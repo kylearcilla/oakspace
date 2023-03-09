@@ -1,0 +1,187 @@
+:global(*) {
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+}
+
+:global(html) {
+    font-size: 62.5%;
+}
+
+button {
+	all: unset;
+}
+button {
+    cursor: pointer;
+}
+button:focus {
+    outline: 2px blue;
+}
+
+body {
+      background-color: #101012;
+}
+
+/* Custom Fonts */
+@font-face {
+    font-family: 'Apercu Medium';
+    font-style: normal;
+    src: url("/src/fonts/Apercu\ Medium.woff2") format('woff2');
+}
+@font-face {
+    font-family: 'Apercu Bold';
+    font-style: normal;
+    src: url("/src/fonts/Apercu\ Bold.woff2") format('woff2');
+}
+@font-face {
+    font-family: 'Gordita Medium';
+    font-style: normal;
+    src: url("/src/fonts/Gordita\ Medium.woff2") format('woff2');
+}
+
+
+/* Default Themes */
+
+$select-color-text: red !default;
+
+
+/* Breakpoints Variables anad Corresponding Mixins */
+
+$screen-mobile-s: 20em;       // mobile small (320px)
+$screen-mobile-m: 23.438em;   // mobile medium (375px)
+$screen-mobile-l: 26.563em;   // mobile large (425px)
+$screen-tablet: 48em;         // tablet (768px)
+$screen-laptop: 60em;         // laptop (1024px)
+$screen-laptop-l: 90em;       // laptop large (1440px)
+
+@mixin mobile-s($property){
+    @media (#{$property}: #{$screen-mobile-s}) {
+        @content;
+    }
+ }
+@mixin mobile-m($property) {
+    @media (#{$property}: #{$screen-mobile-m}) {
+        @content;
+    }
+ }
+@mixin mobile-l($property) {
+    @media (#{$property}: #{$screen-mobile-l}) {
+        @content;
+    }
+ }
+@mixin tablet($property) {
+    @media (#{$property}: #{$screen-tablet}) {
+        @content;
+    }
+ }
+@mixin laptop($property) {
+    @media (#{$property}: #{$screen-laptop}) {
+        @content;
+    }
+ }
+@mixin laptop-l($property) {
+    @media (#{$property}: #{$screen-laptop-l}) {
+        @content;
+    }
+ }
+
+$screen-sm: 37.5em;    // small (600 px)
+$screen-md: 56.25em;   // medium (900 px)
+$screen-lg: 75em;      // large (1200 px)
+$screen-xl: 112.5em;   // extra large (1800 px)
+
+@mixin sm($property) {
+    @media (#{$property}: #{$screen-sm}) {
+        @content;
+    }
+ }
+ @mixin md($property) {
+    @media (#{$property}: #{$screen-md}) {
+        @content;
+    }
+ }
+ @mixin lg($property) {
+    @media (#{$property}: #{$screen-lg}) {
+        @content;
+    }
+ }
+ @mixin xl($property) {
+    @media (#{$property}: #{$screen-xl}) {
+        @content;
+    }
+ }
+
+/* Reusable Stylings */
+@mixin center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+ /* Animations */
+
+/* Icons */
+ .icon {
+    height: 13px;
+    width: 13px;
+    display: block;
+
+    &--home-toggle-right {
+        content: url('double-arrow-right.svg');
+    }
+    &--home-toggle-left {
+        content: url('double-arrow-left.svg');
+    }
+ }
+
+ /* Tool Tip */
+ .tool-tip-text {
+     // left: 50px;
+    position: absolute;
+    padding: 8px 15px 8px 13px;
+    border-radius: 15px;
+    opacity: 0;
+    visibility: hidden;
+    font-size: 1rem;
+    font-family: "Manrope";
+    text-align: center;
+    transition: all 0.1s ease-in-out;
+    pointer-events: none;
+
+    // pointing left
+    &--left {
+        left: 50px;
+        &::after {
+            bottom: 10px;
+            left: 2px;
+        }
+    }
+
+    // triangle pointer
+    &::after {
+        height: 9px;
+        width: 9px;
+        position: absolute;
+        content: "";
+        transform: translate(-50%) rotate(45deg);
+        opacity: 100;
+        visibility: hidden;
+        background-color: #262628;
+        // bottom: 10px;
+        // left: 2px;
+        transition: all 0.1s ease-in-out;
+    }
+ }
+
+ @mixin tool-tip-shown {
+     opacity: 100;
+     visibility: visible;
+     background: #19191b;
+    color: white;
+ }
+
+//  .tool-tip-container:hover,
+//  .tool-tip-container:hover .tool-tip-text,
+//  .tool-tip-container:hover .tool-tip-text::after {
+//      @include tool-tip-shown
+//  }

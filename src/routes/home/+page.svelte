@@ -3,34 +3,39 @@
   import PomView from "./PomView.svelte";
   import VideoView from "./VideoView.svelte";
   import MusicView from "./MusicView.svelte";
+  import TaskView from "./TaskView.svelte";
 
-  let isNavMenuExpanded = true;
-  let isMusicMenuExpanded = true;
+  let isTaskMenuExpanded = true;
+  let doShowNavMenu = false;
 
-  const handleNavToggleClick = () => isNavMenuExpanded = !isNavMenuExpanded 
-  const handleMusicToggleClick = () => isMusicMenuExpanded = !isMusicMenuExpanded
+  const handleTaskMenuToggleClick = () => isTaskMenuExpanded = !isTaskMenuExpanded
+  const handleMouseMove = (event: MouseEvent) => {
+    const mouseX = event.clientX;
+    const cutoff = doShowNavMenu ? 80 : 10
+
+    if (mouseX < cutoff) doShowNavMenu = true;
+    else doShowNavMenu = false;
+  }
 
 </script>
 
-<div class="home">
+<div class="home" on:mousemove={handleMouseMove}>
   <!-- left nav menu -->
-  <div class={`home__nav-menu-container ${isNavMenuExpanded ? "" : "home__nav-menu-container--closed"}`}>
-    <button on:click={handleNavToggleClick} class="home__toggle home__toggle--nav-menu">
-      <i class={`fa-solid fa-angles-${isNavMenuExpanded ? "left" : "right" }`}></i>
-    </button>
-    <NavMenu isNavMenuExpanded={isNavMenuExpanded}/>
+  <div class={`home__nav-menu-container ${doShowNavMenu ? "home__nav-menu-container--shown" : ""}`}>
+    <NavMenu/>
   </div>
   <!-- middle video component -->
-  <div class="home__video">
+  <div class={`home__video ${doShowNavMenu ? "home__video--nav-menu-shown" : ""}`}>
     <PomView />
     <VideoView/>
     <MusicView/>
   </div>
   <!-- right music menu -->
-  <div class={`home__music-menu-container ${isMusicMenuExpanded ? "" : "home__music-menu-container--closed"}`}>
-    <button on:click={handleMusicToggleClick} class="home__toggle home__toggle--music">
-      <i class={`fa-solid fa-angles-${isMusicMenuExpanded ? "right" : "left" }`}></i>
+  <div class={`home__task-view-container ${isTaskMenuExpanded ? "" : "home__task-view-container--closed"}`}>
+    <button on:click={handleTaskMenuToggleClick} class="home__toggle home__toggle--music">
+      <i class={`fa-solid fa-angles-${isTaskMenuExpanded ? "right" : "left" }`}></i>
     </button>
+    <TaskView/>
   </div>
 </div>
 
@@ -66,62 +71,72 @@
       }
 
       // left
-      @mixin nav-menu-container-closed {
-          width: 60px;
-          .home__toggle--nav-menu {
-            right: -30px;
-          }
-      }
       &__nav-menu-container {
+        background-color: #18151a;
         position: relative;
-        width: clamp(180px, 20%, 220px);
-        background-color: #161418;
-        transition: ease-in-out 0.2s;
+        width: 60px;
+        transition: ease-in-out 0.15s;
+        height: 100vh;
+        margin-left: 0px;
+        position: fixed;
+        z-index: 1000;
+        
+        @include sm(max-width) {
+          margin-left: -60px;
 
-        &--closed {
-          @include nav-menu-container-closed;
-        }
-        @include md(max-width) {
-          @include nav-menu-container-closed;
-        }
+          &--shown {
+            margin-left: 0px;
+          }
+        } 
+
         // when the screen is enlarged to 900px, the nav bar stretch transition should be quick
         @include md(min-width) {
-          transition: ease-in-out 0.016s;
-          // does not apply to the shrinking of nav bar
-          &--closed {
-            transition: ease-in-out 0.2s;
-          }
+          transition: ease-in-out 0.2s;
         }
       }
 
       // middle
       &__video {
         padding: 0px 2.5% 50px 2.5%;
+        transition: ease-in-out 0.15s;
         width: 100%;
+        margin-left: 60px;
+        
+        @include sm(max-width) {
+          margin-left: 0px;
+          padding-right: 4%;
+
+          &--nav-menu-shown {
+            margin-left: 60px;
+            display: block;
+          }
+        }
       }
 
       // right
-      @mixin music-menu-container-closed {
+      @mixin task-view-container-closed {
           height: 50vh;
           width: 55px;
           border-radius: 0px 0px 0px 13px;
-
           .home__toggle--music {
             left: -30px;
           }
       }
-      &__music-menu-container {
+      &__task-view-container {
         position: relative;
-        width: 20%;
-        padding: 20px;
+        width: clamp(250px, 25%, 280px);
         background-color: #161418;
         transition: ease-in-out 0.25s;
   
         &--closed {
-          @include music-menu-container-closed;
+          @include task-view-container-closed;
+        }
+        @include sm(max-width) {
+          margin-right: -55px; 
+          display: none
         }
         @include md(max-width) {
-          @include music-menu-container-closed;
+          @include task-view-container-closed;
         }
       }
     }

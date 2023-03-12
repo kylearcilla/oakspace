@@ -59,11 +59,12 @@
                     transform: translate(-50%, 0);
                 }
                 i {
+                    border-radius: 100%;
                     font-size: 15px;
                     color: #DF6B6B;
-                    box-shadow: 1px 0px 11px rgba(223, 107, 107, 0.28);
                 }
                 .yt-icon-fill {
+                    box-shadow: 0px 0px 12px 5px rgba(223, 107, 107, 0.28);
                     top: 5px;
                     background-color: white;
                     width: 5px;

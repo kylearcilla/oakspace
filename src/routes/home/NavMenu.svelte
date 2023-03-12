@@ -1,41 +1,29 @@
 <script lang="ts">
-    export let isNavMenuExpanded: boolean;
+    console.log("render")
 </script>
 
-<div class={`nav-menu ${isNavMenuExpanded ? "" : "nav-menu--closed"}`}>
-    <div class={`nav-menu-header ${isNavMenuExpanded ? "" : "nav-menu-header--closed"}`}>
+<div class="nav-menu">
+    <!-- <div class={"nav-menu-header"}>
         <h1 class="nav-menu-header__title">Today</h1>
         <p class="nav-menu-header__date">Wed, Feb 02</p>
-    </div>
+    </div> -->
     <div class="nav-menu__divider"></div>
     <div class="nav-menu__tabs">
-        <button class={`nav-menu-tab nav-menu-tab--sessions tool-tip-container ${isNavMenuExpanded ? "tool-tip-container-nav-bar--open" : "nav-menu-tab--closed tool-tip-container-nav-bar--closed"}`}>
+        <button class={"nav-menu-tab nav-menu-tab--sessions tool-tip-container"}>
             <span class="tool-tip-text tool-tip-text--left">Sessions</span>
-            <i class={`fa-solid fa-book nav-menu-tab__icon ${isNavMenuExpanded ? "" : "nav-menu-tab__icon--closed"}`}></i>
-            <p class={`nav-menu-tab__text ${isNavMenuExpanded ? "" : "nav-menu-tab__text--closed"}`}>
-                Today's Sessions
-            </p>
+            <i class="fa-solid fa-book nav-menu-tab__icon"></i>
         </button>
-        <button class={`nav-menu-tab nav-menu-tab--stats tool-tip-container ${isNavMenuExpanded ? "tool-tip-container-nav-bar--open" : "nav-menu-tab--closed tool-tip-container-nav-bar--closed"}`}>
+        <button class="nav-menu-tab nav-menu-tab--stats tool-tip-container">
             <span class="tool-tip-text tool-tip-text--left">Stats</span>
-            <i class={`fa-solid fa-calendar-days nav-menu-tab__icon ${isNavMenuExpanded ? "" : "nav-menu-tab__icon--closed"}`}></i>
-            <p class={`nav-menu-tab__text ${isNavMenuExpanded ? "" : "nav-menu-tab__text--closed"}`}>
-                My Stats
-            </p>
+            <i class="fa-solid fa-calendar-days nav-menu-tab__icon"></i>
         </button>
-        <button class={`nav-menu-tab nav-menu-tab--youtube tool-tip-container ${isNavMenuExpanded ? "tool-tip-container-nav-bar--open" : "nav-menu-tab--closed tool-tip-container-nav-bar--closed"}`}>
+        <button class="nav-menu-tab nav-menu-tab--youtube tool-tip-container">
             <span class="tool-tip-text tool-tip-text--left">Youtube</span>
-            <i class={`fa-brands fa-youtube nav-menu-tab__icon ${isNavMenuExpanded ? "" : "nav-menu-tab__icon--closed"}`}></i>
-            <p class={`nav-menu-tab__text ${isNavMenuExpanded ? "" : "nav-menu-tab__text--closed"}`}>
-                Youtube
-            </p>
+            <i class="fa-brands fa-youtube nav-menu-tab__icon"></i>
         </button>
-        <button class={`nav-menu-tab nav-menu-tab--spotify tool-tip-container ${isNavMenuExpanded ? "tool-tip-container-nav-bar--open" : "nav-menu-tab--closed tool-tip-container-nav-bar--closed"}`}>
+        <button class="nav-menu-tab nav-menu-tab--spotify tool-tip-container">
             <span class="tool-tip-text tool-tip-text--left">Spotify</span>
-            <i class={`fa-brands fa-spotify nav-menu-tab__icon ${isNavMenuExpanded ? "" : "nav-menu-tab__icon--closed"}`}></i>
-            <p class={`nav-menu-tab__text ${isNavMenuExpanded ? "" : "nav-menu-tab__text--closed"}`}>
-                Spotify
-            </p>
+            <i class="fa-brands fa-spotify nav-menu-tab__icon"></i>
         </button>
     </div>
 </div>
@@ -45,10 +33,8 @@
         height: 100%;
         font-family: "Manrope", system-ui;
         padding: 20px 20px 20px 5%;
-
-        &--closed {
-            margin: 0px 10%;
-        }
+        margin: 0px 10%;
+        left: 0px;
         @include md(max-width) {
             margin: 0px 10%;
         }
@@ -98,11 +84,7 @@
                 transition: 0.2s ease-in-out;
 
                 &__icon {
-                    margin-right: 10px;
-                    &--closed {
-                        margin: 0px;
-                        font-size: 1.4rem;
-                    }
+                    font-size: 1.4rem;
                     @include md(max-width) {
                         margin: 0px;
                         font-size: 1.4rem;
@@ -110,9 +92,7 @@
                 }
                 &__text {
                     white-space: nowrap;
-                    &--closed {
-                        display: none;
-                    }
+                    display: none;
                     @include md(max-width) {
                         display: none;
                     }
@@ -149,30 +129,15 @@
                         background-color: #2a2830;
                     }
                 }
-                &--closed {
-                    @include minimize-nav-menu-style;
-                    transition: none;
-                }
-                @include md(max-width) {
-                    @include minimize-nav-menu-style;
-                }
+                @include minimize-nav-menu-style;
             }
         }
     }
 
     // when nav bar is closed, allow the tooltip to be seen when hovered over
-    .tool-tip-container-nav-bar--closed:hover,
-    .tool-tip-container-nav-bar--closed:hover .tool-tip-text,
-    .tool-tip-container-nav-bar--closed:hover .tool-tip-text::after {
+    .tool-tip-container:hover,
+    .tool-tip-container:hover .tool-tip-text,
+    .tool-tip-container:hover .tool-tip-text::after {
         @include tool-tip-shown
-    }
-
-    // when navbar is open, allow the tool tip to be seen only when the window is less than md
-    @include md(max-width) {
-        .tool-tip-container-nav-bar--open:hover,
-        .tool-tip-container-nav-bar--open:hover .tool-tip-text,
-        .tool-tip-container-nav-bar--open:hover .tool-tip-text::after {
-            @include tool-tip-shown
-        }
     }
 </style>

@@ -16,7 +16,7 @@
         <i class="fa-brands fa-spotify header-icon"></i>
         <div class="music-view-header__music-view-dots">•••</div>
     </div>
-    <div class="music-view__divider"></div>
+    <div class="divider"></div>
     <div class="playlist-details-container">
         <img alt="" src={spotifyPlaylist.playlistCoverImgSrc}/>
         <div class="playlist-details">
@@ -87,7 +87,7 @@
                 font-size: 7px;
             }
         }
-        &__divider {
+        .divider {
             background-color: #292929;
             width: 100%;
             height: 1px;
@@ -190,7 +190,6 @@
                 overflow: hidden;
                 
                 .playlist-track {
-                    list-style: none;
                     display: flex;
                     align-items: center;
                     text-align: center;

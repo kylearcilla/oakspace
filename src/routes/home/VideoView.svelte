@@ -1,6 +1,23 @@
 <script lang="ts">
     const youtubePlaylistId = "PLzbwD_XvqPteo_SM7DgKX12T0jq8n5pKf"
-
+    const playlistIDs = [
+        {
+            name: "home.",
+            id: "PLzbwD_XvqPteo_SM7DgKX12T0jq8n5pKf"
+        },
+        {
+            name: "vibes.",
+            id: "PLzbwD_XvqPtdogWuW4vyBN4b7OWpY57YB"
+        },
+        {
+            name: "inspiring people.",
+            id: "PLzbwD_XvqPtd4QFAaFwFTgGZPNV00HX4g"
+        },
+        {
+            name: "interviews.",
+            id: "PLzbwD_XvqPtdusD2SnrCLgz-FbnZUIi7y"
+        }
+    ]
     const youtubeVid = {
         vidTitle: "",
         vidDate: "",
@@ -9,6 +26,13 @@
         channelImgSrc: "https://cdn.dribbble.com/userupload/3490175/file/original-59a4b6ec06a349e77a877c2156fa508f.png?compress=1&resize=2400x1800",
         channelTitle: "",
         channelSubCount: ""
+    }
+    let isDropDownOpen = false;
+    let currentPlayListIdx = 0;
+
+    const updatePlaylist = (index: number) => {
+        currentPlayListIdx = index
+        isDropDownOpen = false
     }
 
 </script>
@@ -20,9 +44,21 @@
             <div class="yt-icon-fill"></div>
             <i class="fa-brands fa-youtube header-icon"></i>
         </div>
-        <div class="vid-view-header__music-view-dots">•••</div>
+        <div class="vid-view-header__dropdown-container">
+            <button on:click={() => isDropDownOpen = !isDropDownOpen} class="dropdown-btn">
+                <p>{playlistIDs[currentPlayListIdx].name}</p>
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+            {#if isDropDownOpen}
+                <ul class="dropdown-menu">
+                    {#each playlistIDs as playlist, index}
+                        <li><button on:click={() => updatePlaylist(index)} class="dropdown-menu__option">{playlist.name}</button></li>
+                    {/each}
+                </ul>
+            {/if}
+        </div>
     </div>
-    <iframe id="video" src={`https://www.youtube.com/embed/videoseries?list=${youtubePlaylistId}`} title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    <iframe id="video" src={`https://www.youtube.com/embed/videoseries?list=${playlistIDs[currentPlayListIdx].id}`} title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
     <h1 class="vid-title">8 Hours soothing rain sound for sleeping on the green forest park</h1>
     <div class="vid-details">
         <h4 class="vid-details__date">Aug 20, 2020</h4>
@@ -44,6 +80,7 @@
         margin-top: 30px;
         font-family: "Manrope";
         color: white;
+
         .vid-view-header {
             position: relative;
             display: flex;
@@ -75,12 +112,31 @@
                 font-size: 14px;
                 font-weight: 700;
             }
-            &__music-view-dots {
+            &__dropdown-container {
+                font-family: "Apercu";
                 position: absolute;
-                top: 0px;
+                top: 5px;
                 right: 0px;
-                color: #9E9E9E;
-                font-size: 7px;
+                .dropdown-btn {
+                    color: #9E9E9E;
+                    font-weight: 500;
+                    font-size: 11px;
+                    align-items: center;
+                    i {
+                        color: white;
+                        margin-left: 7px;
+                        font-size: 9px;
+                    }
+                }
+                .dropdown-menu {
+                    position: absolute;
+                    top: 25px;
+                    right: 0px;
+                    background-color: hsl(300, 6%, 9%);
+                    border-radius: 7px;
+                    padding: 7px 10px 10px 10px;
+                    width: 120px;
+                }
             }
         }
         iframe {

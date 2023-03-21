@@ -4,28 +4,55 @@
   import VideoView from "./VideoView.svelte";
   import MusicView from "./MusicView.svelte";
   import TaskView from "./TaskView.svelte";
+  import MusicPlayer from "./MusicPlayer.svelte";
+	import { onDestroy, onMount } from "svelte";
 
   let isTaskMenuExpanded = true;
-  let doShowNavMenu = false;
+  let doHideMenu = false;
+  let hasUserToggledWithKeyLast = true;
 
   const handleTaskMenuToggleClick = () => isTaskMenuExpanded = !isTaskMenuExpanded
   const handleMouseMove = (event: MouseEvent) => {
     const mouseX = event.clientX;
-    const cutoff = doShowNavMenu ? 80 : 10
+    const cutoff = doHideMenu ? 20 : 10
 
-    if (mouseX < cutoff) doShowNavMenu = true;
-    else doShowNavMenu = false;
+    if (doHideMenu && mouseX < cutoff) {
+      doHideMenu = false;
+      hasUserToggledWithKeyLast = false;
+    }
+    // only hide when user is right outside of nav and prevent hiding when nav shown through shortcut
+    else if ((mouseX > 80 && mouseX < 100) && !hasUserToggledWithKeyLast) { 
+      doHideMenu = true;
+    }
   }
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.shiftKey && event.key.toLowerCase() === "x") handleTaskMenuToggleClick();
+    if (event.shiftKey && event.key.toLowerCase() === "z") {
+      doHideMenu = !doHideMenu;
+      hasUserToggledWithKeyLast = true;
+    }
+  }
+  const handleResize = () => {
+    if (document.body.clientWidth <= 600) doHideMenu = true;
+  }
+  onMount(() => {
+    window.addEventListener("resize", handleResize);
+  });
+  onDestroy(() => {
+    window.removeEventListener("resize", handleResize);
+  });
 
 </script>
 
+<svelte:window on:keydown={handleKeyDown} />
+
 <div class="home" on:mousemove={handleMouseMove}>
   <!-- left nav menu -->
-  <div class={`home__nav-menu-container ${doShowNavMenu ? "home__nav-menu-container--shown" : ""}`}>
+  <div class={`home__nav-menu-container ${doHideMenu ? "home__nav-menu-container--hide" : ""}`}>
     <NavMenu/>
   </div>
   <!-- middle video component -->
-  <div class={`home__video ${doShowNavMenu ? "home__video--nav-menu-shown" : ""}`}>
+  <div class={`home__video ${doHideMenu ? "home__video--hide" : ""}`}>
     <PomView />
     <VideoView/>
     <MusicView/>
@@ -35,8 +62,9 @@
     <button on:click={handleTaskMenuToggleClick} class="home__toggle home__toggle--music">
       <i class={`fa-solid fa-angles-${isTaskMenuExpanded ? "right" : "left" }`}></i>
     </button>
-    <TaskView/>
+    <TaskView isTaskMenuExpanded={isTaskMenuExpanded}/>
   </div>
+  <MusicPlayer/>
 </div>
 
 <style lang="scss">
@@ -45,6 +73,10 @@
       display: flex;
       justify-content: space-between;
       font-family: 'Apercu Medium' system-ui;
+
+      @include sm(max-width) {
+        width: 100%;
+      }
 
       // toggle buttons
       &__toggle {
@@ -65,9 +97,6 @@
             color: white;
             transition: ease-in 0.2s;
           }
-          @include md(max-width) {
-            display: none;
-          }
       }
 
       // left
@@ -80,15 +109,10 @@
         margin-left: 0px;
         position: fixed;
         z-index: 1000;
-        
-        @include sm(max-width) {
-          margin-left: -60px;
 
-          &--shown {
-            margin-left: 0px;
-          }
-        } 
-
+        &--hide {
+          margin-left: -60px !important;
+        }
         // when the screen is enlarged to 900px, the nav bar stretch transition should be quick
         @include md(min-width) {
           transition: ease-in-out 0.2s;
@@ -97,46 +121,38 @@
 
       // middle
       &__video {
-        padding: 0px 2.5% 50px 2.5%;
+        padding: 0px 2.5% 100px 2.5%;
         transition: ease-in-out 0.15s;
         width: 100%;
         margin-left: 60px;
-        
-        @include sm(max-width) {
-          margin-left: 0px;
-          padding-right: 4%;
 
-          &--nav-menu-shown {
-            margin-left: 60px;
-            display: block;
-          }
+        &--hide {
+          margin-left: 0px !important;
+          padding-right: 4% !important;
         }
       }
-
       // right
-      @mixin task-view-container-closed {
-          height: 50vh;
-          width: 55px;
+      &__task-view-container {
+        position: relative;
+        width: min(25%, 280px);
+        background-color: #141418;
+        transition: ease-in-out 0.25s;
+        min-width: 80px;
+        min-height: 100%;
+
+        &--closed {
+          height: 350px;
+          width: 65px;
           border-radius: 0px 0px 0px 13px;
+          min-width: 0px;
+
           .home__toggle--music {
             left: -30px;
           }
-      }
-      &__task-view-container {
-        position: relative;
-        width: clamp(250px, 25%, 280px);
-        background-color: #161418;
-        transition: ease-in-out 0.25s;
-  
-        &--closed {
-          @include task-view-container-closed;
         }
         @include sm(max-width) {
           margin-right: -55px; 
           display: none
-        }
-        @include md(max-width) {
-          @include task-view-container-closed;
         }
       }
     }

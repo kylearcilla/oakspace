@@ -6,13 +6,13 @@
     <div class="pom-view__pom-task-tag-icon">
         S
     </div>
-    <h2 class="pom-view__pom-task-title">
-        Math Homework
-    </h2>
+    <div class="pom-view__title">
+        <h2>Math Homework</h2>
+    </div>
     <PomProgressBar/>
-    <button class="pom-view__pom-settings-btn">
-        <i class="fa-solid fa-ellipsis"></i>
-    </button>
+    <div class="pom-view__pom-dots-btn-container">
+        <button class="dots-btn">•••</button>
+    </div>
 </div>
 
 <style lang="scss">
@@ -23,7 +23,12 @@
     color: white;
     background-color: #18151a;
     border-radius: 0px 0px 12px 12px;
-    padding: 25px 15px 30px 15px;
+    padding: 30px 15px 28px 15px;
+    position: relative;
+
+    @include sm(max-width) {
+        padding-bottom: 22px;
+    }
     
     &__pom-task-tag-icon {
         width: 15px;
@@ -37,36 +42,38 @@
         margin-right: 10px;
         @include center;
     }
-    &__pom-task-title {
+    &__title {
         font-family: "Manrope";
         color: white;
-        max-width: 80px;
-        white-space: nowrap;
+        max-width: 90px;
         text-align: start;
         overflow: hidden;
-        text-overflow: ellipsis !important;
-        font-weight: 700;
-        font-size: 0.9rem;
-        margin-right: 1.8%;
+        width: 15%;
+
+        h2 {
+            max-width: 90%;
+            font-weight: 700;
+            font-size: 0.9rem;
+            @include elipses-overflow;
+        }
 
         @include sm(max-width) {
             margin: 0px;
         }
     }
-    &__pom-progress-bar-container {
-    }
-    &__pom-settings-btn {
-        transition: 0.2s;
-        color: #9E9E9E;
-        margin: 0px;
-        margin-left: 15px;
 
-        &:hover {
-            color: white; 
-        }
-        @include sm(max-width) {
-            margin-left: 5px;
+    &__pom-dots-btn-container {
+        width: 4%;
+        button {
+            position: absolute;
+            right: 1.5%;
+            top: 20px;
+            @include sm(max-width) {
+                margin-left: 5px;
+                right: 2.5%;
+            }
         }
     }
+
 }
 </style>

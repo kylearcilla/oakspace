@@ -8,7 +8,7 @@
     font-size: 62.5%;
 }
 
-button {
+button, input {
 	all: unset;
 }
 button {
@@ -94,6 +94,11 @@ $screen-md: 56.25em;   // medium (900 px)
 $screen-lg: 75em;      // large (1200 px)
 $screen-xl: 112.5em;   // extra large (1800 px)
 
+@mixin mq-custom($property, $screen-sz) {
+    @media (#{$property}: #{$screen-sz}) {
+        @content;
+    }
+ }
 @mixin sm($property) {
     @media (#{$property}: #{$screen-sm}) {
         @content;
@@ -134,6 +139,31 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     align-items: center;
 }
 
+@mixin circle($radius) {
+    height: $radius;
+    width: $radius;
+    aspect-ratio: 1 / 1;
+    border-radius: 100%;
+}
+
+@mixin elipses-overflow {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.show-block {
+    display: block !important;
+}
+
+.show-flex {
+    display: flex !important;
+}
+
+.hide {
+    display: none !important;
+}
+
  /* Animations */
 
 /* Icons */
@@ -156,6 +186,15 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     width: 100%;
     height: 1px;
     margin-top: 8px;
+
+    &--vertical {
+        width: 1px !important;
+        height: 100%;
+    }
+
+    &--thin {
+        height: 0.5px;
+    }
 }
 
  /* Tool Tip */
@@ -198,11 +237,147 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     }
  }
 
+ .icon-btn {
+    transition: ease-in-out 0.15s;
+    &:hover {
+        color: rgb(125, 125, 125);
+    }
+    &:active {
+        i {
+            transform: scale(0.95);
+        }
+    }
+ }
+
+ .dots-btn {
+    color: #9E9E9E;
+    font-size: 7px;
+    transition: ease-in-out 0.15s;
+    font-weight: 600;
+    font-size: 6px;
+    border-radius: 2px;
+    padding: 5px;
+
+    &:hover {
+        color: white; 
+        background-color: #242425;
+    }
+ }
+ 
+.dropdown-btn {
+    transition: ease-in-out 0.15s;
+    display: flex;
+    &:hover {
+        color: rgb(125, 125, 125);
+    }
+}
+
+.overflow-scroll-gradient {
+    position: relative;
+}
+.dropdown-menu {
+    display: block;
+    background-color: hsl(300, 6%, 9%);
+    border-radius: 7px;
+    padding: 7px 10px 10px 10px;
+    width: 200px;
+    max-height: 200px;
+    position: relative;
+    overflow: scroll;
+    
+    ul {
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 100%;
+            background: linear-gradient(black, rgba(255, 255, 255, 0.001)); 
+        }
+    }
+
+    li {
+        width: 80%;
+    }
+
+    &__option {
+        color: #bab7b7;
+        white-space: nowrap;
+        font-weight: 400;
+        font-size: 11px;
+        padding: 6px 10px 6px 9px;
+        width: 100%;
+        border-radius: 6px;
+
+        &:hover {
+            background-color: #242124;
+        }
+    }
+}
+
+ input[type="range"] {
+    width: 100%;
+    top: 0px;
+    height: 3px;
+    cursor: pointer;
+    background-color: black;
+    transition: ease-in-out 0.1s;
+    border-radius: 20px;
+
+    &:hover {
+       height: 4px;
+    }
+    
+    // thumb
+    &::-webkit-slider-thumb {
+        transition: ease-in-out 0.1s;
+        width: 0px;
+        height: 0px;
+        -webkit-appearance: none;
+        appearance: none;
+        background-color: white;
+    }
+    &::-moz-range-thumb  {
+        transition: ease-in-out 0.1s;
+        width: 0px;
+        height: 0px;
+        -webkit-appearance: none;
+        appearance: none;
+        background-color: white;
+    }
+    &:hover::-moz-range-thumb {
+        @include circle(9px);
+    }
+    &:hover::-webkit-slider-thumb {
+        @include circle(9px);
+    }
+  }
+
+ .text-icon-btn-1 {
+    @include center;
+    transition: ease-in-out 0.1s;
+    font-weight: 700;
+    width: 100%;
+    background: #1E1E22; 
+    box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.07);
+    padding: 10px 0px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    margin-top: 20px;
+
+    &:hover {
+        background: #272427;
+    }
+    &:active {
+        background: rgb(51, 48, 48); 
+    }
+ }
+
+
  @mixin tool-tip-shown {
      opacity: 100;
      visibility: visible;
      background: #19191b;
-    color: white;
+     color: white;
  }
 
 //  .tool-tip-container:hover,
@@ -210,3 +385,130 @@ $screen-xl: 112.5em;   // extra large (1800 px)
 //  .tool-tip-container:hover .tool-tip-text::after {
 //      @include tool-tip-shown
 //  }
+
+.today-stat {
+    text-align: center;
+    color: #5B5B5B;
+    p {
+        font-size: 8px;
+        margin-top: 4px;
+        text-align: center;
+    }
+    i {
+        font-size: 11px;
+    }
+    &--middle {
+        margin: 0px 2px;
+    }
+}
+
+.tag-wide {
+    background: #9997FE;
+    border-radius: 12px;
+    @include center;
+    padding: 3px 15px;
+    font-weight: 800;
+}
+
+.session-todo {
+    font-family: "Manrope";
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+    width: 100%;
+
+    &__icon {
+        margin-right: 8px;
+        border-radius: 18px;
+        width: 9.5px;
+        height: 9.5px;
+        aspect-ratio: 1 / 1;
+        background: rgba(115, 119, 255, 0.05);
+        border: 1.8px solid #5e5e5e;
+        transition: ease-in-out 0.1s;
+        cursor: default;
+        @include center;
+        i {
+            font-size: 4px;
+            display: none;
+        }
+        &--active {
+            border: 1.8px solid #5e5e5e;
+            cursor: pointer;
+            &:hover {
+                cursor: pointer;
+                background-color: rgb(66, 66, 66);
+            }
+        }
+        &--add {
+            border-color: transparent;
+            background: none;
+            @include center;
+            i {
+                font-size: 10px;
+                display: block;
+                font-weight: 100;
+            }
+        }
+        &--finished, &--unfinished {
+            border: none;
+            background-color: transparent;
+            margin-right: 5px;
+            i {
+                font-size: 7px;
+                display: block;
+            }
+        }
+    }
+    &--new-session-btn {
+        margin: 10px 0px 30px 0px;
+    }
+    &__text {
+        color: rgb(139, 139, 139);
+        max-width: 90%;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-size: 9px;
+        &--input {
+            color: white;
+        }
+    }
+    form {
+        display: flex;
+        width: 100%;
+        input {
+            color: rgb(199, 199, 199);
+            width: 85%;
+            max-width: 80%;
+            padding-bottom: 4px;
+            border-bottom: 1.5px solid #4e4e4e;
+            &::placeholder {
+                color: rgb(56, 56, 56);
+            }
+            &:focus {
+                border-color: #6A83FF;
+                box-shadow: 0px 6px 8px -6px #2f3362;
+            }
+        }
+    }
+    &:first-child {
+        margin-top: 10px;
+    }
+    &:last-child {
+        margin-bottom: 20px;
+    }
+    &--checked > .session-todo__icon {
+        background: linear-gradient(90deg, #5366FF 0%, #7876FE 100%);
+        border: 2px solid #9997FE;
+        box-shadow: -1px 1px 2px 1px rgba(120, 118, 254, 0.02);
+        i {
+            display: block;
+        }
+    }
+    &--checked > p {
+        text-decoration: line-through;
+        text-decoration-thickness: 1px;
+    }
+}
+

@@ -1,7 +1,7 @@
 <script lang="ts">
     const sessionPeriods = 3
     const sessionTime = 25
-    const breakTime = 10
+    const breakTime = 5
     const totalMinutes = (sessionPeriods * sessionTime) + ((sessionPeriods - 1) * breakTime)
     const totalPeriods = (sessionPeriods * 2) - 1
     const sessionTimePercent = sessionTime / totalMinutes
@@ -17,15 +17,15 @@
                 result += (`
                     <div class="pom-bar__step-icon" style="left: ${percentSoFar * 100}%;">
                         <i class="fa-solid fa-book-open"></i>
-                        <p class="step-icon-time">${sessionTime} min</p>
+                        <p class="step-icon-time">${sessionTime} m</p>
                     </div>
                 `)
             } else {
                 percentSoFar += breakTimePercent;
                 result += (`
                     <div class="pom-bar__step-icon" style="left: ${percentSoFar * 100}%;">
-                        <i class="fa-solid fa-book-open"></i>
-                        <p class="step-icon-time">${breakTime} min</p>
+                        <i class="fa-solid fa-leaf"></i>
+                        <p class="step-icon-time">${breakTime} m</p>
                     </div>
                 `)
             }
@@ -55,17 +55,17 @@
     .pom-view {
         display: flex;
         align-items: center;
-        width: 80%;
+        width: 100%;
         transition: ease-in-out 0.2s;
         font-family: "Manrope";
 
         @include sm(max-width) {
-            width: 75%;;
+            width: 75%;
         }
 
         &__pom-timer {
             color: #8F8F8F;
-            font-size: 0.7rem;
+            font-size: 0.9rem;
             font-weight: 100;
             @include sm(max-width) {
                 display: none;
@@ -74,7 +74,7 @@
 
         .pom-bar {
             position: relative;
-            margin: 0px min(3.5%, 12px);
+            margin: 0px min(4%, 15px);
             width: 100%;
             height: 4px;
             background-color: rgb(14, 13, 16);
@@ -88,24 +88,32 @@
             }
             &__step-icon {
                 position: absolute;
-                top: -6px;
+                top: -22px;
                 width: 16px;
                 height: 16px;
-                background: #222024;
-                border: 2px solid #323232;
                 border-radius: 18px;
                 color: #747474;
                 @include center;
+
+                &::after {
+                    content: "";
+                    @include circle(1.5px);
+                    background-color: #747474;
+                    position: absolute;
+                    bottom: -2px;
+                }
                 i {
-                    font-size: 0.5rem;
+                    font-size: 0.75rem;
                 }
                 .step-icon-time {
                     position: absolute;
                     white-space: nowrap;
-                    top: 20px;
-                    font-size: 0.5rem;
+                    top: 33px;
+                    font-size: 0.68rem;
                     font-weight: 400;
-                    // display: none;
+                    @include sm(max-width) {
+                        display: none;
+                    }
                 }
                 &--finished {
                     background: linear-gradient(90deg, #5366FF 0%, #7876FE 100%);

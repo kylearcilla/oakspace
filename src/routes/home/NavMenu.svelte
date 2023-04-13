@@ -1,5 +1,23 @@
 <script lang="ts">
-    console.log("render")
+    export let onNavButtonClicked: any;
+    let navButtonClicked = "";
+
+    const handleNavButtonClicked = (event: any) => {
+        const srcClassList: string[] = event.srcElement.classList.value;
+
+        if (srcClassList.includes("chart")) {
+            onNavButtonClicked("stats")
+        }
+        else if (srcClassList.includes("youtube")) {
+            onNavButtonClicked("youtube")
+        }
+        else if (srcClassList.includes("spotify")) {
+            onNavButtonClicked("spotify")
+        }
+        else {
+            onNavButtonClicked("settings")
+        }
+    }
 </script>
 
 <div class="nav-menu">
@@ -9,21 +27,21 @@
     </div> -->
     <div class="nav-menu__divider"></div>
     <div class="nav-menu__tabs">
-        <button class={"nav-menu-tab nav-menu-tab--sessions tool-tip-container"}>
-            <span class="tool-tip-text tool-tip-text--left">Sessions</span>
-            <i class="fa-solid fa-book nav-menu-tab__icon"></i>
-        </button>
-        <button class="nav-menu-tab nav-menu-tab--stats tool-tip-container">
+        <button on:click={handleNavButtonClicked} class="nav-menu-tab nav-menu-tab--chart tool-tip-container">
             <span class="tool-tip-text tool-tip-text--left">Stats</span>
-            <i class="fa-solid fa-calendar-days nav-menu-tab__icon"></i>
+            <i class="fa-solid fa-chart-line nav-menu-tab__icon"></i>
         </button>
-        <button class="nav-menu-tab nav-menu-tab--youtube tool-tip-container">
+        <button on:click={handleNavButtonClicked} class="nav-menu-tab nav-menu-tab--youtube tool-tip-container">
             <span class="tool-tip-text tool-tip-text--left">Youtube</span>
             <i class="fa-brands fa-youtube nav-menu-tab__icon"></i>
         </button>
-        <button class="nav-menu-tab nav-menu-tab--spotify tool-tip-container">
+        <button on:click={handleNavButtonClicked} class="nav-menu-tab nav-menu-tab--spotify tool-tip-container">
             <span class="tool-tip-text tool-tip-text--left">Spotify</span>
             <i class="fa-brands fa-spotify nav-menu-tab__icon"></i>
+        </button>
+        <button on:click={handleNavButtonClicked} class={"nav-menu-tab nav-menu-tab--gear tool-tip-container"}>
+            <span class="tool-tip-text tool-tip-text--left">Sessions</span>
+            <i class="fa-solid fa-gear nav-menu-tab__icon"></i>
         </button>
     </div>
 </div>
@@ -35,6 +53,7 @@
         padding: 20px 20px 20px 5%;
         margin: 0px 10%;
         left: 0px;
+        
         @include md(max-width) {
             margin: 0px 10%;
         }
@@ -45,6 +64,7 @@
             align-items: baseline;
             margin: 25px 0px 0px 10px;
             padding-bottom: 2px;
+
             &__title {
                 font-size: 1.5rem;
                 font-weight: 700;
@@ -72,64 +92,52 @@
         }
         &__tabs {
             font-family: "Gordita Medium", system-ui;
+        }
 
-            .nav-menu-tab {
-                width: 100%;
-                display: flex;
-                position: relative;
-                padding: 8px 0px 8px 10px;
-                margin-bottom: 4px;
-                border-radius: 8px;
-                font-size: 1rem;
-                transition: 0.2s ease-in-out;
+        .nav-menu-tab {
+            height: 40px;
+            width: 40px;
+            position: relative;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            padding: 0px;
+            border-radius: 35%;
+            transition: 0.1s ease-in-out;
+            background-color: #201f26;
+            
+            @include flex-container(center, center);
+            
+            &:hover {
+                border-radius: 100%;
+                transition: 0.3s ease-in-out;
+                background-color: rgb(37, 35, 41);
+            }
 
-                &__icon {
+            &__icon {
+                font-size: 1.4rem;
+                @include md(max-width) {
+                    margin: 0px;
                     font-size: 1.4rem;
-                    @include md(max-width) {
-                        margin: 0px;
-                        font-size: 1.4rem;
-                    }
                 }
-                &__text {
-                    white-space: nowrap;
+            }
+            &__text {
+                white-space: nowrap;
+                display: none;
+                @include md(max-width) {
                     display: none;
-                    @include md(max-width) {
-                        display: none;
-                    }
                 }
-                &:hover {
-                    background-color: #1E1E22;
-                    cursor: pointer;
-                }
-                &--sessions {
-                    color: #7B98FC !important;
-                }
-                &--stats {
-                    color: #9997FE !important;
-                }
-                &--youtube {
-                    color: #DA7EBA !important;
-                }
-                &--spotify {
-                    color: #89F6A7 !important;
-                }
-                @mixin minimize-nav-menu-style {
-                    height: 40px;
-                    width: 40px;
-                    display: flex;
-                    margin-bottom: 10px;
-                    padding: 0px;
-                    justify-content: center;
-                    align-items: center;
-                    border-radius: 35%;
-                    background-color: #1a1a1f;
-                    &:hover {
-                        border-radius: 100%;
-                        transition: 0.3s ease-in-out;
-                        background-color: #2a2830;
-                    }
-                }
-                @include minimize-nav-menu-style;
+            }
+            &--gear {
+                color: #7B98FC !important;
+            }
+            &--chart {
+                color: #9997FE !important;
+            }
+            &--youtube {
+                color: #DA7EBA !important;
+            }
+            &--spotify {
+                color: #89F6A7 !important;
             }
         }
     }

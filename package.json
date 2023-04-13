@@ -34,6 +34,12 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"firebase": "^9.19.1",
+		"google-auth-library": "^8.7.0",
+		"googleapis": "^116.0.0",
+		"i": "^0.3.7",
+		"jwt-decode": "^3.1.2",
+		"npm": "^9.6.4",
 		"sass": "^1.58.0"
 	}
 }

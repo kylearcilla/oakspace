@@ -6,28 +6,45 @@
   import TaskView from "./TaskView.svelte";
   import MusicPlayer from "./MusicPlayer.svelte";
 	import { onDestroy, onMount } from "svelte";
+	import YoutubeSettings from "./YoutubeSettings.svelte";
+	import SpotifySettings from "./SpotifySettings.svelte";
+	import UserSettings from "./UserSettings.svelte";
+
+	import { _initGoogleClient } from "./+page";
+  import { currentYtVidId, ytUserData, ytCurrentVid } from "$lib/store";
 
   let isTaskMenuExpanded = true;
   let doHideMenu = false;
   let hasUserToggledWithKeyLast = true;
+  let navSettingClicked = "";
+  let flag = 0
 
+  $: flag += 1;
+
+  const handleNavButtonClicked = (buttonName: string) => {
+    navSettingClicked = buttonName;
+  }
   const handleTaskMenuToggleClick = () => isTaskMenuExpanded = !isTaskMenuExpanded
   const handleMouseMove = (event: MouseEvent) => {
     const mouseX = event.clientX;
-    const cutoff = doHideMenu ? 20 : 10
+    const cutoff = 5
 
+    // show when user is close to left edge
     if (doHideMenu && mouseX < cutoff) {
       doHideMenu = false;
       hasUserToggledWithKeyLast = false;
     }
-    // only hide when user is right outside of nav and prevent hiding when nav shown through shortcut
+    // only hide when user is right outside of nav and prevent hiding when nav was shown through shortcut
+    // ...as the nav menu should only close in this case when the user was in the nav menu
     else if ((mouseX > 80 && mouseX < 100) && !hasUserToggledWithKeyLast) { 
       doHideMenu = true;
     }
   }
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.shiftKey && event.key.toLowerCase() === "x") handleTaskMenuToggleClick();
-    if (event.shiftKey && event.key.toLowerCase() === "z") {
+    if (event.metaKey && event.key.toLowerCase() === "x") {
+      handleTaskMenuToggleClick();
+    }
+    if (event.metaKey && event.key.toLowerCase() === "z") {
       doHideMenu = !doHideMenu;
       hasUserToggledWithKeyLast = true;
     }
@@ -35,8 +52,10 @@
   const handleResize = () => {
     if (document.body.clientWidth <= 600) doHideMenu = true;
   }
+
   onMount(() => {
     window.addEventListener("resize", handleResize);
+    _initGoogleClient();
   });
   onDestroy(() => {
     window.removeEventListener("resize", handleResize);
@@ -47,14 +66,16 @@
 <svelte:window on:keydown={handleKeyDown} />
 
 <div class="home" on:mousemove={handleMouseMove}>
+  <div id="signInDiv"></div>
   <!-- left nav menu -->
   <div class={`home__nav-menu-container ${doHideMenu ? "home__nav-menu-container--hide" : ""}`}>
-    <NavMenu/>
+    <NavMenu onNavButtonClicked={handleNavButtonClicked} />
   </div>
   <!-- middle video component -->
   <div class={`home__video ${doHideMenu ? "home__video--hide" : ""}`}>
     <PomView />
-    <VideoView/>
+    <!-- @ts-ignore -->
+    <VideoView />
     <MusicView/>
   </div>
   <!-- right music menu -->
@@ -64,10 +85,18 @@
     </button>
     <TaskView isTaskMenuExpanded={isTaskMenuExpanded}/>
   </div>
-  <MusicPlayer/>
+  {#if navSettingClicked === "settings"} <UserSettings/> {/if}
+  {#if navSettingClicked === "youtube"} <YoutubeSettings onNavButtonClicked={handleNavButtonClicked}/> {/if}
+  {#if navSettingClicked === "spotify"} <SpotifySettings onNavButtonClicked={handleNavButtonClicked} /> {/if}
+  <!-- <MusicPlayer /> -->
 </div>
 
 <style lang="scss">
+    #signInDiv {
+      position: absolute;
+      right: 400px;
+      top: 150px;
+    }
     .home {
       height: 100%;
       display: flex;
@@ -121,7 +150,7 @@
 
       // middle
       &__video {
-        padding: 0px 2.5% 100px 2.5%;
+        padding: 0px 2.5% 30px 2.5%;
         transition: ease-in-out 0.15s;
         width: 100%;
         margin-left: 60px;

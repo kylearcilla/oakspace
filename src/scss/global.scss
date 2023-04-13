@@ -104,24 +104,24 @@ $screen-xl: 112.5em;   // extra large (1800 px)
         @content;
     }
  }
- @mixin md($property) {
+@mixin md($property) {
     @media (#{$property}: #{$screen-md}) {
         @content;
     }
  }
- @mixin lg($property) {
+@mixin lg($property) {
     @media (#{$property}: #{$screen-lg}) {
         @content;
     }
  }
- @mixin xl($property) {
+@mixin xl($property) {
     @media (#{$property}: #{$screen-xl}) {
         @content;
     }
  }
 
  /* Global Mixins */
- @mixin flex-container($vert-spacing, $hoz-spacing) {
+@mixin flex-container($vert-spacing, $hoz-spacing) {
     display: flex;
 
     @if $vert-spacing != _ {
@@ -134,9 +134,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
 
 /* Reusable Stylings */
 @mixin center {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    @include flex-container(center, center);
 }
 
 @mixin circle($radius) {
@@ -152,6 +150,14 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     text-overflow: ellipsis;
 }
 
+.text-aln-center {
+    text-align: center;
+}
+
+.elipses-overflow {
+    @include elipses-overflow;
+}
+
 .show-block {
     display: block !important;
 }
@@ -164,10 +170,10 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     display: none !important;
 }
 
- /* Animations */
+/* Animations */
 
 /* Icons */
- .icon {
+.icon {
     height: 13px;
     width: 13px;
     display: block;
@@ -180,7 +186,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     }
  }
 
- /* Line Divider */
+/* Line Divider */
 .divider {
     background-color: #292929;
     width: 100%;
@@ -191,12 +197,137 @@ $screen-xl: 112.5em;   // extra large (1800 px)
         width: 1px !important;
         height: 100%;
     }
-
     &--thin {
         height: 0.5px;
     }
+    &--top {
+        position: absolute;
+        top: 0px;
+    }
+    &--bottom {
+        position: absolute;
+        bottom: 0px;
+    }
 }
 
+.flx {
+    display: flex;
+    &--algn-center {
+        align-items: center;
+    }
+    &--space-between {
+        justify-content: space-between;
+    }
+}
+
+.abs-bottom-right {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+
+    &--padded-lg {
+        bottom: 20px;
+        right: 20px;
+    }
+}
+
+/* Modal */
+
+.modal-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.7);
+  
+    &__content {
+      position: relative;
+      max-width: 90%;
+      max-height: 90%;
+      overflow-x: scroll;
+      padding: 25px 30px 30px 30px;
+      border-radius: 15px;
+      background-color: #131314;
+    }
+
+    &--hidden {
+        display: none;
+    }
+  }
+
+  .section-bg {
+    background-color: #161617;
+    padding: 15px 15px 15px 20px;
+    border-radius: 12px;
+}
+
+ /* Buttons */
+ .icon-btn {
+    transition: ease-in-out 0.15s;
+    &:hover {
+        color: rgb(125, 125, 125);
+    }
+    &:active {
+        i {
+            transform: scale(0.95);
+        }
+    }
+ }
+ .dots-btn {
+    color: #c2c0c0;
+    font-size: 0.7rem;
+    transition: ease-in-out 0.15s;
+    font-weight: 600;
+    font-size: 0.6rem;
+    border-radius: 2px;
+    padding: 5px;
+
+    &:hover {
+        background-color: #242425;
+    }
+ }
+ .btn-line {
+    padding: 8px 20px 8px 20px;
+    border: solid 1px #9997FE;
+    color: #9997FE;
+    border-radius: 15px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    transition: 0.2s ease-in-out;
+
+    &:hover {
+        background-color: #9997FE;
+        color: white;
+    }
+}
+.btn-text-only {
+    color: #a3a3a3;
+    border-radius: 15px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: 0.15s ease-in-out;
+
+    &:hover {
+        filter: brightness(1.5);
+    }
+}
+.close-btn {
+    position: absolute;
+    right: 30px;
+    top: 20px;
+    font-size: 1.3rem;
+    transition: 0.15s ease-in-out;
+
+    &:hover {
+        filter: brightness(0.5);
+    }
+}
+ 
  /* Tool Tip */
  .tool-tip-text {
      // left: 50px;
@@ -236,64 +367,39 @@ $screen-xl: 112.5em;   // extra large (1800 px)
         transition: all 0.1s ease-in-out;
     }
  }
-
- .icon-btn {
-    transition: ease-in-out 0.15s;
-    &:hover {
-        color: rgb(125, 125, 125);
-    }
-    &:active {
-        i {
-            transform: scale(0.95);
-        }
-    }
+ @mixin tool-tip-shown {
+     opacity: 100;
+     visibility: visible;
+     background: #19191b;
+     color: white;
  }
 
- .dots-btn {
-    color: #9E9E9E;
-    font-size: 7px;
-    transition: ease-in-out 0.15s;
-    font-weight: 600;
-    font-size: 6px;
-    border-radius: 2px;
-    padding: 5px;
-
-    &:hover {
-        color: white; 
-        background-color: #242425;
-    }
- }
- 
+ /* Drop Down UI */
 .dropdown-btn {
     transition: ease-in-out 0.15s;
-    display: flex;
+    color: #9E9E9E;
+    font-weight: 500;
+    font-size: 1.1rem;
+    @include flex-container(center, _);
     &:hover {
         color: rgb(125, 125, 125);
     }
-}
-
-.overflow-scroll-gradient {
-    position: relative;
+    i {
+        margin-left: 7px;
+        font-size: 0.9rem;
+        color: rgb(200, 200, 200);
+    }
 }
 .dropdown-menu {
     display: block;
-    background-color: hsl(300, 6%, 9%);
+    background-color: rgb(32, 32, 33);
     border-radius: 7px;
-    padding: 7px 10px 10px 10px;
+    padding: 7px 2px 10px 5px;
     width: 200px;
     max-height: 200px;
     position: relative;
     overflow: scroll;
-    
-    ul {
-        &::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            width: 100%;
-            background: linear-gradient(black, rgba(255, 255, 255, 0.001)); 
-        }
-    }
+    z-index: 1000;
 
     li {
         width: 80%;
@@ -303,18 +409,19 @@ $screen-xl: 112.5em;   // extra large (1800 px)
         color: #bab7b7;
         white-space: nowrap;
         font-weight: 400;
-        font-size: 11px;
+        font-size: 1.1rem;
         padding: 6px 10px 6px 9px;
         width: 100%;
         border-radius: 6px;
 
         &:hover {
-            background-color: #242124;
+            background-color: #302d30;
         }
     }
 }
 
- input[type="range"] {
+/* Custom Input Range */
+.input-range {
     width: 100%;
     top: 0px;
     height: 3px;
@@ -350,20 +457,31 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     &:hover::-webkit-slider-thumb {
         @include circle(9px);
     }
+
+    &--show-thumb {
+        &:hover {
+            height: 3px;
+        }
+        &::-webkit-slider-thumb {
+            @include circle(9px);
+        }
+        &::-moz-range-thumb  {
+            @include circle(9px);
+        }
+    }
   }
 
+/* Icons */
  .text-icon-btn-1 {
     @include center;
-    transition: ease-in-out 0.1s;
-    font-weight: 700;
     width: 100%;
-    background: #1E1E22; 
-    box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.07);
-    padding: 10px 0px;
     border-radius: 8px;
-    margin-bottom: 10px;
-    margin-top: 20px;
-
+    box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.07);
+    background: #1E1E22; 
+    padding: 10px 0px;
+    font-weight: 700;
+    transition: ease-in-out 0.1s;
+    margin-bottom: 20px 0px 10px 0px;
     &:hover {
         background: #272427;
     }
@@ -372,30 +490,16 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     }
  }
 
-
- @mixin tool-tip-shown {
-     opacity: 100;
-     visibility: visible;
-     background: #19191b;
-     color: white;
- }
-
-//  .tool-tip-container:hover,
-//  .tool-tip-container:hover .tool-tip-text,
-//  .tool-tip-container:hover .tool-tip-text::after {
-//      @include tool-tip-shown
-//  }
-
+/* App Specific-UI */
 .today-stat {
     text-align: center;
     color: #5B5B5B;
     p {
-        font-size: 8px;
+        font-size: 0.8rem;
         margin-top: 4px;
-        text-align: center;
     }
     i {
-        font-size: 11px;
+        font-size: 1.1rem;
     }
     &--middle {
         margin: 0px 2px;
@@ -412,50 +516,47 @@ $screen-xl: 112.5em;   // extra large (1800 px)
 
 .session-todo {
     font-family: "Manrope";
-    display: flex;
-    align-items: center;
+    @include flex-container(center, _);
     margin-bottom: 5px;
     width: 100%;
 
     &__icon {
         margin-right: 8px;
         border-radius: 18px;
-        width: 9.5px;
-        height: 9.5px;
-        aspect-ratio: 1 / 1;
+        @include circle(9.5px);
         background: rgba(115, 119, 255, 0.05);
         border: 1.8px solid #5e5e5e;
         transition: ease-in-out 0.1s;
         cursor: default;
         @include center;
         i {
-            font-size: 4px;
+            font-size: 0.4rem;
             display: none;
         }
-        &--active {
+        &--active { // todo in an active session
             border: 1.8px solid #5e5e5e;
             cursor: pointer;
             &:hover {
                 cursor: pointer;
-                background-color: rgb(66, 66, 66);
+                background-color: rgb(50, 50, 50);
             }
         }
-        &--add {
+        &--add { // add new todo
             border-color: transparent;
             background: none;
             @include center;
             i {
-                font-size: 10px;
+                font-size: 1rem;
                 display: block;
                 font-weight: 100;
             }
         }
-        &--finished, &--unfinished {
+        &--finished, &--unfinished { // todos in a finished session
             border: none;
             background-color: transparent;
             margin-right: 5px;
             i {
-                font-size: 7px;
+                font-size: 0.7rem;
                 display: block;
             }
         }
@@ -466,14 +567,26 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     &__text {
         color: rgb(139, 139, 139);
         max-width: 90%;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        font-size: 9px;
+        @include elipses-overflow;
+        font-size: 0.9rem;
         &--input {
             color: white;
         }
     }
+
+    &--checked > .session-todo__icon {
+        background: linear-gradient(90deg, #5366FF 0%, #7876FE 100%);
+        border: 2px solid #9997FE;
+        box-shadow: -1px 1px 2px 1px rgba(120, 118, 254, 0.02);
+        i {
+            display: block;
+        }
+    }
+    &--checked > p {
+        text-decoration: line-through;
+        text-decoration-thickness: 1px;
+    }
+
     form {
         display: flex;
         width: 100%;
@@ -497,18 +610,6 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     }
     &:last-child {
         margin-bottom: 20px;
-    }
-    &--checked > .session-todo__icon {
-        background: linear-gradient(90deg, #5366FF 0%, #7876FE 100%);
-        border: 2px solid #9997FE;
-        box-shadow: -1px 1px 2px 1px rgba(120, 118, 254, 0.02);
-        i {
-            display: block;
-        }
-    }
-    &--checked > p {
-        text-decoration: line-through;
-        text-decoration-thickness: 1px;
     }
 }
 

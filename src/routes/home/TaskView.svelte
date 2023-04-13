@@ -1,11 +1,18 @@
 <script lang="ts">
+    import { onMount } from 'svelte';
+	import { getCurrentDate, getCurrentTime } from "$lib/helper";
+
     export let isTaskMenuExpanded: Boolean;
+
     const hasActiveSession = true;
     const sessionIDClicked = 1;
     let flag = false;
     const isEmpty = false;
+    let doUse12HourFormat = true;
 
-    console.log("renderd");
+    let currentTime = getCurrentTime(doUse12HourFormat);
+    let currentDate = getCurrentDate();
+
     const prevSessionClickedHandler = () => {
         flag = !flag;
     }
@@ -16,6 +23,18 @@
         event.preventDefault();
         console.log("SwefweweDG");
     }
+    const changeTimeFormat = () => {
+        doUse12HourFormat = !doUse12HourFormat;
+        currentTime = getCurrentTime(doUse12HourFormat);
+    }
+    onMount(() => {
+        const intervalId = setInterval(() => {
+            currentDate = getCurrentDate();
+            currentTime = getCurrentTime(doUse12HourFormat);
+        }, 1000);
+    
+        return () => clearInterval(intervalId);
+    });
 </script>
 
 <div class={`task-view ${!isTaskMenuExpanded ? "task-view--minimize" : ""}`}>
@@ -24,11 +43,11 @@
         {/if}
         {#if isTaskMenuExpanded}
         <div class="task-view__header task-view__header--default"> 
-            <h1>Today</h1><p>Wed, July 07</p>
+            <h1 on:click={() => changeTimeFormat()}>{currentTime}</h1> <p>{currentDate}</p>
         </div>
         {:else}
         <div class="task-view__header task-view__header--secondary"> 
-            <h1>6/7</h1><p>Wed</p>
+            <h1>{currentTime}</h1><p>Wed</p>
         </div>
         {/if}
     <div class="divider"></div>
@@ -127,8 +146,8 @@
 
 <style lang="scss">
     .task-view {
-        padding: 0px 10%;
         width: 100%;
+        padding: 0px 10%;
         overflow: hidden;
 
         &--minimize {
@@ -138,23 +157,28 @@
             width: 100%;
             margin-top: 55px;
             @include flex-container(flex-end, space-between);
+            h1 {
+                font-family: "Apercu";
+                font-size: 1.5rem;
+                cursor: pointer;
+                white-space: nowrap;
+            }
             p {
                 color: #adadad;
-                overflow: hidden;
                 margin-left: 10px;
-                white-space: nowrap;
-                text-overflow: ellipsis;
+                font-weight: 800;
+                @include elipses-overflow;
             }
             &--secondary {
                 display: block;
                 text-align: center;
             }
             &--secondary > h1 {
-                font-size: 13px;
+                font-size: 0.9rem;
             }
             &--secondary > p {
-                margin: 2px 0px 4px 0px;
-                font-size: 8px;
+                margin: 5px 0px 6px 0px;
+                font-size: 0.8rem;
             }
         }
         .divider {
@@ -169,19 +193,17 @@
                 aspect-ratio: 1 / 1;
             }
             &--minimize > p {
-                font-size: 15px;
+                font-size: 1.5rem;
             }
             &--minimize > p:first-child {
                 display: none;
             }
         }
-
         .today-stats {
-            display: flex;
             width: 100%;
             padding: 10px 2%;
             justify-content: space-evenly;
-            align-items: center;
+            @include flex-container(center, _);
             border-radius: 10px;
             margin-bottom: 15px;
             &--minimize {
@@ -194,7 +216,6 @@
                 }
             }
         }
-
         .current-session-container {
             margin-bottom: 30px;
             h4 {
@@ -206,13 +227,13 @@
             }
             .session {
                 position: relative;
-                background-color: #121112;
+                background-color: #1c1c20;
                 padding: 10px 10px 15px 15px;
                 border-radius: 10px;
                 h4 {
-                    font-size: 10.5px;
+                    font-size: 0.95rem;
                     margin: 0px;
-                    color: rgb(194, 194, 194);
+                    color: white;
                 }
                 &__todo-list {
                 }
@@ -223,11 +244,9 @@
                     cursor: default;
                     font-family: "Apercu";
                     font-weight: 800;
-                    font-size: 8px;
+                    font-size: 0.8rem;
                     @include center;
-                    height: 13px;
-                    width: 13px;
-                    aspect-ratio: 1 / 1;
+                    @include circle(13px);
                     border-radius: 100%;
                     background-color: #9997FE;   
                 }
@@ -235,7 +254,7 @@
                     position: absolute;
                     right: 10px;
                     bottom: 10px;
-                    font-size: 8px;
+                    font-size: 0.8rem;
                     color: #818181;
                 }
             }
@@ -247,7 +266,7 @@
                     @include flex-container(baseline, space-between);
                     margin-bottom: 10px;
                     h2 {
-                        font-size: 1.1rem;
+                        font-size: 1rem;
                         font-family: "Gordita Medium";
                     }
                     p {
@@ -255,10 +274,6 @@
                         font-size: 0.7rem;
                         color: #808080;
                     }
-                }
-                .divider {
-                    height: 0.1px;
-                    margin: 6px 0px 10px 0px;
                 }
                 &--morning {
                     color: #9997FE;
@@ -269,91 +284,87 @@
                 &--evening {
                     color: #6A83FF;
                 }
+            }
 
-                .task {
-                    color: white;
-                    padding: 8px 12px;
-                    border-radius: 7px;
-                    width: 100%;
-                    margin-bottom: 5px;
-                    transition: ease-in-out 0.14s;
-                    position: relative;
-                    background-color: #1c1c20;
+            .task {
+                color: white;
+                padding: 8px 12px;
+                border-radius: 7px;
+                width: 100%;
+                margin-bottom: 5px;
+                transition: ease-in-out 0.14s;
+                position: relative;
+                background-color: #1c1c20;
+                cursor: pointer;
 
-                    &:hover {
-                        background-color: #222226;
-                    }
-                    &__header {
-                        display: flex;
-                        .task-header-title {
-                            font-size: 1rem;
-                            white-space: nowrap;
-                            max-width: 80%;
-                            overflow: hidden;
-                            text-overflow: ellipsis;
-                            font-weight: 800;
-                        }
-                        .task-score-indicator {
-                            height: 3.5px;
-                            width: 3.5px;
-                            // background-color: #AEFA8A;
-                            margin: 2px 0px 0px 3px;
-                            border-radius: 100%;
-                            aspect-ratio: 1/1;
-                            font-size: 0.45rem;
-                        }
-                    }
-                    &__details {
-                        margin-top: 1px;
-                        display: flex;
-                        font-weight: 100;
-                        align-items: center;
-                        color: rgb(131, 131, 131);
-                        white-space: nowrap;
+                &:hover {
+                    background-color: #1e1e21;
+                }
+                &__header {
+                    display: flex;
+                    .task-header-title {
+                        font-size: 1rem;
                         max-width: 80%;
-                        overflow: hidden;
-                        .details-time-period {
-                            font-size: 0.8rem;
-                        }
-                        .dot {
-                            margin: 0px 4px;
-                        }
-                        .details-tasks-done {
-                            font-size: 0.8rem;  
-                        }
-                    }
-                    .task-tag-emblem {
-                        cursor: default;
-                        position: absolute;
-                        right: 10px;
-                        bottom: 10px;
-                        font-family: "Apercu";
+                        @include elipses-overflow;
                         font-weight: 800;
-                        font-size: 8px;
-                        @include center;
-                        height: 13px;
-                        width: 13px;
-                        aspect-ratio: 1 / 1;
+                    }
+                    .task-score-indicator {
+                        height: 3.5px;
+                        width: 3.5px;
+                        // background-color: #AEFA8A;
+                        margin: 2px 0px 0px 3px;
                         border-radius: 100%;
-                        background-color: #9997FE;   
+                        aspect-ratio: 1/1;
+                        font-size: 0.45rem;
                     }
-                    &__time {
-                        display: none;
-                        font-weight: 100;
-                        font-size: 0.85rem;
-                        color: #808080;
-                        top: 10px;
-                        right: 15px;
-                        position: absolute;
-                        &--clicked {
-                            display: block;
-                        }
+                }
+                &__details {
+                    margin-top: 1px;
+                    font-weight: 100;
+                    @include flex-container(center, _);
+                    color: rgb(131, 131, 131);
+                    white-space: nowrap;
+                    max-width: 80%;
+                    overflow: hidden;
+                    .details-time-period {
+                        font-size: 0.8rem;
                     }
-                    &__todo-list {
-                        display: none;
-                        &--clicked {
-                            display: block;
-                        }
+                    .dot {
+                        margin: 0px 4px;
+                    }
+                    .details-tasks-done {
+                        font-size: 0.8rem;  
+                    }
+                }
+                .task-tag-emblem {
+                    cursor: default;
+                    position: absolute;
+                    right: 10px;
+                    bottom: 10px;
+                    font-family: "Apercu";
+                    font-weight: 800;
+                    font-size: 0.8rem;
+                    @include center;
+                    @include circle(13px);
+                    border-radius: 100%;
+                    background-color: #9997FE;   
+                }
+                &__time {
+                    display: none;
+                    font-weight: 100;
+                    font-size: 0.85rem;
+                    color: #808080;
+                    top: 10px;
+                    right: 15px;
+                    position: absolute;
+                    &--clicked {
+                        display: block;
+                    }
+                }
+                &__todo-list {
+                    display: none;
+                    &--clicked {
+                        display: block;
                     }
                 }
             }

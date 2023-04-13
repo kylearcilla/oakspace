@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onDestroy, onMount } from "svelte";
     const spotifyPlaylist = {
         vidTitle: "",
         vidDate: "",
@@ -8,32 +9,62 @@
         channelTitle: "",
         channelSubCount: ""
     }
-    let tabHeaderPicked = "sessions"
+    let tabHeaderPicked = "spotify"
     let flag = false;
+    let isSessionViewShown = false;
 
     const handleSessionClicked = () => { flag = !flag }
 
     const handleTabHeaderClick = () => {
+        if (!isSessionViewShown) return;
         if (tabHeaderPicked == "spotify") tabHeaderPicked = "sessions"
         else tabHeaderPicked = "spotify"
     }
+
+    const handleResize = () => {
+        if (document.body.clientWidth <= 600) {
+            isSessionViewShown = true;
+        } 
+        else {
+            isSessionViewShown = false; 
+            tabHeaderPicked = "spotify";
+        }
+    }
+    onMount(() => {
+        window.addEventListener("resize", handleResize);
+    });
+    onDestroy(() => {
+        window.removeEventListener("resize", handleResize);
+    });
+
 </script>
 
 <div class="music-view">
+    <!-- svelte-ignore a11y-missing-attribute -->
     <div class="music-view-header">
-        <button on:click={handleTabHeaderClick} class={`music-view-header-tab music-view-header-tab--spotify ${tabHeaderPicked == "spotify" ? "music-view-header-tab--clicked" : ""}`}>
+        <button on:click={handleTabHeaderClick} class={`music-view-header-tab music-view-header-tab--spotify ${tabHeaderPicked == "spotify" ? "music-view-header-tab--clicked" : ""} ${!isSessionViewShown ? "music-view-header-tab--active-always" : ""}`}>
             <h1>Music Player</h1>
             <i class="fa-brands fa-spotify header-icon spotify-icon"></i>
         </button>
+        {#if isSessionViewShown}
         <button on:click={handleTabHeaderClick} class={`music-view-header-tab music-view-header-tab--sessions  ${tabHeaderPicked == "sessions" ? "music-view-header-tab--clicked" : ""}`}>
             <h1>Sessions</h1>
         </button>
+        {/if}
         <button class="music-view-header__music-view-dots dots-btn">•••</button>
     </div>
     <div class="divider">
-        <div class={`tab-highlight ${tabHeaderPicked == "sessions" ? "tab-highlight--right" : ""}`}></div>
+        <div class={`tab-highlight ${tabHeaderPicked == "sessions" ? "tab-highlight--right" : ""} ${!isSessionViewShown ? "tab-highlight--hidden" : ""}`}></div>
     </div>
-    {#if tabHeaderPicked === "spotify"}
+    <iframe 
+        style="border-radius:12px" 
+        src="https://open.spotify.com/embed/playlist/6xuGL91g9OTIz52YzaHZBR?utm_source=generator&theme=0"
+        width="100%" height="500" 
+        frameBorder="0"
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+        loading="lazy">
+    </iframe>
+    <!-- {#if tabHeaderPicked === "spotify"}
         <div class="playlist-details-container">
             <img alt="" src={spotifyPlaylist.playlistCoverImgSrc}/>
             <div class="playlist-details">
@@ -73,113 +104,115 @@
             </ul>
         </div>
     {:else}
-        <div class="today-stats">
-            <div class="today-stats-time">
-                <div class="today-stat">
-                    <i class="fa-solid fa-book-open"></i>
-                    <p>3.4 hrs</p>
-                </div>
-                <div class="today-stat today-stat--last">
-                    <i class="fa-solid fa-pencil"></i>
-                    <p>3 Sess.</p>
-                </div>
-            </div>
-            <div class="divider divider--vertical"></div>
-            <div class="today-stats-medals">
-                <div class="today-stat">
-                    🥉
-                    <p>3</p>
-                </div>
-                <div class="today-stat today-stat--middle">
-                    🥈
-                    <p>2</p>
-                </div>
-                <div class="today-stat">
-                    🥇
-                    <p>3</p>
-                </div>
-            </div>
-            <button class="text-icon-btn-1 music-view__new-task-btn">
-                <p>New Session</p>
-                <p>+</p>
-            </button>
-        </div>
-        <div class="current-session">
-            <h1>Current Session</h1>
-            <div class="current-session-container">
-                <div class="current-session-header">
-                    <div class="current-session-left">
-                        <h3>Math HW</h3>
-                        <p class="session-wide__pom-period">45 min × 3</p>
+        {#if isSessionViewShown}
+            <div class="today-stats">
+                <div class="today-stats-time">
+                    <div class="today-stat">
+                        <i class="fa-solid fa-book-open"></i>
+                        <p>3.4 hrs</p>
                     </div>
-                    <div class="current-session-right">
-                        <div class="tag-wide">
-                            school
+                    <div class="today-stat today-stat--last">
+                        <i class="fa-solid fa-pencil"></i>
+                        <p>3 Sess.</p>
+                    </div>
+                </div>
+                <div class="divider divider--vertical"></div>
+                <div class="today-stats-medals">
+                    <div class="today-stat">
+                        🥉
+                        <p>3</p>
+                    </div>
+                    <div class="today-stat today-stat--middle">
+                        🥈
+                        <p>2</p>
+                    </div>
+                    <div class="today-stat">
+                        🥇
+                        <p>3</p>
+                    </div>
+                </div>
+                <button class="text-icon-btn-1 music-view__new-task-btn">
+                    <p>New Session</p>
+                    <p>+</p>
+                </button>
+            </div>
+            <div class="current-session">
+                <h1>Current Session</h1>
+                <div class="current-session-container">
+                    <div class="current-session-header">
+                        <div class="current-session-left">
+                            <h3>Math HW</h3>
+                            <p class="session-wide__pom-period">45 min × 3</p>
+                        </div>
+                        <div class="current-session-right">
+                            <div class="tag-wide">
+                                school
+                            </div>
                         </div>
                     </div>
-                </div>
-                <ul class="current-session-todo-list">
-                    <li class="session-todo">
-                        <button class="session-todo__icon session-todo__icon--active" role="checkbox" aria-checked="false">
-                            <i class="fa-solid fa-check"></i>
-                        </button>
-                        <p class="session-todo__text">Problems 3 - 6</p>
-                    </li>
-                    <li class="session-todo">
-                        <button class="session-todo__icon session-todo__icon--active" role="checkbox" aria-checked="false">
-                            <i class="fa-solid fa-check"></i>
-                        </button>
-                        <p class="session-todo__text">Problems 3 - 6</p>
-                    </li>
-                    <li class="session-todo session-todo--new-session-btn">
-                        <form>
-                            <button class="session-todo__icon session-todo__icon--add session-todo__icon--active" type="submit">
-                                <i class="fa-solid fa-plus"></i>
+                    <ul class="current-session-todo-list">
+                        <li class="session-todo">
+                            <button class="session-todo__icon session-todo__icon--active" role="checkbox" aria-checked="false">
+                                <i class="fa-solid fa-check"></i>
                             </button>
-                            <!-- <p class="session-todo__text">Add New Task</p> -->
-                            <input class="session-todo__text session-todo__text--input" placeholder="Type Here!"><br>
-                        </form>
-                    </li>
-                </ul>
-            </div>
-        </div>
-        <h1 class="day-section day-section--morning">This Morning</h1>
-        <div class="divider divider--thin"></div>
-        <ul>
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <li class={`sesssion-wide-container ${flag ? "sesssion-wide-container--clicked" : ""}`} on:click={handleSessionClicked}>
-                <div class="session-wide">
-                    <div class="session-wide__title">
-                        <h2>Math HW</h2>
-                    </div>
-                    <p class="session-wide__tasks-done">2/7</p>
-                    <div class="session-wide__tag-wide-container">
-                        <div class="tag-wide">
-                            school
-                        </div>
-                    </div>
-                    <p class="session-wide__pom-period">45 min × 3</p>
-                    <p class="session-wide__time-period">2:21 PM - 12:30 AM</p>
-                    <p class="session-wide__medal">🥇</p>
+                            <p class="session-todo__text">Problems 3 - 6</p>
+                        </li>
+                        <li class="session-todo">
+                            <button class="session-todo__icon session-todo__icon--active" role="checkbox" aria-checked="false">
+                                <i class="fa-solid fa-check"></i>
+                            </button>
+                            <p class="session-todo__text">Problems 3 - 6</p>
+                        </li>
+                        <li class="session-todo session-todo--new-session-btn">
+                            <form>
+                                <button class="session-todo__icon session-todo__icon--add session-todo__icon--active" type="submit">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                                <p class="session-todo__text">Add New Task</p>
+                                <input class="session-todo__text session-todo__text--input" placeholder="Type Here!"><br>
+                            </form>
+                        </li>
+                    </ul>
                 </div>
-                <ul class="session-wide-todo-list">
-                    <li class="session-todo">
-                        <button class="session-todo__icon session-todo__icon--finished" role="checkbox" aria-checked="false">
-                            <i class="fa-solid fa-check"></i>
-                        </button>
-                        <p class="session-todo__text">Problems 3 - 6</p>
-                    </li>
-                    <li class="session-todo">
-                        <button class="session-todo__icon session-todo__icon--finished" role="checkbox" aria-checked="false">
-                            <i class="fa-solid fa-check"></i>
-                        </button>
-                        <p class="session-todo__text">Problems 3 - 6</p>
-                    </li>
-                </ul>
-                <div class="divider divider--thin"></div>
-            </li>
-        </ul>
-    {/if}
+            </div>
+            <h1 class="day-section day-section--morning">This Morning</h1>
+            <div class="divider divider--thin"></div>
+            <ul>
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <!-- <li class={`sesssion-wide-container ${flag ? "sesssion-wide-container--clicked" : ""}`} on:click={handleSessionClicked}>
+                    <div class="session-wide">
+                        <div class="session-wide__title">
+                            <h2>Math HW</h2>
+                        </div>
+                        <p class="session-wide__tasks-done">2/7</p>
+                        <div class="session-wide__tag-wide-container">
+                            <div class="tag-wide">
+                                school
+                            </div>
+                        </div>
+                        <p class="session-wide__pom-period">45 min × 3</p>
+                        <p class="session-wide__time-period">2:21 PM - 12:30 AM</p>
+                        <p class="session-wide__medal">🥇</p>
+                    </div>
+                    <ul class="session-wide-todo-list">
+                        <li class="session-todo">
+                            <button class="session-todo__icon session-todo__icon--finished" role="checkbox" aria-checked="false">
+                                <i class="fa-solid fa-check"></i>
+                            </button>
+                            <p class="session-todo__text">Problems 3 - 6</p>
+                        </li>
+                        <li class="session-todo">
+                            <button class="session-todo__icon session-todo__icon--finished" role="checkbox" aria-checked="false">
+                                <i class="fa-solid fa-check"></i>
+                            </button>
+                            <p class="session-todo__text">Problems 3 - 6</p>
+                        </li>
+                    </ul>
+                    <div class="divider divider--thin"></div>
+                </li>
+            </ul>
+        {/if}
+    {/if}  -->
 </div>
 
 <style lang="scss">
@@ -191,20 +224,19 @@
 
         .music-view-header {
             position: relative;
-            display: flex;
-            align-items: center;
+            @include flex-container(center, _);
             .music-view-header-tab {
                 display: flex;
                 margin-right: 25px;
                 color: rgb(79, 79, 79);
-                align-items: center;
+                @include flex-container(center, _);
                 i {
-                    font-size: 11px;
+                    font-size: 1.1rem;
                     border-radius: 100%;
                     margin: 3px 0px 0px 8px;
                 }
                 h1 {
-                    font-size: 14px;
+                    font-size: 1.4rem;
                     font-weight: 700;
                 }
                 &:hover {
@@ -224,6 +256,17 @@
                         color: white !important;
                     }
                 }
+                &--active-always {
+                    cursor: default;
+                    color: white;
+                    i {
+                        color: #94F292;
+                        box-shadow: 0px 2px 9px rgba(148, 242, 146, 0.16);
+                    }
+                    &:hover {
+                        color: white !important;
+                    }
+                }
             }
             &__music-view-dots {
                 position: absolute;
@@ -234,9 +277,8 @@
         .divider {
             background-color: #292929;
             width: 100%;
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
+            margin: 10px 0px 20px 0px;
+            @include flex-container(center, _);
             position: relative;
             
             .tab-highlight {
@@ -250,17 +292,18 @@
                     width: 70px;
                     left: 125px;
                 }
+                &--hidden {
+                    display: none;
+                }
             }
         }
         .playlist-details-container {
             margin-top: 20px;
-            display: flex;
-            align-items: center;
+            @include flex-container(center, _);
             width: 100%;
             position: relative;
             img {
-                width: 65px;
-                aspect-ratio: 1 / 1;
+                @include circle(65px);
                 border-radius: 100%;
                 object-fit: cover;
             }
@@ -269,12 +312,12 @@
                 margin-left: 17px;
                 position: relative;
                 &__name-and-dropdown {
-                    font-size: 12px;
+                    font-size: 1.2rem;
                     color: #E3E3E3;
                 }
                 &__author {
                     color: #8B8B8B;
-                    font-size: 10px;
+                    font-size: 1rem;
                     margin-top: 2px;
                 }
             }
@@ -312,9 +355,7 @@
                 }
                 &__name {
                     width: 25%;
-                    overflow: hidden;
-                    white-space: nowrap;
-                    text-overflow: ellipsis;
+                    @include elipses-overflow;
                     max-width: 160px;
                 }
                 &__released {
@@ -349,8 +390,7 @@
                 overflow: hidden;
                 
                 .playlist-track {
-                    display: flex;
-                    align-items: center;
+                    @include flex-container(center, _);
                     text-align: center;
                     white-space: nowrap;
                     margin-bottom: 3px;
@@ -386,43 +426,38 @@
                         &__details {
                             width: 60%;
                             text-align: left;
-                            overflow: hidden;
-                            text-overflow: ellipsis;
                             h4, p {
-                                overflow: hidden;
-                                white-space: nowrap;
-                                text-overflow: ellipsis;
+                                @include elipses-overflow;
                             }
                             h4 {
                                 color: white;
-                                font-size: 12px;
+                                font-size: 1.2rem;
                             }
                             p {
                                 font-family: "Manrope";
                                 font-weight: 400;
-                                font-size: 8px;
+                                font-size: 0.8rem;
                                 color: rgb(154, 154, 154);
                                 margin-top: 2px;
                             }
                         }
                     }
                     &__name {
-                        font-size: 10px;
+                        font-size: 1rem;
                         width: 25%;
                         font-weight: 700;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
+                        @include elipses-overflow;
                         max-width: 160px;
                     }
                     &__released {
-                        font-size: 10px;
+                        font-size: 1rem;
                         font-weight: 400;
                         width: 30%;
                         padding-left: 25px;
                     }
                     &__length {
                         text-align: right;
-                        font-size: 10px;
+                        font-size: 1rem;
                         font-weight: 100;
                         width: 10%;
                     }
@@ -447,8 +482,7 @@
         .today-stats {
             position: relative;
             margin: 25px 0px 40px 0px;
-            display: flex;
-            align-items: center;
+            @include flex-container(center, _);
             .today-stats-time {
                 display: flex;
                 .today-stat {
@@ -470,14 +504,14 @@
                 }
                 p {
                     font-weight: 400;
-                    font-size: 9px;
+                    font-size: 0.9rem;
                 }
             }
         }
         .current-session {
             margin-bottom: 40px;
             h1 {
-                font-size: 13px;
+                font-size: 1.3rem;
                 margin-bottom: 10px;
             }
             .current-session-container {
@@ -499,8 +533,7 @@
                         }
                     }
                     .current-session-right {
-                        align-items: center;
-                        display: flex;
+                        @include flex-container(center, _);
                         .tag-wide {
                             margin-right: 10px;
                         }
@@ -511,14 +544,14 @@
                         background-color: transparent;
                     }
                     p {
-                        font-size: 11px;
+                        font-size: 1.1rem;
                     }
                     &--new-session-btn {
                         i {
-                            font-size: 11px;
+                            font-size: 1.1rem;
                         }
                         input {
-                            font-size: 11px;
+                            font-size: 1.1rem;
                             max-width: 95%;
                         }
                     }
@@ -534,7 +567,7 @@
         }
         .day-section {
             margin: 20px 0px 15px 0px;
-            font-size: 12px;
+            font-size: 1.1rem;
             &--morning {
                 color: #9997FE;
             }
@@ -549,8 +582,7 @@
             cursor: pointer;
             transition: ease-in-out 0.15s;
             .session-wide {
-                display: flex;
-                align-items: center;
+                @include flex-container(center, _);
                 padding: 12px 10px 7px 10px;
                 width: 100%;
                 p {
@@ -560,15 +592,13 @@
                     width: 20%;
                 }
                 h2 {
-                    font-size: 12px;
-                    text-overflow: ellipsis;
+                    font-size: 1.2rem;
+                    @include elipses-overflow;
                     max-width: 90%;
-                    white-space: nowrap;
-                    overflow: hidden;
                 }
                 p {
                     color: #808080;
-                    font-size: 11px;
+                    font-size: 1.1rem;
                 }
                 &__tasks-done {
                     width: 10%;
@@ -605,10 +635,10 @@
             padding: 0px 0px 12px 15px;
             .session-todo {
                 i {
-                    font-size: 10px;
+                    font-size: 1.0rem;
                 }
                 &__text {
-                    font-size: 11px;
+                    font-size: 1.1rem;
                     margin-left: 8px;
                 }
                 &:last-child {

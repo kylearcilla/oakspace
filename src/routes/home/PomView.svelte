@@ -31,10 +31,8 @@
     }
     
     &__pom-task-tag-icon {
-        width: 15px;
-        height: 15px;
         background-color: #7E7BF8;
-        aspect-ratio: 1 / 1; 
+        @include circle(15px);
         box-shadow: -1px 1px 10px 8px rgba(120, 118, 254, 0.1);
         border-radius: 50%;
         font-family: "Apercu Medium";

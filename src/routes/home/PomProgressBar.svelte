@@ -53,8 +53,7 @@
 
 <style global lang="scss">
     .pom-view {
-        display: flex;
-        align-items: center;
+        @include flex-container(center, _);
         width: 100%;
         transition: ease-in-out 0.2s;
         font-family: "Manrope";

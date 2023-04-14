@@ -1,19 +1,18 @@
 <script lang="ts">
 	import { addCommasToNum, clickOutside, formatDate, shorterNum } from "../../lib/helper";
-    import { currentYtVidId, ytUserData, ytCurrentVid } from "$lib/store";
+    import { currentYtVidId, ytUserData, ytCurrentVid, ytCredentials } from "$lib/store";
 	import { onDestroy, onMount } from 'svelte';
 	import { getChannelDetails, getPlayListDetails, getVidDetails, saveYtUserData } from "$lib/yt-api";
+	import { construct_svelte_component } from "svelte/internal";
 
-    console.log("RENDER")
+    console.log("YT View Rendering...")
 
     let isDropDownOpen = false;
-    let isSignedIn = false;
     // @ts-ignore
     let player: YT.Player;
     let currentVidIdx = 0;
     let hasError = false
-    let hasJustInitialized = false
-    let hasJustUnSelectedAPlaylist = true
+    let isUserSignedIn = false
 
     let ytUserAccountData: any = {
         username: '',
@@ -39,112 +38,87 @@
     ytCurrentVid.subscribe((data: any) => {
         ytVidDetails = data
     })
+
+
     ytUserData.subscribe(async (data) => {
-        let oldId = ytUserAccountData.selectedPlaylistId 
-        isSignedIn = true;
-        hasJustInitialized = false
+        console.log("📌 YT User Data Updated!")
 
-        console.log("SDFSDHIUh")
+        const hasUserLoggedOff = data.username === ""
 
+        if (hasUserLoggedOff) {
+            console.log("📌 User has logged out!")
+            isUserSignedIn = false
+        } else {
+            console.log("📌 User is signed in!")
+            isUserSignedIn = true
+        }
+
+        const selectedPlaylistIdx = data.selectedPlaylistId
+        // @ts-ignore
+        const selectedPlaylistId = data.playlists[selectedPlaylistIdx]?.id ?? "No current selected playlist!"
+
+        console.log("📌 " + selectedPlaylistIdx)
+        console.log("📌 " + selectedPlaylistId)
+
+        const hasUserToggledSettings = data.selectedPlaylistId === ytUserAccountData.selectedPlaylistId
+        const hasUserDeselectedPlaylist = data.selectedPlaylistId < 0 && ytUserAccountData.selectedPlaylistId >= 0
+        const hasUserSelectedNewPlaylist = (data.selectedPlaylistId != ytUserAccountData.selectedPlaylistId) && !hasUserDeselectedPlaylist
 
         ytUserAccountData = {
             ...ytUserAccountData,
             ...data
         }
 
-        hasJustUnSelectedAPlaylist = oldId >= 0 && data.selectedPlaylistId == -1 
-
-        const savedIndex = localStorage.getItem("currentVidIdIndex");
-
-        if (hasJustUnSelectedAPlaylist) {
-            console.log("A")
-            isSignedIn = true;
-            if (player && player.stopVideo) {
-                const playerDiv = document.getElementById("player")!;
-                playerDiv.style.display = "none";
-                player.stopVideo() 
-                console.log("DSPLAY NONE -1")
-            }
-        }      
-        else if (data.selectedPlaylistId == -1) {      
-            console.log("B")
-            isSignedIn = data.username != "" ? true : false;     
-            player.stopVideo() 
-            const playerDiv = document.getElementById("player")!;
-            playerDiv.style.display = "none";
-            console.log("DSPLAY NONE 0")
-
-        } else if (ytUserAccountData.username != "") {
-            isSignedIn = true
-        } else if (data.selectedPlaylistId && localStorage.getItem("currentVidIdIndex")) {
-            const selectedPlaylist = ytUserAccountData.playlists[ytUserAccountData.selectedPlaylistId]
+        if (hasUserDeselectedPlaylist) {
+            console.log("📌 User has just deselected a playlist")
+            hidePlaylist()
         }
+        if (hasUserSelectedNewPlaylist) {
+            const res = await getPlayListDetails(selectedPlaylistId)
+            const userHasSelectedPrivatePlaylist = res.error != null
 
-        if (player?.loadPlaylist && oldId != data.selectedPlaylistId) { // this is what is causing the vid player to disappear
-            console.log("=====")
-            if (!hasJustUnSelectedAPlaylist && (!data || data.selectedPlaylistId < 0)) { 
-                const playerDiv = document.getElementById("player")!;
-                playerDiv.style.display = "none";
-                console.log("DSPLAY NONE 1")
-                return
-            }
-            
-            console.log("C")
-            // @ts-ignore
-            const selectedPlaylist = ytUserAccountData.playlists[ytUserAccountData.selectedPlaylistId]
-            if (!selectedPlaylist) {
-                return;
-            }
-            const id = selectedPlaylist.id;
-            console.log(id)
-            const res = await getPlayListDetails(id)
-            let flag = true
-            
-
-            let wasAnError = false
-
-            if (res.error) {
-                console.log(selectedPlaylist)
-                console.log("D")
+            if (userHasSelectedPrivatePlaylist) {
+                console.log("📌 User has just selected a broken playlist!")
                 hasError = true;
-                if (player && player.stopVideo) player.stopVideo()
-                const playerDiv = document.getElementById("player")!;
-                playerDiv.style.display = "none";
-                console.log("DSPLAY NONE 2")
+                hidePlaylist();
                 return;
-            } else if (player.stopVideo) {
-                console.log("ERROR HAPPENS HERE")
-                if (player && player.stopVideo) player.stopVideo()
-                const playerDiv = document.getElementById("player")!;  
-                playerDiv.remove()
-                console.log("DSPLAY NONE 2")
-                flag = false
-                wasAnError = hasError
-                hasError = false;
+            } else {
+                hasError = false
+                const vidId = res.items[0].snippet.resourceId.videoId;
+                await updateVidDetails(vidId)
             }
-            
-            const vidId = res.items[0].snippet.resourceId.videoId;
-            await updateVidDetails(vidId)
+        }
+        if (selectedPlaylistId != "No current selected playlist!" && !hasUserToggledSettings) {
+            console.log("📌 Now Playing Playlist")
+
+            if (player.stopVideo) player.stopVideo()
+            showPlaylist()
             player.loadPlaylist({
-                list: id,
+                list: selectedPlaylistId,
                 listType: "playlist",
                 index: 0
             });
-
-            console.log(oldId)
-            if (!flag && (oldId < 0 || wasAnError)) {
-                if (player && player.stopVideo) player.stopVideo()
-                player.setVolume(0)
-                console.log("VOLUME: 0")
-            } else {
-                player.setVolume(50)
-            }
         }
+
     })
+
+    function showPlaylist() {
+        const playerDiv = document.getElementById("player")!;
+        playerDiv.style.display = "flex";
+    }
+    function hidePlaylist() {
+        if (player && player.stopVideo) player.stopVideo()
+        const playerDiv = document.getElementById("player")!;
+        playerDiv.style.display = "none";
+    }
+    
+    // triggers when page reloads
     async function onReady() {
-        console.log("ON READY")
-        console.log(ytUserAccountData.selectedPlaylistId)
-        hasJustInitialized = false
+        console.log("📌 Player is Ready!")
+        if (ytUserAccountData.playlists[ytUserAccountData.selectedPlaylistId].id < 0) return 
+
+        // see if there was a saved vid index that user was watching before start off with that vid
+        // otherwise default to first vid
         const startVidIdx = JSON.parse(localStorage.getItem("currentVidIdIndex") ?? "0");
         player.loadPlaylist({
             list: ytUserAccountData.playlists[ytUserAccountData.selectedPlaylistId].id,
@@ -152,12 +126,12 @@
             index: startVidIdx
         });
         currentYtVidId.update(() => startVidIdx)
+        
+        // update vid details, show the saved vid, otherwise use the first vid as default
         const vidIdxWasSaved = localStorage.getItem("currentVidIdIndex");
-
         if (vidIdxWasSaved) {
             updateVidDetails(localStorage.getItem("currentVidId")!)
-        } 
-        else {
+        } else {
             const res = await getPlayListDetails(ytUserAccountData.playlists[ytUserAccountData.selectedPlaylistId].id)
             const vidId = res.items[0].snippet.resourceId.videoId;
             updateVidDetails(vidId)
@@ -178,12 +152,10 @@
     const toggleDropDown = () => {
         isDropDownOpen = !isDropDownOpen
     }
+    // triggers only when player plays a vid whose embed option has been disabled or is private
     function onError() {
-        hasError = true;
-        if (player && player.stopVideo) player.stopVideo()
-        const playerDiv = document.getElementById("player")!;
-        playerDiv.style.display = "none";
     }
+    // only triggers when user has clicked a new vid, if so save htis new vid
     async function onStateChange() {
         if (player.getPlaylistIndex() === currentVidIdx) return;
         currentYtVidId.update(() => player.getPlaylistIndex())
@@ -213,7 +185,7 @@
 
     function initPlayer() {
         // @ts-ignore
-            window.onYouTubeIframeAPIReady = () => {
+        window.onYouTubeIframeAPIReady = () => {
         // @ts-ignore
         player = new YT.Player('player', {
             height: '100%',
@@ -234,26 +206,25 @@
     }
 
     onDestroy(() => {
-        isSignedIn = false;
+        console.log("DESTROYING")
+        isUserSignedIn = false;
         const playerDiv = document.getElementById("player")!;
         if (playerDiv) playerDiv.remove();
     })
     onMount(() => {
-        hasJustInitialized = true
-        console.log("ON MOUNT")
+        console.log("MOUNTING")
         if (localStorage.getItem('yt-user-data')) {
             const ytData = JSON.parse(localStorage.getItem('yt-user-data')!)
-            console.log("sfsidufh")
-            isSignedIn = true
             ytUserData.set({ ...ytData });
         }
+        console.log("📌 User is signed in!")
+        isUserSignedIn = true;
         const tag = document.createElement('script');
         tag.src = 'https://www.youtube.com/iframe_api';
 
         const ytScriptTag = document.getElementsByTagName('script')[0];
         ytScriptTag.id = "ytScriptTag"
         ytScriptTag!.parentNode!.insertBefore(tag, ytScriptTag);
-
         initPlayer();
     })
 </script>
@@ -265,7 +236,7 @@
             <div class="yt-icon-fill"></div>
             <i class="fa-brands fa-youtube header-icon"></i>
         </div>
-        {#if isSignedIn && ytUserAccountData.username != ""}
+        {#if ytUserAccountData.username != ""}
             <div class="dropdown-container">
                 <button on:click={toggleDropDown} class="dropdown-btn">
                     <p>{ytUserAccountData.playlists[ytUserAccountData.selectedPlaylistId]?.title ?? "No Playlist Selected"}</p>
@@ -281,70 +252,48 @@
             </div>
         {/if}
     </div>
-    {#if isSignedIn && ytUserAccountData.username != ""}
-            <div class="vid-view-container">
-                {#if hasError}
-                    <div class="vid-view-empty-vid-view abs-pos-1">
-                        <div class="text-aln-center">
-                            {#if (ytUserAccountData.selectedPlaylistId < 0 && !hasJustInitialized)}
-                                <p class="vid-view-empty-msg">No Playlist Selected</p>
-                            {:else}
-                                <p class="vid-view-empty-msg">Playlist / Video can't be played</p>
-                                    <a
-                                    class="vid-view-support-link"
-                                    target="_blank"
-                                    href="https://support.google.com/youtube/answer/97363?hl=en"
-                                    rel="noreferrer"
-                                    >
-                                    More info on unplayable embeded youtube content.
-                                </a>
-                            {/if}
-                        </div>
-                    </div>
-                {:else if (hasJustUnSelectedAPlaylist) && !hasError && ytUserAccountData.username != ""}
-                    <div class="vid-view-empty-vid-view abs-pos-1">
-                        <div class="text-aln-center">
-                            <p class="vid-view-empty-msg">No Playlist Selecteds</p>
-                        </div>
-                    </div>
-                {:else}
-                    <div id="player">
-                        {#if ytUserAccountData.selectedPlaylistId < 0}
-                            <div class="vid-view-empty-vid-view abs-pos-1">
-                                <div class="text-aln-center">
-                                    <p class="vid-view-empty-msg">No Playlist Selected</p>
-                                </div>
-                            </div>
-                        {:else}
-                            <div id="player__container">
-                                <p class="vid-view-empty-msg">Reload the page to initialize the player!</p>
-                                <button class="vid-view-refresh-button btn-line" on:click={() => location.reload()}>Refresh Page!</button>
-                            </div>
-                        {/if}
-                    </div>
-                {/if}
+    <div class="vid-view-container">
+        <div id="player">
+        </div>
+        {#if ytUserAccountData.username === ""}
+            <div class="vid-view-empty-vid-view">
+                <p class="vid-view-empty-msg">No Youtube account linked.</p>
             </div>
-
-            {#if ytVidDetails.id != "" && !hasError && ytUserAccountData.playlists[ytUserAccountData.selectedPlaylistId]}
-                <div class="vid-details-container">
-                    <h1 class="vid-title">{ytVidDetails.title}</h1>
-                    <div class="vid-details">
-                        <h4 class="vid-details__date">{ytVidDetails.publishedAt}</h4>
-                        <h5 class="vid-details__view-count">{ytVidDetails.viewCount} views</h5>
-                    </div>
-                    <div class="vid-channel-details-container">
-                        <img alt="channel-profile-img" src={ytVidDetails.channelImgSrc} />
-                        <div class="vid-channel-details">
-                            <div class="vid-channel-details__channel-name">{ytVidDetails.channelName}</div>
-                            <div class="vid-channel-details__sub-count">{ytVidDetails.channelSubs} subscribers</div>
-                        </div>
-                        <div class="vid-like-count">27.5 K</div>
-                    </div>
+        {:else if !ytUserAccountData.playlists[ytUserAccountData.selectedPlaylistId]}
+            <div class="vid-view-empty-vid-view">
+                <p class="vid-view-empty-msg">No Playlist Selected</p>
+            </div>
+        {:else if hasError}
+            <div class="vid-view-empty-vid-view">
+                <div class="text-aln-center">
+                    <p class="vid-view-empty-msg">Playlist / Video can't be played</p>
+                        <a
+                        class="vid-view-support-link"
+                        target="_blank"
+                        href="https://support.google.com/youtube/answer/97363?hl=en"
+                        rel="noreferrer"
+                        >
+                        More info on unplayable embeded youtube content.
+                    </a>
                 </div>
-            {/if}
-    {:else}
-        <div class="vid-view-empty-vid-view">
-            <p class="vid-view-empty-msg">No Youtube account linked.</p>
+            </div>
+        {/if}
+    </div>
+    {#if ytUserAccountData.playlists[ytUserAccountData.selectedPlaylistId] && !hasError}
+        <div class="vid-details-container">
+            <h1 class="vid-title">{ytVidDetails.title}</h1>
+            <div class="vid-details">
+                <h4 class="vid-details__date">{ytVidDetails.publishedAt}</h4>
+                <h5 class="vid-details__view-count">{ytVidDetails.viewCount} views</h5>
+            </div>
+            <div class="vid-channel-details-container">
+                <img alt="channel-profile-img" src={ytVidDetails.channelImgSrc} />
+                <div class="vid-channel-details">
+                    <div class="vid-channel-details__channel-name">{ytVidDetails.channelName}</div>
+                    <div class="vid-channel-details__sub-count">{ytVidDetails.channelSubs} subscribers</div>
+                </div>
+                <div class="vid-like-count">27.5 K</div>
+            </div>
         </div>
     {/if}
 </div>
@@ -354,14 +303,6 @@
         margin-top: 30px;
         font-family: "Manrope";
         color: white;
-
-        .vid-view-container {
-            width: 100%;
-            aspect-ratio: 16 / 9;
-            border-radius: 10px;
-            background-color: #181719;
-            position: relative;
-        }
 
         .vid-view-header {
             position: relative;
@@ -407,10 +348,12 @@
                 }
             }
         }
-        #player {
-            &__container {
-                text-align: center;
-            }
+        .vid-view-container {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border-radius: 10px;
+            background-color: #181719;
+            position: relative;
         }
         #player, .vid-view-empty-vid-view {
             width: 100%;
@@ -419,6 +362,12 @@
             background-color: #181719;
             display: flex;
             @include center;
+        }
+        .vid-view-empty-vid-view {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
         .vid-view-empty-msg {
             font-weight: 700;

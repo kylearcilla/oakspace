@@ -41,12 +41,17 @@
             ...ytUserAccountData,
             selectedPlaylistId: clickedPlaylistId
         });
+
     }
     const handleRemoveChoosenPlaylist = () => {
         ytUserData.set({
             ...ytUserAccountData,
             selectedPlaylistId: -1
         })
+        localStorage.setItem('yt-user-data', JSON.stringify({
+            ...ytUserAccountData,
+            selectedPlaylistId: -1
+        }));
     }
     const getUserYtPlaylists = async (accessToken: string) => {
         const playlistData: any = {};

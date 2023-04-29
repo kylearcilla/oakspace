@@ -7,19 +7,15 @@
   import MusicPlayer from "./MusicPlayer.svelte";
 	import { onDestroy, onMount } from "svelte";
 	import YoutubeSettings from "./YoutubeSettings.svelte";
-	import SpotifySettings from "./SpotifySettings.svelte";
+	import MusicSettings from "./MusicSettings.svelte";
 	import UserSettings from "./UserSettings.svelte";
 
-	import { _initGoogleClient } from "./+page";
-  import { currentYtVidId, ytUserData, ytCurrentVid } from "$lib/store";
+	import { _initGoogleClient, _initMusicKit } from "./+page";
 
   let isTaskMenuExpanded = true;
   let doHideMenu = false;
   let hasUserToggledWithKeyLast = true;
   let navSettingClicked = "";
-  let flag = 0
-
-  $: flag += 1;
 
   const handleNavButtonClicked = (buttonName: string) => {
     navSettingClicked = buttonName;
@@ -55,12 +51,12 @@
 
   onMount(() => {
     window.addEventListener("resize", handleResize);
+    console.log(window)
     _initGoogleClient();
   });
   onDestroy(() => {
     window.removeEventListener("resize", handleResize);
   });
-
 </script>
 
 <svelte:window on:keydown={handleKeyDown} />
@@ -87,8 +83,8 @@
   </div>
   {#if navSettingClicked === "settings"} <UserSettings/> {/if}
   {#if navSettingClicked === "youtube"} <YoutubeSettings onNavButtonClicked={handleNavButtonClicked}/> {/if}
-  {#if navSettingClicked === "spotify"} <SpotifySettings onNavButtonClicked={handleNavButtonClicked} /> {/if}
-  <!-- <MusicPlayer /> -->
+  {#if navSettingClicked === "music"} <MusicSettings onNavButtonClicked={handleNavButtonClicked} /> {/if}
+  <MusicPlayer />
 </div>
 
 <style lang="scss">
@@ -164,10 +160,10 @@
       &__task-view-container {
         position: relative;
         width: min(25%, 280px);
+        height: 100vh;
         background-color: #141418;
         transition: ease-in-out 0.25s;
         min-width: 80px;
-        min-height: 100%;
 
         &--closed {
           height: 350px;

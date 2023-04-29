@@ -1,7 +1,7 @@
 export function clickOutside(node: any) {
-    // if user clicks on any element has one of these classes, do not dispatch event to close, let the btn close
-    // if dispatched, local bool var will false, will be toggled to true when btn is clicked
-    const blackList = ["dropdown-container", "dropdown-btn"] 
+    // if user clicks on any element that has one of these classes, do not dispatch event to close it, let the local btn close
+    // if dispatched, local bool will be toggled to true from dispatch, after toggled to false from btn
+    const blackList = ["dropdown-container", "dropdown-btn", "dropdown-element"] 
 
     const handleClick = (event: any)  => {
         const srcClass = event.srcElement.parentElement.classList.value.split(" ")[0];
@@ -81,4 +81,21 @@ export function shorterNum(num: string): string {
   } else {
     return (val / 1000000000).toFixed(2) + " B";
   }
+}
+
+export const formatTime = (milliseconds: number) => {
+  let seconds = Math.floor(milliseconds / 1000);
+  let hours = Math.floor(seconds / 3600);
+  seconds = seconds % 3600;
+  let minutes = Math.floor(seconds / 60);
+  seconds = seconds % 60;
+
+  let result = "";
+  if (hours > 0) {
+    result += hours + "h ";
+  }
+  if (minutes > 0 || hours > 0) {
+    result += minutes + "m ";
+  }
+  return result.trim();
 }

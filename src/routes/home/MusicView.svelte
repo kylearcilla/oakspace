@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte";
+	import { _initMusicKit } from "./+page";
     const spotifyPlaylist = {
         vidTitle: "",
         vidDate: "",
@@ -12,6 +13,7 @@
     let tabHeaderPicked = "spotify"
     let flag = false;
     let isSessionViewShown = false;
+
 
     const handleSessionClicked = () => { flag = !flag }
 
@@ -31,7 +33,10 @@
         }
     }
     onMount(() => {
+        console.log("📌 Music View Loaded")
         window.addEventListener("resize", handleResize);
+
+        _initMusicKit();
     });
     onDestroy(() => {
         window.removeEventListener("resize", handleResize);
@@ -56,14 +61,6 @@
     <div class="divider">
         <div class={`tab-highlight ${tabHeaderPicked == "sessions" ? "tab-highlight--right" : ""} ${!isSessionViewShown ? "tab-highlight--hidden" : ""}`}></div>
     </div>
-    <iframe 
-        style="border-radius:12px" 
-        src="https://open.spotify.com/embed/playlist/6xuGL91g9OTIz52YzaHZBR?utm_source=generator&theme=0"
-        width="100%" height="500" 
-        frameBorder="0"
-        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-        loading="lazy">
-    </iframe>
     <!-- {#if tabHeaderPicked === "spotify"}
         <div class="playlist-details-container">
             <img alt="" src={spotifyPlaylist.playlistCoverImgSrc}/>
@@ -83,6 +80,7 @@
                 <h5 class="playlist-header__released">Released</h5>
                 <h5 class="playlist-header__length">Length</h5>
             </div>
+
             <ul class="playlist-tracklist">
                 {#each [1, 2, 3, 5, 6] as item}
                     <li class="playlist-track">
@@ -381,7 +379,7 @@
                         width: 20%;
                     }
                 }
-            }        
+            }
             .playlist-tracklist {
                 width: 100%;
                 font-family: "Manrope";

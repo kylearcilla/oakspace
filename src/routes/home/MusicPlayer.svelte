@@ -21,7 +21,7 @@
 
 <div class="music-player">
     <!-- svelte-ignore a11y-missing-attribute -->
-    <!-- <div class="music-player-track">
+    <div class="music-player-track">
         <img class="music-player-track__art" src="https://upload.wikimedia.org/wikipedia/en/d/d3/Call_Me_If_You_Get_Lost_album_cover.jpg" alt="">
         <div class="music-player-track__details">
             <h5 class="music-player-track__title elipses-overflow">Wus Ya Name sdofijsofisdjf</h5>
@@ -32,7 +32,7 @@
         <div class="music-player-playback__controls">
             <button class="icon-btn"><i class="fa-solid fa-shuffle"></i></button>
             <button class="icon-btn"><i class="fa-solid fa-backward"></i></button>
-            <button class="icon-btn"><i class="fa-solid fa-play"></i></button>
+            <button on:click={() => testAppleMusic()} class="icon-btn"><i class="fa-solid fa-play"></i></button>
             <button class="icon-btn"><i class="fa-solid fa-forward"></i></button>
             <button class="icon-btn"><i class="fa-solid fa-repeat"></i></button>
         </div>
@@ -67,7 +67,7 @@
                 step="0.1"
             />
         </div>
-    </div> -->
+    </div>
 </div>
 
 <style lang="scss">

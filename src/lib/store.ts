@@ -19,6 +19,36 @@ export const ytUserData = writable({
     playlists: []
 });
 
+export const appleUserCredentials = writable({
+    devToken: '',
+    musicUserToken: ''
+})
+
+export const musicData = writable({
+    platform: "",
+    userData: {
+        username: '',
+        profileImgSrc: ''
+    },
+    playerData: {
+        currentPlaylist: {
+            id: "",
+            name: "",
+            artworkImgSrc: "",
+            songCount: "",
+            time: "",
+            description: "",
+            type: ""
+        },
+        currentRadio: {
+            name: "",
+            artworkImgSrc: "",
+            description: ""
+        }
+    },
+    playlists: []
+})
+
 type YouTubePlaylist = {
     id: string;
     title: string;

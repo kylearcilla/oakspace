@@ -11,8 +11,8 @@
         else if (srcClassList.includes("youtube")) {
             onNavButtonClicked("youtube")
         }
-        else if (srcClassList.includes("spotify")) {
-            onNavButtonClicked("spotify")
+        else if (srcClassList.includes("music")) {
+            onNavButtonClicked("music")
         }
         else {
             onNavButtonClicked("settings")
@@ -35,9 +35,9 @@
             <span class="tool-tip-text tool-tip-text--left">Youtube</span>
             <i class="fa-brands fa-youtube nav-menu-tab__icon"></i>
         </button>
-        <button on:click={handleNavButtonClicked} class="nav-menu-tab nav-menu-tab--spotify tool-tip-container">
-            <span class="tool-tip-text tool-tip-text--left">Spotify</span>
-            <i class="fa-brands fa-spotify nav-menu-tab__icon"></i>
+        <button on:click={handleNavButtonClicked} class="nav-menu-tab nav-menu-tab--music tool-tip-container">
+            <span class="tool-tip-text tool-tip-text--left">Music</span>
+            <i class="fa-solid fa-music"></i>
         </button>
         <button on:click={handleNavButtonClicked} class={"nav-menu-tab nav-menu-tab--gear tool-tip-container"}>
             <span class="tool-tip-text tool-tip-text--left">Sessions</span>
@@ -136,8 +136,8 @@
             &--youtube {
                 color: #DA7EBA !important;
             }
-            &--spotify {
-                color: #89F6A7 !important;
+            &--music {
+                color: #9997FE !important;
             }
         }
     }

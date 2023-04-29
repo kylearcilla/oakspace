@@ -5,14 +5,13 @@
 	import { getChannelDetails, getPlayListDetails, getVidDetails, saveYtUserData } from "$lib/yt-api";
 	import { construct_svelte_component } from "svelte/internal";
 
-    console.log("YT View Rendering...")
+    // console.log("YT View Rendering...")
 
     let isDropDownOpen = false;
     // @ts-ignore
     let player: YT.Player;
     let currentVidIdx = 0;
     let hasError = false
-    let isUserSignedIn = false
 
     let ytUserAccountData: any = {
         username: '',
@@ -41,24 +40,22 @@
 
 
     ytUserData.subscribe(async (data) => {
-        console.log("📌 YT User Data Updated!")
+        // // console.log("📌 YT User Data Updated!")
 
         const hasUserLoggedOff = data.username === ""
 
         if (hasUserLoggedOff) {
-            console.log("📌 User has logged out!")
-            isUserSignedIn = false
+            // // console.log("📌 User has logged out!")
         } else {
-            console.log("📌 User is signed in!")
-            isUserSignedIn = true
+            // // console.log("📌 User is signed in!")
         }
 
         const selectedPlaylistIdx = data.selectedPlaylistId
         // @ts-ignore
         const selectedPlaylistId = data.playlists[selectedPlaylistIdx]?.id ?? "No current selected playlist!"
 
-        console.log("📌 " + selectedPlaylistIdx)
-        console.log("📌 " + selectedPlaylistId)
+        // console.log("📌 " + selectedPlaylistIdx)
+        // console.log("📌 " + selectedPlaylistId)
 
         const hasUserToggledSettings = data.selectedPlaylistId === ytUserAccountData.selectedPlaylistId
         const hasUserDeselectedPlaylist = data.selectedPlaylistId < 0 && ytUserAccountData.selectedPlaylistId >= 0
@@ -70,7 +67,7 @@
         }
 
         if (hasUserDeselectedPlaylist) {
-            console.log("📌 User has just deselected a playlist")
+            // console.log("📌 User has just deselected a playlist")
             hidePlaylist()
         }
         if (hasUserSelectedNewPlaylist) {
@@ -78,7 +75,7 @@
             const userHasSelectedPrivatePlaylist = res.error != null
 
             if (userHasSelectedPrivatePlaylist) {
-                console.log("📌 User has just selected a broken playlist!")
+                // console.log("📌 User has just selected a broken playlist!")
                 hasError = true;
                 hidePlaylist();
                 return;
@@ -89,7 +86,7 @@
             }
         }
         if (selectedPlaylistId != "No current selected playlist!" && !hasUserToggledSettings) {
-            console.log("📌 Now Playing Playlist")
+            // console.log("📌 Now Playing Playlist")
 
             if (player.stopVideo) player.stopVideo()
             showPlaylist()
@@ -120,10 +117,10 @@
         // see if there was a saved vid index that user was watching before start off with that vid
         // otherwise default to first vid
         const startVidIdx = JSON.parse(localStorage.getItem("currentVidIdIndex") ?? "0");
-        player.loadPlaylist({
+        player.cuePlaylist({
             list: ytUserAccountData.playlists[ytUserAccountData.selectedPlaylistId].id,
             listType: "playlist",
-            index: startVidIdx
+            index: startVidIdx,
         });
         currentYtVidId.update(() => startVidIdx)
         
@@ -206,19 +203,17 @@
     }
 
     onDestroy(() => {
-        console.log("DESTROYING")
-        isUserSignedIn = false;
+        // console.log("DESTROYING")
         const playerDiv = document.getElementById("player")!;
         if (playerDiv) playerDiv.remove();
     })
     onMount(() => {
-        console.log("MOUNTING")
+        // console.log("MOUNTING")
         if (localStorage.getItem('yt-user-data')) {
             const ytData = JSON.parse(localStorage.getItem('yt-user-data')!)
             ytUserData.set({ ...ytData });
         }
-        console.log("📌 User is signed in!")
-        isUserSignedIn = true;
+        // console.log("📌 User is signed in!")
         const tag = document.createElement('script');
         tag.src = 'https://www.youtube.com/iframe_api';
 

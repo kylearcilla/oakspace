@@ -145,7 +145,7 @@
         <div class={`yt-settings ${!isSignedIn ? "yt-settings--min" : ""}`}>
             <div class="yt-settings-header">
                 <h1>Youtube Settings</h1>
-                <div class={`yt-settings-header__yt-icon ${isSignedIn ? "yt-settings-header__yt-icon--active" : ""}`}>
+                <div class={`yt-icon ${isSignedIn ? "yt-icon--active" : ""}`}>
                     <div class="yt-icon-fill"></div>
                     <i class="fa-brands fa-youtube header-icon"></i>
                 </div>
@@ -254,34 +254,6 @@
         margin-bottom: 25px;
         h1 {
             font-size: 1.7rem;
-        }
-        &__yt-icon {
-            position: relative;
-            margin: 3px 0px 20px 22px;
-            i, .yt-icon-fill {
-                position: absolute;
-                transform: translate(-50%, 0);
-            }
-            i {
-                border-radius: 100%;
-                font-size: 1.8rem;
-                color: #313131;
-            }
-            .yt-icon-fill {
-                width: 7px;
-                height: 7px;
-                top: 5px;
-            }
-
-            &--active {
-                .yt-icon-fill {
-                    box-shadow: 0px 0px 12px 5px rgba(223, 107, 107, 0.28);
-                    background-color: white;
-                }
-                i {
-                    color: #e44141;
-                }
-            }
         }
     }
     .yt-settings-account-details {

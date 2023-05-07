@@ -338,7 +338,6 @@
                     position: absolute;
                     top: 25px;
                     right: 0px;
-                    border-radius: 7px;
                     width: 120px;
                 }
             }

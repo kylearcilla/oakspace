@@ -1,8 +1,9 @@
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
 declare global {
-	interface Window {
+	declare interface Window {
 		google: any;
+		MusicKit: any;
 	}
 	namespace App {
 		// interface Error {}
@@ -18,3 +19,4 @@ declare global {
 }
 
 export {};
+

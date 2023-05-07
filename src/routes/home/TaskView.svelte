@@ -227,7 +227,7 @@
             }
             .session {
                 position: relative;
-                background-color: #1c1c20;
+                background-color: $bg-color-3;
                 padding: 10px 10px 15px 15px;
                 border-radius: 10px;
                 h4 {
@@ -294,7 +294,7 @@
                 margin-bottom: 5px;
                 transition: ease-in-out 0.14s;
                 position: relative;
-                background-color: #1c1c20;
+                background-color: $bg-color-3;
                 cursor: pointer;
 
                 &:hover {

@@ -21,7 +21,7 @@
     width: 100%;
     display: flex;
     color: white;
-    background-color: #18151a;
+    background-color: $bg-color-2;
     border-radius: 0px 0px 12px 12px;
     padding: 30px 15px 28px 15px;
     position: relative;

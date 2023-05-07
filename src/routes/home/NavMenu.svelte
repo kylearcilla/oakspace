@@ -31,13 +31,13 @@
             <span class="tool-tip-text tool-tip-text--left">Stats</span>
             <i class="fa-solid fa-chart-line nav-menu-tab__icon"></i>
         </button>
-        <button on:click={handleNavButtonClicked} class="nav-menu-tab nav-menu-tab--youtube tool-tip-container">
-            <span class="tool-tip-text tool-tip-text--left">Youtube</span>
-            <i class="fa-brands fa-youtube nav-menu-tab__icon"></i>
-        </button>
         <button on:click={handleNavButtonClicked} class="nav-menu-tab nav-menu-tab--music tool-tip-container">
             <span class="tool-tip-text tool-tip-text--left">Music</span>
             <i class="fa-solid fa-music"></i>
+        </button>
+        <button on:click={handleNavButtonClicked} class="nav-menu-tab nav-menu-tab--youtube tool-tip-container">
+            <span class="tool-tip-text tool-tip-text--left">Youtube</span>
+            <i class="fa-brands fa-youtube nav-menu-tab__icon"></i>
         </button>
         <button on:click={handleNavButtonClicked} class={"nav-menu-tab nav-menu-tab--gear tool-tip-container"}>
             <span class="tool-tip-text tool-tip-text--left">Sessions</span>
@@ -103,7 +103,7 @@
             padding: 0px;
             border-radius: 35%;
             transition: 0.1s ease-in-out;
-            background-color: #201f26;
+            background-color: $bg-color-3;
             
             @include flex-container(center, center);
             
@@ -111,6 +111,10 @@
                 border-radius: 100%;
                 transition: 0.3s ease-in-out;
                 background-color: rgb(37, 35, 41);
+            }
+
+            .fa-music {
+                font-size: 1.2rem;
             }
 
             &__icon {
@@ -127,17 +131,17 @@
                     display: none;
                 }
             }
-            &--gear {
-                color: #7B98FC !important;
-            }
             &--chart {
-                color: #9997FE !important;
+                color: #7e93ff !important;
             }
             &--youtube {
-                color: #DA7EBA !important;
+                color: #f486d3 !important;
             }
             &--music {
-                color: #9997FE !important;
+                color: #9a7bf8 !important;
+            }
+            &--gear {
+                color: #e9b8a3 !important;
             }
         }
     }

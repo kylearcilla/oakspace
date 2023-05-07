@@ -58,7 +58,7 @@ export const deleteYtCredentials = () => {
 
 export const deleteYtUserData = () => {
     localStorage.removeItem('yt-user-data');
-    localStorage.removeItem("currentVidIdIndex")
+    localStorage.removeItem("")
     localStorage.removeItem("currentVidId")
 }
 
@@ -71,7 +71,7 @@ export const saveYtUserData = (ytUserData: any) => {
 export const getUserPlaylists = async (accessToken: string) => {
     console.log(accessToken)
     const key = KEY ?? "";
-    const url = `https://youtube.googleapis.com/youtube/v3/playlists?part=snippet%2CcontentDetails&maxResults=25&mine=true&key=${key}`;
+    const url = `https://youtube.googleapis.com/youtube/v3/playlists?part=snippet%2CcontentDetails&maxResults=30&mine=true&key=${key}`;
   
     const headers = new Headers();
     headers.append("Content-Type", "application/json");

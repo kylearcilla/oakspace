@@ -11,6 +11,7 @@
 	import UserSettings from "./UserSettings.svelte";
 
 	import { _initGoogleClient, _initMusicKit } from "./+page";
+	import Icon from "../../components/Icon.svelte";
 
   let isTaskMenuExpanded = true;
   let doHideMenu = false;
@@ -88,6 +89,9 @@
 </div>
 
 <style lang="scss">
+    $bg-color-1: #141418;
+    $bg-color-2: #141418;
+
     #signInDiv {
       position: absolute;
       right: 400px;
@@ -126,7 +130,7 @@
 
       // left
       &__nav-menu-container {
-        background-color: #18151a;
+        background-color: $bg-color-2;
         position: relative;
         width: 60px;
         transition: ease-in-out 0.15s;
@@ -161,7 +165,7 @@
         position: relative;
         width: min(25%, 280px);
         height: 100vh;
-        background-color: #141418;
+        background-color: $bg-color-2;
         transition: ease-in-out 0.25s;
         min-width: 80px;
 

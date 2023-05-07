@@ -1,10 +1,15 @@
 <script lang="ts">
-	import { getPlaylistDetails, getUserPlaylists, intAppleMusicUser, loadUserMusicData } from "$lib/apple-music-api";
-	import { appleUserCredentials, musicData } from "$lib/store";
+	import { appleMusicPlayerState, curentPlaylist, musicDataState, musicPlayerData, userMusicPlaylists } from "$lib/store";
 	import { onMount } from "svelte";
     import { clickOutside } from "../../lib/helper";
 	import { _authAppleUser, _initMusicKit } from "./+page";
+	import { MusicData } from "$lib/MusicData";
+	import { AppleMusicPlayer } from "$lib/AppleMusicPlayer";
+	import type { MusicPlayer } from "$lib/MusicPlayer";
     export let onNavButtonClicked: any;
+
+    let musicPlayer: MusicPlayer
+    let musicData: MusicData
 
     let isModalOpen = true;
     let pickedPlaylistId = -1;
@@ -20,55 +25,48 @@
     let playlists: any = []
     let currentPlaylist: any = {}
 
-    musicData.subscribe((data) => {
-        if (!data) return
 
-        currentPlaylist = data.playerData.currentPlaylist
-        playlists = data.playlists;
+    userMusicPlaylists.subscribe((data: any) => {
+        playlists = (!data || data.length == 0) ? [] : data
+    })
+    curentPlaylist.subscribe((data: any) => {
+        currentPlaylist = data
+    })
+    musicDataState.subscribe((data: any) => {
+        musicData = data
+    })
+    appleMusicPlayerState.subscribe((data: any) => {
+        musicPlayer = data
     })
 
+    // attempt to init player
     const handlePlatformClicked = async (platformName: string) => {
         if (platformName === "apple") {
-            await intAppleMusicUser();
-            getUserPlaylists()
+            musicData = new MusicData()
+            await musicData.authUser()
+            musicData.loadMusicData()
+            musicData.setUserPlaylists()
+
+            musicPlayer = new AppleMusicPlayer(musicData)
+
+            appleMusicPlayerState.set(musicPlayer)
+            musicDataState.set(musicData)
         }
     }
 
+    // init new playlist
     const handlePlaylistClicked = async (id: string, globalId: string) => {
-        await getPlaylistDetails(globalId)
-        // @ts-ignore
-        const music = await MusicKit.getInstance()
-        await music.setQueue({
-            playlist: id
-        });
-        await music.play()
+        musicData.setNewPlaylist(globalId)
+        musicPlayerData.update((data: any) => { return { ...data, message: "Setting Up!", isDisabled: true } })
+
+        musicPlayer.resetMusicPlayerData()
+        musicPlayer.queueAndPlayNextTrack(id, 0)
     }
 
+    const handleLogUserOut = (platformName: string) => { }
     const closeModal = () => onNavButtonClicked("")
-    const handleClickedPlaylist = (playlistIndex: number) => {
-        if (playlistIndex === pickedPlaylistId) {
-            clickedPlaylistId = playlistIndex;
-            return;
-        }
-        if (playlistIndex != clickedPlaylistId) {
-            clickedPlaylistId = playlistIndex;
-            return;
-        }
-        clickedPlaylistId = -1;
-    }
-    const handleChoosePlaylist = () => {
-        pickedPlaylistId = clickedPlaylistId
-    }
-    const handleRemoveChoosenPlaylist = () => {
-        pickedPlaylistId = -1;
-        clickedPlaylistId = -1;
-    }
 
     onMount(() => {
-        const storedData = loadUserMusicData()
-        if (!storedData) return
-
-        musicData.set(storedData)
     })
 </script>
 
@@ -142,7 +140,7 @@
                 </div>
                 <div class="music__row music__row--top">
                     <div class="now-playing grid-section">
-                        <img class="img-bg" src={currentPlaylist.artworkImgSrc} alt="">
+                        <img class="img-bg" src={currentPlaylist?.artworkImgSrc} alt="">
                         <div class="blur-bg"></div>
                         <div class="content-bg">
                             <div class="grid-section__header">
@@ -150,18 +148,18 @@
                             </div>
                             <div class="flx">
                                 <div class="now-playing__img">
-                                    <img src={currentPlaylist.artworkImgSrc} alt="">
+                                    <img src={currentPlaylist?.artworkImgSrc} alt="">
                                 </div>
                                 <div class="now-playing__description">
-                                    <span>{currentPlaylist.type}</span>                                
-                                    <h3>{currentPlaylist.name}</h3>
-                                    <p>{currentPlaylist.description}</p>
+                                    <span>{currentPlaylist?.type}</span>                                
+                                    <h3>{currentPlaylist?.name}</h3>
+                                    <p>{currentPlaylist?.description}</p>
                                 </div>
                             </div>                        
                             <div class="now-playing__collection-details">
-                                <p>{currentPlaylist.songCount} songs</p>
+                                <p>{currentPlaylist?.songCount} songs</p>
                                 <span>•</span>
-                                <p>{currentPlaylist.time}</p>
+                                <p>{currentPlaylist?.time}</p>
                             </div>
                         </div>
                     </div>
@@ -213,10 +211,10 @@
                     <div class="my-playlists grid-section grid-section--no-padding">
                         <div class="grid-section__header grid-section__header--padded">
                             <h2>My Playlists</h2>
-                            <p>{`${playlists.length} ${playlists.length == 1 ? "playlist" : "playlists"}`}</p>
+                            <p>{`${playlists?.length} ${playlists?.length == 1 ? "playlist" : "playlists"}`}</p>
                         </div>     
                         <ul class="my-playlists__playlists vert-scroll">
-                            {#if playlists.length == 0}
+                            {#if playlists?.length == 0}
                                 <img class="my-playlists__no-pl-meme abs-center" src="/no-pl.png"/>
                             {:else}
                                 {#each playlists as p, idx}
@@ -229,7 +227,7 @@
                                             {:else}
                                                 <i class="fa-solid fa-music abs-center"></i>
                                             {/if}
-                                        </div>
+                                        </div> 
                                         <div class="my-playlists__playlist-text">
                                             <h4>{p.name}</h4>
                                             <p>{p.description}</p>
@@ -241,8 +239,6 @@
                         </ul>
                     </div>
                     <div class="recs grid-section">
-                        <apple-music-card-player></apple-music-card-player>
-                        <apple-music-volume></apple-music-volume>
                         <div class="grid-section__header">
                             <h2>Recommendations</h2>
                         </div>     
@@ -337,7 +333,7 @@
                                                         </div>
                                                     </div>
                                                     <p class="playlist-track__type">Album</p>
-                                                    <p class="playlist-track__genre">2021</p>
+                                                    <p class="playlist-track__genre">Ambient</p>
                                                     <p class="playlist-track__length">24 songs</p>
                                                     <p class="playlist-track__time">3:03</p>
                                                 </li>
@@ -505,7 +501,7 @@
         }
         .flx {
             @include flex-container(flex-start, _);
-            margin-top: 18px;
+            margin-top: 13px;
             position: relative;
             width: 90%;
         }
@@ -755,7 +751,6 @@
             height: 0.6px;
         }
     }
-
     .playlist-header {
         color: #8B8B8B;
         display: flex;
@@ -795,6 +790,9 @@
             width: 10%;
         }
         @include sm(max-width) {
+            &__num {
+                width: 35px; // must be 35 to, the 2 right cols will pushed to far to the right
+            }
             &__title {
                 width: 50%;
             }
@@ -802,7 +800,7 @@
                 width: 25%;
             }
             &__genre{
-                width: 25%;
+                width: 38%;  // cannot be 25, same reason
             }
             &__length {
                 display: none;
@@ -812,7 +810,6 @@
             }
         }
     }   
-
     .playlist-track {
         @include flex-container(center, _);
         text-align: center;
@@ -834,7 +831,6 @@
             display: flex;
             &__img {
                 width: 15%;
-                max-width: 60px;
                 min-width: 40px;
                 text-align: left;
                 object-fit: cover;
@@ -844,7 +840,7 @@
                 }
             }
             &__details {
-                width: 60%;
+                width: 70%;
                 text-align: left;
                 h4, p {
                     @include elipses-overflow;
@@ -928,58 +924,6 @@
         &:active {
             i {
                 transform: scale(0.95);
-            }
-        }
-    }
-    .platform-logo {
-        background-color: white;
-        width: 32px;
-        height: 32px;
-        border-radius: 10px;
-        @include flex-container(center, center);
-
-        &--soundcloud {
-            background: linear-gradient(180deg, #FF7402 0%, #FF3801 50%);
-        }
-        &--apple {
-            background: linear-gradient(180deg, #FB5C75 0%, #FD223C 50%);
-        }
-        &--spotify {
-            background-color: #0D0D0D;
-        }
-
-        &--small {
-            width: 20px;
-            height: 20px;
-            border-radius: 7px;
-        }
-
-        .fa-soundcloud {
-            color: white;
-            font-size: 1.7rem;
-            &--small {
-                font-size: 1rem;
-            }
-        }
-        .fa-youtube {
-            color: #FC4343;
-            font-size: 1.7rem;
-            &--small {
-                font-size: 1.2rem;
-            }
-        }
-        .fa-itunes-note {
-            color: white;
-            font-size: 1.6rem;
-            &--small {
-                font-size: 1.02rem;
-            }
-        }
-        .fa-spotify {
-            color: #94F292;
-            font-size: 1.5rem;
-            &--small {
-                font-size: 0.9rem;
             }
         }
     }
@@ -1156,8 +1100,8 @@
             display: block;
             .flx {
                 height: 11.5px;
-                @include trans-text(#ececec, 0.73);
                 align-items: center;
+                @include trans-text(#efefef, 0.6);
                 p {
                     font-size: 9px;
                     font-weight: 400;

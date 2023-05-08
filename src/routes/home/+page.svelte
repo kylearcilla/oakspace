@@ -63,7 +63,7 @@
 <svelte:window on:keydown={handleKeyDown} />
 
 <div class="home" on:mousemove={handleMouseMove}>
-  <div id="signInDiv"></div>
+  <!-- <div id="signInDiv"></div> -->
   <!-- left nav menu -->
   <div class={`home__nav-menu-container ${doHideMenu ? "home__nav-menu-container--hide" : ""}`}>
     <NavMenu onNavButtonClicked={handleNavButtonClicked} />

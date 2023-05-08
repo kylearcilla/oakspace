@@ -30,7 +30,6 @@ export const getArtwork = (artwork: any) => {
     if (!artwork) return ""
     // @ts-ignore
     const imgSrc = MusicKit.formatArtworkURL(artwork, 200, 200);
-    console.log(imgSrc)
     return imgSrc
 }
 

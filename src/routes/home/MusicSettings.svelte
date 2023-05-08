@@ -57,7 +57,7 @@
     // init new playlist
     const handlePlaylistClicked = async (id: string, globalId: string) => {
         musicData.setNewPlaylist(globalId)
-        musicPlayerData.update((data: any) => { return { ...data, message: "Setting Up!", isDisabled: true } })
+        musicPlayerData.update((data: any) => { return { ...data, message: "Setting Up!", isDisabled: true, isShuffled: false } })
 
         musicPlayer.resetMusicPlayerData()
         musicPlayer.queueAndPlayNextTrack(id, 0)

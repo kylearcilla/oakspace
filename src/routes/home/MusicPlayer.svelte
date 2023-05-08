@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { appleMusicPlayerState, currentTrack, musicDataState, musicPlayerData } from '$lib/store';
-    import { onMount } from 'svelte';
+    import { onDestroy, onMount } from 'svelte';
     import Icon from '../../components/Icon.svelte';
 	import { AppleMusicPlayer } from '$lib/AppleMusicPlayer';
 	import { MusicData } from "$lib/MusicData";
@@ -18,7 +18,7 @@
     let isPlaying = false
     let errorMessage = ""
     let isPlayerDisabled = true // empty state
-    let isRepeating: false
+    let isRepeating: any
     let isShuffled: false
 
     currentTrack.subscribe((data: any) => {
@@ -28,8 +28,6 @@
         currentTrackPlaying = data
     })
     musicPlayerData.subscribe((error: any) => {
-        if (!error.message) return
-
         errorMessage = error.message
         isPlaying = error.isCurrentlyPlaying
         isPlayerAvailable = error.doShowPlayer
@@ -79,6 +77,7 @@
         trackProgressHandler();
         volumeHandler();
     })
+    onDestroy(() => console.log("HAAAAA"))
 </script>
 
 <div class={`music-player ${isPlayerAvailable ? "" : "music-player--hidden"}`}>

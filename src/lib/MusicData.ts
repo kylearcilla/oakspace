@@ -72,16 +72,25 @@ export class MusicData {
         localStorage.setItem("music-current-track", JSON.stringify(mediaItem))
     }
 
-    getNextPlaylistIndex(): number {
+    getNextPlaylistIndex(isRepeating: boolean): number {
         if (!this.currentPlaylist) return -1
 
-        return this.currentPlaylist.currentIndex + 1 === this.currentPlaylist.songCount ? 0 :  this.currentPlaylist.currentIndex + 1
+        const isAtEnd = this.currentPlaylist.currentIndex === this.currentPlaylist.songCount - 1
+
+        if (isAtEnd && isRepeating) return 0
+        if (isAtEnd && !isRepeating) return -1
+        return  this.currentPlaylist.currentIndex + 1
     }
 
-    getPrevPlaylistIndex(): number {
+    getPrevPlaylistIndex(isRepeating: boolean): number {
         if (!this.currentPlaylist) return -1
 
-        return this.currentPlaylist.currentIndex === 0 ? this.currentPlaylist.songCount - 1 :  this.currentPlaylist.currentIndex - 1
+        const isAtStart = this.currentPlaylist.currentIndex === 0
+
+        if (isAtStart && isRepeating) return this.currentPlaylist.songCount - 1 
+        if (isAtStart && !isRepeating) return -1
+
+        return  this.currentPlaylist.currentIndex - 1
     }
 
     getNextRandomIndex(): number {
@@ -121,7 +130,6 @@ export class MusicData {
             return newData
         })
     }
-
 
     /* User Library Playlists */
     async setUserPlaylists() {

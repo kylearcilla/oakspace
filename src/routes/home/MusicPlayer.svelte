@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { appleMusicPlayerState, currentTrack, musicDataState, musicPlayerData } from '$lib/store';
+	import { appleMusicPlayerState, colorTheme, currentTrack, musicDataState, musicPlayerData } from '$lib/store';
     import { onDestroy, onMount } from 'svelte';
     import Icon from '../../components/Icon.svelte';
 	import { AppleMusicPlayer } from '$lib/AppleMusicPlayer';
@@ -21,27 +21,29 @@
     let isRepeating: any
     let isShuffled: false
 
-    currentTrack.subscribe((data: any) => {
-        if (!data.name) return
+    let hasColorTheme = false
+
+    colorTheme.subscribe((theme: ColorTheme) => {
+        hasColorTheme = theme.fgColor1 != "#141418"
+    })
+
+    currentTrack.subscribe((track: any) => {
+        if (!track.name) return
 
         isPlayerDisabled = false
-        currentTrackPlaying = data
+        currentTrackPlaying = track
     })
-    musicPlayerData.subscribe((error: any) => {
-        errorMessage = error.message
-        isPlaying = error.isCurrentlyPlaying
-        isPlayerAvailable = error.doShowPlayer
-        isPlayerDisabled = error.isDisabled
+    musicPlayerData.subscribe((player: any) => {
+        errorMessage = player.message
+        isPlaying = player.isCurrentlyPlaying
+        isPlayerAvailable = player.doShowPlayer
+        isPlayerDisabled = player.isDisabled
 
-        isRepeating = error.isRepeating
-        isShuffled = error.isShuffled
+        isRepeating = player.isRepeating
+        isShuffled = player.isShuffled
     })
-    appleMusicPlayerState.subscribe((data: any) => {
-        musicPlayer = data
-    })
-    musicDataState.subscribe((data: any) => {
-        musicData = data
-    })
+    appleMusicPlayerState.subscribe((player: any) => musicPlayer = player)
+    musicDataState.subscribe((data: any) => musicData = data)
 
     const trackProgressHandler = () => {
         const value = trackPlaybackBar.value;
@@ -59,6 +61,7 @@
     const skipToPreviousSong = () => musicPlayer.skipToPrevTrack()
 
     onMount(async () => {
+        // init player and data, which will also init settings
         const storedData = localStorage.getItem("music-context");
         if (!storedData) return;
 
@@ -77,10 +80,9 @@
         trackProgressHandler();
         volumeHandler();
     })
-    onDestroy(() => console.log("HAAAAA"))
 </script>
 
-<div class={`music-player ${isPlayerAvailable ? "" : "music-player--hidden"}`}>
+<div class={`music-player ${isPlayerAvailable ? "" : "music-player--hidden"} ${hasColorTheme ? "music-player--solid-bg" : ""}`}>
     <!-- svelte-ignore a11y-missing-attribute -->
     <div class="music-player-track">
         <img class="music-player-track__art" src={currentTrackPlaying.artworkImgSrc} alt="" title={currentTrackPlaying.name}>
@@ -92,11 +94,33 @@
     <div class="music-player-playback">
         <div class="music-player-playback__container">
             <div class="music-player-playback__controls">
-                <button on:click={toggleShuffle} class={`music-player-playback__shuffle-btn ${isShuffled ? "music-player-playback__shuffle-btn--isShuffled" : ""} icon-btn`} disabled={isPlayerDisabled}><i class="fa-solid fa-shuffle"></i></button>
-                <button on:click={skipToPreviousSong} class="icon-btn" disabled={isPlayerDisabled}><i class="fa-solid fa-backward"></i></button>
-                <button on:click={togglePlayback} class="music-player-playback__playback-btn icon-btn" disabled={isPlayerDisabled}><i class={`${isPlaying ? "fa-solid fa-pause" : "fa-solid fa-play"}`}></i></button>
-                <button on:click={skipToNextSong} class="icon-btn" disabled={isPlayerDisabled}><i class="fa-solid fa-forward"></i></button>
-                <button on:click={toggleRepeat} class={`music-player-playback__repeat-btn ${isRepeating ? "music-player-playback__repeat-btn--isRepeating" : ""} icon-btn`} disabled={isPlayerDisabled}><i class="fa-solid fa-repeat"></i></button>
+                <button 
+                    on:click={toggleShuffle} 
+                    class={`music-player-playback__shuffle-btn ${isShuffled ? "music-player-playback__shuffle-btn--isShuffled" : ""} icon-btn`} 
+                    disabled={isPlayerDisabled}>
+                        <i class="fa-solid fa-shuffle"></i>
+                </button>
+                <button 
+                    on:click={skipToPreviousSong} 
+                    class="icon-btn" disabled={isPlayerDisabled}>
+                    <i class="fa-solid fa-backward"></i>
+                </button>
+                <button 
+                    on:click={togglePlayback} 
+                    class="music-player-playback__playback-btn icon-btn" disabled={isPlayerDisabled}>
+                        <i class={`${isPlaying ? "fa-solid fa-pause" : "fa-solid fa-play"}`}></i>
+                </button>
+                <button 
+                    on:click={skipToNextSong} 
+                    class="icon-btn" disabled={isPlayerDisabled}>
+                        <i class="fa-solid fa-forward"></i>
+                </button>
+                <button 
+                    on:click={toggleRepeat} 
+                    class={`music-player-playback__repeat-btn ${isRepeating ? "music-player-playback__repeat-btn--isRepeating" : ""} icon-btn`} 
+                    disabled={isPlayerDisabled}>
+                        <i class="fa-solid fa-repeat"></i>
+                </button>
             </div>
             <div class="music-player-playback__bar-container">
                 <div class="music-player-playback__playback-bar">
@@ -158,7 +182,7 @@
         padding: 10px 25px 12px 20px;
         display: flex;
         z-index: 2000;
-        background: rgba(41, 41, 41, 0.6);
+        background: var(--muiscPlayerBgColor);
         box-shadow: 0px -7px 20px rgba(0, 0, 0, 0.24);
         backdrop-filter: blur(100px);
         -webkit-backdrop-filter: blur(100px);
@@ -170,6 +194,12 @@
 
         &--hidden {
             display: none;
+        }
+        &--solid-bg {
+            opacity: 1 !important;
+            box-shadow: none;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
         }
     }
     .music-player-track {
@@ -191,16 +221,16 @@
         &__details {
             width: 100%;
             overflow: hidden;
+            color: rgb(var(--textColor4));
         }
         &__title {
             width: 100%;
             font-size: 1.1rem;
         }
-        &__artist{
+        &__artist {
             margin-top: 4px;
             font-size: 0.9rem; 
             font-weight: 100;
-            color: rgb(167, 166, 166);
         }
         &__art {
             width: 35px;
@@ -230,7 +260,7 @@
         &__controls {
             width: 200px;
             margin: auto;
-            transition: 0.15s ease-in-out;
+            transition: 0.12s ease-in-out;
             @include flex-container(center, center);
             button {
                 margin: 0px 5%;
@@ -238,22 +268,26 @@
                     margin: 0px 5px;
                 }
                 &:hover {
-                    filter: brightness(0.5);
+                    filter: opacity(0.5);
                 }
             }
-            button:disabled {
-                color: red;
-            }
-            button:active {
-                transform: scale(0.8);
+            // button:disabled {
+            //     opacity: 0.6;
+            // }
+            button:enabled:active {
+                transform: scale(0.9);
             }
         }
         &__playback-btn {
-            color: #1C1C1C;
+            color: var(--muiscPlayerBgColor);
             background-color: white;
             border-radius: 100%;
             @include circle(15px);
             @include flex-container(center, center);
+
+            // &:disabled {
+            //     opacity: 0.6;
+            // }
             .fa-play {
                 margin-right: -2px;
             }
@@ -335,21 +369,23 @@
         transition: 0.12s ease-in-out;
         min-width: 60px;
         @include flex-container(center, center);
-        background-color: #2b2b2b;
+        background: var(--muiscPlayerBgColor);
+        filter: brightness(1.05);
         border-radius: 12px;
         padding: 7px 0px 7px 2px;
         margin-left: 8px;
-
+        transition: 0.15 ease-in-out;
+        
         &:hover {
-            background-color: rgb(52, 52, 52);
+            filter: brightness(1.08);
         }
         img {
-            @include circle(20px);
-            border-radius: 8px;
+            height: 20px;
+            width: 20px;
             margin-right: 11px;
         }
         i {
-            color: #8b8b8b;
+            color: rgb(var(--textColor4));
         }
     }
     .music-player-platform-logo {

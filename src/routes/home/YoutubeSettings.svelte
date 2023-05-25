@@ -122,9 +122,6 @@
         const savedYtCreds = localStorage.getItem('yt-credentials');
         const savedUserData = localStorage.getItem('yt-user-data');
 
-        console.log("🍩 " + (savedYtCreds != null ? "savedUserData present!" : "savedUserData empty!"))
-        console.log("🍩 " + (savedUserData != null ? "savedUserData present!" : "savedUserData empty!"))
-
         if (savedYtCreds) {
             const ytCreds = JSON.parse(localStorage.getItem('yt-credentials')!);
             ytCredentials.set({ ...ytCreds });

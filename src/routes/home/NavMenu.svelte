@@ -88,7 +88,8 @@
             height: 1px;
             width: 93%;
             margin: 10px 5px 15px 10px;
-            background-color: #28282E;
+            background-color: rgb(var(--fgColor1));
+            filter: brightness(1.1);
         }
         &__tabs {
             font-family: "Gordita Medium", system-ui;
@@ -103,14 +104,16 @@
             padding: 0px;
             border-radius: 35%;
             transition: 0.1s ease-in-out;
-            background-color: $bg-color-3;
+            background-color: rgb(var(--fgColor1));
+            filter: brightness(1.03);
+            color: var(--navIconColors);
             
             @include flex-container(center, center);
             
             &:hover {
                 border-radius: 100%;
                 transition: 0.3s ease-in-out;
-                background-color: rgb(37, 35, 41);
+                // background-color: rgb(37, 35, 41);
             }
 
             .fa-music {
@@ -131,25 +134,27 @@
                     display: none;
                 }
             }
+
             &--chart {
-                color: #7e93ff !important;
             }
             &--youtube {
-                color: #f486d3 !important;
             }
             &--music {
-                color: #9a7bf8 !important;
             }
             &--gear {
-                color: #e9b8a3 !important;
             }
         }
     }
 
+    .tool-tip-text {
+        &::after {
+            background-color: rgb(var(--fgColor1));
+        }
+    }
+    
     // when nav bar is closed, allow the tooltip to be seen when hovered over
-    .tool-tip-container:hover,
     .tool-tip-container:hover .tool-tip-text,
     .tool-tip-container:hover .tool-tip-text::after {
-        @include tool-tip-shown
+        @include tool-tip-shown(rgb(var(--fgColor1)));
     }
-</style>
+</style>    

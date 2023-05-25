@@ -161,6 +161,17 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     opacity: $opacity;
 }
 
+@mixin pos-abs-bottom-right-corner($right, $bottom) {
+    position: absolute;
+    right: $right;
+    bottom: $bottom;
+}
+@mixin pos-abs-top-right-corner($top, $right) {
+    position: absolute;
+    top: $top;
+    right: $right;
+}
+
 .text-aln-center {
     text-align: center;
 }
@@ -227,8 +238,14 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     &--algn-center {
         align-items: center;
     }
+    &--justify-center {
+        align-items: center;
+    }
     &--space-between {
         justify-content: space-between;
+    }
+    &--right {
+        justify-content: flex-end;
     }
 }
 
@@ -283,15 +300,17 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     justify-content: center;
     align-items: center;
     background-color: rgba(0, 0, 0, 0.7);
-  
+    
+    
     &__content {
-      position: relative;
-      max-width: 90%;
-      max-height: 90%;
-      overflow: hidden;
-      padding: 25px 35px 30px 35px;
-      border-radius: 15px;
-      background-color: #131314;
+        position: relative;
+        max-width: 90%;
+        max-height: 90%;
+        overflow: hidden;
+        padding: 25px 35px 30px 35px;
+        border-radius: 15px;
+        background-color: var(--primaryBgColor);
+        color: rgb(var(--textColor1));
 
       &--overflow-y-scroll {
         overflow-y: scroll;
@@ -326,7 +345,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     right: 0px;
     height: 100%;
     width: 70px;
-    background: linear-gradient(270deg, #18181A 0%, transparent);
+    background: linear-gradient(270deg, var(--secondaryBgColor) 0%, transparent);
 }
 
  /* Buttons */
@@ -348,17 +367,20 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     }
  }
  .btn-line {
-    padding: 8px 20px 8px 20px;
+    padding: 6px 16px 6px 16px;
     border: solid 1px #9997FE;
     color: #9997FE;
     border-radius: 15px;
     font-weight: 700;
-    font-size: 0.8rem;
-    transition: 0.2s ease-in-out;
+    font-size: 1rem;
+    transition: 0.13s ease-in-out;
 
     &:hover {
         background-color: #9997FE;
         color: white;
+    }
+    &:active {
+        transform: scale(0.98);
     }
 }
 .btn-text-only {
@@ -398,6 +420,8 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     text-align: center;
     transition: all 0.1s ease-in-out;
     pointer-events: none;
+    filter: brightness(1.05);
+
 
     // pointing left
     &--left {
@@ -417,16 +441,16 @@ $screen-xl: 112.5em;   // extra large (1800 px)
         transform: translate(-50%) rotate(45deg);
         opacity: 100;
         visibility: hidden;
-        background-color: #262628;
         // bottom: 10px;
         // left: 2px;
         transition: all 0.1s ease-in-out;
     }
  }
- @mixin tool-tip-shown {
+
+ @mixin tool-tip-shown($bg-color) { // styling for the tool tip parent container and the tool tip bg
      opacity: 100;
      visibility: visible;
-     background: #19191b;
+     background: $bg-color;
      color: white;
  }
 
@@ -441,7 +465,6 @@ $screen-xl: 112.5em;   // extra large (1800 px)
  /* Drop Down UI */
 .dropdown-btn {
     transition: ease-in-out 0.15s;
-    color: #9E9E9E;
     font-weight: 500;
     font-size: 1.1rem;
     @include flex-container(center, _);
@@ -456,7 +479,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
 }
 .dropdown-menu {
     display: block;
-    background-color: rgb(23, 23, 23);
+    background-color: var(--secondaryBgColor);
     width: 200px;
     max-height: 200px;
     position: relative;
@@ -465,18 +488,23 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     padding: 4px 0px 8px 0px;
     border-radius: 3px;
 
+    border: var(--borderVal);
+    box-shadow: var(--shadowVal);
+
     &__option {
-        color: #96959a;
+        color: rgb(var(--textColor1));
+        opacity: 0.8;
         font-family: 'Manrope';
         font-weight: 600;
         white-space: nowrap;
         font-size: 1.1rem;
         padding: 7px 10px 7px 13px;
         width: 100%;
-
+        
         &:hover {
-            background-color: #1f1f20;
-            color: #e2dede; 
+            background-color: var(--hoverColor);
+            filter: brightness(0.98);
+            opacity: 1;
         }
     }
 }
@@ -575,105 +603,6 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     font-weight: 800;
 }
 
-.session-todo {
-    font-family: "Manrope";
-    @include flex-container(center, _);
-    margin-bottom: 5px;
-    width: 100%;
-
-    &__icon {
-        margin-right: 8px;
-        border-radius: 18px;
-        @include circle(9.5px);
-        background: rgba(115, 119, 255, 0.05);
-        border: 1.8px solid #5e5e5e;
-        transition: ease-in-out 0.1s;
-        cursor: default;
-        @include center;
-        i {
-            font-size: 0.4rem;
-            display: none;
-        }
-        &--active { // todo in an active session
-            border: 1.8px solid #5e5e5e;
-            cursor: pointer;
-            &:hover {
-                cursor: pointer;
-                background-color: rgb(50, 50, 50);
-            }
-        }
-        &--add { // add new todo
-            border-color: transparent;
-            background: none;
-            @include center;
-            i {
-                font-size: 1rem;
-                display: block;
-                font-weight: 100;
-            }
-        }
-        &--finished, &--unfinished { // todos in a finished session
-            border: none;
-            background-color: transparent;
-            margin-right: 5px;
-            i {
-                font-size: 0.7rem;
-                display: block;
-            }
-        }
-    }
-    &--new-session-btn {
-        margin: 10px 0px 30px 0px;
-    }
-    &__text {
-        color: rgb(139, 139, 139);
-        max-width: 90%;
-        @include elipses-overflow;
-        font-size: 0.9rem;
-        &--input {
-            color: white;
-        }
-    }
-
-    &--checked > .session-todo__icon {
-        background: linear-gradient(90deg, #5366FF 0%, #7876FE 100%);
-        border: 2px solid #9997FE;
-        box-shadow: -1px 1px 2px 1px rgba(120, 118, 254, 0.02);
-        i {
-            display: block;
-        }
-    }
-    &--checked > p {
-        text-decoration: line-through;
-        text-decoration-thickness: 1px;
-    }
-
-    form {
-        display: flex;
-        width: 100%;
-        input {
-            color: rgb(199, 199, 199);
-            width: 85%;
-            max-width: 80%;
-            padding-bottom: 4px;
-            border-bottom: 1.5px solid #4e4e4e;
-            &::placeholder {
-                color: rgb(56, 56, 56);
-            }
-            &:focus {
-                border-color: #6A83FF;
-                box-shadow: 0px 6px 8px -6px #2f3362;
-            }
-        }
-    }
-    &:first-child {
-        margin-top: 10px;
-    }
-    &:last-child {
-        margin-bottom: 20px;
-    }
-}
-
 /* Youtube */
 
 .yt-icon {
@@ -732,9 +661,11 @@ $screen-xl: 112.5em;   // extra large (1800 px)
 }
 
 .grid-section {
-    background-color: #18181A;
     border-radius: 10px;
     padding: 13px 20px;
+    background-color: var(--secondaryBgColor);
+    box-shadow: var(--shadowVal);
+
     &--no-padding {
         padding: 0px;
     }
@@ -745,13 +676,16 @@ $screen-xl: 112.5em;   // extra large (1800 px)
         color: #757575;
         padding: 0px;
         h2 {
-            color: white;
+            color: rgb(var(--textColor1));
             margin: 0px;
             font-size: 1.3rem;
         }
         &--padded {
             padding: 13px 20px;
         }
+    }
+    &__copy {
+        opacity: 0.8;
     }
 }
 

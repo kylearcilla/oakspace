@@ -1,22 +1,24 @@
 <script lang="ts">
+  import ActiveSessionView from "./ActiveSessionView.svelte";
   import NavMenu from "./NavMenu.svelte";
   import PomView from "./PomView.svelte";
   import VideoView from "./VideoView.svelte";
-  import MusicView from "./MusicView.svelte";
   import TaskView from "./TaskView.svelte";
   import MusicPlayer from "./MusicPlayer.svelte";
 	import { onDestroy, onMount } from "svelte";
 	import YoutubeSettings from "./YoutubeSettings.svelte";
 	import MusicSettings from "./MusicSettings.svelte";
 	import UserSettings from "./UserSettings.svelte";
+  import colorThemes, { setRootColors } from "$lib/color-themes";
 
 	import { _initGoogleClient, _initMusicKit } from "./+page";
-	import Icon from "../../components/Icon.svelte";
 
   let isTaskMenuExpanded = true;
   let doHideMenu = false;
   let hasUserToggledWithKeyLast = true;
   let navSettingClicked = "";
+
+  let theme = colorThemes[1];
 
   const handleNavButtonClicked = (buttonName: string) => {
     navSettingClicked = buttonName;
@@ -52,8 +54,11 @@
 
   onMount(() => {
     window.addEventListener("resize", handleResize);
-    console.log(window)
+    
     _initGoogleClient();
+    setRootColors(theme)
+
+    console.log(window)
   });
   onDestroy(() => {
     window.removeEventListener("resize", handleResize);
@@ -69,17 +74,14 @@
     <NavMenu onNavButtonClicked={handleNavButtonClicked} />
   </div>
   <!-- middle video component -->
-  <div class={`home__video ${doHideMenu ? "home__video--hide" : ""}`}>
+  <div class={`home__video ${doHideMenu ? "home__video--nav-menu-hidden" : ""} ${!isTaskMenuExpanded ? "home__video--task-view-hidden" : ""}`}>
     <PomView />
     <!-- @ts-ignore -->
     <VideoView />
-    <MusicView/>
+    <ActiveSessionView />
   </div>
   <!-- right music menu -->
   <div class={`home__task-view-container ${isTaskMenuExpanded ? "" : "home__task-view-container--closed"}`}>
-    <button on:click={handleTaskMenuToggleClick} class="home__toggle home__toggle--music">
-      <i class={`fa-solid fa-angles-${isTaskMenuExpanded ? "right" : "left" }`}></i>
-    </button>
     <TaskView isTaskMenuExpanded={isTaskMenuExpanded}/>
   </div>
   {#if navSettingClicked === "settings"} <UserSettings/> {/if}
@@ -89,19 +91,23 @@
 </div>
 
 <style lang="scss">
-    $bg-color-1: #141418;
-    $bg-color-2: #141418;
-
     #signInDiv {
       position: absolute;
       right: 400px;
       top: 150px;
     }
     .home {
+      background-color: var(--primaryBgColor);
       height: 100%;
+      min-height: 100vh;
       display: flex;
       justify-content: space-between;
       font-family: 'Apercu Medium' system-ui;
+
+      // background-image: url('https://upload.wikimedia.org/wikipedia/commons/7/77/Cole_Thomas_The_Course_of_Empire_Desolation_1836.jpg');
+      // background-size: cover;
+      // background-position: center;
+      // background-repeat: no-repeat;
 
       @include sm(max-width) {
         width: 100%;
@@ -130,14 +136,17 @@
 
       // left
       &__nav-menu-container {
-        background-color: $bg-color-2;
-        position: relative;
+        background-color: rgb(var(--fgColor1));
         width: 60px;
         transition: ease-in-out 0.15s;
         height: 100vh;
         margin-left: 0px;
         position: fixed;
         z-index: 1000;
+
+        // background: rgba(32, 31, 31, 0.1);
+        // backdrop-filter: blur(10px);
+        // border-right: 1px solid rgba(138, 138, 138, 0.3);
 
         &--hide {
           margin-left: -60px !important;
@@ -154,31 +163,45 @@
         transition: ease-in-out 0.15s;
         width: 100%;
         margin-left: 60px;
+        margin-right: min(30vw, 300px);
+        
+        &--nav-menu-hidden {
+          margin-left: 0px;
+          padding-right: 4%;
+        }
+        &--task-view-hidden {
+          margin-right: 65px;
+          padding-right: 4%;
 
-        &--hide {
-          margin-left: 0px !important;
-          padding-right: 4% !important;
+        }
+        @include sm(max-width) {
+          margin-right: 0px !important;
         }
       }
+
       // right
       &__task-view-container {
-        position: relative;
-        width: min(25%, 280px);
+        width: min(30vw, 300px);
+        min-width: 200px;
         height: 100vh;
-        background-color: $bg-color-2;
-        transition: ease-in-out 0.25s;
-        min-width: 80px;
+        position: fixed;
+        right: 0px;
+        background-color: var(--secondaryBgColor);
+        transition: ease-in-out 0.18s;
+        border: var(--borderVal);
+        box-shadow: var(--shadowVal);
+
+        // background: rgba(32, 31, 31, 0.1);
+        // backdrop-filter: blur(10px);
+        // border-left: 1px solid rgba(138, 138, 138, 0.3);
 
         &--closed {
           height: 350px;
           width: 65px;
           border-radius: 0px 0px 0px 13px;
           min-width: 0px;
-
-          .home__toggle--music {
-            left: -30px;
-          }
         }
+
         @include sm(max-width) {
           margin-right: -55px; 
           display: none

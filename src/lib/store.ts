@@ -1,13 +1,16 @@
 import { writable } from 'svelte/store';
 import type { MusicData } from './MusicData';
 import type { MusicPlayer } from './MusicPlayer';
+import colorThemes from './color-themes';
 
+/* General Authentication Stuff */
 export const googleData = writable<GoogleUserData>({
     email: '',
     name: '',
     profileImgSrc: ''
 })
 
+/* YT Stuff */
 export const ytCredentials = writable<YoutubeUserCreds>({
     accessToken: '',
     refreshToken: ''
@@ -33,7 +36,7 @@ export const ytCurrentVid = writable<YouTubePlaylist>({
     channelSubs: ""
 })
 
-/** Music Stuff */
+/* Music Stuff */
 export const appleMusicPlayerState = writable<MusicPlayer>()
 export const musicDataState = writable<MusicData>()
 
@@ -87,3 +90,7 @@ export const musicPlayerData = writable<MusicPlayerData>({
     isRepeating: false,
     isShuffled: false
 })
+
+/* Color Stuff */
+
+export const colorTheme = writable<ColorTheme>(colorThemes[1])

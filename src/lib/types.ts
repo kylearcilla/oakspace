@@ -56,9 +56,7 @@ type MusicPlayerData = {
     isShuffled: boolean
 }
 
-
 /* Video Stuff */
-
 type YoutubeUserCreds = {
     accessToken: string,
     refreshToken: string
@@ -82,3 +80,27 @@ type YouTubePlaylist = {
     channelImgSrc: string
     channelSubs: string
 };
+
+/* Color Theme */
+
+type ColorTheme = {
+    isDark: boolean,
+    primaryBgColor: string,
+    secondaryBgColor: string,
+    fgColor1: string,
+    fgColor2: string,
+    fgColor3: string,
+    fgColor4: string,
+    textColor1: string,
+    textColor2: string,
+    textColor3: string,
+    textColor4: string,
+    hoverColor: string,
+    pomBgColor: string,
+    muiscPlayerBgColor: string,
+    pomProgressBarFgColor: string,
+    pomProgressBgColor: string,
+    navIconColors: string,
+    borderVal: string,
+    shadowVal: string
+}

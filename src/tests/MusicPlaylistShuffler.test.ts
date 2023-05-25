@@ -5,22 +5,49 @@ import {beforeEach, describe, expect, it} from 'vitest';
 describe('MusicPlaylistShuffler', () => {
   let playlist: MusicPlaylistShuffler | null
 
-  test('shuffled indices array initialized properly', () => {
-    // change chunk size to 20 for these
+  test('Shuffled indices array initialized properly', () => {
     playlist = new MusicPlaylistShuffler(0, 1)
-    expect(playlist.shuffledIndexes[0] === 1)
+    expect(playlist.shuffledIndexes[0]).toBe(0)
     
     playlist = new MusicPlaylistShuffler(0, 2)
-    expect(playlist.shuffledIndexes[0] === 1)
+    expect(playlist.shuffledIndexes[0]).toBe(0)
     
-    playlist = new MusicPlaylistShuffler(14, 20)
-    expect(playlist.shuffledIndexes[0] === 14)
+    playlist = new MusicPlaylistShuffler(14, 100)
+    expect(playlist.shuffledIndexes[0]).toBe(14)
+    expect(playlist.shuffledIndexes.length).toBe(100)
     
-    playlist = new MusicPlaylistShuffler(9, 21)
-    expect(playlist.shuffledIndexes[0] === 9)
+    playlist = new MusicPlaylistShuffler(9, 101)
+    expect(playlist.shuffledIndexes[0]).toBe(9)
+    expect(playlist.shuffledIndexes.length).toBe(100)
     
-    playlist = new MusicPlaylistShuffler(8, 50)
-    expect(playlist.shuffledIndexes[0] === 8)
+    playlist = new MusicPlaylistShuffler(8, 150)
+    expect(playlist.shuffledIndexes[0]).toBe(8)
+    expect(playlist.shuffledIndexes.length).toBe(100)
+    
+  })
+
+  test('User toggles repeat off while shuffled, then item plays next.', () => {
+    const startIndex = 0
+    const length = 6
+
+    playlist = new MusicPlaylistShuffler(startIndex, length) 
+
+    expect(playlist.indexPointer).toBe(0);
+    expect(playlist.shuffledIndexes.length).toBe(6)
+
+    /* User currently playing an index, just toggled off repeat */
+
+    playlist = new MusicPlaylistShuffler(playlist.startTrackIndex, length) 
+    playlist.indexPointer = -1
+
+    expect(playlist.startTrackIndex).toBe(startIndex);
+    expect(playlist.indexPointer).toBe(-1);
+
+    /* After toggled off, next song plays */
+    expect(playlist.getNextIndex()).greaterThanOrEqual(0)
+    expect(playlist.indexPointer).toBe(0);
+
+    console.log(localStorage.getItem("music-shuffle-data")) // props should match above
   })
 
   test('Move through 3 chunks while moving backwards to prev chunks', () => {
@@ -88,7 +115,7 @@ describe('MusicPlaylistShuffler', () => {
     console.log(localStorage.getItem("music-shuffle-data")) // props should match above
   })
 
-  test('Move back & forth through playlit and finish then prev, play, skip', () => {
+  test('Move back & forth through playlist and finish then prev, play, skip', () => {
     const testArr = [0, 2, 4, 6, 3, 5, 7, 8, 9, 1]
     const startIndex = 0
     const length = 10

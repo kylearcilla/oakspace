@@ -6,7 +6,6 @@
     const totalPeriods = (sessionPeriods * 2) - 1
     const sessionTimePercent = sessionTime / totalMinutes
     const breakTimePercent = breakTime / totalMinutes
-    
     const getStepIcons = () => {
         let result = ""
         let percentSoFar = 0
@@ -63,66 +62,65 @@
         }
 
         &__pom-timer {
-            color: #8F8F8F;
-            font-size: 0.9rem;
-            font-weight: 100;
+            font-size: 0.95rem;
+            font-weight: 500;
             @include sm(max-width) {
                 display: none;
             }
         }
+    }
 
-        .pom-bar {
-            position: relative;
-            margin: 0px min(4%, 15px);
-            width: 100%;
+    .pom-bar {
+        position: relative;
+        margin: 0px min(4%, 15px);
+        width: 100%;
+        height: 4px;
+        background-color: var(--pomProgressBgColor);
+        border-radius: 5px;
+        
+        &__progress-bar {
             height: 4px;
-            background-color: rgb(14, 13, 16);
-            border-radius: 5px;
-            
-            &__progress-bar {
-                height: 4px;
-                background: linear-gradient(270.59deg, #FF8B9C -10.17%, #E39ECE 12.41%, #A3B6FF 71.86%);
-                box-shadow: -1px 0px 10px 6px rgba(187, 173, 237, 0.05);
-                border-radius: 28px 0px 0px 28px;
-            }
-            &__step-icon {
-                position: absolute;
-                top: -22px;
-                width: 16px;
-                height: 16px;
-                border-radius: 18px;
-                color: #747474;
-                @include center;
+            background-color: var(--pomProgressBgColor);
+            background: var(--pomProgressBarFgColor);
+            box-shadow: -1px 0px 10px 6px rgba(187, 173, 237, 0.05);
+            border-radius: 28px 0px 0px 28px;
+        }
+        &__step-icon {
+            position: absolute;
+            top: -22px;
+            width: 16px;
+            height: 16px;
+            border-radius: 18px;
+            @include center;
 
-                &::after {
-                    content: "";
-                    @include circle(1.5px);
-                    background-color: #747474;
-                    position: absolute;
-                    bottom: -2px;
+            &::after {
+                content: "";
+                @include circle(1.5px);
+                background-color: rgb(var(--textColor4));
+                position: absolute;
+                bottom: -2px;
+            }
+            i {
+                font-size: 0.75rem;
+            }
+            .step-icon-time {
+                position: absolute;
+                white-space: nowrap;
+                top: 33px;
+                font-size: 0.68rem;
+                font-weight: 400;
+                @include sm(max-width) {
+                    display: none;
                 }
+            }
+            &--finished {
+                background: linear-gradient(90deg, #5366FF 0%, #7876FE 100%);
+                border: 1.5px solid #9997FE;
+                box-shadow: -1px 1px 5px 3px rgba(120, 118, 254, 0.06);
+                color: white;
+
                 i {
-                    font-size: 0.75rem;
-                }
-                .step-icon-time {
-                    position: absolute;
-                    white-space: nowrap;
-                    top: 33px;
-                    font-size: 0.68rem;
-                    font-weight: 400;
-                    @include sm(max-width) {
-                        display: none;
-                    }
-                }
-                &--finished {
-                    background: linear-gradient(90deg, #5366FF 0%, #7876FE 100%);
-                    border: 1.5px solid #9997FE;
-                    box-shadow: -1px 1px 5px 3px rgba(120, 118, 254, 0.06);
-                    color: white;
-    
-                    i {
-                        font-size: 0.6rem;
-                    }
+                    font-size: 0.6rem;
                 }
             }
         }

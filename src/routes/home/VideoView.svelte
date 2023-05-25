@@ -3,7 +3,6 @@
     import { currentYtVidId, ytUserData, ytCurrentVid, ytCredentials } from "$lib/store";
 	import { onDestroy, onMount } from 'svelte';
 	import { getChannelDetails, getPlayListDetails, getVidDetails, saveYtUserData } from "$lib/yt-api";
-	import { construct_svelte_component } from "svelte/internal";
 
     // console.log("YT View Rendering...")
 
@@ -277,10 +276,6 @@
     {#if ytUserAccountData.playlists[ytUserAccountData.selectedPlaylistId] && !hasError}
         <div class="vid-details-container">
             <h1 class="vid-title">{ytVidDetails.title}</h1>
-            <div class="vid-details">
-                <h4 class="vid-details__date">{ytVidDetails.publishedAt}</h4>
-                <h5 class="vid-details__view-count">{ytVidDetails.viewCount} views</h5>
-            </div>
             <div class="vid-channel-details-container">
                 <img alt="channel-profile-img" src={ytVidDetails.channelImgSrc} />
                 <div class="vid-channel-details">
@@ -303,6 +298,7 @@
             position: relative;
             @include flex-container(center, _);
             margin-bottom: 15px;
+            color: rgb(var(--textColor1));
 
             &__yt-icon {
                 position: relative;
@@ -318,7 +314,7 @@
                     color: #DF6B6B;
                 }
                 .yt-icon-fill {
-                    box-shadow: 0px 0px 12px 5px rgba(223, 107, 107, 0.28);
+                    // box-shadow: 0px 0px 12px 5px rgba(223, 107, 107, 0.28);
                     top: 5px;
                     background-color: white;
                     width: 5px;
@@ -334,6 +330,7 @@
                 position: absolute;
                 top: 5px;
                 right: 0px;
+                color: rgb(var(--textColor1));
                 .dropdown-menu {
                     position: absolute;
                     top: 25px;
@@ -345,15 +342,14 @@
         .vid-view-container {
             width: 100%;
             aspect-ratio: 16 / 9;
-            border-radius: 10px;
-            background-color: #181719;
+            background-color: var(--primaryBgColor);
             position: relative;
         }
         #player, .vid-view-empty-vid-view {
             width: 100%;
             aspect-ratio: 16 / 9;
-            border-radius: 10px;
-            background-color: #181719;
+            // border-radius: 7px;
+            background-color: var(--secondaryBgColor);
             display: flex;
             @include center;
         }
@@ -394,38 +390,16 @@
             font-size: 1.5rem;
             margin-top: 10px;
             font-weight: 700;
+            color: rgb(var(--textColor1));
             @include elipses-overflow;
         }
-        .vid-details {
-            margin-top: 8px;
-            display: flex;
-            position: relative;
-            width: 100%;
-
-            &__date {
-                font-size: 1rem;
-                margin-right: 12px;
-                color: rgb(154, 154, 154);
-                font-weight: 400;
-            }
-            &__view-count {
-                font-size: 1rem;
-                font-weight: 200;
-                color: rgb(154, 154, 154);
-            }
-            &__play-list-dropdown {
-                font-family: "Apercu";
-                position: absolute;
-                top: 0px;
-                right: 0px;
-                color: rgb(158, 158, 158);
-            }
-        }
         .vid-channel-details-container {
-            margin-top: 20px;
+            margin: 7px 0px 40px 0px;
             position: relative;
             width: 100%;
             @include flex-container(center, _);
+            color: rgb(var(--textColor1));
+            
             img {
                 border-radius: 100%;
                 width: 35px;
@@ -438,10 +412,10 @@
                     font-size: 1.1rem;
                 }
                 &__sub-count {
-                    color: rgb(151, 151, 151);
                     font-weight: 400;   
                     font-size: 0.9rem;
                     margin-top: 2px;
+                    opacity: 0.8;
                 }
             }
             .vid-like-count {

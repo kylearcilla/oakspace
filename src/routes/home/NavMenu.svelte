@@ -21,23 +21,23 @@
 </script>
 
 <div class="nav-menu">
-    <!-- <div class={"nav-menu-header"}>
-        <h1 class="nav-menu-header__title">Today</h1>
-        <p class="nav-menu-header__date">Wed, Feb 02</p>
-    </div> -->
-    <div class="nav-menu__divider"></div>
+    <div class="divider"></div>
+    <div class="nav-menu__profile-pic">
+        <img src="https://lh3.googleusercontent.com/ogw/AOLn63FP_CjxioHdirdPhirZ5iK2JTYhNHJC3vZlXtJw2Q=s64-c-mo" alt="user-profile-pic">
+    </div>
+    <div class="divider"></div>
     <div class="nav-menu__tabs">
         <button on:click={handleNavButtonClicked} class="nav-menu-tab nav-menu-tab--chart tool-tip-container">
             <span class="tool-tip-text tool-tip-text--left">Stats</span>
             <i class="fa-solid fa-chart-line nav-menu-tab__icon"></i>
         </button>
-        <button on:click={handleNavButtonClicked} class="nav-menu-tab nav-menu-tab--music tool-tip-container">
-            <span class="tool-tip-text tool-tip-text--left">Music</span>
-            <i class="fa-solid fa-music"></i>
-        </button>
         <button on:click={handleNavButtonClicked} class="nav-menu-tab nav-menu-tab--youtube tool-tip-container">
             <span class="tool-tip-text tool-tip-text--left">Youtube</span>
             <i class="fa-brands fa-youtube nav-menu-tab__icon"></i>
+        </button>
+        <button on:click={handleNavButtonClicked} class="nav-menu-tab nav-menu-tab--music tool-tip-container">
+            <span class="tool-tip-text tool-tip-text--left">Music</span>
+            <i class="fa-solid fa-music"></i>
         </button>
         <button on:click={handleNavButtonClicked} class={"nav-menu-tab nav-menu-tab--gear tool-tip-container"}>
             <span class="tool-tip-text tool-tip-text--left">Sessions</span>
@@ -50,46 +50,34 @@
     .nav-menu {
         height: 100%;
         font-family: "Manrope", system-ui;
-        padding: 20px 20px 20px 5%;
+        padding: 20px 10px;
         margin: 0px 10%;
         left: 0px;
+        text-align: center;
+        @include flex-container(center, _);
+        flex-direction: column;
         
         @include md(max-width) {
             margin: 0px 10%;
         }
-        
-        .nav-menu-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin: 25px 0px 0px 10px;
-            padding-bottom: 2px;
-
-            &__title {
-                font-size: 1.5rem;
-                font-weight: 700;
-                color: white;
-                margin-right: 7px;
-            }
-            &__date {
-                white-space: nowrap;
-                font-weight: 400;
-                font-size: 0.9rem;
-                color: #7F7F7F;
-            }
-            &--closed {
-                display: none;
-            }
-            @include md(max-width) {
-                display: none;
+        &__profile-pic {
+            overflow: hidden;
+            @include circle(33px);
+            border: 2px solid white;
+            img {
+                @include circle(33px);
+                -webkit-user-drag: none;
             }
         }
-        &__divider {
+        .divider {
             height: 1px;
-            width: 93%;
-            margin: 10px 5px 15px 10px;
             background-color: rgb(var(--fgColor1));
-            filter: brightness(1.1);
+            filter: brightness(1.13);
+            margin: 14px 0px 18px 0px;
+            
+            &:first-child {
+                margin: 10px 0px 12px 0px;
+            }
         }
         &__tabs {
             font-family: "Gordita Medium", system-ui;
@@ -105,10 +93,8 @@
             border-radius: 35%;
             transition: 0.1s ease-in-out;
             background-color: rgb(var(--fgColor1));
-            filter: brightness(1.03);
-            color: var(--navIconColors);
-            
             @include flex-container(center, center);
+            filter: brightness(1.03);
             
             &:hover {
                 border-radius: 100%;
@@ -116,8 +102,18 @@
                 // background-color: rgb(37, 35, 41);
             }
 
-            .fa-music {
+            &--chart {
+            }
+            &--youtube {
+            }
+            &--music {
                 font-size: 1.2rem;
+            }
+            &--gear {
+            }
+
+            i {
+                color: var(--navIconColors);
             }
 
             &__icon {
@@ -133,15 +129,6 @@
                 @include md(max-width) {
                     display: none;
                 }
-            }
-
-            &--chart {
-            }
-            &--youtube {
-            }
-            &--music {
-            }
-            &--gear {
             }
         }
     }

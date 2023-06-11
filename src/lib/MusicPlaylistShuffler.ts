@@ -14,7 +14,7 @@ export class MusicPlaylistShuffler {
     hasCompleted: boolean = false
     shuffledIndexes: number[] = [];
     
-    CHUNK_SIZE: number = 100;
+    static CHUNK_SIZE: number = 100;
     CAN_CONTINUE_CHUNK = 1
     HAS_ENDED_AND_MORE_CHUNKS = 2
     HAS_ENDED_NO_CHUNKS = 3
@@ -32,7 +32,7 @@ export class MusicPlaylistShuffler {
         }
         else {
             if (currentTrackIndex >= songCount) throw new Error('Starting Index Out Of Boounds!');
-            if (chunkSize) this.CHUNK_SIZE = chunkSize
+            if (chunkSize) MusicPlaylistShuffler.CHUNK_SIZE = chunkSize
             
             this.startTrackIndex = currentTrackIndex
             this.currentTrackIndex = currentTrackIndex
@@ -68,7 +68,7 @@ export class MusicPlaylistShuffler {
         // May be caused in playlist item selector after scrolling down 100+ playlists
         // ...then selects a starting index > shuffled array size
 
-        let size = Math.min(this.CHUNK_SIZE, this.songCount)
+        let size = Math.min(MusicPlaylistShuffler.CHUNK_SIZE, this.songCount)
         this.shuffledIndexes = new Array(size);
     
         for (let i = 0; i <= size - 1; i++) {
@@ -118,7 +118,7 @@ export class MusicPlaylistShuffler {
 
     private getNextChunk(): number[] {
         const currentSize = this.shuffledIndexes.length
-        const size = Math.min(this.CHUNK_SIZE, this.songCount - this.shuffledIndexes.length)
+        const size = Math.min(MusicPlaylistShuffler.CHUNK_SIZE, this.songCount - this.shuffledIndexes.length)
   
         let currIndex = currentSize
         const nextChunkArray = new Array(size);

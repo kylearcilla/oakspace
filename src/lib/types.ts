@@ -17,25 +17,32 @@ type Track = {
     playlistName: string;
     playlistArtworkSrc: string;
 };
-
-type LiveTrack = {
+  
+type MusicCollection = {
     id: string,
     name: string,
     author: string,
-    artworkImgSrc: string,
-    description: string
-};
-  
-type MusicPlaylist = {
-    id: string,
-    name: string,
     artworkImgSrc: string,
     songCount: number,
     time: string,
     description: string,
     type: string,
+    url: string | null,
     currentIndex: number,
 };
+
+type MusicDiscoverCollection = {
+    title: string,
+    author: string,
+    artworkSrc: string,
+    description: string,
+    genre: string,
+    length: number,
+    albumId: string | null,
+    playlistId: string | null
+    url: string | null
+}
+
 
 type AppleUserCredentials = {
     devToken: string,
@@ -43,8 +50,8 @@ type AppleUserCredentials = {
 }
 
 type MusicContext = {
-    platform: string,
-    currentMedia: string
+    platform: MusicPlatform | null,
+    platformName: string | null
 }
 
 type MusicPlayerData = {
@@ -54,6 +61,20 @@ type MusicPlayerData = {
     isDisabled: boolean,
     isRepeating: boolean,
     isShuffled: boolean
+}
+
+type MusicCollectionCategory = {
+    title: string,
+    artworkSrc: string,
+    artworkBlurredSrc: string,
+    artistCredit: string,
+    description: string,
+}
+
+type MusicCollectionCategoryCollections = {
+    appleMusic: MusicCollection[],
+    spotify: MusicCollection[],
+    soundcloud: MusicCollection[]
 }
 
 /* Video Stuff */
@@ -66,23 +87,31 @@ type YoutubeUserData = {
     username: string,
     channelImgSrc: string,
     email: string,
-    selectedPlaylistId: number,
-    playlists: YouTubePlaylist[]
+    selectedPlaylist: YoutubePlaylist | null,
+    playlists: YoutubePlaylist[]
 }
 
-type YouTubePlaylist = {
+type YoutubePlaylist = {
+    id: string,
+    title: string,
+    description: string,
+    vidCount: number,
+    channelId: string,
+    thumbnailURL: string,
+}
+
+type YoutubeVideo = {
     id: string
     title: string
-    likeCount: string
-    viewCount: string
+    likeCount: number
+    viewCount: number
     publishedAt: string
     channelName: string
     channelImgSrc: string
-    channelSubs: string
+    channelSubs: number
 };
 
 /* Color Theme */
-
 type ColorTheme = {
     isDark: boolean,
     primaryBgColor: string,

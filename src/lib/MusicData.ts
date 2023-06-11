@@ -1,30 +1,29 @@
 import type { Writable } from "svelte/store"
-import { curentPlaylist, currentTrack, musicContext, userMusicPlaylists } from "./store"
-import { getAppleMusicPlaylistDetails, getUserApplePlaylists } from "./apple-music-api"
+import { curentPlaylist, currentTrack, userMusicPlaylists } from "./store"
+import { getPlaylistDetails, getUserApplePlaylists } from "./apple-music-api"
+
+enum MusicPlatform { AppleMusic, Spotify, Youtube, Soundcloud }
 
 export class MusicData {
     musicKit: any = null
     musicPlayerInstance: any;
 
-    musicContext: MusicContext = {
-        platform: "",
-        currentMedia: ""
-    }
-    currentMediaItem: Track | LiveTrack | null = null
-    userPlaylists: MusicPlaylist[] = []
-    currentPlaylist: MusicPlaylist | null = null
+    musicPlatform: MusicPlatform | null = null
+    currentMediaItem: Track | null = null
+    userPlaylists: MusicCollection[] = []
+    currentPlaylist: MusicCollection | null = null
 
-    userPlaylistsState: Writable<MusicPlaylist[]>
-    currentTrackState: Writable<Track | LiveTrack>
-    curentPlaylistState: Writable<MusicPlaylist>
-    musicContextState: Writable<MusicContext>
+    userPlaylistsState: Writable<MusicCollection[] | null>
+    currentTrackState: Writable<Track | null>
+    curentPlaylistState: Writable<MusicCollection | null>
 
-    constructor() { 
+    constructor(musicPlatform: MusicPlatform) { 
+        this.musicPlatform = musicPlatform
         this.currentTrackState = currentTrack
         this.curentPlaylistState = curentPlaylist
-        this.musicContextState = musicContext
         this.userPlaylistsState = userMusicPlaylists
 
+        localStorage.setItem("music-platform", JSON.stringify(musicPlatform));
     }
 
     authUser = async () => await this.initUser()
@@ -56,8 +55,6 @@ export class MusicData {
             await this.musicKit.configure(options);
             this.musicPlayerInstance = this.musicKit.getInstance()
             const authToken = await this.musicPlayerInstance.authorize()
-    
-            this.updateMusicContext({ platform: "apple music", currentMedia: "" })
             return this.updateAppleAuthToken(authToken)
         }
         
@@ -65,11 +62,17 @@ export class MusicData {
     }
 
     /* Tracks */
-    updateCurrentTrack(mediaItem: Track | LiveTrack) {
+    updateCurrentTrack(mediaItem: Track) {
         this.currentMediaItem = mediaItem
         this.currentTrackState.update(() => mediaItem)
 
         localStorage.setItem("music-current-track", JSON.stringify(mediaItem))
+    }
+    removeCurrentTrack() {
+        this.currentMediaItem = null
+        this.currentTrackState.set(null)
+
+        localStorage.removeItem("music-current-track")
     }
 
     getNextPlaylistIndex(isRepeating: boolean): number {
@@ -106,30 +109,42 @@ export class MusicData {
     /* Current Playlist */
     async setNewPlaylist(playlistId: string) {
         const newPlaylist = await this.getPlaylistDetails(playlistId)
-        console.log(newPlaylist)
         if (!newPlaylist) return
 
         this.updateCurrentPlaylist(newPlaylist)
     }
 
-    private async getPlaylistDetails(playlistId: string): Promise<MusicPlaylist | null>  {
-        if (this.musicContext.platform === "apple music") {
-            return await getAppleMusicPlaylistDetails(playlistId, this.getAccessToken())
-        }
-
-        return null
-    }
-
-    updateCurrentPlaylist(newCurrentPlaylist: MusicPlaylist) {
+    updateCurrentPlaylist(newCurrentPlaylist: MusicCollection) {
         this.currentPlaylist = newCurrentPlaylist
 
         this.curentPlaylistState.update((data: any) => {
             const newData = { ...data, ...newCurrentPlaylist }
-            localStorage.setItem("music-current-playlist", JSON.stringify(newData))
+            localStorage.setItem("music-current-collection", JSON.stringify(newData))
 
             return newData
         })
     }
+
+    removeCurrentMusicCollection() {
+        this.currentPlaylist = null
+        this.curentPlaylistState.set(null)
+
+        localStorage.removeItem("music-current-collection")
+        this.removeCurrentTrack()
+    }
+
+    private async getPlaylistDetails(playlistId: string): Promise<MusicCollection | null>  {
+        if (this.musicPlatform === MusicPlatform.AppleMusic) {
+            return await getPlaylistDetails(playlistId, this.getAccessToken())
+        }
+        
+        return null
+    }
+
+    /* Current Album */
+    async setNewAlbum(album: MusicCollection) {
+        this.updateCurrentPlaylist(album)
+	}
 
     /* User Library Playlists */
     async setUserPlaylists() {
@@ -139,15 +154,15 @@ export class MusicData {
         this.updateUserPlaylists(userPlaylistsResults, false)
     }
 
-    private async getUserPlaylists(): Promise<MusicPlaylist[] | null>  {
-        if (this.musicContext.platform === "apple music") {
+    private async getUserPlaylists(): Promise<MusicCollection[] | null>  {
+        if (this.musicPlatform === MusicPlatform.AppleMusic) {
             return await getUserApplePlaylists()
         }
 
         return null
     }
 
-    private updateUserPlaylists(userPlaylists: MusicPlaylist[], isLoading: boolean) {
+    private updateUserPlaylists(userPlaylists: MusicCollection[], isLoading: boolean) {
         this.userPlaylists = userPlaylists
         this.userPlaylistsState.update((data) => {
             localStorage.setItem("music-user-playlists", JSON.stringify(userPlaylists))
@@ -170,13 +185,6 @@ export class MusicData {
     }
     
     /* General Music Data */
-    updateMusicContext(newMusicContext: MusicContext) {
-        this.musicContext = newMusicContext
-        musicContext.set(newMusicContext)
-
-        localStorage.setItem("music-context", JSON.stringify(newMusicContext))
-    }
-
     loadMusicData = () => {
         const currentPlaylist = this.loadCurrentPlaylist()
         if (currentPlaylist) this.updateCurrentPlaylist(currentPlaylist)
@@ -189,10 +197,9 @@ export class MusicData {
     }
 
     private loadCurrentPlaylist = () => {
-        if (!localStorage.getItem("music-current-playlist")) return null
-        return JSON.parse(localStorage.getItem("music-current-playlist")!)
+        if (!localStorage.getItem("music-current-collection")) return null
+        return JSON.parse(localStorage.getItem("music-current-collection")!)
     }
-
     private loadCurrentTrack = () => {
         if (!localStorage.getItem("music-current-track")) return null
         return JSON.parse(localStorage.getItem("music-current-track")!)

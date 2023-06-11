@@ -22,15 +22,20 @@
 
 <style lang="scss">
     .pom-view {
-        height: 50px;
+        height: 40px;
         width: 100%;
         display: flex;
         background-color: var(--pomBgColor);
-        padding: 30px 15px 28px 15px;
-        margin-top: 10px;
+        padding: 24px 15px 24px 15px;
+        margin-top: 8px;
         position: relative;
         color: rgb(var(--textColor4));
-        border-radius: 10px;    
+        border-radius: 16px;
+        
+        
+        @include sm(max-width) {
+            padding-bottom: 22px;
+        }
         
         &__pom-task-tag-icon {
             background-color: #7E7BF8;
@@ -50,7 +55,7 @@
             max-width: 90px;
             text-align: start;
             overflow: hidden;
-            width: 15%;
+            width: 20%;
 
             h2 {
                 max-width: 90%;
@@ -70,7 +75,7 @@
                 position: absolute;
                 color: rgb(var(--textColor4));
                 right: 1.5%;
-                top: 20px;
+                top: 15px;
                 border-radius: 4px;
                 
                 &:hover {
@@ -82,7 +87,6 @@
                     margin-left: 5px;
                     right: 2.5%;
                 }
-
             }
         }
 }

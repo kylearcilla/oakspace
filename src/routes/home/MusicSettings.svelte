@@ -1,54 +1,64 @@
 <script lang="ts">
-	import { appleMusicPlayerState, colorTheme, curentPlaylist, musicDataState, musicPlayerData, userMusicPlaylists } from "$lib/store";
-	import { onMount } from "svelte";
-    import { clickOutside } from "../../lib/helper";
-	import { _authAppleUser, _initMusicKit } from "./+page";
-	import { MusicData } from "$lib/MusicData";
-	import { AppleMusicPlayer } from "$lib/AppleMusicPlayer";
-	import type { MusicPlayer } from "$lib/MusicPlayer";
-    export let onNavButtonClicked: any;
+	import { onDestroy, onMount } from "svelte"
+    
+	import { _authAppleUser, _initMusicKit } from "./+page"
+	import type { MusicPlayer } from "$lib/MusicPlayer"
+    import { clickOutside } from "$lib/helper"
+	import { MusicData } from "$lib/MusicData"
+	import { AppleMusicPlayer } from "$lib/AppleMusicPlayer"
 
-    let musicPlayer: MusicPlayer
-    let musicData: MusicData
+	import { 
+        appleMusicPlayerState, curentPlaylist, musicDataState, 
+        musicPlayerData, userMusicPlaylists 
+    } from "$lib/store"
+    import { 
+        musicCategories, sereneCollections, acousticCollections, 
+        classicalCollections, lofiCollections, soundtrackCollections, 
+        summerCollections, upbeatCollections, zenCollections  
+    } from "$lib/data-music-collections"
 
-    let isModalOpen = true;
-    let pickedPlaylistId = -1;
-    let clickedPlaylistId = -1;
-    let isSignedIn = true;
+    enum MusicPlatform { AppleMusic, Spotify, Youtube, Soundcloud }
+
+    export let onNavButtonClicked: any
+
+    let musicPlayer: MusicPlayer | null = null
+    let musicData: MusicData | null = null
+
+    let isSignedIn = false
     let isPlatformListOpen = false
 
-    let isSoundCloudLinked = true
-    let isAppleMusicLinked = true
-    let isYoutubeLinked = true
-    let isCollectionOpen = false
-
-    let isPlaylistBtnDisabled = false
-
     let playlists: any = []
-    let currentPlaylist: any = {}
+    let currentMusicCollection: MusicCollection | null = null
+    
+    let collectionGroupIdx = 0
+    let isScrollableLeft = false
+    let isScrollableRight = true
+    let collectionList: HTMLElement
 
-    let isThemeLightMode = false
-    colorTheme.subscribe((theme: ColorTheme) => {
-        isThemeLightMode = !theme.isDark
+    let debounceTimeout: NodeJS.Timeout | null = null
+
+    const SCROLL_STEP = 250
+    const PLAYLIST_BTN_COOLDOWN_MS = 350
+
+    // init music data for music settings
+    musicDataState.subscribe((data: MusicData) => {
+        if (data) isSignedIn = true
+        
+        // @ts-ignore
+        musicData = data
     })
+    appleMusicPlayerState.subscribe((data: MusicPlayer) => musicPlayer = data)    
+    userMusicPlaylists.subscribe((data: MusicCollection[] | null) => playlists = (!data || data.length == 0) ? [] : data)
+    curentPlaylist.subscribe((data: MusicCollection | null) => currentMusicCollection = data)
 
-    let PLAYLIST_BTN_COOLDOWN_MS = 150
+    let chosenMusicCollection: MusicDiscoverCollection[] = (sereneCollections as any)[getPlatformNameForDiscoverPlaylist()]
 
-    // keep track of whether a debounced call to handlePlaylistClicked has already been scheduled
-    let debounceTimeout: NodeJS.Timeout | null = null;
-
-    // init user music settings
-    userMusicPlaylists.subscribe((data: any) => playlists = (!data || data.length == 0) ? [] : data)
-
-    // init data for music settings
-    curentPlaylist.subscribe((data: any) => currentPlaylist = data )
-    musicDataState.subscribe((data: any) => musicData = data)
-    appleMusicPlayerState.subscribe((data: any) => musicPlayer = data)
+    const closeModal = () => onNavButtonClicked("")
 
     // attempt to init player
-    const handlePlatformClicked = async (platformName: string) => {
-        if (platformName === "apple") {
-            musicData = new MusicData()
+    const initMusicData = async (platform: MusicPlatform) => {
+        if (platform === MusicPlatform.AppleMusic) {
+            musicData = new MusicData(MusicPlatform.AppleMusic)
             await musicData.authUser()
             musicData.loadMusicData()
             musicData.setUserPlaylists()
@@ -57,363 +67,500 @@
 
             appleMusicPlayerState.set(musicPlayer)
             musicDataState.set(musicData)
+
+            isSignedIn = true
+            // @ts-ignore
+            chosenMusicCollection = sereneCollections[getPlatformNameForDiscoverPlaylist()]
+        }
+    }
+    /**
+     * For selecting corresponding category playlists for Discover section (varies for each platform)
+    */
+    function getPlatformNameForDiscoverPlaylist(): string {
+        const platform = MusicPlatform[musicData!.musicPlatform!].toLowerCase()
+        return platform === "applemusic" ? "appleMusic" : platform
+    }
+    const getPlatformName = (): string => {
+        const platform = MusicPlatform[musicData!.musicPlatform!]
+        return platform === "AppleMusic" ? "Apple Music" : platform
+    }
+    const logoutUser = (platformName: string) => {
+        isSignedIn = false
+     }
+
+    /**
+     * @param id        used to play playlist for app player using JS Music Kit API
+     * @param globalId  used for getting user playlist details for personal playlists, otherwise id is used
+     */
+    const handlePersonalPlaylistClicked = async (id: string, globalId: string = id) => {
+        if (debounceTimeout !== null) clearTimeout(debounceTimeout)
+
+        debounceTimeout = setTimeout(async () => {
+            if (musicPlayer!.musicPlayerData.isShuffled) {
+                musicPlayer!.toggleShuffle()
+            } else {
+                musicPlayer!.updateMusicPlayerData({ ...musicPlayer!.musicPlayerData, isDisabled: true, isShuffled: false })
+            }
+            
+            musicData!.setNewPlaylist(globalId)
+            musicPlayer!.resetMusicPlayerData()
+            musicPlayer!.queueAndPlayNextTrack(id, 0)
+
+            debounceTimeout = null
+        }, PLAYLIST_BTN_COOLDOWN_MS)
+    }
+
+    /* Discover Section Functionality */
+    const handleDiscoverCollectionClicked = (index: number) => {
+        collectionGroupIdx = index
+        const collectionTitle = musicCategories[index].title
+        const platformProp = getPlatformNameForDiscoverPlaylist()
+
+        switch (collectionTitle) {
+            case "Serene":
+                //@ts-ignore
+                chosenMusicCollection = sereneCollections[platformProp]
+                break
+            case "Lofi":
+                //@ts-ignore
+                chosenMusicCollection = lofiCollections[platformProp]
+                break
+            case "Upbeat":
+                //@ts-ignore
+                chosenMusicCollection = upbeatCollections[platformProp]
+                break
+            case "Soundtracks":
+                //@ts-ignore
+                chosenMusicCollection = soundtrackCollections[platformProp]
+                break
+            case "Acoustic":
+                //@ts-ignore
+                chosenMusicCollection = acousticCollections[platformProp]
+                break
+            case "Classical":
+                //@ts-ignore
+                chosenMusicCollection = classicalCollections[platformProp]
+                break
+            case "Zen":
+                //@ts-ignore
+                chosenMusicCollection = zenCollections[platformProp]
+                break
+            case "Summer":
+                //@ts-ignore
+                chosenMusicCollection = summerCollections[platformProp]
+                break
         }
     }
 
-    const handlePlaylistClicked = async (id: string, globalId: string) => {
-        // a previous call to the debounced function is still waiting to execute (user pressed to quick)
-        // cancel to schedule a new one and wait for that one
-        if (debounceTimeout !== null) clearTimeout(debounceTimeout);
+    const getCollectionId = (collection: MusicDiscoverCollection) => {
+        return collection?.albumId ?? collection.playlistId
+    }
+
+    const handleRecommendedPlaylistClicked = async (collection: MusicDiscoverCollection, event: MouseEvent) => {
+        const target = event.target as HTMLElement;
+        if (target.tagName === 'A') return
+        if (debounceTimeout !== null) clearTimeout(debounceTimeout)
+
+        const id = collection?.albumId ?? (collection?.playlistId ?? (collection?.albumId ?? ""))
+        if (id === currentMusicCollection?.id) {
+            musicData!.removeCurrentMusicCollection()
+            musicPlayer!.resetMusicPlayerDataToEmptyState()
+            return
+        }
 
         debounceTimeout = setTimeout(async () => {
-            musicData.setNewPlaylist(globalId)
-            musicPlayerData.update((data: any) => { return { ...data, message: "Setting Up!", isDisabled: true, isShuffled: false } })
+            if (musicPlayer!.musicPlayerData.isShuffled) {
+                musicPlayer!.toggleShuffle()
+            }
+            else {
+                musicPlayer!.updateMusicPlayerData({ ...musicPlayer!.musicPlayerData, isDisabled: true, isShuffled: false })
+            }
 
-            musicPlayer.resetMusicPlayerData()
-            musicPlayer.queueAndPlayNextTrack(id, 0)
+            musicData!.updateCurrentPlaylist({
+                id: id,
+                name: collection.title,
+                description: collection?.description,
+                artworkImgSrc: collection.artworkSrc,
+                currentIndex: 0,
+                time: "",
+                type: collection.playlistId === null ? "Album" : "Playlist",
+                songCount: collection.length,
+                url: collection.url,
+                author: collection.author
+            })
 
-            debounceTimeout = null;
-        }, PLAYLIST_BTN_COOLDOWN_MS);
-    };
+            musicPlayer!.resetMusicPlayerData()
+            musicPlayer!.queueAndPlayNextTrack(id, 0)
+            debounceTimeout = null
 
-    const handleLogUserOut = (platformName: string) => { }
-    const closeModal = () => onNavButtonClicked("")
+        }, PLAYLIST_BTN_COOLDOWN_MS)
+    }
 
+    /* Discover Collection Carousel Functionality */
+    const handleShiftTabCategoryRight = () => collectionList!.scrollLeft += SCROLL_STEP
+    const handleShiftTabCategoryLeft = () => collectionList!.scrollLeft -= SCROLL_STEP
+
+    const handleScroll = (event: any) => {
+        const scrollLeft = event.target.scrollLeft
+        const scrollWidth = event.target.scrollWidth
+        const clientWidth = event.target.clientWidth // container width
+
+        isScrollableLeft = scrollLeft > 0
+        isScrollableRight = scrollLeft + clientWidth < scrollWidth - 20
+    }
+
+    // right arrow disappears after a window resize if false even user can scroll right
+    const handleResize = () => {
+        const scrollLeft = collectionList.scrollLeft
+        const scrollWidth = collectionList.scrollWidth
+        const clientWidth = collectionList.clientWidth
+
+        isScrollableRight = scrollLeft + clientWidth < scrollWidth
+    }
+
+    onMount(() => window.addEventListener("resize", handleResize))
+    onDestroy(() => window.removeEventListener("resize", handleResize))
 </script>
 
-<div class={`modal-bg ${isModalOpen ? "" : "modal-bg--hidden"}`}>
-    <div use:clickOutside on:click_outside={closeModal} class="modal-bg__content modal-bg__content--overflow-y-scroll">
+<div class="modal-bg">
+    <div 
+        use:clickOutside on:click_outside={closeModal} 
+        class={`modal-bg__content modal-bg__content--overflow-y-scroll ${isSignedIn ? "" : "modal-bg__content--med"}`}
+    >
         <!-- <button on:click={closeModal} class="close-btn">
             <i class="fa-solid fa-xmark"></i>
         </button> -->
-        <div class={`music ${isSignedIn ? "" : "music--min"}`}>
+        <div class={`music ${isSignedIn ? "" : "music--small"}`}>
             <div class="music__header">
                 <h1>Music</h1>
                 <i class="fa-solid fa-music"></i>
             </div>
             {#if isSignedIn}
-            <!-- Current Platform and Name Section -->
-                <div class="dropdown-element profile-tab">
-                    <button class="dropdown-element profile-tab__btn" on:click={() => isPlatformListOpen = !isPlatformListOpen}>
-                        <div class="dropdown-element platform-logo platform-logo--soundcloud">
-                            <i class="fa-brands fa-soundcloud"></i>
+            <!-- Logged In Profile Header -->
+            <div class="active-account-header">
+                <button class="active-account-header__btn dropdown-element" on:click={() => isPlatformListOpen = !isPlatformListOpen}>
+                    {#if musicData?.musicPlatform === MusicPlatform.Soundcloud}
+                        <div class="platform-logo platform-logo--small platform-logo--soundcloud dropdown-element">
+                            <i class="fa-brands fa-soundcloud fa-soundcloud--small"></i>
                         </div>
-                        <i class="fa-solid fa-chevron-down"></i>
-                    </button>
-                    <div class="divider divider--vertical"></div>
-                    <p>Kyle Arcilla</p>
-                    <div class="profile-tab__img">
-                        <img src="" alt="">
-                    </div>
-                    <!-- Music Platform Dropdown List -->
-                    {#if isPlatformListOpen}
-                        <div use:clickOutside on:click_outside={() => isPlatformListOpen = false} class="platform-list platform-list--dropdown dropwdown-element">
-                            <li class="platform-item platform-item--small">
-                                <div class="platform-item__logo platform-logo platform-logo--small platform-logo--soundcloud">
-                                    <i class="fa-brands fa-soundcloud fa-soundcloud--small"></i>
-                                </div>
-                                <div class="platform-item__text">
-                                    <h3>Soundcloud</h3>
-                                    <p>Playlist</p>
-                                </div>
-                                <button class="btn-text-only" on:click={() => handlePlatformClicked("soundcloud")}>Connect</button>
-                            </li>
-                            <li class="platform-item platform-item--small">
-                                <div class="platform-item__logo platform-logo platform-logo--small platform-logo--youtube">
-                                    <i class="fa-brands fa-youtube fa-youtube--small"></i>
-                                </div>
-                                <div class="platform-item__text">
-                                    <h3>Youtube</h3>
-                                    <p>Playlist, Live Videos</p>
-                                </div>
-                                <button class="btn-text-only" on:click={() => handlePlatformClicked("youtube")}>Connect</button>
-                            </li>
-                            <li class="platform-item platform-item--small">
-                                <div class="platform-item__logo platform-logo platform-logo--small platform-logo--apple">
-                                    <i class="fa-brands fa-itunes-note fa-itunes-note--small"></i>
-                                </div>
-                                <div class="platform-item__text">
-                                    <h3>Apple Music</h3>
-                                    <p>Playlists, Live Radio</p>
-                                </div>
-                                <button class="btn-text-only" on:click={() => handlePlatformClicked("apple")}>Connect</button>
-                            </li>
-                            <li class="platform-item platform-item--small">
-                                <div class="platform-item__logo platform-logo platform-logo--small platform-logo--spotify">
-                                    <i class="fa-brands fa-spotify fa-spotify--small"></i>
-                                </div>
-                                <div class="platform-item__text">
-                                    <h3>Spotify</h3>
-                                    <p>Playlists, Podcasts</p>
-                                </div>
-                                <button class="btn-text-only" on:click={() => handlePlatformClicked("spotify")}>Connect</button>
-                            </li>
+                    {:else if musicData?.musicPlatform === MusicPlatform.Youtube}
+                        <div class="platform-logo platform-logo--small platform-logo--youtube dropdown-element">
+                            <i class="fa-brands fa-youtube fa-youtube--small"></i>
+                        </div>
+                    {:else if musicData?.musicPlatform === MusicPlatform.AppleMusic}
+                        <div class="platform-logo platform-logo--small platform-logo--apple dropdown-element">
+                            <i class="fa-brands fa-itunes-note fa-itunes-note--small"></i>
+                        </div>
+                    {:else if musicData?.musicPlatform === MusicPlatform.Spotify}
+                        <div class="platform-logo platform-logo--small platform-logo--spotify dropdown-element">
+                            <i class="fa-brands fa-spotify fa-spotify--small"></i>
                         </div>
                     {/if}
+                    <p>{getPlatformName()}</p>
+                    <i class="fa-solid fa-chevron-down"></i>
+                </button>
+                <p class="active-account-header__username">Kyle Arcilla</p>
+                <div class="active-account-header__user-profile-pic">
+                    <img src="" alt="">
                 </div>
-                <div class="music__row music__row--top">
+                <!-- Music Platform Dropdown List -->
+                {#if isPlatformListOpen}
+                    <ul class="platform-list" use:clickOutside on:click_outside={() => isPlatformListOpen = false}>
+                        <li class="platform-list__platform-item">
+                            <div class="platform-logo platform-logo--small platform-logo--soundcloud">
+                                <i class="fa-brands fa-soundcloud fa-soundcloud--small"></i>
+                            </div>
+                            <div class="platform-list__platform-item-text">
+                                <h3>Soundcloud</h3>
+                                <p>Playlist</p>
+                            </div>
+                            <button 
+                                class={`platform-list__platform-item-btn ${musicData?.musicPlatform === MusicPlatform.Soundcloud ? "platform-list__platform-item-btn--selected" : ""} btn-text-only`}
+                                on:click={() => initMusicData(MusicPlatform.Soundcloud)}
+                            >
+                                {musicData?.musicPlatform === MusicPlatform.Soundcloud ? "Disconnect" : "Connect"}
+                            </button>
+                        </li>
+                        <li class="platform-list__platform-item">
+                            <div class="platform-logo platform-logo--youtube platform-logo--small-youtube">
+                                <i class="fa-brands fa-youtube fa-youtube--small"></i>
+                            </div>
+                            <div class="platform-list__platform-item-text">
+                                <h3>Youtube</h3>
+                                <p>Playlist, Live Videos</p>
+                            </div>
+                            <button 
+                                class={`platform-list__platform-item-btn ${musicData?.musicPlatform === MusicPlatform.Youtube ? "platform-list__platform-item-btn--selected" : ""} btn-text-only`}
+                                on:click={() => initMusicData(MusicPlatform.Youtube)}
+                            >
+                                {musicData?.musicPlatform === MusicPlatform.Youtube ? "Disconnect" : "Connect"}
+                            </button>
+                        </li>
+                        <li class="platform-list__platform-item">
+                            <div class="platform-logo platform-logo--small platform-logo--apple">
+                                <i class="fa-brands fa-itunes-note fa-itunes-note--small"></i>
+                            </div>
+                            <div class="platform-list__platform-item-text">
+                                <h3>Apple Music</h3>
+                                <p>Playlists</p>
+                            </div>
+                            <button 
+                                class={`platform-list__platform-item-btn ${musicData?.musicPlatform === MusicPlatform.AppleMusic ? "platform-list__platform-item-btn--selected" : ""} btn-text-only`}
+                                on:click={() => initMusicData(MusicPlatform.AppleMusic)}
+                            >
+                                {musicData?.musicPlatform === MusicPlatform.AppleMusic ? "Disconnect" : "Connect"}
+                            </button>
+                        </li>
+                        <li class="platform-list__platform-item">
+                            <div class="platform-logo platform-logo--small platform-logo--spotify">
+                                <i class="fa-brands fa-spotify fa-spotify--small"></i>
+                            </div>
+                            <div class="platform-list__platform-item-text">
+                                <h3>Spotify</h3>
+                                <p>Playlists, Podcasts</p>
+                            </div>
+                            <button 
+                                class={`platform-list__platform-item-btn ${musicData?.musicPlatform === MusicPlatform.Spotify ? "platform-list__platform-item-btn--selected" : ""} btn-text-only`}
+                                on:click={() => initMusicData(MusicPlatform.Spotify)}
+                            >
+                                {musicData?.musicPlatform === MusicPlatform.Spotify ? "Disconnect" : "Connect"}
+                            </button>
+                        </li>
+                    </ul>
+                {/if}
+            </div>
+            <!-- Music Settings Content -->
+            <div class="music__content">
+                <div class="music__left-section">
                     <!-- Now Playing Section -->
                     <div class="now-playing grid-section">
-                        <img class="img-bg" src={currentPlaylist?.artworkImgSrc} alt="">
-                        <div class={`blur-bg ${isThemeLightMode ? "blur-bg--solid-color" : "blur-bg--blurred-bg"}`}></div>
+                        <img class="img-bg" src={currentMusicCollection?.artworkImgSrc} alt="">
+                        <div class={`blur-bg blur-bg--blurred-bg ${currentMusicCollection ?? "blur-bg--solid-color"}`}></div>
                         <div class="content-bg">
                             <div class="grid-section__header">
                                 <h2>Now Playing</h2>
                             </div>
-                            <div class="flx">
-                                <div class="now-playing__img">
-                                    <img src={currentPlaylist?.artworkImgSrc} alt="">
+                            {#if currentMusicCollection}
+                                <div class="now-playing__details-container">
+                                    <div class="now-playing__artwork">
+                                        <img src={currentMusicCollection?.artworkImgSrc} alt="">
+                                    </div>
+                                    <div class="now-playing__description">
+                                        <span>{currentMusicCollection?.author}</span>
+                                        {#if currentMusicCollection?.url}
+                                            <a href={currentMusicCollection?.url} target="_blank" rel="noreferrer">{currentMusicCollection?.name}</a>
+                                        {:else}
+                                            <h3>{currentMusicCollection?.name}</h3>
+                                        {/if}
+                                        <p>{currentMusicCollection?.description}</p>
+                                    </div>
+                                </div>             
+                                <div class="now-playing__collection-details">
+                                    <p class="now-playing__collection-type">{currentMusicCollection?.type}</p>
+                                    <span>/</span>
+                                    <p>{currentMusicCollection?.songCount} songs</p>
                                 </div>
-                                <div class={`now-playing__description ${isThemeLightMode ? "now-playing__description--solid-color" : "now-playing__description--blurred-bg"}`}>
-                                    <span>{currentPlaylist?.type}</span>                                
-                                    <h3>{currentPlaylist?.name}</h3>
-                                    <p>{currentPlaylist?.description}</p>
+                            {:else}
+                                <div class="now-playing__no-pl-selected">
+                                    No Playlist / Album Selected
                                 </div>
-                            </div>                        
-                            <div class={`now-playing__collection-details ${isThemeLightMode ? "now-playing__collection-details--solid-color" : "now-playing__collection-details--blurred-bg"}`}>
-                                <p>{currentPlaylist?.songCount} songs</p>
-                                <span>•</span>
-                                <p>{currentPlaylist?.time}</p>
-                            </div>
+                            {/if}
                         </div>
                     </div>
-                    <!-- Discover Section -->
-                    <div class="discover grid-section">
-                        <div class="grid-section__header">
-                            <h2>Discover</h2>
-                        </div>     
-                        <div class="flx">
-                            <div class="discover__description">
-                                <p class="grid-section__copy">Get in the zone with music that matches your vibe - select a category and discover new tunes to fuel your day.</p>
-                                <a class="btn-text-only">Discover more on Apple Music</a>
-                            </div>
-                            <div class="discover__collection-container">
-                                <div class="gradient-container"></div>
-                                <button class="icon-btn">
-                                    <i class="fa-solid fa-chevron-right"></i>
-                                </button>
-                                <div class="discover__collection">
-                                        <div class="discover__collection-padding"></div>
-                                        {#each [0, 1, 2, 4] as i}
-                                            <!-- svelte-ignore a11y-click-events-have-key-events -->
-                                            <div class="blur-card" on:click={() => isCollectionOpen = !isCollectionOpen}>
-                                                <img src="https://i.pinimg.com/564x/75/f3/3c/75f33c50db8c58dd6874751a6cd29837.jpg" alt="">
-                                                <div class="blur-card__blur-bg">
-                                                    <h3>Zen</h3>
-                                                    <div class="blur-card__description">
-                                                        <div class="flx">
-                                                            <p>Acoustic</p><div class="divider divider--vertical"></div><p>Lofi</p><div class="divider divider--vertical"></div><p>Folk</p>
-                                                        </div>
-                                                        <div class="flx">
-                                                            <p>Piano</p><div class="divider divider--vertical"></div><p>Classical</p>
-                                                        </div>
-                                                        <div class="flx">
-                                                            <p>Soul</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="blur-card__bottom-header">
-                                                    <h3>Zen</h3>
-                                                </div>
-                                            </div>
-                                        {/each}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="music__row music__row--bottom">
                     <!-- My Playlists Section -->
                     <div class="my-playlists grid-section grid-section--no-padding">
                         <div class="grid-section__header grid-section__header--padded">
                             <h2>My Playlists</h2>
-                            <h3>{`${playlists?.length} ${playlists?.length == 1 ? "playlist" : "playlists"}`}</h3>
+                            <h3>{`${playlists.length} ${playlists.length == 1 ? "playlist" : "playlists"}`}</h3>
                         </div>     
-                        <ul class="my-playlists__playlists vert-scroll">
-                            {#if playlists?.length == 0}
-                            <img class="my-playlists__no-pl-meme abs-center" src="/no-pl.png"/>
+                        <ul class="my-playlists__collection-list vert-scroll">
+                            {#if playlists?.length === 0}
+                                <img class="my-playlists__no-pl-meme-img abs-center" src="/no-pl.png" alt="no-playlists-img"/>
                             {:else}
-                            {#each playlists as p, idx}
-                            <!-- svelte-ignore a11y-click-events-have-key-events -->
-                            <li class="my-playlists__playlist" on:click={() => handlePlaylistClicked(p.id, p.globalId)}>
-                                <p>{idx + 1}</p>
-                                <div class="my-playlists__playlist-img">
-                                    {#if p.artworkSrc != ""}
-                                    <img src={p.artworkSrc} />
-                                    {:else}
-                                    <i class="fa-solid fa-music abs-center"></i>
-                                    {/if}
-                                </div> 
-                                <div class="my-playlists__playlist-text">
-                                    <h4>{p.name}</h4>
-                                    <p>{p.description}</p>
-                                </div>
-                            </li>
-                            {/each}
+                                {#each playlists as p, idx}
+                                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                                <li class="my-playlists__playlist" on:click={() => handlePersonalPlaylistClicked(p.id, p.globalId)}>
+                                    <p class="my-playlists__playlist-idx">{idx + 1}</p>
+                                    <div class="my-playlists__playlist-img">
+                                        {#if p.artworkSrc != ""}
+                                            <img src={p.artworkSrc} alt="playlist-artwork"/>
+                                        {:else}
+                                            <i class="fa-solid fa-music abs-center"></i>
+                                        {/if}
+                                    </div> 
+                                    <div class="my-playlists__playlist-text">
+                                        <h4>{p.name}</h4>
+                                        <p>{p.description}</p>
+                                    </div>
+                                </li>
+                                {/each}
                             {/if}
-                            <div class="my-playlists__padding"></div>
                         </ul>
                     </div>
-                    <!-- Recommendation Section -->
-                    <div class="recs grid-section">
-                        <div class="grid-section__header">
-                            <h2>Recommendations</h2>
-                        </div>     
-                        <p class="recs__copy grid-section__copy">Unlock your productivity potential with our staff-recommended playlist picks – trust us, your to-do list will thank you!</p>
-                        <div class="recs__top">
-                            <h3>Playlist</h3>
-                            <div class="recs__collection-container">
-                                <div class="gradient-container"></div>
-                                <button class="icon-btn">
-                                    <i class="fa-solid fa-chevron-right"></i>
-                                </button>
-                                <ul class="recs__collection hoz-scroll">
-                                    {#each [0, 1, 2, 4, 5, 6, 7, 8] as i}
-                                        <li class="media-card">
-                                            <img class="media-img" src="/nf.png" alt=" ">
-                                            <h5>Chill Station</h5>
-                                            <p>Apple Music Chill</p>
-                                        </li>
-                                    {/each}
-                                </ul>
-                            </div>
+                </div>
+                <div class="music__right-section">
+                    <!-- Discover Section -->
+                    <div class="discover grid-section grid-section--no-padding">
+                        <div class="grid-section__header grid-section__header--padded"> <h2>Discover</h2> </div>     
+                        <div class="discover__description">
+                            <p class="discover__copy">Get in the zone with music that matches your vibe - select a category and discover new tunes to fuel your day.</p>
                         </div>
-                        <div class="recs__bottom">
-                            <h3>Videos</h3>
-                            <div class="recs__collection-container">
-                                <div class="gradient-container"></div>
-                                <button class="icon-btn">
-                                    <i class="fa-solid fa-chevron-right"></i>
-                                </button>
-                                <ul class="recs__collection hoz-scroll">
-                                    {#each [0, 1, 2, 4, 5, 6, 7, 8] as i}
-                                    <li class="media-card media-card--wide">
-                                        <img class="media-img" src="/nf.png" alt="">
-                                        <h5>Chill Station</h5>
-                                        <p>Apple Music Chill</p>
+                        <div class="discover__collection-list-container">
+                            {#if isScrollableLeft}
+                                <div class="gradient-container gradient-container--left">
+                                    <button class="gradient-container__tab-arrow gradient-container__tab-arrow--left"
+                                            on:click={handleShiftTabCategoryLeft}
+                                    >
+                                        <i class="fa-solid fa-chevron-left"></i>
+                                    </button>
+                                </div>
+                            {/if}
+                            <ul 
+                                class="discover__collection-list"
+                                bind:this={collectionList}
+                                on:scroll={handleScroll}
+                            >
+                                {#each musicCategories as group, idx}
+                                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                                    <li class="discover__collection-card" on:click={() => handleDiscoverCollectionClicked(idx)}>
+                                        <img class="discover__collection-card-img" src={group.artworkSrc}  alt="">
+                                        <div class="discover__collection-card-hover-details">
+                                            <img src={group.artworkBlurredSrc} alt="">
+                                            <h3>{group.title}</h3>
+                                            <p class="discover__collection-card-hover-details-description">
+                                                {group.description}
+                                            </p>
+                                            <span>{group.artistCredit}</span>
+                                        </div>
+                                        <h3 class="discover__collection-card-title">{group.title}</h3>
                                     </li>
-                                    {/each}
-                                </ul>
+                                {/each}
+                                <li class="discover__collection-list-padding discover__collection-list-padding-right"></li>
+                            </ul>
+                            {#if isScrollableRight}
+                                <div class="gradient-container gradient-container--right">
+                                    <button class="gradient-container__tab-arrow gradient-container__tab-arrow--right"
+                                            on:click={handleShiftTabCategoryRight}
+                                    >
+                                        <i class="fa-solid fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            {/if}
+                        </div>
+                        <h2 class="discover__collection-title">Collections</h2>
+                        <div class="discover__collection-container">
+                            <div class="discover__collection-header flx">
+                                <h4 class="discover__collection-header-num">#</h4>
+                                <h4 class="discover__collection-header-title">Title</h4>
+                                <div class="discover__collection-header-type">
+                                    <h4>Type</h4>
+                                </div>
+                                <div class="discover__collection-header-genre">
+                                    <h4>Genre</h4>
+                                </div>
+                                <div class="discover__collection-header-length">
+                                    <h4>Length</h4>
+                                </div>
                             </div>
+                            <ul class="discover__selected-collection-list">
+                                {#each chosenMusicCollection as collection, idx}
+                                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                                    <li 
+                                        on:click={event => handleRecommendedPlaylistClicked(collection, event)} 
+                                        class={`discover__collection-item ${getCollectionId(collection) === currentMusicCollection?.id ? "discover__collection-item--chosen" : ""}`}
+                                    >
+                                        <p class="discover__collection-item-num">{idx + 1}</p>
+                                        <div class="discover__collection-item-main-details-container">
+                                            <img src={collection.artworkSrc} alt="collection-artwork">
+                                            <div class="discover__collection-item-main-details">
+                                                {#if collection?.url}
+                                                    <a href={collection.url} target="_blank" rel="noreferrer">{collection.title}</a>
+                                                {:else}
+                                                    <h3>{collection.title}</h3>
+                                                {/if}
+                                                <p>{collection.author}</p>
+                                            </div>
+                                        </div>
+                                        <p class="discover__collection-item-type">{collection.playlistId === null ? "Album" : "Playlist"}</p>
+                                        <p class="discover__collection-item-genre">{collection.genre}</p>
+                                        <p class="discover__collection-item-length">{collection.length > 100 ? "100+" : collection.length}</p>
+                                    </li>
+                                {/each}
+                            </ul>
                         </div>
                     </div>
                 </div>
-                <!-- Curation Collection Modal -->
-                {#if isCollectionOpen}
-                    <div class="modal-bg">
-                        <div use:clickOutside on:click_outside={() => isCollectionOpen = !isCollectionOpen} class="modal-bg__content collection-modal">
-                            <div class="collection">
-                                <img class="img-bg" src="https://i.pinimg.com/564x/01/12/53/01125394b5d4a92206d33f0430d5f85b.jpg" alt="">
-                                <div class="blur-bg"></div>
-                                <div class="content-bg">
-                                    <div class="collection__header flx">
-                                        <img src="https://i.pinimg.com/564x/01/12/53/01125394b5d4a92206d33f0430d5f85b.jpg" alt="">
-                                        <div class="collection__description">
-                                            <span>Apple Music</span>
-                                            <h1>Serene</h1>
-                                            <p class="collection__text">Whether you're studying, meditating, or just need a moment of calm, this playlist will transport you to a place of ultimate relaxation and focus with acoustic sounds, soft vocals, and instrumental pieces.</p>
-                                            <ul class="collection__genres-list">
-                                                <li>Acoustic</li>
-                                                <li>Lofi</li>
-                                                <li>Classical</li>
-                                                <li>Piano</li>
-                                                <li>Soul</li>
-                                                <li>Folk</li>
-                                                <li>Ambient</li>
-                                            </ul>
-                                            <p class="collection__art-artist">
-                                                Art by John Smith
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div class="collection__playlists-container">
-                                        <div class="playlist-header">
-                                            <h2 class="playlist-header__num">#</h2>
-                                            <h2 class="playlist-header__title">Title</h2>
-                                            <h2 class="playlist-header__type">Type</h2>
-                                            <h2 class="playlist-header__genre">Genre</h2>
-                                            <h2 class="playlist-header__length">Length</h2>
-                                            <h2 class="playlist-header__time">Time</h2>
-                                        </div>
-                                        <ul class="collection__playlists">
-                                            <div class="collection__top-padding"></div>
-                                            {#each [0, 1, 2, 4, 5, 6, 7, 8] as i}
-                                                <li class="playlist-track">
-                                                    <p class="playlist-track__num">{i + 1}</p>
-                                                    <div class="playlist-track-details-container">
-                                                        <div class="playlist-track-details-container__img">
-                                                            <img alt="" src="https://f4.bcbits.com/img/a3390257927_16.jpg"/>
-                                                        </div>
-                                                        <div class="playlist-track-details-container__details">
-                                                            <h4>Wus Ya Name sdf sdf </h4>
-                                                            <p>Tyler the Creator</p>
-                                                        </div>
-                                                    </div>
-                                                    <p class="playlist-track__type">Album</p>
-                                                    <p class="playlist-track__genre">Ambient</p>
-                                                    <p class="playlist-track__length">24 songs</p>
-                                                    <p class="playlist-track__time">3:03</p>
-                                                </li>
-                                            {/each}
-                                            <div class="collection__bottom-padding"></div>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>  
-                    </div>
-                {/if}
+            </div>
             {/if}
             <!-- Logged Off UI -->
             {#if !isSignedIn}
                 <p class="music__description">
-                    Sync your favorite music streaming service to listen to personal playlists and discover new music all in one app. No more switching between tabs and windows!
+                    Escape tab chaos and window hopping! Connect your favorite music streaming platform to listen to playlists and discover staff-curated tunes.
                 </p>
                 <h2>Sync an Account</h2>
-                <ul class="platform-list section-bg">
-                    <li class="platform-item">
-                        <div class="platform-item__logo platform-logo platform-logo--soundcloud">
+                <ul class="platform-list platform-list--logged-out section-bg">
+                    <li class="platform-list__platform-item platform-list__platform-item--logged-out">
+                        <div class="platform-list__platform-item__logo platform-logo platform-logo--soundcloud">
                             <i class="fa-brands fa-soundcloud"></i>
                         </div>
-                        <div class="platform-item__text">
+                        <div class="platform-list__platform-item-text platform-list__platform-item-text--logged-out">
                             <h3>Soundcloud</h3>
                             <p>Playlist</p>
                         </div>
-                        <button class="btn-text-only">Connect</button>
+                        <button 
+                            class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out btn-text-only"
+                            on:click={() => initMusicData(MusicPlatform.Soundcloud)}
+                        >
+                            Connect
+                        </button>
                     </li>
-                    <li class="platform-item">
-                        <div class="platform-item__logo platform-logo platform-logo--youtube">
+                    <li class="platform-list__platform-item platform-list__platform-item--logged-out">
+                        <div class="platform-list__platform-item__logo platform-logo platform-logo--youtube">
                             <i class="fa-brands fa-youtube"></i>
                         </div>
-                        <div class="platform-item__text">
+                        <div class="platform-list__platform-item-text platform-list__platform-item-text--logged-out">
                             <h3>Youtube</h3>
                             <p>Playlist, Live Videos</p>
                         </div>
-                        <button class="btn-text-only">Connect</button>
+                        <button 
+                            class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out btn-text-only"
+                            on:click={() => initMusicData(MusicPlatform.Youtube)}
+                        >
+                            Connect
+                        </button>
                     </li>
-                    <li class="platform-item">
-                        <div class="platform-item__logo platform-logo platform-logo--apple">
+                    <li class="platform-list__platform-item platform-list__platform-item--logged-out">
+                        <div class="platform-list__platform-item__logo platform-logo platform-logo--apple">
                             <i class="fa-brands fa-itunes-note"></i>
                         </div>
-                        <div class="platform-item__text">
+                        <div class="platform-list__platform-item-text platform-list__platform-item-text--logged-out">
                             <h3>Apple Music</h3>
-                            <p>Playlists, Live Radio</p>
+                            <p>Playlists</p>
                         </div>
-                        <button class="btn-text-only">Connect</button>
+                        <button 
+                            class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out btn-text-only"
+                            on:click={() => initMusicData(MusicPlatform.AppleMusic)}
+                        >
+                            Connect
+                        </button>
                     </li>
-                    <li class="platform-item">
-                        <div class="platform-item__logo platform-logo platform-logo--spotify">
+                    <li class="platform-list__platform-item platform-list__platform-item--logged-out">
+                        <div class="platform-list__platform-item__logo platform-logo platform-logo--spotify">
                             <i class="fa-brands fa-spotify"></i>
                         </div>
-                        <div class="platform-item__text">
+                        <div class="platform-list__platform-item-text platform-list__platform-item-text--logged-out">
                             <h3>Spotify</h3>
                             <p>Playlists, Podcasts</p>
                         </div>
-                        <button class="btn-text-only">Connect</button>
+                        <button 
+                            class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out btn-text-only"
+                            on:click={() => initMusicData(MusicPlatform.Spotify)}
+                        >
+                            Connect
+                        </button>
                     </li>
                 </ul>
             {/if}
-            <div class="music__padding"></div>
         </div>
     </div>
 </div>
@@ -429,11 +576,9 @@
         min-width: 390px;
         max-width: 1000px;
         
-        &--min {
-            width: 42vw;
-            height: 390px;
-            min-width: 350px;
-            max-width: 500px;
+        &--small {
+            width: 310px;
+            height: 340px;
         }
         &__header {
             @include flex-container(center, _);
@@ -446,24 +591,145 @@
                 font-size: 17px;
                 color: rgb(var(--fgColor3));
                 margin-top: -4px;
-                // box-shadow: 0px 0px 7px rgba(133, 130, 255, 0.03);
             }
         }
         &__description {
-            font-size: 1.1rem;
-            margin-top: 12px;
-            max-width: 90%;
+            margin: 8px 0px 25px 0px;
+            color: rgba(var(--textColor1), 0.85);
             font-weight: 400;
-            color: #666565;
+            font-size: 1.1rem;
         }
-        &__container {
-            margin-top: 40px;
-        }
-        &__row {
-            width: 100%;
+        &__content {
+            margin-top: 15px;
             display: flex;
-            &--top {
-                margin: 20px 0px 0px 0px;
+            height: 95%;
+            padding-bottom: 10px;
+        }
+        &__left-section {
+            margin-right: $section-spacing;
+            width: 40%;
+            height: 100%;
+            overflow: hidden;
+        }
+        &__right-section {
+            margin-right: $section-spacing;
+            width: 60%;
+        }
+    }
+
+    /* Top Right Account Header */
+    .active-account-header {
+        @include flex-container(center, _);
+        @include pos-abs-top-right-corner(25px, 42px);
+
+        p {
+            color: rgba(var(--textColor1), 0.7);
+            font-weight: 700;
+        }
+        &__btn {
+            @include flex-container(center, _);
+            padding: 5px 8px;
+            border-radius: 10px;
+            border: var(--borderVal);
+            margin-right: 7px;
+            &:hover {
+                transition: 0.2s ease-in-out;
+                background-color: var(--secondaryBgColor);
+                box-shadow: var(--shadowVal);
+            }
+            &:active {
+                transform: scale(0.98);
+            }
+            p {
+                margin: 0px 6px 0px 8px;
+            }
+        }
+        &__username {
+            margin: 0px 7px 0px 4px;
+        }
+        &__user-profile-pic {
+            @include circle(20px);
+            background-color: #4E4E4F;
+        }
+        .platform-logo {
+            margin-right: 7px;
+            border-radius: 7px;
+        }
+        .fa-chevron-down {
+            font-size: 0.9rem;
+            color: rgb(var(--textColor1));
+        }
+    }
+    .platform-list {
+        margin-top: 15px;
+        z-index: 10000;
+        width: 220px;
+        @include pos-abs-top-right-corner(20px, 30%);
+        background: var(--secondaryBgColor);
+        box-shadow: var(--shadowVal);
+        border: var(--borderVal);
+        padding: 12px 5px 15px 13px;
+        border-radius: 10px;
+
+        &--logged-out {
+            @include pos-abs-top-right-corner(0px, 0px);
+            position: relative;
+            width: 100%;
+            padding: 20px 5px 20px 20px; 
+            margin-top: 13px
+        }
+        &__platform-item {
+            @include flex-container(center, _);
+            margin-bottom: 13px;
+
+            &:last-child {
+                margin-bottom: 0px;
+            }
+            &--logged-out {
+                margin-bottom: 16px;
+            }
+        }
+        &__platform-item-btn {
+            position: absolute;
+            right: 10px;
+            padding: 7px 0px 7px 10px;
+            color: rgba(var(--textColor1), 0.6);
+            transition: 0.1s ease-in-out;
+            width: 60px;
+            @include center;
+
+            &:active {
+                transform: scale(0.97);
+            }
+            &--selected {
+                color: rgba(238, 89, 66, 0.7);
+            }
+            &--logged-out {
+                font-size: 1rem;
+                margin-right: 15px;
+            }
+        }
+
+        &__platform-item-text {
+            margin: -2px 0px 0px 7px;
+            h3 {
+                font-size: 1.02rem;
+            }
+            p {
+                font-weight: 100;
+                font-size: 0.9rem;
+                color: rgba(var(--textColor1), 0.8);
+            }
+            &--logged-out {
+                margin-left: 19px;
+                h3 {
+                    font-size: 1.2rem;
+                    margin: -3px 0px 1px 0px;
+                }
+                p {
+                    font-weight: 500;
+                    font-size: 0.95rem;
+                }
             }
         }
     }
@@ -471,131 +737,83 @@
     /* Sections */
     .now-playing {
         margin: 0px $section-spacing $section-spacing 0px;
-        height: $top-row-height;
-        width: 40%;
+        height: 25%;
+        width: 100%;
         position: relative;
 
         h2, h3 {
             color: white;
         }
-        
-        .blur-bg {
-            &--blurred-bg {
-                background: rgba(110, 110, 110, 0.1);
-                backdrop-filter: blur(30px);
-            }
-            &--solid-color {
-                background: rgba(var(--fgColor3, 1));
-            }
+        a {
+            color: white;
+            font-size: 1.17rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            @include elipses-overflow;
         }
-        .content-bg {
-            top: 0px;
+        &__details-container {
+            display: flex;
+            margin-top: 10px;
+            position: relative;
+            width: 100%;
         }
-        &__img {
+        &__artwork {
             z-index: 1;
             margin-right: 15px;
             @include flex-container(center, _);
-            
             img {
                 border-radius: 5px;
-                width: 90px;
+                width: 75px;
             }
         }
         &__description {
             overflow: hidden;
+            height: 74px;
+            width: 90%;
             span {
-                @include trans-text(#DFDFDF, 0.73);
+                color: rgba(var(--textColor4), 0.6);
                 text-transform: capitalize;
+                font-weight: 600;
             }
             h3 {
                 z-index: 2000;
-                margin: 3px 0px 10px 0px;
-                @include two-line-elipses-overflow;
+                margin-bottom: 10px;
+                @include elipses-overflow;
             }
             p {
-                @include trans-text(#DFDFDF, 0.73);
-                @include two-line-elipses-overflow;
-            }
-
-            &--solid-color {
-                p, span {
-                    color: rgba(var(--textColor4), 1);
-                }
+                color: rgba(var(--textColor4), 0.5);
+                font-size: 0.9rem;
+                @include multi-line-elipses-overflow(3);
             }
         }
         &__collection-details {
-            font-size: 1rem;
+            font-size: 0.94rem;
+            font-weight: 600;
+            @include pos-abs-bottom-right-corner(20px, 13px);
             display: flex;
-            @include trans-text(#DFDFDF, 0.73);
-            position: absolute;
-            right: 20px;
-            bottom: 20px;
+            color: rgba(var(--textColor4), 0.7);
+
             span {
-                margin: 0px 5px;
+                font-weight: 100;
+                margin: 0px 4px;
             }
-            
-            &--solid-color {
-                color: rgba(var(--textColor4), 1);
-            }
+        }
+        &__no-pl-selected {
+            font-weight: 600;
+            @include elipses-overflow();
+            color: rgb(var(--textColor4), 0.8);
+            font-size: 1.2rem;
+            @include abs-center;
         }
         .content-bg {
+            top: 0px;
             padding: 12px 17px;
-        }
-        .flx {
-            @include flex-container(flex-start, _);
-            margin-top: 13px;
-            position: relative;
-            width: 90%;
-        }
-    }
-    .discover {
-        height: $top-row-height;
-        margin: 0px 0px $section-spacing 0px;
-        width: 60%;
-        position: relative;
-        padding-right: 0px;
-        .flx {
-            height: 120px;
-        }
-        &__description {
-            width: 40%;
-            margin-top: 10px;
-            color: #787878;
-        }
-        &__collection-padding {
-            height: 100px;
-            margin-left: 15px;
-        }
-        &__collection-container {
-            position: relative;
-            height: 170px;
-            margin-top: -17px;
-            width: 60%;
-            .icon-btn {
-                top: 40%; 
-                right: 10px;
-            }
-            &:hover > .gradient-container, &:hover > .icon-btn {
-                opacity: 1 !important;
-                visibility: visible !important;
-            }
-        }
-        &__collection {
-            overflow-x: scroll;
-            display: flex;
-            align-items: center;
-        }
-        a {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            cursor: pointer;
         }
     }
     .my-playlists { 
-        height: $bottom-row-height;
-        margin: 0px $section-spacing $section-spacing 0px;
-        width: 50%;
+        margin: 0px $section-spacing 0px 0px;
+        width: 100%;
+        height: 75%;
         margin-right: 6px;
         overflow: hidden;
         position: relative;
@@ -603,20 +821,15 @@
         h3 {
             font-size: 1rem;
             opacity: 0.7;
-        }
-        
-        .music__section-header {
-            padding: 13px 20px 13px 20px;
-        }
-        
-        &__playlists {
+        }        
+        &__collection-list {
             height: 90%;
             margin-top: 2px;
         }
         &__playlist {
             @include flex-container(center, _);
             cursor: pointer;
-            padding: 8px 20px;
+            padding: 8px 0px 8px 20px;
             margin-bottom: 10px;
             
             &:hover {
@@ -624,31 +837,33 @@
             }
             p {
                 color: rgb(148, 148, 148);
-                margin-right: 15px;
             }
         }
+        &__playlist-idx {
+            min-width: 15px;
+        }
         &__playlist-img {
-            width: 40px;
+            min-width: 40px;
             height: 40px;
-            margin-right: 17px;
-            background-color: #202023;
+            margin-right: 14px;
+            background-color: var(--primaryBgColor);
+            box-shadow: var(--shadowVal);
             position: relative;
             border-radius: 4px;
             overflow: hidden;
 
             img {
-                border: 0px;
                 width: 40px;
             }
             i {
-                color: #8582FF;
+                color: rgba(var(--fgColor3));
                 font-size: 1.3rem;
             }
         }
         &__playlist-text {
             margin-top: -8px;
             overflow: hidden;
-            width: 80%;
+            width: 100%;
             h4 {
                 font-size: 1.1rem;
                 margin-bottom: 5px;
@@ -656,546 +871,270 @@
             p {
                 @include elipses-overflow;
                 font-weight: 100;
-                width: 80%;
+                width: 95%;
             }
         }
-        &__no-pl-meme {
+        &__no-pl-meme-img {
             width: 200px;
         }
-        &__padding {
-            width: 100px;
-            height: 50px;
-        }
     }
-    .recs {
-        height: $bottom-row-height;
-        width: 50%;
-        &__copy {
-            margin-top: 12px;
-            color: rgb(var(--textColor1));
-        }
-        &__top {
-            margin-top: 25px;
-        }
-        .icon-btn {
-            top: 40%; 
-            right: 12px;
-            color: rgb(var(--textColor1));
-            transition: 0.1s ease-in-out;
+    .discover {
+        margin: 0px 0px 0px 0px;
+        width: 100%;
+        height: 100%;        
+        position: relative;
+        padding-right: 0px;
+        overflow: hidden;
 
-            &:hover {
-                color: rgb(var(--textColor1));
+        &__header {
+            padding: 13px 0px 0px 20px;
+            h2 {
+                font-size: 1.3rem;
             }
         }
-        &__collection-container {
+        &__copy {
+            padding-left: 20px;
+        }
+        &__description {
+            width: 100%;
+            margin-top: -5px;
+            color: #787878;
+        }
+        /* Discover Collections */
+        &__collection-list-container {
             position: relative;
+            height: 130px;
 
             &:hover > .gradient-container {
-                opacity: 1 !important;
-                visibility: visible !important;
+                opacity: 1;
+                visibility: visible;
             }
-            &:hover > .icon-btn {
-                opacity: 0.5 !important;
-                visibility: visible !important;
+        }
+        .gradient-container {
+            height: 100%;
+
+            &--left {
+                width: 50px;
             }
-
+            &--right {
+                width: 50px;
+            }
+            &__tab-arrow {
+                &--left {
+                    margin-right: 13px;
+                }
+                &--right {
+                    margin-left: 5px;
+                }
+            }
         }
-        &__collection {
-            margin-top: 20px;
-            z-index: 10;
+        &__collection-list {
+            margin-top: 15px;
+            display: flex;
+            overflow-x: scroll;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
+            li {
+                &:first-child {
+                    margin-left: 20px;
+                }
+            }
         }
-        &__gradient {
-            transition: 0.15s ease-in-out;
-            opacity: 0;
-            visibility: hidden;
-            position: absolute;
-            z-index: 1000;
-            right: 0px;
-            height: 100%;
-            width: 70px;
+        &__collection-list-padding {
+            min-width: 80px;
+            height: 1px;
         }
-        &__bottom {
-            margin-top: 25px;
-        }
-    }
-
-    .collection-modal {
-        background-color: var(--secondaryBgColor);
-    }
-    .collection {
-        height: 640px;
-        width: 65vw;
-        overflow: hidden;
-        max-width: 700px;
-
-        .img-bg {
-            object-fit: cover;
-            height: 40%;
-            border-radius: 0px;
-        }
-        .blur-bg {
-            background: rgba(101, 100, 100, 0.2);
-            height: 40%;
-        }
-        .content-bg {
-            height: 100%;
-            padding: 0px;
-            top: 0px;
-        }
-        &__header {
-            height: 40%;
-            padding: 35px 30px 45px 40px;
-            h1 {
+        &__collection-card {
+            margin-right: 8px;
+            position: relative;
+            cursor: pointer;
+            min-width: 170px;
+            height: 130px;
+            border-radius: 7px;
+            transition: 0.33s ease-in-out;
+            overflow: hidden;
+            
+            h3 {
                 color: white;
+            }
+            &:hover {
+                min-width: 200px;
+            }
+            &:hover > .discover__collection-card-img {
+                width: 200px;
+            }
+            &:hover > .discover__collection-card-hover-details {
+                visibility: visible;
+                opacity: 1;
+            }
+            &:hover > .discover__collection-card-title {
+                visibility: hidden;
+                opacity: 0;
+            }
+            &:active {
+                transform: scale(0.98);
+            }
+        }
+        &__collection-card-img {
+            visibility: visible;
+            opacity: 1;
+            transition: 0.4s ease-in-out;
+            border-radius: 7px;
+            width: 170px;
+            height: 130px;
+            object-fit: fill;
+        }
+        &__collection-card-title {
+            transition: 0.3s ease-in-out;
+            font-size: 13px;
+            @include pos-abs-bottom-left-corner(9px, 10px);
+        }
+        &__collection-card-hover-details {
+            border-radius: 6px;
+            visibility: hidden;
+            transition: 0.1s ease-in-out;
+            opacity: 0;
+            display: block;
+            z-index: 100;
+            width: 100%;
+            height: 100%;
+            padding: 60px 0px 0px 12px;
+            @include pos-abs-top-left-corner(0px, 0px);
+            
+            h3 {
+                font-size: 2rem;
+                margin-bottom: 5px
+            }
+            span {
+                color: rgba(var(--textColor4), 0.64);
+                font-weight: 700;
+                @include pos-abs-top-right-corner(10px, 10px);
+                font-size: 0.75rem;
             }
             img {
-                border-radius: 22px;
-                width: 200px;
-                height: 200px;
-                aspect-ratio: 1 / 1;
+                border-radius: 6px;
+                width: 101%;
+                height: 101%;
+                @include pos-abs-top-left-corner(0px, 0px);
+                z-index: -1;
             }
         }
-        &__description {
-            position: relative;
-            margin-left: 35px;
-            span {
-                @include trans-text(#DFDFDF, 0.7);
-                font-weight: 600;
-            }
-            h1 {
-                font-family: "Apercu";
-                font-size: 40px;
-                margin-bottom: 20px;
-            }
-        }
-        &__text {
-            @include trans-text(#f0efef, 0.73);
-            width: 90%;
-            max-height: 80px;
-            overflow: hidden;
-        }
-        &__genres-list {
-            position: absolute;
-            display: flex;
-            bottom: 0px;
-            li {
-                font-weight: 600;
-                @include trans-text(#f0efef, 0.76);
-                margin-right: 15px;
-            }
-        }
-        &__art-artist {
-            position: absolute;
-            top: 0px;
-            right: 0px;
-            font-weight: 600;
-            @include trans-text(#f0efef, 0.76);
-        }
-        &__playlists-container {
-            height: 60%;
-        }
-        &__playlists {
-            overflow-y: scroll;
-            height: 100%;
-            // -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent);
-        }
-        &__top-padding {
-            height: 20px;
-            width: 100%;
-        }
-        &__bottom-padding {
-            height: 100px;
-            width: 100%;
-        }
-    }
-    .playlist-header {
-        display: flex;
-        width: 100%;
-        padding: 25px 30px 0px 30px;
-        text-align: center;
-        white-space: nowrap;
-        color: rgba(var(--textColor1), 0.8);
-        opacity: 0.8;
-
-        h2 {
+        &__collection-card-hover-details-description {
+            color: rgba(var(--textColor4), 0.64);
             font-size: 0.9rem;
-        }
-        &__num {
-            text-align: left;
-            width: 25px;
-        }
-        &__title {
-            text-align: left;
-            width: 40%;
-            min-width: 135px;
-        }
-        &__type {
-            width: 15%;
-            @include elipses-overflow;
-            max-width: 160px;
-        }
-        &__genre {
-            width: 15%;
-            padding-left: 25px;
-        }
-        &__length {
-            width: 15%;
-            padding-left: 25px;
-        }
-        &__time {
-            text-align: right;
-            width: 10%;
-        }
-        @include sm(max-width) {
-            &__num {
-                width: 35px; // must be 35 to, the 2 right cols will pushed to far to the right
-            }
-            &__title {
-                width: 50%;
-            }
-            &__type {
-                width: 25%;
-            }
-            &__genre{
-                width: 38%;  // cannot be 25, same reason
-            }
-            &__length {
-                display: none;
-            }
-            &__time {
-                display: none;
-            }
-        }
-    }   
-    .playlist-track {
-        @include flex-container(center, _);
-        text-align: center;
-        white-space: nowrap;
-        margin-bottom: 3px;
-        cursor: pointer;
-        padding: 8px 30px 8px 30px;
-
-        &:hover {
-            background-color: var(--hoverColor);
+            width: 95%;
         }
 
-        &__num {
-            width: max(2%, 20px);
-            text-align: left;
-            opacity: 0.8;
+        /* Discover Category Collections List Section */
+        &__collection-title {
+            margin: 30px 0px 10px 20px;
+            font-size: 1.3rem;
         }
-        .playlist-track-details-container {
-            width: 40%;
-            display: flex;
-            &__img {
-                width: 15%;
-                min-width: 40px;
-                text-align: left;
-                object-fit: cover;
-                img {
-                    width: 80%;
-                    aspect-ratio: 1 / 1;
-                }
-            }
-            &__details {
-                width: 70%;
-                text-align: left;
-                h4, p {
-                    @include elipses-overflow;
-                }
-                h4 {
-                    color: rgb(var(--textColor1));
-                    font-size: 1.2rem;
-                }
-                p {
-                    font-family: "Manrope";
-                    font-weight: 400;
-                    font-size: 0.8rem;
-                    color: rgb(154, 154, 154);
-                    margin-top: 2px;
-                }
-            }
-        }
-        p {
-            color: rgb(142, 142, 142);
-        }
-        &__num {
-            text-align: left;
-            width: 25px;
-        }
-        &__title {
-            text-align: left;
-            width: 40%;
-            min-width: 135px;
-        }
-        &__type {
-            width: 15%;
-            @include elipses-overflow;
-            max-width: 160px;
-        }
-        &__genre {
-            width: 15%;
-            padding-left: 25px;
-        }
-        &__length {
-            width: 15%;
-            padding-left: 25px;
-        }
-        &__time {
-            text-align: right;
-            width: 10%;
-        }
-        @include sm(max-width) {
-            &__title {
-                width: 50%;
-            }
-            &__type {
-                width: 25%;
-            }
-            &__genre{
-                width: 25%;
-            }
-            &__length {
-                display: none;
-            }
-            &__time {
-                display: none;
-            }
-        }
-    }
-
-    /* Elements */
-    .icon-btn {
-        opacity: 0;
-        z-index: 9999;
-        visibility: hidden;
-        position: absolute;
-        color: white;
-        transform: translateY(-50%); 
-        color: rgb(189, 189, 189);
-        &:hover {
-            i {
-                color: white;
-                transform: scale(1.2);
-            }
-        }
-        &:active {
-            i {
-                transform: scale(0.95);
-            }
-        }
-    }
-    .platform-list {
-        margin-top: 15px;
-        &--dropdown {
-            z-index: 10000;
-            width: 200px;
-            position: absolute;
-            background-color: #1e1e1e;
-            padding: 15px 5px 15px 15px;
-            border-radius: 10px;
-            bottom: -170px;
-            right: 90px;
-        }
-    }
-    .platform-item {
-        @include flex-container(center, _);
-        margin-bottom: 20px;
-
-        &__text {
-            margin: -5px 0px 0px 18px;
-            p {
-                color: #797979
-            }
-        }
-        button {
-            position: absolute;
-            right: 30px;
-        }
-        &:last-child {
-            margin-bottom: 0px;
-        }
-
-        &--small {
-            margin-bottom: 13px;
-            .platform-item__text {
-                margin: -2px 0px 0px 10px;
-                h3 {
-                    font-size: 0.9rem;
-                }
-                p {
-                    font-weight: 100;
-                    font-size: 0.8rem;
-                }
-            }
-            button {
-                right: 20px;
-                font-size: 8px;
-            }
-        }
-    }
-    .profile-tab {
-        @include flex-container(center, _);
-        position: absolute;
-        top: 35px;
-        right: 30px;
-        height: 12px;
-
-        .divider {
-            transition: 0.2s ease-in-out;
-        }
-
-        &__btn {
-            @include flex-container(center, _);
-            padding: 5px 8px;
-            border-radius: 10px;
-            &:hover {
-                transition: 0.15s ease-in-out;
-                background-color: #1d1d1f;
-            }
-            &:hover + .divider {
-                background-color: transparent;
-            }
-
-        }
-        .platform-logo {
-            width: 18px;
+        /* List Column Header Section */
+        &__collection-header {
+            width: 100%;
+            opacity: 0.7;
             height: 18px;
-            margin-right: 5px;
-            border-radius: 7px;
-            i {
-                font-size: 8px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        &__collection-header-num {
+            width: 25px;
+            margin-left: 20px;
+        }
+        &__collection-header-title {
+            width: 35%;
+        }
+        &__collection-header-type {
+            width: 21%;
+            text-align: center;
+        }
+        &__collection-header-genre {
+            text-align: center;
+            width: 21%;
+        }
+        &__collection-header-length {
+            text-align: center;
+            width: 21%;
+        }
+        /* Playlist List */
+        &__selected-collection-list {
+            overflow-y: scroll;
+            height: 450px;
+        }
+        /* Playlist Item */
+        &__collection-item {
+            @include flex-container(center, _);
+            cursor: pointer;
+            transition: 0.1s ease-in-out;
+            padding: 10px 0px;
+
+            &:hover {
+                background-color: var(--hoverColor);
+            }
+            &:first-child {
+                margin-top: 5px;
+            }
+            &:last-child {
+                margin-bottom: 100px;
+            }
+            p {
+                color: rgba(var(--textColor1), 0.9);
+            }
+            &--chosen {
+                background-color: var(--hoverColor);
             }
         }
-        .fa-chevron-down {
-            font-size: 0.9rem;
-            color: rgb(var(--textColor1));
+        &__collection-item-num {
+            opacity: 0.7;
+            margin-left: 20px;
+            width: 25px;
         }
-        p {
-            color: #8A8A8A;
-            font-weight: 700;
-            margin-right: 8px
+        &__collection-item-main-details-container {
+            width: 35%;
+            display: flex;
+            overflow: hidden;
+            img {
+                width: 35px;
+                height: 35px;
+                aspect-ratio: 1/ 1;
+                border-radius: 3px;
+                margin-right: 6px;
+            }
         }
-        .divider {
-            margin: 0px 10px 0px 1px;
-            background-color: #414141;
+        &__collection-item-main-details {
+            max-width: 80%;
+            overflow: hidden;
 
+            a {
+                color: rgb(var(--textColor1));
+                font-size: 1.17rem;
+                font-weight: 700;
+                @include elipses-overflow;
+            }
+            h3 {
+                width: 100%;
+                @include elipses-overflow;
+            }
+            p {
+                color: rgba(var(--textColor1), 0.75);
+                @include elipses-overflow;
+            }
         }
-        &__img {
-            @include circle(20px);
-            background-color: #4E4E4F;
+        &__collection-item-type {
+            width: 21%;
+            text-align: center;
         }
-
+        &__collection-item-genre {
+            width: 21%;
+            text-align: center;
+        }
+        &__collection-item-length {
+            width: 21%;
+            text-align: center;
+        }
     }
     
-    .media-card {
-        margin-right: 7px;
-        cursor: pointer;
-        &--wide {
-            width: 120px;
-        }
-        &--wide > .media-img {
-            width: 100px;
-            height: 70px;
-            object-fit: cover;
-        }
-        img {
-            width: 85px;
-            border-radius: 10px;
-        }
-        h5 {
-            margin-top: 5px;
-        }
-        p {
-            margin-top: 3px;
-            font-weight: 100;
-            color: #6a6a6a;
-            @include elipses-overflow;
-        }
-    }
-    .blur-card {
-        margin-right: 8px;
-        position: relative;
-        cursor: pointer;
-        h3 {
-            color: white;
-        }
-        img {
-            border-radius: 13px;
-            width: 130px;
-            height: 130px;
-            
-        }
-        &:hover > .blur-card__blur-bg {
-            height: 100%;
-            border-radius: 13px;
-            visibility: visible;
-            opacity: 1;
-        }
-        &:hover > .blur-card__bottom-header {
-            transition: 0.5s ease-in-out;
-            visibility: hidden;
-            opacity: 0;
-        }
-        &__blur-bg {
-            transition: 0.2s ease-in-out;
-            position: absolute;
-            top: 0px;
-            bottom: 0px;
-            width: 100%;
-            height: 100%;
-            border-radius: 13px;
-            visibility: hidden;
-            opacity: 0;
-            z-index: 1000;
-            background: rgba(110, 110, 110, 0.1);
-            backdrop-filter: blur(30px);
-        
-
-            h3 {
-                font-family: "Apercu";
-                font-size: 18px;
-                margin: 45px 0px 0px 15px;
-                color: white;
-            }
-
-        }
-        &__description {
-            margin: 5px 0px 0px 15px;
-            display: block;
-            .flx {
-                height: 11.5px;
-                align-items: center;
-                @include trans-text(#efefef, 0.6);
-                p {
-                    font-size: 9px;
-                    font-weight: 400;
-                }
-                .divider {
-                    background-color: #ececec;
-                    opacity: 0.73;
-                    width: 0.2px !important;
-                    height: 60%;
-                    margin: 0px 7px;
-                }
-            }
-        }
-        &__bottom-header {
-            position: absolute;
-            bottom: 0px;
-            height: 40px;
-            width: 100%;
-            background: rgba(110, 110, 110, 0.1);
-            backdrop-filter: blur(100px);
-            border-radius: 0px 0px 10px 10px;
-            z-index: 0;
-            visibility: visible;
-            opacity: 1;
-            h3 {
-                margin: 9px 0px 0px 12px;
-            }
-        }
-    }
     @include mq-custom(max-width, 50em) {
         .modal-bg {
             &__content {
@@ -1203,16 +1142,19 @@
             }
         }
         .music {
-            &__row {
+            &__content {
                 display: block;
             }
-            &__padding {
-                display: block;
+            &__left-section {
                 width: 100%;
-                height: 20px;
+            }
+            &__right-section {
+                width: 100%;
+                margin-top: $section-spacing;
+                padding-bottom: 30px;
             }
         }
-        .now-playing, .discover, .my-playlists, .recs {
+        .now-playing, .discover, .my-playlists {
             width: 100%;
         }
     }

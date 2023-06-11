@@ -18,22 +18,25 @@
     let isPlaying = false
     let errorMessage = ""
     let isPlayerDisabled = true // empty state
-    let isRepeating: any
-    let isShuffled: false
+    let isRepeating: boolean
+    let isShuffled: boolean
 
     let hasColorTheme = false
+
+    enum MusicPlatform { AppleMusic, Spotify, Youtube, Soundcloud }
 
     colorTheme.subscribe((theme: ColorTheme) => {
         hasColorTheme = theme.fgColor1 != "#141418"
     })
-
-    currentTrack.subscribe((track: any) => {
-        if (!track.name) return
+    currentTrack.subscribe((track: Track | null) => {
+        if (!track) return
 
         isPlayerDisabled = false
         currentTrackPlaying = track
     })
-    musicPlayerData.subscribe((player: any) => {
+    musicPlayerData.subscribe((player: MusicPlayerData | null) => {
+        if (!player) return
+        
         errorMessage = player.message
         isPlaying = player.isCurrentlyPlaying
         isPlayerAvailable = player.doShowPlayer
@@ -42,8 +45,8 @@
         isRepeating = player.isRepeating
         isShuffled = player.isShuffled
     })
-    appleMusicPlayerState.subscribe((player: any) => musicPlayer = player)
-    musicDataState.subscribe((data: any) => musicData = data)
+    appleMusicPlayerState.subscribe((player: MusicPlayer) => musicPlayer = player)
+    musicDataState.subscribe((data: MusicData) => musicData = data)
 
     const trackProgressHandler = () => {
         const value = trackPlaybackBar.value;
@@ -62,13 +65,11 @@
 
     onMount(async () => {
         // init player and data, which will also init settings
-        const storedData = localStorage.getItem("music-context");
-        if (!storedData) return;
-
-        const res = JSON.parse(storedData);
+        const platformCode = localStorage.getItem("music-platform");
+        if (!platformCode) return;
         
-        if (res.platform === "apple music") {
-            musicData = new MusicData()
+        if (platformCode === "0") {
+            musicData = new MusicData(MusicPlatform.AppleMusic)
             await musicData.authUser()
             musicData.loadMusicData()
             musicData.setUserPlaylists()
@@ -85,10 +86,10 @@
 <div class={`music-player ${isPlayerAvailable ? "" : "music-player--hidden"} ${hasColorTheme ? "music-player--solid-bg" : ""}`}>
     <!-- svelte-ignore a11y-missing-attribute -->
     <div class="music-player-track">
-        <img class="music-player-track__art" src={currentTrackPlaying.artworkImgSrc} alt="" title={currentTrackPlaying.name}>
+        <img class="music-player-track__art" src={currentTrackPlaying?.artworkImgSrc} alt="" title={currentTrackPlaying?.name}>
         <div class="music-player-track__details">
-            <h5 class="music-player-track__title elipses-overflow">{currentTrackPlaying.name}</h5>
-            <p class="music-player-track__artist elipses-overflow">{currentTrackPlaying.artist}</p>
+            <h5 class="music-player-track__title elipses-overflow">{currentTrackPlaying?.name ?? ""}</h5>
+            <p class="music-player-track__artist elipses-overflow">{currentTrackPlaying?.artist ?? ""}</p>
         </div>
     </div>
     <div class="music-player-playback">
@@ -124,7 +125,7 @@
             </div>
             <div class="music-player-playback__bar-container">
                 <div class="music-player-playback__playback-bar">
-                    {#if musicData?.musicContext?.platform === "apple music"}
+                    {#if musicData?.musicPlatform === MusicPlatform.AppleMusic}
                         <apple-music-progress style="width: 100%; font-size: 20px; margin-top: 12px;" theme="dark"></apple-music-progress>
                     {:else }
                        <div class="music-player-playback__time music-playback__time--elapsed">2:45</div>
@@ -146,7 +147,7 @@
     </div>
     <div class="music-player-right-container">
         <div class="music-player-volume">
-            {#if musicData?.musicContext?.platform === "apple music"}
+            {#if musicData?.musicPlatform === MusicPlatform.AppleMusic}
                 <apple-music-volume style="width: 100%;" theme="dark"></apple-music-volume>
             {:else }
                 <button class="icon-btn"><i class="fa-solid fa-volume-high"></i></button>
@@ -163,17 +164,30 @@
             {/if}
         </div>
         <button class="music-player-context-container">
-            <img src={currentTrackPlaying.playlistArtworkSrc} alt="playlist-artwork" title={currentTrackPlaying.playlistName}>
+            <img src={currentTrackPlaying?.playlistArtworkSrc} alt="playlist-artwork" title={currentTrackPlaying?.playlistName}>
             <i class="fa-solid fa-list"></i>
         </button>
-        <div class="music-player-platform-logo platform-logo platform-logo--soundcloud platform-logo--med">
-            <i class="fa-brands fa-soundcloud"></i>
-        </div>
+        {#if MusicPlatform[musicData?.musicPlatform ?? 0] === "Soundcloud"}
+            <div class="music-player-platform-logo platform-logo platform-logo--soundcloud platform-logo--med">
+                <i class="fa-brands fa-soundcloud fa-soundcloud--med"></i>
+            </div>
+        {:else if MusicPlatform[musicData?.musicPlatform ?? 0] === "Youtube"}
+            <div class="music-player-platform-logo platform-logo platform-logo--youtube platform-logo--med">
+                <i class="fa-brands fa-youtube fa-youtube--med"></i>
+            </div>
+        {:else if MusicPlatform[musicData?.musicPlatform ?? 0] === "AppleMusic"}
+            <div class="music-player-platform-logo platform-logo platform-logo--apple platform-logo--med">
+                <i class="fa-brands fa-itunes-note fa-itunes-note--med"></i>
+            </div>
+        {:else if MusicPlatform[musicData?.musicPlatform ?? 0] === "Spotify"}
+            <div class="music-player-platform-logo platform-logo platform-logo--spotify platform-logo--med">
+                <i class="fa-brands fa-spotify fa-spotify--med"></i>
+            </div>
+        {/if}
     </div>
 </div>
 
 <style lang="scss">
-
     .music-player {
         width: 100%;
         height: 65px;
@@ -202,6 +216,7 @@
             -webkit-backdrop-filter: none;
         }
     }
+    /* Left Section */
     .music-player-track {
         height: 100%;
         overflow: hidden;
@@ -239,6 +254,7 @@
             margin-right: 10px;
         }
     }
+    /* Middle Section */
     .music-player-playback {
         display: flex;
         width: 100%;
@@ -350,6 +366,7 @@
             font-weight: 100;
         }
     }
+    /* Right Section */
     .music-player-right-container {
         width: 30%;
         @include flex-container(center, flex-end);
@@ -391,8 +408,5 @@
     .music-player-platform-logo {
         margin-left: 12px;
         border-radius: 100%;
-        i {
-            font-size: 0.8rem !important;
-        }
     }
 </style>

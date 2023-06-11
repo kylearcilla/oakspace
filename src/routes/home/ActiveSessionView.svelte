@@ -1,16 +1,31 @@
 <script lang="ts">
-    let isAllTodoChecked = true
-    let completedTodosCount = 0
-    let isEditSessionModalOpen = false
+	import { clickOutside } from "$lib/helper";
 
-    let todoToEditIndex = -1
-    let todoToEditNewTitle = ""
-    let isTodoToEditTitleValid = false
-
-    let isMakingNewTask = false
-    let todoToEditTitle = ""
-    let isTodoTitleValid = false
-
+    let currentActiveSession = {
+        title: "Math Homework",
+        tag:  {
+            title: "school",
+            color: "#9997FE"
+        }
+    }
+    let newTag = { 
+        title: currentActiveSession.tag.title, 
+        color: currentActiveSession.tag.color 
+    }
+    let tags = [
+        {
+            title: "school",
+            color: "#9997FE"
+        },
+        {
+            title: "swe",
+            color: "#FF8B9C"
+        },
+        {
+            title: "book",
+            color: "#CFAB96"
+        },
+    ]
     let todos = [
         {
             title: "Reach CH 3.1",
@@ -30,6 +45,9 @@
         }
     ]
 
+    let isAllTodoChecked = true
+    let completedTodosCount = 0
+
 	const handleCheckBoxClicked = (idx: number) => {
         const todoClicked = todos[idx]
         if (todoClicked.isComplete) {
@@ -41,17 +59,75 @@
         todos[idx].isComplete = !todos[idx].isComplete
 	}
 
-    const handleEditButtonClicked = () => {
+    /* Editing Session */
+    let isEditSessionModalOpen = false
+    let newSessionTitle = ""
+    let isNewSessionTitleValid = true
+    let isTagListDropDownOpen = false
+    let isNewTagModalOpen = false
 
+    const handleEditSessionBtnClicked = () => {
+        isEditSessionModalOpen = true
+        newSessionTitle = currentActiveSession.title
     }
-    const handleSessionEditSubmitClicked = () => {
+    const handleEditSessionDoneBtnClicked = () => {
+        currentActiveSession.title = newSessionTitle
 
+        if (newTag.title != "") {
+            currentActiveSession.tag.title = newTag.title
+            currentActiveSession.tag.color = newTag.color
+        }
+        
+        handleEditSessionCancelClicked()
     }
+    const handleEditSessionCancelClicked = () => {
+        todoToEditNewTitle = ""
+        isNewSessionTitleValid = true
+        isTagListDropDownOpen = false
+        isEditSessionModalOpen = false
+        newTag = { 
+            title: currentActiveSession.tag.title, 
+            color: currentActiveSession.tag.color 
+        }
+    }
+    const editActiveSessionTitleInputHandler = (event: any) => {
+        newSessionTitle = event.target.value;
+        
+        if (newSessionTitle != "" && newSessionTitle.length < 20) {
+            isNewSessionTitleValid = true
+        }
+        else {
+            isNewSessionTitleValid = false
+        }
+    }
+    const toggleTagDropdownList = () => {
+        isTagListDropDownOpen = !isTagListDropDownOpen
+    }
+    const handleNewTagClicked = (tag: { title: string, color: string }) => {
+        isTagListDropDownOpen = false
+        
+        newTag.title = tag.title
+        newTag.color = tag.color
+    }
+    const handleCreateTagBtnClicked = () => {
+        isTagListDropDownOpen = false
+        isNewTagModalOpen = false
+    }
+
+
+    /* Editing a Todo */
+    let todoToEditIndex = -1
+    let todoToEditNewTitle = ""
+    let isTodoToEditTitleValid = true
+
     const handleTodoEditButtonClicked = (index: number) => {
         todoToEditIndex = index
+        todoToEditNewTitle = todos[index].title
     }
     const handleEditTodoDeleteBtnClicked = (index: number) => {
+        if (todos[index].isComplete) completedTodosCount--
         todos.splice(index, 1)
+        todos.length = todos.length
 
         todoToEditIndex = -1
         todoToEditNewTitle = ""
@@ -72,11 +148,22 @@
             isTodoToEditTitleValid = false
         }
     }
+
+    /* Adding New Todo */
+    let isMakingNewTask = false
+    let todoToEditTitle = ""
+    let isTodoTitleValid = false
+
+    const newTodoCancelBtnHandler = () => {
+        todoToEditTitle = ""
+        isTodoTitleValid = false
+        isMakingNewTask = false
+    }
     const newTodoAddBtnHandler = () => {
         todos.push({ title: todoToEditTitle, isComplete: false })
-        todoToEditTitle = ""
-        isMakingNewTask = false
-        isTodoTitleValid = false
+        todos.length = todos.length
+
+        newTodoCancelBtnHandler()
     }
     const newTodoTextInputHandler = (event: any) => {
         todoToEditTitle = event.target.value;
@@ -92,6 +179,76 @@
 </script>
 
 <div class="active-session-container">
+    <div class={`modal-bg ${isEditSessionModalOpen ? "" : "modal-bg--hidden"}`}>
+        <div 
+            use:clickOutside on:click_outside={() => isEditSessionModalOpen = false} 
+            class="modal-bg__content modal-bg__content--overflow-show modal-bg__content--small"
+        >
+            <div class="active-session-modal">
+                <h1>Edit Active Session</h1>
+                <h2>Title</h2>
+                <input 
+                    type="text" 
+                    placeholder="Rename Session Name"
+                    on:input={editActiveSessionTitleInputHandler}
+                    bind:value={newSessionTitle}
+                />
+                <div class="flx flx--space-between">
+                    <h2>Tag</h2>
+                    <div class="tag-dropdown dropdown-container">
+                        <button on:click={toggleTagDropdownList} class="tag-dropdown__dropdown-btn dropdown-btn">
+                            <div class="tag-dropdown__dropdown-btn-tag" style={`background-color: ${newTag.color}`}></div>
+                            <div class="dropdown-btn__title">
+                                {newTag.title}
+                            </div>
+                            <div class="dropdown-btn__icon">
+                                <div class="dropdown-btn__icon-triangle-up">
+                                    <i class="fa-solid fa-chevron-up"></i>
+                                </div>
+                                <div class="dropdown-btn__icon-triangle-down">
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </div>
+                            </div>
+                        </button>
+                        {#if isTagListDropDownOpen}
+                            <ul use:clickOutside on:click_outside={() => isTagListDropDownOpen = false} class="dropdown-menu">
+                                {#each tags as tag} 
+                                    <li class={`dropdown-menu__option ${tag.title === newTag.title ? "dropdown-menu__option--selected" : ""}`}>
+                                        <button class="dropdown-element" on:click={() => handleNewTagClicked(tag)}>
+                                            <div class="tag-dropdown__dropdown-btn-tag" style={`background-color: ${tag.color}`}></div>
+                                            <p>{tag.title}</p>
+                                            <i class="fa-solid fa-check"></i>
+                                        </button>
+                                    </li>
+                                {/each}
+                                <li class="dropdown-menu__new-option-container">
+                                    <div class="divider"></div>
+                                    <button on:click={handleCreateTagBtnClicked}>
+                                        <p>+</p>
+                                        <p>New Tag</p>
+                                    </button>
+                                </li>
+                            </ul>
+                        {/if}
+                    </div>
+                </div>
+                <div class="active-session-modal__buttons-container">
+                    <button 
+                        class="active-session-modal__cancel-btn btn-line" 
+                        on:click={handleEditSessionCancelClicked}>
+                            Cancel
+                    </button>
+                    <button 
+                        disabled={!isNewSessionTitleValid}
+                        class="active-session-modal__done-btn btn-line" 
+                        on:click={handleEditSessionDoneBtnClicked}>
+                            Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <h1>Active Session</h1>
     <div class="active-session-container__session-details">
         <p>Started at 12:23 PM</p>
@@ -100,8 +257,8 @@
     </div>
     <div class="active-session">
         <div class="active-session__header">
-            <h2>Math Homework</h2>
-            <button on:click={handleEditButtonClicked} class="active-session__edit-button">
+            <h2>{currentActiveSession.title}</h2>
+            <button on:click={handleEditSessionBtnClicked} class="active-session__edit-button">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20">
                     <g fill="none" stroke="currentColor" stroke-linecap="round" transform="translate(1 10)">
                         <circle cx="2" cy="1.7" r="1.7"></circle>
@@ -111,10 +268,18 @@
                 </svg>
             </button>
         </div>
-        <div class="active-session__tag"><p>school</p></div>
+        <div class="active-session__tag" style={`background-color: ${currentActiveSession.tag.color}`}>
+            <p>{currentActiveSession.tag.title}</p>
+        </div>
         <div class="active-session__subheader">
             <h3>Session Subtasks</h3>
-            <p>{completedTodosCount} / {todos.length}</p>
+            <p>
+                {#if todos.length === 0}
+                    No substasks
+                {:else}
+                    {completedTodosCount} / {todos.length}
+                {/if}
+            </p>
         </div>
         <ul class="active-session__todo-list">
             {#each todos as todo, idx}
@@ -199,11 +364,7 @@
                                     Add
                             </button>
                             <button 
-                                on:click={() => { 
-                                    todoToEditTitle = ""
-                                    isTodoTitleValid = false
-                                    isMakingNewTask = false
-                                }}
+                                on:click={newTodoCancelBtnHandler}
                                 class="active-session-todo__cancel-btn btn-line">
                                     Cancel
                             </button>
@@ -216,7 +377,7 @@
                 </button>
             {/if}
         </ul>
-        {#if completedTodosCount === todos.length}
+        {#if todos.length > 0 && completedTodosCount === todos.length}
         <div class="flx flx--right">
             <button class="active-session__finish-session-btn btn-line">
                 Finish Session <span>👏</span>
@@ -243,7 +404,6 @@
             @include pos-abs-top-right-corner(5px, 0px);
             opacity: 0.5;
 
-
             .divider {
                 margin: 0px 7px;
                 height: 80%;
@@ -252,15 +412,84 @@
             }
         }
     }
+    .active-session-modal {
+        height: 200px;
+        width: 250px;
+        h1 {
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+        }
+        h2 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+        input {
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(var(--fgColor4), 0.7);
+            width: 100%;
+            padding-bottom: 5px;
+            &::placeholder {
+                color: rgba(var(--textColor1), 0.4);
+            }
+            &:focus {
+                box-shadow: 0px 4px 7px -4px rgba(var(--fgColor4), 0.6);
+                border-bottom: 1px solid rgba(var(--fgColor4), 1);
+            }
+        }
+        &__buttons-container {
+            width: 250px;
+            margin-top: 30px;
+            display: flex;
+            width: 100%;
+
+            button {
+                @include center;
+                width: 50%;
+                color: rgb(var(--fgColor4));
+                border-color: rgb(var(--fgColor4));
+
+                &:hover {
+                    background-color: rgb(var(--fgColor4));
+                }
+                &:disabled {
+                    opacity: 0.4;
+                    &:hover {
+                        color: rgb(var(--fgColor4));
+                        background: none;
+                    }
+                }
+            }
+        }
+        &__cancel-btn {
+            margin-right: 5px;
+        }
+    }
+    .tag-dropdown {
+        @include flex-container(center, _);
+        &__dropdown-btn-tag {
+            @include circle(8px);
+            margin-right: 7px;
+        }
+        .dropdown-menu {
+            position: absolute;
+            top: 35px;
+            width: 100px;
+            &__option {
+                p {
+                    margin-left: 3px;
+                }
+            }
+        }
+    }
     .active-session {
-        min-height: 200px;
+        min-height: 160px;
         position: relative;
         margin-top: 10px;
         background-color: var(--secondaryBgColor);
         border-radius: 8px;
         border: var(--borderVal);
         box-shadow: var(--shadowVal);
-        padding: 15px 20px;
+        padding: 10px 20px 20px 20px;
 
         &__header {
             @include flex-container(center, space-between);
@@ -286,13 +515,12 @@
             }
         }
         &__tag {
-            background-color: #9997FE;
             color: white;
             border-radius: 20px;
             @include flex-container(center, center);
             font-size: 0.8rem;
             padding: 2px 8px;
-            margin: 6px 0px 14px 0px;
+            margin: 2px 0px 14px 0px;
             display: inline-block;
         }
         &__subheader {
@@ -353,7 +581,7 @@
         cursor: pointer;
 
         &--editing > &__right-container {
-            border: 1px solid rgba(var(--textColor1), 0.2);
+            border: 1px solid rgba(var(--textColor1), 0.1);
             border-radius: 5px;
             padding: 8px 0px 8px 0px;
         }
@@ -489,7 +717,7 @@
             margin-right: 10px;
             color: rgba(227, 145, 132, 0.7);
             &:hover {
-                color: rgb(194, 116, 104);
+                color: #e42828;
             }
         }
         &__done-btn {
@@ -498,7 +726,7 @@
                 color: rgba(var(--textColor1), 1);
             }
             &:disabled {
-                opacity: 0.5;
+                opacity: 0.3;
             }
         }
         &__edit-todo-input {

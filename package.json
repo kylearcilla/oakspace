@@ -37,6 +37,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@splidejs/svelte-splide": "^0.2.9",
 		"@types/jsonwebtoken": "^9.0.1",
 		"firebase": "^9.19.1",
 		"google-auth-library": "^8.7.0",

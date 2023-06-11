@@ -20,12 +20,12 @@ export const ytUserData = writable<YoutubeUserData>({
     username: '',
     channelImgSrc: '',
     email: '',
-    selectedPlaylistId: -1,
+    selectedPlaylist: null,
     playlists: []
 });
 
 export const currentYtVidId = writable(0)
-export const ytCurrentVid = writable<YouTubePlaylist>({
+export const ytCurrentVid = writable<any>({
     id: "",
     title: "",
     likeCount: "",
@@ -40,56 +40,11 @@ export const ytCurrentVid = writable<YouTubePlaylist>({
 export const appleMusicPlayerState = writable<MusicPlayer>()
 export const musicDataState = writable<MusicData>()
 
-export const appleUserCredentials = writable<AppleUserCredentials>({
-    devToken: '',
-    musicUserToken: ''
-})
-
-export const musicContext = writable<MusicContext>({
-    platform: "",
-    currentMedia: ""
-})
-
-export const userMusicPlaylists = writable<MusicPlaylist[]>([])
-
-export const curentPlaylist = writable<MusicPlaylist>({
-    id: "",
-    name: "",
-    artworkImgSrc: "",
-    songCount: 0,
-    time: "",
-    description: "",
-    type: "",
-    currentIndex: 0,
-})
-
-export const currentTrack = writable<Track | LiveTrack>({
-    id: "",
-    name: "",
-    artist: "",
-    collection: "",
-    artworkImgSrc: "",
-    playlistId: "",
-    playlistName: "",
-    playlistArtworkSrc: ""
-})
-
-export const currentLiveTrack = writable<LiveTrack>({
-    id: "",
-    name: "",
-    author: "",
-    artworkImgSrc: "",
-    description: ""
-})
-
-export const musicPlayerData = writable<MusicPlayerData>({
-    message: "",
-    doShowPlayer: false,
-    isCurrentlyPlaying: false,
-    isDisabled: true,
-    isRepeating: false,
-    isShuffled: false
-})
+export const appleUserCredentials = writable<AppleUserCredentials | null>(null)
+export const userMusicPlaylists = writable<MusicCollection[] | null>(null)
+export const curentPlaylist = writable<MusicCollection | null>(null)
+export const currentTrack = writable<Track | null>(null)
+export const musicPlayerData = writable<MusicPlayerData | null>(null)
 
 /* Color Stuff */
 

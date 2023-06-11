@@ -1,6 +1,7 @@
 import firebase from "firebase/compat/app";
 import auth from  "./firebase";
 import jwtDecode from "jwt-decode";
+import { ytCredentials, ytUserData } from "./store";
 
 // Replace with your client ID and secret
 const CLIENT_ID = "554073039798-fg87ji0n2iki91g6m16129nkbaocmtl6.apps.googleusercontent.com";
@@ -32,10 +33,14 @@ export const initClientApp = (googleSignInCallback: any) => {
     )
 }
 
+
+
 /**
- * Start 0Auth 2.0 Flow with firebase to get access token to utilize Google APIs. 
+ * Initiailze 0Auth 2.0 Flow using Firebase to get access token to utilize Google APIs. 
  * Generates a user consent screen pop-up to grant client app permission.
  * Returns an access token and user account metadata. Pass responses in callback function.
+ * 
+ * @param callback Calls callback function that init global store after user has allowed client to use user data. 
  * 
 */
 export const initOAuth2Client = async (callback: any) => {
@@ -47,6 +52,53 @@ export const initOAuth2Client = async (callback: any) => {
 
     callback({ popUpResponse, credential })
 }
+
+export const initYtCreds = (ytCreds: any) => {
+  ytCredentials.set({ ...ytCreds });
+  saveYtCredentials(ytCreds);
+}
+
+export const intUserYtData = async (ytData: YoutubeUserData, accessToken: string) => {
+  const userPlaylists = await getUserYtPlaylists(accessToken)
+  
+  ytUserData.set({ ...ytData, playlists: userPlaylists });
+  saveYtUserData({ ...ytData, playlists: userPlaylists });
+}
+
+export const resetYtUserData = () => {
+  ytUserData.update((data: YoutubeUserData) => {
+      return {
+          ...data,
+          username: '',
+          channelImgSrc: '',
+          email: '',
+          playlists: []
+      }
+  });
+  ytCredentials.update(() => ({ accessToken: '', refreshToken: '' }));
+  deleteYtCredentials()
+  deleteYtUserData()
+}
+
+export const getUserYtPlaylists = async (accessToken: string): Promise<YoutubePlaylist[]> => {
+  const playlists: YoutubePlaylist[] = []
+  const results = await getUserPlaylists(accessToken)
+  const playlistResults: [] = results.items
+
+  playlistResults.map((playlist: any) => {
+      playlists.push({
+          id: playlist.id,
+          title: playlist.snippet.title,
+          description: playlist.snippet.description,
+          vidCount: playlist.contentDetails.itemCount,
+          channelId: playlist.snippet.channelId,
+          thumbnailURL: playlist.snippet.thumbnails.medium.url
+      });
+  })
+  return playlists
+}
+
+/* Local Storage */
 
 export const saveYtCredentials = (ytCredentials: any) => {
     localStorage.setItem('yt-credentials', JSON.stringify(ytCredentials));

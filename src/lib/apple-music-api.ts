@@ -1,5 +1,5 @@
 import { get } from "svelte/store";
-import { musicContext, userMusicPlaylists, curentPlaylist, musicPlayerData, currentTrack } from "./store";
+import { userMusicPlaylists, curentPlaylist, musicPlayerData, currentTrack } from "./store";
 import { formatTime } from "./helper";
 
 /* Authentication */
@@ -33,7 +33,7 @@ export const getArtwork = (artwork: any) => {
     return imgSrc
 }
 
-export const getAppleMusicPlaylistDetails = async (playlistId: string, token: string): Promise<MusicPlaylist | null>  => {
+export const getPlaylistDetails = async (playlistId: string, token: string): Promise<MusicCollection | null>  => {
     const url = `https://api.music.apple.com/v1/catalog/us/playlists/${playlistId}`
     const options = {
         method: 'GET',
@@ -51,15 +51,17 @@ export const getAppleMusicPlaylistDetails = async (playlistId: string, token: st
     const totalTime = trackList.reduce((sum, x) =>  sum + x.attributes.durationInMillis, 0)
     const descriptionText = res.data[0].attributes?.description?.short ?? res.data[0].attributes?.description?.standard
     
-    const playlistData: MusicPlaylist = {
+    const playlistData: MusicCollection = {
         id: playlistId,
         name: res.data[0].attributes.name,
+        author: "My Library",
         artworkImgSrc: getArtwork(res.data[0].attributes?.artwork),
         songCount: trackList.length,
         time: formatTime(totalTime),
         description: descriptionText ?? "No Description",
         type: res.data[0].attributes.playParams.kind,
         currentIndex: 0,
+        url: null
     }
 
     return playlistData

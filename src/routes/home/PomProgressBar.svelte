@@ -16,7 +16,7 @@
                 result += (`
                     <div class="pom-bar__step-icon" style="left: ${percentSoFar * 100}%;">
                         <i class="fa-solid fa-book-open"></i>
-                        <p class="step-icon-time">${sessionTime} m</p>
+                        <p class="pom-bar__step-icon-time">${sessionTime} m</p>
                     </div>
                 `)
             } else {
@@ -24,7 +24,7 @@
                 result += (`
                     <div class="pom-bar__step-icon" style="left: ${percentSoFar * 100}%;">
                         <i class="fa-solid fa-leaf"></i>
-                        <p class="step-icon-time">${breakTime} m</p>
+                        <p class="pom-bar__step-icon-time">${breakTime} m</p>
                     </div>
                 `)
             }
@@ -35,7 +35,7 @@
 </script>
 
 <div class="pom-view">
-    <p class="pom-view__pom-timer">18:45</p>
+    <p class="pom-view__pom-timer pom-view__pom-timer--elapsed">18:45</p>
     <div class="pom-bar">
         <!-- <div class="pom-bar__step-icon pom-bar__step-icon--finished" style="left: 20%;">
             <i class="fa-solid fa-check"></i>
@@ -47,7 +47,7 @@
         {@html getStepIcons()}
         <div class="pom-bar__progress-bar" style="width: 20%;"></div>
     </div>
-    <p class="pom-view__pom-timer">{totalMinutes}:00</p>
+    <p class="pom-view__pom-timer pom-view__pom-timer--total">{totalMinutes}:00</p>
 </div>
 
 <style global lang="scss">
@@ -62,17 +62,21 @@
         }
 
         &__pom-timer {
-            font-size: 0.95rem;
+            font-size: 0.8rem;
             font-weight: 500;
+
             @include sm(max-width) {
                 display: none;
+            }
+            &--total {
+                margin-right: 4px;
             }
         }
     }
 
     .pom-bar {
         position: relative;
-        margin: 0px min(4%, 15px);
+        margin: 0px min(4%, 9px);
         width: 100%;
         height: 4px;
         background-color: var(--pomProgressBgColor);
@@ -87,31 +91,21 @@
         }
         &__step-icon {
             position: absolute;
-            top: -22px;
+            top: -20px;
             width: 16px;
             height: 16px;
             border-radius: 18px;
             @include center;
+            i {
+                font-size: 0.6rem;
+            }
 
             &::after {
                 content: "";
                 @include circle(1.5px);
                 background-color: rgb(var(--textColor4));
                 position: absolute;
-                bottom: -2px;
-            }
-            i {
-                font-size: 0.75rem;
-            }
-            .step-icon-time {
-                position: absolute;
-                white-space: nowrap;
-                top: 33px;
-                font-size: 0.68rem;
-                font-weight: 400;
-                @include sm(max-width) {
-                    display: none;
-                }
+                bottom: 0px;
             }
             &--finished {
                 background: linear-gradient(90deg, #5366FF 0%, #7876FE 100%);
@@ -122,6 +116,16 @@
                 i {
                     font-size: 0.6rem;
                 }
+            }
+        }
+        &__step-icon-time {
+            position: absolute;
+            white-space: nowrap;
+            top: 30px;
+            font-size: 0.68rem;
+            font-weight: 400;
+            @include sm(max-width) {
+                display: none;
             }
         }
     }

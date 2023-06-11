@@ -4,22 +4,20 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { getChannelDetails, getPlayListDetails, getVidDetails, saveYtUserData } from "$lib/yt-api";
 
-    // console.log("YT View Rendering...")
-
     let isDropDownOpen = false;
     // @ts-ignore
     let player: YT.Player;
     let currentVidIdx = 0;
     let hasError = false
 
-    let ytUserAccountData: any = {
+    let ytData: YoutubeUserData = {
         username: '',
         channelImgSrc: '',
         email: '',
-        selectedPlaylistId: 0,
+        selectedPlaylist: null,
         playlists: []
     }
-    let ytVidDetails: any = {
+    let ytVidDetails: YoutubeVideo = {
         id: "",
         title: "",
         likeCount: 0,
@@ -36,45 +34,29 @@
     ytCurrentVid.subscribe((data: any) => {
         ytVidDetails = data
     })
-
-
     ytUserData.subscribe(async (data) => {
-        // // console.log("📌 YT User Data Updated!")
-
-        const hasUserLoggedOff = data.username === ""
-
-        if (hasUserLoggedOff) {
-            // // console.log("📌 User has logged out!")
-        } else {
-            // // console.log("📌 User is signed in!")
+        if (!data.selectedPlaylist) {
+            ytData = { ...ytData, ...data }
+            player.stopVideo()
+            hidePlaylist()
+            return
         }
+        const selectedPlaylistId = data.selectedPlaylist?.id ?? "No current selected playlist!"
 
-        const selectedPlaylistIdx = data.selectedPlaylistId
-        // @ts-ignore
-        const selectedPlaylistId = data.playlists[selectedPlaylistIdx]?.id ?? "No current selected playlist!"
+        const hasUserToggledSettings = data.selectedPlaylist?.id === ytData.selectedPlaylist?.id
+        const hasUserDeselectedPlaylist = !data.selectedPlaylist && ytData.selectedPlaylist
+        const hasUserSelectedNewPlaylist = (data.selectedPlaylist?.id != ytData.selectedPlaylist?.id) && !hasUserDeselectedPlaylist
 
-        // console.log("📌 " + selectedPlaylistIdx)
-        // console.log("📌 " + selectedPlaylistId)
-
-        const hasUserToggledSettings = data.selectedPlaylistId === ytUserAccountData.selectedPlaylistId
-        const hasUserDeselectedPlaylist = data.selectedPlaylistId < 0 && ytUserAccountData.selectedPlaylistId >= 0
-        const hasUserSelectedNewPlaylist = (data.selectedPlaylistId != ytUserAccountData.selectedPlaylistId) && !hasUserDeselectedPlaylist
-
-        ytUserAccountData = {
-            ...ytUserAccountData,
-            ...data
-        }
+        ytData = { ...ytData, ...data }
 
         if (hasUserDeselectedPlaylist) {
-            // console.log("📌 User has just deselected a playlist")
             hidePlaylist()
         }
         if (hasUserSelectedNewPlaylist) {
             const res = await getPlayListDetails(selectedPlaylistId)
             const userHasSelectedPrivatePlaylist = res.error != null
-
+            
             if (userHasSelectedPrivatePlaylist) {
-                // console.log("📌 User has just selected a broken playlist!")
                 hasError = true;
                 hidePlaylist();
                 return;
@@ -85,8 +67,6 @@
             }
         }
         if (selectedPlaylistId != "No current selected playlist!" && !hasUserToggledSettings) {
-            // console.log("📌 Now Playing Playlist")
-
             if (player.stopVideo) player.stopVideo()
             showPlaylist()
             player.loadPlaylist({
@@ -110,14 +90,13 @@
     
     // triggers when page reloads
     async function onReady() {
-        console.log("📌 Player is Ready!")
-        if (ytUserAccountData.playlists[ytUserAccountData.selectedPlaylistId].id < 0) return 
+        if (!ytData.selectedPlaylist?.id) return 
 
         // see if there was a saved vid index that user was watching before start off with that vid
         // otherwise default to first vid
         const startVidIdx = JSON.parse(localStorage.getItem("currentVidIdIndex") ?? "0");
         player.cuePlaylist({
-            list: ytUserAccountData.playlists[ytUserAccountData.selectedPlaylistId].id,
+            list: ytData.selectedPlaylist!.id,
             listType: "playlist",
             index: startVidIdx,
         });
@@ -128,22 +107,19 @@
         if (vidIdxWasSaved) {
             updateVidDetails(localStorage.getItem("currentVidId")!)
         } else {
-            const res = await getPlayListDetails(ytUserAccountData.playlists[ytUserAccountData.selectedPlaylistId].id)
+            const res = await getPlayListDetails(ytData.selectedPlaylist!.id)
             const vidId = res.items[0].snippet.resourceId.videoId;
             updateVidDetails(vidId)
             localStorage.setItem("currentVidId", vidId)
         }
     }
-    const updatePlaylist = (clickedPlaylistId: number) => {
+    const updatePlaylist = async (clickedPlaylistIdx: number) => {
         isDropDownOpen = false
-        ytUserData.set({
-            ...ytUserAccountData,
-            selectedPlaylistId: clickedPlaylistId
-        })
-        saveYtUserData({
-            ...ytUserAccountData,
-            selectedPlaylistId: clickedPlaylistId
-        });
+        const newPlaylist = ytData.playlists[clickedPlaylistIdx]
+        const newYtData = { ...ytData, selectedPlaylist: newPlaylist }
+
+        ytUserData.set(newYtData)
+        saveYtUserData(newYtData);
     }
     const toggleDropDown = () => {
         isDropDownOpen = !isDropDownOpen
@@ -151,7 +127,7 @@
     // triggers only when player plays a vid whose embed option has been disabled or is private
     function onError() {
     }
-    // only triggers when user has clicked a new vid, if so save htis new vid
+    // only triggers when user has clicked a new vid or new playlist
     async function onStateChange() {
         if (player.getPlaylistIndex() === currentVidIdx) return;
         currentYtVidId.update(() => player.getPlaylistIndex())
@@ -178,7 +154,6 @@
 
         ytCurrentVid.update(() => currentVidObject)
     }
-
     function initPlayer() {
         // @ts-ignore
         window.onYouTubeIframeAPIReady = () => {
@@ -202,17 +177,14 @@
     }
 
     onDestroy(() => {
-        // console.log("DESTROYING")
         const playerDiv = document.getElementById("player")!;
         if (playerDiv) playerDiv.remove();
     })
     onMount(() => {
-        // console.log("MOUNTING")
         if (localStorage.getItem('yt-user-data')) {
             const ytData = JSON.parse(localStorage.getItem('yt-user-data')!)
             ytUserData.set({ ...ytData });
         }
-        // console.log("📌 User is signed in!")
         const tag = document.createElement('script');
         tag.src = 'https://www.youtube.com/iframe_api';
 
@@ -230,30 +202,44 @@
             <div class="yt-icon-fill"></div>
             <i class="fa-brands fa-youtube header-icon"></i>
         </div>
-        {#if ytUserAccountData.username != ""}
+        {#if ytData.username != ""}
             <div class="dropdown-container">
                 <button on:click={toggleDropDown} class="dropdown-btn">
-                    <p>{ytUserAccountData.playlists[ytUserAccountData.selectedPlaylistId]?.title ?? "No Playlist Selected"}</p>
-                    <i class="fa-solid fa-caret-down"></i>
+                    <p class="dropdown-btn__title">
+                        {ytData.selectedPlaylist?.title ?? "No Playlist Selected"}
+                    </p>
+                    <div class="dropdown-btn__icon">
+                        <div class="dropdown-btn__icon-triangle-up">
+                            <i class="fa-solid fa-chevron-up"></i>
+                        </div>
+                        <div class="dropdown-btn__icon-triangle-down">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                    </div>
                 </button>
                 {#if isDropDownOpen}
                     <ul use:clickOutside on:click_outside={() => isDropDownOpen = false} class="dropdown-menu">
-                        {#each ytUserAccountData.playlists as playlist, index}
-                            <li><button on:click={() => updatePlaylist(index)} class="dropdown-menu__option">{playlist.title}</button></li>
+                        {#each ytData.playlists as playlist, index}
+                            <li class={`dropdown-menu__option ${playlist.title ===  ytData.selectedPlaylist?.title ? "dropdown-menu__option--selected" : ""}`}>
+                                <button class="dropdown-element" on:click={() => updatePlaylist(index)}>
+                                    <p>{playlist.title}</p>
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                            </li>
                         {/each}
                     </ul>
                 {/if}
             </div>
+        {:else if ytData.username === "" && ytData.selectedPlaylist}
+            <h3 class="vid-view__playlist-title">
+                {ytData.selectedPlaylist.title}
+            </h3>
         {/if}
     </div>
     <div class="vid-view-container">
         <div id="player">
         </div>
-        {#if ytUserAccountData.username === ""}
-            <div class="vid-view-empty-vid-view">
-                <p class="vid-view-empty-msg">No Youtube account linked.</p>
-            </div>
-        {:else if !ytUserAccountData.playlists[ytUserAccountData.selectedPlaylistId]}
+        {#if !ytData.selectedPlaylist}
             <div class="vid-view-empty-vid-view">
                 <p class="vid-view-empty-msg">No Playlist Selected</p>
             </div>
@@ -273,7 +259,7 @@
             </div>
         {/if}
     </div>
-    {#if ytUserAccountData.playlists[ytUserAccountData.selectedPlaylistId] && !hasError}
+    {#if ytData.selectedPlaylist?.id && !hasError}
         <div class="vid-details-container">
             <h1 class="vid-title">{ytVidDetails.title}</h1>
             <div class="vid-channel-details-container">
@@ -282,7 +268,6 @@
                     <div class="vid-channel-details__channel-name">{ytVidDetails.channelName}</div>
                     <div class="vid-channel-details__sub-count">{ytVidDetails.channelSubs} subscribers</div>
                 </div>
-                <div class="vid-like-count">27.5 K</div>
             </div>
         </div>
     {/if}
@@ -293,6 +278,13 @@
         margin-top: 30px;
         font-family: "Manrope";
         color: white;
+        position: relative;
+
+        &__playlist-title {
+            color: rgba(var(--textColor1), 0.9);
+            float: right;
+            @include pos-abs-top-right-corner(5px, 0px);
+        }
 
         .vid-view-header {
             position: relative;
@@ -328,13 +320,12 @@
             .dropdown-container {
                 font-family: "Apercu";
                 position: absolute;
-                top: 5px;
                 right: 0px;
                 color: rgb(var(--textColor1));
                 .dropdown-menu {
                     position: absolute;
-                    top: 25px;
-                    right: 0px;
+                    top: 30px;
+                    right: -10px;
                     width: 120px;
                 }
             }
@@ -342,14 +333,14 @@
         .vid-view-container {
             width: 100%;
             aspect-ratio: 16 / 9;
-            background-color: var(--primaryBgColor);
+            background-color: rgb(var(--primaryBgColor));
+            filter: brightness(0.95);
             position: relative;
         }
         #player, .vid-view-empty-vid-view {
             width: 100%;
             aspect-ratio: 16 / 9;
-            // border-radius: 7px;
-            background-color: var(--secondaryBgColor);
+            background-color: var(--primaryBgColor);
             display: flex;
             @include center;
         }
@@ -362,7 +353,7 @@
         .vid-view-empty-msg {
             font-weight: 700;
             font-size: 1.4rem;
-            color: #999999;
+            color: rgb(var(--textColor2));
             margin-bottom: 15px;
             z-index: 1000;
         }
@@ -386,12 +377,14 @@
             }
 
         }
+        .vid-details-container {
+            width: 100%;
+        }
         .vid-title {
             font-size: 1.5rem;
             margin-top: 10px;
             font-weight: 700;
             color: rgb(var(--textColor1));
-            @include elipses-overflow;
         }
         .vid-channel-details-container {
             margin: 7px 0px 40px 0px;

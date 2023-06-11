@@ -74,7 +74,7 @@
     <NavMenu onNavButtonClicked={handleNavButtonClicked} />
   </div>
   <!-- middle video component -->
-  <div class={`home__video ${doHideMenu ? "home__video--nav-menu-hidden" : ""} ${!isTaskMenuExpanded ? "home__video--task-view-hidden" : ""}`}>
+  <div class={`home__video ${!doHideMenu && !isTaskMenuExpanded ? "home__video--nav-shown-task-min" : ""} ${doHideMenu ? "home__video--nav-menu-hidden" : ""} ${!isTaskMenuExpanded ? "home__video--task-view-hidden" : ""}`}>
     <PomView />
     <!-- @ts-ignore -->
     <VideoView />
@@ -171,11 +171,37 @@
         }
         &--task-view-hidden {
           margin-right: 65px;
-          padding-right: 4%;
+        }
+        // < 1100px, margin right no longer works
+        @include mq-custom(max-width, 1100px) {
+          margin-right: 0px;
+          padding-right: 33vw;
 
+          &--nav-menu-hidden {
+            padding-right: 33vw;
+          }
+          &--task-view-hidden {
+            padding-right: 12vw;
+          }
+          &--nav-shown-task-min {
+            width: 85vw;
+            padding-right: 0px;
+          }
+        }
+        // < 755px, task view overlaps with middle vide
+        @include mq-custom(max-width, 755px) {
+          &--nav-shown-task-min {
+            width: 82vw;
+            padding-right: 2.5%;
+          }
         }
         @include sm(max-width) {
+          width: 88vw;
           margin-right: 0px !important;
+          padding-right: 4%;
+          &--nav-menu-hidden {
+            width: 100vw;
+          }
         }
       }
 

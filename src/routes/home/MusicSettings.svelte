@@ -26,6 +26,7 @@
 
     let isSignedIn = false
     let isPlatformListOpen = false
+    let collectionTitle = "Serene"
 
     let playlists: any = []
     let currentMusicCollection: MusicCollection | null = null
@@ -38,13 +39,12 @@
     let debounceTimeout: NodeJS.Timeout | null = null
 
     const SCROLL_STEP = 250
-    const PLAYLIST_BTN_COOLDOWN_MS = 350
+    const PLAYLIST_BTN_COOLDOWN_MS = 250
 
     // init music data for music settings
     musicDataState.subscribe((data: MusicData) => {
         if (data) isSignedIn = true
         
-        // @ts-ignore
         musicData = data
     })
     appleMusicPlayerState.subscribe((data: MusicPlayer) => musicPlayer = data)    
@@ -93,27 +93,28 @@
      * @param globalId  used for getting user playlist details for personal playlists, otherwise id is used
      */
     const handlePersonalPlaylistClicked = async (id: string, globalId: string = id) => {
-        if (debounceTimeout !== null) clearTimeout(debounceTimeout)
+        if (debounceTimeout !== null) return
 
-        debounceTimeout = setTimeout(async () => {
-            if (musicPlayer!.musicPlayerData.isShuffled) {
-                musicPlayer!.toggleShuffle()
-            } else {
-                musicPlayer!.updateMusicPlayerData({ ...musicPlayer!.musicPlayerData, isDisabled: true, isShuffled: false })
-            }
-            
-            musicData!.setNewPlaylist(globalId)
-            musicPlayer!.resetMusicPlayerData()
-            musicPlayer!.queueAndPlayNextTrack(id, 0)
+        musicPlayer!.musicPlayerData.isShuffled ? musicPlayer!.toggleShuffle() : null;
+        musicPlayer!.musicPlayerData.isRepeating ? musicPlayer!.toggleShuffle() : null;
+        
+        musicPlayer!.updateMusicPlayerData({ 
+            ...musicPlayer!.musicPlayerData, 
+            isDisabled: true, 
+            isShuffled: false,
+            isRepeating: false,
+        })
+        
+        musicData!.setNewPlaylist(globalId)
+        musicPlayer!.queueAndPlayNextTrack(id, 0)
 
-            debounceTimeout = null
-        }, PLAYLIST_BTN_COOLDOWN_MS)
+        debounceTimeout = setTimeout(() => debounceTimeout = null, PLAYLIST_BTN_COOLDOWN_MS)
     }
 
     /* Discover Section Functionality */
     const handleDiscoverCollectionClicked = (index: number) => {
         collectionGroupIdx = index
-        const collectionTitle = musicCategories[index].title
+        collectionTitle = musicCategories[index].title
         const platformProp = getPlatformNameForDiscoverPlaylist()
 
         switch (collectionTitle) {
@@ -158,8 +159,7 @@
 
     const handleRecommendedPlaylistClicked = async (collection: MusicDiscoverCollection, event: MouseEvent) => {
         const target = event.target as HTMLElement;
-        if (target.tagName === 'A') return
-        if (debounceTimeout !== null) clearTimeout(debounceTimeout)
+        if (target.tagName === 'A' || debounceTimeout !== null) return
 
         const id = collection?.albumId ?? (collection?.playlistId ?? (collection?.albumId ?? ""))
         if (id === currentMusicCollection?.id) {
@@ -168,32 +168,31 @@
             return
         }
 
-        debounceTimeout = setTimeout(async () => {
-            if (musicPlayer!.musicPlayerData.isShuffled) {
-                musicPlayer!.toggleShuffle()
-            }
-            else {
-                musicPlayer!.updateMusicPlayerData({ ...musicPlayer!.musicPlayerData, isDisabled: true, isShuffled: false })
-            }
+        musicPlayer!.musicPlayerData.isShuffled ? musicPlayer!.toggleShuffle() : null;
+        musicPlayer!.musicPlayerData.isRepeating ? musicPlayer!.toggleShuffle() : null;
+        
+        musicPlayer!.updateMusicPlayerData({ 
+            ...musicPlayer!.musicPlayerData, 
+            isDisabled: true, 
+            isShuffled: false,
+            isRepeating: false,
+        })
 
-            musicData!.updateCurrentPlaylist({
-                id: id,
-                name: collection.title,
-                description: collection?.description,
-                artworkImgSrc: collection.artworkSrc,
-                currentIndex: 0,
-                time: "",
-                type: collection.playlistId === null ? "Album" : "Playlist",
-                songCount: collection.length,
-                url: collection.url,
-                author: collection.author
-            })
+        musicData!.updateCurrentPlaylist({
+            id: id,
+            name: collection.title,
+            description: collection?.description,
+            artworkImgSrc: collection.artworkSrc,
+            currentIndex: 0,
+            time: "",
+            type: collection.playlistId === null ? "Album" : "Playlist",
+            songCount: collection.length,
+            url: collection.url,
+            author: collection.author
+        })
 
-            musicPlayer!.resetMusicPlayerData()
-            musicPlayer!.queueAndPlayNextTrack(id, 0)
-            debounceTimeout = null
-
-        }, PLAYLIST_BTN_COOLDOWN_MS)
+        musicPlayer!.queueAndPlayNextTrack(id, 0)
+        debounceTimeout = setTimeout(() => debounceTimeout = null, PLAYLIST_BTN_COOLDOWN_MS)
     }
 
     /* Discover Collection Carousel Functionality */
@@ -231,10 +230,7 @@
             <i class="fa-solid fa-xmark"></i>
         </button> -->
         <div class={`music ${isSignedIn ? "" : "music--small"}`}>
-            <div class="music__header">
-                <h1>Music</h1>
-                <i class="fa-solid fa-music"></i>
-            </div>
+            <h1 class="modal-bg__content-title">Music</h1>
             {#if isSignedIn}
             <!-- Logged In Profile Header -->
             <div class="active-account-header">
@@ -337,9 +333,7 @@
                         <img class="img-bg" src={currentMusicCollection?.artworkImgSrc} alt="">
                         <div class={`blur-bg blur-bg--blurred-bg ${currentMusicCollection ?? "blur-bg--solid-color"}`}></div>
                         <div class="content-bg">
-                            <div class="grid-section__header">
-                                <h2>Now Playing</h2>
-                            </div>
+                            <h2 class="grid-section__title">Now Playing</h2>
                             {#if currentMusicCollection}
                                 <div class="now-playing__details-container">
                                     <div class="now-playing__artwork">
@@ -369,29 +363,34 @@
                     </div>
                     <!-- My Playlists Section -->
                     <div class="my-playlists grid-section grid-section--no-padding">
-                        <div class="grid-section__header grid-section__header--padded">
-                            <h2>My Playlists</h2>
+                        <div class="my-playlists__header">
+                            <h2 class="grid-section__title">My Playlists</h2>
                             <h3>{`${playlists.length} ${playlists.length == 1 ? "playlist" : "playlists"}`}</h3>
-                        </div>     
+                        </div>
                         <ul class="my-playlists__collection-list vert-scroll">
                             {#if playlists?.length === 0}
                                 <img class="my-playlists__no-pl-meme-img abs-center" src="/no-pl.png" alt="no-playlists-img"/>
                             {:else}
-                                {#each playlists as p, idx}
+                                {#each playlists as personalPlaylist, idx}
+                                <!-- My Playlist Item -->
                                 <!-- svelte-ignore a11y-click-events-have-key-events -->
-                                <li class="my-playlists__playlist" on:click={() => handlePersonalPlaylistClicked(p.id, p.globalId)}>
+                                <li
+                                    on:click={() => handlePersonalPlaylistClicked(personalPlaylist.id, personalPlaylist.globalId)}
+                                    class={`my-playlists__playlist ${personalPlaylist.globalId === currentMusicCollection?.id ? "my-playlists__playlist--chosen" : ""}`}
+                                >
                                     <p class="my-playlists__playlist-idx">{idx + 1}</p>
                                     <div class="my-playlists__playlist-img">
-                                        {#if p.artworkSrc != ""}
-                                            <img src={p.artworkSrc} alt="playlist-artwork"/>
+                                        {#if personalPlaylist.artworkSrc != ""}
+                                            <img src={personalPlaylist.artworkSrc} alt="playlist-artwork"/>
                                         {:else}
                                             <i class="fa-solid fa-music abs-center"></i>
                                         {/if}
                                     </div> 
                                     <div class="my-playlists__playlist-text">
-                                        <h4>{p.name}</h4>
-                                        <p>{p.description}</p>
+                                        <h4>{personalPlaylist.name}</h4>
+                                        <p>{personalPlaylist.description}</p>
                                     </div>
+                                    <div class="divider divider--thin"></div>
                                 </li>
                                 {/each}
                             {/if}
@@ -401,10 +400,8 @@
                 <div class="music__right-section">
                     <!-- Discover Section -->
                     <div class="discover grid-section grid-section--no-padding">
-                        <div class="grid-section__header grid-section__header--padded"> <h2>Discover</h2> </div>     
-                        <div class="discover__description">
-                            <p class="discover__copy">Get in the zone with music that matches your vibe - select a category and discover new tunes to fuel your day.</p>
-                        </div>
+                        <h2 class="grid-section__title">{`Discover from ${getPlatformName()}`}</h2>
+                        <p class="grid-section__copy">Get in the zone with music that matches your vibe - select a category and discover new tunes to fuel your day.</p>
                         <div class="discover__collection-list-container">
                             {#if isScrollableLeft}
                                 <div class="gradient-container gradient-container--left">
@@ -415,11 +412,8 @@
                                     </button>
                                 </div>
                             {/if}
-                            <ul 
-                                class="discover__collection-list"
-                                bind:this={collectionList}
-                                on:scroll={handleScroll}
-                            >
+                            <!-- Discover Categories Carousel -->
+                            <ul  class="discover__collection-list" bind:this={collectionList} on:scroll={handleScroll}>
                                 {#each musicCategories as group, idx}
                                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                                     <li class="discover__collection-card" on:click={() => handleDiscoverCollectionClicked(idx)}>
@@ -447,7 +441,8 @@
                                 </div>
                             {/if}
                         </div>
-                        <h2 class="discover__collection-title">Collections</h2>
+                        <!-- Collections List -->
+                        <h2 class="discover__collection-title">{`${collectionTitle} Collections`}</h2>
                         <div class="discover__collection-container">
                             <div class="discover__collection-header flx">
                                 <h4 class="discover__collection-header-num">#</h4>
@@ -464,6 +459,7 @@
                             </div>
                             <ul class="discover__selected-collection-list">
                                 {#each chosenMusicCollection as collection, idx}
+                                    <!-- Collection Item -->
                                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                                     <li 
                                         on:click={event => handleRecommendedPlaylistClicked(collection, event)} 
@@ -484,6 +480,7 @@
                                         <p class="discover__collection-item-type">{collection.playlistId === null ? "Album" : "Playlist"}</p>
                                         <p class="discover__collection-item-genre">{collection.genre}</p>
                                         <p class="discover__collection-item-length">{collection.length > 100 ? "100+" : collection.length}</p>
+                                        <div class="divider divider--thin"></div>
                                     </li>
                                 {/each}
                             </ul>
@@ -570,6 +567,8 @@
     $top-row-height: 170px;
     $bottom-row-height: 470px;
 
+    $my-playlists-section-padding-left: 25px;
+
     .music {
         width: 82vw;
         height: 700px;
@@ -582,11 +581,6 @@
         }
         &__header {
             @include flex-container(center, _);
-            h1 {
-                font-size: 2.3rem;
-                font-family: "Apercu";
-                margin-right: 10px;
-            }
             i {
                 font-size: 17px;
                 color: rgb(var(--fgColor3));
@@ -630,11 +624,13 @@
             @include flex-container(center, _);
             padding: 5px 8px;
             border-radius: 10px;
-            border: var(--borderVal);
             margin-right: 7px;
+            background-color: var(--modalFgColor);
+            border: var(--borderVal);
+
             &:hover {
                 transition: 0.2s ease-in-out;
-                background-color: var(--secondaryBgColor);
+                background-color: var(--hoverColor);
                 box-shadow: var(--shadowVal);
             }
             &:active {
@@ -771,7 +767,7 @@
             height: 74px;
             width: 90%;
             span {
-                color: rgba(var(--textColor4), 0.6);
+                color: rgba(var(--textColor2), 0.6);
                 text-transform: capitalize;
                 font-weight: 600;
             }
@@ -781,8 +777,8 @@
                 @include elipses-overflow;
             }
             p {
-                color: rgba(var(--textColor4), 0.5);
-                font-size: 0.9rem;
+                color: rgba(var(--textColor2), 0.5);
+                font-size: 0.98rem;
                 @include multi-line-elipses-overflow(3);
             }
         }
@@ -791,7 +787,7 @@
             font-weight: 600;
             @include pos-abs-bottom-right-corner(20px, 13px);
             display: flex;
-            color: rgba(var(--textColor4), 0.7);
+            color: rgba(var(--textColor2), 0.7);
 
             span {
                 font-weight: 100;
@@ -801,7 +797,7 @@
         &__no-pl-selected {
             font-weight: 600;
             @include elipses-overflow();
-            color: rgb(var(--textColor4), 0.8);
+            color: rgb(var(--textColor2), 0.8);
             font-size: 1.2rem;
             @include abs-center;
         }
@@ -818,6 +814,10 @@
         overflow: hidden;
         position: relative;
 
+        &__header {
+            @include flex-container(center, space-between);
+            padding: 17px 17px 0px $my-playlists-section-padding-left;
+        }
         h3 {
             font-size: 1rem;
             opacity: 0.7;
@@ -826,17 +826,27 @@
             height: 90%;
             margin-top: 2px;
         }
+        /* Playlist Item */
         &__playlist {
             @include flex-container(center, _);
             cursor: pointer;
-            padding: 8px 0px 8px 20px;
-            margin-bottom: 10px;
-            
+            padding: 15px 0px 15px 20px;
+            position: relative;
+
             &:hover {
                 background-color: var(--hoverColor);
             }
+
+            &--chosen {
+                background-color: var(--hoverColor);
+            }
+
             p {
-                color: rgb(148, 148, 148);
+                color: rgba(var(--textColor1), 0.5);
+            }
+            .divider {
+                @include pos-abs-bottom-left-corner(0px, 22);
+                width: 85%;
             }
         }
         &__playlist-idx {
@@ -886,21 +896,27 @@
         padding-right: 0px;
         overflow: hidden;
 
+        .grid-section__title {
+            padding: 17px 0px 0px $my-playlists-section-padding-left;
+        }
+        .grid-section__copy {
+            padding-left: $my-playlists-section-padding-left;
+        }
         &__header {
-            padding: 13px 0px 0px 20px;
+            padding: 17px 0px 0px $my-playlists-section-padding-left;
             h2 {
                 font-size: 1.3rem;
             }
         }
         &__copy {
-            padding-left: 20px;
+            padding-left: $my-playlists-section-padding-left;
         }
         &__description {
             width: 100%;
             margin-top: -5px;
             color: #787878;
         }
-        /* Discover Collections */
+        /* Discover Collections Carousel */
         &__collection-list-container {
             position: relative;
             height: 130px;
@@ -929,14 +945,14 @@
             }
         }
         &__collection-list {
-            margin-top: 15px;
+            margin-top: 25px;
             display: flex;
             overflow-x: scroll;
             overflow-y: hidden;
             scroll-behavior: smooth;
             li {
                 &:first-child {
-                    margin-left: 20px;
+                    margin-left: 25px;
                 }
             }
         }
@@ -944,6 +960,7 @@
             min-width: 80px;
             height: 1px;
         }
+        /* Discover Collection Card */
         &__collection-card {
             margin-right: 8px;
             position: relative;
@@ -1006,7 +1023,7 @@
                 margin-bottom: 5px
             }
             span {
-                color: rgba(var(--textColor4), 0.64);
+                color: rgba(var(--textColor2), 0.64);
                 font-weight: 700;
                 @include pos-abs-top-right-corner(10px, 10px);
                 font-size: 0.75rem;
@@ -1020,14 +1037,14 @@
             }
         }
         &__collection-card-hover-details-description {
-            color: rgba(var(--textColor4), 0.64);
+            color: rgba(var(--textColor2), 0.64);
             font-size: 0.9rem;
             width: 95%;
         }
 
         /* Discover Category Collections List Section */
         &__collection-title {
-            margin: 30px 0px 10px 20px;
+            margin: 30px 0px 10px $my-playlists-section-padding-left;
             font-size: 1.3rem;
         }
         /* List Column Header Section */
@@ -1040,7 +1057,7 @@
         }
         &__collection-header-num {
             width: 25px;
-            margin-left: 20px;
+            margin-left: $my-playlists-section-padding-left;
         }
         &__collection-header-title {
             width: 35%;
@@ -1067,7 +1084,8 @@
             @include flex-container(center, _);
             cursor: pointer;
             transition: 0.1s ease-in-out;
-            padding: 10px 0px;
+            padding: 14px 0px;
+            position: relative;
 
             &:hover {
                 background-color: var(--hoverColor);
@@ -1079,16 +1097,23 @@
                 margin-bottom: 100px;
             }
             p {
-                color: rgba(var(--textColor1), 0.9);
+                font-weight: 500;
+                color: rgba(var(--textColor1), 0.5);
             }
             &--chosen {
                 background-color: var(--hoverColor);
             }
+
+            .divider {
+                @include pos-abs-bottom-left-corner(0px, 25px);
+                width: 90%;
+            }
         }
         &__collection-item-num {
             opacity: 0.7;
-            margin-left: 20px;
+            margin-left: $my-playlists-section-padding-left;
             width: 25px;
+            color: rgba(var(--textColor1), 0.7);
         }
         &__collection-item-main-details-container {
             width: 35%;
@@ -1099,13 +1124,12 @@
                 height: 35px;
                 aspect-ratio: 1/ 1;
                 border-radius: 3px;
-                margin-right: 6px;
+                margin-right: 10px;
             }
         }
         &__collection-item-main-details {
             max-width: 80%;
             overflow: hidden;
-
             a {
                 color: rgb(var(--textColor1));
                 font-size: 1.17rem;
@@ -1117,7 +1141,8 @@
                 @include elipses-overflow;
             }
             p {
-                color: rgba(var(--textColor1), 0.75);
+                color: rgba(var(--textColor1), 0.5);
+                font-weight: 300;
                 @include elipses-overflow;
             }
         }

@@ -179,6 +179,7 @@
 </script>
 
 <div class="active-session-container">
+    <!-- Edit Active Session Modal -->
     <div class={`modal-bg ${isEditSessionModalOpen ? "" : "modal-bg--hidden"}`}>
         <div 
             use:clickOutside on:click_outside={() => isEditSessionModalOpen = false} 
@@ -222,7 +223,7 @@
                                     </li>
                                 {/each}
                                 <li class="dropdown-menu__new-option-container">
-                                    <div class="divider"></div>
+                                    <div class="divider divider--thin"></div>
                                     <button on:click={handleCreateTagBtnClicked}>
                                         <p>+</p>
                                         <p>New Tag</p>
@@ -249,6 +250,7 @@
         </div>
     </div>
 
+    <!-- Active Session View -->
     <h1>Active Session</h1>
     <div class="active-session-container__session-details">
         <p>Started at 12:23 PM</p>
@@ -305,7 +307,7 @@
                                 />
                             </form>
                         {:else}
-                            <div class="divider"></div>
+                            <div class="divider divider--thin"></div>
                             <p class={`active-session-todo__title ${todo.isComplete ? "active-session-todo__title--finished" : ""}`}>
                                 {#if todo.isComplete} 
                                     <span class="strike">{todo.title}</span>
@@ -340,13 +342,14 @@
                     {/if}
                 </li>
             {/each}
+            <!-- New Task Button -->
             {#if isMakingNewTask}
                 <li class="active-session-todo">
                     <button disabled class="active-session-todo__check-box active-session-todo__check-box--edit-mode">
                         <i class="fa-solid fa-check"></i>
                     </button>
                     <div class="active-session-todo__right-container">
-                        <div class="divider"></div>
+                        <div class="divider divider--thin"></div>
                             <!-- <p class="session-todo__text">Add New Task</p> -->
                             <form>
                                 <input 
@@ -570,7 +573,6 @@
         }
 
         .divider {
-            background-color: rgba(var(--textColor2), 0.1) !important;
             margin: 0px;
         }
     }
@@ -606,7 +608,7 @@
             position: relative;
             border: 1.9px solid rgb(var(--fgColor3));
             margin-right: 8.5px;
-            color: rgb(var(--textColor4));
+            color: rgb(var(--textColor2));
 
             i {
                 font-size: 0.7rem;
@@ -646,7 +648,7 @@
             transition: 0.2s ease-in-out;
             border-left: 1.5px dotted rgb(var(--fgColor3));
             bottom: -9px;
-            height: 17px;
+            height: 19px;
             left: 6.5px;
         }
         &__solid-line {
@@ -660,10 +662,10 @@
             &::after {
                 content: ' ';
                 position: absolute;
-                bottom: -23px;
+                bottom: -25px;
                 left: 6.5px;
 
-                height: 17px;
+                height: 19px;
                 border-left: 1.2px solid rgb(var(--fgColor3));
 
                 animation-name: progress-line;
@@ -679,7 +681,7 @@
         }
         &__title {
             font-size: 1.05rem;
-            margin: 7px 0px;
+            margin: 9px 0px;
             transition: 0.13s ease-in-out;
             
             .strike {

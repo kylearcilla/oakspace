@@ -111,8 +111,33 @@ type YoutubeVideo = {
     channelSubs: number
 };
 
-/* Color Theme */
-type ColorTheme = {
+/* Custom Themes */
+type Theme = {
+    title: string,
+    thumbnailImgSrc: string,
+    sectionDetails: {
+        title: string
+        index: number
+    }
+    properties: ThemeData
+}
+
+type ColorTheme = Theme & {
+    colorPalette: string[] | null,
+}
+
+type ImageTheme = Theme & {
+    fullImgSrc: string
+    artist: string
+}
+
+type VideoTheme = Theme & {
+    vidUrl: string,
+    channelName: string,
+    channelImgSrc: string
+}
+
+type ThemeData = {
     isDark: boolean,
     primaryBgColor: string,
     secondaryBgColor: string,
@@ -122,14 +147,25 @@ type ColorTheme = {
     fgColor4: string,
     textColor1: string,
     textColor2: string,
-    textColor3: string,
-    textColor4: string,
+    profibleBorderColor: string,
+    themeHighlightBorderColor: string,
     hoverColor: string,
+    tabColor: string,
+    tabHighlightColor: string,
+    tabHighlightBoxShadow: string,
+    modalBgColor: string,
+    modalFgColor: string,
+    dividerColor: string,
     pomBgColor: string,
+    pomIconColor: string,
     muiscPlayerBgColor: string,
+    navMenuBgColor: string,
+    taskViewBgColor: string
     pomProgressBarFgColor: string,
+    pomProgressBarFgBoxShadow: string,
     pomProgressBgColor: string,
-    navIconColors: string,
+    navIconColor: string,
+    navIconBgColor: string,
     borderVal: string,
     shadowVal: string
 }

@@ -64,6 +64,7 @@
         &__pom-timer {
             font-size: 0.8rem;
             font-weight: 500;
+            color: rgba(var(--textColor2), 0.7);
 
             @include sm(max-width) {
                 display: none;
@@ -84,7 +85,6 @@
         
         &__progress-bar {
             height: 4px;
-            background-color: var(--pomProgressBgColor);
             background: var(--pomProgressBarFgColor);
             box-shadow: -1px 0px 10px 6px rgba(187, 173, 237, 0.05);
             border-radius: 28px 0px 0px 28px;
@@ -96,14 +96,16 @@
             height: 16px;
             border-radius: 18px;
             @include center;
+
             i {
                 font-size: 0.6rem;
+                color: var(--pomIconColor);
             }
-
+            
             &::after {
                 content: "";
                 @include circle(1.5px);
-                background-color: rgb(var(--textColor4));
+                background-color: var(--pomIconColor);
                 position: absolute;
                 bottom: 0px;
             }
@@ -111,11 +113,6 @@
                 background: linear-gradient(90deg, #5366FF 0%, #7876FE 100%);
                 border: 1.5px solid #9997FE;
                 box-shadow: -1px 1px 5px 3px rgba(120, 118, 254, 0.06);
-                color: white;
-
-                i {
-                    font-size: 0.6rem;
-                }
             }
         }
         &__step-icon-time {
@@ -124,6 +121,8 @@
             top: 30px;
             font-size: 0.68rem;
             font-weight: 400;
+            color: var(--pomIconColor);
+
             @include sm(max-width) {
                 display: none;
             }

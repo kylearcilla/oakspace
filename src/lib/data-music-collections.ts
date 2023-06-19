@@ -1082,7 +1082,7 @@ export const soundtrackCollections = {
             author: "Ryuichi Sakamoto, Alva Noto",
             artworkSrc: "https://is2-ssl.mzstatic.com/image/thumb/Music113/v4/4d/d0/17/4dd017cf-bb56-6fd3-7a7f-2ef7086b6252/886448177968.jpg/592x592bb.webp",
             genre: "Soundtrack",
-            description: "",
+            description: "Intensely visceral music that echoes the intensity of a story about survival and revenge.",
             length: 23,
             albumId: "1516405841",
             playlistId: null,
@@ -1330,13 +1330,103 @@ export const acousticCollections = {
 export const classicalCollections = {
     appleMusic: [
         {
-            title: "zzzz",
-            author: "",
-            artworkSrc: "",
-            genre: "",
-            length: "",
-            albumId: "",
-            playlistId: null
+            title: "Classic Acoustic",
+            author: "Apple Music Acoustic",
+            artworkSrc: "https://is3-ssl.mzstatic.com/image/thumb/Video115/v4/05/5d/c4/055dc4b5-29d5-36d9-f6d4-af1ca4822c99/Job1c7d19c5-5de9-46a5-926c-8e4e735d364f-124021346-PreviewImage_preview_image_nonvideo_sdr-Time1631826356251.png/400x400cc.webp",
+            genre: "Classical",
+            description: "Timeless, stripped-down tunes by classic rockers and songsmiths.",
+            length: 100,
+            albumId: null,
+            playlistId: "pl.895834a538434df79968948ee559608c",
+            url: "https://music.apple.com/us/playlist/classic-acoustic/pl.895834a538434df79968948ee559608c"
+        },
+        {
+            title: "Piano Essentials",
+            author: "Apple Music Classical",
+            artworkSrc: "https://is2-ssl.mzstatic.com/image/thumb/Features125/v4/d5/a6/a3/d5a6a342-2d34-585d-ba9b-1480a5b90788/U0MtTVMtV1ctUGlhbm9fRXNzZW50aWFscy1BREFNX0lEPTEzNDg4MjQ3MTEucG5n.png/400x400SC.CAESS02.webp?l=en-US",
+            genre: "Classical Piano",
+            description: "Classical music's versatile pioneer from Bach to Debussy, shaping musical boundaries along the way.",
+            length: 100,
+            albumId: null,
+            playlistId: "pl.5e6ff35247334d9699646afd21e589bd",
+            url: "https://music.apple.com/us/playlist/piano-essentials/pl.5e6ff35247334d9699646afd21e589bd"
+        },
+        {
+            title: "Relaxing Classical",
+            author: "Apple Music Classical",
+            artworkSrc: "https://is5-ssl.mzstatic.com/image/thumb/Video126/v4/a4/9a/06/a49a06f3-a29d-c581-9f73-2c72e0406561/Job24071de3-fd3f-4b15-8575-a48a9ea1247d-146859868-PreviewImage_preview_image_nonvideo_sdr-Time1679341990783.png/400x400cc.webp",
+            genre: "Classical",
+            description: "Embrace tranquility and find balance with this classical mix, guiding you towards a relaxed state of mind, whether unwinding or taking a break.",
+            length: 50,
+            albumId: null,
+            playlistId: "pl.c2ab8af2e9e74576b3bb45d62819d5cd",
+            url: "https://music.apple.com/us/playlist/relaxing-classical/pl.c2ab8af2e9e74576b3bb45d62819d5cd"
+        },
+        {
+            title: "Classical Hits",
+            author: "Apple Music Classical",
+            artworkSrc: "https://is5-ssl.mzstatic.com/image/thumb/Video116/v4/b2/7f/43/b27f436f-29a2-ac36-b47c-deb683dfec12/Job4a8f3e1a-8510-4b21-a312-4a4977c68c05-148085538-PreviewImage_preview_image_nonvideo_sdr-Time1680632682932.png/400x400cc.webp",
+            genre: "Classical",
+            description: "Indulge in the timeless beauty of classical hits, a captivating collection of musical masterpieces",
+            length: 50,
+            albumId: null,
+            playlistId: "pl.c2ab8af2e9e74576b3bb45d62819d5cd",
+            url: "https://music.apple.com/us/playlist/relaxing-classical/pl.c2ab8af2e9e74576b3bb45d62819d5cd"
+        },
+        {
+            title: "Classical Summer",
+            author: "Apple Music Classical",
+            artworkSrc: "https://is2-ssl.mzstatic.com/image/thumb/Video126/v4/1f/98/4f/1f984fbf-2c71-2d0f-8984-67ef988e2854/Job7f278307-f867-4542-890f-ca2e0f4443b6-146927777-PreviewImage_preview_image_nonvideo_sdr-Time1679434445879.png/400x400cc.webp",
+            genre: "Classical",
+            description: "Experience the magic of summer with the uplifting and vibrant tunes of classical music.",
+            length: 49,
+            albumId: null,
+            playlistId: "pl.ab135abce66d4784b801594e22ce338d",
+            url: "https://music.apple.com/us/playlist/classical-summer/pl.ab135abce66d4784b801594e22ce338d"
+        },
+        {
+            title: "Joyful Classical",
+            author: "Apple Music Classical",
+            artworkSrc: "https://is2-ssl.mzstatic.com/image/thumb/Features116/v4/97/12/d1/9712d139-591f-c299-7ea7-b85f07acd884/b0331411-2392-46ee-b964-e2044ea0c1fb.png/400x400SC.DNC01.webp?l=en-US",
+            genre: "Classical",
+            description: "Delight in the enchanting melodies of joyful classical music, filling your heart with bliss",
+            length: 100,
+            albumId: null,
+            playlistId: "pl.0030a85106a14c078a3bbf0f6befb877",
+            url: "https://music.apple.com/us/playlist/joyful-classical/pl.0030a85106a14c078a3bbf0f6befb877"
+        },
+        {
+            title: "Mozart Essentials",
+            author: "Apple Music Classical",
+            artworkSrc: "https://is2-ssl.mzstatic.com/image/thumb/Features116/v4/12/58/7d/12587dec-089f-049e-f6d0-c00f9597f4ab/mza_2526353882289973203.png/400x400SC.FPESSC01.webp?l=en-US",
+            genre: "Classical",
+            description: "Mozart: Musical genius, timeless masterpieces. Explore the profound and enduring compositions of a master.",
+            length: 48,
+            albumId: null,
+            playlistId: "pl.63696b0b53a24734a0f1f34c92ccd5c4",
+            url: "https://music.apple.com/us/playlist/wolfgang-amadeus-mozart-essentials/pl.63696b0b53a24734a0f1f34c92ccd5c4"
+        },
+        {
+            title: "Classical Spring",
+            author: "Apple Music Classical",
+            artworkSrc: "https://is1-ssl.mzstatic.com/image/thumb/Video126/v4/14/29/c3/1429c308-0bf3-43f0-8484-e61c255784d8/Jobd438d920-a841-4d2b-9d2c-cd2e95936492-146676420-PreviewImage_preview_image_nonvideo_sdr-Time1678984039633.png/400x400cc.webp",
+            genre: "Classical",
+            description: "A delightful playlist capturing the spirit of renewal and blossoming with classical compositions.",
+            length: 24,
+            albumId: null,
+            playlistId: "pl.c310b4d40b394e2e91cb8d9a08321097",
+            url: "https://music.apple.com/us/playlist/classical-spring/pl.c310b4d40b394e2e91cb8d9a08321097"
+        },
+        {
+            title: "Classical Motivation",
+            author: "Apple Music Classical",
+            artworkSrc: "https://is4-ssl.mzstatic.com/image/thumb/Video126/v4/ee/97/1d/ee971daa-252c-7604-a87b-9dba08e1fce6/Job565eba58-ba25-410b-b49f-2d550e523e30-146857155-PreviewImage_preview_image_nonvideo_sdr-Time1679338762831.png/400x400cc.webp",
+            genre: "Classical",
+            description: "Brisk and elegant classical tunes for an energized and enduring boost.",
+            length: 73,
+            albumId: null,
+            playlistId: "pl.351c85541ea843eeb9b9a814bf210b03",
+            url: "https://music.apple.com/us/playlist/classical-motivation/pl.351c85541ea843eeb9b9a814bf210b03"
         },
     ],
     spotify: [
@@ -1366,13 +1456,70 @@ export const classicalCollections = {
 export const zenCollections = {
     appleMusic: [
         {
-            title: "vvvv",
-            author: "",
-            artworkSrc: "",
-            genre: "",
-            length: "",
-            albumId: "",
-            playlistId: null
+            title: "Sleep Meditation",
+            author: "Apple Music Sleep",
+            artworkSrc: "https://is5-ssl.mzstatic.com/image/thumb/Video126/v4/ac/b4/f8/acb4f831-bbb5-612f-ebf3-121a23036cef/Job101b8390-f9ec-4fcd-b262-2ec635ad1265-125823217-PreviewImage_preview_image_nonvideo_sdr-Time1636732931998.png/400x400cc.webp",
+            genre: "Ambient",
+            description: "Guided meditations to ease anxieties and promote restful sleep for all ages.",
+            length: 100,
+            albumId: null,
+            playlistId: "pl.b201f2bc8ec3468c8afd74a5e394b6e2",
+            url: "https://music.apple.com/us/playlist/sleep-meditation/pl.b201f2bc8ec3468c8afd74a5e394b6e2"
+        },
+        {
+            title: "Spa",
+            author: "Apple Music Wellbeing",
+            artworkSrc: "https://is3-ssl.mzstatic.com/image/thumb/Video125/v4/e2/4e/a0/e24ea026-be0a-2e43-b59b-4923adc59727/Job228dc454-d709-438f-93e9-701c91d4c19c-124823685-PreviewImage_preview_image_nonvideo_sdr-Time1634075912438.png/400x400cc.webp",
+            genre: "Ambient",
+            description: "Unwind and rejuvenate with a soothing playlist of tranquil melodies for ultimate relaxation.",
+            length: 250,
+            albumId: null,
+            playlistId: "pl.4f2b5ddd448344a1848db8259e6c5f5b",
+            url: "https://music.apple.com/us/playlist/spa/pl.4f2b5ddd448344a1848db8259e6c5f5b"
+        },
+        {
+            title: "Sleep Sounds",
+            author: "Apple Music Sleep",
+            artworkSrc: "https://is2-ssl.mzstatic.com/image/thumb/Video124/v4/0c/9e/b2/0c9eb20f-1b27-9536-83dc-8765af3135a2/Jobd80949f7-345e-4460-a8d5-dcd702991b62-108327984-PreviewImage_PreviewImageIntermediate_preview_image_nonvideo-Time1608524996185.png/400x400cc.webp",
+            genre: "Ambient",
+            description: "Guided meditations to ease anxieties and promote restful sleep for all ages.",
+            length: 250,
+            albumId: null,
+            playlistId: "pl.0ef59752c0cd457dbf1391f08cbd936f",
+            url: "https://music.apple.com/us/playlist/sleep-sounds/pl.0ef59752c0cd457dbf1391f08cbd936f"
+        },
+        {
+            title: "Pure Meditation",
+            author: "Apple Music Wellbeing",
+            artworkSrc: "https://is5-ssl.mzstatic.com/image/thumb/Video116/v4/e1/9f/79/e19f79c5-370b-a28d-763a-f16b0b49fecf/Job46fe51ce-a72a-4c42-af8c-2965dc7fa683-127602118-PreviewImage_preview_image_nonvideo_sdr-Time1641929865610.png/400x400cc.webp",
+            genre: "Ambient",
+            description: "Serene ambient tunes for a peaceful background, featuring gentle acoustic, nature sounds, and more.",
+            length: 250,
+            albumId: null,
+            playlistId: "pl.e896478fdf824a93ab2f99165c3a1422",
+            url: "https://music.apple.com/us/playlist/pure-meditation/pl.e896478fdf824a93ab2f99165c3a1422"
+        },
+        {
+            title: "Guided Meditation",
+            author: "Apple Music Wellbeing",
+            artworkSrc: "https://is3-ssl.mzstatic.com/image/thumb/Video116/v4/43/22/a5/4322a546-e5dc-bbe2-f284-229844eaa26d/Job866f054e-3f12-4b82-bbca-971b4cd5927b-125168388-PreviewImage_preview_image_nonvideo_sdr-Time1634931226260.png/400x400cc.webp",
+            genre: "Ambient",
+            description: "Enlightening talks and prompts from leading voices in meditation and wellness.",
+            length: 100,
+            albumId: null,
+            playlistId: "pl.84d78a058d1744208f63004b66e4d857",
+            url: "https://music.apple.com/us/playlist/guided-meditation/pl.84d78a058d1744208f63004b66e4d857"
+        },
+        {
+            title: "Beats & Breath",
+            author: "Apple Music Fitness",
+            artworkSrc: "https://is1-ssl.mzstatic.com/image/thumb/Features115/v4/ea/d6/8a/ead68a2c-3c45-1625-715c-47d3136031c4/U0MtTVMtV1ctV2VsbG5lc3MtQmVhdHNfQW5kX0JyZWF0aC1BREFNX0lEPTE1Mjc4Mzc0OTcucG5n.png/400x400SC.DN01.webp?l=en-US",
+            genre: "Ambient",
+            description: "An eclectic playlist to keep you focused and anchored during yoga practice and teaching.",
+            length: 99,
+            albumId: null,
+            playlistId: "pl.72a029c5d77f4da8a0793afeb2a8be8b",
+            url: "https://music.apple.com/us/playlist/beats-breath/pl.72a029c5d77f4da8a0793afeb2a8be8b"
         },
     ],
     spotify: [

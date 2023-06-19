@@ -65,7 +65,7 @@ const ytRecsPlaylists = [
             {
                 title: "Poké & Chill ~ Lofi Hiphop by Mikel",
                 playlistThumbnailImgSrc: "https://i.ytimg.com/vi/2DVpys50LVE/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDBFgnMvfnYFB57ytj9BzawffqLUg",
-                playlistDescription: "Hello World",
+                playlistDescription: "Unleash nostalgia with Pokémon-inspired lo-fi beats, capturing the essence of your favorite adventures",
                 playlistId: "PLBsm_SagFMme7PusfP7l30tCcAxQe9lvX",
                 channelTitle: "Game Chops",
                 channelImgSrc: "https://yt3.ggpht.com/ytc/AGIKgqPF5XGLboNObSrHAsbDqmAcEPZREUpk5Zy-PVokhA=s88-c-k-c0x00ffffff-no-rj-mo",
@@ -75,7 +75,7 @@ const ytRecsPlaylists = [
             {
                 title: "Pokemon Relaxing Music Compilations",
                 playlistThumbnailImgSrc: "https://i.ytimg.com/vi/-BKfhq_TtcE/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCcVbQdKtqVXb2jmZQgBJhXcMMEwA",
-                playlistDescription: "Hello World",
+                playlistDescription: "Unwind and recharge with soothing Pokémon melodies in this relaxing music compilation.",
                 playlistId: "PL8sXnvCokOzmT_c7jahpCTuVcCn9bVL-m",
                 channelTitle: "braix",
                 channelImgSrc: "https://yt3.ggpht.com/ytc/AGIKgqOPOOEKuhj-DqK9mXw7_7qVTbf0utnuLkyG8iGjKg=s88-c-k-c0x00ffffff-no-rj",
@@ -85,7 +85,7 @@ const ytRecsPlaylists = [
             {
                 title: "Chillhop Radio - jazzy & lofi hip hop beats 🐾",
                 playlistThumbnailImgSrc: "https://i.ytimg.com/vi/jU5uheLFYi0/hqdefault_live.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLA5-5igzibwUzmNJZrUkT2bohTO2Q",
-                playlistDescription: "Hello World",
+                playlistDescription: "Laid-back jazzy & lofi hip hop beats for a cozy and relaxed vibe",
                 playlistId: "PL21ubKuUJp_dG6Y2yqFW79KAKBdZXysPX",
                 channelTitle: "RELAXATION (LoFi & CHILL)",
                 channelImgSrc: "https://yt3.ggpht.com/nR7cakMqnjBUMEZF1OZiUYE_zpdkvfqm3G72Eu67p8y-9Ue14nlSDNAqqcQhdOWIHZfXUMu4Rg=s88-c-k-c0x00ffffff-no-rj",
@@ -95,7 +95,7 @@ const ytRecsPlaylists = [
             {
                 title: "Studio Ghibli Music",
                 playlistThumbnailImgSrc: "https://i.ytimg.com/vi/3jWRrafhO7M/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLCfcVlLc3Bm6aqaCf2ybO_IRa53cQ",
-                playlistDescription: "Hello World",
+                playlistDescription: "Captivating melodies that transport you into the enchanting world of Studio Ghibli.",
                 playlistId: "PLYyJCobshLZlTxiQvR12noxc38n0zXv0G",
                 channelTitle: "Cafe Music BGM channel",
                 channelImgSrc: "https://yt3.googleusercontent.com/ytc/AGIKgqNdDW3hiE1udWI4eI086Qa3qu41ltejJ3EGvXovzQ=s176-c-k-c0x00ffffff-no-rj",
@@ -105,7 +105,7 @@ const ytRecsPlaylists = [
             {
                 title: "Jazz music for relax, study and work",
                 playlistThumbnailImgSrc: "https://i.ytimg.com/vi/rpwxhOwiMzI/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLAQ6RTU_e8rDKAi-rDipY_hGrow-A",
-                playlistDescription: "Hello World",
+                playlistDescription: "Smooth tunes to relax, focus, and enhance productivity during study and work sessions.",
                 playlistId: "PLxmNTgb6VxBz3v4cGYtKydbgtABn68pjo",
                 channelTitle: "Coffee Relaxing Jazz",
                 channelImgSrc: "https://yt3.googleusercontent.com/4WEURbGBEs0-N63_SNeB_NdAltYDNVccI-85TYp0bRqkPhG3ye1PvSIWEGGcJ0W6hVHTvfzIcw=s176-c-k-c0x00ffffff-no-rj",
@@ -140,7 +140,7 @@ const ytRecsPlaylists = [
             {
                 title: "StudyMD - Study with Me",
                 playlistThumbnailImgSrc: "https://i.ytimg.com/vi/08DochENii8/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLClxqpVojlNsbhAHIKVj_1_XO2klA",
-                playlistDescription: "Hello World",
+                playlistDescription: "Join productivity master StufyMD for some study sessions to help you stay motivated!",
                 playlistId: "PLnBcyEFLuLUtrJZbnFCv6_IO7AfZcD7E8",
                 channelTitle: "StudyMD",
                 channelImgSrc: "https://yt3.googleusercontent.com/L0W93fDHgz9L_GGkmZvouFGNbbvHARFVhPsDVjK5NP-GqdUPPTDGwFQkUlDzh-WaOJmsx0DN3w=s176-c-k-c0x00ffffff-no-rj",
@@ -160,7 +160,7 @@ const ytRecsPlaylists = [
             {
                 title: "🎧Study with Music - Pomodoro Timer/Study/Work",
                 playlistThumbnailImgSrc: "https://i.ytimg.com/vi/sca4VG9b0NY/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLCzrqQ5S5zh5StvkhR1jB1Pvl4Hgw",
-                playlistDescription: "Hello World",
+                playlistDescription: "Study with productivity guru \"Abao in Tokyo\" while listenting to some chill tunes.",
                 playlistId: "PLr5OsF2umninjc42Ia_bzEjKKi9QgHaWU",
                 channelTitle: "Abao in Tokyo",
                 channelImgSrc: "https://yt3.googleusercontent.com/NrIEzYVk5mBH9yRIefVDnvyD7YQpvbmOUx-LRNaC7KCc1DQ82B-bvURmZbEhZoCllobJjCBq=s176-c-k-c0x00ffffff-no-rj",
@@ -196,7 +196,7 @@ const ytRecsPlaylists = [
             {
                 title: "Nature Ambience",
                 playlistThumbnailImgSrc: "https://i.ytimg.com/vi/qRTVg8HHzUo/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCgM2LaUhy3mSWfKCzJ8ysmYiwv6Q",
-                playlistDescription: "Ambient sounds from cities around the world.",
+                playlistDescription: "Immerse yourself in the serenity of nature for a soothing, 4k ambient experience.",
                 playlistId: "PLpEqmyo6EfvKqGFfjS3r8OXZtjKexkikR",
                 channelTitle: "Nature Sooundscapes",
                 channelImgSrc: "https://yt3.googleusercontent.com/SWhM3bV2uPbAMb-Qx9F3pxT5EuDCRkFtlrCC0uxvHuPigTXQDtJhhOSu8BiP2tmLfKKYb4f-Nw=s176-c-k-c0x00ffffff-no-rj",
@@ -408,14 +408,14 @@ const ytRecsPlaylists = [
 
             },
             {
-                title: "Great Big Stry - Art Stories",
+                title: "Great Big Story - Art Stories",
                 playlistThumbnailImgSrc: "https://i.ytimg.com/vi/xMgz61YjoLU/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCjRWtbDgt0GV4CDjRjVgW5NsynEQ",
                 playlistDescription: "Hello World",
                 playlistId: "PLpEqmyo6EfvIUMb4z97ohT4GGyy14FDsa",
                 channelTitle: "Great Big Story",
                 channelImgSrc: "https://yt3.googleusercontent.com/ek2CK7M2HU9SCi7SkN10_1BfP7HpEjXA7lieUdPgamKJYhyJbLezmsj7rF3t6KtTOZl0Zrq1IQ=s176-c-k-c0x00ffffff-no-rj",
                 channelURL: "https://www.youtube.com/@GreatBigStory",
-                vidCount: 36,
+                vidCount: 27,
 
             },
             {

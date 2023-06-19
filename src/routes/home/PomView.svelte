@@ -1,11 +1,7 @@
 <script lang="ts">
-	import { colorTheme } from "$lib/store";
 	import PomProgressBar from "./PomProgressBar.svelte";
 
     let hasColorTheme = false
-    colorTheme.subscribe((theme: ColorTheme) => {
-        hasColorTheme = theme.fgColor1 != "#141418"
-    })
 
 </script>
 
@@ -29,8 +25,9 @@
         padding: 24px 15px 24px 15px;
         margin-top: 8px;
         position: relative;
-        color: rgb(var(--textColor4));
+        color: rgba(var(--textColor2), 1);
         border-radius: 16px;
+        border: var(--borderVal);
         
         
         @include sm(max-width) {
@@ -73,7 +70,7 @@
             width: 4%;
             button {
                 position: absolute;
-                color: rgb(var(--textColor4));
+                color: rgb(var(--textColor2));
                 right: 1.5%;
                 top: 15px;
                 border-radius: 4px;

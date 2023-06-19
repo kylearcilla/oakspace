@@ -1,24 +1,24 @@
 <script lang="ts">
-  import ActiveSessionView from "./ActiveSessionView.svelte";
+	import { onDestroy, onMount } from "svelte";
   import NavMenu from "./NavMenu.svelte";
   import PomView from "./PomView.svelte";
   import VideoView from "./VideoView.svelte";
+  import ActiveSessionView from "./ActiveSessionView.svelte";
   import TaskView from "./TaskView.svelte";
   import MusicPlayer from "./MusicPlayer.svelte";
-	import { onDestroy, onMount } from "svelte";
+
 	import YoutubeSettings from "./YoutubeSettings.svelte";
 	import MusicSettings from "./MusicSettings.svelte";
-	import UserSettings from "./UserSettings.svelte";
-  import colorThemes, { setRootColors } from "$lib/color-themes";
-
+	import Settings from "./Settings.svelte";
+  
 	import { _initGoogleClient, _initMusicKit } from "./+page";
+	import ApperanceSettings from "./ApperanceSettings.svelte";
+	import { loadTheme } from "$lib/helper";
 
   let isTaskMenuExpanded = true;
   let doHideMenu = false;
   let hasUserToggledWithKeyLast = true;
   let navSettingClicked = "";
-
-  let theme = colorThemes[1];
 
   const handleNavButtonClicked = (buttonName: string) => {
     navSettingClicked = buttonName;
@@ -56,7 +56,7 @@
     window.addEventListener("resize", handleResize);
     
     _initGoogleClient();
-    setRootColors(theme)
+    loadTheme()
 
     console.log(window)
   });
@@ -84,9 +84,10 @@
   <div class={`home__task-view-container ${isTaskMenuExpanded ? "" : "home__task-view-container--closed"}`}>
     <TaskView isTaskMenuExpanded={isTaskMenuExpanded}/>
   </div>
-  {#if navSettingClicked === "settings"} <UserSettings/> {/if}
+  {#if navSettingClicked === "settings"} <Settings onNavButtonClicked={handleNavButtonClicked}/> {/if}
   {#if navSettingClicked === "youtube"} <YoutubeSettings onNavButtonClicked={handleNavButtonClicked}/> {/if}
   {#if navSettingClicked === "music"} <MusicSettings onNavButtonClicked={handleNavButtonClicked} /> {/if}
+  {#if navSettingClicked === "appearance"} <ApperanceSettings onNavButtonClicked={handleNavButtonClicked} /> {/if}
   <MusicPlayer />
 </div>
 
@@ -136,7 +137,8 @@
 
       // left
       &__nav-menu-container {
-        background-color: rgb(var(--fgColor1));
+        background-color: var(--navMenuBgColor);
+        border: var(--borderVal);
         width: 60px;
         transition: ease-in-out 0.15s;
         height: 100vh;
@@ -212,7 +214,7 @@
         height: 100vh;
         position: fixed;
         right: 0px;
-        background-color: var(--secondaryBgColor);
+        background-color: var(--taskViewBgColor);
         transition: ease-in-out 0.18s;
         border: var(--borderVal);
         box-shadow: var(--shadowVal);

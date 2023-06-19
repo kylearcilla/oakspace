@@ -197,11 +197,11 @@
 
 <div class="vid-view">
     <div class="vid-view-header">
-        <h1>Video Player</h1>
+        <!-- <h1>Video Player</h1>
         <div class="vid-view-header__yt-icon">
             <div class="yt-icon-fill"></div>
             <i class="fa-brands fa-youtube header-icon"></i>
-        </div>
+        </div> -->
         {#if ytData.username != ""}
             <div class="dropdown-container">
                 <button on:click={toggleDropDown} class="dropdown-btn">
@@ -381,13 +381,13 @@
             width: 100%;
         }
         .vid-title {
-            font-size: 1.5rem;
-            margin-top: 10px;
+            font-size: 1.2rem;
+            margin-top: 12px;
             font-weight: 700;
-            color: rgb(var(--textColor1));
+            color: rgb(var(--textColor1), 0.95);
         }
         .vid-channel-details-container {
-            margin: 7px 0px 40px 0px;
+            margin: 10px 0px 40px 0px;
             position: relative;
             width: 100%;
             @include flex-container(center, _);
@@ -395,16 +395,18 @@
             
             img {
                 border-radius: 100%;
-                width: 35px;
+                width: 25px;
                 aspect-ratio: 1 / 1;
                 margin-right: 10px;
             }
             .vid-channel-details {
-                font-weight: 700;
                 &__channel-name {
+                    font-weight: 400;
+                    color: rgb(var(--textColor1), 0.85);
                     font-size: 1.1rem;
                 }
                 &__sub-count {
+                    color: rgb(var(--textColor1), 0.55);
                     font-weight: 400;   
                     font-size: 0.9rem;
                     margin-top: 2px;

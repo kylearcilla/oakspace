@@ -1,3 +1,6 @@
+import { defaultThemes } from "./data-themes"
+import { colorThemeState } from "./store"
+
 export function clickOutside(node: any) {
     // if user clicks on any element that has has 'dropdown', do not dispatch event to close it, let the local btn close
     // if dispatched, local bool will be toggled to true from dispatch, after toggled to false from btn
@@ -20,6 +23,35 @@ export function clickOutside(node: any) {
       }
     }
 }
+
+export const loadTheme = () => {
+  let storedThemeData = localStorage.getItem("theme")
+  
+  if (!storedThemeData) {
+    localStorage.setItem("theme", JSON.stringify(defaultThemes[0]))
+    storedThemeData = localStorage.getItem("theme")
+  } 
+
+  const themeItem: Theme = JSON.parse(storedThemeData!)
+  colorThemeState.set({
+    title: themeItem.title,
+    isDarkTheme: themeItem.properties.isDark
+  })
+  setRootColors(themeItem!.properties)
+}
+
+/**
+ * Sets selected theme colors to the root element of the document
+ * Allows for global access of colors throughout the app
+ * 
+ * @param theme theme object to be currently used
+ */
+export const setRootColors = (theme: ThemeData) => {
+  for (let [prop, color] of Object.entries(theme)) {
+      if (typeof color === "boolean") continue
+      document.documentElement.style.setProperty(`--${prop}`, color);
+  }
+};
 
 /**
  * @return the current time as a string in the format "hh:mm AM/PM" for the user's local time
@@ -53,6 +85,16 @@ export function formatDate(dateString: string): string {
 
   return formattedDate
 }
+
+/**
+ *  Formats date to MM/DD 
+ *  @return the formatted date
+ * 
+ */
+export function formatDateToMMDD(date: Date): string {
+  return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' });
+}
+
 
 /**
  *  Adds commas to numbers

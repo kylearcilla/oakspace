@@ -232,7 +232,7 @@
             @include flex-container(center, space-around);
             border-radius: 13px;
             background-color: rgb(var(--fgColor3));
-            color: rgb(var(--textColor4));
+            color: rgb(var(--textColor2));
             margin: 0px 7% 0px 7%;
 
             &__stat {

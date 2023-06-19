@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { appleMusicPlayerState, colorTheme, currentTrack, musicDataState, musicPlayerData } from '$lib/store';
+	import { appleMusicPlayerState, currentTrack, musicDataState, musicPlayerData } from '$lib/store';
     import { onDestroy, onMount } from 'svelte';
     import Icon from '../../components/Icon.svelte';
 	import { AppleMusicPlayer } from '$lib/AppleMusicPlayer';
@@ -25,9 +25,6 @@
 
     enum MusicPlatform { AppleMusic, Spotify, Youtube, Soundcloud }
 
-    colorTheme.subscribe((theme: ColorTheme) => {
-        hasColorTheme = theme.fgColor1 != "#141418"
-    })
     currentTrack.subscribe((track: Track | null) => {
         if (!track) return
 
@@ -205,7 +202,6 @@
         @include sm(max-width) {
             padding: 0px 10px;
         }
-
         &--hidden {
             display: none;
         }
@@ -236,7 +232,7 @@
         &__details {
             width: 100%;
             overflow: hidden;
-            color: rgb(var(--textColor4));
+            color: rgb(var(--textColor2));
         }
         &__title {
             width: 100%;
@@ -402,7 +398,7 @@
             margin-right: 11px;
         }
         i {
-            color: rgb(var(--textColor4));
+            color: rgb(var(--textColor2));
         }
     }
     .music-player-platform-logo {

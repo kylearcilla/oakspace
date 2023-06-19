@@ -2,6 +2,7 @@ import { writable } from 'svelte/store';
 import type { MusicData } from './MusicData';
 import type { MusicPlayer } from './MusicPlayer';
 import colorThemes from './color-themes';
+import { defaultThemes } from './data-themes';
 
 /* General Authentication Stuff */
 export const googleData = writable<GoogleUserData>({
@@ -48,4 +49,7 @@ export const musicPlayerData = writable<MusicPlayerData | null>(null)
 
 /* Color Stuff */
 
-export const colorTheme = writable<ColorTheme>(colorThemes[1])
+export const colorThemeState = writable<any>({
+    title: "Dark Mode",  // to set styling specific only to Default Dark Mode
+    isDarkTheme: true     // to change styling specific only to dark / light themes
+})

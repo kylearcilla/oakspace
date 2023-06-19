@@ -101,6 +101,8 @@
 
         isScrollableLeft = scrollLeft > 0;
         isScrollableRight = scrollLeft + clientWidth < scrollWidth - HORIZONTAL_TAB_COROUSEL_RIGHT_OFFSET;
+
+
     }
 
     // right arrow disappears after a window resize if false even user can scroll right
@@ -115,6 +117,8 @@
     onMount(() => {
         const savedYtCreds = localStorage.getItem('yt-credentials');
         const savedUserData = localStorage.getItem('yt-user-data');
+
+        handleResize()
         
         if (savedYtCreds) {
             const ytCreds = JSON.parse(localStorage.getItem('yt-credentials')!);
@@ -136,7 +140,7 @@
         </button>
         <div class={`yt-settings ${ytUserAccountData.email == "" ? "yt-settings--min" : ""}`}>
             <div class="yt-settings__header">
-                <h1>Youtube Settings</h1>
+                <h1 class="modal-bg__content-title">Youtube Settings</h1>
                 <!-- <div class={`yt-icon ${ytUserAccountData.email == "" ? "" : "yt-icon--active"}`}>
                     <div class="yt-icon-fill"></div>
                     <i class="fa-brands fa-youtube header-icon"></i>
@@ -176,7 +180,7 @@
                                 Unlink Account
                             </button>
                         {:else}
-                            <button class="account-details__link-btn btn-line" 
+                            <button class="account-details__link-btn btn-text-only" 
                                 on:click={handleYtSignUp}
                             >
                                 Connect a Youtube account
@@ -262,9 +266,10 @@
                     <div class="grid-section__header">
                         <h2>Recommendations</h2>
                     </div>
-                    <p class="recs__copy">
+                    <p class="recs__copy grid-section__copy">
                         Discover new playlists with our staff recommended playlist picks!
                     </p>
+                    <!-- Horizontal Tabs Carousel -->
                     <div class="recs__groups-list-container">
                         {#if isScrollableLeft}
                             <div class="gradient-container gradient-container--left">
@@ -275,17 +280,15 @@
                                 </button>
                             </div>
                         {/if}
-                        <ul class="recs__groups-list"
-                            bind:this={groupTabList}
-                            on:scroll={handleScroll} 
-                        >
+                        <ul class="recs__groups-list" bind:this={groupTabList} on:scroll={handleScroll}>
                             <li><div class="recs__tab-group-padding recs__tab-group-padding--left"></div></li>
+                            <!-- Tab Item -->
                             {#each ytRecsPlaylists as group, idx}
-                            <li class={`recs__group-tab ${idx === ytRecsPlaylistsIdx ? "recs__group-tab--selected" : ""}`}> 
-                                <button on:click={() => handleRecTabBtnClicked(idx)}>
-                                    <p>{group.title}</p>
-                                </button>
-                            </li>
+                                <li class={`recs__group-tab ${idx === ytRecsPlaylistsIdx ? "recs__group-tab--selected" : ""}`}> 
+                                    <button on:click={() => handleRecTabBtnClicked(idx)}>
+                                        <p>{group.title}</p>
+                                    </button>
+                                </li>
                             {/each}
                             <li><div class="recs__tab-group-padding recs__tab-group-padding--right"></div></li>
                         </ul>
@@ -299,10 +302,14 @@
                             </div>
                         {/if}
                     </div>
+                    <!-- Playlist Item List -->
                     <ul class="recs__playlists-list">
                         {#each selectedGroupPlaylists as playlist, idx}
+                            <!-- Playlist Item -->
                             <!-- svelte-ignore a11y-click-events-have-key-events -->
-                            <li class={`recs__playlist-item ${playlist.playlistId === ytUserAccountData?.selectedPlaylist?.id ? "recs__playlist-item--selected " : ""}`} 
+                            <li class={`recs__playlist-item 
+                                            ${playlist.playlistId === ytUserAccountData?.selectedPlaylist?.id ? "recs__playlist-item--selected " : ""}
+                                      `} 
                                     on:click={event => handleChooseRecPlaylist(event, idx)}
                             >
                                 <img class="recs__playlist-item-img" src={playlist.playlistThumbnailImgSrc} alt="playlist-item-thumbnail"/>
@@ -316,6 +323,7 @@
                                         <a href={playlist.channelURL} target="_blank" rel="noreferrer">{playlist.channelTitle}</a>
                                     </div>
                                 </div>
+                                <div class="divider divider--thin"></div>
                             </li>
                         {/each}
                     </ul>
@@ -330,6 +338,8 @@
     $section-spacing: 8px;
     $top-row-height: 170px;
     $bottom-row-height: 470px;
+
+    $recs-section-padding-left: 25px;
 
     .modal {
         &--content {
@@ -351,13 +361,6 @@
         &__bottom-row {
             display: flex;
         }
-        &__header {
-            @include flex-container(center, _);
-            margin-bottom: 15px;
-            h1 {
-                font-size: 2rem;
-            }
-        }
     }
 
     /* Sections */
@@ -366,19 +369,18 @@
         margin: 0px $section-spacing $section-spacing 0px;
         position: relative;
         height: 170px;
-        background-color: rgb(var(--fgColor4));
 
         button {
-            color: rgba(var(--textColor4), 0.7);
+            color: rgba(var(--textColor1), 0.7);
         }
         
         h2 {
-            color: rgb(var(--textColor4));
+            color: rgb(var(--textColor1));
             font-size: 1.15rem;
             margin-bottom: 20px;
         }
         h3 {
-            color: rgb(var(--textColor4));
+            color: rgb(var(--textColor1));
         }
         img {
             @include circle(40px);
@@ -402,17 +404,16 @@
             p {
                 @include elipses-overflow;
                 font-weight: 300;
-                color: rgba(var(--textColor4), 0.7);
+                color: rgba(var(--textColor1), 0.7);
             }
         }
         &__replace-btn {
             margin-right: 10px;
         }
         &__link-btn {
-            border-color: rgb(var(--textColor4), 0.8);
-            color: rgb(var(--textColor4), 0.8);
+            border-color: rgb(var(--textColor1), 0.8);
+            color: rgb(var(--textColor1), 0.8);
             &:hover {
-                background-color: rgb(var(--textColor4), 0.8);
                 color: rgb(var(--fgColor4));
             }
         }
@@ -421,11 +422,11 @@
         margin-bottom: $section-spacing;
         width: 60%;
         position: relative;
-        color: rgb(var(--textColor4));
+        color: rgb(var(--textColor2));
         height: 170px;
 
         h2 {
-            color: rgb(var(--textColor4));
+            color: rgb(var(--textColor2));
             margin-bottom: 5px;
         }
         .content-bg {
@@ -540,7 +541,6 @@
             }
             .divider {
                 margin: 0px;
-                background-color: rgba(var(--textColor1), 0.07);
             }
         }
         &__list-item-num {
@@ -567,6 +567,7 @@
             @include center;
         }
     }
+
     .recs {
         width: 55%;
         height: 470px;
@@ -577,12 +578,12 @@
         }
 
         h2 {
-            padding: 13px 0px 0px 20px;
+            padding: 17px 0px 0px $recs-section-padding-left;
         }
 
         &__copy {
             margin-top: 8px;
-            padding: 0px 20px;
+            padding: 0px 0px 0px $recs-section-padding-left;
         }
         &__tab-arrow {
             z-index: 10000;
@@ -607,7 +608,7 @@
                 width: 45px;
                 @include center;
                 &--left {
-                    background: linear-gradient(90deg, var(--secondaryBgColor) 60%, transparent);
+                    background: linear-gradient(90deg, var(--modalFgColor) 60%, transparent);
                     @include pos-abs-bottom-left-corner(0px, 0px)
                 }
                 &--right {
@@ -626,12 +627,11 @@
         &__groups-list {
             padding: 13px 0px;
             overflow-x: scroll;
-            margin: 6px 0px 0px 0px;
             display: flex;
             scroll-behavior: smooth;
         }
         &__tab-group-padding {
-            width: 20px;
+            width: $recs-section-padding-left;;
             height: 5px;
 
             &--right {
@@ -644,27 +644,28 @@
             button {
                 font-size: 1rem;            
                 @include center;
-                background-color: rgba(var(--fgColor1), 0.5);
-                color: rgba(var(--textColor4), 1);
+                background-color: (var(--tabColor));
+                color: rgba(var(--textColor2), 0.8);
                 border-radius: 15px;
                 padding: 2.5px 10px;
                 transition: 0.1s ease-in-out;
                 white-space: nowrap;
 
                 &:hover {
-                    background-color: rgb(var(--fgColor1));
+                    filter: brightness(1.05);
                 }
                 &:active {
-                    background-color: rgba(var(--fgColor1), 0.9);
                     transform: scale(0.98);
                 }
 
             }
             &--selected > button {
-                background-color: rgb(var(--fgColor1));
-                color: rgb(var(--textColor4));
+                background-color: var(--tabHighlightColor);
+                box-shadow: var(--tabHighlightBoxShadow);
+                color: var(--modalFgColor);
             }
         }
+        /* Playlit List */
         &__playlists-list {
             height: 90%;
             overflow-y: scroll;
@@ -672,17 +673,17 @@
                 margin-bottom: 5px;
             }
         }
+        /* Playlist Item */
         &__playlist-item {
             transition: 0.1s ease-in-out;
             cursor: pointer;
             display: flex;
             overflow: hidden;
-            padding: 11px 0px;
-            height: 100px;
-            max-height: 100px;
+            padding: 20px 0px;
+            height: 120px;
+            max-height: 120px;
             position: relative;
             width: 100%;
-            margin-bottom: 5px;
 
             &--selected, &:hover {
                 background-color: var(--hoverColor);
@@ -692,11 +693,15 @@
             }
             h3 {
                 @include elipses-overflow;
+                color: rgb(var(--textColor1), 1);
+            }
+            .divider {
+                @include pos-abs-bottom-left-corner(0px, 0px);
             }
         }
         &__playlist-item-img {
             width: 140px;
-            margin: 0px 3% 0px 20px;
+            margin: 0px 3% 0px 25px;
             object-fit: cover;
         }
         &__playlist-item-details {
@@ -704,12 +709,11 @@
         }
         &__playlist-item-description {
             width: 95%;
-            opacity: 0.5;
             max-height: 27px;
             overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
+            @include multi-line-elipses-overflow(2);
+            font-weight: 300;
+            color: rgb(var(--textColor1), 0.6);
         }
         &__playlist-item-channel-details {
             @include flex-container(center, _);
@@ -719,7 +723,7 @@
             a {
                 font-weight: 600;
                 text-decoration: none;
-                color: rgba(var(--textColor1));
+                color: rgba(var(--textColor1), 0.7);
 
                 &:hover {
                     text-decoration: underline

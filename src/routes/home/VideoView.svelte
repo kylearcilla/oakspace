@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { addCommasToNum, clickOutside, formatDate, shorterNum } from "../../lib/helper";
-    import { currentYtVidId, ytUserData, ytCurrentVid, ytCredentials } from "$lib/store";
+    import { currentYtVidId, ytUserData, ytCurrentVid, ytCredentials, colorThemeState } from "$lib/store";
 	import { onDestroy, onMount } from 'svelte';
 	import { getChannelDetails, getPlayListDetails, getVidDetails, saveYtUserData } from "$lib/yt-api";
+	import { get } from "svelte/store";
 
     let isDropDownOpen = false;
     // @ts-ignore
@@ -28,6 +29,15 @@
         channelSubs: 0
     }
 
+    let isLightTheme = false
+    let isColorPaletteTheme = false
+    let isVidPlayerShown = false
+    
+    colorThemeState.subscribe((theme) => {
+        isLightTheme = !theme.isDarkTheme
+        isColorPaletteTheme = ["light", "dark"].includes(theme.sectionTitle)
+    })
+    
     currentYtVidId.subscribe((idx) => {
         currentVidIdx = idx
     })
@@ -74,6 +84,8 @@
                 listType: "playlist",
                 index: 0
             });
+
+            isVidPlayerShown = true
         }
 
     })
@@ -86,11 +98,14 @@
         if (player && player.stopVideo) player.stopVideo()
         const playerDiv = document.getElementById("player")!;
         playerDiv.style.display = "none";
+
+        isVidPlayerShown = false
     }
     
     // triggers when page reloads
     async function onReady() {
         if (!ytData.selectedPlaylist?.id) return 
+        isVidPlayerShown = true
 
         // see if there was a saved vid index that user was watching before start off with that vid
         // otherwise default to first vid
@@ -197,22 +212,26 @@
 
 <div class="vid-view">
     <div class="vid-view-header">
-        <!-- <h1>Video Player</h1>
-        <div class="vid-view-header__yt-icon">
-            <div class="yt-icon-fill"></div>
-            <i class="fa-brands fa-youtube header-icon"></i>
-        </div> -->
+        <h1 class={`vid-view-header__title ${isLightTheme ? "vid-view-header__title--light-mode" : ""}`}>Dashboard</h1>
         {#if ytData.username != ""}
             <div class="dropdown-container">
-                <button on:click={toggleDropDown} class="dropdown-btn">
-                    <p class="dropdown-btn__title">
+                <button 
+                    class={`dropdown-btn ${isLightTheme ? "dropdown-btn--light-mode" : ""} dropdown-btn--icon-text ${isColorPaletteTheme ? "dropdown-btn--color-theme" : ""}`} 
+                    on:click={toggleDropDown}
+                >
+                    <div class="dropdown-btn__icon">
+                        <div class="dropdown-btn__youtube-logo">
+                            <i class="fa-brands fa-youtube"></i>
+                        </div>
+                    </div>
+                    <p class="dropdown-btn__title paragraph-4">
                         {ytData.selectedPlaylist?.title ?? "No Playlist Selected"}
                     </p>
-                    <div class="dropdown-btn__icon">
-                        <div class="dropdown-btn__icon-triangle-up">
+                    <div class="dropdown-btn__arrows">
+                        <div class="dropdown-btn__arrows-triangle-up">
                             <i class="fa-solid fa-chevron-up"></i>
                         </div>
-                        <div class="dropdown-btn__icon-triangle-down">
+                        <div class="dropdown-btn__arrows-triangle-down">
                             <i class="fa-solid fa-chevron-down"></i>
                         </div>
                     </div>
@@ -236,7 +255,7 @@
             </h3>
         {/if}
     </div>
-    <div class="vid-view-container">
+    <div class={`vid-view-container ${!isVidPlayerShown ? "vid-view-container--player-hidden" : ""}`}>
         <div id="player">
         </div>
         {#if !ytData.selectedPlaylist}
@@ -260,13 +279,15 @@
         {/if}
     </div>
     {#if ytData.selectedPlaylist?.id && !hasError}
-        <div class="vid-details-container">
-            <h1 class="vid-title">{ytVidDetails.title}</h1>
+        <div class={`vid-details-container ${isLightTheme ? "vid-details-container--light-mode" : ""}`}>
+            <h3 class="vid-title">{ytVidDetails.title}</h3>
             <div class="vid-channel-details-container">
                 <img alt="channel-profile-img" src={ytVidDetails.channelImgSrc} />
                 <div class="vid-channel-details">
-                    <div class="vid-channel-details__channel-name">{ytVidDetails.channelName}</div>
-                    <div class="vid-channel-details__sub-count">{ytVidDetails.channelSubs} subscribers</div>
+                    <span class="vid-channel-details__channel-name">{ytVidDetails.channelName}</span>
+                    <span class="vid-channel-details__sub-count">
+                        {ytVidDetails.channelSubs} Subscribers
+                    </span>
                 </div>
             </div>
         </div>
@@ -290,59 +311,71 @@
             position: relative;
             @include flex-container(center, _);
             margin-bottom: 15px;
+            height: 30px;
             color: rgb(var(--textColor1));
 
-            &__yt-icon {
-                position: relative;
-                margin: 3px 0px 15px 18px;
-                i, .yt-icon-fill {
-                    position: absolute;
-                    left: 50%;
-                    transform: translate(-50%, 0);
+            &__title {
+                font-size: 1.8rem;
+
+                &--light-mode {
+                    font-weight: 600;
                 }
-                i {
-                    border-radius: 100%;
-                    font-size: 1.5rem;
-                    color: #DF6B6B;
-                }
-                .yt-icon-fill {
-                    // box-shadow: 0px 0px 12px 5px rgba(223, 107, 107, 0.28);
-                    top: 5px;
-                    background-color: white;
-                    width: 5px;
-                    height: 5px;
-                }
-            }
-            h1 {
-                font-size: 1.4rem;
-                font-weight: 700;
             }
             .dropdown-container {
-                font-family: "Apercu";
                 position: absolute;
                 right: 0px;
                 color: rgb(var(--textColor1));
-                .dropdown-menu {
-                    position: absolute;
-                    top: 30px;
-                    right: -10px;
-                    width: 120px;
+            }
+            .dropdown-btn {
+                &__icon {
                 }
+                &__youtube-logo {
+                    background-color: white;
+                    @include circle(8px);
+                    @include center;
+
+                    i {
+                        color: #FE5454;
+                        font-size: 1.2rem;;
+                        z-index: 1;
+                        margin-right: 4px;
+                    }
+                }
+
+                /* Color Theme Styling */
+                &--color-theme {
+                    background-color: var(--muiscPlayerBgColor);
+                    color: rgba(var(--textColor2), 1);
+                }
+                &--color-theme .dropdown-btn__youtube-logo {
+                    background-color: var(--muiscPlayerBgColor);
+                }
+                &--color-theme i {
+                    color: var(--primaryBgColor);
+                }
+            }
+            .dropdown-menu {
+                position: absolute;
+                top: 35px;
+                right: -2px;
+                width: 120px;
             }
         }
         .vid-view-container {
-            width: 100%;
-            aspect-ratio: 16 / 9;
-            background-color: rgb(var(--primaryBgColor));
-            filter: brightness(0.95);
+            background-color: black;
             position: relative;
+            @include center;
+
+            &--player-hidden {
+                height: 600px;
+            }
         }
-        #player, .vid-view-empty-vid-view {
+        #player {
             width: 100%;
             aspect-ratio: 16 / 9;
+            max-height: 500px;
             background-color: var(--primaryBgColor);
             display: flex;
-            @include center;
         }
         .vid-view-empty-vid-view {
             position: absolute;
@@ -379,12 +412,22 @@
         }
         .vid-details-container {
             width: 100%;
+
+            &--light-mode .vid-title {
+                font-weight: 700;
+            }
+            &--light-mode .vid-channel-details__channel-name {
+                font-weight: 600 !important;
+            }
+            &--light-mode .vid-channel-details__sub-count {
+                font-weight: 400 !important;
+            }
+
         }
         .vid-title {
-            font-size: 1.2rem;
             margin-top: 12px;
-            font-weight: 700;
             color: rgb(var(--textColor1), 0.95);
+            font-weight: 500;
         }
         .vid-channel-details-container {
             margin: 10px 0px 40px 0px;
@@ -400,17 +443,18 @@
                 margin-right: 10px;
             }
             .vid-channel-details {
+                span {
+                    display: block;
+                }
                 &__channel-name {
-                    font-weight: 400;
                     color: rgb(var(--textColor1), 0.85);
-                    font-size: 1.1rem;
+                    font-weight: 500;
                 }
                 &__sub-count {
                     color: rgb(var(--textColor1), 0.55);
-                    font-weight: 400;   
-                    font-size: 0.9rem;
                     margin-top: 2px;
                     opacity: 0.8;
+                    font-weight: 300;
                 }
             }
             .vid-like-count {

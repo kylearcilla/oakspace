@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { clickOutside } from "$lib/helper";
+	import { colorThemeState } from "$lib/store";
+	import PomProgressBar from "./PomProgressBar.svelte";
 
     let currentActiveSession = {
         title: "Math Homework",
@@ -65,6 +67,9 @@
     let isNewSessionTitleValid = true
     let isTagListDropDownOpen = false
     let isNewTagModalOpen = false
+
+    let isLightTheme = false
+    colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
 
     const handleEditSessionBtnClicked = () => {
         isEditSessionModalOpen = true
@@ -185,28 +190,30 @@
             use:clickOutside on:click_outside={() => isEditSessionModalOpen = false} 
             class="modal-bg__content modal-bg__content--overflow-show modal-bg__content--small"
         >
-            <div class="active-session-modal">
+            <div class={`active-session-modal ${isLightTheme ? "active-session-modal--light-mode" : ""}`}>
                 <h1>Edit Active Session</h1>
-                <h2>Title</h2>
-                <input 
-                    type="text" 
-                    placeholder="Rename Session Name"
-                    on:input={editActiveSessionTitleInputHandler}
-                    bind:value={newSessionTitle}
-                />
+                <h3>Title</h3>
+                <form spellcheck="false">
+                    <input 
+                        type="text" 
+                        placeholder="Rename Session"
+                        on:input={editActiveSessionTitleInputHandler}
+                        bind:value={newSessionTitle}
+                    />
+                </form>
                 <div class="flx flx--space-between">
-                    <h2>Tag</h2>
+                    <h3>Tag</h3>
                     <div class="tag-dropdown dropdown-container">
                         <button on:click={toggleTagDropdownList} class="tag-dropdown__dropdown-btn dropdown-btn">
                             <div class="tag-dropdown__dropdown-btn-tag" style={`background-color: ${newTag.color}`}></div>
                             <div class="dropdown-btn__title">
                                 {newTag.title}
                             </div>
-                            <div class="dropdown-btn__icon">
-                                <div class="dropdown-btn__icon-triangle-up">
+                            <div class="dropdown-btn__arrows">
+                                <div class="dropdown-btn__arrows-triangle-up">
                                     <i class="fa-solid fa-chevron-up"></i>
                                 </div>
-                                <div class="dropdown-btn__icon-triangle-down">
+                                <div class="dropdown-btn__arrows-triangle-down">
                                     <i class="fa-solid fa-chevron-down"></i>
                                 </div>
                             </div>
@@ -225,8 +232,7 @@
                                 <li class="dropdown-menu__new-option-container">
                                     <div class="divider divider--thin"></div>
                                     <button on:click={handleCreateTagBtnClicked}>
-                                        <p>+</p>
-                                        <p>New Tag</p>
+                                        <span>+</span>New Tag
                                     </button>
                                 </li>
                             </ul>
@@ -235,13 +241,13 @@
                 </div>
                 <div class="active-session-modal__buttons-container">
                     <button 
-                        class="active-session-modal__cancel-btn btn-line" 
+                        class="active-session-modal__cancel-btn unfill unfill--oval" 
                         on:click={handleEditSessionCancelClicked}>
                             Cancel
                     </button>
                     <button 
                         disabled={!isNewSessionTitleValid}
-                        class="active-session-modal__done-btn btn-line" 
+                        class="active-session-modal__done-btn unfill unfill--oval" 
                         on:click={handleEditSessionDoneBtnClicked}>
                             Save Changes
                     </button>
@@ -250,217 +256,232 @@
         </div>
     </div>
 
-    <!-- Active Session View -->
-    <h1>Active Session</h1>
-    <div class="active-session-container__session-details">
-        <p>Started at 12:23 PM</p>
-        <div class="divider divider--vertical"></div>
-        <p>45 min x 3</p>
-    </div>
+    <!-- Active Session Component -->
     <div class="active-session">
-        <div class="active-session__header">
-            <h2>{currentActiveSession.title}</h2>
-            <button on:click={handleEditSessionBtnClicked} class="active-session__edit-button">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20">
-                    <g fill="none" stroke="currentColor" stroke-linecap="round" transform="translate(1 10)">
-                        <circle cx="2" cy="1.7" r="1.7"></circle>
-                        <circle cx="8.5" cy="1.7" r="1.7"></circle>
-                        <circle cx="15" cy="1.7" r="1.7"></circle>
-                    </g>
-                </svg>
-            </button>
-        </div>
-        <div class="active-session__tag" style={`background-color: ${currentActiveSession.tag.color}`}>
-            <p>{currentActiveSession.tag.title}</p>
-        </div>
-        <div class="active-session__subheader">
-            <h3>Session Subtasks</h3>
-            <p>
-                {#if todos.length === 0}
-                    No substasks
-                {:else}
-                    {completedTodosCount} / {todos.length}
-                {/if}
-            </p>
-        </div>
-        <ul class="active-session__todo-list">
-            {#each todos as todo, idx}
-                <li class={`active-session-todo ${todoToEditIndex === idx ? "active-session-todo--editing" : ""}`}>
-                    {#if isMakingNewTask || idx != todos.length - 1}
-                        {#if todo.isComplete && idx + 1 < todos.length && todos[idx + 1].isComplete} 
-                            <div class="active-session-todo__line active-session-todo__solid-line active-session-todo__solid-line"></div>
-                        {:else}
-                            <div class="active-session-todo__line active-session-todo__dotted-line"></div>
-                        {/if}
-                    {/if}
-                    <button on:click={() => handleCheckBoxClicked(idx)} class={`active-session-todo__check-box ${todo.isComplete ? "active-session-todo__check-box--finished" : ""}`}>
-                        <i class="fa-solid fa-check"></i>
-                    </button> 
-                    <div class="active-session-todo__right-container">
-                        {#if idx === todoToEditIndex}
-                            <form>
-                                <input
-                                    class="active-session-todo__edit-todo-input"
-                                    placeholder="New Subtask Title" 
-                                    on:input={editTextInputHandler}
-                                    bind:value={todoToEditNewTitle}
-                                />
-                            </form>
-                        {:else}
-                            <div class="divider divider--thin"></div>
-                            <p class={`active-session-todo__title ${todo.isComplete ? "active-session-todo__title--finished" : ""}`}>
-                                {#if todo.isComplete} 
-                                    <span class="strike">{todo.title}</span>
-                                {:else}
-                                    {todo.title}
-                                {/if}
-                            </p>
-                        {/if}
+        <div class="flx">
+            <!-- Session Details Header -->
+            <div class="active-session__header active-session__bento-box">
+                <div class="active-session__header-title">
+                    <h4>{currentActiveSession.title}</h4>
+                    <div class="active-session__header-tag" style={`background-color: ${currentActiveSession.tag.color}`}>
+                        <p title={currentActiveSession.tag.title} >{currentActiveSession.tag.title[0].toUpperCase()}</p>
                     </div>
-                    {#if todoToEditIndex < 0}
-                        <button on:click={() => handleTodoEditButtonClicked(idx)} class="active-session-todo__edit-button flx">
-                            <div class="flx flx--algn-center">
-                                <i class="fa-solid fa-pencil"></i>
-                                <span>Edit</span>
-                            </div>
-                        </button>
-                    {/if}
-                    {#if idx === todoToEditIndex}
-                        <div class="active-session-todo__edit-btn-container">
-                            <button 
-                                class="active-session-todo__delete-btn btn-text-only"
-                                on:click={() => handleEditTodoDeleteBtnClicked(idx)}>
-                                    Delete
-                            </button>
-                            <button
-                                disabled={!isTodoToEditTitleValid} 
-                                on:click={handleEditTodoDoneBtnClicked}
-                                class="active-session-todo__done-btn btn-text-only">
-                                    Done
-                            </button>
-                        </div>
-                    {/if}
-                </li>
-            {/each}
-            <!-- New Task Button -->
-            {#if isMakingNewTask}
-                <li class="active-session-todo">
-                    <button disabled class="active-session-todo__check-box active-session-todo__check-box--edit-mode">
-                        <i class="fa-solid fa-check"></i>
-                    </button>
-                    <div class="active-session-todo__right-container">
-                        <div class="divider divider--thin"></div>
-                            <!-- <p class="session-todo__text">Add New Task</p> -->
-                            <form>
-                                <input 
-                                    class="active-session-todo__new-todo-input"
-                                    placeholder="New Subtask" 
-                                    on:input={newTodoTextInputHandler}
-                                    bind:value={todoToEditTitle}
-                                />
-                            </form>
-                        <div class="active-session-todo__new-todo-btn-container">
-                            <button 
-                                disabled={!isTodoTitleValid} 
-                                class="active-session-todo__add-btn btn-line"
-                                on:click={newTodoAddBtnHandler}>
-                                    Add
-                            </button>
-                            <button 
-                                on:click={newTodoCancelBtnHandler}
-                                class="active-session-todo__cancel-btn btn-line">
-                                    Cancel
-                            </button>
-                        </div>
-                    </div>
-                </li>
-            {:else}
-                <button class="active-session__new-task-btn" on:click={() => isMakingNewTask = true}>
-                    <span>+</span> Add New Task
+                </div>
+                <button on:click={handleEditSessionBtnClicked} class="active-session__header-edit-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20">
+                        <g fill="none" stroke="currentColor" stroke-linecap="round" transform="translate(1 10)">
+                            <circle cx="2" cy="0.8" r="1.2"></circle>
+                            <circle cx="8" cy="0.8" r="1.2"></circle>
+                            <circle cx="14" cy="0.8" r="1.2"></circle>
+                        </g>
+                    </svg>
                 </button>
-            {/if}
-        </ul>
-        {#if todos.length > 0 && completedTodosCount === todos.length}
-        <div class="flx flx--right">
-            <button class="active-session__finish-session-btn btn-line">
-                Finish Session <span>👏</span>
-            </button>
+                <div class={`active-session__header-session-details ${isLightTheme ? "active-session__header-session-details--light-mode" : ""}`}>
+                    <span class="active-session-header-time-period">
+                        6:21 PM - 10:23 PM
+                    </span>
+                    <div class="divider divider--vertical">|</div>
+                    <span class="active-session-header-time-period">
+                        45 min × 3 min
+                    </span>
+                </div>
+            </div>
+            <!-- Pomodoro Timer -->
+            <div class="active-session__pom-view active-session__bento-box">
+                <div class="active-session__pom-view-bar-container">
+                    <PomProgressBar/>
+                </div>
+            </div>
         </div>
-        {/if}
-    </div>
+        <!-- Active Session Tasks -->
+        <div class="active-session__tasks active-session__bento-box">
+            <div class="active-session__tasks-subheader">
+                <h5 class="subheading-2">Session Subtasks</h5>
+                <p>
+                    {#if todos.length === 0}
+                        No substasks
+                    {:else}
+                        {completedTodosCount} / {todos.length}
+                    {/if}
+                </p>
+            </div>
+            <!-- To Do List -->
+            <ul class="active-session__tasks-todo-list">
+                {#each todos as todo, idx}
+                <!-- To Do List Item -->
+                <li 
+                    class={`active-session-todo 
+                             ${todoToEditIndex === idx ? "active-session-todo--editing" : ""}
+                             ${isLightTheme ? "active-session-todo--light-mode" : ""}
+                          `}
+                >
+                        <!-- Check Box -->
+                        {#if isMakingNewTask || idx != todos.length - 1}
+                            {#if todo.isComplete && idx + 1 < todos.length && todos[idx + 1].isComplete} 
+                                <div class="active-session-todo__line active-session-todo__solid-line active-session-todo__solid-line"></div>
+                            {:else}
+                                <div class="active-session-todo__line active-session-todo__dotted-line"></div>
+                            {/if}
+                        {/if}
+                        <button  on:click={() => handleCheckBoxClicked(idx)} class={`active-session-todo__check-box ${todo.isComplete ? "active-session-todo__check-box--finished" : ""}`}>
+                            <i class="fa-solid fa-check"></i>
+                        </button> 
+                        <!-- Content -->
+                        <div class="active-session-todo__right-container">
+                            {#if idx === todoToEditIndex}
+                                <form>
+                                    <input
+                                        class="active-session-todo__edit-todo-input"
+                                        placeholder="New Subtask Title" 
+                                        on:input={editTextInputHandler}
+                                        bind:value={todoToEditNewTitle}
+                                    />
+                                </form>
+                            {:else}
+                                {#if todoToEditIndex < 0 || idx != todoToEditIndex + 1} <!-- Do not remember below todo's top divider line -->
+                                    <div class="divider divider--thin"></div>
+                                {/if}
+                                <p class={`active-session-todo__title ${todo.isComplete ? "active-session-todo__title--finished" : ""}`}>
+                                    {#if todo.isComplete} 
+                                        <span class="strike">{todo.title}</span>
+                                    {:else}
+                                        {todo.title}
+                                    {/if}
+                                </p>
+                            {/if}
+                        </div>
+                        {#if todoToEditIndex < 0}
+                            <button on:click={() => handleTodoEditButtonClicked(idx)} class="active-session-todo__edit-button flx">
+                                <div class="flx flx--algn-center">
+                                    <i class="fa-solid fa-pencil"></i>
+                                    <span>Edit</span>
+                                </div>
+                            </button>
+                        {/if}
+                        {#if idx === todoToEditIndex}
+                            <div class="active-session-todo__edit-btn-container">
+                                <button 
+                                    class="active-session-todo__delete-btn text-only"
+                                    on:click={() => handleEditTodoDeleteBtnClicked(idx)}>
+                                        Delete
+                                </button>
+                                <button
+                                    disabled={!isTodoToEditTitleValid} 
+                                    on:click={handleEditTodoDoneBtnClicked}
+                                    class="active-session-todo__done-btn text-only">
+                                        Done
+                                </button>
+                            </div>
+                        {/if}
+                    </li>
+                {/each}
+                <!-- New Task Button -->
+                {#if isMakingNewTask}
+                    <li class={`active-session-todo ${isLightTheme ? "active-session-todo--light-mode" : ""}`}>
+                        <button disabled class="active-session-todo__check-box active-session-todo__check-box--edit-mode">
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+                        <div class="active-session-todo__right-container">
+                            <div class="divider divider--thin"></div>
+                                <!-- <p class="session-todo__text">Add New Task</p> -->
+                                <form>
+                                    <input 
+                                        class="active-session-todo__new-todo-input paragraph-2"
+                                        placeholder="New Subtask" 
+                                        on:input={newTodoTextInputHandler}
+                                        bind:value={todoToEditTitle}
+                                    />
+                                </form>
+                            <div class="active-session-todo__new-todo-btn-container">
+                                <button 
+                                    disabled={!isTodoTitleValid} 
+                                    class="active-session-todo__add-btn unfill unfill--oval"
+                                    on:click={newTodoAddBtnHandler}>
+                                        Add
+                                </button>
+                                <button 
+                                    on:click={newTodoCancelBtnHandler}
+                                    class="active-session-todo__cancel-btn unfill unfill--oval">
+                                        Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </li>
+                {:else}
+                    <button class="active-session__tasks-new-task-btn paragraph-2" on:click={() => isMakingNewTask = true}>
+                        <span>+</span> Add New Task
+                    </button>
+                {/if}
+            </ul>
+            {#if todos.length > 0 && completedTodosCount === todos.length}
+                <div class="flx flx--right">
+                    <button class="active-session__tasks-finish-session-btn unfill unfill--oval">
+                        Finish Session <span>👏</span>
+                    </button>
+                </div>
+            {/if}
+            </div>
+        </div>
 </div>
 
 <style lang="scss">
+    $bento-box-padding: 6px;
+
     .active-session-container {
         position: relative;
         color: rgb(var(--textColor1));
         margin: 20px 0px 100px 0px;
         h1 {
             font-size: 1.4rem;
-        }
-        &__session-details {
-            @include flex-container(center, _);
-            height: 9px;
-            display: flex;
-            width: auto;
-            font-size: 0.96rem;
-            @include pos-abs-top-right-corner(5px, 0px);
-            opacity: 0.5;
-
-            .divider {
-                margin: 0px 7px;
-                height: 80%;
-                width: 0.85px;
-                opacity: 0.4;
-            }
+            margin-bottom: 2px;
         }
     }
+    /* Edit Active Session Modal */
     .active-session-modal {
-        height: 200px;
+        height: 215px;
         width: 250px;
-        h1 {
-            font-size: 1.6rem;
-            margin-bottom: 15px;
+
+        &--light-mode h1 {
+            font-weight: 700;
         }
-        h2 {
-            font-size: 1.3rem;
+        &--light-mode h3 {
+            font-weight: 600;
+        }
+
+
+        h1 {
+            margin-bottom: 25px;
+        }
+        h3 {
+            opacity: 0.9;
             margin-bottom: 10px;
         }
         input {
             margin-bottom: 25px;
-            border-bottom: 1px solid rgba(var(--fgColor4), 0.7);
+            border-bottom: 1px solid rgba(var(--textColor1), 0.1);
             width: 100%;
             padding-bottom: 5px;
+            color: rgba(var(--textColor1), 0.4);
+            font-size: 1.3rem;
+            font-weight: 400;
+
             &::placeholder {
-                color: rgba(var(--textColor1), 0.4);
+                color: rgba(var(--textColor1), 0.2);
             }
             &:focus {
-                box-shadow: 0px 4px 7px -4px rgba(var(--fgColor4), 0.6);
-                border-bottom: 1px solid rgba(var(--fgColor4), 1);
+                color: rgba(var(--textColor1), 0.7);
+                box-shadow: -1px 4px 7px -6px rgba(var(--fgColor2), 0.4);
+                border-bottom: 1px solid rgba(var(--fgColor2), 1);
             }
         }
         &__buttons-container {
             width: 250px;
-            margin-top: 30px;
+            margin-top: 35px;
             display: flex;
             width: 100%;
 
             button {
-                @include center;
                 width: 50%;
-                color: rgb(var(--fgColor4));
-                border-color: rgb(var(--fgColor4));
-
-                &:hover {
-                    background-color: rgb(var(--fgColor4));
-                }
-                &:disabled {
-                    opacity: 0.4;
-                    &:hover {
-                        color: rgb(var(--fgColor4));
-                        background: none;
-                    }
-                }
             }
         }
         &__cancel-btn {
@@ -481,73 +502,145 @@
                 p {
                     margin-left: 3px;
                 }
+                span {
+                    margin-right: 3px;
+                }
             }
         }
     }
+    
+    /* Actual Active Session Component */
     .active-session {
         min-height: 160px;
         position: relative;
         margin-top: 10px;
         background-color: var(--secondaryBgColor);
-        border-radius: 8px;
+        border-radius: 22px;
         border: var(--borderVal);
         box-shadow: var(--shadowVal);
-        padding: 10px 20px 20px 20px;
+        padding: 12px 15px 15px 15px;
 
+        &__bento-box {
+            position: relative;
+            background-color: var(--tertiaryBgColor);
+            border: var(--activeSessionItemBorderVal);
+            box-shadow: var(--activeSessionItemShadowVal);
+            padding: 10px 25px 14px 15px;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        &__top-row {
+            display: flex;
+            margin-bottom: $bento-box-padding;
+        }
+        /* Header */
         &__header {
-            @include flex-container(center, space-between);
-            h2 {
-                font-size: 1.3rem;
+            width: 35%;
+            margin-right: $bento-box-padding;
+        }
+        &__header-title {
+            display: flex;
+            margin-bottom: 2px;
+            width: 80%;
+            h4 {
+                max-width: 145px;
+                margin-right: 8px;
+                @include elipses-overflow;
             }
         }
-        &__edit-button {
-            transition: 0.08s ease-in-out;
+        &__header-tag {
+            color: white;
+            border-radius: 20px;
+            @include center;
+            @include circle(12px);
+            margin: 4px 0px 4px 0px;
+            font-size: 8px;
+            max-width: 70px;
+            font-family: "Apercu";
+            p {
+                @include elipses-overflow;
+            }
+        }
+        &__header-session-details {
+            color: rgba(var(--textColor1), 0.5);
+            @include flex-container(center, _);
+            font-weight: 300;
+            width: 100%;
+
+            &--light-mode span {
+                font-weight: 500;
+            }
+
+            span {
+                font-size: 0.95rem;
+                white-space: nowrap;
+            }
+            .divider {
+                margin: 0px 8px !important;
+                background-color: rgba(var(--textColor1), 0.3);
+                height: 7px !important;
+                width: 0.4px;
+                color: transparent;  // added "|", will disappear when squeezed
+            }
+        }
+        &__header-edit-button {
             padding: 0px 5px;
             border-radius: 5px;
-            margin-right: -5px;
-
+            @include pos-abs-top-right-corner(8px, 8px);
+            
             svg {
-                color: rgba(var(--textColor1), 0.7);
+                transition: 0.15s ease-in-out;
+                color: rgba(var(--textColor1), 0.25);
             }
             &:hover {
                 background-color: var(--secondaryBgColor);
-                filter: brightness(0.97);
                 svg {
-                    color: rgba(var(--textColor1), 1);
+                    color: rgba(var(--textColor1), 0.7);
                 }
             }
+            &:active {
+                transform: scale(0.92);
+            }
         }
-        &__tag {
-            color: white;
-            border-radius: 20px;
-            @include flex-container(center, center);
-            font-size: 0.8rem;
-            padding: 2px 8px;
-            margin: 2px 0px 14px 0px;
-            display: inline-block;
+
+        /* Pomodoro View */
+        &__pom-view {
+            width: 65%;
+            position: relative;
         }
-        &__subheader {
+        &__pom-view-bar-container {
+            width: 85%;
+            margin-top: -3px;
+            @include abs-center;
+        }
+
+        /* Tasks Component */
+        &__tasks {
+            margin-top: $bento-box-padding;
+        }
+        &__tasks-subheader {
             @include flex-container(center, space-between);
             margin-bottom: 12px;
-            h3 {
+            h5 {
                 opacity: 0.85;
             }
             p {
                 opacity: 0.6;
             }
         }
-        &__todo-list {
+        &__tasks-todo-list {
             margin-bottom: 0px;
         }
-        &__new-task-btn {
+        &__tasks-new-task-btn {
             transition: 0.15s ease-in-out;
-            opacity: 0.65;
+            opacity: 0.35;
             padding: 10px 10px 10px 0px;
-            margin: -5px 0px 0px 3px;
+            margin: -5px 0px 0px 4px;
             @include flex-container(center, center);
 
             span {
-                font-size: 1.35rem;
+                font-size: 1.3rem;
                 margin-right: 18px;
             }
             &:hover {
@@ -555,35 +648,31 @@
             }
             &:active {
                 opacity: 1;
-                transform: scale(0.98);
             }
         }
-        &__finish-session-btn {
-            color: rgb(var(--fgColor4));
-            border-color: rgb(var(--fgColor4));
+        &__tasks-finish-session-btn {
+            color: rgb(var(--fgColor2));
+            border-color: rgb(var(--fgColor2));
 
             span {
                 margin-left: 5px;
             }
 
             &:hover {
-                background-color: rgb(var(--fgColor4));
+                background-color: rgb(var(--fgColor2));
                 color: var(--secondaryBgColor);
             }
         }
-
-        .divider {
-            margin: 0px;
-        }
     }
 
+    /* Todo Component in Subtasks Section */
     .active-session-todo {
         @include flex-container(center, _);
         position: relative;
         cursor: pointer;
 
         &--editing > &__right-container {
-            border: 1px solid rgba(var(--textColor1), 0.1);
+            border: 0.3px solid rgba(var(--textColor1), 0.1);
             border-radius: 5px;
             padding: 8px 0px 8px 0px;
         }
@@ -594,20 +683,42 @@
             display: block;
         }
 
+        &--light-mode &__check-box {
+            border: 1.5px solid rgb(var(--fgColor2));
+        }
+        &--light-mode &__dotted-line {
+            border-left: 1.5px dotted rgb(var(--fgColor2));
+            left: 7px;
+        }
+        &--light-mode &__solid-line {
+            
+            &::after {
+                border-left: 1.2px solid rgb(var(--fgColor2));
+                left: 7px;
+            }
+        }
+        &--light-mode &__title {
+            font-weight: 500;
+        }
+
+        .divider {
+            margin: 0px;
+        }
+
         &:hover > &__edit-button { 
             transition: 0.2s ease-in-out;
             visibility: visible;
             opacity: 0.5;
         }
         
+        /* Check Box */
         &__check-box {
-            @include circle(11px);
+            @include circle(12px);
             @include flex-container(center, center);
-            
             transition: 0.1s ease-in-out;
             position: relative;
-            border: 1.9px solid rgb(var(--fgColor3));
             margin-right: 8.5px;
+            border: 1px solid rgb(var(--fgColor2));
             color: rgb(var(--textColor2));
 
             i {
@@ -615,16 +726,18 @@
                 display: none;
             }
             &:hover {
-                background-color: rgba(var(--fgColor3), 0.2);
+                background-color: rgba(var(--fgColor2), 0.2);
             }
-            
+            &:active {
+                transform: scale(0.9);
+            }
             &--finished > i {
                 display: block;
             }
             &--finished {
-                background-color: rgb(var(--fgColor3));
+                background-color: rgb(var(--fgColor2));
                 &:hover {
-                    background-color: rgb(var(--fgColor3));
+                    background-color: rgb(var(--fgColor2));
                 }
                 // &:hover > i:before {
                 //     font-size: 0.9rem;
@@ -641,12 +754,9 @@
         &__dotted-line {
             position: absolute;
             width: 1px;
-            border-left: 2px dotted rgb(var(--fgColor3));
             left: 6px;
-            height: 0px;
-            bottom: 0px;
             transition: 0.2s ease-in-out;
-            border-left: 1.5px dotted rgb(var(--fgColor3));
+            border-left: 1.45px dotted rgb(var(--fgColor2));
             bottom: -9px;
             height: 19px;
             left: 6.5px;
@@ -664,10 +774,8 @@
                 position: absolute;
                 bottom: -25px;
                 left: 6.5px;
-
-                height: 19px;
-                border-left: 1.2px solid rgb(var(--fgColor3));
-
+                height: 22px;
+                border-left: 1.2px solid rgb(var(--fgColor2));
                 animation-name: progress-line;
                 animation-duration: 0.1s;
                 animation-timing-function: ease-in-out;
@@ -675,14 +783,16 @@
                 animation-fill-mode: backwards; 
             }
         }
+
+        /* Todo Content Stuff */
         &__right-container {
             padding-left: 7px; 
             width: 100%;
         }
         &__title {
-            font-size: 1.05rem;
             margin: 9px 0px;
             transition: 0.13s ease-in-out;
+            opacity: 0.7;
             
             .strike {
                 position: relative; 
@@ -706,7 +816,7 @@
                 animation-fill-mode: forwards; 
             }
             &--finished {
-                opacity: 0.4;
+                opacity: 0.2;
             }
         }
         &__edit-btn-container {
@@ -718,9 +828,6 @@
         &__delete-btn {
             margin-right: 10px;
             color: rgba(227, 145, 132, 0.7);
-            &:hover {
-                color: #e42828;
-            }
         }
         &__done-btn {
             color: rgba(var(--textColor1), 0.7);
@@ -733,7 +840,6 @@
         }
         &__edit-todo-input {
             cursor: text;
-            font-size: 1.05rem;
             width: 90%;
             margin-left: 6px;
 
@@ -744,8 +850,9 @@
         &__new-todo-input {
             margin: 8px 0px 5px 0px;
             cursor: text;
-            font-size: 1.05rem;
             width: 50%;
+            font-size: 1.1rem;
+            font-weight: 400;
 
             &::placeholder {
                 opacity: 0.5;
@@ -756,12 +863,12 @@
             margin: 8px 0px 10px -5px;
             button {
                 @include center;
-                color: rgb(var(--fgColor4));
-                border-color: rgb(var(--fgColor4));
+                color: rgb(var(--fgColor2));
+                border-color: rgb(var(--fgColor2));
                 padding: 6px 12px 6px 12px;
 
                 &:hover {
-                    background: rgb(var(--fgColor4));
+                    background: rgb(var(--fgColor2));
                 }
                 &:first-child {
                     margin-right: 5px;
@@ -775,7 +882,7 @@
             &:disabled {
                 &:hover {
                     background: none;
-                    color: rgb(var(--fgColor4));
+                    color: rgb(var(--fgColor2));
                 }
             }
         }

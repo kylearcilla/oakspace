@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { initOAuth2Client, initYtCreds, intUserYtData, resetYtUserData, saveYtCredentials, saveYtUserData } from "$lib/yt-api";
-	import { ytCredentials, ytUserData } from "$lib/store";
+	import { colorThemeState, ytCredentials, ytUserData } from "$lib/store";
     import { clickOutside } from "../../lib/helper";
 	import { onDestroy, onMount } from 'svelte';
     import ytRecsPlaylists from '$lib/data-yt-playlists'
@@ -21,6 +21,10 @@
 
     const SCROLL_STEP = 50
     const HORIZONTAL_TAB_COROUSEL_RIGHT_OFFSET = 30
+
+    let isLightTheme = false
+
+    colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
 
     ytUserData.subscribe((data: YoutubeUserData) => {
         ytUserAccountData = {
@@ -135,9 +139,6 @@
 
 <div class={`modal-bg ${isYtModalOpen ? "" : "modal-bg--hidden"}`}>
     <div use:clickOutside on:click_outside={closeModal} class="modal-bg__content modal-bg__content--overflow-y-scroll">
-        <button on:click={closeModal} class="close-btn">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
         <div class={`yt-settings ${ytUserAccountData.email == "" ? "yt-settings--min" : ""}`}>
             <div class="yt-settings__header">
                 <h1 class="modal-bg__content-title">Youtube Settings</h1>
@@ -150,7 +151,7 @@
             <div class="yt-settings__top-row">
                 <div class="account-details grid-section">
                     <div class="grid-section__header">
-                        <h2>Account Details</h2>
+                        <h3>Account Details</h3>
                     </div>
                     <div class="flx flx--aln-center">
                         {#if ytUserAccountData.email != ""}
@@ -159,28 +160,28 @@
                             <div class="account-details__blank-img"></div>
                         {/if}
                         <div class="account-details__section"> 
-                            <h3>Gmail Account</h3>
+                            <h5>Gmail Account</h5>
                             <p>{ytUserAccountData.email === "" ? "- -" : ytUserAccountData.email}</p>
                         </div>
                         <div class="account-details__section"> 
-                            <h3>Channel Name</h3>
+                            <h5>Channel Name</h5>
                             <p>{ytUserAccountData.email === "" ? "- -" : ytUserAccountData.username}</p>
                         </div>
                     </div>
-                    <div class="abs-bottom-right abs-bottom-right--padded-lg">
+                    <div class="account-details__btn-container">
                         {#if ytUserAccountData.email != ""}
-                            <button class="account-details__replace-btn btn-text-only" 
+                            <button class="account-details__replace-btn text-only" 
                                 on:click={handleYtSignUp}
                             >
                                 Use a different account
                             </button>
-                            <button class="account-details__unlink-btn btn-text-only" 
+                            <button class="account-details__unlink-btn text-only" 
                                 on:click={handleUnlinkCurrentYtAccount}
                             >
                                 Unlink Account
                             </button>
                         {:else}
-                            <button class="account-details__link-btn btn-text-only" 
+                            <button class="account-details__link-btn text-only" 
                                 on:click={handleYtSignUp}
                             >
                                 Connect a Youtube account
@@ -194,15 +195,19 @@
                     <div class={`blur-bg ${!selectedPlaylist ? "blur-bg--solid-color" : "blur-bg--blurred-bg"}`}></div>
                     <div class="content-bg">
                         <div class="grid-section__header">
-                            <h2>Chosen Playlist</h2>
+                            <h3>Chosen Playlist</h3>
                         </div>
                         {#if selectedPlaylist}
                             <div class="flx">
                                 <img class="chosen-playlist__playlist-img" src={selectedPlaylist?.thumbnailURL} alt="chosen-playlist">
                                 <div class="chosen-playlist__playlist-details">
-                                    <h3>{selectedPlaylist?.title}</h3>
-                                    <p class="chosen-playlist__playlist-description content-bg__subtitle">{selectedPlaylist?.description === "" ? "No Description" : selectedPlaylist?.description}</p>
-                                    <p class="chosen-playlist__playlist-vid-count">{`${selectedPlaylist?.vidCount == 1 ? "1 video" : selectedPlaylist?.vidCount > 50 ? "50+ videos" : selectedPlaylist?.vidCount + " videos" }`}</p>
+                                    <h4>{selectedPlaylist?.title}</h4>
+                                    <p class="chosen-playlist__playlist-description paragraph-4">
+                                        {selectedPlaylist?.description === "" ? "No Description" : selectedPlaylist?.description}
+                                    </p>
+                                    <p class="chosen-playlist__playlist-vid-count paragraph-4">
+                                        {`${selectedPlaylist?.vidCount == 1 ? "1 video" : selectedPlaylist?.vidCount > 50 ? "50+ videos" : selectedPlaylist?.vidCount + " videos" }`}
+                                    </p>
                                 </div>
                             </div>
                         {:else}
@@ -219,24 +224,26 @@
                     <div class="user-playlists grid-section grid-section--no-padding">
                         <div class="user-playlists__header">
                             <div class="grid-section__header">
-                                <h2>Playlists</h2>
+                                <h3>Playlists</h3>
                             </div>
                             {#if ytUserAccountData}
-                                <p>{`${ytUserAccountData.playlists.length} ${ytUserAccountData.playlists.length > 1 ? "playlists" : "playlist"}`}</p>
+                                <span class="caption-4">
+                                    {`${ytUserAccountData.playlists.length} ${ytUserAccountData.playlists.length > 1 ? "playlists" : "playlist"}`}
+                                </span>
                             {/if}
                         </div>
                         <ul class="user-playlists__list">
                             <div class="user-playlists__list-header flx">
-                                <h4 class="user-playlists__list-header-num">#</h4>
-                                <h4 class="user-playlists__list-header-thumbnail">Thumnail</h4>
+                                <h6 class="user-playlists__list-header-num">#</h6>
+                                <h6 class="user-playlists__list-header-thumbnail">Thumnail</h6>
                                 <div class="user-playlists__list-header-title">
-                                    <h4>Title</h4>
+                                    <h6>Title</h6>
                                 </div>
                                 <div class="user-playlists__list-header-length">
-                                    <h4>Length</h4>
+                                    <h6>Length</h6>
                                 </div>
                                 <div class="user-playlists__list-header-description">
-                                    <h4>Description</h4>
+                                    <h6>Description</h6>
                                 </div>
                             </div>
                             {#each ytUserAccountData.playlists as playlist, idx}
@@ -244,18 +251,17 @@
                                 <li on:click={() => handleChoosePlaylist(idx)} 
                                     class={`user-playlists__list-item ${clickedPlaylistId === idx ? "user-playlists__list-item--clicked" : ""}  ${ytUserAccountData?.selectedPlaylist?.id === playlist.id ? "user-playlists__list-item--chosen" : ""} flx flx--algn-center`}>
                                     <div class="divider divider--thin divider--top"></div>
-                                    <p class="user-playlists__list-item-num">{idx + 1}</p>
+                                    <p class={`user-playlists__list-item-num paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{idx + 1}</p>
                                     <img src={`${playlist.thumbnailURL}`} alt="yt-profile-pic" />
                                     <div class="user-playlists__list-item-title">
-                                        <p>{playlist.title}</p>
+                                        <p class={`paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{playlist.title}</p>
                                     </div>
                                     <div class="user-playlists__list-item-length">
-                                        <p>{`${playlist.vidCount} video${playlist.vidCount != 1 ? "s" : ""}`}</p>
+                                        <p class={`paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{`${playlist.vidCount} video${playlist.vidCount != 1 ? "s" : ""}`}</p>
                                     </div>
                                     <div class="user-playlists__list-description">
-                                        <p>{`${playlist?.description != "" ? playlist?.description : "No Description"}`}</p>
+                                        <p class={`paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{`${playlist?.description != "" ? playlist?.description : "No Description"}`}</p>
                                     </div>
-                                    <div class="divider divider--thin divider--bottom"></div>
                                 </li>
                             {/each}
                         </ul>
@@ -264,9 +270,9 @@
                 <!-- Playlist Recommendations Section -->
                 <div class={`recs ${ytUserAccountData.username === "" ? "recs--min" : ""} grid-section grid-section--no-padding`}>
                     <div class="grid-section__header">
-                        <h2>Recommendations</h2>
+                        <h3>Recommendations</h3>
                     </div>
-                    <p class="recs__copy grid-section__copy">
+                    <p class="recs__copy grid-section__copy paragraph-2">
                         Discover new playlists with our staff recommended playlist picks!
                     </p>
                     <!-- Horizontal Tabs Carousel -->
@@ -284,9 +290,12 @@
                             <li><div class="recs__tab-group-padding recs__tab-group-padding--left"></div></li>
                             <!-- Tab Item -->
                             {#each ytRecsPlaylists as group, idx}
-                                <li class={`recs__group-tab ${idx === ytRecsPlaylistsIdx ? "recs__group-tab--selected" : ""}`}> 
-                                    <button on:click={() => handleRecTabBtnClicked(idx)}>
-                                        <p>{group.title}</p>
+                                <li>
+                                    <button 
+                                        on:click={() => handleRecTabBtnClicked(idx)}
+                                        class={`tab-btn ${isLightTheme ? "tab-btn--light-mode" : ""} ${idx === ytRecsPlaylistsIdx ? "tab-btn--selected" : ""}`}
+                                    >
+                                        {group.title}
                                     </button>
                                 </li>
                             {/each}
@@ -314,8 +323,8 @@
                             >
                                 <img class="recs__playlist-item-img" src={playlist.playlistThumbnailImgSrc} alt="playlist-item-thumbnail"/>
                                 <div class="recs__playlist-item-details">
-                                    <h3 class="recs__playlist-item-title">{playlist.title}</h3>
-                                    <p class="recs__playlist-item-description">
+                                    <h4 class="recs__playlist-item-title">{playlist.title}</h4>
+                                    <p class={`recs__playlist-item-description paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>
                                         {playlist.playlistDescription}
                                     </p>
                                     <div class="recs__playlist-item-channel-details">
@@ -369,18 +378,15 @@
         margin: 0px $section-spacing $section-spacing 0px;
         position: relative;
         height: 170px;
-
-        button {
-            color: rgba(var(--textColor1), 0.7);
-        }
         
-        h2 {
-            color: rgb(var(--textColor1));
-            font-size: 1.15rem;
-            margin-bottom: 20px;
-        }
         h3 {
+            margin-bottom: 20px;
+            @include elipses-overflow;
+        }
+        h5 {
             color: rgb(var(--textColor1));
+            @include elipses-overflow;
+            margin-bottom: 3px
         }
         img {
             @include circle(40px);
@@ -396,9 +402,7 @@
             margin-right: 15px;
             max-width: 100px;
             h3 {
-                font-weight: 700;
                 margin-bottom: 4px;
-                font-size: 1rem;
                 white-space: nowrap
             }
             p {
@@ -407,15 +411,12 @@
                 color: rgba(var(--textColor1), 0.7);
             }
         }
-        &__replace-btn {
-            margin-right: 10px;
-        }
-        &__link-btn {
-            border-color: rgb(var(--textColor1), 0.8);
-            color: rgb(var(--textColor1), 0.8);
-            &:hover {
-                color: rgb(var(--fgColor4));
+        &__btn-container {
+            display: flex;
+            button {
+                margin-left: 12px;
             }
+            @include pos-abs-bottom-right-corner(15px, 15px);
         }
     }
     .chosen-playlist {
@@ -443,18 +444,17 @@
             width: 90%;
         }
         &__playlist-description {
-            margin-top: 4px;
+            margin-top: 8px;
             width: 80%;
             max-height: 40px;
             overflow: hidden;
+            color: rgb(var(--textColor2), 0.7);
         }
         &__playlist-vid-count {
-            @include pos-abs-bottom-left-corner(-20px, 0px);
+            @include pos-abs-bottom-right-corner(20px, -30px);
         }
         &__no-playlist-msg {
             @include abs-center;
-            font-weight: 700;
-            font-size: 1.2rem;
             top: 45%;
         }
     }
@@ -472,22 +472,15 @@
             padding: 13px 20px 15px 20px;
             @include flex-container(center, space-between);
 
-            h2 {
-                font-size: 1.15rem;
-            }
-            p {
-                font-size: 1rem;
-                color: rgb(155, 155, 155);
-                margin-right: 10px;
+            span {
+                color: rgb(var(--textColor1), 0.7);
             }
         }
         /* List Header */
         &__list-header {
             padding: 6px 0px 20px 6px;
-            h4 {
-                color: rgba(var(--textColor1), 0.8);
-                font-weight: 700;
-                font-size: 0.85rem;
+            h6 {
+                color: rgba(var(--textColor1), 0.72);
                 @include elipses-overflow;
             }
         }
@@ -524,8 +517,6 @@
             padding: 12px 0px 12px 6px;
             transition: 0.1s ease-in-out;
             color: rgba(var(--textColor1), 0.6);
-            font-weight: 600;
-            font-size: 0.85rem;
             cursor: pointer;
             transition: 0.01s ease-in-out;
             @include elipses-overflow;
@@ -540,7 +531,9 @@
                 @include elipses-overflow;
             }
             .divider {
-                margin: 0px;
+                margin: 0px 0px 0px -10px;
+                width: 110%;
+                height: 0.5px;
             }
         }
         &__list-item-num {
@@ -567,7 +560,6 @@
             @include center;
         }
     }
-
     .recs {
         width: 55%;
         height: 470px;
@@ -577,7 +569,7 @@
             width: 100%;
         }
 
-        h2 {
+        h3 {
             padding: 17px 0px 0px $recs-section-padding-left;
         }
 
@@ -604,7 +596,6 @@
             overflow-y: hidden;
             
             .gradient-container {
-                height: 55px;
                 width: 45px;
                 @include center;
                 &--left {
@@ -640,30 +631,6 @@
         }
         &__group-tab {
             margin-right: 4px;
-
-            button {
-                font-size: 1rem;            
-                @include center;
-                background-color: (var(--tabColor));
-                color: rgba(var(--textColor2), 0.8);
-                border-radius: 15px;
-                padding: 2.5px 10px;
-                transition: 0.1s ease-in-out;
-                white-space: nowrap;
-
-                &:hover {
-                    filter: brightness(1.05);
-                }
-                &:active {
-                    transform: scale(0.98);
-                }
-
-            }
-            &--selected > button {
-                background-color: var(--tabHighlightColor);
-                box-shadow: var(--tabHighlightBoxShadow);
-                color: var(--modalFgColor);
-            }
         }
         /* Playlit List */
         &__playlists-list {
@@ -691,6 +658,9 @@
             &:last-child {
                 margin-bottom: 70px;
             }
+            h4 {
+                margin-bottom: 5px;
+            }
             h3 {
                 @include elipses-overflow;
                 color: rgb(var(--textColor1), 1);
@@ -712,7 +682,6 @@
             max-height: 27px;
             overflow: hidden;
             @include multi-line-elipses-overflow(2);
-            font-weight: 300;
             color: rgb(var(--textColor1), 0.6);
         }
         &__playlist-item-channel-details {

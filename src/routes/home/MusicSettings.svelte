@@ -8,7 +8,7 @@
 	import { AppleMusicPlayer } from "$lib/AppleMusicPlayer"
 
 	import { 
-        appleMusicPlayerState, curentPlaylist, musicDataState, 
+        appleMusicPlayerState, colorThemeState, curentPlaylist, musicDataState, 
         musicPlayerData, userMusicPlaylists 
     } from "$lib/store"
     import { 
@@ -30,6 +30,7 @@
 
     let playlists: any = []
     let currentMusicCollection: MusicCollection | null = null
+    let clickedPlaylistId = ""
     
     let collectionGroupIdx = 0
     let isScrollableLeft = false
@@ -40,6 +41,10 @@
 
     const SCROLL_STEP = 250
     const PLAYLIST_BTN_COOLDOWN_MS = 250
+
+    let isLightTheme = false
+
+    colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
 
     // init music data for music settings
     musicDataState.subscribe((data: MusicData) => {
@@ -154,7 +159,7 @@
     }
 
     const getCollectionId = (collection: MusicDiscoverCollection) => {
-        return collection?.albumId ?? collection.playlistId
+        return (collection?.albumId ?? collection.playlistId) ?? ""
     }
 
     const handleRecommendedPlaylistClicked = async (collection: MusicDiscoverCollection, event: MouseEvent) => {
@@ -252,10 +257,10 @@
                             <i class="fa-brands fa-spotify fa-spotify--small"></i>
                         </div>
                     {/if}
-                    <p>{getPlatformName()}</p>
+                    <span class="caption-3">{getPlatformName()}</span>
                     <i class="fa-solid fa-chevron-down"></i>
                 </button>
-                <p class="active-account-header__username">Kyle Arcilla</p>
+                <span class="active-account-header__username caption-3">Kyle Arcilla</span>
                 <div class="active-account-header__user-profile-pic">
                     <img src="" alt="">
                 </div>
@@ -267,14 +272,14 @@
                                 <i class="fa-brands fa-soundcloud fa-soundcloud--small"></i>
                             </div>
                             <div class="platform-list__platform-item-text">
-                                <h3>Soundcloud</h3>
-                                <p>Playlist</p>
+                                <h5>Soundcloud</h5>
+                                <span class="caption-5">Playlist</span>
                             </div>
                             <button 
-                                class={`platform-list__platform-item-btn ${musicData?.musicPlatform === MusicPlatform.Soundcloud ? "platform-list__platform-item-btn--selected" : ""} btn-text-only`}
+                                class={`platform-list__platform-item-btn ${musicData?.musicPlatform === MusicPlatform.Soundcloud ? "platform-list__platform-item-btn--selected" : ""} text-only`}
                                 on:click={() => initMusicData(MusicPlatform.Soundcloud)}
                             >
-                                {musicData?.musicPlatform === MusicPlatform.Soundcloud ? "Disconnect" : "Connect"}
+                                <span class="caption-3">{musicData?.musicPlatform === MusicPlatform.Soundcloud ? "Disconnect" : "Connect"}</span>
                             </button>
                         </li>
                         <li class="platform-list__platform-item">
@@ -282,14 +287,14 @@
                                 <i class="fa-brands fa-youtube fa-youtube--small"></i>
                             </div>
                             <div class="platform-list__platform-item-text">
-                                <h3>Youtube</h3>
-                                <p>Playlist, Live Videos</p>
+                                <h5>Youtube</h5>
+                                <span class="caption-5">Playlist, Live Videos</span>
                             </div>
                             <button 
-                                class={`platform-list__platform-item-btn ${musicData?.musicPlatform === MusicPlatform.Youtube ? "platform-list__platform-item-btn--selected" : ""} btn-text-only`}
+                                class={`platform-list__platform-item-btn ${musicData?.musicPlatform === MusicPlatform.Youtube ? "platform-list__platform-item-btn--selected" : ""} text-only`}
                                 on:click={() => initMusicData(MusicPlatform.Youtube)}
                             >
-                                {musicData?.musicPlatform === MusicPlatform.Youtube ? "Disconnect" : "Connect"}
+                                <span class="caption-3">{musicData?.musicPlatform === MusicPlatform.Youtube ? "Disconnect" : "Connect"}</span>
                             </button>
                         </li>
                         <li class="platform-list__platform-item">
@@ -297,14 +302,14 @@
                                 <i class="fa-brands fa-itunes-note fa-itunes-note--small"></i>
                             </div>
                             <div class="platform-list__platform-item-text">
-                                <h3>Apple Music</h3>
-                                <p>Playlists</p>
+                                <h5>Apple Music</h5>
+                                <span class="caption-5">Playlists</span>
                             </div>
                             <button 
-                                class={`platform-list__platform-item-btn ${musicData?.musicPlatform === MusicPlatform.AppleMusic ? "platform-list__platform-item-btn--selected" : ""} btn-text-only`}
+                                class={`platform-list__platform-item-btn ${musicData?.musicPlatform === MusicPlatform.AppleMusic ? "platform-list__platform-item-btn--selected" : ""} text-only`}
                                 on:click={() => initMusicData(MusicPlatform.AppleMusic)}
                             >
-                                {musicData?.musicPlatform === MusicPlatform.AppleMusic ? "Disconnect" : "Connect"}
+                                <span class="caption-3">{musicData?.musicPlatform === MusicPlatform.AppleMusic ? "Disconnect" : "Connect"}</span>
                             </button>
                         </li>
                         <li class="platform-list__platform-item">
@@ -312,11 +317,11 @@
                                 <i class="fa-brands fa-spotify fa-spotify--small"></i>
                             </div>
                             <div class="platform-list__platform-item-text">
-                                <h3>Spotify</h3>
-                                <p>Playlists, Podcasts</p>
+                                <h5>Spotify</h5>
+                                <span class="caption-5">Playlists, Podcasts</span>
                             </div>
                             <button 
-                                class={`platform-list__platform-item-btn ${musicData?.musicPlatform === MusicPlatform.Spotify ? "platform-list__platform-item-btn--selected" : ""} btn-text-only`}
+                                class={`platform-list__platform-item-btn ${musicData?.musicPlatform === MusicPlatform.Spotify ? "platform-list__platform-item-btn--selected" : ""} text-only`}
                                 on:click={() => initMusicData(MusicPlatform.Spotify)}
                             >
                                 {musicData?.musicPlatform === MusicPlatform.Spotify ? "Disconnect" : "Connect"}
@@ -333,26 +338,28 @@
                         <img class="img-bg" src={currentMusicCollection?.artworkImgSrc} alt="">
                         <div class={`blur-bg blur-bg--blurred-bg ${currentMusicCollection ?? "blur-bg--solid-color"}`}></div>
                         <div class="content-bg">
-                            <h2 class="grid-section__title">Now Playing</h2>
+                            <h3 class="grid-section__title">Now Playing</h3>
                             {#if currentMusicCollection}
                                 <div class="now-playing__details-container">
                                     <div class="now-playing__artwork">
                                         <img src={currentMusicCollection?.artworkImgSrc} alt="">
                                     </div>
                                     <div class="now-playing__description">
-                                        <span>{currentMusicCollection?.author}</span>
+                                        <span class="caption-3">{currentMusicCollection?.author}</span>
                                         {#if currentMusicCollection?.url}
-                                            <a href={currentMusicCollection?.url} target="_blank" rel="noreferrer">{currentMusicCollection?.name}</a>
+                                            <a href={currentMusicCollection?.url} target="_blank" rel="noreferrer">
+                                                <h4>{currentMusicCollection?.name}</h4>
+                                            </a>
                                         {:else}
                                             <h3>{currentMusicCollection?.name}</h3>
                                         {/if}
-                                        <p>{currentMusicCollection?.description}</p>
+                                        <p class={`paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{currentMusicCollection?.description}</p>
                                     </div>
                                 </div>             
                                 <div class="now-playing__collection-details">
-                                    <p class="now-playing__collection-type">{currentMusicCollection?.type}</p>
+                                    <p class={`now-playing__collection-type paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{currentMusicCollection?.type}</p>
                                     <span>/</span>
-                                    <p>{currentMusicCollection?.songCount} songs</p>
+                                    <p class={`paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{currentMusicCollection?.songCount} songs</p>
                                 </div>
                             {:else}
                                 <div class="now-playing__no-pl-selected">
@@ -364,8 +371,8 @@
                     <!-- My Playlists Section -->
                     <div class="my-playlists grid-section grid-section--no-padding">
                         <div class="my-playlists__header">
-                            <h2 class="grid-section__title">My Playlists</h2>
-                            <h3>{`${playlists.length} ${playlists.length == 1 ? "playlist" : "playlists"}`}</h3>
+                            <h3 class="grid-section__title">My Playlists</h3>
+                            <span class="caption-4">{`${playlists.length} ${playlists.length == 1 ? "playlist" : "playlists"}`}</span>
                         </div>
                         <ul class="my-playlists__collection-list vert-scroll">
                             {#if playlists?.length === 0}
@@ -375,8 +382,12 @@
                                 <!-- My Playlist Item -->
                                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                                 <li
-                                    on:click={() => handlePersonalPlaylistClicked(personalPlaylist.id, personalPlaylist.globalId)}
-                                    class={`my-playlists__playlist ${personalPlaylist.globalId === currentMusicCollection?.id ? "my-playlists__playlist--chosen" : ""}`}
+                                    on:click={() => clickedPlaylistId = personalPlaylist.globalId}
+                                    on:dblclick={() => handlePersonalPlaylistClicked(personalPlaylist.id, personalPlaylist.globalId)}
+                                    class={`my-playlists__playlist 
+                                                ${personalPlaylist.globalId === currentMusicCollection?.id ? "my-playlists__playlist--chosen" : ""}
+                                                ${personalPlaylist.globalId === clickedPlaylistId ? "my-playlists__playlist--clicked" : ""}
+                                           `}
                                 >
                                     <p class="my-playlists__playlist-idx">{idx + 1}</p>
                                     <div class="my-playlists__playlist-img">
@@ -387,8 +398,8 @@
                                         {/if}
                                     </div> 
                                     <div class="my-playlists__playlist-text">
-                                        <h4>{personalPlaylist.name}</h4>
-                                        <p>{personalPlaylist.description}</p>
+                                        <h5>{personalPlaylist.name}</h5>
+                                        <p class={`paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{personalPlaylist.description}</p>
                                     </div>
                                     <div class="divider divider--thin"></div>
                                 </li>
@@ -400,13 +411,14 @@
                 <div class="music__right-section">
                     <!-- Discover Section -->
                     <div class="discover grid-section grid-section--no-padding">
-                        <h2 class="grid-section__title">{`Discover from ${getPlatformName()}`}</h2>
-                        <p class="grid-section__copy">Get in the zone with music that matches your vibe - select a category and discover new tunes to fuel your day.</p>
+                        <h3 class="grid-section__title">{`Discover from ${getPlatformName()}`}</h3>
+                        <p class="grid-section__copy paragraph-2">Get in the zone with music that matches your vibe - select a category and discover new tunes to fuel your day.</p>
                         <div class="discover__collection-list-container">
                             {#if isScrollableLeft}
                                 <div class="gradient-container gradient-container--left">
-                                    <button class="gradient-container__tab-arrow gradient-container__tab-arrow--left"
-                                            on:click={handleShiftTabCategoryLeft}
+                                    <button 
+                                        on:click={handleShiftTabCategoryLeft}
+                                        class="gradient-container__tab-arrow gradient-container__tab-arrow--left"
                                     >
                                         <i class="fa-solid fa-chevron-left"></i>
                                     </button>
@@ -420,11 +432,12 @@
                                         <img class="discover__collection-card-img" src={group.artworkSrc}  alt="">
                                         <div class="discover__collection-card-hover-details">
                                             <img src={group.artworkBlurredSrc} alt="">
-                                            <h3>{group.title}</h3>
-                                            <p class="discover__collection-card-hover-details-description">
+                                            <h2>{group.title}</h2>
+                                            <p 
+                                                class={`discover__collection-card-hover-details-description paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>
                                                 {group.description}
                                             </p>
-                                            <span>{group.artistCredit}</span>
+                                            <span class="caption-3"> {group.artistCredit}</span>
                                         </div>
                                         <h3 class="discover__collection-card-title">{group.title}</h3>
                                     </li>
@@ -442,44 +455,50 @@
                             {/if}
                         </div>
                         <!-- Collections List -->
-                        <h2 class="discover__collection-title">{`${collectionTitle} Collections`}</h2>
+                        <h3 class="discover__collection-title">{`${collectionTitle} Collections`}</h3>
                         <div class="discover__collection-container">
                             <div class="discover__collection-header flx">
-                                <h4 class="discover__collection-header-num">#</h4>
-                                <h4 class="discover__collection-header-title">Title</h4>
+                                <h6 class="discover__collection-header-num">#</h6>
+                                <h6 class="discover__collection-header-title">Title</h6>
                                 <div class="discover__collection-header-type">
-                                    <h4>Type</h4>
+                                    <h6>Type</h6>
                                 </div>
                                 <div class="discover__collection-header-genre">
-                                    <h4>Genre</h4>
+                                    <h6>Genre</h6>
                                 </div>
                                 <div class="discover__collection-header-length">
-                                    <h4>Length</h4>
+                                    <h6>Length</h6>
                                 </div>
                             </div>
                             <ul class="discover__selected-collection-list">
                                 {#each chosenMusicCollection as collection, idx}
                                     <!-- Collection Item -->
                                     <!-- svelte-ignore a11y-click-events-have-key-events -->
-                                    <li 
-                                        on:click={event => handleRecommendedPlaylistClicked(collection, event)} 
-                                        class={`discover__collection-item ${getCollectionId(collection) === currentMusicCollection?.id ? "discover__collection-item--chosen" : ""}`}
+                                    <li
+                                        on:click={() => clickedPlaylistId = getCollectionId(collection)}
+                                        on:dblclick={event => handleRecommendedPlaylistClicked(collection, event)} 
+                                        class={`discover__collection-item 
+                                                    ${getCollectionId(collection) === currentMusicCollection?.id ? "discover__collection-item--chosen" : ""}
+                                                    ${getCollectionId(collection) === clickedPlaylistId ? "discover__collection-item--clicked" : ""}
+                                              `}
                                     >
                                         <p class="discover__collection-item-num">{idx + 1}</p>
                                         <div class="discover__collection-item-main-details-container">
                                             <img src={collection.artworkSrc} alt="collection-artwork">
                                             <div class="discover__collection-item-main-details">
                                                 {#if collection?.url}
-                                                    <a href={collection.url} target="_blank" rel="noreferrer">{collection.title}</a>
+                                                    <a href={collection.url} target="_blank" rel="noreferrer">
+                                                        <h6>{collection.title}</h6>
+                                                    </a>
                                                 {:else}
-                                                    <h3>{collection.title}</h3>
+                                                    <h5>{collection.title}</h5>
                                                 {/if}
-                                                <p>{collection.author}</p>
+                                                <p class={`paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{collection.author}</p>
                                             </div>
                                         </div>
-                                        <p class="discover__collection-item-type">{collection.playlistId === null ? "Album" : "Playlist"}</p>
-                                        <p class="discover__collection-item-genre">{collection.genre}</p>
-                                        <p class="discover__collection-item-length">{collection.length > 100 ? "100+" : collection.length}</p>
+                                        <p class={`discover__collection-item-type paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{collection.playlistId === null ? "Album" : "Playlist"}</p>
+                                        <p class={`discover__collection-item-genre paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{collection.genre}</p>
+                                        <p class={`discover__collection-item-length paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{collection.length > 100 ? "100+" : collection.length}</p>
                                         <div class="divider divider--thin"></div>
                                     </li>
                                 {/each}
@@ -505,7 +524,7 @@
                             <p>Playlist</p>
                         </div>
                         <button 
-                            class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out btn-text-only"
+                            class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out text-only"
                             on:click={() => initMusicData(MusicPlatform.Soundcloud)}
                         >
                             Connect
@@ -520,7 +539,7 @@
                             <p>Playlist, Live Videos</p>
                         </div>
                         <button 
-                            class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out btn-text-only"
+                            class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out text-only"
                             on:click={() => initMusicData(MusicPlatform.Youtube)}
                         >
                             Connect
@@ -535,7 +554,7 @@
                             <p>Playlists</p>
                         </div>
                         <button 
-                            class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out btn-text-only"
+                            class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out text-only"
                             on:click={() => initMusicData(MusicPlatform.AppleMusic)}
                         >
                             Connect
@@ -550,7 +569,7 @@
                             <p>Playlists, Podcasts</p>
                         </div>
                         <button 
-                            class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out btn-text-only"
+                            class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out text-only"
                             on:click={() => initMusicData(MusicPlatform.Spotify)}
                         >
                             Connect
@@ -591,7 +610,6 @@
             margin: 8px 0px 25px 0px;
             color: rgba(var(--textColor1), 0.85);
             font-weight: 400;
-            font-size: 1.1rem;
         }
         &__content {
             margin-top: 15px;
@@ -616,10 +634,6 @@
         @include flex-container(center, _);
         @include pos-abs-top-right-corner(25px, 42px);
 
-        p {
-            color: rgba(var(--textColor1), 0.7);
-            font-weight: 700;
-        }
         &__btn {
             @include flex-container(center, _);
             padding: 5px 8px;
@@ -627,21 +641,19 @@
             margin-right: 7px;
             background-color: var(--modalFgColor);
             border: var(--borderVal);
-
+            
             &:hover {
-                transition: 0.2s ease-in-out;
                 background-color: var(--hoverColor);
                 box-shadow: var(--shadowVal);
             }
-            &:active {
-                transform: scale(0.98);
-            }
-            p {
+            span {
+                color: rgba(var(--textColor1), 0.7);
                 margin: 0px 6px 0px 8px;
             }
         }
         &__username {
             margin: 0px 7px 0px 4px;
+            color: rgba(var(--textColor1), 0.85);
         }
         &__user-profile-pic {
             @include circle(20px);
@@ -694,37 +706,23 @@
             width: 60px;
             @include center;
 
-            &:active {
-                transform: scale(0.97);
-            }
             &--selected {
                 color: rgba(238, 89, 66, 0.7);
             }
             &--logged-out {
-                font-size: 1rem;
                 margin-right: 15px;
             }
         }
 
         &__platform-item-text {
             margin: -2px 0px 0px 7px;
-            h3 {
-                font-size: 1.02rem;
-            }
-            p {
-                font-weight: 100;
-                font-size: 0.9rem;
-                color: rgba(var(--textColor1), 0.8);
+            span {
+                color: rgba(var(--textColor1), 0.6);
             }
             &--logged-out {
                 margin-left: 19px;
                 h3 {
-                    font-size: 1.2rem;
                     margin: -3px 0px 1px 0px;
-                }
-                p {
-                    font-weight: 500;
-                    font-size: 0.95rem;
                 }
             }
         }
@@ -742,8 +740,6 @@
         }
         a {
             color: white;
-            font-size: 1.17rem;
-            font-weight: 700;
             margin-bottom: 6px;
             @include elipses-overflow;
         }
@@ -773,12 +769,10 @@
             }
             h3 {
                 z-index: 2000;
-                margin-bottom: 10px;
                 @include elipses-overflow;
             }
             p {
                 color: rgba(var(--textColor2), 0.5);
-                font-size: 0.98rem;
                 @include multi-line-elipses-overflow(3);
             }
         }
@@ -798,7 +792,6 @@
             font-weight: 600;
             @include elipses-overflow();
             color: rgb(var(--textColor2), 0.8);
-            font-size: 1.2rem;
             @include abs-center;
         }
         .content-bg {
@@ -816,12 +809,17 @@
 
         &__header {
             @include flex-container(center, space-between);
+            text-align: center;
             padding: 17px 17px 0px $my-playlists-section-padding-left;
+            margin-bottom: 10px;
+            
+            h3 {
+                margin-bottom: 0px;
+            }
+            span {
+                color: rgb(var(--textColor1), 0.7);
+            }
         }
-        h3 {
-            font-size: 1rem;
-            opacity: 0.7;
-        }        
         &__collection-list {
             height: 90%;
             margin-top: 2px;
@@ -829,7 +827,6 @@
         /* Playlist Item */
         &__playlist {
             @include flex-container(center, _);
-            cursor: pointer;
             padding: 15px 0px 15px 20px;
             position: relative;
 
@@ -840,9 +837,13 @@
             &--chosen {
                 background-color: var(--hoverColor);
             }
+            &--clicked {
+                background-color: var(--hoverColor);
+                filter: brightness(1.2);
+            }
 
             p {
-                color: rgba(var(--textColor1), 0.5);
+                color: rgba(var(--textColor1), 0.53);
             }
             .divider {
                 @include pos-abs-bottom-left-corner(0px, 22);
@@ -874,13 +875,11 @@
             margin-top: -8px;
             overflow: hidden;
             width: 100%;
-            h4 {
-                font-size: 1.1rem;
+            h5 {
                 margin-bottom: 5px;
             }
             p {
                 @include elipses-overflow;
-                font-weight: 100;
                 width: 95%;
             }
         }
@@ -904,9 +903,6 @@
         }
         &__header {
             padding: 17px 0px 0px $my-playlists-section-padding-left;
-            h2 {
-                font-size: 1.3rem;
-            }
         }
         &__copy {
             padding-left: $my-playlists-section-padding-left;
@@ -964,12 +960,12 @@
         &__collection-card {
             margin-right: 8px;
             position: relative;
-            cursor: pointer;
             min-width: 170px;
             height: 130px;
             border-radius: 7px;
             transition: 0.33s ease-in-out;
             overflow: hidden;
+            cursor: pointer;
             
             h3 {
                 color: white;
@@ -977,19 +973,16 @@
             &:hover {
                 min-width: 200px;
             }
-            &:hover > .discover__collection-card-img {
+            &:hover > &-img {
                 width: 200px;
             }
-            &:hover > .discover__collection-card-hover-details {
+            &:hover > &-hover-details {
                 visibility: visible;
                 opacity: 1;
             }
-            &:hover > .discover__collection-card-title {
+            &:hover > &-title {
                 visibility: hidden;
                 opacity: 0;
-            }
-            &:active {
-                transform: scale(0.98);
             }
         }
         &__collection-card-img {
@@ -1003,7 +996,6 @@
         }
         &__collection-card-title {
             transition: 0.3s ease-in-out;
-            font-size: 13px;
             @include pos-abs-bottom-left-corner(9px, 10px);
         }
         &__collection-card-hover-details {
@@ -1018,15 +1010,12 @@
             padding: 60px 0px 0px 12px;
             @include pos-abs-top-left-corner(0px, 0px);
             
-            h3 {
-                font-size: 2rem;
+            h2 {
                 margin-bottom: 5px
             }
             span {
-                color: rgba(var(--textColor2), 0.64);
-                font-weight: 700;
+                color: rgba(var(--textColor1), 0.64);
                 @include pos-abs-top-right-corner(10px, 10px);
-                font-size: 0.75rem;
             }
             img {
                 border-radius: 6px;
@@ -1038,14 +1027,12 @@
         }
         &__collection-card-hover-details-description {
             color: rgba(var(--textColor2), 0.64);
-            font-size: 0.9rem;
             width: 95%;
         }
 
         /* Discover Category Collections List Section */
         &__collection-title {
             margin: 30px 0px 10px $my-playlists-section-padding-left;
-            font-size: 1.3rem;
         }
         /* List Column Header Section */
         &__collection-header {
@@ -1082,7 +1069,6 @@
         /* Playlist Item */
         &__collection-item {
             @include flex-container(center, _);
-            cursor: pointer;
             transition: 0.1s ease-in-out;
             padding: 14px 0px;
             position: relative;
@@ -1097,11 +1083,14 @@
                 margin-bottom: 100px;
             }
             p {
-                font-weight: 500;
-                color: rgba(var(--textColor1), 0.5);
+                color: rgba(var(--textColor1), 0.6);
             }
             &--chosen {
                 background-color: var(--hoverColor);
+            }
+            &--clicked {
+                background-color: var(--hoverColor);
+                filter: brightness(1.1);
             }
 
             .divider {
@@ -1132,16 +1121,15 @@
             overflow: hidden;
             a {
                 color: rgb(var(--textColor1));
-                font-size: 1.17rem;
-                font-weight: 700;
                 @include elipses-overflow;
+                margin-bottom: 2.5px;
             }
-            h3 {
+            h6 {
                 width: 100%;
                 @include elipses-overflow;
             }
             p {
-                color: rgba(var(--textColor1), 0.5);
+                color: rgba(var(--textColor1), 0.6);
                 font-weight: 300;
                 @include elipses-overflow;
             }

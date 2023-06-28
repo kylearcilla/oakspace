@@ -36,7 +36,10 @@
         selectedTheme = themeSections[clickedTheme.sectionTitle][clickedTheme.index]
         colorThemeState.set({
             title: selectedTheme!.title,
-            isDarkTheme: selectedTheme!.properties.isDark
+            isDarkTheme: selectedTheme!.properties.isDark,
+            themeToggleBtnIconColor: selectedTheme!.properties.iconToggleBtnBgColor,
+            hasTwin: selectedTheme!.properties.hasTwin,
+            sectionTitle: selectedTheme!.sectionDetails.title
         })
         setRootColors(selectedTheme!.properties)
 
@@ -51,11 +54,11 @@
 <div class="modal-bg">
     <div use:clickOutside on:click_outside={closeModal} class="modal-bg__content modal-bg__content--main-modal modal-bg__content--overflow-y-scroll">
         <div class="appearance">
-            <h1 class="modal-bg__content-title">Settings</h1>
-            <p class="modal-bg__content-copy">Tailor your workspace to your personal aesthetic!</p>
+            <h1 class="modal-bg__content-title">Appearance</h1>
+            <p class="modal-bg__content-copy paragraph-1">Tailor your workspace to your personal aesthetic!</p>
             <!-- Default Themes -->
             <div class="default-themes grid-section">
-                <h2 class="grid-section__title">Default Themes</h2>
+                <h3 class="grid-section__title">Default Themes</h3>
                 <ul class="default-themes__selection">
                     {#each defaultThemes as theme, idx}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -67,13 +70,13 @@
                             }
                         >
                             <img src={theme.thumbnailImgSrc} alt="theme-icon">
-                            <div class="appearance__theme-item-text"><h4>{theme.title}</h4></div>
+                            <div class="appearance__theme-item-text"><h6>{theme.title}</h6></div>
                         </li>
                     {/each}
                 </ul>
                 {#if clickedTheme?.sectionTitle === "default"}
                     <div class="appearance__apply-btn-container">
-                        <button on:click={handleThemeSelected} class="appearance__apply-btn btn-line">
+                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill unfill--oval">
                             {`Apply ${clickedTheme?.themeTitle}"`}
                         </button>
                     </div>
@@ -81,11 +84,13 @@
             </div>
             <!-- Color Themes -->
             <div class="color-themes grid-section">
-                <h2 class="grid-section__title"> Color Themes</h2>
-                <p class="grid-section__copy">Personalize your workspace with custom color themes tailored to your unique aesthetic!</p>
+                <h3 class="grid-section__title"> Color Themes</h3>
+                <p class="grid-section__copy  paragraph-2">
+                    Personalize your workspace with custom color themes tailored to your unique aesthetic!
+                </p>
                 <!-- Light Themes -->
                 <div class="color-themes__light-themes">
-                    <h3>Light Themes</h3>
+                    <h4 class="subheading-2">Light Themes</h4>
                     <ul class="color-themes__themes-list">
                         {#each lightColorThemes as theme, idx}
                             <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -102,7 +107,7 @@
                                     {/each}
                                 </ul>
                                 <div class="appearance__theme-item-text appearance__theme-item-text--color-theme">
-                                    <h4>{theme.title}</h4>
+                                    <h6>{theme.title}</h6>
                                 </div>
                             </li>
                         {/each}
@@ -110,7 +115,7 @@
                 </div>
                 <!-- Dark Themes -->
                 <div class="color-themes__dark-themes">
-                    <h3>Dark Themes</h3>
+                    <h4 class="subheading-2">Dark Themes</h4>
                     <ul class="color-themes__themes-list">
                         {#each darkColorThemes as theme, idx}
                             <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -127,7 +132,7 @@
                                         {/each}
                                 </ul>
                                 <div class="appearance__theme-item-text appearance__theme-item-text--color-theme">
-                                    <h4>{theme.title}</h4>
+                                    <h6>{theme.title}</h6>
                                 </div>
                             </li>
                         {/each}
@@ -135,7 +140,7 @@
                 </div>
                 {#if clickedTheme?.sectionTitle === "dark" || clickedTheme?.sectionTitle === "light"}
                     <div class="appearance__apply-btn-container">
-                        <button on:click={handleThemeSelected} class="appearance__apply-btn btn-line">
+                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill unfill--oval">
                             {`Apply "${clickedTheme?.themeTitle}"`}
                         </button>
                     </div>
@@ -143,13 +148,14 @@
             </div>
             <!-- Image Themes -->
             <div class="img-themes grid-section">
-                <h2 class="grid-section__title"> Image Themes</h2>
-                <p class="grid-section__copy">Customize your workspace with personalized image backgrounds, reflecting your unique aesthetic!</p>
+                <h3 class="grid-section__title"> Image Themes</h3>
+                <p class="grid-section__copy  paragraph-2">Customize your workspace with personalized image backgrounds, reflecting your unique aesthetic!</p>
                 <ul class="img-themes__img-list">
                     {#each imageThemes as img, idx}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <li 
                             on:click={() => handleThemeClicked(Object.keys(themeSections)[3], idx)}  
+                            title={img.title}
                             class={`img-themes__selection-item appearance__theme-item 
                                     ${("image" === clickedTheme?.sectionTitle && idx === clickedTheme?.index) ? "appearance__theme-item--clicked" : ""}        
                                     ${("image" === selectedTheme?.sectionDetails.title && idx === selectedTheme?.sectionDetails.index) ? "appearance__theme-item--selected" : ""}`        
@@ -157,15 +163,15 @@
                         >
                             <img src={img.thumbnailImgSrc}>
                             <div class="appearance__theme-item-text">
-                                <h4>{img.title}</h4>
-                                <span>{img.artist}</span>
+                                <h6>{img.title}</h6>
+                                <span class="caption-4">{img.artist}</span>
                             </div>
                         </li>
                     {/each}
                 </ul>
                 {#if clickedTheme?.sectionTitle === "image"}
                     <div class="appearance__apply-btn-container appearance__apply-btn-container--overflow-hover">
-                        <button on:click={handleThemeSelected} class="appearance__apply-btn btn-line">
+                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill unfill--oval">
                             {`Preview "${clickedTheme.sectionTitle}"`}
                         </button>
                     </div>
@@ -173,13 +179,14 @@
             </div>
             <!-- Ambient Themes -->
             <div class="ambient-mode grid-section">
-                <h2 class="grid-section__title"> Ambient</h2>
-                <p class="grid-section__copy">Personalize your workspace with custom color themes tailored to your unique aesthetic!</p>
+                <h3 class="grid-section__title"> Ambient</h3>
+                <p class="grid-section__copy  paragraph-2">Personalize your workspace with custom color themes tailored to your unique aesthetic!</p>
                 <ul class="ambient-mode__vid-list">
                     {#each ambientVideos as vid, idx}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <li 
-                            on:click={() => handleThemeClicked(Object.keys(themeSections)[4], idx)}  
+                            on:click={() => handleThemeClicked(Object.keys(themeSections)[4], idx)}
+                            title={vid.title}
                             class={`ambient-mode__selection-item appearance__theme-item 
                                     ${("video" === clickedTheme?.sectionTitle && idx === clickedTheme?.index) ? "appearance__theme-item--clicked" : ""}        
                                     ${("video" === selectedTheme?.sectionDetails.title && idx === selectedTheme?.sectionDetails.index) ? "appearance__theme-item--selected" : ""}`        
@@ -187,8 +194,8 @@
                         >
                             <img src={vid.thumbnailSrc}>
                             <div class="appearance__theme-item-text">
-                                <h4>{vid.title}</h4>
-                                <span>
+                                <h6>{vid.title}</h6>
+                                <span class="caption-4">
                                     <img src={vid.channelImgSrc} alt="">
                                     {vid.channelName}
                                 </span>
@@ -198,7 +205,7 @@
                 </ul>
                 {#if clickedTheme?.sectionTitle === "video"}
                     <div class="appearance__apply-btn-container appearance__apply-btn-container--overflow-hover">
-                        <button on:click={handleThemeSelected} class="appearance__apply-btn btn-line">
+                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill unfill--oval">
                             {`Preview "${clickedTheme.sectionTitle}"`}
                         </button>
                     </div>
@@ -213,7 +220,7 @@
     $desktop-aspect-ratio: 16 / 10;
     $video-aspect-ratio: 16 / 9;
     $selected-color: #75bef5;
-    $clicked-color: rgb(var(--fgColor4));
+    $clicked-color: rgba(var(--textColor1), 0.5);
 
     .modal-bg {
         &__content {
@@ -224,7 +231,6 @@
     .appearance {
         position: relative;
         &__description {
-            font-weight: 600;
             color: rgba(var(--textColor1), 0.8);
         }
         &__apply-btn-container {
@@ -237,10 +243,6 @@
         }
         &__apply-btn {
             @include pos-abs-bottom-right-corner(0px, 0px);
-
-            &:active {
-                transform: scale(0.98);
-            }
         }
         /* Theme Item */
         &__theme-item {
@@ -253,11 +255,12 @@
             &:active {
                 transform: scale(0.98);
             }
+
             &--clicked {
                 img {
                     border: 2.5px solid $clicked-color;
                 }
-                h4, span {
+                h6, span {
                     color: $clicked-color !important;
                 }
             }
@@ -271,7 +274,7 @@
                 img {
                     border: 2.5px solid $selected-color;
                 }
-                h4, span {
+                h6, span {
                     color: $selected-color !important;
                 }
                 span {
@@ -299,21 +302,18 @@
             }
         }
         &__theme-item-text {
-            margin: 2px 0px 0px 0px;
+            margin: 5px 0px 0px 0px;
             &--color-theme {
                 margin: 4px 0px 0px 0px;
             }
-            h4 {
+            h6 {
                 @include elipses-overflow;
-                font-weight: 400;
                 color: rgba(var(--textColor1), 0.85);
                 margin-bottom: 2px;
             }
             span {
                 @include elipses-overflow;
                 @include flex-container(center, _);
-                font-weight: 300;
-                font-size: 0.9rem;
                 color: rgba(var(--textColor1), 0.55);
             }
         }
@@ -339,15 +339,16 @@
     .grid-section {
         margin-bottom: $section-spacing;
         position: relative;
-        h2 {
-            font-size: 1.25rem;
+
+        &__copy {
+            color: rgba(var(--textColor1), 0.55);
         }
     }
     .default-themes {
         margin-top: 20px;
         padding-bottom: 20px;
         &__selection {
-            margin-top: 10px;
+            margin-top: 20px;
             display: flex;
             padding-bottom: 10px;
         }
@@ -357,11 +358,15 @@
     }
     .color-themes {
         padding-bottom: 15px;
-        h3 {
-            color: rgba(var(--textColor1), 0.9);
-            font-weight: 600;
-            font-size: 1.05rem;
-            margin-bottom: 13px;
+        h4 {
+            color: rgba(var(--textColor1), 0.8);
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        h6 {
+            @include elipses-overflow;
+            margin-top: 8px;
+            color: rgba(var(--textColor1), 0.7);
         }
         &__selection-item {
             margin-bottom: 10px;
@@ -409,7 +414,6 @@
         }
         span {
             margin-top: 3px;
-            font-size: 0.95rem;
             margin-bottom: 4px;
             img {
                 @include circle(13px);

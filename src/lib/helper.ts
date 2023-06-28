@@ -34,8 +34,11 @@ export const loadTheme = () => {
 
   const themeItem: Theme = JSON.parse(storedThemeData!)
   colorThemeState.set({
-    title: themeItem.title,
-    isDarkTheme: themeItem.properties.isDark
+    title: themeItem!.title,
+    isDarkTheme: themeItem!.properties.isDark,
+    themeToggleBtnIconColor: themeItem!.properties.iconToggleBtnBgColor,
+    hasTwin: themeItem!.properties.hasTwin,
+    sectionTitle: themeItem!.sectionDetails.title
   })
   setRootColors(themeItem!.properties)
 }

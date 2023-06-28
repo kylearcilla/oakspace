@@ -1521,6 +1521,39 @@ export const zenCollections = {
             playlistId: "pl.72a029c5d77f4da8a0793afeb2a8be8b",
             url: "https://music.apple.com/us/playlist/beats-breath/pl.72a029c5d77f4da8a0793afeb2a8be8b"
         },
+        {
+            title: "High Vibes Yoga",
+            author: "Apple Music Fitness",
+            artworkSrc: "https://is1-ssl.mzstatic.com/image/thumb/Features125/v4/5f/4f/66/5f4f6654-ef2a-e284-1696-8a478d4af401/U0MtTVMtV1ctV2VsbG5lc3MtSGlnaF9WaWJlc19Zb2dhLUFEQU1fSUQ9MTUyNzgyNzYzMS5wbmc.png/592x592SC.DN01.webp?l=en-US",
+            genre: "Pop / Electronic",
+            description: "High-energy playlist for collective, ecstatic yoga sessions with tribal and house influences.",
+            length: 99,
+            albumId: null,
+            playlistId: "pl.72a029c5d77f4da8a0793afeb2a8be8b",
+            url: "https://music.apple.com/us/playlist/beats-breath/pl.72a029c5d77f4da8a0793afeb2a8be8b"
+        },
+        {
+            title: "Flow State",
+            author: "Apple Music Fitness",
+            artworkSrc: "https://is1-ssl.mzstatic.com/image/thumb/Features115/v4/db/c8/d3/dbc8d309-d2e5-40c4-fde0-bae8a50929ae/U0MtTVMtV1ctV2VsbG5lc3MtRmxvd19TdGF0ZS1BREFNX0lEPTE1Mjc4MjQ2MjkucG5n.png/592x592SC.DN01.webp?l=en-US",
+            genre: "Ambient",
+            description: "Energizing playlist for seamless movement and breath in your yoga practiceg.",
+            length: 99,
+            albumId: null,
+            playlistId: "pl.de20dc985af84cc2aaef6c9f5f493c3b",
+            url: "https://music.apple.com/us/playlist/flow-state/pl.de20dc985af84cc2aaef6c9f5f493c3b"
+        },
+        {
+            title: "Healing Meditation",
+            author: "Guided Meditation",
+            artworkSrc: "https://is1-ssl.mzstatic.com/image/thumb/Features115/v4/34/41/27/3441276f-143c-c19b-84d2-e4cbaa48b350/U0MtTVMtV1ctV2VsbG5lc3MtSGVhbGluZ19NZWRpdGlhdGlvbi1BREFNX0lEPTE1MjI2MzAzMjMucG5n.png/592x592SC.DN01.webp?l=en-US",
+            genre: "Ambient",
+            description: "Guided meditations to embrace challenges, grow, and discover self-improvement.",
+            length: 100,
+            albumId: null,
+            playlistId: "pl.d8caca2864d645459da8f4301cb26a37",
+            url: "https://music.apple.com/us/playlist/healing-meditation/pl.d8caca2864d645459da8f4301cb26a37"
+        },
     ],
     spotify: [
         {

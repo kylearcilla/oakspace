@@ -1,67 +1,74 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte";
-  import NavMenu from "./NavMenu.svelte";
-  import PomView from "./PomView.svelte";
-  import VideoView from "./VideoView.svelte";
-  import ActiveSessionView from "./ActiveSessionView.svelte";
-  import TaskView from "./TaskView.svelte";
-  import MusicPlayer from "./MusicPlayer.svelte";
+  import NavMenu from "./NavMenu.svelte"
+  import PomView from "./PomView.svelte"
+  import VideoView from "./VideoView.svelte"
+  import ActiveSessionView from "./ActiveSessionView.svelte"
+  import TaskView from "./TaskView.svelte"
+  import MusicPlayer from "./MusicPlayer.svelte"
 
-	import YoutubeSettings from "./YoutubeSettings.svelte";
-	import MusicSettings from "./MusicSettings.svelte";
-	import Settings from "./Settings.svelte";
+	import YoutubeSettings from "./YoutubeSettings.svelte"
+	import MusicSettings from "./MusicSettings.svelte"
+	import Settings from "./Settings.svelte"
   
-	import { _initGoogleClient, _initMusicKit } from "./+page";
-	import ApperanceSettings from "./ApperanceSettings.svelte";
-	import { loadTheme } from "$lib/helper";
+	import { _initGoogleClient, _initMusicKit } from "./+page"
+	import ApperanceSettings from "./ApperanceSettings.svelte"
+	import { loadTheme } from "$lib/helper"
+	import HomeHeader from "./HomeHeader.svelte";
 
-  let isTaskMenuExpanded = true;
-  let doHideMenu = false;
-  let hasUserToggledWithKeyLast = true;
-  let navSettingClicked = "";
+  let isTaskMenuExpanded = true
+  let doHideMenu = false
+  let hasUserToggledWithKeyLast = true
+  let navSettingClicked = ""
 
   const handleNavButtonClicked = (buttonName: string) => {
-    navSettingClicked = buttonName;
+    navSettingClicked = buttonName
   }
-  const handleTaskMenuToggleClick = () => isTaskMenuExpanded = !isTaskMenuExpanded
+  const handleTaskMenuToggleClick = () => {
+    if (document.body.clientWidth < 600) return
+    isTaskMenuExpanded = !isTaskMenuExpanded
+  }
   const handleMouseMove = (event: MouseEvent) => {
-    const mouseX = event.clientX;
+    const mouseX = event.clientX
     const cutoff = 5
 
     // show when user is close to left edge
     if (doHideMenu && mouseX < cutoff) {
-      doHideMenu = false;
-      hasUserToggledWithKeyLast = false;
+      doHideMenu = false
+      hasUserToggledWithKeyLast = false
     }
     // only hide when user is right outside of nav and prevent hiding when nav was shown through shortcut
     // ...as the nav menu should only close in this case when the user was in the nav menu
     else if ((mouseX > 80 && mouseX < 100) && !hasUserToggledWithKeyLast) { 
-      doHideMenu = true;
+      doHideMenu = true
     }
   }
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.metaKey && event.key.toLowerCase() === "x") {
-      handleTaskMenuToggleClick();
+      handleTaskMenuToggleClick()
     }
     if (event.metaKey && event.key.toLowerCase() === "z") {
-      doHideMenu = !doHideMenu;
-      hasUserToggledWithKeyLast = true;
+      doHideMenu = !doHideMenu
+      hasUserToggledWithKeyLast = true
     }
   }
   const handleResize = () => {
-    if (document.body.clientWidth <= 600) doHideMenu = true;
+    if (document.body.clientWidth > 600) return
+    doHideMenu = true
+    isTaskMenuExpanded = false
   }
 
   onMount(() => {
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", handleResize)
+    handleResize()
     
-    _initGoogleClient();
+    _initGoogleClient()
     loadTheme()
 
     console.log(window)
-  });
+  })
   onDestroy(() => {
-    window.removeEventListener("resize", handleResize);
+    window.removeEventListener("resize", handleResize)
   });
 </script>
 
@@ -74,8 +81,8 @@
     <NavMenu onNavButtonClicked={handleNavButtonClicked} />
   </div>
   <!-- middle video component -->
-  <div class={`home__video ${!doHideMenu && !isTaskMenuExpanded ? "home__video--nav-shown-task-min" : ""} ${doHideMenu ? "home__video--nav-menu-hidden" : ""} ${!isTaskMenuExpanded ? "home__video--task-view-hidden" : ""}`}>
-    <PomView />
+  <div class={`home__video ${doHideMenu ? "home__video--nav-menu-hidden" : ""} ${!isTaskMenuExpanded ? "home__video--task-view-hidden" : ""}`}>
+    <HomeHeader/>
     <!-- @ts-ignore -->
     <VideoView />
     <ActiveSessionView />
@@ -138,7 +145,8 @@
       // left
       &__nav-menu-container {
         background-color: var(--navMenuBgColor);
-        border: var(--borderVal);
+        border: var(--menuBorderVal);
+        box-shadow: var(--shadowVal);
         width: 60px;
         transition: ease-in-out 0.15s;
         height: 100vh;
@@ -164,46 +172,16 @@
         padding: 0px 2.5% 30px 2.5%;
         transition: ease-in-out 0.15s;
         width: 100%;
+
+        // nev menu and right menu both shown
         margin-left: 60px;
         margin-right: min(30vw, 300px);
-        
+
         &--nav-menu-hidden {
           margin-left: 0px;
-          padding-right: 4%;
         }
         &--task-view-hidden {
-          margin-right: 65px;
-        }
-        // < 1100px, margin right no longer works
-        @include mq-custom(max-width, 1100px) {
           margin-right: 0px;
-          padding-right: 33vw;
-
-          &--nav-menu-hidden {
-            padding-right: 33vw;
-          }
-          &--task-view-hidden {
-            padding-right: 12vw;
-          }
-          &--nav-shown-task-min {
-            width: 85vw;
-            padding-right: 0px;
-          }
-        }
-        // < 755px, task view overlaps with middle vide
-        @include mq-custom(max-width, 755px) {
-          &--nav-shown-task-min {
-            width: 82vw;
-            padding-right: 2.5%;
-          }
-        }
-        @include sm(max-width) {
-          width: 88vw;
-          margin-right: 0px !important;
-          padding-right: 4%;
-          &--nav-menu-hidden {
-            width: 100vw;
-          }
         }
       }
 
@@ -216,7 +194,7 @@
         right: 0px;
         background-color: var(--taskViewBgColor);
         transition: ease-in-out 0.18s;
-        border: var(--borderVal);
+        border: var(--menuBorderVal);
         box-shadow: var(--shadowVal);
 
         // background: rgba(32, 31, 31, 0.1);
@@ -224,15 +202,11 @@
         // border-left: 1px solid rgba(138, 138, 138, 0.3);
 
         &--closed {
-          height: 350px;
-          width: 65px;
-          border-radius: 0px 0px 0px 13px;
-          min-width: 0px;
+          margin-right: -300px; 
         }
 
         @include sm(max-width) {
-          margin-right: -55px; 
-          display: none
+          margin-right: -300px; 
         }
       }
     }

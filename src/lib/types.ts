@@ -114,12 +114,15 @@ type YoutubeVideo = {
 /* Custom Themes */
 type Theme = {
     title: string,
-    thumbnailImgSrc: string,
     sectionDetails: {
         title: string
         index: number
     }
     properties: ThemeData
+}
+
+type DefaultTheme = Theme & {
+    thumbnailImgSrc: string
 }
 
 type ColorTheme = Theme & {
@@ -139,12 +142,27 @@ type VideoTheme = Theme & {
 
 type ThemeData = {
     isDark: boolean,
+    hasTwin: boolean,
     primaryBgColor: string,
     secondaryBgColor: string,
+    tertiaryBgColor: string,
     fgColor1: string,
     fgColor2: string,
     fgColor3: string,
     fgColor4: string,
+    menuBorderVal: string,
+    borderVal: string,
+    borderVal2: string,
+    shadowVal: string,
+    shadowVal2: string,
+    sessionBgColor: string,
+    sessionBorderVal: string,
+    sessionShadowVal: string,
+    themeToggleBtnBgColor: string,
+    iconToggleBtnBgColor: string,
+    highlighterToggleBtnBgColor: string,
+    activeSessionItemBorderVal: string,
+    activeSessionItemShadowVal: string,
     textColor1: string,
     textColor2: string,
     profibleBorderColor: string,
@@ -153,19 +171,24 @@ type ThemeData = {
     tabColor: string,
     tabHighlightColor: string,
     tabHighlightBoxShadow: string,
+    tabColorTextColor: string,
     modalBgColor: string,
     modalFgColor: string,
+    gridItemBorderVal: string,
+    gridItemShadowVal: string,
+    headerElementBgColor: string,
+    headerElementBorderVal: string,
     dividerColor: string,
     pomBgColor: string,
     pomIconColor: string,
     muiscPlayerBgColor: string,
+    musicProgressBgColor: string,
     navMenuBgColor: string,
-    taskViewBgColor: string
+    taskViewBgColor: string,
     pomProgressBarFgColor: string,
     pomProgressBarFgBoxShadow: string,
     pomProgressBgColor: string,
+    pomProgressPlaybackBtnColor: string,
     navIconColor: string,
-    navIconBgColor: string,
-    borderVal: string,
-    shadowVal: string
+    navIconBgColor: string
 }

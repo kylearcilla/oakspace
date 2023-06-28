@@ -16,15 +16,6 @@ a {
         text-decoration: underline;
     }
 }
-button, input {
-	all: unset;
-}
-button {
-    cursor: pointer;
-}
-button:focus {
-    outline: 2px blue;
-}
 li {
     list-style: none;
 }
@@ -52,77 +43,82 @@ body {
 }
 
 
-/* Default Themes */
-$bg-color-1: #141418;
-$bg-color-2: #141418;
-$bg-color-3: #1b1b20;
-
-
 /* Text Classes */
 h1 {
-
+    font-size: 1.8rem;
+    font-weight: 600;
 }
 h2 {
-
+    font-size: 1.6rem;
+    font-weight: 500;
 }
 h3 {
-
+    font-size: 1.3rem;
+    font-weight: 600;
 }
 h4 {
-
+    font-size: 1.2rem;
+    font-weight: 700;
 }
 h5 {
-
+    font-size: 1.1rem;
+    font-weight: 500;
 }
 h6 {
-
+    font-size: 1.05rem;
+    font-weight: 600;
 }
 
-.subheading1 {
-
+.subheading-1 {
+    font-size: 1.1rem;
+    font-weight: 500;
 }
-.subheading2 {
-
+.subheading-2 {
+    font-size: 1.12rem;
+    font-weight: 600;
 }
-.subheading3 {
-    &--light-theme {
-        
+
+.paragraph-1 {
+    font-weight: 400;
+    font-size: 1.2rem;
+}
+.paragraph-2 {
+    font-size: 1.05rem;
+    font-weight: 400;
+}
+.paragraph-3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+.paragraph-4 {
+    font-weight: 400;
+    font-size: 1rem;
+    &--light-theme {   
+        font-weight: 500;
     }
 }
 
-.paragraph1 {
-
-}
-.paragraph2 {
-    &--light-theme {
+.caption-1 {
         
+}
+.caption-2 {
+    font-weight: 300;
+    font-size: 0.9rem;
+    &--light-theme {
+        font-weight: 600;
     }
 }
-.paragraph3 {
-
+.caption-3 {
+    font-weight: 600;
+    font-size: 0.95rem;
 }
-.paragraph4 {
-
+.caption-4 {
+    font-size: 1.05rem;
+    font-weight: 400;
 }
-.paragraph5 {
-    &--light-theme {
-        
-    }
-}
-
-.caption1 {
-    
-}
-.caption2 {
-    
-}
-.caption3 {
-    &--light-theme {
-        
-    }
-}
-.caption4 {
-    
+.caption-5 {
+    font-size: 0.88rem;
+    font-weight: 300;
 }
 
 /* Breakpoints Variables anad Corresponding Mixins */
@@ -418,14 +414,11 @@ $screen-xl: 112.5em;   // extra large (1800 px)
 
     }
     &__content-copy {
-        font-weight: 400;
-        color: rgba(var(--textColor1), 0.5);
+        color: rgba(var(--textColor1), 0.7);
         margin-bottom: 20px;
-        font-size: 1.2rem;
     }
     &__content-title {
         font-family: "Manrope";
-        font-size: 2rem;
         margin-bottom: 10px;
     }
 
@@ -456,6 +449,9 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     }
 
     button {
+        i {
+            color: rgba(var(--textColor1), 0.7);
+        }
         &:active {
             transform: scale(0.8);
         }
@@ -483,68 +479,109 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     -moz-text-security: disc;
 }
 
- /* Buttons */
-@mixin btn-press-animation($scale-factor) {
+ /* Buttons unfill unfill--oval | fill | no-bg | text-only | icon-only | text-icon */
+button, input {
+	all: unset;
+}
+button {
+    transition: 0.15s ease-in-out;
+    font-weight: 600; // uses caption-3
+    font-size: 0.95rem;
+    cursor: pointer;
+
     &:active {
-        transform: scale($scale-factor);
+        transform: scale(0.98);
+    }
+    &:disabled {
+        opacity: 0.6;
     }
 }
+button:focus {
+    outline: 2px blue;
+}
 
- .icon-btn {
-    transition: ease-in-out 0.15s;
+button.icon {
     padding: 5px;
- }
- .dots-btn {
-    color: #c2c0c0;
-    font-size: 0.7rem;
-    transition: ease-in-out 0.15s;
-    font-weight: 600;
-    font-size: 0.6rem;
-    border-radius: 2px;
-    padding: 5px;
-
-    &:hover {
-        background-color: #242425;
-    }
- }
- .btn-line {
-    padding: 6px 16px 6px 16px;
-    border: solid 1px rgb(var(--fgColor4));
-    color: rgb(var(--fgColor4));
-    background-color: transparent;
+}
+button.tab-btn {
+    background-color: (var(--tabColor));
+    color: var(--tabColorTextColor);
     border-radius: 15px;
-    font-weight: 700;
-    font-size: 1rem;
-    transition: 0.13s ease-in-out;
+    padding: 2.5px 10px;
+    transition: 0.1s ease-in-out;
+    white-space: nowrap;
+    margin-right: 4px;
+    font-size: 1.05rem; // uses caption 4
+    font-weight: 400;
+    @include center;
 
     &:hover {
-        background-color: rgb(var(--fgColor4));
+        filter: brightness(1.05);
+    }
+    
+    &--light-mode {
+        &:hover {
+            filter: brightness(1.03);
+        }
+    }
+    &--selected {
+        background-color: var(--tabHighlightColor);
+        box-shadow: var(--tabHighlightBoxShadow);
+        color: var(--modalFgColor);
+    }
+}
+ button.unfill {
+    padding: 6px 16px 6px 16px;
+    border: solid 1.15px rgb(var(--fgColor2));
+    color: rgb(var(--fgColor2));
+    background-color: transparent;
+    @include center;
+
+
+    &:hover {
+        background-color: rgb(var(--fgColor2));
         color: rgb(var(--textColor2));
     }
     &:active {
         transform: scale(0.98);
     }
-}
-.btn-text-only {
-    color: #a3a3a3;
-    border-radius: 15px;
-    font-weight: 700;
-    font-size: 0.9rem;
-    transition: 0.15s ease-in-out;
+    &:disabled {
+        &:hover {
+            color: rgb(var(--fgColor2));
+            background: none;
+        }
+    }
 
-    &:hover {
-        opacity: 0.5;
+    &--oval {
+        border-radius: 15px;
+    }
+    &--rectangle {
+        border-radius: 4px;
     }
 }
-.close-btn {
-    position: absolute;
-    right: 30px;
-    top: 20px;
-    font-size: 1.3rem;
-    transition: 0.15s ease-in-out;
+button.text-only {
+    border-radius: 15px;
+    font-weight: 600; // uses caption-3
+    font-size: 0.95rem;
+    color: rgb(var(--textColor1), 0.5);
+    
 
+    &:active {
+        transform: scale(0.99);
+    }
     &:hover {
-        filter: brightness(0.5);
+        color: rgb(var(--textColor1), 1);
+    }
+
+    &--reverse-hover-styling {
+        color: rgb(var(--textColor1), 1) !important;
+
+        &:hover {
+            color: rgb(var(--textColor1), 0.5) !important;
+        }
+    }
+    &--thin {
+        font-weight: 400;
     }
 }
  
@@ -605,23 +642,34 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     font-weight: 500;
     font-size: 1.1rem;
     height: 17px;
-    background-color: var(--hoverColor);
-    border: var(--borderVal);
+    background-color: var(--headerElementBgColor);
+    border: var(--headerElementBorderVal);
     box-shadow: var(--shadowVal);
     display: flex;
     border-radius: 20px;
-    padding: 4px 8px;
+    padding: 4px 11px 4px 10px;
     @include center;
     color: rgba(var(--textColor1), 0.75);
     @include flex-container(center, _);
 
     &:hover {
-        filter: brightness(1.2);
+        filter: brightness(1.1);
     }
     &:active {
-        opacity: 1;
-        transform: scale(0.97);
-        filter: brightness(1.3) !important;
+        transform: scale(0.994);
+    }
+
+    &--icon-text &__icon {
+        margin-right: 15px;
+        padding-left: 5px;
+    }
+    &--light-mode {
+        &:hover {
+            filter: brightness(0.98);
+        }
+    }
+    &--light-mode p  {
+        font-weight: 600;
     }
 
     i {
@@ -630,17 +678,18 @@ $screen-xl: 112.5em;   // extra large (1800 px)
         color: rgb(200, 200, 200);
     }
     &__title {
-        margin: 0px 11px 0px 4px;
+        margin: 0px 5px 0px 4px;
+        font-size: 1.2rem;
     }
-    &__icon {
+    &__arrows {
 
     }
-    &__icon-triangle-up {
-        margin: -4px 0px -9px 0px;
+    &__arrows-triangle-up {
+        margin: -4px 0px -8px 0px;
     }
-    &__icon-triangle-up, &__icon-triangle-down {
+    &__arrows-triangle-up, &__arrows-triangle-down {
         i {
-            font-size: 0.6rem;
+            font-size: 0.5rem;
         }
     }
 }
@@ -655,32 +704,18 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     padding: 4px 3px 8px 3px;
     border-radius: 5px;
     border: var(--borderVal);
-    box-shadow: 0px 4px 12px 3px rgba(123, 123, 123, 0.2);
+    box-shadow: var(--shadowVal);
 
     &__option {
         color: rgb(var(--textColor1));
         font-family: 'Manrope';
-        font-weight: 600;
         white-space: nowrap;
-        font-size: 1rem;
         border-radius: 4px;
         width: 100%;
         position: relative;
         display: block;
+        margin-bottom: 3px;
         cursor: pointer;
-        
-        button {
-            @include flex-container(center, _);
-            padding: 5px 0px 5px 5px;
-            opacity: 0.6;
-            width: 95%;
-            i {
-                @include pos-abs-bottom-right-corner(8px, 8px);
-                display: none;
-                font-size: 0.9rem;
-                opacity: 0.8;
-            }
-        }
         
         &--selected {
             background-color: var(--hoverColor);
@@ -698,6 +733,23 @@ $screen-xl: 112.5em;   // extra large (1800 px)
         }
         &:hover > button {
             opacity: 1;
+        }
+
+        button {
+            @include flex-container(center, _);
+            padding: 6px 0px 7px 5px;
+            opacity: 0.6;
+            width: 95%;
+            font-weight: 600;
+            p {
+                font-size: 1.12rem;
+            }
+            i {
+                @include pos-abs-bottom-right-corner(8px, 8px);
+                display: none;
+                font-size: 0.9rem;
+                opacity: 0.8;
+            }
         }
     }
     &__new-option-container {
@@ -779,7 +831,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
   }
 
 /* Icons */
- .text-icon-btn-1 {
+ .text-icon-1 {
     @include center;
     width: 100%;
     border-radius: 8px;
@@ -877,9 +929,8 @@ $screen-xl: 112.5em;   // extra large (1800 px)
 
 .grid-section {
     border-radius: 10px;
-    padding: 17px 25px;
+    padding: 15px 25px 17px 25px;
     background-color: var(--modalFgColor);
-    box-shadow: var(--shadowVal);
     border: var(--borderVal);
 
     &--no-padding {
@@ -888,8 +939,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
 
     &__title {
         color: rgb(var(--textColor1));
-        margin-bottom: 10px;
-        font-size: 1.3rem;
+        margin-bottom: 6px;
     }
     &__copy {
         margin-bottom: 15px;
@@ -903,25 +953,20 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     width: 100%;
     height: 100%;
     border-radius: 10px;
-    position: absolute;
     z-index: 0;
-    top: 0px;
-    left: 0px;
+    @include abs-center;
 }
 .blur-bg {
-    top: 0px;
-    left: 0px;
-    position: absolute;
+    @include abs-center;
     width: 100%;
     height: 100%;
     border-radius: 7px;
     z-index: 0;
-    background: rgba(110, 110, 110, 0.1);
-    backdrop-filter: blur(120px);
-    -webkit-backdrop-filter: blur(100px);
+    background: rgba(91, 91, 91, 0.5);
+    backdrop-filter: blur(80px);
+    -webkit-backdrop-filter: blur(80px);
 
     &--solid-color {
-        background: rgba(var(--fgColor3, 1));
         -webkit-backdrop-filter: none;
         backdrop-filter: none;
     }
@@ -931,6 +976,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     position: absolute;
     width: 100%;
     height: 100%;
+    overflow: hidden;
 
     &__subtitle {
         color: rgb(var(--textColor2));

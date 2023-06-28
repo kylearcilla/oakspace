@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { appleMusicPlayerState, currentTrack, musicDataState, musicPlayerData } from '$lib/store';
+	import { appleMusicPlayerState, colorThemeState, currentTrack, musicDataState, musicPlayerData } from '$lib/store';
     import { onDestroy, onMount } from 'svelte';
     import Icon from '../../components/Icon.svelte';
 	import { AppleMusicPlayer } from '$lib/AppleMusicPlayer';
@@ -24,6 +24,10 @@
     let hasColorTheme = false
 
     enum MusicPlatform { AppleMusic, Spotify, Youtube, Soundcloud }
+
+    let isLightTheme = false
+
+    colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
 
     currentTrack.subscribe((track: Track | null) => {
         if (!track) return
@@ -85,8 +89,8 @@
     <div class="music-player-track">
         <img class="music-player-track__art" src={currentTrackPlaying?.artworkImgSrc} alt="" title={currentTrackPlaying?.name}>
         <div class="music-player-track__details">
-            <h5 class="music-player-track__title elipses-overflow">{currentTrackPlaying?.name ?? ""}</h5>
-            <p class="music-player-track__artist elipses-overflow">{currentTrackPlaying?.artist ?? ""}</p>
+            <h5 class="music-player-track__title">{currentTrackPlaying?.name ?? ""}</h5>
+            <span class={`music-player-track__artist caption-2 ${isLightTheme ? "caption-2--light-theme" : ""}`}>{currentTrackPlaying?.artist ?? ""}</span>
         </div>
     </div>
     <div class="music-player-playback">
@@ -94,28 +98,28 @@
             <div class="music-player-playback__controls">
                 <button 
                     on:click={toggleShuffle} 
-                    class={`music-player-playback__shuffle-btn ${isShuffled ? "music-player-playback__shuffle-btn--isShuffled" : ""} icon-btn`} 
+                    class={`music-player-playback__shuffle-btn ${isShuffled ? "music-player-playback__shuffle-btn--isShuffled" : ""} icon`} 
                     disabled={isPlayerDisabled}>
                         <i class="fa-solid fa-shuffle"></i>
                 </button>
                 <button 
                     on:click={skipToPreviousSong} 
-                    class="icon-btn" disabled={isPlayerDisabled}>
+                    class="icon" disabled={isPlayerDisabled}>
                     <i class="fa-solid fa-backward"></i>
                 </button>
                 <button 
                     on:click={togglePlayback} 
-                    class="music-player-playback__playback-btn icon-btn" disabled={isPlayerDisabled}>
+                    class="music-player-playback__playback-btn icon" disabled={isPlayerDisabled}>
                         <i class={`${isPlaying ? "fa-solid fa-pause" : "fa-solid fa-play"}`}></i>
                 </button>
                 <button 
                     on:click={skipToNextSong} 
-                    class="icon-btn" disabled={isPlayerDisabled}>
+                    class="icon" disabled={isPlayerDisabled}>
                         <i class="fa-solid fa-forward"></i>
                 </button>
                 <button 
                     on:click={toggleRepeat} 
-                    class={`music-player-playback__repeat-btn ${isRepeating ? "music-player-playback__repeat-btn--isRepeating" : ""} icon-btn`} 
+                    class={`music-player-playback__repeat-btn ${isRepeating ? "music-player-playback__repeat-btn--isRepeating" : ""} icon`} 
                     disabled={isPlayerDisabled}>
                         <i class="fa-solid fa-repeat"></i>
                 </button>
@@ -147,7 +151,7 @@
             {#if musicData?.musicPlatform === MusicPlatform.AppleMusic}
                 <apple-music-volume style="width: 100%;" theme="dark"></apple-music-volume>
             {:else }
-                <button class="icon-btn"><i class="fa-solid fa-volume-high"></i></button>
+                <button class="icon"><i class="fa-solid fa-volume-high"></i></button>
                 <input
                     class="input-range input-range--show-thumb"
                     bind:this={musicPlaybackBar}
@@ -194,7 +198,6 @@
         display: flex;
         z-index: 2000;
         background: var(--muiscPlayerBgColor);
-        box-shadow: 0px -7px 20px rgba(0, 0, 0, 0.24);
         backdrop-filter: blur(100px);
         -webkit-backdrop-filter: blur(100px);
         align-items: center;
@@ -222,7 +225,8 @@
         @include flex-container(center, _);
         @include sm(max-width) {
             min-width: 65px;
-            width: 65px;
+            width: 200px;
+            height: 45px;
             img {
                 width: 30px;
                 height: 30px;
@@ -233,15 +237,17 @@
             width: 100%;
             overflow: hidden;
             color: rgb(var(--textColor2));
+            height: 100%;
         }
         &__title {
             width: 100%;
-            font-size: 1.1rem;
+            margin: 5px 0px 0px 0px;
+            @include elipses-overflow;            
         }
         &__artist {
-            margin-top: 4px;
             font-size: 0.9rem; 
-            font-weight: 100;
+            opacity: 0.7;
+            @include elipses-overflow;            
         }
         &__art {
             width: 35px;
@@ -272,7 +278,6 @@
         &__controls {
             width: 200px;
             margin: auto;
-            transition: 0.12s ease-in-out;
             @include flex-container(center, center);
             button {
                 margin: 0px 5%;
@@ -283,9 +288,6 @@
                     filter: opacity(0.5);
                 }
             }
-            // button:disabled {
-            //     opacity: 0.6;
-            // }
             button:enabled:active {
                 transform: scale(0.9);
             }
@@ -297,9 +299,6 @@
             @include circle(15px);
             @include flex-container(center, center);
 
-            // &:disabled {
-            //     opacity: 0.6;
-            // }
             .fa-play {
                 margin-right: -2px;
             }

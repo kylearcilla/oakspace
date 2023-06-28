@@ -139,18 +139,23 @@
     <div use:clickOutside on:click_outside={closeModal} class="modal-bg__content modal-bg__content--main-modal modal-bg__content--overflow-y-scroll">
         <div class="settings">
             <h1 class="modal-bg__content-title">Settings</h1>
-            <p class="modal-bg__content-copy">View and update your account and profile details.</p>
+            <p class="modal-bg__content-copy paragraph-1">View and update your account and profile details.</p>
             <!-- User Info -->
             <div class="user-info grid-section">
-                <h2>User Info</h2>
+                <h3>User Info</h3>
                 <div class="flx">
                     <div class="user-info__img-container">
                         <img src={userDetails.profileImageSrc} alt="">
-                        <button on:click={handleChangeProfilePic}>Edit</button>
+                        <button 
+                            class="text-only text-only--reverse-hover-styling text-only--thin" 
+                            on:click={handleChangeProfilePic}
+                        >
+                            Edit
+                        </button>
                     </div>
                     <div class="user-info__info-container">
                         <div class="user-info__info-row info-row">
-                            <h3>First Name</h3>
+                            <h5>First Name</h5>
                             <p>{userDetails.firstName}</p>
                             <button on:click={() => handleEditUserInfo("firstName")}>
                                 <i class="fa-solid fa-pencil"></i>
@@ -158,7 +163,7 @@
                             <div class="divider divider--thin"></div>
                         </div>
                         <div class="user-info__info-row info-row">
-                            <h3>Last Name</h3>
+                            <h5>Last Name</h5>
                             <p>{userDetails.lastName}</p>
                             <button on:click={() => handleEditUserInfo("lastName")}>
                                 <i class="fa-solid fa-pencil"></i>
@@ -166,7 +171,7 @@
                             <div class="divider divider--thin"></div>
                         </div>
                         <div class="user-info__info-row info-row">
-                            <h3>Account Name</h3>
+                            <h5>Account Name</h5>
                             <p>{userDetails.username}</p>
                             <button on:click={() => handleEditUserInfo("username")}>
                                 <i class="fa-solid fa-pencil"></i>
@@ -174,15 +179,18 @@
                         </div>
                     </div>
                 </div>
-                <button on:click={handleLogOut} class="user-info__logout-btn btn-line">
-                    Log Out
+                <button 
+                    on:click={handleLogOut} 
+                    class="user-info__logout-btn unfill unfill--oval"
+                >
+                    Log out
                 </button>
             </div>
             <!-- Login Info -->
             <div class="login-info grid-section">
-                <h2>Login Info</h2>
+                <h3>Login Info</h3>
                 <div class="login-info__info-row info-row">
-                    <h3>Email</h3>
+                    <h5>Email</h5>
                     <p>{userDetails.logInInfo.email}</p>
                     <button on:click={() => handleEditUserInfo("email")}>
                         Change Email
@@ -190,7 +198,7 @@
                     <div class="divider divider--thin"></div>
                 </div>
                 <div class="login-info__info-row info-row">
-                    <h3>Password</h3>
+                    <h5>Password</h5>
                     <p class="password-text">{userDetails.logInInfo.password}</p>
                     <button on:click={() => handleEditUserInfo("passwprd")}>
                         Change Password
@@ -198,7 +206,7 @@
                     <div class="divider divider--thin"></div>
                 </div>
                 <div class="login-info__info-row info-row">
-                    <h3>Login Provider</h3>
+                    <h5>Login Provider</h5>
                     <p>{userDetails.logInInfo?.loginProvider ?? "None"}</p>
                     <button on:click={() => handleEditUserInfo("loginProvider")}>
                         {userDetails.logInInfo.loginProvider ? "Change Login Provider" : "Add Login Provider"}
@@ -207,20 +215,20 @@
             </div>
             <!-- App Language -->
             <div class="language grid-section">
-                <h2>Language & Region</h2>
+                <h3>Language & Region</h3>
                 <div class="flx flx--space-between flx--algn-center">
-                    <h3>Chosen Language</h3>
+                    <h5>Chosen Language</h5>
                     <div class="lang-dropdown dropdown-container">
                         <button on:click={handleLanguageBtn} class="lang-dropdown__dropdown-btn dropdown-btn">
                             <div class="lang-dropdown__icon">🇰🇷</div>
                             <div class="dropdown-btn__title">
                                 Korean
                             </div>
-                            <div class="dropdown-btn__icon">
-                                <div class="dropdown-btn__icon-triangle-up">
+                            <div class="dropdown-btn__arrows">
+                                <div class="dropdown-btn__arrows-triangle-up">
                                     <i class="fa-solid fa-chevron-up"></i>
                                 </div>
-                                <div class="dropdown-btn__icon-triangle-down">
+                                <div class="dropdown-btn__arrows-triangle-down">
                                     <i class="fa-solid fa-chevron-down"></i>
                                 </div>
                             </div>
@@ -232,9 +240,9 @@
             <div class="user-plan-container grid-section">
                 <!-- Plan Details -->
                 <div class="plan-details">
-                    <h2>Plan Details</h2>
+                    <h3>Plan Details</h3>
                     <div class="plan-details__header">
-                        <h4>{userDetails.isUserPremium ? "Premium" : "Basic"}</h4>
+                        <h5>{userDetails.isUserPremium ? "Premium" : "Basic"}</h5>
                         <h5>${userDetails.isUserPremium ? planDetails.premium.price : planDetails.basic.price} / month</h5>
                     </div>
                     <div class="plan-details__subheader">My Plan</div>
@@ -243,14 +251,17 @@
                             <li><span>•</span>{planDetail}</li>
                         {/each}
                     </ul>
-                    <button on:click={handleUpgradeToPremium} class="plan-details__upgrade-btn btn-line">
+                    <button 
+                        on:click={handleUpgradeToPremium} 
+                        class="plan-details__upgrade-btn unfill unfill--oval"
+                    >
                         Upgrade to Premium
                     </button>
                 </div>
                 <div class="divider divider--vertical divider--thin"></div>
                 <!-- Payment Method -->
                 <div class="payment-method">
-                    <h2>Payment Method</h2>
+                    <h3>Payment Method</h3>
                     <p class="payment-method__next-payment">Your next bill is for $9.99 + tax on 7/11/23.</p>
                     <div class="payment-card">
                         <div class="payment-card__header">
@@ -274,14 +285,14 @@
                             </div>
                         </div>
                     </div>
-                    <button on:click={handleEditPaymentMethod} class="payment-method__edit-payment-method-btn btn-line">
+                    <button on:click={handleEditPaymentMethod} class="payment-method__edit-payment-method-btn unfill unfill--oval">
                         Change Card
                     </button>
                 </div>
             </div>
             <!-- User Payment Cards -->
             <div class="payment-cards grid-section">
-                <h2>Payment Cards</h2>
+                <h3>Payment Cards</h3>
                 <ul>
                     {#each userDetails.paymentCards as card}                            
                         <li class="payment-cards__card-item">
@@ -289,7 +300,7 @@
                                 <div class="payment-cards__card-logo-container">
                                     <img src={card.paymentNetwork.imgLogoSrc} alt="">
                                 </div>
-                                <h4>{card.paymentNetwork.name}</h4>
+                                <h5>{card.paymentNetwork.name}</h5>
                             </div>
                                 <p class="payment-cards__card-digits">**** **** **** **** {card.lastFourDigits}</p>
                                 <p class="payment-cards__card-exp-date">{formatDateToMMDD(card.expDate)}</p>
@@ -299,14 +310,14 @@
                         </li>
                     {/each}
                 </ul>
-                <button on:click={handleAddNewCardBtn} class="payment-cards__add-new-card-btn btn-line">
+                <button on:click={handleAddNewCardBtn} class="payment-cards__add-new-card-btn unfill unfill--oval">
                     Add New Card +
                 </button>
             </div>
             <!-- Close Account -->
             <div class="close-account grid-section">
-                <h2>Close Account</h2>
-                <button on:click={handleDeleteBtn} class="close-account__delete-btn btn-line">
+                <h3>Close Account</h3>
+                <button on:click={handleDeleteBtn} class="close-account__delete-btn unfill unfill--oval">
                     Delete My Account
                 </button>
             </div>
@@ -344,11 +355,11 @@
                                 </div>
                             </div>
                             <div class="new-card-modal__bottom-section">
-                                <h4 class="new-card-modal__card-details-title">Details</h4>
+                                <h5 class="new-card-modal__card-details-title">Details</h5>
                                 <form class="new-card-modal__card-details-container grid-section">
                                     <!-- <h3>Card Info</h3> -->
                                     <div class="new-card-modal__card-number">
-                                        <h4>Card Number</h4>
+                                        <h5>Card Number</h5>
                                         <input 
                                         type="text" 
                                         placeholder="0000 0000 0000 0000"
@@ -356,14 +367,14 @@
                                     </div>
                                     <div class="new-card-modal__bottom-details">
                                         <div class="new-card-modal__exp-date">
-                                            <h4>Exp. Date</h4>
+                                            <h5>Exp. Date</h5>
                                             <input 
                                                 type="text" 
                                                 placeholder="MM / YYYY"
                                             />
                                         </div>
                                         <div class="new-card-modal__cvv-num">
-                                            <h4>CVV</h4>
+                                            <h5>CVV</h5>
                                             <input 
                                                 type="text" 
                                                 placeholder="000"
@@ -404,13 +415,11 @@
             margin: 8px 0px 20px 0px;
             font-size: 1.1rem;
         }
-        h2 {
-            font-size: 1.15rem;
+        h3 {
             margin-bottom: 10px;
         }
-        h3 {
-            font-size: 1rem;
-            opacity: 0.85;
+        h5 {
+            color: rgba(var(--textColor1), 0.8);
         }
     }
     .info-row {
@@ -419,7 +428,7 @@
         padding-bottom: 10px;
         margin-bottom: 10px;
         @include flex-container(center, space-between);
-        h3 {
+        h5 {
             width: 100px;
         }
         p {
@@ -456,19 +465,10 @@
             position: relative;
 
             button {
-                transition: 0.2s ease-in-out;
                 opacity: 0;
                 visibility: hidden;
-                color: rgba(var(--textColor2), 0.7);
                 @include pos-abs-bottom-right-corner(40%, 10px);
                 @include center;
-                
-                &:hover {
-                    color: rgba(var(--textColor2), 1);
-                }
-                &:active {
-                    transform: scale(0.98);
-                }
             }
             &:hover > button {
                 opacity: 100;
@@ -519,7 +519,6 @@
             margin-bottom: 12px;
         }
         button {
-            transition: 0.15s ease-in-out;
             width: 110px;
             text-align: end;
             opacity: 0.7;
@@ -550,7 +549,7 @@
 
         &__header {
             @include flex-container(flex-end, space-between);
-            h4 {
+            h5 {
                 margin-top: -2px;
                 font-size: 2rem;
             }
@@ -573,15 +572,7 @@
             }
         }
         &__upgrade-btn {
-            transition: 0.15s ease-in-out;
             @include pos-abs-bottom-right-corner(0px, 5px);
-
-            &:hover {
-                color: rgba(var(--textColor2), 1);
-            }
-            &:active {
-                transform: scale(0.98);
-            }
         }
     }
     .payment-method {
@@ -594,17 +585,8 @@
             margin: -5px 0px 10px 0px;
             color: rgba(var(--textColor1), 0.8);
         }
-
         &__edit-payment-method-btn {
-            transition: 0.15s ease-in-out;
             @include pos-abs-bottom-right-corner(0px, 5px);
-
-            &:hover {
-                color: rgba(var(--textColor2), 1);
-            }
-            &:active {
-                transform: scale(0.98);
-            }
         }
         .payment-card {
             width: 65%;
@@ -626,8 +608,6 @@
             padding: 5px 0px;
 
             button {
-                transition: 0.15s ease-in-out;
-                color: rgba(var(--textColor1), 0.7);
                 padding: 0px 0px 0px 10px;
                 font-weight: 600;
 
@@ -710,7 +690,7 @@
         }
         &__card-details-container {
             padding: 15px 12px 20px 12px;
-            h4 {
+            h5 {
                 margin-bottom: 8px;
                 font-size: 1.1rem;
             }
@@ -760,20 +740,15 @@
             margin-top: 30px;
 
             button {
-                transition: 0.15s ease-in-out;
                 padding: 8px 0px;
                 border-radius: 5px;
                 width: 50%;
                 font-weight: 700;
                 @include center;
-
-                &:active {
-                    transform: scale(0.98);
-                }
             }
         }
         &__cancel-btn {
-            border: 1.45px solid rgba(var(--textColor1), 0.1);
+            border: 1px solid rgba(var(--textColor1), 0.1);
             margin-right: 7px;
         }
         &__submit-btn {

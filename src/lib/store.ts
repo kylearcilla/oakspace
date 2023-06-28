@@ -51,5 +51,7 @@ export const musicPlayerData = writable<MusicPlayerData | null>(null)
 
 export const colorThemeState = writable<any>({
     title: "Dark Mode",  // to set styling specific only to Default Dark Mode
-    isDarkTheme: true     // to change styling specific only to dark / light themes
+    isDarkTheme: true,     // to change styling specific only to dark / light themes
+    themeToggleBtnIconColor: "#3F3F3F",
+    sectionTitle: "default"
 })

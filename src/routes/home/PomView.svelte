@@ -6,9 +6,11 @@
 </script>
 
 <div class="pom-view">
-    <div class={`pom-view__pom-task-tag-icon ${hasColorTheme ? "pom-view__pom-task-tag-icon--no-shadow" : ""}`}>S</div>
+    <div class={`pom-view__pom-task-tag-icon ${hasColorTheme ? "pom-view__pom-task-tag-icon--no-shadow" : ""}`}>
+        S
+    </div>
     <div class="pom-view__title">
-        <h2>Math Homework</h2>
+        <span class="caption-3">Math Homework</span>
     </div>
     <PomProgressBar/>
     <div class="pom-view__pom-dots-btn-container">
@@ -56,8 +58,6 @@
 
             h2 {
                 max-width: 90%;
-                font-weight: 700;
-                font-size: 0.9rem;
                 @include elipses-overflow;
             }
 

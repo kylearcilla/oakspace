@@ -529,11 +529,7 @@
             border-radius: 15px;
             overflow: hidden;
         }
-        
-        &__top-row {
-            display: flex;
-            margin-bottom: $bento-box-padding;
-        }
+
         /* Header */
         &__header {
             width: 35%;
@@ -617,7 +613,7 @@
 
         /* Tasks Component */
         &__tasks {
-            margin-top: $bento-box-padding;
+            margin-top: 9px;
         }
         &__tasks-subheader {
             @include flex-container(center, space-between);

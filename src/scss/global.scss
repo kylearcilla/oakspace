@@ -474,6 +474,9 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     }
 }
 
+.pos-relative {
+    position: relative;
+}
 .password-text {
     -webkit-text-security: disc;
     -moz-text-security: disc;
@@ -505,7 +508,7 @@ button.icon {
 }
 button.tab-btn {
     background-color: (var(--tabColor));
-    color: var(--tabColorTextColor);
+    color: rgba(var(--textColor1), 0.55);
     border-radius: 15px;
     padding: 2.5px 10px;
     transition: 0.1s ease-in-out;

@@ -56,7 +56,7 @@
     userMusicPlaylists.subscribe((data: MusicCollection[] | null) => playlists = (!data || data.length == 0) ? [] : data)
     curentPlaylist.subscribe((data: MusicCollection | null) => currentMusicCollection = data)
 
-    let chosenMusicCollection: MusicDiscoverCollection[] = (sereneCollections as any)[getPlatformNameForDiscoverPlaylist()]
+    let chosenMusicCollection: MusicDiscoverCollection[] = []
 
     const closeModal = () => onNavButtonClicked("")
 
@@ -222,7 +222,12 @@
         isScrollableRight = scrollLeft + clientWidth < scrollWidth
     }
 
-    onMount(() => window.addEventListener("resize", handleResize))
+    onMount(() => {
+        window.addEventListener("resize", handleResize)
+        if (musicData) {
+            chosenMusicCollection = (sereneCollections as any)[getPlatformNameForDiscoverPlaylist()]
+        }
+    })
     onDestroy(() => window.removeEventListener("resize", handleResize))
 </script>
 
@@ -353,13 +358,13 @@
                                         {:else}
                                             <h3>{currentMusicCollection?.name}</h3>
                                         {/if}
-                                        <p class={`paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{currentMusicCollection?.description}</p>
+                                        <p>{currentMusicCollection?.description}</p>
                                     </div>
                                 </div>             
                                 <div class="now-playing__collection-details">
-                                    <p class={`now-playing__collection-type paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{currentMusicCollection?.type}</p>
+                                    <p class="now-playing__collection-type">{currentMusicCollection?.type}</p>
                                     <span>/</span>
-                                    <p class={`paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{currentMusicCollection?.songCount} songs</p>
+                                    <p>{currentMusicCollection?.songCount} songs</p>
                                 </div>
                             {:else}
                                 <div class="now-playing__no-pl-selected">
@@ -399,7 +404,7 @@
                                     </div> 
                                     <div class="my-playlists__playlist-text">
                                         <h5>{personalPlaylist.name}</h5>
-                                        <p class={`paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{personalPlaylist.description}</p>
+                                        <p>{personalPlaylist.description}</p>
                                     </div>
                                     <div class="divider divider--thin"></div>
                                 </li>
@@ -412,7 +417,7 @@
                     <!-- Discover Section -->
                     <div class="discover grid-section grid-section--no-padding">
                         <h3 class="grid-section__title">{`Discover from ${getPlatformName()}`}</h3>
-                        <p class="grid-section__copy paragraph-2">Get in the zone with music that matches your vibe - select a category and discover new tunes to fuel your day.</p>
+                        <p class="grid-section__copy">Get in the zone with music that matches your vibe - select a category and discover new tunes to fuel your day.</p>
                         <div class="discover__collection-list-container">
                             {#if isScrollableLeft}
                                 <div class="gradient-container gradient-container--left">
@@ -434,7 +439,7 @@
                                             <img src={group.artworkBlurredSrc} alt="">
                                             <h2>{group.title}</h2>
                                             <p 
-                                                class={`discover__collection-card-hover-details-description paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>
+                                                class="discover__collection-card-hover-details-description">
                                                 {group.description}
                                             </p>
                                             <span class="caption-3"> {group.artistCredit}</span>
@@ -493,12 +498,12 @@
                                                 {:else}
                                                     <h5>{collection.title}</h5>
                                                 {/if}
-                                                <p class={`paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{collection.author}</p>
+                                                <p>{collection.author}</p>
                                             </div>
                                         </div>
-                                        <p class={`discover__collection-item-type paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{collection.playlistId === null ? "Album" : "Playlist"}</p>
-                                        <p class={`discover__collection-item-genre paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{collection.genre}</p>
-                                        <p class={`discover__collection-item-length paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{collection.length > 100 ? "100+" : collection.length}</p>
+                                        <p class="discover__collection-item-type">{collection.playlistId === null ? "Album" : "Playlist"}</p>
+                                        <p class="discover__collection-item-genre">{collection.genre}</p>
+                                        <p class="discover__collection-item-length">{collection.length > 100 ? "100+" : collection.length}</p>
                                         <div class="divider divider--thin"></div>
                                     </li>
                                 {/each}

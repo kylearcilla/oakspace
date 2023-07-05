@@ -145,7 +145,7 @@
       // left
       &__nav-menu-container {
         background-color: var(--navMenuBgColor);
-        border: var(--menuBorderVal);
+        border: var(--borderVal);
         box-shadow: var(--shadowVal);
         width: 60px;
         transition: ease-in-out 0.15s;
@@ -192,7 +192,7 @@
         height: 100vh;
         position: fixed;
         right: 0px;
-        background-color: var(--taskViewBgColor);
+        background-color: var(--secondaryBgColor);
         transition: ease-in-out 0.18s;
         border: var(--menuBorderVal);
         box-shadow: var(--shadowVal);

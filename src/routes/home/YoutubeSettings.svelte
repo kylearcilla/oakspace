@@ -190,7 +190,7 @@
                     </div>
                 </div>
                 <!-- Chosen Playlist -->
-                <div class="chosen-playlist grid-section">
+                <div class={`chosen-playlist grid-section ${isLightTheme ? "chosen-playlist--light-theme" : ""}`}>
                     <img class="img-bg" src={selectedPlaylist?.thumbnailURL} alt="chosen-playlist">
                     <div class={`blur-bg ${!selectedPlaylist ? "blur-bg--solid-color" : "blur-bg--blurred-bg"}`}></div>
                     <div class="content-bg">
@@ -423,11 +423,11 @@
         margin-bottom: $section-spacing;
         width: 60%;
         position: relative;
-        color: rgb(var(--textColor2));
+        color: rgb(var(--textColor1));
         height: 170px;
 
         h2 {
-            color: rgb(var(--textColor2));
+            color: rgb(var(--textColor1));
             margin-bottom: 5px;
         }
         .content-bg {
@@ -448,7 +448,7 @@
             width: 80%;
             max-height: 40px;
             overflow: hidden;
-            color: rgb(var(--textColor2), 0.7);
+            color: rgb(var(--textColor1), 0.7);
         }
         &__playlist-vid-count {
             @include pos-abs-bottom-right-corner(20px, -30px);
@@ -456,6 +456,16 @@
         &__no-playlist-msg {
             @include abs-center;
             top: 45%;
+        }
+
+        &--light-theme h3 {
+            color: rgba(var(--textColor2)) !important;
+        }
+        &--light-theme h4 {
+            color: rgba(var(--textColor2), 0.9) !important;
+        }
+        &--light-theme p {
+            color: rgba(var(--textColor2), 0.65) !important;
         }
     }
     .user-playlists {

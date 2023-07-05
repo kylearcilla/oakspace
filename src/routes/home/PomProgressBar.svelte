@@ -119,7 +119,7 @@
             height: 16px;
             border-radius: 18px;
             cursor: pointer;
-            opacity: 0.7;
+            opacity: 1;
             @include center;
 
             i {

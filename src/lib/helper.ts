@@ -38,7 +38,10 @@ export const loadTheme = () => {
     isDarkTheme: themeItem!.properties.isDark,
     themeToggleBtnIconColor: themeItem!.properties.iconToggleBtnBgColor,
     hasTwin: themeItem!.properties.hasTwin,
-    sectionTitle: themeItem!.sectionDetails.title
+    sectionTitle: themeItem!.sectionDetails.title,
+    isMultiColor: themeItem!.properties.isMultiColor,
+    isHeaderElementTextLight: themeItem!.properties.isHeaderElementTextLight,
+    twinTheme: themeItem!.twinTheme
   })
   setRootColors(themeItem!.properties)
 }

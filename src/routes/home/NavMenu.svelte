@@ -1,18 +1,27 @@
 <script lang="ts">
-	import { defaultThemes } from "$lib/data-themes";
+    import { lightColorThemes, darkColorThemes, defaultThemes } from "$lib/data-themes";
 	import { setRootColors } from "$lib/helper";
-	import { colorThemeState } from "$lib/store"
+	import { colorThemeState, musicPlayerData } from "$lib/store"
 
     export let onNavButtonClicked: any
     let navButtonClicked = ""
+    let isMusicPlayerActive = false
+
     let currentTheme = { 
         title: "Dark Mode", 
         isDark: true, 
         themeToggleBtnIconColor: "#3F3F3F",
         hasTwin: true,
-        sectionTitle: "default"
+        sectionTitle: "default",
+        twinTheme: {
+            sectionName: "defaultThemes",
+            index: 1
+        }
     }
 
+    musicPlayerData.subscribe((data: MusicPlayerData | null) => {
+        isMusicPlayerActive = data != null && data.doShowPlayer
+    })
     colorThemeState.subscribe((data) => {
         if (currentTheme.title === data.title) return
         currentTheme = {
@@ -20,7 +29,8 @@
             isDark: data.isDarkTheme,
             themeToggleBtnIconColor: data.themeToggleBtnIconColor,
             hasTwin: data.hasTwin,
-            sectionTitle: data.sectionTitle
+            sectionTitle: data.sectionTitle,
+            twinTheme: data.twinTheme
         }
     })
 
@@ -43,7 +53,14 @@
     }
     
     const handleToggleThemeMode = () => {
-        let selectedTheme = currentTheme.title === "Dark Mode" ? defaultThemes[1] : defaultThemes[0]
+        const themeSections: any = {
+            defaultThemes: defaultThemes,
+            lightColorThemes: lightColorThemes,
+            darkColorThemes: darkColorThemes,
+        };
+
+        console.log(currentTheme.twinTheme.index)
+        let selectedTheme = themeSections[currentTheme.twinTheme.sectionName][currentTheme.twinTheme.index]
         setRootColors(selectedTheme!.properties)
         localStorage.setItem("theme", JSON.stringify(selectedTheme))
 
@@ -52,7 +69,10 @@
             isDarkTheme: selectedTheme!.properties.isDark,
             themeToggleBtnIconColor: selectedTheme!.properties.iconToggleBtnBgColor,
             hasTwin: selectedTheme.properties.hasTwin,
-            sectionTitle: selectedTheme.sectionDetails.title
+            sectionTitle: selectedTheme.sectionDetails.title,
+            isMultiColor: selectedTheme.properties.isMultiColor,
+            isHeaderElementTextLight: selectedTheme!.properties.isHeaderElementTextLight,
+            twinTheme: selectedTheme!.twinTheme
         })
     }
 </script>
@@ -75,7 +95,7 @@
         </button>
         <button on:click={() => handleNavButtonClicked("apperance")} class={"nav-menu-tab nav-menu-tab--appearance tool-tip-container"}>
             <!-- <span class="tool-tip-text tool-tip-text--left">Appearance</span> -->
-            <i class="fa-solid fa-image nav-menu-tab__icon"></i>
+            <i class="fa-solid fa-paint-roller"></i>
         </button>
         <button on:click={() => handleNavButtonClicked("settings")} class={"nav-menu-tab nav-menu-tab--settings tool-tip-container"}>
             <!-- <span class="tool-tip-text tool-tip-text--left">Settings</span> -->
@@ -85,7 +105,10 @@
     {#if currentTheme.hasTwin}
         <button 
             on:click={handleToggleThemeMode}
-            class={`theme-mode-toggle ${currentTheme.isDark ? "theme-mode-toggle--dark" : "theme-mode-toggle--light"}`}
+            class={`theme-mode-toggle 
+                    ${currentTheme.isDark ? "theme-mode-toggle--dark" : "theme-mode-toggle--light"}
+                    ${isMusicPlayerActive ? "theme-mode-toggle--music-player-active" : ""}
+                  `}
         >
             <div class="theme-mode-toggle__sun">
                 <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -177,7 +200,7 @@
                 .fa-music {
                     color: #caa0fd !important;
                 }
-                .fa-image {
+                .fa-paint-roller {
                     color: #E9A6D4 !important;
                 }
                 .fa-gear  {
@@ -227,6 +250,9 @@
         .fa-music {
             font-size: 1.2rem;
         }
+        .fa-paint-roller {
+            font-size: 1.4rem;
+        }
         &__icon {
             font-size: 1.4rem;
         }
@@ -242,7 +268,7 @@
         background-color: var(--themeToggleBtnBgColor);
         border: var(--borderVal2);
         transition: 0.15s ease-in-out;
-        @include pos-abs-bottom-left-corner(80px, 9px);
+        @include pos-abs-bottom-left-corner(14px, 9px);
         
         &--light &__highlighter {
             background-color: var(--highlighterToggleBtnBgColor);
@@ -251,6 +277,9 @@
         &--dark &__highlighter {
             background-color: var(--highlighterToggleBtnBgColor);
             @include pos-abs-bottom-left-corner(5px, 3.5px);
+        }
+        &--music-player-active {
+            bottom: 80px;
         }
         
         &__sun {

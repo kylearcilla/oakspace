@@ -31,11 +31,13 @@
 
     let isLightTheme = false
     let isColorPaletteTheme = false
+    let isMultiColorTheme = false
     let isVidPlayerShown = false
     
     colorThemeState.subscribe((theme) => {
         isLightTheme = !theme.isDarkTheme
         isColorPaletteTheme = ["light", "dark"].includes(theme.sectionTitle)
+        isMultiColorTheme = theme.isMultiColor
     })
     
     currentYtVidId.subscribe((idx) => {
@@ -71,6 +73,7 @@
                 hidePlaylist();
                 return;
             } else {
+                currentVidIdx = -1
                 hasError = false
                 const vidId = res.items[0].snippet.resourceId.videoId;
                 await updateVidDetails(vidId)
@@ -216,7 +219,11 @@
         {#if ytData.username != ""}
             <div class="dropdown-container">
                 <button 
-                    class={`dropdown-btn ${isLightTheme ? "dropdown-btn--light-mode" : ""} dropdown-btn--icon-text ${isColorPaletteTheme ? "dropdown-btn--color-theme" : ""}`} 
+                    class={`dropdown-btn 
+                                ${isLightTheme ? "dropdown-btn--light-mode" : ""} dropdown-btn--icon-text 
+                                ${isColorPaletteTheme ? "dropdown-btn--color-theme" : ""}
+                                ${isMultiColorTheme ? "dropdown-btn--multi-color-theme" : ""}
+                            `} 
                     on:click={toggleDropDown}
                 >
                     <div class="dropdown-btn__icon">
@@ -292,8 +299,7 @@
             </div>
         </div>
     {/if}
-</div>
-
+</div> 
 <style lang="scss">
     .vid-view {
         margin-top: 30px;
@@ -344,14 +350,21 @@
 
                 /* Color Theme Styling */
                 &--color-theme {
-                    background-color: var(--muiscPlayerBgColor);
-                    color: rgba(var(--textColor2), 1);
+                    background-color: var(--secondaryBgColor);
+                    color: var(--homeVidDropDownTextColor);
+                    border: var(--borderVal2);
                 }
                 &--color-theme .dropdown-btn__youtube-logo {
-                    background-color: var(--muiscPlayerBgColor);
+                    background-color: var(--secondaryBgColor);
                 }
                 &--color-theme i {
-                    color: var(--primaryBgColor);
+                    color: var(--homeVidDropDownTextColor);
+                }
+                &--multi-color-theme .dropdown-btn__youtube-logo {
+                    background-color: rgb(var(--fgColor3));
+                }
+                &--multi-color-theme {
+                    background-color: rgb(var(--fgColor3));
                 }
             }
             .dropdown-menu {
@@ -367,7 +380,8 @@
             @include center;
 
             &--player-hidden {
-                height: 600px;
+                aspect-ratio: 16 / 9;
+                width: 100%;
             }
         }
         #player {

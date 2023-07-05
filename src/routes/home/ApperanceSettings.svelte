@@ -39,7 +39,10 @@
             isDarkTheme: selectedTheme!.properties.isDark,
             themeToggleBtnIconColor: selectedTheme!.properties.iconToggleBtnBgColor,
             hasTwin: selectedTheme!.properties.hasTwin,
-            sectionTitle: selectedTheme!.sectionDetails.title
+            sectionTitle: selectedTheme!.sectionDetails.title,
+            isMultiColor: selectedTheme!.properties.isMultiColor,
+            isHeaderElementTextLight: selectedTheme!.properties.isHeaderElementTextLight,
+            twinTheme: selectedTheme!.twinTheme
         })
         setRootColors(selectedTheme!.properties)
 
@@ -219,8 +222,7 @@
     $section-spacing: 8px;
     $desktop-aspect-ratio: 16 / 10;
     $video-aspect-ratio: 16 / 9;
-    $selected-color: #75bef5;
-    $clicked-color: rgba(var(--textColor1), 0.5);
+    $clicked-color: rgba(var(--textColor1), 0.3);
 
     .modal-bg {
         &__content {
@@ -272,10 +274,10 @@
             }
             &--selected {
                 img {
-                    border: 2.5px solid $selected-color;
+                    border: 2.5px solid var(--themeHighlightBorderColor);
                 }
                 h6, span {
-                    color: $selected-color !important;
+                    color: var(--themeHighlightBorderColor) !important;
                 }
                 span {
                     opacity: 0.6;
@@ -284,7 +286,7 @@
             &--selected > &-color-swatch-list {
                 margin-top: -2px;
                 height: 24px;
-                background-color: $selected-color;
+                background-color: var(--themeHighlightBorderColor);
                 @include center;
             }
             &--color-theme {

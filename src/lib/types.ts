@@ -4,6 +4,13 @@ type GoogleUserData = {
     profileImgSrc: string
 }
 
+type Quote = {
+    text: string,
+    bgImgSrc: string,
+    artCredit: string,
+    quoteCredit: string
+}
+
 /* Music Stuff */
 enum MusicPlatform { AppleMusic, Spotify, Youtube, Soundcloud }
 
@@ -118,6 +125,10 @@ type Theme = {
         title: string
         index: number
     }
+    twinTheme: {
+        sectionName: string,
+        index: number
+    } | null,
     properties: ThemeData
 }
 
@@ -143,6 +154,8 @@ type VideoTheme = Theme & {
 type ThemeData = {
     isDark: boolean,
     hasTwin: boolean,
+    isMultiColor: boolean,
+    isHeaderElementTextLight: boolean,
     primaryBgColor: string,
     secondaryBgColor: string,
     tertiaryBgColor: string,
@@ -150,7 +163,6 @@ type ThemeData = {
     fgColor2: string,
     fgColor3: string,
     fgColor4: string,
-    menuBorderVal: string,
     borderVal: string,
     borderVal2: string,
     shadowVal: string,
@@ -165,30 +177,31 @@ type ThemeData = {
     activeSessionItemShadowVal: string,
     textColor1: string,
     textColor2: string,
-    profibleBorderColor: string,
     themeHighlightBorderColor: string,
     hoverColor: string,
+    hoverColor2: string,
     tabColor: string,
     tabHighlightColor: string,
     tabHighlightBoxShadow: string,
-    tabColorTextColor: string,
     modalBgColor: string,
     modalFgColor: string,
     gridItemBorderVal: string,
     gridItemShadowVal: string,
     headerElementBgColor: string,
+    headerElementTextColor: string,
     headerElementBorderVal: string,
     dividerColor: string,
     pomBgColor: string,
     pomIconColor: string,
     muiscPlayerBgColor: string,
+    musicProgressFgColor: string,
     musicProgressBgColor: string,
     navMenuBgColor: string,
-    taskViewBgColor: string,
     pomProgressBarFgColor: string,
     pomProgressBarFgBoxShadow: string,
     pomProgressBgColor: string,
     pomProgressPlaybackBtnColor: string,
     navIconColor: string,
-    navIconBgColor: string
+    navIconBgColor: string,
+    homeVidDropDownTextColor: string
 }

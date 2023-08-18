@@ -30,7 +30,6 @@
 
     let playlists: any = []
     let currentMusicCollection: MusicCollection | null = null
-    let clickedPlaylistId = ""
     
     let collectionGroupIdx = 0
     let isScrollableLeft = false
@@ -39,8 +38,8 @@
 
     let debounceTimeout: NodeJS.Timeout | null = null
 
-    const SCROLL_STEP = 250
-    const PLAYLIST_BTN_COOLDOWN_MS = 250
+    const SCROLL_STEP = 400
+    const PLAYLIST_BTN_COOLDOWN_MS = 1000
 
     let isLightTheme = false
 
@@ -49,7 +48,6 @@
     // init music data for music settings
     musicDataState.subscribe((data: MusicData) => {
         if (data) isSignedIn = true
-        
         musicData = data
     })
     appleMusicPlayerState.subscribe((data: MusicPlayer) => musicPlayer = data)    
@@ -64,20 +62,25 @@
     const initMusicData = async (platform: MusicPlatform) => {
         if (platform === MusicPlatform.AppleMusic) {
             musicData = new MusicData(MusicPlatform.AppleMusic)
-            await musicData.authUser()
-            musicData.loadMusicData()
-            musicData.setUserPlaylists()
 
-            musicPlayer = new AppleMusicPlayer(musicData)
-
-            appleMusicPlayerState.set(musicPlayer)
-            musicDataState.set(musicData)
-
-            isSignedIn = true
-            // @ts-ignore
-            chosenMusicCollection = sereneCollections[getPlatformNameForDiscoverPlaylist()]
+            try {
+                await musicData.authUser()
+                musicData.loadMusicData()
+                musicData.setUserPlaylists()
+                musicPlayer = new AppleMusicPlayer(musicData)
+    
+                appleMusicPlayerState.set(musicPlayer)
+                musicDataState.set(musicData)
+    
+                isSignedIn = true
+                // @ts-ignore
+                chosenMusicCollection = sereneCollections[getPlatformNameForDiscoverPlaylist()]
+            } catch (error) {
+                console.error("An error occurred:", error)
+            }
         }
     }
+
     /**
      * For selecting corresponding category playlists for Discover section (varies for each platform)
     */
@@ -387,11 +390,9 @@
                                 <!-- My Playlist Item -->
                                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                                 <li
-                                    on:click={() => clickedPlaylistId = personalPlaylist.globalId}
                                     on:dblclick={() => handlePersonalPlaylistClicked(personalPlaylist.id, personalPlaylist.globalId)}
                                     class={`my-playlists__playlist 
                                                 ${personalPlaylist.globalId === currentMusicCollection?.id ? "my-playlists__playlist--chosen" : ""}
-                                                ${personalPlaylist.globalId === clickedPlaylistId ? "my-playlists__playlist--clicked" : ""}
                                            `}
                                 >
                                     <p class="my-playlists__playlist-idx">{idx + 1}</p>
@@ -480,11 +481,9 @@
                                     <!-- Collection Item -->
                                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                                     <li
-                                        on:click={() => clickedPlaylistId = getCollectionId(collection)}
                                         on:dblclick={event => handleRecommendedPlaylistClicked(collection, event)} 
                                         class={`discover__collection-item 
                                                     ${getCollectionId(collection) === currentMusicCollection?.id ? "discover__collection-item--chosen" : ""}
-                                                    ${getCollectionId(collection) === clickedPlaylistId ? "discover__collection-item--clicked" : ""}
                                               `}
                                     >
                                         <p class="discover__collection-item-num">{idx + 1}</p>
@@ -595,7 +594,7 @@
 
     .music {
         width: 82vw;
-        height: 700px;
+        height: 750px;
         min-width: 390px;
         max-width: 1000px;
         
@@ -626,7 +625,6 @@
             margin-right: $section-spacing;
             width: 40%;
             height: 100%;
-            overflow: hidden;
         }
         &__right-section {
             margin-right: $section-spacing;
@@ -638,18 +636,22 @@
     .active-account-header {
         @include flex-container(center, _);
         @include pos-abs-top-right-corner(25px, 42px);
-
+        
         &__btn {
             @include flex-container(center, _);
             padding: 5px 8px;
             border-radius: 10px;
             margin-right: 7px;
-            background-color: var(--modalFgColor);
-            border: var(--borderVal);
+            background-color: var(--bentoBoxBgColor);
+            border: var(--bentoBoxBorder);
+            box-shadow: var(--bentoBoxShadow);
+            transition: 0.09s ease-in-out;
             
+            &:active {
+                transform: translateY(0.45px);
+            }
             &:hover {
                 background-color: var(--hoverColor);
-                box-shadow: var(--shadowVal);
             }
             span {
                 color: rgba(var(--textColor1), 0.7);
@@ -678,9 +680,8 @@
         z-index: 10000;
         width: 220px;
         @include pos-abs-top-right-corner(20px, 30%);
-        background: var(--secondaryBgColor);
-        box-shadow: var(--shadowVal);
-        border: var(--borderVal);
+        background: var(--bentoBoxBgColor);
+        box-shadow: var(--bentoBoxShadow);
         padding: 12px 5px 15px 13px;
         border-radius: 10px;
 
@@ -807,7 +808,7 @@
     .my-playlists { 
         margin: 0px $section-spacing 0px 0px;
         width: 100%;
-        height: 75%;
+        height: 74%;
         margin-right: 6px;
         overflow: hidden;
         position: relative;
@@ -841,10 +842,6 @@
 
             &--chosen {
                 background-color: var(--hoverColor);
-            }
-            &--clicked {
-                background-color: var(--hoverColor);
-                filter: brightness(1.2);
             }
 
             p {
@@ -920,7 +917,7 @@
         /* Discover Collections Carousel */
         &__collection-list-container {
             position: relative;
-            height: 130px;
+            height: 140px;
 
             &:hover > .gradient-container {
                 opacity: 1;
@@ -937,6 +934,9 @@
                 width: 50px;
             }
             &__tab-arrow {
+                i {
+                    color: white;
+                }
                 &--left {
                     margin-right: 13px;
                 }
@@ -965,25 +965,27 @@
         &__collection-card {
             margin-right: 8px;
             position: relative;
-            min-width: 170px;
-            height: 130px;
+            min-width: 180px;
+            height: 125px;
             border-radius: 7px;
-            transition: 0.33s ease-in-out;
+            transition: 0.2s ease-in-out;
             overflow: hidden;
             cursor: pointer;
-            
-            h3 {
-                color: white;
-            }
+            color: white;
+
             &:hover {
                 min-width: 200px;
             }
             &:hover > &-img {
                 width: 200px;
             }
+            &:active {
+                transform: scale(0.99);
+            }
             &:hover > &-hover-details {
                 visibility: visible;
                 opacity: 1;
+                transition-delay: 0.2s;
             }
             &:hover > &-title {
                 visibility: hidden;
@@ -993,11 +995,11 @@
         &__collection-card-img {
             visibility: visible;
             opacity: 1;
-            transition: 0.4s ease-in-out;
+            transition: 0.2s ease-in-out;
             border-radius: 7px;
-            width: 170px;
-            height: 130px;
-            object-fit: fill;
+            width: 180px;
+            height: 125px;
+            object-fit: cover;
         }
         &__collection-card-title {
             transition: 0.3s ease-in-out;
@@ -1005,21 +1007,23 @@
         }
         &__collection-card-hover-details {
             border-radius: 6px;
-            visibility: hidden;
             transition: 0.1s ease-in-out;
-            opacity: 0;
             display: block;
             z-index: 100;
             width: 100%;
             height: 100%;
             padding: 60px 0px 0px 12px;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            transition-delay: 0s; 
             @include pos-abs-top-left-corner(0px, 0px);
             
             h2 {
                 margin-bottom: 5px
             }
             span {
-                color: rgba(var(--textColor1), 0.64);
+                color: rgba(255, 255, 255, 0.64);
                 @include pos-abs-top-right-corner(10px, 10px);
             }
             img {
@@ -1037,7 +1041,7 @@
 
         /* Discover Category Collections List Section */
         &__collection-title {
-            margin: 30px 0px 10px $my-playlists-section-padding-left;
+            margin: 8px 0px 10px $my-playlists-section-padding-left;
         }
         /* List Column Header Section */
         &__collection-header {
@@ -1074,13 +1078,9 @@
         /* Playlist Item */
         &__collection-item {
             @include flex-container(center, _);
-            transition: 0.1s ease-in-out;
             padding: 14px 0px;
             position: relative;
 
-            &:hover {
-                background-color: var(--hoverColor);
-            }
             &:first-child {
                 margin-top: 5px;
             }
@@ -1091,13 +1091,11 @@
                 color: rgba(var(--textColor1), 0.6);
             }
             &--chosen {
+                background-color: var(--hoverColor2) !important;
+            }
+            &:hover {
                 background-color: var(--hoverColor);
             }
-            &--clicked {
-                background-color: var(--hoverColor);
-                filter: brightness(1.1);
-            }
-
             .divider {
                 @include pos-abs-bottom-left-corner(0px, 25px);
                 width: 90%;
@@ -1135,7 +1133,7 @@
             }
             p {
                 color: rgba(var(--textColor1), 0.6);
-                font-weight: 300;
+                font-weight: 400;
                 @include elipses-overflow;
             }
         }

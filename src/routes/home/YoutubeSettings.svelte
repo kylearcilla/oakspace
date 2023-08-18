@@ -38,24 +38,8 @@
 
     const closeModal = () => onNavButtonClicked("")
 
-    /* Youtube User Authentication */
-    const handleYtSignUp = () => {
-        // Init consent-screen to ask user for permission to use user data.
-        initOAuth2Client((res: any) => {
-            let ytCreds: YoutubeUserCreds | null = {
-                accessToken: "",
-                refreshToken: ""
-            }
-
-            ytCreds.accessToken = res.credential.accessToken;
-            ytUserAccountData.email = res.popUpResponse.additionalUserInfo.profile.email
-            ytUserAccountData.username = res.popUpResponse.additionalUserInfo.profile.name;
-            ytUserAccountData.channelImgSrc = res.popUpResponse.additionalUserInfo.profile.picture;
-
-            intUserYtData(ytUserAccountData, ytCreds.accessToken);
-            initYtCreds(ytCreds)
-        });
-    }
+    /* Log In / Log Out */
+    const handleYtSignUp = () => initOAuth2Client()
     const handleUnlinkCurrentYtAccount = () => resetYtUserData()
 
     /* Personal Playlist */
@@ -87,7 +71,8 @@
             description: newPlaylist.playlistDescription,
             vidCount: newPlaylist.vidCount,
             channelId: "",
-            thumbnailURL: newPlaylist.playlistThumbnailImgSrc
+            thumbnailURL: newPlaylist.playlistThumbnailImgSrc,
+            isRecPlaylist: true
         }
         ytUserData.set(ytUserAccountData!)
         saveYtUserData(ytUserAccountData!);
@@ -190,7 +175,7 @@
                     </div>
                 </div>
                 <!-- Chosen Playlist -->
-                <div class={`chosen-playlist grid-section ${isLightTheme ? "chosen-playlist--light-theme" : ""}`}>
+                <div class={`chosen-playlist grid-section ${!selectedPlaylist ? "chosen-playlist--no-pl" : ""} ${isLightTheme ? "chosen-playlist--light-theme" : ""}`}>
                     <img class="img-bg" src={selectedPlaylist?.thumbnailURL} alt="chosen-playlist">
                     <div class={`blur-bg ${!selectedPlaylist ? "blur-bg--solid-color" : "blur-bg--blurred-bg"}`}></div>
                     <div class="content-bg">
@@ -202,10 +187,10 @@
                                 <img class="chosen-playlist__playlist-img" src={selectedPlaylist?.thumbnailURL} alt="chosen-playlist">
                                 <div class="chosen-playlist__playlist-details">
                                     <h4>{selectedPlaylist?.title}</h4>
-                                    <p class="chosen-playlist__playlist-description paragraph-4">
+                                    <p class="chosen-playlist__playlist-description ">
                                         {selectedPlaylist?.description === "" ? "No Description" : selectedPlaylist?.description}
                                     </p>
-                                    <p class="chosen-playlist__playlist-vid-count paragraph-4">
+                                    <p class="chosen-playlist__playlist-vid-count ">
                                         {`${selectedPlaylist?.vidCount == 1 ? "1 video" : selectedPlaylist?.vidCount > 50 ? "50+ videos" : selectedPlaylist?.vidCount + " videos" }`}
                                     </p>
                                 </div>
@@ -242,25 +227,18 @@
                                 <div class="user-playlists__list-header-length">
                                     <h6>Length</h6>
                                 </div>
-                                <div class="user-playlists__list-header-description">
-                                    <h6>Description</h6>
-                                </div>
                             </div>
                             {#each ytUserAccountData.playlists as playlist, idx}
-                                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                                <li on:click={() => handleChoosePlaylist(idx)} 
+                                <li on:dblclick={() => handleChoosePlaylist(idx)} 
                                     class={`user-playlists__list-item ${clickedPlaylistId === idx ? "user-playlists__list-item--clicked" : ""}  ${ytUserAccountData?.selectedPlaylist?.id === playlist.id ? "user-playlists__list-item--chosen" : ""} flx flx--algn-center`}>
                                     <div class="divider divider--thin divider--top"></div>
-                                    <p class={`user-playlists__list-item-num paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{idx + 1}</p>
+                                    <p class={`user-playlists__list-item-num  ${isLightTheme ? "" : ""}`}>{idx + 1}</p>
                                     <img src={`${playlist.thumbnailURL}`} alt="yt-profile-pic" />
                                     <div class="user-playlists__list-item-title">
-                                        <p class={`paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{playlist.title}</p>
+                                        <p>{playlist.title}</p>
                                     </div>
                                     <div class="user-playlists__list-item-length">
-                                        <p class={`paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{`${playlist.vidCount} video${playlist.vidCount != 1 ? "s" : ""}`}</p>
-                                    </div>
-                                    <div class="user-playlists__list-description">
-                                        <p class={`paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{`${playlist?.description != "" ? playlist?.description : "No Description"}`}</p>
+                                        <p>{`${playlist.vidCount} video${playlist.vidCount != 1 ? "s" : ""}`}</p>
                                     </div>
                                 </li>
                             {/each}
@@ -319,16 +297,15 @@
                             <li class={`recs__playlist-item 
                                             ${playlist.playlistId === ytUserAccountData?.selectedPlaylist?.id ? "recs__playlist-item--selected " : ""}
                                       `} 
-                                    on:click={event => handleChooseRecPlaylist(event, idx)}
+                                    on:dblclick={event => handleChooseRecPlaylist(event, idx)}
                             >
                                 <img class="recs__playlist-item-img" src={playlist.playlistThumbnailImgSrc} alt="playlist-item-thumbnail"/>
                                 <div class="recs__playlist-item-details">
                                     <h4 class="recs__playlist-item-title">{playlist.title}</h4>
-                                    <p class={`recs__playlist-item-description paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>
+                                    <p class={`recs__playlist-item-description  ${isLightTheme ? "--light-theme" : ""}`}>
                                         {playlist.playlistDescription}
                                     </p>
                                     <div class="recs__playlist-item-channel-details">
-                                        <img src={playlist.channelImgSrc} alt="">
                                         <a href={playlist.channelURL} target="_blank" rel="noreferrer">{playlist.channelTitle}</a>
                                     </div>
                                 </div>
@@ -426,6 +403,22 @@
         color: rgb(var(--textColor1));
         height: 170px;
 
+        &--light-theme h3 {
+            color: rgba(var(--textColor2));
+        }
+        &--light-theme h4 {
+            color: rgba(var(--textColor2), 0.9);
+        }
+        &--light-theme p {
+            color: rgba(var(--textColor2), 0.65);
+        }
+        &--no-pl h3 {
+            color: rgb(var(--textColor1));
+        }
+        &--no-pl .img-bg, &--no-pl .blur-bg {
+            display: none;
+        }
+
         h2 {
             color: rgb(var(--textColor1));
             margin-bottom: 5px;
@@ -454,18 +447,11 @@
             @include pos-abs-bottom-right-corner(20px, -30px);
         }
         &__no-playlist-msg {
+            font-weight: 600;
+            font-size: 1.3rem;
+            color: rgba(var(--textColor1), 0.5);
             @include abs-center;
             top: 45%;
-        }
-
-        &--light-theme h3 {
-            color: rgba(var(--textColor2)) !important;
-        }
-        &--light-theme h4 {
-            color: rgba(var(--textColor2), 0.9) !important;
-        }
-        &--light-theme p {
-            color: rgba(var(--textColor2), 0.65) !important;
         }
     }
     .user-playlists {
@@ -501,18 +487,15 @@
         &__list-header-thumbnail {
             min-width: 105px;
         }
-        &__list-header-title {
-            width: 15%;
-        }
-        &__list-header-length {
+        &__list-header-title, &__list-header-length {
             @include center;
-            width: 20%;
+            width: 30%;
+
+            @include md(max-width) {
+                width: 40%;
+            }
         }
-        &__list-header-description {
-            width: 40%;
-            @include center;
-        }
-        /* User Playlists */
+        /* User Playlist Items */
         &__list {
             margin-bottom: 15px;
             overflow-y: scroll;
@@ -527,7 +510,6 @@
             padding: 12px 0px 12px 6px;
             transition: 0.1s ease-in-out;
             color: rgba(var(--textColor1), 0.6);
-            cursor: pointer;
             transition: 0.01s ease-in-out;
             @include elipses-overflow;
 
@@ -539,11 +521,14 @@
             }
             p {
                 @include elipses-overflow;
+                font-size: 1.1rem;
+                font-weight: 500;
             }
             .divider {
                 margin: 0px 0px 0px -10px;
                 width: 110%;
                 height: 0.5px;
+                background-color: rgba(var(--textColor1), 0.11);                
             }
         }
         &__list-item-num {
@@ -557,17 +542,14 @@
             aspect-ratio: 16 / 9;
             margin-right: 15px;
         }
-        &__list-item-title {
-            width: 15%;
+        &__list-item-title, &__list-item-length {
+            width: 30%;
             overflow: hidden;
-        }
-        &__list-item-length {
-            width: 20%;
             @include center;
-        }
-        &__list-description {
-            width: 40%;
-            @include center;
+
+            @include md(max-width) {
+                width: 40%;
+            }
         }
     }
     .recs {
@@ -584,7 +566,7 @@
         }
 
         &__copy {
-            margin-top: 8px;
+            margin: 8px 0px 12px 0px;
             padding: 0px 0px 0px $recs-section-padding-left;
         }
         &__tab-arrow {
@@ -609,7 +591,7 @@
                 width: 45px;
                 @include center;
                 &--left {
-                    background: linear-gradient(90deg, var(--modalFgColor) 60%, transparent);
+                    background: linear-gradient(90deg, var(--bentoBoxBgColor) 60%, transparent);
                     @include pos-abs-bottom-left-corner(0px, 0px)
                 }
                 &--right {
@@ -653,7 +635,6 @@
         /* Playlist Item */
         &__playlist-item {
             transition: 0.1s ease-in-out;
-            cursor: pointer;
             display: flex;
             overflow: hidden;
             padding: 20px 0px;
@@ -670,6 +651,8 @@
             }
             h4 {
                 margin-bottom: 5px;
+                @include elipses-overflow;
+                max-width: 90%;
             }
             h3 {
                 @include elipses-overflow;
@@ -696,8 +679,7 @@
         }
         &__playlist-item-channel-details {
             @include flex-container(center, _);
-            position: absolute;
-            bottom: 10px;
+            margin-top: 10px;
 
             a {
                 font-weight: 600;
@@ -707,10 +689,6 @@
                 &:hover {
                     text-decoration: underline
                 }
-            }
-            img {
-                @include circle(18px);
-                margin-right: 7px;
             }
         }
     }

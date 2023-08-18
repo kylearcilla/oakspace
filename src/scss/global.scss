@@ -21,7 +21,7 @@ li {
 }
 body {
       background-color: #101012;
-      font-family: "Manrope";
+      font-family: "Manrope", sans-serif, Roboto;
       color: white;
 }
 
@@ -296,7 +296,6 @@ $screen-xl: 112.5em;   // extra large (1800 px)
 
 /* Line Divider */
 .divider {
-    background-color: var(--dividerColor);
     opacity: 0.7;
     width: 100%;
     height: 1px;
@@ -368,6 +367,8 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     display: none;
 }
 
+
+
 /* Modal */
 
 .modal {
@@ -397,6 +398,9 @@ $screen-xl: 112.5em;   // extra large (1800 px)
         background-color: var(--modalBgColor);
         color: rgb(var(--textColor1));
         
+        &--no-padding {
+            padding: 0px;
+        }
         &--overflow-show {
             overflow: visible;
         }
@@ -418,7 +422,6 @@ $screen-xl: 112.5em;   // extra large (1800 px)
         margin-bottom: 20px;
     }
     &__content-title {
-        font-family: "Manrope";
         margin-bottom: 10px;
     }
 
@@ -436,16 +439,16 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     height: 100%;
     width: 70px;
     top: 0px;
-    background: linear-gradient(270deg, var(--modalFgColor) 60%, transparent);
+    background: linear-gradient(270deg, var(--bentoBoxBgColor) 60%, transparent);
     @include center;
     
     &--left {
         left: 0px;
-        background: linear-gradient(90deg, var(--modalFgColor) 15%, transparent);
+        background: linear-gradient(90deg, var(--bentoBoxBgColor) 15%, transparent);
     }
     &--right {
         right: 0px;
-        background: linear-gradient(270deg, var(--modalFgColor) 20%, transparent);
+        background: linear-gradient(270deg, var(--bentoBoxBgColor) 20%, transparent);
     }
 
     button {
@@ -487,14 +490,10 @@ button, input {
 	all: unset;
 }
 button {
-    transition: 0.15s ease-in-out;
     font-weight: 600; // uses caption-3
     font-size: 0.95rem;
     cursor: pointer;
 
-    &:active {
-        transform: scale(0.98);
-    }
     &:disabled {
         opacity: 0.6;
     }
@@ -521,6 +520,9 @@ button.tab-btn {
     &:hover {
         filter: brightness(1.05);
     }
+    &:active {
+        transform: scale(0.985);
+    }
     
     &--light-mode {
         &:hover {
@@ -530,7 +532,7 @@ button.tab-btn {
     &--selected {
         background-color: var(--tabHighlightColor);
         box-shadow: var(--tabHighlightBoxShadow);
-        color: var(--modalFgColor);
+        color: var(--bentoBoxBgColor);
     }
 }
  button.unfill {
@@ -538,6 +540,7 @@ button.tab-btn {
     border: solid 1.15px rgb(var(--fgColor2));
     color: rgb(var(--fgColor2));
     background-color: transparent;
+    transition: 0.1s ease-in-out;
     @include center;
 
 
@@ -566,6 +569,7 @@ button.text-only {
     border-radius: 15px;
     font-weight: 600; // uses caption-3
     font-size: 0.95rem;
+    transition: 0.1s ease-in-out;
     color: rgb(var(--textColor1), 0.5);
     
 
@@ -585,6 +589,21 @@ button.text-only {
     }
     &--thin {
         font-weight: 400;
+    }
+}
+button.settings-btn {
+    transition: 0.1s ease-in-out;
+    padding: 4.5px;
+    @include center;
+    aspect-ratio: 1 / 1;
+    border-radius: 20px;
+    transition: 0.15s ease-in-out;
+    
+    &:active {
+        transform: scale(0.98)
+    }
+    &:hover {
+        background-color: rgba(var(--textColor1), 0.05);
     }
 }
  
@@ -637,39 +656,33 @@ button.text-only {
  }
 
  /* Drop Down UI */
-.dropdown-container {
-    position: relative;        
+ .dropdown-container {
+     position: relative;
 }
 .dropdown-btn {
-    transition: ease-in-out 0.15s;
     font-weight: 500;
     font-size: 1.1rem;
     height: 17px;
-    background-color: var(--headerElementBgColor);
-    border: var(--headerElementBorderVal);
-    box-shadow: var(--shadowVal);
+    background-color: var(--bentoBoxBgColor);
+    box-shadow: var(--bentoBoxShadow);
     display: flex;
     border-radius: 20px;
+    color: rgba(var(--textColor1), 0.75);
+    transition: 0.06s ease-in-out;
     padding: 4px 11px 4px 10px;
     @include center;
-    color: rgba(var(--textColor1), 0.75);
     @include flex-container(center, _);
 
     &:hover {
-        filter: brightness(1.1);
+        background-color: var(--hoverColor3);
     }
     &:active {
-        transform: scale(0.994);
+        transform: scale(0.99);
     }
 
     &--icon-text &__icon {
         margin-right: 15px;
         padding-left: 5px;
-    }
-    &--light-mode {
-        &:hover {
-            filter: brightness(0.98);
-        }
     }
     &--light-mode p  {
         font-weight: 600;
@@ -685,7 +698,9 @@ button.text-only {
         font-size: 1.2rem;
     }
     &__arrows {
-
+        i {
+            color: rgba(var(--textColor1), 0.5);
+        }
     }
     &__arrows-triangle-up {
         margin: -4px 0px -8px 0px;
@@ -698,27 +713,27 @@ button.text-only {
 }
 .dropdown-menu {
     display: block;
-    background-color: var(--secondaryBgColor);
-    width: 200px;
     max-height: 200px;
     position: relative;
     overflow: scroll;
     z-index: 1000;
-    padding: 4px 3px 8px 3px;
+    padding: 4px 3px 5px 3px;
     border-radius: 5px;
-    border: var(--borderVal);
-    box-shadow: var(--shadowVal);
-
+    background-color: var(--dropdownMenuBgColor);
+    border: var(--bentoBoxBorder);
+    box-shadow: var(--bentoBoxShadow);
+    width: auto;
+    min-width: 25px;
+    
     &__option {
         color: rgb(var(--textColor1));
-        font-family: 'Manrope';
         white-space: nowrap;
         border-radius: 4px;
         width: 100%;
         position: relative;
         display: block;
-        margin-bottom: 3px;
         cursor: pointer;
+        margin-bottom: 1px;
         
         &--selected {
             background-color: var(--hoverColor);
@@ -729,6 +744,9 @@ button.text-only {
                     display: block;
                 }
             }
+        }
+        &:last-child {
+            padding-bottom: 0px;
         }
         &:hover {
             background-color: var(--hoverColor);
@@ -760,23 +778,31 @@ button.text-only {
         display: block;
         .divider {
             margin: 2px 0px 4px 2px;
-            width: 95%;
-            opacity: 0.15;
+            width: 90%;
+            height: 1px;
+            margin-left: 5px;
+            background-color: rgba(var(--textColor1), 0.1);
         }
         button {
             width: 95%;
             padding: 5px 0px 5px 5px;
             display: flex;
             opacity: 0.8;
+            align-items: center;
+            font-size: 1.1rem;
+            
+            &:hover {
+                background-color: var(--hoverColor2);
+            }
+            span {
+                font-size: 1.5rem;
+                margin-right: 10px;
+            }
             p {
+                font-size: 1.2rem;
                 &:first-child {
                     margin: 0px 9px 0px 1px;
                 }
-            }
-            
-            &:hover {
-                background-color: var(--hoverColor);
-                opacity: 1;
             }
         }
     }
@@ -933,8 +959,9 @@ button.text-only {
 .grid-section {
     border-radius: 10px;
     padding: 15px 25px 17px 25px;
-    background-color: var(--modalFgColor);
-    border: var(--borderVal);
+    background-color: var(--bentoBoxBgColor);
+    border: var(--bentoBoxBorder);
+    box-shadow: var(--bentoBoxShadow);
 
     &--no-padding {
         padding: 0px;
@@ -963,7 +990,7 @@ button.text-only {
     @include abs-center;
     width: 100%;
     height: 100%;
-    border-radius: 7px;
+    border-radius: 6px;
     z-index: 0;
     background: rgba(91, 91, 91, 0.5);
     backdrop-filter: blur(80px);

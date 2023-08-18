@@ -9,6 +9,9 @@ export const load = () => {
     
 }
 
+/**
+ * TODO: when no internet connection / can't fetch, functionality below will not run
+ */
 export const _initGoogleClient = () => {
     const googleRes: any = {}
 

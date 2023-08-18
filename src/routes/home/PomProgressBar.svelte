@@ -57,7 +57,6 @@
     .pom-view {
         width: 100%;
         transition: ease-in-out 0.1s;
-        font-family: "Manrope";
         position: relative;
         
         &__pom-timer {

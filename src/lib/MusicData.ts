@@ -32,19 +32,30 @@ export class MusicData {
     initUser = async () => {
         const options = { method: 'GET', headers: { 'Content-Type': 'application/json' } }
 
-        return await fetch("http://localhost:3000/", options)
-                        .then((response: any) => response.json())
-                        .then(async (data: any) => {
-                                this.updateAccessToken(data.token)
-                                const isSuccessful = await this.initAppleMusic()
-                                return { ...data, isSuccessful }
-                        })
-                        .catch((error: any) => { error })
+        try {
+            const response = await fetch("http://localhost:3000/", options);
+            const data = await response.json();
+            let isSuccessful = false;
+            
+            this.updateAccessToken(data.token);
+            
+            try {
+                isSuccessful = await this.initAppleMusic();
+            } catch (appleMusicError) {
+                console.error("Error in initAppleMusic:", appleMusicError);
+                return appleMusicError
+            }
+    
+            return { ...data, isSuccessful };
+        } catch (fetchError) {
+            console.error("Fetch error:", fetchError);
+            return fetchError;
+        }
     }
 
     initAppleMusic = async () => {
         const devToken = this.getAccessToken();
-        if (devToken === "") return;
+        if (devToken === "") return false;
 
         const options = { developerToken: devToken, app: { name: 'Luciole', build: '1.1' } }
 
@@ -55,7 +66,8 @@ export class MusicData {
             await this.musicKit.configure(options);
             this.musicPlayerInstance = this.musicKit.getInstance()
             const authToken = await this.musicPlayerInstance.authorize()
-            return this.updateAppleAuthToken(authToken)
+            this.updateAppleAuthToken(authToken)
+            return true
         }
         
         return false;

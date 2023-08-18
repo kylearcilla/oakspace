@@ -32,16 +32,16 @@ export const loadTheme = () => {
     storedThemeData = localStorage.getItem("theme")
   } 
 
-  const themeItem: Theme = JSON.parse(storedThemeData!)
+  const themeItem = JSON.parse(storedThemeData!)
   colorThemeState.set({
     title: themeItem!.title,
     isDarkTheme: themeItem!.properties.isDark,
     themeToggleBtnIconColor: themeItem!.properties.iconToggleBtnBgColor,
-    hasTwin: themeItem!.properties.hasTwin,
+    fgColor1: themeItem!.properties.fgColor1,
     sectionTitle: themeItem!.sectionDetails.title,
     isMultiColor: themeItem!.properties.isMultiColor,
     isHeaderElementTextLight: themeItem!.properties.isHeaderElementTextLight,
-    twinTheme: themeItem!.twinTheme
+    twinTheme: themeItem!.twinTheme,
   })
   setRootColors(themeItem!.properties)
 }
@@ -62,10 +62,19 @@ export const setRootColors = (theme: ThemeData) => {
 /**
  * @return the current time as a string in the format "hh:mm AM/PM" for the user's local time
  */
-export function getCurrentTime(doUserHour12: boolean): string {
+export function getCurrentTime(doUserHour12: boolean = true): string {
   const now = new Date()
+  let res = now.toLocaleTimeString(undefined, { hour12: doUserHour12, hour: 'numeric', minute: 'numeric' })
+  if (res.startsWith('0')) return res.slice(1)
 
-    return now.toLocaleTimeString(undefined, { hour12: doUserHour12, hour: 'numeric', minute: 'numeric' })
+  return res
+}
+
+export  function isNightTime() {
+    const now = new Date();
+    const currentHour = now.getHours();
+  
+    return currentHour >= 18 || currentHour <= 5;
 }
 
 /**
@@ -147,4 +156,20 @@ export const formatTime = (milliseconds: number) => {
     result += minutes + "m "
   }
   return result.trim()
+}
+
+const getWeekNumber = (currentDate: Date) => {
+  const startDate = new Date(currentDate.getFullYear(), 0, 1) // starting point of counting weeks
+  const days = Math.floor(((currentDate as any) - (startDate as any)) / (24 * 60 * 60 * 1000)) // count difference in days (ms to days)
+  
+  const weekNumber = Math.ceil(days / 7) // days / 7
+  return weekNumber
+}
+
+const getCurrentWeek = () => {
+  const currentDate = new Date();
+  const firstDayOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 1));
+  const lastDayOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 7));
+
+  return `${firstDayOfWeek.getMonth() + 1}/${firstDayOfWeek.getDate()} - ${lastDayOfWeek.getMonth() + 1}/${lastDayOfWeek.getDate()}`;
 }

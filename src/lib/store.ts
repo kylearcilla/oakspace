@@ -1,8 +1,14 @@
 import { writable } from 'svelte/store';
 import type { MusicData } from './MusicData';
 import type { MusicPlayer } from './MusicPlayer';
-import colorThemes from './color-themes';
 import { defaultThemes } from './data-themes';
+
+export const homePanelData = writable<any>({
+    isNavMenuOpen: true,
+    isTaskMenuOpen: true,
+    isVideoViewVisible: true,
+    isMusicPlayerlarge: true,
+})
 
 /* General Authentication Stuff */
 export const googleData = writable<GoogleUserData>({
@@ -10,6 +16,8 @@ export const googleData = writable<GoogleUserData>({
     name: '',
     profileImgSrc: ''
 })
+
+export const sessionData = writable<Session | null>()
 
 /* YT Stuff */
 export const ytCredentials = writable<YoutubeUserCreds>({
@@ -55,5 +63,9 @@ export const colorThemeState = writable<any>({
     themeToggleBtnIconColor: "#3F3F3F",
     sectionTitle: "default",
     isMultiColor: false,
-    isHeaderElementTextLight: false
+    isHeaderElementTextLight: false,
+    twinTheme: {
+        sectionName: "defaultThemes",
+        index: 1
+    }
 })

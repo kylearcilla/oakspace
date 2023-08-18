@@ -5,56 +5,98 @@
 
     export let isTaskMenuExpanded: Boolean;
 
-    const hasActiveSession = false;
-    const sessionIDClicked = 1;
-    let flag = false;
-    const isEmpty = false;
-    let doUse12HourFormat = true;
-
-    let currentTime = getCurrentTime(doUse12HourFormat);
-    let currentDate = getCurrentDate();
-
     let isLightTheme = false
+    let selectedTabTitle = "Dashboard"
+
+    let isScrollableLeft = false;
+    let isScrollableRight = true;
+    let groupTabList: HTMLElement;
+
+    const SCROLL_STEP = 50
+    const HORIZONTAL_TAB_COROUSEL_RIGHT_OFFSET = 30
 
     colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
 
-    const prevSessionClickedHandler = () => {
-        flag = !flag;
+    /* Horizontal Reccomendation Category Tab List */
+    const handleShiftTabCategoryRight = () => groupTabList!.scrollLeft += SCROLL_STEP
+    const handleShiftTabCategoryLeft = () => groupTabList!.scrollLeft -= SCROLL_STEP
+
+    const handleScroll = (event: any) => {
+        const scrollLeft = event.target.scrollLeft;
+        const scrollWidth = event.target.scrollWidth;
+        const clientWidth = event.target.clientWidth; // container width
+
+        isScrollableLeft = scrollLeft > 0;
+        isScrollableRight = scrollLeft + clientWidth < scrollWidth - HORIZONTAL_TAB_COROUSEL_RIGHT_OFFSET;
+
+
     }
-    const newTaskButtonHandler = () => {
-        console.log("SDG");
+
+    // right arrow disappears after a window resize if false even user can scroll right
+    const handleResize = () => {
+        const scrollLeft = groupTabList.scrollLeft;
+        const scrollWidth = groupTabList.scrollWidth;
+        const clientWidth = groupTabList.clientWidth;
+
+        isScrollableRight = scrollLeft + clientWidth < scrollWidth;
     }
-    const handleNewTaskSubmit = (event: Event) => {
-        event.preventDefault();
-        console.log("SwefweweDG");
-    }
-    const changeTimeFormat = () => {
-        doUse12HourFormat = !doUse12HourFormat;
-        currentTime = getCurrentTime(doUse12HourFormat);
-    }
+
     onMount(() => {
-        const intervalId = setInterval(() => {
-            currentDate = getCurrentDate();
-            currentTime = getCurrentTime(doUse12HourFormat);
-        }, 1000);
-    
-        return () => clearInterval(intervalId);
+        const savedYtCreds = localStorage.getItem('yt-credentials');
+        const savedUserData = localStorage.getItem('yt-user-data');
+
+        handleResize()
+        window.addEventListener("resize", handleResize);
     });
 </script>
 
 <div class={`task-view ${!isTaskMenuExpanded ? "task-view--minimize" : ""}`}>
     <div class="task-view__header task-view__header--default"> 
         <img class="task-view__header-img" src="https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/287d3559037917.5a130f45904d5.gif" alt="">
-        <div class="flx flx--space-between">
             <h2>Hey, Kyle!</h2>
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <div class="task-view__header-today-time" on:click={() => changeTimeFormat()} >
-                <i class="fa-solid fa-moon"></i>
-                <p class={`paragraph-4 ${isLightTheme ? "paragraph-4--light-theme" : ""}`}>{currentTime}</p>
-            </div>
-        </div>
-        <p class="task-view__header-today-date subheading-1">{currentDate}</p>
+        <p class="task-view__header-text">Let's get shit done today!</p>
     </div>
+    <!-- Horizontal Tabs Carousel -->
+    <!-- <div class="task-view__tab-container">
+        {#if isScrollableLeft}
+            <div class="gradient-container gradient-container--left">
+                <button class="recs__tab-arrow recs__tab-arrow--left icon-btn"
+                        on:click={handleShiftTabCategoryLeft}
+                >
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+            </div>
+        {/if}
+        <ul class="task-view__tabs" bind:this={groupTabList} on:scroll={handleScroll}>
+            <li><div class="recs__tab-group-padding recs__tab-group-padding--left"></div></li>
+            <li>
+                <button 
+                    on:click={() => {selectedTabTitle = "Active Session"}}
+                    class={`tab-btn ${isLightTheme ? "tab-btn--light-mode" : ""} ${selectedTabTitle === "Active Session" ? "tab-btn--selected" : ""}`}
+                >
+                    Active Session
+                </button>
+            </li>
+            <li>
+                <button 
+                    on:click={() => {selectedTabTitle = "Dashboard"}}
+                    class={`tab-btn ${isLightTheme ? "tab-btn--light-mode" : ""} ${selectedTabTitle === "Dashboard" ? "tab-btn--selected" : ""}`}
+                >
+                    Dasboard
+                </button>
+            </li>
+            <li><div class="recs__tab-group-padding recs__tab-group-padding--right"></div></li>
+        </ul>
+        {#if isScrollableRight}
+            <div class="gradient-container gradient-container--right">
+                <button class="recs__tab-arrow recs__tab-arrow--right icon-btn"
+                        on:click={handleShiftTabCategoryRight}
+                >
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        {/if}
+    </div> -->
 </div>
 
 <style lang="scss">
@@ -63,9 +105,6 @@
         overflow: hidden;
         color: rgb(var(--textColor1));
         
-        &--minimize {
-            padding: 0px 25% 0px 17%;
-        }
         &__header {
             width: 100%;
             margin: 0px 0px 15px 0px;
@@ -103,22 +142,16 @@
                 @include elipses-overflow;
             }
         }
-        &__header-today-date {
+        &__header-text {
+            margin-top: 6px;
             padding: 0px 7%;
             opacity: 0.6;
         }
-        &__new-task-btn {
-            &--minimize {
-                border-radius: 100%;
-                width: 100%;
-                padding: 0px;
-                aspect-ratio: 1 / 1;
-            }
-            &--minimize > p {
-            }
-            &--minimize > p:first-child {
-                display: none;
-            }
+        &__tab-container {
+            padding-left: 7%;
+        }
+        &__tabs {
+            display: flex;
         }
     }
 

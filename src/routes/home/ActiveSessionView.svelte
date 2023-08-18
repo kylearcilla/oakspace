@@ -1,7 +1,7 @@
 <script lang="ts">
+	import PomProgressBar from "./PomProgressBar.svelte";
 	import { clickOutside } from "$lib/helper";
 	import { colorThemeState } from "$lib/store";
-	import PomProgressBar from "./PomProgressBar.svelte";
 
     let currentActiveSession = {
         title: "Math Homework",
@@ -50,25 +50,22 @@
     let isAllTodoChecked = true
     let completedTodosCount = 0
 
-	const handleCheckBoxClicked = (idx: number) => {
-        const todoClicked = todos[idx]
-        if (todoClicked.isComplete) {
-            completedTodosCount--
-        } else {
-            completedTodosCount++
-        }
-
-        todos[idx].isComplete = !todos[idx].isComplete
-	}
-
-    /* Editing Session */
     let isEditSessionModalOpen = false
     let newSessionTitle = ""
     let isNewSessionTitleValid = true
     let isTagListDropDownOpen = false
     let isNewTagModalOpen = false
 
+    let todoToEditIndex = -1
+    let todoToEditNewTitle = ""
+    let isTodoToEditTitleValid = true
+
+    let isMakingNewTask = false
+    let todoToEditTitle = ""
+    let isTodoTitleValid = false
     let isLightTheme = false
+
+    /* Editing Session */
     colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
 
     const handleEditSessionBtnClicked = () => {
@@ -121,10 +118,6 @@
 
 
     /* Editing a Todo */
-    let todoToEditIndex = -1
-    let todoToEditNewTitle = ""
-    let isTodoToEditTitleValid = true
-
     const handleTodoEditButtonClicked = (index: number) => {
         todoToEditIndex = index
         todoToEditNewTitle = todos[index].title
@@ -153,12 +146,18 @@
             isTodoToEditTitleValid = false
         }
     }
+    const handleCheckBoxClicked = (idx: number) => {
+        const todoClicked = todos[idx]
+        if (todoClicked.isComplete) {
+            completedTodosCount--
+        } else {
+            completedTodosCount++
+        }
+
+        todos[idx].isComplete = !todos[idx].isComplete
+	}
 
     /* Adding New Todo */
-    let isMakingNewTask = false
-    let todoToEditTitle = ""
-    let isTodoTitleValid = false
-
     const newTodoCancelBtnHandler = () => {
         todoToEditTitle = ""
         isTodoTitleValid = false
@@ -257,17 +256,15 @@
     </div>
 
     <!-- Active Session Component -->
-    <div class="active-session">
-        <div class="flx">
+    <div class={`active-session ${isLightTheme ? "" : "active-session--dark"}`}>
+        <!-- Left Side -->
+        <div class="active-session__top-container">
             <!-- Session Details Header -->
             <div class="active-session__header active-session__bento-box">
                 <div class="active-session__header-title">
                     <h4>{currentActiveSession.title}</h4>
-                    <div class="active-session__header-tag" style={`background-color: ${currentActiveSession.tag.color}`}>
-                        <p title={currentActiveSession.tag.title} >{currentActiveSession.tag.title[0].toUpperCase()}</p>
-                    </div>
                 </div>
-                <button on:click={handleEditSessionBtnClicked} class="active-session__header-edit-button">
+                <button on:click={handleEditSessionBtnClicked} class="active-session__header-edit-button settings-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20">
                         <g fill="none" stroke="currentColor" stroke-linecap="round" transform="translate(1 10)">
                             <circle cx="2" cy="0.8" r="1.2"></circle>
@@ -276,27 +273,55 @@
                         </g>
                     </svg>
                 </button>
-                <div class={`active-session__header-session-details ${isLightTheme ? "active-session__header-session-details--light-mode" : ""}`}>
-                    <span class="active-session-header-time-period">
-                        6:21 PM - 10:23 PM
-                    </span>
-                    <div class="divider divider--vertical">|</div>
-                    <span class="active-session-header-time-period">
-                        45 min × 3 min
-                    </span>
+                <div class="active-session__header-time-period">
+                    6:21 PM – 10:23 PM
+                </div>
+                <div class="active-session__header-session-details">
+                    <div class="active-session__header-session-details-data">
+                        <h6>Focus</h6>
+                        <span>45 min × 3</span>
+                    </div>
+                    <div class="active-session__header-session-details-data">
+                        <h6>Break</h6>
+                        <span>15 min × 2</span>
+                    </div>
+                </div>
+                <div class="active-session__header-session-bottom-details">
+                    <div class="active-session__header-total-time">
+                        <i class="fa-solid fa-clock"></i>
+                        <h2>4 hr 34 min</h2>
+                    </div>
+                    <div class="active-session__header-tag" style={`background-color: ${currentActiveSession.tag.color}`}>
+                        <p title={currentActiveSession.tag.title}>{currentActiveSession.tag.title}</p>
+                    </div>
                 </div>
             </div>
-            <!-- Pomodoro Timer -->
-            <div class="active-session__pom-view active-session__bento-box">
-                <div class="active-session__pom-view-bar-container">
-                    <PomProgressBar/>
+            <!-- Pomodoro Details -->
+            <div class="active-session__pom active-session__bento-box">
+                <div class="active-session__pom-header">
+                    <h4>Pomodoro Timer</h4>
+                    <h6>0 / 3</h6>
+                </div>
+                <div class="active-session__pom-details">
+                    <div>
+                        <div class="active-session__pom-timer">
+                            <h1>14:34</h1>
+                            <p>Focus Mode</p>
+                        </div>
+                        <div class="active-session__pom-btn-container">
+                            <button>
+                                <i class="fa-solid fa-pause"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
         <!-- Active Session Tasks -->
-        <div class="active-session__tasks active-session__bento-box">
-            <div class="active-session__tasks-subheader">
-                <h5 class="subheading-2">Session Subtasks</h5>
+        <div class={`active-session__tasks active-session__bento-box ${isLightTheme ? "active-session__tasks--light-mode" : ""}`}>
+            <div class="active-session__tasks-header">
+                <h4>Session Subtasks</h4>
                 <p>
                     {#if todos.length === 0}
                         No substasks
@@ -308,39 +333,36 @@
             <!-- To Do List -->
             <ul class="active-session__tasks-todo-list">
                 {#each todos as todo, idx}
-                <!-- To Do List Item -->
-                <li 
-                    class={`active-session-todo 
-                             ${todoToEditIndex === idx ? "active-session-todo--editing" : ""}
-                             ${isLightTheme ? "active-session-todo--light-mode" : ""}
-                          `}
-                >
-                        <!-- Check Box -->
-                        {#if isMakingNewTask || idx != todos.length - 1}
-                            {#if todo.isComplete && idx + 1 < todos.length && todos[idx + 1].isComplete} 
-                                <div class="active-session-todo__line active-session-todo__solid-line active-session-todo__solid-line"></div>
-                            {:else}
-                                <div class="active-session-todo__line active-session-todo__dotted-line"></div>
-                            {/if}
-                        {/if}
-                        <button  on:click={() => handleCheckBoxClicked(idx)} class={`active-session-todo__check-box ${todo.isComplete ? "active-session-todo__check-box--finished" : ""}`}>
-                            <i class="fa-solid fa-check"></i>
-                        </button> 
-                        <!-- Content -->
-                        <div class="active-session-todo__right-container">
-                            {#if idx === todoToEditIndex}
-                                <form>
-                                    <input
-                                        class="active-session-todo__edit-todo-input"
-                                        placeholder="New Subtask Title" 
-                                        on:input={editTextInputHandler}
-                                        bind:value={todoToEditNewTitle}
-                                    />
-                                </form>
-                            {:else}
-                                {#if todoToEditIndex < 0 || idx != todoToEditIndex + 1} <!-- Do not remember below todo's top divider line -->
-                                    <div class="divider divider--thin"></div>
+                    <!-- To Do List Item -->
+                    <li 
+                        class={`active-session-todo 
+                                    ${todoToEditIndex === idx ? "active-session-todo--editing" : ""}
+                                    ${isLightTheme ? "active-session-todo--light-mode" : ""}
+                              `}
+                    >
+                            <!-- Todo Check Box -->
+                            {#if idx != todos.length - 1}
+                                {#if todo.isComplete && idx + 1 < todos.length && todos[idx + 1].isComplete} 
+                                    <div class="active-session-todo__line active-session-todo__solid-line active-session-todo__solid-line"></div>
+                                {:else}
+                                    <div class="active-session-todo__line active-session-todo__dotted-line"></div>
                                 {/if}
+                            {/if}
+                            <button  on:click={() => handleCheckBoxClicked(idx)} class={`active-session-todo__check-box ${todo.isComplete ? "active-session-todo__check-box--finished" : ""}`}>
+                                <i class="fa-solid fa-check"></i>
+                            </button> 
+                            <!-- Todo Content -->
+                            <div class="active-session-todo__right-container">
+                                {#if idx === todoToEditIndex}
+                                    <form>
+                                        <input
+                                            class="active-session-todo__edit-todo-input"
+                                            placeholder="New Subtask Title" 
+                                            on:input={editTextInputHandler}
+                                            bind:value={todoToEditNewTitle}
+                                        />
+                                    </form>
+                                {:else}
                                 <p class={`active-session-todo__title ${todo.isComplete ? "active-session-todo__title--finished" : ""}`}>
                                     {#if todo.isComplete} 
                                         <span class="strike">{todo.title}</span>
@@ -348,96 +370,606 @@
                                         {todo.title}
                                     {/if}
                                 </p>
+                                    {#if (todos.length > 1 && idx != todos.length - 1) && idx != todoToEditIndex - 1}
+                                        <div class="divider divider--thin"></div>
+                                    {/if}
+                                {/if}
+                            </div>
+                            {#if todoToEditIndex < 0}
+                                <button on:click={() => handleTodoEditButtonClicked(idx)} class="active-session-todo__edit-button flx">
+                                    <div class="flx flx--algn-center">
+                                        <i class="fa-solid fa-pencil"></i>
+                                        <span>Edit</span>
+                                    </div>
+                                </button>
                             {/if}
-                        </div>
-                        {#if todoToEditIndex < 0}
-                            <button on:click={() => handleTodoEditButtonClicked(idx)} class="active-session-todo__edit-button flx">
-                                <div class="flx flx--algn-center">
-                                    <i class="fa-solid fa-pencil"></i>
-                                    <span>Edit</span>
+                            {#if idx === todoToEditIndex}
+                                <div class="active-session-todo__edit-btn-container">
+                                    <button 
+                                        class="active-session-todo__delete-btn text-only"
+                                        on:click={() => handleEditTodoDeleteBtnClicked(idx)}>
+                                            Delete
+                                    </button>
+                                    <button
+                                        disabled={!isTodoToEditTitleValid} 
+                                        on:click={handleEditTodoDoneBtnClicked}
+                                        class="active-session-todo__done-btn text-only">
+                                            Done
+                                    </button>
                                 </div>
-                            </button>
-                        {/if}
-                        {#if idx === todoToEditIndex}
-                            <div class="active-session-todo__edit-btn-container">
-                                <button 
-                                    class="active-session-todo__delete-btn text-only"
-                                    on:click={() => handleEditTodoDeleteBtnClicked(idx)}>
-                                        Delete
-                                </button>
-                                <button
-                                    disabled={!isTodoToEditTitleValid} 
-                                    on:click={handleEditTodoDoneBtnClicked}
-                                    class="active-session-todo__done-btn text-only">
-                                        Done
-                                </button>
-                            </div>
-                        {/if}
-                    </li>
+                            {/if}
+                        </li>
                 {/each}
-                <!-- New Task Button -->
-                {#if isMakingNewTask}
-                    <li class={`active-session-todo ${isLightTheme ? "active-session-todo--light-mode" : ""}`}>
-                        <button disabled class="active-session-todo__check-box active-session-todo__check-box--edit-mode">
-                            <i class="fa-solid fa-check"></i>
-                        </button>
-                        <div class="active-session-todo__right-container">
-                            <div class="divider divider--thin"></div>
-                                <!-- <p class="session-todo__text">Add New Task</p> -->
-                                <form>
-                                    <input 
-                                        class="active-session-todo__new-todo-input paragraph-2"
-                                        placeholder="New Subtask" 
-                                        on:input={newTodoTextInputHandler}
-                                        bind:value={todoToEditTitle}
-                                    />
-                                </form>
-                            <div class="active-session-todo__new-todo-btn-container">
-                                <button 
-                                    disabled={!isTodoTitleValid} 
-                                    class="active-session-todo__add-btn unfill unfill--oval"
-                                    on:click={newTodoAddBtnHandler}>
-                                        Add
-                                </button>
-                                <button 
-                                    on:click={newTodoCancelBtnHandler}
-                                    class="active-session-todo__cancel-btn unfill unfill--oval">
-                                        Cancel
-                                </button>
-                            </div>
-                        </div>
-                    </li>
-                {:else}
-                    <button class="active-session__tasks-new-task-btn paragraph-2" on:click={() => isMakingNewTask = true}>
-                        <span>+</span> Add New Task
-                    </button>
-                {/if}
             </ul>
-            {#if todos.length > 0 && completedTodosCount === todos.length}
-                <div class="flx flx--right">
-                    <button class="active-session__tasks-finish-session-btn unfill unfill--oval">
-                        Finish Session <span>👏</span>
-                    </button>
+            <!-- New Task Button -->
+            {#if isMakingNewTask}
+                <div class="active-session__tasks-new-todo-input-container">
+                    <form>
+                        <input 
+                            class="active-session__tasks-new-todo-input"
+                            placeholder="New Subtask" 
+                            on:input={newTodoTextInputHandler}
+                            bind:value={todoToEditTitle}
+                        />
+                    </form>
+                    <div class="active-session__tasks-new-todo-btn-container">
+                        <button 
+                            disabled={!isTodoTitleValid} 
+                            class="active-session__tasks-add-btn unfill unfill--oval"
+                            on:click={newTodoAddBtnHandler}>
+                                Add
+                        </button>
+                        <button 
+                            on:click={newTodoCancelBtnHandler}
+                            class="active-session__tasks-cancel-btn unfill unfill--oval">
+                                Cancel
+                        </button>
+                    </div>
                 </div>
+            {:else}
+                <button class="active-session__tasks-new-task-btn" on:click={() => isMakingNewTask = true}>
+                    <span>+</span> Add New Task
+                </button>
+            {/if}
+            {#if !isMakingNewTask && (todos.length > 0 && completedTodosCount === todos.length)}
+                <button class="active-session__tasks-finish-session-btn unfill unfill--oval">
+                    Finish Session <span>👏</span>
+                </button>
             {/if}
             </div>
         </div>
 </div>
 
 <style lang="scss">
-    $bento-box-padding: 6px;
+    $bento-box-padding: 8px;
 
     .active-session-container {
         position: relative;
         color: rgb(var(--textColor1));
-        margin: 20px 0px 100px 0px;
-        h1 {
-            font-size: 1.4rem;
+    }
+    
+    /* Actual Active Session Component */
+    .active-session {
+        &--dark &__bento-box h4 {
+            color: rgba(var(--textColor1), 1);
+            font-weight: 600;
+        }
+        &--dark &__header-time-period {
+            font-weight: 300;
+        }
+        &--dark &__header-session-details-data {
+            h6 {
+                font-weight: 500;
+            }
+            span {
+                font-weight: 300;
+            }
+        }
+        &--dark &__pom-timer h1 {
+            font-weight: 400;
+        }
+        &--dark &__pom-btn-container button {
+            background-color: var(--hoverColor) !important;
+        }
+        &--dark &__pom-btn-container button {
+            background-color: var(--hoverColor) !important;
+        }
+
+        &__bento-box {
+            position: relative;
+            background-color: var(--bentoBoxBgColor);
+            border: var(--bentoBoxBorder);
+            box-shadow: var(--bentoBoxShadow);
+            padding: 11px 15px 20px 15px;
+            border-radius: 15px;
+            overflow: hidden;
+
+            h4 {
+                font-size: 1.25rem;
+                color: rgba(var(--textColor1), 0.85);
+            }
+        }
+
+        &__top-container {
+            width: 100%;
+            display: flex;
+            margin-bottom: $bento-box-padding;
+            
+            @include sm(max-width) {
+                display: block;
+            }
+        }
+        
+        /* Header */
+        &__header {
+            margin-right: $bento-box-padding;
+            width: 60%;
+            height: 130px;
+
+            @include sm(max-width) {
+                width: 100%;
+                margin-bottom: $bento-box-padding;
+            }
+        }
+        &__header-title {
+            display: flex;
             margin-bottom: 2px;
+            width: 80%;
+            h4 {
+                font-size: 1.4rem;
+                max-width: 145px;
+                margin-right: 8px;
+                @include elipses-overflow;
+            }
+        }
+        &__header-time-period {
+            font-size: 1.1rem;
+            font-weight: 400;
+            white-space: nowrap;
+            color: rgba(var(--textColor1), 0.5);
+        }
+        &__header-session-details {
+            margin: 13px 0px 12px 0px;
+        }
+        &__header-session-details-data {
+            @include flex-container(center, space-between);
+            h6 {
+                color: rgba(var(--textColor1), 0.65);
+                font-size: 1.09rem;
+            }
+            span {
+                color: rgba(var(--textColor1), 0.65);
+                font-size: 1rem;
+                font-weight: 400;
+            }
+        }
+        &__header-session-bottom-details {
+            @include flex-container(center, space-between);
+        }
+        &__header-total-time {
+            @include flex-container(center, space-between);
+            color: rgba(var(--textColor1), 0.7);
+            i {
+                margin-right: 6px;
+                font-size: 1rem;
+            }
+            h2 {
+                font-size: 1.2rem;
+            }
+        }
+        &__header-tag {
+            color: white;
+            border-radius: 20px;
+            @include center;
+            padding: 2px 12px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            p {
+                @include elipses-overflow;
+            }
+        }
+        &__header-edit-button {
+            @include pos-abs-top-right-corner(5px, 7px);
+            svg {
+                transition: 0.15s ease-in-out;
+                color: rgba(var(--textColor1), 0.4);
+            }
+            &:hover {
+                background-color: var(--secondaryBgColor);
+                svg {
+                    color: rgba(var(--textColor1), 0.7);
+                }
+            }
+            &:active {
+                transform: scale(0.92);
+            }
+        }
+
+        /* Pomodoro Component */
+        &__pom {
+            height: 130px;
+            width: 40%;
+
+            @include sm(max-width) {
+                width: 100%;
+                margin-bottom: $bento-box-padding;
+            }
+        }
+        &__pom-header {
+            @include flex-container(baseline, space-between);
+            h6 {
+                font-weight: 600;
+                font-size: 1.1rem;
+                color: rgba(var(--textColor1), 0.6);
+            }
+        }
+        &__pom-timer {
+            text-align: center;
+            margin-top: 3px;
+            h1 {
+                font-size: 4.3rem;
+                font-weight: 500;
+                color: rgba(var(--textColor1), 0.85);
+            }
+            p {
+                margin-top: -3px;
+                font-weight: 500;
+                font-size: 1.15rem;
+                color: rgba(var(--textColor1), 0.55);
+            }
+        }
+        &__pom-btn-container {
+            @include pos-abs-bottom-right-corner(8px, 12px);
+            button {
+                @include circle(24px);
+                color: rgba(var(--textColor1), 0.8);
+                background-color: var(--hoverColor2);
+                filter: brightness(1.1);
+                box-shadow: 0px 3px 4px 0px rgba(0, 0, 0, 0.04);
+                margin-right: 4px;
+                transition: 0.15s ease-in-out;
+                position: relative;
+
+                &:active {
+                    transform: scale(0.95);
+                }
+
+                i  {
+                    @include abs-center;
+                    font-size: 0.85rem;
+                }
+            }
+        }
+
+        /* Tasks Component */
+        &__tasks {
+            height: 100%;
+            width: 100%;
+            padding: 12px 20px 10px 20px;
+        }
+        &__tasks-header {
+            @include flex-container(center, space-between);
+            h4 {
+                margin-bottom: 5px;
+            }
+            p {
+                opacity: 0.6;
+            }
+        }
+        &__tasks-todo-list {
+            overflow-y: scroll;
+            overflow-x: hidden;
+            height: 70%;
+            min-height: 100px;
+            max-height: 200px;
+            padding-top: 4px;
+        }
+        &__tasks-new-task-btn {
+            transition: 0.15s ease-in-out;
+            opacity: 0.35;
+            padding: 10px 10px 18px 0px;
+            margin: -5px 0px -5px 3px;
+            font-size: 1.2rem;
+            @include flex-container(center, center);
+
+            span {
+                font-size: 1.3rem;
+                margin-right: 18px;
+            }
+            &:hover {
+                opacity: 1;
+            }
+            &:active {
+                opacity: 1;
+            }
+        }
+        &__tasks-new-todo-input-container {
+            margin: -2px 0px 0px 3px;
+            @include flex-container(center, space-between);
+
+            form {
+                width: 100%;
+            }
+        }
+        &__tasks-new-todo-input {
+            cursor: text;
+            width: 90%;
+            font-size: 1.15rem;
+            font-weight: 500;
+            transition: 0.1s ease-in-out;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(var(--fgColor1), 0.3);
+            
+            &::placeholder {
+                opacity: 0.5;
+            }
+            &:focus {
+                border-bottom: 1px solid rgba(var(--fgColor1), 0.7);
+            }
+            &:focus::placeholder {
+                opacity: 0.6;
+            }
+        }
+        &__tasks-new-todo-btn-container {
+            margin: 8px 0px 0px -5px;
+            display: flex;
+            button {
+                @include center;
+                color: rgb(var(--fgColor1));
+                border-color: rgb(var(--fgColor1));
+                padding: 6px 12px 6px 12px;
+
+                &:hover {
+                    background: rgb(var(--fgColor1));
+                }
+                &:first-child {
+                    margin-right: 5px;
+                }
+            }
+        }
+        &__tasks-add-btn {
+            &:disabled {
+                opacity: 0.5;
+            }
+            &:disabled {
+                &:hover {
+                    background: none;
+                    color: rgb(var(--fgColor1));
+                }
+            }
+        }
+        &__tasks-finish-session-btn {
+            color: rgb(var(--fgColor1));
+            border-color: rgb(var(--fgColor1));
+            @include pos-abs-bottom-right-corner(20px, 13px);
+
+            span {
+                margin-left: 5px;
+            }
+
+            &:hover {
+                background-color: rgb(var(--fgColor1));
+                color: var(--secondaryBgColor);
+            }
         }
     }
+
+    /* Todo Component in Subtasks Section */
+    .active-session-todo {
+        position: relative;
+        @include flex-container(center, _);
+
+        .divider {
+            margin: 0px;
+            background-color: rgba(var(--textColor1), 0.06);
+            height: 0.5px;
+        }
+
+        &--editing > &__right-container {
+            border: 1px solid rgba(var(--textColor1), 0.1);
+            border-radius: 8px;
+            padding: 9px 0px 9px 2px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: rgba(var(--textColor1), 0.7);
+        }
+        &--editing > .divider {
+            display: none;
+        }
+        &--editing > form {
+            display: block;
+        }
+
+        &--light-mode .divider {
+            background-color: rgba(var(--textColor1), 0.16);
+        }
+        &--light-mode &__check-box {
+            border: 2px solid rgb(var(--fgColor1));
+        }
+        &--light-mode &__dotted-line {
+            border-left: 2px dotted rgb(var(--fgColor1));
+            left: 8px;
+        }
+        &--light-mode &__solid-line {
+            
+            &::after {
+                border-left: 1.2px solid rgb(var(--fgColor1));
+                left: 8px;
+            }
+        }
+        &--light-mode &__title {
+            font-weight: 500;
+        }
+        &:first-child {
+            margin-top: -4px;
+        }
+        &:hover > &__edit-button { 
+            transition: 0.2s ease-in-out;
+            visibility: visible;
+            opacity: 0.5;
+        }
+        
+        /* Check Box */
+        &__check-box {
+            @include circle(13.5px);
+            @include flex-container(center, center);
+            transition: 0.1s ease-in-out;
+            position: relative;
+            margin-right: 8.5px;
+            border: 1.5px solid rgb(var(--fgColor1));
+            color: rgb(var(--textColor2));
+
+            i {
+                margin-top: 1px;
+                font-size: 0.8rem;
+                display: none;
+            }
+            &:hover {
+                background-color: rgba(var(--fgColor1), 0.2);
+            }
+            &:active {
+                transform: scale(0.9);
+            }
+            &--finished > i {
+                display: block;
+            }
+            &--finished {
+                background-color: rgb(var(--fgColor1));
+                &:hover {
+                    background-color: rgb(var(--fgColor1));
+                }
+                // &:hover > i:before {
+                //     font-size: 0.9rem;
+                //     content: "\f00d";
+                // }
+            }
+            &--edit-mode {
+                margin-top: -40px;
+                &:hover {
+                    background: none;
+                }
+            }
+        }
+        &__dotted-line {
+            position: absolute;
+            width: 1px;
+            transition: 0.2s ease-in-out;
+            border-left: 1.45px dotted rgb(var(--fgColor1));
+            bottom: -10px;
+            height: 21px;
+            left: 7.7px;
+        }
+        &__solid-line {
+            position: relative; 
+
+            @keyframes progress-line {
+                0%   { height : 0; }
+                100% { height: 17px; }
+            }
+
+            &::after {
+                content: ' ';
+                position: absolute;
+                bottom: -30px;
+                left: 7.3px;
+                height: 25px;
+                border-left: 1.2px solid rgb(var(--fgColor1));
+                animation-name: progress-line;
+                animation-duration: 0.1s;
+                animation-timing-function: ease-in-out;
+                animation-iteration-count: 1;
+                animation-fill-mode: backwards; 
+            }
+        }
+
+        /* Todo Content Stuff */
+        &__right-container {
+            padding-left: 7px; 
+            width: 100%;
+        }
+        &__title {
+            margin: 9px 0px;
+            padding: 2px 0px;
+            transition: 0.13s ease-in-out;
+            opacity: 0.7;
+            font-size: 1.2rem;
+            
+            .strike {
+                position: relative; 
+            }
+            @keyframes strike {
+                0%   { width : 0; }
+                100% { width: 100%; }
+            }
+            .strike::after {
+                content: ' ';
+                position: absolute;
+                top: 50%;
+                left: 0;
+                width: 100%;
+                height: 1px;
+                background: rgb(var(--textColor1));
+                animation-name: strike;
+                animation-duration: 0.13s;
+                animation-timing-function: ease-in-out;
+                animation-iteration-count: 1;
+                animation-fill-mode: forwards; 
+            }
+            &--finished {
+                opacity: 0.2;
+            }
+        }
+        &__edit-button {
+            transition: 0.01s ease-in-out;
+            visibility: hidden;
+            opacity: 0;
+            padding: 0px 10px;
+            margin: 0px;
+
+            @include pos-abs-top-right-corner(13px, -10px);
+
+            &:hover {
+                opacity: 1 !important;
+            }
+            span {
+                font-size: 1.05rem;
+                margin-left: 5px;
+            }
+        }
+        &__edit-btn-container {
+            @include pos-abs-bottom-right-corner(12px, 10px);
+            button {
+                font-size: 1.07rem;
+                transition: 0.01s ease-in-out;
+            }
+        }
+        &__delete-btn {
+            margin-right: 10px;
+            color: rgba(227, 145, 132, 0.7);
+        }
+        &__done-btn {
+            color: rgba(var(--textColor1), 0.7);
+            &:hover {
+                color: rgba(var(--textColor1), 1);
+            }
+            &:disabled {
+                opacity: 0.3;
+            }
+        }
+        &__edit-todo-input {
+            cursor: text;
+            width: 90%;
+            margin-left: 6px;
+
+            &::placeholder {
+                opacity: 0.5;
+            }
+        }
+    }
+
     /* Edit Active Session Modal */
     .active-session-modal {
+        background-color: var(--modalBgColor);
         height: 215px;
         width: 250px;
 
@@ -470,8 +1002,8 @@
             }
             &:focus {
                 color: rgba(var(--textColor1), 0.7);
-                box-shadow: -1px 4px 7px -6px rgba(var(--fgColor2), 0.4);
-                border-bottom: 1px solid rgba(var(--fgColor2), 1);
+                box-shadow: -1px 4px 7px -6px rgba(var(--fgColor1), 0.4);
+                border-bottom: 1px solid rgba(var(--fgColor1), 1);
             }
         }
         &__buttons-container {
@@ -488,6 +1020,7 @@
             margin-right: 5px;
         }
     }
+
     .tag-dropdown {
         @include flex-container(center, _);
         &__dropdown-btn-tag {
@@ -505,399 +1038,6 @@
                 span {
                     margin-right: 3px;
                 }
-            }
-        }
-    }
-    
-    /* Actual Active Session Component */
-    .active-session {
-        min-height: 160px;
-        position: relative;
-        margin-top: 10px;
-        background-color: var(--secondaryBgColor);
-        border-radius: 22px;
-        border: var(--borderVal);
-        box-shadow: var(--shadowVal);
-        padding: 12px 15px 15px 15px;
-
-        &__bento-box {
-            position: relative;
-            background-color: var(--tertiaryBgColor);
-            border: var(--activeSessionItemBorderVal);
-            box-shadow: var(--activeSessionItemShadowVal);
-            padding: 10px 25px 14px 15px;
-            border-radius: 15px;
-            overflow: hidden;
-        }
-
-        /* Header */
-        &__header {
-            width: 35%;
-            margin-right: $bento-box-padding;
-        }
-        &__header-title {
-            display: flex;
-            margin-bottom: 2px;
-            width: 80%;
-            h4 {
-                max-width: 145px;
-                margin-right: 8px;
-                @include elipses-overflow;
-            }
-        }
-        &__header-tag {
-            color: white;
-            border-radius: 20px;
-            @include center;
-            @include circle(12px);
-            margin: 4px 0px 4px 0px;
-            font-size: 8px;
-            max-width: 70px;
-            font-family: "Apercu";
-            p {
-                @include elipses-overflow;
-            }
-        }
-        &__header-session-details {
-            color: rgba(var(--textColor1), 0.5);
-            @include flex-container(center, _);
-            font-weight: 300;
-            width: 100%;
-
-            &--light-mode span {
-                font-weight: 500;
-            }
-
-            span {
-                font-size: 0.95rem;
-                white-space: nowrap;
-            }
-            .divider {
-                margin: 0px 8px !important;
-                background-color: rgba(var(--textColor1), 0.3);
-                height: 7px !important;
-                width: 0.4px;
-                color: transparent;  // added "|", will disappear when squeezed
-            }
-        }
-        &__header-edit-button {
-            padding: 0px 5px;
-            border-radius: 5px;
-            @include pos-abs-top-right-corner(8px, 8px);
-            
-            svg {
-                transition: 0.15s ease-in-out;
-                color: rgba(var(--textColor1), 0.25);
-            }
-            &:hover {
-                background-color: var(--secondaryBgColor);
-                svg {
-                    color: rgba(var(--textColor1), 0.7);
-                }
-            }
-            &:active {
-                transform: scale(0.92);
-            }
-        }
-
-        /* Pomodoro View */
-        &__pom-view {
-            width: 65%;
-            position: relative;
-        }
-        &__pom-view-bar-container {
-            width: 85%;
-            margin-top: -3px;
-            @include abs-center;
-        }
-
-        /* Tasks Component */
-        &__tasks {
-            margin-top: 9px;
-        }
-        &__tasks-subheader {
-            @include flex-container(center, space-between);
-            margin-bottom: 12px;
-            h5 {
-                opacity: 0.85;
-            }
-            p {
-                opacity: 0.6;
-            }
-        }
-        &__tasks-todo-list {
-            margin-bottom: 0px;
-        }
-        &__tasks-new-task-btn {
-            transition: 0.15s ease-in-out;
-            opacity: 0.35;
-            padding: 10px 10px 10px 0px;
-            margin: -5px 0px 0px 4px;
-            @include flex-container(center, center);
-
-            span {
-                font-size: 1.3rem;
-                margin-right: 18px;
-            }
-            &:hover {
-                opacity: 1;
-            }
-            &:active {
-                opacity: 1;
-            }
-        }
-        &__tasks-finish-session-btn {
-            color: rgb(var(--fgColor2));
-            border-color: rgb(var(--fgColor2));
-
-            span {
-                margin-left: 5px;
-            }
-
-            &:hover {
-                background-color: rgb(var(--fgColor2));
-                color: var(--secondaryBgColor);
-            }
-        }
-    }
-
-    /* Todo Component in Subtasks Section */
-    .active-session-todo {
-        @include flex-container(center, _);
-        position: relative;
-        cursor: pointer;
-
-        &--editing > &__right-container {
-            border: 0.3px solid rgba(var(--textColor1), 0.1);
-            border-radius: 5px;
-            padding: 8px 0px 8px 0px;
-        }
-        &--editing > .divider {
-            display: none;
-        }
-        &--editing > form {
-            display: block;
-        }
-
-        &--light-mode &__check-box {
-            border: 1.5px solid rgb(var(--fgColor2));
-        }
-        &--light-mode &__dotted-line {
-            border-left: 1.5px dotted rgb(var(--fgColor2));
-            left: 7px;
-        }
-        &--light-mode &__solid-line {
-            
-            &::after {
-                border-left: 1.2px solid rgb(var(--fgColor2));
-                left: 7px;
-            }
-        }
-        &--light-mode &__title {
-            font-weight: 500;
-        }
-
-        .divider {
-            margin: 0px;
-        }
-
-        &:hover > &__edit-button { 
-            transition: 0.2s ease-in-out;
-            visibility: visible;
-            opacity: 0.5;
-        }
-        
-        /* Check Box */
-        &__check-box {
-            @include circle(12px);
-            @include flex-container(center, center);
-            transition: 0.1s ease-in-out;
-            position: relative;
-            margin-right: 8.5px;
-            border: 1px solid rgb(var(--fgColor2));
-            color: rgb(var(--textColor2));
-
-            i {
-                font-size: 0.7rem;
-                display: none;
-            }
-            &:hover {
-                background-color: rgba(var(--fgColor2), 0.2);
-            }
-            &:active {
-                transform: scale(0.9);
-            }
-            &--finished > i {
-                display: block;
-            }
-            &--finished {
-                background-color: rgb(var(--fgColor2));
-                &:hover {
-                    background-color: rgb(var(--fgColor2));
-                }
-                // &:hover > i:before {
-                //     font-size: 0.9rem;
-                //     content: "\f00d";
-                // }
-            }
-            &--edit-mode {
-                margin-top: -40px;
-                &:hover {
-                    background: none;
-                }
-            }
-        }
-        &__dotted-line {
-            position: absolute;
-            width: 1px;
-            left: 6px;
-            transition: 0.2s ease-in-out;
-            border-left: 1.45px dotted rgb(var(--fgColor2));
-            bottom: -9px;
-            height: 19px;
-            left: 6.5px;
-        }
-        &__solid-line {
-            position: relative; 
-
-            @keyframes progress-line {
-                0%   { height : 0; }
-                100% { height: 17px; }
-            }
-
-            &::after {
-                content: ' ';
-                position: absolute;
-                bottom: -25px;
-                left: 6.5px;
-                height: 22px;
-                border-left: 1.2px solid rgb(var(--fgColor2));
-                animation-name: progress-line;
-                animation-duration: 0.1s;
-                animation-timing-function: ease-in-out;
-                animation-iteration-count: 1;
-                animation-fill-mode: backwards; 
-            }
-        }
-
-        /* Todo Content Stuff */
-        &__right-container {
-            padding-left: 7px; 
-            width: 100%;
-        }
-        &__title {
-            margin: 9px 0px;
-            transition: 0.13s ease-in-out;
-            opacity: 0.7;
-            
-            .strike {
-                position: relative; 
-            }
-            @keyframes strike {
-                0%   { width : 0; }
-                100% { width: 100%; }
-            }
-            .strike::after {
-                content: ' ';
-                position: absolute;
-                top: 50%;
-                left: 0;
-                width: 100%;
-                height: 1px;
-                background: rgb(var(--textColor1));
-                animation-name: strike;
-                animation-duration: 0.13s;
-                animation-timing-function: ease-in-out;
-                animation-iteration-count: 1;
-                animation-fill-mode: forwards; 
-            }
-            &--finished {
-                opacity: 0.2;
-            }
-        }
-        &__edit-btn-container {
-            @include pos-abs-bottom-right-corner(15px, 10px);
-            button {
-                transition: 0.01s ease-in-out;
-            }
-        }
-        &__delete-btn {
-            margin-right: 10px;
-            color: rgba(227, 145, 132, 0.7);
-        }
-        &__done-btn {
-            color: rgba(var(--textColor1), 0.7);
-            &:hover {
-                color: rgba(var(--textColor1), 1);
-            }
-            &:disabled {
-                opacity: 0.3;
-            }
-        }
-        &__edit-todo-input {
-            cursor: text;
-            width: 90%;
-            margin-left: 6px;
-
-            &::placeholder {
-                opacity: 0.5;
-            }
-        }
-        &__new-todo-input {
-            margin: 8px 0px 5px 0px;
-            cursor: text;
-            width: 50%;
-            font-size: 1.1rem;
-            font-weight: 400;
-
-            &::placeholder {
-                opacity: 0.5;
-            }
-        }
-        &__new-todo-btn-container {
-            display: flex;
-            margin: 8px 0px 10px -5px;
-            button {
-                @include center;
-                color: rgb(var(--fgColor2));
-                border-color: rgb(var(--fgColor2));
-                padding: 6px 12px 6px 12px;
-
-                &:hover {
-                    background: rgb(var(--fgColor2));
-                }
-                &:first-child {
-                    margin-right: 5px;
-                }
-            }
-        }
-        &__add-btn {
-            &:disabled {
-                opacity: 0.5;
-            }
-            &:disabled {
-                &:hover {
-                    background: none;
-                    color: rgb(var(--fgColor2));
-                }
-            }
-        }
-        &__cancel-btn {
-        }
-        &__edit-button {
-            transition: 0.01s ease-in-out;
-            visibility: hidden;
-            opacity: 0;
-            padding: 0px 10px;
-            margin: 0px;
-
-            @include pos-abs-top-right-corner(8px, -10px);
-
-            &:hover {
-                opacity: 1 !important;
-            }
-            span {
-                margin-left: 5px;
             }
         }
     }

@@ -282,7 +282,7 @@ const ytRecsPlaylists = [
             {
                 title: "Walking Tour",
                 playlistThumbnailImgSrc: "https://i.ytimg.com/vi/EuNguMnSKnA/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLChHTKsXAKbartzBAC7F3XakBbNsQ",
-                playlistDescription: "Hello World",
+                playlistDescription: "Tour cities with architectural experts, exploring their designs and urban inspirations.",
                 playlistId: "PLpi4YdMCC439LJOnJyIgLR98zCazUGNwq",
                 channelTitle: "Architectural Digest",
                 channelImgSrc: "https://yt3.googleusercontent.com/ytc/AGIKgqMlG0_fNgw1y0MdSRE6rnc9lNUsK_3Igg_1nu7Fh-4=s176-c-k-c0x00ffffff-no-rj",
@@ -292,7 +292,7 @@ const ytRecsPlaylists = [
             {
                 title: "An Architect's Own Home",
                 playlistThumbnailImgSrc: "https://i.ytimg.com/vi/J4_rLK7F4fw/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLA7rMhQ_puQrsh8sB2Cl_iiFsoA_w",
-                playlistDescription: "Hello World",
+                playlistDescription: "Step inside architects' abodes for design revelations and personal inspirations.",
                 playlistId: "PLirM94SQW73BAPwA09CDbGd6RRMK4SJpp",
                 channelTitle: "The Local Project",
                 channelImgSrc: "https://yt3.googleusercontent.com/NhCDTmydHHsvQKhwoknxIGAztUNtyi9CQg4HI3gt70Z_9f3BD9etb_uB4a5V2AhWJ2B6Tl1awbE=s176-c-k-c0x00ffffff-no-rj",
@@ -302,7 +302,7 @@ const ytRecsPlaylists = [
             {
                 title: "Tiny Homes and Cabins",
                 playlistThumbnailImgSrc: "https://i.ytimg.com/vi/9Eu0nHapqf0/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCks4Pc293qBBzIKMf8ejy6Q76S0g",
-                playlistDescription: "Hello World",
+                playlistDescription: "Explore cozy living with stunning tiny homes and cabins.",
                 playlistId: "PLirM94SQW73AXi3KRoq3bsGphry4Znoe_",
                 channelTitle: "The Local Project",
                 channelImgSrc: "https://yt3.googleusercontent.com/NhCDTmydHHsvQKhwoknxIGAztUNtyi9CQg4HI3gt70Z_9f3BD9etb_uB4a5V2AhWJ2B6Tl1awbE=s176-c-k-c0x00ffffff-no-rj",
@@ -312,7 +312,7 @@ const ytRecsPlaylists = [
             {
                 title: "Australian Homes Series",
                 playlistThumbnailImgSrc: "https://i.ytimg.com/vi/dZEgImpC1GI/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAVAg1B0o4EhhoStWRdFUhL6jodCg",
-                playlistDescription: "Hello World",
+                playlistDescription: "Experience the ingenuity of Austrialia's best architects.",
                 playlistId: "PLirM94SQW73DxCZHkH5uv85utVF_VGZF7",
                 channelTitle: "The Local Project",
                 channelImgSrc: "https://yt3.googleusercontent.com/NhCDTmydHHsvQKhwoknxIGAztUNtyi9CQg4HI3gt70Z_9f3BD9etb_uB4a5V2AhWJ2B6Tl1awbE=s176-c-k-c0x00ffffff-no-rj",
@@ -322,9 +322,9 @@ const ytRecsPlaylists = [
             {
                 title: "NEVER TOO SMALL Official Playlist",
                 playlistThumbnailImgSrc: "https://i.ytimg.com/vi/bA6C7QvTqZQ/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLCKtmnlvwJBpZbWf1_XBuDYcmJG2w",
-                playlistDescription: "Hello World",
+                playlistDescription: "Explore space-saving marvels in the innovative designs of compact living environments.",
                 playlistId: "PL1WZky7MVeY_6H2ieeVKitXGd3npyPo-g",
-                channelTitle: "Never Too Small",
+                channelTitle: "NEVER TOO SMALL",
                 channelImgSrc: "https://yt3.googleusercontent.com/ytc/AGIKgqPu1g1VZ5_9vzfGYd9O6p_c0EK3N3Z8TrpRux12Hw=s176-c-k-c0x00ffffff-no-rj",
                 channelURL: "https://www.youtube.com/@nevertoosmall",
                 vidCount: 150,
@@ -332,22 +332,12 @@ const ytRecsPlaylists = [
             {
                 title: "Tiny House Tours",
                 playlistThumbnailImgSrc: "https://i.ytimg.com/vi/wAsXkkLumrk/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCE1YQe2sTpdeZbkAtTMnWtbaSLbw",
-                playlistDescription: "Hello World",
+                playlistDescription: "Experience unique tiny homes worldwide, celebrating sustainable living and creative design.",
                 playlistId: "PL999ZDYL8QbTqnT8PZshZzJa7tat-Vdcj",
-                channelTitle: "Architectural Digest",
+                channelTitle: "Living Big In A Tiny House",
                 channelImgSrc: "https://yt3.googleusercontent.com/ytc/AGIKgqM49fR69HbYoFhsWkmCsi7SwgDIfrZA3ayVzXM4cw=s176-c-k-c0x00ffffff-no-rj",
                 channelURL: "https://www.youtube.com/@livingbig",
                 vidCount: 292,
-            },
-            {
-                title: "Une Fille, Un Style | Vogue France",
-                playlistThumbnailImgSrc: "https://i.ytimg.com/vi/EwPiQD1w4uU/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCL_IRH-w11yatDduLJsjeq_oIlDw",
-                playlistDescription: "Hello World",
-                playlistId: "PLVRtRwc2n-r6ToS9OapZq9OilGU3zqrbi",
-                channelTitle: "Vogue France",
-                channelImgSrc: "https://yt3.googleusercontent.com/zugRK3m-JPWTEds-VSs4ic4IkswQgZFxbY4M0E80vtYzdKv5_jqy8wbjTMWjQvbdqpvZ-1srJA=s176-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@VogueFrance",
-                vidCount: 150,
             },
         ]
     },

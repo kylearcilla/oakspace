@@ -43,14 +43,35 @@ export const initClientApp = (googleSignInCallback: any) => {
  * @param callback Calls callback function that init global store after user has allowed client to use user data. 
  * 
 */
-export const initOAuth2Client = async (callback: any) => {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    provider.addScope("https://www.googleapis.com/auth/youtube.readonly");
+export const initOAuth2Client = async () => {
+    const provider = new firebase.auth.GoogleAuthProvider()
+    provider.addScope("https://www.googleapis.com/auth/youtube.readonly")
 
-    const popUpResponse = await auth.signInWithPopup(provider);
-    const credential = popUpResponse.credential as firebase.auth.OAuthCredential;
+    try {
+        const popUpResponse = await auth.signInWithPopup(provider) as any
+        const credential = popUpResponse.credential
 
-    callback({ popUpResponse, credential })
+        let ytCreds: YoutubeUserCreds = {
+            accessToken: "",
+            refreshToken: ""
+        }
+        let ytUserData: any = {
+            username: "",
+            channelImgSrc: "",
+            email: ""
+        }
+    
+        ytCreds.accessToken = credential!.accessToken
+        ytUserData.email = popUpResponse!.additionalUserInfo!.profile!.email
+        ytUserData.username = popUpResponse!.additionalUserInfo!.profile!.name
+        ytUserData.channelImgSrc = popUpResponse!.additionalUserInfo!.profile!.picture
+    
+        intUserYtData(ytUserData, ytCreds.accessToken)
+        initYtCreds(ytCreds)
+
+    } catch (error) {
+        console.log(error)
+    }
 }
 
 export const initYtCreds = (ytCreds: any) => {
@@ -61,7 +82,7 @@ export const initYtCreds = (ytCreds: any) => {
 export const intUserYtData = async (ytData: YoutubeUserData, accessToken: string) => {
   const userPlaylists = await getUserYtPlaylists(accessToken)
   
-  ytUserData.set({ ...ytData, playlists: userPlaylists });
+  ytUserData.update((data) => ({ ...data, ...ytData, playlists: userPlaylists }))
   saveYtUserData({ ...ytData, playlists: userPlaylists });
 }
 
@@ -72,7 +93,8 @@ export const resetYtUserData = () => {
           username: '',
           channelImgSrc: '',
           email: '',
-          playlists: []
+          playlists: [],
+          selectedPlaylist: data?.selectedPlaylist?.isRecPlaylist ? data.selectedPlaylist : null
       }
   });
   ytCredentials.update(() => ({ accessToken: '', refreshToken: '' }));
@@ -92,7 +114,8 @@ export const getUserYtPlaylists = async (accessToken: string): Promise<YoutubePl
           description: playlist.snippet.description,
           vidCount: playlist.contentDetails.itemCount,
           channelId: playlist.snippet.channelId,
-          thumbnailURL: playlist.snippet.thumbnails.medium.url
+          thumbnailURL: playlist.snippet.thumbnails.medium.url,
+          isRecPlaylist: false
       });
   })
   return playlists
@@ -121,7 +144,6 @@ export const saveYtUserData = (ytUserData: any) => {
 /* Youtube API Requests */
 
 export const getUserPlaylists = async (accessToken: string) => {
-    console.log(accessToken)
     const key = KEY ?? "";
     const url = `https://youtube.googleapis.com/youtube/v3/playlists?part=snippet%2CcontentDetails&maxResults=30&mine=true&key=${key}`;
   

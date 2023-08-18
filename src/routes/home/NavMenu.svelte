@@ -69,10 +69,10 @@
             isDarkTheme: selectedTheme!.properties.isDark,
             themeToggleBtnIconColor: selectedTheme!.properties.iconToggleBtnBgColor,
             hasTwin: selectedTheme.properties.hasTwin,
+            fgColor1: selectedTheme.properties.fgColor1,
             sectionTitle: selectedTheme.sectionDetails.title,
-            isMultiColor: selectedTheme.properties.isMultiColor,
             isHeaderElementTextLight: selectedTheme!.properties.isHeaderElementTextLight,
-            twinTheme: selectedTheme!.twinTheme
+            twinTheme: selectedTheme!.twinTheme,
         })
     }
 </script>

@@ -11,6 +11,25 @@ type Quote = {
     quoteCredit: string
 }
 
+type Session = {
+    name: string,
+    tag: Tag,
+    pomTime: number,
+    pomTimeNum: number,
+    breakTime: number,
+    breakTimeNum: number,
+    startTime: Date,
+    endTime: Date | null,
+    currentIndex: number,
+    score: number | null,
+    tasks: string[] | null
+}
+
+type Tag = {
+    name: string,
+    color: string
+}
+
 /* Music Stuff */
 enum MusicPlatform { AppleMusic, Spotify, Youtube, Soundcloud }
 
@@ -105,6 +124,7 @@ type YoutubePlaylist = {
     vidCount: number,
     channelId: string,
     thumbnailURL: string,
+    isRecPlaylist: boolean
 }
 
 type YoutubeVideo = {
@@ -121,15 +141,15 @@ type YoutubeVideo = {
 /* Custom Themes */
 type Theme = {
     title: string,
-    sectionDetails: {
-        title: string
-        index: number
+    sectionDetails: {     // allows for easy selection of right theme from different array 
+        title: string     // ...types instead of looking for theme w/ the right name
+        index: number 
     }
+    properties: ThemeData,
     twinTheme: {
         sectionName: string,
         index: number
-    } | null,
-    properties: ThemeData
+    } | null
 }
 
 type DefaultTheme = Theme & {
@@ -154,54 +174,35 @@ type VideoTheme = Theme & {
 type ThemeData = {
     isDark: boolean,
     hasTwin: boolean,
-    isMultiColor: boolean,
     isHeaderElementTextLight: boolean,
     primaryBgColor: string,
     secondaryBgColor: string,
     tertiaryBgColor: string,
     fgColor1: string,
     fgColor2: string,
-    fgColor3: string,
-    fgColor4: string,
-    borderVal: string,
-    borderVal2: string,
-    shadowVal: string,
-    shadowVal2: string,
     sessionBgColor: string,
     sessionBorderVal: string,
     sessionShadowVal: string,
     themeToggleBtnBgColor: string,
     iconToggleBtnBgColor: string,
     highlighterToggleBtnBgColor: string,
-    activeSessionItemBorderVal: string,
-    activeSessionItemShadowVal: string,
     textColor1: string,
     textColor2: string,
-    themeHighlightBorderColor: string,
     hoverColor: string,
     hoverColor2: string,
     tabColor: string,
     tabHighlightColor: string,
     tabHighlightBoxShadow: string,
     modalBgColor: string,
-    modalFgColor: string,
-    gridItemBorderVal: string,
-    gridItemShadowVal: string,
+    bentoBoxBgColor: string,
+    bentoBoxBorder: string,
+    bentoBoxShadow: string,
     headerElementBgColor: string,
     headerElementTextColor: string,
     headerElementBorderVal: string,
-    dividerColor: string,
-    pomBgColor: string,
-    pomIconColor: string,
     muiscPlayerBgColor: string,
     musicProgressFgColor: string,
-    musicProgressBgColor: string,
     navMenuBgColor: string,
-    pomProgressBarFgColor: string,
-    pomProgressBarFgBoxShadow: string,
-    pomProgressBgColor: string,
-    pomProgressPlaybackBtnColor: string,
     navIconColor: string,
-    navIconBgColor: string,
-    homeVidDropDownTextColor: string
+    navIconBgColor: string
 }

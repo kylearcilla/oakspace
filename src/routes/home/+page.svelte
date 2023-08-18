@@ -1,93 +1,93 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte";
-  import NavMenu from "./NavMenu.svelte"
-  import PomView from "./PomView.svelte"
-  import VideoView from "./VideoView.svelte"
-  import ActiveSessionView from "./ActiveSessionView.svelte"
-  import TaskView from "./TaskView.svelte"
-  import MusicPlayer from "./MusicPlayer.svelte"
 
-	import YoutubeSettings from "./YoutubeSettings.svelte"
+  import ActiveSessionView from "./ActiveSessionView.svelte"
+	import HomeHeader from "./HomeHeader.svelte";
+  import MusicPlayer from "./MusicPlayer.svelte"
+  import NavMenu from "./NavMenu.svelte"
+  import TaskView from "./TaskView.svelte"
+  import VideoView from "./VideoView.svelte"
+
+	import ApperanceSettings from "./ApperanceSettings.svelte"
 	import MusicSettings from "./MusicSettings.svelte"
 	import Settings from "./Settings.svelte"
+	import YoutubeSettings from "./YoutubeSettings.svelte"
   
 	import { _initGoogleClient, _initMusicKit } from "./+page"
-	import ApperanceSettings from "./ApperanceSettings.svelte"
 	import { loadTheme } from "$lib/helper"
-	import HomeHeader from "./HomeHeader.svelte";
+	import { homePanelData } from "$lib/store";
+	import { dataset_dev } from "svelte/internal";
 
   let isTaskMenuExpanded = true
-  let doHideMenu = false
+  let isNavMenuExpanded = true
   let hasUserToggledWithKeyLast = true
   let navSettingClicked = ""
 
-  const handleNavButtonClicked = (buttonName: string) => {
-    navSettingClicked = buttonName
-  }
-  const handleTaskMenuToggleClick = () => {
-    if (document.body.clientWidth < 600) return
-    isTaskMenuExpanded = !isTaskMenuExpanded
-  }
-  const handleMouseMove = (event: MouseEvent) => {
-    const mouseX = event.clientX
-    const cutoff = 5
+  homePanelData.subscribe((data) => {
+    isNavMenuExpanded = data.isNavMenuOpen
+    isTaskMenuExpanded = data.isTaskMenuOpen
+  })
 
-    // show when user is close to left edge
-    if (doHideMenu && mouseX < cutoff) {
-      doHideMenu = false
-      hasUserToggledWithKeyLast = false
-    }
-    // only hide when user is right outside of nav and prevent hiding when nav was shown through shortcut
-    // ...as the nav menu should only close in this case when the user was in the nav menu
-    else if ((mouseX > 80 && mouseX < 100) && !hasUserToggledWithKeyLast) { 
-      doHideMenu = true
-    }
+  const handleNavButtonClicked = (buttonName: string) => navSettingClicked = buttonName
+  const handleTaskMenuToggleOpen = () => {
+    homePanelData.update((data: any) => ({ ...data, isTaskMenuOpen: !data.isTaskMenuOpen }))
   }
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.metaKey && event.key.toLowerCase() === "x") {
-      handleTaskMenuToggleClick()
+      handleTaskMenuToggleOpen()
     }
     if (event.metaKey && event.key.toLowerCase() === "z") {
-      doHideMenu = !doHideMenu
+      homePanelData.update((data: any) => ({ ...data, isNavMenuOpen: !data.isNavMenuOpen }))
       hasUserToggledWithKeyLast = true
+    }
+  }
+  const handleMouseMove = (event: MouseEvent) => {
+    const mouseX = event.clientX
+    const CUTT_OFF = 5
+
+    // show when cursor is close to left edge
+    if (!isNavMenuExpanded && mouseX < CUTT_OFF) {
+      homePanelData.update((data: any) => ({ ...data, isNavMenuOpen: true }))
+      hasUserToggledWithKeyLast = false
+    }
+    // only hide when user is right outside of nav and prevent hiding when nav was shown through shortcut
+    // ...as the nav menu should only close in this case when cursor goes from left of cutt off to outside
+    else if ((mouseX > 80 && mouseX < 100) && !hasUserToggledWithKeyLast) { 
+      homePanelData.update((data: any) => ({ ...data, isNavMenuOpen: false }))
     }
   }
   const handleResize = () => {
     if (document.body.clientWidth > 600) return
-    doHideMenu = true
-    isTaskMenuExpanded = false
+    homePanelData.update((data: any) => ({ isTaskMenuOpen: false, isNavMenuOpen: false }))
   }
 
   onMount(() => {
     window.addEventListener("resize", handleResize)
     handleResize()
-    
-    _initGoogleClient()
     loadTheme()
-
-    console.log(window)
+    _initGoogleClient()
   })
-  onDestroy(() => {
-    window.removeEventListener("resize", handleResize)
-  });
+  onDestroy(() =>  window.removeEventListener("resize", handleResize))
+
 </script>
 
 <svelte:window on:keydown={handleKeyDown} />
 
 <div class="home" on:mousemove={handleMouseMove}>
   <!-- <div id="signInDiv"></div> -->
-  <!-- left nav menu -->
-  <div class={`home__nav-menu-container ${doHideMenu ? "home__nav-menu-container--hide" : ""}`}>
+  <div class={`home__nav-menu-container ${!isNavMenuExpanded ? "home__nav-menu-container--hide" : ""}`}>
     <NavMenu onNavButtonClicked={handleNavButtonClicked} />
   </div>
-  <!-- middle video component -->
-  <div class={`home__video ${doHideMenu ? "home__video--nav-menu-hidden" : ""} ${!isTaskMenuExpanded ? "home__video--task-view-hidden" : ""}`}>
+  <div class={`home__video 
+                  ${!isNavMenuExpanded ? "home__video--nav-menu-hidden" : ""} 
+                  ${!isTaskMenuExpanded ? "home__video--task-view-hidden" : ""}
+                  ${!isTaskMenuExpanded && isNavMenuExpanded ? "home__video--just-nav-menu-shown" : ""}
+                  ${isTaskMenuExpanded && !isNavMenuExpanded ? "home__video--just-task-view-shown" : ""}
+                  ${isTaskMenuExpanded && isNavMenuExpanded ? "home__video--task-view-also-shown" : ""}
+              `}>
     <HomeHeader/>
-    <!-- @ts-ignore -->
     <VideoView />
-    <ActiveSessionView />
   </div>
-  <!-- right music menu -->
   <div class={`home__task-view-container ${isTaskMenuExpanded ? "" : "home__task-view-container--closed"}`}>
     <TaskView isTaskMenuExpanded={isTaskMenuExpanded}/>
   </div>
@@ -121,32 +121,10 @@
         width: 100%;
       }
 
-      // toggle buttons
-      &__toggle {
-          position: absolute;
-          top: 12px;
-          color: #232327;
-          opacity: 0.5;
-          font-size: 1.5rem;
-          cursor: pointer;
-
-          &--nav-menu {
-            right: 15px;
-          }
-          &--music {
-            left: 15px;
-          }
-          &:hover {
-            color: white;
-            transition: ease-in 0.2s;
-          }
-      }
-
-      // left
       &__nav-menu-container {
         background-color: var(--navMenuBgColor);
-        border: var(--borderVal);
-        box-shadow: var(--shadowVal);
+        border: var(--sidePanelBorder);
+        box-shadow: var(--sidePanelShadow);
         width: 60px;
         transition: ease-in-out 0.15s;
         height: 100vh;
@@ -161,13 +139,11 @@
         &--hide {
           margin-left: -60px !important;
         }
-        // when the screen is enlarged to 900px, the nav bar stretch transition should be quick
-        @include md(min-width) {
-          transition: ease-in-out 0.2s;
+        @include sm(max-width) {
+          position: fixed; 
         }
       }
 
-      // middle
       &__video {
         padding: 0px 2.5% 30px 2.5%;
         transition: ease-in-out 0.15s;
@@ -175,37 +151,60 @@
 
         // nev menu and right menu both shown
         margin-left: 60px;
-        margin-right: min(30vw, 300px);
-
+        
         &--nav-menu-hidden {
           margin-left: 0px;
         }
+        &--just-nav-menu-shown {
+          @include sm(max-width) {
+            margin-left: 0px;
+          }
+        }
         &--task-view-hidden {
-          margin-right: 0px;
+            padding-right: 2.5%;
+        }
+        &--just-task-view-shown {
+          padding-right: 250px;
+          margin-right: 2.5%;
+          
+          @include mq-custom(max-width, 940px) {
+            padding-right: 265px;
+          }
+          @include mq-custom(max-width, 730px) {
+            padding-right: 2.5%;
+            margin-right: 0px;
+          }
+        }
+        &--task-view-also-shown {
+          padding-right: 250px;
+          margin-right: 2.5%;
+
+          @include mq-custom(max-width, 995px) {
+            padding-right: 245px;
+          }
+          @include mq-custom(max-width, 840px) {
+            padding-right: 2.5%;
+            margin-right: 0px;
+          }
         }
       }
-
-      // right
       &__task-view-container {
-        width: min(30vw, 300px);
-        min-width: 200px;
+        width: 245px;
         height: 100vh;
         position: fixed;
+        top: 0px;
         right: 0px;
         background-color: var(--secondaryBgColor);
         transition: ease-in-out 0.18s;
-        border: var(--menuBorderVal);
-        box-shadow: var(--shadowVal);
+        overflow: hidden;
+        border: var(--sidePanelBorder);
+        box-shadow: var(--sidePanelShadow);
 
         // background: rgba(32, 31, 31, 0.1);
         // backdrop-filter: blur(10px);
         // border-left: 1px solid rgba(138, 138, 138, 0.3);
 
         &--closed {
-          margin-right: -300px; 
-        }
-
-        @include sm(max-width) {
           margin-right: -300px; 
         }
       }

@@ -1,17 +1,20 @@
 <script lang="ts">
-	import { clickOutside, setRootColors } from "$lib/helper";
-    import { lightColorThemes, darkColorThemes, imageThemes, ambientVideos, defaultThemes } from "$lib/data-themes";
 	import { onMount } from "svelte";
+    import { lightColorThemes, darkColorThemes, imageThemes, ambientVideos, defaultThemes } from "$lib/data-themes";
+	import { clickOutside, setRootColors } from "$lib/helper";
 	import { colorThemeState } from "$lib/store";
 
     export let onNavButtonClicked: any;
+    let clickedTheme: { 
+        sectionTitle: keyof typeof themeSections, 
+        index: number, 
+        themeTitle: string 
+    } | null = null
+    let selectedTheme: Theme | ColorTheme | null = null
+
     const closeModal = () => onNavButtonClicked("")
 
-
-    let clickedTheme: { sectionTitle: keyof typeof themeSections, index: number, themeTitle: string } | null = null
-    let selectedTheme: Theme | null = null
-
-    // object to map section names to array names for dynmaically selecting the corresponding array to use
+    // object to map section names to array names in import for dynmaically selecting the correct 1array
     const themeSections: any = {
         default: defaultThemes,
         light: lightColorThemes,
@@ -39,19 +42,17 @@
             isDarkTheme: selectedTheme!.properties.isDark,
             themeToggleBtnIconColor: selectedTheme!.properties.iconToggleBtnBgColor,
             hasTwin: selectedTheme!.properties.hasTwin,
+            fgColor1: selectedTheme!.properties.fgColor1,
             sectionTitle: selectedTheme!.sectionDetails.title,
-            isMultiColor: selectedTheme!.properties.isMultiColor,
             isHeaderElementTextLight: selectedTheme!.properties.isHeaderElementTextLight,
-            twinTheme: selectedTheme!.twinTheme
+            twinTheme: selectedTheme!.twinTheme,
         })
         setRootColors(selectedTheme!.properties)
 
         clickedTheme = null
         localStorage.setItem("theme", JSON.stringify(selectedTheme))
     }
-    onMount(() => {
-        selectedTheme = JSON.parse(localStorage.getItem("theme")!)
-    })
+    onMount(() => selectedTheme = JSON.parse(localStorage.getItem("theme")!))
 </script>
 
 <div class="modal-bg">
@@ -236,17 +237,14 @@
             color: rgba(var(--textColor1), 0.8);
         }
         &__apply-btn-container {
-            height: 10px;
-            &--overflow-hover {
-                height: 40px;
-            }
+            height: 30px;
             width: 100%;
             position: relative;
         }
         &__apply-btn {
             @include pos-abs-bottom-right-corner(0px, 0px);
         }
-        /* Theme Item */
+        /* Theme Item (every selection is a theme item)*/
         &__theme-item {
             position: relative;
             transition: 0.14s ease-in-out;
@@ -258,6 +256,7 @@
                 transform: scale(0.98);
             }
 
+            /* When Item Clicked */
             &--clicked {
                 img {
                     border: 2.5px solid $clicked-color;
@@ -266,28 +265,39 @@
                     color: $clicked-color !important;
                 }
             }
-            &--clicked > &-color-swatch-list {
+            &--clicked &-color-swatch-list {
                 margin-top: -2px;
+                width: 86.5px;
                 height: 24px;
                 background-color: $clicked-color;
-                @include center;
+                align-items: center;
+                padding-left: 3.3px;
             }
+            &--clicked &-color-swatch {
+                width: 18px;
+            }
+            /* When Item Selected */
             &--selected {
                 img {
-                    border: 2.5px solid var(--themeHighlightBorderColor);
+                    border: 2.5px solid rgba(var(--fgColor1), 1);
                 }
                 h6, span {
-                    color: var(--themeHighlightBorderColor) !important;
+                    color: rgba(var(--fgColor1), 1) !important;
                 }
                 span {
                     opacity: 0.6;
                 }
             }
-            &--selected > &-color-swatch-list {
+            &--selected &-color-swatch-list {
                 margin-top: -2px;
+                width: 86.5px;
                 height: 24px;
-                background-color: var(--themeHighlightBorderColor);
-                @include center;
+                background-color: rgba(var(--fgColor1), 1);
+                align-items: center;
+                padding-left: 3.3px;
+            }
+            &--selected &-color-swatch {
+                width: 18px; 
             }
             &--color-theme {
                 height: 50px;
@@ -321,21 +331,18 @@
         }
         /* For Color Palettes */
         &__theme-item-color-swatch-list {
+            transition: 0.15s ease-in-out;
             height: 20px;
             width: 90px;
-            padding-right: 3.4px;
-            border-radius: 5px;
+            border-radius: 3px;
             display: flex;
-
-            & ~ {
-
-            }
         }
         &__theme-item-color-swatch {
+            transition: 0.15s ease-in-out;
             width: 20px;
             aspect-ratio: 1 / 1;
-            border-radius: 3px;;
-            margin-right: -3.5px;
+            border-radius: 2px;;
+            margin-right: -2.6px;
         }
     }
     .grid-section {
@@ -346,6 +353,7 @@
             color: rgba(var(--textColor1), 0.55);
         }
     }
+    /* Sections */
     .default-themes {
         margin-top: 20px;
         padding-bottom: 20px;
@@ -375,7 +383,7 @@
         }
         &__themes-list {
             display: grid;
-            grid-template-columns: repeat(auto-fill, 95px);
+            grid-template-columns: repeat(auto-fill, 115px);
             width: 100%;
         }
         &__light-themes {

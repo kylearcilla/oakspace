@@ -25,7 +25,7 @@ export const musicCategories: MusicCollectionCategory[] = [
         artworkSrc: "/collection_soundtracks.png",
         artworkBlurredSrc: "/collection_soundtracks_bg.png",
         artistCredit: "Art by Studio Ghibli",
-        description: "Fly above clouds in a house or trek the Middle Earth w/ these iconic soundtracks.",
+        description: "Embark on cinematic journeys with film scores to ignite your imagination.",
     },
     {
         title: "Acoustic",
@@ -770,7 +770,7 @@ export const upbeatCollections = {
             artworkSrc: "https://is4-ssl.mzstatic.com/image/thumb/Music125/v4/04/f8/63/04f863fc-2852-604f-c910-a97ac069506b/12UMGIM40339.rgb.jpg/592x592bb.webp",
             genre: "Pop",
             description: "A mesmerizing album that seamlessly blends soul, R&B, and introspective storytelling for an unforgettable musical experience.",
-            length: 100,
+            length: 17,
             albumId: "1440765580",
             playlistId: null,
             url: "https://music.apple.com/us/album/channel-orange/1440765580"
@@ -910,7 +910,7 @@ export const soundtrackCollections = {
             length: 21,
             albumId: "883501721",
             playlistId: null,
-            url: ""
+            url: "https://music.apple.com/us/album/spirited-away-original-soundtrack/883501721"
         },
         {
             title: "Disney Pixar Hits",
@@ -1180,6 +1180,17 @@ export const acousticCollections = {
             albumId: null,
             playlistId: "pl.522581bf8c264bafa742e75df9772078",
             url: "https://music.apple.com/us/playlist/acoustic-hits/pl.522581bf8c264bafa742e75df9772078"
+        },
+        {
+            title: "Acoustic Summer",
+            author: "Apple Music Summertime Sounds",
+            artworkSrc: "https://is1-ssl.mzstatic.com/image/thumb/Video115/v4/17/f4/27/17f4279d-b3fd-28dc-8c50-5f9fb3befb47/Job1229dc7d-c382-4ed0-93e5-25a55bc400f7-111916041-PreviewImage_preview_image_nonvideo_sdr-Time1618953189310.png/540x540cc.webp",
+            genre: "Pop",
+            description: "Unwind with Acoustic Summer: Relaxing melodies that capture the essence of a serene summer.",
+            length: 61,
+            albumId: null,
+            playlistId: "pl.e6441e3d39664b9997d3533e7e65e037",
+            url: "https://music.apple.com/us/playlist/acoustic-summer/pl.e6441e3d39664b9997d3533e7e65e037"
         },
         {
             title: "Acoustic Chill",
@@ -1582,13 +1593,125 @@ export const zenCollections = {
 export const summerCollections = {
     appleMusic: [
         {
-            title: "qqq",
-            author: "",
-            artworkSrc: "",
-            genre: "",
-            length: "",
-            albumId: "",
-            playlistId: null
+            title: "Summer Vibes",
+            author: "Apple Music Summertime Sounds",
+            artworkSrc: "https://is1-ssl.mzstatic.com/image/thumb/Video125/v4/65/19/05/6519051b-0aca-c750-4f3f-009c09e9af75/Job7b50fd20-698c-4871-95c6-804f39fe616e-117771577-PreviewImage_preview_image_nonvideo_sdr-Time1626888119158.png/540x540cc.webp",
+            genre: "Pop",
+            description: "Radiates warm vibes, featuring tunes that capture the carefree spirit and sunny moments.",
+            length: 109,
+            albumId: null,
+            playlistId: "pl.6cbec98d25194addb2b012e681e0eff6",
+            url: "https://music.apple.com/us/playlist/summer-vibes/pl.6cbec98d25194addb2b012e681e0eff6"
+        },
+        {
+            title: "Women In Music, Pt. III (Expanded Edition)",
+            author: "HAIM",
+            artworkSrc: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/d8/78/01/d87801c7-ae42-63cc-f887-3b22c2b20309/886448983798.jpg/632x632bb.webp",
+            genre: "Alternative",
+            description: "An album teeming dreamy melodies, lively guitars, and summer soul-searching.",
+            length: 18,
+            albumId: "1550175828",
+            playlistId: null,
+            url: "https://music.apple.com/us/album/women-in-music-pt-iii-expanded-edition/1550175828"
+        },
+        {
+            title: "Songs of the Summer",
+            author: "Apple Music Pop",
+            artworkSrc: "https://is1-ssl.mzstatic.com/image/thumb/Video115/v4/8c/b1/95/8cb1958d-50d6-3afc-0f97-8fd6d353841b/Job31332cbd-86f9-4329-b292-8d73c11b945a-112821519-PreviewImage_preview_image_nonvideo_sdr-Time1620240698518.png/540x540cc.webp",
+            genre: "Mostly Pop",
+            description: "Filled with melodies embodying the sun-soaked and carefree essence of the season.",
+            length: 79,
+            albumId: null,
+            playlistId: "pl.34c6bf42a176492abb918edb57b565e9",
+            url: "https://music.apple.com/us/playlist/songs-of-the-summer/pl.34c6bf42a176492abb918edb57b565e9"
+        },
+        {
+            title: "Channel Orange",
+            author: "Frank Ocean",
+            artworkSrc: "https://is4-ssl.mzstatic.com/image/thumb/Music125/v4/04/f8/63/04f863fc-2852-604f-c910-a97ac069506b/12UMGIM40339.rgb.jpg/592x592bb.webp",
+            genre: "Pop",
+            description: "A mesmerizing album that seamlessly blends soul, R&B, and introspective storytelling for an unforgettable musical experience.",
+            length: 17,
+            albumId: "1440765580",
+            playlistId: null,
+            url: "https://music.apple.com/us/album/channel-orange/1440765580"
+        },
+        {
+            title: "Prince and the Revolution, ‘Purple Rain’ (1984)",
+            author: "Frank Ocean",
+            artworkSrc: "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/b7/44/ca/b744ca9b-9b29-e934-3d59-5da099a83ce3/mzi.shgvhklf.jpg/632x632bb.webp",
+            genre: "Rock",
+            description: "A seminal album of the '80s, blending rock, funk, and iconic hits like \"Purple Rain\".",
+            length: 9,
+            albumId: "214145442",
+            playlistId: null,
+            url: "https://music.apple.com/us/album/purple-rain/214145442"
+        },
+        {
+            title: "Legend – The Best of Bob Marley & The Wailers (2002 Edition)",
+            author: "Bob Marley & The Wailers",
+            artworkSrc: "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/ea/20/06/ea2006f9-7512-cf9c-7b44-78116156875e/12UMGIM14712.rgb.jpg/632x632bb.webp",
+            genre: "Reggae",
+            description: "Timeless reggae rhythms with messages of love, freedom, and social consciousness.",
+            length: 16,
+            albumId: "1469575763",
+            playlistId: null,
+            url: "https://music.apple.com/us/album/legend-the-best-of-bob-marley-the-wailers-2002-edition/1469575763"
+        },
+        {
+            title: "Summer Soul",
+            author: "Apple Music Summertime Sounds",
+            artworkSrc: "https://is1-ssl.mzstatic.com/image/thumb/Video116/v4/42/c2/58/42c25864-54ef-42f3-95fa-c2a9667aba36/Job6d14df16-f816-4a8a-ab72-6d5586702c0c-126905734-PreviewImage_preview_image_nonvideo_sdr-Time1639673781768.png/540x540cc.webp",
+            genre: "Soul / Pop",
+            description: "Groove to soulful melodies that capture the essence of summer's laid-back vibe.",
+            length: 61,
+            albumId: null,
+            playlistId: "pl.bd08a568ec2647d19da5891d3a4a3ebe",
+            url: "https://music.apple.com/us/playlist/summer-soul/pl.bd08a568ec2647d19da5891d3a4a3ebe"
+        },
+        {
+            title: "Happy Hits",
+            author: "Apple Music Pop",
+            artworkSrc: "https://is1-ssl.mzstatic.com/image/thumb/Video125/v4/ba/3c/65/ba3c6531-4993-ef14-6d2c-c092f67bef58/Jobceac683a-4ba1-4c75-a7aa-623d6820930f-111427458-PreviewImage_preview_image_nonvideo_sdr-Time1618522173056.png/540x540cc.webp",
+            genre: "Pop",
+            description: "Elevate your mood with breezy beats, uplifting vocals, and catchy rhythms. Regularly updated for joy.",
+            length: 100,
+            albumId: null,
+            playlistId: "pl.4fe671d3bd994738ace5ae974daebc10",
+            url: "https://music.apple.com/us/playlist/happy-hits/pl.4fe671d3bd994738ace5ae974daebc10"
+        },
+        {
+            title: "Sunkissed",
+            author: "Apple Music Chill",
+            artworkSrc: "https://is1-ssl.mzstatic.com/image/thumb/Video126/v4/3c/aa/bf/3caabfd0-a1d6-8ad3-9089-d6f0ee26e9f7/Jobb2bd0019-bf67-483b-b0ca-73a28bf5dec5-129188771-PreviewImage_preview_image_nonvideo_sdr-Time1645804513371.png/540x540cc.webp",
+            genre: "Pop",
+            description: "Feel the warmth of Sunkissed: Radiant tunes that embody the sun's golden embrace.",
+            length: 100,
+            albumId: null,
+            playlistId: "pl.e4d0cb54b9dd46648a06290ff1a90045",
+            url: "https://music.apple.com/us/playlist/sunkissed/pl.e4d0cb54b9dd46648a06290ff1a90045"
+        },
+        {
+            title: "Permanent Vacation",
+            author: "Apple Music Summertime Sounds",
+            artworkSrc: "https://is1-ssl.mzstatic.com/image/thumb/Video115/v4/0e/c1/d9/0ec1d9b9-2d5d-62e0-9003-3854ccf47a0a/Job359dd63a-f8db-4d4a-9997-d20efc5bff8c-111817944-PreviewImage_PreviewImageIntermediate_preview_image_nonvideo_vfcs128013572-Time1618868454188.png/540x540cc.webp",
+            genre: "Pop",
+            description: "Escape to 'Permanent Vacation': Where music takes you on a never-ending journey of relaxation.",
+            length: 196,
+            albumId: null,
+            playlistId: "pl.9dc9de535a544d5d9692766feac0f7c7",
+            url: "https://music.apple.com/us/playlist/permanent-vacation/pl.9dc9de535a544d5d9692766feac0f7c7"
+        },
+        {
+            title: "Beach Party",
+            author: "Apple Music",
+            artworkSrc: "https://is1-ssl.mzstatic.com/image/thumb/Video115/v4/b2/96/b5/b296b55c-af41-423c-f6a8-280040f93aaf/Job835ceaf0-afac-4ea1-96dc-626fbd8663ec-124485814-PreviewImage_preview_image_nonvideo_sdr-Time1633112893634.png/540x540cc.webp",
+            genre: "Pop",
+            description: "Embrace the endless summer vibe with tunes that make every day a vacation.",
+            length: 100,
+            albumId: null,
+            playlistId: "pl.894cf25d1772492f89115f854826fc15",
+            url: "https://music.apple.com/us/playlist/beach-party/pl.894cf25d1772492f89115f854826fc15"
         },
     ],
     spotify: [

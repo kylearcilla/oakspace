@@ -435,10 +435,10 @@
             @include center;
         }
         #player {
-            width: 100%;
-            max-height: 500px;
+            // width: 100%;
+            // max-height: 500px;
             background-color: var(--primaryBgColor);
-            display: flex;
+            // display: flex;
         }
         .vid-view-empty-vid-view {
             position: absolute;

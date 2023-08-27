@@ -94,7 +94,7 @@
         <div class="music-player-track__details">
             <h5 class="music-player-track__title">{currentTrackPlaying?.name ?? ""}</h5>
             <span class={`music-player-track__artist caption-2 ${isLightTheme ? "caption-2--light-theme" : ""}`}>
-                {currentTrackPlaying?.artist ?? ""}sdfsdsd
+                {currentTrackPlaying?.artist ?? ""}
             </span>
         </div>
     </div>
@@ -246,7 +246,7 @@
         &__details {
             width: 80%;
             overflow: hidden;
-            color: rgb(var(--textColor2));
+            color: white;
             margin-top: -5px;
         }
         &__title {

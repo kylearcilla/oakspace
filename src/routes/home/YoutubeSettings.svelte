@@ -206,7 +206,7 @@
             <div class="yt-settings__bottom-row">
                 <!-- User Playlists Section -->
                 {#if ytUserAccountData?.email != ""}
-                    <div class="user-playlists grid-section grid-section--no-padding">
+                    <div class={`user-playlists ${!isLightTheme ? "user-playlists--dark" : ""} grid-section grid-section--no-padding`}>
                         <div class="user-playlists__header">
                             <div class="grid-section__header">
                                 <h3>Playlists</h3>
@@ -324,7 +324,6 @@
     $section-spacing: 8px;
     $top-row-height: 170px;
     $bottom-row-height: 470px;
-
     $recs-section-padding-left: 25px;
 
     .modal {
@@ -462,6 +461,9 @@
 
         &--min {
             height: 30%;
+        }
+        &--dark .divider {
+            background-color: rgba(var(--textColor1), 0.055) !important;
         }
 
         &__header {
@@ -650,7 +652,7 @@
                 margin-bottom: 70px;
             }
             h4 {
-                margin-bottom: 5px;
+                margin-bottom: 2px;
                 @include elipses-overflow;
                 max-width: 90%;
             }
@@ -679,7 +681,7 @@
         }
         &__playlist-item-channel-details {
             @include flex-container(center, _);
-            margin-top: 10px;
+            margin-top: 12px;
 
             a {
                 font-weight: 600;

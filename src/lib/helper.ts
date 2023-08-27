@@ -37,11 +37,9 @@ export const loadTheme = () => {
     title: themeItem!.title,
     isDarkTheme: themeItem!.properties.isDark,
     themeToggleBtnIconColor: themeItem!.properties.iconToggleBtnBgColor,
-    fgColor1: themeItem!.properties.fgColor1,
     sectionTitle: themeItem!.sectionDetails.title,
-    isMultiColor: themeItem!.properties.isMultiColor,
-    isHeaderElementTextLight: themeItem!.properties.isHeaderElementTextLight,
     twinTheme: themeItem!.twinTheme,
+    headerTimeColor: themeItem!.headerTimeColor
   })
   setRootColors(themeItem!.properties)
 }
@@ -53,10 +51,69 @@ export const loadTheme = () => {
  * @param theme theme object to be currently used
  */
 export const setRootColors = (theme: ThemeData) => {
-  for (let [prop, color] of Object.entries(theme)) {
-      if (typeof color === "boolean") continue
-      document.documentElement.style.setProperty(`--${prop}`, color);
-  }
+  const headTag = document.getElementsByTagName('head')[0];
+  const styleTag = document.createElement("style");
+
+  console.log(theme)
+
+  styleTag.innerHTML = `
+    :root {
+        --primaryBgColor: ${theme.primaryBgColor};
+        --secondaryBgColor: ${theme.secondaryBgColor};
+        --tertiaryBgColor: ${theme.tertiaryBgColor};
+        --fgColor1: ${theme.fgColor1};
+        --fgColor2: ${theme.fgColor2};
+        --sessionBgColor: ${theme.sessionBgColor};
+        --sessionBorderVal: ${theme.sessionBorderVal};
+        --sessionShadowVal: ${theme.sessionShadowVal};
+        --textColor1: ${theme.textColor1};
+        --textColor2: ${theme.textColor2};
+        --hoverColor: ${theme.hoverColor};
+        --hoverColor2: ${theme.hoverColor2};
+        --hoverColor3: ${theme.hoverColor3};
+        --tabColor: ${theme.tabColor};
+        --tabHighlightColor: ${theme.tabHighlightColor};
+        --tabHighlightBoxShadow: ${theme.tabHighlightBoxShadow};
+        --headerElementBgColor: ${theme.headerElementBgColor};
+        --headerElementBorderVal: ${theme.headerElementBorderVal};
+        --headerElementTextColor: ${theme.headerElementTextColor};
+        --headerElementShadow: ${theme.headerElementShadow};
+        --headerTimeColor: ${theme.headerTimeColor};
+        --modalBgColor: ${theme.modalBgColor};
+        --modalBgAccentColor: ${theme.modalBgAccentColor};
+        --bentoBoxBgColor: ${theme.bentoBoxBgColor};
+        --bentoBoxBorder: ${theme.bentoBoxBorder};
+        --bentoBoxShadow: ${theme.bentoBoxShadow};
+        --muiscPlayerBgColor: ${theme.muiscPlayerBgColor};
+        --musicProgressFgColor: ${theme.musicProgressFgColor};
+        --navMenuBgColor: ${theme.navMenuBgColor};
+        --navIconColor: ${theme.navIconColor};
+        --navIconBgColor: ${theme.navIconBgColor};
+        --themeToggleBtnBgColor: ${theme.themeToggleBtnBgColor};
+        --iconToggleBtnBgColor: ${theme.iconToggleBtnBgColor};
+        --highlighterToggleBtnBgColor: ${theme.highlighterToggleBtnBgColor};
+        --midPanelBorder: ${theme.midPanelBorder};
+        --midPanelShadow: ${theme.midPanelShadow};
+        --midPanelBaseColor: ${theme.midPanelBaseColor};
+        --midPanelAccentColor: ${theme.midPanelAccentColor};
+        --midPanelAccentAltColor: ${theme.midPanelAccentAltColor};
+        --midPanelAccentTextColor: ${theme.midPanelAccentTextColor};
+        --sidePanelBorder: ${theme.sidePanelBorder};
+        --sidePanelShadow: ${theme.sidePanelShadow};
+        --dropdownMenuBgColor: ${theme.dropdownMenuBgColor};
+        --prodMenuViewShadow: ${theme.prodMenuViewShadow};
+    }
+  `
+
+  headTag.appendChild(styleTag)
+  // for (let [prop, color] of Object.entries(theme)) {
+  //     if (typeof color === "boolean") continue
+
+  //     // @ts-ignore
+  //     const root = document.querySelector(': ${theme.primaryBgColor};
+  //     // @ts-ignore
+  //     root.style.setProperty(`--${prop}`, color);
+  // }
 };
 
 /**
@@ -110,6 +167,23 @@ export function formatDateToMMDD(date: Date): string {
   return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' });
 }
 
+export function minsToHHMM(mins: number): string {
+  if (mins < 60) return `${mins} mins`
+
+  const hours = Math.floor(mins / 60);
+  const minutes = mins % 60;
+
+  return `${hours} ${hours > 1 ? "hrs" : "hr" } ${String(minutes).padStart(2, '0')} mins`;
+}
+
+export function formatDateToHHMM(date: Date): string {
+  const hours = date.getHours()
+  const minutes = date.getMinutes()
+  const ampm = hours >= 12 ? 'PM' : 'AM'
+  const formattedHours = hours % 12 || 12
+  const formattedMinutes = String(minutes).padStart(2, '0')
+  return `${formattedHours}:${formattedMinutes} ${ampm}`
+}
 
 /**
  *  Adds commas to numbers

@@ -486,6 +486,14 @@ $screen-xl: 112.5em;   // extra large (1800 px)
 }
 
  /* Buttons unfill unfill--oval | fill | no-bg | text-only | icon-only | text-icon */
+@mixin color-btn-hover {
+    transition: 0.12s ease-in-out;
+
+    &:hover {
+        filter: brightness(1.1);
+    }
+}
+
 button, input {
 	all: unset;
 }
@@ -495,7 +503,7 @@ button {
     cursor: pointer;
 
     &:disabled {
-        opacity: 0.6;
+        opacity: 0.3;
     }
 }
 button:focus {
@@ -655,7 +663,48 @@ button.settings-btn {
      color: white;
  }
 
+ /* Input Fields */
+ @mixin input-text-field-dark {
+    border: 1px solid rgba(211, 211, 211, 0);
+    &--focus {
+        border-color: rgba(var(--fgColor1), 1);
+    }
+    input {
+        font-weight: 300;
+        color: rgba(var(--textColor1), 0.65);
+    }
+ }
+
  /* Drop Down UI */
+ @mixin dropdown-btn-dark {
+    color: rgba(var(--textColor1), 0.65);
+    font-weight: 400;
+
+    i {
+        color: rgba(var(--textColor1), 0.65);
+    }
+}    
+@mixin dropdown-menu-dark {
+    box-shadow: none;
+    &__option {
+        &:hover {
+            background-color: rgba(30, 30, 30, 0.2);
+        }
+        p {
+            font-weight: 300;
+        }
+    }
+    .divider {
+        height: 0.5px;
+    }
+    &__new-option-container button {
+        font-weight: 400;
+        &:hover {
+            background-color: rgba(30, 30, 30, 0.2);
+        }
+    }
+}
+
  .dropdown-container {
      position: relative;
 }
@@ -665,11 +714,11 @@ button.settings-btn {
     height: 17px;
     background-color: var(--bentoBoxBgColor);
     box-shadow: var(--bentoBoxShadow);
+    color: rgba(var(--textColor1), 0.75);
     display: flex;
     border-radius: 20px;
-    color: rgba(var(--textColor1), 0.75);
-    transition: 0.06s ease-in-out;
     padding: 4px 11px 4px 10px;
+    transition: 0.1s ease-in-out;
     @include center;
     @include flex-container(center, _);
 
@@ -689,26 +738,21 @@ button.settings-btn {
     }
 
     i {
-        margin-left: 7px;
-        font-size: 0.9rem;
-        color: rgb(200, 200, 200);
+        color: rgba(var(--textColor1), 0.5);
     }
     &__title {
         margin: 0px 5px 0px 4px;
         font-size: 1.2rem;
     }
-    &__arrows {
-        i {
-            color: rgba(var(--textColor1), 0.5);
-        }
+    &__arrows i {
+        margin-left: 7px;
+        font-size: 0.9rem;
     }
     &__arrows-triangle-up {
         margin: -4px 0px -8px 0px;
     }
-    &__arrows-triangle-up, &__arrows-triangle-down {
-        i {
-            font-size: 0.5rem;
-        }
+    &__arrows-triangle-up i, &__arrows-triangle-down i {
+        font-size: 0.5rem;
     }
 }
 .dropdown-menu {
@@ -736,7 +780,8 @@ button.settings-btn {
         margin-bottom: 1px;
         
         &--selected {
-            background-color: var(--hoverColor);
+            background-color: var(--dropdownMenuBgColor);
+            filter: brightness(1.03);
             opacity: 1;
             button {
                 opacity: 1;
@@ -749,28 +794,28 @@ button.settings-btn {
             padding-bottom: 0px;
         }
         &:hover {
-            background-color: var(--hoverColor);
+            background-color: var(--dropdownMenuBgColor);
+            filter: brightness(0.98);
             opacity: 1;
         }
         &:hover > button {
             opacity: 1;
         }
-
-        button {
-            @include flex-container(center, _);
-            padding: 6px 0px 7px 5px;
-            opacity: 0.6;
-            width: 95%;
-            font-weight: 600;
-            p {
-                font-size: 1.12rem;
-            }
-            i {
-                @include pos-abs-bottom-right-corner(8px, 8px);
-                display: none;
-                font-size: 0.9rem;
-                opacity: 0.8;
-            }
+    }
+    &__option button {
+        @include flex-container(center, _);
+        padding: 6px 0px 7px 5px;
+        opacity: 0.5;
+        width: 95%;
+        font-weight: 600;
+        p {
+            font-size: 1.12rem;
+        }
+        i {
+            @include pos-abs-bottom-right-corner(8px, 8px);
+            display: none;
+            font-size: 0.9rem;
+            opacity: 0.8;
         }
     }
     &__new-option-container {
@@ -790,6 +835,7 @@ button.settings-btn {
             opacity: 0.8;
             align-items: center;
             font-size: 1.1rem;
+            border-radius: 8px;
             
             &:hover {
                 background-color: var(--hoverColor2);

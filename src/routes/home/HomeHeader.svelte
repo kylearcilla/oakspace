@@ -1,49 +1,135 @@
 <script lang="ts">
 	import quotes from "$lib/data-quotes";
-	import { clickOutside, getCurrentTime, isNightTime } from "$lib/helper";
-	import { colorThemeState, homePanelData, sessionData } from "$lib/store";
+	import { clickOutside, getCurrentTime, isNightTime, minsToHHMM } from "$lib/helper";
+	import { colorThemeState, globalSessionObj, globalSessionState } from "$lib/store";
 	import { onDestroy, onMount } from "svelte";
 	import ActiveSessionView from "./ActiveSessionView.svelte";
+	import { Session } from "$lib/Session";
 
     let quote: Quote | null = null
     let isQuoteModalOpen = false
     let isCreateNewSessionModalOpen = false
     let isSessionModalOpen = false
-    let session: Session | null = null
     let isLightTheme = false
-    let isHeaderElementTextLight = false
-    let isTaskMenuExpanded = true
-    let isNavMenuExpanded = true
-    let interval: any;
-    let isDropDownOpen = false
+    let interval:  NodeJS.Timer
     let is12HourTime = true
     let currentTime = ""
     let isEvening = false
-    let baseColor = "248, 177, 187"
+    let headerTimeColor = "#8D907C"
 
-    const options = ["A", "B"]
+    const MAX_SESSION_NAME_LENGTH = 18
 
-    homePanelData.subscribe((data) => {
-        isNavMenuExpanded = data.isNavMenuOpen
-        isTaskMenuExpanded = data.isTaskMenuOpen
+    let sessionObj: Session | null = null
+    let activeSession: ActiveSessionState | null = null
+
+    let sessionNameInput: HTMLElement
+    let newTodoInput: HTMLElement
+
+    let newSession: SessionInputs = {
+        name: "",
+        tag: {
+            name: "Korean",
+            color: "#C7C4AB"
+        },
+        poms: 2,
+        focusTime: 25,
+        breakTime: 5,
+        todos: [],
+        calculatedEndTime: null,
+        totalElapsedTime: null,
+        timePeriodString: null
+    }
+
+    let subtaskCount = 0
+    let tags = [
+        {
+            name: "school",
+            color: "#9997FE"
+        },
+        {
+            name: "swe",
+            color: "#FF8B9C"
+        },
+        {
+            name: "book",
+            color: "#CFAB96"
+        },
+    ]
+    let newTodoTitle = ""
+    let isTagListDropDownOpen = false
+    let isFocusTimeDropDownOpen = false
+    let isBreakTimeDropDownOpen = false
+    let pomMessage = ""
+
+
+    globalSessionObj.subscribe((sess: any) => {
+        if (!sess) return
+        sessionObj = sess
+    })
+    globalSessionState.subscribe((sessionState: any) => {
+        if (!sessionState) return
+        activeSession = sessionState
     })
     colorThemeState.subscribe((theme) => {
         isLightTheme = !theme.isDarkTheme
-        isHeaderElementTextLight = theme.isHeaderElementTextLight
-        baseColor = theme.fgColor1
-    })
-    sessionData.subscribe((data) => {
-        if (data) session = data
+        headerTimeColor = theme.headerTimeColor
     })
 
-    const handleDropdownOptionClicked = (index: number) => {
-        isDropDownOpen = false
+    /* Session Stuff */
+    const setResultTimes = () => {
+        const totalFocusTimeMins = newSession.poms * newSession.focusTime
+        const totalbreakTimeMins = (newSession.poms - 1) * newSession.breakTime
+        const totalMins = totalbreakTimeMins + totalFocusTimeMins
 
-        if (index === 0) {
-        } 
-        else if (index === 1) {
-        }
+        newSession.calculatedEndTime = Session.calculateEndTime(new Date, totalMins)
+        newSession.timePeriodString = Session.getTimePeriodString(new Date, newSession.calculatedEndTime)
+
+        setElapsedTime(totalMins)
     }
+    const setElapsedTime = (totalMins: number) => {
+        newSession.totalElapsedTime = minsToHHMM(totalMins)
+    }
+    const createNewSession = () => {
+        globalSessionObj.set(new Session(newSession))
+
+        resetNewSesion() 
+        isSessionModalOpen = true
+    }
+    const resetNewSesion = () => {
+        newSession = {
+            name: "",
+            tag: {
+                name: "Korean",
+                color: "#C7C4AB"
+            },
+            poms: 2,
+            focusTime: 25,
+            breakTime: 5,
+            todos: [],
+            calculatedEndTime: null,
+            totalElapsedTime: null,
+            timePeriodString: null
+        }
+        setResultTimes()
+        isCreateNewSessionModalOpen = false
+    }
+    const editTextInputHandler = (event: any) => {
+        if (newSession.name.length >= 20) return
+        newSession.name = event.target.value;
+    }
+    const editNewTodoInputHandler = (event: any) => {
+        if (newSession.name.length >= 20) return
+        newTodoTitle = event.target.value;
+    }
+    const handleNewTagClicked = (idx: number) => {
+        newSession.tag = tags[idx]
+        isTagListDropDownOpen = false
+    }
+    const handleCreateTagBtnClicked = () => {
+        
+    }
+
+    /* Time Stuff */
     const handleTimeBtnClicked = () => {
         is12HourTime = !is12HourTime
         currentTime = getCurrentTime(is12HourTime)
@@ -52,12 +138,17 @@
         interval = setInterval(() => {
             currentTime = getCurrentTime(is12HourTime)
             isEvening = isNightTime()
+
+            if (!activeSession) {
+                setResultTimes()
+            }
         }, 1000);
     }
 
     onDestroy(() => clearInterval(interval))
     onMount(() => {
         startTimer()
+        setResultTimes()
 
         // const quoteData = localStorage.getItem("quoteData")
         
@@ -76,7 +167,7 @@
     })
 </script>
 
-<div class={`header ${isLightTheme ? "header--light" : ""} ${isHeaderElementTextLight ? "header--light-text" : ""}`}>
+<div class={`header ${isLightTheme ? "header--light" : ""}`}>
     <!-- Quote Modal -->
     <div class={`modal-bg ${isQuoteModalOpen ? "" : "modal-bg--hidden"}`}>
         <div 
@@ -106,25 +197,204 @@
     <div class={`modal-bg ${isCreateNewSessionModalOpen ? "" : "modal-bg--hidden"}`}>
         <div 
             use:clickOutside on:click_outside={() => isCreateNewSessionModalOpen = false} 
-            class="modal-bg__content"
+            class="modal-bg__content new-session-modal-content"
         >
-            <div class="quote-modal" style={`background-image: url(${quote?.bgImgSrc})`}>
-                <div class={`quote-modal__content
-                               ${quote?.artCredit === "" ? "quote-modal__content--no-art-credit" : ""}
-                               ${quote?.quoteCredit === "" ? "quote-modal__content--no-quote-credit" : ""}
-                `}>
-                    <div class="quote-modal__content-container">
-                        <!-- <span class="quote-modal__current-week">{getCurrentWeek()}</span> -->
-                        <div class="pos-relative">
-                            <h1>Quote of the Week</h1>
+            <div class={`new-session-modal ${isLightTheme ? "" : "new-session-modal--dark"}`}>
+                <h1>Create New Session</h1>
+                <h2>Session Name</h2>
+                    <!-- Name -->
+                    <div class="new-session-modal__name-input" bind:this={sessionNameInput}>
+                        <input 
+                            type="text"
+                            placeholder="Afternoon Reading" 
+                            on:focus={() => sessionNameInput.classList.add("new-session-modal__name-input--focus")}
+                            on:blur={() => sessionNameInput.classList.remove("new-session-modal__name-input--focus")}
+                            on:input={editTextInputHandler}
+                            bind:value={newSession.name}
+                        >
+                        <div class="new-session-modal__name-input__divider"></div>
+                        <div class="new-session-modal__name-input-tag-dropdown-container dropdown-container">
+                            <button class="new-session-modal__name-input-tag-dropdown-btn dropdown-btn" on:click={() => {
+                                isTagListDropDownOpen = true
+                                isFocusTimeDropDownOpen = false
+                                isBreakTimeDropDownOpen = false
+                            }}>
+                                <div class="new-session-modal__name-input-btn-tag" style={`background-color: ${newSession.tag.color}`}></div>
+                                <div class="dropdown-btn__title">
+                                    {newSession.tag.name}
+                                </div>
+                                <div class="dropdown-btn__arrows">
+                                    <div class="dropdown-btn__arrows-triangle-up">
+                                        <i class="fa-solid fa-chevron-up"></i>
+                                    </div>
+                                    <div class="dropdown-btn__arrows-triangle-down">
+                                        <i class="fa-solid fa-chevron-down"></i>
+                                    </div>
+                                </div>
+                            </button>
+                            {#if isTagListDropDownOpen}
+                                <ul use:clickOutside on:click_outside={() => isTagListDropDownOpen = false} class="dropdown-menu">
+                                    {#each tags as tag, idx} 
+                                        <li class={`dropdown-menu__option ${tag.name === newSession.tag.name ? "dropdown-menu__option--selected" : ""}`}>
+                                            <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
+                                                <div class="new-session-modal__name-input-btn-tag" style={`background-color: ${tag.color}`}></div>
+                                                <p>{tag.name}</p>
+                                                <i class="fa-solid fa-check"></i>
+                                            </button>
+                                        </li>
+                                    {/each}
+                                    <li class="dropdown-menu__new-option-container">
+                                        <div class="divider divider--thin"></div>
+                                        <button on:click={handleCreateTagBtnClicked}>
+                                            <span>+</span>New Tag
+                                        </button>
+                                    </li>
+                                </ul>
+                            {/if}
                         </div>
-                        <p>"{quote?.text}"</p>
                     </div>
-                    <span class="quote-modal__artist-credit">{quote?.artCredit}</span>
-                    {#if quote?.quoteCredit !== ""}
-                        <h4 class="quote-modal__quote-credit">- {quote?.quoteCredit}</h4>
-                    {/if}
-                </div>
+                    <!-- Pom Details -->
+                    <div class="new-session-modal__pom-input-container">
+                        <!-- Pomodoro Count -->
+                        <div class="new-session-modal__pom-input">
+                            <h2>Pomodoros</h2>
+                            <div class="new-session-modal__pom-input-stepper">
+                                <button on:click={() => { newSession.poms = Math.max(2, newSession.poms) - 1; setResultTimes() }}>-</button>
+                                <span>{newSession.poms}</span>
+                                <button on:click={() => { newSession.poms = Math.min(5, newSession.poms) + 1; setResultTimes() }}>+</button>
+                            </div>
+                        </div>
+                        <!-- Focus Time -->
+                        <div class="new-session-modal__pom-input">
+                            <h2>Focus Time</h2>
+                            <div class="new-session-modal__pom-input-dd-container">
+                                <button class="new-session-modal__pom-input-dropdown-btn dropdown-btn" on:click={() => { 
+                                    isFocusTimeDropDownOpen = true; 
+                                    isBreakTimeDropDownOpen = false;
+                                    isTagListDropDownOpen = false;
+                                }}>
+                                    <div class="dropdown-btn__title">
+                                        {newSession.focusTime} mins
+                                    </div>
+                                    <div class="dropdown-btn__arrows">
+                                        <div class="dropdown-btn__arrows-triangle-up">
+                                            <i class="fa-solid fa-chevron-up"></i>
+                                        </div>
+                                        <div class="dropdown-btn__arrows-triangle-down">
+                                            <i class="fa-solid fa-chevron-down"></i>
+                                        </div>
+                                    </div>
+                                </button>
+                                {#if isFocusTimeDropDownOpen}
+                                    <ul use:clickOutside on:click_outside={() => isFocusTimeDropDownOpen = false } class="dropdown-menu">
+                                        {#each [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60] as time} 
+                                            <li class={`dropdown-menu__option ${newSession.focusTime === time ? "dropdown-menu__option--selected" : ""}`}>
+                                                <button 
+                                                    class="dropdown-element" 
+                                                    on:click={() => { 
+                                                        newSession.focusTime = time
+                                                        isFocusTimeDropDownOpen = false
+                                                        setResultTimes()
+                                                    }}
+                                                >
+                                                    <p>{time} mins</p>
+                                                    <i class="fa-solid fa-check"></i>
+                                                </button>
+                                            </li>
+                                        {/each}
+                                    </ul>
+                                {/if}
+                            </div>
+                        </div>
+                        <!-- Break Time -->
+                        <div class="new-session-modal__pom-input">
+                            <h2>Break Time</h2>
+                            <div class="new-session-modal__pom-input-dd-container">
+                                <button class="new-session-modal__pom-input-dropdown-btn dropdown-btn" on:click={() => {{ 
+                                    isBreakTimeDropDownOpen = true;
+                                    isFocusTimeDropDownOpen = false;
+                                    isTagListDropDownOpen = false;
+                                }}}>
+                                    <div class="dropdown-btn__title">
+                                        {newSession.breakTime} mins
+                                    </div>
+                                    <div class="dropdown-btn__arrows">
+                                        <div class="dropdown-btn__arrows-triangle-up">
+                                            <i class="fa-solid fa-chevron-up"></i>
+                                        </div>
+                                        <div class="dropdown-btn__arrows-triangle-down">
+                                            <i class="fa-solid fa-chevron-down"></i>
+                                        </div>
+                                    </div>
+                                </button>
+                                {#if isBreakTimeDropDownOpen}
+                                    <ul use:clickOutside on:click_outside={() => isBreakTimeDropDownOpen = false} class="dropdown-menu">
+                                        {#each [5, 10, 15, 20, 25, 30] as time} 
+                                            <li class={`dropdown-menu__option ${newSession.breakTime === time ? "dropdown-menu__option--selected" : ""}`}>
+                                                <button 
+                                                    class="dropdown-element" 
+                                                    on:click={() => { 
+                                                        newSession.breakTime = time
+                                                        isBreakTimeDropDownOpen = false
+                                                        setResultTimes()
+                                                    }}
+                                                >
+                                                    <p>{time} mins</p>
+                                                    <i class="fa-solid fa-check"></i>
+                                                </button>
+                                            </li>
+                                        {/each}
+                                    </ul>
+                                {/if}
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Todos -->
+                    <div class="new-session-modal__pom-input-todos">
+                        <h2>Todos</h2>
+                        <div class="new-session-modal__pom-input-todo-input-container">
+                            <div class="new-session-modal__pom-input-todo-input" bind:this={newTodoInput}>
+                                <input 
+                                    type="text"
+                                    placeholder="Afternoon Reading" 
+                                    on:focus={() => newTodoInput.classList.add("new-session-modal__pom-input-todo-input--focus")}
+                                    on:blur={() => newTodoInput.classList.remove("new-session-modal__pom-input-todo-input--focus")}
+                                    on:input={editNewTodoInputHandler}
+                                    bind:value={newTodoTitle}
+                                >
+                                <span>{subtaskCount}</span>
+                            </div>
+                            <button disabled={newTodoTitle === "" || newTodoTitle.length > 20} class="unfill" on:click={() => { 
+                                // @ts-ignore
+                                newSession.todos.push(newTodoTitle)
+                                newTodoTitle = "" 
+                                subtaskCount++
+                            }}>
+                                Submit
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Result -->
+                    <div class="new-session-modal__pom-input-result">
+                        <h2>Result: </h2>
+                        <h3>{newSession.timePeriodString}</h3>
+                        <h4>{`(${newSession.totalElapsedTime})`}</h4>
+                    </div>
+                    <!-- Button Container -->
+                    <div class="new-session-modal__pom-input-btn-container">
+                        <button 
+                            disabled={newSession.name === "" || newSession.name.length >= MAX_SESSION_NAME_LENGTH} 
+                            on:click={createNewSession} class="new-session-modal__pom-input-btn-done-btn"
+                        >
+                            Start Session
+                        </button>
+                        <button 
+                            on:click={() => resetNewSesion()} 
+                            class="new-session-modal__pom-input-btn-cancel-btn"
+                        >
+                            Cancel
+                        </button>
+                    </div>
             </div>            
         </div>            
     </div>            
@@ -135,8 +405,9 @@
             class="modal-bg__content session-modal-content"
         >
             <div class="session-modal">
-                <h1>Active Session</h1>
-                <ActiveSessionView/>
+                {#if activeSession}
+                    <ActiveSessionView />
+                {/if}
             </div>            
         </div>            
     </div>            
@@ -145,56 +416,87 @@
     <!-- Left Side -->
     <button 
         class={`header-session-btn header__section ${isLightTheme ? "header-session-btn--light-mode" : ""}`}
-        on:click={() => isSessionModalOpen = true}
+        on:click={() => {
+            if (activeSession) isSessionModalOpen = true
+            else isCreateNewSessionModalOpen = true
+        }}
     >
-        {#if session}
-            <h5>New Session</h5>
-            <p class="header-session-btn__add-icon">+</p>
+        {#if !activeSession}
+            <div class="header-session-btn__new-session-title">New Session</div>
+            <div class="header-session-btn__new-session-icon">+</div>
         {:else}
-            <div class="header-session-btn__session-tag">S</div>
-            <div class="header-session-btn__session-name">Math Homework</div>
-            <div class="header-session-btn__session-todos">4 / 7</div>
-            <div class="divider"></div>
-            <div class="header-session-btn__session-mode">
-                <i class="fa-brands fa-airbnb"></i>
+            <div title={activeSession?.tag.name} class="header-session-btn__session-tag">
+                {activeSession?.tag.name[0].toLocaleUpperCase()}
             </div>
-            <div class="header-session-btn__session-time">14:34</div>
-            <div class="header-session-btn__session-cycles">1 / 3</div>
+            <div class="header-session-btn__session-name">{activeSession?.name}</div>
+            {#if activeSession.todos.length > 0}
+                <div title={`${activeSession.todosCheckedCount} completed`} class="header-session-btn__session-todos">
+                    {`${activeSession.todosCheckedCount} / ${activeSession.todos.length}`}
+                </div>
+            {/if}
+            <div 
+                title={sessionObj?.iCurrentlyFocusTime() ? "Focus Time" : "Break Time"} 
+                class="header-session-btn__session-mode"
+            >
+                {#if sessionObj?.iCurrentlyFocusTime()}
+                    <i class="fa-brands fa-readme"></i>
+                {:else}
+                    <i class="fa-solid fa-seedling"></i>
+                {/if}
+            </div>
+            <div class="header-session-btn__session-time">
+                {`${activeSession?.currentTime?.minutes}:${String(activeSession?.currentTime?.seconds).padStart(2, '0')}`}
+            </div>
+            <div class="header-session-btn__session-cycles">
+                {`${activeSession?.currentPomPeriod} / ${activeSession?.pomPeriods}`}
+            </div>
         {/if}
     </button>
     <!-- Right Side -->
     <button class="header__time" on:click={() => handleTimeBtnClicked()}>
         {#if isEvening}
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path 
-                    d="M6.8452 0.416992C3.40296 0.416992 0.615723 2.94859 0.615723 6.0708C0.615723 9.19302 3.40296 11.7246 6.8452 11.7246C8.53427 11.7246 10.0645 11.1138 11.1877 10.1244C11.3271 10.0007 11.3633 9.80888 11.2741 9.65239C11.1849 9.4959 10.9926 9.40756 10.8003 9.43785C10.5271 9.48075 10.2484 9.50347 9.96134 9.50347C7.2605 9.50347 5.06973 7.51454 5.06973 5.06119C5.06973 3.40039 6.07314 1.95412 7.55874 1.19187C7.72876 1.10353 7.81516 0.926845 7.77335 0.755211C7.73154 0.583578 7.56988 0.454853 7.37478 0.439708C7.19918 0.427088 7.02359 0.419516 6.8452 0.419516V0.416992Z" 
-                    fill={`${!isLightTheme ? "url(#paint0_linear_3051_27118)" : "rgb(" + baseColor + ")"}`}
-                />
-            {#if !isLightTheme}
+            <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 36 36" fill="none" style={`${!isLightTheme ? "margin-right: -4px;" : ""}`}>
+                <g filter="url(#filter0_d_2981_19936)">
+                    <path 
+                        d="M19.1896 12.5381C15.6431 12.5381 12.7715 14.9938 12.7715 18.0225C12.7715 21.0511 15.6431 23.5068 19.1896 23.5068C20.9298 23.5068 22.5063 22.9143 23.6636 21.9546C23.8072 21.8346 23.8445 21.6485 23.7526 21.4967C23.6607 21.3449 23.4626 21.2592 23.2645 21.2886C22.983 21.3302 22.6959 21.3523 22.4001 21.3523C19.6175 21.3523 17.3604 19.4229 17.3604 17.0431C17.3604 15.4321 18.3942 14.0292 19.9247 13.2897C20.0999 13.204 20.1889 13.0327 20.1459 12.8662C20.1028 12.6997 19.9362 12.5748 19.7352 12.5601C19.5543 12.5479 19.3734 12.5405 19.1896 12.5405V12.5381Z" 
+                        fill={`${!isLightTheme ? "url(#paint0_linear_3051_27118)" : headerTimeColor}`}
+                    />
+                </g>
                 <defs>
-                    <linearGradient id="paint0_linear_3051_27118" x1="6.9292" y1="-2.89459" x2="6.9292" y2="9.06261" gradientUnits="userSpaceOnUse">
-                        <stop stop-color="#FAEEE3"/>
-                        <stop offset="1" stop-color="#F2C59C"/>
-                    </linearGradient>
+                    {#if !isLightTheme}
+                        <filter id="filter0_d_2981_19936" x="0.771484" y="0.538086" width="41.0312" height="40.9688" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                            <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+                            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                            <feOffset/>
+                            <feGaussianBlur stdDeviation="7.5"/>
+                            <feComposite in2="hardAlpha" operator="out"/>
+                            <feColorMatrix type="matrix" values="0 0 0 0 0.945098 0 0 0 0 0.8 0 0 0 0 0.643137 0 0 0 0.55 0"/>
+                            <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2981_19936"/>
+                            <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2981_19936" result="shape"/>
+                        </filter>
+                        <linearGradient id="paint0_linear_3051_27118" x1="6.9292" y1="-2.89459" x2="6.9292" y2="9.06261" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#FAEEE3"/>
+                            <stop offset="1" stop-color="#F2C59C"/>
+                        </linearGradient>
+                    {/if}
                 </defs>
-            {/if}
             </svg>
         {:else}
             {#if isLightTheme}
-                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 19 19" fill="none" style="margin-top: 3px;">
-                    <path d="M8.16841 11.1703C9.95724 11.1703 11.4074 9.72017 11.4074 7.93135C11.4074 6.14252 9.95724 4.69238 8.16841 4.69238C6.37958 4.69238 4.92944 6.14252 4.92944 7.93135C4.92944 9.72017 6.37958 11.1703 8.16841 11.1703Z" fill={`rgb(${baseColor})`}/>
-                    <path d="M8.16823 11.6983C6.09025 11.6983 4.39966 10.0077 4.39966 7.92971C4.39966 5.85172 6.09025 4.16113 8.16823 4.16113C10.2462 4.16113 11.9368 5.85172 11.9368 7.92971C11.9368 10.0077 10.2462 11.6983 8.16823 11.6983ZM8.16823 5.22029C6.6743 5.22029 5.45888 6.43571 5.45888 7.92964C5.45888 9.42357 6.6743 10.639 8.16823 10.639C9.66216 10.639 10.8776 9.42357 10.8776 7.92964C10.8776 6.43571 9.66216 5.22029 8.16823 5.22029Z" fill={`rgb(${baseColor})`}/>
-                    <path d="M8.16828 3.3798C7.8758 3.3798 7.63867 3.14268 7.63867 2.85019V1.12824C7.63867 0.835758 7.8758 0.598633 8.16828 0.598633C8.46077 0.598633 8.6979 0.835758 8.6979 1.12824V2.85019C8.6979 3.14268 8.46077 3.3798 8.16828 3.3798Z" fill={`rgb(${baseColor})`}/>
-                    <path d="M8.16828 15.2607C7.8758 15.2607 7.63867 15.0235 7.63867 14.731V13.0091C7.63867 12.7166 7.8758 12.4795 8.16828 12.4795C8.46077 12.4795 8.6979 12.7166 8.6979 13.0091V14.731C8.6979 15.0236 8.46077 15.2607 8.16828 15.2607Z" fill={`rgb(${baseColor})`}/>
-                    <path d="M14.9696 8.45864H13.2476C12.9551 8.45864 12.718 8.22151 12.718 7.92903C12.718 7.63654 12.9551 7.39941 13.2476 7.39941H14.9696C15.2621 7.39941 15.4992 7.63654 15.4992 7.92903C15.4992 8.22151 15.2621 8.45864 14.9696 8.45864Z" fill={`rgb(${baseColor})`}/>
-                    <path d="M3.08896 8.45864H1.36701C1.07453 8.45864 0.837402 8.22151 0.837402 7.92903C0.837402 7.63654 1.07453 7.39941 1.36701 7.39941H3.08896C3.38144 7.39941 3.61857 7.63654 3.61857 7.92903C3.61857 8.22151 3.38144 8.45864 3.08896 8.45864Z" fill={`rgb(${baseColor})`}/>
-                    <path d="M11.7603 4.86662C11.6248 4.86662 11.4892 4.81493 11.3858 4.71148C11.179 4.50465 11.179 4.1693 11.3858 3.96254L12.6034 2.74499C12.8103 2.53816 13.1456 2.53809 13.3524 2.74499C13.5592 2.95182 13.5592 3.28717 13.3524 3.49394L12.1348 4.71148C12.0314 4.81493 11.8958 4.86662 11.7603 4.86662Z" fill={`rgb(${baseColor})`}/>
-                    <path d="M3.35943 13.269C3.22392 13.269 3.08834 13.2173 2.98496 13.1139C2.77813 12.907 2.77813 12.5717 2.98496 12.3649L4.20257 11.1473C4.4094 10.9405 4.74475 10.9405 4.95151 11.1473C5.15834 11.3541 5.15834 11.6895 4.95151 11.8963L3.7339 13.1139C3.63052 13.2173 3.49501 13.269 3.35943 13.269Z" fill={`rgb(${baseColor})`}/>
-                    <path d="M12.9777 13.269C12.8422 13.269 12.7066 13.2173 12.6032 13.1139L11.3856 11.8963C11.1788 11.6894 11.1788 11.3541 11.3856 11.1473C11.5924 10.9405 11.9278 10.9405 12.1345 11.1473L13.3521 12.3649C13.559 12.5718 13.559 12.9071 13.3521 13.1139C13.2488 13.2173 13.1133 13.269 12.9777 13.269Z" fill={`rgb(${baseColor})`}/>
-                    <path d="M4.57704 4.86662C4.44153 4.86662 4.30595 4.81493 4.20257 4.71148L2.98496 3.49394C2.77813 3.2871 2.77813 2.95182 2.98496 2.74499C3.19179 2.53816 3.52714 2.53809 3.7339 2.74499L4.95151 3.96254C5.15834 4.16937 5.15834 4.50465 4.95151 4.71148C4.84813 4.81493 4.71262 4.86662 4.57704 4.86662Z" fill={`rgb(${baseColor})`}/>
+                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 19 19" fill="none" style="margin: 3px 5px 0px 0px;">
+                    <path d="M8.16841 11.1703C9.95724 11.1703 11.4074 9.72017 11.4074 7.93135C11.4074 6.14252 9.95724 4.69238 8.16841 4.69238C6.37958 4.69238 4.92944 6.14252 4.92944 7.93135C4.92944 9.72017 6.37958 11.1703 8.16841 11.1703Z" fill={headerTimeColor}/>
+                    <path d="M8.16823 11.6983C6.09025 11.6983 4.39966 10.0077 4.39966 7.92971C4.39966 5.85172 6.09025 4.16113 8.16823 4.16113C10.2462 4.16113 11.9368 5.85172 11.9368 7.92971C11.9368 10.0077 10.2462 11.6983 8.16823 11.6983ZM8.16823 5.22029C6.6743 5.22029 5.45888 6.43571 5.45888 7.92964C5.45888 9.42357 6.6743 10.639 8.16823 10.639C9.66216 10.639 10.8776 9.42357 10.8776 7.92964C10.8776 6.43571 9.66216 5.22029 8.16823 5.22029Z" fill={headerTimeColor}/>
+                    <path d="M8.16828 3.3798C7.8758 3.3798 7.63867 3.14268 7.63867 2.85019V1.12824C7.63867 0.835758 7.8758 0.598633 8.16828 0.598633C8.46077 0.598633 8.6979 0.835758 8.6979 1.12824V2.85019C8.6979 3.14268 8.46077 3.3798 8.16828 3.3798Z" fill={headerTimeColor}/>
+                    <path d="M8.16828 15.2607C7.8758 15.2607 7.63867 15.0235 7.63867 14.731V13.0091C7.63867 12.7166 7.8758 12.4795 8.16828 12.4795C8.46077 12.4795 8.6979 12.7166 8.6979 13.0091V14.731C8.6979 15.0236 8.46077 15.2607 8.16828 15.2607Z" fill={headerTimeColor}/>
+                    <path d="M14.9696 8.45864H13.2476C12.9551 8.45864 12.718 8.22151 12.718 7.92903C12.718 7.63654 12.9551 7.39941 13.2476 7.39941H14.9696C15.2621 7.39941 15.4992 7.63654 15.4992 7.92903C15.4992 8.22151 15.2621 8.45864 14.9696 8.45864Z" fill={headerTimeColor}/>
+                    <path d="M3.08896 8.45864H1.36701C1.07453 8.45864 0.837402 8.22151 0.837402 7.92903C0.837402 7.63654 1.07453 7.39941 1.36701 7.39941H3.08896C3.38144 7.39941 3.61857 7.63654 3.61857 7.92903C3.61857 8.22151 3.38144 8.45864 3.08896 8.45864Z" fill={headerTimeColor}/>
+                    <path d="M11.7603 4.86662C11.6248 4.86662 11.4892 4.81493 11.3858 4.71148C11.179 4.50465 11.179 4.1693 11.3858 3.96254L12.6034 2.74499C12.8103 2.53816 13.1456 2.53809 13.3524 2.74499C13.5592 2.95182 13.5592 3.28717 13.3524 3.49394L12.1348 4.71148C12.0314 4.81493 11.8958 4.86662 11.7603 4.86662Z" fill={headerTimeColor}/>
+                    <path d="M3.35943 13.269C3.22392 13.269 3.08834 13.2173 2.98496 13.1139C2.77813 12.907 2.77813 12.5717 2.98496 12.3649L4.20257 11.1473C4.4094 10.9405 4.74475 10.9405 4.95151 11.1473C5.15834 11.3541 5.15834 11.6895 4.95151 11.8963L3.7339 13.1139C3.63052 13.2173 3.49501 13.269 3.35943 13.269Z" fill={headerTimeColor}/>
+                    <path d="M12.9777 13.269C12.8422 13.269 12.7066 13.2173 12.6032 13.1139L11.3856 11.8963C11.1788 11.6894 11.1788 11.3541 11.3856 11.1473C11.5924 10.9405 11.9278 10.9405 12.1345 11.1473L13.3521 12.3649C13.559 12.5718 13.559 12.9071 13.3521 13.1139C13.2488 13.2173 13.1133 13.269 12.9777 13.269Z" fill={headerTimeColor}/>
+                    <path d="M4.57704 4.86662C4.44153 4.86662 4.30595 4.81493 4.20257 4.71148L2.98496 3.49394C2.77813 3.2871 2.77813 2.95182 2.98496 2.74499C3.19179 2.53816 3.52714 2.53809 3.7339 2.74499L4.95151 3.96254C5.15834 4.16937 5.15834 4.50465 4.95151 4.71148C4.84813 4.81493 4.71262 4.86662 4.57704 4.86662Z" fill={headerTimeColor}/>
                 </svg>
             {:else}
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="16" viewBox="0 0 15 16" fill="none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="16" viewBox="0 0 15 16" fill="none" style="margin-right: 7px;">
                     <path d="M7.63691 11.4037C9.42574 11.4037 10.8759 9.95357 10.8759 8.16474C10.8759 6.37591 9.42574 4.92578 7.63691 4.92578C5.84808 4.92578 4.39795 6.37591 4.39795 8.16474C4.39795 9.95357 5.84808 11.4037 7.63691 11.4037Z" fill="url(#paint0_linear_3054_27121)"/>
                     <path d="M7.63674 11.9317C5.55876 11.9317 3.86816 10.2411 3.86816 8.16311C3.86816 6.08512 5.55876 4.39453 7.63674 4.39453C9.71472 4.39453 11.4053 6.08512 11.4053 8.16311C11.4053 10.2411 9.71472 11.9317 7.63674 11.9317ZM7.63674 5.45368C6.14281 5.45368 4.92739 6.66911 4.92739 8.16304C4.92739 9.65696 6.14281 10.8724 7.63674 10.8724C9.13067 10.8724 10.3461 9.65696 10.3461 8.16304C10.3461 6.66911 9.13067 5.45368 7.63674 5.45368Z" fill="url(#paint1_linear_3054_27121)"/>
                     <path d="M7.63679 3.6132C7.3443 3.6132 7.10718 3.37607 7.10718 3.08359V1.36164C7.10718 1.06916 7.3443 0.832031 7.63679 0.832031C7.92928 0.832031 8.1664 1.06916 8.1664 1.36164V3.08359C8.1664 3.37607 7.92928 3.6132 7.63679 3.6132Z" fill="url(#paint2_linear_3054_27121)"/>
@@ -261,7 +563,7 @@
         @include flex-container(center, space-between);
         
         &__section {
-            border-radius: 20px;
+            border-radius: 15px;
             height: 35px;
             @include flex-container(center, _);
             padding: 11px 15px 11px 12px;
@@ -275,13 +577,10 @@
             transition: 0.1s ease-in-out;
             cursor: pointer;
 
-            svg {
-                margin: 0px 7px 0px 0px;
-            }
             h2 {
                 font-size: 1.45rem;
                 font-weight: 300;
-                color: rgba(var(--fgColor1), 1);
+                color: var(--headerTimeColor);
             }
 
             &:active {
@@ -316,9 +615,10 @@
         }
     }
 
+    /* Active Session Btn */
     .header-session-btn {
         overflow: hidden;
-        padding: 0px 15px;
+        padding: 0px 12px 0px 15px;
         margin-right: 10px;
         color: rgba(var(--headerElementTextColor), 1);
         align-items: center;
@@ -346,21 +646,30 @@
             color: rgba(var(--headerElementTextColor), 0.8);
         }
         
-        &__add-icon {
-            font-size: 1.5rem;
-            font-weight: 100;
-            margin-left: 10px;
+        &__new-session-title {
+            font-size: 1.2rem;
+            margin-left: 2px;
         }
+        &__new-session-icon {
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin: 0px 2px 0px 10px;
+        }
+        /* Active Session Component */
         &__session-tag {
             @include circle(17px);
             @include center;
             background-color: rgba(var(--fgColor1), 1);
             margin: 0px 8px 0px -5px;
             color: white;
-        } 
+        }
         &__session-name {
             font-size: 1.1rem;
-            margin-right: 7px;
+        }
+        &__session-todos {
+            width: 30px;
+            margin-right: -5px;
+            @include center;
         }
         &__session-todos, &__session-cycles {
             color: rgba(var(--headerElementTextColor), 0.5);
@@ -368,16 +677,10 @@
             font-size: 0.95rem;
             margin-top: 2px;
         }
-        .divider {
-            background-color: rgba(var(--headerElementTextColor), 0);
-            margin: 0px 2px 0px 10px;
-            width: 0.8px;
-            height: 10px;
-        }
         &__session-mode {
             i {
                 color: rgba(var(--headerElementTextColor), 0.85);
-                margin: 2px -3px 0px 5px;
+                margin: 2px -1px 0px 15px;
                 font-size: 1.2rem;
             }
         }
@@ -385,7 +688,8 @@
             color: rgba(var(--headerElementTextColor), 0.85);
             font-size: 1.27rem;
             font-weight: 500;
-            margin: 0px 8px 0px 9px;
+            margin-left: 9px;
+            width: 37px;
         }
     }
 
@@ -393,6 +697,8 @@
     .modal-bg__content {
         border-radius: 0px;
     }
+
+    /* Quote Modal */
     .quote-modal {
         padding: 0px;
         width: 75vw;
@@ -451,12 +757,358 @@
             @include pos-abs-bottom-right-corner(30px, 25px);
         }
     }
+
+    /* New Session Modal */
+    .new-session-modal-content {
+        width: 390px;   
+        padding: 15px 22px 18px 22px;
+        border-radius: 14px;
+    }
+    .new-session-modal {
+        h1 {
+            font-size: 1.7rem;
+            margin-bottom: 20px;
+        }
+        h2 {
+            font-size: 1.35rem;
+            margin-bottom: 9px;
+            color: rgba(var(--textColor1), 0.85);
+        }
+        
+        /* Dark Themes Adjustments */
+        &--dark .dropdown-menu {
+            border: 1px solid rgba(60, 60, 60, 0.1);
+        }
+        &--dark h2 {
+            font-weight: 400;
+            color: rgba(var(--textColor1), 0.8);
+        }
+        &--dark &__name-input {
+            @include input-text-field-dark;
+        }
+        &--dark &__pom-input-todo-input {
+            @include input-text-field-dark;
+        }
+        &--dark &__name-input-tag-dropdown-btn {
+            @include dropdown-btn-dark;
+            &:hover {
+                background-color: rgba(30, 30, 30, 0.24);
+            }
+        }
+        &--dark &__name-input-tag-dropdown-container .dropdown-menu {
+            @include dropdown-menu-dark;
+        }
+        &--dark &__pom-input-stepper {
+            span {
+                color: rgba(var(--textColor1), 0.65);
+            }
+            button {
+                color: rgba(var(--textColor1), 0.65);
+
+                &:hover {
+                    background-color: rgba(30, 30, 30, 0.3);
+                }
+            }
+        }
+        &--dark &__pom-input-dropdown-btn {
+            @include dropdown-btn-dark;
+            &:hover {
+                background-color: rgba(30, 30, 30, 0.24);
+            }
+        }
+        &--dark &__pom-input-dd-container .dropdown-menu {
+            @include dropdown-menu-dark;
+        }
+        &--dark &__pom-input-result {
+            h3 {
+                font-weight: 400;
+            }
+            h4 {
+                font-weight: 300;
+            }
+        }
+        &--dark &__pom-input-btn-done-btn {
+            @include color-btn-hover;
+        }
+        &--dark &__pom-input-btn-cancel-btn {
+            border: 1px solid rgba(var(--textColor1), 0.4);
+            color: rgba(var(--textColor1), 0.4);
+            
+            &:hover {
+                background-color: rgba(var(--textColor1), 0.4);
+            }
+        }
+
+        /* Name Input */
+        &__name-input { 
+            font-size: 1.32rem;
+            padding: 0px 7px 0px 20px;
+            height: 47px;
+            border-radius: 10px;
+            width: 97%;
+            @include flex-container(center, _);
+            transition: 0.2s ease-in-out;
+            border: 1px solid rgba(211, 211, 211, 0);
+            background-color: var(--modalBgAccentColor);
+            
+            &--focus {
+                border-color: rgba(211, 211, 211, 0.5);
+            }
+            
+            input {
+                color: rgba(var(--textColor1), 0.5);
+                transition: 0.14s ease-in-out;
+                font-weight: 500;
+                width: 70%;
+
+                &::placeholder {
+                    font-size: 1.4rem;
+                    font-weight: 400;
+                    opacity: 0.2;
+                }
+            }
+            .quote-modal {
+                width: 0.9px;
+                height: 15px;
+                margin-top: -1px;
+                background-color: rgba(var(--textColor1), 0.15);
+            }
+            &__divider {
+                width: 0.9px;
+                height: 14px;
+                margin: 0px 10px 0px 0px;
+                background-color: rgba(var(--textColor1), 0.15);
+            }
+        }
+        &__name-input-tag-dropdown-container {
+            position: relative;
+            .dropdown-menu {
+                position: absolute;
+                top: 40px;
+                width: 100px;
+                &__option {
+                    p {
+                        margin-left: 3px;
+                    }
+                    span {
+                        margin-right: 3px;
+                    }
+                }
+            }
+        }
+        &__name-input-tag-dropdown-btn {
+            @include flex-container(center, _);
+            background: none;
+            box-shadow: none;
+            padding: 10px 11px 10px 10px;
+            border-radius: 10px;
+
+            &:hover {
+                background-color: rgba(217, 217, 217, 0.3);
+            }
+        }
+        &__name-input-btn-tag {
+            @include circle(8px);
+            margin-right: 7px;
+        }
+
+        /* Pomodoros */
+        &__pom-input-container {
+            display: flex;
+            margin: 20px 0px 10px 0px;
+            width: 100%;
+        }
+        &__pom-input {
+            width: 33%;
+            padding-right: 10px;
+        }
+        &__pom-input-dropdown-btn {
+            height: 34px;
+            border-radius: 7px;
+            box-shadow: none;
+            padding: 0px;
+            width: 100%;
+            justify-content: start;
+            background-color: var(--modalBgAccentColor);
+
+            &:hover {
+                background-color: rgba(217, 217, 217, 0.5);
+            }
+            &:active {
+                transform: scale(0.995);
+            }
+
+            .dropdown-btn__title {
+                width: 45px;
+                margin: 0px 14px 0px 15px;
+            }
+        }
+
+        /* Pom Count */
+        &__pom-input-stepper {
+            height: 34px;
+            padding: 0px 4px;
+            border-radius: 7px;
+            @include flex-container(center, space-between);
+            background-color: var(--modalBgAccentColor);
+
+            span {
+                margin: 0px 5px;
+                font-size: 1.2rem;
+                color: rgba(var(--textColor1), 0.7);
+            }
+            button {
+                padding: 10px;
+                height: 8px;
+                font-size: 1.4rem;
+                @include center;
+                transition: 0.05s ease-in-out;
+                border-radius: 3px;
+                color: rgba(var(--textColor1), 0.7);
+                background: none;
+
+                &:active {
+                    transform: scale(0.97);
+                }
+                &:hover {
+                    background-color: rgba(217, 217, 217, 0.3);
+                }
+            }
+        }
+        &__pom-input-dd-container {
+            position: relative;
+        }
+
+        /* Focust & Break Time */
+        &__pom-input-dd-container .dropdown-menu {
+            position: absolute;
+            top: 40px;
+            left: 10px;
+            border-radius: 10px;
+            width: 80px;
+            
+            &__option {
+                padding: 0px;
+                border-radius: 10px;
+                button {
+                    padding: 8px 12px;
+                    &:active {
+                        transform: scale(0.97);
+                    }
+                }
+            }
+        }
+
+        /* Sutasks */
+        &__pom-input-todos {
+            margin-top: 22px;
+        }
+        &__pom-input-todo-input-container {
+            display: flex;
+            
+            button {
+                width: 18%;
+                border-radius: 10px;
+                font-size: 1.3rem;
+            }
+        }
+        &__pom-input-todo-input {
+            font-size: 1.32rem;
+            padding: 0px 7px 0px 20px;
+            height: 38px;
+            border-radius: 10px;
+            width: 65%;
+            @include flex-container(center, _);
+            transition: 0.2s ease-in-out;
+            border: 1px solid rgba(211, 211, 211, 0);
+            margin-right: 10px;
+            position: relative;
+            background-color: var(--modalBgAccentColor);
+
+            &--focus {
+                border-color: rgba(211, 211, 211, 0.5);
+            }
+
+            input {
+                &::placeholder {
+                    font-size: 1.4rem;
+                    font-weight: 300;
+                    opacity: 0.2;
+                }
+            }
+
+            span {
+                @include pos-abs-top-right-corner(10px, 15px);
+                color: rgba(150, 150, 150, 0.6);
+            }
+        }
+
+        /* Result */
+        &__pom-input-result {
+            margin: 35px 0px 45px 0px;
+            @include flex-container(center, center);
+            h2 {
+                margin: 0px 20px 0px 0px;
+                font-size: 1.5rem;
+            }
+            h3 {
+                padding: 0px;
+                margin-right: 8px;
+                color: rgba(var(--textColor1), 0.8);
+                font-weight: 500;
+                font-size: 1.45rem;
+            }
+            h4 {
+                font-size: 1.45rem;
+                font-weight: 400;
+                color: rgba(var(--textColor1), 0.45);
+            }
+        }
+
+        /* Button Container */
+        &__pom-input-btn-container {
+            width: 96%;
+            display: flex;
+
+            button {
+                @include center;
+                border-radius: 9px;
+                height: 45px;
+                font-size: 1.3rem;
+                transition: 0.12s ease-in-out;
+
+                &:active {
+                    transform: scale(0.99);
+                }
+            }
+        }
+        &__pom-input-btn-done-btn {
+            width: 70%;
+            background-color: rgba(var(--fgColor1), 1);
+            color: var(--modalBgColor);
+            margin-right: 5px;
+        }
+        &__pom-input-btn-cancel-btn {
+            width: 30%;
+            background-color: transparent;
+            border: solid 1.15px rgba(150, 150, 150, 0.7);
+            color: rgba(var(--textColor1), 0.55);
+            
+            &:hover {
+                background-color: rgba(150, 150, 150, 0.7);
+                border-color: transparent;
+                color: var(--modalBgColor);
+            }
+        }
+    }
+
+    /* Session Modal */
     .session-modal-content {
-        border-radius: 15px;
-        padding: 15px 22px 28px 22px;
+        border-radius: 20px;
+        padding: 13px 22px 10px 22px;
     }
     .session-modal {
-        width: 500px;
+        width: 340px;
 
         h1 {
             margin-bottom: 15px;

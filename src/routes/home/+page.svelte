@@ -194,11 +194,11 @@
         position: fixed;
         top: 0px;
         right: 0px;
-        background-color: var(--secondaryBgColor);
         transition: ease-in-out 0.18s;
         overflow: hidden;
+        background-color: var(--secondaryBgColor);
         border: var(--sidePanelBorder);
-        box-shadow: var(--sidePanelShadow);
+        box-shadow: var(--prodMenuViewShadow);
 
         // background: rgba(32, 31, 31, 0.1);
         // backdrop-filter: blur(10px);

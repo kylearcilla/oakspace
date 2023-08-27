@@ -11,23 +11,55 @@ type Quote = {
     quoteCredit: string
 }
 
-type Session = {
-    name: string,
-    tag: Tag,
-    pomTime: number,
-    pomTimeNum: number,
-    breakTime: number,
-    breakTimeNum: number,
-    startTime: Date,
-    endTime: Date | null,
-    currentIndex: number,
-    score: number | null,
-    tasks: string[] | null
-}
-
+/* Session Stuff */
+type Medal = "🏅" | "🥈" | "🥉"
+type SessionResult = { score: number, medal: Medal }
 type Tag = {
     name: string,
     color: string
+}
+type SessionInputs = {
+    name: string,
+    tag: Tag
+    poms: number,
+    focusTime: number,
+    breakTime: number,
+    todos: string[]
+    calculatedEndTime: Date | null,
+    totalElapsedTime: string | null,
+    timePeriodString: string | null
+}
+
+enum SessionState {
+    EMPTY, 
+    PAUSED, 
+    FOCUSING, 
+    ON_BREAK, 
+    WAITING_TO_PROGRESS_BREAK, 
+    WAITING_TO_PROGRESS_FOCUS, 
+    FINISHED, 
+    CANCELED, 
+    FINISH_TOO_EARLY
+}
+
+type ActiveSessionState = {
+    name: string,
+    tag: Tag,
+    pomTime: number,
+    pomPeriods: number,
+    breakTime: number,
+    startTime: Date,
+    calculatedEndTime: Date
+    totalElapsedTime: string,
+    timePeriodString: string,
+    currentIndex: number,
+    todos: { title: string, isChecked: boolean }[],
+    todosCheckedCount: number,
+    currentTime: { minutes: number, seconds: number } | null,
+    currentPomPeriod: number,
+    sessionState: SessionState,
+    resultScore: SessionResult | null,
+    pomMessage: string    
 }
 
 /* Music Stuff */
@@ -138,6 +170,18 @@ type YoutubeVideo = {
     channelSubs: number
 };
 
+type ThemeState = {
+    title: string,  // to set styling specific only to Default Dark Mode
+    isDarkTheme: boolean,     // to change styling specific only to dark / light themes
+    themeToggleBtnIconColor: string,
+    sectionTitle: string,
+    headerTimeColor: string,
+    twinTheme: {
+        sectionName: string,
+        index: number
+    } | null
+}
+
 /* Custom Themes */
 type Theme = {
     title: string,
@@ -183,26 +227,40 @@ type ThemeData = {
     sessionBgColor: string,
     sessionBorderVal: string,
     sessionShadowVal: string,
-    themeToggleBtnBgColor: string,
-    iconToggleBtnBgColor: string,
-    highlighterToggleBtnBgColor: string,
     textColor1: string,
     textColor2: string,
     hoverColor: string,
     hoverColor2: string,
+    hoverColor3: string,
     tabColor: string,
     tabHighlightColor: string,
     tabHighlightBoxShadow: string,
+    headerElementBgColor: string,
+    headerElementBorderVal: string,
+    headerElementTextColor: string,
+    headerElementShadow: string,
+    headerTimeColor: string,
+    modalBgAccentColor: string,
     modalBgColor: string,
     bentoBoxBgColor: string,
     bentoBoxBorder: string,
     bentoBoxShadow: string,
-    headerElementBgColor: string,
-    headerElementTextColor: string,
-    headerElementBorderVal: string,
     muiscPlayerBgColor: string,
     musicProgressFgColor: string,
     navMenuBgColor: string,
     navIconColor: string,
-    navIconBgColor: string
+    navIconBgColor: string,
+    themeToggleBtnBgColor: string,
+    iconToggleBtnBgColor: string,
+    highlighterToggleBtnBgColor: string,
+    midPanelBorder: string,
+    midPanelShadow: string,            
+    midPanelBaseColor: string,
+    midPanelAccentColor: string,
+    midPanelAccentAltColor: string,
+    midPanelAccentTextColor: string,
+    sidePanelBorder: string,
+    sidePanelShadow: string,
+    dropdownMenuBgColor: string,
+    prodMenuViewShadow: string
 }

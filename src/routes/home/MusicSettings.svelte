@@ -762,14 +762,16 @@
             img {
                 border-radius: 5px;
                 width: 75px;
+                object-fit: cover;
+                aspect-ratio: 1 / 1;
             }
         }
         &__description {
             overflow: hidden;
-            height: 74px;
+            height: 80px;
             width: 90%;
             span {
-                color: rgba(var(--textColor2), 0.6);
+                color: rgba(255, 255, 255, 0.6);
                 text-transform: capitalize;
                 font-weight: 600;
             }
@@ -778,7 +780,7 @@
                 @include elipses-overflow;
             }
             p {
-                color: rgba(var(--textColor2), 0.5);
+                color: rgba(255, 255, 255, 0.5);
                 @include multi-line-elipses-overflow(3);
             }
         }
@@ -787,7 +789,7 @@
             font-weight: 600;
             @include pos-abs-bottom-right-corner(20px, 13px);
             display: flex;
-            color: rgba(var(--textColor2), 0.7);
+            color: rgba(255, 255, 255, 0.7);
 
             span {
                 font-weight: 100;
@@ -797,7 +799,7 @@
         &__no-pl-selected {
             font-weight: 600;
             @include elipses-overflow();
-            color: rgb(var(--textColor2), 0.8);
+            color: rgb(255, 255, 255, 0.8);
             @include abs-center;
         }
         .content-bg {
@@ -917,7 +919,8 @@
         /* Discover Collections Carousel */
         &__collection-list-container {
             position: relative;
-            height: 140px;
+            height: 125px;
+            margin-bottom: 20px;
 
             &:hover > .gradient-container {
                 opacity: 1;
@@ -1112,6 +1115,7 @@
             display: flex;
             overflow: hidden;
             img {
+                object-fit: cover;
                 width: 35px;
                 height: 35px;
                 aspect-ratio: 1/ 1;

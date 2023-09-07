@@ -393,7 +393,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
         max-width: 90%;
         max-height: 90%;
         overflow: hidden;
-        padding: 25px 35px 30px 35px;
+        padding: 20px 25px 25px 25px;
         border-radius: 8px;
         background-color: var(--modalBgColor);
         color: rgb(var(--textColor1));
@@ -422,6 +422,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
         margin-bottom: 20px;
     }
     &__content-title {
+        font-size: 1.9rem;
         margin-bottom: 10px;
     }
 
@@ -485,15 +486,39 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     -moz-text-security: disc;
 }
 
- /* Buttons unfill unfill--oval | fill | no-bg | text-only | icon-only | text-icon */
-@mixin color-btn-hover {
+@mixin color-btn-styling {
     transition: 0.12s ease-in-out;
-
+    
+    &:focus {
+        filter: brightness(1.1);
+    }
     &:hover {
         filter: brightness(1.1);
     }
 }
+@mixin trans-btn-dark-styling {
+    &:focus {
+        background-color: rgba(50, 50, 50, 0.2) !important;
+    }
+    &:hover {
+        background-color: rgba(45, 45, 45, 0.3) !important;
+    }
+}
+@mixin trans-btn-light-styling {
+    &:focus {
+        background-color: rgba(180, 180, 180, 0.14) !important;
+    }
+    &:hover {
+        background-color: rgba(190, 190, 190, 0.15) !important;
+    }
+}
+@mixin unfill-btn-ficus-styling($color-var) {
+    &:focus {
+        background-color: rgba($color-var, 0.2);
+    }
+}
 
+/* Buttons unfill unfill--oval | fill | no-bg | text-only | icon-only | text-icon */
 button, input {
 	all: unset;
 }
@@ -525,8 +550,11 @@ button.tab-btn {
     font-weight: 400;
     @include center;
 
+    &:focus {
+        filter: brightness(1.4);
+    }
     &:hover {
-        filter: brightness(1.05);
+        filter: brightness(1.4);
     }
     &:active {
         transform: scale(0.985);
@@ -536,21 +564,29 @@ button.tab-btn {
         &:hover {
             filter: brightness(1.03);
         }
+        &:focus {
+            filter: brightness(1.05);
+        }
     }
     &--selected {
-        background-color: var(--tabHighlightColor);
+        background-color: var(--tabHighlightColor) !important;
         box-shadow: var(--tabHighlightBoxShadow);
         color: var(--bentoBoxBgColor);
+
+        &:hover {
+            filter: brightness(1);
+        }
+        &:focus {
+            filter: brightness(1);
+        }
     }
 }
  button.unfill {
-    padding: 6px 16px 6px 16px;
     border: solid 1.15px rgb(var(--fgColor2));
     color: rgb(var(--fgColor2));
     background-color: transparent;
     transition: 0.1s ease-in-out;
     @include center;
-
 
     &:hover {
         background-color: rgb(var(--fgColor2));
@@ -566,11 +602,24 @@ button.tab-btn {
         }
     }
 
+    &--padded {
+        padding: 6px 16px 6px 16px;
+    }
     &--oval {
         border-radius: 15px;
     }
     &--rectangle {
         border-radius: 4px;
+    }
+    &--gray {
+        border: solid 1.15px rgba(150, 150, 150, 0.7);
+        color: rgba(150, 150, 150, 0.7);
+        
+        &:hover {
+            background-color: rgba(150, 150, 150, 0.7) !important;
+            border-color: transparent !important;
+            color: var(--modalBgColor) !important;
+        }
     }
 }
 button.text-only {
@@ -583,6 +632,9 @@ button.text-only {
 
     &:active {
         transform: scale(0.99);
+    }
+    &:focus {
+        color: rgb(var(--textColor1), 1);
     }
     &:hover {
         color: rgb(var(--textColor1), 1);
@@ -609,6 +661,9 @@ button.settings-btn {
     
     &:active {
         transform: scale(0.98)
+    }
+    &:focus {
+        background-color: rgba(var(--textColor1), 0.05);
     }
     &:hover {
         background-color: rgba(var(--textColor1), 0.05);
@@ -680,6 +735,12 @@ button.settings-btn {
     color: rgba(var(--textColor1), 0.65);
     font-weight: 400;
 
+    &:hover {
+        background-color: rgba(100, 100, 100, 0.15) !important;
+    }
+    &:focus {
+        background-color: rgba(100, 100, 100, 0.15) !important;
+    }
     i {
         color: rgba(var(--textColor1), 0.65);
     }
@@ -687,8 +748,16 @@ button.settings-btn {
 @mixin dropdown-menu-dark {
     box-shadow: none;
     &__option {
-        &:hover {
-            background-color: rgba(30, 30, 30, 0.2);
+        &--selected {
+            background-color: rgba(45, 45, 45, 0.2) !important;
+        }
+        button {
+            &:hover {
+                background-color: rgba(45, 45, 45, 0.2);
+            }
+            &:focus {
+                background-color: rgba(45, 45, 45, 0.2);
+            }
         }
         p {
             font-weight: 300;
@@ -699,13 +768,16 @@ button.settings-btn {
     }
     &__new-option-container button {
         font-weight: 400;
+        &:focus {
+            background-color: rgba(40, 40, 40, 0.2);
+        }
         &:hover {
             background-color: rgba(30, 30, 30, 0.2);
         }
     }
 }
 
- .dropdown-container {
+.dropdown-container {
      position: relative;
 }
 .dropdown-btn {
@@ -717,13 +789,13 @@ button.settings-btn {
     color: rgba(var(--textColor1), 0.75);
     display: flex;
     border-radius: 20px;
-    padding: 4px 11px 4px 10px;
-    transition: 0.1s ease-in-out;
+    padding: 5.5px 11px 5.5px 10px;
+    transition: 0.13s ease-in-out;
     @include center;
     @include flex-container(center, _);
 
     &:hover {
-        background-color: var(--hoverColor3);
+        background-color: rgba(255, 255, 255, 1);
     }
     &:active {
         transform: scale(0.99);
@@ -736,12 +808,19 @@ button.settings-btn {
     &--light-mode p  {
         font-weight: 600;
     }
+    &--small {
+        height: 14px;
+    }
+    &--small &__title { 
+        font-size: 1.1rem;
+    }
+
 
     i {
         color: rgba(var(--textColor1), 0.5);
     }
     &__title {
-        margin: 0px 5px 0px 4px;
+        margin: -2px 5px 0px 4px;
         font-size: 1.2rem;
     }
     &__arrows i {
@@ -762,45 +841,45 @@ button.settings-btn {
     overflow: scroll;
     z-index: 1000;
     padding: 4px 3px 5px 3px;
-    border-radius: 5px;
+    border-radius: 10px;
     background-color: var(--dropdownMenuBgColor);
     border: var(--bentoBoxBorder);
     box-shadow: var(--bentoBoxShadow);
     width: auto;
     min-width: 25px;
+    position: absolute;
     
     &__option {
         color: rgb(var(--textColor1));
         white-space: nowrap;
-        border-radius: 4px;
+        border-radius: 9px;
         width: 100%;
         position: relative;
         display: block;
-        cursor: pointer;
         margin-bottom: 1px;
+        overflow: hidden;
+        cursor: pointer;
         
         &--selected {
-            background-color: var(--dropdownMenuBgColor);
-            filter: brightness(1.03);
             opacity: 1;
+            background-color: rgba(220, 220, 220, 0.2);
+
             button {
                 opacity: 1;
                 i {
-                    display: block;
+                    display: block !important;
                 }
             }
         }
         &:last-child {
             padding-bottom: 0px;
         }
-        &:hover {
-            background-color: var(--dropdownMenuBgColor);
-            filter: brightness(0.98);
-            opacity: 1;
-        }
         &:hover > button {
             opacity: 1;
         }
+    }
+    &__option-icon {
+        margin-right: 7px;
     }
     &__option button {
         @include flex-container(center, _);
@@ -808,11 +887,21 @@ button.settings-btn {
         opacity: 0.5;
         width: 95%;
         font-weight: 600;
+
+        &:hover {
+            background-color: rgba(220, 220, 220, 0.2);
+            opacity: 1;
+        }
+        &:focus {
+            background-color: rgba(220, 220, 220, 0.2);
+            opacity: 1;
+        }
+
         p {
             font-size: 1.12rem;
         }
         i {
-            @include pos-abs-bottom-right-corner(8px, 8px);
+            @include pos-abs-bottom-right-corner(8px, 10px);
             display: none;
             font-size: 0.9rem;
             opacity: 0.8;
@@ -837,8 +926,11 @@ button.settings-btn {
             font-size: 1.1rem;
             border-radius: 8px;
             
+            &:focus {
+                background-color: rgba(220, 220, 220, 0.2);
+            }
             &:hover {
-                background-color: var(--hoverColor2);
+                background-color: rgba(220, 220, 220, 0.2);
             }
             span {
                 font-size: 1.5rem;
@@ -1002,7 +1094,7 @@ button.settings-btn {
     @include abs-center();
 }
 
-.grid-section {
+.bento-box {
     border-radius: 10px;
     padding: 15px 25px 17px 25px;
     background-color: var(--bentoBoxBgColor);

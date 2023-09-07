@@ -170,6 +170,66 @@ type YoutubeVideo = {
     channelSubs: number
 };
 
+/* Analytics Stuff */
+type ProdOverviewData = { 
+    dayToBarDataArr: TagBarStat[]
+    tagDistrMap: Map<string, TagDistrData>,
+    maxHours: number,
+    tags: { name: string, color: string }[],
+}
+
+type DayData = { 
+    totalSessions: number, 
+    totalHours: number, 
+    sessionData: TagBarSegmentStat[] 
+}
+
+type GraphChartData = {
+    maxHours: number
+    chartDataMap: Map<string, TagBarStat>
+}
+
+type SessionWeeklyData = {
+    tagDistributionMap: Map<string, TagDistrData>,
+    avgSessions: number,
+    avgFocusTime: number
+}
+
+type SessionDailyData = {
+    tagDistributionMap: Map<string, TagDistrData>,
+    sessionCount: number,
+    focusTimeCount: number
+}
+
+type TagBarStat = {
+    dateStr: string,
+    date: Date,
+    sessionsCount: number,
+    focusHours: number,
+    focusHoursStr: string,
+    segments: TagBarSegmentStat[],
+}
+
+type TagBarSegmentStat = {
+    name: string, 
+    color: string,
+    hrsTimesTen: number
+}
+
+type TagDistrData = { 
+    name: string, 
+    color: string, 
+    hrsTimesTen: number, 
+    hoursStr: string,
+}
+
+type DaySessionData = {
+    date: Date,
+    sessions: any[]
+}
+
+  
+/* Theme Stuff */
 type ThemeState = {
     title: string,  // to set styling specific only to Default Dark Mode
     isDarkTheme: boolean,     // to change styling specific only to dark / light themes
@@ -182,7 +242,6 @@ type ThemeState = {
     } | null
 }
 
-/* Custom Themes */
 type Theme = {
     title: string,
     sectionDetails: {     // allows for easy selection of right theme from different array 

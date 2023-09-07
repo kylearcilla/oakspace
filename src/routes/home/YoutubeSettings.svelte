@@ -5,7 +5,8 @@
 	import { onDestroy, onMount } from 'svelte';
     import ytRecsPlaylists from '$lib/data-yt-playlists'
 
-    export let onNavButtonClicked: any;
+    enum Modal { Settings, Youtube, Music, Stats, Appearance }
+    export let onNavButtonClicked: (modal: Modal | null) => void
 
     let isYtModalOpen = true;
 
@@ -35,8 +36,6 @@
             selectedPlaylist = data.selectedPlaylist
         }
     })
-
-    const closeModal = () => onNavButtonClicked("")
 
     /* Log In / Log Out */
     const handleYtSignUp = () => initOAuth2Client()
@@ -123,7 +122,7 @@
 </script>
 
 <div class={`modal-bg ${isYtModalOpen ? "" : "modal-bg--hidden"}`}>
-    <div use:clickOutside on:click_outside={closeModal} class="modal-bg__content modal-bg__content--overflow-y-scroll">
+    <div use:clickOutside on:click_outside={() => onNavButtonClicked(null)} class="modal-bg__content modal-bg__content--overflow-y-scroll">
         <div class={`yt-settings ${ytUserAccountData.email == "" ? "yt-settings--min" : ""}`}>
             <div class="yt-settings__header">
                 <h1 class="modal-bg__content-title">Youtube Settings</h1>
@@ -134,8 +133,8 @@
             </div>
             <!-- Account Details -->
             <div class="yt-settings__top-row">
-                <div class="account-details grid-section">
-                    <div class="grid-section__header">
+                <div class="account-details bento-box">
+                    <div class="bento-box__header">
                         <h3>Account Details</h3>
                     </div>
                     <div class="flx flx--aln-center">
@@ -175,11 +174,11 @@
                     </div>
                 </div>
                 <!-- Chosen Playlist -->
-                <div class={`chosen-playlist grid-section ${!selectedPlaylist ? "chosen-playlist--no-pl" : ""} ${isLightTheme ? "chosen-playlist--light-theme" : ""}`}>
+                <div class={`chosen-playlist bento-box ${!selectedPlaylist ? "chosen-playlist--no-pl" : ""} ${isLightTheme ? "chosen-playlist--light-theme" : ""}`}>
                     <img class="img-bg" src={selectedPlaylist?.thumbnailURL} alt="chosen-playlist">
                     <div class={`blur-bg ${!selectedPlaylist ? "blur-bg--solid-color" : "blur-bg--blurred-bg"}`}></div>
                     <div class="content-bg">
-                        <div class="grid-section__header">
+                        <div class="bento-box__header">
                             <h3>Chosen Playlist</h3>
                         </div>
                         {#if selectedPlaylist}
@@ -206,9 +205,9 @@
             <div class="yt-settings__bottom-row">
                 <!-- User Playlists Section -->
                 {#if ytUserAccountData?.email != ""}
-                    <div class={`user-playlists ${!isLightTheme ? "user-playlists--dark" : ""} grid-section grid-section--no-padding`}>
+                    <div class={`user-playlists ${!isLightTheme ? "user-playlists--dark" : ""} bento-box bento-box--no-padding`}>
                         <div class="user-playlists__header">
-                            <div class="grid-section__header">
+                            <div class="bento-box__header">
                                 <h3>Playlists</h3>
                             </div>
                             {#if ytUserAccountData}
@@ -246,11 +245,11 @@
                     </div>
                 {/if}
                 <!-- Playlist Recommendations Section -->
-                <div class={`recs ${ytUserAccountData.username === "" ? "recs--min" : ""} grid-section grid-section--no-padding`}>
-                    <div class="grid-section__header">
+                <div class={`recs ${ytUserAccountData.username === "" ? "recs--min" : ""} bento-box bento-box--no-padding`}>
+                    <div class="bento-box__header">
                         <h3>Recommendations</h3>
                     </div>
-                    <p class="recs__copy grid-section__copy paragraph-2">
+                    <p class="recs__copy bento-box__copy paragraph-2">
                         Discover new playlists with our staff recommended playlist picks!
                     </p>
                     <!-- Horizontal Tabs Carousel -->

@@ -12,23 +12,27 @@
 	import MusicSettings from "./MusicSettings.svelte"
 	import Settings from "./Settings.svelte"
 	import YoutubeSettings from "./YoutubeSettings.svelte"
+	import Stats from "./Stats.svelte"
   
 	import { _initGoogleClient, _initMusicKit } from "./+page"
 	import { loadTheme } from "$lib/helper"
 	import { homePanelData } from "$lib/store";
 	import { dataset_dev } from "svelte/internal";
 
+
+  enum Modal { Settings, Youtube, Music, Stats, Appearance }
+
   let isTaskMenuExpanded = true
   let isNavMenuExpanded = true
   let hasUserToggledWithKeyLast = true
-  let navSettingClicked = ""
+  let navSettingClicked: Modal | null = Modal.Stats
 
   homePanelData.subscribe((data) => {
     isNavMenuExpanded = data.isNavMenuOpen
     isTaskMenuExpanded = data.isTaskMenuOpen
   })
 
-  const handleNavButtonClicked = (buttonName: string) => navSettingClicked = buttonName
+  const handleNavButtonClicked = (modal: Modal | null) => navSettingClicked = modal
   const handleTaskMenuToggleOpen = () => {
     homePanelData.update((data: any) => ({ ...data, isTaskMenuOpen: !data.isTaskMenuOpen }))
   }
@@ -91,10 +95,11 @@
   <div class={`home__task-view-container ${isTaskMenuExpanded ? "" : "home__task-view-container--closed"}`}>
     <TaskView isTaskMenuExpanded={isTaskMenuExpanded}/>
   </div>
-  {#if navSettingClicked === "settings"} <Settings onNavButtonClicked={handleNavButtonClicked}/> {/if}
-  {#if navSettingClicked === "youtube"} <YoutubeSettings onNavButtonClicked={handleNavButtonClicked}/> {/if}
-  {#if navSettingClicked === "music"} <MusicSettings onNavButtonClicked={handleNavButtonClicked} /> {/if}
-  {#if navSettingClicked === "appearance"} <ApperanceSettings onNavButtonClicked={handleNavButtonClicked} /> {/if}
+  {#if navSettingClicked === Modal.Settings} <Settings onNavButtonClicked={handleNavButtonClicked}/> {/if}
+  {#if navSettingClicked === Modal.Youtube} <YoutubeSettings onNavButtonClicked={handleNavButtonClicked}/> {/if}
+  {#if navSettingClicked === Modal.Music} <MusicSettings onNavButtonClicked={handleNavButtonClicked} /> {/if}
+  {#if navSettingClicked === Modal.Appearance} <ApperanceSettings onNavButtonClicked={handleNavButtonClicked} /> {/if}
+  {#if navSettingClicked === Modal.Stats} <Stats onNavButtonClicked={handleNavButtonClicked} /> {/if}
   <MusicPlayer />
 </div>
 

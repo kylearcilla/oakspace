@@ -3,8 +3,9 @@
 	import { setRootColors } from "$lib/helper";
 	import { colorThemeState, musicPlayerData } from "$lib/store"
 
-    export let onNavButtonClicked: any
-    let navButtonClicked = ""
+    enum Modal { Settings, Youtube, Music, Stats, Appearance }
+    export let onNavButtonClicked: (modal: Modal | null) => void
+
     let isMusicPlayerActive = false
 
     let currentTheme: ThemeState = { 
@@ -36,19 +37,19 @@
 
     const handleNavButtonClicked = (btnName: string) => {
         if (btnName === "stats") {
-            onNavButtonClicked("stats")
+            onNavButtonClicked(Modal.Stats)
         }
         else if (btnName === "youtube") {
-            onNavButtonClicked("youtube")
+            onNavButtonClicked(Modal.Youtube)
         }
         else if (btnName === "music") {
-            onNavButtonClicked("music")
+            onNavButtonClicked(Modal.Music)
         }
         else if (btnName === "settings") {
-            onNavButtonClicked("settings")
+            onNavButtonClicked(Modal.Settings)
         }
-        else {
-            onNavButtonClicked("appearance")
+        else if (btnName === "appearance") {
+            onNavButtonClicked(Modal.Appearance)
         }
     }
     
@@ -77,8 +78,8 @@
 <div class="nav-menu">
     <div class="divider"></div>
     <div class="divider"></div>
-    <div class={`nav-menu__tabs nav-menu__tabs--${currentTheme.title === "Dark Mode" ? "dark-mode" : (currentTheme.title === "Light Mode" ? "light-mode" : "simple-styling")}`}>
-        <button on:click={() => handleNavButtonClicked("chart")} class="nav-menu-tab nav-menu-tab--stats tool-tip-container">
+    <div class={`nav-menu__tabs ${currentTheme.isDarkTheme ? "nav-menu__tabs--dark-theme" : ""} nav-menu__tabs--${currentTheme.title === "Dark Mode" ? "dark-mode" : (currentTheme.title === "Light Mode" ? "light-mode" : "simple-styling")}`}>
+        <button on:click={() => handleNavButtonClicked("stats")} class="nav-menu-tab nav-menu-tab--stats tool-tip-container">
             <!-- <span class="tool-tip-text tool-tip-text--left">Stats</span> -->
             <i class="fa-solid fa-chart-line nav-menu-tab__icon"></i>
         </button>
@@ -90,7 +91,7 @@
             <!-- <span class="tool-tip-text tool-tip-text--left">Music</span> -->
             <i class="fa-solid fa-music"></i>
         </button>
-        <button on:click={() => handleNavButtonClicked("apperance")} class={"nav-menu-tab nav-menu-tab--appearance tool-tip-container"}>
+        <button on:click={() => handleNavButtonClicked("appearance")} class={"nav-menu-tab nav-menu-tab--appearance tool-tip-container"}>
             <!-- <span class="tool-tip-text tool-tip-text--left">Appearance</span> -->
             <i class="fa-solid fa-paint-roller"></i>
         </button>
@@ -187,6 +188,11 @@
         &__tabs {
             font-family: "Gordita Medium", system-ui;
 
+            &--dark-theme .nav-menu-tab {
+                &:focus {
+                    filter: brightness(1.3) !important;
+                }
+            }
             &--dark-mode, &--light-mode {
                 .fa-chart-line {
                     color: #a3ceff !important;
@@ -243,6 +249,10 @@
         &:hover {
             border-radius: 100%;
             transition: 0.3s ease-in-out;
+        }
+        &:focus {
+            border-radius: 100%;
+            filter: brightness(0.98);
         }
         .fa-music {
             font-size: 1.2rem;

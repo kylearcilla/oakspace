@@ -1,13 +1,15 @@
 <script lang="ts">
-	import quotes from "$lib/data-quotes";
-	import { clickOutside, getCurrentTime, isNightTime, minsToHHMM } from "$lib/helper";
+	import { clickOutside, getCurrentTime, isNightTime } from "$lib/helper";
 	import { colorThemeState, globalSessionObj, globalSessionState } from "$lib/store";
 	import { onDestroy, onMount } from "svelte";
 	import ActiveSessionView from "./ActiveSessionView.svelte";
-	import { Session } from "$lib/Session";
+	import QuoteModal from "./QuoteModal.svelte";
+	import NewSessionModal from "./NewSessionModal.svelte";
+	import type { Session } from "$lib/Session";
 
-    let quote: Quote | null = null
-    let isQuoteModalOpen = false
+    enum CurrentModal { Quote, NewSession, ActiveSession }
+
+    let currModalOpen : CurrentModal | null = null
     let isCreateNewSessionModalOpen = false
     let isSessionModalOpen = false
     let isLightTheme = false
@@ -17,117 +19,34 @@
     let isEvening = false
     let headerTimeColor = "#8D907C"
 
-    const MAX_SESSION_NAME_LENGTH = 18
-
-    let sessionObj: Session | null = null
-    let activeSession: ActiveSessionState | null = null
-
     let sessionNameInput: HTMLElement
     let newTodoInput: HTMLElement
 
-    let newSession: SessionInputs = {
-        name: "",
-        tag: {
-            name: "Korean",
-            color: "#C7C4AB"
-        },
-        poms: 2,
-        focusTime: 25,
-        breakTime: 5,
-        todos: [],
-        calculatedEndTime: null,
-        totalElapsedTime: null,
-        timePeriodString: null
+    const toggleModal = (modal: CurrentModal | null): void => {
+        currModalOpen = modal
     }
 
-    let subtaskCount = 0
-    let tags = [
-        {
-            name: "school",
-            color: "#9997FE"
-        },
-        {
-            name: "swe",
-            color: "#FF8B9C"
-        },
-        {
-            name: "book",
-            color: "#CFAB96"
-        },
-    ]
     let newTodoTitle = ""
     let isTagListDropDownOpen = false
     let isFocusTimeDropDownOpen = false
     let isBreakTimeDropDownOpen = false
     let pomMessage = ""
 
+    let sessionObj: Session | null = null
+    let activeSession: ActiveSessionState | null = null
 
     globalSessionObj.subscribe((sess: any) => {
-        if (!sess) return
         sessionObj = sess
     })
     globalSessionState.subscribe((sessionState: any) => {
-        if (!sessionState) return
         activeSession = sessionState
     })
+
+
     colorThemeState.subscribe((theme) => {
         isLightTheme = !theme.isDarkTheme
         headerTimeColor = theme.headerTimeColor
     })
-
-    /* Session Stuff */
-    const setResultTimes = () => {
-        const totalFocusTimeMins = newSession.poms * newSession.focusTime
-        const totalbreakTimeMins = (newSession.poms - 1) * newSession.breakTime
-        const totalMins = totalbreakTimeMins + totalFocusTimeMins
-
-        newSession.calculatedEndTime = Session.calculateEndTime(new Date, totalMins)
-        newSession.timePeriodString = Session.getTimePeriodString(new Date, newSession.calculatedEndTime)
-
-        setElapsedTime(totalMins)
-    }
-    const setElapsedTime = (totalMins: number) => {
-        newSession.totalElapsedTime = minsToHHMM(totalMins)
-    }
-    const createNewSession = () => {
-        globalSessionObj.set(new Session(newSession))
-
-        resetNewSesion() 
-        isSessionModalOpen = true
-    }
-    const resetNewSesion = () => {
-        newSession = {
-            name: "",
-            tag: {
-                name: "Korean",
-                color: "#C7C4AB"
-            },
-            poms: 2,
-            focusTime: 25,
-            breakTime: 5,
-            todos: [],
-            calculatedEndTime: null,
-            totalElapsedTime: null,
-            timePeriodString: null
-        }
-        setResultTimes()
-        isCreateNewSessionModalOpen = false
-    }
-    const editTextInputHandler = (event: any) => {
-        if (newSession.name.length >= 20) return
-        newSession.name = event.target.value;
-    }
-    const editNewTodoInputHandler = (event: any) => {
-        if (newSession.name.length >= 20) return
-        newTodoTitle = event.target.value;
-    }
-    const handleNewTagClicked = (idx: number) => {
-        newSession.tag = tags[idx]
-        isTagListDropDownOpen = false
-    }
-    const handleCreateTagBtnClicked = () => {
-        
-    }
 
     /* Time Stuff */
     const handleTimeBtnClicked = () => {
@@ -139,286 +58,29 @@
             currentTime = getCurrentTime(is12HourTime)
             isEvening = isNightTime()
 
-            if (!activeSession) {
-                setResultTimes()
-            }
         }, 1000);
     }
 
     onDestroy(() => clearInterval(interval))
-    onMount(() => {
-        startTimer()
-        setResultTimes()
-
-        // const quoteData = localStorage.getItem("quoteData")
-        
-        // if (!quoteData || isQuoteOutDated(new Date(JSON.parse(quoteData!).createdAt))) {
-        //     const randomQuoteId = Math.floor(Math.random() * quotes.length)
-            
-        //     localStorage.setItem("quoteData", JSON.stringify({
-        //         quoteId: randomQuoteId,
-        //         createdAt: new Date()
-        //     }))
-        //     quote = quotes[Math.floor(Math.random() * quotes.length)]
-        // }
-        // else {
-        //     quote = quotes[JSON.parse(quoteData).quoteId]
-        // }
-    })
+    onMount(() => startTimer())
 </script>
 
 <div class={`header ${isLightTheme ? "header--light" : ""}`}>
-    <!-- Quote Modal -->
-    <div class={`modal-bg ${isQuoteModalOpen ? "" : "modal-bg--hidden"}`}>
-        <div 
-            use:clickOutside on:click_outside={() => isQuoteModalOpen = false} 
-            class="modal-bg__content modal-bg__content--no-padding"
-        >
-            <div class="quote-modal" style={`background-image: url(${quote?.bgImgSrc})`}>
-                <div class={`quote-modal__content
-                               ${quote?.artCredit === "" ? "quote-modal__content--no-art-credit" : ""}
-                               ${quote?.quoteCredit === "" ? "quote-modal__content--no-quote-credit" : ""}
-                `}>
-                    <div class="quote-modal__content-container">
-                        <div class="pos-relative">
-                            <h1>Quote of the Week</h1>
-                        </div>
-                        <p>"{quote?.text}"</p>
-                    </div>
-                    <span class="quote-modal__artist-credit">{quote?.artCredit}</span>
-                    {#if quote?.quoteCredit !== ""}
-                        <h4 class="quote-modal__quote-credit">- {quote?.quoteCredit}</h4>
-                    {/if}
-                </div>
-            </div>            
-        </div>            
-    </div>            
-    <!-- New Session Modal -->
-    <div class={`modal-bg ${isCreateNewSessionModalOpen ? "" : "modal-bg--hidden"}`}>
-        <div 
-            use:clickOutside on:click_outside={() => isCreateNewSessionModalOpen = false} 
-            class="modal-bg__content new-session-modal-content"
-        >
-            <div class={`new-session-modal ${isLightTheme ? "" : "new-session-modal--dark"}`}>
-                <h1>Create New Session</h1>
-                <h2>Session Name</h2>
-                    <!-- Name -->
-                    <div class="new-session-modal__name-input" bind:this={sessionNameInput}>
-                        <input 
-                            type="text"
-                            placeholder="Afternoon Reading" 
-                            on:focus={() => sessionNameInput.classList.add("new-session-modal__name-input--focus")}
-                            on:blur={() => sessionNameInput.classList.remove("new-session-modal__name-input--focus")}
-                            on:input={editTextInputHandler}
-                            bind:value={newSession.name}
-                        >
-                        <div class="new-session-modal__name-input__divider"></div>
-                        <div class="new-session-modal__name-input-tag-dropdown-container dropdown-container">
-                            <button class="new-session-modal__name-input-tag-dropdown-btn dropdown-btn" on:click={() => {
-                                isTagListDropDownOpen = true
-                                isFocusTimeDropDownOpen = false
-                                isBreakTimeDropDownOpen = false
-                            }}>
-                                <div class="new-session-modal__name-input-btn-tag" style={`background-color: ${newSession.tag.color}`}></div>
-                                <div class="dropdown-btn__title">
-                                    {newSession.tag.name}
-                                </div>
-                                <div class="dropdown-btn__arrows">
-                                    <div class="dropdown-btn__arrows-triangle-up">
-                                        <i class="fa-solid fa-chevron-up"></i>
-                                    </div>
-                                    <div class="dropdown-btn__arrows-triangle-down">
-                                        <i class="fa-solid fa-chevron-down"></i>
-                                    </div>
-                                </div>
-                            </button>
-                            {#if isTagListDropDownOpen}
-                                <ul use:clickOutside on:click_outside={() => isTagListDropDownOpen = false} class="dropdown-menu">
-                                    {#each tags as tag, idx} 
-                                        <li class={`dropdown-menu__option ${tag.name === newSession.tag.name ? "dropdown-menu__option--selected" : ""}`}>
-                                            <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
-                                                <div class="new-session-modal__name-input-btn-tag" style={`background-color: ${tag.color}`}></div>
-                                                <p>{tag.name}</p>
-                                                <i class="fa-solid fa-check"></i>
-                                            </button>
-                                        </li>
-                                    {/each}
-                                    <li class="dropdown-menu__new-option-container">
-                                        <div class="divider divider--thin"></div>
-                                        <button on:click={handleCreateTagBtnClicked}>
-                                            <span>+</span>New Tag
-                                        </button>
-                                    </li>
-                                </ul>
-                            {/if}
-                        </div>
-                    </div>
-                    <!-- Pom Details -->
-                    <div class="new-session-modal__pom-input-container">
-                        <!-- Pomodoro Count -->
-                        <div class="new-session-modal__pom-input">
-                            <h2>Pomodoros</h2>
-                            <div class="new-session-modal__pom-input-stepper">
-                                <button on:click={() => { newSession.poms = Math.max(2, newSession.poms) - 1; setResultTimes() }}>-</button>
-                                <span>{newSession.poms}</span>
-                                <button on:click={() => { newSession.poms = Math.min(5, newSession.poms) + 1; setResultTimes() }}>+</button>
-                            </div>
-                        </div>
-                        <!-- Focus Time -->
-                        <div class="new-session-modal__pom-input">
-                            <h2>Focus Time</h2>
-                            <div class="new-session-modal__pom-input-dd-container">
-                                <button class="new-session-modal__pom-input-dropdown-btn dropdown-btn" on:click={() => { 
-                                    isFocusTimeDropDownOpen = true; 
-                                    isBreakTimeDropDownOpen = false;
-                                    isTagListDropDownOpen = false;
-                                }}>
-                                    <div class="dropdown-btn__title">
-                                        {newSession.focusTime} mins
-                                    </div>
-                                    <div class="dropdown-btn__arrows">
-                                        <div class="dropdown-btn__arrows-triangle-up">
-                                            <i class="fa-solid fa-chevron-up"></i>
-                                        </div>
-                                        <div class="dropdown-btn__arrows-triangle-down">
-                                            <i class="fa-solid fa-chevron-down"></i>
-                                        </div>
-                                    </div>
-                                </button>
-                                {#if isFocusTimeDropDownOpen}
-                                    <ul use:clickOutside on:click_outside={() => isFocusTimeDropDownOpen = false } class="dropdown-menu">
-                                        {#each [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60] as time} 
-                                            <li class={`dropdown-menu__option ${newSession.focusTime === time ? "dropdown-menu__option--selected" : ""}`}>
-                                                <button 
-                                                    class="dropdown-element" 
-                                                    on:click={() => { 
-                                                        newSession.focusTime = time
-                                                        isFocusTimeDropDownOpen = false
-                                                        setResultTimes()
-                                                    }}
-                                                >
-                                                    <p>{time} mins</p>
-                                                    <i class="fa-solid fa-check"></i>
-                                                </button>
-                                            </li>
-                                        {/each}
-                                    </ul>
-                                {/if}
-                            </div>
-                        </div>
-                        <!-- Break Time -->
-                        <div class="new-session-modal__pom-input">
-                            <h2>Break Time</h2>
-                            <div class="new-session-modal__pom-input-dd-container">
-                                <button class="new-session-modal__pom-input-dropdown-btn dropdown-btn" on:click={() => {{ 
-                                    isBreakTimeDropDownOpen = true;
-                                    isFocusTimeDropDownOpen = false;
-                                    isTagListDropDownOpen = false;
-                                }}}>
-                                    <div class="dropdown-btn__title">
-                                        {newSession.breakTime} mins
-                                    </div>
-                                    <div class="dropdown-btn__arrows">
-                                        <div class="dropdown-btn__arrows-triangle-up">
-                                            <i class="fa-solid fa-chevron-up"></i>
-                                        </div>
-                                        <div class="dropdown-btn__arrows-triangle-down">
-                                            <i class="fa-solid fa-chevron-down"></i>
-                                        </div>
-                                    </div>
-                                </button>
-                                {#if isBreakTimeDropDownOpen}
-                                    <ul use:clickOutside on:click_outside={() => isBreakTimeDropDownOpen = false} class="dropdown-menu">
-                                        {#each [5, 10, 15, 20, 25, 30] as time} 
-                                            <li class={`dropdown-menu__option ${newSession.breakTime === time ? "dropdown-menu__option--selected" : ""}`}>
-                                                <button 
-                                                    class="dropdown-element" 
-                                                    on:click={() => { 
-                                                        newSession.breakTime = time
-                                                        isBreakTimeDropDownOpen = false
-                                                        setResultTimes()
-                                                    }}
-                                                >
-                                                    <p>{time} mins</p>
-                                                    <i class="fa-solid fa-check"></i>
-                                                </button>
-                                            </li>
-                                        {/each}
-                                    </ul>
-                                {/if}
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Todos -->
-                    <div class="new-session-modal__pom-input-todos">
-                        <h2>Todos</h2>
-                        <div class="new-session-modal__pom-input-todo-input-container">
-                            <div class="new-session-modal__pom-input-todo-input" bind:this={newTodoInput}>
-                                <input 
-                                    type="text"
-                                    placeholder="Afternoon Reading" 
-                                    on:focus={() => newTodoInput.classList.add("new-session-modal__pom-input-todo-input--focus")}
-                                    on:blur={() => newTodoInput.classList.remove("new-session-modal__pom-input-todo-input--focus")}
-                                    on:input={editNewTodoInputHandler}
-                                    bind:value={newTodoTitle}
-                                >
-                                <span>{subtaskCount}</span>
-                            </div>
-                            <button disabled={newTodoTitle === "" || newTodoTitle.length > 20} class="unfill" on:click={() => { 
-                                // @ts-ignore
-                                newSession.todos.push(newTodoTitle)
-                                newTodoTitle = "" 
-                                subtaskCount++
-                            }}>
-                                Submit
-                            </button>
-                        </div>
-                    </div>
-                    <!-- Result -->
-                    <div class="new-session-modal__pom-input-result">
-                        <h2>Result: </h2>
-                        <h3>{newSession.timePeriodString}</h3>
-                        <h4>{`(${newSession.totalElapsedTime})`}</h4>
-                    </div>
-                    <!-- Button Container -->
-                    <div class="new-session-modal__pom-input-btn-container">
-                        <button 
-                            disabled={newSession.name === "" || newSession.name.length >= MAX_SESSION_NAME_LENGTH} 
-                            on:click={createNewSession} class="new-session-modal__pom-input-btn-done-btn"
-                        >
-                            Start Session
-                        </button>
-                        <button 
-                            on:click={() => resetNewSesion()} 
-                            class="new-session-modal__pom-input-btn-cancel-btn"
-                        >
-                            Cancel
-                        </button>
-                    </div>
-            </div>            
-        </div>            
-    </div>            
-    <!-- Session Modal -->
-    <div class={`modal-bg ${isSessionModalOpen ? "" : "modal-bg--hidden"}`}>
-        <div 
-            use:clickOutside on:click_outside={() => isSessionModalOpen = false} 
-            class="modal-bg__content session-modal-content"
-        >
-            <div class="session-modal">
-                {#if activeSession}
-                    <ActiveSessionView />
-                {/if}
-            </div>            
-        </div>            
-    </div>            
+    {#if currModalOpen === CurrentModal.Quote}
+        <QuoteModal toggleModal={toggleModal} />
+    {:else if currModalOpen === CurrentModal.NewSession}
+        <NewSessionModal toggleModal={toggleModal} />
+    {:else if currModalOpen === CurrentModal.ActiveSession}
+        <ActiveSessionView toggleModal={toggleModal} />
+    {/if}         
 
     <!-- Header Component -->
     <!-- Left Side -->
     <button 
         class={`header-session-btn header__section ${isLightTheme ? "header-session-btn--light-mode" : ""}`}
         on:click={() => {
-            if (activeSession) isSessionModalOpen = true
-            else isCreateNewSessionModalOpen = true
+            if (activeSession) toggleModal(CurrentModal.ActiveSession)
+            else toggleModal(CurrentModal.NewSession)
         }}
     >
         {#if !activeSession}
@@ -556,7 +218,7 @@
         </button>
 </div>
 
-<style lang="scss">
+<style global lang="scss">
     .header {
         margin-top: 15px;
         width: 100%;
@@ -614,7 +276,6 @@
             }
         }
     }
-
     /* Active Session Btn */
     .header-session-btn {
         overflow: hidden;
@@ -624,16 +285,13 @@
         align-items: center;
         transition: 0.1s ease-in-out;
 
-        img {
-            @include circle(20px);
-        }
-        span {
-            font-weight: 500;
-            margin-left: 4px;
-            font-size: 1.2rem;
-        }
-        &:active {
-            transform: scale(0.992);
+        &--light-mode {
+            &:focus {
+                filter: brightness(1.03);
+            }
+            &:hover {
+                filter: brightness(1.02);
+            }
         }
         &--light-mode p {
             font-weight: 300;
@@ -645,7 +303,44 @@
             font-weight: 400;
             color: rgba(var(--headerElementTextColor), 0.8);
         }
+
+        &:focus {
+            filter: brightness(1);
+            box-shadow: 0px 0px 7px 0px rgba(255, 255, 255, 0.3);
+
+            &:before {
+                content: " ";
+                position: absolute;
+                z-index: -3;
+                top: 0px;
+                left: 0px;
+                right: 0px;
+                bottom: 0px;
+                border-radius: 15px;
+                border: 3px solid rgba(255, 255, 255, 0.2);
+            }
+        }
+        &:hover {
+            filter: brightness(1.07);
+        }
+        &:active {
+            transform: scale(0.992);
+            box-shadow: none;
+
+            &:before {
+                content: " " !important;
+                border-width: 0px;
+            }
+        }
         
+        img {
+            @include circle(20px);
+        }
+        span {
+            font-weight: 500;
+            margin-left: 4px;
+            font-size: 1.2rem;
+        }
         &__new-session-title {
             font-size: 1.2rem;
             margin-left: 2px;
@@ -692,431 +387,8 @@
             width: 37px;
         }
     }
-
     /* Modals */
     .modal-bg__content {
         border-radius: 0px;
     }
-
-    /* Quote Modal */
-    .quote-modal {
-        padding: 0px;
-        width: 75vw;
-        height: 400px;
-        position: relative;
-        background-repeat: no-repeat;
-        background-position: center;
-        background-size: cover;
-        max-width: 650px;
-        min-width: 330px;
-
-        &__content {
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.84); 
-            color: white;
-
-            &--no-art-credit {
-                padding-top: 20px;
-            }
-            &--no-quote-credit {
-                padding-bottom: 35px;
-            }
-
-            h1 {
-                font-size: 1.4rem;
-                margin: 2px 0px 6px 0px;
-            }
-            p {
-                font-size: 1.3rem;
-                font-weight: 400;
-                opacity: 0.85;
-                color: rgb(215, 215, 215);
-            }
-            i {    
-                font-size: 1.2rem;
-                opacity: 0.85;
-                color: rgb(219, 219, 219);
-                @include pos-abs-top-right-corner(0px, 0px);
-            } 
-        }
-
-        &__content-container {
-            width: 90%;
-            @include pos-abs-bottom-left-corner(60px, 20px);
-        }
-        &__artist-credit {
-            font-size: 1.15rem;
-            @include pos-abs-top-right-corner(15px, 20px);
-            color: rgba(197, 197, 197, 0.5);
-            font-weight: 300;
-        }
-        &__quote-credit {
-            font-size: 1.25rem;
-            font-weight: 500;
-            color: rgb(197, 197, 197, 0.9);
-            @include pos-abs-bottom-right-corner(30px, 25px);
-        }
-    }
-
-    /* New Session Modal */
-    .new-session-modal-content {
-        width: 390px;   
-        padding: 15px 22px 18px 22px;
-        border-radius: 14px;
-    }
-    .new-session-modal {
-        h1 {
-            font-size: 1.7rem;
-            margin-bottom: 20px;
-        }
-        h2 {
-            font-size: 1.35rem;
-            margin-bottom: 9px;
-            color: rgba(var(--textColor1), 0.85);
-        }
-        
-        /* Dark Themes Adjustments */
-        &--dark .dropdown-menu {
-            border: 1px solid rgba(60, 60, 60, 0.1);
-        }
-        &--dark h2 {
-            font-weight: 400;
-            color: rgba(var(--textColor1), 0.8);
-        }
-        &--dark &__name-input {
-            @include input-text-field-dark;
-        }
-        &--dark &__pom-input-todo-input {
-            @include input-text-field-dark;
-        }
-        &--dark &__name-input-tag-dropdown-btn {
-            @include dropdown-btn-dark;
-            &:hover {
-                background-color: rgba(30, 30, 30, 0.24);
-            }
-        }
-        &--dark &__name-input-tag-dropdown-container .dropdown-menu {
-            @include dropdown-menu-dark;
-        }
-        &--dark &__pom-input-stepper {
-            span {
-                color: rgba(var(--textColor1), 0.65);
-            }
-            button {
-                color: rgba(var(--textColor1), 0.65);
-
-                &:hover {
-                    background-color: rgba(30, 30, 30, 0.3);
-                }
-            }
-        }
-        &--dark &__pom-input-dropdown-btn {
-            @include dropdown-btn-dark;
-            &:hover {
-                background-color: rgba(30, 30, 30, 0.24);
-            }
-        }
-        &--dark &__pom-input-dd-container .dropdown-menu {
-            @include dropdown-menu-dark;
-        }
-        &--dark &__pom-input-result {
-            h3 {
-                font-weight: 400;
-            }
-            h4 {
-                font-weight: 300;
-            }
-        }
-        &--dark &__pom-input-btn-done-btn {
-            @include color-btn-hover;
-        }
-        &--dark &__pom-input-btn-cancel-btn {
-            border: 1px solid rgba(var(--textColor1), 0.4);
-            color: rgba(var(--textColor1), 0.4);
-            
-            &:hover {
-                background-color: rgba(var(--textColor1), 0.4);
-            }
-        }
-
-        /* Name Input */
-        &__name-input { 
-            font-size: 1.32rem;
-            padding: 0px 7px 0px 20px;
-            height: 47px;
-            border-radius: 10px;
-            width: 97%;
-            @include flex-container(center, _);
-            transition: 0.2s ease-in-out;
-            border: 1px solid rgba(211, 211, 211, 0);
-            background-color: var(--modalBgAccentColor);
-            
-            &--focus {
-                border-color: rgba(211, 211, 211, 0.5);
-            }
-            
-            input {
-                color: rgba(var(--textColor1), 0.5);
-                transition: 0.14s ease-in-out;
-                font-weight: 500;
-                width: 70%;
-
-                &::placeholder {
-                    font-size: 1.4rem;
-                    font-weight: 400;
-                    opacity: 0.2;
-                }
-            }
-            .quote-modal {
-                width: 0.9px;
-                height: 15px;
-                margin-top: -1px;
-                background-color: rgba(var(--textColor1), 0.15);
-            }
-            &__divider {
-                width: 0.9px;
-                height: 14px;
-                margin: 0px 10px 0px 0px;
-                background-color: rgba(var(--textColor1), 0.15);
-            }
-        }
-        &__name-input-tag-dropdown-container {
-            position: relative;
-            .dropdown-menu {
-                position: absolute;
-                top: 40px;
-                width: 100px;
-                &__option {
-                    p {
-                        margin-left: 3px;
-                    }
-                    span {
-                        margin-right: 3px;
-                    }
-                }
-            }
-        }
-        &__name-input-tag-dropdown-btn {
-            @include flex-container(center, _);
-            background: none;
-            box-shadow: none;
-            padding: 10px 11px 10px 10px;
-            border-radius: 10px;
-
-            &:hover {
-                background-color: rgba(217, 217, 217, 0.3);
-            }
-        }
-        &__name-input-btn-tag {
-            @include circle(8px);
-            margin-right: 7px;
-        }
-
-        /* Pomodoros */
-        &__pom-input-container {
-            display: flex;
-            margin: 20px 0px 10px 0px;
-            width: 100%;
-        }
-        &__pom-input {
-            width: 33%;
-            padding-right: 10px;
-        }
-        &__pom-input-dropdown-btn {
-            height: 34px;
-            border-radius: 7px;
-            box-shadow: none;
-            padding: 0px;
-            width: 100%;
-            justify-content: start;
-            background-color: var(--modalBgAccentColor);
-
-            &:hover {
-                background-color: rgba(217, 217, 217, 0.5);
-            }
-            &:active {
-                transform: scale(0.995);
-            }
-
-            .dropdown-btn__title {
-                width: 45px;
-                margin: 0px 14px 0px 15px;
-            }
-        }
-
-        /* Pom Count */
-        &__pom-input-stepper {
-            height: 34px;
-            padding: 0px 4px;
-            border-radius: 7px;
-            @include flex-container(center, space-between);
-            background-color: var(--modalBgAccentColor);
-
-            span {
-                margin: 0px 5px;
-                font-size: 1.2rem;
-                color: rgba(var(--textColor1), 0.7);
-            }
-            button {
-                padding: 10px;
-                height: 8px;
-                font-size: 1.4rem;
-                @include center;
-                transition: 0.05s ease-in-out;
-                border-radius: 3px;
-                color: rgba(var(--textColor1), 0.7);
-                background: none;
-
-                &:active {
-                    transform: scale(0.97);
-                }
-                &:hover {
-                    background-color: rgba(217, 217, 217, 0.3);
-                }
-            }
-        }
-        &__pom-input-dd-container {
-            position: relative;
-        }
-
-        /* Focust & Break Time */
-        &__pom-input-dd-container .dropdown-menu {
-            position: absolute;
-            top: 40px;
-            left: 10px;
-            border-radius: 10px;
-            width: 80px;
-            
-            &__option {
-                padding: 0px;
-                border-radius: 10px;
-                button {
-                    padding: 8px 12px;
-                    &:active {
-                        transform: scale(0.97);
-                    }
-                }
-            }
-        }
-
-        /* Sutasks */
-        &__pom-input-todos {
-            margin-top: 22px;
-        }
-        &__pom-input-todo-input-container {
-            display: flex;
-            
-            button {
-                width: 18%;
-                border-radius: 10px;
-                font-size: 1.3rem;
-            }
-        }
-        &__pom-input-todo-input {
-            font-size: 1.32rem;
-            padding: 0px 7px 0px 20px;
-            height: 38px;
-            border-radius: 10px;
-            width: 65%;
-            @include flex-container(center, _);
-            transition: 0.2s ease-in-out;
-            border: 1px solid rgba(211, 211, 211, 0);
-            margin-right: 10px;
-            position: relative;
-            background-color: var(--modalBgAccentColor);
-
-            &--focus {
-                border-color: rgba(211, 211, 211, 0.5);
-            }
-
-            input {
-                &::placeholder {
-                    font-size: 1.4rem;
-                    font-weight: 300;
-                    opacity: 0.2;
-                }
-            }
-
-            span {
-                @include pos-abs-top-right-corner(10px, 15px);
-                color: rgba(150, 150, 150, 0.6);
-            }
-        }
-
-        /* Result */
-        &__pom-input-result {
-            margin: 35px 0px 45px 0px;
-            @include flex-container(center, center);
-            h2 {
-                margin: 0px 20px 0px 0px;
-                font-size: 1.5rem;
-            }
-            h3 {
-                padding: 0px;
-                margin-right: 8px;
-                color: rgba(var(--textColor1), 0.8);
-                font-weight: 500;
-                font-size: 1.45rem;
-            }
-            h4 {
-                font-size: 1.45rem;
-                font-weight: 400;
-                color: rgba(var(--textColor1), 0.45);
-            }
-        }
-
-        /* Button Container */
-        &__pom-input-btn-container {
-            width: 96%;
-            display: flex;
-
-            button {
-                @include center;
-                border-radius: 9px;
-                height: 45px;
-                font-size: 1.3rem;
-                transition: 0.12s ease-in-out;
-
-                &:active {
-                    transform: scale(0.99);
-                }
-            }
-        }
-        &__pom-input-btn-done-btn {
-            width: 70%;
-            background-color: rgba(var(--fgColor1), 1);
-            color: var(--modalBgColor);
-            margin-right: 5px;
-        }
-        &__pom-input-btn-cancel-btn {
-            width: 30%;
-            background-color: transparent;
-            border: solid 1.15px rgba(150, 150, 150, 0.7);
-            color: rgba(var(--textColor1), 0.55);
-            
-            &:hover {
-                background-color: rgba(150, 150, 150, 0.7);
-                border-color: transparent;
-                color: var(--modalBgColor);
-            }
-        }
-    }
-
-    /* Session Modal */
-    .session-modal-content {
-        border-radius: 20px;
-        padding: 13px 22px 10px 22px;
-    }
-    .session-modal {
-        width: 340px;
-
-        h1 {
-            margin-bottom: 15px;
-        }
-
-        @include sm(max-width) {
-            width: 75vw;
-        }
-    }
-
 </style>

@@ -4,7 +4,9 @@
 	import { clickOutside, setRootColors } from "$lib/helper";
 	import { colorThemeState } from "$lib/store";
 
-    export let onNavButtonClicked: any;
+  enum Modal { Settings, Youtube, Music, Stats, Appearance }
+    export let onNavButtonClicked: (modal: Modal | null) => void
+
     let clickedTheme: { 
         sectionTitle: keyof typeof themeSections, 
         index: number, 
@@ -12,7 +14,7 @@
     } | null = null
     let selectedTheme: Theme | ColorTheme | null = null
 
-    const closeModal = () => onNavButtonClicked("")
+    const closeModal = () => onNavButtonClicked(null)
 
     // object to map section names to array names in import for dynmaically selecting the correct 1array
     const themeSections: any = {
@@ -59,8 +61,8 @@
             <h1 class="modal-bg__content-title">Appearance</h1>
             <p class="modal-bg__content-copy paragraph-1">Tailor your workspace to your personal aesthetic!</p>
             <!-- Default Themes -->
-            <div class="default-themes grid-section">
-                <h3 class="grid-section__title">Default Themes</h3>
+            <div class="default-themes bento-box">
+                <h3 class="bento-box__title">Default Themes</h3>
                 <ul class="default-themes__selection">
                     {#each defaultThemes as theme, idx}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -78,16 +80,16 @@
                 </ul>
                 {#if clickedTheme?.sectionTitle === "default"}
                     <div class="appearance__apply-btn-container">
-                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill unfill--oval">
+                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill  unfill--padded unfill--oval">
                             {`Apply ${clickedTheme?.themeTitle}"`}
                         </button>
                     </div>
                 {/if}
             </div>
             <!-- Color Themes -->
-            <div class="color-themes grid-section">
-                <h3 class="grid-section__title"> Color Themes</h3>
-                <p class="grid-section__copy  paragraph-2">
+            <div class="color-themes bento-box">
+                <h3 class="bento-box__title"> Color Themes</h3>
+                <p class="bento-box__copy  paragraph-2">
                     Personalize your workspace with custom color themes tailored to your unique aesthetic!
                 </p>
                 <!-- Light Themes -->
@@ -142,16 +144,16 @@
                 </div>
                 {#if clickedTheme?.sectionTitle === "dark" || clickedTheme?.sectionTitle === "light"}
                     <div class="appearance__apply-btn-container">
-                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill unfill--oval">
+                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill  unfill--padded unfill--oval">
                             {`Apply "${clickedTheme?.themeTitle}"`}
                         </button>
                     </div>
                 {/if}
             </div>
             <!-- Image Themes -->
-            <div class="img-themes grid-section">
-                <h3 class="grid-section__title"> Image Themes</h3>
-                <p class="grid-section__copy  paragraph-2">Customize your workspace with personalized image backgrounds, reflecting your unique aesthetic!</p>
+            <div class="img-themes bento-box">
+                <h3 class="bento-box__title"> Image Themes</h3>
+                <p class="bento-box__copy  paragraph-2">Customize your workspace with personalized image backgrounds, reflecting your unique aesthetic!</p>
                 <ul class="img-themes__img-list">
                     {#each imageThemes as img, idx}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -173,16 +175,16 @@
                 </ul>
                 {#if clickedTheme?.sectionTitle === "image"}
                     <div class="appearance__apply-btn-container appearance__apply-btn-container--overflow-hover">
-                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill unfill--oval">
+                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill  unfill--padded unfill--oval">
                             {`Preview "${clickedTheme.sectionTitle}"`}
                         </button>
                     </div>
                 {/if}
             </div>
             <!-- Ambient Themes -->
-            <div class="ambient-mode grid-section">
-                <h3 class="grid-section__title"> Ambient</h3>
-                <p class="grid-section__copy  paragraph-2">Personalize your workspace with custom color themes tailored to your unique aesthetic!</p>
+            <div class="ambient-mode bento-box">
+                <h3 class="bento-box__title"> Ambient</h3>
+                <p class="bento-box__copy  paragraph-2">Personalize your workspace with custom color themes tailored to your unique aesthetic!</p>
                 <ul class="ambient-mode__vid-list">
                     {#each ambientVideos as vid, idx}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -207,7 +209,7 @@
                 </ul>
                 {#if clickedTheme?.sectionTitle === "video"}
                     <div class="appearance__apply-btn-container appearance__apply-btn-container--overflow-hover">
-                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill unfill--oval">
+                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill  unfill--padded unfill--oval">
                             {`Preview "${clickedTheme.sectionTitle}"`}
                         </button>
                     </div>
@@ -231,6 +233,10 @@
     }
     .appearance {
         position: relative;
+        .unfill {
+            @include unfill-btn-ficus-styling(var(--fgColor1));
+        }
+        
         &__description {
             color: rgba(var(--textColor1), 0.8);
         }
@@ -343,7 +349,7 @@
             margin-right: -2.6px;
         }
     }
-    .grid-section {
+    .bento-box {
         margin-bottom: $section-spacing;
         position: relative;
 

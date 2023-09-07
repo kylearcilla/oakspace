@@ -267,12 +267,11 @@
         ytScriptTag.id = "ytScriptTag"
         ytScriptTag!.parentNode!.insertBefore(tag, ytScriptTag);
         initPlayer();
-
-
     })
 </script>
 
 <div class="vid-view">
+    <!-- Video Player -->
     <div class={`vid-view-container ${!isVidPlayerShown ? "vid-view-container--player-hidden" : ""}`}>
         <div id="player">
         </div>
@@ -296,6 +295,7 @@
             </div>
         {/if}
     </div>
+    <!-- Video Details -->
     {#if ytData.selectedPlaylist?.id && !hasError}
         <div class={`vid-details-container ${isLightTheme ? "vid-details-container--light-mode" : ""}`}>
             <h3 class="vid-title">{ytVidDetails.title}</h3>
@@ -310,11 +310,11 @@
             </div>
         </div>
     {/if}
-
+    <!-- Playlist Panel -->
     <div class={`playlist-panel 
                     ${(ytData?.username === "" || doHideMyPlaylists) ? "playlist-panel--my-pls-hidden" : ""}  
                     ${doMinimizeYtPanel ? "playlist-panel--small" : ""}
-                    ${isLightTheme ? "playlist-panel--light" : ""}
+                    ${isLightTheme ? "playlist-panel--light" : "playlist-panel--dark"}
                `} 
         bind:this={plPanelElement}
     >
@@ -322,62 +322,46 @@
         <div class={`blur-bg ${!ytData ? "blur-bg--solid-color" : "blur-bg--blurred-bg"}`}></div>
         <div class="content-bg">
             <div class="playlist-panel__content-container">
-                <!-- Left Side -->
-                <div class="playlist-panel__left">
-                    <!-- Header -->
-                    <div class="playlist-panel__header">
-                        <h1>Video Player</h1>
-                        <div class="playlist-panel__header-yt-logo">
-                            <svg width="16" height="11" viewBox="0 0 16 11" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M5.20251 2.74939H13.9156V9.35219H5.20251V2.74939Z" fill="white"/>
-                                <path d="M15.1406 1.87571C14.9703 1.24147 14.4684 0.741953 13.8311 0.572437C12.6759 0.264404 8.04401 0.264404 8.04401 0.264404C8.04401 0.264404 3.41211 0.264404 2.25696 0.572437C1.61967 0.74198 1.11775 1.24147 0.947395 1.87571C0.637878 3.02532 0.637878 5.42388 0.637878 5.42388C0.637878 5.42388 0.637878 7.82243 0.947395 8.97204C1.11775 9.60629 1.61967 10.085 2.25696 10.2545C3.41211 10.5625 8.04401 10.5625 8.04401 10.5625C8.04401 10.5625 12.6759 10.5625 13.8311 10.2545C14.4684 10.085 14.9703 9.60629 15.1406 8.97204C15.4501 7.82243 15.4501 5.42388 15.4501 5.42388C15.4501 5.42388 15.4501 3.02532 15.1406 1.87571ZM6.52911 7.60158V3.24617L10.4005 5.42393L6.52911 7.60158Z" fill="#D85252"/>
-                            </svg>                                              
-                        </div>
-                        <div class="playlist-panel__header-settings-btn-container">
-                            <button on:click={() => isDropDownOpen = !isDropDownOpen} class="playlist-panel__header-settings-btn settings-btn dropdown">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20">
-                                    <g fill="none" stroke={`${!isLightTheme ? "rgba(255, 255, 255, 0.55)" : "rgba(0, 0, 0, 0.35)"}`} stroke-linecap="round" transform="translate(1 10)">
-                                        <circle cx="2.5" cy="0.8" r="1.2"></circle>
-                                        <circle cx="8.5" cy="0.8" r="1.2"></circle>
-                                        <circle cx="14.5" cy="0.8" r="1.2"></circle>
-                                    </g>
-                                </svg>
-                            </button>
-                            <!-- Dropdown Menu -->
-                            {#if isDropDownOpen}
-                                <ul use:clickOutside on:click_outside={() => isDropDownOpen = false} class="dropdown-menu">
-                                    {#each options as option, idx} 
-                                        <li class="dropdown-menu__option">
-                                            <button class="dropdown-element" on:click={() => handleDropdownOptionClicked(idx)}>
-                                                <p>{option}</p>
-                                            </button>
-                                        </li>
-                                    {/each}
-                                </ul>
+                <!-- User Top -->
+                <div class="playlist-panel__top">
+                    <!-- Left Side: Current Playlist -->
+                    <div class="playlist-panel__left">
+                        <!-- Current Playlist -->
+                        <div class="playlist-panel__current-pl">
+                            {#if ytData.selectedPlaylist}
+                                <div class="playlist-panel__current-pl-img-container">
+                                    <img src={ytData?.selectedPlaylist?.thumbnailURL} alt="current-playlist"/>
+                                </div>
+                                <div class="playlist-panel__current-pl-details">
+                                    <!-- Title -->
+                                    <h1>{ytData?.selectedPlaylist?.title}</h1>
+                                    <!-- Header -->
+                                    <div class="playlist-panel__header">
+                                        <div class="playlist-panel__header-yt-logo">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="9" viewBox="0 0 14 9" fill="none">
+                                                <path d="M4.56592 2.23535H12.2325V7.66267H4.56592V2.23535Z" fill="white"/>
+                                                <path d="M13.3099 1.51744C13.16 0.99611 12.7184 0.585525 12.1577 0.446187C11.1413 0.192993 7.06567 0.192993 7.06567 0.192993C7.06567 0.192993 2.9901 0.192993 1.97369 0.446187C1.41294 0.585547 0.971306 0.99611 0.821414 1.51744C0.549072 2.46239 0.549072 4.43393 0.549072 4.43393C0.549072 4.43393 0.549072 6.40547 0.821414 7.35042C0.971306 7.87175 1.41294 8.26523 1.97369 8.40457C2.9901 8.65777 7.06567 8.65777 7.06567 8.65777C7.06567 8.65777 11.1412 8.65777 12.1577 8.40457C12.7184 8.26523 13.16 7.87175 13.3099 7.35042C13.5823 6.40547 13.5823 4.43393 13.5823 4.43393C13.5823 4.43393 13.5823 2.46239 13.3099 1.51744ZM5.73272 6.22395V2.64392L9.13911 4.43398L5.73272 6.22395Z" fill="#DF6B6B"/>
+                                                </svg>                                          
+                                        </div>
+                                        <span class="playlist-panel__header-vid-count">
+                                            {`${ytData?.selectedPlaylist?.vidCount} ${ytData?.selectedPlaylist?.vidCount === 1 ? "Video" : "Videos"}`}
+                                        </span>
+                                    </div>
+                                </div>
+                            {:else}
+                                <div class="playlist-panel__current-pl-empty">
+                                    <h4>No Playlist Chosen</h4>
+                                </div>
                             {/if}
                         </div>
                     </div>
-                    <!-- Current Playlist -->
-                    <div class="playlist-panel__current-pl">
-                        {#if ytData.selectedPlaylist}
-                            <div class="playlist-panel__current-pl-img-container">
-                                <img src={ytData?.selectedPlaylist?.thumbnailURL} alt="current-playlist"/>
-                            </div>
-                            <div class="playlist-panel__current-pl-details">
-                                <h1>{ytData?.selectedPlaylist?.title}</h1>
-                                <p>{ytData?.selectedPlaylist?.description}</p>
-                                <div class="playlist-panel__current-pl-sub-details">
-                                    <span class="playlist-panel__current-pl-vid-count">
-                                        {`${ytData?.selectedPlaylist?.vidCount} ${ytData?.selectedPlaylist?.vidCount === 1 ? "Video" : "Videos"}`}
-                                    </span>
-                                </div>
-                            </div>
-                        {:else}
-                            <div class="playlist-panel__current-pl-empty">
-                                <h4>No Playlist Chosen</h4>
-                            </div>
-                        {/if}
-                    </div>
+                    <!-- Right Side: Playlist Description -->
+                    {#if ytData?.selectedPlaylist?.description}
+                        <div class="playlist-panel__pl-descr-container">
+                            <span>Description</span>
+                            <p>{ytData?.selectedPlaylist?.description}</p>
+                        </div>
+                    {/if}
                 </div>
                 <!-- User Playlists -->
                 {#if ytData?.username != ""}
@@ -413,10 +397,39 @@
                     </div>
                 {/if}
             </div>
+            <!-- Settings Btn -->
+            <div class="playlist-panel__settings-btn-container">
+                <button on:click={() => isDropDownOpen = !isDropDownOpen} class="playlist-panel__header-settings-btn settings-btn dropdown">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20">
+                        <g fill="none" stroke={`${!isLightTheme ? "rgba(255, 255, 255, 0.55)" : "rgba(0, 0, 0, 0.35)"}`} stroke-linecap="round" transform="translate(1 10)">
+                            <circle cx="2.5" cy="0.8" r="1.2"></circle>
+                            <circle cx="8.5" cy="0.8" r="1.2"></circle>
+                            <circle cx="14.5" cy="0.8" r="1.2"></circle>
+                        </g>
+                    </svg>
+                </button>
+                <!-- Dropdown Menu -->
+                {#if isDropDownOpen}
+                    <ul use:clickOutside on:click_outside={() => isDropDownOpen = false} class="dropdown-menu">
+                        {#each options as option, idx} 
+                            <li class="dropdown-menu__option">
+                                <button class="dropdown-element" on:click={() => handleDropdownOptionClicked(idx)}>
+                                    <p>{option}</p>
+                                </button>
+                            </li>
+                        {/each}
+                    </ul>
+                {/if}
+            </div>
         </div>
     </div>
 </div> 
 <style lang="scss">
+    $pl-panel-height--min: 77px;
+    $pl-panel-border-radius: 18px;
+    $pl-panel-user-pls-height: 200px;
+    $pl-panel-height--max: $pl-panel-user-pls-height + 85;
+    
     .vid-view {
         margin-top: 30px;
         position: relative;
@@ -530,65 +543,31 @@
         }
     }
     .playlist-panel {
-        height: 150px;
         position: relative;
-        overflow: hidden;
         margin: 25px 0px 160px 0px;
-        border-radius: 15px;
+        border-radius: $pl-panel-border-radius;
         color: white;
+        height: $pl-panel-height--max;
+        overflow: hidden;
 
         .img-bg {
-            border-radius: 20px;
+            border-radius: $pl-panel-border-radius;
         }
         .blur-bg {
-            border-radius: 15px;
+            border-radius: $pl-panel-border-radius;
         }
-        &--light {
-            color: rgba(var(--textColor1), 0.9);
-            border: var(--midPanelBorder);
-            box-shadow: var(--midPanelShadow);
-
-            .img-bg, .blur-bg {
-                display: none;
-            }
+        .content-bg {
+            overflow: visible;
         }
-        &--light &__left {
-            background-color: var(--midPanelBaseColor);
-        }
-        &--light &__user-pls {
-            background-color: var(--midPanelAccentColor);
-            color: rgba(var(--midPanelAccentTextColor), 1);
-        }
-        &--small  {
-            height: 400px;
-        }
-        &--small &__current-pl {
-            min-height: 100px;
-            
-            p {
-                max-width: 60%;         
-            }
-        }
-        &--small &__current-pl-details {
-            max-width: 500px;
-        }
-        &--small &__content-container {
-            display: block;
-        }
+        /* When Screen is Small */
         &--small &__left {
-            width: 100%;
+            width: 90%;
+        }
+        &--small &__pl-descr-container {
+            display: none;
         }
         &--small &__user-pls {
-            width: 100%;
-            height: 260px;
-            border-radius: 0px;
-            max-width: 1000px;
-
-            li {
-                &:last-child {
-                    margin-bottom: 40px;
-                }
-            }
+            display: block;
         }
         &--small &__user-pls-vid-details {
             position: relative;
@@ -605,8 +584,19 @@
             position: relative;
 
         }
+        /* When Pls is Hidden*/
+        &--my-pls-hidden &__top {
+            height: $pl-panel-height--min;
+        }
+        &--my-pls-hidden &__pl-descr-container {
+            background-color: var(--midPanelAccentColor) !important;
+            color: rgba(var(--midPanelAccentTextColor), 1) !important;
+            padding: 18px 0px 0px 25px;
+            overflow: hidden;
+        }
         &--my-pls-hidden {
-            height: 145px !important;
+            height: 77px !important;
+            overflow: visible;
         }
         &--my-pls-hidden &__user-pls {
             display: none;
@@ -614,56 +604,64 @@
         &--my-pls-hidden {
             height: 185px;
         }
-        &--my-pls-hidden &__left {
-            width: 100%;
-        }
         &--my-pls-hidden &__header-settings-btn {
             right: 0px;
+        }
+        /* Dark Theme */
+        &--dark .dropdown-menu {
+            @include dropdown-menu-dark;
+        }
+        /* Light Theme */
+        &--light {
+            color: rgba(var(--textColor1), 0.9);
+            border: var(--midPanelBorder);
+            box-shadow: var(--midPanelShadow);
+
+            .img-bg, .blur-bg {
+                display: none;
+            }
+        }
+        &--light &__top {
+            background-color: var(--midPanelBaseColor);
+        }
+        &--light &__user-pls {
+            background-color: var(--midPanelAccentColor);
+            color: rgba(var(--midPanelAccentTextColor), 1);
+
+            li {
+                &:hover {
+                    background-color: rgba(var(--midPanelAccentAltColor), 0.4);
+                }
+            }
         }
 
         &__content-container {
             width: 100%;
-            display: flex;
+            display: block;
+            border-radius: $pl-panel-border-radius;
             overflow: hidden;
         }
+        &__top {
+            display: flex;
+            height: 85px;
+            width: 100%;
+        }
         &__left {
-            width: 70%;
-
-            @include md(min-width) {
-                width: 100%;
-            }
+            width: 45%;
         }
-        /* Header */
-        &__header {
-            padding: 11px 20px 15px 25px;
-            position: relative;
-            @include flex-container(center, _);
-            width: 98%;
-            h1 {
-                font-size: 1.4rem;
-            }
-        }
-        &__header-yt-logo {
-            margin: 5px 0px 0px 10px;
-        }
-        &__header-settings-btn-container {
-            @include pos-abs-top-right-corner(9px, 3px);
-            
-            .dropdown-menu {
-                @include pos-abs-top-right-corner(32px, 0px);
-                width: 120px;
-            }
-        }
-        &__header-settings-btn {
-
+        &__pl-descr-container {
+            height: $pl-panel-height--min;
+            width: 60%;
         }
         /* Current Playlist */
         &__current-pl {
             display: flex;
-            padding: 0px 20px 0px 25px;
             position: relative;
-            overflow: hidden;
-            min-height: 115px;
+            padding: 9px 0px 0px 9px;
+
+            p {
+                display: none;
+            }
         }
         &__current-pl-empty {
             position: relative;
@@ -675,55 +673,81 @@
                 @include abs-center;
             }
         }
-        &__current-pl-img-container {
-            width: 100%;
-            margin-right: min(4.5%, 20px);
-            max-width: 120px;
-            min-width: 140px;
-            img {
-                width: 100%;
-                aspect-ratio: 16 / 9;
-                max-width: 200px;
-                max-height: 120px;
-                border-radius: 7px;
-                object-fit: cover;
-            }
-        }
+        /* Playlist Details */
         &__current-pl-details {
-            margin-top: -2px;
+            margin-top: 10px;
             position: relative;
-            max-width: 70%;
+            width: 100%;
+            overflow: hidden;
             h1 {
+                width: 90%;
                 font-weight: 600;
-                font-size: 1.4rem;
+                font-size: 1.2rem;
                 margin-bottom: 4px;
                 @include elipses-overflow;
             }
-            p {
-                font-weight: 400;
-                max-height: 41px;
-                max-width: 100%;
-                overflow: hidden;
-                font-size: 1.1rem;
-                @include elipses-overflow;
-                opacity: 0.75;
-                margin-bottom: 10px;
+        }
+        &__current-pl-img-container {
+            margin-right: 15px;
+            min-width: 105px;
+            max-width: 105px;
+            aspect-ratio: 16 / 9;
+            img {
+                width: 100%;
+                border-radius: 10px;
+                object-fit: cover;
             }
         }
-        &__current-pl-sub-details {
-            font-size: 1.15rem;
-            font-weight: 500;
-            opacity: 0.75;
+        &__header {
+            position: relative;
+            width: 98%;
+            margin-top: 5px;
+            @include flex-container(center, _);
+            h1 {
+                font-size: 1.4rem;
+            }
+            span {
+                margin: 0px 0px 3px 10px;
+                opacity: 0.7;
+                font-weight: 500;
+                white-space: nowrap;
+            }
         }
-        &__current-pl-author {
-            margin-right: 7px;
+        &__settings-btn-container {
+            @include pos-abs-top-right-corner(5px, 5px);
+            
+            .dropdown-menu {
+                @include pos-abs-top-right-corner(32px, 0px);
+                width: 120px;
+            }
         }
+        /* Current Playlist Description */
+        &__pl-descr-container {
+            background: none !important;
+            padding: 18px 0px 0px 0px;
+
+            span {
+                opacity: 0.9;
+                font-weight: 500;
+                font-size: 1.05rem;
+            }
+            p {
+                max-height: 28px;
+                margin-top: 5px;
+                width: 90%;
+                opacity: 0.7;
+                font-weight: 300;
+                font-size: 1.05rem;
+                @include elipses-overflow;
+            }
+        }
+
         /* User Playlists */
         &__user-pls {
-            width: 30%;
-            height: 150px;
-            background-color: rgba(3, 3, 3, 0.6);
-            border-radius: 0px 15px 15px 0px;
+            width: 100%;
+            height: $pl-panel-user-pls-height;
+            background-color: var(--midPanelAccentColor);
+            color: rgba(var(--midPanelAccentTextColor), 1);
 
             ul {
                 overflow-y: scroll;
@@ -736,15 +760,11 @@
                     background-color: rgba(var(--textColor1), 0.12);
                 }
                 &:hover {
-                    background-color: rgba(var(--midPanelAccentAltColor), 0.4);
+                    background-color: rgba(50, 50, 50, 0.1);
                 }
                 &:last-child {
                     margin-bottom: 30px;
                 }
-            }
-
-            @include md(min-width) {
-                width: 300px;
             }
         }
         &__user-pls-header {
@@ -759,6 +779,7 @@
                 white-space: nowrap;
                 font-weight: 600;
                 opacity: 0.7;
+                display: block;
             }
         }
         &__user-pls-vid {

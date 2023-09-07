@@ -18,8 +18,9 @@
     } from "$lib/data-music-collections"
 
     enum MusicPlatform { AppleMusic, Spotify, Youtube, Soundcloud }
+    enum Modal { Settings, Youtube, Music, Stats, Appearance }
 
-    export let onNavButtonClicked: any
+    export let onNavButtonClicked: (modal: Modal | null) => void
 
     let musicPlayer: MusicPlayer | null = null
     let musicData: MusicData | null = null
@@ -55,8 +56,6 @@
     curentPlaylist.subscribe((data: MusicCollection | null) => currentMusicCollection = data)
 
     let chosenMusicCollection: MusicDiscoverCollection[] = []
-
-    const closeModal = () => onNavButtonClicked("")
 
     // attempt to init player
     const initMusicData = async (platform: MusicPlatform) => {
@@ -236,12 +235,9 @@
 
 <div class="modal-bg">
     <div 
-        use:clickOutside on:click_outside={closeModal} 
+        use:clickOutside on:click_outside={() => onNavButtonClicked(null)} 
         class={`modal-bg__content modal-bg__content--overflow-y-scroll ${isSignedIn ? "" : "modal-bg__content--med"}`}
     >
-        <!-- <button on:click={closeModal} class="close-btn">
-            <i class="fa-solid fa-xmark"></i>
-        </button> -->
         <div class={`music ${isSignedIn ? "" : "music--small"}`}>
             <h1 class="modal-bg__content-title">Music</h1>
             {#if isSignedIn}
@@ -342,11 +338,11 @@
             <div class="music__content">
                 <div class="music__left-section">
                     <!-- Now Playing Section -->
-                    <div class="now-playing grid-section">
+                    <div class="now-playing bento-box">
                         <img class="img-bg" src={currentMusicCollection?.artworkImgSrc} alt="">
                         <div class={`blur-bg blur-bg--blurred-bg ${currentMusicCollection ?? "blur-bg--solid-color"}`}></div>
                         <div class="content-bg">
-                            <h3 class="grid-section__title">Now Playing</h3>
+                            <h3 class="bento-box__title">Now Playing</h3>
                             {#if currentMusicCollection}
                                 <div class="now-playing__details-container">
                                     <div class="now-playing__artwork">
@@ -377,9 +373,9 @@
                         </div>
                     </div>
                     <!-- My Playlists Section -->
-                    <div class="my-playlists grid-section grid-section--no-padding">
+                    <div class="my-playlists bento-box bento-box--no-padding">
                         <div class="my-playlists__header">
-                            <h3 class="grid-section__title">My Playlists</h3>
+                            <h3 class="bento-box__title">My Playlists</h3>
                             <span class="caption-4">{`${playlists.length} ${playlists.length == 1 ? "playlist" : "playlists"}`}</span>
                         </div>
                         <ul class="my-playlists__collection-list vert-scroll">
@@ -416,9 +412,9 @@
                 </div>
                 <div class="music__right-section">
                     <!-- Discover Section -->
-                    <div class="discover grid-section grid-section--no-padding">
-                        <h3 class="grid-section__title">{`Discover from ${getPlatformName()}`}</h3>
-                        <p class="grid-section__copy">Get in the zone with music that matches your vibe - select a category and discover new tunes to fuel your day.</p>
+                    <div class="discover bento-box bento-box--no-padding">
+                        <h3 class="bento-box__title">{`Discover from ${getPlatformName()}`}</h3>
+                        <p class="bento-box__copy">Get in the zone with music that matches your vibe - select a category and discover new tunes to fuel your day.</p>
                         <div class="discover__collection-list-container">
                             {#if isScrollableLeft}
                                 <div class="gradient-container gradient-container--left">
@@ -589,7 +585,6 @@
     $section-spacing: 8px;
     $top-row-height: 170px;
     $bottom-row-height: 470px;
-
     $my-playlists-section-padding-left: 25px;
 
     .music {
@@ -838,6 +833,9 @@
             padding: 15px 0px 15px 20px;
             position: relative;
 
+            &:focus {
+                background-color: var(--hoverColor);
+            }
             &:hover {
                 background-color: var(--hoverColor);
             }
@@ -899,10 +897,10 @@
         padding-right: 0px;
         overflow: hidden;
 
-        .grid-section__title {
+        .bento-box__title {
             padding: 17px 0px 0px $my-playlists-section-padding-left;
         }
-        .grid-section__copy {
+        .bento-box__copy {
             padding-left: $my-playlists-section-padding-left;
         }
         &__header {
@@ -1095,6 +1093,9 @@
             }
             &--chosen {
                 background-color: var(--hoverColor2) !important;
+            }
+            &:focus {
+                background-color: var(--hoverColor);
             }
             &:hover {
                 background-color: var(--hoverColor);

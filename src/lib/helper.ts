@@ -176,6 +176,28 @@ export function minsToHHMM(mins: number): string {
   return `${hours} ${hours > 1 ? "hrs" : "hr" } ${String(minutes).padStart(2, '0')} mins`;
 }
 
+/* 4.65 - 4h:39m */
+export function hoursToHhMm(decimalHours: number): string {
+  const hours = Math.floor(decimalHours);
+  const minutes = Math.round((decimalHours - hours) * 60);
+  
+  const formattedMinutes = String(minutes).padStart(2, '0');
+
+  if (hours === 0) {
+    return `${formattedMinutes}m`
+  }
+  else if (minutes == 0) {
+    return `${hours}h`
+  }
+  else {
+    return `${hours}h ${formattedMinutes}m`;
+  }
+}
+
+export function decimalAdd(x: number, y: number): number {
+  return parseFloat((x + y).toFixed(2))
+}
+
 export function formatDateToHHMM(date: Date): string {
   const hours = date.getHours()
   const minutes = date.getMinutes()

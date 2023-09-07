@@ -54,7 +54,6 @@ export class Session {
         this.currentPomPeriod = 1
         this.sessionState = SessionState.FOCUSING
 
-        
         this.activeSessionState = globalSessionState
         this.activeSessionState.set({
             name: this.name,
@@ -80,6 +79,14 @@ export class Session {
     }
 
     iCurrentlyFocusTime = () => this.currentIndex % 2 === 0
+    editSessionTitle = (newTitle: string) => {
+        this.name = newTitle
+        this.activeSessionState.update((data: any) => ({ ...data, name: this.name }))
+    }
+    editSesionTag = (newTag: Tag) => {
+        this.tag = newTag
+        this.activeSessionState.update((data: any) => ({ ...data, tag: this.tag }))
+    }
 
     playSession = () => {
         this.sessionState = this.iCurrentlyFocusTime() ? SessionState.FOCUSING : SessionState.ON_BREAK
@@ -172,9 +179,9 @@ export class Session {
     }
     cancelSession = () => {
         this.pauseSession()
-        this.sessionState = SessionState.CANCELED
+        // this.sessionState = SessionState.CANCELED
 
-        this.activeSessionState.update((data: any) => ({ ...data, sessionState: this.sessionState }))
+        this.activeSessionState.set(null)
     }
     finishSession = (/* ⛳️ fakeEndTime: Date = new Date() */) => { 
         this.pauseSession()

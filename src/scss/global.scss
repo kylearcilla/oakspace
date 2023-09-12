@@ -439,17 +439,29 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     z-index: 9000;
     height: 100%;
     width: 70px;
-    top: 0px;
     background: linear-gradient(270deg, var(--bentoBoxBgColor) 60%, transparent);
     @include center;
     
     &--left {
+        top: 0px;
         left: 0px;
         background: linear-gradient(90deg, var(--bentoBoxBgColor) 15%, transparent);
     }
     &--right {
+        top: 0px;
         right: 0px;
         background: linear-gradient(270deg, var(--bentoBoxBgColor) 20%, transparent);
+    }
+    &--bottom {
+        bottom: 0px;
+        left: 0px;
+        background: linear-gradient(0deg, var(--bentoBoxBgColor) 20%, transparent);
+        opacity: 1;
+        visibility: visible;
+        height: 65px;
+    }
+    &--horizontal {
+        width: 100%;
     }
 
     button {
@@ -859,6 +871,7 @@ button.settings-btn {
         margin-bottom: 1px;
         overflow: hidden;
         cursor: pointer;
+        transition: 0.12s ease-in-out;
         
         &--selected {
             opacity: 1;
@@ -876,6 +889,9 @@ button.settings-btn {
         }
         &:hover > button {
             opacity: 1;
+        }
+        &:active {
+            transform: scale(0.984);
         }
     }
     &__option-icon {

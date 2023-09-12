@@ -1,50 +1,671 @@
  <script lang="ts">
-	import { clickOutside } from "$lib/helper";
+	import { clickOutside, daysOfWeek, getCurrentDate, hoursToHhMm } from "$lib/helper";
 	import { colorThemeState } from "$lib/store";
-	import BarGraph from "../../components/BarGraph.svelte";
+	import { onMount } from "svelte";
+	import { getSelectedKeyInsightData, getProdOverViewData } from "$lib/sessionUtils";
+	import ProdLineChart from "../../components/ProdLineChart.svelte";
+	import ProdStackedBarGraph from "../../components/ProdStackedBarGraph.svelte";
+	import TagBarGraph from "../../components/TagBarGraph.svelte";
 
-    enum Modal { Settings, Youtube, Music, Stats, Appearance }
+    enum Modal { Settings, Youtube, Music, Stats, Appearance,  }
+    enum TimeFrame { THIS_WEEK, TWO_WEEKS, THREE_WEEKS, THREE_MONTHS, SIX_MONTHS, THIS_YEAR, ALL_TIME }
+
 
     export let onNavButtonClicked: (modal: Modal | null) => void
 
-    let tags = [
+    const tags = [
         {
             name: "school",
-            color: "#9997FE",
-            avg: "5h 45m",
-            percent: "34%"
+            color: "#9997FE"
         },
         {
             name: "swe",
-            color: "#FF8B9C",
-            avg: "5h 45m",
-            percent: "34%"
+            color: "#FF8B9C"
         },
         {
-            name: "book",
-            color: "#CFAB96",
-            avg: "5h 45m",
-            percent: "34%"
+            name: "reading",
+            color: "#CFAB96"
         },
         {
-            name: "book",
-            color: "#CFAB96",
-            avg: "5h 45m",
-            percent: "34%"
-        }
+            name: "french",
+            color: "#DBB47A"
+        },
+        {
+            name: "meditation",
+            color: "#93DB7A"
+        },
+        {
+            name: "drawing",
+            color: "#6967BC"
+        },
     ]
+    // Time Frame Stacked Bar Graph
+    const daySessionData: DaySessionData[] = [
+        {
+        date: new Date(2023, 7, 20),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 1.0 },
+            { tagName: 'french', color: "#8280E5", hours: 1.0 },
+            { tagName: 'school', color: "#EE94A1", hours: 1.0 },
+            { tagName: 'swe', color: "#F8B1BB", hours: 3.5 },
+            { tagName: 'drawing', color: "#B5A7F0", hours: 1.5 },
+        ],
+        },
+        {
+        date: new Date(2023, 7, 21),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 2.5 },
+            { tagName: 'reading', color: "#A3C2FF", hours: 2.0 },
+            { tagName: 'french', color: "#8280E5", hours: 2.0 },
+            { tagName: 'french', color: "#8280E5", hours: 0 },
+            { tagName: 'school', color: "#EE94A1", hours: 1.0 },
+            { tagName: 'school', color: "#EE94A1", hours: 2.0 },
+            { tagName: 'swe', color: "#F8B1BB", hours: 2.0 },
+            { tagName: 'meditation', color: "#E4B496", hours: 2.0 },
+            { tagName: 'drawing', color: "#B5A7F0", hours: 1.0 },
+        ],
+        },
+        {
+        date: new Date(2023, 7, 22),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 1.0 },
+            { tagName: 'french', color: "#8280E5", hours: 1.0 },
+        ],
+        },
+        {
+        date: new Date(2023, 7, 23),
+        sessions: [],
+        },
+        {
+        date: new Date(2023, 7, 24),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 12.4 },
+        ],
+        },
+        {
+        date: new Date(2023, 7, 25),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 3.0 },
+            { tagName: 'french', color: "#8280E5", hours: 1.0 },
+            { tagName: 'school', color: "#EE94A1", hours: 1.0 },
+            { tagName: 'drawing', color: "#EE94A1", hours: 4.0 },
+        ]
+        },
+        {
+        date: new Date(2023, 7, 26),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 3.0 },
+            { tagName: 'french', color: "#8280E5", hours: 1.0 }
+        ],
+        },
+        {
+        date: new Date(2023, 7, 27),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 1.0 },
+            { tagName: 'french', color: "#8280E5", hours: 1.0 },
+            { tagName: 'school', color: "#EE94A1", hours: 1.0 },
+            { tagName: 'swe', color: "#F8B1BB", hours: 3.5 },
+            { tagName: 'drawing', color: "#B5A7F0", hours: 1.5 },
+        ],
+        },
+        {
+        date: new Date(2023, 7, 28),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 2.5 },
+            { tagName: 'reading', color: "#A3C2FF", hours: 2.0 },
+            { tagName: 'french', color: "#8280E5", hours: 2.0 },
+            { tagName: 'french', color: "#8280E5", hours: 0 },
+            { tagName: 'school', color: "#EE94A1", hours: 1.0 },
+            { tagName: 'school', color: "#EE94A1", hours: 2.0 },
+            { tagName: 'swe', color: "#F8B1BB", hours: 2.0 },
+            { tagName: 'meditation', color: "#E4B496", hours: 2.0 },
+            { tagName: 'drawing', color: "#B5A7F0", hours: 1.0 },
+        ],
+        },
+        {
+        date: new Date(2023, 7, 29),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 1.0 },
+            { tagName: 'french', color: "#8280E5", hours: 1.0 },
+        ],
+        },
+        {
+        date: new Date(2023, 7, 30),
+        sessions: [],
+        },
+        {
+        date: new Date(2023, 7, 31),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 12.4 },
+        ],
+        },
+        {
+        date: new Date(2023, 8, 1),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 3.0 },
+            { tagName: 'french', color: "#8280E5", hours: 1.0 },
+            { tagName: 'school', color: "#EE94A1", hours: 1.0 },
+            { tagName: 'drawing', color: "#EE94A1", hours: 4.0 },
+        ]
+        },
+        {
+        date: new Date(2023, 8, 2),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 3.0 },
+            { tagName: 'french', color: "#8280E5", hours: 1.0 }
+        ],
+        },
+        {
+        date: new Date(2023, 8, 3),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 2.5 },
+            { tagName: 'reading', color: "#A3C2FF", hours: 2.0 },
+            { tagName: 'french', color: "#8280E5", hours: 2.0 },
+            { tagName: 'french', color: "#8280E5", hours: 0 },
+            { tagName: 'school', color: "#EE94A1", hours: 1.0 },
+            { tagName: 'school', color: "#EE94A1", hours: 2.0 },
+            { tagName: 'swe', color: "#F8B1BB", hours: 2.0 },
+            { tagName: 'meditation', color: "#E4B496", hours: 2.0 },
+            { tagName: 'drawing', color: "#B5A7F0", hours: 1.0 },
+        ],
+        },
+        {
+        date: new Date(2023, 8, 4),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 1.0 },
+            { tagName: 'french', color: "#8280E5", hours: 1.0 },
+        ],
+        },
+        {
+        date: new Date(2023, 8, 5),
+        sessions: [],
+        },
+        {
+        date: new Date(2023, 8, 6),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 12.4 },
+        ],
+        },
+        {
+        date: new Date(2023, 8, 7),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 1.0 },
+            { tagName: 'french', color: "#8280E5", hours: 1.0 },
+            { tagName: 'school', color: "#EE94A1", hours: 1.0 },
+            { tagName: 'swe', color: "#F8B1BB", hours: 3.5 },
+            { tagName: 'drawing', color: "#B5A7F0", hours: 1.5 },
+        ],
+        },
+        {
+        date: new Date(2023, 8, 8),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 3.0 },
+            { tagName: 'french', color: "#8280E5", hours: 1.0 },
+            { tagName: 'school', color: "#EE94A1", hours: 1.0 },
+            { tagName: 'drawing', color: "#EE94A1", hours: 4.0 },
+        ]
+        },
+        {
+        date: new Date(2023, 8, 9),
+        sessions: [
+            { tagName: 'reading', color: "#A3C2FF", hours: 3.0 },
+            { tagName: 'french', color: "#8280E5", hours: 1.0 }
+        ],
+        },
+    ]
+    const timeFrameOptions = [
+        "This Week", "2 Weeks", "3 Weeks", "3 Months", "6 Months", "This Year", "All Time"
+    ]
+    // Weekly Avg. Line Chart
+    const timeFrameActivityData: TimeFrameActivity[] = [
+        {
+            timeFrame: "Sunday 0:00-3:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Sunday 3:00-6:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Sunday 6:00-9:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Sunday 9:00-12:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Sunday 12:00-15:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Sunday 15:00-18:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Sunday 18:00-21:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Sunday 21:00-24:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Monday 0:00-3:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Monday 3:00-6:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Monday 6:00-9:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Monday 9:00-12:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Monday 12:00-15:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Monday 15:00-18:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Monday 18:00-21:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Monday 21:00-24:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Tuesday 0:00-3:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Tuesday 3:00-6:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Tuesday 6:00-9:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Tuesday 9:00-12:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Tuesday 12:00-15:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Tuesday 15:00-18:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Tuesday 18:00-21:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Tuesday 21:00-24:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Wednesday 0:00-3:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Wednesday 3:00-6:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Wednesday 6:00-9:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Wednesday 9:00-12:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Wednesday 12:00-15:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Wednesday 15:00-18:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Wednesday 18:00-21:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Wednesday 21:00-24:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Thursday 0:00-3:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Thursday 3:00-6:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Thursday 6:00-9:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Thursday 9:00-12:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Thursday 12:00-15:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Thursday 15:00-18:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Thursday 18:00-21:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Thursday 21:00-24:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Friday 0:00-3:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Friday 3:00-6:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Friday 6:00-9:00",
+            allTimeMins: 315,
+        },
+        {
+            timeFrame: "Friday 9:00-12:00",
+            allTimeMins: 315,
+        },
+        {
+            timeFrame: "Friday 12:00-15:00",
+            allTimeMins: 315,
+        },
+        {
+            timeFrame: "Friday 15:00-18:00",
+            allTimeMins: 315,
+        },
+        {
+            timeFrame: "Friday 18:00-21:00",
+            allTimeMins: 315,
+        },
+        {
+            timeFrame: "Friday 21:00-24:00",
+            allTimeMins: 315,
+        },
+        {
+            timeFrame: "Saturday 0:00-3:00",
+            allTimeMins: 315,
+        },
+        {
+            timeFrame: "Saturday 3:00-6:00",
+            allTimeMins: 315,
+        },
+        {
+            timeFrame: "Saturday 6:00-9:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Saturday 9:00-12:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Saturday 12:00-15:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Saturday 15:00-18:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Saturday 18:00-21:00",
+            allTimeMins: 0,
+        },
+        {
+            timeFrame: "Saturday 21:00-24:00",
+            allTimeMins: 0,
+        },
+    ]
+    const allTimeFrameMins = 2520
+    const mostActiveTimeFrameIdx = 49
+
+    // Tag Bar Graph
+    const tagMonthlyData: TagMonthlyActivity[] = [
+        {
+            month: "Jan",
+            sessionsDone: 2,
+            focusHrs: 30.4
+        },
+        {
+            month: "Feb",
+            sessionsDone: 4,
+            focusHrs: 21
+        },
+        {
+            month: "Mar",
+            sessionsDone: 34,
+            focusHrs: 0
+        },
+        {
+            month: "Apr",
+            sessionsDone: 34,
+            focusHrs: 12
+        },
+        {
+            month: "May",
+            sessionsDone: 34,
+            focusHrs: 18
+        },
+        {
+            month: "Jun",
+            sessionsDone: 34,
+            focusHrs: 23
+        },
+        {
+            month: "Jul",
+            sessionsDone: 34,
+            focusHrs: 50
+        },
+        {
+            month: "Aug",
+            sessionsDone: 34,
+            focusHrs: 67
+        },
+        {
+            month: "Sep",
+            sessionsDone: 34,
+            focusHrs: 120
+        },
+        {
+            month: "Oct",
+            sessionsDone: 34,
+            focusHrs: 23
+        },
+        {
+            month: "Nov",
+            sessionsDone: 34,
+            focusHrs: 2
+        },
+        {
+            month: "Dec",
+            sessionsDone: 34,
+            focusHrs: 69
+        },
+    ]
+
+    let chartData: ChartData | null  = null
+    let focusTimeData: FocusTimeData | null = null
+    let timeFrame: TimeFrame = TimeFrame.THIS_WEEK
+
+    let keySelected: number | null = null
+    let xDomainRange = 0
+
+    let highlightedBarChartKey = 0
+    let barChartDomainRange = 0
+
     let isTimeFrameListOpen = false
+    let isTagListOpen = false
+
     let newTag = tags[0]
     let isLightTheme = false
+    let timeFrameDataSet = ""
+    let timeFrameStr = ""
+
+    let timeFrameInsightData: PordOverViewInisightData | null = null
+    let insightData: PordOverViewInisightData | null = null
+
+    $: {
+        timeFrameStr = getTimeFrameStr(keySelected)
+        updateInsightData(keySelected)
+    }
+    $: {
+        getData(timeFrame)
+    }
 
     colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
 
-    const handleNewTagClicked = (idx: number) => {
-        newTag = tags[idx]
+    const setKey = (newKey: number | null) => {
+        keySelected = newKey
+    }
+    const getTimeFrameStr = (keySelected: number | null) => {
+        if (!chartData) return ""
+
+        const timeFrameDataSet = chartData!.dayToBarDataArr
+        if (keySelected === null) {
+            const startDate = timeFrameDataSet[0].date
+            const endDate = timeFrameDataSet[timeFrameDataSet.length - 1].date
+
+            const startDay = startDate.getDate()
+            const startMonth = startDate.getMonth()
+
+            const endDay = endDate.getDate()
+            const endMonth = endDate.getMonth()
+
+            return `${startMonth + 1}/${startDay} - ${endMonth + 1}/${endDay}`
+        }
+        const timePointDate = timeFrameDataSet[keySelected].date
+
+        return `${daysOfWeek[timePointDate.getDay()]}  ${timePointDate.getMonth() + 1}/${timePointDate.getDate()}`
+    }
+    const getTimeFrameData = (timeFrame: TimeFrame) => {
+        if (timeFrame === TimeFrame.THIS_WEEK) {
+            return daySessionData.slice(0, 7)
+        } else if (timeFrame === TimeFrame.TWO_WEEKS) {
+            return daySessionData.slice(0, 14)
+        } else if (timeFrame === TimeFrame.THREE_WEEKS) {
+            return daySessionData.slice(0, 21)
+        } else if (timeFrame === TimeFrame.THREE_MONTHS) {
+            return daySessionData.slice(0, 3)
+        } else if (timeFrame === TimeFrame.SIX_MONTHS) {
+            return daySessionData.slice(0, 6)
+        } else if (timeFrame === TimeFrame.THIS_YEAR) {
+            return daySessionData.slice(0, 12)
+        }
+
+        return daySessionData.slice(0, 3)
+    }
+    const handleTimeFrameSwitcherClicked = (idx: number) => {
+        timeFrame = idx
         isTimeFrameListOpen = false
     }
-    
+    const handleNewTagClicked = (idx: number) => {
+        newTag = tags[idx]
+    }
+    const incrementTimeFrameTick = () => {
+        if (keySelected === null) {
+            keySelected = 0
+            return
+        }
+        keySelected = keySelected === xDomainRange - 1 ? 0 : keySelected + 1
+    }
+    const decrementTimeFrameTick = () => {
+        if (keySelected === null) {
+            keySelected = xDomainRange - 1
+            return
+        }
+        keySelected = keySelected === 0 ? xDomainRange - 1 : keySelected - 1
+    }
+    const getMostActiveTimePeriod = () => {
+        const timeFrameStr = timeFrameActivityData[mostActiveTimeFrameIdx].timeFrame
+        let day = timeFrameStr.split(" ")[0]
+        let [start, end] = timeFrameStr.match(/\d{1,2}(?=:)/g)!
+        let str = ""
 
+        switch (start) {
+            case "6":
+                str = "Early Mornings"
+                break
+            case "9":
+                str = "Late Mornings"
+                break
+            case "12":
+                str = "Early Afternoons"
+                break
+            case "15":
+                str = "Late Afternoons"
+                break
+            case "18":
+                str = "Early Nights"
+                break
+            default:
+                str = "Late Nights"
+                break
+        }
+
+        if (mostActiveTimeFrameIdx === 0 && start === "0") {
+            day = mostActiveTimeFrameIdx === 0 ? "Saturday" : timeFrameActivityData[mostActiveTimeFrameIdx - 1].timeFrame.split(" ")[0]
+        }
+
+        return day + " " + str
+    }
+
+    function updateInsightData(keySelected: number | null) {
+        if (keySelected === null) {
+            insightData = timeFrameInsightData!
+            return
+        }
+
+        const keyData = chartData?.dayToBarDataArr[keySelected]
+
+        insightData = getSelectedKeyInsightData(keyData, keyData.focusHours)
+        console.log(insightData)
+    }
+    function getData(timeFrame: TimeFrame) {
+        const prodOverViewData = getProdOverViewData(tags, getTimeFrameData(timeFrame))
+        
+        chartData = prodOverViewData.chartData
+        timeFrameInsightData = {
+            tagDistrData: prodOverViewData.timeFrameInsightData.tagDistrData,
+            sessionCountData: prodOverViewData.timeFrameInsightData.sessionCountData,
+            focusTimeData: prodOverViewData.timeFrameInsightData.focusTimeData
+        }
+        insightData = timeFrameInsightData
+        
+        xDomainRange = prodOverViewData.chartData.dayToBarDataArr.length
+        timeFrameStr = getTimeFrameStr(null)
+        setKey(null)
+    }
+    
+    onMount(() => {
+        getData(TimeFrame.THIS_WEEK)
+    })
 </script>
 
  <div class="modal-bg">
@@ -64,18 +685,18 @@
                         <h2>Productivity Overview</h2>
                         <div class="flx flx--algn-center">
                             <div class="prod-overview__time-frame-slider-wrapper">
-                                <button on:click={() => {}}>
+                                <button on:click={decrementTimeFrameTick}>
                                     <i class="fa-solid fa-chevron-left"></i>
                                 </button>
-                                <span>2 Sep – 8 Sep</span>
-                                <button on:click={() => {}}>
+                                <span>{`${timeFrameStr}`}</span>
+                                <button on:click={incrementTimeFrameTick}>
                                     <i class="fa-solid fa-chevron-right"></i>
                                 </button>
                             </div>
                             <div class="prod-overview__time-frame-dropdown-container dropdown-container">
                                 <button class="prod-overview__time-frame-dropdown-btn dropdown-btn trans-btn" on:click={() => { isTimeFrameListOpen = true }}>
                                     <div class="dropdown-btn__title">
-                                        {newTag.name}
+                                        {timeFrameOptions[timeFrame]}
                                     </div>
                                     <div class="dropdown-btn__arrows">
                                         <div class="dropdown-btn__arrows-triangle-up">
@@ -88,10 +709,10 @@
                                 </button>
                                 {#if isTimeFrameListOpen}
                                     <ul use:clickOutside on:click_outside={() => isTimeFrameListOpen = false} class="dropdown-menu">
-                                        {#each tags as tag, idx} 
-                                            <li class={`dropdown-menu__option ${tag.name === newTag.name ? "dropdown-menu__option--selected" : ""}`}>
-                                                <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
-                                                    <p>{tag.name}</p>
+                                        {#each timeFrameOptions as tf, idx} 
+                                            <li class={`dropdown-menu__option ${idx == timeFrame ? "dropdown-menu__option--selected" : ""}`}>
+                                                <button class="dropdown-element" on:click={() => handleTimeFrameSwitcherClicked(idx)}>
+                                                    <p>{tf}</p>
                                                     <i class="fa-solid fa-check"></i>
                                                 </button>
                                             </li>
@@ -106,9 +727,16 @@
                         <div class="prod-graph-view prod-overview__bento-box">
                             <div class="prod-overview__bento-box-header">
                                 <h4>This Week</h4>
-                                <p>Pulling stats from <strong>9/2 - 9/8</strong></p>
+                                <p>Pulling stats from <strong>{`${timeFrameStr}`}</strong></p>
                             </div>
-                            <BarGraph/>
+                            {#if chartData}
+                                <ProdStackedBarGraph 
+                                    chartData={chartData} 
+                                    timeFrame={timeFrame} 
+                                    keySelected={keySelected} 
+                                    setKey={setKey} 
+                                />
+                            {/if}
                         </div>
                         <!-- Stats View -->
                         <div class="prod-stats-view prod-overview__bento-box">
@@ -119,17 +747,19 @@
                                         <div class="prod-stats-view__stat-header-icon">
                                             <i class="fa-regular fa-hourglass-half"></i>
                                         </div>
-                                        <div class="prod-stats-view__stat-header-percentage">
-                                            <div class="flx flx--algn-center">
-                                                <i class="fa-solid fa-arrow-up"></i>
-                                                <span>3.5%</span>
+                                        {#if insightData?.sessionCountData && !insightData.sessionCountData.isDay}
+                                            <div class="prod-stats-view__stat-header-percentage">
+                                                <div class="flx flx--algn-center">
+                                                    <i class={`fa-solid fa-${insightData?.sessionCountData.percChange < 0 ? "arrow-down" : "arrow-up"}`}></i>
+                                                    <span>{insightData?.sessionCountData.percChange}</span>
+                                                </div>
+                                                    <span class="prod-stats-view__stat-header-time">Since Last Week</span>
                                             </div>
-                                            <span class="prod-stats-view__stat-header-time">Since Last Week</span>
-                                        </div>
+                                        {/if}
                                     </div>
                                     <div class="prod-stats-view__stat-info">
-                                        <h5>3.4</h5>
-                                        <span>Daily Session Average</span>
+                                        <h5>{insightData?.sessionCountData?.count}</h5>
+                                        <span>{`${insightData?.sessionCountData?.isDay ? "Sessions Completed" : "Dail Session Average"}`}</span>
                                     </div>
                                 </div>
                                 <!-- Session Focust Time Stat -->
@@ -138,17 +768,21 @@
                                         <div class="prod-stats-view__stat-header-icon">
                                             <i class="fa-brands fa-readme"></i>
                                         </div>
-                                        <div class="prod-stats-view__stat-header-percentage">
-                                            <div class="flx">
-                                                <i class="fa-solid fa-arrow-up"></i>
-                                                <span>3.5%</span>
+                                        {#if insightData?.focusTimeData && !insightData.focusTimeData.isDay}
+                                            <div class="prod-stats-view__stat-header-percentage">
+                                                <div class="flx">
+                                                    <i class={`fa-solid fa-${insightData?.focusTimeData.percChange < 0 ? "arrow-down" : "arrow-up"}`}></i>
+                                                    <span>{insightData?.focusTimeData.percChange}</span>
+                                                </div>
+                                                <span class="prod-stats-view__stat-header-time">Since Last Week</span>
                                             </div>
-                                            <span class="prod-stats-view__stat-header-time">Since Last Week</span>
-                                        </div>
+                                        {/if}
                                     </div>
                                     <div class="prod-stats-view__stat-info">
-                                        <h5>1h 30 min</h5>
-                                        <span>Break Session Average</span>
+                                        {#if insightData?.focusTimeData}
+                                            <h5>{`${hoursToHhMm(insightData?.focusTimeData.hours)}`}</h5>
+                                        {/if}
+                                        <span>{`${insightData?.focusTimeData?.isDay ? "Total Focus Time" : "Focus Time Average"}`}</span>
                                     </div>
                                 </div>
                             </div>
@@ -169,22 +803,26 @@
                                             %
                                         </div>
                                     </div>
-                                    <ul>
-                                        {#each tags as tag}
-                                            <li class="prod-stats-view__tag-list-item">
-                                                <div class="prod-stats-view__tag-list-item-col prod-stats-view__tag-list-item-col--tag-name">
-                                                    <div class="prod-stats-view__tag-list-item-color" style={`background-color: ${tag.color};`}></div>
-                                                    <div class="prod-stats-view__tag-list-item-name">{tag.name}</div>
-                                                </div>
-                                                <div class="prod-stats-view__tag-list-item-col prod-stats-view__tag-list-item-col--avg">
-                                                    {tag.avg}
-                                                </div>
-                                                <div class="prod-stats-view__tag-list-item-col prod-stats-view__tag-list-item-col--percentage">
-                                                    {tag.percent}
-                                                </div>
-                                            </li>
-                                        {/each}
-                                    </ul>
+                                    {#if insightData?.tagDistrData}
+                                        <ul>
+                                            {#each insightData.tagDistrData as tagData}
+                                                <li class="prod-stats-view__tag-list-item">
+                                                    <div class="prod-stats-view__tag-list-item-col prod-stats-view__tag-list-item-col--tag-name">
+                                                        <div class="prod-stats-view__tag-list-item-color" style={`background-color: ${tagData.color};`}></div>
+                                                        <div class="prod-stats-view__tag-list-item-name">{tagData.name}</div>
+                                                    </div>
+                                                    <div class="prod-stats-view__tag-list-item-col prod-stats-view__tag-list-item-col--avg">
+                                                        {tagData.hoursStr}
+                                                    </div>
+                                                    <div class="prod-stats-view__tag-list-item-col prod-stats-view__tag-list-item-col--percentage">
+                                                        {`${(tagData.fraction * 100).toFixed(0)}`}
+                                                    </div>
+                                                </li>
+                                            {/each}
+                                        </ul>
+                                    {/if}
+                                    <div class="gradient-container gradient-container--horizontal gradient-container--bottom">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -211,9 +849,14 @@
                         <!-- Weekly Avg. Line Graph -->
                         <div class="weekly-avg-graph prod-overview__bento-box">
                             <div class="prod-overview__bento-box-header">
-                                <h4>Weekly Average</h4>
-                                <p>Most focused on <strong>Tuesdays</strong></p>
+                                <h4>Weekly Avg.</h4>
+                                <p>Most focused on <strong>{getMostActiveTimePeriod()}</strong></p>
                             </div>
+                            <ProdLineChart 
+                                timeFrameActivityData={timeFrameActivityData}
+                                allTimeFrameMins={allTimeFrameMins}
+                                mostActiveTimeFrameIdx={mostActiveTimeFrameIdx}
+                            />
                         </div>
                     </div>
                 </div>
@@ -245,7 +888,7 @@
                         <div class="tag-overview__header">
                             <h4>Tag Overview</h4>
                             <div class="tag-overview__dropdown-btn-container dropdown-container">
-                                <button class="tag-overview__dropdown-btn dropdown-btn dropdown-btn--small trans-btn" on:click={() => { isTimeFrameListOpen = true }}>
+                                <button class="tag-overview__dropdown-btn dropdown-btn dropdown-btn--small trans-btn" on:click={() => { isTagListOpen = true }}>
                                     <div class="dropdown-btn__title">
                                         {newTag.name}
                                     </div>
@@ -258,8 +901,8 @@
                                         </div>
                                     </div>
                                 </button>
-                                {#if isTimeFrameListOpen}
-                                    <ul use:clickOutside on:click_outside={() => isTimeFrameListOpen = false} class="dropdown-menu">
+                                {#if isTagListOpen}
+                                    <ul use:clickOutside on:click_outside={() => isTagListOpen = false} class="dropdown-menu">
                                         {#each tags as tag, idx} 
                                             <li class={`dropdown-menu__option ${tag.name === newTag.name ? "dropdown-menu__option--selected" : ""}`}>
                                                 <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
@@ -278,7 +921,7 @@
                         <div class="tag-bar-graph tag-panel__bento-box">
                             <div class="tag-bar-graph__header">
                                 <h5>Monthly Trends</h5>
-                                <div class="tag-bar-graph__dropdown-btn-container dropdown-container">
+                                <!-- <div class="tag-bar-graph__dropdown-btn-container dropdown-container">
                                     <button class="tag-bar-graph__dropdown-btn dropdown-btn dropdown-btn--small trans-btn" on:click={() => { isTimeFrameListOpen = true }}>
                                         <div class="dropdown-btn__title">
                                             {newTag.name}
@@ -304,8 +947,12 @@
                                             {/each}
                                         </ul>
                                     {/if}
-                                </div>
+                                </div> -->
                             </div>
+                            <TagBarGraph
+                                tagMonthlyData={tagMonthlyData}
+                                selectedTag={tags[0]}
+                            />
                         </div>
                     </div>
                 </div>
@@ -318,8 +965,11 @@
     $bento-box-padding: 7px;
 
     .modal-bg {
-        overflow-y: scroll;
-        overflow: hidden;
+        
+        &__content {
+            overflow-y: scroll;
+            overflow-x: scroll;
+        }
         &__content-title {
             margin-bottom: 10px;
         }
@@ -365,7 +1015,7 @@
     }
     /**** Left Side ****/
     .prod-overview {
-        height: 86%;
+        height: 88%;
         &__bento-box {
             width: 50%;
             height: 100%;
@@ -386,7 +1036,9 @@
             strong {
                 color: rgba(var(--textColor1), 1);
                 font-weight: 400;
-                padding-left: 6px;
+                width: 65px;
+                text-align: right;
+                display: inline-block;
                 font-size: 1.04rem;
             }
             span {
@@ -396,32 +1048,35 @@
         &__bento-box-header {
             @include flex-container(baseline, space-between);
         }
-        &__top-row {
-            margin-bottom: $bento-box-padding;
-        }
-        &__top-row, &__bottom-row { 
-            display: flex;
-            height: 46.5%;
-            width: 100%;
-        }
         &__header {
-            margin: 0px $bento-box-padding 18px 0px;
+            margin: 0px $bento-box-padding 14px 0px;
             @include flex-container(center, space-between);
 
             h2 {
                 font-size: 1.45rem;
             }
         }
+        &__top-row {
+            margin-bottom: $bento-box-padding;
+        }
+        &__top-row, &__bottom-row { 
+            display: flex;
+            height: calc((100% - ($bento-box-padding + 42px)) / 2);
+            width: 100%;
+        }
         /* Right Side Btns */
         &__time-frame-slider-wrapper {
-            margin-right: 22px;
+            margin-right: 10px;
             span {
                 font-size: 1.14rem;
                 font-weight: 500;
                 padding: 0px 11px;
+                width: 90px;
+                text-align: center;
+                display: inline-block;
             }   
             button {
-                padding: 5px;
+                padding: 0px 10px;
                 color: rgba(var(--textColor1), 0.45);
                 transition: 0.14s ease-in-out;
                 font-size: 0.92rem;
@@ -450,13 +1105,13 @@
 
         &__top-row {
             display: flex;
+            height: 37%;
         }
         &__top-row, &__bottom-row {
             width: 100%;
-            height: 41%;
         }
         &__bottom-row {
-            height: 56%;
+            height: 60.4%;
         }
         &__bento-box {
             background-color: var(--bentoBoxBgColor);
@@ -479,6 +1134,7 @@
         }
         &__stat-header {
             @include flex-container(center, space-between);
+            height: 27px;
         }
         &__stat-header-icon {
             i {
@@ -515,6 +1171,8 @@
             margin-top: $bento-box-padding;
             width: 100%;
             height: 100%;
+            position: relative;
+            overflow: hidden;
         }
         &__tag-list-header {
             margin-top: 10px;
@@ -537,13 +1195,19 @@
             }
         }
         ul {
-            margin-top: 14px;
-            height: 64%;
+            height: 72%;
             overflow-y: scroll;
         }
         &__tag-list-item {
             display: flex;
             margin-bottom: 8px;
+
+            &:first-child {
+                margin-top: 14px;
+            }
+            &:last-child {
+                margin-bottom: 40px;
+            }
         }
         &__tag-list-item-color {
             @include circle(5px);
@@ -590,7 +1254,19 @@
         }
     }
     .weekly-avg-graph {
-        
+        h4 {
+            white-space: nowrap;
+            margin-right: 10px;
+        }
+        p {
+            white-space: nowrap;
+            font-size: 0.95rem;
+        }
+        strong {
+            font-size: 0.95rem;
+            width: auto;
+            margin-left: 3px;
+        }
     }
     /**** Right Side ****/
     .tag-panel {

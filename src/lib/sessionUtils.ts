@@ -1,249 +1,218 @@
 import type { Session } from "./Session";
-import { hoursToHhMm } from "./helper";
+import { decimalAdd, hoursToHhMm } from "./helper";
 
-const tags = [
-    {
-        name: "school",
-        color: "#9997FE"
-    },
-    {
-        name: "swe",
-        color: "#FF8B9C"
-    },
-    {
-        name: "reading",
-        color: "#CFAB96"
-    },
-    {
-        name: "french",
-        color: "#DBB47A"
-    },
-    {
-        name: "meditation",
-        color: "#93DB7A"
-    },
-    {
-        name: "drawing",
-        color: "#6967BC"
-    },
-    {
-        name: "restTime",
-        color: "#A3C2FF"
-    }
-]
-const data: DaySessionData[] = [
-    {
-      date: new Date(2023, 8, 3),
-      sessions: [
-        { name: 'reading', color: "#A3C2FF", hours: 2.5 },
-        { name: 'reading', color: "#A3C2FF", hours: 2.0 },
-        { name: 'french', color: "#8280E5", hours: 2.0 },
-        { name: 'french', color: "#8280E5", hours: 0 },
-        { name: 'school', color: "#EE94A1", hours: 1.0 },
-        { name: 'school', color: "#EE94A1", hours: 2.0 },
-        { name: 'swe', color: "#F8B1BB", hours: 2.0 },
-        { name: 'meditation', color: "#E4B496", hours: 2.0 },
-        { name: 'drawing', color: "#B5A7F0", hours: 1.0 },
-      ],
-    },
-    {
-      date: new Date(2023, 8, 4),
-      sessions: [
-        { name: 'reading', color: "#A3C2FF", hours: 1.0 },
-        { name: 'french', color: "#8280E5", hours: 1.0 },
-      ],
-    },
-    {
-      date: new Date(2023, 8, 5),
-      sessions: [],
-    },
-    {
-      date: new Date(2023, 8, 6),
-      sessions: [
-        { name: 'reading', color: "#A3C2FF", hours: 12.4 },
-      ],
-    },
-    {
-      date: new Date(2023, 8, 7),
-      sessions: [
-        { name: 'reading', color: "#A3C2FF", hours: 1.0 },
-        { name: 'french', color: "#8280E5", hours: 1.0 },
-        { name: 'school', color: "#EE94A1", hours: 1.0 },
-        { name: 'swe', color: "#F8B1BB", hours: 3.5 },
-        { name: 'drawing', color: "#B5A7F0", hours: 1.5 },
-      ],
-    },
-    {
-      date: new Date(2023, 8, 8),
-      sessions: [
-        { name: 'reading', color: "#A3C2FF", hours: 3.0 },
-        { name: 'french', color: "#8280E5", hours: 1.0 },
-        { name: 'school', color: "#EE94A1", hours: 1.0 },
-        { name: 'drawing', color: "#EE94A1", hours: 4.0 },
-      ]
-    },
-    {
-      date: new Date(2023, 8, 9),
-      sessions: [
-        { name: 'reading', color: "#A3C2FF", hours: 3.0 },
-        { name: 'french', color: "#8280E5", hours: 1.0 }
-      ],
-    }
-]
-
-type SessionData = { name: string, hours: number, color: string  }
-
-/* Get 3 most spent-on tags for a day */
-const getSortedTags = (sessions: TagBarSegmentStat[]) => {
-    return sessions.sort((a, b) => b.hrsTimesTen - a.hrsTimesTen);
+type DayActivityData = {
+    date: Date,
+    sessions: any[]
+}
+type AggrDayData = {
+    totalSessions: number
+    totalFocusHrs: number
+    tagAggregatedMap: Map<string, { hours: number, color: string }>
 }
 
-const makeStackedBarDataObj = (obj: any) => {
-    return tags.reduce((obj: any, tag) => {
-        obj[tag.name] = 0; 
-        return obj
-    }, obj)
+type TagAggrDayData = {
+    dateStr: string,
+    date: Date,
+    sessionsCount: number,
+    focusHours: number,
+    focusHoursStr: string,
+    segments: TagSegmentData[],
+}
+
+type TagSegmentData = {
+    name: string, 
+    color: string,
+    hrsTimesTen: number
 }
 
 /**
- * Create data to be fed into productivity overview section given current time frame
- * @returns stackedBarData (map betewen day and day data), tag distribution data, max focus time for week, tag info
+ * @param tags User tags
+ * @param data Raw data of session activity over a selected time frame
+ * @returns Data to be displayed in the productivity overview section
  */
-export const getChartData = (): ProdOverviewData => {
-    const graphData = new Map<string, DayData>()
+export const getProdOverViewData = (tags: Tag[], data: DayActivityData[]): ProdOverviewData => {
+    const dayToAggrTagMap = new Map<string, TagAggrDayData>()
     let maxHours = 0
 
     // Construct mapping between day and segment data associated with it
-    data.forEach((day: DaySessionData) => {
-        let totalSessions = 0
-        let totalHours = 0
+    data.forEach((day: DayActivityData) => {
+        // aggregegate session data in terms of tags
+        const aggregatedTagData = aggregateRawTagData(day.sessions)
 
-        const sessionDayData = new Map<string, { hours: number, color: string }>()
-
-        // aggregegate session data
-        day.sessions.forEach((session: SessionData) => {
-            totalSessions++
-            const hrsTimesTen = Math.round(session.hours * 10) // multiple by 10 to avoid floating
-            totalHours += hrsTimesTen
-
-            sessionDayData.set(session.name, {
-                    hours: sessionDayData.has(session.name) ? sessionDayData.get(session.name)!.hours + hrsTimesTen : hrsTimesTen,
-                    color: session.color
+        // convert map to an array of aggregated tag objects for curr day
+        const tagAggrArr: TagSegmentData[] = []
+        aggregatedTagData.tagAggregatedMap.forEach((sessionData, sessionName) => {
+            tagAggrArr.push({ 
+                name: sessionName, 
+                hrsTimesTen: sessionData.hours, 
+                color: sessionData.color 
             })
         })
-
-        // create day : dayData entry
-        const sessionDayDataArray: TagBarSegmentStat[] = []
-        sessionDayData.forEach((sessionData, sessionName) => {
-            sessionDayDataArray.push({ name: sessionName, hrsTimesTen: sessionData.hours, color: sessionData.color })
-        })
-        graphData.set(day.date.toISOString(), {
-            totalSessions,
-            totalHours,
-            sessionData: sessionDayDataArray
+        dayToAggrTagMap.set(day.date.toISOString(), {
+            dateStr: day.date.toISOString(),
+            date: day.date,
+            sessionsCount: aggregatedTagData.totalSessions,
+            focusHours: aggregatedTagData.totalFocusHrs,
+            segments: tagAggrArr,
+            focusHoursStr: hoursToHhMm(aggregatedTagData.totalSessions),
         })
     })
 
     // Contruct prod overview section data sets from the produced map
-    const dayToBarDataMap = getDayToBarDataMap(graphData)
-    const tagDistrMap =  getTagDistrMap(graphData)
+    const tagDistrData =  getTimeFrameDistrData(dayToAggrTagMap, data.length)
     const dayToBarDataArr: any[] = []
-    let count = 0
+    let key = 0
 
-    dayToBarDataMap.forEach((dayData: TagBarStat, day: string) => {
+    // Make array objects to be fed into stacked bar chart
+    dayToAggrTagMap.forEach((dayData: TagAggrDayData, day: string) => {
         const dataObj: any = {}
 
-        dataObj["key"] = count++
+        dataObj["key"] = key++
         dataObj["date"] = dayData.date
         dataObj["focusHours"] = dayData.focusHours
         dataObj["focusHoursStr"] = dayData.focusHoursStr
         dataObj["sessionsCount"] = dayData.sessionsCount
+        dataObj["data"] = makeAllTagsObj(tags)
         
-        const dayDataObj = makeStackedBarDataObj(dataObj)
-        dayData.segments.forEach((segment: TagBarSegmentStat) => dayDataObj[segment.name] = segment.hrsTimesTen)
+        dayData.segments.forEach((tagSegment: TagSegmentData) => dataObj[tagSegment.name] = tagSegment.hrsTimesTen)
+        dayData.segments.forEach((tagSegment: TagSegmentData) => dataObj.data[tagSegment.name] = {
+            name: tagSegment.name,
+            hours: tagSegment.hrsTimesTen / 10,
+            color: tagSegment.color
+        })
 
-        dayToBarDataArr.push(dayDataObj)
+        dayToBarDataArr.push(dataObj)
         maxHours = Math.max(maxHours, dayData.focusHours)
     })
 
-    return { dayToBarDataArr, tagDistrMap, maxHours, tags }
+    return {
+        chartData: {
+            dayToBarDataArr,
+            maxHours,
+            tags
+        },
+        timeFrameInsightData: {
+            tagDistrData: tagDistrData,
+            sessionCountData: { count: 3, isDay: false, percChange: 0.3 },
+            focusTimeData: { hours: 3.4, isDay: false, percChange: -0.3 }
+        }
+    }
 }
 
-  
 /**
- * Data for Productivity Overview: Segemented Bar Chart
  * 
- * @param data a map that maps sessionData to a date
- * @returns a map that maps bar graph info to a date
+ * @param sessions User's completed session for a time frame point
+ * @returns Aggregated tag, total focus hours / sessions data for a given time frame
  */
-const getDayToBarDataMap = (graphData: Map<string, DayData>): Map<string, TagBarStat> => {
-    // key: day, value: segmented bar graph data
-    const segmentedWeeklyData = new Map<string, TagBarStat>()
+function aggregateRawTagData(sessions: SessionData[]): AggrDayData {
+    const data = {
+        totalSessions: 0,
+        totalFocusHrs: 0,
+        tagAggregatedMap: new Map<string, { hours: number, color: string }>()
+    }
 
-    graphData.forEach((daySessionData, dayStr) => {
-        const top3TagsArr = getSortedTags(daySessionData.sessionData)
+    sessions.forEach((session: SessionData) => {
+        data.totalSessions++
+        const hrsTimesTen = Math.round(session.hours * 10) // multiple by 10 to avoid floating
+        data.totalFocusHrs += hrsTimesTen
 
-        segmentedWeeklyData.set(dayStr, {
-            dateStr: dayStr,
-            date: new Date(dayStr),
-            sessionsCount: daySessionData.totalSessions,
-            focusHours: daySessionData.totalHours, 
-            focusHoursStr: hoursToHhMm(daySessionData.totalHours),
-            segments: top3TagsArr,
-          })
+        data.tagAggregatedMap.set(session.tagName, {
+                hours: data.tagAggregatedMap.has(session.tagName) ? data.tagAggregatedMap.get(session.tagName)!.hours + hrsTimesTen : hrsTimesTen,
+                color: session.color
+        })
     })
 
-    return segmentedWeeklyData
+    return data
 }
 
 /**
- * Data for Productivity Overview: Tag Distribution Info Section (Non - Day: weekly, monthly, yearly)
  * 
- * @param data a map that maps sessionData to a date
+ * @param dayToAggrTagMap mapping between day and aggregated session data
+ * @param dataRange total length of raw data (length of time frame)
  * @returns a map that maps avg focus time for each day in a week per each session
  */
-const getTagDistrMap = (graphData: Map<string, DayData>): Map<string, TagDistrData> => {
-    // key: session, value: weekly focus average
-    let tagDistributionMap = new Map<string, TagDistrData>() 
+function getTimeFrameDistrData(dayToAggrTagMap: Map<string, TagAggrDayData>, dataRange: number): TagDistrDataPoint[] {
+    let tagToTimeFrameStatsMap = new Map<string, TagDistrDataPoint>() 
+    let totalHours = 0
 
-    // Merge Session Data for Whole Week
-    graphData.forEach((daySessionData) => {
-        for (let session of daySessionData.sessionData) {
+    // loop over each time frame point's session data to aggregate all tag data over time frame
+    dayToAggrTagMap.forEach((daySessionData) => {
+        for (let session of daySessionData.segments) {
 
-            let hrs = session.hrsTimesTen
+            let hrs = session.hrsTimesTen / 10
 
-            if (tagDistributionMap.has(session.name)) {
-                const sum = tagDistributionMap.get(session.name)!.hrsTimesTen + session.hrsTimesTen     
-                hrs = Math.round(sum) / 100
+            if (tagToTimeFrameStatsMap.has(session.name)) {
+                hrs = decimalAdd(tagToTimeFrameStatsMap.get(session.name)!.hours, hrs)
             }
 
-            tagDistributionMap.set(session.name, {
+            tagToTimeFrameStatsMap.set(session.name, {
                 name: session.name,
                 color: session.color,
-                hrsTimesTen: hrs,
+                hours: hrs,
                 hoursStr: "",
+                fraction: 0
             })
         }
     })
 
-    // Calculate the average focus time in a day per session
-    tagDistributionMap.forEach((session, name) => {
-        tagDistributionMap.set(name, { ...session, hoursStr: hoursToHhMm(session.hrsTimesTen / data.length) })
+    // calculate the average focus time in a day per session
+    tagToTimeFrameStatsMap.forEach((session, name) => {
+        tagToTimeFrameStatsMap.set(name, { ...session, hoursStr: hoursToHhMm(session.hours / dataRange) })
     })
 
+    // sort and calculate fraction
+    const tagRawDatarArr: TagDistrDataPoint[] = []
+    
+    tagToTimeFrameStatsMap.forEach((dataPoint: TagDistrDataPoint, key: string) => {
+        tagRawDatarArr.push(dataPoint)
+        totalHours += dataPoint.hours
+    })
 
-    return tagDistributionMap 
+    tagRawDatarArr.sort((a, b) => b.hours - a.hours)
+    
+    return tagRawDatarArr.map((data: TagDistrDataPoint) => (
+        { name: data.name, color: data.color, hours: data.hours, hoursStr: data.hoursStr, fraction: data.hours / totalHours }
+    ))
 }
 
 /**
- * Data for Productivity Overview: Tag Distribution Info Section (Daily)
  * 
- * @param data a map that maps sessionData to a date
- * @returns session data for that day
+ * @param tags All user tags with colors
+ * @returns An object of user tags with given tag data, to be attached stacked bar chart dataset
  */
-  const getDailySessionData = (dayStr: string, graphData: Map<string, DayData>): DayData => {
-    const dayData = graphData.get(dayStr)
-    if (!dayData) throw new Error("Date does not exist in data.")
+function makeAllTagsObj(tags: Tag[]) {
+    return tags.reduce((dayData: any, tag) => {
+        dayData[tag.name] = {
+            name: tag.name,
+            hours: 0,
+            color: tag.color
+        };
+        return dayData
+    }, {})
+}
 
-    return dayData
+/**
+ * 
+ * @param keyData Highlighted time frame key data
+ * @param totalHoursTimesTen Total focus time hours for that time frame key * 10
+ * @returns insight data
+ */
+export const getSelectedKeyInsightData = (keyData: any, totalHoursTimesTen: number): PordOverViewInisightData => {
+    const tagDistrData: any[] = []
+    const totalFocusHours = totalHoursTimesTen / 10
+
+    for (const tagName in keyData.data) {
+        const tagStats = keyData.data[tagName]
+        if (tagStats.hours === 0) continue
+        tagDistrData.push({ name: tagName, hoursStr: hoursToHhMm(tagStats.hours), fraction: tagStats.hours / totalFocusHours, color: tagStats.color })
+    }
+
+    tagDistrData.sort((a, b) => b.fraction - a.fraction);
+
+    return {
+        tagDistrData: tagDistrData,
+        sessionCountData: { count: keyData.sessionsCount, isDay: true, percChange: 0 },
+        focusTimeData: { hours: totalFocusHours, isDay: true, percChange: 0 }
+    }
 }

@@ -1,6 +1,23 @@
 import { defaultThemes } from "./data-themes"
 import { colorThemeState } from "./store"
 
+export const months = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "April",
+  "September",
+  "October",
+  "November",
+  "December"
+]
+
+export const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
 export function clickOutside(node: any) {
     // if user clicks on any element that has has 'dropdown', do not dispatch event to close it, let the local btn close
     // if dispatched, local bool will be toggled to true from dispatch, after toggled to false from btn
@@ -189,7 +206,9 @@ export function hoursToHhMm(decimalHours: number): string {
   else if (minutes == 0) {
     return `${hours}h`
   }
-  else {
+  else if (hours === 0 && minutes === 0) {
+    return "0h 0m"
+  } else {
     return `${hours}h ${formattedMinutes}m`;
   }
 }
@@ -205,6 +224,16 @@ export function formatDateToHHMM(date: Date): string {
   const formattedHours = hours % 12 || 12
   const formattedMinutes = String(minutes).padStart(2, '0')
   return `${formattedHours}:${formattedMinutes} ${ampm}`
+}
+
+export function twentyFourTwo12HourFormat(time: number): string {
+  if (time < 0 || time > 24) throw new Error("Invliad time, out of range.")
+
+  if (time >= 12 && time < 24) {
+    return (time % 12 || 12) + " PM"
+  }
+
+  return (time === 0 || time == 24) ? "12 AM" : time + " AM"
 }
 
 /**

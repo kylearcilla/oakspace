@@ -309,7 +309,7 @@
                             >
                             <span>{subtaskCount}</span>
                         </div>
-                        <button disabled={newTodoTitle === "" || newTodoTitle.length > we} class="unfill" on:click={() => { 
+                        <button disabled={newTodoTitle === "" || newTodoTitle.length > MAX_TODO_NAME_LENGTH} class="unfill" on:click={() => { 
                             // @ts-ignore
                             newSession.todos.push(newTodoTitle)
                             newTodoTitle = "" 

@@ -171,63 +171,64 @@ type YoutubeVideo = {
 };
 
 /* Analytics Stuff */
-type ProdOverviewData = { 
-    dayToBarDataArr: TagBarStat[]
-    tagDistrMap: Map<string, TagDistrData>,
-    maxHours: number,
-    tags: { name: string, color: string }[],
-}
-
-type DayData = { 
-    totalSessions: number, 
-    totalHours: number, 
-    sessionData: TagBarSegmentStat[] 
-}
-
-type GraphChartData = {
-    maxHours: number
-    chartDataMap: Map<string, TagBarStat>
-}
-
-type SessionWeeklyData = {
-    tagDistributionMap: Map<string, TagDistrData>,
-    avgSessions: number,
-    avgFocusTime: number
-}
-
-type SessionDailyData = {
-    tagDistributionMap: Map<string, TagDistrData>,
-    sessionCount: number,
-    focusTimeCount: number
-}
-
-type TagBarStat = {
-    dateStr: string,
-    date: Date,
-    sessionsCount: number,
-    focusHours: number,
-    focusHoursStr: string,
-    segments: TagBarSegmentStat[],
-}
-
-type TagBarSegmentStat = {
-    name: string, 
-    color: string,
-    hrsTimesTen: number
-}
-
-type TagDistrData = { 
-    name: string, 
-    color: string, 
-    hrsTimesTen: number, 
-    hoursStr: string,
+type SessionData = { 
+    tagName: string, 
+    hours: number, 
+    color: string  
 }
 
 type DaySessionData = {
     date: Date,
-    sessions: any[]
+    sessions: SessionData[]
 }
 
+type ProdOverviewData = { 
+    chartData: ChartData
+    timeFrameInsightData: PordOverViewInisightData
+}
+
+type PordOverViewInisightData = {
+    tagDistrData: TagDistrDataPoint[],
+    sessionCountData: SessionCountData
+    focusTimeData: FocusTimeData
+}
+
+type ChartData = {
+    dayToBarDataArr: any[]
+    maxHours: number,
+    tags: Tag[]
+}
+
+type TagDistrDataPoint = { 
+    name: string, 
+    color: string, 
+    hours: number,
+    hoursStr: string,
+    fraction: number
+}
+
+type SessionCountData = {
+    isDay: boolean,
+    percChange: number
+    count: number
+}
+
+type FocusTimeData = {
+    isDay: boolean
+    percChange: number
+    hours: number
+}
+
+type TimeFrameActivity = {
+    timeFrame: string
+    allTimeMins: number
+}
+
+type TagMonthlyActivity = {
+    month: string,
+    sessionsDone: number
+    focusHrs: number
+}
   
 /* Theme Stuff */
 type ThemeState = {

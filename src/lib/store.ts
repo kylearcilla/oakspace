@@ -1,8 +1,8 @@
 import { writable } from 'svelte/store';
-import type { MusicData } from './MusicData';
-import type { MusicPlayer } from './MusicPlayer';
+import type { MusicData } from './music-data';
+import type { MusicPlayer } from './music-player';
 import { defaultThemes } from './data-themes';
-import type { Session } from './Session';
+import type { Session } from './pom-session';
 
 export const homePanelData = writable<any>({
     isNavMenuOpen: true,

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { lightColorThemes, darkColorThemes, defaultThemes } from "$lib/data-themes";
-	import { setRootColors } from "$lib/helper";
+	import { setRootColors } from "$lib/utils-general";
 	import { colorThemeState, musicPlayerData } from "$lib/store"
 
     enum Modal { Settings, Youtube, Music, Stats, Appearance }
@@ -307,17 +307,5 @@
         &:active {
             transform: scale(0.99);
         }
-    }
-
-
-    .tool-tip-text {
-        &::after {
-            background-color: rgb(var(--fgColor1));
-        }
-    }
-    // when nav bar is closed, allow the tooltip to be seen when hovered over
-    .tool-tip-container:hover .tool-tip-text,
-    .tool-tip-container:hover .tool-tip-text::after {
-        @include tool-tip-shown(rgb(var(--fgColor1)));
     }
 </style>    

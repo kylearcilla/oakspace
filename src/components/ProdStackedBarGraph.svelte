@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import * as d3 from 'd3';
-	import { daysOfWeek, hoursToHhMm, months } from '$lib/helper'
+	import { roundToNearestFive } from '$lib/utils-general'
+	import { daysOfWeek, hoursToHhMm, months } from '$lib/utils-date'
 	import { colorThemeState } from "$lib/store"
 
     enum TimeFrame { THIS_WEEK, TWO_WEEKS, THREE_WEEKS, THREE_MONTHS, SIX_MONTHS, THIS_YEAR, ALL_TIME }
@@ -44,12 +45,16 @@
     }
     let tickTextStyling = {
         x: {
-            fontWeight: 300,
+            fontWtLight: 200,
+            fontWtMed: 300,
+            fontColorDark: "rgba(255, 255, 255, 0.4)",
+            fontColorLight: "rgba(255, 255, 255, 0.65)",
             fontSize: 9.5
         },
         y: {
             fontWeight: 300,
-            fontSize: 9.5
+            fontSize: 9.5,
+            fontSizeSm: 8.9
         }
     }
 
@@ -129,22 +134,20 @@
         const yAxis = svg.append('g')
             .attr("class", "yAxis")
             .call(d3.axisLeft(yScale)
-                    .tickPadding(12)
+                    .tickPadding(maxYAxisNum <= 2 ? 6 : 8)
                     .ticks(ticksCount)
                     .tickValues(yAxisTicks)
                     .tickSizeInner(0)
                     .tickSizeOuter(0)
-                    .tickFormat((yAxisTickNum) =>
-                        d3.format(maxYAxisNum <= 2 ? "0.1f" : "0.0f")(yAxisTickNum / 10)
-                    )
+                    .tickFormat((yAxisTickNum) => getYTickFormat(+yAxisTickNum / 10, maxYAxisNum))
                 )
 
         let count = 0
 
         xAxis.selectAll(".tick text")
-            .attr("color","rgba(255, 255, 255, 0.6)")
-            .attr("font-weight", `${tickTextStyling.x.fontWeight}`)
-            .attr("font-size", `${tickTextStyling.x.fontSize}`)
+            .attr("color", tickTextStyling.x.fontColorLight)
+            .attr("font-weight", tickTextStyling.x.fontWtMed)
+            .attr("font-size", tickTextStyling.x.fontSize)
             .attr("cursor", "pointer")
             .style("transition", "0.1s ease-in-out")
             .attr("class", (d: any) => `xAxis-tick xAxis-tick__${count++}`)
@@ -154,8 +157,8 @@
             
         yAxis.selectAll(".tick text")
             .attr("color","rgba(255, 255, 255, 1")
-            .attr("font-weight", `${tickTextStyling.x.fontWeight}`)
-            .attr("font-size", `${tickTextStyling.x.fontSize}`)
+            .attr("font-weight", tickTextStyling.y.fontWeight)
+            .attr("font-size", maxYAxisNum <= 2 ? tickTextStyling.y.fontSizeSm : tickTextStyling.y.fontSize)
 
         svg.selectAll(".domain")
             .attr("font-family", "Manrope")
@@ -303,17 +306,15 @@
     function initXTickTextStyling() {
         if (chartData.dayToBarDataArr.length > 7) {
             tickTextStyling.x.fontSize = 8
-            tickTextStyling.x.fontSize = 8
         }
         else {
-            tickTextStyling.y.fontSize = 9.5
-            tickTextStyling.y.fontSize = 9.5
+            tickTextStyling.x.fontSize = 9.5
         }
     }
     function setBarStyling(keySelected: number | null, isLight: boolean) {
         const barOpacity = !isLight ? LOW_BAR_OPACITY : DEFAULT_BAR_OPACITY
-        const fontWeight = !isLight ? 400 : 500
-        const textColor = !isLight ? "rgba(255, 255, 255, 0.4)" : "rgba(255, 255, 255, 0.8)"
+        const fontWeight = !isLight ? tickTextStyling.x.fontWtLight : tickTextStyling.x.fontWtMed
+        const textColor = !isLight ? tickTextStyling.x.fontColorDark : tickTextStyling.x.fontColorLight
         const tickClass = keySelected === null ? ".xAxis-tick" : `.xAxis-tick__${keySelected}`
         const segmentClass = keySelected === null ? ".bar-segment" : `.bar-segment__${keySelected}`
 
@@ -360,6 +361,17 @@
         }
         return path.join(" ")
     }
+    function getYTickFormat(yAxisTickNum: number, maxYAxisNum: number) {
+        if (maxYAxisNum <= 1) {
+            return d3.format("0.0f")(60 * yAxisTickNum) + "m"
+        }
+        else if (maxYAxisNum <= 2) {
+            return d3.format(Number.isInteger(yAxisTickNum) ? "0.0f" : "0.1f")(yAxisTickNum) + "h"
+        }
+        else {
+            return d3.format("0.0f")(yAxisTickNum) + "h"
+        }
+    }
     function getXTickFormat(d: any) {
         if (timeFrame === TimeFrame.THIS_WEEK) {
             return daysOfWeek[d.getDay()].slice(0, 2)
@@ -375,9 +387,6 @@
         }
 
         return d.getFullYear()
-    }
-    function roundToNearestFive(n: number) {
-	    return Math.ceil(n / 5) * 5
     }
     function getMaxYAxisNum(maxYNumTimesTen: number) {
         const maxYNum = maxYNumTimesTen / 10

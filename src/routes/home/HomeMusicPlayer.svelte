@@ -2,9 +2,9 @@
 	import { appleMusicPlayerState, colorThemeState, currentTrack, musicDataState, musicPlayerData } from '$lib/store';
     import { onDestroy, onMount } from 'svelte';
     import Icon from '../../components/Icon.svelte';
-	import { AppleMusicPlayer } from '$lib/AppleMusicPlayer';
-	import { MusicData } from "$lib/MusicData";
-	import type { MusicPlayer } from '$lib/MusicPlayer';
+	import { AppleMusicPlayer } from '$lib/music-apple-player';
+	import { MusicData } from "$lib/music-data";
+	import type { MusicPlayer } from '$lib/music-player';
 
     let musicPlayer: MusicPlayer
     let musicData: MusicData

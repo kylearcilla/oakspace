@@ -1,4 +1,4 @@
-import { MusicPlaylistShuffler } from '$lib/MusicPlaylistShuffler';
+import { MusicPlaylistShuffler } from '$lib/music-playlist-shuffler';
 import {beforeEach, describe, expect, it} from 'vitest';
 
 

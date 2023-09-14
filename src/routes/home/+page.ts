@@ -1,4 +1,4 @@
-import { initClientApp } from "$lib/yt-api";
+import { initClientApp } from "$lib/api-youtube";
 
 import jwtDecode from "jwt-decode";
 import { googleData } from "$lib/store";

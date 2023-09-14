@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
     import { lightColorThemes, darkColorThemes, imageThemes, ambientVideos, defaultThemes } from "$lib/data-themes";
-	import { clickOutside, setRootColors } from "$lib/helper";
+	import { clickOutside, setRootColors } from "$lib/utils-general";
 	import { colorThemeState } from "$lib/store";
 
   enum Modal { Settings, Youtube, Music, Stats, Appearance }

@@ -1,5 +1,6 @@
-import type { Session } from "./Session";
-import { decimalAdd, hoursToHhMm } from "./helper";
+import type { Session } from "./pom-session"
+import { hoursToHhMm } from "./utils-date"
+import { decimalAdd } from "./utils-general"
 
 type DayActivityData = {
     date: Date,
@@ -156,7 +157,7 @@ function getTimeFrameDistrData(dayToAggrTagMap: Map<string, TagAggrDayData>, dat
         }
     })
 
-    // calculate the average focus time in a day per session
+    // calculate the average focus time for each session give day
     tagToTimeFrameStatsMap.forEach((session, name) => {
         tagToTimeFrameStatsMap.set(name, { ...session, hoursStr: hoursToHhMm(session.hours / dataRange) })
     })

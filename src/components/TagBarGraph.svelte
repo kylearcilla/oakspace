@@ -2,33 +2,40 @@
     import { onMount } from "svelte"
 	import * as d3 from 'd3'
 	import { colorThemeState } from "$lib/store";
-	import { months } from "$lib/helper";
+	import { roundToNearestFive } from "$lib/utils-general";
 
     export let tagMonthlyData: TagMonthlyActivity[]
     export let selectedTag: Tag
+
+    $: {
+        if (selectedTag && tagBarContainer && tagBarGraph) {
+            initGraph()
+        }
+    }
+
     let tagBarContainer: HTMLElement
     let tagBarGraph: HTMLElement
-
     let isLightTheme = false
     let highlightedKey = -1
+
     let width: number;
 	let height: number;
 	const margin = { top: 20, right: 10, bottom: 40, left: 25 }
 
-    let toolTip: d3.Selection<HTMLDivElement, unknown, null, undefined> | null = null
-    let toolTipSessionIcon: d3.Selection<HTMLElement, unknown, HTMLElement, any> | null = null
-    let toolTipSessionCount: d3.Selection<HTMLDivElement, unknown, HTMLElement, any> | null = null
-    let toolTipFocusIcon: d3.Selection<HTMLElement, unknown, HTMLElement, any> | null = null
-    let toolTipFocusHrs: d3.Selection<HTMLDivElement, unknown, HTMLElement, any> | null = null
-
+    // styling
     let tickTextStyling = {
         x: {
-            fontWeight: 300,
+            fontWtBase: 200,
+            fontWtActive: 300,
+            fontColorBase: "rgba(255, 255, 255, 0.4)",
+            fontColorActive: "rgba(255, 255, 255, 1)",
             fontSize: 8.7
         },
         y: {
-            fontWeight: 300,
-            fontSize: 8.5
+            fontColor: "rgba(255, 255, 255, 0.8)",
+            fontWeight: 200,
+            fontSize: 8.2,
+            fontSizeSm: 8
         }
     }
     let toolTipStyling = {
@@ -45,12 +52,19 @@
         BAR_TRANS_DELAY: 40,
         BAR_TRANS_DUR: 250,
         DEFAULT_BAR_OPACITY: 0.09,
-        HIGHLIGHTED_BAR_OPACITY: 1
+        ACTIVE_BAR_OPACITY: 1
     }
+
+    // tool tip
+    let toolTip: d3.Selection<HTMLDivElement, unknown, null, undefined> | null = null
+    let toolTipSessionIcon: d3.Selection<HTMLElement, unknown, HTMLElement, any> | null = null
+    let toolTipSessionCount: d3.Selection<HTMLDivElement, unknown, HTMLElement, any> | null = null
+    let toolTipFocusIcon: d3.Selection<HTMLElement, unknown, HTMLElement, any> | null = null
+    let toolTipFocusHrs: d3.Selection<HTMLDivElement, unknown, HTMLElement, any> | null = null
 
     colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
 
-    const initGraph = () => {
+    function initGraph() {
         // init SVG canvas & bars and chart dimensions
         d3.select(tagBarGraph).html(null)
 
@@ -71,9 +85,6 @@
         const ticksCount = maxYAxisNum === 2 ? 4 : 5
         const step = maxYAxisNum / ticksCount
         const yAxisTicks = d3.range(0, maxYAxisNum + step, step)
-
-        console.log(maxHours, maxYAxisNum, ticksCount, step)
-        console.log(yAxisTicks)
 
         // Scales
         const xScale = d3
@@ -102,28 +113,26 @@
         const yAxis = svg.append('g')
             .attr("class", "yAxis")
             .call(d3.axisLeft(yScale)
+                    .tickPadding(maxYAxisNum <= 2 ? 6 : 7)
                     .ticks(ticksCount)
                     .tickValues(yAxisTicks)
                     .tickSizeInner(0)
                     .tickSizeOuter(0)
-                    .tickFormat((yAxisTickNum) =>
-                        d3.format(maxYAxisNum <= 2 ? "00000.1f" : "000000.0f")(yAxisTickNum)
-                    )
+                    .tickFormat((yAxisTickNum) => getYTickFormat(+yAxisTickNum, maxYAxisNum))
             )
 
-        let count = 0
-
         xAxis.selectAll(".tick text")
-            .attr("color","rgba(255, 255, 255, 0.4)")
-            .attr("font-weight", `${tickTextStyling.x.fontWeight}`)
-            .attr("font-size", `${tickTextStyling.x.fontSize}`)
+            .attr("color", tickTextStyling.x.fontColorBase)
+            .attr("font-weight", tickTextStyling.x.fontColorBase)
+            .attr("font-size", tickTextStyling.x.fontSize)
             .attr("class", (month: string) => `tag-bar-x-axis-tick tag-bar-x-axis-tick__${month}`)
             
         yAxis.selectAll(".tick text")
-            .attr("color","rgba(255, 255, 255, 1")
-            .attr("font-weight", `${tickTextStyling.x.fontWeight}`)
-            .attr("font-size", `${tickTextStyling.x.fontSize}`)
-            .attr("x", "-10")
+            .attr("color", tickTextStyling.y.fontColor)
+            .attr("font-weight", tickTextStyling.y.fontWeight)
+            .attr("font-size", tickTextStyling.y.fontSize)
+            .attr("font-size", maxYAxisNum <= 2 ? tickTextStyling.y.fontSizeSm : tickTextStyling.y.fontSize)
+
 
         svg.selectAll(".domain")
             .attr("font-family", "Manrope")
@@ -194,7 +203,7 @@
             .data(tagMonthlyData)
             .enter()
             .append("g")
-            .style("fill", `${selectedTag.color}`)
+            .style("fill", selectedTag.color)
             .attr("height", function(d) { return height - yScale(0); }) 
             .attr("y", function(d) { return yScale(0); })
 
@@ -204,7 +213,7 @@
             .append("path")
             .attr("class", "bar")
             .style("cursor", "pointer")
-            .attr("fill", "#A3C2FF")
+            .attr("fill", selectedTag.color)
             .attr('class', d => "bar bar__" + d.month)
             .attr('d', (d) => {
                     const path = []
@@ -229,9 +238,7 @@
 
     }
 
-    function roundToNearestFive(n: number) {
-	    return Math.ceil(n / 5) * 5
-    }
+    // helpers
     function getMaxYAxisNum(maxYNum: number) {
         if (maxYNum > 2) {
             return maxYNum
@@ -240,7 +247,17 @@
             return maxYNum <= 1 ? Math.max(maxYNum, 1) :  Math.max(maxYNum, 2)
         }
     }
-
+    function getYTickFormat(yAxisTickNum: number, maxYAxisNum: number) {
+        if (maxYAxisNum <= 1) {
+            return d3.format("0.0f")(60 * yAxisTickNum) + "m"
+        }
+        else if (maxYAxisNum <= 2) {
+            return d3.format(Number.isInteger(yAxisTickNum) ? "0.0f" : "0.1f")(yAxisTickNum) + "h"
+        }
+        else {
+            return d3.format("0.0f")(yAxisTickNum) + "h"
+        }
+    }
     function initXTickTextStyling() {
         tickTextStyling.y.fontSize = 9.5
         tickTextStyling.y.fontSize = 9.5
@@ -271,9 +288,9 @@
         return path.join(" ")
     }
     function setBarStyling(monthKey: number, isLight: boolean) {
-        const color = isLight ? "rgba(255, 255, 255, 0.4)" : "rgba(255, 255, 255, 1)"
-        const fontWeight = isLight ? "500" : "400"
-        const opacity = isLight ? barStyles.DEFAULT_BAR_OPACITY : barStyles.HIGHLIGHTED_BAR_OPACITY
+        const color = isLight ? tickTextStyling.x.fontColorActive : tickTextStyling.x.fontColorBase
+        const fontWeight = isLight ? tickTextStyling.x.fontWtActive : tickTextStyling.x.fontColorBase
+        const opacity = isLight ? barStyles.ACTIVEIGHLIGHTED_BAR_OPACITY : barStyles.DEFAULT_BAR_OPACITY
 
 
         d3.selectAll(`.tag-bar-x-axis-tick__${monthKey}`).style("color", color)
@@ -300,13 +317,13 @@
             .style("left", (x - offSetX) + "px")
             .style("top", (y + toolTipStyling.Y_OFFSET_TOOL_TIP) + "px")
 
-        setBarStyling(barData.month, false)
+        setBarStyling(barData.month, true)
     }
     function onMouseLeaveBar(event: MouseEvent, barData: any) { 
         toolTip.style("display", "none")
 
         if (highlightedKey === barData.month) return
-        setBarStyling(barData.month, true)
+        setBarStyling(barData.month, false)
     }
     onMount(initGraph)
 </script>
@@ -321,6 +338,10 @@
         width: 100%;
         display: flex;
         position: relative;
+    }
+
+    .tag-bar-x-axis-tick {
+        transition: 0.12s ease-in-out;
     }
 
     .tag-bar-tool-tip {

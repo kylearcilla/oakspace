@@ -1,6 +1,6 @@
 import { get } from "svelte/store";
 import { userMusicPlaylists, curentPlaylist, musicPlayerData, currentTrack } from "./store";
-import { formatTime } from "./helper";
+import { formatTime } from "./utils-date";
 
 /* Authentication */
 

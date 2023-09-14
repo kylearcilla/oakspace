@@ -2,10 +2,10 @@
 	import { onDestroy, onMount } from "svelte"
     
 	import { _authAppleUser, _initMusicKit } from "./+page"
-	import type { MusicPlayer } from "$lib/MusicPlayer"
-    import { clickOutside } from "$lib/helper"
-	import { MusicData } from "$lib/MusicData"
-	import { AppleMusicPlayer } from "$lib/AppleMusicPlayer"
+	import type { MusicPlayer } from "$lib/music-player"
+    import { clickOutside } from "$lib/utils-general"
+	import { MusicData } from "$lib/music-data"
+	import { AppleMusicPlayer } from "$lib/music-apple-player"
 
 	import { 
         appleMusicPlayerState, colorThemeState, curentPlaylist, musicDataState, 

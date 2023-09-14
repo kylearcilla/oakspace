@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { addCommasToNum, clickOutside, formatDate, shorterNum } from "../../lib/helper";
+	import { addCommasToNum, clickOutside, shorterNum } from "../../lib/utils-general";
+	import { formatDateToMDY } from "../../lib/utils-date";
     import { currentYtVidId, ytUserData, ytCurrentVid, ytCredentials, colorThemeState, homePanelData } from "$lib/store";
 	import { onDestroy, onMount } from 'svelte';
-	import { getChannelDetails, getPlayListDetails, getVidDetails, initOAuth2Client, resetYtUserData, saveYtUserData } from "$lib/yt-api";
+	import { getChannelDetails, getPlayListDetails, getVidDetails, initOAuth2Client, resetYtUserData, saveYtUserData } from "$lib/api-youtube";
 
     // @ts-ignore
     let player: YT.Player;
@@ -165,7 +166,7 @@
             title: vidDetailsRes.items[0].snippet.title,
             likeCount: shorterNum(vidDetailsRes.items[0].statistics.likeCount),
             viewCount: addCommasToNum(vidDetailsRes.items[0].statistics.viewCount),
-            publishedAt: formatDate(vidDetailsRes.items[0].snippet.publishedAt),
+            publishedAt: formatDateToMDY(vidDetailsRes.items[0].snippet.publishedAt),
             channelName: vidDetailsRes.items[0].snippet.channelTitle,
             channelImgSrc: channelDetailsRes.items[0].snippet.thumbnails.default.url,
             channelSubs: shorterNum(channelDetailsRes.items[0].statistics.subscriberCount)

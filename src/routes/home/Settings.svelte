@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { clickOutside, formatDateToMMDD } from '$lib/helper';
+	import { clickOutside } from '$lib/utils-general';
+	import { formatDateToMMDD } from '$lib/utils-date';
 	import { onMount } from 'svelte';
 
     enum Modal { Settings, Youtube, Music, Stats, Appearance }

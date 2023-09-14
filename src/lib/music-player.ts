@@ -1,4 +1,4 @@
-import type { MusicData } from "./MusicData" 
+import type { MusicData } from "./music-data" 
 
 export abstract class MusicPlayer {
     abstract musicPlayerData: MusicPlayerData

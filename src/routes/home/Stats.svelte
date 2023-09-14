@@ -1,15 +1,16 @@
  <script lang="ts">
-	import { clickOutside, daysOfWeek, getCurrentDate, hoursToHhMm } from "$lib/helper";
+	import { clickOutside } from "$lib/utils-general";
 	import { colorThemeState } from "$lib/store";
 	import { onMount } from "svelte";
-	import { getSelectedKeyInsightData, getProdOverViewData } from "$lib/sessionUtils";
+	import { getSelectedKeyInsightData, getProdOverViewData } from "$lib/utils-session";
 	import ProdLineChart from "../../components/ProdLineChart.svelte";
 	import ProdStackedBarGraph from "../../components/ProdStackedBarGraph.svelte";
 	import TagBarGraph from "../../components/TagBarGraph.svelte";
+	import CalendarHeatMap from "../../components/CalendarHeatMap.svelte";
+	import { daysOfWeek, hoursToHhMm } from "$lib/utils-date";
 
     enum Modal { Settings, Youtube, Music, Stats, Appearance,  }
     enum TimeFrame { THIS_WEEK, TWO_WEEKS, THREE_WEEKS, THREE_MONTHS, SIX_MONTHS, THIS_YEAR, ALL_TIME }
-
 
     export let onNavButtonClicked: (modal: Modal | null) => void
 
@@ -523,13 +524,14 @@
     let isTimeFrameListOpen = false
     let isTagListOpen = false
 
-    let newTag = tags[0]
     let isLightTheme = false
     let timeFrameDataSet = ""
     let timeFrameStr = ""
 
     let timeFrameInsightData: PordOverViewInisightData | null = null
     let insightData: PordOverViewInisightData | null = null
+
+    let selectedTag = tags[0]
 
     $: {
         timeFrameStr = getTimeFrameStr(keySelected)
@@ -586,7 +588,8 @@
         isTimeFrameListOpen = false
     }
     const handleNewTagClicked = (idx: number) => {
-        newTag = tags[idx]
+        selectedTag = tags[idx]
+        isTagListOpen = false
     }
     const incrementTimeFrameTick = () => {
         if (keySelected === null) {
@@ -889,8 +892,9 @@
                             <h4>Tag Overview</h4>
                             <div class="tag-overview__dropdown-btn-container dropdown-container">
                                 <button class="tag-overview__dropdown-btn dropdown-btn dropdown-btn--small trans-btn" on:click={() => { isTagListOpen = true }}>
+                                    <div class="dropdown-btn__icon" style={`background-color: ${selectedTag.color}`}></div>
                                     <div class="dropdown-btn__title">
-                                        {newTag.name}
+                                        {selectedTag.name}
                                     </div>
                                     <div class="dropdown-btn__arrows">
                                         <div class="dropdown-btn__arrows-triangle-up">
@@ -904,8 +908,9 @@
                                 {#if isTagListOpen}
                                     <ul use:clickOutside on:click_outside={() => isTagListOpen = false} class="dropdown-menu">
                                         {#each tags as tag, idx} 
-                                            <li class={`dropdown-menu__option ${tag.name === newTag.name ? "dropdown-menu__option--selected" : ""}`}>
+                                            <li class={`dropdown-menu__option ${tag.name === selectedTag.name ? "dropdown-menu__option--selected" : ""}`}>
                                                 <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
+                                                    <div class="dropdown-menu__option-icon" style={`background-color: ${tag.color}`}></div>
                                                     <p>{tag.name}</p>
                                                     <i class="fa-solid fa-check"></i>
                                                 </button>
@@ -917,41 +922,15 @@
                         </div>
                         <div class="tag-heat-map tag-panel__bento-box">
                             <h5>Heat Map</h5>
+                            <CalendarHeatMap tag={selectedTag} />
                         </div>
                         <div class="tag-bar-graph tag-panel__bento-box">
                             <div class="tag-bar-graph__header">
                                 <h5>Monthly Trends</h5>
-                                <!-- <div class="tag-bar-graph__dropdown-btn-container dropdown-container">
-                                    <button class="tag-bar-graph__dropdown-btn dropdown-btn dropdown-btn--small trans-btn" on:click={() => { isTimeFrameListOpen = true }}>
-                                        <div class="dropdown-btn__title">
-                                            {newTag.name}
-                                        </div>
-                                        <div class="dropdown-btn__arrows">
-                                            <div class="dropdown-btn__arrows-triangle-up">
-                                                <i class="fa-solid fa-chevron-up"></i>
-                                            </div>
-                                            <div class="dropdown-btn__arrows-triangle-down">
-                                                <i class="fa-solid fa-chevron-down"></i>
-                                            </div>
-                                        </div>
-                                    </button>
-                                    {#if isTimeFrameListOpen}
-                                        <ul use:clickOutside on:click_outside={() => isTimeFrameListOpen = false} class="dropdown-menu">
-                                            {#each tags as tag, idx} 
-                                                <li class={`dropdown-menu__option ${tag.name === newTag.name ? "dropdown-menu__option--selected" : ""}`}>
-                                                    <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
-                                                        <p>{tag.name}</p>
-                                                        <i class="fa-solid fa-check"></i>
-                                                    </button>
-                                                </li>
-                                            {/each}
-                                        </ul>
-                                    {/if}
-                                </div> -->
                             </div>
                             <TagBarGraph
                                 tagMonthlyData={tagMonthlyData}
-                                selectedTag={tags[0]}
+                                selectedTag={selectedTag}
                             />
                         </div>
                     </div>
@@ -1353,6 +1332,17 @@
             @include flex-container(center, space-between);
             margin-bottom: 12px;
         }
+
+        .dropdown-btn {
+            &__icon {
+                @include circle(5px);
+            }
+        }
+        .dropdown-menu {
+            &__option-icon {
+                @include circle(5px);
+            }
+        }
     }
     /* Heat Map */
     .tag-heat-map {
@@ -1366,9 +1356,6 @@
 
         &__header {
             @include flex-container(center, space-between);
-        }
-        .dropdown-btn {
-            background-color: var(--hoverColor2);
         }
     }
  </style>

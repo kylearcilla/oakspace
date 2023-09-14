@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { Session } from "$lib/Session";
-	import { clickOutside, minsToHHMM } from "$lib/helper";
+	import { Session } from "$lib/pom-session";
+	import { clickOutside } from "$lib/utils-general";
+	import { minsToHHMM } from "$lib/utils-date";
 	import { colorThemeState, globalSessionObj, globalSessionState } from "$lib/store";
 	import { onDestroy, onMount } from "svelte";
 
@@ -160,7 +161,7 @@
                             isFocusTimeDropDownOpen = false
                             isBreakTimeDropDownOpen = false
                         }}>
-                            <div class="new-session-modal__name-input-btn-tag" style={`background-color: ${newSession.tag.color}`}></div>
+                            <div class="dropdown-btn__icon" style={`background-color: ${newSession.tag.color}`}></div>
                             <div class="dropdown-btn__title">
                                 {newSession.tag.name}
                             </div>
@@ -464,6 +465,11 @@
         }
         &__name-input-tag-dropdown-container {
             position: relative;
+            .dropdown-btn {
+                &__icon {
+                    @include circle(7px);
+                }
+            }
             .dropdown-menu {
                 position: absolute;
                 top: 40px;

@@ -1,6 +1,5 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-	import { getCurrentDate, getCurrentTime } from "$lib/helper";
 	import { colorThemeState } from '$lib/store';
 
     export let isTaskMenuExpanded: Boolean;
@@ -16,21 +15,6 @@
     const HORIZONTAL_TAB_COROUSEL_RIGHT_OFFSET = 30
 
     colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
-
-    /* Horizontal Reccomendation Category Tab List */
-    const handleShiftTabCategoryRight = () => groupTabList!.scrollLeft += SCROLL_STEP
-    const handleShiftTabCategoryLeft = () => groupTabList!.scrollLeft -= SCROLL_STEP
-
-    const handleScroll = (event: any) => {
-        const scrollLeft = event.target.scrollLeft;
-        const scrollWidth = event.target.scrollWidth;
-        const clientWidth = event.target.clientWidth; // container width
-
-        isScrollableLeft = scrollLeft > 0;
-        isScrollableRight = scrollLeft + clientWidth < scrollWidth - HORIZONTAL_TAB_COROUSEL_RIGHT_OFFSET;
-
-
-    }
 
     // right arrow disappears after a window resize if false even user can scroll right
     const handleResize = () => {

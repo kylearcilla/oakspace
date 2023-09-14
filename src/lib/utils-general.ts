@@ -1,22 +1,7 @@
 import { defaultThemes } from "./data-themes"
 import { colorThemeState } from "./store"
 
-export const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "April",
-  "September",
-  "October",
-  "November",
-  "December"
-]
-
-export const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+export const roundToNearestFive = (n: number) => Math.ceil(n / 5) * 5
 
 export function clickOutside(node: any) {
     // if user clicks on any element that has has 'dropdown', do not dispatch event to close it, let the local btn close
@@ -70,8 +55,6 @@ export const loadTheme = () => {
 export const setRootColors = (theme: ThemeData) => {
   const headTag = document.getElementsByTagName('head')[0];
   const styleTag = document.createElement("style");
-
-  console.log(theme)
 
   styleTag.innerHTML = `
     :root {
@@ -133,107 +116,8 @@ export const setRootColors = (theme: ThemeData) => {
   // }
 };
 
-/**
- * @return the current time as a string in the format "hh:mm AM/PM" for the user's local time
- */
-export function getCurrentTime(doUserHour12: boolean = true): string {
-  const now = new Date()
-  let res = now.toLocaleTimeString(undefined, { hour12: doUserHour12, hour: 'numeric', minute: 'numeric' })
-  if (res.startsWith('0')) return res.slice(1)
-
-  return res
-}
-
-export  function isNightTime() {
-    const now = new Date();
-    const currentHour = now.getHours();
-  
-    return currentHour >= 18 || currentHour <= 5;
-}
-
-/**
- * @return the current time as a string in the format "Ddd, Mmm, D" for the user's local time
- */
-export function getCurrentDate(): string {
-  const now = new Date()
-  
-  return now.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
-}
-
-/**
- *  Formats date to Mmm DD, YYYY 
- *  i.e. 2017-11-10T11:46:23Z to Nov 11, 2016
- *  
- *  @return the formatted date
- * 
- */
-export function formatDate(dateString: string): string {
-  const date = new Date(dateString)
-  const options: any = { year: 'numeric', month: 'short', day: 'numeric' }
-  const formattedDate = new Intl.DateTimeFormat('en-US', options).format(date)
-
-  return formattedDate
-}
-
-/**
- *  Formats date to MM/DD 
- *  @return the formatted date
- * 
- */
-export function formatDateToMMDD(date: Date): string {
-  return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' });
-}
-
-export function minsToHHMM(mins: number): string {
-  if (mins < 60) return `${mins} mins`
-
-  const hours = Math.floor(mins / 60);
-  const minutes = mins % 60;
-
-  return `${hours} ${hours > 1 ? "hrs" : "hr" } ${String(minutes).padStart(2, '0')} mins`;
-}
-
-/* 4.65 - 4h:39m */
-export function hoursToHhMm(decimalHours: number): string {
-  const hours = Math.floor(decimalHours);
-  const minutes = Math.round((decimalHours - hours) * 60);
-  
-  const formattedMinutes = String(minutes).padStart(2, '0');
-
-  if (hours === 0) {
-    return `${formattedMinutes}m`
-  }
-  else if (minutes == 0) {
-    return `${hours}h`
-  }
-  else if (hours === 0 && minutes === 0) {
-    return "0h 0m"
-  } else {
-    return `${hours}h ${formattedMinutes}m`;
-  }
-}
-
 export function decimalAdd(x: number, y: number): number {
   return parseFloat((x + y).toFixed(2))
-}
-
-export function formatDateToHHMM(date: Date): string {
-  const hours = date.getHours()
-  const minutes = date.getMinutes()
-  const ampm = hours >= 12 ? 'PM' : 'AM'
-  const formattedHours = hours % 12 || 12
-  const formattedMinutes = String(minutes).padStart(2, '0')
-  return `${formattedHours}:${formattedMinutes} ${ampm}`
-}
-
-export function twentyFourTwo12HourFormat(time: number): string {
-  if (time < 0 || time > 24) throw new Error("Invliad time, out of range.")
-
-  if (time >= 12 && time < 24) {
-    return (time % 12 || 12) + " PM"
-  }
-
-  return (time === 0 || time == 24) ? "12 AM" : time + " AM"
 }
 
 /**
@@ -264,37 +148,4 @@ export function shorterNum(num: string): string {
   } else {
     return parseFloat((val / 1000000000).toFixed(2)).toString() + "B"
   }
-}
-
-export const formatTime = (milliseconds: number) => {
-  let seconds = Math.floor(milliseconds / 1000)
-  let hours = Math.floor(seconds / 3600)
-  seconds = seconds % 3600
-  let minutes = Math.floor(seconds / 60)
-  seconds = seconds % 60
-
-  let result = ""
-  if (hours > 0) {
-    result += hours + "h "
-  }
-  if (minutes > 0 || hours > 0) {
-    result += minutes + "m "
-  }
-  return result.trim()
-}
-
-const getWeekNumber = (currentDate: Date) => {
-  const startDate = new Date(currentDate.getFullYear(), 0, 1) // starting point of counting weeks
-  const days = Math.floor(((currentDate as any) - (startDate as any)) / (24 * 60 * 60 * 1000)) // count difference in days (ms to days)
-  
-  const weekNumber = Math.ceil(days / 7) // days / 7
-  return weekNumber
-}
-
-const getCurrentWeek = () => {
-  const currentDate = new Date();
-  const firstDayOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 1));
-  const lastDayOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 7));
-
-  return `${firstDayOfWeek.getMonth() + 1}/${firstDayOfWeek.getDate()} - ${lastDayOfWeek.getMonth() + 1}/${lastDayOfWeek.getDate()}`;
 }

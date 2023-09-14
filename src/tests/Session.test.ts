@@ -1,4 +1,4 @@
-import { Session } from '$lib/Session';
+import { Session } from '$lib/pom-session';
 import { describe, expect, vi } from 'vitest';
 
 enum SessionState {

@@ -1,6 +1,6 @@
 import type { Writable } from "svelte/store"
 import { curentPlaylist, currentTrack, userMusicPlaylists } from "./store"
-import { getPlaylistDetails, getUserApplePlaylists } from "./apple-music-api"
+import { getPlaylistDetails, getUserApplePlaylists } from "./api-apple-music"
 
 enum MusicPlatform { AppleMusic, Spotify, Youtube, Soundcloud }
 

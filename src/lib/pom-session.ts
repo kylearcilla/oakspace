@@ -1,18 +1,18 @@
-import type { Writable } from "svelte/store";
-import { formatDateToHHMM } from "./helper";
-import { globalSessionState } from "./store";
-import { activeSessionMessages } from "$lib/data-pom";
+import type { Writable } from "svelte/store"
+import { formatTimeToHHMM } from "./utils-date"
+import { globalSessionState } from "./store"
+import { activeSessionMessages } from "$lib/data-pom"
 
 enum SessionState {
     EMPTY, PAUSED, FOCUSING, ON_BREAK, WAITING_TO_PROGRESS_BREAK, WAITING_TO_PROGRESS_FOCUS, FINISHED, CANCELED, FINISH_TOO_EARLY
 }
 
 export class Session {
-    name: string;
-    tag: Tag;
-    pomTime: number;
-    pomPeriods: number;
-    breakTime: number;
+    name: string
+    tag: Tag
+    pomTime: number
+    pomPeriods: number
+    breakTime: number
     startTime: Date
     endTime: Date | null = null
     calculatedEndTime: Date
@@ -283,10 +283,10 @@ export class Session {
     }
 
     isDateEarlier = (date1: Date, date2: Date) => {
-        return date1.getTime() < date2.getTime();
+        return date1.getTime() < date2.getTime()
     }
     getDifferenceInSecs = (date1: Date, date2: Date) =>  {
-        const differenceMilliseconds = Math.abs(date1.getTime() - date2.getTime());
+        const differenceMilliseconds = Math.abs(date1.getTime() - date2.getTime())
         return Math.floor(differenceMilliseconds / 1000)
     }
     static calculateEndTime = (startTime: Date, totalMins: number) => {
@@ -296,6 +296,6 @@ export class Session {
         return endTime
     }
     static getTimePeriodString = (startTime: Date, endTime: Date) => {
-        return  `${formatDateToHHMM(startTime)} - ${formatDateToHHMM(endTime)}`
+        return  `${formatTimeToHHMM(startTime)} - ${formatTimeToHHMM(endTime)}`
     }
 }

@@ -1,8 +1,7 @@
 <script lang="ts">
-	import PomProgressBar from "./PomProgressBar.svelte";
-	import { clickOutside } from "$lib/helper";
+	import { clickOutside } from "$lib/utils-general";
 	import { colorThemeState, globalSessionObj, globalSessionState } from "$lib/store";
-	import type { Session } from "$lib/Session";
+	import type { Session } from "$lib/pom-session";
 
     enum SessionState {
         EMPTY, PAUSED, FOCUSING, ON_BREAK, WAITING_TO_PROGRESS_BREAK, 

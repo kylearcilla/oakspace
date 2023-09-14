@@ -437,7 +437,6 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     visibility: hidden;
     position: absolute;
     z-index: 9000;
-    height: 100%;
     width: 70px;
     background: linear-gradient(270deg, var(--bentoBoxBgColor) 60%, transparent);
     @include center;
@@ -445,12 +444,22 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     &--left {
         top: 0px;
         left: 0px;
+        height: 100%;
         background: linear-gradient(90deg, var(--bentoBoxBgColor) 15%, transparent);
     }
     &--right {
         top: 0px;
         right: 0px;
+        height: 100%;
         background: linear-gradient(270deg, var(--bentoBoxBgColor) 20%, transparent);
+    }
+    &--top {
+        top: 0px;
+        left: 0px;
+        background: linear-gradient(0deg, var(--bentoBoxBgColor) 20%, transparent);
+        opacity: 1;
+        visibility: visible;
+        height: 65px;
     }
     &--bottom {
         bottom: 0px;
@@ -831,6 +840,9 @@ button.settings-btn {
     i {
         color: rgba(var(--textColor1), 0.5);
     }
+    &__icon {
+        margin-right: 7px;
+    }
     &__title {
         margin: -2px 5px 0px 4px;
         font-size: 1.2rem;
@@ -872,6 +884,7 @@ button.settings-btn {
         overflow: hidden;
         cursor: pointer;
         transition: 0.12s ease-in-out;
+        @include elipses-overflow;
         
         &--selected {
             opacity: 1;
@@ -892,6 +905,10 @@ button.settings-btn {
         }
         &:active {
             transform: scale(0.984);
+        }
+        p {
+            @include elipses-overflow;
+            width: 85%;
         }
     }
     &__option-icon {

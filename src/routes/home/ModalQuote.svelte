@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
     import quotes from "$lib/data-quotes";
-	import { clickOutside } from "$lib/helper";
+	import { clickOutside } from "$lib/utils-general";
 
     enum CurrentModal { Quote, NewSession, ActiveSession }
     export let toggleModal: (modal: CurrentModal | null) => void

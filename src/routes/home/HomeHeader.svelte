@@ -1,17 +1,15 @@
 <script lang="ts">
-	import { clickOutside, getCurrentTime, isNightTime } from "$lib/helper";
-	import { colorThemeState, globalSessionObj, globalSessionState } from "$lib/store";
-	import { onDestroy, onMount } from "svelte";
-	import ActiveSessionView from "./ActiveSessionView.svelte";
-	import QuoteModal from "./QuoteModal.svelte";
-	import NewSessionModal from "./NewSessionModal.svelte";
-	import type { Session } from "$lib/Session";
+	import { getCurrentTime, isNightTime } from "$lib/utils-date"
+	import { colorThemeState, globalSessionObj, globalSessionState } from "$lib/store"
+	import { onDestroy, onMount } from "svelte"
+	import ActiveSessionView from "./SessionActiveModal.svelte"
+	import QuoteModal from "./ModalQuote.svelte"
+	import NewSessionModal from "./SessionNewModal.svelte"
+	import type { Session } from "$lib/pom-session"
 
     enum CurrentModal { Quote, NewSession, ActiveSession }
 
     let currModalOpen : CurrentModal | null = null
-    let isCreateNewSessionModalOpen = false
-    let isSessionModalOpen = false
     let isLightTheme = false
     let interval:  NodeJS.Timer
     let is12HourTime = true
@@ -19,18 +17,10 @@
     let isEvening = false
     let headerTimeColor = "#8D907C"
 
-    let sessionNameInput: HTMLElement
-    let newTodoInput: HTMLElement
-
     const toggleModal = (modal: CurrentModal | null): void => {
         currModalOpen = modal
     }
 
-    let newTodoTitle = ""
-    let isTagListDropDownOpen = false
-    let isFocusTimeDropDownOpen = false
-    let isBreakTimeDropDownOpen = false
-    let pomMessage = ""
 
     let sessionObj: Session | null = null
     let activeSession: ActiveSessionState | null = null
@@ -58,7 +48,7 @@
             currentTime = getCurrentTime(is12HourTime)
             isEvening = isNightTime()
 
-        }, 1000);
+        }, 1000)
     }
 
     onDestroy(() => clearInterval(interval))

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import * as d3 from 'd3';
-	import { daysOfWeek, twentyFourTwo12HourFormat } from "$lib/helper";
+	import { daysOfWeek, twentyFourToTwelveHrFormat } from "$lib/utils-date";
 	import { colorThemeState } from "$lib/store"
 
     export let timeFrameActivityData: TimeFrameActivity[]
@@ -322,8 +322,8 @@
             let [start, end] = timeFrameStr.match(/\d{1,2}(?=:)/g)!
             const isDiffHalf = start === "9" && end === "12" || start === "18" && end === "24"
 
-            start = twentyFourTwo12HourFormat(+start)
-            end = twentyFourTwo12HourFormat(+end)
+            start = twentyFourToTwelveHrFormat(+start)
+            end = twentyFourToTwelveHrFormat(+end)
 
             toolTipDayOfWeek.html(timeFrameStr.slice(0, 3))
             toolTipTimeFrame.html((isDiffHalf ? start : start.slice(0, -2)) + " - " + end)

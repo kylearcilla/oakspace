@@ -1,23 +1,20 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte";
-
-  import ActiveSessionView from "./ActiveSessionView.svelte"
 	import HomeHeader from "./HomeHeader.svelte";
-  import MusicPlayer from "./MusicPlayer.svelte"
-  import NavMenu from "./NavMenu.svelte"
-  import TaskView from "./TaskView.svelte"
-  import VideoView from "./VideoView.svelte"
+  import MusicPlayer from "./HomeMusicPlayer.svelte"
+  import NavMenu from "./SideBarLeft.svelte"
+  import TaskView from "./SideBarRight.svelte"
+  import VideoView from "./HomeVideoView.svelte"
 
-	import ApperanceSettings from "./ApperanceSettings.svelte"
-	import MusicSettings from "./MusicSettings.svelte"
+	import ApperanceSettings from "./SettingsAppearance.svelte"
+	import MusicSettings from "./SettingsMusic.svelte"
 	import Settings from "./Settings.svelte"
-	import YoutubeSettings from "./YoutubeSettings.svelte"
+	import YoutubeSettings from "./SettingsYoutube.svelte"
 	import Stats from "./Stats.svelte"
   
 	import { _initGoogleClient, _initMusicKit } from "./+page"
-	import { loadTheme } from "$lib/helper"
+	import { loadTheme } from "$lib/utils-general"
 	import { homePanelData } from "$lib/store";
-	import { dataset_dev } from "svelte/internal";
 
 
   enum Modal { Settings, Youtube, Music, Stats, Appearance }

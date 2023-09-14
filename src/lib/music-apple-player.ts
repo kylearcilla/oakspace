@@ -1,9 +1,9 @@
 import type { Writable } from "svelte/store";
-import type { MusicData } from "./MusicData";
+import type { MusicData } from "./music-data";
 import { musicPlayerData } from "./store";
-import { getArtwork } from "./apple-music-api";
-import { MusicPlayer } from "./MusicPlayer";
-import { MusicPlaylistShuffler } from "./MusicPlaylistShuffler"
+import { getArtwork } from "./api-apple-music";
+import { MusicPlayer } from "./music-player";
+import { MusicPlaylistShuffler } from "./music-playlist-shuffler"
 
 /**
  * A class representing an Apple Music player instance that extends MusicPlayer.

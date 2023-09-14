@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { initOAuth2Client, initYtCreds, intUserYtData, resetYtUserData, saveYtCredentials, saveYtUserData } from "$lib/yt-api";
+	import { initOAuth2Client, initYtCreds, intUserYtData, resetYtUserData, saveYtCredentials, saveYtUserData } from "$lib/api-youtube";
 	import { colorThemeState, ytCredentials, ytUserData } from "$lib/store";
-    import { clickOutside } from "../../lib/helper";
+    import { clickOutside } from "../../lib/utils-general";
 	import { onDestroy, onMount } from 'svelte';
     import ytRecsPlaylists from '$lib/data-yt-playlists'
 
@@ -21,7 +21,7 @@
     let groupTabList: HTMLElement;
 
     const SCROLL_STEP = 50
-    const HORIZONTAL_TAB_COROUSEL_RIGHT_OFFSET = 30
+    const TAB_SECTION_RIGHT_OFFSET = 30
 
     let isLightTheme = false
 
@@ -74,7 +74,7 @@
             isRecPlaylist: true
         }
         ytUserData.set(ytUserAccountData!)
-        saveYtUserData(ytUserAccountData!);
+        saveYtUserData(ytUserAccountData!)
     }
 
     /* Horizontal Reccomendation Category Tab List */
@@ -83,38 +83,36 @@
     const handleShiftTabCategoryLeft = () => groupTabList!.scrollLeft -= SCROLL_STEP
 
     const handleScroll = (event: any) => {
-        const scrollLeft = event.target.scrollLeft;
-        const scrollWidth = event.target.scrollWidth;
-        const clientWidth = event.target.clientWidth; // container width
+        const scrollXOffSet = event.target.scrollLeft
+        const windowWidth = event.target.clientWidth // container width
+        const totalScrollableWidth = event.target.scrollWidth
 
-        isScrollableLeft = scrollLeft > 0;
-        isScrollableRight = scrollLeft + clientWidth < scrollWidth - HORIZONTAL_TAB_COROUSEL_RIGHT_OFFSET;
-
-
+        isScrollableLeft = scrollXOffSet > 0
+        isScrollableRight = scrollXOffSet + windowWidth < totalScrollableWidth - TAB_SECTION_RIGHT_OFFSET
     }
 
     // right arrow disappears after a window resize if false even user can scroll right
     const handleResize = () => {
-        const scrollLeft = groupTabList.scrollLeft;
-        const scrollWidth = groupTabList.scrollWidth;
-        const clientWidth = groupTabList.clientWidth;
+        const scrollXOffSet = groupTabList.scrollLeft
+        const windowWidth = groupTabList.clientWidth
+        const totalScrollableWidth = groupTabList.scrollWidth
 
-        isScrollableRight = scrollLeft + clientWidth < scrollWidth;
+        isScrollableRight = scrollXOffSet + windowWidth < totalScrollableWidth
     }
 
     onMount(() => {
-        const savedYtCreds = localStorage.getItem('yt-credentials');
-        const savedUserData = localStorage.getItem('yt-user-data');
+        const savedYtCreds = localStorage.getItem('yt-credentials')
+        const savedUserData = localStorage.getItem('yt-user-data')
 
         handleResize()
         
         if (savedYtCreds) {
-            const ytCreds = JSON.parse(localStorage.getItem('yt-credentials')!);
-            ytCredentials.set({ ...ytCreds });
+            const ytCreds = JSON.parse(localStorage.getItem('yt-credentials')!)
+            ytCredentials.set({ ...ytCreds })
         }
         if (savedUserData) {
-            const ytData = JSON.parse(localStorage.getItem('yt-user-data')!);
-            ytUserData.set({ ...ytData });
+            const ytData = JSON.parse(localStorage.getItem('yt-user-data')!)
+            ytUserData.set({ ...ytData })
         }
         window.addEventListener("resize", handleResize);
     })
@@ -124,12 +122,9 @@
 <div class={`modal-bg ${isYtModalOpen ? "" : "modal-bg--hidden"}`}>
     <div use:clickOutside on:click_outside={() => onNavButtonClicked(null)} class="modal-bg__content modal-bg__content--overflow-y-scroll">
         <div class={`yt-settings ${ytUserAccountData.email == "" ? "yt-settings--min" : ""}`}>
+            <!-- Header -->
             <div class="yt-settings__header">
                 <h1 class="modal-bg__content-title">Youtube Settings</h1>
-                <!-- <div class={`yt-icon ${ytUserAccountData.email == "" ? "" : "yt-icon--active"}`}>
-                    <div class="yt-icon-fill"></div>
-                    <i class="fa-brands fa-youtube header-icon"></i>
-                </div> -->
             </div>
             <!-- Account Details -->
             <div class="yt-settings__top-row">

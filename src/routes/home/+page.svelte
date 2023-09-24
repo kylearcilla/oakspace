@@ -2,8 +2,8 @@
 	import { onDestroy, onMount } from "svelte";
 	import HomeHeader from "./HomeHeader.svelte";
   import MusicPlayer from "./HomeMusicPlayer.svelte"
-  import NavMenu from "./SideBarLeft.svelte"
-  import TaskView from "./SideBarRight.svelte"
+  import NavMenu from "./HomeSideBarLeft.svelte"
+  import TaskView from "./HomeSideBarRight.svelte"
   import VideoView from "./HomeVideoView.svelte"
 
 	import ApperanceSettings from "./SettingsAppearance.svelte"
@@ -13,59 +13,83 @@
 	import Stats from "./Stats.svelte"
   
 	import { _initGoogleClient, _initMusicKit } from "./+page"
-	import { loadTheme } from "$lib/utils-general"
-	import { homePanelData } from "$lib/store";
-
+	import { loadHomePanelData, loadTheme, loadYtUserData, updateUI } from "$lib/utils-general"
+	import { globalSessionObj, homeViewLaout } from "$lib/store";
+	import { get } from "svelte/store";
+	import HomeEmptyView from "./HomeEmptyView.svelte";
+	import SessionActiveHome from "./SessionActiveHome.svelte";
 
   enum Modal { Settings, Youtube, Music, Stats, Appearance }
 
-  let isTaskMenuExpanded = true
-  let isNavMenuExpanded = true
-  let hasUserToggledWithKeyLast = true
-  let navSettingClicked: Modal | null = Modal.Stats
+  let isVideoViewOpen = true
+  let isTaskMenuExpanded = false
+  let isNavMenuExpanded = false
 
-  homePanelData.subscribe((data) => {
+  let hasUserToggledWithKeyLast = true
+  let navSettingClicked: Modal | null = null
+
+  let isSessionActive = false
+  const LEFT_BAR_LEFT_BOUND = 5
+  const LEFT_BAR_RIGHT_BOUND = 80
+  const MIN_UI_MAX_WIDTH = 600
+
+  globalSessionObj.subscribe((data: any) => {
+    if (data) isSessionActive = true
+    else isSessionActive = false
+  })
+  homeViewLaout.subscribe((data) => {
     isNavMenuExpanded = data.isNavMenuOpen
     isTaskMenuExpanded = data.isTaskMenuOpen
+    isVideoViewOpen = data.isVideoViewOpen
   })
 
   const handleNavButtonClicked = (modal: Modal | null) => navSettingClicked = modal
   const handleTaskMenuToggleOpen = () => {
-    homePanelData.update((data: any) => ({ ...data, isTaskMenuOpen: !data.isTaskMenuOpen }))
+    const homePaneDataObj = get(homeViewLaout)
+    updateUI({ ...homePaneDataObj, isTaskMenuOpen: !homePaneDataObj.isTaskMenuOpen })
+
   }
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.metaKey && event.key.toLowerCase() === "x") {
+    if (event.shiftKey && event.key === "}") {
       handleTaskMenuToggleOpen()
     }
-    if (event.metaKey && event.key.toLowerCase() === "z") {
-      homePanelData.update((data: any) => ({ ...data, isNavMenuOpen: !data.isNavMenuOpen }))
+    else if (event.shiftKey && event.key === "{") {
+      const homePaneDataObj = get(homeViewLaout)
+      updateUI({ ...homePaneDataObj, isNavMenuOpen: !homePaneDataObj.isNavMenuOpen })
+  
       hasUserToggledWithKeyLast = true
+    }
+    else if (event.key=== "Escape") {
+      navSettingClicked = null
     }
   }
   const handleMouseMove = (event: MouseEvent) => {
     const mouseX = event.clientX
-    const CUTT_OFF = 5
 
-    // show when cursor is close to left edge
-    if (!isNavMenuExpanded && mouseX < CUTT_OFF) {
-      homePanelData.update((data: any) => ({ ...data, isNavMenuOpen: true }))
+    if (!isNavMenuExpanded && mouseX < LEFT_BAR_LEFT_BOUND) {
+      // show when cursor is close to left edge
+
+      updateUI({ ...get(homeViewLaout), isNavMenuOpen: true  })
       hasUserToggledWithKeyLast = false
     }
-    // only hide when user is right outside of nav and prevent hiding when nav was shown through shortcut
-    // ...as the nav menu should only close in this case when cursor goes from left of cutt off to outside
-    else if ((mouseX > 80 && mouseX < 100) && !hasUserToggledWithKeyLast) { 
-      homePanelData.update((data: any) => ({ ...data, isNavMenuOpen: false }))
+    else if (isNavMenuExpanded && mouseX > LEFT_BAR_RIGHT_BOUND && !hasUserToggledWithKeyLast) { 
+      // Prevent hiding when nav was toggled through shortcut
+      // ...as the nav menu should only close in this case when cursor goes from over left side bar to outside of right boundary
+
+      homeViewLaout.update((data: any) => ({ ...data, isNavMenuOpen: false }))
     }
   }
   const handleResize = () => {
-    if (document.body.clientWidth > 600) return
-    homePanelData.update((data: any) => ({ isTaskMenuOpen: false, isNavMenuOpen: false }))
+    if (document.body.clientWidth > MIN_UI_MAX_WIDTH) return
+    updateUI({ ...get(homeViewLaout), isTaskMenuOpen: false, isNavMenuOpen: false  })
   }
 
   onMount(() => {
     window.addEventListener("resize", handleResize)
     handleResize()
     loadTheme()
+    loadHomePanelData()
+    loadYtUserData()
     _initGoogleClient()
   })
   onDestroy(() =>  window.removeEventListener("resize", handleResize))
@@ -87,7 +111,9 @@
                   ${isTaskMenuExpanded && isNavMenuExpanded ? "home__video--task-view-also-shown" : ""}
               `}>
     <HomeHeader/>
-    <VideoView />
+    {#if isVideoViewOpen} <VideoView /> {/if}
+    {#if !isVideoViewOpen && !isSessionActive} <HomeEmptyView /> {/if}
+    {#if !isVideoViewOpen && isSessionActive} <SessionActiveHome /> {/if}
   </div>
   <div class={`home__task-view-container ${isTaskMenuExpanded ? "" : "home__task-view-container--closed"}`}>
     <TaskView isTaskMenuExpanded={isTaskMenuExpanded}/>

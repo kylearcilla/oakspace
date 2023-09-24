@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { months } from "$lib/utils-date"
+	import { isSameDay, months } from "$lib/utils-date"
 	import { onMount } from "svelte"
     import { fly } from 'svelte/transition'
     import { quintOut } from 'svelte/easing'
@@ -125,7 +125,10 @@
                 <ul class="calendar-heat-map__month-grid">
                     {#each month.days as day, idx}
                         <li 
-                            class={`calendar-heat-map__month-grid-day ${day === null ? "calendar-heat-map__month-grid-day--empty" : ""}`}
+                            class={`calendar-heat-map__month-grid-day 
+                                        ${day === null ? "calendar-heat-map__month-grid-day--empty" : ""}
+                                        ${day != null && isSameDay(new Date(), day.date) ? "calendar-heat-map__month-grid-day--today" : ""}
+                                    `}
                             in:fly={{ x: 0, y: 20, opacity: 0, duration: 600, delay: 20 * idx, easing: quintOut }}
                         >
                             <div 
@@ -220,6 +223,9 @@
             &--empty {
                 background: none;
                 height: 0px;
+            }
+            &--today {
+                border: 1.5px solid white;
             }
 
             span {

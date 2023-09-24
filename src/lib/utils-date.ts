@@ -38,6 +38,16 @@ export function getCurrentDate(): string {
 }
 
 /**
+ * See if 2 dates are the same day
+ * @param d1 
+ * @param d2 
+ * @returns 
+ */
+export function isSameDay(d1: Date, d2: Date) {
+    return d1.getDate() === d2.getDate() && d1.getMonth() === d2.getMonth() && d1.getFullYear() && d2.getFullYear()
+}
+
+/**
  * See if currently evening 6PM - 5AM (Evening)
  * @returns 
  */
@@ -119,6 +129,7 @@ export function minsToHHMM(mins: number): string {
  * @returns Formatted # of minutes to HH MM (i.e. 2 hrs 34 mins)
  */
 export function hoursToHhMm(decimalHours: number): string {
+    console.log(decimalHours)
     const hours = Math.floor(decimalHours);
     const minutes = Math.round((decimalHours - hours) * 60);
 

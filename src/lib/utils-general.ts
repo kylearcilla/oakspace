@@ -1,29 +1,69 @@
 import { defaultThemes } from "./data-themes"
-import { colorThemeState } from "./store"
+import { colorThemeState, homeViewLaout, ytUserData } from "./store"
 
 export const roundToNearestFive = (n: number) => Math.ceil(n / 5) * 5
 
 export function clickOutside(node: any) {
-    // if user clicks on any element that has has 'dropdown', do not dispatch event to close it, let the local btn close
-    // if dispatched, local bool will be toggled to true from dispatch, after toggled to false from btn
-    const handleClick = (event: any)  => {
-        // check for black-list elements, assumes they are placed first in the class list
-        const srcElement = event.srcElement
-        const flag = srcElement.classList.value.includes("dropdown")|| srcElement.parentElement.classList.value.includes("dropdown")
 
-        if (!flag && node && !node.contains(event.target) && !event.defaultPrevented) {
-            node.dispatchEvent(
-                new CustomEvent('click_outside', node)
-            )
-        }
-    }
-    document.addEventListener('click', handleClick, true)
+  const handleClick = (event: any) => {
+    const srcElement = event.srcElement
 
-    return {
-      destroy() {
-        document.removeEventListener('click', handleClick, true)
-      }
+    // if user clicks on any element that has 'dropdown', do not dispatch event to close it, let the local btn close
+    // if dispatched, local btn and dispatch will override each other
+    let flag = srcElement.classList.value.includes("dropdown-btn") || srcElement.parentElement.classList.value.includes("dropdown-btn")
+
+    if (!flag && node && !node.contains(event.target) && !event.defaultPrevented) {
+        node.dispatchEvent(
+            new CustomEvent('click_outside', node)
+        )
     }
+  }
+  document.addEventListener('click', handleClick, true)
+
+  return {
+    destroy() {
+      document.removeEventListener('click', handleClick, true)
+    }
+  }
+}
+
+export const updateUI = (data: HomePandelData) => {
+  homeViewLaout.set(data)
+  localStorage.setItem("home-ui", JSON.stringify(data))
+}
+
+export const loadHomePanelData = () => {
+  const storedData = localStorage.getItem("home-ui")
+  let data: HomePandelData
+
+  if (!storedData) {
+    data = {
+      isNavMenuOpen: true,
+      isTaskMenuOpen: true,
+      isVideoViewOpen: true
+    }
+  } else {
+    data = JSON.parse(storedData)
+  }
+  homeViewLaout.set(data)
+}
+
+export const loadYtUserData = () => {
+  const storedData = localStorage.getItem("yt-user-data")
+  let data: YoutubeUserData
+
+  if (!storedData) {
+    data = {
+      username: '',
+      channelImgSrc: '',
+      email: '',
+      selectedPlaylist: null,
+      playlists: []
+    }
+  } else {
+    data = JSON.parse(storedData)
+  }
+  ytUserData.set(data)
 }
 
 export const loadTheme = () => {
@@ -95,8 +135,9 @@ export const setRootColors = (theme: ThemeData) => {
         --midPanelBorder: ${theme.midPanelBorder};
         --midPanelShadow: ${theme.midPanelShadow};
         --midPanelBaseColor: ${theme.midPanelBaseColor};
-        --midPanelAccentColor: ${theme.midPanelAccentColor};
-        --midPanelAccentAltColor: ${theme.midPanelAccentAltColor};
+        --midPanelAccentColor1: ${theme.midPanelAccentColor1};
+        --midPanelAccentColor2: ${theme.midPanelAccentColor2};
+        --midPanelAccentColor3: ${theme.midPanelAccentColor3};
         --midPanelAccentTextColor: ${theme.midPanelAccentTextColor};
         --sidePanelBorder: ${theme.sidePanelBorder};
         --sidePanelShadow: ${theme.sidePanelShadow};

@@ -1,7 +1,7 @@
 import type { Writable } from "svelte/store";
-import type { MusicData } from "./music-data";
+import type { MusicData } from "./music-data-apple";
 import { musicPlayerData } from "./store";
-import { getArtwork } from "./api-apple-music";
+import { getArtworkSrc, isCollectionPlaylist } from "./api-apple-music";
 import { MusicPlayer } from "./music-player";
 import { MusicPlaylistShuffler } from "./music-playlist-shuffler"
 
@@ -11,12 +11,13 @@ import { MusicPlaylistShuffler } from "./music-playlist-shuffler"
  */
 
 export class AppleMusicPlayer extends MusicPlayer {
-    musicKit: any = null
-    musicPlayerInstance: any;
-    musicData: MusicData;
-    musicPlayerState: Writable<MusicPlayerData | null> 
-    
+    musicPlayerInstance: any
+    musicData: MusicData
+
+    musicPlayerState: Writable<MusicPlayerState | null> 
     musicPlaylistShuffler: MusicPlaylistShuffler | null = null
+
+    canPlayerPlay = false
     
     EMPTY_MUSIC_PLAYER_STATE = {
         message: "",
@@ -34,52 +35,52 @@ export class AppleMusicPlayer extends MusicPlayer {
         isRepeating: false,
         isShuffled: false
     }
-    musicPlayerData: MusicPlayerData = this.EMPTY_MUSIC_PLAYER_STATE
+
+    musicPlayerData: MusicPlayerState = this.EMPTY_MUSIC_PLAYER_STATE
 
     PLAYING_STATE = 2
     PAUSED_STATE = 3
     PLAYLIST_END_STATE = 10
-    PLAYER_COOLDOWN_MS = 450
-
+    PLAYER_COOLDOWN_MS = 500
+ 
     /* Global Store Data */
     constructor(musicData: MusicData) {
-        super();
+        super()
         this.musicData = musicData
         this.musicPlayerState = musicPlayerData
-        this.initMusicPlayerData()
+        this.initMusicPlayerState()
 
         // @ts-ignore
-        this.musicKit = MusicKit
-        this.musicPlayerInstance = this.musicKit.getInstance()
-
+        this.musicPlayerInstance = MusicKit.getInstance()
         this.attachEventListeners()
     }
 
     /* Load data for state persistence */
-    initMusicPlayerData = () => {
+    initMusicPlayerState = () => {
         setTimeout(() => {
-            const musicPlayerData = this.loadMusicPlayerData() ?? this.musicPlayerData
+            const musicPlayerData = this.loadMusicPlayerState() ?? this.musicPlayerData
             // @ts-ignore
             this.musicPlayerInstance = MusicKit.getInstance()
             if (!this.musicPlayerInstance) {
-                this.updateMusicPlayerData({ ...musicPlayerData, message: "Music Kit Unavailable!", doShowPlayer: false })
+                this.updateMusicPlayerState({ ...musicPlayerData, message: "Music Kit Unavailable!", doShowPlayer: false })
                 return
             }
 
-            const id =  this.musicData.currentPlaylist?.id
+            const id = this.musicData.currentPlaylist?.id
             const collectionType = this.musicData.currentPlaylist?.type
 
             this.musicPlayerInstance.setQueue({
-                ...(collectionType === "Playlist" ? { playlist: id } : { album: id }),
-                startWith: this.musicData.currentPlaylist?.currentIndex 
+                ...(collectionType === "playlist" ? { playlist: id } : { album: id }),
+                startWith: this.musicData.currentIdx 
             })
             
-            this.updateMusicPlayerData({ ...this.loadMusicPlayerData(), isCurrentlyPlaying: false })
+            this.updateMusicPlayerState({ ...musicPlayerData, message: "Web Comnponents Loaded!", isCurrentlyPlaying: false, isDisabled: false, doShowPlayer: true })
 
             if (this.musicPlayerData.isShuffled) {
                 this.musicPlaylistShuffler = new MusicPlaylistShuffler(-1, -1, this.loadMusicShuffleData())
             }
 
+            this.unDisableMusicPlayer()
         }, 700);
     }
 
@@ -89,10 +90,6 @@ export class AppleMusicPlayer extends MusicPlayer {
 
     /* Init Event Listeners */
     private attachEventListeners = () => {
-        this.musicPlayerState.update((data: any) => {
-            return { ...data, message: "Web Comnponents Loaded!", doShowPlayer: true }
-        })
-
         this.musicPlayerInstance.addEventListener("nowPlayingItemWillChange", this.nowPlayingItemWillChangeHandler);
         this.musicPlayerInstance.addEventListener("playbackTimeDidChange", this.playbackTimeDidChangeHandler);
         this.musicPlayerInstance.addEventListener("mediaPlaybackError", this.mediaPlaybackErrorHandler);
@@ -102,7 +99,7 @@ export class AppleMusicPlayer extends MusicPlayer {
     }
 
     /* Player Data */
-    private loadMusicPlayerData = () => {
+    private loadMusicPlayerState = () => {
         if (!localStorage.getItem("music-player-data")) return null
     
         return JSON.parse(localStorage.getItem("music-player-data")!)
@@ -110,9 +107,9 @@ export class AppleMusicPlayer extends MusicPlayer {
     private loadMusicShuffleData = () => {
         return JSON.parse(localStorage.getItem("music-shuffle-data")!)
     }
-    updateMusicPlayerData(newMusicPlayerData: MusicPlayerData) {
+    updateMusicPlayerState(newMusicPlayerState: MusicPlayerState) {
         this.musicPlayerState.update((data: any) => { 
-            const newState =  { ...data, ...newMusicPlayerData } 
+            const newState =  { ...data, ...newMusicPlayerState } 
 
             this.musicPlayerData = newState
             localStorage.setItem("music-player-data", JSON.stringify(newState))
@@ -120,32 +117,32 @@ export class AppleMusicPlayer extends MusicPlayer {
             return newState
         })
     }
-    async resetMusicPlayerDataToEmptyState() {
-        this.resetMusicPlayerData()
+    async resetMusicPlayerStateToEmptyState() {
+        this.resetMusicPlayerState()
         await this.musicPlayerInstance.stop()
         this.musicPlayerState.set(this.EMPTY_MUSIC_PLAYER_STATE)
     }
-    resetMusicPlayerData() {
+    resetMusicPlayerState() {
         if (this.musicPlayerData.isShuffled) {
             this.musicPlaylistShuffler = null
             localStorage.removeItem("music-shuffle-data")
         } 
         this.musicPlayerData = this.EMPTY_MUSIC_PLAYER_STATE
     }
+    hideMusicPlayer() {
+        this.updateMusicPlayerState({ ...this.musicPlayerData, doShowPlayer: false })
+    }
 
     /* Controls */
     async togglePlayback() {
-        this.updateMusicPlayerData({ ...this.musicPlayerData, isDisabled: false })
-        
         if (this.musicPlayerInstance.isPlaying) {
-            this.updateMusicPlayerData({ ...this.musicPlayerData, isCurrentlyPlaying: false })
+            this.updateMusicPlayerState({ ...this.musicPlayerData, isCurrentlyPlaying: false })
             await this.musicPlayerInstance.pause()
         } 
         else {
-            this.updateMusicPlayerData({ ...this.musicPlayerData, isCurrentlyPlaying: true })
+            this.updateMusicPlayerState({ ...this.musicPlayerData, isCurrentlyPlaying: true })
             await this.musicPlayerInstance.play()
         }
-
         this.unDisableMusicPlayer()
     }
     /* Skipping While Shuffled */
@@ -174,20 +171,15 @@ export class AppleMusicPlayer extends MusicPlayer {
         const playlistID = this.musicData.currentPlaylist!.id
 
         const nextTrackIndex = shuffler.getPrevIndex(this.musicPlayerData.isRepeating)
-        const isTrackIndexValid = nextTrackIndex >= 0  // when at starting position
+        const isTrackIndexValid = nextTrackIndex >= 0  // invalid when @ starting position
 
         if (isTrackIndexValid) {
             this.queueAndPlayNextTrack(playlistID, nextTrackIndex)
         } 
-        else {
-            this.unDisableMusicPlayer()
-        }
 
     }
     /* Skipping Tracks */
     async skipToNextTrack() {
-        musicPlayerData.update((data: any) => { return { ...data, isDisabled: true } })
-
         if (this.musicPlayerData.isShuffled) {
             this.skipToNextRandomTrack()
             return
@@ -201,13 +193,10 @@ export class AppleMusicPlayer extends MusicPlayer {
         this.queueAndPlayNextTrack(this.musicData.currentPlaylist!.id, nextIndex)
     }
     async skipToPrevTrack() {
-        musicPlayerData.update((data: any) => { return { ...data, isDisabled: true } })
-
         if (this.musicPlayerData.isShuffled) {
             this.skipToPrevRandomTrack()
             return
         }
-        this.musicPlayerData.isDisabled = true
         const nextIndex = this.musicData.getPrevPlaylistIndex(this.musicPlayerData.isRepeating)
 
         if (nextIndex < 0) {
@@ -219,7 +208,8 @@ export class AppleMusicPlayer extends MusicPlayer {
     }
     /* Playing Track */
     queueAndPlayNextTrack = async (id: string, newIndex: number, doPlay: boolean = true) => {
-        const isPlaylist = id.includes(".")
+        this.updateMusicPlayerState({ ...this.musicPlayerData, isDisabled: true })
+        const isPlaylist = isCollectionPlaylist(id)
 
         if (isPlaylist) {
             await this.musicPlayerInstance.setQueue({ playlist: id, startWith: newIndex });
@@ -228,23 +218,20 @@ export class AppleMusicPlayer extends MusicPlayer {
             await this.musicPlayerInstance.setQueue({ album: id, startWith: newIndex });
         }
 
-        this.musicData.updateCurrentPlaylistIdx(newIndex)
+        this.musicData.updateCurrentCollectionIdx(newIndex)
 
-        // for when current collection ends and queue fist song
-        if (doPlay) this.musicPlayerInstance.play() 
+        // for when current playlist / album ends and queue fist song
+        if (doPlay) this.musicPlayerInstance.play()
     }
-
 
     /* Other Controls */
     toggleShuffle(): void {
-        this.musicPlayerState.update((data: any) => { return { ...data, isDisabled: true } })
-
         const musicPlayerData = this.musicPlayerData
         const currPlaylist = this.musicData.currentPlaylist!
 
-        const currIndex = currPlaylist.currentIndex
+        const currIndex = this.musicData.currentIdx
         const songCount = currPlaylist.songCount
-
+    
         if (currIndex >= MusicPlaylistShuffler.CHUNK_SIZE) {
             console.log("Playlist index out of bounds!")
             return
@@ -256,64 +243,67 @@ export class AppleMusicPlayer extends MusicPlayer {
             this.musicPlaylistShuffler = new MusicPlaylistShuffler(currIndex, songCount)
         }
         
-        const newData = { ...musicPlayerData, isShuffled:  musicPlayerData.isShuffled }
-        this.updateMusicPlayerData(newData)
+        const newData = { ...musicPlayerData, isDisabled: true, isShuffled:  musicPlayerData.isShuffled }
+        this.updateMusicPlayerState(newData)
         this.unDisableMusicPlayer()
     }
     toggleRepeat(): void {
-        this.musicPlayerState.update((data: any) => { return { ...data, isDisabled: true } })
-
-        // when shuffled, and not looped, create new shuffle ordering, start from 0
-        // this is to avoid shuffling larged playlists
-        // shuffled playlist will be played on the next strack
+        // When shuffle is on and not looped: create new shuffle ordering, start from 0
+        // ...to avoid shuffling large playlists (so if current idx is 100, shuffle will range from 0 to CHUNK_SIZE not 0 to 100)
+        // ...shuffled playlist will be played on the next track
         if (this.musicPlayerData.isRepeating && this.musicPlayerData.isShuffled) {
             this.musicPlaylistShuffler = new MusicPlaylistShuffler(
                 this.musicPlaylistShuffler!.startTrackIndex, 
                 this.musicData.currentPlaylist!.songCount
             )
 
-            // this is so that very next will be the starting index
-            // handles case where user toggles repeat when outside of shuffleIndices range
+            // Very next will be the starting index
+            // handles case where user toggles repeat when outside of shuffled indices range
             this.musicPlaylistShuffler.indexPointer = -1
         }
 
-        this.musicPlayerState.update((data: any) => { 
-            this.musicPlayerData.isRepeating = !data.isRepeating
-
-            const newData = { ...data, isRepeating: this.musicPlayerData.isRepeating }
-            this.updateMusicPlayerData(newData)
-
-            return newData
+        this.updateMusicPlayerState({
+            ...this.musicPlayerData,
+            isDisabled: true,
+            isRepeating: !this.musicPlayerData.isRepeating,
         })
-
         this.unDisableMusicPlayer()
     }
 
     /* Event Handlers for Music Player */
-    mediaCanPlayHandler = async () => this.unDisableMusicPlayer()
+    mediaCanPlayHandler = async () => {
+        this.canPlayerPlay = true
+
+        if (this.musicPlayerData.isDisabled) {
+            this.updateMusicPlayerState({ ...this.musicPlayerData, isDisabled: false })
+        }
+    }
     mediaPlaybackErrorHandler = async (event: any) => {
         this.musicPlayerState.update((data: any) => {
             return { ...data, message: "Error has occured!", isDisabled: true }
         })
+        this.canPlayerPlay = false
     }
     nowPlayingItemWillChangeHandler = async (event: any) => {
         if (!event.item) return
         if (!this.musicPlayerData.doShowPlayer) {
-            this.updateMusicPlayerData(this.ACTIVE_MUSIC_PLAYER_STATE)
+            this.updateMusicPlayerState(this.ACTIVE_MUSIC_PLAYER_STATE)
         }
+        this.updateMusicPlayerState({ ...this.musicPlayerData, isDisabled: true, isCurrentlyPlaying: true })
     
         const mediaItem = {
             id: event.item.id,
             name: event.item.attributes.name,
             artist: event.item.attributes.artistName,
             collection: event.item.albumName,
-            artworkImgSrc: getArtwork(event.item.attributes.artwork),
+            artworkImgSrc: getArtworkSrc(event.item.attributes.artwork),
             playlistId: event.item._container.id,
             playlistName: event.item._container.attributes.name,
-            playlistArtworkSrc: getArtwork(event.item._container.attributes.artwork)
+            playlistArtworkSrc: getArtworkSrc(event.item._container.attributes.artwork)
         }
         
         this.musicData.updateCurrentTrack(mediaItem)
+        this.unDisableMusicPlayer()
     }
     playbackTimeDidChangeHandler = async (event: any) => {
         if (event.currentPlaybackTimeRemaining === 0) {
@@ -321,28 +311,22 @@ export class AppleMusicPlayer extends MusicPlayer {
         }
     }
     queuePositionDidChangeHandler = async (event: any) => {
-        if (event.oldPosition === -1) { // after a refresh
-            this.unDisableMusicPlayer()
-            return
-        }
-        this.updateMusicPlayerData({ ...this.musicPlayerData, message: "Setting Up!", isDisabled: true })
+        // if (event.oldPosition === -1) {
+        //     this.updateMusicPlayerState({ ...this.musicPlayerData, isCurrentlyPlaying: true })
+        //     return
+        // }
     }
     playbackStateDidChangeHandler = async (event: any) => {
-        if (event.state === this.PLAYING_STATE) {
-            console.log("A")
-            this.updateMusicPlayerData({ ...this.musicPlayerData, message: "Playing!", isCurrentlyPlaying: true })
-        }
-        else if (event.state == this.PAUSED_STATE) {
-            this.updateMusicPlayerData({ ...this.musicPlayerData, message: "Pausing!", isCurrentlyPlaying: false  })
-        }
-        else if (event.state == this.PLAYLIST_END_STATE && this.musicPlayerData.isRepeating) {
+        if (event.state == this.PLAYLIST_END_STATE && event.state != this.PLAYLIST_END_STATE && this.musicPlayerData.isRepeating) {
             await this.musicPlayerInstance.setQueue({ playlist: this.musicData.currentPlaylist!.id, startWith: 0 }); 
             this.musicPlayerInstance.play()
         }
     }
     unDisableMusicPlayer = () => {
         setTimeout(() => {
-            this.updateMusicPlayerData({ ...this.musicPlayerData, isDisabled: false })
+
+            if (!this.canPlayerPlay) return
+            this.updateMusicPlayerState({ ...this.musicPlayerData, isDisabled: false })
         }, this.PLAYER_COOLDOWN_MS);
     }
 }

@@ -3,11 +3,12 @@
 	import { colorThemeState } from "$lib/store";
 	import { onMount } from "svelte";
 	import { getSelectedKeyInsightData, getProdOverViewData } from "$lib/utils-session";
-	import ProdLineChart from "../../components/ProdLineChart.svelte";
-	import ProdStackedBarGraph from "../../components/ProdStackedBarGraph.svelte";
-	import TagBarGraph from "../../components/TagBarGraph.svelte";
-	import CalendarHeatMap from "../../components/CalendarHeatMap.svelte";
+	import ProdLineChart from "./StatsLineChart.svelte";
+	import TagBarGraph from "./StatsTagBarGraph.svelte";
+	import ProdStackedBarGraph from "./StatsStackedBarGraph.svelte";
+	import CalendarHeatMap from "./StatsHeatMap.svelte";
 	import { daysOfWeek, hoursToHhMm } from "$lib/utils-date";
+	import StatsTagRanking from "./StatsTagRanking.svelte";
 
     enum Modal { Settings, Youtube, Music, Stats, Appearance,  }
     enum TimeFrame { THIS_WEEK, TWO_WEEKS, THREE_WEEKS, THREE_MONTHS, SIX_MONTHS, THIS_YEAR, ALL_TIME }
@@ -697,7 +698,7 @@
                                 </button>
                             </div>
                             <div class="prod-overview__time-frame-dropdown-container dropdown-container">
-                                <button class="prod-overview__time-frame-dropdown-btn dropdown-btn trans-btn" on:click={() => { isTimeFrameListOpen = true }}>
+                                <button class="prod-overview__time-frame-dropdown-btn dropdown-btn trans-btn" on:click={() => { isTimeFrameListOpen = !isTimeFrameListOpen }}>
                                     <div class="dropdown-btn__title">
                                         {timeFrameOptions[timeFrame]}
                                     </div>
@@ -713,10 +714,14 @@
                                 {#if isTimeFrameListOpen}
                                     <ul use:clickOutside on:click_outside={() => isTimeFrameListOpen = false} class="dropdown-menu">
                                         {#each timeFrameOptions as tf, idx} 
-                                            <li class={`dropdown-menu__option ${idx == timeFrame ? "dropdown-menu__option--selected" : ""}`}>
+                                            <li class={`dropdown-menu__option ${idx === timeFrame ? "dropdown-menu__option--selected" : ""}`}>
                                                 <button class="dropdown-element" on:click={() => handleTimeFrameSwitcherClicked(idx)}>
                                                     <p>{tf}</p>
-                                                    <i class="fa-solid fa-check"></i>
+                                                    {#if idx === timeFrame}
+                                                        <div class="dropdown-menu__option-icon dropdown-menu__option-icon--right">
+                                                            <i class="fa-solid fa-check"></i>
+                                                        </div>
+                                                    {/if }
                                                 </button>
                                             </li>
                                         {/each}
@@ -868,30 +873,15 @@
                 <div class="tag-panel bento-box">
                     <h4>Top Tags</h4>
                     <!-- My Top Tags -->
-                    <div class="top-tags tag-panel__bento-box">
-                        <div class="top-tags__distribution-vis">
-                            <div class="top-tags__distribution-vis-data-point top-tags__distribution-vis-data-point--1"></div>
-                            <div class="top-tags__distribution-vis-data-point top-tags__distribution-vis-data-point--2"></div>
-                            <div class="top-tags__distribution-vis-data-point top-tags__distribution-vis-data-point--3"></div>
-                            <div class="top-tags__distribution-vis-data-point top-tags__distribution-vis-data-point--4"></div>
-                        </div>
-                        <div class="top-tags__selected-tag-info-wrapper">
-                            <div class="top-tags__selected-tag">
-                                <div class="top-tags__selected-tag-color"></div>
-                                <div class="top-tags__selected-tag-title">school.</div>
-                            </div>
-                            <div class="top-tags__selected-tag-info">
-                                <div class="top-tags__selected-tag-info-avg">3h 31m</div>
-                                <span>Avg. Daily Session</span>
-                            </div>
-                        </div>
+                    <div class="tag-ranking-wrapper tag-panel__bento-box">
+                        <StatsTagRanking />
                     </div>
                     <!-- Tag Overview -->
                     <div class="tag-overview">
                         <div class="tag-overview__header">
                             <h4>Tag Overview</h4>
                             <div class="tag-overview__dropdown-btn-container dropdown-container">
-                                <button class="tag-overview__dropdown-btn dropdown-btn dropdown-btn--small trans-btn" on:click={() => { isTagListOpen = true }}>
+                                <button class="tag-overview__dropdown-btn dropdown-btn dropdown-btn--small trans-btn" on:click={() => { isTagListOpen = !isTagListOpen }}>
                                     <div class="dropdown-btn__icon" style={`background-color: ${selectedTag.color}`}></div>
                                     <div class="dropdown-btn__title">
                                         {selectedTag.name}
@@ -912,7 +902,11 @@
                                                 <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
                                                     <div class="dropdown-menu__option-icon" style={`background-color: ${tag.color}`}></div>
                                                     <p>{tag.name}</p>
-                                                    <i class="fa-solid fa-check"></i>
+                                                    {#if tag.name === selectedTag.name}
+                                                        <div class="dropdown-menu__option-icon dropdown-menu__option-icon--right">
+                                                            <i class="fa-solid fa-check"></i>
+                                                        </div>
+                                                    {/if}
                                                 </button>
                                             </li>
                                         {/each}
@@ -1268,62 +1262,8 @@
             }
         }
     }
-    /* Top Tags */
-    .top-tags {
+    .tag-ranking-wrapper  {
         margin-bottom: 20px;
-
-        &__distribution-vis {
-            width: 100%;
-            display: flex;
-        }
-        &__distribution-vis-data-point {
-            border-radius: 10px;
-            height: 4px;
-            margin-bottom: 16px;
-
-            &--1 {
-                background-color: #A3C2FF;
-                width: 20%;
-            }
-            &--2 {
-                background-color: #949FFF;
-                width: 50%;
-            }
-            &--3 {
-                background-color: #BEA0FD;
-                width: 15%;
-            }
-            &--4 {
-                width: 15%;
-                background-color: #E9A6D4;
-            }
-        }
-        &__selected-tag-info-wrapper {
-            @include flex-container(flex-end, space-between);
-        }
-        &__selected-tag {
-            @include flex-container(center, _);
-        }
-        &__selected-tag-color {
-            margin-top: 2px;
-            @include circle(6px);
-            margin-right: 9px;
-            background-color: #A3C2FF;
-        }
-        &__selected-tag-title {
-            font-size: 1.3rem;
-            font-weight: 500;
-        }
-        &__selected-tag-info {
-            span {
-                opacity: 0.3;
-            }
-        }
-        &__selected-tag-info-avg {
-            font-size: 1.8rem;
-            text-align: right;
-            margin-bottom: 2px;
-        }
     }
     /* Tag Overview */
     .tag-overview {

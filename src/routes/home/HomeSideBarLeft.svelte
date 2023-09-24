@@ -20,7 +20,7 @@
         }
     }
 
-    musicPlayerData.subscribe((data: MusicPlayerData | null) => {
+    musicPlayerData.subscribe((data: MusicPlayerState | null) => {
         isMusicPlayerActive = data != null && data.doShowPlayer
     })
     colorThemeState.subscribe((data) => {
@@ -286,7 +286,9 @@
             @include pos-abs-bottom-left-corner(5px, 3.5px);
         }
         &--music-player-active {
-            bottom: 70px;
+            @include sm(max-width) {
+                bottom: 60px;
+            }
         }
         
         &__sun {

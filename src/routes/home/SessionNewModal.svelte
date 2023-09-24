@@ -181,7 +181,11 @@
                                         <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
                                             <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon" style={`background-color: ${tag.color}`}></div>
                                             <p>{tag.name}</p>
-                                            <i class="fa-solid fa-check"></i>
+                                            {#if tag.name === newSession.tag.name}
+                                                <div class="dropdown-menu__option-icon">
+                                                    <i class="fa-solid fa-check"></i>
+                                                </div>
+                                            {/if}
                                         </button>
                                     </li>
                                 {/each}
@@ -244,7 +248,11 @@
                                                 }}
                                             >
                                                 <p>{time} mins</p>
-                                                <i class="fa-solid fa-check"></i>
+                                                {#if newSession.focusTime === time}
+                                                    <div class="dropdown-menu__option-icon">
+                                                        <i class="fa-solid fa-check"></i>
+                                                    </div>
+                                                {/if}
                                             </button>
                                         </li>
                                     {/each}
@@ -286,7 +294,11 @@
                                                 }}
                                             >
                                                 <p>{time} mins</p>
-                                                <i class="fa-solid fa-check"></i>
+                                                {#if newSession.breakTime === time}
+                                                    <div class="dropdown-menu__option-icon">
+                                                        <i class="fa-solid fa-check"></i>
+                                                    </div>
+                                                {/if}
                                             </button>
                                         </li>
                                     {/each}
@@ -476,6 +488,7 @@
                 width: 100px;
                 &__option {
                     p {
+                        width: 60%;
                         margin-left: 3px;
                     }
                     span {
@@ -570,6 +583,9 @@
                 border-radius: 10px;
                 button {
                     padding: 8px 12px;
+                }
+                p {
+                    width: 65%;
                 }
             }
         }

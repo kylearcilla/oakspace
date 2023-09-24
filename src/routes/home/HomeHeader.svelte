@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { getCurrentTime, isNightTime } from "$lib/utils-date"
-	import { colorThemeState, globalSessionObj, globalSessionState } from "$lib/store"
+	import { colorThemeState, globalSessionObj, globalSessionState, homeViewLaout, musicDataStore, ytUserData } from "$lib/store"
 	import { onDestroy, onMount } from "svelte"
 	import ActiveSessionView from "./SessionActiveModal.svelte"
 	import QuoteModal from "./ModalQuote.svelte"
 	import NewSessionModal from "./SessionNewModal.svelte"
 	import type { Session } from "$lib/pom-session"
+	import { updateUI } from "$lib/utils-general";
+	import { get } from "svelte/store";
 
     enum CurrentModal { Quote, NewSession, ActiveSession }
 
@@ -17,27 +19,81 @@
     let isEvening = false
     let headerTimeColor = "#8D907C"
 
-    const toggleModal = (modal: CurrentModal | null): void => {
-        currModalOpen = modal
-    }
+    let dropdownMenu: HTMLElement
 
+    let isDropdownOpen = false
+    let isVideoViewOpen = false
+    let isMusicPlayerOpen = false
+    let isYoutubeAvailable = false
+    let isMusicAvailable = false
 
+    let isSessionActive = false
     let sessionObj: Session | null = null
     let activeSession: ActiveSessionState | null = null
 
     globalSessionObj.subscribe((sess: any) => {
-        sessionObj = sess
+        if (sess) {
+            isSessionActive = true
+            sessionObj = sess
+        }
+        else { 
+            isSessionActive = false
+        }
+
     })
+    ytUserData.subscribe((data: any) => {
+        isYoutubeAvailable = data.username != '' ? true : false
+    })
+    musicDataStore.subscribe((data: any) => {
+        isMusicAvailable = data != null
+    })
+
     globalSessionState.subscribe((sessionState: any) => {
         activeSession = sessionState
     })
-
-
     colorThemeState.subscribe((theme) => {
         isLightTheme = !theme.isDarkTheme
         headerTimeColor = theme.headerTimeColor
     })
+    homeViewLaout.subscribe((data) => {
+        if (!isVideoViewOpen && data.isVideoViewOpen) {
+            currModalOpen = null
+        } 
 
+        isVideoViewOpen = data.isVideoViewOpen
+        isMusicPlayerOpen = data.isMusicPlayerOpen
+    })
+
+
+    const toggleModal = (modal: CurrentModal | null): void => {
+        currModalOpen = modal
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Escape" && currModalOpen === CurrentModal.NewSession) {
+            currModalOpen = null
+        }
+    }
+    const handleKeyUp = (event: KeyboardEvent) => {
+        if (!isSessionActive && event.key.toLocaleLowerCase() === "n") {
+            currModalOpen = CurrentModal.NewSession
+        }
+    }
+
+    /* Dropdown Menu */
+    const handleOptionClicked = (event: MouseEvent, idx: number) => {
+        if (idx === 0) {
+            console.log("LOGGING OUT USER")
+        }
+        else if (idx === 1) {
+            const homeViewLaoutObj = get(homeViewLaout)
+            updateUI({ ...homeViewLaoutObj, isVideoViewOpen: !homeViewLaoutObj.isVideoViewOpen})
+        }
+        else if (idx === 2) {
+            const homeViewLaoutObj = get(homeViewLaout)
+            updateUI({ ...homeViewLaoutObj, isMusicPlayerOpen: !homeViewLaoutObj.isMusicPlayerOpen})
+        }
+        dropdownMenu.style.display = "none"
+    }
     /* Time Stuff */
     const handleTimeBtnClicked = () => {
         is12HourTime = !is12HourTime
@@ -55,57 +111,140 @@
     onMount(() => startTimer())
 </script>
 
-<div class={`header ${isLightTheme ? "header--light" : ""}`}>
+<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} />
+
+<div class={`header header${isLightTheme ? "--light" : "--dark"}`}>
     {#if currModalOpen === CurrentModal.Quote}
         <QuoteModal toggleModal={toggleModal} />
     {:else if currModalOpen === CurrentModal.NewSession}
         <NewSessionModal toggleModal={toggleModal} />
-    {:else if currModalOpen === CurrentModal.ActiveSession}
+    {:else if isVideoViewOpen && currModalOpen === CurrentModal.ActiveSession}
         <ActiveSessionView toggleModal={toggleModal} />
     {/if}         
 
-    <!-- Header Component -->
     <!-- Left Side -->
-    <button 
-        class={`header-session-btn header__section ${isLightTheme ? "header-session-btn--light-mode" : ""}`}
-        on:click={() => {
-            if (activeSession) toggleModal(CurrentModal.ActiveSession)
-            else toggleModal(CurrentModal.NewSession)
-        }}
+    <!-- svelte-ignore a11y-mouse-events-have-key-events -->
+    <div class="user-panel" 
+        on:mouseover={() => dropdownMenu.style.display = "block"} 
+        on:mouseleave={() => dropdownMenu.style.display = "none"}
     >
-        {#if !activeSession}
-            <div class="header-session-btn__new-session-title">New Session</div>
-            <div class="header-session-btn__new-session-icon">+</div>
-        {:else}
-            <div title={activeSession?.tag.name} class="header-session-btn__session-tag">
-                {activeSession?.tag.name[0].toLocaleUpperCase()}
-            </div>
-            <div class="header-session-btn__session-name">{activeSession?.name}</div>
-            {#if activeSession.todos.length > 0}
-                <div title={`${activeSession.todosCheckedCount} completed`} class="header-session-btn__session-todos">
-                    {`${activeSession.todosCheckedCount} / ${activeSession.todos.length}`}
-                </div>
-            {/if}
-            <div 
-                title={sessionObj?.iCurrentlyFocusTime() ? "Focus Time" : "Break Time"} 
-                class="header-session-btn__session-mode"
-            >
-                {#if sessionObj?.iCurrentlyFocusTime()}
-                    <i class="fa-brands fa-readme"></i>
+        <img src="https://i.pinimg.com/564x/43/86/bb/4386bb3d57ddcb0c6ee1ba7a7f171689.jpg" alt="">
+        <div class="user-panel__user-details">
+            <div class="user-panel__user-details-user">Kyle Arcilla</div>
+            <div class="user-panel__user-details-subheading">
+                {#if isVideoViewOpen}
+                    <div class="user-panel__user-details-session-stat" title="4 sessions done.">
+                        <i class="fa-regular fa-hourglass-half"></i>
+                        <span>4</span>
+                    </div>
+                    <div class="user-panel__user-details-session-stat" title="2h 32m of focus time today.">
+                        <i class="fa-brands fa-readme"></i>
+                        <span>2h 32m</span>
+                    </div>
+                    <div class="user-panel__user-details-session-stat" title="1h 3m of break time today.">
+                        <i class="fa-solid fa-seedling"></i>
+                        <span>1h 3m</span>
+                    </div>
                 {:else}
-                    <i class="fa-solid fa-seedling"></i>
+                    <div class="user-panel__user-details-email">
+                        kylearcilla09@gmail.com
+                    </div>
                 {/if}
             </div>
-            <div class="header-session-btn__session-time">
-                {`${activeSession?.currentTime?.minutes}:${String(activeSession?.currentTime?.seconds).padStart(2, '0')}`}
-            </div>
-            <div class="header-session-btn__session-cycles">
-                {`${activeSession?.currentPomPeriod} / ${activeSession?.pomPeriods}`}
-            </div>
-        {/if}
-    </button>
+        </div>
+        <div class="dropdown-container" bind:this={dropdownMenu}>
+            <ul class="dropdown-menu">
+                <li class="dropdown-menu__option">
+                    <button class="dropdown-element" on:click={(event) => handleOptionClicked(event, 0)}>
+                        <p>Log Out</p>
+                    </button>
+                </li>
+                {#if isYoutubeAvailable || isMusicAvailable}
+                    <div class="divider"></div>
+                {/if}
+                {#if isYoutubeAvailable}
+                    <li class="dropdown-menu__option">
+                        <button class="dropdown-element" on:click={(event) => handleOptionClicked(event, 1)}>
+                            <p>{`${isVideoViewOpen ? "Hide": "Show"} Video View`}</p>
+                            <div class="dropdown-menu__option-icon">
+                                <i class="fa-brands fa-youtube"></i>
+                            </div>
+                        </button>
+                    </li>
+                {/if}
+                {#if isMusicAvailable}
+                    <li class="dropdown-menu__option">
+                        <button class="dropdown-element" on:click={(event) => handleOptionClicked(event, 2)}>
+                            <p>{`${isVideoViewOpen ? "Hide": "Show"} Music Player`}</p>
+                            <div class="dropdown-menu__option-icon">
+                                <i class="fa-solid fa-music"></i>
+                            </div>
+                        </button>
+                    </li>
+                {/if}
+            </ul>
+        </div>
+    </div>
+
     <!-- Right Side -->
-    <button class="header__time" on:click={() => handleTimeBtnClicked()}>
+    {#if isVideoViewOpen}
+        <button 
+            class={`header-session-btn header__section ${isLightTheme ? "header-session-btn--light-mode" : ""}`}
+            on:click={() => {
+                if (activeSession) toggleModal(CurrentModal.ActiveSession)
+                else toggleModal(CurrentModal.NewSession)
+            }}
+        >
+            {#if !activeSession}
+                <div class="header-session-btn__new-session-title">New Session</div>
+                <div class="header-session-btn__new-session-icon">+</div>
+            {:else}
+                <div title={activeSession?.tag.name} class="header-session-btn__session-tag">
+                    {activeSession?.tag.name[0].toLocaleUpperCase()}
+                </div>
+                <div class="header-session-btn__session-name">{activeSession?.name}</div>
+                {#if activeSession.todos.length > 0}
+                    <div title={`${activeSession.todosCheckedCount} completed`} class="header-session-btn__session-todos">
+                        {`${activeSession.todosCheckedCount} / ${activeSession.todos.length}`}
+                    </div>
+                {/if}
+                <div 
+                    title={sessionObj?.iCurrentlyFocusTime() ? "Focus Time" : "Break Time"} 
+                    class="header-session-btn__session-mode"
+                >
+                    {#if sessionObj?.iCurrentlyFocusTime()}
+                        <i class="fa-brands fa-readme"></i>
+                    {:else}
+                        <i class="fa-solid fa-seedling"></i>
+                    {/if}
+                </div>
+                <div class="header-session-btn__session-time">
+                    {`${activeSession?.currentTime?.minutes}:${String(activeSession?.currentTime?.seconds).padStart(2, '0')}`}
+                </div>
+                <div class="header-session-btn__session-cycles">
+                    {`${activeSession?.currentPomPeriod} / ${activeSession?.pomPeriods}`}
+                </div>
+            {/if}
+        </button>
+    {:else}
+        <div class="user-stats">
+            <button class="user-stats__new-sess-btn">+</button>
+            <div class="divider divider--vertical"></div>
+            <div class="user-stats__stat">
+                <i class="fa-regular fa-hourglass-half"></i>
+                4
+            </div>
+            <div class="user-stats__stat">
+                <i class="fa-brands fa-readme"></i>
+                1h 3m
+            </div>
+            <div class="user-stats__stat">
+                <i class="fa-solid fa-seedling"></i>
+                1h 3m
+            </div>
+        </div>
+    {/if}
+   <!-- <button class="header__time" on:click={() => handleTimeBtnClicked()}>
         {#if isEvening}
             <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 36 36" fill="none" style={`${!isLightTheme ? "margin-right: -4px;" : ""}`}>
                 <g filter="url(#filter0_d_2981_19936)">
@@ -205,7 +344,7 @@
             {/if}
         {/if}
         <h2>{currentTime}</h2>
-        </button>
+    </button> -->
 </div>
 
 <style global lang="scss">
@@ -215,7 +354,7 @@
         @include flex-container(center, space-between);
         
         &__section {
-            border-radius: 15px;
+            border-radius: 20px;
             height: 35px;
             @include flex-container(center, _);
             padding: 11px 15px 11px 12px;
@@ -243,29 +382,167 @@
         &--light &__time h2 {
             font-weight: 400;
         }
+        &--light .user-panel {
+            &__user-details-user {
+                font-weight: 600;
+            }
+            &__user-details-email {
+                font-weight: 500;
+            }
+            &__user-details-session-stat {
+                i {
+                    color: rgba(var(--textColor1), 0.38);
+                }
+                span {
+                    color: rgba(var(--textColor1), 0.35);
+                    font-weight: 500;
+                }
+            }
+        }
+        &--light .user-stats {
+            i {
+                color: rgba(var(--textColor1), 0.6);
+            }
+            &__stat {
+                font-weight: 500;
+                color: rgba(var(--textColor1), 0.6);
+            }
+        }
+        &--dark .user-panel .dropdown-menu {
+            @include dropdown-menu-dark;
+            i {
+                color: rgba(var(--textColor1), 0.85);
+            }
+        }
 
         /* Styling for when Header Element Bg Color is Dark */
-        &--light-text &-user-details {
-            p {
-                color: rgba(var(--headerElementTextColor), 1) !important;
-            }
+        &--light-text &-user-details p {
+            color: rgba(var(--headerElementTextColor), 1) !important;
         }
         &--light-text &-settings__user-stats {
             color: rgba(var(--headerElementTextColor), 0.75) !important;
         }
         &--light-text &-settings__time {
             color: rgba(var(--headerElementTextColor), 0.9) !important;
-
             span {
                 font-family: 400 !important;
             }
         }
-        &--light-text &-settings__settings-btn {
-            svg {
-                color: rgba(var(--headerElementTextColor), 1) !important;
+        &--light-text &-settings__settings-btn svg {
+            color: rgba(var(--headerElementTextColor), 1) !important;
+        }
+    } 
+
+    .user-panel {
+        @include flex-container(center, _);
+        position: relative;
+        height: 37px;
+
+        img {
+            @include circle(32px);
+            object-fit: cover;
+            border: 1.5px solid white;
+            margin-right: 12px;
+            -webkit-user-drag: none;
+        }
+        &__user-details {
+            height: 36px;
+        }
+        &__user-details-user {
+            font-size: 1.3rem;
+            color: rgba(var(--textColor1), 1);
+        }
+        &__user-details-subheading {
+            margin-top: 3px;
+            @include flex-container(center, _);
+            color: rgba(var(--textColor1), 0.35);
+        }
+        &__user-details-session-stat {
+            @include flex-container(center, _);
+
+            i {
+                color: rgba(var(--textColor1), 0.45);
+                font-size: 0.94rem;
+                padding: 0px;
+            }
+            span {
+                color: rgba(var(--textColor1), 0.3);
+                font-size: 1.1rem;
+                font-weight: 300;
+                margin: 0px 8px 0px 5px;
+            }
+        }
+        &__user-details-email {
+            font-size: 1.1rem;
+            font-weight: 200;
+        }
+        .dropdown-container {
+            @include pos-abs-bottom-left-corner(-120px, 0px);
+            height: 120px;
+            width: 135px;
+            display: none;
+        }
+        .divider {
+            background-color: rgba(var(--textColor1), 0.14);
+            height: 0.5px;
+            width: 90%;
+            margin: 5px 0px 9px 5px;
+        }
+        .dropdown-menu {
+            margin-top: 10px;
+            width: 100%;
+
+            &__option {
+                width: 100%;
+            }
+            i, .fa-youtube {
+                color: rgba(var(--textColor1), 1);
+                font-size: 1rem;
             }
         }
     }
+    
+    /* Right Side */
+    .user-stats {
+        @include flex-container(center, _);
+
+        &__new-sess-btn {
+            @include circle(30px);
+            @include center;
+            background-color: var(--midPanelAccentColor1);
+            font-size: 1.7rem;
+            font-weight: 100;
+            margin-right: 4px;
+            transition: 0.1s ease-in-out;
+            display: none;
+
+            &:hover {
+                background-color: rgba($color: #FFFFFF, $alpha: 0.08);
+            }
+            &:active {
+                transform: scale(0.97);
+            }
+        }
+        &__stat {
+            background-color: var(--midPanelAccentColor3);
+            margin-right: 4px;
+            padding: 8px 13px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            color: rgba(var(--textColor1), 0.7);
+            font-weight: 200;
+            
+            i {
+                color: rgba(var(--textColor1), 1);
+                font-size: 1rem;
+                margin-right: 5px;
+            }
+            &:last-child {
+                margin-right: 0px;
+            }
+        }
+    }
+
     /* Active Session Btn */
     .header-session-btn {
         overflow: hidden;
@@ -280,7 +557,7 @@
                 filter: brightness(1.03);
             }
             &:hover {
-                filter: brightness(1.02);
+                filter: brightness(1.02) !important;
             }
         }
         &--light-mode p {
@@ -323,9 +600,6 @@
             }
         }
         
-        img {
-            @include circle(20px);
-        }
         span {
             font-weight: 500;
             margin-left: 4px;

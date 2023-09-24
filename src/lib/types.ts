@@ -1,3 +1,9 @@
+type HomePandelData = {
+    isNavMenuOpen: boolean
+    isTaskMenuOpen: boolean
+    isVideoViewOpen: boolean
+}
+
 type GoogleUserData = {
     email: string,
     name: string,
@@ -13,7 +19,12 @@ type Quote = {
 
 /* Session Stuff */
 type Medal = "🏅" | "🥈" | "🥉"
-type SessionResult = { score: number, medal: Medal }
+type SessionResult = { 
+    score: number, 
+    medal: Medal ,
+    message: string,
+    resultImgUrl: string
+}
 type Tag = {
     name: string,
     color: string
@@ -74,28 +85,36 @@ type Track = {
     playlistId: string;
     playlistName: string;
     playlistArtworkSrc: string;
-};
+}
   
+type AppleMusicUserCollection = {
+    artworkSrc: string
+    description: string
+    globalId: string
+    id: string
+    isOwn: true
+    name: string
+}
+
 type MusicCollection = {
     id: string,
     name: string,
     author: string,
     artworkImgSrc: string,
     songCount: number,
-    time: string,
+    genre: string,
     description: string,
     type: string,
     url: string | null,
-    currentIndex: number,
 };
 
 type MusicDiscoverCollection = {
-    title: string,
+    name: string,
     author: string,
-    artworkSrc: string,
+    artworkImgSrc: string,
     description: string,
     genre: string,
-    length: number,
+    songCount: number,
     albumId: string | null,
     playlistId: string | null
     url: string | null
@@ -112,7 +131,7 @@ type MusicContext = {
     platformName: string | null
 }
 
-type MusicPlayerData = {
+type MusicPlayerState = {
     message: string,
     doShowPlayer: boolean,
     isCurrentlyPlaying: boolean,
@@ -316,8 +335,9 @@ type ThemeData = {
     midPanelBorder: string,
     midPanelShadow: string,            
     midPanelBaseColor: string,
-    midPanelAccentColor: string,
-    midPanelAccentAltColor: string,
+    midPanelAccentColor1: string,
+    midPanelAccentColor2: string,
+    midPanelAccentColor3: string,
     midPanelAccentTextColor: string,
     sidePanelBorder: string,
     sidePanelShadow: string,

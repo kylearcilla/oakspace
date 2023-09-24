@@ -1,14 +1,23 @@
 import { writable } from 'svelte/store';
-import type { MusicData } from './music-data';
+import type { MusicData } from './music-data-apple';
 import type { MusicPlayer } from './music-player';
 import { defaultThemes } from './data-themes';
 import type { Session } from './pom-session';
 
-export const homePanelData = writable<any>({
+type HomePanelData = {
+    isNavMenuOpen: boolean,
+    isTaskMenuOpen: boolean,
+    isVideoViewOpen: boolean,
+    isMusicPlayerOpen: boolean,
+    minModeSrc: string | null,
+}
+
+export const homeViewLaout = writable<any>({
     isNavMenuOpen: true,
     isTaskMenuOpen: true,
-    isVideoViewVisible: true,
-    isMusicPlayerlarge: true,
+    isVideoViewOpen: false,
+    isMusicPlayerOpen: false,
+    minModeSrc: null,
 })
 
 /* General Authentication Stuff */
@@ -44,15 +53,15 @@ export const ytCurrentVid = writable<any>({
     channelSubs: ""
 })
 
-/* Music Stuff */
+/* Music Stuff: Music Player State */
+export const musicPlayerData = writable<MusicPlayerState | null>(null)
 export const appleMusicPlayerState = writable<MusicPlayer>()
-export const musicDataState = writable<MusicData>()
 
-export const appleUserCredentials = writable<AppleUserCredentials | null>(null)
-export const userMusicPlaylists = writable<MusicCollection[] | null>(null)
+/* MusicData: Playback Info & User Playlists */
+export const musicDataStore = writable<MusicData>()
+export const userPlaylistsStore = writable<MusicCollection[] | null>(null)
 export const curentPlaylist = writable<MusicCollection | null>(null)
 export const currentTrack = writable<Track | null>(null)
-export const musicPlayerData = writable<MusicPlayerData | null>(null)
 
 /* Session Stuff */
 export const globalSessionObj = writable<Session | null>(null)

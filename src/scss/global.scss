@@ -24,6 +24,13 @@ body {
       font-family: "Manrope", sans-serif, Roboto;
       color: white;
 }
+img {
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+}
 
 /* Custom Fonts */
 @font-face {
@@ -394,7 +401,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
         max-height: 90%;
         overflow: hidden;
         padding: 20px 25px 25px 25px;
-        border-radius: 8px;
+        border-radius: 20px;
         background-color: var(--modalBgColor);
         color: rgb(var(--textColor1));
         
@@ -912,13 +919,24 @@ button.settings-btn {
         }
     }
     &__option-icon {
-        margin-right: 7px;
+        margin-right: 12px;
+        width: 10px;
+        height: 10px;
+        @include center;
+
+        i {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        &--right {
+        }
     }
     &__option button {
         @include flex-container(center, _);
         padding: 6px 0px 7px 5px;
         opacity: 0.5;
-        width: 95%;
+        width: 100%;
         font-weight: 600;
 
         &:hover {
@@ -932,12 +950,6 @@ button.settings-btn {
 
         p {
             font-size: 1.12rem;
-        }
-        i {
-            @include pos-abs-bottom-right-corner(8px, 10px);
-            display: none;
-            font-size: 0.9rem;
-            opacity: 0.8;
         }
     }
     &__new-option-container {
@@ -1191,8 +1203,8 @@ button.settings-btn {
 }
 
 .platform-logo {
-    width: 25px;
-    height: 25px;
+    width: 24px;
+    height: 24px;
     border-radius: 100px;
     @include flex-container(center, center);
     aspect-ratio: 1 / 1;
@@ -1230,7 +1242,8 @@ button.settings-btn {
 
 .fa-soundcloud {
     color: white;
-    font-size: 1.2rem;
+    font-size: 1.05rem;
+    margin-top: -2px;
     &--small {
         font-size: 0.94rem;
     }
@@ -1247,6 +1260,10 @@ button.settings-btn {
     }
     &--med {
         font-size: 1.2rem;
+    }
+    &--no-bg {
+        font-size: 1.7rem;
+        padding: 0px 3px 0px 2px;
     }
 }
 .fa-itunes-note {

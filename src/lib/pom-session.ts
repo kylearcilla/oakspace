@@ -1,7 +1,7 @@
 import type { Writable } from "svelte/store"
 import { formatTimeToHHMM } from "./utils-date"
-import { globalSessionState } from "./store"
-import { activeSessionMessages } from "$lib/data-pom"
+import { globalSessionObj, globalSessionState } from "./store"
+import { sessionCopy } from "$lib/data-pom"
 
 enum SessionState {
     EMPTY, PAUSED, FOCUSING, ON_BREAK, WAITING_TO_PROGRESS_BREAK, WAITING_TO_PROGRESS_FOCUS, FINISHED, CANCELED, FINISH_TOO_EARLY
@@ -37,7 +37,8 @@ export class Session {
 
     TIME_CUTT_OFF = 1860
     GOLD_CUT_OFF = 85
-    SILVER_CUT_OFF = 70
+    SILVER_CUT_OFF = 60
+    globalSessionObj: any
 
 
     constructor(sessionSettings: SessionInputs) { 
@@ -116,7 +117,9 @@ export class Session {
         }
         else {
             this.currentTime!.seconds++
+            document.title = `${this.currentTime!.minutes}:${(this.currentTime!.seconds + "").padStart(2, '0')}`
         }
+
         this.activeSessionState.update((data: any) => ({ ...data, currentTime: this.currentTime }))
     }
     endPeriod = () => {
@@ -124,23 +127,22 @@ export class Session {
         this.currentTime!.minutes = 0
         this.currentTime!.seconds = 0
         this.sessionState = this.iCurrentlyFocusTime() ? SessionState.WAITING_TO_PROGRESS_BREAK : SessionState.WAITING_TO_PROGRESS_FOCUS
-        let idx = 0
+        let randomMsgIdx = 0
 
         if (this.sessionState === SessionState.WAITING_TO_PROGRESS_BREAK) {
-            idx = Math.floor(Math.random() * activeSessionMessages.breakTimeMessages.length)
-            this.pomMessage = activeSessionMessages.breakTimeMessages[idx]
+            randomMsgIdx = Math.floor(Math.random() * sessionCopy.breakTimeMessages.length)
+            this.pomMessage = sessionCopy.breakTimeMessages[randomMsgIdx]
         }
         else if (this.sessionState === SessionState.WAITING_TO_PROGRESS_FOCUS) {
-            idx = Math.floor(Math.random() * activeSessionMessages.focusMessages.length)
-            this.pomMessage = activeSessionMessages.focusMessages[idx]
+            randomMsgIdx = Math.floor(Math.random() * sessionCopy.focusMessages.length)
+            this.pomMessage = sessionCopy.focusMessages[randomMsgIdx]
         }
 
         const periods = (this.pomPeriods * 2) - 2
         this.activeSessionState.update((data: any) => ({ 
             ...data, 
             currentTime: this.currentTime, 
-            sessionState: this.sessionState,
-            pomMessage: this.pomMessage
+            pomMessage: this.pomMessage,
         }))
 
         if (this.currentIndex === periods) {
@@ -149,6 +151,10 @@ export class Session {
         }
     }
     progressToNextPeriod = () => {
+        this.pauseSession() // will be already pused since end period is always called before this
+        this.currentTime!.minutes = 0
+        this.currentTime!.seconds = 0
+
         this.currentIndex++
         this.sessionState = this.iCurrentlyFocusTime() ? SessionState.FOCUSING : SessionState.ON_BREAK
 
@@ -166,7 +172,8 @@ export class Session {
                 currentPomPeriod: this.currentPomPeriod,
                 currentIndex: this.currentIndex,
                 sessionState: this.sessionState,
-                pomMessage: this.pomMessage
+                pomMessage: this.pomMessage,
+                currentTime: this.currentTime
             }))
         }
 
@@ -177,11 +184,21 @@ export class Session {
 
         this.activeSessionState.update((data: any) => ({ ...data, name: this.name }))
     }
+    restartPeriod = () => {
+        this.currentTime!.minutes = 0
+        this.currentTime!.seconds = 0
+
+        this.activeSessionState.update((data: any) => ({ ...data, currentTime: this.currentTime }))
+    }
+
+    /* This should call end period to see the end period UI, user should click progress to fully skip to next period */
+    skipToNextPeriod = () => this.progressToNextPeriod()
     cancelSession = () => {
         this.pauseSession()
         // this.sessionState = SessionState.CANCELED
 
         this.activeSessionState.set(null)
+        globalSessionObj.set(null)
     }
     finishSession = (/* ⛳️ fakeEndTime: Date = new Date() */) => { 
         this.pauseSession()
@@ -193,7 +210,11 @@ export class Session {
 
         const isEndTimeEarlier = this.isDateEarlier(endTime, this.calculatedEndTime)
         const hasFinishedAllTodos = this.todosCheckedCount === this.todos.length
-        this.sessionResult = this.calculateScore(isEndTimeEarlier, hasFinishedAllTodos)
+        const medalAndScore = this.getMedalAndScore(isEndTimeEarlier, hasFinishedAllTodos)
+        const msgAndImg = this.getMsgAndImg(medalAndScore.medal)
+
+        this.sessionResult = { ...medalAndScore, ...msgAndImg }
+        console.log(this.sessionResult)
 
         this.activeSessionState.update((data: any) => ({ 
             ...data,
@@ -201,17 +222,18 @@ export class Session {
             resultScore: this.sessionResult,
         }))
 
+        this.activeSessionState.set(null)
+        globalSessionObj.set(null)
+
         return this.sessionResult
     }
-    calculateScore = (isEndTimeEarlier: boolean, hasFinishedAllTodos: boolean): SessionResult | null => {
+    getMedalAndScore = (isEndTimeEarlier: boolean, hasFinishedAllTodos: boolean): { score: number, medal: Medal } => {
         let score = 0
         let medal: Medal = "🏅"
 
         /* All subtasks finished and finish early */
         if (isEndTimeEarlier && hasFinishedAllTodos) {
             score = 100
-            medal = "🏅"
-
             return { score, medal }
         }
 
@@ -263,6 +285,36 @@ export class Session {
             return "🥉"
         }
     }
+    getMsgAndImg = (medal: Medal): { message: string, resultImgUrl: string } => {
+        if (medal === "🥉") {
+            const msgs = sessionCopy.bronzeResultMessages
+            const imgs = sessionCopy.bronzeResultImages
+
+            return {
+                message: msgs[Math.floor(Math.random() * msgs.length)],
+                resultImgUrl: imgs[Math.floor(Math.random() * imgs.length)]
+            }
+        }
+        else { 
+            const LAST_SILVER_MSG_IDX = 3
+            const LAST_SILVER_IMG_IDX = 3
+            const msgs = sessionCopy.goodResultMessages
+            const imgs = sessionCopy.goodResultImages
+
+            let lastIdxMsg = medal === "🥈" ? LAST_SILVER_MSG_IDX : msgs.length - 1  // if silver get from first 4 msgs, if gold get from rest
+            let lastIdxImg = medal === "🥈" ? LAST_SILVER_IMG_IDX : imgs.length - 1  // if silver get from first 4 imgs, if gold get from rest
+
+            // if any of the last 4 msgs is chosen when gold, must use the very last img
+            let randomIdxMsg = Math.floor(Math.random() * lastIdxMsg + 1)
+            let resultImgUrl = randomIdxMsg > LAST_SILVER_MSG_IDX ? imgs[imgs.length - 1] : imgs[Math.floor(Math.random() * lastIdxImg + 1)] 
+
+            return {
+                message: msgs[randomIdxMsg],
+                resultImgUrl
+            }
+        }
+    }
+
     addTodo = (todoTitle: string) => {
         this.todos.push({ title: todoTitle, isChecked: false })
         this.activeSessionState.update((data: any) => ({ ...data, todos: this.todos }))

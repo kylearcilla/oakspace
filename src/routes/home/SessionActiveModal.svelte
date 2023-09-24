@@ -16,9 +16,10 @@
 
     let isEditSessionModalOpen = false
     let newSessionTitle = ""
-    let isNewSessionTitleValid = true
     let isTagListDropDownOpen = false
+    let isNewSessionTitleValid = true
     let isNewTagModalOpen = false
+    let isDropDownOpen = false
 
     const MAX_SESSION_NAME_LENGTH = 18
     const MAX_TODO_NAME_LENGTH = 15
@@ -62,13 +63,35 @@
         globalSessionObj.set(null)
         toggleModal(null)
     }
+
+    const handlePomOptionClicked = (optionIdx: number) => {
+        if (optionIdx === 0) {
+            isEditSessionModalOpen = true
+            newSessionTitle = activeSession!.name
+            newTag = activeSession!.tag
+        }
+        else if (optionIdx === 1) {
+            activeSession!.sessionState === SessionState.PAUSED ? sessionObj!.playSession() : sessionObj!.pauseSession()
+        }
+        else if (optionIdx === 2) {
+            sessionObj!.restartPeriod()
+        }
+        else if (optionIdx === 3) {
+            sessionObj!.skipToNextPeriod()
+        }
+        else if (optionIdx === 4) {
+            sessionObj!.cancelSession()
+        }
+        else {
+            sessionObj!.finishSession()
+        }
+    
+        isDropDownOpen = false
+        // newTag = tags[idx]
+    }
     
     /* Editing Session */
-    const handleEditSessionBtnClicked = () => {
-        isEditSessionModalOpen = true
-        newSessionTitle = activeSession!.name
-        newTag = activeSession!.tag
-    }
+    const handleEditSessionBtnClicked = () => isDropDownOpen = true
     const handleEditSessionDoneBtnClicked = () => {
         sessionObj!.name = newSessionTitle
 
@@ -228,22 +251,84 @@
         
                 <!-- Active Session Component -->
                 <div class={`active-session ${isLightTheme ? "" : "active-session--dark"}`}>
-                    <!-- Left Side -->
                     <div class="active-session__top-container">
                         <!-- Session Details Header -->
                         <div class="active-session__header active-session__bento-box">
                             <div class="active-session__header-name">
                                 <h4>{activeSession.name}</h4>
                             </div>
-                            <button on:click={handleEditSessionBtnClicked} class="active-session__header-edit-button settings-btn">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20">
-                                    <g fill="none" stroke="currentColor" stroke-linecap="round" transform="translate(1 10)">
-                                        <circle cx="2" cy="0.8" r="1.2"></circle>
-                                        <circle cx="8" cy="0.8" r="1.2"></circle>
-                                        <circle cx="14" cy="0.8" r="1.2"></circle>
-                                    </g>
-                                </svg>
-                            </button>
+                            <div class="dropdown-container">
+                                <button on:click={handleEditSessionBtnClicked} class="active-session__header-edit-button settings-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20">
+                                        <g fill="none" stroke="currentColor" stroke-linecap="round" transform="translate(1 10)">
+                                            <circle cx="2" cy="0.8" r="1.2"></circle>
+                                            <circle cx="8" cy="0.8" r="1.2"></circle>
+                                            <circle cx="14" cy="0.8" r="1.2"></circle>
+                                        </g>
+                                    </svg>
+                                </button>
+                                <!-- Session Controls -->
+                                {#if isDropDownOpen}
+                                    <ul use:clickOutside on:click_outside={() => isDropDownOpen = false} class="active-session__settings-dropdown-menu dropdown-menu">
+                                        <li class="dropdown-menu__option">
+                                            <button class="dropdown-element" on:click={() => handlePomOptionClicked(0)}>
+                                                <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
+                                                    <i class="fa-solid fa-pencil"></i>
+                                                </div>
+                                                <p>Edit Session</p>
+                                            </button>
+                                        </li>
+                                        <li class="dropdown-menu__option">
+                                            <button class="dropdown-element" on:click={() => handlePomOptionClicked(1)}>
+                                                <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
+                                                    {#if activeSession.sessionState === SessionState.PAUSED}
+                                                        <i class="fa-solid fa-play"></i>
+                                                    {:else}
+                                                        <i class="fa-solid fa-pause"></i>
+                                                    {/if}
+                                                </div>
+                                                {#if activeSession.sessionState === SessionState.PAUSED}
+                                                    <p>Play Session</p>
+                                                {:else}
+                                                    <p>Pause Session</p>
+                                                {/if}
+                                            </button>
+                                        </li>
+                                        <li class="dropdown-menu__option">
+                                            <button class="dropdown-element" on:click={() => handlePomOptionClicked(2)}>
+                                                <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
+                                                    <i class="fa-solid fa-rotate-right"></i>
+                                                </div>
+                                                <p>Restart Period</p>
+                                            </button>
+                                        </li>
+                                        <li class="dropdown-menu__option">
+                                            <button class="dropdown-element" on:click={() => handlePomOptionClicked(3)}>
+                                                <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
+                                                    <i class="fa-solid fa-forward-step"></i>
+                                                </div>
+                                                <p>Skip Period</p>
+                                            </button>
+                                        </li>
+                                        <li class="dropdown-menu__option">
+                                            <button class="dropdown-element" on:click={() => handlePomOptionClicked(4)}>
+                                                <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
+                                                    <i class="fa-solid fa-ban"></i>
+                                                </div>
+                                                <p>Cancel Session</p>
+                                            </button>
+                                        </li>
+                                        <li class="dropdown-menu__option">
+                                            <button class="dropdown-element" on:click={() => handlePomOptionClicked(5)}>
+                                                <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
+                                                    <i class="fa-solid fa-flag-checkered"></i>
+                                                </div>
+                                                <p>Finish Session</p>
+                                            </button>
+                                        </li>
+                                    </ul>
+                                {/if}
+                            </div>
                             <div class="active-session__header-time-period">
                                 <span>
                                     {`${activeSession.timePeriodString}`}
@@ -269,33 +354,15 @@
                                             {`${activeSession.pomMessage}`}
                                         </span>
                                     </div>
-                                    <div class="active-session__pom-btn-container">
-                                        <button on:click={() => { 
-                                                if (activeSession?.sessionState === SessionState.PAUSED) {
-                                                    sessionObj?.playSession()
-                                                }
-                                                else {
-                                                    sessionObj?.pauseSession()
-                                                }
-                                            }
-                                        }>
-                                            {#if activeSession.sessionState === SessionState.PAUSED}
-                                                <i class="fa-solid fa-play"></i> <span>Play</span>
-                                            {:else}
-                                                <i class="fa-solid fa-pause"></i> <span>Pause</span>
-                                            {/if}
-                                        </button>
-                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-        
                     
                     <!-- Active Session Tasks -->
                     <div class={`active-session__tasks active-session__bento-box ${isLightTheme ? "active-session__tasks--light-mode" : ""}`}>
                         <div class="active-session__tasks-header">
-                            <h4>Session Subtasks</h4>
+                            <h4>To Do's</h4>
                             <p>
                                 {#if activeSession.todos.length === 0}
                                     No substasks
@@ -337,41 +404,41 @@
                                                     />
                                                 </form>
                                             {:else}
-                                            <p class={`active-session-todo__name ${todo.isChecked ? "active-session-todo__name--finished" : ""}`}>
-                                                {#if todo.isChecked} 
-                                                    <span class="strike">{todo.title}</span>
-                                                {:else}
-                                                    {todo.title}
-                                                {/if}
-                                            </p>
+                                                <p class={`active-session-todo__name ${todo.isChecked ? "active-session-todo__name--finished" : ""}`}>
+                                                    {#if todo.isChecked} 
+                                                        <span class="strike">{todo.title}</span>
+                                                    {:else}
+                                                        {todo.title}
+                                                    {/if}
+                                                </p>
                                                 {#if (activeSession.todos.length > 1 && idx != activeSession.todos.length - 1) && idx != todoToEditIndex - 1}
                                                     <div class="divider divider--thin"></div>
                                                 {/if}
                                             {/if}
-                                        </div>
-                                        {#if todoToEditIndex < 0}
-                                            <button on:click={() => handleTodoEditButtonClicked(idx)} class="active-session-todo__edit-button flx">
-                                                <div class="flx flx--algn-center">
-                                                    <i class="fa-solid fa-pencil"></i>
-                                                    <span>Edit</span>
+                                            {#if idx === todoToEditIndex}
+                                                <div class="active-session-todo__edit-btn-container">
+                                                    <button 
+                                                        class="active-session-todo__delete-btn text-only"
+                                                        on:click={() => handleEditTodoDeleteBtnClicked(idx)}>
+                                                            Delete
+                                                    </button>
+                                                    <button
+                                                        disabled={todoToEditNewTitle === "" || todoToEditNewTitle.length > MAX_TODO_NAME_LENGTH}
+                                                        on:click={handleEditTodoDoneBtnClicked}
+                                                        class="active-session-todo__done-btn text-only">
+                                                            Done
+                                                    </button>
                                                 </div>
-                                            </button>
-                                        {/if}
-                                        {#if idx === todoToEditIndex}
-                                            <div class="active-session-todo__edit-btn-container">
-                                                <button 
-                                                    class="active-session-todo__delete-btn text-only"
-                                                    on:click={() => handleEditTodoDeleteBtnClicked(idx)}>
-                                                        Delete
+                                            {/if}
+                                            {#if todoToEditIndex < 0}
+                                                <button on:click={() => handleTodoEditButtonClicked(idx)} class="active-session-todo__edit-button flx">
+                                                    <div class="flx flx--algn-center">
+                                                        <i class="fa-solid fa-pencil"></i>
+                                                        <span>Edit</span>
+                                                    </div>
                                                 </button>
-                                                <button
-                                                    disabled={todoToEditNewTitle === "" || todoToEditNewTitle.length > MAX_TODO_NAME_LENGTH}
-                                                    on:click={handleEditTodoDoneBtnClicked}
-                                                    class="active-session-todo__done-btn text-only">
-                                                        Done
-                                                </button>
-                                            </div>
-                                        {/if}
+                                            {/if}
+                                        </div>
                                     </li>
                             {/each}
                         </ul>
@@ -421,8 +488,7 @@
 </div>      
 
 <style lang="scss">
-    $bento-box-padding: 8px;
-
+    @import '../../scss/active-session.scss';
     /* Session Modal */
     .session-modal-content {
         border-radius: 20px;
@@ -441,659 +507,15 @@
             width: 75vw;
         }
     }
-    /* Actual Active Session Component */
     .active-session {
-        .unfill {
-            @include unfill-btn-ficus-styling(var(--fgColor1));
-        }
-
-        &--dark &__bento-box h4 {
-            color: rgba(var(--textColor1), 1);
-            font-weight: 600;
-        }
-        &--dark &__header-time-period {
-            font-weight: 300;
-        }
-        &--dark &__header-session-details-data {
-            h6 {
-                font-weight: 500;
-            }
-            span {
-                font-weight: 300;
-            }
-        }
-        &--dark &__pom-timer h1 {
-            font-weight: 400;
-        }
-        &--dark &__pom-btn-container button {
-            background-color: var(--hoverColor) !important;
-        }
-        &--dark &__pom-btn-container button {
-            background-color: var(--hoverColor) !important;
-
-            &:focus {
-                filter: brightness(1.3);
-            }
-        }
-
-        &__bento-box {
-            position: relative;
-            h4 {
-                font-size: 1.5rem;
-                color: rgba(var(--textColor1), 0.85);
-            }
-        }
-
-        &__top-container {
-            width: 100%;
-            display: block;
-        }
-        
-        /* Header */
-        &__header {
-            width: 100%;
-        }
-        &__header-name {
-            display: flex;
-            margin-bottom: 2px;
-            h4 {
-                font-size: 1.5rem;
-                max-width: 145px;
-                margin-right: 8px;
-                max-width: 600px;
-                @include elipses-overflow;
-            }
-        }
-        &__header-time-period {
-            @include flex-container(center, _);
-            span {
-                font-size: 1.15rem;
-                font-weight: 500;
-                white-space: nowrap;
-                color: rgba(var(--textColor1), 0.4);
-            }
-
-            .divider {
-                width: 0.5px;
-                height: 9px;
-                background-color: rgba(var(--textColor1), 0.8);
-                margin: 0px 10px;
-            }
-        }
-        &__header-tag {
-            color: white;
-            border-radius: 20px;
-            @include center;
-            padding: 2px 12px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            p {
-                @include elipses-overflow;
-            }
-        }
         &__header-edit-button {
-            @include pos-abs-top-right-corner(-5px, -5px);
-            svg {
-                transition: 0.15s ease-in-out;
-                color: rgba(var(--textColor1), 0.4);
-            }
-            &:hover {
-                background-color: var(--secondaryBgColor);
-                svg {
-                    color: rgba(var(--textColor1), 0.7);
-                }
-            }
-            &:active {
-                transform: scale(0.92);
-            }
-        }
-
-        /* Pomodoro Component */
-        &__pom {
-            height: 120px;
-            width: 100%;
-            margin: 15px 0px 25px 0px;
-        }
-        &__pom-details {
-            text-align: center;
-            margin-top: 0px;
-        }
-        &__pom-message {
-            display: block;
-            margin-top: -2px;
-            font-weight: 500;
-            font-size: 1.4em;
-            color: rgba(var(--textColor1), 0.42);
-        }
-        &__pom-timer {
-            @include flex-container(baseline, center);
-            h1 {
-                margin: -8px 10px 0px 0px;
-                font-size: 6rem;
-                font-weight: 500;
-                color: rgba(var(--textColor1), 0.85);
-                width: 170px;
-            }
-            span {
-                display: none;
-                color: rgba(var(--textColor1), 0.5);
-            }
-        }
-        &__pom-btn-container {
-            margin-top: 2px;
-            @include pos-abs-bottom-right-corner(-5px,-3px);
-            button {
-                margin-right: 4px;
-                transition: 0.1s ease-in-out;
-                padding: 8px 13px 5px 13px;
-                border-radius: 8px;
-                position: relative;
-                background-color: var(--bentoBoxBgColor);
-                box-shadow: var(--bentoBoxShadow);
-                @include flex-container(center, center);
-
-                &:focus {
-                    filter: brightness(1.05);
-                }
-                &:active {
-                    transform: scale(0.98);
-                }
-                span {
-                    display: block;
-                    font-size: 1.2rem;
-                    font-weight: 600;
-                    margin-top: -2px;
-                    color: rgba(var(--fgColor1), 0.9);
-                }
-                i  {
-                    color: rgba(var(--fgColor1), 0.9);
-                    font-size: 1rem;
-                    margin: 0px 10px 2px 0px;
-                }
-            }
-        }
-
-        /* Tasks Component */
-        &__tasks {
-            height: 100%;
-            width: 100%;
-        }
-        &__tasks-header {
-            @include flex-container(center, space-between);
-            h4 {
-                margin-bottom: 5px;
-            }
-            p {
-                opacity: 0.35;
-                font-size: 1.25rem;
-                font-weight: 600;
-                margin-bottom: 3px;
-            }
-        }
-        &__tasks-todo-list {
-            overflow-y: scroll;
-            overflow-x: hidden;
-            height: 70%;
-            min-height: 100px;
-            max-height: 250px;
-            padding-top: 4px;
-        }
-        &__tasks-new-task-btn {
-            transition: 0.15s ease-in-out;
-            opacity: 0.35;
-            padding: 10px 10px 18px 0px;
-            margin: 3px 0px -5px 3px;
-            font-size: 1.2rem;
-            @include flex-container(center, center);
-
-            span {
-                font-size: 1.3rem;
-                margin-right: 18px;
-            }
-            &:focus {
-                opacity: 1;
-            }
-            &:hover {
-                opacity: 1;
-            }
-            &:active {
-                opacity: 1;
-            }
-        }
-        &__tasks-new-todo-input-container {
-            margin: -2px 0px 0px 3px;
-            @include flex-container(center, space-between);
-
-            form {
-                width: 100%;
-            }
-        }
-        &__tasks-new-todo-input {
-            cursor: text;
-            width: 90%;
-            font-size: 1.15rem;
-            font-weight: 500;
-            transition: 0.1s ease-in-out;
-            margin: 20px 0px 10px 0px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid rgba(var(--fgColor2), 0.3);
-            
-            &::placeholder {
-                opacity: 0.5;
-            }
-            &:focus {
-                border-bottom: 1px solid rgba(var(--fgColor2), 0.7);
-            }
-            &:focus::placeholder {
-                opacity: 0.6;
-            }
-        }
-        &__tasks-new-todo-btn-container {
-            margin: 8px 0px 0px -5px;
-            display: flex;
-            button {
-                @include center;
-                color: rgb(var(--fgColor2));
-                border-color: rgb(var(--fgColor2));
-                padding: 6px 12px 6px 12px;
-
-                &:focus {
-                    background: rgb(var(--fgColor2));
-                }
-                &:hover {
-                    background: rgb(var(--fgColor2));
-                }
-                &:first-child {
-                    margin-right: 5px;
-                }
-            }
-        }
-        &__tasks-add-btn {
-            &:disabled {
-                opacity: 0.5;
-            }
-            &:disabled {
-                &:hover {
-                    background: none;
-                    color: rgb(var(--fgColor2));
-                }
-            }
-        }
-        &__tasks-finish-session-btn {
-            color: rgb(var(--fgColor2));
-            border-color: rgb(var(--fgColor2));
-            @include pos-abs-bottom-right-corner(0px, 10px);
-
-            span {
-                margin-left: 5px;
-            }
-
-            &:hover {
-                background-color: rgb(var(--fgColor2));
-                color: var(--secondaryBgColor);
-            }
-        }
-    }
-
-    /* Todo Component in Subtasks Section */
-    .active-session-todo {
-        position: relative;
-        @include flex-container(center, _);
-
-        .divider {
-            margin: 0px;
-            background-color: rgba(var(--textColor1), 0.06);
-            height: 0.5px;
-        }
-
-        &--editing > &__right-container {
-            border: 1px solid rgba(var(--textColor1), 0.1);
-            border-radius: 8px;
-            padding: 9px 0px 9px 2px;
-            font-size: 1.2rem;
-            font-weight: 500;
-            color: rgba(var(--textColor1), 0.7);
-        }
-        &--editing > .divider {
-            display: none;
-        }
-        &--editing > form {
-            display: block;
-        }
-
-        &--light-mode .divider {
-            background-color: rgba(var(--textColor1), 0.16);
-        }
-        &--light-mode &__check-box {
-            border: 2px solid rgb(var(--fgColor1));
-        }
-        &--light-mode &__dotted-line {
-            border-left: 2px dotted rgb(var(--fgColor1));
-            left: 8px;
-        }
-        &--light-mode &__solid-line {
-            
-            &::after {
-                border-left: 1.2px solid rgb(var(--fgColor1));
-                left: 8px;
-            }
-        }
-        &--light-mode &__name {
-            font-weight: 500;
-        }
-        &:first-child {
-            margin-top: -4px;
-        }
-        &:hover > &__edit-button { 
-            transition: 0.2s ease-in-out;
-            visibility: visible;
-            opacity: 0.5;
-        }
-        
-        /* Check Box */
-        &__check-box {
-            @include circle(13.5px);
-            @include flex-container(center, center);
-            transition: 0.1s ease-in-out;
-            position: relative;
-            margin-right: 8.5px;
-            border: 1.5px solid rgb(var(--fgColor1));
-            color: rgb(var(--textColor2));
-
-            i {
-                margin-top: 1px;
-                font-size: 0.8rem;
-                display: none;
-            }
-            &:focus {
-                background-color: rgba(var(--fgColor1), 0.4);
-            }
-            &:hover {
-                background-color: rgba(var(--fgColor1), 0.2);
-            }
-            &:active {
-                transform: scale(0.9);
-            }
-            &--finished > i {
-                display: block;
-            }
-            &--finished {
-                background-color: rgb(var(--fgColor1)) !important;
-                &:hover {
-                    background-color: rgb(var(--fgColor1));
-                }
-                // &:hover > i:before {
-                //     font-size: 0.9rem;
-                //     content: "\f00d";
-                // }
-            }
-            &--edit-mode {
-                margin-top: -40px;
-                &:hover {
-                    background: none;
-                }
-            }
-        }
-        &__dotted-line {
-            position: absolute;
-            width: 1px;
-            transition: 0.2s ease-in-out;
-            border-left: 1.45px dotted rgb(var(--fgColor1));
-            bottom: -10px;
-            height: 21px;
-            left: 7.7px;
-        }
-        &__solid-line {
-            position: relative; 
-
-            @keyframes progress-line {
-                0%   { height : 0; }
-                100% { height: 17px; }
-            }
-
-            &::after {
-                content: ' ';
-                position: absolute;
-                bottom: -30px;
-                left: 7.3px;
-                height: 25px;
-                border-left: 1.2px solid rgb(var(--fgColor1));
-                animation-name: progress-line;
-                animation-duration: 0.1s;
-                animation-timing-function: ease-in-out;
-                animation-iteration-count: 1;
-                animation-fill-mode: backwards; 
-            }
-        }
-
-        /* Todo Content Stuff */
-        &__right-container {
-            padding-left: 7px; 
-            width: 100%;
-        }
-        &__name {
-            margin: 9px 0px;
-            padding: 2px 0px;
-            transition: 0.13s ease-in-out;
-            opacity: 0.7;
-            font-size: 1.2rem;
-            
-            .strike {
-                position: relative; 
-            }
-            @keyframes strike {
-                0%   { width : 0; }
-                100% { width: 100%; }
-            }
-            .strike::after {
-                content: ' ';
-                position: absolute;
-                top: 50%;
-                left: 0;
-                width: 100%;
-                height: 1px;
-                background: rgb(var(--textColor1));
-                animation-name: strike;
-                animation-duration: 0.13s;
-                animation-timing-function: ease-in-out;
-                animation-iteration-count: 1;
-                animation-fill-mode: forwards; 
-            }
-            &--finished {
-                opacity: 0.2;
-            }
-        }
-        &__edit-button {
-            transition: 0.01s ease-in-out;
-            visibility: hidden;
-            opacity: 0;
-            padding: 0px 10px;
-            margin: 0px;
-
-            @include pos-abs-top-right-corner(13px, -10px);
-
-            &:focus {
-                opacity: 1 !important;
-            }
-            &:hover {
-                opacity: 1 !important;
-            }
-            span {
-                font-size: 1.05rem;
-                margin-left: 5px;
-            }
-        }
-        &__edit-btn-container {
-            @include pos-abs-bottom-right-corner(12px, 10px);
-            button {
-                font-size: 1.07rem;
-                transition: 0.01s ease-in-out;
-            }
-        }
-        &__delete-btn {
-            margin-right: 10px;
-            color: rgba(227, 145, 132, 0.7);
-
-            &:focus {
-                color: rgba(var(--textColor1), 1);
-            }
-            &:hover {
-                color: rgba(var(--textColor1), 1);
-            }
-        }
-        &__done-btn {
-            color: rgba(var(--textColor1), 0.7);
-            &:focus {
-                color: rgba(var(--textColor1), 1);
-            }
-            &:hover {
-                color: rgba(var(--textColor1), 1);
-            }
-            &:disabled {
-                opacity: 0.3;
-            }
-        }
-        &__edit-todo-input {
-            cursor: text;
-            width: 90%;
-            margin-left: 6px;
-
-            &::placeholder {
-                opacity: 0.5;
-            }
-        }
-    }
-
-    /* Edit Active Session Modal */
-    .edit-session-modal {
-        background-color: var(--modalBgColor);
-        width: 300px;
-
-        /* Btn Styling */
-        .fill-btn {
-            @include color-btn-styling;
-        }
-        .trans-btn {
-            @include trans-btn-light-styling;
-        }
-        .unfill {
-            @include unfill-btn-ficus-styling(var(--fgColor1));
-        }
-        .unfill--gray {
-            @include unfill-btn-ficus-styling(var(--textColor1));
-        }
-        &--dark .trans-btn {
-            @include trans-btn-dark-styling;
-        }
-
-        /* Dark Themes Adjustments */
-        &--dark .dropdown-menu {
-            border: 1px solid rgba(60, 60, 60, 0.1);
-        }
-        &--dark &__name-input {
-            @include input-text-field-dark;
-        }
-        &--dark &__name-input-tag-dropdown-btn {
-            @include dropdown-btn-dark;
-        }
-        &--dark &__name-input-tag-dropdown-container .dropdown-menu {
-            @include dropdown-menu-dark;
-        }
-
-        h3 {
-            opacity: 0.9;
-            margin: 20px 0px 10px 0px;
-        }
-        /* Name Input */
-        &__name-input { 
-            font-size: 1.32rem;
-            padding: 0px 7px 0px 20px;
-            height: 47px;
-            border-radius: 10px;
-            width: 97%;
-            @include flex-container(center, _);
-            transition: 0.2s ease-in-out;
-            border: 1px solid rgba(211, 211, 211, 0);
-            background-color: var(--modalBgAccentColor);
-            
-            &--focus {
-                border-color: rgba(211, 211, 211, 0.5);
-            }
-            
-            input {
-                color: rgba(var(--textColor1), 0.5);
-                transition: 0.14s ease-in-out;
-                font-weight: 500;
-                width: 70%;
-                border-width: 0px;
-
-                &::placeholder {
-                    font-size: 1.4rem;
-                    font-weight: 400;
-                    opacity: 0.2;
-                }
-            }
-            &__divider {
-                width: 0.9px;
-                height: 14px;
-                margin: 0px 10px 0px 0px;
-                background-color: rgba(var(--textColor1), 0.15);
-            }
-        }
-        &__name-input-tag-dropdown-container {
-            position: relative;
-            .dropdown-menu {
-                position: absolute;
-                top: 40px;
-                width: 100px;
-                &__option {
-                    p {
-                        margin-left: 3px;
-                    }
-                    span {
-                        margin-right: 3px;
-                    }
-                }
-            }
-        }
-        &__name-input-tag-dropdown-btn {
-            @include flex-container(center, _);
             background: none;
-            box-shadow: none;
-            padding: 10px 11px 10px 10px;
-            border-radius: 10px;
+            margin-right: -10px;
         }
-        &__name-input-btn-tag {
-            @include circle(8px);
-            margin-right: 7px;
-        }
-        &__buttons-container {
-            width: 250px;
-            margin-top: 50px;
-            display: flex;
-            width: 100%;
 
-            button {
-                @include center;
-                border-radius: 9px;
-                height: 40px;
-                font-size: 1.3rem;
-                transition: 0.12s ease-in-out;
-
-                &:active {
-                    transform: scale(0.99);
-                }
-            }
-        }
-        &__done-btn {
-            width: 70%;
-            background-color: rgba(var(--fgColor1), 1);
-            color: var(--modalBgColor);
-            margin-right: 5px;
-        }
-        &__cancel-btn {
-            width: 30%;
-            background-color: transparent;
+        .dropdown-menu {
+            @include pos-abs-top-right-corner(35px, -5px);
+            width: 120px;
         }
     }
 </style>

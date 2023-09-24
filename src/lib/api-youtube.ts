@@ -145,7 +145,7 @@ export const saveYtUserData = (ytUserData: any) => {
 
 export const getUserPlaylists = async (accessToken: string) => {
     const key = KEY ?? "";
-    const url = `https://youtube.googleapis.com/youtube/v3/playlists?part=snippet%2CcontentDetails&maxResults=30&mine=true&key=${key}`;
+    const url = `https://youtube.googleapis.com/youtube/v3/playlists?part=snippet%2CcontentDetails&maxResults=20&mine=true&key=${key}`;
   
     const headers = new Headers();
     headers.append("Content-Type", "application/json");

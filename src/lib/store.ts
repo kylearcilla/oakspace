@@ -54,14 +54,8 @@ export const ytCurrentVid = writable<any>({
 })
 
 /* Music Stuff: Music Player State */
-export const musicPlayerData = writable<MusicPlayerState | null>(null)
-export const appleMusicPlayerState = writable<MusicPlayer>()
-
-/* MusicData: Playback Info & User Playlists */
-export const musicDataStore = writable<MusicData>()
-export const userPlaylistsStore = writable<MusicCollection[] | null>(null)
-export const curentPlaylist = writable<MusicCollection | null>(null)
-export const currentTrack = writable<Track | null>(null)
+export const musicPlayerStore = writable<MusicPlayer | null>(null)
+export const musicDataStore = writable<MusicData | null>(null)
 
 /* Session Stuff */
 export const globalSessionObj = writable<Session | null>(null)

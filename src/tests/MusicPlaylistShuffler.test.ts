@@ -55,7 +55,6 @@ describe('MusicPlaylistShuffler', () => {
     const length = 6
 
     playlist = new MusicPlaylistShuffler(startIndex, length, null, 2) 
-    console.log(playlist.shuffledIndexes)
 
     expect(playlist.shuffledIndexes.length).toBe(2)
     expect(playlist.indexPointer).toBe(0);
@@ -126,7 +125,7 @@ describe('MusicPlaylistShuffler', () => {
     expect(playlist.getState()).toBe(playlist.CAN_CONTINUE_CHUNK);
     expect(playlist.totalPlayed).toBe(1); 
     expect(playlist.indexPointer).toBe(0); 
-    expect(playlist.currentTrackIndex).toBe(0); 
+    expect(playlist.trackIndex).toBe(0); 
 
     /* User Goes Back */
     expect(playlist.getPrevIndex()).toBe(-1);
@@ -174,7 +173,7 @@ describe('MusicPlaylistShuffler', () => {
     expect(playlist.totalPlayed).toBe(10);
     expect(playlist.hasCompleted).toBe(true);
     expect(playlist.startTrackIndex).toBe(0);
-    expect(playlist.currentTrackIndex).toBe(1);
+    expect(playlist.trackIndex).toBe(1);
 
     /* User Goes Back: Should Not Happen */
     expect(playlist.getPrevIndex()).toBe(-1);

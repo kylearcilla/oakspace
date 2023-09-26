@@ -120,6 +120,30 @@ type MusicDiscoverCollection = {
     url: string | null
 }
 
+type MusicPlayerState = {
+    doShowPlayer: boolean,
+    isPlaying: boolean,
+    error: any,
+    isDisabled: boolean,
+    isRepeating: boolean,
+    isShuffled: boolean,
+    hasJustEnded: boolean
+}
+
+type MusicShufflerState = {
+    startTrackIndex: number,
+    trackIndex: number
+    indexPointer: number,
+    shuffledIndexes: number[],
+    songCount: number
+    totalPlayed: number
+}
+
+type MusicPlatformPropNames = "appleMusic"
+
+type DiscoverCollection = {
+    [platform in MusicPlatformPropNames]: MusicCollection[]
+  }
 
 type AppleUserCredentials = {
     devToken: string,
@@ -129,15 +153,6 @@ type AppleUserCredentials = {
 type MusicContext = {
     platform: MusicPlatform | null,
     platformName: string | null
-}
-
-type MusicPlayerState = {
-    message: string,
-    doShowPlayer: boolean,
-    isCurrentlyPlaying: boolean,
-    isDisabled: boolean,
-    isRepeating: boolean,
-    isShuffled: boolean
 }
 
 type MusicCollectionCategory = {

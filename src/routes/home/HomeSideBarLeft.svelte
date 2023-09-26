@@ -1,7 +1,7 @@
 <script lang="ts">
     import { lightColorThemes, darkColorThemes, defaultThemes } from "$lib/data-themes";
 	import { setRootColors } from "$lib/utils-general";
-	import { colorThemeState, musicPlayerData } from "$lib/store"
+	import { colorThemeState, musicPlayerStore } from "$lib/store"
 
     enum Modal { Settings, Youtube, Music, Stats, Appearance }
     export let onNavButtonClicked: (modal: Modal | null) => void
@@ -20,7 +20,7 @@
         }
     }
 
-    musicPlayerData.subscribe((data: MusicPlayerState | null) => {
+    musicPlayerStore.subscribe((data: any) => {
         isMusicPlayerActive = data != null && data.doShowPlayer
     })
     colorThemeState.subscribe((data) => {

@@ -1,476 +1,495 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte"
-
     import { clickOutside } from "$lib/utils-general"
     import { initAppleMusicState } from "$lib/api-apple-music"
     import { musicCategories, sereneCollections } from "$lib/data-music-collections"
-	import { appleMusicPlayerState, colorThemeState, curentPlaylist, musicDataStore, userPlaylistsStore } from "$lib/store"
+	import { musicPlayerStore, colorThemeState, musicDataStore } from "$lib/store"
 	import { getClickedDiscoverCollectionCardList, getCurrMusicPlatformName, getPlatformNameForDiscoverObj } from "$lib/utils-music"
-
+	import Modal from "../../components/Modal.svelte"
+    
     enum MusicPlatform { AppleMusic, Spotify, Youtube, Soundcloud }
-    enum Modal { Settings, Youtube, Music, Stats, Appearance }
+    enum SettingsModal { Settings, Youtube, Music, Stats, Appearance }
     enum MoodCategory { Serene, Lofi, Upbeat, Soundtracks, Acoustic, Classical, Zen, Summer }
 
-    export let onNavButtonClicked: (modal: Modal | null) => void
+    export let onNavButtonClicked: (modal: SettingsModal | null) => void
 
-    let isPlatformListOpen = false
     let chosenDiscoverCardTitle = "Serene"
-
+    let chosenMusicCollection: MusicCollection[] = []
+    let isPlatformListOpen = false
     let isScrollableLeft = false
     let isScrollableRight = true
-    let collectionList: HTMLElement
-    
+    let collectionList: HTMLElement | null
     let debounceTimeout: NodeJS.Timeout | null = null
 
     const SCROLL_STEP = 400
     const PLAYLIST_BTN_COOLDOWN_MS = 1000
 
-    let chosenMusicCollection: MusicCollection[] = []
-
     /* Log In Functionality  */
     const initMusicData = async (platform: MusicPlatform) => {
-        if (platform === MusicPlatform.AppleMusic) {
-            await initAppleMusicState()
+        try {
+            if (platform === MusicPlatform.AppleMusic) {
+                await initAppleMusicState()
+            }
+            chosenMusicCollection = sereneCollections[getPlatformNameForDiscoverObj(platform)]
         }
-
-        //@ts-ignore
-        chosenMusicCollection = sereneCollections[getPlatformNameForDiscoverObj()]
+        // ERROR UI
+        catch(error) {
+            musicDataStore!.set(null) // set when new instance is made
+            console.error(error)
+        }
+    }
+    const logOutUser = async () => {
+        isPlatformListOpen = false
+        $musicDataStore!.quit()
+        $musicPlayerStore!.quitPlayer()
     }
 
     /* Event Handlers */
     const handlePersonalPlaylistClicked = async (id: string) => {
         if (debounceTimeout !== null) return
         
-        $appleMusicPlayerState!.updateMusicPlayerState({ 
-            ...$appleMusicPlayerState!.musicPlayerData, 
-            isDisabled: true, 
-            isShuffled: false,
-            isRepeating: false,
-        })
-
-        const collection = await $musicDataStore.getPlaylistDetails(id)
-        $musicDataStore.updateCurrentCollection(collection)
-        $appleMusicPlayerState!.queueAndPlayNextTrack(id, 0)
-
-        debounceTimeout = setTimeout(() => debounceTimeout = null, PLAYLIST_BTN_COOLDOWN_MS)
-    }
-    const handleRecPlaylistClicked = async (collection: MusicCollection, event: MouseEvent) => {
-        const target = event.target as HTMLElement
-        if (target.tagName === 'A' || debounceTimeout !== null) return
-
-        if (collection.id === $curentPlaylist?.id) {
-            $musicDataStore.removeCurrentMusicCollection()
-            $appleMusicPlayerState!.resetMusicPlayerStateToEmptyState()
+        if (id === $musicDataStore?.collection?.id) {
+            $musicDataStore!.removeCurrentMusicCollection()
+            $musicPlayerStore!.resetMusicPlayerStateToEmptyState()
             return
         }
-         
-        $appleMusicPlayerState!.updateMusicPlayerState({ 
-            ...$appleMusicPlayerState!.musicPlayerData, 
+
+        // @ts-ignore
+        $musicPlayerStore!.updateMusicPlayerState({ 
+            ...$musicPlayerStore!.state,
             isDisabled: true, 
             isShuffled: false,
-            isRepeating: false,
+            isRepeating: false
         })
-        
-        $musicDataStore.updateCurrentCollection(collection)
-        $appleMusicPlayerState!.queueAndPlayNextTrack(collection.id, 0)
+
+        const collection = await $musicDataStore!.getPlaylistDetails(id)
+        console.log(collection.id)
+        $musicDataStore!.updateCurrentCollection(collection)
+        $musicPlayerStore!.queueAndPlayNextTrack(id, 0)
+
         debounceTimeout = setTimeout(() => debounceTimeout = null, PLAYLIST_BTN_COOLDOWN_MS)
     }
-    const handleDiscoverCollectionCardClicked = (index: number) => {
-        chosenDiscoverCardTitle = musicCategories[index].title
-        const platformProp = getPlatformNameForDiscoverObj($musicDataStore.musicPlatform!)
-        chosenMusicCollection = getClickedDiscoverCollectionCardList(chosenDiscoverCardTitle, platformProp)
+    const handleRecPlaylistClicked = async (collection: MusicCollection) => {
+        if (debounceTimeout !== null) return
+
+        if (collection.id === $musicDataStore?.collection?.id) {
+            $musicDataStore!.removeCurrentMusicCollection()
+            $musicPlayerStore!.resetMusicPlayerStateToEmptyState()
+            return
+        }
+
+        // @ts-ignore
+        $musicPlayerStore!.updateMusicPlayerState({ 
+            ...$musicPlayerStore!.state,
+            isDisabled: true, 
+            isShuffled: false,
+            isRepeating: false
+        })
+        
+        $musicDataStore!.updateCurrentCollection(collection)
+        $musicPlayerStore!.queueAndPlayNextTrack(collection.id, 0)
+        debounceTimeout = setTimeout(() => debounceTimeout = null, PLAYLIST_BTN_COOLDOWN_MS)
+    }
+    const handleDiscoverCollectionCardClicked = (moodCategoryIdx: number) => {
+        chosenDiscoverCardTitle = MoodCategory[moodCategoryIdx]
+        const platformProp = getPlatformNameForDiscoverObj($musicDataStore!.musicPlatform!)
+        chosenMusicCollection = getClickedDiscoverCollectionCardList(moodCategoryIdx, platformProp)
     }
 
     /* Discover Slider Scroll Stuff */
     const handleShiftTabCategoryRight = () => collectionList!.scrollLeft += SCROLL_STEP
     const handleShiftTabCategoryLeft = () => collectionList!.scrollLeft -= SCROLL_STEP
     const handleScroll = () => {
-        const scrollLeft = collectionList.scrollLeft
-        const scrollWidth = collectionList.scrollWidth
-        const clientWidth = collectionList.clientWidth 
+        const scrollLeft = collectionList!.scrollLeft
+        const scrollWidth = collectionList!.scrollWidth
+        const clientWidth = collectionList!.clientWidth 
 
         isScrollableLeft = scrollLeft > 0
         isScrollableRight = scrollLeft + clientWidth < scrollWidth - 20
     }
 
     onMount(() => {
-        window.addEventListener("resize", handleScroll)
-        handleDiscoverCollectionCardClicked(0)
+        if ($musicDataStore?.isSignedIn) {
+            window.addEventListener("resize", handleScroll)
+            handleDiscoverCollectionCardClicked(MoodCategory.Serene)
+        }
     })
     onDestroy(() => window.removeEventListener("resize", handleScroll))
 </script>
 
-<div class="modal-bg">
-    <div 
-        use:clickOutside on:click_outside={() => onNavButtonClicked(null)} 
-        class={`modal-bg__content modal-bg__content--overflow-y-scroll ${$musicDataStore != null ? "" : "modal-bg__content--small"}`}
-    >
-        <div class={`music ${$musicDataStore != null ? "" : "music--small"} ${!$colorThemeState.isDarkTheme ? "music--light" : ""}`}>
+{#if $musicDataStore?.isSignedIn}
+    <Modal onNavButtonClicked={onNavButtonClicked} isModalSmall={false}> 
+        <div class={`music ${!$colorThemeState.isDarkTheme ? "music--light" : ""}`}>
             <h1 class="modal-bg__content-title">Music</h1>
-            {#if $musicDataStore}
-                <!-- Logged In Profile Header -->
-                <div class="active-account-header">
-                    <button class="active-account-header__btn dropdown-element" on:click={() => isPlatformListOpen = !isPlatformListOpen}>
-                        {#if $musicDataStore.musicPlatform === MusicPlatform.Soundcloud}
-                            <div class="platform-logo platform-logo--small platform-logo--soundcloud dropdown-element">
-                                <i class="fa-brands fa-soundcloud fa-soundcloud--small"></i>
-                            </div>
-                        {:else if $musicDataStore.musicPlatform === MusicPlatform.Youtube}
-                            <div class="platform-logo platform-logo--small platform-logo--youtube dropdown-element">
-                                <i class="fa-brands fa-youtube fa-youtube--small"></i>
-                            </div>
-                        {:else if $musicDataStore.musicPlatform === MusicPlatform.AppleMusic}
-                            <div class="platform-logo platform-logo--small platform-logo--apple dropdown-element">
-                                <i class="fa-brands fa-itunes-note fa-itunes-note--small"></i>
-                            </div>
-                        {:else if $musicDataStore.musicPlatform === MusicPlatform.Spotify}
-                            <div class="platform-logo platform-logo--small platform-logo--spotify dropdown-element">
-                                <i class="fa-brands fa-spotify fa-spotify--small"></i>
-                            </div>
-                        {/if}
-                        {#if $musicDataStore != null && $musicDataStore.musicPlatform != null}
-                            <span class="caption-3">{getCurrMusicPlatformName($musicDataStore.musicPlatform)}</span>
-                        {/if}
-                        <i class="fa-solid fa-chevron-down"></i>
-                    </button>
-                    <span class="active-account-header__username caption-3">Kyle Arcilla</span>
+            <!-- Logged In Profile Header -->
+            <div class="active-account-header">
+                <button class="active-account-header__btn dropdown-element" on:click={() => isPlatformListOpen = !isPlatformListOpen}>
+                    {#if $musicDataStore.musicPlatform === MusicPlatform.Soundcloud}
+                        <div class="platform-logo platform-logo--small platform-logo--soundcloud dropdown-element">
+                            <i class="fa-brands fa-soundcloud fa-soundcloud--small"></i>
+                        </div>
+                    {:else if $musicDataStore.musicPlatform === MusicPlatform.Youtube}
+                        <div class="platform-logo platform-logo--small platform-logo--youtube dropdown-element">
+                            <i class="fa-brands fa-youtube fa-youtube--small"></i>
+                        </div>
+                    {:else if $musicDataStore.musicPlatform === MusicPlatform.AppleMusic}
+                        <div class="platform-logo platform-logo--small platform-logo--apple dropdown-element">
+                            <i class="fa-brands fa-itunes-note fa-itunes-note--small"></i>
+                        </div>
+                    {:else if $musicDataStore.musicPlatform === MusicPlatform.Spotify}
+                        <div class="platform-logo platform-logo--small platform-logo--spotify dropdown-element">
+                            <i class="fa-brands fa-spotify fa-spotify--small"></i>
+                        </div>
+                    {/if}
+                    {#if $musicDataStore?.isSignedIn && $musicDataStore.musicPlatform != null}
+                        <span>{getCurrMusicPlatformName($musicDataStore.musicPlatform)}</span>
+                    {/if}
+                    <i class="fa-solid fa-chevron-down"></i>
+                </button>
+                <!-- No way to get account details from Music Kit -->
+                {#if $musicDataStore.musicPlatform !== MusicPlatform.AppleMusic}
+                    <span class="active-account-header__username">Kyle Arcilla</span>
                     <div class="active-account-header__user-profile-pic">
                         <img src="" alt="">
                     </div>
-                    <!-- Music Platform Dropdown List -->
-                    {#if isPlatformListOpen}
-                        <ul class="platform-list" use:clickOutside on:click_outside={() => isPlatformListOpen = false}>
-                            <li class="platform-list__platform-item">
-                                <div class="platform-logo platform-logo--small platform-logo--soundcloud">
-                                    <i class="fa-brands fa-soundcloud fa-soundcloud--small"></i>
-                                </div>
-                                <div class="platform-list__platform-item-text">
-                                    <h5>Soundcloud</h5>
-                                    <span class="caption-5">Playlist</span>
-                                </div>
-                                <button 
-                                    class={`platform-list__platform-item-btn ${$musicDataStore.musicPlatform === MusicPlatform.Soundcloud ? "platform-list__platform-item-btn--selected" : ""} text-only`}
-                                    on:click={() => initMusicData(MusicPlatform.Soundcloud)}
-                                >
-                                    <span class="caption-3">{$musicDataStore.musicPlatform === MusicPlatform.Soundcloud ? "Disconnect" : "Connect"}</span>
-                                </button>
-                            </li>
-                            <li class="platform-list__platform-item">
-                                <div class="platform-logo platform-logo--youtube platform-logo--small-youtube">
-                                    <i class="fa-brands fa-youtube fa-youtube--small"></i>
-                                </div>
-                                <div class="platform-list__platform-item-text">
-                                    <h5>Youtube</h5>
-                                    <span class="caption-5">Playlist, Live Videos</span>
-                                </div>
-                                <button 
-                                    class={`platform-list__platform-item-btn ${$musicDataStore.musicPlatform === MusicPlatform.Youtube ? "platform-list__platform-item-btn--selected" : ""} text-only`}
-                                    on:click={() => initMusicData(MusicPlatform.Youtube)}
-                                >
-                                    <span class="caption-3">{$musicDataStore.musicPlatform === MusicPlatform.Youtube ? "Disconnect" : "Connect"}</span>
-                                </button>
-                            </li>
-                            <li class="platform-list__platform-item">
-                                <div class="platform-logo platform-logo--small platform-logo--apple">
-                                    <i class="fa-brands fa-itunes-note fa-itunes-note--small"></i>
-                                </div>
-                                <div class="platform-list__platform-item-text">
-                                    <h5>Apple Music</h5>
-                                    <span class="caption-5">Playlists</span>
-                                </div>
-                                <button 
-                                    class={`platform-list__platform-item-btn ${$musicDataStore.musicPlatform === MusicPlatform.AppleMusic ? "platform-list__platform-item-btn--selected" : ""} text-only`}
-                                    on:click={() => initMusicData(MusicPlatform.AppleMusic)}
-                                >
-                                    <span class="caption-3">{$musicDataStore.musicPlatform === MusicPlatform.AppleMusic ? "Disconnect" : "Connect"}</span>
-                                </button>
-                            </li>
-                            <li class="platform-list__platform-item">
-                                <div class="platform-logo platform-logo--small platform-logo--spotify">
-                                    <i class="fa-brands fa-spotify fa-spotify--small"></i>
-                                </div>
-                                <div class="platform-list__platform-item-text">
-                                    <h5>Spotify</h5>
-                                    <span class="caption-5">Playlists, Podcasts</span>
-                                </div>
-                                <button 
-                                    class={`platform-list__platform-item-btn ${$musicDataStore.musicPlatform === MusicPlatform.Spotify ? "platform-list__platform-item-btn--selected" : ""} text-only`}
-                                    on:click={() => initMusicData(MusicPlatform.Spotify)}
-                                >
-                                    {$musicDataStore.musicPlatform === MusicPlatform.Spotify ? "Disconnect" : "Connect"}
-                                </button>
-                            </li>
-                        </ul>
-                    {/if}
-                </div>
-                <!-- Music Settings Content -->
-                <div class="music__content">
-                    <div class="music__left-section">
-                        <!-- Now Playing Section -->
-                        <div class={`now-playing ${$curentPlaylist ? "" : "now-playing--empty"} bento-box`}>
-                            <img class="img-bg" src={$curentPlaylist?.artworkImgSrc} alt="">
-                            <div class={`blur-bg blur-bg--blurred-bg ${$curentPlaylist ?? "blur-bg--solid-color"}`}></div>
-                            <div class="content-bg">
-                                <h3 class="bento-box__title">Now Playing</h3>
-                                {#if $curentPlaylist}
-                                    <div class="now-playing__details-container">
-                                        <div class="now-playing__artwork">
-                                            <img src={$curentPlaylist?.artworkImgSrc} alt="">
-                                        </div>
-                                        <div class="now-playing__description">
-                                            <span class="caption-3">{$curentPlaylist?.author}</span>
-                                            {#if $curentPlaylist?.url}
-                                                <a href={$curentPlaylist?.url} target="_blank" rel="noreferrer">
-                                                    <h4>{$curentPlaylist?.name}</h4>
-                                                </a>
-                                            {:else}
-                                                <h3>{$curentPlaylist?.name}</h3>
-                                            {/if}
-                                            <p>{$curentPlaylist?.description}</p>
-                                        </div>
-                                    </div>             
-                                    <div class="now-playing__collection-details">
-                                        <p class="now-playing__collection-type">{$curentPlaylist?.type}</p>
-                                        <span>/</span>
-                                        <p>{$curentPlaylist?.songCount} songs</p>
-                                    </div>
-                                {:else}
-                                    <div class="now-playing__no-pl-selected">
-                                        No Playlist / Album Selected
-                                    </div>
-                                {/if}
+                {/if}
+                <!-- Music Platform Dropdown List -->
+                {#if isPlatformListOpen}
+                    <ul class="platform-list" use:clickOutside on:click_outside={() => isPlatformListOpen = false}>
+                        <li class="platform-list__platform-item">
+                            <div class="platform-logo platform-logo--small platform-logo--soundcloud">
+                                <i class="fa-brands fa-soundcloud fa-soundcloud--small"></i>
                             </div>
-                        </div>
-                        <!-- My Playlists Section -->
-                        <div class="my-playlists bento-box bento-box--no-padding">
-                            {#if $userPlaylistsStore != null}
-                                <div class="my-playlists__header">
-                                    <h3 class="bento-box__title">My Playlists</h3>
-                                    <span class="caption-4">{`${$userPlaylistsStore.length} ${$userPlaylistsStore.length == 1 ? "playlist" : "playlists"}`}</span>
+                            <div class="platform-list__platform-item-text">
+                                <h5>Soundcloud</h5>
+                                <span >Playlist</span>
+                            </div>
+                            <button 
+                                class={`platform-list__platform-item-btn ${$musicDataStore.musicPlatform === MusicPlatform.Soundcloud ? "platform-list__platform-item-btn--selected" : ""} text-only`}
+                                on:click={logOutUser}
+                            >
+                                <span>
+                                    {$musicDataStore.musicPlatform === MusicPlatform.Soundcloud ? "Disconnect" : "Connect"}
+                                </span>
+                            </button>
+                        </li>
+                        <li class="platform-list__platform-item">
+                            <div class="platform-logo platform-logo--youtube platform-logo--small-youtube">
+                                <i class="fa-brands fa-youtube fa-youtube--small"></i>
+                            </div>
+                            <div class="platform-list__platform-item-text">
+                                <h5>Youtube</h5>
+                                <span >Playlist, Live Videos</span>
+                            </div>
+                            <button 
+                                class={`platform-list__platform-item-btn ${$musicDataStore.musicPlatform === MusicPlatform.Youtube ? "platform-list__platform-item-btn--selected" : ""} text-only`}
+                                on:click={logOutUser}
+                            >
+                                <span>{$musicDataStore.musicPlatform === MusicPlatform.Youtube ? "Disconnect" : "Connect"}</span>
+                            </button>
+                        </li>
+                        <li class="platform-list__platform-item">
+                            <div class="platform-logo platform-logo--small platform-logo--apple">
+                                <i class="fa-brands fa-itunes-note fa-itunes-note--small"></i>
+                            </div>
+                            <div class="platform-list__platform-item-text">
+                                <h5>Apple Music</h5>
+                                <span >Playlists</span>
+                            </div>
+                            <button 
+                                class={`platform-list__platform-item-btn ${$musicDataStore.musicPlatform === MusicPlatform.AppleMusic ? "platform-list__platform-item-btn--selected" : ""} text-only`}
+                                on:click={logOutUser}
+                            >
+                                <span>{$musicDataStore.musicPlatform === MusicPlatform.AppleMusic ? "Disconnect" : "Connect"}</span>
+                            </button>
+                        </li>
+                        <li class="platform-list__platform-item">
+                            <div class="platform-logo platform-logo--small platform-logo--spotify">
+                                <i class="fa-brands fa-spotify fa-spotify--small"></i>
+                            </div>
+                            <div class="platform-list__platform-item-text">
+                                <h5>Spotify</h5>
+                                <span >Playlists, Podcasts</span>
+                            </div>
+                            <button 
+                                class={`platform-list__platform-item-btn ${$musicDataStore.musicPlatform === MusicPlatform.Spotify ? "platform-list__platform-item-btn--selected" : ""} text-only`}
+                                on:click={logOutUser}
+                            >
+                                {$musicDataStore.musicPlatform === MusicPlatform.Spotify ? "Disconnect" : "Connect"}
+                            </button>
+                        </li>
+                    </ul>
+                {/if}
+            </div>
+            <!-- Music Settings Content -->
+            <div class="music__content">
+                <div class="music__left-section">
+                    <!-- Now Playing Section -->
+                    <div class={`now-playing ${$musicDataStore?.collection ? "" : "now-playing--empty"} bento-box`}>
+                        <img class="img-bg" src={$musicDataStore?.collection?.artworkImgSrc} alt="">
+                        <div class={`blur-bg blur-bg--blurred-bg ${$musicDataStore?.collection ?? "blur-bg--solid-color"}`}></div>
+                        <div class="content-bg">
+                            <h3 class="bento-box__title">Now Playing</h3>
+                            {#if $musicDataStore?.collection}
+                                <div class="now-playing__details-container">
+                                    <div class="now-playing__artwork">
+                                        <img src={$musicDataStore?.collection.artworkImgSrc} alt="">
+                                    </div>
+                                    <div class="now-playing__description">
+                                        <span>{$musicDataStore?.collection.author}</span>
+                                        {#if $musicDataStore?.collection.url}
+                                            <a href={$musicDataStore?.collection.url} target="_blank" rel="noreferrer">
+                                                <h4>{$musicDataStore?.collection.name}</h4>
+                                            </a>
+                                        {:else}
+                                            <h4>{$musicDataStore?.collection.name}</h4>
+                                        {/if}
+                                        <p>{$musicDataStore?.collection.description}</p>
+                                    </div>
+                                </div>             
+                                <div class="now-playing__collection-details">
+                                    <p class="now-playing__collection-type">{$musicDataStore?.collection.type}</p>
+                                    <span>/</span>
+                                    <p>{$musicDataStore?.collection.songCount} songs</p>
                                 </div>
-                                <ul class="my-playlists__collection-list vert-scroll">
-                                    {#if $userPlaylistsStore.length === 0}
-                                        <img class="my-playlists__no-pl-meme-img abs-center" src="/no-pl.png" alt="no-playlists-img"/>
-                                    {:else}
-                                        {#each $userPlaylistsStore as personalPlaylist, idx}
-                                            <!-- My Playlist Item -->
-                                            <li
-                                                on:dblclick={() => handlePersonalPlaylistClicked(personalPlaylist.id)}
-                                                class={`my-playlists__playlist 
-                                                            ${personalPlaylist.id === $curentPlaylist?.id ? "my-playlists__playlist--chosen" : ""}
-                                                    `}
-                                            >
-                                                <p class="my-playlists__playlist-idx">{idx + 1}</p>
-                                                <div class="my-playlists__playlist-img">
-                                                    {#if personalPlaylist.artworkImgSrc != ""}
-                                                        <img src={personalPlaylist.artworkImgSrc} alt="playlist-artwork"/>
-                                                    {:else}
-                                                        <i class="fa-solid fa-music abs-center"></i>
-                                                    {/if}
-                                                </div> 
-                                                <div class="my-playlists__playlist-text">
-                                                    <h5>{personalPlaylist.name}</h5>
-                                                    <p>{personalPlaylist.description}</p>
-                                                </div>
-                                                <div class="divider divider--thin"></div>
-                                            </li>
-                                        {/each}
-                                    {/if}
-                                </ul>
+                            {:else}
+                                <div class="now-playing__no-pl-selected">
+                                    No Playlist / Album Selected
+                                </div>
                             {/if}
                         </div>
                     </div>
-                    <div class="music__right-section">
-                        <!-- Discover Section -->
-                        <div class="discover bento-box bento-box--no-padding">
-                            {#if $musicDataStore != null && $musicDataStore.musicPlatform != null}
-                                <h3 class="bento-box__title">{`Discover from ${getCurrMusicPlatformName($musicDataStore.musicPlatform)}`}</h3>
-                            {/if}
-                            <p class="bento-box__copy">Get in the zone with music that matches your vibe - select a category and discover new tunes to fuel your day.</p>
-                            <div class="discover__collection-list-container">
-                                {#if isScrollableLeft}
-                                    <div class="gradient-container gradient-container--left">
-                                        <button 
-                                            on:click={handleShiftTabCategoryLeft}
-                                            class="gradient-container__tab-arrow gradient-container__tab-arrow--left"
-                                        >
-                                            <i class="fa-solid fa-chevron-left"></i>
-                                        </button>
-                                    </div>
-                                {/if}
-                                <!-- Discover Categories Carousel -->
-                                <ul  class="discover__collection-list" bind:this={collectionList} on:scroll={handleScroll}>
-                                    {#each musicCategories as group, idx}
-                                        <!-- svelte-ignore a11y-click-events-have-key-events -->
-                                        <li class="discover__collection-card" on:click={() => handleDiscoverCollectionCardClicked(idx)}>
-                                            <img class="discover__collection-card-img" src={group.artworkSrc}  alt="">
-                                            <div class="discover__collection-card-hover-details">
-                                                <img src={group.artworkBlurredSrc} alt="">
-                                                <h2>{group.title}</h2>
-                                                <p 
-                                                    class="discover__collection-card-hover-details-description">
-                                                    {group.description}
-                                                </p>
-                                                <span class="caption-3"> {group.artistCredit}</span>
-                                            </div>
-                                            <h3 class="discover__collection-card-title">{group.title}</h3>
-                                        </li>
-                                    {/each}
-                                    <li class="discover__collection-list-padding discover__collection-list-padding-right"></li>
-                                </ul>
-                                {#if isScrollableRight}
-                                    <div class="gradient-container gradient-container--right">
-                                        <button class="gradient-container__tab-arrow gradient-container__tab-arrow--right"
-                                                on:click={handleShiftTabCategoryRight}
-                                        >
-                                            <i class="fa-solid fa-chevron-right"></i>
-                                        </button>
-                                    </div>
-                                {/if}
+                    <!-- My Playlists Section -->
+                    <div class="my-playlists bento-box bento-box--no-padding">
+                        {#if $musicDataStore?.userPlaylists != null}
+                            <div class="my-playlists__header">
+                                <h3 class="bento-box__title">My Playlists</h3>
+                                <span>{`${$musicDataStore?.userPlaylists.length} ${$musicDataStore?.userPlaylists.length == 1 ? "playlist" : "playlists"}`}</span>
                             </div>
-                            <!-- Collections List -->
-                            <h3 class="discover__collection-title">{`${chosenDiscoverCardTitle} Collections`}</h3>
-                            <div class="discover__collection-container">
-                                <div class="discover__collection-header flx">
-                                    <h6 class="discover__collection-header-num">#</h6>
-                                    <h6 class="discover__collection-header-title">Title</h6>
-                                    <div class="discover__collection-header-type">
-                                        <h6>Type</h6>
-                                    </div>
-                                    <div class="discover__collection-header-genre">
-                                        <h6>Genre</h6>
-                                    </div>
-                                    <div class="discover__collection-header-length">
-                                        <h6>Length</h6>
-                                    </div>
-                                </div>
-                                <ul class="discover__selected-collection-list">
-                                    {#each chosenMusicCollection as collection, idx}
-                                        <!-- Collection Item -->
-                                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                            <ul class="my-playlists__collection-list vert-scroll">
+                                {#if $musicDataStore?.userPlaylists.length === 0}
+                                    <img class="my-playlists__no-pl-meme-img abs-center" src="/no-pl.png" alt="no-playlists-img"/>
+                                {:else}
+                                    {#each $musicDataStore?.userPlaylists as personalPlaylist, idx}
+                                        <!-- My Playlist Item -->
                                         <li
-                                            on:dblclick={event => handleRecPlaylistClicked(collection, event)} 
-                                            class={`discover__collection-item 
-                                                        ${collection.id === $curentPlaylist?.id ? "discover__collection-item--chosen" : ""}
-                                                    `}
+                                            on:dblclick={() => handlePersonalPlaylistClicked(personalPlaylist.id)}
+                                            class={`my-playlists__playlist 
+                                                        ${personalPlaylist.id === $musicDataStore?.collection?.id ? "my-playlists__playlist--chosen" : ""}
+                                                `}
                                         >
-                                            <p class="discover__collection-item-num">{idx + 1}</p>
-                                            <div class="discover__collection-item-main-details-container">
-                                                <img src={collection.artworkImgSrc} alt="collection-artwork">
-                                                <div class="discover__collection-item-main-details">
-                                                    {#if collection?.url}
-                                                        <a href={collection.url} target="_blank" rel="noreferrer">
-                                                            <h6>{collection.name}</h6>
-                                                        </a>
-                                                    {:else}
-                                                        <h5>{collection.name}</h5>
-                                                    {/if}
-                                                    <p>{collection.author}</p>
-                                                </div>
+                                            <p class="my-playlists__playlist-idx">{idx + 1}</p>
+                                            <div class="my-playlists__playlist-img">
+                                                {#if personalPlaylist.artworkImgSrc != ""}
+                                                    <img src={personalPlaylist.artworkImgSrc} alt="playlist-artwork"/>
+                                                {:else}
+                                                    <i class="fa-solid fa-music abs-center"></i>
+                                                {/if}
+                                            </div> 
+                                            <div class="my-playlists__playlist-text">
+                                                <a href={personalPlaylist.url} target="_blank" rel="noreferrer">
+                                                    <h5>{personalPlaylist.name}</h5>
+                                                </a>
+                                                <p>{personalPlaylist.description}</p>
                                             </div>
-                                            <p class="discover__collection-item-type">{collection.type}</p>
-                                            <p class="discover__collection-item-genre">{collection.genre}</p>
-                                            <p class="discover__collection-item-length">{collection.songCount > 100 ? "100+" : collection.songCount}</p>
                                             <div class="divider divider--thin"></div>
                                         </li>
                                     {/each}
-                                </ul>
+                                {/if}
+                            </ul>
+                        {/if}
+                    </div>
+                </div>
+                <div class="music__right-section">
+                    <!-- Discover Section -->
+                    <div class="discover bento-box bento-box--no-padding">
+                        {#if $musicDataStore?.isSignedIn && $musicDataStore.musicPlatform != null}
+                            <h3 class="bento-box__title">{`Discover from ${getCurrMusicPlatformName($musicDataStore.musicPlatform)}`}</h3>
+                        {/if}
+                        <p class="bento-box__copy">Get in the zone with music that matches your vibe - select a category and discover new tunes to fuel your day.</p>
+                        <div class="discover__collection-list-container">
+                            {#if isScrollableLeft}
+                                <div class="gradient-container gradient-container--left">
+                                    <button 
+                                        on:click={handleShiftTabCategoryLeft}
+                                        class="gradient-container__tab-arrow gradient-container__tab-arrow--left"
+                                    >
+                                        <i class="fa-solid fa-chevron-left"></i>
+                                    </button>
+                                </div>
+                            {/if}
+                            <!-- Discover Categories Carousel -->
+                            <ul  class="discover__collection-list" bind:this={collectionList} on:scroll={handleScroll}>
+                                {#each musicCategories as group, idx}
+                                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                                    <li class="discover__collection-card" on:click={() => handleDiscoverCollectionCardClicked(idx)}>
+                                        <img class="discover__collection-card-img" src={group.artworkSrc}  alt="">
+                                        <div class="discover__collection-card-hover-details">
+                                            <img src={group.artworkBlurredSrc} alt="">
+                                            <h2>{group.title}</h2>
+                                            <p 
+                                                class="discover__collection-card-hover-details-description">
+                                                {group.description}
+                                            </p>
+                                            <span> {group.artistCredit}</span>
+                                        </div>
+                                        <h3 class="discover__collection-card-title">{group.title}</h3>
+                                    </li>
+                                {/each}
+                                <li class="discover__collection-list-padding discover__collection-list-padding-right"></li>
+                            </ul>
+                            {#if isScrollableRight}
+                                <div class="gradient-container gradient-container--right">
+                                    <button class="gradient-container__tab-arrow gradient-container__tab-arrow--right"
+                                            on:click={handleShiftTabCategoryRight}
+                                    >
+                                        <i class="fa-solid fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            {/if}
+                        </div>
+                        <!-- Collections List -->
+                        <h3 class="discover__collection-title">{`${chosenDiscoverCardTitle} Collections`}</h3>
+                        <div class="discover__collection-container">
+                            <div class="discover__collection-header flx">
+                                <h6 class="discover__collection-header-num">#</h6>
+                                <h6 class="discover__collection-header-title">Title</h6>
+                                <div class="discover__collection-header-type">
+                                    <h6>Type</h6>
+                                </div>
+                                <div class="discover__collection-header-genre">
+                                    <h6>Genre</h6>
+                                </div>
+                                <div class="discover__collection-header-length">
+                                    <h6>Length</h6>
+                                </div>
                             </div>
+                            <ul class="discover__selected-collection-list">
+                                {#each chosenMusicCollection as collection, idx}
+                                    <!-- Collection Item -->
+                                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                                    <li
+                                        on:dblclick={_ => handleRecPlaylistClicked(collection)} 
+                                        class={`discover__collection-item 
+                                                    ${collection.id === $musicDataStore?.collection?.id ? "discover__collection-item--chosen" : ""}
+                                                `}
+                                    >
+                                        <p class="discover__collection-item-num">{idx + 1}</p>
+                                        <div class="discover__collection-item-main-details-container">
+                                            <img src={collection.artworkImgSrc} alt="collection-artwork">
+                                            <div class="discover__collection-item-main-details">
+                                                {#if collection?.url}
+                                                    <a href={collection.url} target="_blank" rel="noreferrer">
+                                                        <h6>{collection.name}</h6>
+                                                    </a>
+                                                {:else}
+                                                    <h5>{collection.name}</h5>
+                                                {/if}
+                                                <p>{collection.author}</p>
+                                            </div>
+                                        </div>
+                                        <p class="discover__collection-item-type">{collection.type}</p>
+                                        <p class="discover__collection-item-genre">{collection.genre}</p>
+                                        <p class="discover__collection-item-length">{collection.songCount > 100 ? "100+" : collection.songCount}</p>
+                                        <div class="divider divider--thin"></div>
+                                    </li>
+                                {/each}
+                            </ul>
                         </div>
                     </div>
                 </div>
-            {/if}
-            <!-- Logged Off UI -->
-            {#if !$musicDataStore}
-                <p class="music__description">
-                    Sync your favorite music streaming service to listen to your playlists or from our recommended playlists.
-                </p>
-                <h2>Link an Account</h2>
-                <ul class="platform-list platform-list--logged-out section-bg">
-                    <li class="platform-list__platform-item platform-list__platform-item--logged-out">
-                        {#if !$colorThemeState.isDarkTheme}
-                            <i class="fa-brands fa-youtube fa-youtube--no-bg"></i>
-                        {:else}
-                            <div class="platform-list__platform-item__logo platform-logo platform-logo--youtube">
-                                <i class="fa-brands fa-youtube"></i>
-                            </div>
-                        {/if}
-                        <div class="platform-list__platform-item-text platform-list__platform-item-text--logged-out">
-                            <h3>Youtube</h3>
-                            <p>Playlist</p>
-                        </div>
-                        <button 
-                            class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out text-only"
-                            on:click={() => initMusicData(MusicPlatform.Youtube)}
-                        >
-                            Connect
-                        </button>
-                    </li>
-                    <li class="platform-list__platform-item platform-list__platform-item--logged-out">
-                        <div class="platform-list__platform-item__logo platform-logo platform-logo--soundcloud">
-                            <i class="fa-brands fa-soundcloud"></i>
-                        </div>
-                        <div class="platform-list__platform-item-text platform-list__platform-item-text--logged-out">
-                            <h3>Soundcloud</h3>
-                            <p>Playlist</p>
-                        </div>
-                        <button 
-                            class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out text-only"
-                            on:click={() => initMusicData(MusicPlatform.Soundcloud)}
-                        >
-                            Connect
-                        </button>
-                    </li>
-                    <li class="platform-list__platform-item platform-list__platform-item--logged-out">
-                        <div class="platform-list__platform-item__logo platform-logo platform-logo--apple">
-                            <i class="fa-brands fa-itunes-note"></i>
-                        </div>
-                        <div class="platform-list__platform-item-text platform-list__platform-item-text--logged-out">
-                            <h3>Apple Music</h3>
-                            <p>Playlists</p>
-                        </div>
-                        <button 
-                            class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out text-only"
-                            on:click={() => initMusicData(MusicPlatform.AppleMusic)}
-                        >
-                            Connect
-                        </button>
-                    </li>
-                    <li class="platform-list__platform-item platform-list__platform-item--logged-out">
-                        <div class="platform-list__platform-item__logo platform-logo platform-logo--spotify">
-                            <i class="fa-brands fa-spotify"></i>
-                        </div>
-                        <div class="platform-list__platform-item-text platform-list__platform-item-text--logged-out">
-                            <h3>Spotify</h3>
-                            <p>Playlists, Podcasts</p>
-                        </div>
-                        <button 
-                            class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out text-only"
-                            on:click={() => initMusicData(MusicPlatform.Spotify)}
-                        >
-                            Connect
-                        </button>
-                    </li>
-                </ul>
-            {/if}
+            </div>
         </div>
-    </div>
-</div>
+    </Modal>
+{/if}
+<!-- Logged Off UI -->
+{#if !$musicDataStore?.isSignedIn}
+    <Modal onNavButtonClicked={onNavButtonClicked} isModalSmall={true}> 
+        <div class={`music music--small ${!$colorThemeState.isDarkTheme ? "music--light" : ""}`}>
+            <h1 class="modal-bg__content-title">
+                Music
+            </h1>
+            <p class="music__description">
+                Sync your favorite music streaming service to listen to your playlists or from our recommended playlists.
+            </p>
+            <h2>
+                Link an Account
+            </h2>
+            <ul class="platform-list platform-list--logged-out section-bg">
+                <li class="platform-list__platform-item platform-list__platform-item--logged-out">
+                    {#if !$colorThemeState.isDarkTheme}
+                        <i class="fa-brands fa-youtube fa-youtube--no-bg"></i>
+                    {:else}
+                        <div class="platform-list__platform-item__logo platform-logo platform-logo--youtube">
+                            <i class="fa-brands fa-youtube"></i>
+                        </div>
+                    {/if}
+                    <div class="platform-list__platform-item-text platform-list__platform-item-text--logged-out">
+                        <h3>Youtube</h3>
+                        <p>Playlist</p>
+                    </div>
+                    <button 
+                        class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out text-only"
+                        on:click={() => initMusicData(MusicPlatform.Youtube)}
+                    >
+                        Connect
+                    </button>
+                </li>
+                <li class="platform-list__platform-item platform-list__platform-item--logged-out">
+                    <div class="platform-list__platform-item__logo platform-logo platform-logo--soundcloud">
+                        <i class="fa-brands fa-soundcloud"></i>
+                    </div>
+                    <div class="platform-list__platform-item-text platform-list__platform-item-text--logged-out">
+                        <h3>Soundcloud</h3>
+                        <p>Playlist</p>
+                    </div>
+                    <button 
+                        class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out text-only"
+                        on:click={() => initMusicData(MusicPlatform.Soundcloud)}
+                    >
+                        Connect
+                    </button>
+                </li>
+                <li class="platform-list__platform-item platform-list__platform-item--logged-out">
+                    <div class="platform-list__platform-item__logo platform-logo platform-logo--apple">
+                        <i class="fa-brands fa-itunes-note"></i>
+                    </div>
+                    <div class="platform-list__platform-item-text platform-list__platform-item-text--logged-out">
+                        <h3>Apple Music</h3>
+                        <p>Playlists</p>
+                    </div>
+                    <button 
+                        class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out text-only"
+                        on:click={() => initMusicData(MusicPlatform.AppleMusic)}
+                    >
+                        Connect
+                    </button>
+                </li>
+                <li class="platform-list__platform-item platform-list__platform-item--logged-out">
+                    <div class="platform-list__platform-item__logo platform-logo platform-logo--spotify">
+                        <i class="fa-brands fa-spotify"></i>
+                    </div>
+                    <div class="platform-list__platform-item-text platform-list__platform-item-text--logged-out">
+                        <h3>Spotify</h3>
+                        <p>Playlists, Podcasts</p>
+                    </div>
+                    <button 
+                        class="platform-list__platform-item-btn platform-list__platform-item-btn--logged-out text-only"
+                        on:click={() => initMusicData(MusicPlatform.AppleMusic)}
+                    >
+                        Connect
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </Modal>
+{/if}
 
 <style lang="scss">
     $section-spacing: 8px;
     $top-row-height: 170px;
     $bottom-row-height: 470px;
     $my-playlists-section-padding-left: 25px;
-
-    .modal-bg {
-        &__content { 
-            &--small {
-                padding: 18px 25px 20px 25px !important;
-                border-radius: 20px;
-            }
-        }
-    }
 
     .music {
         width: 82vw;
@@ -501,6 +520,14 @@
                 }
                 button {
                     font-weight: 600 !important;
+                }
+            }
+            .active-account-header {
+                background-color: var(--bentoBoxBgColor);
+                &__btn {
+                    background-color: var(--bentoBoxBgColor);
+                    border: var(--bentoBoxBorder);
+                    box-shadow: var(--bentoBoxShadow);
                 }
             }
             .my-playlists p {
@@ -571,16 +598,13 @@
     /* Top Right Account Header */
     .active-account-header {
         @include flex-container(center, _);
-        @include pos-abs-top-right-corner(25px, 42px);
+        @include pos-abs-top-right-corner(25px, 16px);
         
         &__btn {
             @include flex-container(center, _);
             padding: 5px 8px;
             border-radius: 10px;
-            margin-right: 7px;
-            background-color: var(--bentoBoxBgColor);
-            border: var(--bentoBoxBorder);
-            box-shadow: var(--bentoBoxShadow);
+            background-color: var(--hoverColor);
             transition: 0.09s ease-in-out;
             
             &:active {
@@ -595,7 +619,7 @@
             }
         }
         &__username {
-            margin: 0px 7px 0px 4px;
+            margin: 0px 7px 0px 11px;
             color: rgba(var(--textColor1), 0.85);
         }
         &__user-profile-pic {
@@ -625,8 +649,8 @@
             @include pos-abs-top-right-corner(0px, 0px);
             position: relative;
             width: 100%;
-            padding: 17px 5px 24px 18px; 
-            margin-top: 13px;
+            padding: 17px 5px 25px 18px; 
+            margin-top: 14px;
             border-radius: 15px;
         }
         &__platform-item {
@@ -703,24 +727,22 @@
         &--empty &__no-pl-selected {
             color: rgba(var(--textColor1), 0.4) !important;
         }
-        h3 {
-            color: white;
+        span {
+            display: block;
         }
         a {
-            color: white;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
+            width: 90%;
             @include elipses-overflow;
+        }
+        a, h3, h4 {
+            color: white;
         }
         &__details-container {
             display: flex;
             margin-top: 10px;
             position: relative;
             width: 100%;
-
-            h4 {
-                width: 95%;
-                @include elipses-overflow;
-            }
         }
         &__artwork {
             z-index: 1;
@@ -816,6 +838,9 @@
                 background-color: var(--hoverColor);
             }
 
+            a {
+                color: rgb(var(--textColor1));
+            }
             p {
                 color: rgba(var(--textColor1), 0.53);
             }
@@ -1094,6 +1119,10 @@
             width: 35%;
             display: flex;
             overflow: hidden;
+            a {
+                width: 100%;
+                @include elipses-overflow;
+            }
             h6 {
                 font-weight: 400; 
             }

@@ -228,17 +228,15 @@
         </button>
     {:else}
         <div class="user-stats">
-            <button class="user-stats__new-sess-btn">+</button>
-            <div class="divider divider--vertical"></div>
-            <div class="user-stats__stat">
+            <div class="user-stats__stat" title={`${"4"} sessions finished today 👏.`}>
                 <i class="fa-regular fa-hourglass-half"></i>
                 4
             </div>
-            <div class="user-stats__stat">
+            <div class="user-stats__stat" title={`${"1h 3m"} of focus time today.`}>
                 <i class="fa-brands fa-readme"></i>
                 1h 3m
             </div>
-            <div class="user-stats__stat">
+            <div class="user-stats__stat" title={`${"1h 3m"} of break time today.`}>
                 <i class="fa-solid fa-seedling"></i>
                 1h 3m
             </div>
@@ -505,24 +503,6 @@
     /* Right Side */
     .user-stats {
         @include flex-container(center, _);
-
-        &__new-sess-btn {
-            @include circle(30px);
-            @include center;
-            background-color: var(--midPanelAccentColor1);
-            font-size: 1.7rem;
-            font-weight: 100;
-            margin-right: 4px;
-            transition: 0.1s ease-in-out;
-            display: none;
-
-            &:hover {
-                background-color: rgba($color: #FFFFFF, $alpha: 0.08);
-            }
-            &:active {
-                transform: scale(0.97);
-            }
-        }
         &__stat {
             background-color: var(--midPanelAccentColor3);
             margin-right: 4px;

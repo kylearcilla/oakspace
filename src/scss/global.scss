@@ -10,7 +10,7 @@
 
 a {
     text-decoration: none;
-    display: block;
+    display: inline-block;
 
     &:hover {
         text-decoration: underline;
@@ -74,58 +74,6 @@ h5 {
 h6 {
     font-size: 1.05rem;
     font-weight: 600;
-}
-
-.subheading-1 {
-    font-size: 1.1rem;
-    font-weight: 500;
-}
-.subheading-2 {
-    font-size: 1.12rem;
-    font-weight: 600;
-}
-
-.paragraph-1 {
-    font-weight: 400;
-    font-size: 1.2rem;
-}
-.paragraph-2 {
-    font-size: 1.05rem;
-    font-weight: 400;
-}
-.paragraph-3 {
-    font-size: 1.1rem;
-    font-weight: 600;
-}
-.paragraph-4 {
-    font-weight: 400;
-    font-size: 1rem;
-    &--light-theme {   
-        font-weight: 500;
-    }
-}
-
-.caption-1 {
-        
-}
-.caption-2 {
-    font-weight: 300;
-    font-size: 0.9rem;
-    &--light-theme {
-        font-weight: 600;
-    }
-}
-.caption-3 {
-    font-weight: 600;
-    font-size: 0.95rem;
-}
-.caption-4 {
-    font-size: 1.05rem;
-    font-weight: 400;
-}
-.caption-5 {
-    font-size: 0.88rem;
-    font-weight: 300;
 }
 
 /* Breakpoints Variables anad Corresponding Mixins */
@@ -436,7 +384,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     &--hidden {
         display: none;
     }
-  }
+}
 
 .gradient-container {
     transition: 0.15s ease-in-out;

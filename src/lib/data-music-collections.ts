@@ -57,10 +57,6 @@ export const musicCategories: MusicCollectionCategory[] = [
     },
 ]
 
-type DiscoverCollection = {
-    appleMusic: MusicCollection[]
-}
-
 export const sereneCollections: DiscoverCollection = {
     appleMusic: [
         {
@@ -71,7 +67,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "Classical music for relaxation and mental balance to soothe your spirits.",
             songCount: 50,
             id: "pl.c2ab8af2e9e74576b3bb45d62819d5cd",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/relaxing-classical/pl.c2ab8af2e9e74576b3bb45d62819d5cd"
         },
         {
@@ -82,7 +78,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "Escape to a realm of tranquil serenity with this collection of soothing and atmospheric tracks.",
             songCount: 250,
             id: "pl.bed492442a53481f98e98c6c4da9e01d",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/ambient-chill/pl.bed492442a53481f98e98c6c4da9e01d"
         },
         {
@@ -93,7 +89,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "Discover a soothing collection of indie and alternative electronic music for late nights, quiet afternoons, and reconnecting with yourself.",
             songCount: 250,
             id: "pl.7d5e4029dd9140ffbb5da5fda64b3f02",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/ca/playlist/evergreen/pl.7d5e4029dd9140ffbb5da5fda64b3f02"
         },
         {
@@ -104,7 +100,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "A sonic journey for relaxation and introspection.",
             songCount: 348,
             id: "pl.a9bd89e7b22e45cbaac40b58c9d3d09b",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/pure-ambient/pl.a9bd89e7b22e45cbaac40b58c9d3d09b"
         },
         {
@@ -115,7 +111,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "An enchanting piece of music the captures Minecraft's tranquil spirit with delicate and ambient soundscapes.",
             songCount: 24,
             id: "424968465",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/minecraft-volume-alpha/424968465"
         },
         {
@@ -126,7 +122,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "Set the mood with these smooth downtempo grooves, perfect for studying or creating a cozy atmosphere.",
             songCount: 99,
             id: "pl.a4e197979fc74b2a91b3cdf869f12aa5",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/ca/playlist/study-beats/pl.a4e197979fc74b2a91b3cdf869f12aa5"
         },
         {
@@ -137,7 +133,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "Relax to the smooth blend of jazz and folk in Norah Jones' music, graced by her textured vocals.",
             songCount: 25,
             id: "pl.f465577a2c9446478a9d5ab4f7c873ee",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/ca/playlist/norah-jones-essentials/pl.f465577a2c9446478a9d5ab4f7c873ee"
         },
         {
@@ -148,7 +144,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "Love and melody return as Radiohead hit a fine balance between adventure and warmth.",
             songCount: 10,
             id: "1109714933",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/ca/album/in-rainbows/1109714933"
         },
         {
@@ -159,7 +155,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "Relaxing piano melodies for a serene and soothing musical experience to unwind and destress.",
             songCount: 59,
             id: "pl.cb4d1c09a2df4230a78d0395fe1f8fde",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/ca/playlist/piano-chill/pl.cb4d1c09a2df4230a78d0395fe1f8fde"
         },
         {
@@ -170,7 +166,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "Lianne La Havas’ silky blend of R&B, folk, reggae, and jazz is both comforting and devastatingly candid.",
             songCount: 17,
             id: "pl.34756d8dde2c46249a224a25db8ce96b",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/ca/playlist/lianne-la-havas-essentials/pl.34756d8dde2c46249a224a25db8ce96b"
         },
         {
@@ -181,7 +177,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "Laidback tunes for laidback vibes.",
             songCount: 100,
             id: "pl.a4563494a6234007a8d2549ede5d6741",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/laidback/pl.a4563494a6234007a8d2549ede5d6741"
         },
         {
@@ -192,7 +188,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "Ethereal ambient music for a tranquil experiences.",
             songCount: 100,
             id: "pl.0809734db4b54d5eb7192a92a8cbf1c2",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/atmospheres/pl.0809734db4b54d5eb7192a92a8cbf1c2"
         },
         {
@@ -203,7 +199,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "Indulge in the soothing blend of jazz melodies perfect for unwinding and chilling.",
             songCount: 250,
             id: "pl.63271312c084419891982eab46cc68ac",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/ca/playlist/jazz-chill/pl.63271312c084419891982eab46cc68ac"
         },
         {
@@ -214,7 +210,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "Breezy, expressive pop and indie. New and classic tracks blend for a mellow, singer-songwriter vibe that brings comfort and charm.",
             songCount: 100,
             id: "pl.b5e8dbe8a706496496e1292466839207",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/ca/playlist/acoustic-chill/pl.b5e8dbe8a706496496e1292466839207"
         },
         {
@@ -225,7 +221,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "Smooth, laid-back electronic beats to set a relaxed, groove-filled atmosphere for unwinding.",
             songCount: 100,
             id: "pl.bd55c25265aa4de8b3fc3e0960751846",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/chill-house/pl.bd55c25265aa4de8b3fc3e0960751846"
         },
         {
@@ -233,10 +229,10 @@ export const sereneCollections: DiscoverCollection = {
             author: "Apple Music Electronic",
             artworkImgSrc: "https://is1-ssl.mzstatic.com/image/thumb/Video115/v4/8e/3c/a1/8e3ca176-3cec-e0c7-6404-0af103f5805c/Jobd6676bbf-fadd-45de-b520-d11484b2fd13-112399419-PreviewImage_preview_image_nonvideo_sdr-Time1619737021371.png/400x400cc.webp",
             genre: "Chillwave",
-            description: "Get focused with hypnotic beats and chill vibes.",
+            description: "Shut out distractions with these hypnotic grooves.",
             songCount: 100,
             id: "pl.0b448cf227014bde8f986ecad02c93de",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/living-in-the-library/pl.0b448cf227014bde8f986ecad02c93de"
         },
         {
@@ -247,7 +243,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "A genre-defying blender of introspective lyrics, innovative production, and soulful vocals, captivating listeners with his emotional depth and artistry.",
             songCount: 24,
             id: "pl.975962a888c64b42898257a2b5c65a39",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/ca/playlist/frank-ocean-essentials/pl.975962a888c64b42898257a2b5c65a39"
         },
         {
@@ -258,7 +254,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "Virtuosic bass, soulful vocals, and genre-bending brilliance seamlessly converge in Thundercat's music.",
             songCount: 23,
             id: "pl.1b312df84dd84e77831b0085a2eef690",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/ca/artist/thundercat/367322286"
         },
         {
@@ -269,7 +265,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "Richly rooted in Mexican traditions, Natalia LaFourcade's music is genre-spanning and emotionally expressive.",
             songCount: 34,
             id: "pl.0131d9e63b204caabe9802d81e891331",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/natalia-lafourcade-essentials/pl.0131d9e63b204caabe9802d81e891331"
         },
         {
@@ -280,7 +276,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "A blend of indie tunes with chill vibes, designed to boost focus and motivation.",
             songCount: 100,
             id: "pl.0385ce9b66404ccf8bde4cac041f1524",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/homework/pl.0385ce9b66404ccf8bde4cac041f1524"
         },
     ],
@@ -296,7 +292,7 @@ export const lofiCollections = {
             description: "Whether you're reading, cooking, or just lying back and chilling out, put this on and let it ride.",
             songCount: 100,
             id: "pl.46bf6d7a51aa48b6a27b37267d293f7f",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/relaxing-classical/pl.46bf6d7a51aa48b6a27b37267d293f7f"
         },
         {
@@ -307,7 +303,7 @@ export const lofiCollections = {
             description: "A tranquil sonic journey, filled with mellow beats, nostalgic samples, and a soothing atmosphere",
             songCount: 27,
             id: "1676000364",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/solitude/1676000364"
         },
         {
@@ -318,7 +314,7 @@ export const lofiCollections = {
             description: "Enjoy mellow Japanese lo-fi, setting a serene mood without distraction.",
             songCount: 150,
             id: "pl.38eb70f47b834187a21cf4e8e5833f35",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/ca/playlist/lo-fi-japan/pl.38eb70f47b834187a21cf4e8e5833f35"
         },
         {
@@ -329,7 +325,7 @@ export const lofiCollections = {
             description: "A daily selection of chill beats - perfect to help you relax & study 📚",
             songCount: 100,
             id: "pl.bf7a3cbca49644d8a33f09c1285aef5c",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/study-lofi/pl.bf7a3cbca49644d8a33f09c1285aef5c"
         },
         {
@@ -340,7 +336,7 @@ export const lofiCollections = {
             description: "Mellow lo-fi vibes meet soulful jazz.",
             songCount: 100,
             id: "pl.1c1744bbc1174cf2880c53b302d428a0",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/study-lofi/pl.1c1744bbc1174cf2880c53b302d428a0"
         },
         {
@@ -351,7 +347,7 @@ export const lofiCollections = {
             description: "A daily selection of chill beats - perfect to help you relax & study 📚",
             songCount: 100,
             id: "pl.f54198ad42404535be13eabf3835fb22",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/study-lofi/pl.f54198ad42404535be13eabf3835fb22"
         },
         {
@@ -362,7 +358,7 @@ export const lofiCollections = {
             description: "Immerse yourself in a soothing ambiance of laid-back beats, gentle melodies, and relaxing vibes.",
             songCount: 200,
             id: "pl.1d5ead185d8a4a9089f3b952770b762c",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/lo-fi-chill/pl.1d5ead185d8a4a9089f3b952770b762c"
         },
         {
@@ -373,7 +369,7 @@ export const lofiCollections = {
             description: "Ease into Sundays with laidback, hip-hop-inspired beats for relaxation, chores, reading, or work.",
             songCount: 100,
             id: "pl.7525e7e5e04f44269ce48ae05d39d209",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/lo-fi-sunday/pl.7525e7e5e04f44269ce48ae05d39d209"
         },
         
@@ -390,7 +386,7 @@ export const upbeatCollections = {
             description: "Unleash your senses with genre-blending tracks that push boundaries and create immersive sonic experiences.",
             songCount: 317,
             id: "pl.d6f5a44a25664f508078216de584ba0d",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/vibes/pl.d6f5a44a25664f508078216de584ba0d"
         },
         {
@@ -401,7 +397,7 @@ export const upbeatCollections = {
             description: "Relaxing and catchy pop tunes to unwind and chill. A curated playlist for those easygoing moments.",
             songCount: 55,
             id: "pl.9a964a33c1484aec8fdb0cac3e7771ed",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/pop-chill/pl.9a964a33c1484aec8fdb0cac3e7771ed"
         },
         {
@@ -412,7 +408,7 @@ export const upbeatCollections = {
             description: "Tracks that provide the perfect backdrop for studying, focusing, and learning.",
             songCount: 55,
             id: "pl.5aedf81bd67d478fa0a17fd58a95a2bc",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/hitting-the-books/pl.5aedf81bd67d478fa0a17fd58a95a2bc"
         },
         {
@@ -423,7 +419,7 @@ export const upbeatCollections = {
             description: "Mac Miller's music is a blend of introspective lyrics, captivating melodies, and innovative production, leaving a lasting impact.",
             songCount: 40,
             id: "pl.056728da1d2d40fbb30fd6209eb81d0d",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/mac-miller-essentials/pl.056728da1d2d40fbb30fd6209eb81d0d"
         },
         {
@@ -434,7 +430,7 @@ export const upbeatCollections = {
             description: "Melodic house and techno with vibrant emotions and steady beats.",
             songCount: 125,
             id: "pl.9642e1be452d43fca846dead91e6e8aa",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/melodic-house-techno/pl.9642e1be452d43fca846dead91e6e8aa"
         },
         {
@@ -445,7 +441,7 @@ export const upbeatCollections = {
             description: "Kendrick Lamar's raw storytelling, versatile flows, and profound artistry have resulted in a rare blend of pop success and widespread critical acclaim.",
             songCount: 30,
             id: "pl.8155ebe08de7423ca2b29929c8adeebd",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/kendrick-lamar-essentials/pl.8155ebe08de7423ca2b29929c8adeebd"
         },
         {
@@ -456,7 +452,7 @@ export const upbeatCollections = {
             description: "Timeless pop classics curated for nostalgia or new discoveries.",
             songCount: 106,
             id: "pl.c21556629e97453f9672feb9d8f228a3",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/pop-throwback/pl.c21556629e97453f9672feb9d8f228a3"
         },
         {
@@ -467,7 +463,7 @@ export const upbeatCollections = {
             description: "Fleetwood Mac's music is a timeless blend of rock, pop, and folk, marked by captivating harmonies and memorable melodies.",
             songCount: 25,
             id: "pl.647db163f3f84ccd9a839e5b6e4f34a2",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/fleetwood-mac-essentials/pl.647db163f3f84ccd9a839e5b6e4f34a2"
         },
         {
@@ -478,7 +474,7 @@ export const upbeatCollections = {
             description: "The hottest songs across various genres, featuring chart-topping hits and the latest music sensations.",
             songCount: 50,
             id: "pl.f4d106fed2bd41149aaacabb233eb5eb",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/todays-hits/pl.f4d106fed2bd41149aaacabb233eb5eb"
         },
         {
@@ -489,7 +485,7 @@ export const upbeatCollections = {
             description: "Tyler, The Creator's music is a bold and boundary-pushing blend of hip-hop, alternative rap, and experimental sounds, brimming with raw and sometimes cathartic energy.",
             songCount: 100,
             id: "pl.02757c79605a4577b79c40fb556728db",
-            type: "playlist",
+            type: "Playlist",
             url: "https://is2-ssl.mzstatic.com/image/thumb/Music125/v4/be/51/83/be5183cc-87dd-3ca3-c082-3ccf228e8bf0/pr_source.png/400x400SC.FPESS03.webp?l=en-US"
         },
         {
@@ -500,7 +496,7 @@ export const upbeatCollections = {
             description: "Rap Life is the playlist at the forefront of hip-hop culture today, updated regularly with new music you can’t miss.",
             songCount: 101,
             id: "https://music.apple.com/us/playlist/rap-life/pl.abe8ba42278f4ef490e3a9fc5ec8e8c5",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/playlist/rap-life/pl.abe8ba42278f4ef490e3a9fc5ec8e8c5"
         },
         {
@@ -511,7 +507,7 @@ export const upbeatCollections = {
             description: "Essential tracks from the vibrant world of Korean pop music, featuring catchy melodies and infectious beats.",
             songCount: 100,
             id: "pl.6a3c854a49a542739e5d57291b27e122",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/k-pop-essentials/pl.6a3c854a49a542739e5d57291b27e122"
         },
         {
@@ -522,7 +518,7 @@ export const upbeatCollections = {
             description: "Born in Nigeria and Ghana, Afrobeats has become one of the most eclectic—and exportable—sounds in contemporary music, mixing with everything from rap and dancehall to R&B and house.",
             songCount: 111,
             id: "pl.dc349df19c6f410d874c197db63ecfed",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/afrobeats-hits/pl.dc349df19c6f410d874c197db63ecfed"
         },
         {
@@ -533,7 +529,7 @@ export const upbeatCollections = {
             description: "Electrifying and futuristic, Daft Punk's music blends infectious beats, mesmerizing synths, and robotic vocals, defining the sound of French electronic music.",
             songCount: 21,
             id: "pl.74657640b88c4587a426160f7441de46",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/daft-punk-essentials/pl.74657640b88c4587a426160f7441de46"
         },
         {
@@ -544,7 +540,7 @@ export const upbeatCollections = {
             description: "Crafted during the grips of the pandemic, her seventh solo album is a celebration of freedom and a complete immersion into house and dance.",
             songCount: 16,
             id: "1636789969",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/renaissance/1636789969"
         },
         {
@@ -555,7 +551,7 @@ export const upbeatCollections = {
             description: "A powerful album that showcases Beyoncé's artistry, exploring themes of love, empowerment, and resilience.",
             songCount: 13,
             id: "1460430561",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/lemonade/1460430561"
         },
         {
@@ -566,7 +562,7 @@ export const upbeatCollections = {
             description: "Rihanna's music a dynamic fusion of pop, R&B, and hip-hop, characterized by her versatile vocals, empowering lyrics, and trend-setting sound.",
             songCount: 45,
             id: "pl.d549e09c35de455c8aaed84684898d01",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/rihanna-essentials/pl.d549e09c35de455c8aaed84684898d01"
         },
         {
@@ -577,7 +573,7 @@ export const upbeatCollections = {
             description: "A psychedelic journey, fusing dreamy melodies, electronic elements, and introspective lyrics into a mesmerizing sonic experience.",
             songCount: 13,
             id: "1440838039",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/currents/1440838039"
         },
         {
@@ -588,7 +584,7 @@ export const upbeatCollections = {
             description: "Powerful vocals and infectious pop melodies define Ariana Grande's music, blending vulnerability and empowerment seamlessly.",
             songCount: 32,
             id: "pl.942cc20e34a44f06bd36488e6c3e475e",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/ariana-grande-essentials/pl.942cc20e34a44f06bd36488e6c3e475e"
         },
         {
@@ -599,7 +595,7 @@ export const upbeatCollections = {
             description: "A sonic tapestry of groovy beats, lush synths, and introspective lyrics that explore the passage of time and personal growth.",
             songCount: 12,
             id: "1497230760",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/the-slow-rush/1497230760"
         },
         {
@@ -610,7 +606,7 @@ export const upbeatCollections = {
             description: "Enchanting and introspective, TS's \"Midnights\" weaves a tapestry of captivating melodies and evocative storytelling.",
             songCount: 23,
             id: "1689089710",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/midnights-the-til-dawn-edition/1689089710"
         },
         {
@@ -621,7 +617,7 @@ export const upbeatCollections = {
             description: "Step back in time with and immerse yourself with some R&B classics.",
             songCount: 23,
             id: "pl.605afbf60191408090398dd0cc153e3f",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/r-b-throwback/pl.605afbf60191408090398dd0cc153e3f"
         },
         {
@@ -632,7 +628,7 @@ export const upbeatCollections = {
             description: "Raw and introspective, Kendrick Lamar's \"DAMN\". delivers a captivating journey through personal reflections and societal observations.",
             songCount: 14,
             id: "1440881047",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/damn/1440881047"
         },
         {
@@ -643,7 +639,7 @@ export const upbeatCollections = {
             description: "A genre-defying masterpiece, Kendrick Lamar's \"To Pimp a Butterfly\" explores profound social commentary through innovative soundscapes",
             songCount: 16,
             id: "1440828886",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/to-pimp-a-butterfly/1440828886"
         },
         {
@@ -654,7 +650,7 @@ export const upbeatCollections = {
             description: "A critically acclaimed hip-hop album that serves as a vivid and introspective narrative of his upbringing in Compton, California and meteoric rise to fame.",
             songCount: 18,
             id: "1440818890",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/good-kid-m-a-a-d-city-deluxe-version/1440818890"
         },
         {
@@ -665,7 +661,7 @@ export const upbeatCollections = {
             description: "A mesmerizing album that seamlessly blends soul, R&B, and introspective storytelling for an unforgettable musical experience.",
             songCount: 17,
             id: "1440765580",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/channel-orange/1440765580"
         },
         {
@@ -676,7 +672,7 @@ export const upbeatCollections = {
             description: "Relive the sound of the early 2000s with a mix of pop, R&B, and rock hits that defined the decade.",
             songCount: 100,
             id: "pl.e50ccee7318043eaaf8e8e28a2a55114",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/2000s-hits-essentials/pl.e50ccee7318043eaaf8e8e28a2a55114"
         },
         {
@@ -687,7 +683,7 @@ export const upbeatCollections = {
             description: "A compilation of chart-topping hits and genre-defying tracks that shaped the diverse music landscape of the 2010s.",
             songCount: 100,
             id: "pl.6b1b5dfda067443481265436811002f1",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/2010s-hits-essentials/pl.6b1b5dfda067443481265436811002f1"
         },
         {
@@ -698,7 +694,7 @@ export const upbeatCollections = {
             description: "As warm as a summer day and as laidback as a cocktail party, Kaytranada's music fuses R&B with crisp boom bap and rich electronic textures",
             songCount: 25,
             id: "pl.11f93fe65feb49db807b1219ad865bc0",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/kaytranada-essentials/pl.11f93fe65feb49db807b1219ad865bc0"
         },
         {
@@ -709,7 +705,7 @@ export const upbeatCollections = {
             description: "a captivating album that fuses soulful melodies, jazz-infused harmonies, and intricate production, creating a sonic journey.",
             songCount: 13,
             id: "1327772541",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/geography/1327772541"
         },
         {
@@ -720,7 +716,7 @@ export const upbeatCollections = {
             description: "Known for their garage-rock-inspired sound, they deliver catchy, raw, and energetic compositions.",
             songCount: 26,
             id: "pl.3a7a911b00c048ebba63b651935a241a",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/the-strokes-essentials/pl.3a7a911b00c048ebba63b651935a241a"
         },
     ],
@@ -736,7 +732,7 @@ export const soundtrackCollections = {
             description: "Hisaishi's whimsical and melancholic compositions gracefully capture the wonder and danger found in the world of 'Spirited Away.'",
             songCount: 21,
             id: "883501721",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/spirited-away-original-soundtrack/883501721"
         },
         {
@@ -747,7 +743,7 @@ export const soundtrackCollections = {
             description: "Enjoy your favorite songs from Pixar greats like Toy Story, Coco, Monster's Inc., Up, Finding Nemo, Cars and many more!",
             songCount: 53,
             id: "pl.7d443a2e53a242d389f5ed439647df1d",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/disney-pixar-hits/pl.7d443a2e53a242d389f5ed439647df1d"
         },
         {
@@ -758,7 +754,7 @@ export const soundtrackCollections = {
             description: "Giacchino's score enriches the film with captivating, whimsical, and often-times gut-wrenching melodies.",
             songCount: 27,
             id: "1440617705",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/up-soundtrack-from-the-motion-picture/1440617705"
         },
         {
@@ -769,7 +765,7 @@ export const soundtrackCollections = {
             description: "Classic rock and pop anthems of 'Guardians of the Galaxy.",
             songCount: 127,
             id: "pl.c7183fd379694af4896a1b4d7dc85d30",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/guardians-of-the-galaxy/pl.c7183fd379694af4896a1b4d7dc85d30"
         },
         {
@@ -780,7 +776,7 @@ export const soundtrackCollections = {
             description: "Epic, immense and ethereal, Hans Zimmer's score for 'Interstellar' is both intimate & cosmic in the scale of its emotional resonance.",
             songCount: 30,
             id: "1533983552",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/interstellar-original-motion-picture-soundtrack-expanded/1533983552"
         },
         {
@@ -791,7 +787,7 @@ export const soundtrackCollections = {
             description: "Coco's' soundtrack resonates with the lively spirit of Mexican traditions and Coco's heartfelt story.",
             songCount: 27,
             id: "1442277063",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/coco-original-motion-picture-soundtrack-deluxe-edition/1442277063"
         },
         {
@@ -802,7 +798,7 @@ export const soundtrackCollections = {
             description: "Epic, sweeping, and enchanting, Howard Shore's soundtrack embodies the grandeur of Middle-earth and the drama of the trilogy.",
             songCount: 37,
             id: "1369921417",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/the-lord-of-the-rings-the/1369921417"
         },
         {
@@ -813,7 +809,7 @@ export const soundtrackCollections = {
             description: "This Grammy-winning soundtack is a timeless blend of folk, blues, and gospel capturing the soul of rural America.",
             songCount: 19,
             id: "1469575447",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/o-brother-where-art-thou-music-from-the-motion-picture/1469575447"
         },
         {
@@ -824,7 +820,7 @@ export const soundtrackCollections = {
             description: "May the Force be with you. All of the iconic Star Wars music—in one playlist.",
             songCount: 66,
             id: "pl.cfa48bbf57144c799f2cb002ddff1f96",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/best-of-star-wars/pl.cfa48bbf57144c799f2cb002ddff1f96"
         },
         {
@@ -835,7 +831,7 @@ export const soundtrackCollections = {
             description: "An eclectic and energizing soundtrack of pop-heavy melodies.",
             songCount: 15,
             id: "1453876765",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/spider-man-into-the-spider-verse-soundtrack-from/1453876765"
         },
         {
@@ -846,7 +842,7 @@ export const soundtrackCollections = {
             description: "Santaolalla's work merges haunting melodies & ambient sounds that perfectly accompanies the game's emotional narrative & desolate aesthetic.",
             songCount: 30,
             id: "655118434",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/ca/playlist/acoustic-chill/pl.b5e8dbe8a706496496e1292466839207"
         },
         {
@@ -857,7 +853,7 @@ export const soundtrackCollections = {
             description: "Sweeping and majestic, the 'Lion King' soundtrack echoes the African savannah's beauty and drama of its story.",
             songCount: 12,
             id: "1445732923",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/the-lion-king-original-motion-picture-soundtrack/1445732923"
         },
         {
@@ -868,7 +864,7 @@ export const soundtrackCollections = {
             description: "Jonny Greenwood's symphonic score on 'There Will be Blood' adds a haunting, dissonant layer of intensity to the film's sprawling narrative.",
             songCount: 13,
             id: "1449615925",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/there-will-be-blood-music-from-the-motion-picture/1449615925"
         },
         {
@@ -879,7 +875,7 @@ export const soundtrackCollections = {
             description: "Minecraft's tranquil spirit is captured beautifully in this enchanting music with delicate, ambient soundscapes.",
             songCount: 24,
             id: "424968465",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/minecraft-volume-alpha/424968465"
         },
         {
@@ -890,7 +886,7 @@ export const soundtrackCollections = {
             description: "Jonny Greenwood's symphonic score enriches the film's graceful and refined aesthetic of the fashion hub of 1950's London.",
             songCount: 13,
             id: "1329073218",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/phantom-thread-original-motion-picture-soundtrack/1329073218"
         },
         {
@@ -901,7 +897,7 @@ export const soundtrackCollections = {
             description: "Ramin Djawad's sweeping work of orchestral grandeur and haunting themes enhance the series' drama and fantasy.",
             songCount: 55,
             id: "pl.fea117e7b45549aea9a0663d8a309806",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/music-from-game-of-thrones/pl.fea117e7b45549aea9a0663d8a309806"
         },
         {
@@ -912,7 +908,7 @@ export const soundtrackCollections = {
             description: "Intensely visceral music that enriches the intensity of a story about survival and revenge.",
             songCount: 23,
             id: "1516405841",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/the-revenant-original-motion-picture-soundtrack/1516405841"
         },
         {
@@ -923,7 +919,7 @@ export const soundtrackCollections = {
             description: "Quirky, whimsical, and emotional, this soundtrack mirrors the film's unique charm and ligh-hearted spirit.",
             songCount: 32,
             id: "1440789547",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/the-grand-budapest-hotel-original-soundtrack/1440789547"
         },
         {
@@ -934,7 +930,7 @@ export const soundtrackCollections = {
             description: "Soulful and emotionally resonant, the 'Her' soundtrack deepens the film's story about heartbreak and love in the modern world.",
             songCount: 13,
             id: "1553022037",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/her-original-score/1553022037"
         },
         {
@@ -945,7 +941,7 @@ export const soundtrackCollections = {
             description: "A melancholic and ethereal soundtrack that mirrors the film's exploration of love, memory, and heartbreak.",
             songCount: 26,
             id: "1442912229",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/eternal-sunshine-of-the-spotless-mind-soundtrack/1442912229"
         },
         {
@@ -956,7 +952,7 @@ export const soundtrackCollections = {
             description: "Nicholas Britell's emotionally rich symphonic score captures the dramatic power struggles within the Roy family.",
             songCount: 25,
             id: "1689640612",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/succession-season-4-hbo-original-series-soundtrack/1689640612"
         },
     ],
@@ -972,7 +968,7 @@ export const acousticCollections = {
             description: "Timeless, stripped-down tunes by classic rockers and songsmiths.",
             songCount: 100,
             id: "pl.895834a538434df79968948ee559608c",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/classic-acoustic/pl.895834a538434df79968948ee559608c"
         },
         {
@@ -983,7 +979,7 @@ export const acousticCollections = {
             description: "Authentic pop hits in their purest form, stripped down to captivate with raw vocals and melodies.",
             songCount: 98,
             id: "pl.522581bf8c264bafa742e75df9772078",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/acoustic-hits/pl.522581bf8c264bafa742e75df9772078"
         },
         {
@@ -994,7 +990,7 @@ export const acousticCollections = {
             description: "Relaxing melodies that capture the essence of a serene summer.",
             songCount: 61,
             id: "pl.e6441e3d39664b9997d3533e7e65e037",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/acoustic-summer/pl.e6441e3d39664b9997d3533e7e65e037"
         },
         {
@@ -1005,7 +1001,7 @@ export const acousticCollections = {
             description: "Jazz playlist for rest and relaxation, perfect for a good night's sleep and winding down.",
             songCount: 100,
             id: "pl.f31fb34cf8ad46f0a27c960fa805cc4c",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/jazzzzzzzzzzzzzzz/pl.f31fb34cf8ad46f0a27c960fa805cc4c"
         },
         {
@@ -1016,7 +1012,7 @@ export const acousticCollections = {
             description: "Breezy, expressive pop and indie.",
             songCount: 100,
             id: "pl.b5e8dbe8a706496496e1292466839207",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/ca/playlist/acoustic-chill/pl.b5e8dbe8a706496496e1292466839207"
         },
         {
@@ -1027,7 +1023,7 @@ export const acousticCollections = {
             description: "Soothing guitar melodies for mindfulness and restoration.",
             songCount: 49,
             id: "pl.e048686be4f34819ad4373a034c8bf59",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/guitar-chill/pl.e048686be4f34819ad4373a034c8bf59"
         },
         {
@@ -1038,7 +1034,7 @@ export const acousticCollections = {
             description: "Stripped-down vocals and melodies, both classics and reworks.",
             songCount: 49,
             id: "pl.7378e49b2bc74ec186547e8185ee913f",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/acoustic-r-b/pl.7378e49b2bc74ec186547e8185ee913f"
         },
         {
@@ -1049,7 +1045,7 @@ export const acousticCollections = {
             description: "Relaxing riffs straight from the pueblos blancos in Andalusia.",
             songCount: 155,
             id: "pl.2f93a13048b94204918d4b99e9a056df",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/spanish-guitar/pl.2f93a13048b94204918d4b99e9a056df"
         },
         {
@@ -1060,7 +1056,7 @@ export const acousticCollections = {
             description: "Relaxed, stripped-down versions of beloved songs for a mellow vibe.",
             songCount: 100,
             id: "pl.171ed575105547da92990578cb1639be",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/chill-covers/pl.171ed575105547da92990578cb1639be"
         },
         {
@@ -1071,7 +1067,7 @@ export const acousticCollections = {
             description: "Experience the soothing allure of acoustic melodies that evoke nature's beauty.",
             songCount: 264,
             id: "pl.8e7d5f0c316f4d9da9db9c29281f10a4",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/barefoot-acoustic/pl.8e7d5f0c316f4d9da9db9c29281f10a4"
         },
         {
@@ -1082,7 +1078,7 @@ export const acousticCollections = {
             description: "A collection of some of the greatest guitar classics, performed by a selection of the finest players of all time.",
             songCount: 18,
             id: "pl.1147311a18094eb9974c3ba4a425fd61",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/the-classical-guitar/pl.1147311a18094eb9974c3ba4a425fd61"
         },
         {
@@ -1093,7 +1089,7 @@ export const acousticCollections = {
             description: "Savor the tranquil solo piano melodies from this acoustic playlist.",
             songCount: 50,
             id: "pl.cb4d1c09a2df4230a78d0395fe1f8fde",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/piano-chill/pl.cb4d1c09a2df4230a78d0395fe1f8fde"
         },
         {
@@ -1104,7 +1100,7 @@ export const acousticCollections = {
             description: "Timeless masterpieces showcasing the piano's elegance and emotional depth.",
             songCount: 100,
             id: "pl.5e6ff35247334d9699646afd21e589bd",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/piano-essentials/pl.5e6ff35247334d9699646afd21e589bd"
         },
         {
@@ -1115,7 +1111,7 @@ export const acousticCollections = {
             description: "Expressive keys and improvisational flair create a rhythmic and soulful musical journey.",
             songCount: 100,
             id: "pl.5d571bccbe60493eaadf6bb467720feb",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/jazz-piano-essentials/pl.5d571bccbe60493eaadf6bb467720feb"
         },
     ],
@@ -1131,7 +1127,7 @@ export const classicalCollections = {
             description: "Relax with a calming mix of classical and contemporary music.",
             songCount: 50,
             id: "pl.5a26d34eb6ec4825976bdef03784537d",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/classical-chill/pl.5a26d34eb6ec4825976bdef03784537d"
         },
         {
@@ -1142,7 +1138,7 @@ export const classicalCollections = {
             description: "Explore the 1700s-1800s classical era's brilliance, featuring Mozart, Haydn, Beethoven, and more.",
             songCount: 49,
             id: "pl.fe324bdb6f104480bae2021c10bbcf77",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/mozart-and-more/pl.fe324bdb6f104480bae2021c10bbcf77"
         },
         {
@@ -1153,7 +1149,7 @@ export const classicalCollections = {
             description: "Timeless masterpieces showcasing the piano's elegance and emotional depth.",
             songCount: 100,
             id: "pl.5e6ff35247334d9699646afd21e589bd",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/piano-essentials/pl.5e6ff35247334d9699646afd21e589bd"
         },
         {
@@ -1164,7 +1160,7 @@ export const classicalCollections = {
             description: "Soothe your soul with serene and timeless classical compositions for tranquil vibes.",
             songCount: 50,
             id: "pl.c2ab8af2e9e74576b3bb45d62819d5cd",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/relaxing-classical/pl.c2ab8af2e9e74576b3bb45d62819d5cd"
         },
         {
@@ -1175,7 +1171,7 @@ export const classicalCollections = {
             description: "Indulge in the timeless beauty of classical hits.",
             songCount: 50,
             id: "pl.9dc583e20e344cc4bf7dc823abde7a2c",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/classical-hits/pl.9dc583e20e344cc4bf7dc823abde7a2c"
         },
         {
@@ -1186,7 +1182,7 @@ export const classicalCollections = {
             description: "Experience the magic of summer with the uplifting and vibrant tunes of classical music.",
             songCount: 49,
             id: "pl.ab135abce66d4784b801594e22ce338d",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/classical-summer/pl.ab135abce66d4784b801594e22ce338d"
         },
         {
@@ -1197,7 +1193,7 @@ export const classicalCollections = {
             description: "Delight in the enchanting melodies of blissful classical music.",
             songCount: 100,
             id: "pl.0030a85106a14c078a3bbf0f6befb877",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/joyful-classical/pl.0030a85106a14c078a3bbf0f6befb877"
         },
         {
@@ -1208,7 +1204,7 @@ export const classicalCollections = {
             description: "Explore the profound and enduring compositions of a master.",
             songCount: 48,
             id: "pl.63696b0b53a24734a0f1f34c92ccd5c4",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/wolfgang-amadeus-mozart-essentials/pl.63696b0b53a24734a0f1f34c92ccd5c4"
         },
         {
@@ -1219,7 +1215,7 @@ export const classicalCollections = {
             description: "Embrace the season with a playlist of uplifting classical masterpieces inspired by springtime.",
             songCount: 24,
             id: "pl.c310b4d40b394e2e91cb8d9a08321097",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/classical-spring/pl.c310b4d40b394e2e91cb8d9a08321097"
         },
         {
@@ -1230,7 +1226,7 @@ export const classicalCollections = {
             description: "Brisk and elegant classical music for an energized and enduring boost.",
             songCount: 73,
             id: "pl.351c85541ea843eeb9b9a814bf210b03",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/classical-motivation/pl.351c85541ea843eeb9b9a814bf210b03"
         },
         {
@@ -1241,7 +1237,7 @@ export const classicalCollections = {
             description: "Discover world-class music-making, from solo recitals to epic symphonies, all performed by incredible artists and ensembles.",
             songCount: 59,
             id: "pl.66c17ed5cc754856b944a9150483e375",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/the-works/pl.66c17ed5cc754856b944a9150483e375"
         },
         {
@@ -1252,7 +1248,7 @@ export const classicalCollections = {
             description: "Harness the power of classical music for better sleep or for just chilling.",
             songCount: 100,
             id: "pl.998d1aa71ae64e1f9199d0a112067149",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/classical-sleep/pl.998d1aa71ae64e1f9199d0a112067149"
         },
     ],
@@ -1268,7 +1264,7 @@ export const zenCollections = {
             description: "Calming rainfall sounds, from gentle drizzles to distant thunderstorms, providing introspective tranquility and natural white noise.",
             songCount: 250,
             id: "pl.e79d63bcaead407fb44a0c19380822e6",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/ca/playlist/rain-sounds/pl.e79d63bcaead407fb44a0c19380822e6"
         },
         {
@@ -1279,7 +1275,7 @@ export const zenCollections = {
             description: "Guided meditations to ease anxieties and promote restful sleep.",
             songCount: 100,
             id: "pl.b201f2bc8ec3468c8afd74a5e394b6e2",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/sleep-meditation/pl.b201f2bc8ec3468c8afd74a5e394b6e2"
         },
         {
@@ -1290,7 +1286,7 @@ export const zenCollections = {
             description: "Unwind and rejuvenate with a soothing playlist of tranquil melodies for ultimate relaxation.",
             songCount: 250,
             id: "pl.4f2b5ddd448344a1848db8259e6c5f5b",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/spa/pl.4f2b5ddd448344a1848db8259e6c5f5b"
         },
         {
@@ -1301,7 +1297,7 @@ export const zenCollections = {
             description: "Relaxing sounds to lull you into peaceful sleep and create a tranquil bedtime atmosphere.",
             songCount: 250,
             id: "pl.0ef59752c0cd457dbf1391f08cbd936f",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/sleep-sounds/pl.0ef59752c0cd457dbf1391f08cbd936f"
         },
         {
@@ -1312,7 +1308,7 @@ export const zenCollections = {
             description: "Serene ambient tunes for tranquility, featuring gentle acoustic sounds, nature sounds, and more.",
             songCount: 250,
             id: "pl.e896478fdf824a93ab2f99165c3a1422",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/pure-meditation/pl.e896478fdf824a93ab2f99165c3a1422"
         },
         {
@@ -1323,7 +1319,7 @@ export const zenCollections = {
             description: "Enlightening talks and prompts from leading voices in meditation and wellness.",
             songCount: 100,
             id: "pl.84d78a058d1744208f63004b66e4d857",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/guided-meditation/pl.84d78a058d1744208f63004b66e4d857"
         },
         {
@@ -1334,7 +1330,7 @@ export const zenCollections = {
             description: "An eclectic playlist to keep you focused and anchored during yoga or meditation.",
             songCount: 99,
             id: "pl.72a029c5d77f4da8a0793afeb2a8be8b",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/beats-breath/pl.72a029c5d77f4da8a0793afeb2a8be8b"
         },
         {
@@ -1345,7 +1341,7 @@ export const zenCollections = {
             description: "Harmonious music for mindfulness and breathwork.",
             songCount: 100,
             id: "pl.ffc344338c3d4ff394ddcf94d766c143",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/pure-calm/pl.ffc344338c3d4ff394ddcf94d766c143"
         },
         {
@@ -1356,7 +1352,7 @@ export const zenCollections = {
             description: "High-energy music for ecstatic yoga sessions with tribal and house influences.",
             songCount: 99,
             id: "pl.10555e26fab04dfb81041ae92a76effd",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/high-vibes-yoga/pl.10555e26fab04dfb81041ae92a76effd"
         },
         {
@@ -1367,7 +1363,7 @@ export const zenCollections = {
             description: "Music to elevate mindfulness & creativity by immersing you in the flow state.",
             songCount: 99,
             id: "pl.de20dc985af84cc2aaef6c9f5f493c3b",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/flow-state/pl.de20dc985af84cc2aaef6c9f5f493c3b"
         },
         {
@@ -1378,7 +1374,7 @@ export const zenCollections = {
             description: "Immerse yourself in a world of peaceful music, tailor-made for enhancing your breathwork and relaxation.",
             songCount: 100,
             id: "pl.d8caca2864d645459da8f4301cb26a37",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/healing-meditation/pl.d8caca2864d645459da8f4301cb26a37"
         },
         {
@@ -1389,7 +1385,7 @@ export const zenCollections = {
             description: "Serenity through breathwork and soothing tunes.",
             songCount: 250,
             id: "pl.2ce0acb450d048c49d4c4b52b2f4b195",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/ambient-sleep/pl.2ce0acb450d048c49d4c4b52b2f4b195"
         },
         {
@@ -1400,7 +1396,7 @@ export const zenCollections = {
             description: "Soothing melodies to enhance mindfulness, relaxation, and deep breathing for overall well-being.",
             songCount: 100,
             id: "pl.45fcb3b93a9749eaa8190693802d025e",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/breathwork/pl.45fcb3b93a9749eaa8190693802d025e"
         },
         {
@@ -1411,7 +1407,7 @@ export const zenCollections = {
             description: "Soothing nature sounds to lull you to a state of relaxation.",
             songCount: 100,
             id: "pl.040f99fdd83542a79b28fc4c13f773bd",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/nature-sounds/pl.040f99fdd83542a79b28fc4c13f773bd"
         }
     ],
@@ -1427,7 +1423,7 @@ export const summerCollections = {
             description: "Sun-soaked, feel-good tunes for the summer.",
             songCount: 109,
             id: "pl.6cbec98d25194addb2b012e681e0eff6",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/summer-vibes/pl.6cbec98d25194addb2b012e681e0eff6"
         },
         {
@@ -1438,7 +1434,7 @@ export const summerCollections = {
             description: "An album teeming dreamy melodies, lively guitars, and summer soul-searching.",
             songCount: 18,
             id: "1550175828",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/women-in-music-pt-iii-expanded-edition/1550175828"
         },
         {
@@ -1449,7 +1445,7 @@ export const summerCollections = {
             description: "Sunny, feel-good melodies to brighten your summer days.",
             songCount: 79,
             id: "pl.34c6bf42a176492abb918edb57b565e9",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/songs-of-the-summer/pl.34c6bf42a176492abb918edb57b565e9"
         },
         {
@@ -1460,7 +1456,7 @@ export const summerCollections = {
             description: "A mesmerizing album that seamlessly blends soul, R&B, and introspective storytelling for an unforgettable musical experience.",
             songCount: 17,
             id: "1440765580",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/channel-orange/1440765580"
         },
         {
@@ -1471,7 +1467,7 @@ export const summerCollections = {
             description: "Timeless reggae rhythms with messages of love, freedom, and social consciousness.",
             songCount: 16,
             id: "1469575763",
-            type: "album",
+            type: "Album",
             url: "https://music.apple.com/us/album/legend-the-best-of-bob-marley-the-wailers-2002-edition/1469575763"
         },
         {
@@ -1482,7 +1478,7 @@ export const summerCollections = {
             description: "Soulful melodies for laid-back summer vibes.",
             songCount: 61,
             id: "pl.bd08a568ec2647d19da5891d3a4a3ebe",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/summer-soul/pl.bd08a568ec2647d19da5891d3a4a3ebe"
         },
         {
@@ -1493,7 +1489,7 @@ export const summerCollections = {
             description: "Elevate your mood with breezy beats, uplifting vocals, and catchy rhythms.",
             songCount: 100,
             id: "pl.4fe671d3bd994738ace5ae974daebc10",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/happy-hits/pl.4fe671d3bd994738ace5ae974daebc10"
         },
         {
@@ -1504,7 +1500,7 @@ export const summerCollections = {
             description: "Radiant tunes that embody the sun's golden embrace.",
             songCount: 100,
             id: "pl.e4d0cb54b9dd46648a06290ff1a90045",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/sunkissed/pl.e4d0cb54b9dd46648a06290ff1a90045"
         },
         {
@@ -1515,7 +1511,7 @@ export const summerCollections = {
             description: "Music that leads you to a perpetual state of chill.",
             songCount: 196,
             id: "pl.9dc9de535a544d5d9692766feac0f7c7",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/permanent-vacation/pl.9dc9de535a544d5d9692766feac0f7c7"
         },
         {
@@ -1526,7 +1522,7 @@ export const summerCollections = {
             description: "Summer vibe tunes fit for fun at the beach.",
             songCount: 100,
             id: "pl.894cf25d1772492f89115f854826fc15",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/beach-party/pl.894cf25d1772492f89115f854826fc15"
         },
         {
@@ -1537,7 +1533,7 @@ export const summerCollections = {
             description: "Pop so hot, you’ll need SPF 50+ to listen.",
             songCount: 50,
             id: "pl.f27ed614acb2429188a9d09f50caa9ff",
-            type: "playlist",
+            type: "Playlist",
             url: "https://music.apple.com/us/playlist/summer-sunshine/pl.f27ed614acb2429188a9d09f50caa9ff"
         },
     ],

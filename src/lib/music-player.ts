@@ -5,8 +5,8 @@ import type { MusicData } from "./music-data-apple"
  * ...that interact with popular Music Platform APIs (e.g., Spotify, Youtube Music, Apple Music).
  */
 export abstract class MusicPlayer {
-    abstract musicPlayerData: MusicPlayerState
     abstract musicData: MusicData
+    abstract state: MusicPlayerState
 
     serverURL = "http://localhost:3000/"
 
@@ -16,9 +16,9 @@ export abstract class MusicPlayer {
     abstract toggleShuffle(): void;
     abstract toggleRepeat(): void;
     abstract queueAndPlayNextTrack(playlistId: string, newIndex: number): void
+    abstract quitPlayer(): void;
     
     abstract hideMusicPlayer(): void;
-    abstract updateMusicPlayerState(newMusicPlayerState: MusicPlayerState): void
-    abstract resetMusicPlayerState(): void;
+    abstract updateMusicPlayerState(newPlayerState: MusicPlayerState): void
     abstract resetMusicPlayerStateToEmptyState(): void
 }

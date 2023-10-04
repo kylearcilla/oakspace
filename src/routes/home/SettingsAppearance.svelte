@@ -1,244 +1,254 @@
 <script lang="ts">
-	import { onMount } from "svelte";
-    import { lightColorThemes, darkColorThemes, imageThemes, ambientVideos, defaultThemes } from "$lib/data-themes";
-	import { clickOutside, setRootColors } from "$lib/utils-general";
-	import { colorThemeState } from "$lib/store";
+	import { onMount } from "svelte"
+	import { themeState } from "$lib/store"
+	import { getThemeFromSection, setNewTheme } from "$lib/utils-appearance"
+    import { lightColorThemes, darkColorThemes, imageThemes, ambientVideos, defaultThemes } from "$lib/data-themes"
 
-  enum Modal { Settings, Youtube, Music, Stats, Appearance }
-    export let onNavButtonClicked: (modal: Modal | null) => void
+	import Modal from "../../components/Modal.svelte"
 
-    let clickedTheme: { 
-        sectionTitle: keyof typeof themeSections, 
-        index: number, 
-        themeTitle: string 
-    } | null = null
-    let selectedTheme: Theme | ColorTheme | null = null
+    let clickedTheme: Theme | null = null
+    let selectedTheme: Theme | null = null
 
-    const closeModal = () => onNavButtonClicked(null)
+    const handleThemeClicked = (theme: Theme) => {
+        const title = theme.sectionDetails.title
+        const idx = theme.sectionDetails.index
+        const isSelf = title === clickedTheme?.sectionDetails.title && idx === clickedTheme?.sectionDetails.index
+        const isPickedTheme = title === selectedTheme?.sectionDetails.title && idx === selectedTheme?.sectionDetails.index
 
-    // object to map section names to array names in import for dynmaically selecting the correct 1array
-    const themeSections: any = {
-        default: defaultThemes,
-        light: lightColorThemes,
-        dark: darkColorThemes,
-        image: imageThemes,
-        video: ambientVideos
-    };
-    const handleThemeClicked = (sectionTitle: keyof typeof themeSections, index: any) => {
-        if (sectionTitle === clickedTheme?.sectionTitle && index === clickedTheme?.index) {
+        if (isSelf) {
             clickedTheme = null
             return
         }
-        else if (sectionTitle === selectedTheme?.sectionDetails.title && index === selectedTheme?.sectionDetails.index) {
-            return
-        }
-        else {
-            clickedTheme = { sectionTitle, index, themeTitle: themeSections[sectionTitle][index].title }
+        else if (!isPickedTheme) {
+            clickedTheme = theme
         }
     }
-    const handleThemeSelected = () => {
-        // @ts-ignore
-        selectedTheme = themeSections[clickedTheme.sectionTitle][clickedTheme.index]
-        colorThemeState.set({
-            title: selectedTheme!.title,
-            isDarkTheme: selectedTheme!.properties.isDark,
-            themeToggleBtnIconColor: selectedTheme!.properties.iconToggleBtnBgColor,
-            sectionTitle: selectedTheme!.sectionDetails.title,
-            headerTimeColor: selectedTheme!.properties.headerTimeColor,
-            twinTheme: selectedTheme!.twinTheme
-        })
-        setRootColors(selectedTheme!.properties)
 
+    const handleThemeSelected = () => {
+        const title = clickedTheme!.sectionDetails.title as keyof AppearanceThemes
+        const idx = clickedTheme!.sectionDetails.index
+        selectedTheme = getThemeFromSection(title, idx)
         clickedTheme = null
-        localStorage.setItem("theme", JSON.stringify(selectedTheme))
+
+        setNewTheme(selectedTheme)
     }
     onMount(() => selectedTheme = JSON.parse(localStorage.getItem("theme")!))
 </script>
 
-<div class="modal-bg">
-    <div use:clickOutside on:click_outside={closeModal} class="modal-bg__content modal-bg__content--main-modal modal-bg__content--overflow-y-scroll">
-        <div class="appearance">
-            <h1 class="modal-bg__content-title">Appearance</h1>
-            <p class="modal-bg__content-copy paragraph-1">Tailor your workspace to your personal aesthetic!</p>
-            <!-- Default Themes -->
-            <div class="default-themes bento-box">
-                <h3 class="bento-box__title">Default Themes</h3>
-                <ul class="default-themes__selection">
-                    {#each defaultThemes as theme, idx}
+
+<Modal isModalSmall={false}>
+    <div class={`appearance ${$themeState.isDarkTheme ? "" : "appearance--light"}`}>
+        <h1 class="appearance__title modal-bg__content-title">Appearance</h1>
+        <p class="appearance__description modal-bg__content-copy">Tailor your workspace to your personal aesthetic!</p>
+        <!-- Default Themes -->
+        <div class="default-themes bento-box">
+            <h3 class="bento-box__title">Default Themes</h3>
+            <ul class="default-themes__selection">
+                {#each defaultThemes as theme, idx}
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <li 
+                        on:click={() => handleThemeClicked(theme)}  
+                        class={`default-themes__selection-item theme-item 
+                                ${("default" === clickedTheme?.sectionDetails.title && idx === clickedTheme?.sectionDetails.index) ? "theme-item--clicked" : ""}        
+                                ${("default" === selectedTheme?.sectionDetails.title && idx === selectedTheme?.sectionDetails.index) ? "theme-item--selected" : ""}`        
+                        }
+                    >
+                        <img src={theme.thumbnailImgSrc} alt="theme-icon">
+                        <div class="theme-item__text">
+                            <div class="theme-item__text-title">
+                                {theme.title}
+                            </div>
+                        </div>
+                    </li>
+                {/each}
+            </ul>
+            {#if clickedTheme?.sectionDetails.title === "default"}
+                <div class="appearance__apply-btn-container">
+                    <button on:click={handleThemeSelected} class="appearance__apply-btn unfill  unfill--padded unfill--oval">
+                        {`Apply ${clickedTheme?.title}"`}
+                    </button>
+                </div>
+            {/if}
+        </div>
+        <!-- Color Themes -->
+        <div class="color-themes bento-box">
+            <h3 class="bento-box__title"> Color Themes</h3>
+            <p class="bento-box__copy">
+                Personalize your workspace with custom color themes tailored to your unique aesthetic!
+            </p>
+            <!-- Light Themes -->
+            <div class="color-themes__light-themes">
+                <div class="bento-box__subheading">Light Themes</div>
+                <ul class="color-themes__themes-list">
+                    {#each lightColorThemes as theme, idx}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <li 
-                            on:click={() => handleThemeClicked(Object.keys(themeSections)[0], idx)}  
-                            class={`default-themes__selection-item appearance__theme-item 
-                                    ${("default" === clickedTheme?.sectionTitle && idx === clickedTheme?.index) ? "appearance__theme-item--clicked" : ""}        
-                                    ${("default" === selectedTheme?.sectionDetails.title && idx === selectedTheme?.sectionDetails.index) ? "appearance__theme-item--selected" : ""}`        
+                            on:click={() => handleThemeClicked(theme)}  
+                            class={`color-themes__selection-item theme-item 
+                                    ${("light" === clickedTheme?.sectionDetails.title && idx === clickedTheme?.sectionDetails.index) ? "theme-item--clicked" : ""}        
+                                    ${("light" === selectedTheme?.sectionDetails.title && idx === selectedTheme?.sectionDetails.index) ? "theme-item--selected" : ""}`        
                             }
                         >
-                            <img src={theme.thumbnailImgSrc} alt="theme-icon">
-                            <div class="appearance__theme-item-text"><h6>{theme.title}</h6></div>
+                            <ul class="theme-item-color-swatch-list">
+                                {#each theme.colorPalette as color}
+                                    <li class="theme-item-color-swatch" style={`background-color: ${color}`}></li>
+                                {/each}
+                            </ul>
+                            <div class="theme-item__text theme-item__text--color-theme">
+                                <div class="theme-item__text-title">
+                                    {theme.title}
+                                </div>
+                            </div>
                         </li>
                     {/each}
                 </ul>
-                {#if clickedTheme?.sectionTitle === "default"}
-                    <div class="appearance__apply-btn-container">
-                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill  unfill--padded unfill--oval">
-                            {`Apply ${clickedTheme?.themeTitle}"`}
-                        </button>
-                    </div>
-                {/if}
             </div>
-            <!-- Color Themes -->
-            <div class="color-themes bento-box">
-                <h3 class="bento-box__title"> Color Themes</h3>
-                <p class="bento-box__copy  paragraph-2">
-                    Personalize your workspace with custom color themes tailored to your unique aesthetic!
-                </p>
-                <!-- Light Themes -->
-                <div class="color-themes__light-themes">
-                    <h4 class="subheading-2">Light Themes</h4>
-                    <ul class="color-themes__themes-list">
-                        {#each lightColorThemes as theme, idx}
-                            <!-- svelte-ignore a11y-click-events-have-key-events -->
-                            <li 
-                                on:click={() => handleThemeClicked(Object.keys(themeSections)[1], idx)}  
-                                class={`color-themes__selection-item appearance__theme-item 
-                                        ${("light" === clickedTheme?.sectionTitle && idx === clickedTheme?.index) ? "appearance__theme-item--clicked" : ""}        
-                                        ${("light" === selectedTheme?.sectionDetails.title && idx === selectedTheme?.sectionDetails.index) ? "appearance__theme-item--selected" : ""}`        
-                                }
-                            >
-                                <ul class="appearance__theme-item-color-swatch-list">
+            <!-- Dark Themes -->
+            <div class="color-themes__dark-themes">
+                <div class="bento-box__subheading">Dark Themes</div>
+                <ul class="color-themes__themes-list">
+                    {#each darkColorThemes as theme, idx}
+                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                        <li 
+                            on:click={() => handleThemeClicked(theme)}  
+                            class={`color-themes__selection-item theme-item 
+                                    ${("dark" === clickedTheme?.sectionDetails.title && idx === clickedTheme?.sectionDetails.index) ? "theme-item--clicked" : ""}        
+                                    ${("dark" === selectedTheme?.sectionDetails.title && idx === selectedTheme?.sectionDetails.index) ? "theme-item--selected" : ""}`        
+                            }
+                        >
+                            <ul class="theme-item-color-swatch-list">
                                     {#each theme.colorPalette as color}
-                                        <li class="appearance__theme-item-color-swatch" style={`background-color: ${color}`}></li>
+                                        <li class="theme-item-color-swatch" style={`background-color: ${color}`}></li>
                                     {/each}
-                                </ul>
-                                <div class="appearance__theme-item-text appearance__theme-item-text--color-theme">
-                                    <h6>{theme.title}</h6>
+                            </ul>
+                            <div class="theme-item__text theme-item__text--color-theme">
+                                <div class="theme-item__text-title">
+                                    {theme.title}
                                 </div>
-                            </li>
-                        {/each}
-                    </ul>
-                </div>
-                <!-- Dark Themes -->
-                <div class="color-themes__dark-themes">
-                    <h4 class="subheading-2">Dark Themes</h4>
-                    <ul class="color-themes__themes-list">
-                        {#each darkColorThemes as theme, idx}
-                            <!-- svelte-ignore a11y-click-events-have-key-events -->
-                            <li 
-                                on:click={() => handleThemeClicked(Object.keys(themeSections)[2], idx)}  
-                                class={`color-themes__selection-item appearance__theme-item 
-                                        ${("dark" === clickedTheme?.sectionTitle && idx === clickedTheme?.index) ? "appearance__theme-item--clicked" : ""}        
-                                        ${("dark" === selectedTheme?.sectionDetails.title && idx === selectedTheme?.sectionDetails.index) ? "appearance__theme-item--selected" : ""}`        
-                                }
-                            >
-                                <ul class="appearance__theme-item-color-swatch-list">
-                                        {#each theme.colorPalette as color}
-                                            <li class="appearance__theme-item-color-swatch" style={`background-color: ${color}`}></li>
-                                        {/each}
-                                </ul>
-                                <div class="appearance__theme-item-text appearance__theme-item-text--color-theme">
-                                    <h6>{theme.title}</h6>
-                                </div>
-                            </li>
-                        {/each}
-                    </ul>
-                </div>
-                {#if clickedTheme?.sectionTitle === "dark" || clickedTheme?.sectionTitle === "light"}
-                    <div class="appearance__apply-btn-container">
-                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill  unfill--padded unfill--oval">
-                            {`Apply "${clickedTheme?.themeTitle}"`}
-                        </button>
-                    </div>
-                {/if}
-            </div>
-            <!-- Image Themes -->
-            <div class="img-themes bento-box">
-                <h3 class="bento-box__title"> Image Themes</h3>
-                <p class="bento-box__copy  paragraph-2">Customize your workspace with personalized image backgrounds, reflecting your unique aesthetic!</p>
-                <ul class="img-themes__img-list">
-                    {#each imageThemes as img, idx}
-                        <!-- svelte-ignore a11y-click-events-have-key-events -->
-                        <li 
-                            on:click={() => handleThemeClicked(Object.keys(themeSections)[3], idx)}  
-                            title={img.title}
-                            class={`img-themes__selection-item appearance__theme-item 
-                                    ${("image" === clickedTheme?.sectionTitle && idx === clickedTheme?.index) ? "appearance__theme-item--clicked" : ""}        
-                                    ${("image" === selectedTheme?.sectionDetails.title && idx === selectedTheme?.sectionDetails.index) ? "appearance__theme-item--selected" : ""}`        
-                            }
-                        >
-                            <img src={img.thumbnailImgSrc}>
-                            <div class="appearance__theme-item-text">
-                                <h6>{img.title}</h6>
-                                <span class="caption-4">{img.artist}</span>
                             </div>
                         </li>
                     {/each}
                 </ul>
-                {#if clickedTheme?.sectionTitle === "image"}
-                    <div class="appearance__apply-btn-container appearance__apply-btn-container--overflow-hover">
-                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill  unfill--padded unfill--oval">
-                            {`Preview "${clickedTheme.sectionTitle}"`}
-                        </button>
-                    </div>
-                {/if}
             </div>
-            <!-- Ambient Themes -->
-            <div class="ambient-mode bento-box">
-                <h3 class="bento-box__title"> Ambient</h3>
-                <p class="bento-box__copy  paragraph-2">Personalize your workspace with custom color themes tailored to your unique aesthetic!</p>
-                <ul class="ambient-mode__vid-list">
-                    {#each ambientVideos as vid, idx}
-                        <!-- svelte-ignore a11y-click-events-have-key-events -->
-                        <li 
-                            on:click={() => handleThemeClicked(Object.keys(themeSections)[4], idx)}
-                            title={vid.title}
-                            class={`ambient-mode__selection-item appearance__theme-item 
-                                    ${("video" === clickedTheme?.sectionTitle && idx === clickedTheme?.index) ? "appearance__theme-item--clicked" : ""}        
-                                    ${("video" === selectedTheme?.sectionDetails.title && idx === selectedTheme?.sectionDetails.index) ? "appearance__theme-item--selected" : ""}`        
-                            }
-                        >
-                            <img src={vid.thumbnailSrc}>
-                            <div class="appearance__theme-item-text">
-                                <h6>{vid.title}</h6>
-                                <span class="caption-4">
-                                    <img src={vid.channelImgSrc} alt="">
-                                    {vid.channelName}
-                                </span>
+            {#if clickedTheme?.sectionDetails.title === "dark" || clickedTheme?.sectionDetails.title === "light"}
+                <div class="appearance__apply-btn-container">
+                    <button on:click={handleThemeSelected} class="appearance__apply-btn unfill  unfill--padded unfill--oval">
+                        {`Apply "${clickedTheme?.title}"`}
+                    </button>
+                </div>
+            {/if}
+        </div>
+        <!-- Image Themes -->
+        <div class="img-themes bento-box">
+            <h3 class="bento-box__title"> Image Themes</h3>
+            <p class="bento-box__copy">Customize your workspace with personalized image backgrounds, reflecting your unique aesthetic!</p>
+            <ul class="img-themes__img-list">
+                {#each imageThemes as imgTheme, idx}
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <li 
+                        on:click={() => handleThemeClicked(imgTheme)}  
+                        title={`${imgTheme.title} – ${imgTheme.artist}`}
+                        class={`img-themes__selection-item theme-item img-themes__selection-item theme-item--fade-on-hover
+                                ${("image" === clickedTheme?.sectionDetails.title && idx === clickedTheme?.sectionDetails.index) ? "theme-item--clicked" : ""}        
+                                ${("image" === selectedTheme?.sectionDetails.title && idx === selectedTheme?.sectionDetails.index) ? "theme-item--selected" : ""}`        
+                        }
+                    >
+                        <img src={imgTheme.thumbnailImgSrc} alt="vid-thumbnail">
+                        <div class="theme-item__text">
+                            <div class="theme-item__text-title">
+                                {imgTheme.title}
                             </div>
-                        </li>
-                    {/each}
-                </ul>
-                {#if clickedTheme?.sectionTitle === "video"}
-                    <div class="appearance__apply-btn-container appearance__apply-btn-container--overflow-hover">
-                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill  unfill--padded unfill--oval">
-                            {`Preview "${clickedTheme.sectionTitle}"`}
-                        </button>
-                    </div>
-                {/if}
-            </div>
+                            <div class="theme-item__text-caption">
+                                {imgTheme.artist}
+                            </div>
+                        </div>
+                    </li>
+                {/each}
+            </ul>
+            {#if clickedTheme?.sectionDetails.title === "image"}
+                <div class="appearance__apply-btn-container appearance__apply-btn-container--overflow-hover">
+                    <button on:click={handleThemeSelected} class="appearance__apply-btn unfill  unfill--padded unfill--oval">
+                        {`Preview "${clickedTheme.sectionDetails.title}"`}
+                    </button>
+                </div>
+            {/if}
+        </div>
+        <!-- Ambient Themes -->
+        <div class="ambient-mode bento-box">
+            <h3 class="bento-box__title"> Ambient</h3>
+            <p class="bento-box__copy">Personalize your workspace with custom color themes tailored to your unique aesthetic!</p>
+            <ul class="ambient-mode__vid-list">
+                {#each ambientVideos as vidTheme, idx}
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <li 
+                        on:click={() => handleThemeClicked(vidTheme)}
+                        title={`${vidTheme.title} – ${vidTheme.channelName}`}
+                        class={`ambient-mode__selection-item theme-item ambient-mode__selection-item theme-item--fade-on-hover
+                                ${("video" === clickedTheme?.sectionDetails.title && idx === clickedTheme?.sectionDetails.index) ? "theme-item--clicked" : ""}        
+                                ${("video" === selectedTheme?.sectionDetails.title && idx === selectedTheme?.sectionDetails.index) ? "theme-item--selected" : ""}`        
+                        }
+                    >
+                        <img src={vidTheme.thumbnailSrc} alt="vid-thumbnail">
+                        <div class="theme-item__text">
+                            <div class="theme-item__text-title">
+                                {vidTheme.title}
+                            </div>
+                            <div class="theme-item__text-caption">
+                                {vidTheme.channelName}
+                            </div>
+                        </div>
+                    </li>
+                {/each}
+            </ul>
+            {#if clickedTheme?.sectionDetails.title === "video"}
+                <div class="appearance__apply-btn-container appearance__apply-btn-container--overflow-hover">
+                    <button on:click={handleThemeSelected} class="appearance__apply-btn unfill  unfill--padded unfill--oval">
+                        {`Preview "${clickedTheme.sectionDetails.title}"`}
+                    </button>
+                </div>
+            {/if}
         </div>
     </div>
-</div>
+</Modal>
 
 <style lang="scss">
     $section-spacing: 8px;
     $desktop-aspect-ratio: 16 / 10;
     $video-aspect-ratio: 16 / 9;
     $clicked-color: rgba(var(--textColor1), 0.3);
+    $selected-color: rgba(var(--fgColor1), 1);
 
-    .modal-bg {
-        &__content {
-            width: 85vw;
-            max-width: 950px;
-        }
-    }
     .appearance {
+        width: 85vw;
+        max-width: 950px;
         position: relative;
+
         .unfill {
             @include unfill-btn-ficus-styling(var(--fgColor1));
         }
+
+        &--light .modal-bg {
+            @include modal-bg-light;
+        }
+        &--light .bento-box {
+            &__copy {
+                font-weight: 500;
+            }
+            &__subheading {
+                font-weight: 600;
+            }
+        }
+        &--light .theme-item {
+            &__text-title {
+                font-weight: 600;
+            }
+            &__text-caption {
+                font-weight: 500;
+            }
+        }
         
         &__description {
-            color: rgba(var(--textColor1), 0.8);
+            margin-top: 8px;
         }
         &__apply-btn-container {
             height: 30px;
@@ -248,104 +258,115 @@
         &__apply-btn {
             @include pos-abs-bottom-right-corner(0px, 0px);
         }
-        /* Theme Item (every selection is a theme item)*/
-        &__theme-item {
-            position: relative;
-            transition: 0.14s ease-in-out;
-            cursor: pointer;
-            border-radius: 3px;
-            margin-right: 20px;
+    }
+    .theme-item {
+        position: relative;
+        transition: 0.11s ease-in-out;
+        cursor: pointer;
+        border-radius: 3px;
+        margin-right: 20px;
 
-            &:active {
-                transform: scale(0.98);
-            }
-
-            /* When Item Clicked */
-            &--clicked {
-                img {
-                    border: 2.5px solid $clicked-color;
-                }
-                h6, span {
-                    color: $clicked-color !important;
-                }
-            }
-            &--clicked &-color-swatch-list {
-                margin-top: -2px;
-                width: 86.5px;
-                height: 24px;
-                background-color: $clicked-color;
-                align-items: center;
-                padding-left: 3.3px;
-            }
-            &--clicked &-color-swatch {
-                width: 18px;
-            }
-            /* When Item Selected */
-            &--selected {
-                img {
-                    border: 2.5px solid rgba(var(--fgColor1), 1);
-                }
-                h6, span {
-                    color: rgba(var(--fgColor1), 1) !important;
-                }
-                span {
-                    opacity: 0.6;
-                }
-            }
-            &--selected &-color-swatch-list {
-                margin-top: -2px;
-                width: 86.5px;
-                height: 24px;
-                background-color: rgba(var(--fgColor1), 1);
-                align-items: center;
-                padding-left: 3.3px;
-            }
-            &--selected &-color-swatch {
-                width: 18px; 
-            }
-            &--color-theme {
-                height: 50px;
-                image {
-                    display: none;
-                }
-            }
-            img {
-                border-radius: 3px;
-                object-fit: cover;
-                aspect-ratio: $desktop-aspect-ratio;
-                width: 100%;
-                -webkit-user-drag: none;                
+        &:active {
+            transform: scale(0.98);
+            opacity: 1 !important;
+        }
+        
+        &--fade-on-hover {
+            &:hover {
+                opacity: 0.7;
             }
         }
-        &__theme-item-text {
+        &--clicked {
+            opacity: 1 !important;
+            img {
+                border: 2.5px solid $clicked-color;
+            }
+            h6, span {
+                color: $clicked-color !important;
+            }
+        }
+        &--clicked &__text {
+            &-title, &-caption {
+                color: $clicked-color !important;
+            }
+            &-caption {
+                opacity: 0.6;
+            }
+        }
+        &--clicked &-color-swatch-list {
+            margin-top: -2px;
+            width: 86.5px;
+            height: 24px;
+            background-color: $clicked-color;
+            align-items: center;
+            padding-left: 3.3px;
+        }
+        &--clicked &-color-swatch {
+            width: 18px;
+        }
+        &--selected {
+            img {
+                border: 2.5px solid $selected-color;
+            }
+            &-title, &-caption {
+                color: rgba(var(--fgColor1), 1) !important;
+            }
+            &-caption {
+                opacity: 0.6;
+            }
+        }
+        &--selected &-color-swatch-list {
+            margin-top: -2px;
+            width: 86.5px;
+            height: 24px;
+            background-color: $selected-color;
+            align-items: center;
+            padding-left: 3.3px;
+        }
+        &--selected &-color-swatch {
+            width: 18px; 
+        }
+        &--color-theme {
+            height: 50px;
+        }
+        img {
+            border-radius: 3px;
+            object-fit: cover;
+            aspect-ratio: $desktop-aspect-ratio;
+            width: 100%;
+            -webkit-user-drag: none;                
+        }
+        &__text {
             margin: 5px 0px 0px 0px;
             &--color-theme {
                 margin: 4px 0px 0px 0px;
             }
-            h6 {
+            &-title {
                 @include elipses-overflow;
                 color: rgba(var(--textColor1), 0.85);
                 margin-bottom: 2px;
+                font-size: 1.03rem;
+                font-weight: 500;
             }
-            span {
-                @include elipses-overflow;
+            &-caption {
                 @include flex-container(center, _);
                 color: rgba(var(--textColor1), 0.55);
+                @include elipses-overflow;
+                display: block;
             }
         }
-        /* For Color Palettes */
-        &__theme-item-color-swatch-list {
+        &-color-swatch-list {
             transition: 0.15s ease-in-out;
             height: 20px;
             width: 90px;
             border-radius: 3px;
             display: flex;
         }
-        &__theme-item-color-swatch {
+        &-color-swatch {
             transition: 0.15s ease-in-out;
             width: 20px;
             aspect-ratio: 1 / 1;
-            border-radius: 2px;;
+            border-radius: 2px;
             margin-right: -2.6px;
         }
     }
@@ -355,6 +376,11 @@
 
         &__copy {
             color: rgba(var(--textColor1), 0.55);
+            font-size: 1.1rem;
+        }
+        &__subheading {
+            color: rgba(var(--textColor1), 1);
+            margin-bottom: 25px;
         }
     }
     /* Sections */
@@ -366,22 +392,12 @@
             display: flex;
             padding-bottom: 10px;
         }
-        &__selection-item  {
+        &__selection-item {
             width: 140px;
         }
     }
     .color-themes {
-        padding-bottom: 15px;
-        h4 {
-            color: rgba(var(--textColor1), 0.8);
-            margin-bottom: 15px;
-            font-weight: 500;
-        }
-        h6 {
-            @include elipses-overflow;
-            margin-top: 8px;
-            color: rgba(var(--textColor1), 0.7);
-        }
+        padding-bottom: 30px;
         &__selection-item {
             margin-bottom: 10px;
         }
@@ -392,6 +408,10 @@
         }
         &__light-themes {
             margin: 25px 0px 20px 0px;
+        }
+
+        .appearance__apply-btn-container {
+            bottom: -5px;
         }
     }
     .img-themes {

@@ -13,8 +13,49 @@ export const months = [
     "December"
   ]
   
-  export const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+export const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
+/**
+ * @param date1 
+ * @param date2 
+ * @returns       If date1 is earlier than date2.
+ */
+export const isDateEarlier = (date1: Date, date2: Date): boolean => {
+    return date1.getTime() < date2.getTime()
+}
+
+/**
+ * @param date1 
+ * @param date2 
+ * @returns       Difference beyween two dayes in seconds.
+ */
+export const getDifferenceInSecs = (date1: Date, date2: Date): number => {
+    const differenceMilliseconds = Math.abs(date1.getTime() - date2.getTime())
+    return Math.floor(differenceMilliseconds / 1000)
+}
+
+/**
+ * 
+ * @param startTime 
+ * @param totalMins  Time to be added to start time.
+ * @returns          Startime + total Minutes
+ */
+export const calculateEndTime = (startTime: Date, totalMins: number): Date => {
+    const endTime = new Date(startTime)
+    endTime.setMinutes(endTime.getMinutes() + totalMins)
+
+    return endTime
+}
+
+/**
+ * 
+ * @param startTime 
+ * @param endTime 
+ * @returns          Start time to end time. i.e. 12: 00PM - 3:00 AM
+ */
+export const getTimePeriodString = (startTime: Date, endTime: Date): string => {
+    return `${formatTimeToHHMM(startTime)} - ${formatTimeToHHMM(endTime)}`
+}
 
 /**
  * @param doUserHour12 

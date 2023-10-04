@@ -2,9 +2,9 @@
 	import { onMount } from "svelte";
     import quotes from "$lib/data-quotes";
 	import { clickOutside } from "$lib/utils-general";
+	import type { SessionModal } from "$lib/enums";
 
-    enum CurrentModal { Quote, NewSession, ActiveSession }
-    export let toggleModal: (modal: CurrentModal | null) => void
+    export let toggleModal: (modal: SessionModal | null) => void
 
     let isQuoteModalOpen = false
     let quote: Quote | null = null

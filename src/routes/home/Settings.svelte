@@ -3,10 +3,8 @@
 	import { formatDateToMMDD } from '$lib/utils-date';
 	import { onMount } from 'svelte';
 
-    enum Modal { Settings, Youtube, Music, Stats, Appearance }
+    enum SettingsModal { Settings, Youtube, Music, Stats, Appearance }
     enum Tab { PROFILE, PLAN_DETAILS, CARDS, LANGUAGE }
-    
-    export let onNavButtonClicked: (modal: Modal | null) => void
 
     let isAddNewCardModalOpen = false
 
@@ -160,7 +158,7 @@
 </script>
 
 <div class="modal-bg">
-    <div use:clickOutside on:click_outside={() => onNavButtonClicked(null)} class="modal-bg__content modal-bg__content--main-modal modal-bg__content--overflow-y-scroll">
+    <div use:clickOutside on:click_outside={() => console.log("")} class="modal-bg__content modal-bg__content--main-modal modal-bg__content--overflow-y-scroll">
         <div class="settings">
             <h1 class="modal-bg__content-title">Settings</h1>
             <p class="modal-bg__content-copy paragraph-1">View and update your account and profile details.</p>

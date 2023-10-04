@@ -1,397 +1,369 @@
 <script lang="ts">
-	import { initOAuth2Client, initYtCreds, intUserYtData, resetYtUserData, saveYtCredentials, saveYtUserData } from "$lib/api-youtube";
-	import { colorThemeState, ytCredentials, ytUserData } from "$lib/store";
-    import { clickOutside } from "../../lib/utils-general";
-	import { onDestroy, onMount } from 'svelte';
+    import { ErrorCode } from "$lib/enums"
+    import Modal from "../../components/Modal.svelte"
     import ytRecsPlaylists from '$lib/data-yt-playlists'
-
-    enum Modal { Settings, Youtube, Music, Stats, Appearance }
-    export let onNavButtonClicked: (modal: Modal | null) => void
-
-    let isYtModalOpen = true;
+    import { clickOutside } from "../../lib/utils-general"
+	import { themeState, ytPlayerStore, ytUserDataStore } from "$lib/store"
+	import { createYtErrorToastMsg, handleChoosePlaylist, logOutUser, loginUser } from "$lib/utils-youtube"
+    
     let isUserProfileDropdownOpen = false
+    let selectedRecCategory = ytRecsPlaylists[0]
 
-    let ytUserAccountData: YoutubeUserData
-    let selectedPlaylist: YoutubePlaylist
-    let clickedPlaylistId = -1;
-    let ytRecsPlaylistsIdx = 0
-    let selectedGroupPlaylists = ytRecsPlaylists[ytRecsPlaylistsIdx].playlists
+    let isScrollableLeft = false
+    let isScrollableRight = true
+    let groupTabList: HTMLElement
 
-    let isScrollableLeft = false;
-    let isScrollableRight = true;
-    let groupTabList: HTMLElement;
+    let isUserPlaylistsLoading = false
+    let scrollTop = 0
+    let scrollHeight = 0
+    let scrollWindow = 0
 
     const SCROLL_STEP = 50
-    const TAB_SECTION_RIGHT_OFFSET = 30
+    const PLAYLIST_SKELETON_LENGTH = 25
+    const FETCH_PLAYLIST_DELAY = 500
 
-    let isLightTheme = false
+    /* Account */
+    const handleYtSignUp = async () => loginUser()
+    const handleYtSignOut = () => logOutUser()
 
-    colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
-    ytUserData.subscribe((data: YoutubeUserData) => {
-        ytUserAccountData = {
-            ...ytUserAccountData,
-            ...data
-        }
-        if (data.selectedPlaylist) {
-            selectedPlaylist = data.selectedPlaylist
-        }
-    })
+    const capsuleBtnClickedHandler =() => $ytUserDataStore?.email ? isUserProfileDropdownOpen = true : loginUser()
+    
+    /* UI Handlers */
+    const _handleChoosePlaylist = (playlist: YoutubePlaylist) => handleChoosePlaylist(playlist)
 
-    /* Log In / Log Out */
-    const handleYtSignUp = () => initOAuth2Client()
-    const handleUnlinkCurrentYtAccount = () => resetYtUserData()
-
-    /* Personal Playlist */
-    const handleChoosePlaylist = (index: number) => {
-        const newPlaylist = ytUserAccountData!.playlists[index]
-        ytUserAccountData!.selectedPlaylist = newPlaylist
-        ytUserData.set(ytUserAccountData!)
-        saveYtUserData(ytUserAccountData!)
-    }
-    const handleRemoveChoosenPlaylist = () => {
-        const newYtData = { ...ytUserAccountData!, selectedPlaylist: null }
-        ytUserData.set(newYtData)
-        localStorage.setItem('yt-user-data', JSON.stringify(newYtData));
-    }
-
-    /* Recommended Playlist */
-    const handleRecTabBtnClicked = (index: number) => {
-        ytRecsPlaylistsIdx = index
-        selectedGroupPlaylists = ytRecsPlaylists[index].playlists
-    }
-    const handleChooseRecPlaylist = (event: MouseEvent, index: number) => {
-        const target = event.target as HTMLElement;
-        if (target.tagName === 'A') return
+    const hasReachedEndOfList = () => Math.ceil(scrollTop) >= scrollHeight - scrollWindow
+    const userPlsPaginationScrollHandler = async (event: Event) => {
+        const list = event.target as HTMLElement
+        scrollTop = list.scrollTop
+        scrollHeight = list!.scrollHeight
+        scrollWindow = list!.clientHeight 
         
-        const newPlaylist = ytRecsPlaylists[ytRecsPlaylistsIdx].playlists[index]
-        ytUserAccountData!.selectedPlaylist = {
-            id: newPlaylist.playlistId,
-            title: newPlaylist.title,
-            description: newPlaylist.playlistDescription,
-            vidCount: newPlaylist.vidCount,
-            channelId: "",
-            thumbnailURL: newPlaylist.playlistThumbnailImgSrc,
-            isRecPlaylist: true
-        }
-        ytUserData.set(ytUserAccountData!)
-        saveYtUserData(ytUserAccountData!)
+        if (!hasReachedEndOfList()) return
+        getMorePlaylists()
+    }
+    const getMorePlaylists = () => {
+        const hasTokenExpired = $ytUserDataStore!.error?.code === ErrorCode.YT_EXPIRED_TOKEN
+        if (isUserPlaylistsLoading || $ytUserDataStore!.hasFetchedAllUserPls || hasTokenExpired) return
+        
+        isUserPlaylistsLoading = true
+        setTimeout(async () => { 
+            try {
+                await $ytUserDataStore!.fetchMoreUserPlaylists()
+                if (hasReachedEndOfList()) getMorePlaylists()
+            }
+            catch(error: any) {
+                createYtErrorToastMsg(error)
+            }
+            isUserPlaylistsLoading = false
+        }, FETCH_PLAYLIST_DELAY)
     }
 
-    /* Horizontal Reccomendation Category Tab List */
-
+    /* Recommended Section */
+    const handleRecTabBtnClicked = (index: number) => selectedRecCategory = ytRecsPlaylists[index]
     const handleShiftTabCategoryRight = () => groupTabList!.scrollLeft += SCROLL_STEP
     const handleShiftTabCategoryLeft = () => groupTabList!.scrollLeft -= SCROLL_STEP
 
-    const handleScroll = (event: any) => {
-        const scrollXOffSet = event.target.scrollLeft
-        const windowWidth = event.target.clientWidth // container width
-        const totalScrollableWidth = event.target.scrollWidth
+    const handleTabListScroll = (event: Event) => {
+        const tabList = event.target as HTMLElement
+        const scrollLeft = tabList.scrollLeft
+        const windowWidth = tabList.clientWidth
+        const scrollWidth = tabList.scrollWidth
 
-        isScrollableLeft = scrollXOffSet > 0
-        isScrollableRight = scrollXOffSet + windowWidth < totalScrollableWidth - TAB_SECTION_RIGHT_OFFSET
+        isScrollableLeft = scrollLeft > 0
+        isScrollableRight = scrollLeft < scrollWidth - windowWidth
     }
-
-    // right arrow disappears after a window resize if false even user can scroll right
-    const handleResize = () => {
-        const scrollXOffSet = groupTabList.scrollLeft
-        const windowWidth = groupTabList.clientWidth
-        const totalScrollableWidth = groupTabList.scrollWidth
-
-        isScrollableRight = scrollXOffSet + windowWidth < totalScrollableWidth
-    }
-
-    onMount(() => {
-        const savedYtCreds = localStorage.getItem('yt-credentials')
-        const savedUserData = localStorage.getItem('yt-user-data')
-
-        handleResize()
-        
-        if (savedYtCreds) {
-            const ytCreds = JSON.parse(localStorage.getItem('yt-credentials')!)
-            ytCredentials.set({ ...ytCreds })
-        }
-        if (savedUserData) {
-            const ytData = JSON.parse(localStorage.getItem('yt-user-data')!)
-            ytUserData.set({ ...ytData })
-        }
-        window.addEventListener("resize", handleResize);
-    })
-    onDestroy(() => window.removeEventListener("resize", handleResize))
 </script>
 
-<div class={`modal-bg ${isYtModalOpen ? "" : "modal-bg--hidden"}`}>
-    <div use:clickOutside on:click_outside={() => onNavButtonClicked(null)} class="modal-bg__content modal-bg__content--overflow-y-scroll">
-        <div class={`yt-settings ${isLightTheme ? "yt-settings--light" : ""} ${ytUserAccountData.email == "" ? "yt-settings--min" : ""}`}>
-            <!-- Header -->
-            <div class="yt-settings__header">
-                <h1 class="modal-bg__content-title">Youtube Settings</h1>
-                <div class="yt-settings__user-profile-container">
-                    <button class="yt-settings__user-capsule" on:click={() => isUserProfileDropdownOpen = true}>
-                        <img src={ytUserAccountData.channelImgSrc} alt="yt-profile" />
-                        <span>{ytUserAccountData.username}</span>
-                    </button>
-                    {#if isUserProfileDropdownOpen}
-                        <div class="yt-settings__user-profile" use:clickOutside on:click_outside={() => isUserProfileDropdownOpen = false} >
-                            <div class="yt-settings__user-profile-img-container">
-                                <img src={ytUserAccountData.channelImgSrc} alt="yt-profile" />
-                            </div>
-                            <div class="yt-settings__user-profile-details">
-                                <div class="yt-settings__user-profile-details-header">
-                                    Gmail Account
-                                </div>
-                                <span>
-                                    {ytUserAccountData.email}
-                                </span>
-                                <div class="yt-settings__user-profile-details-header">
-                                    Youtube Channel
-                                </div>
-                                <span>
-                                    {ytUserAccountData.username}
-                                </span>
-                            </div>
-                            <div class="yt-settings__user-profile-btns-container">
-                                <button class="text-only"  on:click={handleYtSignUp}>
-                                    Switch Account
-                                </button>                                
-                                <button class="text-only"  on:click={handleUnlinkCurrentYtAccount}>
-                                    Log Out
-                                </button>                                
-                            </div>
-                        </div>
+<Modal isModalSmall={false}>
+    <div class={`yt-settings ${!$themeState.isDarkTheme ? "yt-settings--light" : ""} ${!$ytUserDataStore?.hasUserSignedIn ? "yt-settings--min" : ""}`}>
+        <!-- Header -->
+        <div class="yt-settings__header">
+            <h1 class="yt-settings__header-title modal-bg__content-title">Youtube Settings</h1>
+            <div class="yt-settings__user-profile-container">
+                <button class="yt-settings__user-capsule" on:click={capsuleBtnClickedHandler}>
+                    {#if $ytUserDataStore?.hasUserSignedIn}
+                        <img src={$ytUserDataStore?.profileImgSrc ?? "https://media.tenor.com/-OpJG9GeK3EAAAAC/kanye-west-stare.gif"} alt="yt-profile" />
+                    {:else}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" preserveAspectRatio="xMidYMid" viewBox="0 0 256 262" id="google">
+                            <path fill="#4285F4" d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 38.875-56.282 38.875-96.027"></path>
+                            <path fill="#34A853" d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.055-45.257 13.055-34.523 0-63.824-22.773-74.269-54.25l-1.531.13-40.298 31.187-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1"></path>
+                            <path fill="#FBBC05" d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82 0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.077 89.644 0 109.517 0 130.55s5.077 40.905 13.925 58.602l42.356-32.782"></path>
+                            <path fill="#EB4335" d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0 79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"></path>
+                        </svg>
                     {/if}
-                </div>
-            </div>
-            <!-- <div class="yt-settings__top-row"> -->
-                <!-- <div class="account-details bento-box">
-                    <div class="bento-box__header">
-                        <h3>Account Details</h3>
-                    </div>
-                    <div class="flx flx--aln-center">
-                        {#if ytUserAccountData.email != ""}
-                            <img src={ytUserAccountData.channelImgSrc} alt="yt-profile" />
-                        {:else}
-                            <div class="account-details__blank-img"></div>
-                        {/if}
-                        <div class="account-details__section"> 
-                            <h5>Gmail Account</h5>
-                            <p>{ytUserAccountData.email === "" ? "- -" : ytUserAccountData.email}</p>
+                    <span>{$ytUserDataStore?.username ?? "Log In"}</span>
+                </button>
+                {#if isUserProfileDropdownOpen}
+                    <div class="yt-settings__user-profile" use:clickOutside on:click_outside={() => isUserProfileDropdownOpen = false} >
+                        <div class="yt-settings__user-profile-img-container">
+                            <img src={$ytUserDataStore?.profileImgSrc} alt="yt-profile" />
                         </div>
-                        <div class="account-details__section"> 
-                            <h5>Channel Name</h5>
-                            <p>{ytUserAccountData.email === "" ? "- -" : ytUserAccountData.username}</p>
-                        </div>
-                    </div>
-                    <div class="account-details__btn-container">
-                        {#if ytUserAccountData.email != ""}
-                            <button class="account-details__replace-btn text-only" 
-                                on:click={handleYtSignUp}
-                            >
-                                Use a different account
-                            </button>
-                            <button class="account-details__unlink-btn text-only" 
-                                on:click={handleUnlinkCurrentYtAccount}
-                            >
-                                Unlink Account
-                            </button>
-                        {:else}
-                            <button class="account-details__link-btn text-only" 
-                                on:click={handleYtSignUp}
-                            >
-                                Connect a Youtube account
-                            </button>
-                        {/if}
-                    </div>
-                </div> -->
-            <!-- </div> -->
-            <div class="yt-settings__content-container">
-                <div class="yt-settings__left">
-                    <!-- Chosen Playlist -->
-                    <div class={`chosen-playlist bento-box ${!selectedPlaylist ? "chosen-playlist--no-pl" : ""}`}>
-                        <img class="img-bg" src={selectedPlaylist?.thumbnailURL} alt="chosen-playlist">
-                        <div class={`blur-bg ${!selectedPlaylist ? "blur-bg--solid-color" : "blur-bg--blurred-bg"}`}></div>
-                        <div class="content-bg">
-                            <div class="bento-box__header">
-                                <h3>Chosen Playlist</h3>
+                        <div class="yt-settings__user-profile-details">
+                            <div class="yt-settings__user-profile-details-header">
+                                Gmail Account
                             </div>
-                            {#if selectedPlaylist}
-                                <div class="flx">
-                                    <img class="chosen-playlist__playlist-img" src={selectedPlaylist?.thumbnailURL} alt="chosen-playlist">
-                                    <div class="chosen-playlist__playlist-details">
-                                        <h4>{selectedPlaylist?.title}</h4>
-                                        <p class="chosen-playlist__playlist-description ">
-                                            {selectedPlaylist?.description === "" ? "No Description" : selectedPlaylist?.description}
-                                        </p>
-                                        <p class="chosen-playlist__playlist-vid-count ">
-                                            {`${selectedPlaylist?.vidCount == 1 ? "1 video" : selectedPlaylist?.vidCount > 50 ? "50+ videos" : selectedPlaylist?.vidCount + " videos" }`}
-                                        </p>
-                                    </div>
-                                </div>
-                            {:else}
-                                <div class="chosen-playlist__no-playlist-msg">
-                                    No Playlist Chosen
-                                </div>
-                            {/if}
+                            <span>
+                                {$ytUserDataStore?.email}
+                            </span>
+                            <div class="yt-settings__user-profile-details-header">
+                                Youtube Channel
+                            </div>
+                            <span>
+                                {$ytUserDataStore?.username}
+                            </span>
+                        </div>
+                        <div class="yt-settings__user-profile-btns-container">
+                            <button class="text-only" on:click={() => { handleYtSignUp(); isUserProfileDropdownOpen = false }}>
+                                Switch Account
+                            </button>                                
+                            <button class="text-only" on:click={() => { handleYtSignOut(); isUserProfileDropdownOpen = false }}>
+                                Log Out
+                            </button>                                
                         </div>
                     </div>
-                    <!-- User Playlists Section -->
-                    {#if ytUserAccountData?.email != ""}
-                        <div class={`user-playlists ${!isLightTheme ? "user-playlists--dark" : ""} bento-box bento-box--no-padding`}>
-                            <div class="user-playlists__header">
-                                <div class="bento-box__header">
-                                    <h3>Playlists</h3>
-                                </div>
-                                {#if ytUserAccountData}
-                                    <span>
-                                        {`${ytUserAccountData.playlists.length} ${ytUserAccountData.playlists.length === 1 ? "playlist" : "playlists"}`}
-                                    </span>
-                                {/if}
-                            </div>
-                            <ul class="user-playlists__list">
-                                <div class="user-playlists__list-header flx">
-                                    <h6 class="user-playlists__list-header-num">#</h6>
-                                    <h6 class="user-playlists__list-header-thumbnail">Thumnail</h6>
-                                    <div class="user-playlists__list-header-title">
-                                        <h6>Title</h6>
-                                    </div>
-                                    <div class="user-playlists__list-header-length">
-                                        <h6>Length</h6>
-                                    </div>
-                                </div>
-                                {#each ytUserAccountData.playlists as playlist, idx}
-                                    <li on:dblclick={() => handleChoosePlaylist(idx)} 
-                                        class={`user-playlists__list-item ${clickedPlaylistId === idx ? "user-playlists__list-item--clicked" : ""}  ${ytUserAccountData?.selectedPlaylist?.id === playlist.id ? "user-playlists__list-item--chosen" : ""} flx flx--algn-center`}>
-                                        <div class="divider divider--thin divider--top"></div>
-                                        <p class={`user-playlists__list-item-num  ${isLightTheme ? "" : ""}`}>{idx + 1}</p>
-                                        <img src={`${playlist.thumbnailURL}`} alt="yt-profile-pic" />
-                                        <div class="user-playlists__list-item-title">
-                                            <p>{playlist.title}</p>
-                                        </div>
-                                        <div class="user-playlists__list-item-length">
-                                            <p>{`${playlist.vidCount} video${playlist.vidCount != 1 ? "s" : ""}`}</p>
-                                        </div>
-                                    </li>
-                                {/each}
-                            </ul>
-                        </div>
-                    {/if}
-                </div>
-                <!-- Playlist Recommendations Section -->
-                <div class={`recs ${ytUserAccountData.username === "" ? "recs--min" : ""} bento-box bento-box--no-padding`}>
-                    <div class="bento-box__header">
-                        <h3>Recommendations</h3>
-                    </div>
-                    <p class="recs__copy bento-box__copy paragraph-2">
-                        Discover new playlists with our staff recommended playlist picks!
-                    </p>
-                    <!-- Horizontal Tabs Carousel -->
-                    <div class="recs__groups-list-container">
-                        {#if isScrollableLeft}
-                            <div class="gradient-container gradient-container--left">
-                                <button class="recs__tab-arrow recs__tab-arrow--left icon-btn"
-                                        on:click={handleShiftTabCategoryLeft}
-                                >
-                                    <i class="fa-solid fa-chevron-left"></i>
-                                </button>
-                            </div>
-                        {/if}
-                        <ul class="recs__groups-list" bind:this={groupTabList} on:scroll={handleScroll}>
-                            <li><div class="recs__tab-group-padding recs__tab-group-padding--left"></div></li>
-                            <!-- Tab Item -->
-                            {#each ytRecsPlaylists as group, idx}
-                                <li>
-                                    <button 
-                                        on:click={() => handleRecTabBtnClicked(idx)}
-                                        class={`tab-btn ${isLightTheme ? "tab-btn--light-mode" : ""} ${idx === ytRecsPlaylistsIdx ? "tab-btn--selected" : ""}`}
-                                    >
-                                        {group.title}
-                                    </button>
-                                </li>
-                            {/each}
-                            <li><div class="recs__tab-group-padding recs__tab-group-padding--right"></div></li>
-                        </ul>
-                        {#if isScrollableRight}
-                            <div class="gradient-container gradient-container--right">
-                                <button class="recs__tab-arrow recs__tab-arrow--right icon-btn"
-                                        on:click={handleShiftTabCategoryRight}
-                                >
-                                    <i class="fa-solid fa-chevron-right"></i>
-                                </button>
-                            </div>
-                        {/if}
-                    </div>
-                    <!-- Playlist Item List -->
-                    <ul class="recs__playlists-list">
-                        {#each selectedGroupPlaylists as playlist, idx}
-                            <!-- Playlist Item -->
-                            <!-- svelte-ignore a11y-click-events-have-key-events -->
-                            <li class={`recs__playlist-item 
-                                            ${playlist.playlistId === ytUserAccountData?.selectedPlaylist?.id ? "recs__playlist-item--selected " : ""}
-                                      `} 
-                                    on:dblclick={event => handleChooseRecPlaylist(event, idx)}
-                            >
-                                <img class="recs__playlist-item-img" src={playlist.playlistThumbnailImgSrc} alt="playlist-item-thumbnail"/>
-                                <div class="recs__playlist-item-details">
-                                    <h4 class="recs__playlist-item-title">{playlist.title}</h4>
-                                    <p class="recs__playlist-item-description">
-                                        {playlist.playlistDescription}
-                                    </p>
-                                    <div class="recs__playlist-item-channel-details">
-                                        <a href={playlist.channelURL} target="_blank" rel="noreferrer">{playlist.channelTitle}</a>
-                                    </div>
-                                </div>
-                                <div class="divider divider--thin"></div>
-                            </li>
-                        {/each}
-                    </ul>
-                </div>
-                <div class="yt-settings__padding"></div>
+                {/if}
             </div>
         </div>
+        <div class="yt-settings__content-container">
+            <div class="yt-settings__left">
+                <!-- Chosen Playlist -->
+                <div class={`chosen-playlist bento-box ${!$ytPlayerStore?.playlist ? "chosen-playlist--no-pl" : ""}`}>
+                    <img class="img-bg" src={$ytPlayerStore?.playlist?.thumbnailURL} alt="chosen-playlist">
+                    <div class={`blur-bg ${!$ytPlayerStore?.playlist ? "blur-bg--solid-color" : "blur-bg--blurred-bg"}`}></div>
+                    <div class="content-bg">
+                        <div class="bento-box__header">
+                            <h3 class="bento-box__title">Chosen Playlist</h3>
+                        </div>
+                        {#if $ytPlayerStore?.playlist}
+                            <div class="flx">
+                                <img class="chosen-playlist__playlist-img" src={$ytPlayerStore?.playlist?.thumbnailURL} alt="chosen-playlist">
+                                <div class="chosen-playlist__playlist-details">
+                                    <h4>{$ytPlayerStore?.playlist?.title}</h4>
+                                    <p class="chosen-playlist__playlist-description ">
+                                        {$ytPlayerStore?.playlist?.description === "" ? "No Description" : $ytPlayerStore?.playlist?.description}
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="chosen-playlist__playlist-vid-count">
+                                {`${$ytPlayerStore?.playlist?.vidCount == 1 ? "1 video" : $ytPlayerStore?.playlist?.vidCount > 50 ? "50+ videos" : $ytPlayerStore?.playlist?.vidCount + " videos" }`}
+                            </span>
+                        {:else}
+                            <div class="chosen-playlist__no-playlist-msg">
+                                No Playlist Chosen
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+                <!-- User Playlists Section -->
+                {#if $ytUserDataStore?.email != ""}
+                    <div class={`user-playlists ${!$themeState?.isDarkTheme ? "user-playlists--dark" : ""} bento-box bento-box--no-padding`}>
+                        <div class="user-playlists__header bento-box__header">
+                            <h3 class="bento-box__title">Playlists</h3>
+                            {#if $ytUserDataStore}
+                                <span class="bento-box__subtitle">
+                                    {`${$ytUserDataStore?.userPlaylistLength} ${$ytUserDataStore?.userPlaylistLength === 1 ? "playlist" : "playlists"}`}
+                                </span>
+                            {/if}
+                        </div>
+                        <!-- Header Columns -->
+                        <div class="user-playlists__list-header flx">
+                            <h4 class="user-playlists__list-header-num">#</h4>
+                            <h4 class="user-playlists__list-header-thumbnail">Thumbnail</h4>
+                            <div class="user-playlists__list-header-title">
+                                <h4>Title</h4>
+                            </div>
+                            <div class="user-playlists__list-header-length">
+                                <h4>Length</h4>
+                            </div>
+                        </div>
+                        <!-- User Playlist List -->
+                        <ul class="user-playlists__list" on:scroll={(e) => userPlsPaginationScrollHandler(e)}>
+                            {#if $ytUserDataStore}
+                                {#each $ytUserDataStore?.userPlaylists as playlist, idx}
+                                    <li on:dblclick={() => _handleChoosePlaylist(playlist)} 
+                                        class={`user-playlists__list-item ${$ytPlayerStore?.playlist?.id === playlist.id ? "user-playlists__list-item--chosen" : ""} flx flx--algn-center`}>
+                                        <div class="divider divider--thin divider--top"></div>
+                                        <p class={`user-playlists__list-item-num  ${$themeState?.isDarkTheme ? "" : ""}`}>{idx + 1}</p>
+                                        <div class="user-playlists__list-item-img-container">
+                                            <img src={`${playlist.thumbnailURL}`} alt="yt-profile-pic" />
+                                        </div>
+                                        <h5 class="user-playlists__list-item-title">
+                                            {playlist.title}
+                                        </h5>
+                                        <h5 class="user-playlists__list-item-length">
+                                            {`${playlist.vidCount} video${playlist.vidCount != 1 ? "s" : ""}`}
+                                        </h5>
+                                    </li>
+                                {/each}
+                                {#if isUserPlaylistsLoading}
+                                    {#each new Array(PLAYLIST_SKELETON_LENGTH) as _}
+                                        <li class="user-playlists__list-item user-playlists__list-item--skeleton flx flx--algn-center">
+                                            <div class="divider divider--thin divider--top"></div>
+                                            <p class="user-playlists__list-item-num skeleton-bg"></p>
+                                            <div class="user-playlists__list-item-img-container skeleton-bg">
+                                            </div>
+                                            <div class="user-playlists__list-item-title">
+                                                <div class="user-playlists__list-item-col-skeleton skeleton-bg"></div>
+                                            </div>
+                                            <div class="user-playlists__list-item-length">
+                                                <div class="user-playlists__list-item-col-skeleton skeleton-bg"></div>
+                                            </div>
+                                        </li>
+                                    {/each} 
+                                {/if}
+                            {/if}
+                        </ul>
+                    </div>
+                {/if}
+            </div>
+            <!-- Playlist Recommendations Section -->
+            <div class={`recs ${$ytUserDataStore?.username === "" ? "recs--min" : ""} bento-box bento-box--no-padding`}>
+                <div class="bento-box__header">
+                    <h3 class="bento-box__title">Recommendations</h3>
+                </div>
+                <p class="recs__copy bento-box__copy paragraph-2">
+                    Discover new playlists with our staff recommended playlist picks!
+                </p>
+                <!-- Horizontal Tabs Carousel -->
+                <div class="recs__groups-list-container">
+                    {#if isScrollableLeft}
+                        <div class="gradient-container gradient-container--left">
+                            <button class="recs__tab-arrow recs__tab-arrow--left icon-btn gradient-container__tab-arrow" on:click={handleShiftTabCategoryLeft}>
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                        </div>
+                    {/if}
+                    <ul class="recs__groups-list" bind:this={groupTabList} on:scroll={handleTabListScroll}>
+                        <li><div class="recs__tab-group-padding recs__tab-group-padding--left"></div></li>
+                        <!-- Tab Item -->
+                        {#each ytRecsPlaylists as group, idx}
+                            <li>
+                                <button 
+                                    on:click={() => handleRecTabBtnClicked(idx)}
+                                    class={`tab-btn ${$themeState?.isDarkTheme ? "tab-btn--light-mode" : ""} ${group.title === selectedRecCategory.title ? "tab-btn--selected" : ""}`}
+                                >
+                                    {group.title}
+                                </button>
+                            </li>
+                        {/each}
+                        <li><div class="recs__tab-group-padding recs__tab-group-padding--right"></div></li>
+                    </ul>
+                    {#if isScrollableRight}
+                        <div class="gradient-container gradient-container--right">
+                            <button class="recs__tab-arrow recs__tab-arrow--right icon-btn gradient-container__tab-arrow" on:click={handleShiftTabCategoryRight}>
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    {/if}
+                </div>
+                <!-- Recommended Playlist Item List -->
+                <ul class="recs__playlists-list">
+                    <!-- Recommended laylist Item -->
+                    {#each selectedRecCategory.playlists as playlist, idx}
+                        <li 
+                            on:dblclick={() => _handleChoosePlaylist(playlist)}
+                            class={`recs__playlist-item  ${playlist.id === $ytPlayerStore?.playlist?.id ? "recs__playlist-item--selected " : ""}`} 
+                        >
+                            <div class="recs__playlist-item-img-container">
+                                <img class="recs__playlist-item-img" src={playlist.thumbnailURL} alt="playlist-item-thumbnail"/>
+                            </div>
+                            <div class="recs__playlist-item-details">
+                                <h5 class="recs__playlist-item-title">{playlist.title}</h5>
+                                <p class="recs__playlist-item-description">
+                                    {playlist.description}
+                                </p>
+                                <div class="recs__playlist-item-channel-details">
+                                    <a href={playlist.channelURL} target="_blank" rel="noreferrer">{playlist.channelTitle}</a>
+                                </div>
+                            </div>
+                            <div class="divider divider--thin"></div>
+                        </li>
+                    {/each}
+                </ul>
+            </div>
+            <div class="yt-settings__padding"></div>
+        </div>
     </div>
-</div>
+</Modal>
 
 <style lang="scss">
+    @import "../../scss/blurred-bg.scss";
+    @import "../../scss/skeleton.scss";
+
     $section-spacing: 8px;
     $recs-section-padding-left: 25px;
+    $video-img-ratio: 16 / 9;
 
-    .modal {
-        &--content {
-            overflow: hidden;
-        } 
-    }
-    .modal-bg {
-        &__content-title {
-            font-size: 1.8rem;
-            margin-bottom: 20px;
-        }
-    }
     .yt-settings {
         width: 82vw;
         height: 690px;
-        min-width: 390px;
         max-width: 1000px;
+
+        .skeleton-bg {
+            @include skeleton-bg(dark);   
+        }
         
+        /* Logged Out Styling */
         &--min {
-            width: 70vw;
+            width: 75vw;
+            min-width: 300px;
+            height: 700px;
+            max-width: 590px;
+        }
+        &--min &__content-container {
+            display: block;
+        }
+        &--min .user-playlists {
+            display: none;
+        }
+        &--min .chosen-playlist {
+            height: 100%;
+        }
+        &--min &__left {
+            height: 25%;
+            margin-bottom: $section-spacing;
+            width: 100%;
+        }
+        &--min .recs {
+            width: 100%;
+            height: 75%;
+        }
+        
+        /* Light Theme Styling */
+        &--light .modal-bg {
+            @include modal-bg-light;
+        }
+        &--light .bento-box {
+            @include bento-box-light;
+        }
+        &--light button.tab-btn {
+            @include tab-btn-light;
+        }
+        &--light .skeleton-bg {
+            @include skeleton-bg(light);
         }
         &--light .divider {
             background-color: rgba(var(--textColor1), 0.06);
             height: 1px !important;
         }
-        &--light .recs, &--light .user-playlists {
-            h4 {
+        &--light .user-playlists {
+            &__list-header h4 {
                 font-weight: 600;
             }
-            p, span {
-                font-weight: 600;
-            }
-            a {
+            &__list-item-title, &__list-item-length {
                 font-weight: 500;
+                color: rgba(var(--textColor1), 0.65);
             }
         }
-        &--light .user-playlists {
-            &__header {
+        &--light .recs {
+            &__playlist-item-title {
                 font-weight: 600;
+            }
+            &__playlist-item-description {
+                font-weight: 400;
+            }
+            &__playlist-item-channel-details a {
+                font-weight: 500;
             }
         }
         &--light &__user-capsule {
@@ -414,10 +386,13 @@
                 font-weight: 600;
             }
         }
-
         &__header {
             @include flex-container(center, space-between);
             margin-bottom: 7px;
+
+            &-title {
+                margin-bottom: 5px;
+            }
         }
         /* User Profile Tab */
         &__user-profile-container {
@@ -430,8 +405,11 @@
             border-radius: 15px;
             transition: 0.12s ease-in-out;
             
+            svg {
+                margin-right: 8px;
+            }
             img {
-                @include circle(23px);
+                @include circle(14px);
                 margin-right: 8px;
             }
             span {
@@ -514,40 +492,56 @@
         position: relative;
         color: rgb(255, 255, 255, 1);
         height: 25%;
+        padding-bottom: 5px;
 
         &--no-pl h3 {
-            color: rgb(var(--textColor1));
+            color: rgb(var(--textColor1), 1);
+        }
+        &--no-pl &__no-playlist-msg {
+            color: rgb(var(--textColor1), 0.6);
         }
         &--no-pl .img-bg, &--no-pl .blur-bg {
             display: none;
         }
-
-        h2 {
-            margin-bottom: 5px;
+        .img-bg, .blur-bg, .content-bg {
+            border-radius: 12px;
         }
         .content-bg {
-            padding-left: 20px;
+            position: relative;
+        }
+
+        h3 {
+            margin-bottom: 10px;
         }
         &__playlist-img {
-            margin: 10px 15px 0px 0px;
-            width: 130px;
+            margin: 0px 15px 0px 0px;
+            height: 72px;
             border-radius: 4px;
+            aspect-ratio: $video-img-ratio;
         }
         &__playlist-details {
-            margin-top: 5px;
-            position: relative;
             width: 90%;
+            position: relative;
+            
+            h4 {
+                max-width: 95%;
+                @include elipses-overflow;
+                font-size: 1.3rem;
+                font-weight: 600;
+            }
         }
         &__playlist-description {
             margin-top: 8px;
-            width: 80%;
-            max-height: 40px;
-            overflow: hidden;
+            width: 100%;
+            max-height: 45px;
+            overflow-y: scroll;
+            position: relative;
+            font-size: 1.1rem;
             color: rgb(255, 255, 255, 0.7);
         }
         &__playlist-vid-count {
-            @include pos-abs-bottom-right-corner(20px, -20px);
-            font-size: 1.15rem;;
+            @include pos-abs-bottom-right-corner(0px, 8px);
+            font-size: 1.1rem;;
             color: rgba(255, 255, 255, 0.7);
         }
         &__no-playlist-msg {
@@ -556,6 +550,11 @@
             color: rgba(255, 255, 255, 0.5);
             @include abs-center;
             top: 45%;
+        }
+
+        .gradient-container {
+            height: 20px;
+            width: 80%;
         }
     }
     .user-playlists {
@@ -568,19 +567,17 @@
             height: 30%;
         }
         &__header {
-            padding: 13px 20px 15px 20px;
-            @include flex-container(center, space-between);
-
-            span {
-                color: rgb(var(--textColor1), 0.7);
-            }
+            padding: 13px 20px 12px 20px;
         }
         /* List Header */
         &__list-header {
-            padding: 6px 0px 20px 6px;
-            h6 {
-                color: rgba(var(--textColor1), 0.72);
-                @include elipses-overflow;
+            padding: 0px 0px 8px 6px;
+            color: rgba(var(--textColor1), 0.7);
+            @include elipses-overflow;
+            
+            h4 {
+                font-weight: 500;
+                font-size: 1.05rem;
             }
         }
         &__list-header-num {
@@ -588,7 +585,7 @@
             width: 25px;
         }
         &__list-header-thumbnail {
-            min-width: 105px;
+            width: 110px;
         }
         &__list-header-title, &__list-header-length {
             @include center;
@@ -600,7 +597,6 @@
         }
         /* User Playlist Items */
         &__list {
-            margin-bottom: 15px;
             overflow-y: scroll;
             height: 90%;
         }
@@ -610,43 +606,59 @@
         }
         &__list-item {
             position: relative;
-            padding: 12px 0px 12px 6px;
-            transition: 0.1s ease-in-out;
+            padding-left: 6px;
             color: rgba(var(--textColor1), 0.6);
             transition: 0.01s ease-in-out;
+            height: 78px;
             @include elipses-overflow;
 
+            &:first-child {
+                margin-top: 12px;
+            }
             &:last-child {
-                margin-bottom: 30px;
+                margin-bottom: 50px;
             }
             &:hover, &--chosen {
                 background-color: var(--hoverColor);
             }
-            p {
-                @include elipses-overflow;
-                font-size: 1.1rem;
-                font-weight: 300;
-            }
             .divider {
                 margin: 0px 0px 0px -10px;
                 width: 110%;
-                height: 0.5px;          
+                height: 1px;          
+            }
+            &--skeleton &-img-container {
+                border-radius: 8px;
+            }
+            &--skeleton &-col-skeleton {
+                height: 13px;
+                margin: 0 auto;
+                border-radius: 3px;
+                width: 50%;
             }
         }
         &__list-item-num {
             margin-left: 19px;
             min-width: 25px;
+            color: rgba(var(--textColor1), 0.45);
         }
-        img {
-            width: 90px;
-            border-radius: 2px;
-            object-fit: cover;
-            aspect-ratio: 16 / 9;
+        &__list-item-img-container {
+            width: 95px;
+            aspect-ratio: $video-img-ratio;
             margin-right: 15px;
+            img {
+                border-radius: 5px;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
         }
         &__list-item-title, &__list-item-length {
             width: 30%;
             overflow: hidden;
+            @include elipses-overflow;
+            font-size: 1.05rem;
+            font-weight: 400;
+            color: rgba(var(--textColor1), 0.5);
             @include center;
 
             @include md(max-width) {
@@ -666,13 +678,13 @@
         h3 {
             padding: 17px 0px 0px $recs-section-padding-left;
         }
-
         &__copy {
             margin: 8px 0px 12px 0px;
             padding: 0px 0px 0px $recs-section-padding-left;
         }
         &__tab-arrow {
             z-index: 10000;
+            background: none;
 
             &--left {
                 margin-right: 15px;
@@ -704,13 +716,9 @@
                 opacity: 1 !important;
                 visibility: visible !important;
             }
-            &:hover > button {
-                opacity: 0.8 !important;
-                visibility: visible !important;
-            }
         }
         &__groups-list {
-            padding: 13px 0px;
+            padding: 6px 0px 10px 0px;
             overflow-x: scroll;
             display: flex;
             scroll-behavior: smooth;
@@ -730,9 +738,6 @@
         &__playlists-list {
             height: 90%;
             overflow-y: scroll;
-            h3 {
-                margin-bottom: 5px;
-            }
         }
         /* Playlist Item */
         &__playlist-item {
@@ -748,50 +753,74 @@
             &--selected, &:hover {
                 background-color: var(--hoverColor);
             }
+            &:first-child {
+                margin-top: 3px;
+            }
             &:last-child {
                 margin-bottom: 70px;
-            }
-            h4 {
-                margin-bottom: 2px;
-                @include elipses-overflow;
-                max-width: 90%;
-                font-weight: 500;
-            }
-            p {
-                font-weight: 300;
-            }
-            h3 {
-                @include elipses-overflow;
-                color: rgb(var(--textColor1), 1);
             }
             .divider {
                 @include pos-abs-bottom-left-corner(0px, 0px);
             }
+
+            &--skeleton &-img-container {
+                border-radius: 7px;
+            }
+            &--skeleton &-title {
+                height: 14px;
+                border-radius: 4px;
+                margin-bottom: 11px;
+                width: 50%;
+            }
+            &--skeleton &-description {
+                height: 10px;
+                margin-bottom: 5px;
+                width: 90%;
+                border-radius: 4px;
+            }
+            &--skeleton &-channel-details {
+                height: 14px;
+                width: 20%;
+                border-radius: 4px;
+            }
         }
-        &__playlist-item-img {
-            min-width: 140px;
+        &__playlist-item-img-container {
+            width: 140px;
             margin: 0px 3% 0px 25px;
-            object-fit: cover;
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+        }
+        &__playlist-item-title {
+            margin-bottom: 4px;
+            @include elipses-overflow;
+            max-width: 90%;
+            font-weight: 500;
+            font-size: 1.1rem;
         }
         &__playlist-item-details {
             width: 60%;
+            position: relative;
         }
         &__playlist-item-description {
             width: 95%;
             max-height: 27px;
             overflow: hidden;
+            font-weight: 300;
+            font-size: 1.04rem;
             @include multi-line-elipses-overflow(2);
             color: rgb(var(--textColor1), 0.6);
         }
         &__playlist-item-channel-details {
-            @include flex-container(center, _);
+            @include pos-abs-bottom-left-corner(0px, 0px);
             margin-top: 12px;
 
             a {
                 font-weight: 400;
-                text-decoration: none;
                 color: rgba(var(--textColor1), 0.8);
-
                 &:hover {
                     text-decoration: underline
                 }

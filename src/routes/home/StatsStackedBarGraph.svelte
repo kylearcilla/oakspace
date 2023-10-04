@@ -3,7 +3,7 @@
 	import * as d3 from 'd3';
 	import { roundToNearestFive } from '$lib/utils-general'
 	import { daysOfWeek, hoursToHhMm, months } from '$lib/utils-date'
-	import { colorThemeState } from "$lib/store"
+	import { themeState } from "$lib/store"
 
     enum TimeFrame { THIS_WEEK, TWO_WEEKS, THREE_WEEKS, THREE_MONTHS, SIX_MONTHS, THIS_YEAR, ALL_TIME }
 
@@ -58,7 +58,7 @@
         }
     }
 
-    colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
+    themeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
 
     const DEFAULT_BAR_OPACITY = 0.96
     const LOW_BAR_OPACITY = 0.67

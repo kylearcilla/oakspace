@@ -1,15 +1,15 @@
 <script lang="ts">
-	import { clickOutside } from "$lib/utils-general";
-	import { colorThemeState, globalSessionObj, globalSessionState } from "$lib/store";
-	import type { Session } from "$lib/pom-session";
+	import { clickOutside } from "$lib/utils-general"
+	import { themeState, globalSessionObj, globalSessionState } from "$lib/store"
+	import type { Session } from "$lib/pom-session"
+	import type { SessionModal } from "$lib/enums"
 
     enum SessionState {
         EMPTY, PAUSED, FOCUSING, ON_BREAK, WAITING_TO_PROGRESS_BREAK, 
         WAITING_TO_PROGRESS_FOCUS, FINISHED, CANCELED, FINISH_TOO_EARLY
     }
-    enum CurrentModal { Quote, NewSession, ActiveSession }
 
-    export let toggleModal: (modal: CurrentModal | null) => void
+    export let toggleModal: (modal: SessionModal | null) => void
     let sessionObj: Session | null = null
     let activeSession: ActiveSessionState | null = null
     let sessionNameInput: HTMLElement
@@ -56,7 +56,7 @@
     let newTodoTitle = ""
     let isLightTheme = false
 
-    colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
+    themeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
 
     const handleFinishSessionClicked = () => {
         sessionObj!.cancelSession()
@@ -488,7 +488,9 @@
 </div>      
 
 <style lang="scss">
+    @import "../../scss/dropdown.scss";
     @import '../../scss/active-session.scss';
+
     /* Session Modal */
     .session-modal-content {
         border-radius: 20px;

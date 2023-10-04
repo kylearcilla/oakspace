@@ -1,13 +1,50 @@
-type HomePandelData = {
-    isNavMenuOpen: boolean
-    isTaskMenuOpen: boolean
-    isVideoViewOpen: boolean
+// avoid checking, issues occur when enums are imported
+// @ts-nocheck
+
+/* Misc. */
+type AsyncResult = {
+    sucess: boolean
 }
 
+type FunctionParam = ((...args: any[]) => any) | ((...args: any[]) => Promise<any>) | null
+
+type AppearanceThemes = { 
+    default: DefaultTheme[], 
+    light: ColorTheme[],
+    dark: ColorTheme[],
+    image: ImageTheme[],
+    video: VideoTheme[]
+}
+
+/* Authentication */
 type GoogleUserData = {
     email: string,
     name: string,
     profileImgSrc: string
+}
+  
+/* Home */
+type HomeLayout = {
+    isNavMenuOpen: boolean,
+    isTaskMenuOpen: boolean,
+    isVideoViewOpen: boolean,
+    isMusicPlayerOpen: boolean,
+    minModeSrc: string | null,
+    modal: SettingsModal | null 
+}
+
+type ToastMsg = {
+    type: ToastType
+    context: ToastContext
+    message: string
+    actionFunction: ((...args: any[]) => any) | ((...args: any[]) => Promise<any>) | null
+}
+
+type ToastMsg = {
+    type: ToastType
+    context: ToastContext
+    message: string
+    actionFunction: FunctionParam
 }
 
 type Quote = {
@@ -19,16 +56,19 @@ type Quote = {
 
 /* Session Stuff */
 type Medal = "🏅" | "🥈" | "🥉"
+
 type SessionResult = { 
     score: number, 
     medal: Medal ,
     message: string,
     resultImgUrl: string
 }
+
 type Tag = {
     name: string,
     color: string
 }
+
 type SessionInputs = {
     name: string,
     tag: Tag
@@ -39,18 +79,6 @@ type SessionInputs = {
     calculatedEndTime: Date | null,
     totalElapsedTime: string | null,
     timePeriodString: string | null
-}
-
-enum SessionState {
-    EMPTY, 
-    PAUSED, 
-    FOCUSING, 
-    ON_BREAK, 
-    WAITING_TO_PROGRESS_BREAK, 
-    WAITING_TO_PROGRESS_FOCUS, 
-    FINISHED, 
-    CANCELED, 
-    FINISH_TOO_EARLY
 }
 
 type ActiveSessionState = {
@@ -74,8 +102,6 @@ type ActiveSessionState = {
 }
 
 /* Music Stuff */
-enum MusicPlatform { AppleMusic, Spotify, Youtube, Soundcloud }
-
 type Track = {
     id: string;
     name: string;
@@ -85,15 +111,6 @@ type Track = {
     playlistId: string;
     playlistName: string;
     playlistArtworkSrc: string;
-}
-  
-type AppleMusicUserCollection = {
-    artworkSrc: string
-    description: string
-    globalId: string
-    id: string
-    isOwn: true
-    name: string
 }
 
 type MusicCollection = {
@@ -106,18 +123,6 @@ type MusicCollection = {
     description: string,
     type: string,
     url: string | null,
-};
-
-type MusicDiscoverCollection = {
-    name: string,
-    author: string,
-    artworkImgSrc: string,
-    description: string,
-    genre: string,
-    songCount: number,
-    albumId: string | null,
-    playlistId: string | null
-    url: string | null
 }
 
 type MusicPlayerState = {
@@ -143,11 +148,6 @@ type MusicPlatformPropNames = "appleMusic"
 
 type DiscoverCollection = {
     [platform in MusicPlatformPropNames]: MusicCollection[]
-  }
-
-type AppleUserCredentials = {
-    devToken: string,
-    musicUserToken: string
 }
 
 type MusicContext = {
@@ -169,18 +169,47 @@ type MusicCollectionCategoryCollections = {
     soundcloud: MusicCollection[]
 }
 
-/* Video Stuff */
+/* Apple Music Stuff */
+type AppleMusicUserCollection = {
+    artworkSrc: string
+    description: string
+    globalId: string
+    id: string
+    isOwn: true
+    name: string
+}
+
+type AppleUserCredentials = {
+    devToken: string,
+    musicUserToken: string
+}
+
+/* Youtube Stuff */
+type YTOAuthResponse = {
+    accessToken: string,
+    email: string,
+    username: string,
+    profileImgSrc: string,
+}
+
 type YoutubeUserCreds = {
     accessToken: string,
     refreshToken: string
 }
 
-type YoutubeUserData = {
+type YoutubeUserPlaylistResponse = {
+    userPlaylists: YoutubePlaylist[]
+    userPlaylistsNextPageToken: string
+    userPlaylistLength: number
+}
+
+type YoutubeUserInfo = {
     username: string,
-    channelImgSrc: string,
+    profileImgSrc: string,
     email: string,
-    selectedPlaylist: YoutubePlaylist | null,
-    playlists: YoutubePlaylist[]
+    userPlaylists: YoutubePlaylist[]
+    userPlaylistsNextPageToken: string
+    userPlaylistLength: number
 }
 
 type YoutubePlaylist = {
@@ -189,19 +218,43 @@ type YoutubePlaylist = {
     description: string,
     vidCount: number,
     channelId: string,
+    channelTitle: string,
     thumbnailURL: string,
-    isRecPlaylist: boolean
+    channelImgSrc: string,
+    channelURL: string,
+    firstVidId: string | null
+}
+
+type YoutubePlayerOptions = {
+    height: string,
+    width: string,
+    playerVars: { autoplay: number, modestbranding: number, rel: number, volume: number }
+    events: {
+        onReady: null | ((...args: any[]) => void) | ((...args: any[]) => Promise<void>),
+        onStateChange: null | ((...args: any[]) => void) | ((...args: any[]) => Promise<void>),
+        onError: null | ((...args: any[]) => void) | ((...args: any[]) => Promise<void>),
+    }
+}
+
+type YoutubeChannel = {
+    channelId: string
+    channelName: string
+    channelImgSrc: string
+    channelSubs: string
+    channelUrl: string
 }
 
 type YoutubeVideo = {
     id: string
     title: string
-    likeCount: number
-    viewCount: number
+    likeCount: string
+    viewCount: string
     publishedAt: string
+    channelId: string
     channelName: string
     channelImgSrc: string
-    channelSubs: number
+    channelSubs: string
+    channelUrl: string
 };
 
 /* Analytics Stuff */
@@ -266,50 +319,40 @@ type TagMonthlyActivity = {
   
 /* Theme Stuff */
 type ThemeState = {
-    title: string,  // to set styling specific only to Default Dark Mode
-    isDarkTheme: boolean,     // to change styling specific only to dark / light themes
+    title: string,  
+    isDarkTheme: boolean,
     themeToggleBtnIconColor: string,
-    sectionTitle: string,
-    headerTimeColor: string,
-    twinTheme: {
-        sectionName: string,
-        index: number
-    } | null
+    twinTheme: { sectionName: keyof AppearanceThemes, index: number } | null
 }
 
-type Theme = {
+interface Theme {
     title: string,
-    sectionDetails: {     // allows for easy selection of right theme from different array 
-        title: string     // ...types instead of looking for theme w/ the right name
-        index: number 
-    }
-    properties: ThemeData,
-    twinTheme: {
-        sectionName: string,
-        index: number
-    } | null
+    sectionDetails: { title: keyof AppearanceThemes, index: number }
 }
 
-type DefaultTheme = Theme & {
+interface ColorTheme extends Theme {
+    colorPalette: string[]
+    styling: ColorThemeProps
+    twinTheme: { sectionName: keyof AppearanceThemes, index: number } | null
+}
+
+interface DefaultTheme extends ColorTheme {
     thumbnailImgSrc: string
 }
 
-type ColorTheme = Theme & {
-    colorPalette: string[] | null,
-}
-
-type ImageTheme = Theme & {
+interface ImageTheme extends Theme {
     fullImgSrc: string
+    thumbnailImgSrc: string
     artist: string
 }
 
-type VideoTheme = Theme & {
-    vidUrl: string,
-    channelName: string,
-    channelImgSrc: string
+interface VideoTheme extends Theme {
+    vidSrc: string,
+    thumbnailSrc: string,
+    channelName: string
 }
 
-type ThemeData = {
+type ColorThemeProps = {
     isDark: boolean,
     hasTwin: boolean,
     isHeaderElementTextLight: boolean,

@@ -1,18 +1,55 @@
 const ANIMTION_SPEED = 12.55    // 12.55 px / sec
 const ANIMATION_PAUSE = 2       // When text hits left / right edge
+const ANIMATION_DELAY = 3000
 
+const INPUT_RANGE_BG_COLOR = "rgba(0, 0, 0, 0.51)"
+
+/**
+ * Updates the progrress bar based on current value.
+ * @param trackPlaybackBar   Player progress bar
+ */
+export const trackProgressHandler = (trackPlaybackBar: HTMLInputElement) => {
+    const value = trackPlaybackBar.value
+    trackPlaybackBar.style.background = `linear-gradient(to right, white 0%, white ${value}%, ${INPUT_RANGE_BG_COLOR} ${value}%, ${INPUT_RANGE_BG_COLOR} 100%)`
+}
+
+/**
+ * Updates the volume bar based on current value.
+ * @param trackPlaybackBar   Player progress bar
+ */
+export const volumeHandler = (musicPlaybackBar: HTMLInputElement) => {
+    const value = musicPlaybackBar.value
+    musicPlaybackBar.style.background = `linear-gradient(to right, white 0%, white ${value}%, ${INPUT_RANGE_BG_COLOR} ${value}%, ${INPUT_RANGE_BG_COLOR} 100%)`
+}
+
+/**
+ * Calculates how long a sliding animation will take. 
+ * Changes depending on the length of track title / artist name.
+ * 
+ * @param offsetWidth    Width difference between a text element and its parent container.
+ * @returns              
+ */
 export const getAnimationDurationMs = (offsetWidth: number) => {
     const totalXOffsetDistance = offsetWidth * 2
     
     return (((totalXOffsetDistance / ANIMTION_SPEED) + (ANIMATION_PAUSE * 2)) * 1000) | 0
 }
-export const getAnimationKeyFrames = (durationMs: number, offSet: number) => {
+
+/**
+ * Generates keyframes for sliding text animation.
+ * There will always be ANIMATION_PAUSE pause when text hits the right & left boundary.
+ *
+ * @param   durationMs    The duration of the animation in milliseconds.
+ * @param   offsetWidth   Width difference between a text element and its parent container.
+ * @returns               An array of keyframes with transform and offset properties.
+ */
+export const getAnimationKeyFrames = (durationMs: number, offsetWidth: number) => {
     const keyFrames = [
         { transform: 'translateX(0)', offset: 0 },
-        { transform: `translateX(-${offSet}px)`, offset: 0 },  // move to the right
-        { transform: `translateX(-${offSet}px)`, offset: 0 },  // pause at the right
-        { transform: 'translateX(0)', offset: 0 },             // move to the left
-        { transform: 'translateX(0)', offset: 0 },             // pause at the left
+        { transform: `translateX(-${offsetWidth}px)`, offset: 0 },  // move to the right
+        { transform: `translateX(-${offsetWidth}px)`, offset: 0 },  // pause at the right
+        { transform: 'translateX(0)', offset: 0 },                  // move to the left
+        { transform: 'translateX(0)', offset: 0 },                  // pause at the left
     ]
 
     const pauseIntervalPercentage = ((ANIMATION_PAUSE * 1000) / durationMs) * 100 
@@ -28,6 +65,13 @@ export const getAnimationKeyFrames = (durationMs: number, offSet: number) => {
     return keyFrames
 }
     
+/**
+ * Used to do a sliding animation to show the entire track title / artist when player is not wide enough to show them.
+ * Dynamically calculates animation length & keyframes to keep animation consistent for any title text length.
+ * 
+ * @param textElement   Text element where track title / artist will be stored
+ * @returns             An animation object that will be attached to the text elements.
+ */
 export const getSlidingTextAnimation = (textElement: HTMLElement): Animation | null => {
     const textContainerWidth = (textElement!.parentNode as HTMLElement).clientWidth
 
@@ -40,7 +84,7 @@ export const getSlidingTextAnimation = (textElement: HTMLElement): Animation | n
     const keyFrames = getAnimationKeyFrames(durationMs, offSet)
 
     const options = {
-        delay: 3000,
+        delay: ANIMATION_DELAY,
         duration: durationMs,
         iterations: Infinity,
         easing: "linear"

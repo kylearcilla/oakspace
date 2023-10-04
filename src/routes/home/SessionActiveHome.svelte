@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { clickOutside } from "$lib/utils-general";
-	import { colorThemeState, globalSessionObj, globalSessionState } from "$lib/store";
-	import type { Session } from "$lib/pom-session";
+	import { clickOutside } from "$lib/utils-general"
+	import { themeState, globalSessionObj, globalSessionState } from "$lib/store"
+	import type { Session } from "$lib/pom-session"
 
     enum SessionState {
         EMPTY, PAUSED, FOCUSING, ON_BREAK, WAITING_TO_PROGRESS_BREAK, 
@@ -55,7 +55,7 @@
     let newTodoTitle = ""
     let isLightTheme = false
 
-    colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
+    themeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
 
     const handleFinishSessionClicked = () => {
         sessionObj!.cancelSession()
@@ -480,6 +480,7 @@
 </div>      
 
 <style lang="scss">
+    @import "../../scss/dropdown.scss";
     @import '../../scss/active-session.scss';
 
     .active-session-container {

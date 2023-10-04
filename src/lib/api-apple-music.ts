@@ -1,23 +1,35 @@
-import { musicPlayerStore, musicDataStore } from "./store"
 import { AppleMusicPlayer } from "./music-apple-player"
 import { MusicData } from "./music-data-apple"
-
-enum MusicPlatform { AppleMusic, Spotify, Youtube, Soundcloud }
+import { MusicPlatform } from "./enums"
+import { getAccessToken, getAppleAuthToken } from "./utils-music"
 
 /**
  * Initializes Apple Music Data & Music Player.
  * Makes new instances of apple music data and player stores.
+ * Handles init errors / expired tokens erros for all music.
+ * Called when user logs into Apple Music the first time.
+ * Called also when a refresh occurs.
  * 
  * @param  isUserLoggedIn   If user has already logged in.
  * @throws {Error}          Error in initializing music data / player.
  */
 export const initAppleMusicState = async (isUserLoggedIn = false) => {
-    const musicData = new MusicData()
-    await musicData.initMusicData(MusicPlatform.AppleMusic, isUserLoggedIn)
+    let musicData: MusicData
 
-    const musicPlayer = new AppleMusicPlayer(musicData)
-
-    return musicPlayer
+    try {
+        musicData = new MusicData()
+        await musicData.initMusicData(MusicPlatform.AppleMusic, isUserLoggedIn)
+        
+        new AppleMusicPlayer(musicData)
+    } 
+    catch (errorCode: any) { 
+        // do not quit during expired token case, user should still be logged in
+        if (!isUserLoggedIn) {
+            musicData!.quit()
+            musicData!.clearPlayerDataAfterLogIn()
+        }
+        throw(errorCode)
+    }
 }
 
 /**
@@ -34,34 +46,39 @@ export const isCollectionPlaylist = (collectionId: string) => {
 /**
  * API Music GET request for fetching user library playlists.
  * 
+ * @param            reqLimit     User playlist response limit
+ * @param            offSet       The next page or group of user playlists to fetch.
  * @returns 
  * @throws {Error}   Error in fetch operation.
  */
-export const getUserApplePlaylists = async (): Promise<MusicCollection[]> => {
-    // @ts-ignore
-    const music = await MusicKit.getInstance()
-    const res = await music.api.music('v1/me/library/playlists')
-
-    if (!res.response.ok) {
-        throw new Error(`Error fetching user library playlists: HTTP ${res.response.status} ${res.response.statusText}`)
+export const getUserPlaylists = async (reqLimit: number, offSet: number): Promise<MusicCollection[]> => {
+    const url = `https://api.music.apple.com/v1/me/library/playlists?limit=${reqLimit}&offset=${offSet}`
+    const headers = {
+        'Authorization': `Bearer ${getAccessToken()}`,
+        'Music-User-Token': `${getAppleAuthToken()}`,
     }
 
+    const res = await fetch(url, {method: 'GET', headers: headers })
     const playlistData = []
-    const data = res.data.data
 
-    for (let i = 0; i < data.length; i++) {
-        const playlist = data[i];
-        const descriptionText = playlist.attributes?.description?.short ?? playlist.attributes?.description?.standard;
+    if (!res.ok) {
+        console.error("Error fetching user playlists.")
+        throw (res.status)
+    }
 
-        // gloal id is used to play playlist so Purchase Music playlist will not included
-        if (!playlist.attributes.playParams.globalId) continue
-        
+    const data = await res.json()
+    const playlists = data.data
+
+    for (let i = 0; i < playlists.length; i++) {
+        const playlist = playlists[i];
+        const descriptionText = playlist.attributes?.description?.short ?? playlist.attributes?.description?.standard
+
         const playlistObj = {
             id: playlist.attributes.playParams.globalId,
             name: playlist.attributes.name,
             description: descriptionText ?? "No Description.",
             artworkImgSrc: playlist.attributes?.artwork ? getArtworkSrc(playlist.attributes.artwork) : "",
-            author: playlist.attributes.curatorName,
+            author: "My Library",
             genre: "",
             songCount: 0,
             type: "Playlist",
@@ -78,10 +95,10 @@ export const getUserApplePlaylists = async (): Promise<MusicCollection[]> => {
  * Fetches playlist details for a user playlists only. 
  * Discover collection details are hardcoded in the back end so no API request needed.
  * 
- * @param playlistId 
- * @param token 
- * @returns 
- * @throws {Error}   Error in fetching playlist details
+ * @param playlistId  
+ * @param token       Acess / Dev token.
+ * @returns           Collection of user's playlists from their library
+ * @throws            Error status from request.
  */
 export const getApplePlaylistDetails = async (playlistId: string, token: string): Promise<MusicCollection>  => {
     const url = `https://api.music.apple.com/v1/catalog/us/playlists/${playlistId}`
@@ -89,7 +106,8 @@ export const getApplePlaylistDetails = async (playlistId: string, token: string)
 
     const res = await fetch(url, options)
     if (!res.ok) { 
-        throw new Error(`Error fetching playlist details: HTTP: ${res.status} ${res.statusText}`)
+        console.error(`Error fetching playlist details. Status: ${res.status} Status Text: ${res.statusText}`)
+        throw (res.status)
     }
 
     const data = await res.json()
@@ -100,13 +118,13 @@ export const getApplePlaylistDetails = async (playlistId: string, token: string)
     const playlistData: MusicCollection = {
         id: playlistId,
         name: data.data[0].attributes.name,
-        author: "My Library",
-        artworkImgSrc: data.data[0].attributes?.artwork ? getArtworkSrc(data.data[0].attributes.artwork) : "",
+        author: data.data[0].attributes.curatorName,
+        artworkImgSrc: data.data[0]?.attributes?.artwork ? getArtworkSrc(data.data[0].attributes.artwork) : "",
         songCount: trackList.length,
         description: descriptionText ?? "No Description",
         type: "Playlist",
         genre: "",
-        url: null
+        url: `https://music.apple.com/library/playlist/${playlistId}`
     }
     return playlistData
 }
@@ -117,6 +135,11 @@ export const getApplePlaylistDetails = async (playlistId: string, token: string)
  * @returns 
  */
 export const getArtworkSrc = (artwork: any) => {
-    // @ts-ignore
-    return MusicKit.formatArtworkURL(artwork, 200, 200)
+    try {
+        // @ts-ignore
+        return MusicKit.formatArtworkURL(artwork, 200, 200)
+    }
+    catch {
+        return ""
+    }
 }

@@ -60,48 +60,70 @@ export const musicCategories: MusicCollectionCategory[] = [
 export const sereneCollections: DiscoverCollection = {
     appleMusic: [
         {
-            name: "Relaxing Classical",
+            name: "Piano Chill",
             author: "Apple Music Classical",
-            artworkImgSrc: "https://is5-ssl.mzstatic.com/image/thumb/Video126/v4/a4/9a/06/a49a06f3-a29d-c581-9f73-2c72e0406561/Job24071de3-fd3f-4b15-8575-a48a9ea1247d-146859868-PreviewImage_preview_image_nonvideo_sdr-Time1679341990783.png/400x400cc.webp",
-            genre: "Classical",
-            description: "Classical music for relaxation and mental balance to soothe your spirits.",
-            songCount: 50,
-            id: "pl.c2ab8af2e9e74576b3bb45d62819d5cd",
+            artworkImgSrc: "https://is3-ssl.mzstatic.com/image/thumb/Video116/v4/dd/04/4c/dd044c89-71f9-8f69-9d8f-2c7460ac5a8e/Job4bc7d373-59e0-40cc-a874-3ac4316358c0-146860002-PreviewImage_preview_image_nonvideo_sdr-Time1679342201716.png/400x400cc.webp",
+            genre: "Piano",
+            description: "Relaxing piano melodies for a serene and soothing musical experience to unwind and destress.",
+            songCount: 59,
+            id: "pl.cb4d1c09a2df4230a78d0395fe1f8fde",
             type: "Playlist",
-            url: "https://music.apple.com/us/playlist/relaxing-classical/pl.c2ab8af2e9e74576b3bb45d62819d5cd"
+            url: "https://music.apple.com/ca/playlist/piano-chill/pl.cb4d1c09a2df4230a78d0395fe1f8fde"
         },
         {
-            name: "Ambient Chill",
+            name: "Lo-Fi Chill",
             author: "Apple Music Chill",
-            artworkImgSrc: "https://is4-ssl.mzstatic.com/image/thumb/Video115/v4/e4/d2/e0/e4d2e04d-9a6d-6c8b-1e1c-f7f24214ab0c/Job84f72d8b-9cf6-48f7-a5e5-febb47c82bea-121401900-PreviewImage_preview_image_nonvideo_sdr-Time1629467430113.png/400x400cc.webp",
+            artworkImgSrc: "https://is1-ssl.mzstatic.com/image/thumb/Video122/v4/05/17/94/05179472-b746-8469-e7bf-0fc8e4fe4d72/Job3e6d7db4-6f0f-4213-b128-b4fec87433d8-133044386-PreviewImage_preview_image_nonvideo_sdr-Time1655426257051.png/540x540cc.webp",
+            genre: "Classical",
+            description: "Hazy, easy sounds for lean-back listening.",
+            songCount: 250,
+            id: "pl.1d5ead185d8a4a9089f3b952770b762c",
+            type: "Playlist",
+            url: "https://music.apple.com/us/playlist/lo-fi-chill/pl.1d5ead185d8a4a9089f3b952770b762c"
+        },
+        {
+            name: "Joyful Classical",
+            author: "Apple Music Classical",
+            artworkImgSrc: "https://is2-ssl.mzstatic.com/image/thumb/Features116/v4/97/12/d1/9712d139-591f-c299-7ea7-b85f07acd884/b0331411-2392-46ee-b964-e2044ea0c1fb.png/400x400SC.DNC01.webp?l=en-US",
+            genre: "Classical",
+            description: "Upbeat, witty, and fun, this music is guaranteed to raise a smile.",
+            songCount: 100,
+            id: "pl.0030a85106a14c078a3bbf0f6befb877",
+            type: "Playlist",
+            url: "https://music.apple.com/us/playlist/joyful-classical/pl.0030a85106a14c078a3bbf0f6befb877"
+        },
+        {
+            name: "Today's Chill",
+            author: "Apple Music Chill",
+            artworkImgSrc: "https://is1-ssl.mzstatic.com/image/thumb/Video125/v4/60/0e/d2/600ed23e-1723-3932-1327-c21a4dacc59b/Job284d2f54-b1e7-4a28-89c7-bb63e4e98f6b-112354263-PreviewImage_preview_image_nonvideo_sdr-Time1619539514875.png/540x540cc.webp",
+            genre: "Classical",
+            description: "The latest updates from electronic music's low-key vanguard.",
+            songCount: 250,
+            id: "pl.2bb29727dbc34a63936787297305c37c",
+            type: "Playlist",
+            url: "https://music.apple.com/us/playlist/lo-fi-chill/pl.2bb29727dbc34a63936787297305c37c"
+        },
+        {
+            name: "Rain Sounds",
+            author: "Apple Music Sleep",
+            artworkImgSrc: "https://is3-ssl.mzstatic.com/image/thumb/Video124/v4/d0/a3/9e/d0a39efb-1245-f8de-6442-f3888a794da3/Jobaa10be7c-a041-4cbc-9e8b-7214d1c2a3ab-108330241-PreviewImage_PreviewImageIntermediate_preview_image_nonvideo-Time1608539542113.png/400x400cc.webp",
             genre: "Ambient",
-            description: "Escape to a realm of tranquil serenity with this collection of soothing and atmospheric tracks.",
+            description: "Calming rainfall sounds, from gentle drizzles to distant thunderstorms, providing introspective tranquility and natural white noise.",
             songCount: 250,
-            id: "pl.bed492442a53481f98e98c6c4da9e01d",
+            id: "pl.e79d63bcaead407fb44a0c19380822e6",
             type: "Playlist",
-            url: "https://music.apple.com/us/playlist/ambient-chill/pl.bed492442a53481f98e98c6c4da9e01d"
+            url: "https://music.apple.com/ca/playlist/rain-sounds/pl.e79d63bcaead407fb44a0c19380822e6"
         },
         {
-            name: "Evergreen",
-            author: "Apple Music",
-            artworkImgSrc: "https://is4-ssl.mzstatic.com/image/thumb/Video112/v4/43/09/b3/4309b37b-fde7-6a14-b8f2-5243bd537b9e/Job5d858b6c-ee63-4701-a397-6b864fa267cd-137639056-PreviewImage_preview_image_nonvideo_sdr-Time1665758696505.png/400x400cc.webp",
-            genre: "Alt / Indie",
-            description: "Discover a soothing collection of indie and alternative electronic music for late nights, quiet afternoons, and reconnecting with yourself.",
-            songCount: 250,
-            id: "pl.7d5e4029dd9140ffbb5da5fda64b3f02",
+            name: "Blossom",
+            author: "Apple Music Chill",
+            artworkImgSrc: "https://is1-ssl.mzstatic.com/image/thumb/Video122/v4/6a/17/be/6a17be39-1d83-52db-c489-617076ec1097/Job8e78c9e3-28a2-4b86-a456-92a428e37ee8-137603745-PreviewImage_preview_image_nonvideo_sdr-Time1665688636346.png/540x540cc.webp",
+            genre: "Ambient",
+            description: "Relaxing journeys in ambient music.",
+            songCount: 100,
+            id: "pl.aa28cc9ba96a4e719da7e2ddc5ffccb3",
             type: "Playlist",
-            url: "https://music.apple.com/ca/playlist/evergreen/pl.7d5e4029dd9140ffbb5da5fda64b3f02"
-        },
-        {
-            name: "Pure Ambient",
-            author: "Apple Music Electronic",
-            artworkImgSrc: "https://is2-ssl.mzstatic.com/image/thumb/Video125/v4/4c/2d/5d/4c2d5dc4-f2d2-5eb2-21ff-bb285c638894/Job500bcd07-1d32-44e4-90f3-39dd0182e751-118078890-PreviewImage_preview_image_nonvideo_sdr-Time1627320875378.png/400x400cc.webp",
-            genre: "Ambient / Lofi",
-            description: "A sonic journey for relaxation and introspection.",
-            songCount: 348,
-            id: "pl.a9bd89e7b22e45cbaac40b58c9d3d09b",
-            type: "Playlist",
-            url: "https://music.apple.com/us/playlist/pure-ambient/pl.a9bd89e7b22e45cbaac40b58c9d3d09b"
+            url: "https://music.apple.com/us/playlist/pure-ambient/pl.aa28cc9ba96a4e719da7e2ddc5ffccb3"
         },
         {
             name: "Minecraft - Volume Alpha",
@@ -146,17 +168,6 @@ export const sereneCollections: DiscoverCollection = {
             id: "1109714933",
             type: "Album",
             url: "https://music.apple.com/ca/album/in-rainbows/1109714933"
-        },
-        {
-            name: "Piano Chill",
-            author: "Apple Music Classical",
-            artworkImgSrc: "https://is3-ssl.mzstatic.com/image/thumb/Video116/v4/dd/04/4c/dd044c89-71f9-8f69-9d8f-2c7460ac5a8e/Job4bc7d373-59e0-40cc-a874-3ac4316358c0-146860002-PreviewImage_preview_image_nonvideo_sdr-Time1679342201716.png/400x400cc.webp",
-            genre: "Piano",
-            description: "Relaxing piano melodies for a serene and soothing musical experience to unwind and destress.",
-            songCount: 59,
-            id: "pl.cb4d1c09a2df4230a78d0395fe1f8fde",
-            type: "Playlist",
-            url: "https://music.apple.com/ca/playlist/piano-chill/pl.cb4d1c09a2df4230a78d0395fe1f8fde"
         },
         {
             name: "Lianne La Havas Essentials",
@@ -212,17 +223,6 @@ export const sereneCollections: DiscoverCollection = {
             id: "pl.b5e8dbe8a706496496e1292466839207",
             type: "Playlist",
             url: "https://music.apple.com/ca/playlist/acoustic-chill/pl.b5e8dbe8a706496496e1292466839207"
-        },
-        {
-            name: "Chill House",
-            author: "Apple Music Dance",
-            artworkImgSrc: "https://is1-ssl.mzstatic.com/image/thumb/Video124/v4/2a/d2/94/2ad2940b-0d37-8665-d5b0-9f511ec7b0fa/Job2d9ee713-d7ee-4a81-b567-5ea07d47df46-108341015-PreviewImage_PreviewImageIntermediate_preview_image_nonvideo-Time1608573869722.png/400x400cc.webp",
-            genre: "Pop / House",
-            description: "Smooth, laid-back electronic beats to set a relaxed, groove-filled atmosphere for unwinding.",
-            songCount: 100,
-            id: "pl.bd55c25265aa4de8b3fc3e0960751846",
-            type: "Playlist",
-            url: "https://music.apple.com/us/playlist/chill-house/pl.bd55c25265aa4de8b3fc3e0960751846"
         },
         {
             name: "Living in the Library",
@@ -296,6 +296,17 @@ export const lofiCollections = {
             url: "https://music.apple.com/us/playlist/relaxing-classical/pl.46bf6d7a51aa48b6a27b37267d293f7f"
         },
         {
+            name: "Lo-Fi Chill",
+            author: "Apple Music Chill",
+            artworkImgSrc: "https://is1-ssl.mzstatic.com/image/thumb/Video122/v4/05/17/94/05179472-b746-8469-e7bf-0fc8e4fe4d72/Job3e6d7db4-6f0f-4213-b128-b4fec87433d8-133044386-PreviewImage_preview_image_nonvideo_sdr-Time1655426257051.png/540x540cc.webp",
+            genre: "Classical",
+            description: "Hazy, easy sounds for lean-back listening.",
+            songCount: 250,
+            id: "pl.1d5ead185d8a4a9089f3b952770b762c",
+            type: "Playlist",
+            url: "https://music.apple.com/us/playlist/lo-fi-chill/pl.1d5ead185d8a4a9089f3b952770b762c"
+        },
+        {
             name: "Solitude",
             author: "Jinsang",
             artworkImgSrc: "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cc/e7/f1/cce7f124-fd18-a5fd-d8a7-0f453361cd16/cover.jpg/592x592bb.webp",
@@ -305,6 +316,17 @@ export const lofiCollections = {
             id: "1676000364",
             type: "Album",
             url: "https://music.apple.com/us/album/solitude/1676000364"
+        },
+        {
+            name: "Evergreen",
+            author: "Apple Music",
+            artworkImgSrc: "https://is4-ssl.mzstatic.com/image/thumb/Video112/v4/43/09/b3/4309b37b-fde7-6a14-b8f2-5243bd537b9e/Job5d858b6c-ee63-4701-a397-6b864fa267cd-137639056-PreviewImage_preview_image_nonvideo_sdr-Time1665758696505.png/400x400cc.webp",
+            genre: "Alt / Indie",
+            description: "Chill sounds for exploring inner space.",
+            songCount: 250,
+            id: "pl.7d5e4029dd9140ffbb5da5fda64b3f02",
+            type: "Playlist",
+            url: "https://music.apple.com/ca/playlist/evergreen/pl.7d5e4029dd9140ffbb5da5fda64b3f02"
         },
         {
             name: "Lo-Fi Japan",
@@ -338,6 +360,17 @@ export const lofiCollections = {
             id: "pl.1c1744bbc1174cf2880c53b302d428a0",
             type: "Playlist",
             url: "https://music.apple.com/us/playlist/study-lofi/pl.1c1744bbc1174cf2880c53b302d428a0"
+        },
+        {
+            name: "Chill House",
+            author: "Apple Music Dance",
+            artworkImgSrc: "https://is1-ssl.mzstatic.com/image/thumb/Video124/v4/2a/d2/94/2ad2940b-0d37-8665-d5b0-9f511ec7b0fa/Job2d9ee713-d7ee-4a81-b567-5ea07d47df46-108341015-PreviewImage_PreviewImageIntermediate_preview_image_nonvideo-Time1608573869722.png/400x400cc.webp",
+            genre: "Pop / House",
+            description: "Smooth, laid-back electronic beats to set a relaxed, groove-filled atmosphere for unwinding.",
+            songCount: 100,
+            id: "pl.bd55c25265aa4de8b3fc3e0960751846",
+            type: "Playlist",
+            url: "https://music.apple.com/us/playlist/chill-house/pl.bd55c25265aa4de8b3fc3e0960751846"
         },
         {
             name: "BEATstrumentals",
@@ -636,7 +669,7 @@ export const upbeatCollections = {
             author: "Kendrick Lamar",
             artworkImgSrc: "https://is2-ssl.mzstatic.com/image/thumb/Music112/v4/0d/ae/61/0dae6140-d4af-d0df-eae0-3c92eb392a33/15UMGIM11922.rgb.jpg/592x592bb.webp",
             genre: "Hip-Hop",
-            description: "A genre-defying masterpiece, Kendrick Lamar's \"To Pimp a Butterfly\" explores profound social commentary through innovative soundscapes",
+            description: "A genre-defying masterpiece, Kendrick Lamar's \"To Pimp a Butterfly\" explores profound social commentary through innovative soundscapes.",
             songCount: 16,
             id: "1440828886",
             type: "Album",
@@ -1153,6 +1186,17 @@ export const classicalCollections = {
             url: "https://music.apple.com/us/playlist/piano-essentials/pl.5e6ff35247334d9699646afd21e589bd"
         },
         {
+            name: "Joyful Classical",
+            author: "Apple Music Classical",
+            artworkImgSrc: "https://is2-ssl.mzstatic.com/image/thumb/Features116/v4/97/12/d1/9712d139-591f-c299-7ea7-b85f07acd884/b0331411-2392-46ee-b964-e2044ea0c1fb.png/400x400SC.DNC01.webp?l=en-US",
+            genre: "Classical",
+            description: "Upbeat, witty, and fun, this music is guaranteed to raise a smile.",
+            songCount: 100,
+            id: "pl.0030a85106a14c078a3bbf0f6befb877",
+            type: "Playlist",
+            url: "https://music.apple.com/us/playlist/joyful-classical/pl.0030a85106a14c078a3bbf0f6befb877"
+        },
+        {
             name: "Relaxing Classical",
             author: "Apple Music Classical",
             artworkImgSrc: "https://is5-ssl.mzstatic.com/image/thumb/Video126/v4/a4/9a/06/a49a06f3-a29d-c581-9f73-2c72e0406561/Job24071de3-fd3f-4b15-8575-a48a9ea1247d-146859868-PreviewImage_preview_image_nonvideo_sdr-Time1679341990783.png/400x400cc.webp",
@@ -1184,17 +1228,6 @@ export const classicalCollections = {
             id: "pl.ab135abce66d4784b801594e22ce338d",
             type: "Playlist",
             url: "https://music.apple.com/us/playlist/classical-summer/pl.ab135abce66d4784b801594e22ce338d"
-        },
-        {
-            name: "Joyful Classical",
-            author: "Apple Music Classical",
-            artworkImgSrc: "https://is2-ssl.mzstatic.com/image/thumb/Features116/v4/97/12/d1/9712d139-591f-c299-7ea7-b85f07acd884/b0331411-2392-46ee-b964-e2044ea0c1fb.png/400x400SC.DNC01.webp?l=en-US",
-            genre: "Classical",
-            description: "Delight in the enchanting melodies of blissful classical music.",
-            songCount: 100,
-            id: "pl.0030a85106a14c078a3bbf0f6befb877",
-            type: "Playlist",
-            url: "https://music.apple.com/us/playlist/joyful-classical/pl.0030a85106a14c078a3bbf0f6befb877"
         },
         {
             name: "Mozart Essentials",
@@ -1279,6 +1312,17 @@ export const zenCollections = {
             url: "https://music.apple.com/us/playlist/sleep-meditation/pl.b201f2bc8ec3468c8afd74a5e394b6e2"
         },
         {
+            name: "Ambient Chill",
+            author: "Apple Music Chill",
+            artworkImgSrc: "https://is4-ssl.mzstatic.com/image/thumb/Video115/v4/e4/d2/e0/e4d2e04d-9a6d-6c8b-1e1c-f7f24214ab0c/Job84f72d8b-9cf6-48f7-a5e5-febb47c82bea-121401900-PreviewImage_preview_image_nonvideo_sdr-Time1629467430113.png/400x400cc.webp",
+            genre: "Ambient",
+            description: "Sonic wallpaper for discerning ears.",
+            songCount: 250,
+            id: "pl.bed492442a53481f98e98c6c4da9e01d",
+            type: "Playlist",
+            url: "https://music.apple.com/us/playlist/ambient-chill/pl.bed492442a53481f98e98c6c4da9e01d"
+        },
+        {
             name: "Spa",
             author: "Apple Music Wellbeing",
             artworkImgSrc: "https://is3-ssl.mzstatic.com/image/thumb/Video125/v4/e2/4e/a0/e24ea026-be0a-2e43-b59b-4923adc59727/Job228dc454-d709-438f-93e9-701c91d4c19c-124823685-PreviewImage_preview_image_nonvideo_sdr-Time1634075912438.png/400x400cc.webp",
@@ -1290,6 +1334,17 @@ export const zenCollections = {
             url: "https://music.apple.com/us/playlist/spa/pl.4f2b5ddd448344a1848db8259e6c5f5b"
         },
         {
+            name: "White Noise",
+            author: "Apple Music Sleep",
+            artworkImgSrc: "https://is1-ssl.mzstatic.com/image/thumb/Video115/v4/3f/1d/1c/3f1d1c58-7efe-e277-5153-5ee2ee6959f6/Jobc1012ed3-0887-4952-abad-c8e9194de8da-118267001-PreviewImage_preview_image_nonvideo_sdr-Time1627509732782.png/540x540cc.webp",
+            genre: "Ambient",
+            description: "Whispering static to cancel out the distractions around you.",
+            songCount: 250,
+            id: "pl.4a9b82ff3b2b4c97935434eb257b7cc3b",
+            type: "Playlist",
+            url: "https://music.apple.com/us/playlist/white-noise/pl.4a9b82ff3b2b4c97935434eb257b7cc3b"
+        },
+        {
             name: "Sleep Sounds",
             author: "Apple Music Sleep",
             artworkImgSrc: "https://is2-ssl.mzstatic.com/image/thumb/Video124/v4/0c/9e/b2/0c9eb20f-1b27-9536-83dc-8765af3135a2/Jobd80949f7-345e-4460-a8d5-dcd702991b62-108327984-PreviewImage_PreviewImageIntermediate_preview_image_nonvideo-Time1608524996185.png/400x400cc.webp",
@@ -1299,6 +1354,17 @@ export const zenCollections = {
             id: "pl.0ef59752c0cd457dbf1391f08cbd936f",
             type: "Playlist",
             url: "https://music.apple.com/us/playlist/sleep-sounds/pl.0ef59752c0cd457dbf1391f08cbd936f"
+        },
+        {
+            name: "Pure Ambient",
+            author: "Apple Music Electronic",
+            artworkImgSrc: "https://is2-ssl.mzstatic.com/image/thumb/Video125/v4/4c/2d/5d/4c2d5dc4-f2d2-5eb2-21ff-bb285c638894/Job500bcd07-1d32-44e4-90f3-39dd0182e751-118078890-PreviewImage_preview_image_nonvideo_sdr-Time1627320875378.png/400x400cc.webp",
+            genre: "Ambient / Lofi",
+            description: "A sonic journey for relaxation and introspection.",
+            songCount: 348,
+            id: "pl.a9bd89e7b22e45cbaac40b58c9d3d09b",
+            type: "Playlist",
+            url: "https://music.apple.com/us/playlist/pure-ambient/pl.a9bd89e7b22e45cbaac40b58c9d3d09b"
         },
         {
             name: "Pure Meditation",

@@ -1,32 +1,28 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte'
-	import { getSlidingTextAnimation } from '$lib/utils-music-player';
-	import { musicPlayerStore, colorThemeState, homeViewLaout, musicDataStore } from '$lib/store'
-	import { initAppleMusicState } from '$lib/api-apple-music';
-	import type { MusicPlayer } from '$lib/music-player';
-	import { getPlatformCode } from '$lib/utils-music';
-	import type { MusicData } from '$lib/music-data-apple';
+    import { MusicPlatform } from "$lib/enums"
+	import type { MusicPlayer } from '$lib/music-player'
+	import type { MusicData } from '$lib/music-data-apple'
+	import { getSlidingTextAnimation, trackProgressHandler, volumeHandler } from '$lib/utils-music-player'
+	import { musicPlayerStore, themeState, homeViewLayout, musicDataStore } from '$lib/store'
     
-    let trackPlaybackBar: HTMLInputElement;
-    let musicPlaybackBar: HTMLInputElement;
+    let hasMediaEventHandlersSet = false
+    let isPausePlayBtnActive = false
+    let isPrevBtnActive = false
+    let isNextBtnActive = false
+    let playbackProgress = 0.1
     
-    let trackTitleElement: HTMLElement;
-    let trackArtistNameElement: HTMLElement;
+    let trackPlaybackBar: HTMLInputElement
+    let musicPlaybackBar: HTMLInputElement
+
+    let trackTitleElement: HTMLElement
+    let trackArtistNameElement: HTMLElement
     let trackTitleElAnimationObj: Animation | null
     let trackArtistElAnimationObj: Animation | null
     
     let ACTIVE_TO_INACTIVE_BTN_DEAY = 150
-    
-    let isPausePlayBtnActive = false
-    let isPrevBtnActive = false
-    let isNextBtnActive = false
 
-    let playbackProgress = 0.1
-    let inputRangeBgColor = "rgba(0, 0, 0, 0.51)"
-    
-    enum MusicPlatform { AppleMusic, Spotify, Youtube, Soundcloud }
-
-    // attach moving text animations for track & artist names
+    /* Watch for music data & player state changes */
     musicDataStore.subscribe((data: MusicData | null) => {
         if (!data?.track) return
 
@@ -38,26 +34,49 @@
             trackArtistElAnimationObj =  getSlidingTextAnimation(trackArtistNameElement)
         })
     })
-
     musicPlayerStore.subscribe((player: MusicPlayer | null) => {
-        if (!player || navigator.mediaSession.metadata) return    
-        if (player.state.error) {
-            // ERROR UI
+        if (!player) return    
+        if (player.state?.error) {
             console.error(player.state.error)
         }
 
-        initMediaSessionEventHandlers()
+        // when media is playing for this site
+        if (navigator.mediaSession.metadata && !hasMediaEventHandlersSet) {
+            initMediaSessionEventHandlers()
+        }
     })
 
+    /* Controls */
     const togglePlayback = () => $musicPlayerStore!.togglePlayback()
     const toggleRepeat = () => $musicPlayerStore!.toggleRepeat()
     const toggleShuffle = () => $musicPlayerStore!.toggleShuffle()
     const skipToNextSong = () => $musicPlayerStore!.skipToNextTrack()
     const skipToPreviousSong = () => $musicPlayerStore!.skipToPrevTrack()
 
-    const initMediaSessionEventHandlers = () => {
-        if (!('mediaSession' in navigator)) return
+    /* Player Event Listeners */
+    const _trackProgressHandler = () => trackProgressHandler(trackPlaybackBar)
+    const _volumeHandler = () => volumeHandler(musicPlaybackBar)
 
+    const handleKeyUp = (event: KeyboardEvent) => {
+        if (event.code !== "Space") return
+        togglePlayback()
+        isPausePlayBtnActive = false
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.code !== "Space") return
+        isPausePlayBtnActive = true
+    }
+    const handleResize = () => {
+        trackTitleElAnimationObj?.cancel()
+        trackArtistElAnimationObj?.cancel()
+
+        trackTitleElAnimationObj = getSlidingTextAnimation(trackTitleElement)
+        trackArtistElAnimationObj =  getSlidingTextAnimation(trackArtistNameElement)
+    }
+
+    /* Media Session */
+    const initMediaSessionEventHandlers = () => {
+        hasMediaEventHandlersSet = true
         navigator.mediaSession.setActionHandler('play', () => { 
             isPausePlayBtnActive = true
             togglePlayback()
@@ -83,59 +102,18 @@
             setTimeout(() => isNextBtnActive = false, ACTIVE_TO_INACTIVE_BTN_DEAY)
         })
     }
-    const handleKeyUp = (event: KeyboardEvent) => {
-        if (event.code !== "Space") return
-        togglePlayback()
-        isPausePlayBtnActive = false
-    }
-    const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.code !== "Space") return
-        isPausePlayBtnActive = true
-    }
-    const handleResize = () => {
-        trackTitleElAnimationObj?.cancel()
-        trackArtistElAnimationObj?.cancel()
-
-        trackTitleElAnimationObj = getSlidingTextAnimation(trackTitleElement)
-        trackArtistElAnimationObj =  getSlidingTextAnimation(trackArtistNameElement)
-    }
-    const initMusicPlatform = async () => {
-        const platformCode = getPlatformCode()
-        if (!platformCode) return
-        
-        try {
-            if (platformCode === "0") {
-                await initAppleMusicState(true)
-            }
-        }
-        catch(e) {
-            console.error(e)
-        }
-    }
-
-    // native progress players
-    const trackProgressHandler = () => {
-        const value = trackPlaybackBar.value;
-        trackPlaybackBar.style.background = `linear-gradient(to right, white 0%, white ${value}%, ${inputRangeBgColor} ${value}%, ${inputRangeBgColor} 100%)`
-    }
-    const volumeHandler = () => {
-        const value = musicPlaybackBar.value;
-        musicPlaybackBar.style.background = `linear-gradient(to right, white 0%, white ${value}%, ${inputRangeBgColor} ${value}%, ${inputRangeBgColor} 100%)`
-    }
 
     onMount(async () => {
-        trackProgressHandler()
-        volumeHandler()
+        _trackProgressHandler()
+        _volumeHandler()
         window.addEventListener("resize", handleResize)
-        
-        initMusicPlatform()
     })
     onDestroy(() => window.removeEventListener("resize", handleResize))
 </script>
 
 <svelte:window on:keyup={handleKeyUp} on:keydown={handleKeyDown} />
 
-<div class={`music-player ${$homeViewLaout.isNavMenuOpen ? "music-player--left-bar-open" : ""} ${$musicDataStore?.track ? "" : "music-player--hidden"} ${!$colorThemeState.isDarkTheme ? "music-player--solid-bg" : ""}`}>
+<div class={`music-player ${$homeViewLayout.isNavMenuOpen ? "music-player--left-bar-open" : ""} ${$musicDataStore?.track ? "" : "music-player--hidden"} ${!$themeState.isDarkTheme ? "music-player--solid-bg" : ""}`}>
     <div class="music-player__wrapper">
     <img class="img-bg" src={$musicDataStore?.track?.artworkImgSrc} alt="track-artwork"/>
     <div class="blur-bg"></div>
@@ -147,7 +125,7 @@
                 <h5 class="music-player-track__title" bind:this={trackTitleElement}>
                     {$musicDataStore?.track?.name ?? ""}
                 </h5>
-                <span class={`music-player-track__artist caption-2 ${!$colorThemeState.isDarkTheme ? "caption-2--light-theme" : ""}`} bind:this={trackArtistNameElement}>
+                <span class={`music-player-track__artist caption-2 ${!$themeState.isDarkTheme ? "caption-2--light-theme" : ""}`} bind:this={trackArtistNameElement}>
                     {$musicDataStore?.track?.artist ?? ""}
                 </span>
             </div>
@@ -198,7 +176,7 @@
                     <input
                         class="input-range"
                         bind:this={trackPlaybackBar}
-                        on:input={trackProgressHandler}
+                        on:input={_trackProgressHandler}
                         value="90"
                         type="range"
                         min="0"
@@ -218,7 +196,7 @@
                     <input
                         class="input-range input-range--show-thumb"
                         bind:this={musicPlaybackBar}
-                        on:input={volumeHandler}
+                        on:input={_volumeHandler}
                         value="90"
                         type="range"
                         min="0"
@@ -228,14 +206,6 @@
                 {/if}
             </div>
             <div class="music-player-context-container">
-                <!-- <div class="divider divider--vertical"></div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20">
-                    <g fill="none" stroke="currentColor" stroke-linecap="round" transform="translate(1 10)">
-                        <circle cx="2" cy="0.8" r="1.2"></circle>
-                        <circle cx="8" cy="0.8" r="1.2"></circle>
-                        <circle cx="14" cy="0.8" r="1.2"></circle>
-                    </g>
-                </svg> -->
                 {#if MusicPlatform[$musicDataStore?.musicPlatform ?? 0] === "Soundcloud"}
                     <div class="music-player-platform-logo platform-logo platform-logo--soundcloud platform-logo--med">
                         <i class="fa-brands fa-soundcloud fa-soundcloud--med"></i>
@@ -260,6 +230,9 @@
 </div>
 
 <style lang="scss">
+    @import "../../scss/blurred-bg.scss";
+    @import "../../scss/brands.scss";
+
     .music-player {
         bottom: 7px;
         min-width: 470px;
@@ -343,14 +316,16 @@
             height: 35px;
         }
         &__title {
-            @include pos-abs-top-left-corner(2.2px, 0px);
+            @include pos-abs-top-left-corner(5px, 0px);
             white-space: nowrap;
             width: auto;
+            font-size: 1.1rem;
         }
         &__artist {
             @include pos-abs-bottom-left-corner(1px, 0px);
             white-space: nowrap;
             width: auto;
+            font-size: 0.95rem;
         }
         &__art {
             width: 30px;

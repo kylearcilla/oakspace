@@ -1,6 +1,6 @@
  <script lang="ts">
 	import { clickOutside } from "$lib/utils-general";
-	import { colorThemeState } from "$lib/store";
+	import { themeState } from "$lib/store";
 	import { onMount } from "svelte";
 	import { getSelectedKeyInsightData, getProdOverViewData } from "$lib/utils-session";
 	import ProdLineChart from "./StatsLineChart.svelte";
@@ -10,10 +10,7 @@
 	import { daysOfWeek, hoursToHhMm } from "$lib/utils-date";
 	import StatsTagRanking from "./StatsTagRanking.svelte";
 
-    enum Modal { Settings, Youtube, Music, Stats, Appearance,  }
     enum TimeFrame { THIS_WEEK, TWO_WEEKS, THREE_WEEKS, THREE_MONTHS, SIX_MONTHS, THIS_YEAR, ALL_TIME }
-
-    export let onNavButtonClicked: (modal: Modal | null) => void
 
     const tags = [
         {
@@ -542,7 +539,7 @@
         getData(timeFrame)
     }
 
-    colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
+    themeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
 
     const setKey = (newKey: number | null) => {
         keySelected = newKey
@@ -673,7 +670,7 @@
 </script>
 
  <div class="modal-bg">
-    <div use:clickOutside on:click_outside={() => onNavButtonClicked(null)} class="modal-bg__content">
+    <div use:clickOutside on:click_outside={() => console.log("")} class="modal-bg__content">
         <div class={`stats ${isLightTheme ? "" : "stats--dark"}`}>
             <div class="stats__left">
                 <!-- Header -->
@@ -935,6 +932,7 @@
  </div>
 
  <style lang="scss">
+    @import "../../scss/dropdown.scss";
     $bento-box-padding: 7px;
 
     .modal-bg {

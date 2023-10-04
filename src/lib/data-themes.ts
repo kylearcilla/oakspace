@@ -1,16 +1,10 @@
-export const defaultThemes: Theme[] = [
+export const defaultThemes: DefaultTheme[] = [
     {
         title: "Dark Mode",
         thumbnailImgSrc: "/dark-mode-icon.png",
-        sectionDetails: {
-            title: "default",
-            index: 0
-        },
-        twinTheme: {
-            sectionName: "defaultThemes",
-            index: 1,
-        },
-        properties: {
+        sectionDetails: { title: "default", index: 0 },
+        twinTheme: { sectionName: "default", index: 1 },
+        styling: {
             isDark: true,
             hasTwin: true,
             isHeaderElementTextLight: false,
@@ -49,7 +43,7 @@ export const defaultThemes: Theme[] = [
             highlighterToggleBtnBgColor: "#1A181A",
             midPanelBorder: "none",
             midPanelShadow: "none",            
-            midPanelBaseColor: "#141415",
+            midPanelBaseColor: "#111011",
             midPanelAccentColor1: "#171517",
             midPanelAccentColor2: "#101011",
             midPanelAccentColor3: "#141417",
@@ -63,15 +57,9 @@ export const defaultThemes: Theme[] = [
     {
         title: "Light Mode",
         thumbnailImgSrc: "/light-mode-icon.png",
-        sectionDetails: {
-            title: "default",
-            index: 1
-        },
-        twinTheme: {
-            sectionName: "defaultThemes",
-            index: 0,
-        },
-        properties: {
+        sectionDetails: { title: "default", index: 1 },
+        twinTheme: { sectionName: "default", index: 0 },
+        styling: {
             isDark: false,
             hasTwin: false,
             isHeaderElementTextLight: false,
@@ -123,19 +111,13 @@ export const defaultThemes: Theme[] = [
         }
     } as DefaultTheme
 ]
-export const darkColorThemes: Theme[] = [
+export const darkColorThemes: ColorTheme[] = [
     {
         title: "Midnights",
-        isDark: false,
-        sectionDetails: {
-            title: "dark",
-            index: 0
-        },
+        sectionDetails: { title: "dark", index: 0 },
         twinTheme: null,
-        colorPalette: [
-            "#141113", "#2D252A", "#DBB590", "#F8E1CC", "#FFF5EC"
-        ],
-        properties: {
+        colorPalette: ["#141113", "#2D252A", "#DBB590", "#F8E1CC", "#FFF5EC"],
+        styling: {
             isDark: true,
             hasTwin: false,
             isHeaderElementTextLight: false,
@@ -185,22 +167,16 @@ export const darkColorThemes: Theme[] = [
             dropdownMenuBgColor: "#100E0F",
             prodMenuViewShadow: "",
         }
-    } as ColorTheme,
+    },
     {
         title: "Dark Academia",
-        isDark: false,
-        sectionDetails: {
-            title: "dark",
-            index: 1
-        },
+        sectionDetails: { title: "dark", index: 1 },
         twinTheme: {
-            sectionName: "lightColorThemes",
-            index: 7,
-        },
+            sectionName: "light",index: 7,},
         colorPalette: [
             "#241D15", "#8D775E", "#564E40", "#B9AE99", "#B8A086"
         ],
-        properties: {
+        styling: {
             isDark: true,
             hasTwin: false,
             isHeaderElementTextLight: false,
@@ -250,22 +226,16 @@ export const darkColorThemes: Theme[] = [
             dropdownMenuBgColor: "#100F0D",
             prodMenuViewShadow: "",
         }
-    } as ColorTheme,
+    },
     {
         title: "Dusk",
-        isDark: false,
-        sectionDetails: {
-            title: "dark",
-            index: 2
-        },
+        sectionDetails: { title: "dark", index: 2 },
         twinTheme: {
-            sectionName: "lightColorThemes",
-            index: 7,
-        },
+            sectionName: "light",index: 7,},
         colorPalette: [
             "#1A191A", "#232225", "#9792CD", "#B5A7F0", "#C8B8F3"
         ],
-        properties: {
+        styling: {
             isDark: true,
             hasTwin: false,
             isHeaderElementTextLight: false,
@@ -315,22 +285,16 @@ export const darkColorThemes: Theme[] = [
             dropdownMenuBgColor: "#0b0a0b",
             prodMenuViewShadow: "",
         }
-    } as ColorTheme,
+    },
     {
         title: "Sundown",
-        isDark: false,
-        sectionDetails: {
-            title: "dark",
-            index: 3
-        },
+        sectionDetails: { title: "dark", index: 3 },
         twinTheme: {
-            sectionName: "lightColorThemes",
-            index: 7,
-        },
+            sectionName: "light",index: 7,},
         colorPalette: [
             "#1A191A", "#232225", "#BF9094", "#E8A293", "#EFB9AE"
         ],
-        properties: {
+        styling: {
             isDark: true,
             hasTwin: false,
             isHeaderElementTextLight: false,
@@ -380,20 +344,15 @@ export const darkColorThemes: Theme[] = [
             dropdownMenuBgColor: "#100F0D",
             prodMenuViewShadow: "",
         }
-    } as ColorTheme,
+    },
 ]
-export const lightColorThemes: Theme[] = [
+export const lightColorThemes: ColorTheme[] = [
     {
         title: "Olive",
-        sectionDetails: {
-            title: "light",
-            index: 0
-        },
+        sectionDetails: { title: "light", index: 0 },
         colorPalette: [
-            "#72673A", "#A2956E", "#BFB38D", "#D2C7A8", "#DBD5C1"
-        ],
-        twinTheme: null,
-        properties: {
+            "#72673A", "#A2956E", "#BFB38D", "#D2C7A8", "#DBD5C1"],twinTheme: null,
+        styling: {
             isDark: false,
             hasTwin: false,
             isHeaderElementTextLight: false,
@@ -443,18 +402,13 @@ export const lightColorThemes: Theme[] = [
             dropdownMenuBgColor: "#FBF7E9",
             prodMenuViewShadow: "0px 4px 18px 0px rgba(123, 123, 123, 0.07)",
         }
-    } as ColorTheme,
+    },
     {
         title: "Basil",
-        sectionDetails: {
-            title: "light",
-            index: 1
-        },
+        sectionDetails: { title: "light", index: 1 },
         twinTheme: null,
-        colorPalette: [
-             "#66754C", "#8E9B6D", "#A5AB95", "#D5C7AA", "#FAF5EB"
-        ],
-        properties: {
+        colorPalette: ["#66754C", "#8E9B6D", "#A5AB95", "#D5C7AA", "#FAF5EB"],
+        styling: {
             isDark: false,
             hasTwin: false,
             isHeaderElementTextLight: false,
@@ -504,18 +458,13 @@ export const lightColorThemes: Theme[] = [
             dropdownMenuBgColor: "#FFFCF6",
             prodMenuViewShadow: "0px 4px 12px 0px rgba(56, 56, 56, 0.1)",
         }
-    } as ColorTheme,
+    },
     {
         title: "Azul",
-        sectionDetails: {
-            title: "light",
-            index: 2
-        },
+        sectionDetails: { title: "light", index: 2 },
         twinTheme: null,
-        colorPalette: [
-             "#5E73AF", "#7487BF", "#98A3C4", "#C5CAD8", "#FAF5EB"
-        ],
-        properties: {
+        colorPalette: ["#5E73AF", "#7487BF", "#98A3C4", "#C5CAD8", "#FAF5EB"],
+        styling: {
             isDark: false,
             hasTwin: false,
             isHeaderElementTextLight: true,
@@ -565,18 +514,13 @@ export const lightColorThemes: Theme[] = [
             dropdownMenuBgColor: "#fffefb",
             prodMenuViewShadow: "0px 2px 16px 5px rgba(0, 0, 0, 0.05)",
         }
-    } as ColorTheme,
+    },
     {
         title: "Vert",
-        sectionDetails: {
-            title: "light",
-            index: 3
-        },
+        sectionDetails: { title: "light", index: 3 },
         twinTheme: null,
-        colorPalette: [
-             "#508D6C", "#739984", "#93B6A3", "#C1C9C0", "#FAF5EB"
-        ],
-        properties: {
+        colorPalette: ["#508D6C", "#739984", "#93B6A3", "#C1C9C0", "#FAF5EB"],
+        styling: {
             isDark: false,
             hasTwin: false,
             isHeaderElementTextLight: true,
@@ -626,18 +570,13 @@ export const lightColorThemes: Theme[] = [
             dropdownMenuBgColor: "#fffefb",
             prodMenuViewShadow: "0px 2px 16px 5px rgba(0, 0, 0, 0.05)",
         }
-    } as ColorTheme,
+    },
     {
         title: "Earth",
-        sectionDetails: {
-            title: "light",
-            index: 4
-        },
+        sectionDetails: { title: "light", index: 4 },
         twinTheme: null,
-        colorPalette: [
-            "#979687", "#C0BEA6", "#D0CCC2", "#E4BAA2", "#E9D3C5"
-        ],
-        properties: {
+        colorPalette: ["#979687", "#C0BEA6", "#D0CCC2", "#E4BAA2", "#E9D3C5"],
+        styling: {
             isDark: false,
             hasTwin: false,
             isHeaderElementTextLight: false,
@@ -687,18 +626,13 @@ export const lightColorThemes: Theme[] = [
             midPanelAccentTextColor: "114, 111, 100",
             dropdownMenuBgColor: "#ecebeb",
         }
-    } as ColorTheme,
+    },
     {
         title: "Pearl",
-        sectionDetails: {
-            title: "light",
-            index: 5
-        },
+        sectionDetails: { title: "light", index: 5 },
         twinTheme: null,
-        colorPalette: [
-            "#897D7D", "#A59B9B", "#D4C9C9", "#E4D8D8", "#FEFAF9"
-        ],
-        properties: {
+        colorPalette: ["#897D7D", "#A59B9B", "#D4C9C9", "#E4D8D8", "#FEFAF9"],
+        styling: {
             isDark: false,
             hasTwin: false,
             isHeaderElementTextLight: false,
@@ -748,19 +682,13 @@ export const lightColorThemes: Theme[] = [
             dropdownMenuBgColor: "#F6F6F6",
             prodMenuViewShadow: "0px 2px 17px 7px rgba(0, 0, 0, 0.05)",
         }
-    } as ColorTheme,
+    },
     {
         title: "Birch",
-        isDark: false,
-        sectionDetails: {
-            title: "light",
-            index: 6
-        },
+        sectionDetails: { title: "light", index: 6 },
         twinTheme: null,
-        colorPalette: [
-            "#878779", "#B0B1A1", "#B0A495", "#D4C9BB", "#FFFAF3"
-        ],
-        properties: {
+        colorPalette: ["#878779", "#B0B1A1", "#B0A495", "#D4C9BB", "#FFFAF3"],
+        styling: {
             isDark: false,
             hasTwin: false,
             isHeaderElementTextLight: false,
@@ -810,19 +738,13 @@ export const lightColorThemes: Theme[] = [
             dropdownMenuBgColor: "#fffbf6",
             prodMenuViewShadow: "0px 3px 8px 1px rgba(0, 0, 0, 0.06)",
         }
-    } as ColorTheme,
+    },
     {
         title: "Cactus",
-        isDark: false,
-        sectionDetails: {
-            title: "light",
-            index: 7
-        },
+        sectionDetails: { title: "light", index: 7 },
         twinTheme: null,
-        colorPalette: [
-            "#31342A", "#585E4A", "#D5AC9A", "#F1DEC2", "#FFFBF4"
-        ],
-        properties: {
+        colorPalette: ["#31342A", "#585E4A", "#D5AC9A", "#F1DEC2", "#FFFBF4"],
+        styling: {
             isDark: false,
             hasTwin: false,
             isHeaderElementTextLight: true,
@@ -872,19 +794,13 @@ export const lightColorThemes: Theme[] = [
             dropdownMenuBgColor: "#ffffff",
             prodMenuViewShadow: "0px 3px 8px 1px rgba(0, 0, 0, 0.06)",
         }
-    } as ColorTheme,
+    },
     {
         title: "Stone",
-        isDark: false,
-        sectionDetails: {
-            title: "light",
-            index: 8
-        },
+        sectionDetails: { title: "light", index: 8 },
         twinTheme: null,
-        colorPalette: [
-            "#897B70", "#998A7B", "#B2A291", "#E2D9D2", "#FFF9EF"
-        ],
-        properties: {
+        colorPalette: ["#897B70", "#998A7B", "#B2A291", "#E2D9D2", "#FFF9EF"],
+        styling: {
             isDark: false,
             hasTwin: false,
             isHeaderElementTextLight: false,
@@ -934,19 +850,13 @@ export const lightColorThemes: Theme[] = [
             dropdownMenuBgColor: "#fffaf1",
             prodMenuViewShadow: "0px 4px 18px 0px rgba(56, 56, 56, 0.075)",
         }
-    } as ColorTheme,
+    },
     {
         title: "Montauk",
-        isDark: false,
-        sectionDetails: {
-            title: "light",
-            index: 9
-        },
+        sectionDetails: { title: "light", index: 9 },
         twinTheme: null,
-        colorPalette: [
-            "#8EA3BC", "#CACCDC", "#F4E6D9", "#F9F1EA", "#FFFAF3"
-        ],
-        properties: {
+        colorPalette: ["#8EA3BC", "#CACCDC", "#F4E6D9", "#F9F1EA", "#FFFAF3"],
+        styling: {
             isDark: false,
             hasTwin: false,
             isHeaderElementTextLight: true,
@@ -996,19 +906,13 @@ export const lightColorThemes: Theme[] = [
             dropdownMenuBgColor: "#FBF8F3",
             prodMenuViewShadow: "0px 2px 12px 7px rgba(0, 0, 0, 0.03)",
         }
-    } as ColorTheme,
+    },
     {
         title: "Sea Foam",
-        isDark: false,
-        sectionDetails: {
-            title: "light",
-            index: 10
-        },
+        sectionDetails: { title: "light", index: 10 },
         twinTheme: null,
-        colorPalette: [
-            "#A3BECB", "#CED9DE", "#DFE0DC", "#DEC3A9", "#FFFBF4"
-        ],
-        properties: {
+        colorPalette: ["#A3BECB", "#CED9DE", "#DFE0DC", "#DEC3A9", "#FFFBF4"],
+        styling: {
             isDark: false,
             hasTwin: false,
             isHeaderElementTextLight: false,
@@ -1058,19 +962,13 @@ export const lightColorThemes: Theme[] = [
             dropdownMenuBgColor: "#F9F7F4",
             prodMenuViewShadow: "0px 4px 18px 0px rgba(56, 56, 56, 0.07)",
         }
-    } as ColorTheme,
+    },
     {
         title: "Ube",
-        isDark: false,
-        sectionDetails: {
-            title: "light",
-            index: 11
-        },
+        sectionDetails: { title: "light", index: 11 },
         twinTheme: null,
-        colorPalette: [
-            "#636067", "#BEB7C7", "#CACCDC", "#F8EEDB", "#FFFAF3"
-        ],
-        properties: {
+        colorPalette: ["#636067", "#BEB7C7", "#CACCDC", "#F8EEDB", "#FFFAF3"],
+        styling: {
             isDark: false,
             hasTwin: false,
             isHeaderElementTextLight: true,
@@ -1122,210 +1020,231 @@ export const lightColorThemes: Theme[] = [
         }
     } as ColorTheme
 ]
-export const imageThemes = [
+export const imageThemes: ImageTheme[] = [
     {
         thumbnailImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Albert_Bierstadt_-_Indians_Spear_Fishing_-_Google_Art_Project.jpg/320px-Albert_Bierstadt_-_Indians_Spear_Fishing_-_Google_Art_Project.jpg",
         fullImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Albert_Bierstadt_-_Indians_Spear_Fishing_-_Google_Art_Project.jpg/2560px-Albert_Bierstadt_-_Indians_Spear_Fishing_-_Google_Art_Project.jpg",
         title: "Indians Spear Fishing",
-        artist: "Albert Bierstadt"
+        artist: "Albert Bierstadt",
+        sectionDetails: { title: "image", index: 0 }
     },
     {
         thumbnailImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Home_in_the_Woods_1847_Thomas_Cole.jpeg/320px-Home_in_the_Woods_1847_Thomas_Cole.jpeg",
         fullImgSrc: "https://upload.wikimedia.org/wikipedia/commons/8/89/Home_in_the_Woods_1847_Thomas_Cole.jpeg",
         title: "Home in the Woods",
-        artist: "Thomas Cole"
+        artist: "Thomas Cole",
+        sectionDetails: { title: "image", index: 1 }
     },
     {
         thumbnailImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Venice%2C_from_the_Porch_of_Madonna_della_Salute_MET_DP169568.jpg/320px-Venice%2C_from_the_Porch_of_Madonna_della_Salute_MET_DP169568.jpg",
         fullImgSrc: "https://upload.wikimedia.org/wikipedia/commons/9/94/Venice%2C_from_the_Porch_of_Madonna_della_Salute_MET_DP169568.jpg",
         title: "Venice, from the Porch of Madonna della Salute",
-        artist: "J.M.W. Turner"
+        artist: "J.M.W. Turner",
+        sectionDetails: { title: "image", index: 2 }
     },
     {
         thumbnailImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Cole_Thomas_The_Course_of_Empire_The_Savage_State_1836.jpg/320px-Cole_Thomas_The_Course_of_Empire_The_Savage_State_1836.jpg",
         fullImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Cole_Thomas_The_Course_of_Empire_The_Savage_State_1836.jpg/2560px-Cole_Thomas_The_Course_of_Empire_The_Savage_State_1836.jpg",
         title: "Savage State",
-        artist: "Thomas Cole"
+        artist: "Thomas Cole",
+        sectionDetails: { title: "image", index: 3 }
     },
     {
         thumbnailImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Cole_Thomas_The_Course_of_Empire_The_Arcadian_or_Pastoral_State_1836.jpg/320px-Cole_Thomas_The_Course_of_Empire_The_Arcadian_or_Pastoral_State_1836.jpg",
         fullImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Cole_Thomas_The_Course_of_Empire_The_Arcadian_or_Pastoral_State_1836.jpg/2560px-Cole_Thomas_The_Course_of_Empire_The_Arcadian_or_Pastoral_State_1836.jpg",
         title: "The Arcadian or Pastoral State",
-        artist: "Thomas Cole"
+        artist: "Thomas Cole",
+        sectionDetails: { title: "image", index: 4 }
     },
     {
         thumbnailImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Cole_Thomas_The_Consummation_The_Course_of_the_Empire_1836.jpg/320px-Cole_Thomas_The_Consummation_The_Course_of_the_Empire_1836.jpg",
         fullImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Cole_Thomas_The_Consummation_The_Course_of_the_Empire_1836.jpg/2560px-Cole_Thomas_The_Consummation_The_Course_of_the_Empire_1836.jpg",
         title: "Consummation",
-        artist: "Thomas Cole"
+        artist: "Thomas Cole",
+        sectionDetails: { title: "image", index: 5 }
     },
     {
         thumbnailImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Cole_Thomas_The_Course_of_Empire_Destruction_1836.jpg/320px-Cole_Thomas_The_Course_of_Empire_Destruction_1836.jpg",
         fullImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Cole_Thomas_The_Course_of_Empire_Destruction_1836.jpg/2560px-Cole_Thomas_The_Course_of_Empire_Destruction_1836.jpg",
         title: "Destruction",
-        artist: "Thomas Cole"
+        artist: "Thomas Cole",
+        sectionDetails: { title: "image", index: 6 }
     },
     {
         thumbnailImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Cole_Thomas_The_Course_of_Empire_Desolation_1836.jpg/320px-Cole_Thomas_The_Course_of_Empire_Desolation_1836.jpg",
         fullImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Cole_Thomas_The_Course_of_Empire_Desolation_1836.jpg/2560px-Cole_Thomas_The_Course_of_Empire_Desolation_1836.jpg",
         title: "Desolation",
-        artist: "Thomas Cole"
+        artist: "Thomas Cole",
+        sectionDetails: { title: "image", index: 7 }
     },
     {
         thumbnailImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Thomas_Cole_-_Dream_of_Arcadia_-_Google_Art_Project.jpg/320px-Thomas_Cole_-_Dream_of_Arcadia_-_Google_Art_Project.jpg",
         fullImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Thomas_Cole_-_Dream_of_Arcadia_-_Google_Art_Project.jpg/2560px-Thomas_Cole_-_Dream_of_Arcadia_-_Google_Art_Project.jpg",
         title: "Dream of Arcadia",
-        artist: "Thomas Cole"
+        artist: "Thomas Cole",
+        sectionDetails: { title: "image", index: 8 }
     },
     {
         thumbnailImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Ivan_Aivazovsky_-_Ship_on_Stormy_Seas.jpg/320px-Ivan_Aivazovsky_-_Ship_on_Stormy_Seas.jpg",
         fullImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Ivan_Aivazovsky_-_Ship_on_Stormy_Seas.jpg/2560px-Ivan_Aivazovsky_-_Ship_on_Stormy_Seas.jpg",
         title: "Ship on Stormy Seas",
-        artist: "Ivan Aivazovsky"
+        artist: "Ivan Aivazovsky",
+        sectionDetails: { title: "image", index: 9 }
     },
     {
         thumbnailImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Claude_Monet_-_Water_Lilies_-_1906%2C_Ryerson.jpg/500px-Claude_Monet_-_Water_Lilies_-_1906%2C_Ryerson.jpg",
         fullImgSrc: "https://upload.wikimedia.org/wikipedia/commons/a/aa/Claude_Monet_-_Water_Lilies_-_1906%2C_Ryerson.jpg",
         title: "Water Lillies - 1906",
-        artist: "Claude Monet"
+        artist: "Claude Monet",
+        sectionDetails: { title: "image", index: 10 }
     },
     {
         thumbnailImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Claude_Monet_-_Waterlilies_-_Google_Art_Project.jpg/307px-Claude_Monet_-_Waterlilies_-_Google_Art_Project.jpg",
         fullImgSrc: "https://upload.wikimedia.org/wikipedia/commons/e/e4/Claude_Monet_-_Waterlilies_-_Google_Art_Project.jpg",
         title: "Waterlilies ",
-        artist: "Claude Monet"
+        artist: "Claude Monet",
+        sectionDetails: { title: "image", index: 11 }
     },
     {
         thumbnailImgSrc: "https://pbs.twimg.com/media/Ea2ATpWUwAAwzvR?format=jpg&name=large",
         fullImgSrc: "https://pbs.twimg.com/media/Ea2ATpWUwAAwzvR?format=jpg&name=large",
         title: "Howl's Moving Castle",
-        artist: "Studio Gibhli"
+        artist: "Studio Gibhli",
+        sectionDetails: { title: "image", index: 12 }
     },
     {
         thumbnailImgSrc: "https://wallpapers.com/images/hd/spirited-away-house-on-an-island-hvwghkdhxqbjzprj.webp",
         fullImgSrc: "https://wallpapers.com/images/hd/spirited-away-house-on-an-island-hvwghkdhxqbjzprj.webp",
         title: "Spirited Away",
-        artist: "Studio Gibhli"
+        artist: "Studio Gibhli",
+        sectionDetails: { title: "image", index: 13 }
     },
     {
         thumbnailImgSrc: "https://images.unsplash.com/photo-1466350380309-a09bb7347af9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=250&q=80",
         fullImgSrc: "https://images.unsplash.com/photo-1466350380309-a09bb7347af9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2670&q=80",
         title: "Manhattan Bridge",
-        artist: "Hieu Vu Minh (Unsplash)"
+        artist: "Hieu Vu Minh (Unsplash)",
+        sectionDetails: { title: "image", index: 14 }
     },
     {
         thumbnailImgSrc: "https://images.unsplash.com/photo-1451186859696-371d9477be93?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=250&q=80",
         fullImgSrc: "https://images.unsplash.com/photo-1451186859696-371d9477be93?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2673&q=80",
         title: "Prince Regent National Park",
-        artist: "NASA (Unsplash)"
+        artist: "NASA (Unsplash)",
+        sectionDetails: { title: "image", index: 15 }
     },
     {
         thumbnailImgSrc: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=250&q=80",
         fullImgSrc: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2711&q=80",
         title: "Space",
-        artist: "NASA (Unsplash)"
+        artist: "NASA (Unsplash)",
+        sectionDetails: { title: "image", index: 16 }
     },
     {
         thumbnailImgSrc: "https://images.unsplash.com/photo-1581610186406-5f6e9f9edbc1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=250&q=80",
         fullImgSrc: "https://images.unsplash.com/photo-1581610186406-5f6e9f9edbc1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2670&q=80",
         title: "Dunes",
-        artist: "Daniel Olah (Unsplash)"
+        artist: "Daniel Olah (Unsplash)",
+        sectionDetails: { title: "image", index: 17 }
     },
     {
         thumbnailImgSrc: "https://images.unsplash.com/photo-1644322749926-66ac55e2913e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=250&q=80",
         fullImgSrc: "https://images.unsplash.com/photo-1644322749926-66ac55e2913e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80",
         title: "Blood Meridian",
-        artist: "George Diama (Unsplash)"
+        artist: "George Diama (Unsplash)",
+        sectionDetails: { title: "image", index: 18 }
     },
     {
         thumbnailImgSrc: "https://images.unsplash.com/photo-1538435740860-67bd8f4e8eb8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=250&q=80",
         fullImgSrc: "https://images.unsplash.com/photo-1538435740860-67bd8f4e8eb8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2728&q=80",
         title: "Foggy Days",
-        artist: "Justin Kauffman (Unsplash)"
+        artist: "Justin Kauffman (Unsplash)",
+        sectionDetails: { title: "image", index: 19 }
     },
     {
         thumbnailImgSrc: "https://images.unsplash.com/photo-1532032659282-dc3fe9336831?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=250&q=80",
         fullImgSrc: "https://images.unsplash.com/photo-1532032659282-dc3fe9336831?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2670&q=80",
         title: "Mt Hood Under the Stars",
-        artist: "Clint MCKoy (Unsplash)"
+        artist: "Clint MCKoy (Unsplash)",
+        sectionDetails: { title: "image", index: 9 }
     },
 ]
-export const ambientVideos = [
+export const ambientVideos: VideoTheme[] = [
     {
         title: "Mount Shuksan",
-        vidUrl: "https://www.youtube.com/watch?v=qRTVg8HHzUo",
+        vidSrc: "https://www.youtube.com/watch?v=qRTVg8HHzUo",
         thumbnailSrc: "https://i.ytimg.com/vi/qRTVg8HHzUo/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCgM2LaUhy3mSWfKCzJ8ysmYiwv6Q",
         channelName: "Nature Soundscapes",
-        channelImgSrc: "https://yt3.ggpht.com/SWhM3bV2uPbAMb-Qx9F3pxT5EuDCRkFtlrCC0uxvHuPigTXQDtJhhOSu8BiP2tmLfKKYb4f-Nw=s88-c-k-c0x00ffffff-no-rj"
+        sectionDetails: { title: "video", index: 0 }
     },
     {
         title: "Hawaii Sunrise",
-        vidUrl: "https://www.youtube.com/watch?v=Fz6tH7cTB5M",
+        vidSrc: "https://www.youtube.com/watch?v=Fz6tH7cTB5M",
         thumbnailSrc: "https://i.ytimg.com/vi/Fz6tH7cTB5M/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCLgi8_QZZUkgV-OntxQ9J2GoJBVA",
         channelName: "Nature Soundscapes",
-        channelImgSrc: "https://yt3.ggpht.com/SWhM3bV2uPbAMb-Qx9F3pxT5EuDCRkFtlrCC0uxvHuPigTXQDtJhhOSu8BiP2tmLfKKYb4f-Nw=s88-c-k-c0x00ffffff-no-rj"
+        sectionDetails: { title: "video", index: 1 }
     },
     {
         title: "Fall Lake",
-        vidUrl: "https://www.youtube.com/watch?v=gwE5dGJ_KI0",
+        vidSrc: "https://www.youtube.com/watch?v=gwE5dGJ_KI0",
         thumbnailSrc: "https://i.ytimg.com/vi/gwE5dGJ_KI0/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCCfgYIiku7WbYntiz8YyuV98X13Q",
         channelName: "Nature Soundscapes",
-        channelImgSrc: "https://yt3.ggpht.com/SWhM3bV2uPbAMb-Qx9F3pxT5EuDCRkFtlrCC0uxvHuPigTXQDtJhhOSu8BiP2tmLfKKYb4f-Nw=s88-c-k-c0x00ffffff-no-rj"
+        sectionDetails: { title: "video", index: 2 }
     },
     {
         title: "Rain in Forest",
-        vidUrl: "https://www.youtube.com/watch?v=4LeyBbDBvQQ",
+        vidSrc: "https://www.youtube.com/watch?v=4LeyBbDBvQQ",
         thumbnailSrc: "https://i.ytimg.com/vi/4LeyBbDBvQQ/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBeewEvZCuZSjksjzh1C2C6NUFr4w",
         channelName: "Nature Soundscapes",
-        channelImgSrc: "https://yt3.ggpht.com/SWhM3bV2uPbAMb-Qx9F3pxT5EuDCRkFtlrCC0uxvHuPigTXQDtJhhOSu8BiP2tmLfKKYb4f-Nw=s88-c-k-c0x00ffffff-no-rj"
+        sectionDetails: { title: "video", index: 3 }
     },
     {
         title: "Storm in Forest",
-        vidUrl: "https://www.youtube.com/watch?v=XtDwPLk8EgI",
+        vidSrc: "https://www.youtube.com/watch?v=XtDwPLk8EgI",
         thumbnailSrc : "https://i.ytimg.com/vi/XtDwPLk8EgI/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_g6AArgIigIMCAAQARg0IGUoXjAP&rs=AOn4CLAl8f0dt8H-4oi5xHkofaGxvHM-Ng",
         channelName: "Relaxing Ambience ASMR",
-        channelImgSrc: "https://yt3.googleusercontent.com/ytc/AGIKgqMEOjK50czS5qb9_MCdoHcXfHshijmjDWblqATP=s176-c-k-c0x00ffffff-no-rj"
+        sectionDetails: { title: "video", index: 4 }
     },
     {
         title: "Kapalua Beach, Maui, Hawaii",
-        vidUrl: "https://www.youtube.com/watch?v=KM6K6Mz13uA",
+        vidSrc: "https://www.youtube.com/watch?v=KM6K6Mz13uA",
         thumbnailSrc: "https://i.ytimg.com/vi/KM6K6Mz13uA/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBbEdwf3JixlHb5E-K_b-zGvtqH0Q",
         channelName: "Nature Soundscapes",
-        channelImgSrc: "https://yt3.ggpht.com/SWhM3bV2uPbAMb-Qx9F3pxT5EuDCRkFtlrCC0uxvHuPigTXQDtJhhOSu8BiP2tmLfKKYb4f-Nw=s88-c-k-c0x00ffffff-no-rj"
+        sectionDetails: { title: "video", index: 5 }
     },
     {
         title: "Study Room with Rain",
-        vidUrl: "https://www.youtube.com/watch?v=Jvgx5HHJ0qw",
+        vidSrc: "https://www.youtube.com/watch?v=Jvgx5HHJ0qw",
         thumbnailSrc: "https://i.ytimg.com/vi/Jvgx5HHJ0qw/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAQDhCWJ0TlZkeHq45cZDM4kpPEiA",
         channelName: "Cosmic Report",
-        channelImgSrc: "https://yt3.ggpht.com/ytc/AGIKgqOOAu-iCDlYmTm-UaNKeeqbItrYTVs8Q-BpO-BQ=s88-c-k-c0x00ffffff-no-rj"
+        sectionDetails: { title: "video", index: 6 }
     },
     {
         title: "Reading Nook",
-        vidUrl: "https://www.youtube.com/watch?v=Ol93KaRhrRM",
+        vidSrc: "https://www.youtube.com/watch?v=Ol93KaRhrRM",
         thumbnailSrc: "https://i.ytimg.com/vi/Ol93KaRhrRM/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDyv-qI-6kRJodCK_4zqvy6l9dYpg",
         channelName: "Cosmic Report",
-        channelImgSrc: "https://yt3.ggpht.com/ytc/AGIKgqOOAu-iCDlYmTm-UaNKeeqbItrYTVs8Q-BpO-BQ=s88-c-k-c0x00ffffff-no-rj"
+        sectionDetails: { title: "video", index: 7 }
     },
     {
         title: "Minecraft Calm Ambience",
-        vidUrl: "https://www.youtube.com/watch?v=CSk9Ozs5Kpg",
+        vidSrc: "https://www.youtube.com/watch?v=CSk9Ozs5Kpg",
         thumbnailSrc: "https://i.ytimg.com/vi/CSk9Ozs5Kpg/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBOHjSUJP5PevquL2Ms_S2MDboosg",
         channelName: "Craft Therapy",
-        channelImgSrc: "https://yt3.ggpht.com/43H3Ejti7HaW9VFtGAvl1I7tDSEr7oUynApD4j9XE86H8i1-m1ZUrWBxPUU2E2Xe-Vn_kSc8=s88-c-k-c0x00ffffff-no-rj"
+        sectionDetails: { title: "video", index: 8 }
     },
     {
         title: "Warm hideout duing a Stormy Night",
-        vidUrl: "https://www.youtube.com/watch?v=2PywKRQhK2g",
+        vidSrc: "https://www.youtube.com/watch?v=2PywKRQhK2g",
         thumbnailSrc: "https://i.ytimg.com/vi/2PywKRQhK2g/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBW69EqIfsOHOIQf8MsIdWLu6Ozhw",
         channelName: "dreamysound",
-        channelImgSrc: "https://yt3.googleusercontent.com/ytc/AGIKgqO5PB-S_w-J0KXq4bVHbf0iMDi6TSs0b3TqiQT_Zg=s176-c-k-c0x00ffffff-no-rj"
+        sectionDetails: { title: "video", index: 9 }
     },
     {
         title: "Raining in Osaka",
-        vidUrl: "https://www.youtube.com/watch?v=q55qNEKQLG0",
+        vidSrc: "https://www.youtube.com/watch?v=q55qNEKQLG0",
         thumbnailSrc: "https://i.ytimg.com/vi/q55qNEKQLG0/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBPskftIDJ3U7gnbkcBwXcW_urnYQ",
         channelName: "Lofi Music",
-        channelImgSrc: "https://yt3.ggpht.com/ytc/AGIKgqMwzOUdfgOvtBXnt0MYP4IuHQmxHd8T2Lwo4mcZ=s88-c-k-c0x00ffffff-no-rj"
+        sectionDetails: { title: "video", index: 10 }
     },
 ]

@@ -1,40 +1,7 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
-	import { colorThemeState } from '$lib/store';
-
-    export let isTaskMenuExpanded: Boolean;
-
-    let isLightTheme = false
-    let selectedTabTitle = "Dashboard"
-
-    let isScrollableLeft = false;
-    let isScrollableRight = true;
-    let groupTabList: HTMLElement;
-
-    const SCROLL_STEP = 50
-    const HORIZONTAL_TAB_COROUSEL_RIGHT_OFFSET = 30
-
-    colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
-
-    // right arrow disappears after a window resize if false even user can scroll right
-    const handleResize = () => {
-        const scrollLeft = groupTabList.scrollLeft;
-        const scrollWidth = groupTabList.scrollWidth;
-        const clientWidth = groupTabList.clientWidth;
-
-        isScrollableRight = scrollLeft + clientWidth < scrollWidth;
-    }
-
-    onMount(() => {
-        const savedYtCreds = localStorage.getItem('yt-credentials');
-        const savedUserData = localStorage.getItem('yt-user-data');
-
-        handleResize()
-        window.addEventListener("resize", handleResize);
-    });
 </script>
 
-<div class={`task-view ${!isTaskMenuExpanded ? "task-view--minimize" : ""}`}>
+<div class="task-view">
     <div class="task-view__header task-view__header--default"> 
         <img class="task-view__header-img" src="https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/287d3559037917.5a130f45904d5.gif" alt="">
             <h2>Hey, Kyle!</h2>

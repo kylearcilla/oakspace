@@ -1,22 +1,11 @@
 <script lang="ts">
-	import { colorThemeState } from "$lib/store";
+	import { themeState } from "$lib/store";
 
     let hasNPressed = false
     let hasQPressed = false
     let hasShiftBClicked = false
-    let isCommandKeyAPressed = false
-    let isCommandKeyBPressed = false
-    let hasSlashAPressed = false
-    let hasSlashBPressed = false
-
     let hasLeftBracketClicked = false
     let hasRightBracketClicked = false
-
-    let isLightTheme = false
-
-    colorThemeState.subscribe((data) => {
-        isLightTheme = !data.isDarkTheme
-    })
 
     const handleKeyDown = (event: KeyboardEvent) => {
         if (event.key.toLocaleLowerCase() === "n") {
@@ -56,7 +45,7 @@
 
 <svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} />
 
-<div class={`shortcuts ${isLightTheme ? "shortcuts--light-theme" : ""}`}>
+<div class={`shortcuts ${$themeState.isDarkTheme ? "" : "shortcuts--light-theme"}`}>
     <div>
         <div class="shortcuts__command">
             <div class="shortcuts__command-title">Start New Session</div>
@@ -169,7 +158,6 @@
             }
             &--active {
                 transform: translateY(5px);
-                // background-color: #221d1f;
             }
             &--active {
                 transform: translateY(5px);

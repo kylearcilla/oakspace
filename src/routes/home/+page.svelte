@@ -1,96 +1,42 @@
 <script lang="ts">
-	import { onDestroy, onMount } from "svelte";
-	import HomeHeader from "./HomeHeader.svelte";
-  import MusicPlayer from "./HomeMusicPlayer.svelte"
+	import { onDestroy, onMount } from "svelte"
+	import HomeHeader from "./HomeHeader.svelte"
   import NavMenu from "./HomeSideBarLeft.svelte"
-  import TaskView from "./HomeSideBarRight.svelte"
   import VideoView from "./HomeVideoView.svelte"
+  import TaskView from "./HomeSideBarRight.svelte"
+  import MusicPlayer from "./HomeMusicPlayer.svelte"
 
-	import ApperanceSettings from "./SettingsAppearance.svelte"
-	import MusicSettings from "./SettingsMusic.svelte"
-	import Settings from "./Settings.svelte"
-	import YoutubeSettings from "./SettingsYoutube.svelte"
 	import Stats from "./Stats.svelte"
+	import Settings from "./Settings.svelte"
+	import Toast from "../../components/Toast.svelte"
+	import HomeEmptyView from "./HomeEmptyView.svelte"
+	import MusicSettings from "./SettingsMusic.svelte"
+	import YoutubeSettings from "./SettingsYoutube.svelte"
+	import SessionActiveHome from "./SessionActiveHome.svelte"
+	import ApperanceSettings from "./SettingsAppearance.svelte"
   
-	import { _initGoogleClient, _initMusicKit } from "./+page"
-	import { loadHomePanelData, loadTheme, loadYtUserData, updateUI } from "$lib/utils-general"
-	import { globalSessionObj, homeViewLaout } from "$lib/store";
-	import { get } from "svelte/store";
-	import HomeEmptyView from "./HomeEmptyView.svelte";
-	import SessionActiveHome from "./SessionActiveHome.svelte";
-
-  enum Modal { Settings, Youtube, Music, Stats, Appearance }
-
-  let isVideoViewOpen = true
-  let isTaskMenuExpanded = false
-  let isNavMenuExpanded = false
+	import { SettingsModal } from "$lib/enums"
+	import { globalSessionObj, homeViewLayout, toastMessages } from "$lib/store"
+	import { appShortCutsHandler, homeVideoViewClassHandler, initAppState, onMouseMoveHandler, onWindowResizedHandler } from "$lib/utils-home";
 
   let hasUserToggledWithKeyLast = true
-  let navSettingClicked: Modal | null = null
+  let homeViewViewClasses = ""
 
-  let isSessionActive = false
-  const LEFT_BAR_LEFT_BOUND = 5
-  const LEFT_BAR_RIGHT_BOUND = 80
-  const MIN_UI_MAX_WIDTH = 600
-
-  globalSessionObj.subscribe((data: any) => {
-    if (data) isSessionActive = true
-    else isSessionActive = false
-  })
-  homeViewLaout.subscribe((data) => {
-    isNavMenuExpanded = data.isNavMenuOpen
-    isTaskMenuExpanded = data.isTaskMenuOpen
-    isVideoViewOpen = data.isVideoViewOpen
+  homeViewLayout.subscribe((layout: HomeLayout) => {
+    homeViewViewClasses = homeVideoViewClassHandler(layout.isNavMenuOpen, layout.isTaskMenuOpen)
   })
 
-  const handleNavButtonClicked = (modal: Modal | null) => navSettingClicked = modal
-  const handleTaskMenuToggleOpen = () => {
-    const homePaneDataObj = get(homeViewLaout)
-    updateUI({ ...homePaneDataObj, isTaskMenuOpen: !homePaneDataObj.isTaskMenuOpen })
-
-  }
+  const handleResize = () => onWindowResizedHandler()
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.shiftKey && event.key === "}") {
-      handleTaskMenuToggleOpen()
-    }
-    else if (event.shiftKey && event.key === "{") {
-      const homePaneDataObj = get(homeViewLaout)
-      updateUI({ ...homePaneDataObj, isNavMenuOpen: !homePaneDataObj.isNavMenuOpen })
-  
-      hasUserToggledWithKeyLast = true
-    }
-    else if (event.key=== "Escape") {
-      navSettingClicked = null
-    }
+    hasUserToggledWithKeyLast = appShortCutsHandler(event)
   }
-  const handleMouseMove = (event: MouseEvent) => {
-    const mouseX = event.clientX
-
-    if (!isNavMenuExpanded && mouseX < LEFT_BAR_LEFT_BOUND) {
-      // show when cursor is close to left edge
-
-      updateUI({ ...get(homeViewLaout), isNavMenuOpen: true  })
-      hasUserToggledWithKeyLast = false
-    }
-    else if (isNavMenuExpanded && mouseX > LEFT_BAR_RIGHT_BOUND && !hasUserToggledWithKeyLast) { 
-      // Prevent hiding when nav was toggled through shortcut
-      // ...as the nav menu should only close in this case when cursor goes from over left side bar to outside of right boundary
-
-      homeViewLaout.update((data: any) => ({ ...data, isNavMenuOpen: false }))
-    }
-  }
-  const handleResize = () => {
-    if (document.body.clientWidth > MIN_UI_MAX_WIDTH) return
-    updateUI({ ...get(homeViewLaout), isTaskMenuOpen: false, isNavMenuOpen: false  })
+  const _onMouseMoveHandler = (event: MouseEvent) => {
+    hasUserToggledWithKeyLast = onMouseMoveHandler(event, hasUserToggledWithKeyLast)
   }
 
   onMount(() => {
     window.addEventListener("resize", handleResize)
-    handleResize()
-    loadTheme()
-    loadHomePanelData()
-    loadYtUserData()
-    _initGoogleClient()
+    initAppState()
   })
   onDestroy(() =>  window.removeEventListener("resize", handleResize))
 
@@ -98,33 +44,38 @@
 
 <svelte:window on:keydown={handleKeyDown} />
 
-<div class="home" on:mousemove={handleMouseMove}>
-  <!-- <div id="signInDiv"></div> -->
-  <div class={`home__nav-menu-container ${!isNavMenuExpanded ? "home__nav-menu-container--hide" : ""}`}>
-    <NavMenu onNavButtonClicked={handleNavButtonClicked} />
+<div class="home" on:mousemove={_onMouseMoveHandler}>
+  <div class={`home__nav-menu-container ${!$homeViewLayout.isNavMenuOpen ? "home__nav-menu-container--hide" : ""}`}>
+      <NavMenu/>
   </div>
-  <div class={`home__video 
-                  ${!isNavMenuExpanded ? "home__video--nav-menu-hidden" : ""} 
-                  ${!isTaskMenuExpanded ? "home__video--task-view-hidden" : ""}
-                  ${!isTaskMenuExpanded && isNavMenuExpanded ? "home__video--just-nav-menu-shown" : ""}
-                  ${isTaskMenuExpanded && !isNavMenuExpanded ? "home__video--just-task-view-shown" : ""}
-                  ${isTaskMenuExpanded && isNavMenuExpanded ? "home__video--task-view-also-shown" : ""}
-              `}>
-    <HomeHeader/>
-    {#if isVideoViewOpen} <VideoView /> {/if}
-    {#if !isVideoViewOpen && !isSessionActive} <HomeEmptyView /> {/if}
-    {#if !isVideoViewOpen && isSessionActive} <SessionActiveHome /> {/if}
+  <div class={`home__video ${homeViewViewClasses}`}>
+      <HomeHeader/>
+      <VideoView />
+      {#if !$homeViewLayout.isVideoViewOpen && !$globalSessionObj} 
+         <HomeEmptyView />    
+      {/if}
+      {#if !$homeViewLayout.isVideoViewOpen && $globalSessionObj}  
+        <SessionActiveHome />  
+      {/if}
   </div>
-  <div class={`home__task-view-container ${isTaskMenuExpanded ? "" : "home__task-view-container--closed"}`}>
-    <TaskView isTaskMenuExpanded={isTaskMenuExpanded}/>
+  <div class={`home__task-view-container ${$homeViewLayout.isTaskMenuOpen ? "" : "home__task-view-container--closed"}`}>
+      <TaskView />
   </div>
-  {#if navSettingClicked === Modal.Settings} <Settings onNavButtonClicked={handleNavButtonClicked}/> {/if}
-  {#if navSettingClicked === Modal.Youtube} <YoutubeSettings onNavButtonClicked={handleNavButtonClicked}/> {/if}
-  {#if navSettingClicked === Modal.Music} <MusicSettings onNavButtonClicked={handleNavButtonClicked} /> {/if}
-  {#if navSettingClicked === Modal.Appearance} <ApperanceSettings onNavButtonClicked={handleNavButtonClicked} /> {/if}
-  {#if navSettingClicked === Modal.Stats} <Stats onNavButtonClicked={handleNavButtonClicked} /> {/if}
+
+  <!-- Floating Elements -->
   <MusicPlayer />
+  {#if $toastMessages.length > 0}
+    {#each $toastMessages as toast, idx}
+        <Toast toast={toast} idx={idx} />
+    {/each}
+  {/if}
+  {#if $homeViewLayout.modal === SettingsModal.Settings} <Settings/> {/if}
+  {#if $homeViewLayout.modal === SettingsModal.Youtube} <YoutubeSettings/> {/if}
+  {#if $homeViewLayout.modal === SettingsModal.Music} <MusicSettings /> {/if}
+  {#if $homeViewLayout.modal === SettingsModal.Appearance} <ApperanceSettings /> {/if}
 </div>
+
+{#if $homeViewLayout.modal === SettingsModal.Stats} <Stats/> {/if}
 
 <style lang="scss">
     #signInDiv {
@@ -132,6 +83,7 @@
       right: 400px;
       top: 150px;
     }
+
     .home {
       background-color: var(--primaryBgColor);
       height: 100%;
@@ -176,6 +128,7 @@
         padding: 0px 2.5% 30px 2.5%;
         transition: ease-in-out 0.15s;
         width: 100%;
+        margin: 0px auto;
 
         // nev menu and right menu both shown
         margin-left: 60px;

@@ -2,7 +2,7 @@
 	import { onMount } from "svelte";
 	import * as d3 from 'd3';
 	import { daysOfWeek, twentyFourToTwelveHrFormat } from "$lib/utils-date";
-	import { colorThemeState } from "$lib/store"
+	import { themeState } from "$lib/store"
 
     export let timeFrameActivityData: TimeFrameActivity[]
     export let allTimeFrameMins: number
@@ -50,7 +50,7 @@
     const X_OFFSET_RIGHT_TOOL_TIP = -70
     const Y_OFFSET_TOOL_TIP = 20
 
-    colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
+    themeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
 
     const initGraph = () => {
         d3.select(lineGraph).html(null)

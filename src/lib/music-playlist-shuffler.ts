@@ -66,7 +66,7 @@ export class MusicPlaylistShuffler {
         }
         if (this.songCount === 1) return 
         
-        // make the index when user toggled shuffle is always first
+        // make the current player index always first
         const temp = this.shuffledIndexes[0]
         this.shuffledIndexes[0] = this.shuffledIndexes[this.startTrackIndex]
         this.shuffledIndexes[this.startTrackIndex] = temp
@@ -119,7 +119,7 @@ export class MusicPlaylistShuffler {
      * Called when user presses skip to next item when shuffle is toggled on.
      * 
      * @param isLooped      Check to see if repeat is toggled on. If so then return the first index.
-     * @param hasJustEnded  If collection has just ended and next is pressed, make sure the first item is played.
+     * @param hasJustEnded  If collection has just ended and next is pressed, make sure the first item is played by not icrementing index.
      * @returns             The prev pointer. If -1, then a bound has been reached.
      */
     getNextIndex(isLooped = false, hasJustEnded = false): number {
@@ -129,13 +129,18 @@ export class MusicPlaylistShuffler {
             return -1
         }
         
-        if (!isLooped) this.totalPlayed += hasJustEnded ? 0 : 1
+        if (!isLooped && !hasJustEnded) {
+            this.totalPlayed++
+        }
 
         if (isLooped && this.indexPointer === this.shuffledIndexes.length - 1) {
             this.indexPointer = 0
         }
+        else if (hasJustEnded) {
+            this.indexPointer = 0
+        }
         else {
-            this.indexPointer = hasJustEnded ? 0 : this.indexPointer + 1
+            this.indexPointer++
         }
 
         this.trackIndex = this.shuffledIndexes[this.indexPointer]

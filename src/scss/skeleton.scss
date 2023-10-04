@@ -1,0 +1,61 @@
+$skeleton-bg-color-dark: rgba(50, 50, 50, 0.12) !important;
+$skeleton-bg-shine-color-dark: rgba(50, 50, 50, 0.2) !important;
+
+$skeleton-bg-color-light: rgba(100, 100, 100, 0.05) !important;
+$skeleton-bg-shine-color-light: rgba(50, 50, 50, 0.1) !important;
+
+$shine-width: 120px;
+$box-width: 150px;
+
+@mixin skeleton-bg($theme: dark) {
+    position: relative;
+    overflow: hidden;
+    
+    @if $theme == dark {
+        background-color: $skeleton-bg-color-dark;
+        
+        &:before {
+            content:'';
+            transform: skewX(-45deg);
+            background-image: linear-gradient(
+                90deg, 
+                rgba(50, 50, 50, 0) 0px, 
+                rgba(50, 50, 50, 0.15) $shine-width / 2, 
+                rgba(50, 50, 50, 0) $shine-width
+            );
+            position: absolute;
+            left: -($box-width / 2 + $shine-width); 
+            width: $shine-width;
+            height: 100%;
+            animation: shine 1s infinite;
+        }
+    } 
+    @else {
+        background-color: $skeleton-bg-color-light;
+
+        &:before {
+            content:'';
+            transform: skewX(-45deg);
+            background-image: linear-gradient(
+                90deg, 
+                rgba(50, 50, 50, 0) 0px, 
+                rgba(157, 157, 157, 0.1) $shine-width / 2, 
+                rgba(50, 50, 50, 0) $shine-width
+            );
+            position: absolute;
+            left: -($box-width / 2 + $shine-width); 
+            width: $shine-width;
+            height: 100%;
+            animation: shine 1s infinite;
+        }
+    } 
+}
+
+@keyframes shine {
+    0% {
+        left: -($box-width / 2 + $shine-width);
+    }
+    100% {
+        left: 3 / 2 * $box-width;
+    }
+}

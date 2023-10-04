@@ -3,10 +3,12 @@ import { musicPlayerStore, } from "./store"
 import { getArtworkSrc, isCollectionPlaylist } from "./api-apple-music"
 import { MusicPlayer } from "./music-player"
 import { MusicPlaylistShuffler } from "./music-playlist-shuffler"
+import { removeMusicPlayerState, removeMusicShuffleData } from "./utils-music"
 
 /**
  * A class representing an Apple Music player instance that extends MusicPlayer. 
- * The player itself is a svelte store object / reactive class.
+ * The player itself is a svelte store object / reactive class, initialized during instantiation.
+ * There must be Music Data Store before making an instance.
  * 
  * @extends MusicPlayer
  */
@@ -70,6 +72,8 @@ export class AppleMusicPlayer extends MusicPlayer {
         // get saved player state
         const savedStateData = this.loadMusicPlayerState() ?? this.EMPTY_MUSIC_PLAYER_STATE
 
+        console.log(this.musicData)
+
         this.updateMusicPlayerState({ ...savedStateData, isPlaying: false, isDisabled: true })
 
         if (this.musicData.collection) {
@@ -102,7 +106,6 @@ export class AppleMusicPlayer extends MusicPlayer {
      * Update the music player store. 
      * The effects will be heared immediately in Music Player Svelte component.
      * Only the state property is updated to avoid full object destructuring.
-     * 
      * @param newMusicPlayerState 
      */
     updateMusicPlayerState(newPlayerState: MusicPlayerState) {
@@ -122,11 +125,9 @@ export class AppleMusicPlayer extends MusicPlayer {
      */
     quitPlayer() {
         if (this.state.isShuffled) {
-            this.removeMusicShuffleData()
+            removeMusicShuffleData()
         }
-        this.removeMusicPlayerState()
-        this.resetMusicPlayerStateToEmptyState()
-
+        removeMusicPlayerState()
         musicPlayerStore.set(null)
     }
 
@@ -136,7 +137,7 @@ export class AppleMusicPlayer extends MusicPlayer {
      */
     async resetMusicPlayerStateToEmptyState() {
         if (this.state.isShuffled) {
-            this.removeMusicShuffleData()
+            removeMusicShuffleData()
         } 
         await this.musicPlayerInstance.stop()
         this.updateMusicPlayerState(this.EMPTY_MUSIC_PLAYER_STATE)
@@ -149,31 +150,35 @@ export class AppleMusicPlayer extends MusicPlayer {
         this.updateMusicPlayerState({ ...this.state, doShowPlayer: false })
     }
 
-
     /**
      * Plays / pauses player.
      */
     async togglePlayback() {
-        if (this.musicPlayerInstance.isPlaying) {
-            this.updateMusicPlayerState({ ...this.state, isPlaying: false })
-            await this.musicPlayerInstance.pause()
-        } 
-        else {
-            this.updateMusicPlayerState({ ...this.state, isPlaying: true })
-            await this.musicPlayerInstance.play()
+        try {
+            if (this.musicPlayerInstance.isPlaying) {
+                this.updateMusicPlayerState({ ...this.state, isPlaying: false })
+                await this.musicPlayerInstance.pause()
+            } 
+            else {
+                this.updateMusicPlayerState({ ...this.state, isPlaying: true })
+                await this.musicPlayerInstance.play()
+            }
+    
+            this.unDisableMusicPlayer()
+    
+            if (this.state.hasJustEnded) {
+                this.updateMusicPlayerState({ ...this.state, hasJustEnded: false })
+            }
         }
-
-        this.unDisableMusicPlayer()
-
-        if (this.state.hasJustEnded) {
-            this.updateMusicPlayerState({ ...this.state, hasJustEnded: false })
+        catch(e) {
+            console.error(e)
+            this.updateMusicPlayerState({ ...this.state, error: e })
         }
     }
 
     /**
      * Skip to Next track.
      * If at the end, it will queue up the first, but won't play immediately.
-     * 
      */
     async skipToNextTrack() {
         if (this.state.isShuffled) {
@@ -199,7 +204,6 @@ export class AppleMusicPlayer extends MusicPlayer {
     /**
      * Skip to Prev track.
      * If at the start, it will queue up the first again and start it over.
-     * 
      */
     async skipToPrevTrack() {
         if (this.state.isShuffled) {
@@ -311,7 +315,7 @@ export class AppleMusicPlayer extends MusicPlayer {
      * @param doPlay      Do immediatley start playing?
      * @param doDIsable   Do disable player temporarily. If so it will eventually undisable after playlist item has changed delay.
      */
-    queueAndPlayNextTrack = async (id: string, newIndex: number, doPlay: boolean = true, doDisable: boolean = true) => {        
+    queueAndPlayNextTrack = async (id: string, newIndex: number, doPlay: boolean = true, doDisable: boolean = true) => {     
         this.updateMusicPlayerState({ ...this.state, isPlaying: doPlay, isDisabled: doDisable, doShowPlayer: true })
 
         const isPlaylist = isCollectionPlaylist(id)
@@ -325,12 +329,17 @@ export class AppleMusicPlayer extends MusicPlayer {
 
         this.musicData.updateCurrentCollectionIdx(newIndex)
 
-        if (doPlay) this.musicPlayerInstance.play()
+        try {
+            if (doPlay) 
+                await this.musicPlayerInstance.play()
+        }
+        catch(e) {
+            console.error(`Muisc player error: ${e}`)
+        }
     }
 
     /**
      * Called when the player is availabled to be played
-     * 
      * @param event   Event data passed in by Apple Music Kit instance.
      */
     private mediaCanPlayHandler = async () => {
@@ -341,17 +350,16 @@ export class AppleMusicPlayer extends MusicPlayer {
 
     /**
      * Called when there is an error in the player
-     * 
      * @param event   Event data passed in by Apple Music Kit instance.
      */
     private mediaPlaybackErrorHandler = async (event: any) => {
+        console.log(event)
         this.updateMusicPlayerState({ ...this.state, isDisabled: true, error: event })
     }
 
     /**
      * Called when player is about to change media item. 
      * Used to update the media item locally.
-     * 
      * @param event   Event data passed in by Apple Music Kit instance.
      */
     private nowPlayingItemWillChangeHandler = async (event: any) => {
@@ -360,7 +368,7 @@ export class AppleMusicPlayer extends MusicPlayer {
             this.updateMusicPlayerState(this.ACTIVE_MUSIC_PLAYER_STATE)
         }
         this.updateMusicPlayerState({ ...this.state, isDisabled: true, isPlaying: true })
-    
+
         const mediaItem = {
             id: event.item.id,
             name: event.item.attributes.name,
@@ -369,7 +377,7 @@ export class AppleMusicPlayer extends MusicPlayer {
             artworkImgSrc: getArtworkSrc(event.item.attributes.artwork),
             playlistId: event.item._container.id,
             playlistName: event.item._container.attributes.name,
-            playlistArtworkSrc: getArtworkSrc(event.item._container.attributes.artwork)
+            playlistArtworkSrc: event.item._container.attributes?.artwork ? getArtworkSrc(event.item._container.attributes?.artwork) : ""
         }
         
         this.musicData.updateCurrentTrack(mediaItem)
@@ -379,17 +387,15 @@ export class AppleMusicPlayer extends MusicPlayer {
     /**
      * Called everytime playback time changes. 
      * Used to update music data when player is about to naturally end.
-     * 
+     * Calls skip to next track to make needed state changes.
      * @param event   Event data passed in by Apple Music Kit instance.
      */
     private playbackTimeDidChangeHandler = async (event: any) => {
         if (event.currentPlaybackTimeRemaining != 0) return
-
         this.skipToNextTrack()
     }
     /**
      * Called everytime player state changes, paused, played, skipped, etc...
-     * 
      * @param event 
      */
     private playbackStateDidChangeHandler = async (event: any) => {
@@ -402,13 +408,13 @@ export class AppleMusicPlayer extends MusicPlayer {
      * Undisabled current music player after a cooldown.
      * Player temorarily disabled after a control is used to avoid spamming.
      */
-    private unDisableMusicPlayer = (doWait = true): void => {
+    private unDisableMusicPlayer = (doWait = true) => {
         setTimeout(() => {
-            this.updateMusicPlayerState({ ...this.state, isDisabled: false, doShowPlayer: true  })
+            this.updateMusicPlayerState({ ...this.state, isDisabled: false, doShowPlayer: true, error: null })
         }, doWait ? this.PLAYER_COOLDOWN_MS : 0)
     }
 
-    private saveMusicPlayerState = (playerState: MusicPlayerState): void => {
+    private saveMusicPlayerState = (playerState: MusicPlayerState) => {
         localStorage.setItem("music-player-data", JSON.stringify(playerState))
     }
     private loadMusicPlayerState = (): MusicPlayerState => {
@@ -420,12 +426,5 @@ export class AppleMusicPlayer extends MusicPlayer {
     } 
     private loadMusicShuffleData = (): MusicShufflerState => {
         return JSON.parse(localStorage.getItem("music-shuffle-data")!)
-    }
-    private removeMusicShuffleData = (): void => {
-        localStorage.removeItem("music-shuffle-data")
-    }
-    private removeMusicPlayerState = (): void => {
-        localStorage.removeItem("music-player-data")
-
     }
 }

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
 	import * as d3 from 'd3'
-	import { colorThemeState } from "$lib/store";
+	import { themeState } from "$lib/store";
 	import { roundToNearestFive } from "$lib/utils-general";
 
     export let tagMonthlyData: TagMonthlyActivity[]
@@ -62,7 +62,7 @@
     let toolTipFocusIcon: d3.Selection<HTMLElement, unknown, HTMLElement, any> | null = null
     let toolTipFocusHrs: d3.Selection<HTMLDivElement, unknown, HTMLElement, any> | null = null
 
-    colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
+    themeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
 
     function initGraph() {
         // init SVG canvas & bars and chart dimensions

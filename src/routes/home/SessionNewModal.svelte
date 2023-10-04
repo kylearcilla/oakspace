@@ -1,17 +1,14 @@
 <script lang="ts">
-	import { Session } from "$lib/pom-session";
-	import { clickOutside } from "$lib/utils-general";
-	import { minsToHHMM } from "$lib/utils-date";
-	import { colorThemeState, globalSessionObj, globalSessionState } from "$lib/store";
-	import { onDestroy, onMount } from "svelte";
+	import { Session } from "$lib/pom-session"
+	import { clickOutside } from "$lib/utils-general"
+	import { calculateEndTime, getTimePeriodString, minsToHHMM } from "$lib/utils-date"
+	import { sessionStore } from "$lib/store"
+	import { onDestroy, onMount } from "svelte"
+	import { SessionModal } from "$lib/enums"
 
-    enum CurrentModal { Quote, NewSession, ActiveSession }
-    export let toggleModal: (modal: CurrentModal | null) => void
+    export let toggleModal: (modal: SessionModal | null) => void
     
     let isLightTheme = false
-
-    let sessionObj: Session | null = null
-    let activeSession: ActiveSessionState | null = null
 
     let newTodoTitle = ""
     let subtaskCount = 0
@@ -55,25 +52,14 @@
         },
     ]
 
-    /* Global State */
-    colorThemeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
-    globalSessionObj.subscribe((sess: any) => {
-        if (!sess) return
-        sessionObj = sess
-    })
-    globalSessionState.subscribe((sessionState: any) => {
-        if (!sessionState) return
-        activeSession = sessionState
-    })
-
     /* Session Stuff */
     const setResultTimes = () => {
         const totalFocusTimeMins = newSession.poms * newSession.focusTime
         const totalbreakTimeMins = (newSession.poms - 1) * newSession.breakTime
         const totalMins = totalbreakTimeMins + totalFocusTimeMins
 
-        newSession.calculatedEndTime = Session.calculateEndTime(new Date, totalMins)
-        newSession.timePeriodString = Session.getTimePeriodString(new Date, newSession.calculatedEndTime)
+        newSession.calculatedEndTime = calculateEndTime(new Date, totalMins)
+        newSession.timePeriodString = getTimePeriodString(new Date, newSession.calculatedEndTime)
 
         setElapsedTime(totalMins)
     }
@@ -81,10 +67,10 @@
         newSession.totalElapsedTime = minsToHHMM(totalMins)
     }
     const createNewSession = () => {
-        globalSessionObj.set(new Session(newSession))
+        sessionStore?.set(new Session(newSession))
 
         resetNewSesion() 
-        toggleModal(CurrentModal.ActiveSession)
+        toggleModal(SessionModal.ActiveSession)
     }
     const resetNewSesion = () => {
         newSession = {
@@ -117,12 +103,11 @@
         isTagListDropDownOpen = false
     }
     const handleCreateTagBtnClicked = () => {
-        
     }
 
     const startTimer = () => {
         interval = setInterval(() => {
-            if (!activeSession) {
+            if (!$sessionStore) {
                 setResultTimes()
             }
         }, 1000);
@@ -359,6 +344,8 @@
 
 
 <style lang="scss">
+    @import "../../scss/dropdown.scss";
+
     /* New Session Modal */
     .new-session-modal-content {
         width: 390px;   

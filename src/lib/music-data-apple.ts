@@ -1,81 +1,91 @@
 import { musicDataStore } from "./store"
-import { getApplePlaylistDetails, getUserApplePlaylists } from "./api-apple-music"
-
-enum MusicPlatform { AppleMusic, Spotify, Youtube, Soundcloud }
+import { getApplePlaylistDetails, getUserPlaylists } from "./api-apple-music"
+import { getAccessToken, removeAppleAccessToken, removeAppleAuthToken, removeAppleMusicTokens, removeMusicPlayerState, 
+         removeMusicShuffleData, updateAccessToken, updateAppleAuthToken, saveMusicPlatform, getPlatformCode  }  from "./utils-music"
+import { MusicPlatform } from "./enums"
 
 /**
  * MusicData class represents the data related to music playback (data & stores), API tokens, and user data & functionality for configuring Music Platform API.
  * Referenced in Music Player Class.
  * 
- * The player itself is a svelte store object / reactive class.
+ * The player itself is a svelte store object / reactive class, initialized during instantiation.
  *
  * @class MusicData
- * @param {MusicPlatform} musicPlatform - The selected music platform (Apple Music, Spotify, Soundcloud, Youtube Music).
+ * @param {MusicPlatform} musicPlatform   The selected music platform (Apple Music, Spotify, Soundcloud, Youtube Music).
  */
 export class MusicData {
     musicKit: any = null
     musicPlayerInstance: any
-
+    
+    // assume true for now, issue with API where non-sub log in will lead to auth error, so cannot distinguish between failed client permission and non-sub log in
+    isUserASubscriber = true 
     isSignedIn = false
+    hasTokenExpired = false
 
     currentIdx = 0
+    userPlaylistsOffset = 0
+    hasUserPlaylistsLoaded = false
+    hasFetchedAllUserPls = false
 
-    /* Music Context */
     musicPlatform: MusicPlatform | null = null
-
-    /* Store Objects */
-    userPlaylists: MusicCollection[] | null = null
+    userPlaylists: MusicCollection[] = []
     track: Track | null = null
     collection: MusicCollection | null = null
+
+    USER_PLAYLISTS_REQUEST_LIMIT = 15
  
-    /**
-     * Set music data store since it's needed when attempting to initialize music data.
-     */
     constructor() { 
         musicDataStore.set(this)
     }
 
     /**
-     * Called after making a new MusicData instance.
      * Configures new music kit instance.
-     * Fetches & stores necessary tokens, user data, and current state.
+     * Fetches & stores necessary tokens, user data, and state.
+     * Called when user logs in the first time or after a refresh.
      * 
-     * @param musicPlatform      Do not request already loaded data from Apple Music API
-     * @param hasUserSignedIn    Has User already signed in? 
+     * @param musicPlatform      Music streaming platfrom user wants to use
+     * @param hasUserSignedIn    If user has previously logged in already. Used to decide to fetch saved token or get a new one.
      * 
-     * @throws {Error}           Error in Music Kit Configuration, User Auth, Fetching Access Token from Server 
+     * @throws                   Error status from Music Kit Configuration, User Auth, Fetching Access Token from Server 
      */
-    initMusicData = async (musicPlatform: MusicPlatform, hasUserSignedIn: boolean): Promise<void>  => {
-        const token = await this.fetchAPIToken()
-        const authToken = await this.initAppleMusic(token)
+    initMusicData = async (musicPlatform: MusicPlatform, hasUserSignedIn: boolean): Promise<void> => {
+        let token = ""
 
-        this.updateAccessToken(token)
-        this.updateAppleAuthToken(authToken)
         this.updateMusicPlatform(musicPlatform)
 
+        if (hasUserSignedIn) {
+            token = getAccessToken()
+        }
+        else {
+            token = await this.fetchAPIToken()
+        }
+        
+        const authToken = await this.initAppleMusic(token, hasUserSignedIn)
+        updateAppleAuthToken(authToken)
+        updateAccessToken(token)
+        
         this.isSignedIn = true
-    
+        this.getUserApplePlaylists()
+
         if (hasUserSignedIn) {
             this.loadMusicData()
-        } 
-        else {
-            this.setUserPlaylists()
         }
     }
 
     /**
      * Get Apple Music User / Access Token from the back end. 
-     * Will be included in the HTTP requests to Apple Music API.
+     * Will be included in the requests to Apple Music API.
      * Needed to initialize Apple Music Kit.
      * 
      * @returns         Apple Music User Token (Active for 60 Days by Default)
-     * @throws {Error}  Error in fetching Apple Music Kit Dev Token
+     * @throws          Error status.
      */
     fetchAPIToken = async (): Promise<string> => {
         const options = { method: 'GET', headers: { 'Content-Type': 'application/json' } }
         const res = await fetch("http://localhost:3000/", options)
         if (!res.ok) {
-            throw new Error(`Error fetching Apple Music Kit Dev Token: HTTP ${res.status} ${res.statusText}`)
+            console.error(`Error fetching Apple Music Kit Dev Token from Website Server. Status: ${res.status}`)
+            throw (res.status)
         }
 
         const { token } = await res.json()
@@ -86,39 +96,91 @@ export class MusicData {
      * From access token, initialize & configure Music Kit and create an instance of it.
      * Invoke user authorization to access user’s Apple Music data & save auth token. 
      * 
-     * @param accessToken   Access / Dev token returned from server
-     * @returns             Returns token returned from completed authorization flow
-     * @throws {Error}      Error in configuring new Music Kit instance. User rejects auth request.
+     * @param accessToken       Access / Dev token returned from server
+     * @param hasUserSignedIn   Used to check if user has already signed in.
+     * @returns                 Returns token returned from completed authorization flow. Returns null if user is not a subscriber.
+     * @throws                  Error status configuring new Music Kit instance.
      */
-    initAppleMusic = async (accessToken: string): Promise<string> => {
-        if (!accessToken) {
-            throw new Error ("Error initializing Apple Music: No Apple Music Token")
-        }
-
-        const options = { developerToken: accessToken, app: { name: 'Luciole', build: '1.1' } }
-
-        // @ts-ignore
-        this.musicKit = MusicKit
-    
-        if (!this.musicKit) {
-            throw new Error ("Error initializing Apple Music: music kit is absent")
-        }
+    initAppleMusic = async (accessToken: string, hasUserSignedIn: boolean): Promise<string> => {
+        try {
+            const options = { developerToken: accessToken, app: { name: 'Luciole', build: '1.1' } }
+            // @ts-ignore
+            this.musicKit = MusicKit
         
-        this.musicPlayerInstance = await this.musicKit.configure(options)
-        return await this.musicPlayerInstance.authorize()  // initialize authorize flow
+            if (!this.musicKit) {
+                throw("400")
+            }
+            this.musicPlayerInstance = await this.musicKit.configure(options)
+            return await this.musicPlayerInstance.authorize()
+        }
+        catch(e: any) { 
+            console.error(`Error initializing Music Kit ${e}`)
+            const errorStr = e.toString()
+
+            if (hasUserSignedIn) {
+                this.hasTokenExpired = true
+                throw("401")
+            }
+            else if (errorStr.includes("AUTHORIZATION_ERROR")) {
+                throw("403")
+            }
+            else {
+                throw("400")
+            }
+        }
     }
 
     /**
-     * Called when user no longer wants to use music.
+     * Request new user token after a current token has expired.
+     * Separate from initMusicData as other platfroms might do fresh token / relogging in requests differently.
+     * 
+     * @throws   Error status in re-loggin in user.
      */
-    quit = () => {
+    reLogInUser = async () => {
+        try {
+            let token = ""
+            token = await this.fetchAPIToken()
+    
+            const authToken = await this.initAppleMusic(token, true)
+            this.hasTokenExpired = false
+            updateAppleAuthToken(authToken)
+            updateAccessToken(token)
+        
+            this.updateMusicPlatform(getPlatformCode()!)
+            this.getUserApplePlaylists()
+        }
+        catch {
+            console.error("Error re-logging in user")
+            throw new Error("Error re-loggin in user")
+        }
+    }
+
+    /**
+     * Called when user wants to lout out of music account.
+     */
+    quit = async () => {
+        this.isSignedIn = false
         this.removeCurrentMusicCollection()
         this.removeUserPlaylists()
-        this.removeAppleAccessToken()
-        this.removeAppleAuthToken()
-        this.removeAppleMusicTokens()
+        removeAppleAccessToken()
+        removeAppleAuthToken()
+        removeAppleMusicTokens()
 
         musicDataStore.set(null)
+
+        // This will cause a 403 on fetching user playlists after a prev log out
+        // if (this.isUserASubscriber) {
+        //     await this.musicPlayerInstance.unauthorize()  
+        // }
+    }
+
+    /**
+     * Removes data saved by music player.
+     * Handled here since player store obj won't be instantiated due to a failure in auth (expired token).
+     */
+    clearPlayerDataAfterLogIn = () => {
+        removeMusicPlayerState()
+        removeMusicShuffleData()
     }
 
     /**
@@ -148,7 +210,6 @@ export class MusicData {
 
     /**
      * Get the next index to be played. If @ end, go to the first.
-     * 
      * @param isRepeating    If looped is on.
      * @param hasJustEnded   If collection has just ended and next is pressed, make sure the first item is played.
      * @returns              The next index. -1 If end has been reached and not looped.
@@ -170,7 +231,6 @@ export class MusicData {
 
     /**
      * Get the next index to be played. If @ start, go to the last.
-     * 
      * @param isRepeating  If looped is on.
      * @returns            The prev index. -1 If at the start. 
      */
@@ -187,17 +247,17 @@ export class MusicData {
 
     /**
      * Updates the current index.
-     * 
      * @param newIndex 
      */
     updateCurrentCollectionIdx(newIndex: number): void {
         if (!this.collection) return
+
         this.currentIdx = newIndex
+        localStorage.setItem("music-idx", newIndex + "")
     }
 
     /**
      * Updates the current playlist. Updates the playlist store.
-     * 
      * @param newCurrentPlaylist 
      */
     updateCurrentCollection(newCurrentPlaylist: MusicCollection): void {
@@ -227,83 +287,74 @@ export class MusicData {
      * 
      * @param   playlistId 
      * @returns            Collection object (playlist or album) details.
-     * @throws  {Error}    Error in fetching user playlist details. 
+     * @throws             Error status from fetching user playlist details. 
      */
     async getPlaylistDetails(playlistId: string): Promise<MusicCollection>  {
-        return await getApplePlaylistDetails(playlistId, this.getAccessToken())
+        return await getApplePlaylistDetails(playlistId, getAccessToken())
     }
 
     /**
      * Fetches user library playlists using Apple Music API and updates state.
-     * Empty if there is an error.
+     * Empty if there is an error. 
+     * After each call, the API will return the next USER_PLAYLISTS_REQUEST_LIMIT items
+     * @throws             Error status from fetching user playlist details. 
      */
-    async setUserPlaylists(): Promise<void> {
+    async getUserApplePlaylists(): Promise<void> {
+        musicDataStore.update((data: MusicData | null) => { 
+            data!.hasUserPlaylistsLoaded = false
+            return data
+        })
+
+        let playlists: MusicCollection[] = []
+        
         try {
-            let userPlaylistsResults: MusicCollection[] = []
-            
-            if (this.musicPlatform === MusicPlatform.AppleMusic) {
-                userPlaylistsResults = await getUserApplePlaylists()
+            if (this.isUserASubscriber && this.musicPlatform === MusicPlatform.AppleMusic) {
+                playlists = await getUserPlaylists(this.USER_PLAYLISTS_REQUEST_LIMIT, this.userPlaylistsOffset)
             }
-            this.updateUserPlaylists(userPlaylistsResults)
+
+            this.updateUserPlaylists([...this.userPlaylists, ...playlists], playlists.length < this.USER_PLAYLISTS_REQUEST_LIMIT)
         }
-        catch(error) {
-            console.error(error)
-            this.updateUserPlaylists([])
+        catch(code) { 
+            musicDataStore.update((data: MusicData | null) => { 
+                data!.hasUserPlaylistsLoaded = true
+                return data
+            })
+            throw (code)
         }
     }
     
     /**
      * Update user playlists state from fetched user library playlists.
-     * 
      * @param userPlaylists 
     */
-   private updateUserPlaylists(userPlaylists: MusicCollection[]): void {
+   private updateUserPlaylists(userPlaylists: MusicCollection[], hasFetchedAllUserPls: boolean): void {
         musicDataStore.update((data: MusicData | null) => { 
             data!.userPlaylists = userPlaylists
+            data!.hasUserPlaylistsLoaded = true
+            data!.userPlaylistsOffset += this.USER_PLAYLISTS_REQUEST_LIMIT
+            data!.hasFetchedAllUserPls = hasFetchedAllUserPls
+
             return data
         })
-
-        localStorage.setItem("music-user-playlists", JSON.stringify(userPlaylists))
     }
+
+    /**
+     * Empty user playlists.
+     */
     private removeUserPlaylists(): void {
         musicDataStore.update((data: MusicData | null) => { 
-            data!.userPlaylists = null
+            data!.userPlaylists = []
             return data
         })
-
-        localStorage.removeItem("music-user-playlists")
     }
 
-    /* Setting and Loading API Tokens */
-    getAccessToken = (): string => {
-        return localStorage.getItem("music-access-token") ?? ""
-    }
-    getAppleAuthToken = (): string => {
-        return localStorage.getItem("apple-music-auth-token") ?? ""
-    }
-    updateMusicPlatform = (musicPlatform: MusicPlatform) => {
+    /**
+     * Save what platform user logged in with.
+     * @param musicPlatform   Current music platform.
+     */
+    updateMusicPlatform = (musicPlatform: MusicPlatform):void => {
         this.musicPlatform = musicPlatform
-        localStorage.setItem("music-platform", JSON.stringify(musicPlatform))
-    }
-    updateAccessToken = (token: string) => {
-        localStorage.setItem("music-access-token", token)
-    }
-    updateAppleAuthToken = (authToken: string): void => {
-
-        localStorage.setItem("apple-music-auth-token", authToken)
-    }
-    removeAppleAuthToken = () => {
-        localStorage.removeItem("apple-music-auth-token")
-        localStorage.removeItem("music.y5xn9fm7bj.media-user-token")
-    }
-    removeAppleAccessToken = () => {
-        localStorage.removeItem("music-access-token")
-    }
-    removeAppleMusicTokens = () => {
-        localStorage.removeItem("music.y5xn9fm7bj.itua")
-        localStorage.removeItem("music-platform")
-        localStorage.removeItem("music.y5xn9fm7bj.itre")
-        localStorage.removeItem("mk-player-tsid")
+        saveMusicPlatform(musicPlatform)
     }
     
     /**
@@ -313,11 +364,12 @@ export class MusicData {
         const collection = this.loadCurrentPlaylist()
         if (collection) this.updateCurrentCollection(collection)
         
-        const currentUserPlaylists = this.loadUserPlaylists()
-        if (currentUserPlaylists) this.updateUserPlaylists(currentUserPlaylists)
-        
         const currTrack = this.loadCurrentTrack()
         if (currTrack)  this.updateCurrentTrack(currTrack)
+
+        
+        const idx = this.loadCurrentCollectionIdx()
+        if (idx)  this.updateCurrentCollectionIdx(idx)
     }
 
     private loadCurrentPlaylist = (): MusicCollection | null => {
@@ -328,9 +380,8 @@ export class MusicData {
         if (!localStorage.getItem("music-current-track")) return null
         return JSON.parse(localStorage.getItem("music-current-track")!)
     }
-    private loadUserPlaylists = (): MusicCollection[] => {
-        if (!localStorage.getItem("music-user-playlists")) return []
-    
-        return JSON.parse(localStorage.getItem("music-user-playlists")!)
+    private loadCurrentCollectionIdx = (): number | null => {
+        if (!localStorage.getItem("music-idx")) return null
+        return JSON.parse(localStorage.getItem("music-idx")!)
     }
 }

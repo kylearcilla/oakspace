@@ -2,16 +2,19 @@
  * Custom click outside use directive.
  * Relevant for modals and dropdown menus / lists.
  * Has a black list of classes that prevents dispatching click outside event for special use cases.
- * Allows local functionality to take over when clickOutside is triggered.
+ * 
+ * Blacklist Elements
+ *  1. Dropdown Btn - Do not close dropdown list when dropdown button is clicked, let the local handler do that
+ *  2. Toast - Do not close modal when user clicks on a toast pop up
  * 
  * @param node    Node that the deritive has been binded / attached to.
  * @returns       Object that contains a function that removes click outside event listener when attachee node is unmounted from DOM.
  */
-export function clickOutside(node: any) {
+export const clickOutside = (node: any) => {
   const handleClick = (event: any) => {
     const srcClasses = event.srcElement.classList.value + " " + event.srcElement.parentElement.classList.value
 
-    let doIgnore = srcClasses.includes("dropdown-btn")
+    let doIgnore = srcClasses.includes("dropdown-btn") || srcClasses.includes("toast") 
     let isClickedOutsideOfNode = !node?.contains(event.target)
 
     if (!doIgnore && isClickedOutsideOfNode && !event.defaultPrevented) {

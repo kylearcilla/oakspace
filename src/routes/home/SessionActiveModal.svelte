@@ -1,154 +1,74 @@
 <script lang="ts">
-	import { clickOutside } from "$lib/utils-general"
-	import { themeState, globalSessionObj, globalSessionState } from "$lib/store"
+    import { onMount } from "svelte";
+	import { SessionState, type SessionModal } from "$lib/enums"
+    import { clickOutside } from "$lib/utils-general"
+	import Modal from "../../components/Modal.svelte"
+	import { sessionStore, themeState } from "$lib/store"
 	import type { Session } from "$lib/pom-session"
-	import type { SessionModal } from "$lib/enums"
 
-    enum SessionState {
-        EMPTY, PAUSED, FOCUSING, ON_BREAK, WAITING_TO_PROGRESS_BREAK, 
-        WAITING_TO_PROGRESS_FOCUS, FINISHED, CANCELED, FINISH_TOO_EARLY
-    }
 
-    export let toggleModal: (modal: SessionModal | null) => void
-    let sessionObj: Session | null = null
-    let activeSession: ActiveSessionState | null = null
-    let sessionNameInput: HTMLElement
+    export let closeModal: () => void
 
-    let isEditSessionModalOpen = false
-    let newSessionTitle = ""
-    let isTagListDropDownOpen = false
-    let isNewSessionTitleValid = true
-    let isNewTagModalOpen = false
+    let todoListElement: HTMLElement
+
     let isDropDownOpen = false
-
-    const MAX_SESSION_NAME_LENGTH = 18
-    const MAX_TODO_NAME_LENGTH = 15
 
     let todoToEditIndex = -1
     let todoToEditNewTitle = ""
-    let isTodoToEditTitleValid = true
 
-    globalSessionObj.subscribe((sess: any) => {
-        sessionObj = sess
-    })
-    globalSessionState.subscribe((sessionState: any) => {
-        activeSession = sessionState
-    })
-
-    let tags = [
-        {
-            name: "school",
-            color: "#9997FE"
-        },
-        {
-            name: "swe",
-            color: "#FF8B9C"
-        },
-        {
-            name: "book",
-            color: "#CFAB96"
-        },
-    ]
     let newTitle = ""
     let newTag = { name: "", color: "" }
-
     let isMakingNewTask = false
     let newTodoTitle = ""
-    let isLightTheme = false
+    
+    let doShowTopGradient = false
+    let doShowBottomGradient = false
 
-    themeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
+    const PENDING_STATES = [SessionState.WAITING_TO_PROGRESS_BREAK, SessionState.WAITING_TO_PROGRESS_FOCUS]
+    const TODO_LIST_MAX_HEIGHT = 250
+    const MAX_TODO_NAME_LENGTH = 15
 
+    sessionStore.subscribe((store: Session | null) => {
+        if (store!.state === SessionState.FINISHED) {
+            console.log("SDfsdfsd")
+        }
+        if (PENDING_STATES.includes(store!.state)) {
+            isMakingNewTask = false
+        }
+    })
+
+    /* UI Handlers */
     const handleFinishSessionClicked = () => {
-        sessionObj!.cancelSession()
-        globalSessionObj.set(null)
-        toggleModal(null)
-    }
-
-    const handlePomOptionClicked = (optionIdx: number) => {
-        if (optionIdx === 0) {
-            isEditSessionModalOpen = true
-            newSessionTitle = activeSession!.name
-            newTag = activeSession!.tag
-        }
-        else if (optionIdx === 1) {
-            activeSession!.sessionState === SessionState.PAUSED ? sessionObj!.playSession() : sessionObj!.pauseSession()
-        }
-        else if (optionIdx === 2) {
-            sessionObj!.restartPeriod()
-        }
-        else if (optionIdx === 3) {
-            sessionObj!.skipToNextPeriod()
-        }
-        else if (optionIdx === 4) {
-            sessionObj!.cancelSession()
-        }
-        else {
-            sessionObj!.finishSession()
-        }
-    
-        isDropDownOpen = false
-        // newTag = tags[idx]
+        $sessionStore!.cancelSession()
+        closeModal()
     }
     
-    /* Editing Session */
-    const handleEditSessionBtnClicked = () => isDropDownOpen = true
-    const handleEditSessionDoneBtnClicked = () => {
-        sessionObj!.name = newSessionTitle
-
-        if (newTag.name != "") {
-            sessionObj!.editSesionTag(newTag)
-            sessionObj!.editSessionTitle(newTitle)
-        }
-        
-        handleEditSessionCancelClicked()
-    }
-    const handleEditSessionCancelClicked = () => {
-        todoToEditNewTitle = ""
-        isTagListDropDownOpen = false
-        isEditSessionModalOpen = false
-        newTag = { 
-            name: sessionObj!.tag.name, 
-            color: sessionObj!.tag.color 
-        }
-    }
-    const editActiveSessionTitleInputHandler = (event: any) => {
-        newSessionTitle = event.target.value;
-    }
-    const toggleTagDropdownList = () => {
-        isTagListDropDownOpen = !isTagListDropDownOpen
-    }
-    const handleNewTagClicked = (idx: number) => {
-        newTag = tags[idx]
-        isTagListDropDownOpen = false
-    }
-    const handleCreateTagBtnClicked = () => {
-        isTagListDropDownOpen = false
-        isNewTagModalOpen = false
-    }
-
-
     /* Editing a Todo */
     const handleTodoEditButtonClicked = (index: number) => {
         todoToEditIndex = index
-        todoToEditNewTitle = activeSession!.todos[index].title
+        todoToEditNewTitle = $sessionStore!.todos[index].title
     }
     const handleEditTodoDeleteBtnClicked = (index: number) => {
-        sessionObj!.deleteTodo(index)
+        $sessionStore!.deleteTodo(index)
 
         todoToEditIndex = -1
         todoToEditNewTitle = ""
+
+        requestAnimationFrame(() => {
+            doShowBottomGradient = todoListElement.clientHeight < TODO_LIST_MAX_HEIGHT ? false : doShowBottomGradient
+        })
     }
     const handleEditTodoDoneBtnClicked = () => {
-        sessionObj!.editTodo(todoToEditIndex, todoToEditNewTitle)
+        $sessionStore!.editTodo(todoToEditIndex, todoToEditNewTitle)
 
         todoToEditIndex = -1
         todoToEditNewTitle = ""
     }
-    const editTextInputHandler = (event: any) => {
-        todoToEditNewTitle = event.target.value;
+    const editTextInputHandler = (event: Event) => {
+        todoToEditNewTitle = (event.target as HTMLInputElement).value
     }
     const handleCheckBoxClicked = (idx: number) => {
-        sessionObj!.toggleCheckTodo(idx)
+        $sessionStore!.toggleCheckTodo(idx)
 	}
 
     /* Adding New Todo */
@@ -157,362 +77,220 @@
         isMakingNewTask = false
     }
     const newTodoAddBtnHandler = () => {
-        sessionObj!.addTodo(newTodoTitle)
+        $sessionStore!.addTodo(newTodoTitle)
         newTodoCancelBtnHandler()
+
+        requestAnimationFrame(() => {
+            doShowBottomGradient = todoListElement.clientHeight === TODO_LIST_MAX_HEIGHT ? true : doShowBottomGradient
+        })
     }
-    const newTodoTextInputHandler = (event: any) => {
-        newTodoTitle = event.target.value;
+    const newTodoTextInputHandler = (event: Event) => {
+        newTodoTitle = (event.target as HTMLInputElement).value
     }
 
+    const handleTodoListGradientHandler = () => {
+        const scrollTop = todoListElement.scrollTop
+        const windowHeight = todoListElement.clientHeight
+        const scrollHeight = todoListElement.scrollHeight
+
+        doShowTopGradient = scrollTop > 0
+        doShowBottomGradient = Math.ceil(scrollTop) < scrollHeight - windowHeight
+    }
+
+    onMount(() => handleTodoListGradientHandler())
 </script>
 
-<div class="modal-bg">
-    <div 
-        use:clickOutside on:click_outside={() => toggleModal(null)} 
-        class="modal-bg__content session-modal-content"
-    >
-        <div class="active-session-container">
-            {#if activeSession}
-                <!-- Edit Active Session Modal -->
-                <div class={`modal-bg ${isEditSessionModalOpen ? "" : "modal-bg--hidden"}`}>
-                    <div 
-                        use:clickOutside on:click_outside={() => isEditSessionModalOpen = false} 
-                        class="modal-bg__content modal-bg__content--overflow-show modal-bg__content--small"
-                    >
-                        <div class={`edit-session-modal ${!isLightTheme ? "edit-session-modal--dark" : ""}`}>
-                            <h1>Edit Active Session</h1>
-                            <h3>Title / Tag</h3>
-                            <!-- Name -->
-                            <div class="edit-session-modal__name-input" bind:this={sessionNameInput}>
-                                <input 
-                                    spellcheck="false"
-                                    type="text"
-                                    placeholder="Afternoon Reading" 
-                                    on:focus={() => sessionNameInput.classList.add("edit-session-modal__name-input--focus")}
-                                    on:blur={() => sessionNameInput.classList.remove("edit-session-modal__name-input--focus")}
-                                    on:input={editTextInputHandler}
-                                    bind:value={newTitle}
-                                >
-                                <div class="edit-session-modal__name-input__divider"></div>
-                                <div class="edit-session-modal__name-input-tag-dropdown-container dropdown-container">
-                                    <button class="edit-session-modal__name-input-tag-dropdown-btn dropdown-btn trans-btn" on:click={() => {
-                                        isTagListDropDownOpen = true
-                                    }}>
-                                        <div class="edit-session-modal__name-input-btn-tag" style={`background-color: ${newTag.color}`}></div>
-                                        <div class="dropdown-btn__title">
-                                            {newTag.name}
-                                        </div>
-                                        <div class="dropdown-btn__arrows">
-                                            <div class="dropdown-btn__arrows-triangle-up">
-                                                <i class="fa-solid fa-chevron-up"></i>
-                                            </div>
-                                            <div class="dropdown-btn__arrows-triangle-down">
-                                                <i class="fa-solid fa-chevron-down"></i>
-                                            </div>
-                                        </div>
-                                    </button>
-                                    {#if isTagListDropDownOpen}
-                                        <ul use:clickOutside on:click_outside={() => isTagListDropDownOpen = false} class="dropdown-menu">
-                                            {#each tags as tag, idx} 
-                                                <li class={`dropdown-menu__option ${tag.name === newTag.name ? "dropdown-menu__option--selected" : ""}`}>
-                                                    <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
-                                                        <div class="edit-session-modal__name-input-btn-tag dropdown-menu__option-icon" style={`background-color: ${tag.color}`}></div>
-                                                        <p>{tag.name}</p>
-                                                        <i class="fa-solid fa-check"></i>
-                                                    </button>
-                                                </li>
-                                            {/each}
-                                            <li class="dropdown-menu__new-option-container">
-                                                <div class="divider divider--thin"></div>
-                                                <button on:click={handleCreateTagBtnClicked}>
-                                                    <span>+</span>New Tag
-                                                </button>
-                                            </li>
-                                        </ul>
-                                    {/if}
+<Modal options={{ borderRadius: "20px" }} onClickOutSide={closeModal}>
+    {#if $sessionStore}
+        <div class={`active-session ${$themeState.isDarkTheme ? "active-session--dark" : ""}`}>
+            <div class="active-session__top-container">
+                <!-- Session Details Header -->
+                <div class="active-session__header active-session__bento-box">
+                    <div>
+                        <h4 class="active-session__header-session-name">{$sessionStore.name}</h4>
+                        <div class="active-session__header-session-tag" style={`background-color: ${$sessionStore?.tag.color};`}>
+                            <span>{`${$sessionStore?.tag.name}`}</span>
+                        </div>
+                    </div>
+                    <div class="active-session__header-time-period">
+                        <span>
+                            {`${$sessionStore.timePeriodString}`}
+                        </span>
+                    </div>
+                </div>
+                <!-- Pomodoro Details -->
+                <div class="active-session__pom active-session__bento-box">
+                    <div class="active-session__pom-details">
+                        <div>
+                            <div class="active-session__pom-details">
+                                <div class="active-session__pom-timer">
+                                    <h1>
+                                        {`${$sessionStore.currentTime?.minutes}:${String($sessionStore.currentTime?.seconds).padStart(2, '0')}`}
+                                    </h1>
+                                    <span>
+                                        {`${$sessionStore.currentPomPeriod} / ${$sessionStore.pomPeriods}`}
+                                    </span>
                                 </div>
-                            </div>
-                            <div class="edit-session-modal__buttons-container">
-                                <button 
-                                    disabled={newTitle === "" || newTitle.length >= MAX_SESSION_NAME_LENGTH} 
-                                    class="edit-session-modal__done-btn fill-btn" 
-                                    on:click={handleEditSessionDoneBtnClicked}>
-                                        Save Changes
-                                </button>
-                                <button 
-                                    class="edit-session-modal__cancel-btn unfill unfill--gray" 
-                                    on:click={handleEditSessionCancelClicked}>
-                                        Cancel
-                                </button>
+                                <span class="active-session__pom-message">
+                                    {`${$sessionStore.pomMessage}`}
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
-        
-                <!-- Active Session Component -->
-                <div class={`active-session ${isLightTheme ? "" : "active-session--dark"}`}>
-                    <div class="active-session__top-container">
-                        <!-- Session Details Header -->
-                        <div class="active-session__header active-session__bento-box">
-                            <div class="active-session__header-name">
-                                <h4>{activeSession.name}</h4>
-                            </div>
-                            <div class="dropdown-container">
-                                <button on:click={handleEditSessionBtnClicked} class="active-session__header-edit-button settings-btn">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20">
-                                        <g fill="none" stroke="currentColor" stroke-linecap="round" transform="translate(1 10)">
-                                            <circle cx="2" cy="0.8" r="1.2"></circle>
-                                            <circle cx="8" cy="0.8" r="1.2"></circle>
-                                            <circle cx="14" cy="0.8" r="1.2"></circle>
-                                        </g>
-                                    </svg>
-                                </button>
-                                <!-- Session Controls -->
-                                {#if isDropDownOpen}
-                                    <ul use:clickOutside on:click_outside={() => isDropDownOpen = false} class="active-session__settings-dropdown-menu dropdown-menu">
-                                        <li class="dropdown-menu__option">
-                                            <button class="dropdown-element" on:click={() => handlePomOptionClicked(0)}>
-                                                <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
-                                                    <i class="fa-solid fa-pencil"></i>
-                                                </div>
-                                                <p>Edit Session</p>
-                                            </button>
-                                        </li>
-                                        <li class="dropdown-menu__option">
-                                            <button class="dropdown-element" on:click={() => handlePomOptionClicked(1)}>
-                                                <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
-                                                    {#if activeSession.sessionState === SessionState.PAUSED}
-                                                        <i class="fa-solid fa-play"></i>
-                                                    {:else}
-                                                        <i class="fa-solid fa-pause"></i>
-                                                    {/if}
-                                                </div>
-                                                {#if activeSession.sessionState === SessionState.PAUSED}
-                                                    <p>Play Session</p>
+            </div>
+            
+            <!-- Active Session Tasks -->
+            <div class={`active-session__tasks active-session__bento-box ${$themeState.isDarkTheme ? "" : "active-session__tasks--light-mode"}`}>
+                <div class="active-session__tasks-header">
+                    <h4>To Do's</h4>
+                    <p>
+                        {#if $sessionStore.todos.length > 0}
+                            {$sessionStore.todosCheckedCount} / {$sessionStore.todos.length}
+                        {/if}
+                    </p>
+                </div>
+                <!-- To Do List -->
+                <div class="active-session__tasks-todo-list-container">
+                    {#if doShowTopGradient} 
+                        <div class="gradient-container gradient-container--top"></div>
+                    {/if}
+                    <ul class="active-session__tasks-todo-list" on:scroll={handleTodoListGradientHandler} bind:this={todoListElement}>
+                        {#each $sessionStore.todos as todo, idx}
+                            <!-- To Do List Item -->
+                            <li 
+                                class={`active-session-todo 
+                                            ${todoToEditIndex === idx ? "active-session-todo--editing" : ""}
+                                            ${$themeState.isDarkTheme ? "" : "active-session-todo--light-mode"}
+                                    `}
+                            >
+                                    <!-- Todo Check Box -->
+                                    {#if idx != $sessionStore.todos.length - 1}
+                                        {#if todo.isChecked && idx + 1 < $sessionStore.todos.length && $sessionStore.todos[idx + 1].isChecked} 
+                                            <div class="active-session-todo__line active-session-todo__solid-line active-session-todo__solid-line"></div>
+                                        {:else}
+                                            <div class="active-session-todo__line active-session-todo__dotted-line"></div>
+                                        {/if}
+                                    {/if}
+                                    <button  on:click={() => handleCheckBoxClicked(idx)} class={`active-session-todo__check-box ${todo.isChecked ? "active-session-todo__check-box--finished" : ""}`}>
+                                        <i class="fa-solid fa-check"></i>
+                                    </button> 
+                                    <!-- Todo Content -->
+                                    <div class="active-session-todo__right-container">
+                                        {#if idx === todoToEditIndex}
+                                            <form>
+                                                <input
+                                                    class="active-session-todo__edit-todo-input"
+                                                    placeholder="New Subtask Title"
+                                                    on:input={editTextInputHandler}
+                                                    bind:value={todoToEditNewTitle}
+                                                />
+                                            </form>
+                                        {:else}
+                                            <p class={`active-session-todo__name ${todo.isChecked ? "active-session-todo__name--finished" : ""}`}>
+                                                {#if todo.isChecked} 
+                                                    <span class="strike">{todo.title}</span>
                                                 {:else}
-                                                    <p>Pause Session</p>
+                                                    {todo.title}
                                                 {/if}
-                                            </button>
-                                        </li>
-                                        <li class="dropdown-menu__option">
-                                            <button class="dropdown-element" on:click={() => handlePomOptionClicked(2)}>
-                                                <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
-                                                    <i class="fa-solid fa-rotate-right"></i>
-                                                </div>
-                                                <p>Restart Period</p>
-                                            </button>
-                                        </li>
-                                        <li class="dropdown-menu__option">
-                                            <button class="dropdown-element" on:click={() => handlePomOptionClicked(3)}>
-                                                <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
-                                                    <i class="fa-solid fa-forward-step"></i>
-                                                </div>
-                                                <p>Skip Period</p>
-                                            </button>
-                                        </li>
-                                        <li class="dropdown-menu__option">
-                                            <button class="dropdown-element" on:click={() => handlePomOptionClicked(4)}>
-                                                <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
-                                                    <i class="fa-solid fa-ban"></i>
-                                                </div>
-                                                <p>Cancel Session</p>
-                                            </button>
-                                        </li>
-                                        <li class="dropdown-menu__option">
-                                            <button class="dropdown-element" on:click={() => handlePomOptionClicked(5)}>
-                                                <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
-                                                    <i class="fa-solid fa-flag-checkered"></i>
-                                                </div>
-                                                <p>Finish Session</p>
-                                            </button>
-                                        </li>
-                                    </ul>
-                                {/if}
-                            </div>
-                            <div class="active-session__header-time-period">
-                                <span>
-                                    {`${activeSession.timePeriodString}`}
-                                </span>
-                                <div class="divider"></div>
-                                <span>{`${activeSession.pomTime} / ${activeSession.breakTime} min × ${activeSession.pomPeriods} `}</span>
-                            </div>
-                        </div>
-                        <!-- Pomodoro Details -->
-                        <div class="active-session__pom active-session__bento-box">
-                            <div class="active-session__pom-details">
-                                <div>
-                                    <div class="active-session__pom-details">
-                                        <div class="active-session__pom-timer">
-                                            <h1>
-                                                {`${activeSession.currentTime?.minutes}:${String(activeSession.currentTime?.seconds).padStart(2, '0')}`}
-                                            </h1>
-                                            <span>
-                                                {`${activeSession.currentPomPeriod} / ${activeSession.pomPeriods}`}
-                                            </span>
-                                        </div>
-                                        <span class="active-session__pom-message">
-                                            {`${activeSession.pomMessage}`}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Active Session Tasks -->
-                    <div class={`active-session__tasks active-session__bento-box ${isLightTheme ? "active-session__tasks--light-mode" : ""}`}>
-                        <div class="active-session__tasks-header">
-                            <h4>To Do's</h4>
-                            <p>
-                                {#if activeSession.todos.length === 0}
-                                    No substasks
-                                {:else}
-                                    {activeSession.todosCheckedCount} / {activeSession.todos.length}
-                                {/if}
-                            </p>
-                        </div>
-                        <!-- To Do List -->
-                        <ul class="active-session__tasks-todo-list">
-                            {#each activeSession.todos as todo, idx}
-                                <!-- To Do List Item -->
-                                <li 
-                                    class={`active-session-todo 
-                                                ${todoToEditIndex === idx ? "active-session-todo--editing" : ""}
-                                                ${isLightTheme ? "active-session-todo--light-mode" : ""}
-                                        `}
-                                >
-                                        <!-- Todo Check Box -->
-                                        {#if idx != activeSession.todos.length - 1}
-                                            {#if todo.isChecked && idx + 1 < activeSession.todos.length && activeSession.todos[idx + 1].isChecked} 
-                                                <div class="active-session-todo__line active-session-todo__solid-line active-session-todo__solid-line"></div>
-                                            {:else}
-                                                <div class="active-session-todo__line active-session-todo__dotted-line"></div>
+                                            </p>
+                                            {#if ($sessionStore.todos.length > 1 && idx != $sessionStore.todos.length - 1) && idx != todoToEditIndex - 1}
+                                                <div class="divider divider--thin"></div>
                                             {/if}
                                         {/if}
-                                        <button  on:click={() => handleCheckBoxClicked(idx)} class={`active-session-todo__check-box ${todo.isChecked ? "active-session-todo__check-box--finished" : ""}`}>
-                                            <i class="fa-solid fa-check"></i>
-                                        </button> 
-                                        <!-- Todo Content -->
-                                        <div class="active-session-todo__right-container">
-                                            {#if idx === todoToEditIndex}
-                                                <form>
-                                                    <input
-                                                        class="active-session-todo__edit-todo-input"
-                                                        placeholder="New Subtask Title"
-                                                        on:input={editTextInputHandler}
-                                                        bind:value={todoToEditNewTitle}
-                                                    />
-                                                </form>
-                                            {:else}
-                                                <p class={`active-session-todo__name ${todo.isChecked ? "active-session-todo__name--finished" : ""}`}>
-                                                    {#if todo.isChecked} 
-                                                        <span class="strike">{todo.title}</span>
-                                                    {:else}
-                                                        {todo.title}
-                                                    {/if}
-                                                </p>
-                                                {#if (activeSession.todos.length > 1 && idx != activeSession.todos.length - 1) && idx != todoToEditIndex - 1}
-                                                    <div class="divider divider--thin"></div>
-                                                {/if}
-                                            {/if}
-                                            {#if idx === todoToEditIndex}
-                                                <div class="active-session-todo__edit-btn-container">
-                                                    <button 
-                                                        class="active-session-todo__delete-btn text-only"
-                                                        on:click={() => handleEditTodoDeleteBtnClicked(idx)}>
-                                                            Delete
-                                                    </button>
-                                                    <button
-                                                        disabled={todoToEditNewTitle === "" || todoToEditNewTitle.length > MAX_TODO_NAME_LENGTH}
-                                                        on:click={handleEditTodoDoneBtnClicked}
-                                                        class="active-session-todo__done-btn text-only">
-                                                            Done
-                                                    </button>
-                                                </div>
-                                            {/if}
-                                            {#if todoToEditIndex < 0}
-                                                <button on:click={() => handleTodoEditButtonClicked(idx)} class="active-session-todo__edit-button flx">
-                                                    <div class="flx flx--algn-center">
-                                                        <i class="fa-solid fa-pencil"></i>
-                                                        <span>Edit</span>
-                                                    </div>
+                                        {#if idx === todoToEditIndex}
+                                            <div class="active-session-todo__edit-btn-container">
+                                                <button 
+                                                    class="active-session-todo__delete-btn text-only"
+                                                    on:click={() => handleEditTodoDeleteBtnClicked(idx)}>
+                                                        Delete
                                                 </button>
-                                            {/if}
-                                        </div>
-                                    </li>
-                            {/each}
-                        </ul>
-                        <!-- New Task Button -->
-                        {#if isMakingNewTask}
-                            <div class="active-session__tasks-new-todo-input-container">
-                                <form>
-                                    <input 
-                                        class="active-session__tasks-new-todo-input"
-                                        placeholder="New Subtask" 
-                                        on:input={newTodoTextInputHandler}
-                                        bind:value={newTodoTitle}
-                                    />
-                                </form>
-                                <div class="active-session__tasks-new-todo-btn-container">
-                                    <button 
-                                        disabled={newTodoTitle === "" || newTodoTitle.length > MAX_TODO_NAME_LENGTH}
-                                        class="active-session__tasks-add-btn unfill unfill--padded unfill--oval"
-                                        on:click={newTodoAddBtnHandler}>
-                                            Add
-                                    </button>
-                                    <button 
-                                        on:click={newTodoCancelBtnHandler}
-                                        class="active-session__tasks-cancel-btn unfill unfill--padded unfill--oval">
-                                            Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        {:else}
-                            <button class="active-session__tasks-new-task-btn" on:click={() => isMakingNewTask = true}>
-                                <span>+</span> Add New Task
-                            </button>
-                        {/if}
-                        {#if !isMakingNewTask && (activeSession.todos?.length > 0 && activeSession.todosCheckedCount === activeSession.todos.length)}
-                            <button 
-                                on:click={() => handleFinishSessionClicked()}
-                                class="active-session__tasks-finish-session-btn unfill unfill--padded unfill--oval"
-                            >
-                                Finish Session <span>👏</span>
-                            </button>
-                        {/if}
-                    </div>
+                                                <button
+                                                    disabled={todoToEditNewTitle === "" || todoToEditNewTitle.length > MAX_TODO_NAME_LENGTH}
+                                                    on:click={handleEditTodoDoneBtnClicked}
+                                                    class="active-session-todo__done-btn text-only">
+                                                        Done
+                                                </button>
+                                            </div>
+                                        {/if}
+                                        {#if todoToEditIndex < 0}
+                                            <button on:click={() => handleTodoEditButtonClicked(idx)} class="active-session-todo__edit-button flx">
+                                                <div class="flx flx--algn-center">
+                                                    <i class="fa-solid fa-pencil"></i>
+                                                    <span>Edit</span>
+                                                </div>
+                                            </button>
+                                        {/if}
+                                    </div>
+                                </li>
+                        {/each}
+                    </ul>
+                    {#if doShowBottomGradient} 
+                        <div class="gradient-container gradient-container--bottom"></div>
+                    {/if}
                 </div>
-            {/if}
-        </div>      
-    </div>            
-</div>      
+                <!-- New Task Button -->
+                {#if isMakingNewTask}
+                    <div class="active-session__tasks-new-todo-input-container">
+                        <form>
+                            <input 
+                                class="active-session__tasks-new-todo-input"
+                                placeholder="New Subtask" 
+                                on:input={newTodoTextInputHandler}
+                                bind:value={newTodoTitle}
+                            />
+                        </form>
+                        <div class="active-session__tasks-new-todo-btn-container">
+                            <button 
+                                disabled={newTodoTitle === "" || newTodoTitle.length > MAX_TODO_NAME_LENGTH}
+                                class="active-session__tasks-add-btn unfill unfill--padded unfill--oval"
+                                on:click={newTodoAddBtnHandler}>
+                                    Add
+                            </button>
+                            <button 
+                                on:click={newTodoCancelBtnHandler}
+                                class="active-session__tasks-cancel-btn unfill unfill--padded unfill--oval">
+                                    Cancel
+                            </button>
+                        </div>
+                    </div>
+                {:else}
+                    <button class="active-session__tasks-new-task-btn" on:click={() => isMakingNewTask = true}>
+                        <span>+</span> Add New Task
+                    </button>
+                {/if}
+                {#if !isMakingNewTask && PENDING_STATES.includes($sessionStore?.state)}
+                    <button 
+                        on:click={() => $sessionStore?.progressToNextPeriod()}
+                        class="active-session__tasks-finish-session-btn unfill unfill--padded unfill--oval"
+                    >
+                        Progress <span>👉</span>
+                    </button>
+                {:else if !isMakingNewTask && ($sessionStore.todos?.length > 0 && $sessionStore.todosCheckedCount === $sessionStore.todos.length)}
+                    <button 
+                        on:click={() => handleFinishSessionClicked()}
+                        class="active-session__tasks-finish-session-btn unfill unfill--padded unfill--oval"
+                    >
+                        Finish Session <span>👏</span>
+                    </button>
+                {/if}
+            </div>
+        </div>
+    {/if}
+</Modal>
 
 <style lang="scss">
     @import "../../scss/dropdown.scss";
     @import '../../scss/active-session.scss';
 
-    /* Session Modal */
-    .session-modal-content {
-        border-radius: 20px;
+    .active-session {
         padding: 13px 22px 10px 22px;
-    }
-    .active-session-container {
         position: relative;
         color: rgb(var(--textColor1));
         width: 340px;
 
         h1 {
             margin-bottom: 15px;
-        }
-
-        @include sm(max-width) {
-            width: 75vw;
-        }
-    }
-    .active-session {
-        &__header-edit-button {
-            background: none;
-            margin-right: -10px;
         }
 
         .dropdown-menu {

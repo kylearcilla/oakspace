@@ -14,8 +14,8 @@ export enum SettingsModal {
 
 /* Sessions */
 export enum SessionState {
-    EMPTY,  PAUSED, FOCUSING,  ON_BREAK,  WAITING_TO_PROGRESS_BREAK, 
-    WAITING_TO_PROGRESS_FOCUS,  FINISHED,  CANCELED, FINISH_TOO_EARLY
+    EMPTY, FOCUSING, ON_BREAK, WAITING_TO_PROGRESS_BREAK, 
+    WAITING_TO_PROGRESS_FOCUS, FINISHED, CANCELED, FINISH_TOO_EARLY
 }
 export enum SessionModal { 
     Quote, NewSession, ActiveSession 

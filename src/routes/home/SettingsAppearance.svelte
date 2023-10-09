@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte"
-	import { themeState } from "$lib/store"
+	import { homeViewLayout, themeState } from "$lib/store"
 	import { getThemeFromSection, setNewTheme } from "$lib/utils-appearance"
     import { lightColorThemes, darkColorThemes, imageThemes, ambientVideos, defaultThemes } from "$lib/data-themes"
 
@@ -32,11 +32,14 @@
 
         setNewTheme(selectedTheme)
     }
+
+    const onClickOutSide = () => homeViewLayout.update((data: HomeLayout) => ({ ...data, settingsModal: null }))
+
     onMount(() => selectedTheme = JSON.parse(localStorage.getItem("theme")!))
 </script>
 
 
-<Modal isModalSmall={false}>
+<Modal onClickOutSide={onClickOutSide}>
     <div class={`appearance ${$themeState.isDarkTheme ? "" : "appearance--light"}`}>
         <h1 class="appearance__title modal-bg__content-title">Appearance</h1>
         <p class="appearance__description modal-bg__content-copy">Tailor your workspace to your personal aesthetic!</p>
@@ -222,6 +225,7 @@
         width: 85vw;
         max-width: 950px;
         position: relative;
+        padding: $settings-modal-padding;
 
         .unfill {
             @include unfill-btn-ficus-styling(var(--fgColor1));

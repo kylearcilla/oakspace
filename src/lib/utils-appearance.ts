@@ -98,6 +98,10 @@ export const setRootColors = (theme: ColorThemeProps) => {
           --headerElementTextColor: ${theme.headerElementTextColor};
           --headerElementShadow: ${theme.headerElementShadow};
           --headerTimeColor: ${theme.headerTimeColor};
+          --headerSessionBaseColor: ${theme.headerSessionBaseColor};
+          --headerSessionAccentColor1: ${theme.headerSessionAccentColor1};
+          --headerSessionAccentColor2: ${theme.headerSessionAccentColor2};
+          --headerSessionAccentColor3: ${theme.headerSessionAccentColor3};
           --modalBgColor: ${theme.modalBgColor};
           --modalBgAccentColor: ${theme.modalBgAccentColor};
           --bentoBoxBgColor: ${theme.bentoBoxBgColor};
@@ -125,4 +129,9 @@ export const setRootColors = (theme: ColorThemeProps) => {
       }
     `
     headTag.appendChild(styleTag)
+  }
+
+
+  export const getThemeStyling = (name: keyof ColorThemeProps) => {
+    return getComputedStyle(document.documentElement).getPropertyValue(`--${name}`)
   }

@@ -9,7 +9,12 @@
         await toast.actionFunction?.()
         dismissToast()
     }
-	const dismissToast = () => toastMessages.update((toasts: ToastMsg[]) => toasts.splice(idx, 1))
+	const dismissToast = () => {
+        toastMessages.update((toasts: ToastMsg[]) => {
+            toasts.splice(idx, 1)
+            return toasts
+        })
+    }
 
 </script>
 

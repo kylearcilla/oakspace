@@ -1,37 +1,26 @@
 <script lang="ts">
 	import QuoteModal from "./ModalQuote.svelte"
 	import NewSessionModal from "./SessionNewModal.svelte"
-	import ActiveSessionView from "./SessionActiveModal.svelte"
     
 	import { SessionModal } from "$lib/enums"
 	import { updateUI } from "$lib/utils-home"
-	import { themeState, globalSessionObj, globalSessionState, homeViewLayout, musicDataStore, ytPlayerStore } from "$lib/store"
+	import { themeState, homeViewLayout, musicDataStore, ytPlayerStore, sessionStore } from "$lib/store"
+	import SessionHeaderView from "./SessionHeaderView.svelte";
 
-    let currModalOpen : SessionModal | null = null
+    let currModalOpen: SessionModal | null = null
     let dropdownMenu: HTMLElement
 
     const toggleModal = (modal: SessionModal | null) => currModalOpen = modal
 
+    /* Event Handlers */
     const handleSessionBtnClicked = () => {
-        if ($globalSessionState) {
+        if ($sessionStore) {
             toggleModal(SessionModal.ActiveSession)
         }
         else {
             toggleModal(SessionModal.NewSession)
         }
     }
-    const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key === "Escape" && currModalOpen === SessionModal.NewSession) {
-            currModalOpen = null
-        }
-    }
-    const handleKeyUp = (event: KeyboardEvent) => {
-        if (!$globalSessionObj && event.key.toLocaleLowerCase() === "n") {
-            currModalOpen = SessionModal.NewSession
-        }
-    }
-
-    /* Dropdown Menu */
     const handleOptionClicked = (idx: number) => {
         if (idx === 0) {
             console.log("LOGGING OUT USER")
@@ -44,6 +33,18 @@
         }
         dropdownMenu.style.display = "none"
     }
+
+    /* Shortcuts */
+    const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Escape" && currModalOpen === SessionModal.NewSession) {
+            currModalOpen = null
+        }
+    }
+    const handleKeyUp = (event: KeyboardEvent) => {
+        if (!$sessionStore && event.key.toLocaleLowerCase() === "n") {
+            currModalOpen = SessionModal.NewSession
+        }
+    }
 </script>
 
 <svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} />
@@ -53,13 +54,11 @@
         <QuoteModal toggleModal={toggleModal} />
     {:else if currModalOpen === SessionModal.NewSession}
         <NewSessionModal toggleModal={toggleModal} />
-    {:else if $homeViewLayout.isVideoViewOpen && currModalOpen === SessionModal.ActiveSession}
-        <ActiveSessionView toggleModal={toggleModal} />
-    {/if}         
+    {/if}
 
     <!-- Left Side -->
     <!-- svelte-ignore a11y-mouse-events-have-key-events -->
-    <div class="user-panel" 
+    <div class="user-panel header__section" 
         on:mouseover={() => dropdownMenu.style.display = "block"} 
         on:mouseleave={() => dropdownMenu.style.display = "none"}
     >
@@ -67,24 +66,7 @@
         <div class="user-panel__user-details">
             <div class="user-panel__user-details-user">Kyle Arcilla</div>
             <div class="user-panel__user-details-subheading">
-                {#if $homeViewLayout.isVideoViewOpen}
-                    <div class="user-panel__user-details-session-stat" title="4 sessions done.">
-                        <i class="fa-regular fa-hourglass-half"></i>
-                        <span>4</span>
-                    </div>
-                    <div class="user-panel__user-details-session-stat" title="2h 32m of focus time today.">
-                        <i class="fa-brands fa-readme"></i>
-                        <span>2h 32m</span>
-                    </div>
-                    <div class="user-panel__user-details-session-stat" title="1h 3m of break time today.">
-                        <i class="fa-solid fa-seedling"></i>
-                        <span>1h 3m</span>
-                    </div>
-                {:else}
-                    <div class="user-panel__user-details-email">
-                        kylearcilla09@gmail.com
-                    </div>
-                {/if}
+                <span class="user-panel__user-details-time">Sat, Oct 7 2023</span>
             </div>
         </div>
         <!-- Dropdown Container -->
@@ -120,61 +102,30 @@
         </div>
     </div>
 
-    <!-- Right Side -->
-    {#if $homeViewLayout.isVideoViewOpen}
-        <!-- Header Session Button -->
-        <button 
-            class={`header-session-btn header__section ${$themeState.isDarkTheme ? "" : "header-session-btn--light-mode"}`}
-            on:click={handleSessionBtnClicked}
-        >
-            {#if !$globalSessionState}
-                <div class="header-session-btn__new-session-title">New Session</div>
-                <div class="header-session-btn__new-session-icon">+</div>
-            {:else}
-                <div title={$globalSessionState?.tag.name} class="header-session-btn__session-tag">
-                    {$globalSessionState?.tag.name[0].toLocaleUpperCase()}
-                </div>
-                <div class="header-session-btn__session-name">{$globalSessionState?.name}</div>
-                {#if $globalSessionState.todos.length > 0}
-                    <div title={`${$globalSessionState.todosCheckedCount} completed`} class="header-session-btn__session-todos">
-                        {`${$globalSessionState.todosCheckedCount} / ${$globalSessionState.todos.length}`}
-                    </div>
-                {/if}
-                <div 
-                    title={$globalSessionObj?.iCurrentlyFocusTime() ? "Focus Time" : "Break Time"} 
-                    class="header-session-btn__session-mode"
-                >
-                    {#if $globalSessionObj?.iCurrentlyFocusTime()}
-                        <i class="fa-brands fa-readme"></i>
-                    {:else}
-                        <i class="fa-solid fa-seedling"></i>
-                    {/if}
-                </div>
-                <div class="header-session-btn__session-time">
-                    {`${$globalSessionState?.currentTime?.minutes}:${String($globalSessionState?.currentTime?.seconds).padStart(2, '0')}`}
-                </div>
-                <div class="header-session-btn__session-cycles">
-                    {`${$globalSessionState?.currentPomPeriod} / ${$globalSessionState?.pomPeriods}`}
-                </div>
-            {/if}
-        </button>
-    {:else}
-        <!-- Header Stats -->
-        <div class="user-stats">
-            <div class="user-stats__stat" title={`${"4"} sessions finished today 👏.`}>
-                <i class="fa-regular fa-hourglass-half"></i>
-                4
-            </div>
-            <div class="user-stats__stat" title={`${"1h 3m"} of focus time today.`}>
-                <i class="fa-brands fa-readme"></i>
-                1h 3m
-            </div>
-            <div class="user-stats__stat" title={`${"1h 3m"} of break time today.`}>
-                <i class="fa-solid fa-seedling"></i>
-                1h 3m
-            </div>
+    {#if $sessionStore != null}
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <div class={`header-session-container ${$themeState.isDarkTheme ? "" : "header-session-container--light-mode"}`}>
+            <SessionHeaderView />
         </div>
     {/if}
+
+    <!-- Right Side -->
+    <div class="header__section">
+        {#if !$sessionStore}
+            <!-- Header Session Button -->
+            <button 
+                class={`header-new-session-btn header__element ${$themeState.isDarkTheme ? "" : "header-new-session-btn--light-mode"}`}
+                on:click={handleSessionBtnClicked}
+            >
+                <div class="header-new-session-btn__new-session-title">New Session</div>
+                <div class="header-new-session-btn__new-session-icon">+</div>
+            </button>
+        {/if}
+        <div class="header__time header__element">
+            <i class="fa-solid fa-moon"></i>
+            <span>9:34 PM</span>
+        </div>
+    </div>
 </div>
 
 <style global lang="scss">
@@ -185,9 +136,9 @@
         width: 100%;
         @include flex-container(center, space-between);
         
-        &__section {
+        &__element {
             border-radius: 20px;
-            height: 35px;
+            height: 40px;
             @include flex-container(center, _);
             padding: 11px 15px 11px 12px;
             background: var(--headerElementBgColor);
@@ -195,30 +146,17 @@
             box-shadow: var(--headerElementShadow);
             white-space: nowrap;
         }
+        &__section {
+            @include flex-container(center, _);
+        }
+
+
         &--light .user-panel {
             &__user-details-user {
                 font-weight: 600;
             }
-            &__user-details-email {
+            &__user-details-time {
                 font-weight: 500;
-            }
-            &__user-details-session-stat {
-                i {
-                    color: rgba(var(--textColor1), 0.38);
-                }
-                span {
-                    color: rgba(var(--textColor1), 0.35);
-                    font-weight: 500;
-                }
-            }
-        }
-        &--light .user-stats {
-            i {
-                color: rgba(var(--textColor1), 0.6);
-            }
-            &__stat {
-                font-weight: 500;
-                color: rgba(var(--textColor1), 0.6);
             }
         }
         &--dark .user-panel .dropdown-menu {
@@ -227,15 +165,28 @@
                 color: rgba(var(--textColor1), 0.85);
             }
         }
+
+        &__time {
+            i {
+                font-size: 1.3rem;
+                color: #F4CCA8;
+            }
+            span {
+                margin-left: 8px;
+                font-size: 1.3rem;
+                font-weight: 200;
+                color: rgba(var(--textColor1), 0.8);
+            }
+        }
     } 
 
     .user-panel {
         @include flex-container(center, _);
         position: relative;
-        height: 37px;
+        height: 40px;
 
         img {
-            @include circle(32px);
+            @include circle(030px);
             object-fit: cover;
             border: 1.5px solid white;
             margin-right: 12px;
@@ -253,22 +204,7 @@
             @include flex-container(center, _);
             color: rgba(var(--textColor1), 0.35);
         }
-        &__user-details-session-stat {
-            @include flex-container(center, _);
-
-            i {
-                color: rgba(var(--textColor1), 0.45);
-                font-size: 0.94rem;
-                padding: 0px;
-            }
-            span {
-                color: rgba(var(--textColor1), 0.3);
-                font-size: 1.1rem;
-                font-weight: 300;
-                margin: 0px 8px 0px 5px;
-            }
-        }
-        &__user-details-email {
+        &__user-details-time {
             font-size: 1.1rem;
             font-weight: 200;
         }
@@ -297,32 +233,51 @@
             }
         }
     }
-    
-    /* Right Side */
-    .user-stats {
-        @include flex-container(center, _);
-        &__stat {
-            background-color: var(--midPanelAccentColor3);
-            margin-right: 4px;
-            padding: 8px 13px;
-            border-radius: 15px;
-            font-size: 1.1rem;
-            color: rgba(var(--textColor1), 0.7);
-            font-weight: 200;
+
+    /* Active Session Component  */
+    .header-session-container {
+        color: rgba(var(--headerElementTextColor), 1);
+        align-items: center;
+
+        &--light-mode {
             
-            i {
-                color: rgba(var(--textColor1), 1);
-                font-size: 1rem;
-                margin-right: 5px;
-            }
-            &:last-child {
-                margin-right: 0px;
-            }
         }
+
+        // &:focus {
+        //     filter: brightness(1);
+        //     box-shadow: 0px 0px 7px 0px rgba(255, 255, 255, 0.3);
+
+        //     &:before {
+        //         content: " ";
+        //         position: absolute;
+        //         z-index: -3;
+        //         top: 0px;
+        //         left: 0px;
+        //         right: 0px;
+        //         bottom: 0px;
+        //         border-radius: 15px;
+        //         border: 3px solid rgba(255, 255, 255, 0.2);
+        //     }
+        // }
+        // &:hover {
+        //     filter: brightness(1.07);
+        // }
+        // &:active {
+        //     transform: scale(0.992);
+        //     box-shadow: none;
+
+        //     &:before {
+        //         content: " " !important;
+        //         border-width: 0px;
+        //     }
+        // }
+        
+
+        /* Active Session Component */
     }
 
-    /* Active Session Btn */
-    .header-session-btn {
+    /* New Session Btn */
+    .header-new-session-btn {
         overflow: hidden;
         padding: 0px 12px 0px 15px;
         margin-right: 10px;
@@ -343,10 +298,6 @@
         }
         &--light-mode span {
             font-weight: 500;
-        }
-        &--light-mode &__session-todos, &--light-mode &__session-cycles {
-            font-weight: 400;
-            color: rgba(var(--headerElementTextColor), 0.8);
         }
 
         &:focus {
@@ -385,48 +336,12 @@
         }
         &__new-session-title {
             font-size: 1.2rem;
-            margin-left: 2px;
+            margin: 0px 0px 2px 2px;
         }
         &__new-session-icon {
             font-size: 1.5rem;
             font-weight: 400;
             margin: 0px 2px 0px 10px;
-        }
-        /* Active Session Component */
-        &__session-tag {
-            @include circle(17px);
-            @include center;
-            background-color: rgba(var(--fgColor1), 1);
-            margin: 0px 8px 0px -5px;
-            color: white;
-        }
-        &__session-name {
-            font-size: 1.1rem;
-        }
-        &__session-todos {
-            width: 30px;
-            margin-right: -5px;
-            @include center;
-        }
-        &__session-todos, &__session-cycles {
-            color: rgba(var(--headerElementTextColor), 0.5);
-            font-weight: 500;
-            font-size: 0.95rem;
-            margin-top: 2px;
-        }
-        &__session-mode {
-            i {
-                color: rgba(var(--headerElementTextColor), 0.85);
-                margin: 2px -1px 0px 15px;
-                font-size: 1.2rem;
-            }
-        }
-        &__session-time {
-            color: rgba(var(--headerElementTextColor), 0.85);
-            font-size: 1.27rem;
-            font-weight: 500;
-            margin-left: 9px;
-            width: 37px;
         }
     }
     /* Modals */

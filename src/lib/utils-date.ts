@@ -15,6 +15,8 @@ export const months = [
   
 export const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
+export const minsSecondsToSecs = (mins: number, secs: number): number => (mins * 60) + secs
+
 /**
  * @param date1 
  * @param date2 

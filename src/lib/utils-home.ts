@@ -31,15 +31,6 @@ export const onMouseMoveHandler = (event: MouseEvent, hasUserToggledWithKeyLast:
 }
 
 /**
- * When window is resized, update the look of the app by toggling side menu bars.
- * If the window is smaller than 600, then hide both side menus.
- */
-export const onWindowResizedHandler = () => {
-    if (document.body.clientWidth > MIN_UI_MAX_WIDTH) return
-    updateUI({ ...get(homeViewLayout), isTaskMenuOpen: false, isNavMenuOpen: false  })
-}
-
-/**
  * 
  * @param event   Keyboard Event
  * @returns       If user has used the short cut to hide the left side bar.
@@ -111,12 +102,12 @@ const loadHomeViewLayOutUIData = () => {
         isVideoViewOpen: true,
         isMusicPlayerOpen: true,
         minModeSrc: null,
-        modal: null
+        settingsModal: null
         }
     } else {
         data = JSON.parse(storedData)
     }
-    homeViewLayout.set({ ...data, modal: null })
+    homeViewLayout.set({ ...data, settingsModal: null })
 }
 
 /**
@@ -125,7 +116,6 @@ const loadHomeViewLayOutUIData = () => {
  */
 export const initAppState = () => {
     // ui
-    onWindowResizedHandler()
     loadTheme()
     loadHomeViewLayOutUIData()
 

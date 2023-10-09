@@ -10,13 +10,13 @@ $bento-box-padding: 8px;
     &--dark .dropdown-menu {
         @include dropdown-menu-dark;
     }
-    &--dark &__bento-box h4 {
-        color: rgba(var(--textColor1), 1);
-        font-weight: 600;
+    &--dark &__header-session-name {
+        font-weight: 400;
     }
     &--dark &__header-time-period {
         span {
             font-weight: 300;
+            color: rgba(var(--textColor1), 0.2);
         }
     }
     &--dark &__header-session-details-data {
@@ -36,6 +36,10 @@ $bento-box-padding: 8px;
         span {
             font-weight: 200;
         }
+    }
+    &--dark &__tasks-header h4 {
+        color: rgba(var(--textColor1), 0.5);
+        font-weight: 400;
     }
     &--dark &__tasks-header p {
         font-weight: 400;
@@ -65,7 +69,7 @@ $bento-box-padding: 8px;
     
     /* Header */
     &__header {
-        @include flex-container(center, space-between);
+        @include flex-container(flex-start, space-between);
     }
     &__header-left {
     }
@@ -76,43 +80,41 @@ $bento-box-padding: 8px;
     &__header-title-tag {
         @include flex-container(center, _);
     }
-    &__header-name {
+    &__header-session-name {
         display: flex;
-        h4 {
-            margin-right: 8px;
-            max-width: 600px;
-            font-weight: 600;
-            font-size: 1.5rem;
-            @include elipses-overflow;
-        }
+        margin-right: 8px;
+        max-width: 600px;
+        font-weight: 600;
+        font-size: 1.5rem;
+        @include elipses-overflow;
     }
     &__header-time-period {
         @include flex-container(center, _);
         margin-top: 5px;
-        display: none;
         span {
             font-size: 1.15rem;
             font-weight: 500;
             white-space: nowrap;
             color: rgba(var(--textColor1), 0.3);
+            margin-left: 10px;
         }
         .divider {
             width: 1px;
-            height: 9px;
-            background-color: rgba(var(--textColor1), 0.4);
+            height: 12px;
             margin: 0px 10px;
+            color: rgba(var(--textColor1), 0.3);
         }
     }
-    &__header-tag {
+    &__header-session-tag {
+        @include flex-container(center, center);
         color: white;
-        border-radius: 20px;
-        @include center;
-        font-size: 0.95rem;
+        border-radius: 25px;
+        font-size: 1.1rem;
+        padding: 2px 0px;
         font-weight: 500;
-        @include circle(16px);
-        margin-right: 8px;
+        margin-top: 7px;
 
-        p {
+        span {
             @include elipses-overflow;
         }
     }
@@ -159,33 +161,32 @@ $bento-box-padding: 8px;
         &:active {
             transform: scale(0.96) !important;
         }
-    }
+    }   
 
     /* Pomodoro Component */
     &__pom {
-        height: 120px;
         width: 100%;
-        margin: 15px 0px 25px 0px;
+        margin: -7px 0px 15px 0px;
     }
     &__pom-details {
-        text-align: center;
         margin-top: 0px;
+        text-align: center;
     }
     &__pom-message {
         display: block;
-        margin-top: -10px;
-        font-weight: 500;
-        font-size: 1.4em;
+        margin-top: -15px;
+        font-weight: 400;
+        font-size: 1.2em;
         color: rgba(var(--textColor1), 0.42);
     }
     &__pom-timer {
-        @include flex-container(baseline, center);
+        // @include flex-container(baseline, center);
         h1 {
-            margin: 0px 10px 0px 0px;
-            font-size: 6rem;
+            font-size: 5rem;
             font-weight: 500;
             color: rgba(var(--textColor1), 0.85);
-            width: 170px;
+            display: inline-block;
+            max-width: 125px;
         }
         span {
             display: none;
@@ -197,12 +198,13 @@ $bento-box-padding: 8px;
     &__tasks {
         height: 100%;
         width: 100%;
+        margin-top: 20px;
     }
     &__tasks-header {
         @include flex-container(center, space-between);
         h4 {
             margin: 2px 0px 5px 0px;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: 600;
         }
         p {
@@ -213,6 +215,23 @@ $bento-box-padding: 8px;
             margin-bottom: 3px;
         }
     }
+    &__tasks-todo-list-container {
+        position: relative;
+
+        .gradient-container {
+            opacity: 1;
+            visibility: visible;
+            width: 100%;
+            &--top {
+                background: linear-gradient(180deg, var(--modalBgColor) 20%, transparent);
+                height: 20px;
+            }
+            &--bottom {
+                background: linear-gradient(0deg, var(--modalBgColor) 20%, transparent);
+                height: 20px;
+            }
+        }
+    }
     &__tasks-todo-list {
         overflow-y: scroll;
         overflow-x: hidden;
@@ -220,12 +239,13 @@ $bento-box-padding: 8px;
         min-height: 100px;
         max-height: 250px;
         padding-top: 4px;
+        position: relative;
     }
     &__tasks-new-task-btn {
         transition: 0.15s ease-in-out;
         opacity: 0.35;
-        padding: 10px 10px 18px 0px;
-        margin: 3px 0px -5px 3px;
+        height: 33px;
+        margin: 4px 0px 8px 0px;
         font-size: 1.3rem;
         padding-right: 20px;
         @include flex-container(center, center);
@@ -259,9 +279,10 @@ $bento-box-padding: 8px;
         font-size: 1.35rem;
         font-weight: 500;
         transition: 0.1s ease-in-out;
-        margin: 20px 0px 10px 0px;
-        padding-bottom: 6px;
+        height: 33px;
+        margin: 4px 0px 8px 0px;
         color: rgb(var(--textColor1), 0.7);
+        border-bottom: 1.5px solid rgba(var(--fgColor2), 0);
         
         &::placeholder {
             opacity: 0.5;
@@ -307,7 +328,8 @@ $bento-box-padding: 8px;
     &__tasks-finish-session-btn {
         color: rgb(var(--fgColor2));
         border-color: rgb(var(--fgColor2));
-        @include pos-abs-bottom-right-corner(0px, 10px);
+        @include pos-abs-bottom-right-corner(0px, 0px);
+        font-size: 1.05rem;
 
         span {
             margin-left: 5px;
@@ -354,6 +376,9 @@ $bento-box-padding: 8px;
             font-weight: 500;
         }
     }
+    &--light-mode p {
+        font-weight: 400;
+    }
     &--light-mode .divider {
         background-color: rgba(var(--textColor1), 0.08);
         height: 1px;
@@ -370,6 +395,10 @@ $bento-box-padding: 8px;
             border-left: 1.2px solid rgb(var(--fgColor1));
             left: 8px;
         }
+    }
+    &--light-mode &__edit-todo-input {
+        font-weight: 500;
+        color: rgba(var(--textColor1), 0.6);
     }
     &--light-mode &__name {
         font-weight: 500;
@@ -424,8 +453,8 @@ $bento-box-padding: 8px;
     }
     &__dotted-line {
         position: absolute;
-        width: 1px;
         transition: 0.2s ease-in-out;
+        width: 1px;
         border-left: 1.45px dotted rgb(var(--fgColor1));
         bottom: -10px;
         height: 21px;
@@ -561,136 +590,5 @@ $bento-box-padding: 8px;
         &::placeholder {
             opacity: 0.5;
         }
-    }
-}
-
-/* Edit Active Session Modal */
-.edit-session-modal {
-    background-color: var(--modalBgColor);
-    width: 300px;
-
-    /* Btn Styling */
-    .fill-btn {
-        @include color-btn-styling;
-    }
-    .trans-btn {
-        @include trans-btn-light-styling;
-    }
-    .unfill {
-        @include unfill-btn-ficus-styling(var(--fgColor1));
-    }
-    .unfill--gray {
-        @include unfill-btn-ficus-styling(var(--textColor1));
-    }
-    &--dark .trans-btn {
-        @include trans-btn-dark-styling;
-    }
-
-    /* Dark Themes Adjustments */
-    &--dark .dropdown-menu {
-        border: 1px solid rgba(60, 60, 60, 0.1);
-        @include dropdown-menu-dark;
-    }
-    &--dark &__name-input {
-        @include input-text-field-dark;
-    }
-    &--dark &__name-input-tag-dropdown-btn {
-        @include dropdown-btn-dark;
-    }
-
-    h3 {
-        opacity: 0.9;
-        margin: 20px 0px 10px 0px;
-    }
-    /* Name Input */
-    &__name-input { 
-        font-size: 1.32rem;
-        padding: 0px 7px 0px 20px;
-        height: 47px;
-        border-radius: 10px;
-        width: 97%;
-        @include flex-container(center, _);
-        transition: 0.2s ease-in-out;
-        border: 1px solid rgba(211, 211, 211, 0);
-        background-color: var(--modalBgAccentColor);
-        
-        &--focus {
-            border-color: rgba(211, 211, 211, 0.5);
-        }
-        
-        input {
-            color: rgba(var(--textColor1), 0.5);
-            transition: 0.14s ease-in-out;
-            font-weight: 500;
-            width: 70%;
-            border-width: 0px;
-
-            &::placeholder {
-                font-size: 1.4rem;
-                font-weight: 400;
-                opacity: 0.2;
-            }
-        }
-        &__divider {
-            width: 0.9px;
-            height: 14px;
-            margin: 0px 10px 0px 0px;
-            background-color: rgba(var(--textColor1), 0.15);
-        }
-    }
-    &__name-input-tag-dropdown-container {
-        position: relative;
-        .dropdown-menu {
-            position: absolute;
-            top: 40px;
-            width: 100px;
-            &__option {
-                p {
-                    margin-left: 3px;
-                }
-                span {
-                    margin-right: 3px;
-                }
-            }
-        }
-    }
-    &__name-input-tag-dropdown-btn {
-        @include flex-container(center, _);
-        background: none;
-        box-shadow: none;
-        padding: 10px 11px 10px 10px;
-        border-radius: 10px;
-    }
-    &__name-input-btn-tag {
-        @include circle(8px);
-        margin-right: 7px;
-    }
-    &__buttons-container {
-        width: 250px;
-        margin-top: 50px;
-        display: flex;
-        width: 100%;
-
-        button {
-            @include center;
-            border-radius: 9px;
-            height: 40px;
-            font-size: 1.3rem;
-            transition: 0.12s ease-in-out;
-
-            &:active {
-                transform: scale(0.99);
-            }
-        }
-    }
-    &__done-btn {
-        width: 70%;
-        background-color: rgba(var(--fgColor1), 1);
-        color: var(--modalBgColor);
-        margin-right: 5px;
-    }
-    &__cancel-btn {
-        width: 30%;
-        background-color: transparent;
     }
 }

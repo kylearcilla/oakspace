@@ -1,13 +1,14 @@
 <script lang="ts">
     import { MusicPlatform } from "$lib/enums"
-	import { themeState } from "$lib/store"
+	import { homeViewLayout, themeState } from "$lib/store"
 	import Modal from "../../components/Modal.svelte"
 
     export let _loginUser: (platform: MusicPlatform) => Promise<void>
 
+    const onClickOutSide = () => homeViewLayout.update((data: HomeLayout) => ({ ...data, settingsModal: null }))
 </script>
 
-<Modal isModalSmall={true}> 
+<Modal onClickOutSide={onClickOutSide}> 
     <div class={`music music--small ${!$themeState.isDarkTheme ? "music--light" : ""}`}>
         <h1 class="modal-bg__content-title">
             Music

@@ -12,7 +12,7 @@ export const homeViewLayout = writable<HomeLayout>({
     isVideoViewOpen: false,
     isMusicPlayerOpen: false,
     minModeSrc: null,
-    modal: null
+    settingsModal: null
 })
 export const themeState = writable<ThemeState>({
     title: "Dark Mode",

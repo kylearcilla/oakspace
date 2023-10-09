@@ -3,7 +3,7 @@
     import Modal from "../../components/Modal.svelte"
     import ytRecsPlaylists from '$lib/data-yt-playlists'
     import { clickOutside } from "../../lib/utils-general"
-	import { themeState, ytPlayerStore, ytUserDataStore } from "$lib/store"
+	import { homeViewLayout, themeState, ytPlayerStore, ytUserDataStore } from "$lib/store"
 	import { createYtErrorToastMsg, handleChoosePlaylist, logOutUser, loginUser } from "$lib/utils-youtube"
     
     let isUserProfileDropdownOpen = false
@@ -72,9 +72,11 @@
         isScrollableLeft = scrollLeft > 0
         isScrollableRight = scrollLeft < scrollWidth - windowWidth
     }
+
+    const onClickOutSide = () => homeViewLayout.update((data: HomeLayout) => ({ ...data, settingsModal: null }))
 </script>
 
-<Modal isModalSmall={false}>
+<Modal onClickOutSide={onClickOutSide}>
     <div class={`yt-settings ${!$themeState.isDarkTheme ? "yt-settings--light" : ""} ${!$ytUserDataStore?.hasUserSignedIn ? "yt-settings--min" : ""}`}>
         <!-- Header -->
         <div class="yt-settings__header">
@@ -298,6 +300,7 @@
         width: 82vw;
         height: 690px;
         max-width: 1000px;
+        padding: $settings-modal-padding;
 
         .skeleton-bg {
             @include skeleton-bg(dark);   

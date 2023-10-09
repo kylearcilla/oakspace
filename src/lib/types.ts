@@ -30,7 +30,7 @@ type HomeLayout = {
     isVideoViewOpen: boolean,
     isMusicPlayerOpen: boolean,
     minModeSrc: string | null,
-    modal: SettingsModal | null 
+    settingsModal: SettingsModal | null 
 }
 
 type ToastMsg = {
@@ -69,13 +69,14 @@ type Tag = {
     color: string
 }
 
-type SessionInputs = {
+type NewSessionUserInput = {
     name: string,
     tag: Tag
-    poms: number,
-    focusTime: number,
+    pomPeriods: number,
+    pomTime: number,
     breakTime: number,
-    todos: string[]
+    startTime: Date | null,
+    todos: { title: string, isChecked: boolean }[],
     calculatedEndTime: Date | null,
     totalElapsedTime: string | null,
     timePeriodString: string | null
@@ -377,6 +378,10 @@ type ColorThemeProps = {
     headerElementTextColor: string,
     headerElementShadow: string,
     headerTimeColor: string,
+    headerSessionBaseColor: string,
+    headerSessionAccentColor1: string,
+    headerSessionAccentColor2: string,
+    headerSessionAccentColor3: string,
     modalBgAccentColor: string,
     modalBgColor: string,
     bentoBoxBgColor: string,

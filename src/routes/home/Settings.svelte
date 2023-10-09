@@ -441,7 +441,9 @@
             }
         }
     }
-    .settings {        
+    .settings {
+        padding: $settings-modal-padding;
+
         &__description {
             margin: 8px 0px 20px 0px;
             font-size: 1.1rem;

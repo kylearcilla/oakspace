@@ -1,37 +1,24 @@
 <script lang="ts">
+    import { sessionStore } from "$lib/store"
+	import { SessionState } from "$lib/enums"
 	import { clickOutside } from "$lib/utils-general"
-	import { themeState, globalSessionObj, globalSessionState } from "$lib/store"
-	import type { Session } from "$lib/pom-session"
+	import Modal from "../../components/Modal.svelte";
 
-    enum SessionState {
-        EMPTY, PAUSED, FOCUSING, ON_BREAK, WAITING_TO_PROGRESS_BREAK, 
-        WAITING_TO_PROGRESS_FOCUS, FINISHED, CANCELED, FINISH_TOO_EARLY
-    }
-    enum CurrentModal { Quote, NewSession, ActiveSession }
-
-    let sessionObj: Session | null = null
-    let activeSession: ActiveSessionState | null = null
     let sessionNameInput: HTMLElement
 
     let isEditSessionModalOpen = false
-    let newSessionTitle = ""
-    let isNewSessionTitleValid = true
     let isTagListDropDownOpen = false
-    let isNewTagModalOpen = false
-
-    const MAX_SESSION_NAME_LENGTH = 18
-    const MAX_TODO_NAME_LENGTH = 15
 
     let todoToEditIndex = -1
     let todoToEditNewTitle = ""
-    let isTodoToEditTitleValid = true
 
-    globalSessionObj.subscribe((sess: any) => {
-        sessionObj = sess
-    })
-    globalSessionState.subscribe((sessionState: any) => {
-        activeSession = sessionState
-    })
+    let newTitle = ""
+    let newTag = { name: "", color: "" }
+    let isDropDownOpen = false
+
+    let isMakingNewTask = false
+    let newTodoTitle = ""
+    let isLightTheme = false
 
     let tags = [
         {
@@ -47,53 +34,41 @@
             color: "#CFAB96"
         },
     ]
-    let newTitle = ""
-    let newTag = { name: "", color: "" }
-    let isDropDownOpen = false
 
-    let isMakingNewTask = false
-    let newTodoTitle = ""
-    let isLightTheme = false
+    const MAX_SESSION_NAME_LENGTH = 18
+    const MAX_TODO_NAME_LENGTH = 15
 
-    themeState.subscribe((theme) => isLightTheme = !theme.isDarkTheme)
+    /* UI Handlers */
+    const handleFinishSessionClicked = () => $sessionStore!.cancelSession()
 
-    const handleFinishSessionClicked = () => {
-        sessionObj!.cancelSession()
-        globalSessionObj.set(null)
-    }
-    const handlePomOptionClicked = (optionIdx: number) => {
+    const handlePomControlsOptionClicked = (optionIdx: number) => {
         if (optionIdx === 0) {
             isEditSessionModalOpen = true
-            newSessionTitle = activeSession!.name
-            newTag = activeSession!.tag
+            newTag = $sessionStore!.tag
         }
         else if (optionIdx === 1) {
-            activeSession!.sessionState === SessionState.PAUSED ? sessionObj!.playSession() : sessionObj!.pauseSession()
+            $sessionStore!.isPlaying? $sessionStore!.pauseSession() : $sessionStore!.playSession()
         }
         else if (optionIdx === 2) {
-            sessionObj!.restartPeriod()
+            $sessionStore!.restartPeriod()
         }
         else if (optionIdx === 3) {
-            sessionObj!.skipToNextPeriod()
+            $sessionStore!.skipToNextPeriod()
         }
         else if (optionIdx === 4) {
-            sessionObj!.cancelSession()
+            $sessionStore!.cancelSession()
         }
         else {
-            sessionObj!.finishSession()
+            $sessionStore!.finishSession()
         }
-    
         isDropDownOpen = false
-        // newTag = tags[idx]
     }
     
     /* Editing Session */
     const handleEditSessionDoneBtnClicked = () => {
-        sessionObj!.name = newSessionTitle
-
         if (newTag.name != "") {
-            sessionObj!.editSesionTag(newTag)
-            sessionObj!.editSessionTitle(newTitle)
+            $sessionStore!.editSesionTag(newTag)
+            $sessionStore!.editSessionTitle(newTitle)
         }
         
         handleEditSessionCancelClicked()
@@ -103,62 +78,53 @@
         isTagListDropDownOpen = false
         isEditSessionModalOpen = false
         newTag = { 
-            name: sessionObj!.tag.name, 
-            color: sessionObj!.tag.color 
+            name: $sessionStore!.tag.name, 
+            color: $sessionStore!.tag.color 
         }
-    }
-    const editActiveSessionTitleInputHandler = (event: any) => {
-        newSessionTitle = event.target.value;
-    }
-    const toggleTagDropdownList = () => {
-        isTagListDropDownOpen = !isTagListDropDownOpen
     }
     const handleCreateTagBtnClicked = () => {
         isTagListDropDownOpen = false
-        isNewTagModalOpen = false
     }
-
 
     /* Editing a Todo */
     const handleTodoEditButtonClicked = (index: number) => {
         todoToEditIndex = index
-        todoToEditNewTitle = activeSession!.todos[index].title
+        todoToEditNewTitle = $sessionStore!.todos[index].title
     }
     const handleEditTodoDeleteBtnClicked = (index: number) => {
-        sessionObj!.deleteTodo(index)
-
+        $sessionStore!.deleteTodo(index)
         todoToEditIndex = -1
         todoToEditNewTitle = ""
     }
     const handleEditTodoDoneBtnClicked = () => {
-        sessionObj!.editTodo(todoToEditIndex, todoToEditNewTitle)
+        $sessionStore!.editTodo(todoToEditIndex, todoToEditNewTitle)
 
         todoToEditIndex = -1
         todoToEditNewTitle = ""
     }
-    const editTextInputHandler = (event: any) => {
-        todoToEditNewTitle = event.target.value;
+    const editTextInputHandler = (event: Event) => {
+        todoToEditNewTitle = (event.target as HTMLInputElement).value
     }
     const handleCheckBoxClicked = (idx: number) => {
-        sessionObj!.toggleCheckTodo(idx)
+        $sessionStore!.toggleCheckTodo(idx)
 	}
 
     /* Adding New Todo */
     const newTodoAddBtnHandler = () => {
-        sessionObj!.addTodo(newTodoTitle)
+        $sessionStore!.addTodo(newTodoTitle)
         newTodoCancelBtnHandler()
+    }
+    const newTodoTextInputHandler = (event: Event) => {
+        newTodoTitle = (event.target as HTMLInputElement).value
     }
     const newTodoCancelBtnHandler = () => {
         newTodoTitle = ""
         isMakingNewTask = false
     }
-    const newTodoTextInputHandler = (event: any) => {
-        newTodoTitle = event.target.value;
-    }
 
-
+    /* Shortcuts */
     const handleKeyUp = (event: KeyboardEvent) => {
-        if (event.key.toLocaleLowerCase() === "n") {
+        if (!$sessionStore && event.key.toLocaleLowerCase() === "n") {
             isMakingNewTask = true
         }
     }
@@ -167,13 +133,10 @@
 <svelte:window on:keyup={handleKeyUp} />
 
 <div class="active-session-container">
-    {#if activeSession}
+    {#if $sessionStore}
         <!-- Edit Active Session Modal -->
-        <div class={`modal-bg ${isEditSessionModalOpen ? "" : "modal-bg--hidden"}`}>
-            <div 
-                use:clickOutside on:click_outside={() => isEditSessionModalOpen = false} 
-                class="modal-bg__content modal-bg__content--overflow-show modal-bg__content--small"
-            >
+        {#if isEditSessionModalOpen}
+            <Modal options={{ overflow: "visible"}} onClickOutSide={() => isEditSessionModalOpen = false}>
                 <div class={`edit-session-modal ${!isLightTheme ? "edit-session-modal--dark" : ""}`}>
                     <h1>Edit Active Session</h1>
                     <h3>Title / Tag</h3>
@@ -210,7 +173,7 @@
                                 <ul use:clickOutside on:click_outside={() => isTagListDropDownOpen = false} class="dropdown-menu">
                                     {#each tags as tag, idx} 
                                         <li class={`dropdown-menu__option ${tag.name === newTag.name ? "dropdown-menu__option--selected" : ""}`}>
-                                            <button class="dropdown-element" on:click={() => handlePomOptionClicked(idx)}>
+                                            <button class="dropdown-element" on:click={() => handlePomControlsOptionClicked(idx)}>
                                                 <div class="edit-session-modal__name-input-btn-tag dropdown-menu__option-icon" style={`background-color: ${tag.color}`}></div>
                                                 <p>{tag.name}</p>
                                                 <i class="fa-solid fa-check"></i>
@@ -241,8 +204,8 @@
                         </button>
                     </div>
                 </div>
-            </div>
-        </div>
+            </Modal>
+        {/if}
 
         <!-- Active Session Component -->
         <div class={`active-session ${isLightTheme ? "" : "active-session--dark"}`}>
@@ -252,29 +215,29 @@
                 <div class="active-session__header active-session__bento-box">
                     <div class="active-session__header-left">
                         <div class="active-session__header-title-tag">
-                            <div class="active-session__header-tag" style={`background-color: ${activeSession.tag.color}`}>
-                                {activeSession.tag.name[0]}
+                            <div class="active-session__header-tag" style={`background-color: ${$sessionStore.tag.color}`}>
+                                {$sessionStore.tag.name[0]}
                             </div>
                             <div class="active-session__header-name">
-                                <h4>{activeSession.name}</h4>
+                                <h4>{$sessionStore.name}</h4>
                             </div>
                         </div>
                         <div class="active-session__header-time-period">
                             <span>
-                                {`${activeSession.timePeriodString}`}
+                                {`${$sessionStore.timePeriodString}`}
                             </span>
                             <div class="divider"></div>
-                            <span>{`${activeSession.pomTime} / ${activeSession.breakTime} min × ${activeSession.pomPeriods} `}</span>
+                            <span>{`${$sessionStore.pomTime} / ${$sessionStore.breakTime} min × ${$sessionStore.pomPeriods} `}</span>
                         </div>
                     </div>
                     <div class="active-session__header-right">
                         <div class="active-session__header-pom-timer-capsule">
                             <i class="fa-brands fa-readme"></i>
                             <p>
-                                {`${activeSession.currentTime?.minutes}:${String(activeSession.currentTime?.seconds).padStart(2, '0')}`}
+                                {`${$sessionStore.currentTime?.minutes}:${String($sessionStore.currentTime?.seconds).padStart(2, '0')}`}
                             </p>
                             <span>
-                                {`${activeSession.currentPomPeriod} / ${activeSession.pomPeriods}`}
+                                {`${$sessionStore.currentPomPeriod} / ${$sessionStore.pomPeriods}`}
                             </span>
                         </div>
                         <div class="new-session-modal__name-input-tag-dropdown-container dropdown-container">
@@ -291,7 +254,7 @@
                             {#if isDropDownOpen}
                                 <ul use:clickOutside on:click_outside={() => isDropDownOpen = false} class="active-session__settings-dropdown-menu dropdown-menu">
                                     <li class="dropdown-menu__option">
-                                        <button class="dropdown-element" on:click={() => handlePomOptionClicked(0)}>
+                                        <button class="dropdown-element" on:click={() => handlePomControlsOptionClicked(0)}>
                                             <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                                                 <i class="fa-solid fa-pencil"></i>
                                             </div>
@@ -299,23 +262,23 @@
                                         </button>
                                     </li>
                                     <li class="dropdown-menu__option">
-                                        <button class="dropdown-element" on:click={() => handlePomOptionClicked(1)}>
+                                        <button class="dropdown-element" on:click={() => handlePomControlsOptionClicked(1)}>
                                             <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
-                                                {#if activeSession.sessionState === SessionState.PAUSED}
-                                                    <i class="fa-solid fa-play"></i>
-                                                {:else}
+                                                {#if $sessionStore.isPlaying}
                                                     <i class="fa-solid fa-pause"></i>
+                                                {:else}
+                                                    <i class="fa-solid fa-play"></i>
                                                 {/if}
                                             </div>
-                                            {#if activeSession.sessionState === SessionState.PAUSED}
-                                                <p>Play Session</p>
-                                            {:else}
+                                            {#if $sessionStore.isPlaying}
                                                 <p>Pause Session</p>
+                                            {:else}
+                                                <p>Play Session</p>
                                             {/if}
                                         </button>
                                     </li>
                                     <li class="dropdown-menu__option">
-                                        <button class="dropdown-element" on:click={() => handlePomOptionClicked(2)}>
+                                        <button class="dropdown-element" on:click={() => handlePomControlsOptionClicked(2)}>
                                             <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                                                 <i class="fa-solid fa-rotate-right"></i>
                                             </div>
@@ -323,7 +286,7 @@
                                         </button>
                                     </li>
                                     <li class="dropdown-menu__option">
-                                        <button class="dropdown-element" on:click={() => handlePomOptionClicked(3)}>
+                                        <button class="dropdown-element" on:click={() => handlePomControlsOptionClicked(3)}>
                                             <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                                                 <i class="fa-solid fa-forward-step"></i>
                                             </div>
@@ -331,7 +294,7 @@
                                         </button>
                                     </li>
                                     <li class="dropdown-menu__option">
-                                        <button class="dropdown-element" on:click={() => handlePomOptionClicked(4)}>
+                                        <button class="dropdown-element" on:click={() => handlePomControlsOptionClicked(4)}>
                                             <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                                                 <i class="fa-solid fa-ban"></i>
                                             </div>
@@ -339,7 +302,7 @@
                                         </button>
                                     </li>
                                     <li class="dropdown-menu__option">
-                                        <button class="dropdown-element" on:click={() => handlePomOptionClicked(5)}>
+                                        <button class="dropdown-element" on:click={() => handlePomControlsOptionClicked(5)}>
                                             <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                                                 <i class="fa-solid fa-flag-checkered"></i>
                                             </div>
@@ -358,16 +321,16 @@
                 <div class="active-session__tasks-header">
                     <h4>To-Do's</h4>
                     <p>
-                        {#if activeSession.todos.length === 0}
+                        {#if $sessionStore.todos.length === 0}
                             No To-do's
                         {:else}
-                            {activeSession.todosCheckedCount} / {activeSession.todos.length}
+                            {$sessionStore.todosCheckedCount} / {$sessionStore.todos.length}
                         {/if}
                     </p>
                 </div>
                 <!-- To Do List -->
                 <ul class="active-session__tasks-todo-list">
-                    {#each activeSession.todos as todo, idx}
+                    {#each $sessionStore.todos as todo, idx}
                         <!-- To Do List Item -->
                         <li 
                             class={`active-session-todo 
@@ -376,8 +339,8 @@
                                 `}
                         >
                                 <!-- Todo Check Box -->
-                                {#if idx != activeSession.todos.length - 1}
-                                    {#if todo.isChecked && idx + 1 < activeSession.todos.length && activeSession.todos[idx + 1].isChecked} 
+                                {#if idx != $sessionStore.todos.length - 1}
+                                    {#if todo.isChecked && idx + 1 < $sessionStore.todos.length && $sessionStore.todos[idx + 1].isChecked} 
                                         <div class="active-session-todo__line active-session-todo__solid-line active-session-todo__solid-line"></div>
                                     {:else}
                                         <div class="active-session-todo__line active-session-todo__dotted-line"></div>
@@ -405,7 +368,7 @@
                                                 {todo.title}
                                             {/if}
                                         </p>
-                                        {#if (activeSession.todos.length > 1 && idx != activeSession.todos.length - 1) && idx != todoToEditIndex - 1}
+                                        {#if ($sessionStore.todos.length > 1 && idx != $sessionStore.todos.length - 1) && idx != todoToEditIndex - 1}
                                             <div class="divider divider--thin"></div>
                                         {/if}
                                     {/if}
@@ -466,7 +429,7 @@
                         <span>+</span> Add New Task
                     </button>
                 {/if}
-                {#if !isMakingNewTask && (activeSession.todos?.length > 0 && activeSession.todosCheckedCount === activeSession.todos.length)}
+                {#if !isMakingNewTask && ($sessionStore.todos?.length > 0 && $sessionStore.todosCheckedCount === $sessionStore.todos.length)}
                     <button 
                         on:click={() => handleFinishSessionClicked()}
                         class="active-session__tasks-finish-session-btn unfill unfill--padded unfill--oval"

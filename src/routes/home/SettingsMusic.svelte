@@ -2,7 +2,7 @@
 	import { onDestroy, onMount } from "svelte"
     import { MusicMoodCategory, type MusicPlatform } from "$lib/enums"
     import { musicCategories } from "$lib/data-music-collections"
-	import { themeState, musicDataStore } from "$lib/store"
+	import { themeState, musicDataStore, homeViewLayout } from "$lib/store"
 	import { discoverPlsPaginationScrollHandler, getClickedDiscoverCollectionCardList, getCurrMusicPlatformName, 
              getPlatformCode, getPlatformNameForDiscoverObj, handlePlaylistItemClicked, logOutUser, loginUser, reLoginUser, userPlsPaginationScrollHandler  } from "$lib/utils-music"
 
@@ -67,6 +67,8 @@
         chosenMusicCollection = getClickedDiscoverCollectionCardList(moodCategoryIdx, platformProp)
     }
 
+    const onClickOutSide = () => homeViewLayout.update((data: HomeLayout) => ({ ...data, settingsModal: null }))
+
     onMount(() => {
         if (!$musicDataStore?.isSignedIn) return
         handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
@@ -74,7 +76,7 @@
 </script>
 
 {#if $musicDataStore?.isSignedIn}
-    <Modal isModalSmall={false}> 
+    <Modal onClickOutSide={onClickOutSide}> 
         <div class={`music ${!$themeState.isDarkTheme ? "music--light" : ""}`}>
             <!-- Top Header -->
             <h1 class="modal-bg__content-title">Music</h1>
@@ -336,6 +338,7 @@
         height: 750px;
         min-width: 390px;
         max-width: 1000px;
+        padding: $settings-modal-padding;
 
         
         .skeleton-bg {

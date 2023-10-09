@@ -1,14 +1,14 @@
  <script lang="ts">
-	import { clickOutside } from "$lib/utils-general";
-	import { themeState } from "$lib/store";
-	import { onMount } from "svelte";
-	import { getSelectedKeyInsightData, getProdOverViewData } from "$lib/utils-session";
-	import ProdLineChart from "./StatsLineChart.svelte";
-	import TagBarGraph from "./StatsTagBarGraph.svelte";
-	import ProdStackedBarGraph from "./StatsStackedBarGraph.svelte";
-	import CalendarHeatMap from "./StatsHeatMap.svelte";
-	import { daysOfWeek, hoursToHhMm } from "$lib/utils-date";
-	import StatsTagRanking from "./StatsTagRanking.svelte";
+	import { clickOutside } from "$lib/utils-general"
+	import { themeState } from "$lib/store"
+	import { onMount } from "svelte"
+	import { getSelectedKeyInsightData, getProdOverViewData } from "$lib/utils-session-stats"
+	import ProdLineChart from "./StatsLineChart.svelte"
+	import TagBarGraph from "./StatsTagBarGraph.svelte"
+	import ProdStackedBarGraph from "./StatsStackedBarGraph.svelte"
+	import CalendarHeatMap from "./StatsHeatMap.svelte"
+	import { daysOfWeek, hoursToHhMm } from "$lib/utils-date"
+	import StatsTagRanking from "./StatsTagRanking.svelte"
 
     enum TimeFrame { THIS_WEEK, TWO_WEEKS, THREE_WEEKS, THREE_MONTHS, SIX_MONTHS, THIS_YEAR, ALL_TIME }
 
@@ -954,6 +954,7 @@
         width: 960px;
         height: 700px;
         display: flex;
+        padding: $settings-modal-padding;
 
         &__header {
             height: 12%;

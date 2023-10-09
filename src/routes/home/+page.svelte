@@ -16,8 +16,10 @@
 	import ApperanceSettings from "./SettingsAppearance.svelte"
   
 	import { SettingsModal } from "$lib/enums"
-	import { globalSessionObj, homeViewLayout, toastMessages } from "$lib/store"
-	import { appShortCutsHandler, homeVideoViewClassHandler, initAppState, onMouseMoveHandler, onWindowResizedHandler } from "$lib/utils-home";
+	import { sessionStore, homeViewLayout, toastMessages } from "$lib/store"
+	import { appShortCutsHandler, homeVideoViewClassHandler, initAppState, onMouseMoveHandler } from "$lib/utils-home";
+	import SessionFinishedModal from "./SessionFinishedModal.svelte";
+	import SessionCanceledModal from "./SessionCanceledModal.svelte";
 
   let hasUserToggledWithKeyLast = true
   let homeViewViewClasses = ""
@@ -26,7 +28,6 @@
     homeViewViewClasses = homeVideoViewClassHandler(layout.isNavMenuOpen, layout.isTaskMenuOpen)
   })
 
-  const handleResize = () => onWindowResizedHandler()
   const handleKeyDown = (event: KeyboardEvent) => {
     hasUserToggledWithKeyLast = appShortCutsHandler(event)
   }
@@ -34,12 +35,7 @@
     hasUserToggledWithKeyLast = onMouseMoveHandler(event, hasUserToggledWithKeyLast)
   }
 
-  onMount(() => {
-    window.addEventListener("resize", handleResize)
-    initAppState()
-  })
-  onDestroy(() =>  window.removeEventListener("resize", handleResize))
-
+  onMount(() => initAppState())
 </script>
 
 <svelte:window on:keydown={handleKeyDown} />
@@ -51,31 +47,33 @@
   <div class={`home__video ${homeViewViewClasses}`}>
       <HomeHeader/>
       <VideoView />
-      {#if !$homeViewLayout.isVideoViewOpen && !$globalSessionObj} 
-         <HomeEmptyView />    
+      <HomeEmptyView />    
+      <!-- {#if !$homeViewLayout.isVideoViewOpen && !$sessionStore} 
       {/if}
-      {#if !$homeViewLayout.isVideoViewOpen && $globalSessionObj}  
+      {#if !$homeViewLayout.isVideoViewOpen && $sessionStore}  
         <SessionActiveHome />  
-      {/if}
+      {/if} -->
   </div>
   <div class={`home__task-view-container ${$homeViewLayout.isTaskMenuOpen ? "" : "home__task-view-container--closed"}`}>
       <TaskView />
   </div>
 
   <!-- Floating Elements -->
+  <!-- <SessionFinishedModal /> -->
+  <!-- <SessionCanceledModal /> -->
   <MusicPlayer />
   {#if $toastMessages.length > 0}
     {#each $toastMessages as toast, idx}
         <Toast toast={toast} idx={idx} />
     {/each}
   {/if}
-  {#if $homeViewLayout.modal === SettingsModal.Settings} <Settings/> {/if}
-  {#if $homeViewLayout.modal === SettingsModal.Youtube} <YoutubeSettings/> {/if}
-  {#if $homeViewLayout.modal === SettingsModal.Music} <MusicSettings /> {/if}
-  {#if $homeViewLayout.modal === SettingsModal.Appearance} <ApperanceSettings /> {/if}
+  {#if $homeViewLayout.settingsModal === SettingsModal.Stats} <Stats/> {/if}
+  {#if $homeViewLayout.settingsModal === SettingsModal.Settings} <Settings/> {/if}
+  {#if $homeViewLayout.settingsModal === SettingsModal.Youtube} <YoutubeSettings/> {/if}
+  {#if $homeViewLayout.settingsModal === SettingsModal.Music} <MusicSettings /> {/if}
+  {#if $homeViewLayout.settingsModal === SettingsModal.Appearance} <ApperanceSettings /> {/if}
 </div>
 
-{#if $homeViewLayout.modal === SettingsModal.Stats} <Stats/> {/if}
 
 <style lang="scss">
     #signInDiv {

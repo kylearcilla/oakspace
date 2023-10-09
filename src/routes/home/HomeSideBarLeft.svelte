@@ -22,7 +22,7 @@
             modalClicked = SettingsModal.Appearance
         }
 
-        homeViewLayout.update((data: HomeLayout) => ({ ...data, modal: modalClicked }))
+        homeViewLayout.update((data: HomeLayout) => ({ ...data, settingsModal: modalClicked }))
     }
     
     const handleToggleThemeMode = () => {

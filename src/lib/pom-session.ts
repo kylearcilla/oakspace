@@ -3,41 +3,41 @@ import { SessionState } from "./enums"
 import { sessionStore } from "./store"
 import { sessionCopy } from "$lib/data-pom"
 import { getDifferenceInSecs, isDateEarlier, minsSecondsToSecs } from "./utils-date"
+import { doesSessionExist } from "./utils-session"
 
 /**
  * Pomodoro Session object initialized when there is an active session.
- * Is itself a reactive class / data store (set during instantiation).
+ * Is itself a reactive class / data store initiated during instantiation.
  */
 export class Session {
     name: string
     tag: Tag
     pomTime: number
-    pomPeriods: number
     breakTime: number
+    pomPeriods: number
     startTime: Date
-    isPlaying: boolean
-    endTime: Date | null = null
+    endTime: Date | null
     calculatedEndTime: Date
     totalElapsedTime: string
     timePeriodString: string
-    currentIndex: number = 0
-    currentPomPeriod: number = 1
-    lastFinishedPeriodIdx = -1
-    sessionResult: SessionResult | null = null
-    todos: { title: string, isChecked: boolean }[] = []
-    todosCheckedCount = 0
-    pomMessage = "Focus Time"
-    currentTime: { minutes: number, seconds: number } | null = {
-        minutes: 0,
-        seconds: 0
-    }
-
-    totalSeconds: number
-    totalMins: number
-
-    interval: NodeJS.Timer | null = null
+    currentPomPeriod: number
+    currentIndex: number
+    lastFinishedPeriodIdx: number
+    pomMessage: string
+    isPlaying: boolean
     state: SessionState
-    result: SessionResult | null = null
+    sessionResult: SessionResult | null
+
+    todos: { title: string, isChecked: boolean }[]
+    todosCheckedCount = 0
+    
+    currentTime: { minutes: number, seconds: number }
+    userFocusTimeSecs: number
+    userBreakTimeSecs: number
+    currentSessionTimeSecs: number
+    sessionDurationMins: number
+    
+    interval: NodeJS.Timer | null = null
 
     TODO_SCORE_WEIGHT = 0.70
     TIME_SCORE_WEIGHT = 0.30
@@ -45,53 +45,72 @@ export class Session {
     TIME_CUT_OFF = 1860
     GOLD_CUT_OFF = 85
     SILVER_CUT_OFF = 60
-    globalSessionObj: any
 
-    PENDING_STATES = [SessionState.WAITING_TO_PROGRESS_BREAK, SessionState.WAITING_TO_PROGRESS_FOCUS]
-
-    constructor(sessionSettings: NewSessionUserInput) { 
+    constructor(sessionSettings: SessionData) { 
         sessionStore.set(this)
 
         this.name = sessionSettings.name
         this.tag = sessionSettings.tag
         this.pomTime = sessionSettings.pomTime
         this.pomPeriods = sessionSettings.pomPeriods
+        this.startTime = new Date(sessionSettings.startTime)
+        this.endTime = sessionSettings.endTime
         this.breakTime = sessionSettings.breakTime
-        this.startTime = sessionSettings.startTime!
-        this.calculatedEndTime = sessionSettings.calculatedEndTime!
-        this.totalElapsedTime = sessionSettings.totalElapsedTime!
-        this.timePeriodString = sessionSettings.timePeriodString!
+        this.isPlaying = sessionSettings.isPlaying
+        this.calculatedEndTime = new Date(sessionSettings.calculatedEndTime)
+        this.totalElapsedTime = sessionSettings.totalElapsedTime
+        this.timePeriodString = sessionSettings.timePeriodString
+        this.currentIndex = sessionSettings.currentIndex
+        this.currentPomPeriod = sessionSettings.currentPomPeriod
+        this.lastFinishedPeriodIdx = sessionSettings.lastFinishedPeriodIdx
+        this.sessionResult = sessionSettings.sessionResult
         this.todos = sessionSettings.todos
-        this.currentPomPeriod = 1
-        this.totalSeconds = 0
-        this.state = SessionState.FOCUSING
-        this.isPlaying = true
-        this.totalMins = (this.pomPeriods * this.pomTime) + ((this.pomPeriods - 1) * this.breakTime)
-
-        sessionStore.update((data: Session | null) => ({ 
-            ...data!, ...sessionSettings as any, totalMins: this.totalMins,
-            currentPomPeriod: this.currentPomPeriod, state: this.state, totalSeconds: this.totalSeconds
-        }))
+        this.pomMessage = sessionSettings.pomMessage
+        this.todosCheckedCount = sessionSettings.todosCheckedCount
+        this.state = sessionSettings.state
+        this.isPlaying = sessionSettings.isPlaying
         
-        this.playSession()
+        this.currentTime = sessionSettings.currentTime
+        this.userFocusTimeSecs = sessionSettings.userFocusTimeSecs
+        this.userBreakTimeSecs = sessionSettings.userBreakTimeSecs
+        this.currentSessionTimeSecs = sessionSettings.currentSessionTimeSecs
+        this.sessionDurationMins = sessionSettings.sessionDurationMins
+
+        sessionStore.update((data: Session | null) => ({ ...data!, ...sessionSettings }))
+        
+        if (!doesSessionExist()) this.saveTodoData()
+        if (this.isPlaying) this.playSession()
     }
 
     updateSession = (newData: Session) => {
         sessionStore.update((data: Session | null) => ({ ...data!, ...newData }))
-    }
-
-    clearSession = () => {
-        sessionStore.set(null)
+        this.saveData()
     }
 
     /**
-     * Session phases are 0 indexed.
+     * Set session store to null and clear data from local storage.
+     */
+    clearSession = () => {
+        clearInterval(this.interval!)
+        sessionStore.set(null)
+        this.clearData()
+    }
+
+    /**
+     * Session phases (break time, focus time) are 0 indexed. 
      * @returns See if the current phase of the session is a focus session.
      */
     iCurrentlyFocusTime = () => this.currentIndex % 2 === 0
 
     /**
-     * @param newTitle   New title for the session
+     * @returns See if session is currently in a waiting phase
+     */
+    isCurrentlyWaiting = () => {
+        return this.state === SessionState.WAITING_TO_PROGRESS_BREAK || this.state === SessionState.WAITING_TO_PROGRESS_FOCUS
+    }
+
+    /**
+     * @param newTitle  New title for session
      */
     editSessionTitle = (newTitle: string) => {
         this.name = newTitle
@@ -99,7 +118,7 @@ export class Session {
     }
 
     /**
-     * @param newTag  New tag for the session
+     * @param newTag   New tag for session
      */
     editSesionTag = (newTag: Tag) => {
         this.tag = newTag
@@ -108,9 +127,10 @@ export class Session {
 
     /**
      * Play current session. This will start an interval that will update the time every second.
+     * If in a waiting phase, then progress to next period.
      */
     playSession = () => {
-        if (this.PENDING_STATES.includes(this.state)) { 
+        if (this.isCurrentlyWaiting()) { 
             this.progressToNextPeriod()
             return
         }
@@ -151,11 +171,22 @@ export class Session {
         }
         else {
             this.currentTime!.seconds++
+
+            if (this.iCurrentlyFocusTime()) {
+                this.userFocusTimeSecs++
+            }
+            else {
+                this.userBreakTimeSecs++
+            }
+
             this.updateDocTitle(`${this.currentTime!.minutes}:${(this.currentTime!.seconds + "").padStart(2, '0')}`)
         }
 
-        this.totalSeconds++
-        this.updateSession({ ...get(sessionStore)!, currentTime: this.currentTime, totalSeconds: this.totalSeconds })
+        this.currentSessionTimeSecs++
+        this.updateSession({ 
+            ...get(sessionStore)!,  currentTime: this.currentTime, currentSessionTimeSecs: this.currentSessionTimeSecs,
+            userFocusTimeSecs: this.userFocusTimeSecs, userBreakTimeSecs: this.userBreakTimeSecs
+        })
     }
 
     /**
@@ -164,27 +195,25 @@ export class Session {
     updateDocTitle = (newTitle: string) => document.title = newTitle
 
     /**
-     * After period has ended:
-     *   1. Restart current time.
-     *   2. Total seconds will be decresed by the elapsed time
+     * Decrease the active session total time by the current running session time.
+     * Then reset the current session time.
      */
     updateTimeAfterPeriodRestarted = () => {
-        this.totalSeconds -= minsSecondsToSecs(this.currentTime!.minutes, this.currentTime!.seconds)
+        this.currentSessionTimeSecs -= minsSecondsToSecs(this.currentTime!.minutes, this.currentTime!.seconds)
 
         this.currentTime!.minutes = 0
         this.currentTime!.seconds = 0
     }
 
     /**
-     * After period has ended:
-     *   1. Restart current time.
-     *   2. Total seconds will be increased by the remaining time of current period (to handle skip period case.)
+     * Increase the active session total time by the remaining session time.
+     * Then reset the current session time.
      */
     updateTimeAfterPeriodEnded = () => {
         const isComingFromFocusState = this.state === SessionState.FOCUSING
 
-        const curStateLength = (isComingFromFocusState ? this.pomTime : this.breakTime) * 60
-        this.totalSeconds += curStateLength - minsSecondsToSecs(this.currentTime!.minutes, this.currentTime!.seconds)
+        const curStateLengthSecs = (isComingFromFocusState ? this.pomTime : this.breakTime) * 60
+        this.currentSessionTimeSecs += curStateLengthSecs - minsSecondsToSecs(this.currentTime!.minutes, this.currentTime!.seconds)
 
         this.currentTime!.minutes = 0
         this.currentTime!.seconds = 0
@@ -193,16 +222,13 @@ export class Session {
     /**
      * End the current period after time has ran out. 
      * This will progress the period to a WAITING_TO_PROGRESS state.
-     * Player is shown a message and a button to progress to the next state.
-     * If this is the last phase, then end the session.
+     * User is shown a message and a button to progress to the next state.
+     * If the period that just ended is the last phase, then end the session.
      */
     endPeriod = () => {
         this.pauseSession()
-        this.updateTimeAfterPeriodEnded()
         this.isPlaying = false
-
-        this.state = this.iCurrentlyFocusTime() ? SessionState.WAITING_TO_PROGRESS_BREAK : SessionState.WAITING_TO_PROGRESS_FOCUS
-        this.lastFinishedPeriodIdx++
+        this.updateTimeAfterPeriodEnded()
 
         const periods = (this.pomPeriods * 2) - 2
         if (this.currentIndex === periods) {
@@ -210,22 +236,26 @@ export class Session {
             return
         }
 
-        if (this.state === SessionState.WAITING_TO_PROGRESS_BREAK) {
+        if (this.iCurrentlyFocusTime()) {
+            this.state = SessionState.WAITING_TO_PROGRESS_BREAK
             this.pomMessage = "Waiting to proceed to break period."
         }
-        else if (this.state === SessionState.WAITING_TO_PROGRESS_FOCUS) {
+        else {
+            this.state = SessionState.WAITING_TO_PROGRESS_FOCUS
             this.pomMessage = "Waiting to proceed to focus period."
         }
 
+        this.lastFinishedPeriodIdx++
+
         this.updateSession({
              ...get(sessionStore)!, isPlaying: false, currentTime: this.currentTime,  
-             pomMessage: this.pomMessage, state: this.state, totalSeconds: this.totalSeconds,
+             pomMessage: this.pomMessage, state: this.state, currentSessionTimeSecs: this.currentSessionTimeSecs,
              lastFinishedPeriodIdx: this.lastFinishedPeriodIdx
         })
     }
 
     /**
-     * Get the next state after previous phase has just ended.
+     * Get the next state to go to after previous phase has just ended.
      */
     getNextState = (): SessionState => {
         if (this.state === SessionState.FOCUSING) {
@@ -244,7 +274,6 @@ export class Session {
 
     /**
      * Progress to the next period after user continues to the next period during a WAITING_TO_PROGRESS state.
-     * Will restart the current time.
      */
     progressToNextPeriod = () => {
         this.currentTime!.minutes = 0
@@ -266,27 +295,14 @@ export class Session {
             this.pomMessage = "Waiting to progress to focus time."
         }
 
-        const hasFinishedFocusPeriod = this.currentIndex % 2 != 0
+        this.currentPomPeriod += this.state === SessionState.FOCUSING ? 1 : 0
 
-        if (hasFinishedFocusPeriod) { 
-            this.currentPomPeriod++
-
-        }
         this.updateSession({
-            ...get(sessionStore)!, 
-            currentPomPeriod: this.currentPomPeriod,
-            currentIndex: this.currentIndex,
-            state: this.state,
-            pomMessage: this.pomMessage,
-            currentTime: this.currentTime
+            ...get(sessionStore)!,  currentPomPeriod: this.currentPomPeriod, currentIndex: this.currentIndex,
+            state: this.state, pomMessage: this.pomMessage, currentTime: this.currentTime
         })
 
         this.playSession()
-    }
-
-    renameSesion = (newName: string) => {
-        this.name = newName
-        this.updateSession({ ...get(sessionStore)!, name: this.name })
     }
 
     /**
@@ -294,26 +310,24 @@ export class Session {
      * Calculate the user productivity score and show it with a message and an accompanying image.
      * Called automatically when timer reaches the end of session or when user ends the session early.
      */
-    finishSession = (fakeEndTime: Date = this.calculatedEndTime) => { 
+    finishSession = () => { 
         this.pauseSession()
-        this.endTime = fakeEndTime
         this.state = SessionState.FINISHED
-        const endTime = this.endTime
+        this.endTime = this.endTime ?? new Date()
+        this.currentSessionTimeSecs = (this.pomPeriods * this.userFocusTimeSecs) + ((this.pomPeriods - 1) * this.userBreakTimeSecs)
 
-        const isUserTimeEarly = isDateEarlier(endTime, this.calculatedEndTime)
-        const hasFinishedAllTodos = this.todosCheckedCount === this.todos.length
+        const isUserTimeEarly = isDateEarlier(this.endTime, this.calculatedEndTime)
 
-        const medalAndScore = this.getMedalAndScore(isUserTimeEarly, hasFinishedAllTodos)
+        const medalAndScore = this.getResultMedalAndScore(isUserTimeEarly)
         const msgAndImg = this.getResultImageAndMessage(medalAndScore.medal)
 
-        this.pomMessage = "Session Finished."
-
+        this.pomMessage = "All Done!"
         this.sessionResult = { ...medalAndScore, ...msgAndImg }
 
         this.updateSession({ 
-            ...get(sessionStore)!, state: this.state, 
-            sessionResult: this.sessionResult, totalSeconds: this.totalSeconds,
-            pomMessage: this.pomMessage
+            ...get(sessionStore)!, state: this.state, endTime: this.endTime,
+            sessionResult: this.sessionResult, currentSessionTimeSecs: this.currentSessionTimeSecs,
+            pomMessage: this.pomMessage, lastFinishedPeriodIdx: this.lastFinishedPeriodIdx
         })
 
         return this.sessionResult
@@ -323,19 +337,19 @@ export class Session {
      * Restart current running period.
      */
     restartPeriod = () => {
-        if (this.PENDING_STATES.includes(this.state)) return
+        if (this.isCurrentlyWaiting()) return
 
         this.updateTimeAfterPeriodRestarted()
-        this.updateSession({ ...get(sessionStore)!, currentTime: this.currentTime, totalSeconds: this.totalSeconds })
+        this.updateSession({ ...get(sessionStore)!, currentTime: this.currentTime, currentSessionTimeSecs: this.currentSessionTimeSecs })
     }
 
     /**
      * Forcibly skip to the next period without waiting for time to run out.
      * This will take the session to a waiting phase, not immediately to the next phase.
-     * If there's no next period, the session will immediately reach an end state.
+     * If is currently in the last period, then session will finish.
      */
     skipToNextPeriod = () => { 
-        if (this.PENDING_STATES.includes(this.state)) { 
+        if (this.isCurrentlyWaiting()) { 
             this.progressToNextPeriod()
         }
         
@@ -344,6 +358,7 @@ export class Session {
 
     /**
      * Cancel the current session.
+     * Will not clear session yet, will do so when user closes the canceled session pop up.
      */
     cancelSession = () => {
         this.pauseSession()
@@ -356,27 +371,27 @@ export class Session {
      * Has 3 cases.
      * 
      * 1. All subtasks finished and finished early.
-     *     - Gold + 100
+     *     - Perfect Score
      * 
      * 2. Not all subtasks finished and finished early.
      *     - Score depends on the % of subtasks finished.
      * 
      * 3. If finished at least at the designated end time
      *     - Score depends on two factors: 
-     *          - amount of time between actual end time and designated end time.
+     *          - amount of time between actual end time and designated end time (the farther the worse the score)
      *          - the amount of subtasks finished
      *     - Subtask factor is weighted more
      * 
-     * @param isUserTimeEarly 
-     * @param hasFinishedAllTodos 
-     * @returns 
+     * @param isUserTimeEarly       If user ends session before the calculated end time.
+     * @returns                     Score and result based on user score.
      */
-    getMedalAndScore = (isUserTimeEarly: boolean, hasFinishedAllTodos: boolean): { score: number, medal: Medal } => {
+    getResultMedalAndScore = (isUserTimeEarly: boolean): { score: number, medal: Medal } => {
         let score = 0
         let medal: Medal = "🏅"
 
         let timeScore = 0
-        let subtasksScore = 100
+        let todosCompletionScore = 100
+        let hasFinishedAllTodos = this.todosCheckedCount === this.todos.length
 
         /* 1. All subtasks finished and finish early */
         if (isUserTimeEarly && hasFinishedAllTodos) {
@@ -386,33 +401,29 @@ export class Session {
 
 
         /* 2. Finished early, has not completed all todos */
-        if (isUserTimeEarly && !hasFinishedAllTodos) {
-            subtasksScore = Math.round((this.todosCheckedCount / this.todos.length) * 100)
-
-            score = subtasksScore
-            medal = this.getMedal(score)
+        if (isUserTimeEarly && this.todosCheckedCount != this.todos.length) {
+            score = Math.round((this.todosCheckedCount / this.todos.length) * 100)
+            medal = this.getResultMedal(score)
 
             return { score, medal }
         }
 
         /* 3. Finished at least at the designated time. */
         if (hasFinishedAllTodos) {
-            subtasksScore = 100
+            todosCompletionScore = 100
         }
         else {
-            subtasksScore = Math.round((this.todosCheckedCount / this.todos.length) * 100)
+            todosCompletionScore = Math.round((this.todosCheckedCount / this.todos.length) * 100)
         }
 
         const diffSecs = getDifferenceInSecs(this.endTime!, this.calculatedEndTime)
 
         if (diffSecs < this.TIME_CUT_OFF) {
-            const percentageScore = 1 - (diffSecs / this.TIME_CUT_OFF)
-            const intScore = Math.round(percentageScore * 100)
-            timeScore = intScore
+            timeScore = Math.round((1 - (diffSecs / this.TIME_CUT_OFF)) * 100)
         }
 
-        score = Math.round((this.TODO_SCORE_WEIGHT * subtasksScore) + (this.TIME_SCORE_WEIGHT * timeScore))
-        medal = this.getMedal(score)
+        score = Math.round((this.TODO_SCORE_WEIGHT * todosCompletionScore) + (this.TIME_SCORE_WEIGHT * timeScore))
+        medal = this.getResultMedal(score)
 
         return { score, medal }
     }
@@ -421,7 +432,7 @@ export class Session {
      * @param score     End result score.
      * @returns         Result medal which depends on the numerical score.
      */
-    getMedal = (score: number): Medal => {
+    getResultMedal = (score: number): Medal => {
         if (score >= this.GOLD_CUT_OFF) {
             return "🏅"
         }
@@ -441,51 +452,87 @@ export class Session {
      * @returns       Result image and message to be shown to the user after session conclusion.
      */
     getResultImageAndMessage = (medal: Medal): { message: string, resultImgUrl: string } => {
-        if (medal === "🥉") {
-            const msgs = sessionCopy.bronzeResultMessages
-            const imgs = sessionCopy.bronzeResultImages
+        let msgs: string[] = []
+        let imgs: string[] = []
 
-            return {
-                message: msgs[Math.floor(Math.random() * msgs.length)],
-                resultImgUrl: imgs[Math.floor(Math.random() * imgs.length)]
-            }
+        if (medal === "🥉") {
+            msgs = sessionCopy.bronzeResultMessages
+            imgs = sessionCopy.bronzeResultImages
+        }
+        else if (medal === "🥈") {
+            msgs = sessionCopy.silverResultMessages
+            imgs = sessionCopy.silverResultImages
+        }
+        else {
+            msgs = sessionCopy.goldResultMessages
+            imgs = sessionCopy.goldResultImages
         }
 
-        const LAST_SILVER_MSG_IDX = 3
-        const LAST_SILVER_IMG_IDX = 3
-        const msgs = sessionCopy.goodResultMessages
-        const imgs = sessionCopy.goodResultImages
-
-        let lastIdxMsg = medal === "🥈" ? LAST_SILVER_MSG_IDX : msgs.length - 1  // if silver get from first 4 msgs, if gold get from rest
-        let lastIdxImg = medal === "🥈" ? LAST_SILVER_IMG_IDX : imgs.length - 1  // if silver get from first 4 imgs, if gold get from rest
-
-        let randomIdxMsg = Math.floor(Math.random() * lastIdxMsg + 1)
-
-        // if any of the last 4 msgs is chosen when gold, must use the very last img
-        let resultImgUrl = randomIdxMsg > LAST_SILVER_MSG_IDX ? imgs[imgs.length - 1] : imgs[Math.floor(Math.random() * lastIdxImg + 1)] 
-
         return {
-            message: msgs[randomIdxMsg],
-            resultImgUrl
+            message: msgs[Math.floor(Math.random() * msgs.length)],
+            resultImgUrl: imgs[Math.floor(Math.random() * imgs.length)]
         }
     }
 
     addTodo = (todoTitle: string) => {
         this.todos.push({ title: todoTitle, isChecked: false })
         this.updateSession({ ...get(sessionStore)!, todos: this.todos })
+
+        this.saveTodoData()
     }
     editTodo = (todoIndex: number, newTitle: string) => {
         this.todos[todoIndex].title = newTitle
         this.updateSession({ ...get(sessionStore)!, todos: this.todos })
+
+        this.saveTodoData()
     }
     deleteTodo = (todoIndex: number) => {
         this.todosCheckedCount -= this.todos[todoIndex].isChecked ? 1 : 0
         this.todos.splice(todoIndex, 1)
         this.updateSession({ ...get(sessionStore)!, todos: this.todos, todosCheckedCount: this.todosCheckedCount })
+
+        this.saveTodoData()
     }
     toggleCheckTodo = (todoIndex: number) => {
         this.todos[todoIndex].isChecked = !this.todos[todoIndex].isChecked
         this.todosCheckedCount += this.todos[todoIndex].isChecked ? 1 : -1
         this.updateSession({ ...get(sessionStore)!, todos: this.todos, todosCheckedCount: this.todosCheckedCount })
+
+        this.saveTodoData()
+    }
+
+    saveTodoData = () => {
+        localStorage.setItem("todos", JSON.stringify(this.todos))
+    }
+    saveData = () => {
+        localStorage.setItem("session", JSON.stringify({
+            name: this.name,
+            tag: this.tag,
+            pomTime: this.pomTime,
+            pomPeriods: this.pomPeriods,
+            breakTime: this.breakTime,
+            startTime: this.startTime,
+            isPlaying: this.isPlaying,
+            endTime: this.endTime,
+            calculatedEndTime: this.calculatedEndTime,
+            totalElapsedTime: this.totalElapsedTime,
+            timePeriodString: this.timePeriodString,
+            currentIndex: this.currentIndex,
+            currentPomPeriod: this.currentPomPeriod,
+            lastFinishedPeriodIdx: this.lastFinishedPeriodIdx,
+            sessionResult: this.sessionResult,
+            todosCheckedCount: this.todosCheckedCount,
+            pomMessage: this.pomMessage,
+            state: this.state,
+            currentTime: this.currentTime,
+            userFocusTimeSecs: this.userFocusTimeSecs,
+            userBreakTimeSecs: this.userBreakTimeSecs,
+            currentSessionTimeSecs: this.currentSessionTimeSecs,
+            sessionDurationMins: this.sessionDurationMins 
+        }))
+    }
+    clearData = () => {
+        localStorage.removeItem("todos")
+        localStorage.removeItem("session")
     }
 }

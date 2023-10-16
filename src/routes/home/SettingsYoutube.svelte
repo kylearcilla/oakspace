@@ -425,7 +425,7 @@
         }
         &__user-profile {
             @include pos-abs-top-right-corner(40px, 0px);
-            background-color: var(--dropdownMenuBgColor);
+            background-color: var(--dropdownMenuBgColor1);
             border-radius: 13px;
             padding: 15px 18px 15px 18px;
             min-width: 160px;

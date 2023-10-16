@@ -46,10 +46,10 @@ export const getAnimationDurationMs = (offsetWidth: number) => {
 export const getAnimationKeyFrames = (durationMs: number, offsetWidth: number) => {
     const keyFrames = [
         { transform: 'translateX(0)', offset: 0 },
-        { transform: `translateX(-${offsetWidth}px)`, offset: 0 },  // move to the right
-        { transform: `translateX(-${offsetWidth}px)`, offset: 0 },  // pause at the right
-        { transform: 'translateX(0)', offset: 0 },                  // move to the left
-        { transform: 'translateX(0)', offset: 0 },                  // pause at the left
+        { transform: `translateX(-${offsetWidth}px)`, offset: 0 },  // move to the left
+        { transform: `translateX(-${offsetWidth}px)`, offset: 0 },  // pause at the left
+        { transform: 'translateX(0)', offset: 0 },                  // move to the right
+        { transform: 'translateX(0)', offset: 0 },                  // pause at the right
     ]
 
     const pauseIntervalPercentage = ((ANIMATION_PAUSE * 1000) / durationMs) * 100 

@@ -69,17 +69,32 @@ type Tag = {
     color: string
 }
 
-type NewSessionUserInput = {
-    name: string,
+type SessionData = {
+    name: string
     tag: Tag
-    pomPeriods: number,
-    pomTime: number,
-    breakTime: number,
-    startTime: Date | null,
-    todos: { title: string, isChecked: boolean }[],
-    calculatedEndTime: Date | null,
-    totalElapsedTime: string | null,
-    timePeriodString: string | null
+    pomTime: number
+    pomPeriods: number
+    breakTime: number
+    startTime: Date
+    isPlaying: boolean
+    endTime: Date | null
+    calculatedEndTime: Date
+    totalElapsedTime: string
+    timePeriodString: string
+    currentIndex: number
+    currentPomPeriod: number
+    lastFinishedPeriodIdx
+    sessionResult: SessionResult | null
+    todos: { title: string, isChecked: boolean }[]
+    todosCheckedCount: number
+    pomMessage: string,
+    state: SessionState
+    result: SessionResult | null
+    currentTime: { minutes: number, seconds: number },
+    userFocusTimeSecs: number,
+    userBreakTimeSecs: number,
+    currentSessionTimeSecs: number,
+    sessionDurationMins: number,
 }
 
 type ActiveSessionState = {
@@ -100,6 +115,14 @@ type ActiveSessionState = {
     sessionState: SessionState,
     resultScore: SessionResult | null,
     pomMessage: string    
+}
+
+type ProgressVisualPart = {
+    type: ProgressVisualPartType
+    offSetPerc: number,
+    widthPerc: number | null, 
+    periodIdx: number,
+    segmentIdx: number
 }
 
 /* Music Stuff */
@@ -378,10 +401,15 @@ type ColorThemeProps = {
     headerElementTextColor: string,
     headerElementShadow: string,
     headerTimeColor: string,
-    headerSessionBaseColor: string,
-    headerSessionAccentColor1: string,
-    headerSessionAccentColor2: string,
-    headerSessionAccentColor3: string,
+    headerProgressColor1: string,
+    headerProgressColor2: string,
+    headerTrackColor1: string,
+    headerTrackColor2: string,
+    baseProgressColor1: string,
+    baseProgressColor2: string,
+    baseTrackColor1: string,
+    baseTrackColor2: string,
+    progressBallGlow: string,
     modalBgAccentColor: string,
     modalBgColor: string,
     bentoBoxBgColor: string,
@@ -404,6 +432,8 @@ type ColorThemeProps = {
     midPanelAccentTextColor: string,
     sidePanelBorder: string,
     sidePanelShadow: string,
-    dropdownMenuBgColor: string,
-    prodMenuViewShadow: string
+    dropdownMenuBgColor1: string,
+    dropdownMenuBgHoverColor1: string,
+    dropdownMenuBgColor2: string
+    dropdownMenuBgHoverColor2: string
 }

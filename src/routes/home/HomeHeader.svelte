@@ -1,26 +1,27 @@
 <script lang="ts">
+    import { SessionModal } from "$lib/enums"
+	import { updateUI } from "$lib/utils-home"
+	import { getDate, getDayOfWeek } from "$lib/utils-date"
+	import { themeState, homeViewLayout, musicDataStore, ytPlayerStore, sessionStore } from "$lib/store"
+
 	import QuoteModal from "./ModalQuote.svelte"
 	import NewSessionModal from "./SessionNewModal.svelte"
-    
-	import { SessionModal } from "$lib/enums"
-	import { updateUI } from "$lib/utils-home"
-	import { themeState, homeViewLayout, musicDataStore, ytPlayerStore, sessionStore } from "$lib/store"
-	import SessionHeaderView from "./SessionHeaderView.svelte";
+	import SessionHeaderView from "./SessionHeaderView.svelte"
+	import { onDestroy, onMount } from "svelte"
 
     let currModalOpen: SessionModal | null = null
     let dropdownMenu: HTMLElement
+    let doMinHeaderUI = false
+    let headerWidth = 0
+
+    $: {
+        doMinHeaderUI = $homeViewLayout.isVideoViewOpen
+    }
 
     const toggleModal = (modal: SessionModal | null) => currModalOpen = modal
 
     /* Event Handlers */
-    const handleSessionBtnClicked = () => {
-        if ($sessionStore) {
-            toggleModal(SessionModal.ActiveSession)
-        }
-        else {
-            toggleModal(SessionModal.NewSession)
-        }
-    }
+    const handleSessionBtnClicked = () => toggleModal(SessionModal.NewSession)
     const handleOptionClicked = (idx: number) => {
         if (idx === 0) {
             console.log("LOGGING OUT USER")
@@ -32,6 +33,10 @@
             updateUI({ ...$homeViewLayout, isMusicPlayerOpen: !$homeViewLayout.isMusicPlayerOpen})
         }
         dropdownMenu.style.display = "none"
+    }
+    const handleResize = () => {
+        if (!$homeViewLayout.isVideoViewOpen) return
+        doMinHeaderUI = headerWidth < 840 
     }
 
     /* Shortcuts */
@@ -45,17 +50,18 @@
             currModalOpen = SessionModal.NewSession
         }
     }
+
+    onMount(() => window.addEventListener("resize", handleResize))
+    onDestroy(() => window.removeEventListener("resize", handleResize))
 </script>
+
 
 <svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} />
 
-<div class={`header header${$themeState.isDarkTheme ? "--dark" : "--light"}`}>
-    {#if currModalOpen === SessionModal.Quote}
-        <QuoteModal toggleModal={toggleModal} />
-    {:else if currModalOpen === SessionModal.NewSession}
-        <NewSessionModal toggleModal={toggleModal} />
-    {/if}
-
+<div 
+    class={`header header${$themeState.isDarkTheme ? "--dark" : "--light"} ${$sessionStore && doMinHeaderUI ? "header--min" : ""}`} 
+    bind:clientWidth={headerWidth}
+>
     <!-- Left Side -->
     <!-- svelte-ignore a11y-mouse-events-have-key-events -->
     <div class="user-panel header__section" 
@@ -66,12 +72,26 @@
         <div class="user-panel__user-details">
             <div class="user-panel__user-details-user">Kyle Arcilla</div>
             <div class="user-panel__user-details-subheading">
-                <span class="user-panel__user-details-time">Sat, Oct 7 2023</span>
+                <span class="user-panel__user-details-time">{`${getDayOfWeek()}, ${getDate()}`}</span>
             </div>
         </div>
         <!-- Dropdown Container -->
         <div class="dropdown-container" bind:this={dropdownMenu}>
-            <ul class="dropdown-menu">
+            <ul class="dropdown-menu dropdown-menu--alt">
+                <div class="user-panel__stats">
+                    <div class="user-panel__stats-stat">
+                        <i class="fa-solid fa-hourglass-half"></i>
+                        <span>3 Sess.</span>
+                    </div>
+                    <div class="user-panel__stats-stat">
+                        <i class="fa-brands fa-readme"></i>
+                        <span>4hr 3m</span>
+                    </div>
+                    <div class="user-panel__stats-stat">
+                        <i class="fa-solid fa-seedling"></i>
+                        <span>1h 3m</span>
+                    </div>
+                </div>
                 <li class="dropdown-menu__option">
                     <button class="dropdown-element" on:click={(_) => handleOptionClicked(0)}>
                         <p>Log Out</p>
@@ -102,7 +122,8 @@
         </div>
     </div>
 
-    {#if $sessionStore != null}
+    <!-- Active Session Component -->
+    {#if $sessionStore != null && $homeViewLayout.isVideoViewOpen}
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div class={`header-session-container ${$themeState.isDarkTheme ? "" : "header-session-container--light-mode"}`}>
             <SessionHeaderView />
@@ -117,16 +138,23 @@
                 class={`header-new-session-btn header__element ${$themeState.isDarkTheme ? "" : "header-new-session-btn--light-mode"}`}
                 on:click={handleSessionBtnClicked}
             >
-                <div class="header-new-session-btn__new-session-title">New Session</div>
-                <div class="header-new-session-btn__new-session-icon">+</div>
+                <div class="header-new-session-btn-title">New Session</div>
+                <div class="header-new-session-btn-icon">+</div>
             </button>
         {/if}
-        <div class="header__time header__element">
+        <div class="header__time header__element" title="9:34 PM">
             <i class="fa-solid fa-moon"></i>
             <span>9:34 PM</span>
         </div>
     </div>
 </div>
+
+<!-- Modals -->
+{#if currModalOpen === SessionModal.Quote}
+    <QuoteModal toggleModal={toggleModal} />
+{:else if currModalOpen === SessionModal.NewSession}
+    <NewSessionModal toggleModal={toggleModal} />
+{/if}
 
 <style global lang="scss">
     @import "../../scss/dropdown.scss";
@@ -135,7 +163,71 @@
         margin-top: 15px;
         width: 100%;
         @include flex-container(center, space-between);
-        
+
+        /* Active Session Component Responsiveness */
+        &--min .user-panel {
+            @include circle(30px);
+            img {
+                @include circle(26px);
+            }
+            &__user-details {
+                margin: none;
+                display: none;
+            }
+        }
+        &--min &-session-container {
+            width: 80%;
+        }
+        &--min &__time {
+            @include circle(35px);
+            margin-left: 4px;
+            span {
+                display: none;   
+            }
+            i {
+                font-size: 1.65rem;
+            }
+        }
+
+        /* Dark / Light Themes */
+        &--light .user-panel {
+            &__user-details-time {
+                color: rgba(var(--textColor1), 0.55);
+            }
+        }
+        &--light &-new-session-btn-title {
+            color: rgba(var(--textColor1), 0.55);
+        }
+        &--light .user-panel {
+            &__user-details-user {
+                font-weight: 600;
+            }
+            &__user-details-time {
+                font-weight: 500;
+            }
+            &__stats {
+                background-color: rgba(45, 45, 45, 0.03);
+
+                &-stat i {
+                    color: rgba(var(--textColor1), 0.6) !important;
+                }
+                &-stat span {
+                    color: rgba(var(--textColor1), 0.5);
+                    font-weight: 500;
+                }
+            }
+        }
+        &--light &__time span {
+            font-weight: 500;
+            color: rgba(var(--textColor1), 0.55);
+        }
+        &--dark .user-panel .dropdown-menu {
+            @include dropdown-menu-dark;
+            i {
+                color: rgba(var(--textColor1), 0.85);
+            }
+        }
+
         &__element {
             border-radius: 20px;
             height: 40px;
@@ -149,24 +241,9 @@
         &__section {
             @include flex-container(center, _);
         }
-
-
-        &--light .user-panel {
-            &__user-details-user {
-                font-weight: 600;
-            }
-            &__user-details-time {
-                font-weight: 500;
-            }
-        }
-        &--dark .user-panel .dropdown-menu {
-            @include dropdown-menu-dark;
-            i {
-                color: rgba(var(--textColor1), 0.85);
-            }
-        }
-
         &__time {
+            // background: none;
+            // border: 0px;
             i {
                 font-size: 1.3rem;
                 color: #F4CCA8;
@@ -180,18 +257,46 @@
         }
     } 
 
+    /* User Panel */
     .user-panel {
         @include flex-container(center, _);
         position: relative;
         height: 40px;
 
         img {
-            @include circle(030px);
+            @include circle(27px);
             object-fit: cover;
             border: 1.5px solid white;
-            margin-right: 12px;
+            margin-right: 10px;
             -webkit-user-drag: none;
         }
+
+        &__stats {
+            @include flex-container(center, space-between);
+            background-color: rgba(45, 45, 45, 0.13);
+            padding: 8px 11px 10px 11px;
+            border-radius: 12px;
+            width: 95%;
+            margin: 2px 0px 10px 3px;
+
+            i {
+                font-size: 1.1em !important;
+            }
+
+            &-stat {
+                display: block;
+                text-align: center;
+
+                span {
+                    font-size: 0.97em;
+                    margin-top: 5px;
+                    display: block;
+                    font-weight: 400;
+                    color: rgba(var(--textColor1), 0.8);
+                }
+            }
+        }
+
         &__user-details {
             height: 36px;
         }
@@ -207,11 +312,12 @@
         &__user-details-time {
             font-size: 1.1rem;
             font-weight: 200;
+            white-space: nowrap;
         }
         .dropdown-container {
             @include pos-abs-bottom-left-corner(-120px, 0px);
             height: 120px;
-            width: 135px;
+            width: 150px;
             display: none;
         }
         .divider {
@@ -223,6 +329,7 @@
         .dropdown-menu {
             margin-top: 10px;
             width: 100%;
+            border-radius: 12px;
 
             &__option {
                 width: 100%;
@@ -238,6 +345,7 @@
     .header-session-container {
         color: rgba(var(--headerElementTextColor), 1);
         align-items: center;
+        width: 70%;
 
         &--light-mode {
             
@@ -281,16 +389,16 @@
         overflow: hidden;
         padding: 0px 12px 0px 15px;
         margin-right: 10px;
-        color: rgba(var(--headerElementTextColor), 1);
+        color: rgba(var(--textColor1), 0.8);
         align-items: center;
         transition: 0.1s ease-in-out;
 
         &--light-mode {
             &:focus {
-                filter: brightness(1.03);
+                filter: brightness(0.98);
             }
             &:hover {
-                filter: brightness(1.02) !important;
+                filter: brightness(0.98) !important;
             }
         }
         &--light-mode p {
@@ -334,18 +442,14 @@
             margin-left: 4px;
             font-size: 1.2rem;
         }
-        &__new-session-title {
+        &-title {
             font-size: 1.2rem;
             margin: 0px 0px 2px 2px;
         }
-        &__new-session-icon {
+        &-icon {
             font-size: 1.5rem;
             font-weight: 400;
             margin: 0px 2px 0px 10px;
         }
-    }
-    /* Modals */
-    .modal-bg__content {
-        border-radius: 0px;
     }
 </style>

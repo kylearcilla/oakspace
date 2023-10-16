@@ -4,6 +4,7 @@ import type { MusicPlayer } from './music-player'
 import type { MusicData } from './music-data-apple'
 import type { YoutubePlayer } from './youtube-player'
 import type { YoutubeUserData } from './youtube-data'
+import type { PomSessionManger } from './pom-session-manager'
 
 /* App UI State */
 export const homeViewLayout = writable<HomeLayout>({
@@ -35,3 +36,4 @@ export const musicDataStore = writable<MusicData | null>(null)
 
 /* Session Stuff */
 export const sessionStore = writable<Session | null>(null)
+export const sessionManager = writable<PomSessionManger | null>(null)

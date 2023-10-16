@@ -17,9 +17,7 @@
   
 	import { SettingsModal } from "$lib/enums"
 	import { sessionStore, homeViewLayout, toastMessages } from "$lib/store"
-	import { appShortCutsHandler, homeVideoViewClassHandler, initAppState, onMouseMoveHandler } from "$lib/utils-home";
-	import SessionFinishedModal from "./SessionFinishedModal.svelte";
-	import SessionCanceledModal from "./SessionCanceledModal.svelte";
+	import { homeVideoViewClassHandler, initAppState, onMouseMoveHandler, updateUI } from "$lib/utils-home"
 
   let hasUserToggledWithKeyLast = true
   let homeViewViewClasses = ""
@@ -29,7 +27,16 @@
   })
 
   const handleKeyDown = (event: KeyboardEvent) => {
-    hasUserToggledWithKeyLast = appShortCutsHandler(event)
+    if (event.key === "Escape") {
+        homeViewLayout.update((data: HomeLayout) => ({ ...data, modal: null }))
+    }
+    if (event.shiftKey && event.key === "}") {
+        updateUI({ ...$homeViewLayout, isTaskMenuOpen: !$homeViewLayout.isTaskMenuOpen })
+    }
+    else if (event.shiftKey && event.key === "{") {
+        updateUI({ ...$homeViewLayout, isNavMenuOpen: !$homeViewLayout.isNavMenuOpen })
+        hasUserToggledWithKeyLast = true
+    }
   }
   const _onMouseMoveHandler = (event: MouseEvent) => {
     hasUserToggledWithKeyLast = onMouseMoveHandler(event, hasUserToggledWithKeyLast)
@@ -40,19 +47,19 @@
 
 <svelte:window on:keydown={handleKeyDown} />
 
-<div class="home" on:mousemove={_onMouseMoveHandler}>
+<div class={`home ${homeViewViewClasses}`} on:mousemove={_onMouseMoveHandler}>
   <div class={`home__nav-menu-container ${!$homeViewLayout.isNavMenuOpen ? "home__nav-menu-container--hide" : ""}`}>
       <NavMenu/>
   </div>
-  <div class={`home__video ${homeViewViewClasses}`}>
+  <div class="home__video">
       <HomeHeader/>
       <VideoView />
-      <HomeEmptyView />    
-      <!-- {#if !$homeViewLayout.isVideoViewOpen && !$sessionStore} 
+      {#if !$homeViewLayout.isVideoViewOpen && !$sessionStore} 
+        <HomeEmptyView />    
       {/if}
       {#if !$homeViewLayout.isVideoViewOpen && $sessionStore}  
         <SessionActiveHome />  
-      {/if} -->
+      {/if}
   </div>
   <div class={`home__task-view-container ${$homeViewLayout.isTaskMenuOpen ? "" : "home__task-view-container--closed"}`}>
       <TaskView />
@@ -82,12 +89,14 @@
       top: 150px;
     }
 
+    $task-menu-width: 240px;
+    $nav-menu-width: 60px;
+
     .home {
       background-color: var(--primaryBgColor);
       height: 100%;
       min-height: 100vh;
       display: flex;
-      justify-content: space-between;
       font-family: 'Apercu Medium' system-ui;
 
       // background-image: url('https://upload.wikimedia.org/wikipedia/commons/7/77/Cole_Thomas_The_Course_of_Empire_Desolation_1836.jpg');
@@ -95,30 +104,50 @@
       // background-position: center;
       // background-repeat: no-repeat;
 
-      @include sm(max-width) {
-        width: 100%;
+      /* Responsivness Classes */
+      &--just-nav-menu-shown &__video {
+        margin-left: $nav-menu-width;
+        width: calc(100% - $nav-menu-width);
+        
+        @include mq-custom(max-width, 600px) {
+          margin-left: 0px;
+          width: 100%;
+        }
+      }
+      &--just-task-view-shown &__video {
+        width: calc(100% - $task-menu-width);
+        
+        @include mq-custom(max-width, 730px) {
+          width: 100%;
+        }
+      }
+      &--both-shown &__video {
+        margin-left: $nav-menu-width;
+        width: calc(100% - ($nav-menu-width + $task-menu-width));
+
+        @include mq-custom(max-width, 785px) {
+          margin: 0px;
+          width: 100%;
+        }
       }
 
       &__nav-menu-container {
         background-color: var(--navMenuBgColor);
         border: var(--sidePanelBorder);
         box-shadow: var(--sidePanelShadow);
-        width: 60px;
+        width: $nav-menu-width;
         transition: ease-in-out 0.15s;
         height: 100vh;
         margin-left: 0px;
-        position: fixed;
         z-index: 1000;
+        position: fixed;
 
         // background: rgba(32, 31, 31, 0.1);
         // backdrop-filter: blur(10px);
         // border-right: 1px solid rgba(138, 138, 138, 0.3);
 
         &--hide {
-          margin-left: -60px !important;
-        }
-        @include sm(max-width) {
-          position: fixed; 
+          margin-left: -$nav-menu-width !important;
         }
       }
 
@@ -126,49 +155,9 @@
         padding: 0px 2.5% 30px 2.5%;
         transition: ease-in-out 0.15s;
         width: 100%;
-        margin: 0px auto;
-
-        // nev menu and right menu both shown
-        margin-left: 60px;
-        
-        &--nav-menu-hidden {
-          margin-left: 0px;
-        }
-        &--just-nav-menu-shown {
-          @include sm(max-width) {
-            margin-left: 0px;
-          }
-        }
-        &--task-view-hidden {
-            padding-right: 2.5%;
-        }
-        &--just-task-view-shown {
-          padding-right: 250px;
-          margin-right: 2.5%;
-          
-          @include mq-custom(max-width, 940px) {
-            padding-right: 265px;
-          }
-          @include mq-custom(max-width, 730px) {
-            padding-right: 2.5%;
-            margin-right: 0px;
-          }
-        }
-        &--task-view-also-shown {
-          padding-right: 250px;
-          margin-right: 2.5%;
-
-          @include mq-custom(max-width, 995px) {
-            padding-right: 245px;
-          }
-          @include mq-custom(max-width, 840px) {
-            padding-right: 2.5%;
-            margin-right: 0px;
-          }
-        }
       }
       &__task-view-container {
-        width: 245px;
+        width: $task-menu-width;
         height: 100vh;
         position: fixed;
         top: 0px;
@@ -177,7 +166,8 @@
         overflow: hidden;
         background-color: var(--secondaryBgColor);
         border: var(--sidePanelBorder);
-        box-shadow: var(--prodMenuViewShadow);
+        box-shadow: var(--dropdownMenuBgColor2);
+        z-index: 200000;
 
         // background: rgba(32, 31, 31, 0.1);
         // backdrop-filter: blur(10px);

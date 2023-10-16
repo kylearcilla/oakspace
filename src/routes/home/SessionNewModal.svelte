@@ -1,13 +1,14 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     
-    import { SessionModal } from "$lib/enums"
+    import { themeState } from "$lib/store"
+    import { HrsMinsFormatOption, SessionModal } from "$lib/enums"
 	import { Session } from "$lib/pom-session"
 	import { clickOutside } from "$lib/utils-general"
-    import { sessionStore, themeState } from "$lib/store"
-	import { DEFAULT_SESSION_INPUTS } from "$lib/utils-session"
 	import { calculateEndTime, getTimePeriodString, minsToHHMM } from "$lib/utils-date"
-	import Modal from "../../components/Modal.svelte";
+	import { BREAK_TIMES_ARR, DEFAULT_SESSION_INPUTS, FOCUS_TIMES_ARR, MAX_SESSION_NAME_LENGTH, MAX_TODO_NAME_LENGTH } from "$lib/utils-session"
+	
+    import Modal from "../../components/Modal.svelte";
     
     export let toggleModal: (modal: SessionModal | null) => void
 
@@ -17,75 +18,57 @@
     let isTagListDropDownOpen = false
     let isFocusTimeDropDownOpen = false
     let isBreakTimeDropDownOpen = false
-    let sessionNameInput: HTMLElement
-    let newTodoInput: HTMLElement
-
-    const MAX_SESSION_NAME_LENGTH = 18
-    const MAX_TODO_NAME_LENGTH = 15
-    const FOCUS_TIMES_ARR = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
-    const BREAK_TIMES_ARR = [5, 10, 15, 20, 25, 30]
+    let sessionNameInputContainer: HTMLElement
+    let newTodoInputContainer: HTMLElement
 
     let interval: NodeJS.Timer | null = null
 
-    let sessionDefaultInputs: NewSessionUserInput = { ...DEFAULT_SESSION_INPUTS }
-    let tags = [
-        {
-            name: "school",
-            color: "#9997FE"
-        },
-        {
-            name: "swe",
-            color: "#FF8B9C"
-        },
-        {
-            name: "book",
-            color: "#CFAB96"
-        },
-    ]
-
-    sessionStore.subscribe((data: Session | null) => {
-        if (data && interval) clearInterval(interval)
-    })
+    let input: SessionData = { ...DEFAULT_SESSION_INPUTS }
+    let tags = [ { name: "school", color: "#9997FE" }, { name: "swe", color: "#FF8B9C" } ]
 
     /* Session Stuff */
     const createNewSession = () => {
-        sessionDefaultInputs.startTime = new Date()
-        new Session(sessionDefaultInputs)
-        resetNewSesion() 
+        if (input.name.length === 0 || input.name.length > MAX_SESSION_NAME_LENGTH) return
+        input.startTime = new Date()
+        input.sessionDurationMins = (input.pomPeriods * input.pomTime) + ((input.pomPeriods - 1) * input.breakTime)
+
+        new Session(input)
         toggleModal(SessionModal.ActiveSession)
+
+        resetAndCloseModal()
     }
     const setResultTimes = () => {
-        const totalFocusTimeMins = sessionDefaultInputs.pomPeriods * sessionDefaultInputs.pomTime
-        const totalbreakTimeMins = (sessionDefaultInputs.pomPeriods - 1) * sessionDefaultInputs.breakTime
+        const totalFocusTimeMins = input.pomPeriods * input.pomTime
+        const totalbreakTimeMins = (input.pomPeriods - 1) * input.breakTime
         const totalMins = totalbreakTimeMins + totalFocusTimeMins
 
-        sessionDefaultInputs.calculatedEndTime = calculateEndTime(new Date, totalMins)
-        sessionDefaultInputs.timePeriodString = getTimePeriodString(new Date, sessionDefaultInputs.calculatedEndTime)
-        sessionDefaultInputs.totalElapsedTime = minsToHHMM(totalMins)
+        input.calculatedEndTime = calculateEndTime(new Date, totalMins)
+        input.timePeriodString = getTimePeriodString(new Date, input.calculatedEndTime)
+        input.totalElapsedTime = minsToHHMM(totalMins, HrsMinsFormatOption.MIN_LETTERS)
     }
-    const resetNewSesion = () => {
-        sessionDefaultInputs = { ...DEFAULT_SESSION_INPUTS }
-        setResultTimes()
+    const resetAndCloseModal = () => {
+        clearInterval(interval!)
         toggleModal(null)
     }
 
     /* Event Handlers */
-    const editTextInputHandler = (event: Event) => {
-        if (sessionDefaultInputs.name.length >= 20) return
-        sessionDefaultInputs.name = (event.target as HTMLInputElement).value
-    }
-    const editNewTodoInputHandler = (event: Event) => {
-        if (sessionDefaultInputs.name.length >= 20) return
-        newTodoTitle = (event.target as HTMLInputElement).value
+    const tagDropDownClicked = (e: Event) => {
+        if ((e as PointerEvent).pointerId < 0) return
+        isTagListDropDownOpen = true
+        isFocusTimeDropDownOpen = false
+        isBreakTimeDropDownOpen = false
     }
     const handleNewTagClicked = (idx: number) => {
-        sessionDefaultInputs.tag = tags[idx]
+        input.tag = tags[idx]
         isTagListDropDownOpen = false
     }
     const handleNewTodoClicked  = () => {
-        sessionDefaultInputs.todos.push({ title: newTodoTitle, isChecked: false })
+        input.todos.push({ title: newTodoTitle, isChecked: false })
         newTodoTitle = "" 
         subtaskCount++
+
+        const inputElement = newTodoInputContainer.firstChild! as HTMLInputElement
+        requestAnimationFrame(() => inputElement.focus())
     }
     const handleCreateNewTagClicked = () => {
         // Create a New Tag
@@ -95,35 +78,40 @@
 
     onDestroy(() => clearInterval(interval!))
     onMount(() => {
-        setResultTimes()
+        // restart data, can contain data from prev session since default input object isn't a fully shallow copy
+        input.currentTime = { minutes: 0, seconds: 0 }
+        input.todos = []
+
         startTimer()
+        setResultTimes()
+
+        const inputElement = sessionNameInputContainer.firstChild as HTMLInputElement
+        inputElement.focus()
     })
 </script>
 
 <Modal onClickOutSide={() => toggleModal(null)}>
     <div class={`new-session-modal ${$themeState.isDarkTheme ? "new-session-modal--dark" : ""}`}>
         <h1>Create New Session</h1>
-        <h2>Session Name</h2>
+        <form on:submit={createNewSession} autocomplete="off" autocorrect="off">
             <!-- Name -->
-            <div class="new-session-modal__name-input" bind:this={sessionNameInput}>
+            <label for="new-session-title-input">Session Name</label>
+            <div class="new-session-modal__name-input" bind:this={sessionNameInputContainer}>
                 <input 
                     type="text"
-                    placeholder="Afternoon Reading" 
-                    on:focus={() => sessionNameInput.classList.add("new-session-modal__name-input--focus")}
-                    on:blur={() => sessionNameInput.classList.remove("new-session-modal__name-input--focus")}
-                    on:input={editTextInputHandler}
-                    bind:value={sessionDefaultInputs.name}
+                    id="new-session-title-input"
+                    name="new-session-title"
+                    placeholder="Afternoon Reading"
+                    on:focus={() => sessionNameInputContainer.classList.add("new-session-modal__name-input--focus")}
+                    on:blur={() => sessionNameInputContainer.classList.remove("new-session-modal__name-input--focus")}
+                    bind:value={input.name}
                 >
                 <div class="new-session-modal__name-input__divider"></div>
                 <div class="new-session-modal__name-input-tag-dropdown-container dropdown-container">
-                    <button class="new-session-modal__name-input-tag-dropdown-btn dropdown-btn trans-btn" on:click={() => {
-                        isTagListDropDownOpen = true
-                        isFocusTimeDropDownOpen = false
-                        isBreakTimeDropDownOpen = false
-                    }}>
-                        <div class="dropdown-btn__icon" style={`background-color: ${sessionDefaultInputs.tag.color}`}></div>
+                    <button class="new-session-modal__name-input-tag-dropdown-btn dropdown-btn trans-btn" type="button" on:click={tagDropDownClicked}>
+                        <div class="dropdown-btn__icon" style={`background-color: ${input.tag.color}`}></div>
                         <div class="dropdown-btn__title">
-                            {sessionDefaultInputs.tag.name}
+                            {input.tag.name}
                         </div>
                         <div class="dropdown-btn__arrows">
                             <div class="dropdown-btn__arrows-triangle-up">
@@ -137,11 +125,11 @@
                     {#if isTagListDropDownOpen}
                         <ul use:clickOutside on:click_outside={() => isTagListDropDownOpen = false} class="dropdown-menu">
                             {#each tags as tag, idx} 
-                                <li class={`dropdown-menu__option ${tag.name === sessionDefaultInputs.tag.name ? "dropdown-menu__option--selected" : ""}`}>
-                                    <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
+                                <li class={`dropdown-menu__option ${tag.name === input.tag.name ? "dropdown-menu__option--selected" : ""}`}>
+                                    <button class="dropdown-element" type="button" on:click={() => handleNewTagClicked(idx)}>
                                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon" style={`background-color: ${tag.color}`}></div>
                                         <p>{tag.name}</p>
-                                        {#if tag.name === sessionDefaultInputs.tag.name}
+                                        {#if tag.name === input.tag.name}
                                             <div class="dropdown-menu__option-icon">
                                                 <i class="fa-solid fa-check"></i>
                                             </div>
@@ -167,14 +155,16 @@
                     <div class="new-session-modal__pom-input-stepper">
                         <button 
                             class="trans-btn" 
-                            on:click={() => { sessionDefaultInputs.pomPeriods = Math.max(2, sessionDefaultInputs.pomPeriods) - 1; setResultTimes() }}
+                            type="button"
+                            on:click={(e) => { input.pomPeriods = Math.max(2, input.pomPeriods) - 1; setResultTimes() }}
                         >
                             -
                         </button>
-                        <span>{sessionDefaultInputs.pomPeriods}</span>
+                        <span>{input.pomPeriods}</span>
                         <button 
                             class="trans-btn" 
-                            on:click={() => { sessionDefaultInputs.pomPeriods = Math.min(5, sessionDefaultInputs.pomPeriods) + 1; setResultTimes() }}
+                            type="button"
+                            on:click={(e) => { input.pomPeriods = Math.min(5, input.pomPeriods) + 1; setResultTimes() }}
                         >
                             +
                         </button>
@@ -184,13 +174,13 @@
                 <div class="new-session-modal__pom-input">
                     <h2>Focus Time</h2>
                     <div class="new-session-modal__pom-input-dd-container">
-                        <button class="new-session-modal__pom-input-dropdown-btn dropdown-btn trans-btn" on:click={() => { 
+                        <button class="new-session-modal__pom-input-dropdown-btn dropdown-btn trans-btn" type="button" on:click={() => { 
                             isFocusTimeDropDownOpen = true; 
                             isBreakTimeDropDownOpen = false;
                             isTagListDropDownOpen = false;
                         }}>
                             <div class="dropdown-btn__title">
-                                {sessionDefaultInputs.pomTime} mins
+                                {input.pomTime} mins
                             </div>
                             <div class="dropdown-btn__arrows">
                                 <div class="dropdown-btn__arrows-triangle-up">
@@ -204,17 +194,17 @@
                         {#if isFocusTimeDropDownOpen}
                             <ul use:clickOutside on:click_outside={() => isFocusTimeDropDownOpen = false } class="dropdown-menu">
                                 {#each FOCUS_TIMES_ARR as time} 
-                                    <li class={`dropdown-menu__option ${sessionDefaultInputs.pomTime === time ? "dropdown-menu__option--selected" : ""}`}>
+                                    <li class={`dropdown-menu__option ${input.pomTime === time ? "dropdown-menu__option--selected" : ""}`}>
                                         <button 
                                             class="dropdown-element" 
                                             on:click={() => { 
-                                                sessionDefaultInputs.pomTime = time
+                                                input.pomTime = time
                                                 isFocusTimeDropDownOpen = false
                                                 setResultTimes()
                                             }}
                                         >
                                             <p>{time} mins</p>
-                                            {#if sessionDefaultInputs.pomTime === time}
+                                            {#if input.pomTime === time}
                                                 <div class="dropdown-menu__option-icon">
                                                     <i class="fa-solid fa-check"></i>
                                                 </div>
@@ -230,13 +220,13 @@
                 <div class="new-session-modal__pom-input">
                     <h2>Break Time</h2>
                     <div class="new-session-modal__pom-input-dd-container">
-                        <button class="new-session-modal__pom-input-dropdown-btn dropdown-btn trans-btn" on:click={() => {{ 
+                        <button class="new-session-modal__pom-input-dropdown-btn dropdown-btn trans-btn" type="button" on:click={() => {{ 
                             isBreakTimeDropDownOpen = true;
                             isFocusTimeDropDownOpen = false;
                             isTagListDropDownOpen = false;
                         }}}>
                             <div class="dropdown-btn__title">
-                                {sessionDefaultInputs.breakTime} mins
+                                {input.breakTime} mins
                             </div>
                             <div class="dropdown-btn__arrows">
                                 <div class="dropdown-btn__arrows-triangle-up">
@@ -250,17 +240,17 @@
                         {#if isBreakTimeDropDownOpen}
                             <ul use:clickOutside on:click_outside={() => isBreakTimeDropDownOpen = false} class="dropdown-menu">
                                 {#each BREAK_TIMES_ARR as time} 
-                                    <li class={`dropdown-menu__option ${sessionDefaultInputs.breakTime === time ? "dropdown-menu__option--selected" : ""}`}>
+                                    <li class={`dropdown-menu__option ${input.breakTime === time ? "dropdown-menu__option--selected" : ""}`}>
                                         <button 
                                             class="dropdown-element" 
                                             on:click={() => { 
-                                                sessionDefaultInputs.breakTime = time
+                                                input.breakTime = time
                                                 isBreakTimeDropDownOpen = false
                                                 setResultTimes()
                                             }}
                                         >
                                             <p>{time} mins</p>
-                                            {#if sessionDefaultInputs.breakTime === time}
+                                            {#if input.breakTime === time}
                                                 <div class="dropdown-menu__option-icon">
                                                     <i class="fa-solid fa-check"></i>
                                                 </div>
@@ -275,20 +265,21 @@
             </div>
             <!-- Todos -->
             <div class="new-session-modal__pom-input-todos">
-                <h2>Todos</h2>
+                <label for="new-todo-title-input">Todos</label>
                 <div class="new-session-modal__pom-input-todo-input-container">
-                    <div class="new-session-modal__pom-input-todo-input" bind:this={newTodoInput}>
+                    <div class="new-session-modal__pom-input-todo-input" bind:this={newTodoInputContainer}>
                         <input 
                             type="text"
-                            placeholder="Afternoon Reading" 
-                            on:focus={() => newTodoInput.classList.add("new-session-modal__pom-input-todo-input--focus")}
-                            on:blur={() => newTodoInput.classList.remove("new-session-modal__pom-input-todo-input--focus")}
-                            on:input={editNewTodoInputHandler}
+                            placeholder="Finish 2 Chapters" 
+                            id="new-todo-title-input"
+                            name="new-todo-title"
+                            on:focus={() => newTodoInputContainer.classList.add("new-session-modal__pom-input-todo-input--focus")}
+                            on:blur={() => newTodoInputContainer.classList.remove("new-session-modal__pom-input-todo-input--focus")}
                             bind:value={newTodoTitle}
                         >
                         <span>{subtaskCount}</span>
                     </div>
-                    <button disabled={newTodoTitle === "" || newTodoTitle.length > MAX_TODO_NAME_LENGTH} class="unfill" on:click={handleNewTodoClicked}>
+                    <button disabled={newTodoTitle === "" || newTodoTitle.length > MAX_TODO_NAME_LENGTH} class="unfill" type="button" on:click={handleNewTodoClicked}>
                         Submit
                     </button>
                 </div>
@@ -296,24 +287,27 @@
             <!-- Result -->
             <div class="new-session-modal__pom-input-result">
                 <h2>Result: </h2>
-                <h3>{sessionDefaultInputs.timePeriodString}</h3>
-                <h4>{`(${sessionDefaultInputs.totalElapsedTime})`}</h4>
+                <h3>{input.timePeriodString}</h3>
+                <h4>{`(${input.totalElapsedTime})`}</h4>
             </div>
             <!-- Button Container -->
             <div class="new-session-modal__pom-input-btn-container">
                 <button 
-                    disabled={sessionDefaultInputs.name === "" || sessionDefaultInputs.name.length >= MAX_SESSION_NAME_LENGTH} 
-                    on:click={createNewSession} class="new-session-modal__pom-input-btn-done-btn fill-btn"
+                    disabled={input.name === "" || input.name.length >= MAX_SESSION_NAME_LENGTH} 
+                    type="submit" class="new-session-modal__pom-input-btn-done-btn fill-btn"
+                    on:click={createNewSession}
                 >
                     Start Session
                 </button>
                 <button 
-                    on:click={() => resetNewSesion()} 
+                    on:click={() => resetAndCloseModal()} 
                     class="new-session-modal__pom-input-btn-cancel-btn unfill unfill--gray"
+                    type="reset"
                 >
                     Cancel
                 </button>
             </div>
+        </form>
     </div>     
 </Modal>
 
@@ -330,16 +324,18 @@
         h1 {
             font-size: 1.7rem;
             margin-bottom: 20px;
+            font-weight: 600;
+            color: rgba(var(--textColor1), 0.85);
         }
-        h2 {
+        label, h2 {
             font-size: 1.35rem;
             font-weight: 500;
             margin-bottom: 9px;
-            color: rgba(var(--textColor1), 0.8);
+            color: rgba(var(--textColor1), 0.75);
         }
 
         /* Btn Styling */
-        .fill-btn {
+        .fill-btn { 
             @include color-btn-styling;
         }
         .trans-btn {
@@ -362,7 +358,7 @@
         &--dark h1 {
             font-weight: 500;
         }
-        &--dark h2 {
+        &--dark label {
             font-weight: 400;
             color: rgba(var(--textColor1), 0.8);
         }
@@ -486,9 +482,11 @@
         &__pom-input {
             width: 32%;
         }
+        &__pom-input-dropdown-btn, &__pom-input-stepper {
+            height: 40px;
+            border-radius: 9px;
+        }
         &__pom-input-dropdown-btn {
-            height: 34px;
-            border-radius: 7px;
             box-shadow: none;
             padding: 0px;
             width: 100%;
@@ -502,21 +500,20 @@
             .dropdown-btn__title {
                 width: 45px;
                 margin: 0px 14px 0px 21px;
+                color: rgba(var(--textColor1), 0.55);
             }
         }
 
         /* Pom Count */
         &__pom-input-stepper {
-            height: 34px;
             padding: 0px 4px;
-            border-radius: 7px;
             @include flex-container(center, space-between);
             background-color: var(--modalBgAccentColor);
 
             span {
                 margin: 0px 5px;
                 font-size: 1.2rem;
-                color: rgba(var(--textColor1), 0.7);
+                color: rgba(var(--textColor1), 0.55);
             }
             button {
                 padding: 10px;
@@ -524,8 +521,8 @@
                 font-size: 1.4rem;
                 @include center;
                 transition: 0.05s ease-in-out;
-                border-radius: 3px;
-                color: rgba(var(--textColor1), 0.7);
+                border-radius: 7px;
+                color: rgba(var(--textColor1), 0.55);
                 background: none;
 
                 &:active {
@@ -564,6 +561,7 @@
         &__pom-input-todo-input-container {
             display: flex;
             width: 100%;
+            height: 45px;
             
             button {
                 width: calc(100% - (65% + 10px));
@@ -578,7 +576,7 @@
         &__pom-input-todo-input {
             font-size: 1.32rem;
             padding: 0px 7px 0px 20px;
-            height: 38px;
+            height: 100%;
             border-radius: 10px;
             width: 65%;
             @include flex-container(center, _);
@@ -595,12 +593,14 @@
                 color: rgba(150, 150, 150, 0.9);
                 &::placeholder {
                     font-size: 1.4rem;
-                    font-weight: 300;
+                    font-weight: 400;
                     opacity: 0.2;
                 }
             }
             span {
-                @include pos-abs-top-right-corner(10px, 15px);
+                display: inline-block;
+                position: absolute;
+                right: 15px;
                 color: rgba(150, 150, 150, 0.6);
             }
         }
@@ -609,7 +609,7 @@
         &__pom-input-result {
             margin: 35px 0px 45px 0px;
             @include flex-container(center, center);
-            h2 {
+            label, h2 {
                 margin: 0px 20px 0px 0px;
                 font-size: 1.5rem;
             }

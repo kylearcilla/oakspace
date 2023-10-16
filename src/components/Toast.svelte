@@ -57,8 +57,8 @@
         opacity: 0;
         padding: 9px 14px 8px 35px;
         background-color: var(--navMenuBgColor);
-        animation: 0.7s cubic-bezier(.13,1,.5,.94) 0.8s slide-up forwards;
-        z-index: 9999;
+        animation: 0.7s cubic-bezier(.13, 1, .5, .94) 0.8s slide-up forwards;
+        z-index: 694206;
 
         &--light &__header {
             color: rgba(var(--textColor1), 0.9);
@@ -71,8 +71,8 @@
             font-weight: 300 !important;
         }
         &--light &__text {
-            color: rgba(var(--textColor1), 0.75);
-            font-weight: 500;
+            color: rgba(var(--textColor1), 0.45);
+            font-weight: 600;
         }
         &--light &__action-btn button {
             color: rgba(var(--textColor1), 0.8);
@@ -105,6 +105,7 @@
             color: rgba(var(--textColor1), 0.5);
             font-weight: 300;
             font-size: 1.1rem;
+            max-width: 250px;
         }
         &__action-btn {
             @include flex-container(center, flex-end);

@@ -3,6 +3,7 @@ import { homeViewLayout } from "./store"
 import { loadTheme } from "./utils-appearance"
 import { initMusicPlatform } from "./utils-music"
 import { initYtPlayer, initYtUser } from "./utils-youtube"
+import { initSession } from "./utils-session"
 
 const LEFT_BAR_LEFT_BOUND = 5
 const LEFT_BAR_RIGHT_BOUND = 80
@@ -20,36 +21,14 @@ export const onMouseMoveHandler = (event: MouseEvent, hasUserToggledWithKeyLast:
     const homeLayout = get(homeViewLayout)
 
     if (!homeLayout.isNavMenuOpen && mouseX < LEFT_BAR_LEFT_BOUND) {
-      updateUI({ ...get(homeViewLayout), isNavMenuOpen: true  })
-      return false
+        updateUI({ ...get(homeViewLayout), isNavMenuOpen: true  })
+        return false
     }
     else if (!hasUserToggledWithKeyLast && homeLayout.isNavMenuOpen && mouseX > LEFT_BAR_RIGHT_BOUND) { 
-      homeViewLayout.update((data: any) => ({ ...data, isNavMenuOpen: false }))
+        homeViewLayout.update((data: any) => ({ ...data, isNavMenuOpen: false }))
     }
 
     return hasUserToggledWithKeyLast
-}
-
-/**
- * 
- * @param event   Keyboard Event
- * @returns       If user has used the short cut to hide the left side bar.
- */
-export const appShortCutsHandler = (event: KeyboardEvent): boolean => {
-    const homeLayout = get(homeViewLayout)
-
-    if (event.shiftKey && event.key === "}") {
-        updateUI({ ...homeLayout, isTaskMenuOpen: !homeLayout.isTaskMenuOpen })
-    }
-    else if (event.shiftKey && event.key === "{") {
-        updateUI({ ...homeLayout, isNavMenuOpen: !homeLayout.isNavMenuOpen })
-        return true
-    }
-    else if (event.key=== "Escape") {
-        homeViewLayout.update((data: HomeLayout) => ({ ...data, modal: null }))
-    }
-
-    return false
 }
 
 /**
@@ -59,24 +38,17 @@ export const appShortCutsHandler = (event: KeyboardEvent): boolean => {
  * @returns               List of classes to be applied to middle view copmonent to change its apperance.
  */
 export const homeVideoViewClassHandler = (isNavMenuOpen: boolean, isTaskMenuOpen: boolean): string => {
-    const classes = [];
-    if (!isNavMenuOpen) {
-        classes.push("home__video--nav-menu-hidden");
-    }
-    if (!isTaskMenuOpen) {
-        classes.push("home__video--task-view-hidden");
-    }
     if (!isTaskMenuOpen && isNavMenuOpen) {
-        classes.push("home__video--just-nav-menu-shown");
+       return "home--just-nav-menu-shown"
     }
     if (isTaskMenuOpen && !isNavMenuOpen) {
-        classes.push("home__video--just-task-view-shown");
+       return "home--just-task-view-shown"
     }
     if (isTaskMenuOpen && isNavMenuOpen) {
-        classes.push("home__video--task-view-also-shown");
+       return "home--both-shown"
     }
 
-   return classes.join(' ');
+   return ""
 }
 
 /**
@@ -118,6 +90,9 @@ export const initAppState = () => {
     // ui
     loadTheme()
     loadHomeViewLayOutUIData()
+
+    // app data
+    initSession()
 
     // streaming platforms
     initYtUser()

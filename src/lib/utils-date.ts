@@ -1,3 +1,5 @@
+import { HrsMinsFormatOption } from "./enums"
+
 export const months = [
     "January",
     "February",
@@ -14,6 +16,16 @@ export const months = [
   ]
   
 export const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+export const getDayOfWeek = () => {
+    const today = new Date()
+    return `${daysOfWeek[today.getDay()]}`
+}
+
+export const getDate = () => {
+    const today = new Date()
+    return `${months[today.getMonth()].substring(0, 3)} ${today.getDate()} ${today.getFullYear()}`
+}
 
 export const minsSecondsToSecs = (mins: number, secs: number): number => (mins * 60) + secs
 
@@ -153,17 +165,45 @@ export function twentyFourToTwelveHrFormat(time: number): string {
 }
 
 /**
+ * Formats secs to HH:MM
+ * @param secs 
+ * @param formatOption  Different formatting options: X hrs, X mins || Xh Xm || HH:MM 
+ * @returns             Formatted # of secs to HH MM (i.e. 2 hrs 34 mins)
+ */
+export function secsToHHMM(secs: number, formatOption: HrsMinsFormatOption = HrsMinsFormatOption.LETTERS): string {
+    return minsToHHMM(secs / 60, formatOption)
+}
+
+/**
  * Formats mins to HH:MM
  * @param mins 
+ * @param formatOption  Different formatting options: Xhrs, Xmins || Xh Xm || HH:MM 
  * @returns Formatted # of minutes to HH MM (i.e. 2 hrs 34 mins)
  */
-export function minsToHHMM(mins: number): string {
-    if (mins < 60) return `${mins} mins`
+export function minsToHHMM(inputMins: number, formatOption: HrsMinsFormatOption = HrsMinsFormatOption.LETTERS): string {
+    const mins = parseInt(inputMins + "", 10)
+    if (mins < 60 && formatOption === HrsMinsFormatOption.LETTERS) {
+        return `${mins} mins`
+    }
+    else if (mins < 60 && formatOption === HrsMinsFormatOption.MIN_LETTERS) {
+        return `${mins}m`
+    }
+    else if (mins < 60 && formatOption === HrsMinsFormatOption.NO_LETTERS) {
+        return `00:${String(mins).padStart(2, '0')}`
+    }
 
-    const hours = Math.floor(mins / 60);
-    const minutes = mins % 60;
+    const hours = Math.floor(mins / 60)
+    const minutes = mins % 60
 
-    return `${hours} ${hours > 1 ? "hrs" : "hr" } ${String(minutes).padStart(2, '0')} mins`;
+    if (formatOption === HrsMinsFormatOption.LETTERS) {
+        return `${hours} ${hours > 1 ? "hrs" : "hr" } ${String(minutes).padStart(2, '0')} mins`
+    }
+    else if (formatOption === HrsMinsFormatOption.MIN_LETTERS) {
+        return `${hours}h ${String(minutes).padStart(2, '0')}m`
+    }
+    else {
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+    }
 }
   
 /**
@@ -172,7 +212,6 @@ export function minsToHHMM(mins: number): string {
  * @returns Formatted # of minutes to HH MM (i.e. 2 hrs 34 mins)
  */
 export function hoursToHhMm(decimalHours: number): string {
-    console.log(decimalHours)
     const hours = Math.floor(decimalHours);
     const minutes = Math.round((decimalHours - hours) * 60);
 

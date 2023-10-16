@@ -1,20 +1,27 @@
 <script lang="ts">
-    import SessionProgress from "./SessionProgress.svelte"
+    import { SessionState } from "$lib/enums"
+	import { clickOutside } from "$lib/utils-general"
 	import { sessionStore, themeState } from "$lib/store"
-	import SessionEditModal from "./SessionEditModal.svelte";
-	import { clickOutside } from "$lib/utils-general";
-	import { onMount } from "svelte";
-	import SessionActiveModal from "./SessionActiveModal.svelte";
 
+    import SessionProgress from "./SessionProgress.svelte"
+	import SessionEditModal from "./SessionEditModal.svelte"
+	import SessionActiveModal from "./SessionActiveModal.svelte"
+	import SessionCanceledModal from "./SessionCanceledModal.svelte"
+	import SessionFinishedModal from "./SessionFinishedModal.svelte"
+    
     let isEditSessionModalOpen = false
     let isActiveSessionModalOpen = false
     let isDropDownOpen = false
     let isSessionComponentActive = false
     let isShowingTime = true
+    let hasSessionConcluded = false
 
-    const handleDropDownControlsListClicked = () => isDropDownOpen = !isDropDownOpen
-
-    const handlePomOptionClicked = (optionIdx: number) => {
+    const dropdownOptionsBtnClicked = () => isDropDownOpen = !isDropDownOpen
+    const progressBtnClicked        = () => $sessionStore!.progressToNextPeriod()
+    const concludeBtnClicked        = () => hasSessionConcluded = true
+    const clearSessionBtnClicked    = () => $sessionStore!.clearSession()
+    
+    const handlePomOptionSessionViewClickeded = (optionIdx: number) => {
         if (optionIdx === 0) {
             isEditSessionModalOpen = true
         }
@@ -36,27 +43,14 @@
         isDropDownOpen = false
     }
 
-    const onClick = (event: Event) => {
-        const target = event.target as HTMLElement
-        const className = target.classList.value
-
-        if (className.includes("settings-btn") || 
-            className.includes("dropdown") || 
-            className.includes("session-time") || 
-            className.includes("session-todo-count") ||
-            target.tagName.toLocaleUpperCase() === "CIRCLE") {
-            return
-        }
-
-        isActiveSessionModalOpen = true
-    }
-
+    /* Button Handlers for Session View Buttons */
     const onMouseDown = (event: Event) => {
         const target = event.target as HTMLElement
         const className = target.classList.value
 
         if (className.includes("settings-btn") || 
-            className.includes("dropdown") || 
+            className.includes("dropdown")     || 
+            className.includes("action-btn")   || 
             target.tagName.toLocaleUpperCase() === "CIRCLE") {
             return
         }
@@ -67,15 +61,32 @@
             isSessionComponentActive = true
         }
     }
+
+    /* Toggling Active Session Modal */
+    const activeSessionModalToggleHandler = (event: Event) => {
+        const target = event.target as HTMLElement
+        const className = target.classList.value
+
+        if (className.includes("settings-btn") || 
+            className.includes("dropdown")     || 
+            className.includes("session-time") || 
+            className.includes("session-todo-count") ||
+            className.includes("action-btn")   ||
+            target.tagName.toLocaleUpperCase() === "CIRCLE") {
+            return
+        }
+
+        isActiveSessionModalOpen = true
+    }
     const onMouseUp = () => isSessionComponentActive = false
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div 
-    class={`header-session ${$themeState?.isDarkTheme ? "" : "header-session--light"} ${isSessionComponentActive ? "header-session--active" : ""}`} 
+    class={`header-session ${$themeState?.isDarkTheme ? "header-session--dark" : "header-session--light"} ${isSessionComponentActive ? "header-session--active" : ""}`} 
     on:mouseup={onMouseUp}
     on:mousedown={onMouseDown}
-    on:click={onClick}
+    on:click={activeSessionModalToggleHandler}
 >
     <div title={$sessionStore?.tag.name} class="header-session__session-tag">
         {$sessionStore?.tag.name[0].toLocaleUpperCase()}
@@ -83,20 +94,32 @@
     <div class="header-session__session-name" title={$sessionStore?.name}>
         {$sessionStore?.name}
     </div>
-    {#if isShowingTime}
-        <div class="header-session__session-time">
-            {`${$sessionStore?.currentTime?.minutes}:${String($sessionStore?.currentTime?.seconds).padStart(2, '0')}`}
-        </div>
-    {:else}
-        <div class="header-session__session-todo-count" title={`Todos accombplished: ${$sessionStore?.todosCheckedCount}`}>
-            {`${$sessionStore?.todosCheckedCount} / ${$sessionStore?.todos.length}`}
-        </div>
-    {/if}
+    <div class="header-session__context-view">
+        {#if $sessionStore?.isCurrentlyWaiting()}
+            <button class="header-session__action-btn header-session__action-btn--finger" title="Press to progress to next phase." on:click={progressBtnClicked}>
+                <span class="header-session__action-btn-icon">👉</span>
+            </button>
+        {:else if $sessionStore?.state === SessionState.FINISHED}
+            <button class="header-session__action-btn header-session__action-btn--flag" title="Press to conclude session." on:click={concludeBtnClicked}>
+                <span class="header-session__action-btn-icon">
+                    <i class="fa-solid fa-flag-checkered header-session__action-btn-icon"></i>
+                </span>
+            </button>
+        {:else if isShowingTime}
+            <div class="header-session__session-time">
+                {`${$sessionStore?.currentTime?.minutes}:${String($sessionStore?.currentTime?.seconds).padStart(2, '0')}`}
+            </div>
+        {:else}
+            <div class="header-session__session-todo-count" title={`Todos accombplished: ${$sessionStore?.todosCheckedCount}`}>
+                {`${$sessionStore?.todosCheckedCount} / ${$sessionStore?.todos.length}`}
+            </div>
+        {/if}
+    </div>
     <div class="header-session__session-progress-container">
         <SessionProgress/>
     </div>
     <div class="header-session__dropdown-btn-container dropdown-container">
-        <button class="header-session__settings-btn dropdown-btn" on:click={handleDropDownControlsListClicked}>
+        <button class="header-session__settings-btn dropdown-btn" on:click={dropdownOptionsBtnClicked}>
             <svg class="header-session__settings-btn-icon" xmlns="http://www.w3.org/2000/svg" width="17" height="17">
                 <g fill="none" stroke="currentColor" stroke-linecap="round" transform="translate(0 8.5)">
                     <circle cx="2" cy="0.8" r="1.7"></circle>
@@ -109,10 +132,10 @@
         {#if isDropDownOpen}
             <ul 
                 use:clickOutside on:click_outside={() => isDropDownOpen = false} 
-                class="active-session__settings-dropdown-menu dropdown-menu"
+                class="active-session__settings-dropdown-menu dropdown-menu dropdown-menu--alt"
                 >
                 <li class="dropdown-menu__option">
-                    <button class="dropdown-element" on:click={() => handlePomOptionClicked(0)}>
+                    <button class="dropdown-element" on:click={() => handlePomOptionSessionViewClickeded(0)}>
                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                             <i class="fa-solid fa-pencil"></i>
                         </div>
@@ -120,7 +143,7 @@
                     </button>
                 </li>
                 <li class="dropdown-menu__option">
-                    <button class="dropdown-element" on:click={() => handlePomOptionClicked(1)}>
+                    <button class="dropdown-element" on:click={() => handlePomOptionSessionViewClickeded(1)}>
                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                             {#if $sessionStore?.isPlaying}
                                 <i class="fa-solid fa-pause dropdown-element"></i>
@@ -136,7 +159,7 @@
                     </button>
                 </li>
                 <li class="dropdown-menu__option">
-                    <button class="dropdown-element" on:click={() => handlePomOptionClicked(2)}>
+                    <button class="dropdown-element" on:click={() => handlePomOptionSessionViewClickeded(2)}>
                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                             <i class="fa-solid fa-rotate-right"></i>
                         </div>
@@ -144,7 +167,7 @@
                     </button>
                 </li>
                 <li class="dropdown-menu__option">
-                    <button class="dropdown-element" on:click={() => handlePomOptionClicked(3)}>
+                    <button class="dropdown-element" on:click={() => handlePomOptionSessionViewClickeded(3)}>
                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                             <i class="fa-solid fa-forward-step"></i>
                         </div>
@@ -152,7 +175,7 @@
                     </button>
                 </li>
                 <li class="dropdown-menu__option">
-                    <button class="dropdown-element" on:click={() => handlePomOptionClicked(4)}>
+                    <button class="dropdown-element" on:click={() => handlePomOptionSessionViewClickeded(4)}>
                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                             <i class="fa-solid fa-ban"></i>
                         </div>
@@ -160,7 +183,7 @@
                     </button>
                 </li>
                 <li class="dropdown-menu__option">
-                    <button class="dropdown-element" on:click={() => handlePomOptionClicked(5)}>
+                    <button class="dropdown-element" on:click={() => handlePomOptionSessionViewClickeded(5)}>
                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                             <i class="fa-solid fa-flag-checkered"></i>
                         </div>
@@ -172,12 +195,18 @@
     </div>
 </div>
 
+<!-- Modals -->
+{#if isActiveSessionModalOpen}
+    <SessionActiveModal closeModal={() => isActiveSessionModalOpen = false} />
+{/if}
 {#if isEditSessionModalOpen}
     <SessionEditModal closeModal={() => isEditSessionModalOpen = false} />
 {/if}
-
-{#if isActiveSessionModalOpen}
-    <SessionActiveModal closeModal={() => isActiveSessionModalOpen = false} />
+{#if hasSessionConcluded && $sessionStore}
+    <SessionFinishedModal clearSession={() => clearSessionBtnClicked()}/>
+{/if}
+{#if $sessionStore?.state === SessionState.CANCELED}
+    <SessionCanceledModal clearSession={() => clearSessionBtnClicked()}/>
 {/if}
 
 
@@ -186,7 +215,7 @@
 
     .header-session {
         @include flex-container(center, _);
-        width: 50vw;
+        width: 100%;
         position: relative;
         overflow: visible;
         padding: 0px 10px 2px 17px;
@@ -203,13 +232,11 @@
         &--active {
             transform: scale(0.994);
         }
-        &--light {
-            // &:focus {
-            //     filter: brightness(1.03);
-            // }
-            // &:hover {
-            //     filter: brightness(1.02) !important;
-            // }
+        &--dark .dropdown-menu {
+            @include dropdown-menu-dark;
+        }
+        &--light &__session-name {
+            font-weight: 500;
         }
         &--light p {
             font-weight: 300;
@@ -217,9 +244,26 @@
         &--light span {
             font-weight: 500;
         }
-        &--light &__session-time {
+        &--light &__action-btn {
+            background-color: rgba(var(--textColor1), 0.04);
+            &:hover {
+                background-color: rgba(var(--textColor1), 0.07);
+            }
+        }
+        &--light &__settings-btn {
+            font-weight: 500;
+
+            &:hover {
+                background-color: rgba(var(--textColor1), 0.04);
+            }
+            svg g {
+                stroke: rgba(var(--textColor1), 0.3);
+                stroke-width: 0.95px;
+            }
+        }
+        &--light &__session-time, &--light &__session-todo-count {
             font-weight: 400;
-            color: rgba(var(--headerElementTextColor), 0.8);
+            color: rgba(var(--headerElementTextColor), 0.7);
         }
 
         &__session-tag {
@@ -236,14 +280,39 @@
             font-size: 1.15rem;
             @include elipses-overflow;
         }
+        &__context-view {
+            width: 37px;
+            margin: 0px 4px;
+        }
         &__session-time, &__session-todo-count {
             color: rgba(var(--headerElementTextColor), 0.3);
             font-size: 1.15rem;
             font-weight: 300;
-            margin-left: 4px;
-            width: 37px;
             text-align: center;
-            margin-right: 4px;
+        }
+        &__action-btn {
+            height: 25px;
+            width: 25px;
+            border-radius: 10px;
+            @include flex-container(center, center);
+            margin: 2px 2px 0px auto;
+            transition: 0.1s ease-in-out;
+            background-color: rgba($color: #FFFFFF, $alpha: 0.06);
+            font-size: 1.1rem;
+            
+            &:hover {
+                background-color: rgba($color: #FFFFFF, $alpha: 0.08);
+            }
+            &:active {
+                transform: scale(0.97);
+            }
+
+            &--finger span {
+                animation: moveBackAndForth 2s ease-in-out infinite;
+            }
+            &--flag span {
+                animation: rotation 1.5s ease-in-out infinite;
+            }
         }
         &__session-progress-container {
             height: 10px;
@@ -259,6 +328,7 @@
             @include circle(25px);
             padding: 0px;
             background: none;
+            box-shadow: none;
 
             &:hover {
                 background-color: rgba(var(--textColor1), 0.03);
@@ -276,8 +346,37 @@
         .dropdown-menu {
             width: 130px;
             @include pos-abs-top-right-corner(40px, -20px);
-            @include dropdown-menu-dark;
             z-index: 1000;
         }
     }
+
+    @keyframes moveBackAndForth {
+        0% {
+            transform: translateX(-1px);
+        }
+        50% {
+            transform: translateX(1.5px);
+        }
+        100% {
+            transform: translateX(-1px);
+        }
+    }
+    @keyframes rotation {
+        0% {
+            -webkit-transform: rotate(0deg);
+        }
+        25% {
+            -webkit-transform: rotate(25deg);
+        }
+        50% {
+            -webkit-transform: rotate(0deg);
+        }
+        75% {
+            -webkit-transform: rotate(-25deg);
+        }
+        100% {
+            -webkit-transform: rotate(0deg);
+        }
+    }
+
 </style>

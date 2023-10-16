@@ -3,73 +3,29 @@
 	import { clickOutside } from "$lib/utils-general"
 	import { sessionStore, themeState } from "$lib/store"
 	import { onMount } from "svelte";
+	import { MAX_SESSION_NAME_LENGTH } from "$lib/utils-session";
 
     export let closeModal: () => void
 
+    let tags = [ { name: "Korean", color: "#9997FE" }, { name: "swe", color: "#FF8B9C" } ]
     let isDropdownOpen = false
     let isTagListDropDownOpen = false
 
     let sessionNameInput: HTMLElement
+    
+    let newTitle = $sessionStore!.name
+    let newTag = {  name: $sessionStore!.tag.name,  color: $sessionStore!.tag.color }
 
-    const MAX_SESSION_NAME_LENGTH = 18
-
-    let newTitle = ""
-    let newTag = { name: "", color: "" }
-
-    let tags = [
-        {
-            name: "school",
-            color: "#9997FE"
-        },
-        {
-            name: "swe",
-            color: "#FF8B9C"
-        },
-        {
-            name: "book",
-            color: "#CFAB96"
-        },
-    ]
-
-    const handleDropDownControlsListClicked = () => isDropdownOpen = !isDropdownOpen
-
-    const handlePomOptionClicked = (optionIdx: number) => {
-        if (optionIdx === 0) {
-            newTag = $sessionStore!.tag
-        }
-        else if (optionIdx === 1) {
-            $sessionStore!.isPlaying? $sessionStore!.pauseSession() : $sessionStore!.playSession()
-        }
-        else if (optionIdx === 2) {
-            $sessionStore!.restartPeriod()
-        }
-        else if (optionIdx === 3) {
-            $sessionStore!.skipToNextPeriod()
-        }
-        else if (optionIdx === 4) {
-            $sessionStore!.cancelSession()
-        }
-        else {
-            $sessionStore!.finishSession()
-        }
-        isDropdownOpen = false
-    }
-
-    const handleEditSessionDoneBtnClicked = () => {
+    const editSessionDoneBtnClicked = () => {
         if (newTag.name != "") {
             $sessionStore!.editSesionTag(newTag)
             $sessionStore!.editSessionTitle(newTitle)
         }
-        
-        handleEditSessionCancelClicked()
+        editSessionCancelBtnClicked()
     }
-    const handleEditSessionCancelClicked = () => {
+    const editSessionCancelBtnClicked = () => {
         closeModal()
-
-        newTag = { 
-            name: $sessionStore!.tag.name, 
-            color: $sessionStore!.tag.color 
-        }
+        newTag = {  name: $sessionStore!.tag.name,  color: $sessionStore!.tag.color  }
     }
     const handleNewTagClicked = (idx: number) => {
         newTag = tags[idx]
@@ -78,81 +34,86 @@
     const handleCreateTagBtnClicked = () => {
         isTagListDropDownOpen = false
     }
-    const editTextInputHandler = (event: Event) => {
-        // todoToEditNewTitle = (event.target as HTMLInputElement).value
-    }
-
-    const handleSessionComponentClicked = (event: Event) => {
-        const target = event.target as HTMLElement
-        const className = target.classList.value
-    }
 </script>
 
-<Modal options={{ overflow: "visible"}} onClickOutSide={closeModal}>
+<Modal options={{ overflow: "visible", overflowY: "inherit" }} onClickOutSide={closeModal}>
     <div class={`edit-session-modal ${$themeState.isDarkTheme ? "edit-session-modal--dark" : "edit-session-modal--light"}`}>
         <h1 class="modal-bg__content-title">Edit Active Session</h1>
-        <h3 class="modal-bg__content-subheading">Title / Tag</h3>
-        <!-- Name -->
-        <div class="edit-session-modal__name-input" bind:this={sessionNameInput}>
-            <input 
-                spellcheck="false"
-                type="text"
-                placeholder="Afternoon Reading" 
-                on:focus={() => sessionNameInput.classList.add("edit-session-modal__name-input--focus")}
-                on:blur={() => sessionNameInput.classList.remove("edit-session-modal__name-input--focus")}
-                on:input={editTextInputHandler}
-                bind:value={newTitle}
-            >
-            <div class="edit-session-modal__name-input__divider"></div>
-            <div class="edit-session-modal__name-input-tag-dropdown-container dropdown-container">
-                <button class="edit-session-modal__name-input-tag-dropdown-btn dropdown-btn trans-btn" on:click={() => isTagListDropDownOpen = true }>
-                    <div class="edit-session-modal__name-input-btn-tag" style={`background-color: ${newTag.color}`}></div>
-                    <div class="dropdown-btn__title">
-                        {newTag.name}
-                    </div>
-                    <div class="dropdown-btn__arrows">
-                        <div class="dropdown-btn__arrows-triangle-up">
-                            <i class="fa-solid fa-chevron-up"></i>
+        <form on:submit={editSessionDoneBtnClicked} autocomplete="off">
+            <!-- Name -->
+            <label for="new-session-name-input" class="modal-bg__content-subheading">Title / Tag</label>
+            <div class="edit-session-modal__name-input" bind:this={sessionNameInput}>
+                <input 
+                    name="new-session-name"
+                    id="new-session-name-input"
+                    spellcheck="false"
+                    type="text"
+                    placeholder="Afternoon Reading" 
+                    on:focus={() => sessionNameInput.classList.add("edit-session-modal__name-input--focus")}
+                    on:blur={() => sessionNameInput.classList.remove("edit-session-modal__name-input--focus")}
+                    bind:value={newTitle}
+                >
+                <div class="edit-session-modal__name-input__divider"></div>
+                <div class="edit-session-modal__name-input-tag-dropdown-container dropdown-container">
+                    <button class="edit-session-modal__name-input-tag-dropdown-btn dropdown-btn trans-btn" on:click={() => isTagListDropDownOpen = true }>
+                        <div class="edit-session-modal__name-input-btn-tag" style={`background-color: ${newTag.color}`}></div>
+                        <div class="dropdown-btn__title">
+                            {newTag.name}
                         </div>
-                        <div class="dropdown-btn__arrows-triangle-down">
-                            <i class="fa-solid fa-chevron-down"></i>
+                        <div class="dropdown-btn__arrows">
+                            <div class="dropdown-btn__arrows-triangle-up">
+                                <i class="fa-solid fa-chevron-up"></i>
+                            </div>
+                            <div class="dropdown-btn__arrows-triangle-down">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
                         </div>
-                    </div>
-                </button>
-                {#if isTagListDropDownOpen}
-                    <ul use:clickOutside on:click_outside={() => isTagListDropDownOpen = false} class="dropdown-menu">
-                        {#each tags as tag, idx} 
-                            <li class={`dropdown-menu__option ${tag.name === newTag.name ? "dropdown-menu__option--selected" : ""}`}>
-                                <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
-                                    <div class="edit-session-modal__name-input-btn-tag dropdown-menu__option-icon" style={`background-color: ${tag.color}`}></div>
-                                    <p>{tag.name}</p>
-                                    <i class="fa-solid fa-check"></i>
+                    </button>
+                    {#if isTagListDropDownOpen}
+                        <ul use:clickOutside on:click_outside={() => isTagListDropDownOpen = false} class="dropdown-menu">
+                            {#each tags as tag, idx} 
+                                <li class={`dropdown-menu__option dropdown-menu__option--has-right-icon ${tag.name === newTag.name ? "dropdown-menu__option--selected" : ""}`}>
+                                    <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
+                                        <div 
+                                            class="edit-session-modal__name-input-btn-tag dropdown-menu__option-icon" 
+                                            style={`background-color: ${tag.color}`}
+                                        >
+                                        </div>
+                                        <p>{tag.name}</p>
+                                        {#if tag.name === newTag.name}
+                                            <div class="dropdown-menu__option-icon dropdown-menu__option-icon--right">
+                                                <i class="fa-solid fa-check"></i>
+                                            </div>
+                                        {/if}
+                                    </button>
+                                </li>
+                            {/each}
+                            <li class="dropdown-menu__new-option-container">
+                                <div class="divider divider--thin"></div>
+                                <button on:click={handleCreateTagBtnClicked}>
+                                    <span>+</span>New Tag
                                 </button>
                             </li>
-                        {/each}
-                        <li class="dropdown-menu__new-option-container">
-                            <div class="divider divider--thin"></div>
-                            <button on:click={handleCreateTagBtnClicked}>
-                                <span>+</span>New Tag
-                            </button>
-                        </li>
-                    </ul>
-                {/if}
+                        </ul>
+                    {/if}
+                </div>
             </div>
-        </div>
-        <div class="edit-session-modal__buttons-container">
-            <button 
-                disabled={newTitle === "" || newTitle.length >= MAX_SESSION_NAME_LENGTH} 
-                class="edit-session-modal__done-btn fill-btn" 
-                on:click={handleEditSessionDoneBtnClicked}>
-                    Save Changes
-            </button>
-            <button 
-                class="edit-session-modal__cancel-btn unfill unfill--gray" 
-                on:click={handleEditSessionCancelClicked}>
-                    Cancel
-            </button>
-        </div>
+            <div class="edit-session-modal__buttons-container">
+                <button 
+                    disabled={newTitle === "" || newTitle.length >= MAX_SESSION_NAME_LENGTH} 
+                    class="edit-session-modal__done-btn fill-btn" 
+                    type="submit"
+                >
+                        Save Changes
+                </button>
+                <button 
+                    class="edit-session-modal__cancel-btn unfill unfill--gray" 
+                    on:click={editSessionCancelBtnClicked}
+                >
+                        Cancel
+                </button>
+            </div>
+        </form>
     </div>
 </Modal>
 
@@ -189,6 +150,10 @@
             @include trans-btn-dark-styling;
         }
         /* Dark Themes Adjustments */
+        &--dark label {
+            font-weight: 400;
+            color: rgba(var(--textColor1), 0.55);
+        }
         &--dark .dropdown-menu {
             border: 1px solid rgba(60, 60, 60, 0.1);
             @include dropdown-menu-dark;
@@ -204,8 +169,9 @@
             @include dropdown-btn-dark;
         }
 
-        h3 {
+        label {
             margin: 20px 0px 10px 0px;
+            display: inline-block;
         }
         /* Name Input */
         &__name-input { 
@@ -250,7 +216,14 @@
                 top: 40px;
                 width: 100px;
                 &__option {
+                    &--selected {
+                        background-color: red;
+                    }
+                    &--selected p {
+                        width: 58% !important;
+                    }
                     p {
+                        width: 70%;
                         margin-left: 3px;
                     }
                     span {

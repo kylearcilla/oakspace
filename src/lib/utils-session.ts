@@ -1,46 +1,81 @@
-import { SessionState } from "./enums"
-import type { Session } from "./pom-session"
+import { ProgressVisualPartType, SessionState } from "./enums"
+import { Session } from "./pom-session"
 
-type BacklineColorOptions = {
-    dotted: {
-        default: string,
-        active: string
-    },
-    solid: {
-        default: string,
-        active: string
-    },
-}
+/* New Session Input */
+export const MAX_SESSION_NAME_LENGTH = 18
+export const MAX_TODO_NAME_LENGTH = 15
+export const FOCUS_TIMES_ARR = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
+export const BREAK_TIMES_ARR = [5, 10, 15, 20, 25, 30]
 
-export const DEFAULT_SESSION_INPUTS: NewSessionUserInput = {
+export const DEFAULT_SESSION_INPUTS: SessionData = {
     name: "",
-    tag: {
-        name: "Korean",
-        color: "#C7C4AB"
-    },
-    pomPeriods: 2,
+    tag: { name: "Korean", color: "#C7C4AB" },
     pomTime: 25,
+    pomPeriods: 2,
     breakTime: 5,
+    startTime: new Date(),
+    isPlaying: true,
+    endTime: null,
+    calculatedEndTime: new Date(),
+    totalElapsedTime: "",
+    timePeriodString: "",
+    currentIndex: 0,
+    currentPomPeriod: 0,
+    lastFinishedPeriodIdx: -1,
+    sessionResult: null,
     todos: [],
-    startTime: null,
-    calculatedEndTime: null,
-    totalElapsedTime: null,
-    timePeriodString: null
+    todosCheckedCount: 0,
+    pomMessage: "Focus Time",
+    state: SessionState.FOCUSING,
+    result: null,
+    currentTime: { minutes: 0, seconds: 0 },
+    userFocusTimeSecs: 0,
+    userBreakTimeSecs: 0,
+    currentSessionTimeSecs: 0,
+    sessionDurationMins: 0
 }
 
-enum SemgnentType {
-    FOCUS, BREAK, CHECKPOINT
-}
-type Segment = {
-    type: SemgnentType
-    offSetPerc: number,
-    widthPerc: number | null, 
-    periodIdx: number,
-    segmentIdx: number
+/* Active Session Progress Visualizer */
+export const HEADER_PROGRESS_COLOR_1 = "headerProgressColor1" as keyof ColorThemeProps
+export const HEADER_PROGRESS_COLOR_2 = "headerProgressColor2" as keyof ColorThemeProps 
+export const HEADER_TRACK_COLOR_1 = "headerTrackColor1" as keyof ColorThemeProps
+export const HEADER_TRACK_COLOR_2 = "headerTrackColor2" as keyof ColorThemeProps
+export const BASE_PROGRESS_COLOR_1 = "baseProgressColor1" as keyof ColorThemeProps
+export const BASE_PROGRESS_COLOR_2 = "baseProgressColor2" as keyof ColorThemeProps
+export const BASE_TRACK_COLOR_1 = "baseTrackColor1" as keyof ColorThemeProps
+export const BASE_TRACK_COLOR_2 = "baseTrackColor2" as keyof ColorThemeProps
+
+const CHECKPOINT_INNER_CIRCLE_NAME = "session-progress__checkpoint-inside"
+
+
+/**
+ * Continue a session if there was one.
+ */
+export const initSession = () => {
+    if (!doesSessionExist()) return
+
+    const sessionData: SessionData = {
+        ...JSON.parse(localStorage.getItem("session")!),
+        todos: JSON.parse(localStorage.getItem("todos")!)
+    }
+
+    new Session(sessionData)
 }
 
-export const createProgressSegments = (sess: Session, totalMins: number) => {
-    let segments: Segment[] = []
+/**
+ * @returns  See if a user has previously made a new session.
+ */
+export const doesSessionExist = () => localStorage.getItem("session") != null
+
+
+/**
+ * Progress visual parts is made up of different parts. Each period is defined by a progress line, book-ened by checkpoints.
+ * @param sess           Currrent session.
+ * @param totalMins      Total length of session in minutes.
+ * @returns              Parts of progress visual component.
+ */
+export const makeProgressVisualParts = (sess: Session, totalMins: number) => {
+    let segments: ProgressVisualPart[] = []
 
     const sessionTimePercent = (sess.pomTime / totalMins) * 100
     const breakTimePercent = (sess.breakTime / totalMins) * 100
@@ -49,32 +84,33 @@ export const createProgressSegments = (sess: Session, totalMins: number) => {
     let currPeriodIdx = 0
     let currSegmentIdx = 0
 
+    // Push focus + checkpoint + break + checkpoint
     for (let i = 0; i < sess.pomPeriods; i++) {
         
-        // push: session segment
+        // push: focus part
         segments.push({ 
-            type: SemgnentType.FOCUS, offSetPerc: nextOffSetPerc, 
+            type: ProgressVisualPartType.FOCUS, offSetPerc: nextOffSetPerc, 
             widthPerc: sessionTimePercent, periodIdx: currPeriodIdx, segmentIdx: currSegmentIdx++
         })
 
         if (i === sess.pomPeriods - 1) break
         
-        // push: checkpoint + break segment + checkpoint
+        // push: checkpoint + break part + checkpoint
         nextOffSetPerc += sessionTimePercent
 
         segments.push({ 
-            type: SemgnentType.CHECKPOINT, offSetPerc: nextOffSetPerc, 
+            type: ProgressVisualPartType.CHECKPOINT, offSetPerc: nextOffSetPerc, 
             widthPerc: null, periodIdx: currPeriodIdx++, segmentIdx:currSegmentIdx++
          })
         segments.push({ 
-            type: SemgnentType.BREAK, offSetPerc: nextOffSetPerc, 
+            type: ProgressVisualPartType.BREAK, offSetPerc: nextOffSetPerc, 
             widthPerc: breakTimePercent, periodIdx: currPeriodIdx, segmentIdx: currSegmentIdx++
         })
         
         nextOffSetPerc += breakTimePercent
 
         segments.push({ 
-            type: SemgnentType.CHECKPOINT, offSetPerc: nextOffSetPerc, 
+            type: ProgressVisualPartType.CHECKPOINT, offSetPerc: nextOffSetPerc, 
             widthPerc: null, periodIdx: currPeriodIdx++, segmentIdx: currSegmentIdx++
         })
     }
@@ -82,19 +118,22 @@ export const createProgressSegments = (sess: Session, totalMins: number) => {
     return segments
 }
 
-const CHECKPOINT_INSIDE_NAME = "session-progress__checkpoint-inside"
-
-const extractElements = (backLineElement: HTMLElement) => {
-    const segmentIdx = parseInt(backLineElement.id)
+/**
+ * From the hovered over progress line, get the svg path element and elements that are attached to the line (checkpoints & their inner circles)
+ * @param progressLineElement   The progress line element hovered over.
+ * @returns                     Progress line path element, checkpoints and their inner circles.
+ */
+const extractElements = (progressLineElement: HTMLElement) => {
+    const segmentIdx = parseInt(progressLineElement.id)
 
     const prevCheckPoint = document.getElementById(`${segmentIdx - 1}`) as HTMLElement
-    const prevCheckPointInnerCircle = !prevCheckPoint ? null : prevCheckPoint.getElementsByClassName(CHECKPOINT_INSIDE_NAME)[0] as HTMLElement
+    const prevCheckPointInnerCircle = !prevCheckPoint ? null : prevCheckPoint.getElementsByClassName(CHECKPOINT_INNER_CIRCLE_NAME)[0] as HTMLElement
 
     const nextCheckPoint = document.getElementById(`${segmentIdx + 1}`) as HTMLElement
-    const nextCheckPointInnerCircle = !nextCheckPoint ? null : nextCheckPoint.getElementsByClassName(CHECKPOINT_INSIDE_NAME)[0] as HTMLElement
+    const nextCheckPointInnerCircle = !nextCheckPoint ? null : nextCheckPoint.getElementsByClassName(CHECKPOINT_INNER_CIRCLE_NAME)[0] as HTMLElement
 
     return [
-        (backLineElement.getElementsByClassName("session-progress__back-line-svg")[0] as HTMLElement).firstChild as SVGPathElement,
+        (progressLineElement.getElementsByClassName("session-progress__back-line-svg")[0] as HTMLElement).firstChild as SVGPathElement,
         prevCheckPoint ?? null,
         prevCheckPointInnerCircle,
         nextCheckPoint ?? null,
@@ -102,6 +141,12 @@ const extractElements = (backLineElement: HTMLElement) => {
     ]
 }
 
+/**
+ * Color the elements of the hovered over progress segment (lines and checkpoints)
+ * @param elements       Hovered over progress segment: progress line and checkpoints.
+ * @param color          New color of the elements.
+ * @param hasFinished    If finished checkpoint's background color will be colored instead of the border.
+ */
 const colorElements = (elements: (HTMLElement | SVGPathElement | null)[], color: string, hasFinished: boolean) => {
     const [path, prevCheckPoint, prevCheckPointInnerCircle, nextCheckPoint, nextCheckPointInnerCircle] = elements
 
@@ -117,26 +162,68 @@ const colorElements = (elements: (HTMLElement | SVGPathElement | null)[], color:
     }
 }
 
-export const onMouseOver = (event: Event, colorOptions: BacklineColorOptions) => {
-    const backLineElement = event.target as HTMLElement
-    const className = backLineElement.classList.value
-    if (backLineElement.tagName.toLocaleUpperCase() === "SVG" || !className.includes("back-line")) return 
+/**
+ * Get the active (when hovered-over) coloring for solid or dotted progress lines, using either header or base styling.
+ * @param hasFinished    If the progress line is solid (finished) or dotted (unfinished)
+ * @param isForHeader    If the progress visualizer is currently in the header or the base.
+ */
+export const getActiveColor = (hasFinished: boolean, isForHeader: boolean) => {
+    if (isForHeader) {
+        return hasFinished ? `var(--${HEADER_PROGRESS_COLOR_2})` : `var(--${HEADER_TRACK_COLOR_2})`
+    }
+    else {
+        return hasFinished ? `var(--${BASE_PROGRESS_COLOR_2})` : `var(--${BASE_TRACK_COLOR_2})`
+    }
+}
+
+/**
+ * Get the default coloring for solid or dotted progress lines, using either header or base styling.
+ * @param hasFinished    If the progress line is solid (finished) or dotted (unfinished)
+ * @param isForHeader    If the progress visualizer is currently in the header or the base.
+ */
+export const getDefaultColor = (hasFinished: boolean, isForHeader: boolean) => {
+    if (isForHeader) {
+        return hasFinished ? `var(--${HEADER_PROGRESS_COLOR_1})` : `var(--${HEADER_TRACK_COLOR_1})`
+    }
+    else {
+        return hasFinished ? `var(--${BASE_PROGRESS_COLOR_1})` : `var(--${BASE_TRACK_COLOR_1})`
+    }
+}
+
+/**
+ * If mouse hovers over a progress line, change the coloring of the line and the bookend checkpoints from default colors to active colors.
+ * Default and acive colors are different for finished / unfinished (solid & dotted respectively) progress lines.
+ * They are also different for header and home components.
+ * @param event           MouseEvent
+ * @param isForHeader     If progress component is located in the header or the base component.
+ */
+export const onMouseOverProgressLine = (event: Event, isForHeader: boolean) => {
+    const progressLineElement = event.target as HTMLElement
+    const className = progressLineElement.classList.value
+    if (progressLineElement.tagName.toLocaleUpperCase() === "SVG" || !className.includes("back-line")) return 
 
     const hasFinished = className.includes("finished")
-    const color = hasFinished ? `${colorOptions.solid.active}` : `${colorOptions.dotted.active}`
+    const color = getActiveColor(hasFinished, isForHeader)
 
-    const elements = extractElements(backLineElement)
+    const elements = extractElements(progressLineElement)
     colorElements(elements, color, hasFinished)
 }
 
-export const onMouseLeave = (event: Event, colorOptions: BacklineColorOptions) => {
-    const backLineElement = event.target as HTMLElement
-    const className = backLineElement.classList.value
-    if (backLineElement.tagName.toLocaleUpperCase() === "SVG" || !className.includes("back-line")) return 
+/**
+ * If mouse hovers over a progress line, change the coloring of the line and the bookend checkpoints from active colors to default colors.
+ * Default and acive colors are different for finished / unfinished (solid & dotted respectively) progress lines.
+ * They are also different for header and home components.
+ * @param event           MouseEvent
+ * @param isForHeader     If progress component is located in the header or the base component.
+ */
+export const onMouseLeaveProgressLine = (event: Event, isForHeader: boolean) => {
+    const progressLineElement = event.target as HTMLElement
+    const className = progressLineElement.classList.value
+    if (progressLineElement.tagName.toLocaleUpperCase() === "SVG" || !className.includes("back-line")) return 
 
     const hasFinished = className.includes("finished")
-    const color = hasFinished ? `${colorOptions.solid.default}` : `${colorOptions.dotted.default}`
+    const color = getDefaultColor(hasFinished, isForHeader)
 
-    const elements = extractElements(backLineElement)
+    const elements = extractElements(progressLineElement)
     colorElements(elements, color, hasFinished)
 }

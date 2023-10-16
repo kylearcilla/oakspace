@@ -1,56 +1,43 @@
 <script lang="ts">
-	import { SessionState } from "$lib/enums";
+    import { onMount } from "svelte"
+	import { ProgressVisualPartType, SessionState } from "$lib/enums"
 	import { sessionStore, themeState } from "$lib/store"
-	import { getThemeStyling } from "$lib/utils-appearance";
-	import { createProgressSegments, onMouseLeave, onMouseOver } from "$lib/utils-session";
-	import { onMount } from "svelte"
-
-    enum SemgnentType {
-        FOCUS, BREAK, CHECKPOINT
-    }
-    type Segment = {
-        type: SemgnentType
-        offSetPerc: number,
-        widthPerc: number | null, 
-        periodIdx: number,
-        segmentIdx: number
-    }
-    type BacklineColorOptions = {
-        dotted: {
-            default: string,
-            active: string
-        },
-        solid: {
-            default: string,
-            active: string
-        },
-    }
-    let backLineColorOptions: BacklineColorOptions
+	import { 
+            makeProgressVisualParts, onMouseLeaveProgressLine, onMouseOverProgressLine,
+            BASE_PROGRESS_COLOR_1, BASE_TRACK_COLOR_1, HEADER_PROGRESS_COLOR_1, HEADER_TRACK_COLOR_1
+    } from "$lib/utils-session"
 
     export let isForHeader: boolean = true
 
     let progressLineElement: HTMLElement | null = null
     let containerElement: HTMLElement | null = null
 
-    let segments: Segment[] = []
+    let segments: ProgressVisualPart[] = []
     let lastFinishedPeriodIdx = -1
 
-    const GRADIENT_DEFAULT_WIDTH = 40
-    const RIGHT_GRADIENT_SHIFT_POINT = 50
+    let GRADIENT_DEFAULT_WIDTH = 0
+    const HEADER_DEFAULT_GRADIENT_WIDTH = 40
+    const BASE_DEFAULT_GRADIENT_WIDTH = 100
+    const RIGHT_GRADIENT_SHIFT_POINT = GRADIENT_DEFAULT_WIDTH + 10
     const RIGHT_GRADIENT_DISTANCE_FROM_BALL = 10
+    
     let leftGradientWidth = GRADIENT_DEFAULT_WIDTH
     let rightGradientWidth = GRADIENT_DEFAULT_WIDTH
-    let totalSecs = 0
-    let totalMins = 0
+
+    let currTimeSecs = 0
+    let sessDurationMins = 0
+    let state: SessionState = SessionState.EMPTY
+    let startTimeStr = ""
+    let endTimeStr = ""
 
     $: {
-        totalSecs = $sessionStore!.totalSeconds
-        totalMins = $sessionStore!.totalMins
+        currTimeSecs = $sessionStore!.currentSessionTimeSecs
+        sessDurationMins = $sessionStore!.sessionDurationMins
         lastFinishedPeriodIdx = $sessionStore!.lastFinishedPeriodIdx
+        state = $sessionStore!.state
 
-        upateGradientWidth()
+        requestAnimationFrame(upateGradientWidth)
     }
-
 
     const upateGradientWidth = () => {
         if (!progressLineElement || !containerElement) return
@@ -61,9 +48,10 @@
 
         // Left Gradient
         leftGradientWidth = Math.min(GRADIENT_DEFAULT_WIDTH, progressWidth + 15)
+        leftGradientWidth = state === SessionState.FINISHED ? GRADIENT_DEFAULT_WIDTH : leftGradientWidth
 
         // Right Gradient
-        if ($sessionStore!.state === SessionState.FINISHED) {
+        if (state === SessionState.FINISHED) {
             rightGradientWidth = 0
         }
         else if (ballDinstanceFromEnd <= RIGHT_GRADIENT_SHIFT_POINT) {
@@ -74,31 +62,25 @@
         }
     }
 
-    const _onMouseOver = (event: Event) => onMouseOver(event, backLineColorOptions)
-    const _onMouseLeave = (event: Event) => onMouseLeave(event, backLineColorOptions)
+    const _onMouseOverProgressLine = (event: Event) => onMouseOverProgressLine(event, isForHeader)
+    const _onMouseLeaveProgressLine = (event: Event) => onMouseLeaveProgressLine(event, isForHeader)
 
     onMount(() => {
         if (!$sessionStore) return
 
-        segments = createProgressSegments($sessionStore!, totalMins)
+        const timePeriod = $sessionStore!.timePeriodString.split(" - ")
+        startTimeStr = timePeriod[0]
+        endTimeStr = timePeriod[1]
+
+        segments = makeProgressVisualParts($sessionStore!, sessDurationMins)
         upateGradientWidth()
 
-        backLineColorOptions = {
-            solid: {
-                default: getThemeStyling("headerSessionBaseColor"),
-                active: getThemeStyling("headerSessionAccentColor1")
-            },
-            dotted: {
-                default: getThemeStyling("headerSessionAccentColor3"),
-                active: getThemeStyling("headerSessionAccentColor2")
-            }
-        }
-
+        GRADIENT_DEFAULT_WIDTH = isForHeader ? HEADER_DEFAULT_GRADIENT_WIDTH : BASE_DEFAULT_GRADIENT_WIDTH
     })
 </script>
 
-<div class={`session-progress ${isForHeader ? "session-progress--header" : ""} ${$themeState?.isDarkTheme ? "" : "session-progress--light"}`}>
-    <span class="session-progress__time session-progress__time--start">1:34 PM</span>
+<div class={`session-progress ${!isForHeader ? "session-progress--home" : ""} ${$themeState?.isDarkTheme ? "" : "session-progress--light"}`}>
+    <span class="session-progress__time session-progress__time--start">{startTimeStr}</span>
     <div class="session-progress__container" bind:this={containerElement}>
         <div 
             class="gradient-container gradient-container--left"
@@ -106,11 +88,17 @@
         >
         </div>
         {#each segments as segment}
-            {#if $sessionStore && segment.type === SemgnentType.CHECKPOINT}
+            {#if $sessionStore && segment.type === ProgressVisualPartType.CHECKPOINT}
                 <div 
                     id={`${segment.segmentIdx}`}
-                    class={`session-progress__checkpoint ${lastFinishedPeriodIdx >= 0 && segment.periodIdx <= lastFinishedPeriodIdx ? "session-progress__checkpoint--finished" : ""}`} 
-                    style={`left: ${segment.offSetPerc}%;`}
+                    class={`session-progress__checkpoint ${state === SessionState.FINISHED || segment.periodIdx <= lastFinishedPeriodIdx ? "session-progress__checkpoint--finished" : ""}`} 
+                    style={`
+                                left: ${segment.offSetPerc}%;
+                                ${state === SessionState.FINISHED || segment.periodIdx <= lastFinishedPeriodIdx ? 
+                                        `background-color: var(--${isForHeader ? HEADER_PROGRESS_COLOR_1 : BASE_PROGRESS_COLOR_1 })` : 
+                                        ""
+                                }
+                          `}
                 >
                     <div class="session-progress__checkpoint-container">
                         <div class="session-progress__checkpoint-inside"></div>
@@ -122,27 +110,32 @@
             {:else if $sessionStore}
                 <!-- svelte-ignore a11y-mouse-events-have-key-events -->
                 <div 
-                    class={`session-progress__back-line ${lastFinishedPeriodIdx >= 0 && segment.periodIdx <= lastFinishedPeriodIdx ? "session-progress__back-line--finished" : ""}`}
+                    class={`session-progress__back-line ${state === SessionState.FINISHED || segment.periodIdx <= lastFinishedPeriodIdx ? "session-progress__back-line--finished" : ""}`}
                     id={`${segment.segmentIdx}`}
                     style={`width: ${segment.widthPerc}%; left: ${segment.offSetPerc}%;`}
-                    on:mouseover={(e) => _onMouseOver(e)}
-                    on:mouseleave={(e) => _onMouseLeave(e)}
+                    on:mouseover={(e) => _onMouseOverProgressLine(e)}
+                    on:mouseleave={(e) => _onMouseLeaveProgressLine(e)}
                 >
                     <svg class="session-progress__back-line-svg" xmlns="http://www.w3.org/2000/svg" width="100%" height="1.5" fill="none">
                         <path 
-                            d="M0 1.1 L300 0"
-                            stroke={`${lastFinishedPeriodIdx >= 0 && segment.periodIdx <= lastFinishedPeriodIdx ? backLineColorOptions.solid.default :  backLineColorOptions.dotted.default}`}
-                            stroke-width={`${lastFinishedPeriodIdx >= 0 && segment.periodIdx <= lastFinishedPeriodIdx ? "2" : "1.2"}`}
-                            stroke-dasharray={`${lastFinishedPeriodIdx >= 0 && segment.periodIdx <= lastFinishedPeriodIdx ? "0" : "2 2"}`}
+                            d="M0 1 L300 1"
+                            stroke={`
+                                        ${state === SessionState.FINISHED || segment.periodIdx <= lastFinishedPeriodIdx ? 
+                                                `var(--${isForHeader ? HEADER_PROGRESS_COLOR_1 : BASE_PROGRESS_COLOR_1})` :  
+                                                `var(--${isForHeader ? HEADER_TRACK_COLOR_1 : BASE_TRACK_COLOR_1})`
+                                         }
+                                   `}
+                            stroke-width={`${state === SessionState.FINISHED || segment.periodIdx <= lastFinishedPeriodIdx ? "2" : "1.2"}`}
+                            stroke-dasharray={`${state === SessionState.FINISHED || segment.periodIdx <= lastFinishedPeriodIdx ? "0" : "2 2"}`}
                         />
                     </svg>
                     <div class="session-progress__back-line-icon">
-                        {#if segment.type === SemgnentType.FOCUS}
+                        {#if segment.type === ProgressVisualPartType.FOCUS}
                             <i class="fa-brands fa-readme"></i>
-                            <span>{$sessionStore.pomTime} m</span>
+                            <span>{$sessionStore.pomTime}:00</span>
                         {:else}
                             <i class="fa-solid fa-seedling"></i>
-                            <span>{$sessionStore.breakTime} m</span>
+                            <span>{$sessionStore.breakTime}:00</span>
                         {/if}
                     </div>
                 </div>
@@ -151,13 +144,13 @@
         {#if $sessionStore?.currentTime}
             <div 
                 class="session-progress__progress-line" 
-                style={`width: ${(((totalSecs / 60) / totalMins) * 100) + 0.7}%`}
+                style={`width: ${state === SessionState.FINISHED ? "100" : ((((currTimeSecs / 60) / sessDurationMins) * 100) + 0.4)}%`}
                 bind:this={progressLineElement}
             >
             </div>
             <div 
                 class="session-progress__progress-ball" 
-                style={`left: ${(((totalSecs / 60) / totalMins) * 100) + 0.7}%`}>
+                style={`left: ${state === SessionState.FINISHED ? "100" : ((((currTimeSecs / 60) / sessDurationMins) * 100) + 0.4)}%`}>
             </div>
         {/if}
         <div 
@@ -166,7 +159,7 @@
         >
         </div>
     </div>
-    <span class="session-progress__time session-progress__time--end">2:34 PM</span>
+    <span class="session-progress__time session-progress__time--end">{endTimeStr}</span>
 </div>
 
 
@@ -177,26 +170,89 @@
         position: relative;
         height: 10px;
 
-        &--light {
-
+        .gradient-container {
+            visibility: visible;
+            opacity: 1;
+            height: 5px;
+            z-index: 5;
+            top: 40%;
+            
+            &--left {
+                background: linear-gradient(90deg, var(--headerElementBgColor) 0%, transparent);
+            }
+            &--right {
+                width: 40px;
+                background: linear-gradient(270deg, var(--headerElementBgColor) 20%, transparent);
+            }
         }
-        // &:hover &__time {
-        //     opacity: 1;
-        //     visibility: visible;
-        // }
+
+        &--home {
+            .gradient-container {
+                &--left {
+                    background: linear-gradient(90deg, var(--primaryBgColor) 0%, transparent);
+                }
+                &--right {
+                    width: 40px;
+                    background: linear-gradient(270deg, var(--primaryBgColor) 20%, transparent);
+                }
+            }
+        }
+        &--home &__time {
+            opacity: 1;
+            visibility: visible;
+        }
+        &--home &__back-line-icon {
+            top: -7px;
+            font-size: 1.15rem;
+        }
+        &--home &__checkpoint {
+            @include circle(8px);
+            border: 1px solid var(--baseTrackColor1);
+            background-color: var(--primaryBgColor);
+            
+            &--finished {
+                margin-bottom: -1px;
+                @include circle(5px);
+                background-color: var(--baseProgressColor1);
+            }
+            &-inside {
+                background-color: var(--baseTrackColor1);
+                @include circle(2px);
+            }
+            &-check-mark {
+                top: -18px;
+            }
+            i {
+                font-size: 1.2rem;
+            }
+        }
+        &--home &__progress-line {
+            background-color: var(--baseProgressColor1);
+        }
+        &--home &__progress-ball {
+            margin-top: 1px;
+            background-color: var(--baseProgressColor1);
+        }
+        &--home &__checkpoint {
+            background-color: var(--primaryBgColor);
+            border: 1px solid var(--baseTrackColor1);
+        }
+        &--light &__back-line-icon span {
+            font-weight: 600;
+        }
 
         &__time {
             opacity: 0;
             visibility: hidden;
-            font-weight: 300;
-            font-size: 0.85rem;
-            color: rgba(var(--textColor1), 0.17);
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: rgba(var(--textColor1), 0.3);
 
             &--start {
-                @include pos-abs-top-left-corner(11px, 0px);
+                @include pos-abs-top-left-corner(22px, 7px);
             }
             &--end {
-                @include pos-abs-top-right-corner(11px, 0px);
+                @include pos-abs-top-right-corner(22px, 7px);
             }
         }
         &__container {
@@ -251,40 +307,41 @@
             }
         }
         &__progress-line {
-            background-color: var(--headerSessionBaseColor);
+            background-color: var(--headerProgressColor1);
             width: 20%;
             height: 1.5px;
             @include pos-abs-top-left-corner(50%, 0px);
             z-index: 2;
         }
         &__progress-ball {
-            background-color: var(--headerSessionBaseColor);
+            background-color: var(--headerProgressColor1);
             @include circle(6px);
             @include abs-center;
-            box-shadow: 0px 0px 9px 2px rgba(255, 255, 255, 0.18);
+            box-shadow: var(--progressBallGlow);
             z-index: 200;
         }
         &__checkpoint {
             @include circle(7px);
-            border: 1px solid var(--headerSessionAccentColor3);
+            border: 1px solid var(--headerTrackColor1);
+            background-color: var(--headerElementBgColor);
             position: absolute;
             transition: 0.1s ease-in-out;
             z-index: 7;
-            margin-left: -1px;
+            margin: 1px 0px 0px -1px;
             
             &-container {
                 @include flex-container(center, center);
-                background-color: var(--headerElementBgColor);
                 width: 100%;
                 height: 100%;
                 border-radius: 100%;
             }
             &-inside {
                 @include circle(2px);   
-                background-color: var(--headerSessionAccentColor3);
+                background-color: var(--headerTrackColor1);
             }
             &-check-mark {
                 visibility: hidden;
+                color: var(--headerProgressColor1);
                 opacity: 0;
                 z-index: 0;
                 position: absolute;
@@ -295,9 +352,9 @@
                 }
             }
             &--finished {
-                @include circle(5px);
-                background-color: white;
-                border: 0;
+                @include circle(4px);
+                background-color: var(--headerProgressColor1);
+                border: 0 !important;
             }
             &--finished &-container {
                 background-color: transparent;
@@ -309,22 +366,6 @@
             &--finished &-inside {
                 opacity: 0;
                 visibility: hidden;
-            }
-        }
-
-        .gradient-container {
-            visibility: visible;
-            opacity: 1;
-            height: 5px;
-            z-index: 5;
-            top: 40%;
-            
-            &--left {
-                background: linear-gradient(90deg, var(--headerElementBgColor) 0%, transparent);
-            }
-            &--right {
-                width: 40px;
-                background: linear-gradient(270deg, var(--headerElementBgColor) 20%, transparent);
             }
         }
     }

@@ -1,6 +1,8 @@
 /* Actual Active Session Component */
 $bento-box-padding: 8px;
+$todo-padding-left: 8px;
 
+/* Styling is for header component by default, base styling is Located in the base component */
 .active-session {
     .unfill {
         @include unfill-btn-ficus-styling(var(--fgColor1));
@@ -27,21 +29,11 @@ $bento-box-padding: 8px;
             font-weight: 300;
         }
     }
-    &--dark  &__header-pom-timer-capsule {
-        box-shadow: none;
-        color: rgba(var(--textColor1), 1);
-        p {
-            font-weight: 400;
-        }
-        span {
-            font-weight: 200;
-        }
-    }
     &--dark &__tasks-header h4 {
         color: rgba(var(--textColor1), 0.5);
         font-weight: 400;
     }
-    &--dark &__tasks-header p {
+    &--dark &__tasks-header span {
         font-weight: 400;
     }
     &--dark &__tasks-new-task-btn {
@@ -52,6 +44,32 @@ $bento-box-padding: 8px;
     }
     &--dark &__pom-timer h1 {
         font-weight: 400;
+    }
+    &--dark &__pom-message {
+        font-weight: 300;
+        color: rgba(var(--textColor1), 0.4);
+    }
+
+    button.unfill--oval {
+        color: rgb(var(--fgColor2));
+        border-color: rgb(var(--fgColor2));
+        font-size: 1.05rem;
+        
+        span {
+            margin-left: 5px;
+        }
+        &:hover {
+            background-color: rgb(var(--fgColor2));
+            color: var(--secondaryBgColor);
+        }
+    }
+
+    .dropdown-menu {
+        &__option {
+            p {
+                text-align: left;
+            }
+        }
     }
 
     &__bento-box {
@@ -65,20 +83,13 @@ $bento-box-padding: 8px;
     &__top-container {
         width: 100%;
         display: block;
+        text-align: center;
     }
     
     /* Header */
     &__header {
         @include flex-container(flex-start, space-between);
-    }
-    &__header-left {
-    }
-    &__header-right {
-        margin-top: -15px;
-        @include flex-container(center, _);
-    }
-    &__header-title-tag {
-        @include flex-container(center, _);
+        padding-left: 9px;
     }
     &__header-session-name {
         display: flex;
@@ -92,7 +103,7 @@ $bento-box-padding: 8px;
         @include flex-container(center, _);
         margin-top: 5px;
         span {
-            font-size: 1.15rem;
+            font-size: 1.25rem;
             font-weight: 500;
             white-space: nowrap;
             color: rgba(var(--textColor1), 0.3);
@@ -110,58 +121,15 @@ $bento-box-padding: 8px;
         color: white;
         border-radius: 25px;
         font-size: 1.1rem;
-        padding: 2px 0px;
+        padding: 2px 12px;
         font-weight: 500;
         margin-top: 7px;
+        width: fit-content;
 
         span {
             @include elipses-overflow;
         }
     }
-    &__header-pom-timer-capsule {
-        background-color: var(--midPanelAccentColor3);
-        color: rgba(var(--textColor1), 0.6);
-        @include flex-container(center, _);
-        padding: 6px 14px;
-        border-radius: 20px;
-        margin-right: 5px;
-
-        i {
-            margin-right: 10px;
-            font-size: 1.3rem;
-            width: 17px;
-        }
-        p {
-            font-weight: 500;
-            font-size: 1.45rem;
-            width: 44px;
-        }
-        span {
-            font-weight: 500;
-            font-size: 1rem;
-        }
-    }
-    &__header-edit-button {
-        background-color: var(--midPanelAccentColor3);
-        @include center;
-        @include circle(22px);
-        box-shadow: none;
-
-        svg {
-            transition: 0.15s ease-in-out;
-            color: rgba(var(--textColor1), 0.4);
-            margin: -1px -2px 0px 0px;
-        }
-        &:hover {
-            background-color: var(--secondaryBgColor);
-            svg {
-                color: rgba(var(--textColor1), 0.7);
-            }
-        }
-        &:active {
-            transform: scale(0.96) !important;
-        }
-    }   
 
     /* Pomodoro Component */
     &__pom {
@@ -170,12 +138,11 @@ $bento-box-padding: 8px;
     }
     &__pom-details {
         margin-top: 0px;
-        text-align: center;
     }
     &__pom-message {
         display: block;
         margin-top: -15px;
-        font-weight: 400;
+        font-weight: 500;
         font-size: 1.2em;
         color: rgba(var(--textColor1), 0.42);
     }
@@ -186,31 +153,41 @@ $bento-box-padding: 8px;
             font-weight: 500;
             color: rgba(var(--textColor1), 0.85);
             display: inline-block;
-            max-width: 125px;
         }
+    }
+    &__conclude-btn-container {
+        margin-top: 20px;
+        width: 100%;
+        @include flex-container(center, center);
+    }
+    &__conclude-btn {
+        // margin: 20px 0px 0px 0px;
         span {
-            display: none;
-            color: rgba(var(--textColor1), 0.5);
+            padding-left: 7px;
+        }
+        &--finger span {
+            animation: moveBackAndForth 2s ease-in-out infinite;
+        }
+        &--flag span {
+            animation: rotation 1.5s ease-in-out infinite;
         }
     }
 
     /* Tasks Component */
     &__tasks {
         height: 100%;
-        width: 100%;
         margin-top: 20px;
     }
     &__tasks-header {
         @include flex-container(center, space-between);
         h4 {
-            margin: 2px 0px 5px 0px;
-            font-size: 1.3rem;
+            margin: 2px 0px 5px $todo-padding-left;
+            font-size: 1.45rem;
             font-weight: 600;
         }
-        p {
-            color: rgb(var(--textColor1), 1);
-            opacity: 0.35;
-            font-size: 1.25rem;
+        span {
+            color: rgb(var(--textColor1), 0.35);
+            font-size: 1.2rem;
             font-weight: 600;
             margin-bottom: 3px;
         }
@@ -245,7 +222,7 @@ $bento-box-padding: 8px;
         transition: 0.15s ease-in-out;
         opacity: 0.35;
         height: 33px;
-        margin: 4px 0px 8px 0px;
+        margin: 4px 0px 8px $todo-padding-left;
         font-size: 1.3rem;
         padding-right: 20px;
         @include flex-container(center, center);
@@ -280,7 +257,7 @@ $bento-box-padding: 8px;
         font-weight: 500;
         transition: 0.1s ease-in-out;
         height: 33px;
-        margin: 4px 0px 8px 0px;
+        margin: 4px 0px 8px $todo-padding-left;
         color: rgb(var(--textColor1), 0.7);
         border-bottom: 1.5px solid rgba(var(--fgColor2), 0);
         
@@ -326,19 +303,7 @@ $bento-box-padding: 8px;
         }
     }
     &__tasks-finish-session-btn {
-        color: rgb(var(--fgColor2));
-        border-color: rgb(var(--fgColor2));
         @include pos-abs-bottom-right-corner(0px, 0px);
-        font-size: 1.05rem;
-
-        span {
-            margin-left: 5px;
-        }
-
-        &:hover {
-            background-color: rgb(var(--fgColor2));
-            color: var(--secondaryBgColor);
-        }
     }
 }
 
@@ -346,17 +311,38 @@ $bento-box-padding: 8px;
 .active-session-todo {
     position: relative;
     @include flex-container(center, _);
+    border: 0.5px solid rgba(var(--textColor1), 0);
+    padding-left: $todo-padding-left;
+    border-radius: 15px;
 
     .divider {
         margin: 0px;
         background-color: rgba(var(--textColor1), 0.06);
         height: 0.5px;
-        @include pos-abs-bottom-left-corner(0px, 0px);
+        width: 99%;
+    }
+
+    &--light-mode {
+        &:focus {
+            background-color: rgba(0, 0, 0, 0.02) !important;
+            border: 0.5px solid rgba(var(--textColor1), 0.04);
+        }
+    }
+    &:focus {
+        outline: none;
+        background-color: rgba(200, 200, 200, 0.0085);
+        border: 0.5px solid rgba(var(--textColor1), 0.04);
+    }
+    &:focus .divider {
+        background-color: rgba(var(--textColor1), 0);
     }
 
     /* Default styling is Dark */
+    &--hide-divider .divider {
+        background-color: rgba(var(--textColor1), 0) !important;
+    }
     &--editing > &__right-container {
-        border: 0.5px solid rgba(var(--textColor1), 0.2);
+        border: 1px solid rgba(var(--textColor1), 0.04);
         border-radius: 12px;
         padding: 9px 12px 9px 2px !important;
         margin: 2px 0px;
@@ -388,7 +374,7 @@ $bento-box-padding: 8px;
     }
     &--light-mode &__dotted-line {
         border-left: 2px dotted rgb(var(--fgColor1));
-        left: 8px;
+        left: calc(8px + $todo-padding-left);
     }
     &--light-mode &__solid-line {
         &::after {
@@ -456,9 +442,9 @@ $bento-box-padding: 8px;
         transition: 0.2s ease-in-out;
         width: 1px;
         border-left: 1.45px dotted rgb(var(--fgColor1));
-        bottom: -10px;
+        bottom: -11px;
         height: 21px;
-        left: 7.7px;
+        left: calc(7.7px + $todo-padding-left);
     }
     &__solid-line {
         position: relative; 
@@ -487,10 +473,11 @@ $bento-box-padding: 8px;
     &__right-container {
         position: relative;
         width: 100%;
-        @include flex-container(center, space-between);
 
         form {
             width: 100%;
+            @include flex-container(center, space-between);
+            position: relative;
         }
         input {
             width: 90%;
@@ -504,6 +491,7 @@ $bento-box-padding: 8px;
         font-size: 1.2rem;
         font-weight: 200;
         color: rgba(var(--textColor1), 0.85);
+        width: fit-content;
         
         .strike {
             position: relative; 
@@ -536,8 +524,7 @@ $bento-box-padding: 8px;
         opacity: 0;
         padding: 0px 10px;
         margin: 0px;
-
-        @include pos-abs-top-right-corner(13px, -10px);
+        @include pos-abs-top-right-corner(13px, 10px);
 
         &:focus {
             opacity: 1 !important;
@@ -550,13 +537,17 @@ $bento-box-padding: 8px;
             margin-left: 8px;
             font-weight: 200;
         }
+        i, span {
+            color: rgb(var(--textColor1), 0.65);
+        }
     }
     &__edit-btn-container {
         display: flex;
         button {
             font-size: 1.12rem;
             transition: 0.12s ease-in-out;
-            font-weight: 200;
+            font-weight: 400;
+            color: rgb(var(--textColor1), 0.3);
         }
     }
     &__delete-btn {
@@ -590,5 +581,34 @@ $bento-box-padding: 8px;
         &::placeholder {
             opacity: 0.5;
         }
+    }
+}
+
+@keyframes moveBackAndForth {
+    0% {
+        transform: translateX(-1px);
+    }
+    50% {
+        transform: translateX(1.5px);
+    }
+    100% {
+        transform: translateX(-1px);
+    }
+}
+@keyframes rotation {
+    0% {
+        -webkit-transform: rotate(0deg);
+    }
+    25% {
+        -webkit-transform: rotate(25deg);
+    }
+    50% {
+        -webkit-transform: rotate(0deg);
+    }
+    75% {
+        -webkit-transform: rotate(-25deg);
+    }
+    100% {
+        -webkit-transform: rotate(0deg);
     }
 }

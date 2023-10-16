@@ -2,6 +2,7 @@
 	import { themeState } from "$lib/store";
 	import Modal from "../../components/Modal.svelte";
 
+    export let clearSession: () => void
 
 </script>
 
@@ -11,7 +12,7 @@
         <p class="canceled-session__text">
             Session not logged due to cancellation.
         </p>
-        <button class="canceled-session__ok-btn">
+        <button class="canceled-session__ok-btn" on:click={() => clearSession()}>
             OK
         </button>
     </div>
@@ -26,12 +27,15 @@
         @include flex-container(center, center);
         flex-direction: column;
 
-        &--light {
-            
+        &--light &__title {
+            font-weight: 600;
+        }
+        &--light &__text {
+            font-weight: 500;
         }
 
         &__title {
-            margin-bottom: 8px;
+            margin-bottom: 14px;
             font-size: 1.65rem;
             font-weight: 500;
         }
@@ -39,12 +43,14 @@
             font-size: 1.3rem;
             font-weight: 300;
             color: rgba(var(--textColor1), 0.5);
+            margin-bottom: 10px;
         }
         &__ok-btn {
-            margin-top: 40px;
+            margin-top: 10px;
             width: 65%;
             height: 32px;
             background-color: rgba(var(--fgColor1));
+            color: var(--modalBgColor);
             border-radius: 7px;
             font-size: 1.1rem;
             transition: 0.12s ease-in-out;

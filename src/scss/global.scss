@@ -19,6 +19,9 @@ a {
 li {
     list-style: none;
 }
+label {
+    display: inline-block;
+}
 body {
       background-color: #101012;
       font-family: "Manrope", sans-serif, Roboto;
@@ -782,7 +785,7 @@ $settings-modal-padding: 20px 25px 25px 25px;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 5000;
+    z-index: 100000;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -811,4 +814,8 @@ $settings-modal-padding: 20px 25px 25px 25px;
             color: rgba(var(--textColor1), 0.6);
         }
     }
+} 
+
+@function darken($color, $amount) {
+    @return mix(black, $color, $amount);
 }

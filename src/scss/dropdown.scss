@@ -19,14 +19,6 @@
         &--selected {
             background-color: rgba(45, 45, 45, 0.2) !important;
         }
-        button {
-            &:hover {
-                background-color: rgba(45, 45, 45, 0.2);
-            }
-            &:focus {
-                background-color: rgba(45, 45, 45, 0.2);
-            }
-        }
         p {
             font-weight: 300;
         }
@@ -113,7 +105,7 @@
     z-index: 1000;
     padding: 4px 3px 5px 3px;
     border-radius: 10px;
-    background-color: var(--dropdownMenuBgColor);
+    background-color: var(--dropdownMenuBgColor1);
     border: var(--bentoBoxBorder);
     box-shadow: var(--bentoBoxShadow);
     width: auto;
@@ -122,6 +114,25 @@
 
     &--hidden {
         display: none;
+    }
+    &--alt {
+        background-color: var(--dropdownMenuBgColor2);
+    }
+    &--alt &__option {
+        &--selected {
+            opacity: 1;
+            background-color: var(--dropdownMenuBgHoverColor2);
+        }   
+    }
+    &--alt &__option {
+        button {
+            &:hover {
+                background-color: var(--dropdownMenuBgHoverColor2);
+            }
+            &:focus {
+                background-color: var(--dropdownMenuBgHoverColor2);
+            }
+        }
     }
     
     &__option {
@@ -135,19 +146,24 @@
         overflow: hidden;
         cursor: pointer;
         transition: 0.15s ease-in-out;
+        position: relative;
         @include elipses-overflow;
         
         &--selected {
             opacity: 1;
-            background-color: rgba(220, 220, 220, 0.2);
-
-            button {
-                opacity: 1;
-                i {
-                    display: block !important;
-                }
+            background-color: var(--dropdownMenuBgHoverColor1);
+        }
+        &--selected button {
+            opacity: 1;
+            i {
+                display: block !important;
             }
         }
+
+        &--has-right-icon button p {
+            width: 58%;
+        }
+
         &:last-child {
             padding-bottom: 0px;
         }
@@ -172,8 +188,8 @@
             font-size: 0.9rem;
             opacity: 0.8;
         }
-
         &--right {
+            margin: 0px;
         }
     }
     &__option button {
@@ -184,16 +200,17 @@
         font-weight: 600;
 
         &:hover {
-            background-color: rgba(220, 220, 220, 0.2);
+            background-color: var(--dropdownMenuBgHoverColor1);
             opacity: 1;
         }
         &:focus {
-            background-color: rgba(220, 220, 220, 0.2);
+            background-color: var(--dropdownMenuBgHoverColor1);
             opacity: 1;
         }
 
         p {
             font-size: 1.12rem;
+            font-weight: 500;
         }
     }
     &__new-option-container {

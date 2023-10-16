@@ -26,7 +26,7 @@ export const loadTheme = () => {
       title: themeItem!.title,
       isDarkTheme: themeItem!.styling.isDark,
       themeToggleBtnIconColor: themeItem!.styling.iconToggleBtnBgColor,
-      twinTheme: themeItem!.twinTheme,
+      twinTheme: themeItem!.twinTheme
     })
     setRootColors(themeItem!.styling)
 }
@@ -98,10 +98,15 @@ export const setRootColors = (theme: ColorThemeProps) => {
           --headerElementTextColor: ${theme.headerElementTextColor};
           --headerElementShadow: ${theme.headerElementShadow};
           --headerTimeColor: ${theme.headerTimeColor};
-          --headerSessionBaseColor: ${theme.headerSessionBaseColor};
-          --headerSessionAccentColor1: ${theme.headerSessionAccentColor1};
-          --headerSessionAccentColor2: ${theme.headerSessionAccentColor2};
-          --headerSessionAccentColor3: ${theme.headerSessionAccentColor3};
+          --headerProgressColor1: ${theme.headerProgressColor1};
+          --headerProgressColor2: ${theme.headerProgressColor2};
+          --headerTrackColor1: ${theme.headerTrackColor1};
+          --headerTrackColor2: ${theme.headerTrackColor2};
+          --baseProgressColor1: ${theme.baseProgressColor1};
+          --baseProgressColor2: ${theme.baseProgressColor2};
+          --baseTrackColor1: ${theme.baseTrackColor1};
+          --baseTrackColor2: ${theme.baseTrackColor2};
+          --progressBallGlow: ${theme.progressBallGlow};
           --modalBgColor: ${theme.modalBgColor};
           --modalBgAccentColor: ${theme.modalBgAccentColor};
           --bentoBoxBgColor: ${theme.bentoBoxBgColor};
@@ -124,8 +129,10 @@ export const setRootColors = (theme: ColorThemeProps) => {
           --midPanelAccentTextColor: ${theme.midPanelAccentTextColor};
           --sidePanelBorder: ${theme.sidePanelBorder};
           --sidePanelShadow: ${theme.sidePanelShadow};
-          --dropdownMenuBgColor: ${theme.dropdownMenuBgColor};
-          --prodMenuViewShadow: ${theme.prodMenuViewShadow};
+          --dropdownMenuBgColor1: ${theme.dropdownMenuBgColor1};
+          --dropdownMenuBgHoverColor1: ${theme.dropdownMenuBgHoverColor1};
+          --dropdownMenuBgColor2: ${theme.dropdownMenuBgColor2};
+          --dropdownMenuBgHoverColor2: ${theme.dropdownMenuBgHoverColor2};
       }
     `
     headTag.appendChild(styleTag)

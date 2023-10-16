@@ -20,8 +20,8 @@
         const arr: string[] = []
         arr.push(`border-radius: ${options?.borderRadius ?? "12px"}`)
         arr.push(`overflow-x: ${options?.overflowX ? options.overflowX : "hidden"}`)
-        arr.push(`overflow-y: ${options?.overflowY ? options.overflowY : "scroll"}`)
         arr.push(`overflow: ${options?.overflow ? options.overflow : "hidden"}`)
+        arr.push(`overflow-y: ${options?.overflowY ? options.overflowY : "scroll"}`)
 
         styling = arr.join('; ')
     }

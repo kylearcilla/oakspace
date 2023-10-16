@@ -11,6 +11,9 @@ export enum ToastType {
 export enum SettingsModal { 
     Settings, Youtube, Music, Stats, Appearance 
 }
+export enum HrsMinsFormatOption {
+    LETTERS, MIN_LETTERS, NO_LETTERS
+}
 
 /* Sessions */
 export enum SessionState {
@@ -19,6 +22,9 @@ export enum SessionState {
 }
 export enum SessionModal { 
     Quote, NewSession, ActiveSession 
+}
+export enum ProgressVisualPartType {
+    FOCUS, BREAK, CHECKPOINT
 }
 
 /* Youtube */

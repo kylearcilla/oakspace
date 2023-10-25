@@ -1,0 +1,46 @@
+export const SHORT_CUTS = {
+    general: [
+        {
+            title: "Toggle Left Bar",
+            controls: ["Ctrl", "["]
+        },
+        {
+            title: "Toggle Right Bar",
+            controls: ["Ctrl", "]"]
+        },
+        {
+            title: "Quote of the Week",
+            controls: ["Q"]
+        },
+        {
+            title: "Keyboard Shortcuts",
+            controls: ["?"]
+        },
+        {
+            title: "Dismiss / Cancel",
+            controls: ["Esc"]
+        },
+    ],
+    pomodoro: [
+        {
+            title: "New Session",
+            controls: ["N"]
+        },
+        {
+            title: "New Todo",
+            controls: ["Ctrl", "+"]
+        },
+        {
+            title: "Move Todo Focus Up",
+            controls: ["↑"]
+        },
+        {
+            title: "Move Todo Focus Down",
+            controls: ["↓"]
+        },
+        {
+            title: "Delete Focused Todo",
+            controls: ["Del"]
+        },
+    ]
+}

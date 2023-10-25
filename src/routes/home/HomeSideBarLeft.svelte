@@ -1,28 +1,29 @@
 <script lang="ts">
-    import { SettingsModal } from "$lib/enums"
+    import { ModalType } from "$lib/enums"
     import { getThemeFromSection, setNewTheme } from "$lib/utils-appearance"
-	import { themeState, homeViewLayout, musicPlayerStore } from "$lib/store"
+	import { themeState, musicPlayerStore } from "$lib/store"
+	import { openModal } from "$lib/utils-home";
 
     const handleNavButtonClicked = (btnName: string) => {
-        let modalClicked: SettingsModal
+        let modalClicked: ModalType
 
         if (btnName === "stats") {
-            modalClicked = SettingsModal.Stats
+            modalClicked = ModalType.Stats
         }
         else if (btnName === "youtube") {
-            modalClicked = SettingsModal.Youtube
+            modalClicked = ModalType.Youtube
         }
         else if (btnName === "music") {
-            modalClicked = SettingsModal.Music
+            modalClicked = ModalType.Music
         }
         else if (btnName === "settings") {
-            modalClicked = SettingsModal.Settings
+            modalClicked = ModalType.Settings
         }
         else if (btnName === "appearance") {
-            modalClicked = SettingsModal.Appearance
+            modalClicked = ModalType.Appearance
         }
 
-        homeViewLayout.update((data: HomeLayout) => ({ ...data, settingsModal: modalClicked }))
+        openModal(modalClicked!)
     }
     
     const handleToggleThemeMode = () => {
@@ -62,7 +63,7 @@
             on:click={handleToggleThemeMode}
             class={`theme-mode-toggle 
                     ${$themeState.isDarkTheme ? "theme-mode-toggle--dark" : "theme-mode-toggle--light"}
-                    ${$musicPlayerStore?.state.doShowPlayer ? "theme-mode-toggle--music-player-active" : ""}
+                    ${$musicPlayerStore?.doShowPlayer ? "theme-mode-toggle--music-player-active" : ""}
                   `}
         >
             <div class="theme-mode-toggle__sun">

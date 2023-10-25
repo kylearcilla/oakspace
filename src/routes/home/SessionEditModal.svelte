@@ -1,30 +1,34 @@
 <script lang="ts">
     import Modal from "../../components/Modal.svelte"
+	import { closeModal } from "$lib/utils-home"
 	import { clickOutside } from "$lib/utils-general"
-	import { sessionStore, themeState } from "$lib/store"
-	import { onMount } from "svelte";
-	import { MAX_SESSION_NAME_LENGTH } from "$lib/utils-session";
-
-    export let closeModal: () => void
+	import { sessionManager, sessionStore, themeState } from "$lib/store"
+	import { MAX_SESSION_NAME_LENGTH } from "$lib/utils-session"
+    
+	import { ModalType } from "$lib/enums"
 
     let tags = [ { name: "Korean", color: "#9997FE" }, { name: "swe", color: "#FF8B9C" } ]
-    let isDropdownOpen = false
+    
     let isTagListDropDownOpen = false
-
     let sessionNameInput: HTMLElement
     
     let newTitle = $sessionStore!.name
     let newTag = {  name: $sessionStore!.tag.name,  color: $sessionStore!.tag.color }
+    
+    const exitEditModal = () => {
+        $sessionManager?.toggleEditSessionModal(false)
+        closeModal(ModalType.EditSession)
+    }
+    const editSessionDoneBtnClicked = (e: Event) => {
+        e.preventDefault()
+        if (newTitle === "" || newTitle.length > MAX_SESSION_NAME_LENGTH) return
 
-    const editSessionDoneBtnClicked = () => {
-        if (newTag.name != "") {
-            $sessionStore!.editSesionTag(newTag)
-            $sessionStore!.editSessionTitle(newTitle)
-        }
+        $sessionStore!.editSesionTag(newTag)
+        $sessionStore!.editSessionTitle(newTitle)
         editSessionCancelBtnClicked()
     }
     const editSessionCancelBtnClicked = () => {
-        closeModal()
+        exitEditModal()
         newTag = {  name: $sessionStore!.tag.name,  color: $sessionStore!.tag.color  }
     }
     const handleNewTagClicked = (idx: number) => {
@@ -36,7 +40,7 @@
     }
 </script>
 
-<Modal options={{ overflow: "visible", overflowY: "inherit" }} onClickOutSide={closeModal}>
+<Modal options={{ overflow: "visible", overflowY: "inherit" }} onClickOutSide={exitEditModal}>
     <div class={`edit-session-modal ${$themeState.isDarkTheme ? "edit-session-modal--dark" : "edit-session-modal--light"}`}>
         <h1 class="modal-bg__content-title">Edit Active Session</h1>
         <form on:submit={editSessionDoneBtnClicked} autocomplete="off">

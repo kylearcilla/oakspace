@@ -8,6 +8,7 @@
         overflowX?: string,      // default: hidden
         overflowY?: string,      // default: visible
         overflow?: string        // default: hidden
+        zIndex?: string          // default: 300000
     }
 
     export let options: ModalOptions = {}
@@ -22,6 +23,7 @@
         arr.push(`overflow-x: ${options?.overflowX ? options.overflowX : "hidden"}`)
         arr.push(`overflow: ${options?.overflow ? options.overflow : "hidden"}`)
         arr.push(`overflow-y: ${options?.overflowY ? options.overflowY : "scroll"}`)
+        arr.push(`z-index: ${options?.zIndex ? options.zIndex : "200001"}`)
 
         styling = arr.join('; ')
     }

@@ -1,12 +1,21 @@
-import type { MusicData } from "./music-data-apple" 
+import type { CustomError } from "./errors"
 
 /**
  * Defines a common interface for different types of music players
  * ...that interact with popular Music Platform APIs (e.g., Spotify, Youtube Music, Apple Music).
  */
 export abstract class MusicPlayer {
-    abstract musicData: MusicData
-    abstract state: MusicPlayerState
+    abstract currentIdx: number
+    abstract track: Track | null
+    abstract collection: MusicCollection | null
+    abstract error: CustomError | null
+    abstract doShowPlayer: boolean
+    abstract isPlaying: boolean
+    abstract isDisabled: boolean
+    abstract isRepeating: boolean
+    abstract isShuffled: boolean
+    abstract hasCollectionJustEnded: boolean
+    abstract hasReachedEnd: boolean
 
     serverURL = "http://localhost:3000/"
 
@@ -17,8 +26,21 @@ export abstract class MusicPlayer {
     abstract toggleRepeat(): void;
     abstract queueAndPlayNextTrack(playlistId: string, newIndex: number): void
     abstract quitPlayer(): void;
+
+    abstract updateCurrentCollectionAndPlay(newCurrentPlaylist: MusicCollection): void
+    abstract updateCurrentCollectionIdx(newIndex: number): void
+    abstract removeCurrentMusicCollection(): void
     
     abstract hideMusicPlayer(): void;
     abstract updateMusicPlayerState(newPlayerState: MusicPlayerState): void
     abstract resetMusicPlayerStateToEmptyState(): void
+}
+
+
+export interface MusicPlayerStore<T> {
+    updateMusicPlayerState(newState: Partial<T>): void
+    getNewStateObj(newState: Partial<T>, oldState: T): T
+    loadAndSetPlayerData(): void
+    saveState(): void
+    deleteMusicPlayerData(): void
 }

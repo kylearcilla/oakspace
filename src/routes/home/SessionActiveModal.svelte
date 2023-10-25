@@ -2,11 +2,10 @@
     import { onMount } from "svelte"
 	import Modal from "../../components/Modal.svelte"
 
-	import { SessionState } from "$lib/enums"
-	import { sessionStore, themeState, sessionManager } from "$lib/store"
+	import { closeModal } from "$lib/utils-home"
+	import { ModalType, SessionState } from "$lib/enums"
 	import { PomSessionManger } from "$lib/pom-session-manager"
-
-    export let closeModal: () => void
+	import { sessionStore, themeState, sessionManager } from "$lib/store"
 
     let todoListElement: HTMLElement
 
@@ -20,11 +19,11 @@
     const todoListElementScrollHandler  = () => $sessionManager!.todoListElementScrollHandler ()
 
     /* Editing a Todo */
+    const checkboxClickedHandler    = (idx: number) =>   $sessionManager!.toggleTodoCheckBox(idx)
     const editTodoBtnClickedHandler = (index: number) => $sessionManager!.editTodoBtnClicked(index)
-    const editTodoDoneBtnHandler = () =>             $sessionManager!.finishEditingTodo()
-    const editTextInputHandler = (event: Event) =>   $sessionManager!.editTodoInputHandler(event)
-    const checkboxClickedHandler = (idx: number) =>  $sessionManager!.toggleTodoCheckBox(idx)
-    const editDeleteBtnHandler = (index: number) =>  $sessionManager!.deleteTodo(index)
+    const editTextInputHandler      = (event: Event) =>  $sessionManager!.editTodoInputHandler(event)
+    const editTodoDoneBtnHandler    = () =>              $sessionManager!.finishEditingTodo()
+    const editDeleteBtnHandler      = (index: number) => $sessionManager!.deleteTodo(index)
     
     /* Adding New Todo */
     const newTodoBtnClickedHandler    = () =>             $sessionManager!.addTodoBtnClicked() 
@@ -42,7 +41,7 @@
 
 <svelte:window on:keyup={(event) => $sessionManager?.keyboardShortcutHandler(event)} />
 
-<Modal options={{ borderRadius: "20px" }} onClickOutSide={closeModal}>
+<Modal options={{ borderRadius: "20px" }} onClickOutSide={() => closeModal(ModalType.ActiveSession)}>
     {#if $sessionStore}
         <div class={`active-session ${$themeState.isDarkTheme ? "active-session--dark" : ""}`}>
             <div class="active-session__top-container">
@@ -118,6 +117,7 @@
                             <!-- To Do List Item -->
                             <li 
                                 role="button" tabindex="0"
+                                on:focus={(e) => $sessionManager?.onTodoFocusEventHandler(e, idx)}
                                 class={`active-session-todo 
                                             ${$sessionManager?.todoToEditIndex === idx ? "active-session-todo--editing" : ""}
                                             ${$sessionManager && $sessionManager?.focusedTodoIndex -1 === idx ? "active-session-todo--hide-divider" : ""}
@@ -143,6 +143,7 @@
                                             <input
                                                 class="active-session-todo__edit-todo-input"
                                                 placeholder="New Subtask Title"
+                                                id={`todo-${idx}`}
                                                 on:input={editTextInputHandler}
                                                 bind:value={$sessionManager.todoToEditNewTitle}
                                             />

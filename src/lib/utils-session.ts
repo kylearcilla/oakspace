@@ -1,13 +1,17 @@
-import { ProgressVisualPartType, SessionState } from "./enums"
+import { toastMessages } from "./store"
 import { Session } from "./pom-session"
+import { HrsMinsFormatOption, ProgressVisualPartType, SessionState, ToastContext } from "./enums"
+import { formatTimeToHHMM, getDifferenceInSecs, getTimePeriodString, secsToHHMM } from "./utils-date"
 
 /* New Session Input */
 export const MAX_SESSION_NAME_LENGTH = 18
 export const MAX_TODO_NAME_LENGTH = 15
 export const FOCUS_TIMES_ARR = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
 export const BREAK_TIMES_ARR = [5, 10, 15, 20, 25, 30]
+export const MAX_TODO_COUNT = 5
+export const MAX_EXTRA_TIME_MINS = 45
 
-export const DEFAULT_SESSION_INPUTS: SessionData = {
+export const DEFAULT_SESSION_INPUTS: SessionInputData = {
     name: "",
     tag: { name: "Korean", color: "#C7C4AB" },
     pomTime: 25,
@@ -47,26 +51,54 @@ export const BASE_TRACK_COLOR_2 = "baseTrackColor2" as keyof ColorThemeProps
 
 const CHECKPOINT_INNER_CIRCLE_NAME = "session-progress__checkpoint-inside"
 
+/**
+ * Continue work session after a refresh.
+ */
+export const conintueWorkSession = () => initSession()
 
 /**
  * Continue a session if there was one.
+ * Used in making new session modal or contiuing as ession.
  */
-export const initSession = () => {
-    if (!doesSessionExist()) return
-
-    const sessionData: SessionData = {
-        ...JSON.parse(localStorage.getItem("session")!),
-        todos: JSON.parse(localStorage.getItem("todos")!)
+export const initSession = (inputSession: SessionInputData | null = null) => {
+    if (inputSession) {
+        new Session(inputSession)
     }
+    else {
+        new Session({ ...getSessionSavedData()!, todos: getTodosSavedTodos()! })
+    }
+}
 
-    new Session(sessionData)
+export const getTodosSavedTodos = () => {
+    const savedData = localStorage.getItem("todos")
+    if (!savedData) return null
+
+    return JSON.parse(savedData)
+}
+
+export const getSessionSavedData = () => {
+    const savedData = localStorage.getItem("session")
+    if (!savedData) return null
+
+    return JSON.parse(savedData)
 }
 
 /**
  * @returns  See if a user has previously made a new session.
  */
-export const doesSessionExist = () => localStorage.getItem("session") != null
+export const didInitSession = () => localStorage.getItem("session") != null
 
+/**
+ * Session related toast messages.
+ * @param msg    Message to be displayed.
+ */
+export const createSessionToastMsg = (msg: string) => {
+    const toastMessage = {
+        context: ToastContext.Session,
+        message: msg,
+    }
+    toastMessages.update((toasts: ToastMsg[]) => [...toasts, toastMessage])
+}
 
 /**
  * Progress visual parts is made up of different parts. Each period is defined by a progress line, book-ened by checkpoints.
@@ -133,7 +165,7 @@ const extractElements = (progressLineElement: HTMLElement) => {
     const nextCheckPointInnerCircle = !nextCheckPoint ? null : nextCheckPoint.getElementsByClassName(CHECKPOINT_INNER_CIRCLE_NAME)[0] as HTMLElement
 
     return [
-        (progressLineElement.getElementsByClassName("session-progress__back-line-svg")[0] as HTMLElement).firstChild as SVGPathElement,
+        (progressLineElement.getElementsByClassName("session-progress__track-line-svg")[0] as HTMLElement).firstChild as SVGPathElement,
         prevCheckPoint ?? null,
         prevCheckPointInnerCircle,
         nextCheckPoint ?? null,
@@ -200,7 +232,7 @@ export const getDefaultColor = (hasFinished: boolean, isForHeader: boolean) => {
 export const onMouseOverProgressLine = (event: Event, isForHeader: boolean) => {
     const progressLineElement = event.target as HTMLElement
     const className = progressLineElement.classList.value
-    if (progressLineElement.tagName.toLocaleUpperCase() === "SVG" || !className.includes("back-line")) return 
+    if (progressLineElement.tagName.toLocaleUpperCase() === "SVG" || !className.includes("track-line")) return 
 
     const hasFinished = className.includes("finished")
     const color = getActiveColor(hasFinished, isForHeader)
@@ -219,7 +251,7 @@ export const onMouseOverProgressLine = (event: Event, isForHeader: boolean) => {
 export const onMouseLeaveProgressLine = (event: Event, isForHeader: boolean) => {
     const progressLineElement = event.target as HTMLElement
     const className = progressLineElement.classList.value
-    if (progressLineElement.tagName.toLocaleUpperCase() === "SVG" || !className.includes("back-line")) return 
+    if (progressLineElement.tagName.toLocaleUpperCase() === "SVG" || !className.includes("track-line")) return 
 
     const hasFinished = className.includes("finished")
     const color = getDefaultColor(hasFinished, isForHeader)

@@ -1,10 +1,11 @@
 import { writable } from 'svelte/store'
 import type { Session } from './pom-session'
 import type { MusicPlayer } from './music-player'
-import type { MusicData } from './music-data-apple'
+import type { MusicUserData } from './music-user-data'
 import type { YoutubePlayer } from './youtube-player'
-import type { YoutubeUserData } from './youtube-data'
+import type { YoutubeUserData } from './youtube-user-data'
 import type { PomSessionManger } from './pom-session-manager'
+import { ToastContext } from './enums'
 
 /* App UI State */
 export const homeViewLayout = writable<HomeLayout>({
@@ -13,7 +14,7 @@ export const homeViewLayout = writable<HomeLayout>({
     isVideoViewOpen: false,
     isMusicPlayerOpen: false,
     minModeSrc: null,
-    settingsModal: null
+    modalsOpen: []
 })
 export const themeState = writable<ThemeState>({
     title: "Dark Mode",
@@ -32,7 +33,7 @@ export const ytPlayerStore = writable<YoutubePlayer| null>(null)
 
 /* Music Stuff: Music Player State */
 export const musicPlayerStore = writable<MusicPlayer | null>(null)
-export const musicDataStore = writable<MusicData | null>(null)
+export const musicDataStore = writable<MusicUserData | null>(null)
 
 /* Session Stuff */
 export const sessionStore = writable<Session | null>(null)

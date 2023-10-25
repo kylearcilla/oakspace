@@ -106,14 +106,14 @@ export const getProdOverViewData = (tags: Tag[], data: DayActivityData[]): ProdO
  * @param sessions User's completed session for a time frame point
  * @returns Aggregated tag, total focus hours / sessions data for a given time frame
  */
-function aggregateRawTagData(sessions: SessionData[]): AggrDayData {
+function aggregateRawTagData(sessions: SessionInputData[]): AggrDayData {
     const data = {
         totalSessions: 0,
         totalFocusHrs: 0,
         tagAggregatedMap: new Map<string, { hours: number, color: string }>()
     }
 
-    sessions.forEach((session: SessionData) => {
+    sessions.forEach((session: SessionInputData) => {
         data.totalSessions++
         const hrsTimesTen = Math.round(session.hours * 10) // multiple by 10 to avoid floating
         data.totalFocusHrs += hrsTimesTen

@@ -1,16 +1,25 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte'
-    import { MusicPlatform } from "$lib/enums"
+    import { Icon, MusicPlatform } from "$lib/enums"
 	import type { MusicPlayer } from '$lib/music-player'
-	import type { MusicData } from '$lib/music-data-apple'
 	import { getSlidingTextAnimation, trackProgressHandler, volumeHandler } from '$lib/utils-music-player'
 	import { musicPlayerStore, themeState, homeViewLayout, musicDataStore } from '$lib/store'
+	import { createMusicAPIErrorToastMsg } from '$lib/utils-music';
+	import Logo from '../../components/Logo.svelte';
+	import { findEnumIdxFromDiffEnum } from '$lib/utils-general';
+	import type { MusicUserData, MusicUserDataStore } from '$lib/music-user-data';
     
+    let trackId = ""
+    let musicPlatform: MusicPlatform | null = null
+
     let hasMediaEventHandlersSet = false
     let isPausePlayBtnActive = false
     let isPrevBtnActive = false
     let isNextBtnActive = false
     let playbackProgress = 0.1
+
+    let icon: Icon | null = null
+    let iconOptions: LogoContainerOptions | null = null
     
     let trackPlaybackBar: HTMLInputElement
     let musicPlaybackBar: HTMLInputElement
@@ -19,12 +28,38 @@
     let trackArtistNameElement: HTMLElement
     let trackTitleElAnimationObj: Animation | null
     let trackArtistElAnimationObj: Animation | null
+    let playerError: any
     
-    let ACTIVE_TO_INACTIVE_BTN_DEAY = 150
+    const ACTIVE_TO_INACTIVE_BTN_DEAY = 150
+    const LOGO_WIDTH = 19
+    const BORDER_RADIUS = 100
+    const MUSIC_PLAYER_ICON_OPTIONS = {
+        AppleMusic: { iconWidth: "45%" },
+        Spotify: { iconWidth: "80%", hasBgColor: false },
+        YoutubeMusic: { iconWidth: "60%" },
+        Soundcloud: { iconWidth: "60%" },
+        Youtube: { iconWidth: "60%" },
+        Google: { iconWidth: "60%" },
+        Luciole: { iconWidth: "60%" }
+    }
 
-    /* Watch for music data & player state changes */
-    musicDataStore.subscribe((data: MusicData | null) => {
-        if (!data?.track) return
+    musicPlayerStore.subscribe((player: MusicPlayer | null) => {
+        if (!player) return    
+
+        // if there is a new error then alert user & if there is no new error remove current error
+        if (player.error && playerError != player.error) {
+            playerError = player.error
+            createMusicAPIErrorToastMsg(player.error!)
+            return
+        }
+        else if (player.error) {
+            return
+        }
+        else if (playerError) { 
+            playerError = null
+        }
+
+        if (!player.track || player.track.id === trackId) return
 
         trackTitleElAnimationObj?.cancel()
         trackArtistElAnimationObj?.cancel()
@@ -33,12 +68,8 @@
             trackTitleElAnimationObj = getSlidingTextAnimation(trackTitleElement)
             trackArtistElAnimationObj =  getSlidingTextAnimation(trackArtistNameElement)
         })
-    })
-    musicPlayerStore.subscribe((player: MusicPlayer | null) => {
-        if (!player) return    
-        if (player.state?.error) {
-            console.error(player.state.error)
-        }
+
+        trackId = player.track!.id
 
         // when media is playing for this site
         if (navigator.mediaSession.metadata && !hasMediaEventHandlersSet) {
@@ -103,66 +134,76 @@
         })
     }
 
-    onMount(async () => {
-        _trackProgressHandler()
-        _volumeHandler()
+    onMount(() => {
+        // _trackProgressHandler()
+        // _volumeHandler()
+
         window.addEventListener("resize", handleResize)
+        
+        musicPlatform = $musicDataStore!.musicPlatform!
+
+        // get the icon enum & options to be used in Icon component
+        let platformIconEnumIdx = findEnumIdxFromDiffEnum(musicPlatform, MusicPlatform, Icon)
+        icon = platformIconEnumIdx === null ? Icon.Luciole : platformIconEnumIdx as Icon
+
+        const iconStrIdx = Icon[icon] as keyof typeof MUSIC_PLAYER_ICON_OPTIONS
+        iconOptions = MUSIC_PLAYER_ICON_OPTIONS[iconStrIdx]
     })
     onDestroy(() => window.removeEventListener("resize", handleResize))
 </script>
 
 <svelte:window on:keyup={handleKeyUp} on:keydown={handleKeyDown} />
 
-<div class={`music-player ${$homeViewLayout.isNavMenuOpen ? "music-player--left-bar-open" : ""} ${$musicDataStore?.track ? "" : "music-player--hidden"} ${!$themeState.isDarkTheme ? "music-player--solid-bg" : ""}`}>
+<div class={`music-player ${$homeViewLayout.isNavMenuOpen ? "music-player--left-bar-open" : ""} ${$musicPlayerStore?.doShowPlayer ? "" : "music-player--hidden"} ${!$themeState.isDarkTheme ? "music-player--solid-bg" : ""}`}>
     <div class="music-player__wrapper">
-    <img class="img-bg" src={$musicDataStore?.track?.artworkImgSrc} alt="track-artwork"/>
+    <img class="img-bg" src={$musicPlayerStore?.track?.artworkImgSrc} alt="track-artwork"/>
     <div class="blur-bg"></div>
     <div class="content-bg">
         <!-- svelte-ignore a11y-missing-attribute -->
-        <div class="music-player-track" title={`${$musicDataStore?.track?.name} – ${$musicDataStore?.track?.artist}`}>
-            <img class="music-player-track__art" src={$musicDataStore?.track?.artworkImgSrc} alt="">
+        <div class="music-player-track" title={`${$musicPlayerStore?.track?.name} – ${$musicPlayerStore?.track?.artist}`}>
+            <img class="music-player-track__art" src={$musicPlayerStore?.track?.artworkImgSrc} alt="">
             <div class="music-player-track__details">
                 <h5 class="music-player-track__title" bind:this={trackTitleElement}>
-                    {$musicDataStore?.track?.name ?? ""}
+                    {$musicPlayerStore?.track?.name ?? ""}
                 </h5>
                 <span class={`music-player-track__artist caption-2 ${!$themeState.isDarkTheme ? "caption-2--light-theme" : ""}`} bind:this={trackArtistNameElement}>
-                    {$musicDataStore?.track?.artist ?? ""}
+                    {$musicPlayerStore?.track?.artist ?? ""}
                 </span>
             </div>
         </div>
         <div class="music-player-controls">
             <button 
                 on:click={toggleShuffle} 
-                class={`music-player-controls__shuffle-btn ${$musicPlayerStore?.state.isShuffled ? "music-player-controls__shuffle-btn--isShuffled" : ""}`} 
-                disabled={$musicPlayerStore?.state.isDisabled}
+                class={`music-player-controls__shuffle-btn ${$musicPlayerStore?.isShuffled ? "music-player-controls__shuffle-btn--isShuffled" : ""}`} 
+                disabled={$musicPlayerStore?.isDisabled}
             >
                     <i class="fa-solid fa-shuffle"></i>
             </button>
             <button 
                 on:click={skipToPreviousSong} 
                 class={`music-player-controls__prev-btn ${isPrevBtnActive ? "music-player-controls__prev-btn--active" : ""}`} 
-                disabled={$musicPlayerStore?.state.isDisabled}
+                disabled={$musicPlayerStore?.isDisabled}
             >
                     <i class="fa-solid fa-backward"></i>
             </button>
             <button 
                 on:click={togglePlayback} 
                 class={`music-player-controls__playback-btn ${isPausePlayBtnActive ? "music-player-controls__playback-btn--active" : ""}`}
-                disabled={$musicPlayerStore?.state.isDisabled}
+                disabled={$musicPlayerStore?.isDisabled}
                 >
-                    <i class={`${$musicPlayerStore?.state.isPlaying ? "fa-solid fa-pause" : "fa-solid fa-play"}`}></i>
+                    <i class={`${$musicPlayerStore?.isPlaying ? "fa-solid fa-pause" : "fa-solid fa-play"}`}></i>
             </button>
             <button 
                 on:click={skipToNextSong} 
                 class={`music-player-controls__next-btn ${isNextBtnActive ? "music-player-controls__next-btn--active" : ""}`} 
-                disabled={$musicPlayerStore?.state.isDisabled}
+                disabled={$musicPlayerStore?.isDisabled}
                 >
                     <i class="fa-solid fa-forward"></i>
             </button>
             <button 
                 on:click={toggleRepeat} 
-                class={`music-player-controls__repeat-btn ${$musicPlayerStore?.state.isRepeating ? "music-player-controls__repeat-btn--isRepeating" : ""}`} 
-                disabled={$musicPlayerStore?.state.isDisabled}
+                class={`music-player-controls__repeat-btn ${$musicPlayerStore?.isRepeating ? "music-player-controls__repeat-btn--isRepeating" : ""}`} 
+                disabled={$musicPlayerStore?.isDisabled}
                 >
                     <i class="fa-solid fa-repeat"></i>
             </button>
@@ -206,22 +247,11 @@
                 {/if}
             </div>
             <div class="music-player-context-container">
-                {#if MusicPlatform[$musicDataStore?.musicPlatform ?? 0] === "Soundcloud"}
-                    <div class="music-player-platform-logo platform-logo platform-logo--soundcloud platform-logo--med">
-                        <i class="fa-brands fa-soundcloud fa-soundcloud--med"></i>
-                    </div>
-                {:else if MusicPlatform[$musicDataStore?.musicPlatform ?? 0] === "Youtube"}
-                    <div class="music-player-platform-logo platform-logo platform-logo--youtube platform-logo--med">
-                        <i class="fa-brands fa-youtube fa-youtube--med"></i>
-                    </div>
-                {:else if MusicPlatform[$musicDataStore?.musicPlatform ?? 0] === "AppleMusic"}
-                    <div class="music-player-platform-logo platform-logo platform-logo--apple platform-logo--med">
-                        <i class="fa-brands fa-itunes-note fa-itunes-note--med"></i>
-                    </div>
-                {:else if MusicPlatform[$musicDataStore?.musicPlatform ?? 0] === "Spotify"}
-                    <div class="music-player-platform-logo platform-logo platform-logo--spotify platform-logo--med">
-                        <i class="fa-brands fa-spotify fa-spotify--med"></i>
-                    </div>
+                {#if icon != null}
+                    <Logo  
+                        logo={icon} 
+                        options={{ containerWidth: `${LOGO_WIDTH}px`, borderRadius: `${BORDER_RADIUS}px`, ...iconOptions }}
+                    />
                 {/if}
             </div>
         </div>
@@ -245,7 +275,7 @@
         transform: translate(-50%, 0%);
         align-items: center;
         display: flex;
-        z-index: 2000;
+        z-index: 200001;
         border-radius: 20px;
         overflow: hidden;
         border: 1px solid rgba(70, 70, 70, 0.3);
@@ -296,7 +326,7 @@
         }
         .content-bg {
             display: flex;
-            padding: 10px 15px 12px 15px;
+            padding: 10px 10px 12px 15px;
             border-radius: 15px;
         }
     }
@@ -441,7 +471,7 @@
         @include flex-container(center, flex-end);
 
         @include sm(max-width) {
-            width: 55px;
+            width: 30px;
         }
     }
     .music-player-volume {
@@ -469,10 +499,11 @@
     }
     .music-player-context-container {
         height: 40px;
-        @include flex-container(center, _);
+        @include flex-container(center, center);
         border-radius: 15px;
         padding: 7px 0px 7px 2px;
         transition: 0.15 ease-in-out;
+        width: 35px;
     }
     .music-player-platform-logo {
         border-radius: 100%;

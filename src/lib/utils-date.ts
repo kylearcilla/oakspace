@@ -1,18 +1,9 @@
 import { HrsMinsFormatOption } from "./enums"
+import { getBrowserLanguagePreference } from "./utils-general"
 
 export const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December"
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
   ]
   
 export const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
@@ -28,6 +19,14 @@ export const getDate = () => {
 }
 
 export const minsSecondsToSecs = (mins: number, secs: number): number => (mins * 60) + secs
+
+export const getUserHourCycle = (): "h11" | "h12" | "h23" | "h24" => {
+    const lang = getBrowserLanguagePreference()
+    const localObj = new Intl.Locale(lang)
+
+    // @ts-ignore
+    return localObj.hourCycle ?? localObj.hourCycles[0]
+}
 
 /**
  * @param date1 
@@ -45,7 +44,7 @@ export const isDateEarlier = (date1: Date, date2: Date): boolean => {
  */
 export const getDifferenceInSecs = (date1: Date, date2: Date): number => {
     const differenceMilliseconds = Math.abs(date1.getTime() - date2.getTime())
-    return Math.floor(differenceMilliseconds / 1000)
+    return Math.ceil(differenceMilliseconds / 1000)
 }
 
 /**
@@ -106,11 +105,11 @@ export function isSameDay(d1: Date, d2: Date) {
  * See if currently evening 6PM - 5AM (Evening)
  * @returns 
  */
-export  function isNightTime() {
+export function isNightTime() {
     const now = new Date();
-    const currentHour = now.getHours();
+    const currentHour = now.getHours()
 
-    return currentHour >= 18 && currentHour <= 5;
+    return currentHour <= 5 || currentHour >= 18
 }
 
 /**
@@ -140,22 +139,59 @@ export function formatDateToMMDD(date: Date): string {
  * @param date 
  * @returns Fromatted Time (i.e. 1:15 PM)
  */
-export function formatTimeToHHMM(date: Date): string {
-    const hours = date.getHours()
-    const minutes = date.getMinutes()
-    const ampm = hours >= 12 ? 'PM' : 'AM'
-    const formattedHours = hours % 12 || 12
-    const formattedMinutes = String(minutes).padStart(2, '0')
-    return `${formattedHours}:${formattedMinutes} ${ampm}`
+export function formatTimeToHHMM(date: Date, hour12 = true): string {
+    const options = { hour: 'numeric', minute: 'numeric', hour12 }    
+
+    // @ts-ignore
+    return date.toLocaleTimeString(undefined, options)
 }
 
 /**
- * Formats time HH AM/PM
- * @param time hrs (i.e. 18)
- * @returns Formatted Time (i.e. 6 PM)
+ * Get the elapsed time for the finish pom period in HH:MM format.
+ * The start / end times in HH:MM format will determine difference in minutes.
+ * So 12:34:49 PM and 12:34:00 PM will be 1 min.
+ * 
+ * @param start   Session start.
+ * @param end     Session end.
+ */
+export const getPomPeriodElapsedTime = (start: Date, end: Date) => {
+    const timePeriodString = getTimePeriodString(start, end)
+    const diffSecs = getDifferenceInSecs(start, end)
+    const diffStr = secsToHHMM(diffSecs, HrsMinsFormatOption.MIN_LETTERS)
+
+    if (!diffStr.includes("m")) return diffStr
+
+    // do no include h portion if less than 1h
+    const hrStr = diffStr.includes("h") ? diffStr.split(" ")[0] + " " : ""
+    const strArr = timePeriodString.split(" - ")
+
+    const startMins = Number(strArr[0].split(":")[1].slice(0, 2))
+    const endMins = Number(strArr[1].split(":")[1].slice(0, 2))
+
+    let diffMins = 0
+
+    if (startMins <= endMins) {
+        diffMins = endMins - startMins
+    }
+    else {
+        diffMins = 60 - startMins + endMins
+    }
+
+    if (hrStr === "" && diffMins === 0) {
+        return "<1m"
+    }
+    else {
+        return `${hrStr}${diffMins}m`
+    }
+}
+
+/**
+ * Formats whole number hour (in 24-hour format) to HH AM/PM
+ * @param time   hrs (i.e. 18)
+ * @returns      Formatted Time (i.e. 6 PM)
  */
 export function twentyFourToTwelveHrFormat(time: number): string {
-    if (time < 0 || time > 24) throw new Error("Invliad time, out of range.")
+    if (time < 0 || time > 24) throw new Error("Invalid time, out of range.")
 
     if (time >= 12 && time < 24) {
     return (time % 12 || 12) + " PM"
@@ -171,7 +207,7 @@ export function twentyFourToTwelveHrFormat(time: number): string {
  * @returns             Formatted # of secs to HH MM (i.e. 2 hrs 34 mins)
  */
 export function secsToHHMM(secs: number, formatOption: HrsMinsFormatOption = HrsMinsFormatOption.LETTERS): string {
-    return minsToHHMM(secs / 60, formatOption)
+    return minsToHHMM(Math.floor(secs / 60), formatOption)
 }
 
 /**
@@ -181,7 +217,8 @@ export function secsToHHMM(secs: number, formatOption: HrsMinsFormatOption = Hrs
  * @returns Formatted # of minutes to HH MM (i.e. 2 hrs 34 mins)
  */
 export function minsToHHMM(inputMins: number, formatOption: HrsMinsFormatOption = HrsMinsFormatOption.LETTERS): string {
-    const mins = parseInt(inputMins + "", 10)
+    const mins = Math.ceil(inputMins)
+
     if (mins < 60 && formatOption === HrsMinsFormatOption.LETTERS) {
         return `${mins} mins`
     }
@@ -195,14 +232,25 @@ export function minsToHHMM(inputMins: number, formatOption: HrsMinsFormatOption 
     const hours = Math.floor(mins / 60)
     const minutes = mins % 60
 
+    let hrsStr, minsStr
+
     if (formatOption === HrsMinsFormatOption.LETTERS) {
-        return `${hours} ${hours > 1 ? "hrs" : "hr" } ${String(minutes).padStart(2, '0')} mins`
+        hrsStr = `${hours} ${hours > 1 ? "hrs" : "hr" }`
+        minsStr = minutes === 0 ? "" : ` ${String(minutes).padStart(2, '0')} mins`
+
+        return `${hrsStr}${minsStr}`
     }
     else if (formatOption === HrsMinsFormatOption.MIN_LETTERS) {
-        return `${hours}h ${String(minutes).padStart(2, '0')}m`
+        hrsStr = `${hours}h`
+        minsStr = minutes === 0 ? "" : ` ${String(minutes).padStart(2, '0')}m`
+
+        return `${hrsStr}${minsStr}`
     }
     else {
-        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+        hrsStr = `${String(hours).padStart(2, '0')}`
+        minsStr = `${String(minutes).padStart(2, '0')}`
+
+        return `${hrsStr}"${minsStr}`
     }
 }
   
@@ -213,7 +261,7 @@ export function minsToHHMM(inputMins: number, formatOption: HrsMinsFormatOption 
  */
 export function hoursToHhMm(decimalHours: number): string {
     const hours = Math.floor(decimalHours);
-    const minutes = Math.round((decimalHours - hours) * 60);
+    const minutes = Math.ceil((decimalHours - hours) * 60);
 
     const formattedMinutes = String(minutes).padStart(2, '0');
 

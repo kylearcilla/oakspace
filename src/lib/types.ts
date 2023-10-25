@@ -16,6 +16,13 @@ type AppearanceThemes = {
     video: VideoTheme[]
 }
 
+type LogoContainerOptions = {
+    hasBgColor?: boolean      // default: has bg
+    containerWidth?: string,  // default: 24px
+    iconWidth?: string,       // default: 50%, can be px
+    borderRadius?: string,    // default: 100%
+}
+
 /* Authentication */
 type GoogleUserData = {
     email: string,
@@ -30,14 +37,16 @@ type HomeLayout = {
     isVideoViewOpen: boolean,
     isMusicPlayerOpen: boolean,
     minModeSrc: string | null,
-    settingsModal: SettingsModal | null 
+    modalsOpen: ModalType[]
 }
 
 type ToastMsg = {
-    type: ToastType
     context: ToastContext
     message: string
-    actionFunction: ((...args: any[]) => any) | ((...args: any[]) => Promise<any>) | null
+    action?: {
+        msg: string
+        func: ((...args: any[]) => any) | ((...args: any[]) => Promise<any>)
+    }
 }
 
 type ToastMsg = {
@@ -69,7 +78,7 @@ type Tag = {
     color: string
 }
 
-type SessionData = {
+type SessionInputData = {
     name: string
     tag: Tag
     pomTime: number
@@ -159,13 +168,15 @@ type MusicPlayerState = {
     hasJustEnded: boolean
 }
 
-type MusicShufflerState = {
+type MusicShufflerData = {
     startTrackIndex: number,
     trackIndex: number
     indexPointer: number,
     shuffledIndexes: number[],
     songCount: number
     totalPlayed: number
+    hasCompleted: boolean
+    state: MusicShufflerState
 }
 
 type MusicPlatformPropNames = "appleMusic"
@@ -234,6 +245,14 @@ type YoutubeUserInfo = {
     userPlaylists: YoutubePlaylist[]
     userPlaylistsNextPageToken: string
     userPlaylistLength: number
+    hasFetchedAllUserPls: boolean
+}
+
+type YoutubePlayerData = {
+    playlist: YoutubePlaylist
+    vid: YoutubeVideo
+    playlistVidIdx: number
+    doShowPlayer: boolean
 }
 
 type YoutubePlaylist = {
@@ -282,7 +301,7 @@ type YoutubeVideo = {
 };
 
 /* Analytics Stuff */
-type SessionData = { 
+type SessionInputData = { 
     tagName: string, 
     hours: number, 
     color: string  
@@ -290,7 +309,7 @@ type SessionData = {
 
 type DaySessionData = {
     date: Date,
-    sessions: SessionData[]
+    sessions: SessionInputData[]
 }
 
 type ProdOverviewData = { 

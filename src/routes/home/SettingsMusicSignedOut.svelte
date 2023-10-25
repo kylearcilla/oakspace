@@ -1,14 +1,16 @@
 <script lang="ts">
-    import { MusicPlatform } from "$lib/enums"
-	import { homeViewLayout, themeState } from "$lib/store"
+    import { Icon, ModalType, MusicPlatform } from "$lib/enums"
+	import { themeState } from "$lib/store"
+	import { closeModal } from "$lib/utils-home";
+	import Logo from "../../components/Logo.svelte";
 	import Modal from "../../components/Modal.svelte"
 
     export let _loginUser: (platform: MusicPlatform) => Promise<void>
 
-    const onClickOutSide = () => homeViewLayout.update((data: HomeLayout) => ({ ...data, settingsModal: null }))
+    const onClickOutSide = () => closeModal(ModalType.Music)
 </script>
 
-<Modal onClickOutSide={onClickOutSide}> 
+<Modal options={{ borderRadius: "23px" }} onClickOutSide={onClickOutSide}> 
     <div class={`music music--small ${!$themeState.isDarkTheme ? "music--light" : ""}`}>
         <h1 class="modal-bg__content-title">
             Music
@@ -24,8 +26,11 @@
                 {#if !$themeState.isDarkTheme}
                     <i class="fa-brands fa-youtube fa-youtube--no-bg"></i>
                 {:else}
-                    <div class="platform-list__platform-item__logo platform-logo platform-logo--youtube">
-                        <i class="fa-brands fa-youtube"></i>
+                    <div class="platform-list__platform-item-logo">
+                        <Logo 
+                            logo={Icon.YoutubeMusic} 
+                            options={{ containerWidth: "22px", borderRadius: "100%", iconWidth: "63%" }} 
+                        />
                     </div>
                 {/if}
                 <div class="platform-list__platform-item-text platform-list__platform-item-text--logged-out">
@@ -40,8 +45,11 @@
                 </button>
             </li>
             <li class="platform-list__platform-item platform-list__platform-item--logged-out">
-                <div class="platform-list__platform-item__logo platform-logo platform-logo--soundcloud">
-                    <i class="fa-brands fa-soundcloud"></i>
+                <div class="platform-list__platform-item-logo">
+                    <Logo 
+                        logo={Icon.Soundcloud} 
+                        options={{ containerWidth: "22px", borderRadius: "100%", iconWidth: "60%" }} 
+                    />
                 </div>
                 <div class="platform-list__platform-item-text platform-list__platform-item-text--logged-out">
                     <h3>Soundcloud</h3>
@@ -55,8 +63,11 @@
                 </button>
             </li>
             <li class="platform-list__platform-item platform-list__platform-item--logged-out">
-                <div class="platform-list__platform-item__logo platform-logo platform-logo--apple">
-                    <i class="fa-brands fa-itunes-note"></i>
+                <div class="platform-list__platform-item-logo">
+                    <Logo 
+                        logo={Icon.AppleMusic} 
+                        options={{ containerWidth: "22px", borderRadius: "100%", iconWidth: "44%" }} 
+                    />
                 </div>
                 <div class="platform-list__platform-item-text platform-list__platform-item-text--logged-out">
                     <h3>Apple Music</h3>
@@ -70,8 +81,11 @@
                 </button>
             </li>
             <li class="platform-list__platform-item platform-list__platform-item--logged-out">
-                <div class="platform-list__platform-item__logo platform-logo platform-logo--spotify">
-                    <i class="fa-brands fa-spotify"></i>
+                <div class="platform-list__platform-item-logo">
+                    <Logo 
+                        logo={Icon.Spotify} 
+                        options={{ containerWidth: "22px", iconWidth: "85%", hasBgColor: false }} 
+                    />
                 </div>
                 <div class="platform-list__platform-item-text platform-list__platform-item-text--logged-out">
                     <h3>Spotify</h3>
@@ -92,16 +106,16 @@
     @import "../../scss/brands.scss";
     
     .music {
-        width: 340px;
-        height: 350px;
-        min-width: fit-content;
+        width: 350px;
+        padding: 16px 22px 22px 22px;
 
         h2 {
             font-size: 1.3em;
             font-weight: 400;
+            margin-bottom: 13px;
         }
         &__description {
-            margin-bottom: 23px;
+            margin: 8px 0px 23px 0px;
             font-size: 1.15rem;
             font-weight: 300;
             color: rgba(var(--textColor1), 0.55);
@@ -112,8 +126,6 @@
             }
         }
         &--light .platform-list {
-            background: var(--bentoBoxBgColor);
-
             &__platform-item-text h3 {
                 font-weight: 600;
                 color: rgba(var(--textColor1), 0.88);
@@ -128,24 +140,27 @@
     }
 
     .platform-list {
-        background: var(--hoverColor);
+        background: var(--bentoBoxBgColor);
         box-shadow: var(--bentoBoxShadow);
         padding: 12px 5px 15px 13px;
         @include pos-abs-top-right-corner(0px, 0px);
         position: relative;
         width: 100%;
-        padding: 17px 5px 25px 18px; 
+        padding: 17px 5px 25px 16px; 
         margin-top: 11px;
         border-radius: 15px;
 
 
         &__platform-item {
             @include flex-container(center, _);
-            margin-bottom: 18px;
+            margin-bottom: 16px;
 
             &:last-child {
                 margin-bottom: 0px;
             }
+        }
+        &__platform-item-logo {
+            @include flex-container(center, center);
         }
         &__platform-item-btn {
             position: absolute;

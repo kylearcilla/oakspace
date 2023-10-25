@@ -14,13 +14,13 @@
         else if (event.key.toLocaleLowerCase() === "q") {
             hasQPressed = true
         }
-        else if (event.key === "Shift") {
+        else if (event.key === "Control") {
             hasShiftBClicked = true
         }
-        else if (event.key === "}") {
+        else if (event.key === "]") {
             hasRightBracketClicked = true
         }
-        else if (event.key === "{") {
+        else if (event.key === "[") {
             hasLeftBracketClicked = true
         }
     }
@@ -31,13 +31,13 @@
         else if (event.key.toLocaleLowerCase() === "q") {
             hasQPressed = false
         }
-        else if (event.key === "Shift") {
+        else if (event.key === "Control") {
             hasShiftBClicked = false
         }
-        else if (event.key === "}") {
+        else if (event.key === "]") {
             hasRightBracketClicked = false
         }
-        else if (event.key === "{") {
+        else if (event.key === "[") {
             hasLeftBracketClicked = false
         }
     }
@@ -69,8 +69,8 @@
             <div class="shortcuts__command-title">Toggle Left Bar</div>
             <div class="shortcuts__command-keys shortcuts__command-key--word">
                 <div class="shortcuts__command-key-container">
-                    <div class="shortcuts__command-key shortcuts__command-key--bg shortcuts__command-key--word">Shift</div>
-                    <div class={`shortcuts__command-key shortcuts__command-key--word ${hasShiftBClicked ? "shortcuts__command-key--active" : ""}`}>Shift</div>
+                    <div class="shortcuts__command-key shortcuts__command-key--bg shortcuts__command-key--word">Ctrl</div>
+                    <div class={`shortcuts__command-key shortcuts__command-key--word ${hasShiftBClicked ? "shortcuts__command-key--active" : ""}`}>Ctrl</div>
                 </div>
                 <div class="shortcuts__command-key-container">
                     <div class="shortcuts__command-key shortcuts__command-key--bg shortcuts__command-key--circle">{"["}</div>
@@ -82,8 +82,8 @@
             <div class="shortcuts__command-title">Toggle Right Bar</div>
             <div class="shortcuts__command-keys">
                 <div class="shortcuts__command-key-container">
-                    <div class="shortcuts__command-key shortcuts__command-key--bg shortcuts__command-key--word">Shift</div>
-                    <div class={`shortcuts__command-key shortcuts__command-key--word ${hasShiftBClicked ? "shortcuts__command-key--active" : ""}`}>Shift</div>
+                    <div class="shortcuts__command-key shortcuts__command-key--bg shortcuts__command-key--word">Ctrl</div>
+                    <div class={`shortcuts__command-key shortcuts__command-key--word ${hasShiftBClicked ? "shortcuts__command-key--active" : ""}`}>Ctrl</div>
                 </div>
                 <div class="shortcuts__command-key-container">
                     <div class="shortcuts__command-key shortcuts__command-key--bg shortcuts__command-key--circle">{"]"}</div>
@@ -120,7 +120,7 @@
             width: 140px;
             margin-right: 28px;
             font-size: 1.45rem;
-            font-weight: 200;
+            font-weight: 300;
             color: rgba(var(--textColor1), 0.15);
         }
         &__command-keys {

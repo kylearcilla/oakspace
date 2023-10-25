@@ -1,36 +1,52 @@
 <script lang="ts">
 	import { themeState, musicDataStore } from "$lib/store";
-	import { clickOutside } from "$lib/utils-general";
-	import { getCurrMusicPlatformName } from "$lib/utils-music";
-    import { MusicPlatform } from "$lib/enums";
+	import { clickOutside, findEnumIdxFromDiffEnum } from "$lib/utils-general";
+	import { addSpacesToCamelCaseStr } from "$lib/utils-general";
+    import { Icon, MusicPlatform } from "$lib/enums";
+	import Logo from "../../components/Logo.svelte";
+	import { onMount } from "svelte";
+	import { construct_svelte_component } from "svelte/internal";
 
     export let isPlatformListOpen: boolean
     export let logOutUser: () => Promise<void>
 
+    let platform: MusicPlatform | null = null
+    let icon: Icon
+    let iconOptions: LogoContainerOptions
+
+    const LOGO_WIDTH = 15
+    const BORDER_RADIUS = 6.5
+    const HEADER_ICON_OPTIONS = {
+        AppleMusic: { iconWidth: "45%" },
+        Spotify: { iconWidth: "90%", hasBgColor: false },
+        YoutubeMusic: { iconWidth: "60%" },
+        Soundcloud: { iconWidth: "60%" },
+        Youtube: { iconWidth: "60%" },
+        Google: { iconWidth: "60%" },
+        Luciole: { iconWidth: "60%" }
+    }
+
+
+    onMount(() => {
+        // get the icon enum & options to be used in Icon component
+        platform = $musicDataStore!.musicPlatform
+
+        let platformIconEnumIdx = findEnumIdxFromDiffEnum(platform, MusicPlatform, Icon)
+        icon = platformIconEnumIdx === null ? Icon.Luciole : platformIconEnumIdx as Icon
+
+        const iconStrIdx = Icon[icon] as keyof typeof HEADER_ICON_OPTIONS
+        iconOptions = HEADER_ICON_OPTIONS[iconStrIdx]
+    })
 </script>
 
 <div class={`active-account-header ${$themeState.isDarkTheme ? "" : "active-account-header--light"}`}>
     <button class="active-account-header__btn dropdown-btn" on:click={() => isPlatformListOpen = !isPlatformListOpen}>
-        {#if $musicDataStore?.musicPlatform === MusicPlatform.Soundcloud}
-            <div class="platform-logo platform-logo--small platform-logo--soundcloud dropdown-element">
-                <i class="fa-brands fa-soundcloud fa-soundcloud--small"></i>
-            </div>
-        {:else if $musicDataStore?.musicPlatform === MusicPlatform.YoutubeMusic}
-            <div class="platform-logo platform-logo--small platform-logo--youtube dropdown-element">
-                <i class="fa-brands fa-youtube fa-youtube--small"></i>
-            </div>
-        {:else if $musicDataStore?.musicPlatform === MusicPlatform.AppleMusic}
-            <div class="platform-logo platform-logo--small platform-logo--apple dropdown-element">
-                <i class="fa-brands fa-itunes-note fa-itunes-note--small"></i>
-            </div>
-        {:else if $musicDataStore?.musicPlatform === MusicPlatform.Spotify}
-            <div class="platform-logo platform-logo--small platform-logo--spotify dropdown-element">
-                <i class="fa-brands fa-spotify fa-spotify--small"></i>
-            </div>
+        {#if iconOptions}
+            <Logo logo={icon} options={{ containerWidth: `${LOGO_WIDTH}px`, borderRadius: `${BORDER_RADIUS}px`, ...iconOptions}} />
         {/if}
-        {#if $musicDataStore?.isSignedIn && $musicDataStore.musicPlatform != null}
+        {#if $musicDataStore?.isSignedIn && platform != null}
             <span>
-                {getCurrMusicPlatformName($musicDataStore.musicPlatform)}
+                {addSpacesToCamelCaseStr(MusicPlatform[platform])}
             </span>
         {/if}
         <i class="fa-solid fa-chevron-down"></i>
@@ -46,12 +62,15 @@
     {#if $musicDataStore != null && isPlatformListOpen}
         <ul class={`platform-list  ${$themeState.isDarkTheme ? "" : "platform-list--light"}`} use:clickOutside on:click_outside={() => isPlatformListOpen = false}>
             <li class="platform-list__platform-item">
-                <div class="platform-logo platform-logo--small platform-logo--soundcloud">
-                    <i class="fa-brands fa-soundcloud fa-soundcloud--small"></i>
+                <div class="platform-list__platform-item-logo">
+                    <Logo 
+                        logo={Icon.AppleMusic} 
+                        options={{ containerWidth: "18px", borderRadius: "7px", iconWidth: "50%" }} 
+                    />
                 </div>
                 <div class="platform-list__platform-item-text">
                     <h5>Soundcloud</h5>
-                    <span >Playlist</span>
+                    <span >Playlists</span>
                 </div>
                 <button 
                     class={`platform-list__platform-item-btn ${$musicDataStore.musicPlatform === MusicPlatform.Soundcloud ? "platform-list__platform-item-btn--selected" : ""} text-only`}
@@ -61,12 +80,15 @@
                 </button>
             </li>
             <li class="platform-list__platform-item">
-                <div class="platform-logo platform-logo--youtube platform-logo--small-youtube">
-                    <i class="fa-brands fa-youtube fa-youtube--small"></i>
+                <div class="platform-list__platform-item-logo">
+                    <Logo 
+                        logo={Icon.YoutubeMusic} 
+                        options={{ containerWidth: "18px", borderRadius: "7px", iconWidth: "66%" }} 
+                    />
                 </div>
                 <div class="platform-list__platform-item-text">
-                    <h5>Youtube</h5>
-                    <span >Playlist, Live Videos</span>
+                    <h5>Youtube Music</h5>
+                    <span >Playlists, Live Videos</span>
                 </div>
                 <button 
                     class={`platform-list__platform-item-btn ${$musicDataStore.musicPlatform === MusicPlatform.YoutubeMusic ? "platform-list__platform-item-btn--selected" : ""} text-only`}
@@ -76,12 +98,15 @@
                 </button>
             </li>
             <li class="platform-list__platform-item">
-                <div class="platform-logo platform-logo--small platform-logo--apple">
-                    <i class="fa-brands fa-itunes-note fa-itunes-note--small"></i>
+                <div class="platform-list__platform-item-logo">
+                    <Logo 
+                        logo={Icon.Soundcloud} 
+                        options={{ containerWidth: "18px", borderRadius: "7px", iconWidth: "60%" }} 
+                    />
                 </div>
                 <div class="platform-list__platform-item-text">
                     <h5>Apple Music</h5>
-                    <span >Playlists</span>
+                    <span >Playlists, Live Radio</span>
                 </div>
                 <button 
                     class={`platform-list__platform-item-btn ${$musicDataStore.musicPlatform === MusicPlatform.AppleMusic ? "platform-list__platform-item-btn--selected" : ""} text-only`}
@@ -95,8 +120,11 @@
                 </button>
             </li>
             <li class="platform-list__platform-item">
-                <div class="platform-logo platform-logo--small platform-logo--spotify">
-                    <i class="fa-brands fa-spotify fa-spotify--small"></i>
+                <div class="platform-list__platform-item-logo">
+                    <Logo 
+                        logo={Icon.Spotify} 
+                        options={{ containerWidth: "18px", borderRadius: "7px", iconWidth: "80%" }} 
+                    />
                 </div>
                 <div class="platform-list__platform-item-text">
                     <h5>Spotify</h5>
@@ -159,10 +187,6 @@
             @include circle(20px);
             background-color: #4E4E4F;
         }
-        .platform-logo {
-            margin-right: 7px;
-            border-radius: 7px;
-        }
         .fa-chevron-down {
             font-size: 0.9rem;
             color: rgb(var(--textColor1));
@@ -176,8 +200,8 @@
         @include pos-abs-top-right-corner(20px, 30%);
         background: var(--hoverColor);
         box-shadow: var(--bentoBoxShadow);
-        padding: 12px 5px 15px 13px;
-        border-radius: 10px;
+        padding: 15px 5px 15px 13px;
+        border-radius: 18px;
 
         &--light {
             background: var(--bentoBoxBgColor);
@@ -212,18 +236,9 @@
                 margin-bottom: 18px;
             }
         }
-        &__platform-item-btn {
-            position: absolute;
-            right: 10px;
-            padding: 7px 0px 7px 10px;
-            color: rgba(var(--textColor1), 0.6);
-            transition: 0.1s ease-in-out;
-            width: 60px;
-            font-weight: 400 !important;
-            font-size: 1rem !important;
-            @include center;
+        &__platform-item-logo {
+            margin-right: 7px;
         }
-
         &__platform-item-text {
             margin: -2px 0px 0px 7px;
             h5 {
@@ -235,6 +250,17 @@
                 color: rgba(var(--textColor1), 0.45);
                 font-weight: 300;
             }
+        }
+        &__platform-item-btn {
+            position: absolute;
+            right: 10px;
+            padding: 7px 0px 7px 10px;
+            color: rgba(var(--textColor1), 0.6);
+            transition: 0.1s ease-in-out;
+            width: 60px;
+            font-weight: 400 !important;
+            font-size: 1rem !important;
+            @include center;
         }
     }
 </style>

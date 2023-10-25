@@ -110,13 +110,13 @@
             {:else if $sessionStore}
                 <!-- svelte-ignore a11y-mouse-events-have-key-events -->
                 <div 
-                    class={`session-progress__back-line ${state === SessionState.FINISHED || segment.periodIdx <= lastFinishedPeriodIdx ? "session-progress__back-line--finished" : ""}`}
+                    class={`session-progress__track-line ${state === SessionState.FINISHED || segment.periodIdx <= lastFinishedPeriodIdx ? "session-progress__track-line--finished" : ""}`}
                     id={`${segment.segmentIdx}`}
                     style={`width: ${segment.widthPerc}%; left: ${segment.offSetPerc}%;`}
                     on:mouseover={(e) => _onMouseOverProgressLine(e)}
                     on:mouseleave={(e) => _onMouseLeaveProgressLine(e)}
                 >
-                    <svg class="session-progress__back-line-svg" xmlns="http://www.w3.org/2000/svg" width="100%" height="1.5" fill="none">
+                    <svg class="session-progress__track-line-svg" xmlns="http://www.w3.org/2000/svg" width="100%" height="1.5" fill="none">
                         <path 
                             d="M0 1 L300 1"
                             stroke={`
@@ -129,7 +129,7 @@
                             stroke-dasharray={`${state === SessionState.FINISHED || segment.periodIdx <= lastFinishedPeriodIdx ? "0" : "2 2"}`}
                         />
                     </svg>
-                    <div class="session-progress__back-line-icon">
+                    <div class="session-progress__track-line-icon">
                         {#if segment.type === ProgressVisualPartType.FOCUS}
                             <i class="fa-brands fa-readme"></i>
                             <span>{$sessionStore.pomTime}:00</span>
@@ -201,7 +201,7 @@
             opacity: 1;
             visibility: visible;
         }
-        &--home &__back-line-icon {
+        &--home &__track-line-icon {
             top: -7px;
             font-size: 1.15rem;
         }
@@ -237,14 +237,18 @@
             background-color: var(--primaryBgColor);
             border: 1px solid var(--baseTrackColor1);
         }
-        &--light &__back-line-icon span {
+        &--light &__track-line-icon span {
             font-weight: 600;
+        }
+        &--light &__time {
+            font-weight: 500;
+            color: rgba(var(--textColor1), 0.4);
         }
 
         &__time {
             opacity: 0;
             visibility: hidden;
-            font-weight: 600;
+            font-weight: 400;
             font-size: 1.2rem;
             color: rgba(var(--textColor1), 0.3);
 
@@ -262,7 +266,7 @@
             display: flex;
             align-items: center;
         }
-        &__back-line {
+        &__track-line {
             height: 20px;
             position: absolute;
             z-index: 1;
@@ -281,7 +285,7 @@
             }
         }
 
-        &__back-line-icon {
+        &__track-line-icon {
             opacity: 0;
             transition: 0.12s ease-in-out;
             visibility: hidden;

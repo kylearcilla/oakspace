@@ -6,10 +6,7 @@
 	import { PomSessionManger } from "$lib/pom-session-manager"
     import { sessionStore, sessionManager, themeState } from "$lib/store"
 
-	import SessionEditModal from "./SessionEditModal.svelte"
 	import SessionProgress from "./SessionProgress.svelte"
-	import SessionFinishedModal from "./SessionFinishedModal.svelte"
-    import SessionCanceledModal from "./SessionCanceledModal.svelte"
     
     let todoListElement: HTMLElement
 
@@ -18,19 +15,17 @@
     const MAX_TODO_NAME_LENGTH = 15
 
     /* UI Handlers */
-    const finishSessionBtnHandleer  = () =>                        $sessionStore!.finishSession()
-    const pomControlsDropdownBtnHandler = (optionIdx: number) =>   $sessionManager!.pomControlsDropdownBtnHandler(optionIdx)
-    const handleClearSessionClicked      = () =>                   $sessionManager!.clearSession()
-    const todoListElementScrollHandler  = () =>                    $sessionManager!.todoListElementScrollHandler()
-    const hideEditSessionModal           = () =>                   $sessionManager!.toggleEditSessionModal(false)
+    const finishSessionBtnHandleer       = () =>                   $sessionStore!.finishSession()
+    const pomControlsDropdownBtnHandler  = (optionIdx: number) =>  $sessionManager!.pomControlsDropdownBtnHandler(optionIdx)
+    const todoListElementScrollHandler   = () =>                   $sessionManager!.todoListElementScrollHandler()
     const concludeSessionClicked         = () =>                   $sessionManager!.concludeSessionBtnClicked()
     const togglePomDropdownMenu          = () =>                   $sessionManager!.togglePomControlsDropDown()
 
     /* Editing a Todo */
-    const editBtnClickedHandler = (index: number) => $sessionManager!.editTodoBtnClicked(index)
-    const editTodoDoneBtnHandler = () =>             $sessionManager!.finishEditingTodo()
-    const editTextInputHandler = (event: Event)  =>  $sessionManager!.editTodoInputHandler(event)
     const checkboxClickedHandler = (idx: number) =>  $sessionManager!.toggleTodoCheckBox(idx)
+    const editBtnClickedHandler = (index: number) => $sessionManager!.editTodoBtnClicked(index)
+    const editTextInputHandler = (event: Event)  =>  $sessionManager!.editTodoInputHandler(event)
+    const editTodoDoneBtnHandler = () =>             $sessionManager!.finishEditingTodo()
     const editDeleteBtnHandler = (index: number) =>  $sessionManager!.deleteTodo(index)
     
     /* Adding New Todo */
@@ -85,7 +80,11 @@
                                     </button>
                                 </li>
                                 <li class="dropdown-menu__option">
-                                    <button class="dropdown-element" on:click={() => pomControlsDropdownBtnHandler(1)}>
+                                    <button 
+                                        disabled={$sessionStore?.state === SessionState.FINISHED}
+                                        class="dropdown-element" 
+                                        on:click={() => pomControlsDropdownBtnHandler(1)}
+                                    >
                                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                                             {#if $sessionStore.isPlaying}
                                                 <i class="fa-solid fa-pause"></i>
@@ -101,7 +100,11 @@
                                     </button>
                                 </li>
                                 <li class="dropdown-menu__option">
-                                    <button class="dropdown-element" on:click={() => pomControlsDropdownBtnHandler(2)}>
+                                    <button 
+                                        class="dropdown-element" 
+                                        on:click={() => pomControlsDropdownBtnHandler(2)}
+                                        disabled={$sessionStore && ($sessionStore.WAITING_STATES.includes($sessionStore.state) || $sessionStore.state === SessionState.FINISHED)}
+                                    >
                                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                                             <i class="fa-solid fa-rotate-right"></i>
                                         </div>
@@ -109,7 +112,11 @@
                                     </button>
                                 </li>
                                 <li class="dropdown-menu__option">
-                                    <button class="dropdown-element" on:click={() => pomControlsDropdownBtnHandler(3)}>
+                                    <button 
+                                        class="dropdown-element" 
+                                        on:click={() => pomControlsDropdownBtnHandler(3)}
+                                        disabled={$sessionStore?.state === SessionState.FINISHED}
+                                    >
                                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                                             <i class="fa-solid fa-forward-step"></i>
                                         </div>
@@ -125,7 +132,11 @@
                                     </button>
                                 </li>
                                 <li class="dropdown-menu__option">
-                                    <button class="dropdown-element" on:click={() => pomControlsDropdownBtnHandler(5)}>
+                                    <button 
+                                        class="dropdown-element" 
+                                        on:click={() => pomControlsDropdownBtnHandler(5)}
+                                        disabled={$sessionStore?.state === SessionState.FINISHED}
+                                    >
                                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                                             <i class="fa-solid fa-flag-checkered"></i>
                                         </div>
@@ -331,18 +342,6 @@
     {/if}
 </div>
 
-<!-- Modals -->
-{#if $sessionManager?.isEditSessionModalOpen}
-    <SessionEditModal closeModal={() => hideEditSessionModal()} />
-{/if}
-{#if $sessionManager?.hasSessionConcluded && $sessionManager?.isSessionFinishedModalOpen}
-    <SessionFinishedModal clearSession={() => handleClearSessionClicked()}/>
-{/if}
-{#if $sessionStore?.state === SessionState.CANCELED}
-    <SessionCanceledModal clearSession={() => handleClearSessionClicked()}/>
-{/if}
-
-
 <style lang="scss">
     @import "../../scss/dropdown.scss";
     @import '../../scss/active-session.scss';
@@ -439,10 +438,10 @@
                 max-height: 400px !important;
             }
             &-new-task-btn {
-                margin: 4px 0px 8px $todo-padding-left;
+                margin: 4px 0px 8px calc($todo-padding-left + 5px);
             }
             &-new-todo-input {
-            margin: 4px 0px 8px $todo-padding-left;
+                margin: 4px 0px 8px $todo-padding-left;
             }
         }
     }

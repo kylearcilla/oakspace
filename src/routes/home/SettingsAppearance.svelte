@@ -5,6 +5,8 @@
     import { lightColorThemes, darkColorThemes, imageThemes, ambientVideos, defaultThemes } from "$lib/data-themes"
 
 	import Modal from "../../components/Modal.svelte"
+	import { ModalType } from "$lib/enums";
+	import { closeModal } from "$lib/utils-home";
 
     let clickedTheme: Theme | null = null
     let selectedTheme: Theme | null = null
@@ -33,8 +35,7 @@
         setNewTheme(selectedTheme)
     }
 
-    const onClickOutSide = () => homeViewLayout.update((data: HomeLayout) => ({ ...data, settingsModal: null }))
-
+    const onClickOutSide = () => closeModal(ModalType.Appearance)
     onMount(() => selectedTheme = JSON.parse(localStorage.getItem("theme")!))
 </script>
 

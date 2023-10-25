@@ -1,29 +1,22 @@
 <script lang="ts">
-    import { SessionState } from "$lib/enums"
+    import { ModalType, SessionState } from "$lib/enums"
 	import { clickOutside } from "$lib/utils-general"
-	import { sessionStore, themeState } from "$lib/store"
+	import { sessionManager, sessionStore, themeState } from "$lib/store"
 
     import SessionProgress from "./SessionProgress.svelte"
-	import SessionEditModal from "./SessionEditModal.svelte"
-	import SessionActiveModal from "./SessionActiveModal.svelte"
-	import SessionCanceledModal from "./SessionCanceledModal.svelte"
-	import SessionFinishedModal from "./SessionFinishedModal.svelte"
+	import { openModal } from "$lib/utils-home";
     
-    let isEditSessionModalOpen = false
-    let isActiveSessionModalOpen = false
     let isDropDownOpen = false
     let isSessionComponentActive = false
     let isShowingTime = true
-    let hasSessionConcluded = false
 
     const dropdownOptionsBtnClicked = () => isDropDownOpen = !isDropDownOpen
     const progressBtnClicked        = () => $sessionStore!.progressToNextPeriod()
-    const concludeBtnClicked        = () => hasSessionConcluded = true
-    const clearSessionBtnClicked    = () => $sessionStore!.clearSession()
+    const concludeBtnClicked        = () => $sessionManager!.concludeSessionBtnClicked()
     
     const handlePomOptionSessionViewClickeded = (optionIdx: number) => {
         if (optionIdx === 0) {
-            isEditSessionModalOpen = true
+            $sessionManager!.toggleEditSessionModal(true)
         }
         else if (optionIdx === 1) {
             $sessionStore!.isPlaying? $sessionStore!.pauseSession() : $sessionStore!.playSession()
@@ -44,7 +37,7 @@
     }
 
     /* Button Handlers for Session View Buttons */
-    const onMouseDown = (event: Event) => {
+    const onMouseDownHandler = (event: Event) => {
         const target = event.target as HTMLElement
         const className = target.classList.value
 
@@ -75,17 +68,16 @@
             target.tagName.toLocaleUpperCase() === "CIRCLE") {
             return
         }
-
-        isActiveSessionModalOpen = true
+        openModal(ModalType.ActiveSession)
     }
-    const onMouseUp = () => isSessionComponentActive = false
+    const onMouseUpHandler = () => isSessionComponentActive = false
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div 
     class={`header-session ${$themeState?.isDarkTheme ? "header-session--dark" : "header-session--light"} ${isSessionComponentActive ? "header-session--active" : ""}`} 
-    on:mouseup={onMouseUp}
-    on:mousedown={onMouseDown}
+    on:mouseup={onMouseUpHandler}
+    on:mousedown={onMouseDownHandler}
     on:click={activeSessionModalToggleHandler}
 >
     <div title={$sessionStore?.tag.name} class="header-session__session-tag">
@@ -143,7 +135,11 @@
                     </button>
                 </li>
                 <li class="dropdown-menu__option">
-                    <button class="dropdown-element" on:click={() => handlePomOptionSessionViewClickeded(1)}>
+                    <button 
+                        class="dropdown-element" 
+                        on:click={() => handlePomOptionSessionViewClickeded(1)}
+                        disabled={$sessionStore?.state === SessionState.FINISHED}
+                    >
                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                             {#if $sessionStore?.isPlaying}
                                 <i class="fa-solid fa-pause dropdown-element"></i>
@@ -159,7 +155,11 @@
                     </button>
                 </li>
                 <li class="dropdown-menu__option">
-                    <button class="dropdown-element" on:click={() => handlePomOptionSessionViewClickeded(2)}>
+                    <button 
+                        disabled={$sessionStore && ($sessionStore.WAITING_STATES.includes($sessionStore.state) || $sessionStore.state === SessionState.FINISHED)}
+                        class="dropdown-element" 
+                        on:click={() => handlePomOptionSessionViewClickeded(2)}
+                    >
                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                             <i class="fa-solid fa-rotate-right"></i>
                         </div>
@@ -167,7 +167,11 @@
                     </button>
                 </li>
                 <li class="dropdown-menu__option">
-                    <button class="dropdown-element" on:click={() => handlePomOptionSessionViewClickeded(3)}>
+                    <button 
+                        class="dropdown-element" 
+                        on:click={() => handlePomOptionSessionViewClickeded(3)}
+                        disabled={$sessionStore?.state === SessionState.FINISHED}
+                    >
                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                             <i class="fa-solid fa-forward-step"></i>
                         </div>
@@ -183,7 +187,11 @@
                     </button>
                 </li>
                 <li class="dropdown-menu__option">
-                    <button class="dropdown-element" on:click={() => handlePomOptionSessionViewClickeded(5)}>
+                    <button 
+                        class="dropdown-element" 
+                        on:click={() => handlePomOptionSessionViewClickeded(5)}
+                        disabled={$sessionStore?.state === SessionState.FINISHED}
+                    >
                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                             <i class="fa-solid fa-flag-checkered"></i>
                         </div>
@@ -194,20 +202,6 @@
         {/if}
     </div>
 </div>
-
-<!-- Modals -->
-{#if isActiveSessionModalOpen}
-    <SessionActiveModal closeModal={() => isActiveSessionModalOpen = false} />
-{/if}
-{#if isEditSessionModalOpen}
-    <SessionEditModal closeModal={() => isEditSessionModalOpen = false} />
-{/if}
-{#if hasSessionConcluded && $sessionStore}
-    <SessionFinishedModal clearSession={() => clearSessionBtnClicked()}/>
-{/if}
-{#if $sessionStore?.state === SessionState.CANCELED}
-    <SessionCanceledModal clearSession={() => clearSessionBtnClicked()}/>
-{/if}
 
 
 <style lang="scss">

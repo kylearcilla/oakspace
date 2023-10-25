@@ -1,45 +1,58 @@
 import { get } from "svelte/store"
-import { initAppleMusicState } from "./api-apple-music"
+import type { MusicPlayer } from "./music-player"
+import type { MusicUserData } from "./music-user-data"
+import { initAppleMusic } from "./api-apple-music"
 import { AppleMusicPlayer } from "./music-apple-player"
 import { musicDataStore, musicPlayerStore, toastMessages } from "./store"
-import { MusicMoodCategory, MusicPlatform, ToastContext, ToastType } from "./enums"
+
+import { MusicAPIErrorContext, MusicMoodCategory, MusicPlatform, ToastContext } from "./enums"
+import { ApiError, AuthorizationError, ExpiredTokenError, ResourceNotFoundError } from "./errors"
 
 import { 
     sereneCollections, acousticCollections, classicalCollections, 
     lofiCollections, soundtrackCollections, summerCollections, 
     upbeatCollections, zenCollections  
 } from "$lib/data-music-collections"
+import { findEnumIdxFromDiffEnum } from "./utils-general"
+
+export const USER_PLAYLISTS_REQUEST_LIMIT = 10
+
+export const didInitMusicUser = () => loadMusicUserData() != null
 
 /**
  * Called after every refresh. If user has signed up cntinue music session.
  */
-export const initMusicPlatform = () => {     
-    const platformCode = getPlatformCode()
-    if (platformCode === null) return
-    
-    loginUser(platformCode, true)
+export const continueMusicSession = (musicPlatform: MusicPlatform) => {
+    musicLogin(musicPlatform, true)
 }
 
 /**
  * Attempt to log in user to desired music platform. 
  * Goes through an auth flow process. Called when logging for the first time or after a refresh after a log in.
- * Show a message if there's an issue.
+ * Makes a new music user and player instance.
+ * End of error pipeline.
  * 
  * @param platform          Current music streaming platform being used.
  * @param hasUserSignedIn   Has user already logged in before. 
  * @returns                 AsyncResult object.
  */
-export const loginUser = async (platform: MusicPlatform, hasUserSignedIn: boolean = false): Promise<AsyncResult> => {
+export const musicLogin = async (platform: MusicPlatform, hasUserSignedIn: boolean = false): Promise<AsyncResult> => {
     try {
         if (platform === MusicPlatform.AppleMusic) {
-            await initAppleMusicState(hasUserSignedIn)
+            await initAppleMusic(hasUserSignedIn)
         }
+
+        if (hasUserSignedIn) return { sucess: true }
+
+        toastMessages.update((toasts: ToastMsg[]) => [...toasts, {
+            context: get(musicDataStore)!.musicPlatform,
+            message: "Log in Successful!",
+        }])
+
         return { sucess: true }
     }
-    catch(code: any) {
-        let toastMessage = createMusicAPIErrorToastMsg(code)
-        toastMessages.update((toasts: ToastMsg[]) => [...toasts, toastMessage])
-
+    catch(error: any) {
+        createMusicAPIErrorToastMsg(error, platform)
         return { sucess: false }
     }    
 }
@@ -48,7 +61,7 @@ export const loginUser = async (platform: MusicPlatform, hasUserSignedIn: boolea
  * Called when user logs out of music platform.
  * @returns        AsyncResult object.
  */
-export const logOutUser = async (): Promise<AsyncResult> => {
+export const musicLogout = async (): Promise<AsyncResult> => {
     const musicStore = get(musicDataStore)
     const playerStore = get(musicPlayerStore)
 
@@ -57,11 +70,8 @@ export const logOutUser = async (): Promise<AsyncResult> => {
         playerStore!.quitPlayer()
         return { sucess: false }
     }
-    catch {
-        let toastMessage = createMusicAPIErrorToastMsg("400", "Relogin failed. Refresh & try again.")
-        toastMessages.update((toasts: ToastMsg[]) => [...toasts, toastMessage])
-
-        console.error("Error logging out user.")
+    catch(error: any) {
+        createMusicAPIErrorToastMsg(error)
         return { sucess: false }
     }
 }
@@ -70,64 +80,97 @@ export const logOutUser = async (): Promise<AsyncResult> => {
  * Called when user wants to log in again after token has expired.
  * @returns     AsyncResult object.
  */
-export const reLoginUser = async (): Promise<AsyncResult> => {
+export const refreshMusicSession = async (): Promise<AsyncResult> => {
     const musicStore = get(musicDataStore)
     try {
-        await musicStore!.reLogInUser()
-        const musicPlayer = new AppleMusicPlayer(musicStore!)
+        await musicStore!.refreshMusicSession()
+        new AppleMusicPlayer(true)
 
         toastMessages.update((toasts: ToastMsg[]) => [...toasts, {
-            type: ToastType.Expired,
-            context: getPlatformCode()!,
-            message: "Log In Success!",
-            actionFunction: null
+            context: musicStore!.musicPlatform,
+            message: "Refresh Success!"
         }])
 
         return { sucess: true }
     }
-    catch(code: any) {
-        let toastMessage = createMusicAPIErrorToastMsg(code, "Relogin failed. Refresh & try again.")
-        toastMessages.update((toasts: ToastMsg[]) => [...toasts, toastMessage])
-        
-        console.error("Error relogging in user.")
+    catch(error: any) {
+        createMusicAPIErrorToastMsg(error)
         return { sucess: false }
     }
 }
 
 /**
- * Create a an error toast message.
- * @param errorCode  Error code. "400" is treated as a generic error to the user.
- * @returns          Toast message to be disaplyed in a Toast component.
+ * Create a an error toast message. 
+ * Error code used to add context to error. 
+ * Used to determine how to handle the error.
+ * 
+ * @param error         Error thrown from interacting with music user data / player stores.
+ * @param musicPlatform Context music platform error occured in.
+ * @returns             Toast message to be disaplyed in a Toast component.
  */
-export const createMusicAPIErrorToastMsg = (errorCode: string, customMsg: string = ""): ToastMsg => {
-    const platform = Number(getPlatformCode()!)
+export const createMusicAPIErrorToastMsg = (error: Error, musicPlatform?: MusicPlatform) => {
+    let toastMessage: ToastMsg
 
-    // 401: invalid token, no token, expired token
-    if (errorCode === "401") {
-        return {
-            type: ToastType.Expired,
-            context: ToastContext[platform],
-            message: customMsg ? customMsg : "Session expired. Log in again to continue.",
-            actionFunction: reLoginUser
+    const platform = musicPlatform === undefined ? get(musicDataStore)!.musicPlatform! : musicPlatform
+    const toastContextidx = findEnumIdxFromDiffEnum(platform!, MusicPlatform, ToastContext)! as ToastContext
+    const toastContext = ToastContext[toastContextidx]
+
+    // put action function
+    if (error instanceof ExpiredTokenError) {
+        toastMessage = {
+            context: toastContext,
+            message: error.message,
+            action: {
+                msg: "Log in",
+                func: () => refreshMusicSession()
+            }
         }
     }
-    else if (errorCode === "403") {
-        return {
-            type: ToastType.BasicError,
-            context: ToastContext[platform],
-            message: customMsg ? customMsg : "App authorization denied by the user.",
-            actionFunction: null
-        }
+    toastMessage = {
+        context: toastContext,
+        message: error.message,
+    }
+
+    toastMessages.update(() => [toastMessage])
+}
+
+
+/**
+ * Get the right error object to throw after a failed interaction with the a Music API.
+ * Used in cases where an action may retrun multiple types of error.
+ * 
+ * @param     code      HTTP Status Code error code returned from Youtube Data API
+ * @param     context   In what API context is the error origination from
+ * @returns             Error type and context will be relevant in how the error will be displayed to the user.
+ */
+export const getMusicAPIError = (code: number, context: MusicAPIErrorContext) => {
+    let message = "Error interacting with Music Data API."
+  
+    if (code === 401) {
+        return new ExpiredTokenError("Session Expired. Log in Again to continue.")
+    }
+    else if (code === 403 && context === MusicAPIErrorContext.TRACK) {
+      return new AuthorizationError("Issue with requested track or request is not properly authorized.")
+    }
+    else if (code === 403 && (context === MusicAPIErrorContext.PLAYLIST || context === MusicAPIErrorContext.ALBUM)) {
+      return new AuthorizationError("Issue with requested playlist / album or request is not properly authorized.")
+    }
+    else if (code === 403 && (context === MusicAPIErrorContext.USER_AUTHORIZATION)) {
+      return new AuthorizationError("App authorization failed.")
+    }
+    else if (code === 404 && (context === MusicAPIErrorContext.PLAYLIST || context === MusicAPIErrorContext.ALBUM)) {
+      return new ResourceNotFoundError("Requested playlist / album failed. Track may not exist.")
+    }
+    else if (code === 404 && context === MusicAPIErrorContext.TRACK) {
+      return new ResourceNotFoundError("Requested track failed Track may not exist.")
+    }
+    else if (code === 404 && context === MusicAPIErrorContext.USER_AUTHORIZATION) {
+      return new ResourceNotFoundError("User does not exist.")
     }
     else {
-        return {
-            type: ToastType.BasicError,
-            context: ToastContext[platform],
-            message: customMsg ? customMsg : "Error occured. Refresh or Log in Again to continue.",
-            actionFunction: null
-        }
+      return new ApiError(message)
     }
-}
+  }
 
 /**
  * Set collection as current collection & lay the first track of the collection item clicked.
@@ -136,32 +179,19 @@ export const createMusicAPIErrorToastMsg = (errorCode: string, customMsg: string
  * @returns               AsyncResult object
  */
 export const handlePlaylistItemClicked = async (collection: MusicCollection): Promise<AsyncResult> => {
-    const musicData = get(musicDataStore)
     const musicPlayer = get(musicPlayerStore)
 
-    if (collection.id === musicData!.collection?.id) {
-        musicData!.removeCurrentMusicCollection()
-        musicPlayer!.resetMusicPlayerStateToEmptyState()
+    if (collection.id === musicPlayer!.collection?.id) {
+        musicPlayer!.removeCurrentMusicCollection()
         return { sucess: true }
     }
 
     try {
-        musicPlayer!.updateMusicPlayerState({ 
-            ...musicPlayer!.state,
-            isDisabled: true, 
-            isShuffled: false,
-            isRepeating: false
-        })
-
-        musicData!.updateCurrentCollection(collection)
-        musicPlayer!.queueAndPlayNextTrack(collection.id, 0)
-
+        musicPlayer!.updateCurrentCollectionAndPlay(collection)
         return { sucess: true }
     }
-    catch(code: any) {
-        let toastMessage = createMusicAPIErrorToastMsg(code)
-        toastMessages.update((toasts: ToastMsg[]) => [...toasts, toastMessage])
-
+    catch(error: any) {
+        createMusicAPIErrorToastMsg(error)
         return { sucess: false }
     }
 }
@@ -184,11 +214,11 @@ export const userPlsPaginationScrollHandler = async (event: Event) => {
 
     try {
         if (music!.hasFetchedAllUserPls) return
-        await music!.getUserApplePlaylists()
+        await music!.fetchMoreUserPlaylists()
+
     }
-    catch(code: any) {
-        let toastMessage = createMusicAPIErrorToastMsg(code)
-        toastMessages.update((toasts: ToastMsg[]) => [...toasts, toastMessage])
+    catch(error: any) {
+        createMusicAPIErrorToastMsg(error)
     }
 }
 
@@ -211,9 +241,8 @@ export const discoverPlsPaginationScrollHandler = async (event: Event) => {
         // await: fetch more discover playlists
         // hasCollectionItemsLoaded = true
     }
-    catch(code: any) {
-        let toastMessage = createMusicAPIErrorToastMsg(code)
-        toastMessages.update((toasts: ToastMsg[]) => [...toasts, toastMessage])
+    catch(error: any) {
+        createMusicAPIErrorToastMsg(error)
     }
 }
 
@@ -224,7 +253,7 @@ export const discoverPlsPaginationScrollHandler = async (event: Event) => {
  * @param platformProp  To string index platform property name from DiscoverCollection
  * @returns             Playlists & albums under given mood category.
  */
-export const getClickedDiscoverCollectionCardList = (discoverCategory: MusicMoodCategory, platformProp: MusicPlatformPropNames): MusicCollection[] => {
+export const getDiscoverCollectionList = (discoverCategory: MusicMoodCategory, platformProp: MusicPlatformPropNames): MusicCollection[] => {
     switch (discoverCategory) {
         case MusicMoodCategory.Serene:
             return sereneCollections[platformProp]
@@ -246,17 +275,6 @@ export const getClickedDiscoverCollectionCardList = (discoverCategory: MusicMood
 }
 
 /**
- * Get the music current platform as a string
- * 
- * @param platFormIdx  Enum platform index
- * @returns            Current music platform title
- */
-export const getCurrMusicPlatformName = (platFormIdx: number): string => {
-    const platform = MusicPlatform[platFormIdx]
-    return platform === "AppleMusic" ? "Apple Music" : platform
-}
-
-/**
  * Based on current platform being used, get the proper platform 
  * ...property of the discover collection object item.
  * 
@@ -270,53 +288,45 @@ export const getPlatformNameForDiscoverObj = (platFormIdx: MusicPlatform): Music
     return platform as MusicPlatformPropNames
 }
 
-/**
- * Get the platform code. Will be present if user has logged in.
- * 
- * @returns  0 (Apple Music), 1 (Spotify), 2 (Youtube), 4 (Soundcloud)
- */
-export const getPlatformCode = (): MusicPlatform | null => {
-    const platformCode = localStorage.getItem("music-platform")
-    if (platformCode === null) return null
-
-    return Number(platformCode)
+/* Load */
+export const loadMusicUserData = (): Partial<MusicUserData> | null => {
+    if (!localStorage.getItem("music-user-data")) return null
+    
+    return JSON.parse(localStorage.getItem("music-user-data")!)
+} 
+export const loadMusicPlayerState = (): MusicPlayer | null => {
+    if (!localStorage.getItem("music-player-data")) return null
+    
+    return JSON.parse(localStorage.getItem("music-player-data")!)
+} 
+export const loadMusicShuffleData = (): MusicShufflerData => {
+    return JSON.parse(localStorage.getItem("music-shuffle-data")!)
 }
 
-
-export const getAccessToken = (): string => {
-    return localStorage.getItem("music-access-token") ?? ""
+/* Updates */
+export const saveMusicUserData = (userData: Partial<MusicUserData>) => {
+    localStorage.setItem("music-user-data", JSON.stringify(userData))
 }
-export const getAppleAuthToken = (): string => {
-    return localStorage.getItem("apple-music-auth-token") ?? ""
+export const saveMusicPlayerData = (playerState: Partial<MusicPlayer>) => {
+    localStorage.setItem("music-player-data", JSON.stringify(playerState))
 }
-
-export const saveMusicPlatform = (musicPlatform: MusicPlatform) => {
-    localStorage.setItem("music-platform", JSON.stringify(musicPlatform))
-}
-export const updateAccessToken = (token: string) => {
-    localStorage.setItem("music-access-token", token)
-}
-export const updateAppleAuthToken = (authToken: string): void => {
-
-    localStorage.setItem("apple-music-auth-token", authToken)
+export const saveMusicShuffleData = (shuffleData: MusicShufflerData) => {
+    return localStorage.setItem("music-shuffle-data", JSON.stringify(shuffleData))
 }
 
-export const removeAppleAuthToken = () => {
-    localStorage.removeItem("apple-music-auth-token")
-    localStorage.removeItem("music.y5xn9fm7bj.media-user-token")
-}
-export const removeAppleAccessToken = () => {
-    localStorage.removeItem("music-access-token")
+/* Removals */
+export const deleteMusicUserData = (): void => {
+    localStorage.removeItem("music-user-data")
 }
 export const removeAppleMusicTokens = () => {
     localStorage.removeItem("music.y5xn9fm7bj.itua")
-    localStorage.removeItem("music-platform")
     localStorage.removeItem("music.y5xn9fm7bj.itre")
+    localStorage.removeItem("music.y5xn9fm7bj.media-user-token")
     localStorage.removeItem("mk-player-tsid")
+}
+export const removeMusicPlayerData = (): void => {
+    localStorage.removeItem("music-player-data")
 }
 export const removeMusicShuffleData = (): void => {
     localStorage.removeItem("music-shuffle-data")
-}
-export const removeMusicPlayerState = (): void => {
-    localStorage.removeItem("music-player-data")
 }

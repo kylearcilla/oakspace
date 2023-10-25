@@ -1,41 +1,47 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     
-    import { themeState } from "$lib/store"
-    import { HrsMinsFormatOption, SessionModal } from "$lib/enums"
 	import { Session } from "$lib/pom-session"
 	import { clickOutside } from "$lib/utils-general"
+    import { themeState, ytPlayerStore } from "$lib/store"
+    import { HrsMinsFormatOption, ModalType } from "$lib/enums"
 	import { calculateEndTime, getTimePeriodString, minsToHHMM } from "$lib/utils-date"
-	import { BREAK_TIMES_ARR, DEFAULT_SESSION_INPUTS, FOCUS_TIMES_ARR, MAX_SESSION_NAME_LENGTH, MAX_TODO_NAME_LENGTH } from "$lib/utils-session"
+	import { 
+            BREAK_TIMES_ARR, DEFAULT_SESSION_INPUTS, FOCUS_TIMES_ARR, MAX_SESSION_NAME_LENGTH, 
+            MAX_TODO_COUNT, MAX_TODO_NAME_LENGTH, createSessionToastMsg, initSession 
+    } from "$lib/utils-session"
 	
     import Modal from "../../components/Modal.svelte";
-    
-    export let toggleModal: (modal: SessionModal | null) => void
+	import { closeModal, openModal } from "$lib/utils-home";
 
     let newTodoTitle = ""
-    let subtaskCount = 0
 
     let isTagListDropDownOpen = false
     let isFocusTimeDropDownOpen = false
     let isBreakTimeDropDownOpen = false
     let sessionNameInputContainer: HTMLElement
     let newTodoInputContainer: HTMLElement
+    let todoCount = 0
 
     let interval: NodeJS.Timer | null = null
 
-    let input: SessionData = { ...DEFAULT_SESSION_INPUTS }
+    let input: SessionInputData = { ...DEFAULT_SESSION_INPUTS }
     let tags = [ { name: "school", color: "#9997FE" }, { name: "swe", color: "#FF8B9C" } ]
 
     /* Session Stuff */
-    const createNewSession = () => {
+    const createNewSession = (e: Event) => {
+        e.preventDefault()
+
         if (input.name.length === 0 || input.name.length > MAX_SESSION_NAME_LENGTH) return
         input.startTime = new Date()
         input.sessionDurationMins = (input.pomPeriods * input.pomTime) + ((input.pomPeriods - 1) * input.breakTime)
 
-        new Session(input)
-        toggleModal(SessionModal.ActiveSession)
-
+        initSession(input) 
         resetAndCloseModal()
+        
+        if ($ytPlayerStore?.doShowPlayer) {
+            openModal(ModalType.ActiveSession)
+        }
     }
     const setResultTimes = () => {
         const totalFocusTimeMins = input.pomPeriods * input.pomTime
@@ -48,7 +54,7 @@
     }
     const resetAndCloseModal = () => {
         clearInterval(interval!)
-        toggleModal(null)
+        closeModal(ModalType.NewSession)
     }
 
     /* Event Handlers */
@@ -63,12 +69,20 @@
         isTagListDropDownOpen = false
     }
     const handleNewTodoClicked  = () => {
+        if (newTodoTitle === "" || newTodoTitle.length > MAX_TODO_NAME_LENGTH) {
+            return
+        }
+        if (input.todos.length === MAX_TODO_COUNT) {
+            createSessionToastMsg("Max todo count reached.")
+            return
+        }
+
         input.todos.push({ title: newTodoTitle, isChecked: false })
+        todoCount++
         newTodoTitle = "" 
-        subtaskCount++
 
         const inputElement = newTodoInputContainer.firstChild! as HTMLInputElement
-        requestAnimationFrame(() => inputElement.focus())
+        inputElement.focus()
     }
     const handleCreateNewTagClicked = () => {
         // Create a New Tag
@@ -90,7 +104,7 @@
     })
 </script>
 
-<Modal onClickOutSide={() => toggleModal(null)}>
+<Modal onClickOutSide={() => resetAndCloseModal()}>
     <div class={`new-session-modal ${$themeState.isDarkTheme ? "new-session-modal--dark" : ""}`}>
         <h1>Create New Session</h1>
         <form on:submit={createNewSession} autocomplete="off" autocorrect="off">
@@ -277,9 +291,14 @@
                             on:blur={() => newTodoInputContainer.classList.remove("new-session-modal__pom-input-todo-input--focus")}
                             bind:value={newTodoTitle}
                         >
-                        <span>{subtaskCount}</span>
+                        <span>{todoCount}</span>
                     </div>
-                    <button disabled={newTodoTitle === "" || newTodoTitle.length > MAX_TODO_NAME_LENGTH} class="unfill" type="button" on:click={handleNewTodoClicked}>
+                    <button 
+                        disabled={newTodoTitle === "" || newTodoTitle.length > MAX_TODO_NAME_LENGTH || input.todos.length + 1 > MAX_TODO_COUNT} 
+                        class="unfill" 
+                        type="button" 
+                        on:click={handleNewTodoClicked}
+                    >
                         Submit
                     </button>
                 </div>

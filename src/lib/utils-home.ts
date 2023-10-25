@@ -1,19 +1,88 @@
 import { get } from "svelte/store"
-import { homeViewLayout } from "./store"
+import { homeViewLayout, sessionStore } from "./store"
+
+import { ModalType } from "./enums"
+import { conintueWorkSession, didInitSession } from "./utils-session"
 import { loadTheme } from "./utils-appearance"
-import { initMusicPlatform } from "./utils-music"
-import { initYtPlayer, initYtUser } from "./utils-youtube"
-import { initSession } from "./utils-session"
+import { continueMusicSession, didInitMusicUser, loadMusicUserData } from "./utils-music"
+import { continueYtPlayerSession, continueYtUserSession, didInitYtUser } from "./utils-youtube"
+import { didInitYtPlayer } from "./utils-youtube-player"
 
 const LEFT_BAR_LEFT_BOUND = 5
 const LEFT_BAR_RIGHT_BOUND = 80
 const MIN_UI_MAX_WIDTH = 600
 
 /**
+ * Initialize app state.
+ * Load data from previously saved state (if there is any).
+ */
+export const initAppState = () => {
+    loadTheme()
+    loadHomeViewLayOutUIData()
+
+    if (didInitSession()) {
+        conintueWorkSession()
+    }
+    if (didInitYtUser()) {
+        continueYtUserSession()
+    }
+    if (didInitYtPlayer()) {
+        continueYtPlayerSession()
+    }
+    if (didInitMusicUser()) {
+        const musicPlatform = loadMusicUserData()!.musicPlatform!
+        continueMusicSession(musicPlatform)
+    }
+}
+
+/**
+ * Keyboard shortcut handler for key down events. 
+ * @param event  The keyboard key down event to handle.
+ * @param hasUserToggledWithKeyLast     If user opened the left side bar with a short cut.
+ * @returns                             If user still has toggled left side bar.
+ */
+export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, hasUserToggledWithKeyLast: boolean) => {    
+    const target = event.target as HTMLElement
+    if (target.tagName === "INPUT") return hasUserToggledWithKeyLast
+
+    const layoutState = get(homeViewLayout)
+
+    if (event.key === "Escape" && layoutState.modalsOpen.length != 0) {
+        const modals = get(homeViewLayout).modalsOpen
+        closeModal(modals[modals.length - 1])
+    }
+    else if (event.ctrlKey && event.key === "]") {
+        updateUI({ ...layoutState, isTaskMenuOpen: !layoutState.isTaskMenuOpen })
+    }
+    else if (event.key === "?" && layoutState.modalsOpen.length === 0) {
+        isModalOpen(ModalType.Shortcuts) ? closeModal(ModalType.Shortcuts) : openModal(ModalType.Shortcuts)
+    }
+    else if (event.ctrlKey && event.key === "[") {
+        updateUI({ ...layoutState, isNavMenuOpen: !layoutState.isNavMenuOpen })
+        return true
+    }
+
+    return hasUserToggledWithKeyLast
+}
+
+/**
+ * Keyboard shortcut handler for key up events. 
+ * @param event  The keyboard key up event to handle.
+ */
+export const keyboardShortCutHandlerKeyUp = (event: KeyboardEvent) => {
+    const target = event.target as HTMLElement
+    if (target.tagName === "INPUT") return
+
+    if (!get(sessionStore) && event.key.toLocaleLowerCase() === "n" && get(homeViewLayout).modalsOpen.length === 0) {
+        openModal(ModalType.NewSession)
+    }
+}
+
+/**
  * On mouse move handler for home page.
  * Toggles left side bar based on the positioning of the mouse.
  * @param event                         Mouse Event
- * @param hasUserToggledWithKeyLast     If user opened the left side bar with a short cut, then must be hidden again from using the same short cut.
+ * @param hasUserToggledWithKeyLast     If user opened the left side bar with a short cut, then must be hidden again from using the same short cut. Cannot be closed from mouse event.
  * @returns                             If user still has toggled left side bar.
  */
 export const onMouseMoveHandler = (event: MouseEvent, hasUserToggledWithKeyLast: boolean): boolean => {
@@ -65,37 +134,38 @@ export const updateUI = (newLayout: HomeLayout) => {
  */
 const loadHomeViewLayOutUIData = () => {
     const storedData = localStorage.getItem("home-ui")
-    let data: HomeLayout
+    if (!storedData) return
 
-    if (!storedData) {
-        data = {
-        isNavMenuOpen: true,
-        isTaskMenuOpen: true,
-        isVideoViewOpen: true,
-        isMusicPlayerOpen: true,
-        minModeSrc: null,
-        settingsModal: null
-        }
-    } else {
-        data = JSON.parse(storedData)
-    }
-    homeViewLayout.set({ ...data, settingsModal: null })
+    let data: HomeLayout = JSON.parse(storedData)
+    homeViewLayout.set({ ...data, modalsOpen: [] })
 }
 
 /**
- * Initialize app state.
- * Load data from previously saved state (if there is any).
+ * Add modal to "open modals" array
+ * @param modal  Modal to be opened
  */
-export const initAppState = () => {
-    // ui
-    loadTheme()
-    loadHomeViewLayOutUIData()
+export const openModal = (modal: ModalType) => {
+    homeViewLayout.update((data: HomeLayout) => {
+        return { ...data, modalsOpen: [ ...data.modalsOpen, modal ]}
+    })
+}
 
-    // app data
-    initSession()
+/**
+ * Remove modal from modals array
+ * @param modal  Modal to be opened
+ */
+export const closeModal = (modalToRemove: ModalType) => {
+    homeViewLayout.update((data: HomeLayout) => {
+        const newArray = data.modalsOpen.filter((modal: ModalType) => modal !== modalToRemove)
+        return { ...data, modalsOpen: newArray }
+    })
+}
 
-    // streaming platforms
-    initYtUser()
-    initYtPlayer()
-    initMusicPlatform()
+/**
+ * @param modal  See if this modal is already open.
+ * @returns      If modal is open.
+ */
+export const isModalOpen = (modal: ModalType) => {
+    const modalsOpen = get(homeViewLayout).modalsOpen
+    return modalsOpen.includes(modal)
 }

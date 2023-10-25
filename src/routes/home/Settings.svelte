@@ -3,7 +3,7 @@
 	import { formatDateToMMDD } from '$lib/utils-date';
 	import { onMount } from 'svelte';
 
-    enum SettingsModal { Settings, Youtube, Music, Stats, Appearance }
+    enum ModalType { Settings, Youtube, Music, Stats, Appearance }
     enum Tab { PROFILE, PLAN_DETAILS, CARDS, LANGUAGE }
 
     let isAddNewCardModalOpen = false

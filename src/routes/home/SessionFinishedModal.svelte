@@ -1,16 +1,28 @@
 <script lang="ts">
-    import { themeState } from "$lib/store"
-    import { sessionStore } from "$lib/store"
-	import { HrsMinsFormatOption } from "$lib/enums"
+	import { closeModal } from "$lib/utils-home"
+	import { HrsMinsFormatOption, ModalType } from "$lib/enums"
+    import { sessionManager, sessionStore, themeState } from "$lib/store"
 	import { getDifferenceInSecs, getTimePeriodString, secsToHHMM } from "$lib/utils-date"
     
 	import Modal from "../../components/Modal.svelte"
+	import { getPomPeriodElapsedTime } from "$lib/utils-date";
 
-    export let clearSession: () => void
     let isInStatsPage = true
+    let elapsedTimeStr = ""
+
+    $: {
+        elapsedTimeStr = getPomPeriodElapsedTime(new Date($sessionStore!.startTime), new Date($sessionStore!.endTime!))
+    }
+
+    const exitModal = () => {
+        $sessionStore!.clearSession()
+        sessionManager.set(null)
+        closeModal(ModalType.SesssionFinished)
+    }
 
     const sessionFinishedBtnClicked = () => isInStatsPage = !isInStatsPage
-    const todayStatsFinishedBtnClicked = () => clearSession()
+    const todayStatsFinishedBtnClicked = () => exitModal()
+    
     const keyboardShortcutHandler = (event: KeyboardEvent) => {
         if (event.key != "Enter") return
         isInStatsPage ? sessionFinishedBtnClicked() : todayStatsFinishedBtnClicked()
@@ -54,9 +66,7 @@
                                 {/if}
                             </div>
                             <div class="session-finished__result-elapsed">
-                                {#if $sessionStore.endTime}
-                                    {secsToHHMM(getDifferenceInSecs(new Date($sessionStore.startTime), new Date($sessionStore.endTime)), HrsMinsFormatOption.MIN_LETTERS)}
-                                {/if}
+                                {elapsedTimeStr}
                             </div>
                         </div>
                     </div>

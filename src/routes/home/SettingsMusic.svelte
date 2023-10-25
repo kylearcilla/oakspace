@@ -1,14 +1,20 @@
 <script lang="ts">
-	import { onDestroy, onMount } from "svelte"
-    import { MusicMoodCategory, type MusicPlatform } from "$lib/enums"
+	import { onMount } from "svelte"
+    import { ModalType, MusicPlatform, MusicMoodCategory } from "$lib/enums"
     import { musicCategories } from "$lib/data-music-collections"
-	import { themeState, musicDataStore, homeViewLayout } from "$lib/store"
-	import { discoverPlsPaginationScrollHandler, getClickedDiscoverCollectionCardList, getCurrMusicPlatformName, 
-             getPlatformCode, getPlatformNameForDiscoverObj, handlePlaylistItemClicked, logOutUser, loginUser, reLoginUser, userPlsPaginationScrollHandler  } from "$lib/utils-music"
+	import { themeState, musicDataStore, musicPlayerStore } from "$lib/store"
+    import { addSpacesToCamelCaseStr } from "$lib/utils-general"
+	import { 
+             USER_PLAYLISTS_REQUEST_LIMIT, discoverPlsPaginationScrollHandler, getDiscoverCollectionList, 
+             getPlatformNameForDiscoverObj, handlePlaylistItemClicked, 
+             musicLogout, musicLogin, refreshMusicSession 
+    } from "$lib/utils-music"
 
 	import Modal from "../../components/Modal.svelte"
-	import SettingsMusicSignedOut from "./SettingsMusicSignedOut.svelte";
-	import SettingsMusicAccountHeader from "./SettingsMusicAccountHeader.svelte";
+	import SettingsMusicSignedOut from "./SettingsMusicSignedOut.svelte"
+	import SettingsMusicAccountHeader from "./SettingsMusicAccountHeader.svelte"
+	import { closeModal } from "$lib/utils-home"
+	import { createMusicAPIErrorToastMsg } from "$lib/utils-music"
 
     let chosenDiscoverCardTitle = "Serene"
     let chosenMusicCollection: MusicCollection[] = []
@@ -17,41 +23,86 @@
     let isScrollableRight = true
     let collectionList: HTMLElement | null
     let debounceTimeout: NodeJS.Timeout | null = null
+
     let hasCollectionItemsLoaded = true
-    let hasNowPlayingCollectionLoaded = false
+    
+    let isUserPlaylistsLoading = false
+    let scrollTop = 0
+    let scrollHeight = 0
+    let scrollWindow = 0
 
     const SCROLL_STEP = 400
     const PLAYLIST_BTN_COOLDOWN_MS = 1000
+    const FETCH_PLAYLIST_DELAY = 1000
     
     /* Log In Functionality  */
-    const _loginUser = async (platform: MusicPlatform) => {
-        const res = await loginUser(platform)
+    async function _musicLogin (platform: MusicPlatform) {
+        const res = await musicLogin(platform)
         if (!res.sucess) return
         
-        hasCollectionItemsLoaded = true
         handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
     }
-    const activePlatformBtnClicked = async () => {
+    async function activePlatformBtnClicked() {
         isPlatformListOpen = false
-         $musicDataStore!.hasTokenExpired ? await reLoginUser() : await logOutUser()
+         $musicDataStore!.hasTokenExpired ? await refreshMusicSession() : await musicLogout()
     }
 
     /* Collection Item Clicked Event Handlers */
-    const _handlePlaylistItemClicked = async (collectionClicked: MusicCollection) => {
+    async function _handlePlaylistItemClicked(collectionClicked: MusicCollection) {
         if (debounceTimeout !== null) return
         
         await handlePlaylistItemClicked(collectionClicked)
         debounceTimeout = setTimeout(() => debounceTimeout = null, PLAYLIST_BTN_COOLDOWN_MS)
     }
 
-    /* Pagination */
-    const _userPlaylistsPaginationScrollHandler = (e: Event) => userPlsPaginationScrollHandler(e)
-    const _discoverPlsPaginationScrollHandler = (e: Event) => discoverPlsPaginationScrollHandler(e)
+    /* Infinite Scroll */
+    function hasReachedEndOfList() { 
+        return Math.ceil(scrollTop) >= scrollHeight - scrollWindow 
+    }
+
+    async function userPlaylistInfiniteScrollHandler(event: Event) { 
+        const list = event.target as HTMLElement
+        scrollTop = list.scrollTop
+        scrollHeight = list!.scrollHeight
+        scrollWindow = list!.clientHeight 
+
+        if (!hasReachedEndOfList()) return
+        getMorePlaylists()
+    }
+    
+    function getMorePlaylists() {
+        if (isUserPlaylistsLoading || $musicDataStore!.hasFetchedAllUserPls || $musicDataStore!.hasTokenExpired) return
+        
+        isUserPlaylistsLoading = true
+        setTimeout(async () => { 
+            try {
+                await $musicDataStore!.fetchMoreUserPlaylists()
+                isUserPlaylistsLoading = false
+
+                if (hasReachedEndOfList()) getMorePlaylists()
+            }
+            catch(error: any) {
+                console.error(error)
+                isUserPlaylistsLoading = false
+                createMusicAPIErrorToastMsg(error)
+            }
+        }, FETCH_PLAYLIST_DELAY)
+    }
+
+
+    function _discoverPlsPaginationScrollHandler(e: Event) { 
+        discoverPlsPaginationScrollHandler(e)
+    }
     
     /* Discover Section */
-    const handleShiftTabCategoryRight = () => collectionList!.scrollLeft += SCROLL_STEP
-    const handleShiftTabCategoryLeft = () => collectionList!.scrollLeft -= SCROLL_STEP
-    const handleScroll = () => {
+    function handleShiftTabCategoryRight() {
+         collectionList!.scrollLeft += SCROLL_STEP
+    }
+    function handleShiftTabCategoryLeft() { 
+        collectionList!.scrollLeft -= SCROLL_STEP
+    }
+
+    function handleScroll() {
         const scrollLeft = collectionList!.scrollLeft
         const scrollWidth = collectionList!.scrollWidth
         const clientWidth = collectionList!.clientWidth 
@@ -61,13 +112,16 @@
     }
 
     function handleDiscoverCollectionCardClicked(moodCategoryIdx: number) {
-        const platformProp = getPlatformNameForDiscoverObj(getPlatformCode()!)
+        const platform = $musicDataStore!.musicPlatform
+        const platformProp = getPlatformNameForDiscoverObj(platform!)
 
         chosenDiscoverCardTitle = MusicMoodCategory[moodCategoryIdx]
-        chosenMusicCollection = getClickedDiscoverCollectionCardList(moodCategoryIdx, platformProp)
+        chosenMusicCollection = getDiscoverCollectionList(moodCategoryIdx, platformProp)
     }
 
-    const onClickOutSide = () => homeViewLayout.update((data: HomeLayout) => ({ ...data, settingsModal: null }))
+    function onClickOutSide() { 
+        closeModal(ModalType.Music) 
+    }
 
     onMount(() => {
         if (!$musicDataStore?.isSignedIn) return
@@ -75,7 +129,7 @@
     })
 </script>
 
-{#if $musicDataStore?.isSignedIn}
+{#if $musicDataStore && $musicDataStore?.isSignedIn && $musicPlayerStore}
     <Modal onClickOutSide={onClickOutSide}> 
         <div class={`music ${!$themeState.isDarkTheme ? "music--light" : ""}`}>
             <!-- Top Header -->
@@ -85,46 +139,47 @@
             <div class="music__content">
                 <div class="music__left-section">
                     <!-- Now Playing Section -->
-                    <div class={`now-playing ${$musicDataStore?.collection ? "" : "now-playing--empty"} bento-box`}>
-                        <img class="img-bg" src={$musicDataStore?.collection?.artworkImgSrc} alt="">
-                        <div class={`blur-bg blur-bg--blurred-bg ${$musicDataStore?.collection ?? "blur-bg--solid-color"}`}></div>
+                    <div class={`now-playing ${$musicPlayerStore.collection ? "" : "now-playing--empty"} bento-box`}>
+                        <img class="img-bg" src={$musicPlayerStore.collection?.artworkImgSrc} alt="">
+                        <div class={`blur-bg blur-bg--blurred-bg ${$musicPlayerStore.collection ?? "blur-bg--solid-color"}`}></div>
                         <div class="content-bg">
-                            <h3 class="now-playing__title bento-box__title">Now Playing</h3>
-                            {#if $musicDataStore?.collection}
+                            {#if $musicPlayerStore.collection}
                                 <div class="now-playing__details-container">
-                                    <div class={`now-playing__artwork ${$musicDataStore?.collection.artworkImgSrc ? "" : "now-playing__artwork--empty"}`}>
-                                        <img src={$musicDataStore?.collection.artworkImgSrc} alt="current-collection">
+                                    <div class="now-playing__details-header">
+                                        <span class="now-playing__description-author">
+                                            {$musicPlayerStore.collection.author}
+                                        </span>
+                                        <div class="now-playing__collection-details">
+                                            <span class="now-playing__collection-type">
+                                                {$musicPlayerStore.collection.type}
+                                            </span>
+                                            <span>/</span>
+                                            <span class="now-playing__collection-song-count">
+                                                {$musicPlayerStore.collection.songCount} Items
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class={`now-playing__artwork ${$musicPlayerStore.collection.artworkImgSrc ? "" : "now-playing__artwork--empty"}`}>
+                                        <img src={$musicPlayerStore.collection.artworkImgSrc} alt="current-collection">
                                         <i class="fa-solid fa-music abs-center"></i>
                                     </div>
                                     <div class="now-playing__description">
-                                        <span class="now-playing__description-author">
-                                            {$musicDataStore?.collection.author}
-                                        </span>
-                                        {#if $musicDataStore?.collection.url}
-                                            <a href={$musicDataStore?.collection.url} target="_blank" rel="noreferrer">
+                                        {#if $musicPlayerStore.collection.url}
+                                            <a href={$musicPlayerStore.collection.url} target="_blank" rel="noreferrer">
                                                 <h4 class="now-playing__description-title">
-                                                    {$musicDataStore?.collection.name}
+                                                    {$musicPlayerStore.collection.name}
                                                 </h4>
                                             </a>
                                         {:else}
                                             <h4 class="now-playing__description-title">
-                                                {$musicDataStore?.collection.name}
+                                                {$musicPlayerStore.collection.name}
                                             </h4>
                                         {/if}
                                         <p class="now-playing__description-text">
-                                            {$musicDataStore?.collection.description}
+                                            {$musicPlayerStore.collection.description}
                                         </p>
                                     </div>
                                 </div>             
-                                <div class="now-playing__collection-details">
-                                    <span class="now-playing__collection-type">
-                                        {$musicDataStore?.collection.type}
-                                    </span>
-                                    <span>/</span>
-                                    <span class="now-playing__collection-song-count">
-                                        {$musicDataStore?.collection.songCount} songs
-                                    </span>
-                                </div>
                             {:else}
                                 <h4 class="now-playing__no-pl-selected">
                                     No Playlist / Album Selected
@@ -140,41 +195,41 @@
                                 {`${$musicDataStore?.userPlaylists.length} ${$musicDataStore?.userPlaylists.length == 1 ? "playlist" : "playlists"}`}
                             </span>
                         </div>
-                        <ul class="my-playlists__collection-list vert-scroll" on:scroll={_userPlaylistsPaginationScrollHandler}>
+                        <ul class="my-playlists__collection-list" on:scroll={userPlaylistInfiniteScrollHandler}>
                             <!-- My Playlist items -->
-                            {#if $musicDataStore?.hasUserPlaylistsLoaded && $musicDataStore?.userPlaylists.length === 0}
+                            {#if !isUserPlaylistsLoading && $musicDataStore?.userPlaylistsOffset > 0 && $musicDataStore?.userPlaylists.length === 0}
                                 <img class="my-playlists__no-pl-meme-img abs-center" src="/no-pl.png" alt="no-playlists-img"/>
                             {/if}
-                            {#each $musicDataStore?.userPlaylists as personalPlaylist, idx}
+                            {#each $musicDataStore?.userPlaylists as pl, idx}
                                 <li
-                                    on:dblclick={() => _handlePlaylistItemClicked(personalPlaylist)}
-                                    title={`${personalPlaylist.name} – ${personalPlaylist.description}`}
-                                    class={`my-playlists__playlist ${personalPlaylist.id === $musicDataStore?.collection?.id ? "my-playlists__playlist--chosen" : ""}`}
+                                    on:dblclick={() => _handlePlaylistItemClicked(pl)}
+                                    title={`${pl.name} – ${pl.description}`}
+                                    class={`my-playlists__playlist ${$musicPlayerStore.collection && pl.id === $musicPlayerStore.collection.id ? "my-playlists__playlist--chosen" : ""}`}
                                 >
                                     <p class="my-playlists__playlist-idx">{idx + 1}</p>
                                     <div class="my-playlists__playlist-img">
-                                        {#if personalPlaylist.artworkImgSrc != ""}
-                                            <img src={personalPlaylist.artworkImgSrc} alt="playlist-artwork"/>
+                                        {#if pl.artworkImgSrc != ""}
+                                            <img src={pl.artworkImgSrc} alt="playlist-artwork"/>
                                         {:else}
                                             <i class="fa-solid fa-music abs-center"></i>
                                         {/if}
                                     </div> 
                                     <div class="my-playlists__playlist-text">
-                                        <a href={personalPlaylist.url} target="_blank" rel="noreferrer">
-                                            <h5 class="my-playlists__playlist-text-title">{personalPlaylist.name}</h5>
+                                        <a href={pl.url} target="_blank" rel="noreferrer">
+                                            <h5 class="my-playlists__playlist-text-title">{pl.name}</h5>
                                         </a>
-                                        <p class="my-playlists__playlist-text-description">{personalPlaylist.description}</p>
+                                        <p class="my-playlists__playlist-text-description">{pl.description}</p>
                                     </div>
                                     <div class="divider divider--thin"></div>
                                 </li>
                             {/each}
                             <!-- Loading Skeleton -->
-                            {#if !$musicDataStore?.hasUserPlaylistsLoaded}
-                                {#each [1, 2, 3, 4, 5, 6, 7] as num}
+                            {#if isUserPlaylistsLoading}
+                                {#each Array.from({ length: USER_PLAYLISTS_REQUEST_LIMIT }, (_, i) =>  ($musicDataStore?.userPlaylistsOffset ?? 0) + i) as idx}
                                     <li
                                         class={`my-playlists__playlist my-playlists__playlist--skeleton`}
                                     >
-                                        <p class="my-playlists__playlist-idx seleton-bg">{num}</p>
+                                        <p class="my-playlists__playlist-idx seleton-bg">{idx + 1}</p>
                                         <div class="my-playlists__playlist-img skeleton-bg"></div> 
                                         <div class="my-playlists__playlist-text">
                                             <div class="my-playlists__playlist-text-title skeleton-bg"></div>
@@ -190,10 +245,10 @@
                 <div class="music__right-section">
                     <!-- Discover Section -->
                     <div class="discover bento-box bento-box--no-padding">
-                        {#if $musicDataStore?.isSignedIn && $musicDataStore.musicPlatform != null}
-                            <h3 class="bento-box__title">{`Discover from ${getCurrMusicPlatformName($musicDataStore.musicPlatform)}`}</h3>
+                        {#if $musicDataStore.musicPlatform != null}
+                            <h3 class="bento-box__title">{`Discover from ${addSpacesToCamelCaseStr(MusicPlatform[$musicDataStore.musicPlatform])}`}</h3>
                         {/if}
-                        <p class="bento-box__copy">Get in the zone with music that matches your vibe - select a category and discover new tunes to fuel your day.</p>
+                        <p class="discover__copy bento-box__copy">Get in the zone with music that matches your vibe - select a category and discover new tunes to fuel your day.</p>
                         <div class="discover__collection-list-container">
                             {#if isScrollableLeft}
                                 <div class="gradient-container gradient-container--left">
@@ -209,7 +264,11 @@
                             <ul  class="discover__collection-list" bind:this={collectionList} on:scroll={handleScroll}>
                                 {#each musicCategories as group, idx}
                                     <!-- svelte-ignore a11y-click-events-have-key-events -->
-                                    <li class="discover__collection-card" on:click={() => handleDiscoverCollectionCardClicked(idx)}>
+                                    <li class={`discover__collection-card 
+                                                 ${chosenDiscoverCardTitle === group.title ? "discover__collection-card--chosen" : ""}
+                                              `}
+                                        on:click={() => handleDiscoverCollectionCardClicked(idx)}
+                                    >
                                         <img class="discover__collection-card-img" src={group.artworkSrc}  alt="">
                                         <div class="discover__collection-card-hover-details">
                                             <img src={group.artworkBlurredSrc} alt="">
@@ -258,7 +317,7 @@
                                     <li
                                         on:dblclick={_ => _handlePlaylistItemClicked(collection)}
                                         title={`${collection.name} – ${collection.author}`}
-                                        class={`discover__collection-item ${collection.id === $musicDataStore?.collection?.id ? "discover__collection-item--chosen" : ""}`}
+                                        class={`discover__collection-item ${$musicPlayerStore.collection && collection.id === $musicPlayerStore.collection?.id ? "discover__collection-item--chosen" : ""}`}
                                     >
                                         <p class="discover__collection-item-num">{idx + 1}</p>
                                         <div class="discover__collection-item-details-container">
@@ -320,7 +379,7 @@
 
 <!-- Logged Off UI -->
 {#if !$musicDataStore?.isSignedIn}
-    <SettingsMusicSignedOut _loginUser={_loginUser} />
+    <SettingsMusicSignedOut _loginUser={_musicLogin} />
 {/if}
 
 <style lang="scss">
@@ -332,12 +391,15 @@
     $top-row-height: 170px;
     $bottom-row-height: 470px;
     $my-playlists-section-padding-left: 25px;
+    $collection-card-border-radius: 12px;
+    $collection-card-width: 160px;
+    $collection-card-height: $collection-card-width - 20px;
 
     .music {
-        width: 82vw;
-        height: 750px;
+        width: 87vw;
+        height: 780px;
         min-width: 390px;
-        max-width: 1000px;
+        max-width: 1100px;
         padding: $settings-modal-padding;
 
         
@@ -361,12 +423,11 @@
         }
         &__left-section {
             margin-right: $section-spacing;
-            width: 40%;
+            width: 32%;
             height: 100%;
         }
         &__right-section {
-            margin-right: $section-spacing;
-            width: calc(60% - 8px);
+            width: calc(68% - $section-spacing);
         }
 
         /* Light Theme */
@@ -422,10 +483,12 @@
     /* Sections */
     .now-playing {
         margin: 0px $section-spacing $section-spacing 0px;
-        height: 25%;
+        height: 33%;
         width: 100%;
         position: relative;
         color: white;
+        border-radius: 15px !important;
+        overflow: hidden;
 
         &--empty {
             .img-bg, .blur-bg {
@@ -442,26 +505,38 @@
             display: block;
         }
         a {
-            margin-bottom: 4px;
             width: 90%;
             @include elipses-overflow;
         }
         &__details-container {
-            display: flex;
-            margin-top: 10px;
             position: relative;
             width: 100%;
+            @include flex-container(_, space-between);
+            flex-direction: column;
+            height: 100%;
+            padding-bottom: 5px;
+        }
+        &__details-header {
+            @include flex-container(center, space-between);
         }
         &__artwork {
             z-index: 1;
             margin-right: 15px;
-            width: 75px;
-            height: 75px;
-            aspect-ratio: 1 / 1;
             position: relative;
             background-color: var(--hoverColor2);
             border-radius: 5px;
-            @include flex-container(center, _);
+            @include flex-container(center, center);
+            width: 90px;
+            height: 90px;
+            object-fit: cover;
+            aspect-ratio: 1 / 1;
+            margin: 0 auto 0 auto;
+            
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
 
             &--empty img {
                 display: none;
@@ -476,30 +551,30 @@
                 font-size: 2.3rem;
                 display: none;
             }
-            img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-            }
         }
         &__description {
             overflow: hidden;
-            height: 80px;
-            width: 90%;
+            max-height: 55px;
             &-author {
-                color: rgba(255, 255, 255, 0.6);
+                color: rgba(255, 255, 255, 0.7);
                 text-transform: capitalize;
                 font-weight: 500;
+                font-size: 1.2rem;
+                @include elipses-overflow;
             }
             &-title {
-                font-size: 1.2rem;
-                font-weight: 600;
+                font-size: 1.3rem;
+                color: rgba(249, 249, 249, 0.8);
+                font-weight: 500;
+                margin-bottom: 1px;
+                width: 100%;
                 @include elipses-overflow;
             }
             &-text {
-                color: rgba(255, 255, 255, 0.5);
+                color: rgba(229, 229, 229, 0.5);
                 overflow-y: scroll;
-                @include multi-line-elipses-overflow(3);
+                font-size: 1.1rem;
+                @include multi-line-elipses-overflow(2);
             }
 
             a {
@@ -508,14 +583,15 @@
             }
         }
         &__collection-details {
-            font-size: 0.97rem;
+            font-size: 1rem;
             font-weight: 500;
-            @include pos-abs-bottom-right-corner(20px, 13px);
             display: flex;
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(219, 219, 219, 0.5);
 
             span {
                 margin-left: 4px;
+                white-space: nowrap;
+
             }
         }
         &__no-pl-selected {
@@ -528,21 +604,26 @@
         .img-bg {
             width: 99.5%;
         }
-        .content-bg, .img-bg, .blur-bg {
-            border-radius: $bento-box-border-radius;
+        .blur-bg {
+            background: rgba(27, 27, 27, 0.4);
+            backdrop-filter: blur(45px);
         }
+        .content-bg, .img-bg, .blur-bg {
+            border-radius: 15px !important;
+        }
+        
         .content-bg {
             top: 0px;
             padding: 12px 17px;
+            border-radius: 15px !important;
         }
     }
     .my-playlists { 
         margin: 0px $section-spacing 0px 0px;
         width: 100%;
-        height: 74%;
-        margin-right: 6px;
-        overflow: hidden;
+        height: calc(100% - (33% + $section-spacing));
         position: relative;
+        margin-right: 6px;
 
         &__header {
             text-align: center;
@@ -550,15 +631,18 @@
             margin-bottom: 10px;
         }
         &__collection-list {
-            height: 100%;
-            margin-top: 2px;
-            padding-bottom: 100px;
+            height: 90%;
+            overflow-y: scroll;
         }
         /* Playlist Item */
         &__playlist {
             @include flex-container(center, _);
             padding: 11px 0px 11px 20px;
             position: relative;
+
+            &:last-child {
+                margin-bottom: 20px;
+            }
 
             &:focus {
                 background-color: var(--hoverColor);
@@ -571,7 +655,8 @@
                 background-color: var(--hoverColor);
             }
             &--skeleton &-idx {
-                opacity: 0.1;
+                opacity: 0.03;
+                font-weight: 500;
             }
             &--skeleton &-img {
                 border-radius: 4px;
@@ -601,6 +686,7 @@
         }
         &__playlist-img {
             min-width: 40px;
+            max-width: 40px;
             height: 40px;
             margin-right: 14px;
             background-color: var(--hoverColor2);
@@ -619,7 +705,7 @@
         &__playlist-text {
             margin-top: -8px;
             overflow: hidden;
-            width: 100%;
+            width: 75%;
             &-title {
                 font-size: 1.1rem;
                 font-weight: 500;
@@ -627,7 +713,7 @@
             }
             &-description {
                 @include elipses-overflow;
-                width: 95%;
+                width: 100%;
                 font-size: 1.07rem;
                 font-weight: 300;
                 color: rgba(var(--textColor1), 0.53);
@@ -656,6 +742,7 @@
         }
         &__copy {
             padding-left: $my-playlists-section-padding-left;
+            color: rgba(var(--textColor1), 0.4);
         }
         &__description {
             width: 100%;
@@ -665,7 +752,6 @@
         /* Discover Collections Carousel */
         &__collection-list-container {
             position: relative;
-            height: 125px;
             margin-bottom: 20px;
 
             &:hover > .gradient-container {
@@ -698,7 +784,6 @@
             margin-top: 25px;
             display: flex;
             overflow-x: scroll;
-            overflow-y: hidden;
             scroll-behavior: smooth;
             li {
                 &:first-child {
@@ -712,18 +797,23 @@
         }
         /* Discover Collection Card */
         &__collection-card {
-            margin-right: 8px;
+            margin-right: 6px;
             position: relative;
-            min-width: 180px;
-            height: 125px;
-            border-radius: 7px;
+            border-radius:  $collection-card-border-radius;
             transition: 0.2s ease-in-out;
             overflow: hidden;
             cursor: pointer;
             color: white;
+            min-width: $collection-card-width;
+            height: $collection-card-height;
+            border: 2px solid transparent;
+            
+            &--chosen {
+                border: 2px solid white;
+            }
 
             &:hover {
-                min-width: 200px;
+                min-width: $collection-card-width + 20;
             }
             &:hover > &-img {
                 width: 200px;
@@ -750,9 +840,9 @@
             -webkit-user-drag: none;
             opacity: 1;
             transition: 0.2s ease-in-out;
-            width: 180px;
-            height: 125px;
             object-fit: cover;
+            width: $collection-card-width;
+            height: $collection-card-height;
         }
         &__collection-card-title {
             transition: 0.3s ease-in-out;
@@ -761,7 +851,7 @@
             @include pos-abs-bottom-left-corner(9px, 10px);
         }
         &__collection-card-hover-details {
-            border-radius: 6px;
+            border-radius: 7px;
             transition: 0.1s ease-in-out;
             display: block;
             z-index: 100;
@@ -771,7 +861,6 @@
             visibility: hidden;
             opacity: 0;
             transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-            transition-delay: 0s; 
             @include pos-abs-top-left-corner(0px, 0px);
             
             h2 {
@@ -783,7 +872,6 @@
                 @include pos-abs-top-right-corner(10px, 10px);
             }
             img {
-                border-radius: 6px;
                 width: 101%;
                 height: 101%;
                 @include pos-abs-top-left-corner(0px, 0px);
@@ -798,6 +886,8 @@
         /* Discover Category Collections List Section */
         &__collection-title {
             margin: 8px 0px 10px $my-playlists-section-padding-left;
+            font-weight: 400;
+            font-size: 1.4rem;
         }
         /* List Column Header Section */
         &__collection-header {
@@ -848,11 +938,6 @@
             }
             &:last-child {
                 margin-bottom: 100px;
-            }
-            h6 {
-                color: rgba(var(--textColor1), 0.6);
-                font-size: 1.05rem;
-                font-weight: 400;
             }
             &--chosen {
                 background-color: var(--hoverColor2) !important;
@@ -921,36 +1006,34 @@
                 height: 100%;
             }
             a {
-                width: 100%;
+                width: fit-content;
                 color: rgb(var(--textColor1));
                 @include elipses-overflow;
-                margin-bottom: 2.5px;
-                display: inline;
+                display: block;
             }
             &-title {
-                width: 100%;
+                width: fit-content;
+                margin-bottom: 2.5px;
                 font-size: 1.1rem;
                 font-weight: 500; 
                 @include elipses-overflow;
             }
             &-author {
-                color: rgba(var(--textColor1), 0.5);
-                font-weight: 300;
+                color: rgba(var(--textColor1), 0.4);
+                font-weight: 400;
+                font-size: 1.05rem;
                 width: 100%;
                 @include elipses-overflow;
 
             }        }
-        &__collection-item-type {
-            width: 21%;
-            text-align: center;
-        }
-        &__collection-item-genre {
-            width: 21%;
-            text-align: center;
-        }
+        &__collection-item-type,
+        &__collection-item-genre,
         &__collection-item-length {
             width: 21%;
             text-align: center;
+            color: rgba(var(--textColor1), 0.4);
+            font-size: 1.05rem;
+            font-weight: 400;
         }
     }
     

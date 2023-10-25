@@ -9,8 +9,8 @@ const INPUT_RANGE_BG_COLOR = "rgba(0, 0, 0, 0.51)"
  * @param trackPlaybackBar   Player progress bar
  */
 export const trackProgressHandler = (trackPlaybackBar: HTMLInputElement) => {
-    const value = trackPlaybackBar.value
-    trackPlaybackBar.style.background = `linear-gradient(to right, white 0%, white ${value}%, ${INPUT_RANGE_BG_COLOR} ${value}%, ${INPUT_RANGE_BG_COLOR} 100%)`
+    // const value = trackPlaybackBar.value
+    // trackPlaybackBar.style.background = `linear-gradient(to right, white 0%, white ${value}%, ${INPUT_RANGE_BG_COLOR} ${value}%, ${INPUT_RANGE_BG_COLOR} 100%)`
 }
 
 /**
@@ -56,7 +56,7 @@ export const getAnimationKeyFrames = (durationMs: number, offsetWidth: number) =
     const activeIntervalPercentage = (100 - (pauseIntervalPercentage * 2)) / 2
 
     let count = 0
-    keyFrames.map((kf: any, idx: number) => {
+    keyFrames.map((kf: { transform: string, offset: number }, idx: number) => {
         kf.offset = (count / 100)
         count += idx % 2 === 0 ? activeIntervalPercentage : pauseIntervalPercentage
     })

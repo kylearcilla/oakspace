@@ -1,18 +1,47 @@
 <script lang="ts">
-	import { themeState } from "$lib/store";
-	import Modal from "../../components/Modal.svelte";
+	import { closeModal } from "$lib/utils-home"
+	import { ModalType, SessionState } from "$lib/enums"
+	import { sessionStore, themeState } from "$lib/store"
+    
+	import { onMount } from "svelte"
+	import Modal from "../../components/Modal.svelte"
 
-    export let clearSession: () => void
+    let title = ""
+    let text = ""
+
+    const exitModal = () => {
+        $sessionStore!.clearSession()
+        closeModal(ModalType.SessionCanceled)
+    }
+
+    const keyboardShortcutHandler = (event: KeyboardEvent) => {
+        if (event.key === "Enter" || event.key === "Escape") {
+            exitModal()
+        }
+    }
+
+    onMount(() => {
+        if ($sessionStore!.state === SessionState.CANCELED) {
+            title = "Session Canceled"
+            text = " Session not logged due to cancellation."
+        }
+        else if ($sessionStore!.state === SessionState.TOOK_TOO_LONG) {
+            title = "Session Terminated"
+            text = " Session canceled since you took too long."
+        }
+    })
 
 </script>
 
-<Modal onClickOutSide={() => console.log("my name jef")}>
+<svelte:window on:keyup={(event) => keyboardShortcutHandler(event)} />
+
+<Modal onClickOutSide={() => {}}>
     <div class={`canceled-session ${$themeState.isDarkTheme ? "" : "canceled-session--light"}`}>
-        <h1 class="canceled-session__title">Session Canceled</h1>
+        <h1 class="canceled-session__title">{title}</h1>
         <p class="canceled-session__text">
-            Session not logged due to cancellation.
+            {text}
         </p>
-        <button class="canceled-session__ok-btn" on:click={() => clearSession()}>
+        <button class="canceled-session__ok-btn" on:click={() => exitModal()}>
             OK
         </button>
     </div>

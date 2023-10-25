@@ -31,6 +31,21 @@ export const clickOutside = (node: any) => {
 }
 
 /**
+ * @returns  User's preferred language code. i.e. US is "en-US"
+ */
+export const getBrowserLanguagePreference = () => {
+  return navigator.language
+}
+
+/**
+ * Update the document title.
+ * @param newTitle   New document title
+ */
+export const setDocumentTitle = (newTitle: string) => {
+  document.title = newTitle
+}
+
+/**
  * @param n   Decimal number
  * @returns   Rounded up number
  */
@@ -71,4 +86,38 @@ export const shorterNum = (num: string): string => {
   } else {
     return parseFloat((val / 1000000000).toFixed(2)).toString() + "B"
   }
+}
+
+/**
+ * Given an enum member of another enum A fine the location of the same matching enum member in enumB.
+ * Enum member must be in both enumA or enumB
+ * 
+ * @param enumMember   The desired enum in query enum whose index value is desired.
+ * @param originEnum   Enum where enumMember is from.
+ * @param queryEnum    Enum that contains the same enum member value. 
+ * @returns            The idx in query enum where the same enum member name exists. Return enumMember does not exist in both enums.
+ */
+export const findEnumIdxFromDiffEnum  = (enumMember: any, originEnum: any, queryEnum: any) => {
+  for (const value in queryEnum) {
+      if (isNaN(Number(value))) continue
+
+      const val = queryEnum[value]
+      const idx = value
+
+      if (originEnum[enumMember] === val) return Number(idx)
+  }
+
+  return null
+}
+
+/**
+ * Add spaces to camel case string.
+ * AppleMusic -> Apple Music
+ * 
+ * @param camelCaseStr   Camel case string
+ * @returns              Stringn with spaces
+ */
+export const addSpacesToCamelCaseStr = (camelCaseStr: string) => {
+  const words = camelCaseStr.replace(/([a-z])([A-Z])/g, '$1 $2');
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }

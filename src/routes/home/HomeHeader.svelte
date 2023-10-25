@@ -1,62 +1,74 @@
 <script lang="ts">
-    import { SessionModal } from "$lib/enums"
-	import { updateUI } from "$lib/utils-home"
-	import { getDate, getDayOfWeek } from "$lib/utils-date"
+    import { ModalType } from "$lib/enums"
+	import { openModal, updateUI } from "$lib/utils-home"
+	import { formatTimeToHHMM, getDate, getDayOfWeek, getUserHourCycle, isNightTime } from "$lib/utils-date"
 	import { themeState, homeViewLayout, musicDataStore, ytPlayerStore, sessionStore } from "$lib/store"
 
-	import QuoteModal from "./ModalQuote.svelte"
-	import NewSessionModal from "./SessionNewModal.svelte"
 	import SessionHeaderView from "./SessionHeaderView.svelte"
 	import { onDestroy, onMount } from "svelte"
 
-    let currModalOpen: SessionModal | null = null
     let dropdownMenu: HTMLElement
+    let interval: NodeJS.Timer | null = null
     let doMinHeaderUI = false
     let headerWidth = 0
+    let currentTimeStr = ""
+    let doUse12HourFormat = false
+    let isDayTime = true
 
     $: {
-        doMinHeaderUI = $homeViewLayout.isVideoViewOpen
+        doMinHeaderUI = $ytPlayerStore?.doShowPlayer ?? false
     }
 
-    const toggleModal = (modal: SessionModal | null) => currModalOpen = modal
-
     /* Event Handlers */
-    const handleSessionBtnClicked = () => toggleModal(SessionModal.NewSession)
     const handleOptionClicked = (idx: number) => {
         if (idx === 0) {
             console.log("LOGGING OUT USER")
         }
         else if (idx === 1) {
-            updateUI({ ...$homeViewLayout, isVideoViewOpen: !$homeViewLayout.isVideoViewOpen})
+            $ytPlayerStore!.toggledShowPlayer()
         }
         else if (idx === 2) {
             updateUI({ ...$homeViewLayout, isMusicPlayerOpen: !$homeViewLayout.isMusicPlayerOpen})
         }
+        else {
+            openModal(ModalType.Shortcuts)
+        }
+
         dropdownMenu.style.display = "none"
     }
     const handleResize = () => {
-        if (!$homeViewLayout.isVideoViewOpen) return
+        if (!$ytPlayerStore?.doShowPlayer) return
         doMinHeaderUI = headerWidth < 840 
     }
-
-    /* Shortcuts */
-    const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key === "Escape" && currModalOpen === SessionModal.NewSession) {
-            currModalOpen = null
-        }
+    const openNewSessionModal = () => {
+        openModal(ModalType.NewSession)
     }
-    const handleKeyUp = (event: KeyboardEvent) => {
-        if (!$sessionStore && event.key.toLocaleLowerCase() === "n") {
-            currModalOpen = SessionModal.NewSession
-        }
+    const updateTimeStr = () => {
+        currentTimeStr = formatTimeToHHMM(new Date(), doUse12HourFormat)
+        isDayTime = !isNightTime()
+    }
+    const toggleTimeFormatting = () => {
+        doUse12HourFormat = !doUse12HourFormat 
+        updateTimeStr()
+    }
+    const initDateTimer = () => {
+        interval = setInterval(updateTimeStr, 1000)
     }
 
-    onMount(() => window.addEventListener("resize", handleResize))
-    onDestroy(() => window.removeEventListener("resize", handleResize))
+    onMount(() => {
+        window.addEventListener("resize", handleResize)
+        
+        const hourCycle = getUserHourCycle()
+        doUse12HourFormat = hourCycle === "h12" || hourCycle === "h11"
+        updateTimeStr()
+        
+        initDateTimer()
+    })
+    onDestroy(() => {
+        window.removeEventListener("resize", handleResize)
+        clearInterval(interval!)
+    })
 </script>
-
-
-<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} />
 
 <div 
     class={`header header${$themeState.isDarkTheme ? "--dark" : "--light"} ${$sessionStore && doMinHeaderUI ? "header--min" : ""}`} 
@@ -78,7 +90,7 @@
         <!-- Dropdown Container -->
         <div class="dropdown-container" bind:this={dropdownMenu}>
             <ul class="dropdown-menu dropdown-menu--alt">
-                <div class="user-panel__stats">
+                <li class="user-panel__stats">
                     <div class="user-panel__stats-stat">
                         <i class="fa-solid fa-hourglass-half"></i>
                         <span>3 Sess.</span>
@@ -91,39 +103,49 @@
                         <i class="fa-solid fa-seedling"></i>
                         <span>1h 3m</span>
                     </div>
-                </div>
-                <li class="dropdown-menu__option">
-                    <button class="dropdown-element" on:click={(_) => handleOptionClicked(0)}>
-                        <p>Log Out</p>
-                    </button>
                 </li>
-                {#if $ytPlayerStore || $musicDataStore}
-                    <div class="divider"></div>
+                {#if $ytPlayerStore}
+                    <li class="dropdown-menu__option">
+                        <button class="dropdown-element" on:click={(_) => handleOptionClicked(1)}>
+                            <p>{`${$ytPlayerStore.doShowPlayer ? "Hide": "Show"} Video View`}</p>
+                            <div class="dropdown-menu__option-icon">
+                                <i class="fa-brands fa-youtube"></i>
+                            </div>
+                        </button>
+                    </li>
                 {/if}
-                <li class="dropdown-menu__option">
-                    <button class="dropdown-element" on:click={(_) => handleOptionClicked(1)}>
-                        <p>{`${$homeViewLayout.isVideoViewOpen ? "Hide": "Show"} Video View`}</p>
-                        <div class="dropdown-menu__option-icon">
-                            <i class="fa-brands fa-youtube"></i>
-                        </div>
-                    </button>
-                </li>
                 {#if $musicDataStore}
                     <li class="dropdown-menu__option">
                         <button class="dropdown-element" on:click={(_) => handleOptionClicked(2)}>
-                            <p>{`${$homeViewLayout.isVideoViewOpen ? "Hide": "Show"} Music Player`}</p>
+                            <p>{`${$ytPlayerStore?.doShowPlayer ? "Hide": "Show"} Music Player`}</p>
                             <div class="dropdown-menu__option-icon">
                                 <i class="fa-solid fa-music"></i>
                             </div>
                         </button>
                     </li>
                 {/if}
+                <li class="dropdown-menu__option">
+                    <button class="dropdown-element" on:click={(_) => handleOptionClicked(3)}>
+                        <p>Keyboard Shortcuts</p>
+                        <div class="dropdown-menu__option-icon">
+                            <i class="fa-regular fa-keyboard"></i>
+                        </div>
+                    </button>
+                </li>
+                {#if $ytPlayerStore || $musicDataStore}
+                    <div class="divider"></div>
+                {/if}
+                <li class="dropdown-menu__option">
+                    <button class="dropdown-element" on:click={(_) => handleOptionClicked(0)}>
+                        <p>Log Out</p>
+                    </button>
+                </li>
             </ul>
         </div>
     </div>
 
     <!-- Active Session Component -->
-    {#if $sessionStore != null && $homeViewLayout.isVideoViewOpen}
+    {#if $sessionStore != null && $ytPlayerStore?.doShowPlayer}
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div class={`header-session-container ${$themeState.isDarkTheme ? "" : "header-session-container--light-mode"}`}>
             <SessionHeaderView />
@@ -132,29 +154,27 @@
 
     <!-- Right Side -->
     <div class="header__section">
+        <!-- New Session Button -->
         {#if !$sessionStore}
-            <!-- Header Session Button -->
             <button 
                 class={`header-new-session-btn header__element ${$themeState.isDarkTheme ? "" : "header-new-session-btn--light-mode"}`}
-                on:click={handleSessionBtnClicked}
+                on:click={openNewSessionModal}
             >
-                <div class="header-new-session-btn-title">New Session</div>
-                <div class="header-new-session-btn-icon">+</div>
-            </button>
+            <div class="header-new-session-btn-title">New Session</div>
+            <div class="header-new-session-btn-icon">+</div>
+        </button>
         {/if}
-        <div class="header__time header__element" title="9:34 PM">
-            <i class="fa-solid fa-moon"></i>
-            <span>9:34 PM</span>
-        </div>
+        <!-- Current Time -->
+        <button class="header__time header__element" title={currentTimeStr} on:click={toggleTimeFormatting}>
+            {#if isDayTime}
+                <i class="fa-solid fa-sun"></i>
+            {:else}
+                <i class="fa-solid fa-moon"></i>
+            {/if}
+            <span>{currentTimeStr}</span>
+        </button>
     </div>
 </div>
-
-<!-- Modals -->
-{#if currModalOpen === SessionModal.Quote}
-    <QuoteModal toggleModal={toggleModal} />
-{:else if currModalOpen === SessionModal.NewSession}
-    <NewSessionModal toggleModal={toggleModal} />
-{/if}
 
 <style global lang="scss">
     @import "../../scss/dropdown.scss";
@@ -180,12 +200,14 @@
         }
         &--min &__time {
             @include circle(35px);
+            @include center;
             margin-left: 4px;
+            padding: 0px;
             span {
                 display: none;   
             }
             i {
-                font-size: 1.65rem;
+                font-size: 1.35rem;
             }
         }
 
@@ -242,8 +264,8 @@
             @include flex-container(center, _);
         }
         &__time {
-            // background: none;
-            // border: 0px;
+            transition: 0.1s ease-in-out;
+            padding: 0px 14px 0px 14px;
             i {
                 font-size: 1.3rem;
                 color: #F4CCA8;

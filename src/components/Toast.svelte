@@ -1,12 +1,30 @@
 <script lang="ts">
-	import { ToastContext } from "$lib/enums"
+	import { ToastContext, Icon } from "$lib/enums"
 	import { themeState, toastMessages } from "$lib/store"
+	import { addSpacesToCamelCaseStr, findEnumIdxFromDiffEnum } from "$lib/utils-general"
+	import { onMount } from "svelte"
+	import Logo from "./Logo.svelte"
 
     export let toast: ToastMsg
     export let idx: number
 
+    let icon: Icon
+    let iconOptions: any
+
+    const LOGO_WIDTH = 15
+    const TOAST_ICON_OPTIONS = {
+        AppleMusic: { iconWidth: "50%" },
+        Spotify: { iconWidth: "90%", hasBgColor: false },
+        YoutubeMusic: { iconWidth: "60%" },
+        Soundcloud: { iconWidth: "60%" },
+        Youtube: { iconWidth: "60%" },
+        Google: { iconWidth: "60%" },
+        Luciole: { iconWidth: "60%" }
+    }
+
     const actionBtnClickedHandler = async () => {
-        await toast.actionFunction?.()
+        if (!toast.action) return
+        await toast.action.func?.()
         dismissToast()
     }
 	const dismissToast = () => {
@@ -16,17 +34,26 @@
         })
     }
 
+    onMount(() => {
+        // get the icon enum & options to be used in Icon component
+        let idx = findEnumIdxFromDiffEnum(toast.context, Icon, ToastContext)
+        icon = idx === null ? Icon.Luciole : idx as Icon
+
+        const iconStrIdx = Icon[icon] as keyof typeof TOAST_ICON_OPTIONS
+        iconOptions = TOAST_ICON_OPTIONS[iconStrIdx]
+    })
+
 </script>
 
 <div class={`toast ${$themeState?.isDarkTheme ? "" : "toast--light"}`}>
     <div class="toast__header-icon">
-        <div class="platform-logo platform-logo--soundcloud platform-logo--xsm platform-logo--circle">
-            <i class="fa-brands fa-soundcloud fa-soundcloud--xsm"></i>
-        </div>
+        {#if iconOptions}
+            <Logo logo={icon} options={{ containerWidth: `${LOGO_WIDTH}px`, ...iconOptions}} />
+        {/if}
     </div>
     <div class="toast__header">
         <h3 class="toast__header-title">
-            {ToastContext[toast.context]}
+            {addSpacesToCamelCaseStr(ToastContext[toast.context])}
         </h3>
         <button class="toast__header-close-btn text-only" on:click={dismissToast}>
             ×
@@ -35,10 +62,10 @@
     <p class="toast__text">
         {toast.message}
     </p>
-    {#if toast.actionFunction}
+    {#if toast.action}
         <div class="toast__action-btn">
             <button class="text-only text-only--light" on:click={actionBtnClickedHandler}>
-                Log In Again
+                {toast.action.msg}
             </button>
         </div>
     {/if}
@@ -59,7 +86,11 @@
         background-color: var(--navMenuBgColor);
         animation: 0.7s cubic-bezier(.13, 1, .5, .94) 0.8s slide-up forwards;
         z-index: 694206;
+        
+        &--light {
+            background-color: var(--midPanelBaseColor);
 
+        }
         &--light &__header {
             color: rgba(var(--textColor1), 0.9);
         }

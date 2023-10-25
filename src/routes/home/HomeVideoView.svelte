@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte'
 	import { clickOutside } from "$lib/utils-general"
-	import type { YoutubeUserData } from "$lib/youtube-data"
+	import type { YoutubeUserData } from "$lib/youtube-user-data"
 	import { logOutUser, loginUser } from "$lib/utils-youtube"
     import { ytPlayerStore, ytUserDataStore, themeState, homeViewLayout } from "$lib/store"
 	import { ytPlayerErrorHandler } from '$lib/utils-youtube-player'
@@ -25,7 +25,9 @@
     })
 
     /* Handle Private Content Clicked Case */
-    ytPlayerStore.subscribe(() => isPlaylistPrivate = ytPlayerErrorHandler(isPlaylistPrivate))
+    ytPlayerStore.subscribe(() => {
+        isPlaylistPrivate = ytPlayerErrorHandler(isPlaylistPrivate)
+    })
 
     /* UI Handlers */
     const handleDropdownOptionClicked = (index: number) => {
@@ -40,13 +42,13 @@
     }
     const handleChoosePlaylist = (playlist: YoutubePlaylist) => $ytPlayerStore?.playPlaylist(playlist)
 
-    onMount(() => options[0] = localStorage.getItem('yt-pl') ? "Log Out" : "Log In")
+    onMount(() => options[0] = localStorage.getItem('yt-player-data') ? "Log Out" : "Log In")
 </script>
 
-<div class={`vid-view ${$homeViewLayout.isVideoViewOpen ? "" : "vid-view--hidden"}`}>
+<div class={`vid-view ${$ytPlayerStore?.doShowPlayer ? "" : "vid-view--hidden"}`}>
     <div class="vid-view__content">
         <!-- Video Player -->
-        <div class={"vid-view__container"}>
+        <div class="vid-view__container">
             <div class={`vid-view__iframe-player-container ${isPlaylistPrivate ? "vid-view__iframe-player-container--private" : ""}`}>
                 <div class="vid-view__iframe-player" id="home-yt-player"></div>
             </div>
@@ -375,18 +377,17 @@
         &__pl-details {
             display: flex;
             position: relative;
-            padding: 10px 0px 10px 10px;
+            padding: 6.5px;
             width: 100%;
         }
         &__pl-details-header-yt-logo {
-            margin: 7px 8px 0px 0px;
+            margin-right: 8px;
         }
         /* Img */
         &__pl-details-img-container {
             margin-right: 15px;
-            min-width: 130px;
-            max-width: 130px;
-            aspect-ratio: 16 / 9;
+            max-width: 90px;
+            min-width: 90px;
 
             &--empty {
                 background: rgba(50, 50, 50, 0.05);
@@ -397,7 +398,7 @@
             }
             img {
                 width: 100%;
-                border-radius: 10px;
+                border-radius: 7px;
                 object-fit: cover;
             }
         }
@@ -406,10 +407,11 @@
         }
         /* Header */
         &__pl-details-header {
+            margin-top: 5px;
             position: relative;
             width: 98%;
-            margin-top: 5px;
-            @include flex-container(center, _);
+            @include flex-container(center, center);
+
             span {
                 margin: 0px 0px 3px 7px;
                 opacity: 0.7;
@@ -421,14 +423,13 @@
             width: 100%;
             font-weight: 400;
             font-size: 1.3rem;
-            margin: 5px 0px 4px 0px;
+            margin-bottom: 4px;
             @include elipses-overflow;
         }
         /* Current Playlist Description */
         &__pl-details-description {
             width: 90%;
             max-height: 40px;
-            margin-top: 4px;
             font-weight: 300;
             font-size: 1.15rem;
             color: rgba(var(--textColor1), 0.6);

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy, onMount } from "svelte"
+	import { onMount } from "svelte"
 	import HomeHeader from "./HomeHeader.svelte"
   import NavMenu from "./HomeSideBarLeft.svelte"
   import VideoView from "./HomeVideoView.svelte"
@@ -11,13 +11,19 @@
 	import Toast from "../../components/Toast.svelte"
 	import HomeEmptyView from "./HomeEmptyView.svelte"
 	import MusicSettings from "./SettingsMusic.svelte"
+	import ShortcutsModal from "./ShortcutsModal.svelte"
 	import YoutubeSettings from "./SettingsYoutube.svelte"
+	import SessionNewModal from "./SessionNewModal.svelte"
 	import SessionActiveHome from "./SessionActiveHome.svelte"
 	import ApperanceSettings from "./SettingsAppearance.svelte"
+	import SessionActiveModal from "./SessionActiveModal.svelte"
+	import SessionFinishedModal from "./SessionFinishedModal.svelte"
+	import SessionCanceledModal from "./SessionCanceledModal.svelte"
   
-	import { SettingsModal } from "$lib/enums"
-	import { sessionStore, homeViewLayout, toastMessages } from "$lib/store"
-	import { homeVideoViewClassHandler, initAppState, onMouseMoveHandler, updateUI } from "$lib/utils-home"
+	import { ModalType } from "$lib/enums"
+	import { sessionStore, homeViewLayout, toastMessages, ytPlayerStore, musicPlayerStore } from "$lib/store"
+	import { homeVideoViewClassHandler, initAppState, keyboardShortCutHandlerKeyDown, keyboardShortCutHandlerKeyUp, onMouseMoveHandler, updateUI } from "$lib/utils-home"
+	import SessionEditModal from "./SessionEditModal.svelte";
 
   let hasUserToggledWithKeyLast = true
   let homeViewViewClasses = ""
@@ -26,26 +32,14 @@
     homeViewViewClasses = homeVideoViewClassHandler(layout.isNavMenuOpen, layout.isTaskMenuOpen)
   })
 
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Escape") {
-        homeViewLayout.update((data: HomeLayout) => ({ ...data, modal: null }))
-    }
-    if (event.shiftKey && event.key === "}") {
-        updateUI({ ...$homeViewLayout, isTaskMenuOpen: !$homeViewLayout.isTaskMenuOpen })
-    }
-    else if (event.shiftKey && event.key === "{") {
-        updateUI({ ...$homeViewLayout, isNavMenuOpen: !$homeViewLayout.isNavMenuOpen })
-        hasUserToggledWithKeyLast = true
-    }
-  }
-  const _onMouseMoveHandler = (event: MouseEvent) => {
-    hasUserToggledWithKeyLast = onMouseMoveHandler(event, hasUserToggledWithKeyLast)
-  }
+  const handleKeyDown       = (event: KeyboardEvent) => hasUserToggledWithKeyLast = keyboardShortCutHandlerKeyDown(event, hasUserToggledWithKeyLast)
+  const handleKeyUp         = (event: KeyboardEvent) => keyboardShortCutHandlerKeyUp(event)
+  const _onMouseMoveHandler = (event: MouseEvent)    => hasUserToggledWithKeyLast = onMouseMoveHandler(event, hasUserToggledWithKeyLast)
 
   onMount(() => initAppState())
 </script>
 
-<svelte:window on:keydown={handleKeyDown} />
+<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} />
 
 <div class={`home ${homeViewViewClasses}`} on:mousemove={_onMouseMoveHandler}>
   <div class={`home__nav-menu-container ${!$homeViewLayout.isNavMenuOpen ? "home__nav-menu-container--hide" : ""}`}>
@@ -54,10 +48,10 @@
   <div class="home__video">
       <HomeHeader/>
       <VideoView />
-      {#if !$homeViewLayout.isVideoViewOpen && !$sessionStore} 
-        <HomeEmptyView />    
+      {#if !$ytPlayerStore?.doShowPlayer && !$sessionStore} 
+        <HomeEmptyView />
       {/if}
-      {#if !$homeViewLayout.isVideoViewOpen && $sessionStore}  
+      {#if !$ytPlayerStore?.doShowPlayer && $sessionStore}  
         <SessionActiveHome />  
       {/if}
   </div>
@@ -66,19 +60,41 @@
   </div>
 
   <!-- Floating Elements -->
-  <!-- <SessionFinishedModal /> -->
-  <!-- <SessionCanceledModal /> -->
-  <MusicPlayer />
+  {#if $musicPlayerStore}
+    <MusicPlayer />
+  {/if}
   {#if $toastMessages.length > 0}
     {#each $toastMessages as toast, idx}
         <Toast toast={toast} idx={idx} />
     {/each}
   {/if}
-  {#if $homeViewLayout.settingsModal === SettingsModal.Stats} <Stats/> {/if}
-  {#if $homeViewLayout.settingsModal === SettingsModal.Settings} <Settings/> {/if}
-  {#if $homeViewLayout.settingsModal === SettingsModal.Youtube} <YoutubeSettings/> {/if}
-  {#if $homeViewLayout.settingsModal === SettingsModal.Music} <MusicSettings /> {/if}
-  {#if $homeViewLayout.settingsModal === SettingsModal.Appearance} <ApperanceSettings /> {/if}
+
+  <!-- Settings Modals -->
+  {#if $homeViewLayout.modalsOpen.includes(ModalType.Stats)} <Stats/> {/if}
+  {#if $homeViewLayout.modalsOpen.includes(ModalType.Settings)} <Settings/> {/if}
+  {#if $homeViewLayout.modalsOpen.includes(ModalType.Youtube)} <YoutubeSettings/> {/if}
+  {#if $homeViewLayout.modalsOpen.includes(ModalType.Appearance)} <ApperanceSettings /> {/if}
+  {#if $homeViewLayout.modalsOpen.includes(ModalType.Music)} <MusicSettings /> {/if}
+
+  <!-- Session Modals -->
+  {#if $homeViewLayout.modalsOpen.includes(ModalType.NewSession)} 
+    <SessionNewModal /> 
+  {/if}
+  {#if $homeViewLayout.modalsOpen.includes(ModalType.EditSession)} 
+    <SessionEditModal /> 
+  {/if}
+  {#if $homeViewLayout.modalsOpen.includes(ModalType.SesssionFinished)} 
+    <SessionFinishedModal /> 
+  {/if}
+  {#if $homeViewLayout.modalsOpen.includes(ModalType.SessionCanceled)}  
+    <SessionCanceledModal /> 
+  {/if}
+  {#if $homeViewLayout.modalsOpen.includes(ModalType.ActiveSession)} 
+    <SessionActiveModal/>
+  {/if}
+
+  <!-- Other Modals Modals -->
+  {#if $homeViewLayout.modalsOpen.includes(ModalType.Shortcuts)} <ShortcutsModal /> {/if}
 </div>
 
 

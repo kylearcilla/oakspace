@@ -178,20 +178,6 @@
             width: 85%;
         }
     }
-    &__option-icon {
-        margin-right: 12px;
-        width: 10px;
-        height: 10px;
-        @include center;
-
-        i {
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-        &--right {
-            margin: 0px;
-        }
-    }
     &__option button {
         @include flex-container(center, _);
         padding: 6px 0px 7px 5px;
@@ -207,10 +193,26 @@
             background-color: var(--dropdownMenuBgHoverColor1);
             opacity: 1;
         }
-
+        &:disabled {
+            opacity: 0.14;
+        }
         p {
             font-size: 1.12rem;
             font-weight: 500;
+        }
+    }
+    &__option-icon {
+        margin-right: 12px;
+        width: 10px;
+        height: 10px;
+        @include center;
+
+        i {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        &--right {
+            margin: 0px;
         }
     }
     &__new-option-container {

@@ -222,7 +222,7 @@ $todo-padding-left: 8px;
         transition: 0.15s ease-in-out;
         opacity: 0.35;
         height: 33px;
-        margin: 4px 0px 8px $todo-padding-left;
+        margin: 4px 0px 8px calc($todo-padding-left + 5px);
         font-size: 1.3rem;
         padding-right: 20px;
         @include flex-container(center, center);

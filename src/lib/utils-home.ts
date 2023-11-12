@@ -43,7 +43,7 @@ export const initAppState = () => {
  */
 export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, hasUserToggledWithKeyLast: boolean) => {    
     const target = event.target as HTMLElement
-    if (target.tagName === "INPUT") return hasUserToggledWithKeyLast
+    if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return hasUserToggledWithKeyLast
 
     const layoutState = get(homeViewLayout)
 
@@ -54,12 +54,15 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, hasUserTogg
     else if (event.ctrlKey && event.key === "]") {
         updateUI({ ...layoutState, isTaskMenuOpen: !layoutState.isTaskMenuOpen })
     }
-    else if (event.key === "?" && layoutState.modalsOpen.length === 0) {
-        isModalOpen(ModalType.Shortcuts) ? closeModal(ModalType.Shortcuts) : openModal(ModalType.Shortcuts)
-    }
     else if (event.ctrlKey && event.key === "[") {
         updateUI({ ...layoutState, isNavMenuOpen: !layoutState.isNavMenuOpen })
         return true
+    }
+    else if (event.key === "?" && (layoutState.modalsOpen.length === 0 || isModalOpen(ModalType.Shortcuts))) {
+        isModalOpen(ModalType.Shortcuts) ? closeModal(ModalType.Shortcuts) : openModal(ModalType.Shortcuts)
+    }
+    else if (event.key === "q" && (layoutState.modalsOpen.length === 0 || isModalOpen(ModalType.Quote))) {
+        isModalOpen(ModalType.Quote) ? closeModal(ModalType.Quote) : openModal(ModalType.Quote)
     }
 
     return hasUserToggledWithKeyLast
@@ -71,7 +74,7 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, hasUserTogg
  */
 export const keyboardShortCutHandlerKeyUp = (event: KeyboardEvent) => {
     const target = event.target as HTMLElement
-    if (target.tagName === "INPUT") return
+    if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return
 
     if (!get(sessionStore) && event.key.toLocaleLowerCase() === "n" && get(homeViewLayout).modalsOpen.length === 0) {
         openModal(ModalType.NewSession)

@@ -224,7 +224,7 @@
         box-shadow: var(--headerElementShadow);
 
         &--active {
-            transform: scale(0.994);
+            transform: scale(0.998);
         }
         &--dark .dropdown-menu {
             @include dropdown-menu-dark;

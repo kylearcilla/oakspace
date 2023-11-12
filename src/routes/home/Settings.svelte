@@ -2,8 +2,11 @@
 	import { clickOutside } from '$lib/utils-general';
 	import { formatDateToMMDD } from '$lib/utils-date';
 	import { onMount } from 'svelte';
+	import Modal from "../../components/Modal.svelte"
+	import { ModalType } from '$lib/enums';
+	import { closeModal } from '$lib/utils-home';
+	import { themeState } from '$lib/store';
 
-    enum ModalType { Settings, Youtube, Music, Stats, Appearance }
     enum Tab { PROFILE, PLAN_DETAILS, CARDS, LANGUAGE }
 
     let isAddNewCardModalOpen = false
@@ -149,300 +152,302 @@
 	function handleDeleteBtn(event: MouseEvent & { currentTarget: EventTarget & HTMLButtonElement; }) {
 		throw new Error('Function not implemented.');
 	}
-
-
 	const handleNewFlagClicked = (idx: number): any => {
         currentLang = langs[idx]
         isLangDropdownListOpen = false
 	}
+
 </script>
 
-<div class="modal-bg">
-    <div use:clickOutside on:click_outside={() => console.log("")} class="modal-bg__content modal-bg__content--main-modal modal-bg__content--overflow-y-scroll">
-        <div class="settings">
-            <h1 class="modal-bg__content-title">Settings</h1>
-            <p class="modal-bg__content-copy paragraph-1">View and update your account and profile details.</p>
-            <div class="settings-tabs">
-                <div class="settings-tabs__container">
-                    <button on:click={() => selectedTab = Tab.PROFILE} class={`settings-tabs__tab settings-tabs__tab--profile settings-tabs__tab--${selectedTab == Tab.PROFILE ? "selected" : ""}`}>
-                        Profile
-                    </button>
-                    <button on:click={() => selectedTab = Tab.PLAN_DETAILS}  class={`settings-tabs__tab settings-tabs__tab--plan-details settings-tabs__tab--${selectedTab == Tab.PLAN_DETAILS ? "selected" : ""}`}>
-                        Plan Details
-                    </button>
-                    <button on:click={() => selectedTab = Tab.LANGUAGE}  class={`settings-tabs__tab settings-tabs__tab--lang settings-tabs__tab--${selectedTab == Tab.LANGUAGE ? "selected" : ""}`}>
-                        Language 
-                    </button>
-                </div>
-                <div class="settings-tabs__divider"></div>
-                <div class={`settings-tabs__highlighter settings-tabs__highlighter--${selectedTab === Tab.PROFILE ? "profile" : selectedTab === Tab.PLAN_DETAILS ? "plan" : "lang"}`}>
-                </div>
-            </div>
-
-            {#if selectedTab === Tab.PROFILE}
-                <!-- User Info -->
-                <div class="user-info bento-box">
-                    <h3>User Info</h3>
-                    <div class="user-info__main-details">
-                        <div class="user-info__img-container">
-                            <img src={userDetails.profileImageSrc} alt="">
-                            <button 
-                                class="text-only text-only--reverse-hover-styling text-only--thin" 
-                                on:click={handleChangeProfilePic}
-                            >
-                                Edit
-                            </button>
-                        </div>
-                        <div class="user-info__details-container">
-                            <div class="user-info__top-row">
-                                <div class="user-info__input-container">
-                                    <span>First Name</span>
-                                    <input 
-                                        class="user-info__first-name-input"
-                                        type="text"
-                                        placeholder="Kyle" 
-                                    >
-                                </div>
-                                <div class="user-info__input-container">
-                                    <span>Last Name</span>
-                                    <input 
-                                        class="user-info__last-name-input"
-                                        type="text"
-                                        placeholder="Arcilla" 
-                                    >
-                                </div>
-                            </div>
-                            <div class="user-info__bottom-row">
-                                <div class="user-info__input-container">
-                                    <span>Username</span>
-                                    <input 
-                                        class="user-info__username-name-input"
-                                        type="text"
-                                        placeholder="kyle_arcilla09" 
-                                    >
-                                </div>
-                            </div>
-                        </div>
-                        <button on:click={handleLogOut} class="user-info__logout-btn settings__msg-btn">
-                            Save Changes
-                        </button>
-                    </div>
-                </div>
-                <!-- Log In Information -->
-                <div class="login-info bento-box">
-                    <h3>Login Information</h3>
-                    <div class="login-info__info-row-section">
-                        <h4>Email / Login Provider</h4>
-                        <div class="login-info__logo">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="13" viewBox="0 0 12 13" fill="none">
-                                <path d="M11.954 6.91125C11.954 6.40966 11.9144 6.04364 11.8286 5.66406H6.25293V7.92797H9.52573C9.45977 8.49058 9.10346 9.33786 8.31163 9.90721L8.30053 9.983L10.0635 11.3859L10.1856 11.3985C11.3073 10.3343 11.954 8.76848 11.954 6.91125Z" fill="#4285F4"/>
-                                <path d="M6.25536 12.8783C7.85876 12.8783 9.20483 12.336 10.188 11.4006L8.31406 9.90936C7.81259 10.2686 7.13953 10.5194 6.25536 10.5194C4.68494 10.5194 3.35207 9.45525 2.87693 7.98438L2.80729 7.99045L0.974168 9.44777L0.950195 9.51623C1.92676 11.509 3.93269 12.8783 6.25536 12.8783Z" fill="#34A853"/>
-                                <path d="M2.87267 7.98245C2.7473 7.60288 2.67475 7.19615 2.67475 6.77592C2.67475 6.35565 2.7473 5.94897 2.86608 5.56939L2.86276 5.48855L1.00666 4.00781L0.945936 4.03749C0.543448 4.86444 0.3125 5.79308 0.3125 6.77592C0.3125 7.75877 0.543448 8.68736 0.945936 9.51431L2.87267 7.98245Z" fill="#FBBC05"/>
-                                <path d="M6.25536 3.03459C7.37048 3.03459 8.12269 3.5294 8.55161 3.94291L10.2276 2.26189C9.19828 1.27905 7.85876 0.675781 6.25536 0.675781C3.93269 0.675781 1.92676 2.04498 0.950195 4.03776L2.87034 5.56967C3.35207 4.09879 4.68494 3.03459 6.25536 3.03459Z" fill="#EB4335"/>
-                            </svg>
-                            <p>kylearcilla09@gmail.com</p>
-                        </div>
-                    </div>
-                    <button on:click={handleLogOut} class="login-info__edit-btn settings__msg-btn">
-                        Change Log In
-                    </button>
-                </div>
-                <!-- Close Account -->
-                <div class="close-account bento-box">
-                    <h3>Account Deactivation</h3>
-                    <button on:click={handleDeleteBtn} class="settings__msg-btn">
-                        Delete My Account
-                    </button>
-                </div>
-            {:else if selectedTab === Tab.PLAN_DETAILS}
-                <!-- Plan Details -->
-                <div class="plan-details bento-box">
-                    <h3>Plan Details</h3>
-                    <h4>Basic</h4>
-                    <div class="plan-details__list-container">
-                        <ul class="plan-details__list-details plan-details__list-details--left">
-                            <li>Full Access to Music & Video Features</li>  
-                            <li>Limited Session Tracking (1 Week)</li>
-                            <li>No access to theatre mode</li>
-                        </ul>
-                        <ul class="plan-details__list-details">
-                            <li>Limited User Analytics</li>
-                            <li>Limited access to color themes</li>
-                        </ul>
-                    </div>
-                    <button on:click={handleDeleteBtn} class="plan-details__upgrade-btn unfill unfill--padded unfill--oval">
-                        Upgrade to Premium
-                    </button>
-                </div>
-                <!-- Payment Method -->
-                <div class="payment-method bento-box">
-                    <h3>Payment Method</h3>
-                    <div class="flx">
-                        <div class="payment-card">
-                            <div class="payment-card__header">
-                                <img src={userDetails.paymentCards[userDetails.currentPaymentCard].paymentNetwork.imgLogoSrc} alt="">
-                                <p>{userDetails.paymentCards[userDetails.currentPaymentCard].paymentNetwork.name}</p>
-                            </div>
-                            <div class="payment-card__number">
-                                <span class="payment-card__four-digit-group">****</span>
-                                <span class="payment-card__four-digit-group">****</span>
-                                <span class="payment-card__four-digit-group">****</span>
-                                <span class="payment-card__four-digit-group">{userDetails.paymentCards[userDetails.currentPaymentCard].lastFourDigits}</span>
-                            </div>
-                            <div class="payment-card__bottom-details">
-                                <div class="payment-card__card-holder">
-                                    <h6>Name</h6>
-                                    <h5>{userDetails.paymentCards[userDetails.currentPaymentCard].cardHolderName}</h5>
-                                </div>
-                                <div class="payment-card__exp-date">
-                                    <h6>Exp Date</h6>
-                                    <h5>{formatDateToMMDD(userDetails.paymentCards[userDetails.currentPaymentCard].expDate)}</h5>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="payment-method__right-section">
-                            <p class="payment-method__next-payment">
-                                Your next bill is for $9.99 + tax on 7/11/23.
-                            </p>
-                        </div>
-                    </div>
-                    <button on:click={handleEditPaymentMethod} class="payment-method__edit-payment-method-btn unfill unfill--padded unfill--oval">
-                        Change Card
-                    </button>
-                </div>
-            {:else}
-                <!-- App Language -->
-                <div class="lang bento-box">
-                    <h3>Language & Region</h3>
-                    <div class="flx flx--space-between flx--algn-center">
-                        <h4>Chosen Language</h4>
-                        <div class="lang__dropdown-btn-container dropdown-container">
-                            <button 
-                                on:click={() => isLangDropdownListOpen = true}
-                                class="lang__dropdown-btn dropdown-btn dropdown-btn--icon-text"
-                            >
-                                <div class="lang__dropdown-btn-icon">{currentLang.flag}</div>
-                                <div class="dropdown-btn__title">
-                                    {currentLang.name}
-                                </div>
-                                <div class="dropdown-btn__arrows">
-                                    <div class="dropdown-btn__arrows-triangle-up">
-                                        <i class="fa-solid fa-chevron-up"></i>
-                                    </div>
-                                    <div class="dropdown-btn__arrows-triangle-down">
-                                        <i class="fa-solid fa-chevron-down"></i>
-                                    </div>
-                                </div>
-                            </button>
-                            {#if isLangDropdownListOpen}
-                                <ul use:clickOutside on:click_outside={() => isLangDropdownListOpen = false} class="dropdown-menu">
-                                    {#each langs as lang, idx} 
-                                        <li class={`dropdown-menu__option ${lang.name === currentLang.name ? "dropdown-menu__option--selected" : ""}`}>
-                                            <button class="dropdown-element" on:click={() => handleNewFlagClicked(idx)}>
-                                                <div class="dropdown-menu__option-icon">{lang.flag}</div>
-                                                <p>{lang.name}</p>
-                                                <i class="fa-solid fa-check"></i>
-                                            </button>
-                                        </li>
-                                    {/each}
-                                </ul>
-                            {/if}
-                        </div>
-                    </div>
-                </div>   
-            {/if}
-
-            <!-- Modals -->
-            <div class={`modal-bg ${isAddNewCardModalOpen ? "" : "modal-bg--hidden"}`}>
-                <div 
-                    use:clickOutside on:click_outside={() => isAddNewCardModalOpen = false} 
-                    class="modal-bg__content modal-bg__content--small modal-bg__content--settings-new-card-modal"
+<Modal onClickOutSide={() => closeModal(ModalType.Settings)}>
+    <div class={`settings ${$themeState.isDarkTheme ? "" : "settings--light"}`}>
+        <h1 class="modal-bg__content-title">Settings</h1>
+        <p class="modal-bg__content-copy paragraph-1">View and update your account and profile details.</p>
+        <div class="highlighter-tabs">
+            <div class="highlighter-tabs__container">
+                <button 
+                        on:click={() => selectedTab = Tab.PROFILE} 
+                        class={`highlighter-tabs__tab-btn highlighter-tabs__tab-btn--profile ${selectedTab == Tab.PROFILE ? "highlighter-tabs__tab-btn--selected" : ""}`}
                 >
-                    <div class="new-card-modal">
-                        <h1>Your New Card</h1>
-                        <div class="new-card-modal__content">
-                            <div class="new-card-modal__top-section">
-                                <div class="payment-card">
-                                    <div class="payment-card__header">
-                                        <img src={userDetails.paymentCards[userDetails.currentPaymentCard].paymentNetwork.imgLogoSrc} alt="">
-                                        <p>{userDetails.paymentCards[userDetails.currentPaymentCard].paymentNetwork.name}</p>
-                                    </div>
-                                    <div class="payment-card__number">
-                                        <span class="payment-card__four-digit-group">****</span>
-                                        <span class="payment-card__four-digit-group">****</span>
-                                        <span class="payment-card__four-digit-group">****</span>
-                                        <span class="payment-card__ four-digit-group">{userDetails.paymentCards[userDetails.currentPaymentCard].lastFourDigits}</span>
-                                    </div>
-                                    <div class="payment-card__bottom-details">
-                                        <div class="payment-card__card-holder">
-                                            <h6>Name</h6>
-                                            <h5>Tupac Shakur</h5>
-                                        </div>
-                                        <div class="payment-card__exp-date">
-                                            <h6>Exp Date</h6>
-                                            <h5>{formatDateToMMDD(userDetails.paymentCards[userDetails.currentPaymentCard].expDate)}</h5>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="new-card-modal__bottom-section">
-                                <h5 class="new-card-modal__card-details-title">Details</h5>
-                                <form class="new-card-modal__card-details-container bento-box">
-                                    <!-- <h3>Card Info</h3> -->
-                                    <div class="new-card-modal__card-number">
-                                        <h5>Card Number</h5>
-                                        <input 
-                                        type="text" 
-                                        placeholder="0000 0000 0000 0000"
-                                        />
-                                    </div>
-                                    <div class="new-card-modal__bottom-details">
-                                        <div class="new-card-modal__exp-date">
-                                            <h5>Exp. Date</h5>
-                                            <input 
-                                                type="text" 
-                                                placeholder="MM / YYYY"
-                                            />
-                                        </div>
-                                        <div class="new-card-modal__cvv-num">
-                                            <h5>CVV</h5>
-                                            <input 
-                                                type="text" 
-                                                placeholder="000"
-                                            />
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="new-card-modal__buttons-container">
-                                <button class="new-card-modal__cancel-btn" on:click={handleNewCardModalCancelBtn}> Cancel</button>
-                                <button class="new-card-modal__submit-btn" on:click={handleNewCardModalSubmitBtn}> Submit Card Info</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    Profile
+                </button>
+                <button 
+                        on:click={() => selectedTab = Tab.PLAN_DETAILS}  
+                        class={`highlighter-tabs__tab-btn highlighter-tabs__tab-btn--plan ${selectedTab == Tab.PLAN_DETAILS ? "highlighter-tabs__tab-btn--selected" : ""}`}
+                >
+                    Plan Details
+                </button>
+                <button 
+                        on:click={() => selectedTab = Tab.LANGUAGE}  
+                        class={`highlighter-tabs__tab-btn highlighter-tabs__tab-btn--lang ${selectedTab == Tab.LANGUAGE ? "highlighter-tabs__tab-btn--selected" : ""}`}
+                >
+                    Language 
+                </button>
+            </div>
+            <div class="highlighter-tabs__divider"></div>
+            <div class={`highlighter-tabs__highlighter
+                         highlighter-tabs__highlighter--${selectedTab === Tab.PROFILE ? "profile" : selectedTab === Tab.PLAN_DETAILS ? "plan" : "lang"}
+                       `}>
             </div>
         </div>
-    </div>        
-</div>        
+
+        {#if selectedTab === Tab.PROFILE}
+            <!-- User Info -->
+            <div class="user-info bento-box">
+                <h3>User Info</h3>
+                <div class="user-info__main-details">
+                    <div class="user-info__img-container">
+                        <img src={userDetails.profileImageSrc} alt="">
+                        <button 
+                            class="text-only text-only--reverse-hover-styling text-only--thin" 
+                            on:click={handleChangeProfilePic}
+                        >
+                            Edit
+                        </button>
+                    </div>
+                    <div class="user-info__details-container">
+                        <div class="user-info__top-row">
+                            <div class="user-info__input-container">
+                                <span>First Name</span>
+                                <input 
+                                    class="user-info__first-name-input"
+                                    type="text"
+                                    placeholder="Kyle" 
+                                >
+                            </div>
+                            <div class="user-info__input-container">
+                                <span>Last Name</span>
+                                <input 
+                                    class="user-info__last-name-input"
+                                    type="text"
+                                    placeholder="Arcilla" 
+                                >
+                            </div>
+                        </div>
+                        <div class="user-info__bottom-row">
+                            <div class="user-info__input-container">
+                                <span>Username</span>
+                                <input 
+                                    class="user-info__username-name-input"
+                                    type="text"
+                                    placeholder="kyle_arcilla09" 
+                                >
+                            </div>
+                        </div>
+                    </div>
+                    <button on:click={handleLogOut} class="user-info__logout-btn settings__msg-btn">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+            <!-- Log In Information -->
+            <div class="login-info bento-box">
+                <h3>Login Information</h3>
+                <div class="login-info__info-row-section">
+                    <h4>Email / Login Provider</h4>
+                    <div class="login-info__logo">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="13" viewBox="0 0 12 13" fill="none">
+                            <path d="M11.954 6.91125C11.954 6.40966 11.9144 6.04364 11.8286 5.66406H6.25293V7.92797H9.52573C9.45977 8.49058 9.10346 9.33786 8.31163 9.90721L8.30053 9.983L10.0635 11.3859L10.1856 11.3985C11.3073 10.3343 11.954 8.76848 11.954 6.91125Z" fill="#4285F4"/>
+                            <path d="M6.25536 12.8783C7.85876 12.8783 9.20483 12.336 10.188 11.4006L8.31406 9.90936C7.81259 10.2686 7.13953 10.5194 6.25536 10.5194C4.68494 10.5194 3.35207 9.45525 2.87693 7.98438L2.80729 7.99045L0.974168 9.44777L0.950195 9.51623C1.92676 11.509 3.93269 12.8783 6.25536 12.8783Z" fill="#34A853"/>
+                            <path d="M2.87267 7.98245C2.7473 7.60288 2.67475 7.19615 2.67475 6.77592C2.67475 6.35565 2.7473 5.94897 2.86608 5.56939L2.86276 5.48855L1.00666 4.00781L0.945936 4.03749C0.543448 4.86444 0.3125 5.79308 0.3125 6.77592C0.3125 7.75877 0.543448 8.68736 0.945936 9.51431L2.87267 7.98245Z" fill="#FBBC05"/>
+                            <path d="M6.25536 3.03459C7.37048 3.03459 8.12269 3.5294 8.55161 3.94291L10.2276 2.26189C9.19828 1.27905 7.85876 0.675781 6.25536 0.675781C3.93269 0.675781 1.92676 2.04498 0.950195 4.03776L2.87034 5.56967C3.35207 4.09879 4.68494 3.03459 6.25536 3.03459Z" fill="#EB4335"/>
+                        </svg>
+                        <p>kylearcilla09@gmail.com</p>
+                    </div>
+                </div>
+                <button on:click={handleLogOut} class="login-info__edit-btn settings__msg-btn">
+                    Change Log In
+                </button>
+            </div>
+            <!-- Close Account -->
+            <div class="close-account bento-box">
+                <h3>Account Deactivation</h3>
+                <button on:click={handleDeleteBtn} class="settings__msg-btn">
+                    Delete My Account
+                </button>
+            </div>
+        {:else if selectedTab === Tab.PLAN_DETAILS}
+            <!-- Plan Details -->
+            <div class="plan-details bento-box">
+                <h3>Plan Details</h3>
+                <h4>Basic</h4>
+                <div class="plan-details__list-container">
+                    <ul class="plan-details__list-details plan-details__list-details--left">
+                        <li>Full Access to Music & Video Features</li>  
+                        <li>Limited Session Tracking (1 Week)</li>
+                        <li>No access to theatre mode</li>
+                    </ul>
+                    <ul class="plan-details__list-details">
+                        <li>Limited User Analytics</li>
+                        <li>Limited access to color themes</li>
+                    </ul>
+                </div>
+                <button on:click={handleDeleteBtn} class="plan-details__upgrade-btn unfill unfill--padded unfill--oval">
+                    Upgrade to Premium
+                </button>
+            </div>
+            <!-- Payment Method -->
+            <div class="payment-method bento-box">
+                <h3>Payment Method</h3>
+                <div class="flx">
+                    <div class="payment-card">
+                        <div class="payment-card__header">
+                            <img src={userDetails.paymentCards[userDetails.currentPaymentCard].paymentNetwork.imgLogoSrc} alt="">
+                            <p>{userDetails.paymentCards[userDetails.currentPaymentCard].paymentNetwork.name}</p>
+                        </div>
+                        <div class="payment-card__number">
+                            <span class="payment-card__four-digit-group">****</span>
+                            <span class="payment-card__four-digit-group">****</span>
+                            <span class="payment-card__four-digit-group">****</span>
+                            <span class="payment-card__four-digit-group">{userDetails.paymentCards[userDetails.currentPaymentCard].lastFourDigits}</span>
+                        </div>
+                        <div class="payment-card__bottom-details">
+                            <div class="payment-card__card-holder">
+                                <h6>Name</h6>
+                                <h5>{userDetails.paymentCards[userDetails.currentPaymentCard].cardHolderName}</h5>
+                            </div>
+                            <div class="payment-card__exp-date">
+                                <h6>Exp Date</h6>
+                                <h5>{formatDateToMMDD(userDetails.paymentCards[userDetails.currentPaymentCard].expDate)}</h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="payment-method__right-section">
+                        <p class="payment-method__next-payment">
+                            Your next bill is for $9.99 + tax on 7/11/23.
+                        </p>
+                    </div>
+                </div>
+                <button on:click={handleEditPaymentMethod} class="payment-method__edit-payment-method-btn unfill unfill--padded unfill--oval">
+                    Change Card
+                </button>
+            </div>
+        {:else}
+            <!-- App Language -->
+            <div class="lang bento-box">
+                <h3>Language & Region</h3>
+                <div class="flx flx--space-between flx--algn-center">
+                    <h4>Chosen Language</h4>
+                    <div class="lang__dropdown-btn-container dropdown-container">
+                        <button 
+                            on:click={() => isLangDropdownListOpen = true}
+                            class="lang__dropdown-btn dropdown-btn dropdown-btn--icon-text"
+                        >
+                            <div class="lang__dropdown-btn-icon">{currentLang.flag}</div>
+                            <div class="dropdown-btn__title">
+                                {currentLang.name}
+                            </div>
+                            <div class="dropdown-btn__arrows">
+                                <div class="dropdown-btn__arrows-triangle-up">
+                                    <i class="fa-solid fa-chevron-up"></i>
+                                </div>
+                                <div class="dropdown-btn__arrows-triangle-down">
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </div>
+                            </div>
+                        </button>
+                        {#if isLangDropdownListOpen}
+                            <ul use:clickOutside on:click_outside={() => isLangDropdownListOpen = false} class="dropdown-menu">
+                                {#each langs as lang, idx} 
+                                    <li class={`dropdown-menu__option ${lang.name === currentLang.name ? "dropdown-menu__option--selected" : ""}`}>
+                                        <button class="dropdown-element" on:click={() => handleNewFlagClicked(idx)}>
+                                            <div class="dropdown-menu__option-icon">{lang.flag}</div>
+                                            <p>{lang.name}</p>
+                                            <i class="fa-solid fa-check"></i>
+                                        </button>
+                                    </li>
+                                {/each}
+                            </ul>
+                        {/if}
+                    </div>
+                </div>
+            </div>   
+        {/if}
+
+        <!-- Modals -->
+        {#if isAddNewCardModalOpen}
+            <Modal onClickOutSide={isAddNewCardModalOpen = false}>
+                <div class="new-card-modal">
+                    <h1>Your New Card</h1>
+                    <div class="new-card-modal__content">
+                        <div class="new-card-modal__top-section">
+                            <div class="payment-card">
+                                <div class="payment-card__header">
+                                    <img src={userDetails.paymentCards[userDetails.currentPaymentCard].paymentNetwork.imgLogoSrc} alt="">
+                                    <p>{userDetails.paymentCards[userDetails.currentPaymentCard].paymentNetwork.name}</p>
+                                </div>
+                                <div class="payment-card__number">
+                                    <span class="payment-card__four-digit-group">****</span>
+                                    <span class="payment-card__four-digit-group">****</span>
+                                    <span class="payment-card__four-digit-group">****</span>
+                                    <span class="payment-card__ four-digit-group">{userDetails.paymentCards[userDetails.currentPaymentCard].lastFourDigits}</span>
+                                </div>
+                                <div class="payment-card__bottom-details">
+                                    <div class="payment-card__card-holder">
+                                        <h6>Name</h6>
+                                        <h5>Tupac Shakur</h5>
+                                    </div>
+                                    <div class="payment-card__exp-date">
+                                        <h6>Exp Date</h6>
+                                        <h5>{formatDateToMMDD(userDetails.paymentCards[userDetails.currentPaymentCard].expDate)}</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="new-card-modal__bottom-section">
+                            <h5 class="new-card-modal__card-details-title">Details</h5>
+                            <form class="new-card-modal__card-details-container bento-box">
+                                <!-- <h3>Card Info</h3> -->
+                                <div class="new-card-modal__card-number">
+                                    <h5>Card Number</h5>
+                                    <input 
+                                    type="text" 
+                                    placeholder="0000 0000 0000 0000"
+                                    />
+                                </div>
+                                <div class="new-card-modal__bottom-details">
+                                    <div class="new-card-modal__exp-date">
+                                        <h5>Exp. Date</h5>
+                                        <input 
+                                            type="text" 
+                                            placeholder="MM / YYYY"
+                                        />
+                                    </div>
+                                    <div class="new-card-modal__cvv-num">
+                                        <h5>CVV</h5>
+                                        <input 
+                                            type="text" 
+                                            placeholder="000"
+                                        />
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="new-card-modal__buttons-container">
+                            <button class="new-card-modal__cancel-btn" on:click={handleNewCardModalCancelBtn}> Cancel</button>
+                            <button class="new-card-modal__submit-btn" on:click={handleNewCardModalSubmitBtn}> Submit Card Info</button>
+                        </div>
+                    </div>
+                </div>
+            </Modal>
+        {/if}
+    </div>
+</Modal>
 
 <style lang="scss">
+    @import "../../scss/highlighter-tabs.scss";
     $section-spacing: 8px;
 
-    .modal-bg {
-        &__content {
-            &--main-modal {
-                width: 55vw;
-                height: 630px;
-                max-width: 650px;
-                min-width: 450px;
-             }
-            &--settings-new-card-modal {
-            }
-        }
-    }
     .settings {
         padding: $settings-modal-padding;
+        width: 55vw;
+        height: 630px;
+        max-width: 650px;
+        min-width: 450px;
+
+        &--light .highlighter-tabs {
+            @include highlighter-tabs-light-mode;
+        }
 
         &__description {
             margin: 8px 0px 20px 0px;
@@ -480,69 +485,28 @@
         padding-top: 12px;
         margin-bottom: $section-spacing;
     }
-    .settings-tabs {
-        position: relative;
+    .highlighter-tabs {
         margin: 30px 0px 25px 0px;
-        &__container {
-            @include flex-container(center, _);
-            margin-bottom: 12px;
-            transition: 0.15s ease-in-out;
-        }
-        &__tab {
-            font-size: 1.3rem;
-            font-weight: 300;
-            color: rgba(var(--textColor1), 0.4);
-            transition: 0.2s ease-in-out;
-            margin-right: 10px;
-            @include center;
-            
-            &--selected {
-                color: rgba(var(--textColor1), 1);
-                font-weight: 500;
-            }
+        &__tab-btn {            
             &--profile {
                 min-width: 58px;
             }
             &--plan-details {
                 min-width: 87px;
             }
-            &--lang {
-                min-width: 80px;
-            }
-            &:hover {
-                color: rgba(var(--textColor1), 1);
-            }
-            &:active {
-                transform: scale(0.99);
-            }
-            &:focus {
-                color: rgba(var(--textColor1), 0.8);
-            }
         }
-        &__divider {
-            width: 100%;
-            height: 0.5px;
-            background-color: rgba(var(--textColor1), 0.12);
-            margin-top: 3px;
-        }
-        &__highlighter {
-            position: absolute;
-            height: 1px;
-            background-color: rgba(var(--textColor1), 1);
-            transition: 0.24s ease-in-out;
-            bottom: 0px;
-            
+        &__highlighter {            
             &--profile {
                 width: 57px;
                 left: 0px;
             }
             &--plan {
                 width: 79px;
-                left: 73px;
+                left: 75px;
             }
             &--lang {
                 width: 75px;
-                left: 167px;
+                left: 165px;
             }
         }
     }

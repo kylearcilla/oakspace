@@ -3,11 +3,12 @@
 	import HomeHeader from "./HomeHeader.svelte"
   import NavMenu from "./HomeSideBarLeft.svelte"
   import VideoView from "./HomeVideoView.svelte"
-  import TaskView from "./HomeSideBarRight.svelte"
+  import TaskView from "./SideBarRight.svelte"
   import MusicPlayer from "./HomeMusicPlayer.svelte"
 
 	import Stats from "./Stats.svelte"
 	import Settings from "./Settings.svelte"
+	import ModalQuote from "./ModalQuote.svelte"
 	import Toast from "../../components/Toast.svelte"
 	import HomeEmptyView from "./HomeEmptyView.svelte"
 	import MusicSettings from "./SettingsMusic.svelte"
@@ -94,6 +95,7 @@
   {/if}
 
   <!-- Other Modals Modals -->
+  {#if $homeViewLayout.modalsOpen.includes(ModalType.Quote)} <ModalQuote /> {/if}
   {#if $homeViewLayout.modalsOpen.includes(ModalType.Shortcuts)} <ShortcutsModal /> {/if}
 </div>
 

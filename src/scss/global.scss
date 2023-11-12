@@ -33,10 +33,20 @@ img {
     -moz-user-drag: none;
     -o-user-drag: none;
 }
-
-/*
-    TODO:  Keep, elipses: position, media queries, 
-*/
+textarea {
+    border: none; /* Remove border */
+    padding: 0; /* Remove padding */
+    margin: 0; /* Remove margin */
+    resize: none; /* Disable resizing */
+    outline: none; /* Remove outline when focused */
+    background-color: transparent;
+    color: rgb(var(--textColor1), 1);
+    font-family: "Manrope", sans-serif, Roboto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    /* Add any additional styling you want */
+}
 
 /* Custom Fonts */
 @font-face {
@@ -54,6 +64,10 @@ img {
     font-style: normal;
     src: url("/src/fonts/Gordita\ Medium.woff2") format('woff2');
 }
+
+/*
+    TODO:  Keep, elipses: position, media queries, 
+*/
 
 /* Breakpoints Variables anad Corresponding Mixins */
 $screen-mobile-s: 20em;       // mobile small (320px)
@@ -142,9 +156,9 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     @include flex-container(center, center);
 }
 
-@mixin circle($radius) {
-    height: $radius;
-    width: $radius;
+@mixin circle($diameter) {
+    height: $diameter;
+    width: $diameter;
     aspect-ratio: 1 / 1;
     border-radius: 100%;
 }
@@ -417,6 +431,7 @@ button {
     font-weight: 600;
     font-size: 0.95rem;
     cursor: pointer;
+    transition: 0.12s ease-in-out;
 
     &:active {
         transform: scale(0.98);
@@ -604,18 +619,6 @@ button.settings-btn {
      visibility: visible;
      background: $bg-color;
      color: white;
- }
-
- /* Input Fields */
- @mixin input-text-field-dark {
-    border: 1px solid rgba(211, 211, 211, 0);
-    &--focus {
-        border-color: rgba(var(--fgColor1), 1);
-    }
-    input {
-        font-weight: 300;
-        color: rgba(var(--textColor1), 0.65);
-    }
  }
 
 /* Custom Input Range */
@@ -818,4 +821,17 @@ $settings-modal-padding: 20px 25px 25px 25px;
 
 @function darken($color, $amount) {
     @return mix(black, $color, $amount);
+}
+
+@keyframes fade-in {
+    0% {
+        transform: translateY(-5px);
+        visibility: hidden;
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0px);
+        visibility: visible;
+        opacity: 1;
+    }
 }

@@ -400,7 +400,7 @@ $todo-padding-left: 8px;
     /* Check Box */
     &__check-box {
         @include circle(13.5px);
-        @include flex-container(center, center);
+        @include center;
         transition: 0.1s ease-in-out;
         position: relative;
         margin-right: 8.5px;

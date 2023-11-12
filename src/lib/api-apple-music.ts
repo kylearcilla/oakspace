@@ -55,8 +55,8 @@ export const getUserPlaylists = async (reqLimit: number, offSet: number, tokens:
     const data = await res.json()
     
     if (!res.ok) {
-        console.error(`Error fetching user playlists. Error: ${data.errors[0]}`)
-        throw getMusicAPIError(data.errors[0].status, MusicAPIErrorContext.USER_PLAYLISTS)
+        console.error(`Error fetching user playlists. Details: ${data.errors[0].detail}. Status: ${data.errors[0].status}.`)
+        throw getMusicAPIError(Number(data.errors[0].status), MusicAPIErrorContext.USER_PLAYLISTS)
     }
     
     const playlistData = []
@@ -103,8 +103,8 @@ export const getApplePlaylistDetails = async (playlistId: string, token: string)
     const data = await res.json()
     
     if (!res.ok) { 
-        console.error(`Error fetching playlist details. Details: ${data.errors[0]}.`)
-        throw getMusicAPIError(data.errors[0].status, MusicAPIErrorContext.PLAYLIST)
+        console.error(`Error fetching playlist details. Details: ${data.errors[0].detail}. Status: ${data.errors[0].status}`)
+        throw getMusicAPIError(Number(data.errors[0].status), MusicAPIErrorContext.PLAYLIST)
     }
 
     const trackList: any[] = data.data[0].relationships.tracks.data
@@ -153,8 +153,8 @@ export const getAppleAlbumDetails = async (albumId: string, token: string): Prom
     const data = await res.json()
     
     if (!res.ok) { 
-        console.error(`Error fetching playlist details. Details: ${data.errors[0]}.`)
-        throw getMusicAPIError(data.errors[0].status, MusicAPIErrorContext.PLAYLIST)
+        console.error(`Error fetching playlist details. Details: ${data.errors[0].detail}. Status: ${data.errors[0].status}.`)
+        throw getMusicAPIError(Number(data.errors[0].status), MusicAPIErrorContext.ALBUM)
     }
     
 

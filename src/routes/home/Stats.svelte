@@ -9,6 +9,9 @@
 	import CalendarHeatMap from "./StatsHeatMap.svelte"
 	import { daysOfWeek, hoursToHhMm } from "$lib/utils-date"
 	import StatsTagRanking from "./StatsTagRanking.svelte"
+	import { ModalType } from "$lib/enums";
+	import { closeModal } from "$lib/utils-home";
+	import Modal from "../../components/Modal.svelte";
 
     enum TimeFrame { THIS_WEEK, TWO_WEEKS, THREE_WEEKS, THREE_MONTHS, SIX_MONTHS, THIS_YEAR, ALL_TIME }
 
@@ -669,293 +672,283 @@
     })
 </script>
 
- <div class="modal-bg">
-    <div use:clickOutside on:click_outside={() => console.log("")} class="modal-bg__content">
-        <div class={`stats ${isLightTheme ? "" : "stats--dark"}`}>
-            <div class="stats__left">
-                <!-- Header -->
-                <div class="stats__header">
-                    <h1 class="modal-bg__content-title">Statistics</h1>
-                    <p class="modal-bg__content-copy">
-                        Get a bird's eye view of your session trends through different time frames.
-                    </p>
+<Modal onClickOutSide={() => closeModal(ModalType.Stats)} options={{ overflowX: "scroll", overflowY: "scroll"}}>
+    <div class={`stats ${isLightTheme ? "" : "stats--dark"}`}>
+        <div class="stats__left">
+            <!-- Header -->
+            <div class="stats__header">
+                <h1 class="stats__title modal-bg__content-title">Statistics</h1>
+                <p class="stats__copy modal-bg__content-copy">
+                    Get a bird's eye view of your session trends through different time frames.
+                </p>
+            </div>
+            <div class="prod-overview">
+                <!-- Prod Overview Header -->
+                <div class="prod-overview__header">
+                    <h2>Productivity Overview</h2>
+                    <div class="flx flx--algn-center">
+                        <div class="prod-overview__time-frame-slider-wrapper">
+                            <button on:click={decrementTimeFrameTick}>
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <span>{`${timeFrameStr}`}</span>
+                            <button on:click={incrementTimeFrameTick}>
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        <div class="prod-overview__time-frame-dropdown-container dropdown-container">
+                            <button class="prod-overview__time-frame-dropdown-btn dropdown-btn trans-btn" on:click={() => { isTimeFrameListOpen = !isTimeFrameListOpen }}>
+                                <div class="dropdown-btn__title">
+                                    {timeFrameOptions[timeFrame]}
+                                </div>
+                                <div class="dropdown-btn__arrows">
+                                    <div class="dropdown-btn__arrows-triangle-up">
+                                        <i class="fa-solid fa-chevron-up"></i>
+                                    </div>
+                                    <div class="dropdown-btn__arrows-triangle-down">
+                                        <i class="fa-solid fa-chevron-down"></i>
+                                    </div>
+                                </div>
+                            </button>
+                            {#if isTimeFrameListOpen}
+                                <ul use:clickOutside on:click_outside={() => isTimeFrameListOpen = false} class="dropdown-menu">
+                                    {#each timeFrameOptions as tf, idx} 
+                                        <li class={`dropdown-menu__option ${idx === timeFrame ? "dropdown-menu__option--selected" : ""}`}>
+                                            <button class="dropdown-element" on:click={() => handleTimeFrameSwitcherClicked(idx)}>
+                                                <p>{tf}</p>
+                                                {#if idx === timeFrame}
+                                                    <div class="dropdown-menu__option-icon dropdown-menu__option-icon--right">
+                                                        <i class="fa-solid fa-check"></i>
+                                                    </div>
+                                                {/if }
+                                            </button>
+                                        </li>
+                                    {/each}
+                                </ul>
+                            {/if}
+                        </div>
+                    </div>
                 </div>
-                <div class="prod-overview">
-                    <!-- Prod Overview Header -->
-                    <div class="prod-overview__header">
-                        <h2>Productivity Overview</h2>
-                        <div class="flx flx--algn-center">
-                            <div class="prod-overview__time-frame-slider-wrapper">
-                                <button on:click={decrementTimeFrameTick}>
-                                    <i class="fa-solid fa-chevron-left"></i>
-                                </button>
-                                <span>{`${timeFrameStr}`}</span>
-                                <button on:click={incrementTimeFrameTick}>
-                                    <i class="fa-solid fa-chevron-right"></i>
-                                </button>
+                <div class="prod-overview__top-row">
+                    <!-- Graph View -->
+                    <div class="prod-graph-view prod-overview__bento-box">
+                        <div class="prod-overview__bento-box-header">
+                            <h4>This Week</h4>
+                            <p>Pulling stats from <strong>{`${timeFrameStr}`}</strong></p>
+                        </div>
+                        {#if chartData}
+                            <ProdStackedBarGraph 
+                                chartData={chartData} 
+                                timeFrame={timeFrame} 
+                                keySelected={keySelected} 
+                                setKey={setKey} 
+                            />
+                        {/if}
+                    </div>
+                    <!-- Stats View -->
+                    <div class="prod-stats-view prod-overview__bento-box">
+                        <div class="prod-stats-view__top-row">
+                            <!-- Session Count Stat -->
+                            <div class="prod-stats-view__stat prod-stats-view__bento-box">
+                                <div class="prod-stats-view__stat-header">
+                                    <div class="prod-stats-view__stat-header-icon">
+                                        <i class="fa-regular fa-hourglass-half"></i>
+                                    </div>
+                                    {#if insightData?.sessionCountData && !insightData.sessionCountData.isDay}
+                                        <div class="prod-stats-view__stat-header-percentage">
+                                            <div class="flx flx--algn-center">
+                                                <i class={`fa-solid fa-${insightData?.sessionCountData.percChange < 0 ? "arrow-down" : "arrow-up"}`}></i>
+                                                <span>{insightData?.sessionCountData.percChange}</span>
+                                            </div>
+                                                <span class="prod-stats-view__stat-header-time">Since Last Week</span>
+                                        </div>
+                                    {/if}
+                                </div>
+                                <div class="prod-stats-view__stat-info">
+                                    <h5>{insightData?.sessionCountData?.count}</h5>
+                                    <span>{`${insightData?.sessionCountData?.isDay ? "Sessions Completed" : "Dail Session Average"}`}</span>
+                                </div>
                             </div>
-                            <div class="prod-overview__time-frame-dropdown-container dropdown-container">
-                                <button class="prod-overview__time-frame-dropdown-btn dropdown-btn trans-btn" on:click={() => { isTimeFrameListOpen = !isTimeFrameListOpen }}>
-                                    <div class="dropdown-btn__title">
-                                        {timeFrameOptions[timeFrame]}
+                            <!-- Session Focust Time Stat -->
+                            <div class="prod-stats-view__stat prod-stats-view__bento-box">
+                                <div class="prod-stats-view__stat-header">
+                                    <div class="prod-stats-view__stat-header-icon">
+                                        <i class="fa-brands fa-readme"></i>
                                     </div>
-                                    <div class="dropdown-btn__arrows">
-                                        <div class="dropdown-btn__arrows-triangle-up">
-                                            <i class="fa-solid fa-chevron-up"></i>
+                                    {#if insightData?.focusTimeData && !insightData.focusTimeData.isDay}
+                                        <div class="prod-stats-view__stat-header-percentage">
+                                            <div class="flx">
+                                                <i class={`fa-solid fa-${insightData?.focusTimeData.percChange < 0 ? "arrow-down" : "arrow-up"}`}></i>
+                                                <span>{insightData?.focusTimeData.percChange}</span>
+                                            </div>
+                                            <span class="prod-stats-view__stat-header-time">Since Last Week</span>
                                         </div>
-                                        <div class="dropdown-btn__arrows-triangle-down">
-                                            <i class="fa-solid fa-chevron-down"></i>
-                                        </div>
+                                    {/if}
+                                </div>
+                                <div class="prod-stats-view__stat-info">
+                                    {#if insightData?.focusTimeData}
+                                        <h5>{`${hoursToHhMm(insightData?.focusTimeData.hours)}`}</h5>
+                                    {/if}
+                                    <span>{`${insightData?.focusTimeData?.isDay ? "Total Focus Time" : "Focus Time Average"}`}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Session Tag Distribution List -->
+                        <div class="prod-stats-view__bottom-row">
+                            <div class="prod-stats-view__tag-distribution prod-stats-view__bento-box">
+                                <div class="prod-overview__bento-box-header">
+                                    <h4>Tag Distribution</h4>
+                                </div>
+                                <div class="prod-stats-view__tag-list-header">
+                                    <div class="prod-stats-view__tag-list-header-item prod-stats-view__tag-list-header-item--tag-name">
+                                        Tag Name
                                     </div>
-                                </button>
-                                {#if isTimeFrameListOpen}
-                                    <ul use:clickOutside on:click_outside={() => isTimeFrameListOpen = false} class="dropdown-menu">
-                                        {#each timeFrameOptions as tf, idx} 
-                                            <li class={`dropdown-menu__option ${idx === timeFrame ? "dropdown-menu__option--selected" : ""}`}>
-                                                <button class="dropdown-element" on:click={() => handleTimeFrameSwitcherClicked(idx)}>
-                                                    <p>{tf}</p>
-                                                    {#if idx === timeFrame}
-                                                        <div class="dropdown-menu__option-icon dropdown-menu__option-icon--right">
-                                                            <i class="fa-solid fa-check"></i>
-                                                        </div>
-                                                    {/if }
-                                                </button>
+                                    <div class="prod-stats-view__tag-list-header-item prod-stats-view__tag-list-header-item--avg">
+                                        Daily Avg.
+                                    </div>
+                                    <div class="prod-stats-view__tag-list-header-item prod-stats-view__tag-list-header-item--percentage">
+                                        %
+                                    </div>
+                                </div>
+                                {#if insightData?.tagDistrData}
+                                    <ul>
+                                        {#each insightData.tagDistrData as tagData}
+                                            <li class="prod-stats-view__tag-list-item">
+                                                <div class="prod-stats-view__tag-list-item-col prod-stats-view__tag-list-item-col--tag-name">
+                                                    <div class="prod-stats-view__tag-list-item-color" style={`background-color: ${tagData.color};`}></div>
+                                                    <div class="prod-stats-view__tag-list-item-name">{tagData.name}</div>
+                                                </div>
+                                                <div class="prod-stats-view__tag-list-item-col prod-stats-view__tag-list-item-col--avg">
+                                                    {tagData.hoursStr}
+                                                </div>
+                                                <div class="prod-stats-view__tag-list-item-col prod-stats-view__tag-list-item-col--percentage">
+                                                    {`${(tagData.fraction * 100).toFixed(0)}`}
+                                                </div>
                                             </li>
                                         {/each}
                                     </ul>
                                 {/if}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="prod-overview__top-row">
-                        <!-- Graph View -->
-                        <div class="prod-graph-view prod-overview__bento-box">
-                            <div class="prod-overview__bento-box-header">
-                                <h4>This Week</h4>
-                                <p>Pulling stats from <strong>{`${timeFrameStr}`}</strong></p>
-                            </div>
-                            {#if chartData}
-                                <ProdStackedBarGraph 
-                                    chartData={chartData} 
-                                    timeFrame={timeFrame} 
-                                    keySelected={keySelected} 
-                                    setKey={setKey} 
-                                />
-                            {/if}
-                        </div>
-                        <!-- Stats View -->
-                        <div class="prod-stats-view prod-overview__bento-box">
-                            <div class="prod-stats-view__top-row">
-                                <!-- Session Count Stat -->
-                                <div class="prod-stats-view__stat prod-stats-view__bento-box">
-                                    <div class="prod-stats-view__stat-header">
-                                        <div class="prod-stats-view__stat-header-icon">
-                                            <i class="fa-regular fa-hourglass-half"></i>
-                                        </div>
-                                        {#if insightData?.sessionCountData && !insightData.sessionCountData.isDay}
-                                            <div class="prod-stats-view__stat-header-percentage">
-                                                <div class="flx flx--algn-center">
-                                                    <i class={`fa-solid fa-${insightData?.sessionCountData.percChange < 0 ? "arrow-down" : "arrow-up"}`}></i>
-                                                    <span>{insightData?.sessionCountData.percChange}</span>
-                                                </div>
-                                                    <span class="prod-stats-view__stat-header-time">Since Last Week</span>
-                                            </div>
-                                        {/if}
-                                    </div>
-                                    <div class="prod-stats-view__stat-info">
-                                        <h5>{insightData?.sessionCountData?.count}</h5>
-                                        <span>{`${insightData?.sessionCountData?.isDay ? "Sessions Completed" : "Dail Session Average"}`}</span>
-                                    </div>
-                                </div>
-                                <!-- Session Focust Time Stat -->
-                                <div class="prod-stats-view__stat prod-stats-view__bento-box">
-                                    <div class="prod-stats-view__stat-header">
-                                        <div class="prod-stats-view__stat-header-icon">
-                                            <i class="fa-brands fa-readme"></i>
-                                        </div>
-                                        {#if insightData?.focusTimeData && !insightData.focusTimeData.isDay}
-                                            <div class="prod-stats-view__stat-header-percentage">
-                                                <div class="flx">
-                                                    <i class={`fa-solid fa-${insightData?.focusTimeData.percChange < 0 ? "arrow-down" : "arrow-up"}`}></i>
-                                                    <span>{insightData?.focusTimeData.percChange}</span>
-                                                </div>
-                                                <span class="prod-stats-view__stat-header-time">Since Last Week</span>
-                                            </div>
-                                        {/if}
-                                    </div>
-                                    <div class="prod-stats-view__stat-info">
-                                        {#if insightData?.focusTimeData}
-                                            <h5>{`${hoursToHhMm(insightData?.focusTimeData.hours)}`}</h5>
-                                        {/if}
-                                        <span>{`${insightData?.focusTimeData?.isDay ? "Total Focus Time" : "Focus Time Average"}`}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Session Tag Distribution List -->
-                            <div class="prod-stats-view__bottom-row">
-                                <div class="prod-stats-view__tag-distribution prod-stats-view__bento-box">
-                                    <div class="prod-overview__bento-box-header">
-                                        <h4>Tag Distribution</h4>
-                                    </div>
-                                    <div class="prod-stats-view__tag-list-header">
-                                        <div class="prod-stats-view__tag-list-header-item prod-stats-view__tag-list-header-item--tag-name">
-                                            Tag Name
-                                        </div>
-                                        <div class="prod-stats-view__tag-list-header-item prod-stats-view__tag-list-header-item--avg">
-                                            Daily Avg.
-                                        </div>
-                                        <div class="prod-stats-view__tag-list-header-item prod-stats-view__tag-list-header-item--percentage">
-                                            %
-                                        </div>
-                                    </div>
-                                    {#if insightData?.tagDistrData}
-                                        <ul>
-                                            {#each insightData.tagDistrData as tagData}
-                                                <li class="prod-stats-view__tag-list-item">
-                                                    <div class="prod-stats-view__tag-list-item-col prod-stats-view__tag-list-item-col--tag-name">
-                                                        <div class="prod-stats-view__tag-list-item-color" style={`background-color: ${tagData.color};`}></div>
-                                                        <div class="prod-stats-view__tag-list-item-name">{tagData.name}</div>
-                                                    </div>
-                                                    <div class="prod-stats-view__tag-list-item-col prod-stats-view__tag-list-item-col--avg">
-                                                        {tagData.hoursStr}
-                                                    </div>
-                                                    <div class="prod-stats-view__tag-list-item-col prod-stats-view__tag-list-item-col--percentage">
-                                                        {`${(tagData.fraction * 100).toFixed(0)}`}
-                                                    </div>
-                                                </li>
-                                            {/each}
-                                        </ul>
-                                    {/if}
-                                    <div class="gradient-container gradient-container--horizontal gradient-container--bottom">
-                                    </div>
+                                <div class="gradient-container gradient-container--horizontal gradient-container--bottom">
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="prod-overview__bottom-row">
-                        <!-- My Tags List -->
-                        <div class="my-tags-list prod-overview__bento-box">
-                            <div class="prod-overview__bento-box-header">
-                                <h4>My Tags</h4>
-                                <p>7 Tags</p>
-                            </div>
-                            <ul>
-                                {#each tags as tag}
-                                    <li class="my-tags-list__list-item">
-                                        <div class="my-tags-list__list-item-color" style={`background-color: ${tag.color};`}>
-                                        </div>
-                                        <div class="my-tags-list__list-item-name">
-                                            {tag.name}
-                                        </div>
-                                    </li>
-                                {/each}
-                            </ul>
+                </div>
+                <div class="prod-overview__bottom-row">
+                    <!-- My Tags List -->
+                    <div class="my-tags-list prod-overview__bento-box">
+                        <div class="prod-overview__bento-box-header">
+                            <h4>My Tags</h4>
+                            <p>7 Tags</p>
                         </div>
-                        <!-- Weekly Avg. Line Graph -->
-                        <div class="weekly-avg-graph prod-overview__bento-box">
-                            <div class="prod-overview__bento-box-header">
-                                <h4>Weekly Avg.</h4>
-                                <p>Most focused on <strong>{getMostActiveTimePeriod()}</strong></p>
-                            </div>
-                            <ProdLineChart 
-                                timeFrameActivityData={timeFrameActivityData}
-                                allTimeFrameMins={allTimeFrameMins}
-                                mostActiveTimeFrameIdx={mostActiveTimeFrameIdx}
-                            />
+                        <ul>
+                            {#each tags as tag}
+                                <li class="my-tags-list__list-item">
+                                    <div class="my-tags-list__list-item-color" style={`background-color: ${tag.color};`}>
+                                    </div>
+                                    <div class="my-tags-list__list-item-name">
+                                        {tag.name}
+                                    </div>
+                                </li>
+                            {/each}
+                        </ul>
+                    </div>
+                    <!-- Weekly Avg. Line Graph -->
+                    <div class="weekly-avg-graph prod-overview__bento-box">
+                        <div class="prod-overview__bento-box-header">
+                            <h4>Weekly Avg.</h4>
+                            <p>Most focused on <strong>{getMostActiveTimePeriod()}</strong></p>
                         </div>
+                        <ProdLineChart 
+                            timeFrameActivityData={timeFrameActivityData}
+                            allTimeFrameMins={allTimeFrameMins}
+                            mostActiveTimeFrameIdx={mostActiveTimeFrameIdx}
+                        />
                     </div>
                 </div>
             </div>
-            <div class="stats__right">
-                <div class="tag-panel bento-box">
-                    <h4>Top Tags</h4>
-                    <!-- My Top Tags -->
-                    <div class="tag-ranking-wrapper tag-panel__bento-box">
-                        <StatsTagRanking />
+        </div>
+        <div class="stats__right">
+            <div class="tag-panel bento-box">
+                <h4>Top Tags</h4>
+                <!-- My Top Tags -->
+                <div class="tag-ranking-wrapper tag-panel__bento-box">
+                    <StatsTagRanking />
+                </div>
+                <!-- Tag Overview -->
+                <div class="tag-overview">
+                    <div class="tag-overview__header">
+                        <h4>Tag Overview</h4>
+                        <div class="tag-overview__dropdown-btn-container dropdown-container">
+                            <button class="tag-overview__dropdown-btn dropdown-btn dropdown-btn--small trans-btn" on:click={() => { isTagListOpen = !isTagListOpen }}>
+                                <div class="dropdown-btn__icon" style={`background-color: ${selectedTag.color}`}></div>
+                                <div class="dropdown-btn__title">
+                                    {selectedTag.name}
+                                </div>
+                                <div class="dropdown-btn__arrows">
+                                    <div class="dropdown-btn__arrows-triangle-up">
+                                        <i class="fa-solid fa-chevron-up"></i>
+                                    </div>
+                                    <div class="dropdown-btn__arrows-triangle-down">
+                                        <i class="fa-solid fa-chevron-down"></i>
+                                    </div>
+                                </div>
+                            </button>
+                            {#if isTagListOpen}
+                                <ul use:clickOutside on:click_outside={() => isTagListOpen = false} class="dropdown-menu">
+                                    {#each tags as tag, idx} 
+                                        <li class={`dropdown-menu__option ${tag.name === selectedTag.name ? "dropdown-menu__option--selected" : ""}`}>
+                                            <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
+                                                <div class="dropdown-menu__option-icon" style={`background-color: ${tag.color}`}></div>
+                                                <p>{tag.name}</p>
+                                                {#if tag.name === selectedTag.name}
+                                                    <div class="dropdown-menu__option-icon dropdown-menu__option-icon--right">
+                                                        <i class="fa-solid fa-check"></i>
+                                                    </div>
+                                                {/if}
+                                            </button>
+                                        </li>
+                                    {/each}
+                                </ul>
+                            {/if}
+                        </div>
                     </div>
-                    <!-- Tag Overview -->
-                    <div class="tag-overview">
-                        <div class="tag-overview__header">
-                            <h4>Tag Overview</h4>
-                            <div class="tag-overview__dropdown-btn-container dropdown-container">
-                                <button class="tag-overview__dropdown-btn dropdown-btn dropdown-btn--small trans-btn" on:click={() => { isTagListOpen = !isTagListOpen }}>
-                                    <div class="dropdown-btn__icon" style={`background-color: ${selectedTag.color}`}></div>
-                                    <div class="dropdown-btn__title">
-                                        {selectedTag.name}
-                                    </div>
-                                    <div class="dropdown-btn__arrows">
-                                        <div class="dropdown-btn__arrows-triangle-up">
-                                            <i class="fa-solid fa-chevron-up"></i>
-                                        </div>
-                                        <div class="dropdown-btn__arrows-triangle-down">
-                                            <i class="fa-solid fa-chevron-down"></i>
-                                        </div>
-                                    </div>
-                                </button>
-                                {#if isTagListOpen}
-                                    <ul use:clickOutside on:click_outside={() => isTagListOpen = false} class="dropdown-menu">
-                                        {#each tags as tag, idx} 
-                                            <li class={`dropdown-menu__option ${tag.name === selectedTag.name ? "dropdown-menu__option--selected" : ""}`}>
-                                                <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
-                                                    <div class="dropdown-menu__option-icon" style={`background-color: ${tag.color}`}></div>
-                                                    <p>{tag.name}</p>
-                                                    {#if tag.name === selectedTag.name}
-                                                        <div class="dropdown-menu__option-icon dropdown-menu__option-icon--right">
-                                                            <i class="fa-solid fa-check"></i>
-                                                        </div>
-                                                    {/if}
-                                                </button>
-                                            </li>
-                                        {/each}
-                                    </ul>
-                                {/if}
-                            </div>
+                    <div class="tag-heat-map tag-panel__bento-box">
+                        <h5>Heat Map</h5>
+                        <CalendarHeatMap tag={selectedTag} />
+                    </div>
+                    <div class="tag-bar-graph tag-panel__bento-box">
+                        <div class="tag-bar-graph__header">
+                            <h5>Monthly Trends</h5>
                         </div>
-                        <div class="tag-heat-map tag-panel__bento-box">
-                            <h5>Heat Map</h5>
-                            <CalendarHeatMap tag={selectedTag} />
-                        </div>
-                        <div class="tag-bar-graph tag-panel__bento-box">
-                            <div class="tag-bar-graph__header">
-                                <h5>Monthly Trends</h5>
-                            </div>
-                            <TagBarGraph
-                                tagMonthlyData={tagMonthlyData}
-                                selectedTag={selectedTag}
-                            />
-                        </div>
+                        <TagBarGraph
+                            tagMonthlyData={tagMonthlyData}
+                            selectedTag={selectedTag}
+                        />
                     </div>
                 </div>
             </div>
         </div>
     </div>
- </div>
+</Modal>
 
  <style lang="scss">
     @import "../../scss/dropdown.scss";
     $bento-box-padding: 7px;
 
-    .modal-bg {
-        
-        &__content {
-            overflow-y: scroll;
-            overflow-x: scroll;
-        }
-        &__content-title {
-            margin-bottom: 10px;
-        }
-        &__content-copy {
-            font-size: 1.2rem;
-            font-weight: 300;
-        }
-        
-    }
     .stats {
-        width: 960px;
-        height: 700px;
+        width: 980px;
+        height: 720px;
         display: flex;
         padding: $settings-modal-padding;
 
+        &__title {
+            margin-bottom: 10px;
+        }
+        &__copy {
+            font-size: 1.2rem;
+            font-weight: 300;
+        }
         &__header {
             height: 12%;
         }

@@ -1,6 +1,8 @@
 import { themeState } from "./store"
 import { lightColorThemes, darkColorThemes, imageThemes, ambientVideos, defaultThemes } from "$lib/data-themes"
 
+const MAX_IMG_FILE_SIZE = 5_242_880
+
 const themeSections: AppearanceThemes = {
   default: defaultThemes,
   light: lightColorThemes,
@@ -46,23 +48,23 @@ export const getThemeFromSection = (title: keyof AppearanceThemes, idx: number):
  * @param newTheme  New Theme
  */
 export const setNewTheme = (newTheme: Theme) => {
-  let theme: any = newTheme
+  let _newTheme: any = newTheme    // used for prop checking to determine sub type
   let newThemeState: ThemeState
   
   // if a Color Theme
   if ("twinTheme" in newTheme) {
     newThemeState = {
-      title: theme.title,
-      isDarkTheme: theme.styling.isDark,
-      themeToggleBtnIconColor: theme.styling.iconToggleBtnBgColor,
-      twinTheme: theme.twinTheme
+      title: _newTheme.title,
+      isDarkTheme: _newTheme.styling.isDark,
+      themeToggleBtnIconColor: _newTheme.styling.iconToggleBtnBgColor,
+      twinTheme: _newTheme.twinTheme
     }
 
-    setRootColors(theme.styling)
+    setRootColors(_newTheme.styling)
   }
   
   themeState.set(newThemeState!)
-  localStorage.setItem("theme", JSON.stringify(theme))
+  localStorage.setItem("theme", JSON.stringify(_newTheme))
 }
 
 /**
@@ -141,4 +143,51 @@ export const setRootColors = (theme: ColorThemeProps) => {
 
   export const getThemeStyling = (name: keyof ColorThemeProps) => {
     return getComputedStyle(document.documentElement).getPropertyValue(`--${name}`)
+  }
+
+  export const handleCustomImgUrlInput = async (imgUrl: string): Promise<AsyncResult> => {
+      try {
+        const res = await fetch(imgUrl)
+
+        if (!res.ok) {
+            throw new Error("Invalid URL")
+        }
+        
+        const contentLengthHeader = res.headers.get("Content-Length")
+        if (!contentLengthHeader) {
+            throw new Error("Invalid URL")
+        }
+
+        const fileSizeInBytes = parseInt(contentLengthHeader, 10);
+        if (fileSizeInBytes > MAX_IMG_FILE_SIZE) {
+            throw new Error("File size cannot exceed more than 5 MB")
+        }
+        return { sucess: true }
+    }
+    catch(error: any) {
+        let errorMsg = error.message
+
+        if (error instanceof TypeError) {
+            errorMsg = "Invalid URL"
+        }
+        return { sucess: false, message: errorMsg }
+    }
+  }
+
+  export const handleCustomImgFileInput = (file: File): AsyncResult => {
+    if (!file) {
+      return { sucess: false, message: "Error has occured. Try gain" }
+    }
+
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    
+    if (file.size > MAX_IMG_FILE_SIZE) {
+        return { sucess: false, message: "Img file cannot exceed 5 MB" }
+    }
+    return { sucess: true }
+  }
+
+  export const handleCustomVidInput = () => {
+
   }

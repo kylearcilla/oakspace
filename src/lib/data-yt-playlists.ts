@@ -3,7 +3,7 @@ const ytRecsPlaylists: { title: string, playlists: YoutubePlaylist[] }[] = [
         title: "Lofi / Chill",
         playlists: [
             {
-                id: "PLzbwD_XvqPtf_zlrqVv8kDo3KQIKRXS0Q",
+                id: "PLDbJgJ7-hEUXmQoTwvsqGPshb2cPopUKi",
                 title: "Lofi Girl - Compilations",
                 description: "Curated compilation of Lofi Girl's beloved and soothing videos for ultimate relaxation and chill vibes.",
                 vidCount: 16,
@@ -65,7 +65,7 @@ const ytRecsPlaylists: { title: string, playlists: YoutubePlaylist[] }[] = [
             {
                 id: "PLpEqmyo6EfvJ71ObeeTRRpBpgIqOpb3bq",
                 title: "Pokémon Chill",
-                description: "From Kanto to all the way to Galar, and the adventures between, Pokémon’s most beloved music in one playlist.",
+                description: "From Kanto's beginnings to the wonders of Galar and all the adventures that link them, experience the magic of Pokémon's cherished music.",
                 vidCount: 21,
                 channelId: "",
                 channelTitle: "Multiple Authors",
@@ -87,7 +87,7 @@ const ytRecsPlaylists: { title: string, playlists: YoutubePlaylist[] }[] = [
                 firstVidId: null
             },
             {
-                id: "PLpEqmyo6EfvKCKd5DJNIwN9ptmNDoLQ8",
+                id: "PLpEqmyo6EfvKCKd5DJNIwN9ptmNDoLQ8-",
                 title: "Anime Chill",
                 description: "Unwind to the calming melodies and sounds of anime.",
                 vidCount: 21,
@@ -177,7 +177,7 @@ const ytRecsPlaylists: { title: string, playlists: YoutubePlaylist[] }[] = [
             },
             { 
                 id: "PLpEqmyo6EfvKjlp0-7brbP6gXAZH0T84z",
-                title: "Hip Gems & Classics",
+                title: "Hip Hop Gems & Classics",
                 description: "Underground tracks, classics hits, and fan-made mixes.",
                 vidCount: 17,
                 channelId: "",
@@ -358,7 +358,7 @@ const ytRecsPlaylists: { title: string, playlists: YoutubePlaylist[] }[] = [
             {
                 id: "PLpEqmyo6EfvKUkEnRlAdbVvpMBACpu7Lu",
                 title: "Natural Soundscapes Mix",
-                description: "Natures symphony of sounds of rain or snowfall within nature or from civilization.",
+                description: "Nature's music, from rainy forests and snowy hills to cozy fires and distant thunder. From within nature or in civilization.",
                 vidCount: 35,
                 channelId: "",
                 channelTitle: "Multiple Authors",
@@ -546,6 +546,18 @@ const ytRecsPlaylists: { title: string, playlists: YoutubePlaylist[] }[] = [
         title: "Arts",
         playlists: [
             {
+                id: "PLpEqmyo6EfvLFKVCc1RzCoUGfGMqJV_Kg",
+                title: "Art of Craft",
+                description: "Find inspiration from artist profiles & demonstrations of their craft.",
+                vidCount: 36,
+                channelId: "",
+                channelTitle: "Different Authors",
+                thumbnailURL: "https://i.ytimg.com/vi/vcoRoP3Abt8/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBR8SjK-LpyqF8EP5mYNTOpUumqWg",
+                channelImgSrc: "",
+                channelURL: "",
+                firstVidId: null
+            },
+            {
                 id: "PLpEqmyo6EfvLBfTZweZnGN_QTosoWO_2i",
                 title: "Sketchbook Tours",
                 description: "Step inside the personal sketchbooks of some extraordinary artists.",
@@ -556,7 +568,18 @@ const ytRecsPlaylists: { title: string, playlists: YoutubePlaylist[] }[] = [
                 channelImgSrc: "",
                 channelURL: "",
                 firstVidId: null
-
+            },
+            {
+                id: "UULPePDFpCr78_qmVtpoB1Axaw",
+                title: "Great Art Explained",
+                description: "Deciphering some of history's greatest artworks, from \"The Starry Night\" to \"Nighthawks.\"",
+                vidCount: 32,
+                channelId: "",
+                channelTitle: "Great Art Explained",
+                thumbnailURL: "https://i.ytimg.com/vi/IBcB_dYtGUg/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDLsrhuZlz8kzcOwffTFXF6pchw4g",
+                channelImgSrc: "https://yt3.ggpht.com/SVoD_4bbVOt1Nc3ncoDbMq7s-LU87TWovuFlUw3O0wQAKik0lwMwccnCWcp65cHSnZ4SQbuDPCc=s88-c-k-c0x00ffffff-no-rj",
+                channelURL: "https://www.youtube.com/@BaumgartnerRestoration",
+                firstVidId: null
             },
             {
                 id: "PLOBH6dux3B0gLfU6SK7IdWeCZMa49H___",
@@ -572,15 +595,15 @@ const ytRecsPlaylists: { title: string, playlists: YoutubePlaylist[] }[] = [
 
             },
             {
-                id: "UULPePDFpCr78_qmVtpoB1Axaw",
-                title: "Great Art Explained",
-                description: "Deciphering some of history's greatest artworks, from \"The Starry Night\" to \"Nighthawks.\"",
-                vidCount: 32,
+                id: "PLFB0oFTSWSYb1mpL9YCFAT1YmSl3G--Ew",
+                title: "3D Render Montages",
+                description: "Get inspired by the works of hundreds of digital artists from pwnisher's 3D render challenges.",
+                vidCount: 10,
                 channelId: "",
-                channelTitle: "Great Art Explained",
-                thumbnailURL: "https://i.ytimg.com/vi/IBcB_dYtGUg/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDLsrhuZlz8kzcOwffTFXF6pchw4g",
-                channelImgSrc: "https://yt3.ggpht.com/SVoD_4bbVOt1Nc3ncoDbMq7s-LU87TWovuFlUw3O0wQAKik0lwMwccnCWcp65cHSnZ4SQbuDPCc=s88-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@BaumgartnerRestoration",
+                channelTitle: "pwnisher",
+                thumbnailURL: "https://i.ytimg.com/vi/EdCvwmebWN0/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLArWq2ck_Aub2tg0mWSR1yc4E4rhQ",
+                channelImgSrc: "https://yt3.googleusercontent.com/ER3I3TTJPZ6s7F0ARY1a88touU80pbINHVK8iYD45HC-TgEmcpcQJqVAVNxC4jxjcIGTQ1fe=s176-c-k-c0x00ffffff-no-rj",
+                channelURL: "https://www.youtube.com/@pwnisher",
                 firstVidId: null
             },
             {
@@ -594,20 +617,6 @@ const ytRecsPlaylists: { title: string, playlists: YoutubePlaylist[] }[] = [
                 channelImgSrc: "",
                 channelURL: "https://www.youtube.com/@PerspectiveArts",
                 firstVidId: null
-
-            },
-            {
-                id: "PLFB0oFTSWSYb1mpL9YCFAT1YmSl3G--Ew",
-                title: "3D Render Montages",
-                description: "Get inspired by the works of hundreds of digital artists from pwnisher's 3D render challenges.",
-                vidCount: 10,
-                channelId: "",
-                channelTitle: "pwnisher",
-                thumbnailURL: "https://i.ytimg.com/vi/EdCvwmebWN0/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLArWq2ck_Aub2tg0mWSR1yc4E4rhQ",
-                channelImgSrc: "https://yt3.googleusercontent.com/ER3I3TTJPZ6s7F0ARY1a88touU80pbINHVK8iYD45HC-TgEmcpcQJqVAVNxC4jxjcIGTQ1fe=s176-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@pwnisher",
-                firstVidId: null
-
             },
             {
                 id: "PLpEqmyo6EfvIlazR90JTrBOEMi44x-5Ct",

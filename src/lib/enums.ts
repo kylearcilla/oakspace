@@ -9,8 +9,8 @@ export enum ToastContext {
     AppleMusic, Spotify, YoutubeMusic, Soundcloud, Youtube, Session, Google, Luciole
 }
 export enum ModalType { 
-    Settings, Youtube, Music, Stats, Appearance, Quote, NewSession, ActiveSession,
-    EditSession, SesssionFinished, SessionCanceled, Shortcuts
+    Settings, Youtube, Music, Stats, Journal, Appearance, Quote, NewSession, ActiveSession,
+    EditSession, SesssionFinished, SessionCanceled, Shortcuts, CustomImgBg, CustomVidBg
 }
 export enum HrsMinsFormatOption {
     LETTERS, MIN_LETTERS, NO_LETTERS
@@ -30,10 +30,14 @@ export enum ProgressVisualPartType {
 export enum YTAPIErrorContext { 
     USER_LOGIN, USER_PLAYLISTS, VIDEO, CHANNEL, PLAYLIST 
 }
+export enum YTMediaLinkType {
+    PLAYLIST, VIDEO
+}
 
 /* Music */
 export enum MusicMoodCategory { 
-    Serene, Lofi, Upbeat, Soundtracks, Acoustic, Classical, Zen, Summer 
+    Serene = "Serene", Lofi = "Lo-Fi", Upbeat = "Upbeat", Soundtracks = "Soundtracks", 
+    Acoustic = "Acoustic", Classical = "Classical", Zen = "Zen", Summer = "Summer"
 }
 export enum MusicPlatform { 
     AppleMusic, Spotify, YoutubeMusic, Soundcloud 

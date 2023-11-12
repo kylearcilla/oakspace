@@ -46,60 +46,62 @@
         <form on:submit={editSessionDoneBtnClicked} autocomplete="off">
             <!-- Name -->
             <label for="new-session-name-input" class="modal-bg__content-subheading">Title / Tag</label>
-            <div class="edit-session-modal__name-input" bind:this={sessionNameInput}>
-                <input 
-                    name="new-session-name"
-                    id="new-session-name-input"
-                    spellcheck="false"
-                    type="text"
-                    placeholder="Afternoon Reading" 
-                    on:focus={() => sessionNameInput.classList.add("edit-session-modal__name-input--focus")}
-                    on:blur={() => sessionNameInput.classList.remove("edit-session-modal__name-input--focus")}
-                    bind:value={newTitle}
-                >
-                <div class="edit-session-modal__name-input__divider"></div>
-                <div class="edit-session-modal__name-input-tag-dropdown-container dropdown-container">
-                    <button class="edit-session-modal__name-input-tag-dropdown-btn dropdown-btn trans-btn" on:click={() => isTagListDropDownOpen = true }>
-                        <div class="edit-session-modal__name-input-btn-tag" style={`background-color: ${newTag.color}`}></div>
-                        <div class="dropdown-btn__title">
-                            {newTag.name}
-                        </div>
-                        <div class="dropdown-btn__arrows">
-                            <div class="dropdown-btn__arrows-triangle-up">
-                                <i class="fa-solid fa-chevron-up"></i>
+            <div class="edit-session-modal__name-input">
+                <div class="edit-session-modal__name-input-container text-input-container" bind:this={sessionNameInput}>
+                    <input 
+                        name="new-session-name"
+                        id="new-session-name-input"
+                        spellcheck="false"
+                        type="text"
+                        placeholder="Afternoon Reading" 
+                        on:focus={() => sessionNameInput.classList.add("text-input-container--focus")}
+                        on:blur={() => sessionNameInput.classList.remove("text-input-container--focus")}
+                        bind:value={newTitle}
+                    >
+                    <div class="edit-session-modal__name-input-divider"></div>
+                    <div class="edit-session-modal__name-input-tag-dropdown-container dropdown-container">
+                        <button class="edit-session-modal__name-input-tag-dropdown-btn dropdown-btn trans-btn" on:click={() => isTagListDropDownOpen = true }>
+                            <div class="edit-session-modal__name-input-btn-tag" style={`background-color: ${newTag.color}`}></div>
+                            <div class="dropdown-btn__title">
+                                {newTag.name}
                             </div>
-                            <div class="dropdown-btn__arrows-triangle-down">
-                                <i class="fa-solid fa-chevron-down"></i>
+                            <div class="dropdown-btn__arrows">
+                                <div class="dropdown-btn__arrows-triangle-up">
+                                    <i class="fa-solid fa-chevron-up"></i>
+                                </div>
+                                <div class="dropdown-btn__arrows-triangle-down">
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </div>
                             </div>
-                        </div>
-                    </button>
-                    {#if isTagListDropDownOpen}
-                        <ul use:clickOutside on:click_outside={() => isTagListDropDownOpen = false} class="dropdown-menu">
-                            {#each tags as tag, idx} 
-                                <li class={`dropdown-menu__option dropdown-menu__option--has-right-icon ${tag.name === newTag.name ? "dropdown-menu__option--selected" : ""}`}>
-                                    <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
-                                        <div 
-                                            class="edit-session-modal__name-input-btn-tag dropdown-menu__option-icon" 
-                                            style={`background-color: ${tag.color}`}
-                                        >
-                                        </div>
-                                        <p>{tag.name}</p>
-                                        {#if tag.name === newTag.name}
-                                            <div class="dropdown-menu__option-icon dropdown-menu__option-icon--right">
-                                                <i class="fa-solid fa-check"></i>
+                        </button>
+                        {#if isTagListDropDownOpen}
+                            <ul use:clickOutside on:click_outside={() => isTagListDropDownOpen = false} class="dropdown-menu">
+                                {#each tags as tag, idx} 
+                                    <li class={`dropdown-menu__option dropdown-menu__option--has-right-icon ${tag.name === newTag.name ? "dropdown-menu__option--selected" : ""}`}>
+                                        <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
+                                            <div 
+                                                class="edit-session-modal__name-input-btn-tag dropdown-menu__option-icon" 
+                                                style={`background-color: ${tag.color}`}
+                                            >
                                             </div>
-                                        {/if}
+                                            <p>{tag.name}</p>
+                                            {#if tag.name === newTag.name}
+                                                <div class="dropdown-menu__option-icon dropdown-menu__option-icon--right">
+                                                    <i class="fa-solid fa-check"></i>
+                                                </div>
+                                            {/if}
+                                        </button>
+                                    </li>
+                                {/each}
+                                <li class="dropdown-menu__new-option-container">
+                                    <div class="divider divider--thin"></div>
+                                    <button on:click={handleCreateTagBtnClicked}>
+                                        <span>+</span>New Tag
                                     </button>
                                 </li>
-                            {/each}
-                            <li class="dropdown-menu__new-option-container">
-                                <div class="divider divider--thin"></div>
-                                <button on:click={handleCreateTagBtnClicked}>
-                                    <span>+</span>New Tag
-                                </button>
-                            </li>
-                        </ul>
-                    {/if}
+                            </ul>
+                        {/if}
+                    </div>
                 </div>
             </div>
             <div class="edit-session-modal__buttons-container">
@@ -124,6 +126,7 @@
 
 <style lang="scss">
     @import "../../scss/dropdown.scss";
+    @import "../../scss/form.scss";
 
     /* Edit Active Session Modal */
     .edit-session-modal {
@@ -150,6 +153,9 @@
         &--light .modal-bg {
             @include modal-bg-light;
         }
+        &--light .text-input-container {
+            @include input-text-field-light;
+        }
         &--dark .trans-btn {
             @include trans-btn-dark-styling;
         }
@@ -162,13 +168,6 @@
             border: 1px solid rgba(60, 60, 60, 0.1);
             @include dropdown-menu-dark;
         }
-        &--dark &__name-input {
-            @include input-text-field-dark;
-
-            &__divider {
-                width: 0.5px;
-            }
-        }
         &--dark &__name-input-tag-dropdown-btn {
             @include dropdown-btn-dark;
         }
@@ -179,38 +178,24 @@
         }
         /* Name Input */
         &__name-input { 
-            font-size: 1.32rem;
-            padding: 0px 7px 0px 20px;
-            height: 47px;
-            border-radius: 10px;
             width: 100%;
-            @include flex-container(center, _);
-            transition: 0.2s ease-in-out;
-            border: 1px solid rgba(211, 211, 211, 0);
-            background-color: var(--modalBgAccentColor);
-            
-            &--focus {
-                border-color: rgba(211, 211, 211, 0.5);
-            }
-            
-            input {
-                color: rgba(var(--textColor1), 0.5);
-                transition: 0.14s ease-in-out;
-                font-weight: 500;
-                width: 70%;
-                border-width: 0px;
-
-                &::placeholder {
-                    font-size: 1.4rem;
-                    font-weight: 400;
-                    opacity: 0.2;
-                }
-            }
             &__divider {
+                width: 0.5px;
+            }
+            &-divider {
                 width: 0.9px;
                 height: 14px;
                 margin: 0px 10px 0px 0px;
                 background-color: rgba(var(--textColor1), 0.15);
+            }
+        }
+        &__name-input-container {
+            width: 100%;
+            height: 47px;
+            margin-top: 6px;
+
+            input {
+                width: 65%;
             }
         }
         &__name-input-tag-dropdown-container {

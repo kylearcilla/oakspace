@@ -16,7 +16,11 @@
 
     let styling = ""
 
-    const handleClickOutside = () => onClickOutSide()!
+    const handleClickOutside = (e: Event) => {
+        const target = e.target as HTMLElement
+        if (!target.classList.value.includes("modal-bg")) return
+        onClickOutSide()!
+    }
     const makeModalStyling = () => {
         const arr: string[] = []
         arr.push(`border-radius: ${options?.borderRadius ?? "12px"}`)
@@ -31,9 +35,9 @@
     onMount(makeModalStyling)
 </script>
 
-<div class={`modal-bg ${$themeState?.isDarkTheme ? "" : "modal-bg--light"}`}>
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+<div class={`modal-bg ${$themeState?.isDarkTheme ? "" : "modal-bg--light"}`} on:click={handleClickOutside}>
     <div 
-        use:clickOutside on:click_outside={() => handleClickOutside()} 
         class={`modal-bg__content modal-bg__content--overflow-y-scroll`}
         style={styling}
     >

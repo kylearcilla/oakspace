@@ -3,7 +3,7 @@
     import Logo from "../../components/Logo.svelte"
     
 	import { closeModal } from "$lib/utils-home"
-    import { ErrorCode, Icon, ModalType } from "$lib/enums"
+    import { Icon, ModalType } from "$lib/enums"
     import ytRecsPlaylists from '$lib/data-yt-playlists'
     import { clickOutside } from "../../lib/utils-general"
 	import { themeState, ytPlayerStore, ytUserDataStore } from "$lib/store"
@@ -30,7 +30,14 @@
     const handleYtSignUp  = async () => loginUser()
     const handleYtSignOut = ()       => logOutUser()
 
-    const capsuleBtnClickedHandler = () => $ytUserDataStore?.email ? isUserProfileDropdownOpen = true : loginUser()
+    const capsuleBtnClickedHandler = () => { 
+        if ($ytUserDataStore) {
+            isUserProfileDropdownOpen = true 
+        }
+        else {
+            loginUser()
+        }
+    }
     
     /* UI Handlers */
     const _handleChoosePlaylist = (playlist: YoutubePlaylist) => handleChoosePlaylist(playlist)
@@ -75,7 +82,7 @@
     const handleShiftTabCategoryLeft  = () => groupTabList!.scrollLeft -= SCROLL_STEP
     const handleRecTabBtnClicked = (index: number) => {
         if (index < 0) {
-            selectedPlsGroup = { title: "My Playlists", playlists: $ytUserDataStore!.userPlaylists}
+            selectedPlsGroup = { title: "My Playlists", playlists: $ytUserDataStore!.userPlaylists }
             return
         }
         selectedPlsGroup = ytRecsPlaylists[index]
@@ -157,8 +164,7 @@
                 <div class="chosen-playlist bento-box">
                     {#if $ytPlayerStore?.playlist}
                         <img class="img-bg" src={$ytPlayerStore?.playlist?.thumbnailURL} alt="chosen-playlist">
-                        <div class="img-bg-gradient gradient-container gradient-container--bottom">
-                        </div>
+                        <div class="img-bg-gradient gradient-container gradient-container--bottom"></div>
                         <div class={`blur-bg ${!$ytPlayerStore?.playlist ? "blur-bg--solid-color" : "blur-bg--blurred-bg"}`}></div>
                         <div class="content-bg">
                             <div class="chosen-playlist__playlist">
@@ -251,7 +257,6 @@
                                         ${playlist.id === $ytPlayerStore?.playlist?.id ? "recs__playlist-item--selected" : ""}
                                         ${selectedPlsGroup.title === "My Playlists" ? "recs__playlist-item--user-pl " : ""}
                                    `} 
-                            title={playlist.description}
                         >
                             <div class="recs__playlist-item-img-container">
                                 <img class="recs__playlist-item-img" src={playlist.thumbnailURL} alt="playlist-item-thumbnail"/>
@@ -260,7 +265,7 @@
                                 <h5 class="recs__playlist-item-title">
                                     {playlist.title}
                                 </h5>
-                                <p class="recs__playlist-item-description">
+                                <p class="recs__playlist-item-description" title={playlist.description}>
                                     {`${playlist.description.length === 0 ? "No description" : playlist.description} `}
                                 </p>
                                 {#if selectedPlsGroup.title === "My Playlists"}
@@ -326,7 +331,8 @@
 
     .yt-settings {
         width: 86vw;
-        height: 790px;
+        height: 86vh;
+        max-width: 1200px;
         padding: $settings-modal-padding;
 
         .skeleton-bg {
@@ -366,7 +372,7 @@
                 background: linear-gradient(0deg, var(--modalBgColor) 10%, transparent) !important;
             }
             .blur-bg {
-                background: rgba(96, 96, 96, 0.5);
+                background: rgba(96, 96, 96, 0.35);
             }
         }
         &--light &__user-capsule {
@@ -484,10 +490,12 @@
             margin-right: $section-spacing;
             width: calc(28% - ($section-spacing / 2));
             min-width: 200px;
+            max-width: 260px;
             height: 100%;
         }
         .recs {
             width: calc(72% - ($section-spacing / 2));
+            flex: 1;
         }
 
         .divider {
@@ -765,7 +773,7 @@
             position: relative;
         }
         &__playlist-item-description {
-            width: 70%;
+            width: 90%;
             max-height: 33px;
             overflow: hidden;
             font-weight: 300;
@@ -812,6 +820,7 @@
                 flex-direction: column;
             }
             &__left {
+                max-width: none;
                 width: 100%;
                 height: 400px;
                 margin-bottom: $section-spacing;

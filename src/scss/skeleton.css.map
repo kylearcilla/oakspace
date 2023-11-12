@@ -1,0 +1,9 @@
+{
+    "version": 3,
+    "mappings": "AA4CA,UAAU,CAAV,KAAU;EACN,EAAE;IACE,IAAI,EAAI,MAA6B;;EAEzC,IAAI;IACA,IAAI,EAAE,KAAkB",
+    "sources": [
+        "skeleton.scss"
+    ],
+    "names": [],
+    "file": "skeleton.css"
+}

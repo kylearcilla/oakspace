@@ -1,9 +1,10 @@
 import { get } from "svelte/store"
-import { ToastContext } from "./enums"
+import { ToastContext, YTMediaLinkType } from "./enums"
 import { toastMessages, ytUserDataStore, ytPlayerStore } from "./store"
 import { YoutubeUserData } from "./youtube-user-data"
 import { YoutubePlayer } from "./youtube-player"
-import { CustomError, ExpiredTokenError } from "./errors"
+import { CustomError, ExpiredTokenError, ResourceNotFoundError } from "./errors"
+import { getPlayListItemsDetails, getPlaylistDetails, getVidDetails } from "./api-youtube"
 
 const INIT_PLAYLIST_REQUEST_DELAY = 500
 export const USER_PLS_MAX_PER_REQUEST = 15
@@ -112,6 +113,42 @@ export const refreshToken = async (): Promise<AsyncResult> => {
     catch(error: any) {
         createYtErrorToastMsg(error)
         return { sucess: false }
+    }
+}
+
+/**
+ * Given Youtube URL, extract the the video or playlist id.
+ * If the url is a video in a playlist then the video will be used.
+ * @param url  Given url
+ * @returns    Link type and media id value if valid and null if not
+ */
+export const getYtMediaId = async (url: string): Promise<YoutubeMediaId | { error: string }>=> {
+    try {
+        const urlParams = new URLSearchParams(new URL(url).search)
+        const listId = urlParams.get("list")
+        const vidId = urlParams.get("v")
+
+        // check if video and pubic
+        if (vidId) {
+            await getVidDetails(vidId)
+            return {
+                type: YTMediaLinkType.VIDEO,
+                id: vidId
+            }
+        }
+        // check if list and public
+        if (listId) {
+            await getPlaylistDetails(listId)
+            return {
+                type: YTMediaLinkType.PLAYLIST,
+                id: listId
+            }
+        }
+
+        return { error: "Resource does not exist or is private." }        
+    }
+    catch(error: any) {
+        return { error: "Resource does not exist or is private." }        
     }
 }
 

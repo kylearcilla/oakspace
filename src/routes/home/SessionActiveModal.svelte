@@ -139,32 +139,32 @@
                                     <div class="active-session-todo__right-container">
                                         <!-- Edit Mode -->
                                         {#if idx === $sessionManager?.todoToEditIndex}
-                                        <form autocomplete="off" on:submit={editTodoDoneBtnHandler}>
-                                            <input
-                                                class="active-session-todo__edit-todo-input"
-                                                placeholder="New Subtask Title"
-                                                id={`todo-${idx}`}
-                                                on:input={editTextInputHandler}
-                                                bind:value={$sessionManager.todoToEditNewTitle}
-                                            />
-                                            <div class="active-session-todo__edit-btn-container">
-                                                <button 
-                                                    class="active-session-todo__delete-btn text-only"
-                                                    on:click={() => editDeleteBtnHandler(idx)}
-                                                    type="reset"
-                                                >
-                                                        Delete
-                                                </button>
-                                                <button
-                                                    disabled={$sessionManager.todoToEditNewTitle === "" || $sessionManager.todoToEditNewTitle.length > MAX_TODO_NAME_LENGTH}
-                                                    type="submit"
-                                                    class="active-session-todo__done-btn text-only"
-                                                    on:click={editTodoDoneBtnHandler}
-                                                >
-                                                        Done
-                                                </button>
-                                            </div>
-                                        </form>
+                                            <form autocomplete="off" on:submit={editTodoDoneBtnHandler}>
+                                                <input
+                                                    class="active-session-todo__edit-todo-input"
+                                                    placeholder="New Subtask Title"
+                                                    id={`todo-${idx}`}
+                                                    on:input={editTextInputHandler}
+                                                    bind:value={$sessionManager.todoToEditNewTitle}
+                                                />
+                                                <div class="active-session-todo__edit-btn-container">
+                                                    <button 
+                                                        class="active-session-todo__delete-btn text-only"
+                                                        on:click={() => editDeleteBtnHandler(idx)}
+                                                        type="reset"
+                                                    >
+                                                            Delete
+                                                    </button>
+                                                    <button
+                                                        disabled={$sessionManager.todoToEditNewTitle === "" || $sessionManager.todoToEditNewTitle.length > MAX_TODO_NAME_LENGTH}
+                                                        type="submit"
+                                                        class="active-session-todo__done-btn text-only"
+                                                        on:click={editTodoDoneBtnHandler}
+                                                    >
+                                                            Done
+                                                    </button>
+                                                </div>
+                                            </form>
                                         <!-- Normdal Mode -->
                                         {:else}
                                             <p class={`active-session-todo__name ${todo.isChecked ? "active-session-todo__name--finished" : ""}`}>

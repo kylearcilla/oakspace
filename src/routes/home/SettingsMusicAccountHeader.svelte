@@ -64,8 +64,8 @@
             <li class="platform-list__platform-item">
                 <div class="platform-list__platform-item-logo">
                     <Logo 
-                        logo={Icon.AppleMusic} 
-                        options={{ containerWidth: "18px", borderRadius: "7px", iconWidth: "50%" }} 
+                        logo={Icon.Soundcloud} 
+                        options={{ containerWidth: "18px", borderRadius: "7px", iconWidth: "60%" }} 
                     />
                 </div>
                 <div class="platform-list__platform-item-text">
@@ -100,8 +100,8 @@
             <li class="platform-list__platform-item">
                 <div class="platform-list__platform-item-logo">
                     <Logo 
-                        logo={Icon.Soundcloud} 
-                        options={{ containerWidth: "18px", borderRadius: "7px", iconWidth: "60%" }} 
+                        logo={Icon.AppleMusic} 
+                        options={{ containerWidth: "18px", borderRadius: "7px", iconWidth: "50%" }} 
                     />
                 </div>
                 <div class="platform-list__platform-item-text">

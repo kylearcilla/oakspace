@@ -1,6 +1,7 @@
 const ANIMTION_SPEED = 12.55    // 12.55 px / sec
 const ANIMATION_PAUSE = 2       // When text hits left / right edge
 const ANIMATION_DELAY = 3000
+const TEXT_CONTAINER_OFFSET_MIN_CUTOFF = 11  // diff betwen text width and container
 
 const INPUT_RANGE_BG_COLOR = "rgba(0, 0, 0, 0.51)"
 
@@ -68,6 +69,7 @@ export const getAnimationKeyFrames = (durationMs: number, offsetWidth: number) =
 /**
  * Used to do a sliding animation to show the entire track title / artist when player is not wide enough to show them.
  * Dynamically calculates animation length & keyframes to keep animation consistent for any title text length.
+ * Animation object is returned for it be canceled later when new animation is needed.
  * 
  * @param textElement   Text element where track title / artist will be stored
  * @returns             An animation object that will be attached to the text elements.
@@ -76,7 +78,7 @@ export const getSlidingTextAnimation = (textElement: HTMLElement): Animation | n
     const textContainerWidth = (textElement!.parentNode as HTMLElement).clientWidth
 
     let offSet = textElement.clientWidth - textContainerWidth
-    offSet = offSet <= 0 ? 0 : offSet + 10
+    offSet = offSet <= 0 ? 0 : offSet
 
     if (offSet === 0) return null
 
@@ -86,7 +88,7 @@ export const getSlidingTextAnimation = (textElement: HTMLElement): Animation | n
     const options = {
         delay: ANIMATION_DELAY,
         duration: durationMs,
-        iterations: Infinity,
+        iterations: offSet <= TEXT_CONTAINER_OFFSET_MIN_CUTOFF ? 1 : Infinity,   // do not keep moving text if only a litle part is cut off
         easing: "linear"
     }
     return textElement.animate(keyFrames, options)

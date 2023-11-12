@@ -4,6 +4,7 @@
 /* Misc. */
 type AsyncResult = {
     sucess: boolean
+    message?: string
 }
 
 type FunctionParam = ((...args: any[]) => any) | ((...args: any[]) => Promise<any>) | null
@@ -191,11 +192,11 @@ type MusicContext = {
 }
 
 type MusicCollectionCategory = {
-    title: string,
-    artworkSrc: string,
-    artworkBlurredSrc: string,
-    artistCredit: string,
-    description: string,
+    moodType: MusicMoodCategory
+    artworkSrc: string
+    artworkBlurredSrc: string
+    artistCredit: string
+    description: string
 }
 
 type MusicCollectionCategoryCollections = {
@@ -236,6 +237,12 @@ type YoutubeUserPlaylistResponse = {
     userPlaylists: YoutubePlaylist[]
     userPlaylistsNextPageToken: string
     userPlaylistLength: number
+}
+
+type YoutubePlaylistResponse = {
+    videos: YoutubeVideo[]
+    nextPageToken: string
+    playlistLength: number
 }
 
 type YoutubeUserInfo = {
@@ -299,6 +306,11 @@ type YoutubeVideo = {
     channelSubs: string
     channelUrl: string
 };
+
+type YoutubeMediaId = { 
+    type: YTMediaLinkType
+    id: string 
+}
 
 /* Analytics Stuff */
 type SessionInputData = { 

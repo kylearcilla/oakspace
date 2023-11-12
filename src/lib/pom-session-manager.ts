@@ -402,7 +402,6 @@ export class PomSessionManger {
   /**
    * When user clicks on a different window, the focused todo index will be removed.
    * So set the prev focus todo index to the current when user goes back to the app window.
-   * "this" isn't used to refer to manager as it will refer to the todo element.
    * 
    * @param event  Focus event to handle
    */
@@ -416,7 +415,6 @@ export class PomSessionManger {
    * Blur handler for when a current focused todo loses focus.
    * Removes prev focused todo if the new focused element is not a todo element.
    * Removes also event listeners if necessary.
-   * "this" isn't used to refer to manager as it will refer to the todo element.
    * 
    * @param event    Focus event to be handled.
    */
@@ -432,14 +430,14 @@ export class PomSessionManger {
 
     this.updateSessionManger({ prevFocusedTodoIdx: this.focusedTodoIndex })
 
+    // Reset focus idx if new focus element is not a new todo
     if (relatedTarget?.tagName === "LI") return
-
     this.resetCurrentFocusedTodoIdx()
   }
 
   /**
    * Reset current focused todo index.
-   * Removed only when the new focus element is not a todo.
+   * Reset only when the new focus element is not a todo.
    */
   resetCurrentFocusedTodoIdx() {
     this.focusedTodoIndex = -1

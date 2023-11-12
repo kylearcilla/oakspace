@@ -23,12 +23,13 @@
     
     let trackPlaybackBar: HTMLInputElement
     let musicPlaybackBar: HTMLInputElement
-
+    
     let trackTitleElement: HTMLElement
     let trackArtistNameElement: HTMLElement
     let trackTitleElAnimationObj: Animation | null
     let trackArtistElAnimationObj: Animation | null
     let playerError: any
+    let leftGradientBlackStart = 17
     
     const ACTIVE_TO_INACTIVE_BTN_DEAY = 150
     const LOGO_WIDTH = 19
@@ -46,7 +47,7 @@
     musicPlayerStore.subscribe((player: MusicPlayer | null) => {
         if (!player) return    
 
-        // if there is a new error then alert user & if there is no new error remove current error
+        // if there is a new error then alert user & if there is no new error remove current error if there was an error
         if (player.error && playerError != player.error) {
             playerError = player.error
             createMusicAPIErrorToastMsg(player.error!)
@@ -61,13 +62,9 @@
 
         if (!player.track || player.track.id === trackId) return
 
-        trackTitleElAnimationObj?.cancel()
-        trackArtistElAnimationObj?.cancel()
+        resetSlidingTextAnimations()
         
-        requestAnimationFrame(() => { 
-            trackTitleElAnimationObj = getSlidingTextAnimation(trackTitleElement)
-            trackArtistElAnimationObj =  getSlidingTextAnimation(trackArtistNameElement)
-        })
+        requestAnimationFrame(initSlidingTextAnimations)
 
         trackId = player.track!.id
 
@@ -76,6 +73,16 @@
             initMediaSessionEventHandlers()
         }
     })
+
+    /* Animations */
+    function initSlidingTextAnimations() {
+        trackTitleElAnimationObj = getSlidingTextAnimation(trackTitleElement)
+        trackArtistElAnimationObj = getSlidingTextAnimation(trackArtistNameElement)
+    }
+    function resetSlidingTextAnimations() {
+        trackTitleElAnimationObj?.cancel()
+        trackArtistElAnimationObj?.cancel()
+    }
 
     /* Controls */
     const togglePlayback = () => $musicPlayerStore!.togglePlayback()
@@ -90,19 +97,16 @@
 
     const handleKeyUp = (event: KeyboardEvent) => {
         if (event.code !== "Space") return
-        togglePlayback()
-        isPausePlayBtnActive = false
+        // togglePlayback()
+        // isPausePlayBtnActive = false
     }
     const handleKeyDown = (event: KeyboardEvent) => {
         if (event.code !== "Space") return
-        isPausePlayBtnActive = true
+        // isPausePlayBtnActive = true
     }
     const handleResize = () => {
-        trackTitleElAnimationObj?.cancel()
-        trackArtistElAnimationObj?.cancel()
-
-        trackTitleElAnimationObj = getSlidingTextAnimation(trackTitleElement)
-        trackArtistElAnimationObj =  getSlidingTextAnimation(trackArtistNameElement)
+        resetSlidingTextAnimations()
+        initSlidingTextAnimations()
     }
 
     /* Media Session */
@@ -163,12 +167,22 @@
         <div class="music-player-track" title={`${$musicPlayerStore?.track?.name} – ${$musicPlayerStore?.track?.artist}`}>
             <img class="music-player-track__art" src={$musicPlayerStore?.track?.artworkImgSrc} alt="">
             <div class="music-player-track__details">
-                <h5 class="music-player-track__title" bind:this={trackTitleElement}>
-                    {$musicPlayerStore?.track?.name ?? ""}
-                </h5>
-                <span class={`music-player-track__artist caption-2 ${!$themeState.isDarkTheme ? "caption-2--light-theme" : ""}`} bind:this={trackArtistNameElement}>
-                    {$musicPlayerStore?.track?.artist ?? ""}
-                </span>
+                <div class={`music-player-track__title-container ${trackTitleElAnimationObj ? "music-player-track__title-container--masked" : ""}`}>
+                    <h5 
+                        class="music-player-track__title" 
+                        bind:this={trackTitleElement}
+                    >
+                        {$musicPlayerStore?.track?.name ?? ""}
+                    </h5>
+                </div>
+                <div class={`music-player-track__artist-container ${trackArtistElAnimationObj ? "music-player-track__artist-container--masked" : ""}`}>
+                    <span 
+                        class={`music-player-track__artist ${!$themeState.isDarkTheme ? "caption-2--light-theme" : ""}`} 
+                        bind:this={trackArtistNameElement}
+                    >
+                        {$musicPlayerStore?.track?.artist ?? ""}
+                    </span>
+                </div>
             </div>
         </div>
         <div class="music-player-controls">
@@ -346,21 +360,34 @@
             height: 35px;
         }
         &__title {
+            &-container {
+                height: 20px;
+            }
             @include pos-abs-top-left-corner(5px, 0px);
             white-space: nowrap;
             width: auto;
             font-size: 1.1rem;
+            padding: 0px 10px;
         }
         &__artist {
+            &-container {
+                height: 15px;
+            }
+            padding: 0px 10px;
             @include pos-abs-bottom-left-corner(1px, 0px);
             white-space: nowrap;
             width: auto;
             font-size: 0.95rem;
         }
+        &__title-container, &__artist-container {
+            &--masked {
+                -webkit-mask-image: linear-gradient(90deg, transparent 2%, black 9%, black 80%, transparent 100%);
+                mask-image: linear-gradient(90deg, transparent 2%, black 9%, black 80%, transparent 100%);
+            }
+        }
         &__art {
             width: 30px;
             aspect-ratio: 1 / 1;
-            margin-right: 10px;
         }
     }
     /* Music Controls */

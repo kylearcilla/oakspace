@@ -1,14 +1,11 @@
 <script lang="ts">
     import { onMount } from 'svelte'
-	import { clickOutside } from "$lib/utils-general"
 	import type { YoutubeUserData } from "$lib/youtube-user-data"
-	import { logOutUser, loginUser } from "$lib/utils-youtube"
-    import { ytPlayerStore, ytUserDataStore, themeState, homeViewLayout } from "$lib/store"
+    import { ytPlayerStore, ytUserDataStore, themeState } from "$lib/store"
 	import { ytPlayerErrorHandler } from '$lib/utils-youtube-player'
 
     let isPlaylistPrivate = false
     let doMinimizeYtPanel = false
-    let isDropDownOpen = false
     let doHideMyPlaylists = true
 
     let options = ["Log In", "Show My Playlists"]
@@ -28,19 +25,6 @@
     ytPlayerStore.subscribe(() => {
         isPlaylistPrivate = ytPlayerErrorHandler(isPlaylistPrivate)
     })
-
-    /* UI Handlers */
-    const handleDropdownOptionClicked = (index: number) => {
-        isDropDownOpen = false
-        if (index === 0 && $ytUserDataStore) {
-            $ytUserDataStore ? loginUser() : logOutUser()
-        } 
-        else if (index === 1) {
-            doHideMyPlaylists = !doHideMyPlaylists
-            options[1] = options[1] === "Hide My Playlists" ? "Show My Playlists" : "Hide My Playlists"
-        }
-    }
-    const handleChoosePlaylist = (playlist: YoutubePlaylist) => $ytPlayerStore?.playPlaylist(playlist)
 
     onMount(() => options[0] = localStorage.getItem('yt-player-data') ? "Log Out" : "Log In")
 </script>
@@ -130,65 +114,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- User Playlists -->
-                {#if $ytUserDataStore?.email && !doHideMyPlaylists}
-                    <div class="playlist-panel__user-pls">
-                        <div class="playlist-panel__user-pls-header">
-                            <h1>My Playlists</h1>
-                            <span>
-                                {`${$ytUserDataStore?.userPlaylistLength} ${$ytUserDataStore?.userPlaylistLength === 1 ? "playlist" : "playlists"}`}
-                            </span>
-                        </div>
-                        <ul class="playlist-panel__user-pls-list">
-                            {#each $ytUserDataStore.userPlaylists as pl, idx}
-                                <li on:dblclick={() => handleChoosePlaylist(pl)}>
-                                    <div class="divider"></div>
-                                    <div class="playlist-panel__user-pls-item">
-                                        <div class="playlist-panel__user-pls-item-thumbnail-container">
-                                            <img src={pl.thumbnailURL} alt="playlist-thumbnail">
-                                        </div>
-                                        <div class="playlist-panel__user-pls-item-details">
-                                            <h5 class="playlist-panel__user-pls-item-details-title">{pl.title}</h5>
-                                            <span class="playlist-panel__user-pls-item-details-count">
-                                                {`${pl.vidCount} ${pl.vidCount === 1 ? "Item" : "Items"}`}
-                                            </span>
-                                            <p class="playlist-panel__user-pls-item-details-description">
-                                                {pl.description === "" ? "No Description" : pl.description}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    {#if idx + 1 === $ytUserDataStore.userPlaylists.length}
-                                        <div class="divider"></div>
-                                    {/if}
-                                </li>
-                            {/each}
-                        </ul>
-                    </div>
-                {/if}
-            </div>
-            <!-- Settings Btn -->
-            <div class="playlist-panel__settings-btn-container">
-                <button on:click={() => isDropDownOpen = !isDropDownOpen} class="playlist-panel__pl-details-header-settings-btn settings-btn dropdown">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20">;
-                        <g fill="none" stroke={`${$themeState.isDarkTheme ? "rgba(255, 255, 255, 0.55)" : "rgba(0, 0, 0, 0.35)"}`} stroke-linecap="round" transform="translate(1 10)">
-                            <circle cx="2.5" cy="0.8" r="1.2"></circle>
-                            <circle cx="8.5" cy="0.8" r="1.2"></circle>
-                            <circle cx="14.5" cy="0.8" r="1.2"></circle>
-                        </g>
-                    </svg>
-                </button>
-                <!-- Dropdown Menu -->
-                {#if isDropDownOpen}
-                    <ul use:clickOutside on:click_outside={() => isDropDownOpen = false} class="dropdown-menu">
-                        {#each options as option, idx} 
-                            <li class="dropdown-menu__option">
-                                <button class="dropdown-element" on:click={() => handleDropdownOptionClicked(idx)}>
-                                    <p>{option}</p>
-                                </button>
-                            </li>
-                        {/each}
-                    </ul>
-                {/if}
             </div>
         </div>
     </div>
@@ -404,6 +329,7 @@
         }
         &__pl-details-right-wrapper {
             width: 100%;
+            min-width: 0px;
         }
         /* Header */
         &__pl-details-header {
@@ -428,107 +354,13 @@
         }
         /* Current Playlist Description */
         &__pl-details-description {
-            width: 90%;
+            width: 100%;
             max-height: 40px;
+            min-width: 0px;
             font-weight: 300;
             font-size: 1.15rem;
             color: rgba(var(--textColor1), 0.6);
             @include elipses-overflow;
-        }
-        &__settings-btn-container {
-            @include pos-abs-top-right-corner(5px, 5px);
-            
-            .dropdown-menu {
-                @include pos-abs-top-right-corner(32px, 0px);
-                width: 140px;
-
-                &__option {
-                    padding-right: 0px;
-                }
-            }
-        }
-        /* User Playlists */
-        &__user-pls {
-            width: 100%;
-            background-color: var(--midPanelBaseColor);
-            color: rgba(var(--textColor1), 0.9);
-            
-            ul {
-                max-height: 400px;
-                overflow-y: scroll;
-                height: 40%;
-                padding-bottom: 20px;
-            }
-            li {
-                .divider {
-                    margin: 0px;
-                    height: 0.5px;
-                    background-color: rgba(var(--textColor1), 0.08);
-                }
-                &:hover {
-                    background-color: rgba(50, 50, 50, 0.1);
-                }
-                &:last-child {
-                    margin-bottom: 30px;
-                }
-            }
-        }
-        &__user-pls-header {
-            @include flex-container(center, space-between);
-            padding: 15px 15px 12px 20px;
-            h1 {
-                font-size: 1.3rem;
-                white-space: nowrap;
-                margin-right: 10px;
-                font-weight: 500;
-            }
-            span {
-                white-space: nowrap;
-                font-weight: 400;
-                opacity: 0.7;
-                display: block;
-                font-size: 1.1rem;
-            }
-        }
-        &__user-pls-item {
-            display: flex;
-            padding: 12px 10px 12px 20px;
-        }
-        &__user-pls-item-thumbnail-container {
-            width: 140px;
-            margin-right: 14px;
-            max-width: 120px;
-            img {
-                width: 100%;
-                margin-right: 10px;
-                border-radius: 7px;
-                aspect-ratio: 16 / 9;
-            }
-        }
-        &__user-pls-item-details {
-            position: relative;
-            overflow: hidden;
-            width: 100%;
-            &-title {
-                font-size: 1.25rem;
-                margin: 5px 0px 5px 0px;
-                font-weight: 500;
-                @include elipses-overflow;
-            }
-            &-count {
-                color: rgba(var(--textColor1), 0.5);
-                font-size: 1.1rem;
-                font-weight: 300;
-                @include pos-abs-top-right-corner(7px, 0px);
-            }
-            &-description {
-                font-size: 0.95rem;
-                max-width: 80%;
-                @include elipses-overflow;
-                color: rgba(var(--textColor1), 0.5);
-                font-size: 1.1rem;
-                font-weight: 300;
-            }
         }
     }
 </style>

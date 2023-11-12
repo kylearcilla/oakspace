@@ -13,13 +13,20 @@ export const getDayOfWeek = () => {
     return `${daysOfWeek[today.getDay()]}`
 }
 
-export const getDate = () => {
-    const today = new Date()
-    return `${months[today.getMonth()].substring(0, 3)} ${today.getDate()} ${today.getFullYear()}`
+/**
+ * Get total nunber of secs from MM:SS time.
+ * @param mins   Minutes
+ * @param secs   Seconds
+ * @returns      Total seconds
+ */
+export const minsSecondsToSecs = (mins: number, secs: number): number => {
+    return mins * 60 + secs
 }
 
-export const minsSecondsToSecs = (mins: number, secs: number): number => (mins * 60) + secs
-
+/**
+ * Get the hour cylce based on the user's browser settings.
+ * @returns  Hour cycle
+ */
 export const getUserHourCycle = (): "h11" | "h12" | "h23" | "h24" => {
     const lang = getBrowserLanguagePreference()
     const localObj = new Intl.Locale(lang)
@@ -112,17 +119,20 @@ export function isNightTime() {
     return currentHour <= 5 || currentHour >= 18
 }
 
+type WeekMonthFormat = "long" | "short" | "narrow" | undefined
+type YearFormat = "numeric" | "2-digit" | undefined
+type DayFormat = "numeric" | "2-digit" | undefined
+
 /**
- * Formats date to Mmm DD, YYYY
- * @param dateString 
+ * Formats date to string representation. Format depends on the options passed in.
+ * @param date 
  * @returns Formatted Time (i.e. Apr 14, 2020)
  */
-export function formatDateToMDY(dateString: string): string {
-    const date = new Date(dateString)
-    const options: any = { year: 'numeric', month: 'short', day: 'numeric' }
-    const formattedDate = new Intl.DateTimeFormat('en-US', options).format(date)
+export function formatDatetoStr(date: Date, options: {
+    weekday?: WeekMonthFormat, year?: YearFormat, month?: WeekMonthFormat, day?: DayFormat 
+}): string {
 
-    return formattedDate
+    return  new Intl.DateTimeFormat(getBrowserLanguagePreference(), options).format(date)
 }
 
 /**
@@ -131,7 +141,7 @@ export function formatDateToMDY(dateString: string): string {
  * @returns  Formatted Time (i.e. 9/6)
  */
 export function formatDateToMMDD(date: Date): string {
-    return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' });
+    return date.toLocaleDateString(getBrowserLanguagePreference(), { month: '2-digit', day: '2-digit' })
 }
 
 /**

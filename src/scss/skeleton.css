@@ -1,0 +1,17 @@
+@-webkit-keyframes shine {
+  0% {
+    left: -195px;
+  }
+  100% {
+    left: 225px;
+  }
+}
+@keyframes shine {
+  0% {
+    left: -195px;
+  }
+  100% {
+    left: 225px;
+  }
+}
+/*# sourceMappingURL=skeleton.css.map */

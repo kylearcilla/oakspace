@@ -3,9 +3,8 @@
  * Relevant for modals and dropdown menus / lists.
  * Has a black list of classes that prevents dispatching click outside event for special use cases.
  * 
- * Blacklist Elements
+ *  Special Cases
  *  1. Dropdown Btn - Do not close dropdown list when dropdown button is clicked, let the local handler do that
- *  2. Toast - Do not close modal when user clicks on a toast pop up
  * 
  * @param node    Node that the deritive has been binded / attached to.
  * @returns       Object that contains a function that removes click outside event listener when attachee node is unmounted from DOM.
@@ -14,10 +13,10 @@ export const clickOutside = (node: any) => {
   const handleClick = (event: any) => {
     const srcClasses = event.srcElement.classList.value + " " + event.srcElement.parentElement.classList.value
 
-    let doIgnore = srcClasses.includes("dropdown-btn") || srcClasses.includes("toast") 
-    let isClickedOutsideOfNode = !node?.contains(event.target)
+    let hasBlacklistedClass = srcClasses.includes("dropdown-btn")
+    let hasClickedInsideNode = node?.contains(event.target)
 
-    if (!doIgnore && isClickedOutsideOfNode && !event.defaultPrevented) {
+    if (!hasBlacklistedClass && !hasClickedInsideNode && !event.defaultPrevented) {
         node.dispatchEvent(new CustomEvent('click_outside', node))
     }
   }
@@ -118,6 +117,8 @@ export const findEnumIdxFromDiffEnum  = (enumMember: any, originEnum: any, query
  * @returns              Stringn with spaces
  */
 export const addSpacesToCamelCaseStr = (camelCaseStr: string) => {
+  console.log(camelCaseStr)
+  
   const words = camelCaseStr.replace(/([a-z])([A-Z])/g, '$1 $2');
   return words.charAt(0).toUpperCase() + words.slice(1);
 }

@@ -16,7 +16,8 @@ import { PlayerError } from "./errors"
  * The player itself is a svelte store object / reactive class, initialized during instantiation.
  * Errors are handled via an event listener in the music player.
  * 
- * @extends MusicPlayer
+ * @extends     MusicPlayer
+ * @implements  MusicPlayerStore<AppleMusicPlayer>
  */
 export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<AppleMusicPlayer> {
     musicPlayerInstance: any
@@ -66,7 +67,7 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
             })
     
             if (this.collection) {
-                this.queueAndPlayNextTrack(this.collection!.id, this.currentIdx, false)
+                this.queueAndPlayNextTrack(this.collection!.id, this.currentIdx, false, false)
                 this.unDisableMusicPlayer()
             }
     
@@ -287,12 +288,15 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
     }
 
     /**
-     * Called by every method that plays a track.
+     * Queues up a media collection item to be played.
+     * By default, plays the given idx in that collection from the start and disables the player to avoid spamming.
+     * Will be disabled later in the nowPlayingItemWillChange handler (triggers when a new playing item has changed).
+     * 
      * 
      * @param id          Id of media item
      * @param newIndex    Index of track to be played within music collection
      * @param doPlay      Do immediatley start playing?
-     * @param doDisable   Do disable player temporarily.
+     * @param doDisable   Do disable player temporarily to avoid spamming.
      * 
      */
     async queueAndPlayNextTrack(id: string, newIndex: number, doPlay: boolean = true, doDisable: boolean = true) {
@@ -442,6 +446,7 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
      * @param event   Event data passed in by Apple Music Kit instance.
      */
     private async mediaPlaybackErrorHandler(event: any) {
+        console.log("ERROR OCCURED")
         console.error(`Playback error with Apple Music Kit. ${event}`)
         this.updateMusicPlayerState({ isDisabled: true, error: event })
     }

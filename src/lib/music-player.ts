@@ -1,6 +1,7 @@
 import type { CustomError } from "./errors"
 
 /**
+ * @abstract 
  * Defines a common interface for different types of music players
  * ...that interact with popular Music Platform APIs (e.g., Spotify, Youtube Music, Apple Music).
  */
@@ -37,6 +38,10 @@ export abstract class MusicPlayer {
 }
 
 
+/**
+ * @interface
+ * An music player object that keeps store state and saves it between re-freshes.
+ */
 export interface MusicPlayerStore<T> {
     updateMusicPlayerState(newState: Partial<T>): void
     getNewStateObj(newState: Partial<T>, oldState: T): T

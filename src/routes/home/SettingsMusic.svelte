@@ -16,7 +16,7 @@
 	import { closeModal } from "$lib/utils-home"
 	import { createMusicAPIErrorToastMsg } from "$lib/utils-music"
 
-    let chosenDiscoverCardTitle = "Serene"
+    let chosenMood = MusicMoodCategory.Serene
     let chosenMusicCollection: MusicCollection[] = []
     let isPlatformListOpen = false
     let isScrollableLeft = false
@@ -111,12 +111,12 @@
         isScrollableRight = scrollLeft < scrollWidth - clientWidth
     }
 
-    function handleDiscoverCollectionCardClicked(moodCategoryIdx: number) {
+    function handleDiscoverCollectionCardClicked(moodType: MusicMoodCategory) {
         const platform = $musicDataStore!.musicPlatform
         const platformProp = getPlatformNameForDiscoverObj(platform!)
 
-        chosenDiscoverCardTitle = MusicMoodCategory[moodCategoryIdx]
-        chosenMusicCollection = getDiscoverCollectionList(moodCategoryIdx, platformProp)
+        chosenMood = moodType
+        chosenMusicCollection = getDiscoverCollectionList(moodType, platformProp)
     }
 
     function onClickOutSide() { 
@@ -141,6 +141,9 @@
                     <!-- Now Playing Section -->
                     <div class={`now-playing ${$musicPlayerStore.collection ? "" : "now-playing--empty"} bento-box`}>
                         <img class="img-bg" src={$musicPlayerStore.collection?.artworkImgSrc} alt="">
+                        {#if $musicPlayerStore.collection}
+                            <div class="img-bg-gradient gradient-container gradient-container--bottom"></div>
+                        {/if}
                         <div class={`blur-bg blur-bg--blurred-bg ${$musicPlayerStore.collection ?? "blur-bg--solid-color"}`}></div>
                         <div class="content-bg">
                             {#if $musicPlayerStore.collection}
@@ -206,7 +209,6 @@
                                     title={`${pl.name} – ${pl.description}`}
                                     class={`my-playlists__playlist ${$musicPlayerStore.collection && pl.id === $musicPlayerStore.collection.id ? "my-playlists__playlist--chosen" : ""}`}
                                 >
-                                    <p class="my-playlists__playlist-idx">{idx + 1}</p>
                                     <div class="my-playlists__playlist-img">
                                         {#if pl.artworkImgSrc != ""}
                                             <img src={pl.artworkImgSrc} alt="playlist-artwork"/>
@@ -229,7 +231,6 @@
                                     <li
                                         class={`my-playlists__playlist my-playlists__playlist--skeleton`}
                                     >
-                                        <p class="my-playlists__playlist-idx seleton-bg">{idx + 1}</p>
                                         <div class="my-playlists__playlist-img skeleton-bg"></div> 
                                         <div class="my-playlists__playlist-text">
                                             <div class="my-playlists__playlist-text-title skeleton-bg"></div>
@@ -248,7 +249,7 @@
                         {#if $musicDataStore.musicPlatform != null}
                             <h3 class="bento-box__title">{`Discover from ${addSpacesToCamelCaseStr(MusicPlatform[$musicDataStore.musicPlatform])}`}</h3>
                         {/if}
-                        <p class="discover__copy bento-box__copy">Get in the zone with music that matches your vibe - select a category and discover new tunes to fuel your day.</p>
+                        <p class="discover__copy bento-box__copy">Get in the zone with music that matches your vibe - select a mood / genre and discover new tunes to fuel your day.</p>
                         <div class="discover__collection-list-container">
                             {#if isScrollableLeft}
                                 <div class="gradient-container gradient-container--left">
@@ -265,21 +266,24 @@
                                 {#each musicCategories as group, idx}
                                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                                     <li class={`discover__collection-card 
-                                                 ${chosenDiscoverCardTitle === group.title ? "discover__collection-card--chosen" : ""}
+                                                 ${chosenMood === group.moodType ? "discover__collection-card--chosen" : ""}
                                               `}
-                                        on:click={() => handleDiscoverCollectionCardClicked(idx)}
+                                        on:click={() => handleDiscoverCollectionCardClicked(group.moodType)}
                                     >
                                         <img class="discover__collection-card-img" src={group.artworkSrc}  alt="">
                                         <div class="discover__collection-card-hover-details">
                                             <img src={group.artworkBlurredSrc} alt="">
-                                            <h2>{group.title}</h2>
-                                            <p 
-                                                class="discover__collection-card-hover-details-description">
-                                                {group.description}
-                                            </p>
-                                            <span> {group.artistCredit}</span>
+                                            <div class="discover__collection-card-hover-details-text-container">
+                                                <span>{group.artistCredit}</span>
+                                                <div>
+                                                    <h2>{group.moodType}</h2>
+                                                    <p  class="discover__collection-card-hover-details-description">
+                                                        {group.description}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <h3 class="discover__collection-card-title">{group.title}</h3>
+                                        <h3 class="discover__collection-card-title">{group.moodType}</h3>
                                     </li>
                                 {/each}
                                 <li class="discover__collection-list-padding discover__collection-list-padding-right"></li>
@@ -295,7 +299,7 @@
                             {/if}
                         </div>
                         <!-- Collections List -->
-                        <h3 class="discover__collection-title bento-box__subheading">{`${chosenDiscoverCardTitle} Collections`}</h3>
+                        <h3 class="discover__collection-title bento-box__subheading">{`${chosenMood} Collections`}</h3>
                         <div class="discover__collection-container">
                             <div class="discover__collection-header">
                                 <h6 class="discover__collection-header-num">#</h6>
@@ -391,18 +395,18 @@
     $top-row-height: 170px;
     $bottom-row-height: 470px;
     $my-playlists-section-padding-left: 25px;
-    $collection-card-border-radius: 12px;
-    $collection-card-width: 160px;
-    $collection-card-height: $collection-card-width - 20px;
+    $collection-card-border-radius: 10px;
+    $collection-card-width: 165px;
+    $collection-card-height: $collection-card-width - 16px;
+    $collection-card-width-expanded: $collection-card-width + 30;
 
     .music {
         width: 87vw;
-        height: 780px;
+        height: 87vh;
         min-width: 390px;
-        max-width: 1100px;
+        max-width: 1200px;
         padding: $settings-modal-padding;
 
-        
         .skeleton-bg {
             @include skeleton-bg(dark);   
         }
@@ -423,11 +427,14 @@
         }
         &__left-section {
             margin-right: $section-spacing;
-            width: 32%;
+            width: calc(30% - ($section-spacing / 2));
             height: 100%;
+            min-width: 240px;
+            max-width: 270px;
         }
         &__right-section {
-            width: calc(68% - $section-spacing);
+            width: calc(70% - ($section-spacing / 2));
+            flex: 1;
         }
 
         /* Light Theme */
@@ -489,6 +496,7 @@
         color: white;
         border-radius: 15px !important;
         overflow: hidden;
+        min-height: 200px;
 
         &--empty {
             .img-bg, .blur-bg {
@@ -514,7 +522,6 @@
             @include flex-container(_, space-between);
             flex-direction: column;
             height: 100%;
-            padding-bottom: 5px;
         }
         &__details-header {
             @include flex-container(center, space-between);
@@ -603,18 +610,25 @@
 
         .img-bg {
             width: 99.5%;
+            z-index: 0;
+        }
+        .img-bg-gradient {
+            width: 100%;
+            height: 2%;
+            z-index: 1;
+            background: linear-gradient(0deg, #000000 5%, transparent) !important;
         }
         .blur-bg {
-            background: rgba(27, 27, 27, 0.4);
+            background: rgba(14, 14, 14, 0.25);
             backdrop-filter: blur(45px);
+            z-index: 2;
         }
-        .content-bg, .img-bg, .blur-bg {
-            border-radius: 15px !important;
-        }
-        
         .content-bg {
             top: 0px;
             padding: 12px 17px;
+            z-index: 3;
+        }
+        .content-bg, .img-bg, .blur-bg {
             border-radius: 15px !important;
         }
     }
@@ -680,21 +694,18 @@
                 width: 85%;
             }
         }
-        &__playlist-idx {
-            min-width: 22px;
-            font-weight: 200;
-        }
         &__playlist-img {
             min-width: 40px;
             max-width: 40px;
             height: 40px;
-            margin-right: 14px;
+            margin: 0px 14px 0px 2px;
             background-color: var(--hoverColor2);
             box-shadow: var(--shadowVal);
             position: relative;
-            overflow: hidden;
-
+            border-radius: 5px;
+            
             img {
+                border-radius: 0px !important;
                 width: 40px;
             }
             i {
@@ -800,35 +811,40 @@
             margin-right: 6px;
             position: relative;
             border-radius:  $collection-card-border-radius;
-            transition: 0.2s ease-in-out;
             overflow: hidden;
             cursor: pointer;
             color: white;
             min-width: $collection-card-width;
             height: $collection-card-height;
             border: 2px solid transparent;
+            transition: min-width 0.45s cubic-bezier(.2,.45,0,1);
             
             &--chosen {
                 border: 2px solid white;
             }
-
-            &:hover {
-                min-width: $collection-card-width + 20;
+            
+            &:active {
+                transition: 0.12s ease-in-out;
+                transition-delay: 0s !important;
             }
-            &:hover > &-img {
-                width: 200px;
+            &:hover {
+                transition-delay: 0.6s;
+                min-width: $collection-card-width-expanded;
+            }
+
+            &:hover &-hover-details {
+                visibility: visible;
+                opacity: 1;
+                transition: 0.2s ease-in-out;
+                transition-delay: 0.8s;
+            }
+            &:hover &-title {
+                visibility: hidden;
+                opacity: 0;
+                transition-delay: 0.6s;
             }
             &:active {
                 transform: scale(0.99);
-            }
-            &:hover > &-hover-details {
-                visibility: visible;
-                opacity: 1;
-                transition-delay: 0.2s;
-            }
-            &:hover > &-title {
-                visibility: hidden;
-                opacity: 0;
             }
 
             p {
@@ -841,8 +857,8 @@
             opacity: 1;
             transition: 0.2s ease-in-out;
             object-fit: cover;
-            width: $collection-card-width;
-            height: $collection-card-height;
+            width: 100%;
+            height: 100%;
         }
         &__collection-card-title {
             transition: 0.3s ease-in-out;
@@ -852,24 +868,22 @@
         }
         &__collection-card-hover-details {
             border-radius: 7px;
-            transition: 0.1s ease-in-out;
             display: block;
             z-index: 100;
             width: 100%;
             height: 100%;
-            padding: 60px 0px 0px 12px;
             visibility: hidden;
             opacity: 0;
-            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
             @include pos-abs-top-left-corner(0px, 0px);
             
             h2 {
                 font-weight: 600;
-                margin-bottom: 5px
+                margin-bottom: 5px;
+                font-size: 1.8rem;
             }
             span {
                 color: rgba(255, 255, 255, 0.64);
-                @include pos-abs-top-right-corner(10px, 10px);
+                display: block;
             }
             img {
                 width: 101%;
@@ -877,15 +891,21 @@
                 @include pos-abs-top-left-corner(0px, 0px);
                 z-index: -1;
             }
-        }
-        &__collection-card-hover-details-description {
-            color: rgba(var(--textColor2), 0.64);
-            width: 95%;
+
+            &-text-container {
+                height: 100%;
+                @include flex-container(_, space-between);
+                flex-direction: column;
+                padding: 12px;
+            }
+            &-description {
+                color: rgba(var(--textColor2), 0.64);
+            }
         }
 
         /* Discover Category Collections List Section */
         &__collection-title {
-            margin: 8px 0px 10px $my-playlists-section-padding-left;
+            margin: 8px 0px 0px $my-playlists-section-padding-left;
             font-weight: 400;
             font-size: 1.4rem;
         }
@@ -895,7 +915,7 @@
             opacity: 0.7;
             height: 18px;
             overflow: hidden;
-            margin-top: 20px;
+            margin-top: 12px;
             display: flex;
             h6 { 
                 font-size: 1.04rem;
@@ -1045,10 +1065,11 @@
         }
         .music {
             &__content {
-                display: block;
+                flex-direction: column;
             }
             &__left-section {
                 width: 100%;
+                max-width: none;
             }
             &__right-section {
                 width: 100%;
@@ -1058,6 +1079,12 @@
         }
         .now-playing, .discover, .my-playlists {
             width: 100%;
+        }
+        .now-playing {
+            &__artwork {
+                width: 120px;
+                height: 120px;
+            }
         }
     }
 

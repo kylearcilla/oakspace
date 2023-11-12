@@ -1,8 +1,8 @@
 <script lang="ts">
     import { ModalType } from "$lib/enums"
-	import { openModal, updateUI } from "$lib/utils-home"
-	import { formatTimeToHHMM, getDate, getDayOfWeek, getUserHourCycle, isNightTime } from "$lib/utils-date"
-	import { themeState, homeViewLayout, musicDataStore, ytPlayerStore, sessionStore } from "$lib/store"
+	import { openModal } from "$lib/utils-home"
+	import { formatTimeToHHMM, formatDatetoStr, getUserHourCycle, isNightTime } from "$lib/utils-date"
+	import { themeState, musicDataStore, ytPlayerStore, sessionStore } from "$lib/store"
 
 	import SessionHeaderView from "./SessionHeaderView.svelte"
 	import { onDestroy, onMount } from "svelte"
@@ -22,16 +22,13 @@
     /* Event Handlers */
     const handleOptionClicked = (idx: number) => {
         if (idx === 0) {
-            console.log("LOGGING OUT USER")
+            openModal(ModalType.Quote)
         }
         else if (idx === 1) {
-            $ytPlayerStore!.toggledShowPlayer()
-        }
-        else if (idx === 2) {
-            updateUI({ ...$homeViewLayout, isMusicPlayerOpen: !$homeViewLayout.isMusicPlayerOpen})
+            openModal(ModalType.Shortcuts)
         }
         else {
-            openModal(ModalType.Shortcuts)
+            console.log("LOGGING OUT USER")
         }
 
         dropdownMenu.style.display = "none"
@@ -84,7 +81,9 @@
         <div class="user-panel__user-details">
             <div class="user-panel__user-details-user">Kyle Arcilla</div>
             <div class="user-panel__user-details-subheading">
-                <span class="user-panel__user-details-time">{`${getDayOfWeek()}, ${getDate()}`}</span>
+                <span class="user-panel__user-details-time">
+                    {`${formatDatetoStr(new Date(), { weekday: "short", day: "2-digit", month: "short" })}`}
+                </span>
             </div>
         </div>
         <!-- Dropdown Container -->
@@ -104,28 +103,16 @@
                         <span>1h 3m</span>
                     </div>
                 </li>
-                {#if $ytPlayerStore}
-                    <li class="dropdown-menu__option">
-                        <button class="dropdown-element" on:click={(_) => handleOptionClicked(1)}>
-                            <p>{`${$ytPlayerStore.doShowPlayer ? "Hide": "Show"} Video View`}</p>
-                            <div class="dropdown-menu__option-icon">
-                                <i class="fa-brands fa-youtube"></i>
-                            </div>
-                        </button>
-                    </li>
-                {/if}
-                {#if $musicDataStore}
-                    <li class="dropdown-menu__option">
-                        <button class="dropdown-element" on:click={(_) => handleOptionClicked(2)}>
-                            <p>{`${$ytPlayerStore?.doShowPlayer ? "Hide": "Show"} Music Player`}</p>
-                            <div class="dropdown-menu__option-icon">
-                                <i class="fa-solid fa-music"></i>
-                            </div>
-                        </button>
-                    </li>
-                {/if}
                 <li class="dropdown-menu__option">
-                    <button class="dropdown-element" on:click={(_) => handleOptionClicked(3)}>
+                    <button class="dropdown-element" on:click={(_) => handleOptionClicked(0)}>
+                        <p>Weekly Wisdom</p>
+                        <div class="dropdown-menu__option-icon">
+                            <i class="fa-solid fa-quote-right"></i>
+                        </div>
+                    </button>
+                </li>
+                <li class="dropdown-menu__option">
+                    <button class="dropdown-element" on:click={(_) => handleOptionClicked(1)}>
                         <p>Keyboard Shortcuts</p>
                         <div class="dropdown-menu__option-icon">
                             <i class="fa-regular fa-keyboard"></i>
@@ -136,7 +123,7 @@
                     <div class="divider"></div>
                 {/if}
                 <li class="dropdown-menu__option">
-                    <button class="dropdown-element" on:click={(_) => handleOptionClicked(0)}>
+                    <button class="dropdown-element" on:click={(_) => handleOptionClicked(2)}>
                         <p>Log Out</p>
                     </button>
                 </li>
@@ -266,6 +253,8 @@
         &__time {
             transition: 0.1s ease-in-out;
             padding: 0px 14px 0px 14px;
+            display: none;
+            
             i {
                 font-size: 1.3rem;
                 color: #F4CCA8;
@@ -333,7 +322,7 @@
         }
         &__user-details-time {
             font-size: 1.1rem;
-            font-weight: 200;
+            font-weight: 300;
             white-space: nowrap;
         }
         .dropdown-container {

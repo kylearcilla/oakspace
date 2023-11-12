@@ -153,10 +153,12 @@ export const getUserYtPlaylists = async (accessToken: string, max: number, nextP
  * @throws  {ResourceNotFoundError}   Resource does not exist, deleted, privated.
  */
 export const getVidDetails = async (videoId: string): Promise<YoutubeVideo> => {
-    let url = `${YT_DATA_API_URL}/videos?part=snippet,statistics,id&id=${videoId}&key=${PUBLIC_YT_DATA_V3_API_KEY}`
+    let url = `${YT_DATA_API_URL}/videos?part=snippet,status,statistics,id&id=${videoId}&key=${PUBLIC_YT_DATA_V3_API_KEY}`
 
     const res = await fetch(url)
     const data = await res.json()
+
+    console.log(res)
 
     if (!res.ok) {
       console.error(`Error fetching video details: Location: ${data.error.errors[0].location}. Message: ${data.error.message}}.`)
@@ -164,6 +166,7 @@ export const getVidDetails = async (videoId: string): Promise<YoutubeVideo> => {
     }
 
     const channelDetails = await getChannelDetails(data.items[0].snippet.channelId)
+    console.log(data.items[0])
 
     return {
         id: data.items[0].id,
@@ -180,17 +183,62 @@ export const getVidDetails = async (videoId: string): Promise<YoutubeVideo> => {
 }
 
 /**
- * Make a GET request to Youtube Data API to get playlist details and another one to get video channel details.
- * For now, only used when video details are needed after a refresh, where there will only be an on-player ready event fired by the iFrame API.
- * Vid details are updated after the player transitions to a PLAYING state which triggers the event listener that displays vid details from vidid extracted from event.
+ * Make a GET request to Youtube Data API to get playlist items details and another one to get video channel details.
  * 
  * @param playlistId 
  * @returns                           Youtube Playlist details.
  * @throws  {ApiError}                Error working with Youtube Data API
  * @throws  {ResourceNotFoundError}   Resource does not exist, deleted, privated.
  */
-export const getPlayListDetails = async (playlistId: string): Promise<YoutubePlaylist> => {
-  const url = `${YT_DATA_API_URL}/playlistItems?part=snippet&maxResults=1&playlistId=${playlistId}&key=${PUBLIC_YT_DATA_V3_API_KEY}`
+export const getPlayListItemsDetails = async (playlistId: string, maxResults = 1): Promise<YoutubePlaylistResponse> => {
+  const url = `${YT_DATA_API_URL}/playlistItems?part=snippet&maxResults=${maxResults}&playlistId=${playlistId}&key=${PUBLIC_YT_DATA_V3_API_KEY}`
+
+  const headers = new Headers()
+  headers.append("Content-Type", "application/json")
+
+  const res = await fetch(url, { method: "GET", headers: headers, })
+  const data = await res.json()
+
+  if (!res.ok) {
+    console.error(`Error fetching playlist details: Location: ${data.error.errors[0].location}. Message: ${data.error.message}.`)
+    throw getYtApiError(data.error.code, YTAPIErrorContext.PLAYLIST)
+  }
+
+  const playlistItems: YoutubeVideo[] = []
+
+  data.items.map(async (plItem: any) => {
+    const channelDetails = await getChannelDetails(data.items[0].snippet.channelId)
+
+    playlistItems.push({
+      id: plItem.id,
+      title: plItem.snippet.title,
+      likeCount: "",
+      viewCount: "",
+      publishedAt: plItem.snippet.publishedAt,
+      channelId: plItem.snippet.videoOwnerChannelId,
+      channelName: plItem.snippet.videoOwnerChannelTitle,
+      channelImgSrc: channelDetails.channelImgSrc,
+      channelSubs: channelDetails.channelSubs,
+      channelUrl: channelDetails.channelUrl
+    })
+  })
+
+  return {
+    videos: playlistItems,
+    nextPageToken: data.nextPageToken,
+    playlistLength: data.pageInfo.totalResults,
+  }
+}
+
+
+/**
+ * Get playlist details. 
+ * Note that vid count (-1) and first vid id (null) values will not be included as the are not contains in the request.
+ * @param playlistId   Requested playlist id.
+ * @returns            Youtube playlist id data.
+ */
+export const getPlaylistDetails = async (playlistId: string): Promise<YoutubePlaylist> => {
+  const url = `${YT_DATA_API_URL}/playlists?part=id,snippet&id=${playlistId}&key=${PUBLIC_YT_DATA_V3_API_KEY}`
 
   const headers = new Headers()
   headers.append("Content-Type", "application/json")
@@ -206,18 +254,19 @@ export const getPlayListDetails = async (playlistId: string): Promise<YoutubePla
   const channelDetails = await getChannelDetails(data.items[0].snippet.channelId)
 
   return {
-      id: playlistId,
-      title: data.items[0].snippet.title,
-      description: data.items[0].snippet.description,
-      vidCount: data.pageInfo.totalResults,
-      channelTitle: data.items[0].snippet.channelTitle,
-      channelId: data.items[0].snippet.channelId,
-      thumbnailURL: data.items[0].snippet.thumbnails.url,
-      firstVidId: data.items[0].snippet.resourceId.videoId,
-      channelImgSrc: channelDetails.channelImgSrc,
-      channelURL: channelDetails.channelUrl
+    id: data.items[0].id,
+    title: data.items[0].snippet.title,
+    description: data.items[0].snippet.description,
+    vidCount: -1,
+    channelId: data.items[0].snippet.channelId,
+    channelTitle: data.items[0].snippet.channelTitle,
+    thumbnailURL: data.items[0].snippet.thumbnails.medium.url,
+    firstVidId: null,
+    channelImgSrc: channelDetails.channelImgSrc,
+    channelURL: channelDetails.channelUrl
   }
 }
+
 
 /**
  * Make a GET request to Youtube Data API to get channel details.
@@ -259,7 +308,7 @@ const getYtApiError = (code: number, context: YTAPIErrorContext) => {
   let message = "Error interacting with Youtube Data API."
 
   if (code === 401) {
-    return new ExpiredTokenError("Session Expired. Log in Again to continue.")
+    return new ExpiredTokenError("Session Expired. Log in again to continue.")
   }
   else if (code === 403 && context === YTAPIErrorContext.USER_LOGIN) {
     return new AuthorizationError("User log in failed. Try again.")
@@ -297,7 +346,7 @@ export const getYtIframeAPIError = (errorMsg: string) => {
       return new PlayerError("Player error has occured. Refresh or try a new item.")
   }
   else if (errorMsg === "auth") {
-    return new PlayerError("Video unable to be played. Select a new one to continue.", ErrorCode.YT_PRIVATE_VIDEO)
+    return new PlayerError("Owner has disabled video playback. Click on a different video to continue.", ErrorCode.YT_PRIVATE_VIDEO)
   }
   else {
     return new PlayerError("Player error has occured. Refresh or try a new item.")

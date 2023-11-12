@@ -112,8 +112,7 @@ export const createMusicAPIErrorToastMsg = (error: Error, musicPlatform?: MusicP
     let toastMessage: ToastMsg
 
     const platform = musicPlatform === undefined ? get(musicDataStore)!.musicPlatform! : musicPlatform
-    const toastContextidx = findEnumIdxFromDiffEnum(platform!, MusicPlatform, ToastContext)! as ToastContext
-    const toastContext = ToastContext[toastContextidx]
+    const toastContext = findEnumIdxFromDiffEnum(platform!, MusicPlatform, ToastContext)!
 
     // put action function
     if (error instanceof ExpiredTokenError) {
@@ -144,10 +143,10 @@ export const createMusicAPIErrorToastMsg = (error: Error, musicPlatform?: MusicP
  * @returns             Error type and context will be relevant in how the error will be displayed to the user.
  */
 export const getMusicAPIError = (code: number, context: MusicAPIErrorContext) => {
-    let message = "Error interacting with Music Data API."
+    let message = "Error interacting with Music API."
   
     if (code === 401) {
-        return new ExpiredTokenError("Session Expired. Log in Again to continue.")
+        return new ExpiredTokenError("Session Expired. Log in again to continue.")
     }
     else if (code === 403 && context === MusicAPIErrorContext.TRACK) {
       return new AuthorizationError("Issue with requested track or request is not properly authorized.")
@@ -159,7 +158,7 @@ export const getMusicAPIError = (code: number, context: MusicAPIErrorContext) =>
       return new AuthorizationError("App authorization failed.")
     }
     else if (code === 404 && (context === MusicAPIErrorContext.PLAYLIST || context === MusicAPIErrorContext.ALBUM)) {
-      return new ResourceNotFoundError("Requested playlist / album failed. Track may not exist.")
+      return new ResourceNotFoundError("Requested playlist / album failed. Item may not exist.")
     }
     else if (code === 404 && context === MusicAPIErrorContext.TRACK) {
       return new ResourceNotFoundError("Requested track failed Track may not exist.")

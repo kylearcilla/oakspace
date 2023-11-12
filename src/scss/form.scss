@@ -1,0 +1,152 @@
+ /* Input Fields */
+ .text-input-container {
+    font-size: 1.32rem;
+    border-radius: 10px;
+    height: 45px;
+    width: 100%;
+    @include flex-container(center, _);
+    transition: 0.2s ease-in-out;
+    border: 1px solid rgba(211, 211, 211, 0);
+    background-color: var(--modalBgAccentColor);
+    padding: 0px 7px 0px 20px;
+    position: relative;
+
+    &--focus {
+        border-color: rgba(var(--fgColor1), 1);
+    }
+    &--error {
+        border: 1px solid #714040;
+    }
+    
+    input {
+        color: rgba(var(--textColor1), 0.35);
+        transition: 0.14s ease-in-out;
+        font-weight: 400;
+        width: 100%;
+
+        &::placeholder {
+            font-size: 1.4rem;
+            font-weight: 400;
+            opacity: 0.2;
+        }
+    }
+
+    &__error-msg {
+        @include pos-abs-bottom-left-corner(-23px, 0px);
+        font-size: 1.1rem;
+        color: #714040;
+    }
+ }
+
+ @mixin input-text-field-light {
+    &--error {
+        border: 1px solid #E19085;
+    }
+    &--focus {
+        border-color: rgba(211, 211, 211, 0.5);
+    }
+    input {
+        color: rgba(var(--textColor1), 0.45);
+        font-weight: 500;
+    }
+
+    &__error-msg {
+        @include pos-abs-bottom-left-corner(-23px, 0px);
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #E19085;
+    }
+}
+
+ /* Default styling is unfill */
+$loading-dots-width: 4px;
+
+ .form-submit-btn {
+    height: 45px;
+    border-radius: 10px;
+    border: solid 1.15px rgb(var(--fgColor2));
+    color: rgb(var(--fgColor2));
+    background-color: transparent;
+    transition: 0.1s ease-in-out;
+    font-size: 1.3rem;
+    font-weight: 500;
+    @include center;
+
+    &:hover {
+        background-color: rgba(var(--fgColor2), 1);
+        color: rgb(var(--textColor2));
+    }
+    &:active {
+        transform: scale(0.98);
+    }
+    &:disabled {
+        &:hover {
+            color: rgb(var(--fgColor2));
+            background: none;
+        }
+    }
+
+    &--fill {
+        background-color: rgba(var(--fgColor1), 1);
+        color: var(--modalBgColor);
+
+        &:hover {
+            background-color: rgba(var(--fgColor2), 1);
+            color: var(--modalBgColor);
+            filter: brightness(1.1)
+        }
+        &:disabled {
+            &:hover {
+                background: rgba(var(--fgColor2), 1);
+                color: var(--modalBgColor);
+            }
+        }
+    }
+    &--cancel {
+        border: solid 1.15px rgba(150, 150, 150, 0.7);
+        color: rgba(150, 150, 150, 0.7);
+        
+        &:focus {
+            background-color: rgba(var(--textColor1), 0.2);
+        }
+        &:hover {
+            background-color: rgba(150, 150, 150, 0.7) !important;
+            border-color: transparent !important;
+            color: var(--modalBgColor) !important;
+        }
+        &:active {
+            color: rgba(150, 150, 150, 0.7);
+        }
+    }
+
+    /* Loading Dots */
+    &__loading-dots {
+        @include flex-container(center, center);
+        margin-top: $loading-dots-width + 2;
+    }
+    &__loading-dots span {
+        @include circle($loading-dots-width);
+        background: rgb(var(--fgColor1));
+        animation: bounce 0.6s infinite alternate;
+    
+        &:not(:last-child) {
+            margin-right: $loading-dots-width;
+        }
+        &:nth-of-type(2) {
+            animation-delay: 250ms;
+        }
+        &:nth-of-type(3) {
+            animation-delay: 350ms;
+        }
+    }
+ }
+ 
+@mixin form-submit-btn--light {
+
+}
+
+@keyframes bounce {
+    to {
+        transform: translateY(-$loading-dots-width);
+    }
+}

@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { ytPlayerStore, ytUserDataStore } from "./store"
 import { type CustomError, ApiError, ResourceNotFoundError, PlayerError } from "./errors"
-import { getPlayListDetails, getVidDetails, getYtIframeAPIError } from "./api-youtube"
+import { getPlayListItemsDetails, getVidDetails, getYtIframeAPIError } from "./api-youtube"
 import { loadYtPlayerData, saveYtPlayerData, deleteYtPlayerData } from "./utils-youtube-player"
 
 /**
@@ -19,11 +19,11 @@ export class YoutubePlayer {
     playlistVidIdx: number | null = null
     error: any = null
     doShowPlayer = false
-    stoppedState = false
     hasJustInit = false
         
     IFRAME_CLASS = "home-yt-player"
-    LOOK_BACK_DELAY = 2000
+    LOOK_BACK_DELAY = 1000
+    lookBackTimeOut: NodeJS.Timeout | null = null
 
     YT_PLAYER_OPTIONS: YoutubePlayerOptions = {
         height: "100%", width: "100%",
@@ -137,11 +137,11 @@ export class YoutubePlayer {
         if (!this.playlist) return 
         try {
 
-            if (this.playlistVidIdx === null) {
-                let firstVidId = this.playlist!.firstVidId ?? (await getPlayListDetails(this.player.playlist.id)).firstVidId
-                const vid = await getVidDetails(firstVidId!)
-                this.updateVideo(vid, 0)
-            }
+            // if (this.playlistVidIdx === null) {
+            //     let firstVidId = this.playlist!.firstVidId ?? (await getPlayListItemsDetails(this.player.playlist.id))[0].id
+            //     const vid = await getVidDetails(firstVidId!)
+            //     this.updateVideo(vid, 0)
+            // }
             this.player.cuePlaylist({ 
                 listType: "playlist",  list: this.playlist!.id,  
                 index: this.playlistVidIdx,  startSeconds: 0 
@@ -163,10 +163,9 @@ export class YoutubePlayer {
         const vidData = player.playerInfo.videoData
         const state = event.data
         console.log(state)
-        console.log(player.playerInfo)
 
         // unlisted video
-        this.unlistedVidHandler(state)
+        this.disabledPlaypackHandler(state)
         if (state === 5 && this.hasJustInit) {
             this.hasJustInit = false
         }
@@ -208,31 +207,28 @@ export class YoutubePlayer {
     }
 
     /**
-     * Unlisted video check and handler.
-     * Check to see that if a player has been queued up (when user chooses a new playlist) w/o it ever going to PLAYING state 
-     * then an unlisted video has been reached.
+     * Handles cases where user selects a playlist whose first vid's ability to be played in other sites has been disabled.
+     * Cases where other vids (not the first) in the playlist are also disabled, they are hanled in the onYTErrorHandler
      * 
-     * Queued to Play State Sequences:
+     * New Queued Playlist Queued Up State Sequences:
      * 
-     * Valid Video     -1, 5, -1, 3, 1
-     * Unlisted Video: -1 5 
+     * Valid Video:         -1, 5, ... 3, 1
+     * Video with disabled: -1 5 
+     * 
+     * This method waits and checks if the state has progressed from 5. If so then it's a valid video.
+     * Also at state 5, the playlist array in the player will be empty. 
      */
-    unlistedVidHandler = (state: number) => {
-        if (this.hasJustInit || ![1, 5].includes(state)) return
-
-        if (state === 1) { 
-            this.stoppedState = true
-            return
-        }
-
-        this.stoppedState = false
+    disabledPlaypackHandler = (state: number) => {
+        if (this.hasJustInit || ![-1, 5].includes(state) || this.lookBackTimeOut) return
         
-        setTimeout(() => {
-            if (this.stoppedState || this.error) return  // state has reached 1 state (above)
+        this.lookBackTimeOut = setTimeout(() => {
+            this.lookBackTimeOut = null
+            const playerInfo = this.player.playerInfo
 
-            console.error("Playlist video is unlisted.")
-            this.setError(new PlayerError("Playlist / video unavailable. Playback on other websites has been disabled by video owner."))
+            // player's playlist will still contain prev playlist after removeCurrentPlaylist() is triggered
+            if ([1, 3].includes(playerInfo.playerState) || playerInfo.playlist.length > 0) return 
 
+            this.setError(new PlayerError("Playback on other websites has been disabled by playlist owner."))
         }, this.LOOK_BACK_DELAY)
     }
 
@@ -252,13 +248,13 @@ export class YoutubePlayer {
      */
     async playPlaylist(playlist: YoutubePlaylist, startingIdx: number = 0) {    
         try {
-            console.log(playlist.title)
-            if (this.error) this.removeError()
+            if (this.error)           this.removeError()
+            if (this.lookBackTimeOut) clearTimeout(this.lookBackTimeOut)
             
             this.player.stopVideo()
-            const res = await getPlayListDetails(playlist.id)
+            const { playlistLength } = await getPlayListItemsDetails(playlist.id)
             
-            this.updateCurrentPlaylist({ ...playlist, vidCount: res.vidCount })
+            this.updateCurrentPlaylist({ ...playlist, vidCount: playlistLength })
             this.player!.loadPlaylist({ list: playlist.id, listType: "playlist", index: startingIdx })
         }
         catch(e: any) {
@@ -276,7 +272,6 @@ export class YoutubePlayer {
      */
     setError(error: CustomError) {
         this.error = error
-        console.log("A")
         this.updateYtPlayerState({ error })
     }
 

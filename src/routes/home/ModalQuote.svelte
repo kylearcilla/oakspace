@@ -2,9 +2,9 @@
 	import { onMount } from "svelte";
     import quotes from "$lib/data-quotes";
 	import { clickOutside } from "$lib/utils-general";
-	import type { SessionModal } from "$lib/enums";
-
-    export let toggleModal: (modal: SessionModal | null) => void
+	import { closeModal } from "$lib/utils-home";
+	import { ModalType } from "$lib/enums";
+	import Modal from "../../components/Modal.svelte";
 
     let isQuoteModalOpen = false
     let quote: Quote | null = null
@@ -22,53 +22,74 @@
 
 
     onMount(() => {
-        const quoteData = localStorage.getItem("quoteData")
-        const isQuoteOutdated = !quoteData || isQuoteOutDated(new Date(JSON.parse(quoteData!).createdAt), new Date())
+        // const quoteData = localStorage.getItem("quoteData")
+        // const isQuoteOutdated = !quoteData || isQuoteOutDated(new Date(JSON.parse(quoteData!).createdAt), new Date())
 
-        if (!isQuoteOutdated) {
-            quote = quotes[JSON.parse(quoteData).quoteId]
-            return
-        }
+        // if (!isQuoteOutdated) {
+        //     quote = quotes[JSON.parse(quoteData).quoteId]
+        //     return
+        // }
         
-        const randomQuoteId = Math.floor(Math.random() * quotes.length)
-        localStorage.setItem("quoteData", JSON.stringify({
-            quoteId: randomQuoteId,
-            createdAt: new Date()
-        }))
+        // const randomQuoteId = Math.floor(Math.random() * quotes.length)
+        // localStorage.setItem("quoteData", JSON.stringify({
+        //     quoteId: randomQuoteId,
+        //     createdAt: new Date()
+        // }))
         quote = quotes[Math.floor(Math.random() * quotes.length)]
+        // quote = quotes[quotes.length - 1]
     })
 </script>
-<div class="modal-bg">
-    <div 
-        use:clickOutside on:click_outside={() => toggleModal(null)} 
-        class="modal-bg__content modal-bg__content--no-padding"
-    >
-        <div class="quote-modal" style={`background-image: url(${quote?.bgImgSrc})`}>
-            <div class={`quote-modal__content
-                           ${quote?.artCredit === "" ? "quote-modal__content--no-art-credit" : ""}
-                           ${quote?.quoteCredit === "" ? "quote-modal__content--no-quote-credit" : ""}
-            `}>
-                <div class="quote-modal__content-container">
-                    <div class="pos-relative">
-                        <h1>Quote of the Week</h1>
-                    </div>
+
+<Modal options={{ borderRadius: "0px" }} onClickOutSide={() => closeModal(ModalType.Quote)}>
+    <div class="quote-modal" style={`background-image: url(${quote?.bgImgSrc})`}>
+        <div class={`quote-modal__content
+                        ${quote?.artCredit === "" ? "quote-modal__content--no-art-credit" : ""}
+                        ${quote?.quoteCredit === "" ? "quote-modal__content--no-quote-credit" : ""}
+        `}>
+            <div>
+            </div>
+            <div class="quote-modal__content-container">
+                <div class="quote-modal__content-top">
+                    <h1>Weekly Wisdom</h1>
                     <p>"{quote?.text}"</p>
                 </div>
-                <span class="quote-modal__artist-credit">{quote?.artCredit}</span>
-                {#if quote?.quoteCredit !== ""}
-                    <h4 class="quote-modal__quote-credit">- {quote?.quoteCredit}</h4>
-                {/if}
+                <div class="quote-modal__content-bottom">
+                    <div class="quote-modal__content-bottom-left">
+                        <div class="quote-modal__likes">
+                            <button>
+                                <i class="fa-regular fa-heart"></i>
+                            </button>
+                            <span>
+                                1473
+                            </span>
+                        </div>
+                        {#if quote?.artCredit != ""}
+                            <div class="divider divider--vertical"></div>
+                            <div 
+                                class="quote-modal__artist-credit" 
+                                title={quote?.artCredit.replace(/<i>(.*?)<\/i>/g, '$1')}
+                            >
+                                {@html quote?.artCredit}
+                            </div>
+                        {/if}
+                    </div>
+                    {#if quote?.quoteCredit !== ""}
+                        <span class="quote-modal__quote-credit">
+                            - {@html quote?.quoteCredit}
+                        </span>
+                    {/if}
+                </div>
             </div>
-        </div>            
+        </div>
     </div>            
-</div> 
+</Modal>
 
-<style lang="scss">
+<style global lang="scss">
     
     .quote-modal {
         padding: 0px;
         width: 75vw;
-        height: 400px;
+        height: 500px;
         position: relative;
         background-repeat: no-repeat;
         background-position: center;
@@ -78,49 +99,104 @@
 
         &__content {
             height: 100%;
+            width: 100%;
             background-color: rgba(0, 0, 0, 0.84); 
             color: white;
+            @include flex-container(_, flex-end);
+            flex-direction: column;
+            padding: 18px 19px;
 
             &--no-art-credit {
-                padding-top: 20px;
+                // padding-top: 20px;
             }
             &--no-quote-credit {
-                padding-bottom: 35px;
+                // padding-bottom: 35px;
             }
 
             h1 {
-                font-size: 1.4rem;
-                margin: 2px 0px 6px 0px;
+                font-size: 1.5rem;
+                margin: 2px 0px 7px 0px;
+                font-weight: 500;
+                color: rgba(255, 255, 255, 0.82)
             }
             p {
-                font-size: 1.3rem;
-                font-weight: 400;
+                font-size: 1.4rem;
+                font-weight: 300;
                 opacity: 0.85;
-                color: rgb(215, 215, 215);
+                color: rgba(215, 215, 215, 0.72);
+                margin-bottom: 9px;
             }
             i {    
                 font-size: 1.2rem;
                 opacity: 0.85;
                 color: rgb(219, 219, 219);
-                @include pos-abs-top-right-corner(0px, 0px);
-            } 
-        }
+            }
 
-        &__content-container {
-            width: 90%;
-            @include pos-abs-bottom-left-corner(60px, 20px);
+            &-top {
+                margin-bottom: 20px;
+            }
+            &-bottom {
+                @include flex-container(center, _);
+            }
+            &-bottom-left {
+                @include flex-container(center, _);
+                flex: 1;
+                min-width: 0;
+            }
+            &-bottom-left .divider {
+                height: 8.5px;
+                width: 0.5px;
+                margin: 0px 9px;
+                background-color: rgba(179, 179, 179, 0.3);
+            }
+            &-context {
+                @include flex-container(center, _);
+            }
+        }
+        &__likes {
+            white-space: nowrap;
+            button {
+                &:active {
+                    transform: scale(0.8);
+                }
+            }
+            button i {
+                color: rgba(241, 241, 241, 0.2);
+                margin-right: 3px;
+            }
+            span {
+                font-size: 1.15rem;
+                color: rgba(179, 179, 179, 0.5);
+            }
         }
         &__artist-credit {
-            font-size: 1.15rem;
-            @include pos-abs-top-right-corner(15px, 20px);
-            color: rgba(197, 197, 197, 0.5);
-            font-weight: 300;
+            font-size: 1.19rem;
+            color: rgba(179, 179, 179, 0.5) !important;
+            font-weight: 400;
+            white-space: nowrap;
+            @include elipses-overflow;
+            
+            i {
+                color: rgba(179, 179, 179, 0.6);
+                margin-right: 3px;
+            }
+            span {
+                @include elipses-overflow;
+            }
         }
         &__quote-credit {
             font-size: 1.25rem;
-            font-weight: 500;
-            color: rgb(197, 197, 197, 0.9);
-            @include pos-abs-bottom-right-corner(30px, 25px);
+            min-width: 0;
+            font-weight: 400;
+            color: rgba(244, 244, 244, 0.5);
+            float: right;
+            white-space: nowrap;
+            margin-left: 12px;
+
+            i {
+                color: rgba(244, 244, 244, 0.6);
+                margin-left: 3px;
+            }
         }
     }
 </style>

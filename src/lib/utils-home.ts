@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { homeViewLayout, sessionStore } from "./store"
 
-import { ModalType } from "./enums"
+import { ModalType, ShortcutSectionInFocus } from "./enums"
 import { conintueWorkSession, didInitSession } from "./utils-session"
 import { loadTheme } from "./utils-appearance"
 import { continueMusicSession, didInitMusicUser, loadMusicUserData } from "./utils-music"
@@ -171,4 +171,10 @@ export const closeModal = (modalToRemove: ModalType) => {
 export const isModalOpen = (modal: ModalType) => {
     const modalsOpen = get(homeViewLayout).modalsOpen
     return modalsOpen.includes(modal)
+}
+
+export const setShortcutsFocus = (section: ShortcutSectionInFocus) => {
+    homeViewLayout.update((state: HomeLayout) => {
+        return { ...state, shortcutsFocus: section }
+    })
 }

@@ -45,7 +45,7 @@ export class PomSessionManger {
      */
      updateSessionManger(newData: Partial<PomSessionManger>) {
       sessionManager.update((data: PomSessionManger | null) => {
-          return this.geNewStateObj(newData, data!)        
+          return this.getNewStateObj(newData, data!)        
       })
     }
 
@@ -334,16 +334,17 @@ export class PomSessionManger {
         const todosLength = get(sessionStore)!.todos.length
         if (todosLength === 0 || this.todoToEditIndex >= 0) return
 
-        let focusTodoIdx = 0
 
         if (event.key === "ArrowUp") {
-          focusTodoIdx = this.focusedTodoIndex === -1 ? 0 : Math.max(this.focusedTodoIndex, 1) - 1
+          this.focusedTodoIndex--
+          this.focusedTodoIndex = this.focusedTodoIndex < 0 ? todosLength - 1 : this.focusedTodoIndex
         }
         else if (event.key === "ArrowDown") {
-          focusTodoIdx = this.focusedTodoIndex === -1 ? 0 : Math.min(this.focusedTodoIndex + 1, todosLength - 1)
+          this.focusedTodoIndex++
+          this.focusedTodoIndex = this.focusedTodoIndex === todosLength ? 0 : this.focusedTodoIndex
         }
 
-        this.focusSelectedTodo(focusTodoIdx)
+        this.focusSelectedTodo()
       }
   }
 
@@ -388,8 +389,7 @@ export class PomSessionManger {
    * Then attach an onblur handler.
    * @param idx 
    */
-  focusSelectedTodo(idx: number) {
-    this.focusedTodoIndex = idx
+  focusSelectedTodo(idx = this.focusedTodoIndex) {
     this.updateSessionManger({ focusedTodoIndex: this.focusedTodoIndex })
 
     const todoElement = this.findTodoElementFromIdx(idx)!
@@ -453,7 +453,7 @@ export class PomSessionManger {
    * @param oldState  Current state
    * @returns         New state with the latest incorporated changes.
    */
-  geNewStateObj(newState: Partial<PomSessionManger>, oldState: PomSessionManger): PomSessionManger {
+  getNewStateObj(newState: Partial<PomSessionManger>, oldState: PomSessionManger): PomSessionManger {
     const newStateObj = oldState
 
     if (newState.newTitle != undefined)                   newStateObj!.newTitle = newState.newTitle

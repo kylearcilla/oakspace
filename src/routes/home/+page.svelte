@@ -21,10 +21,11 @@
 	import SessionFinishedModal from "./SessionFinishedModal.svelte"
 	import SessionCanceledModal from "./SessionCanceledModal.svelte"
   
-	import { ModalType } from "$lib/enums"
+	import { ModalType, ShortcutSectionInFocus } from "$lib/enums"
 	import { sessionStore, homeViewLayout, toastMessages, ytPlayerStore, musicPlayerStore } from "$lib/store"
 	import { homeVideoViewClassHandler, initAppState, keyboardShortCutHandlerKeyDown, keyboardShortCutHandlerKeyUp, onMouseMoveHandler, updateUI } from "$lib/utils-home"
 	import SessionEditModal from "./SessionEditModal.svelte";
+	import { clickOutside } from "$lib/utils-general";
 
   let hasUserToggledWithKeyLast = true
   let homeViewViewClasses = ""

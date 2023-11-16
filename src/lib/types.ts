@@ -38,9 +38,9 @@ type HomeLayout = {
     isVideoViewOpen: boolean,
     isMusicPlayerOpen: boolean,
     minModeSrc: string | null,
+    shortcutsFocus: ShortcutSectionInFocus
     modalsOpen: ModalType[]
 }
-
 type ToastMsg = {
     context: ToastContext
     message: string
@@ -49,19 +49,29 @@ type ToastMsg = {
         func: ((...args: any[]) => any) | ((...args: any[]) => Promise<any>)
     }
 }
-
 type ToastMsg = {
     type: ToastType
     context: ToastContext
     message: string
     actionFunction: FunctionParam
 }
-
 type Quote = {
     text: string,
     bgImgSrc: string,
     artCredit: string,
     quoteCredit: string
+}
+
+/* Tasks */
+type Task = {
+    title: string,
+    subtasks: SubTask[],
+    description: string,
+    isFinished: boolean
+}
+type SubTask = {
+    title: string, 
+    isFinished: boolean
 }
 
 /* Session Stuff */

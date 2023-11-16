@@ -45,6 +45,32 @@ export const setDocumentTitle = (newTitle: string) => {
 }
 
 /**
+ * Get HTML element by its id.
+ * @param id  Id to identify elem
+ */
+export const getElemById = (id: string): HTMLElement | null => {
+    return document.getElementById(id)
+}
+
+/**
+ * Get an elem css style that is a number value
+ * @returns 
+ */
+export const getElemNumStyle = (elem: HTMLElement, style: string): number => {
+  return parseFloat(getComputedStyle(elem).getPropertyValue(style))
+}
+
+/**
+ * Checks if any strings in passed in array exists in string.
+ * @param str   String in question.
+ * @param arr   Contains substrings to be checked in stringg
+ * @returns     If a substring in array exists in str.
+ */
+export const containsSubstring = (str: string, arr: string[]) => {
+  return arr.some(s => str.includes(s))
+}
+
+/**
  * @param n   Decimal number
  * @returns   Rounded up number
  */

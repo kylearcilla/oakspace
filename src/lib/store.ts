@@ -5,7 +5,8 @@ import type { MusicUserData } from './music-user-data'
 import type { YoutubePlayer } from './youtube-player'
 import type { YoutubeUserData } from './youtube-user-data'
 import type { PomSessionManger } from './pom-session-manager'
-import { ToastContext } from './enums'
+import type { TasksViewManager } from './tasks-view-manager'
+import { ShortcutSectionInFocus } from './enums'
 
 /* App UI State */
 export const homeViewLayout = writable<HomeLayout>({
@@ -13,6 +14,7 @@ export const homeViewLayout = writable<HomeLayout>({
     isTaskMenuOpen: true,
     isVideoViewOpen: false,
     isMusicPlayerOpen: false,
+    shortcutsFocus: ShortcutSectionInFocus.MAIN,
     minModeSrc: null,
     modalsOpen: []
 })
@@ -26,6 +28,9 @@ export const toastMessages = writable<ToastMsg[]>([])
 
 /* General Authentication Stuff */
 export const googleData = writable<GoogleUserData | null>(null)
+
+/* Home View Stuff */
+export const tasksViewStore = writable<TasksViewManager | null>(null)
 
 /* YT Stuff */
 export const ytUserDataStore = writable<YoutubeUserData| null>(null)

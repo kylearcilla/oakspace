@@ -98,7 +98,7 @@ export class Session {
      */
     updateSession(newData: Partial<Session>) {
         sessionStore.update((data: Session | null) => { 
-            return this.geNewStateObj(newData, data!)
+            return this.getNewStateObj(newData, data!)
         })
         this.saveData()
         this.updateDocumentTitle()
@@ -566,7 +566,7 @@ export class Session {
      * @param oldState  Current state
      * @returns         New state with the latest incorporated changes.
      */
-    geNewStateObj(newState: Partial<Session>, oldState: Session): Session {
+    getNewStateObj(newState: Partial<Session>, oldState: Session): Session {
         const newStateObj = oldState
 
         if (newState.name != undefined)                 newStateObj!.name = newState.name

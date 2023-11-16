@@ -142,8 +142,16 @@
                                 {#each tags as tag, idx} 
                                     <li class={`dropdown-menu__option ${tag.name === input.tag.name ? "dropdown-menu__option--selected" : ""}`}>
                                         <button class="dropdown-element" type="button" on:click={() => handleNewTagClicked(idx)}>
-                                            <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon" style={`background-color: ${tag.color}`}></div>
-                                            <p>{tag.name}</p>
+                                            <div class="dropdown-menu__option-icon">
+                                                <div 
+                                                    class="new-session-modal__name-input-tag-option-circle"
+                                                    style={`background-color: ${tag.color}`}
+                                                >
+                                                </div>
+                                            </div>
+                                            <span class="dropdown-menu__option-text">
+                                                {tag.name}
+                                            </span>
                                             {#if tag.name === input.tag.name}
                                                 <div class="dropdown-menu__option-icon">
                                                     <i class="fa-solid fa-check"></i>
@@ -152,10 +160,15 @@
                                         </button>
                                     </li>
                                 {/each}
-                                <li class="dropdown-menu__new-option-container">
-                                    <div class="divider divider--thin"></div>
+                                <div class="dropdown-menu__divider"></div>
+                                <li class="dropdown-menu__option">
                                     <button on:click={handleCreateNewTagClicked}>
-                                        <span>+</span>New Tag
+                                        <div class="dropdown-menu__option-icon">
+                                            <span class="new-session-modal__name-input-new-tag-option-icon">+</span>
+                                        </div>
+                                        <span class="dropdown-menu__option-text">
+                                            New Tag
+                                        </span>
                                     </button>
                                 </li>
                             </ul>
@@ -467,9 +480,12 @@
             padding: 10px 11px 10px 10px;
             border-radius: 10px;
         }
-        &__name-input-btn-tag {
-            @include circle(8px);
-            margin-right: 7px;
+        &__name-input-tag-option-circle {
+            @include circle(6px);
+        }
+        &__name-input-new-tag-option-icon {
+            font-size: 1.45rem;
+            font-weight: 200;
         }
 
         /* Pomodoros Stuff */

@@ -381,7 +381,7 @@
         }
         &__title-container, &__artist-container {
             &--masked {
-                -webkit-mask-image: linear-gradient(90deg, transparent 2%, black 9%, black 80%, transparent 100%);
+                -webkit-mask-image: linear-gradient(90deg, transparent 5px, black 10px, black 80%, transparent 100%);
                 mask-image: linear-gradient(90deg, transparent 2%, black 9%, black 80%, transparent 100%);
             }
         }

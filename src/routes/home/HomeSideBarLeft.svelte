@@ -238,8 +238,8 @@
             @include pos-abs-bottom-left-corner(calc(0% + 3px), calc(50% - 16.5px));
         }
         &--music-player-active {
-            @include sm(max-width) {
-                bottom: 60px;
+            @include mq-custom(max-width, 34.375em) {
+                margin-bottom: 55px;
             }
         }
         &__container {

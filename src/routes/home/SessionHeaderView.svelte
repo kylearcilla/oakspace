@@ -131,12 +131,11 @@
                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                             <i class="fa-solid fa-pencil"></i>
                         </div>
-                        <p class="dropdown-element">Edit Session</p>
+                        <span class="dropdown-menu__option-text">Edit Session</span>
                     </button>
                 </li>
                 <li class="dropdown-menu__option">
                     <button 
-                        class="dropdown-element" 
                         on:click={() => handlePomOptionSessionViewClickeded(1)}
                         disabled={$sessionStore?.state === SessionState.FINISHED}
                     >
@@ -148,34 +147,32 @@
                             {/if}
                         </div>
                         {#if $sessionStore?.isPlaying}
-                            <p class="dropdown-element">Pause Session</p>
+                            <span class="dropdown-menu__option-text">Pause Session</span>
                         {:else}
-                            <p class="dropdown-element">Play Session</p>
+                            <span class="dropdown-menu__option-text">Play Session</span>
                         {/if}
                     </button>
                 </li>
                 <li class="dropdown-menu__option">
                     <button 
                         disabled={$sessionStore && ($sessionStore.WAITING_STATES.includes($sessionStore.state) || $sessionStore.state === SessionState.FINISHED)}
-                        class="dropdown-element" 
                         on:click={() => handlePomOptionSessionViewClickeded(2)}
                     >
                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                             <i class="fa-solid fa-rotate-right"></i>
                         </div>
-                        <p class="dropdown-element">Restart Period</p>
+                        <span class="dropdown-menu__option-text">Restart Period</span>
                     </button>
                 </li>
                 <li class="dropdown-menu__option">
                     <button 
-                        class="dropdown-element" 
                         on:click={() => handlePomOptionSessionViewClickeded(3)}
                         disabled={$sessionStore?.state === SessionState.FINISHED}
                     >
                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                             <i class="fa-solid fa-forward-step"></i>
                         </div>
-                        <p class="dropdown-element">Skip Period</p>
+                        <span class="dropdown-menu__option-text">Skip Period</span>
                     </button>
                 </li>
                 <li class="dropdown-menu__option">
@@ -183,19 +180,18 @@
                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                             <i class="fa-solid fa-ban"></i>
                         </div>
-                        <p class="dropdown-element">Cancel Session</p>
+                        <span class="dropdown-menu__option-text">Cancel Session</span>
                     </button>
                 </li>
                 <li class="dropdown-menu__option">
                     <button 
-                        class="dropdown-element" 
                         on:click={() => handlePomOptionSessionViewClickeded(5)}
                         disabled={$sessionStore?.state === SessionState.FINISHED}
                     >
                         <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
                             <i class="fa-solid fa-flag-checkered"></i>
                         </div>
-                        <p class="dropdown-element">Finish Session</p>
+                        <span class="dropdown-menu__option-text">Finish Session</span>
                     </button>
                 </li>
             </ul>
@@ -341,6 +337,10 @@
             width: 130px;
             @include pos-abs-top-right-corner(40px, -20px);
             z-index: 1000;
+
+            &__option-icon {
+                margin-right: 9px;
+            }
         }
     }
 

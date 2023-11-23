@@ -30,6 +30,10 @@ export enum ContextMenuOption {
     ADD_SUBTASK, DELETE_TASK, DELETE_SUBTASK
 }
 
+/* Goals */
+export enum GoalStatus {
+    OnHold, InProgress, Accomplished
+}
 
 /* Sessions */
 export enum SessionState {

@@ -53,6 +53,14 @@ export const getElemById = (id: string): HTMLElement | null => {
 }
 
 /**
+ * Get HTML elements that share the same className
+ * @param className  Elements' class name
+ */
+export const getElemsByClass = (className: string): Element[] | null => {
+    return [...document.getElementsByClassName(className)]
+}
+
+/**
  * Get an elem css style that is a number value
  * @returns 
  */
@@ -143,8 +151,6 @@ export const findEnumIdxFromDiffEnum  = (enumMember: any, originEnum: any, query
  * @returns              Stringn with spaces
  */
 export const addSpacesToCamelCaseStr = (camelCaseStr: string) => {
-  console.log(camelCaseStr)
-  
   const words = camelCaseStr.replace(/([a-z])([A-Z])/g, '$1 $2');
   return words.charAt(0).toUpperCase() + words.slice(1);
 }

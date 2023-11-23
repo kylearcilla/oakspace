@@ -60,7 +60,10 @@
                     >
                     <div class="edit-session-modal__name-input-divider"></div>
                     <div class="edit-session-modal__name-input-tag-dropdown-container dropdown-container">
-                        <button class="edit-session-modal__name-input-tag-dropdown-btn dropdown-btn trans-btn" on:click={() => isTagListDropDownOpen = true }>
+                        <button 
+                            class="edit-session-modal__name-input-tag-dropdown-btn dropdown-btn trans-btn" on:click={() => isTagListDropDownOpen = !isTagListDropDownOpen }
+                            type="button"
+                        >
                             <div class="edit-session-modal__name-input-btn-tag" style={`background-color: ${newTag.color}`}></div>
                             <div class="dropdown-btn__title">
                                 {newTag.name}
@@ -75,32 +78,41 @@
                             </div>
                         </button>
                         {#if isTagListDropDownOpen}
-                            <ul use:clickOutside on:click_outside={() => isTagListDropDownOpen = false} class="dropdown-menu">
-                                {#each tags as tag, idx} 
-                                    <li class={`dropdown-menu__option dropdown-menu__option--has-right-icon ${tag.name === newTag.name ? "dropdown-menu__option--selected" : ""}`}>
-                                        <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
+                        <ul use:clickOutside on:click_outside={() => isTagListDropDownOpen = false} class="dropdown-menu">
+                            {#each tags as tag, idx} 
+                                <li class={`dropdown-menu__option ${tag.name === newTag.name ? "dropdown-menu__option--selected" : ""}`}>
+                                    <button class="dropdown-element" type="button" on:click={() => handleNewTagClicked(idx)}>
+                                        <div class="dropdown-menu__option-icon">
                                             <div 
-                                                class="edit-session-modal__name-input-btn-tag dropdown-menu__option-icon" 
+                                                class="new-session-modal__name-input-tag-option-circle"
                                                 style={`background-color: ${tag.color}`}
                                             >
                                             </div>
-                                            <p>{tag.name}</p>
-                                            {#if tag.name === newTag.name}
-                                                <div class="dropdown-menu__option-icon dropdown-menu__option-icon--right">
-                                                    <i class="fa-solid fa-check"></i>
-                                                </div>
-                                            {/if}
-                                        </button>
-                                    </li>
-                                {/each}
-                                <li class="dropdown-menu__new-option-container">
-                                    <div class="divider divider--thin"></div>
-                                    <button on:click={handleCreateTagBtnClicked}>
-                                        <span>+</span>New Tag
+                                        </div>
+                                        <span class="dropdown-menu__option-text">
+                                            {tag.name}
+                                        </span>
+                                        {#if tag.name === newTag.name}
+                                            <div class="dropdown-menu__option-icon">
+                                                <i class="fa-solid fa-check"></i>
+                                            </div>
+                                        {/if}
                                     </button>
                                 </li>
-                            </ul>
-                        {/if}
+                            {/each}
+                            <div class="dropdown-menu__divider"></div>
+                            <li class="dropdown-menu__option">
+                                <button on:click={handleCreateTagBtnClicked}>
+                                    <div class="dropdown-menu__option-icon">
+                                        <span class="new-session-modal__name-input-new-tag-option-icon">+</span>
+                                    </div>
+                                    <span class="dropdown-menu__option-text">
+                                        New Tag
+                                    </span>
+                                </button>
+                            </li>
+                        </ul>
+                    {/if}
                     </div>
                 </div>
             </div>
@@ -204,21 +216,6 @@
                 position: absolute;
                 top: 40px;
                 width: 100px;
-                &__option {
-                    &--selected {
-                        background-color: red;
-                    }
-                    &--selected p {
-                        width: 58% !important;
-                    }
-                    p {
-                        width: 70%;
-                        margin-left: 3px;
-                    }
-                    span {
-                        margin-right: 3px;
-                    }
-                }
             }
         }
         &__name-input-tag-dropdown-btn {

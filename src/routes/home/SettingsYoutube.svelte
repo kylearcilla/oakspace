@@ -344,7 +344,7 @@
             @include bento-box-light;
         }
         &--light button.tab-btn {
-            @include tab-btn-light;
+            @include tab-btn-light(1.045);
         }
         &--light .skeleton-bg {
             @include skeleton-bg(light);

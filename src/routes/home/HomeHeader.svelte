@@ -35,7 +35,7 @@
     }
     const handleResize = () => {
         if (!$ytPlayerStore?.doShowPlayer) return
-        doMinHeaderUI = headerWidth < 840 
+        doMinHeaderUI = headerWidth < 840  
     }
     const openNewSessionModal = () => {
         openModal(ModalType.NewSession)
@@ -105,7 +105,9 @@
                 </li>
                 <li class="dropdown-menu__option">
                     <button class="dropdown-element" on:click={(_) => handleOptionClicked(0)}>
-                        <p>Weekly Wisdom</p>
+                        <span class="dropdown-menu__option-text">
+                            Weekly Wisdom
+                        </span>
                         <div class="dropdown-menu__option-icon">
                             <i class="fa-solid fa-quote-right"></i>
                         </div>
@@ -113,7 +115,9 @@
                 </li>
                 <li class="dropdown-menu__option">
                     <button class="dropdown-element" on:click={(_) => handleOptionClicked(1)}>
-                        <p>Keyboard Shortcuts</p>
+                        <span class="dropdown-menu__option-text">
+                            Keyboard Shortcuts
+                        </span>
                         <div class="dropdown-menu__option-icon">
                             <i class="fa-regular fa-keyboard"></i>
                         </div>
@@ -124,7 +128,9 @@
                 {/if}
                 <li class="dropdown-menu__option">
                     <button class="dropdown-element" on:click={(_) => handleOptionClicked(2)}>
-                        <p>Log Out</p>
+                        <span class="dropdown-menu__option-text">
+                            Log Out
+                        </span>
                     </button>
                 </li>
             </ul>
@@ -147,19 +153,10 @@
                 class={`header-new-session-btn header__element ${$themeState.isDarkTheme ? "" : "header-new-session-btn--light-mode"}`}
                 on:click={openNewSessionModal}
             >
-            <div class="header-new-session-btn-title">New Session</div>
-            <div class="header-new-session-btn-icon">+</div>
-        </button>
+                <div class="header-new-session-btn-title">New Session</div>
+                <div class="header-new-session-btn-icon">+</div>
+            </button>
         {/if}
-        <!-- Current Time -->
-        <button class="header__time header__element" title={currentTimeStr} on:click={toggleTimeFormatting}>
-            {#if isDayTime}
-                <i class="fa-solid fa-sun"></i>
-            {:else}
-                <i class="fa-solid fa-moon"></i>
-            {/if}
-            <span>{currentTimeStr}</span>
-        </button>
     </div>
 </div>
 
@@ -287,8 +284,8 @@
             background-color: rgba(45, 45, 45, 0.13);
             padding: 8px 11px 10px 11px;
             border-radius: 12px;
-            width: 95%;
-            margin: 2px 0px 10px 3px;
+            width: 100%;
+            margin-bottom: 10px;
 
             i {
                 font-size: 1.1em !important;

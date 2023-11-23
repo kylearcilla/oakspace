@@ -11,6 +11,7 @@
 	import ModalQuote from "./ModalQuote.svelte"
 	import Toast from "../../components/Toast.svelte"
 	import HomeEmptyView from "./HomeEmptyView.svelte"
+	import Journal from "./Journal.svelte"
 	import MusicSettings from "./SettingsMusic.svelte"
 	import ShortcutsModal from "./ShortcutsModal.svelte"
 	import YoutubeSettings from "./SettingsYoutube.svelte"
@@ -21,11 +22,10 @@
 	import SessionFinishedModal from "./SessionFinishedModal.svelte"
 	import SessionCanceledModal from "./SessionCanceledModal.svelte"
   
-	import { ModalType, ShortcutSectionInFocus } from "$lib/enums"
+	import { ModalType } from "$lib/enums"
 	import { sessionStore, homeViewLayout, toastMessages, ytPlayerStore, musicPlayerStore } from "$lib/store"
 	import { homeVideoViewClassHandler, initAppState, keyboardShortCutHandlerKeyDown, keyboardShortCutHandlerKeyUp, onMouseMoveHandler, updateUI } from "$lib/utils-home"
-	import SessionEditModal from "./SessionEditModal.svelte";
-	import { clickOutside } from "$lib/utils-general";
+	import SessionEditModal from "./SessionEditModal.svelte"
 
   let hasUserToggledWithKeyLast = true
   let homeViewViewClasses = ""
@@ -77,6 +77,7 @@
   {#if $homeViewLayout.modalsOpen.includes(ModalType.Youtube)} <YoutubeSettings/> {/if}
   {#if $homeViewLayout.modalsOpen.includes(ModalType.Appearance)} <ApperanceSettings /> {/if}
   {#if $homeViewLayout.modalsOpen.includes(ModalType.Music)} <MusicSettings /> {/if}
+  {#if $homeViewLayout.modalsOpen.includes(ModalType.Journal)} <Journal /> {/if}
 
   <!-- Session Modals -->
   {#if $homeViewLayout.modalsOpen.includes(ModalType.NewSession)} 
@@ -183,9 +184,9 @@
         right: 0px;
         transition: ease-in-out 0.18s;
         overflow: hidden;
-        background-color: var(--secondaryBgColor);
+        background-color: var(--rightBarBgColor);
         border: var(--sidePanelBorder);
-        box-shadow: var(--dropdownMenuBgColor2);
+        box-shadow: var(--rightBarBgBoxShadow);
         z-index: 200000;
 
         // background: rgba(32, 31, 31, 0.1);

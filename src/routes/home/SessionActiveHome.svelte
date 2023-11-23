@@ -381,7 +381,6 @@
                 margin: -1px -2px 0px 0px;
             }
             &:hover {
-                background-color: var(--secondaryBgColor);
                 svg {
                     color: rgba(var(--textColor1), 0.7);
                 }

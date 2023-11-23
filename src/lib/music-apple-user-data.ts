@@ -93,6 +93,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
     async fetchAPIToken(): Promise<string> {
         const options = { method: 'GET', headers: { 'Content-Type': 'application/json' } }
         const res = await fetch("http://localhost:3000/", options)
+        console.log(res)
 
         if (!res.ok) {
             console.error(`Error fetching Apple Music Kit dev token from app server. Status: ${res.status}`)

@@ -15,39 +15,64 @@
         <h1 class="shortcuts__title">
             Keyboard Shortcuts
         </h1>
-        <h2 class="shortcuts__subtitle">General</h2>
-        <ul class="shortcuts__list">
-            {#each SHORT_CUTS.general as shortcut}
-                <li class="shortcuts__shortcut">
-                    <div class="shortcuts__shortcut-title">
-                        {shortcut.title}
-                    </div>
-                    <div class="shortcuts__shortcut-keys-container">
-                        {#each shortcut.controls as control}
-                            <div class={`shortcuts__key ${control.length === 1 ? "shortcuts__key--square" : ""}`}>
-                                {control}
+        <ul class="shortcuts__section-list">
+            <li>
+                <h2 class="shortcuts__subtitle">General</h2>
+                <ul class="shortcuts__list">
+                    {#each SHORT_CUTS.general as shortcut}
+                        <li class="shortcuts__shortcut">
+                            <div class="shortcuts__shortcut-title">
+                                {shortcut.title}
                             </div>
-                        {/each}
-                    </div>
-                </li>
-            {/each}
-        </ul>
-        <h2 class="shortcuts__subtitle">Pomodoro</h2>
-        <ul class="shortcuts__list">
-            {#each SHORT_CUTS.pomodoro as shortcut}
-                <li class="shortcuts__shortcut">
-                    <div class="shortcuts__shortcut-title">
-                        {shortcut.title}
-                    </div>
-                    <div class="shortcuts__shortcut-keys-container">
-                        {#each shortcut.controls as control}
-                            <div class={`shortcuts__key ${control.length === 1 ? "shortcuts__key--square" : ""}`}>
-                                {control}
+                            <div class="shortcuts__shortcut-keys-container">
+                                {#each shortcut.controls as control}
+                                    <div class={`shortcuts__key ${control.length === 1 ? "shortcuts__key--square" : ""}`}>
+                                        {control}
+                                    </div>
+                                {/each}
                             </div>
-                        {/each}
-                    </div>
-                </li>
-            {/each}
+                        </li>
+                    {/each}
+                </ul>
+            </li>
+            <li>
+                <h2 class="shortcuts__subtitle">Pomodoro</h2>
+                <ul class="shortcuts__list">
+                    {#each SHORT_CUTS.pomodoro as shortcut}
+                        <li class="shortcuts__shortcut">
+                            <div class="shortcuts__shortcut-title">
+                                {shortcut.title}
+                            </div>
+                            <div class="shortcuts__shortcut-keys-container">
+                                {#each shortcut.controls as control}
+                                    <div class={`shortcuts__key ${control.length === 1 ? "shortcuts__key--square" : ""}`}>
+                                        {control}
+                                    </div>
+                                {/each}
+                            </div>
+                        </li>
+                    {/each}
+                </ul>
+            </li>
+            <li>
+            <h2 class="shortcuts__subtitle">Tasks</h2>
+                <ul class="shortcuts__list">
+                    {#each SHORT_CUTS.tasks as shortcut}
+                        <li class="shortcuts__shortcut">
+                            <div class="shortcuts__shortcut-title">
+                                {shortcut.title}
+                            </div>
+                            <div class="shortcuts__shortcut-keys-container">
+                                {#each shortcut.controls as control}
+                                    <div class={`shortcuts__key ${control.length === 1 ? "shortcuts__key--square" : ""}`}>
+                                        {control}
+                                    </div>
+                                {/each}
+                            </div>
+                        </li>
+                    {/each}
+                </ul>
+            </li>
         </ul>
     </div>
 </Modal>
@@ -55,8 +80,8 @@
 
 <style lang="scss">
     .shortcuts {
-        padding: 17px 27px 22px 27px;
-        width: 310px;
+        padding: 17px 0px 0px 27px;
+        width: 350px;
 
         &--light &__subtitle {
             font-weight: 500;
@@ -71,6 +96,10 @@
             background-color: rgba(0, 0, 0, 0.03);
         }
 
+        &__section-list {
+            overflow-y: scroll;
+            height: 500px;
+        }
         &__title {
             text-align: center;
             margin-bottom: 20px;
@@ -83,9 +112,8 @@
             margin-bottom: 5px;
         }
         &__list {
-            &:first-of-type {
-                margin-bottom: 25px;  
-            }
+            margin-bottom: 18px;  
+            padding-right: 27px;
         }
         &__shortcut {
             height: 30px;
@@ -106,6 +134,7 @@
             background-color: rgba(255, 255, 255, 0.03);
             padding: 5.5px 11px;
             border-radius: 9px;
+            font-size: 1.05rem;
 
             &--square {
                 width: 24px;

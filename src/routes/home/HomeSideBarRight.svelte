@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { formatDatetoStr, formatTimeToHHMM, getUserHourCycle, isNightTime } from "$lib/utils-date";
-	import { tasks } from "$lib/utils-right-bar";
+	import { taskGroups } from "$lib/utils-right-bar";
 	import { onDestroy, onMount } from "svelte";
     import { fly } from 'svelte/transition'
     import { quintOut } from 'svelte/easing'
+	import { tasksViewStore } from "$lib/store";
 
     enum TAB { 
         TASKS, RECENT_ACTIVITY 
@@ -118,66 +119,68 @@
                     </svg>
                 </button>
             </div>
-            <!-- Tasks List -->
-            <ul class="quick-todos__todo-list">
-                <!-- Task Element  -->
-                {#each tasks as task, taskIdx}
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <div
-                        role="button" tabindex="0" on:click={onTaskedClicked}  
-                        class={`quick-todo ${taskIdx === pickedTaskIdx ? "quick-todo--expanded" : ""} ${task.isFinished ? "quick-todo--chcked" : ""}`}
-                    >
-                        <!-- Left Side  -->
-                        <div class="quick-todo__left">
-                            <button class="quick-todo__checkbox">
-                                <i class="fa-solid fa-check"></i>
-                            </button>
-                        </div>
-                        <!-- Right Side  -->
-                        <div class="quick-todo__right">
-                            <!-- Title  -->
-                            <div class="quick-todo__title">
-                                <span class="">{task.title}</span>
+            {#if $tasksViewStore?.tasks}
+                <!-- Tasks List -->
+                <ul class="quick-todos__todo-list">
+                    <!-- Task Element  -->
+                    {#each $tasksViewStore.tasks as task, taskIdx}
+                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                        <div
+                            role="button" tabindex="0" on:click={onTaskedClicked}  
+                            class={`quick-todo ${taskIdx === pickedTaskIdx ? "quick-todo--expanded" : ""} ${task.isFinished ? "quick-todo--chcked" : ""}`}
+                        >
+                            <!-- Left Side  -->
+                            <div class="quick-todo__left">
+                                <button class="quick-todo__checkbox">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
                             </div>
-                            <!-- Description  -->
-                            <div class="quick-todo__description">
-                                {task.description}
-                            </div>
-                            <!-- Subtasks  -->
-                            {#if taskIdx === pickedTaskIdx && task.subtasks.length > 0}
-                                <ul class="quick-todo__subtasks-list">
-                                    {#each task.subtasks as subtask, subtaskIdx}
-                                        <div 
-                                            class="quick-todo__subtask" 
-                                            in:fly={{ x: 0, y: -6, opacity: 0, duration: 600, delay: 200 * 1, easing: quintOut }}
-                                        >
-                                        {#if subtaskIdx === 0}
+                            <!-- Right Side  -->
+                            <div class="quick-todo__right">
+                                <!-- Title  -->
+                                <div class="quick-todo__title">
+                                    <span class="">{task.title}</span>
+                                </div>
+                                <!-- Description  -->
+                                <div class="quick-todo__description">
+                                    {task.description}
+                                </div>
+                                <!-- Subtasks  -->
+                                {#if taskIdx === pickedTaskIdx && task.subtasks.length > 0}
+                                    <ul class="quick-todo__subtasks-list">
+                                        {#each task.subtasks as subtask, subtaskIdx}
                                             <div 
-                                                class={`quick-todo__subtask-hook-line ${subtaskIdx === 0 ? "quick-todo__subtask-hook-line--first" : ""}`}
+                                                class="quick-todo__subtask" 
+                                                in:fly={{ x: 0, y: -6, opacity: 0, duration: 600, delay: 200 * 1, easing: quintOut }}
                                             >
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="23" height="85" viewBox="0 0 23 85" fill="none">
-                                                    <path d={`M15 ${42.2466 + sum}H10.3164C5.34584 ${42.2466 + sum} 1.31641 ${38.2171 + sum} 1.31641 ${33.2466 + sum} V0.719971`} stroke-dasharray="2 2"/>
-                                                </svg>
+                                            {#if subtaskIdx === 0}
+                                                <div 
+                                                    class={`quick-todo__subtask-hook-line ${subtaskIdx === 0 ? "quick-todo__subtask-hook-line--first" : ""}`}
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="23" height="85" viewBox="0 0 23 85" fill="none">
+                                                        <path d={`M15 ${42.2466 + sum}H10.3164C5.34584 ${42.2466 + sum} 1.31641 ${38.2171 + sum} 1.31641 ${33.2466 + sum} V0.719971`} stroke-dasharray="2 2"/>
+                                                    </svg>
+                                                </div>
+                                            {:else}
+                                                <div class="quick-todo__subtask-hook-line">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="23" height="30" viewBox="0 0 23 30" fill="none">
+                                                        <path d="M16.084 27.2358H10.3125C5.34194 27.2358 1.3125 23.2064 1.3125 18.2358V0.141846" stroke-dasharray="2 2"/>
+                                                    </svg>
+                                                </div>
+                                            {/if}
+                                                <div class="quick-todo__subtask-checkbox quick-todo__checkbox"></div>
+                                                <div class="quick-todo__subtask-title quick-todo__title">
+                                                    {subtask.title}
+                                                </div>
                                             </div>
-                                        {:else}
-                                            <div class="quick-todo__subtask-hook-line">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="23" height="30" viewBox="0 0 23 30" fill="none">
-                                                    <path d="M16.084 27.2358H10.3125C5.34194 27.2358 1.3125 23.2064 1.3125 18.2358V0.141846" stroke-dasharray="2 2"/>
-                                                </svg>
-                                            </div>
-                                        {/if}
-                                            <div class="quick-todo__subtask-checkbox quick-todo__checkbox"></div>
-                                            <div class="quick-todo__subtask-title quick-todo__title">
-                                                {subtask.name}
-                                            </div>
-                                        </div>
-                                    {/each}
-                                </ul>
-                            {/if}
+                                        {/each}
+                                    </ul>
+                                {/if}
+                            </div>
                         </div>
-                    </div>
-                {/each}
-            </ul>
+                    {/each}
+                </ul>
+            {/if}
             <button class="quick-todos__add-btn">
                 <span>+</span> Add New Todo
             </button>
@@ -194,7 +197,13 @@
         height: 100%;
         overflow: hidden;
         color: rgb(var(--textColor1));
-        
+
+        .tab-btn {
+            &--selected {
+                background-color: var(--sidePanelTabBgColor) !important;
+            }
+        }
+
         &__header {
             width: 100%;
             margin: 0px 0px 15px 0px;
@@ -269,7 +278,7 @@
             color: rgb(var(--textColor1), 0.4);
             
             &--selected {
-                background-color: rgb(255, 255, 255, 0.05);
+                background-color: var(--sidePanelTabBgColor) !important;
                 color: rgb(var(--textColor1), 0.9);
             }
         }
@@ -278,7 +287,6 @@
             height: calc(100% - 134.5px);
             width: 100%;
         }
-
         &__settings-btn {
             opacity: 0.1;
             margin: -2px -5px 0px 0px;

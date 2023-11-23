@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { ytPlayerStore, ytUserDataStore } from "./store"
+import { ytPlayerStore } from "./store"
 import { type CustomError, ApiError, ResourceNotFoundError, PlayerError } from "./errors"
 import { getPlayListItemsDetails, getVidDetails, getYtIframeAPIError } from "./api-youtube"
 import { loadYtPlayerData, saveYtPlayerData, deleteYtPlayerData } from "./utils-youtube-player"
@@ -162,7 +162,6 @@ export class YoutubePlayer {
         const player = event.target
         const vidData = player.playerInfo.videoData
         const state = event.data
-        console.log(state)
 
         // unlisted video
         this.disabledPlaypackHandler(state)
@@ -258,7 +257,6 @@ export class YoutubePlayer {
             this.player!.loadPlaylist({ list: playlist.id, listType: "playlist", index: startingIdx })
         }
         catch(e: any) {
-            console.error(e)   
             if (e instanceof TypeError) return
             if (e instanceof ResourceNotFoundError) this.removeCurrentPlaylist()
             this.setError(e)

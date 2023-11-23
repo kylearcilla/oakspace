@@ -32,6 +32,8 @@
         transition: 0.14s ease-in-out;
         margin-right: 20px;
         color: rgba(var(--textColor1), 0.35);
+        width: fit-content;
+        position: relative;
         @include center;
         
         &--selected {
@@ -57,7 +59,7 @@
         position: absolute;
         height: 1px;
         background-color: rgba(var(--textColor1), 1);
-        transition: 0.24s ease-in-out;
+        transition: 0.15s cubic-bezier(.5,.84,.42,.9);
         bottom: 0px;
     }
 }

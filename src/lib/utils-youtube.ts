@@ -5,6 +5,7 @@ import { YoutubeUserData } from "./youtube-user-data"
 import { YoutubePlayer } from "./youtube-player"
 import { CustomError, ExpiredTokenError, ResourceNotFoundError } from "./errors"
 import { getPlayListItemsDetails, getPlaylistDetails, getVidDetails } from "./api-youtube"
+import { getElemsByClass } from "./utils-general"
 
 const INIT_PLAYLIST_REQUEST_DELAY = 500
 export const USER_PLS_MAX_PER_REQUEST = 15
@@ -177,6 +178,15 @@ export const handleChoosePlaylist = async (playlist: YoutubePlaylist) => {
     else {
         ytPlayer!.removeCurrentPlaylist()
     }
+}
+
+/**
+ * Toggle pointer events for all Youtube iFrames. 
+ * @param isPointerEventsEnabled   Should iframes have pointer events.
+ */
+export const toggleYTIFramePointerEvents = (isPointerEventsEnabled: boolean) => {
+    const ytPlayers = getElemsByClass("iframe-vid-player") as HTMLElement[]
+    ytPlayers.forEach((elem: HTMLElement) => elem.style.pointerEvents = isPointerEventsEnabled ? "auto" : "none")
 }
 
 /**

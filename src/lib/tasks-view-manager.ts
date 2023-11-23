@@ -4,27 +4,29 @@ import { getElemById, getElemNumStyle } from "./utils-general"
 import { 
         MAX_X_CONTEXT_MENU_POS, SUBTASK_HEIGHT, 
         TASK_BOTTOM_PADDING, TASK_HEIGHT_MIN_NO_DESCR 
-    } from "$lib/utils-right-bar"
+} from "$lib/utils-right-bar"
 
 
 /**
  * State handler for tasks view in the right side bar.
- * Is itself a svelte store that component listens to for changes.
+ * Is itself a svelte store that Tasks component listens to for changes.
  */
 export class TasksViewManager {
     /* Groups */
-    taskGroups: string[] = []
+    taskGroups: TaskGroup[] = []
+    currTaskGroupIdx = -1
     isNewTaskGroupFocused = false
     isMakingNewGroup = false
     isEditingGroup = false
+    editingTaskGroupIdx = -1
     
     /* Tasks */
-    tasks: Task[] = []
+    tasks: Task[] | null = null
     pickedTaskIdx = -1
     pickedTaskHT: number = 0
     pickedTaskDescriptionHT = 0
     pickedTaskGroupIdx = 0
-    
+     
     taskCheckBoxJustChecked = -1
     isMakingNewTask = false
     isEditingTitle = false
@@ -58,11 +60,18 @@ export class TasksViewManager {
     textAreaHasSpellCheck = false
     hasInputBlurred = false
 
-    constructor(tasks: Task[], taskGroups: string[]) {
-        this.tasks = tasks
+    constructor(taskGroups: TaskGroup[]) {
         this.taskGroups = taskGroups
+        this.currTaskGroupIdx = taskGroups.length === 0 ? -1 : 0
+        this.tasks = taskGroups.length === 0 ? null : this.taskGroups[0].tasks
 
         tasksViewStore.set(this)
+2
+        this.updateTaskViewState({
+            taskGroups,
+            currTaskGroupIdx: this.currTaskGroupIdx,
+            tasks: this.tasks!
+        })
     }
 
     updateTaskViewState(newState: Partial<TasksViewManager>) {
@@ -72,15 +81,42 @@ export class TasksViewManager {
     }
 
     /* UI Click Handlers */
+
+    /**
+     * Task list item component's title element on click handler.
+     * Immediately focuses new title input.
+     * Will not expand if user has selectde title.
+     * 
+     * @param taskIdx   Task idx of task component
+     */
     onTaskTitleClicked(taskIdx: number) {
         if (window.getSelection()?.toString()) return
-        
         this.expandTask(taskIdx)
-        this.toggleTaskTitleInput()
 
-        this.updateTaskViewState({ newText: this.newText })
+        this.isEditingTitle = true
+        this.newText = this.tasks![this.pickedTaskIdx].title
+
+        requestAnimationFrame(() => { 
+            const inputTitleElem = getElemById(`todo-title-id--${this.pickedTaskIdx}`) as HTMLInputElement
+            inputTitleElem.focus()
+        })
+
+        this.updateTaskViewState({ 
+            isEditingTitle: this.isEditingTitle,
+            newText: this.newText
+        })
     }
+
+    /**
+     * Task list item component's subtask title element on click handler.
+     * Immediately focuses new subtask title input.
+     * Will not work if user has highlighted subtask title.
+     * 
+     * @param taskIdx   Subtask idx of task component
+     */
     onSubtaskTitleClicked(subtaskIdx: number) {
+        if (window.getSelection()?.toString()) return
+
         this.editingSubtaskIdx = subtaskIdx
 
         requestAnimationFrame(() => {
@@ -93,9 +129,19 @@ export class TasksViewManager {
             newText: this.newText
         })
     }
+
+    /**
+     * Task elemen on click handler. Only used for expansion and minimization of task.
+     * Expands clicked task if not expanded and minimizes otherwise.
+     * Will not expand if user has selectde title.
+     * 
+     * @param event      On click event.
+     * @param taskIdx    Idx of task selected.
+     */
     onTaskedClicked(event: Event, taskIdx: number) {
-        if (window.getSelection()?.toString()) return
-        
+        if (window.getSelection()?.toString()) {
+            return
+        }
         if (this.hasJustClosedContextMenu) {
             this.hasJustClosedContextMenu = false
             return
@@ -112,55 +158,64 @@ export class TasksViewManager {
             this.toggleInputBlurred(false)
         }
         else if (taskIdx === this.pickedTaskIdx) {
-            this.removeHighlightedTask()
+            this.minimizeExpandedTask()
         }
         else {
-            this.removeHighlightedTask()
+            this.minimizeExpandedTask()
             this.expandTask(taskIdx)
         }
     }
-    handleTaskCheckboxClicked(taskIdx: number) {
-        this.tasks[taskIdx].isFinished = !this.tasks[taskIdx].isFinished
 
-        if (this.tasks[taskIdx].isFinished) {
+    /**
+     * Toggle a task's checkbox.
+     * @param taskIdx  Idx of the the checkbock's task.
+     */
+    handleTaskCheckboxClicked(taskIdx: number) {
+        this.tasks![taskIdx].isFinished = !this.tasks![taskIdx].isFinished
+
+        if (this.tasks![taskIdx].isFinished) {
             this.taskCheckBoxJustChecked = taskIdx
         }
 
-        this.updateTaskViewState({ tasks: this.tasks })
+        this.updateTaskViewState({ tasks: this.tasks! })
     }
+
+    /**
+     * Toggle a subtask's checkbox.
+     * @param taskIdx  Idx of the the subtask's checkbock's task.
+     */
     handleSubtaskCheckboxClicked(subtaskIdx: number) {
-        const subtask = this.getSubtask(this.pickedTaskIdx, subtaskIdx)
+        const subtask = this.getSubtask(this.pickedTaskIdx, subtaskIdx)!
         subtask.isFinished = !subtask.isFinished
 
         if (subtask.isFinished) {
             this.subtaskCheckBoxJustChecked = subtaskIdx
         }
 
-        this.updateTaskViewState({ tasks: this.tasks })
+        this.updateTaskViewState({ tasks: this.tasks! })
     }
 
     /* UI Input Handlers */
-    toggleTaskTitleInput() {
-        this.isEditingTitle = true
-        this.newText = this.tasks[this.pickedTaskIdx].title
 
-        requestAnimationFrame(() => { 
-            const inputTitleElem = getElemById(`todo-title-id--${this.pickedTaskIdx}`) as HTMLInputElement
-            inputTitleElem.focus()
-        })
-
-        this.updateTaskViewState({ 
-            isEditingTitle: this.isEditingTitle
-        })
-    }
+    /**
+     * Toggles description text area input element.
+     * Will change task to an editing-description-state. 
+     * Will stay that way until task is minimized for ease of use.
+     */
     toggleTextArea() {
         requestAnimationFrame(() => {
             this.isEditingDescription = true
-            this.updateTaskViewState({ 
-                isEditingDescription: this.isEditingDescription 
-            })
+            this.updateTaskViewState({ isEditingDescription: this.isEditingDescription })
         })
     }
+
+    /**
+     * Input handler for all inputs in tasks view.
+     * For editing task titles, subtask titles, descriptions, & task groups.
+     * For description, updates the task height in real time.
+     * 
+     * @param event    Input event.
+     */
     inputTextHandler(event: Event) {
         const inputElem = event.target as HTMLInputElement | HTMLTextAreaElement
         const targetClass = inputElem.classList.value
@@ -174,31 +229,61 @@ export class TasksViewManager {
             requestAnimationFrame(() => this.updateTaskHeight())
         }
     }
+
+    /**
+     * Input on focus handler for all inputs in tasks view.
+     * Initializes shared input text variable.
+     * 
+     * @param event    Focus event.
+     */
     onInputFocusHandler(event: FocusEvent) {
         const target = event.target as HTMLElement
         const targetClass = target.classList.value
 
+        // close task group in put when clicking on a new input
+        if (!targetClass.includes("new-task-group-title-input") && (this.isEditingGroup || this.isMakingNewGroup)) {
+            this.closeEditState()
+        }
+
         if (targetClass.includes("subtask-title-input")) {
-            this.newText = this.getSubtask(this.pickedTaskIdx, this.editingSubtaskIdx).title
+            this.newText = this.getSubtask(this.pickedTaskIdx, this.editingSubtaskIdx)!.title
         }
         else if (targetClass.includes("new-task-group-title-input")) {
-            this.newText = this.taskGroups[this.pickedTaskGroupIdx]
+            this.newText = this.isEditingGroup ? this.taskGroups[this.pickedTaskGroupIdx].title : ""
+
+            // class styling modifier for focus styling as underline is outside of input elem
             this.isNewTaskGroupFocused = true
             this.updateTaskViewState({ isNewTaskGroupFocused: true })   
         }
         else if (targetClass.includes("title-input")) {
-            this.newText = this.tasks[this.pickedTaskIdx].title
+            this.newText = this.tasks![this.pickedTaskIdx].title
         }
         else if (targetClass.includes("description")) {
-            this.newText = this.tasks[this.pickedTaskIdx].description!
+            this.newText = this.tasks![this.pickedTaskIdx].description!
         }
     }
+
+    /**
+     * Input on blur handler for all inputs in tasks view.
+     * By default, focusing out of an input will save input text except for editing / making new group.
+     * Focusing out will also not automatically minimize the task.
+     * 
+     * @param event    Focus event.
+     */
     onInputBlurHandler(event: FocusEvent) {
         const target = event.target as HTMLElement
+        const relatedTarget = event.relatedTarget as HTMLElement
         const targetClass = target.classList.value
+        const relatedTargetClass = relatedTarget?.classList.value ?? ""
 
+        // using edit shortcut will blur input
+        // click away blur and edit shortcut blur must be separate
         if (this.hasUsedEditShortcut) {
             this.hasUsedEditShortcut = false
+            return
+        }
+        else if (relatedTargetClass.includes("tab-btn")) {
+            this.closeEditState()
             return
         }
 
@@ -207,6 +292,10 @@ export class TasksViewManager {
         // Input Shortcut Pressed 
         if (targetClass.includes("subtask-title-input")) {
             this.saveNewSubtask()
+        }
+        else if (targetClass.includes("task-group-title-input")) {
+            this.isNewTaskGroupFocused = false
+            this.updateTaskViewState({ isNewTaskGroupFocused: false })
         }
         else if (targetClass.includes("title-input")) {
             this.saveNewTitle()
@@ -217,11 +306,59 @@ export class TasksViewManager {
 
         this.toggleInputBlurred(true)
     }
+
+    /**
+     * Triggered when an input element has been blurred.
+     * Used to distinguish between focusing out of an input elem by click away vs. using an editing shortcut.
+     * 
+     * @param hasInputBlurred   An input eleme has been blurred.
+     */
     toggleInputBlurred(hasInputBlurred: boolean) {
         this.hasInputBlurred = hasInputBlurred
     }
 
+    /**
+     * Close current editing state if there is one.
+     */
+    closeEditState() {
+
+        // this should be first to handle close task group edit state when clicking on a new input elem
+        if (this.isEditingGroup || this.isMakingNewGroup) {
+            this.isEditingGroup = false
+            this.isMakingNewGroup = false
+            this.isNewTaskGroupFocused = false
+            this.newText = ""
+
+            this.updateTaskViewState({ 
+                isEditingGroup: false, isMakingNewGroup: false, 
+                isNewTaskGroupFocused: true, newText: ""
+            })
+        }
+        else if (this.isEditingDescription) {
+            this.isEditingDescription = false
+            this.newText = ""
+
+            this.updateTaskViewState({ isEditingDescription: false, newText: "" })
+        }
+        else if (this.isEditingTitle) {
+            this.isEditingTitle = false
+            this.newText = ""
+
+            this.updateTaskViewState({ isEditingTitle: false, newText: "" })
+        }
+        else if (this.editingSubtaskIdx >= 0) {
+            this.editingSubtaskIdx = -1
+            this.newText = ""
+
+            this.updateTaskViewState({  editingSubtaskIdx: -1, newText: "" })
+        }
+    }
+
     /* Menu Handlers */
+
+    /**
+     * Close an open context menu.
+     */
     closeContextMenu() {
         this.contextMenuX = -1
         this.contextMenuY = -1
@@ -238,14 +375,15 @@ export class TasksViewManager {
     }
 
     /**
-     * 
+     * Open a context menu. 
+     * Two types, one for a task and subtask. Uses target element class to distinguish.
      * @param event         Right click event
      * @param taskIdx       Task idx user has right clicked
      * @param subtaskIdx    Subtask idx whose settings btn user has right clicked. Will be < 0 if user clicked on task instead.
-     *                      If subtask object was clicked, the idx is captured from the id of target elem. 
+     *                      If subtask elem itself was clicked, the idx will be captured from the id of target elem. 
      * @returns 
      */
-    toggleContextMenu(event: MouseEvent, taskIdx: number, subtaskIdx = -1) {
+    openContextMenu(event: MouseEvent, taskIdx: number, subtaskIdx = -1) {
         const target = event.target as HTMLElement
         const targetClass = target.classList.value
 
@@ -263,10 +401,10 @@ export class TasksViewManager {
 
         if (targetClass.includes("subtask") || subtaskIdx >= 0) {
             const clickedSubtaskIdx = subtaskIdx >= 0 ? subtaskIdx : parseInt(target.id.split("--")[1])
-            this.rightClickedSubtask = { subtask: this.getSubtask(taskIdx, subtaskIdx), idx: clickedSubtaskIdx }
+            this.rightClickedSubtask = { subtask: this.getSubtask(taskIdx, subtaskIdx)!, idx: clickedSubtaskIdx }
         }
         else {
-            this.rightClickedTask = { task: this.tasks[taskIdx], idx: taskIdx }
+            this.rightClickedTask = { task: this.tasks![taskIdx], idx: taskIdx }
         }
 
         this.updateTaskViewState({
@@ -276,13 +414,18 @@ export class TasksViewManager {
             rightClickedTask: this.rightClickedTask,
         })
     }
+
+    /**
+     * Handler for context menu options.
+     * @param option    Option user has clicked.
+     */
     contextMenuHandler(option: ContextMenuOption) {
         if (option === ContextMenuOption.ADD_SUBTASK) {
             this.expandTask(this.rightClickedTask!.idx)
             this.isAddingNewSubtask = true
             this.addNewSubtask(this.rightClickedTask!.idx)
 
-            const newSubTaskIdx = this.tasks[this.rightClickedTask!.idx].subtasks.length - 1
+            const newSubTaskIdx = this.tasks![this.rightClickedTask!.idx].subtasks.length - 1
             this.editingSubtaskIdx = newSubTaskIdx
 
             requestAnimationFrame(() => {
@@ -291,10 +434,10 @@ export class TasksViewManager {
             })
         }
         else if (option === ContextMenuOption.DELETE_TASK) {
-            const newTasks = this.tasks.filter((_: Task, idx: number) => idx != this.rightClickedTask!.idx)
-            this.tasks = newTasks
+            const newTasks = this.tasks!.filter((_: Task, idx: number) => idx != this.rightClickedTask!.idx)
+            this.tasks! = newTasks
 
-            this.removeHighlightedTask()
+            this.minimizeExpandedTask()
         }
         else {
             this.removeSubtask(this.pickedTaskIdx, this.rightClickedSubtask!.idx)
@@ -309,38 +452,98 @@ export class TasksViewManager {
     }
 
     /* Groups */
-    taskGroupDropdownHandler(taskGroup: string) {
 
+    /**
+     * Get tasks from ta task group.
+     * @param   taskGroupIdx  Task group idx whose tasks are desired.
+     * @returns tasks of a given group
+     */
+    getTaskGroupTasks(taskGroupIdx: number) {
+        return this.taskGroups[taskGroupIdx]
     }
-    toggleNewGroupInputFocus() {
-        this.isNewTaskGroupFocused = !this.isNewTaskGroupFocused
-        this.updateTaskViewState({ isNewTaskGroupFocused: this.isNewTaskGroupFocused })
+
+    /**
+     * Update current task group
+     * @param taskGroupIdx 
+     */
+    updateTaskGroup(taskGroupIdx: number) {
+        this.currTaskGroupIdx = taskGroupIdx
+        this.tasks = taskGroupIdx < 0 ? null : this.taskGroups[taskGroupIdx].tasks
+
+        if (this.pickedTaskGroupIdx >= 0) {
+            this.minimizeExpandedTask()
+        }
+        if (this.focusedTaskIdx >= 0) {
+            this.resetCurrentFocusedTaskdx()
+        }
+
+        this.updateTaskViewState({
+            currTaskGroupIdx: this.currTaskGroupIdx,
+            tasks: this.tasks
+        })
     }
+
+    /**
+     * Saves current text in input as the new task group title.
+     * Closes the current task-editing state.
+     * Will not save if user has clicked 'Esc.'
+     * 
+     * @param doSave   Save the current text.
+     */
     saveNewTaskGroupTitle(doSave: boolean) {
+        if (doSave && this.isEditingGroup) {
+            this.taskGroups[this.currTaskGroupIdx].title = this.newText
+        }
+        else if (doSave && this.isMakingNewGroup) {
+            this.taskGroups.push({ title: this.newText, tasks: [] })
+            this.updateTaskGroup(this.taskGroups.length - 1)
+        }
 
         this.newText = ""
+        this.isEditingGroup = false
+        this.isMakingNewGroup = false
 
         this.updateTaskViewState({ 
             newText: "",
             isEditingGroup: false,
-            isMakingNewGroup: false
+            isMakingNewGroup: false,
+            taskGroups: this.taskGroups
         })
     }
 
-    /* Misc. Handlers */
-    toggleSpellCheck() {
-        this.textAreaHasSpellCheck = !this.textAreaHasSpellCheck
-        this.updateTaskViewState({ textAreaHasSpellCheck: this.textAreaHasSpellCheck })
+    /**
+     * Deletes current task group.
+     */
+    deleteTaskGroup() {
+        this.taskGroups = this.taskGroups.filter((taskGroup: TaskGroup, idx: number) => this.currTaskGroupIdx != idx)
+        const newTaskGroupIdx = this.taskGroups.length === 0 ? -1 : Math.max(this.currTaskGroupIdx - 1, 0)
+        this.updateTaskGroup(newTaskGroupIdx)
+
+        this.updateTaskViewState({ taskGroups: this.taskGroups })
     }
-    tasksSettingsHandler(optionsIdx: TaskSettingsOptions) {
-        if (optionsIdx === TaskSettingsOptions.MAKE_NEW_TASK_GROUP) {
+
+    /**
+     * Task group dropdown list handler
+     * @param taskGroupIdx   New task group idx.
+     */
+    taskGroupDropdownHandler(taskGroupIdx: number) {
+        this.updateTaskGroup(taskGroupIdx)
+    }
+
+    /**
+     * Settings handler for tasks view settings.
+     * 
+     * @param option   Option user has clicked. 
+     */
+    tasksSettingsHandler(option: TaskSettingsOptions) {
+        if (option === TaskSettingsOptions.MAKE_NEW_TASK_GROUP) {
             this.isMakingNewGroup = true
         }
-        else if (optionsIdx === TaskSettingsOptions.RENAME_TASK_GROUP) {
+        else if (option === TaskSettingsOptions.RENAME_TASK_GROUP) {
             this.isEditingGroup = true
         }
         else {
-
+            this.deleteTaskGroup()
         }
 
         this.updateTaskViewState({
@@ -353,18 +556,38 @@ export class TasksViewManager {
             const elem = getElemById(`task-group-input`)! as HTMLInputElement
             elem.focus()
 
-            elem.value = this.isEditingGroup ? this.tasks[this.pickedTaskGroupIdx].title : ""
+            elem.value = this.isEditingGroup ? this.tasks![this.pickedTaskGroupIdx].title : ""
         })
     }
 
+    /* Misc. Handlers */
+
+    /**
+     * Toggle input description spell check.
+     * True if focusing and false if blurred.
+     * Used to give the illusion focusing and blurring will change textarea to p tag and vice-versa.
+     */
+    toggleSpellCheck() {
+        this.textAreaHasSpellCheck = !this.textAreaHasSpellCheck
+        this.updateTaskViewState({ textAreaHasSpellCheck: this.textAreaHasSpellCheck })
+    }
+
     /* Task Updates */
+
+    /**
+     * Saves current text in input as the new task title.
+     * Closes the current task-editing state.
+     * Will not save if user has clicked 'Esc'
+     * 
+     * @param doSave   Save the current text.
+     */
     saveNewTitle(doSave = true) {
         if (doSave && this.newText) {
-            this.tasks[this.pickedTaskIdx].title = this.newText
+            this.tasks![this.pickedTaskIdx].title = this.newText
         }
         else if (!doSave && this.isMakingNewTask || doSave && !this.newText) {
             this.removeTask(this.pickedTaskIdx)
-            this.removeHighlightedTask()
+            this.minimizeExpandedTask()
         }
 
         this.newText = ""
@@ -372,19 +595,27 @@ export class TasksViewManager {
         this.isMakingNewTask = false
 
         this.updateTaskViewState({ 
-            tasks: this.tasks,
+            tasks: this.tasks!,
             isEditingTitle: this.isEditingTitle,
             isMakingNewTask: this.isMakingNewTask,
             newText: this.newText
         })
     }
+
+    /**
+     * Saves current text in input as the new task description text.
+     * Closes the current task-editing state.
+     * Will not save if user has clicked 'Esc.'
+     * 
+     * @param doSave   Save the current text.
+     */
     saveNewDescription(doSave = true) {
         if (doSave) {
-            this.tasks[this.pickedTaskIdx].description = this.newText
+            this.tasks![this.pickedTaskIdx].description = this.newText
         }
         else {
             const descriptInputElem = getElemById(`todo-description-input-id--${this.pickedTaskIdx}`) as HTMLTextAreaElement
-            descriptInputElem.value = this.tasks[this.pickedTaskIdx].description!
+            descriptInputElem.value = this.tasks![this.pickedTaskIdx].description!
 
             descriptInputElem.style.height = "5px"
             descriptInputElem.style.height = (descriptInputElem.scrollHeight) + "px"
@@ -397,14 +628,21 @@ export class TasksViewManager {
 
         this.updateTaskViewState({ 
             newText: this.newText,
-            tasks: this.tasks,
+            tasks: this.tasks!,
             textAreaHasSpellCheck: this.textAreaHasSpellCheck
         })
     }
+
+
+    /**
+     * Button handler for new task button.
+     * Makes a new task and inserts it at the top.
+     * This task elem receives the editing state.
+     */
     addNewTaskBtnHandler() {
-        this.removeHighlightedTask()
+        this.minimizeExpandedTask()
         this.toggleInputBlurred(false)
-        this.tasks.unshift({ title: "", description: "", isFinished: false, subtasks: [] })
+        this.tasks!.unshift({ title: "", description: "", isFinished: false, subtasks: [] })
         this.isMakingNewTask = true
         this.hasJustClosedContextMenu = false
 
@@ -412,29 +650,44 @@ export class TasksViewManager {
 
         this.updateTaskViewState({ 
             isMakingNewTask: this.isMakingNewTask,
-            tasks: this.tasks,
+            tasks: this.tasks!,
         })
     }
-    removeTask(taskIdx: number) {
-        this.tasks = this.tasks.filter((_: SubTask, idx: number) => idx != taskIdx)
-        this.updateTaskViewState({ tasks: this.tasks })
 
+    /**
+     * Removes a given task.
+     * @param taskIdx  Idx of task to be removed.
+     */
+    removeTask(taskIdx: number) {
+        this.tasks! = this.tasks!.filter((_: Task, idx: number) => idx != taskIdx)
+
+        // picked task idx may fall on a new one after deletion
         if (this.pickedTaskIdx >= 0) {
-            this.removeHighlightedTask()
+            this.minimizeExpandedTask()
         }
 
         requestAnimationFrame(() => this.updateTaskHeight())
 
+        // if removed task is the current focus the prev task will be focuseds, next if the first is removed
         this.focusedTaskIdx = Math.max(0, this.focusedTaskIdx - 1)
-        this.updateTaskViewState({ focusedTaskIdx: this.focusedTaskIdx })
+        this.updateTaskViewState({ focusedTaskIdx: this.focusedTaskIdx, tasks: this.tasks! })
 
-        if (this.tasks.length === 0) {
+        if (this.tasks!.length === 0) {
             this.focusedTaskIdx = -1
         }
 
         if (this.focusedTaskIdx < 0) return
         requestAnimationFrame(() => this.focusTaskElem(`todo-id--${this.focusedTaskIdx}`))
     }
+
+    /**
+     * Expand a given task.
+     * This expaned task will be the picked and focused one.
+     * Sets the height of task based on its elements. 
+     * This is done for the height animation as auto will not work.
+     * 
+     * @param taskIdx  Task idx of the task to be expanded.
+     */
     expandTask(taskIdx: number) {
         this.pickedTaskIdx = taskIdx
         this.focusedTaskIdx = taskIdx
@@ -446,9 +699,21 @@ export class TasksViewManager {
         if (this.focusedTaskIdx < 0) return
         requestAnimationFrame(() => this.focusTaskElem(`todo-id--${this.focusedTaskIdx}`))
     }
+
+    /**
+     * Get the subtasks of a given task.
+     * @param taskIdx  Idx of the task whose subtask is wanted.
+     */
     getSubtasks(taskIdx: number) {
-        return this.tasks[taskIdx].subtasks
+        return this.tasks![taskIdx].subtasks
     }
+
+    /**
+     * Updates the task height given using its children elements. 
+     * Will be set to the height of the selected task elem.
+     * Will change when a changes in its children will cause a task change.
+     * This is done for the height animation as auto will not work.
+     */
     updateTaskHeight() {
         let minTaskHeight = TASK_HEIGHT_MIN_NO_DESCR
         let subtasksHeight = 0
@@ -467,7 +732,7 @@ export class TasksViewManager {
         this.pickedTaskDescriptionHT = descriptionElement?.clientHeight || 15
 
         // Subtasks
-        if (this.tasks[this.pickedTaskIdx].subtasks.length > 0) {
+        if (this.tasks![this.pickedTaskIdx].subtasks.length > 0) {
             const subtasksListElement = getElemById(`todo-subtasks-id--${this.pickedTaskIdx}`)! as HTMLElement
             
             subtasksHeight = subtasksListElement.clientHeight + subtasksTopPadding
@@ -490,7 +755,11 @@ export class TasksViewManager {
             hooklineOffset: this.hooklineOffset
         })
     }
-    removeHighlightedTask() {
+
+    /**
+     * Minimize current expanded task.
+     */
+    minimizeExpandedTask() {
         this.isEditingTitle = false
         this.isEditingDescription = false
         this.pickedTaskIdx = -1
@@ -515,6 +784,12 @@ export class TasksViewManager {
             subtaskCheckBoxJustChecked: this.subtaskCheckBoxJustChecked,
         })
     }
+
+    /**
+     * Focus a given task elem id. Attach focus event listeners.
+     * Used for tasks and subtasks.
+     * @param focusElemId   The id of the task elem to be focused.
+     */
     focusTaskElem(focusElemId: string) {
         const taskElem = getElemById(focusElemId)!
         taskElem.focus()
@@ -522,56 +797,100 @@ export class TasksViewManager {
         taskElem.addEventListener('blur', this.focusedTaskOnBlurHandler)
         taskElem.addEventListener('focus', this.refocusTaskElem)
     }
+
+    /**
+     * Refocus to a task elem that has already been focused and blurred.
+     * Used for tasks and subtasks.
+     * @param event  Focus Event
+     */
     refocusTaskElem = (event: FocusEvent) => {
         if (event.relatedTarget) return
     
         this.focusedTaskIdx = this.prevFocusedTodoIdx
         this.updateTaskViewState({ focusedTaskIdx: this.prevFocusedTodoIdx })
     }
+
+    /**
+     * Blur handler for when a current focused task loses focus.
+     * Removes prev focused task if user does moves to a new focus task so blurs away from clicking away.
+     * Removes also event listeners if necessary.
+     * 
+     * @param event  Focus Event
+     */
     focusedTaskOnBlurHandler = (event: FocusEvent) => {
         const relatedTarget = event.relatedTarget as HTMLElement
         const taskElement = event.target as HTMLElement
+        const isMovingToNewFocusTask = relatedTarget != null
 
-        // do not remove listeners when user clicks outside of app, they will be needed on refocus
-        if (relatedTarget != null) {
+        // do not remove listeners when user clicks away, they will be needed on refocus
+        if (isMovingToNewFocusTask) {
             taskElement.removeEventListener('blur', this.focusedTaskOnBlurHandler)
             taskElement.removeEventListener('focus', this.refocusTaskElem)
         }
 
         this.prevFocusedTodoIdx = this.focusedTaskIdx
         this.updateTaskViewState({ prevFocusedTodoIdx: this.focusedTaskIdx })
-
-        if (!relatedTarget || relatedTarget?.tagName === "LI") return
-        this.resetCurrentFocusedTaskdx()
     }
+
+    /**
+     * Removes current focused subtask.
+     */
     resetCurrentFocusedSubtaskIdx() {
         this.focusedSubtaskIdx = -1
         this.updateTaskViewState({ focusedSubtaskIdx: this.focusedSubtaskIdx })
     }
+
+    /**
+     * Removes current focused task.
+     */
     resetCurrentFocusedTaskdx() {
         this.focusedTaskIdx = -1
         this.updateTaskViewState({ focusedTaskIdx: this.focusedTaskIdx })
     }
 
     /* Subtasks Updates */
-    getSubtask(taskIdx: number, subtaskIdx: number): SubTask {
-        return this.tasks[taskIdx].subtasks[subtaskIdx]
-    }
-    addNewSubtask(taskIdx: number) {
-        this.tasks[taskIdx].subtasks.push({ title: "", isFinished: false })
 
-        this.updateTaskViewState({ tasks: this.tasks })
+    /**
+     * Get subtask
+     * @param taskIdx     Task where desired subtask belongs.
+     * @param subtaskIdx  Desired subtask
+     * 
+     * @returns Desired subtask
+     */
+    getSubtask(taskIdx: number, subtaskIdx: number): SubTask | null {
+        return this.tasks![taskIdx].subtasks[subtaskIdx] ?? null
+    }
+
+    /**
+     * Add a new subtask
+     * @param taskIdx   Task idx of task where new subtask will belong.
+     */
+    addNewSubtask(taskIdx: number) {
+        this.tasks![taskIdx].subtasks.push({ title: "", isFinished: false })
+
+        this.updateTaskViewState({ tasks: this.tasks! })
         requestAnimationFrame(() => this.updateTaskHeight())
     }
+
+    /**
+     * Remove given subtask
+     * @param taskIdx     Task where desired subtask to be removed belongs.
+     * @param subtaskIdx  Subtask to be removed
+     * 
+     */
     removeSubtask(taskIdx: number, subTaskIdx: number) {
-        const subtasks = this.tasks[taskIdx].subtasks
+        const subtasks = this.tasks![taskIdx].subtasks
         const newSubtasks = subtasks.filter((_: SubTask, idx: number) => idx != subTaskIdx)
 
-        this.tasks[this.pickedTaskIdx].subtasks = newSubtasks
-        this.updateTaskViewState({ tasks: this.tasks })
+        this.tasks![this.pickedTaskIdx].subtasks = newSubtasks
+        this.updateTaskViewState({ tasks: this.tasks! })
 
         requestAnimationFrame(() => this.updateTaskHeight())
     }
+
+    /**
+     * Remove current focused subtask.
+     */
     removeFocusedSubtask() {
         this.removeSubtask(this.pickedTaskIdx, this.focusedSubtaskIdx)
 
@@ -582,9 +901,17 @@ export class TasksViewManager {
             this.resetCurrentFocusedSubtaskIdx()
         }
     }
+
+    /**
+     * Closes the current task-editing state.
+     * Saves current text in input as the new subtask title.
+     * Will not save if user has clicked 'Esc.'
+     * 
+     * @param doSave  Do save current changes.
+     */
     saveNewSubtask(doSave = true) {
         if (doSave && this.newText) {
-            this.tasks[this.pickedTaskIdx].subtasks[this.editingSubtaskIdx].title = this.newText
+            this.tasks![this.pickedTaskIdx].subtasks[this.editingSubtaskIdx].title = this.newText
         }
         else if (!doSave && this.isAddingNewSubtask || doSave && !this.newText) {
             this.removeSubtask(this.pickedTaskIdx, this.editingSubtaskIdx)
@@ -595,7 +922,7 @@ export class TasksViewManager {
         this.isAddingNewSubtask = false
 
         this.updateTaskViewState({ 
-            tasks: this.tasks,
+            tasks: this.tasks!,
             editingSubtaskIdx: this.editingSubtaskIdx,
             newText: this.newText,
             isAddingNewSubtask: this.isAddingNewSubtask
@@ -603,13 +930,19 @@ export class TasksViewManager {
     }
 
     /* Focus Functionality */
+
+    /**
+     * Up and down key pressed handler. Used for both subtasks and tasks.
+     * Will be for subtasks if there is an expanded task, there are subtasks in it, expanded is focused.
+     * @param key   Arrow key pressed.
+     */
     handleArrowkeyPressed(key: string) {
         let isForSubtasks = this.pickedTaskIdx >= 0
         let subtasklength = 0
 
         if (isForSubtasks) {
             subtasklength = this.getSubtasks(this.pickedTaskIdx).length
-            isForSubtasks = isForSubtasks && subtasklength > 0 && this.focusedTaskIdx === this.pickedTaskIdx            
+            isForSubtasks = isForSubtasks && subtasklength > 0 && this.focusedTaskIdx === this.pickedTaskIdx
         }
 
         if (isForSubtasks) {
@@ -619,6 +952,13 @@ export class TasksViewManager {
             this.updateTaskFocusIdx(key)
         }
     }
+
+    /**
+     * Update the current subtask focus idx. 
+     * Increments or decrements depending on which key is pressed.
+     * Will reset and move to a prev or text task if idx goes out of bounds.
+     * @param key   Left or right key
+     */
     updateSubTaskFocusIdx(key: string) {
         const subtasklength = this.getSubtasks(this.pickedTaskIdx).length
 
@@ -641,11 +981,16 @@ export class TasksViewManager {
             }
         }
 
-        // this.focusTaskElem(`subtask-idx--${this.focusedSubtaskIdx}`)  .focus() for subtask elem fails to work
         this.updateTaskViewState({ focusedSubtaskIdx: this.focusedSubtaskIdx })
     }
+
+    /**
+     * Update the current focus idx. 
+     * Increments or decrements depending on which key is pressed.
+     * @param key   Left or right key
+     */
     updateTaskFocusIdx(key: string) {
-        const tasksLength = this.tasks.length
+        const tasksLength = this.tasks!.length
         if (tasksLength === 0) return
 
         if (key === "ArrowUp") {
@@ -660,18 +1005,29 @@ export class TasksViewManager {
         this.updateTaskViewState({ focusedTaskIdx: this.focusedTaskIdx })
     }
 
+    /**
+     * Shortcut handler for tasks view component.
+     * @param event   Keyboard event
+     */
     keyboardShortcutHandler(event: KeyboardEvent) {
         const target = event.target as HTMLElement
         const targetClass = target.classList.value
         const key = event.key
         const tag = target.tagName
 
+        console.log(tag)
+
+        if (event.code === "Space" && tag != "INPUT" && tag != "TEXTAREA") {
+            event.preventDefault()
+        }
+
         // GENERAL SHORTCUTS
         if (["BODY", "LI"].includes(tag) && key === "ArrowUp" || key === "ArrowDown") {
+            event.preventDefault()                  // don't allow arrow keys to move scroll
             this.handleArrowkeyPressed(key)
         }
         else if (!["INPUT", "TEXTAREA"].includes(tag) && key === "Escape") {
-            this.removeHighlightedTask()
+            this.minimizeExpandedTask()
         }
 
         const isEditing = ["INPUT", "TEXTAREA"].includes(tag)
@@ -692,6 +1048,7 @@ export class TasksViewManager {
         }
 
         if (isEditShortCut) {
+            // click away blur and edit shortcut blur must be separate
             this.hasUsedEditShortcut = true
             target.blur()
         }
@@ -723,12 +1080,28 @@ export class TasksViewManager {
         }
         else if (event.code === "Space") {
             if (pickedTaskIdx >= 0) {
-                this.removeHighlightedTask()
+                this.minimizeExpandedTask()
             }
             if (pickedTaskIdx < 0 || pickedTaskIdx >= 0 && pickedTaskIdx != focusedIdx) {
                 this.expandTask(focusedIdx)
             }
         }
+    }
+
+    /* Misc. */
+    hasTabBarClicked() {
+        this.focusedSubtaskIdx = -1
+        
+        if (this.focusedTaskIdx >= 0) {
+            this.resetCurrentFocusedTaskdx()
+        }
+        if (this.pickedTaskGroupIdx >= 0) {
+            this.minimizeExpandedTask()
+        }
+
+        this.closeEditState()
+
+        this.updateTaskViewState({ focusedSubtaskIdx: -1 })
     }
 
     /**
@@ -765,6 +1138,10 @@ export class TasksViewManager {
         if (newState.focusedSubtaskIdx != undefined)            newStateObj.focusedSubtaskIdx = newState.focusedSubtaskIdx
         if (newState.newText != undefined)                      newStateObj.newText = newState.newText
         if (newState.isNewTaskGroupFocused != undefined)        newStateObj.isNewTaskGroupFocused = newState.isNewTaskGroupFocused
+        if (newState.currTaskGroupIdx != undefined)             newStateObj.currTaskGroupIdx = newState.currTaskGroupIdx
+        if (newState.taskGroups != undefined)                   newStateObj.taskGroups = newState.taskGroups
+        if (newState.isEditingGroup != undefined)               newStateObj.isEditingGroup = newState.isEditingGroup
+        if (newState.isMakingNewGroup != undefined)             newStateObj.isMakingNewGroup = newState.isMakingNewGroup
 
         return newStateObj
     }

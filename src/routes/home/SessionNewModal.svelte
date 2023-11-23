@@ -84,6 +84,17 @@
         const inputElement = newTodoInputContainer.firstChild! as HTMLInputElement
         inputElement.focus()
     }
+    const focustTimeDropdownOptionClicked = (time: number) => {
+        input.pomTime = time
+        isFocusTimeDropDownOpen = false
+        setResultTimes()
+    }
+    const breakTimeDropdownOptionClicked = (time: number) => {
+        input.breakTime = time
+        isBreakTimeDropDownOpen = false
+        setResultTimes()
+    }
+
     const handleCreateNewTagClicked = () => {
         // Create a New Tag
     }
@@ -226,13 +237,9 @@
                                     <li class={`dropdown-menu__option ${input.pomTime === time ? "dropdown-menu__option--selected" : ""}`}>
                                         <button 
                                             class="dropdown-element" 
-                                            on:click={() => { 
-                                                input.pomTime = time
-                                                isFocusTimeDropDownOpen = false
-                                                setResultTimes()
-                                            }}
+                                            on:click={() => focustTimeDropdownOptionClicked(time)}
                                         >
-                                            <p>{time} mins</p>
+                                            <span class="dropdown-menu__option-text">{time} mins</span>
                                             {#if input.pomTime === time}
                                                 <div class="dropdown-menu__option-icon">
                                                     <i class="fa-solid fa-check"></i>
@@ -272,13 +279,9 @@
                                     <li class={`dropdown-menu__option ${input.breakTime === time ? "dropdown-menu__option--selected" : ""}`}>
                                         <button 
                                             class="dropdown-element" 
-                                            on:click={() => { 
-                                                input.breakTime = time
-                                                isBreakTimeDropDownOpen = false
-                                                setResultTimes()
-                                            }}
+                                            on:click={() => breakTimeDropdownOptionClicked(time)}
                                         >
-                                            <p>{time} mins</p>
+                                            <span class="dropdown-menu__option-text">{time} mins</span>
                                             {#if input.breakTime === time}
                                                 <div class="dropdown-menu__option-icon">
                                                     <i class="fa-solid fa-check"></i>
@@ -383,6 +386,22 @@
             @include unfill-btn-ficus-styling(var(--textColor1));
         }
 
+        /* Dropdown Styling */
+        .dropdown-menu {
+            background-color: var(--sidePanelContextMenuBgColor);
+            border: var(--sidePanelContextMenuBorder);
+            box-shadow: var(--sidePanelContextMenuBoxShadow);
+
+            &__option button {
+                &:hover {
+                    background-color: var(--sidePanelContextMenuHoverColor) !important;
+                }
+                &:focus {
+                    background-color: var(--sidePanelContextMenuHoverColor) !important;
+                }
+            }
+        }
+
         /* Light Themes Adjustments */
         &--light .text-input-container {
             @include input-text-field-light;
@@ -462,15 +481,6 @@
                 position: absolute;
                 top: 40px;
                 width: 100px;
-                &__option {
-                    p {
-                        width: 60%;
-                        margin-left: 3px;
-                    }
-                    span {
-                        margin-right: 3px;
-                    }
-                }
             }
         }
         &__name-input-tag-dropdown-btn {
@@ -558,14 +568,7 @@
             width: 90px;
             
             &__option {
-                padding: 0px;
                 border-radius: 10px;
-                button {
-                    padding: 8px 12px;
-                }
-                p {
-                    width: 65%;
-                }
             }
         }
 

@@ -80,8 +80,6 @@ export const setRootColors = (theme: ColorThemeProps) => {
     styleTag.innerHTML = `
       :root {
           --primaryBgColor: ${theme.primaryBgColor};
-          --secondaryBgColor: ${theme.secondaryBgColor};
-          --tertiaryBgColor: ${theme.tertiaryBgColor};
           --fgColor1: ${theme.fgColor1};
           --fgColor2: ${theme.fgColor2};
           --sessionBgColor: ${theme.sessionBgColor};
@@ -131,6 +129,20 @@ export const setRootColors = (theme: ColorThemeProps) => {
           --midPanelAccentTextColor: ${theme.midPanelAccentTextColor};
           --sidePanelBorder: ${theme.sidePanelBorder};
           --sidePanelShadow: ${theme.sidePanelShadow};
+          --sidePanelTabBgColor: ${theme.sidePanelTabBgColor};
+          --sidePanelTabHighlightColor: ${theme.sidePanelTabHighlightColor};
+          --rightBarBgColor: ${theme.rightBarBgColor};
+          --rightBarBgBoxShadow: ${theme.rightBarBgBoxShadow};
+          --tasksCheckBoxColorDefault: ${theme.tasksCheckBoxColorDefault};
+          --sidePanelContextMenuBgColor: ${theme.sidePanelContextMenuBgColor};
+          --sidePanelContextMenuHoverColor: ${theme.sidePanelContextMenuHoverColor};
+          --sidePanelContextMenuBorder: ${theme.sidePanelContextMenuBorder};
+          --sidePanelContextMenuBoxShadow: ${theme.sidePanelContextMenuBoxShadow};
+          --sidePanelLightAccentColor: ${theme.sidePanelLightAccentColor};
+          --tasksCheckColor: ${theme.tasksCheckColor};
+          --tasksCheckBoxColorDefault: ${theme.tasksCheckBoxColorDefault};
+          --tasksCheckBoxColorComplete: ${theme.tasksCheckBoxColorComplete};
+          --tasksLightTextColor: ${theme.tasksLightTextColor};
           --dropdownMenuBgColor1: ${theme.dropdownMenuBgColor1};
           --dropdownMenuBgHoverColor1: ${theme.dropdownMenuBgHoverColor1};
           --dropdownMenuBgColor2: ${theme.dropdownMenuBgColor2};

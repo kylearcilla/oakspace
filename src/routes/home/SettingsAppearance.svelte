@@ -57,6 +57,7 @@
 <svelte:window on:keydown={handleEnterPressed} />
 
 <Modal onClickOutSide={() => closeModal(ModalType.Appearance)}>
+    <div class="appearance-wrapper">
     <div class={`appearance ${$themeState.isDarkTheme ? "" : "appearance--light"}`}>
         <h1 class="appearance__title modal-bg__content-title">Appearance</h1>
         <p class="appearance__description modal-bg__content-copy">Tailor your workspace to your personal aesthetic!</p>
@@ -104,13 +105,6 @@
                         </li>
                     {/each}
                 </ul>
-                {#if clickedTheme?.sectionDetails.title === "default"}
-                    <div class="appearance__apply-btn-container">
-                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill  unfill--padded unfill--oval">
-                            {`Apply ${clickedTheme?.title}"`}
-                        </button>
-                    </div>
-                {/if}
             </div>
             <!-- Color Themes -->
             <div class="color-themes bento-box">
@@ -174,13 +168,6 @@
                         {/each}
                     </ul>
                 </div>
-                {#if clickedTheme?.sectionDetails.title === "dark" || clickedTheme?.sectionDetails.title === "light"}
-                    <div class="appearance__apply-btn-container">
-                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill  unfill--padded unfill--oval">
-                            {`Apply "${clickedTheme?.title}"`}
-                        </button>
-                    </div>
-                {/if}
             </div>
         {:else}
             <!-- Image Themes -->
@@ -225,13 +212,6 @@
                         </li>
                     {/each}
                 </ul>
-                {#if clickedTheme?.sectionDetails.title === "image"}
-                    <div class="appearance__apply-btn-container appearance__apply-btn-container--overflow-hover">
-                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill  unfill--padded unfill--oval">
-                            {`Preview "${clickedTheme.sectionDetails.title}"`}
-                        </button>
-                    </div>
-                {/if}
             </div>
             <!-- Ambient Themes -->
             <div class="ambient-mode bento-box">
@@ -275,16 +255,19 @@
                         </li>
                     {/each}
                 </ul>
-                {#if clickedTheme?.sectionDetails.title === "video"}
-                    <div class="appearance__apply-btn-container appearance__apply-btn-container--overflow-hover">
-                        <button on:click={handleThemeSelected} class="appearance__apply-btn unfill  unfill--padded unfill--oval">
-                            {`Preview "${clickedTheme.sectionDetails.title}"`}
-                        </button>
-                    </div>
-                {/if}
             </div>
             <div class="modal-padding"></div>
         {/if}
+    </div>
+        <div class={`appearance-apply-btn-container ${clickedTheme ? "appearance-apply-btn-container--visible" : ""}`}>
+            <button on:click={handleThemeSelected} class="appearance__apply-btn">
+                {#if clickedTheme && (clickedTheme.sectionDetails.title === "image" || clickedTheme.sectionDetails.title === "video")}
+                    {`Preview Selected ${clickedTheme.sectionDetails.title === "image" ? "Image" : "Video"}"`}
+                {:else if clickedTheme}
+                    {`Apply "${clickedTheme?.title}"`}
+                {/if}
+            </button>
+        </div>
     </div>
 </Modal>
 
@@ -307,9 +290,12 @@
     .appearance {
         width: 85vw;
         max-width: 950px;
-        height: 750px;
-        position: relative;
         padding: $settings-modal-padding;
+        padding-bottom: 0px;
+
+        &-wrapper {
+            position: relative;
+        }
 
         .unfill {
             @include unfill-btn-ficus-styling(var(--fgColor1));
@@ -351,15 +337,36 @@
         &__description {
             margin-top: 8px;
         }
-        &__apply-btn-container {
-            height: 30px;
-            width: 100%;
+
+        &-wrapper {
             position: relative;
         }
-        &__apply-btn {
-            @include pos-abs-bottom-right-corner(0px, 0px);
+        &-apply-btn-container {
+            @include pos-abs-bottom-right-corner(0px, 20px);
+            position: sticky;
+            height: 30px;
+            min-width: 100px;
+            @include flex-container(center, flex-end);
+            visibility: hidden;
+            opacity: 0;
+            
+            &--visible {
+                visibility: visible;
+                opacity: 1;
+            }
         }
+        &-apply-btn-container button {
+            margin-right: 20px;
+            padding: 8.5px 20px;
+            font-size: 1.2rem;
+            border-radius: 20px;
+            background-color: rgb(var(--fgColor2));
+            color: rgb(var(--textColor2));
 
+            &:hover, &:focus {
+                filter: brightness(1.05);
+            }
+        }
     }
     .appearance .highlighter-tabs {
         margin: 22px 0px 25px 0px;
@@ -555,6 +562,7 @@
     /* Sections */
     .default-themes {
         padding-bottom: 20px;
+
         &__selection {
             margin-top: 20px;
             display: flex;
@@ -566,12 +574,14 @@
     }
     .color-themes {
         padding-bottom: 30px;
+
         &__selection-item {
-            margin-bottom: 10px;
+            height: 55px;
+            margin: 0px;
         }
         &__themes-list {
             display: grid;
-            grid-template-columns: repeat(auto-fill, 115px);
+            grid-template-columns: repeat(auto-fill, 107px);
             width: 100%;
         }
         &__light-themes {

@@ -63,6 +63,10 @@ type Quote = {
 }
 
 /* Tasks */
+type TaskGroup = {
+    title: string,
+    tasks: Task[]
+}
 type Task = {
     title: string,
     subtasks: SubTask[],
@@ -322,6 +326,26 @@ type YoutubeMediaId = {
     id: string 
 }
 
+/* Goals */
+type Goal = {
+    id: string
+    tagId: string
+    title: string
+    description: string
+    dueDate: Date
+    startDate: Date
+    accomplishedDate: Date | null
+    status: GoalStatus
+    milestones: Milestone[]
+    idx: number
+}
+type Milestone = {
+    title: string
+    id: string
+    idx: number
+    endDate: Date | null
+}
+
 /* Analytics Stuff */
 type SessionInputData = { 
     tagName: string, 
@@ -422,8 +446,6 @@ type ColorThemeProps = {
     hasTwin: boolean,
     isHeaderElementTextLight: boolean,
     primaryBgColor: string,
-    secondaryBgColor: string,
-    tertiaryBgColor: string,
     fgColor1: string,
     fgColor2: string,
     sessionBgColor: string,
@@ -473,6 +495,19 @@ type ColorThemeProps = {
     midPanelAccentTextColor: string,
     sidePanelBorder: string,
     sidePanelShadow: string,
+    sidePanelTabBgColor: string,
+    sidePanelTabHighlightColor: string,
+    sidePanelContextMenuBgColor: string,
+    sidePanelContextMenuHoverColor: string,
+    sidePanelContextMenuBorder: string,
+    sidePanelContextMenuBoxShadow: string,
+    sidePanelLightAccentColor: string,
+    rightBarBgColor: string,
+    rightBarBgBoxShadow: string,
+    tasksCheckBoxColorDefault: string,
+    tasksCheckBoxColorComplete: string,
+    tasksCheckColor: string,
+    tasksLightTextColor: string,
     dropdownMenuBgColor1: string,
     dropdownMenuBgHoverColor1: string,
     dropdownMenuBgColor2: string

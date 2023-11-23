@@ -448,9 +448,9 @@ button.icon {
     padding: 5px;
 }
 
-@mixin tab-btn-light {
+@mixin tab-btn-light($val) {
     &:hover, &:focus {
-        filter: brightness(1.045);
+        filter: brightness($val);
     }
 }
 
@@ -476,7 +476,7 @@ button.tab-btn {
         transform: scale(0.985);
     }
     &--selected {
-        background-color: var(--tabHighlightColor) !important;
+        background-color: var(--tabHighlightColor);
         box-shadow: var(--tabHighlightBoxShadow);
         color: var(--bentoBoxBgColor);
 
@@ -696,6 +696,7 @@ button.settings-btn {
 }
 
 $bento-box-border-radius: 12px;
+$bento-box-padding: 8px;
 
 @mixin bento-box-light {
     &__title {
@@ -760,6 +761,7 @@ $bento-box-border-radius: 12px;
 $settings-modal-padding: 20px 25px 25px 25px;
 
 .modal {
+    position: relative;
     &--content {
         overflow: hidden;
     } 
@@ -812,6 +814,7 @@ $settings-modal-padding: 20px 25px 25px 25px;
             color: rgba(var(--textColor1), 0.8);
         }
         &-copy {
+            margin-top: 8px;
             font-size: 1.2rem;
             font-weight: 400;
             color: rgba(var(--textColor1), 0.6);

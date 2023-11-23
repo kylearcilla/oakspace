@@ -34,7 +34,7 @@
         <!-- Video Player -->
         <div class="vid-view__container">
             <div class={`vid-view__iframe-player-container ${isPlaylistPrivate ? "vid-view__iframe-player-container--private" : ""}`}>
-                <div class="vid-view__iframe-player" id="home-yt-player"></div>
+                <div class="vid-view__iframe-player iframe-vid-player" id="home-yt-player"></div>
             </div>
             {#if !isPlaylistPrivate && $ytPlayerStore?.playlist === null}
                 <div class="vid-view__empty-vid-view">
@@ -154,6 +154,7 @@
         &__iframe-player-container {
             width: 100%;
             height: 100%;
+
             &--private {
                 display: none;
             }

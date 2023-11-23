@@ -42,5 +42,31 @@ export const SHORT_CUTS = {
             title: "Delete Focused Todo",
             controls: ["Del"]
         },
-    ]
+    ],
+    tasks: [
+        {
+            title: "Move Task Focus Up",
+            controls: ["↑"]
+        },
+        {
+            title: "Move Task Focus Down",
+            controls: ["↓"]
+        },
+        {
+            title: "Expand / Minimize Focused Task",
+            controls: ["Space"]
+        },
+        {
+            title: "Toggle Task / Subtask Checkbox",
+            controls: ["Enter"]
+        },
+        {
+            title: "Delete Focused Task / Subtask",
+            controls: ["Del"]
+        },
+        {
+            title: "Escape Focus",
+            controls: ["Esc"]
+        },
+    ],
 }

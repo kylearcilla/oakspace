@@ -249,7 +249,7 @@
                         {#if $musicDataStore.musicPlatform != null}
                             <h3 class="bento-box__title">{`Discover from ${addSpacesToCamelCaseStr(MusicPlatform[$musicDataStore.musicPlatform])}`}</h3>
                         {/if}
-                        <p class="discover__copy bento-box__copy">Get in the zone with music that matches your vibe - select a mood / genre and discover new tunes to fuel your day.</p>
+                        <p class="discover__copy bento-box__copy">Get in the zone with music that matches your vibe. Select a mood / genre and discover new tunes to fuel your day.</p>
                         <div class="discover__collection-list-container">
                             {#if isScrollableLeft}
                                 <div class="gradient-container gradient-container--left">

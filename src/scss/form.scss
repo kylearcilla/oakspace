@@ -64,8 +64,8 @@ $loading-dots-width: 4px;
  .form-submit-btn {
     height: 45px;
     border-radius: 10px;
-    border: solid 1.15px rgb(var(--fgColor2));
-    color: rgb(var(--fgColor2));
+    border: solid 1.15px rgb(var(--fgColor1));
+    color: rgb(var(--fgColor1));
     background-color: transparent;
     transition: 0.1s ease-in-out;
     font-size: 1.3rem;
@@ -73,7 +73,7 @@ $loading-dots-width: 4px;
     @include center;
 
     &:hover {
-        background-color: rgba(var(--fgColor2), 1);
+        background-color: rgba(var(--fgColor1), 1);
         color: rgb(var(--textColor2));
     }
     &:active {
@@ -81,7 +81,7 @@ $loading-dots-width: 4px;
     }
     &:disabled {
         &:hover {
-            color: rgb(var(--fgColor2));
+            color: rgb(var(--fgColor1));
             background: none;
         }
     }
@@ -91,13 +91,13 @@ $loading-dots-width: 4px;
         color: var(--modalBgColor);
 
         &:hover {
-            background-color: rgba(var(--fgColor2), 1);
+            background-color: rgba(var(--fgColor1), 1);
             color: var(--modalBgColor);
             filter: brightness(1.1)
         }
         &:disabled {
             &:hover {
-                background: rgba(var(--fgColor2), 1);
+                background: rgba(var(--fgColor1), 1);
                 color: var(--modalBgColor);
             }
         }

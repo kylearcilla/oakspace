@@ -413,7 +413,7 @@ export class PomSessionManger {
 
   /**
    * Blur handler for when a current focused todo loses focus.
-   * Removes prev focused todo if the new focused element is not a todo element.
+   * Removes prev focused todo if user does moves to a new focus todo so blurs away from clicking away.
    * Removes also event listeners if necessary.
    * 
    * @param event    Focus event to be handled.

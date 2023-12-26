@@ -6,17 +6,19 @@
     
 	import Modal from "../../components/Modal.svelte"
 
+    export let title: string
+    export let inputPlaceHolder: string 
+    export let onSubmit: (imgSrc: string) => void
+
     let isImgUrlOptClicked = true
     let isInputLoading = false
     let urlInputHasError = false
-    let imgFileInputHasError = false
-
-    let imgUrl = ""
     let errorMsg: string | null = null
-
+    let imgFileInputHasError = false
+    let imgUrl = ""
     let imgFileName = ""
 
-    const imgUrlInputSubmitBtn = async () => {
+    const onImgUrlSubmit = async () => {
         if (!imgUrl) return
 
         isInputLoading = true
@@ -27,6 +29,9 @@
             urlInputHasError = false
             isInputLoading = false
             errorMsg = null
+
+            onSubmit(imgUrl)
+            closeModal(ModalType.ImgUpload)
         }
         else {
             urlInputHasError = true
@@ -68,9 +73,9 @@
     }
 </script>
 
-<Modal onClickOutSide={() => closeModal(ModalType.CustomImgBg)}>
+<Modal onClickOutSide={() => closeModal(ModalType.ImgUpload)}>
     <div class={`img-upload ${$themeState.isDarkTheme ? "" : "img-upload--light"}`}>
-        <h1 class="img-upload__title modal-bg__content-title">Custom Background Video</h1>
+        <h1 class="img-upload__title modal-bg__content-title">{title}</h1>
         <div class="highlighter-tabs">
             <div class="highlighter-tabs__container">
                 <button 
@@ -101,7 +106,7 @@
                     <div class={`text-input-container ${urlInputHasError ? "text-input-container--error" : ""}`}>
                         <input 
                             type="text" 
-                            placeholder="1500+ px wide images are ideal."
+                            placeholder={inputPlaceHolder}
                             bind:value={imgUrl}
                             on:input={handleImgUrlInput}
                         >
@@ -113,7 +118,7 @@
                     </div>
                     <button 
                         class="form-submit-btn" disabled={isInputLoading || imgUrl === ""}
-                        on:click={imgUrlInputSubmitBtn}
+                        on:click={onImgUrlSubmit}
                     >
                         {#if isInputLoading}
                             <div class="form-submit-btn__loading-dots">

@@ -7,7 +7,7 @@
 	import Modal from "../../components/Modal.svelte"
 	import { ModalType } from "$lib/enums";
 	import { closeModal, openModal } from "$lib/utils-home";
-	import AppearanceImgUpload from "./AppearanceImgUpload.svelte";
+	import ImgUpload from "./ImgUpload.svelte";
 	import AppearanceVidUrl from "./AppearanceVidUrl.svelte";
 
     let clickedTheme: Theme | null = null
@@ -15,7 +15,7 @@
     let isAmbientTabSelected = false
 
     const handleNewCustomImgBtnSelected = () => {
-        openModal(ModalType.CustomImgBg)
+        openModal(ModalType.ImgUpload)
     }
     const handleNewCustomVidBtnSelected = () => {
         openModal(ModalType.CustomVidBg)
@@ -271,12 +271,17 @@
     </div>
 </Modal>
 
-{#if $homeViewLayout.modalsOpen.includes(ModalType.CustomImgBg)}
-    <AppearanceImgUpload />
+{#if $homeViewLayout.modalsOpen.includes(ModalType.ImgUpload)}
+    <ImgUpload
+        title="Custom Background Video"
+        inputPlaceHolder="1500 px wide images are ideal."
+        onSubmit={() => console.log("x")}
+    />
 {/if}
 {#if $homeViewLayout.modalsOpen.includes(ModalType.CustomVidBg)}
     <AppearanceVidUrl />
 {/if}
+
 
 <style lang="scss">
     @import "../../scss/highlighter-tabs.scss";

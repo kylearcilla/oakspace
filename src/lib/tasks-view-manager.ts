@@ -94,7 +94,6 @@ export class TasksViewManager {
         this.expandTask(taskIdx)
 
         this.isEditingTitle = true
-        this.newText = this.tasks![this.pickedTaskIdx].title
 
         requestAnimationFrame(() => { 
             const inputTitleElem = getElemById(`todo-title-id--${this.pickedTaskIdx}`) as HTMLInputElement
@@ -103,7 +102,6 @@ export class TasksViewManager {
 
         this.updateTaskViewState({ 
             isEditingTitle: this.isEditingTitle,
-            newText: this.newText
         })
     }
 
@@ -240,7 +238,7 @@ export class TasksViewManager {
         const target = event.target as HTMLElement
         const targetClass = target.classList.value
 
-        // close task group in put when clicking on a new input
+        // close task group input when clicking on a new input
         if (!targetClass.includes("new-task-group-title-input") && (this.isEditingGroup || this.isMakingNewGroup)) {
             this.closeEditState()
         }
@@ -276,8 +274,8 @@ export class TasksViewManager {
         const targetClass = target.classList.value
         const relatedTargetClass = relatedTarget?.classList.value ?? ""
 
-        // using edit shortcut will blur input
-        // click away blur and edit shortcut blur must be separate
+        // both using a shortcut and clicking away will cause a blur
+        // this should only handle click-away blurs
         if (this.hasUsedEditShortcut) {
             this.hasUsedEditShortcut = false
             return
@@ -383,7 +381,7 @@ export class TasksViewManager {
      *                      If subtask elem itself was clicked, the idx will be captured from the id of target elem. 
      * @returns 
      */
-    openContextMenu(event: MouseEvent, taskIdx: number, subtaskIdx = -1) {
+    openMilestoneContextMenu(event: MouseEvent, taskIdx: number, subtaskIdx = -1) {
         const target = event.target as HTMLElement
         const targetClass = target.classList.value
 
@@ -1015,8 +1013,7 @@ export class TasksViewManager {
         const key = event.key
         const tag = target.tagName
 
-        console.log(tag)
-
+        // prevent scroll when editing
         if (event.code === "Space" && tag != "INPUT" && tag != "TEXTAREA") {
             event.preventDefault()
         }

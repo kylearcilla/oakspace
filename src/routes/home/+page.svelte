@@ -17,7 +17,7 @@
 	import YoutubeSettings from "./SettingsYoutube.svelte"
 	import SessionNewModal from "./SessionNewModal.svelte"
 	import SessionActiveHome from "./SessionActiveHome.svelte"
-	import ApperanceSettings from "./SettingsAppearance.svelte"
+	import ApperanceSettings from "./Appearance.svelte"
 	import SessionActiveModal from "./SessionActiveModal.svelte"
 	import SessionFinishedModal from "./SessionFinishedModal.svelte"
 	import SessionCanceledModal from "./SessionCanceledModal.svelte"

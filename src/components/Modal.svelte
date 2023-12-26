@@ -18,16 +18,26 @@
 
     const handleClickOutside = (e: Event) => {
         const target = e.target as HTMLElement
-        if (!target.classList.value.includes("modal-bg")) return
-        onClickOutSide()!
+        const className = target.classList.value
+        const regex = /\bmodal-bg\b/
+
+        if (!regex.test(className)) return
+        
+        onClickOutSide(e)!
     }
     const makeModalStyling = () => {
         const arr: string[] = []
         arr.push(`border-radius: ${options?.borderRadius ?? "12px"}`)
-        arr.push(`overflow-x: ${options?.overflowX ? options.overflowX : "hidden"}`)
-        arr.push(`overflow: ${options?.overflow ? options.overflow : "hidden"}`)
-        arr.push(`overflow-y: ${options?.overflowY ? options.overflowY : "scroll"}`)
         arr.push(`z-index: ${options?.zIndex ? options.zIndex : "200001"}`)
+        
+        if (options.overflow) {
+            arr.push(`overflow: ${options?.overflow ? options.overflow : "hidden"}`)
+        }
+        else {
+            arr.push(`overflow-x: ${options?.overflowX ? options.overflowX : "hidden"}`)
+            arr.push(`overflow-y: ${options?.overflowY ? options.overflowY : "scroll"}`)
+        }
+
 
         styling = arr.join('; ')
     }

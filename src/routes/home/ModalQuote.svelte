@@ -46,12 +46,14 @@
                         ${quote?.artCredit === "" ? "quote-modal__content--no-art-credit" : ""}
                         ${quote?.quoteCredit === "" ? "quote-modal__content--no-quote-credit" : ""}
         `}>
-            <div>
-            </div>
+            <div></div>
             <div class="quote-modal__content-container">
                 <div class="quote-modal__content-top">
-                    <h1>Weekly Wisdom</h1>
-                    <p>"{quote?.text}"</p>
+                    <h1 class="quote-modal__title">Weekly Wisdom</h1>
+                    <div class="flx">
+                        <span class="quote-modal__quote quote-modal__quote--left-quotation">"</span>
+                        <p class="quote-modal__quote">{@html quote?.text}"</p>
+                    </div>
                 </div>
                 <div class="quote-modal__content-bottom">
                     <div class="quote-modal__content-bottom-left">
@@ -106,32 +108,6 @@
             flex-direction: column;
             padding: 18px 19px;
 
-            &--no-art-credit {
-                // padding-top: 20px;
-            }
-            &--no-quote-credit {
-                // padding-bottom: 35px;
-            }
-
-            h1 {
-                font-size: 1.5rem;
-                margin: 2px 0px 7px 0px;
-                font-weight: 500;
-                color: rgba(255, 255, 255, 0.82)
-            }
-            p {
-                font-size: 1.4rem;
-                font-weight: 300;
-                opacity: 0.85;
-                color: rgba(215, 215, 215, 0.72);
-                margin-bottom: 9px;
-            }
-            i {    
-                font-size: 1.2rem;
-                opacity: 0.85;
-                color: rgb(219, 219, 219);
-            }
-
             &-top {
                 margin-bottom: 20px;
             }
@@ -152,6 +128,19 @@
             &-context {
                 @include flex-container(center, _);
             }
+        }
+        &__title {
+            font-size: 1.5rem;
+            margin: 2px 0px 7px 0px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.82)
+        }
+        &__quote {
+            font-size: 1.4rem;
+            font-weight: 300;
+            opacity: 0.85;
+            color: rgba(215, 215, 215, 0.72);
+            margin-bottom: 9px;
         }
         &__likes {
             white-space: nowrap;

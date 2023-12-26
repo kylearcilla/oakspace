@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Icon } from "$lib/enums";
+	import { LogoIcon } from "$lib/enums";
 	import { onMount } from "svelte";
 
     /* type LogoContainerOptions = {
@@ -12,7 +12,7 @@
     let bgStyling = ""
     let iconStyling = ""
 
-    export let logo: Icon
+    export let logo: LogoIcon
     export let options: LogoContainerOptions = {}
 
     const makeContainerStyling = () => {
@@ -36,7 +36,7 @@
 </script>
 
 
-{#if logo === Icon.AppleMusic}
+{#if logo === LogoIcon.AppleMusic}
     <div class="logo-container apple-music-logo-bg" style={bgStyling}>
         <div class="logo" style={iconStyling}>
             <svg width="100%" height="100%"  viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -44,7 +44,7 @@
             </svg>            
         </div>
     </div>
-{:else if logo === Icon.Spotify}
+{:else if logo === LogoIcon.Spotify}
     <div class="logo-container spotify-logo-bg" style={bgStyling}>
         <div class="logo" style={iconStyling}>
             <svg width="100%" height="100%" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -52,7 +52,7 @@
             </svg>
         </div>
     </div>
-{:else if logo === Icon.Youtube || logo === Icon.YoutubeMusic}
+{:else if logo === LogoIcon.Youtube || logo === LogoIcon.YoutubeMusic}
     <div class="logo-container youtube-logo-bg" style={bgStyling}>
         <div class="logo" style={iconStyling}>
             <svg width="100%" height="100%" viewBox="0 0 13 9" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -61,7 +61,7 @@
             </svg>                
         </div>
     </div>
-{:else if logo === Icon.Soundcloud}
+{:else if logo === LogoIcon.Soundcloud}
     <div class="logo-container soundcloud-logo-bg" style={bgStyling}>
         <div class="logo" style={iconStyling}>
             <svg width="100%" height="100%" viewBox="0 0 13 7" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -69,7 +69,7 @@
             </svg>
         </div>
     </div>
-{:else if logo === Icon.Google}
+{:else if logo === LogoIcon.Google}
     <div class="logo-container google-logo-bg" style={bgStyling}>
         <div class="logo" style={iconStyling}>
             <svg  width="100%" height="100%" preserveAspectRatio="xMidYMid" viewBox="0 0 256 262" id="google" xmlns="http://www.w3.org/2000/svg">
@@ -80,7 +80,7 @@
             </svg>
         </div>
     </div>
-{:else if logo === Icon.Luciole}
+{:else if logo === LogoIcon.Luciole}
     <div class="logo-bg" style={bgStyling}>
         <div class="logo" style={iconStyling}>
         </div>

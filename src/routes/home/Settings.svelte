@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { clickOutside } from '$lib/utils-general';
-	import { formatDateToMMDD } from '$lib/utils-date';
+	import { formatDateShort } from '$lib/utils-date';
 	import { onMount } from 'svelte';
 	import Modal from "../../components/Modal.svelte"
 	import { ModalType } from '$lib/enums';
@@ -308,7 +308,7 @@
                             </div>
                             <div class="payment-card__exp-date">
                                 <h6>Exp Date</h6>
-                                <h5>{formatDateToMMDD(userDetails.paymentCards[userDetails.currentPaymentCard].expDate)}</h5>
+                                <h5>{formatDateShort(userDetails.paymentCards[userDetails.currentPaymentCard].expDate)}</h5>
                             </div>
                         </div>
                     </div>
@@ -389,7 +389,7 @@
                                     </div>
                                     <div class="payment-card__exp-date">
                                         <h6>Exp Date</h6>
-                                        <h5>{formatDateToMMDD(userDetails.paymentCards[userDetails.currentPaymentCard].expDate)}</h5>
+                                        <h5>{formatDateShort(userDetails.paymentCards[userDetails.currentPaymentCard].expDate)}</h5>
                                     </div>
                                 </div>
                             </div>

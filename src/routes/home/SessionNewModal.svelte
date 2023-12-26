@@ -607,6 +607,7 @@
         &__pom-input-result {
             margin: 35px 0px 45px 0px;
             @include flex-container(center, center);
+
             label, h2 {
                 margin: 0px 20px 0px 0px;
                 font-size: 1.5rem;
@@ -617,11 +618,13 @@
                 color: rgba(var(--textColor1), 0.8);
                 font-weight: 500;
                 font-size: 1.45rem;
+                font-family: "DM Sans";
             }
             h4 {
                 font-size: 1.45rem;
                 font-weight: 400;
                 color: rgba(var(--textColor1), 0.45);
+                font-family: "DM Sans";
             }
         }
 

@@ -33,6 +33,10 @@ img {
     -moz-user-drag: none;
     -o-user-drag: none;
 }
+input {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
 textarea {
     border: none; /* Remove border */
     padding: 0; /* Remove padding */
@@ -140,7 +144,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
  }
 
  /* Global Mixins */
-@mixin flex-container($vert-spacing, $hoz-spacing) {
+@mixin flex-container($vert-spacing, $hoz-spacing: _) {
     display: flex;
 
     @if $vert-spacing != _ {
@@ -173,6 +177,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     display: -webkit-box;
     -webkit-line-clamp: $line_number;
     -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 @mixin trans-text($color, $opacity) {
     color: $color;
@@ -270,6 +275,15 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     display: flex;
     &--algn-center {
         align-items: center;
+    }
+    &--algn-start {
+        align-items: flex-start;
+    }
+    &--algn-end {
+        align-items: flex-end;
+    }
+    &--algn-baseline {
+        align-items: baseline;
     }
     &--justify-center {
         justify-content: center;
@@ -391,6 +405,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     -moz-text-security: disc;
 }
 
+
 @mixin color-btn-styling {
     transition: 0.12s ease-in-out;
     
@@ -420,6 +435,18 @@ $screen-xl: 112.5em;   // extra large (1800 px)
 @mixin unfill-btn-ficus-styling($color-var) {
     &:focus {
         background-color: rgba($color-var, 0.2);
+    }
+}
+
+@mixin text-style($opacity: _, $weight: _, $size: _) {
+    @if $opacity != _ {
+        color: rgb(var(--textColor1), $opacity);
+    }
+    @if $size != _ {
+        font-size: $size;
+    }
+    @if $weight != _ {
+        font-weight: $weight;
     }
 }
 
@@ -836,5 +863,33 @@ $settings-modal-padding: 20px 25px 25px 25px;
         transform: translateY(0px);
         visibility: visible;
         opacity: 1;
+    }
+}
+
+.strike {
+    position: relative; 
+
+    &::after {
+        content: ' ';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: rgba(var(--textColor1), 0.5);
+    }
+    
+    &--animated {
+        &::after {
+            animation: 0.13s strike ease-in-out forwards 1;
+        }
+    }
+}
+@keyframes strike {
+    0%   { 
+        width : 0; 
+    }
+    100% { 
+        width: 100%; 
     }
 }

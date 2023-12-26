@@ -181,7 +181,8 @@ export const handleChoosePlaylist = async (playlist: YoutubePlaylist) => {
 }
 
 /**
- * Toggle pointer events for all Youtube iFrames. 
+ * Toggle pointer events for all Youtube iFrames.
+ * Done to avoid weird behavior with Drag & Drop API over an active iFrame
  * @param isPointerEventsEnabled   Should iframes have pointer events.
  */
 export const toggleYTIFramePointerEvents = (isPointerEventsEnabled: boolean) => {

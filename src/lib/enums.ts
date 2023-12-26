@@ -2,15 +2,19 @@ export enum ErrorCode {
     YT_PRIVATE_PLAYLIST, YT_PRIVATE_VIDEO, YT_EXPIRED_TOKEN, DEFAULT, MUSIC_EXPIRED_TOKEN
 }
 /* General */
-export enum Icon {
+export enum LogoIcon {
     AppleMusic, Spotify, YoutubeMusic, Soundcloud, Youtube, Session, Google, Luciole
+}
+export enum Icon {
+    Settings, Dropdown, Add, Close, ChevronLeft, ChevronRight, DragDots
 }
 export enum ToastContext {
     AppleMusic, Spotify, YoutubeMusic, Soundcloud, Youtube, Session, Google, Luciole
 }
 export enum ModalType { 
     Settings, Youtube, Music, Stats, Journal, Appearance, Quote, NewSession, ActiveSession,
-    EditSession, SesssionFinished, SessionCanceled, Shortcuts, CustomImgBg, CustomVidBg
+    EditSession, SesssionFinished, SessionCanceled, Shortcuts, ImgUpload, CustomVidBg,
+    EditGoal
 }
 export enum HrsMinsFormatOption {
     LETTERS, MIN_LETTERS, NO_LETTERS
@@ -21,7 +25,7 @@ export enum ShortcutSectionInFocus {
 
 /* Tasks */
 export enum RightSideTab { 
-    TASKS, RECENT_ACTIVITY 
+    TASKS, RECENT_ACTIVITY
 }
 export enum TaskSettingsOptions {
     MAKE_NEW_TASK_GROUP, RENAME_TASK_GROUP, DELETE_TASK_GROUP
@@ -32,7 +36,22 @@ export enum ContextMenuOption {
 
 /* Goals */
 export enum GoalStatus {
-    OnHold, InProgress, Accomplished
+    OnHold , InProgress, Accomplished
+}
+export enum JournalTab {
+    Goals, Summary
+}
+export enum GoalViewOption {
+    Board, History
+}
+export enum EditMilestoneOption {
+    EditTitle, ChangeDate, Delete
+}
+export enum EditGoalOption {
+    ChangeImage, ToggleHideImg, DelteGoal, RemoveImage
+}
+export enum EditGoalContextMenu {
+    Milestone, Date, Img, Goal
 }
 
 /* Sessions */

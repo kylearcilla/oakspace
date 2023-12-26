@@ -25,6 +25,7 @@
     let hasTopSpace = false
     let hasBottomSpace = true
 
+    /* General UI Handlers */
     function handleTabClicked(newTab: RightSideTab) {
         if (newTab === RightSideTab.TASKS) {
             $tasksViewStore!.hasTabBarClicked()
@@ -70,17 +71,12 @@
     function initDateTimer() {
         interval = setInterval(updateTimeStr, 1000)
     }
-    function textAreOnKeyDown(event: KeyboardEvent) {
-        if (event.key != "Enter") return
-        event.preventDefault()
-    }
 
     /* Shortcuts */
     function keyboardShortcutsHandler(event: KeyboardEvent) {
         if ($homeViewLayout.shortcutsFocus != ShortcutSectionInFocus.TASK_BAR) {
             return
         }
-
         const hasMenu = isTaskGroupDrodownOpen || isTasksSettingsDropdownOpen || $tasksViewStore!.contextMenuX >= 0
 
         if (selectedTab === RightSideTab.TASKS && hasMenu && event.key === "Escape") {
@@ -320,7 +316,7 @@
                                           `}
                                     style={`height: ${taskIdx === $tasksViewStore.pickedTaskIdx ? `${$tasksViewStore.pickedTaskHT}` : `${task.description ? TASK_HEIGHT_MIN_HAS_DESCR : TASK_HEIGHT_MIN_NO_DESCR}`}px;`}
                                     on:click={(event) => $tasksViewStore?.onTaskedClicked(event, taskIdx)}  
-                                    on:contextmenu={(e) => $tasksViewStore?.openContextMenu(e, taskIdx)}
+                                    on:contextmenu={(e) => $tasksViewStore?.openMilestoneContextMenu(e, taskIdx)}
                                 >
                                     <!-- Left Side  -->
                                     <div class="quick-todo__left">
@@ -370,7 +366,7 @@
                                                     value={task.description}
                                                     spellcheck={$tasksViewStore.textAreaHasSpellCheck}
                                                     on:focus={(e) => $tasksViewStore?.onInputFocusHandler(e)}
-                                                    on:keydown={textAreOnKeyDown}
+                                                    on:keydown={(e) => e.key === "Enter" ? e.preventDefault() : null}
                                                     on:input={(e) => $tasksViewStore?.inputTextHandler(e)}
                                                     on:blur={(e) => $tasksViewStore?.onInputBlurHandler(e)}
                                                 />
@@ -388,6 +384,7 @@
                                                         class={`quick-todo__subtask 
                                                                     ${subtask.isFinished ? "quick-todo__subtask--checked" : ""}
                                                                     ${subtaskIdx === $tasksViewStore.focusedSubtaskIdx ? "quick-todo__subtask--focused" : ""}
+                                                                    ${$themeState.isDarkTheme ? "" : "quick-todo__subtask--light"}
                                                             `} 
                                                         style={`height: ${SUBTASK_HEIGHT}px; animation: fade-in 0.3s cubic-bezier(.5,.84,.42,.9) ${(task.subtasks.length <= 5 ? 100 : 30) * subtaskIdx}ms forwards;`}
                                                         id={`subtask-idx--${subtaskIdx}`}
@@ -437,7 +434,7 @@
                                                                 </span>
                                                             {/if}
                                                         </div>                                                
-                                                        <button class="quick-todo__subtask-settings-btn" on:click={(e) => $tasksViewStore?.openContextMenu(e, taskIdx, subtaskIdx)}>
+                                                        <button class="quick-todo__subtask-settings-btn" on:click={(e) => $tasksViewStore?.openMilestoneContextMenu(e, taskIdx, subtaskIdx)}>
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="18">
                                                                 <g fill="currentcolor" stroke="currentColor" stroke-linecap="round" transform="translate(0 8.5)">
                                                                     <circle cx="2" cy="0.8" r="0.8"></circle>
@@ -988,7 +985,12 @@
         overflow: hidden;
         transition: height 0.4s cubic-bezier(.1,.84,.42,.95);
         width: 100%;
+        border-top: 0.5px solid transparent;
+        border-bottom: 0.5px solid transparent;
 
+        &--light {
+            border: none !important;
+        }
         &--light &__title-container {
             h3, input {
                 color: rgba(var(--textColor1), 0.8);
@@ -999,24 +1001,6 @@
             font-size: 1.1rem;
             font-weight: 500;
             color: rgba(var(--textColor1), 0.6);
-        }
-        &--light &__subtask-title, &--light &__subtask-title-input {
-            font-weight: 500;
-            color: rgba(var(--textColor1), 0.6);
-        }
-        &--light &__subtask  {
-            &:hover {
-                .quick-todo__subtask-settings-btn {
-                    opacity: 0.3 !important;
-                    visibility: visible;
-                }
-            }
-        }
-        &--light &__subtask-settings-btn {
-            &:hover {
-                opacity: 0.9 !important;
-                background-color: rgba(var(--textColor1), 0.1);
-            }
         }
         &--light &__checkbox {
             border-width: 1.5px;
@@ -1030,6 +1014,8 @@
         }
         &:hover, &:focus, &--selected {
             background-color: var(--sidePanelLightAccentColor);
+            border-color: rgb(var(--textColor1), 0.015);
+
         }
         &--expanded &__description {
             display: flex;
@@ -1107,7 +1093,7 @@
         &__description, &__description-text-area {
             font-size: 1.1rem;
             font-weight: 300;
-            color: rgba(var(--textColor1), 0.22);
+            color: rgba(var(--textColor1), 0.3);
             width: 100%;
             padding: 0px 8px 0px 0px;
         }
@@ -1132,6 +1118,16 @@
             position: relative;
             visibility: hidden;
             transition: 0.12s ease-in-out;
+
+            &--light &-title, &--light &-title-input {
+                font-weight: 500;
+                color: rgba(var(--textColor1), 0.6);
+            }
+            &--light &-settings-btn {
+                &:hover {
+                    opacity: 0.7 !important;
+                }
+            }
             
             &:hover &-settings-btn {
                 opacity: 0.1;
@@ -1142,10 +1138,10 @@
             }
 
             &:hover &-title, &--focused &-title {
-                color: rgba(var(--textColor1), 0.2) !important;
+                color: rgba(var(--tasksSubtaskFocusColor));
             }
             &:hover &-title.strike::after, &--focused &-title.strike::after {
-                background-color: rgba(var(--textColor1), 0.2) !important;
+                background-color: rgba(var(--tasksSubtaskFocusColor));
             }
             &--checked &-checkbox {
                 border-color: transparent;
@@ -1212,33 +1208,6 @@
                     background-color: rgb(var(--textColor1), 0.1);
                 }
             }
-        }
-    }
-    .strike {
-        position: relative; 
-
-        &::after {
-            content: ' ';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            width: 100%;
-            height: 1px;
-            background: rgba(var(--textColor1), 0.5);
-        }
-        
-        &--animated {
-            &::after {
-                animation: 0.13s strike ease-in-out forwards 1;
-            }
-        }
-    }
-    @keyframes strike {
-        0%   { 
-            width : 0; 
-        }
-        100% { 
-            width: 100%; 
         }
     }
 </style>

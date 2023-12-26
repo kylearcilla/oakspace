@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ToastContext, Icon } from "$lib/enums"
+	import { ToastContext, LogoIcon } from "$lib/enums"
 	import { themeState, toastMessages } from "$lib/store"
 	import { addSpacesToCamelCaseStr, findEnumIdxFromDiffEnum } from "$lib/utils-general"
 	import { onMount } from "svelte"
@@ -8,7 +8,7 @@
     export let toast: ToastMsg
     export let idx: number
 
-    let icon: Icon
+    let icon: LogoIcon
     let iconOptions: any
 
     const LOGO_WIDTH = 15
@@ -36,10 +36,10 @@
 
     onMount(() => {
         // get the icon enum & options to be used in Icon component
-        let idx = findEnumIdxFromDiffEnum(toast.context, Icon, ToastContext)
-        icon = idx === null ? Icon.Luciole : idx as Icon
+        let idx = findEnumIdxFromDiffEnum(toast.context, LogoIcon, ToastContext)
+        icon = idx === null ? LogoIcon.Luciole : idx as LogoIcon
 
-        const iconStrIdx = Icon[icon] as keyof typeof TOAST_ICON_OPTIONS
+        const iconStrIdx = LogoIcon[icon] as keyof typeof TOAST_ICON_OPTIONS
         iconOptions = TOAST_ICON_OPTIONS[iconStrIdx]
     })
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Icon, ModalType, MusicPlatform } from "$lib/enums"
+    import { LogoIcon, ModalType, MusicPlatform } from "$lib/enums"
 	import { themeState } from "$lib/store"
 	import { closeModal } from "$lib/utils-home";
 	import Logo from "../../components/Logo.svelte";
@@ -28,7 +28,7 @@
                 {:else}
                     <div class="platform-list__platform-item-logo">
                         <Logo 
-                            logo={Icon.YoutubeMusic} 
+                            logo={LogoIcon.YoutubeMusic} 
                             options={{ containerWidth: "22px", borderRadius: "100%", iconWidth: "63%" }} 
                         />
                     </div>
@@ -47,7 +47,7 @@
             <li class="platform-list__platform-item platform-list__platform-item--logged-out">
                 <div class="platform-list__platform-item-logo">
                     <Logo 
-                        logo={Icon.Soundcloud} 
+                        logo={LogoIcon.Soundcloud} 
                         options={{ containerWidth: "22px", borderRadius: "100%", iconWidth: "60%" }} 
                     />
                 </div>
@@ -65,7 +65,7 @@
             <li class="platform-list__platform-item platform-list__platform-item--logged-out">
                 <div class="platform-list__platform-item-logo">
                     <Logo 
-                        logo={Icon.AppleMusic} 
+                        logo={LogoIcon.AppleMusic} 
                         options={{ containerWidth: "22px", borderRadius: "100%", iconWidth: "44%" }} 
                     />
                 </div>
@@ -83,7 +83,7 @@
             <li class="platform-list__platform-item platform-list__platform-item--logged-out">
                 <div class="platform-list__platform-item-logo">
                     <Logo 
-                        logo={Icon.Spotify} 
+                        logo={LogoIcon.Spotify} 
                         options={{ containerWidth: "22px", iconWidth: "85%", hasBgColor: false }} 
                     />
                 </div>

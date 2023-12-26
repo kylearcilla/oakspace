@@ -5,7 +5,7 @@ import { openModal } from "./utils-home"
 import { MAX_TODO_COUNT, MAX_TODO_NAME_LENGTH, createSessionToastMsg } from "$lib/utils-session"
 
 /**
- * This class provides an abstract interface for interacting with an active session store.
+ * This class provides an abstracted interface for interacting with an active session store.
  * Manages the state and behavior of an Active Session UI Component.
  * The UI includes session to do list, dropdown for pom controls, modal controls, and inputs.
  * Is itself a reactive class where store is initialized on instantiation.

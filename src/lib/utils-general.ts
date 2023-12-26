@@ -13,7 +13,7 @@ export const clickOutside = (node: any) => {
   const handleClick = (event: any) => {
     const srcClasses = event.srcElement.classList.value + " " + event.srcElement.parentElement.classList.value
 
-    let hasBlacklistedClass = srcClasses.includes("dropdown-btn")
+    let hasBlacklistedClass = srcClasses.includes("dropdown-btn") || srcClasses.includes("dropdown-elem")
     let hasClickedInsideNode = node?.contains(event.target)
 
     if (!hasBlacklistedClass && !hasClickedInsideNode && !event.defaultPrevented) {
@@ -27,6 +27,49 @@ export const clickOutside = (node: any) => {
       document.removeEventListener('click', handleClick, true)
     }
   }
+}
+
+/**
+ * Find an element's ancestor by name
+ * @param child 
+ * @param className 
+ * @returns  Ancestor
+ */
+export const findAncestorByClass = (child: HTMLElement, className: string): HTMLElement | null => {
+  let currentElement: HTMLElement | null = child;
+  let i = 0
+
+  while (currentElement !== null && !currentElement.classList.contains(className) && i++ < 25) {
+      currentElement = currentElement.parentElement
+  }
+
+  return currentElement
+}
+
+/**
+ * Helper for seeing if there's space to scroll up or down.
+ * @param target    Scroll Element
+ * @param options   Options for how early client wants to hit the top / bottom
+ * @returns         Scroll status as array
+ */
+export function getScrollStatus(target: HTMLElement, options?: { 
+  topOffSet?: number, bottomOffSet?: number
+}): [boolean, boolean, { scrollTop: number, scrollHeight: number, windowHeight: number }] {
+  
+  const scrollTop = target.scrollTop
+  const windowHeight = target. clientHeight
+  const scrollHeight = target.scrollHeight
+
+  const hasReachedEnd = scrollTop + (options?.bottomOffSet ?? 1) >= scrollHeight - windowHeight
+  const hasReachedTop = scrollTop <= (options?.topOffSet ?? 0) 
+
+  return [hasReachedEnd, hasReachedTop, { scrollTop, scrollHeight, windowHeight }]
+}
+
+export const moveElementInArr = (array: any[], fromIndex: number, toIndex: number) => {
+  const elementToMove = array.splice(fromIndex, 1)[0]
+  array.splice(toIndex, 0, elementToMove)
+  return array
 }
 
 /**

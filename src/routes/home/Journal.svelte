@@ -1,41 +1,31 @@
 <script lang="ts">
-	import { GoalStatus, ModalType } from "$lib/enums"
-	import { themeState } from "$lib/store"
-	import { closeModal } from "$lib/utils-home"
-	import { onDestroy, onMount } from "svelte"
-	import Modal from "../../components/Modal.svelte"
+	import { GoalsManager } from "$lib/goals-manager"
+    import { closeModal, openModal } from "$lib/utils-home"
+    import { toggleYTIFramePointerEvents } from "$lib/utils-youtube"
+    import { JournalTab, GoalViewOption, ModalType } from "$lib/enums"
 	import { clickOutside, getElemsByClass } from "$lib/utils-general"
-	import { toggleYTIFramePointerEvents } from "$lib/utils-youtube"
-    import { goals } from "$lib/utils-journal"
-	import { formatDatetoStr } from "$lib/utils-date";
+	import { goalsManager, homeViewLayout, themeState } from "$lib/store"
 
-    enum JournalTab {
-        Goals, Summary
-    }
-    enum GoalViewOption {
-        Board, History
-    }
+	import { onDestroy, onMount } from "svelte"
+	import GoalsBoard from "./GoalsBoard.svelte"
+	import GoalsHistory from "./GoalsHistory.svelte"
+	import Modal from "../../components/Modal.svelte"
+	import EditGoalModal from "./EditGoalModal.svelte"
 
     let selectedTab = JournalTab.Goals
     let goalViewOption = GoalViewOption.Board
     
     let tabHighlighterClass = ""
     let isGoalsDropdownOpen = false
-    let dragSourcElem: HTMLElement | null = null
+    let goalInEdit: Goal | null = null
 
-    let onHoldGoals: Goal[] = []
-    let inProgressGoals: Goal[] = []
-    let accomplishedGoals: Goal[] = []
+    const HIGHLIGHTER_TAB_CLASS= "highlighter-tabs__tab-btn"
 
     function onTabClicked(e: Event, tab: JournalTab) {
         const target = e.target as HTMLButtonElement
         selectedTab = tab
 
         initHighlighter(target)
-
-        if (selectedTab === JournalTab.Goals) {
-            requestAnimationFrame(() => initGoalsBoard())
-        }
     }
     function initHighlighter(tab: HTMLButtonElement) {
         const width = tab.clientWidth
@@ -46,157 +36,38 @@
     function onGoalViewOptionClicked(tab: GoalViewOption) {
         goalViewOption = tab
         isGoalsDropdownOpen = false
+
+        if (tab === GoalViewOption.History) {
+            requestAnimationFrame(() =>  $goalsManager?.updateYrTitle(0))
+        }
     }
     function onTagClicked() {
 
     }
-
-    /* Board Card Events */
-    function onMouseDown(event: MouseEvent) {
-        console.log(event)
-    }
-    function onDragStartHandler(event: DragEvent) {
-        event.stopPropagation()
-        const target = event.target as HTMLElement
-        target.style.opacity = "0.3"
-        target.style.cursor = "grabbing"
-        dragSourcElem = target
-
-        console.log(event)
-        
-        event!.dataTransfer!.effectAllowed = 'move'
-        event!.dataTransfer!.setData('text/html', target.innerHTML)
-    }
-    function onDragHandler(event: DragEvent) {
-        event.preventDefault()
-        return false
-    }
-    function onDragEndHandler(event: DragEvent) {
-        event.stopPropagation()
-        const target = event.target as HTMLElement
-        target.style.opacity = "1"
-        target.style.cursor = "pointer"
-        dragSourcElem = null
-    }
-    function onDragOverHandler(event: DragEvent) {
-        event.preventDefault()
-        return false
-    }
-    function onDragEnterHandler(event: DragEvent) {
-        const target = event.target as HTMLElement
-
-        if (target.tagName != "LI" || target.id === dragSourcElem!.id) {
-            event.preventDefault()
-            return
-        }
-
-        target.classList.add('journal-goals__board-item--over')
-    }
-    function onDragLeaveHandler(event: DragEvent) {
-        const target = event.target as HTMLElement
-        target.classList.remove('journal-goals__board-item--over')
-    }
-    function onDropHandler(event: DragEvent) {
-        event.stopPropagation()
-        const target = event.target as HTMLElement
-        target.classList.remove('journal-goals__board-item--over')
-
-        if (dragSourcElem!.id === target.id || target.tagName != "LI") {
-            // event.preventDefault()
-            return false
-        }
-
-        // duplicate and insert before elem
-        const newElement = document.createElement('li')
-        newElement.className = "journal-goals__board-item"
-        newElement.draggable = true
-        newElement.id = dragSourcElem!.id
-        newElement.innerHTML = event.dataTransfer!.getData('text/html')
-
-        const firstChild = newElement.firstChild as HTMLElement
-        if (firstChild.tagName === "META") {
-            newElement.firstChild!.remove()
-        }
-
-        addBoardItemDragEventHandlers(newElement)
-        target.parentNode!.insertBefore(newElement, target)
-
-        dragSourcElem!.remove()
-        dragSourcElem =  null
-
-        return false
-    }
-    function addToNewStatusArray() {
-
-    }
-    function removeFromOldStatusArray() {
-
-    }
-    function updateItemStatus() {
-
-    }
-    function addBoardItemDragEventHandlers(elem: HTMLElement, isBtnContainer = false) {
-        elem.addEventListener("dragover", onDragOverHandler)
-        elem.addEventListener("dragenter", onDragEnterHandler)
-        elem.addEventListener("dragleave", onDragLeaveHandler)
-        elem.addEventListener("drop", onDropHandler)
-        elem.addEventListener("drag", onDragHandler)
-        
-        if (isBtnContainer) return
-        
-        elem.addEventListener("dragstart", onDragStartHandler)
-        elem.addEventListener("dragend", onDragEndHandler)
-    }
-    function initGoals() {
-        const goalsContainer: Goal[][] = [[],[],[]]
-
-        goals.forEach((goal: Goal) => {
-            const rowIdx = goal.status
-            goalsContainer[rowIdx].push(goal)
-        })
-
-        onHoldGoals = new Array(goalsContainer[0].length).fill(null)
-        inProgressGoals = new Array(goalsContainer[1].length).fill(null)
-        accomplishedGoals = new Array(goalsContainer[2].length).fill(null)
-
-        goalsContainer.forEach((row: Goal[], rowIdx: number) => {
-            row.forEach((goal: Goal) => {
-                const idx = goal.idx
-                if (rowIdx === 0) {
-                    onHoldGoals[idx] = goal
-                }
-                else if (rowIdx === 1) {
-                    inProgressGoals[idx] = goal
-                }
-                else {
-                    accomplishedGoals[idx] = goal
-                }
-            })
-        })
-    }
-    function initGoalsBoard() {
-        initGoals()
-
-        requestAnimationFrame(() => {
-            const goalCards = getElemsByClass("journal-goals__board-item") as HTMLElement[]
-    
-            goalCards.forEach((elem: HTMLElement) => {
-                const isBtnContainer = elem?.id.includes("add-btn-container")
-                elem.draggable = !isBtnContainer
-                addBoardItemDragEventHandlers(elem, isBtnContainer)
-            })
-        })
-
+    function initGoalInEdit(goal: Goal) {
+        goalInEdit = goal
+        openModal(ModalType.EditGoal)
     }
 
     onMount(() => {
-        const firstTab = getElemsByClass("highlighter-tabs__tab-btn")![0] as HTMLButtonElement
-        initHighlighter(firstTab)
-        initGoalsBoard()
         toggleYTIFramePointerEvents(false)
+
+        const firstTab = getElemsByClass(HIGHLIGHTER_TAB_CLASS)![0] as HTMLButtonElement
+        initHighlighter(firstTab)
+
+        if ($goalsManager) return
+
+        new GoalsManager()
+
+        $goalsManager!.initGoals()
+        $goalsManager!.getMoreAccomplishments()
+        $goalsManager!.updateYrTitle()
     })
-    onDestroy(() => toggleYTIFramePointerEvents(true))
+    onDestroy(() => { 
+        toggleYTIFramePointerEvents(true)
+    })
 </script>
+
 
 <Modal onClickOutSide={() => closeModal(ModalType.Journal)} options={{ overflowY: "hidden" }}>
     <div class={`journal ${$themeState.isDarkTheme ? "journal--dark" : "journal--light"}`}>
@@ -204,13 +75,10 @@
             <h1 class="modal-bg__content-title">Journal</h1>
         </div>
         <div class="journal__section-divider journal__section-divider--header"></div>
+        <!-- Content -->
         <div class="journal__content">
             <div class="journal-tags">
                 <h2>Tags</h2>
-                <button class="journal-tags__add-tag-btn">
-                    <span class="journal-tags__add-tag-btn-text">New Tag</span>
-                    <span class="journal-tags__add-tag-btn-icon">+</span>
-                </button>
                 <ul class="journal-tags__list">
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <li class="journal-tags__tag" role="button" tabindex="0" on:click={() => onTagClicked()}>
@@ -227,6 +95,10 @@
                         </span>
                     </li>
                 </ul>
+                <button class="journal-tags__add-tag-btn">
+                    <span class="journal-tags__add-tag-btn-icon">+</span>
+                    <span class="journal-tags__add-tag-btn-text">Make New Tag</span>
+                </button>
                 <div class="journal__section-divider journal__section-divider--main"></div>
             </div>
             <div class="journal-tag-view">
@@ -266,11 +138,9 @@
                     </div>
                 </div>
                 {#if selectedTab === JournalTab.Goals}
-                    <div class="journal-goals">
+                    <div class={`journal-goals ${$themeState.isDarkTheme ? "" : "journal-goals--light"}`}>
                         <!-- Filter Buttons  -->
-                        <div 
-                            class="journal-goals__dropdown-container dropdown-container"
-                        >
+                        <div class="journal-goals__dropdown-container dropdown-container">
                             <button 
                                 class={`journal-goals__filter-dropdown-btn dropdown-btn ${isGoalsDropdownOpen ? "dropdown-btn--active" : ""}`}
                                 on:click={() => isGoalsDropdownOpen = !isGoalsDropdownOpen}
@@ -291,204 +161,30 @@
                                 <li class={`dropdown-menu__option ${goalViewOption === GoalViewOption.Board ? "dropdown-menu__option--selected" : ""}`}>
                                     <button on:click={() => onGoalViewOptionClicked(GoalViewOption.Board)}>
                                         <span class="dropdown-menu__option-text">Board</span>
-                                        <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
-                                            <i class="fa-solid fa-check"></i>
-                                        </div>
+                                        {#if goalViewOption === GoalViewOption.Board}
+                                            <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
+                                                <i class="fa-solid fa-check"></i>
+                                            </div>
+                                        {/if}
                                     </button>
                                 </li>
                                 <li class={`dropdown-menu__option ${goalViewOption === GoalViewOption.History ? "dropdown-menu__option--selected" : ""}`}>
                                     <button on:click={() => onGoalViewOptionClicked(GoalViewOption.History)}>
                                         <span class="dropdown-menu__option-text">History</span>
-                                        <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
-                                            <i class="fa-solid fa-check"></i>
-                                        </div>
+                                        {#if goalViewOption === GoalViewOption.History}
+                                            <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
+                                                <i class="fa-solid fa-check"></i>
+                                            </div>
+                                        {/if}
                                     </button>
                                 </li>
                             </ul>
                         </div>
-                        <div class="journal-goals__board">
-                            <div class="journal-goals__board-col-container">
-                                <div class="journal-goals__board-col-header">
-                                    <div class="journal-goals__board-col-header-dot journal-goals__board-col-header-dot--on-hold"></div>
-                                    <div class="journal-goals__board-col-header-title">
-                                        On-Hold
-                                    </div>
-                                    <div class="journal-goals__board-col-header-count">
-                                        1
-                                    </div>
-                                </div>
-                                <div class="journal-goals__board-col-header">
-                                    <div class="journal-goals__board-col-header-dot journal-goals__board-col-header-dot--in-progress"></div>
-                                    <div class="journal-goals__board-col-header-title">
-                                        In-Progress
-                                    </div>
-                                    <div class="journal-goals__board-col-header-count">
-                                        6
-                                    </div>
-                                </div>
-                                <div class="journal-goals__board-col-header">
-                                    <div class="journal-goals__board-col-header-dot journal-goals__board-col-header-dot--accomplished"></div>
-                                    <div class="journal-goals__board-col-header-title">
-                                        Accomplished
-                                    </div>
-                                    <div class="journal-goals__board-col-header-count">
-                                        3
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="journal-goals__board-cards-container" on:scroll={(e) => e.preventDefault()}>
-                                <!-- On Hold -->
-                                <div class="journal-goals__board-col">
-                                    <ul class="journal-goals__board-col-goals-list">
-                                        {#each onHoldGoals as goal}
-                                            <li class="journal-goals__board-item" id={`goal--0-${goal.idx}`}>
-                                                <div class="journal-goals__board-item-divider">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="90%" height="2" viewBox="0 0 200 2" fill="none">
-                                                        <path d="M0.567383 0.545898H215.092" stroke-opacity="0.65" stroke-dasharray="3 3"/>
-                                                    </svg>
-                                                </div>
-                                                <div class="journal-goals__goal">
-                                                    <h5 class="journal-goals__goal-name" title={goal.title}>
-                                                        {goal.title}
-                                                    </h5>
-                                                    <p class="journal-goals__goal-description" title={goal.description}>
-                                                        {goal.description}
-                                                    </p>
-                                                    <div class="flx flx--algn-center flx--space-between">
-                                                        <div class="flx">
-                                                            <div class="journal-goals__goal-status flx flx--algn-center">
-                                                                <div class="journal-goals__goal-status-dot" style={`background-color: #CB6E6E`}></div>
-                                                                <span>On-Hold</span>
-                                                            </div>
-                                                            {#if goal.milestones.length > 0}
-                                                                <div class="journal-goals__goal-milestones" title="Milestones">
-                                                                    {`${goal.milestonesDone} / ${goal.milestones.length}`}
-                                                                </div>
-                                                            {/if}
-                                                        </div>
-                                                        <div class="journal-goals__goal-time-period" title="Start / End Date">July '23</div>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                        {/each}
-                                        <li 
-                                            class="journal-goals__board-item journal-goals__board-item--btn-container" 
-                                            id="add-btn-container--on-hold"
-                                        >
-                                            <div class="journal-goals__board-item-divider">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="90%" height="2" viewBox="0 0 200 2" fill="none">
-                                                    <path d="M0.567383 0.545898H215.092" stroke-opacity="0.65" stroke-dasharray="3 3"/>
-                                                </svg>
-                                            </div>
-                                            <button class="journal-goals__board-col-add-new-goal-btn">
-                                                <span>+</span>
-                                                Add New Goal
-                                            </button>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <!-- In Progress -->
-                                <div class="journal-goals__board-col">
-                                    <ul class="journal-goals__board-col-goals-list">
-                                        {#each inProgressGoals as goal}
-                                            <li class="journal-goals__board-item" id={`goal--1-${goal.idx}`}>
-                                                <div class="journal-goals__board-item-divider">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="90%" height="2" viewBox="0 0 200 2" fill="none">
-                                                        <path d="M0.567383 0.545898H215.092" stroke-opacity="0.65" stroke-dasharray="3 3"/>
-                                                    </svg>
-                                                </div>
-                                                <div class="journal-goals__goal">
-                                                    <h5 class="journal-goals__goal-name" title={goal.title}>
-                                                        {goal.title}
-                                                    </h5>
-                                                    <p class="journal-goals__goal-description" title={goal.description}>
-                                                        {goal.description}
-                                                    </p>
-                                                    <div class="flx flx--algn-center flx--space-between">
-                                                        <div class="flx">
-                                                            <div class="journal-goals__goal-status flx flx--algn-center">
-                                                                <div class="journal-goals__goal-status-dot" style={`background-color: #D2B569`}></div>
-                                                                <span>On-Hold</span>
-                                                            </div>
-                                                            {#if goal.milestones.length > 0}
-                                                                <div class="journal-goals__goal-milestones" title="Milestones">
-                                                                    {`${goal.milestonesDone} / ${goal.milestones.length}`}
-                                                                </div>
-                                                            {/if}
-                                                        </div>
-                                                        <div class="journal-goals__goal-time-period" title="Start / End Date">July '23</div>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                        {/each}
-                                        <li 
-                                            class="journal-goals__board-item journal-goals__board-item--btn-container" 
-                                            id="add-btn-container--in-progress"
-                                        >
-                                            <div class="journal-goals__board-item-divider">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="90%" height="2" viewBox="0 0 200 2" fill="none">
-                                                    <path d="M0.567383 0.545898H215.092" stroke-opacity="0.65" stroke-dasharray="3 3"/>
-                                                </svg>
-                                            </div>
-                                            <button class="journal-goals__board-col-add-new-goal-btn">
-                                                <span>+</span>
-                                                Add New Goal
-                                            </button>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <!-- Accomplished -->
-                                <div class="journal-goals__board-col">
-                                    <ul class="journal-goals__board-col-goals-list">
-                                        {#each accomplishedGoals as goal}
-                                            <li class="journal-goals__board-item" id={`goal--2-${goal.idx}`}>
-                                                <div class="journal-goals__board-item-divider">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="90%" height="2" viewBox="0 0 200 2" fill="none">
-                                                        <path d="M0.567383 0.545898H215.092" stroke-opacity="0.65" stroke-dasharray="3 3"/>
-                                                    </svg>
-                                                </div>
-                                                <div class="journal-goals__goal">
-                                                    <h5 class="journal-goals__goal-name" title={goal.title}>
-                                                        {goal.title}
-                                                    </h5>
-                                                    <p class="journal-goals__goal-description" title={goal.description}>
-                                                        {goal.description}
-                                                    </p>
-                                                    <div class="flx flx--algn-center flx--space-between">
-                                                        <div class="flx">
-                                                            <div class="journal-goals__goal-status flx flx--algn-center">
-                                                                <div class="journal-goals__goal-status-dot" style={`background-color: #8FD067`}></div>
-                                                                <span>On-Hold</span>
-                                                            </div>
-                                                            {#if goal.milestones.length > 0}
-                                                                <div class="journal-goals__goal-milestones" title="Milestones">
-                                                                    {`${goal.milestonesDone} / ${goal.milestones.length}`}
-                                                                </div>
-                                                            {/if}
-                                                        </div>
-                                                        <div class="journal-goals__goal-time-period" title="Start / End Date">July '23</div>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                        {/each}
-                                        <li 
-                                            class="journal-goals__board-item journal-goals__board-item--btn-container
-                                            " id="add-btn-container--accomplished"
-                                        >
-                                            <div class="journal-goals__board-item-divider">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="90%" height="2" viewBox="0 0 200 2" fill="none">
-                                                    <path d="M0.567383 0.545898H215.092" stroke-opacity="0.65" stroke-dasharray="3 3"/>
-                                                </svg>
-                                            </div>
-                                            <button class="journal-goals__board-col-add-new-goal-btn">
-                                                <span>+</span>
-                                                Add New Goal
-                                            </button>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
+                        {#if goalViewOption === GoalViewOption.Board}
+                            <GoalsBoard initGoalInEdit={initGoalInEdit} />
+                        {:else}
+                            <GoalsHistory/>
+                        {/if}
                     </div>
                 {:else}
                 {/if}
@@ -496,6 +192,11 @@
         </div>
     </div>
 </Modal>
+
+
+{#if $homeViewLayout.modalsOpen.includes(ModalType.EditGoal)}
+    <EditGoalModal goalToEdit={goalInEdit} />
+{/if}
 
 <style global lang="scss">
     @import "../../scss/highlighter-tabs.scss";
@@ -508,7 +209,7 @@
 
     .journal {
         width: 88vw;
-        height: 85vh;
+        height: 88vh;
         min-width: 390px;
         max-width: 1100px;
 
@@ -519,8 +220,48 @@
             @include dropdown-btn-dark;
             background-color: rgba(var(--textColor1), 0.032);
         }
-        &--light {
+        &--light &__section-divider {
+            height: 1px;
+            background-color: rgba(var(--textColor1), 0.05);
+            
+            &--main {
+                height: calc(100% - 25px);
+                width: 1px;
+            }
+        }
+        &--light &__content h2 {
+            font-weight: 500;
+        }
+        &--light .highlighter-tabs {
+            @include highlighter-tabs-light-mode;
 
+            &__divider {
+                height: 1px;
+                background-color: rgba(var(--textColor1), 0.05);
+            }
+        }
+        &--light &-tags {
+            &__add-tag-btn span {
+                font-weight: 500;
+                color: rgba(var(--textColor1), 0.98);
+            }
+            &__tag {
+                opacity: 1;
+
+                &:hover {
+                    opacity: 0.7;
+                }
+            }
+            &__tag-title {
+                font-weight: 600;
+                color: rgba(var(--textColor1), 0.64);
+            }
+        }
+        &--light &-tag-view {
+            &__tag-description {
+                font-weight: 500;
+                color: rgba(var(--textColor1), 0.55);
+            }
         }
 
         &__header {
@@ -546,7 +287,6 @@
             &--header {
             }
             &--main {
-                height: 100%;
                 width: 0.5px;
                 height: calc(100% - 25px);
                 @include pos-abs-top-right-corner(0px, 0px);
@@ -563,22 +303,27 @@
         padding: 18px 0px 0px 25px;
         position: relative;
 
+        h2 {
+            margin-bottom: 15px;
+        }
+
         &__add-tag-btn {
             @include flex-container(center, _);
-            margin: 15px 0px 18px 0px;
+            margin: 15px 0px 0px 0px;
             opacity: 0.3;
+            display: none;
 
             &:hover, &:focus {
                 opacity: 1;
             }
             &-icon {
-                font-weight: 300;
-                font-size: 1.4rem !important;
-                margin-left: 5px;
+                font-weight: 100;
+                font-size: 1.6rem;
             }
             &-text {
+                margin-left: 8px;
                 font-weight: 300;
-                font-size: 1.3rem;
+                font-size: 1.2rem;
             }
         }
         &__list {
@@ -586,24 +331,24 @@
         &__tag {
             @include flex-container(center, _);
             opacity: 0.5;
-            transition: 0.1s ease-in-out;
-            margin-bottom: 6px;
+            transition: 0.05s ease-in-out;
+            margin-bottom: 9px;
             cursor: pointer;
 
             &:active {
                 transform: scale(0.98);
             }
             &:hover, &:focus, &--chosen {
-                opacity: 1;
+                opacity: 0.85;
             }
 
             &-color {
-                @include circle(3.5px);
+                @include circle(4px);
                 margin-right: 10px;
             }
             &-title {
                 font-weight: 300;
-                font-size: 1.15rem;
+                font-size: 1.24rem;
             }
         }
     }
@@ -659,80 +404,155 @@
 
     /* Goals View */
     .journal-goals {
-        padding: 18px 0px 0px 25px;
+        padding: 18px 0px 0px 0px;
         min-height: 0px;
         height: 100%;
         width: 100%;
 
+        &--light &__filter-dropdown-btn {
+            box-shadow: none;
+            background-color: rgba(black, 0.032);
+        }
+        &--light &__history-year-view {
+            &-row-title {
+                @include text-style(0.6, 500);
+            }
+            &-row-count {
+                @include text-style(0.3, 500);
+            }
+        }
+        &--light &__history-item {
+            &-date {
+                @include text-style(0.45, 600);
+            }
+            &-details-title {
+                @include text-style(0.9, 500);
+            }
+            &-details-type, &-details-arrow {
+                @include text-style(0.55, 500);
+            }
+            &-details-goal {
+                @include text-style(0.65, 500);
+            }
+        }
+        &--light &__history-timeline {
+            &-month {
+                @include text-style(1, 600);
+            }
+        }
+
         &__dropdown-container .dropdown-menu {
-            @include pos-abs-top-left-corner(32px, 0px);
+            @include pos-abs-top-left-corner(35px, 0px);
+            margin-left: 25px;
         }
         &__filter-dropdown-btn {
-
+            margin-left: 25px;
         }
-        &__board {
-            gap: 15px;
-            margin-top: 20px;
-            position: relative;
-            max-height: calc(100% - $board-top-offset-gap);
-            height: calc(100% - $board-top-offset-gap);
-            overflow-x: scroll;
-            width: 100%;
-            
-            &-cards-container {
-                display: flex;
-                max-height: calc(100% - $board-frame-top-offset-gap);
-                overflow-y: scroll;
-                overflow-x: hidden;
-                width: 100%;
-                min-width: 650px;
+    }
+
+    .goals-board {
+        margin-top: 20px;
+        position: relative;
+        max-height: calc(100% - $board-top-offset-gap);
+        height: calc(100% - $board-top-offset-gap);
+        overflow-x: scroll;
+        width: 100%;
+        padding-left: 25px;
+
+        &--light &-item {
+            &:hover, &:focus {
+                filter: brightness(1.02);
             }
-            &-item {
-                width: $board-item-width;
-                transition: 0.12s ease-in-out;
-                cursor: pointer;
+
+            &--btn-container button {
+                font-weight: 500;
+            }
+        }
+        &--light &-col-header {
+            &-title {
+                font-weight: 600;
+                color: rgba(var(--textColor1), 0.78);
+            }
+            &-count {
+                font-weight: 500;
+                color: rgba(var(--textColor1), 0.3);
+            }
+        }
+
+        /* Board */
+        &__cards-container {
+            display: flex;
+            max-height: calc(100% - $board-frame-top-offset-gap);
+            overflow-y: scroll;
+            overflow-x: hidden;
+            width: 100%;
+            min-width: 650px;
+            scroll-behavior: smooth;
+
+            &--grabbing * {
+                cursor: grab !important;
+            }
+        }
+        &__item {
+            width: $board-item-width;
+            transition: 0.09s ease-in-out;
+            cursor: pointer;
+            position: relative;
+
+            &:active {
+                transform: scale(0.994);
+            }
+            &:hover, &:focus {
+                filter: brightness(1.12);
+            }
+
+            &--dragging {
+                cursor: grabbing !important;
+                opacity: 0.3;
+            }
+            &--dragging * {
+                cursor: grabbing !important;
+            }
+            &--over &-divider {
+                opacity: 1;
+                padding: 15px 0px 15px 0px;
+            }
+            &--btn-container {
+                height: 150px;
 
                 &:active {
-                    transform: scale(0.994);
+                    transform: scale(1);
                 }
                 &:hover, &:focus {
-                    filter: brightness(1.12);            
-                }
-                * {
-                    pointer-events: none;
-                }
-
-                &--dragging {
-                    opacity: 0.3;
-                }
-                &--over &-divider {
-                    opacity: 1;
-                    padding: 15px 0px 15px 0px;
-                }
-                &--btn-container {
-                    height: 150px;
-
-                    * {
-                        pointer-events: auto;
-                    }
-                }
-            }
-
-            &-item-divider {
-                width: 100%;
-                @include flex-container(center, center);
-                transition: 0.1s ease-in-out;
-                opacity: 0;
-                padding-top: 5px;
-                
-                path {
-                    stroke: rgba(var(--textColor1), 0.24);
+                    filter: brightness(1);
                 }
             }
         }
+        &__item-handle {
+            width: 100%;
+            height: 10px;
+            @include pos-abs-top-left-corner(2px, 0px);
+            cursor: grab;
 
-        /* Columns */
-        &__board-col {
+            &:active {
+                cursor: grabbing !important;
+            }
+            
+        }
+        &__item-divider {
+            width: 100%;
+            @include flex-container(center, center);
+            transition: 0.1s ease-in-out;
+            opacity: 0;
+            padding-top: 5px;
+            
+            path {
+                stroke: rgba(var(--textColor1), 0.24);
+            }
+        }
+
+        /* Board Columns */
+        &__col {
             margin-right: $board-col-gap;
 
             &:hover &-add-new-goal-btn {
@@ -762,10 +582,14 @@
                 }
             }
         }
-        &__board-col-header {
-            @include flex-container(center, _);
-            margin: 0px $board-col-gap 4px 0px;
+        &__col-header {
+            @include flex-container(center, space-between);
+            margin: 0px $board-col-gap 0px 0px;
             min-width: $board-item-width;
+
+            &:hover &-add-btn {
+                color: rgba(var(--textColor1), 0.2);
+            }
 
             &-dot {
                 @include circle(3px);
@@ -781,65 +605,111 @@
                     background-color: #8FD067;
                 }
             }
+            &-add-btn {
+                @include text-style(0, 200, 2.1rem);
+
+                &:hover {
+                    color: rgba(var(--textColor1), 0.75) !important;
+                }
+                &:active {
+                    transform: scale(0.94);
+                }
+            }
             &-title {
                 font-size: 1.17rem;
                 font-weight: 300;
                 margin-right: 15px;
-                opacity: 0.4;
+                color: rgba(var(--textColor1), 0.7);
                 @include elipses-overflow;
             }
             &-count {
                 font-size: 1.2rem;
-                opacity: 0.2;
+                color: rgba(var(--textColor1), 0.2);
             }
         }
+    }
 
-        /* Goal Card */
-        &__goal {
-            background-color: var(--bentoBoxBgColor);
-            box-shadow: var(--bentoBoxShadow);
-            border-radius: 15px;
-            padding: 10.5px 14px 12.5px 16px;
-            font-weight: 300;
-            border: 0.5px solid rgba(var(--textColor1), 0.029);
-            position: relative;
-            transition: 0.12s ease-in-out;
-            cursor: pointer;
-            
-            &-name, &-description, &-status-dot, &-status, &-milestones, &-time-period {
-                cursor: text !important;
-                font-size: 1.075rem;
+    /* Goal Card */
+    .goal-card {
+        background-color: var(--bentoBoxBgColor);
+        box-shadow: var(--bentoBoxShadow);
+        border-radius: 15px;
+        padding: 10.5px 14px 12.5px 16px;
+        font-weight: 300;
+        border: 0.5px solid rgba(var(--textColor1), 0.029);
+        position: relative;
+        transition: 0.12s ease-in-out;
+        position: relative;
+
+        &--light  {
+            border-color: transparent;
             }
-            &-name {
-                font-size: 1.24rem;
-                font-weight: 500;
-                color: rgba(var(--textColor1), 0.77);
-                margin-bottom: 6px;
-                width: fit-content;
-                max-width: 95%;
-                @include multi-line-elipses-overflow(2);
-            }
-            &-description {
-                color: rgba(var(--textColor1), 0.36);
-                font-size: 1.15rem;
-                margin-bottom: 14px;
-                width: fit-content;
-            }
-            &-status-dot {
-                @include circle(2.5px);
-                margin-right: 7px;
-            }
-            &-status {
-                color: rgba(var(--textColor1), 0.44);
-                font-weight: 400;
-                margin-right: 10px;
-            }
-            &-milestones {
-                color: rgba(var(--textColor1), 0.24);
-            }
-            &-time-period {
-                color: rgba(var(--textColor1), 0.24);
-            }
+        &--light &__name { 
+            font-weight: 600;
+            color: rgba(var(--textColor1), 0.85);
+        }
+        &--light &__description {
+            font-weight: 400;
+            color: rgba(var(--textColor1), 0.5);
+        }
+        &--light &__status {
+            font-weight: 600;
+            color: rgba(var(--textColor1), 0.7);
+        }
+        &--light &__milestones {
+            font-weight: 500;
+            color: rgba(var(--textColor1), 0.3);
+        }
+        &--light &__time-period span {
+            font-weight: 600;
+            color: rgba(var(--textColor1), 0.35);
+        }
+
+        
+        &__name, &__description, &__status-dot, &__status, &__milestones, &__time-period {
+            cursor: text;
+            user-select: text;
+            font-size: 1.075rem;
+        }
+        &__name {
+            font-size: 1.24rem;
+            font-weight: 500;
+            color: rgba(var(--textColor1), 0.77);
+            margin-bottom: 6px;
+            width: fit-content;
+            max-width: 95%;
+            @include multi-line-elipses-overflow(2);
+        }
+        &__description {
+            color: rgba(var(--textColor1), 0.36);
+            font-size: 1.15rem;
+            margin-bottom: 14px;
+            width: fit-content;
+            white-space: pre-wrap;
+            word-break: break-word;
+            @include multi-line-elipses-overflow(11);
+        }
+        &__bottom-details {
+            @include flex-container(center, space-between);
+        }
+        &__bottom-details-left {
+            @include flex-container(center, _);
+        }
+        &__status-dot {
+            @include circle(2.5px);
+            margin-right: 7px;
+        }
+        &__status {
+            color: rgba(var(--textColor1), 0.44);
+            font-weight: 400;
+            margin-right: 6.5px;
+            @include flex-container(center, _);
+        }
+        &__milestones {
+            color: rgba(var(--textColor1), 0.24);
+        }
+        &__time-period span {
+            color: rgba(var(--textColor1), 0.24);
         }
     }
 </style>

@@ -3,13 +3,12 @@ import { MusicPlayer, type MusicPlayerStore } from "./music-player"
 import { musicDataStore, musicPlayerStore, } from "./store"
 import { MusicPlaylistShuffler } from "./music-playlist-shuffler"
 import { getAppleAlbumDetails, getApplePlaylistDetails, getArtworkSrc, isCollectionPlaylist } from "./api-apple-music"
+import { PlayerError } from "./errors"
 
 import { 
-        loadMusicPlayerState, 
-        loadMusicShuffleData, removeMusicPlayerData, removeMusicShuffleData, 
-        saveMusicPlayerData 
+    loadMusicPlayerState, loadMusicShuffleData, 
+    removeMusicPlayerData, removeMusicShuffleData, saveMusicPlayerData 
 } from "./utils-music"
-import { PlayerError } from "./errors"
 
 /**
  * A class representing an Apple Music player instance that extends MusicPlayer. 
@@ -85,7 +84,6 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
      * Has helpful info in the data passed to handlers about state / data of current player / media.
      */
     private attachEventHandlers() {
-
         // use arrow function to use "this" instance as the lexical context
         this.musicPlayerInstance.addEventListener("nowPlayingItemWillChange", (e: any) => this.nowPlayingItemWillChangeHandler(e))
         this.musicPlayerInstance.addEventListener("playbackTimeDidChange", (e: any) => this.playbackTimeDidChangeHandler(e))
@@ -570,4 +568,6 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
             hasReachedEnd: musicPlayerState.hasReachedEnd
         })
     }
+
+    
 }

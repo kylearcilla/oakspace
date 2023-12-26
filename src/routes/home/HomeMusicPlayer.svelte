@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte'
-    import { Icon, MusicPlatform } from "$lib/enums"
+    import { LogoIcon, MusicPlatform } from "$lib/enums"
 	import type { MusicPlayer } from '$lib/music-player'
 	import { getSlidingTextAnimation, trackProgressHandler, volumeHandler } from '$lib/utils-music-player'
 	import { musicPlayerStore, themeState, homeViewLayout, musicDataStore } from '$lib/store'
@@ -18,7 +18,7 @@
     let isNextBtnActive = false
     let playbackProgress = 0.1
 
-    let icon: Icon | null = null
+    let icon: LogoIcon | null = null
     let iconOptions: LogoContainerOptions | null = null
     
     let trackPlaybackBar: HTMLInputElement
@@ -147,10 +147,10 @@
         musicPlatform = $musicDataStore!.musicPlatform!
 
         // get the icon enum & options to be used in Icon component
-        let platformIconEnumIdx = findEnumIdxFromDiffEnum(musicPlatform, MusicPlatform, Icon)
-        icon = platformIconEnumIdx === null ? Icon.Luciole : platformIconEnumIdx as Icon
+        let platformIconEnumIdx = findEnumIdxFromDiffEnum(musicPlatform, MusicPlatform, LogoIcon)
+        icon = platformIconEnumIdx === null ? LogoIcon.Luciole : platformIconEnumIdx as LogoIcon
 
-        const iconStrIdx = Icon[icon] as keyof typeof MUSIC_PLAYER_ICON_OPTIONS
+        const iconStrIdx = LogoIcon[icon] as keyof typeof MUSIC_PLAYER_ICON_OPTIONS
         iconOptions = MUSIC_PLAYER_ICON_OPTIONS[iconStrIdx]
     })
     onDestroy(() => window.removeEventListener("resize", handleResize))

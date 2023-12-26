@@ -1,8 +1,10 @@
+// Underline Input
 @mixin input-bottom-underline--light {
+    input {
+        @include text-style(0.6, 500, 1.4rem);
+    }
     input::placeholder {
-        opacity: 0.13;
-        font-weight: 500;
-        font-size: 1.4rem;
+        @include text-style(0.13, 500, 1.4rem);
     }
 
     &--focus &__underline {
@@ -18,10 +20,12 @@
 }
 
 .input-bottom-underline {
+    input {
+        padding: 5px 0px 6px 0px;
+        @include text-style(0.8, 200, 1.5rem);
+    }
     input::placeholder {
-        opacity: 0.15;
-        font-weight: 200;
-        font-size: 1.5rem;
+        @include text-style(0.15, 200, 1.5rem);
     }
 
     &--focus &__underline {
@@ -46,11 +50,71 @@
 }
 
 
-@keyframes quantumWizPaperInputAddUnderline {
-    0% {
-        transform: scaleX(0)
+// Box Input
+@mixin input-box--light {
+    border: 1.5px solid rgba(var(--textColor1), 0.12);
+
+    input {
+        @include text-style(0.8, 500);
     }
-    to {
-        transform: scaleX(1)
+    input::placeholder {
+        @include text-style(0.15, 400);
+    }
+
+    &__btn {
+        @include text-style(0.7, 500);
+
+        &:hover, &:focus {
+            @include text-style(0.4, 500);
+        }
+        &:disabled {
+            opacity: 0.4;
+        }
+    }
+}
+
+.input-box {
+    @include flex-container(center, space-between);
+    border: 1px solid rgba(var(--textColor1), 0.05);
+    border-radius: 12px;
+    padding: 5px 10px 5px 12px;
+
+    input {
+        padding: 0px 0px 3px 0px;
+        @include text-style(0.8, 200, 1.4rem);
+    }
+    input::placeholder {
+        @include text-style(0.15, 200, 1.4rem);
+    }
+
+    &--no-highlight {
+        border: 0px solid !important;
+    }
+    &--highlighted {
+
+    }
+
+    &__btn-container {
+        @include flex-container(center);
+    }
+    &__btn {
+        padding: 5px 10px;
+        @include text-style(0.2, 200, 1.3rem);
+
+        &:active {
+            transform: scale(0.95);
+        }
+        &:hover, &:focus {
+            @include text-style(0.5, 200, 1.3rem);
+        }
+        &:disabled {
+            opacity: 0.4;
+        }
+
+        &--submit {
+
+        }
+        &--cancel {
+        }
     }
 }

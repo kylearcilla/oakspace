@@ -6,7 +6,10 @@ import type { YoutubePlayer } from './youtube-player'
 import type { YoutubeUserData } from './youtube-user-data'
 import type { PomSessionManger } from './pom-session-manager'
 import type { TasksViewManager } from './tasks-view-manager'
+import type { GoalsManager } from './goals-manager'
 import { ShortcutSectionInFocus } from './enums'
+import type { EditGoalManager } from './edit-goal-manager'
+import type { DatePickerManager } from './date-picker-manager'
 
 /* App UI State */
 export const homeViewLayout = writable<HomeLayout>({
@@ -32,6 +35,10 @@ export const googleData = writable<GoogleUserData | null>(null)
 /* Home View Stuff */
 export const tasksViewStore = writable<TasksViewManager | null>(null)
 
+/* Goals Stuff */
+export const goalsManager = writable<GoalsManager | null>(null)
+export const editGoalManger = writable<EditGoalManager | null>(null)
+
 /* YT Stuff */
 export const ytUserDataStore = writable<YoutubeUserData| null>(null)
 export const ytPlayerStore = writable<YoutubePlayer| null>(null)
@@ -43,3 +50,6 @@ export const musicDataStore = writable<MusicUserData | null>(null)
 /* Session Stuff */
 export const sessionStore = writable<Session | null>(null)
 export const sessionManager = writable<PomSessionManger | null>(null)
+
+/* General Stuff */
+export const datePickerManager = writable<DatePickerManager | null>(null)

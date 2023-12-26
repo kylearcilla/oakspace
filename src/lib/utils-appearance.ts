@@ -142,6 +142,7 @@ export const setRootColors = (theme: ColorThemeProps) => {
           --tasksCheckColor: ${theme.tasksCheckColor};
           --tasksCheckBoxColorDefault: ${theme.tasksCheckBoxColorDefault};
           --tasksCheckBoxColorComplete: ${theme.tasksCheckBoxColorComplete};
+          --tasksSubtaskFocusColor: ${theme.tasksSubtaskFocusColor};
           --tasksLightTextColor: ${theme.tasksLightTextColor};
           --dropdownMenuBgColor1: ${theme.dropdownMenuBgColor1};
           --dropdownMenuBgHoverColor1: ${theme.dropdownMenuBgHoverColor1};

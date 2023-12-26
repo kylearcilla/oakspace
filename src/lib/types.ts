@@ -7,6 +7,11 @@ type AsyncResult = {
     message?: string
 }
 
+type Result<T, E> = {
+    result: T
+    error: E
+}
+
 type FunctionParam = ((...args: any[]) => any) | ((...args: any[]) => Promise<any>) | null
 
 type AppearanceThemes = { 
@@ -90,7 +95,8 @@ type SessionResult = {
 
 type Tag = {
     name: string,
-    color: string
+    color: string,
+    symbol: string
 }
 
 type SessionInputData = {
@@ -329,21 +335,51 @@ type YoutubeMediaId = {
 /* Goals */
 type Goal = {
     id: string
-    tagId: string
+    tag: Tag
     title: string
     description: string
-    dueDate: Date
-    startDate: Date
+    dueDate: Date | null
+    creationDate: Date
     accomplishedDate: Date | null
     status: GoalStatus
+    milestonesDone: number,
     milestones: Milestone[]
     idx: number
+    imgSrc: string
+    isImgHidden: boolean
 }
 type Milestone = {
     title: string
     id: string
     idx: number
     endDate: Date | null
+}
+type YrAccomplishmentsOverview = {
+    newGoals: number,
+    milestonesReached: number,
+    goalsAccomplished: number,
+    accomplishments: Accomplishment[]
+}
+type Accomplishment = {
+    title: string
+    date: Date
+    tagRef: {
+        id: string
+        title: string
+        symbol: string,
+        color: string
+    },
+    goalRef: {
+        id: string
+        title: string
+    }
+    isMilestone: boolean
+}
+
+type DatePickerOptions = {
+    forwards?: boolean
+    minDate?: Date | null 
+    maxDate?: Date | null 
 }
 
 /* Analytics Stuff */
@@ -506,6 +542,7 @@ type ColorThemeProps = {
     rightBarBgBoxShadow: string,
     tasksCheckBoxColorDefault: string,
     tasksCheckBoxColorComplete: string,
+    tasksSubtaskFocusColor: string,
     tasksCheckColor: string,
     tasksLightTextColor: string,
     dropdownMenuBgColor1: string,

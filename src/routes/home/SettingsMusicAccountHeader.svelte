@@ -2,7 +2,7 @@
 	import { themeState, musicDataStore } from "$lib/store";
 	import { clickOutside, findEnumIdxFromDiffEnum } from "$lib/utils-general";
 	import { addSpacesToCamelCaseStr } from "$lib/utils-general";
-    import { Icon, MusicPlatform } from "$lib/enums";
+    import { LogoIcon, MusicPlatform } from "$lib/enums";
 	import Logo from "../../components/Logo.svelte";
 	import { onMount } from "svelte";
 	import { construct_svelte_component } from "svelte/internal";
@@ -11,7 +11,7 @@
     export let logOutUser: () => Promise<void>
 
     let platform: MusicPlatform | null = null
-    let icon: Icon
+    let icon: LogoIcon
     let iconOptions: LogoContainerOptions
 
     const LOGO_WIDTH = 15
@@ -31,10 +31,10 @@
         // get the icon enum & options to be used in Icon component
         platform = $musicDataStore!.musicPlatform
 
-        let platformIconEnumIdx = findEnumIdxFromDiffEnum(platform, MusicPlatform, Icon)
-        icon = platformIconEnumIdx === null ? Icon.Luciole : platformIconEnumIdx as Icon
+        let platformIconEnumIdx = findEnumIdxFromDiffEnum(platform, MusicPlatform, LogoIcon)
+        icon = platformIconEnumIdx === null ? LogoIcon.Luciole : platformIconEnumIdx as LogoIcon
 
-        const iconStrIdx = Icon[icon] as keyof typeof HEADER_ICON_OPTIONS
+        const iconStrIdx = LogoIcon[icon] as keyof typeof HEADER_ICON_OPTIONS
         iconOptions = HEADER_ICON_OPTIONS[iconStrIdx]
     })
 </script>
@@ -64,7 +64,7 @@
             <li class="platform-list__platform-item">
                 <div class="platform-list__platform-item-logo">
                     <Logo 
-                        logo={Icon.Soundcloud} 
+                        logo={LogoIcon.Soundcloud} 
                         options={{ containerWidth: "18px", borderRadius: "7px", iconWidth: "60%" }} 
                     />
                 </div>
@@ -82,7 +82,7 @@
             <li class="platform-list__platform-item">
                 <div class="platform-list__platform-item-logo">
                     <Logo 
-                        logo={Icon.YoutubeMusic} 
+                        logo={LogoIcon.YoutubeMusic} 
                         options={{ containerWidth: "18px", borderRadius: "7px", iconWidth: "66%" }} 
                     />
                 </div>
@@ -100,7 +100,7 @@
             <li class="platform-list__platform-item">
                 <div class="platform-list__platform-item-logo">
                     <Logo 
-                        logo={Icon.AppleMusic} 
+                        logo={LogoIcon.AppleMusic} 
                         options={{ containerWidth: "18px", borderRadius: "7px", iconWidth: "50%" }} 
                     />
                 </div>
@@ -122,7 +122,7 @@
             <li class="platform-list__platform-item">
                 <div class="platform-list__platform-item-logo">
                     <Logo 
-                        logo={Icon.Spotify} 
+                        logo={LogoIcon.Spotify} 
                         options={{ containerWidth: "18px", borderRadius: "7px", iconWidth: "80%" }} 
                     />
                 </div>

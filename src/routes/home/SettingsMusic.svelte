@@ -34,6 +34,8 @@
     const SCROLL_STEP = 400
     const PLAYLIST_BTN_COOLDOWN_MS = 1000
     const FETCH_PLAYLIST_DELAY = 1000
+
+    let gradientWrapperStyle = ""
     
     /* Log In Functionality  */
     async function _musicLogin (platform: MusicPlatform) {
@@ -95,13 +97,28 @@
     }
     
     /* Discover Section */
+    function handleGradientWrapperStyle() {
+        let gradientStyle = ""
+        if (isScrollableLeft && isScrollableRight) {
+            gradientStyle = "linear-gradient(90deg, rgba(0, 0, 0, 0.00) 0%, #000 9.84%, #000 85%, rgba(0, 0, 0, 0.00) 100%)"
+        }
+        else if (isScrollableLeft) {
+            gradientStyle = "linear-gradient(90deg, rgba(0, 0, 0, 0.00) 0%, #000 10.55%)"
+        }
+        else if (isScrollableRight) {
+            gradientStyle = "linear-gradient(90deg, #000 85%, rgba(0, 0, 0, 0.00) 100%)"
+        }
+
+        gradientWrapperStyle = "mask-image: " + gradientStyle + "; "
+        gradientWrapperStyle += "-webkit-mask-image: " + gradientStyle + "; "
+
+    }
     function handleShiftTabCategoryRight() {
          collectionList!.scrollLeft += SCROLL_STEP
     }
     function handleShiftTabCategoryLeft() { 
         collectionList!.scrollLeft -= SCROLL_STEP
     }
-
     function handleScroll() {
         const scrollLeft = collectionList!.scrollLeft
         const scrollWidth = collectionList!.scrollWidth
@@ -109,6 +126,7 @@
 
         isScrollableLeft = scrollLeft > 0
         isScrollableRight = scrollLeft < scrollWidth - clientWidth
+        handleGradientWrapperStyle()
     }
 
     function handleDiscoverCollectionCardClicked(moodType: MusicMoodCategory) {
@@ -126,6 +144,8 @@
     onMount(() => {
         if (!$musicDataStore?.isSignedIn) return
         handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
+
+        handleScroll()
     })
 </script>
 
@@ -252,50 +272,48 @@
                         <p class="discover__copy bento-box__copy">Get in the zone with music that matches your vibe. Select a mood / genre and discover new tunes to fuel your day.</p>
                         <div class="discover__collection-list-container">
                             {#if isScrollableLeft}
-                                <div class="gradient-container gradient-container--left">
-                                    <button 
-                                        on:click={handleShiftTabCategoryLeft}
-                                        class="gradient-container__tab-arrow gradient-container__tab-arrow--left"
-                                    >
-                                        <i class="fa-solid fa-chevron-left"></i>
-                                    </button>
-                                </div>
+                                <button 
+                                    on:click={handleShiftTabCategoryLeft}
+                                    class="discover__collection-list-container-btn discover__collection-list-container-btn--left"
+                                >
+                                    <i class="fa-solid fa-chevron-left"></i>
+                                </button>
                             {/if}
-                            <!-- Discover Categories Carousel -->
-                            <ul  class="discover__collection-list" bind:this={collectionList} on:scroll={handleScroll}>
-                                {#each musicCategories as group, idx}
-                                    <!-- svelte-ignore a11y-click-events-have-key-events -->
-                                    <li class={`discover__collection-card 
-                                                 ${chosenMood === group.moodType ? "discover__collection-card--chosen" : ""}
-                                              `}
-                                        on:click={() => handleDiscoverCollectionCardClicked(group.moodType)}
-                                    >
-                                        <img class="discover__collection-card-img" src={group.artworkSrc}  alt="">
-                                        <div class="discover__collection-card-hover-details">
-                                            <img src={group.artworkBlurredSrc} alt="">
-                                            <div class="discover__collection-card-hover-details-text-container">
-                                                <span>{group.artistCredit}</span>
-                                                <div>
-                                                    <h2>{group.moodType}</h2>
-                                                    <p  class="discover__collection-card-hover-details-description">
-                                                        {group.description}
-                                                    </p>
+                            <div class="discover__collection-list-container-gradient-wrapper" style={`${gradientWrapperStyle}`}>
+                                <!-- Discover Categories Carousel -->
+                                <ul  class="discover__collection-list" bind:this={collectionList} on:scroll={handleScroll}>
+                                    {#each musicCategories as group, idx}
+                                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                                        <li class={`discover__collection-card 
+                                                    ${chosenMood === group.moodType ? "discover__collection-card--chosen" : ""}
+                                                `}
+                                            on:click={() => handleDiscoverCollectionCardClicked(group.moodType)}
+                                        >
+                                            <img class="discover__collection-card-img" src={group.artworkSrc}  alt="">
+                                            <div class="discover__collection-card-hover-details">
+                                                <img src={group.artworkBlurredSrc} alt="">
+                                                <div class="discover__collection-card-hover-details-text-container">
+                                                    <span>{group.artistCredit}</span>
+                                                    <div>
+                                                        <h2>{group.moodType}</h2>
+                                                        <p  class="discover__collection-card-hover-details-description">
+                                                            {group.description}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <h3 class="discover__collection-card-title">{group.moodType}</h3>
-                                    </li>
-                                {/each}
-                                <li class="discover__collection-list-padding discover__collection-list-padding-right"></li>
-                            </ul>
+                                            <h3 class="discover__collection-card-title">{group.moodType}</h3>
+                                        </li>
+                                    {/each}
+                                    <li class="discover__collection-list-padding discover__collection-list-padding-right"></li>
+                                </ul>
+                            </div>
                             {#if isScrollableRight}
-                                <div class="gradient-container gradient-container--right">
-                                    <button class="gradient-container__tab-arrow gradient-container__tab-arrow--right"
-                                            on:click={handleShiftTabCategoryRight}
-                                    >
-                                        <i class="fa-solid fa-chevron-right"></i>
-                                    </button>
-                                </div>
+                                <button class="discover__collection-list-container-btn discover__collection-list-container-btn--right"
+                                        on:click={handleShiftTabCategoryRight}
+                                >
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
                             {/if}
                         </div>
                         <!-- Collections List -->
@@ -765,29 +783,39 @@
             position: relative;
             margin-bottom: 20px;
 
-            &:hover > .gradient-container {
+            &:hover &-btn {
                 opacity: 1;
                 visibility: visible;
             }
-        }
-        .gradient-container {
-            height: 100%;
+            &:not(:hover) &-gradient-wrapper {
+                mask-image: none !important;
+                -webkit-mask-image: none !important;
+                transition: 0.6s webkit-mask-image ease-in-out;
+            }
+            &-gradient-wrapper {
+                width: 100%;
+            }
+            &-btn {
+                opacity: 0;
+                visibility: hidden;
+                @include circle(20px);
+                @include center;
+                background-color: rgba(100, 100, 100, 0.4);
+                transition: 0.12s ease-in-out;
+                z-index: 100;
 
-            &--left {
-                width: 50px;
-            }
-            &--right {
-                width: 50px;
-            }
-            &__tab-arrow {
                 i {
                     color: white;
                 }
+                &:active {
+                    transform: scale(0.8);
+                }
+
                 &--left {
-                    margin-right: 13px;
+                    @include pos-abs-top-left-corner(60px, 5px);
                 }
                 &--right {
-                    margin-left: 5px;
+                    @include pos-abs-top-right-corner(60px, 5px);
                 }
             }
         }
@@ -796,6 +824,7 @@
             display: flex;
             overflow-x: scroll;
             scroll-behavior: smooth;
+
             li {
                 &:first-child {
                     margin-left: 25px;

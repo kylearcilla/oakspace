@@ -3,7 +3,7 @@
     import Logo from "../../components/Logo.svelte"
     
 	import { closeModal } from "$lib/utils-home"
-    import { Icon, ModalType } from "$lib/enums"
+    import { LogoIcon, ModalType } from "$lib/enums"
     import ytRecsPlaylists from '$lib/data-yt-playlists'
     import { clickOutside } from "../../lib/utils-general"
 	import { themeState, ytPlayerStore, ytUserDataStore } from "$lib/store"
@@ -111,7 +111,7 @@
                 </h1>
                 <div class="yt-settings__header-yt-logo">
                     <Logo 
-                        logo={Icon.Youtube}
+                        logo={LogoIcon.Youtube}
                         options={{ hasBgColor: false, containerWidth: "20px", iconWidth: "100%" }}
                     />
                 </div>
@@ -122,7 +122,7 @@
                         <img src={$ytUserDataStore?.profileImgSrc ?? "https://media.tenor.com/-OpJG9GeK3EAAAAC/kanye-west-stare.gif"} alt="yt-profile" />
                     {:else}
                         <div class="yt-settings__user-capsule-google-logo">
-                            <Logo logo={Icon.Google} options={{ hasBgColor: false, containerWidth: "11.5px", iconWidth: "100%" }} />
+                            <Logo logo={LogoIcon.Google} options={{ hasBgColor: false, containerWidth: "11.5px", iconWidth: "100%" }} />
                         </div>
                     {/if}
                     <span>{$ytUserDataStore?.username ?? "Log In"}</span>

@@ -15,11 +15,11 @@
     let newTitle = $sessionStore!.name
     let newTag = {  name: $sessionStore!.tag.name,  color: $sessionStore!.tag.color }
     
-    const exitEditModal = () => {
+    function exitEditModal() {
         $sessionManager?.toggleEditSessionModal(false)
         closeModal(ModalType.EditSession)
     }
-    const editSessionDoneBtnClicked = (e: Event) => {
+    function editSessionDoneBtnClicked(e: Event) {
         e.preventDefault()
         if (newTitle === "" || newTitle.length > MAX_SESSION_NAME_LENGTH) return
 
@@ -27,15 +27,15 @@
         $sessionStore!.editSessionTitle(newTitle)
         editSessionCancelBtnClicked()
     }
-    const editSessionCancelBtnClicked = () => {
+    function editSessionCancelBtnClicked() {
         exitEditModal()
         newTag = {  name: $sessionStore!.tag.name,  color: $sessionStore!.tag.color  }
     }
-    const handleNewTagClicked = (idx: number) => {
+    function handleNewTagClicked(idx: number) {
         newTag = tags[idx]
         isTagListDropDownOpen = false
     }
-    const handleCreateTagBtnClicked = () => {
+    function handleCreateTagBtnClicked() {
         isTagListDropDownOpen = false
     }
 </script>

@@ -38,10 +38,18 @@ export const getUserHourCycle = (): "h11" | "h12" | "h23" | "h24" => {
 /**
  * @param date1 
  * @param date2 
- * @returns       If date1 is earlier than date2.
+ * @param inclusve  If same day then valid
+ * @returns         If date1 is earlier than date2.
  */
-export const isDateEarlier = (date1: Date, date2: Date): boolean => {
-    return date1.getTime() < date2.getTime()
+export const isDateEarlier = (date1: Date, date2: Date, inclusive = false): boolean => {
+    const day1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate())
+    const day2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate())
+
+    if (inclusive) {
+        return day1.getTime() <= day2.getTime()
+    } else {
+        return day1.getTime() < day2.getTime()
+    }
 }
 
 /**
@@ -104,8 +112,9 @@ export function getCurrentDate(): string {
  * @param d2 
  * @returns 
  */
-export function isSameDay(d1: Date, d2: Date) {
-    return d1.getDate() === d2.getDate() && d1.getMonth() === d2.getMonth() && d1.getFullYear() && d2.getFullYear()
+export function isSameDay(d1: Date | null, d2: Date | null) {
+    if (!d1 || !d2) return false
+    return d1.getDate() === d2.getDate() && isSameMonth(d1, d2)
 }
 
 /**
@@ -124,7 +133,7 @@ type YearFormat = "numeric" | "2-digit" | undefined
 type DayFormat = "numeric" | "2-digit" | undefined
 
 /**
- * Formats date to string representation. Format depends on the options passed in.
+ * Formats date to string representation. Format depends on the options passed in and geo-location.
  * @param date 
  * @returns Formatted Time (i.e. Apr 14, 2020)
  */
@@ -136,11 +145,20 @@ export function formatDatetoStr(date: Date, options: {
 }
 
 /**
- * Formats date to MM DD
+ * Formats date to MM/DD/YY
+ * @param date 
+ * @returns  Formatted Time (i.e. Jan 12, 2024)
+ */
+export function formatDateLong(date: Date) {
+    return formatDatetoStr(date, { year: "numeric", month: "short", day: "numeric" })
+}
+
+/**
+ * Formats date to MM/DD
  * @param date 
  * @returns  Formatted Time (i.e. 9/6)
  */
-export function formatDateToMMDD(date: Date): string {
+export function formatDateShort(date: Date): string {
     return date.toLocaleDateString(getBrowserLanguagePreference(), { month: '2-digit', day: '2-digit' })
 }
 
@@ -311,6 +329,40 @@ export const formatTime = (milliseconds: number) => {
 
 /**
  * 
+ * @param fromDate  
+ * @returns  The very first day of the next month form passed-in month.
+ */
+export function getNextMonth(fromDate: Date): Date {
+    const nextMonth = new Date(fromDate.getFullYear(), fromDate.getMonth() + 1, 1);
+    return nextMonth
+}
+
+/**
+ * 
+ * @param fromDate  
+ * @returns  The very first day of the prev month form passed-in month.
+ */
+export function getPrevMonth(fromDate: Date): Date {
+    return new Date(fromDate.setDate(0))
+}
+
+/**
+ * Checks to see if year is later than 100 yrs ago and is before 100 yrs from now
+ * 
+ * @param yr 
+ * @param min   Min allowed yr
+ * @param max   Max allowed yr
+ * @returns 
+ */
+export function isYrValid(yr: number) {
+    const max = new Date().getFullYear() + 100
+    const min = new Date().getFullYear() - 100
+
+    return min <= yr && yr <= max
+}
+
+/**
+ * 
  * @param currentDate 
  * @returns Get current week number (i.e. 52 for last week)
  */
@@ -333,3 +385,41 @@ const getCurrentWeek = () => {
   
     return `${firstDayOfWeek.getMonth() + 1}/${firstDayOfWeek.getDate()} - ${lastDayOfWeek.getMonth() + 1}/${lastDayOfWeek.getDate()}`;
 }
+
+/**
+ * Check to see if str accturately represents a month.
+ * Return the month idx if so and -1 otherwise
+ * @param str   
+ * @returns  Month idx
+ */
+export function isStrMonth(str: String): number {
+    for (let idx = 0; idx < months.length; idx++) {
+        const month = months[idx]
+        if (month.toLowerCase() === str.toLowerCase()) {
+            return idx
+        }
+        else if (str.length === 3 && month.toLowerCase().substring(0, 3) === str) {
+            return idx
+        }
+    }
+    return -1
+}
+
+export function getLastDayOfMonth(date: Date): number {
+    const year = date.getFullYear()
+    const month = date.getMonth()
+
+    const nextMonthFirstDay = new Date(year, month + 1, 1)
+    const lastDayOfMonth = new Date(nextMonthFirstDay.getTime() - 1)
+  
+    return lastDayOfMonth.getDate()
+}
+
+export function isSameMonth(d1: Date, d2: Date) {
+    return d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear()
+}
+
+export function addDaysToDate(d: Date, n: number): Date { 
+    return new Date(d.setDate(d.getDate() + n))
+}
+  

@@ -36,14 +36,19 @@ export const clickOutside = (node: any) => {
  * @returns  Ancestor
  */
 export const findAncestorByClass = (child: HTMLElement, className: string): HTMLElement | null => {
-  let currentElement: HTMLElement | null = child;
+  let currentElement: HTMLElement | null = child
   let i = 0
 
-  while (currentElement !== null && !currentElement.classList.contains(className) && i++ < 25) {
+  while (currentElement !== null && !currentElement.classList.contains(className) && i++ < 15) {
       currentElement = currentElement.parentElement
   }
 
-  return currentElement
+  if (currentElement?.classList.contains(className))  {
+    return currentElement
+  }
+  else {
+    return null
+  }
 }
 
 /**
@@ -66,10 +71,38 @@ export function getScrollStatus(target: HTMLElement, options?: {
   return [hasReachedEnd, hasReachedTop, { scrollTop, scrollHeight, windowHeight }]
 }
 
+/**
+ * Move an element given an idex to a new index within the same array.
+ * @param array       
+ * @param fromIndex   Original location of element to be moved.
+ * @param toIndex     New location where element should be moved to.
+ * @returns           Updated array.
+ */
 export const moveElementInArr = (array: any[], fromIndex: number, toIndex: number) => {
   const elementToMove = array.splice(fromIndex, 1)[0]
   array.splice(toIndex, 0, elementToMove)
   return array
+}
+
+/**
+ * Remove an item from 1st array and move it to the 2nd array. 
+ * Arrays must be different.
+ * 
+ * @param array1   Array where item should be removed from
+ * @param oldIdx   Location of to-be-removed item
+ * @param array2   Array whre item should be moved to
+ * @param newIdx   Location where the item should be placed in
+ * 
+ * @returns        Updated two arrays.
+ */
+export function moveItemBetweenArrays<T>(array1: T[], oldIdx: number, array2: T[], newIdx: number): { newArray1: T[], newArray2: T[] } {
+  const newArray1 = [...array1]
+  const newArray2 = [...array2]
+
+  const [removedItem] = newArray1.splice(oldIdx, 1)
+  newArray2.splice(newIdx, 0, removedItem)
+
+  return { newArray1, newArray2 }
 }
 
 /**

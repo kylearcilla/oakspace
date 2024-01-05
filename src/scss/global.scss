@@ -190,22 +190,22 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     left: 50%;
     transform: translate(-50%, -50%);
 }
-@mixin pos-abs-bottom-right-corner($right, $bottom) {
+@mixin pos-abs-bottom-right-corner($right: 0, $bottom: 0) {
     position: absolute;
     right: $right;
     bottom: $bottom;
 }
-@mixin pos-abs-top-right-corner($top, $right) {
+@mixin pos-abs-top-right-corner($top: 0, $right: 0) {
     position: absolute;
     top: $top;
     right: $right;
 }
-@mixin pos-abs-top-left-corner($top, $left) {
+@mixin pos-abs-top-left-corner($top: 0, $left: 0) {
     position: absolute;
     top: $top;
     left: $left;
 }
-@mixin pos-abs-bottom-left-corner($bottom, $left) {
+@mixin pos-abs-bottom-left-corner($bottom: 0, $left: 0) {
     position: absolute;
     bottom: $bottom;
     left: $left;
@@ -885,6 +885,23 @@ $settings-modal-padding: 20px 25px 25px 25px;
         }
     }
 }
+
+@mixin divider($color, $height: 0.5px, $width: 100%) {
+    width: $width;
+    height: $height;
+    background-color: $color;
+}
+
+@mixin visible($opacity: 1) {
+    opacity: $opacity;
+    visibility: visible;
+}
+
+@mixin not-visible {
+    opacity: 0;
+    visibility: hidden;
+}
+
 @keyframes strike {
     0%   { 
         width : 0; 

@@ -74,6 +74,7 @@
     }
     &__title {
         font-size: 1.24rem;
+        white-space: nowrap;
         flex: 1;
         margin-right: 9px;
     }
@@ -86,6 +87,7 @@
             transition: 0.1s ease-in-out;
             transform-origin: center;
             transform: rotate(0deg);
+            opacity: 0.2;
         }
         
         // for first child (when not only child)
@@ -174,6 +176,7 @@
         }
         &--selected &-icon {
             &--check {
+                visibility: visible;
                 opacity: 1;
             }
         }
@@ -194,11 +197,16 @@
             width: 10px;
             height: 10px;
             @include center;
+            transition: 0.12s ease-in-out;
+
+            &--check {
+                visibility: hidden;
+                opacity: 0;
+            }
 
             &:first-child:not(:only-child) {
                 margin-right: 7px;
             }
-    
             i {
                 font-size: 0.9rem;
                 opacity: 0.8;

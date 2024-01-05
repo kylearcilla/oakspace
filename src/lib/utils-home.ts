@@ -43,7 +43,11 @@ export const initAppState = () => {
  */
 export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, hasUserToggledWithKeyLast: boolean) => {    
     const target = event.target as HTMLElement
-    if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return hasUserToggledWithKeyLast
+    if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") { 
+        if (event.key === "Escape") target.blur()
+
+        return hasUserToggledWithKeyLast
+    }
 
     const layoutState = get(homeViewLayout)
 

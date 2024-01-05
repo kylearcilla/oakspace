@@ -3,7 +3,7 @@ import { GoalStatus } from "./enums"
 export const MAX_GOAL_TITLE_LENGTH = 100
 export const MAX_GOAL_DESCRIPTION_LENGTH = 450
 
-export function getGoalStatusString(status: GoalStatus) {
+export function getStatusString(status: GoalStatus) {
     if (status === GoalStatus.InProgress) {
         return "In Progress"
     }

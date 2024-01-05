@@ -6,7 +6,7 @@ export enum LogoIcon {
     AppleMusic, Spotify, YoutubeMusic, Soundcloud, Youtube, Session, Google, Luciole
 }
 export enum Icon {
-    Settings, Dropdown, Add, Close, ChevronLeft, ChevronRight, DragDots
+    Settings, Dropdown, Add, Close, ChevronLeft, ChevronRight, DragDots, Archive, Tune
 }
 export enum ToastContext {
     AppleMusic, Spotify, YoutubeMusic, Soundcloud, Youtube, Session, Google, Luciole
@@ -41,14 +41,24 @@ export enum GoalStatus {
 export enum JournalTab {
     Goals, Summary
 }
+export enum GoalsDropdown { 
+    ViewOption,
+    TuneDropdown
+}
+export enum GoalItemUI {
+    RepoList, BoardList, RepoCard, BoardCard 
+}
 export enum GoalViewOption {
-    Board, History
+    Board = "Board", History = "History", AllGoals = "All Goals"
+}
+export enum GoalItemView {
+    List, Board
 }
 export enum EditMilestoneOption {
     EditTitle, ChangeDate, Delete
 }
 export enum EditGoalOption {
-    ChangeImage, ToggleHideImg, DelteGoal, RemoveImage
+    ChangeImage, ToggleHideImg, DelteGoal, RemoveImage, TogglePinGoal
 }
 export enum EditGoalContextMenu {
     Milestone, Date, Img, Goal

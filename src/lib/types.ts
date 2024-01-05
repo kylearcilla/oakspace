@@ -345,14 +345,30 @@ type Goal = {
     milestonesDone: number,
     milestones: Milestone[]
     idx: number
+    globalIdx: number
+    sectionId: number
+    sectionIdx: number
     imgSrc: string
     isImgHidden: boolean
+    isArchived: boolean
+    isPinned: boolean
+}
+type GoalSection = {
+    name: string
+    orderIdx: number
+    length: number
+    isExpanded: boolean
+    tagRef: ""
 }
 type Milestone = {
     title: string
     id: string
     idx: number
     endDate: Date | null
+}
+type GoalSectionItemId = {
+    sectionId: number,
+    sectionItemIdx: number
 }
 type YrAccomplishmentsOverview = {
     newGoals: number,

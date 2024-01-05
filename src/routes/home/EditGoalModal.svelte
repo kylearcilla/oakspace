@@ -6,23 +6,23 @@
 	import SVGIcon from "../../components/SVGIcon.svelte"
 	import ImgUpload from "./ImgUpload.svelte";
 
-	import { editGoalManger, homeViewLayout, themeState } from "$lib/store"
+	import { editGoalManger, goalsManager, homeViewLayout, themeState } from "$lib/store"
 	import { closeModal } from "$lib/utils-home"
 	import { clickOutside, findAncestorByClass, getScrollStatus } from "$lib/utils-general"
 	import { formatDatetoStr } from "$lib/utils-date"
 	import { EditGoalManager } from "$lib/edit-goal-manager"
 	import { ModalType, GoalStatus, EditMilestoneOption, Icon, EditGoalOption, EditGoalContextMenu } from "$lib/enums"
-	import { MAX_GOAL_DESCRIPTION_LENGTH, MAX_GOAL_TITLE_LENGTH, getGoalStatusString } from "$lib/utils-goals"
-
+	import { MAX_GOAL_DESCRIPTION_LENGTH, MAX_GOAL_TITLE_LENGTH, getStatusString } from "$lib/utils-goals"
 
     export let goalToEdit: Goal | null
 
     enum Dropdown {
-        Tag, Status, DueDate
+        Tag, Status, DueDate, TagSection, GenSection
     }
 
     let isTagDropdownListOpen = false
     let isStatusDropdownListOpen = false
+    let isTagSectionListOpen = false
 
     let hasSpaceAboveMilestoneList = false
     let hasSpaceBelowMilestoneList = true
@@ -162,6 +162,23 @@
     function settingsBtnClickedHandler() {
 
     }
+    function tagSectionOptionClicked(targetSectionId: number) {
+        const targetSection = $goalsManager!.goalSections[targetSectionId]
+
+        const srcSectionIdx = {
+            sectionId: $editGoalManger!.sectionId,
+            sectionItemIdx: $editGoalManger!.sectionIdx
+        }
+        const targetSectionIdx = {
+            sectionId: targetSection.orderIdx,
+            sectionItemIdx: targetSection.length
+        }
+
+        $goalsManager!.moveSectionItem(srcSectionIdx, targetSectionIdx)
+        $editGoalManger!.updateSectionIdx(targetSectionIdx)
+
+        isTagSectionListOpen = false
+    }
     function statusListDropdownOptClicked(newStatus: GoalStatus) {
         $editGoalManger!.editNewStatus(newStatus)
         isStatusDropdownListOpen = false
@@ -173,6 +190,7 @@
         }
         isStatusDropdownListOpen = dropdown === Dropdown.Status && !isStatusDropdownListOpen
         isTagDropdownListOpen    = dropdown === Dropdown.Tag && !isTagDropdownListOpen
+        isTagSectionListOpen     = dropdown === Dropdown.TagSection && !isTagSectionListOpen
     }
     function tagListDropdownOptClicked(tag: Tag) {
         $editGoalManger!.editNewTag(tag)
@@ -315,7 +333,7 @@
                                 </div>
                                 <div class="edit-goal__milestone-drag-handle">
                                     <div class="edit-goal__milestone-drag-handle-dots">
-                                        <SVGIcon icon={Icon.DragDots} />
+                                        <SVGIcon icon={Icon.DragDots} options={{ scale: 0.8 }}/>
                                     </div>
                                 </div>
                                 <div class="edit-goal__milestone-top-details">
@@ -404,7 +422,6 @@
                                 <button 
                                     on:click={() => $editGoalManger?.saveNewMilestone(false)}
                                     class="input-box__btn input-box__btn--cancel"
-                                    disabled={($editGoalManger?.newText?.length ?? 0) >= 25}
                                 >
                                     Cancel
                                 </button>
@@ -461,7 +478,7 @@
                                 use:clickOutside on:click_outside={() => isTagDropdownListOpen = false }
                             >
                                 {#each tags as tag}
-                                    <li class="dropdown-menu__option">
+                                    <li class={`dropdown-menu__option ${$editGoalManger?.tag?.name === tag.name ? "dropdown-menu__option--selected" : ""}`}>
                                         <button on:click={() => tagListDropdownOptClicked(tag)}>
                                             <div class="dropdown-menu__option-icon">
                                                 <div class="edit-goal__status-dropdown-tag-symbol">
@@ -471,11 +488,44 @@
                                             <span class="dropdown-menu__option-text">
                                                 {tag.name}
                                             </span>
-                                            {#if tag.name === $editGoalManger.tag?.name}
-                                                <div class="dropdown-menu__option-icon">
-                                                    <i class="fa-solid fa-check"></i>
-                                                </div>
-                                            {/if}
+                                            <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
+                                                <i class="fa-solid fa-check"></i>
+                                            </div>
+                                        </button>
+                                    </li>
+                                {/each}
+                            </ul>
+                        {/if}
+                    </div>
+                    <div class="edit-goal__detail-divider"></div>
+                </div>
+                <div class="edit-goal__detail edit-goal__status edit-goal__detail--dropdown">
+                    <div class="edit-goal__detail-title">
+                        Tag Section
+                    </div>
+                    <div class="edit-goal__status-dropdown-container">
+                        <button 
+                            class={`edit-goal__status-btn dropdown-btn ${isTagSectionListOpen ? "dropdown-btn--active" : ""}`}
+                            on:click={(e) => onDropdownClicked(e, Dropdown.TagSection)}
+                        >
+                            <span class="edit-goal__status-btn-name dropdown-btn__title">
+                                {$goalsManager?.goalSections[$editGoalManger.sectionId].name}
+                            </span>
+                            <div class="dropdown-btn__icon dropdown-btn__icon--arrow">
+                                <SVGIcon icon={Icon.Dropdown}/>
+                            </div>
+                        </button>
+                        {#if isTagSectionListOpen && $goalsManager}
+                            <ul class="edit-goal__status-dropdown dropdown-menu" use:clickOutside on:click_outside={() => isTagSectionListOpen = false}>
+                                {#each $goalsManager.goalSections as section}
+                                    <li class="dropdown-menu__option">
+                                        <button on:click={() => tagSectionOptionClicked(section.orderIdx)}>
+                                            <span class="dropdown-menu__option-text">
+                                                {section.name}
+                                            </span>
+                                            <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
+                                                <i class="fa-solid fa-check"></i>
+                                            </div>
                                         </button>
                                     </li>
                                 {/each}
@@ -503,7 +553,7 @@
                                 </div>
                             </div>
                             <span class="edit-goal__status-btn-name dropdown-btn__title">
-                                {getGoalStatusString($editGoalManger.status)}
+                                {getStatusString($editGoalManger.status)}
                             </span>
                             <div class="dropdown-btn__icon dropdown-btn__icon--arrow">
                                 <SVGIcon icon={Icon.Dropdown}/>
@@ -512,7 +562,7 @@
                         {#if isStatusDropdownListOpen}
                             <ul class="edit-goal__status-dropdown dropdown-menu" use:clickOutside on:click_outside={() => isStatusDropdownListOpen = false}>
                                 {#each [GoalStatus.OnHold, GoalStatus.InProgress, GoalStatus.Accomplished] as status}
-                                    <li class="dropdown-menu__option">
+                                    <li class={`dropdown-menu__option ${$editGoalManger.status === status ? "dropdown-menu__option--selected" : ""}`}>
                                         <button on:click={() => statusListDropdownOptClicked(status)}>
                                             <div class="dropdown-menu__option-icon">
                                                 <div 
@@ -521,13 +571,11 @@
                                                 </div>
                                             </div>
                                             <span class="dropdown-menu__option-text">
-                                                {getGoalStatusString(status)}
+                                                {getStatusString(status)}
                                             </span>
-                                            {#if $editGoalManger.status === status}
-                                                <div class="dropdown-menu__option-icon">
-                                                    <i class="fa-solid fa-check"></i>
-                                                </div>
-                                            {/if}
+                                            <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
+                                                <i class="fa-solid fa-check"></i>
+                                            </div>
                                         </button>
                                     </li>
                                 {/each}
@@ -678,6 +726,17 @@
                     <button on:click={() => $editGoalManger?.goalOptionClicked(EditGoalOption.DelteGoal)}>
                         <span class="dropdown-menu__option-text">
                             Delete Goal
+                        </span>
+                    </button>
+                </li>
+                <li class="dropdown-menu__option">
+                    <button on:click={() => $editGoalManger?.goalOptionClicked(EditGoalOption.TogglePinGoal)}>
+                        <span class="dropdown-menu__option-text">
+                            {#if $editGoalManger.isPinned}
+                                Unpin Goal
+                            {:else}
+                                Pin Goal to Board
+                            {/if}
                         </span>
                     </button>
                 </li>
@@ -906,7 +965,7 @@
         &__description {
             height: 110px;
             overflow-y: scroll;
-
+            
             p {
                 white-space: pre-wrap;
                 word-break: break-word;
@@ -922,6 +981,7 @@
         &__milestones {
             width: 100%;
             height: calc(100% - 20px);
+            padding-top: 20px;
         }
         &__milestones-header {
             @include flex-container(center, space-between);
@@ -1113,7 +1173,6 @@
             }
             &-drag-handle-dots {
                 opacity: 0.1;
-                transform: scale(0.8);
             }
         }
         &__new-milestone-container {
@@ -1200,14 +1259,11 @@
         &__tag .dropdown-btn, &__status .dropdown-btn {
             margin-left: -5px;
             
-            &:hover &__icon {
-                &:last-child {
-                    opacity: 0.9 !important;
-                }
+            &:hover &__icon:last-child {
+                opacity: 0.9 !important;
             }
             &__icon {
                 &:last-child {
-                    opacity: 0.2;
                     margin-right: 5px;
                 }
                 &:last-child svg {

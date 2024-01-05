@@ -4,12 +4,36 @@ export const YR_CONTAINER_ID = "goals-hist-yr-info-container"
 export const YR_DIGIT_CLASS = "goals-history__year-view-yr-digit"
 export const YR_DIGIT_ANIMATION = "fade-in-digit 0.32s cubic-bezier(.5,.84,.42,.9) forwards 1"
 
+export const goalSections: GoalSection[] = [
+    {
+        name: "General",
+        orderIdx: 0,
+        length: 4,
+        isExpanded: true,
+        tagRef: ""
+    },
+    {
+        name: "2023",
+        orderIdx: 1,
+        length: 2,
+        isExpanded: true,
+        tagRef: ""
+    },
+    {
+        name: "2022",
+        orderIdx: 2,
+        length: 2,
+        isExpanded: true,
+        tagRef: ""
+    }
+]
+
 export const goals: Goal[] = [
     {
         id: "",
         tag: {
             color: "#",
-            name: "French",
+            name: "french",
             symbol: "🇫🇷"
         },
         title: "Secure Admission to Medical School",
@@ -22,13 +46,18 @@ export const goals: Goal[] = [
         status: GoalStatus.Accomplished,
         milestonesDone: 0,
         milestones: [],
-        idx: 0
+        idx: 0,
+        globalIdx: 0,
+        sectionId: 0,
+        sectionIdx: 0,
+        isArchived: false,
+        isPinned: true
     },
     {
         id: "",
         tag: {
             color: "#",
-            name: "French",
+            name: "french",
             symbol: "🇫🇷"
         },
         title: "Complete Clinical Clerkships with Honors",
@@ -41,13 +70,18 @@ export const goals: Goal[] = [
         status: GoalStatus.InProgress,
         milestonesDone: 0,
         milestones: [],
-        idx: 0
+        idx: 0,
+        globalIdx: 0,
+        sectionId: 0,
+        sectionIdx: 1,
+        isArchived: false,
+        isPinned: true,
     },
     {
         id: "",
         tag: {
             color: "#",
-            name: "French",
+            name: "french",
             symbol: "🇫🇷"
         },
         title: "Complete ACLS Certification",
@@ -60,13 +94,18 @@ export const goals: Goal[] = [
         status: GoalStatus.InProgress,
         milestonesDone: 0,
         milestones: [],
-        idx: 1
+        idx: 1,
+        globalIdx: 0,
+        sectionId: 1,
+        sectionIdx: 0,
+        isArchived: false,
+        isPinned: true,
     },
     {
         id: "",
         tag: {
             color: "#",
-            name: "French",
+            name: "french",
             symbol: "🇫🇷"
         },
         title: "Secure Residency Placement",
@@ -79,13 +118,18 @@ export const goals: Goal[] = [
         status: GoalStatus.InProgress,
         milestonesDone: 0,
         milestones: [],
-        idx: 2
+        idx: 2,
+        globalIdx: 0,
+        sectionId: 1,
+        sectionIdx: 1,
+        isArchived: false,
+        isPinned: true,
     },
     {
         id: "",
         tag: {
             color: "#",
-            name: "French",
+            name: "french",
             symbol: "🇫🇷"
         },
         title: "Achieve 30 Consecutive Days of Meditation",
@@ -98,13 +142,18 @@ export const goals: Goal[] = [
         status: GoalStatus.OnHold,
         milestonesDone: 0,
         milestones: [],
-        idx: 1
+        idx: 1,
+        globalIdx: 0,
+        sectionId: 0,
+        sectionIdx: 2,
+        isArchived: false,
+        isPinned: true,
     },
     {
         id: "",
         tag: {
             color: "#",
-            name: "French",
+            name: "french",
             symbol: "🇫🇷"
         },
         title: "High on USMLE Step 2",
@@ -184,32 +233,42 @@ export const goals: Goal[] = [
                 endDate: new Date(2021, 2, 1)
             },
         ],
-        idx: 0
+        idx: 0,
+        globalIdx: 0,
+        sectionId: 2,
+        sectionIdx: 1,
+        isArchived: false,
+        isPinned: true,
     },
     {
         id: "",
         tag: {
             color: "#",
-            name: "French",
+            name: "french",
             symbol: "🇫🇷"
         },
         title: "Complete \"Atomic Habits\" by James Clear",
         description: "Read and finish the book \"Atomic Habits\" by James Clear to gain insights into building positive habits, breaking bad ones, and mastering the tiny behaviors that lead to remarkable results.",
         dueDate: new Date(),
         creationDate: new Date(),
-        imgSrc: "https://cdn.dribbble.com/userupload/11651096/file/original-acf2c0c9527c1c6598b4647be67e9fe1.png?resize=752x",
+        imgSrc: "https://i.pinimg.com/564x/ea/9d/b2/ea9db2d3d08731c07802c37cbe4c2930.jpg",
         isImgHidden: true,
         accomplishedDate: null,
         status: GoalStatus.OnHold,
         milestonesDone: 0,
         milestones: [],
-        idx: 2
+        idx: 2,
+        globalIdx: 0,
+        sectionId: 0,
+        sectionIdx: 3,
+        isArchived: false,
+        isPinned: true,
     },
     {
         id: "",
         tag: {
             color: "#",
-            name: "French",
+            name: "french",
             symbol: "🇫🇷"
         },
         title: "Run a 5K in Under 25 Minutes",
@@ -222,6 +281,11 @@ export const goals: Goal[] = [
         status: GoalStatus.InProgress,
         milestonesDone: 0,
         milestones: [],
-        idx: 3
+        idx: 3,
+        globalIdx: 0,
+        sectionId: 2,
+        sectionIdx: 0,
+        isArchived: false,
+        isPinned: true,
     },
 ]

@@ -2,7 +2,7 @@
 	import { GoalsManager } from "$lib/goals-manager"
     import { closeModal, openModal } from "$lib/utils-home"
     import { toggleYTIFramePointerEvents } from "$lib/utils-youtube"
-    import { JournalTab, GoalViewOption, ModalType } from "$lib/enums"
+    import { JournalTab, GoalViewOption, GoalsDropdown, ModalType, Icon, GoalItemUI} from "$lib/enums"
 	import { clickOutside, getElemsByClass } from "$lib/utils-general"
 	import { goalsManager, homeViewLayout, themeState } from "$lib/store"
 
@@ -10,14 +10,27 @@
 	import GoalsBoard from "./GoalsBoard.svelte"
 	import GoalsHistory from "./GoalsHistory.svelte"
 	import Modal from "../../components/Modal.svelte"
+	import SVGIcon from "../../components/SVGIcon.svelte"
 	import EditGoalModal from "./EditGoalModal.svelte"
+	import GoalsRepo from "./GoalsRepo.svelte"
 
-    let selectedTab = JournalTab.Goals
-    let goalViewOption = GoalViewOption.Board
     
+    let selectedTab = JournalTab.Goals
     let tabHighlighterClass = ""
-    let isGoalsDropdownOpen = false
     let goalInEdit: Goal | null = null
+    let isItemViewCard = true
+
+    $: goalViewOption = $goalsManager?.currentGoalView
+    $: currentDropDown = $goalsManager?.currentDropDown
+
+    $: {
+        if ($goalsManager && (goalViewOption === GoalViewOption.Board)) {
+            isItemViewCard = $goalsManager.boardGoalItemView === GoalItemUI.BoardCard
+        }
+        else if ($goalsManager) {
+            isItemViewCard = $goalsManager.repoGoalItemView === GoalItemUI.RepoCard
+        }
+    }
 
     const HIGHLIGHTER_TAB_CLASS= "highlighter-tabs__tab-btn"
 
@@ -32,14 +45,6 @@
         const offSetLeft = tab.offsetLeft
 
         tabHighlighterClass = `left: ${offSetLeft}px; width: ${width}px;`
-    }
-    function onGoalViewOptionClicked(tab: GoalViewOption) {
-        goalViewOption = tab
-        isGoalsDropdownOpen = false
-
-        if (tab === GoalViewOption.History) {
-            requestAnimationFrame(() =>  $goalsManager?.updateYrTitle(0))
-        }
     }
     function onTagClicked() {
 
@@ -78,8 +83,18 @@
         <!-- Content -->
         <div class="journal__content">
             <div class="journal-tags">
-                <h2>Tags</h2>
+                <div class="journal-tags__header">
+                    <h2 class="journal-tags__header-title">Tags</h2>
+                    <button class="journal-tags__add-tag-btn">
+                        <SVGIcon icon={Icon.Add} options={{ scale: 0.8, strokeWidth: 1.4 }} />
+                    </button>
+                </div>
+                <!-- Tags List -->
                 <ul class="journal-tags__list">
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <li class="journal-tags__tag" role="button" tabindex="0" on:click={() => onTagClicked()}>
+                        <span class="journal-tags__tag-title">All</span>
+                    </li>
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <li class="journal-tags__tag" role="button" tabindex="0" on:click={() => onTagClicked()}>
                         <div class="journal-tags__tag-color" style={`background-color: #A3C2FF`}></div>
@@ -95,10 +110,6 @@
                         </span>
                     </li>
                 </ul>
-                <button class="journal-tags__add-tag-btn">
-                    <span class="journal-tags__add-tag-btn-icon">+</span>
-                    <span class="journal-tags__add-tag-btn-text">Make New Tag</span>
-                </button>
                 <div class="journal__section-divider journal__section-divider--main"></div>
             </div>
             <div class="journal-tag-view">
@@ -139,49 +150,116 @@
                 </div>
                 {#if selectedTab === JournalTab.Goals}
                     <div class={`journal-goals ${$themeState.isDarkTheme ? "" : "journal-goals--light"}`}>
-                        <!-- Filter Buttons  -->
-                        <div class="journal-goals__dropdown-container dropdown-container">
-                            <button 
-                                class={`journal-goals__filter-dropdown-btn dropdown-btn ${isGoalsDropdownOpen ? "dropdown-btn--active" : ""}`}
-                                on:click={() => isGoalsDropdownOpen = !isGoalsDropdownOpen}
-                            >
-                                <span class="dropdown-btn__title">
-                                    {GoalViewOption[goalViewOption]}
-                                </span>
-                                <div class="dropdown-btn__icon dropdown-btn__icon--arrow">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="6" height="5" viewBox="0 0 6 5" fill="none">
-                                        <path d="M2.76221 4.45654L0.343848 0.267823L5.18057 0.267822L2.76221 4.45654Z" fill="#5A5A5A"/>
-                                    </svg>
-                                </div>
-                            </button>
-                            <ul 
-                                use:clickOutside on:click_outside={() => isGoalsDropdownOpen &&= !isGoalsDropdownOpen }
-                                class={`journal-goals__dropdown-menu dropdown-menu ${!isGoalsDropdownOpen ? "dropdown-menu--hidden" : ""}`}
-                            >
-                                <li class={`dropdown-menu__option ${goalViewOption === GoalViewOption.Board ? "dropdown-menu__option--selected" : ""}`}>
-                                    <button on:click={() => onGoalViewOptionClicked(GoalViewOption.Board)}>
-                                        <span class="dropdown-menu__option-text">Board</span>
-                                        {#if goalViewOption === GoalViewOption.Board}
-                                            <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
-                                                <i class="fa-solid fa-check"></i>
-                                            </div>
+                        <div class="journal-goals__options-header">
+                            <!-- Filter Buttons  -->
+                            <div class="journal-goals__dropdown-container dropdown-container">
+                                <button 
+                                    class={`journal-goals__filter-dropdown-btn dropdown-btn ${currentDropDown === GoalsDropdown.ViewOption ? "dropdown-btn--active" : ""}`}
+                                    on:click={() => $goalsManager?.setCurrentDropdown(GoalsDropdown.ViewOption)}
+                                >
+                                    <span class="dropdown-btn__title">
+                                        {goalViewOption}
+                                    </span>
+                                    <div class="dropdown-btn__icon dropdown-btn__icon--arrow">
+                                        <SVGIcon icon={Icon.Dropdown} />
+                                    </div>
+                                </button>
+                                <!-- View Option Dropdown -->
+                                {#if currentDropDown === GoalsDropdown.ViewOption}
+                                    <ul 
+                                        use:clickOutside on:click_outside={() => $goalsManager?.setCurrentDropdown(null)}
+                                        class="journal-goals__dropdown-menu dropdown-menu"
+                                    >
+                                        <li class={`dropdown-menu__option ${goalViewOption === GoalViewOption.Board ? "dropdown-menu__option--selected" : ""}`}>
+                                            <button on:click={() => $goalsManager?.setCurrGoalView(GoalViewOption.Board)}>
+                                                <span class="dropdown-menu__option-text">Board</span>
+                                                {#if goalViewOption === GoalViewOption.Board}
+                                                    <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
+                                                        <i class="fa-solid fa-check"></i>
+                                                    </div>
+                                                {/if}
+                                            </button>
+                                        </li>
+                                        <li class={`dropdown-menu__option ${goalViewOption === GoalViewOption.AllGoals ? "dropdown-menu__option--selected" : ""}`}>
+                                            <button on:click={() => $goalsManager?.setCurrGoalView(GoalViewOption.AllGoals)}>
+                                                <span class="dropdown-menu__option-text">All Goals</span>
+                                                {#if goalViewOption === GoalViewOption.AllGoals}
+                                                    <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
+                                                        <i class="fa-solid fa-check"></i>
+                                                    </div>
+                                                {/if}
+                                            </button>
+                                        </li>
+                                        <li class={`dropdown-menu__option ${goalViewOption === GoalViewOption.History ? "dropdown-menu__option--selected" : ""}`}>
+                                            <button on:click={() => $goalsManager?.setCurrGoalView(GoalViewOption.History)}>
+                                                <span class="dropdown-menu__option-text">History</span>
+                                                {#if goalViewOption === GoalViewOption.History}
+                                                    <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
+                                                        <i class="fa-solid fa-check"></i>
+                                                    </div>
+                                                {/if}
+                                            </button>
+                                        </li>
+                                    </ul>
+                            {/if}
+                            </div>
+                            <!-- View Options -->
+                            <div class="journal-goals__options-btns-container">
+                                <!-- View Settings Button -->
+                                {#if goalViewOption === GoalViewOption.AllGoals || goalViewOption === GoalViewOption.Board}
+                                    <div class="journal-goals__view-btn-container dropdown-elem">
+                                        <button 
+                                            class="journal-goals__options-btn"
+                                            on:click={() => $goalsManager?.setCurrentDropdown(GoalsDropdown.TuneDropdown)}
+                                        >
+                                            <div class="journal-goals__options-btn-icon"><SVGIcon icon={Icon.Tune}/></div>
+                                            View
+                                        </button>
+                                        <!-- Tune Dropdown -->
+                                        {#if currentDropDown === GoalsDropdown.TuneDropdown}
+                                            <ul class="journal-goals__options-dropdown dropdown-menu" 
+                                                use:clickOutside on:click_outside={() => $goalsManager?.setCurrentDropdown(null)}
+                                            >
+                                                <li class={`dropdown-menu__option ${!isItemViewCard ? "dropdown-menu__option--selected" : ""}`}>
+                                                    <button on:click={() => $goalsManager?.setCurrentGoalItemView(false)}>
+                                                        <span class="dropdown-menu__option-text">
+                                                            List View
+                                                        </span>
+                                                        <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
+                                                            <i class="fa-solid fa-check"></i>
+                                                        </div>
+                                                    </button>
+                                                </li>
+                                                <li class={`dropdown-menu__option ${isItemViewCard ? "dropdown-menu__option--selected" : ""}`}>
+                                                    <button on:click={() => $goalsManager?.setCurrentGoalItemView(true)}>
+                                                        <span class="dropdown-menu__option-text">
+                                                            Card View
+                                                        </span>
+                                                        <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
+                                                            <i class="fa-solid fa-check"></i>
+                                                        </div>
+                                                    </button>
+                                                </li>
+                                            </ul>
                                         {/if}
+                                    </div>
+                                {/if}
+                                <!-- Archived Button -->
+                                {#if goalViewOption === GoalViewOption.AllGoals}
+                                    <button class="journal-goals__options-btn">
+                                        <div class="journal-goals__options-btn-icon">
+                                            <SVGIcon icon={Icon.Archive}/>
+                                        </div>
+                                        Archived
                                     </button>
-                                </li>
-                                <li class={`dropdown-menu__option ${goalViewOption === GoalViewOption.History ? "dropdown-menu__option--selected" : ""}`}>
-                                    <button on:click={() => onGoalViewOptionClicked(GoalViewOption.History)}>
-                                        <span class="dropdown-menu__option-text">History</span>
-                                        {#if goalViewOption === GoalViewOption.History}
-                                            <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
-                                                <i class="fa-solid fa-check"></i>
-                                            </div>
-                                        {/if}
-                                    </button>
-                                </li>
-                            </ul>
+                                {/if}
+                            </div>
                         </div>
+
                         {#if goalViewOption === GoalViewOption.Board}
                             <GoalsBoard initGoalInEdit={initGoalInEdit} />
+                        {:else if goalViewOption === GoalViewOption.AllGoals}
+                                <GoalsRepo  initGoalInEdit={initGoalInEdit}/>
                         {:else}
                             <GoalsHistory/>
                         {/if}
@@ -267,17 +345,12 @@
         &__header {
             height: 23px;
             margin-bottom: 10px;
-            padding: 20px 20px 27px 25px;
+            padding: 20px 20px 27px 18px;
         }
         &__content {
             display: flex;
             width: 100%;
             height: calc(100% - 33px);
-
-            h2 {
-                font-size: 1.85rem;
-                font-weight: 400;
-            }
         }
         &__section-divider {
             height: 0.5px;
@@ -300,55 +373,49 @@
     .journal-tags {
         min-width: 155px;
         padding-top: 15px;
-        padding: 18px 0px 0px 25px;
+        padding: 12px 13px 0px 18px;
         position: relative;
 
-        h2 {
-            margin-bottom: 15px;
+        &__header {
+            @include flex-container(center, space-between);
+            margin-bottom: 10px;
         }
-
+        &__header-title {
+            @include text-style(0.85, 400, 1.2rem);
+        }
         &__add-tag-btn {
-            @include flex-container(center, _);
-            margin: 15px 0px 0px 0px;
-            opacity: 0.3;
-            display: none;
+            opacity: 0.2;
+            margin: 3px 5px 0px 0px;
 
-            &:hover, &:focus {
+            &:hover {
                 opacity: 1;
             }
-            &-icon {
-                font-weight: 100;
-                font-size: 1.6rem;
-            }
-            &-text {
-                margin-left: 8px;
-                font-weight: 300;
-                font-size: 1.2rem;
+            &:active {
+                transform: scale(0.96)
             }
         }
         &__list {
         }
         &__tag {
-            @include flex-container(center, _);
-            opacity: 0.5;
+            @include flex-container(center);
+            opacity: 0.4;
             transition: 0.05s ease-in-out;
-            margin-bottom: 9px;
+            margin-bottom: 6.5px;
             cursor: pointer;
 
             &:active {
-                transform: scale(0.98);
+                transform: scale(0.99);
             }
             &:hover, &:focus, &--chosen {
                 opacity: 0.85;
             }
 
             &-color {
-                @include circle(4px);
+                @include circle(3.5px);
                 margin-right: 10px;
             }
             &-title {
-                font-weight: 300;
-                font-size: 1.24rem;
+                @include text-style(0.9, 300, 1.1rem);
             }
         }
     }
@@ -360,11 +427,16 @@
         display: flex;
         flex-direction: column;
 
+        h2 {
+            font-size: 1.85rem;
+            font-weight: 400;
+        }
+
         &__top {
         }
         &__header {
             @include flex-container(center, space-between);
-            padding: 18px 0px 0px 25px;
+            padding: 15px 0px 0px 25px;
             margin-bottom: 5px;
         }
         &__tag-title {
@@ -440,276 +512,53 @@
                 @include text-style(1, 600);
             }
         }
+        &--light &__options-btn {
+            @include text-style(_, 600);
+            opacity: 0.45;
+            
+            &:hover {
+                opacity: 0.8;
+            }
+        }
 
+        &__options-header {
+            @include flex-container(center, space-between);
+            padding-right: 20px;
+        }
+        &__options-dropdown {
+            @include pos-abs-top-right-corner(23px, 0px);
+        }
+        &__view-btn-container {
+            position: relative;
+        }
+        &__options-btns-container {
+            display: flex;
+            margin-top: 5px;
+        }
+        &__options-btn {
+            @include flex-container(center);
+            @include text-style(1, 400, 1.2rem);
+            opacity: 0.2;
+
+            &-icon {
+                margin-right: 9px;
+                transition: 0.12s ease-in-out;
+                @include center;
+            }
+
+            &:last-child {
+                margin-left: 20px;
+            }
+            &:hover {
+                opacity: 0.7;
+            }
+        }
         &__dropdown-container .dropdown-menu {
             @include pos-abs-top-left-corner(35px, 0px);
             margin-left: 25px;
         }
         &__filter-dropdown-btn {
             margin-left: 25px;
-        }
-    }
-
-    .goals-board {
-        margin-top: 20px;
-        position: relative;
-        max-height: calc(100% - $board-top-offset-gap);
-        height: calc(100% - $board-top-offset-gap);
-        overflow-x: scroll;
-        width: 100%;
-        padding-left: 25px;
-
-        &--light &-item {
-            &:hover, &:focus {
-                filter: brightness(1.02);
-            }
-
-            &--btn-container button {
-                font-weight: 500;
-            }
-        }
-        &--light &-col-header {
-            &-title {
-                font-weight: 600;
-                color: rgba(var(--textColor1), 0.78);
-            }
-            &-count {
-                font-weight: 500;
-                color: rgba(var(--textColor1), 0.3);
-            }
-        }
-
-        /* Board */
-        &__cards-container {
-            display: flex;
-            max-height: calc(100% - $board-frame-top-offset-gap);
-            overflow-y: scroll;
-            overflow-x: hidden;
-            width: 100%;
-            min-width: 650px;
-            scroll-behavior: smooth;
-
-            &--grabbing * {
-                cursor: grab !important;
-            }
-        }
-        &__item {
-            width: $board-item-width;
-            transition: 0.09s ease-in-out;
-            cursor: pointer;
-            position: relative;
-
-            &:active {
-                transform: scale(0.994);
-            }
-            &:hover, &:focus {
-                filter: brightness(1.12);
-            }
-
-            &--dragging {
-                cursor: grabbing !important;
-                opacity: 0.3;
-            }
-            &--dragging * {
-                cursor: grabbing !important;
-            }
-            &--over &-divider {
-                opacity: 1;
-                padding: 15px 0px 15px 0px;
-            }
-            &--btn-container {
-                height: 150px;
-
-                &:active {
-                    transform: scale(1);
-                }
-                &:hover, &:focus {
-                    filter: brightness(1);
-                }
-            }
-        }
-        &__item-handle {
-            width: 100%;
-            height: 10px;
-            @include pos-abs-top-left-corner(2px, 0px);
-            cursor: grab;
-
-            &:active {
-                cursor: grabbing !important;
-            }
-            
-        }
-        &__item-divider {
-            width: 100%;
-            @include flex-container(center, center);
-            transition: 0.1s ease-in-out;
-            opacity: 0;
-            padding-top: 5px;
-            
-            path {
-                stroke: rgba(var(--textColor1), 0.24);
-            }
-        }
-
-        /* Board Columns */
-        &__col {
-            margin-right: $board-col-gap;
-
-            &:hover &-add-new-goal-btn {
-                opacity: 0.3;
-            }
-            &-container {
-                @include flex-container(center, _);
-            }
-            &-add-new-goal-btn {
-                @include flex-container(center, _);
-                font-size: 1.15rem;
-                font-weight: 300;
-                opacity: 0;
-                padding-bottom: 100px;
-                cursor: pointer;
-                margin-top: 6px;
-                
-                &:active {
-                    transform: scale(0.99);
-                }
-                &:hover {
-                    opacity: 0.5 !important;
-                }
-                span {
-                    margin-right: 7px;
-                    font-size: 1.4rem;
-                }
-            }
-        }
-        &__col-header {
-            @include flex-container(center, space-between);
-            margin: 0px $board-col-gap 0px 0px;
-            min-width: $board-item-width;
-
-            &:hover &-add-btn {
-                color: rgba(var(--textColor1), 0.2);
-            }
-
-            &-dot {
-                @include circle(3px);
-                margin-right: 10px;
-                
-                &--on-hold {
-                    background-color: #CB6E6E;
-                }
-                &--in-progress {
-                    background-color: #D2B569;
-                }
-                &--accomplished {
-                    background-color: #8FD067;
-                }
-            }
-            &-add-btn {
-                @include text-style(0, 200, 2.1rem);
-
-                &:hover {
-                    color: rgba(var(--textColor1), 0.75) !important;
-                }
-                &:active {
-                    transform: scale(0.94);
-                }
-            }
-            &-title {
-                font-size: 1.17rem;
-                font-weight: 300;
-                margin-right: 15px;
-                color: rgba(var(--textColor1), 0.7);
-                @include elipses-overflow;
-            }
-            &-count {
-                font-size: 1.2rem;
-                color: rgba(var(--textColor1), 0.2);
-            }
-        }
-    }
-
-    /* Goal Card */
-    .goal-card {
-        background-color: var(--bentoBoxBgColor);
-        box-shadow: var(--bentoBoxShadow);
-        border-radius: 15px;
-        padding: 10.5px 14px 12.5px 16px;
-        font-weight: 300;
-        border: 0.5px solid rgba(var(--textColor1), 0.029);
-        position: relative;
-        transition: 0.12s ease-in-out;
-        position: relative;
-
-        &--light  {
-            border-color: transparent;
-            }
-        &--light &__name { 
-            font-weight: 600;
-            color: rgba(var(--textColor1), 0.85);
-        }
-        &--light &__description {
-            font-weight: 400;
-            color: rgba(var(--textColor1), 0.5);
-        }
-        &--light &__status {
-            font-weight: 600;
-            color: rgba(var(--textColor1), 0.7);
-        }
-        &--light &__milestones {
-            font-weight: 500;
-            color: rgba(var(--textColor1), 0.3);
-        }
-        &--light &__time-period span {
-            font-weight: 600;
-            color: rgba(var(--textColor1), 0.35);
-        }
-
-        
-        &__name, &__description, &__status-dot, &__status, &__milestones, &__time-period {
-            cursor: text;
-            user-select: text;
-            font-size: 1.075rem;
-        }
-        &__name {
-            font-size: 1.24rem;
-            font-weight: 500;
-            color: rgba(var(--textColor1), 0.77);
-            margin-bottom: 6px;
-            width: fit-content;
-            max-width: 95%;
-            @include multi-line-elipses-overflow(2);
-        }
-        &__description {
-            color: rgba(var(--textColor1), 0.36);
-            font-size: 1.15rem;
-            margin-bottom: 14px;
-            width: fit-content;
-            white-space: pre-wrap;
-            word-break: break-word;
-            @include multi-line-elipses-overflow(11);
-        }
-        &__bottom-details {
-            @include flex-container(center, space-between);
-        }
-        &__bottom-details-left {
-            @include flex-container(center, _);
-        }
-        &__status-dot {
-            @include circle(2.5px);
-            margin-right: 7px;
-        }
-        &__status {
-            color: rgba(var(--textColor1), 0.44);
-            font-weight: 400;
-            margin-right: 6.5px;
-            @include flex-container(center, _);
-        }
-        &__milestones {
-            color: rgba(var(--textColor1), 0.24);
-        }
-        &__time-period span {
-            color: rgba(var(--textColor1), 0.24);
         }
     }
 </style>

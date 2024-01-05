@@ -1,12 +1,16 @@
 <script lang="ts">
-	import { onDestroy, onMount } from "svelte"
-
-    import type { GoalStatus } from "$lib/enums"
-	import { formatDateLong } from "$lib/utils-date"
-	import { findAncestorByClass, getScrollStatus } from "$lib/utils-general"
+    import { GoalItemUI, Icon } from "$lib/enums"
 	import { goalsManager, editGoalManger, themeState } from "$lib/store"
+	import { findAncestorByClass, getScrollStatus } from "$lib/utils-general"
+
+	import GoalItem from "../../components/GoalItem.svelte"
+	import SVGIcon from "../../components/SVGIcon.svelte"
 
     export let initGoalInEdit: (goal: Goal) => void
+
+    const BOTTOM_GRADIENT = "linear-gradient(180deg, black 80%, transparent 99%)"
+    const GOAL_CARD_CLASS = "goals-board__item"
+    const DROP_DIVIDER_BOARD_WIDTH = 179
 
     let shouldDrag = false
     let isSpaceDown = false
@@ -16,65 +20,78 @@
     let dragSourcElem: HTMLElement | null = null
 
     let boardCardsContainer: HTMLElement | null = null
-    let goalInViewId: string | null = null
 
     let hasReachedBoardEnd = false
-    let maskListGradient = ""
+    let maskListGradient = BOTTOM_GRADIENT
+
+    let itemWidth = DROP_DIVIDER_BOARD_WIDTH
+    let goalItemView = GoalItemUI.BoardCard
+
+    $: GOAL_CARD_OVER_CLASS = `${GOAL_CARD_CLASS}--${goalItemView === GoalItemUI.BoardCard ? "board-over" : "list-over"}`
+    $: { 
+        goalItemView = $goalsManager!.boardGoalItemView
+
+        if (goalItemView === GoalItemUI.BoardCard) {
+            itemWidth = DROP_DIVIDER_BOARD_WIDTH
+        }
+        else {
+            requestAnimationFrame(() => onWindowResize())
+        }
+    }
 
     const goalStatuses = [
         { color: "#CB6E6E", title: "On-Hold"}, 
         { color: "#D2B569", title: "In-Progress"}, 
         { color: "#8FD067", title: "Accomplished"}
     ]
-    const GOAL_CARD_CLASS = "goals-board__item"
     
     function boardScrollHandler(e: Event) {
         const [hasReachedEnd] = getScrollStatus(e.target as HTMLElement)
         hasReachedBoardEnd = hasReachedEnd
 
         if (!hasReachedBoardEnd) {
-            maskListGradient = "linear-gradient(180deg, black 80%, transparent 99%)"
+            maskListGradient = BOTTOM_GRADIENT
+        }
+        else {
+            maskListGradient = ""
         }
     }
 
     /* General UI Handlers */
-    function goalItemClicked(goalId: string) {
-        let status = parseInt(goalId[6]) as GoalStatus
-        let idx = parseInt(goalId.substring(8, goalId.length), 10)
+    function goalItemClicked(status: number, idx: number) {
+        if (shouldDrag) return
 
-        const goalInEdit = $goalsManager!.getGoal(status, idx)!
+        const goalInEdit = $goalsManager!.getGoalFromStatus(status, idx)!
         initGoalInEdit(goalInEdit)
     }
 
     /* Board Event Handlers */
-    function onGoalCardClicked() {
-        if (!goalInViewId) return
-        goalItemClicked(goalInViewId)
-        goalInViewId = null
-    }
-    function onGoalCardMouseDown(event: MouseEvent, id: string) {
+    function onGoalCardMouseDown(event: MouseEvent) {
         const target = event.target as HTMLElement
-        shouldDrag = target.classList.value.includes("item-handle")
+        const handleElem = findAncestorByClass(target, "goals-board__item-handle")
 
-        if (!shouldDrag && (target.tagName === "DIV" || target.tagName === "IMG")) {
-            goalInViewId = id
+        if (!handleElem && !isSpaceDown) {
+            return 
         }
+
+        shouldDrag = true
     }
     function onBoardDragEnter() {
         if (!dropTargetElem) return
 
-        dropTargetElem.classList.remove(`${GOAL_CARD_CLASS}--over`)
+        dropTargetElem.classList.remove(GOAL_CARD_OVER_CLASS)
         dropTargetElem = null
     }
 
     /* Drag Event Handlers */
-    function onDragStartHandler(event: DragEvent) {
+    function onDragStartHandler(event: DragEvent) {        
         event.stopPropagation()
 
         if (!shouldDrag && !isSpaceDown) {
             event.preventDefault()
             return
         }
+
 
         isSpacePressedForDrag = isSpaceDown
 
@@ -98,6 +115,7 @@
         return false
     }
     function onDragOverHandler(event: DragEvent) {
+
         event.stopPropagation()
         event.preventDefault()
         return false
@@ -106,6 +124,8 @@
         event.stopPropagation()
         const target = event.target as HTMLElement
         const boardItem = findAncestorByClass(target, GOAL_CARD_CLASS)!
+
+        
         if (boardItem.id === dragSourcElem!.id) {
             event.preventDefault()
             return false
@@ -113,13 +133,14 @@
         
         resetCurrentDropTarget()
         dropTargetElem = boardItem
-        dropTargetElem.classList.add(`${GOAL_CARD_CLASS}--over`)
+        dropTargetElem.classList.add(GOAL_CARD_OVER_CLASS)
     }
     function onDragLeaveHandler(event: DragEvent) {
         event.preventDefault()
         return false
     }
     function onDropHandler(event: DragEvent) {
+        console.log("X")
         event.stopPropagation()
 
         if (!dropTargetElem) {
@@ -127,24 +148,7 @@
             return
         }
 
-        // duplicate and insert before elem
-        // const newElement = document.createElement('li')
-        // newElement.className = `"${GOAL_CARD_CLASS}
-        //`newElement.draggable = true
-        // newElement.id = dragSourcElem!.id
-        // newElement.innerHTML = event.dataTransfer!.getData('text/html')
-
         $goalsManager!.updateGoalStatus(dragSourcElem!.id, dropTargetElem!.id)
-
-        // const firstChild = newElement.firstChild as HTMLElement
-        // if (firstChild.tagName === "META") {
-        //     newElement.firstChild!.remove()
-        // }
-
-        // addBoardItemDragEventHandlers(newElement)
-        // dropTargetElem!.parentNode!.insertBefore(newElement, dropTargetElem!)
-
-        // dragSourcElem!.remove()
         
         resetCurrentDragSourceTarget()
         resetCurrentDropTarget()
@@ -158,8 +162,13 @@
     }
     function resetCurrentDropTarget() {
         if (!dropTargetElem) return
-        dropTargetElem.classList.remove(`${GOAL_CARD_CLASS}--over`)
+        dropTargetElem.classList.remove(GOAL_CARD_OVER_CLASS)
         dropTargetElem =  null
+    }
+
+    function onWindowResize() {
+        if (goalItemView === GoalItemUI.BoardCard) return
+        itemWidth = boardCardsContainer?.clientWidth ?? DROP_DIVIDER_BOARD_WIDTH
     }
 
     /* Keyboard Handlers */
@@ -181,59 +190,41 @@
             boardCardsContainer!.scrollTop += 250
         }
     }
+
+    // onMount(() => onWindowResize())
 </script>
 
-<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} />
+<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} on:resize={onWindowResize}/>
 
 {#if $goalsManager}
 <div 
-    class={`goals-board ${$themeState.isDarkTheme ? "" : "goals-board--light"}`} 
+    class={`goals-board ${goalItemView === GoalItemUI.BoardList ? "goals-board--list" : ""} ${$themeState.isDarkTheme ? "" : "goals-board--light"}`} 
     on:dragenter={onBoardDragEnter}
 >
     <!-- Column Headers -->
     <div class="goals-board__col-container">
-        <div class="goals-board__col-header">
-            <div class="flx flx--algn-center">
-                <div class="goals-board__col-header-dot goals-board__col-header-dot--on-hold"></div>
-                <div class="goals-board__col-header-title">
-                    On-Hold
+        {#if goalItemView === GoalItemUI.BoardCard}
+            {#each goalStatuses as status, idx}
+                <div class="goals-board__col">
+                    <div class="goals-board__col-header">
+                        <div class="flx flx--algn-center flx--space-between">
+                            <div class="flx flx--algn-center">
+                                <div class={`goals-board__col-header-dot goals-board__col-header-dot--${idx}`}></div>
+                                <div class="goals-board__col-header-title">
+                                    {status.title}
+                                </div>
+                                <div class="goals-board__col-header-count">
+                                    {$goalsManager?.userGoals[idx].length}
+                                </div>
+                            </div>
+                            <button class="goals-board__col-header-add-btn">
+                                +
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="goals-board__col-header-count">
-                    {$goalsManager?.userGoals[0].length}
-                </div>
-            </div>
-            <button class="goals-board__col-header-add-btn">
-                +
-            </button>
-        </div>
-        <div class="goals-board__col-header">
-            <div class="flx flx--algn-center">
-                <div class="goals-board__col-header-dot goals-board__col-header-dot--in-progress"></div>
-                <div class="goals-board__col-header-title">
-                    In-Progress
-                </div>
-                <div class="goals-board__col-header-count">
-                    {$goalsManager?.userGoals[1].length}
-                </div>
-            </div>
-            <button class="goals-board__col-header-add-btn">
-                +
-            </button>
-        </div>
-        <div class="goals-board__col-header">
-            <div class="flx flx--algn-center">
-                <div class="goals-board__col-header-dot goals-board__col-header-dot--accomplished"></div>
-                <div class="goals-board__col-header-title">
-                    Accomplished
-                </div>
-                <div class="goals-board__col-header-count">
-                    {$goalsManager?.userGoals[2].length}
-                </div>
-            </div>
-            <button class="goals-board__col-header-add-btn">
-                +
-            </button>
-        </div>
+            {/each}
+        {/if}
     </div>
     <!-- Board Cards Container -->
     <div 
@@ -242,17 +233,37 @@
         bind:this={boardCardsContainer}
         on:scroll={boardScrollHandler} 
     >
-        {#each goalStatuses as status, idx}
+        {#each goalStatuses as status, statusIdx}
             <div class="goals-board__col">
+                {#if goalItemView === GoalItemUI.BoardList}
+                    <div class="goals-board__col-header">
+                        <div class="flx flx--algn-center flx--space-between">
+                            <div class="flx flx--algn-center">
+                                <div class={`goals-board__col-header-dot goals-board__col-header-dot--${statusIdx}`}></div>
+                                <div class="goals-board__col-header-title">
+                                    {goalStatuses[statusIdx].title}
+                                </div>
+                                <div class="goals-board__col-header-count">
+                                    {$goalsManager?.userGoals[statusIdx].length}
+                                </div>
+                            </div>
+                            <button class="goals-board__col-header-add-btn">
+                                +
+                            </button>
+                        </div>
+                        <div class="goals-board__col-header-divider goals-board__divider"></div>
+                    </div>
+                {/if}
                 <ul class="goals-board__col-goals-list" >
-                    {#each $goalsManager?.userGoals[idx] as goal}
+                    {#each $goalsManager?.userGoals[statusIdx] as goal, idx}
                         {#if goal}
                             <!-- svelte-ignore a11y-click-events-have-key-events -->
                             <li 
-                                class="goals-board__item" id={`goal--${idx}-${goal?.idx}`}
+                                class={`goals-board__item ${goalItemView === GoalItemUI.BoardList ? "goals-board__item--list" : "goals-board__item--card"}`}
+                                id={`goal--${statusIdx}-${goal.idx}`}
                                 draggable="true"
-                                on:click={onGoalCardClicked}
-                                on:mousedown={(e) => onGoalCardMouseDown(e, `goal--${idx}-${goal?.idx}`)}
+                                on:click={() => goalItemClicked(statusIdx, goal?.idx ?? 0)}
+                                on:mousedown={(e) => onGoalCardMouseDown(e)}
                                 on:dragover={onDragOverHandler}
                                 on:dragenter={onDragEnterHandler}
                                 on:dragleave={onDragLeaveHandler}
@@ -261,60 +272,40 @@
                                 on:dragstart={onDragStartHandler}
                                 on:dragend={onDragEndHandler}
                             >
-                                <div class="goals-board__item-divider">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="90%" height="2" viewBox="0 0 200 2" fill="none">
-                                        <path d="M0.567383 0.545898H215.092" stroke-opacity="0.65" stroke-dasharray="3 3"/>
+                                {#if idx != 0}
+                                    <div class="goals-board__item-divider goals-board__divider"></div>
+                                {/if}
+                                <div class="goals-board__item-drop-divider">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width={itemWidth} height="2" viewBox={`0 0 ${itemWidth} 2`} fill="none">
+                                        <path d={`M0.567383 0.545898H${itemWidth}`} stroke-opacity="0.65" stroke-dasharray="3 3"/>
                                     </svg>
                                 </div>
-                                <div class={`goal-card ${$themeState.isDarkTheme ? "" : "goal-card--light"}`}>
-                                    <div class="goals-board__item-handle"></div>
-                                    {#if !goal.isImgHidden}
-                                        <img class="goal-card__img" src={goal?.imgSrc} alt="goal-img" />
-                                    {/if}
-                                    <div class="goal-card__details">
-                                        <h5 class="goal-card__name" title={goal?.title}>
-                                            {goal?.title}
-                                        </h5>
-                                        {#if goal.dueDate}
-                                            <span class="goal-card__target-date" title="Target Date">
-                                                {formatDateLong(goal.dueDate)}
-                                            </span>
-                                        {/if}
-                                        <p class="goal-card__description" title={goal?.description}>
-                                            {goal?.description}
-                                        </p>
-                                        <div class="goal-card__bottom-details">
-                                            <div class="goal-card__status">
-                                                <div class="goal-card__status-dot" style={`background-color: ${status.color}`}></div>
-                                                <span>{status.title}</span>
-                                            </div>
-                                            {#if goal?.milestones && goal.milestones.length > 0}
-                                                <div class="goal-card__milestones" title="Milestones">
-                                                    {`${goal?.milestonesDone} / ${goal?.milestones.length}`}
-                                                </div>
-                                            {/if}
-                                        </div>
+                                <div class="goals-board__item-handle goals-board-handle">
+                                    <div class="goals-board__item-handle-dots goals-board-handle__dots">
+                                        <SVGIcon icon={Icon.DragDots} options={{ scale: 0.8 }}/>
                                     </div>
                                 </div>
+                                <GoalItem goal={goal} status={statusIdx} appearance={goalItemView} />
                             </li>
                         {/if}
                     {/each}
                     <li 
                         class="goals-board__item goals-board__item--btn-container" 
-                        id={`goal--${idx}--1`}
+                        style={`${goalItemView === GoalItemUI.BoardList ? "height: 40px;" : ""}`}
+                        id={`goal--${statusIdx}--1`}
                         on:dragover={onDragOverHandler}
                         on:dragenter={onDragEnterHandler}
                         on:dragleave={onDragLeaveHandler}
                         on:drop={onDropHandler}
                     >
-                        <div class="goals-board__item-divider">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="90%" height="2" viewBox="0 0 200 2" fill="none">
-                                <path d="M0.567383 0.545898H215.092" stroke-opacity="0.65" stroke-dasharray="3 3"/>
+                        <div class="goals-board__item-drop-divider goals-board__divider">
+                            <svg xmlns="http://www.w3.org/2000/svg" width={itemWidth} height="2" viewBox={`0 0 ${itemWidth} 2`} fill="none">
+                                <path d={`M0.567383 0.545898H${itemWidth}`} stroke-opacity="0.65" stroke-dasharray="3 3"/>
                             </svg>
                         </div>
                         <button class="goals-board__col-add-new-goal-btn">
-                            <span>+</span>
-                            Add New Goal
+                            <SVGIcon icon={Icon.Add} options={{ scale: 0.65, strokeWidth: 1.6 }}/>
+                            <span>New Goal</span>
                         </button>
                     </li>
                 </ul>
@@ -340,21 +331,62 @@
         padding-left: 25px;
 
         &--light &__item {
-            &:hover, &:focus {
-                filter: brightness(1.02);
-            }
-
             &--btn-container button {
                 font-weight: 500;
             }
         }
-        &--light &__col-header {
-            &-title {
-                @include text-style(0.8, 600);
+        &--light &__col-header-title {
+            @include text-style(0.95, 600);
+        }
+        &--light &__col-header-count {
+            @include text-style(0.3, 500);
+        }
+        &--light &__divider {
+            @include divider(rgba(black, 0.05));
+        }
+        &--light#{&}--list &__item:hover {
+            background-color: rgba(black, 0.02);
+        }
+        &--light &__col-add-new-goal-btn span {
+            @include text-style(1, 600);
+        }
+
+        &--list {
+            margin-top: 10px;
+            padding-left: 0px;
+        }
+        &--list &__cards-container {
+            display: block;
+        }
+        &--list &__item {
+            width: 100%;
+            padding: 0px 0px 12px 25px;
+
+            &:nth-last-child(2){
+                margin-bottom: 5px;
             }
-            &-count {
-                @include text-style(0.3, 500);
+            &:hover {
+                background-color: rgba(white, 0.008);
             }
+        }
+        &--list &__item-divider {
+            display: block;
+        }
+        &--list &__col {
+            margin: 0px 0px 0px 0px;
+
+            &-add-new-goal-btn {
+                margin: -3px 20px 0px 0px;
+                float: right;
+            }
+        }
+        &--list &__col-header {
+            padding: 0px 20px 0px 25px;
+            width: 100%;
+        }
+
+        &__divider {
+            @include divider(rgba(white, 0.045));
         }
 
         /* Board */
@@ -373,17 +405,14 @@
         }
         &__item {
             width: $board-item-width;
-            transition: 0.09s ease-in-out;
-            cursor: pointer;
             position: relative;
-
+            cursor: pointer;
+            height: auto;
+            transition: 0.12s ease-in-out;
+            
             &:active {
                 transform: scale(0.997);
             }
-            &:hover, &:focus {
-                filter: brightness(1.12);
-            }
-
             &--dragging {
                 cursor: grabbing !important;
                 opacity: 0.3;
@@ -391,12 +420,31 @@
             &--dragging * {
                 cursor: grabbing !important;
             }
-            &--over &-divider {
+            &--list:hover &-handle-dots {
+                @include visible(0.09);
+            }
+            &--list &-handle {
+                @include pos-abs-top-left-corner(50%);
+                transform: translateY(-50%);
+            }
+            &--list &-handle-dots:hover {
+                opacity: 0.5;
+            } 
+            &--board-over &-drop-divider {
                 opacity: 1;
                 padding: 15px 0px 15px 0px;
             }
+            &--list-over &-drop-divider {
+                opacity: 0.5;
+                padding: 0px 0px 15px 0px;
+            }
+            &--list-over &-divider {
+                display: none;
+            }
             &--btn-container {
                 height: 150px;
+                width: 100%;
+                background: none !important;
 
                 &:active {
                     transform: scale(1);
@@ -405,22 +453,32 @@
                     filter: brightness(1);
                 }
             }
+            &--btn-container &-drop-divider {
+                background: none;
+            }
         }
         &__item-handle {
             width: 100%;
-            height: 10px;
-            @include pos-abs-top-left-corner(2px, 0px);
+            height: 8px;
             cursor: grab;
+            z-index: 1;
+            @include flex-container(center);
+            @include pos-abs-top-left-corner(5px);
 
             &:active {
                 cursor: grabbing !important;
             }
-            
         }
         &__item-divider {
+            @include pos-abs-top-left-corner;
+            @include divider(rgba(white, 0.045), 0.5px, calc(100% - 50px));
+            margin-left: 25px;
+            display: none;
+        }
+        &__item-drop-divider {
             width: 100%;
             @include flex-container(center, center);
-            transition: 0.1s ease-in-out;
+            transition: 0.12s ease-in-out;
             opacity: 0;
             padding-top: 5px;
             
@@ -432,38 +490,36 @@
         /* Board Columns */
         &__col {
             margin-right: $board-col-gap;
-
-            &:hover &-add-new-goal-btn {
-                opacity: 0.3;
+        }
+        &__col-goals-list {
+            &:hover .goals-board__col-add-new-goal-btn {
+                @include visible(0.35);
             }
-            &-container {
-                @include flex-container(center, _);
+            &:hover .goals-board__col-add-new-goal-btn:hover {
+                opacity: 0.8;
             }
-            &-add-new-goal-btn {
-                @include flex-container(center, _);
-                font-size: 1.15rem;
-                font-weight: 300;
-                opacity: 0;
-                padding-bottom: 100px;
-                cursor: pointer;
-                margin-top: 6px;
-                
-                &:active {
-                    transform: scale(0.99);
-                }
-                &:hover {
-                    opacity: 0.5 !important;
-                }
-                span {
-                    margin-right: 7px;
-                    font-size: 1.4rem;
-                }
+        }
+        &__col-container {
+            @include flex-container(center, _);
+        }
+        &__col-add-new-goal-btn {
+            @include flex-container(center, _);
+            @include not-visible;
+            cursor: pointer;
+            margin-top: 6px;
+            
+            &:active {
+                transform: scale(0.99);
+            }
+            span {
+                @include text-style(_, 400, 1.2rem);
+                margin-left: 7px;
             }
         }
         &__col-header {
-            @include flex-container(center, space-between);
-            margin: 0px $board-col-gap 0px 0px;
+            margin: 0px 6px 0px 0px;
             min-width: $board-item-width;
+            position: relative;
 
             &:hover &-add-btn {
                 color: rgba(var(--textColor1), 0.2);
@@ -473,13 +529,13 @@
                 @include circle(3px);
                 margin-right: 10px;
                 
-                &--on-hold {
+                &--0 {
                     background-color: #CB6E6E;
                 }
-                &--in-progress {
+                &--1 {
                     background-color: #D2B569;
                 }
-                &--accomplished {
+                &--2 {
                     background-color: #8FD067;
                 }
             }
@@ -502,95 +558,20 @@
                 font-family: "DM Mono";
                 @include text-style(0.2, _, 1.2rem);
             }
+            &-divider {
+                margin: 3px 0px 5px 0px;
+            }
         }
     }
 
-    /* Goal Card */
-    .goal-card {
-        background-color: var(--bentoBoxBgColor);
-        box-shadow: var(--bentoBoxShadow);
-        border-radius: 15px;
-        padding: 7.5px 7.5px 11px 7.5px;
-        font-weight: 300;
-        border: 0.5px solid rgba(var(--textColor1), 0.029);
-        position: relative;
-        transition: 0.12s ease-in-out;
-        position: relative;
-
-        &--light  {
-            border-color: transparent;
-            }
-        &--light &__name { 
-            @include text-style(0.87, 600);
+    .goals-board-handle {
+        cursor: grab;
+        &:active {
+            cursor: grabbing;
         }
-        &--light &__description {
-            @include text-style(0.58, 500, 1.15rem);
-        }
-        &--light &__status {
-            @include text-style(0.8, 600);
-        }
-        &--light &__milestones {
-            @include text-style(0.5, 500);
-        }
-        &--light &__target-date {
-            @include text-style(0.3, 400, 1.1rem);
-        }
-
-        &__img {
-            width: 100%;
-            margin-bottom: 9px;
-            border-radius: 10px;
-            object-fit: cover;
-            height: 110px;
-        }
-        &__details {
-            padding: 1px 7px 0px 3px;
-        }
-        &__name, &__description, &__status-dot, &__status, &__milestones {
-            cursor: text;
-            user-select: text;
-            font-size: 1.08rem;
-        }
-        &__name {
-            @include text-style(0.77, 500, 1.24rem);
-            margin-bottom: 6px;
-            width: fit-content;
-            max-width: 95%;
-            @include multi-line-elipses-overflow(2);
-        }
-        &__target-date {
-            @include text-style(0.24, 200, 1.1rem);
-            margin-bottom: 7px;
-            display: inline-block;
-            font-family: "DM Sans";
-        }
-        &__description {
-            @include text-style(0.36, _, 1.15rem);
-            margin-bottom: 14px;
-            width: fit-content;
-            white-space: pre-wrap;
-            word-break: break-word;
-            @include multi-line-elipses-overflow(11);
-        }
-        &__bottom-details {
-            @include flex-container(center, space-between);
-        }
-        &__bottom-details-left {
-            @include flex-container(center, _);
-        }
-        &__status-dot {
-            @include circle(2.5px);
-            margin-right: 7px;
-        }
-        &__status {
-            @include text-style(0.44, 400);
-            margin-right: 6.5px;
-            @include flex-container(center, _);
-        }
-        &__milestones {
-            @include text-style(0.24);
-            font-family: "DM Sans";
-
+        &__dots {
+            transition: 0.12s ease-in-out;
+            @include not-visible;
         }
     }
 </style>

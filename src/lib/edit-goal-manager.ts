@@ -13,6 +13,9 @@ export class EditGoalManager {
     creationDate: Date | null = null
     dueDate: Date | null = null
     accomplishedDate: Date | null = null
+    sectionId = 0
+    sectionIdx = -1
+    isPinned = false
 
     imgSrc: string | null = null
     isImgHidden = false
@@ -51,6 +54,9 @@ export class EditGoalManager {
             this.accomplishedDate = goal.accomplishedDate
             this.imgSrc = goal.imgSrc
             this.isImgHidden = goal.isImgHidden
+            this.sectionId = goal.sectionId
+            this.sectionIdx = goal.sectionIdx
+            this.isPinned = goal.isPinned
         }
         editGoalManger.set(this)
     }
@@ -270,6 +276,22 @@ export class EditGoalManager {
     editGoalImgSrcVisibility(doHide: boolean) {
         this.isImgHidden = doHide
     }
+
+    updateSectionIdx(targetSectionIdx: GoalSectionItemId) {
+        this.sectionId = targetSectionIdx.sectionId
+        this.sectionIdx = targetSectionIdx.sectionItemIdx
+
+        this.updateEditGoalState({
+            sectionId: this.sectionId,
+            sectionIdx: this.sectionIdx,
+        })
+    }
+    
+    togglePinGoal() {
+        this.isPinned = !this.isPinned
+        this.updateEditGoalState({ isPinned: this.isPinned })
+    }
+
    
    // Editing Milestone 
 
@@ -330,7 +352,6 @@ export class EditGoalManager {
     moveElemInMilestone(fromIdx: number, toIndex: number) {
         this.milestones = moveElementInArr(this.milestones, fromIdx, toIndex)
         this.sortUnFinishishedMilestones()
-        console.log(this.milestones)
     }
 
     sortUnFinishishedMilestones() {
@@ -370,6 +391,9 @@ export class EditGoalManager {
         }
         else if (option === EditGoalOption.RemoveImage) {
             this.editGoalImgSrc(null)
+        }
+        else {
+            this.togglePinGoal()
         }
         
         this.closeGoalContextMenu()
@@ -576,13 +600,16 @@ export class EditGoalManager {
         if (newState.status != undefined)           newStateObj!.status = newState.status
         if (newState.creationDate != undefined)     newStateObj!.creationDate = newState.creationDate
         if (newState.datePickerPos != undefined)    newStateObj!.datePickerPos = newState.datePickerPos
-        if (newState.milestoneContextMenuPos != undefined)            newStateObj!.milestoneContextMenuPos = newState.milestoneContextMenuPos
-        if (newState.isEditingMilestoneTitle != undefined)   newStateObj!.isEditingMilestoneTitle = newState.isEditingMilestoneTitle
-        if (newState.isEditingDescription != undefined)         newStateObj!.isEditingDescription = newState.isEditingDescription
-        if (newState.isEditingTitle != undefined)               newStateObj!.isEditingTitle = newState.isEditingTitle
-        if (newState.isMakingNewMilestone != undefined)               newStateObj!.isMakingNewMilestone = newState.isMakingNewMilestone
-        if (newState.imgSrc != undefined)               newStateObj!.imgSrc = newState.imgSrc
-        if (newState.imgContextMenuPos != undefined)               newStateObj!.imgContextMenuPos = newState.imgContextMenuPos
+        if (newState.milestoneContextMenuPos != undefined)  newStateObj!.milestoneContextMenuPos = newState.milestoneContextMenuPos
+        if (newState.isEditingMilestoneTitle != undefined)  newStateObj!.isEditingMilestoneTitle = newState.isEditingMilestoneTitle
+        if (newState.isEditingDescription != undefined)     newStateObj!.isEditingDescription = newState.isEditingDescription
+        if (newState.isEditingTitle != undefined)           newStateObj!.isEditingTitle = newState.isEditingTitle
+        if (newState.isMakingNewMilestone != undefined)     newStateObj!.isMakingNewMilestone = newState.isMakingNewMilestone
+        if (newState.imgSrc != undefined)                   newStateObj!.imgSrc = newState.imgSrc
+        if (newState.imgContextMenuPos != undefined)        newStateObj!.imgContextMenuPos = newState.imgContextMenuPos
+        if (newState.sectionId != undefined)                newStateObj!.sectionId = newState.sectionId
+        if (newState.sectionIdx != undefined)               newStateObj!.sectionIdx = newState.sectionIdx
+        if (newState.isPinned != undefined)                 newStateObj!.isPinned = newState.isPinned
 
         return newStateObj
     }

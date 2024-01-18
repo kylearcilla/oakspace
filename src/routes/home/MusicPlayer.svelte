@@ -1,13 +1,14 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte'
-    import { LogoIcon, MusicPlatform } from "$lib/enums"
+
 	import type { MusicPlayer } from '$lib/music-player'
+    import { LogoIcon, MusicPlatform } from "$lib/enums"
+	import { createMusicAPIErrorToastMsg } from '$lib/utils-music'
 	import { getSlidingTextAnimation, trackProgressHandler, volumeHandler } from '$lib/utils-music-player'
 	import { musicPlayerStore, themeState, homeViewLayout, musicDataStore } from '$lib/store'
-	import { createMusicAPIErrorToastMsg } from '$lib/utils-music';
-	import Logo from '../../components/Logo.svelte';
-	import { findEnumIdxFromDiffEnum } from '$lib/utils-general';
-	import type { MusicUserData, MusicUserDataStore } from '$lib/music-user-data';
+    
+	import Logo from '../../components/Logo.svelte'
+	import { findEnumIdxFromDiffEnum } from '$lib/utils-general'
     
     let trackId = ""
     let musicPlatform: MusicPlatform | null = null

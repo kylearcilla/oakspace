@@ -160,6 +160,7 @@
             }
             #home-yt-player {
                 background-color: var(--primaryBgColor);
+                border-radius: 7.5px;
             }
         }
         &__empty-msg {

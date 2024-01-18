@@ -1,7 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     
-	import { Session } from "$lib/pom-session"
 	import { clickOutside } from "$lib/utils-general"
     import { themeState, ytPlayerStore } from "$lib/store"
     import { HrsMinsFormatOption, ModalType } from "$lib/enums"
@@ -26,7 +25,7 @@
     let interval: NodeJS.Timer | null = null
 
     let input: SessionInputData = { ...DEFAULT_SESSION_INPUTS }
-    let tags = [ { name: "school", color: "#9997FE" }, { name: "swe", color: "#FF8B9C" } ]
+    let tags = [ { name: "school", color: "#9997FE", symbol: "📖" }, { name: "swe", color: "#FF8B9C", symbol: "👨‍💻" } ]
 
     /* Session Stuff */
     const createNewSession = (e: Event) => {

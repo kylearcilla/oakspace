@@ -15,6 +15,14 @@ export class CustomError extends Error {
   }
 }
 
+export class ResError<T> extends Error {
+  constructor(public code?: T, message?: string) {
+    super(message);
+    this.name = 'ResError'
+    this.code = code
+  }
+}
+
 /**
  * Occurs when app requests for a resource that does not exist or unavailable.
  */

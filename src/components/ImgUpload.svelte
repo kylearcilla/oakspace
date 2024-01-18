@@ -2,9 +2,9 @@
 	import { ModalType } from "$lib/enums"
 	import { themeState } from "$lib/store"
 	import { closeModal } from "$lib/utils-home"
-	import { handleCustomImgFileInput, handleCustomImgUrlInput } from "$lib/utils-appearance"
+	import { getImgUploadErrorMsg, validateUserImgFileInput, validateUserImgURLInput } from "$lib/utils-media-upload"
     
-	import Modal from "../../components/Modal.svelte"
+	import Modal from "./Modal.svelte"
 
     export let title: string
     export let inputPlaceHolder: string 
@@ -18,57 +18,57 @@
     let imgUrl = ""
     let imgFileName = ""
 
-    const onImgUrlSubmit = async () => {
-        if (!imgUrl) return
-
-        isInputLoading = true
-        const res = await handleCustomImgUrlInput(imgUrl)
-        isInputLoading = false
-
-        if (res.sucess) {
+    async function onImgUrlSubmit() {
+        try {
+            if (!imgUrl) return
+    
+            isInputLoading = true
+            await validateUserImgURLInput(imgUrl)
             urlInputHasError = false
-            isInputLoading = false
             errorMsg = null
 
             onSubmit(imgUrl)
             closeModal(ModalType.ImgUpload)
         }
-        else {
+        catch(e: any) {
             urlInputHasError = true
-            errorMsg = res.message! 
+            errorMsg = getImgUploadErrorMsg(e)
+        }
+        finally {
+            isInputLoading = false
         }
     }
-    const handleImgUrlInput = () => {
+    function onImgUploaded(event: Event) {
+        try {
+            const input = event.target as HTMLInputElement
+            const file = input.files![0]
+
+            imgFileName = file.name
+            isInputLoading = true
+            validateUserImgFileInput(file)
+            imgFileInputHasError = false
+            errorMsg = null
+        }
+        catch(e: any) {
+            imgFileInputHasError = true
+            errorMsg = getImgUploadErrorMsg(e)
+        }
+        finally {
+            isInputLoading = false
+        }
+    }
+    function handleImgUrlInput() {
         urlInputHasError = false
         errorMsg = null
     }
-    const onUserSubmitUrlImg = () => {
+    function onUserSubmitUrlImg() {
 
     }
-
-    const onImgUploaded = (event: Event) => {
-        const input = event.target as HTMLInputElement
-        const file = input.files![0]
-
-        imgFileName = file.name
-        const res = handleCustomImgFileInput(file)
-
-        if (res.sucess) {
-            imgFileInputHasError = false
-            isInputLoading = false
-            errorMsg = null
-        }
-        else {
-            imgFileInputHasError = true
-            errorMsg = res.message!
-        }
-    }
-    const onUserSubmitUploadImg = () => {
+    function onUserSubmitUploadImg() {
         if (!imgFileName || imgFileInputHasError) return
 
     }
-
-    const highlightTabBtnClicked = (isUrl: boolean) => {
+    function highlightTabBtnClicked(isUrl: boolean) {
         isImgUrlOptClicked = isUrl
     }
 </script>
@@ -182,8 +182,8 @@
 </Modal>
 
 <style lang="scss">
-    @import "../../scss/highlighter-tabs.scss";
-    @import "../../scss/form.scss";
+    @import "../scss/highlighter-tabs.scss";
+    @import "../scss/form.scss";
 
     .img-upload {
         position: relative;

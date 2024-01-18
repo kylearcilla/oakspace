@@ -438,7 +438,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     }
 }
 
-@mixin text-style($opacity: _, $weight: _, $size: _) {
+@mixin text-style($opacity: _, $weight: _, $size: _, $font: _) {
     @if $opacity != _ {
         color: rgb(var(--textColor1), $opacity);
     }
@@ -447,6 +447,9 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     }
     @if $weight != _ {
         font-weight: $weight;
+    }
+    @if $font != _ {
+        font-family: $font;
     }
 }
 

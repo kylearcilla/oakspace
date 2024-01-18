@@ -13,7 +13,7 @@ export const MAX_EXTRA_TIME_MINS = 45
 
 export const DEFAULT_SESSION_INPUTS: SessionInputData = {
     name: "",
-    tag: { name: "Korean", color: "#C7C4AB" },
+    tag: { name: "Korean", color: "#C7C4AB", symbol: "📖" },
     pomTime: 25,
     pomPeriods: 2,
     breakTime: 5,

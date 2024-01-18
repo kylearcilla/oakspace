@@ -23,6 +23,20 @@ export enum ShortcutSectionInFocus {
     MAIN, TASK_BAR
 }
 
+/* Dates */
+export enum DatePickerUserInput {
+    InvalidYr, BeyondMin, BeyondMax, InBounds, Invalid
+}
+
+export enum DateBoundState{
+    InvalidYr, BeyondMin, BeyondMax, InBounds
+}
+
+/* Image Upload */
+export enum ImgUploadInput {
+    Error, TooBig, TooSmall, InvalidFormat, InvalidURL
+}
+
 /* Tasks */
 export enum RightSideTab { 
     TASKS, RECENT_ACTIVITY

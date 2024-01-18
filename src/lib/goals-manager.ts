@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { GoalViewOption, GoalsDropdown, type GoalStatus, GoalItemView, GoalItemUI } from "./enums"
+import { GoalViewOption, GoalsDropdown, type GoalStatus, GoalItemUI } from "./enums"
 import { goalsManager } from "./store"
 import { getElemById, getScrollStatus, moveElementInArr } from "./utils-general"
 import { accomplishments2023, accomplishments2021, accomplishments2022 } from "./utils-goals"

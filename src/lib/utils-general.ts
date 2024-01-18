@@ -198,6 +198,15 @@ export const shorterNum = (num: string): string => {
 }
 
 /**
+ * Gets the first highlighter btn Element in a highlighter btn component
+ * @param containerId   String id for the Highlighter Btn Component
+ * @returns             First highlighter btn.
+ */
+export const getFirstHighlighterBtn = (containerId: string) => {
+  return getElemById(containerId)!.firstChild as HTMLButtonElement
+}
+
+/**
  * Given an enum member of another enum A fine the location of the same matching enum member in enumB.
  * Enum member must be in both enumA or enumB
  * 

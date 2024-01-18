@@ -489,6 +489,7 @@ export class Session {
      * @returns  True if the running session is 45 mins over the calculated end time.
      */
     isUserTakingTooLong() {
+        return
         if (isDateEarlier(new Date, new Date(this.calculatedEndTime))) return
 
         const diffInSecs = getDifferenceInSecs(new Date, new Date(this.calculatedEndTime))

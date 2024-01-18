@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { ModalType, YTMediaLinkType } from "$lib/enums";
+	import { ModalType } from "$lib/enums";
 	import { themeState } from "$lib/store";
     import { closeModal } from "$lib/utils-home";
 	import { getYtMediaId } from "$lib/utils-youtube";
-	import Modal from "../../components/Modal.svelte";
+	import Modal from "./Modal.svelte";
 
     let errorMsg: string | null = null
     let ytMediaUrl = ""
@@ -72,7 +72,7 @@
 </Modal>
 
 <style lang="scss">
-    @import "../../scss/form.scss";
+    @import "../scss/form.scss";
 
     .custom-yt {
         padding: 18px 20px 30px 20px;

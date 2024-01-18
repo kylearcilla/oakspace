@@ -11,8 +11,8 @@
     } from "$lib/utils-music"
 
 	import Modal from "../../components/Modal.svelte"
-	import SettingsMusicSignedOut from "./SettingsMusicSignedOut.svelte"
-	import SettingsMusicAccountHeader from "./SettingsMusicAccountHeader.svelte"
+	import MusicSettingsSignedOut from "./MusicSettingsSignedOut.svelte"
+	import MusicSettingsAccountHeader from "./MusicSettingsAccountHeader.svelte"
 	import { closeModal } from "$lib/utils-home"
 	import { createMusicAPIErrorToastMsg } from "$lib/utils-music"
 
@@ -154,7 +154,7 @@
         <div class={`music ${!$themeState.isDarkTheme ? "music--light" : ""}`}>
             <!-- Top Header -->
             <h1 class="modal-bg__content-title">Music</h1>
-            <SettingsMusicAccountHeader isPlatformListOpen={isPlatformListOpen} logOutUser={activePlatformBtnClicked} />
+            <MusicSettingsAccountHeader isPlatformListOpen={isPlatformListOpen} logOutUser={activePlatformBtnClicked} />
             <!-- Music Settings Content -->
             <div class="music__content">
                 <div class="music__left-section">
@@ -401,7 +401,7 @@
 
 <!-- Logged Off UI -->
 {#if !$musicDataStore?.isSignedIn}
-    <SettingsMusicSignedOut _loginUser={_musicLogin} />
+    <MusicSettingsSignedOut _loginUser={_musicLogin} />
 {/if}
 
 <style lang="scss">
@@ -824,6 +824,11 @@
             display: flex;
             overflow-x: scroll;
             scroll-behavior: smooth;
+
+
+            &::-webkit-scrollbar {
+                display: none;
+            }
 
             li {
                 &:first-child {

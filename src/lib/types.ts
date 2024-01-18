@@ -12,9 +12,40 @@ type Result<T, E> = {
     error: E
 }
 
+// Dates 
+type MonthData = {
+    monthIdx: number,
+    firstDay: Date,    
+    year: number,
+    days: ({ date: Date, isInCurrMonth: boolean })[]
+}
+
+type ProductivityDay = {
+    date: Date, 
+    isInCurrMonth: boolean, 
+    hadGoal: boolean, 
+    hadSession: boolean
+}
+
+type ProductivityDate = {
+    monthIdx: number,
+    firstDay: Date,    
+    year: number,
+    days: ProductivityDay[]
+} 
+
+type CalendarOptions = {
+    forwards?: boolean
+    minDate?: Date | null 
+    maxDate?: Date | null 
+}
+
+type DatePickerOptions = CalendarOptions
+
 type FunctionParam = ((...args: any[]) => any) | ((...args: any[]) => Promise<any>) | null
 
-type AppearanceThemes = { 
+// maps string section to corresponging theme arrays
+type AppearanceSectionToThemeMap = { 
     default: DefaultTheme[], 
     light: ColorTheme[],
     dark: ColorTheme[],
@@ -392,12 +423,6 @@ type Accomplishment = {
     isMilestone: boolean
 }
 
-type DatePickerOptions = {
-    forwards?: boolean
-    minDate?: Date | null 
-    maxDate?: Date | null 
-}
-
 /* Analytics Stuff */
 type SessionInputData = { 
     tagName: string, 
@@ -463,18 +488,18 @@ type ThemeState = {
     title: string,  
     isDarkTheme: boolean,
     themeToggleBtnIconColor: string,
-    twinTheme: { sectionName: keyof AppearanceThemes, index: number } | null
+    twinTheme: { sectionName: keyof AppearanceSectionToThemeMap, index: number } | null
 }
 
 interface Theme {
     title: string,
-    sectionDetails: { title: keyof AppearanceThemes, index: number }
+    sectionDetails: { title: keyof AppearanceSectionToThemeMap, index: number }
 }
 
 interface ColorTheme extends Theme {
     colorPalette: string[]
     styling: ColorThemeProps
-    twinTheme: { sectionName: keyof AppearanceThemes, index: number } | null
+    twinTheme: { sectionName: keyof AppearanceSectionToThemeMap, index: number } | null
 }
 
 interface DefaultTheme extends ColorTheme {

@@ -1,26 +1,37 @@
 <script lang="ts">
-	import { onDestroy, onMount } from "svelte"
+	import { onMount } from "svelte"
+	import { ModalType } from "$lib/enums"
+	import { closeModal, openModal } from "$lib/utils-home"
 	import { homeViewLayout, themeState } from "$lib/store"
 	import { getThemeFromSection, setNewTheme } from "$lib/utils-appearance"
     import { lightColorThemes, darkColorThemes, imageThemes, ambientVideos, defaultThemes } from "$lib/data-themes"
 
 	import Modal from "../../components/Modal.svelte"
-	import { ModalType } from "$lib/enums";
-	import { closeModal, openModal } from "$lib/utils-home";
-	import ImgUpload from "./ImgUpload.svelte";
-	import AppearanceVidUrl from "./AppearanceVidUrl.svelte";
+	import ImgUpload from "../../components/ImgUpload.svelte"
+	import CustomVidUpload from "../../components/VidUpload.svelte"
+	import { getFirstHighlighterBtn } from "$lib/utils-general"
+
+    enum AppearanceTab {
+        Color, Ambient
+    }
 
     let clickedTheme: Theme | null = null
     let selectedTheme: Theme | null = null
-    let isAmbientTabSelected = false
+    let selectedTab = AppearanceTab.Color
+    let tabHighlighterClass = ""
 
-    const handleNewCustomImgBtnSelected = () => {
-        openModal(ModalType.ImgUpload)
+    const APPEARANCE_TAB_CONTAINER_ID = "appearance-tabs"
+
+    /* Theme item Stuff */
+    function handleThemeSelected() {
+        const title = clickedTheme!.sectionDetails.title as keyof AppearanceSectionToThemeMap
+        const idx = clickedTheme!.sectionDetails.index
+        selectedTheme = getThemeFromSection(title, idx)
+        clickedTheme = null
+
+        setNewTheme(selectedTheme)
     }
-    const handleNewCustomVidBtnSelected = () => {
-        openModal(ModalType.CustomVidBg)
-    }
-   const handleThemeClicked = (theme: Theme) => {
+    function onThemeItemFocus(theme: Theme) {
         const title = theme.sectionDetails.title
         const idx = theme.sectionDetails.index
         const isSelf = title === clickedTheme?.sectionDetails.title && idx === clickedTheme?.sectionDetails.index
@@ -28,29 +39,45 @@
 
         if (isSelf) {
             clickedTheme = null
-            return
         }
         else if (!isPickedTheme) {
             clickedTheme = theme
         }
     }
-    const handleThemeSelected = () => {
-        const title = clickedTheme!.sectionDetails.title as keyof AppearanceThemes
-        const idx = clickedTheme!.sectionDetails.index
-        selectedTheme = getThemeFromSection(title, idx)
+    function onThemeItemBlur(event: FocusEvent) {
+        const target = event.relatedTarget as HTMLElement
+        if (target?.classList.value.includes("apply-btn")) return
         clickedTheme = null
-
-        setNewTheme(selectedTheme)
     }
-    const handleEnterPressed = (event: KeyboardEvent) => {
+
+    /* General UI Handlers */
+    function customImgBtnClicked() {
+        openModal(ModalType.ImgUpload)
+    }
+    function customVidBtnClicked() {
+        openModal(ModalType.CustomVidBg)
+    }
+    function handleEnterPressed(event: KeyboardEvent) {
         if (event.key != "Enter" || clickedTheme === null) return
         handleThemeSelected()
     }
 
+    /* Highlighter Tabs */
+    function onTabClicked(e: Event, tab: AppearanceTab) {
+        const target = e.target as HTMLButtonElement
+        selectedTab = tab
+        initHighlighter(target)
+    }
+    function initHighlighter(tab: HTMLButtonElement) {
+        const width = tab.clientWidth
+        const offSetLeft = tab.offsetLeft
+
+        tabHighlighterClass = `left: ${offSetLeft}px; width: ${width}px;`
+    }
+
     onMount(() => { 
-        selectedTheme = JSON.parse(localStorage.getItem("theme")!) 
-    })
-    onDestroy(() => {
+        selectedTheme = JSON.parse(localStorage.getItem("theme")!)
+        initHighlighter(getFirstHighlighterBtn(APPEARANCE_TAB_CONTAINER_ID))
     })
 </script>
 
@@ -62,26 +89,27 @@
         <h1 class="appearance__title modal-bg__content-title">Appearance</h1>
         <p class="appearance__description modal-bg__content-copy">Tailor your workspace to your personal aesthetic!</p>
 
+        <!-- Highlighter Tabs -->
         <div class="highlighter-tabs">
-            <div class="highlighter-tabs__container">
+            <div class="highlighter-tabs__container" id="appearance-tabs">
                 <button 
-                    on:click={() => isAmbientTabSelected = false}
-                    class={`highlighter-tabs__tab-btn ${!isAmbientTabSelected ? "highlighter-tabs__tab-btn--selected" : ""}`}
+                    on:click={(e) => onTabClicked(e, AppearanceTab.Color)}
+                    class={`highlighter-tabs__tab-btn ${selectedTab === AppearanceTab.Color ? "highlighter-tabs__tab-btn--selected" : ""}`}
                 >
                     Color Themes
                 </button>
                 <button 
-                    on:click={() => isAmbientTabSelected = true}
-                    class={`highlighter-tabs__tab-btn ${isAmbientTabSelected ? "highlighter-tabs__tab-btn--selected" : ""}`}
+                    on:click={(e) => onTabClicked(e, AppearanceTab.Ambient)}
+                    class={`highlighter-tabs__tab-btn ${selectedTab === AppearanceTab.Ambient ? "highlighter-tabs__tab-btn--selected" : ""}`}
                 >
                     Ambient Mode
                 </button>
             </div>
             <div class="settings-tabs__divider highlighter-tabs__divider"></div>
-            <div class={`highlighter-tabs__highlighter highlighter-tabs__highlighter--${isAmbientTabSelected ? "ambient" : "color"}`}></div>
+            <div class="highlighter-tabs__highlighter" style={tabHighlighterClass}></div>
         </div>
 
-        {#if !isAmbientTabSelected}
+        {#if selectedTab === AppearanceTab.Color}
             <!-- Default Themes -->
             <div class="default-themes bento-box">
                 <h3 class="bento-box__title">Default Themes</h3>
@@ -89,7 +117,8 @@
                     {#each defaultThemes as theme, idx}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <li 
-                            on:click={() => handleThemeClicked(theme)}
+                            on:focus={() => onThemeItemFocus(theme)}
+                            on:blur={onThemeItemBlur}
                             role="button" tabindex="0"
                             class={`default-themes__selection-item theme-item 
                                     ${("default" === clickedTheme?.sectionDetails.title && idx === clickedTheme?.sectionDetails.index) ? "theme-item--clicked" : ""}        
@@ -118,8 +147,9 @@
                     <ul class="color-themes__themes-list">
                         {#each lightColorThemes as theme, idx}
                             <!-- svelte-ignore a11y-click-events-have-key-events -->
-                            <li 
-                                on:click={() => handleThemeClicked(theme)}  
+                            <li   
+                                on:focus={() => onThemeItemFocus(theme)}
+                                on:blur={onThemeItemBlur}
                                 role="button" tabindex="0"
                                 class={`color-themes__selection-item theme-item 
                                         ${("light" === clickedTheme?.sectionDetails.title && idx === clickedTheme?.sectionDetails.index) ? "theme-item--clicked" : ""}        
@@ -147,7 +177,8 @@
                         {#each darkColorThemes as theme, idx}
                             <!-- svelte-ignore a11y-click-events-have-key-events -->
                             <li 
-                                on:click={() => handleThemeClicked(theme)}
+                                on:focus={() => onThemeItemFocus(theme)}
+                                on:blur={onThemeItemBlur}
                                 role="button" tabindex="0"
                                 class={`color-themes__selection-item theme-item 
                                         ${("dark" === clickedTheme?.sectionDetails.title && idx === clickedTheme?.sectionDetails.index) ? "theme-item--clicked" : ""}        
@@ -176,7 +207,7 @@
                 <p class="bento-box__copy">Customize your workspace with personalized image backgrounds, reflecting your unique aesthetic!</p>
                 <ul class="img-themes__img-list">
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <li class="custom-item" on:click={handleNewCustomImgBtnSelected} role="button" tabindex="0">
+                    <li class="custom-item" on:click={customImgBtnClicked} role="button" tabindex="0">
                     <div class="custom-item__img-container">
                             <span>+</span>
                         </div>
@@ -192,7 +223,7 @@
                     {#each imageThemes as imgTheme, idx}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <li 
-                            on:click={() => handleThemeClicked(imgTheme)}
+                            on:click={() => onThemeItemFocus(imgTheme)}
                             role="button" tabindex="0"
                             title={`${imgTheme.title} – ${imgTheme.artist}`}
                             class={`img-themes__selection-item theme-item img-themes__selection-item theme-item--fade-on-hover
@@ -219,7 +250,7 @@
                 <p class="bento-box__copy">Personalize your workspace with custom color themes tailored to your unique aesthetic!</p>
                 <ul class="ambient-mode__vid-list">
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <li class="custom-item" on:click={handleNewCustomVidBtnSelected} role="button" tabindex="0">
+                    <li class="custom-item" on:click={customVidBtnClicked} role="button" tabindex="0">
                         <div class="custom-item__img-container">
                             <span>+</span>
                         </div>
@@ -235,7 +266,7 @@
                     {#each ambientVideos as vidTheme, idx}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <li 
-                            on:click={() => handleThemeClicked(vidTheme)}
+                            on:click={() => onThemeItemFocus(vidTheme)}
                             role="button" tabindex="0"
                             title={`${vidTheme.title} – ${vidTheme.channelName}`}
                             class={`ambient-mode__selection-item theme-item ambient-mode__selection-item theme-item--fade-on-hover
@@ -279,7 +310,7 @@
     />
 {/if}
 {#if $homeViewLayout.modalsOpen.includes(ModalType.CustomVidBg)}
-    <AppearanceVidUrl />
+    <CustomVidUpload />
 {/if}
 
 
@@ -378,16 +409,6 @@
 
         &__tab-btn {
             margin-right: 20px;
-        }
-        &__highlighter {
-            &--color {
-                width: 85px;
-                left: 0px;
-            }
-            &--ambient {
-                width: 94px;
-                left: 98px;
-            }
         }
     }
     .theme-item {

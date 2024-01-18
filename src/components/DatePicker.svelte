@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { Icon } from "$lib/enums"
 	import { clickOutside } from "$lib/utils-general"
-    import { isSameDay, months } from "$lib/utils-date"
     import { datePickerManager, themeState } from "$lib/store"
 	import { DatePickerManager } from "$lib/date-picker-manager"
     import SVGIcon from "./SVGIcon.svelte"
 	import { onDestroy, onMount } from "svelte"
+	import Calendar from "./Calendar.svelte"
+	import { BasicCalendar } from "$lib/basic-calendar"
     
     export let pickedDate: Date | null = null
     export let options: DatePickerOptions | null
@@ -13,8 +14,18 @@
     export let onApply: (date: Date | null) => void
 
     let datePickerInput: HTMLInputElement | null = null
-    let today = new Date()
+    let calendar: BasicCalendar
 
+    $: {
+        calendar?._store.subscribe((newCalendar: BasicCalendar) => calendar = newCalendar) 
+    }
+
+    function onDateCellPressed(day: any) {
+        const basicDay = day as { date: Date, isInCurrMonth: boolean }
+
+        $datePickerManager!.onDateCellPressed(basicDay.date)
+        calendar.setNewPickedDate($datePickerManager!.pickedDate)
+    }
     function onCancelClicked() {
         $datePickerManager!.quit()
         onCancel()
@@ -37,7 +48,6 @@
     function keyboardShortcutsHandler(e: KeyboardEvent) {
         const target = e.target as HTMLInputElement
         const key = e.key
-
         const isOnInput = target.tagName === "INPUT"
 
         if (isOnInput && key === "Enter") {
@@ -55,7 +65,10 @@
     }
 
     onMount(() => {
-        new DatePickerManager(pickedDate, options!)
+        new DatePickerManager(options!)
+        calendar = new BasicCalendar(options!)
+
+        onDateCellPressed(pickedDate)
     })
     onDestroy(() => {
         $datePickerManager!.quit()
@@ -98,70 +111,8 @@
             <path d="M0.552734 0.755859H340.584" stroke-width="0.3" stroke-dasharray="2.2 2.2"/>
         </svg>
     </div>
-    <!-- Focus Header -->
-    <div class="date-picker__focus">
-        <div class="date-picker__focus-header">
-            <div class="date-picker__month-title">
-                <strong>
-                    {months[$datePickerManager.currMonth.monthIdx].substring(0, 3)}
-                </strong> 
-                {$datePickerManager.currMonth.year}
-            </div>
-            <div class="date-picker__btns-container">
-                <button 
-                    class="date-picker__next-prev-btn"
-                    on:click={() => $datePickerManager?.getPrevMonthCalendar()}
-                    disabled={!$datePickerManager.isPrevMonthAvailable}
-                >
-                    <SVGIcon icon={Icon.ChevronLeft}/>
-                </button>
-                <button
-                    class="date-picker__today-btn"
-                    on:click={() => $datePickerManager?.getThisMonth()}
-                >
-                    Today
-                </button>
-                <button 
-                    class="date-picker__next-prev-btn"
-                    on:click={() => $datePickerManager?.getNextMonthCalendar()}
-                    disabled={!$datePickerManager.isNextMonthAvailable}
-                >
-                <SVGIcon icon={Icon.ChevronRight}/>
-            </button>
-            </div>
-        </div>
-        <div class="date-picker__days-of-week">
-            <div>S</div>
-            <div>M</div>
-            <div>T</div>
-            <div>W</div>
-            <div>T</div>
-            <div>F</div>
-            <div>S</div>
-        </div>
-    </div>
-    <!-- Month Calendar -->
-    <div class="date-picker__calendar">
-        <ul>
-            {#each $datePickerManager.currMonth.days as day}
-                <li class={`date-picker__calendar-day-container ${day ? "" : "date-picker__calendar-day-container--empty"}`}>
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <div 
-                        role="button" tabindex="0"
-                        class={`date-picker__calendar-day 
-                                    ${day ? "date-picker__calendar-day--fill" : ""}
-                                    ${day != null && $datePickerManager.isDateInBounds(day.date).result ? "" : "date-picker__calendar-day--disabled"}
-                                    ${day != null && isSameDay(day.date, today) ? "date-picker__calendar-day--today" : ""}
-                                    ${day != null && isSameDay(day.date, $datePickerManager.pickedDate) ? "date-picker__calendar-day--picked" : ""}
-                                    ${day != null && !day.isInCurrMonth ? "date-picker__calendar-day--not-curr-month" : ""}
-                        `}
-                        on:click={() => $datePickerManager?.onDateCellPressed(day)}
-                    >
-                        {`${day === null ? "" : day?.date.getDate()}`}
-                    </div>
-                </li>
-            {/each}
-        </ul>
+    <div class="date-picker__calendar-container">
+        <Calendar calendar={calendar} onDateCellPressed={onDateCellPressed}/>
     </div>
     <!-- Buttons Container -->
     <div class="date-picker__bottom-btn-container">
@@ -210,55 +161,6 @@
             @include text-style(_, 500, 1.05rem);
             color: rgba(212, 115, 115, 0.85);
         }
-        &--light &__today-btn {
-            @include text-style(0.9, 600);
-        }
-        &--light &__next-prev-btn {
-            opacity: 0.7;
-
-            &:disabled {
-                opacity: 0.16;
-            }
-            &:disabled:hover {
-                opacity: 0.16;
-            }
-            &:hover {
-                opacity: 0.5;
-            }
-        }
-        &--light &__month-title {
-            @include text-style(0.28, 500);
-            strong {
-                @include text-style(0.9, 500);
-            }
-        }
-        &--light &__days-of-week * {
-            @include text-style(0.5, 500);
-        }
-        &--light &__calendar-day {
-            @include text-style(0.94, 500);
-
-            &--fill {
-                background: rgba(var(--textColor1), 0.05);
-            }
-            &--fill:hover {
-                background: rgba(var(--textColor1), 0.1);
-            }
-            &--today {
-                @include text-style(0.89);
-                background: rgba(var(--textColor1), 0.1);
-            }
-            &--picked {
-                background: rgba(var(--textColor1), 1) !important;
-                color: white !important;
-            }
-            &--not-curr-month {
-                opacity: 0.35 !important;
-            }
-            &--disabled {
-                opacity: 0.6;
-            }
-        }
         &--light &__bottom-btn-container button {
             @include text-style(_, 600);
         }
@@ -301,134 +203,15 @@
                 stroke: rgba(var(--textColor1), 0.2);
             }
         }
-        &__focus-header {
-            @include flex-container(center, space-between);
-            padding: 4px 12px 0px 12px;
+        &__remove-btn {
+            padding: 0px 4px 0px 5px;
         }
         &__btns-container {
             @include flex-container(center);
         }
-        &__remove-btn {
-            padding: 0px 4px 0px 5px;
-        }
-        &__today-btn {
-            @include text-style(0.2, 300, 1.29rem);
-            margin: 0px 5px;
-            padding: 0px 7px;
-            
-            &:hover {
-                @include text-style(0.6);
-            }
-        }
-        &__next-prev-btn {
-            @include center;
-            opacity: 0.2;
-            padding: 5px;
-
-            &:disabled {
-                opacity: 0.05;
-            }
-            &:disabled:hover {
-                opacity: 0.05;
-            }
-            &:hover {
-                opacity: 0.6;
-            }
-            &:active {
-                transform: scale(0.9);
-            }
-        }
-        &__month-title {
-            font-family: "DM Sans";
-            @include text-style(0.4, 200, 1.27rem);
-
-            strong {
-                @include text-style(1, 300, 1.27rem);
-                margin-right: 3px;
-            }
-        }
-        &__days-of-week {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            font-family: "DM Sans";
-            padding: 15px 12px 6px 12px;
+        &__calendar-container {
             width: 100%;
-
-            * {
-                @include text-style(1, 300, 1rem);
-                @include center;
-                width: 28px;
-            }
-        }
-        &__calendar {
-            height: 175px;
-            width: 100%;
-            padding: 0px 12px 25px 12px;
-            margin-bottom: 5px;
-
-            ul {
-                display: grid;
-                grid-template-columns: repeat(7, 1fr);
-                grid-gap: 0px;
-                row-gap: 0px;
-                width: 100%;
-                margin-top: 7px;
-            }
-
-            &--focus ul {
-                margin-top: 1px;
-            }
-            &--focus .date-picker__month-title {
-                display: none;
-            }
-        }
-        &__calendar-day {
-            font-family: "DM Mono";
-            @include center;
-            @include text-style(0.7, 300, 1rem);
-            @include circle(90%);
-            transition: 0.04s ease-in-out;
-            user-select: none;
-
-            &-container {
-                height: 28px;
-                width: 28px;
-                @include center;
-
-                &--empty {
-                    height: 0px;
-                    width: 0px;
-                }
-            }
-            
-            &--fill {
-                cursor: pointer;
-                background: rgba(var(--textColor1), 0.02);
-            }
-            &--fill {
-                &:hover {
-                    @include text-style(0.89);
-                    background: rgba(var(--textColor1), 0.08);
-                }
-            }
-            &--today {
-                @include text-style(0.89);
-                background: rgba(var(--textColor1), 0.08);
-            }
-            &--picked {
-                background-color: white !important;
-                color: #111010 !important;
-                font-weight: 500 !important;
-            }
-            &--not-curr-month {
-                opacity: 0.25 !important;
-            }
-            &--disabled {
-                opacity: 0.52;
-            }
-            &:active {
-                transform: scale(0.98);
-            }
+            padding: 3px 5px 20px 5px;
         }
         &__calendar-divider {
             width: 100;

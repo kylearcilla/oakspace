@@ -646,7 +646,6 @@
             position: relative;
             z-index: 0;
             width: 100%;
-            overflow-x: scroll;
             
             .gradient-container {
                 width: 45px;
@@ -667,11 +666,14 @@
         }
         &__groups-list {
             overflow-x: scroll;
-            overflow-y: visible;
             scroll-behavior: smooth;
             height: 50px;
             padding-bottom: 10px;
             @include flex-container(center, _);
+
+            &::-webkit-scrollbar {
+                display: none;
+            }
         }
         &__tab-group-padding {
             width: $recs-section-padding-left;;

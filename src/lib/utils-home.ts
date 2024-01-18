@@ -1,16 +1,15 @@
 import { get } from "svelte/store"
 import { homeViewLayout, sessionStore } from "./store"
-
 import { ModalType, ShortcutSectionInFocus } from "./enums"
-import { conintueWorkSession, didInitSession } from "./utils-session"
+
 import { loadTheme } from "./utils-appearance"
+import { didInitYtPlayer } from "./utils-youtube-player"
+import { conintueWorkSession, didInitSession } from "./utils-session"
 import { continueMusicSession, didInitMusicUser, loadMusicUserData } from "./utils-music"
 import { continueYtPlayerSession, continueYtUserSession, didInitYtUser } from "./utils-youtube"
-import { didInitYtPlayer } from "./utils-youtube-player"
 
 const LEFT_BAR_LEFT_BOUND = 5
 const LEFT_BAR_RIGHT_BOUND = 80
-const MIN_UI_MAX_WIDTH = 600
 
 /**
  * Initialize app state.
@@ -56,10 +55,10 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, hasUserTogg
         closeModal(modals[modals.length - 1])
     }
     else if (event.ctrlKey && event.key === "]") {
-        updateUI({ ...layoutState, isTaskMenuOpen: !layoutState.isTaskMenuOpen })
+        updteHomeLayout({ ...layoutState, isTaskMenuOpen: !layoutState.isTaskMenuOpen })
     }
     else if (event.ctrlKey && event.key === "[") {
-        updateUI({ ...layoutState, isNavMenuOpen: !layoutState.isNavMenuOpen })
+        updteHomeLayout({ ...layoutState, isNavMenuOpen: !layoutState.isNavMenuOpen })
         return true
     }
     else if (event.key === "?" && (layoutState.modalsOpen.length === 0 || isModalOpen(ModalType.Shortcuts))) {
@@ -97,7 +96,7 @@ export const onMouseMoveHandler = (event: MouseEvent, hasUserToggledWithKeyLast:
     const homeLayout = get(homeViewLayout)
 
     if (!homeLayout.isNavMenuOpen && mouseX < LEFT_BAR_LEFT_BOUND) {
-        updateUI({ ...get(homeViewLayout), isNavMenuOpen: true  })
+        updteHomeLayout({ ...get(homeViewLayout), isNavMenuOpen: true  })
         return false
     }
     else if (!hasUserToggledWithKeyLast && homeLayout.isNavMenuOpen && mouseX > LEFT_BAR_RIGHT_BOUND) { 
@@ -131,7 +130,7 @@ export const homeVideoViewClassHandler = (isNavMenuOpen: boolean, isTaskMenuOpen
  * Update UI Layout of app.
  * @param newLayout      New layout
  */
-export const updateUI = (newLayout: HomeLayout) => {
+export const updteHomeLayout = (newLayout: HomeLayout) => {
     homeViewLayout.set(newLayout)
     localStorage.setItem("home-ui", JSON.stringify(newLayout))
   }

@@ -188,7 +188,7 @@
         }
         else {
             boardCardsContainer!.scrollTop += 250
-        }
+        } 
     }
 
     // onMount(() => onWindowResize())

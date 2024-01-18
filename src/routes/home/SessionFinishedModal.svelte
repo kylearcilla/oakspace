@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { closeModal } from "$lib/utils-home"
+	import { getPomPeriodElapsedTime } from "$lib/utils-date"
 	import { HrsMinsFormatOption, ModalType } from "$lib/enums"
+	import { getTimePeriodString, secsToHHMM } from "$lib/utils-date"
     import { sessionManager, sessionStore, themeState } from "$lib/store"
-	import { getDifferenceInSecs, getTimePeriodString, secsToHHMM } from "$lib/utils-date"
     
 	import Modal from "../../components/Modal.svelte"
-	import { getPomPeriodElapsedTime } from "$lib/utils-date";
 
     let isInStatsPage = true
     let elapsedTimeStr = ""
@@ -14,16 +14,18 @@
         elapsedTimeStr = getPomPeriodElapsedTime(new Date($sessionStore!.startTime), new Date($sessionStore!.endTime!))
     }
 
-    const exitModal = () => {
+    function exitModal() {
         $sessionStore!.clearSession()
         sessionManager.set(null)
         closeModal(ModalType.SesssionFinished)
     }
-
-    const sessionFinishedBtnClicked = () => isInStatsPage = !isInStatsPage
-    const todayStatsFinishedBtnClicked = () => exitModal()
-    
-    const keyboardShortcutHandler = (event: KeyboardEvent) => {
+    function sessionFinishedBtnClicked() { 
+        isInStatsPage = !isInStatsPage
+    }
+    function todayStatsFinishedBtnClicked() {
+         exitModal()
+    }
+    function keyboardShortcutHandler(event: KeyboardEvent) {
         if (event.key != "Enter") return
         isInStatsPage ? sessionFinishedBtnClicked() : todayStatsFinishedBtnClicked()
     }

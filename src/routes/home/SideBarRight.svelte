@@ -130,7 +130,7 @@
 >
     <div class="task-view__header task-view__header--default"> 
         <!-- Header -->
-        <img class="task-view__header-img" src="https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/287d3559037917.5a130f45904d5.gif" alt="">
+        <img class="task-view__header-img" src="https://i.pinimg.com/564x/ea/9d/b2/ea9db2d3d08731c07802c37cbe4c2930.jpg" alt="">
         <div class="task-view__header-top">
             <button class="task-view__header-time" title={currentTimeStr} on:click={toggleTimeFormatting}>
                 <h1>{currentTimeStr}</h1>

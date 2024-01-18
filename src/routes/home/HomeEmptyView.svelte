@@ -7,7 +7,7 @@
     let hasLeftBracketClicked = false
     let hasRightBracketClicked = false
 
-    const handleKeyDown = (event: KeyboardEvent) => {
+    function handleKeyDown(event: KeyboardEvent) {
         if (event.key.toLocaleLowerCase() === "n") {
             hasNPressed = true
         }
@@ -24,7 +24,7 @@
             hasLeftBracketClicked = true
         }
     }
-    const handleKeyUp = (event: KeyboardEvent) => {
+    function handleKeyUp(event: KeyboardEvent) {
         if (event.key.toLocaleLowerCase() === "n") {
             hasNPressed = false
         }

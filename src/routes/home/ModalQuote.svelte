@@ -1,25 +1,16 @@
 <script lang="ts">
-	import { onMount } from "svelte";
-    import quotes from "$lib/data-quotes";
-	import { clickOutside } from "$lib/utils-general";
-	import { closeModal } from "$lib/utils-home";
-	import { ModalType } from "$lib/enums";
-	import Modal from "../../components/Modal.svelte";
+	import { onMount } from "svelte"
+    import quotes from "$lib/data-quotes"
+	import { ModalType } from "$lib/enums"
+	import { closeModal } from "$lib/utils-home"
+	import { getWeekNumber } from "$lib/utils-date"
+	import Modal from "../../components/Modal.svelte"
 
-    let isQuoteModalOpen = false
     let quote: Quote | null = null
 
     const isQuoteOutDated = (quoteCreatedDate: Date, currDate: Date) => {
         return quoteCreatedDate.getFullYear() === currDate.getFullYear() && (getWeekNumber(quoteCreatedDate) === getWeekNumber(currDate));
     }
-    const getWeekNumber = (currentDate: Date) => {
-        const startDate = new Date(currentDate.getFullYear(), 0, 1)
-        const days = Math.floor(((currentDate as any) - (startDate as any)) / (24 * 60 * 60 * 1000))
-        
-        const weekNumber = Math.ceil(days / 7)
-        return weekNumber
-    }
-
 
     onMount(() => {
         // const quoteData = localStorage.getItem("quoteData")
@@ -45,7 +36,8 @@
         <div class={`quote-modal__content
                         ${quote?.artCredit === "" ? "quote-modal__content--no-art-credit" : ""}
                         ${quote?.quoteCredit === "" ? "quote-modal__content--no-quote-credit" : ""}
-        `}>
+                   `}
+        >
             <div></div>
             <div class="quote-modal__content-container">
                 <div class="quote-modal__content-top">

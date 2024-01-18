@@ -8,6 +8,8 @@ export const months = [
   
 export const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
+export const TOTAL_DAY_MINS = 1440
+
 export const getDayOfWeek = () => {
     const today = new Date()
     return `${daysOfWeek[today.getDay()]}`
@@ -167,8 +169,15 @@ export function formatDateShort(date: Date): string {
  * @param date 
  * @returns Fromatted Time (i.e. 1:15 PM)
  */
-export function formatTimeToHHMM(date: Date, hour12 = true): string {
-    const options = { hour: 'numeric', minute: 'numeric', hour12 }    
+export function formatTimeToHHMM(date: Date, doUsehour12: boolean | null = null): string {
+    let _doUserHour12 = doUsehour12
+
+    if (_doUserHour12 === null) {
+        const hourCycle = getUserHourCycle()
+        _doUserHour12 = hourCycle === "h12" || hourCycle === "h11"
+    }
+
+    const options = { hour: 'numeric', minute: 'numeric', _doUserHour12 }    
 
     // @ts-ignore
     return date.toLocaleTimeString(undefined, options)
@@ -363,19 +372,6 @@ export function isYrValid(yr: number) {
 
 /**
  * 
- * @param currentDate 
- * @returns Get current week number (i.e. 52 for last week)
- */
-const getWeekNumber = (currentDate: Date) => {
-    const startDate = new Date(currentDate.getFullYear(), 0, 1) // starting point of counting weeks
-    const days = Math.floor(((currentDate as any) - (startDate as any)) / (24 * 60 * 60 * 1000)) // count difference in days (ms to days)
-    
-    const weekNumber = Math.ceil(days / 7) // days / 7
-    return weekNumber
-}
-
-/**
- * 
  * @returns String and ending dates of current week (Apr 1 - Apr 7)
  */
 const getCurrentWeek = () => {
@@ -405,6 +401,19 @@ export function isStrMonth(str: String): number {
     return -1
 }
 
+/**
+ * 
+ * @param currentDate 
+ * @returns Get current week number (i.e. 52 for last week)
+ */
+export function getWeekNumber(currentDate: Date) {
+    const startDate = new Date(currentDate.getFullYear(), 0, 1)
+    const days = Math.floor(((currentDate as any) - (startDate as any)) / (24 * 60 * 60 * 1000))
+    
+    const weekNumber = Math.ceil(days / 7)
+    return weekNumber
+}
+
 export function getLastDayOfMonth(date: Date): number {
     const year = date.getFullYear()
     const month = date.getMonth()
@@ -422,4 +431,17 @@ export function isSameMonth(d1: Date, d2: Date) {
 export function addDaysToDate(d: Date, n: number): Date { 
     return new Date(d.setDate(d.getDate() + n))
 }
+
+export function getTotalSecondsFromStartOfDay(date: Date): number {
+    const currentDate = date.getTime()
+  
+    const startOfDay = new Date(date)
+    startOfDay.setHours(0, 0, 0, 0)
+    const startOfDayMillis = startOfDay.getTime()
+  
+    // Calculate the total seconds elapsed
+    const totalSeconds = Math.floor((currentDate - startOfDayMillis) / 1000)
+  
+    return totalSeconds
+  }
   

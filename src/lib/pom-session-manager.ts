@@ -12,7 +12,7 @@ import { MAX_TODO_COUNT, MAX_TODO_NAME_LENGTH, createSessionToastMsg } from "$li
  */
 export class PomSessionManger {
     newTitle = ""
-    newTag: Tag = { name: "", color: "" }
+    newTag: Tag = { name: "", color: "", symbol: "" }
 
     focusedTodoIndex = -1
     prevFocusedTodoIdx = -1

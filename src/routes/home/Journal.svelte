@@ -3,7 +3,7 @@
     import { closeModal, openModal } from "$lib/utils-home"
     import { toggleYTIFramePointerEvents } from "$lib/utils-youtube"
     import { JournalTab, GoalViewOption, GoalsDropdown, ModalType, Icon, GoalItemUI} from "$lib/enums"
-	import { clickOutside, getElemsByClass } from "$lib/utils-general"
+	import { clickOutside, getElemById, getFirstHighlighterBtn } from "$lib/utils-general"
 	import { goalsManager, homeViewLayout, themeState } from "$lib/store"
 
 	import { onDestroy, onMount } from "svelte"
@@ -13,12 +13,13 @@
 	import SVGIcon from "../../components/SVGIcon.svelte"
 	import EditGoalModal from "./EditGoalModal.svelte"
 	import GoalsRepo from "./GoalsRepo.svelte"
-
     
     let selectedTab = JournalTab.Goals
     let tabHighlighterClass = ""
     let goalInEdit: Goal | null = null
     let isItemViewCard = true
+
+    const JOURNAL_TAB_CONTAINER_ID = "journal-tabs"
 
     $: goalViewOption = $goalsManager?.currentGoalView
     $: currentDropDown = $goalsManager?.currentDropDown
@@ -31,8 +32,6 @@
             isItemViewCard = $goalsManager.repoGoalItemView === GoalItemUI.RepoCard
         }
     }
-
-    const HIGHLIGHTER_TAB_CLASS= "highlighter-tabs__tab-btn"
 
     function onTabClicked(e: Event, tab: JournalTab) {
         const target = e.target as HTMLButtonElement
@@ -56,9 +55,7 @@
 
     onMount(() => {
         toggleYTIFramePointerEvents(false)
-
-        const firstTab = getElemsByClass(HIGHLIGHTER_TAB_CLASS)![0] as HTMLButtonElement
-        initHighlighter(firstTab)
+        initHighlighter(getFirstHighlighterBtn(JOURNAL_TAB_CONTAINER_ID))
 
         if ($goalsManager) return
 
@@ -130,7 +127,7 @@
                         </p>
                     </div>
                     <div class="journal-tag-view__tabs highlighter-tabs">
-                        <div class="highlighter-tabs__container">
+                        <div class="highlighter-tabs__container" id="journal-tabs">
                             <button 
                                     on:click={(e) => onTabClicked(e, JournalTab.Goals)} 
                                     class={`highlighter-tabs__tab-btn highlighter-tabs__tab-btn--profile ${selectedTab == JournalTab.Goals ? "highlighter-tabs__tab-btn--selected" : ""}`}
@@ -357,14 +354,10 @@
             width: 100%;
             background-color: rgba(var(--textColor1), 0.045);
 
-            &--header {
-            }
             &--main {
                 width: 0.5px;
                 height: calc(100% - 25px);
                 @include pos-abs-top-right-corner(0px, 0px);
-            }
-            &--tabs {
             }
         }
     }

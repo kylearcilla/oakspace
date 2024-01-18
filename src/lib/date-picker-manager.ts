@@ -1,54 +1,32 @@
+import { BasicCalendar } from "./basic-calendar"
+import { DatePickerUserInput } from "./enums"
+import { ResError } from "./errors"
 import { datePickerManager } from "./store"
-import { addDaysToDate, formatDateLong, getLastDayOfMonth, getNextMonth, getPrevMonth, isDateEarlier, isSameDay, isSameMonth, isStrMonth, isYrValid } from "./utils-date"
-import { getElemById, getScrollStatus } from "./utils-general"
+import { formatDateLong, getLastDayOfMonth, getNextMonth, getPrevMonth, isDateEarlier, isSameMonth, isStrMonth, isYrValid } from "./utils-date"
+import { getElemById } from "./utils-general"
 
-type MonthData = {
-    monthIdx: number,
-    firstDay: Date,    
-    year: number,
-    days: ({ date: Date, isInCurrMonth: boolean } | null)[]
-}
-
-enum DateError {
-    Invalid, BeyondMin, BeyondMax, InvalidYr
-}
+class DatePickerError extends ResError<DatePickerUserInput> { }
 
 export class DatePickerManager {
     pickedDate: Date | null = null
-    pickedDateStr: string = ""
-    
-    currMonth: MonthData
-    isPrevMonthAvailable: boolean
-    isNextMonthAvailable: boolean
-    isForwards: boolean | null = null
+    pickedDateStr = ""
+
     errorMsg = ""
-
-    minDate: Date | null 
-    maxDate: Date | null 
-
     datePickerInput: HTMLInputElement | null = null
 
-    constructor(pickedDate: Date | null, options: DatePickerOptions | null) {
+    isForwards: boolean | null
+    minDate: Date | null
+    maxDate: Date | null
+
+    constructor(options: DatePickerOptions | null) {
         datePickerManager.set(this)
 
         this.minDate = options?.minDate ?? null
         this.maxDate = options?.maxDate ?? null
         this.isForwards = options?.forwards ?? null
 
-        this.currMonth = this.genMonthCalendar(new Date())
-
-        this.isPrevMonthAvailable = !this.isForwards ?? true
-        this.isNextMonthAvailable = this.isForwards ?? true
-
         requestAnimationFrame(() => {
             this.datePickerInput = getElemById("date-picker-input")! as HTMLInputElement
-            this.setNewPickedDate(pickedDate)
-        })
-
-        this.updateDatePickerState({ 
-            currMonth: this.currMonth ,
-            isPrevMonthAvailable: this.isPrevMonthAvailable,
-            isNextMonthAvailable: this.isNextMonthAvailable
         })
     }
 
@@ -72,12 +50,12 @@ export class DatePickerManager {
      */
     setNewPickedDate(newDate: Date | null) {
         this.pickedDate = newDate ?? null
-        this.pickedDateStr = newDate ? formatDateLong(newDate) : ""
+        this.pickedDateStr = newDate != null ? formatDateLong(newDate) : ""
         this.datePickerInput!.value = this.pickedDateStr
 
         this.updateDatePickerState({
             pickedDate: this.pickedDate,
-            pickedDateStr: this.pickedDateStr,
+            pickedDateStr: this.pickedDateStr
         })
     }
 
@@ -86,11 +64,16 @@ export class DatePickerManager {
      * Will set a new date unless not a valid date.
      * @param day  Day object clicked.
      */
-    onDateCellPressed(day: { date: Date, isInCurrMonth: boolean } | null) {
-        const isValid = day && this.isDateInBounds(day.date).result   
-        if (!isValid) return
+    onDateCellPressed(day: Date) {
+        try {
+            const isValid = day && this.getDateBoundState(day) === DatePickerUserInput.InBounds
+            if (!isValid) return
 
-        this.setNewPickedDate(day.date)
+            this.setNewPickedDate(day)
+        }
+        catch {
+            return
+        }
     }
 
     /**
@@ -103,45 +86,45 @@ export class DatePickerManager {
      * 
      */
     submitInputText(userInput: string): Date | null {
-        // see if date is valid format
-        const { result: date, error: extractError } = this.extractDateFromInput(userInput)
-        
-        if (extractError != null) {
-            this.setError(extractError)
+        try {
+            // see if date is valid format
+            const date = this.extractDateFromInput(userInput)
+    
+            // see date is within bounds
+            const boundState = this.getDateBoundState(date!)
+
+            if (boundState !== DatePickerUserInput.InBounds) {
+                console.log(boundState)
+                throw new DatePickerError(boundState)
+            }
+
+            this.setNewPickedDate(date)
+            return date
+        }
+        catch(e: any) {
+            this.setError(e)
             return null
         }
-
-
-        // see date is within bounds
-        const { result, error: boundsError } = this.isDateInBounds(date!)
-        
-        if (boundsError != null) {
-            this.setError(boundsError)
-            return null
-        }
-
-        this.setNewPickedDate(date)
-        return date
     }
 
     /**
      * Triggered when a user input error has occured
      * @param error 
      */
-    setError(error: DateError | null) {
+    setError(error: DatePickerError | null) {
         if (error === null) {
             this.errorMsg = ""
             this.updateDatePickerState({ errorMsg: this.errorMsg })
             return
         }
 
-        if (error === DateError.Invalid) {
+        if (error.code === DatePickerUserInput.Invalid) {
             this.errorMsg = "Input is not a valid date format."
         }
-        else if (error === DateError.BeyondMin) {
+        else if (error.code === DatePickerUserInput.BeyondMin) {
             this.errorMsg = `Must be later than ${formatDateLong(this.minDate!)}`
         }
-        else if (error === DateError.BeyondMax) {
+        else if (error.code === DatePickerUserInput.BeyondMax) {
             this.errorMsg = `Must be earlier than ${formatDateLong(this.maxDate!)}`
         }
         else {
@@ -152,83 +135,24 @@ export class DatePickerManager {
         this.updateDatePickerState({ errorMsg: this.errorMsg })
     }
 
-   /*
-    * Get prev month after current
-    */
-    getNextMonthCalendar() { 
-        this.currMonth = this.genMonthCalendar(getNextMonth(this.currMonth.firstDay))
-
-        if (!this.isForwards) {
-            this.isNextMonthAvailable = !isSameMonth(this.currMonth.firstDay, new Date())
-        }
-        else if (this.isForwards) {
-            this.isPrevMonthAvailable = true
-        }
-
-        this.updateDatePickerState({ 
-            currMonth: this.currMonth, 
-            isPrevMonthAvailable: this.isPrevMonthAvailable,
-            isNextMonthAvailable: this.isNextMonthAvailable
-        })
-    }
-
     /**
-     * Get next month after current
-     */
-    getPrevMonthCalendar() {
-        this.currMonth = this.genMonthCalendar(getPrevMonth(this.currMonth.firstDay))
-
-        if (this.isForwards) {
-            this.isPrevMonthAvailable = !isSameMonth(this.currMonth.firstDay, new Date())
-        }
-        else if (!this.isForwards) {
-            this.isNextMonthAvailable = true
-        }
-
-        this.updateDatePickerState({ 
-            currMonth: this.currMonth, 
-            isPrevMonthAvailable: this.isPrevMonthAvailable,
-            isNextMonthAvailable: this.isNextMonthAvailable
-        })
-    }
-
-    /**
-     * Get this month
-     */
-    getThisMonth() {
-        this.currMonth = this.genMonthCalendar(new Date())
-
-
-        this.isPrevMonthAvailable = !this.isForwards ?? true
-        this.isNextMonthAvailable = this.isForwards ?? true
-
-        this.updateDatePickerState({ 
-            currMonth: this.currMonth, 
-            isPrevMonthAvailable: this.isPrevMonthAvailable,
-            isNextMonthAvailable: this.isNextMonthAvailable
-        })
-    }
-
-    /**
-     * Check if current date is a valid date.
-     * If date must be used after today then dates must be either today after today (depends if inclusive is set)
-     * Same logic follows for use before.
+     * Check the bound state of the user date input according to the set max / min dates.
+     * Checks the validity of the user input based on bounds.
      * 
      * @param date  Date picked by user.
-     * @returns     If date is within bounds.
+     * @returns     Returns the bound state of user input.
      */
-    isDateInBounds(date: Date): Result<boolean, DateError | null> {
+    getDateBoundState(date: Date): DatePickerUserInput {
         if (!isYrValid(date.getFullYear())) {
-            return { result: false, error: DateError.InvalidYr }
+            return DatePickerUserInput.InvalidYr
         }
         else if (this.maxDate && isDateEarlier(this.maxDate, date)) {
-            return { result: false, error: DateError.BeyondMax }
+            return DatePickerUserInput.BeyondMax
         }
         else if (this.minDate && isDateEarlier(date, this.minDate)) {
-            return { result: false, error: DateError.BeyondMin }
+            return DatePickerUserInput.BeyondMin
         }
-    
-        return { result: true, error: null }
+        return DatePickerUserInput.InBounds
     }
 
     /**
@@ -260,7 +184,6 @@ export class DatePickerManager {
                 currMonth.days[idx++] = { date: currDate, isInCurrMonth };
             }
         }
-
         return currMonth
     }
 
@@ -277,13 +200,13 @@ export class DatePickerManager {
      * @param inputVal  User input
      * @returns         If valid, will return a Date object, null otherise
      */
-    extractDateFromInput(inputVal: string): Result<Date | null, DateError | null> {
+    extractDateFromInput(inputVal: string): Date {
         const val = inputVal.toLowerCase().trim()
         const strArr = val.split(/[,\s]+/)
         const currYr = new Date().getFullYear()
         
         if (val === "" || strArr.length === 0 || strArr.length > 3) {
-            return { result: null, error: DateError.Invalid }
+            throw new DatePickerError(DatePickerUserInput.Invalid)
         }
     
         let yr = -1, day = -1, month = -1
@@ -297,19 +220,19 @@ export class DatePickerManager {
             const isYr = str.length === 4 && !isNotNum
     
             if (monthIdx >= 0 && month >= 0) {
-                return { result: null, error: DateError.Invalid }
+                throw new DatePickerError(DatePickerUserInput.Invalid)
             }
             if (monthIdx >= 0) {
                 month = monthIdx
             }
             else if (isDay && day >= 0) {
-                return { result: null, error: DateError.Invalid }
+                throw new DatePickerError(DatePickerUserInput.Invalid)
             }
             else if (isDay) {
                 day = num
             }
             else if (isYr && yr >= 0)  {
-                return { result: null, error: DateError.Invalid }
+                throw new DatePickerError(DatePickerUserInput.Invalid)
             }
             else if (isYr) {
                 yr = num
@@ -318,35 +241,34 @@ export class DatePickerManager {
     
         // String length of 1
         if (strArr.length === 1 && day >= 1) {
-            return { result: null, error: DateError.Invalid }
+            throw new DatePickerError(DatePickerUserInput.Invalid)
         }
         else if (strArr.length === 1 && yr >= 0) {
-            return { result: new Date(yr, 11, 31), error: null }
+            return new Date(yr, 11, 31)
         }
         else if (strArr.length === 1 && month >= 0) {
             const lastDayOfMonth = getLastDayOfMonth(new Date)
-    
-            return { result: new Date(currYr, month, lastDayOfMonth), error: null }
+            return new Date(currYr, month, lastDayOfMonth)
         }
 
         // String length of 2
         if (strArr.length === 2 && month < 0) {
-            return { result: null, error: DateError.Invalid }
+            throw new DatePickerError(DatePickerUserInput.Invalid)
         }
         else if (strArr.length === 2 && day >= 0) {
-            return { result: new Date(currYr, month, day), error: null }
+            return new Date(currYr, month, day)
         }
         else if (strArr.length === 2 && yr >= 0) {
             const lastDayOfMonth = getLastDayOfMonth(new Date(yr, month))
-            return { result: new Date(yr, month, lastDayOfMonth), error: null }
+            return new Date(yr, month, lastDayOfMonth)
         }
         
         // String length of 3
         if (yr >= 0 && day >= 0 && month >= 0) {
-            return { result: new Date(yr, month, day), error: null }
+            return new Date(yr, month, day)
         }
         
-        return { result: null, error: DateError.Invalid }
+        throw new DatePickerError(DatePickerUserInput.Invalid)
     }
     
     /**
@@ -362,12 +284,9 @@ export class DatePickerManager {
     getNewStateObj(oldState: DatePickerManager, newState: Partial<DatePickerManager>): DatePickerManager {
         const newStateObj = oldState
 
-        if (newState.pickedDateStr != undefined)  newStateObj!.pickedDateStr = newState.pickedDateStr
-        if (newState.pickedDate != undefined)     newStateObj!.pickedDate = newState.pickedDate
-        if (newState.currMonth != undefined)      newStateObj!.currMonth = newState.currMonth
-        if (newState.isNextMonthAvailable != undefined)      newStateObj!.isNextMonthAvailable = newState.isNextMonthAvailable
-        if (newState.isPrevMonthAvailable != undefined)      newStateObj!.isPrevMonthAvailable = newState.isPrevMonthAvailable
         if (newState.errorMsg != undefined)                  newStateObj!.errorMsg = newState.errorMsg
+        if (newState.pickedDate != undefined)                  newStateObj!.pickedDate = newState.pickedDate
+        if (newState.pickedDateStr != undefined)                  newStateObj!.pickedDateStr = newState.pickedDateStr
 
         return newStateObj
     }

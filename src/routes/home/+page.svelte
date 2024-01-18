@@ -1,81 +1,94 @@
 <script lang="ts">
 	import { onMount } from "svelte"
-	import HomeHeader from "./HomeHeader.svelte"
-  import NavMenu from "./HomeSideBarLeft.svelte"
-  import VideoView from "./HomeVideoView.svelte"
-  import TaskView from "./SideBarRight.svelte"
-  import MusicPlayer from "./HomeMusicPlayer.svelte"
 
-	import Stats from "./Stats.svelte"
-	import Settings from "./Settings.svelte"
-	import ModalQuote from "./ModalQuote.svelte"
-	import Toast from "../../components/Toast.svelte"
+  // home components
+	import HomeHeader from "./HomeHeader.svelte"
+  import NavMenu from "./SideBarLeft.svelte"
+  import TaskView from "./SideBarRight.svelte"
+  import VideoView from "./HomeVideoView.svelte"
+  import MusicPlayer from "./MusicPlayer.svelte"
 	import HomeEmptyView from "./HomeEmptyView.svelte"
+
+  // main modals
+	import Stats from "./Stats.svelte"
 	import Journal from "./Journal.svelte"
-	import MusicSettings from "./SettingsMusic.svelte"
+	import Settings from "./Settings.svelte"
+	import Appearance from "./Appearance.svelte"
+	import MusicSettings from "./MusicSettings.svelte"
+	import YoutubeSettings from "./YoutubeSettings.svelte"
+
+  // modals
+	import ModalQuote from "./ModalQuote.svelte"
 	import ShortcutsModal from "./ShortcutsModal.svelte"
-	import YoutubeSettings from "./SettingsYoutube.svelte"
 	import SessionNewModal from "./SessionNewModal.svelte"
+  import SessionEditModal from "./SessionEditModal.svelte"
 	import SessionActiveHome from "./SessionActiveHome.svelte"
-	import ApperanceSettings from "./Appearance.svelte"
 	import SessionActiveModal from "./SessionActiveModal.svelte"
 	import SessionFinishedModal from "./SessionFinishedModal.svelte"
 	import SessionCanceledModal from "./SessionCanceledModal.svelte"
+
+  // misc. elems
+	import Toast from "../../components/Toast.svelte"
   
 	import { ModalType } from "$lib/enums"
 	import { sessionStore, homeViewLayout, toastMessages, ytPlayerStore, musicPlayerStore } from "$lib/store"
-	import { homeVideoViewClassHandler, initAppState, keyboardShortCutHandlerKeyDown, keyboardShortCutHandlerKeyUp, onMouseMoveHandler, updateUI } from "$lib/utils-home"
-	import SessionEditModal from "./SessionEditModal.svelte"
+	import { 
+        homeVideoViewClassHandler, initAppState, keyboardShortCutHandlerKeyDown, 
+        keyboardShortCutHandlerKeyUp, onMouseMoveHandler
+  } from "$lib/utils-home"
 
   let hasUserToggledWithKeyLast = true
   let homeViewViewClasses = ""
 
-  homeViewLayout.subscribe((layout: HomeLayout) => {
-    homeViewViewClasses = homeVideoViewClassHandler(layout.isNavMenuOpen, layout.isTaskMenuOpen)
-  })
+  $: {
+    homeViewViewClasses = homeVideoViewClassHandler($homeViewLayout.isNavMenuOpen, $homeViewLayout.isTaskMenuOpen)
+  }
 
-  const handleKeyDown       = (event: KeyboardEvent) => hasUserToggledWithKeyLast = keyboardShortCutHandlerKeyDown(event, hasUserToggledWithKeyLast)
-  const handleKeyUp         = (event: KeyboardEvent) => keyboardShortCutHandlerKeyUp(event)
-  const _onMouseMoveHandler = (event: MouseEvent)    => hasUserToggledWithKeyLast = onMouseMoveHandler(event, hasUserToggledWithKeyLast)
-
-  onMount(() => initAppState())
+  function handleKeyDown(event: KeyboardEvent) {
+    hasUserToggledWithKeyLast = keyboardShortCutHandlerKeyDown(event, hasUserToggledWithKeyLast)
+  }
+  function handleKeyUp(event: KeyboardEvent) {
+    keyboardShortCutHandlerKeyUp(event)
+  }
+  function _onMouseMoveHandler(event: MouseEvent) {
+    hasUserToggledWithKeyLast = onMouseMoveHandler(event, hasUserToggledWithKeyLast)
+  }
+  
+  onMount(initAppState)
 </script>
 
 <svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} />
 
 <div class={`home ${homeViewViewClasses}`} on:mousemove={_onMouseMoveHandler}>
-  <div class={`home__nav-menu-container ${!$homeViewLayout.isNavMenuOpen ? "home__nav-menu-container--hide" : ""}`}>
-      <NavMenu/>
-  </div>
-  <div class="home__video">
-      <HomeHeader/>
-      <VideoView />
-      {#if !$ytPlayerStore?.doShowPlayer && !$sessionStore} 
-        <HomeEmptyView />
-      {/if}
-      {#if !$ytPlayerStore?.doShowPlayer && $sessionStore}  
-        <SessionActiveHome />  
-      {/if}
-  </div>
-  <div class={`home__task-view-container ${$homeViewLayout.isTaskMenuOpen ? "" : "home__task-view-container--closed"}`}>
-      <TaskView />
+  <HomeHeader/>
+  <div class="home__main">
+      <div class={`home__nav-menu-container ${!$homeViewLayout.isNavMenuOpen ? "home__nav-menu-container--hide" : ""}`}>
+          <NavMenu/>
+      </div>
+      <div class="home__video">
+          <VideoView />
+          {#if !$ytPlayerStore?.doShowPlayer && !$sessionStore} 
+            <HomeEmptyView />
+          {/if}
+          {#if !$ytPlayerStore?.doShowPlayer && $sessionStore}  
+            <SessionActiveHome />  
+          {/if}
+      </div>
+      <div class={`home__task-view-container ${$homeViewLayout.isTaskMenuOpen ? "" : "home__task-view-container--closed"}`}>
+          <TaskView />
+      </div>
   </div>
 
-  <!-- Floating Elements -->
+  <!-- Music Player -->
   {#if $musicPlayerStore}
     <MusicPlayer />
   {/if}
-  {#if $toastMessages.length > 0}
-    {#each $toastMessages as toast, idx}
-        <Toast toast={toast} idx={idx} />
-    {/each}
-  {/if}
 
-  <!-- Settings Modals -->
+  <!-- Main Modals -->
   {#if $homeViewLayout.modalsOpen.includes(ModalType.Stats)} <Stats/> {/if}
   {#if $homeViewLayout.modalsOpen.includes(ModalType.Settings)} <Settings/> {/if}
   {#if $homeViewLayout.modalsOpen.includes(ModalType.Youtube)} <YoutubeSettings/> {/if}
-  {#if $homeViewLayout.modalsOpen.includes(ModalType.Appearance)} <ApperanceSettings /> {/if}
+  {#if $homeViewLayout.modalsOpen.includes(ModalType.Appearance)} <Appearance /> {/if}
   {#if $homeViewLayout.modalsOpen.includes(ModalType.Music)} <MusicSettings /> {/if}
   {#if $homeViewLayout.modalsOpen.includes(ModalType.Journal)} <Journal /> {/if}
 
@@ -99,6 +112,13 @@
   <!-- Other Modals Modals -->
   {#if $homeViewLayout.modalsOpen.includes(ModalType.Quote)} <ModalQuote /> {/if}
   {#if $homeViewLayout.modalsOpen.includes(ModalType.Shortcuts)} <ShortcutsModal /> {/if}
+
+  <!-- Toasts -->
+  {#if $toastMessages.length > 0}
+    {#each $toastMessages as toast, idx}
+        <Toast toast={toast} idx={idx} />
+    {/each}
+  {/if}
 </div>
 
 
@@ -110,13 +130,14 @@
     }
 
     $task-menu-width: 240px;
-    $nav-menu-width: 60px;
+    $nav-menu-narrow-bar-width: 60px;
+    $nav-menu-side-bar-width: 220px;
+    $nav-menu-width: $nav-menu-side-bar-width + $nav-menu-narrow-bar-width;
 
     .home {
       background-color: var(--primaryBgColor);
       height: 100%;
       min-height: 100vh;
-      display: flex;
       font-family: 'Apercu Medium' system-ui;
 
       // background-image: url('https://upload.wikimedia.org/wikipedia/commons/7/77/Cole_Thomas_The_Course_of_Empire_Desolation_1836.jpg');
@@ -151,13 +172,17 @@
         }
       }
 
+      &__main {
+        display: flex;
+      }
+
       &__nav-menu-container {
         background-color: var(--navMenuBgColor);
         border: var(--sidePanelBorder);
         box-shadow: var(--sidePanelShadow);
         width: $nav-menu-width;
         transition: ease-in-out 0.15s;
-        height: 100vh;
+        height: calc(100vh - 32px);
         margin-left: 0px;
         z-index: 1000;
         position: fixed;
@@ -175,12 +200,13 @@
         padding: 0px 2.5% 30px 2.5%;
         transition: ease-in-out 0.15s;
         width: 100%;
+        height: calc(100vh - 32px);
       }
       &__task-view-container {
         width: $task-menu-width;
-        height: 100vh;
+        height: calc(100vh - 32px);
         position: fixed;
-        top: 0px;
+        top: 32px;
         right: 0px;
         transition: ease-in-out 0.18s;
         overflow: hidden;

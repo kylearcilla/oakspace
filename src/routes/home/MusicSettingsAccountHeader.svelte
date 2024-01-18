@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { themeState, musicDataStore } from "$lib/store";
-	import { clickOutside, findEnumIdxFromDiffEnum } from "$lib/utils-general";
-	import { addSpacesToCamelCaseStr } from "$lib/utils-general";
-    import { LogoIcon, MusicPlatform } from "$lib/enums";
-	import Logo from "../../components/Logo.svelte";
-	import { onMount } from "svelte";
-	import { construct_svelte_component } from "svelte/internal";
+	import { themeState, musicDataStore } from "$lib/store"
+	import { clickOutside, findEnumIdxFromDiffEnum } from "$lib/utils-general"
+	import { addSpacesToCamelCaseStr } from "$lib/utils-general"
+    import { LogoIcon, MusicPlatform } from "$lib/enums"
+	import Logo from "../../components/Logo.svelte"
+	import { onMount } from "svelte"
 
     export let isPlatformListOpen: boolean
     export let logOutUser: () => Promise<void>
@@ -25,7 +24,6 @@
         Google: { iconWidth: "60%" },
         Luciole: { iconWidth: "60%" }
     }
-
 
     onMount(() => {
         // get the icon enum & options to be used in Icon component

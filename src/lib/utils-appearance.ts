@@ -1,9 +1,8 @@
 import { themeState } from "./store"
 import { lightColorThemes, darkColorThemes, imageThemes, ambientVideos, defaultThemes } from "$lib/data-themes"
+import { ResError } from "./errors"
 
-const MAX_IMG_FILE_SIZE = 5_242_880
-
-const themeSections: AppearanceThemes = {
+const sectionToThemeMap: AppearanceSectionToThemeMap = {
   default: defaultThemes,
   light: lightColorThemes,
   dark: darkColorThemes,
@@ -12,9 +11,9 @@ const themeSections: AppearanceThemes = {
 }
 
 /**
- * Load theme from local storage to persit theme data between refreshes.
+ * Load theme from local storage to init current color theme.
  */
-export const loadTheme = () => {
+export function loadTheme() {
     let storedColorThemStyling = localStorage.getItem("theme")
     
     if (!storedColorThemStyling) {
@@ -34,24 +33,14 @@ export const loadTheme = () => {
 }
 
 /**
- * Uses object prop / string indexing to get theme from selected theme item's title and index. 
- * @param title  Section title, must be a property name of Apperance Themes
- * @param idx    Section idex
- * @returns      Theme selected
- */
-export const getThemeFromSection = (title: keyof AppearanceThemes, idx: number): Theme => {
-  return themeSections[title][idx]
-}
-
-/**
- * Set and save new theme, handles all themes.
+ * Initializes a new them state object and updates root theme colors.
  * @param newTheme  New Theme
  */
-export const setNewTheme = (newTheme: Theme) => {
-  let _newTheme: any = newTheme    // used for prop checking to determine sub type
+export function setNewTheme(newTheme: Theme) {
+  let _newTheme: any = newTheme
   let newThemeState: ThemeState
   
-  // if a Color Theme
+  // if theme is a color / default theme
   if ("twinTheme" in newTheme) {
     newThemeState = {
       title: _newTheme.title,
@@ -68,12 +57,23 @@ export const setNewTheme = (newTheme: Theme) => {
 }
 
 /**
- * Sets selected theme colors to the root element of the document
- * Allows for global access of colors throughout the app
+ * Uses object prop / string indexing to get theme from selected theme item's title and index. 
+ * @param title  Section title, must be a property name of Apperance Themes
+ * @param idx    Section idex
+ * @returns      Theme selected
+ */
+export function getThemeFromSection(title: keyof AppearanceSectionToThemeMap, idx: number): Theme {
+  return sectionToThemeMap[title][idx]
+}
+
+
+/**
+ * Updates the root color variables to new theme's color scheme.
+ * Allows for global access of colors throughout the app.
  * 
  * @param theme theme object to be currently used
  */
-export const setRootColors = (theme: ColorThemeProps) => {
+export function setRootColors(theme: ColorThemeProps) {
     const headTag = document.getElementsByTagName('head')[0];
     const styleTag = document.createElement("style");
   
@@ -153,54 +153,11 @@ export const setRootColors = (theme: ColorThemeProps) => {
     headTag.appendChild(styleTag)
   }
 
-
-  export const getThemeStyling = (name: keyof ColorThemeProps) => {
+  /**
+   * Gets a root css variable's value of a theme.
+   * @param name   Name of the theme property.
+   * @returns      Returns the value of this property.
+   */
+  export function getThemeStyling (name: keyof ColorThemeProps) {
     return getComputedStyle(document.documentElement).getPropertyValue(`--${name}`)
-  }
-
-  export const handleCustomImgUrlInput = async (imgUrl: string): Promise<AsyncResult> => {
-      try {
-        const res = await fetch(imgUrl)
-
-        if (!res.ok) {
-            throw new Error("Invalid URL")
-        }
-        
-        const contentLengthHeader = res.headers.get("Content-Length")
-        if (!contentLengthHeader) {
-            throw new Error("Invalid URL")
-        }
-
-        const fileSizeInBytes = parseInt(contentLengthHeader, 10);
-        if (fileSizeInBytes > MAX_IMG_FILE_SIZE) {
-            throw new Error("File size cannot exceed more than 5 MB")
-        }
-        return { sucess: true }
-    }
-    catch(error: any) {
-        let errorMsg = error.message
-
-        if (error instanceof TypeError) {
-            errorMsg = "Invalid URL"
-        }
-        return { sucess: false, message: errorMsg }
-    }
-  }
-
-  export const handleCustomImgFileInput = (file: File): AsyncResult => {
-    if (!file) {
-      return { sucess: false, message: "Error has occured. Try gain" }
-    }
-
-    const reader = new FileReader()
-    reader.readAsDataURL(file)
-    
-    if (file.size > MAX_IMG_FILE_SIZE) {
-        return { sucess: false, message: "Img file cannot exceed 5 MB" }
-    }
-    return { sucess: true }
-  }
-
-  export const handleCustomVidInput = () => {
-
   }

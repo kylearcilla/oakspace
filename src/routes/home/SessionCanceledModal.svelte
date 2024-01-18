@@ -9,15 +9,13 @@
     let title = ""
     let text = ""
 
-    const exitModal = () => {
+    function exitModal() {
         $sessionStore!.clearSession()
         closeModal(ModalType.SessionCanceled)
     }
-
-    const keyboardShortcutHandler = (event: KeyboardEvent) => {
-        if (event.key === "Enter" || event.key === "Escape") {
-            exitModal()
-        }
+    function keyboardShortcutHandler(event: KeyboardEvent) {
+        if (event.key !== "Enter" && event.key !== "Escape") return
+        exitModal()
     }
 
     onMount(() => {

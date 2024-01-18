@@ -4,7 +4,7 @@
 	import Modal from "../../components/Modal.svelte"
 	import DatePicker from "../../components/DatePicker.svelte"
 	import SVGIcon from "../../components/SVGIcon.svelte"
-	import ImgUpload from "./ImgUpload.svelte";
+	import ImgUpload from "../../components/ImgUpload.svelte"
 
 	import { editGoalManger, goalsManager, homeViewLayout, themeState } from "$lib/store"
 	import { closeModal } from "$lib/utils-home"

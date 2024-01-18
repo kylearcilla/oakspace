@@ -1,10 +1,10 @@
 <script lang="ts">
+	import { openModal } from "$lib/utils-home"
     import { ModalType, SessionState } from "$lib/enums"
 	import { clickOutside } from "$lib/utils-general"
 	import { sessionManager, sessionStore, themeState } from "$lib/store"
 
     import SessionProgress from "./SessionProgress.svelte"
-	import { openModal } from "$lib/utils-home";
     
     let isDropDownOpen = false
     let isSessionComponentActive = false
@@ -215,10 +215,6 @@
         border-radius: 20px;
         white-space: nowrap;
 
-        background: var(--headerElementBgColor);
-        border: var(--headerElementBorderVal);
-        box-shadow: var(--headerElementShadow);
-
         &--active {
             transform: scale(0.998);
         }
@@ -257,17 +253,17 @@
         }
 
         &__session-tag {
-            @include circle(15px);
+            @include circle(13px);
             @include center;
             background-color: rgba(var(--fgColor1), 1);
             margin: 0px 8px 0px -5px;
             color: white;
-            font-size: 0.85rem;
+            @include text-style(1, 500, 0.8rem);
         }
         &__session-name {
             min-width: 40px;
             width: 10%;
-            font-size: 1.15rem;
+            font-size: 1rem;
             @include elipses-overflow;
         }
         &__context-view {
@@ -275,10 +271,10 @@
             margin: 0px 4px;
         }
         &__session-time, &__session-todo-count {
-            color: rgba(var(--headerElementTextColor), 0.3);
-            font-size: 1.15rem;
-            font-weight: 300;
+            color: rgba(var(--headerElementTextColor), 0.43);
+            @include text-style(_, 400, 1.1rem);
             text-align: center;
+            font-family: "DM Sans";
         }
         &__action-btn {
             height: 25px;

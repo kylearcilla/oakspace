@@ -5,8 +5,7 @@ import { MusicAPIErrorContext, MusicPlatform } from "./enums"
 import { MusicUserData, type MusicUserDataStore } from "./music-user-data"
 import { ApiError, AppServerError, AuthorizationError, ExpiredTokenError } from "./errors"
 import { 
-         removeAppleMusicTokens, getMusicAPIError, removeMusicPlayerData, 
-         saveMusicUserData, loadMusicUserData, USER_PLAYLISTS_REQUEST_LIMIT, deleteMusicUserData  
+         removeAppleMusicTokens, saveMusicUserData, loadMusicUserData, deleteMusicUserData, USER_PLAYLISTS_REQUEST_LIMIT
 } from "./utils-music"
 
 
@@ -29,13 +28,13 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
     hasTokenExpired = false
     accessToken: string = ""   // described as Developer Token in Docs
     userToken: string = ""
+    userDetails: MusicUserDetails | null = null
 
-    userPlaylistsOffset = -1
-    hasUserPlaylistsLoaded = false
+    userPlsOffset = -1
     hasFetchedAllUserPls = false
 
-    userPlaylists: MusicCollection[] = []
-    musicPlatform: MusicPlatform | null = null
+    userPlaylists: Playlist[] = []
+    musicPlatform = MusicPlatform.AppleMusic
  
     constructor(hasUserSignedIn: boolean = false) { 
         super()
@@ -47,7 +46,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
     }
 
     /**
-     * Configures new music kit instance.
+     * Initilizes credential data and configures new music kit instance.
      * Fetches & stores necessary tokens, user data, and state.
      * Called when user logs in the first time or after a refresh (used again since it's the same functionality).
      * Saves data locally. Called after a refresh of page / session.
@@ -66,7 +65,6 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
             else {
                 this.accessToken = await this.fetchAPIToken()
                 this.userToken = await this.initAppleMusic(this.accessToken)            
-                this.musicPlatform = MusicPlatform.AppleMusic
                 this.setMusicUserPlaylistData()
 
                 this.updateState({ 
@@ -158,7 +156,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
      * @throws {AuthorizationError}  Error from Music Kit authorization step.
      * @throws {AppServerError}      Error fetching token from app server.
      */
-    async refreshMusicSession() {
+    async refreshAccessToken() {
         try {
             this.accessToken = await this.fetchAPIToken()
             this.userToken = await this.initAppleMusic(this.accessToken, true)
@@ -199,14 +197,6 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
     }
 
     /**
-     * Removes data saved by music player.
-     * Handled here since player store obj won't be instantiated due to a failure in auth (expired token).
-     */
-    clearPlayerDataAfterLogIn() {
-        removeMusicPlayerData()
-    }
-
-    /**
      * Fetches and updates state after fetching user playlists.
      * Used to get fresh user playlist data.
      * 
@@ -216,7 +206,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
      * @throws {ExpiredTokenError}  Fetch for user playlists failed due to expired token.
      */
     async setMusicUserPlaylistData () {
-        let playlists: MusicCollection[] = []
+        let playlists: Playlist[] = []
         
         try {
             playlists = await getUserPlaylists(
@@ -225,14 +215,14 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
             )
 
             const userPlaylists = [...this.userPlaylists, ...playlists]
-            const userPlaylistsOffset = playlists.length
+            const userPlsOffset = playlists.length
             const hasFetchedAllUserPls = playlists.length < USER_PLAYLISTS_REQUEST_LIMIT
 
             this.userPlaylists = userPlaylists
-            this.userPlaylistsOffset = userPlaylistsOffset
+            this.userPlsOffset = userPlsOffset
             this.hasFetchedAllUserPls = hasFetchedAllUserPls
 
-            this.updateState({  userPlaylists, userPlaylistsOffset, hasFetchedAllUserPls })
+            this.updateState({  userPlaylists, userPlsOffset, hasFetchedAllUserPls })
         }
         catch(error) {
             throw (error)
@@ -247,24 +237,24 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
      * @throws {ExpiredTokenError}  Fetch for user playlists failed due to expired token.
      */
     async fetchMoreUserPlaylists() {
-        let playlists: MusicCollection[] = []
+        let playlists: Playlist[] = []
         
         try {
             playlists = await getUserPlaylists(
-                USER_PLAYLISTS_REQUEST_LIMIT, this.userPlaylistsOffset, 
+                USER_PLAYLISTS_REQUEST_LIMIT, this.userPlsOffset, 
                 { accessToken: this.accessToken, userToken: this.userToken }
             )
 
             const userPlaylists = [...this.userPlaylists, ...playlists]
-            const userPlaylistsOffset = this.userPlaylistsOffset + playlists.length
+            const userPlsOffset = this.userPlsOffset + playlists.length
             const hasFetchedAllUserPls = playlists.length < USER_PLAYLISTS_REQUEST_LIMIT
 
             this.userPlaylists = userPlaylists
-            this.userPlaylistsOffset = userPlaylistsOffset
+            this.userPlsOffset = userPlsOffset
             this.hasFetchedAllUserPls = hasFetchedAllUserPls
             
             // do not save subseq playlist response data in local storage, will always use the initial request after a refresh
-            this.updateState({  userPlaylists, userPlaylistsOffset, hasFetchedAllUserPls }, false)
+            this.updateState({  userPlaylists, userPlsOffset, hasFetchedAllUserPls }, false)
         }
         catch(error) {
             throw (error)
@@ -287,7 +277,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
         this.hasTokenExpired = savedUserData.hasTokenExpired!,
         this.accessToken = savedUserData.accessToken!,
         this.musicPlatform = savedUserData.musicPlatform!,
-        this.userPlaylistsOffset = savedUserData.userPlaylistsOffset!,
+        this.userPlsOffset = savedUserData.userPlsOffset!,
         this.userPlaylists = savedUserData.userPlaylists!
 
         this.updateState({ ...savedUserData })
@@ -298,14 +288,14 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
      * Only saves what it needs to.
      */
     saveState() {
-        const userDataState = get(musicDataStore)!
+        const userDataState = get(musicDataStore)! as AppleMusicUserData
         
         // user token is not saved as a new one is made after refresh
         saveMusicUserData({
             hasTokenExpired: userDataState.hasTokenExpired,
             accessToken: userDataState.accessToken,
             musicPlatform: userDataState.musicPlatform,
-            userPlaylistsOffset: userDataState.userPlaylistsOffset,
+            userPlsOffset: userDataState.userPlsOffset,
             userPlaylists: userDataState.userPlaylists
         })
     }
@@ -320,7 +310,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
 
         if (newState.isSignedIn != undefined)          newStateObj.isSignedIn = newState.isSignedIn
         if (newState.hasTokenExpired != undefined)     newStateObj.hasTokenExpired = newState.hasTokenExpired
-        if (newState.userPlaylistsOffset != undefined)    newStateObj.userPlaylistsOffset = newState.userPlaylistsOffset
+        if (newState.userPlsOffset != undefined)    newStateObj.userPlsOffset = newState.userPlsOffset
         if (newState.hasFetchedAllUserPls != undefined)   newStateObj.hasFetchedAllUserPls = newState.hasFetchedAllUserPls
         if (newState.userPlaylists != undefined)          newStateObj.userPlaylists = newState.userPlaylists
         if (newState.accessToken != undefined)            newStateObj.accessToken = newState.accessToken

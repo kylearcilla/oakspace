@@ -1,8 +1,7 @@
-import { BasicCalendar } from "./basic-calendar"
 import { DatePickerUserInput } from "./enums"
 import { ResError } from "./errors"
 import { datePickerManager } from "./store"
-import { formatDateLong, getLastDayOfMonth, getNextMonth, getPrevMonth, isDateEarlier, isSameMonth, isStrMonth, isYrValid } from "./utils-date"
+import { formatDateLong, getLastDayOfMonth, isDateEarlier, isSameMonth, isStrMonth, isYrValid } from "./utils-date"
 import { getElemById } from "./utils-general"
 
 class DatePickerError extends ResError<DatePickerUserInput> { }

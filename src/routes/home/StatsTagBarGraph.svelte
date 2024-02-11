@@ -345,7 +345,7 @@
     }
 
     .tag-bar-tool-tip {
-        @include flex-container(center, _);
+        @include flex(center, _);
         padding: 4px 7px 5px 10px;
         height: 25px;
         position: absolute;

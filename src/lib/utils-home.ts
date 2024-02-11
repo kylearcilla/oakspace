@@ -7,6 +7,7 @@ import { didInitYtPlayer } from "./utils-youtube-player"
 import { conintueWorkSession, didInitSession } from "./utils-session"
 import { continueMusicSession, didInitMusicUser, loadMusicUserData } from "./utils-music"
 import { continueYtPlayerSession, continueYtUserSession, didInitYtUser } from "./utils-youtube"
+import { didSpotifyUserAuthApp, parseSpotifyAuthCodeFromURL } from "./api-spotify"
 
 const LEFT_BAR_LEFT_BOUND = 5
 const LEFT_BAR_RIGHT_BOUND = 80
@@ -15,7 +16,7 @@ const LEFT_BAR_RIGHT_BOUND = 80
  * Initialize app state.
  * Load data from previously saved state (if there is any).
  */
-export const initAppState = () => {
+export const initAppState = async () => {
     loadTheme()
     loadHomeViewLayOutUIData()
 
@@ -31,6 +32,9 @@ export const initAppState = () => {
     if (didInitMusicUser()) {
         const musicPlatform = loadMusicUserData()!.musicPlatform!
         continueMusicSession(musicPlatform)
+    }
+    if (didSpotifyUserAuthApp()) {
+        parseSpotifyAuthCodeFromURL()
     }
 }
 
@@ -100,30 +104,10 @@ export const onMouseMoveHandler = (event: MouseEvent, hasUserToggledWithKeyLast:
         return false
     }
     else if (!hasUserToggledWithKeyLast && homeLayout.isNavMenuOpen && mouseX > LEFT_BAR_RIGHT_BOUND) { 
-        homeViewLayout.update((data: any) => ({ ...data, isNavMenuOpen: false }))
+        updteHomeLayout({ ...get(homeViewLayout), isNavMenuOpen: false  })
     }
 
     return hasUserToggledWithKeyLast
-}
-
-/**
- * Update home's classes that depends on side bars being open / closed.
- * @param isNavMenuOpen   If left side bar is open.
- * @param isTaskMenuOpen  If right side bar is open.
- * @returns               List of classes to be applied to middle view copmonent to change its apperance.
- */
-export const homeVideoViewClassHandler = (isNavMenuOpen: boolean, isTaskMenuOpen: boolean): string => {
-    if (!isTaskMenuOpen && isNavMenuOpen) {
-       return "home--just-nav-menu-shown"
-    }
-    if (isTaskMenuOpen && !isNavMenuOpen) {
-       return "home--just-task-view-shown"
-    }
-    if (isTaskMenuOpen && isNavMenuOpen) {
-       return "home--both-shown"
-    }
-
-   return ""
 }
 
 /**
@@ -133,7 +117,7 @@ export const homeVideoViewClassHandler = (isNavMenuOpen: boolean, isTaskMenuOpen
 export const updteHomeLayout = (newLayout: HomeLayout) => {
     homeViewLayout.set(newLayout)
     localStorage.setItem("home-ui", JSON.stringify(newLayout))
-  }
+}
   
 /**
  * Load previously set layout state.
@@ -144,6 +128,23 @@ const loadHomeViewLayOutUIData = () => {
 
     let data: HomeLayout = JSON.parse(storedData)
     homeViewLayout.set({ ...data, modalsOpen: [] })
+    updteHomeLayout({ ...data, modalsOpen: [] })
+}
+
+export function hideWideMenuBar() {
+    updteHomeLayout({ ...get(homeViewLayout), isLeftWideMenuOpen: false  })
+}
+
+export function showWideMenuBar() {
+    updteHomeLayout({ ...get(homeViewLayout), isLeftWideMenuOpen: true  })
+}
+
+export function hideRightBar() {
+    updteHomeLayout({ ...get(homeViewLayout), isTaskMenuOpen: false  })
+}
+
+export function showRightBar() {
+    updteHomeLayout({ ...get(homeViewLayout), isTaskMenuOpen: true  })
 }
 
 /**

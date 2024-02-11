@@ -190,7 +190,7 @@
             &-yr-title-container {
                 transition: 0.1s ease-in-out;
                 margin-bottom: 20px;
-                @include flex-container(center, _);
+                @include flex(center, _);
             }
             &-yr-digit {
                 @include text-style(1, 200, 3.2rem);
@@ -198,7 +198,7 @@
                 opacity: 0;
             }
             &-row {
-                @include flex-container(center, space-between);
+                @include flex(center, space-between);
                 margin-bottom: 8px;
                 width: 190px;
             }

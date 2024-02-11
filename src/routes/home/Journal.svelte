@@ -370,7 +370,7 @@
         position: relative;
 
         &__header {
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
             margin-bottom: 10px;
         }
         &__header-title {
@@ -390,7 +390,7 @@
         &__list {
         }
         &__tag {
-            @include flex-container(center);
+            @include flex(center);
             opacity: 0.4;
             transition: 0.05s ease-in-out;
             margin-bottom: 6.5px;
@@ -428,12 +428,12 @@
         &__top {
         }
         &__header {
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
             padding: 15px 0px 0px 25px;
             margin-bottom: 5px;
         }
         &__tag-title {
-            @include flex-container(center, _);
+            @include flex(center, _);
 
             h2 {
                 margin-right: 9px;
@@ -515,7 +515,7 @@
         }
 
         &__options-header {
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
             padding-right: 20px;
         }
         &__options-dropdown {
@@ -529,7 +529,7 @@
             margin-top: 5px;
         }
         &__options-btn {
-            @include flex-container(center);
+            @include flex(center);
             @include text-style(1, 400, 1.2rem);
             opacity: 0.2;
 

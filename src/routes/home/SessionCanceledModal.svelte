@@ -51,7 +51,7 @@
         width: 275px;
         padding: 20px 20px 20px 20px;
         text-align: center;
-        @include flex-container(center, center);
+        @include flex(center, center);
         flex-direction: column;
 
         &--light &__title {

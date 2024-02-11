@@ -239,3 +239,45 @@ export const addSpacesToCamelCaseStr = (camelCaseStr: string) => {
   const words = camelCaseStr.replace(/([a-z])([A-Z])/g, '$1 $2');
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
+
+
+/**
+ *  According to the PKCE standard, a code verifier is a high-entropy cryptographic random string with a length between 43 and 128 characters (the longer the better). 
+ *  It can contain letters, digits, underscores, periods, hyphens, or tildes.
+ * 
+ *  @param length 
+ *  @returns 
+ */
+export function generateCodeVerifier(length: number): string {
+  if (length < 43 || length > 128) { 
+    throw new Error("Must be between 43 and 128 inclusive.")
+  }
+
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const values = crypto.getRandomValues(new Uint8Array(length))
+
+  return values.reduce((acc, x) => acc + possible[x % possible.length], "")
+}
+
+/**
+ * Hashes a string using that SHA 256 Algorithm
+ * @param plain  String to be hashed 
+ * @returns      SHA 256-Hashed String
+ */
+export function hashSHA256(plain: string): Promise<ArrayBuffer> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(plain)
+  return window.crypto.subtle.digest('SHA-256', data)
+}
+
+/**
+ * Returns the base64 representation of a string
+ * @param input   
+ * @returns 
+ */
+export function base64encode(input: any): string {
+  return window.btoa(String.fromCharCode(...new Uint8Array(input)))
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+}

@@ -1,12 +1,14 @@
 <script lang="ts">
     import { onMount } from "svelte";
 
-	import { SessionState } from "$lib/enums"
+	import { Icon, SessionState } from "$lib/enums"
     import { clickOutside } from "$lib/utils-general"
 	import { PomSessionManger } from "$lib/pom-session-manager"
     import { sessionStore, sessionManager, themeState } from "$lib/store"
 
 	import SessionProgress from "./SessionProgress.svelte"
+	import SvgIcon from "../../components/SVGIcon.svelte";
+	import { getThemeStyling } from "$lib/utils-appearance";
     
     let todoListElement: HTMLElement
 
@@ -19,7 +21,7 @@
     const pomControlsDropdownBtnHandler  = (optionIdx: number) =>  $sessionManager!.pomControlsDropdownBtnHandler(optionIdx)
     const todoListElementScrollHandler   = () =>                   $sessionManager!.todoListElementScrollHandler()
     const concludeSessionClicked         = () =>                   $sessionManager!.concludeSessionBtnClicked()
-    const togglePomDropdownMenu          = () =>                   $sessionManager!.togglePomControlsDropDown()
+    const togglePomDropdownMenu          = (isOpen: boolean) =>    $sessionManager!.togglePomControlsDropDown(isOpen)
 
     /* Editing a Todo */
     const checkboxClickedHandler = (idx: number) =>  $sessionManager!.toggleTodoCheckBox(idx)
@@ -59,92 +61,113 @@
                     </div>
                     <!-- Right Side -->
                     <div class="new-session-modal__name-input-tag-dropdown-container dropdown-container">
-                        <button on:click={() => togglePomDropdownMenu()} class="active-session__header-edit-button settings-btn dropdown-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20">
-                                <g fill="none" stroke="currentColor" stroke-linecap="round" transform="translate(1 10)">
-                                    <circle cx="2" cy="0.8" r="1.7"></circle>
-                                    <circle cx="8" cy="0.8" r="1.7"></circle>
-                                    <circle cx="14" cy="0.8" r="1.7"></circle>
-                                </g>
-                            </svg>
+                        <button on:click={() => togglePomDropdownMenu(true)} class="active-session__settings-dropdown-btn settings-btn">
+                            <SvgIcon icon ={Icon.Settings} options={{ opacity: 0.6 }} />
                         </button>
                         <!-- Session Controls -->
-                        {#if $sessionManager?.isDropDownOpen}
-                            <ul use:clickOutside on:click_outside={() => togglePomDropdownMenu()} class="active-session__settings-dropdown-menu dropdown-menu dropdown-menu--alt">
-                                <li class="dropdown-menu__option">
-                                    <button class="dropdown-element" on:click={() => pomControlsDropdownBtnHandler(0)}>
-                                        <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
-                                            <i class="fa-solid fa-pencil"></i>
-                                        </div>
-                                        <p>Edit Session</p>
-                                    </button>
-                                </li>
-                                <li class="dropdown-menu__option">
-                                    <button 
-                                        disabled={$sessionStore?.state === SessionState.FINISHED}
-                                        class="dropdown-element" 
-                                        on:click={() => pomControlsDropdownBtnHandler(1)}
-                                    >
-                                        <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
-                                            {#if $sessionStore.isPlaying}
-                                                <i class="fa-solid fa-pause"></i>
-                                            {:else}
-                                                <i class="fa-solid fa-play"></i>
-                                            {/if}
-                                        </div>
+                        <ul 
+                            use:clickOutside on:click_outside={() => togglePomDropdownMenu(false)} 
+                            class={`active-session__settings-dropdown-menu dropdown-menu ${$sessionManager?.isDropDownOpen ? "" : "dropdown-menu--hidden"}`}
+                        >
+                            <li class="dropdown-menu__option">
+                                <button class="dropdown-element" on:click={() => pomControlsDropdownBtnHandler(0)}>
+                                    <div class="dropdown-menu__option-icon dropdown-menu__option-icon--left">
+                                        <i class="fa-solid fa-pencil"></i>
+                                    </div>
+                                    <span class="dropdown-menu__option-text">
+                                        Edit Session
+                                    </span>
+                                </button>
+                            </li>
+                            <li class="dropdown-menu__option">
+                                <button 
+                                    disabled={$sessionStore?.state === SessionState.FINISHED}
+                                    class="dropdown-element" 
+                                    on:click={() => pomControlsDropdownBtnHandler(1)}
+                                >
+                                    <div class="dropdown-menu__option-icon dropdown-menu__option-icon--left">
                                         {#if $sessionStore.isPlaying}
-                                            <p>Pause Session</p>
+                                            <i class="fa-solid fa-pause"></i>
                                         {:else}
-                                            <p>Play Session</p>
+                                            <i class="fa-solid fa-play"></i>
                                         {/if}
-                                    </button>
-                                </li>
-                                <li class="dropdown-menu__option">
-                                    <button 
-                                        class="dropdown-element" 
-                                        on:click={() => pomControlsDropdownBtnHandler(2)}
-                                        disabled={$sessionStore && ($sessionStore.WAITING_STATES.includes($sessionStore.state) || $sessionStore.state === SessionState.FINISHED)}
-                                    >
-                                        <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
-                                            <i class="fa-solid fa-rotate-right"></i>
-                                        </div>
-                                        <p>Restart Period</p>
-                                    </button>
-                                </li>
-                                <li class="dropdown-menu__option">
-                                    <button 
-                                        class="dropdown-element" 
-                                        on:click={() => pomControlsDropdownBtnHandler(3)}
-                                        disabled={$sessionStore?.state === SessionState.FINISHED}
-                                    >
-                                        <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
-                                            <i class="fa-solid fa-forward-step"></i>
-                                        </div>
-                                        <p>Skip Period</p>
-                                    </button>
-                                </li>
-                                <li class="dropdown-menu__option">
-                                    <button class="dropdown-element" on:click={() => pomControlsDropdownBtnHandler(4)}>
-                                        <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
-                                            <i class="fa-solid fa-ban"></i>
-                                        </div>
-                                        <p>Cancel Session</p>
-                                    </button>
-                                </li>
-                                <li class="dropdown-menu__option">
-                                    <button 
-                                        class="dropdown-element" 
-                                        on:click={() => pomControlsDropdownBtnHandler(5)}
-                                        disabled={$sessionStore?.state === SessionState.FINISHED}
-                                    >
-                                        <div class="new-session-modal__name-input-btn-tag dropdown-menu__option-icon">
-                                            <i class="fa-solid fa-flag-checkered"></i>
-                                        </div>
-                                        <p>Finish Session</p>
-                                    </button>
-                                </li>
-                            </ul>
-                        {/if}
+                                    </div>
+                                    <span class="dropdown-menu__option-text">
+                                        {#if $sessionStore.isPlaying}
+                                            Pause Session
+                                        {:else}
+                                            Play Session
+                                        {/if}
+                                    </span>
+                                </button>
+                            </li>
+                            <li class="dropdown-menu__option">
+                                <button 
+                                    class="dropdown-element" 
+                                    on:click={() => pomControlsDropdownBtnHandler(2)}
+                                    disabled={$sessionStore && ($sessionStore.WAITING_STATES.includes($sessionStore.state) || $sessionStore.state === SessionState.FINISHED)}
+                                >
+                                    <div class="dropdown-menu__option-icon dropdown-menu__option-icon--left">
+                                        <i class="fa-solid fa-rotate-right"></i>
+                                    </div>
+                                    <span class="dropdown-menu__option-text">
+                                        Restart Period
+                                    </span>
+                                </button>
+                            </li>
+                            <li class="dropdown-menu__option">
+                                <button 
+                                    class="dropdown-element" 
+                                    on:click={() => pomControlsDropdownBtnHandler(3)}
+                                    disabled={$sessionStore?.state === SessionState.FINISHED}
+                                >
+                                    <div class="dropdown-menu__option-icon dropdown-menu__option-icon--left">
+                                        <i class="fa-solid fa-forward-step"></i>
+                                    </div>
+                                    <span class="dropdown-menu__option-text">
+                                        Skip Period
+                                    </span>
+                                </button>
+                            </li>
+                            <li class="dropdown-menu__option">
+                                <button class="dropdown-element" on:click={() => pomControlsDropdownBtnHandler(4)}>
+                                    <div class="dropdown-menu__option-icon dropdown-menu__option-icon--left">
+                                        <i class="fa-solid fa-ban"></i>
+                                    </div>
+                                    <span class="dropdown-menu__option-text">
+                                        Cancel Session
+                                    </span>
+                                </button>
+                            </li>
+                            <li class="dropdown-menu__option">
+                                <button 
+                                    class="dropdown-element" 
+                                    on:click={() => pomControlsDropdownBtnHandler(5)}
+                                    disabled={$sessionStore?.state === SessionState.FINISHED}
+                                >
+                                    <div class="dropdown-menu__option-icon dropdown-menu__option-icon--left">
+                                        <i class="fa-solid fa-flag-checkered"></i>
+                                    </div>
+                                    <span class="dropdown-menu__option-text">
+                                        Finish Session
+                                    </span>
+                                </button>
+                            </li>
+                            <li class="dropdown-menu__option">
+                                <button 
+                                    class="dropdown-element" 
+                                    on:click={() => pomControlsDropdownBtnHandler(6)}
+                                    disabled={$sessionStore?.state === SessionState.FINISHED}
+                                >
+                                    <div class="dropdown-menu__option-icon dropdown-menu__option-icon--left">
+                                        <i class="fa-solid fa-minimize"></i>
+                                    </div>
+                                    <span class="dropdown-menu__option-text">
+                                        Min Mode
+                                    </span>
+                                </button>
+                            </li>
+                        </ul>
                     </div>
                 </div>
 
@@ -293,50 +316,53 @@
                     {#if $sessionManager?.doShowBottomGradient} 
                         <div class="gradient-container gradient-container--bottom"></div>
                     {/if}
-                </div>
-                <!-- New Task Input -->
-                {#if $sessionManager?.isMakingNewTask}
-                    <div class="active-session__tasks-new-todo-input-container">
-                        <form on:submit={newTodoAddBtnClickedHandler} autocomplete="off">
-                            <input 
-                                class="active-session__tasks-new-todo-input"
-                                placeholder="New Subtask" 
-                                id={NEW_TASK_INPUT_ID}
-                                on:input={newTodoTextInputHandler}
-                            />
-                        </form>
-                        <div class="active-session__tasks-new-todo-btn-container">
-                            <button 
-                                disabled={$sessionManager?.newTodoTitle === "" || $sessionManager?.newTodoTitle.length > MAX_TODO_NAME_LENGTH}
-                                class="active-session__tasks-add-btn unfill unfill--padded unfill--oval"
-                                on:click={newTodoAddBtnClickedHandler}
-                                type="submit"
-                            >
-                                    Add
-                            </button>
-                            <button 
-                                on:click={newTodoCancelBtnHandler}
-                                class="active-session__tasks-cancel-btn unfill unfill--padded unfill--oval"
-                                type="reset"
-                            >
-                                    Cancel
-                            </button>
-                        </div>
+            </div>
+            <!-- New Task Input -->
+            {#if $sessionManager?.isMakingNewTask}
+                <div class="active-session__new-task-input-container input-box">
+                    <form on:submit={newTodoAddBtnClickedHandler} autocomplete="off">
+                        <input
+                            type="text"
+                            name="new-subtask-input" 
+                            spellcheck="false"
+                            maxlength={25}
+                            placeholder="New Task" 
+                            id={NEW_TASK_INPUT_ID}
+                            on:input={newTodoTextInputHandler}
+                        />
+                    </form>
+                    <div class="input-box__btn-container">
+                        <button 
+                            on:click={newTodoAddBtnClickedHandler}
+                            disabled={$sessionManager?.newTodoTitle === "" || $sessionManager?.newTodoTitle.length > MAX_TODO_NAME_LENGTH}
+                            type="submit"
+                            class="input-box__btn input-box__btn--submit"
+                        >
+                            Add
+                        </button>
+                        <button 
+                            on:click={newTodoCancelBtnHandler}
+                            class="input-box__btn input-box__btn--cancel"
+                            type="reset"
+                        >
+                            Cancel
+                        </button>
                     </div>
-                {:else}
-                    <button class="active-session__tasks-new-task-btn" on:click={newTodoBtnClickedHandler}>
-                        <span>+</span> Add New Task
-                    </button>
-                {/if}
-                <!-- Finish Btn -->
-                {#if !$sessionManager?.isMakingNewTask && ($sessionStore.todos?.length > 0 && $sessionStore.todosCheckedCount === $sessionStore.todos.length)}
-                    <button 
-                        on:click={() => finishSessionBtnHandleer()}
-                        class="active-session__tasks-finish-session-btn unfill unfill--padded unfill--oval"
-                    >
-                        Finish Session <span>👏</span>
-                    </button>
-                {/if}
+                </div>
+            {:else}
+                <button class="active-session__tasks-new-task-btn" on:click={newTodoBtnClickedHandler}>
+                    <span>+</span> Add New Task
+                </button>
+            {/if}
+            <!-- Finish Btn -->
+            {#if !$sessionManager?.isMakingNewTask && ($sessionStore.todos?.length > 0 && $sessionStore.todosCheckedCount === $sessionStore.todos.length)}
+                <button 
+                    on:click={() => finishSessionBtnHandleer()}
+                    class="active-session__tasks-finish-session-btn unfill unfill--padded unfill--oval"
+                >
+                    Finish Session <span>👏</span>
+                </button>
+            {/if}
             </div>
         </div>
     {/if}
@@ -345,6 +371,7 @@
 <style lang="scss">
     @import "../../scss/dropdown.scss";
     @import '../../scss/active-session.scss';
+    @import "../../scss/inputs.scss";
 
     $todo-padding-left: 7px;
 
@@ -355,6 +382,14 @@
     .active-session {
         &--light &__pom-message {
             color: rgb(var(--textColor1), 0.35);
+        }
+        &--light &__settings-dropdown-btn {
+            opacity: 0.7;
+            background: rgba(black, 0.05) !important;
+            
+            &:hover {
+                opacity: 1;
+            }
         }
 
         &__header {
@@ -369,34 +404,23 @@
         &__header-session-tag {
             font-size: 1.2rem;
         }
-        &__header-edit-button {
-            background-color: var(--headerElementBgColor);
-            @include center;
-            @include circle(22px);
-            box-shadow: none;
-
-            svg {
-                transition: 0.15s ease-in-out;
-                color: rgba(var(--textColor1), 0.4);
-                margin: -1px -2px 0px 0px;
-            }
+        &__settings-dropdown-btn {
+            opacity: 0.6;
+            background: rgba(white, 0.06) !important;
+            
             &:hover {
-                svg {
-                    color: rgba(var(--textColor1), 0.7);
-                }
+                opacity: 0.8;
             }
-            &:active {
-                transform: scale(0.96) !important;
-            }
-        }   
+        }
         &__settings-dropdown-menu {
-            @include pos-abs-top-right-corner(40px, 0px);
-            width: 120px;
+            @include pos-abs-top-right-corner(28px, 0px);
+            width: 150px;
         }
         &__pom {
             margin: -20px 0px 15px 0px;
         }
         &__pom-timer {
+            font-family: "DM Sans";
             h1 {
                 font-size: 7rem;
                 margin-bottom: 20px;
@@ -411,7 +435,7 @@
         &__progress {
             margin: 50px 0px 30px 0px;
             width: 100%;
-            @include flex-container(center, center);
+            @include flex(center, center);
         }
         &__progress-container {
             width: 90%;
@@ -427,7 +451,7 @@
             
             &-header h4 {
                 margin: 2px 0px 5px $todo-padding-left;
-            }
+            } 
             &-header span {
                 font-size: 1.2rem;
                 color: rgb(var(--textColor1), 0.25);
@@ -442,6 +466,9 @@
             &-new-todo-input {
                 margin: 4px 0px 8px $todo-padding-left;
             }
+        }
+        &__new-task-input-container {
+            margin-top: 16px;
         }
     }
     .active-session-todo {

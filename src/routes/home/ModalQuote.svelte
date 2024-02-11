@@ -96,7 +96,7 @@
             width: 100%;
             background-color: rgba(0, 0, 0, 0.84); 
             color: white;
-            @include flex-container(_, flex-end);
+            @include flex(_, flex-end);
             flex-direction: column;
             padding: 18px 19px;
 
@@ -104,10 +104,10 @@
                 margin-bottom: 20px;
             }
             &-bottom {
-                @include flex-container(center, _);
+                @include flex(center, _);
             }
             &-bottom-left {
-                @include flex-container(center, _);
+                @include flex(center, _);
                 flex: 1;
                 min-width: 0;
             }
@@ -118,7 +118,7 @@
                 background-color: rgba(179, 179, 179, 0.3);
             }
             &-context {
-                @include flex-container(center, _);
+                @include flex(center, _);
             }
         }
         &__title {

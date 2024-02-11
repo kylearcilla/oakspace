@@ -43,7 +43,7 @@
 
 <Modal options={{ borderRadius: "20px" }} onClickOutSide={() => closeModal(ModalType.ActiveSession)}>
     {#if $sessionStore}
-        <div class={`active-session ${$themeState.isDarkTheme ? "active-session--dark" : ""}`}>
+        <div class={`active-session ${$themeState.isDarkTheme ? "active-session--dark" : "active-session--light"}`}>
             <div class="active-session__top-container">
                 <!-- Session Details Header -->
                 <div class="active-session__header active-session__bento-box">
@@ -194,30 +194,33 @@
                 </div>
                 <!-- Bottom List New Task Button -->
                 {#if $sessionManager?.isMakingNewTask}
-                    <div class="active-session__tasks-new-todo-input-container">
+                    <div class="active-session__new-task-input-container input-box">
                         <form on:submit={newTodoAddBtnClickedHandler} autocomplete="off">
-                            <input 
-                                class="active-session__tasks-new-todo-input"
+                            <input
+                                type="text"
+                                name="new-subtask-input" 
+                                spellcheck="false"
+                                maxlength={25}
                                 placeholder="New Subtask" 
                                 id={NEW_TASK_INPUT_ID}
                                 on:input={newTodoTextInputHandler}
                             />
                         </form>
-                        <div class="active-session__tasks-new-todo-btn-container">
+                        <div class="input-box__btn-container">
                             <button 
                                 disabled={$sessionManager?.newTodoTitle === "" || $sessionManager?.newTodoTitle.length > MAX_TODO_NAME_LENGTH}
-                                class="active-session__tasks-add-btn unfill unfill--padded unfill--oval"
+                                class="input-box__btn input-box__btn--submit"
                                 type="submit"
                                 on:click={newTodoAddBtnClickedHandler}
                             >
-                                    Add
+                                Add
                             </button>
                             <button 
                                 on:click={newTodoCancelBtnHandler}
-                                class="active-session__tasks-cancel-btn unfill unfill--padded unfill--oval"
+                                class="input-box__btn input-box__btn--cancel"
                                 type="reset"
                             >
-                                    Cancel
+                                Cancel
                             </button>
                         </div>
                     </div>

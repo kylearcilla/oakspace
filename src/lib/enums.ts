@@ -1,12 +1,15 @@
 export enum ErrorCode { 
     YT_PRIVATE_PLAYLIST, YT_PRIVATE_VIDEO, YT_EXPIRED_TOKEN, DEFAULT, MUSIC_EXPIRED_TOKEN
 }
+export enum APIErrorCode {
+    EXPIRED_TOKEN, FAILED_TOKEN_REFRESH, LOGIN_IN, LOG_OUT, RESOURCE_NOT_FOUND, RESOURCE_UNAVAILABLE, AUTHORIZATION_ERROR, UNAUTHORIZED, API_ERROR, GENERAL, RATE_LIMIT_HIT
+}
 /* General */
 export enum LogoIcon {
     AppleMusic, Spotify, YoutubeMusic, Soundcloud, Youtube, Session, Google, Luciole
 }
 export enum Icon {
-    Settings, Dropdown, Add, Close, ChevronLeft, ChevronRight, DragDots, Archive, Tune
+    Settings, Dropdown, Add, Close, ChevronLeft, ChevronRight, DragDots, Archive, Tune, Sun, Moon, Pin
 }
 export enum ToastContext {
     AppleMusic, Spotify, YoutubeMusic, Soundcloud, Youtube, Session, Google, Luciole
@@ -39,7 +42,7 @@ export enum ImgUploadInput {
 
 /* Tasks */
 export enum RightSideTab { 
-    TASKS, RECENT_ACTIVITY
+    TASKS, OVERVIEW
 }
 export enum TaskSettingsOptions {
     MAKE_NEW_TASK_GROUP, RENAME_TASK_GROUP, DELETE_TASK_GROUP
@@ -109,4 +112,10 @@ export enum MusicAPIErrorContext {
 }
 export enum MusicShufflerState {
     CAN_CONTINUE_CHUNK, HAS_ENDED_AND_MORE_CHUNKS, HAS_ENDED_NO_CHUNKS,
+}
+export enum MusicMediaType {
+    Playlist, Track, RadioStation, Podcast
+}
+export enum UserLibraryMedia {
+    Playlists = "Playlists", LikedTracks = "Tracks", Albums = "Albums", PodcastEps = "Episodes", Audiobooks = "Audiobooks"
 }

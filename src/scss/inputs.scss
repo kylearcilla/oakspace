@@ -74,7 +74,7 @@
 }
 
 .input-box {
-    @include flex-container(center, space-between);
+    @include flex(center, space-between);
     border: 1px solid rgba(var(--textColor1), 0.05);
     border-radius: 12px;
     padding: 5px 10px 5px 12px;
@@ -82,6 +82,7 @@
     input {
         padding: 0px 0px 3px 0px;
         @include text-style(0.8, 200, 1.4rem);
+        flex: 1;
     }
     input::placeholder {
         @include text-style(0.15, 200, 1.4rem);
@@ -95,7 +96,7 @@
     }
 
     &__btn-container {
-        @include flex-container(center);
+        @include flex(center);
     }
     &__btn {
         padding: 5px 10px;

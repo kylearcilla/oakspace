@@ -462,7 +462,7 @@
             height: 8px;
             cursor: grab;
             z-index: 1;
-            @include flex-container(center);
+            @include flex(center);
             @include pos-abs-top-left-corner(5px);
 
             &:active {
@@ -477,7 +477,7 @@
         }
         &__item-drop-divider {
             width: 100%;
-            @include flex-container(center, center);
+            @include flex(center, center);
             transition: 0.12s ease-in-out;
             opacity: 0;
             padding-top: 5px;
@@ -500,10 +500,10 @@
             }
         }
         &__col-container {
-            @include flex-container(center, _);
+            @include flex(center, _);
         }
         &__col-add-new-goal-btn {
-            @include flex-container(center, _);
+            @include flex(center, _);
             @include not-visible;
             cursor: pointer;
             margin-top: 6px;

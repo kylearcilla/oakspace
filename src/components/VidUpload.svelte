@@ -97,7 +97,7 @@
             font-weight: 300;
         }
         &__content-container {
-            @include flex-container(center, _);
+            @include flex(center, _);
             width: 100%;
 
             .text-input-container {

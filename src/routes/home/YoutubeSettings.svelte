@@ -344,7 +344,7 @@
             @include bento-box-light;
         }
         &--light button.tab-btn {
-            @include tab-btn-light(1.045);
+            @include tab-btn-light();
         }
         &--light .skeleton-bg {
             @include skeleton-bg(light);
@@ -396,7 +396,7 @@
             }
         }
         &__header {
-            @include flex-container(flex-start, space-between);
+            @include flex(flex-start, space-between);
             height: $header-height;
 
             &-title {
@@ -411,7 +411,7 @@
             position: relative;
         }
         &__user-capsule {
-            @include flex-container(center, _);
+            @include flex(center, _);
             background-color: var(--hoverColor);
             padding: 5px 13px 5px 7px;
             border-radius: 15px;
@@ -441,7 +441,7 @@
             z-index: 100;
         }
         &__user-profile-img-container {
-            @include flex-container(center, center);
+            @include flex(center, center);
             margin-bottom: 20px;
             
             img {
@@ -465,7 +465,7 @@
         }
         &__user-profile-btns-container {
             padding-top: 10px;
-            @include flex-container(center, space-evenly);
+            @include flex(center, space-evenly);
             color: rgb(var(--textColor1), 0.7);
             width: 100%;
 
@@ -583,7 +583,7 @@
         &__playlist-metadata {
             margin-top: 6px;
             width: 100%;
-            @include flex-container(center, flex-start);
+            @include flex(center, flex-start);
 
             span {
                 font-size: 1.05rem;
@@ -669,7 +669,7 @@
             scroll-behavior: smooth;
             height: 50px;
             padding-bottom: 10px;
-            @include flex-container(center, _);
+            @include flex(center, _);
 
             &::-webkit-scrollbar {
                 display: none;

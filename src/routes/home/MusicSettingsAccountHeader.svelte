@@ -2,9 +2,11 @@
 	import { themeState, musicDataStore } from "$lib/store"
 	import { clickOutside, findEnumIdxFromDiffEnum } from "$lib/utils-general"
 	import { addSpacesToCamelCaseStr } from "$lib/utils-general"
-    import { LogoIcon, MusicPlatform } from "$lib/enums"
+    import { Icon, LogoIcon, MusicPlatform } from "$lib/enums"
 	import Logo from "../../components/Logo.svelte"
 	import { onMount } from "svelte"
+	import { getSpotifyAcessToken, requestSpotifyUserAuth } from "$lib/api-spotify";
+	import SvgIcon from "../../components/SVGIcon.svelte";
 
     export let isPlatformListOpen: boolean
     export let logOutUser: () => Promise<void>
@@ -16,7 +18,7 @@
     const LOGO_WIDTH = 15
     const BORDER_RADIUS = 6.5
     const HEADER_ICON_OPTIONS = {
-        AppleMusic: { iconWidth: "45%" },
+        AppleMusic: { iconWidth: "50%" },
         Spotify: { iconWidth: "90%", hasBgColor: false },
         YoutubeMusic: { iconWidth: "60%" },
         Soundcloud: { iconWidth: "60%" },
@@ -25,9 +27,12 @@
         Luciole: { iconWidth: "60%" }
     }
 
+    $: musicStore = $musicDataStore
+    $: userDetails = $musicDataStore!.userDetails
+
     onMount(() => {
         // get the icon enum & options to be used in Icon component
-        platform = $musicDataStore!.musicPlatform
+        platform = musicStore!.musicPlatform
 
         let platformIconEnumIdx = findEnumIdxFromDiffEnum(platform, MusicPlatform, LogoIcon)
         icon = platformIconEnumIdx === null ? LogoIcon.Luciole : platformIconEnumIdx as LogoIcon
@@ -37,116 +42,144 @@
     })
 </script>
 
-<div class={`active-account-header ${$themeState.isDarkTheme ? "" : "active-account-header--light"}`}>
-    <button class="active-account-header__btn dropdown-btn" on:click={() => isPlatformListOpen = !isPlatformListOpen}>
-        {#if iconOptions}
-            <Logo logo={icon} options={{ containerWidth: `${LOGO_WIDTH}px`, borderRadius: `${BORDER_RADIUS}px`, ...iconOptions}} />
-        {/if}
-        {#if $musicDataStore?.isSignedIn && platform != null}
-            <span>
-                {addSpacesToCamelCaseStr(MusicPlatform[platform])}
-            </span>
-        {/if}
-        <i class="fa-solid fa-chevron-down"></i>
-    </button>
+<div class={`active-account-header ${$themeState.isDarkTheme ? "active-account-header--dark" : "active-account-header--light"}`}>
+    <div class="active-account-header__btn-container">
+        <button class="active-account-header__btn dropdown-btn" on:click={() => isPlatformListOpen = !isPlatformListOpen}>
+            {#if iconOptions}
+                <Logo logo={icon} options={{ containerWidth: `${LOGO_WIDTH}px`, borderRadius: `${BORDER_RADIUS}px`, ...iconOptions}} />
+            {/if}
+            {#if musicStore?.isSignedIn && platform != null}
+                <span>
+                    {addSpacesToCamelCaseStr(MusicPlatform[platform])}
+                </span>
+            {/if}
+            <div class="active-account-header__btn-arrow">
+                <SvgIcon icon={Icon.Dropdown} options={{ opacity: 0.2 }}></SvgIcon>
+            </div>
+        </button>
+        <div class="active-account-header__btn-divider"></div>
+    </div>
     <!-- No way to get account details from Music Kit -->
-    {#if $musicDataStore != null && $musicDataStore.musicPlatform !== MusicPlatform.AppleMusic}
-        <span class="active-account-header__username">Kyle Arcilla</span>
-        <div class="active-account-header__user-profile-pic">
-            <img src="" alt="">
+    {#if userDetails}
+        <div class="active-account-header__user">
+            <a class="active-account-header__user-name" href={userDetails.url} target="_blank" rel="noreferrer">
+                {userDetails.username}
+            </a>
+            <div class="active-account-header__user-profile-pic">
+                <img src={userDetails.profileImg} alt="">
+            </div>
         </div>
     {/if}
     <!-- Music Platform Dropdown List -->
-    {#if $musicDataStore != null && isPlatformListOpen}
-        <ul class={`platform-list  ${$themeState.isDarkTheme ? "" : "platform-list--light"}`} use:clickOutside on:click_outside={() => isPlatformListOpen = false}>
-            <li class="platform-list__platform-item">
-                <div class="platform-list__platform-item-logo">
+    <ul 
+        class={`platform-list dropdown-menu
+                    ${$themeState.isDarkTheme ? "" : "platform-list--light"}
+                    ${musicStore && isPlatformListOpen ? "" : "dropdown-menu--hidden"}
+                `} 
+        use:clickOutside on:click_outside={() => isPlatformListOpen = false}
+    >
+        <li class="platform-list__item">
+            <div class="flx">
+                <div class="platform-list__item-logo">
                     <Logo 
                         logo={LogoIcon.Soundcloud} 
-                        options={{ containerWidth: "18px", borderRadius: "7px", iconWidth: "60%" }} 
+                        options={{ containerWidth: "20px", borderRadius: "9px", iconWidth: "65%" }} 
                     />
                 </div>
-                <div class="platform-list__platform-item-text">
-                    <h5>Soundcloud</h5>
-                    <span >Playlists</span>
+                <div class="platform-list__item-text">
+                    <div class="platform-list__item-name">Soundcloud</div>
+                    <div class="platform-list__item-content">Playlists</div>
                 </div>
-                <button 
-                    class={`platform-list__platform-item-btn ${$musicDataStore.musicPlatform === MusicPlatform.Soundcloud ? "platform-list__platform-item-btn--selected" : ""} text-only`}
-                    on:click={logOutUser}
-                >
-                    {$musicDataStore.musicPlatform === MusicPlatform.Soundcloud ? "Disconnect" : "Connect"}
-                </button>
-            </li>
-            <li class="platform-list__platform-item">
-                <div class="platform-list__platform-item-logo">
+            </div>
+            <button 
+                class={`platform-list__item-btn ${musicStore?.musicPlatform === MusicPlatform.Soundcloud ? "platform-list__item-btn--selected" : ""}`}
+                on:click={logOutUser}
+            >
+                {musicStore?.musicPlatform === MusicPlatform.Soundcloud ? "Disconnect" : "Connect"}
+            </button>
+        </li>
+        <li class="platform-list__item">
+            <div class="flx">
+                <div class="platform-list__item-logo">
                     <Logo 
                         logo={LogoIcon.YoutubeMusic} 
-                        options={{ containerWidth: "18px", borderRadius: "7px", iconWidth: "66%" }} 
+                        options={{ containerWidth: "20px", borderRadius: "7px", iconWidth: "66%" }} 
                     />
                 </div>
-                <div class="platform-list__platform-item-text">
-                    <h5>Youtube Music</h5>
-                    <span >Playlists, Live Videos</span>
+                <div class="platform-list__item-text">
+                    <div class="platform-list__item-name">Youtube Music</div>
+                    <div class="platform-list__item-content">Playlists, Live Videos</div>
                 </div>
-                <button 
-                    class={`platform-list__platform-item-btn ${$musicDataStore.musicPlatform === MusicPlatform.YoutubeMusic ? "platform-list__platform-item-btn--selected" : ""} text-only`}
-                    on:click={logOutUser}
-                >
-                    {$musicDataStore.musicPlatform === MusicPlatform.YoutubeMusic ? "Disconnect" : "Connect"}
-                </button>
-            </li>
-            <li class="platform-list__platform-item">
-                <div class="platform-list__platform-item-logo">
+            </div>
+            <button 
+                class={`platform-list__item-btn ${musicStore?.musicPlatform === MusicPlatform.YoutubeMusic ? "platform-list__item-btn--selected" : ""}`}
+                on:click={logOutUser}
+            >
+                {musicStore?.musicPlatform === MusicPlatform.YoutubeMusic ? "Disconnect" : "Connect"}
+            </button>
+        </li>
+        <li class="platform-list__item">
+            <div class="flx">
+                <div class="platform-list__item-logo">
                     <Logo 
                         logo={LogoIcon.AppleMusic} 
-                        options={{ containerWidth: "18px", borderRadius: "7px", iconWidth: "50%" }} 
+                        options={{ containerWidth: "20px", borderRadius: "10px", iconWidth: "50%" }} 
                     />
                 </div>
-                <div class="platform-list__platform-item-text">
-                    <h5>Apple Music</h5>
-                    <span >Playlists, Live Radio</span>
+                <div class="platform-list__item-text">
+                    <div class="platform-list__item-name">Apple Music</div>
+                    <div class="platform-list__item-content">Playlists, Live Radio</div>
                 </div>
-                <button 
-                    class={`platform-list__platform-item-btn ${$musicDataStore.musicPlatform === MusicPlatform.AppleMusic ? "platform-list__platform-item-btn--selected" : ""} text-only`}
-                    on:click={logOutUser}
-                >
-                    {#if $musicDataStore.musicPlatform === MusicPlatform.AppleMusic && $musicDataStore.hasTokenExpired}
-                        Reconnect
-                    {:else}
-                        {$musicDataStore.musicPlatform === MusicPlatform.AppleMusic ? "Disconnect" : "Connect"}
-                    {/if}
-                </button>
-            </li>
-            <li class="platform-list__platform-item">
-                <div class="platform-list__platform-item-logo">
+            </div>
+            <button 
+                class={`platform-list__item-btn ${musicStore?.musicPlatform === MusicPlatform.AppleMusic ? "platform-list__item-btn--selected" : ""}`}
+                on:click={logOutUser}
+            >
+                {#if musicStore?.musicPlatform === MusicPlatform.AppleMusic && musicStore?.hasTokenExpired}
+                    Reconnect
+                {:else}
+                    {musicStore?.musicPlatform === MusicPlatform.AppleMusic ? "Disconnect" : "Connect"}
+                {/if}
+            </button>
+        </li>
+        <li class="platform-list__item">
+            <div class="flx">
+                <div class="platform-list__item-logo">
                     <Logo 
                         logo={LogoIcon.Spotify} 
-                        options={{ containerWidth: "18px", borderRadius: "7px", iconWidth: "80%" }} 
+                        options={{ containerWidth: "19px", borderRadius: "7px", iconWidth: "90%" }} 
                     />
                 </div>
-                <div class="platform-list__platform-item-text">
-                    <h5>Spotify</h5>
-                    <span >Playlists, Podcasts</span>
+                <div class="platform-list__item-text">
+                    <div class="platform-list__item-name">Spotify</div>
+                    <div class="platform-list__item-content">Playlists, Podcasts</div>
                 </div>
-                <button 
-                    class={`platform-list__platform-item-btn ${$musicDataStore.musicPlatform === MusicPlatform.Spotify ? "platform-list__platform-item-btn--selected" : ""} text-only`}
-                    on:click={logOutUser}
-                >
-                    {$musicDataStore.musicPlatform === MusicPlatform.Spotify ? "Disconnect" : "Connect"}
-                </button>
-            </li>
-        </ul>
-    {/if}
+            </div>
+            <button 
+                class={`platform-list__item-btn ${musicStore?.musicPlatform === MusicPlatform.Spotify ? "platform-list__item-btn--selected" : ""}`}
+                on:click={() => requestSpotifyUserAuth()}
+            >
+                {#if musicStore?.musicPlatform === MusicPlatform.Spotify && musicStore?.hasTokenExpired}
+                    Reconnect
+                {:else}
+                    {musicStore?.musicPlatform === MusicPlatform.Spotify ? "Disconnect" : "Connect"}
+                {/if}
+            </button>
+        </li>
+    </ul>
 </div>
 
 <style lang="scss">
     @import "../../scss/brands.scss";
+    @import "../../scss/dropdown.scss";
 
     .active-account-header {
-        @include flex-container(center, _);
-        @include pos-abs-top-right-corner(25px, 35px);
         border-radius: 10px;
+        @include flex(center);
 
+        &--dark .dropdown-menu {
+            @include dropdown-menu-dark;
+        }
         &--light {
             background-color: var(--hoverColor);
         }
@@ -157,32 +190,49 @@
             font-weight: 600;
         }
         
+        &__btn-container {
+            @include flex(center);
+            &:hover .active-account-header__btn-divider {
+                @include not-visible;
+            }
+        }
         &__btn {
-            @include flex-container(center, _);
-            padding: 5px 8px;
+            @include flex(center, _);
+            padding: 5px 8px 5px 8px;
             border-radius: 10px;
-            background-color: var(--hoverColor);
             transition: 0.09s ease-in-out;
-            font-weight: 400;
-            font-size: 1rem;
             
             &:active {
-                transform: translateY(0.45px);
+                transform: scale(0.98);
             }
             &:hover {
-                background-color: var(--hoverColor);
+                @include text-color(0.03, "background");
             }
             span {
-                color: rgba(var(--textColor1), 0.7);
                 margin: 0px 6px 0px 8px;
+                @include text-style(0.7, 400, 1.1rem);
             }
         }
-        &__username {
-            margin: 0px 7px 0px 11px;
-            color: rgba(var(--textColor1), 0.85);
+        &__btn-arrow {
+            opacity: 0.2;
         }
-        &__user-profile-pic {
-            @include circle(20px);
+        &__btn-divider {
+            width: 0.5px;
+            height: 10px;
+            background-color: rgba(var(--textColor1), 0.14);
+            margin: 0px 9px 0px 0px;
+            transition: 0.3s ease-in-out;
+            @include visible;
+        }
+        &__user {
+            @include flex(center);
+        }
+        &__user-name {
+            margin: -1px 9px 0px 0px;
+            @include text-style(0.85, 300, 1.14rem)
+        }
+        &__user-profile-pic img {
+            @include circle(16px);
             background-color: #4E4E4F;
         }
         .fa-chevron-down {
@@ -194,22 +244,16 @@
     .platform-list {
         margin-top: 15px;
         z-index: 10000;
-        width: 220px;
-        @include pos-abs-top-right-corner(20px, 30%);
-        background: var(--hoverColor);
-        box-shadow: var(--bentoBoxShadow);
-        padding: 15px 5px 15px 13px;
+        width: 250px;
+        @include pos-abs-top-right-corner(40px, 25px);
+        padding: 11px 15px 15px 8px;
         border-radius: 18px;
 
-        &--light {
-            background: var(--bentoBoxBgColor);
-        }
-
-        &--light &__platform-item-btn {
+        &--light &__item-btn {
             font-weight: 600 !important;
             font-size: 1rem !important;
         }
-        &--light &__platform-item-text {
+        &--light &__item-text {
             h5 {
                 font-weight: 600;
                 font-size: 1.05rem;
@@ -223,8 +267,8 @@
             }
         }
 
-        &__platform-item {
-            @include flex-container(center, _);
+        &__item {
+            @include flex(center, space-between);
             margin-bottom: 14px;
 
             &:last-child {
@@ -234,31 +278,35 @@
                 margin-bottom: 18px;
             }
         }
-        &__platform-item-logo {
-            margin-right: 7px;
+        &__item-logo {
+            @include flex(center, center);
+            width: 30px;
+            height: 30px;
         }
-        &__platform-item-text {
+        &__item-text {
             margin: -2px 0px 0px 7px;
-            h5 {
-                font-size: 1rem;
-                font-weight: 400;
-            }
-            span {
-                font-size: 1.02rem;
-                color: rgba(var(--textColor1), 0.45);
-                font-weight: 300;
-            }
         }
-        &__platform-item-btn {
-            position: absolute;
-            right: 10px;
+        &__item-name {
+            @include text-style(1, 400, 1.2rem);
+            margin-bottom: 2.5px;
+        }
+        &__item-content {
+            @include text-style(0.4, 300, 1.1rem, "DM Sans");
+        }
+        &__item-btn {
             padding: 7px 0px 7px 10px;
-            color: rgba(var(--textColor1), 0.6);
             transition: 0.1s ease-in-out;
+            float: right;
             width: 60px;
-            font-weight: 400 !important;
-            font-size: 1rem !important;
+            @include text-style(0.6, 400, 1.1rem, "DM Sans");
             @include center;
+
+            &:hover {
+                opacity: 0.4;
+            }
+            &:active {
+                transform: scale(0.95);
+            }
         }
     }
 </style>

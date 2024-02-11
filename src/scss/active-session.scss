@@ -1,3 +1,5 @@
+@import "../../scss/inputs.scss";
+
 /* Actual Active Session Component */
 $bento-box-padding: 8px;
 $todo-padding-left: 8px;
@@ -9,6 +11,10 @@ $todo-padding-left: 8px;
     }
 
     /* Default styling is Light */
+    &--light .input-box {
+        @include input-box--light;
+    }
+
     &--dark .dropdown-menu {
         @include dropdown-menu-dark;
     }
@@ -65,11 +71,7 @@ $todo-padding-left: 8px;
     }
 
     .dropdown-menu {
-        &__option {
-            p {
-                text-align: left;
-            }
-        }
+        width: 150px;
     }
 
     &__bento-box {
@@ -88,7 +90,7 @@ $todo-padding-left: 8px;
     
     /* Header */
     &__header {
-        @include flex-container(flex-start, space-between);
+        @include flex(flex-start, space-between);
         padding-left: 9px;
     }
     &__header-session-name {
@@ -100,7 +102,7 @@ $todo-padding-left: 8px;
         @include elipses-overflow;
     }
     &__header-time-period {
-        @include flex-container(center, _);
+        @include flex(center, _);
         margin-top: 5px;
         span {
             font-size: 1.25rem;
@@ -117,7 +119,7 @@ $todo-padding-left: 8px;
         }
     }
     &__header-session-tag {
-        @include flex-container(center, center);
+        @include flex(center, center);
         color: white;
         border-radius: 25px;
         font-size: 1.1rem;
@@ -147,7 +149,7 @@ $todo-padding-left: 8px;
         color: rgba(var(--textColor1), 0.42);
     }
     &__pom-timer {
-        // @include flex-container(baseline, center);
+        // @include flex(baseline, center);
         h1 {
             font-size: 5rem;
             font-weight: 500;
@@ -158,7 +160,7 @@ $todo-padding-left: 8px;
     &__conclude-btn-container {
         margin-top: 20px;
         width: 100%;
-        @include flex-container(center, center);
+        @include flex(center, center);
     }
     &__conclude-btn {
         // margin: 20px 0px 0px 0px;
@@ -179,7 +181,7 @@ $todo-padding-left: 8px;
         margin-top: 20px;
     }
     &__tasks-header {
-        @include flex-container(center, space-between);
+        @include flex(center, space-between);
         h4 {
             margin: 2px 0px 5px $todo-padding-left;
             font-size: 1.45rem;
@@ -223,10 +225,9 @@ $todo-padding-left: 8px;
         opacity: 0.35;
         height: 33px;
         margin: 4px 0px 8px calc($todo-padding-left + 5px);
-        font-size: 1.3rem;
         padding-right: 20px;
-        @include flex-container(center, center);
-        color: rgb(var(--textColor1), 1);
+        @include flex(center, center);
+        @include text-style(1, 500, 1.3rem);
 
         span {
             font-size: 1.5rem;
@@ -242,13 +243,8 @@ $todo-padding-left: 8px;
             opacity: 1;
         }
     }
-    &__tasks-new-todo-input-container {
-        margin: -2px 0px 0px 3px;
-        @include flex-container(center, space-between);
-
-        form {
-            width: 100%;
-        }
+    &__new-task-input-container {
+        margin: 5px 0px 0px 3px;
     }
     &__tasks-new-todo-input {
         cursor: text;
@@ -271,26 +267,6 @@ $todo-padding-left: 8px;
             opacity: 0.6;
         }
     }
-    &__tasks-new-todo-btn-container {
-        margin: 8px 0px 0px -5px;
-        display: flex;
-        button {
-            @include center;
-            color: rgb(var(--fgColor2));
-            border-color: rgb(var(--fgColor2));
-            padding: 6px 12px 6px 12px;
-
-            &:active {
-                transform: scale(0.98);
-            }
-            &:hover {
-                background: rgb(var(--fgColor2));
-            }
-            &:first-child {
-                margin-right: 5px;
-            }
-        }
-    }
     &__tasks-add-btn {
         &:disabled {
             opacity: 0.5;
@@ -310,7 +286,7 @@ $todo-padding-left: 8px;
 /* Todo Component in Subtasks Section */
 .active-session-todo {
     position: relative;
-    @include flex-container(center, _);
+    @include flex(center, _);
     border: 0.5px solid rgba(var(--textColor1), 0);
     padding-left: $todo-padding-left;
     border-radius: 15px;
@@ -476,7 +452,7 @@ $todo-padding-left: 8px;
 
         form {
             width: 100%;
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
             position: relative;
         }
         input {

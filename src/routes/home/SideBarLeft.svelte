@@ -1,22 +1,32 @@
 <script lang="ts">
     import { ModalType } from "$lib/enums"
     import { getThemeFromSection, setNewTheme } from "$lib/utils-appearance"
-	import { themeState, musicPlayerStore } from "$lib/store"
-	import { openModal } from "$lib/utils-home"
+	import { themeState, musicPlayerStore, homeViewLayout } from "$lib/store"
+	import { hideWideMenuBar, openModal, showWideMenuBar } from "$lib/utils-home"
 	import { onMount } from "svelte";
 	import { getElemById } from "$lib/utils-general";
-	import { text } from "svelte/internal";
 	import SideBarCalendar from "./SideBarCalendar.svelte";
-
-    let selectedTxtButtonElement: HTMLElement
-    let selectTextTabModifier = ""
+	import { goto } from "$app/navigation";
 
     enum TextTab {
         Workspace, Productivity, Goals, Habits, Mindhub
     }
 
+    const NAV_MENU_NARROW_BAR_WIDTH = 58
+    const NAV_MENU_WIDE_BAR_WIDTH = 220
+
+    let selectedTxtButtonElement: HTMLElement
+    let selectTextTabModifier = ""
+    let initDragXPos = -1
+    let isWideBarMenuOpen = true
+
+    $: {
+        isWideBarMenuOpen = $homeViewLayout.isLeftWideMenuOpen
+    }
+
     $: {
         const isDefaultTheme = ["Dark Mode", "Light Mode"].includes($themeState.title)
+        removeSelectTabBtnStyling()
 
         if (isDefaultTheme) {
            selectTextTabModifier = $themeState.title === "Light Mode" ? "--selected--light-default" : "--selected--dark-default"
@@ -24,7 +34,44 @@
         else {
            selectTextTabModifier = "--selected"
         }
+
+        selectTabBtn(selectedTxtButtonElement)
     }
+
+    function onResizerClicked(event: Event) {
+        const pe = event as PointerEvent
+
+        window.addEventListener("mousemove", onResizerDrag)
+        window.addEventListener("mouseup", onResizerEndDrag)
+
+        initDragXPos = pe.clientX
+    }
+    function onResizerDrag(event: Event) {
+        const pe = event as MouseEvent
+        const newDragXOffSet = pe.clientX
+        const xOffset = initDragXPos - newDragXOffSet
+
+        pe.preventDefault()
+
+        if (xOffset > 0 && isWideBarMenuOpen) {
+            hideWideMenuBar()
+            removeDragEventListener()
+        }
+        else if (xOffset < 0 && !isWideBarMenuOpen) {
+            showWideMenuBar()
+            removeDragEventListener()
+        }
+    }
+    function onResizerEndDrag() {
+        removeDragEventListener()
+    }
+    function removeDragEventListener() {
+        initDragXPos = -1
+
+        window.removeEventListener("mousemove", onResizerDrag)
+        window.removeEventListener("mouseup", onResizerEndDrag)
+    }
+
     
     function handleToggleThemeMode() {
         const title = $themeState!.twinTheme!.sectionName as keyof AppearanceSectionToThemeMap
@@ -35,39 +82,44 @@
         console.log(event)
     }
 
-
+    function removeSelectTabBtnStyling() {
+        if (!selectedTxtButtonElement) return
+        selectedTxtButtonElement.classList.remove(`nav-menu__txt-tab-btn${selectTextTabModifier}`)
+    }
     function selectTabBtn(buttonElem: HTMLElement) {
+        if (!buttonElem) return
+
         buttonElem.classList.add(`nav-menu__txt-tab-btn${selectTextTabModifier}`)
         selectedTxtButtonElement = buttonElem
     }
     function handleTxtButtonClicked(event: Event, textTab: TextTab) {
-        selectedTxtButtonElement.classList.remove(`nav-menu__txt-tab-btn${selectTextTabModifier}`)
-
+        removeSelectTabBtnStyling()
         const target = event.target! as HTMLElement
         selectTabBtn(target.tagName === "BUTTON" ? target : target.parentElement!)
 
         if (textTab === TextTab.Workspace) {
-
+            goto("/home")
         }
         else if (textTab === TextTab.Productivity) {
-            
+            goto("/home/productivity")
         }
         else if (textTab === TextTab.Goals) {
+            goto("/home/goals")
         }
         else if (textTab === TextTab.Habits) {
-
+            goto("/home/habits")
         }
         else {
-
+            goto("/home/mind-hub")
         }
     }
     onMount(() => {
-        const workspaceTabBtn = getElemById("workspace-btn")! as HTMLButtonElement
+        const workspaceTabBtn = getElemById(`workspace-btn--${TextTab.Workspace}`)! as HTMLButtonElement
         selectTabBtn(workspaceTabBtn)
     })
 </script>
 
-<nav class={`nav-menu ${$themeState.isDarkTheme ? "nav-menu--dark-theme" : ""}`}>
+<div class={`nav-menu ${$themeState.isDarkTheme ? "nav-menu--dark-theme" : "nav-menu--light-theme"}`}>
     <!-- Narrow Bar -->
     <div class="nav-menu__narrow-bar">
         <div>
@@ -76,15 +128,15 @@
             </span>
             <div class="nav-menu__divider"></div>
             <div class={`nav-menu__icon-tabs ${$themeState.isDarkTheme ? "nav-menu__icon-tabs--dark-theme" : ""} nav-menu__icon-tabs--${$themeState.title === "Dark Mode" ? "dark-default" : ($themeState.title === "Light Mode" ? "light-default" : "simple-styling")}`}>
-                <button on:click={() => openModal(ModalType.Appearance)} class={"nav-menu__icon-tab nav-menu__icon-tab--appearance tool-tip-container"}>
+                <button on:click={() => openModal(ModalType.Appearance)} class="nav-menu__icon-tab nav-menu__icon-tab--appearance">
                     <!-- <span class="tool-tip-text tool-tip-text--left">Appearance</span> -->
                     <i class="fa-solid fa-brush"></i>
                 </button>
-                <button on:click={() => openModal(ModalType.Music)} class="nav-menu__icon-tab nav-menu__icon-tab--music tool-tip-container">
+                <button on:click={() => openModal(ModalType.Music)} class="nav-menu__icon-tab nav-menu__icon-tab--music">
                     <!-- <span class="tool-tip-text tool-tip-text--left">Music</span> -->
                     <i class="fa-solid fa-compact-disc"></i>
                 </button>
-                <button on:click={() => openModal(ModalType.Youtube)} class="nav-menu__icon-tab nav-menu__icon-tab--vid tool-tip-container">
+                <button on:click={() => openModal(ModalType.Youtube)} class="nav-menu__icon-tab nav-menu__icon-tab--vid">
                     <!-- <span class="tool-tip-text tool-tip-text--left">Youtube</span> -->
                     <i class="fa-brands fa-youtube"></i>
                 </button>
@@ -155,60 +207,80 @@
         <div class="nav-menu__divider"></div>
     </div>
     <!-- Wide Bar -->
-    <div class="nav-menu__wide-bar">
+    <div class="nav-menu__wide-bar" style={`${!isWideBarMenuOpen ? "display: none;" : ""}`}>
         <!-- Tab Buttons -->
         <div class={`nav-menu__txt-tabs nav-menu__txt-tabs--${$themeState.title === "Dark Mode" ? "dark-default" : ($themeState.title === "Light Mode" ? "light-default" : "simple-styling")}`}>
-            <button class="nav-menu__txt-tab-btn nav-menu__txt-tab-btn--workspace" id="workspace-btn" on:click={(e) => handleTxtButtonClicked(e, TextTab.Workspace)}>
+            <button class={`nav-menu__txt-tab-btn nav-menu__txt-tab-btn--workspace`} id="workspace-btn--0" on:click={(e) => handleTxtButtonClicked(e, TextTab.Workspace)}>
                 <i class="fa-solid fa-ruler-combined nav-menu__txt-tab-btn-icon"></i>
                 <span>Workspace</span>
             </button>
-            <button class="nav-menu__txt-tab-btn nav-menu__txt-tab-btn--productivity" on:click={(e) => handleTxtButtonClicked(e, TextTab.Productivity)}>
+            <button class={`nav-menu__txt-tab-btn nav-menu__txt-tab-btn--productivity`} on:click={(e) => handleTxtButtonClicked(e, TextTab.Productivity)}>
                 <i class="fa-solid fa-chart-line nav-menu__txt-tab-btn-icon"></i>
                 <span>Productivity</span>
             </button>
-            <button class="nav-menu__txt-tab-btn nav-menu__txt-tab-btn--goals" on:click={(e) => handleTxtButtonClicked(e, TextTab.Goals)}>
+            <button class={`nav-menu__txt-tab-btn nav-menu__txt-tab-btn--goals`} on:click={(e) => handleTxtButtonClicked(e, TextTab.Goals)}>
                 <i class="fa-solid fa-bullseye nav-menu__txt-tab-btn-icon"></i>
                 <span>Goals</span>
             </button>
-            <button class="nav-menu__txt-tab-btn nav-menu__txt-tab-btn--habits" on:click={(e) => handleTxtButtonClicked(e, TextTab.Habits)}>
+            <button class={`nav-menu__txt-tab-btn nav-menu__txt-tab-btn--habits`} on:click={(e) => handleTxtButtonClicked(e, TextTab.Habits)}>
                 <i class="fa-solid fa-cubes-stacked nav-menu__txt-tab-btn-icon"></i>
                 <span>Habits</span>
             </button>
-            <button class="nav-menu__txt-tab-btn nav-menu__txt-tab-btn--mindhub" on:click={(e) => handleTxtButtonClicked(e, TextTab.Mindhub)}>
+            <button class={`nav-menu__txt-tab-btn nav-menu__txt-tab-btn--mindhub`} on:click={(e) => handleTxtButtonClicked(e, TextTab.Mindhub)}>
                 <i class="fa-solid fa-spa nav-menu__txt-tab-btn-icon"></i>
                 <span>Mindhub</span>
             </button>
         </div>
-        <div class="nav-menu__wide-bar-resize" on:resize={onWideBarResize}></div>
         <!-- Calendar / Day View -->
         <div class="nav-menu__calendar-container">
             <SideBarCalendar/>
         </div>
     </div>
-</nav>
+    <div class="nav-menu__wide-bar-resize" on:mousedown={onResizerClicked}></div>
+</div>
 
 <style lang="scss">
-    $nav-menu-narrow-bar-width: 60px;
-    $nav-menu-side-bar-width: 220px;
-    $nav-menu-width: $nav-menu-narrow-bar-width + $nav-menu-side-bar-width;
+    $nav-menu-width: 58px;
 
     .nav-menu {
         height: 100%;
         left: 0px;
         display: flex;
-
+        position: relative;
+        
+        &--light-theme &__txt-tab-btn span {
+            opacity: 0.64;
+            @include text-style(1, 500);
+        }
+        &--light-theme &__txt-tab-btn-icon {
+            @include text-style(1);
+            opacity: 0.48;
+        }
+        &--light-theme &__txt-tabs {
+            padding-left: 3px;
+        }
+        
         &__narrow-bar {
-            width: $nav-menu-narrow-bar-width;
+            background-color: var(--navMenuBgColor);
             position: relative;
             flex-direction: column;
             padding: 8.5px 10px 12px 10px;
             text-align: center;
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
+            z-index: 1;
+            box-shadow: var(--navMenuBoxShadow);
+            border-right: var(--navMenuBorder);
+            width: $nav-menu-width;
+            position: relative;
         }
         &__wide-bar {
-            width: $nav-menu-side-bar-width;
+            background-color: var(--wideLeftBarColor);
+            box-shadow: var(--wideLeftBarBoxShadow);
+            border-right: var(--wideLeftBarBorder);
+            border-top: 0px solid;
             padding: 8px 0px 0px 5px;
             position: relative;
+            // border-top-left-radius: 18px;
         }
         &__calendar-container {
             height: calc(100% - 150.5px);
@@ -216,8 +288,9 @@
         }
         &__temp-logo {
             font-family: "Apercu";
-            @include text-style(1, 500, 1.8rem);
+            @include text-style(_, 500, 1.8rem);
             position: relative;
+            color: var(--navIconColor);
 
             &:after {
                 content: " ";
@@ -227,8 +300,8 @@
             }
         }
         &__divider {
-            @include divider(rgba(white, 0.1), 0.5px, 25px);
-            margin: 12px auto;
+            @include divider(rgba(white, 0), 0.5px, 25px);
+            margin: 8px auto;
         }
         &__divider:last-child {
             @include divider(rgba(white, 0.045), 100%, 0.5px);
@@ -285,7 +358,7 @@
             border-radius: 15px;
             transition: 0.14s ease-in-out;
             background-color: var(--navIconBgColor);
-            @include flex-container(center, center);
+            @include flex(center, center);
             
             &:active {
                 transform: scale(0.91);
@@ -312,6 +385,8 @@
             }
         }
         &__txt-tabs {
+            margin-bottom: -7px;
+
             &--dark-theme .nav-menu__txt-tab-btn {
                 &:focus {
                     filter: brightness(1.3) !important;
@@ -334,14 +409,9 @@
                     background-color: #fff4f7 !important;
                 }
             }
-            &--simple-styling {
-                i {
-                    color: var(--navIconColor) !important;
-                }
-            }
         }
         &__txt-tab-btn {
-            @include flex-container(center);
+            @include flex(center);
             padding: 5px 8px 5px 11px;
             transition: 0.04s ease-in-out;
             width: calc(100% - 27px);
@@ -350,8 +420,7 @@
             border: 0.5px solid transparent;
         
             &:hover {
-                background-color: rgba(white, 0.02);
-                border: 0.5px solid rgba(white, 0.02);
+                background-color: var(--wideLeftBarTabColor);
             }
             &:hover span {
                 opacity: 1;
@@ -374,7 +443,11 @@
 
             // default styling
             &--selected {
-
+                background-color: var(--wideLeftBarTabColor) !important;
+            }
+            &--selected i {
+                color: var(--wideLeftBarTabIconColor) !important;
+                opacity: 1 !important;
             }
 
             // dark default styling
@@ -423,8 +496,8 @@
             }
         }
         &__wide-bar-resize {
-            @include pos-abs-top-right-corner;
-            width: 3px;
+            @include pos-abs-top-right-corner(0px, -5px);
+            width: 5px;
             height: 100%;
             cursor: ew-resize;
         }
@@ -462,7 +535,7 @@
             position: relative;
             width: 100%;
             height: 100%;
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
             flex-direction: column;
         }
         &__sun {

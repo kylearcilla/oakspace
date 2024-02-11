@@ -1,3 +1,9 @@
+@mixin blur-bg($blur-val: 80px, $bg: rgba(91, 91, 91, 0.5)) {
+    backdrop-filter: blur($blur-val);
+    -webkit-backdrop-filter: blur($blur-val);
+    background: $bg;
+}
+
 .img-bg {
     width: 100%;
     height: 100%;
@@ -11,9 +17,7 @@
     height: 100%;
     border-radius: 6px;
     z-index: 0;
-    background: rgba(91, 91, 91, 0.5);
-    backdrop-filter: blur(80px);
-    -webkit-backdrop-filter: blur(80px);
+    @include blur-bg;
 
     &--solid-color {
         -webkit-backdrop-filter: none;

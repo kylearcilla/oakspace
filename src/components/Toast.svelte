@@ -85,7 +85,7 @@
         padding: 9px 14px 8px 35px;
         background-color: var(--navMenuBgColor);
         animation: 0.7s cubic-bezier(.13, 1, .5, .94) 0.8s slide-up forwards;
-        z-index: 694206;
+        z-index: 9900000;
         
         &--light {
             background-color: var(--midPanelBaseColor);
@@ -115,7 +115,7 @@
         }
 
         &__header {
-            @include flex-container(center, _);
+            @include flex(center, _);
             position: relative;
             margin-bottom: 4px;
         }
@@ -130,6 +130,14 @@
             @include pos-abs-top-right-corner(-5px, 0px);
             font-size: 1.8rem !important;
             font-weight: 100 !important;
+            transition: 0.12s ease-in-out;
+
+            &:hover {
+                overflow: 0.5;
+            }
+            &:active {
+                transform: scale(0.9) !important;
+            }
         }
         &__text {
             margin-bottom: 8px;
@@ -139,7 +147,7 @@
             max-width: 250px;
         }
         &__action-btn {
-            @include flex-container(center, flex-end);
+            @include flex(center, flex-end);
             margin-bottom: 6px;
             
             button {

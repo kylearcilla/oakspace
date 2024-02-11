@@ -97,8 +97,8 @@
 <style lang="scss">
     .shortcuts {
         width: 100%;
-        height: 75%;
-        @include flex-container(center, center);
+        height: 100%;
+        @include flex(center, center);
 
         &--light-theme &__command-title {
             color: rgba(var(--textColor1), 0.22);
@@ -119,27 +119,24 @@
             padding-top: 3px;
             width: 140px;
             margin-right: 28px;
-            font-size: 1.45rem;
-            font-weight: 300;
             color: rgba(var(--textColor1), 0.15);
+            @include text-style(0.15, 300, 1.45rem, "DM Sans");
         }
         &__command-keys {
-            @include flex-container(center, _);
+            @include flex(center, _);
         }
         &__command-key-container {
             position: relative;
         }
         &__command-key {
             @include center;
-            font-size: 1.1rem;
             transition: 0.1s ease-in-out;
             padding: 5.5px 15px;
             margin-right: 7px;
             border-radius: 20px;
             background-color: var(--midPanelAccentColor1);
-            color: rgba(var(--textColor1), 0.3);
-            font-weight: 300;
             transform: translateY(0px);
+            @include text-style(0.3, 300, 1.1rem, "DM Mono");
             
             &--bg {
                 transform: translateY(5px);

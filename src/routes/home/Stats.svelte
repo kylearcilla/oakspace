@@ -1011,11 +1011,11 @@
             }
         }
         &__bento-box-header {
-            @include flex-container(baseline, space-between);
+            @include flex(baseline, space-between);
         }
         &__header {
             margin: 0px $bento-box-padding 14px 0px;
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
 
             h2 {
                 font-size: 1.45rem;
@@ -1098,7 +1098,7 @@
             }
         }
         &__stat-header {
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
             height: 27px;
         }
         &__stat-header-icon {
@@ -1184,7 +1184,7 @@
             font-weight: 300;
             &--tag-name {
                 width: 43%;
-                @include flex-container(center, _);
+                @include flex(center, _);
             }
             &--avg {
                 text-align: center;
@@ -1206,7 +1206,7 @@
             overflow-y: scroll;
         }
         &__list-item {
-            @include flex-container(center, _);
+            @include flex(center, _);
             margin-bottom: 6px;
         }
         &__list-item-color {
@@ -1261,7 +1261,7 @@
     .tag-overview {
         height: 72%;
         &__header {
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
             margin-bottom: 12px;
         }
 
@@ -1287,7 +1287,7 @@
         position: relative;
 
         &__header {
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
         }
     }
  </style>

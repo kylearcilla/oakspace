@@ -1,10 +1,11 @@
-import { tasksViewStore } from "./store";
+import { tasksViewStore, themeState } from "./store";
 import { ContextMenuOption, TaskSettingsOptions, RightSideTab } from "./enums"
 import { getElemById, getElemNumStyle } from "./utils-general"
 import { 
         MAX_X_CONTEXT_MENU_POS, SUBTASK_HEIGHT, 
         TASK_BOTTOM_PADDING, TASK_HEIGHT_MIN_NO_DESCR 
 } from "$lib/utils-right-bar"
+import { get } from "svelte/store";
 
 
 /**
@@ -47,8 +48,9 @@ export class TasksViewManager {
     
     /* Task Context Menu */
     hasJustClosedContextMenu = false
-    contextMenuX = -1
-    contextMenuY = -1
+    isContextMenuOpen = false
+    contextMenuX: number | null = null
+    contextMenuY: number | null = null
     
     rightClickedTask: null | { task: Task, idx: number }  = null
     rightClickedSubtask: null | { subtask: SubTask, idx: number } = null
@@ -358,33 +360,39 @@ export class TasksViewManager {
      * Close an open context menu.
      */
     closeContextMenu() {
-        this.contextMenuX = -1
-        this.contextMenuY = -1
-        this.rightClickedSubtask = null
-        this.rightClickedTask = null
-        this.hasJustClosedContextMenu = true
+        this.isContextMenuOpen = false
+        this.updateTaskViewState({ isContextMenuOpen: false })
+        
+        // allow for dropdown-menu fade out animation to finish
+        setTimeout(() => {
+            this.contextMenuX = null
+            this.contextMenuY = null
+            this.rightClickedSubtask = null
+            this.rightClickedTask = null
+            this.hasJustClosedContextMenu = true
 
-        this.updateTaskViewState({
-            contextMenuX: this.contextMenuX,
-            contextMenuY: this.contextMenuY,
-            rightClickedSubtask: this.rightClickedSubtask,
-            rightClickedTask: this.rightClickedTask,
-        })
+            this.updateTaskViewState({
+                rightClickedSubtask: this.rightClickedSubtask,
+                rightClickedTask: this.rightClickedTask,
+                contextMenuX: this.contextMenuX,
+                contextMenuY: this.contextMenuY
+            })
+        }, 100)
     }
 
     /**
      * Open a context menu. 
      * Two types, one for a task and subtask. Uses target element class to distinguish.
-     * @param event         Right click event
+     * @param event         Pointer event from right click
      * @param taskIdx       Task idx user has right clicked
      * @param subtaskIdx    Subtask idx whose settings btn user has right clicked. Will be < 0 if user clicked on task instead.
      *                      If subtask elem itself was clicked, the idx will be captured from the id of target elem. 
      * @returns 
      */
-    openMilestoneContextMenu(event: MouseEvent, taskIdx: number, subtaskIdx = -1) {
-        const target = event.target as HTMLElement
+    openMilestoneContextMenu(event: Event, taskIdx: number, subtaskIdx = -1) {
+        const pe = event as PointerEvent
+        const target = pe.target as HTMLElement
         const targetClass = target.classList.value
-
         
         if (["INPUT", "TEXTAREA", "H3", "SPAN"].includes(target.tagName) || targetClass.includes("checkbox")) { 
             this.contextMenuX = -1
@@ -392,10 +400,14 @@ export class TasksViewManager {
             return
         }
 
-        event.preventDefault()
+        pe.preventDefault()
+
+        const isDarkTheme = get(themeState).isDarkTheme
+        const Y_OFFSET = isDarkTheme ? 110 : 170
         
-        this.contextMenuX = subtaskIdx >= 0 ? MAX_X_CONTEXT_MENU_POS : Math.min(event.offsetX, MAX_X_CONTEXT_MENU_POS)
-        this.contextMenuY = event.clientY
+        this.contextMenuX = subtaskIdx >= 0 ? MAX_X_CONTEXT_MENU_POS : Math.min(pe.offsetX, MAX_X_CONTEXT_MENU_POS)
+        this.contextMenuY = pe.clientY - Y_OFFSET
+        this.isContextMenuOpen = true
 
         if (targetClass.includes("subtask") || subtaskIdx >= 0) {
             const clickedSubtaskIdx = subtaskIdx >= 0 ? subtaskIdx : parseInt(target.id.split("--")[1])
@@ -410,6 +422,7 @@ export class TasksViewManager {
             contextMenuY: this.contextMenuY,
             rightClickedSubtask: this.rightClickedSubtask,
             rightClickedTask: this.rightClickedTask,
+            isContextMenuOpen: true
         })
     }
 
@@ -1139,6 +1152,7 @@ export class TasksViewManager {
         if (newState.taskGroups != undefined)                   newStateObj.taskGroups = newState.taskGroups
         if (newState.isEditingGroup != undefined)               newStateObj.isEditingGroup = newState.isEditingGroup
         if (newState.isMakingNewGroup != undefined)             newStateObj.isMakingNewGroup = newState.isMakingNewGroup
+        if (newState.isContextMenuOpen != undefined)            newStateObj.isContextMenuOpen = newState.isContextMenuOpen
 
         return newStateObj
     }

@@ -23,7 +23,7 @@
     position: relative;
 
     &__container {
-        @include flex-container(center, _);
+        @include flex(center, _);
         margin-bottom: 12px;
         transition: 0.15s ease-in-out;
     }

@@ -74,6 +74,7 @@ type HomeLayout = {
     isVideoViewOpen: boolean,
     isMusicPlayerOpen: boolean,
     minModeSrc: string | null,
+    isLeftWideMenuOpen: boolean,
     shortcutsFocus: ShortcutSectionInFocus
     modalsOpen: ModalType[]
 }
@@ -187,15 +188,48 @@ type ProgressVisualPart = {
 }
 
 /* Music Stuff */
-type Track = {
-    id: string;
-    name: string;
-    artist: string;
-    collection: string;
-    artworkImgSrc: string;
-    playlistId: string;
-    playlistName: string;
-    playlistArtworkSrc: string;
+// music player plays media
+type UserLibraryCollection = {
+    items: Album[] | Playlist[] | Track[] | AudioBook[] | PodcastEpisode[]
+    hasFetchedAll: boolean
+    offset: number
+    totalItems: number
+}
+
+interface Media {
+    id: string
+    name: string
+    author: string
+    authorUrl: string
+    artworkImgSrc: string
+    genre: string
+    url: string
+}
+
+interface Playlist extends Media {
+    length: number
+    description: string
+}
+interface Album extends Media {
+    length: number
+    description: string
+}
+interface Track extends Media {
+    duration: number
+    album: string
+    albumId: string
+    playlistId: string
+}
+interface PodcastEpisode extends Media {
+    description: string
+    duration: number
+}
+interface RadioStation extends Media {
+    description: string
+    isLive: boolean
+}
+interface AudioBook extends Media {
+    description: string
 }
 
 type MusicCollection = {
@@ -234,7 +268,7 @@ type MusicShufflerData = {
 type MusicPlatformPropNames = "appleMusic"
 
 type DiscoverCollection = {
-    [platform in MusicPlatformPropNames]: MusicCollection[]
+    [platform in MusicPlatformPropNames]: Media[]
 }
 
 type MusicContext = {
@@ -256,6 +290,8 @@ type MusicCollectionCategoryCollections = {
     soundcloud: MusicCollection[]
 }
 
+type MusicUserDataChildren = AppleMusicUserData | SpotifyMusicUserData
+
 /* Apple Music Stuff */
 type AppleMusicUserCollection = {
     artworkSrc: string
@@ -269,6 +305,28 @@ type AppleMusicUserCollection = {
 type AppleUserCredentials = {
     devToken: string,
     musicUserToken: string
+}
+
+/* Spotify Music Stuff */
+type SpotifyInitData = {
+    accessToken: string
+    expiresIn: number
+    refreshToken: string
+    authCode: string
+}
+type SpotifyAuthTokenResponse = {
+    access_token: string
+    expires_in: number
+    scope: string
+    refresh_token: string
+    tokenType: string
+}
+type MusicUserDetails = {
+    id: string,
+    username: string,
+    url: string,
+    isPremiumUser: boolean
+    profileImg: string
 }
 
 /* Youtube Stuff */
@@ -485,14 +543,14 @@ type TagMonthlyActivity = {
   
 /* Theme Stuff */
 type ThemeState = {
-    title: string,  
-    isDarkTheme: boolean,
-    themeToggleBtnIconColor: string,
+    title: string
+    isDarkTheme: boolean
+    themeToggleBtnIconColor: string
     twinTheme: { sectionName: keyof AppearanceSectionToThemeMap, index: number } | null
 }
 
 interface Theme {
-    title: string,
+    title: string
     sectionDetails: { title: keyof AppearanceSectionToThemeMap, index: number }
 }
 
@@ -513,81 +571,85 @@ interface ImageTheme extends Theme {
 }
 
 interface VideoTheme extends Theme {
-    vidSrc: string,
-    thumbnailSrc: string,
+    vidSrc: string
+    thumbnailSrc: string
     channelName: string
 }
 
 type ColorThemeProps = {
-    isDark: boolean,
-    hasTwin: boolean,
-    isHeaderElementTextLight: boolean,
-    primaryBgColor: string,
-    fgColor1: string,
-    fgColor2: string,
-    sessionBgColor: string,
-    sessionBorderVal: string,
-    sessionShadowVal: string,
-    textColor1: string,
-    textColor2: string,
-    hoverColor: string,
-    hoverColor2: string,
-    hoverColor3: string,
-    tabColor: string,
-    tabHighlightColor: string,
-    tabHighlightBoxShadow: string,
-    headerElementBgColor: string,
-    headerElementBorderVal: string,
-    headerElementTextColor: string,
-    headerElementShadow: string,
-    headerTimeColor: string,
-    headerProgressColor1: string,
-    headerProgressColor2: string,
-    headerTrackColor1: string,
-    headerTrackColor2: string,
-    baseProgressColor1: string,
-    baseProgressColor2: string,
-    baseTrackColor1: string,
-    baseTrackColor2: string,
-    progressBallGlow: string,
-    modalBgAccentColor: string,
-    modalBgColor: string,
-    bentoBoxBgColor: string,
-    bentoBoxBorder: string,
-    bentoBoxShadow: string,
-    muiscPlayerBgColor: string,
-    musicProgressFgColor: string,
-    navMenuBgColor: string,
-    navIconColor: string,
-    navIconBgColor: string,
-    themeToggleBtnBgColor: string,
-    iconToggleBtnBgColor: string,
-    highlighterToggleBtnBgColor: string,
-    midPanelBorder: string,
-    midPanelShadow: string,            
-    midPanelBaseColor: string,
-    midPanelAccentColor1: string,
-    midPanelAccentColor2: string,
-    midPanelAccentColor3: string,
-    midPanelAccentTextColor: string,
-    sidePanelBorder: string,
-    sidePanelShadow: string,
-    sidePanelTabBgColor: string,
-    sidePanelTabHighlightColor: string,
-    sidePanelContextMenuBgColor: string,
-    sidePanelContextMenuHoverColor: string,
-    sidePanelContextMenuBorder: string,
-    sidePanelContextMenuBoxShadow: string,
-    sidePanelLightAccentColor: string,
-    rightBarBgColor: string,
-    rightBarBgBoxShadow: string,
-    tasksCheckBoxColorDefault: string,
-    tasksCheckBoxColorComplete: string,
-    tasksSubtaskFocusColor: string,
-    tasksCheckColor: string,
-    tasksLightTextColor: string,
-    dropdownMenuBgColor1: string,
-    dropdownMenuBgHoverColor1: string,
-    dropdownMenuBgColor2: string
-    dropdownMenuBgHoverColor2: string
+    isDark: boolean
+    hasTwin: boolean
+    primaryBgColor: string
+    fgColor1: string
+    fgColor2: string
+    sessionBgColor: string
+    sessionBorderVal: string
+    sessionShadowVal: string
+    textColor1: string
+    textColor2: string
+    hoverColor: string
+    hoverColor2: string
+    hoverColor3: string
+    tabColor: string
+    tabHighlightColor: string
+    tabHighlightBoxShadow: string
+    headerBgColor: string
+    headerBorder: string
+    headerBoxShadow: string
+    headerTextColor: string
+    headerIconColor: string
+    headerProgressColor1: string
+    headerProgressColor2: string
+    headerTrackColor1: string
+    headerTrackColor2: string
+    baseProgressColor1: string
+    baseProgressColor2: string
+    baseTrackColor1: string
+    baseTrackColor2: string
+    progressBallGlow: string
+    pomToolTipBgColor: string
+    pomToolTipTextColor: string
+    modalBgAccentColor: string
+    modalBgColor: string
+    bentoBoxBgColor: string
+    bentoBoxBorder: string
+    bentoBoxShadow: string
+    muiscPlayerBgColor: string
+    musicProgressFgColor: string
+    navMenuBgColor: string
+    navIconColor: string
+    navIconBgColor: string
+    navMenuBorder: string
+    navMenuBoxShadow: string
+    wideLeftBarColor: string
+    wideLeftBarBorder: string
+    wideLeftBarBoxShadow: string
+    wideLeftBarTabColor: string
+    wideLeftBarTabIconColor: string
+    sessionBlockColor: string
+    rightBarMindNoteBgColor: string
+    themeToggleBtnBgColor: string
+    iconToggleBtnBgColor: string
+    highlighterToggleBtnBgColor: string
+    midPanelBorder: string
+    midPanelShadow: string            
+    midPanelBaseColor: string
+    midPanelAccentColor1: string
+    midPanelAccentColor2: string
+    midPanelAccentColor3: string
+    midPanelAccentTextColor: string
+    sidePanelBorder: string
+    sidePanelShadow: string
+    sidePanelTabBgColor: string
+    sidePanelTabHighlightColor: string
+    sidePanelLightAccentColor: string
+    rightBarBgColor: string
+    rightBarBgBoxShadow: string
+    tasksCheckBoxColorDefault: string
+    tasksCheckBoxColorComplete: string
+    tasksSubtaskFocusColor: string
+    tasksCheckColor: string
+    tasksLightTextColor: string
+    dropdownMenuBgColor1: string
+    dropdownMenuBgHoverColor1: string
 }

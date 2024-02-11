@@ -382,7 +382,7 @@
             position: sticky;
             height: 30px;
             min-width: 100px;
-            @include flex-container(center, flex-end);
+            @include flex(center, flex-end);
             visibility: hidden;
             opacity: 0;
             
@@ -502,7 +502,7 @@
                 font-weight: 500;
             }
             &-caption {
-                @include flex-container(center, _);
+                @include flex(center, _);
                 color: rgba(var(--textColor1), 0.55);
                 @include elipses-overflow;
                 display: block;
@@ -566,7 +566,7 @@
             font-weight: 500;
         }
         &__input-btn {
-            @include flex-container(center, _);
+            @include flex(center, _);
             color: rgba(var(--textColor1), 0.55);
             @include elipses-overflow;
             display: block;

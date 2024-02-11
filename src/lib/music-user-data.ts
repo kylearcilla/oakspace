@@ -1,4 +1,4 @@
-import type { MusicPlatform } from "./enums"
+import type { MusicPlatform, UserLibraryMedia } from "./enums"
 
 
 /**
@@ -7,22 +7,22 @@ import type { MusicPlatform } from "./enums"
  * The player itself is a svelte store object / reactive class, initialized during instantiation.
  */
 export abstract class MusicUserData {
-    abstract isUserASubscriber: boolean
     abstract isSignedIn: boolean
-    abstract hasTokenExpired: boolean
-    abstract userPlaylistsOffset: number
-    abstract hasFetchedAllUserPls: boolean
-    abstract userPlaylists: MusicCollection[]
     abstract accessToken: string
     abstract musicPlatform: MusicPlatform | null
+    abstract userDetails: MusicUserDetails | null
+    abstract hasTokenExpired: boolean
+    abstract currentUserMedia : UserLibraryMedia
 
-    abstract initMusicData(hasUserSignedIn: boolean): void
-    abstract refreshMusicSession(): Promise<void>
+    abstract refreshAccessToken(): Promise<void>
+
+    abstract getMoreLibraryItems(): Promise<boolean>
+    abstract getCurrentLibraryDetails(): UserLibraryCollection
+    abstract updateLibraryMedia(media: UserLibraryMedia, isSwitchingTheFirstTime: boolean): void
+    abstract getLibraryDetails(currentUserMedia: UserLibraryMedia): UserLibraryCollection
+    abstract refreshCurrentLibraryMedia(): void
+
     abstract quit(): void
-    abstract setMusicUserPlaylistData(): Promise<void>
-    
-    abstract fetchMoreUserPlaylists(): Promise<void>
-    abstract removeUserPlaylists(): void
 }
 
 /**

@@ -504,7 +504,7 @@
             }
         }
         &__section-drop-divider {
-            @include flex-container(center, center);
+            @include flex(center, center);
             transition: 0.1s ease-in-out;
             opacity: 0;
             padding-top: 6px;
@@ -517,7 +517,7 @@
         }
         &__add-section-btn {
             @include not-visible;
-            @include flex-container(center);
+            @include flex(center);
             
             span {
                 @include text-style(_, 400, 1.2rem);
@@ -567,11 +567,11 @@
         }
         
         &__details {
-            @include flex-container(center);
+            @include flex(center);
             width: 100%;
         }
         &__details-wrapper {
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
             width: 100%;
         }
         &__dropdown-btn {
@@ -697,7 +697,7 @@
         }
         &__drop-divider {
             width: 100%;
-            @include flex-container(center, center);
+            @include flex(center, center);
             transition: 0.1s ease-in-out;
             opacity: 0;
             padding-top: 6px;

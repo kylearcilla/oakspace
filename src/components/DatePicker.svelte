@@ -186,7 +186,7 @@
             }
         }
         &__input-container {
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
             padding: 10px 12px 0px 12px;
         }
         &__input-error-msg {
@@ -207,7 +207,7 @@
             padding: 0px 4px 0px 5px;
         }
         &__btns-container {
-            @include flex-container(center);
+            @include flex(center);
         }
         &__calendar-container {
             width: 100%;
@@ -221,7 +221,7 @@
         }
         &__bottom-btn-container {
             padding: 0px 12px;
-            @include flex-container(center);
+            @include flex(center);
             width: 100%;
             
             button {

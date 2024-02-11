@@ -219,7 +219,7 @@
             }
         }
         &__name-input-tag-dropdown-btn {
-            @include flex-container(center, _);
+            @include flex(center, _);
             background: none;
             box-shadow: none;
             padding: 10px 11px 10px 10px;

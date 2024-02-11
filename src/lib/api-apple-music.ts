@@ -1,7 +1,6 @@
 import { AppleMusicPlayer } from "./music-apple-player"
 import { AppleMusicUserData } from "./music-apple-user-data"
 import { MusicAPIErrorContext } from "./enums"
-import { getMusicAPIError } from "./utils-music"
 import { ExpiredTokenError } from "./errors"
 
 const ARTWORK_WIDTH = 400
@@ -37,14 +36,14 @@ export const initAppleMusic = async (isUserLoggedIn = false) => {
 
 /**
  * API Music GET request for fetching user library playlists.
- * 
+    * 
  * @param   reqLimit User playlist response limit
  * @param   offSet   The next page or group of user playlists to fetch.
  * @returns          User playlists
  * @throws {APIError}           Error interacting with Apple Music Kit API.
  * @throws {ExpiredTokenError}  Fetch for user playlists failed due to expired token.
  */
-export const getUserPlaylists = async (reqLimit: number, offSet: number, tokens: { accessToken: string, userToken: string}): Promise<MusicCollection[]> => {
+export const getUserPlaylists = async (reqLimit: number, offSet: number, tokens: { accessToken: string, userToken: string}): Promise<Playlist[]> => {
     const url = `https://api.music.apple.com/v1/me/library/playlists?limit=${reqLimit}&offset=${offSet}`
     const headers = {
         'Authorization': `Bearer ${tokens.accessToken}`,
@@ -73,8 +72,7 @@ export const getUserPlaylists = async (reqLimit: number, offSet: number, tokens:
             artworkImgSrc: playlist.attributes?.artwork ? getArtworkSrc(playlist.attributes.artwork) : "",
             author: "My Library",
             genre: "",
-            songCount: 0,
-            type: "Playlist",
+            length: 0,
             url: `https://music.apple.com/library/playlist/${playlist.id}`
         };
         
@@ -95,7 +93,7 @@ export const getUserPlaylists = async (reqLimit: number, offSet: number, tokens:
  * @throws {ExpiredTokenError}      Fetch for playlist failed due to expired token.
  * @throws {ResourceNotFoundError}  If requested playlist does not exist.
  */
-export const getApplePlaylistDetails = async (playlistId: string, token: string): Promise<MusicCollection>  => {
+export const getApplePlaylistDetails = async (playlistId: string, token: string): Promise<Playlist>  => {
     const url = `https://api.music.apple.com/v1/catalog/us/playlists/${playlistId}`
     const options = { method: 'GET', headers: { 'Authorization': "Bearer " + token } }
 
@@ -120,14 +118,13 @@ export const getApplePlaylistDetails = async (playlistId: string, token: string)
         mediaUrl = data.data[0].attributes.url
     }
 
-    const playlistData: MusicCollection = {
+    const playlistData: Playlist = {
         id: playlistId,
         name: data.data[0].attributes.name,
         author: data.data[0].attributes.curatorName,
         artworkImgSrc: data.data[0]?.attributes?.artwork ? getArtworkSrc(data.data[0].attributes.artwork) : "",
-        songCount: trackList.length,
+        length: trackList.length,
         description: descriptionText ?? "",
-        type: "Playlist",
         genre: "",
         url: mediaUrl
     }
@@ -145,7 +142,46 @@ export const getApplePlaylistDetails = async (playlistId: string, token: string)
  * @throws {ExpiredTokenError}      Fetch for album failed due to expired token.
  * @throws {ResourceNotFoundError}  If requested album does not exist.
  */
-export const getAppleAlbumDetails = async (albumId: string, token: string): Promise<MusicCollection>  => {
+export async function getRadioStationDetails(radioStationId: string, token: string): Promise<RadioStation> {
+    const url = `https://api.music.apple.com/v1/catalog/us/stations/${radioStationId}`
+    const options = { method: 'GET', headers: { 'Authorization': "Bearer " + token } }
+
+    const res = await fetch(url, options)
+    const data = await res.json()
+    
+    if (!res.ok) { 
+        console.error(`Error fetching playlist details. Details: ${data.errors[0].detail}. Status: ${data.errors[0].status}.`)
+        throw getMusicAPIError(Number(data.errors[0].status), MusicAPIErrorContext.ALBUM)
+    }
+    
+    const notes = data.data[0].attributes?.editorialNotes
+    const descriptionText = notes.standard ?? notes.short ?? notes.tagline
+
+    const radioStationData: RadioStation = {
+        id: radioStationId,
+        name: data.data[0].attributes.name,
+        isLive: data.data[0].attributes.isLive,
+        author: "",
+        artworkImgSrc: data.data[0]?.attributes?.artwork ? getArtworkSrc(data.data[0].attributes.artwork) : "",
+        description: descriptionText ?? "",
+        genre: "",
+        url: data.data[0].attributes.url
+    }
+    return radioStationData
+}
+
+/**
+ * Fetches album details. 
+ * 
+ * @param albumId  
+ * @param token       Acess / Dev token.
+ * @returns           Collection of user's playlists from their library
+ * 
+ * @throws {APIError}               Error interacting with Apple Music Kit API.
+ * @throws {ExpiredTokenError}      Fetch for album failed due to expired token.
+ * @throws {ResourceNotFoundError}  If requested album does not exist.
+ */
+export const getAppleAlbumDetails = async (albumId: string, token: string): Promise<Album>  => {
     const url = `https://api.music.apple.com/v1/catalog/us/albums/${albumId}`
     const options = { method: 'GET', headers: { 'Authorization': "Bearer " + token } }
 
@@ -161,18 +197,17 @@ export const getAppleAlbumDetails = async (albumId: string, token: string): Prom
     const trackList: any[] = data.data[0].relationships.tracks.data
     const descriptionText = data.data[0].attributes?.description?.short ?? data.data[0].attributes?.description?.standard
 
-    const playlistData: MusicCollection = {
+    const albumData: Album = {
         id: albumId,
         name: data.data[0].attributes.name,
         author: data.data[0].attributes.artistName,
         artworkImgSrc: data.data[0]?.attributes?.artwork ? getArtworkSrc(data.data[0].attributes.artwork) : "",
-        songCount: trackList.length,
+        length: trackList.length,
         description: descriptionText ?? "",
-        type: "Album",
         genre: data.data[0].attributes.genreNames[0],
         url: data.data[0].attributes.url
     }
-    return playlistData
+    return albumData
 }
 
 /**

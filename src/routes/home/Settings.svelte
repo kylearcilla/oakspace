@@ -609,14 +609,14 @@
             @include pos-abs-bottom-right-corner(13px, 10px);
         }
         &__top-row {
-            @include flex-container(_, _); 
+            @include flex(_, _); 
         }
     }
     .login-info {
         position: relative;
         height: 120px;
         &__info-row-section {
-            @include flex-container(baseline, _);
+            @include flex(baseline, _);
             margin-top: 5px;
             width: 100%;
             position: relative;;
@@ -632,7 +632,7 @@
         }
         &__logo {
             @include pos-abs-bottom-right-corner(0px, 0px);
-            @include flex-container(center, _);
+            @include flex(center, _);
 
             svg {
                 margin-right: 12px;
@@ -746,7 +746,7 @@
         &__content {
         }
         &__top-section {
-            @include flex-container(center, center);
+            @include flex(center, center);
         }
         &__bottom-section {
             width: 300px;
@@ -783,7 +783,7 @@
             }
         }
         &__bottom-details {
-            @include flex-container(center, _); 
+            @include flex(center, _); 
             width: 100%;
         }
         &__exp-date {
@@ -876,7 +876,7 @@
                 aspect-ratio: 1.618;
                 margin-right: 10px;
             }
-            @include flex-container(center, _);
+            @include flex(center, _);
         }
         &__number {
             display: flex;

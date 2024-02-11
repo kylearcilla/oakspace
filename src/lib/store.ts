@@ -10,6 +10,8 @@ import type { GoalsManager } from './goals-manager'
 import { ShortcutSectionInFocus } from './enums'
 import type { EditGoalManager } from './edit-goal-manager'
 import type { DatePickerManager } from './date-picker-manager'
+import type { AppleMusicUserData } from './music-apple-user-data'
+import type { SpotifyMusicUserData } from './music-spotify-user-data'
 
 /* App UI State */
 export const homeViewLayout = writable<HomeLayout>({
@@ -17,6 +19,7 @@ export const homeViewLayout = writable<HomeLayout>({
     isTaskMenuOpen: true,
     isVideoViewOpen: false,
     isMusicPlayerOpen: false,
+    isLeftWideMenuOpen: true,
     shortcutsFocus: ShortcutSectionInFocus.MAIN,
     minModeSrc: null,
     modalsOpen: []
@@ -45,7 +48,7 @@ export const ytPlayerStore = writable<YoutubePlayer| null>(null)
 
 /* Music Stuff: Music Player State */
 export const musicPlayerStore = writable<MusicPlayer | null>(null)
-export const musicDataStore = writable<MusicUserData | null>(null)
+export const musicDataStore = writable<AppleMusicUserData | SpotifyMusicUserData | null>(null)
 
 /* Session Stuff */
 export const sessionStore = writable<Session | null>(null)

@@ -74,10 +74,10 @@
         }
     }
     &__selected-tag-info-wrapper {
-        @include flex-container(flex-end, space-between);
+        @include flex(flex-end, space-between);
     }
     &__selected-tag {
-        @include flex-container(center, _);
+        @include flex(center, _);
     }
     &__selected-tag-color {
         margin-top: 2px;

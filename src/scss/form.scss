@@ -4,7 +4,7 @@
     border-radius: 10px;
     height: 45px;
     width: 100%;
-    @include flex-container(center, _);
+    @include flex(center, _);
     transition: 0.2s ease-in-out;
     border: 1px solid rgba(211, 211, 211, 0);
     background-color: var(--modalBgAccentColor);
@@ -121,7 +121,7 @@ $loading-dots-width: 4px;
 
     /* Loading Dots */
     &__loading-dots {
-        @include flex-container(center, center);
+        @include flex(center, center);
         margin-top: $loading-dots-width + 2;
     }
     &__loading-dots span {

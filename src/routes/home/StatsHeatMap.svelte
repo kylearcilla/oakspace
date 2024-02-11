@@ -175,7 +175,7 @@
             width: 100%;
         }
         &__days {
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
         }
         &__day {
             margin-top: 9px;

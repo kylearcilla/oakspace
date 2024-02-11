@@ -9,6 +9,7 @@
 
     export let isForHeader: boolean = true
 
+    let currProgressWidth = 0
     let progressLineElement: HTMLElement | null = null
     let containerElement: HTMLElement | null = null
 
@@ -80,9 +81,9 @@
     <span class="session-progress__time session-progress__time--start">{startTimeStr}</span>
     <div 
         bind:this={containerElement}
+        bind:clientWidth={currProgressWidth}
         class="session-progress__container" 
         style={`
-                height: 25px;
                 -webkit-mask-image: linear-gradient(90deg, transparent 0px, black ${leftGradientWidth}px, black ${rightGradientWidth}%, transparent 100%);
                 mask-image: linear-gradient(90deg, transparent 0px, black ${leftGradientWidth}px, black ${rightGradientWidth}%, transparent 100%);
         `}
@@ -106,7 +107,7 @@
                         </div>
                     </div>
                 </div>
-            {:else if $sessionStore}
+            {:else if $sessionStore && segment.widthPerc}
                 <!-- svelte-ignore a11y-mouse-events-have-key-events -->
                 <div 
                     class={`session-progress__track-line ${state === SessionState.FINISHED || segment.periodIdx <= lastFinishedPeriodIdx ? "session-progress__track-line--finished" : ""}`}
@@ -115,9 +116,12 @@
                     on:mouseover={(e) => onMouseOverProgressLine(e, isForHeader)}
                     on:mouseleave={(e) => onMouseLeaveProgressLine(e, isForHeader)}
                 >
-                    <svg class="session-progress__track-line-svg" xmlns="http://www.w3.org/2000/svg" width="100%" height="1.5" fill="none">
+                    <svg 
+                        class="session-progress__track-line-svg" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        width={`${currProgressWidth * (segment.widthPerc / 100)}`} height="1.5" viewBox={`0 0 ${currProgressWidth * (segment.widthPerc / 100)} 1.5`}
+                    >
                         <path 
-                            d="M0 1 L300 1"
+                            d={`M0 1 L${currProgressWidth * (segment.widthPerc / 100)} 1`}
                             stroke={`
                                         ${state === SessionState.FINISHED || segment.periodIdx <= lastFinishedPeriodIdx ? 
                                                 `var(--${isForHeader ? HEADER_PROGRESS_COLOR_1 : BASE_PROGRESS_COLOR_1})` :  
@@ -128,14 +132,18 @@
                             stroke-dasharray={`${state === SessionState.FINISHED || segment.periodIdx <= lastFinishedPeriodIdx ? "0" : "2 2"}`}
                         />
                     </svg>
-                    <div class="session-progress__track-line-icon">
+                    <div class="session-progress__track-line-tooltip">
                         {#if segment.type === ProgressVisualPartType.FOCUS}
-                            <i class="fa-brands fa-readme"></i>
                             <span>{$sessionStore.pomTime}:00</span>
                         {:else}
-                            <i class="fa-solid fa-seedling"></i>
                             <span>{$sessionStore.breakTime}:00</span>
                         {/if}
+                        <div class="session-progress__track-line-tooltip-svg">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="44" height="24" viewBox="0 0 44 24" fill="none">
+                                <path d="M29.3673 6.46283C27.2971 6.39923 21.7796 5.7369 21.3909 0.248535C21.0022 5.7369 15.4847 6.39923 13.4144 6.46283H29.3673Z"/>
+                                <path d="M43.2988 14.6236C43.2988 19.2884 39.5173 23.0699 34.8525 23.0699L9.08692 23.0699C4.42216 23.0699 0.640625 19.2884 0.640625 14.6236C0.640625 9.95884 4.42216 6.17731 9.08691 6.17731L34.8525 6.17731C39.5173 6.17731 43.2988 9.95884 43.2988 14.6236Z"/>
+                            </svg>
+                        </div>
                     </div>
                 </div>
             {/if}
@@ -162,62 +170,69 @@
         width: 100%;
         position: relative;
         height: 10px;
-        @include flex-container(center, center);
+        @include flex(center, center);
+        z-index: 2;
 
-        &--home {
+        &--home &__container {
+            height: 65px;
         }
         &--home &__time {
             opacity: 1;
             visibility: visible;
         }
-        &--home &__track-line-icon {
-            top: -7px;
+        &--home &__track-line-tooltip {
+            top: 30px;
             font-size: 1.15rem;
         }
         &--home &__checkpoint {
-            @include circle(8px);
             border: 1px solid var(--baseTrackColor1);
             background-color: var(--primaryBgColor);
             
             &--finished {
-                margin-bottom: -1px;
+                margin-bottom: 0px;
                 @include circle(5px);
                 background-color: var(--baseProgressColor1);
             }
             &-inside {
                 background-color: var(--baseTrackColor1);
-                @include circle(2px);
             }
             &-check-mark {
                 top: -18px;
+
+                color: var(--baseProgressColor1);
             }
             i {
-                font-size: 1.2rem;
+                font-size: 1rem;
             }
         }
         &--home &__progress-line {
             background-color: var(--baseProgressColor1);
+            height: 2px;
         }
         &--home &__progress-ball {
             margin-top: 1px;
             background-color: var(--baseProgressColor1);
+            top: 28.5px;
         }
         &--home &__checkpoint {
             background-color: var(--primaryBgColor);
             border: 1px solid var(--baseTrackColor1);
         }
-        &--light &__track-line-icon span {
-            font-weight: 600;
+        &--light &__progress-line {
+            height: 2px;
+        }
+        &--light &__track-line-tooltip span {
+            font-weight: 500;
         }
         &--light &__time {
             font-weight: 500;
-            color: rgba(var(--textColor1), 0.4);
+            @include text-color(0.4);
         }
 
         &__time {
             opacity: 0;
             visibility: hidden;
-            @include text-style(0.45, 400, 1.2rem);
+            @include text-style(0.45, 400, 1.2rem, "DM Sans");
 
             &--start {
                 @include pos-abs-top-left-corner(22px, 7px);
@@ -231,6 +246,7 @@
             position: relative;
             display: flex;
             align-items: center;
+            height: 55px;
         }
         &__track-line {
             height: 20px;
@@ -242,7 +258,7 @@
                 @include pos-abs-top-left-corner(50%, 0px);
                 transform: translateY(-50%);
             }
-            &:hover &-icon {
+            &:hover &-tooltip {
                 opacity: 1;
                 visibility: visible;
             }
@@ -251,24 +267,38 @@
             }
         }
 
-        &__track-line-icon {
+        &__track-line-tooltip {
             opacity: 0;
-            transition: 0.12s ease-in-out;
             visibility: hidden;
+            transition: 0.12s ease-in-out;
             text-align: center;
-            @include flex-container(center, center);
+            @include flex(center, center);
             @include abs-center;
             white-space: nowrap;
             width: auto;
-            top: 0.5px;
-            color: rgba(var(--textColor1), 0.3);
             font-size: 0.9rem;
+            top: 25px;
             z-index: 100;
             
+            &-svg {
+                position: relative;
+            }
+            svg {
+                @include abs-center;
+                fill: var(--pomToolTipBgColor);
+            }
+            path {
+                fill: var(--pomToolTipBgColor);
+            }
             span {
                 display: block;
                 z-index: 100;
-                font-family: "DM Mono";
+                font-family: "DM Sans";
+                @include abs-center;
+                @include text-style(_, 300, 1.05rem);
+                color: var(--pomToolTipTextColor);
+                top: 3px;
+                cursor: text;
             }
             i {
                 display: none;
@@ -288,7 +318,7 @@
         &__progress-ball {
             @include circle(6px);
             position: absolute;
-            top: calc(12.5px - 3px);
+            top: 24px;
             z-index: 200;
             box-shadow: var(--progressBallGlow);
             background-color: var(--headerProgressColor1);
@@ -296,14 +326,14 @@
         &__checkpoint {
             @include circle(7px);
             border: 1px solid var(--headerTrackColor1);
-            background-color: var(--headerElementBgColor); 
+            background-color: var(--headerBgColor);
             position: absolute;
             transition: 0.1s ease-in-out;
             z-index: 7;
             margin: 0px 0px 0px -1px;
             
             &-container {
-                @include flex-container(center, center);
+                @include flex(center, center);
                 width: 100%;
                 height: 100%;
                 border-radius: 100%;
@@ -318,10 +348,10 @@
                 opacity: 0;
                 z-index: 0;
                 position: absolute;
-                top: -15px;
+                top: -14.5px;
 
                 i {
-                    font-size: 0.8rem;
+                    font-size: 0.6rem;
                 }
             }
             &--finished {

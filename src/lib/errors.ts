@@ -1,4 +1,4 @@
-import { ErrorCode } from "./enums";
+import { APIErrorCode, ErrorCode } from "./enums";
 
 /**
  * Custom error that standardizes a set of errors that can occur throught out the app.
@@ -22,6 +22,8 @@ export class ResError<T> extends Error {
     this.code = code
   }
 }
+
+export class APIError extends ResError<APIErrorCode> { }
 
 /**
  * Occurs when app requests for a resource that does not exist or unavailable.

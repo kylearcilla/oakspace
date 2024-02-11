@@ -1,13 +1,12 @@
 <script lang="ts">
-	import { BasicCalendar } from "$lib/basic-calendar"
-	import type { Calendar } from "$lib/calendar"
-	import { isSameDay, months } from "$lib/utils-date"
-	import { onMount } from "svelte"
     import SVGIcon from "./SVGIcon.svelte"
-	import { DateBoundState, Icon } from "$lib/enums";
-	import { themeState } from "$lib/store";
-	import type { Writable } from "svelte/store";
-	import { ProductivityCalendar } from "$lib/productivity-calendar";
+
+	import { onMount } from "svelte"
+	import { themeState } from "$lib/store"
+	import type { Calendar } from "$lib/calendar"
+	import { DateBoundState, Icon } from "$lib/enums"
+	import { isSameDay, months } from "$lib/utils-date"
+	import { ProductivityCalendar } from "$lib/productivity-calendar"
 
     enum CalendarType {
         Basic, Productivity
@@ -60,7 +59,7 @@
 </script>
 
 {#if type != null}
-<div class={`calendar calendar--${CalendarType[type].toLowerCase()} ${$themeState.isDarkTheme ? "" : "calendar--light-theme"}`}>
+<div class={`calendar ${$themeState.isDarkTheme ? "" : "calendar--light"} calendar--${CalendarType[type].toLowerCase()}`}>
     <div class="calendar__focus">
         <div class="calendar__focus-header">
             <div class="calendar__month-title">
@@ -131,11 +130,106 @@
 
 <style lang="scss">
     .calendar {
+        // light / dark themes adjustments
+        &--light &__today-btn {
+            @include text-style(0.5, 600);
+        }
+        &--light &__next-prev-btn {
+            opacity: 0.4;
+
+            &:disabled {
+                opacity: 0.16;
+            }
+            &:disabled:hover {
+                opacity: 0.16;
+            }
+            &:hover {
+                opacity: 0.5;
+            }
+        }
+        &--light &__month-title {
+            @include text-style(0.28, 500);
+            strong {
+                @include text-style(0.9, 500);
+            }
+        }
+        &--light &__month-day--had-goal::after {
+            color: rgba(var(--textColor1), 0.3) !important;
+        }
+        &--light &__days-of-week *, &--light#{&}--productivity &__days-of-week * {
+            @include text-style(0.5, 500);
+        }
+        &--light &__month-day {
+            @include text-style(0.85, 500);
+
+            &:hover {
+                background: rgba(var(--textColor1), 0.1);
+            }
+            &--today {
+                @include text-style(0.89);
+                background: rgba(var(--textColor1), 0.1);
+            }
+            &--picked {
+                background: rgba(var(--fgColor2), 1) !important;
+                color: rgba(var(--textColor2), 1) !important;
+                border-color: transparent;
+            }
+            &--not-curr-month {
+                opacity: 0.35;
+            }
+            &--disabled {
+                opacity: 0.9;
+            }
+        }
+        &--light#{&}--productivity &__today-btn {
+            opacity: 0.4;
+            &:hover {
+                opacity: 0.8;
+            }
+        }
+        &--light#{&}--productivity &__next-prev-btn {
+            opacity: 0.26;
+            
+            &:hover {
+                opacity: 0.5;
+            }
+            &:disabled {
+                opacity: 0.1;
+            }
+        }
+        &--light#{&}--productivity &__month-day {
+            @include text-style(0.5);
+            font-weight: 600 !important;
+
+            &:hover {
+                background: rgba(var(--textColor1), 0.04);
+            }
+            &--today {
+                @include text-style(0.89);
+                background: rgba(var(--fgColor1), 1);
+                color: rgba(var(--textColor2), 1) !important;
+            }
+            &--picked {
+                background: rgba(var(--fgColor2), 1) !important;
+                color: rgba(var(--textColor2), 1) !important;
+                border-color: transparent;
+            }
+            &--had-session:active {
+                transition: 0.1s ease-in-out;
+                transform: scale(0.93);
+            }
+            &--had-session {
+                cursor: pointer;
+                @include text-style(0.9, 500);
+            }
+            &--not-curr-month {
+                opacity: 0.4 !important;
+            }
+        }
+
+        /* Calendar Type Specific Styling */
         &--basic &__month-day-container {
             aspect-ratio: 1 / 1;
-        }
-        &--productivity {
-
         }
         &--productivity &__days-of-week {
             padding-bottom: 4px; 
@@ -177,70 +271,22 @@
         }
         &--productivity &__month-day--had-goal::after {
             content: "*";
-            @include text-style(0.23, 300, 1.1rem,"Manrope");
-            @include pos-abs-bottom-left-corner(-8.5px, 50%);
+            @include text-style(0.23, 300, 1.2rem,"Manrope");
+            @include pos-abs-bottom-left-corner(-6.5px, 50%);
             transform: translateX(-50%);
-        }
-
-        // light / dark themes adjustments
-        &--light &__today-btn {
-            @include text-style(0.9, 600);
-        }
-        &--light &__next-prev-btn {
-            opacity: 0.7;
-
-            &:disabled {
-                opacity: 0.16;
-            }
-            &:disabled:hover {
-                opacity: 0.16;
-            }
-            &:hover {
-                opacity: 0.5;
-            }
-        }
-        &--light &__month-title {
-            @include text-style(0.28, 500);
-            strong {
-                @include text-style(0.9, 500);
-            }
-        }
-        &--light &__days-of-week * {
-            @include text-style(0.5, 500);
-        }
-        &--light &__calendar-day {
-            @include text-style(0.94, 500);
-            background: rgba(var(--textColor1), 0.05);
-
-            &:hover {
-                background: rgba(var(--textColor1), 0.1);
-            }
-            &--today {
-                @include text-style(0.89);
-                background: rgba(var(--textColor1), 0.1);
-            }
-            &--picked {
-                background: rgba(var(--textColor1), 1) !important;
-                color: white !important;
-            }
-            &--not-curr-month {
-                opacity: 0.35 !important;
-            }
-            &--disabled {
-                opacity: 0.6;
-            }
         }
         
         &__focus-header {
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
             padding: 4px 4px 0px 8px;
         }
         &__btns-container {
-            @include flex-container(center);
+            @include flex(center);
         }
         &__today-btn {
             @include text-style(0.2, 300, 1.29rem);
             @include center;
+            transition: 0.1s ease-in-out;
             width: 12px;
             height: 12px;
             padding: 0px 5px;
@@ -256,6 +302,7 @@
             @include center;
             opacity: 0.2;
             padding: 5px;
+            transition: 0.1s ease-in-out;
 
             &:disabled {
                 opacity: 0.05;

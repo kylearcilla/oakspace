@@ -217,7 +217,7 @@
         }
         /* Url Input */
         &__url-img-content {
-            @include flex-container(center, _);
+            @include flex(center, _);
             button {
                 margin-left: 7px;
                 width: calc(30% - 7px);
@@ -226,7 +226,7 @@
         /* File Input */
         &__file-input-content {
             margin-top: 27px;
-            @include flex-container(center, _);
+            @include flex(center, _);
             height: 40px;
             width: 100%;
         }
@@ -246,7 +246,7 @@
             }
         }
         &__file-input-content-btns {
-            @include flex-container(center, flex-end);
+            @include flex(center, flex-end);
             margin-left: 5px;
             height: 100%;
             min-width: 0px;

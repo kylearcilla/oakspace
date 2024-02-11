@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { sessionManager, sessionStore } from "./store"
+import { sessionManager, sessionStore, ytPlayerStore } from "./store"
 import { ModalType } from "./enums"
 import { openModal } from "./utils-home"
 import { MAX_TODO_COUNT, MAX_TODO_NAME_LENGTH, createSessionToastMsg } from "$lib/utils-session"
@@ -96,9 +96,9 @@ export class PomSessionManger {
     /**
      * Toggle drop down controls list.
      */
-    togglePomControlsDropDown() {
-      this.isDropDownOpen = !this.isDropDownOpen
-      this.updateSessionManger({ isDropDownOpen: this.isDropDownOpen })
+    togglePomControlsDropDown(isOpen = !this.isDropDownOpen) {
+      this.isDropDownOpen = isOpen
+      this.updateSessionManger({ isDropDownOpen: isOpen })
     }
 
     /**
@@ -128,8 +128,11 @@ export class PomSessionManger {
       else if (optionIdx === 4) {
           sess!.cancelSession()
       }
-      else {
+      else if (optionIdx === 5) {
           sess!.finishSession()
+      }
+      else {
+        get(ytPlayerStore)!.toggledShowPlayer()
       }
     }
 

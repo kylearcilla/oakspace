@@ -7,8 +7,8 @@ import type { CustomError } from "./errors"
  */
 export abstract class MusicPlayer {
     abstract currentIdx: number
-    abstract track: Track | null
-    abstract collection: MusicCollection | null
+    abstract mediaItem: Track | null
+    abstract mediaCollection: Media | null
     abstract error: CustomError | null
     abstract doShowPlayer: boolean
     abstract isPlaying: boolean
@@ -25,12 +25,12 @@ export abstract class MusicPlayer {
     abstract skipToPrevTrack(): void;
     abstract toggleShuffle(): void;
     abstract toggleRepeat(): void;
-    abstract queueAndPlayNextTrack(playlistId: string, newIndex: number): void
+    abstract queueAndPlayMedia(playlistId: string, newIndex: number): void
     abstract quitPlayer(): void;
 
-    abstract updateCurrentCollectionAndPlay(newCurrentPlaylist: MusicCollection): void
-    abstract updateCurrentCollectionIdx(newIndex: number): void
-    abstract removeCurrentMusicCollection(): void
+    abstract updateCurrentMediaAndPlay(newCurrentPlaylist: Media): void
+    abstract updateMediaCollectionIdx(newIndex: number): void
+    abstract removeCurrentMedia(): void
     
     abstract hideMusicPlayer(): void;
     abstract updateMusicPlayerState(newPlayerState: MusicPlayerState): void

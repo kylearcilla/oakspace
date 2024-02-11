@@ -1,32 +1,39 @@
 <script lang="ts">
 	import { onMount } from "svelte"
-    import { ModalType, MusicPlatform, MusicMoodCategory } from "$lib/enums"
+    import { ModalType, MusicPlatform, MusicMoodCategory, UserLibraryMedia, Icon } from "$lib/enums"
     import { musicCategories } from "$lib/data-music-collections"
 	import { themeState, musicDataStore, musicPlayerStore } from "$lib/store"
-    import { addSpacesToCamelCaseStr } from "$lib/utils-general"
+    import { addSpacesToCamelCaseStr, clickOutside } from "$lib/utils-general"
 	import { 
-             USER_PLAYLISTS_REQUEST_LIMIT, discoverPlsPaginationScrollHandler, getDiscoverCollectionList, 
+             discoverPlsPaginationScrollHandler, getDiscoverCollectionList, 
              getPlatformNameForDiscoverObj, handlePlaylistItemClicked, 
-             musicLogout, musicLogin, refreshMusicSession 
+             musicLogout, musicLogin, refreshMusicSession, getMediaLength, getMediaDescription, getLibraryMediaItemInfo, getLibraryMediaTitle 
     } from "$lib/utils-music"
 
 	import Modal from "../../components/Modal.svelte"
 	import MusicSettingsSignedOut from "./MusicSettingsSignedOut.svelte"
 	import MusicSettingsAccountHeader from "./MusicSettingsAccountHeader.svelte"
 	import { closeModal } from "$lib/utils-home"
-	import { createMusicAPIErrorToastMsg } from "$lib/utils-music"
+	import { musicAPIErrorHandler } from "$lib/utils-music"
+	import type { AppleMusicUserData } from "$lib/music-apple-user-data";
+	import type { SpotifyMusicUserData } from "$lib/music-spotify-user-data";
+	import SVGIcon from "../../components/SVGIcon.svelte";
+	import { LIBRARY_COLLECTION_LIMIT } from "$lib/api-spotify";
 
     let chosenMood = MusicMoodCategory.Serene
-    let chosenMusicCollection: MusicCollection[] = []
-    let isPlatformListOpen = false
+    let chosenMusicCollection: (Playlist | Album | RadioStation)[] = []
     let isScrollableLeft = false
     let isScrollableRight = true
     let collectionList: HTMLElement | null
     let debounceTimeout: NodeJS.Timeout | null = null
 
+    let isPlatformListOpen = false
+    let isLibraryDropdownOpen = false
+    let isLibraryOptionsDropdownOpen = false
+
     let hasCollectionItemsLoaded = true
     
-    let isUserPlaylistsLoading = false
+    let isUserLibraryLoading = false
     let scrollTop = 0
     let scrollHeight = 0
     let scrollWindow = 0
@@ -36,13 +43,29 @@
     const FETCH_PLAYLIST_DELAY = 1000
 
     let gradientWrapperStyle = ""
+
+    let hasUserSignedIn = false
+    let userLibrary: UserLibraryCollection | null = null
+    let currLibraryCollection = UserLibraryMedia.Playlists
+
+    $: mediaCollection = $musicPlayerStore?.mediaCollection 
+    $: hasTokenExpired = $musicDataStore?.hasTokenExpired ?? false
+
+    musicDataStore.subscribe((data: SpotifyMusicUserData | AppleMusicUserData | null) => {
+        if (!data || !data?.isSignedIn) return
+
+        if (!hasUserSignedIn) {
+            hasUserSignedIn = true
+            handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
+        }
+
+        const doUpdateLibrary = isUserLibraryLoading || !userLibrary
+        if (doUpdateLibrary) updateLibrary()
+    })
     
     /* Log In Functionality  */
     async function _musicLogin (platform: MusicPlatform) {
         const res = await musicLogin(platform)
-        if (!res.sucess) return
-        
-        handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
     }
     async function activePlatformBtnClicked() {
         isPlatformListOpen = false
@@ -50,14 +73,14 @@
     }
 
     /* Collection Item Clicked Event Handlers */
-    async function _handlePlaylistItemClicked(collectionClicked: MusicCollection) {
+    async function _handleLibraryMediaClicked(mediaClicked: Media) {
         if (debounceTimeout !== null) return
         
-        await handlePlaylistItemClicked(collectionClicked)
+        await handlePlaylistItemClicked(mediaClicked)
         debounceTimeout = setTimeout(() => debounceTimeout = null, PLAYLIST_BTN_COOLDOWN_MS)
     }
 
-    /* Infinite Scroll */
+    /* Library Section */
     function hasReachedEndOfList() { 
         return Math.ceil(scrollTop) >= scrollHeight - scrollWindow 
     }
@@ -69,31 +92,72 @@
         scrollWindow = list!.clientHeight 
 
         if (!hasReachedEndOfList()) return
-        getMorePlaylists()
+        getMoreLibItems()
+    }
+
+    function updateLibrary() {
+        const data = $musicDataStore!
+
+        userLibrary = data.getCurrentLibraryDetails()
+        currLibraryCollection = data.currentUserMedia
+        isUserLibraryLoading = false
+
+        console.log(userLibrary)
+    }
+    function refreshCurrentLibraryMedia() {
+        isUserLibraryLoading = true
+        userLibrary = null
+        
+        $musicDataStore!.refreshCurrentLibraryMedia()
     }
     
-    function getMorePlaylists() {
-        if (isUserPlaylistsLoading || $musicDataStore!.hasFetchedAllUserPls || $musicDataStore!.hasTokenExpired) return
+    function getMoreLibItems() {
+        const doGetMoreLibItems = !isUserLibraryLoading && !userLibrary?.hasFetchedAll && !$musicDataStore!.hasTokenExpired
+        if (!doGetMoreLibItems) return
         
-        isUserPlaylistsLoading = true
+        isUserLibraryLoading = true
         setTimeout(async () => { 
             try {
-                await $musicDataStore!.fetchMoreUserPlaylists()
-                isUserPlaylistsLoading = false
+                await $musicDataStore!.getMoreLibraryItems()
+                userLibrary = $musicDataStore!.getCurrentLibraryDetails()
 
-                if (hasReachedEndOfList()) getMorePlaylists()
+                if (hasReachedEndOfList()) getMoreLibItems()
             }
             catch(error: any) {
                 console.error(error)
-                isUserPlaylistsLoading = false
-                createMusicAPIErrorToastMsg(error)
+                isUserLibraryLoading = false
+                musicAPIErrorHandler(error)
             }
         }, FETCH_PLAYLIST_DELAY)
     }
 
 
+    function onLibOptionsDropdownMouseEnter(event: MouseEvent) {
+        const toTarget = (event as any).toElement as HTMLElement
+        const classes = toTarget.classList.value
+
+        if (!classes.includes("library-options-dropdown")) {
+            isLibraryOptionsDropdownOpen = false
+        }
+    }
     function _discoverPlsPaginationScrollHandler(e: Event) { 
         discoverPlsPaginationScrollHandler(e)
+    }
+    async function updateLibraryMedia(media: UserLibraryMedia) {
+        if (media === currLibraryCollection) return
+
+        isLibraryDropdownOpen = false
+        userLibrary = null
+        isUserLibraryLoading = true
+
+        const _media = ($musicDataStore! as SpotifyMusicUserData).getLibraryDetails(media)
+        const isFetchingForFirstTime = !_media.hasFetchedAll && _media.items.length === 0
+
+        await ($musicDataStore! as SpotifyMusicUserData).updateLibraryMedia(media, isFetchingForFirstTime)
+
+        setTimeout(() => {
+            isUserLibraryLoading = false
+        }, 1000)
     }
     
     /* Discover Section */
@@ -120,6 +184,8 @@
         collectionList!.scrollLeft -= SCROLL_STEP
     }
     function handleScroll() {
+        if (!collectionList) return
+
         const scrollLeft = collectionList!.scrollLeft
         const scrollWidth = collectionList!.scrollWidth
         const clientWidth = collectionList!.clientWidth 
@@ -134,7 +200,7 @@
         const platformProp = getPlatformNameForDiscoverObj(platform!)
 
         chosenMood = moodType
-        chosenMusicCollection = getDiscoverCollectionList(moodType, platformProp)
+        chosenMusicCollection = getDiscoverCollectionList(moodType, platformProp) as (Playlist | Album | RadioStation)[]
     }
 
     function onClickOutSide() { 
@@ -143,63 +209,73 @@
 
     onMount(() => {
         if (!$musicDataStore?.isSignedIn) return
-        handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
 
+        handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
         handleScroll()
     })
 </script>
 
-{#if $musicDataStore && $musicDataStore?.isSignedIn && $musicPlayerStore}
+{#if $musicDataStore && $musicDataStore?.isSignedIn}
     <Modal onClickOutSide={onClickOutSide}> 
-        <div class={`music ${!$themeState.isDarkTheme ? "music--light" : ""}`}>
+        <div class={`music ${!$themeState.isDarkTheme ? "music--light" : "music--dark"}`}>
             <!-- Top Header -->
-            <h1 class="modal-bg__content-title">Music</h1>
-            <MusicSettingsAccountHeader isPlatformListOpen={isPlatformListOpen} logOutUser={activePlatformBtnClicked} />
+            <div class="music__header">
+                <h1 class="modal-bg__content-title">Music</h1>
+                <div class="music__context-container">
+                    <MusicSettingsAccountHeader isPlatformListOpen={isPlatformListOpen} logOutUser={activePlatformBtnClicked} />
+                </div>
+            </div>
             <!-- Music Settings Content -->
             <div class="music__content">
                 <div class="music__left-section">
                     <!-- Now Playing Section -->
-                    <div class={`now-playing ${$musicPlayerStore.collection ? "" : "now-playing--empty"} bento-box`}>
-                        <img class="img-bg" src={$musicPlayerStore.collection?.artworkImgSrc} alt="">
-                        {#if $musicPlayerStore.collection}
+                    <div class={`now-playing ${mediaCollection ? "" : "now-playing--empty"} bento-box`}>
+                        <img class="img-bg" src={mediaCollection?.artworkImgSrc} alt="">
+                        {#if mediaCollection}
                             <div class="img-bg-gradient gradient-container gradient-container--bottom"></div>
                         {/if}
-                        <div class={`blur-bg blur-bg--blurred-bg ${$musicPlayerStore.collection ?? "blur-bg--solid-color"}`}></div>
+                        <div class={`blur-bg blur-bg--blurred-bg ${mediaCollection ?? "blur-bg--solid-color"}`}></div>
                         <div class="content-bg">
-                            {#if $musicPlayerStore.collection}
+                            {#if mediaCollection}
+                                {@const isCollection = "length" in mediaCollection}
+                                {@const isPlaylist = mediaCollection.id.startsWith("pl.")}
+                                {@const type = isPlaylist ? "Playlist" : isCollection ? "Album" : "Radio Station"}
+                                {@const length = getMediaLength(mediaCollection)}
+                                {@const description = getMediaDescription(mediaCollection)}
+
                                 <div class="now-playing__details-container">
                                     <div class="now-playing__details-header">
                                         <span class="now-playing__description-author">
-                                            {$musicPlayerStore.collection.author}
+                                            {mediaCollection.author}
                                         </span>
                                         <div class="now-playing__collection-details">
                                             <span class="now-playing__collection-type">
-                                                {$musicPlayerStore.collection.type}
+                                                {type}
                                             </span>
                                             <span>/</span>
                                             <span class="now-playing__collection-song-count">
-                                                {$musicPlayerStore.collection.songCount} Items
+                                                {length} Items
                                             </span>
                                         </div>
                                     </div>
-                                    <div class={`now-playing__artwork ${$musicPlayerStore.collection.artworkImgSrc ? "" : "now-playing__artwork--empty"}`}>
-                                        <img src={$musicPlayerStore.collection.artworkImgSrc} alt="current-collection">
+                                    <div class={`now-playing__artwork ${mediaCollection.artworkImgSrc ? "" : "now-playing__artwork--empty"}`}>
+                                        <img src={mediaCollection.artworkImgSrc} alt="current-collection">
                                         <i class="fa-solid fa-music abs-center"></i>
                                     </div>
                                     <div class="now-playing__description">
-                                        {#if $musicPlayerStore.collection.url}
-                                            <a href={$musicPlayerStore.collection.url} target="_blank" rel="noreferrer">
+                                        {#if mediaCollection.url}
+                                            <a href={mediaCollection.url} target="_blank" rel="noreferrer">
                                                 <h4 class="now-playing__description-title">
-                                                    {$musicPlayerStore.collection.name}
+                                                    {mediaCollection.name}
                                                 </h4>
                                             </a>
                                         {:else}
                                             <h4 class="now-playing__description-title">
-                                                {$musicPlayerStore.collection.name}
+                                                {mediaCollection.name}
                                             </h4>
                                         {/if}
                                         <p class="now-playing__description-text">
-                                            {$musicPlayerStore.collection.description}
+                                            {description}
                                         </p>
                                     </div>
                                 </div>             
@@ -210,44 +286,93 @@
                             {/if}
                         </div>
                     </div>
-                    <!-- User Playlists Section -->
+                    <!-- User Library Section -->
                     <div class="my-playlists bento-box bento-box--no-padding">
                         <div class="my-playlists__header bento-box__header">
-                            <h3 class="bento-box__title">My Playlists</h3>
-                            <span class="bento-box__subtitle">
-                                {`${$musicDataStore?.userPlaylists.length} ${$musicDataStore?.userPlaylists.length == 1 ? "playlist" : "playlists"}`}
-                            </span>
-                        </div>
-                        <ul class="my-playlists__collection-list" on:scroll={userPlaylistInfiniteScrollHandler}>
-                            <!-- My Playlist items -->
-                            {#if !isUserPlaylistsLoading && $musicDataStore?.userPlaylistsOffset > 0 && $musicDataStore?.userPlaylists.length === 0}
-                                <img class="my-playlists__no-pl-meme-img abs-center" src="/no-pl.png" alt="no-playlists-img"/>
+                            <div class="flx flx--algn-center">
+                                <h3 class="bento-box__title">
+                                    Library
+                                </h3>
+                                {#if userLibrary}
+                                    <span class="my-playlists__count bento-box__subtitle">
+                                        {userLibrary.totalItems}
+                                    </span>
+                                {/if}
+                            </div>
+                            {#if userLibrary}
+                                <button class="my-playlists__dropdown-btn settings-btn" on:click={() => isLibraryDropdownOpen = !isLibraryDropdownOpen}>
+                                    <SVGIcon icon={Icon.Settings} options={{ opacity: 0.3 }}/>
+                                </button>
                             {/if}
-                            {#each $musicDataStore?.userPlaylists as pl, idx}
-                                <li
-                                    on:dblclick={() => _handlePlaylistItemClicked(pl)}
-                                    title={`${pl.name} – ${pl.description}`}
-                                    class={`my-playlists__playlist ${$musicPlayerStore.collection && pl.id === $musicPlayerStore.collection.id ? "my-playlists__playlist--chosen" : ""}`}
-                                >
-                                    <div class="my-playlists__playlist-img">
-                                        {#if pl.artworkImgSrc != ""}
-                                            <img src={pl.artworkImgSrc} alt="playlist-artwork"/>
-                                        {:else}
-                                            <i class="fa-solid fa-music abs-center"></i>
-                                        {/if}
-                                    </div> 
-                                    <div class="my-playlists__playlist-text">
-                                        <a href={pl.url} target="_blank" rel="noreferrer">
-                                            <h5 class="my-playlists__playlist-text-title">{pl.name}</h5>
-                                        </a>
-                                        <p class="my-playlists__playlist-text-description">{pl.description}</p>
-                                    </div>
-                                    <div class="divider divider--thin"></div>
-                                </li>
-                            {/each}
-                            <!-- Loading Skeleton -->
-                            {#if isUserPlaylistsLoading}
-                                {#each Array.from({ length: USER_PLAYLISTS_REQUEST_LIMIT }, (_, i) =>  ($musicDataStore?.userPlaylistsOffset ?? 0) + i) as idx}
+                        </div>
+                        <!-- Library Items -->   
+                        <ul class="my-playlists__collection-list" on:scroll={userPlaylistInfiniteScrollHandler}>
+                            {#if userLibrary?.items}
+                                {@const isTrack = currLibraryCollection === UserLibraryMedia.LikedTracks}
+                                {@const isAlbum = currLibraryCollection === UserLibraryMedia.Albums}
+                                {@const isPodcastEp = currLibraryCollection === UserLibraryMedia.PodcastEps}
+                                {@const isAudiobook = currLibraryCollection === UserLibraryMedia.Audiobooks}
+                                <!-- Media Item -->
+                                {#each userLibrary?.items as item, idx}
+                                    {@const itemInfo = getLibraryMediaItemInfo(item, currLibraryCollection)}
+                                    {@const itemTitleContext = getLibraryMediaTitle(item, currLibraryCollection)}
+
+                                    <li
+                                        on:dblclick={() => _handleLibraryMediaClicked(item)}
+                                        title={itemTitleContext}
+                                        class={`my-playlists__playlist ${mediaCollection && item.id === mediaCollection.id ? "my-playlists__playlist--chosen" : ""}`}
+                                    >
+                                        <div class="my-playlists__playlist-img">
+                                            {#if item.artworkImgSrc != ""}
+                                                <img src={item.artworkImgSrc} alt="playlist-artwork"/>
+                                            {:else}
+                                                <i class="fa-solid fa-music abs-center"></i>
+                                            {/if}
+                                        </div> 
+                                        <!-- Media Item Details -->
+                                        <div class="my-playlists__playlist-text">
+                                            <a href={item.url} target="_blank" rel="noreferrer" class="my-playlists__playlist-text-title">
+                                               {item.name}
+                                            </a>
+                                            <div class="my-playlists__playlist-media-details">
+                                                <!-- Album -->
+                                                {#if isAlbum}
+                                                    <div class="my-playlists__playlist-media-subtitle-1">
+                                                        {itemInfo?.artist}
+                                                    </div>
+                                                <!-- Episode -->
+                                                {:else if isPodcastEp}
+                                                    <div class="my-playlists__playlist-media-subtitle-1">
+                                                        {itemInfo?.show}
+                                                    </div>
+                                                <!-- Audiobook -->
+                                                {:else if isAudiobook}
+                                                    <div class="my-playlists__playlist-media-subtitle-1">
+                                                        {itemInfo?.author}
+                                                    </div>
+                                                <!-- Track -->
+                                                {:else if isTrack}
+                                                    <div class="my-playlists__playlist-media-subtitle-1">
+                                                        {itemInfo?.artist}
+                                                    </div>
+                                                    <div class="my-playlists__playlist-media-subtitle-2">
+                                                        {itemInfo?.album}
+                                                    </div>
+                                                <!-- Playlist -->
+                                                {:else}
+                                                    <div class="my-playlists__playlist-media-subtitle-1">
+                                                        {`${itemInfo?.length} ${itemInfo?.length === 1 ? "item" : "items"}`}
+                                                    </div>
+                                                {/if}
+                                            </div>
+                                        </div>
+                                        <div class="divider divider--thin"></div>
+                                    </li>
+                                {/each}
+                            {/if}
+                            <!-- Loading Skeleton -->   
+                            {#if isUserLibraryLoading}
+                                {#each Array.from({ length: LIBRARY_COLLECTION_LIMIT }, (_, i) => i) as _}
                                     <li
                                         class={`my-playlists__playlist my-playlists__playlist--skeleton`}
                                     >
@@ -261,15 +386,139 @@
                                 {/each}
                             {/if} 
                         </ul>
+                        <!-- Empty UI -->
+                        {#if userLibrary?.hasFetchedAll && userLibrary?.totalItems === 0}
+                            <div class="my-playlists__empty-msg">
+                                {`Your ${currLibraryCollection.toLocaleLowerCase()} collection is empty.`}
+                            </div>
+                        {/if}
+                        <!-- Library Dropdown -->
+                        <div class="my-playlists__library-dropdown-container dropdown-menu-container">
+                            <ul 
+                                use:clickOutside on:click_outside={() => isLibraryDropdownOpen = false} 
+                                class={`my-playlists__library-dropdown dropdown-menu ${isLibraryDropdownOpen ? "" : "dropdown-menu--hidden"}`}
+                            >
+                                <li class="dropdown-menu__option">
+                                    <button 
+                                        class="dropdown-element"
+                                        on:click={() => updateLibraryMedia(UserLibraryMedia.Playlists)}
+                                        on:mouseenter={() => isLibraryOptionsDropdownOpen = true}
+                                        on:mouseleave={(e) => onLibOptionsDropdownMouseEnter(e)}
+                                    >
+                                        <span class="dropdown-menu__option-text">
+                                            Pick Library
+                                        </span>
+                                        <div class="dropdown-menu__option-icon">
+                                            <i class="fa-solid fa-arrow-right"></i>
+                                        </div>
+                                    </button>
+                                </li>
+                                <li class="dropdown-menu__option">
+                                    <button 
+                                        class="dropdown-element"
+                                        on:click={() => refreshCurrentLibraryMedia()}
+                                    >
+                                        <span class="dropdown-menu__option-text">
+                                            {`Refresh ${currLibraryCollection}`}
+                                        </span>
+                                        <div class="dropdown-menu__option-icon">
+                                            <i class="fa-solid fa-rotate-right"></i>
+                                        </div>
+                                    </button>
+                                </li>
+                            </ul>
+                            <div 
+                                class={`my-playlists__library-options-dropdown-container dropdown-menu__menu-container ${isLibraryDropdownOpen ? "" : "hidden"}`}
+                                on:mouseleave={() => isLibraryOptionsDropdownOpen = false}
+                            >
+                                    <ul 
+                                        use:clickOutside on:click_outside={() => {
+                                            isLibraryDropdownOpen = false
+                                            isLibraryOptionsDropdownOpen = false
+                                        }} 
+                                        class={`my-playlists__library-dropdown dropdown-menu ${isLibraryOptionsDropdownOpen ? "" : "dropdown-menu--hidden"}`}
+                                    >
+                                        <li class={`dropdown-menu__option ${currLibraryCollection === UserLibraryMedia.Playlists ? "dropdown-menu__option--selected" : ""}`}>
+                                            <button 
+                                                class="dropdown-element"
+                                                on:click={() => updateLibraryMedia(UserLibraryMedia.Playlists)}
+                                            >
+                                                <span class="dropdown-menu__option-text">
+                                                    Playlists
+                                                </span>
+                                                <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
+                                                    <i class="fa-solid fa-check"></i>
+                                                </div>
+                                            </button>
+                                        </li>
+                                        <li class={`dropdown-menu__option ${currLibraryCollection === UserLibraryMedia.LikedTracks ? "dropdown-menu__option--selected" : ""}`}>
+                                            <button 
+                                                class="dropdown-element"
+                                                on:click={() => updateLibraryMedia(UserLibraryMedia.LikedTracks)}
+                                            >
+                                                <span class="dropdown-menu__option-text">
+                                                    Liked Tracks
+                                                </span>
+                                                <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
+                                                    <i class="fa-solid fa-check"></i>
+                                                </div>
+                                            </button>
+                                        </li>
+                                        <li class={`dropdown-menu__option ${currLibraryCollection === UserLibraryMedia.Albums ? "dropdown-menu__option--selected" : ""}`}>
+                                            <button 
+                                                class="dropdown-element"
+                                                on:click={() => updateLibraryMedia(UserLibraryMedia.Albums)}
+                                            >
+                                                <span class="dropdown-menu__option-text">
+                                                    Albums
+                                                </span>
+                                                <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
+                                                    <i class="fa-solid fa-check"></i>
+                                                </div>
+                                            </button>
+                                        </li>
+                                        <li class={`dropdown-menu__option ${currLibraryCollection === UserLibraryMedia.PodcastEps ? "dropdown-menu__option--selected" : ""}`}>
+                                            <button 
+                                                class="dropdown-element"
+                                                on:click={() => updateLibraryMedia(UserLibraryMedia.PodcastEps)}
+                                            >
+                                                <span class="dropdown-menu__option-text">
+                                                    Podcast Episodes
+                                                </span>
+                                                <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
+                                                    <i class="fa-solid fa-check"></i>
+                                                </div>
+                                            </button>
+                                        </li>
+                                        <li class={`dropdown-menu__option ${currLibraryCollection === UserLibraryMedia.Audiobooks ? "dropdown-menu__option--selected" : ""}`}>
+                                            <button 
+                                                class="dropdown-element"
+                                                on:click={() => updateLibraryMedia(UserLibraryMedia.Audiobooks)}
+                                            >
+                                                <span class="dropdown-menu__option-text">
+                                                    Audiobooks
+                                                </span>
+                                                <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
+                                                    <i class="fa-solid fa-check"></i>
+                                                </div>
+                                            </button>
+                                        </li>
+                                    </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="music__right-section">
                     <!-- Discover Section -->
                     <div class="discover bento-box bento-box--no-padding">
                         {#if $musicDataStore.musicPlatform != null}
-                            <h3 class="bento-box__title">{`Discover from ${addSpacesToCamelCaseStr(MusicPlatform[$musicDataStore.musicPlatform])}`}</h3>
+                            <h3 class="bento-box__title">
+                                {`Discover from ${addSpacesToCamelCaseStr(MusicPlatform[$musicDataStore.musicPlatform])}`}
+                            </h3>
                         {/if}
-                        <p class="discover__copy bento-box__copy">Get in the zone with music that matches your vibe. Select a mood / genre and discover new tunes to fuel your day.</p>
+                        <p class="discover__copy bento-box__copy">
+                            Get in the zone with music that matches your vibe. Select a mood / genre and discover new tunes to fuel your day.
+                        </p>
                         <div class="discover__collection-list-container">
                             {#if isScrollableLeft}
                                 <button 
@@ -320,26 +569,31 @@
                         <h3 class="discover__collection-title bento-box__subheading">{`${chosenMood} Collections`}</h3>
                         <div class="discover__collection-container">
                             <div class="discover__collection-header">
-                                <h6 class="discover__collection-header-num">#</h6>
-                                <h6 class="discover__collection-header-title">Title</h6>
+                                <div class="discover__collection-header-num">#</div>
+                                <div class="discover__collection-header-title">Title</div>
                                 <div class="discover__collection-header-type">
-                                    <h6>Type</h6>
+                                    <div>Type</div>
                                 </div>
                                 <div class="discover__collection-header-genre">
-                                    <h6>Genre</h6>
+                                    <div>Genre</div>
                                 </div>
                                 <div class="discover__collection-header-length">
-                                    <h6>Length</h6>
+                                    <div>Length</div>
                                 </div>
                             </div>
                             <ul class="discover__selected-collection-list" on:scroll={_discoverPlsPaginationScrollHandler}>
                                 <!-- Collection Item -->
                                 {#each chosenMusicCollection as collection, idx}
+                                    {@const isCollection = "length" in collection}
+                                    {@const isPlaylist = collection.id.startsWith("pl.")}
+                                    {@const type = isPlaylist ? "Playlist" : isCollection ? "Album" : "Radio Station"}
+                                    {@const length = getMediaLength(collection)}
+
                                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                                     <li
-                                        on:dblclick={_ => _handlePlaylistItemClicked(collection)}
+                                        on:dblclick={_ => _handleLibraryMediaClicked(collection)}
                                         title={`${collection.name} – ${collection.author}`}
-                                        class={`discover__collection-item ${$musicPlayerStore.collection && collection.id === $musicPlayerStore.collection?.id ? "discover__collection-item--chosen" : ""}`}
+                                        class={`discover__collection-item ${mediaCollection && collection.id === mediaCollection?.id ? "discover__collection-item--chosen" : ""}`}
                                     >
                                         <p class="discover__collection-item-num">{idx + 1}</p>
                                         <div class="discover__collection-item-details-container">
@@ -348,20 +602,24 @@
                                             </div>
                                             <div class="discover__collection-item-details">
                                                 {#if collection?.url}
-                                                    <a href={collection.url} target="_blank" rel="noreferrer">
-                                                        <h5 class="discover__collection-item-details-title">{collection.name}</h5>
+                                                    <a href={collection.url} target="_blank" rel="noreferrer" class="discover__collection-item-details-title">
+                                                        {collection.name}
                                                     </a>
                                                 {:else}
-                                                    <h6 class="discover__collection-item-details-title">{collection.name}</h6>
+                                                    <div class="discover__collection-item-details-title">{collection.name}</div>
                                                 {/if}
                                                 <span class="discover__collection-item-details-author">{collection.author}</span>
                                             </div>
                                         </div>
-                                        <h6 class="discover__collection-item-type">{collection.type}</h6>
-                                        <h6 class="discover__collection-item-genre">{collection.genre}</h6>
-                                        <h6 class="discover__collection-item-length">
-                                            {collection.songCount > 100 ? "100+" : collection.songCount}
-                                        </h6>
+                                        <div class="discover__collection-item-type">
+                                            {type}
+                                        </div>
+                                        <div class="discover__collection-item-genre">
+                                            {collection.genre}
+                                        </div>
+                                        <div class="discover__collection-item-length">
+                                            {length}
+                                        </div>
                                         <div class="divider divider--thin"></div>
                                     </li>
                                 {/each}
@@ -373,19 +631,19 @@
                                             <div class="discover__collection-item-details-container">
                                                 <div class="discover__collection-item-details-img skeleton-bg"></div>
                                                 <div class="discover__collection-item-details">
-                                                    <h6 class="discover__collection-item-details-title skeleton-bg"> </h6>
+                                                    <div class="discover__collection-item-details-title skeleton-bg"> </div>
                                                     <p class="discover__collection-item-details-author skeleton-bg"></p>
                                                 </div>
                                             </div>
-                                            <h6 class="discover__collection-item-type">
+                                            <div class="discover__collection-item-type">
                                                 <div class="discover__collection-item-col-skeleton skeleton-bg"></div>
-                                            </h6>
-                                            <h6 class="discover__collection-item-genre">
+                                            </div>
+                                            <div class="discover__collection-item-genre">
                                                 <div class="discover__collection-item-col-skeleton skeleton-bg"></div>
-                                            </h6>
-                                            <h6 class="discover__collection-item-length">
+                                            </div>
+                                            <div class="discover__collection-item-length">
                                                 <div class="discover__collection-item-col-skeleton skeleton-bg"></div>
-                                            </h6>
+                                            </div>
                                             <div class="divider divider--thin"></div>
                                         </li>
                                     {/each}
@@ -408,11 +666,14 @@
     @import "../../scss/blurred-bg.scss";
     @import "../../scss/brands.scss";
     @import "../../scss/skeleton.scss";
+    @import "../../scss/dropdown.scss";
 
     $section-spacing: 8px;
     $top-row-height: 170px;
     $bottom-row-height: 470px;
     $my-playlists-section-padding-left: 25px;
+    $lib-dropdown-menu-width: 152px;
+    
     $collection-card-border-radius: 10px;
     $collection-card-width: 165px;
     $collection-card-height: $collection-card-width - 16px;
@@ -430,7 +691,7 @@
         }
 
         &__header {
-            @include flex-container(center, _);
+            @include flex(center, space-between);
         }
         &__description {
             margin: 8px 0px 25px 0px;
@@ -455,6 +716,10 @@
             flex: 1;
         }
 
+        &--dark .dropdown-menu {
+            @include dropdown-menu-dark;
+
+        }
         /* Light Theme */
         &--light .modal-bg {
             @include modal-bg-light;
@@ -486,7 +751,7 @@
             }
         }
         &--light .discover {
-            &__collection-header h6 {
+            &__collection-header {
                 font-weight: 600;
             }
             &__collection-item-details-title {
@@ -498,7 +763,7 @@
             &__collection-item-num {
                 font-weight: 400;
             }
-            &__collection-item h6 {
+            &__collection-item {
                 color: rgba(var(--textColor1), 0.65);
                 font-weight: 500;
             }
@@ -537,12 +802,12 @@
         &__details-container {
             position: relative;
             width: 100%;
-            @include flex-container(_, space-between);
+            @include flex(_, space-between);
             flex-direction: column;
             height: 100%;
         }
         &__details-header {
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
         }
         &__artwork {
             z-index: 1;
@@ -550,7 +815,7 @@
             position: relative;
             background-color: var(--hoverColor2);
             border-radius: 5px;
-            @include flex-container(center, center);
+            @include flex(center, center);
             width: 90px;
             height: 90px;
             object-fit: cover;
@@ -656,21 +921,40 @@
         height: calc(100% - (33% + $section-spacing));
         position: relative;
         margin-right: 6px;
+        position: relative;
 
         &__header {
             text-align: center;
             padding: 17px 17px 0px $my-playlists-section-padding-left;
             margin-bottom: 10px;
         }
+        &__count {
+            @include text-style(0.3, 300, 1.2rem, "DM Sans");
+            margin: 0px 0px 4.5px 10px;
+        }
+        &__dropdown-btn {
+            @include text-color(0.02, "background");
+            margin: -4px -4px 0px 0px;
+            background-color: rgb(var(--textColor1), 0) !important;
+            
+            &:hover {
+                background-color: rgb(var(--textColor1), 0.05) !important;
+            }
+        }
         &__collection-list {
             height: 90%;
             overflow-y: scroll;
+
+            &::-webkit-scrollbar {
+                display: none;
+            }
         }
         /* Playlist Item */
         &__playlist {
-            @include flex-container(center, _);
+            @include flex(center, _);
             padding: 11px 0px 11px 20px;
             position: relative;
+            width: 100%;
 
             &:last-child {
                 margin-bottom: 20px;
@@ -725,6 +1009,8 @@
             img {
                 border-radius: 0px !important;
                 width: 40px;
+                height: 40px;
+                object-fit: cover;
             }
             i {
                 color: rgba(var(--textColor1), 0.4);
@@ -732,13 +1018,18 @@
             }
         }
         &__playlist-text {
-            margin-top: -8px;
             overflow: hidden;
-            width: 75%;
+            width: calc(100% - 70px);
+            
             &-title {
+                display: inline-block;
+                width: min-content;
                 font-size: 1.1rem;
                 font-weight: 500;
-                margin-bottom: 5px;
+                margin-bottom: 4px;
+                max-width: 95%;
+                display:inline-block;
+                @include elipses-overflow;
             }
             &-description {
                 @include elipses-overflow;
@@ -748,8 +1039,41 @@
                 color: rgba(var(--textColor1), 0.53);
             }
         }
-        &__no-pl-meme-img {
-            width: 200px;
+        &__playlist-media-details {
+            @include flex(center);
+        }
+        &__playlist-media-subtitle-1 {
+            @include text-style(0.5, 300, 1.05rem, "DM Sans");
+            margin-right: 7px;
+            white-space: nowrap;
+        }
+        &__playlist-media-subtitle-2 {
+            @include text-style(0.3, 400, 1rem, "DM Sans");
+            @include elipses-overflow;
+        }
+        &__empty-msg {
+            @include text-style(0.2, 400, 1.4rem, "DM Sans");
+            @include abs-center;
+            text-align: center;
+        }
+        &__library-dropdown-container {
+            @include pos-abs-top-right-corner(42px, 21px);
+        }
+        &__library-dropdown {
+            width: $lib-dropdown-menu-width;
+            @include pos-abs-top-right-corner(0px, -5px);
+
+            &:last-child {
+                @include pos-abs-top-right-corner(0px, -18px);
+            }
+        }
+        &__library-options-dropdown-container {
+            @include pos-abs-top-right-corner(0px, calc(($lib-dropdown-menu-width - 10px) * -1));
+            position: relative;
+            width: calc($lib-dropdown-menu-width);
+            height: 170px;
+            z-index: 10000;
+            // background-color: red;
         }
     }
     .discover {
@@ -928,7 +1252,7 @@
 
             &-text-container {
                 height: 100%;
-                @include flex-container(_, space-between);
+                @include flex(_, space-between);
                 flex-direction: column;
                 padding: 12px;
             }
@@ -951,10 +1275,8 @@
             overflow: hidden;
             margin-top: 12px;
             display: flex;
-            h6 { 
-                font-size: 1.04rem;
-                font-weight: 400; 
-            }
+            font-size: 1.04rem;
+            font-weight: 400; 
         }
         &__collection-header-num {
             width: 25px;
@@ -982,7 +1304,7 @@
         }
         /* Playlist Item */
         &__collection-item {
-            @include flex-container(center, _);
+            @include flex(center, _);
             position: relative;
             height: 68px;
             width: 100%;
@@ -1038,6 +1360,7 @@
             opacity: 0.7;
             width: 25px;
             color: rgba(var(--textColor1), 0.7);
+            font-family: "DM Sans";
         }
         &__collection-item-details-container {
             width: 35%;
@@ -1045,7 +1368,7 @@
             overflow: hidden;
         }
         &__collection-item-details {
-            max-width: 80%;
+            width: 100%;
             overflow: hidden;
             &-img {
                 background-color: var(--hoverColor);
@@ -1059,27 +1382,27 @@
                 width: 100%;
                 height: 100%;
             }
-            a {
-                width: fit-content;
-                color: rgb(var(--textColor1));
-                @include elipses-overflow;
-                display: block;
-            }
             &-title {
-                width: fit-content;
                 margin-bottom: 2.5px;
                 font-size: 1.1rem;
                 font-weight: 500; 
+                max-width: 95%;
+                color: rgba(var(--textColor1), 1);
                 @include elipses-overflow;
             }
             &-author {
                 color: rgba(var(--textColor1), 0.4);
                 font-weight: 400;
                 font-size: 1.05rem;
-                width: 100%;
+                max-width: 95%;
+                display: block;
                 @include elipses-overflow;
 
-            }        }
+            }        
+        }
+        &__collection-item-length {
+            font-family: "DM Sans";
+        }
         &__collection-item-type,
         &__collection-item-genre,
         &__collection-item-length {

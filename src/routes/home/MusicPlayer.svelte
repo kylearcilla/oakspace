@@ -3,15 +3,12 @@
 
 	import type { MusicPlayer } from '$lib/music-player'
     import { LogoIcon, MusicPlatform } from "$lib/enums"
-	import { createMusicAPIErrorToastMsg } from '$lib/utils-music'
+	import { musicAPIErrorHandler } from '$lib/utils-music'
 	import { getSlidingTextAnimation, trackProgressHandler, volumeHandler } from '$lib/utils-music-player'
 	import { musicPlayerStore, themeState, homeViewLayout, musicDataStore } from '$lib/store'
     
 	import Logo from '../../components/Logo.svelte'
 	import { findEnumIdxFromDiffEnum } from '$lib/utils-general'
-    
-    let trackId = ""
-    let musicPlatform: MusicPlatform | null = null
 
     let hasMediaEventHandlersSet = false
     let isPausePlayBtnActive = false
@@ -31,6 +28,7 @@
     let trackArtistElAnimationObj: Animation | null
     let playerError: any
     let leftGradientBlackStart = 17
+
     
     const ACTIVE_TO_INACTIVE_BTN_DEAY = 150
     const LOGO_WIDTH = 19
@@ -45,13 +43,19 @@
         Luciole: { iconWidth: "60%" }
     }
 
+    let mediaItemId = ""
+    let musicPlatform: MusicPlatform | null = null
+
+    $: mediaItem = $musicPlayerStore?.mediaItem
+    $: mediaCollection = ($musicPlayerStore?.mediaCollection! as any)
+
     musicPlayerStore.subscribe((player: MusicPlayer | null) => {
         if (!player) return    
 
         // if there is a new error then alert user & if there is no new error remove current error if there was an error
         if (player.error && playerError != player.error) {
             playerError = player.error
-            createMusicAPIErrorToastMsg(player.error!)
+            musicAPIErrorHandler(player.error!)
             return
         }
         else if (player.error) {
@@ -61,13 +65,12 @@
             playerError = null
         }
 
-        if (!player.track || player.track.id === trackId) return
+        if (!player.mediaItem || player.mediaItem.id === mediaItemId) return
 
         resetSlidingTextAnimations()
-        
         requestAnimationFrame(initSlidingTextAnimations)
 
-        trackId = player.track!.id
+        mediaItemId = player.mediaItem!.id
 
         // when media is playing for this site
         if (navigator.mediaSession.metadata && !hasMediaEventHandlersSet) {
@@ -159,21 +162,22 @@
 
 <svelte:window on:keyup={handleKeyUp} on:keydown={handleKeyDown} />
 
+{#if mediaItem}
 <div class={`music-player ${$homeViewLayout.isNavMenuOpen ? "music-player--left-bar-open" : ""} ${$musicPlayerStore?.doShowPlayer ? "" : "music-player--hidden"} ${!$themeState.isDarkTheme ? "music-player--solid-bg" : ""}`}>
     <div class="music-player__wrapper">
-    <img class="img-bg" src={$musicPlayerStore?.track?.artworkImgSrc} alt="track-artwork"/>
+    <img class="img-bg" src={mediaItem.artworkImgSrc} alt="track-artwork"/>
     <div class="blur-bg"></div>
     <div class="content-bg">
         <!-- svelte-ignore a11y-missing-attribute -->
-        <div class="music-player-track" title={`${$musicPlayerStore?.track?.name} – ${$musicPlayerStore?.track?.artist}`}>
-            <img class="music-player-track__art" src={$musicPlayerStore?.track?.artworkImgSrc} alt="">
+        <div class="music-player-track" title={`${mediaItem.name} – ${mediaItem.artist}`}>
+            <img class="music-player-track__art" src={mediaItem.artworkImgSrc} alt="">
             <div class="music-player-track__details">
                 <div class={`music-player-track__title-container ${trackTitleElAnimationObj ? "music-player-track__title-container--masked" : ""}`}>
                     <h5 
                         class="music-player-track__title" 
                         bind:this={trackTitleElement}
                     >
-                        {$musicPlayerStore?.track?.name ?? ""}
+                        {mediaItem.name ?? ""}
                     </h5>
                 </div>
                 <div class={`music-player-track__artist-container ${trackArtistElAnimationObj ? "music-player-track__artist-container--masked" : ""}`}>
@@ -181,7 +185,7 @@
                         class={`music-player-track__artist ${!$themeState.isDarkTheme ? "caption-2--light-theme" : ""}`} 
                         bind:this={trackArtistNameElement}
                     >
-                        {$musicPlayerStore?.track?.artist ?? ""}
+                        {mediaItem.artist ?? mediaCollection?.description}
                     </span>
                 </div>
             </div>
@@ -273,6 +277,7 @@
     </div>
     </div>
 </div>
+{/if}
 
 <style lang="scss">
     @import "../../scss/blurred-bg.scss";
@@ -350,7 +355,7 @@
         height: 100%;
         overflow: hidden;
         width: 22%;
-        @include flex-container(center, _);
+        @include flex(center, _);
 
         &__details {
             width: 75%;
@@ -396,7 +401,7 @@
         min-width: 150px;
         margin: 0px 15px 0px 15px;
 
-        @include flex-container(center, space-around);
+        @include flex(center, space-around);
         button {
             transition: 0.12s ease-in-out;
         }
@@ -418,7 +423,7 @@
             border-radius: 100%;
             padding: 5px;
             @include circle(15px);
-            @include flex-container(center, center);
+            @include flex(center, center);
 
             .fa-play {
                 margin: 0px -2px 1px 0px;
@@ -469,7 +474,7 @@
     }
     /* Playback Bar */
     .music-player-progress-bar-wrapper {
-        @include flex-container(center, flex-end);
+        @include flex(center, flex-end);
         width: 50%;
         padding-right: 2%;
         &__playback-bar {
@@ -496,14 +501,14 @@
     /* Right Section */
     .music-player-right-container {
         width: 145px;
-        @include flex-container(center, flex-end);
+        @include flex(center, flex-end);
 
         @include sm(max-width) {
             width: 30px;
         }
     }
     .music-player-volume {
-        @include flex-container(center, center);
+        @include flex(center, center);
         position: relative;
         margin-right: 5px;
         button {
@@ -527,7 +532,7 @@
     }
     .music-player-context-container {
         height: 40px;
-        @include flex-container(center, center);
+        @include flex(center, center);
         border-radius: 15px;
         padding: 7px 0px 7px 2px;
         transition: 0.15 ease-in-out;

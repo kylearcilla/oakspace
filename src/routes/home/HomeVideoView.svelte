@@ -123,9 +123,9 @@
     @import "../../scss/dropdown.scss";
 
     .vid-view {
-        margin-top: 30px;
+        margin-top: 22px;
         position: relative;
-        @include flex-container(center, center);
+        @include flex(center, center);
 
         &--hidden {
             display: none;
@@ -202,7 +202,7 @@
             margin: 10px 0px 0px 0px;
             position: relative;
             width: 100%;
-            @include flex-container(center, _);
+            @include flex(center, _);
             color: rgba(var(--textColor1), 0.7);
             
             img {
@@ -338,7 +338,7 @@
             margin-top: 5px;
             position: relative;
             width: 98%;
-            @include flex-container(center, center);
+            @include flex(center, center);
 
             span {
                 margin: 0px 0px 3px 7px;

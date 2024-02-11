@@ -117,7 +117,7 @@
         }
         &__shortcut {
             height: 30px;
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
             
             &-title {
                 font-size: 1.25rem;
@@ -125,11 +125,11 @@
                 color: rgba(var(--textColor1), 0.5)
             }
             &-keys-container {
-                @include flex-container(center, center);
+                @include flex(center, center);
             }
         }
         &__key {
-            @include flex-container(center, center);
+            @include flex(center, center);
             margin-left: 4px;
             background-color: rgba(255, 255, 255, 0.03);
             padding: 5.5px 11px;

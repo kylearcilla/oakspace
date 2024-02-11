@@ -219,7 +219,7 @@
             font-size: 1rem;
         }
         &--repo-card &__details {
-            @include flex-container(_, space-between);
+            @include flex(_, space-between);
             flex-direction: column;
             padding: 7.5px 9px 7.5px 10px;
             height: 100%;
@@ -263,7 +263,7 @@
             margin: 0px 12px 0px 0px;
         }
         &--board-list &__bottom-details, &--repo-list &__bottom-details {
-            @include flex-container(center, flex-start);
+            @include flex(center, flex-start);
         }
 
         // board card
@@ -285,11 +285,11 @@
             border-radius: 15px;
         }
         &__details-header {
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
             margin-bottom: 6px;
         }
         &__pinned {
-            @include flex-container(center);
+            @include flex(center);
             svg {
                 margin-right: 6px;
                 transform: scale(1.1);
@@ -325,10 +325,10 @@
             @include multi-line-elipses-overflow(11);
         }
         &__bottom-details {
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
         }
         &__bottom-details-left {
-            @include flex-container(center, _);
+            @include flex(center, _);
         }
         &__status-dot {
             @include circle(2.5px);
@@ -337,7 +337,7 @@
         &__status {
             @include text-style(0.44, 400);
             margin-right: 6.5px;
-            @include flex-container(center);
+            @include flex(center);
         }
         &__milestones {
             @include text-style(0.24);

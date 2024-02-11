@@ -215,7 +215,7 @@
             margin-bottom: 25px;
             object-fit: cover;
             width: 100%;
-            @include flex-container(center, center);
+            @include flex(center, center);
 
             img {
                 object-fit: cover;
@@ -226,11 +226,11 @@
         }
         &__text {
             text-align: center;
+            font-family: "DM Sans";
         }
         &__text-title {
-            font-size: 1.8rem;
             margin-bottom: 10px;
-            font-weight: 500;
+            @include text-style(1, 500, 1.8rem);
         }
         &__text-message {
             font-size: 1.4rem;
@@ -242,15 +242,14 @@
         &__results-container {
             margin-top: 35px;
             width: 100%;
-            @include flex-container(center, center);
+            @include flex(center, center);
             flex-direction: column;
         }
         &__result {
             width: 95%;
             display: flex;
-            font-size: 1.35rem;
             margin-bottom: 3px;
-            font-size: 1.5rem;
+            @include text-style(_, _, 1.5rem, "DM Sans");
         }
         &__result-title {
             width: 30%;
@@ -261,23 +260,20 @@
         &__result-time {
             width: 55%;
             white-space: nowrap;
-            color: rgba(var(--textColor1), 0.55);
-            font-weight: 300;
             text-align: center;
+            @include text-style(0.55, 300, _);
         }
         &__result-elapsed {
             text-align: left;
             width: 15%;
             margin-right: -5px;
             white-space: nowrap;
-            color: rgba(var(--textColor1), 0.3);
-            font-weight: 300;
+            @include text-style(0.3, 300, _);
         }
         &__score {
             margin-top: 30px;
             text-align: center;
-            font-size: 1.7rem;
-            color: rgba(var(--textColor1), 0.7);
+            @include text-style(0.7, _, 1.7rem, "DM Sans");
 
             span {
                 color: rgba(var(--textColor1), 1);
@@ -287,7 +283,7 @@
         &__btn-container {
             width: 100%;
             // @include pos-abs-bottom-left-corner(0px, 50px);
-            @include flex-container(center, center);
+            @include flex(center, center);
 
             button {
                 font-size: 1.3rem;
@@ -324,6 +320,7 @@
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
+            font-family: "DM Sans";
 
             &-title h2 {
                 font-weight: 500;
@@ -332,7 +329,7 @@
             &-container {
                 margin-top: -16px;
                 width: 100%;
-                @include flex-container(center, space-around);
+                @include flex(center, space-around);
             }
         }
         &__stat {
@@ -370,7 +367,7 @@
         }
         &__stats-btn-container {
             width: 80%;
-            @include flex-container(center, center);
+            @include flex(center, center);
 
             button {
                 margin-top: -20px;

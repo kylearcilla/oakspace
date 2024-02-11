@@ -932,7 +932,7 @@
         }
 
         &__header {
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
             margin-bottom: 12px;
             width: 100%;
         }
@@ -984,7 +984,7 @@
             padding-top: 20px;
         }
         &__milestones-header {
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
             margin-bottom: 8px;
             padding: 0px 20px 0px 25px;
 
@@ -995,7 +995,7 @@
         &__milestone-progress {
             font-family: "DM Mono";
             @include text-style(0.4, 200, 1.2rem);
-            @include flex-container(center);
+            @include flex(center);
             span {
                 font-family: "Manrope";
                 margin: 0px 5px;
@@ -1012,7 +1012,7 @@
             }
         }
         &__milestone-top-details {
-            @include flex-container(center, _);
+            @include flex(center, _);
             margin-bottom: 3px;
         }
         &__milestone {
@@ -1176,7 +1176,7 @@
             }
         }
         &__new-milestone-container {
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
             width: 100%;
             padding-right: 25px;
         }

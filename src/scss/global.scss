@@ -144,7 +144,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
  }
 
  /* Global Mixins */
-@mixin flex-container($vert-spacing, $hoz-spacing: _) {
+@mixin flex($vert-spacing, $hoz-spacing: _) {
     display: flex;
 
     @if $vert-spacing != _ {
@@ -157,7 +157,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
 
 /* Reusable Stylings */
 @mixin center {
-    @include flex-container(center, center);
+    @include flex(center, center);
 }
 
 @mixin circle($diameter) {
@@ -171,6 +171,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0px;
 }
 
 @mixin multi-line-elipses-overflow($line_number) {
@@ -478,18 +479,23 @@ button.icon {
     padding: 5px;
 }
 
-@mixin tab-btn-light($val) {
-    &:hover, &:focus {
-        filter: brightness($val);
+@mixin tab-btn-light() {
+    &:hover {
+        filter: brightness(0.96);
+    }
+    &--selected {
+        &:hover {
+            filter: brightness(1.08);
+        }
     }
 }
 
 button.tab-btn {
     background-color: (var(--tabColor));
-    color: rgba(var(--textColor1), 0.55);
+    @include text-style(0.55);
     border-radius: 15px;
     padding: 3px 12px;
-    transition: 0.15s ease-in-out;
+    transition: 0.1s ease-in-out;
     white-space: nowrap;
     margin-right: 4px;
     font-size: 1.15rem;
@@ -504,6 +510,25 @@ button.tab-btn {
     }
     &:active {
         transform: scale(0.985);
+    }
+    &--txt-only {
+        background-color: transparent;
+        padding: 0px;
+        margin-right: 14px;
+        transition: 0.1s ease-in-out;
+        @include text-style(0.4, 300, 1.35rem);
+
+        &:hover {
+            @include text-style(0.9);
+        }
+        &:active {
+            transform: scale(0.97);
+        }
+    }
+    &--txt-only-selected {
+        box-shadow: none;
+        background-color: transparent;
+        @include text-style(0.9);
     }
     &--selected {
         background-color: var(--tabHighlightColor);
@@ -584,22 +609,25 @@ button.text-only {
         }
     }
 }
+
+@mixin settings-btn--light {
+    background-color: rgb(var(--textColor1), 0.04);
+
+    &:hover {
+        background-color: rgb(var(--textColor1), 0.08);
+    }
+}
+
 button.settings-btn {
-    transition: 0.1s ease-in-out;
-    padding: 4.5px;
+    @include circle(22px);
     @include center;
-    aspect-ratio: 1 / 1;
-    border-radius: 20px;
-    transition: 0.15s ease-in-out;
+    background-color: rgb(var(--textColor1), 0.04);
     
     &:active {
-        transform: scale(0.98)
-    }
-    &:focus {
-        background-color: rgba(var(--textColor1), 0.05);
+        transform: scale(0.94);
     }
     &:hover {
-        background-color: rgba(var(--textColor1), 0.05);
+        background-color: rgb(var(--textColor1), 0.08);
     }
 }
  
@@ -759,7 +787,7 @@ $bento-box-padding: 8px;
     }
 
     &__header {
-        @include flex-container(center, space-between);
+        @include flex(center, space-between);
     }
     &__title {
         margin-bottom: 6px;
@@ -786,6 +814,7 @@ $bento-box-padding: 8px;
     color: rgb(var(--textColor2));
     opacity: $opacity;
 }
+
 
 /* Modal */
 $settings-modal-padding: 20px 25px 25px 25px;
@@ -820,7 +849,7 @@ $settings-modal-padding: 20px 25px 25px 25px;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 200001;
+    z-index: 3100004;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -884,7 +913,7 @@ $settings-modal-padding: 20px 25px 25px 25px;
     
     &--animated {
         &::after {
-            animation: 0.13s strike ease-in-out forwards 1;
+            animation: 0.22s strike ease-in-out forwards 1;
         }
     }
 }
@@ -898,6 +927,25 @@ $settings-modal-padding: 20px 25px 25px 25px;
 @mixin visible($opacity: 1) {
     opacity: $opacity;
     visibility: visible;
+}
+
+@mixin text-color($opacity: 1, $type: "text") {
+    @if $type == "stroke" {
+        stroke: rgba(var(--textColor1), $opacity);
+    }
+    @else if $type == "background" {
+        background: rgba(var(--textColor1), $opacity);
+    }
+    @else if $type == "background-color" {
+        background-color: rgba(var(--textColor1), $opacity);
+    }
+    @else {
+        color: rgba(var(--textColor1), $opacity);
+    }
+}
+
+.hidden {
+    display: none;
 }
 
 @mixin not-visible {

@@ -93,20 +93,23 @@ export function setRootColors(theme: ColorThemeProps) {
           --tabColor: ${theme.tabColor};
           --tabHighlightColor: ${theme.tabHighlightColor};
           --tabHighlightBoxShadow: ${theme.tabHighlightBoxShadow};
-          --headerElementBgColor: ${theme.headerElementBgColor};
-          --headerElementBorderVal: ${theme.headerElementBorderVal};
-          --headerElementTextColor: ${theme.headerElementTextColor};
-          --headerElementShadow: ${theme.headerElementShadow};
-          --headerTimeColor: ${theme.headerTimeColor};
+          --headerTextColor: ${theme.headerTextColor};
+          --headerIconColor: ${theme.headerIconColor};
+          --headerBorder: ${theme.headerBorder};
+          --headerBoxShadow: ${theme.headerBoxShadow};
           --headerProgressColor1: ${theme.headerProgressColor1};
           --headerProgressColor2: ${theme.headerProgressColor2};
           --headerTrackColor1: ${theme.headerTrackColor1};
           --headerTrackColor2: ${theme.headerTrackColor2};
           --baseProgressColor1: ${theme.baseProgressColor1};
           --baseProgressColor2: ${theme.baseProgressColor2};
+          --navMenuBoxShadow: ${theme.navMenuBoxShadow};
+          --navMenuBorder: ${theme.navMenuBorder};
           --baseTrackColor1: ${theme.baseTrackColor1};
           --baseTrackColor2: ${theme.baseTrackColor2};
           --progressBallGlow: ${theme.progressBallGlow};
+          --pomToolTipBgColor: ${theme.pomToolTipBgColor};
+          --pomToolTipTextColor: ${theme.pomToolTipTextColor};
           --modalBgColor: ${theme.modalBgColor};
           --modalBgAccentColor: ${theme.modalBgAccentColor};
           --bentoBoxBgColor: ${theme.bentoBoxBgColor};
@@ -114,6 +117,14 @@ export function setRootColors(theme: ColorThemeProps) {
           --bentoBoxShadow: ${theme.bentoBoxShadow};
           --muiscPlayerBgColor: ${theme.muiscPlayerBgColor};
           --musicProgressFgColor: ${theme.musicProgressFgColor};
+          --headerBgColor: ${theme.headerBgColor};
+          --wideLeftBarColor: ${theme.wideLeftBarColor};
+          --wideLeftBarBorder: ${theme.wideLeftBarBorder};
+          --wideLeftBarBoxShadow: ${theme.wideLeftBarBoxShadow};
+          --wideLeftBarTabColor: ${theme.wideLeftBarTabColor};
+          --wideLeftBarTabIconColor: ${theme.wideLeftBarTabIconColor};
+          --sessionBlockColor: ${theme.sessionBlockColor};
+          --rightBarMindNoteBgColor: ${theme.rightBarMindNoteBgColor};
           --navMenuBgColor: ${theme.navMenuBgColor};
           --navIconColor: ${theme.navIconColor};
           --navIconBgColor: ${theme.navIconBgColor};
@@ -134,10 +145,6 @@ export function setRootColors(theme: ColorThemeProps) {
           --rightBarBgColor: ${theme.rightBarBgColor};
           --rightBarBgBoxShadow: ${theme.rightBarBgBoxShadow};
           --tasksCheckBoxColorDefault: ${theme.tasksCheckBoxColorDefault};
-          --sidePanelContextMenuBgColor: ${theme.sidePanelContextMenuBgColor};
-          --sidePanelContextMenuHoverColor: ${theme.sidePanelContextMenuHoverColor};
-          --sidePanelContextMenuBorder: ${theme.sidePanelContextMenuBorder};
-          --sidePanelContextMenuBoxShadow: ${theme.sidePanelContextMenuBoxShadow};
           --sidePanelLightAccentColor: ${theme.sidePanelLightAccentColor};
           --tasksCheckColor: ${theme.tasksCheckColor};
           --tasksCheckBoxColorDefault: ${theme.tasksCheckBoxColorDefault};
@@ -146,8 +153,6 @@ export function setRootColors(theme: ColorThemeProps) {
           --tasksLightTextColor: ${theme.tasksLightTextColor};
           --dropdownMenuBgColor1: ${theme.dropdownMenuBgColor1};
           --dropdownMenuBgHoverColor1: ${theme.dropdownMenuBgHoverColor1};
-          --dropdownMenuBgColor2: ${theme.dropdownMenuBgColor2};
-          --dropdownMenuBgHoverColor2: ${theme.dropdownMenuBgHoverColor2};
       }
     `
     headTag.appendChild(styleTag)

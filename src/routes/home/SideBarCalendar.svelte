@@ -4,10 +4,19 @@
 	import Calendar from "../../components/Calendar.svelte";
 	import { formatTimeToHHMM, getDifferenceInSecs, getTotalSecondsFromStartOfDay, isSameDay } from "$lib/utils-date";
 	import { clickOutside, getElemById, getScrollStatus } from "$lib/utils-general";
+	import { themeState } from "$lib/store";
 
     let calendar: ProductivityCalendar | null = null
     let dayViewElem: HTMLElement | null = null
     let maskListGradient = ""
+
+    $: {
+        const isLightTheme = !$themeState.isDarkTheme
+
+        if (isLightTheme) {
+            maskListGradient = ""
+        }
+    }
 
     type DayViewSession = {
         title: string,
@@ -169,6 +178,7 @@
         return `${formattedHour} ${suffix}`;
     }
     function dayViewScrollHandler(event: Event) {
+        if (!$themeState.isDarkTheme) return
         const target = event.target as HTMLElement
         const [hasReachedEnd, hasReachedTop] = getScrollStatus(target!)
 
@@ -192,7 +202,7 @@
     })
 </script>
 
-<div class="overview">
+<div class={`overview ${$themeState.isDarkTheme ? "" : "overview--light"}`}>
     <!-- Calendar -->
     <div class="overview__calendar-container">
         {#if calendar}
@@ -271,8 +281,45 @@
 <style lang="scss">
     .overview {
         height: 100%;
+
+        &--light &__day-view-day-details {
+            margin-bottom: 5px;
+
+            span {
+                @include text-style(0.7, 500);
+            }
+        }
+        &--light &__hour-block {
+            span {
+                @include text-style(0.55, 500);
+            }
+
+            &-hoz-divider path {
+                @include text-color(0.2, "stroke");
+                stroke-width: 0.85px;
+            }
+            &-vert-divider path {
+                @include text-color(0.2, "stroke");
+                stroke-width: 1px;
+            }
+        }
+        &--light &__session {
+            border-color: transparent;
+
+            &--magnify {
+                box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.1);
+            }
+
+            &-title {
+                @include text-style(0.72, 500);
+            }
+            &-time-period span {
+                @include text-style(0.4, 500);
+            }
+        }
+
         &__calendar-container {
-            margin: 11px 0px 5px 0px;
+            margin: 11px 0px 7px 0px;
             padding: 0px 2px;
         }
         &__day-view {
@@ -281,9 +328,8 @@
             height: calc(100% - 294px);
         }
         &__day-view-day-details {
-            @include flex-container(center, space-between);
-            margin-bottom: 2px;
-            height: 14px;
+            @include flex(center, space-between);
+            height: 18px;
 
             span {
                 @include text-style(0.5, 300, 1.05rem, "DM Sans");
@@ -316,7 +362,7 @@
             }
         }
         &__hour-block-hoz-divider {
-            @include flex-container(center);
+            @include flex(center);
             path {
                 stroke: rgba(var(--textColor1), 0.07);
             }
@@ -332,7 +378,7 @@
             background-color: red;
             left: 50px;
             width: 70%;
-            background-color: var(--dropdownMenuBgColor2);
+            background-color: var(--sessionBlockColor);
             border-radius: 9px;
             overflow: hidden;
             transition: 0.12s ease-in-out;
@@ -373,7 +419,7 @@
                 transform: scale(0.97);
             }
             &--md &-content {
-                @include flex-container(center);
+                @include flex(center);
             }
             &--md &-time-period {
                 margin-left: 9.5px;

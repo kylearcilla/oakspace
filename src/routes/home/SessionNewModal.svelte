@@ -385,22 +385,6 @@
             @include unfill-btn-ficus-styling(var(--textColor1));
         }
 
-        /* Dropdown Styling */
-        .dropdown-menu {
-            background-color: var(--sidePanelContextMenuBgColor);
-            border: var(--sidePanelContextMenuBorder);
-            box-shadow: var(--sidePanelContextMenuBoxShadow);
-
-            &__option button {
-                &:hover {
-                    background-color: var(--sidePanelContextMenuHoverColor) !important;
-                }
-                &:focus {
-                    background-color: var(--sidePanelContextMenuHoverColor) !important;
-                }
-            }
-        }
-
         /* Light Themes Adjustments */
         &--light .text-input-container {
             @include input-text-field-light;
@@ -483,7 +467,7 @@
             }
         }
         &__name-input-tag-dropdown-btn {
-            @include flex-container(center, _);
+            @include flex(center, _);
             background: none;
             box-shadow: none;
             padding: 10px 11px 10px 10px;
@@ -499,7 +483,7 @@
 
         /* Pomodoros Stuff */
         &__pom-input-container {
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
             margin: 20px 0px 10px 0px;
             width: 100%;
         }
@@ -531,7 +515,7 @@
         /* Pom Count */
         &__pom-input-stepper {
             padding: 0px 4px;
-            @include flex-container(center, space-between);
+            @include flex(center, space-between);
             background-color: var(--modalBgAccentColor);
 
             span {
@@ -605,7 +589,7 @@
         /* Result */
         &__pom-input-result {
             margin: 35px 0px 45px 0px;
-            @include flex-container(center, center);
+            @include flex(center, center);
 
             label, h2 {
                 margin: 0px 20px 0px 0px;

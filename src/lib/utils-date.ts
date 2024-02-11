@@ -57,7 +57,7 @@ export const isDateEarlier = (date1: Date, date2: Date, inclusive = false): bool
 /**
  * @param date1 
  * @param date2 
- * @returns       Difference beyween two dayes in seconds.
+ * @returns       Difference beyween two dates in seconds.
  */
 export const getDifferenceInSecs = (date1: Date, date2: Date): number => {
     const differenceMilliseconds = Math.abs(date1.getTime() - date2.getTime())
@@ -177,7 +177,7 @@ export function formatTimeToHHMM(date: Date, doUsehour12: boolean | null = null)
         _doUserHour12 = hourCycle === "h12" || hourCycle === "h11"
     }
 
-    const options = { hour: 'numeric', minute: 'numeric', _doUserHour12 }    
+    const options = { hour: 'numeric', minute: 'numeric', hour12: _doUserHour12 }    
 
     // @ts-ignore
     return date.toLocaleTimeString(undefined, options)

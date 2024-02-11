@@ -343,12 +343,12 @@ const getYtApiError = (code: number, context: YTAPIErrorContext) => {
  */
 export const getYtIframeAPIError = (errorMsg: string) => {
   if (errorMsg === "api.invalidparam") {
-      return new PlayerError("Player error has occured. Refresh or try a new item.")
+      return new PlayerError("Player error has occured. Refresh or play a new playlist / video.")
   }
   else if (errorMsg === "auth") {
     return new PlayerError("Owner has disabled video playback. Click on a different video to continue.", ErrorCode.YT_PRIVATE_VIDEO)
   }
   else {
-    return new PlayerError("Player error has occured. Refresh or try a new item.")
+    return new PlayerError("Player error has occured. Refresh or play a new playlist / video.")
   }
 }

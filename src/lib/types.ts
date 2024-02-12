@@ -179,6 +179,15 @@ type ActiveSessionState = {
     pomMessage: string    
 }
 
+type FloatingMediaEmbed = {
+    mediaEmbedType: MediaEmbedType
+    topPos: number
+    leftPos: number
+    fixed: MediaEmbedFixed
+    width: number
+    height: number
+}
+
 type ProgressVisualPart = {
     type: ProgressVisualPartType
     offSetPerc: number,
@@ -204,6 +213,7 @@ interface Media {
     artworkImgSrc: string
     genre: string
     url: string
+    type: MusicMediaType
 }
 
 interface Playlist extends Media {
@@ -265,7 +275,7 @@ type MusicShufflerData = {
     state: MusicShufflerState
 }
 
-type MusicPlatformPropNames = "appleMusic"
+type MusicPlatformPropNames = "appleMusic" | "spotify"
 
 type DiscoverCollection = {
     [platform in MusicPlatformPropNames]: Media[]

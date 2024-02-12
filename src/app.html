@@ -12,11 +12,13 @@
 		<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@200;300;400;500&family=DM+Sans:opsz,wght@9..40,200;9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 		<meta name="viewport" content="width=device-width" />
 		<script src="https://kit.fontawesome.com/814cfda7df.js" crossorigin="anonymous"></script>
-		<script src="https://js-cdn.music.apple.com/musickit/v3/musickit.js" data-web-components async></script>
 		<script src="https://accounts.google.com/gsi/client" async defer></script>
+		<script src="https://js-cdn.music.apple.com/musickit/v3/musickit.js" data-web-components async></script>
+
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
+		<script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html

@@ -4,7 +4,7 @@ import { initAppleMusic } from "./api-apple-music"
 import { AppleMusicPlayer } from "./music-apple-player"
 import { musicDataStore, musicPlayerStore, toastMessages } from "./store"
 
-import { APIErrorCode, MusicMoodCategory, MusicPlatform, ToastContext, UserLibraryMedia } from "./enums"
+import { APIErrorCode, MusicMediaType, MusicMoodCategory, MusicPlatform, ToastContext, UserLibraryMedia } from "./enums"
 
 import { 
     sereneCollections, acousticCollections, classicalCollections, 
@@ -12,10 +12,11 @@ import {
     upbeatCollections, zenCollections  
 } from "$lib/data-music-collections"
 import { findEnumIdxFromDiffEnum } from "./utils-general"
-import { initSpotifyMusic, requestSpotifyUserAuth } from "./api-spotify"
+import { handleSpotifyMediaItemClicked, initSpotifyMusic, requestSpotifyUserAuth } from "./api-spotify"
 import type { AppleMusicUserData } from "./music-apple-user-data"
 import type { SpotifyMusicUserData } from "./music-spotify-user-data"
 import { APIError } from "./errors"
+import type { SpotifyMusicPlayer } from "./music-spotify-player"
 
 export const USER_PLAYLISTS_REQUEST_LIMIT = 10
 export const didInitMusicUser = () => loadMusicUserData() != null
@@ -46,7 +47,7 @@ export const musicLogin = async (platform: MusicPlatform, hasUserSignedIn: boole
             initSpotifyMusic()
         }
 
-        if (hasUserSignedIn) return { sucess: true }
+        if (hasUserSignedIn) return
 
         toastMessages.update((toasts: ToastMsg[]) => [...toasts, {
             context: get(musicDataStore)!.musicPlatform,
@@ -90,22 +91,19 @@ export const musicLogout = async (): Promise<AsyncResult> => {
  * Called when user wants to log in again after token has expired.
  * @returns     AsyncResult object.
  */
-export const refreshMusicSession = async (): Promise<AsyncResult> => {
+export const refreshMusicSession = async () => {
     const musicStore = get(musicDataStore)
     try {
         await musicStore!.refreshAccessToken()
-        new AppleMusicPlayer(true)
+        musicStore!.setTokenHasExpired(false)
 
         toastMessages.update((toasts: ToastMsg[]) => [...toasts, {
             context: musicStore!.musicPlatform,
             message: "Refresh Success!"
         }])
-
-        return { sucess: true }
     }
     catch(error: any) {
         musicAPIErrorHandler(error)
-        return { sucess: false }
     }
 }
 
@@ -146,6 +144,12 @@ export const musicAPIErrorHandler = (error: APIError, musicPlatform?: MusicPlatf
             }
         }
     }
+    else if (error instanceof TypeError) {
+        toastMessage = {
+            context: toastContext,
+            message: "There was an error with Spotify. Please try again."
+        }
+    }
     else {
         toastMessage = {
             context: toastContext,
@@ -162,21 +166,24 @@ export const musicAPIErrorHandler = (error: APIError, musicPlatform?: MusicPlatf
  * @param collection      Media the user has clicked on.
  * @returns               AsyncResult object
  */
-export const handlePlaylistItemClicked = async (media: Media): Promise<AsyncResult> => {
+export const handlePlaylistItemClicked = async (media: Media) => {
+    const musicData = get(musicDataStore)
     const musicPlayer = get(musicPlayerStore)
+
+    if (musicData!.musicPlatform === MusicPlatform.Spotify) {
+        handleSpotifyMediaItemClicked(media)
+        return
+    }
 
     if (media.id === musicPlayer!.mediaCollection?.id) {
         musicPlayer!.removeCurrentMedia()
-        return { sucess: true }
     }
 
     try {
         musicPlayer!.updateCurrentMediaAndPlay(media)
-        return { sucess: true }
     }
     catch(error: any) {
         musicAPIErrorHandler(error)
-        return { sucess: false }
     }
 }
 
@@ -356,9 +363,13 @@ export function getLibraryMediaTitle(media: Media, type: UserLibraryMedia) {
  */
 export const getPlatformNameForDiscoverObj = (platFormIdx: MusicPlatform): MusicPlatformPropNames => {
     let platform = MusicPlatform[platFormIdx].toLowerCase()
-    platform = "applemusic" ? "appleMusic" : platform
+    platform = platform === "applemusic" ? "appleMusic" : platform
 
     return platform as MusicPlatformPropNames
+}
+
+export function hasUserSignedIn() {
+    return localStorage.getItem("music-user-data") != null
 }
 
 /* Load */
@@ -377,9 +388,13 @@ export const loadMusicShuffleData = (): MusicShufflerData => {
 }
 
 /* Updates */
+
+/**
+ * Incorporates changes to currently-saved user data
+ * @param userData   New data changes.
+ */
 export const saveMusicUserData = (userData: Partial<AppleMusicUserData | SpotifyMusicUserData>) => {
     const prevData = loadMusicUserData()
-
 
     if (prevData) {
         localStorage.setItem("music-user-data", JSON.stringify({ ...prevData, ...userData }))
@@ -388,7 +403,7 @@ export const saveMusicUserData = (userData: Partial<AppleMusicUserData | Spotify
         localStorage.setItem("music-user-data", JSON.stringify(userData))
     }
 }
-export const saveMusicPlayerData = (playerState: Partial<MusicPlayer>) => {
+export const saveMusicPlayerData = (playerState: Partial<MusicPlayer | SpotifyMusicPlayer>) => {
     localStorage.setItem("music-player-data", JSON.stringify(playerState))
 }
 export const saveMusicShuffleData = (shuffleData: MusicShufflerData) => {

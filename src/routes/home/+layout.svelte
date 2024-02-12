@@ -31,11 +31,12 @@
 	import Toast from "../../components/Toast.svelte"
   
 	import { ModalType } from "$lib/enums"
-	import { sessionStore, homeViewLayout, toastMessages, ytPlayerStore, musicPlayerStore } from "$lib/store"
+	import { sessionStore, homeViewLayout, toastMessages, ytPlayerStore, musicPlayerStore, mediaEmbedStore } from "$lib/store"
 	import { 
         initAppState, keyboardShortCutHandlerKeyDown, 
         keyboardShortCutHandlerKeyUp, onMouseMoveHandler
   } from "$lib/utils-home"
+	import MediaEmbed from "./MediaEmbed.svelte";
 
   let hasUserToggledWithKeyLast = true
   let totalWidth = 0
@@ -135,7 +136,11 @@
       >
           <TaskView />
       </nav>
-  </div>
+    </div>
+    
+  {#if $mediaEmbedStore}
+     <MediaEmbed />
+  {/if}
 
   <!-- Music Player -->
   {#if $musicPlayerStore}

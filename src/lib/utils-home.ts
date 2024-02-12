@@ -1,13 +1,14 @@
 import { get } from "svelte/store"
-import { homeViewLayout, sessionStore } from "./store"
-import { ModalType, ShortcutSectionInFocus } from "./enums"
+import { homeViewLayout, mediaEmbedStore, sessionStore } from "./store"
+import { MediaEmbedFixed, MediaEmbedType, ModalType, ShortcutSectionInFocus } from "./enums"
 
 import { loadTheme } from "./utils-appearance"
 import { didInitYtPlayer } from "./utils-youtube-player"
 import { conintueWorkSession, didInitSession } from "./utils-session"
-import { continueMusicSession, didInitMusicUser, loadMusicUserData } from "./utils-music"
+import { continueMusicSession, didInitMusicUser, hasUserSignedIn, loadMusicUserData } from "./utils-music"
 import { continueYtPlayerSession, continueYtUserSession, didInitYtUser } from "./utils-youtube"
-import { didSpotifyUserAuthApp, parseSpotifyAuthCodeFromURL } from "./api-spotify"
+import { didSpotifyUserAuthApp, getSpotifyCodeFromURLAndLogin } from "./api-spotify"
+import { getElemById } from "./utils-general"
 
 const LEFT_BAR_LEFT_BOUND = 5
 const LEFT_BAR_RIGHT_BOUND = 80
@@ -29,12 +30,12 @@ export const initAppState = async () => {
     if (didInitYtPlayer()) {
         continueYtPlayerSession()
     }
-    if (didInitMusicUser()) {
+    if (hasUserSignedIn()) {
         const musicPlatform = loadMusicUserData()!.musicPlatform!
         continueMusicSession(musicPlatform)
     }
     if (didSpotifyUserAuthApp()) {
-        parseSpotifyAuthCodeFromURL()
+        getSpotifyCodeFromURLAndLogin()
     }
 }
 
@@ -147,6 +148,14 @@ export function showRightBar() {
     updteHomeLayout({ ...get(homeViewLayout), isTaskMenuOpen: true  })
 }
 
+export function initFloatingEmbed(type: MediaEmbedType) {
+    mediaEmbedStore.set({
+        mediaEmbedType: type,
+        fixed: MediaEmbedFixed.Bottom,
+        leftPos: 50, topPos: 99.5,
+        width: 600, height: 100
+    })
+}
 /**
  * Add modal to "open modals" array
  * @param modal  Modal to be opened

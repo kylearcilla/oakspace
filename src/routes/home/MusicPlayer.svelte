@@ -284,21 +284,21 @@
     @import "../../scss/brands.scss";
 
     .music-player {
-        bottom: 7px;
         min-width: 470px;
         height: 53px;
-        position: fixed;
         width: 90%;
         max-width: 1100px;
-        left: 50%;
         transition: 0.16s ease-in-out;
-        transform: translate(-50%, 0%);
         align-items: center;
         display: flex;
         z-index: 200001;
         border-radius: 20px;
         overflow: hidden;
         border: 1px solid rgba(70, 70, 70, 0.3);
+        position: fixed;
+        left: 50%;
+        bottom: 7px;
+        transform: translate(-50%, 0%);
         
         &--left-bar-open {
             @include md(max-width) {

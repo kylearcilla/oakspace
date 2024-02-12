@@ -12,6 +12,7 @@ import type { EditGoalManager } from './edit-goal-manager'
 import type { DatePickerManager } from './date-picker-manager'
 import type { AppleMusicUserData } from './music-apple-user-data'
 import type { SpotifyMusicUserData } from './music-spotify-user-data'
+import type { SpotifyMusicPlayer } from './music-spotify-player'
 
 /* App UI State */
 export const homeViewLayout = writable<HomeLayout>({
@@ -37,6 +38,7 @@ export const googleData = writable<GoogleUserData | null>(null)
 
 /* Home View Stuff */
 export const tasksViewStore = writable<TasksViewManager | null>(null)
+export const mediaEmbedStore = writable<FloatingMediaEmbed | null>(null)
 
 /* Goals Stuff */
 export const goalsManager = writable<GoalsManager | null>(null)
@@ -49,6 +51,7 @@ export const ytPlayerStore = writable<YoutubePlayer| null>(null)
 /* Music Stuff: Music Player State */
 export const musicPlayerStore = writable<MusicPlayer | null>(null)
 export const musicDataStore = writable<AppleMusicUserData | SpotifyMusicUserData | null>(null)
+export const spotifyIframeStore = writable<SpotifyMusicPlayer | null>(null)
 
 /* Session Stuff */
 export const sessionStore = writable<Session | null>(null)

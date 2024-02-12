@@ -54,14 +54,14 @@ export class YoutubePlayer {
      * If there's data from a previous session, play that playlist and update video details.
      */
     async initYtPlayer() {
-        await this.intIframePlayerAPI()
+        await this.initIframePlayerAPI()
     }
 
     /**
      * Initialize iFrame Player API asynchrnously
      * @throws  {ApiError}   Error initializing iFrame Player API
      */
-    async intIframePlayerAPI() {
+    async initIframePlayerAPI() {
         try {
             this.setYoutubeScript()
             await this.waitForPlayerReadyAndSetPlayerInstance()

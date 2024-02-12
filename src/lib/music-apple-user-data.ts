@@ -10,9 +10,8 @@ import {
 
 
 /**
- * User data class for the Apple Music Musc Kit API. Extends MusicUsesrData Abastract class.
- * Manages and stores user data information, app tokens, and authorization functionality.
- * Errors are handled in function calls to this instance.
+ * User data class for the Apple Music Kit API.
+ * Manages and stores user data information (including library items) and authorization data.
  * 
  * @extends     {MusicUserData}
  * @implements  {MusicUserDataStore}
@@ -167,7 +166,6 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
                 userToken: this.userToken, 
                 hasTokenExpired: this.hasTokenExpired 
             })
-
         }
         catch(e) {
             console.error("Error continuing Apple Music user session.")
@@ -183,9 +181,10 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
         musicDataStore.set(null)
     }
 
+
     /**
-     * Update the state of user music data.
-     * Saves to local storage to persist state between refreshes.
+     * Update the state of store.
+     * Saves to local storage to persist necessary data between refreshes.
      * @param newState  New version of current state
      */
     updateState(newState: Partial<AppleMusicUserData>, doSave: boolean = true) {

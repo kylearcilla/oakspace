@@ -21,6 +21,7 @@ export abstract class MusicUserData {
     abstract updateLibraryMedia(media: UserLibraryMedia, isSwitchingTheFirstTime: boolean): void
     abstract getLibraryDetails(currentUserMedia: UserLibraryMedia): UserLibraryCollection
     abstract refreshCurrentLibraryMedia(): void
+    abstract setTokenHasExpired(hasExpired: boolean): void
 
     abstract quit(): void
 }
@@ -33,6 +34,6 @@ export interface MusicUserDataStore<T> {
     updateState(newState: Partial<T>): void
     getNewStateObj(newState: Partial<T>, oldState: T): T
     loadAndSetUserData(): void
-    saveState(): void
+    saveState(newState: Partial<T>): void
     deleteMusicUserData(): void
 }

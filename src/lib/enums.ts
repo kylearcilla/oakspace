@@ -19,6 +19,12 @@ export enum ModalType {
     EditSession, SesssionFinished, SessionCanceled, Shortcuts, ImgUpload, CustomVidBg,
     EditGoal
 }
+export enum MediaEmbedType {
+    Spotify, Youtube
+}
+export enum MediaEmbedFixed {
+    BottomLeft, BottomRight, Bottom
+}
 export enum HrsMinsFormatOption {
     LETTERS, MIN_LETTERS, NO_LETTERS
 }
@@ -114,7 +120,7 @@ export enum MusicShufflerState {
     CAN_CONTINUE_CHUNK, HAS_ENDED_AND_MORE_CHUNKS, HAS_ENDED_NO_CHUNKS,
 }
 export enum MusicMediaType {
-    Playlist, Track, RadioStation, Podcast
+    Playlist, Track, Album, PodcastEpisode, AudioBook, RadioStation, 
 }
 export enum UserLibraryMedia {
     Playlists = "Playlists", LikedTracks = "Tracks", Albums = "Albums", PodcastEps = "Episodes", Audiobooks = "Audiobooks"

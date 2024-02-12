@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte"
-    import { ModalType, MusicPlatform, MusicMoodCategory, UserLibraryMedia, Icon } from "$lib/enums"
+    import { ModalType, MusicPlatform, MusicMoodCategory, UserLibraryMedia, Icon, MusicMediaType } from "$lib/enums"
     import { musicCategories } from "$lib/data-music-collections"
 	import { themeState, musicDataStore, musicPlayerStore } from "$lib/store"
     import { addSpacesToCamelCaseStr, clickOutside } from "$lib/utils-general"
@@ -14,11 +14,10 @@
 	import MusicSettingsSignedOut from "./MusicSettingsSignedOut.svelte"
 	import MusicSettingsAccountHeader from "./MusicSettingsAccountHeader.svelte"
 	import { closeModal } from "$lib/utils-home"
-	import { musicAPIErrorHandler } from "$lib/utils-music"
-	import type { AppleMusicUserData } from "$lib/music-apple-user-data";
-	import type { SpotifyMusicUserData } from "$lib/music-spotify-user-data";
-	import SVGIcon from "../../components/SVGIcon.svelte";
-	import { LIBRARY_COLLECTION_LIMIT } from "$lib/api-spotify";
+	import type { AppleMusicUserData } from "$lib/music-apple-user-data"
+	import type { SpotifyMusicUserData } from "$lib/music-spotify-user-data"
+	import SVGIcon from "../../components/SVGIcon.svelte"
+	import { LIBRARY_COLLECTION_LIMIT } from "$lib/api-spotify"
 
     let chosenMood = MusicMoodCategory.Serene
     let chosenMusicCollection: (Playlist | Album | RadioStation)[] = []
@@ -58,29 +57,97 @@
             hasUserSignedIn = true
             handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
         }
-
-        const doUpdateLibrary = isUserLibraryLoading || !userLibrary
-        if (doUpdateLibrary) updateLibrary()
     })
     
     /* Log In Functionality  */
     async function _musicLogin (platform: MusicPlatform) {
-        const res = await musicLogin(platform)
+        await musicLogin(platform)
     }
     async function activePlatformBtnClicked() {
         isPlatformListOpen = false
-         $musicDataStore!.hasTokenExpired ? await refreshMusicSession() : await musicLogout()
+        hasTokenExpired ? await refreshMusicSession() : await musicLogout()
     }
 
-    /* Collection Item Clicked Event Handlers */
+    /* Discover Section */
     async function _handleLibraryMediaClicked(mediaClicked: Media) {
         if (debounceTimeout !== null) return
         
         await handlePlaylistItemClicked(mediaClicked)
         debounceTimeout = setTimeout(() => debounceTimeout = null, PLAYLIST_BTN_COOLDOWN_MS)
     }
+    function _discoverPlsPaginationScrollHandler(e: Event) { 
+        discoverPlsPaginationScrollHandler(e)
+    }
 
     /* Library Section */
+    function updateLibrary() {
+        const data = $musicDataStore!
+        userLibrary = data.getCurrentLibraryDetails()
+        currLibraryCollection = data.currentUserMedia
+    }
+
+    async function updateLibraryMedia(media: UserLibraryMedia) {
+        if (media === currLibraryCollection) return
+
+        isLibraryDropdownOpen = false
+        userLibrary = null
+        
+        const _media = ($musicDataStore! as SpotifyMusicUserData).getLibraryDetails(media)
+        const isFetchingForFirstTime = !_media.hasFetchedAll && _media.items.length === 0
+
+        if (!_media.hasFetchedAll) {
+            isUserLibraryLoading = true
+        }
+
+
+        try {
+            await ($musicDataStore! as SpotifyMusicUserData).updateLibraryMedia(media, isFetchingForFirstTime)
+            updateLibrary()
+            setTimeout(() => isUserLibraryLoading = false, 1000)
+        }
+        catch {
+            isUserLibraryLoading = false
+        }
+    }
+
+    function getMoreLibItems() {
+        const doGetMoreLibItems = !isUserLibraryLoading && !userLibrary?.hasFetchedAll && !$musicDataStore!.hasTokenExpired
+        if (!doGetMoreLibItems) return
+        
+        isUserLibraryLoading = true
+        setTimeout(async () => { 
+            try {
+                await $musicDataStore!.getMoreLibraryItems()
+                userLibrary = $musicDataStore!.getCurrentLibraryDetails()
+                isUserLibraryLoading = false
+
+                if (hasReachedEndOfList()) getMoreLibItems()
+            }
+            catch(error: any) {
+                isUserLibraryLoading = false
+            }
+        }, FETCH_PLAYLIST_DELAY)
+    }
+
+    async function refreshCurrentLibraryMedia() {
+        isLibraryDropdownOpen = false
+        isUserLibraryLoading = true
+        userLibrary = null
+        
+        await $musicDataStore!.refreshCurrentLibraryMedia()
+        updateLibrary()
+        isUserLibraryLoading = false
+    }
+
+    function onMousLeavePlaylistOption(event: MouseEvent) {
+        const toTarget = (event as any).toElement as HTMLElement
+        const classes = toTarget.classList.value
+
+        if (!classes.includes("library-options-dropdown")) {
+            isLibraryOptionsDropdownOpen = false
+        }
+    }
+
     function hasReachedEndOfList() { 
         return Math.ceil(scrollTop) >= scrollHeight - scrollWindow 
     }
@@ -93,71 +160,6 @@
 
         if (!hasReachedEndOfList()) return
         getMoreLibItems()
-    }
-
-    function updateLibrary() {
-        const data = $musicDataStore!
-
-        userLibrary = data.getCurrentLibraryDetails()
-        currLibraryCollection = data.currentUserMedia
-        isUserLibraryLoading = false
-
-        console.log(userLibrary)
-    }
-    function refreshCurrentLibraryMedia() {
-        isUserLibraryLoading = true
-        userLibrary = null
-        
-        $musicDataStore!.refreshCurrentLibraryMedia()
-    }
-    
-    function getMoreLibItems() {
-        const doGetMoreLibItems = !isUserLibraryLoading && !userLibrary?.hasFetchedAll && !$musicDataStore!.hasTokenExpired
-        if (!doGetMoreLibItems) return
-        
-        isUserLibraryLoading = true
-        setTimeout(async () => { 
-            try {
-                await $musicDataStore!.getMoreLibraryItems()
-                userLibrary = $musicDataStore!.getCurrentLibraryDetails()
-
-                if (hasReachedEndOfList()) getMoreLibItems()
-            }
-            catch(error: any) {
-                console.error(error)
-                isUserLibraryLoading = false
-                musicAPIErrorHandler(error)
-            }
-        }, FETCH_PLAYLIST_DELAY)
-    }
-
-
-    function onLibOptionsDropdownMouseEnter(event: MouseEvent) {
-        const toTarget = (event as any).toElement as HTMLElement
-        const classes = toTarget.classList.value
-
-        if (!classes.includes("library-options-dropdown")) {
-            isLibraryOptionsDropdownOpen = false
-        }
-    }
-    function _discoverPlsPaginationScrollHandler(e: Event) { 
-        discoverPlsPaginationScrollHandler(e)
-    }
-    async function updateLibraryMedia(media: UserLibraryMedia) {
-        if (media === currLibraryCollection) return
-
-        isLibraryDropdownOpen = false
-        userLibrary = null
-        isUserLibraryLoading = true
-
-        const _media = ($musicDataStore! as SpotifyMusicUserData).getLibraryDetails(media)
-        const isFetchingForFirstTime = !_media.hasFetchedAll && _media.items.length === 0
-
-        await ($musicDataStore! as SpotifyMusicUserData).updateLibraryMedia(media, isFetchingForFirstTime)
-
-        setTimeout(() => {
-            isUserLibraryLoading = false
-        }, 1000)
     }
     
     /* Discover Section */
@@ -212,6 +214,7 @@
 
         handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
         handleScroll()
+        updateLibrary()
     })
 </script>
 
@@ -401,9 +404,8 @@
                                 <li class="dropdown-menu__option">
                                     <button 
                                         class="dropdown-element"
-                                        on:click={() => updateLibraryMedia(UserLibraryMedia.Playlists)}
                                         on:mouseenter={() => isLibraryOptionsDropdownOpen = true}
-                                        on:mouseleave={(e) => onLibOptionsDropdownMouseEnter(e)}
+                                        on:mouseleave={(e) => onMousLeavePlaylistOption(e)}
                                     >
                                         <span class="dropdown-menu__option-text">
                                             Pick Library
@@ -584,9 +586,7 @@
                             <ul class="discover__selected-collection-list" on:scroll={_discoverPlsPaginationScrollHandler}>
                                 <!-- Collection Item -->
                                 {#each chosenMusicCollection as collection, idx}
-                                    {@const isCollection = "length" in collection}
-                                    {@const isPlaylist = collection.id.startsWith("pl.")}
-                                    {@const type = isPlaylist ? "Playlist" : isCollection ? "Album" : "Radio Station"}
+                                    {@const type = MusicMediaType[collection.type]}
                                     {@const length = getMediaLength(collection)}
 
                                     <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -608,7 +608,13 @@
                                                 {:else}
                                                     <div class="discover__collection-item-details-title">{collection.name}</div>
                                                 {/if}
-                                                <span class="discover__collection-item-details-author">{collection.author}</span>
+                                                {#if collection?.authorUrl}
+                                                    <a href={collection.authorUrl} target="_blank" rel="noreferrer" class="discover__collection-item-details-author">
+                                                        {collection.author}
+                                                    </a>
+                                                {:else}
+                                                    <span class="discover__collection-item-details-author">{collection.author}</span>
+                                                {/if}
                                             </div>
                                         </div>
                                         <div class="discover__collection-item-type">
@@ -672,7 +678,7 @@
     $top-row-height: 170px;
     $bottom-row-height: 470px;
     $my-playlists-section-padding-left: 25px;
-    $lib-dropdown-menu-width: 152px;
+    $lib-dropdown-menu-width: 155px;
     
     $collection-card-border-radius: 10px;
     $collection-card-width: 165px;
@@ -942,7 +948,7 @@
             }
         }
         &__collection-list {
-            height: 90%;
+            height: calc(100% - 51px);
             overflow-y: scroll;
 
             &::-webkit-scrollbar {
@@ -1057,20 +1063,21 @@
             text-align: center;
         }
         &__library-dropdown-container {
-            @include pos-abs-top-right-corner(42px, 21px);
+            @include pos-abs-top-right-corner(42px, 10px);
         }
         &__library-dropdown {
             width: $lib-dropdown-menu-width;
             @include pos-abs-top-right-corner(0px, -5px);
 
             &:last-child {
+                width: $lib-dropdown-menu-width - 10px;
                 @include pos-abs-top-right-corner(0px, -18px);
             }
         }
         &__library-options-dropdown-container {
-            @include pos-abs-top-right-corner(0px, calc(($lib-dropdown-menu-width - 10px) * -1));
+            @include pos-abs-top-right-corner(0px, calc(($lib-dropdown-menu-width - 20px) * -1));
             position: relative;
-            width: calc($lib-dropdown-menu-width);
+            width: calc($lib-dropdown-menu-width - 10px);
             height: 170px;
             z-index: 10000;
             // background-color: red;
@@ -1394,6 +1401,7 @@
                 color: rgba(var(--textColor1), 0.4);
                 font-weight: 400;
                 font-size: 1.05rem;
+                width: fit-content;
                 max-width: 95%;
                 display: block;
                 @include elipses-overflow;

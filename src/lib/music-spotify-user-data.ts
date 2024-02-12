@@ -11,29 +11,27 @@ import { APIError } from "./errors"
 import { getDifferenceInSecs } from "./utils-date"
 
 /**
- * User data class for the Apple Music Musc Kit API. Extends MusicUsesrData Abastract class.
- * Manages and stores user data information, app tokens, and authorization functionality.
- * Errors are handled in function calls to this instance.
+ * User data class for the Spotify Web API.
+ * Manages and stores user data information (including library items) and authorization data.
  * 
  * @extends     {MusicUserData}
  * @implements  {MusicUserDataStore}
  */
 export class SpotifyMusicUserData extends MusicUserData implements MusicUserDataStore<SpotifyMusicUserData> {
+    // creds
     accessToken = ""
     refreshToken = ""
     tokenExpiration = 0
-    tokenExpCountDown = -1
-    tokenInterval: NodeJS.Timer | null = null
     authCode = ""   // code verifier
-    accessTokenCreationDate: Date | null = null
     hasTokenExpired = false
+    accessTokenCreationDate: Date | null = null
 
-    hadPreviousSession = false
+    // session
     isSignedIn = false
+    
+    // user data
     userDetails: MusicUserDetails | null = null
-
     currentUserMedia = UserLibraryMedia.Playlists
-    currentUserLibrary: UserLibraryCollection | null = null
 
     // user library albums
     userPlaylists: UserLibraryCollection = {
@@ -76,9 +74,6 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
     }
 
     musicPlatform = MusicPlatform.Spotify
-    
-    CLIENT_ID = "ed4c34b3aa704c6fbc88ca3e2957ced4"
-    REDIRECT_URI = "http://localhost:5173/home"
     REQUEST_NEW_TOKEN_BELOW_SEC_LEFT = 60
     
     constructor(initData: SpotifyInitData | null, hasUserSignedIn = false) { 
@@ -92,20 +87,36 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
             this.initSpotifyAfterAuth(initData!)
             this.initUserData()
         }
-        
-        if (this.hasTokenExpired) {
-            musicAPIErrorHandler(new APIError(APIErrorCode.EXPIRED_TOKEN))   
-        }
-        else {
-            this.initTokenTimeOut()
+        if (this.hasAccessTokenExpired()) {
+            this.refreshAccessToken()
         }
     }
 
+    setUserSignedIn() {
+        this.isSignedIn = true
+        this.updateState({ isSignedIn: true })
+    }
+
+    setTokenHasExpired(hasExpired: boolean) {
+        this.hasTokenExpired = hasExpired
+        this.updateState({ hasTokenExpired: hasExpired })
+    }
+
+    /**
+     * Check if token has or about to expire. 
+     * Called everytime a request to the API is made.
+     * @returns Token will expire
+     */
+    hasAccessTokenExpired() {
+        const timeFromCreation = getDifferenceInSecs(new Date(this.accessTokenCreationDate!), new Date())
+        return this.REQUEST_NEW_TOKEN_BELOW_SEC_LEFT > this.tokenExpiration - timeFromCreation
+    }
+    
+
     /**
      * The requesting of credential data is handled outside the class.
-     * Here, the data returned is initialized.
-     * Called for the first time when user first logs in.
-     * @param initData 
+     * The data returned is initialized.
+     * @param initData    Important creds data.
      */
     initSpotifyAfterAuth(initData: SpotifyInitData): void {
         this.accessToken = initData.accessToken
@@ -114,26 +125,36 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
         this.authCode = initData.authCode
         this.accessTokenCreationDate = new Date()
     
-        this.updateState({ ...initData, accessTokenCreationDate: new Date() })
+        this.updateState({ 
+            ...initData, tokenExpiration: this.tokenExpiration,
+            accessTokenCreationDate: new Date(), 
+            musicPlatform: this.musicPlatform,
+            currentUserMedia: this.currentUserMedia
+        })
     }
 
-    initTokenTimeOut() {
-        const timeFromCreation = getDifferenceInSecs(new Date(this.accessTokenCreationDate!), new Date())
-        this.tokenExpCountDown = this.tokenExpiration - timeFromCreation
+    /**
+     * Initialize user data (profile details & playlists) after user logs in.
+     */
+    async initUserData() {
+        try {
+            await this.getUserProfileData()
+            await this.getUserPlaylists()
 
-        this.tokenInterval = setInterval(() => {
-            this.tokenExpCountDown-- 
-
-            if (this.tokenExpCountDown < this.REQUEST_NEW_TOKEN_BELOW_SEC_LEFT) {
-                clearInterval(this.tokenInterval!)
-                this.refreshAccessToken()
-            }
-        }, 1000)
+            this.setUserSignedIn()
+        }
+        catch(error: any) {
+            this.quit()
+            musicAPIErrorHandler(error, MusicPlatform.Spotify)
+        }
     }
 
-    setUserSignedIn() {
-        this.isSignedIn = true
-        this.updateState({ isSignedIn: true })
+    /**
+     * Get user profile details.
+     */
+    async getUserProfileData() {
+        this.userDetails = await getSpotifyUserData(this.accessToken)
+        this.updateState({ userDetails: this.userDetails })
     }
 
     /**
@@ -147,15 +168,17 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
             this.refreshToken = data.refresh_token
             this.tokenExpiration = data.expires_in
             this.accessTokenCreationDate = new Date()
-    
-            console.log(`New refresh token! ${this.refreshToken}`)
+
+            console.log("new access token!", this.accessToken)
     
             this.updateState({ 
                 accessToken: this.accessToken, refreshToken: this.refreshToken,
-                tokenExpiration: this.tokenExpiration, tokenExpCountDown: this.tokenExpCountDown 
+                tokenExpiration: this.tokenExpiration, accessTokenCreationDate: new Date()
             })
-    
-            this.initTokenTimeOut()
+
+            if (this.hasTokenExpired) {
+                this.setTokenHasExpired(false)
+            }
         }
         catch(error: any) {
             musicAPIErrorHandler(new APIError(APIErrorCode.FAILED_TOKEN_REFRESH))
@@ -167,28 +190,32 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
      */
     quit() {
         this.deleteMusicUserData()
-        if (this.tokenInterval) {
-            clearInterval(this.tokenInterval)
-        }
         musicDataStore.set(null)
     }
 
-
     /**
-     * Update the state of user music data.
-     * Saves to local storage to persist state between refreshes.
+     * Update the state of store.
+     * Saves to local storage to persist necessary data between refreshes.
      * @param newState  New version of current state
      */
     updateState(newState: Partial<SpotifyMusicUserData>, doSave: boolean = true) {
-        musicDataStore.update((data: MusicUserData | null) => {
-            return this.getNewStateObj(newState, data! as SpotifyMusicUserData)
-        })
+        musicDataStore.update((data: MusicUserData | null) => this.getNewStateObj(newState, data! as SpotifyMusicUserData))
 
-        if (doSave) this.saveState()
+        if (doSave) this.saveState(newState)
     }
 
+    /**
+     * Update the current library media
+     * @param media    Media user has chosen.                     
+     * @param isSwitchingTheFirstTime   Is chosen for the first time for the session.
+     */
     async updateLibraryMedia(media: UserLibraryMedia, isSwitchingTheFirstTime: boolean) {
         try {
+            if (this.hasAccessTokenExpired()) {
+                await this.refreshAccessToken()
+            }
+
+            // if first time request for resource
             if (media === UserLibraryMedia.Albums && isSwitchingTheFirstTime) {
                 await this.getUserAlbums()
             }
@@ -207,7 +234,7 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
         }
         catch (error: any) {
             if (error instanceof APIError && error.code === APIErrorCode.EXPIRED_TOKEN) {
-                this.setTokenHasExpired()
+                this.setTokenHasExpired(true)
                 musicAPIErrorHandler(error)
             }
             else if (error instanceof TypeError) {
@@ -220,8 +247,15 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
         }
     }
 
+    /**
+     * Refresh current chosen library media resource for updated data.
+     */
     async refreshCurrentLibraryMedia() {
         try {
+            if (this.hasAccessTokenExpired()) {
+                await this.refreshAccessToken()
+            }
+
             if (this.currentUserMedia === UserLibraryMedia.Playlists) {
                 await this.getUserPlaylists(true)
             }
@@ -242,7 +276,7 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
         }
         catch (error: any) {
             if (error instanceof APIError && error.code === APIErrorCode.EXPIRED_TOKEN) {
-                this.setTokenHasExpired()
+                this.setTokenHasExpired(true)
                 musicAPIErrorHandler(error)
             }
             else if (error instanceof TypeError) {
@@ -256,26 +290,16 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
     }
 
     /**
-     * Initialize user data after user first logs in.
-     * Include profile data and user playlists.
+     * @returns  Current chosen library details
      */
-    async initUserData() {
-        try {
-            await this.getUserProfileData()
-            await this.getUserPlaylists()
-
-            this.setUserSignedIn()
-        }
-        catch(error: any) {
-            this.quit()
-            musicAPIErrorHandler(error, MusicPlatform.Spotify)
-        }
-    }
-
     getCurrentLibraryDetails(): UserLibraryCollection {
         return this.getLibraryDetails(this.currentUserMedia!)
     }
 
+    /**
+     * @param    currentUserMedia 
+     * @returns  Current chosen library details
+     */
     getLibraryDetails(currentUserMedia: UserLibraryMedia): UserLibraryCollection {
         if (currentUserMedia === UserLibraryMedia.Playlists) {
             return this.userPlaylists
@@ -298,10 +322,14 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
 
     /**
      * Called when the user scrolls to the end of the library list to get more items.
-     * @returns  Returns true if more items were available and false if no more is left.
+     * @returns  Returns true if more items were available and false otherwise.
      */
     async getMoreLibraryItems(): Promise<boolean> {
         try {
+            if (this.hasAccessTokenExpired()) {
+                await this.refreshAccessToken()
+            }
+
             if (this.currentUserMedia === UserLibraryMedia.Playlists) {
                 if (this.userPlaylists.hasFetchedAll) return false
     
@@ -331,7 +359,7 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
         }
         catch (error: any) {
             if (error instanceof APIError && error.code === APIErrorCode.EXPIRED_TOKEN) {
-                this.setTokenHasExpired()
+                this.setTokenHasExpired(true)
                 musicAPIErrorHandler(error)
             }
             else if (error instanceof TypeError) {
@@ -344,22 +372,14 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
             throw error
         }
     }
-    
-    /**
-     * Get user profile details.
-     */
-    async getUserProfileData() {
-        this.userDetails = await getSpotifyUserData(this.accessToken)
-        this.updateState({ userDetails: this.userDetails })
-    }
 
     /**
      * Used to get user's playlists saved in their library.
      * Used repeatedly to get more items using pagination.
      * 
      * @param accessToken           Token needed to access user content.
+     * @param doRefresh             Request for the first page to get fresh resource data.
      * @returns                     Spotify user's saved playlists
-     * @throws {APIError}           Error interacting with Spotify Web Player API
      */
     async getUserPlaylists(doRefresh = false) {
         let userPlaylists = !doRefresh ? this.userPlaylists : { 
@@ -380,12 +400,38 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
     }
 
     /**
+     * Used to get user's tracks saved in their library.
+     * Used repeatedly to get more items using pagination.
+     * 
+     * @param accessToken           Token needed to access user content
+     * @param doRefresh             Request for the first page to get fresh resource data.
+     * @returns                     Spotify user's liked tracks
+     */
+    async getUserLikedTracks(doRefresh = false) {
+        let userLikedTracks = !doRefresh ? this.userLikedTracks : { 
+            items: [],
+            hasFetchedAll: false,
+            offset: 0,
+            totalItems: 0
+        }
+        let res = await getSpotfifyUserLikedTracks(this.accessToken, userLikedTracks.offset)
+
+        userLikedTracks = {
+            offset: userLikedTracks.offset + res.items.length,
+            items:  [...userLikedTracks.items, ...res.items] as Track[],
+            hasFetchedAll:  res.items.length < LIBRARY_COLLECTION_LIMIT,
+            totalItems: res.total
+        } 
+        this.updateState({ userLikedTracks })
+    }
+
+    /**
      * Used to get user's albums saved in their library.
      * Used repeatedly to get more items using pagination.
      * 
      * @param accessToken           Token needed to access user content.
+     * @param doRefresh             Request for the first page to get fresh resource data.
      * @returns                     Spotify user's saved albums
-     * @throws {APIError}           Error interacting with Spotify Web Player API
      */
     async getUserAlbums(doRefresh = false) {
         let userAlbums = !doRefresh ? this.userAlbums : { 
@@ -409,8 +455,8 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
      * Used repeatedly to get more items using pagination.
      * 
      * @param accessToken           Token needed to access user content
+     * @param doRefresh             Request for the first page to get fresh resource data.
      * @returns                     Spotify user's saved podcast episodes
-     * @throws {APIError}           Error interacting with Spotify Web Player API
      */
     async getUserPodcastsEps(doRefresh = false) {
         let userPodcastEps = !doRefresh ? this.userPodcastEps : { 
@@ -435,7 +481,6 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
      * 
      * @param accessToken           Token needed to access user content
      * @returns                     Spotify user's saved audio books
-     * @throws {APIError}           Error interacting with Spotify Web Player API
      */
     async getUserAudiobooks(doRefresh = false) {
         let userAudioBooks = !doRefresh ? this.userAudioBooks : { 
@@ -456,37 +501,6 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
     }                                               
 
     /**
-     * Used to get user's tracks saved in their library.
-     * Used repeatedly to get more items using pagination.
-     * 
-     * @param accessToken           Token needed to access user content
-     * @returns                     Spotify user's liked tracks
-     * @throws {APIError}           Error interacting with Spotify Web Player API
-     */
-    async getUserLikedTracks(doRefresh = false) {
-        let userLikedTracks = !doRefresh ? this.userLikedTracks : { 
-            items: [],
-            hasFetchedAll: false,
-            offset: 0,
-            totalItems: 0
-        }
-        let res = await getSpotfifyUserLikedTracks(this.accessToken, userLikedTracks.offset)
-
-        userLikedTracks = {
-            offset: userLikedTracks.offset + res.items.length,
-            items:  [...userLikedTracks.items, ...res.items] as Track[],
-            hasFetchedAll:  res.items.length < LIBRARY_COLLECTION_LIMIT,
-            totalItems: res.total
-        } 
-        this.updateState({ userLikedTracks })
-    }
-
-    setTokenHasExpired() {
-        this.hasTokenExpired = true
-        this.updateState({ hasTokenExpired: true })
-    }
-
-    /**
      * @returns Save data from previous session.
      */
     loadAndSetUserData() {
@@ -499,71 +513,90 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
         this.musicPlatform =    savedUserData.musicPlatform!,
         this.tokenExpiration =        savedUserData.tokenExpiration!
         this.userDetails =            savedUserData.userDetails!
-        this.currentUserMedia =       savedUserData.currentUserMedia!
         this.isSignedIn =             savedUserData.isSignedIn!
-        this.tokenExpiration =        savedUserData.tokenExpiration!
         this.hasTokenExpired =        savedUserData.hasTokenExpired!
+        this.currentUserMedia =       savedUserData.currentUserMedia!
 
-        this.userPlaylists =    savedUserData.userPlaylists!
-        this.userLikedTracks =  savedUserData.userLikedTracks!
-        this.userAlbums =       savedUserData.userAlbums!
-        this.userPodcastEps =   savedUserData.userPodcastEps!
-        this.userAudioBooks =   savedUserData.userAudioBooks!
+        this.userPlaylists =  savedUserData.userPlaylists!
 
-        this.updateState({ ...savedUserData })
+        if (savedUserData.userLikedTracks) {
+            this.userLikedTracks = savedUserData.userLikedTracks
+        }
+        if (savedUserData.userAlbums) {
+            this.userAlbums = savedUserData.userAlbums
+        }
+        if (savedUserData.userPodcastEps) {
+            this.userPodcastEps = savedUserData.userPodcastEps
+        }
+        if (savedUserData.userAudioBooks) {
+            this.userAudioBooks = savedUserData.userAudioBooks
+        }
+
+        this.updateState({ ...savedUserData }, false)
     }
 
     /**
      * Saves updated data to persist state between refreshes.
      * Only saves what it needs to.
      */
-    saveState() {
-        const data = get(musicDataStore)! as SpotifyMusicUserData
+    saveState(newState: Partial<SpotifyMusicUserData>) {
+        let newData = {} as Partial<SpotifyMusicUserData>
+
+        if (newState.isSignedIn != undefined)       newData.isSignedIn = newState.isSignedIn
+        if (newState.musicPlatform != undefined)    newData.musicPlatform = newState.musicPlatform
+        if (newState.userDetails != undefined)      newData.userDetails = newState.userDetails
+        if (newState.currentUserMedia != undefined) newData.currentUserMedia = newState.currentUserMedia
+        if (newState.hasTokenExpired != undefined)  newData.hasTokenExpired = newState.hasTokenExpired
+
+        if (newState.accessTokenCreationDate != undefined)  newData.accessTokenCreationDate = newState.accessTokenCreationDate
+        if (newState.accessToken != undefined)              newData.accessToken = newState.accessToken
+        if (newState.refreshToken != undefined)             newData.refreshToken = newState.refreshToken
+        if (newState.authCode != undefined)                 newData.authCode = newState.authCode
+        if (newState.tokenExpiration != undefined)          newData.tokenExpiration = newState.tokenExpiration
+
+        if (newState.userPlaylists != undefined) {
+            newData.userPlaylists = {
+                offset:        newState.userPlaylists.offset === 0 ? 0 : Math.min(newState.userPlaylists.offset, LIBRARY_COLLECTION_LIMIT), 
+                items:         newState.userPlaylists.items.slice(0, LIBRARY_COLLECTION_LIMIT),
+                hasFetchedAll:  Math.min(newState.userPlaylists.items.length, LIBRARY_COLLECTION_LIMIT) < newState.userPlaylists.totalItems ? false : true,
+                totalItems:     newState.userPlaylists.totalItems
+            }
+        }
+        if (newState.userLikedTracks != undefined) {
+            newData.userLikedTracks = {
+                offset:        newState.userLikedTracks.offset === 0 ? 0 : Math.min(newState.userLikedTracks.offset, LIBRARY_COLLECTION_LIMIT), 
+                items:         newState.userLikedTracks.items.slice(0, LIBRARY_COLLECTION_LIMIT),
+                hasFetchedAll:  Math.min(newState.userLikedTracks.items.length, LIBRARY_COLLECTION_LIMIT) < newState.userLikedTracks.totalItems ? false : true,
+                totalItems:     newState.userLikedTracks.totalItems
+            }
+        }
+        if (newState.userAlbums != undefined) {
+            newData.userAlbums = {
+                offset:        newState.userAlbums.offset === 0 ? 0 : Math.min(newState.userAlbums.offset, LIBRARY_COLLECTION_LIMIT), 
+                items:         newState.userAlbums.items.slice(0, LIBRARY_COLLECTION_LIMIT),
+                hasFetchedAll:  Math.min(newState.userAlbums.items.length, LIBRARY_COLLECTION_LIMIT) < newState.userAlbums.totalItems ? false : true,
+                totalItems:     newState.userAlbums.totalItems
+            }
+        }
+        if (newState.userPodcastEps != undefined) {
+            newData.userPodcastEps = {
+                offset:        newState.userPodcastEps.offset === 0 ? 0 : Math.min(newState.userPodcastEps.offset, LIBRARY_COLLECTION_LIMIT), 
+                items:         newState.userPodcastEps.items.slice(0, LIBRARY_COLLECTION_LIMIT),
+                hasFetchedAll: Math.min(newState.userPodcastEps.items.length, LIBRARY_COLLECTION_LIMIT) < newState.userPodcastEps.totalItems ? false : true,
+                totalItems:     newState.userPodcastEps.totalItems
+            }
+        }
+        if (newState.userAudioBooks != undefined) {
+            newData.userAudioBooks = {
+                offset:        newState.userAudioBooks.offset === 0 ? 0 : Math.min(newState.userAudioBooks.offset, LIBRARY_COLLECTION_LIMIT), 
+                items:         newState.userAudioBooks.items.slice(0, LIBRARY_COLLECTION_LIMIT),
+                hasFetchedAll:  Math.min(newState.userAudioBooks.items.length, LIBRARY_COLLECTION_LIMIT) < newState.userAudioBooks.totalItems ? false : true,
+                totalItems:     newState.userAudioBooks.totalItems
+            }
+        }
         
         // user token is not saved as a new one is made after refresh
-        saveMusicUserData({
-            accessToken:     data.accessToken,
-            musicPlatform:   data.musicPlatform,
-            authCode:        data.authCode,
-            refreshToken:    data.refreshToken,
-            userDetails:     data.userDetails,
-            currentUserMedia:  data.currentUserMedia,
-            isSignedIn:        data.isSignedIn,
-            accessTokenCreationDate:  data.accessTokenCreationDate,
-            tokenExpiration:          data.tokenExpiration,
-            hasTokenExpired:          data.hasTokenExpired,
-            
-            userPlaylists: {
-                 ...data.userPlaylists, 
-                offset:        data.userPlaylists.offset === 0 ? 0 : Math.min(data.userPlaylists.offset, LIBRARY_COLLECTION_LIMIT), 
-                items:         data.userPlaylists.items.slice(0, LIBRARY_COLLECTION_LIMIT),
-                hasFetchedAll: Math.min(data.userPlaylists.items.length, LIBRARY_COLLECTION_LIMIT) < data.userPlaylists.totalItems ? false : true
-            },
-            userAlbums: {
-                 ...data.userAlbums, 
-                offset:        data.userAlbums.offset === 0 ? 0 : Math.min(data.userAlbums.offset, LIBRARY_COLLECTION_LIMIT), 
-                items:         data.userAlbums.items.slice(0, LIBRARY_COLLECTION_LIMIT) ,
-                hasFetchedAll: Math.min(data.userAlbums.items.length, LIBRARY_COLLECTION_LIMIT) < data.userAlbums.totalItems ? false : true
-            },
-            userAudioBooks: {
-                 ...data.userAudioBooks, 
-                offset:        data.userAudioBooks.offset === 0 ? 0 : Math.min(data.userAudioBooks.offset, LIBRARY_COLLECTION_LIMIT), 
-                items:         data.userAudioBooks.items.slice(0, LIBRARY_COLLECTION_LIMIT) ,
-                hasFetchedAll: Math.min(data.userAudioBooks.items.length, LIBRARY_COLLECTION_LIMIT) < data.userAudioBooks.totalItems ? false : true
-            },
-            userLikedTracks: {
-                 ...data.userLikedTracks, 
-                offset:        data.userLikedTracks.offset === 0 ? 0 : Math.min(data.userLikedTracks.offset, LIBRARY_COLLECTION_LIMIT), 
-                items:         data.userLikedTracks.items.slice(0, LIBRARY_COLLECTION_LIMIT) ,
-                hasFetchedAll: Math.min(data.userLikedTracks.items.length, LIBRARY_COLLECTION_LIMIT) < data.userLikedTracks.totalItems ? false : true
-            },
-            userPodcastEps: {
-                 ...data.userPodcastEps, 
-                offset:        data.userPodcastEps.offset === 0 ? 0 : Math.min(data.userPodcastEps.offset, LIBRARY_COLLECTION_LIMIT), 
-                items:         data.userPodcastEps.items.slice(0, LIBRARY_COLLECTION_LIMIT),
-                hasFetchedAll: Math.min(data.userPodcastEps.items.length, LIBRARY_COLLECTION_LIMIT) < data.userPodcastEps.totalItems ? false : true
-             }
-        })
+        saveMusicUserData(newData)
     }
 
     /**
@@ -574,22 +607,17 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
     getNewStateObj(newState: Partial<SpotifyMusicUserData>, oldState: SpotifyMusicUserData): SpotifyMusicUserData {
         const newStateObj = oldState
 
-        if (newState.isSignedIn != undefined)          newStateObj.isSignedIn = newState.isSignedIn
-        if (newState.accessToken != undefined)            newStateObj.accessToken = newState.accessToken
-        if (newState.musicPlatform != undefined)          newStateObj.musicPlatform = newState.musicPlatform
-        if (newState.authCode != undefined)               newStateObj.authCode = newState.authCode
-        if (newState.refreshToken != undefined)           newStateObj.refreshToken = newState.refreshToken
-        if (newState.userDetails != undefined)            newStateObj.userDetails = newState.userDetails
-        if (newState.currentUserMedia != undefined)       newStateObj.currentUserMedia = newState.currentUserMedia
-        if (newState.accessTokenCreationDate != undefined)  newStateObj.accessTokenCreationDate = newState.accessTokenCreationDate
-        if (newState.tokenExpiration != undefined)          newStateObj.tokenExpiration = newState.tokenExpiration
-        if (newState.hasTokenExpired != undefined)        newStateObj.hasTokenExpired = newState.hasTokenExpired
+        if (newState.isSignedIn != undefined)       newStateObj.isSignedIn = newState.isSignedIn
+        if (newState.musicPlatform != undefined)    newStateObj.musicPlatform = newState.musicPlatform
+        if (newState.userDetails != undefined)      newStateObj.userDetails = newState.userDetails
+        if (newState.currentUserMedia != undefined) newStateObj.currentUserMedia = newState.currentUserMedia
+        if (newState.hasTokenExpired != undefined)  newStateObj.hasTokenExpired = newState.hasTokenExpired
         
-        if (newState.userPlaylists != undefined)          newStateObj.userPlaylists = newState.userPlaylists
-        if (newState.userAlbums != undefined)             newStateObj.userAlbums = newState.userAlbums
-        if (newState.userAudioBooks != undefined)         newStateObj.userAudioBooks = newState.userAudioBooks
-        if (newState.userPodcastEps != undefined)         newStateObj.userPodcastEps = newState.userPodcastEps
-        if (newState.userLikedTracks != undefined)        newStateObj.userLikedTracks = newState.userLikedTracks
+        if (newState.userPlaylists != undefined)    newStateObj.userPlaylists = newState.userPlaylists
+        if (newState.userLikedTracks != undefined)  newStateObj.userLikedTracks = newState.userLikedTracks
+        if (newState.userAlbums != undefined)       newStateObj.userAlbums = newState.userAlbums
+        if (newState.userPodcastEps != undefined)   newStateObj.userPodcastEps = newState.userPodcastEps
+        if (newState.userAudioBooks != undefined)   newStateObj.userAudioBooks = newState.userAudioBooks
 
         return newStateObj
     }

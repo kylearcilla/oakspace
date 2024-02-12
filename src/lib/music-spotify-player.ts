@@ -1,13 +1,10 @@
-import { get } from "svelte/store"
-import { musicPlayerStore, spotifyIframeStore, } from "./store"
+import { spotifyIframeStore, } from "./store"
 
-import { 
-    loadMusicPlayerState, loadMusicShuffleData, 
-    removeMusicPlayerData, removeMusicShuffleData, saveMusicPlayerData, saveMusicUserData 
-} from "./utils-music"
-import { initFloatingEmbed } from "./utils-home"
-import { MediaEmbedType, MusicMediaType } from "./enums"
 import { getIFrameMediaUri } from "./api-spotify"
+import { APIErrorCode, MediaEmbedType, MusicMediaType, MusicPlatform } from "./enums"
+import { initFloatingEmbed } from "./utils-home"
+import { loadMusicPlayerState, musicAPIErrorHandler, saveMusicPlayerData } from "./utils-music"
+import { APIError } from "./errors"
 
 /**
  * User data class that uses the Spotify iFrame API to play music.
@@ -48,10 +45,9 @@ export class SpotifyMusicPlayer {
             await this.waitForPlayerReadyAndSetPlayerInstance()
         }
         catch(error) {
-            // const error = new ApiError("Error initializing Youtube iFrame Player API")
-            // this.setError(error)
-            // console.error(error)
-            throw error
+            const msg = "There was an error initialize Spotify Player."
+            console.error(msg, error)
+            musicAPIErrorHandler(new APIError(APIErrorCode.PLAYER, msg), MusicPlatform.Spotify)
         }
     }
 
@@ -68,43 +64,55 @@ export class SpotifyMusicPlayer {
     }
 
     /**
-     * Initializes a new YouTube iframe player instance.
-     * Waits for YoutubeAPI on iFrame API to fire the event then initializes a player.
-     * Resolves the promise afterwards
-     * 
-     * @throws   Error that occured when initializing Youtube iFrame API
+     * Allow Spotify iFrame API to attach iframe player on designated HTML Element
+     * Wait for this and resolve afterwards.
      */
     waitForPlayerReadyAndSetPlayerInstance(): Promise<void> {
         // @ts-ignore
         return new Promise<void>((resolve) => window.onSpotifyIframeApiReady = (IFrameAPI: any) => {
-
             const element = document.getElementById('spotify-iframe');
             IFrameAPI.createController(element, this.PLAYER_OPTIONS, (controller: any) => this.createControllerCallback(controller))
             resolve()
         })
     }
 
+    /**
+     * Create a controller after initialized to configure the Embed and to control playback.
+     * @param controller 
+     */
     createControllerCallback(controller: any) {
         this.controller = controller 
-
         this.controller.addListener('playback_update', (e: any) => {
             console.log(e)
         });
     }
 
+    /**
+     * Initialize new resource for iFrame player to play.
+     * @param media 
+     */
     initNewResource(media: Media) {
-        const uri = getIFrameMediaUri(media)
-
-        if ([MusicMediaType.Track, MusicMediaType.PodcastEpisode, MusicMediaType.AudioBook].includes(media.type)) {
-            this.mediaItem = media as Track | PodcastEpisode | AudioBook
+        try {
+            const uri = getIFrameMediaUri(media)
+    
+            if ([MusicMediaType.Track, MusicMediaType.PodcastEpisode, MusicMediaType.AudioBook].includes(media.type)) {
+                this.mediaItem = media as Track | PodcastEpisode | AudioBook
+                this.mediaCollection = null
+            }
+            else {
+                this.mediaCollection = media
+                this.mediaItem = null
+            }
+    
+            this.controller!.loadUri(uri)
+            this.controller!.play()
+            this.updateState({ mediaItem: this.mediaItem, mediaCollection: this.mediaCollection })
         }
-        else {
-            this.mediaCollection = media
+        catch(error) {
+            const msg = "There was an error playing requested resource."
+            console.error(msg, error)
+            musicAPIErrorHandler(new APIError(APIErrorCode.PLAYER, msg), MusicPlatform.Spotify)
         }
-
-        this.controller!.loadUri(uri)
-        this.controller!.play()
-        this.updateState({ mediaItem: this.mediaItem, mediaCollection: this.mediaCollection })
     }
 
 

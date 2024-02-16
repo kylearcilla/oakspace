@@ -1,14 +1,13 @@
 import { get } from "svelte/store"
-import { musicDataStore, spotifyIframeStore, toastMessages } from "./store"
+import { mediaEmbedStore, musicDataStore, musicPlayerStore, toastMessages } from "./store"
 
-import { hasUserSignedIn, musicAPIErrorHandler } from "./utils-music"
+import { hasUserSignedIn, loadMusicPlayerData, musicAPIErrorHandler, musicLoginSuccessHandler, removeMusicPlayerData } from "./utils-music"
 import { base64encode, generateCodeVerifier, hashSHA256 } from "./utils-general"
 
 import { APIError } from "./errors"
-import { APIErrorCode, MediaEmbedType, MusicMediaType, MusicPlatform } from "./enums"
 import { SpotifyMusicUserData } from "./music-spotify-user-data"
 import { SpotifyMusicPlayer } from "./music-spotify-player"
-import { initFloatingEmbed } from "./utils-home"
+import { APIErrorCode, MusicMediaType, MusicPlatform } from "./enums"
 
 const CLIENT_ID     = "ed4c34b3aa704c6fbc88ca3e2957ced4"
 const REDIRECT_URI  = "http://localhost:5173/home"
@@ -25,16 +24,20 @@ export const LIBRARY_COLLECTION_LIMIT = 25
 /**
  * Starts the OAuth 2.0 Auth Flow if logging for the first time or initializes new store if continuing a session.
  */
-export function initSpotifyMusic() {
-    if (hasUserSignedIn()) {
-        new SpotifyMusicUserData(null, true)
-
-        if (didSetSpotifyiFrameAPI()) { 
-            initSpotifyiFramePlayer() 
+export async function initSpotifyMusic() {
+    try {
+        if (hasUserSignedIn()) {
+            new SpotifyMusicUserData()
+            verifyForPlayerSession()
+        }
+        else {
+            await requestSpotifyUserAuth()
+            musicLoginSuccessHandler(MusicPlatform.Spotify)
         }
     }
-    else {
-        requestSpotifyUserAuth()
+    catch(error: any) {
+        console.error(error)
+        musicAPIErrorHandler(new APIError(APIErrorCode.AUTHORIZATION_ERROR, error.message ?? "There was an error initializing Spotify Music."))
     }
 }
 
@@ -47,7 +50,7 @@ export function initSpotifyMusic() {
 export async function requestSpotifyUserAuth() {
     const codeVerifier = generateCodeVerifier(64)
     localStorage.setItem("code_verifier", codeVerifier)
-    localStorage.removeItem("redirected-from-spotify-consent-page")
+    localStorage.removeItem("url-code-flag")
 
     const hashed = await hashSHA256(codeVerifier)
     const codeChallenge = base64encode(hashed)
@@ -75,6 +78,9 @@ export function didSpotifyUserAuthApp() {
     if (!spotifyAccessTokenCode && localStorage.getItem("code_verifier")) {
         localStorage.removeItem("code_verifier")
     }
+    if (!spotifyAccessTokenCode) {
+        localStorage.removeItem("url-code-flag")
+    }
 
     return spotifyAccessTokenCode != null
 }
@@ -83,13 +89,20 @@ export function didSpotifyUserAuthApp() {
  * Runs after a successful user authorization.
  * Parses auth code from the redirect uri and calls success handler if successful.
  */
-export function getSpotifyCodeFromURLAndLogin() {
-    const url =  new URL(window.location.href)
-    const spotifyAccessTokenCode = url.searchParams.get('code')
+export async function getSpotifyCodeFromURLAndLogin() {
+    try {
+        const url =  new URL(window.location.href)
+        const spotifyAccessTokenCode = url.searchParams.get('code')
 
-    // here, only check if we don't have an access token OR access token has expired
-    if (spotifyAccessTokenCode && !localStorage.getItem("redirected-from-spotify-consent-page")) {
-        userAuthSuccessHandler(spotifyAccessTokenCode)
+        // if signing for the first time only (flag is)
+        if (!localStorage.getItem("url-code-flag")) {
+            await userAuthSuccessHandler(spotifyAccessTokenCode!)
+        }
+    }
+    catch(e: any) {
+        console.error(e)
+        localStorage.removeItem("code_verifier")
+        localStorage.removeItem("url-code-flag")
     }
 }
 
@@ -102,27 +115,19 @@ export function getSpotifyCodeFromURLAndLogin() {
  */
 export async function userAuthSuccessHandler(code: string) {
     const codeVerifier = localStorage.getItem("code_verifier")!
-    localStorage.setItem("redirected-from-spotify-consent-page", JSON.stringify(true))
-
+    
     try {
-        const refreshHasFailed = hasUserSignedIn()
         const res = await getSpotifyAcessToken(code, codeVerifier)
-
-        initSpotifyAfterAuth({
+        await initSpotifyAfterAuth({
             accessToken: res.access_token, expiresIn: res.expires_in,
             refreshToken: res.refresh_token, authCode: codeVerifier
-        }, refreshHasFailed)
-
-        toastMessages.update((toasts: ToastMsg[]) => [...toasts, {
-            context: get(musicDataStore)!.musicPlatform,
-            message: refreshHasFailed ? "Session refreshed!" : "Log in Successful!"
-        }])
+        })
+        
+        localStorage.setItem("url-code-flag", JSON.stringify(true))
+        musicLoginSuccessHandler(MusicPlatform.Spotify)
     }
-    catch(e: any) {
-        localStorage.removeItem("code_verifier")
-        localStorage.removeItem("redirected-from-spotify-consent-page")
-
-        musicAPIErrorHandler(e, MusicPlatform.Spotify)
+    catch (error: any) {
+        throw error
     }
 }
 
@@ -133,14 +138,12 @@ export async function userAuthSuccessHandler(code: string) {
  * 
  * @param initData 
  */
-export const initSpotifyAfterAuth = async (initData: SpotifyInitData, refreshHasFailed: boolean) => {
-    if (refreshHasFailed) {
-        const musicStore = get(musicDataStore)! as SpotifyMusicUserData
-        musicStore.initSpotifyAfterAuth(initData)
+export async function initSpotifyAfterAuth(initData: SpotifyInitData) {
+    if (!get(musicDataStore)) {
+        new SpotifyMusicUserData()
     }
-    else {
-        new SpotifyMusicUserData(initData)
-    }
+
+    await (get(musicDataStore) as SpotifyMusicUserData).initSpotifyAfterAuth(initData)
 }
 
 /**
@@ -166,15 +169,12 @@ export async function getSpotifyAcessToken(code: string, codeVerifier: string): 
 
         if (!res.ok) {
             console.error(`There was an error getting a Spotify Web API access token. \n URL: ${res.url} \n Status: ${res.status} \n Error: ${data.error}. \n Description: ${data.error_description}.`)
-            throwSpotifyAPIError({ status: res.status, message: data.error.message })
+            throwSpotifyAPIError(res.status, data.error.message)
         }
     
         return data
     }
     catch(e: any) {
-        if (e instanceof TypeError) {
-            throw new APIError(APIErrorCode.FAILED_TOKEN_REFRESH)
-        }
         throw e
     }
 }
@@ -199,7 +199,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<SpotifyA
 
         if (!res.ok) {
             console.error(`There was an error refreshing token. \n URL: ${res.url} \n Status: ${res.status} \n Error: ${data.error}. \n Description: ${data.error_description}.`)
-            throwSpotifyAPIError({ status: res.status, message: data.error.message })
+            throwSpotifyAPIError(res.status, data.error.message)
         }
 
         return data
@@ -219,22 +219,21 @@ export async function refreshAccessToken(refreshToken: string): Promise<SpotifyA
  * @returns  Spotify user profile data.
  */
 export async function getSpotifyUserData(accessToken: string): Promise<MusicUserDetails> {
-    const headers = new Headers({
-        "Authorization": `Bearer ${accessToken}`
-    })
+    const headers = new Headers({ "Authorization": `Bearer ${accessToken}` })
     const res = await fetch("https://api.spotify.com/v1/me", { method: 'GET', headers })
     const data = await res.json()
 
     if (!res.ok) {
         console.error(`There was an error getting a user's profile data. \n URL: ${res.url} \n Status: ${res.status} \n Description: ${data.error.message}.`)
-        throwSpotifyAPIError({ status: res.status, message: data.error.message })
+        throwSpotifyAPIError(res.status, data.error.message)
     }
     return {
         id: data.id,
         username: data.display_name,
         url: data.external_urls.spotify,
         isPremiumUser: data.product === "premium",
-        profileImg: data.images[0].url
+        profileImgSmall: data.images[0].url,
+        profileImgBig: data.images.length > 1 ? data.images[1].url : ""
     }
 }
 
@@ -243,17 +242,17 @@ export async function getSpotifyUserData(accessToken: string): Promise<MusicUser
  * @param offset      Offset for pagination
  * @returns           User's playlists from their library
  */
-export async function getSpotfifyUserPlaylists(accessToken: string, offset: number): Promise<{ items: Playlist[], total: number }> {
+export async function getSpotfifyUserPlaylists(accessToken: string, offset: number, limit = LIBRARY_COLLECTION_LIMIT): Promise<{ items: Playlist[], total: number }> {
     try {
         const headers = new Headers({
             "Authorization": `Bearer ${accessToken}`
         })
-        const res = await fetch(`https://api.spotify.com/v1/me/playlists?limit=${LIBRARY_COLLECTION_LIMIT}&offset=${offset}`, { method: 'GET', headers })
+        const res  = await fetch(`https://api.spotify.com/v1/me/playlists?limit=${limit}&offset=${offset}`, { method: 'GET', headers })
         const data = await res.json()
 
         if (!res.ok) {
             console.error(`There was an error getting a user's saved playlists. \n URL: ${res.url} \n Status: ${res.status} \n Description: ${data.error.message}.`)
-            throwSpotifyAPIError({ status: res.status, message: data.error.message })
+            throwSpotifyAPIError(res.status, data.error.message)
         }
 
         const playlists: Playlist[] = (data.items as any[]).map((pl: any) => {
@@ -285,17 +284,17 @@ export async function getSpotfifyUserPlaylists(accessToken: string, offset: numb
  * @param offset      Offset for pagination
  * @returns           User's saved tracks from their library
  */
-export async function getSpotfifyUserLikedTracks(accessToken: string, offset: number): Promise<{ items: Track[], total: number }> {
+export async function getSpotfifyUserLikedTracks(accessToken: string, offset: number, limit = LIBRARY_COLLECTION_LIMIT): Promise<{ items: Track[], total: number }> {
     try {
         const headers = new Headers({
             "Authorization": `Bearer ${accessToken}`
         })
-        const res = await fetch(`https://api.spotify.com/v1/me/tracks?limit=${LIBRARY_COLLECTION_LIMIT}&offset=${offset}`, { method: 'GET', headers })
+        const res  = await fetch(`https://api.spotify.com/v1/me/tracks?limit=${limit}&offset=${offset}`, { method: 'GET', headers })
         const data = await res.json()
 
         if (!res.ok) {
             console.error(`There was an error getting a user's saved tracks. \n URL: ${res.url} \n Status: ${res.status} \n Description: ${data.error.message}.`)
-            throwSpotifyAPIError({ status: res.status, message: data.error.message })
+            throwSpotifyAPIError(res.status, data.error.message)
         } 
 
         console.log(data)
@@ -314,7 +313,7 @@ export async function getSpotfifyUserLikedTracks(accessToken: string, offset: nu
                 albumId: item.track.album.id,
                 type: MusicMediaType.Track,
                 playlistId: "",
-                playlistName:  ""
+                fromLib: true
             }
         })
         return { 
@@ -332,16 +331,14 @@ export async function getSpotfifyUserLikedTracks(accessToken: string, offset: nu
  * @param offset      Offset for pagination
  * @returns           User's saved albums from their library
  */
-export async function getSpotifyUserAlbums(accessToken: string, offset: number): Promise<{ items: Album[], total: number }> {
-    const headers = new Headers({
-        "Authorization": `Bearer ${accessToken}`
-    })
-    const res = await fetch(`https://api.spotify.com/v1/me/albums?limit=${LIBRARY_COLLECTION_LIMIT}&offset=${offset}`, { method: 'GET', headers })
+export async function getSpotifyUserAlbums(accessToken: string, offset: number, limit = LIBRARY_COLLECTION_LIMIT): Promise<{ items: Album[], total: number }> {
+    const headers = new Headers({ "Authorization": `Bearer ${accessToken}` })
+    const res  = await fetch(`https://api.spotify.com/v1/me/albums?limit=${limit}&offset=${offset}`, { method: 'GET', headers })
     const data = await res.json()
 
     if (!res.ok) {
         console.error(`There was an error getting a user's saved albums. \n URL: ${res.url} \n Status: ${res.status} \n Description: ${data.error.message}.`)
-        throwSpotifyAPIError({ status: res.status, message: data.error.message })
+        throwSpotifyAPIError(res.status, data.error.message)
     }
 
     const albums: Album[] = (data.items as any[]).map((item: any) => {
@@ -355,7 +352,8 @@ export async function getSpotifyUserAlbums(accessToken: string, offset: number):
             length: item.album.total_tracks,
             artworkImgSrc: item.album.images[item.album.images.length < 2 ? 0 : 1].url,
             genre: item.album.genres.length === 0 ? "" : item.album.genres[0],
-            description: ""
+            description: "",
+            fromLib: true
         }
     })
     return { 
@@ -369,16 +367,14 @@ export async function getSpotifyUserAlbums(accessToken: string, offset: number):
  * @param offset      Offset for pagination
  * @returns           User's saved podcast episodes from their library
  */
-export async function getUserPodcastsEps(accessToken: string, offset: number): Promise<{ items: PodcastEpisode[], total: number }> {
-    const headers = new Headers({
-        "Authorization": `Bearer ${accessToken}`
-    })
-    const res = await fetch(`https://api.spotify.com/v1/me/episodes?limit=${LIBRARY_COLLECTION_LIMIT}&offset=${offset}`, { method: 'GET', headers })
+export async function getUserPodcastsEps(accessToken: string, offset: number, limit = LIBRARY_COLLECTION_LIMIT): Promise<{ items: PodcastEpisode[], total: number }> {
+    const headers = new Headers({ "Authorization": `Bearer ${accessToken}` })
+    const res  = await fetch(`https://api.spotify.com/v1/me/episodes?limit=${limit}&offset=${offset}`, { method: 'GET', headers })
     const data = await res.json()
 
     if (!res.ok) {
         console.error(`There was an error getting a user's saved podcast episodes. \n URL: ${res.url} \n Status: ${res.status} \n Description: ${data.error.message}.`)
-        throwSpotifyAPIError({ status: res.status, message: data.error.message })
+        throwSpotifyAPIError(res.status, data.error.message)
     }
 
     const podcastEps: PodcastEpisode[] = (data.items as any[]).map((item: any) => {
@@ -392,7 +388,8 @@ export async function getUserPodcastsEps(accessToken: string, offset: number): P
             artworkImgSrc: item.episode.images[item.episode.images.length < 2 ? 0 : 1].url,
             genre: "",
             description: item.episode.description,
-            duration: item.episode.duration_ms
+            duration: item.episode.duration_ms,
+            fromLib: true
         }
     })
     return { 
@@ -406,16 +403,14 @@ export async function getUserPodcastsEps(accessToken: string, offset: number): P
  * @param offset      Offset for pagination
  * @returns           User's saved audiobooks from their library
  */
-export async function getSpotifyUserAudioBooks(accessToken: string, offset: number): Promise<{ items: AudioBook[], total: number }> {
-    const headers = new Headers({
-        "Authorization": `Bearer ${accessToken}`
-    })
-    const res = await fetch(`https://api.spotify.com/v1/me/audiobooks?limit=${LIBRARY_COLLECTION_LIMIT}&offset=${offset}`, { method: 'GET', headers })
+export async function getSpotifyUserAudioBooks(accessToken: string, offset: number, limit = LIBRARY_COLLECTION_LIMIT): Promise<{ items: AudioBook[], total: number }> {
+    const headers = new Headers({ "Authorization": `Bearer ${accessToken}` })
+    const res  = await fetch(`https://api.spotify.com/v1/me/audiobooks?limit=${limit}&offset=${offset}`, { method: 'GET', headers })
     const data = await res.json()
 
     if (!res.ok) {
         console.error(`There was an error getting a user's saved audiobooks. \n URL: ${res.url} \n Status: ${res.status} \n Description: ${data.error.message}.`)
-        throwSpotifyAPIError({ status: res.status, message: data.error.message })
+        throwSpotifyAPIError(res.status, data.error.message)
     }
 
     const audioBooks: AudioBook[] = (data.items as any[]).map((item: any) => {
@@ -428,7 +423,8 @@ export async function getSpotifyUserAudioBooks(accessToken: string, offset: numb
             url: item.external_urls.spotify,
             artworkImgSrc: item.images[item.images.length < 2 ? 0 : 1].url,
             genre: "",
-            description: item.description
+            description: item.description,
+            fromLib: true
         }
     })
     return { 
@@ -437,33 +433,164 @@ export async function getSpotifyUserAudioBooks(accessToken: string, offset: numb
     }
 }
 
-export function didSetSpotifyiFrameAPI() {
-    return localStorage.getItem("music-player-data") != null
+/**
+ * @param accessToken 
+ * @param pos      position of element is offset
+ * @returns        User's saved audiobooks from their library
+ */
+export async function getPlaylistItem(accessToken: string, playlistId: string, pos: number): Promise<Track> {
+    const headers = new Headers({ "Authorization": `Bearer ${accessToken}` })
+    const res  = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=1&offset=${pos}`, { method: 'GET', headers })
+    const data = await res.json()
+
+    if (!res.ok) {
+        console.error(`There was an error getting a collection's item. \n URL: ${res.url} \n Status: ${res.status} \n Description: ${data.error.message}.`)
+        throwSpotifyAPIError(res.status, data.error.message)
+    }
+
+    const item = data.items[0]
+
+    return {
+        id: item.track.id,
+        name: item.track.name,
+        author: item.track.artists[0].name ?? item.track.artists[0].type,
+        authorUrl: item.track.artists[0].href,
+        artworkImgSrc: item.track.album.images[item.track.album.images.length < 2 ? 0 : 1].url,
+        genre: "",
+        url: item.track.external_urls.spotify,
+        duration: item.track.duration_ms,
+        album: item.track.album.name,
+        albumId: item.track.album.id,
+        type: MusicMediaType.Track,
+        playlistId: "",
+        fromLib: true
+    }
 }
 
-export async function initSpotifyiFramePlayer(media?: Media) {
+/**
+ * @param accessToken 
+ * @param pos      position of element is offset
+ * @returns        User's saved audiobooks from their library
+ */
+export async function getAlbumItem(accessToken: string, albumId: string, pos: number): Promise<Track> {
+    const headers = new Headers({ "Authorization": `Bearer ${accessToken}` })
+    const res  = await fetch(`https://api.spotify.com/v1/albums/${albumId}/tracks?limit=1&offset=${pos}`, { method: 'GET', headers })
+    const data = await res.json()
+
+    if (!res.ok) {
+        console.error(`There was an error getting a collection's item. \n URL: ${res.url} \n Status: ${res.status} \n Description: ${data.error.message}.`)
+        throwSpotifyAPIError(res.status, data.error.message)
+    }
+
+    const item = data.items[0]
+
+    return {
+        id: item.id,
+        name: item.name,
+        author: item.artists[0].name,
+        authorUrl: item.artists[0].external_urls.spotify,
+        type: MusicMediaType.Album,
+        url: item.external_urls.spotify,
+        duration: item.duration_ms,
+        artworkImgSrc: "",
+        genre: "",
+        album: "",
+        albumId: "",
+        playlistId: "",
+        fromLib: true
+    }
+}
+
+/**
+ * @param accessToken 
+ * @param pos      position of element is offset
+ * @returns        User's saved audiobooks from their library
+ */
+export async function getLibTracksItem(accessToken: string,  pos: number): Promise<Track> {
+    return (await getSpotfifyUserLikedTracks(accessToken, pos, 1)).items[0]
+}
+
+/**
+ * @param accessToken 
+ * @param pos      position of element is offset
+ * @returns        User's saved audiobooks from their library
+ */
+export async function getLibPodcastEpisdesItem(accessToken: string,  pos: number): Promise<PodcastEpisode> {
+    return (await getUserPodcastsEps(accessToken, pos, 1)).items[0]
+
+}
+
+/**
+ * @param accessToken 
+ * @param pos      position of element, is offset
+ * @returns           User's saved audiobooks from their library
+ */
+export async function getLibAudiobooksItem(accessToken: string,  pos: number): Promise<AudioBook> {
+    return (await getSpotifyUserAudioBooks(accessToken, pos, 1)).items[0]
+}
+
+export function verifyForPlayerSession() {
+    const playerData = loadMusicPlayerData()
+
+    if (playerData && playerData.currentIdx === undefined) {
+        removeMusicPlayerData()
+        return
+    }
+    if (playerData) {
+        continueSpotifyiFramePlayerSession() 
+    }
+}
+
+/**
+ * Continue player session by initializing iFrame Player again 
+ */
+export async function continueSpotifyiFramePlayerSession() {
     new SpotifyMusicPlayer()
-    const player = get(spotifyIframeStore)!
-    let _media = media
-
-    if (!media) {
-        _media = player.mediaCollection ?? player.mediaItem!
-    }
-    await player.initIframePlayerAPI(_media!)
+    const player = get(musicPlayerStore)! as SpotifyMusicPlayer
+    await player.initIframePlayerAPI(null)
 }
 
-export async function handleSpotifyMediaItemClicked(media: Media) {
-    let spotifyPlayer = get(spotifyIframeStore)
+/**
+ * Initialize Spotify player class.
+ * Must always be a starting collection when initializing for the first time.
+ * @param mediaCollection  Media collection to start with. 
+ */
+export async function initSpotifyiFramePlayer(context: MediaClickedContext | null) {
+    new SpotifyMusicPlayer()
+    const player = get(musicPlayerStore)! as SpotifyMusicPlayer
 
-    if (!spotifyPlayer) {
-        await initSpotifyiFramePlayer(media)
-        spotifyPlayer = get(spotifyIframeStore)
-
-    }
-    spotifyPlayer!.initNewResource(media)
+    await player.initIframePlayerAPI(context)
 }
 
-export function getIFrameMediaUri(media: Media) {
+/**
+ * Handler for when an media item has been clicked to be played
+ * @param media   
+ * @param idx   
+ */
+export async function handleSpotifyMediaItemClicked(context: MediaClickedContext) {
+    try {
+        let spotifyPlayer = get(musicPlayerStore) as SpotifyMusicPlayer
+    
+        if (!spotifyPlayer) {
+            await initSpotifyiFramePlayer(context)
+            spotifyPlayer = get(musicPlayerStore) as SpotifyMusicPlayer
+        }
+        await spotifyPlayer!.updateMediaCollection(context)
+        spotifyPlayer!.loadCurrentItem(true)
+    }
+    catch(error: any) {
+        if (error.code != undefined && error.code === APIErrorCode.PLAYER) {
+            musicAPIErrorHandler(error)
+        }
+    }
+}
+
+/**
+ * 
+ * @param media  Get URI from media
+ * @returns     URI to be loaded into the iFrame Player
+ */
+export function getSpotifyMediaUri(media: Media) {
     const parsedUrl = new URL(media.url)
     const pathnameParts = parsedUrl.pathname.split('/').filter(Boolean)
     const resourceType = pathnameParts[0]
@@ -478,17 +605,17 @@ export function getIFrameMediaUri(media: Media) {
  * @param     error     Error context extracted from the API reesponse
  * @returns             API error with proper context using a code and message.
  */
-export function throwSpotifyAPIError(error: { status: number, message: string }) {
-    if (error.status === 401 && error.message === "The access token expired") {
+export function throwSpotifyAPIError(status: number, message: string) {
+    if (status === 401 && message === "The access token expired") {
         throw new APIError(APIErrorCode.EXPIRED_TOKEN, "Token expired. Log in again to continue.")
     }
-    else if (error.status === 404) {
+    else if (status === 404) {
         throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Requested media unavailable.")
     }
-    else if (error.status === 429) {
-        throw new APIError(APIErrorCode.RATE_LIMIT_HIT, "Sorry, the app has exceeded the rate limit. Please try again later.")
+    else if (status === 429) {
+        throw new APIError(APIErrorCode.RATE_LIMIT_HIT)
     }
     else {
         throw new APIError(APIErrorCode.GENERAL, "There was an error with Spotify. Please try again later.")
     }
-  }
+}

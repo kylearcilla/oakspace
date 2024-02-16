@@ -3,7 +3,7 @@ export enum ErrorCode {
 }
 export enum APIErrorCode {
     EXPIRED_TOKEN, FAILED_TOKEN_REFRESH, LOGIN_IN, LOG_OUT, RESOURCE_NOT_FOUND, RESOURCE_UNAVAILABLE, 
-    AUTHORIZATION_ERROR, UNAUTHORIZED, API_ERROR, GENERAL, RATE_LIMIT_HIT, PLAYER
+    AUTHORIZATION_ERROR, UNAUTHORIZED, API_ERROR, GENERAL, RATE_LIMIT_HIT, PLAYER, APP_SERVER
 }
 /* General */
 export enum LogoIcon {
@@ -121,8 +121,8 @@ export enum MusicShufflerState {
     CAN_CONTINUE_CHUNK, HAS_ENDED_AND_MORE_CHUNKS, HAS_ENDED_NO_CHUNKS,
 }
 export enum MusicMediaType {
-    Playlist, Track, Album, PodcastEpisode, AudioBook, RadioStation, 
+    Playlist, Track, Album, PodcastEpisode, AudioBook, RadioStation, SavedTracks, SavedAudioBooks, SavedEpisodes
 }
 export enum UserLibraryMedia {
-    Playlists = "Playlists", LikedTracks = "Tracks", Albums = "Albums", PodcastEps = "Episodes", Audiobooks = "Audiobooks"
+    Playlists = "Playlists", LikedTracks = "Tracks", Albums = "Albums", PodcastEps = "Episodes", Audiobooks = "Audiobooks", Artists = "Artists"
 }

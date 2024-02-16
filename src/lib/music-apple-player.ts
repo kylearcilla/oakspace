@@ -2,13 +2,15 @@ import { get } from "svelte/store"
 import { MusicPlayer, type MusicPlayerStore } from "./music-player"
 import { musicDataStore, musicPlayerStore, } from "./store"
 import { MusicPlaylistShuffler } from "./music-playlist-shuffler"
-import { getAppleAlbumDetails, getApplePlaylistDetails, getArtworkSrc, getRadioStationDetails } from "./api-apple-music"
-import { PlayerError } from "./errors"
+import { getAppleAlbumDetails, getApplePlaylistDetails, getArtistDeteails, getArtistTopSongs, getArtworkSrc, getLibTrackItem, getRadioStationDetails } from "./api-apple-music"
+import { APIError, PlayerError } from "./errors"
 
 import { 
-    loadMusicPlayerState, loadMusicShuffleData, 
+    loadMusicPlayerData, loadMusicShuffleData, 
     removeMusicPlayerData, removeMusicShuffleData, saveMusicPlayerData 
 } from "./utils-music"
+import { APIErrorCode, MusicMediaType, MusicPlatform } from "./enums"
+import type { AppleMusicUserData } from "./music-apple-user-data"
 
 /**
  * A class representing an Apple Music player instance that extends MusicPlayer. 
@@ -21,23 +23,36 @@ import {
 export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<AppleMusicPlayer> {
     musicPlayerInstance: any
     musicPlaylistShuffler: MusicPlaylistShuffler | null = null
-
+    mediaItem:  Track | PodcastEpisode | AudioBook | null = null
+    mediaCollection: MediaCollection | null = null
+    
+    // media state
     currentIdx = 0
-    lastCollectionIdx = 0
-    mediaItem: Track | null = null
-    mediaCollection: Media | null = null
-    isPlayingRadio = false
-    isPlaylingLive = false
-    doShowPlayer = false
+    currentPosition = -1
+    currentDuration = -1
+    
+    // player state
     isPlaying = false
-    error: any = null
     isDisabled = true
     isRepeating = false
     isShuffled = false
-    hasCollectionJustEnded = false
+    isBuffering = false
+    error: any = null
+    
+    lastCollectionIdx = 0
+    isPlayingRadio = false
+    isPlayingLive = false
+    
     hasReachedEnd = false
+    hasCollectionJustEnded = false
+    hasItemUpdated = false
+    doAllowUpdate = true
+    hasSeekedTo = -1
+    
+    doShowPlayer = false
     hasFinishedPlaylist = false
 
+    // Apple Musc Kit States
     PLAYING_STATE = 2
     PAUSED_STATE = 3
     COLLECTION_JUST_ENDED_STATE = 10
@@ -46,12 +61,10 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
 
     undisableTimeout: NodeJS.Timeout | null = null
  
-    constructor(didInitApplePlayer: boolean = false) {
+    constructor() {
         super()
         musicPlayerStore.set(this)
-
-        if (didInitApplePlayer) this.loadAndSetPlayerData()
-        this.initMusicPlayerState()
+        this.loadAndSetPlayerData()
     }
 
     /**
@@ -60,28 +73,32 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
      * 
      * @throws  {Error}    Error initializing Music Kit API.
      */
-    async initMusicPlayerState () {
+    async initAppleMusicPlayer() {
         try {
+            console.log("INIT MUSIC PLAYER")
             // @ts-ignore
             this.musicPlayerInstance = await MusicKit.getInstance()
     
-            this.updateMusicPlayerState({ 
-                isPlaying: false, isDisabled: true, 
-                error: null, doShowPlayer: this.mediaItem != null
-            })
-    
-            if (this.mediaCollection) {
-                this.queueAndPlayMedia(this.mediaCollection!.id, this.currentIdx, false, false)
-                this.unDisableMusicPlayer()
-            }
-    
             this.attachEventHandlers()
+
+            if (this.mediaCollection) {
+                await this.loadCurrentItem(false)
+            }
         }
         catch(e: any) {
             console.error(`Error initializing Apple Music Kit. Error: ${e}`)
-            this.updateMusicPlayerState({ error: e })
-            throw e
+            this.deleteMusicPlayerData()
+            throw new APIError(APIErrorCode.PLAYER, "There was an error initializing Apple Music player. Try again later.")
         }
+    }
+
+    /**
+     * Verify the access token has not expired. If so request for a new one and return.
+     * @returns   Fresh access token
+     */
+    async validateAndGetAccessToken(): Promise<string> {
+        await get(musicDataStore)!.verifyAccessToken()
+        return get(musicDataStore)!.accessToken
     }
 
     /**
@@ -94,6 +111,13 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
         this.musicPlayerInstance.addEventListener("playbackTimeDidChange", (e: any) => this.playbackTimeDidChangeHandler(e))
         this.musicPlayerInstance.addEventListener("mediaPlaybackError", (e: any) => this.mediaPlaybackErrorHandler(e))
         this.musicPlayerInstance.addEventListener("mediaCanPlay", (e: any) => this.mediaCanPlayHandler(e))
+        this.musicPlayerInstance.addEventListener("playbackStateDidChange", (e: any) => this.onPlaybackUpdate(e))
+    }
+
+    onPlaybackUpdate(e: any) {
+        const isPlaying = this.musicPlayerInstance.isPlaying
+        this.isPlaying = isPlaying
+        this.updateState({ isPlaying: isPlaying })
     }
 
     /**
@@ -103,49 +127,33 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
      * 
      * @param newMusicPlayerState   New state
      */
-    updateMusicPlayerState(newPlayerState: Partial<AppleMusicPlayer>) {
+    updateState(newPlayerState: Partial<AppleMusicPlayer>) {
         musicPlayerStore.update((player: MusicPlayer | null) => {
             return this.getNewStateObj(newPlayerState, player! as AppleMusicPlayer)
         })
 
         this.saveState()
     }
-    
-    /**
-     * Called when player is no longer in use. 
-     */
-    quitPlayer() {
-        this.deleteMusicPlayerData()
-    }
 
     /**
-     * Resets to empty state.
-     * Called when there is no playlist or quitting plater.
+     * Called when a new media item will be loaded.
+     * Player changes to an "in-between" state that goes back to a playing state after the next media item has been successfully loaded.
      */
-    async resetMusicPlayerStateToEmptyState() {
-        if (this.isShuffled) removeMusicShuffleData()
-
-        await this.musicPlayerInstance.stop()
-
-        this.mediaCollection = null
-        this.removeCurrentTrack()
+    mediaItemWillChange() {
+        this.disablePlayer()
+        // this.updateMediaTime(0, -1)
         
-        this.updateMusicPlayerState({
-            doShowPlayer: false, isPlaying: false, isDisabled: true, isRepeating: false, 
-            isShuffled: false, error: null, hasCollectionJustEnded: false, mediaCollection: null
-        })
+        this.hasItemUpdated = true
+        this.updateState({ hasItemUpdated: true })
     }
 
     /**
-     * Hide music player component.
+     * Called after a media change request was processed successfully and the new item has been successfully loaded by the iFrame Player.
      */
-    async hideMusicPlayer() {
-        if (this.musicPlayerInstance.isPlaying) {
-            await this.musicPlayerInstance.pause()
-        } 
-
-        this.updateMusicPlayerState({ isPlaying: false })
-        this.updateMusicPlayerState({ doShowPlayer: false })
+    mediaItemHasChanged() {
+        this.hasItemUpdated = false
+        this.isDisabled = false
+        this.updateState({ hasItemUpdated: false, isDisabled: false })
     }
 
     /**
@@ -155,30 +163,28 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
     async togglePlayback() {
         try {
             if (this.hasReachedEnd) {
-                this.queueAndPlayMedia(this.mediaCollection!.id, 0)
+                this.loadCurrentItem(false)
                 this.updateMediaCollectionIdx(0)
                 this.hasReachedEnd = false
                 return
             }
 
-            if (this.musicPlayerInstance.isPlaying && this.isPlaylingLive) {
-                this.updateMusicPlayerState({ isPlaying: false })
+            // isPlaying state from instance is not always accurate
+            if (this.musicPlayerInstance.isPlaying && this.isPlayingLive) {
                 await this.musicPlayerInstance.stop()      
             }
             else if (this.musicPlayerInstance.isPlaying) {
-                this.updateMusicPlayerState({ isPlaying: false })
                 await this.musicPlayerInstance.pause()      
             }
             else {
-                this.updateMusicPlayerState({ isPlaying: true })
                 await this.musicPlayerInstance.play()
             }
             
-            this.unDisableMusicPlayer()
+            this.undisablePLayer()
         }
         catch(e: any) {
             console.error(`Error using Apple Music Kit (playback). Error: ${e}`)
-            this.updateMusicPlayerState({ error: new PlayerError("Error occured. Refresh the page or play a different item. ")})
+            this.updateState({ error: new PlayerError("Error occured. Refresh the page or play a different item. ")})
             throw e
         }
     }
@@ -188,25 +194,12 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
      * If album / collection has just ended, it will prep the player to play the 0th index.
      */
     async skipToNextTrack() {
-        if (!this.mediaCollection || this.isPlaylingLive) return
-        if (this.isShuffled) {
-            this.skipToNextRandomTrack()
-            return
+        try {
+            await this.loadNextMediaItem(true)
         }
-        
-        // here because play & skip prev methods need to see that player reached end state before resetting
-        if (this.hasReachedEnd) this.hasReachedEnd = false
-
-        const nextIndex = this.getNextPlaylistIndex()
-
-        if (this.hasReachedEnd) {
-            // do not disable as it will not trigger the now-playing event that will undisable player
-            this.queueAndPlayMedia(this.mediaCollection!.id, 0, false, false) 
-            this.updateMediaCollectionIdx(-1)
-        }
-        else {
-            this.queueAndPlayMedia(this.mediaCollection!.id, nextIndex)
-            this.updateMediaCollectionIdx(nextIndex)
+        catch(error: any) {
+            this.mediaItemHasChanged()
+            this.onError(error)
         }
     }
 
@@ -215,51 +208,16 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
      * If at the start, it will queue up the first again and start it over.
      */
     async skipToPrevTrack() {
-        if (!this.mediaCollection || this.isPlaylingLive) return
-        this.updateMusicPlayerState({ isDisabled: true })
+        try {
+            const doSkipNext = this.currentIdx === 0 && !this.isPlaying
+            if (doSkipNext) return
 
-        if (this.isShuffled) {
-            this.skipToPrevRandomTrack()
-            return
+            await this.loadNextMediaItem(false)
         }
-        const nextIndex = this.getPrevPlaylistIndex()
-        this.queueAndPlayMedia(this.mediaCollection!.id, nextIndex)
-        this.updateMediaCollectionIdx(nextIndex)
-    }
-
-    /**
-     * Skips to next track when shuffled
-     */
-    async skipToNextRandomTrack() {
-        const shuffler = this.musicPlaylistShuffler!
-        const playlistID = this.mediaCollection!.id
-
-        const nextTrackIndex = shuffler.getNextIndex(this.isRepeating)
-        
-        if (nextTrackIndex < 0) {
-            // do not disable as it will not trigger the now-playing event that will undisable player
-            this.queueAndPlayMedia(playlistID, 0, false, false)
+        catch(error: any) {
+            this.mediaItemHasChanged()
+            this.onError(error)
         }
-        else {
-            this.queueAndPlayMedia(playlistID, nextTrackIndex)
-        }
-
-        shuffler!.newItemIsPlayingHandler(true, this.isRepeating)
-        this.updateMediaCollectionIdx(nextTrackIndex)
-    }
-
-    /**
-     * Skips to prev track when shuffled
-     */
-    async skipToPrevRandomTrack() {
-        const shuffler = this.musicPlaylistShuffler!
-        const playlistID = this.mediaCollection!.id
-
-        const nextTrackIndex = shuffler.getPrevIndex(this.isRepeating)
-        this.queueAndPlayMedia(playlistID, nextTrackIndex)
-
-        shuffler!.newItemIsPlayingHandler(false, this.isRepeating)
-        this.updateMediaCollectionIdx(nextTrackIndex)
     }
 
     /**
@@ -268,42 +226,116 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
      * Will get more if all items have been played.
      */
     toggleShuffle(): void {
-        if (!this.mediaCollection) return
-        if (!this.mediaCollection || this.isPlayingRadio) return
+        try {
+            if (this.isPlayingRadio) return
 
-        const media = this.mediaCollection as Playlist | Album
-        const currIndex = this.currentIdx
+            const currIndex = this.currentIdx
+            const length = this.getCurrCollectionLength()
+    
+            this.isShuffled = !this.isShuffled
+            this.hasReachedEnd = false
 
-        this.isShuffled = !this.isShuffled
-        this.hasReachedEnd = false
-
-        if (this.isShuffled && currIndex >= MusicPlaylistShuffler.CHUNK_SIZE) {
-            // the actual starting idx will be 0
-            this.musicPlaylistShuffler = new MusicPlaylistShuffler(-1, media.length)  
-            this.musicPlaylistShuffler.indexPointer = -1
+            if (this.isShuffled) {
+                this.musicPlaylistShuffler = new MusicPlaylistShuffler(currIndex, length)
+            }
+            else {
+                this.musicPlaylistShuffler!.quit()
+                this.musicPlaylistShuffler = null
+            }
+    
+            this.updateState({ isShuffled: this.isShuffled })
         }
-        else if (this.isShuffled) {
-            this.musicPlaylistShuffler = new MusicPlaylistShuffler(currIndex, media.length)
+        catch (error: any) {
+            console.error("There was an error toggling shuffle.")
+            this.onError(error)
         }
-        else {
-            this.musicPlaylistShuffler!.quit()
-            this.musicPlaylistShuffler = null
-        }
-
-        this.updateMusicPlayerState({ isDisabled: true, isShuffled: this.isShuffled })
-        this.unDisableMusicPlayer()
     }
 
     /**
      * Toggle repeat for player. 
      */
     toggleRepeat(): void {
-        if (!this.mediaCollection || this.isPlayingRadio) return
+        if (this.isPlayingRadio) return
 
         this.isRepeating = !this.isRepeating
-        this.updateMusicPlayerState({ isDisabled: true, isRepeating: this.isRepeating })
-        this.unDisableMusicPlayer()
+        this.updateState({ isDisabled: true, isRepeating: this.isRepeating })
+
+        this.undisablePLayer()
     }
+
+    /**
+     * Load the next index and corresponding media item based on seeking prev or next.
+     * Updates the state and plays the item.
+     * @param isNext   Is seeking for next index.
+     */
+    async loadNextMediaItem(isNext: boolean): Promise<void> {
+        this.mediaItemWillChange()
+
+        let shuffler = this.musicPlaylistShuffler
+        let nextIdx = 0
+        let doPlay = true
+
+        if (isNext && shuffler) {
+             nextIdx = shuffler.getNextIndex(this.isRepeating)
+             doPlay = shuffler.indexPointer === 0 ? this.isRepeating : true
+             nextIdx = Math.max(nextIdx, 0)
+        }
+        else if (isNext) {
+            nextIdx = this.getNextIndex()
+            doPlay = nextIdx === 0 ? this.isRepeating : true
+        }
+        else if (!isNext && shuffler) {
+            nextIdx = shuffler.getPrevIndex(this.isRepeating)
+        }
+        else {
+            nextIdx = this.getPrevIndex()
+        }
+                
+        this.currentIdx = nextIdx
+
+        if (this.mediaCollection!.type === MusicMediaType.SavedTracks) {
+            this.mediaItem = await this.getItemFromIdx(this.mediaCollection!, nextIdx) as Track
+        }
+
+        // TODO: media item will be update do now playing item will change handler
+
+        this.loadCurrentItem(doPlay)
+        this.updateState({ mediaItem: this.mediaItem, currentIdx: nextIdx })
+    }
+
+    hasQueuedAnItem() {
+        return [ MusicMediaType.SavedTracks ].includes(this.mediaCollection!.type)
+    }
+
+    getCurrCollectionLength() {
+        return this.hasQueuedAnItem() ? this.mediaCollection!.length : this.musicPlayerInstance.queue._queueItems.length
+    }
+
+    /**
+     */
+    getNextIndex(): number {
+        const hasReachEnd = this.currentIdx + 1 === this.getCurrCollectionLength()
+
+        if (hasReachEnd) {
+            return 0
+        }
+        else {
+            return this.currentIdx + 1
+        }
+    }
+    
+    /**
+     */
+    getPrevIndex(): number {
+        if (this.isRepeating) {
+            return this.currentIdx > 0 ? this.currentIdx - 1 : this.getCurrCollectionLength() - 1
+        }
+        else {
+            return Math.max(0, this.currentIdx - 1)
+        }
+    }
+
+
 
     /**
      * Queues up a media collection item to be played.
@@ -317,185 +349,206 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
      * @param doDisable   Do disable player temporarily to avoid spamming.
      * 
      */
-    async queueAndPlayMedia(id: string, newIndex: number, doPlay: boolean = true, doDisable: boolean = true) {
-        try {
-            if (this.undisableTimeout) {
-                clearTimeout(this.undisableTimeout)
-            }
+    async loadCurrentItem(doPlay: boolean = true) {
+        try {            
+            this.mediaItemWillChange()
 
-            const isPlaylist = this.mediaCollection!.id.startsWith("pl")
+            const type = this.mediaCollection!.type
+            const collectionId = this.mediaCollection?.id ?? ""
 
-            if (this.isPlayingRadio) {
-                await this.musicPlayerInstance.setQueue({ station: id })
+            console.log("loadCurrentItem", this.mediaCollection)
+            
+            if (type === MusicMediaType.RadioStation) {
+                await this.musicPlayerInstance.setQueue({ station: collectionId })
             }
-            else if (isPlaylist) {
-                await this.musicPlayerInstance.setQueue({ playlist: id, startWith: newIndex })
+            else if (type === MusicMediaType.Playlist) {
+                await this.musicPlayerInstance.setQueue({ playlist: collectionId, startWith: this.currentIdx })
+            }
+            else if (type === MusicMediaType.Album) {
+                await this.musicPlayerInstance.setQueue({ album: collectionId, startWith: this.currentIdx })
             }
             else {
-                await this.musicPlayerInstance.setQueue({ album: id, startWith: newIndex })
+                // for an individual track
+                const itemId = this.mediaItem!.id
+                await this.musicPlayerInstance.setQueue({ song: itemId })  // for saved tracks and artists' top songs
             }
-    
-            this.updateMusicPlayerState({ isPlaying: doPlay, isDisabled: doDisable, doShowPlayer: true })
-            if (doPlay) await this.musicPlayerInstance.play() 
 
-            // undisable if nowPlayingItemWillChange method does not execute
-            this.undisableTimeout = setTimeout(async () => { 
-                this.unDisableMusicPlayer(false)
+            if (doPlay) { 
+                await this.musicPlayerInstance.play() 
+            }
 
-                if (doPlay) {
-                    await this.musicPlayerInstance.play()
-                }
-            }, this.UNDISABLE_COOLDOWN_AFTER_SKIP_MS)
         }
-        catch(e: any) {
-            console.error(`Apple Music Kit error with qeueue. Error: ${e}`)
-            this.updateMusicPlayerState({ error: new PlayerError("Error occured. Refresh the page or play a different item.") })
+        catch(error: any) {
+            console.error(`Apple Music Kit error with qeueue. Error: ${error}`)
+            
+            const errorStr = error.toString().split(":")[0].trim()
+            if (errorStr === "CONTENT_UNAVAILABLE") {
+                this.onError(new APIError(APIErrorCode.PLAYER, "This collection is empty."))
+            }
+            else {
+                this.onError(new APIError(APIErrorCode.PLAYER, "Player error. Refresh the page or play a different item."))
+            }
         }
+        finally {
+            this.mediaItemHasChanged()
+        }
+    }
+
+    seekTo(time: number): void {
+
+    }
+
+    /**
+     * Update current playing collection. 
+     * Media item will not be updated as it's gather from the object the API returns from an updated when the collection has been loeaded.
+     * @param context 
+     */
+    async updateMediaCollection(context: MediaClickedContext) {
+        try {
+            this.mediaItemWillChange()
+
+            const collection = context.collection
+            const collectionType = collection.type
+            const hasClickedLibTrack = collection.type === MusicMediaType.SavedTracks
+            const isFromLib = context.collection.fromLib
+
+            const _idx = hasClickedLibTrack ? context.idx : 0
+            const accessToken = await this.validateAndGetAccessToken()
+        
+
+            let _mediaCollection
+
+            // fetching here to get data that was not hardcoded in
+            // TODO see if this can be done by getting the media returned by the willItemChange event (not lib since they always contain updated stuff)
+            if (!isFromLib && collectionType === MusicMediaType.RadioStation) {
+                _mediaCollection = { ...context.collection, ...await getRadioStationDetails(collection.id, accessToken), author: collection.author, genre: collection.genre }
+                this.isPlayingRadio = true
+                this.isPlayingLive = (_mediaCollection as RadioStation).isLive
+            }
+            else if (!isFromLib && collectionType === MusicMediaType.Playlist) {
+                _mediaCollection = { ...context.collection, ...await getApplePlaylistDetails(collection.id, accessToken) } as Playlist
+                this.isPlayingRadio = false
+                this.isPlayingLive = false
+            }
+            else if (!isFromLib && collectionType === MusicMediaType.Album) {
+                _mediaCollection = { ...context.collection, ...await getAppleAlbumDetails(collection.id, accessToken) } as Album
+                this.isPlayingRadio = false
+                this.isPlayingLive = false
+            }
+            else {
+                _mediaCollection = context.collection
+            }
+
+            console.log("updateMediaCollection")
+            this.mediaCollection = _mediaCollection
+            this.currentIdx = _idx
+
+            if (collectionType === MusicMediaType.SavedTracks) {
+                this.mediaItem = context.itemClicked as Track
+            }
+
+            console.log("mediaCollection", this.mediaCollection)
+            console.log("mediaItem", this.mediaItem)
+            console.log("currentIdx", this.currentIdx)
+
+            this.updateState({ 
+                mediaCollection: this.mediaCollection,
+                currentIdx: this.currentIdx, isPlayingLive: this.isPlayingLive
+            })
+        }
+        catch(error) {
+            this.onError(error)
+            this.mediaItemHasChanged()
+
+            throw error
+        }
+    }
+
+
+    /**
+     * Used when we want to play individual songs as opposesd to loading a collection in aplaylist
+     * @param mediaCollection 
+     * @param idx              Idx position of desired item.
+     * @returns                Media item stored in that idx.
+     */
+    async getItemFromIdx(mediaCollection: MediaCollection, idx: number) {
+        const accessToken = await this.validateAndGetAccessToken()
+        const musicStore = get(musicDataStore) as AppleMusicUserData
+        const userToken = musicStore.userToken
+
+        let creds = { accessToken, userToken }
+
+        if (mediaCollection.type === MusicMediaType.SavedTracks) {
+            return await getLibTrackItem(idx, creds)
+        }
+        else {
+            return null
+        }
+    }
+
+
+
+    async getArtistInfo(artistId: string) {
+        const accessToken = await this.validateAndGetAccessToken()
+        const musicStore = get(musicDataStore) as AppleMusicUserData
+        const userToken = musicStore.userToken
+
+        let creds = { accessToken, userToken }
+
+        return await getArtistDeteails(artistId, creds)
+    }
+
+    updateMediaCollectionIdx(idx: number) {
+        this.currentIdx = idx
+        this.updateState({ currentIdx: this.currentIdx })
+    }
+
+    toggleShow(doShow: boolean): void {
+        if (!doShow && this.isPlaying) {
+            this.togglePlayback()
+        }
+
+        this.doShowPlayer = doShow
+        this.updateState({ doShowPlayer: doShow })
+
     }
 
     /**
      * Update current track state & save in local storage.
      * @param mediaItem  Current track playing from collection.
      */
-    updateCurrentTrack(mediaItem: Track): void {
+    updateCurrentMediaItem(mediaItem: Track): void {
+        console.log(mediaItem)
         this.mediaItem = mediaItem
-        this.updateMusicPlayerState({ mediaItem })
+        this.updateState({ mediaItem })
     }
-    
+
     /**
-     * Remove current track from store / local storage.
+     * Called when player is no longer in use. 
      */
-    removeCurrentTrack(): void {
+    quit() {
+        this.deleteMusicPlayerData()
+    }
+
+    /**
+     * Resets to empty state.
+     * Called when there is no playlist or quitting plater.
+     */
+    async resetMusicPlayerStateToEmptyState() {
+        if (this.isShuffled) removeMusicShuffleData()
+
+        await this.musicPlayerInstance.stop()
+
+        this.mediaCollection = null
         this.mediaItem = null
-        this.updateMusicPlayerState({ mediaCollection: null })
-    }
-    
-    /**
-     * Get the next index to be played. If @ end, go to the first.
-     * If has reached the end, prep the player to play the first idx if next is pressed.
-     * 
-     * @param isRepeating              If looped is toggled on.
-     * @param hasCollectionJustEnded   If collection has just ended and next is pressed, make sure the first item is played.
-     * @returns                        The next index. -1 If end has been reached and not looped. Preps the player to play 0th idx when next is pressed.
-     */
-    getNextPlaylistIndex(): number {
-        let media: any = this.mediaCollection
-        let isCollection = "length" in this.mediaCollection! ? media.length : -1
-
-        if (isCollection) {
-            media as Playlist | Album
-        }
-        else {
-            return -1
-        }
         
-        this.hasReachedEnd = this.currentIdx + 1 === media.length
-
-        if (this.hasReachedEnd && this.isRepeating) {
-            this.hasReachedEnd = false
-            return 0
-        }
-        if (this.hasReachedEnd && !this.isRepeating) return -1
-
-        return this.currentIdx + 1
-    }
-    
-    /**
-     * Get the next index to be played. If @ start, go to the last.
-     * If playlist has finished and stopped, prep the player to play the last if next is pressed.
-     * @returns            The prev index. -1 If at the start. 
-     */
-    getPrevPlaylistIndex(): number {
-        let media: any = this.mediaCollection
-        let isCollection = "length" in this.mediaCollection! ? media.length : -1
-
-        if (isCollection) {
-            media as Playlist | Album
-        }
-        else {
-            return -1
-        }
-
-        let prevIdx = 0
-        const isAtStart = this.currentIdx === 0
-
-        if (isAtStart && this.isRepeating) return media.length - 1 
-        if (isAtStart && !this.isRepeating) return 0
-
-        if (this.hasReachedEnd) {
-            prevIdx = media.length - 1
-            this.hasReachedEnd = false
-        }
-        else {
-            prevIdx = this.currentIdx - 1
-        }
-
-        return prevIdx
-    }
-    
-    /**
-     * Updates the current index.
-     * @param newIndex 
-     */
-    updateMediaCollectionIdx(newIndex: number) {
-        this.currentIdx = newIndex
-        this.updateMusicPlayerState({ currentIdx: newIndex })
-    }
-    
-    /**
-     * Updates the current playlist. Updates the playlist store.
-     * Have to make additional request to get song count.
-     * 
-     * @param  newCollection        New collection chosen by user to play.
-     * @throws {TokenExpiredError}  401 Error when making requests using access tokens to Music Kit API.       
-     * @throws {APIError}           Any other issue with making request. Abstracted as API error to user
-     */
-    async updateCurrentMediaAndPlay(newMedia: Media) {
-        try {
-            this.hasReachedEnd = false
-            
-            let mediaCollection = newMedia
-
-            const accessToken = get(musicDataStore)!.accessToken
-            const isRadio = newMedia.id.startsWith("ra")
-            const isPlaylist = newMedia.id.startsWith("pl")
-
-            // fetch for new data
-            if (isRadio) {
-                mediaCollection = { ...await getRadioStationDetails(newMedia.id, accessToken), author: mediaCollection.author, genre: mediaCollection.genre }
-                this.isPlayingRadio = true
-                this.isPlaylingLive = (mediaCollection as RadioStation).isLive
-            }
-            else if (isPlaylist) {
-                mediaCollection = { ...mediaCollection, ...await getApplePlaylistDetails(newMedia.id, accessToken) } as Playlist
-                this.isPlayingRadio = false
-                this.isPlaylingLive = false
-            }
-            else {
-                mediaCollection = { ...mediaCollection, ...await getAppleAlbumDetails(newMedia.id, accessToken) } as Album
-                this.isPlayingRadio = false
-                this.isPlaylingLive = false
-            }
-            
-            this.mediaCollection = mediaCollection
-            this.updateMusicPlayerState({ 
-                mediaCollection: this.mediaCollection, hasReachedEnd: false, 
-                currentIdx: 0, doShowPlayer: true, isPlayingRadio: this.isPlayingRadio
-            })
-    
-            await this.queueAndPlayMedia(this.mediaCollection!.id, 0)
-        }
-        catch(e: any) {
-            this.updateMusicPlayerState({ error: e })
-            throw e
-        }
+        this.updateState({
+            doShowPlayer: false, isPlaying: false, isDisabled: true, isRepeating: false, 
+            isShuffled: false, error: null, hasCollectionJustEnded: false, mediaCollection: null, mediaItem: null 
+        })
     }
 
-    /**
-     * Remove current collection.
-     * This will reset the player to an empty state.
-     */
-    removeCurrentMedia() {
+    removeCurrentCollection(): void {
         this.resetMusicPlayerStateToEmptyState()
     }
 
@@ -505,7 +558,7 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
      */
     private async mediaCanPlayHandler(e: any) {
         if (this.isDisabled) {
-            this.unDisableMusicPlayer(false)
+            this.undisablePLayer(false)
         }
     }
 
@@ -516,7 +569,15 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
     private async mediaPlaybackErrorHandler(event: any) {
         console.log("ERROR OCCURED")
         console.error(`Playback error with Apple Music Kit. ${event}`)
-        this.updateMusicPlayerState({ isDisabled: true, error: event })
+        this.updateState({ isDisabled: true, error: event })
+    }
+
+    /**
+     * General error handler. Called by other members.
+     * @param error  Error 
+     */
+    onError(error: any) {
+        super.onError(error, MusicPlatform.AppleMusic)
     }
 
     /**
@@ -528,22 +589,26 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
         if (!event.item) return
 
         if (!this.isDisabled) {
-            this.updateMusicPlayerState({ isDisabled: true, isPlaying: true })
+            this.updateState({ isDisabled: true, isPlaying: true })
         }
+
+
+        console.log("nowPlayingItemWillChangeHandler", event)
 
         const mediaItem = {
             id: event.item.id,
             name: event.item.attributes.name,
-            artist: event.item.attributes.artistName,
+            author: event.item.attributes.artistName,
             collection: event.item.albumName,
             artworkImgSrc: getArtworkSrc(event.item.attributes.artwork),
             playlistId: event.item._container.id,
-            playlistName: event.item._container.attributes.name,
-            playlistArtworkSrc: event.item._container.attributes?.artwork ? getArtworkSrc(event.item._container.attributes?.artwork) : ""
+            playlistName: event.item._container.attributes?.name,
+            playlistArtworkSrc: event.item._container.attributes?.artwork ? getArtworkSrc(event.item._container.attributes?.artwork) : "",
+            duration: 0, album: "", albumId: "", authorUrl: "", genre: "", url: "", type: "", fromLib: false
         }
         
-        this.updateCurrentTrack(mediaItem)
-        this.unDisableMusicPlayer()
+        this.updateCurrentMediaItem(mediaItem)
+        this.undisablePLayer()
 
         if (this.undisableTimeout) {
             clearTimeout(this.undisableTimeout)
@@ -561,13 +626,18 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
         this.skipToNextTrack()
     }
 
+    disablePlayer() {
+        this.isDisabled = true
+        this.updateState({ isDisabled: true })
+    }
+
     /**
      * Undsiable a disabled player
      * Player is temorarily disabled after a control is used to avoid spamming.
      */
-    private unDisableMusicPlayer(doWait = true) {
+    private undisablePLayer(doWait = true) {
         setTimeout(() => {
-            this.updateMusicPlayerState({ isDisabled: false, doShowPlayer: true, error: null })
+            this.updateState({ isDisabled: false, doShowPlayer: true, error: null })
         }, doWait ? this.PLAYER_COOLDOWN_MS : 0)
     }
 
@@ -575,26 +645,49 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
      * Load and set from previous music player session.
      */
     loadAndSetPlayerData() {
-        const savedData = loadMusicPlayerState()
+        const savedData = loadMusicPlayerData() as AppleMusicPlayer
 
-        this.currentIdx =      savedData!.currentIdx
         this.mediaItem =       savedData!.mediaItem
         this.mediaCollection = savedData!.mediaCollection
-        this.doShowPlayer =    savedData!.doShowPlayer
-        this.isPlaying =       savedData!.isPlaying
-        this.isDisabled =      savedData!.isDisabled
+        this.currentIdx =      savedData!.currentIdx
+
         this.isRepeating =     savedData!.isRepeating
         this.isShuffled =      savedData!.isShuffled
-        this.hasReachedEnd =   savedData!.hasReachedEnd
-        this.isPlayingRadio =  !("length" in this.mediaCollection!)
+        this.doShowPlayer =    savedData!.doShowPlayer
+        this.isPlayingLive =   savedData!.isPlayingLive
 
         if (this.isShuffled) {
             const shuffleData = loadMusicShuffleData()
             this.musicPlaylistShuffler = new MusicPlaylistShuffler(shuffleData.trackIndex, shuffleData.songCount, shuffleData)
         }
 
-        this.updateMusicPlayerState({ ...savedData, isPlayingRadio: this.isPlayingRadio })
+        this.updateState({ ...savedData, isPlayingRadio: this.isPlayingRadio })
     }
+
+    /**
+     * Save player state to persist state between refreshes.
+     */
+    saveState() {
+        let newData = {} as AppleMusicPlayer
+        newData.mediaItem =       this.mediaItem
+        newData.mediaCollection = this.mediaCollection
+        newData.currentIdx =      this.currentIdx
+
+        newData.isRepeating =     this.isRepeating
+        newData.isShuffled =      this.isShuffled
+
+        newData.doShowPlayer =   this.doShowPlayer
+        newData.isPlayingLive =  this.isPlayingLive
+
+        saveMusicPlayerData(newData)
+    }
+
+    deleteMusicPlayerData() {
+        if (this.isShuffled) { 
+            removeMusicShuffleData()
+        }
+        removeMusicPlayerData()
+    }  
 
     /**
      * Get the updated version of the old state. 
@@ -607,44 +700,28 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
     getNewStateObj(newState: Partial<AppleMusicPlayer>, oldState: AppleMusicPlayer): AppleMusicPlayer {
         const newStateObj = oldState
 
-        if (newState.currentIdx != undefined)         newStateObj!.currentIdx = newState.currentIdx
         if (newState.mediaItem != undefined)          newStateObj!.mediaItem = newState.mediaItem
         if (newState.mediaCollection != undefined)    newStateObj!.mediaCollection = newState.mediaCollection
-        if (newState.error != undefined)              newStateObj!.error = newState.error
-        if (newState.doShowPlayer != undefined)       newStateObj!.doShowPlayer = newState.doShowPlayer
+
+        if (newState.currentIdx != undefined)         newStateObj!.currentIdx = newState.currentIdx
+        // if (newState.currentDuration != undefined)    newStateObj!.currentDuration = newState.currentDuration
+        // if (newState.currentPosition != undefined)    newStateObj!.currentPosition = newState.currentPosition
+
+        if (newState.isPlaying != undefined)          newStateObj!.isPlaying = newState.isPlaying
+        if (newState.isDisabled != undefined)         newStateObj!.isDisabled = newState.isDisabled
+        if (newState.isRepeating != undefined)        newStateObj!.isRepeating = newState.isRepeating
+        if (newState.isShuffled != undefined)         newStateObj!.isShuffled = newState.isShuffled
+        if (newState.isBuffering != undefined)        newStateObj!.isBuffering = newState.isBuffering
+        if (newState.isPlayingLive != undefined)     newStateObj!.isPlayingLive = newState.isPlayingLive
+        
         if (newState.isPlaying != undefined)          newStateObj!.isPlaying = newState.isPlaying
         if (newState.isDisabled != undefined)         newStateObj!.isDisabled = newState.isDisabled
         if (newState.isRepeating != undefined)        newStateObj!.isRepeating = newState.isRepeating
         if (newState.isShuffled != undefined)         newStateObj!.isShuffled = newState.isShuffled
         if (newState.hasReachedEnd != undefined)      newStateObj!.hasReachedEnd = newState.hasReachedEnd
-        if (newState.isPlayingRadio != undefined)      newStateObj!.isPlayingRadio = newState.isPlayingRadio
+        if (newState.doShowPlayer != undefined)       newStateObj!.doShowPlayer = newState.doShowPlayer
+        if (newState.error != undefined)              newStateObj!.error = newState.error
 
         return newStateObj
-    }
-
-    deleteMusicPlayerData() {
-        if (this.isShuffled) removeMusicShuffleData()
-        removeMusicPlayerData()
-        musicPlayerStore.set(null)
-    }
-
-    /**
-     * Save player state to persist state between refreshes.
-     */
-    saveState() {
-        const musicPlayerState = get(musicPlayerStore)!
-        saveMusicPlayerData({
-            currentIdx: musicPlayerState.currentIdx,
-            mediaItem: musicPlayerState.mediaItem,
-            mediaCollection: musicPlayerState.mediaCollection,
-            doShowPlayer: musicPlayerState.doShowPlayer,
-            isPlaying: musicPlayerState.isPlaying,
-            isDisabled: musicPlayerState.isDisabled,
-            isRepeating: musicPlayerState.isRepeating,
-            isShuffled: musicPlayerState.isShuffled,
-            hasReachedEnd: musicPlayerState.hasReachedEnd
-        })
-    }
-
-    
+    }  
 }

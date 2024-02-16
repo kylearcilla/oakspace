@@ -1,7 +1,7 @@
 <script lang="ts">
     import { ModalType } from "$lib/enums"
     import { getThemeFromSection, setNewTheme } from "$lib/utils-appearance"
-	import { themeState, musicPlayerStore, homeViewLayout, spotifyIframeStore } from "$lib/store"
+	import { themeState, homeViewLayout, musicPlayerStore } from "$lib/store"
 	import { hideWideMenuBar, openModal, showWideMenuBar } from "$lib/utils-home"
 	import { onMount } from "svelte";
 	import { getElemById } from "$lib/utils-general";
@@ -101,9 +101,7 @@
             goto("/home")
         }
         else if (textTab === TextTab.Productivity) {
-            const player = $spotifyIframeStore!
-            player.controller.seek(200)
-            // goto("/home/productivity")
+            goto("/home/productivity")
         }
         else if (textTab === TextTab.Goals) {
             goto("/home/goals")

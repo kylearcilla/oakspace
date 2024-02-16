@@ -22,7 +22,7 @@ export class MusicPlaylistShuffler {
     shuffledIndexes: number[] = []
     state: MusicShufflerState
     
-    static CHUNK_SIZE: number = 100
+    CHUNK_SIZE: number = 25
   
     /**
      * 
@@ -42,11 +42,18 @@ export class MusicPlaylistShuffler {
             this.state = prevData.state
         }
         else {
-            if (chunkSize) MusicPlaylistShuffler.CHUNK_SIZE = chunkSize
-            this.startTrackIndex = trackIndex
-            this.trackIndex = trackIndex
+            if (chunkSize) {
+                this.CHUNK_SIZE = chunkSize
+            }
+
+            const isIdxOverChunkSize = trackIndex >= this.CHUNK_SIZE
+            
+            this.indexPointer    = isIdxOverChunkSize ? -1 : 0
+            this.startTrackIndex = isIdxOverChunkSize ?  0 : trackIndex
+            this.trackIndex      = isIdxOverChunkSize ?  0 : trackIndex
+
             this.songCount = songCount
-            this.initShuffleIndexes()
+            this.initShuffleIndexes(isIdxOverChunkSize)
             this.saveMusicPlayerData()
             this.state = songCount >= 1 ? MusicShufflerState.CAN_CONTINUE_CHUNK : MusicShufflerState.HAS_ENDED_NO_CHUNKS
         }
@@ -60,21 +67,16 @@ export class MusicPlaylistShuffler {
      * Inititalize shuffled collection indices array. 
      * 
      */
-    private initShuffleIndexes(): void {
-        let size = Math.min(MusicPlaylistShuffler.CHUNK_SIZE, this.songCount)
+    private initShuffleIndexes(isIdxOverChunkSize: boolean): void {
+        let size = Math.min(this.CHUNK_SIZE, this.songCount)
         this.shuffledIndexes = new Array(size)
     
         for (let i = 0; i <= size - 1; i++) {
             this.shuffledIndexes[i] = i
         }
-        if (this.songCount === 1) return 
-        
-        // make the current player index always first
-        const temp = this.shuffledIndexes[0]
-        this.shuffledIndexes[0] = this.shuffledIndexes[this.startTrackIndex]
-        this.shuffledIndexes[this.startTrackIndex] = temp
+        if (this.songCount === 1) return     
 
-        this.shuffleArray(this.shuffledIndexes)
+        this.shuffleArray(this.shuffledIndexes, isIdxOverChunkSize)
     }
 
     /**
@@ -83,13 +85,14 @@ export class MusicPlaylistShuffler {
      * 
      * @param array   Array of music collection indices to be shuffled.
      */
-    private shuffleArray(array: number[]) {
-        for (let i = array.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * i) + 1;
-          [array[i], array[j]] = [array[j], array[i]];
+    private shuffleArray(array: number[], isIdxOverChunkSize = false) {
+        const startIndex = isIdxOverChunkSize ? 0 : 1
+    
+        for (let i = array.length - 1; i >= startIndex; i--) {
+            const j = Math.floor(Math.random() * i) + startIndex;
+            [array[i], array[j]] = [array[j], array[i]];
         }
-      }
-
+    }
     /**
      * Called when user presses skip to next item when shuffle is toggled on.
      * Gets the next index that should be played, updates the current idxPointer and track idx being played.
@@ -99,23 +102,19 @@ export class MusicPlaylistShuffler {
      */
     getNextIndex(isLooped = false): number {
         this.indexPointer++
+        this.newItemIsPlayingHandler(true, isLooped)
 
         if (!isLooped && this.state === MusicShufflerState.HAS_ENDED_NO_CHUNKS && this.indexPointer === this.shuffledIndexes.length) {
             this.indexPointer = 0           // prep the player to play the first idx if skip next is pressed
             this.saveMusicPlayerData()
-            console.log("A")
             return -1
         }
         else if (isLooped && this.indexPointer === this.shuffledIndexes.length) {
-            console.log("B")
             this.indexPointer = 0
         }
         else if (this.state === MusicShufflerState.HAS_ENDED_AND_MORE_CHUNKS) {
-            console.log("C")
             this.initNextChunk()
         }
-
-        console.log(this.indexPointer)
 
         this.trackIndex = this.shuffledIndexes[this.indexPointer]
         this.saveMusicPlayerData()
@@ -129,6 +128,8 @@ export class MusicPlaylistShuffler {
      * @returns         The prev pointer. If -1, then a bound has been reached.
      */
     getPrevIndex(isLooped = false): number {
+        this.newItemIsPlayingHandler(false, isLooped)
+
         if (!isLooped && this.state === MusicShufflerState.HAS_ENDED_NO_CHUNKS) {
             this.indexPointer = this.shuffledIndexes.length - 1
         }
@@ -156,7 +157,7 @@ export class MusicPlaylistShuffler {
      */
     private getNextChunk(): number[] {
         const currentSize = this.shuffledIndexes.length
-        const size = Math.min(MusicPlaylistShuffler.CHUNK_SIZE, this.songCount - currentSize)
+        const size = Math.min(this.CHUNK_SIZE, this.songCount - currentSize)
   
         let currIndex = currentSize
         const nextChunkArray = new Array(size)
@@ -190,7 +191,6 @@ export class MusicPlaylistShuffler {
 
     /**
      * Keep the shuffler's state updated to keep it in-sync with the music player.
-     * Called before updating indices.
      */
     newItemIsPlayingHandler(isNext: boolean, isLooped: boolean): void {
         const change = isNext ? 1 : -1

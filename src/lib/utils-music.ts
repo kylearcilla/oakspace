@@ -1,31 +1,40 @@
 import { get } from "svelte/store"
-import type { MusicPlayer } from "./music-player"
-import { initAppleMusic } from "./api-apple-music"
-import { AppleMusicPlayer } from "./music-apple-player"
 import { musicDataStore, musicPlayerStore, toastMessages } from "./store"
 
-import { APIErrorCode, MusicMediaType, MusicMoodCategory, MusicPlatform, ToastContext, UserLibraryMedia } from "./enums"
-
+import { getAppleMusicUserAlbums, getAppleMusicUserLikedTracks, getAppleMusicUserPlaylists, handleAppleMusicyMediaItemClicked, initAppleMusic } from "./api-apple-music"
+import type { SpotifyMusicPlayer } from "./music-spotify-player"
+import { findEnumIdxFromDiffEnum, getScrollStatus } from "./utils-general"
+import { 
+    getSpotfifyUserLikedTracks, getSpotfifyUserPlaylists, getSpotifyUserAlbums, getSpotifyUserAudioBooks, getUserPodcastsEps, 
+    handleSpotifyMediaItemClicked, initSpotifyMusic
+} from "./api-spotify"
 import { 
     sereneCollections, acousticCollections, classicalCollections, 
     lofiCollections, soundtrackCollections, summerCollections, 
     upbeatCollections, zenCollections  
 } from "$lib/data-music-collections"
-import { findEnumIdxFromDiffEnum } from "./utils-general"
-import { handleSpotifyMediaItemClicked, initSpotifyMusic, requestSpotifyUserAuth } from "./api-spotify"
+
+import type { MusicPlayer } from "./music-player"
 import type { AppleMusicUserData } from "./music-apple-user-data"
 import type { SpotifyMusicUserData } from "./music-spotify-user-data"
+import { 
+    APIErrorCode, MusicMediaType, MusicMoodCategory, 
+    MusicPlatform, ToastContext, UserLibraryMedia 
+} from "./enums"
 import { APIError } from "./errors"
-import type { SpotifyMusicPlayer } from "./music-spotify-player"
 
 export const USER_PLAYLISTS_REQUEST_LIMIT = 10
-export const didInitMusicUser = () => loadMusicUserData() != null
+export const SPOTIFY_IFRAME_ID = "spotify-iframe"
+
+export function didInitMusicUser() { 
+    loadMusicUserData() != null
+}
 
 /**
  * Called after every refresh. If user has signed up cntinue music session.
  */
-export const continueMusicSession = (musicPlatform: MusicPlatform) => {
-    musicLogin(musicPlatform, true)
+export async function continueMusicSession(musicPlatform: MusicPlatform) {
+    await musicLogin(musicPlatform)
 }
 
 /**
@@ -36,75 +45,50 @@ export const continueMusicSession = (musicPlatform: MusicPlatform) => {
  * 
  * @param platform          Current music streaming platform being used.
  * @param hasUserSignedIn   Has user already logged in before. 
- * @returns                 AsyncResult object.
  */
-export const musicLogin = async (platform: MusicPlatform, hasUserSignedIn: boolean = false) => {
-    try {
-        if (platform === MusicPlatform.AppleMusic) {
-            await initAppleMusic(hasUserSignedIn)
-        }
-        else if (platform === MusicPlatform.Spotify) {
-            initSpotifyMusic()
-        }
-
-        if (hasUserSignedIn) return
-
-        toastMessages.update((toasts: ToastMsg[]) => [...toasts, {
-            context: get(musicDataStore)!.musicPlatform,
-            message: "Log in Successful!",
-        }])
+export async function musicLogin(platform: MusicPlatform) {
+    if (platform === MusicPlatform.AppleMusic) {
+        await initAppleMusic()
     }
-    catch(error: any) {
-        const isSpotifyAuth = platform === MusicPlatform.Spotify && !hasUserSignedIn && error instanceof TypeError
-        if  (isSpotifyAuth) return
+    else if (platform === MusicPlatform.Spotify) {
+        await initSpotifyMusic()
+    }
+}
 
-        if (error instanceof TypeError) {
-            alert(error)
-            musicAPIErrorHandler(new APIError(APIErrorCode.GENERAL, "There was an en error with the login. Please try again."), platform)
-        }
-        else {
-            musicAPIErrorHandler(error, platform)
-        }
-    }    
+export function musicLoginSuccessHandler(platform: MusicPlatform) {
+    toastMessages.update((toasts: ToastMsg[]) => [...toasts, {
+        context: platform,
+        message: "Log in Successful!",
+    }])
 }
 
 /**
  * Called when user logs out of music platform.
- * @returns        AsyncResult object.
  */
-export const musicLogout = async (): Promise<AsyncResult> => {
+export async function musicLogout() {
     const musicStore = get(musicDataStore)
     const playerStore = get(musicPlayerStore)
 
     try {
         musicStore!.quit()
-        playerStore!.quitPlayer()
-        return { sucess: false }
+        playerStore!.quit()
     }
     catch(error: any) {
         musicAPIErrorHandler(error)
-        return { sucess: false }
     }
 }
 
 /**
  * Called when user wants to log in again after token has expired.
- * @returns     AsyncResult object.
  */
-export const refreshMusicSession = async () => {
+export async function refreshMusicSession() {
     const musicStore = get(musicDataStore)
-    try {
-        await musicStore!.refreshAccessToken()
-        musicStore!.setTokenHasExpired(false)
+    await musicStore!.refreshAccessToken()
 
-        toastMessages.update((toasts: ToastMsg[]) => [...toasts, {
-            context: musicStore!.musicPlatform,
-            message: "Refresh Success!"
-        }])
-    }
-    catch(error: any) {
-        musicAPIErrorHandler(error)
-    }
+    toastMessages.update((toasts: ToastMsg[]) => [...toasts, {
+        context: musicStore!.musicPlatform,
+        message: "Refresh Success!"
+    }])
 }
 
 /**
@@ -116,128 +100,267 @@ export const refreshMusicSession = async () => {
  * @param musicPlatform Context music platform error occured in.
  * @returns             Toast message to be disaplyed in a Toast component.
  */
-export const musicAPIErrorHandler = (error: APIError, musicPlatform?: MusicPlatform) => {
+export function musicAPIErrorHandler(error: APIError, musicPlatform?: MusicPlatform) {
     let toastMessage: ToastMsg
 
     const platform = musicPlatform === undefined ? get(musicDataStore)!.musicPlatform! : musicPlatform
-    const toastContext = findEnumIdxFromDiffEnum(platform!, MusicPlatform, ToastContext)!
+    const platformStr = getPlatformString(platform)
 
-    console.error(error)
+    const toastContext = findEnumIdxFromDiffEnum(platform!, MusicPlatform, ToastContext)!
 
     if (error.code === APIErrorCode.EXPIRED_TOKEN) {
         toastMessage = {
             context: toastContext,
-            message: "Token has expired. Log in again to continue.",
+            message: error.message ?? "Token has expired. Log in again to continue.",
             action: {
                 msg: "Continue session",
                 func: () => refreshMusicSession()
             }
         }
     }
-    else if (error.code === APIErrorCode.FAILED_TOKEN_REFRESH) {
+    else if (error.code === APIErrorCode.PLAYER) {
         toastMessage = {
             context: toastContext,
-            message: "There was an error continuing session. Log in again to continue.",
-            action: {
-                msg: "Continue session",
-                func: () => requestSpotifyUserAuth()
-            }
+            message: error.message ?? "There was an error with the player. Try refreshing the page.",
+        }
+    }
+    else if (error.code === APIErrorCode.AUTHORIZATION_ERROR) {
+        toastMessage = {
+            context: toastContext,
+            message: error.message ?? `${platformStr} authorization failed.`,
+        }
+    }
+    else if (error.code === APIErrorCode.RATE_LIMIT_HIT) {
+        toastMessage = {
+            context: toastContext,
+            message: "Rate limit exceeded. Try again later.",
         }
     }
     else if (error instanceof TypeError) {
         toastMessage = {
             context: toastContext,
-            message: "There was an error with Spotify. Please try again."
+            message: error.message ?? "There was an error. Please try again."
         }
     }
     else {
         toastMessage = {
             context: toastContext,
-            message: error.message
+            message: error.message ?? `There was an error with ${platformStr} Please try again later.` ,
         }
     }
 
     toastMessages.update(() => [toastMessage])
 }
 
+async function getUserAlbums(platform: MusicPlatform, offset: number,limit: number) {
+    const musicStore = get(musicDataStore)!
+    const accessToken = await musicStore.verifyAccessToken() as string
+
+    if (platform === MusicPlatform.AppleMusic) {
+        const userToken = (musicStore as AppleMusicUserData).userToken
+
+        return await getAppleMusicUserAlbums(limit, offset, { accessToken, userToken} )
+    }
+    else if (platform === MusicPlatform.Spotify) {
+        return await getSpotifyUserAlbums(accessToken, offset, limit)
+    }
+    return null
+}
+
+async function getUserPlaylist(platform: MusicPlatform, offset: number,limit: number) {
+    const musicStore = get(musicDataStore)!
+    const accessToken = await musicStore.verifyAccessToken() as string
+
+    if (platform === MusicPlatform.AppleMusic) {
+        const userToken = (musicStore as AppleMusicUserData).userToken
+
+        return await getAppleMusicUserPlaylists(limit, offset, { accessToken, userToken} )
+    }
+    else if (platform === MusicPlatform.Spotify) {
+        return await getSpotfifyUserPlaylists(accessToken, offset, limit)
+    }
+    return null
+}
+
+async function getUserLikedTracks(platform: MusicPlatform, offset: number,limit: number) {
+    const musicStore = get(musicDataStore)!
+    const accessToken = await musicStore.verifyAccessToken() as string
+
+    if (platform === MusicPlatform.AppleMusic) {
+        const userToken = (musicStore as AppleMusicUserData).userToken
+
+        return await getAppleMusicUserLikedTracks(limit, offset, { accessToken, userToken} )
+    }
+    else if (platform === MusicPlatform.Spotify) {
+        return await getSpotfifyUserLikedTracks(accessToken, offset, limit)
+    }
+}
+
+
+/* Media Item Clicked Listeners */
+
 /**
  * Set collection as current collection & lay the first track of the collection item clicked.
  * 
- * @param collection      Media the user has clicked on.
- * @returns               AsyncResult object
+ * @param collection  Media the user has clicked on.
+ * @param idx         Idx location of clicked
  */
-export const handlePlaylistItemClicked = async (media: Media) => {
+export async function handlePlaylistItemClicked (collection: MediaCollection, itemClicked: Media, idx: number) {
     const musicData = get(musicDataStore)
     const musicPlayer = get(musicPlayerStore)
+    const selectContext = { collection, itemClicked, idx }
 
+    
     if (musicData!.musicPlatform === MusicPlatform.Spotify) {
-        handleSpotifyMediaItemClicked(media)
-        return
+        handleSpotifyMediaItemClicked(selectContext)
+    }
+    else if (musicData!.musicPlatform === MusicPlatform.AppleMusic) {
+        console.log("B")
+        handleAppleMusicyMediaItemClicked(selectContext)
     }
 
-    if (media.id === musicPlayer!.mediaCollection?.id) {
-        musicPlayer!.removeCurrentMedia()
-    }
 
-    try {
-        musicPlayer!.updateCurrentMediaAndPlay(media)
-    }
-    catch(error: any) {
-        musicAPIErrorHandler(error)
-    }
+    // if (collection!.id === musicPlayer!.mediaCollection?.id) {
+    //     musicPlayer!.removeCurrentCollection()
+    // }
+    // try {
+    //     musicPlayer!.updateMediaCollection({ collection, itemClicked, idx })
+    // }
+    // catch(error: any) {
+    //     musicAPIErrorHandler(error)
+    // }
 }
 
 /**
- * Scroll handler for user playlists list component that has pagination.
- * Requests for more user playlists once scrolled down far enough.
- * @param event 
- */
-export const userPlsPaginationScrollHandler = async (event: Event) => {
-    const list = event.target as HTMLElement
-    const scrollTop = list.scrollTop
-    const scrollHeight = list!.scrollHeight 
-    const clientHeight = list!.clientHeight 
-    const hasReachedEnd = scrollTop >= scrollHeight - clientHeight
-    
-    if (!hasReachedEnd) return
+ * Get the collection associated with the library clicked.
+ * If not a collection (clicked on a track from saved tracks for example), then create a library for it.
+ * Ensure that the media user clicks is consistent with the actual media located in that index (undeleted, unmoved).
+ * 
+ * @param mediaClicked  Clicked media
+ * @returns             Media associated collection
+ */ 
+export async function getLibMediaCollection(mediaClicked: Media, itemIdx: number): Promise<MediaCollection> {
+    const musicStore = get(musicDataStore)!
+    const accessToken = await musicStore.verifyAccessToken() as string
+    const platform = musicStore.musicPlatform
 
-    try {
-        await requestMoreLibraryItemsHandler()
+    let mediaCollection: MediaCollection
+
+    console.log("mediaClicked", mediaClicked)
+
+    if (mediaClicked.type === MusicMediaType.Playlist) {
+        const details = (await getUserPlaylist(platform, itemIdx, 1))!
+
+        if (!details || details.total === 0 || details.items[0].id != mediaClicked.id) {
+            throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Outdated library. Please refresh.")
+        }
+        else {
+            mediaCollection = details.items[0] as MediaCollection
+        }
     }
-    catch(error: any) {
-        musicAPIErrorHandler(error)
+    else if (mediaClicked.type === MusicMediaType.Album) {
+        const details = (await getUserAlbums(platform, itemIdx, 1))!
+
+        if (!details || details.total === 0 || details.items[0].id != mediaClicked.id) {
+            throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Outdated library. Please refresh.")
+        }
+        else {
+            mediaCollection = details.items[0] as MediaCollection
+        }
     }
-}
+    else if (mediaClicked.type === MusicMediaType.PodcastEpisode) {
+        const details = await getUserPodcastsEps(accessToken, itemIdx, 1)
 
-async function requestMoreLibraryItemsHandler() {
-    const music = get(musicDataStore)!
-    const musicPlatform = music.musicPlatform
+        if (!details || details.total === 0 || details.items[0].id != mediaClicked.id) {
+            throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Outdated library. Please refresh.")
+        }
 
-    if (musicPlatform === MusicPlatform.AppleMusic) {
-        const appleMusicData = music as AppleMusicUserData
-        if (appleMusicData!.hasFetchedAllUserPls) {
-            return
+        const artwork = musicStore.userDetails?.profileImgBig ?? details.items[0].artworkImgSrc
+
+        mediaCollection = {
+            id: "",
+            name: "My Library",
+            description: "Your saved podcast episodes.",
+            artworkImgSrc: artwork ?? details.items[0].artworkImgSrc,
+            author: musicStore.userDetails!.username,
+            authorUrl: musicStore.userDetails!.url,
+            genre: "",
+            type: MusicMediaType.SavedEpisodes,
+            length: details.total,
+            fromLib: true,
+            url: ""
+        }
+    }
+    else if (mediaClicked.type === MusicMediaType.Track) {
+        const details = (await getUserLikedTracks(platform, itemIdx, 1))!
+
+        if (!details || details.total === 0 || details.items[0].id != mediaClicked.id) {
+            throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Outdated library. Please refresh.")
         }
         
-        await appleMusicData!.fetchMoreUserPlaylists()
+        const artwork = musicStore.userDetails?.profileImgBig ?? details.items[0].artworkImgSrc
+
+        mediaCollection = {
+            id: "",
+            name: "My Library",
+            description: "Your saved tracks.",
+            artworkImgSrc: artwork ?? details.items[0].artworkImgSrc,
+            author: musicStore.userDetails?.username ?? "",
+            authorUrl: musicStore.userDetails?.url ?? "",
+            genre: "",
+            type: MusicMediaType.SavedTracks,
+            length: details.total,
+            fromLib: true,
+            url: ""
+        } 
     }
-    else if (musicPlatform === MusicPlatform.Spotify) {
-        const spotifyMusicData = music as SpotifyMusicUserData
-        await spotifyMusicData.getMoreLibraryItems()
+    else {
+        const details = await getSpotifyUserAudioBooks(accessToken, itemIdx, 1)!
+
+        if (!details || details.total === 0 || details.items[0].id != mediaClicked.id) {
+            throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Outdated library. Please refresh.")
+        }
+
+        const artwork = musicStore.userDetails?.profileImgBig ?? details.items[0].artworkImgSrc
+
+        mediaCollection = {
+            id: "",
+            name: "My Library",
+            description: "Your saved audiobooks. (These are preview-only.)",
+            artworkImgSrc: artwork ?? details.items[0].artworkImgSrc,
+            author: musicStore.userDetails!.username,
+            authorUrl: musicStore.userDetails!?.url,
+            genre: "",
+            type: MusicMediaType.SavedAudioBooks,
+            length: details.total,
+            url: "",
+            fromLib: true
+        }
     }
+
+    return mediaCollection!
 }
+
+export function isMediaTypeACollection(type: MusicMediaType): boolean {
+    return [
+        MusicMediaType.Playlist, 
+        MusicMediaType.Album,
+        MusicMediaType.SavedTracks,
+        MusicMediaType.SavedAudioBooks,
+        MusicMediaType.SavedEpisodes
+    ].includes(type)
+}
+
+/* Discover Section */
 
 /**
  * Scroll handler for discover media lists list component that has pagination.
  * Requests for more discover media lists once scrolled down far enough.
  * @param event 
  */
-export const discoverPlsPaginationScrollHandler = async (event: Event) => {
+export async function discoverPlsPaginationScrollHandler(event: Event) {
     const list = event.target as HTMLElement
-    const scrollTop = list.scrollTop
-    const scrollHeight = list!.scrollHeight 
-    const clientHeight = list!.clientHeight 
-    const hasReachedEnd = scrollTop >= scrollHeight - clientHeight
+    const [hasReachedEnd] = getScrollStatus(list)
     
     if (!hasReachedEnd) return
 
@@ -250,6 +373,69 @@ export const discoverPlsPaginationScrollHandler = async (event: Event) => {
         musicAPIErrorHandler(error)
     }
 }
+
+/**
+ * Returns the music media items under a discover / mood category based on the current platform.
+ * 
+ * @param moodTitle     Current collection title
+ * @param platformProp  To string index platform property name from DiscoverCollection
+ * @returns             Music media items under given mood category.
+ */
+export function getDiscoverCollectionList(discoverCategory: MusicMoodCategory, platformProp: MusicPlatformPropNames): Media[] {
+    switch (discoverCategory) {
+        case MusicMoodCategory.Serene:
+            return sereneCollections[platformProp]
+        case MusicMoodCategory.Lofi:
+            return lofiCollections[platformProp]
+        case MusicMoodCategory.Upbeat:
+            return upbeatCollections[platformProp]
+        case MusicMoodCategory.Soundtracks:
+            return soundtrackCollections[platformProp]
+        case MusicMoodCategory.Acoustic:
+            return acousticCollections[platformProp]
+        case MusicMoodCategory.Classical:
+            return classicalCollections[platformProp]
+        case MusicMoodCategory.Zen:
+            return zenCollections[platformProp]
+        case MusicMoodCategory.Summer:
+            return summerCollections[platformProp]
+    }
+}
+
+/**
+ * Based on current platform being used, get the proper platform 
+ * ...property of the discover collection object item.
+ * 
+ * @param platFormIdx  Enum platform index
+ * @returns            Music Discover Property name of current platform
+ */
+export function getPlatformString(platform: MusicPlatform): string {
+    if (platform === MusicPlatform.AppleMusic) {
+        return "Apple Music"
+    }
+    else if (platform === MusicPlatform.YoutubeMusic) {
+        return "Youtube Music"
+    }
+    else{
+        return MusicPlatform[platform]
+    }
+}
+
+/**
+ * Based on current platform being used, get the proper platform 
+ * ...property of the discover collection object item.
+ * 
+ * @param platFormIdx  Enum platform index
+ * @returns            Music Discover Property name of current platform
+ */
+export function getPlatformNameForDiscoverObj(platFormIdx: MusicPlatform): MusicPlatformPropNames {
+    let platform = MusicPlatform[platFormIdx].toLowerCase()
+    platform = platform === "applemusic" ? "appleMusic" : platform
+
+    return platform as MusicPlatformPropNames
+}
+
+/* Media Item Displays */
 
 export function getMediaDescription(media: Media): string {
     const _media: any = media
@@ -270,34 +456,6 @@ export function getMediaLength(media: Media): string {
     }
 
     return "-"
-}
-
-/**
- * Returns the music media items under a discover / mood category based on the current platform.
- * 
- * @param moodTitle     Current collection title
- * @param platformProp  To string index platform property name from DiscoverCollection
- * @returns             Music media items under given mood category.
- */
-export const getDiscoverCollectionList = (discoverCategory: MusicMoodCategory, platformProp: MusicPlatformPropNames): Media[] => {
-    switch (discoverCategory) {
-        case MusicMoodCategory.Serene:
-            return sereneCollections[platformProp]
-        case MusicMoodCategory.Lofi:
-            return lofiCollections[platformProp]
-        case MusicMoodCategory.Upbeat:
-            return upbeatCollections[platformProp]
-        case MusicMoodCategory.Soundtracks:
-            return soundtrackCollections[platformProp]
-        case MusicMoodCategory.Acoustic:
-            return acousticCollections[platformProp]
-        case MusicMoodCategory.Classical:
-            return classicalCollections[platformProp]
-        case MusicMoodCategory.Zen:
-            return zenCollections[platformProp]
-        case MusicMoodCategory.Summer:
-            return summerCollections[platformProp]
-    }
 }
 
 export function getLibraryItemDescription(mediaItem: Media) {
@@ -354,36 +512,29 @@ export function getLibraryMediaTitle(media: Media, type: UserLibraryMedia) {
     return ""
 }
 
-/**
- * Based on current platform being used, get the proper platform 
- * ...property of the discover collection object item.
- * 
- * @param platFormIdx  Enum platform index
- * @returns            Music Discover Property name of current platform
- */
-export const getPlatformNameForDiscoverObj = (platFormIdx: MusicPlatform): MusicPlatformPropNames => {
-    let platform = MusicPlatform[platFormIdx].toLowerCase()
-    platform = platform === "applemusic" ? "appleMusic" : platform
-
-    return platform as MusicPlatformPropNames
-}
-
-export function hasUserSignedIn() {
-    return localStorage.getItem("music-user-data") != null
-}
 
 /* Load */
-export const loadMusicUserData = (): Partial<AppleMusicUserData | SpotifyMusicUserData> | null => {
+export function hasUserSignedIn() {
+    const hasData = localStorage.getItem("music-user-data") != null
+    if (!hasData) {
+        removeAppleMusicTokens()
+        removeMusicPlayerData() 
+        removeMusicShuffleData() 
+    }
+    return hasData
+}
+
+export function loadMusicUserData(): Partial<AppleMusicUserData | SpotifyMusicUserData> | null {
     if (!localStorage.getItem("music-user-data")) return null
     
     return JSON.parse(localStorage.getItem("music-user-data")!)
 } 
-export const loadMusicPlayerState = (): MusicPlayer | null => {
+export function loadMusicPlayerData(): MusicPlayer | null {
     if (!localStorage.getItem("music-player-data")) return null
     
     return JSON.parse(localStorage.getItem("music-player-data")!)
 } 
-export const loadMusicShuffleData = (): MusicShufflerData => {
+export function loadMusicShuffleData(): MusicShufflerData {
     return JSON.parse(localStorage.getItem("music-shuffle-data")!)
 }
 
@@ -393,36 +544,30 @@ export const loadMusicShuffleData = (): MusicShufflerData => {
  * Incorporates changes to currently-saved user data
  * @param userData   New data changes.
  */
-export const saveMusicUserData = (userData: Partial<AppleMusicUserData | SpotifyMusicUserData>) => {
-    const prevData = loadMusicUserData()
-
-    if (prevData) {
-        localStorage.setItem("music-user-data", JSON.stringify({ ...prevData, ...userData }))
-    }
-    else {
-        localStorage.setItem("music-user-data", JSON.stringify(userData))
-    }
+export function saveMusicUserData(newState: AppleMusicUserData | SpotifyMusicUserData) {
+    localStorage.setItem("music-user-data", JSON.stringify(newState))
 }
-export const saveMusicPlayerData = (playerState: Partial<MusicPlayer | SpotifyMusicPlayer>) => {
-    localStorage.setItem("music-player-data", JSON.stringify(playerState))
+export function saveMusicPlayerData(newState: MusicPlayer | SpotifyMusicPlayer) {
+    localStorage.setItem("music-player-data", JSON.stringify(newState))
 }
-export const saveMusicShuffleData = (shuffleData: MusicShufflerData) => {
+export function saveMusicShuffleData(shuffleData: MusicShufflerData) {
     return localStorage.setItem("music-shuffle-data", JSON.stringify(shuffleData))
 }
 
 /* Removals */
-export const deleteMusicUserData = (): void => {
+export function deleteMusicUserData(): void {
     localStorage.removeItem("music-user-data")
 }
-export const removeAppleMusicTokens = () => {
+export function removeAppleMusicTokens() {
     localStorage.removeItem("music.y5xn9fm7bj.itua")
     localStorage.removeItem("music.y5xn9fm7bj.itre")
     localStorage.removeItem("music.y5xn9fm7bj.media-user-token")
     localStorage.removeItem("mk-player-tsid")
 }
-export const removeMusicPlayerData = (): void => {
+export function removeMusicPlayerData(): void {
     localStorage.removeItem("music-player-data")
+
 }
-export const removeMusicShuffleData = (): void => {
+export function removeMusicShuffleData(): void {
     localStorage.removeItem("music-shuffle-data")
 }

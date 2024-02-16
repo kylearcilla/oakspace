@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { MediaEmbedType } from "$lib/enums";
 	import { mediaEmbedStore } from "$lib/store";
+	import { SPOTIFY_IFRAME_ID } from "$lib/utils-music";
 	import { toggleYTIFramePointerEvents } from "$lib/utils-youtube";
 	import { onMount } from "svelte";
 
@@ -15,9 +16,6 @@
     let doHideResizeLayer = false
 
     $: store = $mediaEmbedStore!
-    $: leftPos = `calc(${store.leftPos}% - ${store.width / 2}px)`
-    $: leftTransform = `calc(-1 * calc(${store.leftPos}% - ${store.width / 2}px))`
-    $: height = store.height < 152 ? 80 : store.height < 352 ? 152 : store.height
 
     const HOVER_EDGE_WIDTH = 10
 
@@ -57,7 +55,7 @@
             newHeight = negativeHtChange ? 152 : 352
         }
         mediaEmbedStore.update((val: FloatingMediaEmbed | null) => {
-            return { ...val!, width: newWidth, height: newHeight }
+            return { ...val!, width: `${newWidth}`, height: `${newHeight}` }
         })
     }
 
@@ -78,8 +76,8 @@
         window.removeEventListener("mousemove", onResizeMouseMove)
         toggleYTIFramePointerEvents(true)
 
-        setWidth = $mediaEmbedStore!.width
-        setHeight = $mediaEmbedStore!.height
+        setWidth = +$mediaEmbedStore!.width
+        setHeight = +$mediaEmbedStore!.height
     }
     function onResizeMouseMove(event: MouseEvent) {
         event.preventDefault()
@@ -139,29 +137,28 @@
 
     onMount(() => {
         window.addEventListener("mousedown", onMouseClicked)
-        setWidth = $mediaEmbedStore!.width
-        setHeight = $mediaEmbedStore!.height
+        setWidth = +$mediaEmbedStore!.width
+        setHeight = +$mediaEmbedStore!.height
     })
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div 
-    class="media-embed" on:mousemove={onMouseMove} on:mouseleave={onMouseLeave}
-    style={`
-        top: ${store.topPos}%; 
-        left: ${leftPos}; 
-        transform: translate(${leftTransform}, -${store.topPos}%);
+    class="media-embed" on:mousemove={onMouseMove} on:mouseleave={onMouseLeave} style={`
+        top: ${store.topPos}; 
+        left: ${store.leftPos}; 
+        ${store.leftTransform ? `transform: translate(${store.leftTransform}, ${store.topTransform});` : ""}
     `}
 >
     <div 
         class="media-embed__wrapper"
-        style={`width: ${store.width}px; height: ${height}px`}
+        style={`width: ${store.width}px; height: ${store.height}px`}
     >
         <div 
             class="media-embed__content"
         >
             {#if store.mediaEmbedType === MediaEmbedType.Spotify}
-                <div id="spotify-iframe"></div>
+                <div id={SPOTIFY_IFRAME_ID}></div>
             {:else}
                 <div id="yt-floating-iframe"></div>
             {/if}
@@ -196,7 +193,7 @@
             @include pos-abs-top-left-corner;
         }
     }
-    #spotify-iframe {
+    #SPOTIFY_IFRAME_ID {
         pointer-events: auto;
     }
 </style>

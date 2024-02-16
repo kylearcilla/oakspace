@@ -683,14 +683,14 @@ button.settings-btn {
 .input-range {
     width: 100%;
     top: 0px;
-    height: 3px;
+    height: 4px;
     cursor: pointer;
     background-color: black;
     transition: ease-in-out 0.1s;
     border-radius: 20px;
 
     &:hover {
-       height: 4px;
+       height: 5px;
     }
     
     // thumb
@@ -701,6 +701,13 @@ button.settings-btn {
         -webkit-appearance: none;
         appearance: none;
         background-color: white;
+
+        &:hover {
+            cursor: grab;
+        }
+        &:active {
+            cursor: grabbing;
+        }
     }
     &::-moz-range-thumb  {
         transition: ease-in-out 0.1s;
@@ -709,12 +716,25 @@ button.settings-btn {
         -webkit-appearance: none;
         appearance: none;
         background-color: white;
+
+        &:hover {
+            cursor: grab;
+        }
+        &:active {
+            cursor: grabbing;
+        }
     }
     &:hover::-moz-range-thumb {
-        @include circle(9px);
+        @include circle(10px);
     }
     &:hover::-webkit-slider-thumb {
-        @include circle(9px);
+        @include circle(10px);
+    }
+    &:active::-moz-range-thumb {
+        cursor: grabbing;
+    }
+    &:active::-webkit-slider-thumb {
+        cursor: grabbing;
     }
 
     &--show-thumb {

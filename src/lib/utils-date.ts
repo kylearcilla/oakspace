@@ -444,4 +444,29 @@ export function getTotalSecondsFromStartOfDay(date: Date): number {
   
     return totalSeconds
   }
+
+  /**
+   * Converts milliseconds to a formatted string in the format HH:MM:SS.
+   * @param ms   The number of milliseconds to convert.
+   * @returns    The formatted string in the format HH:MM:SS.
+   */
+  export function msToHHMMSS(ms: number) {
+    const totalSeconds = Math.floor(ms / 1000)
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
   
+    // Format the time components as HH:MM:SS
+    let formattedTime = ''
+    if (hours > 0) {
+        formattedTime += hours + ':'
+    }
+    if (minutes > 0 || hours > 0) {
+        formattedTime += minutes + ':'
+    } else {
+        formattedTime += '0:'
+    }
+    formattedTime += (seconds < 10 ? '0' : '') + seconds
+  
+    return formattedTime
+  }

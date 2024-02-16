@@ -32,7 +32,7 @@ export const initAppState = async () => {
     }
     if (hasUserSignedIn()) {
         const musicPlatform = loadMusicUserData()!.musicPlatform!
-        continueMusicSession(musicPlatform)
+        await continueMusicSession(musicPlatform)
     }
     if (didSpotifyUserAuthApp()) {
         getSpotifyCodeFromURLAndLogin()
@@ -149,11 +149,24 @@ export function showRightBar() {
 }
 
 export function initFloatingEmbed(type: MediaEmbedType) {
+    const width = 600
+    const height = 80
+
+    const leftOffset = "50%"
+    const topOffset = "100%"
+    
+    const leftPos = `calc(${leftOffset} - ${width / 2}px)`
+    const leftTransform = `calc(-1 * calc(${leftOffset} - ${width / 2}px))`
+
+    const topPos = `calc(${topOffset} + ${height}px)`
+    const topTransform = `calc(calc(-1 * calc(${topOffset} - ${height}px)))`
+
     mediaEmbedStore.set({
         mediaEmbedType: type,
         fixed: MediaEmbedFixed.Bottom,
-        leftPos: 50, topPos: 99.5,
-        width: 600, height: 100
+        leftPos, leftTransform,
+        topPos, topTransform,
+        width:`${width}`, height: `${height}`
     })
 }
 /**

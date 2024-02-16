@@ -1,17 +1,19 @@
+import { MusicMediaType } from "./enums"
+
 const ANIMTION_SPEED = 12.55    // 12.55 px / sec
 const ANIMATION_PAUSE = 2       // When text hits left / right edge
 const ANIMATION_DELAY = 3000
 const TEXT_CONTAINER_OFFSET_MIN_CUTOFF = 11  // diff betwen text width and container
 
-const INPUT_RANGE_BG_COLOR = "rgba(0, 0, 0, 0.51)"
+export const INPUT_RANGE_BG_COLOR = "rgba(0, 0, 0, 0.51)"
 
 /**
  * Updates the progrress bar based on current value.
  * @param trackPlaybackBar   Player progress bar
  */
 export const trackProgressHandler = (trackPlaybackBar: HTMLInputElement) => {
-    // const value = trackPlaybackBar.value
-    // trackPlaybackBar.style.background = `linear-gradient(to right, white 0%, white ${value}%, ${INPUT_RANGE_BG_COLOR} ${value}%, ${INPUT_RANGE_BG_COLOR} 100%)`
+    const value = trackPlaybackBar.value
+    trackPlaybackBar.style.background = `linear-gradient(to right, white 0%, white ${value}%, ${INPUT_RANGE_BG_COLOR} ${value}%, ${INPUT_RANGE_BG_COLOR} 100%)`
 }
 
 /**
@@ -92,4 +94,14 @@ export const getSlidingTextAnimation = (textElement: HTMLElement): Animation | n
         easing: "linear"
     }
     return textElement.animate(keyFrames, options)
+}
+
+/**
+ * Given current media duration and value of input get the corresponding position in seconds.
+ * @param percValue   Value of input
+ * @param durationMs  Duration  of current media
+ * @returns           Seek position in seconds
+ */
+export function getSeekPositionSecs(percValue: number, durationMs: number) {
+    return (durationMs * (percValue / 100)) / 1000
 }

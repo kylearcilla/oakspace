@@ -1,4 +1,6 @@
-import type { MusicPlatform, UserLibraryMedia } from "./enums"
+import { APIErrorCode, type MusicPlatform, type UserLibraryMedia } from "./enums"
+import { APIError } from "./errors"
+import { getPlatformString, musicAPIErrorHandler } from "./utils-music"
 
 
 /**
@@ -12,16 +14,32 @@ export abstract class MusicUserData {
     abstract musicPlatform: MusicPlatform | null
     abstract userDetails: MusicUserDetails | null
     abstract hasTokenExpired: boolean
+    abstract tokenExpiresInMs : number
     abstract currentUserMedia : UserLibraryMedia
 
+    // token
     abstract refreshAccessToken(): Promise<void>
-
-    abstract getMoreLibraryItems(): Promise<boolean>
-    abstract getCurrentLibraryDetails(): UserLibraryCollection
-    abstract updateLibraryMedia(media: UserLibraryMedia, isSwitchingTheFirstTime: boolean): void
-    abstract getLibraryDetails(currentUserMedia: UserLibraryMedia): UserLibraryCollection
-    abstract refreshCurrentLibraryMedia(): void
     abstract setTokenHasExpired(hasExpired: boolean): void
+    abstract hasAccessTokenExpired(): boolean
+    abstract verifyAccessToken(): Promise<string>
+
+    // lib
+    abstract getMoreLibraryItems(): void
+    abstract updateLibraryMedia(media: UserLibraryMedia, isSwitchingTheFirstTime: boolean): void
+    abstract refreshCurrentLibraryMedia(): void
+    abstract getCurrentLibraryDetails(): UserLibraryCollection
+    abstract getLibraryDetails(currentUserMedia: UserLibraryMedia): UserLibraryCollection
+
+    onError(error: any, platform: MusicPlatform) {
+        console.error(error)
+
+        if (error instanceof APIError) {
+            musicAPIErrorHandler(error, platform)
+        }
+        else {
+            musicAPIErrorHandler(new APIError(APIErrorCode.GENERAL, `There was an error with ${getPlatformString(platform)}. Please try again later.`))
+        }
+    }
 
     abstract quit(): void
 }

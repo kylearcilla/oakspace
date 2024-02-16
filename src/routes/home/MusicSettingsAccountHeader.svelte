@@ -5,15 +5,14 @@
     import { Icon, LogoIcon, MusicPlatform } from "$lib/enums"
 	import Logo from "../../components/Logo.svelte"
 	import { onMount } from "svelte"
-	import { getSpotifyAcessToken, requestSpotifyUserAuth } from "$lib/api-spotify";
 	import SvgIcon from "../../components/SVGIcon.svelte";
 
-    export let isPlatformListOpen: boolean
-    export let logOutUser: () => Promise<void>
-
+    export let onBtnClick: (platform: MusicPlatform) => void
+    
     let platform: MusicPlatform | null = null
     let icon: LogoIcon
     let iconOptions: LogoContainerOptions
+    let isPlatformListOpen = false
 
     const LOGO_WIDTH = 15
     const BORDER_RADIUS = 6.5
@@ -26,8 +25,10 @@
         Google: { iconWidth: "60%" },
         Luciole: { iconWidth: "60%" }
     }
-
-    $: musicStore = $musicDataStore
+    
+    $: musicStore  = $musicDataStore
+    $: platform    = $musicDataStore!.musicPlatform
+    $: hasTokenExpired  = $musicDataStore!.hasTokenExpired
     $: userDetails = $musicDataStore!.userDetails
 
     onMount(() => {
@@ -57,7 +58,9 @@
                 <SvgIcon icon={Icon.Dropdown} options={{ opacity: 0.2 }}></SvgIcon>
             </div>
         </button>
-        <div class="active-account-header__btn-divider"></div>
+        {#if platform != MusicPlatform.AppleMusic}
+            <div class="active-account-header__btn-divider"></div>
+        {/if}
     </div>
     <!-- No way to get account details from Music Kit -->
     {#if userDetails}
@@ -66,7 +69,7 @@
                 {userDetails.username}
             </a>
             <div class="active-account-header__user-profile-pic">
-                <img src={userDetails.profileImg} alt="">
+                <img src={userDetails.profileImgSmall} alt="">
             </div>
         </div>
     {/if}
@@ -92,10 +95,10 @@
                 </div>
             </div>
             <button 
-                class={`platform-list__item-btn ${musicStore?.musicPlatform === MusicPlatform.Soundcloud ? "platform-list__item-btn--selected" : ""}`}
-                on:click={logOutUser}
+                class={`platform-list__item-btn ${platform === MusicPlatform.Soundcloud ? "platform-list__item-btn--selected" : ""}`}
+                on:click={() => onBtnClick(MusicPlatform.Soundcloud)}
             >
-                {musicStore?.musicPlatform === MusicPlatform.Soundcloud ? "Disconnect" : "Connect"}
+                {platform === MusicPlatform.Soundcloud ? "Disconnect" : "Connect"}
             </button>
         </li>
         <li class="platform-list__item">
@@ -112,10 +115,10 @@
                 </div>
             </div>
             <button 
-                class={`platform-list__item-btn ${musicStore?.musicPlatform === MusicPlatform.YoutubeMusic ? "platform-list__item-btn--selected" : ""}`}
-                on:click={logOutUser}
+                class={`platform-list__item-btn ${platform === MusicPlatform.YoutubeMusic ? "platform-list__item-btn--selected" : ""}`}
+                on:click={() => onBtnClick(MusicPlatform.YoutubeMusic)}
             >
-                {musicStore?.musicPlatform === MusicPlatform.YoutubeMusic ? "Disconnect" : "Connect"}
+                {platform === MusicPlatform.YoutubeMusic ? "Disconnect" : "Connect"}
             </button>
         </li>
         <li class="platform-list__item">
@@ -132,13 +135,13 @@
                 </div>
             </div>
             <button 
-                class={`platform-list__item-btn ${musicStore?.musicPlatform === MusicPlatform.AppleMusic ? "platform-list__item-btn--selected" : ""}`}
-                on:click={logOutUser}
+                class={`platform-list__item-btn ${platform === MusicPlatform.AppleMusic ? "platform-list__item-btn--selected" : ""}`}
+                on:click={() => onBtnClick(MusicPlatform.AppleMusic)}
             >
-                {#if musicStore?.musicPlatform === MusicPlatform.AppleMusic && musicStore?.hasTokenExpired}
+                {#if platform === MusicPlatform.AppleMusic && hasTokenExpired}
                     Reconnect
                 {:else}
-                    {musicStore?.musicPlatform === MusicPlatform.AppleMusic ? "Disconnect" : "Connect"}
+                    {platform === MusicPlatform.AppleMusic ? "Disconnect" : "Connect"}
                 {/if}
             </button>
         </li>
@@ -156,13 +159,13 @@
                 </div>
             </div>
             <button 
-                class={`platform-list__item-btn ${musicStore?.musicPlatform === MusicPlatform.Spotify ? "platform-list__item-btn--selected" : ""}`}
-                on:click={() => requestSpotifyUserAuth()}
+                class={`platform-list__item-btn ${platform === MusicPlatform.Spotify ? "platform-list__item-btn--selected" : ""}`}
+                on:click={() => onBtnClick(MusicPlatform.Spotify)}
             >
-                {#if musicStore?.musicPlatform === MusicPlatform.Spotify && musicStore?.hasTokenExpired}
+                {#if platform === MusicPlatform.Spotify && hasTokenExpired}
                     Reconnect
                 {:else}
-                    {musicStore?.musicPlatform === MusicPlatform.Spotify ? "Disconnect" : "Connect"}
+                    {platform === MusicPlatform.Spotify ? "Disconnect" : "Connect"}
                 {/if}
             </button>
         </li>

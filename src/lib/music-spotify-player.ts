@@ -1,27 +1,56 @@
-import { spotifyIframeStore, } from "./store"
+import { mediaEmbedStore, musicDataStore, musicPlayerManager, musicPlayerStore, } from "./store"
+import { get } from "svelte/store"
 
-import { getIFrameMediaUri } from "./api-spotify"
-import { APIErrorCode, MediaEmbedType, MusicMediaType, MusicPlatform } from "./enums"
 import { initFloatingEmbed } from "./utils-home"
-import { loadMusicPlayerState, musicAPIErrorHandler, saveMusicPlayerData } from "./utils-music"
+import type { AppleMusicPlayer } from "./music-apple-player"
+import { MusicPlayer, type MusicPlayerStore } from "./music-player"
+import { MusicPlaylistShuffler } from "./music-playlist-shuffler"
+import { SPOTIFY_IFRAME_ID, isMediaTypeACollection, loadMusicPlayerData, loadMusicShuffleData, removeMusicPlayerData, removeMusicShuffleData, saveMusicPlayerData } from "./utils-music"
+
 import { APIError } from "./errors"
+import { APIErrorCode, MediaEmbedType, MusicMediaType, MusicPlatform } from "./enums"
+import { getAlbumItem, getSpotifyMediaUri, getLibAudiobooksItem, getLibPodcastEpisdesItem, getLibTracksItem, getPlaylistItem } from "./api-spotify"
+import { MusicPlayerManager } from "./music-player-manager"
 
 /**
- * User data class that uses the Spotify iFrame API to play music.
- * The player itself is a svelte store object / reactive class, initialized during instantiation.
+ * User data class that wraps over the Spotify iFrame API.
+ * The player itself is a store object / reactive class, initialized during instantiation.
+ * iFrame player only plays individual tracks as playing there is a cap for playlists and albums.
+ * The app hides the embed iFrame and uses its own.
  * 
  */
-export class SpotifyMusicPlayer {
+export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<SpotifyMusicPlayer> {
     controller: any
     mediaItem: Track | PodcastEpisode | AudioBook | null = null
-    mediaCollection: Media | null = null
+    mediaCollection: MediaCollection | null = null
+    musicPlaylistShuffler: MusicPlaylistShuffler | null = null
 
-    doShowPlayer = false
+    // media state
+    currentIdx = -1
+    currentDuration = -1
+    currentPosition = -1
+
+    // player state
     isPlaying = false
+    isDisabled = false
+    isRepeating = false
+    isShuffled = false
+    isBuffering = false
+    isPlayingLive = false
     error: any = null
 
+    hasReachedEnd = false
+    hasCollectionJustEnded = false
+    hasSeekedTo = -1
+    hasItemUpdated = false
+    
+    doShowPlayer = false
+    doIgnoreAutoPlay = false
+    doAllowUpdate = true
+    
     undisableTimeout: NodeJS.Timeout | null = null
-
+    
+    UNDISABLE_DELAY_MS = 500
     PLAYER_OPTIONS = {
         uri: '',
         width: '100%',
@@ -29,30 +58,46 @@ export class SpotifyMusicPlayer {
     }
  
     constructor() {
-        initFloatingEmbed(MediaEmbedType.Spotify)
-        spotifyIframeStore.set(this)
+        super()
+        musicPlayerStore.set(this)
         this.loadAndSetPlayerData()
     }
-
+    
     /**
-     * Initialize Spotify iFrame Player API.
-     */
-    async initIframePlayerAPI(media: Media) {
-        try {
-            const _media = media ? media : this.mediaCollection ? this.mediaCollection : this.mediaItem!
-            this.PLAYER_OPTIONS.uri = getIFrameMediaUri(_media)
+     * Initialize Spoify iFrame Player API and play clicked or saved media item.
+     * Used for the first time or continuing a session.
+     * 
+     * @param startCollection   Initial media collection. Is null if continuing a session.
+     * @param idx               Position of media item clicked by the user. 
+     *                          If a collection, this will be 0. If an item, this represetns the idx location of the track.
+    */
+   async initIframePlayerAPI(context: MediaClickedContext | null) {
+       try {
+            initFloatingEmbed(MediaEmbedType.Spotify)
             this.loadSpotifyiFrameAPI()
+            this.doIgnoreAutoPlay = true
+
+            if (context) {
+                await this.updateMediaCollection(context)
+            }
+            
+            this.PLAYER_OPTIONS.uri = getSpotifyMediaUri(this.mediaItem!)
+
             await this.waitForPlayerReadyAndSetPlayerInstance()
+            this.loadCurrentItem()
+
+            if (!this.doShowPlayer) this.toggleShow(true)
         }
-        catch(error) {
-            const msg = "There was an error initialize Spotify Player."
-            console.error(msg, error)
-            musicAPIErrorHandler(new APIError(APIErrorCode.PLAYER, msg), MusicPlatform.Spotify)
+        catch(error: any) {
+            if (this.isDisabled) this.undisablePLayer()
+            if (context)  this.quit()  // if init for the first time
+            
+            throw new APIError(APIErrorCode.PLAYER, "There was an error initializing Spotify player. Try again later.")
         }
     }
 
     /**
-     * Load the iFrame Player API asynchornously
+     * Load the Spotify iFrame Player API asynchornously.
      */
     loadSpotifyiFrameAPI() {
         const body = document.getElementsByTagName('body')[0]
@@ -61,6 +106,15 @@ export class SpotifyMusicPlayer {
         script.src = 'https://open.spotify.com/embed/iframe-api/v1'
         script.async = true
         body.appendChild(script)
+    } 
+
+    /**
+     * Verify the access token has not expired. If so request for a new one and return.
+     * @returns   Fresh access token
+     */
+    async validateAndGetAccessToken(): Promise<string> {
+        await get(musicDataStore)!.verifyAccessToken()
+        return get(musicDataStore)!.accessToken
     }
 
     /**
@@ -68,53 +122,433 @@ export class SpotifyMusicPlayer {
      * Wait for this and resolve afterwards.
      */
     waitForPlayerReadyAndSetPlayerInstance(): Promise<void> {
-        // @ts-ignore
-        return new Promise<void>((resolve) => window.onSpotifyIframeApiReady = (IFrameAPI: any) => {
-            const element = document.getElementById('spotify-iframe');
-            IFrameAPI.createController(element, this.PLAYER_OPTIONS, (controller: any) => this.createControllerCallback(controller))
-            resolve()
+        return new Promise<void>((resolve, reject) => (window as any).onSpotifyIframeApiReady = (IFrameAPI: any) => {
+            try {
+                const element = document.getElementById(SPOTIFY_IFRAME_ID);
+                IFrameAPI.createController(element, this.PLAYER_OPTIONS, (controller: any) => this.createControllerCallback(controller))
+                resolve()
+            }
+            catch(error: any) {
+                reject(error)
+            }
         })
     }
 
     /**
      * Create a controller after initialized to configure the Embed and to control playback.
-     * @param controller 
+     * @param controller  Controller object returned by the API after creating the controller.
      */
     createControllerCallback(controller: any) {
+        console.log(controller)
         this.controller = controller 
-        this.controller.addListener('playback_update', (e: any) => {
-            console.log(e)
-        });
+        this.controller.addListener('playback_update', (e: any) => this.onPlaybackUpdate(e.data))
+        this.controller.addListener('error', (e: any) => this.onSpotifyiFramePlayerError(e.data))
+    }
+
+    /**
+     * Update the state of the player using event object returned by the iFrame API.
+     * @param data    Event object that contains info about current state of the player.
+     */
+    onPlaybackUpdate(data: any) {
+        if (data.isBuffering) return
+
+        const hasOldPosAfterSeek = Math.abs(data.position - this.hasSeekedTo) > 500
+        const hasOldDataAfterSkip = this.hasItemUpdated && (data.position != 0 || data.duration === this.currentDuration)
+
+
+        // do not register updates if player still shows old data after skip to next / prev
+        if (hasOldDataAfterSkip) {
+            this.updateMediaTime(0, -1)
+        }
+        else {
+            this.mediaItemHasChanged()
+            this.updateMediaTime(data.position, data.duration)
+
+            // after skip, sometimes old-data-after-seek state will remain from prev seek
+            if (!hasOldPosAfterSeek) this.hasSeekedTo = -1
+        }
+
+        // do not update if player still shows old data after seek
+        if (this.hasSeekedTo > 0 && hasOldPosAfterSeek) {
+            this.doAllowUpdate = false
+            this.updateState({ doAllowUpdate: false})
+            return
+        }
+
+        this.doAllowUpdate = true
+        this.error = null
+
+        // sometimes player will bypass the browser autoplay restriction, so let it go to a playing state to be consistent with UI
+        if (this.doIgnoreAutoPlay && this.currentPosition > 0) {
+            this.doIgnoreAutoPlay = false
+        }
+        
+        // most times browsers will not allow auto play despite iFrame set to autoplay
+        // so do not allow into a playing state
+        this.isPlaying = !data.isPaused && !this.doIgnoreAutoPlay
+
+        if (this.willCurrentMediaEnd(data)) {
+            this.skipToNextTrack()
+        }
+
+        this.updateState({ 
+            isPlaying: this.isPlaying, doAllowUpdate: this.doAllowUpdate,
+            hasSeekedTo: this.hasSeekedTo
+        })
+    }
+
+    updateMediaTime(pos: number, dur: number) {
+        this.currentPosition = pos
+        this.currentDuration = dur
+
+        this.updateState({
+            currentDuration: dur, currentPosition: pos
+        })
+    }
+
+    /**
+     * @param data Data returned by iFrame API after a state update 
+     * @returns    If the current media is about to end based on its duration and current position
+     */
+    willCurrentMediaEnd(data: any): boolean {
+        if (data.duration === 0 || data.position === 0) return false
+
+        const diffMs = data.duration - data.position
+        return diffMs < 1000
+    }
+
+    /**
+     * Called when a new media item will be loaded.
+     * Player changes to an "in-between" state that goes back to a playing state after the next media item has been successfully loaded.
+     */
+    mediaItemWillChange() {
+        this.disablePlayer()
+        this.updateMediaTime(0, -1)
+        
+        this.hasItemUpdated = true
+        this.updateState({ hasItemUpdated: true })
+    }
+
+    /**
+     * Called after a media change request was processed successfully and the new item has been successfully loaded by the iFrame Player.
+     */
+    mediaItemHasChanged() {
+        this.hasItemUpdated = false
+        this.updateState({ hasItemUpdated: false })
+    }
+
+    togglePlayback(): void {
+        if (this.doIgnoreAutoPlay) {   // if browser blocks autoplay,
+            this.controller.play()
+            this.doIgnoreAutoPlay = false
+        }
+        else {
+            this.controller.togglePlay()
+        }
+    }
+
+    async skipToNextTrack() {
+        try {    
+            await this.loadNextMediaItem(true)
+        }
+        catch(error: any) {
+            this.mediaItemHasChanged()
+            this.onError(error)
+        }
+    }
+
+    async skipToPrevTrack() {
+        try {
+            if (this.shouldRestartTrackAfterSkipPrev()) {
+                this.controller.playFromStart()
+                this.undisablePLayer()
+            }
+            else {
+                await this.loadNextMediaItem(false)
+            }
+        }
+        catch(error: any) {
+            this.mediaItemHasChanged()
+            this.onError(error)
+        }
+    }
+
+    /**
+     * Seeks to a specific position in the media playback.
+     * If the specified position is less than 1 second, the media playback starts from the beginning.
+     * @param posSecs - The position to seek to, in seconds.
+     */
+    seekTo(posSecs: number) {
+        this.hasSeekedTo = posSecs * 1000
+        if (posSecs === 0) {
+            this.controller.playFromStart()
+        }
+        else {
+            this.controller.seek(posSecs)
+        }
+    }
+
+    toggleRepeat(): void {
+        this.isRepeating = !this.isRepeating
+        this.updateState({ isRepeating: this.isRepeating })
+    }
+
+    toggleShuffle(): void {
+        try {
+            const media = this.mediaCollection as Playlist | Album
+            const currIndex = this.currentIdx
+    
+            this.isShuffled = !this.isShuffled
+            this.hasReachedEnd = false
+    
+
+            if (this.isShuffled) {
+                this.musicPlaylistShuffler = new MusicPlaylistShuffler(currIndex, media.length)
+            }
+            else {
+                this.musicPlaylistShuffler!.quit()
+                this.musicPlaylistShuffler = null
+            }
+    
+            this.updateState({ isDisabled: true, isShuffled: this.isShuffled })
+        }
+        catch (error: any) {
+            console.error("There was an error toggling shuffle.")
+            this.onError(error)
+        }
+    }
+
+
+    /**
+     * Load the next index and corresponding media item based on seeking prev or next.
+     * Updates the state and plays the item.
+     * 
+     * @param isNext   Is seeking for next index.
+     */
+    async loadNextMediaItem(isNext: boolean): Promise<void> {
+        this.mediaItemWillChange()
+
+        let shuffler = this.musicPlaylistShuffler
+        let nextIdx = 0
+        let doPlay = true
+
+        if (isNext && shuffler) {
+             nextIdx = shuffler.getNextIndex(this.isRepeating)
+             doPlay = nextIdx >= 0 ? true : false  // has shuffle end
+             nextIdx = Math.max(nextIdx, 0)
+        }
+        else if (isNext) {
+            nextIdx = this.getNextIndex()
+            doPlay = this.currentIdx === 0 ? this.isRepeating : true
+        }
+        else if (!isNext && shuffler) {
+            nextIdx = shuffler.getPrevIndex(this.isRepeating)
+        }
+        else {
+            nextIdx = this.getPrevIndex()
+        }
+                
+        this.currentIdx = nextIdx
+        this.mediaItem = await this.getItemFromIdx(this.mediaCollection!, nextIdx)
+
+        this.loadCurrentItem(doPlay)
+        this.updateState({ mediaItem: this.mediaItem, currentIdx: nextIdx })
+    }
+
+    /**
+     * Get the next collection index and update the current index
+     */
+    getNextIndex() {
+        const hasReachEnd = this.currentIdx + 1 === this.mediaCollection!.length
+
+        if (hasReachEnd) {
+            return 0
+        }
+        else {
+            return this.currentIdx + 1
+        }
+    }
+
+    /**
+     * Get the prev playlist index and update the current index
+     */
+    getPrevIndex() {
+        if (this.isRepeating) {
+            return this.currentIdx > 0 ? this.currentIdx - 1 : this.mediaCollection!.length - 1
+        }
+        else {
+            return Math.max(0, this.currentIdx - 1)
+        }
+    }
+
+    /**
+     * If track is close from the beginning, then resetart.
+     * @returns Should restart current track
+     */
+    shouldRestartTrackAfterSkipPrev() {
+        const trackProgressPerc = (this.currentPosition / this.currentDuration) * 100
+        return !this.isRepeating && (this.currentIdx === 0 || trackProgressPerc > 15)   
+    }
+
+    /**
+     * Load current item in the player
+     * Cannot force a pause when loading a new item using Spotify iFrame API.
+     * @param doPlay   Play item
+     */
+    async loadCurrentItem(doPlay = true) {
+        const uri = getSpotifyMediaUri(this.mediaItem!)
+        this.controller!.loadUri(uri)
+
+        if (this.isDisabled) this.undisablePLayer()
+
+        if (doPlay) {
+            this.controller!.play()
+        }
+        else {
+            this.controller!.play()
+            // this.controller!.pause() does not work
+        }
     }
 
     /**
      * Initialize new resource for iFrame player to play.
+     * Will always be a media collection
      * @param media 
      */
-    initNewResource(media: Media) {
+    async updateMediaCollection(context: MediaClickedContext) {
         try {
-            const uri = getIFrameMediaUri(media)
-    
-            if ([MusicMediaType.Track, MusicMediaType.PodcastEpisode, MusicMediaType.AudioBook].includes(media.type)) {
-                this.mediaItem = media as Track | PodcastEpisode | AudioBook
-                this.mediaCollection = null
-            }
-            else {
-                this.mediaCollection = media
-                this.mediaItem = null
-            }
-    
-            this.controller!.loadUri(uri)
-            this.controller!.play()
-            this.updateState({ mediaItem: this.mediaItem, mediaCollection: this.mediaCollection })
+            this.mediaItemWillChange()
+
+            const isMediaCollection = isMediaTypeACollection(context.itemClicked.type) 
+            const _idx = isMediaCollection ? 0 : context.idx
+
+            const mediaItem = await this.getItemFromIdx(context.collection!, _idx)
+
+            // // the media item to be played from a collection will always be updated
+            // if (!isMediaCollection && mediaItem?.id != context.itemClicked.id) {
+            //     throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Library outdated. Please refresh.")
+            // }
+
+            this.mediaCollection = context.collection!
+            this.currentIdx = _idx
+            this.mediaItem = mediaItem
+
+            this.updateState({ 
+                mediaItem: this.mediaItem, mediaCollection: this.mediaCollection, currentIdx: this.currentIdx 
+            })
         }
         catch(error) {
-            const msg = "There was an error playing requested resource."
-            console.error(msg, error)
-            musicAPIErrorHandler(new APIError(APIErrorCode.PLAYER, msg), MusicPlatform.Spotify)
+            this.onError(error)
+            this.mediaItemHasChanged()
+
+            throw error
         }
     }
 
+    /**
+     * Get a playable media item from a collection from index
+     * If collection no longer exists request will throw an error.
+     * May return an inconsistent item (item that may have not existed at that location)
+     * 
+     * @param mediaCollection   Item where collection belongs.
+     * @param idx               Idx position of desired item.
+     * @returns                 Media item stored in that idx.
+     */
+    async getItemFromIdx(mediaCollection: MediaCollection, idx: number) {
+        const accessToken = await this.validateAndGetAccessToken()  
+
+        if (mediaCollection.type === MusicMediaType.Playlist) {
+            return await getPlaylistItem(accessToken, mediaCollection.id, idx)
+        }
+        else if (mediaCollection.type === MusicMediaType.SavedTracks) {
+            return await getLibTracksItem(accessToken, idx)
+        }
+        else if (mediaCollection.type === MusicMediaType.Album) {
+            return {
+                ...await getAlbumItem(accessToken, mediaCollection.id, idx),
+                         artworkImgSrc: mediaCollection.artworkImgSrc,
+                         album: mediaCollection.name, albumId: mediaCollection.id,
+                         genre: mediaCollection.genre
+            } as Track
+        }
+        else if (mediaCollection.type === MusicMediaType.SavedEpisodes) {
+            return await getLibPodcastEpisdesItem(accessToken, idx)
+        }
+        else if (mediaCollection.type === MusicMediaType.SavedAudioBooks) {
+            return await getLibAudiobooksItem(accessToken, idx)
+        }
+        else {
+            return null
+        }
+    }
+
+    /**
+     * There must always be an item loaded for the Spotify iFrame Player.
+     * So this is not possible without completely quitting. 
+     * Will just have to quit player and initialize again.
+     */
+    removeCurrentCollection() {
+        this.quit()
+    }
+
+    resetMusicPlayerStateToEmptyState() {
+        this.quit()
+    }
+
+    quit(): void {
+        if (this.controller) {
+            this.controller.destroy()
+        }
+        this.deleteMusicPlayerData()
+        musicPlayerStore.set(null)
+        musicPlayerManager.set(null)
+    }
+
+    toggleShow(doShow: boolean) {
+        if (!doShow && this.isPlaying) {
+            this.togglePlayback()
+        }
+
+        this.doShowPlayer = doShow
+        this.updateState({ doShowPlayer: doShow })
+    }
+
+    disablePlayer() {
+        this.isDisabled = true
+        this.updateState({ isDisabled: true })
+    }
+    
+    /**
+     * Disabled player
+     * @param hasDelay  Temporarily disable the player
+     */
+    undisablePLayer(hasDelay = false) {
+        this.undisableTimeout = setTimeout(() => {
+            this.isDisabled = false
+            this.updateState({ isDisabled: false })
+
+            clearTimeout(this.undisableTimeout!)
+            this.undisableTimeout = null
+
+        }, hasDelay ? this.UNDISABLE_DELAY_MS : 0)
+    }
+
+    /**
+     * Call back called by the Spotify iFrame API
+     * @param error  error passed in by the Spotify iFrame API
+     */
+    onSpotifyiFramePlayerError(error: any) {
+        console.error(`There was an error with the Spotify iFrame API. Error. Error: ${error}`)
+        this.onError(error)
+    }
+
+    /**
+     * General error handler. Called by other members.
+     * @param error  Error 
+     */
+    onError(error: any) {
+        super.onError(error, MusicPlatform.Spotify)
+    }
 
     /**
      * Update the state of store.
@@ -122,23 +556,33 @@ export class SpotifyMusicPlayer {
      * @param newState  New version of current state
      */
     updateState(newState: Partial<SpotifyMusicPlayer>, doSave: boolean = true) {
-        spotifyIframeStore.update((data: SpotifyMusicPlayer | null) => this.getNewStateObj(newState, data! as SpotifyMusicPlayer))
+        musicPlayerStore.update((data: AppleMusicPlayer | SpotifyMusicPlayer | null) => { 
+            return this.getNewStateObj(newState, data! as SpotifyMusicPlayer)
+        })
 
-        if (doSave) this.saveState(newState)
+        if (doSave) this.saveState()
     }
 
     /**
      * Load and set from previous music player session.
      */
     loadAndSetPlayerData() {
-        const savedData = loadMusicPlayerState()
-
+        const savedData = loadMusicPlayerData() as SpotifyMusicPlayer
         if (!savedData) return
 
-        this.mediaItem =       savedData!.mediaItem
-        this.mediaCollection =     savedData!.mediaCollection
-        this.doShowPlayer =    savedData!.doShowPlayer
-        this.isPlaying =       savedData!.isPlaying
+        this.mediaItem =        savedData!.mediaItem
+        this.mediaCollection =  savedData!.mediaCollection
+        this.currentIdx =       savedData!.currentIdx
+        this.currentDuration =  savedData!.currentDuration
+
+        this.isRepeating =      savedData!.isRepeating
+        this.isShuffled  =      savedData!.isShuffled
+        this.doShowPlayer =     savedData!.doShowPlayer
+
+        if (this.isShuffled) {
+            const shuffleData = loadMusicShuffleData()
+            this.musicPlaylistShuffler = new MusicPlaylistShuffler(shuffleData.trackIndex, shuffleData.songCount, shuffleData)
+        }
 
         this.updateState({...savedData }, false)
     }
@@ -147,16 +591,28 @@ export class SpotifyMusicPlayer {
      * Saves updated data to persist state between refreshes.
      * Only saves what it needs to.
      */
-    saveState(newState: Partial<SpotifyMusicPlayer>) {
-        let newData = {} as Partial<SpotifyMusicPlayer>
+    saveState() {
+        let newData = {} as SpotifyMusicPlayer
 
-        if (newState.mediaItem != undefined)       newData.mediaItem = newState.mediaItem
-        if (newState.mediaCollection != undefined) newData.mediaCollection = newState.mediaCollection
-        if (newState.error != undefined)           newData.error = newState.error
-        if (newState.doShowPlayer != undefined)    newData.doShowPlayer = newState.doShowPlayer
-        if (newState.isPlaying != undefined)       newData.isPlaying = newState.isPlaying
+        newData.mediaItem =       this.mediaItem
+        newData.mediaCollection = this.mediaCollection
+        newData.currentIdx =      this.currentIdx
+        newData.currentDuration = this.currentDuration
+        newData.isPlaying = this.isPlaying
+
+        newData.isRepeating =     this.isRepeating
+        newData.isShuffled =      this.isShuffled
+
+        newData.doShowPlayer =   this.doShowPlayer
 
         saveMusicPlayerData(newData)
+    }
+
+    deleteMusicPlayerData() {
+        if (this.isShuffled) {
+            removeMusicShuffleData()
+        }
+        removeMusicPlayerData()
     }
 
     /**
@@ -172,9 +628,22 @@ export class SpotifyMusicPlayer {
 
         if (newState.mediaItem != undefined)          newStateObj!.mediaItem = newState.mediaItem
         if (newState.mediaCollection != undefined)    newStateObj!.mediaCollection = newState.mediaCollection
+
+        if (newState.currentIdx != undefined)         newStateObj!.currentIdx = newState.currentIdx
+        if (newState.currentDuration != undefined)    newStateObj!.currentDuration = newState.currentDuration
+        if (newState.currentPosition != undefined)    newStateObj!.currentPosition = newState.currentPosition
+
+        if (newState.isPlaying != undefined)          newStateObj!.isPlaying = newState.isPlaying
+        if (newState.isDisabled != undefined)         newStateObj!.isDisabled = newState.isDisabled
+        if (newState.isRepeating != undefined)        newStateObj!.isRepeating = newState.isRepeating
+        if (newState.isShuffled != undefined)         newStateObj!.isShuffled = newState.isShuffled
+        if (newState.isBuffering != undefined)        newStateObj!.isBuffering = newState.isBuffering
+
         if (newState.error != undefined)              newStateObj!.error = newState.error
         if (newState.doShowPlayer != undefined)       newStateObj!.doShowPlayer = newState.doShowPlayer
-        if (newState.isPlaying != undefined)          newStateObj!.isPlaying = newState.isPlaying
+        if (newState.doAllowUpdate != undefined)      newStateObj!.doAllowUpdate = newState.doAllowUpdate
+        if (newState.hasItemUpdated != undefined)     newStateObj!.hasItemUpdated = newState.hasItemUpdated
+        if (newState.hasSeekedTo != undefined)        newStateObj!.hasSeekedTo = newState.hasSeekedTo
 
         return newStateObj
     }

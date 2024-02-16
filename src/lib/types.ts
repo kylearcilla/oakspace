@@ -181,11 +181,13 @@ type ActiveSessionState = {
 
 type FloatingMediaEmbed = {
     mediaEmbedType: MediaEmbedType
-    topPos: number
-    leftPos: number
+    topPos: string
+    leftPos: string
     fixed: MediaEmbedFixed
-    width: number
-    height: number
+    width: string
+    height: string
+    leftTransform?: string
+    topTransform?: string
 }
 
 type ProgressVisualPart = {
@@ -199,11 +201,13 @@ type ProgressVisualPart = {
 /* Music Stuff */
 // music player plays media
 type UserLibraryCollection = {
-    items: Album[] | Playlist[] | Track[] | AudioBook[] | PodcastEpisode[]
+    items: Album[] | Playlist[] | Track[] | AudioBook[] | PodcastEpisode[] | Artist[]
     hasFetchedAll: boolean
     offset: number
     totalItems: number
 }
+
+type MediaCollection = Playlist | Album | ArtistTopSongs | LibTracks | LibAlbums | LibEpisodes | LibAudiobooks
 
 interface Media {
     id: string
@@ -214,8 +218,13 @@ interface Media {
     genre: string
     url: string
     type: MusicMediaType
+    fromLib: boolean
 }
 
+interface ArtistTopSongs extends Media {
+    length: number
+    description: string
+}
 interface Playlist extends Media {
     length: number
     description: string
@@ -242,6 +251,30 @@ interface AudioBook extends Media {
     description: string
 }
 
+// Library
+interface LibTracks extends Media {
+    length: number
+    description: string
+}
+interface LibAlbums extends Media {
+    length: number
+    description: string
+}
+interface LibEpisodes extends Media {
+    length: number
+    description: string
+}
+interface LibAudiobooks extends Media {
+    length: number
+    description: string
+}
+
+type MediaClickedContext = {
+    collection: MediaCollection
+    itemClicked: Media
+    idx: number
+}
+
 type MusicCollection = {
     id: string,
     name: string,
@@ -252,6 +285,18 @@ type MusicCollection = {
     description: string,
     type: string,
     url: string | null,
+}
+
+type MusicPlayerManagerState = {
+    progressMs: number
+    durationMs: number
+    trackTitleElAnimationObj: Animation | null
+    trackArtistElAnimationObj: Animation | null
+    isSeeking: boolean
+    isMouseDownOnInput: boolean
+    isPausePlayBtnActive: boolean
+    isPrevBtnActive: boolean
+    isNextBtnActive: boolean
 }
 
 type MusicPlayerState = {
@@ -336,7 +381,8 @@ type MusicUserDetails = {
     username: string,
     url: string,
     isPremiumUser: boolean
-    profileImg: string
+    profileImgSmall: string
+    profileImgBig: string
 }
 
 /* Youtube Stuff */

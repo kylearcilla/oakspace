@@ -5,7 +5,7 @@
 	import Logo from "../../components/Logo.svelte";
 	import Modal from "../../components/Modal.svelte"
 
-    export let _loginUser: (platform: MusicPlatform) => Promise<void>
+    export let _loginUser: (platform: MusicPlatform) => void
 
     const onClickOutSide = () => closeModal(ModalType.Music)
 </script>

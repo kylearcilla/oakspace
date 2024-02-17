@@ -3,7 +3,7 @@
 	import { onMount } from "svelte";
 	import Calendar from "../../components/Calendar.svelte";
 	import { formatTimeToHHMM, getDifferenceInSecs, getTotalSecondsFromStartOfDay, isSameDay } from "$lib/utils-date";
-	import { clickOutside, getElemById, getScrollStatus } from "$lib/utils-general";
+	import { clickOutside, getElemById, getVertScrollStatus } from "$lib/utils-general";
 	import { themeState } from "$lib/store";
 
     let calendar: ProductivityCalendar | null = null
@@ -180,7 +180,7 @@
     function dayViewScrollHandler(event: Event) {
         if (!$themeState.isDarkTheme) return
         const target = event.target as HTMLElement
-        const [hasReachedEnd, hasReachedTop] = getScrollStatus(target!)
+        const [hasReachedEnd, hasReachedTop] = getVertScrollStatus(target!)
 
         if (!hasReachedEnd && !hasReachedTop) {
             maskListGradient = "linear-gradient(180deg, transparent 0%, black 10%, black 80%, transparent 100%)"

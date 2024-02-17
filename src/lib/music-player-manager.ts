@@ -4,16 +4,16 @@ import { musicPlayerManager, musicPlayerStore } from "./store"
 import { findEnumIdxFromDiffEnum, getElemById } from "./utils-general"
 import { INPUT_RANGE_BG_COLOR, getSeekPositionSecs, getSlidingTextAnimation } from "./utils-music-player"
 
-import { LogoIcon, MusicPlatform } from "./enums"
-import type { AppleMusicPlayer } from "./music-apple-player"
+import { LogoIcon, MusicPlatform, PlaybackGesture } from "./enums"
 import type { SpotifyMusicPlayer } from "./music-spotify-player"
+import type { MusicPlayer } from "./music-player"
 /**
  * Manager class for handling state changes from music data class and changes from user gestures.
  * Handles Music Player UI chanegs.
  */
 export class MusicPlayerManager {
     musicPlatform: MusicPlatform
-    playerStore: AppleMusicPlayer | SpotifyMusicPlayer | null
+    playerStore: MusicPlayer | null
     icon: LogoIcon
     iconOptions: LogoContainerOptions
     
@@ -22,6 +22,7 @@ export class MusicPlayerManager {
     isMouseDownOnInput = false
     hasOnChangeFired = false
     didJustMouseUp = false
+    onCooldown = false
     
     progressMs = -1
     durationMs = -1
@@ -41,9 +42,12 @@ export class MusicPlayerManager {
     trackTitleElAnimationObj: Animation | null = null
     trackArtistElAnimationObj: Animation | null = null
 
-    ACTIVE_TO_INACTIVE_BTN_DEAY = 150
+    cooldownTimeOut: NodeJS.Timeout | null = null
+
+    GESTURE_COOL_DOWN_MS = 500
     LOGO_WIDTH = 19
     BORDER_RADIUS = 100
+
     MUSIC_PLAYER_ICON_OPTIONS = {
         AppleMusic: { iconWidth: "45%" },
         Spotify: { iconWidth: "80%", hasBgColor: false },
@@ -75,7 +79,8 @@ export class MusicPlayerManager {
             isMouseDownOnInput: false,
             isPausePlayBtnActive: false,
             isPrevBtnActive: false,
-            isNextBtnActive: false
+            isNextBtnActive: false,
+            onCooldown: false
         })
 
         this.initPlayerElements()
@@ -94,9 +99,38 @@ export class MusicPlayerManager {
             if (newState.isPausePlayBtnActive != undefined)       _state.isPausePlayBtnActive = newState.isPausePlayBtnActive
             if (newState.isPrevBtnActive != undefined)            _state.isPrevBtnActive = newState.isPrevBtnActive
             if (newState.isNextBtnActive != undefined)            _state.isNextBtnActive = newState.isNextBtnActive
+            if (newState.onCooldown != undefined)                 _state.onCooldown = newState.onCooldown
 
             return _state
         })
+    }
+
+    /* Controls */
+    onPlaybackGesture(gesture: PlaybackGesture) {
+        const player = get(musicPlayerStore)!
+
+        if (gesture === PlaybackGesture.PLAY_PAUSE) {
+            player.togglePlayback()
+        }
+        else if (gesture === PlaybackGesture.SKIP_NEXT) {
+            player.skipToNextTrack()
+        }
+        else if (gesture === PlaybackGesture.SKIP_PREV) {
+            player.skipToPrevTrack()
+        }
+        else if (gesture === PlaybackGesture.SHUFFLE) {
+            player.toggleShuffle()
+        }
+        else  if (gesture === PlaybackGesture.LOOP) {
+            player.toggleRepeat()
+        }
+        
+        const isPlayingLive = player.isPlayingLive
+        const doSetCooldown = [PlaybackGesture.SKIP_NEXT, PlaybackGesture.SKIP_PREV].includes(gesture) && !isPlayingLive
+
+        if (doSetCooldown) {
+            this.setCooldown()
+        }
     }
 
     /* State Updates */
@@ -121,7 +155,7 @@ export class MusicPlayerManager {
 
 
     /* Listeners */
-    onMediaItemUpdate(store: AppleMusicPlayer | SpotifyMusicPlayer) {
+    onMediaItemUpdate(store: MusicPlayer) {
         const mediaItem = store.mediaItem
         if (!mediaItem || mediaItem.id === this.mediaItemId) return
 
@@ -136,7 +170,7 @@ export class MusicPlayerManager {
         }
     }
 
-    onPlaybackUpdate(store: AppleMusicPlayer | SpotifyMusicPlayer) {
+    onPlaybackUpdate(store: MusicPlayer) {
         const _progressMs = store!.currentPosition
         const _durationMs = store!.currentDuration
         const doAllowUpdate = store!.doAllowUpdate
@@ -174,6 +208,26 @@ export class MusicPlayerManager {
 
     quit() {
         musicPlayerManager.set(null)
+    }
+
+    /**
+     * Sets a coold down to actions that may overwhelm the API.
+     * If on cool-down user gestures to perform these actions will be temporarily disabled
+     */
+    setCooldown() {
+        this.toggleCooldown(true)
+
+        this.cooldownTimeOut = setTimeout(() => {
+            this.toggleCooldown(false)
+
+            clearTimeout(this.cooldownTimeOut!)
+            this.cooldownTimeOut = null
+
+        }, this.GESTURE_COOL_DOWN_MS)
+    }
+    
+    toggleCooldown(onCooldown: boolean) {
+        this.updateState({ onCooldown: onCooldown })
     }
 
     /* Input RangeFunctionality */
@@ -254,25 +308,25 @@ export class MusicPlayerManager {
             this.isPausePlayBtnActive = true
             this.togglePlayback()
 
-            setTimeout(() => this.isPausePlayBtnActive = false, this.ACTIVE_TO_INACTIVE_BTN_DEAY)
+            setTimeout(() => this.isPausePlayBtnActive = false, this.GESTURE_COOL_DOWN_MS)
         })
         navigator.mediaSession.setActionHandler('pause', () => { 
             this.isPausePlayBtnActive = true
             this.togglePlayback()
             
-            setTimeout(() => this.isPausePlayBtnActive = false, this.ACTIVE_TO_INACTIVE_BTN_DEAY)
+            setTimeout(() => this.isPausePlayBtnActive = false, this.GESTURE_COOL_DOWN_MS)
         })
         navigator.mediaSession.setActionHandler('previoustrack', () => { 
             this.isPrevBtnActive = true
             this.skipToPRev()
 
-            setTimeout(() => this.isPrevBtnActive = false, this.ACTIVE_TO_INACTIVE_BTN_DEAY)
+            setTimeout(() => this.isPrevBtnActive = false, this.GESTURE_COOL_DOWN_MS)
         })
         navigator.mediaSession.setActionHandler('nexttrack', () => { 
             this.isNextBtnActive = true
             this.skipToNext()
 
-            setTimeout(() => this.isNextBtnActive = false, this.ACTIVE_TO_INACTIVE_BTN_DEAY)
+            setTimeout(() => this.isNextBtnActive = false, this.GESTURE_COOL_DOWN_MS)
         })
     }
 

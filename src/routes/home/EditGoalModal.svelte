@@ -8,7 +8,7 @@
 
 	import { editGoalManger, goalsManager, homeViewLayout, themeState } from "$lib/store"
 	import { closeModal } from "$lib/utils-home"
-	import { clickOutside, findAncestorByClass, getScrollStatus } from "$lib/utils-general"
+	import { clickOutside, findAncestorByClass, getVertScrollStatus } from "$lib/utils-general"
 	import { formatDatetoStr } from "$lib/utils-date"
 	import { EditGoalManager } from "$lib/edit-goal-manager"
 	import { ModalType, GoalStatus, EditMilestoneOption, Icon, EditGoalOption, EditGoalContextMenu } from "$lib/enums"
@@ -208,7 +208,7 @@
         }
     }
     function milestoneListScrollHandler(e: Event) {
-        const [hasReachedEnd, hasReachedTop] = getScrollStatus(e.target as HTMLElement)
+        const [hasReachedEnd, hasReachedTop] = getVertScrollStatus(e.target as HTMLElement)
 
         hasSpaceAboveMilestoneList = !hasReachedTop
         hasSpaceBelowMilestoneList = !hasReachedEnd

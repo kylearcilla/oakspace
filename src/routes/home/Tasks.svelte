@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { ContextMenuOption, Icon, ShortcutSectionInFocus, TaskSettingsOptions } from "$lib/enums";
 	import { homeViewLayout, musicPlayerStore, tasksViewStore, themeState } from "$lib/store";
-	import { clickOutside, getScrollStatus } from "$lib/utils-general";
+	import { clickOutside, getVertScrollStatus } from "$lib/utils-general";
 	import { MAX_TAK_GROUP_TITLE_LENGTH, TASK_HEIGHT_MIN_HAS_DESCR, TASK_HEIGHT_MIN_NO_DESCR, MAX_TITLE_LENGTH, TASK_DESCR_LINE_HT, MAX_DESCRIPTION_LENGTH, SUBTASK_HEIGHT } from "$lib/utils-right-bar";
 	import { onMount } from "svelte";
 	import SvgIcon from "../../components/SVGIcon.svelte";
@@ -9,11 +9,11 @@
     let isTaskGroupDrodownOpen = false
     let isTasksSettingsDropdownOpen = false
     let maskListGradient = ""
+    let contentList: HTMLElement
 
-    let hasReachedTop = true
-    let hasReachedBottom = false
+    function updateMaskListGradient(status: VertScrollStatus) {
+        const { hasReachedBottom, hasReachedTop } = status
 
-    function updateMaskListGradient() {
         if (!hasReachedTop && !hasReachedBottom) {
             maskListGradient = "linear-gradient(180deg, transparent 0.2%, black 10%, black 80%, transparent 99%)"
         }
@@ -24,9 +24,9 @@
             maskListGradient = "linear-gradient(180deg, black 80%, transparent 99%)"
         }
     }
-    function contentListScrollHandler(event: Event) {
-        [hasReachedBottom, hasReachedTop] = getScrollStatus(event.target as HTMLElement)
-        updateMaskListGradient()
+    function contentListScrollHandler(contentList: HTMLElement) {
+        const status = getVertScrollStatus(contentList)
+        updateMaskListGradient(status)
     }
 
     /* Shortcuts */
@@ -59,26 +59,28 @@
         isTasksSettingsDropdownOpen = false
     }
 
-    onMount(updateMaskListGradient)
+    onMount(() => {
+        contentListScrollHandler(contentList)
+    })
 </script>
 
 <svelte:window on:keydown={(e) => keyboardShortcutsHandler(e)} />
 
-{#if $tasksViewStore}
+
 <div class={`quick-todos ${$themeState.isDarkTheme ? "quick-todos--dark-theme" : "quick-todos--light-theme"}`}>
     <!-- Header -->
     <div class="quick-todos__header">
-        {#if $tasksViewStore.isMakingNewGroup || $tasksViewStore.isEditingGroup}
+        {#if $tasksViewStore?.isMakingNewGroup || $tasksViewStore?.isEditingGroup}
             <div class="quick-todos__task-group-input-container">
                 <div 
-                    class={`quick-todos__task-group-input input-bottom-underline ${$tasksViewStore.isNewTaskGroupFocused ? "input-bottom-underline--focus" : ""}`}
+                    class={`quick-todos__task-group-input input-bottom-underline ${$tasksViewStore?.isNewTaskGroupFocused ? "input-bottom-underline--focus" : ""}`}
                 >
                     <input 
                         type="text"
                         name="new-task-group-input" 
                         id={`task-group-input`}
                         class="quick-todos__task-group-input__new-task-group-title-input"
-                        value={`${$tasksViewStore.newText}`}
+                        value={`${$tasksViewStore?.newText}`}
                         maxlength={MAX_TAK_GROUP_TITLE_LENGTH}
                         placeholder="New Task Group"
                         on:input={(e) => $tasksViewStore?.inputTextHandler(e)}
@@ -90,14 +92,14 @@
                     </div>
                 </div>
             </div>
-        {:else if $tasksViewStore && $tasksViewStore.taskGroups.length > 0}
+        {:else if $tasksViewStore && $tasksViewStore?.taskGroups.length > 0}
             <button class="quick-todos__task-group-dropdown-btn" on:click={() => isTaskGroupDrodownOpen = !isTaskGroupDrodownOpen}>
-                {#if $tasksViewStore.currTaskGroupIdx >= 0}
+                {#if $tasksViewStore?.currTaskGroupIdx >= 0}
                     <h1 
                         class="quick-todos__task-group-dropdown-btn-title" 
-                        title={$tasksViewStore.taskGroups[$tasksViewStore.currTaskGroupIdx].title}
+                        title={$tasksViewStore?.taskGroups[$tasksViewStore?.currTaskGroupIdx].title}
                     >
-                        {$tasksViewStore.taskGroups[$tasksViewStore.currTaskGroupIdx].title}
+                        {$tasksViewStore?.taskGroups[$tasksViewStore?.currTaskGroupIdx].title}
                     </h1>
                 {:else}
                     <h1 
@@ -122,7 +124,7 @@
         </button>
         <div class="quick-todos__task-group-dropdown-container">
             <ul class={`dropdown-menu ${isTaskGroupDrodownOpen ? "" : "dropdown-menu--hidden"}`} use:clickOutside on:click_outside={() => isTaskGroupDrodownOpen = false}>
-                {#each $tasksViewStore.taskGroups as taskGroup, idx}
+                {#each $tasksViewStore?.taskGroups ?? [] as taskGroup, idx}
                     <li class="dropdown-menu__option">
                         <button class="dropdown-element" on:click={() => _taskGroupDropdownHandler(idx)}>
                             <span class="dropdown-menu__option-text">
@@ -185,23 +187,23 @@
         class={`quick-todos__todo-list-container ${$musicPlayerStore?.doShowPlayer ? "quick-todos__todo-list-container--short" : ""}`}
         style={`-webkit-mask-image: ${maskListGradient}; mask-image: ${maskListGradient};`}
     >
-        {#if $tasksViewStore.tasks}
-            <ul class="quick-todos__todo-list" on:scroll={contentListScrollHandler}>
+        {#if $tasksViewStore?.tasks}
+            <ul class="quick-todos__todo-list" on:scroll={() => contentListScrollHandler(contentList)} bind:this={contentList}>
                 <!-- Add Button  -->
                 <button class="quick-todos__add-btn" on:click={() => _addNewTaskBtnHandler()}>
                     <span>+</span> Add New Todo
                 </button>
                 <!-- Task Element  -->
-                {#each $tasksViewStore.tasks as task, taskIdx}
+                {#each $tasksViewStore?.tasks as task, taskIdx}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <li
                         role="button" tabindex="0" 
                         id={`todo-id--${taskIdx}`}
                         class={`quick-todo 
-                                    ${taskIdx === $tasksViewStore.pickedTaskIdx ? "quick-todo--expanded" : ""} ${task.isFinished ? "quick-todo--checked" : ""}
+                                    ${taskIdx === $tasksViewStore?.pickedTaskIdx ? "quick-todo--expanded" : ""} ${task.isFinished ? "quick-todo--checked" : ""}
                                     ${$themeState.isDarkTheme ? "" : "quick-todo--light"}
                                 `}
-                        style={`height: ${taskIdx === $tasksViewStore.pickedTaskIdx ? `${$tasksViewStore.pickedTaskHT}` : `${task.description ? TASK_HEIGHT_MIN_HAS_DESCR : TASK_HEIGHT_MIN_NO_DESCR}`}px;`}
+                        style={`height: ${taskIdx === $tasksViewStore?.pickedTaskIdx ? `${$tasksViewStore?.pickedTaskHT}` : `${task.description ? TASK_HEIGHT_MIN_HAS_DESCR : TASK_HEIGHT_MIN_NO_DESCR}`}px;`}
                         on:click={(event) => $tasksViewStore?.onTaskedClicked(event, taskIdx)}  
                         on:contextmenu={(e) => $tasksViewStore?.openMilestoneContextMenu(e, taskIdx)}
                     >
@@ -215,7 +217,7 @@
                         <div class="quick-todo__right">
                             <!-- Title -->
                             <div class="quick-todo__title-container">
-                                {#if taskIdx === $tasksViewStore.pickedTaskIdx && $tasksViewStore.isEditingTitle}
+                                {#if taskIdx === $tasksViewStore?.pickedTaskIdx && $tasksViewStore?.isEditingTitle}
                                     <input 
                                         type="text" 
                                         name="title-input" 
@@ -231,7 +233,7 @@
                                 {:else}
                                     <h3 
                                         on:click={() => $tasksViewStore?.onTaskTitleClicked(taskIdx)} 
-                                        class={`quick-todo__title ${task.isFinished ? "strike" : ""} ${task.isFinished && $tasksViewStore.taskCheckBoxJustChecked === taskIdx ? "strike--animated" : ""}`}
+                                        class={`quick-todo__title ${task.isFinished ? "strike" : ""} ${task.isFinished && $tasksViewStore?.taskCheckBoxJustChecked === taskIdx ? "strike--animated" : ""}`}
                                     >
                                         {task.title}
                                     </h3>
@@ -240,18 +242,18 @@
                             <!-- Description -->
                             <div 
                                 id={`todo-description-id--${taskIdx}`}  class="quick-todo__description-container"
-                                style={`line-height: ${TASK_DESCR_LINE_HT}px; ${$tasksViewStore.pickedTaskDescriptionHT ? `height: ${$tasksViewStore.pickedTaskDescriptionHT}px` : ""}`}
+                                style={`line-height: ${TASK_DESCR_LINE_HT}px; ${$tasksViewStore?.pickedTaskDescriptionHT ? `height: ${$tasksViewStore?.pickedTaskDescriptionHT}px` : ""}`}
                             >
-                                {#if taskIdx === $tasksViewStore.pickedTaskIdx && $tasksViewStore.isEditingDescription}
+                                {#if taskIdx === $tasksViewStore?.pickedTaskIdx && $tasksViewStore?.isEditingDescription}
                                     <textarea
                                         rows="1"
                                         id={`todo-description-input-id--${taskIdx}`}
                                         class="quick-todo__description-text-area"
-                                        style={`height: ${$tasksViewStore.pickedTaskDescriptionHT}px`}
+                                        style={`height: ${$tasksViewStore?.pickedTaskDescriptionHT}px`}
                                         maxlength={MAX_DESCRIPTION_LENGTH}
                                         placeholder={task.description ? "" : "No description"}
                                         value={task.description}
-                                        spellcheck={$tasksViewStore.textAreaHasSpellCheck}
+                                        spellcheck={$tasksViewStore?.textAreaHasSpellCheck}
                                         on:focus={(e) => $tasksViewStore?.onInputFocusHandler(e)}
                                         on:keydown={(e) => e.key === "Enter" ? e.preventDefault() : null}
                                         on:input={(e) => $tasksViewStore?.inputTextHandler(e)}
@@ -264,13 +266,13 @@
                                 {/if}
                             </div>
                             <!-- Subtasks -->
-                            {#if taskIdx === $tasksViewStore.pickedTaskIdx}
+                            {#if taskIdx === $tasksViewStore?.pickedTaskIdx}
                                 <ul id={`todo-subtasks-id--${taskIdx}`} class="quick-todo__subtasks-list">
                                     {#each task.subtasks as subtask, subtaskIdx}
                                         <li 
                                             class={`quick-todo__subtask 
                                                         ${subtask.isFinished ? "quick-todo__subtask--checked" : ""}
-                                                        ${subtaskIdx === $tasksViewStore.focusedSubtaskIdx ? "quick-todo__subtask--focused" : ""}
+                                                        ${subtaskIdx === $tasksViewStore?.focusedSubtaskIdx ? "quick-todo__subtask--focused" : ""}
                                                         ${$themeState.isDarkTheme ? "" : "quick-todo__subtask--light"}
                                                 `} 
                                             style={`height: ${SUBTASK_HEIGHT}px; animation: fade-in 0.3s cubic-bezier(.5,.84,.42,.9) ${(task.subtasks.length <= 5 ? 100 : 30) * subtaskIdx}ms forwards;`}
@@ -281,9 +283,9 @@
                                                 <div 
                                                     class={`quick-todo__subtask-hook-line ${subtaskIdx === 0 ? "quick-todo__subtask-hook-line--first" : ""}`}
                                                 >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height={`${$tasksViewStore.hookContainerHT ?? 30}`} viewBox={`0 0 10 ${$tasksViewStore.hookContainerHT ?? 30}`} fill="none">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height={`${$tasksViewStore?.hookContainerHT ?? 30}`} viewBox={`0 0 10 ${$tasksViewStore?.hookContainerHT ?? 30}`} fill="none">
                                                         <path 
-                                                            d={`M18.5684 ${$tasksViewStore.hooklineOffset}H9.66992C4.69936 ${$tasksViewStore.hooklineOffset} 0.669922 ${$tasksViewStore.hooklineOffset - 4.0294} 0.669922 ${$tasksViewStore.hooklineOffset - 9}V0.0244141`} stroke-dasharray="1.6 1.6"
+                                                            d={`M18.5684 ${$tasksViewStore?.hooklineOffset}H9.66992C4.69936 ${$tasksViewStore?.hooklineOffset} 0.669922 ${$tasksViewStore?.hooklineOffset - 4.0294} 0.669922 ${$tasksViewStore?.hooklineOffset - 9}V0.0244141`} stroke-dasharray="1.6 1.6"
                                                         />
                                                     </svg>
                                                 </div>
@@ -298,7 +300,7 @@
                                                 <button class="quick-todo__subtask-checkbox quick-todo__checkbox" on:click={() => $tasksViewStore?.handleSubtaskCheckboxClicked(subtaskIdx)}>
                                                     <i class="fa-solid fa-check checkbox-check"></i>
                                                 </button>
-                                                {#if $tasksViewStore.editingSubtaskIdx === subtaskIdx}
+                                                {#if $tasksViewStore?.editingSubtaskIdx === subtaskIdx}
                                                     <input 
                                                         type="text" 
                                                         id={`todo-subtask-title-id--${subtaskIdx}`} 
@@ -313,7 +315,7 @@
                                                 {:else}
                                                     <span 
                                                         class={`quick-todo__subtask-title ${subtask.isFinished ? "strike" : ""} 
-                                                                ${subtask.isFinished && $tasksViewStore.subtaskCheckBoxJustChecked === subtaskIdx ? "strike--animated" : ""}
+                                                                ${subtask.isFinished && $tasksViewStore?.subtaskCheckBoxJustChecked === subtaskIdx ? "strike--animated" : ""}
                                                         `}
                                                         on:click={() => $tasksViewStore?.onSubtaskTitleClicked(subtaskIdx)}
                                                     >
@@ -341,9 +343,9 @@
     <ul 
         use:clickOutside on:click_outside={() => $tasksViewStore?.closeContextMenu()} 
         class={`quick-todos__context-menu dropdown-menu ${$tasksViewStore?.isContextMenuOpen ? "" : "dropdown-menu--hidden"}`}
-        style={`left: ${$tasksViewStore.contextMenuX}px; top: ${$tasksViewStore.contextMenuY}px`}
+        style={`left: ${$tasksViewStore?.contextMenuX}px; top: ${$tasksViewStore?.contextMenuY}px`}
     >
-        {#if $tasksViewStore.rightClickedTask}
+        {#if $tasksViewStore?.rightClickedTask}
             <li class="dropdown-menu__option">
                 <button 
                         class="dropdown-element" 
@@ -397,7 +399,6 @@
         {/if}
     </ul>
 </div>
-{/if}
 
 
 <style lang="scss">

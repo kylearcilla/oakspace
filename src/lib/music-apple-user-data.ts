@@ -2,8 +2,7 @@ import { musicDataStore } from "./store"
 import { MusicUserData, type MusicUserDataStore } from "./music-user-data"
 
 import { getDifferenceInSecs } from "./utils-date"
-import { LIBRARY_COLLECTION_LIMIT } from "./api-spotify"
-import { removeAppleMusicTokens, saveMusicUserData, loadMusicUserData, deleteMusicUserData } from "./utils-music"
+import { removeAppleMusicTokens, saveMusicUserData, loadMusicUserData, deleteMusicUserData, LIBRARY_COLLECTION_LIMIT} from "./utils-music"
 import { getAppleMusicUserAlbums, getAppleMusicUserLikedTracks, getAppleMusicUserPlaylists } from "./api-apple-music"
 
 import { APIError, AppServerError } from "./errors"
@@ -75,12 +74,9 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
             else {
                 await this.initCreds()
                 await this.initUserData()
+                
                 this.isSignedIn = true
-
-                this.updateState({ 
-                    isSignedIn: true,
-                    currentUserMedia: this.currentUserMedia,
-                })
+                this.updateState({ isSignedIn: true, currentUserMedia: this.currentUserMedia })
             }
         }
         catch(e: any) {
@@ -139,6 +135,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
             }
         }
         catch(error: any) {
+            console.error(error)
             throw error
         }
     }
@@ -149,7 +146,6 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
      * Must be called every time Apple Music Kit is used.
      * 
      * @param accessToken            Access / Dev token returned from server
-     * @param hasUserSignedIn        Used to check if user has already signed in.
      * @returns                      Returns token returned from completed authorization flow. Returns null if user is not a subscriber.
      */
     async initAppleMusic (accessToken: string): Promise<string> {
@@ -214,6 +210,8 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
         try {
             const tokenData = await this.fetchAPIToken()
 
+            console.log("new token!", tokenData)
+
             this.accessToken = tokenData.accessToken
             this.tokenExpiresInMs = tokenData.expInMs
 
@@ -237,7 +235,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
      * @param error  Error 
      */
     onError(error: any) {
-        super.onError(error, MusicPlatform.Spotify)
+        super.onError(error, MusicPlatform.AppleMusic)
     }
 
     /**
@@ -265,7 +263,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
      * 
      * @param accessToken           Token needed to access user content.
      * @param doRefresh             Request for the first page to get fresh resource data.
-     * @returns                     Spotify user's saved playlists
+     * @returns                     AppleMusic user's saved playlists
      */
     async getUserPlaylists(doRefresh = false) {
         let userPlaylists = !doRefresh ? this.userPlaylists : { 
@@ -275,9 +273,8 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
             totalItems: 0
         }
 
-        let creds = { accessToken: this.accessToken, userToken: this.userToken }
         let offset = Math.max(userPlaylists.offset, 0)
-        let res = await getAppleMusicUserPlaylists(LIBRARY_COLLECTION_LIMIT, offset, creds)
+        let res = await getAppleMusicUserPlaylists(LIBRARY_COLLECTION_LIMIT, offset)
         
         userPlaylists = {
             offset: userPlaylists.offset + res.items.length,
@@ -285,8 +282,6 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
             hasFetchedAll:  res.items.length < LIBRARY_COLLECTION_LIMIT,
             totalItems: res.total
         } 
-
-        console.log(userPlaylists)
 
         this.updateState({ userPlaylists })
     }
@@ -297,7 +292,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
      * 
      * @param accessToken           Token needed to access user content.
      * @param doRefresh             Request for the first page to get fresh resource data.
-     * @returns                     Spotify user's saved albums
+     * @returns                     AppleMusic user's saved albums
      */
     async getUserAlbums(doRefresh = false) {
         let userAlbums = !doRefresh ? this.userAlbums : { 
@@ -307,9 +302,8 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
             totalItems: 0
         }
 
-        let creds = { accessToken: this.accessToken, userToken: this.userToken }
         let offset = Math.max(userAlbums.offset, 0)
-        let res = await getAppleMusicUserAlbums(LIBRARY_COLLECTION_LIMIT, offset, creds)
+        let res = await getAppleMusicUserAlbums(LIBRARY_COLLECTION_LIMIT, offset)
 
         userAlbums = {
             offset: userAlbums.offset + res.items.length,
@@ -317,8 +311,6 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
             hasFetchedAll:  res.items.length < LIBRARY_COLLECTION_LIMIT,
             totalItems: res.total
         } 
-
-        console.log(userAlbums)
 
         this.updateState({ userAlbums })
     }    
@@ -329,7 +321,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
      * 
      * @param accessToken           Token needed to access user content
      * @param doRefresh             Request for the first page to get fresh resource data.
-     * @returns                     Spotify user's liked tracks
+     * @returns                     AppleMusic user's liked tracks
      */
     async getUserLikedTracks(doRefresh = false) {
         let userLikedTracks = !doRefresh ? this.userLikedTracks : { 
@@ -338,9 +330,8 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
             offset: 0,
             totalItems: 0
         }
-        let creds = { accessToken: this.accessToken, userToken: this.userToken }
         let offset = Math.max(userLikedTracks.offset, 0)
-        let res = await getAppleMusicUserLikedTracks(LIBRARY_COLLECTION_LIMIT, offset, creds)
+        let res = await getAppleMusicUserLikedTracks(LIBRARY_COLLECTION_LIMIT, offset)
 
         userLikedTracks = {
             offset: userLikedTracks.offset + res.items.length,
@@ -348,8 +339,6 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
             hasFetchedAll:  res.items.length < LIBRARY_COLLECTION_LIMIT,
             totalItems: res.total
         } 
-
-        console.log(userLikedTracks)
 
         this.updateState({ userLikedTracks })
     }
@@ -365,11 +354,9 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
 
             // if first time request for resource
             if (media === UserLibraryMedia.Albums && isSwitchingTheFirstTime) {
-                console.log("A")
                 await this.getUserAlbums()
             }
             else if (media === UserLibraryMedia.LikedTracks && isSwitchingTheFirstTime) {
-                console.log("C")
                 await this.getUserLikedTracks()
             }
 

@@ -5,7 +5,7 @@ import { MediaEmbedFixed, MediaEmbedType, ModalType, ShortcutSectionInFocus } fr
 import { loadTheme } from "./utils-appearance"
 import { didInitYtPlayer } from "./utils-youtube-player"
 import { conintueWorkSession, didInitSession } from "./utils-session"
-import { continueMusicSession, didInitMusicUser, hasUserSignedIn, loadMusicUserData } from "./utils-music"
+import { didInitMusicUser, loadMusicUserData, musicLogin } from "./utils-music"
 import { continueYtPlayerSession, continueYtUserSession, didInitYtUser } from "./utils-youtube"
 import { didSpotifyUserAuthApp, getSpotifyCodeFromURLAndLogin } from "./api-spotify"
 import { getElemById } from "./utils-general"
@@ -30,9 +30,9 @@ export const initAppState = async () => {
     if (didInitYtPlayer()) {
         continueYtPlayerSession()
     }
-    if (hasUserSignedIn()) {
+    if (didInitMusicUser()) {
         const musicPlatform = loadMusicUserData()!.musicPlatform!
-        await continueMusicSession(musicPlatform)
+        await musicLogin(musicPlatform)
     }
     if (didSpotifyUserAuthApp()) {
         getSpotifyCodeFromURLAndLogin()

@@ -1,8 +1,7 @@
-import { mediaEmbedStore, musicDataStore, musicPlayerManager, musicPlayerStore, } from "./store"
+import { musicDataStore, musicPlayerStore, } from "./store"
 import { get } from "svelte/store"
 
 import { initFloatingEmbed } from "./utils-home"
-import type { AppleMusicPlayer } from "./music-apple-player"
 import { MusicPlayer, type MusicPlayerStore } from "./music-player"
 import { MusicPlaylistShuffler } from "./music-playlist-shuffler"
 import { SPOTIFY_IFRAME_ID, isMediaTypeACollection, loadMusicPlayerData, loadMusicShuffleData, removeMusicPlayerData, removeMusicShuffleData, saveMusicPlayerData } from "./utils-music"
@@ -10,13 +9,15 @@ import { SPOTIFY_IFRAME_ID, isMediaTypeACollection, loadMusicPlayerData, loadMus
 import { APIError } from "./errors"
 import { APIErrorCode, MediaEmbedType, MusicMediaType, MusicPlatform } from "./enums"
 import { getAlbumItem, getSpotifyMediaUri, getLibAudiobooksItem, getLibPodcastEpisdesItem, getLibTracksItem, getPlaylistItem } from "./api-spotify"
-import { MusicPlayerManager } from "./music-player-manager"
 
 /**
  * User data class that wraps over the Spotify iFrame API.
  * The player itself is a store object / reactive class, initialized during instantiation.
- * iFrame player only plays individual tracks as playing there is a cap for playlists and albums.
+ * iFrame player only plays individual tracks as there is a cap for playlists and albums.
  * The app hides the embed iFrame and uses its own.
+ * 
+ * @extends     MusicPlayer
+ * @implements  MusicPlayerStore<SpotifyMusicPlayer>
  * 
  */
 export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<SpotifyMusicPlayer> {
@@ -48,13 +49,9 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
     doIgnoreAutoPlay = false
     doAllowUpdate = true
     
-    undisableTimeout: NodeJS.Timeout | null = null
-    
-    UNDISABLE_DELAY_MS = 500
     PLAYER_OPTIONS = {
-        uri: '',
-        width: '100%',
-        height: '100%'
+        width: '100%', height: '100%',
+        uri: ''
     }
  
     constructor() {
@@ -71,7 +68,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
      * @param idx               Position of media item clicked by the user. 
      *                          If a collection, this will be 0. If an item, this represetns the idx location of the track.
     */
-   async initIframePlayerAPI(context: MediaClickedContext | null) {
+   async init(context?: MediaClickedContext) {
        try {
             initFloatingEmbed(MediaEmbedType.Spotify)
             this.loadSpotifyiFrameAPI()
@@ -89,7 +86,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
             if (!this.doShowPlayer) this.toggleShow(true)
         }
         catch(error: any) {
-            if (this.isDisabled) this.undisablePLayer()
+            if (this.isDisabled) this.undisablePlayer()
             if (context)  this.quit()  // if init for the first time
             
             throw new APIError(APIErrorCode.PLAYER, "There was an error initializing Spotify player. Try again later.")
@@ -154,7 +151,6 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
 
         const hasOldPosAfterSeek = Math.abs(data.position - this.hasSeekedTo) > 500
         const hasOldDataAfterSkip = this.hasItemUpdated && (data.position != 0 || data.duration === this.currentDuration)
-
 
         // do not register updates if player still shows old data after skip to next / prev
         if (hasOldDataAfterSkip) {
@@ -233,6 +229,8 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
      * Called after a media change request was processed successfully and the new item has been successfully loaded by the iFrame Player.
      */
     mediaItemHasChanged() {
+        if (!this.hasItemUpdated) return
+
         this.hasItemUpdated = false
         this.updateState({ hasItemUpdated: false })
     }
@@ -261,7 +259,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
         try {
             if (this.shouldRestartTrackAfterSkipPrev()) {
                 this.controller.playFromStart()
-                this.undisablePLayer()
+                this.undisablePlayer()
             }
             else {
                 await this.loadNextMediaItem(false)
@@ -399,7 +397,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
         const uri = getSpotifyMediaUri(this.mediaItem!)
         this.controller!.loadUri(uri)
 
-        if (this.isDisabled) this.undisablePLayer()
+        if (this.isDisabled) this.undisablePlayer()
 
         if (doPlay) {
             this.controller!.play()
@@ -417,17 +415,14 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
      */
     async updateMediaCollection(context: MediaClickedContext) {
         try {
-            this.mediaItemWillChange()
+            if (!this.doShowPlayer) {
+                this.toggleShow(true)
+            }
 
             const isMediaCollection = isMediaTypeACollection(context.itemClicked.type) 
             const _idx = isMediaCollection ? 0 : context.idx
 
             const mediaItem = await this.getItemFromIdx(context.collection!, _idx)
-
-            // // the media item to be played from a collection will always be updated
-            // if (!isMediaCollection && mediaItem?.id != context.itemClicked.id) {
-            //     throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Library outdated. Please refresh.")
-            // }
 
             this.mediaCollection = context.collection!
             this.currentIdx = _idx
@@ -499,9 +494,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
         if (this.controller) {
             this.controller.destroy()
         }
-        this.deleteMusicPlayerData()
-        musicPlayerStore.set(null)
-        musicPlayerManager.set(null)
+        super.quit()
     }
 
     toggleShow(doShow: boolean) {
@@ -509,28 +502,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
             this.togglePlayback()
         }
 
-        this.doShowPlayer = doShow
-        this.updateState({ doShowPlayer: doShow })
-    }
-
-    disablePlayer() {
-        this.isDisabled = true
-        this.updateState({ isDisabled: true })
-    }
-    
-    /**
-     * Disabled player
-     * @param hasDelay  Temporarily disable the player
-     */
-    undisablePLayer(hasDelay = false) {
-        this.undisableTimeout = setTimeout(() => {
-            this.isDisabled = false
-            this.updateState({ isDisabled: false })
-
-            clearTimeout(this.undisableTimeout!)
-            this.undisableTimeout = null
-
-        }, hasDelay ? this.UNDISABLE_DELAY_MS : 0)
+        super.toggleShow(doShow)
     }
 
     /**
@@ -556,7 +528,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
      * @param newState  New version of current state
      */
     updateState(newState: Partial<SpotifyMusicPlayer>, doSave: boolean = true) {
-        musicPlayerStore.update((data: AppleMusicPlayer | SpotifyMusicPlayer | null) => { 
+        musicPlayerStore.update((data: MusicPlayer | null) => { 
             return this.getNewStateObj(newState, data! as SpotifyMusicPlayer)
         })
 
@@ -581,7 +553,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
 
         if (this.isShuffled) {
             const shuffleData = loadMusicShuffleData()
-            this.musicPlaylistShuffler = new MusicPlaylistShuffler(shuffleData.trackIndex, shuffleData.songCount, shuffleData)
+            this.musicPlaylistShuffler = new MusicPlaylistShuffler(shuffleData!.trackIndex, shuffleData!.songCount, shuffleData)
         }
 
         this.updateState({...savedData }, false)

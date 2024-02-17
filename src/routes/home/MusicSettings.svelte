@@ -1,187 +1,51 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { themeState, musicDataStore, musicPlayerStore } from "$lib/store"
+    import { themeState, musicDataStore, musicPlayerStore, musicSettingsManager } from "$lib/store"
 
     import { closeModal } from "$lib/utils-home"
     import { musicCategories } from "$lib/data-music-collections"
-    import { LIBRARY_COLLECTION_LIMIT } from "$lib/api-spotify"
-    import { addSpacesToCamelCaseStr, clickOutside, getScrollStatus } from "$lib/utils-general"
-	import { 
-        discoverPlsPaginationScrollHandler, getDiscoverCollectionList, 
-        getPlatformNameForDiscoverObj, handlePlaylistItemClicked, 
-        musicLogout, musicLogin, refreshMusicSession, getMediaLength, getMediaDescription, getLibraryMediaItemInfo, getLibraryMediaTitle, getLibMediaCollection, musicAPIErrorHandler 
-    } from "$lib/utils-music"
+    import { addSpacesToCamelCaseStr, clickOutside, getElemById } from "$lib/utils-general"
+	import {  musicLogin, LIBRARY_COLLECTION_LIMIT } from "$lib/utils-music"
+
+	import { getMediaContext, getMediaItemInfo, getMediaLength, getMediaDescription, getMediaTypeStr } from "$lib/utils-music-settings"
     
 	import Modal from "../../components/Modal.svelte"
 	import SVGIcon from "../../components/SVGIcon.svelte"
 	import MusicSettingsSignedOut from "./MusicSettingsSignedOut.svelte"
 	import MusicSettingsAccountHeader from "./MusicSettingsAccountHeader.svelte"
     
-    import { ModalType, MusicPlatform, MusicMoodCategory, UserLibraryMedia, Icon, MusicMediaType, APIErrorCode } from "$lib/enums"
+    import { ModalType, MusicPlatform, MusicMoodCategory, UserLibraryMedia, Icon, MusicMediaType, LibError } from "$lib/enums"
 
-    enum LibError {
-        REFRESH, NEW_COLLECTION, MORE_ITEMS
-    }
+    $: manager  = $musicSettingsManager
+    $: platform = $musicSettingsManager?.platform
+
+    $: chosenMood            = $musicSettingsManager?.chosenMood
+    $: chosenMusicCollection = $musicSettingsManager?.chosenMusicCollection!
+
+    $: userLibrary           = $musicSettingsManager?.userLibrary
+    $: currLibraryCollection = $musicSettingsManager?.currLibraryCollection!
+    $: isUserLibraryLoading  = $musicSettingsManager?.isUserLibraryLoading
+    $: libError              = $musicSettingsManager?.libError
     
-    // discover
-    let chosenMood = MusicMoodCategory.Serene
-    let chosenMusicCollection: (Playlist | Album | RadioStation)[] = []
+    $: isScrollableLeft      = $musicSettingsManager?.isScrollableLeft
+    $: isScrollableRight     = $musicSettingsManager?.isScrollableRight
+    
+    $: libListGradient        = $musicSettingsManager?.libListGradient
+    $: categoriesListGradient = $musicSettingsManager?.categoriesListGradient
 
-    let isScrollableLeft = false
-    let isScrollableRight = true
-    let collectionList: HTMLElement | null
+    $: mediaCollection = $musicPlayerStore?.mediaCollection 
+
     let hasCollectionItemsLoaded = true
-    
-    // user library
-    let userLibrary: UserLibraryCollection | null = null
-    let isUserLibraryLoading = false
-    let libraryList: HTMLElement | null
     let isLibraryDropdownOpen = false
     let isLibraryOptionsDropdownOpen = false
-    let currLibraryCollection = UserLibraryMedia.Playlists
-    
-    let debounceTimeout: NodeJS.Timeout | null = null
-    let libOptions: UserLibraryMedia[] = [
-        UserLibraryMedia.Playlists, UserLibraryMedia.Albums, UserLibraryMedia.LikedTracks
-    ]
 
-    const SCROLL_STEP = 400
-    const PLAYLIST_BTN_COOLDOWN_MS = 1000
-    const FETCH_PLAYLIST_DELAY = 1000
-    
-    let gradientWrapperStyle = ""
-    let libError: LibError | null = null
-
-    $: musicStore      = $musicDataStore
-    $: musicPlatform   = $musicDataStore?.musicPlatform
-    $: mediaCollection = $musicPlayerStore?.mediaCollection 
-    $: hasTokenExpired = $musicDataStore?.hasTokenExpired ?? false
-    $: isSignedIn      = $musicDataStore?.isSignedIn ?? false
-
-    $: {
-        onUserSignIn(isSignedIn)
-        if (isSignedIn) updateLibrary()
+    function onLibOptionClicked(lib: UserLibraryMedia) {
+        closeLibDropdowns()
+        manager!.updateLibraryMedia(lib)
     }
-    $: {
-        if (musicPlatform === MusicPlatform.Spotify) {
-            libOptions.push(UserLibraryMedia.Audiobooks)
-            libOptions.push(UserLibraryMedia.PodcastEps)
-        }
-        else if (musicPlatform === MusicPlatform.YoutubeMusic) {
-            libOptions = [UserLibraryMedia.Playlists]
-        }
-    }
-
-    /* Log In Functionality  */
-    function onUserSignIn(isSignedIn: boolean) {
-        if (!isSignedIn) return
-        handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
-    }
-    function onPlatformOptionClicked(platform: MusicPlatform) {
-        if (platform != musicPlatform) {
-            musicLogout()
-            musicLogin(platform)
-        }
-        else if (hasTokenExpired) {
-            refreshMusicSession()
-        }
-        else {
-            musicLogout()
-        }
-    }
-
-    /* Discover Section */
-    async function _handleLibraryMediaClicked(mediaClicked: Media, idx: number) {
-        if (debounceTimeout !== null) return
-
-        try {
-            console.log("New Item Clicked!")
-            let mediaCollection = await getLibMediaCollection(mediaClicked, idx)
-            console.log("Media collection from clicked!", mediaCollection)
-            await handlePlaylistItemClicked(mediaCollection, mediaClicked, idx)
-    
-            debounceTimeout = setTimeout(() => debounceTimeout = null, PLAYLIST_BTN_COOLDOWN_MS)
-        }
-        catch(e: any) {
-            musicAPIErrorHandler(e)
-        }
-    }
-    function _discoverPlsPaginationScrollHandler(e: Event) { 
-        discoverPlsPaginationScrollHandler(e)
-    }
-
-    /* Library Section */
-    function updateLibrary() {
-        const data = $musicDataStore
-        if (!data) return
-
-        currLibraryCollection  = data.currentUserMedia
-        userLibrary            = data.getCurrentLibraryDetails()
-    }
-    async function updateLibraryMedia(media: UserLibraryMedia) {
-        if (media === currLibraryCollection) return
-
+    function closeLibDropdowns() {
         isLibraryDropdownOpen = false
-        userLibrary = null
-        
-        const _media = $musicDataStore!.getLibraryDetails(media)
-        const isFetchingForFirstTime = !_media.hasFetchedAll && _media.items.length === 0
-
-        if (!_media.hasFetchedAll) {
-            isUserLibraryLoading = true
-        }
-        try {
-            await musicStore!.updateLibraryMedia(media, isFetchingForFirstTime)
-            updateLibrary()
-            libError = null
-            setTimeout(() => isUserLibraryLoading = false, 1000)
-        }
-        catch {
-            libError = LibError.NEW_COLLECTION
-        }
-        finally {
-            isUserLibraryLoading = false
-        }
-    }
-    function getMoreLibItems() {
-        const doGetMoreLibItems = !isUserLibraryLoading && !userLibrary?.hasFetchedAll && !hasTokenExpired && !libError
-        if (!doGetMoreLibItems) return
-        
-        isUserLibraryLoading = true
-        setTimeout(async () => { 
-            try {
-                await musicStore!.getMoreLibraryItems()
-                libError = null
-                updateLibrary()
-                isUserLibraryLoading = false
-
-                if (hasReachedEndOfList()) getMoreLibItems()
-            }
-            catch(error: any) {
-                isUserLibraryLoading = false
-                libError = LibError.MORE_ITEMS
-            }
-        }, FETCH_PLAYLIST_DELAY)
-    }
-
-    async function refreshCurrentLibraryMedia() {
-        let _userLibrary = userLibrary
-        try {
-            isLibraryDropdownOpen = false
-            isUserLibraryLoading = true
-            userLibrary = null
-            
-            await musicStore!.refreshCurrentLibraryMedia()
-            updateLibrary()
-            libError = null
-        }
-        catch {
-            userLibrary = _userLibrary
-            libError = LibError.REFRESH
-        }
-        finally {
-            isUserLibraryLoading = false
-        }
+        isLibraryOptionsDropdownOpen = false
     }
     function onMousLeavePlaylistOption(event: MouseEvent) {
         const toTarget = (event as any).toElement as HTMLElement
@@ -191,76 +55,31 @@
             isLibraryOptionsDropdownOpen = false
         }
     }
-    function hasReachedEndOfList() { 
-        const [hasReachedEnd] = getScrollStatus(libraryList!)
-        return hasReachedEnd
-    }
-    async function userPlaylistInfiniteScrollHandler(event: Event) { 
-        if (!hasReachedEndOfList()) return
-        getMoreLibItems()
-    }
-    
-    /* Discover Section */
-    function handleGradientWrapperStyle() {
-        let gradientStyle = ""
-        if (isScrollableLeft && isScrollableRight) {
-            gradientStyle = "linear-gradient(90deg, rgba(0, 0, 0, 0.00) 0%, #000 9.84%, #000 85%, rgba(0, 0, 0, 0.00) 100%)"
-        }
-        else if (isScrollableLeft) {
-            gradientStyle = "linear-gradient(90deg, rgba(0, 0, 0, 0.00) 0%, #000 10.55%)"
-        }
-        else if (isScrollableRight) {
-            gradientStyle = "linear-gradient(90deg, #000 85%, rgba(0, 0, 0, 0.00) 100%)"
-        }
-
-        gradientWrapperStyle = "mask-image: " + gradientStyle + "; "
-        gradientWrapperStyle += "-webkit-mask-image: " + gradientStyle + "; "
-
-    }
-    function handleShiftTabCategoryRight() {
-         collectionList!.scrollLeft += SCROLL_STEP
-    }
-    function handleShiftTabCategoryLeft() { 
-        collectionList!.scrollLeft -= SCROLL_STEP
-    }
-    function handleScroll() {
-        if (!collectionList) return
-
-        const scrollLeft = collectionList!.scrollLeft
-        const scrollWidth = collectionList!.scrollWidth
-        const clientWidth = collectionList!.clientWidth 
-
-        isScrollableLeft = scrollLeft > 0
-        isScrollableRight = scrollLeft < scrollWidth - clientWidth
-        handleGradientWrapperStyle()
-    }
-
-    function handleDiscoverCollectionCardClicked(moodType: MusicMoodCategory) {
-        const platform = $musicDataStore!.musicPlatform
-        const platformProp = getPlatformNameForDiscoverObj(platform!)
-
-        chosenMood = moodType
-        chosenMusicCollection = getDiscoverCollectionList(moodType, platformProp) as (Playlist | Album | RadioStation)[]
-    }
 
     onMount(() => {
-        if (!isSignedIn) return
+        if (!manager) return
 
-        handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
-        handleScroll()
+        manager.updateLibrary()
+        manager.handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
 
-
+        console.log(getElemById("collection-list"))
+        
+        requestAnimationFrame(() => {
+            manager!.fetchHTMLElements()
+            manager!.handleCategoriesScroll()
+            manager!.handleLibListScroll()
+        })
     })
 </script>
 
-{#if isSignedIn}
+{#if manager}
     <Modal onClickOutSide={() => closeModal(ModalType.Music)}> 
         <div class={`music ${!$themeState.isDarkTheme ? "music--light" : "music--dark"}`}>
             <!-- Top Header -->
             <div class="music__header">
                 <h1 class="modal-bg__content-title">Music</h1>
                 <div class="music__context-container">
-                    <MusicSettingsAccountHeader onBtnClick={onPlatformOptionClicked} />
+                    <MusicSettingsAccountHeader onBtnClick={(platform) => manager?.onPlatformOptionClicked(platform)} />
                 </div>
             </div>
             <!-- Music Settings Content -->
@@ -275,11 +94,9 @@
                         <div class={`blur-bg blur-bg--blurred-bg ${mediaCollection ?? "blur-bg--solid-color"}`}></div>
                         <div class="content-bg">
                             {#if mediaCollection}
-                                {@const isCollection = "length" in mediaCollection}
-                                {@const isPlaylist = mediaCollection.id.startsWith("pl.")}
-                                {@const type = isPlaylist ? "Playlist" : isCollection ? "Album" : "Radio Station"}
                                 {@const length = getMediaLength(mediaCollection)}
                                 {@const description = getMediaDescription(mediaCollection)}
+                                {@const type = getMediaTypeStr(mediaCollection.type)}
 
                                 <div class="now-playing__details-container">
                                     <div class="now-playing__details-header">
@@ -290,10 +107,12 @@
                                             <span class="now-playing__collection-type">
                                                 {type}
                                             </span>
-                                            <span>/</span>
-                                            <span class="now-playing__collection-song-count">
-                                                {length} Items
-                                            </span>
+                                            {#if length >= 0}
+                                                <span>/</span>
+                                                <span class="now-playing__collection-song-count">
+                                                    {length} {`${length === 1 ? "Item" : "Items"}`}
+                                                </span>
+                                            {/if}
                                         </div>
                                     </div>
                                     <div class={`now-playing__artwork ${mediaCollection.artworkImgSrc ? "" : "now-playing__artwork--empty"}`}>
@@ -344,24 +163,27 @@
                             {/if}
                         </div>
                         <!-- Library Items -->   
-                        <ul class="my-playlists__collection-list" on:scroll={userPlaylistInfiniteScrollHandler} bind:this={libraryList}>
+                        <ul 
+                            class="my-playlists__collection-list" id="library-list" 
+                            on:scroll={() => manager?.handleLibListScroll()} style={`${libListGradient}`}
+                        >
                             {#if userLibrary?.items || (userLibrary?.items && libError != LibError.NEW_COLLECTION)}
-                                {@const isTrack = currLibraryCollection === UserLibraryMedia.LikedTracks}
-                                {@const isAlbum = currLibraryCollection === UserLibraryMedia.Albums}
-                                {@const isPodcastEp = currLibraryCollection === UserLibraryMedia.PodcastEps}
-                                {@const isAudiobook = currLibraryCollection === UserLibraryMedia.Audiobooks}
-                                {@const isPlaylist = currLibraryCollection === UserLibraryMedia.Playlists}
-                                {@const isArtist = currLibraryCollection === UserLibraryMedia.Artists}
-                                {@const isAppleMusic = musicPlatform === MusicPlatform.AppleMusic}
+                                {@const isTrack      = currLibraryCollection === UserLibraryMedia.LikedTracks}
+                                {@const isAlbum      = currLibraryCollection === UserLibraryMedia.Albums}
+                                {@const isPodcastEp  = currLibraryCollection === UserLibraryMedia.PodcastEps}
+                                {@const isAudiobook  = currLibraryCollection === UserLibraryMedia.Audiobooks}
+                                {@const isPlaylist   = currLibraryCollection === UserLibraryMedia.Playlists}
+                                {@const isArtist     = currLibraryCollection === UserLibraryMedia.Artists}
+                                {@const isAppleMusic = platform === MusicPlatform.AppleMusic}
 
                                 <!-- Media Item -->
                                 {#each userLibrary?.items as item, idx}
-                                    {@const itemInfo = getLibraryMediaItemInfo(item, currLibraryCollection)}
-                                    {@const itemTitleContext = getLibraryMediaTitle(item, currLibraryCollection)}
+                                    {@const itemInfo = getMediaItemInfo(item, currLibraryCollection)}
+                                    {@const itemContext = getMediaContext(item, currLibraryCollection)}
 
                                     <li
-                                        on:dblclick={() => _handleLibraryMediaClicked(item, idx)}
-                                        title={itemTitleContext}
+                                        on:dblclick={() => manager?.handleLibraryMediaClicked(item, idx)}
+                                        title={itemContext}
                                         class={`my-playlists__playlist ${mediaCollection && item.id === mediaCollection.id ? "my-playlists__playlist--chosen" : ""}`}
                                     >
                                         <div class="my-playlists__playlist-img">
@@ -464,7 +286,10 @@
                                 <li class="dropdown-menu__option">
                                     <button 
                                         class="dropdown-element"
-                                        on:click={() => refreshCurrentLibraryMedia()}
+                                        on:click={() => { 
+                                            manager?.refreshCurrentLibraryMedia() 
+                                            isLibraryDropdownOpen = false
+                                        }}
                                     >
                                         <span class="dropdown-menu__option-text">
                                             {`Refresh ${currLibraryCollection}`}
@@ -477,20 +302,17 @@
                             </ul>
                             <div 
                                 class={`my-playlists__library-options-dropdown-container dropdown-menu__menu-container ${isLibraryDropdownOpen ? "" : "hidden"}`}
-                                on:mouseleave={() => isLibraryOptionsDropdownOpen = false}
+                                on:mouseleave={() => isLibraryDropdownOpen = false}
                             >
                                     <ul 
-                                        use:clickOutside on:click_outside={() => {
-                                            isLibraryDropdownOpen = false
-                                            isLibraryOptionsDropdownOpen = false
-                                        }} 
+                                        use:clickOutside on:click_outside={() => closeLibDropdowns()} 
                                         class={`my-playlists__library-dropdown dropdown-menu ${isLibraryOptionsDropdownOpen ? "" : "dropdown-menu--hidden"}`}
                                     >
-                                        {#each libOptions as lib, idx}
+                                        {#each manager.libOptions as lib, idx}
                                             <li class={`dropdown-menu__option ${currLibraryCollection === lib ? "dropdown-menu__option--selected" : ""}`}>
                                                 <button 
                                                     class="dropdown-element"
-                                                    on:click={() => updateLibraryMedia(lib)}
+                                                    on:click={() => onLibOptionClicked(lib)}
                                                 >
                                                     <span class="dropdown-menu__option-text">
                                                         {lib}
@@ -509,9 +331,9 @@
                 <div class="music__right-section">
                     <!-- Discover Section -->
                     <div class="discover bento-box bento-box--no-padding">
-                        {#if musicPlatform != null}
+                        {#if platform != null}
                             <h3 class="bento-box__title">
-                                {`Discover from ${addSpacesToCamelCaseStr(MusicPlatform[musicPlatform])}`}
+                                {`Discover from ${addSpacesToCamelCaseStr(MusicPlatform[platform])}`}
                             </h3>
                         {/if}
                         <p class="discover__copy bento-box__copy">
@@ -520,21 +342,19 @@
                         <div class="discover__collection-list-container">
                             {#if isScrollableLeft}
                                 <button 
-                                    on:click={handleShiftTabCategoryLeft}
+                                    on:click={() => manager?.handleShiftTabCategoryLeft()}
                                     class="discover__collection-list-container-btn discover__collection-list-container-btn--left"
                                 >
                                     <i class="fa-solid fa-chevron-left"></i>
                                 </button>
                             {/if}
-                            <div class="discover__collection-list-container-gradient-wrapper" style={`${gradientWrapperStyle}`}>
+                            <div class="discover__collection-list-container-gradient-wrapper" style={`${categoriesListGradient}`}>
                                 <!-- Discover Categories Carousel -->
-                                <ul  class="discover__collection-list" bind:this={collectionList} on:scroll={handleScroll}>
+                                <ul  class="discover__collection-list" id="collection-list" on:scroll={() => manager?.handleCategoriesScroll()}>
                                     {#each musicCategories as group, idx}
                                         <!-- svelte-ignore a11y-click-events-have-key-events -->
-                                        <li class={`discover__collection-card 
-                                                    ${chosenMood === group.moodType ? "discover__collection-card--chosen" : ""}
-                                                `}
-                                            on:click={() => handleDiscoverCollectionCardClicked(group.moodType)}
+                                        <li class={`discover__collection-card ${manager.chosenMood === group.moodType ? "discover__collection-card--chosen" : ""}`}
+                                            on:click={() => manager?.handleDiscoverCollectionCardClicked(group.moodType)}
                                         >
                                             <img class="discover__collection-card-img" src={group.artworkSrc}  alt="">
                                             <div class="discover__collection-card-hover-details">
@@ -557,7 +377,7 @@
                             </div>
                             {#if isScrollableRight}
                                 <button class="discover__collection-list-container-btn discover__collection-list-container-btn--right"
-                                        on:click={handleShiftTabCategoryRight}
+                                        on:click={() => manager?.handleShiftTabCategoryRight()}
                                 >
                                     <i class="fa-solid fa-chevron-right"></i>
                                 </button>
@@ -579,7 +399,7 @@
                                     <div>Length</div>
                                 </div>
                             </div>
-                            <ul class="discover__selected-collection-list" on:scroll={_discoverPlsPaginationScrollHandler}>
+                            <ul class="discover__selected-collection-list">
                                 <!-- Collection Item -->
                                 {#each chosenMusicCollection as collection, idx}
                                     {@const type = MusicMediaType[collection.type]}
@@ -587,7 +407,7 @@
 
                                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                                     <li
-                                        on:dblclick={_ => _handleLibraryMediaClicked(collection, idx)}
+                                        on:dblclick={() => manager?.handleLibraryMediaClicked(collection, idx)}
                                         title={`${collection.name} – ${collection.author}`}
                                         class={`discover__collection-item ${mediaCollection && collection.id === mediaCollection?.id ? "discover__collection-item--chosen" : ""}`}
                                     >
@@ -620,7 +440,7 @@
                                             {collection.genre}
                                         </div>
                                         <div class="discover__collection-item-length">
-                                            {length}
+                                            {length >= 0 ? length : "-"}
                                         </div>
                                         <div class="divider divider--thin"></div>
                                     </li>

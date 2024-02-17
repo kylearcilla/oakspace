@@ -99,6 +99,26 @@ type Quote = {
     quoteCredit: string
 }
 
+type HozScrollStatus = {
+    hasReachedEnd: boolean,
+    hasReachedStart: boolean,
+    status: { 
+        scrollLeft: number
+        scrollWidth: number
+        windowWidth: number 
+    }
+}
+
+type VertScrollStatus = {
+    hasReachedBottom: boolean,
+    hasReachedTop: boolean,
+    status: { 
+        scrollTop: number
+        scrollHeight: number
+        windowHeight: number 
+    }
+}
+
 /* Tasks */
 type TaskGroup = {
     title: string,
@@ -207,6 +227,12 @@ type UserLibraryCollection = {
     totalItems: number
 }
 
+type MusicMediaSelectContext = {
+    collection: MediaMediaCollection
+    itemClicked: Media
+    idx: number
+}
+
 type MediaCollection = Playlist | Album | ArtistTopSongs | LibTracks | LibAlbums | LibEpisodes | LibAudiobooks
 
 interface Media {
@@ -297,6 +323,7 @@ type MusicPlayerManagerState = {
     isPausePlayBtnActive: boolean
     isPrevBtnActive: boolean
     isNextBtnActive: boolean
+    onCooldown: boolean
 }
 
 type MusicPlayerState = {

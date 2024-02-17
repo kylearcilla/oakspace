@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { GoalViewOption, GoalsDropdown, type GoalStatus, GoalItemUI } from "./enums"
 import { goalsManager } from "./store"
-import { getElemById, getScrollStatus, moveElementInArr } from "./utils-general"
+import { getElemById, getVertScrollStatus, moveElementInArr } from "./utils-general"
 import { accomplishments2023, accomplishments2021, accomplishments2022 } from "./utils-goals"
 import { YR_CONTAINER_ID, YR_DIGIT_ANIMATION, YR_DIGIT_CLASS, goals } from "./utils-journal"
 import { goalSections } from "./utils-journal"
@@ -471,7 +471,7 @@ export class GoalsManager {
      */
     goalsHistoryTimeScrollHandler(event: Event) {
         const target = event.target as HTMLElement
-        const [hasReachedEnd, _, { scrollTop }] = getScrollStatus(target!, { bottomOffSet: 5 })
+        const [hasReachedEnd, _, { scrollTop }] = getVertScrollStatus(target!, { bottomOffSet: 5 })
 
         const preYr = this.currYr - Math.max(this.yrIdx, 0) - 1
         const doFetchMore = preYr >= this.userStartYr 

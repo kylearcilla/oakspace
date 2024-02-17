@@ -2,7 +2,7 @@
 	import { Icon } from "$lib/enums"
 	import { themeState } from "$lib/store"
 	import { formatDateLong, formatDatetoStr } from "$lib/utils-date"
-	import { getElemById, getScrollStatus } from "$lib/utils-general";
+	import { getElemById, getVertScrollStatus } from "$lib/utils-general";
 	import { onMount } from "svelte";
 	import SvgIcon from "../../components/SVGIcon.svelte"
 
@@ -170,7 +170,7 @@
     function onListScroll(target: EventTarget | HTMLElement | null, list: ListType) {
         if (!$themeState.isDarkTheme) return
 
-        const [hasReachedBottom, hasReachedTop] = getScrollStatus(target! as HTMLElement)
+        const { hasReachedBottom, hasReachedTop } = getVertScrollStatus(target! as HTMLElement)
         const hasSpaceAbove = !hasReachedTop
         const hasSpaceBelow = !hasReachedBottom
 

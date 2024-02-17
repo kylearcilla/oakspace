@@ -57,18 +57,32 @@ export const findAncestorByClass = (child: HTMLElement, className: string): HTML
  * @param options   Options for how early client wants to hit the top / bottom
  * @returns         Scroll status as array
  */
-export function getScrollStatus(target: HTMLElement, options?: { 
-  topOffSet?: number, bottomOffSet?: number
-}): [boolean, boolean, { scrollTop: number, scrollHeight: number, windowHeight: number }] {
-  
+export function getVertScrollStatus(target: HTMLElement, options?: { topOffSet?: number, bottomOffSet?: number }): VertScrollStatus {
   const scrollTop = target.scrollTop
   const windowHeight = target. clientHeight
   const scrollHeight = target.scrollHeight
 
-  const hasReachedEnd = scrollTop + (options?.bottomOffSet ?? 1) >= scrollHeight - windowHeight
+  const hasReachedBottom = scrollTop + (options?.bottomOffSet ?? 1) >= scrollHeight - windowHeight
   const hasReachedTop = scrollTop <= (options?.topOffSet ?? 0) 
 
-  return [hasReachedEnd, hasReachedTop, { scrollTop, scrollHeight, windowHeight }]
+  return { hasReachedBottom, hasReachedTop, status: { scrollTop, scrollHeight, windowHeight } }
+}
+
+/**
+ * Helper for seeing if there's space to scroll left or right
+ * @param target    Scroll Element
+ * @param options   Options for how early client wants to hit the top / bottom
+ * @returns         Scroll status as array
+ */
+export function getHozScrollStatus(target: HTMLElement, options?: { leftOffSet?: number, rightOffSet?: number }): HozScrollStatus {
+  const scrollLeft = target.scrollLeft
+  const windowWidth = target.clientWidth
+  const scrollWidth = target.scrollWidth
+
+  const hasReachedEnd = scrollLeft + (options?.rightOffSet ?? 1) >= scrollWidth - windowWidth
+  const hasReachedStart = scrollLeft <= (options?.leftOffSet ?? 0) 
+
+  return { hasReachedEnd, hasReachedStart, status: { scrollLeft, scrollWidth, windowWidth } }
 }
 
 /**

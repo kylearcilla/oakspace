@@ -1,7 +1,7 @@
 <script lang="ts">
     import { GoalItemUI, Icon } from "$lib/enums"
 	import { goalsManager, editGoalManger, themeState } from "$lib/store"
-	import { findAncestorByClass, getScrollStatus } from "$lib/utils-general"
+	import { findAncestorByClass, getVertScrollStatus } from "$lib/utils-general"
 
 	import GoalItem from "../../components/GoalItem.svelte"
 	import SVGIcon from "../../components/SVGIcon.svelte"
@@ -46,7 +46,7 @@
     ]
     
     function boardScrollHandler(e: Event) {
-        const [hasReachedEnd] = getScrollStatus(e.target as HTMLElement)
+        const [hasReachedEnd] = getVertScrollStatus(e.target as HTMLElement)
         hasReachedBoardEnd = hasReachedEnd
 
         if (!hasReachedBoardEnd) {

@@ -15,6 +15,7 @@ import type { SpotifyMusicUserData } from './music-spotify-user-data'
 import type { SpotifyMusicPlayer } from './music-spotify-player'
 import type { AppleMusicPlayer } from './music-apple-player'
 import type { MusicPlayerManager } from './music-player-manager'
+import type { MusicSettingsManager } from './music-settings-manager'
 
 /* App UI State */
 export const homeViewLayout = writable<HomeLayout>({
@@ -51,10 +52,11 @@ export const ytUserDataStore = writable<YoutubeUserData| null>(null)
 export const ytPlayerStore = writable<YoutubePlayer| null>(null)
 
 /* Music Stuff: Music Player State */
-export const musicPlayerStore = writable<AppleMusicPlayer | SpotifyMusicPlayer | null>(null)
-export const musicPlayerManager = writable<MusicPlayerManagerState | null>(null)
-
+export const musicPlayerStore = writable<MusicPlayer | null>(null)
 export const musicDataStore = writable<AppleMusicUserData | SpotifyMusicUserData | null>(null)
+
+export const musicPlayerManager = writable<MusicPlayerManagerState | null>(null)
+export const musicSettingsManager = writable<MusicSettingsManager | null>(null)
 
 /* Session Stuff */
 export const sessionStore = writable<Session | null>(null)

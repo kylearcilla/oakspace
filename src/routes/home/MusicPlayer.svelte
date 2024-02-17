@@ -8,7 +8,8 @@
     import type { AppleMusicPlayer } from '$lib/music-apple-player'
     import type { SpotifyMusicPlayer } from '$lib/music-spotify-player'
 
-    import { MusicMediaType, MusicPlatform } from "$lib/enums"
+    import { MusicMediaType, MusicPlatform, PlaybackGesture } from "$lib/enums"
+	import type { MusicPlayer } from '$lib/music-player';
 
     let manager: MusicPlayerManager | null = null
 
@@ -20,7 +21,8 @@
     $: mediaCollection = $musicPlayerStore?.mediaCollection! as MediaCollection
     $: hasItemChanged  = $musicPlayerStore?.hasItemUpdated ?? false
     $: isDisabled      = $musicPlayerStore?.isDisabled ?? false
-
+    $: isOnCooldown    = $musicPlayerManager?.onCooldown ?? false
+    
     $: musicPlatform   = $musicDataStore?.musicPlatform
 
     let progressMs = 0
@@ -39,11 +41,11 @@
         onMediaItemUpdate($musicPlayerStore)
     }
 
-    function onPlaybackUpdate (store: AppleMusicPlayer | SpotifyMusicPlayer | null) {
+    function onPlaybackUpdate (store: MusicPlayer | null) {
         if (!manager || !store) return
         manager!.onPlaybackUpdate(store)
     }
-    function onMediaItemUpdate (store: AppleMusicPlayer | SpotifyMusicPlayer | null) {
+    function onMediaItemUpdate (store: MusicPlayer | null) {
         if (!manager || !store) return
         manager!.onMediaItemUpdate(store)
     }
@@ -89,37 +91,37 @@
         </div>
         <div class="music-player-controls">
             <button 
-                on:click={() => playerStore?.toggleShuffle()} 
+                on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SHUFFLE)} 
                 class={`music-player-controls__shuffle-btn ${playerStore?.isShuffled ? "music-player-controls__shuffle-btn--isShuffled" : ""}`} 
-                disabled={isDisabled}
+                disabled={isDisabled || isOnCooldown}
             >
                     <i class="fa-solid fa-shuffle"></i>
             </button>
             <button 
-                on:click={() => playerStore?.skipToPrevTrack()} 
+                on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SKIP_PREV)} 
                 class={`music-player-controls__prev-btn ${$musicPlayerManager?.isPrevBtnActive ? "music-player-controls__prev-btn--active" : ""}`} 
-                disabled={isDisabled}
+                disabled={isDisabled || isOnCooldown}
             >
                     <i class="fa-solid fa-backward"></i>
             </button>
             <button 
-                on:click={() => playerStore?.togglePlayback()} 
+                on:click={() => manager?.onPlaybackGesture(PlaybackGesture.PLAY_PAUSE)} 
                 class={`music-player-controls__playback-btn ${$musicPlayerManager?.isPausePlayBtnActive ? "music-player-controls__playback-btn--active" : ""}`}
-                disabled={isDisabled}
+                disabled={isDisabled || isOnCooldown}
                 >
                     <i class={`${playerStore?.isPlaying ? "fa-solid fa-pause" : "fa-solid fa-play"}`}></i>
             </button>
             <button 
-                on:click={() => playerStore?.skipToNextTrack()} 
+                on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SKIP_NEXT)} 
                 class={`music-player-controls__next-btn ${$musicPlayerManager?.isNextBtnActive ? "music-player-controls__next-btn--active" : ""}`} 
-                disabled={isDisabled}
+                disabled={isDisabled || isOnCooldown}
                 >
                     <i class="fa-solid fa-forward"></i>
             </button>
             <button 
-                on:click={() => playerStore?.toggleRepeat()} 
+                on:click={() => manager?.onPlaybackGesture(PlaybackGesture.LOOP)} 
                 class={`music-player-controls__repeat-btn ${playerStore?.isRepeating ? "music-player-controls__repeat-btn--isRepeating" : ""}`} 
-                disabled={isDisabled}
+                disabled={isDisabled || isOnCooldown}
                 >
                     <i class="fa-solid fa-repeat"></i>
             </button>

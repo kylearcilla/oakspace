@@ -107,15 +107,18 @@ export enum YTMediaLinkType {
 }
 
 /* Music */
+export enum PlaybackGesture {
+    SHUFFLE, PLAY_PAUSE, SKIP_NEXT, SKIP_PREV, SEEK, LOOP
+}
 export enum MusicMoodCategory { 
     Serene = "Serene", Lofi = "Lo-Fi", Upbeat = "Upbeat", Soundtracks = "Soundtracks", 
     Acoustic = "Acoustic", Classical = "Classical", Zen = "Zen", Summer = "Summer"
 }
+export enum LibError {
+    REFRESH, NEW_COLLECTION, MORE_ITEMS
+}
 export enum MusicPlatform { 
     AppleMusic, Spotify, YoutubeMusic, Soundcloud 
-}
-export enum MusicAPIErrorContext {
-    USER_AUTHORIZATION, USER_RELOGIN, USER_PLAYLISTS, APP_SERVER, TRACK, ALBUM, PLAYLIST, PLAYER
 }
 export enum MusicShufflerState {
     CAN_CONTINUE_CHUNK, HAS_ENDED_AND_MORE_CHUNKS, HAS_ENDED_NO_CHUNKS,

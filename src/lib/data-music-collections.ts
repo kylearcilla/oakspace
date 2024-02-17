@@ -71,7 +71,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 59,
             id: "pl.cb4d1c09a2df4230a78d0395fe1f8fde",
             url: "https://music.apple.com/ca/playlist/piano-chill/pl.cb4d1c09a2df4230a78d0395fe1f8fde",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Lo-Fi Chill",
@@ -83,7 +84,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 250,
             id: "pl.1d5ead185d8a4a9089f3b952770b762c",
             url: "https://music.apple.com/us/playlist/lo-fi-chill/pl.1d5ead185d8a4a9089f3b952770b762c",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Chill Covers Acoustic",
@@ -95,7 +97,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 100,
             id: "pl.171ed575105547da92990578cb1639be",
             url: "https://music.apple.com/us/playlist/chill-covers/pl.171ed575105547da92990578cb1639be",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Pure Ambient",
@@ -107,7 +110,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 348,
             id: "pl.a9bd89e7b22e45cbaac40b58c9d3d09b",
             url: "https://music.apple.com/us/playlist/pure-ambient/pl.a9bd89e7b22e45cbaac40b58c9d3d09b",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Blossom",
@@ -119,7 +123,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 100,
             id: "pl.aa28cc9ba96a4e719da7e2ddc5ffccb3",
             url: "https://music.apple.com/us/playlist/pure-ambient/pl.aa28cc9ba96a4e719da7e2ddc5ffccb3",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Soft Pop Station",
@@ -130,7 +135,8 @@ export const sereneCollections: DiscoverCollection = {
             description: "",
             id: "ra.991200508",
             url: "https://music.apple.com/us/station/soft-pop-station/ra.991200508",
-            type: MusicMediaType.RadioStation
+            type: MusicMediaType.RadioStation,
+            fromLib: false
         } as RadioStation,
         {
             name: "Laidback",
@@ -142,7 +148,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 100,
             id: "pl.a4563494a6234007a8d2549ede5d6741",
             url: "https://music.apple.com/us/playlist/laidback/pl.a4563494a6234007a8d2549ede5d6741",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Minecraft - Volume Alpha",
@@ -154,7 +161,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 24,
             id: "424968465",
             url: "https://music.apple.com/us/album/minecraft-volume-alpha/424968465",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Study Beats",
@@ -166,7 +174,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 99,
             id: "pl.a4e197979fc74b2a91b3cdf869f12aa5",
             url: "https://music.apple.com/ca/playlist/study-beats/pl.a4e197979fc74b2a91b3cdf869f12aa5",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Norah Jones Essentials",
@@ -178,7 +187,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 25,
             id: "pl.f465577a2c9446478a9d5ab4f7c873ee",
             url: "https://music.apple.com/ca/playlist/norah-jones-essentials/pl.f465577a2c9446478a9d5ab4f7c873ee",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Classic Chill Station",
@@ -189,7 +199,8 @@ export const sereneCollections: DiscoverCollection = {
             description: "",
             id: "ra.1579113999https://music.apple.com/us/curator/apple-music-chill/1558256251",
             url: "https://music.apple.com/us/station/classic-chill-station/ra.1579113999",
-            type: MusicMediaType.RadioStation
+            type: MusicMediaType.RadioStation,
+            fromLib: false
         } as RadioStation,
         {
             name: "In Rainbows",
@@ -201,7 +212,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 10,
             id: "1109714933",
             url: "https://music.apple.com/ca/album/in-rainbows/1109714933",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Lianne La Havas Essentials",
@@ -213,7 +225,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 17,
             id: "pl.34756d8dde2c46249a224a25db8ce96b",
             url: "https://music.apple.com/ca/playlist/lianne-la-havas-essentials/pl.34756d8dde2c46249a224a25db8ce96b",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Today's Chill",
@@ -225,7 +238,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 250,
             id: "pl.2bb29727dbc34a63936787297305c37c",
             url: "https://music.apple.com/us/playlist/lo-fi-chill/pl.2bb29727dbc34a63936787297305c37c",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Atmospheres",
@@ -237,7 +251,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 100,
             id: "pl.0809734db4b54d5eb7192a92a8cbf1c2",
             url: "https://music.apple.com/us/playlist/atmospheres/pl.0809734db4b54d5eb7192a92a8cbf1c2",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Jazz Chill",
@@ -249,7 +264,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 250,
             id: "pl.63271312c084419891982eab46cc68ac",
             url: "https://music.apple.com/ca/playlist/jazz-chill/pl.63271312c084419891982eab46cc68ac",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Acoustic Chill",
@@ -261,7 +277,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 100,
             id: "pl.b5e8dbe8a706496496e1292466839207",
             url: "https://music.apple.com/ca/playlist/acoustic-chill/pl.b5e8dbe8a706496496e1292466839207",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Living in the Library",
@@ -273,7 +290,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 100,
             id: "pl.0b448cf227014bde8f986ecad02c93de",
             url: "https://music.apple.com/us/playlist/living-in-the-library/pl.0b448cf227014bde8f986ecad02c93de",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Frank Ocean Essentials",
@@ -285,7 +303,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 24,
             id: "pl.975962a888c64b42898257a2b5c65a39",
             url: "https://music.apple.com/ca/playlist/frank-ocean-essentials/pl.975962a888c64b42898257a2b5c65a39",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Thundercat Essentials",
@@ -297,7 +316,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 23,
             id: "pl.1b312df84dd84e77831b0085a2eef690",
             url: "https://music.apple.com/ca/artist/thundercat/367322286",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Natalia LaFourcade Essentials",
@@ -309,7 +329,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 34,
             id: "pl.0131d9e63b204caabe9802d81e891331",
             url: "https://music.apple.com/us/playlist/natalia-lafourcade-essentials/pl.0131d9e63b204caabe9802d81e891331",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Homework",
@@ -321,7 +342,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 100,
             id: "pl.0385ce9b66404ccf8bde4cac041f1524",
             url: "https://music.apple.com/us/playlist/homework/pl.0385ce9b66404ccf8bde4cac041f1524",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
     ],
     spotify: [
@@ -335,7 +357,8 @@ export const sereneCollections: DiscoverCollection = {
             length: 140,
             id: "37i9dQZF1DX889U0CL85jj",
             url: "https://open.spotify.com/playlist/37i9dQZF1DX889U0CL85jj",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
     ]
 }
@@ -352,7 +375,8 @@ export const lofiCollections = {
             length: 100,
             id: "pl.46bf6d7a51aa48b6a27b37267d293f7f",
             url: "https://music.apple.com/us/playlist/relaxing-classical/pl.46bf6d7a51aa48b6a27b37267d293f7f",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Solitude",
@@ -364,7 +388,8 @@ export const lofiCollections = {
             length: 27,
             id: "1676000364",
             url: "https://music.apple.com/us/album/solitude/1676000364",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Evergreen",
@@ -376,7 +401,8 @@ export const lofiCollections = {
             length: 250,
             id: "pl.7d5e4029dd9140ffbb5da5fda64b3f02",
             url: "https://music.apple.com/ca/playlist/evergreen/pl.7d5e4029dd9140ffbb5da5fda64b3f02",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Lo-Fi Japan",
@@ -388,7 +414,8 @@ export const lofiCollections = {
             length: 150,
             id: "pl.38eb70f47b834187a21cf4e8e5833f35",
             url: "https://music.apple.com/ca/playlist/lo-fi-japan/pl.38eb70f47b834187a21cf4e8e5833f35",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Lo-Fi Station",
@@ -399,7 +426,8 @@ export const lofiCollections = {
             description: "",
             id: "ra.1569482000",
             url: "https://music.apple.com/us/station/lo-fi-station/ra.1569482000",
-            type: MusicMediaType.RadioStation
+            type: MusicMediaType.RadioStation,
+            fromLib: false
         } as RadioStation,
         {
             name: "Study lofi 📚",
@@ -411,7 +439,8 @@ export const lofiCollections = {
             length: 100,
             id: "pl.bf7a3cbca49644d8a33f09c1285aef5c",
             url: "https://music.apple.com/us/playlist/study-lofi/pl.bf7a3cbca49644d8a33f09c1285aef5c",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Lo-Fi Jazz",
@@ -423,7 +452,8 @@ export const lofiCollections = {
             length: 100,
             id: "pl.1c1744bbc1174cf2880c53b302d428a0",
             url: "https://music.apple.com/us/playlist/study-lofi/pl.1c1744bbc1174cf2880c53b302d428a0",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Chill House",
@@ -435,7 +465,8 @@ export const lofiCollections = {
             length: 100,
             id: "pl.bd55c25265aa4de8b3fc3e0960751846",
             url: "https://music.apple.com/us/playlist/chill-house/pl.bd55c25265aa4de8b3fc3e0960751846",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "BEATstrumentals",
@@ -447,7 +478,8 @@ export const lofiCollections = {
             length: 100,
             id: "pl.f54198ad42404535be13eabf3835fb22",
             url: "https://music.apple.com/us/playlist/study-lofi/pl.f54198ad42404535be13eabf3835fb22",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Lo-Fi Chill",
@@ -459,7 +491,8 @@ export const lofiCollections = {
             length: 250,
             id: "pl.1d5ead185d8a4a9089f3b952770b762c",
             url: "https://music.apple.com/us/playlist/lo-fi-chill/pl.1d5ead185d8a4a9089f3b952770b762c",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Lo-fi Sunday",
@@ -471,7 +504,8 @@ export const lofiCollections = {
             length: 100,
             id: "pl.7525e7e5e04f44269ce48ae05d39d209",
             url: "https://music.apple.com/us/playlist/lo-fi-sunday/pl.7525e7e5e04f44269ce48ae05d39d209",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         
     ],
@@ -486,7 +520,8 @@ export const lofiCollections = {
             length: 59,
             id: "pl.cb4d1c09a2df4230a78d0395fe1f8fde",
             url: "https://music.apple.com/ca/playlist/piano-chill/pl.cb4d1c09a2df4230a78d0395fe1f8fde",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
     ]
 }
@@ -503,7 +538,8 @@ export const upbeatCollections = {
             length: 317,
             id: "pl.d6f5a44a25664f508078216de584ba0d",
             url: "https://music.apple.com/us/playlist/vibes/pl.d6f5a44a25664f508078216de584ba0d",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Pop Chill",
@@ -515,7 +551,8 @@ export const upbeatCollections = {
             length: 55,
             id: "pl.9a964a33c1484aec8fdb0cac3e7771ed",
             url: "https://music.apple.com/us/playlist/pop-chill/pl.9a964a33c1484aec8fdb0cac3e7771ed",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Hitting the Books",
@@ -527,7 +564,8 @@ export const upbeatCollections = {
             length: 55,
             id: "pl.5aedf81bd67d478fa0a17fd58a95a2bc",
             url: "https://music.apple.com/us/playlist/hitting-the-books/pl.5aedf81bd67d478fa0a17fd58a95a2bc",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Apple Music 1",
@@ -538,7 +576,8 @@ export const upbeatCollections = {
             description: "",
             id: "ra.978194965",
             url: "https://music.apple.com/us/station/apple-music-1/ra.978194965",
-            type: MusicMediaType.RadioStation
+            type: MusicMediaType.RadioStation,
+            fromLib: false
         } as RadioStation,
         {
             name: "Melodic House & Techno",
@@ -550,7 +589,8 @@ export const upbeatCollections = {
             length: 125,
             id: "pl.9642e1be452d43fca846dead91e6e8aa",
             url: "https://music.apple.com/us/playlist/melodic-house-techno/pl.9642e1be452d43fca846dead91e6e8aa",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Apple Music Hits",
@@ -561,7 +601,8 @@ export const upbeatCollections = {
             description: "",
             id: "ra.1498155548",
             url: "https://music.apple.com/us/station/apple-music-hits/ra.1498155548",
-            type: MusicMediaType.RadioStation
+            type: MusicMediaType.RadioStation,
+            fromLib: false
         } as RadioStation,
         {
             name: "K-Pop Station",
@@ -572,7 +613,8 @@ export const upbeatCollections = {
             description: "",
             id: "ra.992731732",
             url: "https://music.apple.com/us/station/k-pop-station/ra.992731732",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Kendrick Lamar Essentials",
@@ -584,7 +626,8 @@ export const upbeatCollections = {
             length: 30,
             id: "pl.8155ebe08de7423ca2b29929c8adeebd",
             url: "https://music.apple.com/us/playlist/kendrick-lamar-essentials/pl.8155ebe08de7423ca2b29929c8adeebd",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Pop Throwback",
@@ -596,7 +639,8 @@ export const upbeatCollections = {
             length: 106,
             id: "pl.c21556629e97453f9672feb9d8f228a3",
             url: "https://music.apple.com/us/playlist/pop-throwback/pl.c21556629e97453f9672feb9d8f228a3",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Fleetwood Mac Essentials",
@@ -608,7 +652,8 @@ export const upbeatCollections = {
             length: 25,
             id: "pl.647db163f3f84ccd9a839e5b6e4f34a2",
             url: "https://music.apple.com/us/playlist/fleetwood-mac-essentials/pl.647db163f3f84ccd9a839e5b6e4f34a2",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Today's Hits",
@@ -620,7 +665,8 @@ export const upbeatCollections = {
             length: 50,
             id: "pl.f4d106fed2bd41149aaacabb233eb5eb",
             url: "https://music.apple.com/us/playlist/todays-hits/pl.f4d106fed2bd41149aaacabb233eb5eb",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Tyler, The Creator Essentials",
@@ -632,7 +678,8 @@ export const upbeatCollections = {
             length: 100,
             id: "pl.02757c79605a4577b79c40fb556728db",
             url: "https://is2-ssl.mzstatic.com/image/thumb/Music125/v4/be/51/83/be5183cc-87dd-3ca3-c082-3ccf228e8bf0/pr_source.png/400x400SC.FPESS03.webp?l=en-US",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Rap Life",
@@ -644,7 +691,8 @@ export const upbeatCollections = {
             length: 101,
             id: "pl.abe8ba42278f4ef490e3a9fc5ec8e8c5",
             url: "https://music.apple.com/us/playlist/rap-life/pl.abe8ba42278f4ef490e3a9fc5ec8e8c5",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "2000s Hits Station",
@@ -655,7 +703,8 @@ export const upbeatCollections = {
             description: "",
             id: "ra.1055198656",
             url: "https://music.apple.com/us/station/2000s-hits-station/ra.1055198656",
-            type: MusicMediaType.RadioStation
+            type: MusicMediaType.RadioStation,
+            fromLib: false
         } as RadioStation,
         {
             name: "2010s Hits Station",
@@ -666,7 +715,8 @@ export const upbeatCollections = {
             description: "",
             id: "ra.1266190007",
             url: "https://music.apple.com/us/station/2010s-hits-station/ra.1266190007",
-            type: MusicMediaType.RadioStation
+            type: MusicMediaType.RadioStation,
+            fromLib: false
         } as RadioStation,
         {
             name: "K-Pop Essentials",
@@ -678,7 +728,8 @@ export const upbeatCollections = {
             length: 100,
             id: "pl.6a3c854a49a542739e5d57291b27e122",
             url: "https://music.apple.com/us/playlist/k-pop-essentials/pl.6a3c854a49a542739e5d57291b27e122",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Afrobeats African",
@@ -690,7 +741,8 @@ export const upbeatCollections = {
             length: 111,
             id: "pl.dc349df19c6f410d874c197db63ecfed",
             url: "https://music.apple.com/us/playlist/afrobeats-hits/pl.dc349df19c6f410d874c197db63ecfed",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Daft Punk Essentials",
@@ -702,7 +754,8 @@ export const upbeatCollections = {
             length: 21,
             id: "pl.74657640b88c4587a426160f7441de46",
             url: "https://music.apple.com/us/playlist/daft-punk-essentials/pl.74657640b88c4587a426160f7441de46",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Electronic Station",
@@ -713,7 +766,8 @@ export const upbeatCollections = {
             description: "",
             id: "ra.985488606",
             url: "https://music.apple.com/us/station/electronic-station/ra.985488606",
-            type: MusicMediaType.RadioStation
+            type: MusicMediaType.RadioStation,
+            fromLib: false
         } as RadioStation,
         {
             name: "Renaissance",
@@ -725,7 +779,8 @@ export const upbeatCollections = {
             length: 16,
             id: "1636789969",
             url: "https://music.apple.com/us/album/renaissance/1636789969",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Lemonade",
@@ -737,7 +792,8 @@ export const upbeatCollections = {
             length: 13,
             id: "1460430561",
             url: "https://music.apple.com/us/album/lemonade/1460430561",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Rihanna Essentials",
@@ -749,7 +805,8 @@ export const upbeatCollections = {
             length: 45,
             id: "pl.d549e09c35de455c8aaed84684898d01",
             url: "https://music.apple.com/us/playlist/rihanna-essentials/pl.d549e09c35de455c8aaed84684898d01",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Currents",
@@ -761,7 +818,8 @@ export const upbeatCollections = {
             length: 13,
             id: "1440838039",
             url: "https://music.apple.com/us/album/currents/1440838039",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Ariana Grande Essentials",
@@ -773,7 +831,8 @@ export const upbeatCollections = {
             length: 32,
             id: "pl.942cc20e34a44f06bd36488e6c3e475e",
             url: "https://music.apple.com/us/playlist/ariana-grande-essentials/pl.942cc20e34a44f06bd36488e6c3e475e",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "The Slow Rush",
@@ -785,7 +844,8 @@ export const upbeatCollections = {
             length: 12,
             id: "1497230760",
             url: "https://music.apple.com/us/album/the-slow-rush/1497230760",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Midnights (The Til Dawn Edition)",
@@ -797,7 +857,8 @@ export const upbeatCollections = {
             length: 23,
             id: "1689089710",
             url: "https://music.apple.com/us/album/midnights-the-til-dawn-edition/1689089710",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "R&B Throwback",
@@ -809,7 +870,8 @@ export const upbeatCollections = {
             length: 23,
             id: "pl.605afbf60191408090398dd0cc153e3f",
             url: "https://music.apple.com/us/playlist/r-b-throwback/pl.605afbf60191408090398dd0cc153e3f",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "DAMN.",
@@ -821,7 +883,8 @@ export const upbeatCollections = {
             length: 14,
             id: "1440881047",
             url: "https://music.apple.com/us/album/damn/1440881047",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "To Pimp a Butterfly",
@@ -833,7 +896,8 @@ export const upbeatCollections = {
             length: 16,
             id: "1440828886",
             url: "https://music.apple.com/us/album/to-pimp-a-butterfly/1440828886",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "good kid, m.A.A.d city (Deluxe Version)",
@@ -845,7 +909,8 @@ export const upbeatCollections = {
             length: 18,
             id: "1440818890",
             url: "https://music.apple.com/us/album/good-kid-m-a-a-d-city-deluxe-version/1440818890",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Channel Orange",
@@ -857,7 +922,8 @@ export const upbeatCollections = {
             length: 17,
             id: "1440765580",
             url: "https://music.apple.com/us/album/channel-orange/1440765580",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "2000s Hits Essentials",
@@ -869,7 +935,8 @@ export const upbeatCollections = {
             length: 100,
             id: "pl.e50ccee7318043eaaf8e8e28a2a55114",
             url: "https://music.apple.com/us/playlist/2000s-hits-essentials/pl.e50ccee7318043eaaf8e8e28a2a55114",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "2010s Hits Essentials",
@@ -881,7 +948,8 @@ export const upbeatCollections = {
             length: 100,
             id: "pl.6b1b5dfda067443481265436811002f1",
             url: "https://music.apple.com/us/playlist/2010s-hits-essentials/pl.6b1b5dfda067443481265436811002f1",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "KAYTRANADA Essentials",
@@ -893,7 +961,8 @@ export const upbeatCollections = {
             length: 25,
             id: "pl.11f93fe65feb49db807b1219ad865bc0",
             url: "https://music.apple.com/us/playlist/kaytranada-essentials/pl.11f93fe65feb49db807b1219ad865bc0",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Geography",
@@ -905,7 +974,8 @@ export const upbeatCollections = {
             length: 13,
             id: "1327772541",
             url: "https://music.apple.com/us/album/geography/1327772541",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "The Strokes Essentials",
@@ -917,7 +987,8 @@ export const upbeatCollections = {
             length: 26,
             id: "pl.3a7a911b00c048ebba63b651935a241a",
             url: "https://music.apple.com/us/playlist/the-strokes-essentials/pl.3a7a911b00c048ebba63b651935a241a",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
     ],
     spotify: [
@@ -931,7 +1002,8 @@ export const upbeatCollections = {
             length: 59,
             id: "pl.cb4d1c09a2df4230a78d0395fe1f8fde",
             url: "https://music.apple.com/ca/playlist/piano-chill/pl.cb4d1c09a2df4230a78d0395fe1f8fde",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
     ]
 }
@@ -948,7 +1020,8 @@ export const soundtrackCollections = {
             length: 21,
             id: "883501721",
             url: "https://music.apple.com/us/album/spirited-away-original-soundtrack/883501721",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Disney Pixar Hits",
@@ -960,7 +1033,8 @@ export const soundtrackCollections = {
             length: 53,
             id: "pl.7d443a2e53a242d389f5ed439647df1d",
             url: "https://music.apple.com/us/playlist/disney-pixar-hits/pl.7d443a2e53a242d389f5ed439647df1d",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Up (Soundtrack from the Motion Picture)",
@@ -972,7 +1046,8 @@ export const soundtrackCollections = {
             length: 27,
             id: "1440617705",
             url: "https://music.apple.com/us/album/up-soundtrack-from-the-motion-picture/1440617705",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Guardians of the Galaxy",
@@ -984,7 +1059,8 @@ export const soundtrackCollections = {
             length: 127,
             id: "pl.c7183fd379694af4896a1b4d7dc85d30",
             url: "https://music.apple.com/us/playlist/guardians-of-the-galaxy/pl.c7183fd379694af4896a1b4d7dc85d30",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Musicals Station",
@@ -995,7 +1071,8 @@ export const soundtrackCollections = {
             description: "",
             id: "ra.1175991912",
             url: "https://music.apple.com/us/station/musicals-station/ra.1175991912",
-            type: MusicMediaType.RadioStation
+            type: MusicMediaType.RadioStation,
+            fromLib: false
         } as RadioStation,
         {
             name: "Interstellar (Original Motion Picture Soundtrack) [Expanded Edition]",
@@ -1007,7 +1084,8 @@ export const soundtrackCollections = {
             length: 30,
             id: "1533983552",
             url: "https://music.apple.com/us/album/interstellar-original-motion-picture-soundtrack-expanded/1533983552",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Coco (Original Motion Picture Soundtrack) [Deluxe Edition]",
@@ -1019,7 +1097,8 @@ export const soundtrackCollections = {
             length: 27,
             id: "1442277063",
             url: "https://music.apple.com/us/album/coco-original-motion-picture-soundtrack-deluxe-edition/1442277063",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "The Lord of the Rings: The Fellowship of the Ring - The Complete Recordings",
@@ -1031,7 +1110,8 @@ export const soundtrackCollections = {
             length: 37,
             id: "1369921417",
             url: "https://music.apple.com/us/album/the-lord-of-the-rings-the/1369921417",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "O Brother, Where Art Thou? (Music from the Motion Picture)",
@@ -1043,7 +1123,8 @@ export const soundtrackCollections = {
             length: 19,
             id: "1469575447",
             url: "https://music.apple.com/us/album/o-brother-where-art-thou-music-from-the-motion-picture/1469575447",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Best of Star Wars",
@@ -1055,7 +1136,8 @@ export const soundtrackCollections = {
             length: 66,
             id: "pl.cfa48bbf57144c799f2cb002ddff1f96",
             url: "https://music.apple.com/us/playlist/best-of-star-wars/pl.cfa48bbf57144c799f2cb002ddff1f96",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Spider-Man: Into the Spider-Verse (Soundtrack From & Inspired by the Motion Picture) [Deluxe Edition]",
@@ -1067,7 +1149,8 @@ export const soundtrackCollections = {
             length: 15,
             id: "1453876765",
             url: "https://music.apple.com/us/album/spider-man-into-the-spider-verse-soundtrack-from/1453876765",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "The Last of Us (Video Game Soundtrack)",
@@ -1079,7 +1162,8 @@ export const soundtrackCollections = {
             length: 30,
             id: "655118434",
             url: "https://music.apple.com/ca/playlist/acoustic-chill/pl.b5e8dbe8a706496496e1292466839207",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "The Lion King (Original Motion Picture Soundtrack)",
@@ -1091,7 +1175,8 @@ export const soundtrackCollections = {
             length: 12,
             id: "1445732923",
             url: "https://music.apple.com/us/album/the-lion-king-original-motion-picture-soundtrack/1445732923",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "There Will Be Blood (Music from the Motion Picture)",
@@ -1103,7 +1188,8 @@ export const soundtrackCollections = {
             length: 13,
             id: "1449615925",
             url: "https://music.apple.com/us/album/there-will-be-blood-music-from-the-motion-picture/1449615925",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Minecraft - Volume Alpha",
@@ -1115,7 +1201,8 @@ export const soundtrackCollections = {
             length: 24,
             id: "424968465",
             url: "https://music.apple.com/us/album/minecraft-volume-alpha/424968465",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Phantom Thread (Original Motion Picture Soundtrack)",
@@ -1127,7 +1214,8 @@ export const soundtrackCollections = {
             length: 13,
             id: "1329073218",
             url: "https://music.apple.com/us/album/phantom-thread-original-motion-picture-soundtrack/1329073218",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Music from Game of Thrones",
@@ -1139,7 +1227,8 @@ export const soundtrackCollections = {
             length: 55,
             id: "pl.fea117e7b45549aea9a0663d8a309806",
             url: "https://music.apple.com/us/playlist/music-from-game-of-thrones/pl.fea117e7b45549aea9a0663d8a309806",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "The Revenant (Original Motion Picture Soundtrack)",
@@ -1151,7 +1240,8 @@ export const soundtrackCollections = {
             length: 23,
             id: "1516405841",
             url: "https://music.apple.com/us/album/the-revenant-original-motion-picture-soundtrack/1516405841",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "The Grand Budapest Hotel (Original Soundtrack)",
@@ -1163,7 +1253,8 @@ export const soundtrackCollections = {
             length: 32,
             id: "1440789547",
             url: "https://music.apple.com/us/album/the-grand-budapest-hotel-original-soundtrack/1440789547",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Her (Original Score)",
@@ -1175,7 +1266,8 @@ export const soundtrackCollections = {
             length: 13,
             id: "1553022037",
             url: "https://music.apple.com/us/album/her-original-score/1553022037",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Eternal Sunshine of the Spotless Mind (Soundtrack from the Motion Picture)",
@@ -1187,7 +1279,8 @@ export const soundtrackCollections = {
             length: 26,
             id: "1442912229",
             url: "https://music.apple.com/us/album/eternal-sunshine-of-the-spotless-mind-soundtrack/1442912229",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Succession: Season 4 (HBO Original Series Soundtrack)",
@@ -1199,7 +1292,8 @@ export const soundtrackCollections = {
             length: 25,
             id: "1689640612",
             url: "https://music.apple.com/us/album/succession-season-4-hbo-original-series-soundtrack/1689640612",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
     ],
     spotify: [
@@ -1213,7 +1307,8 @@ export const soundtrackCollections = {
             length: 59,
             id: "pl.cb4d1c09a2df4230a78d0395fe1f8fde",
             url: "https://music.apple.com/ca/playlist/piano-chill/pl.cb4d1c09a2df4230a78d0395fe1f8fde",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
     ]
 }
@@ -1230,7 +1325,8 @@ export const acousticCollections = {
             length: 100,
             id: "pl.895834a538434df79968948ee559608c",
             url: "https://music.apple.com/us/playlist/classic-acoustic/pl.895834a538434df79968948ee559608c",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Acoustic Hits",
@@ -1242,7 +1338,8 @@ export const acousticCollections = {
             length: 98,
             id: "pl.522581bf8c264bafa742e75df9772078",
             url: "https://music.apple.com/us/playlist/acoustic-hits/pl.522581bf8c264bafa742e75df9772078",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Acoustic Summer",
@@ -1254,7 +1351,8 @@ export const acousticCollections = {
             length: 61,
             id: "pl.e6441e3d39664b9997d3533e7e65e037",
             url: "https://music.apple.com/us/playlist/acoustic-summer/pl.e6441e3d39664b9997d3533e7e65e037",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Acoustic Station",
@@ -1265,7 +1363,8 @@ export const acousticCollections = {
             description: "",
             id: "ra.985501172",
             url: "https://music.apple.com/us/station/acoustic-station/ra.985501172",
-            type: MusicMediaType.RadioStation
+            type: MusicMediaType.RadioStation,
+            fromLib: false
         } as RadioStation,
         {
             name: "Jazzzzzzzzzzzzzzz",
@@ -1277,7 +1376,8 @@ export const acousticCollections = {
             length: 100,
             id: "pl.f31fb34cf8ad46f0a27c960fa805cc4c",
             url: "https://music.apple.com/us/playlist/jazzzzzzzzzzzzzzz/pl.f31fb34cf8ad46f0a27c960fa805cc4c",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Acoustic Chill",
@@ -1289,7 +1389,8 @@ export const acousticCollections = {
             length: 100,
             id: "pl.b5e8dbe8a706496496e1292466839207",
             url: "https://music.apple.com/ca/playlist/acoustic-chill/pl.b5e8dbe8a706496496e1292466839207",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Guitar Chill",
@@ -1301,7 +1402,8 @@ export const acousticCollections = {
             length: 49,
             id: "pl.e048686be4f34819ad4373a034c8bf59",
             url: "https://music.apple.com/us/playlist/guitar-chill/pl.e048686be4f34819ad4373a034c8bf59",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Acoustic R&B",
@@ -1313,7 +1415,8 @@ export const acousticCollections = {
             length: 49,
             id: "pl.7378e49b2bc74ec186547e8185ee913f",
             url: "https://music.apple.com/us/playlist/acoustic-r-b/pl.7378e49b2bc74ec186547e8185ee913f",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Spanish Guitar",
@@ -1325,7 +1428,8 @@ export const acousticCollections = {
             length: 155,
             id: "pl.2f93a13048b94204918d4b99e9a056df",
             url: "https://music.apple.com/us/playlist/spanish-guitar/pl.2f93a13048b94204918d4b99e9a056df",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Chill Covers Acoustic",
@@ -1337,7 +1441,8 @@ export const acousticCollections = {
             length: 100,
             id: "pl.171ed575105547da92990578cb1639be",
             url: "https://music.apple.com/us/playlist/chill-covers/pl.171ed575105547da92990578cb1639be",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Barefoot Acoustic",
@@ -1349,7 +1454,8 @@ export const acousticCollections = {
             length: 264,
             id: "pl.8e7d5f0c316f4d9da9db9c29281f10a4",
             url: "https://music.apple.com/us/playlist/barefoot-acoustic/pl.8e7d5f0c316f4d9da9db9c29281f10a4",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "The Classical Guitar",
@@ -1361,7 +1467,8 @@ export const acousticCollections = {
             length: 18,
             id: "pl.1147311a18094eb9974c3ba4a425fd61",
             url: "https://music.apple.com/us/playlist/the-classical-guitar/pl.1147311a18094eb9974c3ba4a425fd61",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Piano Chill",
@@ -1373,7 +1480,8 @@ export const acousticCollections = {
             length: 50,
             id: "pl.cb4d1c09a2df4230a78d0395fe1f8fde",
             url: "https://music.apple.com/us/playlist/piano-chill/pl.cb4d1c09a2df4230a78d0395fe1f8fde",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Piano Essentials",
@@ -1385,7 +1493,8 @@ export const acousticCollections = {
             length: 100,
             id: "pl.5e6ff35247334d9699646afd21e589bd",
             url: "https://music.apple.com/us/playlist/piano-essentials/pl.5e6ff35247334d9699646afd21e589bd",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Jazz Piano Essentials",
@@ -1397,7 +1506,8 @@ export const acousticCollections = {
             length: 100,
             id: "pl.5d571bccbe60493eaadf6bb467720feb",
             url: "https://music.apple.com/us/playlist/jazz-piano-essentials/pl.5d571bccbe60493eaadf6bb467720feb",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
     ],
     spotify: [
@@ -1411,7 +1521,8 @@ export const acousticCollections = {
             length: 59,
             id: "pl.cb4d1c09a2df4230a78d0395fe1f8fde",
             url: "https://music.apple.com/ca/playlist/piano-chill/pl.cb4d1c09a2df4230a78d0395fe1f8fde",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
     ]
 }
@@ -1428,7 +1539,8 @@ export const classicalCollections = {
             length: 50,
             id: "pl.5a26d34eb6ec4825976bdef03784537d",
             url: "https://music.apple.com/us/playlist/classical-chill/pl.5a26d34eb6ec4825976bdef03784537d",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Mozart and More",
@@ -1440,7 +1552,8 @@ export const classicalCollections = {
             length: 49,
             id: "pl.fe324bdb6f104480bae2021c10bbcf77",
             url: "https://music.apple.com/us/playlist/mozart-and-more/pl.fe324bdb6f104480bae2021c10bbcf77",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Piano Essentials",
@@ -1452,7 +1565,8 @@ export const classicalCollections = {
             length: 100,
             id: "pl.5e6ff35247334d9699646afd21e589bd",
             url: "https://music.apple.com/us/playlist/piano-essentials/pl.5e6ff35247334d9699646afd21e589bd",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Joyful Classical",
@@ -1464,7 +1578,8 @@ export const classicalCollections = {
             length: 100,
             id: "pl.0030a85106a14c078a3bbf0f6befb877",
             url: "https://music.apple.com/us/playlist/joyful-classical/pl.0030a85106a14c078a3bbf0f6befb877",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Relaxing Classical",
@@ -1476,7 +1591,8 @@ export const classicalCollections = {
             length: 50,
             id: "pl.c2ab8af2e9e74576b3bb45d62819d5cd",
             url: "https://music.apple.com/us/playlist/relaxing-classical/pl.c2ab8af2e9e74576b3bb45d62819d5cd",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Classical Hits",
@@ -1488,7 +1604,8 @@ export const classicalCollections = {
             length: 50,
             id: "pl.9dc583e20e344cc4bf7dc823abde7a2c",
             url: "https://music.apple.com/us/playlist/classical-hits/pl.9dc583e20e344cc4bf7dc823abde7a2c",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Classical Summer",
@@ -1500,7 +1617,8 @@ export const classicalCollections = {
             length: 49,
             id: "pl.ab135abce66d4784b801594e22ce338d",
             url: "https://music.apple.com/us/playlist/classical-summer/pl.ab135abce66d4784b801594e22ce338d",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Mozart Essentials",
@@ -1512,7 +1630,8 @@ export const classicalCollections = {
             length: 48,
             id: "pl.63696b0b53a24734a0f1f34c92ccd5c4",
             url: "https://music.apple.com/us/playlist/wolfgang-amadeus-mozart-essentials/pl.63696b0b53a24734a0f1f34c92ccd5c4",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Classical Spring",
@@ -1524,7 +1643,8 @@ export const classicalCollections = {
             length: 24,
             id: "pl.c310b4d40b394e2e91cb8d9a08321097",
             url: "https://music.apple.com/us/playlist/classical-spring/pl.c310b4d40b394e2e91cb8d9a08321097",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Classical Motivation",
@@ -1536,7 +1656,8 @@ export const classicalCollections = {
             length: 73,
             id: "pl.351c85541ea843eeb9b9a814bf210b03",
             url: "https://music.apple.com/us/playlist/classical-motivation/pl.351c85541ea843eeb9b9a814bf210b03",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "The Works",
@@ -1548,7 +1669,8 @@ export const classicalCollections = {
             length: 59,
             id: "pl.66c17ed5cc754856b944a9150483e375",
             url: "https://music.apple.com/us/playlist/the-works/pl.66c17ed5cc754856b944a9150483e375",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Classical Sleep",
@@ -1560,7 +1682,8 @@ export const classicalCollections = {
             length: 100,
             id: "pl.998d1aa71ae64e1f9199d0a112067149",
             url: "https://music.apple.com/us/playlist/classical-sleep/pl.998d1aa71ae64e1f9199d0a112067149",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
     ],
     spotify: [
@@ -1574,7 +1697,8 @@ export const classicalCollections = {
             length: 59,
             id: "pl.cb4d1c09a2df4230a78d0395fe1f8fde",
             url: "https://music.apple.com/ca/playlist/piano-chill/pl.cb4d1c09a2df4230a78d0395fe1f8fde",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
     ]
 }
@@ -1591,7 +1715,8 @@ export const zenCollections = {
             length: 250,
             id: "pl.e79d63bcaead407fb44a0c19380822e6",
             url: "https://music.apple.com/ca/playlist/rain-sounds/pl.e79d63bcaead407fb44a0c19380822e6",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Sleep Meditation",
@@ -1603,7 +1728,8 @@ export const zenCollections = {
             length: 100,
             id: "pl.b201f2bc8ec3468c8afd74a5e394b6e2",
             url: "https://music.apple.com/us/playlist/sleep-meditation/pl.b201f2bc8ec3468c8afd74a5e394b6e2",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Ambient Chill",
@@ -1615,7 +1741,8 @@ export const zenCollections = {
             length: 250,
             id: "pl.bed492442a53481f98e98c6c4da9e01d",
             url: "https://music.apple.com/us/playlist/ambient-chill/pl.bed492442a53481f98e98c6c4da9e01d",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Spa",
@@ -1627,7 +1754,8 @@ export const zenCollections = {
             length: 250,
             id: "pl.4f2b5ddd448344a1848db8259e6c5f5b",
             url: "https://music.apple.com/us/playlist/spa/pl.4f2b5ddd448344a1848db8259e6c5f5b",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "White Noise",
@@ -1639,7 +1767,8 @@ export const zenCollections = {
             length: 250,
             id: "pl.4a9b82ff3b2b4c97935434eb257b7cc3",
             url: "https://music.apple.com/us/playlist/white-noise/pl.4a9b82ff3b2b4c97935434eb257b7cc3",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Sleep Sounds",
@@ -1651,7 +1780,8 @@ export const zenCollections = {
             length: 250,
             id: "pl.0ef59752c0cd457dbf1391f08cbd936f",
             url: "https://music.apple.com/us/playlist/sleep-sounds/pl.0ef59752c0cd457dbf1391f08cbd936f",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Pure Ambient",
@@ -1663,7 +1793,8 @@ export const zenCollections = {
             length: 348,
             id: "pl.a9bd89e7b22e45cbaac40b58c9d3d09b",
             url: "https://music.apple.com/us/playlist/pure-ambient/pl.a9bd89e7b22e45cbaac40b58c9d3d09b",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Pure Meditation",
@@ -1675,7 +1806,8 @@ export const zenCollections = {
             length: 250,
             id: "pl.e896478fdf824a93ab2f99165c3a1422",
             url: "https://music.apple.com/us/playlist/pure-meditation/pl.e896478fdf824a93ab2f99165c3a1422",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Guided Meditation",
@@ -1687,7 +1819,8 @@ export const zenCollections = {
             length: 100,
             id: "pl.84d78a058d1744208f63004b66e4d857",
             url: "https://music.apple.com/us/playlist/guided-meditation/pl.84d78a058d1744208f63004b66e4d857",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Beats & Breath",
@@ -1699,7 +1832,8 @@ export const zenCollections = {
             length: 99,
             id: "pl.72a029c5d77f4da8a0793afeb2a8be8b",
             url: "https://music.apple.com/us/playlist/beats-breath/pl.72a029c5d77f4da8a0793afeb2a8be8b",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Pure Calm",
@@ -1711,7 +1845,8 @@ export const zenCollections = {
             length: 100,
             id: "pl.ffc344338c3d4ff394ddcf94d766c143",
             url: "https://music.apple.com/us/playlist/pure-calm/pl.ffc344338c3d4ff394ddcf94d766c143",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "High Vibes Yoga",
@@ -1723,7 +1858,8 @@ export const zenCollections = {
             length: 99,
             id: "pl.10555e26fab04dfb81041ae92a76effd",
             url: "https://music.apple.com/us/playlist/high-vibes-yoga/pl.10555e26fab04dfb81041ae92a76effd",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Flow State",
@@ -1735,7 +1871,8 @@ export const zenCollections = {
             length: 99,
             id: "pl.de20dc985af84cc2aaef6c9f5f493c3b",
             url: "https://music.apple.com/us/playlist/flow-state/pl.de20dc985af84cc2aaef6c9f5f493c3b",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Healing Meditation",
@@ -1747,7 +1884,8 @@ export const zenCollections = {
             length: 100,
             id: "pl.d8caca2864d645459da8f4301cb26a37",
             url: "https://music.apple.com/us/playlist/healing-meditation/pl.d8caca2864d645459da8f4301cb26a37",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Ambient Sleep",
@@ -1759,7 +1897,8 @@ export const zenCollections = {
             length: 250,
             id: "pl.2ce0acb450d048c49d4c4b52b2f4b195",
             url: "https://music.apple.com/us/playlist/ambient-sleep/pl.2ce0acb450d048c49d4c4b52b2f4b195",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Breathwork",
@@ -1771,7 +1910,8 @@ export const zenCollections = {
             length: 100,
             id: "pl.45fcb3b93a9749eaa8190693802d025e",
             url: "https://music.apple.com/us/playlist/breathwork/pl.45fcb3b93a9749eaa8190693802d025e",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Nature Sounds",
@@ -1783,7 +1923,8 @@ export const zenCollections = {
             length: 100,
             id: "pl.040f99fdd83542a79b28fc4c13f773bd",
             url: "https://music.apple.com/us/playlist/nature-sounds/pl.040f99fdd83542a79b28fc4c13f773bd",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist
     ],
     spotify: [
@@ -1797,7 +1938,8 @@ export const zenCollections = {
             length: 59,
             id: "pl.cb4d1c09a2df4230a78d0395fe1f8fde",
             url: "https://music.apple.com/ca/playlist/piano-chill/pl.cb4d1c09a2df4230a78d0395fe1f8fde",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
     ]
 }
@@ -1814,7 +1956,8 @@ export const summerCollections = {
             length: 109,
             id: "pl.6cbec98d25194addb2b012e681e0eff6",
             url: "https://music.apple.com/us/playlist/summer-vibes/pl.6cbec98d25194addb2b012e681e0eff6",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Women In Music, Pt. III (Expanded Edition)",
@@ -1826,7 +1969,8 @@ export const summerCollections = {
             length: 18,
             id: "1550175828",
             url: "https://music.apple.com/us/album/women-in-music-pt-iii-expanded-edition/1550175828",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Songs of the Summer",
@@ -1838,7 +1982,8 @@ export const summerCollections = {
             length: 79,
             id: "pl.34c6bf42a176492abb918edb57b565e9",
             url: "https://music.apple.com/us/playlist/songs-of-the-summer/pl.34c6bf42a176492abb918edb57b565e9",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Roots Reggae Station",
@@ -1849,7 +1994,8 @@ export const summerCollections = {
             description: "",
             id: "ra.1055206677",
             url: "https://music.apple.com/us/station/roots-reggae-station/ra.1055206677",
-            type: MusicMediaType.RadioStation
+            type: MusicMediaType.RadioStation,
+            fromLib: false
         } as RadioStation,
         {
             name: "Channel Orange",
@@ -1861,7 +2007,8 @@ export const summerCollections = {
             length: 17,
             id: "1440765580",
             url: "https://music.apple.com/us/album/channel-orange/1440765580",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Legend – The Best of Bob Marley & The Wailers (2002 Edition)",
@@ -1873,7 +2020,8 @@ export const summerCollections = {
             length: 16,
             id: "1469575763",
             url: "https://music.apple.com/us/album/legend-the-best-of-bob-marley-the-wailers-2002-edition/1469575763",
-            type: MusicMediaType.Album
+            type: MusicMediaType.Album,
+            fromLib: false
         } as Album,
         {
             name: "Summer Soul",
@@ -1885,7 +2033,8 @@ export const summerCollections = {
             length: 61,
             id: "pl.bd08a568ec2647d19da5891d3a4a3ebe",
             url: "https://music.apple.com/us/playlist/summer-soul/pl.bd08a568ec2647d19da5891d3a4a3ebe",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Happy Hits",
@@ -1897,7 +2046,8 @@ export const summerCollections = {
             length: 100,
             id: "pl.4fe671d3bd994738ace5ae974daebc10",
             url: "https://music.apple.com/us/playlist/happy-hits/pl.4fe671d3bd994738ace5ae974daebc10",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Sunkissed",
@@ -1909,7 +2059,8 @@ export const summerCollections = {
             length: 100,
             id: "pl.e4d0cb54b9dd46648a06290ff1a90045",
             url: "https://music.apple.com/us/playlist/sunkissed/pl.e4d0cb54b9dd46648a06290ff1a90045",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Permanent Vacation",
@@ -1921,7 +2072,8 @@ export const summerCollections = {
             length: 196,
             id: "pl.9dc9de535a544d5d9692766feac0f7c7",
             url: "https://music.apple.com/us/playlist/permanent-vacation/pl.9dc9de535a544d5d9692766feac0f7c7",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Beach Party",
@@ -1933,7 +2085,8 @@ export const summerCollections = {
             length: 100,
             id: "pl.894cf25d1772492f89115f854826fc15",
             url: "https://music.apple.com/us/playlist/beach-party/pl.894cf25d1772492f89115f854826fc15",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         {
             name: "Summer Sunshine",
@@ -1945,7 +2098,8 @@ export const summerCollections = {
             length: 50,
             id: "pl.f27ed614acb2429188a9d09f50caa9ff",
             url: "https://music.apple.com/us/playlist/summer-sunshine/pl.f27ed614acb2429188a9d09f50caa9ff",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
         } as Playlist,
         ],
         spotify: [
@@ -1959,7 +2113,8 @@ export const summerCollections = {
             length: 59,
             id: "pl.cb4d1c09a2df4230a78d0395fe1f8fde",
             url: "https://music.apple.com/ca/playlist/piano-chill/pl.cb4d1c09a2df4230a78d0395fe1f8fde",
-            type: MusicMediaType.Playlist
+            type: MusicMediaType.Playlist,
+            fromLib: false
     } as Playlist,
 ]
 }

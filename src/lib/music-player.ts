@@ -1,6 +1,7 @@
 import { APIErrorCode, MusicPlatform } from "./enums"
 import { APIError, type CustomError } from "./errors"
-import { getPlatformString, musicAPIErrorHandler } from "./utils-music"
+import { musicPlayerManager, musicPlayerStore } from "./store"
+import { getPlatformString, musicAPIErrorHandler, removeMusicPlayerData, removeMusicShuffleData } from "./utils-music"
 
 /**
  * @abstract 
@@ -14,6 +15,7 @@ export abstract class MusicPlayer {
     abstract mediaItem: Track | PodcastEpisode | AudioBook | null
     abstract mediaCollection: Media | null
 
+    // all
     abstract error: CustomError | null
     abstract doShowPlayer: boolean
     abstract isPlaying: boolean
@@ -21,33 +23,62 @@ export abstract class MusicPlayer {
     abstract isRepeating: boolean
     abstract isBuffering: boolean
     abstract isShuffled: boolean
-    abstract hasCollectionJustEnded: boolean
-    abstract hasReachedEnd: boolean
+    abstract isPlayingLive: boolean
+    
+    // spotify only
     abstract currentDuration: number
     abstract currentPosition: number
-    abstract doAllowUpdate: boolean
-    abstract hasItemUpdated: boolean
-    abstract hasSeekedTo: number
-    abstract isPlayingLive: boolean
 
+    // used to disallow updates if old data is still present after skip or seek
+    abstract hasSeekedTo: number
+    abstract hasItemUpdated: boolean
+    abstract doAllowUpdate: boolean
+    
     serverURL = "http://localhost:3000/"
 
+    abstract init(param?: any): Promise<void>;
     abstract togglePlayback(): void;
     abstract skipToNextTrack(): void;
     abstract skipToPrevTrack(): void;
     abstract toggleShuffle(): void;
     abstract toggleRepeat(): void;
-    // abstract queueAndPlayMedia(playlistId: string, newIndex: number): void
-    abstract quit(): void;
     abstract seekTo(time: number): void;
-
-    abstract updateMediaCollection(collectionContext: MediaClickedContext): void
-    // abstract updateMediaCollectionIdx(newIndex: number): void
+    
+    abstract updateMediaCollection(collectionContext: MediaClickedContext): Promise<void>
+    abstract loadCurrentItem(doPlay: boolean): void
     abstract removeCurrentCollection(): void
     
-    abstract toggleShow(doSHow: boolean): void;
-    abstract updateState(newPlayerState: MusicPlayerState): void
+    abstract updateState(newPlayerState: Partial<MusicPlayerState>): void
     abstract resetMusicPlayerStateToEmptyState(): void
+
+    toggleShow(doShow: boolean) {
+        this.doShowPlayer = doShow
+        this.updateState({ doShowPlayer: doShow })
+    }
+
+    undisablePlayer() {
+        this.isDisabled = false
+        this.updateState({ isDisabled: false })
+    }
+
+    disablePlayer() {
+        this.isDisabled = true
+        this.updateState({ isDisabled: true })
+    }
+
+    quit() {
+        this.deleteMusicPlayerData()
+        musicPlayerStore.set(null)
+        musicPlayerManager.set(null)
+    }
+
+    deleteMusicPlayerData() {
+        if (this.isShuffled) { 
+            removeMusicShuffleData()
+        }
+        removeMusicPlayerData()
+    }  
+
 
     onError(error: any, platform: MusicPlatform) {
         console.error(error)

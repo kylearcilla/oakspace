@@ -1,14 +1,13 @@
-import { get } from "svelte/store"
 import { musicDataStore } from "./store"
 import { APIErrorCode, MusicPlatform, UserLibraryMedia } from "./enums"
 import { MusicUserData, type MusicUserDataStore } from "./music-user-data"
 import { 
          saveMusicUserData, 
-         loadMusicUserData, deleteMusicUserData, musicAPIErrorHandler, musicLoginSuccessHandler
+         loadMusicUserData, deleteMusicUserData, musicAPIErrorHandler, LIBRARY_COLLECTION_LIMIT
 } from "./utils-music"
 import { 
     getSpotfifyUserLikedTracks, getSpotfifyUserPlaylists, getSpotifyUserAlbums, getSpotifyUserAudioBooks, 
-    getSpotifyUserData, getUserPodcastsEps, refreshAccessToken, LIBRARY_COLLECTION_LIMIT
+    getSpotifyUserData, getUserPodcastsEps, refreshAccessToken
 } from "./api-spotify"
 import { APIError } from "./errors"
 import { getDifferenceInSecs } from "./utils-date"

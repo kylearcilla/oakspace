@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
-import { mediaEmbedStore, musicDataStore, musicPlayerStore, toastMessages } from "./store"
+import { musicDataStore } from "./store"
 
-import { hasUserSignedIn, loadMusicPlayerData, musicAPIErrorHandler, musicLoginSuccessHandler, removeMusicPlayerData } from "./utils-music"
+import { musicAPIErrorHandler, initMusicToast, LIBRARY_COLLECTION_LIMIT, didInitMusicUser, verifyForPlayerSession } from "./utils-music"
 import { base64encode, generateCodeVerifier, hashSHA256 } from "./utils-general"
 
 import { APIError } from "./errors"
@@ -12,27 +12,26 @@ import { APIErrorCode, MusicMediaType, MusicPlatform } from "./enums"
 const CLIENT_ID     = "ed4c34b3aa704c6fbc88ca3e2957ced4"
 const REDIRECT_URI  = "http://localhost:5173/home"
 const AUTH_URL      = new URL("https://accounts.spotify.com/authorize")
-const SCOPES_ARR    = [
-    "streaming", "user-library-read", "user-read-playback-position", 
-    "user-read-private", "playlist-read-private", "user-read-currently-playing"
-]
+
+const SCOPES_ARR = ["streaming", "user-library-read", "user-read-playback-position", "user-read-private", "playlist-read-private", "user-read-currently-playing"]
 const SCOPES_STR = SCOPES_ARR.join(" ")
 
 export const TOKEN_URL  = new URL("https://accounts.spotify.com/api/token")
-export const LIBRARY_COLLECTION_LIMIT = 25
 
 /**
- * Starts the OAuth 2.0 Auth Flow if logging for the first time or initializes new store if continuing a session.
+ * 
+ * Starts the OAuth 2.0 Auth Flow if logging for the first time.
+ * Otherwise, initiate a new store and player if there is any.
  */
 export async function initSpotifyMusic() {
     try {
-        if (hasUserSignedIn()) {
+        if (didInitMusicUser()) {
             new SpotifyMusicUserData()
-            verifyForPlayerSession()
+            await verifyForPlayerSession(MusicPlatform.Spotify)
         }
         else {
             await requestSpotifyUserAuth()
-            musicLoginSuccessHandler(MusicPlatform.Spotify)
+            initMusicToast(MusicPlatform.Spotify, "Log in Sucess!")
         }
     }
     catch(error: any) {
@@ -56,12 +55,9 @@ export async function requestSpotifyUserAuth() {
     const codeChallenge = base64encode(hashed)
 
     const params =  {
-        response_type: 'code',
-        client_id: CLIENT_ID,
-        scope: SCOPES_STR,
-        code_challenge_method: 'S256',
-        code_challenge: codeChallenge,
-        redirect_uri: REDIRECT_URI
+        response_type: 'code', code_challenge_method: 'S256',
+        client_id: CLIENT_ID, scope: SCOPES_STR, redirect_uri: REDIRECT_URI,
+        code_challenge: codeChallenge
     }
 
     AUTH_URL.search = new URLSearchParams(params).toString()
@@ -94,7 +90,7 @@ export async function getSpotifyCodeFromURLAndLogin() {
         const url =  new URL(window.location.href)
         const spotifyAccessTokenCode = url.searchParams.get('code')
 
-        // if signing for the first time only (flag is)
+        // flag exists if signing for the first time
         if (!localStorage.getItem("url-code-flag")) {
             await userAuthSuccessHandler(spotifyAccessTokenCode!)
         }
@@ -113,7 +109,7 @@ export async function getSpotifyCodeFromURLAndLogin() {
  * 
  * @param code    Code verifier required for PKCE Authorization	
  */
-export async function userAuthSuccessHandler(code: string) {
+async function userAuthSuccessHandler(code: string) {
     const codeVerifier = localStorage.getItem("code_verifier")!
     
     try {
@@ -124,7 +120,7 @@ export async function userAuthSuccessHandler(code: string) {
         })
         
         localStorage.setItem("url-code-flag", JSON.stringify(true))
-        musicLoginSuccessHandler(MusicPlatform.Spotify)
+        initMusicToast(MusicPlatform.Spotify, "Log in Sucess!")
     }
     catch (error: any) {
         throw error
@@ -132,13 +128,12 @@ export async function userAuthSuccessHandler(code: string) {
 }
 
 /**
- * Initialize data store from Spotify after a successful OAuth 2.0 Flow.
- * Initalizes with important credentials data from the flow.
- * Runs during first-time logins or logins during an expired token state.
+ * Initialize data store from Spotify after a successful OAuth 2.0 Flow
+ * Runs during first-time logins or refresh after an expired token state.
  * 
- * @param initData 
+ * @param initData   Credentials data after creds request after successful request.
  */
-export async function initSpotifyAfterAuth(initData: SpotifyInitData) {
+async function initSpotifyAfterAuth(initData: SpotifyInitData) {
     if (!get(musicDataStore)) {
         new SpotifyMusicUserData()
     }
@@ -154,16 +149,15 @@ export async function initSpotifyAfterAuth(initData: SpotifyInitData) {
  */
 export async function getSpotifyAcessToken(code: string, codeVerifier: string): Promise<SpotifyAuthTokenResponse> {
     try {
-        const headers = new Headers({
-            "Content-Type": "application/x-www-form-urlencoded"
+        const headers = new Headers({ 
+            "Content-Type": "application/x-www-form-urlencoded" 
         })
         const body = new URLSearchParams({
-            client_id: CLIENT_ID,
+            client_id: CLIENT_ID, redirect_uri: REDIRECT_URI,
             grant_type: 'authorization_code',
-            code,
-            redirect_uri: REDIRECT_URI,
-            code_verifier: codeVerifier
+            code, code_verifier: codeVerifier
         })
+
         const res = await fetch("https://accounts.spotify.com/api/token", { method: 'POST', headers, body })
         const data = await res.json()
 
@@ -194,6 +188,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<SpotifyA
             refresh_token: refreshToken,
             client_id: CLIENT_ID
         })
+
         const res = await fetch(TOKEN_URL, { method: 'POST', headers, body })
         const data = await res.json()
 
@@ -286,18 +281,14 @@ export async function getSpotfifyUserPlaylists(accessToken: string, offset: numb
  */
 export async function getSpotfifyUserLikedTracks(accessToken: string, offset: number, limit = LIBRARY_COLLECTION_LIMIT): Promise<{ items: Track[], total: number }> {
     try {
-        const headers = new Headers({
-            "Authorization": `Bearer ${accessToken}`
-        })
+        const headers = new Headers({ "Authorization": `Bearer ${accessToken}` })
         const res  = await fetch(`https://api.spotify.com/v1/me/tracks?limit=${limit}&offset=${offset}`, { method: 'GET', headers })
         const data = await res.json()
 
         if (!res.ok) {
             console.error(`There was an error getting a user's saved tracks. \n URL: ${res.url} \n Status: ${res.status} \n Description: ${data.error.message}.`)
             throwSpotifyAPIError(res.status, data.error.message)
-        } 
-
-        console.log(data)
+        }
 
         const tracks: Track[] = (data.items as any[]).map((item: any) => {
             return {
@@ -527,62 +518,6 @@ export async function getLibPodcastEpisdesItem(accessToken: string,  pos: number
  */
 export async function getLibAudiobooksItem(accessToken: string,  pos: number): Promise<AudioBook> {
     return (await getSpotifyUserAudioBooks(accessToken, pos, 1)).items[0]
-}
-
-export function verifyForPlayerSession() {
-    const playerData = loadMusicPlayerData()
-
-    if (playerData && playerData.currentIdx === undefined) {
-        removeMusicPlayerData()
-        return
-    }
-    if (playerData) {
-        continueSpotifyiFramePlayerSession() 
-    }
-}
-
-/**
- * Continue player session by initializing iFrame Player again 
- */
-export async function continueSpotifyiFramePlayerSession() {
-    new SpotifyMusicPlayer()
-    const player = get(musicPlayerStore)! as SpotifyMusicPlayer
-    await player.initIframePlayerAPI(null)
-}
-
-/**
- * Initialize Spotify player class.
- * Must always be a starting collection when initializing for the first time.
- * @param mediaCollection  Media collection to start with. 
- */
-export async function initSpotifyiFramePlayer(context: MediaClickedContext | null) {
-    new SpotifyMusicPlayer()
-    const player = get(musicPlayerStore)! as SpotifyMusicPlayer
-
-    await player.initIframePlayerAPI(context)
-}
-
-/**
- * Handler for when an media item has been clicked to be played
- * @param media   
- * @param idx   
- */
-export async function handleSpotifyMediaItemClicked(context: MediaClickedContext) {
-    try {
-        let spotifyPlayer = get(musicPlayerStore) as SpotifyMusicPlayer
-    
-        if (!spotifyPlayer) {
-            await initSpotifyiFramePlayer(context)
-            spotifyPlayer = get(musicPlayerStore) as SpotifyMusicPlayer
-        }
-        await spotifyPlayer!.updateMediaCollection(context)
-        spotifyPlayer!.loadCurrentItem(true)
-    }
-    catch(error: any) {
-        if (error.code != undefined && error.code === APIErrorCode.PLAYER) {
-            musicAPIErrorHandler(error)
-        }
-    }
 }
 
 /**

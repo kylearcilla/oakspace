@@ -7,7 +7,7 @@
     import ytRecsPlaylists from '$lib/data-yt-playlists'
     import { clickOutside } from "../../lib/utils-general"
 	import { themeState, ytPlayerStore, ytUserDataStore } from "$lib/store"
-	import { createYtErrorToastMsg, handleChoosePlaylist, logOutUser, loginUser } from "$lib/utils-youtube"
+	import { createYtErrorToastItem, handleChoosePlaylist, logOutUser, loginUser } from "$lib/utils-youtube"
 	import { ExpiredTokenError } from "$lib/errors";
     
     let isUserProfileDropdownOpen = false
@@ -72,7 +72,7 @@
             }
             catch(error: any) {
                 isPlsLoading = false
-                createYtErrorToastMsg(error)
+                createYtErrorToastItem(error)
             }
         }, FETCH_PLAYLIST_DELAY)
     }

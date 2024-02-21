@@ -6,8 +6,6 @@
   import NavMenu from "./SideBarLeft.svelte"
   import TaskView from "./SideBarRight.svelte"
   import MusicPlayer from "./MusicPlayer.svelte"
-  import VideoView from "./HomeVideoView.svelte"
-	import HomeEmptyView from "./HomeEmptyView.svelte"
 
   // main modals
 	import Stats from "./Stats.svelte"
@@ -22,16 +20,15 @@
 	import ShortcutsModal from "./ShortcutsModal.svelte"
 	import SessionNewModal from "./SessionNewModal.svelte"
   import SessionEditModal from "./SessionEditModal.svelte"
-	import SessionActiveHome from "./SessionActiveHome.svelte"
 	import SessionActiveModal from "./SessionActiveModal.svelte"
 	import SessionFinishedModal from "./SessionFinishedModal.svelte"
 	import SessionCanceledModal from "./SessionCanceledModal.svelte"
 
   // misc. elems
-	import Toast from "../../components/Toast.svelte"
+	import Toaster from "../../components/Toaster.svelte"
   
 	import { ModalType } from "$lib/enums"
-	import { sessionStore, homeViewLayout, toastMessages, ytPlayerStore, musicPlayerStore, mediaEmbedStore } from "$lib/store"
+	import { sessionStore, homeViewLayout, toaster, ytPlayerStore, musicPlayerStore, mediaEmbedStore } from "$lib/store"
 	import { 
         initAppState, keyboardShortCutHandlerKeyDown, 
         keyboardShortCutHandlerKeyUp, onMouseMoveHandler
@@ -177,15 +174,15 @@
   {#if $homeViewLayout.modalsOpen.includes(ModalType.Shortcuts)} <ShortcutsModal /> {/if}
 
   <!-- Toasts -->
-  {#if $toastMessages.length > 0}
-    {#each $toastMessages as toast, idx}
-        <Toast toast={toast} idx={idx} />
-    {/each}
+  {#if $toaster}
+    <Toaster />
   {/if}
 </div>
 
 
 <style lang="scss">
+    @import "../../scss/toasts.scss";
+
     #signInDiv {
       position: absolute;
       right: 400px;

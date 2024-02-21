@@ -4,7 +4,7 @@
 
     import { closeModal } from "$lib/utils-home"
     import { musicCategories } from "$lib/data-music-collections"
-    import { addSpacesToCamelCaseStr, clickOutside, getElemById } from "$lib/utils-general"
+    import { addSpacesToCamelCaseStr, clickOutside } from "$lib/utils-general"
 	import {  musicLogin, LIBRARY_COLLECTION_LIMIT } from "$lib/utils-music"
 
 	import { getMediaContext, getMediaItemInfo, getMediaLength, getMediaDescription, getMediaTypeStr } from "$lib/utils-music-settings"
@@ -15,12 +15,16 @@
 	import MusicSettingsAccountHeader from "./MusicSettingsAccountHeader.svelte"
     
     import { ModalType, MusicPlatform, MusicMoodCategory, UserLibraryMedia, Icon, MusicMediaType, LibError } from "$lib/enums"
+	import { MusicSettingsManager } from "$lib/music-settings-manager";
+
+    $: isSignedIn      = $musicDataStore?.isSignedIn
+    $: platform        = $musicDataStore?.musicPlatform
+    $: mediaCollection = $musicPlayerStore?.mediaCollection 
 
     $: manager  = $musicSettingsManager
-    $: platform = $musicSettingsManager?.platform
 
     $: chosenMood            = $musicSettingsManager?.chosenMood
-    $: chosenMusicCollection = $musicSettingsManager?.chosenMusicCollection!
+    $: chosenMusicCollection = $musicSettingsManager?.chosenMusicCollection! ?? []
 
     $: userLibrary           = $musicSettingsManager?.userLibrary
     $: currLibraryCollection = $musicSettingsManager?.currLibraryCollection!
@@ -33,12 +37,35 @@
     $: libListGradient        = $musicSettingsManager?.libListGradient
     $: categoriesListGradient = $musicSettingsManager?.categoriesListGradient
 
-    $: mediaCollection = $musicPlayerStore?.mediaCollection 
+    $: {
+        if (isSignedIn) onMusicInit(platform)
+    }
 
     let hasCollectionItemsLoaded = true
     let isLibraryDropdownOpen = false
     let isLibraryOptionsDropdownOpen = false
 
+    /* Init Music */
+    function onMusicInit(platform?: MusicPlatform) {
+        if ($musicSettingsManager || platform === undefined) return
+
+        manager = new MusicSettingsManager(platform)
+        requestAnimationFrame(() => initMusicManager())
+    }
+    function initMusicManager() {
+        if (!manager) return
+
+        manager.updateLibrary()
+        manager.handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
+        
+        requestAnimationFrame(() => {
+            manager!.fetchHTMLElements()
+            manager!.handleCategoriesScroll()
+            manager!.handleLibListScroll()
+        })
+    }
+
+    /* Event Listeners */
     function onLibOptionClicked(lib: UserLibraryMedia) {
         closeLibDropdowns()
         manager!.updateLibraryMedia(lib)
@@ -57,18 +84,7 @@
     }
 
     onMount(() => {
-        if (!manager) return
-
-        manager.updateLibrary()
-        manager.handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
-
-        console.log(getElemById("collection-list"))
-        
-        requestAnimationFrame(() => {
-            manager!.fetchHTMLElements()
-            manager!.handleCategoriesScroll()
-            manager!.handleLibListScroll()
-        })
+        initMusicManager()
     })
 </script>
 
@@ -167,7 +183,7 @@
                             class="my-playlists__collection-list" id="library-list" 
                             on:scroll={() => manager?.handleLibListScroll()} style={`${libListGradient}`}
                         >
-                            {#if userLibrary?.items || (userLibrary?.items && libError != LibError.NEW_COLLECTION)}
+                            {#if userLibrary && (userLibrary?.items || (userLibrary?.items && libError != LibError.NEW_COLLECTION))}
                                 {@const isTrack      = currLibraryCollection === UserLibraryMedia.LikedTracks}
                                 {@const isAlbum      = currLibraryCollection === UserLibraryMedia.Albums}
                                 {@const isPodcastEp  = currLibraryCollection === UserLibraryMedia.PodcastEps}
@@ -480,7 +496,7 @@
 {/if}
 
 <!-- Logged Off UI -->
-{#if !$musicDataStore?.isSignedIn}
+{#if !isSignedIn}
     <MusicSettingsSignedOut _loginUser={musicLogin} />
 {/if}
 

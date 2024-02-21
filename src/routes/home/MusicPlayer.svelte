@@ -72,23 +72,25 @@
     <div class="blur-bg"></div>
     <div class="content-bg">
         <!-- svelte-ignore a11y-missing-attribute -->
-        <div class="music-player-track" title={`${mediaItem?.name} – ${mediaItem?.author}`}>
-            <img class="music-player-track__art" src={mediaItem?.artworkImgSrc} alt="">
-            <div class="music-player-track__details">
-                <div class={`music-player-track__title-container ${$musicPlayerManager?.trackTitleElAnimationObj ? "music-player-track__title-container--masked" : ""}`}>
-                    <h5 class="music-player-track__title"  id="track-title">
-                        {mediaItem?.name ?? ""}
-                    </h5>
-                </div>
-                <div class={`music-player-track__artist-container ${$musicPlayerManager?.trackArtistElAnimationObj ? "music-player-track__artist-container--masked" : ""}`}>
-                    <span 
-                        class={`music-player-track__artist ${!$themeState.isDarkTheme ? "caption-2--light-theme" : ""}`} id="track-artist"
-                    >
-                        {mediaItem?.author ?? mediaCollection?.description ?? ""}
-                    </span>
+        {#if mediaItem}
+            <div class="music-player-track" title={`${mediaItem.name} – ${mediaItem.author}`}>
+                <img class="music-player-track__art" src={mediaItem.artworkImgSrc} alt="">
+                <div class="music-player-track__details">
+                    <div class={`music-player-track__title-container ${$musicPlayerManager?.trackTitleElAnimationObj ? "music-player-track__title-container--masked" : ""}`}>
+                        <h5 class="music-player-track__title"  id="track-title">
+                            {mediaItem.name ?? ""}
+                        </h5>
+                    </div>
+                    <div class={`music-player-track__artist-container ${$musicPlayerManager?.trackArtistElAnimationObj ? "music-player-track__artist-container--masked" : ""}`}>
+                        <span 
+                            class={`music-player-track__artist ${!$themeState.isDarkTheme ? "caption-2--light-theme" : ""}`} id="track-artist"
+                        >
+                            {mediaItem.author ?? mediaCollection?.description ?? ""}
+                        </span>
+                    </div>
                 </div>
             </div>
-        </div>
+        {/if}
         <div class="music-player-controls">
             <button 
                 on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SHUFFLE)} 

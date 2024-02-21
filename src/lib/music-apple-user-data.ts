@@ -2,7 +2,7 @@ import { musicDataStore } from "./store"
 import { MusicUserData, type MusicUserDataStore } from "./music-user-data"
 
 import { getDifferenceInSecs } from "./utils-date"
-import { removeAppleMusicTokens, saveMusicUserData, loadMusicUserData, deleteMusicUserData, LIBRARY_COLLECTION_LIMIT} from "./utils-music"
+import { removeAppleMusicTokens, saveMusicUserData, loadMusicUserData, deleteMusicUserData, LIBRARY_COLLECTION_LIMIT, initMusicToast, musicAPIErrorHandler} from "./utils-music"
 import { getAppleMusicUserAlbums, getAppleMusicUserLikedTracks, getAppleMusicUserPlaylists } from "./api-apple-music"
 
 import { APIError, AppServerError } from "./errors"
@@ -35,7 +35,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
     userPlaylists: UserLibraryCollection = {
         items: [],
         hasFetchedAll: false,
-        offset: 0,
+        offset: -1,
         totalItems: 0
     }
 
@@ -43,7 +43,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
     userLikedTracks: UserLibraryCollection = {
         items: [],
         hasFetchedAll: false,
-        offset: 0,
+        offset: -1,
         totalItems: 0
     }
 
@@ -51,7 +51,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
     userAlbums: UserLibraryCollection = {
         items: [],
         hasFetchedAll: false,
-        offset: 0,
+        offset: -1,
         totalItems: 0
     }
 
@@ -64,7 +64,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
         this.loadAndSetUserData()
     }
 
-    async initMusicData(): Promise<void> {
+    async init() {
         const hasSignedIn = this.accessToken != ""
 
         try {
@@ -178,12 +178,16 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
     setTokenHasExpired(hasExpired: boolean) {
         this.hasTokenExpired = hasExpired
         this.updateState({ hasTokenExpired: hasExpired })
+
+        if (hasExpired) {
+            musicAPIErrorHandler(new APIError(APIErrorCode.EXPIRED_TOKEN))
+        }
     }
 
     /**
      * Check if token has or about to expire. 
      * Called everytime a request to the API is made.
-     * @returns Token will expire
+     * @returns    Token will expire
      */
     hasAccessTokenExpired() {
         const currentTime = new Date().getTime()
@@ -214,15 +218,15 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
 
             this.accessToken = tokenData.accessToken
             this.tokenExpiresInMs = tokenData.expInMs
-
             this.accessTokenCreationDate = new Date()
-            this.hasTokenExpired = false
 
             this.updateState({ 
-                accessToken: this.accessToken, userToken: this.userToken, 
-                tokenExpiresInMs: this.tokenExpiresInMs, accessTokenCreationDate: this.accessTokenCreationDate,
-                hasTokenExpired: this.hasTokenExpired
+                accessToken: this.accessToken, tokenExpiresInMs: this.tokenExpiresInMs, accessTokenCreationDate: this.accessTokenCreationDate,
             })
+
+            if (this.hasTokenExpired) {
+                this.setTokenHasExpired(false)
+            }
         }
         catch(error) {
             this.onError(new APIError(APIErrorCode.FAILED_TOKEN_REFRESH))
@@ -364,13 +368,11 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
             this.updateState({ currentUserMedia: media })
         }
         catch (error: any) {
-            console.error(error)
             if (error instanceof APIError && error.code === APIErrorCode.EXPIRED_TOKEN) {
                 this.setTokenHasExpired(true)
                 this.onError(error)
-                return
             }
-            else {
+            else if (error.code != APIErrorCode.FAILED_TOKEN_REFRESH) {
                 this.onError(new APIError(APIErrorCode.GENERAL, `There was an loading your ${media.toLowerCase()} from your library. Please try again later.`))
             }
             throw error
@@ -395,13 +397,11 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
             }
         }
         catch (error: any) {
-            console.error(error)
             if (error instanceof APIError && error.code === APIErrorCode.EXPIRED_TOKEN) {
                 this.setTokenHasExpired(true)
                 this.onError(error)
-                return
             }
-            else {
+            else if (error.code != APIErrorCode.FAILED_TOKEN_REFRESH) {
                 this.onError(new APIError(APIErrorCode.GENERAL, `There was an refreshing ${this.currentUserMedia.toLowerCase()} from your library. Please try again later.`))
             }
             throw error
@@ -415,31 +415,22 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
         try {
             await this.verifyAccessToken()
 
-            if (this.currentUserMedia === UserLibraryMedia.Playlists) {
-                if (this.userPlaylists.hasFetchedAll) return false
-    
+            if (this.currentUserMedia === UserLibraryMedia.Playlists && !this.userPlaylists.hasFetchedAll) {
                 await this.getUserPlaylists()
             }
-            else if (this.currentUserMedia === UserLibraryMedia.Albums) {
-                if (this.userAlbums.hasFetchedAll) return false
-    
+            else if (this.currentUserMedia === UserLibraryMedia.Albums && !this.userAlbums.hasFetchedAll) {
                 await this.getUserAlbums()
             }
-            else if (this.currentUserMedia === UserLibraryMedia.LikedTracks) {
-                if (this.userLikedTracks.hasFetchedAll) return false
-                
+            else if (this.currentUserMedia === UserLibraryMedia.LikedTracks && !this.userLikedTracks.hasFetchedAll) {
                 await this.getUserLikedTracks()
             }
         }
         catch (error: any) {
-            console.error(error)
-
             if (error instanceof APIError && error.code === APIErrorCode.EXPIRED_TOKEN) {
                 this.setTokenHasExpired(true)
                 this.onError(error)
-                return
             }
-            else {
+            else if (error.code != APIErrorCode.FAILED_TOKEN_REFRESH) {
                 this.onError(new APIError(APIErrorCode.GENERAL, `There was an loading more ${this.currentUserMedia.toLowerCase()} from your library. Please try again later.`))
             }
             throw error
@@ -479,14 +470,14 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
 
         this.accessTokenCreationDate =  savedUserData.accessTokenCreationDate!,
         this.accessToken =      savedUserData.accessToken!,
-        this.userToken =      savedUserData.userToken!,
+        this.userToken =        savedUserData.userToken!,
         this.refreshToken =     savedUserData.refreshToken!,
         this.musicPlatform =    savedUserData.musicPlatform!,
-        this.tokenExpiresInMs =        savedUserData.tokenExpiresInMs!
-        this.userDetails =            savedUserData.userDetails!
-        this.hasTokenExpired =        savedUserData.hasTokenExpired!
-        this.isSignedIn =               savedUserData.isSignedIn!
-        this.currentUserMedia =       savedUserData.currentUserMedia!
+        this.tokenExpiresInMs =    savedUserData.tokenExpiresInMs!
+        this.userDetails =          savedUserData.userDetails!
+        this.hasTokenExpired =      savedUserData.hasTokenExpired!
+        this.isSignedIn =           savedUserData.isSignedIn!
+        this.currentUserMedia =     savedUserData.currentUserMedia!
 
         this.userPlaylists =  savedUserData.userPlaylists!
 
@@ -508,40 +499,40 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
     saveState() {
         let newData = {} as AppleMusicUserData
         
-        newData.isSignedIn = this.isSignedIn
+        newData.isSignedIn    = this.isSignedIn
         newData.musicPlatform = this.musicPlatform
-        newData.userDetails = this.userDetails
+        newData.userDetails   = this.userDetails
         newData.currentUserMedia = this.currentUserMedia
-        newData.hasTokenExpired = this.hasTokenExpired
+        newData.hasTokenExpired  = this.hasTokenExpired
         
-        newData.accessTokenCreationDate = this.accessTokenCreationDate
-        newData.userToken = this.userToken
+        newData.userToken        = this.userToken
         newData.tokenExpiresInMs = this.tokenExpiresInMs
-        newData.accessToken = this.accessToken
+        newData.accessToken  = this.accessToken
         newData.refreshToken = this.refreshToken
-        newData.tokenExpiresInMs = this.tokenExpiresInMs
-
+        newData.tokenExpiresInMs        = this.tokenExpiresInMs
+        newData.accessTokenCreationDate = this.accessTokenCreationDate
+        
         newData.userPlaylists = {
             offset:        this.userPlaylists.offset === 0 ? 0 : Math.min(this.userPlaylists.offset, LIBRARY_COLLECTION_LIMIT), 
             items:         this.userPlaylists.items.slice(0, LIBRARY_COLLECTION_LIMIT),
-            hasFetchedAll:  Math.min(this.userPlaylists.items.length, LIBRARY_COLLECTION_LIMIT) < this.userPlaylists.totalItems ? false : true,
-            totalItems:     this.userPlaylists.totalItems
+            hasFetchedAll: Math.min(this.userPlaylists.items.length, LIBRARY_COLLECTION_LIMIT) < this.userPlaylists.totalItems ? false : true,
+            totalItems:    this.userPlaylists.totalItems
         }
 
         if (this.userLikedTracks.offset >= 0) {
             newData.userLikedTracks = {
                 offset:        this.userLikedTracks.offset === 0 ? 0 : Math.min(this.userLikedTracks.offset, LIBRARY_COLLECTION_LIMIT), 
                 items:         this.userLikedTracks.items.slice(0, LIBRARY_COLLECTION_LIMIT),
-                hasFetchedAll:  Math.min(this.userLikedTracks.items.length, LIBRARY_COLLECTION_LIMIT) < this.userLikedTracks.totalItems ? false : true,
-                totalItems:     this.userLikedTracks.totalItems
+                hasFetchedAll: Math.min(this.userLikedTracks.items.length, LIBRARY_COLLECTION_LIMIT) < this.userLikedTracks.totalItems ? false : true,
+                totalItems:    this.userLikedTracks.totalItems
             }
         }
         if (this.userAlbums.offset >= 0) {
             newData.userAlbums = {
                 offset:        this.userAlbums.offset === 0 ? 0 : Math.min(this.userAlbums.offset, LIBRARY_COLLECTION_LIMIT), 
                 items:         this.userAlbums.items.slice(0, LIBRARY_COLLECTION_LIMIT),
-                hasFetchedAll:  Math.min(this.userAlbums.items.length, LIBRARY_COLLECTION_LIMIT) < this.userAlbums.totalItems ? false : true,
-                totalItems:     this.userAlbums.totalItems
+                hasFetchedAll: Math.min(this.userAlbums.items.length, LIBRARY_COLLECTION_LIMIT) < this.userAlbums.totalItems ? false : true,
+                totalItems:    this.userAlbums.totalItems
             }
         }
 

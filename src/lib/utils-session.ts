@@ -1,4 +1,4 @@
-import { toastMessages } from "./store"
+import { toaster } from "./store"
 import { Session } from "./pom-session"
 import { HrsMinsFormatOption, ProgressVisualPartType, SessionState, ToastContext } from "./enums"
 import { formatTimeToHHMM, getDifferenceInSecs, getTimePeriodString, secsToHHMM } from "./utils-date"
@@ -92,12 +92,12 @@ export const didInitSession = () => localStorage.getItem("session") != null
  * Session related toast messages.
  * @param msg    Message to be displayed.
  */
-export const createSessionToastMsg = (msg: string) => {
+export const createSessionToastItem = (msg: string) => {
     const toastMessage = {
         context: ToastContext.Session,
         message: msg,
     }
-    toastMessages.update((toasts: ToastMsg[]) => [...toasts, toastMessage])
+    toaster.update((toaster: ToastItem[]) => [...toaster, toastMessage])
 }
 
 /**

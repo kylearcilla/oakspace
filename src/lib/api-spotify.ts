@@ -6,8 +6,8 @@ import { base64encode, generateCodeVerifier, hashSHA256 } from "./utils-general"
 
 import { APIError } from "./errors"
 import { SpotifyMusicUserData } from "./music-spotify-user-data"
-import { SpotifyMusicPlayer } from "./music-spotify-player"
 import { APIErrorCode, MusicMediaType, MusicPlatform } from "./enums"
+import { MusicSettingsManager } from "./music-settings-manager"
 
 const CLIENT_ID     = "ed4c34b3aa704c6fbc88ca3e2957ced4"
 const REDIRECT_URI  = "http://localhost:5173/home"
@@ -27,16 +27,17 @@ export async function initSpotifyMusic() {
     try {
         if (didInitMusicUser()) {
             new SpotifyMusicUserData()
+            new MusicSettingsManager(MusicPlatform.Spotify)     // create here since redirect is to home page
             await verifyForPlayerSession(MusicPlatform.Spotify)
         }
         else {
             await requestSpotifyUserAuth()
-            initMusicToast(MusicPlatform.Spotify, "Log in Sucess!")
+            initMusicToast(MusicPlatform.Spotify, "Log in Success!")
         }
     }
     catch(error: any) {
         console.error(error)
-        musicAPIErrorHandler(new APIError(APIErrorCode.AUTHORIZATION_ERROR, error.message ?? "There was an error initializing Spotify Music."))
+        musicAPIErrorHandler(new APIError(APIErrorCode.AUTHORIZATION_ERROR))
     }
 }
 
@@ -47,25 +48,32 @@ export async function initSpotifyMusic() {
  * If accepts the auth code in the url after redirect.
  */
 export async function requestSpotifyUserAuth() {
-    const codeVerifier = generateCodeVerifier(64)
-    localStorage.setItem("code_verifier", codeVerifier)
-    localStorage.removeItem("url-code-flag")
-
-    const hashed = await hashSHA256(codeVerifier)
-    const codeChallenge = base64encode(hashed)
-
-    const params =  {
-        response_type: 'code', code_challenge_method: 'S256',
-        client_id: CLIENT_ID, scope: SCOPES_STR, redirect_uri: REDIRECT_URI,
-        code_challenge: codeChallenge
+    try {
+        const codeVerifier = generateCodeVerifier(64)
+        localStorage.setItem("code_verifier", codeVerifier)
+        localStorage.removeItem("url-code-flag")
+    
+        const hashed = await hashSHA256(codeVerifier)
+        const codeChallenge = base64encode(hashed)
+    
+        const params =  {
+            response_type: 'code', code_challenge_method: 'S256',
+            client_id: CLIENT_ID, scope: SCOPES_STR, redirect_uri: REDIRECT_URI,
+            code_challenge: codeChallenge
+        }
+    
+        AUTH_URL.search = new URLSearchParams(params).toString()
+        window.location.href = AUTH_URL.toString()
     }
-
-    AUTH_URL.search = new URLSearchParams(params).toString()
-    window.location.href = AUTH_URL.toString()
+    catch (error: any) {
+        console.error(error)
+        musicAPIErrorHandler(new APIError(APIErrorCode.AUTHORIZATION_ERROR))
+    }
 }
 
 /**
  * Check to see if app has redirected from the consent page by checking if code param is in URL.
+ * Allow the auth success flow only if user has not previously logged in.
  */
 export function didSpotifyUserAuthApp() {
     const url =  new URL(window.location.href)
@@ -97,6 +105,7 @@ export async function getSpotifyCodeFromURLAndLogin() {
     }
     catch(e: any) {
         console.error(e)
+        musicAPIErrorHandler(new APIError(APIErrorCode.AUTHORIZATION_ERROR))
         localStorage.removeItem("code_verifier")
         localStorage.removeItem("url-code-flag")
     }
@@ -104,27 +113,22 @@ export async function getSpotifyCodeFromURLAndLogin() {
 
 /**
  * Runs after a successful user authorization.
- * Runs after a first-time log in or a log in during token state.
+ * Runs after a first-time log in or a log in during an expired-token state.
  * Will request for new access token and initialize a new Spotify Data Store.
  * 
  * @param code    Code verifier required for PKCE Authorization	
  */
 async function userAuthSuccessHandler(code: string) {
     const codeVerifier = localStorage.getItem("code_verifier")!
+    const res = await getSpotifyAcessToken(code, codeVerifier)
+
+    await initSpotifyAfterAuth({
+        accessToken: res.access_token, expiresIn: res.expires_in,
+        refreshToken: res.refresh_token, authCode: codeVerifier
+    })
     
-    try {
-        const res = await getSpotifyAcessToken(code, codeVerifier)
-        await initSpotifyAfterAuth({
-            accessToken: res.access_token, expiresIn: res.expires_in,
-            refreshToken: res.refresh_token, authCode: codeVerifier
-        })
-        
-        localStorage.setItem("url-code-flag", JSON.stringify(true))
-        initMusicToast(MusicPlatform.Spotify, "Log in Sucess!")
-    }
-    catch (error: any) {
-        throw error
-    }
+    localStorage.setItem("url-code-flag", JSON.stringify(true))
+    initMusicToast(MusicPlatform.Spotify, "Log in Success!")
 }
 
 /**
@@ -136,9 +140,10 @@ async function userAuthSuccessHandler(code: string) {
 async function initSpotifyAfterAuth(initData: SpotifyInitData) {
     if (!get(musicDataStore)) {
         new SpotifyMusicUserData()
+        new MusicSettingsManager(MusicPlatform.Spotify)
     }
 
-    await (get(musicDataStore) as SpotifyMusicUserData).initSpotifyAfterAuth(initData)
+    await get(musicDataStore)!.init(initData)
 }
 
 /**
@@ -148,29 +153,24 @@ async function initSpotifyAfterAuth(initData: SpotifyInitData) {
  * @returns               Important creds data for requesting user data.
  */
 export async function getSpotifyAcessToken(code: string, codeVerifier: string): Promise<SpotifyAuthTokenResponse> {
-    try {
-        const headers = new Headers({ 
-            "Content-Type": "application/x-www-form-urlencoded" 
-        })
-        const body = new URLSearchParams({
-            client_id: CLIENT_ID, redirect_uri: REDIRECT_URI,
-            grant_type: 'authorization_code',
-            code, code_verifier: codeVerifier
-        })
+    const headers = new Headers({ 
+        "Content-Type": "application/x-www-form-urlencoded" 
+    })
+    const body = new URLSearchParams({
+        client_id: CLIENT_ID, redirect_uri: REDIRECT_URI,
+        grant_type: 'authorization_code',
+        code, code_verifier: codeVerifier
+    })
 
-        const res = await fetch("https://accounts.spotify.com/api/token", { method: 'POST', headers, body })
-        const data = await res.json()
+    const res = await fetch("https://accounts.spotify.com/api/token", { method: 'POST', headers, body })
+    const data = await res.json()
 
-        if (!res.ok) {
-            console.error(`There was an error getting a Spotify Web API access token. \n URL: ${res.url} \n Status: ${res.status} \n Error: ${data.error}. \n Description: ${data.error_description}.`)
-            throwSpotifyAPIError(res.status, data.error.message)
-        }
-    
-        return data
+    if (!res.ok) {
+        console.error(`There was an error getting a Spotify Web API access token. \n URL: ${res.url} \n Status: ${res.status} \n Error: ${data.error}. \n Description: ${data.error_description}.`)
+        throwSpotifyAPIError(res.status, data.error.message)
     }
-    catch(e: any) {
-        throw e
-    }
+
+    return data
 }
 
 /**
@@ -238,39 +238,34 @@ export async function getSpotifyUserData(accessToken: string): Promise<MusicUser
  * @returns           User's playlists from their library
  */
 export async function getSpotfifyUserPlaylists(accessToken: string, offset: number, limit = LIBRARY_COLLECTION_LIMIT): Promise<{ items: Playlist[], total: number }> {
-    try {
-        const headers = new Headers({
-            "Authorization": `Bearer ${accessToken}`
-        })
-        const res  = await fetch(`https://api.spotify.com/v1/me/playlists?limit=${limit}&offset=${offset}`, { method: 'GET', headers })
-        const data = await res.json()
+    const headers = new Headers({
+        "Authorization": `Bearer ${accessToken}`
+    })
+    const res  = await fetch(`https://api.spotify.com/v1/me/playlists?limit=${limit}&offset=${offset}`, { method: 'GET', headers })
+    const data = await res.json()
 
-        if (!res.ok) {
-            console.error(`There was an error getting a user's saved playlists. \n URL: ${res.url} \n Status: ${res.status} \n Description: ${data.error.message}.`)
-            throwSpotifyAPIError(res.status, data.error.message)
-        }
-
-        const playlists: Playlist[] = (data.items as any[]).map((pl: any) => {
-            return {
-                id: pl.id,
-                name: pl.name,
-                author: pl.owner.display_name,
-                authorUrl: pl.owner.external_urls.spotify,
-                artworkImgSrc: pl.images[pl.images.length < 2 ? 0 : 1].url,
-                genre: "",
-                url: pl.external_urls.spotify,
-                length: pl.tracks.total,
-                type: MusicMediaType.Playlist,
-                description: pl?.description ?? ""
-            } as Playlist
-        })
-        return { 
-            items: playlists,
-            total: data.total
-        }
+    if (!res.ok) {
+        console.error(`There was an error getting a user's saved playlists. \n URL: ${res.url} \n Status: ${res.status} \n Description: ${data.error.message}.`)
+        throwSpotifyAPIError(res.status, data.error.message)
     }
-    catch(e: any) {
-        throw e
+
+    const playlists: Playlist[] = (data.items as any[]).map((pl: any) => {
+        return {
+            id: pl.id,
+            name: pl.name,
+            author: pl.owner.display_name,
+            authorUrl: pl.owner.external_urls.spotify,
+            artworkImgSrc: pl.images[pl.images.length < 2 ? 0 : 1].url,
+            genre: "",
+            url: pl.external_urls.spotify,
+            length: pl.tracks.total,
+            type: MusicMediaType.Playlist,
+            description: pl?.description ?? ""
+        } as Playlist
+    })
+    return { 
+        items: playlists,
+        total: data.total
     }
 }
 
@@ -280,40 +275,35 @@ export async function getSpotfifyUserPlaylists(accessToken: string, offset: numb
  * @returns           User's saved tracks from their library
  */
 export async function getSpotfifyUserLikedTracks(accessToken: string, offset: number, limit = LIBRARY_COLLECTION_LIMIT): Promise<{ items: Track[], total: number }> {
-    try {
-        const headers = new Headers({ "Authorization": `Bearer ${accessToken}` })
-        const res  = await fetch(`https://api.spotify.com/v1/me/tracks?limit=${limit}&offset=${offset}`, { method: 'GET', headers })
-        const data = await res.json()
+    const headers = new Headers({ "Authorization": `Bearer ${accessToken}` })
+    const res  = await fetch(`https://api.spotify.com/v1/me/tracks?limit=${limit}&offset=${offset}`, { method: 'GET', headers })
+    const data = await res.json()
 
-        if (!res.ok) {
-            console.error(`There was an error getting a user's saved tracks. \n URL: ${res.url} \n Status: ${res.status} \n Description: ${data.error.message}.`)
-            throwSpotifyAPIError(res.status, data.error.message)
-        }
-
-        const tracks: Track[] = (data.items as any[]).map((item: any) => {
-            return {
-                id: item.track.id,
-                name: item.track.name,
-                author: item.track.artists[0].name,
-                authorUrl: "",
-                artworkImgSrc: item.track.album.images[item.track.album.images.length < 2 ? 0 : 1].url,
-                genre: "",
-                url: item.track.external_urls.spotify,
-                duration: item.track.duration_ms,
-                album: item.track.album.name,
-                albumId: item.track.album.id,
-                type: MusicMediaType.Track,
-                playlistId: "",
-                fromLib: true
-            }
-        })
-        return { 
-            items: tracks,
-            total: data.total
-        }
+    if (!res.ok) {
+        console.error(`There was an error getting a user's saved tracks. \n URL: ${res.url} \n Status: ${res.status} \n Description: ${data.error.message}.`)
+        throwSpotifyAPIError(res.status, data.error.message)
     }
-    catch(e: any) {
-        throw e
+
+    const tracks: Track[] = (data.items as any[]).map((item: any) => {
+        return {
+            id: item.track.id,
+            name: item.track.name,
+            author: item.track.artists[0].name,
+            authorUrl: "",
+            artworkImgSrc: item.track.album.images[item.track.album.images.length < 2 ? 0 : 1].url,
+            genre: "",
+            url: item.track.external_urls.spotify,
+            duration: item.track.duration_ms,
+            album: item.track.album.name,
+            albumId: item.track.album.id,
+            type: MusicMediaType.Track,
+            playlistId: "",
+            fromLib: true
+        }
+    })
+    return { 
+        items: tracks,
+        total: data.total
     }
 }
 
@@ -537,12 +527,14 @@ export function getSpotifyMediaUri(media: Media) {
  * Get the right error object to throw after a failed interaction with the a Spotify Music API.
  * Error message shown as a toast is handled by the error handler.
  * 
- * @param     error     Error context extracted from the API reesponse
- * @returns             API error with proper context using a code and message.
+ * Spotify Web API Errrors: https://developer.spotify.com/documentation/web-api/concepts/api-calls
+ * 
+ * @param     error   Error context extracted from the API reesponse
+ * @returns           API error with proper context using a code and message.
  */
 export function throwSpotifyAPIError(status: number, message: string) {
     if (status === 401 && message === "The access token expired") {
-        throw new APIError(APIErrorCode.EXPIRED_TOKEN, "Token expired. Log in again to continue.")
+        throw new APIError(APIErrorCode.AUTHORIZATION_ERROR, "Invalid Credentials.")
     }
     else if (status === 404) {
         throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Requested media unavailable.")

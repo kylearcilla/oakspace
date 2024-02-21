@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { ModalType } from "$lib/enums"
+    import { ModalType, MusicPlatform } from "$lib/enums"
     import { getThemeFromSection, setNewTheme } from "$lib/utils-appearance"
-	import { themeState, homeViewLayout, musicPlayerStore } from "$lib/store"
-	import { hideWideMenuBar, openModal, showWideMenuBar } from "$lib/utils-home"
+	import { themeState, homeViewLayout, musicPlayerStore, toaster } from "$lib/store"
+	import { hideWideMenuBar, makeToast, openModal, showWideMenuBar } from "$lib/utils-home"
 	import { onMount } from "svelte";
 	import { getElemById } from "$lib/utils-general";
 	import SideBarCalendar from "./SideBarCalendar.svelte";
@@ -19,6 +19,7 @@
     let selectTextTabModifier = ""
     let initDragXPos = -1
     let isWideBarMenuOpen = true
+    let count = 0
 
     $: {
         isWideBarMenuOpen = $homeViewLayout.isLeftWideMenuOpen
@@ -101,7 +102,28 @@
             goto("/home")
         }
         else if (textTab === TextTab.Productivity) {
-            goto("/home/productivity")
+            // Array of sentences
+            const sentences = [
+                "Life is like a box of chocolates, you never know what you're gonna get.",
+                "The early bird catches the worm, but the second mouse gets the cheese.",
+                "Don't cry because it's over, smile because it happened.",
+                "All our dreams can come true, if we have the courage to pursue them.",
+                "I have not failed. I've just found 10,000 ways that won't work.",
+                "Success is not final, failure is not fatal: It is the courage to continue that counts.",
+                "The only way to do great work is to love what you do.",
+                "You miss 100% of the shots you don't take.",
+                "The future belongs to those who believe in the beauty of their dreams.",
+                "In the end, it's not the years in your life that count. It's the life in your years."
+            ];
+
+            // Randomly select a sentence
+            const randomIndex = Math.floor(Math.random() * sentences.length);
+            const message = sentences[randomIndex];
+
+            makeToast({
+                context: MusicPlatform.AppleMusic, message: "0"
+            })
+            // goto("/home/productivity")
         }
         else if (textTab === TextTab.Goals) {
             goto("/home/goals")
@@ -129,15 +151,12 @@
             <div class="nav-menu__divider"></div>
             <div class={`nav-menu__icon-tabs ${$themeState.isDarkTheme ? "nav-menu__icon-tabs--dark-theme" : ""} nav-menu__icon-tabs--${$themeState.title === "Dark Mode" ? "dark-default" : ($themeState.title === "Light Mode" ? "light-default" : "simple-styling")}`}>
                 <button on:click={() => openModal(ModalType.Appearance)} class="nav-menu__icon-tab nav-menu__icon-tab--appearance">
-                    <!-- <span class="tool-tip-text tool-tip-text--left">Appearance</span> -->
                     <i class="fa-solid fa-brush"></i>
                 </button>
                 <button on:click={() => openModal(ModalType.Music)} class="nav-menu__icon-tab nav-menu__icon-tab--music">
-                    <!-- <span class="tool-tip-text tool-tip-text--left">Music</span> -->
                     <i class="fa-solid fa-compact-disc"></i>
                 </button>
                 <button on:click={() => openModal(ModalType.Youtube)} class="nav-menu__icon-tab nav-menu__icon-tab--vid">
-                    <!-- <span class="tool-tip-text tool-tip-text--left">Youtube</span> -->
                     <i class="fa-brands fa-youtube"></i>
                 </button>
             </div>
@@ -149,28 +168,13 @@
                 class={`theme-mode-toggle 
                         ${$themeState.isDarkTheme ? "theme-mode-toggle--dark" : "theme-mode-toggle--light"}
                         ${$musicPlayerStore?.doShowPlayer ? "theme-mode-toggle--music-player-active" : ""}
-                      `}
+                `}
             >
                 <div class="theme-mode-toggle__container">
                     <div class="theme-mode-toggle__sun">
-                        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <g filter="url(#filter0_d_2609_23316)">
-                                <path d="M17.297 20.5476C19.3712 20.5476 21.0527 18.8661 21.0527 16.7919C21.0527 14.7177 19.3712 13.0362 17.297 13.0362C15.2229 13.0362 13.5414 14.7177 13.5414 16.7919C13.5414 18.8661 15.2229 20.5476 17.297 20.5476Z" fill={`${!$themeState.isDarkTheme ? "#C7C2B3" : $themeState.themeToggleBtnIconColor}`}/>
-                                <path d="M17.297 21.1618C14.8876 21.1618 12.9273 19.2015 12.9273 16.792C12.9273 14.3825 14.8876 12.4222 17.297 12.4222C19.7065 12.4222 21.6668 14.3825 21.6668 16.792C21.6668 19.2015 19.7065 21.1618 17.297 21.1618ZM17.297 13.6503C15.5648 13.6503 14.1555 15.0596 14.1555 16.7919C14.1555 18.5242 15.5648 19.9335 17.297 19.9335C19.0293 19.9335 20.4386 18.5242 20.4386 16.7919C20.4386 15.0596 19.0293 13.6503 17.297 13.6503Z" fill={`${!$themeState.isDarkTheme ? "#C7C2B3" : $themeState.themeToggleBtnIconColor}`}/>
-                                <path d="M17.297 11.5164C16.9579 11.5164 16.683 11.2414 16.683 10.9023V8.90561C16.683 8.56646 16.9579 8.2915 17.297 8.2915C17.6362 8.2915 17.9111 8.56646 17.9111 8.90561V10.9023C17.9111 11.2414 17.6362 11.5164 17.297 11.5164Z" fill={`${!$themeState.isDarkTheme ? "#C7C2B3" : $themeState.themeToggleBtnIconColor}`}/>
-                                <path d="M17.2969 25.2915C16.9577 25.2915 16.6828 25.0165 16.6828 24.6774V22.6807C16.6828 22.3416 16.9577 22.0666 17.2969 22.0666C17.636 22.0666 17.911 22.3416 17.911 22.6807V24.6774C17.911 25.0166 17.636 25.2915 17.2969 25.2915Z" fill={`${!$themeState.isDarkTheme ? "#C7C2B3" : $themeState.themeToggleBtnIconColor}`}/>
-                                <path d="M25.1828 17.4058H23.1862C22.847 17.4058 22.5721 17.1309 22.5721 16.7917C22.5721 16.4526 22.847 16.1776 23.1862 16.1776H25.1828C25.5219 16.1776 25.7969 16.4526 25.7969 16.7917C25.7969 17.1309 25.522 17.4058 25.1828 17.4058Z" fill={`${!$themeState.isDarkTheme ? "#C7C2B3" : $themeState.themeToggleBtnIconColor}`}/>
-                                <path d="M11.4076 17.4057H9.41097C9.07182 17.4057 8.79688 17.1307 8.79688 16.7916C8.79688 16.4524 9.07182 16.1775 9.41097 16.1775H11.4076C11.7467 16.1775 12.0217 16.4524 12.0217 16.7916C12.0217 17.1307 11.7467 17.4057 11.4076 17.4057Z" fill={`${!$themeState.isDarkTheme ? "#C7C2B3" : $themeState.themeToggleBtnIconColor}`}/>
-                                <path d="M21.4613 13.241C21.3042 13.241 21.147 13.1811 21.0271 13.0611C20.7873 12.8213 20.7873 12.4324 21.0271 12.1927L22.4389 10.7809C22.6788 10.541 23.0676 10.541 23.3073 10.7809C23.5472 11.0207 23.5472 11.4096 23.3073 11.6493L21.8955 13.0611C21.7756 13.1811 21.6184 13.241 21.4613 13.241Z" fill={`${!$themeState.isDarkTheme ? "#C7C2B3" : $themeState.themeToggleBtnIconColor}`}/>
-                                <path d="M11.7204 22.9818C11.5632 22.9818 11.406 22.9219 11.2862 22.8019C11.0463 22.5621 11.0463 22.1732 11.2862 21.9335L12.698 20.5216C12.9378 20.2818 13.3267 20.2818 13.5664 20.5216C13.8062 20.7615 13.8062 21.1503 13.5664 21.3901L12.1546 22.8019C12.0347 22.9219 11.8776 22.9818 11.7204 22.9818Z" fill={`${!$themeState.isDarkTheme ? "#C7C2B3" : $themeState.themeToggleBtnIconColor}`}/>
-                                <path d="M22.8731 22.9818C22.716 22.9818 22.5588 22.9219 22.4389 22.8019L21.0271 21.3901C20.7873 21.1502 20.7873 20.7614 21.0271 20.5216C21.2669 20.2818 21.6558 20.2818 21.8955 20.5216L23.3073 21.9335C23.5472 22.1733 23.5472 22.5622 23.3073 22.8019C23.1875 22.9219 23.0303 22.9818 22.8731 22.9818Z" fill={`${!$themeState.isDarkTheme ? "#C7C2B3" : $themeState.themeToggleBtnIconColor}`}/>
-                                <path d="M13.1322 13.241C12.9751 13.241 12.8179 13.1811 12.698 13.0611L11.2862 11.6493C11.0463 11.4095 11.0463 11.0207 11.2862 10.7809C11.526 10.541 11.9148 10.541 12.1546 10.7809L13.5664 12.1927C13.8062 12.4325 13.8062 12.8213 13.5664 13.0611C13.4465 13.1811 13.2894 13.241 13.1322 13.241Z" fill={`${!$themeState.isDarkTheme ? "#C7C2B3" : $themeState.themeToggleBtnIconColor}`}/>
-                                </g>
-                                <defs>
-                                    <stop stop-color="#C7C2B3"/>
-                                    <stop offset="0.966295" stop-color="#C7C2B3"/>
-                                </defs>
-                            </svg>
+                        <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill={$themeState.themeToggleBtnIconColor} d="M9.60542 0.572266C10.1786 0.572266 10.6432 1.0369 10.6432 1.61005V3.19737C10.6432 3.77051 10.1786 4.23515 9.60542 4.23515C9.03227 4.23515 8.56764 3.77051 8.56764 3.19737V1.61005C8.56764 1.0369 9.03227 0.572266 9.60542 0.572266ZM13.9398 10.3399C13.9398 12.5988 12.1085 14.43 9.84955 14.43C7.59063 14.43 5.75945 12.5988 5.75945 10.3399C5.75945 8.08099 7.59063 6.24968 9.84955 6.24968C12.1085 6.24968 13.9398 8.08099 13.9398 10.3399ZM0.0820312 10.584C0.0820312 10.0109 0.546666 9.54625 1.11981 9.54625H2.707C3.28015 9.54625 3.74478 10.0109 3.74478 10.584C3.74478 11.1572 3.28015 11.6218 2.707 11.6218H1.11981C0.546666 11.6218 0.0820312 11.1572 0.0820312 10.584ZM18.5794 11.1334C19.1526 11.1334 19.6172 10.6688 19.6172 10.0957C19.6172 9.52251 19.1526 9.05787 18.5794 9.05787H16.9921C16.4189 9.05787 15.9543 9.52251 15.9543 10.0957C15.9543 10.6688 16.4189 11.1334 16.9921 11.1334H18.5794ZM9.05602 19.0696C9.05602 19.6428 9.52065 20.1074 10.0938 20.1074C10.6669 20.1074 11.1316 19.6428 11.1316 19.0696V17.4825C11.1316 16.9093 10.6669 16.4447 10.0938 16.4447C9.52065 16.4447 9.05602 16.9093 9.05602 17.4825V19.0696ZM2.77023 3.60574C3.17538 3.20046 3.83252 3.20046 4.23781 3.60574L5.36023 4.72817C5.76551 5.13345 5.76551 5.7906 5.36023 6.19588C4.95495 6.60116 4.2978 6.60116 3.89252 6.19588L2.77023 5.07345C2.36482 4.66817 2.36482 4.01102 2.77023 3.60574ZM15.4613 17.0741C15.8666 17.4794 16.5237 17.4794 16.929 17.0741C17.3343 16.6687 17.3343 16.0116 16.929 15.6064L15.8067 14.4839C15.4014 14.0787 14.7443 14.0787 14.339 14.4839C13.9337 14.8892 13.9337 15.5464 14.339 15.9516L15.4613 17.0741ZM16.5837 3.26046C16.989 3.66587 16.989 4.32289 16.5837 4.72817L15.4613 5.85059C15.056 6.25588 14.3989 6.25588 13.9936 5.85059C13.5883 5.44531 13.5883 4.78817 13.9936 4.38289L15.116 3.26059C15.5213 2.85518 16.1784 2.85518 16.5837 3.26046ZM3.11551 15.9516C2.71023 16.3569 2.71023 17.0141 3.11551 17.4194C3.52079 17.8245 4.17794 17.8245 4.58322 17.4194L5.70551 16.2969C6.1108 15.8916 6.1108 15.2345 5.70551 14.8292C5.30023 14.4239 4.64309 14.4239 4.23781 14.8292L3.11551 15.9516Z"/>
+                        </svg>                                                        
                     </div>
                     <div class="theme-mode-toggle__moon">
                         <svg width="37" height="37" viewBox="0 0 37 37" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -182,20 +186,20 @@
                             </g>
                             {#if $themeState.isDarkTheme}
                                 <defs>
-                                <filter id="filter0_d_2572_18359" x="0.464844" y="0.357422" width="35.3984" height="36.0054" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-                                <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-                                <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-                                <feOffset/>
-                                <feGaussianBlur stdDeviation="6"/>
-                                <feComposite in2="hardAlpha" operator="out"/>
-                                <feColorMatrix type="matrix" values="0 0 0 0 0.945098 0 0 0 0 0.8 0 0 0 0 0.643137 0 0 0 0.31 0"/>
-                                <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2572_18359"/>
-                                <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2572_18359" result="shape"/>
-                                </filter>
-                                <linearGradient id="paint0_linear_2572_18359" x1="17.023" y1="9.67795" x2="18.2169" y2="20.7874" gradientUnits="userSpaceOnUse">
-                                <stop stop-color="#FAEEE3"/>
-                                <stop offset="1" stop-color="#F2C59C"/>
-                                </linearGradient>
+                                    <filter id="filter0_d_2572_18359" x="0.464844" y="0.357422" width="35.3984" height="36.0054" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                                    <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+                                    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                                    <feOffset/>
+                                    <feGaussianBlur stdDeviation="6"/>
+                                    <feComposite in2="hardAlpha" operator="out"/>
+                                    <feColorMatrix type="matrix" values="0 0 0 0 0.945098 0 0 0 0 0.8 0 0 0 0 0.643137 0 0 0 0.31 0"/>
+                                    <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2572_18359"/>
+                                    <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2572_18359" result="shape"/>
+                                    </filter>
+                                    <linearGradient id="paint0_linear_2572_18359" x1="17.023" y1="9.67795" x2="18.2169" y2="20.7874" gradientUnits="userSpaceOnUse">
+                                    <stop stop-color="#FAEEE3"/>
+                                    <stop offset="1" stop-color="#F2C59C"/>
+                                    </linearGradient>
                                 </defs>
                             {/if}
                         </svg>
@@ -537,9 +541,9 @@
             height: 100%;
             @include flex(center, space-between);
             flex-direction: column;
+            padding-top: 9px;
         }
         &__sun {
-            margin-top: 2px;
             z-index: 2;
         }
         &__moon {

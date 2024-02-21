@@ -48,16 +48,11 @@ export class MusicSettingsManager {
 
         this.platform = platform
         musicSettingsManager.set(this)
-    }
-
-    /* Signing In & Out */
-
-    onUserSignIn(isSignedIn: boolean) {
-        if (!isSignedIn) return
 
         this.handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
     }
 
+    /* Signing In & Out */
     onPlatformOptionClicked(platform: MusicPlatform) {
         if (platform != this.platform) {
             musicLogout()
@@ -68,6 +63,7 @@ export class MusicSettingsManager {
         }
         else {
             musicLogout()
+            musicSettingsManager.set(null)
         }
     }
 
@@ -77,11 +73,16 @@ export class MusicSettingsManager {
     }
 
     /* Media Stuff */
+
+    /**
+     * Exectures after user clicks on any playable media.
+     * Prevents spamming by using debouncing.
+     * 
+     * @param mediaClicked   Media user has clicked.
+     * @param idx            Index location of the item clicked.
+     */
     async handleLibraryMediaClicked(mediaClicked: Media, idx: number) {
-        if (this.debounceTimeout != null) {
-            console.log("COOLDOWN BITCHS")
-            return
-        }
+        if (this.debounceTimeout != null) return
 
         try {
             const isFromLib = mediaClicked.fromLib
@@ -113,6 +114,7 @@ export class MusicSettingsManager {
             userLibrary: this.userLibrary, isUserLibraryLoading: this.isUserLibraryLoading
         })
     }
+
     setLibraryLoaded(error: any = null) {
         this.isUserLibraryLoading = false
         this.libError = error
@@ -122,6 +124,9 @@ export class MusicSettingsManager {
         })
     }
 
+    /**
+     * Update the current library colelction after an update to the current collection.
+     */
     updateLibrary() {
         const data = get(musicDataStore)
         if (!data) return
@@ -132,6 +137,12 @@ export class MusicSettingsManager {
         this.updateState({ userLibrary: this.userLibrary, currLibraryCollection: this.currLibraryCollection })
     }
 
+    /**
+     * Called when user clicks on a new Library collectino to view.
+     * If view has not been initialized yet, request for it.
+     * @param toMedia   New library view option.
+     * @returns 
+     */
     async updateLibraryMedia(toMedia: UserLibraryMedia) {
         try {
             if (toMedia === this.currLibraryCollection) return
@@ -148,6 +159,7 @@ export class MusicSettingsManager {
             this.updateLibrary()
             this.setLibraryLoaded()
 
+            // TODO: get rid of this
             setTimeout(() => this.isUserLibraryLoading = false, 1000)
         }
         catch {
@@ -155,6 +167,9 @@ export class MusicSettingsManager {
         }
     }
 
+    /**
+     * For pagination. Gets more items of current library collection when user scrolls down far enough.
+     */
     getMoreLibItems() {
         if (!this.shouldGetMoreLibItems()) return
         this.setLibraryLoading()
@@ -174,6 +189,9 @@ export class MusicSettingsManager {
         }, this.FETCH_MORE_LIB_ITEMS_COOLDOWN_MS)
     }
 
+    /**
+     * Gets a fresh batch of items for the current library collection.
+     */
     async refreshCurrentLibraryMedia() {
         let _userLibrary = this.userLibrary
         
@@ -191,8 +209,15 @@ export class MusicSettingsManager {
         }
     }
 
+    /**
+     * Determines whether more library items should be fetched.
+     * @returns    Whether more library items should be fetched.
+     */
     shouldGetMoreLibItems() {
-        return !this.isUserLibraryLoading && !this.userLibrary?.hasFetchedAll && !this.hasTokenExpired() && !this.libError
+        return !this.isUserLibraryLoading &&            
+               !this.userLibrary?.hasFetchedAll &&     
+               !this.hasTokenExpired() &&            
+               !this.libError
     }
 
     /* Categories */
@@ -207,6 +232,9 @@ export class MusicSettingsManager {
 
     /* List Scroll Handlers + Styling */
 
+    /**
+     * Scroll handler for the libray list section.
+     */
     handleLibListScroll() {
         const scrollStatus = getVertScrollStatus(this.libraryList!)
         this.handleLibListStyling(scrollStatus)
@@ -238,6 +266,9 @@ export class MusicSettingsManager {
         }
     }
 
+    /**
+     * Scroll handler for horizontal mood categories in the discover section.
+     */
     handleCategoriesScroll() {
         const scrollStatus = getHozScrollStatus(this.collectionList!)
         this.handleCategoriesListStyling(scrollStatus)

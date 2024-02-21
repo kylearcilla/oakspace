@@ -1,8 +1,9 @@
 
 import { AppleMusicUserData } from "./music-apple-user-data"
-import { APIErrorCode, MusicMediaType, MusicPlatform } from "./enums"
+import { APIErrorCode, LogoIcon, MusicMediaType, MusicPlatform } from "./enums"
 import { APIError } from "./errors"
-import { didInitMusicUser, musicAPIErrorHandler, verifyForPlayerSession } from "./utils-music"
+import { didInitMusicUser, initMusicToast, musicAPIErrorHandler, verifyForPlayerSession } from "./utils-music"
+import { MusicSettingsManager } from "./music-settings-manager"
 
 const ARTWORK_WIDTH = 400
 const ARTWORK_LENGTH = 400
@@ -13,13 +14,20 @@ const ARTWORK_LENGTH = 400
  */
 export async function initAppleMusic() {
     try {
-        let musicData = new AppleMusicUserData()
-        await musicData.initMusicData()
+        const hasSignedIn = didInitMusicUser()
+        const musicData = new AppleMusicUserData()
+        await musicData.init()
         await verifyForPlayerSession(MusicPlatform.AppleMusic)
+
+        if (hasSignedIn) {
+            new MusicSettingsManager(MusicPlatform.AppleMusic)
+        }
+        else {
+            initMusicToast(MusicPlatform.AppleMusic, "Log in Success!")
+        }
     } 
     catch (error: any) { 
-        musicAPIErrorHandler(new APIError(APIErrorCode.AUTHORIZATION_ERROR, "There was an error initializing Apple Music."))
-        throw(error)
+        musicAPIErrorHandler(new APIError(APIErrorCode.AUTHORIZATION_ERROR))
     }
 }
 /**
@@ -40,23 +48,20 @@ export async function getAppleMusicUserPlaylists (limit: number, offset: number)
 
         if (!reqRes.ok) {
             console.error(`Error fetching user playlists. \n URL: ${reqRes.url} \n Status: ${reqRes.status}`)
-            throw throwAppleMusicAPIError(Number(reqRes.status), "")
+            throw throwAppleMusicAPIError(Number(reqRes.status))
         }
 
-        const data = res.data
-        const playlistData: Playlist[] = []
-        const playlists = data.data
+        const playlistData = res.data.data
+        const playlists: Playlist[] = []
 
-        for (let i = 0; i < playlists.length; i++) {
-            const playlist = playlists[i];
+        for (let playlist of playlistData) {
             const attrs = playlist.attributes
 
             // if media has just been deleted, it can still appear breifly in the response but without some details
             if (attrs.name === undefined) continue
 
             const descriptionText = attrs?.description?.short ?? attrs?.description?.standard
-
-            const playlistObj = {
+            playlists.push({
                 id: attrs.playParams.id,
                 name: attrs.name,
                 description: descriptionText ?? "No Description.",
@@ -68,14 +73,12 @@ export async function getAppleMusicUserPlaylists (limit: number, offset: number)
                 url: `https://music.apple.com/library/playlist/${playlist.id}`,
                 type: MusicMediaType.Playlist,
                 fromLib: true
-            }
-            
-            playlistData.push(playlistObj)
+            })
         }
 
         return {
-            items: playlistData,
-            total: data.meta.total
+            items: playlists,
+            total: res.data.meta.total
         }
     }
     catch (error: any) {
@@ -101,20 +104,17 @@ export async function getAppleMusicUserAlbums (limit: number, offset: number): P
 
         if (!reqRes.ok) {
             console.error(`Error fetching user playlists. \n URL: ${reqRes.url} \n Status: ${reqRes.status}`)
-            throw throwAppleMusicAPIError(Number(reqRes.status), "")
+            throw throwAppleMusicAPIError(Number(reqRes.status))
         }
         
-        const data = res.data    
-        const albums = data.data
-        const _albums: Album[] = []
+        const albumsData = res.data.data
+        const albums: Album[] = []
 
-        for (let i = 0; i < albums.length; i++) {
-            const album = albums[i];
+        for (let album of albumsData) {
             const attrs = album.attributes
-
             if (attrs.name === undefined) continue
-
-            const albumObj = {
+            
+            albums.push({
                 id: attrs.playParams.id,
                 name: attrs.name,
                 description: "",
@@ -126,13 +126,11 @@ export async function getAppleMusicUserAlbums (limit: number, offset: number): P
                 url: `https://music.apple.com/library/albums/${album.id}`,
                 type: MusicMediaType.Album,
                 fromLib: true
-            }
-            
-            _albums.push(albumObj)
+            })
         }
         return {
-            items: _albums,
-            total: data.meta.total
+            items: albums,
+            total: res.data.meta.total
         }
     }
     catch (error: any) {
@@ -159,23 +157,19 @@ export async function getAppleMusicUserLikedTracks (limit: number, offset: numbe
     
         if (!reqRes.ok) {
             console.error(`Error fetching user playlists. \n URL: ${reqRes.url} \n Status: ${reqRes.status}`)
-            throw throwAppleMusicAPIError(Number(reqRes.status), "")
+            throw throwAppleMusicAPIError(Number(reqRes.status))
         }
         
-        const data = res.data    
-        const likedSongs = data.data
-        const _likedSongs: Track[] = []
+        const songsData = res.data.data
+        const songs: Track[] = []
     
-        for (let i = 0; i < likedSongs.length; i++) {
-            const song = likedSongs[i];
+        for (let song of songsData) {
             const attrs = song.attributes
-
             if (attrs.name === undefined) continue
-    
-            const songObj = {
+        
+            songs.push({
                 id: song.id,
                 name: attrs.name,
-                description: "",
                 artworkImgSrc: attrs?.artwork ? getArtworkSrc(attrs.artwork) : "",
                 author: attrs.artistName,
                 authorUrl: "",
@@ -184,15 +178,13 @@ export async function getAppleMusicUserLikedTracks (limit: number, offset: numbe
                 type: MusicMediaType.Track,
                 fromLib: true,
                 duration: attrs.durationInMillis, 
-                album: "", albumId: "", songId: "", playlistId: "",
-            }
-            
-            _likedSongs.push(songObj)
+                album: "", albumId: "", playlistId: "",
+            })
         }
     
         return {
-            items: _likedSongs,
-            total: data.meta.total
+            items: songs,
+            total: res.data.meta.total
         }
     }
     catch (error: any) {
@@ -219,11 +211,10 @@ export async function getApplePlaylistDetails(playlistId: string): Promise<Playl
         
         if (!reqRes.ok) {
             console.error(`Error fetching playlist details. \n URL: ${reqRes.url} \n Status: ${reqRes.status}`)
-            throw throwAppleMusicAPIError(Number(reqRes.status), "")
+            throw throwAppleMusicAPIError(Number(reqRes.status))
         }
     
         const data = res.data
-        console.log(res)
         const trackList: any[] = data.data[0].relationships.tracks.data
         const descriptionText = data.data[0].attributes?.description?.short ?? data.data[0].attributes?.description?.standard
     
@@ -268,27 +259,25 @@ export async function getRadioStationDetails(radioStationId: string): Promise<Ra
         
         if (!reqRes.ok) {
             console.error(`Error fetching radio station details. \n URL: ${reqRes.url} \n Status: ${reqRes.status}`)
-            throw throwAppleMusicAPIError(Number(reqRes.status), "")
+            throw throwAppleMusicAPIError(Number(reqRes.status))
         }
     
-        const data = res.data
-        const notes = data.data[0].attributes?.editorialNotes
+        const item = res.data.data[0]
+        const notes = item.attributes?.editorialNotes
         const descriptionText = notes.standard ?? notes.short ?? notes.tagline
     
-    
-        const radioStationData: RadioStation = {
+        return {
             id: radioStationId,
-            name: data.data[0].attributes.name,
-            isLive: data.data[0].attributes.isLive,
+            name: item.attributes.name,
+            isLive: item.attributes.isLive,
             author: "",
-            artworkImgSrc: data.data[0]?.attributes?.artwork ? getArtworkSrc(data.data[0].attributes.artwork) : "",
+            artworkImgSrc: item?.attributes?.artwork ? getArtworkSrc(item.attributes.artwork) : "",
             description: descriptionText ?? "",
             genre: "",
-            url: data.data[0].attributes.url,
+            url: item.attributes.url,
             authorUrl: "", type: MusicMediaType.RadioStation,
             fromLib: true
         }
-        return radioStationData
     }
     catch(error: any) {
         console.error(error)
@@ -314,7 +303,7 @@ export async function getAppleAlbumDetails (albumId: string): Promise<Album>  {
         
         if (!reqRes.ok) {
             console.error(`Error fetching album details. \n URL: ${reqRes.url} \n Status: ${reqRes.status}`)
-            throw throwAppleMusicAPIError(Number(reqRes.status), "")
+            throw throwAppleMusicAPIError(Number(reqRes.status))
         }
     
         const data = res.data
@@ -322,7 +311,7 @@ export async function getAppleAlbumDetails (albumId: string): Promise<Album>  {
         const trackList: any[] = data.data[0].relationships.tracks.data
         const descriptionText = attrs?.editorialNotes?.short ?? attrs?.editorialNotes?.standard
     
-        const albumData: Album = {
+        return {
             id: albumId,
             name: attrs.name,
             author: attrs.artistName,
@@ -334,7 +323,6 @@ export async function getAppleAlbumDetails (albumId: string): Promise<Album>  {
             authorUrl: attrs.artistUrl, type: MusicMediaType.Album,
             fromLib: true
         }
-        return albumData
     }
     catch(error: any) {
         console.error(error)
@@ -377,6 +365,8 @@ export function getArtworkSrc(artwork: any) {
  * Example Musict Kit error content;
  * "CONTENT_UNAVAILABLE: No item data is available for the current media queue"
  * 
+ * Music Kit Errors: https://js-cdn.music.apple.com/musickit/v3/docs/index.html?path=/docs/reference-javascript-mkerror--page
+ * 
  * @param error 
  * @returns 
  */
@@ -393,21 +383,20 @@ export function throwMusicKitError(error: any) {
  * Get the right error object to throw after a failed interaction with the a Spotify Music API.
  * Error message shown as a toast is handled by the error handler.
  * 
- * @param     error     Error context extracted from the API reesponse
- * @returns             API error with proper context using a code and message.
+ * Apple Music API Errors: https://developer.apple.com/documentation/applemusicapi/common_objects/http_status_codes
+ * 
+ * @param  error Error context extracted from the API reesponse
+ * @returns    API error with proper context using a code and message.
  */
-export function throwAppleMusicAPIError(status: number, message: string) {
-    if (status === 401 && message === "The access token expired") {
-        throw new APIError(APIErrorCode.EXPIRED_TOKEN, "Token expired. Log in again to continue.")
+export function throwAppleMusicAPIError(status: number) {
+    if (status === 401) {
+        throw new APIError(APIErrorCode.AUTHORIZATION_ERROR, "Invalid Credentials.")
     }
     else if (status === 404) {
         throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Requested media unavailable.")
     }
     else if (status === 429) {
         throw new APIError(APIErrorCode.RATE_LIMIT_HIT)
-    }
-    else if (message === "AUTHORIZATION_ERROR") {
-        throw new APIError(APIErrorCode.AUTHORIZATION_ERROR)
     }
     else {
         throw new APIError(APIErrorCode.GENERAL, "There was an error with Spotify. Please try again later.")

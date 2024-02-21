@@ -12,9 +12,6 @@ import type { EditGoalManager } from './edit-goal-manager'
 import type { DatePickerManager } from './date-picker-manager'
 import type { AppleMusicUserData } from './music-apple-user-data'
 import type { SpotifyMusicUserData } from './music-spotify-user-data'
-import type { SpotifyMusicPlayer } from './music-spotify-player'
-import type { AppleMusicPlayer } from './music-apple-player'
-import type { MusicPlayerManager } from './music-player-manager'
 import type { MusicSettingsManager } from './music-settings-manager'
 
 /* App UI State */
@@ -34,7 +31,9 @@ export const themeState = writable<ThemeState>({
     themeToggleBtnIconColor: "#3F3F3F",
     twinTheme: { sectionName: "default", index: 1 }
 })
-export const toastMessages = writable<ToastMsg[]>([])
+export const toaster = writable<Toaster | null>(null)
+export const toasterHeights = writable<number[] | null>(null)
+
 
 /* General Authentication Stuff */
 export const googleData = writable<GoogleUserData | null>(null)

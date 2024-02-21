@@ -136,7 +136,6 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
      * @param controller  Controller object returned by the API after creating the controller.
      */
     createControllerCallback(controller: any) {
-        console.log(controller)
         this.controller = controller 
         this.controller.addListener('playback_update', (e: any) => this.onPlaybackUpdate(e.data))
         this.controller.addListener('error', (e: any) => this.onSpotifyiFramePlayerError(e.data))
@@ -421,8 +420,10 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
 
             const isMediaCollection = isMediaTypeACollection(context.itemClicked.type) 
             const _idx = isMediaCollection ? 0 : context.idx
-
             const mediaItem = await this.getItemFromIdx(context.collection!, _idx)
+
+            // to update hardcoded playlist data: for non-library stuff
+            // to update hardcoded playlist data, lib media is always updated for the consistency check
 
             this.mediaCollection = context.collection!
             this.currentIdx = _idx

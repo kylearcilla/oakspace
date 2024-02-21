@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
-import { homeViewLayout, mediaEmbedStore, sessionStore } from "./store"
-import { MediaEmbedFixed, MediaEmbedType, ModalType, ShortcutSectionInFocus } from "./enums"
+import { homeViewLayout, mediaEmbedStore, sessionStore, toaster } from "./store"
+import { MediaEmbedFixed, MediaEmbedType, ModalType, MusicPlatform, ShortcutSectionInFocus, ToasterPosition } from "./enums"
 
 import { loadTheme } from "./utils-appearance"
 import { didInitYtPlayer } from "./utils-youtube-player"
@@ -8,7 +8,6 @@ import { conintueWorkSession, didInitSession } from "./utils-session"
 import { didInitMusicUser, loadMusicUserData, musicLogin } from "./utils-music"
 import { continueYtPlayerSession, continueYtUserSession, didInitYtUser } from "./utils-youtube"
 import { didSpotifyUserAuthApp, getSpotifyCodeFromURLAndLogin } from "./api-spotify"
-import { getElemById } from "./utils-general"
 
 const LEFT_BAR_LEFT_BOUND = 5
 const LEFT_BAR_RIGHT_BOUND = 80
@@ -203,4 +202,20 @@ export const setShortcutsFocus = (section: ShortcutSectionInFocus) => {
     homeViewLayout.update((state: HomeLayout) => {
         return { ...state, shortcutsFocus: section }
     })
+}
+
+export function makeToast(data: ToastItem) {
+    const toasterStore = get(toaster)
+    const toast: ToastItem = { 
+        context: data.context, 
+        message: data.message, 
+        action: data.action !== undefined ? data.action : undefined
+    }
+
+    if (!toasterStore) {
+        toaster.set({ toasts: [toast], position: ToasterPosition.BOTTOM_RIGHT })
+    }
+    else {
+        toaster.update((data: Toaster | null) => ({ ...data!, toasts: [toast, ...data!.toasts]}))
+    }
 }

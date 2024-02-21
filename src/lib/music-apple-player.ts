@@ -62,7 +62,6 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
         try {
             // @ts-ignore
             this.musicPlayerInstance = await MusicKit.getInstance()
-    
             this.attachEventHandlers()
 
             if (this.mediaCollection) {
@@ -99,6 +98,8 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
     }
 
     onPlaybackUpdate() {
+        if (!this.musicPlayerInstance) return
+
         const isPlaying = this.musicPlayerInstance.isPlaying
         this.isPlaying = isPlaying
         this.updateState({ isPlaying: isPlaying })
@@ -142,10 +143,10 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
         try {
             // pause does not work on live radio stations
             if (this.musicPlayerInstance.isPlaying && this.isPlayingLive) {
-                await this.musicPlayerInstance.stop()      
+                await this.musicPlayerInstance.stop()
             }
             else if (this.musicPlayerInstance.isPlaying) {
-                await this.musicPlayerInstance.pause()      
+                this.musicPlayerInstance.pause()      
             }
             else {
                 await this.musicPlayerInstance.play()
@@ -381,7 +382,8 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
 
             let _mediaCollection
 
-            // fetching here to get data that was not hardcoded in
+            // to update hardcoded playlist data, lib media is always updated for the consistency check
+            
             if (!isFromLib && collectionType === MusicMediaType.RadioStation) {
                 _mediaCollection = { ...context.collection, ...await getRadioStationDetails(collection.id), author: collection.author, genre: collection.genre }
                 this.isPlayingRadio = true
@@ -561,8 +563,13 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
         this.skipToNextTrack()
     }
 
+    async quit() {
+        await this.musicPlayerInstance.stop()
+        super.quit()
+    }
+
     /**
-     * General error handler. Called by other members.
+     * General error handler.
      * @param error  Error 
      */
     onError(error: any) {

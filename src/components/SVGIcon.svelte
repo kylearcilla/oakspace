@@ -53,8 +53,8 @@
       <path d="M6.46506 0.173828V11.8553M0.625 6.01495L12.3047 6.01495" stroke={iconColor} stroke-width={options.strokeWidth ?? addDims.strokeWidth}/>
     </svg>
 {:else if icon === Icon.Close}
-    <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 9 9" fill="none">
-      <path d="M8.4082 8.55078L0.871094 1.01367M0.871094 8.55078L8.4082 1.01367" stroke={iconColor} stroke-width="1.1"/>
+    <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 9 9" fill="none" style={`transform: scale(${options.scale ?? 1});`}>
+      <path d="M8.4082 8.55078L0.871094 1.01367M0.871094 8.55078L8.4082 1.01367" stroke={iconColor} stroke-width={options.strokeWidth ?? 1}/>
     </svg>
 {:else if icon === Icon.ChevronLeft}
     <svg xmlns="http://www.w3.org/2000/svg" width="7" height="11" viewBox="0 0 7 11" fill="none">

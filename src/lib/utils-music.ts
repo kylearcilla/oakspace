@@ -1,9 +1,9 @@
 import { get } from "svelte/store"
-import { musicDataStore, musicPlayerStore, toastMessages } from "./store"
+import { musicDataStore, musicPlayerStore, toaster } from "./store"
 
 import { getAppleMusicUserAlbums, getAppleMusicUserLikedTracks, getAppleMusicUserPlaylists, initAppleMusic } from "./api-apple-music"
 import { SpotifyMusicPlayer } from "./music-spotify-player"
-import { findEnumIdxFromDiffEnum } from "./utils-general"
+import { getLogoIconFromEnum } from "./utils-general"
 import { 
     getSpotfifyUserLikedTracks, getSpotfifyUserPlaylists, getSpotifyUserAlbums, getSpotifyUserAudioBooks, getUserPodcastsEps, initSpotifyMusic
 } from "./api-spotify"
@@ -11,15 +11,13 @@ import {
 import type { MusicPlayer } from "./music-player"
 import type { AppleMusicUserData } from "./music-apple-user-data"
 import type { SpotifyMusicUserData } from "./music-spotify-user-data"
-import {  APIErrorCode, MusicMediaType, MusicPlatform, ToastContext } from "./enums"
+import {  APIErrorCode, LogoIcon, MusicMediaType, MusicPlatform, ToastContext } from "./enums"
 import { APIError } from "./errors"
 import { AppleMusicPlayer } from "./music-apple-player"
-import { MusicSettingsManager } from "./music-settings-manager"
 
 export const USER_PLAYLISTS_REQUEST_LIMIT = 10
 export const SPOTIFY_IFRAME_ID = "spotify-iframe"
 export const LIBRARY_COLLECTION_LIMIT = 25
-
 
 /**
  * Attempt to log in user to desired music platform. 
@@ -36,8 +34,6 @@ export async function musicLogin(platform: MusicPlatform) {
     else if (platform === MusicPlatform.Spotify) {
         await initSpotifyMusic()
     }
-
-    new MusicSettingsManager(platform)
 }
 
 /**
@@ -49,7 +45,7 @@ export async function musicLogout() {
 
     try {
         musicStore!.quit()
-        playerStore!.quit()
+        playerStore?.quit()
     }
     catch(error: any) {
         musicAPIErrorHandler(error)
@@ -111,6 +107,11 @@ export async function handlePlaylistItemClicked (collection: MediaCollection, it
     }
 }
 
+/**
+ * Check to see if player has been initialized in a previous session.
+ * If so then init the player.
+ * @param platform    Current platform user is using.
+ */
 export async function verifyForPlayerSession(platform: MusicPlatform) {
     const playerData = loadMusicPlayerData()
 
@@ -270,7 +271,7 @@ async function getUserLikedTracks(platform: MusicPlatform, offset: number,limit:
  * @param message 
  */
 export function initMusicToast(context: MusicPlatform, message: string) {
-    toastMessages.update((toasts: ToastMsg[]) => [...toasts, { context, message }])
+    toaster.update((toaster: ToastItem[]) => [...toaster, { context, message }])
 }
 
 /**
@@ -283,13 +284,13 @@ export function initMusicToast(context: MusicPlatform, message: string) {
  * @returns             Toast message to be disaplyed in a Toast component.
  */
 export function musicAPIErrorHandler(error: APIError, musicPlatform?: MusicPlatform) {
-    let toastMessage: ToastMsg
+    let toastMessage: ToastItem
     console.error(error)
 
     const platform = musicPlatform === undefined ? get(musicDataStore)!.musicPlatform! : musicPlatform
     const platformStr = getPlatformString(platform)
 
-    const toastContext = findEnumIdxFromDiffEnum(platform!, MusicPlatform, ToastContext)!
+    const toastContext = getLogoIconFromEnum(platform, MusicPlatform)
     const errorMessage = error.message 
     const hasNoMsg = errorMessage != undefined && errorMessage
 
@@ -340,7 +341,7 @@ export function musicAPIErrorHandler(error: APIError, musicPlatform?: MusicPlatf
         }
     }
 
-    toastMessages.update(() => [toastMessage])
+    toaster.update(() => [toastMessage])
 }
 
 /**

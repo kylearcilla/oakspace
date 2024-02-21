@@ -981,3 +981,12 @@ $settings-modal-padding: 20px 25px 25px 25px;
         width: 100%; 
     }
 }
+
+@mixin hov-opacity($length: 0, $before: 0.5, $after: 1) {
+    opacity: $before;
+    transition: $length ease-in-out;
+
+    &:hover {
+        opacity: $after;
+    }
+}

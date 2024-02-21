@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { sessionManager, sessionStore, ytPlayerStore } from "./store"
 import { ModalType } from "./enums"
 import { openModal } from "./utils-home"
-import { MAX_TODO_COUNT, MAX_TODO_NAME_LENGTH, createSessionToastMsg } from "$lib/utils-session"
+import { MAX_TODO_COUNT, MAX_TODO_NAME_LENGTH, createSessionToastItem } from "$lib/utils-session"
 
 /**
  * This class provides an abstracted interface for interacting with an active session store.
@@ -157,7 +157,7 @@ export class PomSessionManger {
       if (this.newTodoTitle === "" || this.newTodoTitle.length > MAX_TODO_NAME_LENGTH) return
 
       if (get(sessionStore)!.todos.length === MAX_TODO_COUNT) {
-        createSessionToastMsg("Max todo count reached.")
+        createSessionToastItem("Max todo count reached.")
         this.cancelAddingTodo()
         return
       }

@@ -1,3 +1,5 @@
+import { LogoIcon } from "./enums"
+
 /**
  * Custom click outside use directive.
  * Relevant for modals and dropdown menus / lists.
@@ -221,22 +223,34 @@ export const getFirstHighlighterBtn = (containerId: string) => {
 }
 
 /**
- * Given an enum member of another enum A fine the location of the same matching enum member in enumB.
- * Enum member must be in both enumA or enumB
+ * Get the matching LogoIcon enum that is contained in another enum.
+ * 
+ * i.e. Spotify exists in LogoIcon and MusicPlatform enums, get the LogoIcon enum value (LogoIcon.Spotify) instead.
+ * 
+ * @param enumVal    Enum val querying for that exists in fromEnum and LogoIcon.
+ * @param fromEnum   Enum where the value exists.
+ * @returns          The matching enum value from LopoIcon
+ */
+export function getLogoIconFromEnum(enumVal: any, fromEnum: any): LogoIcon {
+  return findEnumIdxFromDiffEnum(enumVal, fromEnum, LogoIcon) ?? LogoIcon.Luciole
+}
+
+/**
+ * Given an enum value that exists both in enumA and enumB, find the index value in enumB using the enum from enum A.
  * 
  * @param enumMember   The desired enum in query enum whose index value is desired.
  * @param originEnum   Enum where enumMember is from.
  * @param queryEnum    Enum that contains the same enum member value. 
  * @returns            The idx in query enum where the same enum member name exists. Return enumMember does not exist in both enums.
  */
-export const findEnumIdxFromDiffEnum  = (enumMember: any, originEnum: any, queryEnum: any) => {
-  for (const value in queryEnum) {
+export function findEnumIdxFromDiffEnum(enumMember: any, enumA: any, enumB: any) {
+  for (const value in enumB) {
       if (isNaN(Number(value))) continue
 
-      const val = queryEnum[value]
+      const val = enumB[value]
       const idx = value
 
-      if (originEnum[enumMember] === val) return Number(idx)
+      if (enumA[enumMember] === val) return Number(idx)
   }
 
   return null
@@ -294,4 +308,36 @@ export function base64encode(input: any): string {
     .replace(/=/g, '')
     .replace(/\+/g, '-')
     .replace(/\//g, '_');
+}
+
+/**
+ * Calculates the additional heights of an element, including margin, padding, and border widths.
+ * 
+ * @param element - The HTMLElement to calculate additional heights for.
+ * @returns The sum of margin, padding, and border widths of the element.
+ */
+export function getAdditionalHeights(element: HTMLElement): number {
+  const styles = getComputedStyle(element);
+
+  // Extract margin, padding, and border widths
+  const marginTop = parseInt(styles.marginTop);
+  const marginBottom = parseInt(styles.marginBottom);
+  const paddingTop = parseInt(styles.paddingTop);
+  const paddingBottom = parseInt(styles.paddingBottom);
+  const borderTopWidth = parseInt(styles.borderTopWidth);
+  const borderBottomWidth = parseInt(styles.borderBottomWidth);
+
+  // Calculate the sum of additional heights
+  return marginTop + marginBottom + paddingTop + paddingBottom + borderTopWidth + borderBottomWidth;
+}
+
+/**
+ * Calculates the total height of an element, including its client height and additional heights (margin, padding, border).
+ * 
+ * @param element - The HTMLElement to calculate the total height for.
+ * @returns The total height of the element, including client height and additional heights.
+ */
+export function getElemHeight(element: HTMLElement): number {
+  const additionalHeights = getAdditionalHeights(element);
+  return element.clientHeight + additionalHeights;
 }

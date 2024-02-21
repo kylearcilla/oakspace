@@ -17,6 +17,8 @@ export abstract class MusicUserData {
     abstract tokenExpiresInMs : number
     abstract currentUserMedia : UserLibraryMedia
 
+    abstract init(param?: any): void
+
     // token
     abstract refreshAccessToken(): Promise<void>
     abstract setTokenHasExpired(hasExpired: boolean): void

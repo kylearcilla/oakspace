@@ -7,7 +7,7 @@
 	import { calculateEndTime, getTimePeriodString, minsToHHMM } from "$lib/utils-date"
 	import { 
             BREAK_TIMES_ARR, DEFAULT_SESSION_INPUTS, FOCUS_TIMES_ARR, MAX_SESSION_NAME_LENGTH, 
-            MAX_TODO_COUNT, MAX_TODO_NAME_LENGTH, createSessionToastMsg, initSession 
+            MAX_TODO_COUNT, MAX_TODO_NAME_LENGTH, createSessionToastItem, initSession 
     } from "$lib/utils-session"
 	
     import Modal from "../../components/Modal.svelte";
@@ -72,7 +72,7 @@
             return
         }
         if (input.todos.length === MAX_TODO_COUNT) {
-            createSessionToastMsg("Max todo count reached.")
+            createSessionToastItem("Max todo count reached.")
             return
         }
 

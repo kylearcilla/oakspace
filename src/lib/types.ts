@@ -78,20 +78,37 @@ type HomeLayout = {
     shortcutsFocus: ShortcutSectionInFocus
     modalsOpen: ModalType[]
 }
-type ToastMsg = {
+
+type Toaster = {
+    toasts: ToastItem[]
+    position: ToasterPosition
+    // deleteToast: (idx: number) => void
+    // addToast: (toast: ToastItem) => void
+}
+interface ToastItem {
     context: ToastContext
     message: string
     action?: {
-        msg: string
-        func: ((...args: any[]) => any) | ((...args: any[]) => Promise<any>)
+        func: FunctionParam
+        text: string
     }
 }
-type ToastMsg = {
-    type: ToastType
-    context: ToastContext
-    message: string
-    actionFunction: FunctionParam
+interface DOMToastItem extends ToastItem {
+    offsets: {
+        start: string,
+        end: string
+    }
+    scales: {
+        start: string,
+        end: string
+    }
+    opacity: {
+        start: number,
+        end: number
+    }
 }
+
+
 type Quote = {
     text: string,
     bgImgSrc: string,

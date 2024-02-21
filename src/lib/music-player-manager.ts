@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { musicPlayerManager, musicPlayerStore } from "./store"
 
-import { findEnumIdxFromDiffEnum, getElemById } from "./utils-general"
+import { getElemById, getLogoIconFromEnum } from "./utils-general"
 import { INPUT_RANGE_BG_COLOR, getSeekPositionSecs, getSlidingTextAnimation } from "./utils-music-player"
 
 import { LogoIcon, MusicPlatform, PlaybackGesture } from "./enums"
@@ -63,9 +63,7 @@ export class MusicPlayerManager {
         this.playerStore = get(musicPlayerStore)!
 
         // get the icon enum & options to be used in Icon component
-        const platformIconEnumIdx = findEnumIdxFromDiffEnum(musicPlatform, MusicPlatform, LogoIcon)
-        this.icon = platformIconEnumIdx === null ? LogoIcon.Luciole : platformIconEnumIdx as LogoIcon
-
+        this.icon = getLogoIconFromEnum(musicPlatform, MusicPlatform)
         
         const iconStrIdx = LogoIcon[this.icon] as keyof typeof this.MUSIC_PLAYER_ICON_OPTIONS
         this.iconOptions = this.MUSIC_PLAYER_ICON_OPTIONS[iconStrIdx]
@@ -76,10 +74,8 @@ export class MusicPlayerManager {
             trackTitleElAnimationObj: null, 
             trackArtistElAnimationObj: null,
             isSeeking: false,
-            isMouseDownOnInput: false,
-            isPausePlayBtnActive: false,
-            isPrevBtnActive: false,
-            isNextBtnActive: false,
+            isMouseDownOnInput: false, isPausePlayBtnActive: false,
+            isPrevBtnActive: false, isNextBtnActive: false,
             onCooldown: false
         })
 
@@ -336,6 +332,10 @@ export class MusicPlayerManager {
      * Make sliding text animations for Track title / subtitle.
      */
     initSlidingTextAnimations() {
+        if (!this.trackTitleElement) {
+            this.initPlayerElements()
+        }
+
         this.trackTitleElAnimationObj = getSlidingTextAnimation(this.trackTitleElement!)
         this.trackArtistElAnimationObj = getSlidingTextAnimation(this.trackArtistNameElement!)
 

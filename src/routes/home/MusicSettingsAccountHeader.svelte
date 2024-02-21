@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { themeState, musicDataStore } from "$lib/store"
-	import { clickOutside, findEnumIdxFromDiffEnum } from "$lib/utils-general"
+	import { clickOutside, getLogoIconFromEnum } from "$lib/utils-general"
 	import { addSpacesToCamelCaseStr } from "$lib/utils-general"
     import { Icon, LogoIcon, MusicPlatform } from "$lib/enums"
 	import Logo from "../../components/Logo.svelte"
@@ -9,7 +9,6 @@
 
     export let onBtnClick: (platform: MusicPlatform) => void
     
-    let platform: MusicPlatform | null = null
     let icon: LogoIcon
     let iconOptions: LogoContainerOptions
     let isPlatformListOpen = false
@@ -27,16 +26,13 @@
     }
     
     $: musicStore  = $musicDataStore
-    $: platform    = $musicDataStore!.musicPlatform
-    $: hasTokenExpired  = $musicDataStore!.hasTokenExpired
-    $: userDetails = $musicDataStore!.userDetails
+    $: platform    = $musicDataStore?.musicPlatform
+    $: hasTokenExpired  = $musicDataStore?.hasTokenExpired
+    $: userDetails = $musicDataStore?.userDetails
 
     onMount(() => {
         // get the icon enum & options to be used in Icon component
-        platform = musicStore!.musicPlatform
-
-        let platformIconEnumIdx = findEnumIdxFromDiffEnum(platform, MusicPlatform, LogoIcon)
-        icon = platformIconEnumIdx === null ? LogoIcon.Luciole : platformIconEnumIdx as LogoIcon
+        icon = getLogoIconFromEnum(platform, MusicPlatform)
 
         const iconStrIdx = LogoIcon[icon] as keyof typeof HEADER_ICON_OPTIONS
         iconOptions = HEADER_ICON_OPTIONS[iconStrIdx]

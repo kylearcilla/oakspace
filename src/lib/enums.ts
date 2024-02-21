@@ -20,6 +20,9 @@ export enum ModalType {
     EditSession, SesssionFinished, SessionCanceled, Shortcuts, ImgUpload, CustomVidBg,
     EditGoal
 }
+export enum ToasterPosition {
+    TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, TOP_CENTER, BOTTOM_CENTER
+}
 export enum MediaEmbedType {
     Spotify, Youtube
 }
@@ -117,9 +120,12 @@ export enum MusicMoodCategory {
 export enum LibError {
     REFRESH, NEW_COLLECTION, MORE_ITEMS
 }
+
+// keep the ordering of the platforms same as LogoIcon
 export enum MusicPlatform { 
     AppleMusic, Spotify, YoutubeMusic, Soundcloud 
 }
+
 export enum MusicShufflerState {
     CAN_CONTINUE_CHUNK, HAS_ENDED_AND_MORE_CHUNKS, HAS_ENDED_NO_CHUNKS,
 }

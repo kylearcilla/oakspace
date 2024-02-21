@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { ytPlayerStore } from "./store"
-import { createYtErrorToastMsg } from "./utils-youtube"
+import { createYtErrorToastItem } from "./utils-youtube"
 import { ResourceNotFoundError } from "./errors"
 
 /**
@@ -20,7 +20,7 @@ export const ytPlayerErrorHandler = (isPlaylistPrivate: boolean): boolean => {
     const ytPlayer = get(ytPlayerStore)!
 
     if (!ytPlayer?.error) return false
-    createYtErrorToastMsg(ytPlayer.error)
+    createYtErrorToastItem(ytPlayer.error)
 
     if (!isPlaylistPrivate && ytPlayer.error instanceof ResourceNotFoundError) {
         return true

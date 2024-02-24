@@ -32,7 +32,6 @@ export async function initSpotifyMusic() {
         }
         else {
             await requestSpotifyUserAuth()
-            initMusicToast(MusicPlatform.Spotify, "Log in Success!")
         }
     }
     catch(error: any) {

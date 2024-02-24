@@ -2,7 +2,7 @@
 	import { onMount } from "svelte"
 	import { ModalType } from "$lib/enums"
 	import { closeModal, openModal } from "$lib/utils-home"
-	import { homeViewLayout, themeState } from "$lib/store"
+	import { globalContext, themeState } from "$lib/store"
 	import { getThemeFromSection, setNewTheme } from "$lib/utils-appearance"
     import { lightColorThemes, darkColorThemes, imageThemes, ambientVideos, defaultThemes } from "$lib/data-themes"
 
@@ -302,14 +302,14 @@
     </div>
 </Modal>
 
-{#if $homeViewLayout.modalsOpen.includes(ModalType.ImgUpload)}
+{#if $globalContext.modalsOpen.includes(ModalType.ImgUpload)}
     <ImgUpload
         title="Custom Background Video"
         inputPlaceHolder="1500 px wide images are ideal."
         onSubmit={() => console.log("x")}
     />
 {/if}
-{#if $homeViewLayout.modalsOpen.includes(ModalType.CustomVidBg)}
+{#if $globalContext.modalsOpen.includes(ModalType.CustomVidBg)}
     <CustomVidUpload />
 {/if}
 

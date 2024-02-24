@@ -4,7 +4,7 @@
 	import { hideRightBar, setShortcutsFocus, showRightBar } from "$lib/utils-home"
 	import { clickOutside } from "$lib/utils-general"
 	import { onDestroy, onMount } from "svelte"
-    import { homeViewLayout, tasksViewStore, themeState } from "$lib/store"    
+    import { globalContext, tasksViewStore, themeState } from "$lib/store"    
 	import { RightSideTab, ShortcutSectionInFocus, Icon } from "$lib/enums"
     import { taskGroups } from "$lib/utils-right-bar"
 	import Tasks from "./Tasks.svelte"
@@ -21,7 +21,7 @@
     let initDragXPos = -1
 
     $: {
-        isRightBarOpen = $homeViewLayout.isTaskMenuOpen
+        isRightBarOpen = $globalContext.isTaskMenuOpen
     }
 
     /* General UI Handlers */

@@ -27,6 +27,9 @@ export async function initAppleMusic() {
         }
     } 
     catch (error: any) { 
+        if (error instanceof APIError && error.code === APIErrorCode.AUTH_DENIED) {
+            return
+        }
         musicAPIErrorHandler(new APIError(APIErrorCode.AUTHORIZATION_ERROR))
     }
 }

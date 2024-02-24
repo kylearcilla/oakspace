@@ -3,7 +3,7 @@ export enum ErrorCode {
 }
 export enum APIErrorCode {
     EXPIRED_TOKEN, FAILED_TOKEN_REFRESH, LOGIN_IN, LOG_OUT, RESOURCE_NOT_FOUND, RESOURCE_UNAVAILABLE, 
-    AUTHORIZATION_ERROR, UNAUTHORIZED, API_ERROR, GENERAL, RATE_LIMIT_HIT, PLAYER, APP_SERVER
+    AUTHORIZATION_ERROR, UNAUTHORIZED, API_ERROR, GENERAL, RATE_LIMIT_HIT, PLAYER, APP_SERVER, AUTH_DENIED
 }
 /* General */
 export enum LogoIcon {
@@ -134,4 +134,9 @@ export enum MusicMediaType {
 }
 export enum UserLibraryMedia {
     Playlists = "Playlists", LikedTracks = "Tracks", Albums = "Albums", PodcastEps = "Episodes", Audiobooks = "Audiobooks", Artists = "Artists"
+}
+export enum SwipeStateTypes {
+	SwipedOut = 'SwipedOut',
+	SwipedBack = 'SwipedBack',
+	NotSwiped = 'NotSwiped'
 }

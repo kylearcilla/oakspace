@@ -1,5 +1,6 @@
-// avoid checking, issues occur when enums are imported
 // @ts-nocheck
+
+// avoid checking, issues occur when enums are imported
 
 /* Misc. */
 type AsyncResult = {
@@ -68,13 +69,14 @@ type GoogleUserData = {
 }
   
 /* Home */
-type HomeLayout = {
-    isNavMenuOpen: boolean,
-    isTaskMenuOpen: boolean,
-    isVideoViewOpen: boolean,
-    isMusicPlayerOpen: boolean,
-    minModeSrc: string | null,
-    isLeftWideMenuOpen: boolean,
+type GlobalContext = {
+    isNavMenuOpen: boolean
+    isTaskMenuOpen: boolean
+    isVideoViewOpen: boolean
+    isMusicPlayerOpen: boolean
+    hasToaster: boolean
+    minModeSrc: string | null
+    isLeftWideMenuOpen: boolean
     shortcutsFocus: ShortcutSectionInFocus
     modalsOpen: ModalType[]
 }
@@ -89,8 +91,8 @@ interface ToastItem {
     context: ToastContext
     message: string
     action?: {
-        func: FunctionParam
-        text: string
+        label: string
+        onClick: (event: MouseEvent) => void
     }
 }
 interface DOMToastItem extends ToastItem {

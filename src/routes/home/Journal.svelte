@@ -4,7 +4,7 @@
     import { toggleYTIFramePointerEvents } from "$lib/utils-youtube"
     import { JournalTab, GoalViewOption, GoalsDropdown, ModalType, Icon, GoalItemUI} from "$lib/enums"
 	import { clickOutside, getElemById, getFirstHighlighterBtn } from "$lib/utils-general"
-	import { goalsManager, homeViewLayout, themeState } from "$lib/store"
+	import { goalsManager, globalContext, themeState } from "$lib/store"
 
 	import { onDestroy, onMount } from "svelte"
 	import GoalsBoard from "./GoalsBoard.svelte"
@@ -269,7 +269,7 @@
 </Modal>
 
 
-{#if $homeViewLayout.modalsOpen.includes(ModalType.EditGoal)}
+{#if $globalContext.modalsOpen.includes(ModalType.EditGoal)}
     <EditGoalModal goalToEdit={goalInEdit} />
 {/if}
 

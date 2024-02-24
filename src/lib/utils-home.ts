@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { homeViewLayout, mediaEmbedStore, sessionStore, toaster } from "./store"
+import { globalContext, mediaEmbedStore, sessionStore } from "./store"
 import { MediaEmbedFixed, MediaEmbedType, ModalType, MusicPlatform, ShortcutSectionInFocus, ToasterPosition } from "./enums"
 
 import { loadTheme } from "./utils-appearance"
@@ -52,17 +52,17 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, hasUserTogg
         return hasUserToggledWithKeyLast
     }
 
-    const layoutState = get(homeViewLayout)
+    const layoutState = get(globalContext)
 
     if (event.key === "Escape" && layoutState.modalsOpen.length != 0) {
-        const modals = get(homeViewLayout).modalsOpen
+        const modals = get(globalContext).modalsOpen
         closeModal(modals[modals.length - 1])
     }
     else if (event.ctrlKey && event.key === "]") {
-        updteHomeLayout({ ...layoutState, isTaskMenuOpen: !layoutState.isTaskMenuOpen })
+        updteGlobalContext({ ...layoutState, isTaskMenuOpen: !layoutState.isTaskMenuOpen })
     }
     else if (event.ctrlKey && event.key === "[") {
-        updteHomeLayout({ ...layoutState, isNavMenuOpen: !layoutState.isNavMenuOpen })
+        updteGlobalContext({ ...layoutState, isNavMenuOpen: !layoutState.isNavMenuOpen })
         return true
     }
     else if (event.key === "?" && (layoutState.modalsOpen.length === 0 || isModalOpen(ModalType.Shortcuts))) {
@@ -83,7 +83,7 @@ export const keyboardShortCutHandlerKeyUp = (event: KeyboardEvent) => {
     const target = event.target as HTMLElement
     if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return
 
-    if (!get(sessionStore) && event.key.toLocaleLowerCase() === "n" && get(homeViewLayout).modalsOpen.length === 0) {
+    if (!get(sessionStore) && event.key.toLocaleLowerCase() === "n" && get(globalContext).modalsOpen.length === 0) {
         openModal(ModalType.NewSession)
     }
 }
@@ -97,14 +97,14 @@ export const keyboardShortCutHandlerKeyUp = (event: KeyboardEvent) => {
  */
 export const onMouseMoveHandler = (event: MouseEvent, hasUserToggledWithKeyLast: boolean): boolean => {
     const mouseX = event.clientX
-    const homeLayout = get(homeViewLayout)
+    const homeLayout = get(globalContext)
 
     if (!homeLayout.isNavMenuOpen && mouseX < LEFT_BAR_LEFT_BOUND) {
-        updteHomeLayout({ ...get(homeViewLayout), isNavMenuOpen: true  })
+        updteGlobalContext({ ...get(globalContext), isNavMenuOpen: true  })
         return false
     }
     else if (!hasUserToggledWithKeyLast && homeLayout.isNavMenuOpen && mouseX > LEFT_BAR_RIGHT_BOUND) { 
-        updteHomeLayout({ ...get(homeViewLayout), isNavMenuOpen: false  })
+        updteGlobalContext({ ...get(globalContext), isNavMenuOpen: false  })
     }
 
     return hasUserToggledWithKeyLast
@@ -114,8 +114,8 @@ export const onMouseMoveHandler = (event: MouseEvent, hasUserToggledWithKeyLast:
  * Update UI Layout of app.
  * @param newLayout      New layout
  */
-export const updteHomeLayout = (newLayout: HomeLayout) => {
-    homeViewLayout.set(newLayout)
+export const updteGlobalContext = (newLayout: GlobalContext) => {
+    globalContext.set(newLayout)
     localStorage.setItem("home-ui", JSON.stringify(newLayout))
 }
   
@@ -126,25 +126,25 @@ const loadHomeViewLayOutUIData = () => {
     const storedData = localStorage.getItem("home-ui")
     if (!storedData) return
 
-    let data: HomeLayout = JSON.parse(storedData)
-    homeViewLayout.set({ ...data, modalsOpen: [] })
-    updteHomeLayout({ ...data, modalsOpen: [] })
+    let data: GlobalContext = JSON.parse(storedData)
+    globalContext.set({ ...data, modalsOpen: [] })
+    updteGlobalContext({ ...data, modalsOpen: [] })
 }
 
 export function hideWideMenuBar() {
-    updteHomeLayout({ ...get(homeViewLayout), isLeftWideMenuOpen: false  })
+    updteGlobalContext({ ...get(globalContext), isLeftWideMenuOpen: false  })
 }
 
 export function showWideMenuBar() {
-    updteHomeLayout({ ...get(homeViewLayout), isLeftWideMenuOpen: true  })
+    updteGlobalContext({ ...get(globalContext), isLeftWideMenuOpen: true  })
 }
 
 export function hideRightBar() {
-    updteHomeLayout({ ...get(homeViewLayout), isTaskMenuOpen: false  })
+    updteGlobalContext({ ...get(globalContext), isTaskMenuOpen: false  })
 }
 
 export function showRightBar() {
-    updteHomeLayout({ ...get(homeViewLayout), isTaskMenuOpen: true  })
+    updteGlobalContext({ ...get(globalContext), isTaskMenuOpen: true  })
 }
 
 export function initFloatingEmbed(type: MediaEmbedType) {
@@ -173,7 +173,7 @@ export function initFloatingEmbed(type: MediaEmbedType) {
  * @param modal  Modal to be opened
  */
 export const openModal = (modal: ModalType) => {
-    homeViewLayout.update((data: HomeLayout) => {
+    globalContext.update((data: GlobalContext) => {
         return { ...data, modalsOpen: [ ...data.modalsOpen, modal ]}
     })
 }
@@ -183,7 +183,7 @@ export const openModal = (modal: ModalType) => {
  * @param modal  Modal to be opened
  */
 export const closeModal = (modalToRemove: ModalType) => {
-    homeViewLayout.update((data: HomeLayout) => {
+    globalContext.update((data: GlobalContext) => {
         const newArray = data.modalsOpen.filter((modal: ModalType) => modal !== modalToRemove)
         return { ...data, modalsOpen: newArray }
     })
@@ -194,28 +194,12 @@ export const closeModal = (modalToRemove: ModalType) => {
  * @returns      If modal is open.
  */
 export const isModalOpen = (modal: ModalType) => {
-    const modalsOpen = get(homeViewLayout).modalsOpen
+    const modalsOpen = get(globalContext).modalsOpen
     return modalsOpen.includes(modal)
 }
 
 export const setShortcutsFocus = (section: ShortcutSectionInFocus) => {
-    homeViewLayout.update((state: HomeLayout) => {
+    globalContext.update((state: GlobalContext) => {
         return { ...state, shortcutsFocus: section }
     })
-}
-
-export function makeToast(data: ToastItem) {
-    const toasterStore = get(toaster)
-    const toast: ToastItem = { 
-        context: data.context, 
-        message: data.message, 
-        action: data.action !== undefined ? data.action : undefined
-    }
-
-    if (!toasterStore) {
-        toaster.set({ toasts: [toast], position: ToasterPosition.BOTTOM_RIGHT })
-    }
-    else {
-        toaster.update((data: Toaster | null) => ({ ...data!, toasts: [toast, ...data!.toasts]}))
-    }
 }

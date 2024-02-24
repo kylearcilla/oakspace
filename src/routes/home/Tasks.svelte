@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ContextMenuOption, Icon, ShortcutSectionInFocus, TaskSettingsOptions } from "$lib/enums";
-	import { homeViewLayout, musicPlayerStore, tasksViewStore, themeState } from "$lib/store";
+	import { globalContext, musicPlayerStore, tasksViewStore, themeState } from "$lib/store";
 	import { clickOutside, getVertScrollStatus } from "$lib/utils-general";
 	import { MAX_TAK_GROUP_TITLE_LENGTH, TASK_HEIGHT_MIN_HAS_DESCR, TASK_HEIGHT_MIN_NO_DESCR, MAX_TITLE_LENGTH, TASK_DESCR_LINE_HT, MAX_DESCRIPTION_LENGTH, SUBTASK_HEIGHT } from "$lib/utils-right-bar";
 	import { onMount } from "svelte";
@@ -31,7 +31,7 @@
 
     /* Shortcuts */
     function keyboardShortcutsHandler(event: KeyboardEvent) {
-        if ($homeViewLayout.shortcutsFocus != ShortcutSectionInFocus.TASK_BAR) {
+        if ($globalContext.shortcutsFocus != ShortcutSectionInFocus.TASK_BAR) {
             return
         }
         const hasMenu = isTaskGroupDrodownOpen || isTasksSettingsDropdownOpen || $tasksViewStore!.contextMenuX

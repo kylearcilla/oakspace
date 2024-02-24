@@ -226,7 +226,7 @@ export class MusicPlayerManager {
         this.updateState({ onCooldown: onCooldown })
     }
 
-    /* Input RangeFunctionality */
+    /* Input Range Functionality */
     updateProgressOnUpdate() {
         if (!this.trackPlaybackBar || this.isSeeking || this.didJustMouseUp) return
 

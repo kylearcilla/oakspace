@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { ToastContext, YTMediaLinkType } from "./enums"
-import { toaster, ytUserDataStore, ytPlayerStore } from "./store"
+import { ytUserDataStore, ytPlayerStore } from "./store"
 import { YoutubeUserData } from "./youtube-user-data"
 import { YoutubePlayer } from "./youtube-player"
 import { CustomError, ExpiredTokenError, ResourceNotFoundError } from "./errors"
@@ -55,10 +55,10 @@ export const loginUser = async (didUserSignIn: boolean = false): Promise<AsyncRe
         await ytData.initYtData()
 
         if (!didUserSignIn) {
-            toaster.update((toaster: ToastItem[]) => [...toaster, {
-                context: ToastContext.Youtube,
-                message: "Log in Successful!"
-            }])
+            // toaster.update((toaster: ToastItem[]) => [...toaster, {
+            //     context: ToastContext.Youtube,
+            //     message: "Log in Successful!"
+            // }])
         }
 
         return { sucess: true }
@@ -79,11 +79,11 @@ export const logOutUser = async (): Promise<AsyncResult> => {
     try {
         ytData!.logOutUser()
 
-        toaster.update((toaster: ToastItem[]) => [...toaster, {
-            context: ToastContext.Youtube,
-            message: "Logged out successfully!",
-            actionFunction: null
-        }])
+        // toaster.update((toaster: ToastItem[]) => [...toaster, {
+        //     context: ToastContext.Youtube,
+        //     message: "Logged out successfully!",
+        //     actionFunction: null
+        // }])
 
         return { sucess: true }
     }
@@ -103,11 +103,11 @@ export const refreshToken = async (): Promise<AsyncResult> => {
     try {
         await playerStore!.getFreshToken()
 
-        toaster.update((toaster: ToastItem[]) => [...toaster, {
-            context: ToastContext.Youtube,
-            message: "Token Refreshed!",
-            actionFunction: null
-        }])
+        // toaster.update((toaster: ToastItem[]) => [...toaster, {
+        //     context: ToastContext.Youtube,
+        //     message: "Token Refreshed!",
+        //     actionFunction: null
+        // }])
 
         return { sucess: true }
     }
@@ -200,14 +200,14 @@ export const createYtErrorToastItem = (error: Error) => {
 
     // put action function
     if (error instanceof ExpiredTokenError) {
-        toastMessage = {
-            context: ToastContext.Youtube,
-            message: error.message,
-            action: {
-                msg: "Log in",
-                func: () => refreshToken()
-            }
-        }
+        // toastMessage = {
+        //     context: ToastContext.Youtube,
+        //     message: error.message,
+        //     action: {
+        //         msg: "Log in",
+        //         func: () => refreshToken()
+        //     }
+        // }
     }
     else if (!(error instanceof CustomError)) {
         toastMessage = {
@@ -221,7 +221,7 @@ export const createYtErrorToastItem = (error: Error) => {
             message: error.message,
         }    
     }
-    toaster.update(() => [toastMessage])
+    // toaster.update(() => [toastMessage])
 }
 
 /**

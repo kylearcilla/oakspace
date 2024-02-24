@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte'
-	import { musicPlayerStore, themeState, homeViewLayout, musicDataStore, musicPlayerManager } from '$lib/store'
+	import { musicPlayerStore, themeState, globalContext, musicDataStore, musicPlayerManager } from '$lib/store'
 
 	import Logo from '../../components/Logo.svelte'
 	import { msToHHMMSS } from '$lib/utils-date'
@@ -66,7 +66,7 @@
 
 <svelte:window on:keyup={manager?.handleKeyUp} on:keydown={manager?.handleKeyDown} />
 
-<div class={`music-player ${$homeViewLayout.isNavMenuOpen ? "music-player--left-bar-open" : ""} ${playerStore?.doShowPlayer ? "" : "music-player--hidden"} ${!$themeState.isDarkTheme ? "music-player--solid-bg" : ""}`}>
+<div class={`music-player ${$globalContext.isNavMenuOpen ? "music-player--left-bar-open" : ""} ${playerStore?.doShowPlayer ? "" : "music-player--hidden"} ${!$themeState.isDarkTheme ? "music-player--solid-bg" : ""}`}>
     <div class="music-player__wrapper">
     <img class="img-bg" src={mediaItem?.artworkImgSrc} alt="track-artwork"/>
     <div class="blur-bg"></div>

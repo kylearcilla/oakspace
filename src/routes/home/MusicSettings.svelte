@@ -47,6 +47,7 @@
 
     /* Init Music */
     function onMusicInit(platform?: MusicPlatform) {
+        console.log($musicSettingsManager)
         if ($musicSettingsManager || platform === undefined) return
 
         manager = new MusicSettingsManager(platform)

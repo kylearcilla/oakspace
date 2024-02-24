@@ -87,7 +87,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
             // TODO: make a special case that shows users why it occured (do this to catch case where user is not a subcriber)
             if (message.includes("AUTHORIZATION_ERROR")) {
                 this.quit()
-                return
+                throw new APIError(APIErrorCode.AUTH_DENIED)
             }
             else if (hasSignedIn) {
                 error = new APIError(APIErrorCode.EXPIRED_TOKEN)

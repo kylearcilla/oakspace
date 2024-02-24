@@ -1,16 +1,20 @@
 <script lang="ts">
-    import { ModalType, MusicPlatform } from "$lib/enums"
+    import { LogoIcon, ModalType, MusicPlatform } from "$lib/enums"
     import { getThemeFromSection, setNewTheme } from "$lib/utils-appearance"
-	import { themeState, homeViewLayout, musicPlayerStore, toaster } from "$lib/store"
-	import { hideWideMenuBar, makeToast, openModal, showWideMenuBar } from "$lib/utils-home"
-	import { onMount } from "svelte";
-	import { getElemById } from "$lib/utils-general";
+	import { themeState, globalContext, musicPlayerStore } from "$lib/store"
+	import { hideWideMenuBar, openModal, showWideMenuBar } from "$lib/utils-home"
+	import { createEventDispatcher, onMount } from "svelte";
+	import { getElemById, getLogoIconFromEnum } from "$lib/utils-general";
 	import SideBarCalendar from "./SideBarCalendar.svelte";
 	import { goto } from "$app/navigation";
+	import { toast, toastAPI } from "$lib/utils-toast";
+	import { get } from "svelte/store";
 
     enum TextTab {
         Workspace, Productivity, Goals, Habits, Mindhub
     }
+
+	const dispatch = createEventDispatcher();
 
     const NAV_MENU_NARROW_BAR_WIDTH = 58
     const NAV_MENU_WIDE_BAR_WIDTH = 220
@@ -22,7 +26,7 @@
     let count = 0
 
     $: {
-        isWideBarMenuOpen = $homeViewLayout.isLeftWideMenuOpen
+        isWideBarMenuOpen = $globalContext.isLeftWideMenuOpen
     }
 
     $: {
@@ -102,27 +106,17 @@
             goto("/home")
         }
         else if (textTab === TextTab.Productivity) {
-            // Array of sentences
-            const sentences = [
-                "Life is like a box of chocolates, you never know what you're gonna get.",
-                "The early bird catches the worm, but the second mouse gets the cheese.",
-                "Don't cry because it's over, smile because it happened.",
-                "All our dreams can come true, if we have the courage to pursue them.",
-                "I have not failed. I've just found 10,000 ways that won't work.",
-                "Success is not final, failure is not fatal: It is the courage to continue that counts.",
-                "The only way to do great work is to love what you do.",
-                "You miss 100% of the shots you don't take.",
-                "The future belongs to those who believe in the beauty of their dreams.",
-                "In the end, it's not the years in your life that count. It's the life in your years."
-            ];
 
-            // Randomly select a sentence
-            const randomIndex = Math.floor(Math.random() * sentences.length);
-            const message = sentences[randomIndex];
-
-            makeToast({
-                context: MusicPlatform.AppleMusic, message: "0"
+            toast("default", {
+                message: "x",
+                description: "Hello world",
+                logoIcon: getLogoIconFromEnum(MusicPlatform.Spotify, MusicPlatform),
+                action: {
+                    label: 'Undo',
+                    onClick: () => console.log('Undo')
+                }
             })
+
             // goto("/home/productivity")
         }
         else if (textTab === TextTab.Goals) {

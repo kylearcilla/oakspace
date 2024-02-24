@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { musicDataStore, musicPlayerStore, toaster } from "./store"
+import { musicDataStore, musicPlayerStore } from "./store"
 
 import { getAppleMusicUserAlbums, getAppleMusicUserLikedTracks, getAppleMusicUserPlaylists, initAppleMusic } from "./api-apple-music"
 import { SpotifyMusicPlayer } from "./music-spotify-player"
@@ -14,6 +14,7 @@ import type { SpotifyMusicUserData } from "./music-spotify-user-data"
 import {  APIErrorCode, LogoIcon, MusicMediaType, MusicPlatform, ToastContext } from "./enums"
 import { APIError } from "./errors"
 import { AppleMusicPlayer } from "./music-apple-player"
+import { toast } from "./utils-toast"
 
 export const USER_PLAYLISTS_REQUEST_LIMIT = 10
 export const SPOTIFY_IFRAME_ID = "spotify-iframe"
@@ -42,10 +43,13 @@ export async function musicLogin(platform: MusicPlatform) {
 export async function musicLogout() {
     const musicStore = get(musicDataStore)
     const playerStore = get(musicPlayerStore)
+    const platform = musicStore!.musicPlatform
 
     try {
         musicStore!.quit()
         playerStore?.quit()
+
+        initMusicToast(platform, "Log out success!")
     }
     catch(error: any) {
         musicAPIErrorHandler(error)
@@ -271,7 +275,11 @@ async function getUserLikedTracks(platform: MusicPlatform, offset: number,limit:
  * @param message 
  */
 export function initMusicToast(context: MusicPlatform, message: string) {
-    toaster.update((toaster: ToastItem[]) => [...toaster, { context, message }])
+    toast("default", {
+        logoIcon: getLogoIconFromEnum(context, MusicPlatform),
+        message: MusicPlatform[context],
+        description: message
+    })
 }
 
 /**
@@ -299,8 +307,8 @@ export function musicAPIErrorHandler(error: APIError, musicPlatform?: MusicPlatf
             context: toastContext,
             message: hasNoMsg ? errorMessage : "Token has expired. Log in again to continue.",
             action: {
-                msg: "Continue session",
-                func: () => refreshMusicSession()
+                label: "Continue session",
+                onClick: () => refreshMusicSession()
             }
         }
     }
@@ -341,7 +349,12 @@ export function musicAPIErrorHandler(error: APIError, musicPlatform?: MusicPlatf
         }
     }
 
-    toaster.update(() => [toastMessage])
+    toast("default", {
+        message: platformStr,
+        description: toastMessage.message,
+        logoIcon: getLogoIconFromEnum(platform, MusicPlatform),
+        action: toastMessage.action
+    })
 }
 
 /**

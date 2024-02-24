@@ -15,7 +15,7 @@ import type { SpotifyMusicUserData } from './music-spotify-user-data'
 import type { MusicSettingsManager } from './music-settings-manager'
 
 /* App UI State */
-export const homeViewLayout = writable<HomeLayout>({
+export const globalContext = writable<GlobalContext>({
     isNavMenuOpen: true,
     isTaskMenuOpen: true,
     isVideoViewOpen: false,
@@ -23,6 +23,7 @@ export const homeViewLayout = writable<HomeLayout>({
     isLeftWideMenuOpen: true,
     shortcutsFocus: ShortcutSectionInFocus.MAIN,
     minModeSrc: null,
+    hasToaster: false,
     modalsOpen: []
 })
 export const themeState = writable<ThemeState>({
@@ -31,9 +32,6 @@ export const themeState = writable<ThemeState>({
     themeToggleBtnIconColor: "#3F3F3F",
     twinTheme: { sectionName: "default", index: 1 }
 })
-export const toaster = writable<Toaster | null>(null)
-export const toasterHeights = writable<number[] | null>(null)
-
 
 /* General Authentication Stuff */
 export const googleData = writable<GoogleUserData | null>(null)
@@ -63,3 +61,4 @@ export const sessionManager = writable<PomSessionManger | null>(null)
 
 /* General Stuff */
 export const datePickerManager = writable<DatePickerManager | null>(null)
+

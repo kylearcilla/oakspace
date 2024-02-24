@@ -6,7 +6,7 @@
 	import SVGIcon from "../../components/SVGIcon.svelte"
 	import ImgUpload from "../../components/ImgUpload.svelte"
 
-	import { editGoalManger, goalsManager, homeViewLayout, themeState } from "$lib/store"
+	import { editGoalManger, goalsManager, globalContext, themeState } from "$lib/store"
 	import { closeModal } from "$lib/utils-home"
 	import { clickOutside, findAncestorByClass, getVertScrollStatus } from "$lib/utils-general"
 	import { formatDatetoStr } from "$lib/utils-date"
@@ -746,7 +746,7 @@
 </Modal>
 {/if}
 
-{#if $homeViewLayout.modalsOpen.includes(ModalType.ImgUpload)}
+{#if $globalContext.modalsOpen.includes(ModalType.ImgUpload)}
     <ImgUpload
         title="Goal Image"
         inputPlaceHolder="1500 px wide images are ideal."

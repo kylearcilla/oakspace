@@ -28,12 +28,18 @@
 	import Toaster from "../../components/Toaster.svelte"
   
 	import { ModalType } from "$lib/enums"
-	import { sessionStore, homeViewLayout, toaster, ytPlayerStore, musicPlayerStore, mediaEmbedStore } from "$lib/store"
+	import { globalContext, musicPlayerStore, mediaEmbedStore } from "$lib/store"
 	import { 
         initAppState, keyboardShortCutHandlerKeyDown, 
         keyboardShortCutHandlerKeyUp, onMouseMoveHandler
   } from "$lib/utils-home"
 	import MediaEmbed from "./MediaEmbed.svelte";
+	import type { Position } from "$lib/types-toast";
+
+  let expand = false;
+	let position: Position = 'bottom-right';
+	let richColors = false;
+	let closeButton = true;
 
   let hasUserToggledWithKeyLast = true
   let totalWidth = 0
@@ -51,7 +57,7 @@
   const NAV_MENU_FULL_WIDTH = NAV_MENU_WIDE_BAR_WIDTH + NAV_MENU_NARROW_BAR_WIDTH
   const RIGHT_SIDE_BAR_WIDTH = 240
 
-  homeViewLayout.subscribe((state: HomeLayout) => {
+  globalContext.subscribe((state: GlobalContext) => {
     isLeftSideBarOpen = state.isNavMenuOpen
     isLeftWideBarOpen = state.isLeftWideMenuOpen
     isRightBarOpen = state.isTaskMenuOpen
@@ -67,16 +73,15 @@
     updateMiddleView()
   })
 
-  $: {
-    if (totalWidth > 0) {
-      updateMiddleView()
-    }
+  $: if (totalWidth > 0) {
+    updateMiddleView()
   }
 
+
   function updateMiddleView() {
-    isLeftSideBarOpen = $homeViewLayout.isNavMenuOpen
-    isLeftWideBarOpen = $homeViewLayout.isLeftWideMenuOpen
-    isRightBarOpen = $homeViewLayout.isTaskMenuOpen
+    isLeftSideBarOpen = $globalContext.isNavMenuOpen
+    isLeftWideBarOpen = $globalContext.isLeftWideMenuOpen
+    isRightBarOpen = $globalContext.isTaskMenuOpen
 
     let width = `width: calc(100% - (${leftSideBarWidth}px + ${rightSideBarWidth}px))`
     let marginLeft = `margin-left: ${leftSideBarWidth}px`
@@ -120,7 +125,7 @@
   <div class="home__main">
       <nav 
         class="home__nav-menu-container" 
-        style={`width: ${leftSideBarWidth}px; margin-left: ${leftSideBarWidth === 0 ? `-${$homeViewLayout.isLeftWideMenuOpen ? NAV_MENU_FULL_WIDTH : NAV_MENU_NARROW_BAR_WIDTH}px` : ""}`}
+        style={`width: ${leftSideBarWidth}px; margin-left: ${leftSideBarWidth === 0 ? `-${$globalContext.isLeftWideMenuOpen ? NAV_MENU_FULL_WIDTH : NAV_MENU_NARROW_BAR_WIDTH}px` : ""}`}
       >
           <NavMenu/>
       </nav>
@@ -145,37 +150,37 @@
   {/if}
 
   <!-- Main Modals -->
-  {#if $homeViewLayout.modalsOpen.includes(ModalType.Stats)} <Stats/> {/if}
-  {#if $homeViewLayout.modalsOpen.includes(ModalType.Settings)} <Settings/> {/if}
-  {#if $homeViewLayout.modalsOpen.includes(ModalType.Youtube)} <YoutubeSettings/> {/if}
-  {#if $homeViewLayout.modalsOpen.includes(ModalType.Appearance)} <Appearance /> {/if}
-  {#if $homeViewLayout.modalsOpen.includes(ModalType.Music)} <MusicSettings /> {/if}
-  {#if $homeViewLayout.modalsOpen.includes(ModalType.Journal)} <Journal /> {/if}
+  {#if $globalContext.modalsOpen.includes(ModalType.Stats)} <Stats/> {/if}
+  {#if $globalContext.modalsOpen.includes(ModalType.Settings)} <Settings/> {/if}
+  {#if $globalContext.modalsOpen.includes(ModalType.Youtube)} <YoutubeSettings/> {/if}
+  {#if $globalContext.modalsOpen.includes(ModalType.Appearance)} <Appearance /> {/if}
+  {#if $globalContext.modalsOpen.includes(ModalType.Music)} <MusicSettings /> {/if}
+  {#if $globalContext.modalsOpen.includes(ModalType.Journal)} <Journal /> {/if}
 
   <!-- Session Modals -->
-  {#if $homeViewLayout.modalsOpen.includes(ModalType.NewSession)} 
+  {#if $globalContext.modalsOpen.includes(ModalType.NewSession)} 
     <SessionNewModal /> 
   {/if}
-  {#if $homeViewLayout.modalsOpen.includes(ModalType.EditSession)} 
+  {#if $globalContext.modalsOpen.includes(ModalType.EditSession)} 
     <SessionEditModal /> 
   {/if}
-  {#if $homeViewLayout.modalsOpen.includes(ModalType.SesssionFinished)} 
+  {#if $globalContext.modalsOpen.includes(ModalType.SesssionFinished)} 
     <SessionFinishedModal /> 
   {/if}
-  {#if $homeViewLayout.modalsOpen.includes(ModalType.SessionCanceled)}  
+  {#if $globalContext.modalsOpen.includes(ModalType.SessionCanceled)}  
     <SessionCanceledModal /> 
   {/if}
-  {#if $homeViewLayout.modalsOpen.includes(ModalType.ActiveSession)} 
+  {#if $globalContext.modalsOpen.includes(ModalType.ActiveSession)} 
     <SessionActiveModal/>
   {/if}
 
   <!-- Other Modals Modals -->
-  {#if $homeViewLayout.modalsOpen.includes(ModalType.Quote)} <ModalQuote /> {/if}
-  {#if $homeViewLayout.modalsOpen.includes(ModalType.Shortcuts)} <ShortcutsModal /> {/if}
+  {#if $globalContext.modalsOpen.includes(ModalType.Quote)} <ModalQuote /> {/if}
+  {#if $globalContext.modalsOpen.includes(ModalType.Shortcuts)} <ShortcutsModal /> {/if}
 
   <!-- Toasts -->
-  {#if $toaster}
-    <Toaster />
+  {#if $globalContext.hasToaster}
+    <Toaster {expand} {position} {richColors} {closeButton} />
   {/if}
 </div>
 

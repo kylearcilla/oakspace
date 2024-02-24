@@ -1,232 +1,177 @@
 <script lang="ts">
-	import { toaster } from "$lib/store"
-	import { DELETE_ITEM_DELAY, EXPANDED_TOAST_GAP, LIFT_AMOUNT } from "$lib/utils-toast";
-    import Toast from "./Toast.svelte"
-    
-    let toasts: DOMToastItem[] = []
-    let hasMouseEntered = false
-    let idxDeleted = -1
+	import { onDestroy, onMount } from 'svelte'
+    import  Toast from "./Toast.svelte"
+	import { getDocumentDirection, getInitialTheme, toasterManager } from '$lib/utils-toast'
+	import type { ToasterProps, ToastOptions, Position } from '$lib/types-toast'
 
-    enum ToastAction {
-        ADDED, DELETED, DELETE_EXPANDED, ADDED_EXPANDED
-    }
+	type $$Props = ToasterProps
 
-    /* Mouse Events */
-    function onToastMouseEnter(idx: number) {
-        if (idx === 0) return
-        hasMouseEntered = true
-    }
-    function onToastMouseLeave(event: MouseEvent) {
-        if (hasMouseEntered === null) return
-        const toElement = (event as any).toElement as HTMLElement
+	type OListFocusEvent = FocusEvent & {
+		currentTarget: EventTarget & HTMLOListElement
+	}
 
-        if (!toElement.classList[0].includes("toast")) {
-            hasMouseEntered = false
-        }
-    }
+	const VISIBLE_TOASTS_AMOUNT = 3
+	const VIEWPORT_OFFSET = 32
+	const TOAST_WIDTH = 356
+	const STACKED_TOAST_GAP = 14
 
-    /* Reactive Styling Changes */
-    function getAction(prevLength: number, newLength: number) {
-        if (prevLength < newLength && hasMouseEntered) {
-            return ToastAction.ADDED_EXPANDED
-        }
-        if (prevLength < newLength) {
-            return ToastAction.ADDED
-        }
-        else if (prevLength > newLength && hasMouseEntered) {
-            return ToastAction.DELETE_EXPANDED
-        } 
-        else {
-            return ToastAction.DELETED
-        }
-    }
-    function getStylingAfterMutate(action: ToastAction | null, idx: number) {
-        const toastsBefore = idx
-        const states = {
-            offsets: { start: "", end: " "},
-            scales:  { start: "", end: " "},
-            opacity: { start:  0, end: toastsBefore < 3 ? 1 : 0 }
-        }
+	export let invert = false
+	export let theme: Exclude<$$Props['theme'], undefined> = 'light'
+	export let position = 'bottom-right'
+	export let hotkey: string[] = ['altKey', 'KeyT']
+	export let richColors = false
+	export let expand = false
+	export let duration: Exclude<$$Props['duration'], undefined> = 4000
+	export let visibleToasts = VISIBLE_TOASTS_AMOUNT
+	export let closeButton = true
+	export let toastOptions: ToastOptions = {}
+	export let offset: $$Props['offset'] = null
+	export let dir: $$Props['dir'] = getDocumentDirection()
 
-        if (action === ToastAction.ADDED) {
-            states.offsets.start = idx === 0 ? "100%" : `${LIFT_AMOUNT * (toastsBefore - 1)}px`
-            states.offsets.end   = `${LIFT_AMOUNT * (toastsBefore)}px`
+	const { toasts, heights, reset } = toasterManager
 
-            states.scales.start = idx === 0 ? "1" : `${(toastsBefore - 1) * -0.05 + 1}`
-            states.scales.end = idx === 0 ? "1" : `${(toastsBefore) * -0.05 + 1}`
+	let expanded = false
+	let interacting = false
+	let actualTheme = getInitialTheme(theme)
+	let toastsListElem: HTMLOListElement
+	let lastFocusedElementRef: HTMLElement | null = null
+	let isFocusWithinRef = false
+	let possiblePositions: Position[] = []
+	
+	$: hotkeyLabel = hotkey.join('+').replace(/Key/g, '').replace(/Digit/g, '')
 
-            states.opacity.start = toastsBefore - 1 < 3 ? 1 : 0
+	$: if ($toasts.length <= 1) {
+		expanded = false
+	}
+	$: {
+		const existingPositions = $toasts.filter((t) => t.position).map((t) => t.position)
+		const uniquePositions   = Array.from(new Set([...existingPositions, position])).filter(Boolean) as Position[]
 
-            return states
-        }
-        else if (action === ToastAction.ADDED_EXPANDED) {
-            const startOffset = -1 * (toastsBefore - 1) * (68.5 + EXPANDED_TOAST_GAP)
-            const finalOffset = -1 * toastsBefore * (68.5 + EXPANDED_TOAST_GAP)
+		possiblePositions = uniquePositions
+	}
+	$: {
+		if (theme !== 'system') {
+			actualTheme = theme
+		}
 
-            states.offsets.start = `${startOffset}px`
-            states.offsets.end   = `${finalOffset}px`
+		if (typeof window !== 'undefined') {
+			if (theme === 'system') {
+				if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+					actualTheme = 'dark'
+				} else {
+					actualTheme = 'light'
+				}
+			}
 
-            states.scales.start = "1"
-            states.scales.end   = "1"
+			window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ({ matches }) => {
+				actualTheme = matches ? 'dark' : 'light'
+			})
+		}
+	}
 
-            states.opacity.start = toastsBefore - 1 < 3 ? 1 : 0
+	function handleBlur(event: OListFocusEvent) {
+		const doBlur = isFocusWithinRef && !event.currentTarget.contains(event.relatedTarget as HTMLElement)
+		if (!doBlur) return
 
-            return states
-        }
-        else if (action === ToastAction.DELETED) {
-            states.offsets.start = `${LIFT_AMOUNT * (toastsBefore + 1)}px`
-            states.offsets.end   = `${LIFT_AMOUNT * (toastsBefore)}px`
+		isFocusWithinRef = false
 
-            states.scales.start = `${(toastsBefore + 1) * -0.05 + 1}`
-            states.scales.end = `${(toastsBefore) * -0.05 + 1}`
+		if (lastFocusedElementRef) {
+			lastFocusedElementRef.focus({ preventScroll: true })
+			lastFocusedElementRef = null
+		}
+	}
+	function handleFocus(event: OListFocusEvent) {
+		if (isFocusWithinRef) return
 
-            states.opacity.start = toastsBefore + 1 < 3 ? 1 : 0
+		isFocusWithinRef = true
+		lastFocusedElementRef = event.relatedTarget as HTMLElement
+	}
+	function handleKeyDown(event: KeyboardEvent) {
+		const isHotkeyPressed = hotkey.every((key) => (event as any)[key] || event.code === key)
+		if (isHotkeyPressed) {
+			expanded = true
+			toastsListElem?.focus()
+		}
 
-            return states
-        }
-        else {
-            const movingStartOffset = -1 * (toastsBefore + 1) * (68.5 + EXPANDED_TOAST_GAP)
-            const finalOffset = -1 * toastsBefore * (68.5 + EXPANDED_TOAST_GAP)
+		const isToasterActive = document.activeElement === toastsListElem || toastsListElem?.contains(document.activeElement) 
 
-            states.offsets.start = idx < idxDeleted ? `${finalOffset}px` : `${movingStartOffset}px`
-            states.offsets.end   = idx < idxDeleted ? `${finalOffset}px` : `${finalOffset}px`
+		if (event.code === 'Escape' && isToasterActive) {
+			expanded = false;
+		}
+	}
 
-            states.scales.start = "1"
-            states.scales.end   = "1"
+	onDestroy(() => {
+		document.removeEventListener('keydown', handleKeyDown)
 
-            states.opacity.start = toastsBefore + 1 < 3 ? 1 : 0
+		if (!toastsListElem || !lastFocusedElementRef) return
 
-            return states
-        }
-    }
-    function getStylingAfterMouseAction(onOver: boolean | null, idx: number) {
-        const toastsBefore = idx
-        const states = {
-            offsets: { start: "", end: " "},
-            scales:  { start: "", end: " "},
-            opacity: { start: 0, end: 0 }
-        }
-
-        if (onOver) {
-            const offset = -1 * toastsBefore * (68.5 + EXPANDED_TOAST_GAP)
-
-            states.offsets.start = `${LIFT_AMOUNT * (toastsBefore)}px`
-            states.offsets.end   = `${offset}px`
-
-            states.scales.start = idx === 0 ? "1" : `${(toastsBefore) * -0.05 + 1}`
-            states.scales.end = "1"
-
-            states.opacity.start = toastsBefore < 3 ? 1 : 0
-            states.opacity.end = states.opacity.start
-
-            return states
-        }
-        else {
-            const offset = -1 * toastsBefore * (68.5 + EXPANDED_TOAST_GAP)
-
-            states.offsets.start = `${offset}px`
-            states.offsets.end   = `${LIFT_AMOUNT * (toastsBefore)}px`
-
-            states.scales.start = "1"
-            states.scales.end = idx === 0 ? "1" : `${(toastsBefore) * -0.05 + 1}`
-
-            states.opacity.start = toastsBefore < 3 ? 1 : 0
-            states.opacity.end = states.opacity.start
-            return states
-        }
-    }
-
-    /* Update functions */
-    function updateOnMouseAction(toastItems: ToastItem[], enter: boolean) {
-        toasts = toastItems.map((toast: ToastItem, idx: number) => {
-            return {
-                ...toast,
-                ...getStylingAfterMouseAction(enter, idx)
-            }
-        })
-    }
-    function updateOnMutate(toastItems: ToastItem[]) {
-        const action = getAction(toasts.length, toastItems.length)
-        
-        toasts = toastItems.map((toast: ToastItem, idx: number) => {
-            return {
-                ...toast,
-                ...getStylingAfterMutate(action, idx)
-            }
-        })
-
-        //  if closed the very, stack the deck
-        if (idxDeleted === toastItems.length) {
-            console.log("CLOSE")
-            hasMouseEntered = false
-            updateOnMouseAction(toastItems, false)
-        }
-
-        idxDeleted = -1
-    }
-
-
-    $: if ($toaster!.toasts.length === toasts.length) {
-        const toastItems = $toaster?.toasts ?? []
-
-        updateOnMouseAction(toastItems, hasMouseEntered)
-    }
-
-    $: if ($toaster!.toasts.length != toasts.length) {
-        const toastItems = $toaster?.toasts ?? []
-
-        updateOnMutate(toastItems)
-    }
-    
-
-    function onToastClose(idx: number) {
-        idxDeleted = idx
-
-        setTimeout(() =>{
-            toaster.update((data: Toaster | null) => { 
-                data!.toasts.splice(idx, 1)
-                return data
-            })
-
-        }, DELETE_ITEM_DELAY)
-    }
-    function onToastActionBtnClicked(idx: number) {
-        
-    }
+		lastFocusedElementRef.focus({ preventScroll: true })
+		lastFocusedElementRef = null
+		isFocusWithinRef = false
+	})
+	onMount(() => {
+		reset()
+		document.addEventListener('keydown', handleKeyDown)
+	})
 </script>
 
-<div class="toaster">
-    <ol class="toaster__toasts">
-        {#if toasts}
-            {#each toasts as toast, idx}
-                {#key toast}
-                    <Toast 
-                        idx={idx}
-                        toast={toast}
-                        length={toasts.length}
-                        hasExpanded={hasMouseEntered}
-                        onMouseEnter={onToastMouseEnter}
-                        onMouseLeave={onToastMouseLeave}
-                        onToastClose={onToastClose} 
-                        onToastActionBtnClicked={onToastActionBtnClicked}
-                    />
-                {/key}
-            {/each}
-        {/if}
-    </ol>
-</div>
+{#if $toasts.length > 0}
+	<section aria-label={`Notifications ${hotkeyLabel}`} tabIndex={-1}>
+		{#each possiblePositions as position, index}
+			<ol
+				bind:this={toastsListElem}
+				tabIndex={-1}
+				class={$$props.class}
+				data-sonner-toaster
+				data-theme={actualTheme}
+				data-rich-colors={richColors}
+				data-y-position={position.split('-')[0]}
+				data-x-position={position.split('-')[1]}
+				dir={dir === 'auto' ? getDocumentDirection() : dir}
+				style:--front-toast-height={`${$heights[0]?.height}px`}
+				style:--offset={typeof offset === 'number' ? `${offset}px` : offset || `${VIEWPORT_OFFSET}px`}
+				style:--width={`${TOAST_WIDTH}px`}
+				style:--gap={`${STACKED_TOAST_GAP}px`}
+				style={$$props.style}
+				{...$$restProps}
+				on:blur={handleBlur}
+				on:focus={handleFocus}
+				on:mouseenter={() => expanded = true}
+				on:pointerdown={() => interacting = true}
+				on:pointerup={() => interacting = false}
+				on:mousemove={() => expanded = true}
+				on:mouseleave={() => {
+					if (interacting) return
+					expanded = false
+				}}
+			>
+				<!-- Render toas of the same position -->
+				{#each $toasts.filter((toast) => (!toast.position && index === 0) || toast.position === position) as toast, index (toast.id)}
+					<Toast
+						{index}
+						{toast}
+						{invert}
+						{visibleToasts}
+                        closeButton={closeButton}
+						{interacting}
+						{position}
+						expandByDefault={expand}
+						{expanded}
+						actionButtonStyle={toastOptions?.actionButtonStyle || ''}
+						cancelButtonStyle={toastOptions?.cancelButtonStyle || ''}
+						class={toastOptions?.class || ''}
+						descriptionClass={toastOptions?.descriptionClass || ''}
+						classes={toastOptions.classes || {}}
+						duration={toastOptions?.duration ?? duration}
+						unstyled={toastOptions.unstyled || false}
+					>
+					</Toast>
+				{/each}
+			</ol>
+		{/each}
+	</section>
+{/if}
 
 <style lang="scss">
-    .toaster {
-        position: fixed;
-        right: 15px;
-        bottom: 15px;
-        z-index: 9900000;
-
-        &__toasts {
-        }
-        &__toast {
-
-        }
-    }
+    @import '../scss/toasts.scss';
 </style>

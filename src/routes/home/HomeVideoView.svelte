@@ -142,7 +142,7 @@
         &__container {
             background-color: none;
             position: relative;
-            aspect-ratio: 16 / 9;
+            aspect-ratio: calc(16 / 9);
             max-height: 500px;
             width: 100%;
             @include center;

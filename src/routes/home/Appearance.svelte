@@ -85,22 +85,22 @@
 
 <Modal onClickOutSide={() => closeModal(ModalType.Appearance)}>
     <div class="appearance-wrapper">
-    <div class={`appearance ${$themeState.isDarkTheme ? "" : "appearance--light"}`}>
+    <div class="appearance" class:appearance--light={!$themeState.isDarkTheme}>
         <h1 class="appearance__title modal-bg__content-title">Appearance</h1>
         <p class="appearance__description modal-bg__content-copy">Tailor your workspace to your personal aesthetic!</p>
 
         <!-- Highlighter Tabs -->
         <div class="highlighter-tabs">
-            <div class="highlighter-tabs__container" id="appearance-tabs">
+            <div class="highlighter-tabs__container" id={APPEARANCE_TAB_CONTAINER_ID}>
                 <button 
                     on:click={(e) => onTabClicked(e, AppearanceTab.Color)}
-                    class={`highlighter-tabs__tab-btn ${selectedTab === AppearanceTab.Color ? "highlighter-tabs__tab-btn--selected" : ""}`}
+                    class="highlighter-tabs__tab-btn" class:highlighter-tabs__tab-btn--selected={selectedTab === AppearanceTab.Color}
                 >
                     Color Themes
                 </button>
                 <button 
                     on:click={(e) => onTabClicked(e, AppearanceTab.Ambient)}
-                    class={`highlighter-tabs__tab-btn ${selectedTab === AppearanceTab.Ambient ? "highlighter-tabs__tab-btn--selected" : ""}`}
+                    class="highlighter-tabs__tab-btn" class:highlighter-tabs__tab-btn--selected={selectedTab === AppearanceTab.Ambient}
                 >
                     Ambient Mode
                 </button>
@@ -318,8 +318,8 @@
     @import "../../scss/highlighter-tabs.scss";
 
     $section-spacing: 8px;
-    $desktop-aspect-ratio: 16 / 10;
-    $video-aspect-ratio: 16 / 9;
+    $desktop-aspect-ratio: calc(16 / 10);
+    $video-aspect-ratio: calc(16 / 9);
     $clicked-color: rgba(var(--textColor1), 0.3);
     $selected-color: rgba(var(--fgColor1), 1);
 

@@ -60,10 +60,6 @@
         <div class="user-panel__details">
             <img src="https://i.pinimg.com/474x/87/7a/f8/877af84ee302075f969be04f809a0e5f.jpg" alt="">
             <span class="user-panel__details-name">Kyle Arcilla</span>
-            <div class="user-panel__active-streak" title="Active perfect habit streak.">
-                <span>4</span>
-                <i class="fa-solid fa-fire"></i>
-            </div>
         </div>
         <!-- Dropdown Container -->
         <div class="dropdown-container" bind:this={dropdownMenu}>
@@ -112,19 +108,9 @@
 
     <!-- Right Side -->
     <div class="header__section">
-        <div class="header__ctrl-btns">
-            <!-- New Session Button -->
-            {#if !$sessionStore}
-                <button class="header__ctrl-btn header__ctrl-btn--session" title="New Session" on:click={() => openModal(ModalType.NewSession)}>
-                    <i class="fa-regular fa-clock"></i>
-                </button>
-            {/if}
-            <button class={`header__ctrl-btn ${$musicPlayerStore ? "header__ctrl-btn--music-active" : "header__ctrl-btn--inactive"}`} title="Music Player Settings">
-                <i class="fa-solid fa-compact-disc"></i>
-            </button>
-            <button class={`header__ctrl-btn ${ytPlayerStore ? "header__ctrl-btn--youtube-active" : "header__ctrl-btn--inactive"}`} title="Youtube Player Settings">
-                <i class="fa-brands fa-youtube"></i>
-            </button>
+        <div class="header__active-streak" title="Active perfect habit streak.">
+            <span>4</span>
+            <i class="fa-solid fa-fire"></i>
         </div>
         <!-- Total Session Time -->
         <div class="header__session-time" title="Tota productive time">
@@ -200,7 +186,7 @@
             @include flex(center);
             white-space: nowrap;
             i {
-                opacity: 0.45;
+                opacity: 0.55;
                 color: rgb(var(--headerTextColor));
             }
             span {
@@ -216,54 +202,17 @@
             @include pos-abs-bottom-left-corner(0px, 0px);
             z-index: 1;
         }
-
-        /* Control Buttons */
-        &__ctrl-btns {
+        &__active-streak {
             @include flex(center);
-            margin-right: 4px;
-        }
-        &__ctrl-btn {
-            @include center;
-            margin-right: 13px;
-
-            &:hover i {
-                color: rgba(var(--headerTextColor), 0.2);
-            }            
-            &:active {
-                transform: scale(0.95);
-            }
-            
+            margin-right: 14px;
             i {
-                font-size: 1.2rem;
-                transition: 0.1s ease-in-out;
+                color: #FFD18B;
+                font-size: 0.85rem;
             }
-            &--inactive {
-                color: rgba(var(--headerTextColor), 0.1);
-            }
-            &--session {
-                i {
-                    color: rgba(var(--headerTextColor), 0.4);
-                    font-size: 1.17rem;
-                }
-                &:hover {
-                    color: rgba(var(--headerTextColor), 0.7);
-                }
-            }
-            &--music-active {
-                i, &:hover i {
-                    color: #DDA3F2;
-                }
-                &:hover i {
-                    opacity: 0.8;
-                }
-            }
-            &--youtube-active {
-                i, &:hover i  {
-                    color: #e94b4a;
-                }
-                &:hover i {
-                    opacity: 0.8;
-                }
+            span {
+                @include text-style(_, 300, 1.12rem, "DM Sans");
+                color: rgba(var(--headerTextColor), 0.5);
+                margin-right: 4px;
             }
         }
     } 
@@ -307,20 +256,6 @@
                 color: rgb(var(--headerTextColor));
                 white-space: nowrap;
                 // max-width: 30px;
-            }
-        }
-        &__active-streak {
-            @include flex(center);
-            margin-left: 10px;
-            // display: none;
-            i {
-                color: #FFD18B;
-                font-size: 0.85rem;
-            }
-            span {
-                @include text-style(_, 300, 1.12rem, "DM Sans");
-                color: rgba(var(--headerTextColor), 0.5);
-                margin-right: 4px;
             }
         }
         .dropdown-container {

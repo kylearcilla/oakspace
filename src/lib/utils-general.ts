@@ -61,13 +61,13 @@ export const findAncestorByClass = (child: HTMLElement, className: string): HTML
  */
 export function getVertScrollStatus(target: HTMLElement, options?: { topOffSet?: number, bottomOffSet?: number }): VertScrollStatus {
   const scrollTop = target.scrollTop
-  const windowHeight = target. clientHeight
+  const windowHeight = target.clientHeight
   const scrollHeight = target.scrollHeight
 
   const hasReachedBottom = scrollTop + (options?.bottomOffSet ?? 1) >= scrollHeight - windowHeight
   const hasReachedTop = scrollTop <= (options?.topOffSet ?? 0) 
 
-  return { hasReachedBottom, hasReachedTop, status: { scrollTop, scrollHeight, windowHeight } }
+  return { hasReachedBottom, hasReachedTop, details: { scrollTop, scrollHeight, windowHeight } }
 }
 
 /**
@@ -84,7 +84,7 @@ export function getHozScrollStatus(target: HTMLElement, options?: { leftOffSet?:
   const hasReachedEnd = scrollLeft + (options?.rightOffSet ?? 1) >= scrollWidth - windowWidth
   const hasReachedStart = scrollLeft <= (options?.leftOffSet ?? 0) 
 
-  return { hasReachedEnd, hasReachedStart, status: { scrollLeft, scrollWidth, windowWidth } }
+  return { hasReachedEnd, hasReachedStart, details: { scrollLeft, scrollWidth, windowWidth } }
 }
 
 /**
@@ -340,4 +340,203 @@ export function getAdditionalHeights(element: HTMLElement): number {
 export function getElemHeight(element: HTMLElement): number {
   const additionalHeights = getAdditionalHeights(element);
   return element.clientHeight + additionalHeights;
+}
+
+type GradientStyleOptions = {
+  isVertical: boolean
+  head?: {
+    start?: string
+    end?: string
+  }
+  tail?: {
+    start?: string
+    end?: string
+  }
+}
+
+/**
+ * Generates a masked gradient style on a scrollable element based on scroll status and options.
+ * Return scroll state details and styling.
+ * 
+ * @param  elementn The HTML element to apply the style to.
+ * @param  options  gradient style options.
+ * @returns         Object containing the styling and horizontal scroll status.
+ */
+export function getMaskedGradientStyle(element: HTMLElement, options?: GradientStyleOptions): { styling: string, scrollStatus: HozScrollStatus} {
+  const scrollStatus = getHozScrollStatus(element)
+  const angle = (options?.isVertical ?? true) ? "180deg" : "90deg"
+  const head = {
+      start: options?.head?.start ?? "0%",
+      end: options?.head?.end ?? "10%"
+  };
+  const tail = {
+      start: options?.tail?.start ?? "85%",
+      end: options?.tail?.end ?? "100%"
+  }
+
+  let gradient = ""
+
+  if (!scrollStatus.hasReachedEnd && !scrollStatus.hasReachedStart) {
+      gradient = `linear-gradient(${angle}, transparent ${head.start}, #000 ${head.end}, #000 ${tail.start}, transparent ${tail.end})`
+  } 
+  else if (!scrollStatus.hasReachedStart) {
+      gradient = `linear-gradient(${angle}, transparent ${head.start}, #000 ${head.end})`
+  } 
+  else {
+      gradient = `linear-gradient(${angle}, #000 ${tail.start}, transparent ${tail.end})`
+  }
+
+  const styling = `mask-image: ${gradient}; -webkit-mask-image: ${gradient}`
+  return { styling, scrollStatus }
+}
+
+/* Colors */
+export const COLOR_SWATCHES = {
+  d: [
+    /* Yellow */
+    {
+      id: "d4-0",
+      primary: "255, 246, 163",
+      light1: "156, 124, 63",
+      light2: "240, 215, 169",
+      light3: "240, 215, 169",
+      dark1:  "255, 235, 196",
+      dark2:  "35, 28, 23",
+      dark3:  "255, 203, 100"
+    },
+    /* Purple */
+    {
+      id: "d1-0",
+      primary: "120, 118, 254",
+      light1: "73, 58, 117",
+      light2: "172, 165, 253",
+      light3: "172, 165, 253",
+      dark1:  "198, 189, 225",
+      dark2:  "30, 27, 49",
+      dark3:  "133, 111, 194",
+    },
+    /* Red */
+    {
+      id: "d3-0",
+      primary: "255, 196, 163",
+      light1: "156, 96, 63",
+      light2: "240, 199, 169",
+      light3: "240, 199, 169",
+      dark1:  "247, 214, 195",
+      dark2:  "51, 35, 28",
+      dark3:  "216, 113, 90",
+    },
+    /* Green */
+    {
+      id: "d5-3",
+      primary: "237, 255, 163",
+      light1: "93, 97, 71",
+      light2: "230, 240, 169",
+      light3: "230, 240, 169",
+      dark1:  "208, 211, 172",
+      dark2:  "53, 54, 35",
+      dark3:  "223, 232, 115",
+    },
+    /* Blue */
+    {
+      id: "d6-3",
+      primary: "200, 248, 248",
+      light1: "59, 78, 92",
+      light2: "163, 216, 2559",
+      light3: "163, 216, 2559",
+      dark1:  "150, 192, 201",
+      dark2:  "32, 36, 45",
+      dark3:  "107, 156, 213",
+    },
+  ],
+  p: [
+
+  ]
+}
+
+/* Tags */
+export const TEST_TAGS = [
+  {
+    id: "",
+    name: "Body",
+    symbol: {
+      color: COLOR_SWATCHES.d[0],
+      emoji: "💪"
+    }
+  },
+  {
+    id: "",
+    name: "SWE",
+    symbol: {
+      color: COLOR_SWATCHES.d[1],
+      emoji: "👨‍💻"
+    }
+  },
+  {
+    id: "",
+    name: "French",
+    symbol: {
+      color: COLOR_SWATCHES.d[4],
+      emoji: "🇫🇷"
+    }
+  },
+  {
+    id: "",
+    name: "Cooking",
+    symbol: {
+      color: COLOR_SWATCHES.d[2],
+      emoji: "🍖"
+    }
+  },
+  {
+    id: "",
+    name: "SWE",
+    symbol: {
+      color: COLOR_SWATCHES.d[4],
+      emoji: "👨‍💻"
+    }
+  },
+  {
+    id: "",
+    name: "BBall",
+    symbol: {
+      color: COLOR_SWATCHES.d[2],
+      emoji: "🏀"
+    }
+  },
+  {
+    id: "",
+    name: "Running",
+    symbol: {
+      color: COLOR_SWATCHES.d[2],
+      emoji: "🏃‍♂️"
+    }
+  },
+  {
+    id: "",
+    name: "Meditation",
+    symbol: {
+      color: COLOR_SWATCHES.d[3],
+      emoji: "🌿"
+    }
+  },
+  {
+    id: "",
+    name: "Art",
+    symbol: {
+      color: COLOR_SWATCHES.d[0],
+      emoji: "🌁"
+    }
+  },
+]
+
+
+/**
+ * Get the pair of color properties based on the theme.
+ * @param    color - The color object containing light and dark properties.
+ * @param    isLightTheme - Boolean value indicating whether the theme is light or dark.
+ * @returns  An tuple containing the pair of color properties.
+ */
+export function getColorPair(color: Color, isLightTheme: boolean): [string, string, string] {
+  return isLightTheme ? [color.light1, color.light2, color.light3] : [color.dark1, color.dark2, color.dark3];
 }

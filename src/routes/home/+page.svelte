@@ -5,8 +5,6 @@
     import { ytPlayerStore, sessionStore } from "$lib/store"
 </script>
 
-
-
 <div>
     <VideoView />
     {#if !$ytPlayerStore?.doShowPlayer && !$sessionStore} 

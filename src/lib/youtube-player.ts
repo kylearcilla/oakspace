@@ -19,7 +19,7 @@ export class YoutubePlayer {
     playlistVidIdx: number | null = null
     error: any = null
     doShowPlayer = false
-    hasJustInit = false
+    hasActiveSession = false
         
     IFRAME_CLASS = "home-yt-player"
     LOOK_BACK_DELAY = 1000
@@ -36,16 +36,9 @@ export class YoutubePlayer {
         }
     }
 
-    constructor(hasUserSignedIn: boolean) {
+    constructor() {
         ytPlayerStore.set(this)
-
-        if (hasUserSignedIn) {
-            this.loadAndSetPlayerData()
-        }
-        else {
-            this.updateYtPlayerState({ doShowPlayer: true }) 
-        }
-
+        this.loadAndSetPlayerData()
         this.initEventHandlers()
     }
 
@@ -54,7 +47,20 @@ export class YoutubePlayer {
      * If there's data from a previous session, play that playlist and update video details.
      */
     async initYtPlayer() {
-        await this.initIframePlayerAPI()
+        try {
+            if (this.hasActiveSession) {
+                this.updateYtPlayerState({ doShowPlayer: true }) 
+    
+            }
+            else {
+                this.hasActiveSession = true
+                await this.initIframePlayerAPI()
+                this.initEventHandlers()
+            }
+        }
+        catch(e: any) {
+
+        }
     }
 
     /**
@@ -68,7 +74,7 @@ export class YoutubePlayer {
         }
         catch {
             const error = new ApiError("Error initializing Youtube iFrame Player API")
-            this.setError(error)
+            this.onError(error)
             console.error(error)
             throw error
         }
@@ -132,7 +138,7 @@ export class YoutubePlayer {
      * Sets playlist / video where user left off.
      */
     onYtPlayerReadyHandler = async () => {
-        this.hasJustInit = true
+        this.hasActiveSession = true
 
         if (!this.playlist) return 
         try {
@@ -148,7 +154,7 @@ export class YoutubePlayer {
             })
         }
         catch(e: any) {
-            this.setError(e)
+            this.onError(e)
         }
     }
 
@@ -165,8 +171,8 @@ export class YoutubePlayer {
 
         // unlisted video
         this.disabledPlaypackHandler(state)
-        if (state === 5 && this.hasJustInit) {
-            this.hasJustInit = false
+        if (state === 5 && this.hasActiveSession) {
+            this.hasActiveSession = false
         }
 
         // vid-specific errors  will not show up on error handler only here
@@ -187,7 +193,7 @@ export class YoutubePlayer {
             this.updateVideo(vid, playlistVidIdx)
         }
         catch(e: any) {
-            this.setError(e)        // error if id does not exists or is privated
+            this.onError(e)        // error if id does not exists or is privated
         }
     }
 
@@ -202,7 +208,7 @@ export class YoutubePlayer {
         if (errorCode === null) return
         console.error(`There was an error with the Youtube iFrame API. Error code: ${errorCode}.`)
 
-        this.setError(getYtIframeAPIError(errorCode))
+        this.onError(getYtIframeAPIError(errorCode))
     }
 
     /**
@@ -218,7 +224,7 @@ export class YoutubePlayer {
      * Also at state 5, the playlist array in the player will be empty. 
      */
     disabledPlaypackHandler = (state: number) => {
-        if (this.hasJustInit || ![-1, 5].includes(state) || this.lookBackTimeOut) return
+        if (this.hasActiveSession || ![-1, 5].includes(state) || this.lookBackTimeOut) return
         
         this.lookBackTimeOut = setTimeout(() => {
             this.lookBackTimeOut = null
@@ -227,7 +233,7 @@ export class YoutubePlayer {
             // player's playlist will still contain prev playlist after removeCurrentPlaylist() is triggered
             if ([1, 3].includes(playerInfo.playerState) || playerInfo.playlist.length > 0) return 
 
-            this.setError(new PlayerError("Playback on other websites has been disabled by playlist owner."))
+            this.onError(new PlayerError("Playback on other websites has been disabled by playlist owner."))
         }, this.LOOK_BACK_DELAY)
     }
 
@@ -259,7 +265,7 @@ export class YoutubePlayer {
         catch(e: any) {
             if (e instanceof TypeError) return
             if (e instanceof ResourceNotFoundError) this.removeCurrentPlaylist()
-            this.setError(e)
+            this.onError(e)
         }
     }
 
@@ -268,7 +274,7 @@ export class YoutubePlayer {
      * 
      * @param error 
      */
-    setError(error: CustomError) {
+    onError(error: any) {
         this.error = error
         this.updateYtPlayerState({ error })
     }
@@ -350,7 +356,10 @@ export class YoutubePlayer {
      * Updates the state.
      */
     loadAndSetPlayerData() {
-        const savedData = loadYtPlayerData()!
+        const savedData = loadYtPlayerData()
+        if (!savedData) return
+
+        this.hasActiveSession = true
         this.updateYtPlayerState({ ...savedData })
     }
 

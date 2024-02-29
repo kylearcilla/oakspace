@@ -2,12 +2,12 @@
 	import { ProductivityCalendar } from "$lib/productivity-calendar";
 	import { onMount } from "svelte";
 	import Calendar from "../../components/Calendar.svelte";
-	import { formatTimeToHHMM, getDifferenceInSecs, getTotalSecondsFromStartOfDay, isSameDay } from "$lib/utils-date";
-	import { clickOutside, getElemById, getVertScrollStatus } from "$lib/utils-general";
+	import { formatTimeToHHMM, getDifferenceInSecs, getTimeFromIdx, getTotalSecondsFromStartOfDay, isSameDay } from "$lib/utils-date";
+	import { clickOutside, getElemById, getMaskedGradientStyle } from "$lib/utils-general";
 	import { themeState } from "$lib/store";
 
     let calendar: ProductivityCalendar | null = null
-    let dayViewElem: HTMLElement | null = null
+    let dayViewElem: HTMLElement
     let maskListGradient = ""
 
     $: {
@@ -157,10 +157,11 @@
     }
     function createDaySessionElems() {
         finishedSessions.forEach((session: DayViewSession) => {
+            const dayContainerHt = dayViewElem!.scrollHeight + 7
             const elapsedTimeMins = getDifferenceInSecs(session.startTime, session.endTime) / 60
+            
             const heightPerc = elapsedTimeMins / 1440
             const yOffsetPerc = (getTotalSecondsFromStartOfDay(session.startTime) / 60) / 1440
-            const dayContainerHt = dayViewElem!.scrollHeight + 7
 
             finishedSessionElems!.push({
                 details: session,
@@ -171,31 +172,14 @@
             })
         })
     }
-    function getTime(timeIdx: number) {
-        const suffix = timeIdx < 12 ? "AM" : "PM";
-        const formattedHour = timeIdx % 12 === 0 ? 12 : timeIdx % 12;
-
-        return `${formattedHour} ${suffix}`;
-    }
-    function dayViewScrollHandler(event: Event) {
+    function updateDayViewStyle() {
         if (!$themeState.isDarkTheme) return
-        const target = event.target as HTMLElement
-        const [hasReachedEnd, hasReachedTop] = getVertScrollStatus(target!)
-
-        if (!hasReachedEnd && !hasReachedTop) {
-            maskListGradient = "linear-gradient(180deg, transparent 0%, black 10%, black 80%, transparent 100%)"
-        }
-        else if (!hasReachedTop) {
-            maskListGradient = "linear-gradient(180deg, transparent 0%, black 10%)"
-        }
-        else if (!hasReachedEnd) {
-            maskListGradient = "linear-gradient(180deg, black 85%, transparent 100%)"
-        }
+        maskListGradient = getMaskedGradientStyle(dayViewElem).styling
     }
 
     onMount(() => {
         calendar = new ProductivityCalendar(null)
-        maskListGradient = "linear-gradient(180deg, black 85%, transparent 100%)"
+        updateDayViewStyle()
 
         finishedSessionElems = []
         createDaySessionElems()
@@ -217,14 +201,14 @@
         </div>
         <div 
             class="overview__session-list-container"
-            style={`-webkit-mask-image: ${maskListGradient}; mask-image: ${maskListGradient};`}
+            style={maskListGradient}
             bind:this={dayViewElem}
-            on:scroll={dayViewScrollHandler}
+            on:scroll={updateDayViewStyle}
         >
             {#each Array.from({ length: 24 }, (_, i) => i) as timeIdx}
                 <div class="overview__hour-block">
                     <div class="flx flx--algn-center">
-                        <span>{getTime(timeIdx)}</span>
+                        <span>{getTimeFromIdx(timeIdx)}</span>
                         <div class="overview__hour-block-hoz-divider">
                             <svg xmlns="http://www.w3.org/2000/svg" width="148" height="2" viewBox="0 0 148 2" fill="none">
                                 <path d="M0.122925 0.850098H195.602" stroke-width="0.7" stroke-dasharray="3 3"/>
@@ -244,7 +228,8 @@
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <div 
                             class={`overview__session ${getSessionClasses(session)}`}
-                            style={`height: ${session.height}px; top: ${session.yOffset}px;`}
+                            style:height={`${session.height}px`}
+                            style:top={`${session.yOffset}px`}
                             title={`${session.details.title} \n${session.startTimeStr} - ${session.endTimeStr}`}
                             id={`session-id--${idx}`}
                             on:click={() => onSessionClicked(session, idx)}

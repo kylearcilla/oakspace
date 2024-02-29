@@ -1,9 +1,10 @@
-import type { CustomError } from "./errors"
+import { APIError, type CustomError } from "./errors"
 import { ytUserDataStore } from "./store"
 import { authYoutubeClient,  getFreshToken,  getUserYtPlaylists, logOutUser } from "./api-youtube"
 import { deleteYtUserData, deleteYtCredentials, saveYtCredentials, 
-         saveYtUserData, loadYtCredentials, loadYtUserData, USER_PLS_MAX_PER_REQUEST 
+         saveYtUserData, loadYtCredentials, loadYtUserData, USER_PLS_MAX_PER_REQUEST, youtubeAPIErrorHandler 
 } from "./utils-youtube"
+import { APIErrorCode } from "./enums"
 
 /**
  * Used to initialize Youtube user data. 
@@ -15,82 +16,158 @@ import { deleteYtUserData, deleteYtCredentials, saveYtCredentials,
 export class YoutubeUserData {
     didUserSign = false
     hasUserSignedIn = false
-    username: string | null = null
-    profileImgSrc: string | null = null
-    email: string | null = null
+    username = ""
+    profileImgSrc = ""
+    email = ""
     error: CustomError | null = null
     
     userPlaylists: YoutubePlaylist[] = []
-    userPlaylistsNextPageToken: string | null = null
-    userPlaylistLength: number | null = null
+    userPlaylistsNextPageToken = ""
+    userPlaylistLength = 0
     hasFetchedAllUserPls = false
     
-    accessToken: string | null = null
-    refreshToken: string | null = null
+    accessToken = ""
+    refreshToken = ""
+    accessTokenCreationDate: Date | null = null
+    tokenExpiresInSecs = 3600
+    hasTokenExpired = false
+
+    ACTIVE_TOKEN_THRESHOLD_SECS = 60
     
-    constructor(didUserSign: boolean = false) {
+    constructor() {
         ytUserDataStore.set(this)
-        this.didUserSign = didUserSign
+        this.loadAndSetUserData()
     }
 
     /**
      * Init auth flow and if user approves consent, save the result from OAuth Flow response.
      * Required to initialize new instance. 
      * Placed in a different method since async due to Auth Flow.
-     * 
-     * @throws {ApiError}             Error working with Firebase API
-     * @throws {AuthorizationError}   Error authorization app (thrown when user closes consent screen)
      */
-    async initYtData() {
+    async init() {
+        const hasSignedIn = this.accessToken != ""
         try {
-            if (this.didUserSign) {
-                this.loadAndSetUserData()
-                this.hasUserSignedIn = true
-                return
-            }
+            if (hasSignedIn) return
             
             const authRes = await authYoutubeClient()
-            this.hasUserSignedIn = true
-            this.setUserDataFromOAuthResponse(authRes)
+            await this.initData(authRes)
         }
         catch(error) {
-            ytUserDataStore.set(null)
-            throw (error)
+            if (!hasSignedIn) {
+                this.quit()
+            }
+            if (error instanceof APIError && error.code === APIErrorCode.AUTH_DENIED)  {
+                throw error
+            }
+            else {
+                throw new APIError(APIErrorCode.AUTHORIZATION_ERROR)
+            }
         }
     }
 
     /**
-     * Save OAuth Flow response data to current Youtube User Data Instance.
-     * @param res                      Response from OAuth 2.0 Flow
-     * @throws {AuthorizationError}    Error requesting personal user data.
-     * @throws {ApiError}              Error working Youtube Data API.
+     * Initializes credential data and user data.
      */
-    async setUserDataFromOAuthResponse(res: YTOAuthResponse) {
+    async initData(res: YTOAuthResponse) {
+        const ytCreds: YoutubeUserCreds = {
+            accessToken: res.accessToken,
+            refreshToken: "",
+            accessTokenCreationDate: new Date()
+        }
+        const ytUserData = {
+            username: res.username,
+            profileImgSrc: res.profileImgSrc,
+            email: res.email
+        }
+
+        this.accessToken = ytCreds.accessToken
+        this.accessTokenCreationDate = new Date()
+
+        this.username = ytUserData.username
+        this.profileImgSrc = ytUserData.profileImgSrc
+        this.email = ytUserData.email
+
+        await this.getUserPlaylists()
+        this.updateYoutubeUserData({ ...ytCreds, ...ytUserData, hasUserSignedIn: true })
+    }
+
+    hasAccessTokenExpired() {
+        const currentTime = new Date().getTime()
+        const timeElapsed = currentTime - new Date(this.accessTokenCreationDate!).getTime()
+        const timeRemaining = (this.tokenExpiresInSecs * 1000) - timeElapsed
+    
+        const threshold = this.ACTIVE_TOKEN_THRESHOLD_SECS * 1000 
+    
+        return threshold >= timeRemaining
+    }
+
+    setTokenHasExpired(hasExpired: boolean) {
+        this.hasTokenExpired = hasExpired
+        this.updateYoutubeUserData({ hasTokenExpired: hasExpired })
+
+        if (hasExpired) {
+            this.onError(new APIError(APIErrorCode.EXPIRED_TOKEN))
+        }
+    }
+
+    async verifyAccessToken() {
+        if (this.hasAccessTokenExpired()) {
+            await this.refreshAccessToken()
+        }
+        return this.accessToken
+    }
+
+    /**
+     * Renew expired access token to continue fetching user playlists.
+     * Does not get a fresh token from a refresh token (can't do with Firebase).
+     * Forces a re-login to get a fresh token.
+     */
+    async refreshAccessToken() {
         try {
+            const accessToken = await getFreshToken()
 
-            const ytCreds: YoutubeUserCreds = {
-                accessToken: res.accessToken,
-                refreshToken: ""
+            console.log("new token!", accessToken)
+
+            this.accessToken = accessToken
+            this.accessTokenCreationDate = new Date()
+
+            this.updateYoutubeUserData({ 
+                accessToken: this.accessToken, 
+                accessTokenCreationDate: this.accessTokenCreationDate
+            })
+
+            if (this.hasTokenExpired) {
+                this.setTokenHasExpired(false)
             }
-            const ytUserData = {
-                username: res.username,
-                profileImgSrc: res.profileImgSrc,
-                email: res.email
-            }
-
-            this.accessToken = ytCreds.accessToken
-            this.refreshToken = ytCreds.refreshToken
-
-            this.username = ytUserData.username
-            this.profileImgSrc = ytUserData.profileImgSrc
-            this.email = ytUserData.email
-
-            await this.setYtUserPlaylistData(res.accessToken)
-            this.updateYoutubeUserData({ ...ytCreds, ...ytUserData, hasUserSignedIn: true })
         }
         catch(error) {
+            this.onError(new APIError(APIErrorCode.FAILED_TOKEN_REFRESH))
             throw error
         }
+    }
+
+    onError(error: any) {
+        console.error(error)
+        if (error instanceof APIError) {
+            youtubeAPIErrorHandler(error)
+        }
+        else {
+            youtubeAPIErrorHandler(new APIError(APIErrorCode.GENERAL, `There was an error with Youtube. Please try again later.`))
+        }
+    }
+
+    /**
+     * Clears user data. 
+     */
+    async logOutUser() {
+        await logOutUser()
+        this.quit()
+    }
+
+    quit() {
+        console.log("QUITTING")
+        ytUserDataStore.set(null)
+        this.clearYoutubeUserData()
     }
 
     /**
@@ -108,112 +185,72 @@ export class YoutubeUserData {
         }
     }
 
-    /**
-     * Renew expired access token to continue fetching user playlists.
-     * Does not get a fresh token from a refresh token (can't do with Firebase).
-     * Forces a re-login to get a fresh token.
-     * Fetch playlists.
-     * 
-     * @throws {ApiError}             Error working with Firebase API
-     * @throws {AuthorizationError}   Error authorization app (thrown when user closes consent screen)
-     */
-    async getFreshToken() {
+    async refreshUserPlaylists() {
         try {
-            const accessToken = await getFreshToken()
-            this.accessToken = accessToken
-            this.updateYoutubeUserData(({ accessToken, error: null }))
-            this.setYtUserPlaylistData(accessToken)
-        }
-        catch(e) {
-            throw e
-        }
-    }
-
-    /**
-     * Clears user data. 
-     * @throws {Error}    Uses custom error for now.
-     */
-    async logOutUser() {
-        try {
-            await logOutUser()
-            ytUserDataStore.set(null)
-
-            this.clearYoutubeUserData()
-        }
-        catch(e) {
-            throw e
-        }
-    }
-
-    /**
-     * Update current error.
-     * @param error          Error
-     */
-    setError(error: CustomError) {
-        this.error = error
-        this.updateYoutubeUserData({ error })
-    }
-
-    /**
-     * Remove current error.
-     */
-    removeError() {
-        this.error = null
-        this.updateYoutubeUserData({ error: null })
-    }
-
-    /**
-     * Fetches and updates state after fetching user playlists and important metadata.
-     * Used to get fresh user playlist data.
-     * 
-     * @param accessToken              Token needed to access user content.
-     * @returns                        Youtube user playlis meta data (playlists, next page token, length)
-     * @throws {AuthorizationError}    Error requesting personal user data.
-     * @throws {ApiError}              Error working Youtube Data API
-     */
-    async setYtUserPlaylistData (accessToken: string) {
-        try {
-            const playlistResponse = await getUserYtPlaylists(accessToken, USER_PLS_MAX_PER_REQUEST)
-
-            this.userPlaylistsNextPageToken = playlistResponse.userPlaylistsNextPageToken
-            this.userPlaylistLength = playlistResponse.userPlaylistLength
-            this.userPlaylists = playlistResponse.userPlaylists
-            this.hasFetchedAllUserPls = this.userPlaylists.length < USER_PLS_MAX_PER_REQUEST ? true : false
-
-            this.updateYoutubeUserData({ ...playlistResponse, hasFetchedAllUserPls: this.hasFetchedAllUserPls })
-        }
-        catch(error) {
-            throw error
-        }
-    }
-
-    /**
-     * Fetches the next USER_PLS_MAX_PER_REQUEST using a next page token.
-     * Called subsequently, after the initial user playlists request has been called.
-     * 
-     * @throws {ExpiredTokenError}       Error requesting personal user data from expired token.
-     * @throws {ApiError}                Error working Youtube Data API
-     */
-    async fetchMoreUserPlaylists() {
-        try {
-            const res = await getUserYtPlaylists(this.accessToken!, USER_PLS_MAX_PER_REQUEST, this.userPlaylistsNextPageToken!)
-            const moreYtPlaylists = res.userPlaylists
-
-            this.userPlaylists = [...this.userPlaylists, ...moreYtPlaylists]
-            this.hasFetchedAllUserPls = moreYtPlaylists.length < USER_PLS_MAX_PER_REQUEST
-            this.userPlaylistsNextPageToken = res.userPlaylistsNextPageToken
-
-            // do not save subseq playlist response data in local storage, will always use the initial request after a refresh
-            this.updateYoutubeUserData({ 
-                userPlaylists: this.userPlaylists,  
-                hasFetchedAllUserPls: this.hasFetchedAllUserPls,
-                userPlaylistsNextPageToken: this.userPlaylistsNextPageToken
-            }, false)
+            await this.verifyAccessToken()
+            await this.getUserPlaylists(true)
         }
         catch(error: any) {
-            this.setError(error)
+            if (error instanceof APIError && error.code === APIErrorCode.EXPIRED_TOKEN) {
+                this.setTokenHasExpired(true)
+                this.onError(error)
+            }
+            else {
+                this.onError(new APIError(APIErrorCode.GENERAL, `There was an refreshing your playlists. Please try again later.`))
+            }
             throw error
         }
+    }
+
+    async loadMorePlaylistItems() {
+        try {
+            if (this.hasFetchedAllUserPls) return
+
+            await this.verifyAccessToken()
+            await this.getUserPlaylists()
+        }
+        catch(error: any) {
+            if (error instanceof APIError && error.code === APIErrorCode.EXPIRED_TOKEN) {
+                this.setTokenHasExpired(true)
+                this.onError(error)
+            }
+            else {
+                this.onError(new APIError(APIErrorCode.GENERAL, `There was an error loading more playlists from your library. Please try again later.`))
+            }
+            throw error
+        }
+    }
+
+    /**
+     * Used to get user's playlists saved in their library.
+     * Used repeatedly to get more items using pagination.
+     * 
+     * @param accessToken           Token needed to access user content.
+     * @param doRefresh             Request for the first page to get fresh resource data.
+     * @returns                     Youtube user's saved playlists
+     */
+    async getUserPlaylists(doRefresh = false) {
+        if (doRefresh) {
+            this.userPlaylistsNextPageToken = ""
+            this.userPlaylistLength = 0
+            this.userPlaylists = []
+            this.hasFetchedAllUserPls = false
+        }
+
+        const playlistResponse = await getUserYtPlaylists(
+            this.accessToken, USER_PLS_MAX_PER_REQUEST, this.userPlaylistsNextPageToken
+        )
+
+        this.userPlaylistsNextPageToken =   playlistResponse.userPlaylistsNextPageToken
+        this.userPlaylistLength         =  playlistResponse.userPlaylistLength
+        this.userPlaylists              =   [...this.userPlaylists, ...playlistResponse.userPlaylists]
+        this.hasFetchedAllUserPls       =   this.userPlaylists.length < USER_PLS_MAX_PER_REQUEST
+
+        this.updateYoutubeUserData({ 
+            userPlaylists:        this.userPlaylists,  
+            userPlaylistLength:   this.userPlaylistLength,
+            hasFetchedAllUserPls: this.hasFetchedAllUserPls
+        })
     }
 
     /**
@@ -221,37 +258,43 @@ export class YoutubeUserData {
      * Called everytime user refreshes and Yotube Data has to be re-initialized.
      */
     loadAndSetUserData() {
-        const ytCreds = loadYtCredentials()!
-        const userData = loadYtUserData()!
+        const ytCreds = loadYtCredentials()
+        const userData = loadYtUserData()
 
-        this.accessToken = ytCreds.accessToken
-        this.refreshToken = ytCreds.refreshToken
+        if (!ytCreds || !userData) return
 
-        this.username = userData.username!
+        this.accessToken      = ytCreds.accessToken
+        this.refreshToken     = ytCreds.refreshToken
+        this.accessTokenCreationDate = ytCreds.accessTokenCreationDate
+        this.hasUserSignedIn  = true
+
+        this.username      = userData.username!
         this.profileImgSrc = userData.profileImgSrc!
-        this.email = userData.email!
-        this.userPlaylists = userData.userPlaylists!
-        this.userPlaylistsNextPageToken = userData.userPlaylistsNextPageToken!
-        this.userPlaylistLength = userData.userPlaylistLength!
+        this.email         = userData.email!
+        
+        this.userPlaylists               = userData.userPlaylists!
+        this.userPlaylistsNextPageToken  = userData.userPlaylistsNextPageToken!
+        this.userPlaylistLength          = userData.userPlaylistLength!
 
         this.updateYoutubeUserData({ ...ytCreds, ...userData, hasUserSignedIn: true })
     }
 
     saveYtCredentials() {
         saveYtCredentials({
-            accessToken: this.accessToken!,
-            refreshToken: this.refreshToken!
+            accessToken: this.accessToken,
+            refreshToken: this.refreshToken,
+            accessTokenCreationDate: this.accessTokenCreationDate!
         })
     }
     
-    saveYtUserData() {
+    saveYtUserData() {        
         saveYtUserData({
-            username: this.username!,
-            profileImgSrc: this.profileImgSrc!,
-            email: this.email!,
-            userPlaylists: this.userPlaylists!.slice(0, USER_PLS_MAX_PER_REQUEST),
-            userPlaylistLength: this.userPlaylistLength!,
-            userPlaylistsNextPageToken: this.userPlaylistsNextPageToken!
+            username:       this.username!,
+            profileImgSrc:  this.profileImgSrc!,
+            email:          this.email!,
+            accessTokenCreationDate:  this.accessTokenCreationDate!,
+            userPlaylists:            this.userPlaylists!.slice(0, USER_PLS_MAX_PER_REQUEST),
+            userPlaylistLength:       this.userPlaylistLength!,
         })
     }
 
@@ -265,16 +308,13 @@ export class YoutubeUserData {
     getNewStateObj(newState: Partial<YoutubeUserData>, oldState: YoutubeUserData) {
         const newStateObj = oldState
 
-        if (newState.username != undefined)                    newStateObj.username = newState.username
-        if (newState.profileImgSrc != undefined)               newStateObj.profileImgSrc = newState.profileImgSrc
-        if (newState.email != undefined)                       newStateObj.email = newState.email
-        if (newState.accessToken != undefined)                 newStateObj.accessToken = newState.accessToken
-        if (newState.refreshToken != undefined)                newStateObj.refreshToken = newState.refreshToken
-        if (newState.hasUserSignedIn != undefined)             newStateObj.hasUserSignedIn = newState.hasUserSignedIn
-        if (newState.userPlaylists != undefined)               newStateObj.userPlaylists = newState.userPlaylists
-        if (newState.userPlaylistsNextPageToken != undefined)  newStateObj.userPlaylistsNextPageToken = newState.userPlaylistsNextPageToken
-        if (newState.userPlaylistLength != undefined)          newStateObj.userPlaylistLength = newState.userPlaylistLength
-        if (newState.hasFetchedAllUserPls != undefined)          newStateObj.hasFetchedAllUserPls = newState.hasFetchedAllUserPls
+        if (newState.username != undefined)             newStateObj.username = newState.username
+        if (newState.profileImgSrc != undefined)        newStateObj.profileImgSrc = newState.profileImgSrc
+        if (newState.email != undefined)                newStateObj.email = newState.email
+        if (newState.hasUserSignedIn != undefined)      newStateObj.hasUserSignedIn = newState.hasUserSignedIn
+        if (newState.userPlaylists != undefined)        newStateObj.userPlaylists = newState.userPlaylists
+        if (newState.userPlaylistLength != undefined)   newStateObj.userPlaylistLength = newState.userPlaylistLength
+        if (newState.hasFetchedAllUserPls != undefined) newStateObj.hasFetchedAllUserPls = newState.hasFetchedAllUserPls
 
         return newStateObj
     }

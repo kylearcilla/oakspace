@@ -116,6 +116,7 @@
                                 {@const type = getMediaTypeStr(mediaCollection.type)}
 
                                 <div class="now-playing__details-container">
+                                    <!-- Header -->
                                     <div class="now-playing__details-header">
                                         <span class="now-playing__description-author">
                                             {mediaCollection.author}
@@ -132,10 +133,12 @@
                                             {/if}
                                         </div>
                                     </div>
+                                    <!-- Artwork -->
                                     <div class={`now-playing__artwork ${mediaCollection.artworkImgSrc ? "" : "now-playing__artwork--empty"}`}>
                                         <img src={mediaCollection.artworkImgSrc} alt="current-collection">
                                         <i class="fa-solid fa-music abs-center"></i>
                                     </div>
+                                    <!-- Description -->
                                     <div class="now-playing__description">
                                         {#if mediaCollection.url}
                                             <a href={mediaCollection.url} target="_blank" rel="noreferrer">

@@ -3,8 +3,3 @@
     
     export let data: PageData;
 </script>
-
-
-<div class="routines">
-    Routines
-</div>

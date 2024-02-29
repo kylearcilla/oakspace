@@ -211,7 +211,7 @@
             margin-bottom: 9px;
             top: 0px;
             left: 0px;
-            margin-left: $side-padding / 2;
+            margin-left: calc($side-padding / 2);
         }
         &--light-theme &__main-content {
             height: calc(100% - 130.5px);

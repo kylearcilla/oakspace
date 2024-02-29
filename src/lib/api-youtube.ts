@@ -1,21 +1,20 @@
 import auth from  "./firebase"
 import firebase from "firebase/compat/app"
 
-import { ErrorCode, YTAPIErrorContext } from "./enums"
+import { APIErrorCode, ErrorCode, YTAPIErrorContext } from "./enums"
 import { shorterNum } from "./utils-general"
 import { getAuth, signOut } from "firebase/auth"
 import { PUBLIC_YT_DATA_V3_API_KEY } from '$env/static/public'
-import { ApiError, AuthorizationError, CustomError, ExpiredTokenError, PlayerError, ResourceNotFoundError } from "./errors"
+import { APIError, ApiError, AuthorizationError, CustomError, ExpiredTokenError, PlayerError, ResourceNotFoundError } from "./errors"
 
 const YT_DATA_API_URL = "https://youtube.googleapis.com/youtube/v3"
 
 /**
  * Initiailze 0Auth 2.0 Flow using Firebase to get access token to utilize Google APIs. 
  * Generates a user consent screen pop-up to grant client app permission.
- * Returns an access token and user account metadata. Pass responses in callback function.
+ * Returns an access token and user account metadata.
  * 
- * @returns                       User profile data & credentials (no refresh token provided)
- * @throws {AuthorizationError}   Occurs from a failed app authorization flow like consent screen closing.
+ * @returns  User profile data & credentials (no refresh token provided)
  * 
  */
 export const authYoutubeClient = async (): Promise<YTOAuthResponse> => {
@@ -35,18 +34,21 @@ export const authYoutubeClient = async (): Promise<YTOAuthResponse> => {
       return authYoutubeClientResponse
 
   } catch (error: any) {
-      const errorStr = error.toString()
-      const matches = errorStr.match(/\(([^)]+)\)/)
-      const contextCode = matches[1]
+      console.error(error)
+      throw throwFireBaseAPIError(error)
+  }
+}
 
-      let errorMsg = "Youtube authorization failed, try again."
-      console.error(`Error authorizing Youtube Client. ${error}`)
-
-      if (contextCode === "auth/popup-closed-by-user") {
-        errorMsg = "User app authorization denied (consent screen closed)."
-      } 
-
-      throw new AuthorizationError(errorMsg)
+/**
+ * Logs out user using current authentication instance set up from the sign up.
+ * TODO: Must investigate error cases for signOut.
+ */
+export const logOutUser = async () => {
+  try {
+    await signOut(getAuth())
+  }
+  catch(e) {
+    throw new APIError(APIErrorCode.LOG_OUT)
   }
 }
 
@@ -54,7 +56,7 @@ export const authYoutubeClient = async (): Promise<YTOAuthResponse> => {
  * Requests new fresh token. Calls the same Firebase method when logging in.
  * Does not actually get a new token from a refresh token (unavailable with firebase)
  * 
- * @returns   Fresh new token from auth response.
+ * @returns Fresh new token from auth response.
  */
 export const getFreshToken = async (): Promise<string> => {
   try {
@@ -66,45 +68,18 @@ export const getFreshToken = async (): Promise<string> => {
       return credential.accessToken
 
   } catch (error: any) {
-      const errorStr = error.toString()
-      const matches = errorStr.match(/\(([^)]+)\)/)
-      const contextCode = matches[1]
+    console.error(error)
 
-      let errorMsg = ""
-      console.error(`Error authorizing Youtube Client. ${error}`)
-
-      if (contextCode === "auth/popup-closed-by-user") {
-        errorMsg = "User app authorization denied (consent screen closed)."
-      } 
-
-      throw new AuthorizationError(errorMsg)
-  }
-}
-
-/**
- * Logs out user using current authentication instance set up from the sign up.
- * TODO: Must investigate error cases for signOut.
- * 
- * @throws {CustomError}   Error from sign out. General CustomError for now.
- */
-export const logOutUser = async () => {
-  try {
-    await signOut(getAuth())
-  }
-  catch(e) {
-    throw new CustomError("There was problem signing you out. Try again.")
+    throw throwFireBaseAPIError(error)
   }
 }
 
 /**
  * Make a GET request to Youtube Data API to get video details.
  * 
- * @param accessToken 
- * @returns                        User personal playlist details.
- * @throws                         Error status rom fetching user playlists
- * @throws  {ApiError}             Error working with Youtube Data API
- * @throws  {AuthorizationError}   Error requesting user data
- * @throws  {ExpiredTokenError}    Error requesting user data due to expired token.
+ * @param   accessToken 
+ * @returns User personal playlist details.
+ * @throws  Error status rom fetching user playlists
  */
 export const getUserYtPlaylists = async (accessToken: string, max: number, nextPageToken: string = ""): Promise<YoutubeUserPlaylistResponse> => {
   const url = `${YT_DATA_API_URL}/playlists?part=snippet%2CcontentDetails&maxResults=${max}&mine=true&key=${PUBLIC_YT_DATA_V3_API_KEY}&pageToken=${nextPageToken}`
@@ -118,7 +93,7 @@ export const getUserYtPlaylists = async (accessToken: string, max: number, nextP
   
   if (!res.ok) {
     console.error(`Error fetching user playlists. Location: ${data.error.errors[0].location}. Message: ${data.error.message}.`)
-    throw getYtApiError(data.error.code, YTAPIErrorContext.USER_PLAYLISTS)
+    throw throwYoutubeDataAPIError(data.error.code)
   }
 
   const playlists: YoutubePlaylist[] = []
@@ -147,10 +122,8 @@ export const getUserYtPlaylists = async (accessToken: string, max: number, nextP
 /**
  * Make a GET request to Youtube Data API to get video details and another one to get video channel details.
  * 
- * @param videoId                     Vid in question.
- * @returns                           Youtube Video playlist details.
- * @throws  {ApiError}                Error working with Youtube Data API
- * @throws  {ResourceNotFoundError}   Resource does not exist, deleted, privated.
+ * @param videoId Vid in question.
+ * @returns       Youtube Video playlist details.
  */
 export const getVidDetails = async (videoId: string): Promise<YoutubeVideo> => {
     let url = `${YT_DATA_API_URL}/videos?part=snippet,status,statistics,id&id=${videoId}&key=${PUBLIC_YT_DATA_V3_API_KEY}`
@@ -158,15 +131,12 @@ export const getVidDetails = async (videoId: string): Promise<YoutubeVideo> => {
     const res = await fetch(url)
     const data = await res.json()
 
-    console.log(res)
-
     if (!res.ok) {
       console.error(`Error fetching video details: Location: ${data.error.errors[0].location}. Message: ${data.error.message}}.`)
-      throw getYtApiError(data.error.code, YTAPIErrorContext.VIDEO)
+      throw throwYoutubeDataAPIError(data.error.code)
     }
 
     const channelDetails = await getChannelDetails(data.items[0].snippet.channelId)
-    console.log(data.items[0])
 
     return {
         id: data.items[0].id,
@@ -185,10 +155,8 @@ export const getVidDetails = async (videoId: string): Promise<YoutubeVideo> => {
 /**
  * Make a GET request to Youtube Data API to get playlist items details and another one to get video channel details.
  * 
- * @param playlistId 
- * @returns                           Youtube Playlist details.
- * @throws  {ApiError}                Error working with Youtube Data API
- * @throws  {ResourceNotFoundError}   Resource does not exist, deleted, privated.
+ * @param   playlistId 
+ * @returns Youtube Playlist details.
  */
 export const getPlayListItemsDetails = async (playlistId: string, maxResults = 1): Promise<YoutubePlaylistResponse> => {
   const url = `${YT_DATA_API_URL}/playlistItems?part=snippet&maxResults=${maxResults}&playlistId=${playlistId}&key=${PUBLIC_YT_DATA_V3_API_KEY}`
@@ -201,7 +169,7 @@ export const getPlayListItemsDetails = async (playlistId: string, maxResults = 1
 
   if (!res.ok) {
     console.error(`Error fetching playlist details: Location: ${data.error.errors[0].location}. Message: ${data.error.message}.`)
-    throw getYtApiError(data.error.code, YTAPIErrorContext.PLAYLIST)
+    throw throwYoutubeDataAPIError(data.error.code)
   }
 
   const playlistItems: YoutubeVideo[] = []
@@ -248,7 +216,7 @@ export const getPlaylistDetails = async (playlistId: string): Promise<YoutubePla
 
   if (!res.ok) {
     console.error(`Error fetching playlist details: Location: ${data.error.errors[0].location}. Message: ${data.error.message}.`)
-    throw getYtApiError(data.error.code, YTAPIErrorContext.PLAYLIST)
+    throw throwYoutubeDataAPIError(data.error.code)
   }
 
   const channelDetails = await getChannelDetails(data.items[0].snippet.channelId)
@@ -271,10 +239,8 @@ export const getPlaylistDetails = async (playlistId: string): Promise<YoutubePla
 /**
  * Make a GET request to Youtube Data API to get channel details.
  * 
- * @param channelId 
- * @returns                           Youtube Channel details
- * @throws  {ApiError}                Error working with Youtube Data API
- * @throws  {ResourceNotFoundError}   Channel does not exist or deleted
+ * @param   channelId 
+ * @returns Youtube Channel details
  */
 export const getChannelDetails = async (channelId: string): Promise<YoutubeChannel> => {
   const url = `${YT_DATA_API_URL}/channels?part=snippet%2Cstatistics&id=${channelId}&key=${PUBLIC_YT_DATA_V3_API_KEY}`
@@ -284,7 +250,7 @@ export const getChannelDetails = async (channelId: string): Promise<YoutubeChann
 
   if (!res.ok) {
     console.error(`Error fetching channel details: Location: ${data.error.errors[0].location}. Message: ${data.error.message}}.`)
-    throw getYtApiError(data.error.code, YTAPIErrorContext.CHANNEL)
+    throw getYtIframeAPIError(data.error.code)
   }
 
   return {
@@ -300,55 +266,61 @@ export const getChannelDetails = async (channelId: string): Promise<YoutubeChann
  * Get the right error object to throw after a failed request.
  * Codes / error messages are based on Youtube Data v3 API.
  * 
+ * Based on Core API Errors from Docs
+ * https://developers.google.com/youtube/v3/docs/errors 
+ * 
  * @param   code     HTTP Status error code returned from Youtube Data API
  * @param   context  In what API context is the error origination from
  * @returns          Error type and context will be relevant in how the error will be displayed to the user.
  */
-const getYtApiError = (code: number, context: YTAPIErrorContext) => {
-  let message = "Error interacting with Youtube Data API."
+const throwYoutubeDataAPIError = (status: number) => {
+    if (status === 401) {
+        throw new APIError(APIErrorCode.AUTHORIZATION_ERROR, "Invalid Credentials.")
+    }
+    else if (status === 404) {
+        throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Requested media unavailable.")
+    }
+    else if (status === 429) {
+        throw new APIError(APIErrorCode.RATE_LIMIT_HIT)
+    }
+    else {
+        throw new APIError(APIErrorCode.GENERAL, "There was an error with Youtube. Please try again later.")
+    }
+}
 
-  if (code === 401) {
-    return new ExpiredTokenError("Session Expired. Log in again to continue.")
-  }
-  else if (code === 403 && context === YTAPIErrorContext.USER_LOGIN) {
-    return new AuthorizationError("User log in failed. Try again.")
-  }
-  else if (code === 403 && context === YTAPIErrorContext.USER_PLAYLISTS) {
-    return new AuthorizationError("Request channel associated with your account is either closed or suspended.")
-  }
-  else if (code === 403 && context === YTAPIErrorContext.PLAYLIST) {
-    return new AuthorizationError("Issue with request playlist or request is not properly authorized.")
-  }
-  else if (code === 404 && context === YTAPIErrorContext.CHANNEL) {
-    return new ResourceNotFoundError("Youtube channel does not exist")
-  }
-  else if (code === 404 && context === YTAPIErrorContext.PLAYLIST) {
-    return new ResourceNotFoundError("Requested playlist failed. Note that private playlists cannot be played.")
-  }
-  else if (code === 404 && context === YTAPIErrorContext.VIDEO) {
-    return new ResourceNotFoundError("Requested video failed. Note that private videos cannot be played.")  
-  }
-  else if (code === 404 && context === YTAPIErrorContext.USER_LOGIN) {
-    return new ResourceNotFoundError("User does not exist.")
-  }
-  else {
-    return new ApiError(message)
-  }
+/**
+ * Finds the right error to throw based on the error returned by Firebase.
+ * TODO: need to find documentation
+ * 
+ * @param error 
+ */
+function throwFireBaseAPIError(error: any) {
+    const errorStr = error.toString()
+    const matches = errorStr.match(/\(([^)]+)\)/)
+    const contextCode = matches[1]
+
+    console.log(contextCode)
+
+    if (contextCode === "auth/popup-closed-by-user") {
+      throw new APIError(APIErrorCode.AUTH_DENIED)
+    }
+    else {
+      throw new APIError(APIErrorCode.AUTHORIZATION_ERROR)
+    }
 }
 
 /**
  * Return the appopriate error with the right context based on the error code return from Youtube iFrame API.
- * @param   error           Error code returned from Youtube iFrame Player API
- * @returns {PlayerError}   Error returned to be handled.
+ * @param error  Error code returned from Youtube iFrame Player API
  */
 export const getYtIframeAPIError = (errorMsg: string) => {
   if (errorMsg === "api.invalidparam") {
-      return new PlayerError("Player error has occured. Refresh or play a new playlist / video.")
+    return new APIError(APIErrorCode.PLAYER, "Player error has occured. Refresh or play a new playlist / video.")
   }
   else if (errorMsg === "auth") {
-    return new PlayerError("Owner has disabled video playback. Click on a different video to continue.", ErrorCode.YT_PRIVATE_VIDEO)
+    return new APIError(APIErrorCode.PLAYER, "Owner has disabled video playback. Click on a different video to continue.")
   }
   else {
-    return new PlayerError("Player error has occured. Refresh or play a new playlist / video.")
+    return new APIError(APIErrorCode.PLAYER, "Player error has occured. Refresh or play a new playlist / video.")
   }
 }

@@ -261,7 +261,6 @@
                             <GoalsHistory/>
                         {/if}
                     </div>
-                {:else}
                 {/if}
             </div>
         </div>

@@ -12,9 +12,6 @@ export enum LogoIcon {
 export enum Icon {
     Settings, Dropdown, Add, Close, ChevronLeft, ChevronRight, DragDots, Archive, Tune, Sun, Moon, Pin
 }
-export enum ToastContext {
-    AppleMusic, Spotify, YoutubeMusic, Soundcloud, Youtube, Session, Google, Luciole
-}
 export enum ModalType { 
     Settings, Youtube, Music, Stats, Journal, Appearance, Quote, NewSession, ActiveSession,
     EditSession, SesssionFinished, SessionCanceled, Shortcuts, ImgUpload, CustomVidBg,
@@ -120,12 +117,9 @@ export enum MusicMoodCategory {
 export enum LibError {
     REFRESH, NEW_COLLECTION, MORE_ITEMS
 }
-
-// keep the ordering of the platforms same as LogoIcon
 export enum MusicPlatform { 
     AppleMusic, Spotify, YoutubeMusic, Soundcloud 
 }
-
 export enum MusicShufflerState {
     CAN_CONTINUE_CHUNK, HAS_ENDED_AND_MORE_CHUNKS, HAS_ENDED_NO_CHUNKS,
 }
@@ -135,6 +129,13 @@ export enum MusicMediaType {
 export enum UserLibraryMedia {
     Playlists = "Playlists", LikedTracks = "Tracks", Albums = "Albums", PodcastEps = "Episodes", Audiobooks = "Audiobooks", Artists = "Artists"
 }
+
+/* Routines */
+export enum RoutineActivityType {
+    Work, Body, Mind, SelfCare, Nap
+}
+
+/* Toasts */
 export enum SwipeStateTypes {
 	SwipedOut = 'SwipedOut',
 	SwipedBack = 'SwipedBack',

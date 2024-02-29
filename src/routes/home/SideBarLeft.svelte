@@ -1,26 +1,23 @@
 <script lang="ts">
-    import { LogoIcon, ModalType, MusicPlatform } from "$lib/enums"
+    import { ModalType, MusicPlatform } from "$lib/enums"
     import { getThemeFromSection, setNewTheme } from "$lib/utils-appearance"
 	import { themeState, globalContext, musicPlayerStore } from "$lib/store"
 	import { hideWideMenuBar, openModal, showWideMenuBar } from "$lib/utils-home"
-	import { createEventDispatcher, onMount } from "svelte";
-	import { getElemById, getLogoIconFromEnum } from "$lib/utils-general";
-	import SideBarCalendar from "./SideBarCalendar.svelte";
-	import { goto } from "$app/navigation";
-	import { toast, toastAPI } from "$lib/utils-toast";
-	import { get } from "svelte/store";
+	import { onMount } from "svelte"
+	import { getElemById, getLogoIconFromEnum } from "$lib/utils-general"
+	import SideBarCalendar from "./SideBarCalendar.svelte"
+	import { goto } from "$app/navigation"
+	import { toast } from "$lib/utils-toast"
 
     enum TextTab {
-        Workspace, Productivity, Goals, Habits, Mindhub
+        Workspace, Productivity, Goals, Habits, Mindhub, Routines
     }
-
-	const dispatch = createEventDispatcher();
 
     const NAV_MENU_NARROW_BAR_WIDTH = 58
     const NAV_MENU_WIDE_BAR_WIDTH = 220
 
     let selectedTxtButtonElement: HTMLElement
-    let selectTextTabModifier = ""
+    let selectedTxtTabModifier = ""
     let initDragXPos = -1
     let isWideBarMenuOpen = true
     let count = 0
@@ -34,12 +31,11 @@
         removeSelectTabBtnStyling()
 
         if (isDefaultTheme) {
-           selectTextTabModifier = $themeState.title === "Light Mode" ? "--selected--light-default" : "--selected--dark-default"
+           selectedTxtTabModifier = $themeState.title === "Light Mode" ? "--selected--light-default" : "--selected--dark-default"
         }
         else {
-           selectTextTabModifier = "--selected"
+           selectedTxtTabModifier = "--selected"
         }
-
         selectTabBtn(selectedTxtButtonElement)
     }
 
@@ -76,8 +72,6 @@
         window.removeEventListener("mousemove", onResizerDrag)
         window.removeEventListener("mouseup", onResizerEndDrag)
     }
-
-    
     function handleToggleThemeMode() {
         const title = $themeState!.twinTheme!.sectionName as keyof AppearanceSectionToThemeMap
         const idx = $themeState!.twinTheme!.index
@@ -87,15 +81,17 @@
         console.log(event)
     }
 
-    function removeSelectTabBtnStyling() {
-        if (!selectedTxtButtonElement) return
-        selectedTxtButtonElement.classList.remove(`nav-menu__txt-tab-btn${selectTextTabModifier}`)
-    }
+    /* Narrow Bar Btn */
     function selectTabBtn(buttonElem: HTMLElement) {
         if (!buttonElem) return
 
-        buttonElem.classList.add(`nav-menu__txt-tab-btn${selectTextTabModifier}`)
+        buttonElem.classList.add(`nav-menu__txt-tab-btn${selectedTxtTabModifier}`)
         selectedTxtButtonElement = buttonElem
+    }
+    /* Wide Bar Btns */
+    function removeSelectTabBtnStyling() {
+        if (!selectedTxtButtonElement) return
+        selectedTxtButtonElement.classList.remove(`nav-menu__txt-tab-btn${selectedTxtTabModifier}`)
     }
     function handleTxtButtonClicked(event: Event, textTab: TextTab) {
         removeSelectTabBtnStyling()
@@ -126,11 +122,27 @@
             goto("/home/habits")
         }
         else {
-            goto("/home/mind-hub")
+            goto("/home/routines/current")
         }
     }
     onMount(() => {
-        const workspaceTabBtn = getElemById(`workspace-btn--${TextTab.Workspace}`)! as HTMLButtonElement
+        let selectedTab = TextTab.Workspace
+        let currentHomePath = window.location.pathname.split("/")[2]
+
+        if (currentHomePath === "routines") {
+            selectedTab = TextTab.Routines
+        }
+        else if (currentHomePath === "goals") {
+            selectedTab = TextTab.Goals
+        }
+        else if (currentHomePath === "habits") {
+            selectedTab = TextTab.Habits
+        }
+        else if (currentHomePath === "productivity") {
+            selectedTab = TextTab.Productivity
+        }
+
+        const workspaceTabBtn = getElemById(`workspace-btn--${selectedTab}`)! as HTMLButtonElement
         selectTabBtn(workspaceTabBtn)
     })
 </script>
@@ -166,9 +178,12 @@
             >
                 <div class="theme-mode-toggle__container">
                     <div class="theme-mode-toggle__sun">
-                        <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fill={$themeState.themeToggleBtnIconColor} d="M9.60542 0.572266C10.1786 0.572266 10.6432 1.0369 10.6432 1.61005V3.19737C10.6432 3.77051 10.1786 4.23515 9.60542 4.23515C9.03227 4.23515 8.56764 3.77051 8.56764 3.19737V1.61005C8.56764 1.0369 9.03227 0.572266 9.60542 0.572266ZM13.9398 10.3399C13.9398 12.5988 12.1085 14.43 9.84955 14.43C7.59063 14.43 5.75945 12.5988 5.75945 10.3399C5.75945 8.08099 7.59063 6.24968 9.84955 6.24968C12.1085 6.24968 13.9398 8.08099 13.9398 10.3399ZM0.0820312 10.584C0.0820312 10.0109 0.546666 9.54625 1.11981 9.54625H2.707C3.28015 9.54625 3.74478 10.0109 3.74478 10.584C3.74478 11.1572 3.28015 11.6218 2.707 11.6218H1.11981C0.546666 11.6218 0.0820312 11.1572 0.0820312 10.584ZM18.5794 11.1334C19.1526 11.1334 19.6172 10.6688 19.6172 10.0957C19.6172 9.52251 19.1526 9.05787 18.5794 9.05787H16.9921C16.4189 9.05787 15.9543 9.52251 15.9543 10.0957C15.9543 10.6688 16.4189 11.1334 16.9921 11.1334H18.5794ZM9.05602 19.0696C9.05602 19.6428 9.52065 20.1074 10.0938 20.1074C10.6669 20.1074 11.1316 19.6428 11.1316 19.0696V17.4825C11.1316 16.9093 10.6669 16.4447 10.0938 16.4447C9.52065 16.4447 9.05602 16.9093 9.05602 17.4825V19.0696ZM2.77023 3.60574C3.17538 3.20046 3.83252 3.20046 4.23781 3.60574L5.36023 4.72817C5.76551 5.13345 5.76551 5.7906 5.36023 6.19588C4.95495 6.60116 4.2978 6.60116 3.89252 6.19588L2.77023 5.07345C2.36482 4.66817 2.36482 4.01102 2.77023 3.60574ZM15.4613 17.0741C15.8666 17.4794 16.5237 17.4794 16.929 17.0741C17.3343 16.6687 17.3343 16.0116 16.929 15.6064L15.8067 14.4839C15.4014 14.0787 14.7443 14.0787 14.339 14.4839C13.9337 14.8892 13.9337 15.5464 14.339 15.9516L15.4613 17.0741ZM16.5837 3.26046C16.989 3.66587 16.989 4.32289 16.5837 4.72817L15.4613 5.85059C15.056 6.25588 14.3989 6.25588 13.9936 5.85059C13.5883 5.44531 13.5883 4.78817 13.9936 4.38289L15.116 3.26059C15.5213 2.85518 16.1784 2.85518 16.5837 3.26046ZM3.11551 15.9516C2.71023 16.3569 2.71023 17.0141 3.11551 17.4194C3.52079 17.8245 4.17794 17.8245 4.58322 17.4194L5.70551 16.2969C6.1108 15.8916 6.1108 15.2345 5.70551 14.8292C5.30023 14.4239 4.64309 14.4239 4.23781 14.8292L3.11551 15.9516Z"/>
-                        </svg>                                                        
+                        <svg width="19" height="18" viewBox="0 0 19 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path 
+                                d="M9.23877 0.507812C9.7419 0.507812 10.1498 0.91568 10.1498 1.4188V2.81219C10.1498 3.31531 9.7419 3.72318 9.23877 3.72318C8.73565 3.72318 8.32778 3.31531 8.32778 2.81219V1.4188C8.32778 0.91568 8.73565 0.507812 9.23877 0.507812ZM13.0436 9.08209C13.0436 11.065 11.436 12.6725 9.45307 12.6725C7.47014 12.6725 5.86268 11.065 5.86268 9.08209C5.86268 7.09916 7.47014 5.49159 9.45307 5.49159C11.436 5.49159 13.0436 7.09916 13.0436 9.08209ZM0.878906 9.29638C0.878906 8.79326 1.28677 8.38539 1.7899 8.38539H3.18317C3.68629 8.38539 4.09416 8.79326 4.09416 9.29638C4.09416 9.79951 3.68629 10.2074 3.18317 10.2074H1.7899C1.28677 10.2074 0.878906 9.79951 0.878906 9.29638ZM17.1164 9.77867C17.6195 9.77867 18.0273 9.3708 18.0273 8.86768C18.0273 8.36455 17.6195 7.95669 17.1164 7.95669H15.723C15.2198 7.95669 14.812 8.36455 14.812 8.86768C14.812 9.3708 15.2198 9.77867 15.723 9.77867H17.1164ZM8.75649 16.7453C8.75649 17.2484 9.16436 17.6562 9.66748 17.6562C10.1706 17.6562 10.5785 17.2484 10.5785 16.7453V15.352C10.5785 14.8489 10.1706 14.441 9.66748 14.441C9.16436 14.441 8.75649 14.8489 8.75649 15.352V16.7453ZM3.23867 3.17067C3.59432 2.81491 4.17118 2.81491 4.52695 3.17067L5.51224 4.15597C5.868 4.51173 5.868 5.08859 5.51224 5.44435C5.15647 5.80012 4.57961 5.80012 4.22385 5.44435L3.23867 4.45906C2.88279 4.1033 2.88279 3.52644 3.23867 3.17067ZM14.3792 14.9935C14.735 15.3493 15.3118 15.3493 15.6676 14.9935C16.0233 14.6376 16.0233 14.0609 15.6676 13.7051L14.6824 12.7198C14.3266 12.3641 13.7498 12.3641 13.394 12.7198C13.0382 13.0756 13.0382 13.6524 13.394 14.0082L14.3792 14.9935ZM15.3645 2.86758C15.7203 3.22346 15.7203 3.8002 15.3645 4.15597L14.3792 5.14126C14.0234 5.49702 13.4466 5.49702 13.0908 5.14126C12.735 4.78549 12.735 4.20863 13.0908 3.85287L14.0761 2.86769C14.4319 2.51181 15.0087 2.51181 15.3645 2.86758ZM3.54177 14.0082C3.186 14.364 3.186 14.9408 3.54177 15.2966C3.89753 15.6523 4.47439 15.6523 4.83016 15.2966L5.81534 14.3113C6.1711 13.9555 6.1711 13.3787 5.81534 13.0229C5.45957 12.6672 4.88271 12.6672 4.52695 13.0229L3.54177 14.0082Z" 
+                                fill={$themeState.themeToggleBtnIconColor}
+                            />
+                        </svg>                                                                                                                          
                     </div>
                     <div class="theme-mode-toggle__moon">
                         <svg width="37" height="37" viewBox="0 0 37 37" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -208,25 +223,45 @@
     <div class="nav-menu__wide-bar" style={`${!isWideBarMenuOpen ? "display: none;" : ""}`}>
         <!-- Tab Buttons -->
         <div class={`nav-menu__txt-tabs nav-menu__txt-tabs--${$themeState.title === "Dark Mode" ? "dark-default" : ($themeState.title === "Light Mode" ? "light-default" : "simple-styling")}`}>
-            <button class={`nav-menu__txt-tab-btn nav-menu__txt-tab-btn--workspace`} id="workspace-btn--0" on:click={(e) => handleTxtButtonClicked(e, TextTab.Workspace)}>
+            <button 
+                class={`nav-menu__txt-tab-btn nav-menu__txt-tab-btn--workspace`} 
+                id={`workspace-btn--${TextTab.Workspace}`} 
+                on:click={(e) => handleTxtButtonClicked(e, TextTab.Workspace)}
+            >
                 <i class="fa-solid fa-ruler-combined nav-menu__txt-tab-btn-icon"></i>
                 <span>Workspace</span>
             </button>
-            <button class={`nav-menu__txt-tab-btn nav-menu__txt-tab-btn--productivity`} on:click={(e) => handleTxtButtonClicked(e, TextTab.Productivity)}>
+            <button 
+                class={`nav-menu__txt-tab-btn nav-menu__txt-tab-btn--productivity`} 
+                id={`workspace-btn--${TextTab.Productivity}`} 
+                on:click={(e) => handleTxtButtonClicked(e, TextTab.Productivity)}
+            >
                 <i class="fa-solid fa-chart-line nav-menu__txt-tab-btn-icon"></i>
                 <span>Productivity</span>
             </button>
-            <button class={`nav-menu__txt-tab-btn nav-menu__txt-tab-btn--goals`} on:click={(e) => handleTxtButtonClicked(e, TextTab.Goals)}>
+            <button 
+                class={`nav-menu__txt-tab-btn nav-menu__txt-tab-btn--goals`} 
+                id={`workspace-btn--${TextTab.Goals}`} 
+                on:click={(e) => handleTxtButtonClicked(e, TextTab.Goals)}
+            >
                 <i class="fa-solid fa-bullseye nav-menu__txt-tab-btn-icon"></i>
                 <span>Goals</span>
             </button>
-            <button class={`nav-menu__txt-tab-btn nav-menu__txt-tab-btn--habits`} on:click={(e) => handleTxtButtonClicked(e, TextTab.Habits)}>
+            <button 
+                class={`nav-menu__txt-tab-btn nav-menu__txt-tab-btn--habits`} 
+                id={`workspace-btn--${TextTab.Habits}`} 
+                on:click={(e) => handleTxtButtonClicked(e, TextTab.Habits)}
+            >
                 <i class="fa-solid fa-cubes-stacked nav-menu__txt-tab-btn-icon"></i>
                 <span>Habits</span>
             </button>
-            <button class={`nav-menu__txt-tab-btn nav-menu__txt-tab-btn--mindhub`} on:click={(e) => handleTxtButtonClicked(e, TextTab.Mindhub)}>
+            <button 
+                class={`nav-menu__txt-tab-btn nav-menu__txt-tab-btn--routines`} 
+                id={`workspace-btn--${TextTab.Routines}`} 
+                on:click={(e) => handleTxtButtonClicked(e, TextTab.Routines)}
+            >
                 <i class="fa-solid fa-spa nav-menu__txt-tab-btn-icon"></i>
-                <span>Mindhub</span>
+                <span>Routines</span>
             </button>
         </div>
         <!-- Calendar / Day View -->
@@ -383,7 +418,7 @@
             }
         }
         &__txt-tabs {
-            margin-bottom: -7px;
+            margin-bottom: 0px;
 
             &--dark-theme .nav-menu__txt-tab-btn {
                 &:focus {
@@ -403,7 +438,7 @@
                 .nav-menu__txt-tab-btn--habits {
                     background-color: #FFF2FB !important;
                 }
-                .nav-menu__txt-tab-btn--mindhub {
+                .nav-menu__txt-tab-btn--routines {
                     background-color: #fff4f7 !important;
                 }
             }
@@ -473,7 +508,7 @@
                     color: #FFCFA3;
                 }
             }
-            &--selected--dark-default#{&}--mindhub {
+            &--selected--dark-default#{&}--routines {
                 background-color: rgba(#C3F493, 0.02);
                 i {
                     color: #C3F493;

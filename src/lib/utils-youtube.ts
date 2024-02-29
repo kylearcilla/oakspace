@@ -1,46 +1,28 @@
 import { get } from "svelte/store"
-import { ToastContext, YTMediaLinkType } from "./enums"
+import { APIErrorCode, LogoIcon, YTMediaLinkType } from "./enums"
 import { ytUserDataStore, ytPlayerStore } from "./store"
 import { YoutubeUserData } from "./youtube-user-data"
 import { YoutubePlayer } from "./youtube-player"
-import { CustomError, ExpiredTokenError, ResourceNotFoundError } from "./errors"
+import type { APIError } from "./errors"
 import { getPlayListItemsDetails, getPlaylistDetails, getVidDetails } from "./api-youtube"
 import { getElemsByClass } from "./utils-general"
+import { toast } from "./utils-toast"
 
 const INIT_PLAYLIST_REQUEST_DELAY = 500
 export const USER_PLS_MAX_PER_REQUEST = 15
 
 /**
  * Continue Youtube player session after a refresh.
- * @returns  AsyncResult object.
  */
-export const continueYtPlayerSession = async (): Promise<AsyncResult> => {
-    return await initYtPlayer(true)
+export const continueYtPlayerSession = () => {
+    initYtPlayer()
 }
 
 /**
  * Continue Youtube user session after a refresh.
- * @returns  AsyncResult object.
  */
-export const continueYtUserSession = async (): Promise<AsyncResult> => {
-    return await loginUser(true)
-}
-
-/**
- * Initialize Youtube Player using Youtube iFrame Player API.
-* @returns    AsyncResult object.
- */
-export const initYtPlayer = async (didInitYtPlayer: boolean = false): Promise<AsyncResult> => {
-    try {
-        const ytPlayer = new YoutubePlayer(didInitYtPlayer)
-        await ytPlayer.initYtPlayer()
-
-        return { sucess: true }
-    }
-    catch(error: any) {
-        createYtErrorToastItem(error)
-        return { sucess: false }
-    }
+export const continueYtUserSession =() => {
+    loginUser()
 }
 
 /**
@@ -49,47 +31,50 @@ export const initYtPlayer = async (didInitYtPlayer: boolean = false): Promise<As
  * Show a message if there's an issue.
  * @returns                 AsyncResult object.
  */
-export const loginUser = async (didUserSignIn: boolean = false): Promise<AsyncResult> => {
+export const loginUser = async () => {
     try {
-        const ytData = new YoutubeUserData(didUserSignIn)
-        await ytData.initYtData()
+        const hasPrevSession = didInitYtUser()
+        const ytData = new YoutubeUserData()
+        await ytData.init()
 
-        if (!didUserSignIn) {
-            // toaster.update((toaster: ToastItem[]) => [...toaster, {
-            //     context: ToastContext.Youtube,
-            //     message: "Log in Successful!"
-            // }])
+        if (!hasPrevSession) {
+            initToast("Log in Successful!")
         }
-
-        return { sucess: true }
     }
     catch(error: any) {
-        createYtErrorToastItem(error)
-        return { sucess: false }
+        if (error.code != APIErrorCode.AUTH_DENIED) {
+            youtubeAPIErrorHandler(error)
+        }
     }    
+}
+
+/**
+ * Initialize Youtube Player using Youtube iFrame Player API.
+* @returns    AsyncResult object.
+ */
+export const initYtPlayer = async () => {
+    try {
+        const ytPlayer = new YoutubePlayer()
+        await ytPlayer.initYtPlayer()
+    }
+    catch(error: any) {
+        youtubeAPIErrorHandler(error)
+    }
 }
 
 /**
  * Log out Youtube User.
  * @returns      AsyncResult object.
  */
-export const logOutUser = async (): Promise<AsyncResult> => {
+export const logOutUser = async () => {
     const ytData = get(ytUserDataStore)
 
     try {
         ytData!.logOutUser()
-
-        // toaster.update((toaster: ToastItem[]) => [...toaster, {
-        //     context: ToastContext.Youtube,
-        //     message: "Logged out successfully!",
-        //     actionFunction: null
-        // }])
-
-        return { sucess: true }
+        initToast("Logged Out Successfully!")
     }
     catch(error: any) {
-        createYtErrorToastItem(error)
-        return { sucess: false }
+        youtubeAPIErrorHandler(error)
     }
 }
 
@@ -97,23 +82,15 @@ export const logOutUser = async (): Promise<AsyncResult> => {
  * Called after token has expired and user wants to authorize the app again.
  * @returns     AsyncResult object.
  */
-export const refreshToken = async (): Promise<AsyncResult> => {
+export const refreshToken = async () => {
     const playerStore = get(ytUserDataStore)
 
     try {
-        await playerStore!.getFreshToken()
-
-        // toaster.update((toaster: ToastItem[]) => [...toaster, {
-        //     context: ToastContext.Youtube,
-        //     message: "Token Refreshed!",
-        //     actionFunction: null
-        // }])
-
-        return { sucess: true }
+        await playerStore!.refreshAccessToken()
+        initToast("Token Refreshed!")
     }
     catch(error: any) {
-        createYtErrorToastItem(error)
-        return { sucess: false }
+        youtubeAPIErrorHandler(error)
     }
 }
 
@@ -145,7 +122,6 @@ export const getYtMediaId = async (url: string): Promise<YoutubeMediaId | { erro
                 id: listId
             }
         }
-
         return { error: "Resource does not exist or is private." }        
     }
     catch(error: any) {
@@ -195,40 +171,74 @@ export const toggleYTIFramePointerEvents = (isPointerEventsEnabled: boolean) => 
  * @param error  Error raised from interacting with Youtube Data API / IFrame Player API.
  * @returns      Toast message to be disaplyed in a Toast component.
  */
-export const createYtErrorToastItem = (error: Error) => {
-    let toastMessage: ToastItem
+export const youtubeAPIErrorHandler = (error: APIError) => {
+    let toastOptions: ToastInitOptions
 
-    // put action function
-    if (error instanceof ExpiredTokenError) {
-        // toastMessage = {
-        //     context: ToastContext.Youtube,
-        //     message: error.message,
-        //     action: {
-        //         msg: "Log in",
-        //         func: () => refreshToken()
-        //     }
-        // }
+    const errorMessage = error.message 
+    const hasNoMsg = errorMessage != undefined && errorMessage
+
+    if (error.code === APIErrorCode.EXPIRED_TOKEN) {
+        toastOptions = {
+            message: hasNoMsg ? errorMessage : "Token has expired. Log in again to continue.",
+            action: {
+                label: "Continue session",
+                onClick: () => refreshToken()
+            }
+        }
     }
-    else if (!(error instanceof CustomError)) {
-        toastMessage = {
-            context: ToastContext.Youtube,
-            message: "Error has occured try again.",
-        }    
+    else if (error.code === APIErrorCode.PLAYER) {
+        toastOptions = {
+            message: hasNoMsg ? errorMessage : "Player error. Try again later.",
+        }
+    }
+    else if (error.code === APIErrorCode.FAILED_TOKEN_REFRESH) {
+        toastOptions = {
+            message: hasNoMsg ? errorMessage : "Token refresh failed. Please try again.",
+        }
+    }
+    else if (error.code === APIErrorCode.AUTHORIZATION_ERROR) {
+        toastOptions = {
+            message: hasNoMsg ? errorMessage : `Youtube authorization failed.`,
+        }
+    }
+    else if (error.code === APIErrorCode.RATE_LIMIT_HIT) {
+        toastOptions = {
+            message: "Rate limit exceeded. Try again later.",
+        }
+    }
+    else if (error instanceof TypeError) {
+        toastOptions = {
+            message: hasNoMsg ? errorMessage : "There was an error. Please try again."
+        }
     }
     else {
-        toastMessage = {
-            context: ToastContext.Youtube,
-            message: error.message,
-        }    
+        toastOptions = {
+            message: hasNoMsg ? errorMessage : `There was an error with Youtube Please try again later.` ,
+        }
     }
-    // toaster.update(() => [toastMessage])
+
+    toast("default", {
+        message: "Youtube",
+        description: toastOptions.message,
+        logoIcon: LogoIcon.Youtube,
+        action: toastOptions.action
+    })
+}
+
+export function initToast(message: string) {
+    toast("default", {
+        logoIcon: LogoIcon.Youtube,
+        message: "Youtube",
+        description: message
+    })
 }
 
 /**
  * @returns User has initialized a session before
  */
 export const didInitYtUser = () => {
-    return localStorage.getItem('yt-user-data') != null
+    const hasData = localStorage.getItem('yt-user-data') != null
+    return hasData
 }
 
 /* Youtube Creds */
@@ -246,7 +256,7 @@ export const deleteYtCredentials = () => {
 }
 
 /* Youtube User Data */
-export const loadYtUserData = (): Partial<YoutubeUserData> | null => {
+export const loadYtUserData = (): YoutubeUserData | null => {
     const res = localStorage.getItem('yt-user-data')
     if (!res) return null
 

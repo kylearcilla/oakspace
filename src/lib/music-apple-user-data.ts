@@ -82,11 +82,14 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
         catch(e: any) {
             const message = e.toString()
             let error = e
+
+            if (!hasSignedIn) {
+                this.quit()
+            }
             
             // This case occurs when: user closes consent screen, denies, non-subscriber log in
             // TODO: make a special case that shows users why it occured (do this to catch case where user is not a subcriber)
             if (message.includes("AUTHORIZATION_ERROR")) {
-                this.quit()
                 throw new APIError(APIErrorCode.AUTH_DENIED)
             }
             else if (hasSignedIn) {
@@ -180,7 +183,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
         this.updateState({ hasTokenExpired: hasExpired })
 
         if (hasExpired) {
-            musicAPIErrorHandler(new APIError(APIErrorCode.EXPIRED_TOKEN))
+            this.onError(new APIError(APIErrorCode.EXPIRED_TOKEN))
         }
     }
 
@@ -191,12 +194,12 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
      */
     hasAccessTokenExpired() {
         const currentTime = new Date().getTime()
-        const timeFromCreation = currentTime - new Date(this.accessTokenCreationDate!).getTime()
-        const timeUntilExpiration = this.tokenExpiresInMs - timeFromCreation
+        const timeElapsed = currentTime - new Date(this.accessTokenCreationDate!).getTime()
+        const timeRemaining = this.tokenExpiresInMs - timeElapsed
     
         const threshold = this.ACTIVE_TOKEN_THRESHOLD_SECS * 1000 
     
-        return timeUntilExpiration <= threshold
+        return threshold >= timeRemaining
     }
 
     async verifyAccessToken() {
@@ -372,7 +375,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
                 this.setTokenHasExpired(true)
                 this.onError(error)
             }
-            else if (error.code != APIErrorCode.FAILED_TOKEN_REFRESH) {
+            else {
                 this.onError(new APIError(APIErrorCode.GENERAL, `There was an loading your ${media.toLowerCase()} from your library. Please try again later.`))
             }
             throw error
@@ -401,7 +404,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
                 this.setTokenHasExpired(true)
                 this.onError(error)
             }
-            else if (error.code != APIErrorCode.FAILED_TOKEN_REFRESH) {
+            else {
                 this.onError(new APIError(APIErrorCode.GENERAL, `There was an refreshing ${this.currentUserMedia.toLowerCase()} from your library. Please try again later.`))
             }
             throw error
@@ -430,7 +433,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
                 this.setTokenHasExpired(true)
                 this.onError(error)
             }
-            else if (error.code != APIErrorCode.FAILED_TOKEN_REFRESH) {
+            else {
                 this.onError(new APIError(APIErrorCode.GENERAL, `There was an loading more ${this.currentUserMedia.toLowerCase()} from your library. Please try again later.`))
             }
             throw error

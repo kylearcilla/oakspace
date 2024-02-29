@@ -18,9 +18,9 @@
 	export let closeButton: $$Props['closeButton']
 	export let interacting: $$Props['interacting']
 	export let cancelButtonStyle: $$Props['cancelButtonStyle'] = ''
-	export let actionButtonStyle: $$Props['actionButtonStyle'] = ''
+	export const actionButtonStyle: $$Props['actionButtonStyle'] = ''
 	export let duration: $$Props['duration'] = 4000
-	export let descriptionClass: $$Props['descriptionClass'] = ''
+	export const descriptionClass: $$Props['descriptionClass'] = ''
 	export let classes: $$Props['classes'] = {}
 	export let unstyled: $$Props['unstyled'] = false
 

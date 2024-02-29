@@ -191,25 +191,41 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     left: 50%;
     transform: translate(-50%, -50%);
 }
-@mixin pos-abs-bottom-right-corner($right: 0, $bottom: 0) {
+@mixin pos-abs-bottom-right-corner($bottom: 0, $right: 0) {
     position: absolute;
     right: $right;
     bottom: $bottom;
+
+    @include pos-center-helper($bottom, $right)
 }
 @mixin pos-abs-top-right-corner($top: 0, $right: 0) {
     position: absolute;
     top: $top;
     right: $right;
+
+    @include pos-center-helper($top, $right)
 }
 @mixin pos-abs-top-left-corner($top: 0, $left: 0) {
     position: absolute;
     top: $top;
     left: $left;
+
+    @include pos-center-helper($top, $left)
 }
 @mixin pos-abs-bottom-left-corner($bottom: 0, $left: 0) {
     position: absolute;
     bottom: $bottom;
     left: $left;
+
+    @include pos-center-helper($bottom, $left)
+}
+@mixin pos-center-helper($top-bottom, $right-left) {
+    @if $top-bottom == 50% {
+        transform: translateY((-50%));
+    }
+    @if $right-left == 50% {
+        transform: translateX((-50%));
+    }
 }
 
 .text-aln-center {
@@ -328,75 +344,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     display: none;
 }
 
-.gradient-container {
-    transition: 0.15s ease-in-out;
-    opacity: 0;
-    visibility: hidden;
-    position: absolute;
-    z-index: 9000;
-    width: 70px;
-    background: linear-gradient(270deg, var(--bentoBoxBgColor) 60%, transparent);
-    @include center;
-    
-    &--left {
-        top: 0px;
-        left: 0px;
-        height: 100%;
-        background: linear-gradient(90deg, var(--bentoBoxBgColor) 15%, transparent);
-    }
-    &--right {
-        top: 0px;
-        right: 0px;
-        height: 100%;
-        background: linear-gradient(270deg, var(--bentoBoxBgColor) 20%, transparent);
-    }
-    &--top {
-        top: 0px;
-        left: 0px;
-        background: linear-gradient(180deg, var(--bentoBoxBgColor) 20%, transparent);
-        opacity: 1;
-        visibility: visible;
-        height: 65px;
-    }
-    &--bottom {
-        bottom: 0px;
-        left: 0px;
-        background: linear-gradient(0deg, var(--bentoBoxBgColor) 20%, transparent);
-        opacity: 1;
-        visibility: visible;
-        height: 65px;
-    }
-    &--shown {
-        opacity: 1;
-        visibility: visible;
-    }
-    &--horizontal {
-        width: 100%;
-    }
 
-    button {
-        i {
-            color: rgba(var(--textColor1), 0.7);
-        }
-        &:active {
-            transform: scale(0.8);
-        }
-    }
-
-    &__tab-arrow {
-        @include circle(20px);
-        @include center;
-        background-color: rgba(100, 100, 100, 0.4);
-        transition: 0.12s ease-in-out;
-
-        i {
-            color: white;
-        }
-        &:active {
-            transform: scale(0.8);
-        }
-    }
-}
 
 .pos-relative {
     position: relative;
@@ -982,11 +930,21 @@ $settings-modal-padding: 20px 25px 25px 25px;
     }
 }
 
-@mixin hov-opacity($length: 0, $before: 0.5, $after: 1) {
+@mixin hov-opacity($before: 0.5, $after: 1, $length: 0.14s) {
     opacity: $before;
     transition: $length ease-in-out;
 
     &:hover {
         opacity: $after;
     }
+}
+
+.scroll-bar-hidden {
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.full-opacity {
+    opacity: 1 !important;
 }

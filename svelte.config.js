@@ -6,6 +6,12 @@ import { vitePreprocess } from '@sveltejs/kit/vite';
 const config = {
 	// Consult https://kit.svelte.dev/docs/integrations#preprocessors
 	// for more information about preprocessors
+	onwarn: (warning, handler) => {
+		if (warning.code === 'css-unused-selector') {
+			return;
+		}
+		handler(warning);
+	},
 	preprocess: preprocess({
 		scss: {
 			prependData: "@import './src/scss/global.scss';"
@@ -13,7 +19,7 @@ const config = {
 	}),
 	kit: {
 		adapter: adapter()
-	}
+	},
 };
 
 export default config;

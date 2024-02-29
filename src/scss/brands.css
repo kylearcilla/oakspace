@@ -1,8 +1,6 @@
 .apple-music-logo-bg {
-  background: -webkit-gradient(linear, left top, left bottom, from(#FB5C75), color-stop(50%, #FD223C));
   background: linear-gradient(180deg, #FB5C75 0%, #FD223C 50%);
 }
-
 .apple-music-logo-bg svg {
   margin-left: -10%;
 }
@@ -12,10 +10,8 @@
 }
 
 .soundcloud-logo-bg {
-  background: -webkit-gradient(linear, left top, left bottom, from(#FF7402), color-stop(50%, #FF3801));
   background: linear-gradient(180deg, #FF7402 0%, #FF3801 50%);
 }
-
 .soundcloud-logo-bg svg {
   margin-top: -10%;
 }
@@ -30,5 +26,4 @@
 
 .app-logo-bg {
   background: white;
-}
-/*# sourceMappingURL=brands.css.map */
+}/*# sourceMappingURL=brands.css.map */

@@ -51,6 +51,18 @@ const ytRecsPlaylists: { title: string, playlists: YoutubePlaylist[] }[] = [
                 firstVidId: null
             },
             {
+                id: "PLpEqmyo6EfvK4MCsYvLENDGlej8mentJ-",
+                title: "Gaming Relax & Chill",
+                description: "Escape into tranquility with melodies from Zelda, Animal Crossing, and other Nintendo favorites in this calming playlist.",
+                vidCount: 22,
+                channelId: "",
+                channelTitle: "Mutliple Authors",
+                thumbnailURL: "https://i.ytimg.com/vi/EdHGrnuCEo4/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhdIGUoUTAP&rs=AOn4CLCRjy5XbgxBm3xltMq0G7SdSXInqQ",
+                channelImgSrc: "",
+                channelURL: "",
+                firstVidId: null
+            },
+            {
                 id: "PLpEqmyo6EfvLOjpfCCoFMRIa-MCZxT-_M",
                 title: "Coding Lofi CHill",
                 description: "Because debugging is less painful with chill beats :)",

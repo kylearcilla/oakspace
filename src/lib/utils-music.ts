@@ -11,7 +11,7 @@ import {
 import type { MusicPlayer } from "./music-player"
 import type { AppleMusicUserData } from "./music-apple-user-data"
 import type { SpotifyMusicUserData } from "./music-spotify-user-data"
-import {  APIErrorCode, LogoIcon, MusicMediaType, MusicPlatform, ToastContext } from "./enums"
+import {  APIErrorCode, MusicMediaType, MusicPlatform } from "./enums"
 import { APIError } from "./errors"
 import { AppleMusicPlayer } from "./music-apple-player"
 import { toast } from "./utils-toast"
@@ -292,19 +292,16 @@ export function initMusicToast(context: MusicPlatform, message: string) {
  * @returns             Toast message to be disaplyed in a Toast component.
  */
 export function musicAPIErrorHandler(error: APIError, musicPlatform?: MusicPlatform) {
-    let toastMessage: ToastItem
-    console.error(error)
+    let toastOptions: ToastInitOptions
 
     const platform = musicPlatform === undefined ? get(musicDataStore)!.musicPlatform! : musicPlatform
     const platformStr = getPlatformString(platform)
 
-    const toastContext = getLogoIconFromEnum(platform, MusicPlatform)
     const errorMessage = error.message 
     const hasNoMsg = errorMessage != undefined && errorMessage
 
     if (error.code === APIErrorCode.EXPIRED_TOKEN) {
-        toastMessage = {
-            context: toastContext,
+        toastOptions = {
             message: hasNoMsg ? errorMessage : "Token has expired. Log in again to continue.",
             action: {
                 label: "Continue session",
@@ -313,47 +310,41 @@ export function musicAPIErrorHandler(error: APIError, musicPlatform?: MusicPlatf
         }
     }
     else if (error.code === APIErrorCode.PLAYER) {
-        toastMessage = {
-            context: toastContext,
+        toastOptions = {
             message: hasNoMsg ? errorMessage : "Player error. Try again later.",
         }
     }
     else if (error.code === APIErrorCode.FAILED_TOKEN_REFRESH) {
-        toastMessage = {
-            context: toastContext,
+        toastOptions = {
             message: hasNoMsg ? errorMessage : "Token refresh failed. Please try again.",
         }
     }
     else if (error.code === APIErrorCode.AUTHORIZATION_ERROR) {
-        toastMessage = {
-            context: toastContext,
+        toastOptions = {
             message: hasNoMsg ? errorMessage : `${platformStr} authorization failed.`,
         }
     }
     else if (error.code === APIErrorCode.RATE_LIMIT_HIT) {
-        toastMessage = {
-            context: toastContext,
+        toastOptions = {
             message: "Rate limit exceeded. Try again later.",
         }
     }
     else if (error instanceof TypeError) {
-        toastMessage = {
-            context: toastContext,
+        toastOptions = {
             message: hasNoMsg ? errorMessage : "There was an error. Please try again."
         }
     }
     else {
-        toastMessage = {
-            context: toastContext,
+        toastOptions = {
             message: hasNoMsg ? errorMessage : `There was an error with ${platformStr} Please try again later.` ,
         }
     }
 
     toast("default", {
         message: platformStr,
-        description: toastMessage.message,
+        description: toastOptions.message,
         logoIcon: getLogoIconFromEnum(platform, MusicPlatform),
-        action: toastMessage.action
+        action: toastOptions.action
     })
 }
 

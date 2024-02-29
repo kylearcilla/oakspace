@@ -13,6 +13,80 @@ type Result<T, E> = {
     error: E
 }
 
+type RoutineCores = { 
+    sleeping: {
+        status: CoreStatus
+        totalTime: number
+        avgTime: number
+        total: number
+    },
+    working: {
+        status: CoreStatus
+        totalTime: number
+        avgTime: number
+        total: number
+    },
+    mind: {
+        status: CoreStatus
+        totalTime: number
+        avgTime: number
+        total: number
+    },
+    awake: {
+        status: CoreStatus
+        totalTime: number
+        avgTime: number
+        total: number
+    },
+    body: {
+        status: CoreStatus
+        totalTime: number
+        avgTime: number
+        total: number
+    },
+    selfCare: {
+        status: CoreStatus
+        totalTime: number
+        avgTime: number
+        total: number
+    }
+}
+
+type RoutineActvity = keyof RoutineCores
+
+type Color = {
+    id: string
+    light1: string
+    light2: string
+    light3: string
+    dark1: string
+    dark2: string
+    dark3: string
+}
+type DayBlocks = {
+    Mon: DayBlock[], Tue: DayBlock[]
+    Wed: DayBlock[], Thu: DayBlock[]
+    Fri: DayBlock[], Sat: DayBlock[]
+    Sun: DayBlock[]
+}
+type DayBlockElems = {
+    Mon: DayBlockElem[], Tue: DayBlockElem[]
+    Wed: DayBlockElem[], Thu: DayBlockElem[]
+    Fri: DayBlockElem[], Sat: DayBlockElem[]
+    Sun: DayBlockElem[]
+}
+type DayBlock = {
+    title: string,
+    color: Color,
+    startTime: number
+    endTime: number
+    activity: RoutineActvity | null
+}
+type DayBlockElem = {
+    id: string, height: number, xOffset: string, yOffset: string,
+    startTimeStr: string, endTimeStr: string
+} & DayBlock
+
 // Dates 
 type MonthData = {
     monthIdx: number,
@@ -81,20 +155,14 @@ type GlobalContext = {
     modalsOpen: ModalType[]
 }
 
-type Toaster = {
-    toasts: ToastItem[]
-    position: ToasterPosition
-    // deleteToast: (idx: number) => void
-    // addToast: (toast: ToastItem) => void
-}
-interface ToastItem {
-    context: ToastContext
+type ToastInitOptions = {
     message: string
     action?: {
-        label: string
+        label: string,
         onClick: (event: MouseEvent) => void
     }
 }
+
 interface DOMToastItem extends ToastItem {
     offsets: {
         start: string,
@@ -121,7 +189,7 @@ type Quote = {
 type HozScrollStatus = {
     hasReachedEnd: boolean,
     hasReachedStart: boolean,
-    status: { 
+    details: { 
         scrollLeft: number
         scrollWidth: number
         windowWidth: number 
@@ -131,7 +199,7 @@ type HozScrollStatus = {
 type VertScrollStatus = {
     hasReachedBottom: boolean,
     hasReachedTop: boolean,
-    status: { 
+    details: { 
         scrollTop: number
         scrollHeight: number
         windowHeight: number 
@@ -442,6 +510,7 @@ type YTOAuthResponse = {
 type YoutubeUserCreds = {
     accessToken: string,
     refreshToken: string
+    accessTokenCreationDate: Date
 }
 
 type YoutubeUserPlaylistResponse = {

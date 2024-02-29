@@ -201,6 +201,7 @@
       height: 100%;
       min-height: 100vh;
       font-family: 'Apercu Medium' system-ui;
+      overflow: hidden;
 
       // background-image: url('https://upload.wikimedia.org/wikipedia/commons/7/77/Cole_Thomas_The_Course_of_Empire_Desolation_1836.jpg');
       // background-size: cover;
@@ -234,7 +235,7 @@
       }
 
       &__middle-view {
-        padding: 0px 2.5% 30px 2.5%;
+        padding: 10px 30px 20px 30px;
         transition: ease-in-out 0.15s;
         width: 100%;
         height: calc(100vh - $header-height);

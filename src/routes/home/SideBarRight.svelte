@@ -164,7 +164,7 @@
         width: 100%;
         height: 100vh;
         position: relative;
-        @include text-color;
+        @include txt-color;
 
         &--light-theme &__header {
             background-image: none !important;
@@ -186,11 +186,11 @@
             &-date {
                 font-weight: 500;
                 margin-bottom: 1.5px;
-                @include text-color(0.4);
+                @include txt-color(0.4);
             }
             &-text {
                 font-weight: 500;
-                @include text-color(0.5);
+                @include txt-color(0.5);
             }
             &-blur-layer {
                 display: none;
@@ -218,7 +218,7 @@
         }
         &--light-theme &__context-menu {
             &-command {
-                @include text-color(0.6);
+                @include txt-color(0.6);
             }
         }
         
@@ -270,7 +270,7 @@
                 margin-top: 3px;
                 font-size: 1.2rem;
                 font-weight: 200;
-                @include text-color(0.32);
+                @include txt-color(0.32);
             }
         }
         &__header-blur-layer {
@@ -323,7 +323,7 @@
                 width: 25px;
                 @include flex(center, center);
                 font-weight: 200;
-                @include text-color(0.3);
+                @include txt-color(0.3);
                 font-size: 0.9rem;
 
                 &--plus {

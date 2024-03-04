@@ -49,7 +49,7 @@
 
         input.calculatedEndTime = calculateEndTime(new Date, totalMins)
         input.timePeriodString = getTimePeriodString(new Date, input.calculatedEndTime)
-        input.totalElapsedTime = minsToHHMM(totalMins, HrsMinsFormatOption.MIN_LETTERS)
+        input.totalElapsedTime = minsToHHMM(totalMins)
     }
     const resetAndCloseModal = () => {
         clearInterval(interval!)

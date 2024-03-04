@@ -4,34 +4,20 @@ import { ytUserDataStore, ytPlayerStore } from "./store"
 import { YoutubeUserData } from "./youtube-user-data"
 import { YoutubePlayer } from "./youtube-player"
 import type { APIError } from "./errors"
-import { getPlayListItemsDetails, getPlaylistDetails, getVidDetails } from "./api-youtube"
+import { getPlaylistDetails, getVidDetails } from "./api-youtube"
 import { getElemsByClass } from "./utils-general"
 import { toast } from "./utils-toast"
 
-const INIT_PLAYLIST_REQUEST_DELAY = 500
+const INIT_PLAYLIST_REQUEST_DELAY = 1000
 export const USER_PLS_MAX_PER_REQUEST = 15
 
-/**
- * Continue Youtube player session after a refresh.
- */
-export const continueYtPlayerSession = () => {
-    initYtPlayer()
-}
-
-/**
- * Continue Youtube user session after a refresh.
- */
-export const continueYtUserSession =() => {
-    loginUser()
-}
 
 /**
  * Attempt to log in Youtube User. Initialize client credentials & user data.
  * Goes through an auth flow process. Called when logging for the first time or after a refresh after a log in.
  * Show a message if there's an issue.
- * @returns                 AsyncResult object.
  */
-export const loginUser = async () => {
+export async function youtubeLogin() {
     try {
         const hasPrevSession = didInitYtUser()
         const ytData = new YoutubeUserData()
@@ -50,23 +36,16 @@ export const loginUser = async () => {
 
 /**
  * Initialize Youtube Player using Youtube iFrame Player API.
-* @returns    AsyncResult object.
  */
-export const initYtPlayer = async () => {
-    try {
-        const ytPlayer = new YoutubePlayer()
-        await ytPlayer.initYtPlayer()
-    }
-    catch(error: any) {
-        youtubeAPIErrorHandler(error)
-    }
+export async function initYoutubePlayer() {
+    const ytPlayer = new YoutubePlayer()
+    await ytPlayer.initYtPlayer()
 }
 
 /**
  * Log out Youtube User.
- * @returns      AsyncResult object.
  */
-export const logOutUser = async () => {
+export function youtubeLogOut() {
     const ytData = get(ytUserDataStore)
 
     try {
@@ -80,18 +59,10 @@ export const logOutUser = async () => {
 
 /**
  * Called after token has expired and user wants to authorize the app again.
- * @returns     AsyncResult object.
  */
-export const refreshToken = async () => {
-    const playerStore = get(ytUserDataStore)
-
-    try {
-        await playerStore!.refreshAccessToken()
-        initToast("Token Refreshed!")
-    }
-    catch(error: any) {
-        youtubeAPIErrorHandler(error)
-    }
+export async function refreshToken() {
+    await get(ytUserDataStore)!.refreshAccessToken()
+    initToast("Token Refreshed!")
 }
 
 /**
@@ -100,7 +71,7 @@ export const refreshToken = async () => {
  * @param url  Given url
  * @returns    Link type and media id value if valid and null if not
  */
-export const getYtMediaId = async (url: string): Promise<YoutubeMediaId | { error: string }>=> {
+export async function getYtMediaId(url: string): Promise<YoutubeMediaId | { error: string }> {
     try {
         const urlParams = new URLSearchParams(new URL(url).search)
         const listId = urlParams.get("list")
@@ -136,19 +107,17 @@ export const getYtMediaId = async (url: string): Promise<YoutubeMediaId | { erro
  * 
  * @param playlist   Playlist user clicked on.
  */
-export const handleChoosePlaylist = async (playlist: YoutubePlaylist) => {
+export async function handleChoosePlaylist (playlist: YoutubePlaylist) {
     let ytPlayer = get(ytPlayerStore)
-
     const hasInitPlayer = ytPlayer != null
 
     if (!hasInitPlayer) {
-        await initYtPlayer()
+        await initYoutubePlayer()
         ytPlayer = get(ytPlayerStore)!
     }
 
-    const doPlayPlaylist = ytPlayer!.playlist === null || playlist.id != ytPlayer!.playlist.id
-
-    if (doPlayPlaylist) {
+    // do no not play if self OR clicking self after an invalid media request
+    if (playlist.id != ytPlayer?.playlist?.id || ytPlayer.error?.code === APIErrorCode.PLAYER_MEDIA_INVALID) {
         setTimeout(() =>  ytPlayer!.playPlaylist(playlist), hasInitPlayer ? 0 : INIT_PLAYLIST_REQUEST_DELAY)
     }
     else {
@@ -161,7 +130,7 @@ export const handleChoosePlaylist = async (playlist: YoutubePlaylist) => {
  * Done to avoid weird behavior with certain events over an active iFrame
  * @param isPointerEventsEnabled   Should iframes have pointer events.
  */
-export const toggleYTIFramePointerEvents = (isPointerEventsEnabled: boolean) => {
+export function toggleYTIFramePointerEvents(isPointerEventsEnabled: boolean) {
     const ytPlayers = getElemsByClass("iframe-vid-player") as HTMLElement[]
     ytPlayers.forEach((elem: HTMLElement) => elem.style.pointerEvents = isPointerEventsEnabled ? "auto" : "none")
 }
@@ -171,10 +140,11 @@ export const toggleYTIFramePointerEvents = (isPointerEventsEnabled: boolean) => 
  * @param error  Error raised from interacting with Youtube Data API / IFrame Player API.
  * @returns      Toast message to be disaplyed in a Toast component.
  */
-export const youtubeAPIErrorHandler = (error: APIError) => {
+export function youtubeAPIErrorHandler(error: APIError) {
     let toastOptions: ToastInitOptions
+    console.error(error)
 
-    const errorMessage = error.message 
+    const errorMessage = error.message
     const hasNoMsg = errorMessage != undefined && errorMessage
 
     if (error.code === APIErrorCode.EXPIRED_TOKEN) {
@@ -193,12 +163,12 @@ export const youtubeAPIErrorHandler = (error: APIError) => {
     }
     else if (error.code === APIErrorCode.FAILED_TOKEN_REFRESH) {
         toastOptions = {
-            message: hasNoMsg ? errorMessage : "Token refresh failed. Please try again.",
+            message: hasNoMsg ? errorMessage : "Token refresh failed.",
         }
     }
     else if (error.code === APIErrorCode.AUTHORIZATION_ERROR) {
         toastOptions = {
-            message: hasNoMsg ? errorMessage : `Youtube authorization failed.`,
+            message: hasNoMsg ? errorMessage : `Youtube authorization failed. Please try again.`,
         }
     }
     else if (error.code === APIErrorCode.RATE_LIMIT_HIT) {
@@ -236,35 +206,64 @@ export function initToast(message: string) {
 /**
  * @returns User has initialized a session before
  */
-export const didInitYtUser = () => {
-    const hasData = localStorage.getItem('yt-user-data') != null
-    return hasData
+export function didInitYtUser() {
+    const userData = localStorage.getItem('yt-user-data') != null
+    const credsData = loadYtCredentials()
+
+    // these 2 sets of data must be present
+    if (!userData || !credsData) {
+        deleteYtUserData()
+        deleteYtCredentials()
+        return false
+    }
+
+    return true
 }
 
 /* Youtube Creds */
-export const loadYtCredentials = (): YoutubeUserCreds | null => {
+export function loadYtCredentials(): YoutubeUserCreds | null {
     const res = localStorage.getItem('yt-credentials')
     if (!res) return null
   
     return JSON.parse(res)
 }
-export const saveYtCredentials = (ytCredentials: YoutubeUserCreds) => {
+export function saveYtCredentials(ytCredentials: YoutubeUserCreds) {
     localStorage.setItem('yt-credentials', JSON.stringify(ytCredentials))
 }
-export const deleteYtCredentials = () => {
+export function deleteYtCredentials() {
     localStorage.removeItem('yt-credentials')
 }
 
 /* Youtube User Data */
-export const loadYtUserData = (): YoutubeUserData | null => {
+export function loadYtUserData(): YoutubeUserData | null {
     const res = localStorage.getItem('yt-user-data')
     if (!res) return null
 
     return JSON.parse(res)
 }
-export const saveYtUserData = (ytUserData: Partial<YoutubeUserData>) => {
+export function saveYtUserData(ytUserData: Partial<YoutubeUserData>) {
     localStorage.setItem('yt-user-data', JSON.stringify(ytUserData))
 }
-export const deleteYtUserData = () => {
+export function deleteYtUserData() {
     localStorage.removeItem('yt-user-data')
+}
+
+export function didInitYtPlayer(): boolean {
+    return localStorage.getItem("yt-player-data") != null
+}
+
+/* Youtube Player Data */
+export function loadYtPlayerData(): YoutubePlayerData | null {
+    const res = localStorage.getItem('yt-player-data')
+    if (!res) return null
+
+    return JSON.parse(res)
+}
+
+export function saveYtPlayerData(newData: YoutubePlayerData) {
+    localStorage.setItem('yt-player-data', JSON.stringify(newData))
+}
+
+export function deleteYtPlayerData() {
+    localStorage.removeItem('yt-player-data')
 }

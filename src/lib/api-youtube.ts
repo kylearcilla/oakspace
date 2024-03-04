@@ -112,10 +112,11 @@ export const getUserYtPlaylists = async (accessToken: string, max: number, nextP
           channelURL: ""
       })
   })
+
   return {
     userPlaylists: playlists,
-    userPlaylistsNextPageToken: data?.nextPageToken,
-    userPlaylistLength: data.pageInfo.totalResults
+    userPlsNextPageToken: data?.nextPageToken,
+    userPlaylistsTotal: data.pageInfo.totalResults
   }
 }
 
@@ -301,7 +302,7 @@ function throwFireBaseAPIError(error: any) {
 
     console.log(contextCode)
 
-    if (contextCode === "auth/popup-closed-by-user") {
+    if (["auth/popup-closed-by-user", "auth/user-cancelled"].includes(contextCode)) {
       throw new APIError(APIErrorCode.AUTH_DENIED)
     }
     else {
@@ -313,14 +314,20 @@ function throwFireBaseAPIError(error: any) {
  * Return the appopriate error with the right context based on the error code return from Youtube iFrame API.
  * @param error  Error code returned from Youtube iFrame Player API
  */
-export const getYtIframeAPIError = (errorMsg: string) => {
-  if (errorMsg === "api.invalidparam") {
-    return new APIError(APIErrorCode.PLAYER, "Player error has occured. Refresh or play a new playlist / video.")
+export function getYtIframeAPIError(code: number) {
+  if (code === 2) {
+    return new APIError(APIErrorCode.PLAYER, "Player error. Invalid playlist / video id.")
   }
-  else if (errorMsg === "auth") {
-    return new APIError(APIErrorCode.PLAYER, "Owner has disabled video playback. Click on a different video to continue.")
+  else if (code === 5) {
+    return new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Player error. This content cannot be played.")
+  }
+  else if (code === 100) {
+    return new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Player error. Resource request not found.")
+  }
+  else if (code === 101 || code === 150) {
+    return new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Player error. Playback on other websites has been disabled by playlist owner.")
   }
   else {
-    return new APIError(APIErrorCode.PLAYER, "Player error has occured. Refresh or play a new playlist / video.")
+    return new APIError(APIErrorCode.PLAYER)
   }
 }

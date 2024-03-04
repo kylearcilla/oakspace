@@ -230,9 +230,9 @@
             font-weight: 500;
         }
         &--light &__action-btn {
-            @include text-color(0.09, "background-color");
+            @include txt-color(0.09, "bg");
             &:hover {
-                @include text-color(0.25, "background-color");
+                @include txt-color(0.25, "bg");
             }
         }
         &--light &__settings-btn {
@@ -317,7 +317,7 @@
             
             &:hover {
                 opacity: 0.6;
-                @include text-color(0.085, "background-color");
+                @include txt-color(0.085, "bg");
             }
             &:active {
                 transform: scale(0.9);

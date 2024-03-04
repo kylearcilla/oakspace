@@ -280,11 +280,11 @@
             }
 
             &-hoz-divider path {
-                @include text-color(0.2, "stroke");
+                @include txt-color(0.2, "stroke");
                 stroke-width: 0.85px;
             }
             &-vert-divider path {
-                @include text-color(0.2, "stroke");
+                @include txt-color(0.2, "stroke");
                 stroke-width: 1px;
             }
         }

@@ -530,6 +530,21 @@ export const TEST_TAGS = [
   },
 ]
 
+export function roundUpToNearestTen(num: number) {
+  return Math.ceil(num / 10) * 10;
+}
+export function roundUpToNearestFive(num: number) {
+  return Math.ceil(num / 5) * 5;
+}
+
+export function isBetween(number: number, min: number, max: number) {
+  return number >= min && number <= max
+}
+
+export function randomArrayElem(arr: any[]) {
+  if (arr.length === 0) return null
+  return arr[Math.floor(Math.random() * arr.length)]
+}
 
 /**
  * Get the pair of color properties based on the theme.
@@ -539,4 +554,16 @@ export const TEST_TAGS = [
  */
 export function getColorPair(color: Color, isLightTheme: boolean): [string, string, string] {
   return isLightTheme ? [color.light1, color.light2, color.light3] : [color.dark1, color.dark2, color.dark3];
+}
+
+export function extractNum(str: string) {
+  // Use a regular expression to find all numbers in the string
+  const numbers = str.match(/\d+(\.\d+)?/g);
+  
+  // If numbers are found, convert them to numbers and return
+  if (numbers) {
+      return numbers.map(Number);
+  } else {
+      return [];
+  }
 }

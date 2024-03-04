@@ -444,7 +444,7 @@
             background-color: rgba(black, 0.1);
         }
         &--light &__divider {
-            @include divider(rgba(black, 0.05));
+            @include dark-divider(0.05);
         }
         &--light &-item:hover {
             background-color: rgba(black, 0.02);
@@ -525,7 +525,7 @@
             }
         }
         &__divider {
-            @include divider(rgba(white, 0.045));
+            @include divider(0.045);
         }
     }
     .goals-repo-handle {
@@ -692,7 +692,7 @@
         
         &__divider {
             margin-left: 25px;
-            @include divider(rgba(white, 0.045), 0.5px, calc(100% - 50px));
+            @include divider(0.045, 0.5px, calc(100% - 50px));
             @include pos-abs-top-left-corner;
         }
         &__drop-divider {

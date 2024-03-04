@@ -8,7 +8,7 @@ import { SPOTIFY_IFRAME_ID, isMediaTypeACollection, loadMusicPlayerData, loadMus
 
 import { APIError } from "./errors"
 import { APIErrorCode, MediaEmbedType, MusicMediaType, MusicPlatform } from "./enums"
-import { getAlbumItem, getSpotifyMediaUri, getLibAudiobooksItem, getLibPodcastEpisdesItem, getLibTracksItem, getPlaylistItem } from "./api-spotify"
+import { getAlbumItem, getSpotifyMediaUri, getLibAudiobooksItem, getLibPodcastEpisdesItem, getLibTracksItem, getPlaylistItem, getPlaylistDetails, getAlbumDetails } from "./api-spotify"
 
 /**
  * User data class that wraps over the Spotify iFrame API.
@@ -48,7 +48,10 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
     doShowPlayer = false
     doIgnoreAutoPlay = false
     doAllowUpdate = true
+
+    naturalEndTimeout: NodeJS.Timer | null = null
     
+    PROGRESS_TO_NEX_DELAY = 1000
     PLAYER_OPTIONS = {
         width: '100%', height: '100%',
         uri: ''
@@ -182,8 +185,14 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
         // so do not allow into a playing state
         this.isPlaying = !data.isPaused && !this.doIgnoreAutoPlay
 
-        if (this.willCurrentMediaEnd(data)) {
-            this.skipToNextTrack()
+        if (!this.naturalEndTimeout && this.willCurrentMediaEnd(data)) {
+
+            this.naturalEndTimeout = setTimeout(() => {
+                this.skipToNextTrack()
+                clearTimeout(this.naturalEndTimeout!)
+
+                this.naturalEndTimeout = null
+            }, this.PROGRESS_TO_NEX_DELAY)
         }
 
         this.updateState({ 
@@ -209,7 +218,14 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
         if (data.duration === 0 || data.position === 0) return false
 
         const diffMs = data.duration - data.position
-        return diffMs < 1000
+        return diffMs === 0
+    }
+
+    clearNaturalEndTimeout() {
+        if (!this.naturalEndTimeout) return
+
+        clearTimeout(this.naturalEndTimeout)
+        this.naturalEndTimeout = null
     }
 
     /**
@@ -245,6 +261,8 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
     }
 
     async skipToNextTrack() {
+        this.clearNaturalEndTimeout()
+
         try {    
             await this.loadNextMediaItem(true)
         }
@@ -255,6 +273,8 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
     }
 
     async skipToPrevTrack() {
+        this.clearNaturalEndTimeout()
+
         try {
             if (this.shouldRestartTrackAfterSkipPrev()) {
                 this.controller.playFromStart()
@@ -307,7 +327,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
                 this.musicPlaylistShuffler = null
             }
     
-            this.updateState({ isDisabled: true, isShuffled: this.isShuffled })
+            this.updateState({ isShuffled: this.isShuffled })
         }
         catch (error: any) {
             console.error("There was an error toggling shuffle.")
@@ -418,14 +438,33 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
                 this.toggleShow(true)
             }
 
+            const accessToken = await this.validateAndGetAccessToken()
             const isMediaCollection = isMediaTypeACollection(context.itemClicked.type) 
             const _idx = isMediaCollection ? 0 : context.idx
+            const isFromLib = context.collection.fromLib
+            const collectionType = context.collection.type
             const mediaItem = await this.getItemFromIdx(context.collection!, _idx)
-
-            // to update hardcoded playlist data: for non-library stuff
-            // to update hardcoded playlist data, lib media is always updated for the consistency check
-
+            
             this.mediaCollection = context.collection!
+            
+            // make sure hard-coded reccommended media always has updated data
+            if (!isFromLib && collectionType === MusicMediaType.Playlist) {
+                this.mediaCollection = { 
+                        ...context.collection, 
+                        ...await getPlaylistDetails(accessToken, context.collection.id),
+                        author: context.collection.author,
+                        authorUrl: context.collection.authorUrl
+                    }
+                }
+                else if (!isFromLib && collectionType === MusicMediaType.Album) {
+                    this.mediaCollection = { 
+                        ...context.collection, 
+                        ...await getAlbumDetails(accessToken, context.collection.id),
+                        author: context.collection.author,
+                        authorUrl: context.collection.authorUrl
+                }
+            }
+
             this.currentIdx = _idx
             this.mediaItem = mediaItem
 
@@ -451,7 +490,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
      * @returns                 Media item stored in that idx.
      */
     async getItemFromIdx(mediaCollection: MediaCollection, idx: number) {
-        const accessToken = await this.validateAndGetAccessToken()  
+        const accessToken = await this.validateAndGetAccessToken()
 
         if (mediaCollection.type === MusicMediaType.Playlist) {
             return await getPlaylistItem(accessToken, mediaCollection.id, idx)
@@ -551,6 +590,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
         this.isRepeating =      savedData!.isRepeating
         this.isShuffled  =      savedData!.isShuffled
         this.doShowPlayer =     savedData!.doShowPlayer
+        this.isPlaying =        false
 
         if (this.isShuffled) {
             const shuffleData = loadMusicShuffleData()
@@ -570,8 +610,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
         newData.mediaItem =       this.mediaItem
         newData.mediaCollection = this.mediaCollection
         newData.currentIdx =      this.currentIdx
-        newData.currentDuration = this.currentDuration
-        newData.isPlaying = this.isPlaying
+        // newData.currentDuration = this.currentDuration
 
         newData.isRepeating =     this.isRepeating
         newData.isShuffled =      this.isShuffled

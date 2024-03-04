@@ -391,16 +391,17 @@ export class AppleMusicPlayer extends MusicPlayer implements MusicPlayerStore<Ap
             }
             else if (!isFromLib && collectionType === MusicMediaType.Playlist) {
                 _mediaCollection = { ...context.collection, ...await getApplePlaylistDetails(collection.id) } as Playlist
-                this.isPlayingRadio = false
-                this.isPlayingLive = false
             }
             else if (!isFromLib && collectionType === MusicMediaType.Album) {
                 _mediaCollection = { ...context.collection, ...await getAppleAlbumDetails(collection.id) } as Album
-                this.isPlayingRadio = false
-                this.isPlayingLive = false
             }
             else {
                 _mediaCollection = context.collection
+            }
+
+            if (collectionType != MusicMediaType.RadioStation) {
+                this.isPlayingRadio = false
+                this.isPlayingLive = false
             }
 
             this.mediaCollection = _mediaCollection

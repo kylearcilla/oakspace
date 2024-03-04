@@ -226,7 +226,7 @@
         }
         &--light &__time {
             font-weight: 500;
-            @include text-color(0.4);
+            @include txt-color(0.4);
         }
 
         &__time {

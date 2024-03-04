@@ -15,6 +15,37 @@ const getWeekNumber = (currentDate: Date) => {
     return weekNumber
 }
 
+describe("HasTokenExpiredText", () => {
+    const ACTIVE_TOKEN_THRESHOLD_SECS = 60
+    const EXPIRES_IN_SECS = 3600
+
+    const hasAccessTokenExpired = (currentTime: Date, expiresInSecs: number) => {
+        const createdAt = new Date("2024-02-23T12:00:00");
+        const currentTimeTime = currentTime.getTime();
+
+        const timeElapsed = currentTimeTime - new Date(createdAt).getTime();
+        const timeRemaining = expiresInSecs * 1000 - timeElapsed;
+
+        const threshold = ACTIVE_TOKEN_THRESHOLD_SECS * 1000;
+        return threshold >= timeRemaining;
+    };
+
+    test('Above Threshold', () => {
+        const currentTime = new Date("2024-02-23T12:58:59")
+        expect(hasAccessTokenExpired(currentTime, EXPIRES_IN_SECS)).toBe(false);
+    });
+
+    test('Below Threshold', () => {
+        const currentTime = new Date("2024-02-23T12:59:01")
+        expect(hasAccessTokenExpired(currentTime, EXPIRES_IN_SECS)).toBe(true);
+    });
+
+    test('On Threshold', () => {
+        const currentTime = new Date("2024-02-23T12:59:00")
+        expect(hasAccessTokenExpired(currentTime, EXPIRES_IN_SECS)).toBe(true);
+    });
+})
+
 describe('OutdatedWeeklyQuoteTest', () => {
     test('Different Year', () => {
         expect(isQuoteOutDated(new Date('2022-01-01'), new Date('2023-06-29'))).toBeFalsy()
@@ -46,7 +77,7 @@ describe('ElapsedTimeBetweenTwoDates', () => {
 
         const diffSecs = getDifferenceInSecs(start, end)
     
-        const elapsedTime = secsToHHMM(diffSecs, HrsMinsFormatOption.MIN_LETTERS)
+        const elapsedTime = secsToHHMM(diffSecs)
         expect(elapsedTime).toBe("0m")
 
     })
@@ -58,7 +89,7 @@ describe('ElapsedTimeBetweenTwoDates', () => {
 
         const diffSecs = getDifferenceInSecs(start, end)
     
-        const elapsedTime = secsToHHMM(diffSecs, HrsMinsFormatOption.MIN_LETTERS)
+        const elapsedTime = secsToHHMM(diffSecs)
         expect(elapsedTime).toBe("59m")
     })
     test('Over 1h', () => {
@@ -69,7 +100,7 @@ describe('ElapsedTimeBetweenTwoDates', () => {
 
         const diffSecs = getDifferenceInSecs(start, end)
     
-        const elapsedTime = secsToHHMM(diffSecs, HrsMinsFormatOption.MIN_LETTERS)
+        const elapsedTime = secsToHHMM(diffSecs)
         expect(elapsedTime).toBe("1h 40m")
     })
     test('Double Digit Hours', () => {
@@ -80,7 +111,7 @@ describe('ElapsedTimeBetweenTwoDates', () => {
 
         const diffSecs = getDifferenceInSecs(start, end)
     
-        const elapsedTime = secsToHHMM(diffSecs, HrsMinsFormatOption.MIN_LETTERS)
+        const elapsedTime = secsToHHMM(diffSecs)
         expect(elapsedTime).toBe("12h")
     })
     test('Non-whole number minutes #1.', () => {
@@ -91,7 +122,7 @@ describe('ElapsedTimeBetweenTwoDates', () => {
 
         const diffSecs = getDifferenceInSecs(start, end)
     
-        const elapsedTime = secsToHHMM(diffSecs, HrsMinsFormatOption.MIN_LETTERS)
+        const elapsedTime = secsToHHMM(diffSecs)
         expect(elapsedTime).toBe("45m")
     })
     test('Non-whole number minutes #2.', () => {
@@ -102,7 +133,7 @@ describe('ElapsedTimeBetweenTwoDates', () => {
 
         const diffSecs = getDifferenceInSecs(start, end)
     
-        const elapsedTime = secsToHHMM(diffSecs, HrsMinsFormatOption.MIN_LETTERS)
+        const elapsedTime = secsToHHMM(diffSecs)
         expect(elapsedTime).toBe("3h 30m")
     })
     test('Non-whole number minutes #3.', () => {
@@ -113,7 +144,7 @@ describe('ElapsedTimeBetweenTwoDates', () => {
 
         const diffSecs = getDifferenceInSecs(start, end)
     
-        const elapsedTime = secsToHHMM(diffSecs, HrsMinsFormatOption.MIN_LETTERS)
+        const elapsedTime = secsToHHMM(diffSecs)
         expect(elapsedTime).toBe("4m")
     })
     test('Pom Display. Start mins less then end', () => {

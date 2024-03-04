@@ -8,72 +8,65 @@
     import type { PageData } from "../$types";
     import SVGIcon from "../../../../components/SVGIcon.svelte"
 
-    export let data: PageData;
+    // export let data: PageData;
 
-    const daysData: DayBlocks = {
+    const daysData: WeekBlocks = {
         Mon: [
-            {
-                title: "💩 Shit",
-                color: COLOR_SWATCHES.d[0],
-                startTime: 0,
-                endTime: 100,
-                activity: null
-            },
-            {
-                title: "💩 Shit",
-                color: COLOR_SWATCHES.d[0],
-                startTime: 100,
-                endTime: 120,
-                activity: null
-            },
             {
                 title: "🌤️ Morning Routine",
                 color: COLOR_SWATCHES.d[0],
                 startTime: 370,
                 endTime: 420,
-                activity: null
+                activity: null,
+                tag: null,
             },
             {
                 title: "👨‍💻 SWE Deep Work",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 525,
                 endTime: 720,
-                activity: "working"
+                activity: "working",
+                tag: TEST_TAGS[1],
             },
             {
                 title: "🍖 Lunch Break",
                 color: COLOR_SWATCHES.d[2],
                 startTime: 730,
                 endTime: 800,
-                activity: null
+                activity: null,
+                tag: null,
             },
             {
                 title: "👨‍💻 SWE Deep Work",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 885,
                 endTime: 1080,
-                activity: "working"
+                activity: "working",
+                tag: TEST_TAGS[1],
             },
             {
                 title: "💪 Gym (Pull)",
                 color: COLOR_SWATCHES.d[3],
                 startTime: 1080,
                 endTime: 1140,
-                activity: "body"
+                activity: "body",
+                tag: TEST_TAGS[0],
             },
             {
                 title: "🍖 Dinner",
                 color: COLOR_SWATCHES.d[4],
                 startTime: 1140,
                 endTime: 1170,
-                activity: null
+                activity: null,
+                tag: TEST_TAGS[3],
             },
             {
                 title: "🌙 Evening Routine",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 1380,
                 endTime: 1410,
-                activity: "selfCare"
+                activity: "selfCare",
+                tag: null
             },
         ],
         Tue: [
@@ -82,49 +75,56 @@
                 color: COLOR_SWATCHES.d[0],
                 startTime: 370,
                 endTime: 420,
-                activity: null
+                activity: null,
+                tag: null,
             },
             {
                 title: "👨‍💻 SWE Deep Work",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 525,
                 endTime: 720,
-                activity: "working"
+                activity: "working",
+                tag: TEST_TAGS[1],
             },
             {
                 title: "🍖 Lunch Break",
                 color: COLOR_SWATCHES.d[2],
                 startTime: 730,
                 endTime: 800,
-                activity: null
+                activity: null,
+                tag: null,
             },
             {
                 title: "👨‍💻 SWE Deep Work",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 885,
                 endTime: 1080,
-                activity: "working"
+                activity: "working",
+                tag: TEST_TAGS[1],
             },
             {
-                title: "💪 Gym (Push)",
+                title: "💪 Gym (Pull)",
                 color: COLOR_SWATCHES.d[3],
                 startTime: 1080,
                 endTime: 1140,
-                activity: "body"
+                activity: "body",
+                tag: TEST_TAGS[0],
             },
             {
                 title: "🍖 Dinner",
                 color: COLOR_SWATCHES.d[4],
                 startTime: 1140,
                 endTime: 1170,
-                activity: null
+                activity: null,
+                tag: TEST_TAGS[3],
             },
             {
                 title: "🌙 Evening Routine",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 1380,
                 endTime: 1410,
-                activity: "selfCare"
+                activity: "selfCare",
+                tag: null
             },
         ],
         Wed: [
@@ -133,42 +133,56 @@
                 color: COLOR_SWATCHES.d[0],
                 startTime: 370,
                 endTime: 420,
-                activity: null
+                activity: null,
+                tag: null,
             },
             {
                 title: "👨‍💻 SWE Deep Work",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 525,
                 endTime: 720,
-                activity: "working"
+                activity: "working",
+                tag: TEST_TAGS[1],
             },
             {
                 title: "🍖 Lunch Break",
                 color: COLOR_SWATCHES.d[2],
                 startTime: 730,
                 endTime: 800,
-                activity: null
+                activity: null,
+                tag: null,
             },
             {
                 title: "👨‍💻 SWE Deep Work",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 885,
                 endTime: 1080,
-                activity: "working"
+                activity: "working",
+                tag: TEST_TAGS[1],
+            },
+            {
+                title: "💪 Gym (Pull)",
+                color: COLOR_SWATCHES.d[3],
+                startTime: 1080,
+                endTime: 1140,
+                activity: "body",
+                tag: TEST_TAGS[0],
             },
             {
                 title: "🍖 Dinner",
                 color: COLOR_SWATCHES.d[4],
                 startTime: 1140,
                 endTime: 1170,
-                activity: null
+                activity: null,
+                tag: TEST_TAGS[3],
             },
             {
                 title: "🌙 Evening Routine",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 1380,
                 endTime: 1410,
-                activity: "selfCare"
+                activity: "selfCare",
+                tag: null
             },
         ],
         Thu: [
@@ -177,49 +191,56 @@
                 color: COLOR_SWATCHES.d[0],
                 startTime: 370,
                 endTime: 420,
-                activity: null
+                activity: null,
+                tag: null,
             },
             {
                 title: "👨‍💻 SWE Deep Work",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 525,
                 endTime: 720,
-                activity: "working"
+                activity: "working",
+                tag: TEST_TAGS[1],
             },
             {
                 title: "🍖 Lunch Break",
                 color: COLOR_SWATCHES.d[2],
                 startTime: 730,
                 endTime: 800,
-                activity: null
+                activity: null,
+                tag: null,
             },
             {
                 title: "👨‍💻 SWE Deep Work",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 885,
                 endTime: 1080,
-                activity: "working"
+                activity: "working",
+                tag: TEST_TAGS[1],
             },
             {
-                title: "💪 Gym (Legs)",
+                title: "💪 Gym (Pull)",
                 color: COLOR_SWATCHES.d[3],
                 startTime: 1080,
                 endTime: 1140,
-                activity: "body"
+                activity: "body",
+                tag: TEST_TAGS[0],
             },
             {
                 title: "🍖 Dinner",
                 color: COLOR_SWATCHES.d[4],
                 startTime: 1140,
                 endTime: 1170,
-                activity: null
+                activity: null,
+                tag: TEST_TAGS[3],
             },
             {
                 title: "🌙 Evening Routine",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 1380,
                 endTime: 1410,
-                activity: "selfCare"
+                activity: "selfCare",
+                tag: null
             },
         ],
         Fri: [
@@ -228,49 +249,56 @@
                 color: COLOR_SWATCHES.d[0],
                 startTime: 370,
                 endTime: 420,
-                activity: null
+                activity: null,
+                tag: null,
             },
             {
                 title: "👨‍💻 SWE Deep Work",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 525,
                 endTime: 720,
-                activity: "working"
+                activity: "working",
+                tag: TEST_TAGS[1],
             },
             {
                 title: "🍖 Lunch Break",
                 color: COLOR_SWATCHES.d[2],
                 startTime: 730,
                 endTime: 800,
-                activity: null
+                activity: null,
+                tag: null,
             },
             {
                 title: "👨‍💻 SWE Deep Work",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 885,
                 endTime: 1080,
-                activity: "working"
+                activity: "working",
+                tag: TEST_TAGS[1],
             },
             {
-                title: "🏃‍♂️ Cardio",
+                title: "💪 Gym (Pull)",
                 color: COLOR_SWATCHES.d[3],
                 startTime: 1080,
                 endTime: 1140,
-                activity: "body"
+                activity: "body",
+                tag: TEST_TAGS[0],
             },
             {
                 title: "🍖 Dinner",
                 color: COLOR_SWATCHES.d[4],
                 startTime: 1140,
                 endTime: 1170,
-                activity: null
+                activity: null,
+                tag: TEST_TAGS[3],
             },
             {
                 title: "🌙 Evening Routine",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 1380,
                 endTime: 1410,
-                activity: "selfCare"
+                activity: "selfCare",
+                tag: null
             },
         ],
         Sat: [
@@ -278,43 +306,57 @@
                 title: "🌤️ Morning Routine",
                 color: COLOR_SWATCHES.d[0],
                 startTime: 480,
-                endTime: 540,
-                activity: null
+                endTime: 520,
+                activity: null,
+                tag: null
             },
             {
-                title: "🚴‍♂️ Biking",
+                title: "🏃‍♂️ Running",
                 color: COLOR_SWATCHES.d[1],
-                startTime: 630,
-                endTime: 720,
-                activity: "working"
+                startTime: 600,
+                endTime: 690,
+                activity: "working",
+                tag: TEST_TAGS[6]
             },
             {
                 title: "🍖 Lunch Break",
                 color: COLOR_SWATCHES.d[2],
-                startTime: 800,
-                endTime: 830,
-                activity: null
+                startTime: 730,
+                endTime: 800,
+                activity: null,
+                tag: null
             },
             {
-                title: "💤 Nap Time",
+                title: "🌁 Art",
                 color: COLOR_SWATCHES.d[1],
-                startTime: 840,
-                endTime: 900,
-                activity: "sleeping"
+                startTime: 885,
+                endTime: 920,
+                activity: "selfCare",
+                tag: TEST_TAGS[8]
+            },
+            {
+                title: "💪 Gym (Push)",
+                color: COLOR_SWATCHES.d[3],
+                startTime: 1000,
+                endTime: 1100,
+                activity: "body",
+                tag: TEST_TAGS[0]
             },
             {
                 title: "🍖 Dinner",
                 color: COLOR_SWATCHES.d[4],
-                startTime: 1140,
-                endTime: 1170,
-                activity: null
+                startTime: 1130,
+                endTime: 1200,
+                activity: null,
+                tag: TEST_TAGS[3]
             },
             {
                 title: "🌙 Evening Routine",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 1380,
                 endTime: 1410,
-                activity: "selfCare"
+                activity: "selfCare",
+                tag: null
             },
         ],
         Sun: [
@@ -322,43 +364,57 @@
                 title: "🌤️ Morning Routine",
                 color: COLOR_SWATCHES.d[0],
                 startTime: 480,
-                endTime: 540,
-                activity: null
+                endTime: 520,
+                activity: null,
+                tag: null
             },
             {
-                title: "🚴‍♂️ Biking",
+                title: "🏃‍♂️ Running",
                 color: COLOR_SWATCHES.d[1],
-                startTime: 630,
-                endTime: 720,
-                activity: "working"
+                startTime: 600,
+                endTime: 690,
+                activity: "working",
+                tag: TEST_TAGS[6]
             },
             {
                 title: "🍖 Lunch Break",
                 color: COLOR_SWATCHES.d[2],
-                startTime: 800,
-                endTime: 830,
-                activity: null
+                startTime: 730,
+                endTime: 800,
+                activity: null,
+                tag: null
             },
             {
-                title: "💤 Nap Time",
+                title: "🌁 Art",
                 color: COLOR_SWATCHES.d[1],
-                startTime: 840,
-                endTime: 900,
-                activity: "sleeping"
+                startTime: 885,
+                endTime: 920,
+                activity: "selfCare",
+                tag: TEST_TAGS[8]
+            },
+            {
+                title: "💪 Gym (Push)",
+                color: COLOR_SWATCHES.d[3],
+                startTime: 1000,
+                endTime: 1100,
+                activity: "body",
+                tag: TEST_TAGS[0]
             },
             {
                 title: "🍖 Dinner",
                 color: COLOR_SWATCHES.d[4],
-                startTime: 1140,
-                endTime: 1170,
-                activity: null
+                startTime: 1130,
+                endTime: 1200,
+                activity: null,
+                tag: TEST_TAGS[3]
             },
             {
                 title: "🌙 Evening Routine",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 1380,
                 endTime: 1410,
-                activity: "selfCare"
+                activity: "selfCare",
+                tag: null
             },
         ]
     }
@@ -372,45 +428,40 @@
     let hourBlocksElem: HTMLElement
     let weekDaysElem: HTMLElement
 
-    let _dayBlockElems = manager.dayBlockElems
+    let _weekBlockElems = manager.weekBlockElems
     let _currCores = manager.currCores
     let coreProp: keyof typeof currCores.sleeping = "avgTime"
     let isBreakdownDropdownOpen = false
     
-    let isViewingCoreAvg = true
-    let selectedTimeFrame = "Weekly"
+    let isAvg = true
+    let isViewingCore = true
 
-    $: dayBlockElems = $_dayBlockElems ?? []
-    $: currCores     = $_currCores ?? []
-    $: isLightTheme  = !$themeState.isDarkTheme
+    $: selectedTimeFrame = isViewingCore ? "Cores" : "Tags"
+    $: weekBlockElems    = $_weekBlockElems as WeekBlockElems ?? []
+    $: currCores         = $_currCores ?? []
+    $: isLightTheme      = !$themeState.isDarkTheme
 
-    $: coreProp = isViewingCoreAvg ? "avgTime" : "totalTime"
+    $: coreProp = isAvg ? "avgTime" : "totalTime"
 
-    function onViewOptionClicked(option: string) {
-        if (option === selectedTimeFrame) return
+    function onDaySettingsBtnClicked(idx: number) {
 
-        if (option === "Weekly") {
-            isViewingCoreAvg = true
-        }
-        else {
-            isViewingCoreAvg = false
-        }
-
-        manager.setBreakdownData(option)
-        selectedTimeFrame = option
+    }
+    function toggleBreakdownView(option: string) {
+        isViewingCore = option === "Cores" 
         isBreakdownDropdownOpen = false
     }
+
     function getBlockStyling(height: number) {
         const classes: string[] = []
 
         if (height < 12) {
-            classes.push("week-view__time-block--xsm")
+            classes.push("routine-time-blocks__block--xsm")
         }
         if (height < 20) {
-            classes.push("week-view__time-block--sm")
+            classes.push("routine-time-blocks__block--sm")
         }
         if (height < 34) {
-            classes.push("week-view__time-block--md")
+            classes.push("routine-time-blocks__block--md")
         }
         return classes.join(" ")
     }
@@ -437,7 +488,7 @@
     
     onMount(() => {
         requestAnimationFrame(() => { 
-            manager.init(scrollableContainer) 
+            manager.initWeekBlocks(scrollableContainer) 
             
             if (manager.earliestBlockHeadPos != Infinity) {
                 scrollableContainer.scrollTop += Math.max(manager.earliestBlockHeadPos - 20, 0)
@@ -461,6 +512,7 @@
         </div>
         <!-- Breakdown -->
         <div class="routine__breakdown">
+            <h3>Breakdown</h3>
             <div class="routine__breakdown-header">
                 <button 
                     class="routine__breakdown-dropdown-btn dropdown-btn"
@@ -477,16 +529,15 @@
                 <div class="routine__breakdown-options">
                     <button 
                         class="routine__breakdown-options-btn" 
-                        class:hidden={selectedTimeFrame != "Weekly"}
-                        class:full-opacity={isViewingCoreAvg}
-                        on:click={() => isViewingCoreAvg = true}
+                        class:full-opacity={isAvg}
+                        on:click={() => isAvg = true}
                     >
                         Avg
                     </button>
                     <button 
                         class="routine__breakdown-options-btn" 
-                        class:full-opacity={!isViewingCoreAvg}
-                        on:click={() => isViewingCoreAvg = false}
+                        class:full-opacity={!isAvg}
+                        on:click={() => isAvg = false}
                     >
                         Total
                     </button>
@@ -496,14 +547,14 @@
                     class="routine__breakdown-options-menu dropdown-menu"
                     class:dropdown-menu--hidden={!isBreakdownDropdownOpen}
                 >
-                    {#each ["Weekly", ...daysOfWeek] as timeFrame}    
+                    {#each ["Cores", "Tags"] as option}    
                         <li 
                             class="dropdown-menu__option" 
-                            class:dropdown-menu__option--selected={selectedTimeFrame === timeFrame}
+                            class:dropdown-menu__option--selected={selectedTimeFrame === option}
                         >
-                            <button class="dropdown-element" on:click={() => onViewOptionClicked(timeFrame)}>
+                            <button class="dropdown-element" on:click={() => toggleBreakdownView(option)}>
                                 <span class="dropdown-menu__option-text">
-                                    {timeFrame}
+                                    {option}
                                 </span>
                                 <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
                                     <i class="fa-solid fa-check"></i>
@@ -514,20 +565,19 @@
                 </ul>
             </div>
             <!-- Cores -->
-            <div class="routine__core-breakdown">
-                <h3>Cores</h3>
+            <div class="routine__core-breakdown" class:hide={!isViewingCore}>
                 <div class="routine__cores">
                     <div class="routine__cores-col">
                         <div class="routine__cores-core">
                             <div class="routine__cores-title">Sleeping</div>
                             <div class="routine__cores-value">
-                                {minsToHHMM(currCores.sleeping[coreProp], HrsMinsFormatOption.MIN_LETTERS)}
+                                {minsToHHMM(currCores.sleeping[coreProp])}
                             </div>
                         </div>
                         <div class="routine__cores-core">
                             <div class="routine__cores-title">Awake</div>
                             <div class="routine__cores-value">
-                                {minsToHHMM(currCores.awake[coreProp], HrsMinsFormatOption.MIN_LETTERS)}
+                                {minsToHHMM(currCores.awake[coreProp])}
                             </div>
                         </div>
                     </div>
@@ -536,13 +586,13 @@
                         <div class="routine__cores-core">
                             <div class="routine__cores-title">Working</div>
                             <div class="routine__cores-value">
-                                {minsToHHMM(currCores.working[coreProp], HrsMinsFormatOption.MIN_LETTERS)}
+                                {minsToHHMM(currCores.working[coreProp])}
                             </div>
                         </div>
                         <div class="routine__cores-core">
                             <div class="routine__cores-title">Self-Care</div>
                             <div class="routine__cores-value">
-                                {minsToHHMM(currCores.selfCare[coreProp], HrsMinsFormatOption.MIN_LETTERS)}
+                                {minsToHHMM(currCores.selfCare[coreProp])}
                             </div>
                         </div>
                     </div>
@@ -551,30 +601,33 @@
                         <div class="routine__cores-core">
                             <div class="routine__cores-title">Mind</div>
                             <div class="routine__cores-value">
-                                {minsToHHMM(currCores.mind[coreProp], HrsMinsFormatOption.MIN_LETTERS)}
+                                {minsToHHMM(currCores.mind[coreProp])}
                             </div>
                         </div>
                         <div class="routine__cores-core">
                             <div class="routine__cores-title">Body</div>
                             <div class="routine__cores-value">
-                                {minsToHHMM(currCores.body[coreProp], HrsMinsFormatOption.MIN_LETTERS)}
+                                {minsToHHMM(currCores.body[coreProp])}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <!-- Tag Breakdown -->
-            <div class="routine__tag-breakdown">
-                <h3>Tags</h3>
+            <div class="routine__tag-breakdown" class:hide={isViewingCore}>
                 {#each TEST_TAGS.slice(0, 4) as tag}
+                    {@const colorTrio = getColorPair(tag.symbol.color, isLightTheme)}
                     <div class="routine__tag">
-                        <div class="flx flx--algn-center">
-                            <div 
-                                class="routine__tag-symbol"
-                                style:background-color={`rgb(${tag.symbol.color.primary})`}
-                            >
+                        <div 
+                            class="routine__tag-content"
+                            style:--tag-color-primary={tag.symbol.color.primary}
+                            style:--tag-color-1={colorTrio[0]}
+                            style:--tag-color-2={colorTrio[1]}
+                            style:--tag-color-3={colorTrio[2]}
+                        >
+                            <span class="routine__tag-symbol">
                                 {tag.symbol.emoji}
-                            </div>
+                            </span>
                             <div class="routine__tag-title">
                                 {tag.name}
                             </div>
@@ -596,12 +649,21 @@
                 on:mouseover={onWeekDaysHover}
             >
                 <div class="week-view__days">
-                    {#each daysOfWeek as day}
+                    {#each daysOfWeek as day, idx}
                         <div class="week-view__days-day">
                             <div class="week-view__days-day-header">
                                 <h4>{day}s</h4>
+                                <button 
+                                    class="week-view__days-day-settings-btn settings-btn" 
+                                    on:click={() => onDaySettingsBtnClicked(idx)}
+                                >
+                                    <SVGIcon 
+                                        icon={Icon.Settings} 
+                                        options={{ opacity: 0.45 }} 
+                                    />
+                                </button>
                             </div>
-                            <div class="week-view__days-day-divider"></div>
+                            <!-- <div class="week-view__days-day-divider"></div> -->
                         </div>
                     {/each}
                 </div>
@@ -616,13 +678,14 @@
                     class="week-view__scrollable-content" 
                     bind:this={scrollableContent}
                 >
-                    <div class="week-view__time-blocks">
-                        {#each manager.days as day}
-                            {#each dayBlockElems[day] as block (block.id)}
+                    <div class="routine-time-blocks">
+                        {#each manager.DAYS_WEEK as day}
+                            {@const dayIdx = manager.getDayIdx(day)}
+                            {#each weekBlockElems[dayIdx] as block (block.id)}
                                 {@const colorTrio = getColorPair(block.color, isLightTheme)}
                                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                                 <div 
-                                    class={`week-view__time-block ${getBlockStyling(block.height)}`}
+                                    class={`routine-time-blocks__block ${getBlockStyling(block.height)}`}
                                     style:top={block.yOffset}
                                     style:left={block.xOffset}
                                     style:--block-height={`${block.height}px`}
@@ -634,32 +697,32 @@
                                         (e) => manager.onBlockPointerDown(e, block.id)
                                     }
                                 >
-                                    <div class="week-view__time-block-content">
+                                    <div class="routine-time-blocks__block-content">
                                         <div class="flx flx--algn-center">
-                                            <span class="week-view__time-block-title">
+                                            <span class="routine-time-blocks__block-title">
                                                 {block.title}
                                             </span>
                                         </div>
-                                        <div class="week-view__time-block-time-period">
+                                        <div class="routine-time-blocks__block-time-period">
                                             <span>{block.startTimeStr}</span>
                                             <span>-</span>
                                             <span>{block.endTimeStr}</span>
                                         </div>
                                     </div>
-                                    <div class="week-view__time-block-spine"></div>
+                                    <div class="routine-time-blocks__block-spine"></div>
                                 </div>
                             {/each}
                         {/each}
                     </div>
-                    <div class="week-view__hoz-lines-container">
-                        <div class="week-view__hoz-lines">
+                    <div class="hoz-lines-container">
+                        <div class="hoz-lines">
                             {#if scrollableContent}
                                 {@const width = scrollableContent.scrollWidth}
                                 {#each Array.from({ length: 24 }, (_, i) => i) as timeIdx}
                                     {@const headOffsetPerc = ((timeIdx * 60) / 1440) * 100}
                                     {@const height = (60 / 1440) * 100}
                                     <div 
-                                        class="week-view__hoz-line"
+                                        class="hoz-lines__line"
                                         style:top={`calc(${headOffsetPerc}% + 5px)`}
                                         style:height={`${height}%`}
                                     >
@@ -676,21 +739,21 @@
             <!-- Hour Blocks -->
             <!-- svelte-ignore a11y-mouse-events-have-key-events -->
             <div 
-                class="week-view__hour-blocks-container scroll-bar-hidden" 
+                class="hour-blocks-container scroll-bar-hidden" 
                 bind:this={hourBlocksElem} on:mouseover={onHourBlocksHover}
             >
-                <div class="week-view__hour-blocks">
+                <div class="hour-blocks">
                     {#if containerWidth > 0}
                         {#each Array.from({ length: 24 }, (_, i) => i) as timeIdx}
                             {@const headOffsetPerc = ((timeIdx * 60) / 1440) * 100}
                             {@const height = (60 / 1440) * 100}
                             <div 
-                                class="week-view__hour-block"
+                                class="hour-blocks__block"
                                 style:top={`calc(${headOffsetPerc}% - 0px)`}
                                 style:height={`${height}%`}
                             >
                                 <span>{getTimeFromIdx(timeIdx)}</span>
-                                <div class="week-view__hour-block-vert-divider">
+                                <div class="hour-blocks__block-vert-divider">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="2" height=28 viewBox={`0 0 2 28`} fill="none">
                                         <path d="M1.25684 0.614746V 32.5" stroke-width="0.9" stroke-dasharray="2 2"/>
                                     </svg>
@@ -704,8 +767,12 @@
     </div>
 </div>
 
+
+
 <style lang="scss">
     @import "../../../../scss/dropdown.scss";
+    @import "../../../../scss/day-box.scss";
+    @import "../../../../scss/components/routines.scss";
 
     .routine {
         height: 100%;
@@ -737,7 +804,7 @@
                 align-items: center;
             }
             &-col-divider {
-                @include divider(rgba(white, 0.06), 38px, 1px);
+                @include divider(0.06, 38px, 1px);
                 margin: -10px 5% 0px 5%;
             }
         }
@@ -765,108 +832,11 @@
         &__details-container {
             width: 280px;
         }
-        &__details {
-            max-width: 80%;
-            margin-bottom: 30px;
-            h2 {
-                @include text-style(1, 400, 2rem, "DM Mono");
-                margin-bottom: 13px;
-            }
-            p {
-                margin-top: 6px;
-                @include text-style(0.5, 200, 1.4rem);
-            }
+        &__details, &__breakdown {
+            width: 84%;
         }
-        /* Breakdown */
-        &__breakdown {
-            width: 80%;
-
-            h3 {
-                margin-bottom: 14px;
-                @include text-style(0.95, 400, 1.4rem);
-            }
-
-            &-header {
-                @include flex(center, space-between);
-                margin-bottom: 14px;
-                position: relative;
-            }
-            &-options {
-                @include flex(center);
-            }
-            &-options-menu {
-                @include pos-abs-top-left-corner(30px, -10px);
-            }
-            &-options-btn {
-                opacity: 0.4;
-                @include text-style(_, 300, 1.35rem);
-
-                &:hover {
-                    opacity: 1;
-                }
-                &:first-child {
-                    margin-right: 12px;
-                }
-            }
-        }
-        &__breakdown-dropdown-btn {
-            padding: 3.5px 12px;
-            margin-left: -10px;
-            @include text-color(0.03, "background");
-            
-            &:hover {
-                @include text-color(0.06, "background");
-            }
-            &-title {
-                @include text-style(1, 300, 1.35rem);
-            }
-            &-icon {
-                // margin-left: 12px;
-            }
-        }
-        /* Core Breakdown */
-        &__core-breakdown {
-            margin-bottom: 30px;
-        }
-        &__cores {
-            @include text-style(0.4, 400, 1.3rem);
-            width: 100%;
-
-            &-value {
-                @include text-style(0.25, 300, _, "DM Sans");
-            }
-        }
-        &__cores-col {
-            position: relative;
-        }
-        &__cores-col-divider {
-            @include divider(rgba(white, 0.06), 0.5px, 100%);
-            width: 100%;
-            margin: 11px 0px;
-        }
-        &__cores-core {
-            @include flex(center, space-between);
-            margin-bottom: 10px;
-        }
-        /* Tag Breakdown */
         &__tag-breakdown {
-
-        }
-        &__tag {
-            @include flex(center, space-between);
-            margin-bottom: 10px;
-        }
-        &__tag-symbol {
-            font-size: 1rem;
-            @include circle(16px);
-            @include center;
-            margin-right: 10px;
-        }
-        &__tag-title {
-            @include text-style(0.8, 300, 1.3rem);
-        }
-        &__tag-stat {
-            @include text-style(0.25, 300, 1.3rem, "DM Sans");
+            margin-left: -5px;
         }
         /* Week View */
         &__week {
@@ -876,14 +846,14 @@
             width: calc(100% - 280px);
         }
     }
+    $hour-blocks-top-offset: 35px;
+    $hour-block-height: 50px;
+
     .week-view {
         width: 100%;
         position: relative;
         height: 100%;
         @include pos-abs-top-left-corner;
-
-        $hour-blocks-top-offset: 30px;
-        $hour-block-height: 50px;
 
         &__scrollable {
             position: relative;
@@ -903,6 +873,7 @@
             width: calc(100% - 13px);
             margin-left: 13px;
             overflow: hidden;
+            padding-bottom: 5px;
             border-bottom: 1px solid rgba(white, 0.04);
         }
         &__days {
@@ -916,140 +887,75 @@
                 position: relative;
                 margin-right: 20px;
             }
+            &-day:hover &-day-settings-btn {
+                @include visible;
+            }
             &-day-header {
                 height: 25px;
                 width: 100%;
                 padding-right: 10px;
+                @include flex(center, space-between);
             }
             &-day-header h4 {
                 @include text-style(0.8, 400, 1.2rem, "DM Sans");
             }
             &-day-divider {
-                @include divider(rgba(white, 0.06), 100%, 0.5px);
+                @include divider(0.06, 100%, 0.5px);
                 @include pos-abs-top-right-corner(20px, 0px);
 
                 &:last-child {
                     display: none;
                 }
-            }   
+            }
+            &-day-settings-btn {
+                margin-right: -18px;
+                @include not-visible;
+                background-color: rgba(var(--textColor1), 0) !important;
+                
+                &:hover {
+                    background-color: rgba(var(--textColor1), 0.05) !important;
+                }
+            }
         }
-        /* Time Blocks */
-        &__time-blocks {
-            width: calc(100% - 0px);
-            position: relative;
-            @include pos-abs-top-left-corner;
-            z-index: 1;
-            height: 100%;
-            margin-left: 10px;
-        }
-        &__time-block {
-            position: absolute;
+    }
+    .routine-time-blocks {
+        margin-left: 10px;
+        
+        &__block {
             width: calc((100% / 7) - 11px);
-            overflow: hidden;
-            background-color: rgba(var(--block-color-2), 0.75);
-            height: var(--block-height);
-            max-height: var(--block-height);
-            transition: 0.1s ease-in-out;
-            cursor: pointer;
-            border: 1px solid rgba(var(--block-color-1), 0.04);
-            border-radius: 4px;
+        }
+    }
+    .hour-blocks {
+        height: calc(($hour-block-height * 24) + $hour-blocks-top-offset);
+        width: 50px;
 
-            &--md &-content {
-                @include flex(center);
-            }
-            &--md &-title {
-                margin: 0px 7px 0px 0px;
-            }
-
-            &:hover {
-                background-color: rgba(var(--block-color-2), 1);
-                transition: 0.04s ease-in-out;
-            }
-            &:active {
-                transform: scale(0.998);
-            }
-        }
-        &__time-block-content {
-            padding: 3px 8px 4px 8px;
-            overflow: hidden;
-            white-space: nowrap;
-            position: relative;
-            height: 100%;
-            border-left: none;
-        }
-        &__time-block-title {
-            color: rgb(var(--block-color-1));
-            @include text-style(_,  300, 1.2rem, "DM Sans");
-            margin-bottom: 2px;
-            cursor: text;
-        }
-        &__time-block-time-period {
-            color: rgb(var(--block-color-1));
-            opacity: 0.5;
-            @include text-style(_, 300, 1.05rem, "DM Sans");
-            cursor: text;
-            display: inline-block;
-        }
-        &__time-block-spine {
-            @include pos-abs-top-left-corner(-1px, -1px);
-            height: calc(100% + 1px);
-            width: 2.5px;
-            background-color: rgb(var(--block-color-3));
-        }
-
-        /* Hour Block */
-        &__hour-blocks-container {
+        &-container {
             overflow: hidden;
             height: calc(100% - 50px);
-            position: relative;
             @include pos-abs-top-left-corner($hour-blocks-top-offset, 5px);
-            margin-top: 3px;
         }
-        &__hour-blocks {
+        &__blocks {
             height: calc(($hour-block-height * 24) + $hour-blocks-top-offset);
-            position: relative;
             width: 50px;
         }
-        &__hour-block {
-            position: relative;
-            @include flex(center, center);
-            text-align: center;
-            flex-direction: column;
+        &__block {
             width: 40px;
-            position: absolute;
             left: 10px;
-
-            span {
-                @include text-style(0.3, 300, 0.94rem, "DM Sans");
-                margin-bottom: 4px;
-                width: 40px;
-                white-space: nowrap;
-            }
         }
+        &__block span {
+            width: 40px;
+        }
+    }
+    .hoz-lines {
+        height: 100%;
+        width: 100%;
+        position: relative;
 
-        /* Hoz Lines */
-        &__hoz-lines-container {
+        &-container {
             @include pos-abs-top-left-corner(0px, 8px);
-            width: 100%;
-            height: 100%;
         }
-        &__hoz-lines {
-            height: 100%;
-            width: 100%;
-            position: relative;
-        }
-        &__hoz-line {
+        &__line {
             height: 50px;
-            position: absolute;
-
-            path {
-                stroke: rgba(var(--textColor1), 0.05);
-            }
-        }
-        &__hour-block-vert-divider {
-            path {
-                stroke: rgba(var(--textColor1), 0.17);
-            }
         }
     }
 </style>

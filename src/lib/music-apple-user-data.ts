@@ -181,10 +181,6 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
     setTokenHasExpired(hasExpired: boolean) {
         this.hasTokenExpired = hasExpired
         this.updateState({ hasTokenExpired: hasExpired })
-
-        if (hasExpired) {
-            this.onError(new APIError(APIErrorCode.EXPIRED_TOKEN))
-        }
     }
 
     /**

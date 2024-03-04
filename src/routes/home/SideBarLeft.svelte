@@ -1,17 +1,13 @@
 <script lang="ts">
-    import { ModalType, MusicPlatform } from "$lib/enums"
+    import { ModalType, MusicPlatform, TextTab } from "$lib/enums"
     import { getThemeFromSection, setNewTheme } from "$lib/utils-appearance"
 	import { themeState, globalContext, musicPlayerStore } from "$lib/store"
 	import { hideWideMenuBar, openModal, showWideMenuBar } from "$lib/utils-home"
-	import { onMount } from "svelte"
+	import { createEventDispatcher, onMount } from "svelte"
 	import { getElemById, getLogoIconFromEnum } from "$lib/utils-general"
 	import SideBarCalendar from "./SideBarCalendar.svelte"
 	import { goto } from "$app/navigation"
 	import { toast } from "$lib/utils-toast"
-
-    enum TextTab {
-        Workspace, Productivity, Goals, Habits, Mindhub, Routines
-    }
 
     const NAV_MENU_NARROW_BAR_WIDTH = 58
     const NAV_MENU_WIDE_BAR_WIDTH = 220
@@ -38,6 +34,8 @@
         }
         selectTabBtn(selectedTxtButtonElement)
     }
+
+    const dispatch = createEventDispatcher()
 
     function onResizerClicked(event: Event) {
         const pe = event as PointerEvent
@@ -97,6 +95,8 @@
         removeSelectTabBtnStyling()
         const target = event.target! as HTMLElement
         selectTabBtn(target.tagName === "BUTTON" ? target : target.parentElement!)
+
+        dispatch("routeChange", textTab)
 
         if (textTab === TextTab.Workspace) {
             goto("/home")
@@ -333,11 +333,11 @@
             }
         }
         &__divider {
-            @include divider(rgba(white, 0), 0.5px, 25px);
+            @include divider(0, 0.5px, 25px);
             margin: 8px auto;
         }
         &__divider:last-child {
-            @include divider(rgba(white, 0.045), 100%, 0.5px);
+            @include divider(0.045, 100%, 0.5px);
             @include pos-abs-top-right-corner(0px, 0px);
             margin: 0px;
         }

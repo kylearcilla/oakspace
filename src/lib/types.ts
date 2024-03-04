@@ -13,6 +13,18 @@ type Result<T, E> = {
     error: E
 }
 
+type HhMmFormat = "full-letters" | "mid-letters" | "min-letters" | "numbers"
+
+type IconOptions = {
+    id?: string
+    width?: number
+    height?: number
+    strokeWidth?: number
+    scale?: number
+    color?: string
+    opacity?: number   
+}
+
 type RoutineCores = { 
     sleeping: {
         status: CoreStatus
@@ -63,29 +75,47 @@ type Color = {
     dark2: string
     dark3: string
 }
-type DayBlocks = {
-    Mon: DayBlock[], Tue: DayBlock[]
-    Wed: DayBlock[], Thu: DayBlock[]
-    Fri: DayBlock[], Sat: DayBlock[]
-    Sun: DayBlock[]
+
+type WeekBlocks = {
+    Mon: RoutineBlock[], Tue: RoutineBlock[]
+    Wed: RoutineBlock[], Thu: RoutineBlock[]
+    Fri: RoutineBlock[], Sat: RoutineBlock[]
+    Sun: RoutineBlock[]
 }
-type DayBlockElems = {
-    Mon: DayBlockElem[], Tue: DayBlockElem[]
-    Wed: DayBlockElem[], Thu: DayBlockElem[]
-    Fri: DayBlockElem[], Sat: DayBlockElem[]
-    Sun: DayBlockElem[]
+type WeekBlockElems = {
+    Mon: RoutineBlockElem[], Tue: RoutineBlockElem[]
+    Wed: RoutineBlockElem[], Thu: RoutineBlockElem[]
+    Fri: RoutineBlockElem[], Sat: RoutineBlockElem[]
+    Sun: RoutineBlockElem[]
 }
-type DayBlock = {
-    title: string,
-    color: Color,
+type TagBreakDown = {
+    tag: Tag,
+    data: {
+        avgTime: number,
+        totalTime : number,
+        total: number
+    }
+}
+type RoutineBlock = {
+    title: string
+    color: Color
     startTime: number
     endTime: number
+    tag: Tag | null
     activity: RoutineActvity | null
 }
-type DayBlockElem = {
+type RoutineBlockElem = {
     id: string, height: number, xOffset: string, yOffset: string,
     startTimeStr: string, endTimeStr: string
-} & DayBlock
+} & RoutineBlock
+
+type DailyRoutine = {
+    id: string
+    name: string
+    description: string
+    blocks: RoutineBlock[]
+}
+
 
 // Dates 
 type MonthData = {
@@ -129,10 +159,10 @@ type AppearanceSectionToThemeMap = {
 }
 
 type LogoContainerOptions = {
-    hasBgColor?: boolean      // default: has bg
-    containerWidth?: string,  // default: 24px
-    iconWidth?: string,       // default: 50%, can be px
-    borderRadius?: string,    // default: 100%
+    hasBgColor?: boolean
+    containerWidth?: string
+    iconWidth?: string
+    borderRadius?: string
 }
 
 /* Authentication */
@@ -232,10 +262,24 @@ type SessionResult = {
     resultImgUrl: string
 }
 
+type ColorSwatch = {
+    id: string
+    primary: string
+    light1: string
+    light2: string
+    light3: string
+    dark1:  string
+    dark2:  string
+    dark3: string
+}
+
 type Tag = {
+    id: string
     name: string,
-    color: string,
-    symbol: string
+    symbol: {
+        color: ColorSwatch,
+        emoji: string
+    }
 }
 
 type SessionInputData = {
@@ -321,6 +365,7 @@ type MusicMediaSelectContext = {
 }
 
 type MediaCollection = Playlist | Album | ArtistTopSongs | LibTracks | LibAlbums | LibEpisodes | LibAudiobooks
+
 
 interface Media {
     id: string
@@ -437,7 +482,7 @@ type MusicShufflerData = {
 type MusicPlatformPropNames = "appleMusic" | "spotify"
 
 type DiscoverCollection = {
-    [platform in MusicPlatformPropNames]: Media[]
+    [platform in MusicPlatformPropNames]: Partial<Media & { length: number}>[]
 }
 
 type MusicContext = {
@@ -515,24 +560,14 @@ type YoutubeUserCreds = {
 
 type YoutubeUserPlaylistResponse = {
     userPlaylists: YoutubePlaylist[]
-    userPlaylistsNextPageToken: string
-    userPlaylistLength: number
+    userPlsNextPageToken: string
+    userPlaylistsTotal: number
 }
 
 type YoutubePlaylistResponse = {
     videos: YoutubeVideo[]
     nextPageToken: string
     playlistLength: number
-}
-
-type YoutubeUserInfo = {
-    username: string,
-    profileImgSrc: string,
-    email: string,
-    userPlaylists: YoutubePlaylist[]
-    userPlaylistsNextPageToken: string
-    userPlaylistLength: number
-    hasFetchedAllUserPls: boolean
 }
 
 type YoutubePlayerData = {

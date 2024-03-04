@@ -460,7 +460,7 @@
                                             {collection.genre}
                                         </div>
                                         <div class="discover__collection-item-length">
-                                            {length >= 0 ? length : "-"}
+                                            {length}
                                         </div>
                                         <div class="divider divider--thin"></div>
                                     </li>
@@ -647,6 +647,7 @@
             @include flex(_, space-between);
             flex-direction: column;
             height: 100%;
+            padding-bottom: 3px;
         }
         &__details-header {
             @include flex(center, space-between);
@@ -698,7 +699,7 @@
                 font-size: 1.3rem;
                 color: rgba(249, 249, 249, 0.8);
                 font-weight: 500;
-                margin-bottom: 1px;
+                margin-bottom: 3px;
                 width: 100%;
                 @include elipses-overflow;
             }
@@ -715,7 +716,7 @@
             }
         }
         &__collection-details {
-            font-size: 1rem;
+            font-size: 1.2rem;
             font-weight: 500;
             display: flex;
             color: rgba(219, 219, 219, 0.5);
@@ -775,7 +776,7 @@
             margin: 0px 0px 4.5px 10px;
         }
         &__dropdown-btn {
-            @include text-color(0.02, "background");
+            @include txt-color(0.02, "bg");
             margin: -4px -4px 0px 0px;
             background-color: rgb(var(--textColor1), 0) !important;
             

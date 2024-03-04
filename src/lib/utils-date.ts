@@ -196,7 +196,7 @@ export function formatTimeToHHMM(date: Date, doUsehour12: boolean | null = null)
 export const getPomPeriodElapsedTime = (start: Date, end: Date) => {
     const timePeriodString = getTimePeriodString(start, end)
     const diffSecs = getDifferenceInSecs(start, end)
-    const diffStr = secsToHHMM(diffSecs, HrsMinsFormatOption.MIN_LETTERS)
+    const diffStr = secsToHHMM(diffSecs)
 
     if (!diffStr.includes("m")) return diffStr
 
@@ -233,7 +233,7 @@ export function twentyFourToTwelveHrFormat(time: number): string {
     if (time < 0 || time > 24) throw new Error("Invalid time, out of range.")
 
     if (time >= 12 && time < 24) {
-    return (time % 12 || 12) + " PM"
+        return (time % 12 || 12) + " PM"
     }
 
     return (time === 0 || time == 24) ? "12 AM" : time + " AM"
@@ -245,26 +245,26 @@ export function twentyFourToTwelveHrFormat(time: number): string {
  * @param formatOption  Different formatting options: X hrs, X mins || Xh Xm || HH:MM 
  * @returns             Formatted # of secs to HH MM (i.e. 2 hrs 34 mins)
  */
-export function secsToHHMM(secs: number, formatOption: HrsMinsFormatOption = HrsMinsFormatOption.LETTERS): string {
+export function secsToHHMM(secs: number, formatOption: HhMmFormat = "min-letters"): string {
     return minsToHHMM(Math.floor(secs / 60), formatOption)
 }
 
 /**
  * Formats mins to HH:MM
- * @param    mins 
+ * @param   mins 
  * @param   formatOption  Different formatting options: Xhrs, Xmins || Xh Xm || HH:MM 
  * @returns Formatted # of minutes to HH MM (i.e. 2 hrs 34 mins)
  */
-export function minsToHHMM(inputMins: number, formatOption: HrsMinsFormatOption = HrsMinsFormatOption.LETTERS): string {
+export function minsToHHMM(inputMins: number, formatOption: HhMmFormat = "min-letters"): string {
     const mins = Math.ceil(inputMins)
 
-    if (mins < 60 && formatOption === HrsMinsFormatOption.LETTERS) {
+    if (mins < 60 && formatOption === "mid-letters") {
         return mins === 0 ? "0h" : `${mins} mins`
     }
-    else if (mins < 60 && formatOption === HrsMinsFormatOption.MIN_LETTERS) {
+    else if (mins < 60 && formatOption === "min-letters") {
         return mins === 0 ? "0h" : `${mins}m`
     }
-    else if (mins < 60 && formatOption === HrsMinsFormatOption.NO_LETTERS) {
+    else if (mins < 60 && formatOption === "numbers") {
         return `00:${String(mins).padStart(2, '0')}`
     }
 
@@ -273,13 +273,13 @@ export function minsToHHMM(inputMins: number, formatOption: HrsMinsFormatOption 
 
     let hrsStr, minsStr
 
-    if (formatOption === HrsMinsFormatOption.LETTERS) {
+    if (formatOption === "mid-letters") {
         hrsStr = `${hours} ${hours > 1 ? "hrs" : "hr" }`
         minsStr = minutes === 0 ? "" : ` ${String(minutes).padStart(2, '0')} mins`
 
         return `${hrsStr}${minsStr}`
     }
-    else if (formatOption === HrsMinsFormatOption.MIN_LETTERS) {
+    else if (formatOption === "min-letters") {
         hrsStr = `${hours}h`
         minsStr = minutes === 0 ? "" : ` ${String(minutes).padStart(2, '0')}m`
 
@@ -484,7 +484,7 @@ export function msToHHMMSS(ms: number) {
 /**
  * Converts the given number of minutes from the beginning of the day to the "hh:mm" format.
  * @param    minutes - The number of minutes from the beginning of the day.
- * @returns  The time in "hh:mm" format.
+ * @returns            The time in "hh:mm AM / PM" format.
  */
 export function minsFromStartToHHMM(minsFromStart: number) {
     const _hours = Math.floor(minsFromStart / 60)

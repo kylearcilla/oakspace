@@ -5,10 +5,9 @@
 	import { closeModal } from "$lib/utils-home"
     import { LogoIcon, ModalType } from "$lib/enums"
     import ytRecsPlaylists from '$lib/data-yt-playlists'
-    import { clickOutside, getHozScrollStatus, getMaskedGradientStyle } from "../../lib/utils-general"
+    import { clickOutside, getMaskedGradientStyle } from "../../lib/utils-general"
 	import { themeState, ytPlayerStore, ytUserDataStore } from "$lib/store"
-	import { handleChoosePlaylist, logOutUser, loginUser } from "$lib/utils-youtube"
-	import { ExpiredTokenError } from "$lib/errors";
+	import { handleChoosePlaylist, refreshToken, youtubeLogOut, youtubeLogin } from "$lib/utils-youtube"
 	import { onMount } from "svelte";
     
     let isUserProfileDropdownOpen = false
@@ -24,6 +23,8 @@
     let scrollWindow = 0
 
     let tabListGradientStyle = ""
+    let hasLibError = false
+    let userPlaylists: YoutubePlaylist[] = []
 
     const SCROLL_STEP = 200
     const PLAYLIST_SKELETON_LENGTH = 25
@@ -35,28 +36,50 @@
     $: hasSignedIn = $ytUserDataStore?.hasUserSignedIn ?? false
     $: playlist = $ytPlayerStore?.playlist ?? null    
     $: userData = $ytUserDataStore
+    $: hasTokenExpired = userData?.hasTokenExpired ?? false
+
+    $: {
+        // if on playlists and loggin out
+        if (!userData && selectedPlsGroup.title === "My Playlists") {
+            selectedPlsGroup = ytRecsPlaylists[0]
+        }
+    }
+    $: {
+        if (hasSignedIn) {
+            userPlaylists = $ytUserDataStore?.userPlaylists ?? []
+        }
+    }
+    $: {
+        // updating playlists (refresh, more items)
+        if (selectedPlsGroup.title === "My Playlists") {
+            selectedPlsGroup.playlists = userPlaylists
+        }
+    }
 
     /* Account */
-    const handleYtSignUp  = async () => loginUser()
-    const handleYtSignOut = ()       => logOutUser()
-
-    const capsuleBtnClickedHandler = () => { 
-        console.log("xxxxsdcosdjcosdicj")
-        console.log("HELLO WORLDJOEISDJdsofisdjfodsifjsdofidsj")
+    function profileBtnClickedHandler() { 
         if ($ytUserDataStore) {
             isUserProfileDropdownOpen = true 
         }
         else {
-            loginUser()
+            youtubeLogin()
         }
+    }
+    function onProfileDropdownFirstBtnClicked() {
+        if (hasTokenExpired) {
+            refreshToken()
+        }
+        else {
+            refreshUserPlaylsts()
+        }
+        isUserProfileDropdownOpen = false 
     }
     
     /* UI Handlers */
-    const _handleChoosePlaylist = (playlist: YoutubePlaylist) => handleChoosePlaylist(playlist)
-    
-    const hasReachedEndOfList   = () => Math.ceil(scrollTop) >= scrollHeight - scrollWindow
-
-    const userPlsInfiniteScrollHandler = async (event: Event) => {
+    function hasReachedEndOfList() { 
+        return Math.ceil(scrollTop) >= scrollHeight - scrollWindow
+    }
+    async function userPlsInfiniteScrollHandler(event: Event) {
         if (selectedPlsGroup.title != "My Playlists") return
 
         const list = event.target as HTMLElement
@@ -67,23 +90,41 @@
         if (!hasReachedEndOfList()) return
         getMorePlaylists()
     }
-    
-    const getMorePlaylists = () => {
-        const hasTokenExpired = $ytUserDataStore!.error instanceof ExpiredTokenError
-        if (isPlsLoading || $ytUserDataStore!.hasFetchedAllUserPls || hasTokenExpired) return
+    async function refreshUserPlaylsts() {
+        let _userPlaylists = userPlaylists
+        
+        try {
+            userPlaylists = []
+            isPlsLoading = true
+            await userData!.refreshUserPlaylists()
+            hasLibError = false
+        }
+        catch {
+            userPlaylists = _userPlaylists
+            hasLibError = true
+        }
+        finally {
+            isPlsLoading = false
+        }
+    }
+    function getMorePlaylists() {
+        const haltFetchMore = isPlsLoading || userData!.hasFetchedAllUserPls || hasLibError || hasTokenExpired 
+        if (haltFetchMore) return
         
         isPlsLoading = true
         setTimeout(async () => { 
             try {
                 await $ytUserDataStore!.loadMorePlaylistItems()
-                selectedPlsGroup.playlists = $ytUserDataStore!.userPlaylists
+                userPlaylists = $ytUserDataStore!.userPlaylists
 
                 isPlsLoading = false
+                hasLibError = false
 
-                if (hasReachedEndOfList()) getMorePlaylists()      // if user reaches the end of skeleton list during loading state
+                if (hasReachedEndOfList()) getMorePlaylists()
             }
             catch(error: any) {
                 isPlsLoading = false
+                hasLibError = true
             }
         }, FETCH_PLAYLIST_DELAY)
     }
@@ -120,6 +161,7 @@
     <div 
         class="yt-settings"
         class:yt-settings--light={!$themeState.isDarkTheme}
+        class:yt-settings--dark={$themeState.isDarkTheme}
         class:yt-settings--min={!hasSignedIn}
     >
         <!-- Header -->
@@ -131,12 +173,12 @@
                 <div class="yt-settings__header-yt-logo">
                     <Logo 
                         logo={LogoIcon.Youtube}
-                        options={{ hasBgColor: false, containerWidth: "20px", iconWidth: "100%" }}
+                        options={{ hasBgColor: false, containerWidth: "18px", iconWidth: "70%" }}
                     />
                 </div>
             </div>
             <div class="yt-settings__user-profile-container">
-                <button class="yt-settings__user-capsule" on:click={capsuleBtnClickedHandler}>
+                <button class="yt-settings__user-capsule" on:click={profileBtnClickedHandler}>
                     {#if hasSignedIn && userData}
                         <img src={userData.profileImgSrc ?? DEFAULT_PROFILE_PIC} alt="yt-profile" />
                     {:else}
@@ -151,35 +193,38 @@
                         {hasSignedIn ? userData?.username : "Log In"}
                     </span>
                 </button>
-                {#if isUserProfileDropdownOpen && hasSignedIn && userData}
-                    <div class="yt-settings__user-profile" use:clickOutside on:click_outside={() => isUserProfileDropdownOpen = false} >
-                        <div class="yt-settings__user-profile-img-container">
-                            <img src={userData.profileImgSrc} alt="yt-profile" />
-                        </div>
-                        <div class="yt-settings__user-profile-details">
-                            <div class="yt-settings__user-profile-details-header">
-                                Gmail Account
-                            </div>
-                            <span>
-                                {userData.email}
-                            </span>
-                            <div class="yt-settings__user-profile-details-header">
-                                Youtube Channel
-                            </div>
-                            <span>
-                                {userData.username}
-                            </span>
-                        </div>
-                        <div class="yt-settings__user-profile-btns-container">
-                            <button class="text-only" on:click={() => { handleYtSignUp(); isUserProfileDropdownOpen = false }}>
-                                Switch Account
-                            </button>                                
-                            <button class="text-only" on:click={() => { handleYtSignOut(); isUserProfileDropdownOpen = false }}>
-                                Log Out
-                            </button>                                
-                        </div>
+                <!-- Dropdown -->
+                <div 
+                    class="yt-settings__user-profile dropdown-menu" 
+                    class:dropdown-menu--hidden={!isUserProfileDropdownOpen || !hasSignedIn || !userData}
+                    use:clickOutside on:click_outside={() => isUserProfileDropdownOpen = false}
+                >
+                    <div class="yt-settings__user-profile-img-container">
+                        <img src={userData?.profileImgSrc} alt="yt-profile" />
                     </div>
-                {/if}
+                    <div class="yt-settings__user-profile-details">
+                        <div class="yt-settings__user-profile-details-header">
+                            Gmail Account
+                        </div>
+                        <span>
+                            {userData?.email}
+                        </span>
+                        <div class="yt-settings__user-profile-details-header">
+                            Youtube Channel
+                        </div>
+                        <span>
+                            {userData?.username}
+                        </span>
+                    </div>
+                    <div class="yt-settings__user-profile-btns-container">
+                        <button class="text-only" on:click={onProfileDropdownFirstBtnClicked}>
+                            {`${hasTokenExpired ? "Refresh Token" : "Refresh Playlists"}`}
+                        </button>                                
+                        <button class="text-only" on:click={() => { youtubeLogOut(); isUserProfileDropdownOpen = false }}>
+                            Log Out
+                        </button>                                
+                    </div>
+                </div>
             </div>
         </div>
         <div class="yt-settings__content-container">
@@ -288,7 +333,7 @@
                     <!-- Recommended laylist Item -->
                     {#each selectedPlsGroup.playlists as playlist}
                         <li 
-                            on:dblclick={() => _handleChoosePlaylist(playlist)}
+                            on:dblclick={() => handleChoosePlaylist(playlist)}
                             class="recs__playlist-item"
                             class:recs__playlist-item--selected={playlist.id === playlist.id}
                             class:recs__playlist-item--user-pl={selectedPlsGroup.title === "My Playlists"}
@@ -360,6 +405,7 @@
 <style lang="scss">
     @import "../../scss/blurred-bg.scss";
     @import "../../scss/skeleton.scss";
+    @import "../../scss/dropdown.scss";
 
     $section-spacing: 8px;
     $recs-section-padding-left: 25px;
@@ -375,6 +421,10 @@
 
         .skeleton-bg {
             @include skeleton-bg(dark);   
+        }
+
+        &--dark .dropdown-menu {
+            @include dropdown-menu-dark;
         }
                 
         /* Light Theme Styling */
@@ -440,9 +490,6 @@
             &-title-container {
                 @include center;
             }
-            &-title {
-                margin-bottom: 5px;
-            }
             &-yt-logo {
                 margin-left: 8px;
             }
@@ -475,10 +522,9 @@
         }
         &__user-profile {
             @include pos-abs-top-right-corner(40px, 0px);
-            background-color: var(--dropdownMenuBgColor1);
             border-radius: 13px;
-            padding: 15px 18px 15px 18px;
-            min-width: 160px;
+            padding: 15px 14px 15px 14px;
+            min-width: 170px;
             z-index: 100;
         }
         &__user-profile-img-container {
@@ -492,6 +538,7 @@
         &__user-profile-details {
             text-align: center;
             margin-bottom: 20px;
+
             span {
                 display: block;
                 color: rgb(var(--textColor1), 0.4);
@@ -507,13 +554,11 @@
         &__user-profile-btns-container {
             padding-top: 10px;
             @include flex(center, space-evenly);
-            color: rgb(var(--textColor1), 0.7);
             width: 100%;
 
             button {
                 padding: 0px;
-                font-weight: 400;
-                font-size: 1.1rem;
+                @include text-style(0.5, 400, 1.2rem);
                 white-space: nowrap;
 
                 &:first-child {
@@ -707,7 +752,6 @@
                 @include visible;
             }
         }
-        // wraps around groups list only not the arrow
         &__groups-wrapper {
             width: 100%;
         }
@@ -747,7 +791,7 @@
         }
         /* Playlist Item */
         &__playlist-item {
-            transition: 0.1s ease-in-out;
+            transition: opacity 0.1s ease-in-out;
             display: flex;
             overflow: hidden;
             padding: 20px 0px;

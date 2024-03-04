@@ -106,7 +106,7 @@
                                     <i class="fa-brands fa-readme"></i>
                                 </div>
                                 <div class="session-finished__stat-text session-finished__stat-text--change">
-                                    {`+ ${secsToHHMM($sessionStore.userFocusTimeSecs, HrsMinsFormatOption.MIN_LETTERS)}`}
+                                    {`+ ${secsToHHMM($sessionStore.userFocusTimeSecs)}`}
                                 </div>
                                 <div class="session-finished__stat-text session-finished__stat-text--total">
                                     2h 34m
@@ -117,7 +117,7 @@
                                     <i class="fa-solid fa-seedling"></i>
                                 </div>
                                 <div class="session-finished__stat-text session-finished__stat-text--change">
-                                    {`+ ${secsToHHMM($sessionStore.userBreakTimeSecs, HrsMinsFormatOption.MIN_LETTERS)}`}
+                                    {`+ ${secsToHHMM($sessionStore.userBreakTimeSecs)}`}
                                 </div>
                                 <div class="session-finished__stat-text session-finished__stat-text--total">
                                     32m

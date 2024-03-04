@@ -342,7 +342,6 @@
             @include text-style(0.3, 500);
         }
         &--light &__divider {
-            @include divider(rgba(black, 0.05));
         }
         &--light#{&}--list &__item:hover {
             background-color: rgba(black, 0.02);
@@ -386,7 +385,6 @@
         }
 
         &__divider {
-            @include divider(rgba(white, 0.045));
         }
 
         /* Board */
@@ -471,7 +469,7 @@
         }
         &__item-divider {
             @include pos-abs-top-left-corner;
-            @include divider(rgba(white, 0.045), 0.5px, calc(100% - 50px));
+
             margin-left: 25px;
             display: none;
         }

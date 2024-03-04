@@ -163,10 +163,10 @@
             transition: 0s;
             @include center;
             @include text-style(0.6, 500, 1.14rem);
-            @include text-color(0.03, "background");
+            @include txt-color(0.03, "bg");
             
             &:hover {
-                @include text-color(0.07, "background");
+                @include txt-color(0.07, "bg");
             }
             &:active {
                 transition: 0.1s ease-in-out;

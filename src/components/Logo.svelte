@@ -1,35 +1,37 @@
 <script lang="ts">
-	import { LogoIcon } from "$lib/enums";
-	import { onMount } from "svelte";
-
-    /* type LogoContainerOptions = {
-        hasBgColor?: boolean      // default: has bg
-        containerWidth?: string,  // default: 24px
-        iconWidth?: string,       // default: 50%, can be px
-        borderRadius?: string,    // default: 100%  
-    } */
+	import { LogoIcon } from "$lib/enums"
+	import { onMount } from "svelte"
 
     let bgStyling = ""
     let iconStyling = ""
 
     export let logo: LogoIcon
-    export let options: LogoContainerOptions = {}
+    export let options: LogoContainerOptions | undefined
 
-    const makeContainerStyling = () => {
+    function makeContainerStyling() {
         const arr: string[] = []
-        arr.push(`width: ${options?.containerWidth ?? "24px"}`)
-        arr.push(`border-radius: ${options?.borderRadius ?? "100%"}`)
 
-        const hasBgColor = options?.hasBgColor ?? true
-        if (!hasBgColor) arr.push(`background: ${hasBgColor ? "" : "transparent"}`)
+        if (options?.containerWidth) {
+            arr.push(`width: ${options.containerWidth}`)
+        }
+        if (options?.borderRadius) {
+            arr.push(`border-radius: ${options.borderRadius}`)
+        }
+        if (options?.hasBgColor != undefined && !options.hasBgColor) { 
+            arr.push("background: transparent")
+        }
 
         bgStyling = arr.join('; ')
     }
-    const makeIconStyling = () => {
-        iconStyling = `width: ${options?.iconWidth ?? "55%"}`
+    function makeIconStyling() {
+        if (options?.iconWidth) {
+            iconStyling = `width: ${options.iconWidth}`
+        }
     }
 
     onMount(() => {
+        if (!options) return
+
         makeContainerStyling()
         makeIconStyling()
     })
@@ -89,11 +91,15 @@
 
 <style lang="scss">
     @import "../scss/brands.scss";
+
     .logo-container {
         @include center;
         aspect-ratio: 1 / 1;
+        width: 24px;
+        border-radius: 40px;
     }
     .logo {
         @include center;
+        width: 55%;
     }
 </style>

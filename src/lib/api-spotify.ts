@@ -259,7 +259,8 @@ export async function getSpotfifyUserPlaylists(accessToken: string, offset: numb
             url: pl.external_urls.spotify,
             length: pl.tracks.total,
             type: MusicMediaType.Playlist,
-            description: pl?.description ?? ""
+            description: pl?.description ?? "",
+            fromLib: true
         } as Playlist
     })
     return { 
@@ -478,6 +479,64 @@ export async function getAlbumItem(accessToken: string, albumId: string, pos: nu
         albumId: "",
         playlistId: "",
         fromLib: true
+    }
+}
+
+/**
+ * @param accessToken 
+ * @param pos      position of element is offset
+ * @returns        User's saved audiobooks from their library
+ */
+export async function getPlaylistDetails(accessToken: string, id: string): Promise<Omit<Playlist, 'fromLib'>> {
+    const headers = new Headers({ "Authorization": `Bearer ${accessToken}` })
+    const res  = await fetch(`https://api.spotify.com/v1/playlists/${id}`, { method: 'GET', headers })
+    const data = await res.json()
+
+    if (!res.ok) {
+        console.error(`There was an error getting a collection's item. \n URL: ${res.url} \n Status: ${res.status} \n Description: ${data.error.message}.`)
+        throwSpotifyAPIError(res.status, data.error.message)
+    }
+
+    return {
+        id: data.id,
+        name: data.name,
+        author: "",
+        artworkImgSrc: data.images.length === 1 ? data.images[0].url : data.images[1].url,
+        length: -1,
+        description: data.description,
+        genre: "",
+        url: "",
+        authorUrl: "", 
+        type: MusicMediaType.Playlist
+    }
+}
+
+/**
+ * @param accessToken 
+ * @param pos      position of element is offset
+ * @returns        User's saved audiobooks from their library
+ */
+export async function getAlbumDetails(accessToken: string, id: string): Promise<Omit<Album, 'fromLib'>> {
+    const headers = new Headers({ "Authorization": `Bearer ${accessToken}` })
+    const res  = await fetch(`https://api.spotify.com/v1/albums/${id}`, { method: 'GET', headers })
+    const data = await res.json()
+
+    if (!res.ok) {
+        console.error(`There was an error getting a collection's item. \n URL: ${res.url} \n Status: ${res.status} \n Description: ${data.error.message}.`)
+        throwSpotifyAPIError(res.status, data.error.message)
+    }
+
+    return {
+        id: data.id,
+        name: data.name,
+        author: data.artists[0].name,
+        artworkImgSrc: data.images.length === 1 ? data.images[0].url : data.images[1].url,
+        length: data.total_tracks,
+        description: "",
+        genre: data.genres[0],
+        url: "",
+        authorUrl: "", 
+        type: MusicMediaType.Album
     }
 }
 

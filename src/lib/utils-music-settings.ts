@@ -28,7 +28,7 @@ export async function discoverPlsPaginationScrollHandler(event: Event) {
  * @param   platformProp       MusicPlatform in object property, used to index for that platform's collection
  * @returns                    Music media items under given mood category for a specific platform.
  */
-export function getDiscoverCollectionList(discoverCategory: MusicMoodCategory, platformProp: MusicPlatformPropNames): Media[] {
+export function getDiscoverCollectionList(discoverCategory: MusicMoodCategory, platformProp: MusicPlatformPropNames): Partial<Media>[] {
     switch (discoverCategory) {
         case MusicMoodCategory.Serene:
             return sereneCollections[platformProp]

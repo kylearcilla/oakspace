@@ -81,13 +81,25 @@ export class MusicSettingsManager {
      * @param mediaClicked   Media user has clicked.
      * @param idx            Index location of the item clicked.
      */
-    async handleLibraryMediaClicked(mediaClicked: Media, idx: number) {
+    async handleLibraryMediaClicked(mediaClicked: Partial<Media>, idx: number) {
         if (this.debounceTimeout != null) return
 
         try {
+            let _mediaClicked: Media
+
+            // reccomended data contains a subset of Media
+            if (!("fromLib" in mediaClicked)) {
+                _mediaClicked = {
+                    ...mediaClicked, description: "", fromLib: false
+                } as Media
+            }
+            else {
+                _mediaClicked = mediaClicked as Media
+            }
+
             const isFromLib = mediaClicked.fromLib
-            const mediaCollection = !isFromLib ? mediaClicked : await getLibMediaCollection(mediaClicked, idx) 
-            await handlePlaylistItemClicked(mediaCollection as MediaCollection, mediaClicked, idx)
+            const mediaCollection = !isFromLib ? mediaClicked : await getLibMediaCollection(_mediaClicked, idx) 
+            await handlePlaylistItemClicked(mediaCollection as MediaCollection, _mediaClicked, idx)
     
             this.debounceTimeout = setTimeout(() => { 
                 this.debounceTimeout = null

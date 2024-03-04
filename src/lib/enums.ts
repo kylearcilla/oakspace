@@ -3,9 +3,16 @@ export enum ErrorCode {
 }
 export enum APIErrorCode {
     EXPIRED_TOKEN, FAILED_TOKEN_REFRESH, LOGIN_IN, LOG_OUT, RESOURCE_NOT_FOUND, RESOURCE_UNAVAILABLE, 
-    AUTHORIZATION_ERROR, UNAUTHORIZED, API_ERROR, GENERAL, RATE_LIMIT_HIT, PLAYER, APP_SERVER, AUTH_DENIED
+    AUTHORIZATION_ERROR, UNAUTHORIZED, API_ERROR, GENERAL, RATE_LIMIT_HIT, PLAYER, APP_SERVER, AUTH_DENIED,
+    PLAYER_MEDIA_INVALID
 }
 /* General */
+export enum CoreStatus {
+    Healthy, Normal, Lacking
+}
+export enum TextTab {
+    Workspace, Productivity, Goals, Habits, Mindhub, Routines
+}
 export enum LogoIcon {
     AppleMusic, Spotify, YoutubeMusic, Soundcloud, Youtube, Session, Google, Luciole
 }

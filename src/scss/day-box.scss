@@ -1,0 +1,109 @@
+
+.routine-time-blocks {
+    @include pos-abs-top-left-corner;
+    z-index: 1;
+    width: 100%;
+    position: relative;
+    height: 100%;
+
+    &__block {
+        position: absolute;
+        overflow: hidden;
+        cursor: pointer;
+        border-radius: 4px;
+        height: var(--block-height);
+        max-height: var(--block-height);
+        background-color: rgba(var(--block-color-2), 0.75);
+        border: 1px solid rgba(var(--block-color-1), 0.04);
+        transition: 0.1s transform ease-in-out;
+
+        &--md &-content {
+            @include flex(center);
+        }
+        &--md &-title {
+            margin: 0px 7px 0px 0px;
+        }
+
+        &:hover {
+            background-color: rgba(var(--block-color-2), 1);
+            transition: 0.04s ease-in-out;
+        }
+        &:active {
+            transform: scale(0.998);
+        }
+    }
+    &__block-content {
+        padding: 3px 8px 4px 8px;
+        overflow: hidden;
+        white-space: nowrap;
+        position: relative;
+        height: 100%;
+        border-left: none;
+    }
+    &__block-title {
+        @include text-style(_,  300, 1.2rem, "DM Sans");
+        margin-bottom: 2px;
+        cursor: text;
+        color: rgb(var(--block-color-1));
+    }
+    &__block-time-period {
+        opacity: 0.5;
+        @include text-style(_, 300, 1.05rem, "DM Sans");
+        cursor: text;
+        display: inline-block;
+        color: rgb(var(--block-color-1));
+    }
+    &__block-spine {
+        @include pos-abs-top-left-corner(-1px, -1px);
+        height: calc(100% + 1px);
+        width: 2.5px;
+        background-color: rgb(var(--block-color-3));
+    }
+}
+
+.hour-blocks {
+    position: relative;
+
+    &-container {
+        margin-top: 3px;
+        position: relative;
+    }
+    &__blocks {
+        position: relative;
+        width: 50px;
+    }
+    &__block {
+        position: relative;
+        @include flex(center, center);
+        text-align: center;
+        flex-direction: column;
+        position: absolute;
+    }
+    &__block span {
+        @include text-style(0.3, 300, 0.94rem, "DM Sans");
+        margin-bottom: 4px;
+        white-space: nowrap;
+    }
+    &__block-vert-divider path {
+        stroke: rgba(var(--textColor1), 0.17);
+    }
+}
+
+
+.hoz-lines {
+    height: 100%;
+    width: 100%;
+    position: relative;
+
+    &-container {
+        width: 100%;
+        height: 100%;
+    }
+    &__line {
+        position: absolute;
+
+        path {
+            stroke: rgba(var(--textColor1), 0.05);
+        }
+    }
+}

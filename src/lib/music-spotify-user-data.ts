@@ -129,10 +129,6 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
     setTokenHasExpired(hasExpired: boolean) {
         this.hasTokenExpired = hasExpired
         this.updateState({ hasTokenExpired: hasExpired })
-
-        if (hasExpired) {
-            musicAPIErrorHandler(new APIError(APIErrorCode.EXPIRED_TOKEN))
-        }
     }
 
     /**
@@ -140,9 +136,13 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
      * @returns    Will token expire
      */
     hasAccessTokenExpired() {
-        const timeFromCreation = getDifferenceInSecs(new Date(this.accessTokenCreationDate!), new Date())
-        const timeLeft = this.tokenExpiresInMs - timeFromCreation
-        return timeLeft < this.ACTIVE_TOKEN_THRESHOLD_SECS
+        const currentTime = new Date().getTime()
+        const timeElapsed = currentTime - new Date(this.accessTokenCreationDate!).getTime()
+        const timeRemaining = this.tokenExpiresInMs - timeElapsed
+    
+        const threshold = this.ACTIVE_TOKEN_THRESHOLD_SECS * 1000 
+    
+        return threshold >= timeRemaining
     }
 
     /**

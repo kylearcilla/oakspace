@@ -98,17 +98,11 @@ export async function handlePlaylistItemClicked (collection: MediaCollection, it
     const musicData = get(musicDataStore)
     const selectContext = { collection, itemClicked, idx }
 
-    try {
-        let player = get(musicPlayerStore)
-        player ??= await initPlayer(musicData!.musicPlatform, selectContext)
+    let player = get(musicPlayerStore)
+    player ??= await initPlayer(musicData!.musicPlatform, selectContext)
 
-        await player.updateMediaCollection(selectContext)
-        player.loadCurrentItem(true)
-    }
-    catch(error: any) {
-        console.error(error)
-        musicAPIErrorHandler(new APIError(APIErrorCode.PLAYER))
-    }
+    await player.updateMediaCollection(selectContext)
+    player.loadCurrentItem(true)
 }
 
 /**
@@ -131,9 +125,11 @@ export async function verifyForPlayerSession(platform: MusicPlatform) {
 
 /**
  * Get the collection associated with the lib media clicked.
+ * There must always be a collection in the player.
  * If not a collection (clicked on a track from saved tracks for example), then create a collection for it.
  * 
  * Ensure that the media user clicks is consistent with the actual media located in that index (make sure it hasn't been deleted or moved).
+ * This is crucial in cases where the player requires an idx-based media id parameter or special lib id for certain media.
  * 
  * @param mediaClicked  Clicked media
  * @returns             Media associated collection
@@ -408,6 +404,8 @@ export function getPlatfromPropName(platFormIdx: MusicPlatform): MusicPlatformPr
  */
 export function didInitMusicUser() { 
     const hasData = localStorage.getItem("music-user-data") != null
+
+    //  if no user data, no music-related data must be stored
     if (!hasData) {
         removeAppleMusicTokens()
         removeMusicPlayerData() 

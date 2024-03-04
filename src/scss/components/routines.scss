@@ -1,0 +1,108 @@
+.routine {
+    &__details {
+        max-width: 100%;
+        margin-bottom: 24px;
+        h2 {
+            @include text-style(1, 400, 2rem, "DM Mono");
+            margin-bottom: 5px;
+        }
+        p {
+            margin-top: 6px;
+            @include text-style(0.5, 200, 1.4rem);
+        }
+    }
+
+    /* Breakdown */
+    &__breakdown {
+        width: 100%;
+        h3 {
+            margin-bottom: 12px;
+            @include text-style(0.95, 400, 1.64rem);
+        }
+        &-header {
+            @include flex(center, space-between);
+            margin-bottom: 14px;
+            position: relative;
+        }
+        &-options {
+            @include flex(center);
+        }
+        &-options-menu {
+            @include pos-abs-top-left-corner(28px, -10px);
+        }
+        &-options-btn {
+            opacity: 0.4;
+            @include text-style(_, 300, 1.3rem);
+
+            &:hover {
+                opacity: 1;
+            }
+            &:first-child {
+                margin-right: 12px;
+            }
+        }
+    }
+    &__breakdown-dropdown-btn {
+        padding: 3.5px 12px;
+        margin-left: -12px;
+        @include txt-color(0, "bg");
+        
+        &:hover {
+            @include txt-color(0.04, "bg");
+        }
+        &-title {
+            @include text-style(1, 300, 1.35rem);
+        }
+    }
+    /* Core Breakdown */
+    &__core-breakdown {
+        margin-bottom: 30px;
+    }
+    &__cores {
+        @include text-style(0.4, 400, 1.3rem);
+        width: 100%;
+
+        &-value {
+            @include text-style(0.25, 300, _, "DM Sans");
+        }
+    }
+    &__cores-col {
+        position: relative;
+    }
+    &__cores-col-divider {
+        @include divider(0.06, 0.5px, 100%);
+        width: 100%;
+        margin: 11px 0px;
+    }
+    &__cores-core {
+        @include flex(center, space-between);
+        margin-bottom: 10px;
+    }
+    /* Tag Breakdown */
+    &__tag-breakdown h3 {
+        margin-bottom: 17px;
+    }
+    &__tag {
+        @include flex(center, space-between);
+        margin-bottom: 9px;
+    }
+    &__tag-content {
+        @include flex(center);
+        background-color: rgba(var(--tag-color-2), 0.4);
+        padding: 3px 12px 3px 9px;
+        border-radius: 12px;
+    }
+    &__tag-symbol {
+        cursor: default;
+        font-size: 0.85rem;
+        margin-right: 9px;
+    }
+    &__tag-title {
+        @include text-style(_, 500, 1.14rem);
+        color: rgba(var(--tag-color-1), 0.8);
+    }
+    &__tag-stat {
+        @include text-style(0.25, 300, 1.34rem, "DM Sans");
+    }
+}
+

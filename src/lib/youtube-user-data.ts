@@ -22,8 +22,9 @@ export class YoutubeUserData {
     error: CustomError | null = null
     
     userPlaylists: YoutubePlaylist[] = []
-    userPlaylistsNextPageToken = ""
-    userPlaylistLength = 0
+    userPlsNextPageToken = ""
+    userPlsSecondPageToken = ""
+    userPlaylistsTotal = 0
     hasFetchedAllUserPls = false
     
     accessToken = ""
@@ -88,7 +89,14 @@ export class YoutubeUserData {
         this.email = ytUserData.email
 
         await this.getUserPlaylists()
-        this.updateYoutubeUserData({ ...ytCreds, ...ytUserData, hasUserSignedIn: true })
+
+        this.userPlsSecondPageToken = this.userPlsNextPageToken
+
+        this.hasUserSignedIn = true
+        this.updateYoutubeUserData({ 
+            ...ytCreds, ...ytUserData, hasUserSignedIn: true,
+            userPlsSecondPageToken: this.userPlsSecondPageToken
+        })
     }
 
     hasAccessTokenExpired() {
@@ -104,15 +112,11 @@ export class YoutubeUserData {
     setTokenHasExpired(hasExpired: boolean) {
         this.hasTokenExpired = hasExpired
         this.updateYoutubeUserData({ hasTokenExpired: hasExpired })
-
-        if (hasExpired) {
-            this.onError(new APIError(APIErrorCode.EXPIRED_TOKEN))
-        }
     }
 
     async verifyAccessToken() {
         if (this.hasAccessTokenExpired()) {
-            await this.refreshAccessToken()
+            throw new APIError(APIErrorCode.EXPIRED_TOKEN)
         }
         return this.accessToken
     }
@@ -125,8 +129,6 @@ export class YoutubeUserData {
     async refreshAccessToken() {
         try {
             const accessToken = await getFreshToken()
-
-            console.log("new token!", accessToken)
 
             this.accessToken = accessToken
             this.accessTokenCreationDate = new Date()
@@ -160,12 +162,15 @@ export class YoutubeUserData {
      * Clears user data. 
      */
     async logOutUser() {
-        await logOutUser()
-        this.quit()
+        try {
+            await logOutUser()
+        }
+        finally {
+            this.quit()
+        }
     }
 
     quit() {
-        console.log("QUITTING")
         ytUserDataStore.set(null)
         this.clearYoutubeUserData()
     }
@@ -189,6 +194,9 @@ export class YoutubeUserData {
         try {
             await this.verifyAccessToken()
             await this.getUserPlaylists(true)
+
+            this.userPlsSecondPageToken = this.userPlsNextPageToken
+            this.updateYoutubeUserData({ userPlsSecondPageToken: this.userPlsSecondPageToken })            
         }
         catch(error: any) {
             if (error instanceof APIError && error.code === APIErrorCode.EXPIRED_TOKEN) {
@@ -231,25 +239,25 @@ export class YoutubeUserData {
      */
     async getUserPlaylists(doRefresh = false) {
         if (doRefresh) {
-            this.userPlaylistsNextPageToken = ""
-            this.userPlaylistLength = 0
+            this.userPlsNextPageToken = ""
+            this.userPlaylistsTotal = 0
             this.userPlaylists = []
             this.hasFetchedAllUserPls = false
         }
 
         const playlistResponse = await getUserYtPlaylists(
-            this.accessToken, USER_PLS_MAX_PER_REQUEST, this.userPlaylistsNextPageToken
+            this.accessToken, USER_PLS_MAX_PER_REQUEST, this.userPlsNextPageToken
         )
 
-        this.userPlaylistsNextPageToken =   playlistResponse.userPlaylistsNextPageToken
-        this.userPlaylistLength         =  playlistResponse.userPlaylistLength
-        this.userPlaylists              =   [...this.userPlaylists, ...playlistResponse.userPlaylists]
-        this.hasFetchedAllUserPls       =   this.userPlaylists.length < USER_PLS_MAX_PER_REQUEST
+        this.userPlsNextPageToken =      playlistResponse.userPlsNextPageToken
+        this.userPlaylistsTotal         =  playlistResponse.userPlaylistsTotal
+        this.userPlaylists              =  [...this.userPlaylists, ...playlistResponse.userPlaylists]
+        this.hasFetchedAllUserPls       =  playlistResponse.userPlaylists.length < USER_PLS_MAX_PER_REQUEST
 
         this.updateYoutubeUserData({ 
             userPlaylists:        this.userPlaylists,  
-            userPlaylistLength:   this.userPlaylistLength,
-            hasFetchedAllUserPls: this.hasFetchedAllUserPls
+            userPlaylistsTotal:   this.userPlaylistsTotal,
+            hasFetchedAllUserPls: this.hasFetchedAllUserPls,
         })
     }
 
@@ -273,8 +281,9 @@ export class YoutubeUserData {
         this.email         = userData.email!
         
         this.userPlaylists               = userData.userPlaylists!
-        this.userPlaylistsNextPageToken  = userData.userPlaylistsNextPageToken!
-        this.userPlaylistLength          = userData.userPlaylistLength!
+        this.userPlaylistsTotal          = userData.userPlaylistsTotal!
+        this.userPlsSecondPageToken = userData.userPlsSecondPageToken
+        this.userPlsNextPageToken   = userData.userPlsSecondPageToken
 
         this.updateYoutubeUserData({ ...ytCreds, ...userData, hasUserSignedIn: true })
     }
@@ -287,14 +296,15 @@ export class YoutubeUserData {
         })
     }
     
-    saveYtUserData() {        
+    saveYtUserData() {
         saveYtUserData({
             username:       this.username!,
             profileImgSrc:  this.profileImgSrc!,
             email:          this.email!,
             accessTokenCreationDate:  this.accessTokenCreationDate!,
             userPlaylists:            this.userPlaylists!.slice(0, USER_PLS_MAX_PER_REQUEST),
-            userPlaylistLength:       this.userPlaylistLength!,
+            userPlaylistsTotal:       this.userPlaylistsTotal!,
+            userPlsSecondPageToken: this.userPlsSecondPageToken
         })
     }
 
@@ -313,7 +323,7 @@ export class YoutubeUserData {
         if (newState.email != undefined)                newStateObj.email = newState.email
         if (newState.hasUserSignedIn != undefined)      newStateObj.hasUserSignedIn = newState.hasUserSignedIn
         if (newState.userPlaylists != undefined)        newStateObj.userPlaylists = newState.userPlaylists
-        if (newState.userPlaylistLength != undefined)   newStateObj.userPlaylistLength = newState.userPlaylistLength
+        if (newState.userPlaylistsTotal != undefined)   newStateObj.userPlaylistsTotal = newState.userPlaylistsTotal
         if (newState.hasFetchedAllUserPls != undefined) newStateObj.hasFetchedAllUserPls = newState.hasFetchedAllUserPls
 
         return newStateObj

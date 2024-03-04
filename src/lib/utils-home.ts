@@ -3,10 +3,9 @@ import { globalContext, mediaEmbedStore, sessionStore } from "./store"
 import { MediaEmbedFixed, MediaEmbedType, ModalType, MusicPlatform, ShortcutSectionInFocus, ToasterPosition } from "./enums"
 
 import { loadTheme } from "./utils-appearance"
-import { didInitYtPlayer } from "./utils-youtube-player"
 import { conintueWorkSession, didInitSession } from "./utils-session"
 import { didInitMusicUser, loadMusicUserData, musicLogin } from "./utils-music"
-import { continueYtPlayerSession, continueYtUserSession, didInitYtUser } from "./utils-youtube"
+import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer } from "./utils-youtube"
 import { didSpotifyUserAuthApp, getSpotifyCodeFromURLAndLogin } from "./api-spotify"
 
 const LEFT_BAR_LEFT_BOUND = 5
@@ -24,10 +23,10 @@ export const initAppState = async () => {
         conintueWorkSession()
     }
     if (didInitYtUser()) {
-        continueYtUserSession()
+        youtubeLogin()
     }
     if (didInitYtPlayer()) {
-        continueYtPlayerSession()
+        initYoutubePlayer()
     }
     if (didInitMusicUser()) {
         const musicPlatform = loadMusicUserData()!.musicPlatform!

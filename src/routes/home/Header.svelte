@@ -198,7 +198,7 @@
             }
         }
         &__divider {
-            @include divider(rgba(var(--textColor1), 0.1), 0.5px, 100%);
+            @include divider(0.1, 0.5px, 100%);
             @include pos-abs-bottom-left-corner(0px, 0px);
             z-index: 1;
         }

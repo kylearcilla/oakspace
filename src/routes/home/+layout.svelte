@@ -6,6 +6,7 @@
   import NavMenu from "./SideBarLeft.svelte"
   import TaskView from "./SideBarRight.svelte"
   import MusicPlayer from "./MusicPlayer.svelte"
+  import VideoView from "./HomeVideoView.svelte"
 
   // main modals
 	import Stats from "./Stats.svelte"
@@ -27,8 +28,8 @@
   // misc. elems
 	import Toaster from "../../components/Toaster.svelte"
   
-	import { ModalType } from "$lib/enums"
-	import { globalContext, musicPlayerStore, mediaEmbedStore } from "$lib/store"
+	import { ModalType, TextTab } from "$lib/enums"
+	import { globalContext, musicPlayerStore, mediaEmbedStore, ytPlayerStore } from "$lib/store"
 	import { 
         initAppState, keyboardShortCutHandlerKeyDown, 
         keyboardShortCutHandlerKeyUp, onMouseMoveHandler
@@ -51,6 +52,7 @@
   let rightSideBarWidth = 0
   let middleViewStyling = ""
   let homeViewClasses = ""
+  let currentRoute = TextTab.Workspace
 
   const NAV_MENU_NARROW_BAR_WIDTH = 58
   const NAV_MENU_WIDE_BAR_WIDTH = 220
@@ -77,6 +79,11 @@
     updateMiddleView()
   }
 
+  $: showYoutubePlayer  = $ytPlayerStore?.doShowPlayer ?? true
+
+  function onRouteChange(e: CustomEvent) {
+    currentRoute = e.detail as TextTab
+  }
 
   function updateMiddleView() {
     isLeftSideBarOpen = $globalContext.isNavMenuOpen
@@ -127,10 +134,16 @@
         class="home__nav-menu-container" 
         style={`width: ${leftSideBarWidth}px; margin-left: ${leftSideBarWidth === 0 ? `-${$globalContext.isLeftWideMenuOpen ? NAV_MENU_FULL_WIDTH : NAV_MENU_NARROW_BAR_WIDTH}px` : ""}`}
       >
-          <NavMenu/>
+          <NavMenu on:routeChange={onRouteChange}/>
       </nav>
       <div class="home__middle-view" style={middleViewStyling}>
-        <slot />
+        <!-- Do not show /workspace if a player is active as it will it lay on top -->
+        {#if !showYoutubePlayer || showYoutubePlayer && currentRoute != TextTab.Workspace}
+          <div class="home__middle-view-slot-container">
+            <slot />
+          </div>
+        {/if}
+        <VideoView />
       </div>
       <nav 
         class="home__task-view-container" 
@@ -239,7 +252,17 @@
         transition: ease-in-out 0.15s;
         width: 100%;
         height: calc(100vh - $header-height);
+        position: relative;
         // border-top: var(--headerBorder);
+
+        &-slot-container {
+          background-color: var(--primaryBgColor);
+          padding: inherit;
+          @include pos-abs-top-left-corner;
+          width: 100%;
+          height: 100%;
+          z-index: 2;
+        }
       }
       &__task-view-container {
         height: calc(100vh - $header-height);

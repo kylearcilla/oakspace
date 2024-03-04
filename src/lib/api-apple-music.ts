@@ -200,9 +200,9 @@ export async function getAppleMusicUserLikedTracks (limit: number, offset: numbe
  * 
  * @param playlistId  
  * @param token       Acess / Dev token.
- * @returns           Collection of user's playlists from their library
+ * @returns           Get a playlist's details
  */
-export async function getApplePlaylistDetails(playlistId: string): Promise<Playlist>  {
+export async function getApplePlaylistDetails(playlistId: string): Promise<Omit<Playlist, 'fromLib'>> {
     try {
         // @ts-ignore
         const music = MusicKit.getInstance()
@@ -222,7 +222,7 @@ export async function getApplePlaylistDetails(playlistId: string): Promise<Playl
     
         let mediaUrl = data.data[0].attributes.url
     
-        const playlistData: Playlist = {
+        const playlistData = {
             id: playlistId,
             name: data.data[0].attributes.name,
             author: data.data[0].attributes.curatorName,
@@ -232,8 +232,7 @@ export async function getApplePlaylistDetails(playlistId: string): Promise<Playl
             genre: "",
             url: mediaUrl,
             authorUrl: "", 
-            type: MusicMediaType.Playlist,
-            fromLib: true
+            type: MusicMediaType.Playlist
         }
         return playlistData
     }
@@ -248,9 +247,9 @@ export async function getApplePlaylistDetails(playlistId: string): Promise<Playl
  * 
  * @param albumId  
  * @param token       Acess / Dev token.
- * @returns           Collection of user's playlists from their library
+ * @returns           Get a radio station's details
  */
-export async function getRadioStationDetails(radioStationId: string): Promise<RadioStation> {
+export async function getRadioStationDetails(radioStationId: string): Promise<Promise<Omit<RadioStation, 'fromLib'>>> {
     try {
         // @ts-ignore
         const music = MusicKit.getInstance()
@@ -278,7 +277,6 @@ export async function getRadioStationDetails(radioStationId: string): Promise<Ra
             genre: "",
             url: item.attributes.url,
             authorUrl: "", type: MusicMediaType.RadioStation,
-            fromLib: true
         }
     }
     catch(error: any) {
@@ -292,9 +290,9 @@ export async function getRadioStationDetails(radioStationId: string): Promise<Ra
  * 
  * @param albumId  
  * @param token       Acess / Dev token.
- * @returns           Collection of user's playlists from their library
+ * @returns           Get an album's details
  */
-export async function getAppleAlbumDetails (albumId: string): Promise<Album>  {
+export async function getAppleAlbumDetails (albumId: string): Promise<Omit<Album, 'fromLib'>>  {
     try {
         // @ts-ignore
         const music = MusicKit.getInstance()
@@ -322,8 +320,7 @@ export async function getAppleAlbumDetails (albumId: string): Promise<Album>  {
             description: descriptionText ?? "",
             genre: attrs.genreNames[0],
             url: attrs.url,
-            authorUrl: attrs.artistUrl, type: MusicMediaType.Album,
-            fromLib: true
+            authorUrl: attrs.artistUrl, type: MusicMediaType.Album
         }
     }
     catch(error: any) {

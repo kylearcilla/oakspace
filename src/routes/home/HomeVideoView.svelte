@@ -1,46 +1,47 @@
 <script lang="ts">
     import { onMount } from 'svelte'
-	import type { YoutubeUserData } from "$lib/youtube-user-data"
-    import { ytPlayerStore, ytUserDataStore, themeState } from "$lib/store"
-	import { ytPlayerErrorHandler } from '$lib/utils-youtube-player'
+    import { ytPlayerStore, themeState } from "$lib/store"
+	import { APIErrorCode, LogoIcon } from '$lib/enums';
+	import Logo from '../../components/Logo.svelte';
 
-    let isPlaylistPrivate = false
+    let doShowInvalidUI = false
     let doMinimizeYtPanel = false
-    let doHideMyPlaylists = true
 
-    let options = ["Log In", "Show My Playlists"]
+    $: video     = $ytPlayerStore?.vid
+    $: playlist  = $ytPlayerStore?.playlist
+    $: isDarkTheme  = $themeState.isDarkTheme
+    $: doShowPlayer = $ytPlayerStore?.doShowPlayer ?? true
 
-    /* Handle Options List */
-    ytUserDataStore.subscribe((data: YoutubeUserData | null) => {
-        if (!data?.email ) {
-            options = ["Log In"]
+    $: {
+        const error: any = $ytPlayerStore?.error
+        if (error?.code === APIErrorCode.PLAYER_MEDIA_INVALID) {
+            doShowInvalidUI = true
         }
         else {
-            options = ["Log In", `${doHideMyPlaylists ? "Show My Playlists" : "Hide My Playlists"}`]
+            doShowInvalidUI = false
         }
-        options[0] = data ? "Log Out" : "Log In"
-    })
+    }
 
-    /* Handle Private Content Clicked Case */
-    ytPlayerStore.subscribe(() => {
-        isPlaylistPrivate = ytPlayerErrorHandler(isPlaylistPrivate)
-    })
+    onMount(() => {
 
-    onMount(() => options[0] = localStorage.getItem('yt-player-data') ? "Log Out" : "Log In")
+    })
 </script>
 
-<div class={`vid-view ${$ytPlayerStore?.doShowPlayer ? "" : "vid-view--hidden"}`}>
+<div class="vid-view" class:vid-view--hidden={!doShowPlayer}>
     <div class="vid-view__content">
         <!-- Video Player -->
         <div class="vid-view__container">
-            <div class={`vid-view__iframe-player-container ${isPlaylistPrivate ? "vid-view__iframe-player-container--private" : ""}`}>
+            <div 
+                class="vid-view__iframe-player-container"
+                class:vid-view__iframe-player-container--container={doShowInvalidUI}
+            >
                 <div class="vid-view__iframe-player iframe-vid-player" id="home-yt-player"></div>
             </div>
-            {#if !isPlaylistPrivate && $ytPlayerStore?.playlist === null}
+            {#if !doShowInvalidUI && playlist === null}
                 <div class="vid-view__empty-vid-view">
                     <p class="vid-view__empty-msg">No Playlist Selected</p>
                 </div>
-            {:else if isPlaylistPrivate}
+            {:else if doShowInvalidUI}
                 <div class="vid-view__empty-vid-view">
                     <div class="text-aln-center">
                         <h4 class="vid-view__empty-msg">Playlist / Video can't be played</h4>
@@ -57,56 +58,69 @@
             {/if}
         </div>
         <!-- Video Details -->
-        {#if $ytPlayerStore?.vid && !$ytPlayerStore?.error && !isPlaylistPrivate}
-            <div class={`vid-details ${$themeState?.isDarkTheme ? "" : "vid-details--light-mode"}`}>
-                <h3 class="vid-details__title">{$ytPlayerStore?.vid.title}</h3>
+        {#if video && !doShowInvalidUI}
+            <div 
+                class="vid-details"
+                class:vid-details--light-mode={!isDarkTheme}
+            >
+                <h3 class="vid-details__title">
+                    {video.title}
+                </h3>
                 <div class="vid-details__channel">
-                    <img alt="channel-profile-img" src={$ytPlayerStore?.vid.channelImgSrc} />
+                    <img alt="channel-profile-img" src={video.channelImgSrc} />
                     <div class="vid-details__channel-details-container">
-                        <a href={`https://www.youtube.com/channel/${$ytPlayerStore?.vid?.channelId}`} target="_blank" rel="noreferrer">
+                        <a href={`https://www.youtube.com/channel/${video?.channelId}`} target="_blank" rel="noreferrer">
                             <span class="vid-details__channel-details-name">
-                                {$ytPlayerStore?.vid.channelName}
+                                {video.channelName}
                             </span>
                         </a>
                         <span class="vid-details__channel-details-subcount">
-                            {$ytPlayerStore?.vid.channelSubs} Subscribers
+                            {video.channelSubs} Subscribers
                         </span>
                     </div>
                 </div>
             </div>
         {/if}
         <!-- Playlist Panel -->
-        <div class={`playlist-panel ${doMinimizeYtPanel ? "playlist-panel--small" : ""} ${$themeState?.isDarkTheme ? "playlist-panel--dark" : "playlist-panel--light"}`}>
+        <div 
+            class="playlist-panel"
+            class:playlist-panel--small={doMinimizeYtPanel}
+            class:playlist-panel--light={!isDarkTheme}
+            class:playlist-panel--dark={isDarkTheme}
+        >
             <!-- Content -->
             <div class="playlist-panel__content-container">
                 <div class="playlist-panel__pl-details-wrapper">
                     <!-- Current Playlist Details -->
                     <div class="playlist-panel__pl-details">
                         <!-- Img -->
-                        <div class={`playlist-panel__pl-details-img-container ${$ytPlayerStore?.playlist === null ? "playlist-panel__pl-details-img-container--empty" : ""}`}>
-                            <img src={$ytPlayerStore?.playlist?.thumbnailURL} alt="pl-thumbnial"/>
+                        <div 
+                            class="playlist-panel__pl-details-img-container"
+                            class:playlist-panel__pl-details-img-container--empty={playlist === null}
+                        >
+                            <img src={playlist?.thumbnailURL} alt="pl-thumbnial"/>
                         </div>
                         <div class="playlist-panel__pl-details-right-wrapper">
                             <!-- Header -->
                             <div class="playlist-panel__pl-details-header">
                                 <div class="playlist-panel__pl-details-header-yt-logo">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" viewBox="0 0 14 10" fill="none">
-                                        <path d="M4.55664 2.15482H12.3763V7.83857H4.55664V2.15482Z" fill="white"/>
-                                        <path 
-                                            d="M13.7144 1.43472C13.5587 0.876183 13.1 0.436294 12.5176 0.287011C11.462 0.0157471 7.22909 0.0157471 7.22909 0.0157471C7.22909 0.0157471 2.99619 0.0157471 1.94054 0.287011C1.35815 0.436318 0.899471 0.876183 0.743792 1.43472C0.460938 2.44711 0.460938 4.55936 0.460938 4.55936C0.460938 4.55936 0.460938 6.67162 0.743792 7.68401C0.899471 8.24255 1.35815 8.66411 1.94054 8.81339C2.99619 9.08466 7.22909 9.08466 7.22909 9.08466C7.22909 9.08466 11.462 9.08466 12.5176 8.81339C13.1 8.66411 13.5587 8.24255 13.7144 7.68401C13.9972 6.67162 13.9972 4.55936 13.9972 4.55936C13.9972 4.55936 13.9972 2.44711 13.7144 1.43472ZM5.84469 6.47713V2.6416L9.38257 4.55941L5.84469 6.47713Z" 
-                                            fill="#E75A5A"
-                                        />
-                                    </svg>
+                                    <Logo 
+                                        logo={LogoIcon.Youtube} 
+                                        options={{
+                                            containerWidth: "15px",
+                                            iconWidth: "80%"
+                                        }}
+                                    />
                                 </div>
                                 <!-- Title -->
                                 <h1 class="playlist-panel__pl-details-title">
-                                    {$ytPlayerStore?.playlist?.title ?? "No Playlist Chosen"}
+                                    {playlist?.title ?? "No Playlist Chosen"}
                                 </h1>
                             </div>
                             <!-- Description -->
                             <p class="playlist-panel__pl-details-description">
-                                {#if $ytPlayerStore?.playlist != null}
-                                    {$ytPlayerStore?.playlist?.description ?? "No Description"}
+                                {#if playlist != null}
+                                    {playlist?.description ?? "No Description"}
                                 {:else}
                                     {"Pick a playlist to start watching"}
                                 {/if}
@@ -123,9 +137,13 @@
     @import "../../scss/dropdown.scss";
 
     .vid-view {
-        margin-top: 22px;
         position: relative;
-        @include flex(center, center);
+        // @include flex(center, center);
+        @include pos-abs-top-left-corner;
+        width: 100%;
+        height: 100%;
+        padding: 28px 30px 20px 30px;
+        z-index: 1;
 
         &--hidden {
             display: none;
@@ -335,7 +353,7 @@
         }
         /* Header */
         &__pl-details-header {
-            margin-top: 5px;
+            margin: 5px 0px 7px 0px;
             position: relative;
             width: 98%;
             @include flex(center, center);
@@ -351,7 +369,6 @@
             width: 100%;
             font-weight: 400;
             font-size: 1.3rem;
-            margin-bottom: 4px;
             @include elipses-overflow;
         }
         /* Current Playlist Description */

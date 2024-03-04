@@ -205,7 +205,7 @@
                 transform: scale(0.98);
             }
             &:hover {
-                @include text-color(0.03, "background");
+                @include txt-color(0.03, "bg");
             }
             span {
                 margin: 0px 6px 0px 8px;

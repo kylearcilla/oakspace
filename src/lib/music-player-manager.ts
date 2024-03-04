@@ -67,6 +67,8 @@ export class MusicPlayerManager {
         
         const iconStrIdx = LogoIcon[this.icon] as keyof typeof this.MUSIC_PLAYER_ICON_OPTIONS
         this.iconOptions = this.MUSIC_PLAYER_ICON_OPTIONS[iconStrIdx]
+        console.log(LogoIcon[this.icon])
+        console.log(this.iconOptions)
 
         musicPlayerManager.set({
             progressMs: this.progressMs, 
@@ -211,6 +213,7 @@ export class MusicPlayerManager {
      * If on cool-down user gestures to perform these actions will be temporarily disabled
      */
     setCooldown() {
+        console.log("XX")
         this.toggleCooldown(true)
 
         this.cooldownTimeOut = setTimeout(() => {

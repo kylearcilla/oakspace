@@ -5,7 +5,7 @@
 	import { themeState } from '$lib/store';
 	import { goto } from '$app/navigation';
     
-    export let data: PageData;
+    // export let data: PageData;
 
     enum RoutinesTab {
         Current, Weekly, Daily
@@ -50,7 +50,7 @@
 </script>
 
 
-<div class="routines" class:routines--light={!$themeState.isDarkTheme}>
+<div class="routines-page" class:routines-page--light={!$themeState.isDarkTheme}>
     <h1>Routines</h1>
     <!-- Highlighter Tabs -->
     <div class="highlighter-tabs">
@@ -79,10 +79,10 @@
     <slot />
 </div>
 
-<style lang="scss">
+<style global lang="scss">
     @import "../../../scss/highlighter-tabs.scss";
 
-    .routines {
+    .routines-page {
         height: 100%;
         padding-top: 10px;
 

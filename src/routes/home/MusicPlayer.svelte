@@ -5,10 +5,8 @@
 	import Logo from '../../components/Logo.svelte'
 	import { msToHHMMSS } from '$lib/utils-date'
 	import { MusicPlayerManager } from '$lib/music-player-manager'
-    import type { AppleMusicPlayer } from '$lib/music-apple-player'
-    import type { SpotifyMusicPlayer } from '$lib/music-spotify-player'
 
-    import { MusicMediaType, MusicPlatform, PlaybackGesture } from "$lib/enums"
+    import { MusicPlatform, PlaybackGesture } from "$lib/enums"
 	import type { MusicPlayer } from '$lib/music-player';
 
     let manager: MusicPlayerManager | null = null
@@ -188,7 +186,9 @@
                 {#if manager && manager.icon != null}
                     <Logo  
                         logo={manager.icon} 
-                        options={{ containerWidth: `${LOGO_WIDTH}px`, borderRadius: `${BORDER_RADIUS}px`, ...manager.iconOptions }}
+                        options={{ 
+                            containerWidth: `${LOGO_WIDTH}px`, borderRadius: `${BORDER_RADIUS}px`, ...manager.iconOptions 
+                        }}
                     />
                 {/if}
             </div>

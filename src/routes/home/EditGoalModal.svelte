@@ -208,10 +208,10 @@
         }
     }
     function milestoneListScrollHandler(e: Event) {
-        const [hasReachedEnd, hasReachedTop] = getVertScrollStatus(e.target as HTMLElement)
+        const { hasReachedBottom, hasReachedTop } = getVertScrollStatus(e.target as HTMLElement)
 
         hasSpaceAboveMilestoneList = !hasReachedTop
-        hasSpaceBelowMilestoneList = !hasReachedEnd
+        hasSpaceBelowMilestoneList = !hasReachedBottom
 
         updateMaskListGradient()
     }
@@ -231,7 +231,9 @@
     onDestroy(() => {
         $editGoalManger!.quit()
     })
+
 </script>
+
 
 <svelte:window on:keydown={(e) => keyboardShortcutsHandler(e)} on:resize={onWindowResize}/>
 
@@ -269,7 +271,7 @@
                 </div>
                 <!-- ★ Description -->
                 <div class="edit-goal__description">
-                    {#if $editGoalManger.isEditingDescription}
+                    {#if $editGoalManger.isTextAreaActive}
                         <textarea
                             rows="1"
                             id={`goal-description-input`}
@@ -761,9 +763,9 @@
     .edit-goal {
         width: 75vw;
         height: 75vh;
-        display: flex;
         max-width: 800px;
         min-width: 550px;
+        display: flex;
         position: relative;
 
         .dropdown-btn {

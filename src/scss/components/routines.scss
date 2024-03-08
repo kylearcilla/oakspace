@@ -82,27 +82,11 @@
     &__tag-breakdown h3 {
         margin-bottom: 17px;
     }
-    &__tag {
-        @include flex(center, space-between);
-        margin-bottom: 9px;
-    }
-    &__tag-content {
-        @include flex(center);
-        background-color: rgba(var(--tag-color-2), 0.4);
-        padding: 3px 12px 3px 9px;
-        border-radius: 12px;
-    }
-    &__tag-symbol {
-        cursor: default;
-        font-size: 0.85rem;
-        margin-right: 9px;
-    }
-    &__tag-title {
-        @include text-style(_, 500, 1.14rem);
-        color: rgba(var(--tag-color-1), 0.8);
-    }
     &__tag-stat {
         @include text-style(0.25, 300, 1.34rem, "DM Sans");
+    }
+    .tag {
+        margin-bottom: 9px;
     }
 }
 

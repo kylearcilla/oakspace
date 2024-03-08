@@ -33,24 +33,6 @@ img {
     -moz-user-drag: none;
     -o-user-drag: none;
 }
-input {
-    white-space: pre-wrap;
-    word-wrap: break-word;
-}
-textarea {
-    border: none; /* Remove border */
-    padding: 0; /* Remove padding */
-    margin: 0; /* Remove margin */
-    resize: none; /* Disable resizing */
-    outline: none; /* Remove outline when focused */
-    background-color: transparent;
-    color: rgb(var(--textColor1), 1);
-    font-family: "Manrope", sans-serif, Roboto;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    white-space: pre-wrap;
-    /* Add any additional styling you want */
-}
 
 /* Custom Fonts */
 @font-face {
@@ -67,6 +49,39 @@ textarea {
     font-family: 'Gordita Medium';
     font-style: normal;
     src: url("/src/fonts/Gordita\ Medium.woff2") format('woff2');
+}
+
+// TODO: might not need this
+@mixin dark-divider($opacity: 0.06, $height: 0.5px, $width: 100%) {
+    width: $width;
+    height: $height;
+    background-color: rgba(black, $opacity);
+}
+
+@mixin divider($opacity: 0.06, $height: 0.5px, $width: 100%) {
+    width: $width;
+    height: $height;
+    background-color: rgba(var(--textColor1), $opacity);
+}
+
+@mixin visible($opacity: 1) {
+    opacity: $opacity;
+    visibility: visible;
+}
+
+@mixin txt-color($opacity: 1, $type: "text") {
+    @if $type == "stroke" {
+        stroke: rgba(var(--textColor1), $opacity);
+    }
+    @else if $type == "bg" {
+        background: rgba(var(--textColor1), $opacity);
+    }
+    @else if $type == "border" {
+        border-color: rgb(var(--textColor1), $opacity);
+    }
+    @else {
+        color: rgba(var(--textColor1), $opacity);
+    }
 }
 
 /*
@@ -288,10 +303,12 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     }
 }
 
-.flx {
+.flx-algn-center {
     display: flex;
+    align-items: center;
+}
+.flx {
     &--algn-center {
-        align-items: center;
     }
     &--algn-start {
         align-items: flex-start;
@@ -569,7 +586,17 @@ button.text-only {
 button.settings-btn {
     @include circle(22px);
     @include center;
-    
+
+    &--bg {
+        @include txt-color(0.04, "bg");
+    }
+    &--bg:hover, &:focus {
+        @include txt-color(0.08, "bg");
+    }
+
+    &:hover {
+        transition: 0s ease-in-out;
+    }
     &:active {
         transform: scale(0.94);
     }
@@ -882,36 +909,6 @@ $settings-modal-padding: 20px 25px 25px 25px;
     }
 }
 
-// TODO: might not need this
-@mixin dark-divider($opacity: 0.06, $height: 0.5px, $width: 100%) {
-    width: $width;
-    height: $height;
-    background-color: rgba(black, $opacity);
-}
-
-@mixin divider($opacity: 0.06, $height: 0.5px, $width: 100%) {
-    width: $width;
-    height: $height;
-    background-color: rgba(var(--textColor1), $opacity);
-}
-
-@mixin visible($opacity: 1) {
-    opacity: $opacity;
-    visibility: visible;
-}
-
-@mixin txt-color($opacity: 1, $type: "text") {
-    @if $type == "stroke" {
-        stroke: rgba(var(--textColor1), $opacity);
-    }
-    @else if $type == "bg" {
-        background: rgba(var(--textColor1), $opacity);
-    }
-    @else {
-        color: rgba(var(--textColor1), $opacity);
-    }
-}
-
 .hidden {
     display: none;
 }
@@ -947,4 +944,24 @@ $settings-modal-padding: 20px 25px 25px 25px;
 
 .full-opacity {
     opacity: 1 !important;
+}
+
+.tag {
+    @include flex(center, space-between);
+
+    &__content {
+        @include flex(center);
+        background-color: rgba(var(--tag-color-2), 0.4);
+        padding: 3px 12px 3px 9px;
+        border-radius: 12px;
+    }
+    &__symbol {
+        cursor: default;
+        font-size: 0.85rem;
+        margin-right: 9px;
+    }
+    &__title {
+        @include text-style(_, 500, 1.14rem);
+        color: rgba(var(--tag-color-1), 0.8);
+    }
 }

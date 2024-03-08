@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { COLOR_SWATCHES, TEST_TAGS, clickOutside, getColorPair, randomArrayElem } from '$lib/utils-general';
+	import { COLOR_SWATCHES, TEST_TAGS, clickOutside, getColorTrio, randomArrayElem } from '$lib/utils-general';
 	import { onMount } from 'svelte';
     import type { PageData } from './$types';
 	import { RoutinesManager } from '$lib/routines-manager';
 	import { themeState } from '$lib/store';
 	import { getTimeFromIdx, minsToHHMM } from '$lib/utils-date';
+	import EditRoutineModal from './EditRoutineModal.svelte';
 
     // export let data: PageData;
 
@@ -140,6 +141,7 @@
     let manager = new RoutinesManager(ROUTINES)
     let timeBoxElem: HTMLElement
     let hozLinesContainerWidth
+    let isEditModalOpen = true
 
     let _userRoutines  = manager.userRoutines!
     let _focusedRoutineElems = manager.focusedRoutineElems
@@ -280,19 +282,19 @@
             <div class="routine__tag-breakdown">
                 <h3>Tag Breakdown</h3>
                 {#each tagBreakdown as tagData}
-                    {@const colorTrio = getColorPair(tagData.tag.symbol.color, isLightTheme)}
-                    <div class="routine__tag">
+                    {@const colorTrio = getColorTrio(tagData.tag.symbol.color, isLightTheme)}
+                    <div class="tag">
                         <div 
-                            class="routine__tag-content"
+                            class="tag__content"
                             style:--tag-color-primary={tagData.tag.symbol.color.primary}
                             style:--tag-color-1={colorTrio[0]}
                             style:--tag-color-2={colorTrio[1]}
                             style:--tag-color-3={colorTrio[2]}
                         >
-                            <span class="routine__tag-symbol">
+                            <span class="tag__symbol">
                                 {tagData.tag.symbol.emoji}
                             </span>
-                            <div class="routine__tag-title">
+                            <div class="tag__title">
                                 {tagData.tag.name}
                             </div>
                         </div>
@@ -318,7 +320,7 @@
                 id={manager.TIME_BOX_ID}
             >
                 {#each focusedRoutineElems as block (block.id)}
-                    {@const colorTrio = getColorPair(block.color, isLightTheme)}
+                    {@const colorTrio = getColorTrio(block.color, isLightTheme)}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div 
                         class={`routine-time-blocks__block ${getBlockStyling(block.height)}`}
@@ -350,7 +352,7 @@
                 {/each}
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 {#if newBlock}
-                    {@const colorTrio = getColorPair(newBlock.color, isLightTheme)}
+                    {@const colorTrio = getColorTrio(newBlock.color, isLightTheme)}
                     <div 
                         class={`routine-time-blocks__block ${getBlockStyling(newBlock.height)}`}
                         id="dummy-block"
@@ -423,6 +425,10 @@
         </div>
     </div>
 </div>
+
+{#if isEditModalOpen}
+    <EditRoutineModal />
+{/if}
 
 <style lang="scss">
     @import "../../../../scss/day-box.scss";

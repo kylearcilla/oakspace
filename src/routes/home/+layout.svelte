@@ -36,6 +36,8 @@
   } from "$lib/utils-home"
 	import MediaEmbed from "./MediaEmbed.svelte";
 	import type { Position } from "$lib/types-toast";
+	import EditGoalModal from "./EditGoalModal.svelte";
+	import { TEST_GOALS } from "$lib/utils-journal";
 
   let expand = false;
 	let position: Position = 'bottom-right';

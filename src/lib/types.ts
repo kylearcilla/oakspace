@@ -3,11 +3,6 @@
 // avoid checking, issues occur when enums are imported
 
 /* Misc. */
-type AsyncResult = {
-    sucess: boolean
-    message?: string
-}
-
 type Result<T, E> = {
     result: T
     error: E
@@ -66,6 +61,46 @@ type RoutineCores = {
 
 type RoutineActvity = keyof RoutineCores
 
+type InputOptions = {
+    placeholder: string,
+    initValue: string
+    maxLength?: number
+    id?: string
+}
+
+type DropdownBtn = {
+    title: string
+    hasArrow?: boolean
+    arrowOnHover?: boolean
+    hasBg?: boolean
+    onClick: FunctionParam
+    styles?: {
+        fontSize?: string
+        padding?: string
+    }
+}
+
+type DropdDownListItem = {
+    name: string,
+    leftIcon?: string,
+    rightIcon?: string
+}
+
+type DropdownListOptions = {
+    listItems: DropdDownListItem[]
+    pickedItemIdx?: number
+    onListItemClicked: FunctionParam
+    onClickOutside: FunctionParam
+    position?: {
+        top?: string, left?: string, bottom?: string, right?: string
+    }
+    checkOptions?: {
+        currentItemChecked: string
+    }
+    zIndex?: number
+    width?: string
+}
+
 type Color = {
     id: string
     light1: string
@@ -116,7 +151,6 @@ type DailyRoutine = {
     blocks: RoutineBlock[]
 }
 
-
 // Dates 
 type MonthData = {
     monthIdx: number,
@@ -147,7 +181,7 @@ type CalendarOptions = {
 
 type DatePickerOptions = CalendarOptions
 
-type FunctionParam = ((...args: any[]) => any) | ((...args: any[]) => Promise<any>) | null
+type FunctionParam = ((...args: any[]) => any) | ((...args: any[]) => Promise<any>)
 
 // maps string section to corresponging theme arrays
 type AppearanceSectionToThemeMap = { 
@@ -171,6 +205,14 @@ type GoogleUserData = {
     name: string,
     profileImgSrc: string
 }
+
+
+type KeyContext = {
+    shiftKey: boolean
+    metaKey: boolean
+    altKey: boolean
+    keyCode: string
+}
   
 /* Home */
 type GlobalContext = {
@@ -183,6 +225,7 @@ type GlobalContext = {
     isLeftWideMenuOpen: boolean
     shortcutsFocus: ShortcutSectionInFocus
     modalsOpen: ModalType[]
+    lastKeysPressed: KeyContext
 }
 
 type ToastInitOptions = {
@@ -216,6 +259,18 @@ type Quote = {
     quoteCredit: string
 }
 
+
+type HozScrollMaskedGradient = {
+    styling: string,
+    scrollStatus: HozScrollStatus
+}
+
+type VertScrollMaskedGradient = {
+    styling: string,
+    scrollStatus: VertScrollStatus
+}
+  
+
 type HozScrollStatus = {
     hasReachedEnd: boolean,
     hasReachedStart: boolean,
@@ -239,15 +294,15 @@ type VertScrollStatus = {
 /* Tasks */
 type TaskGroup = {
     title: string,
-    tasks: Task[]
+    tasks: Task_[]
 }
-type Task = {
+type Task_ = {
     title: string,
-    subtasks: SubTask[],
+    subtasks: SubTask_[],
     description: string,
     isFinished: boolean
 }
-type SubTask = {
+type SubTask_ = {
     title: string, 
     isFinished: boolean
 }
@@ -364,8 +419,64 @@ type MusicMediaSelectContext = {
     idx: number
 }
 
-type MediaCollection = Playlist | Album | ArtistTopSongs | LibTracks | LibAlbums | LibEpisodes | LibAudiobooks
+type Task = {
+    id: string,
+    idx: number,
+    isChecked: boolean,
+    title: string,
+    description: string
+    subtasks: Subtask[]
+}
+type Subtask = Omit<Task, "description" | "subtasks"> & { taskId: string }
 
+type TaskListType = "flexible" | "ordered" | "tasks-linked" | "subtasks-linked"
+
+type TaskListTypeCombos = `${TaskListType} ${TaskListType} ${TaskListType} ${TaskListType}` | 
+                          `${TaskListType} ${TaskListType} ${TaskListType}` | 
+                          `${TaskListType} ${TaskListType}` |
+                          `${TaskListType}` | null
+
+type TaskListReorder = {
+    taskId: string
+    newIdx: number
+    oldIdx: number
+}
+type DragAndDropHandler = {
+    onDrag: (event: DragEvent) => any
+    onDragStart: (event: DragEvent) => any
+    onDragEnd: (event: DragEvent) => any
+    onDragOver: (event: DragEvent) => any
+    onDragEnter: (event: DragEvent) => any
+    onDragLeave: (event: DragEvent) => any
+    onDrop: (event: DragEvent) => any
+}
+
+type CSSUnitVal = `${number}px` | `${number}%`
+
+type ContextMenuOptions = {
+    width: CSSUnitVal
+}
+
+type TasksListOptions<TaskListTypeCombos> = {
+    type: TaskListTypeCombos
+    tasks: Task[]
+    styling?: {
+        task: string
+        subtask: string
+        checkbox: string
+    }
+    handlers?: {
+        onTaskEdit: (task: Task) => any
+        onSubtaskEdit: (subtask: Subtask) => any
+        onListReorder: (action: TaskListOptions) => any
+    }
+    dragAndDrop?: DragAndDropHandler
+    contextMenuOptions: ContextMenuOptions
+}
+
+interface TaskListOptionsInterface extends TasksListOptions<TaskType> { }
+
+type MediaCollection = Playlist | Album | ArtistTopSongs | LibTracks | LibAlbums | LibEpisodes | LibAudiobooks
 
 interface Media {
     id: string

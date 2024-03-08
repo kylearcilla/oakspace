@@ -54,40 +54,6 @@ export const findAncestorByClass = (child: HTMLElement, className: string): HTML
 }
 
 /**
- * Helper for seeing if there's space to scroll up or down.
- * @param target    Scroll Element
- * @param options   Options for how early client wants to hit the top / bottom
- * @returns         Scroll status as array
- */
-export function getVertScrollStatus(target: HTMLElement, options?: { topOffSet?: number, bottomOffSet?: number }): VertScrollStatus {
-  const scrollTop = target.scrollTop
-  const windowHeight = target.clientHeight
-  const scrollHeight = target.scrollHeight
-
-  const hasReachedBottom = scrollTop + (options?.bottomOffSet ?? 1) >= scrollHeight - windowHeight
-  const hasReachedTop = scrollTop <= (options?.topOffSet ?? 0) 
-
-  return { hasReachedBottom, hasReachedTop, details: { scrollTop, scrollHeight, windowHeight } }
-}
-
-/**
- * Helper for seeing if there's space to scroll left or right
- * @param target    Scroll Element
- * @param options   Options for how early client wants to hit the top / bottom
- * @returns         Scroll status as array
- */
-export function getHozScrollStatus(target: HTMLElement, options?: { leftOffSet?: number, rightOffSet?: number }): HozScrollStatus {
-  const scrollLeft = target.scrollLeft
-  const windowWidth = target.clientWidth
-  const scrollWidth = target.scrollWidth
-
-  const hasReachedEnd = scrollLeft + (options?.rightOffSet ?? 1) >= scrollWidth - windowWidth
-  const hasReachedStart = scrollLeft <= (options?.leftOffSet ?? 0) 
-
-  return { hasReachedEnd, hasReachedStart, details: { scrollLeft, scrollWidth, windowWidth } }
-}
-
-/**
  * Move an element given an idex to a new index within the same array.
  * @param array       
  * @param fromIndex   Original location of element to be moved.
@@ -355,6 +321,40 @@ type GradientStyleOptions = {
 }
 
 /**
+ * Helper for seeing if there's space to scroll up or down.
+ * @param target    Scroll Element
+ * @param options   Options for how early client wants to hit the top / bottom
+ * @returns         Scroll status as array
+ */
+export function getVertScrollStatus(target: HTMLElement, options?: { topOffSet?: number, bottomOffSet?: number }): VertScrollStatus {
+  const scrollTop = target.scrollTop
+  const windowHeight = target.clientHeight
+  const scrollHeight = target.scrollHeight
+
+  const hasReachedBottom = scrollTop + (options?.bottomOffSet ?? 1) >= scrollHeight - windowHeight
+  const hasReachedTop = scrollTop <= (options?.topOffSet ?? 0) 
+
+  return { hasReachedBottom, hasReachedTop, details: { scrollTop, scrollHeight, windowHeight } }
+}
+
+/**
+ * Helper for seeing if there's space to scroll left or right
+ * @param target    Scroll Element
+ * @param options   Options for how early client wants to hit the top / bottom
+ * @returns         Scroll status as array
+ */
+export function getHozScrollStatus(target: HTMLElement, options?: { leftOffSet?: number, rightOffSet?: number }): HozScrollStatus {
+  const scrollLeft = target.scrollLeft
+  const windowWidth = target.clientWidth
+  const scrollWidth = target.scrollWidth
+
+  const hasReachedEnd = scrollLeft + (options?.rightOffSet ?? 1) >= scrollWidth - windowWidth
+  const hasReachedStart = scrollLeft <= (options?.leftOffSet ?? 0) 
+
+  return { hasReachedEnd, hasReachedStart, details: { scrollLeft, scrollWidth, windowWidth } }
+}
+
+/**
  * Generates a masked gradient style on a scrollable element based on scroll status and options.
  * Return scroll state details and styling.
  * 
@@ -362,24 +362,35 @@ type GradientStyleOptions = {
  * @param  options  gradient style options.
  * @returns         Object containing the styling and horizontal scroll status.
  */
-export function getMaskedGradientStyle(element: HTMLElement, options?: GradientStyleOptions): { styling: string, scrollStatus: HozScrollStatus} {
-  const scrollStatus = getHozScrollStatus(element)
+export function getMaskedGradientStyle(element: HTMLElement, options?: GradientStyleOptions): HozScrollMaskedGradient | VertScrollMaskedGradient {
+  const scrollStatus = options?.isVertical 
+        ? getVertScrollStatus(element) 
+        : getHozScrollStatus(element)
+        
   const angle = (options?.isVertical ?? true) ? "180deg" : "90deg"
   const head = {
       start: options?.head?.start ?? "0%",
       end: options?.head?.end ?? "10%"
-  };
+  }
   const tail = {
       start: options?.tail?.start ?? "85%",
       end: options?.tail?.end ?? "100%"
   }
 
+  const hasReachedEnd = 
+      (scrollStatus as VertScrollStatus).hasReachedBottom ?? 
+      (scrollStatus as HozScrollStatus).hasReachedEnd;
+
+  const hasReachedStart = 
+      (scrollStatus as VertScrollStatus).hasReachedTop ?? 
+      (scrollStatus as HozScrollStatus).hasReachedStart;
+
   let gradient = ""
 
-  if (!scrollStatus.hasReachedEnd && !scrollStatus.hasReachedStart) {
+  if (!hasReachedEnd && !hasReachedStart) {
       gradient = `linear-gradient(${angle}, transparent ${head.start}, #000 ${head.end}, #000 ${tail.start}, transparent ${tail.end})`
   } 
-  else if (!scrollStatus.hasReachedStart) {
+  else if (!hasReachedStart) {
       gradient = `linear-gradient(${angle}, transparent ${head.start}, #000 ${head.end})`
   } 
   else {
@@ -387,7 +398,9 @@ export function getMaskedGradientStyle(element: HTMLElement, options?: GradientS
   }
 
   const styling = `mask-image: ${gradient}; -webkit-mask-image: ${gradient}`
-  return { styling, scrollStatus }
+
+
+    return options?.isVertical ? { styling, scrollStatus } as VertScrollMaskedGradient : { styling, scrollStatus } as HozScrollMaskedGradient
 }
 
 /* Colors */
@@ -549,11 +562,11 @@ export function randomArrayElem(arr: any[]) {
 /**
  * Get the pair of color properties based on the theme.
  * @param    color - The color object containing light and dark properties.
- * @param    isLightTheme - Boolean value indicating whether the theme is light or dark.
- * @returns  An tuple containing the pair of color properties.
+ * @param    doGetLight - Boolean value indicating whether the theme is light or dark.
+ * @returns  An tuple containing a color's light or dark color trio.
  */
-export function getColorPair(color: Color, isLightTheme: boolean): [string, string, string] {
-  return isLightTheme ? [color.light1, color.light2, color.light3] : [color.dark1, color.dark2, color.dark3];
+export function getColorTrio(color: Color, doGetLight: boolean): [string, string, string] {
+  return doGetLight ? [color.light1, color.light2, color.light3] : [color.dark1, color.dark2, color.dark3];
 }
 
 export function extractNum(str: string) {

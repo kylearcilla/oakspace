@@ -1,4 +1,5 @@
 import { GoalStatus } from "./enums";
+import { TEST_TAGS } from "./utils-general";
 
 export const YR_CONTAINER_ID = "goals-hist-yr-info-container"
 export const YR_DIGIT_CLASS = "goals-history__year-view-yr-digit"
@@ -28,14 +29,10 @@ export const goalSections: GoalSection[] = [
     }
 ]
 
-export const goals: Goal[] = [
+export const TEST_GOALS: Goal[] = [
     {
         id: "",
-        tag: {
-            color: "#",
-            name: "french",
-            symbol: "🇫🇷"
-        },
+        tag: TEST_TAGS[0],
         title: "Secure Admission to Medical School",
         description: "Pursue the goal of gaining admission to a reputable medical school by diligently preparing for and completing all necessary prerequisites, achieving a competitive GPA, excelling in standardized exams (such as the MCAT), participating in meaningful extracurricular activities, and submitting a compelling application. Seek guidance from mentors, gather strong letters of recommendation, and craft a personal statement that reflects dedication to the medical profession. Stay informed about the application process, deadlines, and requirements of various medical schools, and approach interviews with confidence and authenticity. This goal reflects the commitment to academic excellence, personal growth, and the pursuit of a lifelong career in medicine.",
         dueDate: new Date(),
@@ -55,11 +52,7 @@ export const goals: Goal[] = [
     },
     {
         id: "",
-        tag: {
-            color: "#",
-            name: "french",
-            symbol: "🇫🇷"
-        },
+        tag: TEST_TAGS[0],
         title: "Complete Clinical Clerkships with Honors",
         description: "Excel in clinical clerkships by consistently earning honors, showcasing a strong understanding of clinical skills, patient care, and medical knowledge.",
         dueDate: new Date(),
@@ -79,11 +72,7 @@ export const goals: Goal[] = [
     },
     {
         id: "",
-        tag: {
-            color: "#",
-            name: "french",
-            symbol: "🇫🇷"
-        },
+        tag: TEST_TAGS[0],
         title: "Complete ACLS Certification",
         description: "Obtain and successfully complete the Advanced Cardiac Life Support (ACLS) certification, enhancing skills in managing cardiovascular emergencies and critical care situations.",
         dueDate: new Date(),
@@ -103,11 +92,7 @@ export const goals: Goal[] = [
     },
     {
         id: "",
-        tag: {
-            color: "#",
-            name: "french",
-            symbol: "🇫🇷"
-        },
+        tag: TEST_TAGS[0],
         title: "Secure Residency Placement",
         description: "Successfully secure a residency position in the desired specialty to further specialize and gain practical experience.",
         dueDate: new Date(),
@@ -127,11 +112,7 @@ export const goals: Goal[] = [
     },
     {
         id: "",
-        tag: {
-            color: "#",
-            name: "french",
-            symbol: "🇫🇷"
-        },
+        tag: TEST_TAGS[0],
         title: "Achieve 30 Consecutive Days of Meditation",
         description: "Establish a daily meditation practice and strive to achieve a continuous streak of 30 days, focusing on mindfulness, relaxation, and mental clarity.",
         dueDate: new Date(),
@@ -151,11 +132,7 @@ export const goals: Goal[] = [
     },
     {
         id: "",
-        tag: {
-            color: "#",
-            name: "french",
-            symbol: "🇫🇷"
-        },
+        tag: TEST_TAGS[0],
         title: "High on USMLE Step 2",
         description: "Prepare rigorously and achieve a high score in the USMLE Step 2 to demonstrate clinical knowledge and readiness for residency.",
         dueDate: new Date(),
@@ -242,11 +219,7 @@ export const goals: Goal[] = [
     },
     {
         id: "",
-        tag: {
-            color: "#",
-            name: "french",
-            symbol: "🇫🇷"
-        },
+        tag: TEST_TAGS[0],
         title: "Complete \"Atomic Habits\" by James Clear",
         description: "Read and finish the book \"Atomic Habits\" by James Clear to gain insights into building positive habits, breaking bad ones, and mastering the tiny behaviors that lead to remarkable results.",
         dueDate: new Date(),
@@ -266,11 +239,7 @@ export const goals: Goal[] = [
     },
     {
         id: "",
-        tag: {
-            color: "#",
-            name: "french",
-            symbol: "🇫🇷"
-        },
+        tag: TEST_TAGS[0],
         title: "Run a 5K in Under 25 Minutes",
         description: "Train regularly to improve running speed and endurance, with the specific goal of completing a 5K run in under 25 minutes",
         dueDate: new Date(),

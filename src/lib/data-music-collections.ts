@@ -315,17 +315,6 @@ export const sereneCollections: DiscoverCollection = {
             type: MusicMediaType.Playlist
         },
         {
-            name: "lofi chill",
-            author: "Spotify - Chill",
-            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFFzDl7qN9Apr",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000027912be812c88dbc15ec2fe38",
-            genre: "Lofi",
-            length: 379,
-            id: "37i9dQZF1DWYoYGBbGKurt",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DWYoYGBbGKurt",
-            type: MusicMediaType.Playlist
-        },
-        {
             name: "wanderlust",
             author: "Spotify - Student",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFJw7QLnM27p6",
@@ -521,6 +510,17 @@ export const sereneCollections: DiscoverCollection = {
             length: 51,
             id: "37i9dQZF1DWZ8Cy8eCcjXW",
             url: "https://open.spotify.com/playlist/37i9dQZF1DWZ8Cy8eCcjXW",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "lofi chill",
+            author: "Spotify - Chill",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFFzDl7qN9Apr",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000027912be812c88dbc15ec2fe38",
+            genre: "Lofi",
+            length: 379,
+            id: "37i9dQZF1DWYoYGBbGKurt",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DWYoYGBbGKurt",
             type: MusicMediaType.Playlist
         },
         {
@@ -1893,14 +1893,157 @@ export const classicalCollections = {
     ],
     spotify: [
         {
-            name: "Piano Chill",
-            author: "Apple Music Classical",
-            authorUrl: "https://music.apple.com/us/curator/apple-music-classical/976439532",
-            artworkImgSrc: "https://is3-ssl.mzstatic.com/image/thumb/Video116/v4/dd/04/4c/dd044c89-71f9-8f69-9d8f-2c7460ac5a8e/Job4bc7d373-59e0-40cc-a874-3ac4316358c0-146860002-PreviewImage_preview_image_nonvideo_sdr-Time1679342201716.png/400x400cc.webp",
+            name: "Classical Essentials",
+            author: "Spotify - Classical",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFPrEiAOxgac3",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000204342edaafe98ad14f6b8b70",
             genre: "Piano",
-            length: 59,
-            id: "pl.cb4d1c09a2df4230a78d0395fe1f8fde",
-            url: "https://music.apple.com/ca/playlist/piano-chill/pl.cb4d1c09a2df4230a78d0395fe1f8fde",
+            length: 159,
+            id: "37i9dQZF1DWWEJlAGA9gs0",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DWWEJlAGA9gs0",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Classical New Releases",
+            author: "Spotify - Classical",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFPrEiAOxgac3",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000291d5e7d962d08f036e7c5a4b",
+            genre: "Classical",
+            length: 72,
+            id: "37i9dQZF1DWV0gynK7G6pD",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DWV0gynK7G6pD",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Calming Classical",
+            author: "Spotify - Classical",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFPrEiAOxgac3",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000232874a8beacbb3c6302949e2",
+            genre: "Classical",
+            length: 73,
+            id: "37i9dQZF1DWVFeEut75IAL",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DWVFeEut75IAL",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Pop Goes Classical",
+            author: "Spotify - Classical",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFPrEiAOxgac3",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002b842522924151e1109eb046f",
+            genre: "Classical",
+            length: 110,
+            id: "37i9dQZF1DWUPafHP1BJw1",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DWUPafHP1BJw1",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Dark Academia Classical",
+            author: "Spotify - Classical",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFPrEiAOxgac3",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000027bf3f93bdc7e40b6e84a9737",
+            genre: "Classical",
+            length: 75,
+            id: "37i9dQZF1DX17GkScaAekA",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX17GkScaAekA",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Classical Piano",
+            author: "Spotify - Classical",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFPrEiAOxgac3",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000273eb0ee1c6dbbf4af456d556",
+            genre: "Classical",
+            length: 71,
+            id: "37i9dQZF1DWUqIzZNMSCv3",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DWUqIzZNMSCv3",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Feel Good Classical",
+            author: "Spotify - Classical",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFPrEiAOxgac3",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000276fe4e552d7cdf10b1a2e310",
+            genre: "Classical",
+            length: 50,
+            id: "37i9dQZF1DX5Lm1ZiObdc3",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX5Lm1ZiObdc3",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Peaceful Piano",
+            author: "Spotify - Classical",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFPrEiAOxgac3",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002d073e656e546e43bc387ad79",
+            genre: "Classical",
+            length: 202,
+            id: "37i9dQZF1DX4sWSpwq3LiO",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX4sWSpwq3LiO",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Dramatic Classical",
+            author: "Classical",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFPrEiAOxgac3",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000203bb12fc963cf58d38f9064b",
+            genre: "Classical",
+            length: 47,
+            id: "37i9dQZF1DX2aCk0vzzaZQ",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX2aCk0vzzaZQ",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Mello Cello",
+            author: "Classical",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFPrEiAOxgac3",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000023b87314dafe288546202fe5b",
+            genre: "Classical",
+            length: 66,
+            id: "37i9dQZF1DX9dX3aBjsxqd",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX9dX3aBjsxqd",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "hopeless romantic",
+            author: "Classical",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFPrEiAOxgac3",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002c877a7e16effe08b548fe5dd",
+            genre: "Classical",
+            length: 49,
+            id: "37i9dQZF1DX6DLB6M8zkNk",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX6DLB6M8zkNk",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "medieval vibes",
+            author: "Classical",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFPrEiAOxgac3",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000024ba15f5d0a3e3eb612a5dc00",
+            genre: "Classical",
+            length: 51,
+            id: "37i9dQZF1DWXi6GqUgtvam",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DWXi6GqUgtvam",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "This is Mozart",
+            author: "Wolfgang Amadeus Mozart",
+            authorUrl: "https://open.spotify.com/artist/4NJhFmfw43RLBLjQvxDuRS",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002b128a8c032b91d451d2d881d",
+            genre: "Classical",
+            length: 71,
+            id: "37i9dQZF1DX8qqIDAkKiQg",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX8qqIDAkKiQg",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "This is Beethoven",
+            author: "Ludwig van Beethoven",
+            authorUrl: "https://open.spotify.com/artist/2wOqMjp9TyABvtHdOSOTUS",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002255243f29ac28ef92ec7644a",
+            genre: "Classical",
+            length: 87,
+            id: "37i9dQZF1DX12YIlzNkccL",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX12YIlzNkccL",
             type: MusicMediaType.Playlist
         },
     ]

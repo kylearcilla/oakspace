@@ -1,4 +1,28 @@
-// Underline Input
+/* Reset */
+input {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+textarea {
+    border: none; /* Remove border */
+    padding: 0; /* Remove padding */
+    margin: 0; /* Remove margin */
+    resize: none; /* Disable resizing */
+    outline: none; /* Remove outline when focused */
+    background-color: transparent;
+    color: rgb(var(--textColor1), 1);
+    font-family: "Manrope", sans-serif, Roboto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    /* Add any additional styling you want */
+}
+
+div[contenteditable]:focus {
+    outline: none;
+}
+
+/* Underline Input */
 @mixin input-bottom-underline--light {
     input {
         @include text-style(0.6, 500, 1.4rem);
@@ -50,7 +74,7 @@
 }
 
 
-// Box Input
+/* Box Input */
 @mixin input-box--light {
     border: 1.5px solid rgba(var(--textColor1), 0.12);
 
@@ -117,5 +141,23 @@
         }
         &--cancel {
         }
+    }
+}
+
+/* Rich Text Editing */
+.text-editor {
+    padding: 4px 4px 4px 0px;
+    transition: 0.2s border ease-in-out;
+    border: 0.5px solid rgba(white, 0);
+    border-radius: 4px;
+    @include text-style(0.8, 300, 1.3rem);
+    word-wrap: break-word;
+    white-space: pre-wrap;
+
+    &--empty {
+        opacity: 0.24;
+    }
+    &:focus {
+        border: 0.5px solid rgba(white, 0);
     }
 }

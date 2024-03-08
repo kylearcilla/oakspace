@@ -54,8 +54,6 @@ export class RoutinesManager {
     userRoutines:   Writable<DailyRoutine[] | null> = writable(null)
     focusedRoutine: Writable<DailyRoutine | null> = writable(null)
     focusedRoutineElems:  Writable<RoutineBlockElem[] | null> = writable(null)
-
-    // separte cors and tags breakdown
     
     // new block stuff
     newBlock:       Writable<RoutineBlockElem | null> = writable(null)
@@ -78,7 +76,7 @@ export class RoutinesManager {
     HEAD_OFFSET = 13.5
     BLOCK_GAP = 1
     TIME_BOX_POINTER_EVENT_OFFSET = 15
-    TIME_BOX_ID="time-box"
+    TIME_BOX_ID = "time-box"
     
     DAYS_WEEK = [ "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" ]
 
@@ -416,7 +414,6 @@ export class RoutinesManager {
     /* Week View Handlers */
     onTimeBoxPointerDown(e: MouseEvent) {
         const target = e.target as HTMLElement
-
         if (target.id != this.TIME_BOX_ID) return
 
         this.timeBoxContainer = target
@@ -457,8 +454,9 @@ export class RoutinesManager {
         const containerHt = this.containerElem!.scrollHeight
 
         const offsetY = e.offsetY - this.TIME_BOX_POINTER_EVENT_OFFSET
-        const yChange = this.timeBoxPointDownRef.y - offsetY
         const yOffsetMins = (offsetY / containerHt) * TOTAL_DAY_MINS
+
+        const yChange = this.timeBoxPointDownRef.y - offsetY
         const isMovingDown = yChange < 0
         
         // start time & end time take turns taking on the offsetY depending on direction of gesture

@@ -4,10 +4,10 @@
     font-weight: 400;
 
     &:hover {
-        background-color: rgba(50, 50, 50, 0.15) !important;
+        background-color: rgba(var(--textColor1), 0.04);
     }
     &:focus {
-        background-color: rgba(50, 50, 50, 0.15) !important;
+        background-color: rgba(var(--textColor1), 0.04);
     }
     i {
         color: rgba(var(--textColor1), 0.65);
@@ -17,42 +17,25 @@
     box-shadow: none;
     border: 1px solid rgba(white, 0.03);
     box-shadow: 0px 0px 18px 8px rgba(black, 0.15);
-
-    &__option {
-        &--selected {
-            background-color: rgba(45, 45, 45, 0.2) !important;
-        }
-        &-text {
-            @include text-style(0.85, 400);
-        }
-    }
-    .divider {
-        height: 0.5px;
-    }
-    &__new-option-container button {
-        font-weight: 400;
-        &:focus {
-            background-color: rgba(40, 40, 40, 0.2);
-        }
-        &:hover {
-            background-color: rgba(30, 30, 30, 0.2);
-        }
-    }
 }
 
-.dropdown-container {
-    position: relative;
-}
 .dropdown-btn {
     color: rgba(var(--textColor1), 0.75);
     box-shadow: var(--bentoBoxShadow);
+    transition: 0.08s ease-in-out;
     cursor: pointer;
     border-radius: 18px;
-    transition: 0.13s ease-in-out;
     padding: 6px 12px 6px 12px;
-    @include flex(center, _);
+    @include flex(center);
     width: fit-content;
 
+    &:hover {
+        background-color: rgba(var(--textColor1), 0.75);
+        transition: 0s ease-in-out;
+    }
+    &:focus {
+        background-color: rgba(var(--textColor1), 0.75);
+    }
     &:active {
         transform: scale(0.978);
     }
@@ -75,6 +58,16 @@
             transform: rotate(-180deg);
         }
     }
+    &--arrow-on-hover &__icon--arrow {
+        @include not-visible;
+    }
+    &--arrow-on-hover:focus &__icon--arrow {
+        @include visible(0.2);
+    }
+    &--arrow-on-hover:hover &__icon--arrow {
+        @include visible(0.2);
+    }
+
     &__title {
         font-size: 1.24rem;
         white-space: nowrap;
@@ -93,7 +86,7 @@
             opacity: 0.2;
         }
         
-        // for first child (when not only child)
+        // first child of children
         &:first-child:not(:only-child) {
             margin-right: 7px;
         }
@@ -128,13 +121,36 @@
     width: auto;
     min-width: 25px;
     position: absolute;
-    transition: 0.2s cubic-bezier(.2, .45, 0, 1);
+    transition: 0.2s opacity cubic-bezier(.2, .45, 0, 1),
+                0.2s visibility cubic-bezier(.2, .45, 0, 1),
+                0.2s transform cubic-bezier(.2, .45, 0, 1);
     transform: scale(1);
     @include visible;
 
     &--hidden {
         transform: scale(0.9);
         @include not-visible;
+    }
+
+    /*  Dark Styles */
+    &--dark {
+        box-shadow: none;
+        border: 1px solid rgba(white, 0.03);
+        box-shadow: 0px 0px 18px 8px rgba(black, 0.15);
+    }
+    &--dark &__option {
+        &--selected {
+            background-color: rgba(45, 45, 45, 0.2) !important;
+        }
+        &-text {
+            @include text-style(0.85, 400);
+        }
+    }
+    &--dark &__new-option-container button {
+        font-weight: 400;
+        &:hover, &:focus {
+            background-color: rgba(white, 0.2);
+        }
     }
 
     &__option {
@@ -150,7 +166,10 @@
         position: relative;
         transition: 0s ease-in-out;
         @include flex(center, _);
-        
+
+        &:last-child {
+            padding-bottom: 0px;
+        }
         &--selected {
             opacity: 1;
             background-color: var(--dropdownMenuBgHoverColor1);
@@ -161,47 +180,37 @@
                 display: block !important;
             }
         }
-        &--selected &-icon {
-            &--check {
-                visibility: visible;
-                opacity: 1;
-            }
-        }
-
-        &:last-child {
-            padding-bottom: 0px;
-        }
-
-        &-text {
-            @include elipses-overflow;
-            flex: 1;
-            min-width: 0px;
-            font-size: 1.24rem;
-            font-weight: 500;
-            margin-right: 10px;
-            text-align: left;
-        }
-        &-icon {
-            width: 10px;
-            height: 10px;
-            @include center;
-            transition: 0.12s ease-in-out;
-
-            &--check {
-                visibility: hidden;
-                opacity: 0;
-            }
-
-            &:first-child:not(:only-child) {
-                margin-right: 9px;
-            }
-            i {
-                font-size: 0.9rem;
-                opacity: 0.8;
-            }
+        &--selected &-icon--check {
+            @include visible;
         }
     }
-    &__option button {
+    &__option-text {
+        @include elipses-overflow;
+        flex: 1;
+        min-width: 0px;
+        font-size: 1.24rem;
+        font-weight: 500;
+        margin-right: 10px;
+        text-align: left;
+    }
+    &__option-icon {
+        width: 10px;
+        height: 10px;
+        @include center;
+        transition: 0.12s ease-in-out;
+
+        &--check {
+            @include not-visible;
+        }
+        &:first-child:not(:only-child) {
+            margin-right: 9px;
+        }
+        i {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+    }
+    &__option-btn {
         @include flex(center, _);
         padding: 6px 7px 7px 7px;
         opacity: 0.65;
@@ -212,13 +221,10 @@
             transition: 0.12s ease-in-out;
             transform: scale(0.984);
         }
-        &:hover {
-            background-color: var(--dropdownMenuBgHoverColor1);
+        &:focus, &:hover {
+            background-color: rgba(var(--textColor1), 0.02);
             opacity: 1;
-        }
-        &:focus {
-            background-color: var(--dropdownMenuBgHoverColor1);
-            opacity: 1;
+            font-weight: 400;
         }
         &:disabled {
             opacity: 0.14;

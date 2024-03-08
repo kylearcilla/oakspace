@@ -51,7 +51,7 @@
 
 
 <div class="routines-page" class:routines-page--light={!$themeState.isDarkTheme}>
-    <h1>Routines</h1>
+    <h1 class="routines-page__title">Routines</h1>
     <!-- Highlighter Tabs -->
     <div class="highlighter-tabs">
         <div class="highlighter-tabs__container" id={ROUTINES_TABS}>
@@ -109,7 +109,7 @@
                 opacity: 0.8;
             }
         }
-        h1 {
+        &__title {
             margin-bottom: 12px;
             @include text-style(_, 400, 2rem);
         }

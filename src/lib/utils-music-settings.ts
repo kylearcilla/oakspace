@@ -60,7 +60,7 @@ export function getMediaDescription(media: Media): string {
         return _media.description ?? ""
     }
 
-    return "-"
+    return ""
 }
 
 /**

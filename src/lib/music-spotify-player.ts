@@ -456,7 +456,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
                         authorUrl: context.collection.authorUrl
                     }
                 }
-                else if (!isFromLib && collectionType === MusicMediaType.Album) {
+            else if (!isFromLib && collectionType === MusicMediaType.Album) {
                     this.mediaCollection = { 
                         ...context.collection, 
                         ...await getAlbumDetails(accessToken, context.collection.id),

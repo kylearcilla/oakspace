@@ -45,29 +45,42 @@ export const initAppState = async () => {
  */
 export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, hasUserToggledWithKeyLast: boolean) => {    
     const target = event.target as HTMLElement
-    if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") { 
-        if (event.key === "Escape") target.blur()
+    const context = get(globalContext)
+    const { altKey, metaKey, shiftKey, code, key, ctrlKey } = event
+    const isTargetContentEditable = target.contentEditable === "true"
+
+    updteGlobalContext({ 
+        ...context, 
+        lastKeysPressed: { keyCode: code, altKey, metaKey, shiftKey }
+    })
+    
+    if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || isTargetContentEditable) { 
+        // Enter for save, Shift + Enter for break.
+        if (isTargetContentEditable && ((key === "Enter" && !shiftKey) || key == "Escape")) {
+            target.blur()
+        }
+        else if (!isTargetContentEditable && (key === "Escape" || (key === "Enter"))) {
+            target.blur()
+        }
 
         return hasUserToggledWithKeyLast
     }
 
-    const layoutState = get(globalContext)
-
-    if (event.key === "Escape" && layoutState.modalsOpen.length != 0) {
+    if (key === "Escape" && context.modalsOpen.length != 0) {
         const modals = get(globalContext).modalsOpen
         closeModal(modals[modals.length - 1])
     }
-    else if (event.ctrlKey && event.key === "]") {
-        updteGlobalContext({ ...layoutState, isTaskMenuOpen: !layoutState.isTaskMenuOpen })
+    else if (event.ctrlKey && key === "]") {
+        updteGlobalContext({ ...context, isTaskMenuOpen: !context.isTaskMenuOpen })
     }
-    else if (event.ctrlKey && event.key === "[") {
-        updteGlobalContext({ ...layoutState, isNavMenuOpen: !layoutState.isNavMenuOpen })
+    else if (ctrlKey && key === "[") {
+        updteGlobalContext({ ...context, isNavMenuOpen: !context.isNavMenuOpen })
         return true
     }
-    else if (event.key === "?" && (layoutState.modalsOpen.length === 0 || isModalOpen(ModalType.Shortcuts))) {
+    else if (key === "?" && (context.modalsOpen.length === 0 || isModalOpen(ModalType.Shortcuts))) {
         isModalOpen(ModalType.Shortcuts) ? closeModal(ModalType.Shortcuts) : openModal(ModalType.Shortcuts)
     }
-    else if (event.key === "q" && (layoutState.modalsOpen.length === 0 || isModalOpen(ModalType.Quote))) {
+    else if (key === "q" && (context.modalsOpen.length === 0 || isModalOpen(ModalType.Quote))) {
         isModalOpen(ModalType.Quote) ? closeModal(ModalType.Quote) : openModal(ModalType.Quote)
     }
 
@@ -80,9 +93,13 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, hasUserTogg
  */
 export const keyboardShortCutHandlerKeyUp = (event: KeyboardEvent) => {
     const target = event.target as HTMLElement
-    if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return
+    const { key } = event
 
-    if (!get(sessionStore) && event.key.toLocaleLowerCase() === "n" && get(globalContext).modalsOpen.length === 0) {
+    if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.contentEditable) {
+        return
+    }
+
+    if (!get(sessionStore) && key === "n" && get(globalContext).modalsOpen.length === 0) {
         openModal(ModalType.NewSession)
     }
 }

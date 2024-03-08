@@ -10,6 +10,72 @@ export let MAX_TAK_GROUP_TITLE_LENGTH = 10
 export let MAX_DESCRIPTION_LENGTH = 300
 export let MAX_X_CONTEXT_MENU_POS = 70
 
+export const TEST_TASKS: Task[] = [
+    {
+        id: "0",
+        idx: 0,
+        title: "A",
+        subtasks: [],
+        description: "",
+        isChecked: false
+    },
+    {
+        id: "1",
+        idx: 1,
+        title: "B",
+        subtasks: [
+            {
+                title: "Get ball scratcher",
+                isChecked: false,
+                id: "vvvv",
+                idx: 0,
+                taskId: "1"
+            },
+            {
+                title: "wfwefwef",
+                isChecked: true,
+                id: "vvssvv",
+                idx: 1,
+                taskId: "1"
+            }
+        ],
+        description: "wefiweo zzzdsd",
+        isChecked: false
+    },
+    {
+        id: "2",
+        idx: 2,
+        title: "C",
+        subtasks: [
+            {
+                title: "Get ball scratcher",
+                isChecked: false,
+                id: "wwww",
+                idx: 0,
+                taskId: "2"
+            }
+        ],
+        description: "wefwfwfwefwefwfwef",
+        isChecked: false
+    },
+    {
+        id: "3",
+        idx: 3,
+        title: "D",
+        subtasks: [
+            {
+                title: "Get ball scratcher",
+                isChecked: false,
+                id: "ttt",
+                idx: 0,
+                taskId: "3"
+            }
+        ],
+        description: "zzoizoiwjsef",
+        isChecked: false
+    },
+]
+
 export const taskGroups = [
     {
         title: "SWE",

@@ -22,7 +22,7 @@ export class EditGoalManager {
 
     newText = ""
     isEditingTitle = false
-    isEditingDescription = false
+    isTextAreaActive = false
     isEditingMilestoneTitle = false
     isMakingNewMilestone = false
     textAreaHasSpellCheck = false
@@ -113,11 +113,11 @@ export class EditGoalManager {
 
         const target = event.target as HTMLElement
 
-        this.isEditingDescription = true
+        this.isTextAreaActive = true
         this.descrTextAreaHt = target.clientHeight
 
         this.updateEditGoalState({ 
-            isEditingDescription: true,
+            isTextAreaActive: true,
             descrTextAreaHt: this.descrTextAreaHt
         })
         
@@ -204,9 +204,9 @@ export class EditGoalManager {
         if (doSave) {
             this.description = this.newText
         }
-        this.isEditingDescription = false
+        this.isTextAreaActive = false
         this.newText = ""
-        this.updateEditGoalState({ description: this.description, isEditingDescription: false, newText: "" })
+        this.updateEditGoalState({ description: this.description, isTextAreaActive: false, newText: "" })
     }
 
     saveNewMilestoneTitle(doSave: boolean = true) {
@@ -470,14 +470,14 @@ export class EditGoalManager {
             return
         }
         else if (option === EditGoalContextMenu.Milestone) {
-            this.openMilestoneContextMenu(pointerEvent, { x,  y })
+            this.openContextMenu(pointerEvent, { x,  y })
         }
         else {
             this.openImgContextMenu({ x, y })
         }
     }
 
-    openMilestoneContextMenu(event: PointerEvent, pos: { x: number, y: number }) {
+    openContextMenu(event: PointerEvent, pos: { x: number, y: number }) {
         const target = event.target as HTMLElement
         const isSettingsBtn = event.button === 0
         if (!isSettingsBtn && target.tagName != "DIV" && target.tagName != "LI") return
@@ -602,7 +602,7 @@ export class EditGoalManager {
         if (newState.datePickerPos != undefined)    newStateObj!.datePickerPos = newState.datePickerPos
         if (newState.milestoneContextMenuPos != undefined)  newStateObj!.milestoneContextMenuPos = newState.milestoneContextMenuPos
         if (newState.isEditingMilestoneTitle != undefined)  newStateObj!.isEditingMilestoneTitle = newState.isEditingMilestoneTitle
-        if (newState.isEditingDescription != undefined)     newStateObj!.isEditingDescription = newState.isEditingDescription
+        if (newState.isTextAreaActive != undefined)     newStateObj!.isTextAreaActive = newState.isTextAreaActive
         if (newState.isEditingTitle != undefined)           newStateObj!.isEditingTitle = newState.isEditingTitle
         if (newState.isMakingNewMilestone != undefined)     newStateObj!.isMakingNewMilestone = newState.isMakingNewMilestone
         if (newState.imgSrc != undefined)                   newStateObj!.imgSrc = newState.imgSrc

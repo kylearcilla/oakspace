@@ -3,7 +3,7 @@
 	import { RoutinesManager } from "$lib/routines-manager";
 	import { themeState } from "$lib/store";
 	import { daysOfWeek, getTimeFromIdx, minsToHHMM } from "$lib/utils-date";
-	import { COLOR_SWATCHES, TEST_TAGS, clickOutside, getColorPair } from "$lib/utils-general";
+	import { COLOR_SWATCHES, TEST_TAGS, clickOutside, getColorTrio } from "$lib/utils-general";
 	import { onMount } from "svelte";
     import type { PageData } from "../$types";
     import SVGIcon from "../../../../components/SVGIcon.svelte"
@@ -616,19 +616,19 @@
             <!-- Tag Breakdown -->
             <div class="routine__tag-breakdown" class:hide={isViewingCore}>
                 {#each TEST_TAGS.slice(0, 4) as tag}
-                    {@const colorTrio = getColorPair(tag.symbol.color, isLightTheme)}
-                    <div class="routine__tag">
+                    {@const colorTrio = getColorTrio(tag.symbol.color, isLightTheme)}
+                    <div class="tag">
                         <div 
-                            class="routine__tag-content"
+                            class="tag__content"
                             style:--tag-color-primary={tag.symbol.color.primary}
                             style:--tag-color-1={colorTrio[0]}
                             style:--tag-color-2={colorTrio[1]}
                             style:--tag-color-3={colorTrio[2]}
                         >
-                            <span class="routine__tag-symbol">
+                            <span class="tag__symbol">
                                 {tag.symbol.emoji}
                             </span>
-                            <div class="routine__tag-title">
+                            <div class="tag__title">
                                 {tag.name}
                             </div>
                         </div>
@@ -682,7 +682,7 @@
                         {#each manager.DAYS_WEEK as day}
                             {@const dayIdx = manager.getDayIdx(day)}
                             {#each weekBlockElems[dayIdx] as block (block.id)}
-                                {@const colorTrio = getColorPair(block.color, isLightTheme)}
+                                {@const colorTrio = getColorTrio(block.color, isLightTheme)}
                                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                                 <div 
                                     class={`routine-time-blocks__block ${getBlockStyling(block.height)}`}

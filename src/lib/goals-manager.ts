@@ -3,7 +3,7 @@ import { GoalViewOption, GoalsDropdown, type GoalStatus, GoalItemUI } from "./en
 import { goalsManager } from "./store"
 import { getElemById, getVertScrollStatus, moveElementInArr } from "./utils-general"
 import { accomplishments2023, accomplishments2021, accomplishments2022 } from "./utils-goals"
-import { YR_CONTAINER_ID, YR_DIGIT_ANIMATION, YR_DIGIT_CLASS, goals } from "./utils-journal"
+import { YR_CONTAINER_ID, YR_DIGIT_ANIMATION, YR_DIGIT_CLASS, TEST_GOALS } from "./utils-journal"
 import { goalSections } from "./utils-journal"
 
 /**
@@ -403,7 +403,7 @@ export class GoalsManager {
         }
 
         // goals
-        for (const goal of goals) {
+        for (const goal of TEST_GOALS) {
             const rowIdx = goal.status
             goalsContainer[rowIdx].push(goal)
 
@@ -471,13 +471,13 @@ export class GoalsManager {
      */
     goalsHistoryTimeScrollHandler(event: Event) {
         const target = event.target as HTMLElement
-        const [hasReachedEnd, _, { scrollTop }] = getVertScrollStatus(target!, { bottomOffSet: 5 })
+        const { hasReachedBottom, details: { scrollTop } } = getVertScrollStatus(target!, { bottomOffSet: 5 });
 
         const preYr = this.currYr - Math.max(this.yrIdx, 0) - 1
         const doFetchMore = preYr >= this.userStartYr 
         const hasCheckPointAhead = this.backCheckPointIdx < this.scrollCheckPoints.length - 1
 
-        if (hasReachedEnd && doFetchMore) {
+        if (hasReachedBottom && doFetchMore) {
             this.getMoreAccomplishments()
             this.scrollCheckPoints.push(scrollTop)
             this.backCheckPointIdx++

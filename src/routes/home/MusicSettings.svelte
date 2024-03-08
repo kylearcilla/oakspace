@@ -111,7 +111,6 @@
                         <div class={`blur-bg blur-bg--blurred-bg ${mediaCollection ?? "blur-bg--solid-color"}`}></div>
                         <div class="content-bg">
                             {#if mediaCollection}
-                                {@const length = getMediaLength(mediaCollection)}
                                 {@const description = getMediaDescription(mediaCollection)}
                                 {@const type = getMediaTypeStr(mediaCollection.type)}
 
@@ -125,12 +124,6 @@
                                             <span class="now-playing__collection-type">
                                                 {type}
                                             </span>
-                                            {#if length >= 0}
-                                                <span>/</span>
-                                                <span class="now-playing__collection-song-count">
-                                                    {length} {`${length === 1 ? "Item" : "Items"}`}
-                                                </span>
-                                            {/if}
                                         </div>
                                     </div>
                                     <!-- Artwork -->
@@ -151,9 +144,11 @@
                                                 {mediaCollection.name}
                                             </h4>
                                         {/if}
-                                        <p class="now-playing__description-text">
-                                            {description}
-                                        </p>
+                                        {#if description != ""}
+                                            <p class="now-playing__description-text">
+                                                {description}
+                                            </p>
+                                        {/if}
                                     </div>
                                 </div>             
                             {:else}

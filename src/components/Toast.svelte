@@ -239,7 +239,7 @@
 	aria-atomic="true"
 	role="status"
 	tabIndex={0}
-    class="toastx"
+    class="toast"
 	data-sonner-toast=""
 	data-styled={!(toast.component || toast?.unstyled || unstyled)}
 	data-mounted={mounted}

@@ -502,7 +502,7 @@ export async function getPlaylistDetails(accessToken: string, id: string): Promi
         name: data.name,
         author: "",
         artworkImgSrc: data.images.length === 1 ? data.images[0].url : data.images[1].url,
-        length: -1,
+        length: data.tracks.total,
         description: data.description,
         genre: "",
         url: "",

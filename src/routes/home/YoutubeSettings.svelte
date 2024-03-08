@@ -148,7 +148,7 @@
             isVertical: false,
             head: { end: "20%" },
             tail: { start: "80%" }
-        })
+        }) as HozScrollMaskedGradient
 
         isScrollableLeft  = !res.scrollStatus.hasReachedStart
         isScrollableRight = !res.scrollStatus.hasReachedEnd

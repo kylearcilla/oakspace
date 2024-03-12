@@ -11,7 +11,7 @@ export const defaultThemes: DefaultTheme[] = [
             fgColor1: "163, 182, 255",
             fgColor2: "163, 182, 255",
             textColor1: "255, 255, 255",
-            textColor2: "255, 255, 255",
+            textColor2: "12, 11, 12",
             hoverColor: "#111112",
             hoverColor2: "#151516",
             hoverColor3: "#121213",

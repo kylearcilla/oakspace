@@ -197,7 +197,7 @@
                                     {@const itemContext = getMediaContext(item, currLibraryCollection)}
 
                                     <li
-                                        on:dblclick={() => manager?.handleLibraryMediaClicked(item, idx)}
+                                        on:dblclick={() => manager?.handleMediaClicked(item, idx)}
                                         title={itemContext}
                                         class={`my-playlists__playlist ${mediaCollection && item.id === mediaCollection.id ? "my-playlists__playlist--chosen" : ""}`}
                                     >
@@ -422,7 +422,7 @@
 
                                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                                     <li
-                                        on:dblclick={() => manager?.handleLibraryMediaClicked(collection, idx)}
+                                        on:dblclick={() => manager?.handleMediaClicked(collection, idx)}
                                         title={`${collection.name} – ${collection.author}`}
                                         class={`discover__collection-item ${mediaCollection && collection.id === mediaCollection?.id ? "discover__collection-item--chosen" : ""}`}
                                     >

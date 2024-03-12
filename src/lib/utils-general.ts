@@ -37,20 +37,16 @@ export const clickOutside = (node: any) => {
  * @param className 
  * @returns  Ancestor
  */
-export const findAncestorByClass = (child: HTMLElement, className: string): HTMLElement | null => {
+export const findAncestorByClass = (child: HTMLElement, className: string, max = 15): HTMLElement | null => {
   let currentElement: HTMLElement | null = child
   let i = 0
 
-  while (currentElement !== null && !currentElement.classList.contains(className) && i++ < 15) {
+  while (currentElement !== null && !currentElement.classList.contains(className) && i++ < max) {
       currentElement = currentElement.parentElement
-  }
 
-  if (currentElement?.classList.contains(className))  {
-    return currentElement
+      if (currentElement!.classList.value.includes(className)) return currentElement
   }
-  else {
-    return null
-  }
+  return null
 }
 
 /**
@@ -283,18 +279,18 @@ export function base64encode(input: any): string {
  * @returns The sum of margin, padding, and border widths of the element.
  */
 export function getAdditionalHeights(element: HTMLElement): number {
-  const styles = getComputedStyle(element);
+  const styles = getComputedStyle(element)
 
   // Extract margin, padding, and border widths
-  const marginTop = parseInt(styles.marginTop);
-  const marginBottom = parseInt(styles.marginBottom);
-  const paddingTop = parseInt(styles.paddingTop);
-  const paddingBottom = parseInt(styles.paddingBottom);
-  const borderTopWidth = parseInt(styles.borderTopWidth);
-  const borderBottomWidth = parseInt(styles.borderBottomWidth);
+  const marginTop = parseInt(styles.marginTop)
+  const marginBottom = parseInt(styles.marginBottom)
+  const paddingTop = parseInt(styles.paddingTop)
+  const paddingBottom = parseInt(styles.paddingBottom)
+  const borderTopWidth = parseInt(styles.borderTopWidth)
+  const borderBottomWidth = parseInt(styles.borderBottomWidth)
 
   // Calculate the sum of additional heights
-  return marginTop + marginBottom + paddingTop + paddingBottom + borderTopWidth + borderBottomWidth;
+  return marginTop + marginBottom + paddingTop + paddingBottom + borderTopWidth + borderBottomWidth
 }
 
 /**
@@ -303,10 +299,43 @@ export function getAdditionalHeights(element: HTMLElement): number {
  * @param element - The HTMLElement to calculate the total height for.
  * @returns The total height of the element, including client height and additional heights.
  */
-export function getElemHeight(element: HTMLElement): number {
-  const additionalHeights = getAdditionalHeights(element);
-  return element.clientHeight + additionalHeights;
+export function getElemTrueHeight(element: HTMLElement): number {
+  const additionalHeights = getAdditionalHeights(element)
+  return element.clientHeight + additionalHeights
 }
+
+/**
+ * Calculates the additional widths of an element, including margin, padding, and border widths.
+ * 
+ * @param element - The HTMLElement to calculate additional widths for.
+ * @returns The sum of margin, padding, and border widths of the element.
+ */
+export function getAdditionalWidths(element: HTMLElement): number {
+  const styles = getComputedStyle(element)
+
+  // Extract margin, padding, and border widths
+  const marginLeft = parseInt(styles.marginLeft)
+  const marginRight = parseInt(styles.marginRight)
+  const paddingLeft = parseInt(styles.paddingLeft)
+  const paddingRight = parseInt(styles.paddingRight)
+  const borderLeftWidth = parseInt(styles.borderLeftWidth)
+  const borderRightWidth = parseInt(styles.borderRightWidth)
+
+  // Calculate the sum of additional widths
+  return marginLeft + marginRight + paddingLeft + paddingRight + borderLeftWidth + borderRightWidth
+}
+
+/**
+ * Calculates the total height of an element, including its client height and additional widths (margin, padding, border).
+ * 
+ * @param element - The HTMLElement to calculate the total height for.
+ * @returns The total height of the element, including client height and additional widths.
+ */
+export function getElemTrueWidth(element: HTMLElement): number {
+  const additionalWidths = getAdditionalWidths(element)
+  return element.clientWidth + additionalWidths
+}
+
 
 type GradientStyleOptions = {
   isVertical: boolean
@@ -363,11 +392,10 @@ export function getHozScrollStatus(target: HTMLElement, options?: { leftOffSet?:
  * @returns         Object containing the styling and horizontal scroll status.
  */
 export function getMaskedGradientStyle(element: HTMLElement, options?: GradientStyleOptions): HozScrollMaskedGradient | VertScrollMaskedGradient {
-  const scrollStatus = options?.isVertical 
-        ? getVertScrollStatus(element) 
-        : getHozScrollStatus(element)
+  const isVertical = options?.isVertical ?? true
+  const scrollStatus = isVertical ? getVertScrollStatus(element) : getHozScrollStatus(element)
         
-  const angle = (options?.isVertical ?? true) ? "180deg" : "90deg"
+  const angle = isVertical ? "180deg" : "90deg"
   const head = {
       start: options?.head?.start ?? "0%",
       end: options?.head?.end ?? "10%"
@@ -383,7 +411,7 @@ export function getMaskedGradientStyle(element: HTMLElement, options?: GradientS
 
   const hasReachedStart = 
       (scrollStatus as VertScrollStatus).hasReachedTop ?? 
-      (scrollStatus as HozScrollStatus).hasReachedStart;
+      (scrollStatus as HozScrollStatus).hasReachedStart
 
   let gradient = ""
 
@@ -579,4 +607,60 @@ export function extractNum(str: string) {
   } else {
       return [];
   }
+}
+
+/**
+ * @param    camelCaseString 
+ * @returns   Kebab cases version of camelcase
+ */
+export function camelToKebab(camelCaseString: string) {
+  return camelCaseString.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+}
+
+export function inlineStyling(styling?: ElemDimensions) {
+    if (!styling) return ""
+    let cssString = ''
+
+    for (let [prop, value] of Object.entries(styling)) {
+      if (!value) return
+      prop = camelToKebab(prop)
+      cssString += `${prop}: ${value}; `
+    
+    }
+    return cssString.trim()
+}
+
+export function isEditTextElem(elem: HTMLElement) {
+  return elem.tagName === "INPUT" || elem.tagName === "TEXTAREA" || elem.contentEditable === "true"
+}
+
+export function getContentEditableSelectionRange(element: HTMLElement) {
+  const selection = window.getSelection()
+  if (!selection || !selection.rangeCount) return { start: 0, end: 0 }
+
+  const range = selection.getRangeAt(0)
+  const preCaretRange = range.cloneRange()
+  preCaretRange.selectNodeContents(element)
+  preCaretRange.setEnd(range.startContainer, range.startOffset);
+
+  const start = preCaretRange.toString().length
+  const end = start + range.toString().length
+
+  return { start, end }
+}
+
+export function setCursorPos(element: HTMLElement, pos: number) {
+  const selection = window.getSelection()
+  const range = document.createRange()
+
+  if (!selection || !element.firstChild) return
+
+  if (pos > element.textContent!.length) {
+      pos = element.textContent!.length
+  }
+
+  range.setStart(element.firstChild, pos)
+  range.collapse(true)
+  selection.removeAllRanges()
+  selection.addRange(range)
 }

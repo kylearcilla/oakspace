@@ -3,7 +3,7 @@
     import { closeModal, openModal } from "$lib/utils-home"
     import { toggleYTIFramePointerEvents } from "$lib/utils-youtube"
     import { JournalTab, GoalViewOption, GoalsDropdown, ModalType, Icon, GoalItemUI} from "$lib/enums"
-	import { clickOutside, getElemById, getFirstHighlighterBtn } from "$lib/utils-general"
+	import { clickOutside, getFirstHighlighterBtn } from "$lib/utils-general"
 	import { goalsManager, globalContext, themeState } from "$lib/store"
 
 	import { onDestroy, onMount } from "svelte"
@@ -256,7 +256,7 @@
                         {#if goalViewOption === GoalViewOption.Board}
                             <GoalsBoard initGoalInEdit={initGoalInEdit} />
                         {:else if goalViewOption === GoalViewOption.AllGoals}
-                                <GoalsRepo  initGoalInEdit={initGoalInEdit}/>
+                            <GoalsRepo  initGoalInEdit={initGoalInEdit}/>
                         {:else}
                             <GoalsHistory/>
                         {/if}

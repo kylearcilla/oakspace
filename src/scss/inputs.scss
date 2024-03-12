@@ -12,12 +12,17 @@ textarea {
     background-color: transparent;
     color: rgb(var(--textColor1), 1);
     font-family: "Manrope", sans-serif, Roboto;
-    white-space: pre-wrap;
     word-wrap: break-word;
     white-space: pre-wrap;
-    /* Add any additional styling you want */
 }
-
+div[contenteditable] {
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+div[contenteditable]:empty:before {
+    content: attr(data-placeholder);
+    opacity: 0.3;
+}
 div[contenteditable]:focus {
     outline: none;
 }
@@ -151,8 +156,6 @@ div[contenteditable]:focus {
     border: 0.5px solid rgba(white, 0);
     border-radius: 4px;
     @include text-style(0.8, 300, 1.3rem);
-    word-wrap: break-word;
-    white-space: pre-wrap;
 
     &--empty {
         opacity: 0.24;

@@ -171,14 +171,15 @@
     >
         <TasksList 
             options={{
-                type: "subtasks-linked",
+                type: "subtasks-linked subtasks",
                 handlers: {
                     onTaskEdit: () => console.log("A"),
                     onSubtaskEdit: () => console.log("B"),
                     onListReorder: () => console.log("C")
                 },
                 tasks: TEST_TASKS,
-                contextMenuOptions: { width: `${TASK_DROPDOWN_WIDTH}px` }
+                contextMenuOptions: { width: `${TASK_DROPDOWN_WIDTH}px` },
+                ui: { showDragHandle: false }
             }}
         />
     </div>

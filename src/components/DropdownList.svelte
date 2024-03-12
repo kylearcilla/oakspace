@@ -2,19 +2,21 @@
 	import { themeState } from "$lib/store";
 	import { clickOutside } from "$lib/utils-general";
 
+    export let id: string = ""
     export let isHidden: boolean
     export let options: DropdownListOptions
 
     $: isDarkTheme = $themeState.isDarkTheme
 
-    function onItemClicked(idx: number) {
-        options.onListItemClicked(idx)
+    function onItemClicked(e: Event, idx: number) {
+        options.onListItemClicked(e, idx)
     }
 </script>
 
 <!-- <div class="dropdown-menu-wrapper"> -->
     <ul 
         use:clickOutside on:click_outside={options.onClickOutside} 
+        id={id}
         class="dropdown-menu dropdown-menu-dark"
         class:dropdown-menu--dark={isDarkTheme}
         class:dropdown-menu--hidden={isHidden}
@@ -30,7 +32,7 @@
                 class="dropdown-menu__option"
                 class:dropdown-menu__option--selected={options.pickedItemIdx === idx}
             >
-                <button class="dropdown-menu__option-btn" on:click={() => onItemClicked(idx)}>
+                <button class="dropdown-menu__option-btn" on:click={(e) => onItemClicked(e, idx)}>
                     <!-- Left Icon -->
                     {#if option.leftIcon}
                         <div class="dropdown-menu__option-icon dropdown-menu__option-icon--left">

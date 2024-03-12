@@ -176,7 +176,6 @@
         const target = e.target as HTMLElement
         if (e.code != "Space" || ["INPUT", "TEXTAREA"].includes(target.tagName)) return
 
-        e.preventDefault()
         isSpaceDown = true
     }
     function handleKeyUp(e: KeyboardEvent) {

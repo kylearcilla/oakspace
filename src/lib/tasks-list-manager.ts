@@ -1,16 +1,53 @@
 import { writable, type Writable } from "svelte/store"
-import { extractNum, getElemById, getElemNumStyle, moveElementInArr } from "./utils-general"
+import { extractNum, findAncestorByClass, getElemById, getElemNumStyle, getElemsByClass, getElemTrueHeight, getElemTrueWidth, getVertScrollStatus, isEditTextElem, moveElementInArr } from "./utils-general"
+
+type SubtaskLinkProp = {
+    idx: number, height: number, width: number, top: number, left: number
+}
 
 export class TasksListManager {
     options: TaskListOptionsInterface
     state: Writable<TasksListManager>
+
+    /* Options */
     types: Record<TaskListType, boolean> = {
         "subtasks-linked": false,
         "tasks-linked": false,
-        "flexible": false,
-        "ordered": false
+        "ordered": false,
+        "dated": false,
+        "subtasks": false
     }
-    listContainer: HTMLElement | null = null
+    styling?: {
+        list?: ElemDimensions
+        task?: ElemDimensions
+        subtask?: ElemDimensions
+        checkbox?: ElemDimensions
+        description?: ElemDimensions
+        descriptionInput?: { fontSize: CSSREMVal }
+    }
+    ui: {
+        showDragHandle: boolean
+        hideTaskBtn: boolean
+        isMin: boolean
+        sidePadding: CSSUnitVal
+        hasTaskDivider: boolean
+    }
+    cssVariables: {
+        checkBoxFill: string
+        checkBoxEmpty: string
+        checkIcon: string
+        taskBgColor: string
+        taskHoverBgColor: string
+        floatingTaskBgColor: string
+    }
+
+    /* Layout */
+    taskLayout: { 
+        topPadding: number, bottomPadding: number, leftSectionWidth: number 
+    } | null = null
+
+    tasksListContainer: HTMLElement | null = null
+    tasksList: HTMLElement | null = null
 
     /* Tasks */
     tasks: Task[]
@@ -19,7 +56,7 @@ export class TasksListManager {
     pickedTaskHT: number = 0
     pickedTaskDescriptionHT = 0
     pickedTaskGroupIdx = 0
-
+    
     /* Dragging Functionality */
     leftOffset = -1
     floatTaskStyling: {
@@ -30,11 +67,14 @@ export class TasksListManager {
     floatingTaskElem: HTMLElement | null = null
     dragOverTaskElem: HTMLElement | null = null
     dragOverTaskIdx = -1
-     
+    
+    subtasksCheckedFromTaskCheck: number[] = []
     taskCheckBoxJustChecked = -1
+
     isMakingNewTask = false
     isEditingTitle = false
-    isTextAreaActive = false
+    isEditingDescription = false
+    
     focusedTaskIdx = -1
     prevFocusedTodoIdx = -1
 
@@ -44,8 +84,8 @@ export class TasksListManager {
     editingSubtaskIdx = -1
     subtaskCheckBoxJustChecked = -1
     isAddingNewSubtask = false
-    hookContainerHT: number = 0
-    hooklineOffset = 0
+    subTaskLinkHt: number = 0
+    frstSubTaskLinkOffset = 0
     focusedSubtaskIdx = -1
 
     /* Input Values */
@@ -54,8 +94,8 @@ export class TasksListManager {
     /* Task Context Menu */
     hasJustClosedContextMenu = false
     isContextMenuOpen = false
-    contextMenuX: number | null = null
-    contextMenuY: number | null = null
+    contextMenuX = -1000
+    contextMenuY = -1000
 
     rightClickedTask: null | { task: Task, idx: number }  = null
     rightClickedSubtask: null | { subtask: Subtask, idx: number } = null
@@ -73,16 +113,18 @@ export class TasksListManager {
     FLOATING_CLIENT_Y_TOP_OFFSET = 150
 
     /* Constants */
-    TASK_DESCR_LINE_HT = 15
-    TASK_BOTTOM_PADDING = 7
+    TASK_DESCR_LINE_HT = 20
+    TASK_BOTTOM_PADDING = 20
     SUBTASK_HEIGHT = 15
+
     DESCRIPTION_BOTTOM_PADDING = 6
     DESCRIPTION_TOP_PADDING = 4
     DESCRIPTON_MIN_HEIGHT = 20
+
     HOOK_HEIGHT_OFFSET = 3
     
-    TASK_HEIGHT_MIN_NO_DESCR = 34
-    TASK_HEIGHT_MIN_HAS_DESCR = this.TASK_HEIGHT_MIN_NO_DESCR + this.TASK_DESCR_LINE_HT
+    TASK_HEIGHT_MIN_NO_DESCR: number
+    TASK_HEIGHT_MIN_HAS_DESCR: number
     
     MAX_TITLE_LENGTH = 50
     MAX_TAK_GROUP_TITLE_LENGTH = 10
@@ -93,7 +135,36 @@ export class TasksListManager {
         this.options = options
         this.tasks = options.tasks
 
-        this.types["flexible"] = options.type.includes("flexible")
+        // ui options
+        this.ui = {
+            showDragHandle: options.ui?.showDragHandle ?? true,
+            hideTaskBtn: options.ui?.hideTaskBtn ?? false,
+            isMin: options.ui?.isMin ?? true,
+            sidePadding: options.ui?.sidePadding ?? "18px",
+            hasTaskDivider: options.ui?.hasTaskDivider ?? true
+        }
+
+        // styling 
+        this.styling = this.options.styling
+
+        // css variables
+        this.cssVariables = {
+            checkBoxFill:     options.cssVariables?.checkBoxFill  ?? "rgba(var(--textColor1), 1)",
+            checkBoxEmpty:    options.cssVariables?.checkBoxEmpty ?? "rgba(var(--textColor1), 0.25)",
+            checkIcon:        options.cssVariables?.checkIcon     ?? "rgba(var(--textColor2), 1)",
+            taskBgColor:      options.cssVariables?.taskBgColor   ?? "rgba(var(--textColor1), 1)",
+            taskHoverBgColor: options.cssVariables?.taskHoverBgColor  ?? "rgba(var(--textColor1), 0.01)",
+            floatingTaskBgColor: options.cssVariables?.floatingTaskBgColor ?? "#141414"
+        }
+        
+        const setTaskHeight = this.styling?.task?.height
+
+        this.TASK_HEIGHT_MIN_NO_DESCR  = setTaskHeight ? extractNum(setTaskHeight)[0] : 40
+        this.TASK_HEIGHT_MIN_HAS_DESCR = this.TASK_HEIGHT_MIN_NO_DESCR + this.TASK_DESCR_LINE_HT
+
+        // type
+        this.types["subtasks"] = options.type.includes("subtasks")
+        this.types["dated"] = options.type.includes("dated")
         this.types["ordered"] = options.type.includes("ordered")
         this.types["tasks-linked"] = options.type.includes("tasks-linked")
         this.types["subtasks-linked"] = options.type.includes("subtasks-linked")
@@ -101,8 +172,29 @@ export class TasksListManager {
         this.state = writable(this)
     }
 
-    initListContainer(listContainer: HTMLUListElement) {
-        this.listContainer = listContainer
+    /**
+     *  Get needed layout data from Task after mounted on the DOM 
+     */
+    initAfterLoaded() {
+        this.tasksList = this.getElemById("tasks-list")!
+        this.tasksListContainer = this.getElemById("tasks-list-container")!
+
+        // task top padding
+        const taskElem = getElemsByClass("task")![0] as HTMLElement
+        const taskTopPadding = getElemNumStyle(taskElem, "padding-top")
+        const bottomPadding = getElemNumStyle(taskElem, "padding-bottom")
+
+        // left section width
+        const taskLeftSectionElem = getElemsByClass("task__left")![0] as HTMLElement
+        const taskLeftSectionElemWidth = getElemTrueWidth(taskLeftSectionElem)
+        
+        this.taskLayout = {
+            topPadding: taskTopPadding,
+            bottomPadding: bottomPadding,
+            leftSectionWidth: taskLeftSectionElemWidth,
+        }
+
+        this.update({ taskLayout: this.taskLayout })
     }
 
     update(newState: Partial<TasksListManager>) {
@@ -133,7 +225,7 @@ export class TasksListManager {
      * Saves current text in input as the new task description text.
      * Closes the current task-editing state.
      */
-    saveNewDescription() {
+    saveNewDescription = () => {
         this.tasks![this.pickedTaskIdx].description = this.newText
         this.newText = ""
         this.textAreaHasSpellCheck = false
@@ -196,12 +288,6 @@ export class TasksListManager {
         let fromIdx = this.floatingTask!.idx
         let toIdx = this.dragOverTaskIdx
 
-        // let cutOffIdx = $editGoalManger!.milestones.length - $editGoalManger!.milestonesDone 
-
-        // if (fromIdx > cutOffIdx) {
-        //     return false
-        // }
-
         // floating going up will take dest idx place
         // floating going down will take drag over's top nbr
         if (fromIdx < toIdx) {
@@ -221,6 +307,10 @@ export class TasksListManager {
         this.update({ tasks: this.tasks })
     }
 
+    getCurrSubtasks() {
+        return this.getSubtasks(this.pickedTaskIdx)!
+    }
+
     /**
      * Get the subtasks of a given task.
      * @param taskIdx  Idx of the task whose subtask is wanted.
@@ -234,6 +324,8 @@ export class TasksListManager {
      * @returns Queried task
      */
     getTask(taskIdx: number) {
+        if (taskIdx < 0) return null
+
         return this.tasks.find((task) => task.idx === taskIdx)
     }
 
@@ -248,7 +340,9 @@ export class TasksListManager {
      * @returns Desired subtask
      */
     getSubtask(taskIdx: number, subtaskIdx: number): Subtask | null {
-        return this.tasks![taskIdx].subtasks[subtaskIdx] ?? null
+        if (taskIdx < 0 || subtaskIdx < 0) return null
+
+        return this.tasks[taskIdx].subtasks![subtaskIdx] ?? null
     }
 
     /**
@@ -256,10 +350,11 @@ export class TasksListManager {
      * @param taskIdx   Task idx of task where new subtask will belong.
      */
     addNewSubtask(idx: number) {
-        this.tasks![idx].subtasks.push({ 
+        const taskSubtasks = this.tasks![idx].subtasks!
+        taskSubtasks!.push({ 
             id: "",
             taskId: "",
-            idx,
+            idx: taskSubtasks!.length,
             isChecked: false,
             title: ""
         })
@@ -275,8 +370,9 @@ export class TasksListManager {
      * 
      */
     removeSubtask(taskIdx: number, subTaskIdx: number) {
-        const subtasks = this.tasks![taskIdx].subtasks
-        const newSubtasks = subtasks.filter((_, idx: number) => idx != subTaskIdx)
+        const subtasks = this.tasks![taskIdx].subtasks!
+        let newSubtasks = subtasks.filter((_, idx: number) => idx != subTaskIdx)
+        newSubtasks     = newSubtasks.map((subtask, idx: number) => ({ ...subtask, idx }))
 
         this.tasks![this.pickedTaskIdx].subtasks = newSubtasks
         this.update({ tasks: this.tasks! })
@@ -293,7 +389,7 @@ export class TasksListManager {
         this.focusedSubtaskIdx = Math.max(0, this.focusedSubtaskIdx - 1)
         this.update({ focusedSubtaskIdx: this.focusedSubtaskIdx })
 
-        if (this.getSubtasks(this.pickedTaskIdx).length === 0) {
+        if (this.getSubtasks(this.pickedTaskIdx)!.length === 0) {
             this.resetCurrentFocusedSubtaskIdx()
         }
     }
@@ -303,7 +399,7 @@ export class TasksListManager {
      * Saves current text in input as the new subtask title.
      */
     saveNewSubtask() {
-        this.tasks![this.pickedTaskIdx].subtasks[this.editingSubtaskIdx].title = this.newText || "Untitled"
+        this.tasks![this.pickedTaskIdx].subtasks![this.editingSubtaskIdx]!.title = this.newText || "Untitled"
         this.editingSubtaskIdx = -1
         this.newText = ""
         this.isAddingNewSubtask = false
@@ -317,15 +413,6 @@ export class TasksListManager {
     }
 
     /* Task Visiblity  */
-
-    /**
-     * Updates the current text area height based on its content.
-     * @param textAreaElemm  Active text area element.
-     */
-    updateTextAreaDescriptionHeight(textAreaElemm: HTMLTextAreaElement) {
-        textAreaElemm.style.height = "5px"
-        textAreaElemm.style.height = (textAreaElemm.scrollHeight) + "px"
-    }
 
     /**
      * Expand a given task.
@@ -342,19 +429,122 @@ export class TasksListManager {
         this.focusedTaskIdx = taskIdx
         this.update({ pickedTaskIdx: this.pickedTaskIdx })
 
-        // toggle text area
-        this.isTextAreaActive = true
-        this.update({ isTextAreaActive: this.isTextAreaActive })
-
         // once text area has replaced the p tag, init its height to calculate that the expanded task height
         requestAnimationFrame(() => {
-            const textAreaElem = this.getActiveTextAreaElement(this.pickedTaskIdx)
-            this.updateTextAreaDescriptionHeight(textAreaElem)
-
             this.updateTaskHeight()
         })
 
         requestAnimationFrame(() => this.focusTaskElem(`task-id--${this.focusedTaskIdx}`))
+    }
+
+    getTaskElemHeight(id: string) {
+        return this.getElemById(id)!.clientHeight
+    }
+
+    getHozDistanceBetweenTwoElems(a: HTMLElement, b: HTMLElement) {
+        const aRect = a.getBoundingClientRect()
+        const bRect = b.getBoundingClientRect()
+        
+        return  Math.abs(bRect.left - aRect.right)
+    }
+
+    getVertDistanceBetweenTwoElems(a: HTMLElement, b: HTMLElement) {
+        const aRect = a.getBoundingClientRect()
+        const bRect = b.getBoundingClientRect()
+        
+        return  Math.abs(bRect.top - aRect.bottom)
+    }
+
+    // M25 43 H9.66992 C4.69936 43 0.669922 38.9706 0.669922 34 V0.0244141
+    // M16.2188 30.0801H9.66797C4.69741 30.0801 0.667969 26.0506 0.667969 21.0801V0.687744
+
+    initSubtaskLink(prop: SubtaskLinkProp) {
+        const linkElem = this.getElemById(`subtask-link-id--${prop.idx}`)!
+        const svgElem = linkElem.firstChild! as SVGElement
+        const pathElem = svgElem.firstChild as SVGPathElement
+
+        linkElem.style.height = prop.height + 'px'
+        linkElem.style.width  = prop.width + 'px'
+        linkElem.style.top    = prop.top + 'px'
+        linkElem.style.left   = prop.left + 'px'
+
+        // svg container
+        svgElem.setAttribute("width", prop.width + '')
+        svgElem.setAttribute("height", (prop.height + 1) + '')
+
+        // path
+        pathElem.setAttribute("d", `M${prop.width} ${prop.height}H9.66992C4.69936 ${prop.height} 0.669922 ${prop.height - 4.0294} 0.669922 ${prop.height - 9}V0.0244141`)
+    }
+
+    initSubtasksLinks(isTyping = false) {
+        const taskCheckBox = this.getElemById(`task-checkbox-id--${this.pickedTaskIdx}`)!
+        let currCheckbox = this.getElemById(`subtask-checkbox-id--${0}`)!
+
+        const taskCheckboxHeight = taskCheckBox.clientHeight
+        const subTaskCheckboxMarginTop = getElemNumStyle(currCheckbox, "margin-top")
+        const subtaskCheckboxHeight = currCheckbox.clientHeight + subTaskCheckboxMarginTop
+        const BORDER_OFFSET = 2
+
+        // at certain states the vertical distance will grow from the growth of checkbox bound top pos
+        let vertDistanceOffset = isTyping ? -5 : 0
+
+        if (isTyping || !isTyping && this.editingSubtaskIdx > 0) {   // typing or new (non first) subtask has just been added 
+            vertDistanceOffset = -5
+        }
+
+        const hozDistance  = this.getHozDistanceBetweenTwoElems(taskCheckBox, currCheckbox) + BORDER_OFFSET
+        let   vertDistance = this.getVertDistanceBetweenTwoElems(taskCheckBox, currCheckbox) + subTaskCheckboxMarginTop + vertDistanceOffset + BORDER_OFFSET
+
+        const subtaskLinkWidth  = hozDistance + (taskCheckboxHeight / 2)
+        let   subtaskLinkHeight = vertDistance + (subtaskCheckboxHeight / 2)
+        let   vertOffset = -1 * (subtaskLinkHeight - (subtaskCheckboxHeight / 2))
+
+        this.initSubtaskLink({
+            idx: 0,
+            height: subtaskLinkHeight,
+            width: subtaskLinkWidth,
+            top: vertOffset + 2,
+            left: -1 * subtaskLinkWidth
+        })
+
+        for (let subtask of this.getCurrSubtasks()) {
+            if (subtask.idx === 0) continue
+
+            const isEditingSubtask =  this.editingSubtaskIdx === subtask.idx
+            const isSecond = subtask.idx === 1
+            const curveHeightOffset = 10
+            const prevLink  =  this.getElemById(`subtask-link-id--${subtask.idx - 1}`)!
+            currCheckbox    =  this.getElemById(`subtask-checkbox-id--${subtask.idx}`)!
+
+            // at certain states the vertical distance will grow from the growth of checkbox bound top pos
+            vertDistanceOffset = 0
+
+            if (!isTyping && isSecond && this.editingSubtaskIdx < 0) {
+                vertDistanceOffset = -6
+            }
+            else if (!isEditingSubtask) {            // non-editing subtasks
+                vertDistanceOffset = -1
+            }
+            else if (isEditingSubtask && isTyping) { // editing a subtask + typing on field
+                vertDistanceOffset = -2
+            }
+            else if (isEditingSubtask) {             // new subtask has just been added
+                vertDistanceOffset = 3
+            }
+
+            vertDistance  = this.getVertDistanceBetweenTwoElems(prevLink, currCheckbox) + subTaskCheckboxMarginTop + vertDistanceOffset + BORDER_OFFSET
+            subtaskLinkHeight = vertDistance + curveHeightOffset
+
+            vertOffset = -1 * (subtaskLinkHeight - (subtaskCheckboxHeight / 2))
+
+            this.initSubtaskLink({
+                idx: subtask.idx ,
+                height: subtaskLinkHeight,
+                width:  subtaskLinkWidth,
+                top: vertOffset + 2,
+                left: -1 * subtaskLinkWidth
+            })
+        }
     }
 
     /**
@@ -363,43 +553,48 @@ export class TasksListManager {
      * Will change when a changes in its children will cause a task change.
      * This is done for the height animation to will not work.
      */
-    updateTaskHeight() {
+    updateTaskHeight(isEditing = false) {
         if (this.pickedTaskIdx < 0) return
 
-        let minTaskHeight = this.TASK_HEIGHT_MIN_NO_DESCR
-        let subtasksHeight = 0
-        let subtasksTopPadding = 0
+        /* Task Padding  */
+        let height = this.taskLayout!.topPadding + this.taskLayout!.bottomPadding
 
-        /* Description */
-        
-        const descriptionElement = getElemById(`task-description-input-id--${this.pickedTaskIdx}`)! as HTMLTextAreaElement
-        const taskPadding = this.DESCRIPTION_BOTTOM_PADDING + this.DESCRIPTION_TOP_PADDING
-        
-        this.pickedTaskDescriptionHT = (descriptionElement!.clientHeight || 15)
-        this.pickedTaskDescriptionHT += taskPadding
+        /* Title Editor */
+        const titleElement = this.getElemById(`task-title-id--${this.pickedTaskIdx}`)!
+        height += titleElement.clientHeight + 4
 
-        /* Subtasks */
-        if (this.tasks![this.pickedTaskIdx].subtasks.length > 0) {
-            const subtasksListElement = getElemById(`task-subtasks-id--${this.pickedTaskIdx}`)! as HTMLElement
-            
-            subtasksHeight = subtasksListElement.clientHeight + subtasksTopPadding
-            subtasksTopPadding = getElemNumStyle(subtasksListElement, "padding-top")
+        /* Description Editor */
+        const descriptionElement = this.getElemById(`task-description-input-id--${this.pickedTaskIdx}`)!
+        height += descriptionElement.clientHeight
 
-            this.hookContainerHT = this.pickedTaskDescriptionHT + subtasksTopPadding + (this.SUBTASK_HEIGHT / 2) + this.HOOK_HEIGHT_OFFSET
-            this.hooklineOffset = this.hookContainerHT
+        /* Subtask Editor */
+        const subtaskTitleElement = this.getElemById(`task-subtask-title-input-id--${this.editingSubtaskIdx}`)
+        if (subtaskTitleElement) {
+            height += subtaskTitleElement!.clientHeight
         }
 
-        const totalHt = this.pickedTaskDescriptionHT + subtasksHeight + minTaskHeight
-        const taskElement = getElemById(`task-id--${this.pickedTaskIdx}`)! as HTMLElement
-        const isSameHt = taskElement.clientHeight === totalHt
+        /* Rest of the Subtasks Height */
+        let doGetSubtaskHeight = this.types["subtasks"] && this.tasks![this.pickedTaskIdx].subtasks!.length > 0
 
-        this.pickedTaskHT = isSameHt ? totalHt : totalHt + this.TASK_BOTTOM_PADDING
+        if (doGetSubtaskHeight) {
+            const subtasksListElement = this.getElemById(`task-subtasks-id--${this.pickedTaskIdx}`)!
+            const subtaskTitleInputHeight = subtaskTitleElement?.clientHeight ?? 0
+            
+            const subtasksTopPadding = getElemNumStyle(subtasksListElement, "padding-top")
+            const subtasksHeight = subtasksListElement.clientHeight + subtasksTopPadding - subtaskTitleInputHeight
+
+            height += subtasksHeight
+        }
+
+        /* Connectors */
+        if (doGetSubtaskHeight && this.types["subtasks-linked"]) {
+            this.initSubtasksLinks(isEditing)
+        }
 
         this.update({
-            pickedTaskHT: this.pickedTaskHT,
-            pickedTaskDescriptionHT: this.pickedTaskDescriptionHT,
-            hookContainerHT: this.hookContainerHT,
-            hooklineOffset: this.hooklineOffset
+            pickedTaskHT: height,
+            subTaskLinkHt: this.subTaskLinkHt,
+            frstSubTaskLinkOffset: this.frstSubTaskLinkOffset
         })
     }
 
@@ -408,7 +603,7 @@ export class TasksListManager {
      */
     minimizeExpandedTask() {
         this.isEditingTitle = false
-        this.isTextAreaActive = false
+        this.isEditingDescription = false
         this.pickedTaskIdx = -1
         this.editingSubtaskIdx = -1
 
@@ -417,10 +612,11 @@ export class TasksListManager {
         this.taskCheckBoxJustChecked = -1
         this.subtaskCheckBoxJustChecked = -1
         this.focusedSubtaskIdx = -1
+        this.subtasksCheckedFromTaskCheck = []
 
         this.update({ 
             isEditingTitle: this.isEditingTitle,
-            isTextAreaActive: this.isTextAreaActive,
+            isEditingDescription: this.isEditingDescription,
             pickedTaskIdx: this.pickedTaskIdx,
             editingSubtaskIdx: this.editingSubtaskIdx,
             focusedSubtaskIdx: this.focusedSubtaskIdx,
@@ -442,18 +638,37 @@ export class TasksListManager {
      * @param taskIdx   Task idx of task component
      */
     onTaskTitleClicked(taskIdx: number) {
-        if (window.getSelection()?.toString()) return
         this.expandTask(taskIdx)
-
         this.isEditingTitle = true
 
         requestAnimationFrame(() => { 
-            const inputTitleElem = getElemById(`task-title-id--${this.pickedTaskIdx}`) as HTMLInputElement
+            const inputTitleElem = this.getElemById(`task-title-id--${this.pickedTaskIdx}`) as HTMLElement
             inputTitleElem.focus()
         })
 
         this.update({ 
             isEditingTitle: this.isEditingTitle,
+        })
+    }
+
+    /**
+     * Task list item component's title element on click handler.
+     * Immediately focuses new title input.
+     * Will not expand if user has selectde title.
+     * 
+     * @param taskIdx   Task idx of task component
+     */
+    onTaskDescriptionClicked(taskIdx: number) {
+        this.expandTask(taskIdx)
+        this.isEditingDescription = true
+
+        requestAnimationFrame(() => { 
+            const inputTitleElem = this.getElemById(`task-description-input-id--${this.pickedTaskIdx}`) as HTMLElement
+            inputTitleElem.focus()
+        })
+
+        this.update({ 
+            isEditingDescription: this.isEditingDescription,
         })
     }
 
@@ -470,14 +685,11 @@ export class TasksListManager {
         this.editingSubtaskIdx = subtaskIdx
 
         requestAnimationFrame(() => {
-            const inputTextElem = getElemById(`task-subtask-title-id--${subtaskIdx}`) as HTMLInputElement
+            const inputTextElem = this.getElemById(`task-subtask-title-input-id--${subtaskIdx}`) as HTMLInputElement
             inputTextElem!.focus()
         })
 
-        this.update({ 
-            editingSubtaskIdx: this.editingSubtaskIdx,
-            newText: this.newText
-        })
+        this.update({ editingSubtaskIdx: this.editingSubtaskIdx })
     }
 
     /**
@@ -491,11 +703,12 @@ export class TasksListManager {
     onTaskedClicked(event: Event, taskIdx: number) {        
         const target = event.target as HTMLElement
         
-        if (["INPUT", "TEXTAREA", "P", "I", "H3", "SPAN", "BUTTON", "svg", "circle", "path"].includes(target.tagName)) {
+        if (["P", "I", "H3", "SPAN", "BUTTON", "svg", "circle", "path"].includes(target.tagName) || isEditTextElem(target)) {
             this.toggleInputBlurred(false)
             return
         }
         
+        // dont minimize when clickout of an input
         if (this.hasInputBlurred) {
             this.toggleInputBlurred(false)
         }
@@ -512,14 +725,43 @@ export class TasksListManager {
      * Toggle a task's checkbox.
      * @param taskIdx  Idx of the the checkbock's task.
      */
-    handleTaskCheckboxClicked(taskIdx: number) {
+    handleTaskCheckboxClicked(pickedTask: Task) {
+        let taskIdx = pickedTask.idx
         this.tasks![taskIdx].isChecked = !this.tasks![taskIdx].isChecked
 
         if (this.tasks![taskIdx].isChecked) {
             this.taskCheckBoxJustChecked = taskIdx
+            let subtasks = this.getSubtasks(pickedTask.idx)!
+            
+            subtasks.forEach((subtask, idx) => { 
+                if (subtask.isChecked) return
+
+                this.subtasksCheckedFromTaskCheck.push(subtask.idx)
+                subtasks[idx] = { ...subtask, isChecked: true }
+            })
+        }
+        else if (this.subtasksCheckedFromTaskCheck.length > 0) {
+            let subtasks = this.getSubtasks(pickedTask.idx)!
+
+            subtasks.forEach((subtask, idx) => { 
+                const wasChecked = this.subtasksCheckedFromTaskCheck.some((subtaskIdx) => subtaskIdx === subtask.idx)
+                if (!wasChecked) return
+
+                subtasks[idx] = { ...subtask, isChecked: false }
+            })
+
+            this.tasks![taskIdx].subtasks = subtasks
+            this.subtasksCheckedFromTaskCheck = []
         }
 
-        this.update({ tasks: this.tasks! })
+        this.update({ 
+            tasks: this.tasks!
+        })
+    }
+
+    doAnimatedCheckedSubtaskTitle(subtaskIdx: number) {
+        return this.subtaskCheckBoxJustChecked === subtaskIdx ||
+               this.subtasksCheckedFromTaskCheck.some((idx) => idx === subtaskIdx)
     }
 
     /**
@@ -539,17 +781,17 @@ export class TasksListManager {
 
     onMouseMove = (event: MouseEvent) => {
         // update cursor pos
-        const rectTop = this.listContainer!.getBoundingClientRect().top
-        const rectLeft = this.listContainer!.getBoundingClientRect().left
+        const rectTop = this.tasksList!.getBoundingClientRect().top
+        const rectLeft = this.tasksList!.getBoundingClientRect().left
         
         let left = event.clientX - rectLeft
         let top  =  event.clientY - rectTop
 
         this.cursorPos = { left, top }
-        const tasksList = [...this.listContainer!.childNodes]
+        const tasksList = [...this.tasksList!.childNodes].filter((elem) => elem.nodeName === 'LI')
 
         // dragging task
-        let taskIdx = -1
+        let taskId = -1
         let taskElem: HTMLElement | null = null
 
         tasksList.forEach((taskItem, idx) => {
@@ -559,14 +801,14 @@ export class TasksListManager {
             const isFloating = _taskItem.className?.includes("task--floating")
 
             if (!isFloating && top >= topEdgePosition && top <= bottomEdgePosition && _taskItem.id) {
-                taskIdx = +_taskItem.id.split("--")[1]
+                taskId = +_taskItem.id.split("id--")[1]
                 taskElem = taskItem as HTMLElement
                 return
             }
         })
-
+        
         // floating element
-        if (!this.isDraggingTask || taskIdx > this.tasks.length) return
+        if (!this.isDraggingTask || taskId > this.tasks.length) return
 
         // init floaing element
         if (!this.floatingTask && taskElem) {
@@ -575,18 +817,16 @@ export class TasksListManager {
             this.floatingTaskElem = taskElem
             this.hideFloatingSrcElem()
 
-            this.floatingTask = this.getTask(taskIdx)!
+            this.floatingTask = this.getTask(taskId)!
             this.update({ floatingTask: this.floatingTask })
         }
 
-        if (taskElem && taskIdx != this.floatingTask!.idx) {
-            this.initDragOverElem(taskIdx, taskElem as HTMLElement)
-        }
+        if (!this.floatingTask) return
 
-        // do update floating position
-        if (this.floatingTask) {
-            this.updateFloatingTaskPos(left, top)
+        if (taskElem && taskId != this.floatingTask!.idx) {
+            this.initDragOverElem(taskId, taskElem as HTMLElement)
         }
+        this.updateFloatingTaskPos(left, top)
     }
 
 
@@ -613,7 +853,7 @@ export class TasksListManager {
      * @param left   Initial left position.
      */
     initDragLeftOffset(left: number) {
-        const listWidth = this.listContainer!.clientWidth
+        const listWidth = this.tasksList!.clientWidth
         const floatingTaskWidth = listWidth * this.FLOATING_WIDTH_PERCENT
         const isOutsideFloatingTask = left > floatingTaskWidth
         
@@ -622,6 +862,7 @@ export class TasksListManager {
         if (isOutsideFloatingTask) {
             xOffset = listWidth - floatingTaskWidth  // move to right by gap diff
             this.leftOffset = left - xOffset 
+            console.log(this.leftOffset)
         }
         else {
             xOffset = 10
@@ -635,7 +876,7 @@ export class TasksListManager {
      * @param top 
      */
     updateFloatingTaskPos(left: number, top: number) {
-        const listWidth = this.listContainer!.clientWidth
+        const listWidth = this.tasksList!.clientWidth
         const floatingTaskWidth = listWidth * this.FLOATING_WIDTH_PERCENT
         
         left -= this.leftOffset
@@ -663,12 +904,15 @@ export class TasksListManager {
      */
     onTaskMouseDown = (event: MouseEvent) => {
         if (event.button != 0) return
-        const target    = event.target as HTMLElement
-        const allowDrag = target.tagName === "LI" || 
-                          target.classList.value.includes("task__right") || 
-                          target.classList.value.includes("task__left")
+        const target = event.target as HTMLElement
 
-        this.isDraggingTask = allowDrag
+        const isDragHandle = findAncestorByClass(target, "drag-handle", 2) != null
+
+        this.isDraggingTask = target.tagName === "LI" || 
+                              target.classList.value.includes("task__right") || 
+                              target.classList.value.includes("task__left") ||
+                              isDragHandle
+
         if (this.floatingTask) event.preventDefault()
     }
     
@@ -743,7 +987,7 @@ export class TasksListManager {
      * @param focusElemId   The id of the task elem to be focused.
      */
     focusTaskElem(focusElemId: string) {
-        const taskElem = getElemById(focusElemId)!
+        const taskElem = this.getElemById(focusElemId)!
         taskElem.focus()
         
         taskElem.addEventListener('blur', this.focusedTaskOnBlurHandler)
@@ -806,14 +1050,13 @@ export class TasksListManager {
      * @param key   Arrow key pressed.
      */
     handleArrowkeyPressed(key: string) {
-        let isForSubtasks = this.pickedTaskIdx >= 0
+        let isForSubtasks = this.pickedTaskIdx >= 0 && this.types["subtasks"]
         let subtasklength = 0
 
         if (isForSubtasks) {
-            subtasklength = this.getSubtasks(this.pickedTaskIdx).length
+            subtasklength = this.getSubtasks(this.pickedTaskIdx)!.length
             isForSubtasks = isForSubtasks && subtasklength > 0 && this.focusedTaskIdx === this.pickedTaskIdx
         }
-
         if (isForSubtasks) {
             this.updateSubTaskFocusIdx(key)
         }
@@ -829,10 +1072,9 @@ export class TasksListManager {
      * @param key   Left or right key
      */
     updateSubTaskFocusIdx(key: string) {
-        const subtasklength = this.getSubtasks(this.pickedTaskIdx).length
+        const subtasklength = this.getSubtasks(this.pickedTaskIdx)!.length
 
         if (key === "ArrowUp") {
-            this.focusedSubtaskIdx = Math.max(this.focusedSubtaskIdx, 0)
             this.focusedSubtaskIdx--
 
             if (this.focusedSubtaskIdx < 0)  {
@@ -883,20 +1125,9 @@ export class TasksListManager {
      * 
      * @param event    Input event.
      */
-    inputTextHandler(event: Event) {
-        const inputElem = event.target as HTMLInputElement | HTMLTextAreaElement
-        const targetClass = inputElem.classList.value
-
-        this.newText = inputElem.value
-
-        if (targetClass.includes("description")) {
-            this.updateTextAreaDescriptionHeight(inputElem as HTMLTextAreaElement)
-            requestAnimationFrame(() => this.updateTaskHeight())
-        }
-    }
-
-    getActiveTextAreaElement(taskIdx: number) {
-        return getElemById(`task-description-input-id--${taskIdx}`)! as HTMLTextAreaElement
+    inputTextHandler = (newVal: string) => {
+        this.newText = newVal
+        requestAnimationFrame(() => this.updateTaskHeight(true))
     }
 
     /**
@@ -905,7 +1136,7 @@ export class TasksListManager {
      * 
      * @param event    Focus event.
      */
-    onInputFocusHandler(event: FocusEvent) {
+    onInputFocusHandler = (event: FocusEvent) => {
         const target = event.target as HTMLElement
         const targetClass = target.classList.value
 
@@ -919,6 +1150,8 @@ export class TasksListManager {
         else if (targetClass.includes("description")) {
             this.newText = this.tasks![this.pickedTaskIdx].description!
         }
+
+        this.update({ newText: this.newText })
     }
 
     /**
@@ -928,9 +1161,12 @@ export class TasksListManager {
      * 
      * @param event    Focus event.
      */
-    onInputBlurHandler(event: FocusEvent) {
-        const target = event.target as HTMLElement
+    onInputBlurHandler = (event: FocusEvent) => {
+        const target = event.target as HTMLInputElement
+        const relatedTarget = event.relatedTarget as HTMLElement
         const targetClass = target.classList.value
+
+        if (this.pickedTaskIdx < 0) return
 
         // Input Shortcut Pressed 
         if (targetClass.includes("subtask__title-input")) {
@@ -942,7 +1178,14 @@ export class TasksListManager {
         else if (targetClass.includes("description")) {
             this.saveNewDescription()
         }
+
         this.toggleInputBlurred(true)
+
+
+        // close if user clicks outside of list
+        if (!relatedTarget || !target.id?.includes(this.options.id)) {
+            // this.minimizeExpandedTask()
+        }
     }
 
     /**
@@ -972,19 +1215,62 @@ export class TasksListManager {
             this.update({  editingSubtaskIdx: -1, newText: "" })
         }
     }
-
-    /**
-     * Toggle input description spell check.
-     * True if focusing and false if blurred.
-     * Used to give the illusion focusing and blurring will change textarea to p tag and vice-versa.
-     */
-    toggleSpellCheck() {
-        this.textAreaHasSpellCheck = !this.textAreaHasSpellCheck
-        this.update({ textAreaHasSpellCheck: this.textAreaHasSpellCheck })
-    }
     
 
     /* Context Menus */
+
+    /**
+     * Fired after user clicks on an option from Task or Subtask dropdown menu
+     * @param optionIdx   Idx of clicked option.
+     */
+    contextMenuOptionClickedHandler (event: any, optionIdx: number) {
+        const isTaskContextMenu = this.rightClickedTask != null
+        const target = event.target as HTMLElement
+        const optionTitle = target.innerText
+
+        /* Task Context Menu */
+        if (optionTitle === "Rename" && isTaskContextMenu) { 
+            this.onTaskTitleClicked(this.rightClickedTask!.idx)
+        }
+        else if (optionTitle === "Rename") {
+            this.onSubtaskTitleClicked(this.rightClickedSubtask!.idx)   
+        }
+        else if (optionTitle === "Delete Task") {
+            const newTasks = this.tasks!.filter((_: Task, idx: number) => idx != this.rightClickedTask!.idx)
+            this.tasks! = newTasks
+            this.minimizeExpandedTask()
+        }
+        else if (optionTitle === "Delete Subtask") {
+            this.removeSubtask(this.pickedTaskIdx, this.rightClickedSubtask!.idx)
+        }
+        else if ("Add Subtask") {
+            // add empty subtask
+            this.addNewSubtask(this.rightClickedTask!.idx)
+            
+            const newSubTaskIdx = this.tasks![this.rightClickedTask!.idx].subtasks!.length - 1
+            this.editingSubtaskIdx = newSubTaskIdx
+            this.isAddingNewSubtask = true
+
+            // go to editing state
+            this.update({
+                editingSubtaskIdx: this.editingSubtaskIdx,
+                isAddingNewSubtask: this.isAddingNewSubtask
+            })
+
+            // expand and focus on input element afterwards
+            this.expandTask(this.rightClickedTask!.idx)
+
+            requestAnimationFrame(() => {
+                const newSubtaskInputElem = this.getElemById(`task-subtask-title-input-id--${newSubTaskIdx}`)
+                setTimeout(() => newSubtaskInputElem!.focus(), 100)
+            })
+        }
+        else if (optionTitle === "Rename") {
+            this.onSubtaskTitleClicked(this.rightClickedSubtask!.idx)   
+        }
+
+        this.closeContextMenu()
+    }
 
     /**
      * Fired everytimee user clicks outside context menu.
@@ -1006,8 +1292,8 @@ export class TasksListManager {
         
         // allow for dropdown-menu fade out animation to finish
         setTimeout(() => {
-            this.contextMenuX = null
-            this.contextMenuY = null
+            this.contextMenuX = -1000
+            this.contextMenuY = -1000
             this.rightClickedSubtask = null
             this.rightClickedTask = null
             this.hasJustClosedContextMenu = true
@@ -1031,39 +1317,53 @@ export class TasksListManager {
      * @returns
      */
     openContextMenu = (event: Event, taskIdx: number, subtaskIdx = -1) => {
-        if (this.isContextMenuOpen) {
-            this.closeContextMenu()
-            return
-        }
-
         const pe = event as PointerEvent
         const target = pe.target as HTMLElement
         const targetClass = target.classList.value
         pe.preventDefault()
 
-        if (["INPUT", "TEXTAREA", "H3", "SPAN"].includes(target.tagName) || targetClass.includes("checkbox")) { 
+        if (this.isContextMenuOpen) {
+            this.closeContextMenu()
+            return
+        }
+
+        const isSubtaskTitle = targetClass.includes("subtask__title")
+
+        if (["INPUT", "TEXTAREA", "H3"].includes(target.tagName) || targetClass.includes("checkbox") && !isSubtaskTitle) { 
             this.contextMenuX = -1
             this.contextMenuY = -1
             return
         }
 
+        // make sure dropdown menu stays in bounds within scroll window and scroll container
+        const { hasReachedBottom, details: { scrollTop } } = getVertScrollStatus(this.tasksListContainer!)
+        const containerElem = hasReachedBottom ? this.tasksList : this.tasksListContainer
+
         this.contextMenuX = this.cursorPos.left - 15
-        this.contextMenuY = this.cursorPos.top + 10
+        this.contextMenuY = this.cursorPos.top + 4
 
-        // make sure dropdown menu stays in bounds
-        const listContainerWidth = this.listContainer!.clientWidth
-        const contextWidthStr    = this.options.contextMenuOptions.width
-        const contextWidthStrVal = extractNum(contextWidthStr)[0]
-        const dropdownWidth      = contextWidthStr.includes("px") ? contextWidthStrVal : ((contextWidthStrVal / 100) * listContainerWidth)
-        const dropdownRightEdge  = dropdownWidth + this.cursorPos.left
+        const tasksListContainerRightEdge = containerElem!.clientWidth
+        const tasksListContainerBottomEdge = containerElem!.clientHeight + scrollTop
 
-        if (dropdownRightEdge >= listContainerWidth) {
-            const xOffset = dropdownRightEdge - listContainerWidth
+        const dropdownElem = this.getElemById("tasks-list-dropdown")!
+
+        const contextMenuWidth = getElemTrueWidth(dropdownElem)
+        const dropdownRightEdge  = contextMenuWidth + this.cursorPos.left
+        
+        const contextMenuHeight = getElemTrueHeight(dropdownElem)
+        const dropdownBottomEdge  = contextMenuHeight + this.cursorPos.top
+
+        if (dropdownRightEdge >= tasksListContainerRightEdge) {
+            const xOffset = dropdownRightEdge - tasksListContainerRightEdge
             this.contextMenuX -= xOffset
         }
+        if (dropdownBottomEdge >= tasksListContainerBottomEdge) {
+            const yOffset = dropdownBottomEdge - tasksListContainerBottomEdge
+            this.contextMenuY -= yOffset
+        }
         
-        // task or subtask context menu
-        if (targetClass.includes("subtask") || subtaskIdx >= 0) {
+        // see if task or subtask context menu
+        if (isSubtaskTitle || subtaskIdx >= 0) {
             const clickedSubtaskIdx = subtaskIdx >= 0 ? subtaskIdx : parseInt(target.id.split("--")[1])
             this.rightClickedSubtask = { subtask: this.getSubtask(taskIdx, subtaskIdx)!, idx: clickedSubtaskIdx }
         }
@@ -1080,51 +1380,9 @@ export class TasksListManager {
         })
     }
 
-    /**
-     * Fired after user clicks on an option from Task or Subtask dropdown menu
-     * @param optionIdx   Idx of clicked option.
-     */
-    contextMenuOptionClickedHandler = (optionIdx: number) => {
-        const isTaskContextMenu = this.rightClickedTask != null
-
-        /* Task Context Menu */
-        if (optionIdx === 0 && isTaskContextMenu) { 
-            this.onTaskTitleClicked(this.rightClickedTask!.idx)
-        }
-        else if (optionIdx === 1 && isTaskContextMenu) { 
-            this.isAddingNewSubtask = true
-            this.expandTask(this.rightClickedTask!.idx)
-            this.addNewSubtask(this.rightClickedTask!.idx)
-
-            const newSubTaskIdx = this.tasks![this.rightClickedTask!.idx].subtasks.length - 1
-            this.editingSubtaskIdx = newSubTaskIdx
-
-            // select subtask input after expansion
-            requestAnimationFrame(() => {
-                const newSubtaskInputElem = getElemById(`task-subtask-title-id--${newSubTaskIdx}`)
-                setTimeout(() => newSubtaskInputElem!.focus(), 500)
-            })
-
-            this.update({
-                editingSubtaskIdx: this.editingSubtaskIdx,
-                isAddingNewSubtask: this.isAddingNewSubtask
-            })
-        }
-        else if (optionIdx === 2 && isTaskContextMenu) { 
-            const newTasks = this.tasks!.filter((_: Task, idx: number) => idx != this.rightClickedTask!.idx)
-            this.tasks! = newTasks
-            this.minimizeExpandedTask()
-        }
-
-        /* Subtask Context Menu*/
-        if (optionIdx === 0 && !isTaskContextMenu) {
-            this.onSubtaskTitleClicked(this.rightClickedSubtask!.idx)   
-        }
-        else if (optionIdx === 1 && !isTaskContextMenu) {
-            this.removeSubtask(this.pickedTaskIdx, this.rightClickedSubtask!.idx)
-        }
-
-        this.closeContextMenu()
+    getElemById(queryId: string) {
+        const idPrefix = this.options.id
+        return getElemById(`${idPrefix}--${queryId}`)
     }
 
     /**
@@ -1135,24 +1393,24 @@ export class TasksListManager {
         const target = event.target as HTMLElement
         const key = event.key
         const tag = target.tagName
+        const isEditing = isEditTextElem(target)
 
         // prevent scroll when editing
-        if (event.code === "Space" && tag != "INPUT" && tag != "TEXTAREA") {
+        if (event.code === "Space" && !isEditing) {
             event.preventDefault()
         }
-
+        
         // GENERAL SHORTCUTS
-        if (["BODY", "LI"].includes(tag) && key === "ArrowUp" || key === "ArrowDown") {
+        if (!isEditing && ["BODY", "LI"].includes(tag) && key === "ArrowUp" || key === "ArrowDown") {
             event.preventDefault()                  // don't allow arrow keys to move scroll
             this.handleArrowkeyPressed(key)
         }
-        else if (!["INPUT", "TEXTAREA"].includes(tag) && key === "Escape") {
+        else if (!isEditing && key === "Escape") {
             this.minimizeExpandedTask()
         }
 
-        const isEditing = ["INPUT", "TEXTAREA"].includes(tag)
+        // Enter || Space While Editing
         const isEditShortCut = (key === "Enter" || key === "Escape") && isEditing
-
         if (isEditShortCut) {
             target.blur()
         }
@@ -1163,7 +1421,7 @@ export class TasksListManager {
 
         const focusedSubtaskIdx = this.focusedSubtaskIdx
         const pickedTaskIdx = this.pickedTaskIdx
-        const taskElement = getElemById(`task-id--${focusedIdx}`)! as HTMLElement
+        const taskElement = this.getElemById(`task-id--${focusedIdx}`)! as HTMLElement
         const hasFocusedSubtask = focusedSubtaskIdx >= 0
 
         if (key === "Backspace" && !hasFocusedSubtask) {
@@ -1173,7 +1431,7 @@ export class TasksListManager {
             this.removeFocusedSubtask()
         }
         else if (key === "Enter" && !hasFocusedSubtask) {
-            this.handleTaskCheckboxClicked(focusedIdx)
+            this.handleTaskCheckboxClicked(this.getTask(focusedIdx)!)
         }
         else if (key === "Enter" && hasFocusedSubtask) {
             this.handleSubtaskCheckboxClicked(focusedSubtaskIdx)
@@ -1193,6 +1451,7 @@ export class TasksListManager {
     }
 
 
+
     /**
      * 
      * Get the updated version of the old state. 
@@ -1209,9 +1468,9 @@ export class TasksListManager {
         if (newState.pickedTaskIdx != undefined)             newStateObj.pickedTaskIdx = newState.pickedTaskIdx
         if (newState.pickedTaskHT != undefined)              newStateObj.pickedTaskHT = newState.pickedTaskHT
         if (newState.pickedTaskDescriptionHT != undefined)   newStateObj.pickedTaskDescriptionHT = newState.pickedTaskDescriptionHT
-        if (newState.hookContainerHT != undefined)           newStateObj.hookContainerHT = newState.hookContainerHT
-        if (newState.hooklineOffset != undefined)            newStateObj.hooklineOffset = newState.hooklineOffset
-        if (newState.isTextAreaActive != undefined)      newStateObj.isTextAreaActive = newState.isTextAreaActive
+        if (newState.subTaskLinkHt != undefined)           newStateObj.subTaskLinkHt = newState.subTaskLinkHt
+        if (newState.frstSubTaskLinkOffset != undefined)            newStateObj.frstSubTaskLinkOffset = newState.frstSubTaskLinkOffset
+        if (newState.isEditingDescription != undefined)      newStateObj.isEditingDescription = newState.isEditingDescription
         if (newState.isEditingTitle != undefined)            newStateObj.isEditingTitle = newState.isEditingTitle
         if (newState.editingSubtaskIdx != undefined)         newStateObj.editingSubtaskIdx = newState.editingSubtaskIdx
         if (newState.taskCheckBoxJustChecked != undefined)   newStateObj.taskCheckBoxJustChecked = newState.taskCheckBoxJustChecked
@@ -1226,6 +1485,8 @@ export class TasksListManager {
         if (newState.newText != undefined)                      newStateObj.newText = newState.newText
         if (newState.floatingTaskOffset != undefined)           newStateObj.floatingTaskOffset = newState.floatingTaskOffset
         if (newState.floatingTask != undefined)                 newStateObj.floatingTask = newState.floatingTask
+        if (newState.taskLayout != undefined)                   newStateObj.taskLayout = newState.taskLayout
+        if (newState.subtasksCheckedFromTaskCheck != undefined) newStateObj.subtasksCheckedFromTaskCheck = newState.subtasksCheckedFromTaskCheck
 
         if (newState.contextMenuX != undefined)                 newStateObj.contextMenuX = newState.contextMenuX
         if (newState.contextMenuY != undefined)                 newStateObj.contextMenuY = newState.contextMenuY

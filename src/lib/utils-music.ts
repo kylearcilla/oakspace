@@ -296,6 +296,8 @@ export function musicAPIErrorHandler(error: APIError, musicPlatform?: MusicPlatf
     const errorMessage = error.message 
     const hasNoMsg = errorMessage != undefined && errorMessage
 
+    console.error("xx")
+
     if (error.code === APIErrorCode.EXPIRED_TOKEN) {
         toastOptions = {
             message: hasNoMsg ? errorMessage : "Token has expired. Log in again to continue.",

@@ -78,37 +78,38 @@ export class MusicSettingsManager {
      * Exectures after user clicks on any playable media.
      * Prevents spamming by using debouncing.
      * 
-     * @param mediaClicked   Media user has clicked.
+     * @param mediaClicked   Media user has clicked, reccomended data only contains a subset of Media type
      * @param idx            Index location of the item clicked.
      */
-    async handleLibraryMediaClicked(mediaClicked: Partial<Media>, idx: number) {
+    async handleMediaClicked(mediaClicked: Partial<Media>, idx: number) {
         if (this.debounceTimeout != null) return
 
-        try {
-            let _mediaClicked: Media
+        let _mediaClicked: Media
+        let isLib = "fromLib" in mediaClicked
 
-            // reccomended data contains a subset of Media
-            if (!("fromLib" in mediaClicked)) {
-                _mediaClicked = {
-                    ...mediaClicked, description: "", fromLib: false
-                } as Media
-            }
-            else {
-                _mediaClicked = mediaClicked as Media
-            }
+        if (isLib) {
+            _mediaClicked = mediaClicked as Media
+        }
+        else {
+            _mediaClicked = { ...mediaClicked, description: "", fromLib: false } as Media
+        }
 
-            const isFromLib = mediaClicked.fromLib
-            const mediaCollection = !isFromLib ? mediaClicked : await getLibMediaCollection(_mediaClicked, idx) 
-            await handlePlaylistItemClicked(mediaCollection as MediaCollection, _mediaClicked, idx)
+        // make a collection for non-collection itmems (tracks, podcast eps, etc...) & verify collection is updated
+        if (isLib) {
+            try {
+                _mediaClicked = await getLibMediaCollection(_mediaClicked, idx) 
+            }
+            catch(e: any) {
+                musicAPIErrorHandler(e)
+            }
+        }
+
+        await handlePlaylistItemClicked(_mediaClicked! as MediaCollection, _mediaClicked, idx)
     
-            this.debounceTimeout = setTimeout(() => { 
-                this.debounceTimeout = null
-                clearTimeout(this.debounceTimeout!)
-            }, this.NEW_COLLECTION_COOLDOWN_MS)
-        }
-        catch(e: any) {
-            musicAPIErrorHandler(e)
-        }
+        this.debounceTimeout = setTimeout(() => { 
+            this.debounceTimeout = null
+            clearTimeout(this.debounceTimeout!)
+        }, this.NEW_COLLECTION_COOLDOWN_MS)
     }
 
     /* Library Stuff */

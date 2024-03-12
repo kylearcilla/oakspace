@@ -7,7 +7,7 @@ type Result<T, E> = {
     result: T
     error: E
 }
-
+InputOptions
 type HhMmFormat = "full-letters" | "mid-letters" | "min-letters" | "numbers"
 
 type IconOptions = {
@@ -62,21 +62,26 @@ type RoutineCores = {
 type RoutineActvity = keyof RoutineCores
 
 type InputOptions = {
+    id?: string
     placeholder: string,
     initValue: string
     maxLength?: number
-    id?: string
+    handlers?: {
+        onInputHandler?: FunctionParam
+        onBlurHandler?: FunctionParam
+        onFocusHandler?: FunctionParam
+    }
 }
 
 type DropdownBtn = {
-    title: string
-    hasArrow?: boolean
-    arrowOnHover?: boolean
-    hasBg?: boolean
-    onClick: FunctionParam
-    styles?: {
-        fontSize?: string
-        padding?: string
+    "title": string
+    "hasArrow?": boolean
+    "arrowOnHover?": boolean
+    "hasBg?": boolean
+    "onClick": FunctionParam
+    "styles?": {
+        "font-size?": string
+        "padding?": string
     }
 }
 
@@ -419,17 +424,23 @@ type MusicMediaSelectContext = {
     idx: number
 }
 
-type Task = {
+interface Task {
     id: string,
     idx: number,
     isChecked: boolean,
     title: string,
     description: string
-    subtasks: Subtask[]
+    subtasks?: Subtask[]
 }
-type Subtask = Omit<Task, "description" | "subtasks"> & { taskId: string }
+interface Subtask implements Omit<Task, "description" | "subtasks"> { 
+    id: string,
+    idx: number,
+    isChecked: boolean,
+    title: string,
+    taskId: string
+}
 
-type TaskListType = "flexible" | "ordered" | "tasks-linked" | "subtasks-linked"
+type TaskListType = "ordered" | "tasks-linked" | "subtasks-linked" | "dated" | "subtasks"
 
 type TaskListTypeCombos = `${TaskListType} ${TaskListType} ${TaskListType} ${TaskListType}` | 
                           `${TaskListType} ${TaskListType} ${TaskListType}` | 
@@ -441,35 +452,62 @@ type TaskListReorder = {
     newIdx: number
     oldIdx: number
 }
-type DragAndDropHandler = {
-    onDrag: (event: DragEvent) => any
-    onDragStart: (event: DragEvent) => any
-    onDragEnd: (event: DragEvent) => any
-    onDragOver: (event: DragEvent) => any
-    onDragEnter: (event: DragEvent) => any
-    onDragLeave: (event: DragEvent) => any
-    onDrop: (event: DragEvent) => any
-}
 
-type CSSUnitVal = `${number}px` | `${number}%`
+type CSSPxVal   = `${number}px`
+type CSSREMVal   = `${number}rem`
+type CSSUnitVal = CSSPxVal | `${number}%`
+type CSSMultiDimPxVal = `${number}px` | 
+                        `${number}px ${number}px` | 
+                        `${number}px ${number}px ${number}px` | 
+                        `${number}px ${number}px ${number}px ${number}px` 
 
 type ContextMenuOptions = {
     width: CSSUnitVal
 }
 
+type ElemDimensions = {
+    padding?: CSSMultiDimPxVal
+    margin?: CSSMultiDimPxVal
+    height?: CSSPxVal
+    width?: CSSUnitVal
+    color?: string
+    backgroundColor?: string
+    fontSize?: CSSREMVal
+}
+
 type TasksListOptions<TaskListTypeCombos> = {
+    id: string
     type: TaskListTypeCombos
     tasks: Task[]
     styling?: {
-        task: string
-        subtask: string
-        checkbox: string
+        list?: ElemDimensions
+        task?: ElemDimensions
+        subtask?: ElemDimensions
+        checkbox?: ElemDimensions
+        description?: ElemDimensions
+        descriptionInput?: { fontSize: CSSREMVal }
     }
     handlers?: {
         onTaskEdit: (task: Task) => any
         onSubtaskEdit: (subtask: Subtask) => any
         onListReorder: (action: TaskListOptions) => any
+        onTasksUpdated?: () => any
     }
+    ui?: {
+        showDragHandle?: boolean
+        hideTaskBtn?: boolean
+        isMin?: boolean
+        sidePadding?: CSSUnitVal
+        hasTaskDivider?: boolean
+    }
+    cssVariables?: {
+        checkBoxFill?: string
+        checkBoxEmpty?: string
+        checkIcon?: string
+        taskBgColor?: string
+        taskHoverBgColor?: string
+        floatingTaskBgColor?: string
+    },
     dragAndDrop?: DragAndDropHandler
     contextMenuOptions: ContextMenuOptions
 }
@@ -766,12 +804,15 @@ type GoalSection = {
     isExpanded: boolean
     tagRef: ""
 }
-type Milestone = {
-    title: string
-    id: string
-    idx: number
-    endDate: Date | null
+interface Milestone implements Task { 
+    id: string,
+    idx: number,
+    isChecked: boolean,
+    title: string,
+    description: string
+    date: Date | null 
 }
+
 type GoalSectionItemId = {
     sectionId: number,
     sectionItemIdx: number

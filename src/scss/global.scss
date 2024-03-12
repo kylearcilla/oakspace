@@ -189,7 +189,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     min-width: 0px;
 }
 
-@mixin multi-line-elipses-overflow($line_number) {
+@mixin multi-line-elipses-overflow($line_number: 1) {
     display: -webkit-box;
     -webkit-line-clamp: $line_number;
     -webkit-box-orient: vertical;
@@ -308,7 +308,9 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     align-items: center;
 }
 .flx {
+    display: flex;
     &--algn-center {
+        align-items: center;
     }
     &--algn-start {
         align-items: flex-start;

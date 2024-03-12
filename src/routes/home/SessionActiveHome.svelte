@@ -248,7 +248,7 @@
                                     <!-- Todo Check Box -->
                                     {#if idx != $sessionStore.todos.length - 1}
                                         {#if todo.isChecked && idx + 1 < $sessionStore.todos.length && $sessionStore.todos[idx + 1].isChecked} 
-                                            <div class="active-session-todo__line active-session-todo__solid-line active-session-todo__solid-line"></div>
+                                            <div class="active-session-todo__line active-session-todo__solid-line"></div>
                                         {:else}
                                             <div class="active-session-todo__line active-session-todo__dotted-line"></div>
                                         {/if}

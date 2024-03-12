@@ -15,6 +15,97 @@ export function getStatusString(status: GoalStatus) {
     }
 }
 
+export const TEST_MILESTONES: Milestone[] = [
+    {
+        title: "Complete Introduction to JavaScript Course",
+        id: "0",
+        idx: 0,
+        date: null,
+        description: "",
+        isChecked: false
+    },
+    {
+        title: "Fart 1",
+        id: "1",
+        idx: 1,
+        date: null,
+        description: "",
+        isChecked: false
+    },
+    {
+        title: "Fart 2",
+        id: "2",
+        idx: 2,
+        date: null,
+        description: "",
+        isChecked: false
+    },
+    {
+        title: "Fart 3",
+        id: "3",
+        idx: 3,
+        date: null,
+        description: "",
+        isChecked: false
+    },
+    {
+        title: "Start Reading 'The Great Gatsby",
+        id: "4",
+        idx: 4,
+        date: new Date(2022, 7, 8),
+        description: "",
+        isChecked: false
+    },
+    {
+        title: "Begin Yoga and Meditation Practice",
+        id: "5",
+        idx: 5,
+        date: new Date(2021, 2, 8),
+        description: "",
+        isChecked: false
+    },
+    {
+        title: "Begin Yoga and Meditation Practice",
+        id: "6",
+        idx: 6,
+        date: new Date(2021, 9, 8),
+        description: "",
+        isChecked: false
+    },
+    {
+        title: "Begin Yoga and Meditation Practice",
+        id: "7",
+        idx: 7,
+        date: new Date(2021, 5, 2),
+        description: "",
+        isChecked: false
+    },
+    {
+        title: "Begin Yoga and Meditation Practice",
+        id: "8",
+        idx: 8,
+        date: new Date(2021, 4, 22),
+        description: "",
+        isChecked: false
+    },
+    {
+        title: "Begin Yoga and Meditation Practice",
+        id: "9",
+        idx: 9,
+        date: new Date(2021, 3, 19),
+        description: "",
+        isChecked: false
+    },
+    {
+        title: "Begin Yoga and Meditation Practice",
+        id: "10",
+        idx: 10,
+        date: new Date(2021, 2, 1),
+        description: "",
+        isChecked: false
+    },
+]
+
 export const accomplishments2021: YrAccomplishmentsOverview = {
     newGoals: 4,
     milestonesReached: 4,

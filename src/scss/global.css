@@ -37,26 +37,6 @@ img {
   -o-user-drag: none;
 }
 
-input {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-textarea {
-  border: none; /* Remove border */
-  padding: 0; /* Remove padding */
-  margin: 0; /* Remove margin */
-  resize: none; /* Disable resizing */
-  outline: none; /* Remove outline when focused */
-  background-color: transparent;
-  color: rgb(var(--textColor1), 1);
-  font-family: "Manrope", sans-serif, Roboto;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  white-space: pre-wrap;
-  /* Add any additional styling you want */
-}
-
 /* Custom Fonts */
 @font-face {
   font-family: "Apercu Medium";
@@ -137,6 +117,11 @@ textarea {
 .divider--bottom {
   position: absolute;
   bottom: 0px;
+}
+
+.flx-algn-center {
+  display: flex;
+  align-items: center;
 }
 
 .flx {
@@ -356,13 +341,18 @@ button.settings-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgb(var(--textColor1), 0.04);
+}
+button.settings-btn--bg {
+  background: rgba(var(--textColor1), 0.04);
+}
+button.settings-btn--bg:hover, button.settings-btn:focus {
+  background: rgba(var(--textColor1), 0.08);
+}
+button.settings-btn:hover {
+  transition: 0s ease-in-out;
 }
 button.settings-btn:active {
   transform: scale(0.94);
-}
-button.settings-btn:hover {
-  background-color: rgb(var(--textColor1), 0.08);
 }
 
 /* Tool Tip */
@@ -630,4 +620,27 @@ button.settings-btn:hover {
 
 .full-opacity {
   opacity: 1 !important;
+}
+
+.tag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tag__content {
+  display: flex;
+  align-items: center;
+  background-color: rgba(var(--tag-color-2), 0.4);
+  padding: 3px 12px 3px 9px;
+  border-radius: 12px;
+}
+.tag__symbol {
+  cursor: default;
+  font-size: 0.85rem;
+  margin-right: 9px;
+}
+.tag__title {
+  font-size: 1.14rem;
+  font-weight: 500;
+  color: rgba(var(--tag-color-1), 0.8);
 }/*# sourceMappingURL=global.css.map */

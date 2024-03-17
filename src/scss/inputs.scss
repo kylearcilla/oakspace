@@ -21,7 +21,7 @@ div[contenteditable] {
 }
 div[contenteditable]:empty:before {
     content: attr(data-placeholder);
-    opacity: 0.3;
+    opacity: 0.2;
 }
 div[contenteditable]:focus {
     outline: none;
@@ -155,11 +155,10 @@ div[contenteditable]:focus {
     transition: 0.2s border ease-in-out;
     border: 0.5px solid rgba(white, 0);
     border-radius: 4px;
+    max-height: 100%;
+    overflow-y: scroll;
     @include text-style(0.8, 300, 1.3rem);
 
-    &--empty {
-        opacity: 0.24;
-    }
     &:focus {
         border: 0.5px solid rgba(white, 0);
     }

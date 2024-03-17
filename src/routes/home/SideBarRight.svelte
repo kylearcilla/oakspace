@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { TasksViewManager } from "$lib/tasks-view-manager"
-	import { formatDatetoStr, formatTimeToHHMM, getUserHourCycle, isNightTime } from "$lib/utils-date"
+	import { formatDatetoStr, formatTimeToHHMM, getUserHourCycle, isNightTime, prefer12HourFormat } from "$lib/utils-date"
 	import { hideRightBar, setShortcutsFocus, showRightBar } from "$lib/utils-home"
 	import { clickOutside } from "$lib/utils-general"
 	import { onDestroy, onMount } from "svelte"
@@ -13,7 +13,7 @@
 
     let currentTimeStr = ""
     let isDayTime = true
-    let doUse12HourFormat = false
+    let doUse12HourFormat = prefer12HourFormat()
     let interval: NodeJS.Timer | null = null
     let selectedTab: RightSideTab = RightSideTab.OVERVIEW
 
@@ -79,8 +79,6 @@
     }
 
     onMount(() => {
-        const hourCycle = getUserHourCycle()
-        doUse12HourFormat = hourCycle === "h12" || hourCycle === "h11"
         updateTimeStr()
         initDateTimer()
 

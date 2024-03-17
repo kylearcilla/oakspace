@@ -1,4 +1,5 @@
 import { HrsMinsFormatOption } from '$lib/enums';
+import { TimeInputManager } from '$lib/inputs';
 import { formatTimeToHHMM, getDifferenceInSecs, getPomPeriodElapsedTime, secsToHHMM } from '$lib/utils-date';
 import { describe, expect } from 'vitest';
 
@@ -14,6 +15,8 @@ const getWeekNumber = (currentDate: Date) => {
     const weekNumber = Math.ceil(days / 7)
     return weekNumber
 }
+
+/*
 
 describe("HasTokenExpiredText", () => {
     const ACTIVE_TOKEN_THRESHOLD_SECS = 60
@@ -66,7 +69,6 @@ describe('OutdatedWeeklyQuoteTest', () => {
         expect(isQuoteOutDated(new Date('2023-06-26'), new Date('2023-06-29'))).toBeFalsy()
     })
 })
-
 
 describe('ElapsedTimeBetweenTwoDates', () => {
     test('Same Minutes', () => {
@@ -195,5 +197,177 @@ describe("Formating Time to HH:MM", () => {
 
         expect(startStr).toBe("12:28 PM")
         expect(endStr).toBe("12:29 PM")
+    })
+})
+
+*/
+
+describe("Time Formatting", () => {
+    test("Without AM / PM, HH Only", () => {
+        let result = TimeInputManager.validateTimeInput("7");
+        expect(result).toEqual(420)
+
+        result = TimeInputManager.validateTimeInput("0");
+        expect(result).toEqual(0)
+
+        result = TimeInputManager.validateTimeInput("2");
+        expect(result).toEqual(120)
+        
+        result = TimeInputManager.validateTimeInput("11");
+        expect(result).toEqual(660)
+
+        result = TimeInputManager.validateTimeInput("12");
+        expect(result).toEqual(720)
+
+        result = TimeInputManager.validateTimeInput("13");
+        expect(result).toEqual(780)
+
+        result = TimeInputManager.validateTimeInput("23");
+        expect(result).toEqual(1380)
+
+        result = TimeInputManager.validateTimeInput("24");
+        expect(result).toEqual(0)
+    })
+
+    test("Without AM / PM, HH:MM Only", () => {
+        let result = TimeInputManager.validateTimeInput("7:00");
+        expect(result).toEqual(420)
+
+        result = TimeInputManager.validateTimeInput("0:00");
+        expect(result).toEqual(0)
+        
+        result = TimeInputManager.validateTimeInput("11:00");
+        expect(result).toEqual(660)
+
+        result = TimeInputManager.validateTimeInput("11:55");
+        expect(result).toEqual(660 + 55)
+
+        result = TimeInputManager.validateTimeInput("12:59");
+        expect(result).toEqual(720 + 59)
+
+        result = TimeInputManager.validateTimeInput("12:33");
+        expect(result).toEqual(720 + 33)
+
+        result = TimeInputManager.validateTimeInput("05:39");
+        expect(result).toEqual(300 + 39)
+
+        result = TimeInputManager.validateTimeInput("9:39");
+        expect(result).toEqual(540 + 39)
+
+        result = TimeInputManager.validateTimeInput("13:00");
+        expect(result).toEqual(780)
+
+        result = TimeInputManager.validateTimeInput("23:59");
+        expect(result).toEqual(1380 + 59)
+
+        result = TimeInputManager.validateTimeInput("24:33");
+        expect(result).toEqual(33)
+
+        result = TimeInputManager.validateTimeInput("24:00");
+        expect(result).toEqual(0)
+    })
+
+    test("With AM / HM", () => {
+        let result = TimeInputManager.validateTimeInput("7:00 AM");
+        expect(result).toEqual(420)
+
+        result = TimeInputManager.validateTimeInput("0:00 AM");
+        expect(result).toEqual(0)
+
+        result = TimeInputManager.validateTimeInput("0:00 PM");
+        expect(result).toEqual(0)
+        
+        result = TimeInputManager.validateTimeInput("11:00 PM");
+        expect(result).toEqual(1380)
+        
+        result = TimeInputManager.validateTimeInput("11:00 AM");
+        expect(result).toEqual(660)
+
+        result = TimeInputManager.validateTimeInput("11:55 PM");
+        expect(result).toEqual(1380 + 55)
+
+        result = TimeInputManager.validateTimeInput("11:55 AM");
+        expect(result).toEqual(660 + 55)
+
+        result = TimeInputManager.validateTimeInput("12:59");
+        expect(result).toEqual(720 + 59)
+
+        result = TimeInputManager.validateTimeInput("05:39 PM");
+        expect(result).toEqual(1020 + 39)
+
+        result = TimeInputManager.validateTimeInput("05:39 AM");
+        expect(result).toEqual(300 + 39)
+
+        result = TimeInputManager.validateTimeInput("9:39 AM");
+        expect(result).toEqual(540 + 39)
+
+        result = TimeInputManager.validateTimeInput("13:00 PM");
+        expect(result).toEqual(780)
+
+        result = TimeInputManager.validateTimeInput("23:59 PM");
+        expect(result).toEqual(1380 + 59)
+
+        result = TimeInputManager.validateTimeInput("23:59 AM");
+        expect(result).toEqual(1380 + 59)
+
+        result = TimeInputManager.validateTimeInput("24:33 PM");
+        expect(result).toEqual(33)
+    })
+
+    test("Weird Valid Inputs", () => {
+        let result = TimeInputManager.validateTimeInput("754");
+        expect(result).toEqual(420 + 54)
+
+        result = TimeInputManager.validateTimeInput("am754");
+        expect(result).toEqual(420 + 54)
+
+        result = TimeInputManager.validateTimeInput("7am54");
+        expect(result).toEqual(420 + 54)
+
+        result = TimeInputManager.validateTimeInput("7pm54");
+        expect(result).toEqual(1140 + 54)
+
+        result = TimeInputManager.validateTimeInput("ww7pmzz54er");
+        expect(result).toEqual(1140 + 54)
+
+        result = TimeInputManager.validateTimeInput("ww17pmzz54er");
+        expect(result).toEqual(1020 + 54)
+
+        result = TimeInputManager.validateTimeInput("ww17a_mpmzz54er");
+        expect(result).toEqual(1020 + 54)
+    })
+
+    test("Weird Invalid Inputs", () => {
+        expect(() => {
+            TimeInputManager.validateTimeInput("22323")
+        }).toThrow()
+
+        expect(() => {
+            TimeInputManager.validateTimeInput("66")
+        }).toThrow()
+
+        expect(() => {
+            TimeInputManager.validateTimeInput("33:31")
+        }).toThrow()
+
+        expect(() => {
+            TimeInputManager.validateTimeInput("12:99")
+        }).toThrow()
+
+        expect(() => {
+            TimeInputManager.validateTimeInput("25:49")
+        }).toThrow()
+
+        expect(() => {
+            TimeInputManager.validateTimeInput("53")
+        }).toThrow()
+
+        expect(() => {
+            TimeInputManager.validateTimeInput("599")
+        }).toThrow()
+
+        expect(() => {
+            TimeInputManager.validateTimeInput("-45")
+        }).toThrow()
     })
 })

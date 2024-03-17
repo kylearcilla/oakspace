@@ -126,6 +126,10 @@
                 0.2s transform cubic-bezier(.2, .45, 0, 1);
     transform: scale(1);
     @include visible;
+    font-family: var(--font-family);
+
+    $side-padding: 7px;
+    $divider-side-padding: $side-padding - 2;
 
     &--hidden {
         transform: scale(0.9);
@@ -139,10 +143,15 @@
         box-shadow: none !important;
     }
     &--dark &__option {
+        &-text {
+            @include text-style(0.85, 400);
+        }
         &--selected {
             background-color: rgba(45, 45, 45, 0.2) !important;
         }
-        &-text {
+    }
+    &--dark &__option-icon {
+        &--unit {
             @include text-style(0.85, 400);
         }
     }
@@ -152,7 +161,16 @@
             background-color: rgba(white, 0.2);
         }
     }
+    &--has-scroll-bar &__option {
+        width: calc(100% - 8px);
+    }
 
+    &__section {
+    }
+    &__section-divider {
+        @include divider(0.06, 0.5px, calc(100% - calc(2 * $divider-side-padding)));
+        margin: 4px 0px 4px $divider-side-padding;
+    }
     &__option {
         color: rgb(var(--textColor1));
         white-space: nowrap;
@@ -165,10 +183,17 @@
         cursor: pointer;
         position: relative;
         transition: 0s ease-in-out;
-        @include flex(center, _);
+        @include flex(center);
 
         &:last-child {
             padding-bottom: 0px;
+        }
+        &:focus, &:hover &-btn {
+            background-color: rgba(var(--textColor1), 0.02);
+            opacity: 1;
+        }
+        &:focus, &:hover &-text {
+            font-weight: 400;
         }
         &--selected {
             opacity: 1;
@@ -184,14 +209,15 @@
             @include visible;
         }
     }
+    &__option-right-icon-container {
+        @include flex(center);
+    }
     &__option-text {
         @include elipses-overflow;
         flex: 1;
         min-width: 0px;
-        font-size: 1.24rem;
-        font-weight: 500;
-        margin-right: 10px;
         text-align: left;
+        @include text-style(_, 500, var(--font-size));
     }
     &__option-icon {
         width: 10px;
@@ -201,6 +227,11 @@
 
         &--check {
             @include not-visible;
+        }
+        &--unit {
+            @include text-style(_, 500, var(--font-size));
+            width: auto;
+            height: auto;
         }
         &:first-child:not(:only-child) {
             margin-right: 9px;
@@ -212,7 +243,7 @@
     }
     &__option-btn {
         @include flex(center, _);
-        padding: 6px 7px 7px 7px;
+        padding: 6px $side-padding 7px $side-padding;
         opacity: 0.65;
         width: 100%;
         transition: 0s ease-in-out;
@@ -220,11 +251,6 @@
         &:active {
             transition: 0.12s ease-in-out;
             transform: scale(0.984);
-        }
-        &:focus, &:hover {
-            background-color: rgba(var(--textColor1), 0.02);
-            opacity: 1;
-            font-weight: 400;
         }
         &:disabled {
             opacity: 0.14;

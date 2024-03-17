@@ -27,6 +27,11 @@ export const minsSecondsToSecs = (mins: number, secs: number): number => {
     return mins * 60 + secs
 }
 
+export function prefer12HourFormat() {
+    const hourCycle = getUserHourCycle()
+    return hourCycle === "h12" || hourCycle === "h11"
+}
+
 /**
  * Get the hour cylce based on the user's browser settings.
  * @returns  Hour cycle
@@ -486,7 +491,7 @@ export function msToHHMMSS(ms: number) {
  * @param    minutes - The number of minutes from the beginning of the day.
  * @returns            The time in "hh:mm AM / PM" format.
  */
-export function minsFromStartToHHMM(minsFromStart: number) {
+export function minsFromStartToHHMM(minsFromStart: number, doShorten = true) {
     const _hours = Math.floor(minsFromStart / 60)
     const hours =  _hours % 12 || 12
     const mins = minsFromStart % 60
@@ -500,11 +505,11 @@ export function minsFromStartToHHMM(minsFromStart: number) {
     const formattedMins = String(mins).padStart(2, '0')
     const period = _hours < 12 ? 'AM' : 'PM'
 
-    if (formattedMins === "00") {
-        return `${formattedHours} ${period}`
+    if (formattedMins === "00" && doShorten) {
+        return `${formattedHours} ${period}`.trim()
     }
     else {
-        return `${formattedHours}:${formattedMins} ${period}`
+        return `${formattedHours}:${formattedMins} ${period}`.trim()
     }
 }
 

@@ -140,12 +140,12 @@
       </nav>
       <div class="home__middle-view" style={middleViewStyling}>
         <!-- Do not show /workspace if a player is active as it will it lay on top -->
-        <!-- {#if !showYoutubePlayer || showYoutubePlayer && currentRoute != TextTab.Workspace}
+        {#if !showYoutubePlayer || showYoutubePlayer && currentRoute != TextTab.Workspace}
           <div class="home__middle-view-slot-container">
             <slot />
           </div>
         {/if}
-        <VideoView /> -->
+        <VideoView />
       </div>
       <nav 
         class="home__task-view-container" 

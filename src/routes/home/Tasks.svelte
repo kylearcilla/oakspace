@@ -10,30 +10,12 @@
 
     let isTaskGroupDrodownOpen = false
     let isTasksSettingsDropdownOpen = false
-    let maskListGradient = ""
-    let contentList: HTMLElement
+    let todoListContainer: HTMLElement
+
     $: isDarkTheme = $themeState.isDarkTheme
 
     const TASK_DROPDOWN_WIDTH = 120
     let currTaskGroupIdx = 0
-
-    function updateMaskListGradient(status: VertScrollStatus) {
-        const { hasReachedBottom, hasReachedTop } = status
-
-        if (!hasReachedTop && !hasReachedBottom) {
-            maskListGradient = "linear-gradient(180deg, transparent 0.2%, black 10%, black 80%, transparent 99%)"
-        }
-        else if (!hasReachedTop) {
-            maskListGradient = "linear-gradient(180deg, transparent 0.2%, black 10%)"
-        }
-        else if (!hasReachedBottom) {
-            maskListGradient = "linear-gradient(180deg, black 80%, transparent 99%)"
-        }
-    }
-    function contentListScrollHandler(contentList: HTMLElement) {
-        const status = getVertScrollStatus(contentList)
-        updateMaskListGradient(status)
-    }
 
     /* Shortcuts */
     function keyboardShortcutsHandler(event: KeyboardEvent) {
@@ -41,16 +23,6 @@
             return
         }
         const hasMenu = isTaskGroupDrodownOpen || isTasksSettingsDropdownOpen
-
-        // if (hasMenu && event.key === "Escape") {
-        //     isTaskGroupDrodownOpen = false
-        //     isTasksSettingsDropdownOpen = false
-
-        //     if ($tasksViewStore!.contextMenuY) $tasksViewStore!.closeContextMenu()
-
-        //     return
-        // }
-        // $tasksViewStore!.keyboardShortcutHandler(event)
     }
     function onTaskGroupItemClicked(idx: number) {
         isTaskGroupDrodownOpen = false
@@ -168,20 +140,29 @@
     <div 
         class="quick-todos__todo-list-container"
         class:quick-todos__todo-list-container--short={$musicPlayerStore?.doShowPlayer}
+        bind:this={todoListContainer}
     >
-        <TasksList 
-            options={{
-                type: "subtasks-linked subtasks",
-                handlers: {
-                    onTaskEdit: () => console.log("A"),
-                    onSubtaskEdit: () => console.log("B"),
-                    onListReorder: () => console.log("C")
-                },
-                tasks: TEST_TASKS,
-                contextMenuOptions: { width: `${TASK_DROPDOWN_WIDTH}px` },
-                ui: { showDragHandle: false }
-            }}
-        />
+        {#if todoListContainer}
+            <TasksList 
+                options={{
+                    id: "todos",
+                    type: "subtasks subtasks-linked",
+                    tasks: TEST_TASKS,
+                    containerRef: todoListContainer,
+                    styling: {
+                        task:             { fontSize: "1.3rem", height: "36px", padding: "7px 0px 4px 0px" },
+                        subtask:          { fontSize: "1.3rem", padding: "4px 0px 4px 0px" },
+                        description:      { margin: "3px 0px 5px 0px" },
+                        descriptionInput: { fontSize: "1.3rem" }
+                    },
+                    contextMenuOptions: { width: "170px" },
+                    ui: { 
+                        sidePadding: "17px", isMin: false, hasTaskDivider: false, showDragHandle: false,
+                        listHeight: "100%"
+                    }
+                }}
+            />
+        {/if}
     </div>
 </div>
 
@@ -282,6 +263,7 @@
         }
         &__todo-list-container {
             height: calc(100% - (38px + 29.5px));
+            position: relative;
             
             &--short {
                 height: calc(100% - (38px + 29.5px + 60px));

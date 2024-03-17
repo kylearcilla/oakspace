@@ -8,6 +8,9 @@
 	import { themeState } from "$lib/store";
 	import DropdownList from "../../../../components/DropdownList.svelte";
 	import DropdownBtn from "../../../../components/DropdownBtn.svelte";
+	import TasksList from "../../../../components/TasksList.svelte";
+	import { TEST_MILESTONES } from "$lib/utils-goals";
+	import TimePicker from "../../../../components/TimePicker.svelte";
 
     let settingsOpen = false
     let coresOpen = false
@@ -15,6 +18,10 @@
     let tagsOpen = false
     let startTimeOpen = false
     let endTimeOpen = false
+    let routineListRef: HTMLElement
+
+    let startTime = 420
+    let endTime = 480
 
     $: isDarkTheme = $themeState.isDarkTheme
 
@@ -36,10 +43,11 @@
         maxLength: 100,
         id: "routine-title-input"
     })).state
+
     const description = (new TextEditorManager({ 
         initValue: "",
         placeholder: "Type description here...",
-        maxLength: 200,
+        maxLength: 500,
         id: "routine-description"
     })).state
 
@@ -97,9 +105,9 @@
             <DropdownList 
                 isHidden={!settingsOpen} 
                 options={{
-                    listItems: ["Duplicate Rouine", "Delete Routine"],
+                    listItems: [{ name: "Duplicate Rouine" }, { name: "Delete Routine" }],
                     onListItemClicked: onSettingsOptionsClicked,
-                    position: { top: "28px", right: "0px" },
+                    position: { top: "45px", right: "0px" },
                     onClickOutside: () => settingsOpen = false
                 }}
             />
@@ -131,6 +139,7 @@
                     </div>
                 </div>
             </div>
+            <!-- Core -->
             <div class="edit-routine__info-row">
                 <div class="edit-routine__info-title">
                     Core
@@ -141,7 +150,7 @@
                             isActive={coresOpen}
                             options={{
                                 onClick: () => coresOpen = !coresOpen,
-                                arrowOnHover: true,
+                                // arrowOnHover: true,
                                 title: cores[1],
                                 styles: { fontSize: "1.18rem", padding: "4px 12px 4px 11px" }
                             }} 
@@ -149,7 +158,8 @@
                         <DropdownList 
                             isHidden={!coresOpen} 
                             options={{
-                                listItems: cores,
+                                listItems: cores.map((core) => ({ name: core })),
+                                pickedItemIdx: 1,
                                 onListItemClicked: onCoresOptionListClicked,
                                 position: { top: "32px", left: "0px" },
                                 onClickOutside: () => coresOpen = false
@@ -158,18 +168,27 @@
                     </div>
                 </div>
             </div>
+            <!-- Time Frame -->
             <div class="edit-routine__info-row">
                 <div class="edit-routine__info-title">
                     Time Frame
                 </div>
                 <div class="edit-routine__info-value">
                     <div class="edit-routine__time">
-                        <div class="edit-routine__time-input edit-routine__time-input--from">
-                            6:00 AM
+                        <div class="edit-routine__time-input-container">
+                            <TimePicker 
+                                options={{ start: startTime, max: endTime }}
+                                onSet={(time) => { 
+                                    startTime = time 
+                                }}
+                            />
                         </div>
                         <span>to</span>
-                        <div class="edit-routine__time-input edit-routine__time-input--to">
-                            7:00 AM
+                        <div class="edit-routine__time-input-container">
+                            <TimePicker 
+                                options={{ start: endTime, min: startTime }}
+                                onSet={(time) => endTime = time}
+                            />
                         </div>
                     </div>
                 </div>
@@ -185,15 +204,14 @@
             </div>
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <div 
-                class="edit-routine__description-text-editor text-editor" 
-                id="routine-description"
-                class:text-editor--empty={$description.value === $description.placeholder}
+                class="edit-routine__description-text-editor text-editor"
+                data-placeholder={$description.placeholder}
                 contenteditable
                 bind:innerHTML={$description.value}
+                on:paste={(e) => $description.onPaste(e)}
                 on:input={(e) => $description.onInputHandler(e)}
                 on:focus={(e) => $description.onFocusHandler(e)}
-                on:blur={(e) => $description.onBlurHandler(e)}
-                on:click={(e) => $description.onClickHandler(e)}
+                on:blur={(e)  => $description.onBlurHandler(e)}
             >
             </div>
         </div>
@@ -205,6 +223,29 @@
                 </div>
                 <div class="edit-routine__info-title">Action Items</div>
             </div>
+            <div class="edit-routine__list-container" bind:this={routineListRef}>
+                {#if routineListRef}
+                    <TasksList 
+                        options={{
+                            id:   "edit-goal",
+                            type: "subtasks",
+                            containerRef: routineListRef,
+                            tasks: TEST_MILESTONES.map((t) => ({ ...t, subtasks: [] })),
+                            styling: {
+                                task:             { fontSize: "1.23rem", height: "38px", padding: "9px 0px 2px 0px" },
+                                subtask:          { fontSize: "1.23rem", padding: "8px 0px 8px 0px" },
+                                description:      { margin: "4px 0px 2px 0px"},
+                                descriptionInput: { fontSize: "1.23rem" }
+                            },
+                            contextMenuOptions: { width: "170px" },
+                            ui:{ 
+                                sidePadding: "25px", isMin: false, hasTaskDivider: false,
+                                listHeight: "100%"
+                            }
+                        }}
+                    />
+                {/if}
+            </div>
         </div>
     </div>
 </Modal>
@@ -215,9 +256,8 @@
 
     .edit-routine {
         height: 75vh;
-        max-width: 50vw;
-        min-width: 550px;
-        padding: 18px 20px 25px 25px;
+        width: clamp(420px, 70vw, 600px);
+        padding: 0px;
 
         &--light {
 
@@ -229,6 +269,8 @@
             margin: 0px 0px 14px -7px;
             position: relative;
             width: 100%;
+            padding: 18px 20px 0px 25px;
+            height: 40px;
 
             &-left {
                 @include flex(center);
@@ -281,13 +323,15 @@
 
         /* Info */
         &__info {
+            height: 105px;
+            padding: 0px 20px 10px 25px;
         }
         &__info-row {
             margin-bottom: 9px;
             @include flex(center);
         }
         &__info-title {
-            @include text-style(0.3, 400, 1.24rem);
+            @include text-style(0.35, 400, 1.24rem);
             width: 110px;
 
             &:last-child {
@@ -295,7 +339,7 @@
             }
         }
         &__info-icon {
-            @include text-style(0.2, 400, 1.24rem);
+            @include text-style(0.3, 400, 1.24rem);
             margin-right: 13px;;
         }
         &__info-value {
@@ -318,11 +362,7 @@
                 opacity: 0.4;
             }
         }
-        &__time-input {
-            @include txt-color(0.04, "bg");
-            @include text-style(0.65, 300, 1.18rem, "DM Sans");
-            padding: 4px 9px 4px 9px;
-            border-radius: 10px;
+        &__time-input-container {
         }
         &__time-from {
         }
@@ -330,20 +370,29 @@
 
         }
         &__description {
-            margin-top: 30px;
-        }
-        &__description {
+            padding: 5px 20px 12px 25px;
+            height: 80px;
         }
         &__description-header {
             @include flex(center);
             margin-bottom: 8px;
         }
         &__description-text-editor {
-            @include text-style(0.8, 300, 1.24rem);
+            max-width: 100%;
+            @include text-style(0.8, 400, 1.24rem);
         }
         &__list-header {
-            margin-top: 30px;
+            padding: 30px 20px 8px 25px;
             @include flex(center);
+        }
+        &__list {
+            height: calc(100% - (90px + 40px + 105px + 105px));
+            width: 100%;
+        }
+        &__list-container {
+            position: relative;
+            height: 100%;
+            max-width: 100%;
         }
     }
 </style>

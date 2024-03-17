@@ -27,11 +27,14 @@
     let hasSpaceAboveMilestoneList = false
     let hasSpaceBelowMilestoneList = true
     let maskListGradient = ""
+    let milestoneListRef: HTMLElement
+    
+    function newTaskAdded(e: CustomEvent) {
+        console.log(e.detail)
+    }
 
 
     let tags = [ { name: "french", color: "#9997FE", symbol: "🇫🇷" }, { name: "swe", color: "#FF8B9C", symbol: "👨‍💻" } ]
-
-    const today = new Date()
 
     function pickedDate() {
         const isEditingMilestone = $editGoalManger!.editingMilestoneIdx >= 0
@@ -89,25 +92,6 @@
         $editGoalManger!.editNewTag(tag)
         isTagDropdownListOpen = false
     }
-    function updateMaskListGradient() {
-        if (hasSpaceAboveMilestoneList && hasSpaceBelowMilestoneList) {
-            maskListGradient = "linear-gradient(180deg, transparent 0.2%, black 10%, black 80%, transparent 99%)"
-        }
-        else if (hasSpaceAboveMilestoneList) {
-            maskListGradient = "linear-gradient(180deg, transparent 0.2%, black 10%)"
-        }
-        else {
-            maskListGradient = "linear-gradient(180deg, black 80%, transparent 99%)"
-        }
-    }
-    function milestoneListScrollHandler(e: Event) {
-        const { hasReachedBottom, hasReachedTop } = getVertScrollStatus(e.target as HTMLElement)
-
-        hasSpaceAboveMilestoneList = !hasReachedTop
-        hasSpaceBelowMilestoneList = !hasReachedBottom
-
-        updateMaskListGradient()
-    }
     function keyboardShortcutsHandler(event: KeyboardEvent) {
         $editGoalManger!.keyboardShortcutHandler(event)
     }
@@ -116,15 +100,12 @@
         $editGoalManger!.updateActivePicker()
     }
     onMount(() => {
-        updateMaskListGradient()
         new EditGoalManager(goalToEdit)
-
         requestAnimationFrame(() => $editGoalManger!.bindElems())
     })
     onDestroy(() => {
         $editGoalManger!.quit()
     })
-
 </script>
 
 
@@ -190,7 +171,7 @@
                     {/if}
                 </div>
             </div>
-            <div class="edit-goal__left-lower">
+            <div class="edit-goal__left-lower" bind:this={milestoneListRef}>
                 <!-- ★ Milestones List -->
                 <div class="edit-goal__milestones">
                     <div class="edit-goal__milestones-header">
@@ -204,25 +185,24 @@
                         </div>
                     </div>
                     <div class="edit-goal__milestones-list">
-                        <TasksList 
-                            options={{
-                                id: "edit-goal",
-                                type: "dated subtasks subtasks-linked",
-                                handlers: {
-                                    onTaskEdit:    () => console.log("A"),
-                                    onSubtaskEdit: () => console.log("B"),
-                                    onListReorder: () => console.log("C")
-                                },
-                                tasks: TEST_MILESTONES.map((t) => ({ ...t, subtasks: [] })),
-                                styling: {
-                                    task:             { fontSize: "1.3rem", height: "48px", padding: "12px 0px 12px 0px" },
-                                    subtask:          { fontSize: "1.3rem" },
-                                    descriptionInput: { fontSize: "1.3rem" }
-                                },
-                                contextMenuOptions: { width: "110px" },
-                                ui:                 { sidePadding: "24px", isMin: false }
-                            }}
-                        />
+                        {#if milestoneListRef}
+                            <TasksList 
+                                on:newTaskAdded={newTaskAdded}
+                                options={{
+                                    id:   "edit-goal",
+                                    type: "subtasks",
+                                    containerRef: milestoneListRef,
+                                    tasks: TEST_MILESTONES.map((t) => ({ ...t, subtasks: [] })),
+                                    styling: {
+                                        task:             { fontSize: "1.3rem", height: "46px", padding: "12px 0px 12px 0px" },
+                                        subtask:          { fontSize: "1.3rem", padding: "12px 0px 12px 0px" },
+                                        descriptionInput: { fontSize: "1.3rem" }
+                                    },
+                                    contextMenuOptions: { width: "170px" },
+                                    ui:                 { sidePadding: "24px", isMin: false }
+                                }}
+                            />
+                        {/if}
                     </div>
                 </div>
                 <div class="edit-goal__new-milestone-container">
@@ -346,7 +326,10 @@
                             </div>
                         </button>
                         {#if isTagSectionListOpen && $goalsManager}
-                            <ul class="edit-goal__status-dropdown dropdown-menu" use:clickOutside on:click_outside={() => isTagSectionListOpen = false}>
+                            <ul 
+                                class="edit-goal__status-dropdown dropdown-menu" 
+                                use:clickOutside on:click_outside={() => isTagSectionListOpen = false}
+                            >
                                 {#each $goalsManager.goalSections as section}
                                     <li class="dropdown-menu__option">
                                         <button on:click={() => tagSectionOptionClicked(section.orderIdx)}>
@@ -503,6 +486,7 @@
                 padding: 0px 20px 0px 25px;
             }
             &-lower {
+                position: relative;
                 height: calc(100% - 28%);
             }
         }

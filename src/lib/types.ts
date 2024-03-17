@@ -70,40 +70,82 @@ type InputOptions = {
         onInputHandler?: FunctionParam
         onBlurHandler?: FunctionParam
         onFocusHandler?: FunctionParam
+        onError?: FunctionParam
     }
+}
+
+type TimeInputOptions = {
+    min?: number
+    max?: number
+} & InputOptions
+
+type TimeInputValue = {
+    num: number,
+    isAM: boolean
+}
+
+type TimePickerOptions = {
+    min?: number,
+    max?: number,
+    start?: number
 }
 
 type DropdownBtn = {
-    "title": string
-    "hasArrow?": boolean
-    "arrowOnHover?": boolean
-    "hasBg?": boolean
-    "onClick": FunctionParam
-    "styles?": {
-        "font-size?": string
-        "padding?": string
+    title: string
+    hasArrow?: boolean
+    arrowOnHover?: boolean
+    hasBg?: boolean
+    onClick: FunctionParam
+    styles?: {
+        fontSize?: string
+        padding?: string
     }
 }
 
-type DropdDownListItem = {
-    name: string,
-    leftIcon?: string,
-    rightIcon?: string
+type OffsetPoint = {
+    top: number, left: number
 }
 
+type HotKeyCombo = string[]
+type DropdDownListItemIconType = "default" | "unit" | "hotkey"
+
+type DropdownOption = {
+    name: string,
+    leftIcon?: string,
+    rightIcon?: { 
+        type: DropdDownListItemIconType
+        icon: string | HotKeyCombo 
+    }
+}
+
+type DropdownOptionSection = {
+    sectionName?: string
+    options: DropdownOption[]
+}
+
+type DropdownListItem = DropdownOptionSection | DropdownOption
+
 type DropdownListOptions = {
-    listItems: DropdDownListItem[]
+    listItems: DropdownListItem[]
     pickedItemIdx?: number
     onListItemClicked: FunctionParam
-    onClickOutside: FunctionParam
+    onClickOutside?: FunctionParam
     position?: {
         top?: string, left?: string, bottom?: string, right?: string
     }
-    checkOptions?: {
-        currentItemChecked: string
+    ui?: {
+        hasScrollBar?: boolean
+        startingIdx?: number
     }
-    zIndex?: number
-    width?: string
+    styling?: {
+        zIndex?: number
+        width?: string
+        optionWidth?: string
+        optionHeight?: string
+        height?: string
+        fontSize?: string,
+        fontFamily?: string
+    }
 }
 
 type Color = {
@@ -445,7 +487,7 @@ type TaskListType = "ordered" | "tasks-linked" | "subtasks-linked" | "dated" | "
 type TaskListTypeCombos = `${TaskListType} ${TaskListType} ${TaskListType} ${TaskListType}` | 
                           `${TaskListType} ${TaskListType} ${TaskListType}` | 
                           `${TaskListType} ${TaskListType}` |
-                          `${TaskListType}` | null
+                          `${TaskListType}`
 
 type TaskListReorder = {
     taskId: string
@@ -455,7 +497,7 @@ type TaskListReorder = {
 
 type CSSPxVal   = `${number}px`
 type CSSREMVal   = `${number}rem`
-type CSSUnitVal = CSSPxVal | `${number}%`
+type CSSUnitVal = CSSPxVal | `${number}%` | "auto"
 type CSSMultiDimPxVal = `${number}px` | 
                         `${number}px ${number}px` | 
                         `${number}px ${number}px ${number}px` | 
@@ -477,8 +519,9 @@ type ElemDimensions = {
 
 type TasksListOptions<TaskListTypeCombos> = {
     id: string
-    type: TaskListTypeCombos
+    type?: TaskListTypeCombos
     tasks: Task[]
+    containerRef: HTMLElement
     styling?: {
         list?: ElemDimensions
         task?: ElemDimensions
@@ -487,18 +530,13 @@ type TasksListOptions<TaskListTypeCombos> = {
         description?: ElemDimensions
         descriptionInput?: { fontSize: CSSREMVal }
     }
-    handlers?: {
-        onTaskEdit: (task: Task) => any
-        onSubtaskEdit: (subtask: Subtask) => any
-        onListReorder: (action: TaskListOptions) => any
-        onTasksUpdated?: () => any
-    }
     ui?: {
         showDragHandle?: boolean
         hideTaskBtn?: boolean
         isMin?: boolean
         sidePadding?: CSSUnitVal
         hasTaskDivider?: boolean
+        listHeight?: CSSUnitVal
     }
     cssVariables?: {
         checkBoxFill?: string
@@ -506,13 +544,13 @@ type TasksListOptions<TaskListTypeCombos> = {
         checkIcon?: string
         taskBgColor?: string
         taskHoverBgColor?: string
-        floatingTaskBgColor?: string
+        floatingItemBgColor?: string
     },
     dragAndDrop?: DragAndDropHandler
     contextMenuOptions: ContextMenuOptions
 }
 
-interface TaskListOptionsInterface extends TasksListOptions<TaskType> { }
+interface TaskListOptionsInterface extends TasksListOptions<TaskListTypeCombos> { }
 
 type MediaCollection = Playlist | Album | ArtistTopSongs | LibTracks | LibAlbums | LibEpisodes | LibAudiobooks
 

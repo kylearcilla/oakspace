@@ -39,12 +39,17 @@ export const clickOutside = (node: any) => {
  */
 export const findAncestorByClass = (child: HTMLElement, className: string, max = 15): HTMLElement | null => {
   let currentElement: HTMLElement | null = child
+
+  if (currentElement!.classList.value.includes(className)) { 
+    return currentElement
+  }
+
   let i = 0
 
   while (currentElement !== null && !currentElement.classList.contains(className) && i++ < max) {
-      currentElement = currentElement.parentElement
-
-      if (currentElement!.classList.value.includes(className)) return currentElement
+    currentElement = currentElement.parentElement
+    
+    if (currentElement!.classList.value.includes(className)) return currentElement
   }
   return null
 }
@@ -119,7 +124,11 @@ export const getElemsByClass = (className: string): Element[] | null => {
  * @returns 
  */
 export const getElemNumStyle = (elem: HTMLElement, style: string): number => {
-  return parseFloat(getComputedStyle(elem).getPropertyValue(style))
+  return parseFloat(getElemStyle(elem, style))
+}
+
+export function getElemStyle(elem: HTMLElement, style: string) {
+  return getComputedStyle(elem).getPropertyValue(style)
 }
 
 /**
@@ -272,6 +281,27 @@ export function base64encode(input: any): string {
     .replace(/\//g, '_');
 }
 
+export function getAdditionTopPadding(element: HTMLElement) {
+  const styles = getComputedStyle(element)
+
+  // Extract margin, padding, and border widths
+  const marginTop = parseInt(styles.marginTop)
+  const paddingTop = parseInt(styles.paddingTop)
+  const borderTopWidth = parseInt(styles.borderTopWidth)
+
+  return marginTop + paddingTop + borderTopWidth
+}
+
+export function getAdditionBottomPadding(element: HTMLElement) {
+  const styles = getComputedStyle(element)
+
+  const marginBottom = parseInt(styles.marginBottom)
+  const paddingBottom = parseInt(styles.paddingBottom)
+  const borderBottomWidth = parseInt(styles.borderBottomWidth)
+
+  return marginBottom + paddingBottom + borderBottomWidth
+}
+
 /**
  * Calculates the additional heights of an element, including margin, padding, and border widths.
  * 
@@ -279,18 +309,7 @@ export function base64encode(input: any): string {
  * @returns The sum of margin, padding, and border widths of the element.
  */
 export function getAdditionalHeights(element: HTMLElement): number {
-  const styles = getComputedStyle(element)
-
-  // Extract margin, padding, and border widths
-  const marginTop = parseInt(styles.marginTop)
-  const marginBottom = parseInt(styles.marginBottom)
-  const paddingTop = parseInt(styles.paddingTop)
-  const paddingBottom = parseInt(styles.paddingBottom)
-  const borderTopWidth = parseInt(styles.borderTopWidth)
-  const borderBottomWidth = parseInt(styles.borderBottomWidth)
-
-  // Calculate the sum of additional heights
-  return marginTop + marginBottom + paddingTop + paddingBottom + borderTopWidth + borderBottomWidth
+  return getAdditionTopPadding(element) + getAdditionBottomPadding(element)
 }
 
 /**
@@ -587,6 +606,22 @@ export function randomArrayElem(arr: any[]) {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
+export function addItemToArray(idx: number, array: any[], item: any) {
+  array.splice(idx, 0, item)
+
+  return array
+}
+
+export function removeItemFromArray(idx: number, array: any[]) {
+  array.splice(idx, 1)
+  
+  return array
+}
+
+export function capitalizeString(str: string) {
+  return str.split('').map((ch) => ch.toUpperCase()).join('')
+}
+
 /**
  * Get the pair of color properties based on the theme.
  * @param    color - The color object containing light and dark properties.
@@ -605,8 +640,22 @@ export function extractNum(str: string) {
   if (numbers) {
       return numbers.map(Number);
   } else {
-      return [];
+      return []
   }
+}
+
+export function isCharNumber(ch: string) {
+  return ch >= '0' && ch <= '9';
+}
+
+export function extractNumStr(str: string) {
+  const nums: string[] = []
+  for (let ch of str) {
+    if (isCharNumber(ch)) {
+      nums.push(ch)
+    }
+  }
+  return nums
 }
 
 /**
@@ -630,6 +679,29 @@ export function inlineStyling(styling?: ElemDimensions) {
     return cssString.trim()
 }
 
+export function showElement(element: HTMLElement) {
+    element.style.opacity = "1"
+    element.style.visibility = "visible"
+}
+
+
+export function getDistanceBetweenTwoPoints(pointA: OffsetPoint, pointB: OffsetPoint) {
+  const deltaX = pointB.left - pointA.left
+  const deltaY = pointB.top - pointA.top
+  
+  return Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+}
+
+export function isKeyAlphaNumeric(event: KeyboardEvent) {
+  return isAlphaNumeric(event.key) && !event.ctrlKey && !event.metaKey
+}
+
+export function isAlphaNumeric(char: string) {
+    const alphaNumericRegex = /^[0-9a-zA-Z]$/
+    
+    return alphaNumericRegex.test(char)
+}
+
 export function isEditTextElem(elem: HTMLElement) {
   return elem.tagName === "INPUT" || elem.tagName === "TEXTAREA" || elem.contentEditable === "true"
 }
@@ -649,6 +721,10 @@ export function getContentEditableSelectionRange(element: HTMLElement) {
   return { start, end }
 }
 
+export function isInRange(min: number, num: number, max: number) {
+  return min <= num && num <= max
+}
+
 export function setCursorPos(element: HTMLElement, pos: number) {
   const selection = window.getSelection()
   const range = document.createRange()
@@ -663,4 +739,8 @@ export function setCursorPos(element: HTMLElement, pos: number) {
   range.collapse(true)
   selection.removeAllRanges()
   selection.addRange(range)
+}
+
+export function clamp(min: number, value: number, max: number): number {
+  return Math.min(Math.max(value, min), max)
 }

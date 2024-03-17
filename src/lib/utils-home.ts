@@ -66,11 +66,13 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, hasUserTogg
         return hasUserToggledWithKeyLast
     }
 
-    if (key === "Escape" && context.modalsOpen.length != 0) {
-        const modals = get(globalContext).modalsOpen
-        closeModal(modals[modals.length - 1])
-    }
-    else if (event.ctrlKey && key === "]") {
+    // if (key === "Escape" && context.modalsOpen.length != 0) {
+    //     const modals = get(globalContext).modalsOpen
+    //     console.log(event)
+
+    //     closeModal(modals[modals.length - 1])
+    // }
+    if (event.ctrlKey && key === "]") {
         updteGlobalContext({ ...context, isTaskMenuOpen: !context.isTaskMenuOpen })
     }
     else if (ctrlKey && key === "[") {

@@ -47,7 +47,7 @@
 <!-- <div class="dropdown-menu-wrapper"> -->
     <ul 
         use:clickOutside on:click_outside={options.onClickOutside} 
-        id={id}
+        id={`${id}--dropdown-menu`}
         class="dropdown-menu"
         class:dropdown-menu--dark={isDarkTheme}
         class:dropdown-menu--hidden={isHidden}

@@ -1,11 +1,10 @@
 import { musicDataStore } from "./store"
 import { MusicUserData, type MusicUserDataStore } from "./music-user-data"
 
-import { getDifferenceInSecs } from "./utils-date"
 import { removeAppleMusicTokens, saveMusicUserData, loadMusicUserData, deleteMusicUserData, LIBRARY_COLLECTION_LIMIT, initMusicToast, musicAPIErrorHandler} from "./utils-music"
 import { getAppleMusicUserAlbums, getAppleMusicUserLikedTracks, getAppleMusicUserPlaylists } from "./api-apple-music"
 
-import { APIError, AppServerError } from "./errors"
+import { APIError } from "./errors"
 import { APIErrorCode, MusicPlatform, UserLibraryMedia } from "./enums"
 
 /**

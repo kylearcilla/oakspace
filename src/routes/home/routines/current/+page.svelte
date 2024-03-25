@@ -1,19 +1,27 @@
 <script lang="ts">
-	import { HrsMinsFormatOption, Icon, RoutineActivityType } from "$lib/enums";
-	import { RoutinesManager } from "$lib/routines-manager";
-	import { themeState } from "$lib/store";
-	import { daysOfWeek, getTimeFromIdx, minsToHHMM } from "$lib/utils-date";
-	import { COLOR_SWATCHES, TEST_TAGS, clickOutside, getColorTrio } from "$lib/utils-general";
-	import { onMount } from "svelte";
-    import type { PageData } from "../$types";
+	import { onMount } from "svelte"
+	import type { Writable } from "svelte/store"
+	import { themeState } from "$lib/store"
+
+    import type { PageData } from "../$types"
+	import { Icon } from "$lib/enums"
+	import { ROUTINES } from "$lib/utils-routines"
+	import { RoutinesManager } from "$lib/routines-manager"
+	import { InputManager, TextEditorManager } from "$lib/inputs"
+	import { daysOfWeek, getTimeFromIdx, minsToHHMM } from "$lib/utils-date"
+	import { COLOR_SWATCHES, TEST_TAGS, getColorTrio } from "$lib/utils-general"
+
+	import SvgIcon from "../../../../components/SVGIcon.svelte"
     import SVGIcon from "../../../../components/SVGIcon.svelte"
+	import DropdownBtn from "../../../../components/DropdownBtn.svelte"
+	import DropdownList from "../../../../components/DropdownList.svelte"
 
     // export let data: PageData;
 
-    const daysData: WeekBlocks = {
+    const daysData: WeeklyRoutine = {
         Mon: [
             {
-                title: "🌤️ Morning Routine",
+                title: "Red",
                 color: COLOR_SWATCHES.d[0],
                 startTime: 370,
                 endTime: 420,
@@ -21,7 +29,7 @@
                 tag: null,
             },
             {
-                title: "👨‍💻 SWE Deep Work",
+                title: "Orange",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 525,
                 endTime: 720,
@@ -38,7 +46,7 @@
             },
             {
                 title: "👨‍💻 SWE Deep Work",
-                color: COLOR_SWATCHES.d[1],
+                color: COLOR_SWATCHES.d[3],
                 startTime: 885,
                 endTime: 1080,
                 activity: "working",
@@ -46,7 +54,7 @@
             },
             {
                 title: "💪 Gym (Pull)",
-                color: COLOR_SWATCHES.d[3],
+                color: COLOR_SWATCHES.d[4],
                 startTime: 1080,
                 endTime: 1140,
                 activity: "body",
@@ -54,7 +62,7 @@
             },
             {
                 title: "🍖 Dinner",
-                color: COLOR_SWATCHES.d[4],
+                color: COLOR_SWATCHES.d[5],
                 startTime: 1140,
                 endTime: 1170,
                 activity: null,
@@ -62,7 +70,7 @@
             },
             {
                 title: "🌙 Evening Routine",
-                color: COLOR_SWATCHES.d[1],
+                color: COLOR_SWATCHES.d[6],
                 startTime: 1380,
                 endTime: 1410,
                 activity: "selfCare",
@@ -71,16 +79,16 @@
         ],
         Tue: [
             {
-                title: "🌤️ Morning Routine",
-                color: COLOR_SWATCHES.d[0],
+                title: "Red",
+                color: COLOR_SWATCHES.d[7],
                 startTime: 370,
                 endTime: 420,
                 activity: null,
                 tag: null,
             },
             {
-                title: "👨‍💻 SWE Deep Work",
-                color: COLOR_SWATCHES.d[1],
+                title: "Orange",
+                color: COLOR_SWATCHES.d[8],
                 startTime: 525,
                 endTime: 720,
                 activity: "working",
@@ -88,7 +96,7 @@
             },
             {
                 title: "🍖 Lunch Break",
-                color: COLOR_SWATCHES.d[2],
+                color: COLOR_SWATCHES.d[9],
                 startTime: 730,
                 endTime: 800,
                 activity: null,
@@ -96,7 +104,7 @@
             },
             {
                 title: "👨‍💻 SWE Deep Work",
-                color: COLOR_SWATCHES.d[1],
+                color: COLOR_SWATCHES.d[10],
                 startTime: 885,
                 endTime: 1080,
                 activity: "working",
@@ -104,7 +112,7 @@
             },
             {
                 title: "💪 Gym (Pull)",
-                color: COLOR_SWATCHES.d[3],
+                color: COLOR_SWATCHES.d[11],
                 startTime: 1080,
                 endTime: 1140,
                 activity: "body",
@@ -112,7 +120,7 @@
             },
             {
                 title: "🍖 Dinner",
-                color: COLOR_SWATCHES.d[4],
+                color: COLOR_SWATCHES.d[12],
                 startTime: 1140,
                 endTime: 1170,
                 activity: null,
@@ -120,7 +128,7 @@
             },
             {
                 title: "🌙 Evening Routine",
-                color: COLOR_SWATCHES.d[1],
+                color: COLOR_SWATCHES.d[13],
                 startTime: 1380,
                 endTime: 1410,
                 activity: "selfCare",
@@ -129,16 +137,16 @@
         ],
         Wed: [
             {
-                title: "🌤️ Morning Routine",
-                color: COLOR_SWATCHES.d[0],
+                title: "Red",
+                color: COLOR_SWATCHES.d[14],
                 startTime: 370,
                 endTime: 420,
                 activity: null,
                 tag: null,
             },
             {
-                title: "👨‍💻 SWE Deep Work",
-                color: COLOR_SWATCHES.d[1],
+                title: "Orange",
+                color: COLOR_SWATCHES.d[15],
                 startTime: 525,
                 endTime: 720,
                 activity: "working",
@@ -146,7 +154,7 @@
             },
             {
                 title: "🍖 Lunch Break",
-                color: COLOR_SWATCHES.d[2],
+                color: COLOR_SWATCHES.d[16],
                 startTime: 730,
                 endTime: 800,
                 activity: null,
@@ -154,7 +162,7 @@
             },
             {
                 title: "👨‍💻 SWE Deep Work",
-                color: COLOR_SWATCHES.d[1],
+                color: COLOR_SWATCHES.d[17],
                 startTime: 885,
                 endTime: 1080,
                 activity: "working",
@@ -162,7 +170,7 @@
             },
             {
                 title: "💪 Gym (Pull)",
-                color: COLOR_SWATCHES.d[3],
+                color: COLOR_SWATCHES.d[18],
                 startTime: 1080,
                 endTime: 1140,
                 activity: "body",
@@ -170,7 +178,7 @@
             },
             {
                 title: "🍖 Dinner",
-                color: COLOR_SWATCHES.d[4],
+                color: COLOR_SWATCHES.d[19],
                 startTime: 1140,
                 endTime: 1170,
                 activity: null,
@@ -178,7 +186,7 @@
             },
             {
                 title: "🌙 Evening Routine",
-                color: COLOR_SWATCHES.d[1],
+                color: COLOR_SWATCHES.d[20],
                 startTime: 1380,
                 endTime: 1410,
                 activity: "selfCare",
@@ -187,16 +195,16 @@
         ],
         Thu: [
             {
-                title: "🌤️ Morning Routine",
-                color: COLOR_SWATCHES.d[0],
+                title: "Red",
+                color: COLOR_SWATCHES.d[21],
                 startTime: 370,
                 endTime: 420,
                 activity: null,
                 tag: null,
             },
             {
-                title: "👨‍💻 SWE Deep Work",
-                color: COLOR_SWATCHES.d[1],
+                title: "Orange",
+                color: COLOR_SWATCHES.d[22],
                 startTime: 525,
                 endTime: 720,
                 activity: "working",
@@ -204,7 +212,7 @@
             },
             {
                 title: "🍖 Lunch Break",
-                color: COLOR_SWATCHES.d[2],
+                color: COLOR_SWATCHES.d[23],
                 startTime: 730,
                 endTime: 800,
                 activity: null,
@@ -212,7 +220,7 @@
             },
             {
                 title: "👨‍💻 SWE Deep Work",
-                color: COLOR_SWATCHES.d[1],
+                color: COLOR_SWATCHES.d[24],
                 startTime: 885,
                 endTime: 1080,
                 activity: "working",
@@ -220,7 +228,7 @@
             },
             {
                 title: "💪 Gym (Pull)",
-                color: COLOR_SWATCHES.d[3],
+                color: COLOR_SWATCHES.d[25],
                 startTime: 1080,
                 endTime: 1140,
                 activity: "body",
@@ -228,7 +236,7 @@
             },
             {
                 title: "🍖 Dinner",
-                color: COLOR_SWATCHES.d[4],
+                color: COLOR_SWATCHES.d[26],
                 startTime: 1140,
                 endTime: 1170,
                 activity: null,
@@ -236,7 +244,7 @@
             },
             {
                 title: "🌙 Evening Routine",
-                color: COLOR_SWATCHES.d[1],
+                color: COLOR_SWATCHES.d[27],
                 startTime: 1380,
                 endTime: 1410,
                 activity: "selfCare",
@@ -245,8 +253,8 @@
         ],
         Fri: [
             {
-                title: "🌤️ Morning Routine",
-                color: COLOR_SWATCHES.d[0],
+                title: "Red",
+                color: COLOR_SWATCHES.d[1],
                 startTime: 370,
                 endTime: 420,
                 activity: null,
@@ -254,7 +262,7 @@
             },
             {
                 title: "👨‍💻 SWE Deep Work",
-                color: COLOR_SWATCHES.d[1],
+                color: COLOR_SWATCHES.d[5],
                 startTime: 525,
                 endTime: 720,
                 activity: "working",
@@ -270,7 +278,7 @@
             },
             {
                 title: "👨‍💻 SWE Deep Work",
-                color: COLOR_SWATCHES.d[1],
+                color: COLOR_SWATCHES.d[5],
                 startTime: 885,
                 endTime: 1080,
                 activity: "working",
@@ -303,8 +311,8 @@
         ],
         Sat: [
             {
-                title: "🌤️ Morning Routine",
-                color: COLOR_SWATCHES.d[0],
+                title: "Red",
+                color: COLOR_SWATCHES.d[1],
                 startTime: 480,
                 endTime: 520,
                 activity: null,
@@ -361,8 +369,8 @@
         ],
         Sun: [
             {
-                title: "🌤️ Morning Routine",
-                color: COLOR_SWATCHES.d[0],
+                title: "Red",
+                color: COLOR_SWATCHES.d[1],
                 startTime: 480,
                 endTime: 520,
                 activity: null,
@@ -419,10 +427,14 @@
         ]
     }
 
-    const MIN_THRESHOLD = 640
+    const MIN_VIEW_MAX_WIDTH = 640
 
     let containerWidth = 0
-    let manager = new RoutinesManager(daysData)
+    let manager = new RoutinesManager({
+        weeklyRoutine: daysData,
+        currentRoutine: ROUTINES[0]
+    })
+
     let scrollableContainer: HTMLElement
     let scrollableContent: HTMLElement
     let hourBlocksElem: HTMLElement
@@ -430,27 +442,63 @@
 
     let _weekBlockElems = manager.weekBlockElems
     let _currCores = manager.currCores
-    let coreProp: keyof typeof currCores.sleeping = "avgTime"
+    let _tagBreakdown = manager.currTagBreakdown
+    let _focusedRoutine = manager.focusedRoutine
+    
+    let breakdownOpt: keyof typeof currCores.sleeping = "avgTime"
     let isBreakdownDropdownOpen = false
     
     let isAvg = true
     let isViewingCore = true
+    let settingsOpen = false
+    let breakdownOptnsOpen = false
+    let pickedBreakdownOptnIdx = 0
+
+    let titleInput:  Writable<InputManager>
+    let description: Writable<InputManager>
 
     $: selectedTimeFrame = isViewingCore ? "Cores" : "Tags"
     $: weekBlockElems    = $_weekBlockElems as WeekBlockElems ?? []
     $: currCores         = $_currCores ?? []
     $: isLightTheme      = !$themeState.isDarkTheme
+    $: tagBreakdown      = $_tagBreakdown ?? []
+    $: focusedRoutine    = $_focusedRoutine
+    $: initTextEditors(focusedRoutine)
 
-    $: coreProp = isAvg ? "avgTime" : "totalTime"
+    $: breakdownOpt = isAvg ? "avgTime" : "totalTime"
 
     function onDaySettingsBtnClicked(idx: number) {
 
     }
-    function toggleBreakdownView(option: string) {
-        isViewingCore = option === "Cores" 
+    function toggleBreakdownView(idx: number) {
+        pickedBreakdownOptnIdx = idx
+        isViewingCore = idx === 0
         isBreakdownDropdownOpen = false
     }
+    function initTextEditors(focusedRoutine: DailyRoutine | null) {
+        if (!focusedRoutine) return
 
+        titleInput = (new InputManager({ 
+            initValue: focusedRoutine.name,
+            placeholder: "Routine Title",
+            maxLength: 100,
+            id: "routine-title-input",
+            doAllowEmpty: false,
+            handlers: {
+                onInputHandler: manager.updateTitle
+            }
+        })).state
+    
+        description = (new TextEditorManager({ 
+            initValue: focusedRoutine.description,
+            placeholder: "Type description here...",
+            maxLength: 500,
+            id: "routine-description",
+            handlers: {
+                onInputHandler:  manager.updateDescription
+            }
+        })).state
+    }
     function getBlockStyling(height: number) {
         const classes: string[] = []
 
@@ -488,7 +536,7 @@
     
     onMount(() => {
         requestAnimationFrame(() => { 
-            manager.initWeekBlocks(scrollableContainer) 
+            manager.initWeeklyRoutine(scrollableContainer) 
             
             if (manager.earliestBlockHeadPos != Infinity) {
                 scrollableContainer.scrollTop += Math.max(manager.earliestBlockHeadPos - 20, 0)
@@ -501,31 +549,74 @@
     class="routine" 
     class:routine--light={isLightTheme} 
     class:routine--dark={!isLightTheme} 
-    class:routine--narrow={containerWidth < MIN_THRESHOLD} 
+    class:routine--narrow={containerWidth < MIN_VIEW_MAX_WIDTH} 
     bind:clientWidth={containerWidth}
 >
     <!-- Routine Details -->
     <div class="routine__details-container">
         <div class="routine__details">
-            <h2>Routine 2.0</h2>
-            <p>Regular work week routine with a light weekend.</p>
+            {#if $titleInput}
+                <div class="routine__details-header">
+                    <input 
+                        type="text"
+                        name="routine-title-input" 
+                        id="routine-title-input"
+                        class="routine__title"
+                        aria-label="Title"
+                        spellcheck="false"
+                        value={$titleInput.value}
+                        placeholder={$titleInput.placeholder}
+                        maxlength={$titleInput.maxLength}
+                        on:blur={(e) => $titleInput.onBlurHandler(e)}
+                        on:input={(e) => $titleInput.onInputHandler(e)}
+                    >
+                    <button 
+                        class="routine__settings-btn dropdown-btn dropdown-btn--settings"
+                        id={"routine-settings--dropdown-btn"}
+                        on:click={() => settingsOpen = !settingsOpen}
+                    >
+                        <SvgIcon icon={Icon.Settings} options={{ opacity: 0.4}}/>
+                    </button>
+                    <!-- Settings Dropdown -->
+                    <DropdownList 
+                        id={"weekly-routine"}
+                        isHidden={!settingsOpen} 
+                        options={{
+                            listItems: [{ name: "Duplicate " }, { name: "Delete Routine" }],
+                            position: { top: "30px", right: "0px" },
+                            styling: { width: "140px" },
+                            onListItemClicked: (e, idx) => manager.onSettingsOptionClicked(idx),
+                            onClickOutside: () => settingsOpen = false
+                        }}
+                    />
+                </div>
+                <div 
+                    class="routine__description text-editor"
+                    aria-label="Description"
+                    data-placeholder={$description.placeholder}
+                    contenteditable
+                    bind:innerHTML={$description.value}
+                    on:paste={(e) => $description.onPaste(e)}
+                    on:input={(e) => $description.onInputHandler(e)}
+                    on:focus={(e) => $description.onFocusHandler(e)}
+                    on:blur={(e)  => $description.onBlurHandler(e)}
+                >
+                </div>
+            {/if}
         </div>
         <!-- Breakdown -->
         <div class="routine__breakdown">
             <h3>Breakdown</h3>
             <div class="routine__breakdown-header">
-                <button 
-                    class="routine__breakdown-dropdown-btn dropdown-btn"
-                    class:dropdown-btn--active={isBreakdownDropdownOpen}
-                    on:click={() => isBreakdownDropdownOpen = !isBreakdownDropdownOpen}
-                >
-                    <span class="routine__breakdown-dropdown-btn-title dropdown-btn__title">
-                        {selectedTimeFrame}
-                    </span>
-                    <div class="routine__breakdown-dropdown-btn-icon dropdown-btn__icon--arrow">
-                        <SVGIcon icon={Icon.Dropdown}/>
-                    </div>
-                </button>
+                <DropdownBtn 
+                    id={"weekly-routine-breakdown"}
+                    isActive={isBreakdownDropdownOpen}
+                    options={{
+                        onClick: () => isBreakdownDropdownOpen = !isBreakdownDropdownOpen,
+                        pickedOptionName: selectedTimeFrame,
+                        styles: { fontSize: "1.3rem", padding: "4px 12px 4px 11px", margin: "0px 0px 0px -10px" }
+                    }} 
+                />
                 <div class="routine__breakdown-options">
                     <button 
                         class="routine__breakdown-options-btn" 
@@ -542,27 +633,18 @@
                         Total
                     </button>
                 </div>
-                <ul 
-                    use:clickOutside on:click_outside={() => isBreakdownDropdownOpen = false} 
-                    class="routine__breakdown-options-menu dropdown-menu"
-                    class:dropdown-menu--hidden={!isBreakdownDropdownOpen}
-                >
-                    {#each ["Cores", "Tags"] as option}    
-                        <li 
-                            class="dropdown-menu__option" 
-                            class:dropdown-menu__option--selected={selectedTimeFrame === option}
-                        >
-                            <button class="dropdown-element" on:click={() => toggleBreakdownView(option)}>
-                                <span class="dropdown-menu__option-text">
-                                    {option}
-                                </span>
-                                <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
-                                    <i class="fa-solid fa-check"></i>
-                                </div>
-                            </button>
-                        </li>
-                    {/each}
-                </ul>
+                   <DropdownList 
+                        id={"weekly-routine-breakdown-option"}
+                        isHidden={!isBreakdownDropdownOpen} 
+                        options={{
+                            listItems: [{ name: "Cores" }, { name: "Tag" }],
+                            onListItemClicked: (e, idx) => toggleBreakdownView(idx),
+                            pickedItemIdx: pickedBreakdownOptnIdx,
+                            position: { top: "30px", left: "-10px" },
+                            styling: { width: "80px" },
+                            onClickOutside: () => isBreakdownDropdownOpen = false
+                        }}
+                    />
             </div>
             <!-- Cores -->
             <div class="routine__core-breakdown" class:hide={!isViewingCore}>
@@ -571,13 +653,13 @@
                         <div class="routine__cores-core">
                             <div class="routine__cores-title">Sleeping</div>
                             <div class="routine__cores-value">
-                                {minsToHHMM(currCores.sleeping[coreProp])}
+                                {minsToHHMM(currCores.sleeping[breakdownOpt])}
                             </div>
                         </div>
                         <div class="routine__cores-core">
                             <div class="routine__cores-title">Awake</div>
                             <div class="routine__cores-value">
-                                {minsToHHMM(currCores.awake[coreProp])}
+                                {minsToHHMM(currCores.awake[breakdownOpt])}
                             </div>
                         </div>
                     </div>
@@ -586,13 +668,13 @@
                         <div class="routine__cores-core">
                             <div class="routine__cores-title">Working</div>
                             <div class="routine__cores-value">
-                                {minsToHHMM(currCores.working[coreProp])}
+                                {minsToHHMM(currCores.working[breakdownOpt])}
                             </div>
                         </div>
                         <div class="routine__cores-core">
                             <div class="routine__cores-title">Self-Care</div>
                             <div class="routine__cores-value">
-                                {minsToHHMM(currCores.selfCare[coreProp])}
+                                {minsToHHMM(currCores.selfCare[breakdownOpt])}
                             </div>
                         </div>
                     </div>
@@ -601,13 +683,13 @@
                         <div class="routine__cores-core">
                             <div class="routine__cores-title">Mind</div>
                             <div class="routine__cores-value">
-                                {minsToHHMM(currCores.mind[coreProp])}
+                                {minsToHHMM(currCores.mind[breakdownOpt])}
                             </div>
                         </div>
                         <div class="routine__cores-core">
                             <div class="routine__cores-title">Body</div>
                             <div class="routine__cores-value">
-                                {minsToHHMM(currCores.body[coreProp])}
+                                {minsToHHMM(currCores.body[breakdownOpt])}
                             </div>
                         </div>
                     </div>
@@ -615,24 +697,30 @@
             </div>
             <!-- Tag Breakdown -->
             <div class="routine__tag-breakdown" class:hide={isViewingCore}>
-                {#each TEST_TAGS.slice(0, 4) as tag}
-                    {@const colorTrio = getColorTrio(tag.symbol.color, isLightTheme)}
-                    <div class="tag">
+                {#each tagBreakdown as tagData}
+                    {@const colorTrio = getColorTrio(tagData.tag.symbol.color, isLightTheme)}
+                    <div class="routine__tag-row">
                         <div 
-                            class="tag__content"
-                            style:--tag-color-primary={tag.symbol.color.primary}
+                            class="tag"
+                            style:--tag-color-primary={tagData.tag.symbol.color.primary}
                             style:--tag-color-1={colorTrio[0]}
                             style:--tag-color-2={colorTrio[1]}
                             style:--tag-color-3={colorTrio[2]}
                         >
                             <span class="tag__symbol">
-                                {tag.symbol.emoji}
+                                {tagData.tag.symbol.emoji}
                             </span>
                             <div class="tag__title">
-                                {tag.name}
+                                {tagData.tag.name}
                             </div>
                         </div>
-                        <div class="routine__tag-stat">1h 3m</div>
+                        <div class="routine__tag-stat">
+                            {#if breakdownOpt === "avgTime"}
+                                {minsToHHMM(tagData.data.avgTime)}
+                            {:else}
+                                {minsToHHMM(tagData.data.totalTime)}
+                            {/if}
+                        </div>
                     </div>
                 {/each}
             </div>
@@ -668,26 +756,24 @@
                     {/each}
                 </div>
             </div>
-            <!-- Time Blocks -->
+            <!-- Day View -->
             <div 
                 class="week-view__scrollable scroll-bar-hidden" 
                 bind:this={scrollableContainer}
                 on:scroll={onBoardScroll}
             >
-                <div 
-                    class="week-view__scrollable-content" 
-                    bind:this={scrollableContent}
-                >
+                <div class="week-view__scrollable-content" bind:this={scrollableContent}>
+                    <!-- Routine Blocks -->
                     <div class="routine-time-blocks">
                         {#each manager.DAYS_WEEK as day}
                             {@const dayIdx = manager.getDayIdx(day)}
                             {#each weekBlockElems[dayIdx] as block (block.id)}
-                                {@const colorTrio = getColorTrio(block.color, isLightTheme)}
+                                {@const colorTrio = getColorTrio(block.color, false)}
                                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                                 <div 
                                     class={`routine-time-blocks__block ${getBlockStyling(block.height)}`}
-                                    style:top={block.yOffset}
-                                    style:left={block.xOffset}
+                                    style:top={`${block.yOffset}px`}
+                                    style:left={`${block.xOffset}px`}
                                     style:--block-height={`${block.height}px`}
                                     style:--block-color-1={colorTrio[0]}
                                     style:--block-color-2={colorTrio[1]}
@@ -772,6 +858,7 @@
 <style lang="scss">
     @import "../../../../scss/dropdown.scss";
     @import "../../../../scss/day-box.scss";
+    @import "../../../../scss/inputs.scss";
     @import "../../../../scss/components/routines.scss";
 
     .routine {
@@ -835,8 +922,8 @@
         &__details, &__breakdown {
             width: 84%;
         }
-        &__tag-breakdown {
-            margin-left: -5px;
+        &__tag-breakdown .tag {
+            margin-left: -2px;
         }
         /* Week View */
         &__week {
@@ -848,17 +935,20 @@
     }
     $hour-blocks-top-offset: 35px;
     $hour-block-height: 50px;
+    $board-view-left-offset: 60px;
+    $days-left-offset: 90px;
 
     .week-view {
         width: 100%;
         position: relative;
         height: 100%;
         @include pos-abs-top-left-corner;
+    
 
         &__scrollable {
             position: relative;
-            height: calc(100% - 50px);
-            margin-left: calc(50px);
+            height: calc(100% - $board-view-left-offset);
+            margin-left: calc($board-view-left-offset);
             overflow: scroll;
         }
         &__scrollable-content {
@@ -880,7 +970,7 @@
             @include flex(_, space-between);
             min-width: 1000px;
             max-width: 1000px;
-            margin-left: 50px;
+            margin-left: $days-left-offset;
 
             &-day {
                 width: calc((100% / 7));
@@ -922,7 +1012,7 @@
         margin-left: 10px;
         
         &__block {
-            width: calc((100% / 7) - 11px);
+            width: calc((100% / 7) - 30px);
         }
     }
     .hour-blocks {

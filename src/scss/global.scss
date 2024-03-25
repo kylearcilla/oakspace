@@ -280,28 +280,6 @@ $screen-xl: 112.5em;   // extra large (1800 px)
  }
 
 /* Line Divider */
-.divider {
-    opacity: 0.7;
-    width: 100%;
-    height: 1px;
-    margin-top: 8px;
-
-    &--vertical {
-        width: 1px;
-        height: 100%;
-    }
-    &--thin {
-        height: 0.5px;
-    }
-    &--top {
-        position: absolute;
-        top: 0px;
-    }
-    &--bottom {
-        position: absolute;
-        bottom: 0px;
-    }
-}
 
 .flx-algn-center {
     display: flex;
@@ -588,12 +566,13 @@ button.text-only {
 button.settings-btn {
     @include circle(22px);
     @include center;
+    padding: 0px;
     transition: transform 0.12s ease-in-out;
 
     &--bg {
         @include txt-color(0.04, "bg");
     }
-    &--bg:hover, &:focus {
+    &--bg:hover, &--bg &:focus {
         @include txt-color(0.08, "bg");
     }
 
@@ -951,21 +930,21 @@ $settings-modal-padding: 20px 25px 25px 25px;
 
 .tag {
     @include flex(center, space-between);
+    @include flex(center);
+    background-color: rgba(var(--tag-color-2), 1);
+    padding: 3.5px 9px 3.5px 9px;
+    border-radius: 12px;
 
-    &__content {
-        @include flex(center);
-        background-color: rgba(var(--tag-color-2), 0.4);
-        padding: 3px 12px 3px 9px;
-        border-radius: 12px;
-    }
+
     &__symbol {
-        cursor: default;
         font-size: 0.85rem;
         margin-right: 9px;
+        cursor: text;
     }
     &__title {
-        @include text-style(_, 500, 1.14rem);
+        @include text-style(_, 400, 1.18rem);
         color: rgba(var(--tag-color-1), 0.8);
+        cursor: text;
     }
 }
 
@@ -977,4 +956,33 @@ $settings-modal-padding: 20px 25px 25px 25px;
 
 .no-pointer-events {
     pointer-events: none;
+}
+
+$loading-dots-width: 4px;
+
+.loading-dots {
+    @include flex(center, center);
+    // margin-top: $loading-dots-width + 2;
+
+    span {
+        @include circle($loading-dots-width);
+        background: var(--dots-color);
+        animation: bounce 0.6s infinite alternate;
+    
+        &:not(:last-child) {
+            margin-right: $loading-dots-width;
+        }
+        &:nth-of-type(2) {
+            animation-delay: 250ms;
+        }
+        &:nth-of-type(3) {
+            animation-delay: 350ms;
+        }
+    }
+}
+
+@keyframes bounce {
+    to {
+        transform: translateY(-$loading-dots-width);
+    }
 }

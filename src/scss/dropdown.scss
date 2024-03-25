@@ -9,6 +9,15 @@
     &:focus {
         background-color: rgba(var(--textColor1), 0.04);
     }
+    
+    &--settings {
+        @include txt-color(0.04, "bg");
+
+        &:hover, &:focus {
+            @include txt-color(0.08, "bg");
+        }
+    }
+    
     i {
         color: rgba(var(--textColor1), 0.65);
     }
@@ -30,21 +39,34 @@
     width: fit-content;
 
     &:hover {
-        background-color: rgba(var(--textColor1), 0.75);
+        @include txt-color(0.75, "bg");
         transition: 0s ease-in-out;
     }
     &:focus {
+        @include txt-color(0.75, "bg");
         background-color: rgba(var(--textColor1), 0.75);
     }
     &:active {
         transform: scale(0.978);
     }
 
+    &--settings {
+        @include circle(22px);
+        @include center;
+        @include txt-color(0.04, "bg");
+        padding: 0px;
+        transition: transform 0.12s ease-in-out;
+        background-color: rgb(var(--textColor1), 0.04);
+
+        &:active, &:hover {
+            background-color: rgb(var(--textColor1), 0.08);
+        }
+    }
     &--icon-text &__icon {
         margin-right: 15px;
         padding-left: 5px;
     }
-    &--light-mode p  {
+    &--light-mode p {
         font-weight: 600;
     }
     &--small {
@@ -53,10 +75,8 @@
     &--small &__title { 
         font-size: 1.1rem;
     }
-    &--active &__icon {
-        &--arrow {
-            transform: rotate(-180deg);
-        }
+    &--active &__icon--arrow {
+        transform: rotate(-180deg);
     }
     &--arrow-on-hover &__icon--arrow {
         @include not-visible;
@@ -66,6 +86,9 @@
     }
     &--arrow-on-hover:hover &__icon--arrow {
         @include visible(0.2);
+    }
+    &--empty &__title {
+        opacity: 0.45;
     }
 
     &__title {

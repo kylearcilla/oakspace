@@ -38,6 +38,7 @@
 	import type { Position } from "$lib/types-toast";
 	import EditGoalModal from "./EditGoalModal.svelte";
 	import { TEST_GOALS } from "$lib/utils-journal";
+	import ConfirmationModal from "../../components/ConfirmationModal.svelte";
 
   let expand = false;
 	let position: Position = 'bottom-right';

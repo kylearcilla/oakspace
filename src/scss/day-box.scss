@@ -1,4 +1,10 @@
+/*
+ *
+ * Reusable styling for day views with routine blocks.
+ *
+ */
 
+ 
 .routine-time-blocks {
     @include pos-abs-top-left-corner;
     z-index: 1;
@@ -6,15 +12,32 @@
     position: relative;
     height: 100%;
 
+    &--light &__block-title {
+        font-weight: 500;
+    }
+    &--light &__block-spine {
+        width: 3.5px;
+    }
+    &--grabbing * {
+        cursor: grabbing !important;
+    }
+    &--editing * {
+        user-select: none !important;
+    }
+    &--editing &__block {
+        pointer-events: none;
+    }
+
+
     &__block {
         position: absolute;
         overflow: hidden;
         cursor: pointer;
-        border-radius: 4px;
+        border-radius: 9px 9px 9px 9px;
         height: var(--block-height);
         max-height: var(--block-height);
-        background-color: rgba(var(--block-color-2), 0.75);
-        border: 1px solid rgba(var(--block-color-1), 0.04);
+        background-color: rgba(var(--block-color-2), 1);
+        border: 1px solid rgba(var(--block-color-2), 0);
         transition: 0.1s transform ease-in-out;
 
         &--md &-content {
@@ -22,6 +45,30 @@
         }
         &--md &-title {
             margin: 0px 7px 0px 0px;
+        }
+        &--lift-edit {
+            z-index: 2000;
+            border: 1px solid rgba(var(--block-color-3), 0.04);
+            box-shadow: 0px 1px 16.4px 4px rgba(0, 0, 0, 0.08);
+
+            * {
+                user-select: none;
+            }
+        }
+        &--drop-area {
+            border: 1px dashed rgba(var(--block-color-1), 0.77);
+            background-color: rgba(var(--block-color-2), 0.4);
+            transform: scale(0.998);
+        }
+        &--drop-area &-title {
+            display: none;
+        }
+        &--drop-area &-time-period {
+            color: rgba(var(--block-color-1), 0.77);
+            font-weight: 300;
+        }
+        &--drop-area &-spine {
+            display: none;
         }
 
         &:hover {
@@ -31,9 +78,22 @@
         &:active {
             transform: scale(0.998);
         }
+        &::after, &::before {
+            z-index: 1000;
+            content: " ";
+            cursor: ns-resize;
+            height: 4px;
+            width: 100%;
+        }
+        &::before {
+            @include pos-abs-top-left-corner();
+        }
+        &::after {
+            @include pos-abs-bottom-left-corner();
+        }
     }
     &__block-content {
-        padding: 3px 8px 4px 8px;
+        padding: 5px 8px 5px 11px;
         overflow: hidden;
         white-space: nowrap;
         position: relative;
@@ -41,23 +101,27 @@
         border-left: none;
     }
     &__block-title {
-        @include text-style(_,  300, 1.2rem, "DM Sans");
-        margin-bottom: 2px;
+        @include text-style(_,  500, 1.14rem);
+        margin-bottom: 3px;
         cursor: text;
         color: rgb(var(--block-color-1));
     }
     &__block-time-period {
-        opacity: 0.5;
-        @include text-style(_, 300, 1.05rem, "DM Sans");
+        @include text-style(_, 500, 1.05rem, "DM Sans");
         cursor: text;
         display: inline-block;
-        color: rgb(var(--block-color-1));
+        color: rgba(var(--block-color-3), 1);
     }
     &__block-spine {
         @include pos-abs-top-left-corner(-1px, -1px);
         height: calc(100% + 1px);
-        width: 2.5px;
-        background-color: rgb(var(--block-color-3));
+        width: 3px;
+        background-color: rgb(var(--block-color-1));
+    }
+    &__block-handler {
+        &:last-child {
+            @include pos-abs-bottom-left-corner();
+        }
     }
 }
 
@@ -65,7 +129,6 @@
     position: relative;
 
     &-container {
-        margin-top: 3px;
         position: relative;
     }
     &__blocks {
@@ -74,18 +137,21 @@
     }
     &__block {
         position: relative;
-        @include flex(center, center);
+        // @include flex(center, center);
         text-align: center;
         flex-direction: column;
         position: absolute;
     }
     &__block span {
         @include text-style(0.3, 300, 0.94rem, "DM Sans");
-        margin-bottom: 4px;
         white-space: nowrap;
+        display: block;
+        height: 11px;
+        margin-top: -5.5px;
     }
     &__block-vert-divider path {
         stroke: rgba(var(--textColor1), 0.17);
+        display: none;
     }
 }
 
@@ -94,6 +160,10 @@
     height: 100%;
     width: 100%;
     position: relative;
+    
+    * {
+        pointer-events: none;
+    }
 
     &-container {
         width: 100%;
@@ -101,9 +171,14 @@
     }
     &__line {
         position: absolute;
-
+        &-content {
+            position: relative;
+        }
+        svg {
+            @include pos-abs-top-left-corner;
+        }
         path {
-            stroke: rgba(var(--textColor1), 0.05);
+            stroke: rgba(var(--textColor1), 0.06);
         }
     }
 }

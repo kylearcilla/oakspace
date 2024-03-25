@@ -16,6 +16,7 @@ export class InputManager {
     placeholder: string
     prevVal: string
     isValidValue = true
+    doAllowEmpty: boolean
     handlers?: {
         onInputHandler?: FunctionParam
         onBlurHandler?: FunctionParam
@@ -32,6 +33,7 @@ export class InputManager {
         this.id = options.id ?? ""
         this.placeholder = options.placeholder
         this.handlers = options.handlers
+        this.doAllowEmpty = options.doAllowEmpty ?? true
         this.prevVal = options.initValue
 
         this.state = writable(this)
@@ -80,13 +82,13 @@ export class InputManager {
         }
     }
     onBlurHandler(event: Event) {
-        const value = this.isValidValue ? this.value : this.oldTitle
-
+        const value = !this.value ? (this.doAllowEmpty ? "" : "Untitled") : this.value
+        
         this.updateState({ oldTitle: value })
         this.updateVal(value)
 
         if (this.handlers?.onBlurHandler) {
-            this.handlers?.onBlurHandler(event)
+            this.handlers?.onBlurHandler(event, value)
         }
     }
 }
@@ -217,8 +219,10 @@ export class TextEditorManager extends InputManager {
         super(options)
 
         requestAnimationFrame(() => {
-            this.initElem()
-            this.inputElem!.addEventListener("keydown", this.keydownHandler)
+            if (this.inputElem) {
+                this.initElem()
+                this.inputElem.addEventListener("keydown", this.keydownHandler)
+            }
         })
 
 
@@ -231,7 +235,10 @@ export class TextEditorManager extends InputManager {
     initElem() {
         super.initElem()
         // attach placeholder
-        this.inputElem!.style.setProperty('--placeholder-val', this.placeholder);
+
+        if (this.inputElem) {
+            this.inputElem.style.setProperty('--placeholder-val', this.placeholder);
+        }
     }
 
     quit() {
@@ -336,13 +343,13 @@ export class TextEditorManager extends InputManager {
         this.updateVal(newValue)
     }
     onBlurHandler(event: Event): void {
-        const value = this.value
+        const value = this.value || (this.doAllowEmpty ? "" : "Untitled")
 
         this.updateState({ oldTitle: value })
         this.updateVal(value)
 
         if (this.handlers?.onBlurHandler) {
-            this.handlers?.onBlurHandler(event)
+            this.handlers?.onBlurHandler(event, value)
         }
     }
 }

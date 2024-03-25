@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { GoalItemUI, GoalStatus, Icon } from "$lib/enums"
 	import { goalsManager, themeState } from "$lib/store"
-	import { findAncestorByClass, getElemById } from "$lib/utils-general"
+	import { findAncestor, getElemById } from "$lib/utils-general"
 	import SVGIcon from "../../components/SVGIcon.svelte"
 	import GoalItem from "../../components/GoalItem.svelte"
 	import { onMount } from "svelte";
@@ -79,7 +79,7 @@
     function onGoalCardMouseDown(event: MouseEvent) {
         const target = event.target as HTMLElement
 
-        const dotsParent = findAncestorByClass(target, "goals-repo-handle")
+        const dotsParent = findAncestor(target, "goals-repo-handle")
 
         if (!dotsParent && !isSpaceDown) {
             return 
@@ -146,7 +146,7 @@
     function onDragEnterHandler(event: DragEvent) {
         event.stopPropagation()
         const target = event.target as HTMLElement
-        const boardItem = findAncestorByClass(target, isDraggingItem ? GOAL_ITEM_CLASS : GOAL_SECTION_CLASS)!
+        const boardItem = findAncestor(target, isDraggingItem ? GOAL_ITEM_CLASS : GOAL_SECTION_CLASS)!
 
         if (!boardItem || boardItem.id === "goal-section--0") {
             event.preventDefault()

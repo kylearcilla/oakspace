@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { themeState } from "$lib/store"
-	import { clickOutside } from "$lib/utils-general"
 	import { onMount } from "svelte"
 
     type ModalOptions = {
@@ -12,7 +11,7 @@
     }
 
     export let options: ModalOptions = {}
-    export let onClickOutSide: any
+    export let onClickOutSide: FunctionParam | undefined = undefined
 
     let styling = ""
 
@@ -21,7 +20,7 @@
         const className = target.classList.value
         const regex = /\bmodal-bg\b/
 
-        if (!regex.test(className)) return
+        if (!regex.test(className) ||!onClickOutSide) return
         
         onClickOutSide(e)!
     }

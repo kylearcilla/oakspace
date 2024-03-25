@@ -1,13 +1,14 @@
 <script lang="ts">
-	import { InputManager, TimeInputManager } from "$lib/inputs";
+	import { InputManager, TimeInputManager } from "$lib/inputs"
 	import { themeState } from "$lib/store"
     import { minsFromStartToHHMM, prefer12HourFormat } from "$lib/utils-date"
-	import { clamp, clickOutside, getElemStyle, roundToNearestFive } from "$lib/utils-general";
-	import { onMount, prevent_default } from "svelte/internal";
-	import DropdownList from "./DropdownList.svelte";
-	import type { Writable } from "svelte/store";
+	import { clamp, clickOutside, getElemStyle } from "$lib/utils-general"
+	import { onMount } from "svelte/internal"
+	import DropdownList from "./DropdownList.svelte"
+	import type { Writable } from "svelte/store"
 
     export let options: TimePickerOptions | undefined = {}
+    export let onClick: FunctionParam | undefined = undefined
     export let onSet: (time: number) => void
 
     const doUse12HourFormat = prefer12HourFormat()
@@ -16,7 +17,7 @@
     let timePickerRef: HTMLElement
     
     $: currentTime = options?.start ?? 720
-    $: maxTime = options?.max ?? 1440
+    $: maxTime = options?.max ?? 1439
     $: minTime = options?.min ?? 0
 
     $: isDarkTheme = $themeState.isDarkTheme
@@ -57,7 +58,6 @@
             }
         })).state
     }
-
     function onInputBlurHandler(timeMins: number) {
         _onSet(timeMins)
         isInputActive = false
@@ -144,7 +144,12 @@
         draggedOverElems = []
     }
 
-    function generateDropdownOptins(min = 0, max = 1440) {
+    /* General */
+    function onClicked() {
+        if (!onClick) return
+        onClick()
+    }
+    function generateDropdownOptions(min = 0, max = 1425) {
         const options: DropdownOption[] = []
 
         for (let i = min; i <= max; i += DROPDOWN_OPTION_INTERVAL) {
@@ -157,10 +162,10 @@
         return options
     }
 
-    onMount(() => dropdownOptions = generateDropdownOptins())
+    onMount(() => dropdownOptions = generateDropdownOptions())
 </script>
 
-<div class="time-picker-container" >
+<div class="time-picker-container" on:mousedown={() => onClicked()}>
     <div 
         class="time-picker" 
         class:time-picker--light={!isDarkTheme}

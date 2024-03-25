@@ -59,13 +59,21 @@ type RoutineCores = {
     }
 }
 
+type AsyncButtonOptions = {
+    title: string
+    isLoading: boolean
+    actionFunc: AsyncFunc
+    styling?: StylingOptions
+}
+
 type RoutineActvity = keyof RoutineCores
 
 type InputOptions = {
     id?: string
-    placeholder: string,
+    placeholder: string
     initValue: string
     maxLength?: number
+    doAllowEmpty?: boolean
     handlers?: {
         onInputHandler?: FunctionParam
         onBlurHandler?: FunctionParam
@@ -90,16 +98,15 @@ type TimePickerOptions = {
     start?: number
 }
 
-type DropdownBtn = {
-    title: string
+type DropdownBtnOptions = {
+    pickedOptionName: string | null
+    allowEmpty?: boolean
     hasArrow?: boolean
     arrowOnHover?: boolean
     hasBg?: boolean
+    styles?: StylingOptions
     onClick: FunctionParam
-    styles?: {
-        fontSize?: string
-        padding?: string
-    }
+    onRemove?: FunctionParam
 }
 
 type OffsetPoint = {
@@ -122,6 +129,17 @@ type DropdownOptionSection = {
     sectionName?: string
     options: DropdownOption[]
 }
+
+type DOMQueryOption = "id" | "class" | "tag"
+
+type AncestoryQueryOptions = {
+    child: HTMLElement
+    queryStr: string
+    queryBy?: DOMQueryOption
+    max?: number
+    strict?: boolean
+  }
+  
 
 type DropdownListItem = DropdownOptionSection | DropdownOption
 
@@ -150,15 +168,23 @@ type DropdownListOptions = {
 
 type Color = {
     id: string
+    primary: string
     light1: string
     light2: string
     light3: string
     dark1: string
     dark2: string
     dark3: string
+    isLight: boolean
+    isDark: boolean
 }
 
-type WeekBlocks = {
+type WeeklyRoutineSetUp = {
+    weeklyRoutine: WeeklyRoutine,
+    currentRoutine: DailyRoutine
+}
+
+type WeeklyRoutine = {
     Mon: RoutineBlock[], Tue: RoutineBlock[]
     Wed: RoutineBlock[], Thu: RoutineBlock[]
     Fri: RoutineBlock[], Sat: RoutineBlock[]
@@ -181,13 +207,14 @@ type TagBreakDown = {
 type RoutineBlock = {
     title: string
     color: Color
+    description: string
     startTime: number
     endTime: number
     tag: Tag | null
     activity: RoutineActvity | null
 }
 type RoutineBlockElem = {
-    id: string, height: number, xOffset: string, yOffset: string,
+    id: string, height: number, xOffset: number, yOffset: number,
     startTimeStr: string, endTimeStr: string
 } & RoutineBlock
 
@@ -229,6 +256,8 @@ type CalendarOptions = {
 type DatePickerOptions = CalendarOptions
 
 type FunctionParam = ((...args: any[]) => any) | ((...args: any[]) => Promise<any>)
+
+type AsyncFunc = ((...args: any[]) => Promise<any>)
 
 // maps string section to corresponging theme arrays
 type AppearanceSectionToThemeMap = { 
@@ -364,22 +393,12 @@ type SessionResult = {
     resultImgUrl: string
 }
 
-type ColorSwatch = {
-    id: string
-    primary: string
-    light1: string
-    light2: string
-    light3: string
-    dark1:  string
-    dark2:  string
-    dark3: string
-}
-
 type Tag = {
     id: string
+    orderIdx: number
     name: string,
     symbol: {
-        color: ColorSwatch,
+        color: Color,
         emoji: string
     }
 }
@@ -482,7 +501,7 @@ interface Subtask implements Omit<Task, "description" | "subtasks"> {
     taskId: string
 }
 
-type TaskListType = "ordered" | "tasks-linked" | "subtasks-linked" | "dated" | "subtasks"
+type TaskListType = "numbered" | "tasks-linked" | "subtasks-linked" | "subtasks"
 
 type TaskListTypeCombos = `${TaskListType} ${TaskListType} ${TaskListType} ${TaskListType}` | 
                           `${TaskListType} ${TaskListType} ${TaskListType}` | 
@@ -507,33 +526,35 @@ type ContextMenuOptions = {
     width: CSSUnitVal
 }
 
-type ElemDimensions = {
+type StylingOptions = {
+    width?: CSSUnitVal
+    height?: CSSPxVal
     padding?: CSSMultiDimPxVal
     margin?: CSSMultiDimPxVal
-    height?: CSSPxVal
-    width?: CSSUnitVal
-    color?: string
-    backgroundColor?: string
     fontSize?: CSSREMVal
+    fontWeight?: CSSPxVal
+    color?: string
+    borderRadius?: CSSPxVal
+    backgroundColor?: string
 }
 
 type TasksListOptions<TaskListTypeCombos> = {
     id: string
     type?: TaskListTypeCombos
     tasks: Task[]
+    isCreatingNewTask: boolean
     containerRef: HTMLElement
     styling?: {
-        list?: ElemDimensions
-        task?: ElemDimensions
-        subtask?: ElemDimensions
-        checkbox?: ElemDimensions
-        description?: ElemDimensions
+        list?: StylingOptions
+        task?: StylingOptions
+        subtask?: StylingOptions
+        checkbox?: StylingOptions
+        description?: StylingOptions
         descriptionInput?: { fontSize: CSSREMVal }
     }
     ui?: {
         showDragHandle?: boolean
         hideTaskBtn?: boolean
-        isMin?: boolean
         sidePadding?: CSSUnitVal
         hasTaskDivider?: boolean
         listHeight?: CSSUnitVal
@@ -545,6 +566,8 @@ type TasksListOptions<TaskListTypeCombos> = {
         taskBgColor?: string
         taskHoverBgColor?: string
         floatingItemBgColor?: string
+        maxTitleLines?: number
+        maxDescrLines?: number
     },
     dragAndDrop?: DragAndDropHandler
     contextMenuOptions: ContextMenuOptions

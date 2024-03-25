@@ -1,147 +1,23 @@
 <script lang="ts">
-	import { COLOR_SWATCHES, TEST_TAGS, clickOutside, getColorTrio, randomArrayElem } from '$lib/utils-general';
-	import { onMount } from 'svelte';
-    import type { PageData } from './$types';
-	import { RoutinesManager } from '$lib/routines-manager';
-	import { themeState } from '$lib/store';
-	import { getTimeFromIdx, minsToHHMM } from '$lib/utils-date';
-	import EditRoutineModal from './EditRoutineModal.svelte';
+	import { COLOR_SWATCHES, TEST_TAGS, getColorTrio } from '$lib/utils-general'
+	import { onMount } from 'svelte'
+	import { RoutinesManager } from '$lib/routines-manager'
+	import { themeState } from '$lib/store'
+	import { getTimeFromIdx, minsToHHMM } from '$lib/utils-date'
+	import EditRoutineModal from './EditRoutineModal.svelte'
+	import { InputManager, TextEditorManager } from '$lib/inputs';
+	import type { Writable } from 'svelte/store';
+	import SvgIcon from '../../../../components/SVGIcon.svelte';
+	import DropdownList from '../../../../components/DropdownList.svelte';
+	import { Icon } from '$lib/enums';
+	import { ROUTINES } from '$lib/utils-routines';
 
     // export let data: PageData;
-
-    const ROUTINES: DailyRoutine[] = [
-        { 
-            id: "0",
-            name: "Workday 1.0",
-            description: "Regular work day",
-            blocks: [
-                {
-                    title: "🌤️ Morning Routine",
-                    color: COLOR_SWATCHES.d[0],
-                    startTime: 370,
-                    endTime: 420,
-                    activity: null,
-                    tag: null,
-                },
-                {
-                    title: "👨‍💻 SWE Deep Work",
-                    color: COLOR_SWATCHES.d[1],
-                    startTime: 525,
-                    endTime: 720,
-                    activity: "working",
-                    tag: TEST_TAGS[1],
-                },
-                {
-                    title: "🍖 Lunch Break",
-                    color: COLOR_SWATCHES.d[2],
-                    startTime: 730,
-                    endTime: 800,
-                    activity: null,
-                    tag: null,
-                },
-                {
-                    title: "👨‍💻 SWE Deep Work",
-                    color: COLOR_SWATCHES.d[1],
-                    startTime: 885,
-                    endTime: 1080,
-                    activity: "working",
-                    tag: TEST_TAGS[1],
-                },
-                {
-                    title: "💪 Gym (Pull)",
-                    color: COLOR_SWATCHES.d[3],
-                    startTime: 1080,
-                    endTime: 1140,
-                    activity: "body",
-                    tag: TEST_TAGS[0],
-                },
-                {
-                    title: "🍖 Dinner",
-                    color: COLOR_SWATCHES.d[4],
-                    startTime: 1140,
-                    endTime: 1170,
-                    activity: null,
-                    tag: TEST_TAGS[3],
-                },
-                {
-                    title: "🌙 Evening Routine",
-                    color: COLOR_SWATCHES.d[1],
-                    startTime: 1380,
-                    endTime: 1410,
-                    activity: "selfCare",
-                    tag: null
-                },
-            ]
-        },
-        { 
-            id: "zz",
-            name: "Weekend",
-            description: "Ideal Weekend",
-            blocks: [
-                {
-                    title: "🌤️ Morning Routine",
-                    color: COLOR_SWATCHES.d[0],
-                    startTime: 480,
-                    endTime: 520,
-                    activity: null,
-                    tag: null
-                },
-                {
-                    title: "🏃‍♂️ Running",
-                    color: COLOR_SWATCHES.d[1],
-                    startTime: 600,
-                    endTime: 690,
-                    activity: "working",
-                    tag: TEST_TAGS[6]
-                },
-                {
-                    title: "🍖 Lunch Break",
-                    color: COLOR_SWATCHES.d[2],
-                    startTime: 730,
-                    endTime: 800,
-                    activity: null,
-                    tag: null
-                },
-                {
-                    title: "🌁 Art",
-                    color: COLOR_SWATCHES.d[1],
-                    startTime: 885,
-                    endTime: 920,
-                    activity: "selfCare",
-                    tag: TEST_TAGS[8]
-                },
-                {
-                    title: "💪 Gym (Push)",
-                    color: COLOR_SWATCHES.d[3],
-                    startTime: 1000,
-                    endTime: 1100,
-                    activity: "body",
-                    tag: TEST_TAGS[0]
-                },
-                {
-                    title: "🍖 Dinner",
-                    color: COLOR_SWATCHES.d[4],
-                    startTime: 1130,
-                    endTime: 1200,
-                    activity: null,
-                    tag: TEST_TAGS[3]
-                },
-                {
-                    title: "🌙 Evening Routine",
-                    color: COLOR_SWATCHES.d[1],
-                    startTime: 1380,
-                    endTime: 1410,
-                    activity: "selfCare",
-                    tag: null
-                },
-            ]
-        }
-    ]
-
     let manager = new RoutinesManager(ROUTINES)
     let timeBoxElem: HTMLElement
     let hozLinesContainerWidth
-    let isEditModalOpen = true
+    let isEditModalOpen = false
+    let settingsOpen = false
 
     let _userRoutines  = manager.userRoutines!
     let _focusedRoutineElems = manager.focusedRoutineElems
@@ -149,22 +25,66 @@
     let _currCores = manager.currCores
     let _newBlock = manager.newBlock
     let _tagBreakdown = manager.currTagBreakdown
+    let _editingBlock = manager.editingBlock
+    let _editContext = manager.editContext
+
+    const BLOCKS_LEFT_OFFSET = 8
+    const BLOCKS_CONTAINER_LEFT_OFFSET = 45
 
     $: selectedTimeFrame = isViewingCore ? "Cores" : "Tags"
-    $: userRoutines   = $_userRoutines!
+
+    $: userRoutines   = $_userRoutines as DailyRoutine[]
     $: focusedRoutineElems  = $_focusedRoutineElems ?? []
     $: focusedRoutine = $_focusedRoutine
     $: currCores      = $_currCores
+    $: editingBlock   = $_editingBlock
     $: tagBreakdown   = $_tagBreakdown ?? []
+    $: editContext    = $_editContext
     $: newBlock       = $_newBlock
-    $: isLightTheme   = !$themeState.isDarkTheme
+    $: isDarkTheme    = $themeState.isDarkTheme
     $: focusedId      = $_focusedRoutine?.id ?? "0"
+
+    $: initTextEditors(focusedRoutine)
 
     let chosenId      = "0"
     let isViewingCore = true
+    let timeBoxElemWidth = 0
 
-    $: console.log(focusedId)
+    let titleInput: Writable<InputManager>
+    let description: Writable<InputManager>
 
+    function initTextEditors(focusedRoutine: DailyRoutine | null) {
+        return
+
+        titleInput = (new InputManager({ 
+            initValue: focusedRoutine.name,
+            placeholder: "Routine Title",
+            maxLength: 100,
+            id: "routine-title-input",
+            doAllowEmpty: false,
+            handlers: {
+                onInputHandler: manager.updateTitle
+            }
+        })).state
+    
+        description = (new TextEditorManager({ 
+            initValue: focusedRoutine.description,
+            placeholder: "Type description here...",
+            maxLength: 500,
+            id: "routine-description",
+            handlers: {
+                onInputHandler:  manager.updateDescription
+            }
+        })).state
+    }
+
+    function onMadeChanges(routineBlock: RoutineBlockElem) {
+        closeEditModal(routineBlock)
+    }
+    function closeEditModal(routineBlock: RoutineBlockElem | null) {
+        manager.onEditModalClose(routineBlock)
+        isEditModalOpen = false
+    }
     function getBlockStyling(height: number) {
         const classes: string[] = []
 
@@ -182,15 +102,16 @@
     
     onMount(() =>{
         requestAnimationFrame(() => {
-            manager.initDayRoutines(ROUTINES[0].id, timeBoxElem)
+            manager.initContainer(timeBoxElem)
+            manager.initDailyRoutines(ROUTINES[0].id)
         })
     })
 </script>
 
 <div 
     class="routines"
-    class:routines--light={isLightTheme}
-    class:routines--dark={!isLightTheme}
+    class:routines--light={!isDarkTheme}
+    class:routines--dark={isDarkTheme}
 >
     <!-- Routines List -->
     <div class="routines__collection">
@@ -201,7 +122,7 @@
                     class="routines__routine-item" 
                     class:routines__routine-item--chosen={routine.id === chosenId}
                     class:routines__routine-item--clicked={routine.id === focusedId}
-                    on:click={() => manager.initCurrentRoutine(routine.id)}
+                    on:click={() => manager.initCurrentDailyRoutine(routine.id)}
                 >
                     <span>
                         {routine.name}
@@ -215,14 +136,59 @@
     </div>
     <div class="routines__divider routines__divider--first"></div>
     <!-- Picked Routine Details -->
-    <div class="routines__routine-details-container ">
+    <div 
+        class="routine"
+        class:routine--dark={isDarkTheme}
+    >
         <div class="routine__details">
-            <h2 class="routine__details-title">
-                {ROUTINES[0].name}
-            </h2>
-            <p class="routine__details-description">
-                {ROUTINES[0].description}
-            </p>
+            {#if $titleInput}
+                <div class="routine__details-header">
+                    <input 
+                        type="text"
+                        name="routine-title-input" 
+                        id="routine-title-input"
+                        class="routine__title"
+                        aria-label="Title"
+                        spellcheck="false"
+                        value={$titleInput.value}
+                        placeholder={$titleInput.placeholder}
+                        maxlength={$titleInput.maxLength}
+                        on:blur={(e) => $titleInput.onBlurHandler(e)}
+                        on:input={(e) => $titleInput.onInputHandler(e)}
+                    >
+                    <button 
+                        class="routine__settings-btn dropdown-btn dropdown-btn--settings"
+                        id={"routine-settings--dropdown-btn"}
+                        on:click={() => settingsOpen = !settingsOpen}
+                    >
+                        <SvgIcon icon={Icon.Settings} options={{ opacity: 0.4}}/>
+                    </button>
+                    <!-- Settings Dropdown -->
+                    <DropdownList 
+                        id={"edit-routine-settings"}
+                        isHidden={!settingsOpen} 
+                        options={{
+                            listItems: [{ name: "Duplicate Routine" }, { name: "Delete Routine" }],
+                            onListItemClicked: (e, idx) => manager.onSettingsOptionClicked(idx),
+                            position: { top: "30px", right: "0px" },
+                            styling: { width: "140px" },
+                            onClickOutside: () => settingsOpen = false
+                        }}
+                    />
+                </div>
+                <div 
+                    class="routine__description text-editor"
+                    aria-label="Description"
+                    data-placeholder={$description.placeholder}
+                    contenteditable
+                    bind:innerHTML={$description.value}
+                    on:paste={(e) => $description.onPaste(e)}
+                    on:input={(e) => $description.onInputHandler(e)}
+                    on:focus={(e) => $description.onFocusHandler(e)}
+                    on:blur={(e)  => $description.onBlurHandler(e)}
+                >
+                </div>
+            {/if}
         </div>
         <!-- Breakdown -->
         <div class="routine__breakdown">
@@ -282,10 +248,10 @@
             <div class="routine__tag-breakdown">
                 <h3>Tag Breakdown</h3>
                 {#each tagBreakdown as tagData}
-                    {@const colorTrio = getColorTrio(tagData.tag.symbol.color, isLightTheme)}
-                    <div class="tag">
+                    {@const colorTrio = getColorTrio(tagData.tag.symbol.color, !isDarkTheme)}
+                    <div class="routine__tag-row">
                         <div 
-                            class="tag__content"
+                            class="tag"
                             style:--tag-color-primary={tagData.tag.symbol.color.primary}
                             style:--tag-color-1={colorTrio[0]}
                             style:--tag-color-2={colorTrio[1]}
@@ -306,34 +272,42 @@
             </div>
         </div>
     </div>
-    <div class="routines__divider"></div>
+    <div class="routines__divider routines__divider--last"></div>
     <!-- Picked Routine Time Blocks -->
     <div 
         class="routines__time-box-container" 
+        class:routines__time-box-container--editing={editContext}
         bind:this={timeBoxElem}
+        bind:clientWidth={timeBoxElemWidth}
+        on:mousemove={manager.timeBoxMouseMove}
     >
         <div class="routines__time-box">
             <div 
+                id={manager.ROUTINE_BLOCKS_CONTAINER_ID}
                 class="routine-time-blocks"
-                class:routine-time-blocks--no-pointer-events={newBlock}
+                class:routine-time-blocks--editing={editContext}
+                class:routine-time-blocks--light={false}
+                style:--left-offset={`${BLOCKS_CONTAINER_LEFT_OFFSET}px`}
                 on:pointerdown={(e) => manager.onTimeBoxPointerDown(e)}
-                id={manager.TIME_BOX_ID}
             >
                 {#each focusedRoutineElems as block (block.id)}
-                    {@const colorTrio = getColorTrio(block.color, isLightTheme)}
+                    {@const colorTrio = getColorTrio(block.color, false)}
+                    {@const isEditingBlock = editingBlock?.id === block.id && editContext === "lift"}
+
+                    <!-- Routine Block -->
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div 
+                        id={`daily-routine-block--${block.id}`}
                         class={`routine-time-blocks__block ${getBlockStyling(block.height)}`}
-                        style:top={block.yOffset}
-                        style:left={block.xOffset}
+                        class:routine-time-blocks__block--lift-edit={isEditingBlock}
+                        style:top={`calc(${block.yOffset}px`}
+                        style:--left-x-offset={`${block.xOffset}px`}
                         style:--block-height={`${block.height}px`}
                         style:--block-color-1={colorTrio[0]}
                         style:--block-color-2={colorTrio[1]}
                         style:--block-color-3={colorTrio[2]}
                         title={`${block.title} \n${block.startTimeStr} - ${block.endTimeStr}`}
-                        on:click={
-                            (e) => manager.onBlockPointerDown(e, block.id)
-                        }
+                        on:mousedown={(e) => manager.onBlockPointerDown(e, block.id)}
                     >
                         <div class="routine-time-blocks__block-content">
                             <div class="flx flx--algn-center">
@@ -350,14 +324,15 @@
                         <div class="routine-time-blocks__block-spine"></div>
                     </div>
                 {/each}
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
+
+                <!-- New Block  -->
                 {#if newBlock}
-                    {@const colorTrio = getColorTrio(newBlock.color, isLightTheme)}
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    {@const colorTrio = getColorTrio(newBlock.color, !isDarkTheme)}
                     <div 
                         class={`routine-time-blocks__block ${getBlockStyling(newBlock.height)}`}
                         id="dummy-block"
-                        style:top={newBlock.yOffset}
-                        style:left={newBlock.xOffset}
+                        style:top={`${newBlock.yOffset}px`}
                         style:--block-height={`${newBlock.height}px`}
                         style:--block-color-1={colorTrio[0]}
                         style:--block-color-2={colorTrio[1]}
@@ -379,6 +354,37 @@
                         <div class="routine-time-blocks__block-spine"></div>
                     </div>
                 {/if}
+
+                <!-- Drop Area Block -->
+                {#if editingBlock && editContext === "lift"}
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    {@const colorTrio = getColorTrio(editingBlock.color, !isDarkTheme)}
+                        <div 
+                            class={`routine-time-blocks__block ${getBlockStyling(editingBlock.height)}`}
+                            class:routine-time-blocks__block--drop-area={true}
+                            id="drop-area-block"
+                            style:top={`${editingBlock.yOffset}px`}
+                            style:--block-height={`${editingBlock.height}px`}
+                            style:--block-color-1={colorTrio[0]}
+                            style:--block-color-2={colorTrio[1]}
+                            style:--block-color-3={colorTrio[2]}
+                            title="Untitled Block"
+                        >
+                            <div class="routine-time-blocks__block-content">
+                                <div class="flx flx--algn-center">
+                                    <span class="routine-time-blocks__block-title">
+                                        {editingBlock.title}
+                                    </span>
+                                </div>
+                                <div class="routine-time-blocks__block-time-period">
+                                    <span>{editingBlock.startTimeStr}</span>
+                                    <span>-</span>
+                                    <span>{editingBlock.endTimeStr}</span>
+                                </div>
+                            </div>
+                            <div class="routine-time-blocks__block-spine"></div>
+                        </div>
+                {/if}
             </div>
            <!-- Hour Blocks -->
             <div class="hour-blocks-container scroll-bar-hidden" >
@@ -388,13 +394,13 @@
                         {@const height = (60 / 1440) * 100}
                         <div 
                             class="hour-blocks__block"
-                            style:top={`calc(${headOffsetPerc}% - 0px)`}
+                            style:top={`calc(${headOffsetPerc}% + 3px)`}
                             style:height={`${height}%`}
                         >
                             <span>{getTimeFromIdx(timeIdx)}</span>
                             <div class="hour-blocks__block-vert-divider">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="2" height=28 viewBox={`0 0 2 28`} fill="none">
-                                    <path d="M1.25684 0.614746V 32.5" stroke-width="0.9" stroke-dasharray="2 2"/>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="2" height="27" viewBox="0 0 0 0" fill="none">
+                                    <path d="M1.25684 0.614746V 28" stroke-width="1" stroke-dasharray="2 2"/>
                                 </svg>
                             </div>
                         </div>
@@ -411,12 +417,14 @@
                             {@const height = (60 / 1440) * 100}
                             <div 
                                 class="hoz-lines__line"
-                                style:top={`calc(${headOffsetPerc}% + 1px)`}
+                                style:top={`calc(${headOffsetPerc}% + 3px)`}
                                 style:height={`${height}%`}
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" width={width} height="2" viewBox={`0 0 ${width} 2`} fill="none">
-                                    <path d={`M0 1H ${width}`} stroke-width="0.7" stroke-dasharray="3 3"/>
-                                </svg>
+                                <div class="hoz-lines__line-content">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width={width} height="2" viewBox={`0 0 ${width} 2`} fill="none">
+                                        <path d={`M0 1H ${width}`} stroke-width="0.7" stroke-dasharray="3 3"/>
+                                    </svg>
+                                </div>
                             </div>
                         {/each}
                     {/if}
@@ -426,17 +434,27 @@
     </div>
 </div>
 
-{#if isEditModalOpen}
-    <EditRoutineModal />
+{#if editContext === "details" && editingBlock}
+    <EditRoutineModal 
+        block={editingBlock}
+        onCancel={() => closeEditModal(null)}
+        {onMadeChanges}
+    />
 {/if}
 
 <style lang="scss">
     @import "../../../../scss/day-box.scss";
     @import "../../../../scss/dropdown.scss";
+    @import "../../../../scss/inputs.scss";
     @import "../../../../scss/components/routines.scss";
 
-    $hour-blocks-top-offset: 35px;
+    $hour-blocks-top-offset: 55px;
     $hour-block-height: 50px;
+
+    $xlg-blocks-left-offset: 30px;
+    $lg-blocks-left-offset: 20px;
+    $md-blocks-left-offset: 30px;
+    $sm-blocks-left-offset: 8px;
 
     .routines {
         display: flex;
@@ -448,6 +466,9 @@
         }
         &--dark .dropdown-menu {
             @include dropdown-menu-dark;
+        }
+        &--dark .dropdown-btn {
+            @include dropdown-btn-dark;
         }
 
         &__collection {
@@ -515,6 +536,11 @@
             height: calc(100% - 10px);
             overflow-y: scroll;
             overflow-x: hidden;
+            padding-bottom: 20px;
+
+            &--editing * {
+                user-select: none !important;
+            }
         }
         &__time-box {
             width: 100%;
@@ -522,19 +548,17 @@
             height: calc(($hour-block-height * 24));
             padding-right: 20px;
         }
-        &__routine-details-container {
+        .routine {
             width: clamp(270px, 30%, 320px);
             position: relative;
         }
     }
 
+    /* Customizization from Resuable Stylings */
     .routine {
         &__breakdown h3 {
             @include text-style(0.8, 400, 1.32rem);
             margin-bottom: 11px;
-        }
-        &__tag {
-            margin-left: -5px;
         }
         &__tag-breakdown h3 {
             margin-bottom: 14px;
@@ -542,20 +566,23 @@
     }
 
     .routine-time-blocks {
-        @include pos-abs-top-left-corner(-2px, 85px);
-        width: calc(100% - 85px);
+        @include pos-abs-top-left-corner(-2px, var(--left-offset));
+        width: calc(100% - var(--left-offset));
         height: calc(($hour-block-height * 24));
-
-        &--no-pointer-events &__block {
-            pointer-events: none;
+        
+        &--grabbing {
+            cursor: grabbing;
         }
         &__block {
             width: 80%;
-            border-radius: 9px;
+            max-width: 240px;
+            $lg-blocks-left-offset: 20px;
+        }
+        &__block--lift-edit {
+            left: var(--left-x-offset) !important;
         }
     }
     .routine-time-blocks {
-
     }
     .hour-blocks {
         height: calc(($hour-block-height * 24));
@@ -573,6 +600,10 @@
             width: 40px;
             left: -5px;
         }
+        &__block-vert-divider {
+            height: 28px;
+            opacity: 0.5;
+        }
         &__block span {
             width: 40px;
         }
@@ -587,6 +618,29 @@
         &__line {
             height: 50px;
             width: 100%;
+        }
+    }
+
+    /* Media Queries */
+    @media (min-width: 1000px) {
+        .routine-time-blocks__block {
+            left: $xlg-blocks-left-offset;
+        }
+    }
+    @media (max-width: 860px) {
+        .routine {
+            display: none;
+        }
+        .routines__divider--last {
+            display: none;
+        }
+        .routine-time-blocks__block {
+            left: $md-blocks-left-offset;
+        }
+    }
+    @media (max-width: 600px) {
+        .routine-time-blocks__block {
+            left: $sm-blocks-left-offset;
         }
     }
 </style>

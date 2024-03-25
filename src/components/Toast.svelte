@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Icon, LogoIcon } from '$lib/enums'
-	import type { ToastClassnames, ToastProps } from '$lib/types-toast'
+	import type { ToastClassnames, ToastProps, ToastTypes } from '$lib/types-toast'
 	import { cn, toasterManager, useEffect } from '$lib/utils-toast'
 	import { onDestroy, onMount } from 'svelte'
 	import Logo from './Logo.svelte'
@@ -109,6 +109,8 @@
 		return () => clearTimeout(timeoutId)
 	})
 
+	$: isContextMsg = ["success", "warning", "info", "error"].some((type) => toastType === type)
+
 	function deleteToast() {
 		removed = true
 		offsetBeforeRemove = offset   // Save the offset for the exit swipe animation
@@ -214,7 +216,8 @@
 
 		if (isAllowedToSwipe) {
 			toastRef.style.setProperty('--swipe-amount', `${xPosition}px`)
-		} else if (Math.abs(yPosition) > swipeStartThreshold) {
+		} 
+		else if (Math.abs(yPosition) > swipeStartThreshold) {
 			pointerStartRef = null
 		}
 	}
@@ -225,8 +228,6 @@
 		// Add toast height total heights array after the toast is mounted
 		const height = toastRef.getBoundingClientRect().height
 		initialHeight = height
-
-		console.log("XX")
 
 	    addHeight({ toastId: toast.id, height })
 	})
@@ -240,6 +241,11 @@
 	role="status"
 	tabIndex={0}
     class="toast"
+    class:toast--context={isContextMsg}
+    class:toast--success={toastType === 'success'}
+    class:toast--warning={toastType === 'warning'}
+    class:toast--info={toastType === 'info'}
+    class:toast--error={toastType === 'error'}
 	data-sonner-toast=""
 	data-styled={!(toast.component || toast?.unstyled || unstyled)}
 	data-mounted={mounted}
@@ -282,76 +288,57 @@
 		</button>
 	{/if}
 
-	<!-- Custom Component -->
-	{#if toast.component}
-		<svelte:component this={toast.component} {...toast.componentProps} on:closeToast={deleteToast}>
-		</svelte:component>
-	<!-- Loading Icon -->
-	{:else if toastType !== 'default' || toast.icon || toast.promise}
-		<div data-icon="">
-			{#if (toast.promise || toastType === 'loading') && !toast.icon}
-				<slot name="loading-icon" />
-			{/if}
-			{#if toast.icon}
-				<svelte:component this={toast.icon}></svelte:component>
-			{:else}
-				{#if toastType === 'success'}
-					<slot name="success-icon" />
-				{:else if toastType === 'error'}
-					<slot name="error-icon" />
-				{:else if toastType === 'warning'}
-					<slot name="warning-icon" />
-				{:else if toastType === 'info'}
-					<slot name="info-icon" />
-				{/if}
-			{/if}
-		</div>
-	<!-- Title and Description -->
-	{:else}
-		<div data-content="">
-            <div class="toast__header">
+	<!-- Main Content -->
+	<div class="toast__content" data-content="">
+		<div class="toast__header">
+			<div class="toast__header-icon">
 				{#if toast.logoIcon != null}
-					<div class="toast__header-icon">
-						<Logo 
-							logo={toast.logoIcon} 
-							options={{ containerWidth: `100%`, ...iconOptions}} 
-						/>
-					</div>
+					<Logo 
+						logo={toast.logoIcon} 
+						options={{ containerWidth: `100%`, ...iconOptions}} 
+					/>
+				{:else if toastType === "success"}
+					<i class="fa-solid fa-circle-check"></i>
+				{:else if toastType === "info"}
+					<i class="fa-solid fa-circle-exclamation"></i>
+				{:else if toastType === "warning"}
+					<i class="fa-solid fa-triangle-exclamation"></i>
+				{:else if toastType === "error"}
+					<i class="fa-solid fa-circle-exclamation"></i>
 				{/if}
-                <div class="toast__header-title">
-                    {toast.title}
-                </div>
-            </div>
-            <div class="toast__header-description">
-                {#if typeof toast.description !== 'string'}
-                    <svelte:component this={toast.description} {...toast.componentProps} />
-                {:else}
-                    {toast.description}
-                {/if}
-            </div>
+			</div>
+			<div class="toast__header-title">
+				{toast.title}
+			</div>
 		</div>
+		<div class="toast__description">
+			{#if typeof toast.description !== 'string'}
+				<svelte:component this={toast.description} {...toast.componentProps} />
+			{:else}
+				{toast.description}
+			{/if}
+		</div>
+	</div>
+	<div class="toast__bottom-container">
+		<!-- Cancel -->
+		{#if toast.cancel}
+			<button
+				data-button data-cancel
+				style={cancelButtonStyle}
+				class={cn(classes?.cancelButton, toast?.classes?.cancelButton)}
+				on:click={closeBtnClickedHandler}
+			>
+				{toast.cancel.label}
+			</button>
+		{/if}
 
-        <div class="toast__bottom-container">
-            <!-- Cancel -->
-            {#if toast.cancel}
-                <button
-                    data-button data-cancel
-                    style={cancelButtonStyle}
-                    class={cn(classes?.cancelButton, toast?.classes?.cancelButton)}
-                    on:click={closeBtnClickedHandler}
-                >
-                    {toast.cancel.label}
-                </button>
-            {/if}
-
-            <!-- Action -->
-            {#if toast.action}
-                <button class="toast__action-btn" on:click={actionBtnClickedHandler}>
-				{toast.action.label}
-                </button>
-            {/if}
-        </div>
-	{/if}
+		<!-- Action -->
+		{#if toast.action}
+			<button class="toast__action-btn" on:click={actionBtnClickedHandler}>
+			{toast.action.label}
+			</button>
+		{/if}
+	</div>
 </li>
 
 

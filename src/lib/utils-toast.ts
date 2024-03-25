@@ -52,7 +52,7 @@ export let toasterManager = ToasterManager()
  *
  *  This is necessary to maintain type information, which would otherwise be lost.
  */
-export let toastAPI = {
+export const toastAPI = {
 	// toast types
 	default: makeDefaultToast,
 	message: toasterManager.makeMessageToast,

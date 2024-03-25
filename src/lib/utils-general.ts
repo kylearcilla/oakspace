@@ -2,23 +2,36 @@ import { LogoIcon } from "./enums"
 
 /**
  * Custom click outside use directive.
- * Relevant for modals and dropdown menus / lists.
- * Has a black list of classes that prevents dispatching click outside event for special use cases.
- * 
- *  Special Cases
- *  1. Dropdown Btn - Do not close dropdown list when dropdown button is clicked, let the local handler do that
  * 
  * @param node    Node that the deritive has been binded / attached to.
  * @returns       Object that contains a function that removes click outside event listener when attachee node is unmounted from DOM.
  */
 export const clickOutside = (node: any) => {
   const handleClick = (event: any) => {
-    const srcClasses = event.srcElement.classList.value + " " + event.srcElement.parentElement.classList.value
+    const target = event.target as HTMLElement
+    const nodeId = node.id as string
+    const hasClickedInsideNode = node?.contains(target)
 
-    let hasBlacklistedClass = srcClasses.includes("dropdown-btn") || srcClasses.includes("dropdown-elem")
-    let hasClickedInsideNode = node?.contains(event.target)
+    const dropdownBtnClicked = findAncestor({
+      child: target, queryStr: "dropdown-btn", queryBy: "id",
+      max: 5, strict: false
+    })
+    const isSrcDropdownMenu = nodeId.includes("dropdown-menu")
 
-    if (!hasBlacklistedClass && !hasClickedInsideNode && !event.defaultPrevented) {
+    let isOwnDropdownBtn = false
+
+    // if dropdown-menu and clicked on a dropdown btn, let the dropdown-btn close, instead of this event
+    if (isSrcDropdownMenu && dropdownBtnClicked) {
+        const srcOrigin   = nodeId.split("--")[0]
+        const targetOrigin = dropdownBtnClicked.id.split("--")[0]
+
+        isOwnDropdownBtn = srcOrigin === targetOrigin
+    }
+
+    const hasClickedOutside = !isOwnDropdownBtn && !hasClickedInsideNode && !event.defaultPrevented
+
+    // has clicked outside
+    if (hasClickedOutside) {
         node.dispatchEvent(new CustomEvent('click_outside', node))
     }
   }
@@ -34,22 +47,33 @@ export const clickOutside = (node: any) => {
 /**
  * Find an element's ancestor by name
  * @param child 
- * @param className 
+ * @param queryStr 
  * @returns  Ancestor
  */
-export const findAncestorByClass = (child: HTMLElement, className: string, max = 15): HTMLElement | null => {
-  let currentElement: HTMLElement | null = child
-
-  if (currentElement!.classList.value.includes(className)) { 
-    return currentElement
-  }
-
+export const findAncestor = (options: AncestoryQueryOptions): HTMLElement | null => {
+  let currentElement: HTMLElement | null = options.child
   let i = 0
 
-  while (currentElement !== null && !currentElement.classList.contains(className) && i++ < max) {
+  const max = options.max ?? 15
+  const strict = options.strict ?? false
+  const queryStr = options.queryStr
+  const byId = options.queryBy === "id"
+
+  while (currentElement && i++ < max) {
+    if (strict && byId && currentElement!.id === queryStr) {
+      return currentElement
+    }
+    else if (!strict && byId && currentElement!.id.includes(queryStr)) {
+      return currentElement
+    }
+    else if (strict && currentElement!.classList.contains(queryStr)) {
+      return currentElement
+    }
+    else if (!strict && currentElement!.classList.value.includes(queryStr)) {
+      return currentElement
+    }
+
     currentElement = currentElement.parentElement
-    
-    if (currentElement!.classList.value.includes(className)) return currentElement
   }
   return null
 }
@@ -453,61 +477,346 @@ export function getMaskedGradientStyle(element: HTMLElement, options?: GradientS
 /* Colors */
 export const COLOR_SWATCHES = {
   d: [
-    /* Yellow */
+    /* First Row */
     {
-      id: "d4-0",
-      primary: "255, 246, 163",
-      light1: "156, 124, 63",
-      light2: "240, 215, 169",
-      light3: "240, 215, 169",
-      dark1:  "255, 235, 196",
-      dark2:  "35, 28, 23",
-      dark3:  "255, 203, 100"
+      id: "d0-0",
+      primary: "255, 163, 174",
+      light1: "108, 59, 65",
+      light2: "247, 167, 181",
+      light3: "149, 102, 108",
+      dark1:  "252, 178, 190",
+      dark2:  "25, 19, 21",
+      dark3:  "146, 96, 102",
+      isLight: false,
+      isDark: false,
     },
-    /* Purple */
     {
       id: "d1-0",
-      primary: "120, 118, 254",
-      light1: "73, 58, 117",
-      light2: "172, 165, 253",
-      light3: "172, 165, 253",
-      dark1:  "198, 189, 225",
-      dark2:  "30, 27, 49",
-      dark3:  "133, 111, 194",
+      primary: "254, 213, 191",
+      light1: "123, 90, 71",
+      light2: "250, 207, 183",
+      light3: "191, 145, 121",
+      dark1:  "254, 213, 191",
+      dark2:  "20, 17, 15",
+      dark3:  "138, 117, 105",
+      isLight: false,
+      isDark: false,
     },
-    /* Red */
+    {
+      id: "d2-0",
+      primary: "254, 244, 191",
+      light1: "132, 110, 65",
+      light2: "254, 244, 191",
+      light3: "191, 167, 121",
+      dark1:  "254, 244, 191",
+      dark2:  "32, 30, 26",
+      dark3:  "125, 119, 95",
+      isLight: true,
+      isDark: false
+    },
     {
       id: "d3-0",
-      primary: "255, 196, 163",
-      light1: "156, 96, 63",
-      light2: "240, 199, 169",
-      light3: "240, 199, 169",
-      dark1:  "247, 214, 195",
-      dark2:  "51, 35, 28",
-      dark3:  "216, 113, 90",
+      primary: "238, 254, 191",
+      light1: "58, 100, 55",
+      light2: "238, 254, 191",
+      light3: "137, 180, 134",
+      dark1:  "220, 251, 195",
+      dark2:  "21, 23, 18",
+      dark3:  "96, 115, 94",
+      isLight: true,
+      isDark: true,
     },
-    /* Green */
     {
-      id: "d5-3",
-      primary: "237, 255, 163",
-      light1: "93, 97, 71",
-      light2: "230, 240, 169",
-      light3: "230, 240, 169",
-      dark1:  "208, 211, 172",
-      dark2:  "53, 54, 35",
-      dark3:  "223, 232, 115",
+      id: "d4-0",
+      primary: "211, 233, 232",
+      light1: "72, 101, 95",
+      light2: "211, 233, 232",
+      light3: "129, 169, 160",
+      dark1:  "211, 233, 232",
+      dark2:  "20, 24, 22",
+      dark3:  "90, 108, 103",
+      isLight: true,
+      isDark: false,
     },
-    /* Blue */
     {
-      id: "d6-3",
-      primary: "200, 248, 248",
-      light1: "59, 78, 92",
-      light2: "163, 216, 2559",
-      light3: "163, 216, 2559",
-      dark1:  "150, 192, 201",
-      dark2:  "32, 36, 45",
-      dark3:  "107, 156, 213",
+      id: "d5-0",
+      primary: "95, 99, 125",
+      light1: "95, 99, 125",
+      light2: "211, 214, 233",
+      light3: "147, 152, 183",
+      dark1:  "195, 215, 255",
+      dark2:  "26, 28, 32",
+      dark3:  "87, 95, 113",
+      isLight: true,
+      isDark: false,
     },
+    {
+      id: "d6-0",
+      primary: "226, 211, 233",
+      light1: "115, 95, 125",
+      light2: "226, 211, 233",
+      light3: "156, 140, 165",
+      dark1:  "234, 213, 255",
+      dark2:  "29, 26, 32",
+      dark3:  "100, 87, 116",
+      isLight: true,
+      isDark: false,
+    },
+    /* Second Row */
+    {
+      id: "d1-0",
+      primary: "255, 166, 84",
+      light1: "111, 76, 44",
+      light2: "255, 190, 131",
+      light3: "161, 121, 84",
+      dark1:  "255, 149, 149",
+      dark2:  "38, 22, 21",
+      dark3:  "146, 78, 78",
+      isLight: false,
+      isDark: true,
+    },
+    {
+      id: "d1-1",
+      primary: "255, 190, 130",
+      light1: "161, 109, 61",
+      light2: "255, 206, 160",
+      light3: "175, 142, 111",
+      dark1:  "255, 215, 167",
+      dark2:  "25, 19, 14",
+      dark3:  "155, 135, 111",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "d1-2",
+      primary: "255, 232, 113",
+      light1: "139, 106, 41",
+      light2: "255, 229, 137",
+      light3: "156, 145, 87",
+      dark1:  "251, 235, 154",
+      dark2:  "26, 24, 18",
+      dark3:  "129, 117, 74",
+      isLight: true,
+      isDark: true,
+    },
+    {
+      id: "d1-3",
+      primary: "192, 247, 101",
+      light1: "79, 91, 58",
+      light2: "208, 249, 139",
+      light3: "129, 153, 87",
+      dark1:  "222, 248, 149",
+      dark2:  "26, 29, 21",
+      dark3:  "129, 141, 94",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "d1-4",
+      primary: "189, 231, 255",
+      light1: "74, 88, 97",
+      light2: "189, 231, 255",
+      light3: "120, 153, 175",
+      dark1:  "189, 231, 255",
+      dark2:  "24, 29, 32",
+      dark3:  "82, 111, 113",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "d1-5",
+      primary: "164, 178, 222",
+      light1: "94, 105, 144",
+      light2: "185, 199, 249",
+      light3: "137, 149, 189",
+      dark1:  "163, 177, 221",
+      dark2:  "24, 26, 32",
+      dark3:  "100, 107, 129",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "d1-6",
+      primary: "157, 138, 211",
+      light1: "93, 85, 147",
+      light2: "206, 198, 255",
+      light3: "139, 132, 182",
+      dark1:  "190, 173, 237",
+      dark2:  "30, 26, 33",
+      dark3:  "102, 96, 120",
+      isLight: false,
+      isDark: false,
+    },
+    /* Third Row */
+    {
+      id: "d2-0",
+      primary: "236, 100, 81",
+      light1: "137, 80, 68",
+      light2: "254, 162, 139",
+      light3: "182, 110, 94",
+      dark1:  "255, 146, 122",
+      dark2:  "32, 22, 20",
+      dark3:  "138, 93, 83",
+      isLight: false,
+      isDark: true,
+    },
+    {
+      id: "d2-1",
+      primary: "255, 166, 84",
+      light1: "111, 76, 44",
+      light2: "255, 190, 131",
+      light3: "161, 121, 84",
+      dark1:  "251, 195, 110",
+      dark2:  "30, 20, 12",
+      dark3:  "137, 116, 85",
+      isLight: false,
+      isDark: true,
+    },
+    {
+      id: "d2-2",
+      primary: "252, 255, 98",
+      light1: "103, 105, 45",
+      light2: "238, 255, 134",
+      light3: "155, 158, 86",
+      dark1:  "243, 248, 89",
+      dark2:  "26, 32, 20",
+      dark3:  "95, 100, 60",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "d2-3",
+      primary: "179, 253, 144",
+      light1: "59, 94, 57",
+      light2: "212, 251, 187",
+      light3: "116, 171, 112",
+      dark1:  "193, 240, 182",
+      dark2:  "23, 28, 22",
+      dark3:  "96, 115, 94",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "d2-4",
+      primary: "171, 206, 195",
+      light1: "63, 81, 80",
+      light2: "184, 225, 222",
+      light3: "109, 137, 129",
+      dark1:  "171, 206, 195",
+      dark2:  "26, 34, 34",
+      dark3:  "81, 99, 93",
+      isLight: true,
+      isDark: false,
+    },
+    {
+      id: "d2-5",
+      primary: "108, 158, 255",
+      light1: "76, 98, 141",
+      light2: "174, 202, 255",
+      light3: "111, 134, 178",
+      dark1:  "153, 167, 247",
+      dark2:  "22, 27, 41",
+      dark3:  "110, 120, 145",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "d2-6",
+      primary: "244, 192, 253",
+      light1: "115, 72, 123",
+      light2: "240, 199, 247",
+      light3: "175, 125, 184",
+      dark1:  "216, 163, 221",
+      dark2:  "36, 29, 37",
+      dark3:  "151, 125, 153",
+      isLight: false,
+      isDark: false,
+    },
+    /* Fourth Row */
+    {
+      id: "d3-0",
+      primary: "178, 111, 111",
+      light1: "83, 58, 58",
+      light2: "191, 145, 145",
+      light3: "133, 97, 97",
+      dark1:  "183, 143, 143",
+      dark2:  "24, 20, 20",
+      dark3:  "113, 96, 96",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "d3-1",
+      primary: "255, 138, 73",
+      light1: "111, 76, 44",
+      light2: "255, 168, 119",
+      light3: "160, 116, 75",
+      dark1:  "243, 150, 99",
+      dark2:  "26, 18, 14",
+      dark3:  "113, 78, 59",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "d3-2",
+      primary: "217, 191, 100",
+      light1: "113, 105, 66",
+      light2: "239, 220, 155",
+      light3: "164, 152, 88",
+      dark1:  "245, 225, 121",
+      dark2:  "38, 37, 26",
+      dark3:  "98, 93, 64",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "d3-3",
+      primary: "127, 243, 152",
+      light1: "61, 94, 61",
+      light2: "186, 234, 191",
+      light3: "119, 149, 119",
+      dark1:  "193, 220, 166",
+      dark2:  "19, 32, 19",
+      dark3:  "92, 113, 85",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "d3-4",
+      primary: "156, 255, 225",
+      light1: "63, 102, 90",
+      light2: "198, 255, 238",
+      light3: "112, 163, 147",
+      dark1:  "182, 244, 226",
+      dark2:  "21, 29, 25",
+      dark3:  "125, 160, 150",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "d3-5",
+      primary: "93, 108, 254",
+      light1: "65, 68, 126",
+      light2: "154, 175, 251",
+      light3: "112, 114, 180",
+      dark1:  "158, 170, 214",
+      dark2:  "23, 24, 31",
+      dark3:  "98, 101, 131",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "d3-6",
+      primary: "240, 152, 236",
+      light1: "109, 69, 107",
+      light2: "232, 163, 229",
+      light3:  "150, 102, 147",
+      dark1:  "240, 152, 236",
+      dark2:  "41, 25, 39",
+      dark3:  "154, 112, 152",
+      isLight: false,
+      isDark: false,
+    }
   ],
   p: [
 
@@ -515,9 +824,10 @@ export const COLOR_SWATCHES = {
 }
 
 /* Tags */
-export const TEST_TAGS = [
+export const TEST_TAGS: Tag[] = [
   {
     id: "",
+    orderIdx: 0,
     name: "Body",
     symbol: {
       color: COLOR_SWATCHES.d[0],
@@ -526,6 +836,7 @@ export const TEST_TAGS = [
   },
   {
     id: "",
+    orderIdx: 1,
     name: "SWE",
     symbol: {
       color: COLOR_SWATCHES.d[1],
@@ -534,6 +845,7 @@ export const TEST_TAGS = [
   },
   {
     id: "",
+    orderIdx: 2,
     name: "French",
     symbol: {
       color: COLOR_SWATCHES.d[4],
@@ -542,6 +854,7 @@ export const TEST_TAGS = [
   },
   {
     id: "",
+    orderIdx: 3,
     name: "Cooking",
     symbol: {
       color: COLOR_SWATCHES.d[2],
@@ -550,6 +863,7 @@ export const TEST_TAGS = [
   },
   {
     id: "",
+    orderIdx: 4,
     name: "SWE",
     symbol: {
       color: COLOR_SWATCHES.d[4],
@@ -558,6 +872,7 @@ export const TEST_TAGS = [
   },
   {
     id: "",
+    orderIdx: 5,
     name: "BBall",
     symbol: {
       color: COLOR_SWATCHES.d[2],
@@ -566,6 +881,7 @@ export const TEST_TAGS = [
   },
   {
     id: "",
+    orderIdx: 6,
     name: "Running",
     symbol: {
       color: COLOR_SWATCHES.d[2],
@@ -574,6 +890,7 @@ export const TEST_TAGS = [
   },
   {
     id: "",
+    orderIdx: 7,
     name: "Meditation",
     symbol: {
       color: COLOR_SWATCHES.d[3],
@@ -582,6 +899,7 @@ export const TEST_TAGS = [
   },
   {
     id: "",
+    orderIdx: 8,
     name: "Art",
     symbol: {
       color: COLOR_SWATCHES.d[0],
@@ -629,7 +947,8 @@ export function capitalizeString(str: string) {
  * @returns  An tuple containing a color's light or dark color trio.
  */
 export function getColorTrio(color: Color, doGetLight: boolean): [string, string, string] {
-  return doGetLight ? [color.light1, color.light2, color.light3] : [color.dark1, color.dark2, color.dark3];
+  const colorTrio = doGetLight ? [color.light1, color.light2, color.light3] : [color.dark1, color.dark2, color.dark3]
+  return colorTrio as [string, string, string]
 }
 
 export function extractNum(str: string) {
@@ -666,7 +985,7 @@ export function camelToKebab(camelCaseString: string) {
   return camelCaseString.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
-export function inlineStyling(styling?: ElemDimensions) {
+export function inlineStyling(styling?: StylingOptions) {
     if (!styling) return ""
     let cssString = ''
 
@@ -743,4 +1062,18 @@ export function setCursorPos(element: HTMLElement, pos: number) {
 
 export function clamp(min: number, value: number, max: number): number {
   return Math.min(Math.max(value, min), max)
+}
+
+export function getVertDistanceBetweenTwoElems(a: HTMLElement, b: HTMLElement) {
+  const aRect = a.getBoundingClientRect()
+  const bRect = b.getBoundingClientRect()
+  
+  return bRect.top - aRect.bottom
+}
+
+export function getHozDistanceBetweenTwoElems(a: HTMLElement, b: HTMLElement) {
+  const aRect = a.getBoundingClientRect()
+  const bRect = b.getBoundingClientRect()
+  
+  return bRect.left - aRect.right
 }

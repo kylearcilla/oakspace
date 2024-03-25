@@ -19,7 +19,7 @@
 
     const HOVER_EDGE_WIDTH = 10
 
-    function updateElemDimensions() {
+    function updateStylingOptions() {
 
     }
     

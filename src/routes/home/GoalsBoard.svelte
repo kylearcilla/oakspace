@@ -1,7 +1,7 @@
 <script lang="ts">
     import { GoalItemUI, Icon } from "$lib/enums"
 	import { goalsManager, editGoalManger, themeState } from "$lib/store"
-	import { findAncestorByClass, getVertScrollStatus } from "$lib/utils-general"
+	import { findAncestor, getVertScrollStatus } from "$lib/utils-general"
 
 	import GoalItem from "../../components/GoalItem.svelte"
 	import SVGIcon from "../../components/SVGIcon.svelte"
@@ -68,7 +68,7 @@
     /* Board Event Handlers */
     function onGoalCardMouseDown(event: MouseEvent) {
         const target = event.target as HTMLElement
-        const handleElem = findAncestorByClass(target, "goals-board__item-handle")
+        const handleElem = findAncestor(target, "goals-board__item-handle")
 
         if (!handleElem && !isSpaceDown) {
             return 
@@ -123,7 +123,7 @@
     function onDragEnterHandler(event: DragEvent) {
         event.stopPropagation()
         const target = event.target as HTMLElement
-        const boardItem = findAncestorByClass(target, GOAL_CARD_CLASS)!
+        const boardItem = findAncestor(target, GOAL_CARD_CLASS)!
 
         
         if (boardItem.id === dragSourcElem!.id) {

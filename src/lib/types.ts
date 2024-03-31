@@ -148,12 +148,13 @@ type DropdownListOptions = {
     pickedItemIdx?: number
     onListItemClicked: FunctionParam
     onClickOutside?: FunctionParam
+    onDismount?: FunctionParam
     position?: {
         top?: string, left?: string, bottom?: string, right?: string
     }
-    ui?: {
-        hasScrollBar?: boolean
-        startingIdx?: number
+    scroll?: {
+        bar?: boolean
+        goToIdx?: number
     }
     styling?: {
         zIndex?: number
@@ -185,6 +186,13 @@ type WeeklyRoutineSetUp = {
 }
 
 type WeeklyRoutine = {
+    id: string
+    name: string
+    description: string
+    blocks: WeeklyRoutineBlocks
+}
+
+type WeeklyRoutineBlocks = {
     Mon: RoutineBlock[], Tue: RoutineBlock[]
     Wed: RoutineBlock[], Thu: RoutineBlock[]
     Fri: RoutineBlock[], Sat: RoutineBlock[]
@@ -204,6 +212,7 @@ type TagBreakDown = {
         total: number
     }
 }
+
 type RoutineBlock = {
     title: string
     color: Color
@@ -212,10 +221,11 @@ type RoutineBlock = {
     endTime: number
     tag: Tag | null
     activity: RoutineActvity | null
+    tasks: Task[]
 }
+
 type RoutineBlockElem = {
-    id: string, height: number, xOffset: number, yOffset: number,
-    startTimeStr: string, endTimeStr: string
+    id: string, height: number, xOffset: number, yOffset: number
 } & RoutineBlock
 
 type DailyRoutine = {
@@ -344,6 +354,11 @@ type HozScrollMaskedGradient = {
 type VertScrollMaskedGradient = {
     styling: string,
     scrollStatus: VertScrollStatus
+}
+
+type BoxSize = {
+    width: number,
+    height: number
 }
   
 
@@ -550,6 +565,7 @@ type TasksListOptions<TaskListTypeCombos> = {
         subtask?: StylingOptions
         checkbox?: StylingOptions
         description?: StylingOptions
+        num?: StylingOptions
         descriptionInput?: { fontSize: CSSREMVal }
     }
     ui?: {

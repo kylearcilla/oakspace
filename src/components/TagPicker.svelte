@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { themeState } from "$lib/store";
-	import { TEST_TAGS, clickOutside, getColorTrio } from "$lib/utils-general";
-	import { onMount } from "svelte";
-	import SvgIcon from "./SVGIcon.svelte";
-	import { Icon } from "$lib/enums";
-	import { sort } from "d3";
+	import { themeState } from "$lib/store"
+	import { TEST_TAGS, clickOutside, getColorTrio } from "$lib/utils-general"
+	import { onMount } from "svelte"
+	import SvgIcon from "./SVGIcon.svelte"
+	import { Icon } from "$lib/enums"
     
     $: isDarkTheme = $themeState.isDarkTheme
 
@@ -26,7 +25,6 @@
     $: tagColor = tag ? getColorTrio(tag.symbol.color, !isDarkTheme) : null
 
     function toggleMenu(isActive: boolean) {
-        console.log(isActive)
         // mount if active, mount on DOM, then toggle aniamtion
         if (isActive) {
             isPickerMounted = true
@@ -51,9 +49,7 @@
 </script>
 
 
-<div 
-    class="tag-picker"
->
+<div class="tag-picker">
     <button 
         id="tag-picker--dropdown-btn"
         class="tag-picker__dropdown-btn dropdown-btn tag"
@@ -95,8 +91,8 @@
     <!-- Tag Dropdown Menu -->
     {#if isPickerMounted}
         <div 
-            class="tag-picker__dropdown-menu-container"
             id="tag-picker--dropdown-menu"
+            class="tag-picker__dropdown-menu-container"
             class:tag-picker__dropdown-menu-container--shown={_isActive}
             style:--trans-duration={`${TRANSITION_DURATIONS_MS}ms`}
             use:clickOutside on:click_outside={() => onClickOutside()}
@@ -109,7 +105,7 @@
                 class="tag-picker__dropdown-menu"
             >
                 {#each TEST_TAGS as tagOption}
-                    {@const tagOptColor = getColorTrio(tagOption.symbol.color, !isDarkTheme)}
+                    {@const tagOptColor = getColorTrio(tagOption.symbol.color, isDarkTheme)}
                     <li 
                         class="tag-picker__dropdown-option"
                         class:tag-picker__dropdown-option--picked={tag?.name === tagOption.name}
@@ -165,11 +161,13 @@
     @import "../scss/dropdown.scss";
 
     .tag {
+        border-radius: 9px !important;
         &__symbol {
             cursor: pointer;
         }
         &__title {
-            font-weight: 400;
+            font-weight: 500;
+            margin-right: 9px;
             cursor: pointer;
         }
     }
@@ -179,10 +177,9 @@
         transition: 0.12s ease-in-out;
 
         .divider {
-            @include divider(0.04, 0.5px, calc(100% - 8px));
         }
         &__dropdown-btn.tag {
-            background-color: rgba(var(--tag-color-2), 0.5);
+            background-color: rgba(var(--tag-color-2), 1);
             padding: 4px 12px 4px 11px;
         }
         &__dropdown-btn {
@@ -199,7 +196,6 @@
         &__dropdown-btn-arrow, &__dropdown-btn-close {
             opacity: 0.2;
             transition: 0.1s ease-in-out;
-            margin-left: 4px;
         }
         &__dropdown-btn-arrow {
             transition: 0.1s ease-in-out;
@@ -222,7 +218,7 @@
             padding: 8px 4px 8px 8px;
             border-radius: 18px;
             z-index: 1000;
-            width: 185px;
+            width: 200px;
             transition: var(--trans-duration) opacity cubic-bezier(.2, .45, 0, 1),
                         var(--trans-duration) visibility cubic-bezier(.2, .45, 0, 1),
                         var(--trans-duration) transform cubic-bezier(.2, .45, 0, 1);
@@ -241,7 +237,7 @@
         }
         &__dropdown-menu-title {
             h3 {
-                padding: 0px 0px 7px 5px;
+                padding: 0px 0px 0px 7px;
                 @include text-style(1, 500, 1.3rem);
             }
             .divider {
@@ -252,14 +248,13 @@
             transition: 0s ease-in-out;
             border-radius: 12px;
             padding: 4.5px 8px 4.5px 6px;
-            margin-left: -2px;
             user-select: text;
             width: calc(100% - 9px);
             position: relative;
             cursor: pointer;
             
             &:hover {
-                @include txt-color(0.012, "bg");
+                @include txt-color(0.05, "bg");
             }
             &:hover &-check {
                 display: none;
@@ -290,7 +285,13 @@
         }
         &__dropdown-option .tag {
             border-radius: 8px;
-            background-color: rgba(var(--tag-color-2), 0.5);
+            background-color: rgba(var(--tag-color-2), 1);
+            padding: 2.5px 5px 2.5px 9px;
+            // border: 1px solid rgba(var(--tag-color-1), 0.03);
+            
+            &__title {
+                font-weight: 600;
+            }
         }
         &__dropdown-menu-add {
             width: 100%;

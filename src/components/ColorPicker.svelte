@@ -7,6 +7,7 @@
     export let chosenColor: Color | undefined = undefined
     export let onClickOutside: FunctionParam
     export let onChoose: FunctionParam
+    export let onDismount: FunctionParam | undefined = undefined
 
     let colorPickerRef: HTMLElement
     let removeTimeout: NodeJS.Timeout | null = null
@@ -32,9 +33,13 @@
         }
         // if inactive, allow the animation, then dismount
         if (!isActive) {
-            console.log("A")
             _isActive = false
-            removeTimeout = setTimeout(() => isPickerMounted = false, TRANSITION_DURATIONS_MS)
+            removeTimeout = setTimeout(() => { 
+                if (onDismount) onDismount()
+                
+                isPickerMounted = false
+
+            }, TRANSITION_DURATIONS_MS)
             removeTimeout = null
         }
     }
@@ -104,8 +109,8 @@
         transition: var(--trans-duration) opacity cubic-bezier(.2, .45, 0, 1),
                     var(--trans-duration) visibility cubic-bezier(.2, .45, 0, 1),
                     var(--trans-duration) transform cubic-bezier(.2, .45, 0, 1);
-        transform: scale(0.9);
         border: 1px solid rgba(white, 0.03);
+        transform: scale(0.9);
         @include not-visible;
         
         &--light {

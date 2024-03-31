@@ -12,21 +12,27 @@ export const clickOutside = (node: any) => {
     const nodeId = node.id as string
     const hasClickedInsideNode = node?.contains(target)
 
-    const dropdownBtnClicked = findAncestor({
-      child: target, queryStr: "dropdown-btn", queryBy: "id",
-      max: 5, strict: false
-    })
+    // if dropdown-menu and clicked on its own dropdown btn, let its dropdown-btn close
     const isSrcDropdownMenu = nodeId.includes("dropdown-menu")
-
+    let dropdownBtnClicked = null 
     let isOwnDropdownBtn = false
 
-    // if dropdown-menu and clicked on a dropdown btn, let the dropdown-btn close, instead of this event
+    if (isSrcDropdownMenu) {
+      dropdownBtnClicked = findAncestor({
+        child: target, queryStr: "dropdown-btn", queryBy: "id",
+        max: 5, strict: false
+      })
+    }
     if (isSrcDropdownMenu && dropdownBtnClicked) {
-        const srcOrigin   = nodeId.split("--")[0]
-        const targetOrigin = dropdownBtnClicked.id.split("--")[0]
+        const srcId    = nodeId.split("--")
+        const targetId = dropdownBtnClicked.id.split("--")
+
+        const srcOrigin    = srcId[srcId.length - 1]
+        const targetOrigin = targetId[targetId.length - 1]
 
         isOwnDropdownBtn = srcOrigin === targetOrigin
     }
+
 
     const hasClickedOutside = !isOwnDropdownBtn && !hasClickedInsideNode && !event.defaultPrevented
 
@@ -55,7 +61,7 @@ export const findAncestor = (options: AncestoryQueryOptions): HTMLElement | null
   let i = 0
 
   const max = options.max ?? 15
-  const strict = options.strict ?? false
+  const strict = options.strict === undefined ? false : options.strict
   const queryStr = options.queryStr
   const byId = options.queryBy === "id"
 
@@ -66,10 +72,10 @@ export const findAncestor = (options: AncestoryQueryOptions): HTMLElement | null
     else if (!strict && byId && currentElement!.id.includes(queryStr)) {
       return currentElement
     }
-    else if (strict && currentElement!.classList.contains(queryStr)) {
+    else if (strict && !byId && currentElement!.classList.contains(queryStr)) {
       return currentElement
     }
-    else if (!strict && currentElement!.classList.value.includes(queryStr)) {
+    else if (!strict && !byId && currentElement!.classList.value.includes(queryStr)) {
       return currentElement
     }
 
@@ -484,14 +490,14 @@ export const COLOR_SWATCHES = {
       light1: "108, 59, 65",
       light2: "247, 167, 181",
       light3: "149, 102, 108",
-      dark1:  "252, 178, 190",
-      dark2:  "25, 19, 21",
-      dark3:  "146, 96, 102",
+      dark1:  "236, 174, 189",
+      dark2:  "26, 16, 17",
+      dark3:  "103, 78, 81",
       isLight: false,
       isDark: false,
     },
     {
-      id: "d1-0",
+      id: "d0-1",
       primary: "254, 213, 191",
       light1: "123, 90, 71",
       light2: "250, 207, 183",
@@ -503,61 +509,61 @@ export const COLOR_SWATCHES = {
       isDark: false,
     },
     {
-      id: "d2-0",
+      id: "d0-2",
       primary: "254, 244, 191",
       light1: "132, 110, 65",
       light2: "254, 244, 191",
       light3: "191, 167, 121",
       dark1:  "254, 244, 191",
-      dark2:  "32, 30, 26",
+      dark2:  "21, 20, 18",
       dark3:  "125, 119, 95",
       isLight: true,
       isDark: false
     },
     {
-      id: "d3-0",
+      id: "d0-3",
       primary: "238, 254, 191",
       light1: "58, 100, 55",
       light2: "238, 254, 191",
       light3: "137, 180, 134",
       dark1:  "220, 251, 195",
-      dark2:  "21, 23, 18",
+      dark2:  "20, 21, 19",
       dark3:  "96, 115, 94",
       isLight: true,
       isDark: true,
     },
     {
-      id: "d4-0",
+      id: "d0-4",
       primary: "211, 233, 232",
       light1: "72, 101, 95",
       light2: "211, 233, 232",
       light3: "129, 169, 160",
       dark1:  "211, 233, 232",
-      dark2:  "20, 24, 22",
+      dark2:  "16, 19, 18",
       dark3:  "90, 108, 103",
       isLight: true,
       isDark: false,
     },
     {
-      id: "d5-0",
-      primary: "95, 99, 125",
-      light1: "95, 99, 125",
+      id: "d0-5",
+      primary: "211, 214, 233",
+      light1: "211, 214, 233",
       light2: "211, 214, 233",
       light3: "147, 152, 183",
       dark1:  "195, 215, 255",
-      dark2:  "26, 28, 32",
+      dark2:  "21, 22, 23",
       dark3:  "87, 95, 113",
       isLight: true,
       isDark: false,
     },
     {
-      id: "d6-0",
+      id: "d0-6",
       primary: "226, 211, 233",
       light1: "115, 95, 125",
       light2: "226, 211, 233",
       light3: "156, 140, 165",
       dark1:  "234, 213, 255",
-      dark2:  "29, 26, 32",
+      dark2:  "22, 22, 22",
       dark3:  "100, 87, 116",
       isLight: true,
       isDark: false,
@@ -565,12 +571,12 @@ export const COLOR_SWATCHES = {
     /* Second Row */
     {
       id: "d1-0",
-      primary: "255, 166, 84",
+      primary: "255, 124, 124",
       light1: "111, 76, 44",
       light2: "255, 190, 131",
       light3: "161, 121, 84",
-      dark1:  "255, 149, 149",
-      dark2:  "38, 22, 21",
+      dark1:  "246, 171, 155",
+      dark2:  "22, 17, 17",
       dark3:  "146, 78, 78",
       isLight: false,
       isDark: true,
@@ -582,7 +588,7 @@ export const COLOR_SWATCHES = {
       light2: "255, 206, 160",
       light3: "175, 142, 111",
       dark1:  "255, 215, 167",
-      dark2:  "25, 19, 14",
+      dark2:  "19, 15, 11",
       dark3:  "155, 135, 111",
       isLight: false,
       isDark: false,
@@ -594,7 +600,7 @@ export const COLOR_SWATCHES = {
       light2: "255, 229, 137",
       light3: "156, 145, 87",
       dark1:  "251, 235, 154",
-      dark2:  "26, 24, 18",
+      dark2:  "27, 24, 15",
       dark3:  "129, 117, 74",
       isLight: true,
       isDark: true,
@@ -606,7 +612,7 @@ export const COLOR_SWATCHES = {
       light2: "208, 249, 139",
       light3: "129, 153, 87",
       dark1:  "222, 248, 149",
-      dark2:  "26, 29, 21",
+      dark2:  "14, 18, 12",
       dark3:  "129, 141, 94",
       isLight: false,
       isDark: false,
@@ -617,8 +623,8 @@ export const COLOR_SWATCHES = {
       light1: "74, 88, 97",
       light2: "189, 231, 255",
       light3: "120, 153, 175",
-      dark1:  "189, 231, 255",
-      dark2:  "24, 29, 32",
+      dark1:  "166, 217, 220",
+      dark2:  "13, 17, 19",
       dark3:  "82, 111, 113",
       isLight: false,
       isDark: false,
@@ -630,7 +636,7 @@ export const COLOR_SWATCHES = {
       light2: "185, 199, 249",
       light3: "137, 149, 189",
       dark1:  "163, 177, 221",
-      dark2:  "24, 26, 32",
+      dark2:  "17, 18, 20",
       dark3:  "100, 107, 129",
       isLight: false,
       isDark: false,
@@ -642,7 +648,7 @@ export const COLOR_SWATCHES = {
       light2: "206, 198, 255",
       light3: "139, 132, 182",
       dark1:  "190, 173, 237",
-      dark2:  "30, 26, 33",
+      dark2:  "20, 18, 22",
       dark3:  "102, 96, 120",
       isLight: false,
       isDark: false,
@@ -655,7 +661,7 @@ export const COLOR_SWATCHES = {
       light2: "254, 162, 139",
       light3: "182, 110, 94",
       dark1:  "255, 146, 122",
-      dark2:  "32, 22, 20",
+      dark2:  "23, 15, 14",
       dark3:  "138, 93, 83",
       isLight: false,
       isDark: true,
@@ -667,7 +673,7 @@ export const COLOR_SWATCHES = {
       light2: "255, 190, 131",
       light3: "161, 121, 84",
       dark1:  "251, 195, 110",
-      dark2:  "30, 20, 12",
+      dark2:  "23, 16, 10",
       dark3:  "137, 116, 85",
       isLight: false,
       isDark: true,
@@ -679,7 +685,7 @@ export const COLOR_SWATCHES = {
       light2: "238, 255, 134",
       light3: "155, 158, 86",
       dark1:  "243, 248, 89",
-      dark2:  "26, 32, 20",
+      dark2:  "22, 21, 15",
       dark3:  "95, 100, 60",
       isLight: false,
       isDark: false,
@@ -691,7 +697,7 @@ export const COLOR_SWATCHES = {
       light2: "212, 251, 187",
       light3: "116, 171, 112",
       dark1:  "193, 240, 182",
-      dark2:  "23, 28, 22",
+      dark2:  "17, 22, 17",
       dark3:  "96, 115, 94",
       isLight: false,
       isDark: false,
@@ -703,7 +709,7 @@ export const COLOR_SWATCHES = {
       light2: "184, 225, 222",
       light3: "109, 137, 129",
       dark1:  "171, 206, 195",
-      dark2:  "26, 34, 34",
+      dark2:  "17, 25, 25",
       dark3:  "81, 99, 93",
       isLight: true,
       isDark: false,
@@ -714,8 +720,8 @@ export const COLOR_SWATCHES = {
       light1: "76, 98, 141",
       light2: "174, 202, 255",
       light3: "111, 134, 178",
-      dark1:  "153, 167, 247",
-      dark2:  "22, 27, 41",
+      dark1:  "160, 174, 255",
+      dark2:  "15, 18, 26",
       dark3:  "110, 120, 145",
       isLight: false,
       isDark: false,
@@ -727,7 +733,7 @@ export const COLOR_SWATCHES = {
       light2: "240, 199, 247",
       light3: "175, 125, 184",
       dark1:  "216, 163, 221",
-      dark2:  "36, 29, 37",
+      dark2:  "21, 18, 22",
       dark3:  "151, 125, 153",
       isLight: false,
       isDark: false,
@@ -735,13 +741,13 @@ export const COLOR_SWATCHES = {
     /* Fourth Row */
     {
       id: "d3-0",
-      primary: "178, 111, 111",
+      primary: "243, 144, 174",
       light1: "83, 58, 58",
       light2: "191, 145, 145",
       light3: "133, 97, 97",
-      dark1:  "183, 143, 143",
-      dark2:  "24, 20, 20",
-      dark3:  "113, 96, 96",
+      dark1:  "243, 144, 192",
+      dark2:  "25, 16, 20",
+      dark3:  "109, 75, 98",
       isLight: false,
       isDark: false,
     },
@@ -764,7 +770,7 @@ export const COLOR_SWATCHES = {
       light2: "239, 220, 155",
       light3: "164, 152, 88",
       dark1:  "245, 225, 121",
-      dark2:  "38, 37, 26",
+      dark2:  "20, 19, 12",
       dark3:  "98, 93, 64",
       isLight: false,
       isDark: false,
@@ -776,7 +782,7 @@ export const COLOR_SWATCHES = {
       light2: "186, 234, 191",
       light3: "119, 149, 119",
       dark1:  "193, 220, 166",
-      dark2:  "19, 32, 19",
+      dark2:  "12, 22, 14",
       dark3:  "92, 113, 85",
       isLight: false,
       isDark: false,
@@ -788,7 +794,7 @@ export const COLOR_SWATCHES = {
       light2: "198, 255, 238",
       light3: "112, 163, 147",
       dark1:  "182, 244, 226",
-      dark2:  "21, 29, 25",
+      dark2:  "11, 19, 17",
       dark3:  "125, 160, 150",
       isLight: false,
       isDark: false,
@@ -800,7 +806,7 @@ export const COLOR_SWATCHES = {
       light2: "154, 175, 251",
       light3: "112, 114, 180",
       dark1:  "158, 170, 214",
-      dark2:  "23, 24, 31",
+      dark2:  "15, 15, 23",
       dark3:  "98, 101, 131",
       isLight: false,
       isDark: false,
@@ -812,7 +818,7 @@ export const COLOR_SWATCHES = {
       light2: "232, 163, 229",
       light3:  "150, 102, 147",
       dark1:  "240, 152, 236",
-      dark2:  "41, 25, 39",
+      dark2:  "21, 14, 20",
       dark3:  "154, 112, 152",
       isLight: false,
       isDark: false,
@@ -931,8 +937,10 @@ export function addItemToArray(idx: number, array: any[], item: any) {
 }
 
 export function removeItemFromArray(idx: number, array: any[]) {
+  console.log(array)
   array.splice(idx, 1)
-  
+  console.log(array)
+
   return array
 }
 
@@ -1076,4 +1084,62 @@ export function getHozDistanceBetweenTwoElems(a: HTMLElement, b: HTMLElement) {
   const bRect = b.getBoundingClientRect()
   
   return bRect.left - aRect.right
+}
+
+/**
+ * Extracts CSS values that can have 4 space-separated values in one line.
+ * 
+ * i.e.: "0px 2px" || "2px" || "2px 2px 2px 2px" || "1px 1px 1px"
+ * 
+ * @param   val CSS space-separated value
+ * @returns Extracted, top, right, bottom, left values
+ */
+export function extractQuadCSSValue(val: CSSMultiDimPxVal | undefined) {
+  const res = { top: 0, right: 0, bottom: 0, left: 0 }
+  if (!val) return res
+
+  const values = val.split(" ").map(value => parseInt(value))
+  const [top, right = top, bottom = top, left = right] = values
+
+  return { ...res, top, right, bottom, left }
+}
+
+
+
+/**
+ * Get the context menu positioning. Ensures that it will not get clipped but its parent.
+ * 
+ * @param menuDims        Context menu width and height (does not have to be compeletely accurate)
+ * 
+ * @param cursorPos       Current cursor position (in terms of the container) where menu was invoked. 
+ * 
+ * @param containerDims   Height and width dimensions of the container element.
+ *                        This container is the menu will be position relatively of.
+ *                        This is the scrollable element / window (not the overflow element.)
+ * 
+ * @returns Left and top offset where the menu should end postioned.
+ */
+export function intContextMenuPos(menuDims: BoxSize, cursorPos: OffsetPoint, containerDims: BoxSize) {
+  const { width: menuWidth, height: menuHeight } = menuDims
+  const { width: containerWidth, height: containerHeight } = containerDims
+
+  let left = cursorPos.left
+  let top = cursorPos.top
+
+  const containerRightEdge  = containerWidth
+  const containerBottomEdge = containerHeight
+
+  const dropdownRightEdge  = menuWidth + left
+  const dropdownBottomEdge = menuHeight + top
+
+  if (dropdownRightEdge >= containerRightEdge) {
+      const xOffset = dropdownRightEdge - containerRightEdge
+      left -= xOffset
+  }
+  if (dropdownBottomEdge >= containerBottomEdge) {
+      const yOffset = dropdownBottomEdge - containerBottomEdge
+      top -= yOffset + 10
+  }
+
+  return { left, top }
 }

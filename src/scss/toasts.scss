@@ -131,19 +131,6 @@ $header-icon-size: 17px;
     --padding-bottom: 7px;
     --padding-left: 16px;
 
-    /* Context Message Colors */
-    --success-fg-color: 37, 126, 34;
-    --success-bg-color: 236, 253, 243;
-
-    --warning-fg-color: 229, 127, 19;
-    --warning-bg-color: 255, 252, 240;
-
-    --error-fg-color: 230, 57, 3;
-    --error-bg-color: 255, 240, 240;
-
-    --info-fg-color: 9, 115, 220;
-    --info-bg-color: 240, 248, 255;
-
     gap: 6px;
     border-radius: 14px;
     background: var(--normal-bg);
@@ -151,20 +138,39 @@ $header-icon-size: 17px;
     padding: var(--padding-top) var(--padding-right) var(--padding-bottom) var(--padding-left);
     background-color: var(--dropdownMenuBgColor1);
     border: 0.5px solid rgba(white, 0.05);
-
-    // Context UI
+    
+    // Context Message UI
     &--context {
         border-width: 1.5px;
         padding-top:    calc(var(--padding-top) + 1px);
         padding-bottom: calc(var(--padding-top) + 3px);
+
+        background-color: rgba(var(--context-rich-color-2));
+        border: 1px solid rgba(var(--context-rich-color-1), 0.1) !important;
+    }
+    &--context &__close-btn {
+        background-color: rgba(var(--context-rich-color-2));
+        border: 1px solid rgba(var(--context-rich-color-1), 0.1) !important;
+
+        i {
+            color: rgba(var(--context-rich-color-1));
+        }
+
+        &:hover {
+            background-color: rgba(var(--context-rich-color-2));
+        }
     }
     &--context i {
         font-size: 1.5rem;
+        color: rgba(var(--context-rich-color-1));
     }
     &--context &__header {
         @include flex(start);
         margin-bottom: 0px;
 
+        &-title {
+            color: rgba(var(--context-rich-color-1)) !important;
+        }
         &-icon {
             margin-top: 2px;
         }
@@ -696,7 +702,6 @@ $header-icon-size: 17px;
         transform: translateY(calc(var(--lift) * var(--offset))) translateX(calc(var(--swipe-amount)));
         opacity: 1;
     }
-
     to {
         transform: translateY(calc(var(--lift) * var(--offset))) translateX(calc(var(--swipe-amount) + var(--width)));
         opacity: 0;

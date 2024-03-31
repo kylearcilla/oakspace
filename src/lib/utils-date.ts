@@ -526,9 +526,16 @@ export function minsFromStartToHHMM(minsFromStart: number, doShorten = true) {
  * console.log(formattedTime); // Output: "2 PM"
  * ```
  */
-export function getTimeFromIdx(timeIdx: number) {
+export function getTimeFromIdx(timeIdx: number, lowerCase = false) {
     const suffix = timeIdx < 12 ? "AM" : "PM";
     const formattedHour = timeIdx % 12 || 12
 
-    return `${formattedHour} ${suffix}`;
+    const str = `${formattedHour} ${suffix}`
+
+    if (lowerCase) {
+        return str.toLowerCase()
+    }
+    else {
+        return str
+    }
 }

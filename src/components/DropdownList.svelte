@@ -11,10 +11,47 @@
     let dropdownMenuRef: HTMLElement
 
     $: isDarkTheme = $themeState.isDarkTheme
-    $: if (!isHidden) {
-        goToStartingIdx(options.ui?.startingIdx)
+    $: toggleMenu(!isHidden)
+
+    $: if (!isHidden && dropdownMenuRef && options.scroll?.goToIdx) {
+        goToStartingIdxLocation(options.scroll.goToIdx)
     }
 
+    let idxCount = 0
+    let removeTimeout: NodeJS.Timeout | null = null
+    let isMounted = false
+    let _isActive = true
+
+    const TRANSITION_DURATIONS_MS = 200
+
+    function toggleMenu(isActive: boolean) {
+        idxCount = 0
+
+        // mount if active, mount on DOM, then toggle aniamtion
+        if (isActive) {
+            isMounted = true
+            requestAnimationFrame(() => _isActive = true)
+        }
+        // if timeout has been set but user quickly toggles active agin, remove the timeout
+        if (isActive && removeTimeout) {
+            clearTimeout(removeTimeout)
+            removeTimeout = null    
+        }
+        // if inactive, allow the animation, then dismount
+        if (!isActive) {
+            _isActive = false
+
+            removeTimeout = setTimeout(() => {
+                isMounted = false
+
+                if (options.onDismount) {
+                    options.onDismount()
+                }
+
+            }, TRANSITION_DURATIONS_MS)
+            removeTimeout = null
+        }
+    }
     function onItemClicked(e: Event, idx: number) {
         options.onListItemClicked(e, idx)
     }
@@ -24,13 +61,13 @@
     function getHotkeys(item: DropdownOption) {
         return item.rightIcon!.icon as HotKeyCombo
     }
-    function goToStartingIdx(startingIdx?: number) {
-        if (!startingIdx || startingIdx < 0 || !dropdownMenuRef) return
+    function goToStartingIdxLocation(goToIdx: number) {
+        if (goToIdx < 0) return
         
         const listItems = [...dropdownMenuRef.children]
         if (!listItems || listItems.length === 0) return
 
-        const toIdx = startingIdx
+        const toIdx = goToIdx
         let distanceToIdx = 0
 
         for (let i = 0; i < toIdx; i++) {
@@ -38,20 +75,28 @@
         }
         dropdownMenuRef.scrollTop = distanceToIdx
     }
+    function onClickOutside() {
+        if (isHidden || !options.onClickOutside) return
+        options.onClickOutside()
+    }
+    function initOptnIdx() {
+        return idxCount++
+    }
 
     onMount(() => {
-        dropdownMenuRef = getElemById(id)!
+        goToStartingIdxLocation(options.scroll?.goToIdx ?? -1)
     })
 </script>
 
-<!-- <div class="dropdown-menu-wrapper"> -->
+{#if isMounted}
     <ul 
-        use:clickOutside on:click_outside={options.onClickOutside} 
+        use:clickOutside on:click_outside={onClickOutside} 
         id={`${id}--dropdown-menu`}
+        bind:this={dropdownMenuRef}
         class="dropdown-menu"
         class:dropdown-menu--dark={isDarkTheme}
-        class:dropdown-menu--hidden={isHidden}
-        class:dropdown-menu--has-scroll-bar={options.ui?.hasScrollBar ?? false}
+        class:dropdown-menu--shown={_isActive}
+        class:dropdown-menu--has-scroll-bar={options.scroll?.bar ?? false}
         style:top={options.position?.top}
         style:left={options.position?.left}
         style:right={options.position?.right}
@@ -70,11 +115,12 @@
                     <!-- Option Item -->
                     {#each section.options as option}
                         {@const type = option.rightIcon?.type}
+                        {@const optnIdx = initOptnIdx()}
                         <li 
                             class="dropdown-menu__option"
-                            class:dropdown-menu__option--selected={options.pickedItemIdx === idx}
+                            class:dropdown-menu__option--selected={options.pickedItemIdx === optnIdx}
                         >
-                            <button class="dropdown-menu__option-btn" on:click={(e) => onItemClicked(e, idx)}>
+                            <button class="dropdown-menu__option-btn" on:click={(e) => onItemClicked(e, optnIdx)}>
                                 <!-- Left Icon -->
                                 {#if option.leftIcon}
                                     <div class="dropdown-menu__option-icon dropdown-menu__option-icon--left">
@@ -116,11 +162,13 @@
             {:else}
                 {@const option = item}
                 {@const type = item.rightIcon?.type}
+                {@const optnIdx = initOptnIdx()}
+
                 <li 
                     class="dropdown-menu__option"
-                    class:dropdown-menu__option--selected={options.pickedItemIdx === idx}
+                    class:dropdown-menu__option--selected={options.pickedItemIdx === optnIdx}
                 >
-                    <button class="dropdown-menu__option-btn" on:click={(e) => onItemClicked(e, idx)}>
+                    <button class="dropdown-menu__option-btn" on:click={(e) => onItemClicked(e, optnIdx)}>
                         <!-- Left Icon -->
                         {#if option.leftIcon}
                             <div class="dropdown-menu__option-icon dropdown-menu__option-icon--left">
@@ -158,7 +206,7 @@
             {/if}
         {/each}
     </ul>
-<!-- </div> -->
+{/if}
 
 <style lang="scss">
     @import "../scss/dropdown.scss";

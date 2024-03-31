@@ -29,6 +29,8 @@ export const ROUTINES: DailyRoutine[] = [
                 endTime: 420,
                 activity: null,
                 tag: null,
+                tasks: [],
+                description: ""
             },
             {
                 title: "👨‍💻 SWE Deep Work",
@@ -37,6 +39,8 @@ export const ROUTINES: DailyRoutine[] = [
                 endTime: 720,
                 activity: "working",
                 tag: TEST_TAGS[1],
+                tasks: [],
+                description: ""
             },
             {
                 title: "🍖 Lunch Break",
@@ -45,6 +49,8 @@ export const ROUTINES: DailyRoutine[] = [
                 endTime: 800,
                 activity: null,
                 tag: null,
+                tasks: [],
+                description: ""
             },
             {
                 title: "👨‍💻 SWE Deep Work",
@@ -53,6 +59,8 @@ export const ROUTINES: DailyRoutine[] = [
                 endTime: 1080,
                 activity: "working",
                 tag: TEST_TAGS[1],
+                tasks: [],
+                description: ""
             },
             {
                 title: "💪 Gym (Pull)",
@@ -61,6 +69,8 @@ export const ROUTINES: DailyRoutine[] = [
                 endTime: 1140,
                 activity: "body",
                 tag: TEST_TAGS[0],
+                tasks: [],
+                description: ""
             },
             {
                 title: "🍖 Dinner",
@@ -69,6 +79,8 @@ export const ROUTINES: DailyRoutine[] = [
                 endTime: 1170,
                 activity: null,
                 tag: TEST_TAGS[3],
+                tasks: [],
+                description: ""
             },
             {
                 title: "🌙 Evening Routine",
@@ -76,7 +88,9 @@ export const ROUTINES: DailyRoutine[] = [
                 startTime: 1380,
                 endTime: 1410,
                 activity: "selfCare",
-                tag: null
+                tag: null,
+                tasks: [],
+                description: ""
             },
         ]
     },
@@ -91,7 +105,9 @@ export const ROUTINES: DailyRoutine[] = [
                 startTime: 480,
                 endTime: 520,
                 activity: null,
-                tag: null
+                tag: null,
+                tasks: [],
+                description: ""
             },
             {
                 title: "🏃‍♂️ Running",
@@ -99,7 +115,9 @@ export const ROUTINES: DailyRoutine[] = [
                 startTime: 600,
                 endTime: 690,
                 activity: "working",
-                tag: TEST_TAGS[6]
+                tag: TEST_TAGS[6],
+                tasks: [],
+                description: ""
             },
             {
                 title: "🍖 Lunch Break",
@@ -107,7 +125,9 @@ export const ROUTINES: DailyRoutine[] = [
                 startTime: 730,
                 endTime: 800,
                 activity: null,
-                tag: null
+                tag: null,
+                tasks: [],
+                description: ""
             },
             {
                 title: "🌁 Art",
@@ -115,7 +135,9 @@ export const ROUTINES: DailyRoutine[] = [
                 startTime: 885,
                 endTime: 920,
                 activity: "selfCare",
-                tag: TEST_TAGS[8]
+                tag: TEST_TAGS[8],
+                tasks: [],
+                description: ""
             },
             {
                 title: "💪 Gym (Push)",
@@ -123,7 +145,9 @@ export const ROUTINES: DailyRoutine[] = [
                 startTime: 1000,
                 endTime: 1100,
                 activity: "body",
-                tag: TEST_TAGS[0]
+                tag: TEST_TAGS[0],
+                tasks: [],
+                description: ""
             },
             {
                 title: "🍖 Dinner",
@@ -131,7 +155,9 @@ export const ROUTINES: DailyRoutine[] = [
                 startTime: 1130,
                 endTime: 1200,
                 activity: null,
-                tag: TEST_TAGS[3]
+                tag: TEST_TAGS[3],
+                tasks: [],
+                description: ""
             },
             {
                 title: "🌙 Evening Routine",
@@ -139,7 +165,9 @@ export const ROUTINES: DailyRoutine[] = [
                 startTime: 1380,
                 endTime: 1410,
                 activity: "selfCare",
-                tag: null
+                tag: null,
+                tasks: [],
+                description: ""
             },
         ]
     }

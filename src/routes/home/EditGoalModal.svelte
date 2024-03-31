@@ -199,7 +199,7 @@
                                         descriptionInput: { fontSize: "1.3rem" }
                                     },
                                     contextMenuOptions: { width: "170px" },
-                                    ui:                 { sidePadding: "24px", isMin: false }
+                                    ui:                 { sidePadding: "24px" }
                                 }}
                             />
                         {/if}

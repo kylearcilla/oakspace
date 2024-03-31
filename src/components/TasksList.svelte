@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { createEventDispatcher, onMount } from "svelte"
 	import SvgIcon from "./SVGIcon.svelte"
 	import { themeState } from "$lib/store"
 	import DropdownList from "./DropdownList.svelte";
@@ -8,7 +8,6 @@
 	import { TasksListManager } from "$lib/tasks-list-manager"
 	import { InputManager, TextEditorManager } from "$lib/inputs";
 	import type { Writable } from "svelte/store";
-	import { backInOut } from "svelte/easing";
 
     export let options: TaskListOptionsInterface
 
@@ -116,8 +115,12 @@
     let tasksListContainerElem: HTMLElement
     let maskListGradient = ""
     let idPrefix = options.id
+    let isContextMenuOpen = false
+
+    const dispatch = createEventDispatcher()
 
     $: tasks = $tasksStore
+    $: dispatch("tasksUpdated", tasks)
 
     $: createNewTask(options.isCreatingNewTask)
     $: isDarkTheme = $themeState.isDarkTheme
@@ -153,8 +156,7 @@
     function createNewTask(doCreateNewTask: boolean) {
         if (!doCreateNewTask) return
 
-        $manager.addingNewTask(0, true)
-        $manager.setMinAfterEdit()
+        $manager.addingNewTask(0)
     }
     function initSubtaskTextEditor(editingSubtaskIdx: number) {
         if (editingSubtaskIdx < 0) return
@@ -200,6 +202,10 @@
     function onWindowResize() {
         requestAnimationFrame(() => $manager.updateTaskHeight({ hasWidthChanged: true }))
     }
+    function onClickedOutside() {
+        if (pickedTaskIdx < 0) return
+        $manager.minimizeExpandedTask()
+    }
     onMount(() => {
         $manager.initAfterLoaded()
         contentListScrollHandler(tasksListContainerElem)
@@ -208,12 +214,16 @@
 
 <svelte:window on:keydown={(e) => keyboardShortcutsHandler(e)}  on:resize={onWindowResize} /> 
 
+<!-- svelte-ignore a11y-click-events-have-key-events -->
 <div 
     class="tasks-container"
     id={`${idPrefix}--tasks-list-container`}
-    style={`-webkit-mask-image: ${maskListGradient}; mask-image: ${maskListGradient}; ${inlineStyling($manager.styling?.list)}}`}
+    style={inlineStyling($manager.styling?.list)}
+    style:-webkit-mask-image={maskListGradient}
+    style:mask-image={maskListGradient}
     style:height={$manager.ui.listHeight}
     on:scroll={() => contentListScrollHandler(tasksListContainerElem)} 
+    use:clickOutside on:click_outside={onClickedOutside} 
     bind:this={tasksListContainerElem}
 >
     <ul 
@@ -239,14 +249,13 @@
         on:mouseup={$manager.onTaskListMouseUp}
     >   
         <!-- Task Item -->
-        {#each tasks as task, taskIdx (task.idx)}
+        {#each $tasksStore as task, taskIdx (task.idx)}
             {@const pickedIdx = $manager.pickedTaskIdx}
             {@const focusedIdx = $manager.focusedTaskIdx}
             {@const subtaskProgress = types["subtasks"] ? $manager.getSubtaskProgress(taskIdx) : null }
             {@const subtasksNoLink = types["subtasks"] && !types["subtasks-linked"]}
             {@const isDraggingTask = $manager.isDraggingTask}
             {@const height = $manager.initMinTaskHeight(task)}
-            {@const leftCornerStyle = inlineStyling($manager.styling?.checkbox)}
 
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <li
@@ -263,29 +272,28 @@
                 class:task--focused={pickedIdx === taskIdx}
                 class:task--full-divider={(focusedIdx === taskIdx && pickedIdx === taskIdx) || (taskIdx > 0 && focusedIdx === taskIdx - 1 && pickedIdx === taskIdx - 1)}
                 class:task--checked={task.isChecked}
-                class:task--not-animated={$manager.floatingItem}
                 class:task--subtasks-no-link={subtasksNoLink}
                 class:dragging-source-hidden={isDraggingTask && $manager.draggingSourceIdx === taskIdx}
                 style={inlineStyling($manager.styling?.task)}
                 on:click={(event) => $manager.onTaskedClicked(event, taskIdx)}
                 on:mousedown={$manager.onTaskMouseDown}
-                on:contextmenu={(e) => $manager.openContextMenu(e, taskIdx)}
+                on:contextmenu={(e) => {
+                    $manager.openContextMenu(e, taskIdx)
+                    isContextMenuOpen = true
+                }}
             >
                 <div class="task__top">
-                    <!-- CheckBox  -->
+                    <!-- CheckBox Or Nunber  -->
                     <div class="task__left">
                         {#if types["numbered"]}
-                            <div 
-                                class="task__number"
-                                style={leftCornerStyle}
-                            >
+                            <div class="task__number" style={inlineStyling($manager.styling?.num)}>
                                 {taskIdx + 1}.
                             </div>
                         {:else}
                             <button 
                                 class="task__checkbox" 
                                 id={`${idPrefix}--task-checkbox-id--${taskIdx}`}
-                                style={leftCornerStyle}
+                                style={inlineStyling($manager.styling?.checkbox)}
                                 on:click={() => $manager.handleTaskCheckboxClicked(task)}
                             >
                                 <i class="fa-solid fa-check checkbox-check"></i>
@@ -499,10 +507,9 @@
             {@const containerWidth  = tasksListContainerElem.clientWidth}
             {@const stylingProps    = isTask ? $manager.styling?.task : $manager.styling?.subtask}
             {@const styling         = inlineStyling(stylingProps)}
-            {@const description     =  "description" in floatingItem ? floatingItem.description : ""}
-            {@const height          = !isTask ? FLOATING_SUBTASK_HEIGHT : description ? TASK_HEIGHT_MIN_HAS_DESCR : TASK_HEIGHT_MIN_NO_DESCR}
+            {@const description     = "description" in floatingItem ? floatingItem.description : ""}
+            {@const height          = isTask ? description ? TASK_HEIGHT_MIN_HAS_DESCR : TASK_HEIGHT_MIN_NO_DESCR : FLOATING_SUBTASK_HEIGHT}
             {@const subtaskProgress = isTask && types["subtasks"] ? $manager.getSubtaskProgress(floatingItem.idx) : null}
-            {@const leftCornerStyle = inlineStyling($manager.styling?.checkbox)}
 
             <li
                 id={`${idPrefix}--floating-item-id--${floatingItem.idx}`}
@@ -523,14 +530,14 @@
                             {@const marker = isTask ? floatingItem.idx + 1 : String.fromCharCode(floatingItem.idx + 65 + 32)}
                             <div 
                                 class="task__number"
-                                style={leftCornerStyle}
+                                style={inlineStyling($manager.styling?.num)}
                             >
                                 {marker}.
                             </div>
                         {:else}
                             <button 
                                 class="task__checkbox"
-                                style={leftCornerStyle}
+                                style={inlineStyling($manager.styling?.checkbox)}
                             >
                                 <i class="fa-solid fa-check checkbox-check"></i>
                             </button>
@@ -579,12 +586,13 @@
 <!-- Context Menu -->
 <DropdownList
     id={`${idPrefix}--tasks-list`}
-    isHidden={!$manager.isContextMenuOpen} 
+    isHidden={!isContextMenuOpen}
     options={{
-        styling:           { width: options.contextMenuOptions.width },
-        listItems:         $manager.rightClickedTask ? TASK_OPTIONS : SUBTASK_OPTIONS,
-        onClickOutside:    () => $manager.onContextMenuClickedOutsideHandler(),
-        onListItemClicked: (event) => requestAnimationFrame(() => $manager.contextMenuOptionClickedHandler(event)),
+        styling:     { width: options.contextMenuOptions.width },
+        listItems:   $manager.rightClickedTask ? TASK_OPTIONS : SUBTASK_OPTIONS,
+        onClickOutside:    () => isContextMenuOpen = false,
+        onDismount:        () => $manager.onContextMenuClickedOutsideHandler(),
+        onListItemClicked: (e) => requestAnimationFrame(() => $manager.contextMenuOptionClickedHandler(e)),
         position: { 
             top: $manager.contextMenuY + "px", left: $manager.contextMenuX + "px" 
         }
@@ -615,10 +623,10 @@
         width: 100%;
         border-top: 0.5px solid transparent;
         border-bottom: 0.5px solid transparent;
-        transition: height 0.2s cubic-bezier(.1,.84,.42,.95);
         position: relative;
         font-family: "DM Sans";
         user-select: none;
+        // transition: height 0.2s cubic-bezier(.1,.84,.42,.95);
         
         &--not-animated {
             transition: 0s;
@@ -727,7 +735,7 @@
             border-bottom-color: transparent !important;
         }
         &--dummy:hover {
-            border-top-color: 1px solid transparent;
+            border-top-color: transparent;
         }
         &--subtasks-no-link &__subtasks-list {
             padding-top: 11px;

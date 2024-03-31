@@ -6,12 +6,12 @@
 	import { onMount } from "svelte/internal"
 	import DropdownList from "./DropdownList.svelte"
 	import type { Writable } from "svelte/store"
-
+    
+    export let id: string | undefined = undefined
     export let options: TimePickerOptions | undefined = {}
     export let onClick: FunctionParam | undefined = undefined
     export let onSet: (time: number) => void
 
-    const doUse12HourFormat = prefer12HourFormat()
     let dropdownOptions: DropdownOption[] = []
 
     let timePickerRef: HTMLElement
@@ -28,7 +28,7 @@
     let inputElem: HTMLElement
     let isInputActive = false
     let titleInput: Writable<InputManager>
-    let idxOptionChosen = -1
+    let closestIdxOption = -1
     
     /* Drag Stuff */
     let draggedOverElems: { target: HTMLElement, cursor: string } [] = []
@@ -44,6 +44,15 @@
     const DROPDOWN_OPTION_INTERVAL = 15
 
     /* Input Stuff */
+    function toggleInput(doOpen: boolean) {
+        if (doOpen) {
+            closestIdxOption = options?.start ? Math.ceil(options.start / DROPDOWN_OPTION_INTERVAL) : -1
+            isInputActive = true
+        }
+        else {
+            isInputActive = false
+        }
+    }
     function initTitleInput(timeStr: string) {
         titleInput = (new TimeInputManager({ 
             min: minTime,
@@ -53,14 +62,19 @@
             maxLength: 10,
             id: "routine-time-input",
             handlers: { 
-                onBlurHandler: (timeMins) => onInputBlurHandler(timeMins),
+                onBlurHandler: (e, timeMins) => onInputBlurHandler(e, timeMins),
                 onError: () => onError()
             }
         })).state
     }
-    function onInputBlurHandler(timeMins: number) {
-        _onSet(timeMins)
-        isInputActive = false
+    function onInputBlurHandler(e: FocusEvent, timeMins: number) {
+        const target = e.relatedTarget as HTMLElement
+        const className = target?.classList.value ?? ""
+
+        if (!target || !className.includes("option-btn")) {
+            toggleInput(false)
+            _onSet(timeMins)
+        }
     }
     function _onSet(timeMins: number) {
         const _timeMins = clamp(minTime, timeMins, maxTime)
@@ -115,10 +129,9 @@
     }
     function onDropdownOptionClicked(e: Event, idx: number) {
         isInputActive = false
+        toggleInput(false)
 
         const newVal = clamp(minTime, idx * DROPDOWN_OPTION_INTERVAL, maxTime)
-        idxOptionChosen = Math.ceil(newVal / DROPDOWN_OPTION_INTERVAL)
-        console.log(idxOptionChosen)
         
         _onSet(newVal)
     }
@@ -127,7 +140,7 @@
         window.removeEventListener("mouseup", onPickerMouseUp)
 
         if (!isDragging) {
-            isInputActive = true
+            toggleInput(true)
             requestAnimationFrame(() => inputElem!.focus())
             return
         }
@@ -167,6 +180,7 @@
 
 <div class="time-picker-container" on:mousedown={() => onClicked()}>
     <div 
+        id={`${id}--dropdown-btn`}
         class="time-picker" 
         class:time-picker--light={!isDarkTheme}
         class:time-picker--default-width={isDragging || isInputActive}
@@ -198,13 +212,13 @@
     </div>
     <div class="time-picker__dropdown">
         <DropdownList 
-            id="time-picker-dropdown"
+            id={`${id}--time-picker-dropdown`}
             isHidden={!isInputActive} 
             options={{
                 listItems: dropdownOptions,
                 position: { top: "-6px", right: "0px" },
+                scroll:   { bar: true, goToIdx: closestIdxOption },
                 onListItemClicked: onDropdownOptionClicked,
-                ui: { hasScrollBar: true, startingIdx: idxOptionChosen },
                 styling: { 
                     zIndex: 100,
                     width: "85px", height: "180px",

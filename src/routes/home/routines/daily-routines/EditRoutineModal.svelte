@@ -3,8 +3,8 @@
 	import Modal from "../../../../components/Modal.svelte";
 	import { InputManager, TextEditorManager } from "$lib/inputs"
 	import SvgIcon from "../../../../components/SVGIcon.svelte"
-	import { Icon, ModalType } from "$lib/enums"
-	import { globalContext, themeState } from "$lib/store"
+	import { Icon } from "$lib/enums"
+	import { themeState } from "$lib/store"
 	import DropdownList from "../../../../components/DropdownList.svelte"
 	import DropdownBtn from "../../../../components/DropdownBtn.svelte"
 	import TasksList from "../../../../components/TasksList.svelte"
@@ -14,22 +14,25 @@
 	import { ROUTINE_CORE_KEYS, getCoreStr } from "$lib/utils-routines"
 	import TagPicker from "../../../../components/TagPicker.svelte"
 	import AsyncButton from "../../../../components/AsyncButton.svelte"
-	import { closeModal, openModal } from "$lib/utils-home";
 	import ConfirmationModal from "../../../../components/ConfirmationModal.svelte";
 	import { toast } from "$lib/utils-toast";
 	import type { Writable } from "svelte/store";
+    import type { RoutinesManager } from "$lib/routines-manager";
 
+    export let routineManager: RoutinesManager
     export let block: RoutineBlockElem
-    export let onMadeChanges: (routineBlock: RoutineBlockElem) => void
-    export let onCancel: () => void
     
     let settingsOpen = false
     let coresOpen = false
     let colorsOpen = false
     let tagsOpen = false
     
-    let { startTime, endTime, title, description } = block
+    let { 
+        startTime, endTime, title, description, yOffset, height,
+        tasks
+    } = block
     
+    let updatedTasks: Task[] = []
     let pickedCoreItemIdx = 0
     let doCreateNewTask = false
 
@@ -38,15 +41,42 @@
     let confirmModalOpen = false
 
     let routineListRef: HTMLElement
-
-    $: isDarkTheme = $themeState.isDarkTheme
-    $: initTitleEditor(title)
-    $: initDescriptionEditor(description)
-    
-    /* Text Editors */
     let titleInput: Writable<InputManager>
     let descriptionEditor: Writable<InputManager>
 
+    $: totalTime = endTime - startTime
+    $: isDarkTheme = $themeState.isDarkTheme
+
+    $: initTitleEditor(title)
+    $: initDescriptionEditor(description)
+
+    function onMadeChanges(updatedBlock: RoutineBlockElem | null) {
+        routineManager.onEditModalClose(updatedBlock)
+    }
+
+    /* Time Changes */
+    function onStartTimeChange(time: number) {
+        const res = routineManager.getSafePropsAfterLift({ 
+            startTime: time, endTime: time + totalTime, blockTotalTime: totalTime 
+        })
+
+        startTime = res.startTime
+        endTime = res.endTime
+        yOffset = res.yOffset
+        height = res.height
+
+        toggleEditMade()
+    }
+    function onEndTimeChange(time: number) {
+        const res = routineManager.onEndTimeChangeFromModal(startTime, endTime, time)
+
+        endTime = res.endTime
+        height = res.height
+
+        toggleEditMade()
+    }
+
+    /* Text Editors */
     function initTitleEditor(_title: string) {
         titleInput = (new InputManager({ 
             initValue: _title,
@@ -58,7 +88,6 @@
             }
         })).state
     }
-
     function initDescriptionEditor(_description: string) {
         descriptionEditor = (new TextEditorManager({ 
             initValue: _description,
@@ -71,7 +100,6 @@
             }
         })).state
     }
-
     function toggleEditMade() {
         editHasBeenMade = true
     }
@@ -126,6 +154,10 @@
         doCreateNewTask = true
         requestAnimationFrame(() => doCreateNewTask = false)
     }
+    function onTaskChange(event: CustomEvent) {
+        const _updatedTasks = event.detail
+        updatedTasks = _updatedTasks
+    }
 
     /* Conclude Changes */
     function asyncCall() {
@@ -138,10 +170,13 @@
         try {
             isSaving = true
             await asyncCall()
+            
             onMadeChanges({
-                ...block,
-                startTime, endTime, title, description
+                ...block, startTime, endTime, 
+                title, description,
+                yOffset, height, tasks: updatedTasks
             })
+
             toast("success", { message: "Changes saved!" })
         }
         catch(e) {
@@ -152,25 +187,23 @@
         }
     }
     function onAttemptClose() {
-        if (isSaving) return
-        
-        if (editHasBeenMade) {
+        if (isSaving) {
+            return
+        }
+        else if (editHasBeenMade) {
             confirmModalOpen = true
-            openModal(ModalType.Confirmation)
         }
         else {
-            okUnsavedClose()
+            confirmUnsavedClose()
         }
     }
-    function cancelUnsavedClose() {
+    function cancelCloseAttempt() {
         confirmModalOpen = false
     }
-    function okUnsavedClose() {
+    function confirmUnsavedClose() {
         confirmModalOpen = false
-        onCancel()
+        onMadeChanges(null)
     }
-    onMount(() => {
-    })
 </script>
 
 <Modal options={{ borderRadius: "20px", overflowY: "hidden" }} onClickOutSide={onAttemptClose}>
@@ -299,17 +332,19 @@
                 <div class="edit-routine__info-value">
                     <div class="edit-routine__time">
                         <div class="edit-routine__time-input-container">
-                            <TimePicker 
+                            <TimePicker
+                                id="start"
                                 options={{ start: startTime, max: endTime }}
-                                onSet={(time) => startTime = time}
+                                onSet={onStartTimeChange}
                                 onClick={() => onTimePickerClicked()}
-                            />
-                        </div>
-                        <span>to</span>
-                        <div class="edit-routine__time-input-container">
-                            <TimePicker 
+                                />
+                            </div>
+                            <span>to</span>
+                            <div class="edit-routine__time-input-container">
+                                <TimePicker 
+                                id="end"
                                 options={{ start: endTime, min: startTime }}
-                                onSet={(time) => endTime = time}
+                                onSet={onEndTimeChange}
                                 onClick={() => onTimePickerClicked()}
                             />
                         </div>
@@ -362,16 +397,17 @@
             <div class="edit-routine__list-container" bind:this={routineListRef}>
                 {#if routineListRef}
                     <TasksList 
+                        on:tasksUpdated={onTaskChange}
                         options={{
                             id:   "edit-routine",
                             type: "subtasks numbered",
                             isCreatingNewTask: doCreateNewTask,
                             containerRef: routineListRef,
-                            tasks: TEST_MILESTONES.map((t) => ({ ...t, subtasks: [] })),
+                            tasks: TEST_MILESTONES.map((task) => ({ ...task, subtasks: []})),
                             styling: {
-                                task:             { fontSize: "1.23rem", height: "30px", padding: "8px 0px 2px 0px" },
-                                subtask:          { fontSize: "1.23rem", padding: "8px 0px 8px 0px" },
-                                checkbox:         { margin: "1px 18px 0px 26px" },
+                                task:    { fontSize: "1.23rem", height: "30px", padding: "7px 0px 5px 0px" },
+                                subtask: { fontSize: "1.23rem", padding: "8px 0px 8px 0px" },
+                                num:     { width: "24px", margin: "1px 0px 0px 26px" },
                                 description:      { margin: "4px 0px 2px 0px"},
                                 descriptionInput: { fontSize: "1.23rem" }
                             },
@@ -406,8 +442,8 @@
 {#if confirmModalOpen} 
     <ConfirmationModal 
         msg="Discard unsaved changes?"
-        onCancel={() => cancelUnsavedClose()}
-        onOk={() => okUnsavedClose()}
+        onCancel={cancelCloseAttempt}
+        onOk={confirmUnsavedClose}
         options={{ okMsg: "Discard" }}
     /> 
 {/if}

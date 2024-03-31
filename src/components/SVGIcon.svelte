@@ -24,7 +24,7 @@
 
   $: {
     if ($themeState && !options?.color) {
-        _options.color = `rgb(${getThemeStyling("textColor1")})`
+      _options.color = `rgb(${getThemeStyling("textColor1")})`
     }
   }
 </script>
@@ -33,6 +33,7 @@
   class="svg-icon"
   style:opacity={_options.opacity}
   style:--stroke-width={_options.strokeWidth}
+  style:--path-color={`rgba(${_options.color})`}
 >
   {#if icon === Icon.Settings}
       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="18" id={_options.id}>
@@ -51,7 +52,7 @@
           xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 9 9" fill="none" 
           style={`transform: scale(${_options.scale});`}
       >
-          <path d="M8.4082 8.55078L0.871094 1.01367M0.871094 8.55078L8.4082 1.01367" stroke={_options.color}>
+          <path d="M8.4082 8.55078L0.871094 1.01367M0.871094 8.55078L8.4082 1.01367">
       </svg>
   {:else if icon === Icon.ChevronLeft}
       <svg xmlns="http://www.w3.org/2000/svg" width="7" height="11" viewBox="0 0 7 11" fill="none">
@@ -157,6 +158,7 @@
 
     path {
       stroke-width: var(--stroke-width);
+      stroke: var(--path-color);
     }
   }
   .day-icon {

@@ -24,7 +24,8 @@
     &__description {
         margin-top: 4px;
         max-height: 120px;
-        @include text-style(0.3, 300, 1.4rem);
+        display: inline-block;
+        @include text-style(0.3, 300, 1.4rem, "DM Sans");
     }
     &__settings-btn {
         
@@ -50,7 +51,7 @@
         }
         &-options-btn {
             opacity: 0.4;
-            @include text-style(_, 300, 1.3rem);
+            @include text-style(_, 300, 1.2rem);
 
             &:hover {
                 opacity: 1;
@@ -62,7 +63,6 @@
     }
     /* Core Breakdown */
     &__core-breakdown {
-        margin-bottom: 45px;
     }
     &__cores {
         @include text-style(0.4, 400, 1.3rem);

@@ -120,7 +120,7 @@ export class TimeInputManager extends InputManager {
             this.updateVal(minsFromStartToHHMM(timeInput, false))
 
             if (this.handlers?.onBlurHandler) { 
-                this.handlers!.onBlurHandler(timeInput)
+                this.handlers!.onBlurHandler(event, timeInput)
             }
         }
         catch (error: any) {

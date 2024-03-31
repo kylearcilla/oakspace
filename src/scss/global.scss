@@ -935,7 +935,6 @@ $settings-modal-padding: 20px 25px 25px 25px;
     padding: 3.5px 9px 3.5px 9px;
     border-radius: 12px;
 
-
     &__symbol {
         font-size: 0.85rem;
         margin-right: 9px;
@@ -984,5 +983,14 @@ $loading-dots-width: 4px;
 @keyframes bounce {
     to {
         transform: translateY(-$loading-dots-width);
+    }
+}
+
+.hide-scroll-bar {
+    -ms-overflow-style: none; /* for Internet Explorer, Edge */
+    scrollbar-width: none; /* for Firefox */
+
+    &::-webkit-scrollbar {
+        display: none;
     }
 }

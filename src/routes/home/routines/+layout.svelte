@@ -22,7 +22,6 @@
         
         const target = e.target as HTMLButtonElement
         selectedTab = tab
-        initHighlighter(target)
 
         if (tab === RoutinesTab.Current) {
             goto("/home/routines/current")
@@ -34,18 +33,8 @@
             goto("/home/routines/weekly-sets")
         }
     }
-    function initHighlighter(tab: HTMLButtonElement) {
-        const width = tab.clientWidth
-        const offSetLeft = tab.offsetLeft
-
-        tabHighlighterClass = `left: ${offSetLeft}px; width: ${width}px;`
-    }
-
     onMount(() => { 
-        initHighlighter(getFirstHighlighterBtn(ROUTINES_TABS))
-
         goto("/home/routines/current")
-
     })
 </script>
 
@@ -53,29 +42,27 @@
 <div class="routines-page" class:routines-page--light={!$themeState.isDarkTheme}>
     <h1 class="routines-page__title">Routines</h1>
     <!-- Highlighter Tabs -->
-    <div class="highlighter-tabs">
-        <div class="highlighter-tabs__container" id={ROUTINES_TABS}>
-            <button 
-                on:click={(e) => onTabClicked(e, RoutinesTab.Current)}
-                class="highlighter-tabs__tab-btn" class:highlighter-tabs__tab-btn--selected={selectedTab === RoutinesTab.Current}
-            >
-                Current
-            </button>
-            <button 
-                on:click={(e) => onTabClicked(e, RoutinesTab.Daily)}
-                class="highlighter-tabs__tab-btn" class:highlighter-tabs__tab-btn--selected={selectedTab === RoutinesTab.Daily}
-            >
-                Daily Routines
-            </button>
-            <button 
-                on:click={(e) => onTabClicked(e, RoutinesTab.Weekly)}
-                class="highlighter-tabs__tab-btn" class:highlighter-tabs__tab-btn--selected={selectedTab === RoutinesTab.Weekly}
-            >
-                Weekly Sets
-            </button>
-        </div>
-        <div class="highlighter-tabs__divider"></div>
+    <div class="routines-page__tabs">
+        <button 
+            on:click={(e) => onTabClicked(e, RoutinesTab.Current)}
+            class="routines-page__tab-btn" class:routines-page__tab-btn--selected={selectedTab === RoutinesTab.Current}
+        >
+            Current
+        </button>
+        <button 
+            on:click={(e) => onTabClicked(e, RoutinesTab.Daily)}
+            class="routines-page__tab-btn" class:routines-page__tab-btn--selected={selectedTab === RoutinesTab.Daily}
+        >
+            Daily Routines
+        </button>
+        <button 
+            on:click={(e) => onTabClicked(e, RoutinesTab.Weekly)}
+            class="routines-page__tab-btn" class:routines-page__tab-btn--selected={selectedTab === RoutinesTab.Weekly}
+        >
+            Weekly Sets
+        </button>
     </div>
+    <div class="routines-page__divider"></div>
     <slot />
 </div>
 
@@ -84,34 +71,44 @@
 
     .routines-page {
         height: 100%;
-        padding-top: 10px;
+        padding-top: 6px;
 
-        &--light .highlighter-tabs {
-            @include highlighter-tabs-light-mode;
+        &__tabs {
+            @include flex(center);
+            margin-left: -10px;
 
-            &__tab-btn {
-                margin-right: 17px;
-            }
         }
-
-        .highlighter-tabs {
-            margin-bottom: 19px;
-            &__tab-btn {
-                font-size: 1.4rem;
-                transition: 0.07s ease-in-out;
+        &__tab-btn {
+            padding: 4.5px 14px;
+            border-radius: 20px;
+            opacity: 0.24;
+            margin-right: 4px;
+            @include text-style(1, 300, 1.45rem, "DM Sans");
+            
+            &:first-child {
+                padding: 4.5px 12px 4.5px 12px;
             }
-            &__tab-btn:active {
+            &:active {
+                transform: scale(0.985);
                 transition: 0.14s ease-in-out;
             }
-            &__divider {
-                margin-top: 13px;
-                width: 100%;
-                opacity: 0.8;
+            &:hover {
+                transition: 0.04s ease-in-out;
+                background: rgba(var(--textColor1), 0.02);
+                opacity: 0.85;
+            }
+            &--selected {
+                opacity: 1 !important;
+                background: rgba(var(--textColor1), 0.05) !important;
             }
         }
         &__title {
-            margin-bottom: 12px;
-            @include text-style(_, 400, 2rem);
+            margin-bottom: 14px;
+            @include text-style(_, 400, 1.74rem);
+        }
+        &__divider {
+            margin: 10px 0px 0px 0px;
+            @include divider();
         }
     }
 </style>

@@ -1,7 +1,7 @@
 import { get, writable, type Writable } from "svelte/store"
 import { 
-        addItemToArray, extractNum, findAncestor, getDistanceBetweenTwoPoints, getElemById, getElemNumStyle, 
-        getElemsByClass, getElemTrueHeight, getElemTrueWidth, getHozDistanceBetweenTwoElems, getVertDistanceBetweenTwoElems, isEditTextElem, isKeyAlphaNumeric, moveElementInArr 
+        addItemToArray, extractNum, extractQuadCSSValue, findAncestor, getDistanceBetweenTwoPoints, getElemById, getElemNumStyle, 
+        getElemsByClass, getElemTrueHeight, getElemTrueWidth, getHozDistanceBetweenTwoElems, getVertDistanceBetweenTwoElems, intContextMenuPos, isEditTextElem, isKeyAlphaNumeric, moveElementInArr 
 } from "./utils-general"
 import { createEventDispatcher } from "svelte"
 
@@ -35,6 +35,7 @@ export class TasksListManager {
         subtask?: StylingOptions
         checkbox?: StylingOptions
         description?: StylingOptions
+        num?: StylingOptions
         descriptionInput?: { fontSize: CSSREMVal }
     }
     ui: {
@@ -68,7 +69,6 @@ export class TasksListManager {
     tasksList: HTMLElement | null = null
     freshExpand = false    
     expandTimeOut: NodeJS.Timeout | null = null
-    dispatch = createEventDispatcher()
 
     /* Tasks */
     tasks: Writable<Task[]>
@@ -127,6 +127,7 @@ export class TasksListManager {
     isContextMenuOpen = false
     contextMenuX = -1000
     contextMenuY = -1000
+    contextMenuWidth = 0
 
     rightClickedTask: null | { task: Task, idx: number }  = null
     rightClickedSubtask: null | { subtask: Subtask, idx: number } = null
@@ -149,6 +150,7 @@ export class TasksListManager {
 
     TASK_DESCR_LINE_HT = 14
     TASK_BOTTOM_PADDING = 20
+    TASK_HT_TRANSITION = "height 0.2s cubic-bezier(.1, .84, .42, .95)"
 
     DESCRIPTION_BOTTOM_PADDING = 6
     DESCRIPTION_TOP_PADDING = 4
@@ -169,8 +171,22 @@ export class TasksListManager {
         this.options = options
         this.tasks = writable(options.tasks)
 
+        this.contextMenuWidth = extractNum(options.contextMenuOptions.width)[0]
+
         // wrapper around the whole component
         this.containerRef = options.containerRef
+
+        // type
+        if (options.type) {
+            const types = options.type.split(" ")
+            this.types["subtasks-linked"] = types.includes("subtasks-linked")
+            this.types["numbered"] = types.includes("numbered")
+            this.types["tasks-linked"] = types.includes("tasks-linked")
+            this.types["subtasks"] = types.includes("subtasks")
+        }
+        if (this.types["subtasks-linked"]) {
+            this.types["subtasks"] = true
+        }
 
         // ui options
         this.ui = {
@@ -182,7 +198,11 @@ export class TasksListManager {
         }
 
         // styling 
-        this.styling = this.options.styling
+        this.styling = {
+            checkbox: { width: "10px", margin: "0px 0px 0px 0px" },
+            num: { width: "10px", margin: "0px 0px 0px 0px" },
+            ...options.styling,
+        }
 
         // css variables
         this.cssVariables = {
@@ -197,22 +217,12 @@ export class TasksListManager {
             subTaskLinkSolidColor: "#313131"
         }
         
-        const setTaskHeight = this.styling?.task?.height
+        // set collapsed task height
+        const { top: padTop, bottom: padBottom } = extractQuadCSSValue(this.styling?.task?.padding)
+        const setTaskHeight = (this.styling?.task?.height ?? 0)
 
-        this.TASK_HEIGHT_MIN_NO_DESCR  = setTaskHeight ? extractNum(setTaskHeight)[0] : 40
+        this.TASK_HEIGHT_MIN_NO_DESCR  = setTaskHeight ? (extractNum(setTaskHeight)[0] + padTop + padBottom) : 40
         this.TASK_HEIGHT_MIN_HAS_DESCR = this.TASK_HEIGHT_MIN_NO_DESCR + this.TASK_DESCR_LINE_HT
-
-        // type
-        if (options.type) {
-            const types = options.type.split(" ")
-            this.types["subtasks-linked"] = types.includes("subtasks-linked")
-            this.types["numbered"] = types.includes("numbered")
-            this.types["tasks-linked"] = types.includes("tasks-linked")
-            this.types["subtasks"] = types.includes("subtasks")
-        }
-        if (this.types["subtasks-linked"] && !this.types["subtasks"]) {
-            this.types["subtasks"] = true
-        }
         
         this.state = writable(this)
     }
@@ -221,8 +231,8 @@ export class TasksListManager {
      *  Get needed layout data from component after mounted on the DOM 
      */
     initAfterLoaded() {
-        this.tasksList = this.getElemById("tasks-list")!
         this.tasksListContainer = this.getElemById("tasks-list-container")!
+        this.tasksList = this.getElemById("tasks-list")!
 
         // task top padding
         const taskElem = getElemsByClass("task")![0] as HTMLElement
@@ -230,13 +240,14 @@ export class TasksListManager {
         const bottomPadding = getElemNumStyle(taskElem, "padding-bottom")
 
         // left section width
-        const taskLeftSectionElem = getElemsByClass("task__left")![0] as HTMLElement
-        const taskLeftSectionElemWidth = getElemTrueWidth(taskLeftSectionElem)
+        const leftSectionObj   = this.types["numbered"] ? this.styling?.num : this.styling?.checkbox
+        const { left, right }  = extractQuadCSSValue(leftSectionObj!.margin)
+        const leftSectionWidth = extractNum(leftSectionObj!.width!)[0] + left + right
         
         this.taskLayout = {
             topPadding: taskTopPadding,
             bottomPadding: bottomPadding,
-            leftSectionWidth: taskLeftSectionElemWidth
+            leftSectionWidth
         }
 
         this.update({ taskLayout: this.taskLayout })
@@ -263,7 +274,7 @@ export class TasksListManager {
         tasks = this.updateTaskIndices(tasks)
         this.tasks.set(tasks)
 
-        this.dispatch("newTaskAdded", _newTask)
+        // this.dispatch("newTaskAdded", _newTask)
     }
 
     duplicateTask(dupIdx: number) {
@@ -302,7 +313,7 @@ export class TasksListManager {
         // if removed task is the current focus the prev task will be focused, next if the first is removed
         this.focusedTaskIdx = Math.max(0, this.focusedTaskIdx - 1)
 
-        this.dispatch("taskRemoved", taskIdx)
+        // this.dispatch("taskRemoved", taskIdx)
         this.update({ focusedTaskIdx: this.focusedTaskIdx })
         this.tasks.set(tasks)
 
@@ -325,7 +336,7 @@ export class TasksListManager {
 
         this.tasks.set(tasks)
 
-        this.dispatch("taskReordered")
+        // this.dispatch("taskReordered")
         this.tasks.set(tasks)
     }
 
@@ -397,7 +408,7 @@ export class TasksListManager {
         tasks = this.updateSubTaskIndices(tasks, taskIdx)
         this.tasks.set(tasks)
 
-        this.dispatch("subtaskAdded", { taskIdx, subtaskIdx })
+        // this.dispatch("subtaskAdded", { taskIdx, subtaskIdx })
         this.tasks.set(tasks)
     }
 
@@ -443,7 +454,7 @@ export class TasksListManager {
         tasks = this.updateSubTaskIndices(tasks, this.pickedTaskIdx)
         this.tasks.set(tasks)
 
-        this.dispatch("subtasksReordered", { taskIdx: this.pickedTaskIdx })
+        // this.dispatch("subtasksReordered", { taskIdx: this.pickedTaskIdx })
         
 
         tasks[this.pickedTaskIdx] = task
@@ -471,7 +482,7 @@ export class TasksListManager {
 
         tasks![this.pickedTaskIdx].subtasks = newSubtasks
 
-        this.dispatch("subtaskRemoved", { taskIdx, subtaskIdx })
+        // this.dispatch("subtaskRemoved", { taskIdx, subtaskIdx })
         this.tasks.set(tasks)
 
         requestAnimationFrame(() => this.updateTaskHeight({ isUserTyping: true }))
@@ -649,7 +660,7 @@ export class TasksListManager {
         if (this.pickedTaskIdx < 0) return
 
         /* Main Task Content Height  */
-        let height = this.getTaskMainContentHeight(this.pickedTaskIdx)
+        let height = this.getTaskElemHeight(this.pickedTaskIdx)
 
         /* Subtask Editor */
         const subtaskTitleElement = this.getElemById(`task-subtask-title-input-id--${this.editingSubtaskIdx}`)
@@ -671,7 +682,7 @@ export class TasksListManager {
         }
 
         this.update({
-            pickedTaskHT: height + this.EXPANDED_TASK_HT_PADDING,
+            pickedTaskHT: height + this.EXPANDED_TASK_HT_PADDING + 2,
             subTaskLinkHt: this.subTaskLinkHt,
             frstSubTaskLinkOffset: this.frstSubTaskLinkOffset
         })
@@ -700,43 +711,51 @@ export class TasksListManager {
         this.subtasksCheckedFromTaskCheck = []
 
         this.update({ 
-            isEditingTitle: this.isEditingTitle,
-            isEditingDescription: this.isEditingDescription,
-            pickedTaskIdx: this.pickedTaskIdx,
-            editingSubtaskIdx: this.editingSubtaskIdx,
-            focusedSubtaskIdx: this.focusedSubtaskIdx,
+            isEditingTitle: false,
+            isEditingDescription: false,
+            pickedTaskIdx: -1,
+            editingSubtaskIdx: -1,
+            focusedSubtaskIdx: -1,
 
             pickedTaskDescriptionHT: this.pickedTaskDescriptionHT,
             pickedTaskHT: this.pickedTaskHT,
             taskCheckBoxJustChecked: this.taskCheckBoxJustChecked,
             subtaskCheckBoxJustChecked: this.subtaskCheckBoxJustChecked,
         })
+
+        this.forceListRerenderAfterMin()
     }
 
     /**
-     * Initialize task height when a task is rendered.
-     * This is done so that the height is calculated dynamically to support multi-line description when minimized.
+     * Initialize collapsed task height when a task is rendered.
+     * This is done so that heights are dynamic when tasks are collapsed instead of hardcoding fixed collapsed heights.
+     * 
+     * Initial heights cannot be auto since height animation is needed when tasks are expanded.
      * 
      * @param task   Task being redered
      * @return       Default fall-back value
      */
     initMinTaskHeight(task: Task) {
-        const taskElem = this.getTaskElem(task.idx)
-        if (!this.taskLayout || !taskElem) {
+        const taskElem     = this.getTaskElem(task.idx)
+        const doGetDefault = !this.taskLayout || !taskElem
+
+        if (doGetDefault) {
             return this.TASK_HEIGHT_MIN_NO_DESCR
         }
 
-        let height = 0
+        const elem = this.getElemById(`task-id--${task.idx}`)!
+        let   height = 0
 
         if (task.idx === this.pickedTaskIdx) {
             height = this.pickedTaskHT
+            elem.style.transition = this.TASK_HT_TRANSITION
         }
         else {
-            height = this.getTaskMainContentHeight(task.idx)
+            height = this.getTaskElemHeight(task.idx)
         }
+
         if (height < 0) return
 
-        const elem = this.getElemById(`task-id--${task.idx}`)!
         elem.style.height = height + "px"
     }
 
@@ -812,7 +831,6 @@ export class TasksListManager {
         }
         else if (taskIdx === this.pickedTaskIdx) {
             this.minimizeExpandedTask()
-            this.forceListRerender()
         }
         else {
             this.minimizeExpandedTask()
@@ -1173,8 +1191,7 @@ export class TasksListManager {
         })
         this.tasks.set(tasks)
 
-
-        this.dispatch("taskEdited", tasks![this.pickedTaskIdx]!)
+        // this.dispatch("taskEdited", tasks![this.pickedTaskIdx]!)
     }
 
     /**
@@ -1193,7 +1210,7 @@ export class TasksListManager {
         })
         this.tasks.set(tasks)
 
-        this.dispatch("taskEdited", tasks![this.pickedTaskIdx]!)
+        // this.dispatch("taskEdited", tasks![this.pickedTaskIdx]!)
     }
 
     /**
@@ -1214,7 +1231,7 @@ export class TasksListManager {
         })
         this.tasks.set(tasks)
 
-        this.dispatch("subtaskEdited", tasks![this.pickedTaskIdx]!)
+        // this.dispatch("subtaskEdited", tasks![this.pickedTaskIdx]!)
     }
 
     /**
@@ -1646,31 +1663,21 @@ export class TasksListManager {
             return
         }
 
-        // make sure dropdown menu stays in bounds within scroll window and scroll container
-        const containerElem = this.containerRef
-        const scrollTop = this.tasksListContainer!.scrollTop
+        const containerElem = this.tasksListContainer!
+        const scrollTop     = this.tasksListContainer!.scrollTop
 
-        this.contextMenuX = this.cursorPos.left
-        this.contextMenuY = this.cursorPos.top - scrollTop
-
-        const tasksListContainerRightEdge = containerElem!.clientWidth
-        const tasksListContainerBottomEdge = containerElem!.clientHeight
-
-        const dropdownElem = this.getElemById("tasks-list--dropdown-menu")!
-        const contextMenuWidth = getElemTrueWidth(dropdownElem)
-        const contextMenuHeight = getElemTrueHeight(dropdownElem)
-
-        const dropdownRightEdge  = contextMenuWidth + this.cursorPos.left
-        const dropdownBottomEdge = contextMenuHeight + this.cursorPos.top - scrollTop
-
-        if (dropdownRightEdge >= tasksListContainerRightEdge) {
-            const xOffset = dropdownRightEdge - tasksListContainerRightEdge
-            this.contextMenuX -= xOffset
+        const cursorPos = {
+            left: this.cursorPos.left,
+            top: this.cursorPos.top - scrollTop
         }
-        if (dropdownBottomEdge >= tasksListContainerBottomEdge) {
-            const yOffset = dropdownBottomEdge - tasksListContainerBottomEdge
-            this.contextMenuY -= yOffset + 10
-        }
+
+        const { left, top } = intContextMenuPos(
+            { height: 220, width: this.contextMenuWidth }, cursorPos,
+            { height: containerElem.clientHeight, width: containerElem.clientWidth }
+        )
+
+        this.contextMenuX = left
+        this.contextMenuY = top
         
         // see if task or subtask context menu
         if (subtaskElem || subtaskIdx >= 0) {
@@ -1755,7 +1762,7 @@ export class TasksListManager {
                 this.minimizeExpandedTask()
 
                 // another re-render needed to close
-                this.forceListRerender()
+                this.forceListRerenderAfterMin()
             }
             if (pickedTaskIdx < 0 || pickedTaskIdx >= 0 && pickedTaskIdx != focusedIdx) {
                 this.expandTask(focusedIdx)
@@ -1791,11 +1798,15 @@ export class TasksListManager {
     }
 
     /* Helpers */
-    getTaskElemHeight(id: string) {
-        return this.getElemById(id)!.clientHeight
-    }
 
-    forceListRerender() {
+    /**
+     * Force a list re-render after a minimizing an open task.
+     * 
+     * Needed because when the state update occurs, the height initialized will be before the element is closed from the update.
+     * This re-renders after the close update, which has now closed the open element and inits the right closed height.
+     * 
+     */
+    forceListRerenderAfterMin() {
         requestAnimationFrame(() => this.update({ isEditingTitle: this.isEditingTitle }))
     }
 
@@ -1811,14 +1822,25 @@ export class TasksListManager {
         return Math.abs(getVertDistanceBetweenTwoElems(higherCheckbox, lowerCheckbox))
     }
 
-    getTaskMainContentHeight(taskIdx: number) {
+    /**
+     * Get the height of a task. Add the set padding, and the heights and margins of its children.
+     * Height could be collapsed or expanded.
+     * 
+     * @param taskIdx 
+     * @returns 
+     */
+    getTaskElemHeight(taskIdx: number) {
+        // get the padding
         let height = this.taskLayout!.topPadding + this.taskLayout!.bottomPadding
 
+        // title element height
         const titleElement = this.getElemById(`task-title-id--${taskIdx}`)
         if (!titleElement) return -1
 
         height += titleElement.clientHeight + 4
 
+        // description element height + margins
+        // description could be collapsed or expanded
         const descrContainer = this.getElemById(`task-description-id--${taskIdx}`)
         if (!descrContainer) return -1
 

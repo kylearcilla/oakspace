@@ -147,16 +147,16 @@
     transition: 0.2s opacity cubic-bezier(.2, .45, 0, 1),
                 0.2s visibility cubic-bezier(.2, .45, 0, 1),
                 0.2s transform cubic-bezier(.2, .45, 0, 1);
-    transform: scale(1);
-    @include visible;
+    transform: scale(0.9);
+    @include not-visible;
     font-family: var(--font-family);
 
     $side-padding: 7px;
     $divider-side-padding: $side-padding - 2;
 
-    &--hidden {
-        transform: scale(0.9);
-        @include not-visible;
+    &--shown {
+        transform: scale(1);
+        @include visible;
     }
 
     /*  Dark Styles */

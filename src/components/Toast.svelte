@@ -5,6 +5,8 @@
 	import { onDestroy, onMount } from 'svelte'
 	import Logo from './Logo.svelte'
 	import SvgIcon from './SVGIcon.svelte'
+	import { themeState } from '$lib/store';
+	import { COLOR_SWATCHES, extractNum, getColorTrio } from '$lib/utils-general';
 
 	type $$Props = Expand<ToastProps>
 
@@ -32,6 +34,7 @@
 	const MIN_SWIPE_THRESHOLD = 20
 	const MIN_TIME_THRESHOLD = 20
 	const MAX_TIME_THRESHOLD = 100
+	const MIN_SWIPE_X_FROM_EDGE_DIFF = 5
 
 	const TOAST_ICON_OPTIONS = {
 		AppleMusic:   { iconWidth: "50%" },
@@ -88,6 +91,7 @@
 	// Height index is used to calculate the offset as it gets updated before the toast array, which means we can calculate the new layout faster.
 	$: heightIdx = $heights.findIndex((height: any) => height.toastId === toast.id) || 0
 	$: toastsHeightBefore = $heights.reduce((prev: any, curr: any, idx: any) => idx >= heightIdx ? prev : prev + curr.height, 0)
+	$: isDarkTheme = $themeState.isDarkTheme
 
 	$: if (toast.delete) {
 		deleteToast()
@@ -168,10 +172,12 @@
 	function onPointerDown(event: PointerEvent) {
 		if (disabled) return
 
-		offsetBeforeRemove = offset
 		const target = event.target as HTMLElement
+		offsetBeforeRemove = offset
+
 		// Ensure we maintain correct pointer capture even when going outside of the toast (e.g. when swiping)
 		target.setPointerCapture(event.pointerId)
+
 		if (target.tagName === 'BUTTON') {
 			return
 		}
@@ -182,29 +188,42 @@
 		pointerStartRef = { x: event.clientX, y: event.clientY }
 	}
 
-	function onPointerUp() {
+	function onPointerUp(e: PointerEvent) {
 		if (swipeOut) return
 
+		const target = e.target as HTMLElement
 		pointerStartRef = null
 
-		const swipeAmount = Number(toastRef?.style.getPropertyValue('--swipe-amount').replace('px', '') || 0)
+		target.style.userSelect = "text"
+
+		const swipeVal = toastRef?.style.getPropertyValue('--swipe-amount')
+		const swipeAmount = swipeVal ? extractNum(swipeVal)[0] : 0
 		const currentTime = Date.now()
 		const timeDifference = currentTime - pointerDownTimeStamp 
 		const isValidTime = MIN_TIME_THRESHOLD <= timeDifference && timeDifference <= MAX_TIME_THRESHOLD
 		
 		if (Math.abs(swipeAmount) >= SWIPE_TRESHOLD || (isValidTime && Math.abs(swipeAmount) >= MIN_SWIPE_THRESHOLD)) {
-			offsetBeforeRemove = offset
-			toast.onDismiss?.(toast)
-			deleteToast()
-			swipeOut = true
-			return
+			swipeAwayToast()
 		}
-		toastRef.style.setProperty('--swipe-amount', '0px')
-		swiping = false
+		else {
+			toastRef.style.setProperty('--swipe-amount', '0px')
+			swiping = false
+		}
+	}
+
+	function swipeAwayToast() {
+		offsetBeforeRemove = offset
+		toast.onDismiss?.(toast)
+		deleteToast()
+		swipeOut = true
 	}
 
 	function onPointerMove(event: PointerEvent) {
 		if (!pointerStartRef) return
+
+		const target = event.target as HTMLElement
+		const className = target.classList.value
+		const isText = className.includes("title") || className.includes("description")
 
 		const yPosition = event.clientY - pointerStartRef!.y
 		const xPosition = event.clientX - pointerStartRef!.x
@@ -212,14 +231,56 @@
 		const clamp = coords[0] === 'top' ? Math.min : Math.max
 		const clampedX = clamp(0, xPosition)
 		const swipeStartThreshold = event.pointerType === 'touch' ? 10 : 2
-		const isAllowedToSwipe = Math.abs(clampedX) > swipeStartThreshold
+		const isAllowedToSwipe = !isText && (Math.abs(clampedX) > swipeStartThreshold)
+
+		const distFromEdge = window.innerWidth - event.clientX
 
 		if (isAllowedToSwipe) {
+			target.style.userSelect = "none"
 			toastRef.style.setProperty('--swipe-amount', `${xPosition}px`)
+
+			if (distFromEdge < MIN_SWIPE_X_FROM_EDGE_DIFF) swipeAwayToast()
 		} 
 		else if (Math.abs(yPosition) > swipeStartThreshold) {
+			target.style.userSelect = "text"
 			pointerStartRef = null
 		}
+	}
+	function getToastIconColor() {
+		if (isContextMsg) {
+			return getContextColors()[0]
+		}
+		else {
+			return undefined
+		}
+
+	}
+	function getContextColors() {
+		let color
+
+		if (toastType === 'success') {
+			color = COLOR_SWATCHES.d[10]
+		}
+		else if (toastType === 'warning') {
+			color = COLOR_SWATCHES.d[9]
+		}
+		else if (toastType === 'info') {
+			color = COLOR_SWATCHES.d[26]
+		}
+		else {
+			color = COLOR_SWATCHES.d[14]
+		}
+
+		return getColorTrio(color, !isDarkTheme)
+	}
+	function initContextColorVars() {
+		const colorTrio = getContextColors()
+
+		return `;
+			--context-rich-color-1: ${colorTrio[0]};
+			--context-rich-color-2: ${colorTrio[1]};
+			--context-rich-color-3: ${colorTrio[2]};
+		`
 	}
 
 	onMount(() => {
@@ -261,7 +322,7 @@
 	data-invert={invert}
 	data-swipe-out={swipeOut}
 	data-expanded={Boolean(expanded || (expandByDefault && mounted))}
-	style={`${$$props.style} ${toast.style}`}
+	style={`${$$props.style} ${toast.style} ${isContextMsg ? initContextColorVars() : ""}`}
 	style:--index={index}
 	style:--toasts-before={index}
 	style:--z-index={$toasts.length - index}
@@ -275,6 +336,8 @@
 
     <!-- Close Button -->
 	{#if closeButton && !toast.component}
+		{@const toastIconColor = getToastIconColor()}
+
 		<button
             class="toast__close-btn" 
 			aria-label="Close toast"
@@ -283,7 +346,12 @@
 			on:click={cancelBtnClickedHandler}
 		>
             <div class="toast__close-btn-icon">
-                <SvgIcon icon={Icon.Close} options={{ scale: 0.88, strokeWidth: 1.2 }} />
+                <SvgIcon 
+					icon={Icon.Close} 
+					options={{ 
+						scale: 0.88, strokeWidth: 1.2, color: toastIconColor
+					}} 
+				/>
             </div>
 		</button>
 	{/if}

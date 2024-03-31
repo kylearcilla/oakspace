@@ -1,11 +1,17 @@
 /*
- *
  * Reusable styling for day views with routine blocks.
- *
  */
-
  
-.routine-time-blocks {
+.routine-blocks-container {
+    &--no-scroll {
+        overflow: hidden;
+    }
+    &--ns-resize * {
+        cursor: ns-resize !important;
+    }
+}
+
+.routine-blocks {
     @include pos-abs-top-left-corner;
     z-index: 1;
     width: 100%;
@@ -19,7 +25,7 @@
         width: 3.5px;
     }
     &--grabbing * {
-        cursor: grabbing !important;
+        cursor: text !important;
     }
     &--editing * {
         user-select: none !important;
@@ -28,6 +34,9 @@
         pointer-events: none;
     }
 
+    #edit-block {
+        transition: 0s !important;
+    }
 
     &__block {
         position: absolute;
@@ -46,15 +55,8 @@
         &--md &-title {
             margin: 0px 7px 0px 0px;
         }
-        &--lift-edit {
-            z-index: 2000;
-            border: 1px solid rgba(var(--block-color-3), 0.04);
-            box-shadow: 0px 1px 16.4px 4px rgba(0, 0, 0, 0.08);
 
-            * {
-                user-select: none;
-            }
-        }
+        // drop area
         &--drop-area {
             border: 1px dashed rgba(var(--block-color-1), 0.77);
             background-color: rgba(var(--block-color-2), 0.4);
@@ -71,6 +73,31 @@
             display: none;
         }
 
+        // week view drop area
+        &--wk-drop-area {
+            border: 1px dashed rgba(var(--block-color-1), 0.4);
+            background-color: rgba(var(--block-color-2), 0.5);
+            border-radius: 4px;
+        }
+
+        &--old-stretch, &--wk-old-stretch {
+            transition: 0s !important;
+            * {
+                pointer-events: all !important;
+            }
+        }
+
+        &--day-floating {
+            left: var(--left-x-offset) !important;
+        }
+        &--day-floating, &--wk-floating {
+            border: 1px solid rgba(var(--block-color-3), 0.04);
+            box-shadow: 0px 1px 16.4px 4px rgba(0, 0, 0, 0.08);
+            transition: 0s !important;
+            cursor: grabbing;
+            opacity: 0.8;
+        }
+
         &:hover {
             background-color: rgba(var(--block-color-2), 1);
             transition: 0.04s ease-in-out;
@@ -81,7 +108,7 @@
         &::after, &::before {
             z-index: 1000;
             content: " ";
-            cursor: ns-resize;
+            cursor: ns-resize !important;
             height: 4px;
             width: 100%;
         }
@@ -125,14 +152,23 @@
     }
 }
 
+$hour-blocks-top-offset: 55px;
+$hour-block-height: 50px;
+
 .hour-blocks {
+    height: calc(($hour-block-height * 24));
     position: relative;
+    width: 50px;
 
     &-container {
         position: relative;
+        width: 50px;
+        overflow: hidden;
     }
     &__blocks {
         position: relative;
+        width: 50px;
+        height: calc(($hour-block-height * 24));
         width: 50px;
     }
     &__block {
@@ -141,6 +177,8 @@
         text-align: center;
         flex-direction: column;
         position: absolute;
+        width: 40px;
+        left: -5px;
     }
     &__block span {
         @include text-style(0.3, 300, 0.94rem, "DM Sans");
@@ -148,37 +186,79 @@
         display: block;
         height: 11px;
         margin-top: -5.5px;
+        width: 40px;
     }
     &__block-vert-divider path {
         stroke: rgba(var(--textColor1), 0.17);
         display: none;
+        height: 28px;
+        opacity: 0.5;
     }
 }
 
-
-.hoz-lines {
+.wk-grid {
     height: 100%;
     width: 100%;
     position: relative;
-    
+    overflow: hidden;
+
     * {
         pointer-events: none;
     }
 
-    &-container {
-        width: 100%;
-        height: 100%;
+    &__vert-lines {
     }
-    &__line {
+    &__vert-line {
+        height: 100%;
+        width: 2px;
         position: absolute;
-        &-content {
-            position: relative;
-        }
+    }
+    &__vert-line-content {
+        position: relative;
+
         svg {
-            @include pos-abs-top-left-corner;
         }
-        path {
-            stroke: rgba(var(--textColor1), 0.06);
+    }
+    &__hoz-lines {
+        height: 100%;
+        width: 100%;
+        position: relative;
+    }
+    &__hoz-line {
+        position: absolute;
+        height: 50px;
+        width: 100%;
+    }
+    &__hoz-line-content {
+        position: relative;
+
+        svg {
+            @include pos-abs-top-left-corner(-3px);
         }
+    }
+
+    svg path {
+        stroke: rgba(var(--textColor1), 0.06);
+    }
+}
+
+.now-line {
+    position: absolute;
+    background-color: #D04149;
+    height: 1.5px;
+    border-radius: 4px;
+
+    &__content {
+        position: relative;
+        height: 100%;
+        width: 100%;
+    }
+    &__content::before {
+        content: " ";
+        background-color: #D04149;
+        @include pos-abs-top-left-corner(50%, 0px);
+        height: 7px;
+        width: 2.5px;
+        border-radius: 4px;
     }
 }

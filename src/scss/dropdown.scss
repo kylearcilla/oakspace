@@ -30,26 +30,46 @@
 
 .dropdown-btn {
     color: rgba(var(--textColor1), 0.75);
-    box-shadow: var(--bentoBoxShadow);
-    transition: 0.08s ease-in-out;
-    cursor: pointer;
+    transition: 0.1s cubic-bezier(.4,0,.2,1);
     border-radius: 18px;
-    padding: 6px 12px 6px 12px;
-    @include flex(center);
+    padding: 6px 12px;
     width: fit-content;
+    // box-shadow: var(--bentoBoxShadow);
+    cursor: pointer;
+    @include flex(center);
 
     &:hover {
-        @include txt-color(0.75, "bg");
+        @include txt-color(0.054, "bg");
         transition: 0s ease-in-out;
     }
     &:focus {
-        @include txt-color(0.75, "bg");
-        background-color: rgba(var(--textColor1), 0.75);
+        @include txt-color(0.054, "bg");
     }
     &:active {
         transform: scale(0.978);
     }
 
+    &--dark {
+        color: rgba(var(--textColor1), 0.65);
+        font-weight: 400;
+    
+        &:hover {
+            background-color: rgba(var(--textColor1), 0.04);
+        }
+        &:focus {
+            background-color: rgba(var(--textColor1), 0.04);
+        }
+        i {
+            color: rgba(var(--textColor1), 0.65);
+        }
+    }
+    &--settings#{&}--dark {
+        @include txt-color(0.04, "bg");
+
+        &:hover, &:focus {
+            @include txt-color(0.08, "bg");
+        }
+    }
     &--settings {
         @include circle(22px);
         @include center;
@@ -78,6 +98,12 @@
     &--active &__icon--arrow {
         transform: rotate(-180deg);
     }
+    &--arrow-left#{&}--active &__icon--arrow {
+        transform: rotate(0deg) !important;
+    }
+    &--arrow-left &__icon--arrow {
+        transform: rotate(-90deg) !important;
+    }
     &--arrow-on-hover &__icon--arrow {
         @include not-visible;
     }
@@ -90,12 +116,21 @@
     &--empty &__title {
         opacity: 0.45;
     }
+    &--no-bg {
+        box-shadow: none !important;
+    }
+    &--bg-on-active {
+        
+    }
+    &--bg-on-active:hover {
+        
+    }
 
     &__title {
-        font-size: 1.24rem;
+        @include text-style(0.85, 500, 1.24rem);
         white-space: nowrap;
-        flex: 1;
         margin-right: 9px;
+        flex: 1;
     }
 
     &__icon {
@@ -103,7 +138,7 @@
         position: relative;
         
         &--arrow {
-            transition: 0.1s ease-in-out;
+            transition: 0.15s cubic-bezier(.4,0,.2,1);
             transform-origin: center;
             transform: rotate(0deg);
             opacity: 0.2;
@@ -139,31 +174,18 @@
     padding: 4px 3px 5px 3px;
     border-radius: 10px;
     background-color: var(--dropdownMenuBgColor1);
-    border: 1px solid rgba(0, 0, 0, 0.08);
     box-shadow: 0px 1px 16.4px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.08);
     width: auto;
     min-width: 25px;
-    position: absolute;
-    transition: 0.2s opacity cubic-bezier(.2, .45, 0, 1),
-                0.2s visibility cubic-bezier(.2, .45, 0, 1),
-                0.2s transform cubic-bezier(.2, .45, 0, 1);
-    transform: scale(0.9);
-    @include not-visible;
     font-family: var(--font-family);
-
     $side-padding: 7px;
     $divider-side-padding: $side-padding - 2;
 
-    &--shown {
-        transform: scale(1);
-        @include visible;
-    }
-
     /*  Dark Styles */
     &--dark {
-        box-shadow: none;
         border: 1px solid rgba(white, 0.03);
-        box-shadow: none !important;
+        box-shadow: 0px 1px 16.4px 4px rgba(0, 0, 0, 0.07);
     }
     &--dark &__option {
         &-text {
@@ -171,6 +193,11 @@
         }
         &--selected {
             background-color: rgba(45, 45, 45, 0.2) !important;
+        }
+    }
+    &--dark &__item {
+        &-text {
+            @include text-style(0.85, 400);
         }
     }
     &--dark &__option-icon {
@@ -184,6 +211,16 @@
             background-color: rgba(white, 0.2);
         }
     }
+    &--dark &__option:focus, &--dark &__option:hover {
+        button {
+            background-color: rgba(var(--textColor1), 0.02);
+            opacity: 1;
+        }
+    }
+    &--dark &__option--selected {
+        background-color: rgba(var(--textColor1), 0.02);
+    }
+
     &--has-scroll-bar &__option {
         width: calc(100% - 8px);
     }
@@ -196,31 +233,28 @@
     }
     &__option {
         color: rgb(var(--textColor1));
-        white-space: nowrap;
+        white-space: nowrap; 
         border-radius: 9px;
         width: 100%;
         position: relative;
         display: block;
         margin-bottom: 1px;
         overflow: hidden;
-        cursor: pointer;
         position: relative;
         transition: 0s ease-in-out;
+        cursor: pointer;
         @include flex(center);
 
         &:last-child {
             padding-bottom: 0px;
         }
         &:focus, &:hover &-btn {
-            background-color: rgba(var(--textColor1), 0.02);
+            background-color: rgba(var(--textColor1), 0.04);
             opacity: 1;
-        }
-        &:focus, &:hover &-text {
-            font-weight: 400;
         }
         &--selected {
             opacity: 1;
-            background-color: var(--dropdownMenuBgHoverColor1);
+            background-color: rgba(var(--textColor1), 0.04);
         }
         &--selected button {
             opacity: 1;
@@ -235,18 +269,18 @@
     &__option-right-icon-container {
         @include flex(center);
     }
-    &__option-text {
-        @include elipses-overflow;
+    &__option-text, &__item-text {
         flex: 1;
         min-width: 0px;
         text-align: left;
+        @include elipses-overflow;
         @include text-style(_, 500, var(--font-size));
     }
     &__option-icon {
         width: 10px;
         height: 10px;
-        @include center;
         transition: 0.12s ease-in-out;
+        @include center;
 
         &--check {
             @include not-visible;
@@ -279,6 +313,15 @@
             opacity: 0.14;
         }
     }
+    &__item {
+        padding: 5px $side-padding 4px $side-padding;
+        @include flex(center, space-between);
+    }
+    &__item-text {
+        color: rgb(var(--textColor1));
+        opacity: 0.65;
+    }
+
     &__divider {
         margin: 2px 0px 4px 2px;
         width: 90%;

@@ -6,12 +6,15 @@
 	import Logo from "../../components/Logo.svelte"
 	import { onMount } from "svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte";
+	import BounceFade from "../../components/BounceFade.svelte";
 
     export let onBtnClick: (platform: MusicPlatform) => void
     
     let icon: LogoIcon
     let iconOptions: LogoContainerOptions
     let isPlatformListOpen = false
+
+    let isLight = !$themeState.isDarkTheme
 
     const LOGO_WIDTH = 15
     const BORDER_RADIUS = 6.5
@@ -39,11 +42,25 @@
     })
 </script>
 
-<div class={`active-account-header ${$themeState.isDarkTheme ? "active-account-header--dark" : "active-account-header--light"}`}>
+<div 
+    class="active-account-header"
+    class:active-account-header--dark={!isLight}
+    class:active-account-header--light={isLight}
+>
     <div class="active-account-header__btn-container">
-        <button class="active-account-header__btn dropdown-btn" on:click={() => isPlatformListOpen = !isPlatformListOpen}>
+        <button 
+            id="music-platforms--dropdown-btn"
+            class="active-account-header__btn dropdown-btn" 
+            class:active-account-header__btn--active={isPlatformListOpen} 
+            on:click={() => isPlatformListOpen = !isPlatformListOpen}
+        >
             {#if iconOptions}
-                <Logo logo={icon} options={{ containerWidth: `${LOGO_WIDTH}px`, borderRadius: `${BORDER_RADIUS}px`, ...iconOptions}} />
+                <Logo 
+                    logo={icon} 
+                    options={{ 
+                        containerWidth: `${LOGO_WIDTH}px`, borderRadius: `${BORDER_RADIUS}px`, ...iconOptions
+                    }} 
+                />
             {/if}
             {#if musicStore?.isSignedIn && platform != null}
                 <span>
@@ -51,11 +68,21 @@
                 </span>
             {/if}
             <div class="active-account-header__btn-arrow">
-                <SvgIcon icon={Icon.Dropdown} options={{ opacity: 0.2 }}></SvgIcon>
+                <SvgIcon 
+                    icon={Icon.Dropdown} 
+                    options={{ 
+                        opacity: 1, scale: 1.14, strokeWidth: 1.2, 
+                        height: 12, width: 12
+                    }}>
+                </SvgIcon>
             </div>
         </button>
         {#if platform != MusicPlatform.AppleMusic}
-            <div class="active-account-header__btn-divider"></div>
+            <div 
+                style:opacity={isPlatformListOpen ? 0 : 1}
+                class="active-account-header__btn-divider"
+            >
+            </div>
         {/if}
     </div>
     <!-- No way to get account details from Music Kit -->
@@ -70,102 +97,110 @@
         </div>
     {/if}
     <!-- Music Platform Dropdown List -->
-    <ul 
-        class={`platform-list dropdown-menu
-                    ${$themeState.isDarkTheme ? "" : "platform-list--light"}
-                    ${musicStore && isPlatformListOpen ? "" : "dropdown-menu--hidden"}
-                `} 
-        use:clickOutside on:click_outside={() => isPlatformListOpen = false}
+
+    <BounceFade
+        zIndex={100}
+        isHidden={!isPlatformListOpen}
     >
-        <li class="platform-list__item">
-            <div class="flx">
-                <div class="platform-list__item-logo">
-                    <Logo 
-                        logo={LogoIcon.Soundcloud} 
-                        options={{ containerWidth: "20px", borderRadius: "9px", iconWidth: "65%" }} 
-                    />
+        <ul 
+            id="music-platforms--dropdown-menu"
+            class={`platform-list dropdown-menu
+                        ${$themeState.isDarkTheme ? "" : "platform-list--light"}
+                        ${musicStore && isPlatformListOpen ? "" : "dropdown-menu--hidden"}
+                `} 
+            use:clickOutside on:click_outside={() => isPlatformListOpen = false}
+            
+        >
+            <li class="platform-list__item">
+                <div class="flx">
+                    <div class="platform-list__item-logo">
+                        <Logo 
+                            logo={LogoIcon.Soundcloud} 
+                            options={{ containerWidth: "20px", borderRadius: "9px", iconWidth: "65%" }} 
+                        />
+                    </div>
+                    <div class="platform-list__item-text">
+                        <div class="platform-list__item-name">Soundcloud</div>
+                        <div class="platform-list__item-content">Playlists</div>
+                    </div>
                 </div>
-                <div class="platform-list__item-text">
-                    <div class="platform-list__item-name">Soundcloud</div>
-                    <div class="platform-list__item-content">Playlists</div>
+                <button 
+                    class={`platform-list__item-btn ${platform === MusicPlatform.Soundcloud ? "platform-list__item-btn--selected" : ""}`}
+                    on:click={() => onBtnClick(MusicPlatform.Soundcloud)}
+                >
+                    {platform === MusicPlatform.Soundcloud ? "Disconnect" : "Connect"}
+                </button>
+            </li>
+            <li class="platform-list__item">
+                <div class="flx">
+                    <div class="platform-list__item-logo">
+                        <Logo 
+                            logo={LogoIcon.YoutubeMusic} 
+                            options={{ containerWidth: "20px", borderRadius: "7px", iconWidth: "66%" }} 
+                        />
+                    </div>
+                    <div class="platform-list__item-text">
+                        <div class="platform-list__item-name">Youtube Music</div>
+                        <div class="platform-list__item-content">Playlists, Live Videos</div>
+                    </div>
                 </div>
-            </div>
-            <button 
-                class={`platform-list__item-btn ${platform === MusicPlatform.Soundcloud ? "platform-list__item-btn--selected" : ""}`}
-                on:click={() => onBtnClick(MusicPlatform.Soundcloud)}
-            >
-                {platform === MusicPlatform.Soundcloud ? "Disconnect" : "Connect"}
-            </button>
-        </li>
-        <li class="platform-list__item">
-            <div class="flx">
-                <div class="platform-list__item-logo">
-                    <Logo 
-                        logo={LogoIcon.YoutubeMusic} 
-                        options={{ containerWidth: "20px", borderRadius: "7px", iconWidth: "66%" }} 
-                    />
+                <button 
+                    class={`platform-list__item-btn ${platform === MusicPlatform.YoutubeMusic ? "platform-list__item-btn--selected" : ""}`}
+                    on:click={() => onBtnClick(MusicPlatform.YoutubeMusic)}
+                >
+                    {platform === MusicPlatform.YoutubeMusic ? "Disconnect" : "Connect"}
+                </button>
+            </li>
+            <li class="platform-list__item">
+                <div class="flx">
+                    <div class="platform-list__item-logo">
+                        <Logo 
+                            logo={LogoIcon.AppleMusic} 
+                            options={{ containerWidth: "20px", borderRadius: "10px", iconWidth: "50%" }} 
+                        />
+                    </div>
+                    <div class="platform-list__item-text">
+                        <div class="platform-list__item-name">Apple Music</div>
+                        <div class="platform-list__item-content">Playlists, Live Radio</div>
+                    </div>
                 </div>
-                <div class="platform-list__item-text">
-                    <div class="platform-list__item-name">Youtube Music</div>
-                    <div class="platform-list__item-content">Playlists, Live Videos</div>
+                <button 
+                    class={`platform-list__item-btn ${platform === MusicPlatform.AppleMusic ? "platform-list__item-btn--selected" : ""}`}
+                    on:click={() => onBtnClick(MusicPlatform.AppleMusic)}
+                >
+                    {#if platform === MusicPlatform.AppleMusic && hasTokenExpired}
+                        Reconnect
+                    {:else}
+                        {platform === MusicPlatform.AppleMusic ? "Disconnect" : "Connect"}
+                    {/if}
+                </button>
+            </li>
+            <li class="platform-list__item">
+                <div class="flx">
+                    <div class="platform-list__item-logo">
+                        <Logo 
+                            logo={LogoIcon.Spotify} 
+                            options={{ containerWidth: "19px", borderRadius: "7px", iconWidth: "90%" }} 
+                        />
+                    </div>
+                    <div class="platform-list__item-text">
+                        <div class="platform-list__item-name">Spotify</div>
+                        <div class="platform-list__item-content">Playlists, Podcasts</div>
+                    </div>
                 </div>
-            </div>
-            <button 
-                class={`platform-list__item-btn ${platform === MusicPlatform.YoutubeMusic ? "platform-list__item-btn--selected" : ""}`}
-                on:click={() => onBtnClick(MusicPlatform.YoutubeMusic)}
-            >
-                {platform === MusicPlatform.YoutubeMusic ? "Disconnect" : "Connect"}
-            </button>
-        </li>
-        <li class="platform-list__item">
-            <div class="flx">
-                <div class="platform-list__item-logo">
-                    <Logo 
-                        logo={LogoIcon.AppleMusic} 
-                        options={{ containerWidth: "20px", borderRadius: "10px", iconWidth: "50%" }} 
-                    />
-                </div>
-                <div class="platform-list__item-text">
-                    <div class="platform-list__item-name">Apple Music</div>
-                    <div class="platform-list__item-content">Playlists, Live Radio</div>
-                </div>
-            </div>
-            <button 
-                class={`platform-list__item-btn ${platform === MusicPlatform.AppleMusic ? "platform-list__item-btn--selected" : ""}`}
-                on:click={() => onBtnClick(MusicPlatform.AppleMusic)}
-            >
-                {#if platform === MusicPlatform.AppleMusic && hasTokenExpired}
-                    Reconnect
-                {:else}
-                    {platform === MusicPlatform.AppleMusic ? "Disconnect" : "Connect"}
-                {/if}
-            </button>
-        </li>
-        <li class="platform-list__item">
-            <div class="flx">
-                <div class="platform-list__item-logo">
-                    <Logo 
-                        logo={LogoIcon.Spotify} 
-                        options={{ containerWidth: "19px", borderRadius: "7px", iconWidth: "90%" }} 
-                    />
-                </div>
-                <div class="platform-list__item-text">
-                    <div class="platform-list__item-name">Spotify</div>
-                    <div class="platform-list__item-content">Playlists, Podcasts</div>
-                </div>
-            </div>
-            <button 
-                class={`platform-list__item-btn ${platform === MusicPlatform.Spotify ? "platform-list__item-btn--selected" : ""}`}
-                on:click={() => onBtnClick(MusicPlatform.Spotify)}
-            >
-                {#if platform === MusicPlatform.Spotify && hasTokenExpired}
-                    Reconnect
-                {:else}
-                    {platform === MusicPlatform.Spotify ? "Disconnect" : "Connect"}
-                {/if}
-            </button>
-        </li>
-    </ul>
+                <button 
+                    class={`platform-list__item-btn ${platform === MusicPlatform.Spotify ? "platform-list__item-btn--selected" : ""}`}
+                    on:click={() => onBtnClick(MusicPlatform.Spotify)}
+                >
+                    {#if platform === MusicPlatform.Spotify && hasTokenExpired}
+                        Reconnect
+                    {:else}
+                        {platform === MusicPlatform.Spotify ? "Disconnect" : "Connect"}
+                    {/if}
+                </button>
+            </li>
+        </ul>
+    </BounceFade>
 </div>
 
 <style lang="scss">
@@ -200,6 +235,10 @@
             padding: 5px 8px 5px 8px;
             border-radius: 10px;
             transition: 0.09s ease-in-out;
+
+            &--active &-arrow {
+                transform: rotate(-180deg);
+            }
             
             &:active {
                 transform: scale(0.98);
@@ -208,11 +247,15 @@
                 @include txt-color(0.03, "bg");
             }
             span {
-                margin: 0px 6px 0px 8px;
+                margin: 0px 5.5px 0px 8px;
                 @include text-style(0.7, 400, 1.1rem);
             }
         }
         &__btn-arrow {
+            transition: 0.15s cubic-bezier(.4,0,.2,1);
+            transform-origin: center;
+            transform: rotate(0deg);
+            @include center;
             opacity: 0.2;
         }
         &__btn-divider {
@@ -220,7 +263,7 @@
             height: 10px;
             background-color: rgba(var(--textColor1), 0.14);
             margin: 0px 9px 0px 0px;
-            transition: 0.3s ease-in-out;
+            transition: 0.1s ease-in-out;
             @include visible;
         }
         &__user {
@@ -241,10 +284,9 @@
     }
     
     .platform-list {
-        margin-top: 15px;
         z-index: 10000;
         width: 250px;
-        @include pos-abs-top-right-corner(40px, 25px);
+        @include abs-top-right(20px, 25px);
         padding: 11px 15px 15px 8px;
         border-radius: 18px;
 

@@ -218,8 +218,7 @@
 <div 
     class="tasks-container"
     id={`${idPrefix}--tasks-list-container`}
-    style={inlineStyling($manager.styling?.list)}
-    style:-webkit-mask-image={maskListGradient}
+    style={`-webkit-mask-image: ${maskListGradient}; ${inlineStyling($manager.styling?.list)}`}
     style:mask-image={maskListGradient}
     style:height={$manager.ui.listHeight}
     on:scroll={() => contentListScrollHandler(tasksListContainerElem)} 
@@ -653,7 +652,7 @@
         }
         &--full-divider &__divider {
             @include divider(0.05, 0.5px, 100%);
-            @include pos-abs-top-left-corner;
+            @include abs-top-left;
         }
         &:hover {
             user-select: auto;
@@ -678,7 +677,7 @@
             opacity: 1 !important;
         }
         &--expanded &__drag-handle {
-            @include pos-abs-top-left-corner(-1px);
+            @include abs-top-left(-1px);
             @include not-visible;
         }
         &--expanded &__left:hover &__drag-handle {
@@ -760,7 +759,7 @@
         &__drag-handle {
             cursor: grab;
             transition: 0.1s ease-in-out;
-            @include pos-abs-top-left-corner(-3px);
+            @include abs-top-left(-3px);
             @include not-visible;
         }
         &__drag-handle-dots {
@@ -857,7 +856,7 @@
         }
         &__divider {
             @include divider(0.05, 0.5px, calc(100% - calc(2 * var(--side-padding))));
-            @include pos-abs-top-left-corner(0px, var(--side-padding));
+            @include abs-top-left(0px, var(--side-padding));
         }
     }
     .subtask {
@@ -913,10 +912,10 @@
             padding-left: var(--left-section-width) !important;
         }
         &--no-link &__drag-handle {
-            @include pos-abs-top-left-corner(50%, calc(var(--side-padding) + 4px));
+            @include abs-top-left(50%, calc(var(--side-padding) + 4px));
         }
         &--no-link &__settings-btn {
-            @include pos-abs-top-right-corner(8px, var(--side-padding));
+            @include abs-top-right(8px, var(--side-padding));
         }
         &--no-link &__divider {
             display: block;
@@ -940,7 +939,7 @@
         }
 
         &__subtask-link {
-            @include pos-abs-top-left-corner;
+            @include abs-top-left;
             pointer-events: none;
             z-index: -2;
         }
@@ -966,7 +965,7 @@
         &__drag-handle {
             cursor: grab;
             transition: 0.1s ease-in-out;
-            @include pos-abs-top-left-corner(50%);
+            @include abs-top-left(50%);
             @include not-visible;
         }
         &__drag-handle-dots {
@@ -1007,7 +1006,7 @@
         &__divider {
             display: none;
             @include divider(0.03, 0.5px, calc(100% - (var(--side-padding) + var(--left-section-width))));
-            @include pos-abs-top-left-corner(0px, var(--left-section-width));
+            @include abs-top-left(0px, var(--left-section-width));
         }
     }
 

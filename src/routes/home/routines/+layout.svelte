@@ -1,65 +1,51 @@
 <script lang="ts">
-	import { getFirstHighlighterBtn } from '$lib/utils-general';
-	import { onMount } from 'svelte';
-    import type { PageData } from './$types';
-	import { themeState } from '$lib/store';
-	import { goto } from '$app/navigation';
+	import { goto } from '$app/navigation'
+	import { themeState } from '$lib/store'
+    import type { PageData } from '../$types';
     
-    // export let data: PageData;
+    export let data: PageData;
 
     enum RoutinesTab {
-        Current, Weekly, Daily
+        Weekly, Daily
     }
 
-    let selectedTab = RoutinesTab.Current
-    let tabHighlighterClass = ""
+    let currTab = RoutinesTab.Weekly
 
-    const ROUTINES_TABS = "routines-tabs"
+    function onTabClicked(tab: RoutinesTab) {
+        if (tab === currTab) return
+        currTab = tab
 
-    /* Highlighter Tabs */
-    function onTabClicked(e: Event, tab: RoutinesTab) {
-        if (tab === selectedTab) return
-        
-        const target = e.target as HTMLButtonElement
-        selectedTab = tab
-
-        if (tab === RoutinesTab.Current) {
-            goto("/home/routines/current")
-        }
-        else if (tab === RoutinesTab.Daily) {
-            goto("/home/routines/daily-routines")
+        if (tab === RoutinesTab.Weekly) {
+            goto("/home/routines/weekly")
         }
         else {
-            goto("/home/routines/weekly-sets")
+            goto("/home/routines/daily")
         }
     }
-    onMount(() => { 
-        goto("/home/routines/current")
-    })
 </script>
 
 
-<div class="routines-page" class:routines-page--light={!$themeState.isDarkTheme}>
-    <h1 class="routines-page__title">Routines</h1>
-    <!-- Highlighter Tabs -->
+<div 
+    class="routines-page" 
+    class:routines-page--light={!$themeState.isDarkTheme}
+>
+    <h1 class="routines-page__title">
+        Routines
+    </h1>
     <div class="routines-page__tabs">
         <button 
-            on:click={(e) => onTabClicked(e, RoutinesTab.Current)}
-            class="routines-page__tab-btn" class:routines-page__tab-btn--selected={selectedTab === RoutinesTab.Current}
+            on:click={() => onTabClicked(RoutinesTab.Weekly)}
+            class="routines-page__tab-btn" 
+            class:routines-page__tab-btn--selected={currTab === RoutinesTab.Weekly}
         >
-            Current
+            Weekly
         </button>
         <button 
-            on:click={(e) => onTabClicked(e, RoutinesTab.Daily)}
-            class="routines-page__tab-btn" class:routines-page__tab-btn--selected={selectedTab === RoutinesTab.Daily}
+            on:click={() => onTabClicked(RoutinesTab.Daily)}
+            class="routines-page__tab-btn" 
+            class:routines-page__tab-btn--selected={currTab === RoutinesTab.Daily}
         >
-            Daily Routines
-        </button>
-        <button 
-            on:click={(e) => onTabClicked(e, RoutinesTab.Weekly)}
-            class="routines-page__tab-btn" class:routines-page__tab-btn--selected={selectedTab === RoutinesTab.Weekly}
-        >
-            Weekly Sets
+            Daily
         </button>
     </div>
     <div class="routines-page__divider"></div>
@@ -73,17 +59,29 @@
         height: 100%;
         padding-top: 6px;
 
+        &--light &__title {
+            @include text-style(1, 600);
+        }
+        &--light &__tab-btn {
+            opacity: 0.34;
+            @include text-style(1, 500);
+        }
+        &--light &__divider {
+            @include divider(0.064, 1px);
+        }
+        
         &__tabs {
             @include flex(center);
             margin-left: -10px;
-
+            font-family: "DM Sans";
         }
         &__tab-btn {
-            padding: 4.5px 14px;
             border-radius: 20px;
-            opacity: 0.24;
             margin-right: 4px;
-            @include text-style(1, 300, 1.45rem, "DM Sans");
+            padding: 4.5px 14px;
+            opacity: 0.24;
+            transition-duration: 0.04s;
+            @include text-style(1, 300, 1.45rem);
             
             &:first-child {
                 padding: 4.5px 12px 4.5px 12px;
@@ -104,7 +102,7 @@
         }
         &__title {
             margin-bottom: 14px;
-            @include text-style(_, 400, 1.74rem);
+            @include text-style(1, 400, 1.74rem);
         }
         &__divider {
             margin: 10px 0px 0px 0px;

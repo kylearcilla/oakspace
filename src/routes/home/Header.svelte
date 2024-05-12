@@ -1,19 +1,50 @@
 <script lang="ts">
-    import { ModalType } from "$lib/enums"
+    import { Icon, ModalType } from "$lib/enums"
 	import { openModal } from "$lib/utils-home"
-	import { themeState, musicDataStore, ytPlayerStore, sessionStore, musicPlayerStore } from "$lib/store"
+	import { themeState, musicDataStore, ytPlayerStore, sessionStore, musicPlayerStore, weekRoutine } from "$lib/store"
 
 	import SessionHeaderView from "./SessionHeaderView.svelte"
 	import { onDestroy, onMount } from "svelte"
+	import SvgIcon from "../../components/SVGIcon.svelte";
+	import { getColorTrio } from "$lib/utils-general";
 
     let dropdownMenu: HTMLElement
     let doMinHeaderUI = false
     let headerWidth = 0
     let isColorThemeDefault = true
+    let nowBlock: RoutineBlock | null = null
+    let nowBlockTitle = ""
+
+    const NO_SESS_MD_MAX_WIDTH = 270
+    const MD_MAX_WIDTH = 800
+    const SM_MAX_WIDTH = 550
+
+    $: activeSession = $sessionStore != null
+    $: dayRoutine = $weekRoutine?.blocks.Friday
+    $: isDarkTheme = $themeState!.isDarkTheme
 
     $: {
         doMinHeaderUI = $ytPlayerStore?.doShowPlayer ?? false
         isColorThemeDefault = ["Dark Mode", "Light Mode"].includes($themeState.title)
+    }
+
+    // new block
+    $: if (dayRoutine && "id" in dayRoutine) {
+        nowBlock = dayRoutine.blocks[0]
+    }
+    else if (dayRoutine) {
+        nowBlock = dayRoutine[0]
+    }
+
+    // new block title
+    $: if (!dayRoutine) {
+        nowBlockTitle = "You current don't have a routine set."
+    }
+    else if (!nowBlock) {
+        nowBlockTitle = "Free time. No active routine block at this moment."
+    }
+    else {
+        nowBlockTitle = `"${nowBlock.title}". Your current routine at this moment from your "${$weekRoutine?.name}" weekly routine.`
     }
 
     /* Event Handlers */
@@ -31,6 +62,7 @@
     }
     function handleResize() {
         if (!$ytPlayerStore?.doShowPlayer) return
+
         doMinHeaderUI = headerWidth < 840  
     }
 
@@ -45,58 +77,44 @@
 
 <header 
     bind:clientWidth={headerWidth}
-    class={`header 
-                header${$themeState.isDarkTheme ? "--dark" : "--light"} 
-                ${isColorThemeDefault ? "" : "header--non-default"}
-                ${$sessionStore && doMinHeaderUI ? "header--min" : ""}
-    `} 
+    class="header"
+    class:header--dark={isDarkTheme}
+    class:header--light={!isDarkTheme}
+    class:header--non-default={isColorThemeDefault}
+    class:header--min={$sessionStore && doMinHeaderUI}
+    class:header--md={activeSession && headerWidth < MD_MAX_WIDTH}
+    class:header--sm={activeSession && headerWidth < SM_MAX_WIDTH}
 >
     <!-- Left Side -->
-    <!-- svelte-ignore a11y-mouse-events-have-key-events -->
-    <div class={`user-panel ${$themeState.isDarkTheme ? "" : "user-panel--light"} header__section`}
-        on:mouseover={() => dropdownMenu.style.display = "block"} 
-        on:mouseleave={() => dropdownMenu.style.display = "none"}
-    >
-        <div class="user-panel__details">
-            <img src="https://i.pinimg.com/474x/87/7a/f8/877af84ee302075f969be04f809a0e5f.jpg" alt="">
-            <span class="user-panel__details-name">Kyle Arcilla</span>
-        </div>
-        <!-- Dropdown Container -->
-        <div class="dropdown-container" bind:this={dropdownMenu}>
-            <ul class="dropdown-menu dropdown-menu--alt">
-                <li class="dropdown-menu__option">
-                    <button class="dropdown-element" on:click={(_) => handleDropdownOption(0)}>
-                        <span class="dropdown-menu__option-text">
-                            Weekly Wisdom
-                        </span>
-                        <div class="dropdown-menu__option-icon">
-                            <i class="fa-solid fa-quote-right"></i>
-                        </div>
-                    </button>
-                </li>
-                <li class="dropdown-menu__option">
-                    <button class="dropdown-element" on:click={(_) => handleDropdownOption(1)}>
-                        <span class="dropdown-menu__option-text">
-                            Keyboard Shortcuts
-                        </span>
-                        <div class="dropdown-menu__option-icon">
-                            <i class="fa-regular fa-keyboard"></i>
-                        </div>
-                    </button>
-                </li>
-                {#if $ytPlayerStore || $musicDataStore}
-                    <div class="divider"></div>
+    {#if nowBlock}
+        {@const colorTrio = getColorTrio(nowBlock.color, !isDarkTheme)}
+        <button 
+            class="header__now-block"
+            class:header__now-block--default={!dayRoutine || !nowBlock}
+            class:header__now-block--md={headerWidth < NO_SESS_MD_MAX_WIDTH}
+            class:header__now-block--sm={activeSession && headerWidth < SM_MAX_WIDTH}
+            style:--block-color-1={colorTrio[0]}
+            style:--block-color-2={colorTrio[1]}
+            style:--block-color-3={colorTrio[2]}
+            title={nowBlockTitle}
+        >
+            <div class="header__now-block-circle"></div>
+            <div class="header__now-block-title">
+                {#if !dayRoutine}
+                    Empty
+                {:else if !nowBlock}
+                    Free
+                {:else}
+                    Deep Work
                 {/if}
-                <li class="dropdown-menu__option">
-                    <button class="dropdown-element" on:click={(_) => handleDropdownOption(2)}>
-                        <span class="dropdown-menu__option-text">
-                            Log Out
-                        </span>
-                    </button>
-                </li>
-            </ul>
-        </div>
-    </div>
+            </div>
+            {#if nowBlock}
+                <div class="header__now-block-time">
+                    42m
+                </div>
+            {/if}
+        </button>
+    {/if}
 
     <!-- Active Session Component -->
     {#if $sessionStore != null && $ytPlayerStore?.doShowPlayer}
@@ -107,20 +125,31 @@
     {/if}
 
     <!-- Right Side -->
-    <div class="header__section">
-        <div class="header__active-streak" title="Active perfect habit streak.">
-            <span>4</span>
-            <i class="fa-solid fa-fire"></i>
+    <div class="header__right-section header__section">
+        <!-- New Session -->
+        <button 
+            title="Create new session"
+            class="header__new-session-btn"
+            class:hidden={activeSession}
+            on:click={() => openModal(ModalType.NewSession)}
+        >
+            <SvgIcon 
+                icon={Icon.Add}
+                options={{ scale: 0.9, strokeWidth: 1.75 }}
+            />
+        </button>
+        <div 
+            class="header__new-session-btn-divider"
+            class:hidden={activeSession}
+        >
         </div>
         <!-- Total Session Time -->
-        <div class="header__session-time" title="Tota productive time">
+        <div class="header__session-time" title="Total session time for today.">
             <i class="fa-regular fa-clock"></i>
-            <span>1h 45m</span>
+            <span>1h 46m</span>
         </div>
     </div>
 
-    <!-- Divider -->
-    <div class="header__divider"></div>
 </header>
 
 <style global lang="scss">
@@ -129,17 +158,10 @@
     .header {
         width: 100%;
         height: 32px;
-        padding: 0px 10px;
+        padding: 5px 0px 0px 0px;
         position: relative;
         @include flex(center, space-between);
-        background-color: var(--headerBgColor);
-        box-shadow: var(--headerBoxShadow);
-        border-bottom: var(--headerBorder);
         
-        /* Dark / Light Themes */
-        &--light &__divider {
-            display: none;
-        }
         &--light &__ctrl-btns {
             margin-right: 11px;
             i {
@@ -163,118 +185,128 @@
                 opacity: 1;
             }
         }
-        &--dark .user-panel .dropdown-menu {
-            @include dropdown-menu-dark;
-            i {
-                color: rgba(var(--textColor1), 0.85);
-            }
-        }
         &--non-default &__ctrl-btn i {
             color: var(--headerIconColor) !important;
         }
         &--non-default &__ctrl-btn--inactive i {
             opacity: 0.5;
+
             &:hover {
                 opacity: 1;
             }
+        }
+        &--md .header-session-container {
+            width: 74%;
+        }
+        &--sm &__right-section {
+            display: none;
+        }
+        &--sm .header-session-container {
+            width: 80%;
+            margin-left: 14px;
         }
 
         &__section {
             @include flex(center);
         }
+
+        /* Now Block */
+        &__now-block {
+            @include flex(center);
+            height: 10px;
+            background-color: rgba(var(--block-color-1), 0.08);
+            padding: 8.5px 10px 9px 13px;
+            border-radius: 12px;
+            
+            &--default {
+                @include txt-color(0.055, "bg");
+            }
+            &--default &-circle {
+                @include txt-color(0.14, "bg");
+            }
+            &--default &-title {
+                @include txt-color(0.6);
+            }
+            &--default &-time {
+                @include txt-color(0.2);
+            }
+            &--md  {
+                padding: 8.5px 10px 9px 11px;
+                border-radius: 14px;
+            }
+            &--md &-title, &--sm &-title {
+                display: none;
+            }
+            &--md &-time {
+                margin-left: 8px;
+            }
+            &--sm {
+                @include circle(22px);
+                padding: 0px;
+                @include center;
+            }
+            &--sm &-circle {
+                @include circle(4px);
+            }
+            &--sm &-time {
+                display: none;
+            }
+            
+            &:active {
+                transform: scale(0.99);
+            }
+            &-circle {
+                // @include circle(3.5px);
+                background-color: rgba(var(--block-color-1));
+                height: 9px;
+                width: 2px;
+                border-radius: 4px;
+            }
+            &-title {
+                color: rgba(var(--block-color-1));
+                font-size: 1.14rem;
+                font-weight: 500;
+                margin: 0px 0px 0px 8px;
+                max-width: 80px;
+                @include elipses-overflow;
+            }
+            &-time {
+                font-weight: 500;
+                font-size: 1.08rem;
+                margin-left: 9px;
+                color: rgba(var(--block-color-3));
+            }
+        }
+
+        /* New Session Button */
+        &__new-session-btn {
+            @include center;
+            @include circle(16px);
+            @include txt-color(0.13, "bg");
+            opacity: 0.6;
+
+            &:hover {
+                transition: 0.1s ease-in-out;
+                opacity: 0.9;
+            }
+        }
+        &__new-session-btn-divider {
+            @include divider(0.2, 9px, 1px);
+            margin: 0px 11px;
+        }
+
+        /* Session Time */
         &__session-time {
             @include flex(center);
             white-space: nowrap;
             i {
-                opacity: 0.55;
-                color: rgb(var(--headerTextColor));
+                opacity: 0.38;
+                font-size: 1.02rem;
             }
             span {
-                @include text-style(_, 300, 1.05rem);
-                color: rgb(var(--headerTextColor));
-                opacity: 0.65;
+                @include text-style(0.4, 400, 1.15rem, "DM Sans");
                 font-family: "DM Sans";
-                margin-left: 6px;
-            }
-        }
-        &__divider {
-            @include divider(0.1, 0.5px, 100%);
-            @include pos-abs-bottom-left-corner(0px, 0px);
-            z-index: 1;
-        }
-        &__active-streak {
-            @include flex(center);
-            margin-right: 14px;
-            i {
-                color: #FFD18B;
-                font-size: 0.85rem;
-            }
-            span {
-                @include text-style(_, 300, 1.12rem, "DM Sans");
-                color: rgba(var(--headerTextColor), 0.5);
-                margin-right: 4px;
-            }
-        }
-    } 
-
-    /* User Panel */
-    .user-panel {
-        @include flex(center);
-        position: relative;
-        height: 40px;
-
-        &--light &__details {
-            &-name {
-                font-weight: 400;
-            }
-            img {
-                @include circle(18px);
-                margin-right: 10px;
-            }
-        }
-        &--light &__active-streak i {
-            color: #fab238;
-        }
-        &--light &__active-streak span {
-            font-weight: 500;
-            color: rgba(var(--headerTextColor), 0.5);
-        }
-
-        img {
-            @include circle(16px);
-            object-fit: cover;
-            -webkit-user-drag: none;
-            margin-right: 7px;
-        }
-        &__details {
-            font-family: "Apercu";
-            @include flex(center);
-            
-            &-name {
-                @include text-style(_, 300, 1.14rem);
-                @include elipses-overflow;
-                color: rgb(var(--headerTextColor));
-                white-space: nowrap;
-                // max-width: 30px;
-            }
-        }
-        .dropdown-container {
-            @include pos-abs-bottom-left-corner(-120px, 0px);
-            height: 120px;
-            width: 150px;
-            display: none;
-        }
-        .dropdown-menu {
-            margin-top: 10px;
-            width: 100%;
-            border-radius: 12px;
-
-            &__option {
-                width: 100%;
-            }
-            i, .fa-youtube {
-                color: rgba(var(--textColor1), 1);
-                font-size: 1rem;
+                margin-left: 7px;
             }
         }
     }
@@ -282,6 +314,7 @@
     /* Active Session Component  */
     .header-session-container {
         align-items: center;
+        z-index: 999;
         width: 70%;
     }
 </style>

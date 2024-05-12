@@ -17,6 +17,8 @@
     import { ModalType, MusicPlatform, MusicMoodCategory, UserLibraryMedia, Icon, MusicMediaType, LibError } from "$lib/enums"
 	import { MusicSettingsManager } from "$lib/music-settings-manager";
 
+    $: isLight = !$themeState.isDarkTheme
+
     $: isSignedIn      = $musicDataStore?.isSignedIn
     $: platform        = $musicDataStore?.musicPlatform
     $: mediaCollection = $musicPlayerStore?.mediaCollection 
@@ -91,7 +93,11 @@
 
 {#if manager}
     <Modal onClickOutSide={() => closeModal(ModalType.Music)}> 
-        <div class={`music ${!$themeState.isDarkTheme ? "music--light" : "music--dark"}`}>
+        <div 
+            class="music"
+            class:music--light={isLight}
+            class:music--dark={!isLight}
+        >
             <!-- Top Header -->
             <div class="music__header">
                 <h1 class="modal-bg__content-title">Music</h1>
@@ -103,7 +109,10 @@
             <div class="music__content">
                 <div class="music__left-section">
                     <!-- Now Playing Section -->
-                    <div class={`now-playing ${mediaCollection ? "" : "now-playing--empty"} bento-box`}>
+                    <div 
+                        class="now-playing bento-box"
+                        class:now-playing--empty={!mediaCollection}
+                    >
                         <img class="img-bg" src={mediaCollection?.artworkImgSrc} alt="">
                         {#if mediaCollection}
                             <div class="img-bg-gradient gradient-container gradient-container--bottom"></div>
@@ -654,8 +663,8 @@
             background-color: var(--hoverColor2);
             border-radius: 5px;
             @include flex(center, center);
-            width: 90px;
-            height: 90px;
+            width: 80px;
+            height: 80px;
             object-fit: cover;
             aspect-ratio: 1 / 1;
             margin: 0 auto 0 auto;
@@ -830,7 +839,7 @@
                 color: rgb(var(--textColor1));
             }
             .divider {
-                @include pos-abs-bottom-left-corner(0px, 22);
+                @include abs-bottom-left(0px, 22);
                 width: 85%;
             }
         }
@@ -895,19 +904,19 @@
             text-align: center;
         }
         &__library-dropdown-container {
-            @include pos-abs-top-right-corner(42px, 10px);
+            @include abs-top-right(42px, 10px);
         }
         &__library-dropdown {
             width: $lib-dropdown-menu-width;
-            @include pos-abs-top-right-corner(0px, -5px);
+            @include abs-top-right(0px, -5px);
 
             &:last-child {
                 width: $lib-dropdown-menu-width - 10px;
-                @include pos-abs-top-right-corner(0px, -18px);
+                @include abs-top-right(0px, -18px);
             }
         }
         &__library-options-dropdown-container {
-            @include pos-abs-top-right-corner(0px, calc(($lib-dropdown-menu-width - 20px) * -1));
+            @include abs-top-right(0px, calc(($lib-dropdown-menu-width - 20px) * -1));
             position: relative;
             width: calc($lib-dropdown-menu-width - 10px);
             height: 170px;
@@ -975,10 +984,10 @@
                 }
 
                 &--left {
-                    @include pos-abs-top-left-corner(60px, 5px);
+                    @include abs-top-left(60px, 5px);
                 }
                 &--right {
-                    @include pos-abs-top-right-corner(60px, 5px);
+                    @include abs-top-right(60px, 5px);
                 }
             }
         }
@@ -1061,7 +1070,7 @@
             transition: 0.3s ease-in-out;
             font-size: 1.3rem;
             font-weight: 600;
-            @include pos-abs-bottom-left-corner(9px, 10px);
+            @include abs-bottom-left(9px, 10px);
         }
         &__collection-card-hover-details {
             border-radius: 7px;
@@ -1071,7 +1080,7 @@
             height: 100%;
             visibility: hidden;
             opacity: 0;
-            @include pos-abs-top-left-corner(0px, 0px);
+            @include abs-top-left(0px, 0px);
             
             h2 {
                 font-weight: 600;
@@ -1085,7 +1094,7 @@
             img {
                 width: 101%;
                 height: 101%;
-                @include pos-abs-top-left-corner(0px, 0px);
+                @include abs-top-left(0px, 0px);
                 z-index: -1;
             }
 
@@ -1190,7 +1199,7 @@
                 background-color: var(--hoverColor);
             }
             .divider {
-                @include pos-abs-bottom-left-corner(0px, 25px);
+                @include abs-bottom-left(0px, 25px);
                 width: 90%;
             }
         }

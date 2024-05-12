@@ -45,22 +45,19 @@ export class InputManager {
     }
 
     onPaste(e: Event) {
-        console.log(e)
+        
     }
-
     initElem() {
         this.inputElem = getElemById(this.id) as HTMLInputElement
     }
-
-    updateVal(newVal: string) {
+    updateVal(e: Event, newVal: string) {
         this.value = newVal
         this.updateState({ value: newVal })
 
         if (this.handlers?.onInputHandler) {
-            this.handlers!.onInputHandler()
+            this.handlers!.onInputHandler(e, newVal)
         }
     }
-
     updateState(newState: Partial<InputManager>) {
         this.state.update((state) => {
             state.oldTitle = newState.oldTitle ?? state.oldTitle
@@ -74,7 +71,7 @@ export class InputManager {
     }
     onInputHandler(event: Event) {
         const inputElem = event.target as HTMLInputElement
-        this.updateVal(inputElem.value)
+        this.updateVal(event, inputElem.value)
     }
     onFocusHandler(event: Event) {
         if (this.handlers?.onFocusHandler) {
@@ -85,7 +82,7 @@ export class InputManager {
         const value = !this.value ? (this.doAllowEmpty ? "" : "Untitled") : this.value
         
         this.updateState({ oldTitle: value })
-        this.updateVal(value)
+        this.updateVal(event, value)
 
         if (this.handlers?.onBlurHandler) {
             this.handlers?.onBlurHandler(event, value)
@@ -108,7 +105,7 @@ export class TimeInputManager extends InputManager {
 
     onInputHandler(event: Event) {
         const inputElem = event.target as HTMLInputElement
-        this.updateVal(inputElem.value)
+        this.updateVal(event, inputElem.value)
     }
 
     onBlurHandler(event: Event) {
@@ -117,7 +114,7 @@ export class TimeInputManager extends InputManager {
 
         try {
             const timeInput = clamp(this.min, TimeInputManager.validateTimeInput(value), this.max)
-            this.updateVal(minsFromStartToHHMM(timeInput, false))
+            this.updateVal(event, minsFromStartToHHMM(timeInput, false))
 
             if (this.handlers?.onBlurHandler) { 
                 this.handlers!.onBlurHandler(event, timeInput)
@@ -126,7 +123,7 @@ export class TimeInputManager extends InputManager {
         catch (error: any) {
             if (this.handlers?.onError) this.handlers!.onError(error)
 
-            this.updateVal(this.oldTitle)
+            this.updateVal(event, this.oldTitle)
         }
     }
 
@@ -209,6 +206,8 @@ export class TextAreaManager extends InputManager {
  * Custom functionality for redo / undo and copy paste/
  */
 export class TextEditorManager extends InputManager {
+    valLength = 0
+
     undoStack: string[] = []
     redoStack: string[] = []
     currentIntervalLength = 0
@@ -234,8 +233,8 @@ export class TextEditorManager extends InputManager {
 
     initElem() {
         super.initElem()
-        // attach placeholder
 
+        // attach placeholder
         if (this.inputElem) {
             this.inputElem.style.setProperty('--placeholder-val', this.placeholder);
         }
@@ -249,12 +248,17 @@ export class TextEditorManager extends InputManager {
         if ((!event.ctrlKey && !event.metaKey) || event.key != "z") {
             return
         }
-
         event.preventDefault()
-        event.shiftKey ? this.redoEdit() : this.undoEdit()
+        event.shiftKey ? this.redoEdit(event) : this.undoEdit(event)
     }
 
-    redoEdit() {
+    /**
+     * When user redos, get the most recent state from redo stack.
+     * The current state will be put in the undo stack.
+     * 
+     * @param event 
+     */
+    redoEdit(event: KeyboardEvent) {
         if (this.redoStack.length === 0) return
 
         if (this.value) {
@@ -262,16 +266,26 @@ export class TextEditorManager extends InputManager {
         }
 
         const recentUndo = this.redoStack.pop()!
-        this.updateVal(recentUndo, true)
+        this.updateTextEditorVal(event, recentUndo, true)
     }
     
-    undoEdit() {
+    /**
+     * When user undos, get the most recent state from undo stack.
+     * The current state will be put in the redo stack.
+     * 
+     * @param event 
+     */
+    undoEdit(event: KeyboardEvent) {
         this.redoStack.push(this.value)
 
         const recentEdit = this.undoStack.pop() ?? ""
-        this.updateVal(recentEdit, true)
+        this.updateTextEditorVal(event, recentEdit, true)
     }
 
+    /**
+     * After every insertion of new text, check to see if the text added from prev undo state
+     * is big enough for the curent text to be put in the undo stack.
+     */
     undoHandler(newValue: string) {
         const recentEditLength = this.undoStack[this.undoStack.length - 1]?.length ?? 0
         this.currentIntervalLength = Math.abs(recentEditLength - newValue.length)
@@ -284,17 +298,17 @@ export class TextEditorManager extends InputManager {
         this.currentIntervalLength = 0
     }
 
-    updateVal(newVal: string, doUpdateCursorPos = false) {
+    updateTextEditorVal(event: Event, newVal: string, doUpdateCursorPos = false) {
         this.prevVal = this.value
         this.value = newVal
         this.updateState({ value: newVal })
 
-        if (this.handlers?.onInputHandler) {
-            this.handlers?.onInputHandler(newVal)
-        }
         if (doUpdateCursorPos) {
             this.inputElem!.innerHTML = newVal
             setCursorPos(this.inputElem!, newVal.length)
+        }
+        if (this.handlers?.onInputHandler) {
+            this.handlers?.onInputHandler(event, newVal, this.valLength)
         }
     }
 
@@ -306,12 +320,14 @@ export class TextEditorManager extends InputManager {
 
         if (!pastedText) return
 
-        // current val will contain the pasted content, use pre val
+        // place the pasted text in the appropriate cursor position of prev value
+        let preVal = target.innerText
         let { start, end } = getContentEditableSelectionRange(target)
-        let newValue       = this.prevVal.slice(0, start) + pastedText + this.prevVal.slice(end)
-        newValue = newValue.substring(0, this.maxLength)
+        let newValue       = preVal.slice(0, start) + pastedText + preVal.slice(end)
+        newValue           = newValue.substring(0, this.maxLength)
 
         target.innerHTML = newValue
+        this.valLength = target.innerText.length
 
         // move the cursor ups
         const newCursorPos = start + pastedText.length
@@ -320,7 +336,7 @@ export class TextEditorManager extends InputManager {
         this.undoHandler(newValue)
         
         // save
-        this.updateVal(newValue)
+        this.updateTextEditorVal(event, newValue)
     }
 
     onInputHandler(event: InputEvent) {
@@ -332,24 +348,30 @@ export class TextEditorManager extends InputManager {
             return
         }
 
-        if (target.innerText.length === this.maxLength) {
+        if (target.innerText.length - 1 === this.maxLength) {
             target.innerHTML = this.prevVal
+
+            this.value = this.prevVal    // on blur, value won't contain preVal
+            this.undoHandler(this.prevVal)
             setCursorPos(target, this.prevVal.length)
+
             return
         }
 
         const newValue = target.innerHTML
+        this.valLength = target.innerText.length
+
         this.undoHandler(newValue)
-        this.updateVal(newValue)
+        this.updateTextEditorVal(event, newValue)
     }
-    onBlurHandler(event: Event): void {
+    onBlurHandler(event: FocusEvent): void {
         const value = this.value || (this.doAllowEmpty ? "" : "Untitled")
 
         this.updateState({ oldTitle: value })
-        this.updateVal(value)
+        this.updateTextEditorVal(event, value)
 
         if (this.handlers?.onBlurHandler) {
-            this.handlers?.onBlurHandler(event, value)
+            this.handlers?.onBlurHandler(event, value, this.valLength)
         }
     }
 }

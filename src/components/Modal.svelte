@@ -45,7 +45,7 @@
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
-<div class={`modal-bg ${$themeState?.isDarkTheme ? "" : "modal-bg--light"}`} on:click={handleClickOutside}>
+<div class={`modal-bg ${$themeState?.isDarkTheme ? "" : "modal-bg--light"}`} on:pointerdown={handleClickOutside}>
     <div 
         class={`modal-bg__content modal-bg__content--overflow-y-scroll`}
         style={styling}

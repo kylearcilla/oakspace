@@ -378,7 +378,7 @@
             position: relative;
         }
         &-apply-btn-container {
-            @include pos-abs-bottom-right-corner(0px, 20px);
+            @include abs-bottom-right(0px, 20px);
             position: sticky;
             height: 30px;
             min-width: 100px;

@@ -1,7 +1,7 @@
-import type { PageLoad } from './$types';
+import { redirect } from '@sveltejs/kit';
 
 export const ssr = false
 
-export const load = (async () => {
-    return {};
-}) satisfies PageLoad;
+export const load = () => {
+	throw redirect(301, "/home/routines/weekly");
+}

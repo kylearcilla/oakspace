@@ -356,7 +356,7 @@
             &--main {
                 width: 0.5px;
                 height: calc(100% - 25px);
-                @include pos-abs-top-right-corner(0px, 0px);
+                @include abs-top-right(0px, 0px);
             }
         }
     }
@@ -518,7 +518,7 @@
             padding-right: 20px;
         }
         &__options-dropdown {
-            @include pos-abs-top-right-corner(23px, 0px);
+            @include abs-top-right(23px, 0px);
         }
         &__view-btn-container {
             position: relative;
@@ -546,7 +546,7 @@
             }
         }
         &__dropdown-container .dropdown-menu {
-            @include pos-abs-top-left-corner(35px, 0px);
+            @include abs-top-left(35px, 0px);
             margin-left: 25px;
         }
         &__filter-dropdown-btn {

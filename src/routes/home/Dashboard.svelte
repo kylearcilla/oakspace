@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { Icon } from "$lib/enums"
-	import { themeState } from "$lib/store"
+	import { globalContext, themeState } from "$lib/store"
 	import { formatDateLong, formatDatetoStr } from "$lib/utils-date"
-	import { getElemById, getVertScrollStatus } from "$lib/utils-general";
+	import { getElemById, getVertScrollStatus } from "$lib/utils-general"
 	import { onMount } from "svelte";
 	import SvgIcon from "../../components/SVGIcon.svelte"
 
@@ -21,22 +21,28 @@
         spaceBelow: "linear-gradient(180deg, black 64%, transparent 100%)"
     }
 
+    export let options: DashboardOptions
+
     let currListHtChange: ListType | null = null
 
-    const INIT_MIND_NOTES_HT_PERC = 17
+    const GOALS_LEFT_MARGIN = 17
+    const GOALS_RIGHT_MARGIN = 13
+
+    const INIT_MIND_NOTES_HT_PERC = 0
     const MIN_MIND_NOTES_HT_PERC = 1
     const MAX_MIND_NOTES_HT_PERC = 60
 
-    const INIT_HABITS_HT_PERC = 17
+    const INIT_HABITS_HT_PERC = 25
     const MIN_HABITS_HT_PERC = 1
     const MAX_HABITS_HT_PERC = 30
 
     let habitsList = { hasSpaceAbove: false, hasSpaceBelow: true, gradientStyle: "" }
     let goalsList = { hasSpaceAbove: false, hasSpaceBelow: true, gradientStyle: "" }
-    let mindNotesList = { hasSpaceAbove: false, hasSpaceBelow: true, gradientStyle: "" }
 
+    let dashboardWt = 0
     let dashboardHt = 0
-    let doHideMindNotes = false
+    let isViewingHabits = true
+    let doHideMindNotes = true
 
     let habitsHeightPerc = INIT_HABITS_HT_PERC
     let _habitsHeightPerc = INIT_HABITS_HT_PERC
@@ -45,24 +51,23 @@
 
     let dragStartYPos = -1
     let dragYOffSet: number | null = null
+    let isLeftBarFloating = false
 
-    $: {
-        if ($themeState && getElemById("list--0")) {
-            for (let i = 0; i < 3; i++) {
-                const listElem = getElemById(`list--${i}`) as HTMLUListElement
-                onListScroll(listElem, i)
-            }
+    $: if (dragYOffSet != null) {
+        if (currListHtChange === ListType.Habits) {
+            updateHabitsHt()
+        }
+        if (currListHtChange === ListType.MindNotes) {
+            updateMindNotesHt()
         }
     }
-    $: {
-        if (dragYOffSet != null) {
-            if (currListHtChange === ListType.Habits) {
-                updateHabitsHt()
-            }
-            if (currListHtChange === ListType.MindNotes) {
-                updateMindNotesHt()
-            }
-        }
+    $: if ($themeState && getElemById("list--0")) {
+        requestAnimationFrame(() => updateListGradients())
+    }
+    $: if ($globalContext.isLeftBarFloating != isLeftBarFloating) {
+        isLeftBarFloating = $globalContext.isLeftBarFloating 
+
+        requestAnimationFrame(() => updateListGradients())
     }
 
     const habits = [
@@ -124,7 +129,10 @@
         habitsHeightPerc = newPerc
     }
     function updateGradientStyle(listVar: GradientListElem) {
-        if (listVar.hasSpaceAbove && listVar.hasSpaceBelow) {
+        if (!listVar.hasSpaceAbove && !listVar.hasSpaceBelow) {
+            listVar.gradientStyle = ""
+        }
+        else if (listVar.hasSpaceAbove && listVar.hasSpaceBelow) {
             listVar.gradientStyle = GRADIENT_STYLES.spaceAboveBelow
         }
         else if (listVar.hasSpaceAbove) {
@@ -151,6 +159,11 @@
         const newDragYOffSet = pe.clientY
 
         dragYOffSet = dragStartYPos - newDragYOffSet
+
+        for (let i = 0; i < 2; i++) {
+            const listElem = getElemById(`list--${i}`) as HTMLUListElement
+            onListScroll(listElem, i)
+        }
     }
     function stopResize() {
         if (currListHtChange === ListType.Habits) {
@@ -168,7 +181,7 @@
     }
 
     function onListScroll(target: EventTarget | HTMLElement | null, list: ListType) {
-        if (!$themeState.isDarkTheme) return
+        if (!$themeState.isDarkTheme || !target) return
 
         const { hasReachedBottom, hasReachedTop } = getVertScrollStatus(target! as HTMLElement)
         const hasSpaceAbove = !hasReachedTop
@@ -178,16 +191,17 @@
             habitsList = { ...habitsList, hasSpaceAbove, hasSpaceBelow }
             updateGradientStyle(habitsList)
         }
-        else if (list === ListType.Goals) {
+        else {
             goalsList = { ...goalsList, hasSpaceAbove, hasSpaceBelow }
             updateGradientStyle(goalsList)
         }
-        else {
-            mindNotesList = { ...mindNotesList, hasSpaceAbove, hasSpaceBelow }
-            updateGradientStyle(mindNotesList)
+    }
+    function updateListGradients() {
+        for (let i = 0; i < 2; i++) {
+            const listElem = getElemById(`list--${i}`) as HTMLUListElement
+            onListScroll(listElem, i)
         }
     }
-
     function getDueDate(due: { date: Date, type: DueDateType }) {
         if (due.type === DueDateType.Full) {
             return formatDateLong(due.date)
@@ -205,115 +219,151 @@
     }
 
     onMount(() => {
-        for (let i = 0; i < 3; i++) {
-            const listElem = getElemById(`list--${i}`) as HTMLUListElement
-            onListScroll(listElem, i)
-        }
+        updateListGradients()
     })
 </script>
 
-<div class={`dashboard ${!$themeState.isDarkTheme ? "dashboard--light-theme" : ""}`} bind:clientHeight={dashboardHt}>
-    <div class="dashboard__habits" style={`height: ${habitsHeightPerc}%`}>
-        <div class="dashboard__habits-header dashboard__subheading-header">
-            <h4 class="dashboard__subheading">Today's Habits</h4>
-            <span class="dashboard__habits-count">1/4</span>
-        </div>
-        <ul 
-            class="dashboard__habits-list" 
-            id="list--0"
-            on:scroll={(event) => onListScroll(event.target, ListType.Habits)}
-            style={`${$themeState.isDarkTheme ? `-webkit-mask-image: ${habitsList.gradientStyle}; mask-image: ${habitsList.gradientStyle}` : ""}`}
-        >
-            {#each habits as habit, idx}
-                <li 
-                    class={`dashboard__habit ${habit.isDone ? "dashboard__habit--done" : ""} ${habit.isLate ? "dashboard__habit--late" : ""}`}
-                    title={`${habit.isLate ? "Overdue" : ""}`}
+<div 
+    class="dashboard"
+    class:dashboard--min={options.type === "min"}
+    class:dashboard--light-theme={!$themeState.isDarkTheme}
+    style:--goals-left-margin={`${GOALS_LEFT_MARGIN}px`}
+    style:--goals-right-margin={`${GOALS_RIGHT_MARGIN}px`}
+    bind:clientHeight={dashboardHt}
+    bind:clientWidth={dashboardWt}
+>
+    {#if options.type != "default"}
+        <div class="dashboard__view-tabs">
+            <div class="dashboard__view-tabs-btns">
+                <button
+                    class="dashboard__view-tab"
+                    class:dashboard__view-tab--selected={isViewingHabits}
+                    on:click={() => isViewingHabits = true}
                 >
-                    <button 
-                        class="dashboard__habit-checkbox" 
-                        title={`${habit.isLate ? "Overdue" : ""}`}
-                        on:click={() => onHabitCheckboxClicked(idx)}
-                    >
-                        <i class="fa-solid fa-check"></i>
-                    </button>
-                    <h5 class={`dashboard__habit-title ${habit.isDone ? "strike strike--animated" : ""}`}>{habit.title}</h5>
-                    {#if habit.metric}
-                        <div class="dashboard__habit-metric">{habit.metric}</div>
-                    {/if}
-                </li>
-            {/each}
-        </ul>
+                    Habits
+                </button>
+                <button
+                    class="dashboard__view-tab"
+                    class:dashboard__view-tab--selected={!isViewingHabits}
+                    on:click={() => isViewingHabits = false}
+                >
+                    Goals
+                </button>
+            </div>
+            <div class="dashboard__habits-count">
+                33%
+            </div>
+        </div>
+    {/if}
+    {#if options.type === "default" || isViewingHabits}
         <div 
-            class={`dashboard__resizer dashboard__resizer--habits ${dragStartYPos >= 0 && currListHtChange === ListType.Habits ? "dashboard__resizer--dragging" : ""}`} 
-            on:mousedown={(e) => onResizerMouseDown(e, ListType.Habits)}
+            class="dashboard__habits" 
+            style:height={`${options.type === "min" ? "100%" :  `${habitsHeightPerc}%`}`}
         >
-            <div class="dashboard__resizer-handle"></div>
-        </div>
-    </div>
-    <div class="dashboard__goals" style={`height: calc(100% - (${habitsHeightPerc}% + ${mindNotesHeightPerc}% + 35px));`}>
-        <div class="dashboard__subheading-header">
-            <div class="dashboard__pin-icon">
-                <SvgIcon icon={Icon.Pin} options={{ opacity: $themeState.isDarkTheme ? 0.3 : 0.42}} />
+            <div class="dashboard__habits-header dashboard__subheading-header">
+                <h4 class="dashboard__subheading">
+                    Your Habits
+                </h4>
+                <span class="dashboard__habits-count">
+                    1/4
+                </span>
             </div>
-            <h4 class="dashboard__subheading" title="Pinned Goals">Goals</h4>
-        </div>
-        <ul 
-            class="dashboard__goals-list"
-            id="list--1"
-            on:scroll={(event) => onListScroll(event.target, ListType.Goals)}
-            style={`${$themeState.isDarkTheme ? `-webkit-mask-image: ${goalsList.gradientStyle}; mask-image: ${goalsList.gradientStyle}` : ""}`}
-        >
-            {#each goals as goal}
-                <li class="dashboard__goal">
-                    <div class="dashboard__goal-dotted-line">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="211" height="2" viewBox="0 0 211 2" fill="none">
-                            <path d="M0.274414 1.04004L211 1.04002" stroke-width="0.4" stroke-dasharray="2.85 2.85"/>
-                        </svg>
-                    </div>
-                    <div class="dashboard__goal-title">{goal.title}</div>
-                    <div class="flx flx--algn-center flx--space-between">
-                        <span class="dashboard__goal-due-date">{getDueDate(goal.due)}</span>
-                        <span class="dashboard__goal-progress">{goal.percentageDone}%</span>
-                    </div>
-                </li>
-            {/each}
-        </ul>
-    </div>
-    <div 
-        class={`dashboard__resizer dashboard__resizer--mind-notes ${dragStartYPos >= 0 && currListHtChange === ListType.MindNotes ? "dashboard__resizer--dragging" : ""}`} 
-        on:mousedown={(e) => onResizerMouseDown(e, ListType.MindNotes)}
-    >
-        <div class="dashboard__resizer-handle">
-        </div>
-    </div>
-    <div class="dashboard__mind-notes" style={`height: ${mindNotesHeightPerc}%; display: ${doHideMindNotes ? "none": "block"}`}>
-        <div class="dashboard__subheading-header">
-            <div class="dashboard__pin-icon">
-                <SvgIcon icon={Icon.Pin} options={{ opacity: $themeState.isDarkTheme ? 0.3 : 0.42}} />
+            <ul 
+                id="list--0"
+                class="dashboard__habits-list" 
+                style:webkit-mask-image={habitsList.gradientStyle}
+                style:mask-image={habitsList.gradientStyle}
+                on:scroll={(event) => onListScroll(event.target, ListType.Habits)}
+            >
+                {#each habits as habit, idx}
+                    <li 
+                        class="dashboard__habit"
+                        class:dashboard__habit--done={habit.isDone}
+                        class:dashboard__habit--late={habit.isLate}
+                        title={`${habit.isLate ? "Overdue" : ""}`}
+                    >
+                        <button 
+                            class="dashboard__habit-checkbox" 
+                            title={`${habit.isLate ? "Overdue" : ""}`}
+                            on:click={() => onHabitCheckboxClicked(idx)}
+                        >
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+                        <h5 
+                            class="dashboard__habit-title"
+                            class:strike={habit.isDone}
+                            class:strike--animated={habit.isDone}
+                        >
+                            {habit.title}
+                        </h5>
+                        {#if habit.metric}
+                            <div class="dashboard__habit-metric">
+                                {habit.metric}
+                            </div>
+                        {/if}
+                    </li>
+                {/each}
+            </ul>
+            <div 
+                class="dashboard__resizer dashboard__resizer--habits" 
+                class:dashboard__resizer--dragging={dragStartYPos >= 0 && currListHtChange === ListType.Habits}
+                on:mousedown={(e) => onResizerMouseDown(e, ListType.Habits)}
+            >
+                <div class="dashboard__resizer-handle"></div>
             </div>
-            <h4 class="dashboard__subheading" title="Pinned Mind Notes">Mind Notes</h4>
         </div>
-        <ul 
-            class="dashboard__mind-notes-list"
-            id="list--2"
-            on:scroll={(event) => onListScroll(event.target, ListType.MindNotes)}
-            style={`${$themeState.isDarkTheme ? `-webkit-mask-image: ${mindNotesList.gradientStyle}; mask-image: ${mindNotesList.gradientStyle}` : ""}`}
+    {/if}
+    {#if options.type === "default" || !isViewingHabits}
+        {@const resizeHeight = `calc(100% - (${habitsHeightPerc}% + ${mindNotesHeightPerc}% + 35px))`}
+        <div 
+            class="dashboard__goals" 
+            style:height={`${options.type === "min" ? "100%" : `${resizeHeight}`}`}
         >
-            {#each quotes as quote}
-                <li class="dashboard__mind-note">
-                    <p>"{quote.text}"</p>
-                </li>
-            {/each}
-        </ul>
-    </div>
+            <div class="dashboard__subheading-header">
+                <div class="dashboard__pin-icon">
+                    <SvgIcon 
+                        icon={Icon.Pin} 
+                        options={{ opacity: $themeState.isDarkTheme ? 0.3 : 0.42, scale: 0.8 }} 
+                    />
+                </div>
+                <h4 class="dashboard__subheading" title="Pinned Goals">
+                    Goals
+                </h4>
+            </div>
+            <ul 
+                id="list--1"
+                class="dashboard__goals-list"
+                style={`${$themeState.isDarkTheme ? `-webkit-mask-image: ${goalsList.gradientStyle}; mask-image: ${goalsList.gradientStyle}` : ""}`}
+                on:scroll={(event) => onListScroll(event.target, ListType.Goals)}
+            >
+                {#each goals as goal}
+                    {@const width = `calc(${dashboardWt}px - (${GOALS_LEFT_MARGIN}px + ${GOALS_RIGHT_MARGIN}px))`}
+                    <li class="dashboard__goal">
+                        <div class="dashboard__goal-dotted-line">
+                            <svg xmlns="http://www.w3.org/2000/svg" width={width} height="2" viewBox={`0 0 ${width} 2`} fill="none">
+                                <path d="M0.274414 1.04004L211 1.04002" stroke-width="0.4" stroke-dasharray="2.85 2.85" />
+                            </svg>
+                        </div>
+                        <div class="dashboard__goal-title">
+                            {goal.title}
+                        </div>
+                        <div class="flx flx--algn-center flx--space-between">
+                            <span class="dashboard__goal-due-date">{getDueDate(goal.due)}</span>
+                            <span class="dashboard__goal-progress">{goal.percentageDone}%</span>
+                        </div>
+                    </li>
+                {/each}
+            </ul>
+        </div>
+    {/if}
 </div>
 
 
 <style lang="scss">
-    $side-padding: 15px;
+    $side-padding: 8px;
 
     .dashboard {
-        height: calc(100% - 90px);
+        height: 100%;
         width: 100%;
         position: relative;
         padding: 5px 0px 0px 0px;
@@ -374,38 +424,96 @@
             @include text-style(0.55, 500);
             background-color: var(--rightBarMindNoteBgColor);
         }
+        &--min &__resizer {
+            display: none;
+        }
+        &--min &__subheading-header {
+            display: none;
+        }
+        &--min &__habit {
+            &-checkbox {
+                @include circle(10.5px);
+                margin-right: 12px;
+            }
+            &-title {
+                @include text-style(0.78, 300, 1.2rem);
+            }
+        }
+        &--min &__habits-count {
+            margin-right: 13px;
+            @include text-style(0.2, 400, 0.97rem, "DM Mono");
+            opacity: 0;
+        }
+        &--min &__goals-list {
+            padding-top: 10px;
+            max-height: 280px;
+        }
+        &--min &__goal {
+            padding-bottom: 9px;
+            &-title {
+                font-size: 0.98rem;
+                margin-bottom: 5px;
+            }
+            &-due-date {
+                font-size: 0.96rem;
+            }
+            &-progress {
+                font-size: 0.96rem;
+            }
+            &-dotted-line {
+                margin-bottom: 6px;
+            }
+        }
+        &__view-tabs {
+            @include flex(center, space-between);
+            margin: 0px 0px 4px 16px;
+        }
+        &__view-tabs-btns {
+            @include flex(center);
+        }
+        &__view-tab {
+            @include text-style(0.18, 500, 1.06rem);
+            margin-right: 10px;
+            
+            &:hover {
+                @include text-style(0.5);
+            }
 
+            &--selected {
+                @include text-style(0.5);
+            }
+        }
         &__subheading {
-            @include text-style(0.4, 400, 1.2rem, "DM Sans");
+            @include text-style(0.3, 400, 1.1rem, "DM Sans");
         }
         &__subheading-header {
             @include flex(center);
-            margin-bottom: 4px;
+            margin: 0px 0px 4px $side-padding;
         }
         &__pin-icon {
-            margin: 0px 7px -3px $side-padding;
+            margin: -2px 7px -3px 0px;
         }
         /* Habits */
         &__habits {
-            padding: 0px 0px 0px $side-padding;
-            margin-bottom: 12px;
+            margin-bottom: 20px;
+            width: calc(100% - 16px);
         }
         &__habits-header {
-            margin-bottom: 4px;
-            padding-right: $side-padding;
+            margin: 0px 0px 3px var(--goals-left-margin);
             @include flex(center, space-between);
         }
         &__habits-count {
-            @include text-style(0.3, 400, 1rem, "DM Mono");
+            @include text-style(0.2, 400, 0.9em, "DM Mono");
         }
         &__habits-list {
             overflow-y: scroll;
             padding-top: 10px;
             height: calc(100% - 19.5px);
+            margin: 0px 0px 5px var(--goals-left-margin);
         }
         &__habit {
             @include flex(center);
-            margin-bottom: 8.5px;
+            margin: 0px 0px 8.5px 0px;
             
             // checked
             &--done &-checkbox {
@@ -434,7 +542,7 @@
             // late
             &--late &-checkbox {
                 background-color: rgba(#D5AE4A, 0.055);
-                border: 1px solid rgba(#D5AE4A, 0.1);
+                border: 1.5px solid rgba(#D5AE4A, 0.1);
             }
             &--late#{&}--done &-checkbox {
                 background-color: var(--tasksCheckBoxColorComplete);
@@ -447,10 +555,10 @@
         }
         &__habit-checkbox {
             @include center;
-            @include circle(13px);
+            @include circle(12px);
             margin-right: 14px;
             transition: 0.1s ease-in-out;
-            border: 1px solid rgba(var(--tasksCheckBoxColorDefault), 1);
+            border: 1.5px solid rgba(var(--tasksCheckBoxColorDefault), 1);
 
             &:hover {
                 background-color: rgba(var(--tasksCheckBoxColorDefault), 0.3);
@@ -466,25 +574,29 @@
         &__habit-title {
             transition: 0.1s ease-in-out;
             max-width: 120px;
-            margin-right: 13px;
-            @include text-style(0.8, 200, 1.28rem, "DM Sans");
+            margin-right: var(--goals-right-margin);
+            @include text-style(0.8, 300, 1.2rem, "DM Sans");
             @include elipses-overflow;
         }
         &__habit-metric {
+            display: none;
             @include text-style(0.2, 200, 1.07rem, "DM Sans");
         }
         /* Goals */
         &__goals {
             min-height: 160px;
         }
+
+        &__goals &__subheading-header {
+            margin: 0px 0px 2px var(--goals-left-margin);
+        }
         &__goals-list {
             overflow-y: scroll;
             height: calc(100% - (18px));
-            padding-top: 7px;
+            padding-top: 12px;
         }
         &__goal {
             padding-bottom: 12px;
-            transition: 0.04s ease-in-out;
             cursor: pointer;
 
             &:hover {
@@ -496,31 +608,30 @@
         }
         &__goal-title {
             @include text-style(0.6, 400, 1.15rem, "DM Sans");
-            margin-bottom: 5px;
-            margin-left: $side-padding;
+            @include elipses-overflow;
+            margin: 0px 0px 5px var(--goals-left-margin);
             cursor: text;
             width: fit-content;
-            @include elipses-overflow;
             max-width: 90%;
         }
         &__goal-due-date {
             @include text-style(0.2, 400, 1.03rem, "DM Mono");
-            margin-left: $side-padding;
+            margin-left: var(--goals-left-margin);
             cursor: text;
         }
         &__goal-progress {
             @include text-style(0.15, 400, 1rem, "DM Mono");
-            margin-right: $side-padding;
+            margin-right: 16px;
             cursor: text;
         }
         &__goal-dotted-line {
             height: 2px;
-            margin-bottom: 9px;
             position: relative;
-            margin-left: $side-padding;
+            margin-left: var(--goals-left-margin);
+            margin-bottom: 9px;
 
             svg {
-                @include pos-abs-top-left-corner(-1px);
+                @include abs-top-left(-1px);
             }
             path {
                 stroke: rgba(white, 0.089);
@@ -534,14 +645,9 @@
             // background-color: red;
             
             &--habits {
-                margin: 0px 0px 0px 0px;
-                width: calc(100% - $side-padding);
+                margin: 0px 0px 0px var(--goals-left-margin);
+                width: calc(100% - var(--goals-left-margin));
             }
-            &--mind-notes {
-                width: calc(100% - (2 * $side-padding));
-                margin: 0px 0px 5px $side-padding !important;
-            }
-            
             &:hover &-handle, &--dragging &-handle {
                 transition: 0.2s ease-in-out 0.08s;
                 @include visible;
@@ -554,25 +660,5 @@
             @include not-visible;
             background-color: rgba(var(--textColor1), 0.06);
         }
-        /* Mind Notes */
-        &__mind-notes {
-        }
-        &__mind-notes--hidden {
-            display: none;
-        }
-        &__mind-notes-list {
-            padding: 7px $side-padding 0px $side-padding;
-            overflow-y: scroll;
-            height: calc(100% - 20px);
-        }
-        &__mind-note {
-            background-color: rgba(white, 0.011);
-            @include text-style(0.4, 300, 1.2rem);
-            padding: 6px 12px 9.5px 12px;
-            margin-bottom: 7px;
-            border-radius: 14px;
-            border: 0.5px solid rgba(white, 0.024);
-        }
     }
 </style>
-

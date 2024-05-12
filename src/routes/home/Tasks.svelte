@@ -104,7 +104,10 @@
                 No Tasks
             </h1>
         {/if}
-        <button class="quick-todos__settings-dropdown-btn settings-btn" on:click={() => isTasksSettingsDropdownOpen = !isTasksSettingsDropdownOpen}>
+        <button 
+            class="quick-todos__settings-dropdown-btn settings-btn" 
+            on:click={() => isTasksSettingsDropdownOpen = !isTasksSettingsDropdownOpen}
+         >
             <SvgIcon icon={Icon.Settings} options={{ opacity: 0.45 }} />
         </button>
         <!-- Task Group Dropdown List -->

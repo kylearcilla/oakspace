@@ -27,7 +27,8 @@ export function loadTheme() {
       title: themeItem!.title,
       isDarkTheme: themeItem!.styling.isDark,
       themeToggleBtnIconColor: themeItem!.styling.iconToggleBtnBgColor,
-      twinTheme: themeItem!.twinTheme
+      twinTheme: themeItem!.twinTheme,
+      textColor: themeItem!.styling.textColor1
     })
     setRootColors(themeItem!.styling)
 }
@@ -45,6 +46,7 @@ export function setNewTheme(newTheme: Theme) {
     newThemeState = {
       title: _newTheme.title,
       isDarkTheme: _newTheme.styling.isDark,
+      textColor: _newTheme.styling.textColor1,
       themeToggleBtnIconColor: _newTheme.styling.iconToggleBtnBgColor,
       twinTheme: _newTheme.twinTheme
     }

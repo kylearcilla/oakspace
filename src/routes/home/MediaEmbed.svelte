@@ -185,12 +185,12 @@
         &__content {
             width: 100%;
             height: 100%;
-            @include pos-abs-top-left-corner;
+            @include abs-top-left;
         }
         &__resize-layer {
             width: 100%;
             height: 100%;
-            @include pos-abs-top-left-corner;
+            @include abs-top-left;
         }
     }
     #SPOTIFY_IFRAME_ID {

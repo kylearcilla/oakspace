@@ -233,7 +233,7 @@
             }
         }
         &__month-grid-day-color {
-            @include pos-abs-top-left-corner(0px, 0px);
+            @include abs-top-left(0px, 0px);
             width: 100%;
             height: 100%;
             border-radius: 13.5px;

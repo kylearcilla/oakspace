@@ -10,6 +10,7 @@
 	import Tasks from "./Tasks.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
 	import Dashboard from "./Dashboard.svelte"
+	import SideBarCalendar from "./SideBarCalendar.svelte";
 
     let currentTimeStr = ""
     let isDayTime = true
@@ -21,7 +22,7 @@
     let initDragXPos = -1
 
     $: {
-        isRightBarOpen = $globalContext.isTaskMenuOpen
+        isRightBarOpen = $globalContext.isRightBarOpen
     }
 
     /* General UI Handlers */
@@ -143,7 +144,9 @@
             <!-- Tasks Section -->
             <Tasks />
         {:else if selectedTab === RightSideTab.OVERVIEW}
-            <Dashboard />
+            <div class="task-view__calendar-container">
+                <SideBarCalendar/>
+            </div>
         {/if}
     </div>
     <div class="task-view__resize-handle" on:mousedown={onResizerClicked}></div>
@@ -162,6 +165,7 @@
         width: 100%;
         height: 100vh;
         position: relative;
+        border-left: 1.5px solid rgba((var(--textColor1)), 0.022);
         @include txt-color;
 
         &--light-theme &__header {
@@ -243,7 +247,7 @@
                 }
             }
             &-time-date {
-                @include pos-abs-top-left-corner(7.5px, 14px);
+                @include abs-top-left(12px, 14px);
                 z-index: 1;
             }
             &-time h1 {
@@ -272,7 +276,7 @@
             }
         }
         &__header-blur-layer {
-            @include pos-abs-top-left-corner(0px);
+            @include abs-top-left(0px);
             z-index: 0;
             width: 100%;
             height: 130px;
@@ -295,20 +299,25 @@
             );
         }
         &__resize-handle {
-            @include pos-abs-top-left-corner();
+            @include abs-top-left();
             width: 5px;
             height: 100%;
             cursor: ew-resize;
         }
         &__tab-btns {
-            @include flex(center, _);
-            margin-bottom: 9px;
-            @include pos-abs-top-left-corner(58.5px, $side-padding - 3px);
+            @include flex(center);
+            @include abs-top-left(62px, $side-padding - 3px);
             z-index: 2;
         }
         &__main-content {
             height: calc(100% - 40px);
             width: 100%;
+            position: relative;
+            z-index: 100;
+        }
+        &__calendar-container {
+            padding: 0px 6px;
+            height: calc(100% - 70px);
         }
         &__context-menu {
             position: absolute;

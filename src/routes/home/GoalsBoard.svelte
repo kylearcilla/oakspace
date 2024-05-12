@@ -421,7 +421,7 @@
                 @include visible(0.09);
             }
             &--list &-handle {
-                @include pos-abs-top-left-corner(50%);
+                @include abs-top-left(50%);
                 transform: translateY(-50%);
             }
             &--list &-handle-dots:hover {
@@ -460,14 +460,14 @@
             cursor: grab;
             z-index: 1;
             @include flex(center);
-            @include pos-abs-top-left-corner(5px);
+            @include abs-top-left(5px);
 
             &:active {
                 cursor: grabbing !important;
             }
         }
         &__item-divider {
-            @include pos-abs-top-left-corner;
+            @include abs-top-left;
 
             margin-left: 25px;
             display: none;

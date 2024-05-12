@@ -1,63 +1,21 @@
 import { get, writable, type Writable } from "svelte/store"
 import { TOTAL_DAY_MINS } from "./utils-date"
-import { CoreStatus } from "./enums"
-import { 
-            COLOR_SWATCHES, findAncestor, getDistanceBetweenTwoPoints, getElemById, 
-            getElemNumStyle, 
-            intContextMenuPos, 
-            randomArrayElem, removeItemFromArray, roundUpToNearestFive 
-} from "./utils-general"
+import { EMPTY_CORES, ViewOption } from "./utils-routines"
 
-const EMPTY_CORES = {
-    sleeping: {
-        status: CoreStatus.Healthy,
-        totalTime: 0,
-        avgTime: 0,
-        total: 0
-    },
-    working: {
-        status: CoreStatus.Healthy,
-        totalTime: 0,
-        avgTime: 0,
-        total: 0
-    },
-    mind: {
-        status: CoreStatus.Healthy,
-        totalTime: 0,
-        avgTime: 0,
-        total: 0
-    },
-    awake: {
-        status: CoreStatus.Healthy,
-        totalTime: 0,
-        avgTime: 0,
-        total: 0
-    },
-    body: {
-        status: CoreStatus.Healthy,
-        totalTime: 0,
-        avgTime: 0,
-        total: 0
-    },
-    selfCare: {
-        status: CoreStatus.Healthy,
-        totalTime: 0,
-        avgTime: 0,
-        total: 0
-    }
-}
+import { 
+    COLOR_SWATCHES, findAncestor, getDistanceBetweenTwoPoints, getElemById, 
+    getElemNumStyle, intContextMenuPos, 
+    randomArrayElem, roundUpToNearestFive 
+} from "./utils-general"
 
 type RoutineBlockEditContext = "old-stretch" | "lift" | "details" | "new-stretch"
 
 /**
- * Manger class for editing routines.
- * Used in daily routines / current routine pages.
- * 
- * Used to initialize (both daily and weekly) routine blocks, statistics, and editing (stretch & lifit).
+ * Manger class for editing and displaying routines.
+ * Used in daily / weekly routine pages.
  */
 export class RoutinesManager {
-    isForDay: boolean
-    userRoutines:   Writable<DailyRoutine[] | null> = writable(null)
+    userRoutines:   Writable<DailyRoutine[] | RoutineBlock[] | null> = writable(null)
     
     // daily routines that is subject to being edited
     focusedDayRoutine:      Writable<DailyRoutine | RoutineBlock[] | null> = writable(null)
@@ -72,10 +30,17 @@ export class RoutinesManager {
     editContext: Writable<RoutineBlockEditContext | null> = writable(null)
     
     // editing blocks
-    editingBlock:       Writable<RoutineBlockElem & { dropAreaOffset?: OffsetPoint } | null> = writable(null)
+    editingBlock: Writable<RoutineBlockElem & { 
+        dropArea?: {
+            top: number,
+            left: number
+            offsetIdx: number
+        } 
+    } | null> = writable(null)
+
     editingBlockRef:    HTMLElement | null = null
     blockOnPointerDown: RoutineBlockElem | null = null
-    floatingBlock: HTMLElement | null = null
+    floatingBlock:      HTMLElement | null = null
     
     editBlockTopNbr:    RoutineBlockElem | null = null
     editBlockBottomNbr: RoutineBlockElem | null = null
@@ -85,10 +50,10 @@ export class RoutinesManager {
     stretchPivotTime = 0
     
     initDragLiftOffsets: OffsetPoint = { left: -1, top: -1 }
-    dragStartPoint: OffsetPoint = { left: -1, top: -1 }
+    dragStartPoint:      OffsetPoint = { left: -1, top: -1 }
     draggingSourceIdx = -1
-    allowLiftEdit = false
-    allowStrechEdit = false
+    allowLiftEdit     = false
+    allowStrechEdit   = false
 
     contextMenuPos: Writable<OffsetPoint> = writable({ left: -1, top: -1 })
     
@@ -108,10 +73,14 @@ export class RoutinesManager {
 
     // DOM stuff    
     containerElem: HTMLElement | null = null
-    containerElemHt        = 1200
     blocksContainerRef: HTMLElement | null = null
-    earliestBlockHeadPos   = 1440
+    containerElemHt        = 1200
+    earliestBlockHeadPos   = TOTAL_DAY_MINS
+    interval: NodeJS.Timer | null = null
+
     cursorPos: OffsetPoint = { left: 0, top: 0 }
+    cursorPosFromWindow: OffsetPoint = { left: 0, top: 0 }
+
     
     // context menu
     hasJustClosedContextMenu = false
@@ -125,16 +94,11 @@ export class RoutinesManager {
     DRAG_DISTANCE_THRESHOLD = 0
     NEW_BLOCK_DRAG_DIST_THRESHOLD = 5
     HEAD_OFFSET = 13.5
-    BLOCK_GAP = 1
     TIME_BOX_POINTER_EVENT_OFFSET = 15
     ROUTINE_BLOCKS_CONTAINER_ID = "routine-blocks-container"
     ROUTINE_SCROLL_CONTAINER_ID = "routine-blocks-scroll-container"
     
     BLOCKS_LEFT_OFFSET = 35
-
-    constructor(isForDay: boolean) {
-        this.isForDay = isForDay
-    }
 
     /**
      * Initialize references to parent contains for the routine blocks.
@@ -144,7 +108,7 @@ export class RoutinesManager {
     initContainer(scrollContainer: HTMLElement, blocksContainer: HTMLElement) {
         this.containerElem = scrollContainer
         this.blocksContainerRef = blocksContainer
-        this.containerElemHt = scrollContainer.scrollHeight - getElemNumStyle(scrollContainer, "padding-top")
+        this.containerElemHt = scrollContainer.scrollHeight - getElemNumStyle(blocksContainer, "padding-bottom")
     }
 
     /**
@@ -156,23 +120,29 @@ export class RoutinesManager {
      * 
      * @returns             Given a routine's blocks, get the core and tag breakdowns, block elems, and earliest block.
      */
-    processRoutineBlocks(blocks: RoutineBlock[], movedHeads?: Map<number, number>) {
+    processRoutineBlocks(routines: RoutineBlock[] | DailyRoutine) {
         const cores = structuredClone(EMPTY_CORES)
-        let earliestBlock = Infinity
-
         const blockElems = []
-        const intervals: [number, number][] = []
         
+        let blocks: RoutineBlock[] = []
+        let earliestBlock = Infinity
         let firstAwakeMin = 1441
         let asleepAtMin = -1
         let tagMap = new Map<string, TagBreakDown>()
 
+        if ("id" in routines) {
+            blocks = routines.blocks
+        }
+        else {
+            blocks = routines
+        }
+
         for (let i = 0; i < blocks.length; i++) {
             // create block
             const block = blocks[i]
-            const blockElem = this.createRoutineBlockElem(block, intervals, movedHeads)
+            const blockElem = this.createRoutineBlockElem(block)
 
-            const headOffsetPx = (block.startTime / 1440) * this.containerElemHt
+            const headOffsetPx = (block.startTime / TOTAL_DAY_MINS) * this.containerElemHt
 
             earliestBlock = Math.min(earliestBlock, headOffsetPx)
             firstAwakeMin = Math.min(firstAwakeMin, block.startTime)
@@ -185,63 +155,38 @@ export class RoutinesManager {
             this.updateTagDataFromBlock(block, tagMap)
         }
 
+        // sort by start times, needed to find open spaces for a moving a block element over
+        blockElems.sort((a, b) => a.startTime - b.startTime)
+
         // count sleeping and awake time
         cores.sleeping.totalTime += firstAwakeMin + (TOTAL_DAY_MINS - asleepAtMin)
         cores.awake.totalTime    = TOTAL_DAY_MINS - cores.sleeping.totalTime
 
         // tag breakdown
         const tagBreakdown: TagBreakDown[] = []
-        tagMap.forEach((tag) => tagBreakdown.push(tag))
+        tagMap.forEach((tag)     => tagBreakdown.push(tag))
         tagBreakdown.sort((a, b) => b.data.totalTime - a.data.totalTime)
+
 
         return { cores, earliestBlock, blockElems, tagBreakdown }
     }
 
     /**
-     * Creates a block element. All blocks on a time box are of this type.
+     * Creates a block element. All the blocks seen on the calendar / time box are of this type.
      * @param block       Raw block data.
-     * 
-     * @param intervals   Block intervals use to track potential collisions.
-     * 
-     * @param movedHeads  Map that tracked off-setted blocks to avoid collision.
-     *                    Used to ensure all blocks that start at the same time are aligned the same.
-     * 
      * @returns           New Day block elem from raw block data.
      */
-    createRoutineBlockElem(block: RoutineBlock, intervals: [number, number][], movedHeads?: Map<number, number>): RoutineBlockElem {
+    createRoutineBlockElem(block: RoutineBlock): RoutineBlockElem {
         const containerHt = this.containerElemHt
         const elapsedTimeMins = block.endTime - block.startTime
 
-        const headOffsetPerc = block.startTime / 1440
-        const heightPx = (elapsedTimeMins / 1440) * containerHt
-        
-        // ensure a BLOCK_GAP space between the blocks
-        const headOffsetPx = headOffsetPerc * containerHt
-        const tailOffsetPx = headOffsetPx + heightPx
-
-        let tailGapOffset = 0
-
-        // blocks that start at the same time should be horizontally aligned for consistency
-        if (movedHeads && movedHeads.has(headOffsetPx)) {
-            tailGapOffset = movedHeads.get(headOffsetPx)!
-        }
-        else {
-            const overlappingInterval = intervals.find((interval) => headOffsetPx <= interval[1])
-            tailGapOffset = overlappingInterval ? (overlappingInterval[1] - headOffsetPx + this.BLOCK_GAP) : 0
-
-            if (movedHeads && overlappingInterval) {
-                movedHeads.set(headOffsetPx, tailGapOffset)
-            }
-        }
-
-        // running amounts
-        intervals.push([headOffsetPx, tailOffsetPx + tailGapOffset])
+        const headOffsetPerc = block.startTime / TOTAL_DAY_MINS
+        const height         = Math.ceil((elapsedTimeMins / TOTAL_DAY_MINS) * containerHt)
 
         return {
             ...block,
-            id: "",
-            height: heightPx,
-            yOffset: (headOffsetPerc * containerHt) + tailGapOffset + this.BLOCK_TOP_OFFSET,
+            id: "", height,
+            yOffset: Math.floor((headOffsetPerc * containerHt) + this.BLOCK_TOP_OFFSET),
             xOffset: 0,
         }
     }
@@ -251,32 +196,49 @@ export class RoutinesManager {
      * 
      * @param block    Block in focus
      * @param tagMap   Map to track tag stats
-     * @returns 
      */
     updateTagDataFromBlock(block: RoutineBlock, tagMap: Map<string, TagBreakDown>) {
         if (!block.tag) return
 
         const elapsedTimeMins = block.endTime - block.startTime
 
+        // if already in the map then just update
         if (tagMap.has(block.tag.name)) {
-            const tagData = tagMap.get(block.tag.name)!.data
+            const tagData   = tagMap.get(block.tag.name)!.data
             const totalTime = tagData.totalTime + elapsedTimeMins
-            const total = tagData.total + 1
+            const total   = tagData.total + 1
             const avgTime = totalTime
 
             const data = { totalTime, avgTime, total }
             tagMap.set(block.tag.name, { tag: block.tag, data })
-            return
+        }
+        else {
+            tagMap.set(block.tag.name, {
+                tag: block.tag,
+                data: { 
+                    totalTime: elapsedTimeMins,
+                    total: 1,
+                    avgTime: elapsedTimeMins
+                }
+            })
+        }
+    }
+
+    getRoutineBlockTags(blocks: RoutineBlock[]): TagBreakDown[] {
+        let tagMap = new Map<string, TagBreakDown>()
+
+        for (let i = 0; i < blocks.length; i++) {
+            // create block
+            const block = blocks[i]
+            this.updateTagDataFromBlock(block, tagMap)
         }
 
-        tagMap.set(block.tag.name, {
-            tag: block.tag,
-            data: { 
-                totalTime: elapsedTimeMins,
-                total: 1,
-                avgTime: elapsedTimeMins
-            }
-        })
+        // tag breakdown
+        const tagBreakdown: TagBreakDown[] = []
+        tagMap.forEach((tag) => tagBreakdown.push(tag))
+        tagBreakdown.sort((a, b) => b.data.totalTime - a.data.totalTime)
+
+        return tagBreakdown
     }
 
     /**
@@ -299,7 +261,7 @@ export class RoutinesManager {
      * @param blocks  Blocks of a routine.
      * @returns       Core data of given routine.
      */
-    getRoutineBlockCores(blocks: RoutineBlock[]) {
+    getRoutineBlockCores(blocks: RoutineBlock[]): RoutineCores {
         const cores = structuredClone(EMPTY_CORES)
 
         let firstAwakeMin = 1441
@@ -335,7 +297,18 @@ export class RoutinesManager {
         blocks.push(newBlock)
         blocks.sort((a, b) => a.startTime - b.startTime)
 
+        blocks = blocks.map((block: RoutineBlockElem, idx: number) => { 
+            // in week routine: {DAY_IDX}--{BLOCK_IDX}
+            const idPair = block.id.split("--")
+
+            return {
+                ...block, id: idPair.length === 1 ? `${idx}` : `${idPair[0]}--${idx}`
+            }
+        })
+        
+        // update the blocks
         this.focusedDayRoutineElems.set(blocks)
+
         const block = {
             title: newBlock.title,
             color: newBlock.color,
@@ -349,7 +322,7 @@ export class RoutinesManager {
 
         const focusedDayRoutine = get(this.focusedDayRoutine)!
 
-        // is current focused daily routine saved by user 
+        // if day routine / column in focus is a set daily routine
         const isSetDailyRoutine = "blocks" in focusedDayRoutine
 
         if (isSetDailyRoutine) {
@@ -384,9 +357,17 @@ export class RoutinesManager {
 
     duplicateEditBlockElem() {
         const dupBlock = get(this.editingBlock)!
-        const length = get(this.focusedDayRoutineElems)!.length
-        const { startTime: oldStartTime, endTime: oldEndTime } = dupBlock
-        const newId = length + ""
+        const length   = get(this.focusedDayRoutineElems)!.length
+        const { 
+            startTime: oldStartTime, endTime: oldEndTime 
+        } = dupBlock
+
+        let newId = length + ""
+
+        // if using a week block: DAY_IDX--BLOCK_IDX
+        if (dupBlock.id.includes("--")) {
+            newId = dupBlock.id.split("--")[0] + "--" + newId
+        }
 
         // move down by total amount
         const totalTime = oldEndTime - oldStartTime
@@ -414,7 +395,7 @@ export class RoutinesManager {
         this.editingBlock.set(null)
     }
 
-    onEditModalClose(updatedBlock: RoutineBlockElem | null) {
+    onConcludeModalEdit(updatedBlock: RoutineBlockElem | null) {
         this.editContext.set(null)
         this.editingBlock.set(null)
         this.editingBlockRef = null
@@ -442,12 +423,11 @@ export class RoutinesManager {
         )
 
         return {
-            left, top: top + scrollTop - 60
+            left, top: top + scrollTop
         }
     }
 
-    onBlockContextMenu(id: string) {
-        const editBlock = this.getDailyRoutineBlock(id)!
+    openContextMenu() {
         const containerWidth = this.containerElem!.clientWidth - 35
         const containerHeight = this.containerElem!.clientHeight
         const scrollTop = this.containerElem!.scrollTop
@@ -458,14 +438,11 @@ export class RoutinesManager {
         }
 
         const { top, left } = intContextMenuPos(
-            { height: 130, width: 130}, cursorPos, 
+            { height: 170, width: 150 }, cursorPos, 
             { height: containerHeight, width: containerWidth }
         )
 
-        this.editingBlock.set(editBlock)
-        this.contextMenuPos.set({
-            left, top: top + scrollTop
-        })
+        this.contextMenuPos.set({ left, top: top + scrollTop })
     }
     
     closeContextMenu(isEditActive: boolean) {
@@ -479,24 +456,26 @@ export class RoutinesManager {
     }
 
     /**
-     * On mouse move handler for time box.
+     * Pointer event handler for when cursor moves in container that holds all the blocks.
      */
-    timeBoxMouseMove = (event: PointerEvent) => {
-        const rect = this.containerElem!.getBoundingClientRect()
-        const scrollLeft = this.containerElem!.scrollLeft
-        const scrollTop = this.containerElem!.scrollTop
+    onBlocksContainerPointerMove = (event: PointerEvent) => {
+        const blocksRect = this.blocksContainerRef!.getBoundingClientRect()
+        const windowRect = this.containerElem!.getBoundingClientRect()
         
-        const left = event.clientX - rect.left + scrollLeft
-        const top = event.clientY - rect.top + scrollTop
+        const blocksLeft = event.clientX - blocksRect.left
+        const blocksTop = event.clientY - blocksRect.top
+
+        const windowLeft = event.clientX - windowRect.left
+        const windowTop = event.clientY - windowRect.top
         
-        this.cursorPos = { left, top }
+        this.cursorPos = { left: blocksLeft, top: blocksTop }
+        this.cursorPosFromWindow = { left: windowLeft, top: windowTop }
     }
 
     /**
-     * Init old stretch edit
-     * Will init an stretch or lift edit state if appropriate.
+     * Initaze the data required for editing an existing routine block.
      * 
-     * @param e 
+     * @param e                Mouse move event.
      * @param isDragFromHead   If user is dragging from block's head.
      */
     initOldStretchEdit(e: PointerEvent, isDragFromHead: boolean) {
@@ -522,10 +501,8 @@ export class RoutinesManager {
     isBlockMouseDownOnEdge(event: PointerEvent) {
         const target = event.target as HTMLElement
         const block = findAncestor({ 
-            queryStr: "routine-blocks__block",
-            child: target,
-            strict: true,
-            queryBy: "class"
+            queryStr: "routine-blocks__block", queryBy: "class",
+            child: target, strict: true
         })
 
         const { top, bottom } = block!.getBoundingClientRect()
@@ -580,17 +557,29 @@ export class RoutinesManager {
                 this.allowLiftEdit = true
             }
         }
-        if (this.allowLiftEdit) {
-            this.blockLiftMoveHandler(e)
-        }
+        if (!this.allowLiftEdit) return
+        const { safeProps, xOffset, yOffset } = this.getLiftBlockPositions(e)
+
+        // drop area block uses safe positions
+        this.editingBlock.update((block) => ({ 
+            ...block!, ...safeProps, 
+            xOffset, 
+            yOffset,
+            dropArea: {
+                top: safeProps!.yOffset, 
+                left: xOffset,
+                offsetIdx: 0
+            }
+        })) 
     }
 
     /**
      * Handler for when user moves a lifted, editing block.
      * Updates the block's start, end times, and offset.
      * 
+     * @returns  Safe area props
      */
-    blockLiftMoveHandler = (e: PointerEvent) => {
+    getLiftBlockPositions = (e: PointerEvent) => {
         let editBlock = get(this.editingBlock)!
 
         // edit block positions
@@ -604,7 +593,7 @@ export class RoutinesManager {
         const endTime = startTime + this.editingBlockTotalTime
         
         // prevent end time out of bounds
-        if (endTime < 1440) {
+        if (endTime < TOTAL_DAY_MINS) {
             editBlock = { ...editBlock, startTime, yOffset, endTime }
         }
         else {
@@ -615,65 +604,115 @@ export class RoutinesManager {
         let xOffset         = Math.max(dragLeftOffset, 0)
         const floatingBlock = getElemById("edit-block")
         const boundWidth    = this.blocksContainerRef!.clientWidth
-        const boundBottom   = this.containerElem!.clientHeight
 
         if (floatingBlock) {
             const floatingToXOffset = floatingBlock!.clientWidth + xOffset
-
             const diff = boundWidth - floatingToXOffset
+            
             if (diff < 10) {
                 xOffset = editBlock.xOffset
             }
         }
 
-        console.log({ xOffset })
-
-        // scroll when near boarder
-        const windowTopOffset   = this.cursorPos.top - this.containerElem!.scrollTop
-        const windowLeftOffset  = this.cursorPos.top - this.containerElem!.scrollTop
-
-        const isNearTop = windowTopOffset < 10
-        const isNearBottom = boundBottom - windowLeftOffset < 20
-
-        if (isNearTop) {
-            this.containerElem!.scrollTop -= 5
-        }
-        if (isNearBottom) {
-            this.containerElem!.scrollTop += 5
+        const moveDirection = this.isNearBorderAndShouldScroll()
+        if (moveDirection) {
+            this.scrollToBlockMovement(moveDirection)
         }
 
-
-        // updatte positioning and times of drop area and floating
+        // update positioning and times of drop area and floating
         const safeProps = this.getSafePropsAfterLift({
-            startTime: editBlock.startTime, endTime: editBlock.endTime, 
+            startTime: editBlock.startTime, 
+            endTime: editBlock.endTime, 
             blockTotalTime: editBlock.endTime - editBlock.startTime
         })
 
-        // drop area block uses safe positions
-        this.editingBlock.update((block) => ({ 
-            ...block!, ...safeProps, xOffset, yOffset,
-            dropAreaOffset: {
-                top: safeProps.yOffset, left: xOffset
-            }
-        })) 
+        return { safeProps, xOffset, yOffset }
     }
 
+    /**
+     * If cursor is near the borders while a block is being lifted do a scroll to the direction of the border the block is going to.
+     */
+    scrollToBlockMovement(moveDirection: "up" | "left" | "right" | "down" | null) {
+        if (this.interval) return
+
+        console.log("A")
+        
+        this.interval = setInterval(() => {
+            moveDirection = this.isNearBorderAndShouldScroll()
+            
+            if (moveDirection === "up") {
+                this.containerElem!.scrollTop -= 10
+            }
+           if (moveDirection === "down") {
+                this.containerElem!.scrollTop += 10
+            }
+           if (moveDirection === "right") {
+                this.containerElem!.scrollLeft += 10
+            }
+           if (moveDirection === "left") {
+                this.containerElem!.scrollLeft -= 10
+            }
+           if (!moveDirection) {
+               clearInterval(this.interval!)
+               this.interval = null
+               return
+            }
+        }, 25)
+    }
+    
+    /**
+     * Check if cursor is near a border and should scroll towards the moving block. if there's space left.
+     * @returns  Direction the scroll should be to. Null if a scroll is not needed
+     */
+    isNearBorderAndShouldScroll() {
+        const { scrollTop, 
+                scrollLeft, 
+                scrollHeight, 
+                scrollWidth,
+                clientHeight: windowHeight, 
+                clientWidth: windowWidth
+        } = this.containerElem!
+
+        const windowTopOffset   = this.cursorPosFromWindow.top
+        const windowLeftOffset  = this.cursorPosFromWindow.left
+
+        const hasReachedBottom   = scrollTop >= scrollHeight - windowHeight
+        const hasReachedRightEnd = scrollLeft >= scrollWidth - windowWidth
+
+
+        if (windowTopOffset < 10 && scrollTop != 0) {
+            return "up"
+        }
+        if (windowHeight - windowTopOffset < 20 && !hasReachedBottom) {
+            return "down"
+        }
+        if (windowLeftOffset < 10 && scrollLeft != 0) {
+            return "left"
+        }
+        if (windowWidth - windowLeftOffset < 20 && !hasReachedRightEnd) {
+            return "right"
+        }
+        return null
+    }
 
     /**
-     * Get the startime, endtime, height, and yOffset after a lift edit such that they do not overlap with other blocks.
-     * And does not physically collid with other blocks.
+     * Get the startime, endtime, height, and yOffset for a block in column of blocks such that they do not overlap with other blocks.
+     * Null if there is no space for the block.
      * 
      * @param times  Start time, end time, and total block time of the move location.
      * @param id     The id of the block lift, if none is provided, will use the edit block by default. 
      * 
      * @returns      Start time, yOffset, end time, height of block after lift edit.
+     *               Returns null if there are no possible safe positions.
      */
     getSafePropsAfterLift(times: { startTime: number, endTime: number, blockTotalTime: number }, id?: string) {
-        const startTime  = this.getStartTimeFromDragLiftEdit({ 
+        let startTime  = this.getStartTimeFromDragLiftEdit({ 
             startTime: times.startTime, endTime: times.endTime
         }, id)
-        
-        const _endTime  = startTime + times.blockTotalTime
+        let _endTime  = startTime + times.blockTotalTime
+
+        // if no availalbe space, startTIme will be @ 1440
+        if (startTime === 1440) return null
 
         // find closest nbrs
         this.editBlockBottomNbr = this.findBlockClosestBottomNbr(_endTime, true)
@@ -702,14 +741,14 @@ export class RoutinesManager {
         if (this.allowLiftEdit) {
 
             const dropAreaBlock = get(this.editingBlock)!
-            const { endTime, startTime, dropAreaOffset } = dropAreaBlock
+            const { endTime, startTime, dropArea } = dropAreaBlock
     
             const editedBlockELem = { 
                 ...dropAreaBlock, startTime, endTime,
-                yOffset: dropAreaOffset!.top, xOffset: dropAreaOffset!.left
+                yOffset: dropArea!.top, xOffset: dropArea!.left
             }
 
-            editedBlockELem.dropAreaOffset = undefined
+            editedBlockELem.dropArea = undefined
     
             this.focusedDayRoutineElems.update((blocks) => (
                 blocks!.map((block) => (block.id === dropAreaBlock.id ? editedBlockELem : block))
@@ -735,7 +774,7 @@ export class RoutinesManager {
     }
 
     /**
-     * Get the start time after the end of a lift edit.
+     * Get the start time after the end of a lift edit based on the top offset position of the floating edit block.
      * If the start time is impossible (ovrlapping with other blocks), find the nearest allowable start time.
      * 
      * @param editBlock 
@@ -784,10 +823,9 @@ export class RoutinesManager {
 
         let nearestStartTime = this.editingBlockInitStartTime
         let shortedDistanceToDesiredStart = Infinity
-        let movedUp = null
 
         const editId = id ? id : get(this.editingBlock)!.id
-        const blocks = get(this.focusedDayRoutineElems)!
+        let blocks = get(this.focusedDayRoutineElems)!
 
         let intervals: { id: string, interval: [number, number] }[] = []
 
@@ -814,17 +852,17 @@ export class RoutinesManager {
             // next interval
             const nextIntervalIdx   = idx + 1  < intervals.length ? idx + 1 : -1
             const nextInterval      = nextIntervalIdx >= 0 ? intervals[nextIntervalIdx].interval : null
-            const nextIntervalStart = nextInterval ? nextInterval[0] : 1440
+            const nextIntervalStart = nextInterval ? nextInterval[0] : TOTAL_DAY_MINS
 
             // see if space is available
             const topSpace = Math.abs(intStart - prevIntervalEnd)
             const bottomSpace = Math.abs(nextIntervalStart - intEnd)
 
             const canFitTop = totalTime <= topSpace
-            let  topStartingPoint = 1440
+            let  topStartingPoint = TOTAL_DAY_MINS
 
             const canFitBottom = totalTime <= bottomSpace
-            let  bottomStartingPoint = 1440
+            let  bottomStartingPoint = TOTAL_DAY_MINS
 
             // find starting point in terms of current interval's top edge or bottom edge
             if (canFitTop) {
@@ -835,8 +873,8 @@ export class RoutinesManager {
             }
 
             // calculate the porjected vertical distances between the desired start time and project start time
-            const intStartDistance = canFitTop ? Math.abs(topStartingPoint - startTime) : 1440
-            const intEndDistance   = canFitBottom ? Math.abs(bottomStartingPoint - startTime) : 1440
+            const intStartDistance = canFitTop ? Math.abs(topStartingPoint - startTime) : TOTAL_DAY_MINS
+            const intEndDistance   = canFitBottom ? Math.abs(bottomStartingPoint - startTime) : TOTAL_DAY_MINS
 
             // should take top starting point if that dstance is shorter
             const shouldMoveUp     = intStartDistance < intEndDistance
@@ -845,13 +883,14 @@ export class RoutinesManager {
             const _nearestStartTime              = shouldMoveUp ? topStartingPoint : bottomStartingPoint
 
             if (_shortedDistanceToDesiredStart < shortedDistanceToDesiredStart) {
+
                 nearestStartTime = _nearestStartTime
                 shortedDistanceToDesiredStart = _shortedDistanceToDesiredStart
-
-                movedUp = shouldMoveUp
             }
 
         })
+
+        console.log({ nearestStartTime })
         return nearestStartTime
     }
 
@@ -986,8 +1025,8 @@ export class RoutinesManager {
     /* Edit Helpers */
 
     /**
-     * Gets the height, yOffset, endTime of an edit block.
-     * Ensures that the props returned will never allow the block to collide with other blocks.
+     * Get the height, yOffset, endTime of an edit block.
+     * Ensures that the props returned will never allow the block to overlap with neighboring blocks.
      * Returns null if the block is too short.
      * 
      * @param startTime     Calculated start time after edit.
@@ -1009,20 +1048,27 @@ export class RoutinesManager {
             endTime   = bottomCollision ? this.editBlockBottomNbr!.startTime : endTime
         }
 
+        let yOffset = Math.ceil((startTime / TOTAL_DAY_MINS) * this.containerElemHt)
+
+        // top position is the position of top nbr's bottom edge position
+        if (topCollision) {
+            const topNbrTopOffset = this.editBlockTopNbr!.yOffset
+            const topNbrHeight = this.editBlockTopNbr!.height
+
+            yOffset = topNbrHeight + topNbrTopOffset
+        }
+
         endTime = Math.min(endTime, 1439)
         
         // if less than min, then use the prev allowed time || don't make at all
         const elapsedTimeMins = endTime - startTime 
-        const { yOffset, offset }  = this.getEditBlockTopOffset(startTime)
-
-        let height = (elapsedTimeMins / 1440) * containerHt
-        height    -= bottomCollision ? (this.BLOCK_GAP + offset) : 0
+        const height  = Math.floor((elapsedTimeMins / TOTAL_DAY_MINS) * containerHt)
         
         return { height, yOffset, endTime, startTime }
     }
 
     /**
-     * Get the top offset from a top offset cursor position
+     * Get the start from a top offset cursor position
      * @param topOffset  Y offset cursor position
      * @returns          Start time in minuts from offset cursor position.
      */
@@ -1031,7 +1077,7 @@ export class RoutinesManager {
         
         const topOffsetMins = (topOffset / containerHt) * TOTAL_DAY_MINS
         const startTime     = Math.max(roundUpToNearestFive(topOffsetMins), 0)
-        const yOffset       = (startTime / 1440) * containerHt
+        const yOffset       = (startTime / TOTAL_DAY_MINS) * containerHt
 
         return { startTime, yOffset }
     }
@@ -1064,39 +1110,6 @@ export class RoutinesManager {
         }
         
         return { startTime, endTime }
-    }
-
-    /**
-     * Get the edit block's new top offset after positioning has changed.
-     * Ensurs that it doesn't collide with top neighbor.
-     * 
-     * @param   startTime      New calculated start time from a change in position
-     * @param   forStrechEdit  Is for stretch edit
-     * 
-     * @returns Resulting topoffset and the offset if there is a top collision.
-     */
-    getEditBlockTopOffset(startTime: number) {
-        let topOffset = ((startTime / 1440) * this.containerElemHt) + this.BLOCK_TOP_OFFSET
-
-        const topNbr = this.editBlockTopNbr
-        if (!topNbr) return { yOffset: topOffset, offset: 0 }
-        
-        // has top nbr
-        const topNbrBottomEdge = topNbr.yOffset + topNbr.height
-        const diff = topOffset - topNbrBottomEdge
-        let offset = 0
-
-        if (diff >= this.BLOCK_GAP) {
-            return { yOffset: topOffset, offset: 0 }
-        }
-        else if (diff >= 0) {
-            offset = this.BLOCK_GAP - diff
-            return { yOffset: topOffset + offset, offset }
-        }
-        else {
-            offset = Math.abs(diff) + this.BLOCK_GAP
-            return { yOffset: topOffset + offset, offset }
-        }
     }
 
     /**
@@ -1156,7 +1169,6 @@ export class RoutinesManager {
         }
         else if (editContext === "old-stretch") {
             this.focusedDayRoutineElems.update(blocks => blocks!.map(block => (editBlock && block.id === editBlock.id ? editBlock : block)))
-
             // this.editContext.set(null)
         }
         
@@ -1168,8 +1180,6 @@ export class RoutinesManager {
         this.pivotPointTopOffset = -1
         this.allowStrechEdit = false
         this.stretchPivotTime = -1
-
-        // end handler removals are hanlded in the children, as they have their own implementations of event listeners
     }
 
     getBlockElem(id: string) {
@@ -1181,34 +1191,34 @@ export class RoutinesManager {
 }
 
 /**
- * Manager object for "Daily Routines" page
+ * Manager object for daily routines
  */
 export class DailyRoutinesManager extends RoutinesManager {
     /**
      * @param data   Daily Routines - All the daily routines that user has made              
      */
-    constructor(data: DailyRoutine[], blockTopOffset: number) {
-        super(true)
-        this.userRoutines.set(data as DailyRoutine[])
-        this.BLOCK_TOP_OFFSET = blockTopOffset
+    constructor(userRoutines: (DailyRoutine | RoutineBlock)[]) {
+        super()
+
+        // @ts-ignore
+        this.userRoutines.set(userRoutines)
     }
 
     /**
      * Initialize all user routines 
      * @param routineId       Current routine in view 
      */
-    initFocusRoutine(focusedDayRoutineId: string) {
-        let currFocusedDayRoutine = get(this.focusedDayRoutine) as DailyRoutine | undefined
-        if (focusedDayRoutineId === currFocusedDayRoutine?.id) return
+    initFocusRoutine(routine: DailyRoutine | null) {
+        if (!routine) {
+            this.currCores.set(EMPTY_CORES)
+            this.currTagBreakdown.set([])
+            this.focusedDayRoutineElems.set(null)
 
-        const routine = get(this.userRoutines)!.find((routine) => routine.id === focusedDayRoutineId)!
+            return
+        }
+
         this.focusedDayRoutine.set(routine)
-
-        currFocusedDayRoutine = get(this.focusedDayRoutine) as DailyRoutine
-
-        this.currCores.set((this.getRoutineBlockCores(routine.blocks)))
-
-        const { cores, earliestBlock, blockElems, tagBreakdown } = this.processRoutineBlocks(currFocusedDayRoutine.blocks)
+        const { cores, earliestBlock, blockElems, tagBreakdown } = this.processRoutineBlocks(routine.blocks)
 
         this.currCores.set(cores)
         this.currTagBreakdown.set(tagBreakdown)
@@ -1223,16 +1233,20 @@ export class DailyRoutinesManager extends RoutinesManager {
         setTimeout(() => this.containerElem!.classList.remove("hide-scroll-bar"), 0)
     }
 
+    removeDailyRoutine(routineId: string) {
+        this.userRoutines.update((routines) => (routines!.filter(r => r.id != routineId)))
+    }
+
+    newDailyRoutine(newRoutine: DailyRoutine) {
+        this.userRoutines.update((routines) => [...routines!, newRoutine])
+    }
+
     /**
      * Updates a selected daily routine's title
-     * @param title 
+     * @param name 
      */
-    updateTitle = (title: string) => {
-        this.focusedDayRoutine.update((routine) => {
-            if (!routine) return routine
-            
-            return { ...routine, title }
-        })
+    updateTitle = (name: string) => {
+        this.focusedDayRoutine.update((routine) => ({ ...routine!, name }))
     }
 
     /**
@@ -1240,11 +1254,7 @@ export class DailyRoutinesManager extends RoutinesManager {
      * @param title 
      */
     updateDescription = (description: string) => {
-        this.focusedDayRoutine.update((routine) => {
-            if (!routine) return routine
-
-            return { ...routine, description }
-        })
+        this.focusedDayRoutine.update((routine) => ({ ...routine!, description } ))
     }
 
     onBlockPointerDown(e: PointerEvent, id: string) {
@@ -1286,11 +1296,8 @@ export class DailyRoutinesManager extends RoutinesManager {
     }
 
     onBlockStrechEditEnd = () => {
+        const wasNewBlockEdit = get(this.editContext) === "new-stretch"
         super.endBlockStretchEditHandler()
-
-        // drag start point was made if a new block was made 
-        // as a drag threshold exists for a new block strech edit
-        const wasNewBlockEdit = this.dragStartPoint!.top != -1
 
         if (wasNewBlockEdit) {
             this.containerElem!.removeEventListener("pointermove", this.onTimeBoxMouseMove)
@@ -1302,65 +1309,86 @@ export class DailyRoutinesManager extends RoutinesManager {
         this.containerElem!.removeEventListener("pointerup", this.onBlockStrechEditEnd)
         this.dragStartPoint = { left: -1, top: -1 }
     }
+
+    onBlockContextMenu(id: string) {
+        const editBlock = this.getDailyRoutineBlock(id)!
+        this.editingBlock.set(editBlock)
+        this.openContextMenu()
+    }
 }
 
 /**
- * Manager object for "Current" page
+ * Manager object for weekly routines
  */
 export class WeeklyRoutinesManager extends RoutinesManager {
+    currViewOption = writable(ViewOption.Weekly)
+    chosenRoutine: WeeklyRoutine | null = null
+
+    // current routine in view
     currWeekRoutine:      Writable<WeeklyRoutine | null> = writable(null)
     currWeekRoutineElems: Writable<WeekBlockElems | null> = writable(null)
+    dayBreakdown:         Writable<DayBreakdown| null> = writable(null)
 
     editDayKey: keyof WeeklyRoutineBlocks | null = null
     editDayKeyStore: Writable<keyof WeeklyRoutineBlocks | null> = writable(null)
 
     editDayIdx = -1
+    editOffsetIdx = -1
     dayColXOffset = 0
     weekCores = structuredClone(EMPTY_CORES)
 
-    DAYS_WEEK = [ "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" ]
+    DAYS_WEEK = [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" ]
+    daysInView = this.DAYS_WEEK
 
     /**
-     * @param data   User's currently chosen routine 
+     * @param weekRoutine   User's currently chosen routine which should be in view
      */
     constructor(weekRoutine: WeeklyRoutine) {
-        super(false)
-
-        this.currWeekRoutine.set(weekRoutine)
-        this.currWeekRoutineElems.set({ Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [], Sun: [] })
+        super()
+        this.updateCurrentWeekRoutine(weekRoutine, false)
     }
 
+    /**
+     * Updates current weekly routine in view.
+     */
+    updateCurrentWeekRoutine(weekRoutine: WeeklyRoutine | null, doProcessBlocks = true) {
+        this.chosenRoutine = weekRoutine
+        
+        this.currWeekRoutine.set(weekRoutine)
+        this.currWeekRoutineElems.set({ 
+            Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [], Sunday: [] 
+        })
+        
+        if (!weekRoutine) {
+            this.dayBreakdown.set(null)
+            this.resetEditState()
+        }
+        if (weekRoutine && doProcessBlocks) {
+            this.processWeeklyRoutine()
+        }
+    }
 
     /**
      * Updates a selected daily routine's title
-     * @param title 
+     * @param name 
      */
-    updateTitle = (title: string) => {
-        this.currWeekRoutine.update((routine) => {
-            if (!routine) return routine
-            
-            return { ...routine, title }
-        })
+    updateTitle = (name: string) => {
+        this.currWeekRoutine.update((routine) => ({ ...routine!, name }))
     }
-
+    
     /**
      * Updates a selected daily routine's description
-     * @param title 
-     */
-    updateDescription = (description: string) => {
-        this.currWeekRoutine.update((routine) => {
-            if (!routine) return routine
-
-            return { ...routine, description }
-        })
+     * @param description 
+    */
+   updateDescription = (description: string) => {
+        this.currWeekRoutine.update((routine) => ({ ...routine!, description }))
     }
 
     /**
-     * Proceses weekly routine by extracting breakdown data and create routine element blocks to be displayed.
+     * Proceses weekly routine by extracting breakdown data and create routine element blocks to be displayed from initialized weekly routine data.
      */
     processWeeklyRoutine() {
         const routineElems = get(this.currWeekRoutineElems)!
-        const movedHeads = new Map<number, number>()
 
         // analytics
         const weekCores = structuredClone(EMPTY_CORES)
@@ -1369,11 +1397,12 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         let i = 0
         
         for (let day of this.DAYS_WEEK) {
-            const   dayDataList = get(this.currWeekRoutine)!.blocks[day as keyof WeeklyRoutineBlocks]
-            const { cores, earliestBlock, blockElems, tagBreakdown } = this.processRoutineBlocks(dayDataList, movedHeads)
+            const dayKey = day as keyof WeeklyRoutineBlocks
+            const dayDataList = get(this.currWeekRoutine)!.blocks[dayKey]
+            const { cores, earliestBlock, blockElems, tagBreakdown } = this.processRoutineBlocks(dayDataList)
 
-            // get elems for each day
-            routineElems[day as keyof WeeklyRoutineBlocks]!.push(
+            // create block elements array + set up ids
+            routineElems[dayKey]!.push(
                 ...blockElems.map((blockElem: RoutineBlockElem, idx: number) => ({
                     ...blockElem, xOffset: 0, id: `${i}--${idx}`,
                 }))
@@ -1389,9 +1418,9 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         }
         
         this.weekCores = this.getWeekCoreAvgs(weekCores)
+
         this.currCores.set(weekCores)
         this.currTagBreakdown.set(weekTagData)
-
         this.currWeekRoutineElems.set(routineElems)
     }
 
@@ -1407,7 +1436,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
                 const prevTag = weekTagData[tagIdx]
                 prevTag.data.totalTime += tagBreakdown.data.totalTime
                 prevTag.data.total     += tagBreakdown.data.total
-                prevTag.data.avgTime    = (prevTag.data.totalTime / 7)
+                prevTag.data.avgTime    = (prevTag.data.totalTime / this.daysInView.length)
 
                 weekTagData[tagIdx] = prevTag
             }
@@ -1433,18 +1462,18 @@ export class WeeklyRoutinesManager extends RoutinesManager {
 
             // if there is at least one core activity
             if (core.totalTime) {
-                core.avgTime = core.totalTime / 7
+                core.avgTime = core.totalTime / this.daysInView.length
             }
         }
         return weekCores
     }
 
-    /* Editing */
+    /* Lift Edits */
 
     onBlockPointerDown(e: PointerEvent, id: string) {
         if (e.button === 2) return
 
-        this.initFocusColContextFromGesture({ leftOffset: this.cursorPos.left })
+        this.initFocusColContextFromLeftOffset(this.cursorPos.left)
         this.initFocusColFromContext()
 
         this.blockOnPointerDown = this.getWeekBlockFromId(id)!
@@ -1453,6 +1482,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         this.editingBlockRef = this.getDOMBlockElem(id)
         this.editingBlock.set({ ...this.blockOnPointerDown, xOffset: this.dayColXOffset })
 
+        // do a strech or lift edit
         if (isOnTopEdge || isOnBottomEdge) {
             this.initOldStretchEdit(e, isOnTopEdge)
         }
@@ -1469,24 +1499,20 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         }
     }
 
-    intWeekDragLiftMoveEdit(block: RoutineBlockElem) {
-        this.intDragLiftMoveEdit(block)
-    }
-
     /**
      * Handler for when the mouse moves after user clicks on a lift move area.
-     * Will become call handler for moving a lifted, editing block if a lift edit has been allowed.
      * 
      * @param event 
      */
     onBlockMouseMove = (e: PointerEvent) => {
         e.preventDefault()
 
+        // only allow the edit if the user has moved he cursor far enough
         if (!this.allowLiftEdit) { 
             const dragDistance = getDistanceBetweenTwoPoints(this.dragStartPoint!, this.cursorPos!)
 
             if (dragDistance > this.DRAG_DISTANCE_THRESHOLD) {
-                this.intWeekDragLiftMoveEdit(this.blockOnPointerDown!)
+                this.intDragLiftMoveEdit(this.blockOnPointerDown!)
                 this.allowLiftEdit = true
             }
         }
@@ -1494,33 +1520,59 @@ export class WeeklyRoutinesManager extends RoutinesManager {
 
         const prevDay = this.editDayKey
 
-        this.initFocusColContextFromGesture({ leftOffset: this.cursorPos.left })
+        // when mouse moves, know in which day column the cursor is currently at
+        this.initFocusColContextFromLeftOffset(this.cursorPos.left)
 
+        // if a new column and init the new col
         if (prevDay != this.editDayKey) {
             this.initFocusColFromContext()
         }
 
-        this.blockLiftMoveHandler(e)
+        const { safeProps, xOffset, yOffset } = this.getLiftBlockPositions(e)
+
+        // safeProps will be null if there was no space in current day col the cursos is in
+        if (safeProps) {
+            this.editingBlock.update((block) => ({ 
+                ...block!, ...safeProps, 
+                xOffset, 
+                yOffset,
+                dropArea: {
+                    top: safeProps.yOffset, 
+                    left: xOffset,
+                    offsetIdx: this.editOffsetIdx
+                }
+            }))
+        }
+        else {
+            this.editingBlock.update((block) => ({ ...block!, xOffset, yOffset })) 
+        }
     }
 
     onBlockMouseUp = () => {
-        if (this.allowLiftEdit) {
+        if (this.interval) {
+            clearInterval(this.interval)
+            this.interval = null
+        }
 
+        if (this.allowLiftEdit) {
             // extract needed props
             const dropAreaBlock = get(this.editingBlock)!
-            const { endTime, startTime, dropAreaOffset } = dropAreaBlock
+            const { endTime, startTime, dropArea } = dropAreaBlock
     
             const editedBlockELem = { 
                 ...dropAreaBlock, startTime, endTime,
-                yOffset: dropAreaOffset!.top, xOffset: dropAreaOffset!.left,
+                yOffset: dropArea!.top, xOffset: dropArea!.left,
             }
+
+            // current set editDayIdx might not be the same as drop area
+            // occurs when current day col has no space for editing block
+            this.initFocusColContextFromIdx(dropArea!.offsetIdx)
 
             // update elems
             const weekElems = get(this.currWeekRoutineElems)!
-            
-            const oldColIdx = +editedBlockELem.id.split("--")[0]
+            const oldColIdx    = +editedBlockELem.id.split("--")[0]
             const oldColDayKey = this.DAYS_WEEK[oldColIdx] as keyof WeekBlockElems
-            const isSameCol = this.editDayKey! === oldColDayKey
+            const isSameCol    = this.editDayKey! === oldColDayKey
             
             // remove from old col
             let oldCol = weekElems[oldColDayKey]
@@ -1533,53 +1585,84 @@ export class WeeklyRoutinesManager extends RoutinesManager {
             // add to from old col
             let newCol = isSameCol ? oldCol : weekElems[this.editDayKey!]
 
-            newCol     = [...newCol, { ...editedBlockELem }]
-            newCol     = newCol.sort((a, b) => a.startTime - b.startTime)
-            newCol     = newCol.map((block, idx) => ({ ...block, id: `${this.editDayIdx}--${idx}`}))
-
+            newCol = [...newCol, { ...editedBlockELem }]
+            newCol = newCol.sort((a, b) => a.startTime - b.startTime)
+            newCol = newCol.map((block, idx) => ({ ...block, id: `${this.editDayIdx}--${idx}`}))
 
             this.currWeekRoutineElems.update((week) => {
-                if (!week) return null
-
-                week[oldColDayKey] = oldCol
-                week[this.editDayKey!] = newCol
+                week![oldColDayKey] = oldCol
+                week![this.editDayKey!] = newCol
 
                 return week
             })
-
-            this.focusedDayRoutine.set(null)
-            this.focusedDayRoutineElems.set(null)
-            this.editContext.set(null)
-            this.editingBlock.set(null)
-            this.editingBlockTotalTime     = -1
-            this.editingBlockInitStartTime = -1
-            this.editDayKey = null
-            this.dayColXOffset = 0
-            this.editDayIdx = -1
-    
-            this.dragStartPoint = { left: -1, top: -1 }
-    
-            this.allowLiftEdit = false
-            this.editTargetElem = null
-            this.initDragLiftOffsets = { top: -1, left: -1 }
+            this.resetEditState()
         }
         else {
             this.editContext.set("details")
         }
 
+        this.removeLiftEventListeners()
+    }
+    
+    /**
+     * After a lift edit, update the current weekly routine.
+     */
+    updateOnLiftEdit() {
+        // extract needed props
+        const dropAreaBlock = get(this.editingBlock)!
+        const { endTime, startTime, dropArea } = dropAreaBlock
+
+        const editedBlockELem = { 
+            ...dropAreaBlock, startTime, endTime,
+            yOffset: dropArea!.top, xOffset: dropArea!.left,
+        }
+
+        // update elems
+        const weekElems = get(this.currWeekRoutineElems)!
+        
+        const oldColIdx = +editedBlockELem.id.split("--")[0]
+        const oldColDayKey = this.DAYS_WEEK[oldColIdx] as keyof WeekBlockElems
+        const isSameCol = this.editDayKey! === oldColDayKey
+        
+        // remove from old col
+        let oldCol = weekElems[oldColDayKey].filter((block) => (block.id != editedBlockELem.id))
+        oldCol = oldCol.filter((block) => (block.id != editedBlockELem.id))
+
+        if (!isSameCol) {
+            oldCol = oldCol.map((block, idx) => ({ ...block, id: `${oldColIdx}--${idx}`}))
+        }
+        
+        // add to from old col
+        let newCol = isSameCol ? oldCol : weekElems[this.editDayKey!]
+        newCol = [...newCol, { ...editedBlockELem }]
+        newCol = newCol.sort((a, b) => a.startTime - b.startTime)
+        newCol = newCol.map((block, idx) => ({ ...block, id: `${this.editDayIdx}--${idx}`}))
+
+        this.currWeekRoutineElems.update((week) => {
+            week![oldColDayKey] = oldCol
+            week![this.editDayKey!] = newCol
+
+            return week
+        })
+
+        this.resetEditState()
+        this.removeLiftEventListeners()
+    }
+
+    removeLiftEventListeners() {
         this.containerElem!.removeEventListener("pointermove", this.onBlockMouseMove)
         this.containerElem!.removeEventListener("pointerup", this.onBlockMouseUp)
     }
 
-    /* Making a New Block */
+    /* Stretch Edits */
 
-    onTimeBoxMouseDown(e: PointerEvent) {
+    onTimeBoxMouseDown = (e: PointerEvent) => {
         const target = e.target as HTMLElement
         if (target.id != this.ROUTINE_BLOCKS_CONTAINER_ID || e.button === 2) {
             return
         }
 
-        this.initFocusColContextFromGesture({ leftOffset: this.cursorPos.left })
+        this.initFocusColContextFromLeftOffset(this.cursorPos.left)
         this.initFocusColFromContext()
 
         this.dragStartPoint = this.cursorPos
@@ -1595,9 +1678,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
 
             if (dragDistance <= this.NEW_BLOCK_DRAG_DIST_THRESHOLD) return
 
-            // init new block strech edit data
-            const containerHt = this.containerElemHt
-            const startTime = roundUpToNearestFive((this.dragStartPoint!.top / containerHt) * TOTAL_DAY_MINS)
+            const startTime = roundUpToNearestFive((this.dragStartPoint!.top / this.containerElemHt) * TOTAL_DAY_MINS)
     
             this.editingBlock.set({
                 id: `${this.editDayIdx}--${get(this.focusedDayRoutineElems)!.length}`,
@@ -1624,57 +1705,68 @@ export class WeeklyRoutinesManager extends RoutinesManager {
     }
 
     onBlockStrechEditEnd = () => {
+        const wasNewBlockEdit = get(this.editContext) === "new-stretch"
         super.endBlockStretchEditHandler()
+        
+        this.containerElem!.removeEventListener("pointerup", this.onBlockStrechEditEnd)
+        this.updateWeekElemsFromColUpdate()
+        
+        this.resetEditState()
+        this.removeStretchEventListeners(wasNewBlockEdit)
+    }
 
-        const wasNewBlockEdit = this.dragStartPoint!.top != -1
-
+    removeStretchEventListeners(wasNewBlockEdit: boolean) {
         if (wasNewBlockEdit) {
             this.containerElem!.removeEventListener("pointermove", this.onTimeBoxMouseMove)
         }
         else {
             this.containerElem!.removeEventListener("pointermove", this.onBlockStretchEditHandler)
         }
-
         this.containerElem!.removeEventListener("pointerup", this.onBlockStrechEditEnd)
-        const updatedDayRoutineElems = get(this.focusedDayRoutineElems)! as RoutineBlockElem[]
-
-        this.currWeekRoutineElems.update((weekRoutine) => {
-            if (!weekRoutine) return null
-
-            const key = this.editDayKey! as keyof WeekBlockElems
-
-            weekRoutine[key] = updatedDayRoutineElems
-            return weekRoutine
-        })
-
-        this.focusedDayRoutine.set(null)
-        this.focusedDayRoutineElems.set(null)
-        this.editingBlock.set(null)
-
-        this.dragStartPoint = { left: -1, top: -1 }
-        this.editDayKey = null
-        this.dayColXOffset = 0
-        this.editDayIdx = -1
     }
 
-    initFocusColContextFromGesture(gestureContext: { id?: string, leftOffset?: number}) {
+    /**
+     * 
+     * Initialize the day column being edited / focused by a user as user interacts with a block / board to make some edits.
+     * @param leftOffset  The positioning of the cursor at the time of interaction
+     */
+    initFocusColContextFromLeftOffset(leftOffset: number) {
         const containerWidth = this.blocksContainerRef!.clientWidth
-        const colWidth = containerWidth / 7
+        const colWidth = containerWidth / this.daysInView.length
 
-        if (gestureContext.id) {
-            this.editDayIdx  = +gestureContext.id.split("--")[0]
+        const leftPos = leftOffset! - (2 + 7)
+        this.editDayIdx  = Math.floor(leftPos / colWidth)
+
+        this.initFocusColContextFromIdx(this.editDayIdx)
+    }
+
+    initFocusColContextFromIdx(idx: number) {
+        const viewOpt = get(this.currViewOption)
+        const containerWidth = this.blocksContainerRef!.clientWidth
+        const colWidth = containerWidth / this.daysInView.length
+
+        this.editDayIdx = idx
+
+        if (viewOpt === ViewOption.Today) {
+            const todayIdx = (new Date().getDay() + 6) % 7
+
+            this.editDayIdx = todayIdx
+            this.editDayKey = this.DAYS_WEEK[todayIdx] as keyof WeeklyRoutineBlocks
+            this.editOffsetIdx = 0
+            this.dayColXOffset = 0
         }
         else {
-            const leftPos = gestureContext.leftOffset! - (2 + 7)
-            this.editDayIdx  = Math.floor(leftPos / colWidth)
+            this.editOffsetIdx = this.editDayIdx
+            this.editDayIdx += viewOpt === ViewOption.FSS ? 4 : 0
+            this.editDayKey  = this.DAYS_WEEK[this.editDayIdx] as keyof WeeklyRoutineBlocks
+
+            this.dayColXOffset = (colWidth * this.editOffsetIdx)
         }
-
-        this.editDayKey = this.DAYS_WEEK[this.editDayIdx] as keyof WeeklyRoutineBlocks
-        this.dayColXOffset = (colWidth * this.editDayIdx)
-
-        console.log(this.dayColXOffset)
     }
 
+    /**
+     * Afte getting the day key of the day column being edited, set that column as the day being edited / focused on.
+     */
     initFocusColFromContext() {
         const editDayRoutine      = get(this.currWeekRoutine)!.blocks[this.editDayKey!]
         const editDayRoutineElems = get(this.currWeekRoutineElems)![this.editDayKey!]
@@ -1683,7 +1775,117 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         this.focusedDayRoutineElems.set(editDayRoutineElems)
     }
 
+    /* Context Menu */
+    onBlockContextMenu(id: string) {
+        this.initFocusColContextFromLeftOffset(this.cursorPos.left)
+        this.initFocusColFromContext()
+
+        const editBlock = this.getWeekBlockFromId(id)!
+        this.editingBlock.set({ ...editBlock, xOffset: this.dayColXOffset })
+
+        this.openContextMenu()
+    }
+
+    openContextMenu() {
+        const containerWidth = this.containerElem!.clientWidth
+        const containerHeight = this.containerElem!.clientHeight
+        const scrollTop = this.containerElem!.scrollTop
+
+        const cursorPos = { 
+            top: this.cursorPos.top - scrollTop - 5,
+            left: this.cursorPos.left
+        }
+
+        const { top, left } = intContextMenuPos(
+            { height: 170, width: 150 }, cursorPos, 
+            { height: containerHeight, width: containerWidth }
+        )
+
+        this.contextMenuPos.set({ left, top: top + scrollTop })
+    }
+
+    getColorPickerPos() {
+        const containerWidth = this.containerElem!.clientWidth 
+        const containerHeight = this.containerElem!.clientHeight
+        const scrollTop = this.containerElem!.scrollTop
+
+        const cursorPos = { 
+            top: this.cursorPos.top - scrollTop - 5,
+            left: Math.max(this.cursorPos.left - 10, 0)
+        }
+
+        const { left, top } = intContextMenuPos(
+            { height: 206, width: 175 }, cursorPos, 
+            { height: containerHeight, width: containerWidth }
+        )
+
+        return {
+            left, top: top + scrollTop
+        }
+    }
+
+    duplicateEditBlockElem() {
+        super.duplicateEditBlockElem()
+        this.updateWeekElemsFromColUpdate()
+        this.resetEditState()
+    }
+
+    changeEditBlockColor(color: Color | null) {
+        if (!color) return
+
+        super.changeEditBlockColor(color)
+        this.updateWeekElemsFromColUpdate()
+    }
+
+    deleteEditBlockElem() {
+        super.deleteEditBlockElem()
+        this.updateWeekElemsFromColUpdate()
+    }
+
+    onConcludeModalEdit(updatedBlock: RoutineBlockElem | null) {
+        super.onConcludeModalEdit(updatedBlock)
+        this.updateWeekElemsFromColUpdate()
+    }
+
+    resetEditState(): void {
+        this.focusedDayRoutine.set(null)
+        this.focusedDayRoutineElems.set(null)
+
+        this.editingBlock.set(null)
+        this.editContext.set(null)
+
+        this.editingBlockTotalTime     = -1
+        this.editingBlockInitStartTime = -1
+
+        this.dragStartPoint = { left: -1, top: -1 }
+        this.editDayKey = null
+        this.dayColXOffset = 0
+        this.editDayIdx = -1
+
+        this.allowLiftEdit = false
+        this.editTargetElem = null
+        this.initDragLiftOffsets = { top: -1, left: -1 }
+    }
+
     /**
+     * Update week block elems if an any edit was made on any column.
+     */
+    updateWeekElemsFromColUpdate() {
+        const updatedDayRoutineElems = get(this.focusedDayRoutineElems) as RoutineBlockElem[]
+
+        if (!updatedDayRoutineElems) return
+
+        this.currWeekRoutineElems.update((weekRoutine) => {
+            const key = this.editDayKey! as keyof WeekBlockElems
+
+            weekRoutine![key] = updatedDayRoutineElems
+            return weekRoutine
+        })
+    }
+
+    /**
+     * Find a week routine block using an id
+     * 
      * @param id  Id of block
      * @returns   Block
      */
@@ -1694,11 +1896,98 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         return get(this.currWeekRoutineElems)![dayProp].find((block) => block.id === id)
     }
 
+    /**
+     * Update the current view option for week view.
+     * @param newOptn   Chosen view option
+     */
+    updateCurrViewOption(newOptn: ViewOption) {
+        const todayIdx = (new Date().getDay() + 6) % 7
+
+        if (newOptn === ViewOption.Today) {
+            this.daysInView = [this.DAYS_WEEK[todayIdx]]
+        }
+        else if (newOptn === ViewOption.MTWT) {
+            this.daysInView = this.DAYS_WEEK.slice(0, 4)
+        }
+        else if (newOptn === ViewOption.FSS) {
+            this.daysInView = this.DAYS_WEEK.slice(4, 7)
+        }
+        else {
+            this.daysInView = this.DAYS_WEEK
+        }
+        this.currViewOption.set(newOptn)
+    }
+
+    /**
+     * See if a day routine is linked to a daily routine
+     * @param   _dayKey  Day key ie "Monday"
+     * @returns  
+     */
+    isDayRoutineLinked(day: string) {
+        const dayKey = day as keyof WeeklyRoutineBlocks
+        const dayRoutine = get(this.currWeekRoutine)!.blocks[dayKey]
+
+        return "id" in dayRoutine
+    }
+
+    /**
+     * Initialize a day routine's tag and core breakdown
+     * @param dayIdx   Idx of day (0 -> Monday)
+     */
+    initDayRoutineBreakdown(dayIdx: number | null) {
+        if (dayIdx === null) {
+            this.dayBreakdown.set(null)
+            return 
+        }
+
+        const _dayKey    = this.DAYS_WEEK[dayIdx]
+        const dayKey     = _dayKey as keyof WeeklyRoutineBlocks
+        const dayRoutine = get(this.currWeekRoutine)!.blocks[dayKey]
+        
+        const isLinked = "id" in dayRoutine
+        const blocks   = isLinked ? dayRoutine.blocks : dayRoutine
+
+        const linkedRoutine = isLinked ? {
+            name: dayRoutine.name,
+            description: dayRoutine.description,
+        } : null
+        
+        this.dayBreakdown.set({
+            cores: this.getRoutineBlockCores(blocks),
+            tags: this.getRoutineBlockTags(blocks),
+            day: _dayKey,
+            dayIdx,
+            linkedRoutine
+        })
+    }
+
+    /**
+     * Sever the link to a daily routine from a given day routine
+     */
+    unlinkCurrBreakdownDay() {
+        const dayIdx = get(this.dayBreakdown)!.dayIdx
+        const dayKey = this.DAYS_WEEK[dayIdx] as keyof WeeklyRoutineBlocks
+        const weekRoutine      = get(this.currWeekRoutine)!
+        const linkedDayRoutine = weekRoutine.blocks[dayKey] as DailyRoutine
+
+        weekRoutine.blocks[dayKey] = linkedDayRoutine.blocks
+        this.currWeekRoutine.set(weekRoutine)
+
+        this.dayBreakdown.update((routine) => ({
+            ...routine!,
+            linkedRoutine: null
+        }))
+    }
+
     getDOMBlockElem(id: string) {
         return getElemById(id) as HTMLElement
     }
 
     getDayIdx(key: string) {
         return key as keyof WeeklyRoutineBlocks
+    }
+
+    getDayKeyFromIdx(idx: number) {
+        return this.DAYS_WEEK[idx] as keyof WeeklyRoutineBlocks
     }
 }

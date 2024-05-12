@@ -413,7 +413,7 @@
             }
         }
         &__settings-dropdown-menu {
-            @include pos-abs-top-right-corner(28px, 0px);
+            @include abs-top-right(28px, 0px);
             width: 150px;
         }
         &__pom {

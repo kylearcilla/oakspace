@@ -272,7 +272,7 @@
         &--productivity &__month-day--had-goal::after {
             content: "*";
             @include text-style(0.23, 300, 1.2rem,"Manrope");
-            @include pos-abs-bottom-left-corner(-6.5px, 50%);
+            @include abs-bottom-left(-6.5px, 50%);
             transform: translateX(-50%);
         }
         

@@ -1119,7 +1119,7 @@
             font-weight: 300;
         }
         &__stat-info {
-            @include pos-abs-bottom-left-corner(12px, 15px);
+            @include abs-bottom-left(12px, 15px);
 
             h5 {
                 margin-bottom: 1px;

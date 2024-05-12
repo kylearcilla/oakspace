@@ -522,7 +522,7 @@
             @include circle(24px);
             @include center;
             opacity: 0.4;
-            @include pos-abs-top-right-corner(14px, 14px);
+            @include abs-top-right(14px, 14px);
             
             &:hover {
                 opacity: 0.8;
@@ -687,7 +687,7 @@
             &-dot {
                 @include circle(3px);
                 font-size: 1.2rem;
-                @include pos-abs-top-left-corner(-6px, 0px);
+                @include abs-top-left(-6px, 0px);
 
                 &--0 {
                     background-color: #CB6E6E;
@@ -748,7 +748,7 @@
             font-family: "DM Mono";
         }
         &__due-date-close-btn {
-            @include pos-abs-top-right-corner(24px, -5px);
+            @include abs-top-right(24px, -5px);
             @include circle(22px);
             @include center;
             opacity: 0.06;

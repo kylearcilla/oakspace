@@ -138,7 +138,7 @@
 
     .platform-list {
         box-shadow: var(--bentoBoxShadow);
-        @include pos-abs-top-right-corner(0px, 0px);
+        @include abs-top-right(0px, 0px);
         position: relative;
         width: 100%;
         border-radius: 15px;

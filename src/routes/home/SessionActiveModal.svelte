@@ -257,7 +257,7 @@
         }
 
         .dropdown-menu {
-            @include pos-abs-top-right-corner(35px, -5px);
+            @include abs-top-right(35px, -5px);
             width: 120px;
         }
     }

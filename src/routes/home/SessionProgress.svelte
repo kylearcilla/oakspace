@@ -235,10 +235,10 @@
             @include text-style(0.45, 400, 1.2rem, "DM Sans");
 
             &--start {
-                @include pos-abs-top-left-corner(22px, 7px);
+                @include abs-top-left(22px, 7px);
             }
             &--end {
-                @include pos-abs-top-right-corner(22px, 7px);
+                @include abs-top-right(22px, 7px);
             }
         }
         &__container {
@@ -255,7 +255,7 @@
             cursor: pointer;
 
             svg {
-                @include pos-abs-top-left-corner(50%, 0px);
+                @include abs-top-left(50%, 0px);
                 transform: translateY(-50%);
             }
             &:hover &-tooltip {
@@ -289,6 +289,8 @@
             }
             path {
                 fill: var(--pomToolTipBgColor);
+            z-index: 99999999;
+
             }
             span {
                 display: block;
@@ -312,7 +314,7 @@
             width: 20%;
             height: 1px;
             z-index: 2;
-            @include pos-abs-top-left-corner(50%, 0px);
+            @include abs-top-left(50%, 0px);
             transform: translateY(-50%);
         }
         &__progress-ball {

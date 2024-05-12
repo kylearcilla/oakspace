@@ -64,7 +64,7 @@
 
 <svelte:window on:keyup={manager?.handleKeyUp} on:keydown={manager?.handleKeyDown} />
 
-<div class={`music-player ${$globalContext.isNavMenuOpen ? "music-player--left-bar-open" : ""} ${playerStore?.doShowPlayer ? "" : "music-player--hidden"} ${!$themeState.isDarkTheme ? "music-player--solid-bg" : ""}`}>
+<div class={`music-player ${$globalContext.isLeftNarrowBarOpen ? "music-player--left-bar-open" : ""} ${playerStore?.doShowPlayer ? "" : "music-player--hidden"} ${!$themeState.isDarkTheme ? "music-player--solid-bg" : ""}`}>
     <div class="music-player__wrapper">
     <img class="img-bg" src={mediaItem?.artworkImgSrc} alt="track-artwork"/>
     <div class="blur-bg"></div>
@@ -292,7 +292,7 @@
             &-container {
                 height: 20px;
             }
-            @include pos-abs-top-left-corner(5px, 0px);
+            @include abs-top-left(5px, 0px);
             white-space: nowrap;
             width: auto;
             font-size: 1.1rem;
@@ -303,7 +303,7 @@
                 height: 15px;
             }
             padding: 0px 10px;
-            @include pos-abs-bottom-left-corner(1px, 0px);
+            @include abs-bottom-left(1px, 0px);
             white-space: nowrap;
             width: auto;
             font-size: 0.95rem;

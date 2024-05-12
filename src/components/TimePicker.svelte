@@ -19,8 +19,8 @@
     $: currentTime = options?.start ?? 720
     $: maxTime = options?.max ?? 1439
     $: minTime = options?.min ?? 0
-
-    $: isDarkTheme = $themeState.isDarkTheme
+    
+    $: isLight = !$themeState.isDarkTheme
     $: timeStr = minsFromStartToHHMM(currentTime, false)
     $: initTitleInput(timeStr)
 
@@ -182,7 +182,7 @@
     <div 
         id={`${id}--dropdown-btn`}
         class="time-picker" 
-        class:time-picker--light={!isDarkTheme}
+        class:time-picker--light={isLight}
         class:time-picker--default-width={isDragging || isInputActive}
         class:time-picker--active-input={isInputActive}
         class:select-none={isDragging}
@@ -244,6 +244,10 @@
         transition: 0.12s ease-in-out;
         position: relative;
 
+        &--light {
+            @include txt-color(0.055, "bg");
+            @include text-style(0.75, 500);
+        }
         &--default-width {
             width: $width !important;
         }
@@ -260,10 +264,10 @@
             cursor: ew-resize;
         }
         &::before {
-            @include pos-abs-top-left-corner;
+            @include abs-top-left;
         }
         &::after {
-            @include pos-abs-top-right-corner;
+            @include abs-top-right;
         }
 
         &-container {
@@ -271,7 +275,7 @@
             position: relative;
         }
         &__dropdown {
-            @include pos-abs-top-left-corner(32px, 0px);
+            @include abs-top-left(32px, 0px);
             width: $dropdown-width !important;
         }
         input {

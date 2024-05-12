@@ -113,6 +113,7 @@
         },
     ]
     let finishedSessionElems: DayViewSessionElem[] | null = null
+    let calendarHt = 0
 
     $: {
         calendar?._store.subscribe((newCalendar: ProductivityCalendar) => calendar = newCalendar) 
@@ -188,13 +189,19 @@
 
 <div class={`overview ${$themeState.isDarkTheme ? "" : "overview--light"}`}>
     <!-- Calendar -->
-    <div class="overview__calendar-container">
+    <div 
+        class="overview__calendar-container"
+        bind:clientHeight={calendarHt}
+    >
         {#if calendar}
             <Calendar calendar={calendar} onDateCellPressed={onDateCellPressed} />
         {/if}
     </div>
     <!-- Day View -->
-    <div class="overview__day-view">
+    <div 
+        class="overview__day-view"
+        style:height={`calc(100% - ${calendarHt}px)`}
+    >
         <div class="overview__day-view-day-details">
             <span>Jan 10</span>
             <span>10 Sessions</span>
@@ -304,13 +311,12 @@
         }
 
         &__calendar-container {
-            margin: 11px 0px 7px 0px;
+            margin: 0px 0px 7px 0px;
             padding: 0px 2px;
         }
         &__day-view {
             width: 100%;
             padding: 0px 11px 0px 10px;
-            height: calc(100% - 294px);
         }
         &__day-view-day-details {
             @include flex(center, space-between);
@@ -353,7 +359,7 @@
             }
         }
         &__hour-block-vert-divider {
-            @include pos-abs-top-left-corner(16px, 10px);
+            @include abs-top-left(16px, 10px);
             path {
                 stroke: rgba(var(--textColor1), 0.17);
             }
@@ -436,7 +442,7 @@
             }
 
             &-content {
-                @include pos-abs-top-left-corner(5px, 7px);
+                @include abs-top-left(5px, 7px);
             }
             &-title {
                 @include text-style(0.8, 400, 1.09rem, "DM Sans");

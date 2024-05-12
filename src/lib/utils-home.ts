@@ -8,8 +8,9 @@ import { didInitMusicUser, loadMusicUserData, musicLogin } from "./utils-music"
 import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer } from "./utils-youtube"
 import { didSpotifyUserAuthApp, getSpotifyCodeFromURLAndLogin } from "./api-spotify"
 
-const LEFT_BAR_LEFT_BOUND = 5
+const LEFT_BAR_LEFT_BOUND = 20
 const LEFT_BAR_RIGHT_BOUND = 80
+const LEFT_BAR_RIGHT_BOUND_BIG = 160
 
 /**
  * Initialize app state.
@@ -39,11 +40,13 @@ export const initAppState = async () => {
 
 /**
  * Keyboard shortcut handler for key down events. 
- * @param event  The keyboard key down event to handle.
- * @param hasUserToggledWithKeyLast     If user opened the left side bar with a short cut.
+ * @param event                  The keyboard key down event to handle.
+ * @param toggledLeftBarWithKey  If user opened the left side bar with a short cut.
+ * @param width                  Total window width
+ * 
  * @returns                             If user still has toggled left side bar.
  */
-export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, hasUserToggledWithKeyLast: boolean) => {    
+export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeftBarWithKey: boolean, totalWidth: number) => {    
     const target = event.target as HTMLElement
     const context = get(globalContext)
     const { altKey, metaKey, shiftKey, code, key, ctrlKey } = event
@@ -63,8 +66,13 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, hasUserTogg
             target.blur()
         }
 
-        return hasUserToggledWithKeyLast
+        return toggledLeftBarWithKey
     }
+
+
+    const { isLeftNarrowBarOpen, isLeftWideMenuOpen, isLeftBarFloating } = get(globalContext)
+    const leftBarFull =  isLeftWideMenuOpen && isLeftNarrowBarOpen
+    const doNotOpenRightBar = !isLeftBarFloating && leftBarFull && totalWidth < 80
 
     // if (key === "Escape" && context.modalsOpen.length != 0) {
     //     const modals = get(globalContext).modalsOpen
@@ -72,11 +80,11 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, hasUserTogg
 
     //     closeModal(modals[modals.length - 1])
     // }
-    if (event.ctrlKey && key === "]") {
-        updteGlobalContext({ ...context, isTaskMenuOpen: !context.isTaskMenuOpen })
+    if (event.ctrlKey && key === "]" && !doNotOpenRightBar) {
+        updteGlobalContext({ ...context, isRightBarOpen: !context.isRightBarOpen })
     }
     else if (ctrlKey && key === "[") {
-        updteGlobalContext({ ...context, isNavMenuOpen: !context.isNavMenuOpen })
+        updteGlobalContext({ ...context, isLeftNarrowBarOpen: !context.isLeftNarrowBarOpen })
         return true
     }
     else if (key === "?" && (context.modalsOpen.length === 0 || isModalOpen(ModalType.Shortcuts))) {
@@ -86,7 +94,7 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, hasUserTogg
         isModalOpen(ModalType.Quote) ? closeModal(ModalType.Quote) : openModal(ModalType.Quote)
     }
 
-    return hasUserToggledWithKeyLast
+    return toggledLeftBarWithKey
 }
 
 /**
@@ -110,22 +118,25 @@ export const keyboardShortCutHandlerKeyUp = (event: KeyboardEvent) => {
  * On mouse move handler for home page.
  * Toggles left side bar based on the positioning of the mouse.
  * @param event                         Mouse Event
- * @param hasUserToggledWithKeyLast     If user opened the left side bar with a short cut, then must be hidden again from using the same short cut. Cannot be closed from mouse event.
+ * @param toggledLeftBarWithKey     If user opened the left side bar with a short cut, then must be hidden again from using the same short cut. Cannot be closed from mouse event.
  * @returns                             If user still has toggled left side bar.
  */
-export const onMouseMoveHandler = (event: MouseEvent, hasUserToggledWithKeyLast: boolean): boolean => {
+export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boolean): boolean => {
     const mouseX = event.clientX
-    const homeLayout = get(globalContext)
+    const context = get(globalContext)
 
-    if (!homeLayout.isNavMenuOpen && mouseX < LEFT_BAR_LEFT_BOUND) {
-        updteGlobalContext({ ...get(globalContext), isNavMenuOpen: true  })
+    let rightBound = context.isLeftWideMenuOpen ? LEFT_BAR_RIGHT_BOUND_BIG : LEFT_BAR_RIGHT_BOUND
+
+    if (!context.isLeftNarrowBarOpen && mouseX < LEFT_BAR_LEFT_BOUND) {
+        updteGlobalContext({ ...get(globalContext), isLeftNarrowBarOpen: true  })
         return false
     }
-    else if (!hasUserToggledWithKeyLast && homeLayout.isNavMenuOpen && mouseX > LEFT_BAR_RIGHT_BOUND) { 
-        updteGlobalContext({ ...get(globalContext), isNavMenuOpen: false  })
-    }
 
-    return hasUserToggledWithKeyLast
+    // else if (!context.isLeftBarFloating && !toggledLeftBarWithKey && context.isLeftNarrowBarOpen && mouseX > rightBound) { 
+    //     updteGlobalContext({ ...get(globalContext), isLeftNarrowBarOpen: false  })
+    // }
+
+    return toggledLeftBarWithKey
 }
 
 /**
@@ -158,11 +169,11 @@ export function showWideMenuBar() {
 }
 
 export function hideRightBar() {
-    updteGlobalContext({ ...get(globalContext), isTaskMenuOpen: false  })
+    updteGlobalContext({ ...get(globalContext), isRightBarOpen: false  })
 }
 
 export function showRightBar() {
-    updteGlobalContext({ ...get(globalContext), isTaskMenuOpen: true  })
+    updteGlobalContext({ ...get(globalContext), isRightBarOpen: true  })
 }
 
 export function initFloatingEmbed(type: MediaEmbedType) {
@@ -219,5 +230,11 @@ export const isModalOpen = (modal: ModalType) => {
 export const setShortcutsFocus = (section: ShortcutSectionInFocus) => {
     globalContext.update((state: GlobalContext) => {
         return { ...state, shortcutsFocus: section }
+    })
+}
+
+export function toggleFloatSideBar() {
+    globalContext.update((state: GlobalContext) => {
+        return { ...state, isLeftBarFloating: !state.isLeftBarFloating }
     })
 }

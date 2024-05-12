@@ -4,15 +4,21 @@
  
 .routine-blocks-container {
     &--no-scroll {
-        overflow: hidden;
+        overflow: hidden !important;
     }
     &--ns-resize * {
         cursor: ns-resize !important;
     }
+    &--light .routine-blocks__block-title {
+        @include text-style(_, 600);
+    }
+    &--light .routine-blocks__block--drop-area .routine-blocks__block-time-period {
+        font-weight: 500;
+    }
 }
 
 .routine-blocks {
-    @include pos-abs-top-left-corner;
+    @include abs-top-left;
     z-index: 1;
     width: 100%;
     position: relative;
@@ -42,11 +48,11 @@
         position: absolute;
         overflow: hidden;
         cursor: pointer;
-        border-radius: 9px 9px 9px 9px;
+        border-radius: 9px;        
         height: var(--block-height);
         max-height: var(--block-height);
         background-color: rgba(var(--block-color-2), 1);
-        border: 1px solid rgba(var(--block-color-2), 0);
+        border-top: 0.5px solid var(--primaryBgColor); // prevent collision with neighbors
         transition: 0.1s transform ease-in-out;
 
         &--md &-content {
@@ -113,10 +119,10 @@
             width: 100%;
         }
         &::before {
-            @include pos-abs-top-left-corner();
+            @include abs-top-left();
         }
         &::after {
-            @include pos-abs-bottom-left-corner();
+            @include abs-bottom-left();
         }
     }
     &__block-content {
@@ -140,14 +146,14 @@
         color: rgba(var(--block-color-3), 1);
     }
     &__block-spine {
-        @include pos-abs-top-left-corner(-1px, -1px);
+        @include abs-top-left(-1px, -1px);
         height: calc(100% + 1px);
         width: 3px;
         background-color: rgb(var(--block-color-1));
     }
     &__block-handler {
         &:last-child {
-            @include pos-abs-bottom-left-corner();
+            @include abs-bottom-left();
         }
     }
 }
@@ -159,6 +165,10 @@ $hour-block-height: 50px;
     height: calc(($hour-block-height * 24));
     position: relative;
     width: 50px;
+
+    &--light &__block span {
+        @include text-style(0.45, 500);
+    }
 
     &-container {
         position: relative;
@@ -181,7 +191,7 @@ $hour-block-height: 50px;
         left: -5px;
     }
     &__block span {
-        @include text-style(0.3, 300, 0.94rem, "DM Sans");
+        @include text-style(0.3, 300, 0.96rem, "DM Sans");
         white-space: nowrap;
         display: block;
         height: 11px;
@@ -201,6 +211,10 @@ $hour-block-height: 50px;
     width: 100%;
     position: relative;
     overflow: hidden;
+
+    &--light svg path {
+        stroke: rgba(var(--textColor1), 0.185) !important;
+    }
 
     * {
         pointer-events: none;
@@ -233,7 +247,7 @@ $hour-block-height: 50px;
         position: relative;
 
         svg {
-            @include pos-abs-top-left-corner(-3px);
+            @include abs-top-left(0px, 0.5px);
         }
     }
 
@@ -256,7 +270,7 @@ $hour-block-height: 50px;
     &__content::before {
         content: " ";
         background-color: #D04149;
-        @include pos-abs-top-left-corner(50%, 0px);
+        @include abs-top-left(50%, 0px);
         height: 7px;
         width: 2.5px;
         border-radius: 4px;

@@ -1,8 +1,32 @@
 /* Reusable styling for routine views (daily / weekly) */
 .routine {
-
     &--light &__tag-breakdown .tag {
         background-color: rgba(var(--tag-color-2), 1);
+    }
+    &--light &__title {
+        @include text-style(_, 500);
+    }
+    &--light &__description {
+        @include text-style(0.85, 500);
+    }
+    &--light &__breakdown h3 {
+        @include text-style(1, 600);
+    }
+    &--light &__cores-title {
+        @include text-style(0.84, 500);
+    }
+    &--light &__cores-value {
+        @include text-style(0.4, 400);
+    }
+    &--light &__cores-col-divider {
+        @include divider(0.08, 1px);
+    }
+    &--light &__breakdown-options-btn {
+        opacity: 0.4;
+        @include text-style(0.84, 600);
+    }
+    &--light &__tag-stat {
+        @include text-style(0.54, 500);
     }
 
     &__details {
@@ -14,21 +38,14 @@
         position: relative;
     }
     &__title {
-        @include text-style(1, 400, 2rem, "DM Mono");
-        width: calc(100% - 35px);
-
-        &::placeholder {
-            opacity: 0.4;
-        }
+        padding: 0px;
+        overflow: scroll;
+        @include text-style(1, 400, _, "DM Sans");
     }
     &__description {
-        margin-top: 4px;
-        max-height: 120px;
+        overflow: scroll;
         display: inline-block;
         @include text-style(0.3, 300, 1.4rem, "DM Sans");
-    }
-    &__settings-btn {
-        
     }
 
     /* Breakdown */
@@ -47,11 +64,12 @@
             @include flex(center);
         }
         &-options-menu {
-            @include pos-abs-top-left-corner(28px, -10px);
+            @include abs-top-left(28px, -10px);
         }
         &-options-btn {
             opacity: 0.4;
-            @include text-style(_, 300, 1.2rem);
+            transition: 0s;
+            @include text-style(1, 300, 1.2rem);
 
             &:hover {
                 opacity: 1;
@@ -63,6 +81,7 @@
     }
     /* Core Breakdown */
     &__core-breakdown {
+        user-select: text;
     }
     &__cores {
         @include text-style(0.4, 400, 1.3rem);

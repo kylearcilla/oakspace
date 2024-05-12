@@ -543,7 +543,7 @@
                 opacity: 0;
                 visibility: hidden;
                 font-weight: 600;
-                @include pos-abs-bottom-right-corner(45%, 10px);
+                @include abs-bottom-right(45%, 10px);
                 @include center;
             }
             &:hover > button {
@@ -584,7 +584,7 @@
         &__input-container {
             position: relative;
             span {
-                @include pos-abs-top-left-corner(8px, 13px);
+                @include abs-top-left(8px, 13px);
                 color: rgba(var(--textColor1), 0.3);
                 font-weight: 300;
             }
@@ -606,7 +606,7 @@
             }
         }
         &__logout-btn {
-            @include pos-abs-bottom-right-corner(13px, 10px);
+            @include abs-bottom-right(13px, 10px);
         }
         &__top-row {
             @include flex(_, _); 
@@ -631,7 +631,7 @@
             }
         }
         &__logo {
-            @include pos-abs-bottom-right-corner(0px, 0px);
+            @include abs-bottom-right(0px, 0px);
             @include flex(center, _);
 
             svg {
@@ -643,7 +643,7 @@
             }
         }
         &__edit-btn {
-            @include pos-abs-bottom-right-corner(13px, 6px);
+            @include abs-bottom-right(13px, 6px);
         }
     }
     .close-account { 
@@ -652,7 +652,7 @@
         button {
             color: #BE7A7A;
             opacity: 0.6;                
-            @include pos-abs-bottom-right-corner(15px, 10px);
+            @include abs-bottom-right(15px, 10px);
             
             &:hover {
                 color: #BE7A7A;
@@ -684,7 +684,7 @@
             }
         }
         &__upgrade-btn {
-            @include pos-abs-bottom-right-corner(28px, 23px);
+            @include abs-bottom-right(28px, 23px);
         }
     }
 
@@ -701,7 +701,7 @@
             color: rgba(var(--textColor1), 0.8);
         }
         &__edit-payment-method-btn {
-            @include pos-abs-bottom-right-corner(25px, 25px);
+            @include abs-bottom-right(25px, 25px);
         }
         .payment-card {
             width: 65%;
@@ -711,7 +711,7 @@
             position: relative;
             width: 100%;
             p {
-                @include pos-abs-top-right-corner(40px, 0px);
+                @include abs-top-right(40px, 0px);
                 font-size: 1.7em;
                 font-weight: 400;
                 width: 180px;
@@ -891,7 +891,7 @@
         &__bottom-details {
             display: flex;
             width: 100%;
-            @include pos-abs-bottom-left-corner(14px, 14px);
+            @include abs-bottom-left(14px, 14px);
             
             h6 {
                 font-weight: 300;

@@ -281,7 +281,7 @@
             }
         }
         &__bottom-msg {
-            @include pos-abs-bottom-right-corner(20px, 20px);
+            @include abs-bottom-right(20px, 20px);
             color: rgba(var(--textColor1), 0.15);
             font-size: 1.3rem;
             font-weight: 300;

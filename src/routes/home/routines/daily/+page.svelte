@@ -1,85 +1,125 @@
 <script lang="ts">
-	import { COLOR_SWATCHES, TEST_TAGS, getColorTrio } from '$lib/utils-general'
 	import { onMount } from 'svelte'
-	import { DailyRoutinesManager, RoutinesManager } from '$lib/routines-manager'
-	import { themeState } from '$lib/store'
-	import { getTimeFromIdx, minsFromStartToHHMM, minsToHHMM } from '$lib/utils-date'
-	import EditRoutineModal from './EditRoutineModal.svelte'
-	import { InputManager, TextEditorManager } from '$lib/inputs';
-	import type { Writable } from 'svelte/store';
-	import SvgIcon from '../../../../components/SVGIcon.svelte';
-	import DropdownList from '../../../../components/DropdownList.svelte';
+	import type { Writable } from 'svelte/store'
+
 	import { Icon } from '$lib/enums';
-	import { ROUTINES } from '$lib/utils-routines';
-	import ColorPicker from '../../../../components/ColorPicker.svelte';
+	import { themeState } from '$lib/store'
+	import { toast } from '$lib/utils-toast'
+	import { getColorTrio } from '$lib/utils-general'
+	import { DAILY_ROUTINES, EDIT_BLOCK_OPTIONS, getBlockStyling } from '$lib/utils-routines'
+	import { InputManager, TextEditorManager } from '$lib/inputs'
+	import { DailyRoutinesManager } from '$lib/routines-manager'
+	import { getTimeFromIdx, minsFromStartToHHMM, minsToHHMM } from '$lib/utils-date'
 
-
-    export const TASK_OPTIONS: DropdownListItem[] = [
-        {
-            options: [
-                { name: "Edit Block" },
-                { name: "Change Color" },
-                { name: "Duplicate Block" }
-            ]
-        },
-        { name: "Delete Block" }
-    ]
-
-    const HOZ_DIVIDER_TOP_OFFSET = 3
+	import EditBlockModal from '../EditBlockModal.svelte'
+	import NewRoutineModal from "../NewRoutineModal.svelte"
+	import ColorPicker from '../../../../components/ColorPicker.svelte'
+	import DropdownList from '../../../../components/DropdownList.svelte'
+	import ConfirmationModal from '../../../../components/ConfirmationModal.svelte'
+	import SvgIcon from '../../../../components/SVGIcon.svelte'
 
     // export let data: PageData;
-    let manager = new DailyRoutinesManager(ROUTINES, 6)
+    const HOZ_DIVIDER_TOP_OFFSET = 3
+    const BLOCKS_CONTAINER_LEFT_OFFSET = 45
+    const BOARD_PAD_BOTTOM  = 18
+
+    // DOM
     let timeBoxElem: HTMLElement
     let blocksContainerRef: HTMLElement
-    let hozLinesContainerWidth
+    let routinesListContainerRef: HTMLElement
+    
+    let manager = new DailyRoutinesManager(DAILY_ROUTINES)
 
-    let settingsOpen = false
     let isContextMenuOpen = false
+    let hasSetPointerCapture = false
+    let routineSettingsOpen  = false
+    let routineSettingsPos   = { left: 0, top: 0 }
+
     let colorsOpen = false
     let colorsPos: OffsetPoint | null = null
+
+    // daily routines
+    let isDeleteDailyRoutineConfirmOpen = false
+    let editDailyRoutineIdx = -1
+    let openNewRoutineModal = false
 
     let _userRoutines  = manager.userRoutines!
     let _focusedDayRoutineElems = manager.focusedDayRoutineElems
     let _focusedDayRoutine = manager.focusedDayRoutine
     let _currCores = manager.currCores
-    let _newBlock = manager.newBlock
     let _tagBreakdown = manager.currTagBreakdown
     let _editingBlock = manager.editingBlock
     let _editContext = manager.editContext
     let _contextMenuPos = manager.contextMenuPos
 
-    const BLOCKS_CONTAINER_LEFT_OFFSET = 45
-
-    $: selectedTimeFrame = isViewingCore ? "Cores" : "Tags"
-
     $: userRoutines   = $_userRoutines as DailyRoutine[]
-    $: focusedDayRoutineElems  = $_focusedDayRoutineElems ?? []
+    $: focusedDayRoutineElems = $_focusedDayRoutineElems ?? []
     $: focusedDayRoutine = $_focusedDayRoutine as DailyRoutine | null
-    $: currCores      = $_currCores
-    $: editingBlock   = $_editingBlock
-    $: editContext    = $_editContext
-    $: tagBreakdown   = $_tagBreakdown ?? []
-    $: newBlock       = $_newBlock
-    $: isDarkTheme    = $themeState.isDarkTheme
-    $: focusedId      = focusedDayRoutine?.id ?? "0"
+    $: currCores     = $_currCores
+    $: editingBlock  = $_editingBlock
+    $: editContext   = $_editContext
+    $: tagBreakdown  = $_tagBreakdown ?? []
+    $: isLightTheme  = !$themeState.isDarkTheme
+    $: focusedId     = focusedDayRoutine?.id ?? "0"
 
     $: contextMenuPos = $_contextMenuPos
-    $: disableScroll = colorsOpen || isContextMenuOpen
+    $: disableScroll  = colorsOpen || isContextMenuOpen
 
     $: initTextEditors(focusedDayRoutine)
-
-    let chosenId      = "0"
-    let isViewingCore = true
-    let timeBoxElemWidth = 0
-    let flag = false
 
     let titleInput: Writable<InputManager>
     let description: Writable<InputManager>
 
+    /* Routine Item Edits */
+    function onRoutineItemContextMenu(e: Event, routineIdx: number) {
+        const pe = e as PointerEvent
+        pe.preventDefault()
+
+        const container = routinesListContainerRef
+
+        const rect = container.getBoundingClientRect()
+        const top  = pe.clientY - rect.top
+        let left = pe.clientX - rect.left
+        
+        editDailyRoutineIdx    = routineIdx
+        routineSettingsOpen = true
+        routineSettingsPos  = { top, left }
+    }
+    function onRoutineItemOptnClicked(itemIdx: number, optIdx: number) {
+        if (optIdx === 0) {
+            editDailyRoutineIdx = -1
+            onRoutineItemClicked(itemIdx)
+        }
+        else {
+            isDeleteDailyRoutineConfirmOpen = true
+        }
+        routineSettingsOpen = false
+    }
+    function onFinishNewDailyRoutineEdit(newRoutine: DailyRoutine | null) {
+        openNewRoutineModal = false
+
+        if (!newRoutine) return
+
+        manager.newDailyRoutine(newRoutine)
+    }
+    function onRoutineItemClicked(routineIdx: number) {
+        if (userRoutines[routineIdx].id === focusedId)  return
+        
+        manager.initFocusRoutine(userRoutines[routineIdx])
+    }
+    function removeDailyRoutine(idx: number) {
+        manager.removeDailyRoutine(userRoutines[idx].id)
+        toast("success", { message: "Weekly routine deleted." })
+
+        isDeleteDailyRoutineConfirmOpen = false
+        editDailyRoutineIdx = -1
+    }
+
+    /* Text Editors */
     function initTextEditors(focusedDayRoutine: DailyRoutine | null) {
         if (!focusedDayRoutine) return 
 
-        titleInput = (new InputManager({ 
+        titleInput = (new TextEditorManager({ 
             initValue: focusedDayRoutine.name,
             placeholder: "Routine Title",
             maxLength: 100,
@@ -100,20 +140,19 @@
             }
         })).state
     }
-
-    function onPointerMove(e: PointerEvent) {
-        if (!flag) {
-            flag = true
-            const target = e.target as HTMLElement
-            target.setPointerCapture(e.pointerId)
-        }
-    }
-
+    
     /* Editing Blocks */
     function onBlockContextMenu(e: MouseEvent, id: string) {
         e.preventDefault()
         manager.onBlockContextMenu(id)
         isContextMenuOpen = true
+    }
+    function onBlockPointerDown(e: PointerEvent) {
+        if (hasSetPointerCapture) return
+
+        hasSetPointerCapture = true
+        const target = e.target as HTMLElement
+        target.setPointerCapture(e.pointerId)
     }
     function onContextMenuOptClicked(e: Event, idx: number) {
         if (idx === 0) {
@@ -138,97 +177,93 @@
         const isEditModalOpen = editContext === "details"
         manager.closeContextMenu(isEditModalOpen || colorsOpen)
     }
-
-    function getBlockStyling(height: number) {
-        const classes: string[] = []
-
-        if (height < 12) {
-            classes.push("routine-blocks__block--xsm")
-        }
-        if (height < 20) {
-            classes.push("routine-blocks__block--sm")
-        }
-        if (height < 34) {
-            classes.push("routine-blocks__block--md")
-        }
-        return classes.join(" ")
-    }
     
     onMount(() =>{
         requestAnimationFrame(() => {
             manager.initContainer(timeBoxElem, blocksContainerRef)
-            manager.initFocusRoutine(ROUTINES[0].id)
+            manager.initFocusRoutine(userRoutines[0])
         })
     })
 </script>
 
 <div 
     class="routines"
-    class:routines--light={!isDarkTheme}
-    class:routines--dark={isDarkTheme}
+    class:routines--light={isLightTheme}
+    class:routines--dark={!isLightTheme}
 >
     <!-- Routines List -->
-    <div class="routines__collection">
+    <div class="routines__collection" bind:this={routinesListContainerRef}>
         <ul>
-            {#each userRoutines as routine}
+            <button 
+                class="routines__add-new-routine"
+                on:click={() => openNewRoutineModal = true}
+            >
+                <span>New Routine</span>
+                <SvgIcon 
+                    icon={Icon.Add}
+                    options={{ scale: 0.89, strokeWidth: 2 }}
+                />
+            </button>
+            {#each userRoutines as routine, routineIdx}
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <li 
                     class="routines__routine-item" 
-                    class:routines__routine-item--chosen={routine.id === chosenId}
                     class:routines__routine-item--clicked={routine.id === focusedId}
-                    on:click={() => manager.initFocusRoutine(routine.id)}
+                    on:click={() => onRoutineItemClicked(routineIdx)}
+                    on:contextmenu={(e) => onRoutineItemContextMenu(e, routineIdx)}
                 >
                     <span>
                         {routine.name}
                     </span>
-                    <div class="routines__routine-item-check">
-                        <i class="fa-solid fa-check"></i>
-                    </div>
                 </li>
             {/each}
         </ul>
+        <DropdownList
+            id={"wk-routines"}
+            isHidden={!routineSettingsOpen}
+            options={{
+                listItems: [
+                    { options: [{ name: "View Routine" }] },
+                    { name: "Delete Routine" }
+                ],
+                onListItemClicked: (e, optIdx) => {
+                    onRoutineItemOptnClicked(editDailyRoutineIdx, optIdx)
+                },
+                onClickOutside: () => {
+                    routineSettingsOpen = false
+                },
+                styling: { 
+                    width: "140px", zIndex: 2001 
+                },
+                position: {
+                    top: routineSettingsPos.top + "px",
+                    left: routineSettingsPos.left + "px"
+                }
+            }}
+        />
     </div>
     <div class="routines__divider routines__divider--first"></div>
     <!-- Picked Routine Details -->
     <div 
         class="routine"
-        class:routine--dark={isDarkTheme}
+        class:routine--light={isLightTheme}
     >
         <div class="routine__details">
             {#if $titleInput}
                 <div class="routine__details-header">
-                    <input 
-                        type="text"
-                        name="routine-title-input" 
-                        id="routine-title-input"
-                        class="routine__title"
+                    <div 
+                        class="routine__title text-editor"
                         aria-label="Title"
-                        spellcheck="false"
-                        value={$titleInput.value}
-                        placeholder={$titleInput.placeholder}
-                        maxlength={$titleInput.maxLength}
-                        on:blur={(e) => $titleInput.onBlurHandler(e)}
+                        data-unstyled
+                        contenteditable
+                        data-placeholder={$titleInput.placeholder}
+                        bind:innerHTML={$titleInput.value}
+                        on:paste={(e) => $titleInput.onPaste(e)}
                         on:input={(e) => $titleInput.onInputHandler(e)}
+                        on:focus={(e) => $titleInput.onFocusHandler(e)}
+                        on:blur={(e)  => $titleInput.onBlurHandler(e)}
                     >
-                    <button 
-                        class="routine__settings-btn dropdown-btn dropdown-btn--settings"
-                        id={"routine-settings--dropdown-btn"}
-                        on:click={() => settingsOpen = !settingsOpen}
-                    >
-                        <SvgIcon icon={Icon.Settings} options={{ opacity: 0.4}}/>
-                    </button>
-                    <!-- Settings Dropdown -->
-                    <DropdownList 
-                        id={"edit-routine-settings"}
-                        isHidden={!settingsOpen} 
-                        options={{
-                            listItems: [{ name: "Duplicate Routine" }, { name: "Delete Routine" }],
-                            onListItemClicked: (e, idx) => console.log("FUCK"),
-                            position: { top: "30px", right: "0px" },
-                            styling: { width: "140px" },
-                            onClickOutside: () => settingsOpen = false
-                        }}
-                    />
+                    </div>
                 </div>
                 <div 
                     class="routine__description text-editor"
@@ -302,10 +337,11 @@
             <div class="routine__tag-breakdown">
                 <h3>Tag Breakdown</h3>
                 {#each tagBreakdown as tagData}
-                    {@const colorTrio = getColorTrio(tagData.tag.symbol.color, !isDarkTheme)}
+                    {@const colorTrio = getColorTrio(tagData.tag.symbol.color, isLightTheme)}
                     <div class="routine__tag-row">
                         <div 
                             class="tag"
+                            class:tag--light={isLightTheme}
                             style:--tag-color-primary={tagData.tag.symbol.color.primary}
                             style:--tag-color-1={colorTrio[0]}
                             style:--tag-color-2={colorTrio[1]}
@@ -330,34 +366,36 @@
     <!-- Picked Routine Time Blocks -->
     <div 
         class="routine-blocks-container" 
+        class:routine-blocks-container--light={isLightTheme}
         class:routine-blocks-container--no-scroll={disableScroll}
         class:routine-blocks-container--ns-resize={editContext?.includes("stretch")}
         bind:this={timeBoxElem}
-        bind:clientWidth={timeBoxElemWidth}
-        on:pointermove={manager.timeBoxMouseMove}
+        on:pointermove={manager.onBlocksContainerPointerMove}
     >
         <!-- Time Box Content -->
-        <div class="routines__blocks-wrapper">
+        <div 
+            bind:this={blocksContainerRef}
+            class="routines__blocks-wrapper"
+            style:--board-pad-bottom={`${BOARD_PAD_BOTTOM}px`}
+        >
             <div 
+                on:pointerdown={(e) => manager.onTimeBoxMouseDown(e)}
+                on:contextmenu={(e) => {
+                    if (editContext === "lift") e.preventDefault()
+                }}
                 id={manager.ROUTINE_BLOCKS_CONTAINER_ID}
                 class="routine-blocks"
                 class:routine-blocks--editing={editContext}
                 class:routine-blocks--light={false}
                 style:--left-offset={`${BLOCKS_CONTAINER_LEFT_OFFSET}px`}
-                bind:this={blocksContainerRef}
-                on:pointerdown={(e) => manager.onTimeBoxMouseDown(e)}
-                on:contextmenu={(e) => {
-                    if (editContext === "lift") e.preventDefault()
-                }}
             >
                 {#each focusedDayRoutineElems as block (block.id)}
-                    {@const colorTrio = getColorTrio(block.color, !isDarkTheme)}
-                    {@const isEditBlock = editingBlock?.id === block.id && (["old-stretch", "lift"].includes(editContext ?? ""))}
+                    {@const colorTrio    = getColorTrio(block.color, isLightTheme)}
+                    {@const isEditBlock  = editingBlock?.id === block.id && (["old-stretch", "lift"].includes(editContext ?? ""))}
                     {@const startTimeStr = minsFromStartToHHMM(block.startTime)}
-                    {@const endTimeStr = minsFromStartToHHMM(block.endTime)}
+                    {@const endTimeStr   = minsFromStartToHHMM(block.endTime)}
 
                     <!-- Routine Block -->
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div 
                         id={`daily-routine-block--${block.id}`}
                         class={`routine-blocks__block ${getBlockStyling(block.height)}`}
@@ -390,7 +428,7 @@
                 <!-- Floating Block or New Block  -->
                 {#if editingBlock}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    {@const colorTrio = getColorTrio(editingBlock.color, !isDarkTheme)}
+                    {@const colorTrio = getColorTrio(editingBlock.color, isLightTheme)}
                     {@const startTimeStr = minsFromStartToHHMM(editingBlock.startTime)}
                     {@const endTimeStr = minsFromStartToHHMM(editingBlock.endTime)}
                     {@const isLift = editContext === "lift"}
@@ -408,7 +446,7 @@
                         style:--block-color-3={colorTrio[2]}
                         style:z-index={2000}
                         id="edit-block"
-                        on:pointerdown={onPointerMove}
+                        on:pointerdown={onBlockPointerDown}
                     >
                         <div class="routine-blocks__block-content">
                             <div class="flx flx--algn-center">
@@ -427,12 +465,12 @@
                 {/if}
 
                 <!-- Drop Area Block -->
-                {#if editingBlock && editingBlock.dropAreaOffset && editContext === "lift"}
+                {#if editingBlock && editingBlock.dropArea && editContext === "lift"}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    {@const colorTrio = getColorTrio(editingBlock.color, !isDarkTheme)}
+                    {@const colorTrio = getColorTrio(editingBlock.color, isLightTheme)}
                     {@const startTimeStr = minsFromStartToHHMM(editingBlock.startTime)}
                     {@const endTimeStr = minsFromStartToHHMM(editingBlock.endTime)}
-                    {@const { left, top } = editingBlock.dropAreaOffset}
+                    {@const { top } = editingBlock.dropArea}
 
                     <div 
                         class={`routine-blocks__block ${getBlockStyling(editingBlock.height)}`}
@@ -463,21 +501,23 @@
             </div>
             
            <!-- Hour Blocks -->
-            <div 
-                class="hour-blocks-container"
-                class:scroll-bar-hidden={true}
-            >
-                <div class="hour-blocks">
+            <div class="hour-blocks-container" class:scroll-bar-hidden={true}>
+                <div 
+                    class="hour-blocks"
+                    class:hour-blocks--light={isLightTheme}
+                >
                     {#each Array.from({ length: 24 }, (_, i) => i) as timeIdx}
                         {@const headOffsetPerc = ((timeIdx * 60) / 1440) * 100}
-                        {@const height = (60 / 1440) * 100}
+                        {@const height         = (60 / 1440) * 100}
                         <div 
                             class="hour-blocks__block"
                             class:hidden={timeIdx === 0}
-                            style:top={`calc(${headOffsetPerc}% + ${HOZ_DIVIDER_TOP_OFFSET}px)`}
                             style:height={`${height}%`}
+                            style:top={`calc(${headOffsetPerc}% + ${HOZ_DIVIDER_TOP_OFFSET}px)`}
                         >
-                            <span>{getTimeFromIdx(timeIdx).toLowerCase()}</span>
+                            <span>
+                                {getTimeFromIdx(timeIdx).toLowerCase()}
+                            </span>
                             <div class="hour-blocks__block-vert-divider">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="2" height="27" viewBox="0 0 0 0" fill="none">
                                     <path d="M1.25684 0.614746V 28" stroke-width="1" stroke-dasharray="2 2"/>
@@ -488,7 +528,10 @@
                 </div>
             </div>
             <!-- Grid -->
-            <div class="wk-grid">
+            <div 
+                class="wk-grid"
+                class:wk-grid--light={isLightTheme}
+            >
                 <div class="wk-grid__hoz-lines">
                     {#if timeBoxElem}
                         {@const width = blocksContainerRef.clientWidth}
@@ -502,7 +545,7 @@
                                 style:height={`${height}%`}
                             >
                                 <div class="wk-grid__hoz-line-content">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width={width} height="2" viewBox={`0 0 ${width} 2`} fill="none">
+                                    <svg xmlns="http://www.w3.org/2000/svg" {width} height="2" viewBox={`0 0 ${width} 2`} fill="none">
                                         <path d={`M0 1H ${width}`} stroke-width="0.7" stroke-dasharray="3 3"/>
                                     </svg>
                                 </div>
@@ -512,19 +555,19 @@
                 </div>
                 <div class="wk-grid__vert-lines">
                     {#if timeBoxElem}
-                    {@const height = blocksContainerRef.clientHeight}
-                        <div 
-                            class="wk-grid__vert-line"
-                            style:top="0px"
-                            style:left="0px"
-                            style:height={`${height}px`}
-                        >
-                            <div class="wk-grid__vert-line-content">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="2" height={height} viewBox="0" fill="none">
-                                    <path d={`M1 ${height}L1 1`} stroke-width="0.7" stroke-dasharray="3 3"/>
-                                </svg>
+                        {@const height = blocksContainerRef.clientHeight}
+                            <div 
+                                class="wk-grid__vert-line"
+                                style:top="0px"
+                                style:left="0px"
+                                style:height={`${height}px`}
+                            >
+                                <div class="wk-grid__vert-line-content">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="2" {height} viewBox="0" fill="none">
+                                        <path d={`M1 ${height}L1 1`} stroke-width="0.7" stroke-dasharray="3 3"/>
+                                    </svg>
+                                </div>
                             </div>
-                        </div>
                     {/if}
                 </div>
             </div>
@@ -535,10 +578,12 @@
             isHidden={!isContextMenuOpen}
             options={{
                 styling: { width: "140px" },
-                listItems: TASK_OPTIONS,
+                listItems: EDIT_BLOCK_OPTIONS,
                 onListItemClicked: onContextMenuOptClicked,
-                onClickOutside:() => isContextMenuOpen = false,
-                onDismount:    () => onContextMenuDismount(),
+                onDismount: onContextMenuDismount,
+                onClickOutside:() => {
+                    isContextMenuOpen = false
+                },
                 position: { 
                     top: contextMenuPos.top + "px", 
                     left: contextMenuPos.left + "px" 
@@ -546,33 +591,53 @@
             }}
         />
         <!-- Color Picker -->
-        <div 
-            class="routines__color-picker"
-            class:hidden={!colorsOpen}
-            style:top={`${colorsPos?.top}px`}
-            style:left={`${colorsPos?.left}px`}
-        >
-            <ColorPicker 
-                isActive={colorsOpen}
-                chosenColor={editingBlock?.color}
-                onChoose={(color) => {
-                    colorsOpen = false
-                    manager.changeEditBlockColor(color)
-                    manager.resetEditState()
-                }}
-                onClickOutside={() => {
-                    manager.changeEditBlockColor(null)
-                    manager.resetEditState()
-                    colorsOpen = false
-                }}
-            />
-        </div>
+        <ColorPicker 
+            isActive={colorsOpen}
+            position={{ 
+                top: `${colorsPos?.top}px`, left: `${colorsPos?.left}px` 
+            }}
+            chosenColor={editingBlock?.color}
+            onChoose={(color) => {
+                colorsOpen = false
+                manager.changeEditBlockColor(color)
+                manager.resetEditState()
+            }}
+            onClickOutside={() => {
+                manager.changeEditBlockColor(null)
+                manager.resetEditState()
+                colorsOpen = false
+            }}
+        />
     </div>
 </div>
 
 {#if editContext === "details" && editingBlock}
-    <EditRoutineModal block={editingBlock} routineManager={manager} />
+    <EditBlockModal block={editingBlock} routineManager={manager} />
 {/if}
+
+{#if isDeleteDailyRoutineConfirmOpen} 
+    <ConfirmationModal 
+        text="Are you sure you want to proceed with deleting this weekly routine?"
+        onCancel={() => { 
+            isDeleteDailyRoutineConfirmOpen = false
+            editDailyRoutineIdx = -1
+        }}
+        onOk={() => removeDailyRoutine(editDailyRoutineIdx)}
+        options={{ ok: "Delete", caption: "Heads Up!", type: "delete" }}
+    /> 
+{/if}
+
+{#if openNewRoutineModal}
+    <NewRoutineModal 
+        onFinishEdit={onFinishNewDailyRoutineEdit}
+        isForWeek={false}
+        bounds={{ 
+            titleMax: 200, descrMax: 300
+        }}
+    />
+{/if}
+
+
 
 <style lang="scss">
     @import "../../../../scss/day-box.scss";
@@ -591,10 +656,21 @@
     .routines {
         display: flex;
         width: 100%;
-        height: calc(100% - 72px);
+        height: calc(100% - 58px);
 
-        &--light {
-
+        &--light &__divider {
+            @include divider(0.064, _, 1px);
+        }
+        &--light &__routine-item span {
+            @include text-style(1, 500);
+        }
+        &--light &__add-new-routine {
+            @include text-style(_, 500);
+            opacity: 0.4;
+            
+            &:hover {
+                opacity: 0.85;
+            }
         }
         &--dark .dropdown-menu {
             @include dropdown-menu-dark;
@@ -606,6 +682,7 @@
         &__collection {
             padding-top: 16px;
             width: clamp(170px, 20%, 195px);
+            position: relative;
 
             h3 {
                 @include text-style(1, 400, 1.7rem);
@@ -621,12 +698,10 @@
             border-radius: 8px;
             transition: 0.03s ease-in-out;
             opacity: 0.8;
+            cursor: pointer;
             @include flex(center, space-between);
             @include elipses-overflow;
 
-            &--chosen &-check {
-                @include visible;
-            }
             &--clicked {
                 opacity: 1;
                 @include txt-color(0.03, "bg");
@@ -640,38 +715,44 @@
             }
             &:hover {
                 opacity: 1;
-                @include txt-color(0.03, "bg");
+                @include txt-color(0.02, "bg");
             }
             &:hover span {
-                opacity: 0.9;
+                opacity: 0.7;
             }
-
             span {
-                @include text-style(_, 300, 1.28rem, "DM Mono");
+                @include text-style(1, 300, 1.28rem, "DM Sans");
                 opacity: 0.4;
             }
         }
-        &__routine-item-check {
-            @include text-style(0.6, 300, 1.3rem);
-            @include not-visible;
+        &__add-new-routine {
+            @include text-style(1, 300, 1.28rem, "DM Sans");
+            @include flex(center);
+            // @include txt-color(0.4, "bg");
+            margin-bottom: 14px;
+            opacity: 0.2;
+            
+            &:hover {
+                opacity: 0.5;
+            }
+            span {
+                margin-right: 7px;
+            }
         }
         &__divider {
             @include divider(0.04, calc(100% - 20px), 0.5px);
-            margin: 0px min(27px, 4%) 0px min(32px, 4%);
+            margin: 0px min(27px, 4%) 0px min(25px, 4%);
 
             &--first {
                 margin-left: min(20px, 4%);
             }
-        }
-        &__color-picker {
-            position: absolute;
-            z-index: 4000;
         }
         &__blocks-wrapper {
             width: 100%;
             display: flex;
             height: calc(($hour-block-height * 24));
             padding-right: 20px;
+            padding-bottom: var(--board-pad-bottom);
         }
         .routine {
             width: clamp(270px, 30%, 320px);
@@ -683,25 +764,71 @@
     .routine {
         padding-top: 16px;
 
+        &--light &__description {
+            @include text-style(0.55);
+        }
+        &--light &__cores-title {
+            opacity: 1;
+            @include text-style(0.8, 500);
+        }
+        &--light &__cores-value {
+            @include text-style(0.54, 500);
+        }
+        &--light &__core-breakdown, &--light &__tag-breakdown  {
+            border: 1px solid rgba(var(--textColor1), 0.03);
+            @include txt-color(0.02, "bg");
+            margin-bottom: 10px;
+        }
+
+        &__title {
+            font-size: 2.2rem;
+            max-height: 70px;
+        }
+        &__description {
+            margin-top: 1px;
+            max-height: 190px;
+        }
+        &__details {
+            margin-bottom: 10px;
+        }
         &__breakdown h3 {
-            @include text-style(0.8, 400, 1.32rem);
-            margin-bottom: 11px;
+            @include text-style(0.72, 400, 1.32rem);
+            margin-bottom: 12px;
+        }
+        &__core-breakdown, &__tag-breakdown {
+            padding: 12px 20px 8px 17px;
+            border-radius: 14px;
+            border: 1px solid rgba(var(--textColor1), 0.02);
+            @include txt-color(0.013, "bg");
+        }
+        &__core-breakdown {
+            margin: 0px 0px 12px -6px;
+        }
+        &__cores-title {
+            opacity: 0.7;
+        }
+        &__tag-breakdown {
+            margin: 0px 0px 0px -6px;
         }
         &__tag-breakdown h3 {
-            margin-bottom: 14px;
+            margin-bottom: 15px;
         }
+    }
+
+    .wk-grid {
+        height: calc(($hour-block-height * 24));
     }
     
     .routine-blocks-container {
         flex: 1;
         position: relative;
-        height: calc(100% - 10px);
+        height: 100%;
         overflow-y: scroll;
         overflow-x: hidden;
         padding-bottom: 20px;
     }
     .routine-blocks {
-        @include pos-abs-top-left-corner(-2px, var(--left-offset));
+        @include abs-top-left(-2px, var(--left-offset));
         width: calc(100% - var(--left-offset));
         height: calc(($hour-block-height * 24));
         

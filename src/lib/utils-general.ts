@@ -27,8 +27,8 @@ export const clickOutside = (node: any) => {
         const srcId    = nodeId.split("--")
         const targetId = dropdownBtnClicked.id.split("--")
 
-        const srcOrigin    = srcId[srcId.length - 1]
-        const targetOrigin = targetId[targetId.length - 1]
+        const srcOrigin    = srcId[0]
+        const targetOrigin = targetId[0]
 
         isOwnDropdownBtn = srcOrigin === targetOrigin
     }
@@ -53,7 +53,7 @@ export const clickOutside = (node: any) => {
 /**
  * Find an element's ancestor by name
  * @param child 
- * @param queryStr 
+ * @param options QueryOptions for finding ancestor element. 
  * @returns  Ancestor
  */
 export const findAncestor = (options: AncestoryQueryOptions): HTMLElement | null => {
@@ -147,6 +147,14 @@ export const getElemById = (id: string): HTMLElement | null => {
  */
 export const getElemsByClass = (className: string): Element[] | null => {
     return [...document.getElementsByClassName(className)]
+}
+
+/**
+ * Get HTML elements that share the same className
+ * @param className  Elements' class name
+ */
+export const getElemByClass = (className: string): Element | null => {
+    return document.querySelector("." + className)
 }
 
 /**
@@ -387,7 +395,7 @@ export function getElemTrueWidth(element: HTMLElement): number {
 
 
 type GradientStyleOptions = {
-  isVertical: boolean
+  isVertical?: boolean
   head?: {
     start?: string
     end?: string
@@ -464,7 +472,10 @@ export function getMaskedGradientStyle(element: HTMLElement, options?: GradientS
 
   let gradient = ""
 
-  if (!hasReachedEnd && !hasReachedStart) {
+  if (hasReachedEnd && hasReachedStart) {
+      gradient = ""
+  } 
+  else if (!hasReachedEnd && !hasReachedStart) {
       gradient = `linear-gradient(${angle}, transparent ${head.start}, #000 ${head.end}, #000 ${tail.start}, transparent ${tail.end})`
   } 
   else if (!hasReachedStart) {
@@ -477,7 +488,7 @@ export function getMaskedGradientStyle(element: HTMLElement, options?: GradientS
   const styling = `mask-image: ${gradient}; -webkit-mask-image: ${gradient}`
 
 
-    return options?.isVertical ? { styling, scrollStatus } as VertScrollMaskedGradient : { styling, scrollStatus } as HozScrollMaskedGradient
+  return options?.isVertical ? { styling, scrollStatus } as VertScrollMaskedGradient : { styling, scrollStatus } as HozScrollMaskedGradient
 }
 
 /* Colors */
@@ -491,7 +502,7 @@ export const COLOR_SWATCHES = {
       light2: "247, 167, 181",
       light3: "149, 102, 108",
       dark1:  "236, 174, 189",
-      dark2:  "26, 16, 17",
+      dark2:  "32, 20, 21",
       dark3:  "103, 78, 81",
       isLight: false,
       isDark: false,
@@ -503,7 +514,7 @@ export const COLOR_SWATCHES = {
       light2: "250, 207, 183",
       light3: "191, 145, 121",
       dark1:  "254, 213, 191",
-      dark2:  "20, 17, 15",
+      dark2:  "28, 24, 23",
       dark3:  "138, 117, 105",
       isLight: false,
       isDark: false,
@@ -515,7 +526,7 @@ export const COLOR_SWATCHES = {
       light2: "254, 244, 191",
       light3: "191, 167, 121",
       dark1:  "254, 244, 191",
-      dark2:  "21, 20, 18",
+      dark2:  "33, 32, 28",
       dark3:  "125, 119, 95",
       isLight: true,
       isDark: false
@@ -527,7 +538,7 @@ export const COLOR_SWATCHES = {
       light2: "238, 254, 191",
       light3: "137, 180, 134",
       dark1:  "220, 251, 195",
-      dark2:  "20, 21, 19",
+      dark2:  "25, 27, 24",
       dark3:  "96, 115, 94",
       isLight: true,
       isDark: true,
@@ -539,7 +550,7 @@ export const COLOR_SWATCHES = {
       light2: "211, 233, 232",
       light3: "129, 169, 160",
       dark1:  "211, 233, 232",
-      dark2:  "16, 19, 18",
+      dark2:  "24, 29, 27",
       dark3:  "90, 108, 103",
       isLight: true,
       isDark: false,
@@ -547,23 +558,23 @@ export const COLOR_SWATCHES = {
     {
       id: "d0-5",
       primary: "211, 214, 233",
-      light1: "211, 214, 233",
+      light1: "95, 99, 125",
       light2: "211, 214, 233",
       light3: "147, 152, 183",
       dark1:  "195, 215, 255",
-      dark2:  "21, 22, 23",
+      dark2:  "29, 29, 31",
       dark3:  "87, 95, 113",
       isLight: true,
       isDark: false,
     },
     {
       id: "d0-6",
-      primary: "226, 211, 233",
+      primary: "227, 196, 217",
       light1: "115, 95, 125",
       light2: "226, 211, 233",
       light3: "156, 140, 165",
       dark1:  "234, 213, 255",
-      dark2:  "22, 22, 22",
+      dark2:  "33, 32, 34",
       dark3:  "100, 87, 116",
       isLight: true,
       isDark: false,
@@ -571,15 +582,15 @@ export const COLOR_SWATCHES = {
     /* Second Row */
     {
       id: "d1-0",
-      primary: "255, 124, 124",
-      light1: "111, 76, 44",
-      light2: "255, 190, 131",
-      light3: "161, 121, 84",
-      dark1:  "246, 171, 155",
-      dark2:  "22, 17, 17",
-      dark3:  "146, 78, 78",
+      primary: "243, 144, 174",
+      light1: "83, 58, 58",
+      light2: "191, 145, 145",
+      light3: "133, 97, 97",
+      dark1:  "243, 144, 192",
+      dark2:  "31, 20, 25",
+      dark3:  "109, 75, 98",
       isLight: false,
-      isDark: true,
+      isDark: false,
     },
     {
       id: "d1-1",
@@ -588,7 +599,7 @@ export const COLOR_SWATCHES = {
       light2: "255, 206, 160",
       light3: "175, 142, 111",
       dark1:  "255, 215, 167",
-      dark2:  "19, 15, 11",
+      dark2:  "32, 26, 19",
       dark3:  "155, 135, 111",
       isLight: false,
       isDark: false,
@@ -612,7 +623,7 @@ export const COLOR_SWATCHES = {
       light2: "208, 249, 139",
       light3: "129, 153, 87",
       dark1:  "222, 248, 149",
-      dark2:  "14, 18, 12",
+      dark2:  "22, 27, 19",
       dark3:  "129, 141, 94",
       isLight: false,
       isDark: false,
@@ -624,7 +635,7 @@ export const COLOR_SWATCHES = {
       light2: "189, 231, 255",
       light3: "120, 153, 175",
       dark1:  "166, 217, 220",
-      dark2:  "13, 17, 19",
+      dark2:  "20, 26, 29",
       dark3:  "82, 111, 113",
       isLight: false,
       isDark: false,
@@ -636,33 +647,33 @@ export const COLOR_SWATCHES = {
       light2: "185, 199, 249",
       light3: "137, 149, 189",
       dark1:  "163, 177, 221",
-      dark2:  "17, 18, 20",
+      dark2:  "24, 25, 28",
       dark3:  "100, 107, 129",
       isLight: false,
       isDark: false,
     },
     {
       id: "d1-6",
-      primary: "157, 138, 211",
+      primary: "221, 183, 224",
       light1: "93, 85, 147",
       light2: "206, 198, 255",
       light3: "139, 132, 182",
-      dark1:  "190, 173, 237",
-      dark2:  "20, 18, 22",
-      dark3:  "102, 96, 120",
+      dark1:  "216, 163, 221",
+      dark2:  "29, 24, 31",
+      dark3:  "122, 92, 124",
       isLight: false,
       isDark: false,
     },
     /* Third Row */
     {
       id: "d2-0",
-      primary: "236, 100, 81",
-      light1: "137, 80, 68",
-      light2: "254, 162, 139",
-      light3: "182, 110, 94",
-      dark1:  "255, 146, 122",
-      dark2:  "23, 15, 14",
-      dark3:  "138, 93, 83",
+      primary: "255, 124, 124",
+      light1: "111, 76, 44",
+      light2: "255, 190, 131",
+      light3: "161, 121, 84",
+      dark1:  "246, 171, 155",
+      dark2:  "40, 28, 27",
+      dark3:  "125, 86, 77",
       isLight: false,
       isDark: true,
     },
@@ -673,7 +684,7 @@ export const COLOR_SWATCHES = {
       light2: "255, 190, 131",
       light3: "161, 121, 84",
       dark1:  "251, 195, 110",
-      dark2:  "23, 16, 10",
+      dark2:  "34, 23, 13",
       dark3:  "137, 116, 85",
       isLight: false,
       isDark: true,
@@ -685,7 +696,7 @@ export const COLOR_SWATCHES = {
       light2: "238, 255, 134",
       light3: "155, 158, 86",
       dark1:  "243, 248, 89",
-      dark2:  "22, 21, 15",
+      dark2:  "34, 33, 24",
       dark3:  "95, 100, 60",
       isLight: false,
       isDark: false,
@@ -697,7 +708,7 @@ export const COLOR_SWATCHES = {
       light2: "212, 251, 187",
       light3: "116, 171, 112",
       dark1:  "193, 240, 182",
-      dark2:  "17, 22, 17",
+      dark2:  "22, 29, 22",
       dark3:  "96, 115, 94",
       isLight: false,
       isDark: false,
@@ -709,7 +720,7 @@ export const COLOR_SWATCHES = {
       light2: "184, 225, 222",
       light3: "109, 137, 129",
       dark1:  "171, 206, 195",
-      dark2:  "17, 25, 25",
+      dark2:  "22, 33, 33",
       dark3:  "81, 99, 93",
       isLight: true,
       isDark: false,
@@ -721,35 +732,35 @@ export const COLOR_SWATCHES = {
       light2: "174, 202, 255",
       light3: "111, 134, 178",
       dark1:  "160, 174, 255",
-      dark2:  "15, 18, 26",
+      dark2:  "20, 25, 37",
       dark3:  "110, 120, 145",
       isLight: false,
       isDark: false,
     },
     {
-      id: "d2-6",
-      primary: "244, 192, 253",
-      light1: "115, 72, 123",
-      light2: "240, 199, 247",
-      light3: "175, 125, 184",
-      dark1:  "216, 163, 221",
-      dark2:  "21, 18, 22",
-      dark3:  "151, 125, 153",
+      id: "d3-6",
+      primary: "240, 152, 236",
+      light1: "109, 69, 107",
+      light2: "232, 163, 229",
+      light3:  "150, 102, 147",
+      dark1:  "240, 152, 236",
+      dark2:  "32, 19, 30",
+      dark3:  "154, 112, 152",
       isLight: false,
       isDark: false,
     },
     /* Fourth Row */
     {
       id: "d3-0",
-      primary: "243, 144, 174",
-      light1: "83, 58, 58",
-      light2: "191, 145, 145",
-      light3: "133, 97, 97",
-      dark1:  "243, 144, 192",
-      dark2:  "25, 16, 20",
-      dark3:  "109, 75, 98",
+      primary: "236, 100, 81",
+      light1: "137, 80, 68",
+      light2: "254, 162, 139",
+      light3: "182, 110, 94",
+      dark1:  "255, 146, 122",
+      dark2:  "35, 23, 21",
+      dark3:  "138, 93, 83",
       isLight: false,
-      isDark: false,
+      isDark: true,
     },
     {
       id: "d3-1",
@@ -758,7 +769,7 @@ export const COLOR_SWATCHES = {
       light2: "255, 168, 119",
       light3: "160, 116, 75",
       dark1:  "243, 150, 99",
-      dark2:  "26, 18, 14",
+      dark2:  "34, 23, 17",
       dark3:  "113, 78, 59",
       isLight: false,
       isDark: false,
@@ -770,7 +781,7 @@ export const COLOR_SWATCHES = {
       light2: "239, 220, 155",
       light3: "164, 152, 88",
       dark1:  "245, 225, 121",
-      dark2:  "20, 19, 12",
+      dark2:  "28, 27, 16",
       dark3:  "98, 93, 64",
       isLight: false,
       isDark: false,
@@ -782,7 +793,7 @@ export const COLOR_SWATCHES = {
       light2: "186, 234, 191",
       light3: "119, 149, 119",
       dark1:  "193, 220, 166",
-      dark2:  "12, 22, 14",
+      dark2:  "15, 28, 18",
       dark3:  "92, 113, 85",
       isLight: false,
       isDark: false,
@@ -794,7 +805,7 @@ export const COLOR_SWATCHES = {
       light2: "198, 255, 238",
       light3: "112, 163, 147",
       dark1:  "182, 244, 226",
-      dark2:  "11, 19, 17",
+      dark2:  "14, 29, 26",
       dark3:  "125, 160, 150",
       isLight: false,
       isDark: false,
@@ -806,26 +817,195 @@ export const COLOR_SWATCHES = {
       light2: "154, 175, 251",
       light3: "112, 114, 180",
       dark1:  "158, 170, 214",
-      dark2:  "15, 15, 23",
+      dark2:  "24, 22, 38",
       dark3:  "98, 101, 131",
       isLight: false,
       isDark: false,
     },
     {
-      id: "d3-6",
-      primary: "240, 152, 236",
-      light1: "109, 69, 107",
-      light2: "232, 163, 229",
-      light3:  "150, 102, 147",
-      dark1:  "240, 152, 236",
-      dark2:  "21, 14, 20",
-      dark3:  "154, 112, 152",
+      id: "d2-6",
+      primary: "161, 137, 229",
+      light1: "115, 72, 123",
+      light2: "240, 199, 247",
+      light3: "175, 125, 184",
+      dark1:  "161, 137, 229",
+      dark2:  "33, 23, 40",
+      dark3:  "107, 95, 142",
+      isLight: false,
+      isDark: false,
+    },
+  ],
+  p: [
+    /* First Row */
+    {
+      id: "p0-0",
+      primary: "212, 175, 176",
+      light1: "99, 79, 80",
+      light2: "212, 175, 176",
+      light3: "149, 120, 121",
+      dark1:  "212, 189, 189",
+      dark2:  "40, 37, 37",
+      dark3:  "110, 92, 92",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "p0-1",
+      primary: "188, 151, 124",
+      light1: "103, 89, 78",
+      light2: "208, 178, 156",
+      light3: "158, 137, 121",
+      dark1:  "244, 216, 196",
+      dark2:  "57, 48, 42",
+      dark3:  "121, 103, 91",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "p0-2",
+      primary: "201, 194, 157",
+      light1: "110, 106, 83",
+      light2: "200, 192, 149",
+      light3: "159, 151, 106",
+      dark1:  "221, 223, 147",
+      dark2:  "42, 43, 36",
+      dark3:  "103, 103, 79",
+      isLight: true,
+      isDark: false
+    },
+    {
+      id: "p0-3",
+      primary: "163, 198, 151",
+      light1: "73, 100, 64",
+      light2: "177, 208, 166",
+      light3: "122, 148, 114",
+      dark1:  "177, 192, 172",
+      dark2:  "53, 58, 52",
+      dark3:  "114, 126, 110",
+      isLight: true,
+      isDark: true,
+    },
+    {
+      id: "p0-4",
+      primary: "161, 178, 176",
+      light1: "63, 82, 81",
+      light2: "211, 233, 232",
+      light3: "92, 128, 126",
+      dark1:  "193, 218, 216",
+      dark2:  "48, 53, 54",
+      dark3:  "109, 117, 117",
+      isLight: true,
+      isDark: false,
+    },
+    {
+      id: "p0-5",
+      primary: "128, 146, 172",
+      light1: "66, 73, 82",
+      light2: "156, 170, 190",
+      light3: "98, 112, 133",
+      dark1:  "197, 207, 221",
+      dark2:  "44, 44, 58",
+      dark3:  "110, 118, 129",
+      isLight: true,
+      isDark: false,
+    },
+    {
+      id: "p0-6",
+      primary: "177, 166, 192",
+      light1: "94, 82, 96",
+      light2: "188, 166, 192",
+      light3: "128, 109, 132",
+      dark1:  "220, 190, 224",
+      dark2:  "47, 43, 48",
+      dark3:  "112, 96, 115",
+      isLight: true,
+      isDark: false,
+    },
+    /* Second Row */
+    {
+      id: "p1-0",
+      primary: "174, 146, 161",
+      light1:  "76, 57, 67",
+      light2:  "174, 146, 161",
+      light3:  "125, 103, 115",
+      dark1: "240, 194, 218",
+      dark2:  "45, 36, 41",
+      dark3: "116, 98, 108",
+      isLight: false,
+      isDark: true,
+    },
+    {
+      id: "p1-1",
+      primary: "124, 106, 89",
+      light1: "67, 57, 47",
+      light2: "177, 151, 128",
+      light3: "113, 97, 80",
+      dark1:  "247, 185, 150",
+      dark2:  "41, 35, 30",
+      dark3:  "112, 93, 77",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "p1-2",
+      primary: "183, 184, 121",
+      light1: "90, 91, 61",
+      light2: "206, 208, 122",
+      light3: "134, 135, 80",
+      dark1:  "214, 215, 163",
+      dark2:  "53, 54, 37",
+      dark3:  "113, 114, 74",
+      isLight: true,
+      isDark: true,
+    },
+    {
+      id: "p1-3",
+      primary: "120, 138, 114",
+      light1:  "58, 65, 55",
+      light2:  "138, 158, 132",
+      light3:  "93, 109, 85",
+      dark1: "177, 192, 172",
+      dark2: "41, 44, 40",
+      dark3: "123, 134, 120",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "p1-4",
+      primary: "94, 123, 119",
+      light1: "41, 57, 55",
+      light2: "135, 160, 157",
+      light3: "90, 112, 109",
+      dark1:  "160, 184, 181",
+      dark2:  "37, 46, 45",
+      dark3:  "86, 107, 106",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "p1-5",
+      primary: "139, 142, 173",
+      light1: "51, 56, 66",
+      light2: "139, 142, 173",
+      light3: "94, 101, 116",
+      dark1:  "178, 195, 207",
+      dark2:  "33, 35, 43",
+      dark3:  "115, 129, 140",
+      isLight: false,
+      isDark: false,
+    },
+    {
+      id: "p1-6",
+      primary: "142, 128, 143",
+      light1: "71, 73, 89",
+      light2: "160, 149, 171",
+      light3: "121, 109, 132",
+      dark1:  "187, 163, 194",
+      dark2:  "28, 26, 28",
+      dark3:  "100, 76, 108",
       isLight: false,
       isDark: false,
     }
-  ],
-  p: [
-
   ]
 }
 
@@ -937,9 +1117,7 @@ export function addItemToArray(idx: number, array: any[], item: any) {
 }
 
 export function removeItemFromArray(idx: number, array: any[]) {
-  console.log(array)
   array.splice(idx, 1)
-  console.log(array)
 
   return array
 }
@@ -1037,11 +1215,12 @@ export function getContentEditableSelectionRange(element: HTMLElement) {
   const selection = window.getSelection()
   if (!selection || !selection.rangeCount) return { start: 0, end: 0 }
 
+  
   const range = selection.getRangeAt(0)
   const preCaretRange = range.cloneRange()
   preCaretRange.selectNodeContents(element)
   preCaretRange.setEnd(range.startContainer, range.startOffset);
-
+  
   const start = preCaretRange.toString().length
   const end = start + range.toString().length
 
@@ -1132,7 +1311,7 @@ export function intContextMenuPos(menuDims: BoxSize, cursorPos: OffsetPoint, con
   const dropdownRightEdge  = menuWidth + left
   const dropdownBottomEdge = menuHeight + top
 
-  if (dropdownRightEdge >= containerRightEdge) {
+if (dropdownRightEdge >= containerRightEdge) {
       const xOffset = dropdownRightEdge - containerRightEdge
       left -= xOffset
   }
@@ -1143,3 +1322,4 @@ export function intContextMenuPos(menuDims: BoxSize, cursorPos: OffsetPoint, con
 
   return { left, top }
 }
+

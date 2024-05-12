@@ -13,18 +13,26 @@ import type { DatePickerManager } from './date-picker-manager'
 import type { AppleMusicUserData } from './music-apple-user-data'
 import type { SpotifyMusicUserData } from './music-spotify-user-data'
 import type { MusicSettingsManager } from './music-settings-manager'
+import { WEEKLY_ROUTINES } from '../tests/routines/routines.data'
 
 /* App UI State */
 export const globalContext = writable<GlobalContext>({
-    isNavMenuOpen: true,
-    isTaskMenuOpen: true,
+    isLeftNarrowBarOpen: true,
+    isRightBarOpen: true,
+    isLeftBarFloating: true,
     isVideoViewOpen: false,
     isMusicPlayerOpen: false,
     isLeftWideMenuOpen: true,
     shortcutsFocus: ShortcutSectionInFocus.MAIN,
     minModeSrc: null,
     hasToaster: false,
-    modalsOpen: []
+    modalsOpen: [],
+    lastKeysPressed: {
+        shiftKey: false,
+        metaKey: false,
+        altKey: false,
+        keyCode: ""
+    }
 })
 export const themeState = writable<ThemeState>({
     title: "Dark Mode",
@@ -39,6 +47,7 @@ export const googleData = writable<GoogleUserData | null>(null)
 /* Home View Stuff */
 export const tasksViewStore = writable<TasksViewManager | null>(null)
 export const mediaEmbedStore = writable<FloatingMediaEmbed | null>(null)
+export const weekRoutine = writable<WeeklyRoutine | null>(WEEKLY_ROUTINES[0])
 
 /* Goals Stuff */
 export const goalsManager = writable<GoalsManager | null>(null)

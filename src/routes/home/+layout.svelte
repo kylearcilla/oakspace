@@ -31,43 +31,59 @@
 	import { ModalType, TextTab } from "$lib/enums"
 	import { globalContext, musicPlayerStore, mediaEmbedStore, ytPlayerStore } from "$lib/store"
 	import { 
+	      hideRightBar,
         initAppState, keyboardShortCutHandlerKeyDown, 
-        keyboardShortCutHandlerKeyUp, onMouseMoveHandler
+        keyboardShortCutHandlerKeyUp, onMouseMoveHandler, updteGlobalContext
+
   } from "$lib/utils-home"
-	import MediaEmbed from "./MediaEmbed.svelte";
-	import type { Position } from "$lib/types-toast";
-	import EditGoalModal from "./EditGoalModal.svelte";
-	import { TEST_GOALS } from "$lib/utils-journal";
-	import ConfirmationModal from "../../components/ConfirmationModal.svelte";
+	import MediaEmbed from "./MediaEmbed.svelte"
+	import type { Position } from "$lib/types-toast"
+	import { getElemById } from "$lib/utils-general";
 
-  let expand = false;
-	let position: Position = 'bottom-right';
-	let richColors = false;
-	let closeButton = true;
+  let expand = false
+	let position: Position = 'bottom-right'
+	let richColors = false
+	let closeButton = true
 
-  let hasUserToggledWithKeyLast = true
+  let toggledLeftBarWithKey = false
   let totalWidth = 0
-  let isLeftSideBarOpen = true
+  let isLeftNarrowBarOpen = true
   let isLeftWideBarOpen = true
   let isRightBarOpen = true
 
   let leftSideBarWidth = 0
   let rightSideBarWidth = 0
-  let middleViewStyling = ""
   let homeViewClasses = ""
   let currentRoute = TextTab.Workspace
+  let middleViewMarginLeft = ""
+  let middleViewWidth = ""
+  let isFloating = false
 
   const NAV_MENU_NARROW_BAR_WIDTH = 58
   const NAV_MENU_WIDE_BAR_WIDTH = 220
   const NAV_MENU_FULL_WIDTH = NAV_MENU_WIDE_BAR_WIDTH + NAV_MENU_NARROW_BAR_WIDTH
   const RIGHT_SIDE_BAR_WIDTH = 240
 
-  globalContext.subscribe((state: GlobalContext) => {
-    isLeftSideBarOpen = state.isNavMenuOpen
-    isLeftWideBarOpen = state.isLeftWideMenuOpen
-    isRightBarOpen = state.isTaskMenuOpen
 
-    if (isLeftSideBarOpen) {
+  $: if (totalWidth > 0) {
+    updateMiddleView()
+  }
+  $: if (isFloating != $globalContext.isLeftBarFloating) { 
+
+    isFloating = $globalContext.isLeftBarFloating
+    toggledLeftBarWithKey = false
+    updateMiddleView()
+  }
+
+  $: isLeftWideMenuOpen = $globalContext.isLeftWideMenuOpen
+  $: showYoutubePlayer = $ytPlayerStore?.doShowPlayer ?? true
+
+  globalContext.subscribe((state: GlobalContext) => {
+    isLeftNarrowBarOpen = state.isLeftNarrowBarOpen
+    isLeftWideBarOpen = state.isLeftWideMenuOpen
+    isRightBarOpen = state.isRightBarOpen
+
+    if (isLeftNarrowBarOpen) {
       leftSideBarWidth = isLeftWideBarOpen ? NAV_MENU_NARROW_BAR_WIDTH + NAV_MENU_WIDE_BAR_WIDTH : NAV_MENU_NARROW_BAR_WIDTH
     }
     else {
@@ -78,49 +94,65 @@
     updateMiddleView()
   })
 
-  $: if (totalWidth > 0) {
-    updateMiddleView()
-  }
-
-  $: showYoutubePlayer  = $ytPlayerStore?.doShowPlayer ?? true
-
   function onRouteChange(e: CustomEvent) {
     currentRoute = e.detail as TextTab
   }
 
   function updateMiddleView() {
-    isLeftSideBarOpen = $globalContext.isNavMenuOpen
+    isLeftNarrowBarOpen = $globalContext.isLeftNarrowBarOpen
     isLeftWideBarOpen = $globalContext.isLeftWideMenuOpen
-    isRightBarOpen = $globalContext.isTaskMenuOpen
+    isRightBarOpen = $globalContext.isRightBarOpen
 
-    let width = `width: calc(100% - (${leftSideBarWidth}px + ${rightSideBarWidth}px))`
-    let marginLeft = `margin-left: ${leftSideBarWidth}px`
+    let width = `calc(100% - (${leftSideBarWidth}px + ${rightSideBarWidth}px))`
+    let marginLeft = `${leftSideBarWidth}px`
 
-    const isAllBarsFullOpen = isLeftSideBarOpen && isLeftWideBarOpen && isRightBarOpen
+    const leftBarFull =  isLeftNarrowBarOpen && isLeftWideBarOpen
+    const isAllBarsFullOpen = leftBarFull && isRightBarOpen
 
     if (isAllBarsFullOpen && totalWidth < 920) {
-      width = "width: 100%"
+      width = "100%"
       marginLeft = "0px"
     }
-    else if (isLeftSideBarOpen && isLeftWideBarOpen && totalWidth < 670) {
-      width = "width: 100%"
+    else if (isFloating && isRightBarOpen) {
+      width = `calc(100% - ${rightSideBarWidth}px)`
+    }
+    else if (isFloating) {
+      width = "100%"
+    }
+    else if (leftBarFull && !isRightBarOpen && totalWidth < 670) {
+      width = "100%"
       marginLeft = "0px"
     }
-    else if (isRightBarOpen && isLeftSideBarOpen && totalWidth < 610) {
-      width = "width: 100%"
+    else if (isLeftNarrowBarOpen && isRightBarOpen && totalWidth < 610) {
+      width = "100%"
     }
 
-    middleViewStyling = `${width}; ${marginLeft};`
+    if (!isFloating && isAllBarsFullOpen && totalWidth < 800) {
+      hideRightBar()
+      return
+    }
+    
+    middleViewMarginLeft = isFloating ? "0px" : marginLeft
+    middleViewWidth = width
   }
 
+
+  function onFloatSideBarMouseLeave(e: MouseEvent) {
+    const isModalOpen = $globalContext.modalsOpen.length > 0
+    const isSettingsOpen = getElemById("left-bar--dropdown-menu")
+
+    if (isModalOpen || isSettingsOpen || toggledLeftBarWithKey) return
+
+    updteGlobalContext({ ...$globalContext, isLeftNarrowBarOpen: false })
+  }
   function handleKeyDown(event: KeyboardEvent) {
-    hasUserToggledWithKeyLast = keyboardShortCutHandlerKeyDown(event, hasUserToggledWithKeyLast)!
+    toggledLeftBarWithKey = keyboardShortCutHandlerKeyDown(event, toggledLeftBarWithKey, totalWidth)!
   }
   function handleKeyUp(event: KeyboardEvent) {
     keyboardShortCutHandlerKeyUp(event)
   }
   function _onMouseMoveHandler(event: MouseEvent) {
-    hasUserToggledWithKeyLast = onMouseMoveHandler(event, hasUserToggledWithKeyLast)
+    toggledLeftBarWithKey = onMouseMoveHandler(event, toggledLeftBarWithKey)
   }
   
   onMount(initAppState)
@@ -128,33 +160,48 @@
 
 <svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} />
 
-<div class={`home ${homeViewClasses}`} on:mousemove={_onMouseMoveHandler} bind:clientWidth={totalWidth}>
-  <div class="home__header-container">
-    <Header/>
-  </div>
+<div 
+  class={`home ${homeViewClasses}`} 
+  on:mousemove={_onMouseMoveHandler} bind:clientWidth={totalWidth}
+>
   <div class="home__main">
+    <!-- Left -->
       <nav 
-        class="home__nav-menu-container" 
-        style={`width: ${leftSideBarWidth}px; margin-left: ${leftSideBarWidth === 0 ? `-${$globalContext.isLeftWideMenuOpen ? NAV_MENU_FULL_WIDTH : NAV_MENU_NARROW_BAR_WIDTH}px` : ""}`}
+        class="home__nav-menu-container smooth-bounce" 
+        class:home__nav-menu-container--floating={isFloating} 
+        class:home__nav-menu-container--float-hidden={isFloating && !isLeftNarrowBarOpen} 
+        style:width={`${leftSideBarWidth}px`}
+        style:margin-left={`${leftSideBarWidth === 0 ? `-${isLeftWideMenuOpen ? NAV_MENU_FULL_WIDTH : NAV_MENU_NARROW_BAR_WIDTH}px` : ""}`}
+        on:mouseleave={onFloatSideBarMouseLeave}
       >
-          <NavMenu on:routeChange={onRouteChange}/>
+        <NavMenu on:routeChange={onRouteChange}/>
       </nav>
-      <div class="home__middle-view" style={middleViewStyling}>
-        <!-- Do not show /workspace if a player is active as it will it lay on top -->
-        {#if !showYoutubePlayer || showYoutubePlayer && currentRoute != TextTab.Workspace}
-          <div class="home__middle-view-slot-container">
-            <slot />
+  <!-- Middle -->
+      <div 
+        class="home__middle-view smooth-bounce" 
+        style:width={middleViewWidth}
+        style:margin-left={middleViewMarginLeft}
+      >
+          <div class="home__header-container">
+            <Header/>
           </div>
-        {/if}
-        <VideoView />
-      </div>
+            <!-- Do not show /workspace if a player is active as it will it lay on top -->
+            {#if !showYoutubePlayer || showYoutubePlayer && currentRoute != TextTab.Workspace}
+              <div class="home__middle-view-slot-container">
+                <slot />
+              </div>
+            {/if}
+            <VideoView />
+        </div>
+    <!-- Right -->
       <nav 
-        class="home__task-view-container" 
-        style={`width: ${rightSideBarWidth}px; margin-right: ${rightSideBarWidth === 0 ? `-${RIGHT_SIDE_BAR_WIDTH}px` : ""}`}
+        class="home__task-view-container smooth-bounce" 
+        style:width={`${rightSideBarWidth}px`}
+        style:margin-right={`${rightSideBarWidth === 0 ? `-${RIGHT_SIDE_BAR_WIDTH}px` : ""}`}
       >
           <TaskView />
       </nav>
-    </div>
+  </div>
     
   {#if $mediaEmbedStore}
      <MediaEmbed />
@@ -210,14 +257,13 @@
       top: 150px;
     }
 
-    $header-height: 32px;
-
     .home {
       background-color: var(--primaryBgColor);
       height: 100%;
       min-height: 100vh;
       font-family: 'Apercu Medium' system-ui;
       overflow: hidden;
+      position: relative;
 
       // background-image: url('https://upload.wikimedia.org/wikipedia/commons/7/77/Cole_Thomas_The_Course_of_Empire_Desolation_1836.jpg');
       // background-size: cover;
@@ -226,53 +272,92 @@
 
       /* Responsivness Modifiders */
       &__main {
-        height: calc(100vh - $header-height);
+        height: 100vh;
         display: flex;
-        padding-top: $header-height;
       }
 
       &__header-container {
-        position: fixed;
-        top: 0px;
-        z-index: 110003;
-        width: 100%;
+        width: calc(100% + 15px);
+        padding: 0px 25px 15px 0px;
+        margin-left: -15px;
       }
       &__nav-menu-container {
         background-color: var(--navMenuBgColor);
         transition: ease-in-out 0.15s;
-        height: calc(100vh - $header-height);
+        height: 100%;
         margin-left: 0px;
         z-index: 1000;
         position: fixed;
+        border-right: 1.5px solid rgba(var(--textColor1), 0.022);
+
+        &--floating {
+          height: auto;
+          width: auto !important;
+          transition: 0.18s cubic-bezier(.4,0,.2,1);
+          background-color: var(--navMenuBgColor);
+          top: 48px;
+          left: 9px;
+          z-index: 999;
+          border: 1px solid rgba(var(--textColor1), 0.04);
+          border-radius: 12px;
+          margin-left: 0px !important;
+        }
+        &--float-hidden {
+          left: -250px;
+        }
+        &--floating::before {
+          content: " ";
+          width: 14px;
+          height: 100%;
+          @include abs-top-left(0px, -14px);
+        }
+
 
         // background: rgba(32, 31, 31, 0.1);
         // backdrop-filter: blur(10px);
         // border-right: 1px solid rgba(138, 138, 138, 0.3);
       }
+      &__floating-nav-menu-container {
+        width: 185px;
+        background-color: var(--navMenuBgColor);
+        position: fixed;
+        top: 48px;
+        left: 9px;
+        z-index: 999;
+        border: 1px solid rgba(var(--textColor1), 0.04);
+        border-radius: 12px;
+        
+        &--hidden {
+          left: -185px;
+        }
+        &::before {
+          content: " ";
+          width: 14px;
+          height: 100%;
+          @include abs-top-left(0px, -14px);
+        }
+      }
 
       &__middle-view {
-        padding: 10px 30px 20px 30px;
-        transition: ease-in-out 0.15s;
+        padding: 6px 0px 20px 30px;
         width: 100%;
-        height: calc(100vh - $header-height);
+        height: 100%;
         position: relative;
-        // border-top: var(--headerBorder);
 
         &-slot-container {
-          background-color: var(--primaryBgColor);
           padding: inherit;
-          @include pos-abs-top-left-corner;
+          @include abs-top-left(38px);
+          background-color: var(--primaryBgColor);
           width: 100%;
           height: 100%;
-          z-index: 2;
+          z-index: 300;
         }
       }
       &__task-view-container {
-        height: calc(100vh - $header-height);
+        height: 100%;
         position: fixed;
-        top: $header-height;
+        top: 0px;
         right: 0px;
-        transition: ease-in-out 0.18s;
         overflow: hidden;
         background-color: var(--rightBarBgColor);
         border: var(--sidePanelBorder);

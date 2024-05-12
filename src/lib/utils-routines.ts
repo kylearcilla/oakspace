@@ -1,10 +1,49 @@
-import { COLOR_SWATCHES, TEST_TAGS } from "./utils-general";
+import { CoreStatus } from "./enums";
+import { COLOR_SWATCHES, TEST_TAGS } from "./utils-general"
+
+export enum BreakdownView {
+    Cores, Tags
+}
+export enum ViewOption {
+    Today, Weekly, MTWT, FSS
+}
+
+export const EDIT_BLOCK_OPTIONS: DropdownListItem[] = [
+    {
+        options: [
+            { name: "Edit Block" },
+            { name: "Change Color" },
+            { name: "Duplicate Block" }
+        ]
+    },
+    { name: "Delete Block" }
+]
 
 export function getCoreStr(core: RoutineActvity | null) {
     if (!core) return core;
 
     const foundPair = ROUTINE_CORE_KEYS.find(pair => pair[0] === core)
     return foundPair ? foundPair[1] : null
+}
+
+export function getBlockStyling(height: number) {
+    const classes: string[] = []
+
+    if (height < 12) {
+        classes.push("routine-blocks__block--xsm")
+    }
+    if (height < 20) {
+        classes.push("routine-blocks__block--sm")
+    }
+    if (height < 34) {
+        classes.push("routine-blocks__block--md")
+    }
+    return classes.join(" ")
+}
+
+export function isDayRoutinedLinked(currWeekRoutine: WeeklyRoutine, dayKey: keyof WeeklyRoutineBlocks) {
+    const dayRoutine = currWeekRoutine!.blocks[dayKey]
+    return "id" in dayRoutine
 }
 
 export const ROUTINE_CORE_KEYS: [RoutineActvity, string][] = [
@@ -16,163 +55,41 @@ export const ROUTINE_CORE_KEYS: [RoutineActvity, string][] = [
     ["selfCare", "Self Care"]
 ]
 
-export const ROUTINES: DailyRoutine[] = [
-    { 
-        id: "0",
-        name: "Workday 1.0",
-        description: "Regular work day",
-        blocks: [
-            {
-                title: "Fruit 🍑",
-                color: COLOR_SWATCHES.d[1],
-                startTime: 370,
-                endTime: 420,
-                activity: null,
-                tag: null,
-                tasks: [],
-                description: ""
-            },
-            {
-                title: "👨‍💻 SWE Deep Work",
-                color: COLOR_SWATCHES.d[1],
-                startTime: 525,
-                endTime: 720,
-                activity: "working",
-                tag: TEST_TAGS[1],
-                tasks: [],
-                description: ""
-            },
-            {
-                title: "🍖 Lunch Break",
-                color: COLOR_SWATCHES.d[2],
-                startTime: 730,
-                endTime: 800,
-                activity: null,
-                tag: null,
-                tasks: [],
-                description: ""
-            },
-            {
-                title: "👨‍💻 SWE Deep Work",
-                color: COLOR_SWATCHES.d[1],
-                startTime: 885,
-                endTime: 1080,
-                activity: "working",
-                tag: TEST_TAGS[1],
-                tasks: [],
-                description: ""
-            },
-            {
-                title: "💪 Gym (Pull)",
-                color: COLOR_SWATCHES.d[3],
-                startTime: 1080,
-                endTime: 1140,
-                activity: "body",
-                tag: TEST_TAGS[0],
-                tasks: [],
-                description: ""
-            },
-            {
-                title: "🍖 Dinner",
-                color: COLOR_SWATCHES.d[4],
-                startTime: 1140,
-                endTime: 1170,
-                activity: null,
-                tag: TEST_TAGS[3],
-                tasks: [],
-                description: ""
-            },
-            {
-                title: "🌙 Evening Routine",
-                color: COLOR_SWATCHES.d[1],
-                startTime: 1380,
-                endTime: 1410,
-                activity: "selfCare",
-                tag: null,
-                tasks: [],
-                description: ""
-            },
-        ]
+export const EMPTY_CORES = {
+    sleeping: {
+        status: CoreStatus.Healthy,
+        totalTime: 0,
+        avgTime: 0,
+        total: 0
     },
-    { 
-        id: "zz",
-        name: "Weekend",
-        description: "Ideal Weekend",
-        blocks: [
-            {
-                title: "🌤️ Morning Routine",
-                color: COLOR_SWATCHES.d[0],
-                startTime: 480,
-                endTime: 520,
-                activity: null,
-                tag: null,
-                tasks: [],
-                description: ""
-            },
-            {
-                title: "🏃‍♂️ Running",
-                color: COLOR_SWATCHES.d[1],
-                startTime: 600,
-                endTime: 690,
-                activity: "working",
-                tag: TEST_TAGS[6],
-                tasks: [],
-                description: ""
-            },
-            {
-                title: "🍖 Lunch Break",
-                color: COLOR_SWATCHES.d[2],
-                startTime: 730,
-                endTime: 800,
-                activity: null,
-                tag: null,
-                tasks: [],
-                description: ""
-            },
-            {
-                title: "🌁 Art",
-                color: COLOR_SWATCHES.d[1],
-                startTime: 885,
-                endTime: 920,
-                activity: "selfCare",
-                tag: TEST_TAGS[8],
-                tasks: [],
-                description: ""
-            },
-            {
-                title: "💪 Gym (Push)",
-                color: COLOR_SWATCHES.d[3],
-                startTime: 1000,
-                endTime: 1100,
-                activity: "body",
-                tag: TEST_TAGS[0],
-                tasks: [],
-                description: ""
-            },
-            {
-                title: "🍖 Dinner",
-                color: COLOR_SWATCHES.d[4],
-                startTime: 1130,
-                endTime: 1200,
-                activity: null,
-                tag: TEST_TAGS[3],
-                tasks: [],
-                description: ""
-            },
-            {
-                title: "🌙 Evening Routine",
-                color: COLOR_SWATCHES.d[1],
-                startTime: 1380,
-                endTime: 1410,
-                activity: "selfCare",
-                tag: null,
-                tasks: [],
-                description: ""
-            },
-        ]
+    working: {
+        status: CoreStatus.Healthy,
+        totalTime: 0,
+        avgTime: 0,
+        total: 0
+    },
+    mind: {
+        status: CoreStatus.Healthy,
+        totalTime: 0,
+        avgTime: 0,
+        total: 0
+    },
+    awake: {
+        status: CoreStatus.Healthy,
+        totalTime: 0,
+        avgTime: 0,
+        total: 0
+    },
+    body: {
+        status: CoreStatus.Healthy,
+        totalTime: 0,
+        avgTime: 0,
+        total: 0
+    },
+    selfCare: {
+        status: CoreStatus.Healthy,
+        totalTime: 0,
+        avgTime: 0,
+        total: 0
     }
-]
-
-export const TEST_ROUTINE = {
-    
 }

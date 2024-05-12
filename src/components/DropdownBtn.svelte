@@ -11,9 +11,14 @@
     $: isDarkTheme = $themeState.isDarkTheme
     $: pickedOptionName = options.pickedOptionName
     $: isEmpty = !pickedOptionName
+
+    $: doShowArrow = hasArrow && (!allowEmpty || ((allowEmpty && !isActive) || (allowEmpty && isEmpty)))
     
     const allowEmpty = options.allowEmpty ?? false
-    const hasArrow = options.hasArrow != undefined ? options.hasArrow : true
+    const arrowLeft  = options.arrowLeft ?? false
+    const hasArrow   = options.hasArrow != undefined ? options.hasArrow : true
+    const noBg       = options.noBg != undefined ? options.noBg : false
+    const bgOnactive = options.bgOnactive != undefined ? options.bgOnactive : false
 
     function onRemoveBtnClicked() {
         if (options.onRemove) {
@@ -27,21 +32,45 @@
     id={`${id}--dropdown-btn`}
     class="dropdown-btn"
     class:dropdown-btn--empty={isEmpty}
+    class:dropdown-btn--no-bg={noBg}
+    class:dropdown-btn--bg-on-active={bgOnactive}
     class:dropdown-btn--active={isActive}
     class:dropdown-btn--dark={isDarkTheme}
     class:dropdown-btn--arrow-on-hover={options.arrowOnHover}
+    class:dropdown-btn--arrow-left={arrowLeft}
     style={inlineStyling(options.styles)}
     on:click={options.onClick}
 >
+    {#if doShowArrow && arrowLeft}
+        <div 
+            class="dropdown-btn__icon dropdown-btn__icon--arrow"
+        style={inlineStyling(options.arrowStyles)}
+        >
+            <SvgIcon 
+                icon={Icon.Dropdown}
+                options={{
+                    scale: 1.1, height: 12, width: 12, strokeWidth: 1.4
+                }}
+            />
+        </div>
+    {/if}
     <span 
         class="dropdown-btn__title"
         style:font-size={options?.styles?.fontSize}
     >
         {pickedOptionName ?? "None"}
     </span>
-    {#if hasArrow && (!allowEmpty || ((allowEmpty && !isActive) || (allowEmpty && isEmpty)))}
-        <div class="dropdown-btn__icon dropdown-btn__icon--arrow">
-            <SvgIcon icon={Icon.Dropdown}/>
+    {#if doShowArrow && !arrowLeft}
+        <div 
+            class="dropdown-btn__icon dropdown-btn__icon--arrow"
+            style={inlineStyling(options.arrowStyles)}
+        >
+            <SvgIcon 
+                icon={Icon.Dropdown}
+                options={{
+                    scale: 1.1, height: 12, width: 12, strokeWidth: 1.4
+                }}
+            />
         </div>
     {/if}
     {#if allowEmpty && isActive && !isEmpty}
@@ -49,7 +78,7 @@
             class="dropdown-btn__icon dropdown-btn__icon--close-btn"
             on:click={onRemoveBtnClicked}
         >
-            <SvgIcon icon={Icon.Close} options={{ scale: 0.9, strokeWidth: 1.2 }} />
+            <SvgIcon icon={Icon.Close} options={{ scale: 0.9, strokeWidth: 1.5 }} />
         </button>
     {/if}
 </button>
@@ -58,6 +87,10 @@
     @import "../scss/dropdown.scss";
 
     .dropdown-btn {
+        &--no-bg {
+            background-color: transparent !important;
+            background: transparent !important;
+        }
         &--dark {
             @include dropdown-btn-dark;
         }

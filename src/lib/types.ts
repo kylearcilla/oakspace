@@ -102,9 +102,12 @@ type DropdownBtnOptions = {
     pickedOptionName: string | null
     allowEmpty?: boolean
     hasArrow?: boolean
+    bgOnactive?: boolean
+    noBg?: boolean
+    arrowLeft?: boolean
     arrowOnHover?: boolean
-    hasBg?: boolean
     styles?: StylingOptions
+    arrowStyles?: StylingsOptions
     onClick: FunctionParam
     onRemove?: FunctionParam
 }
@@ -138,8 +141,29 @@ type AncestoryQueryOptions = {
     queryBy?: DOMQueryOption
     max?: number
     strict?: boolean
-  }
-  
+}
+
+type DashboardType = "min" | "default"
+type DashboardView = "goals" | "habits"
+
+type DashboardOptions = {
+    type: string
+    view?: DashboardView
+}
+
+
+type CSSAbsPos = {
+    top?: string, left?: string, bottom?: string, right?: string
+}
+
+type ConfirmType = "default" | "delete"
+
+type ConfirmOptions = {
+    type?: ConfirmType
+    cancel?: string
+    ok?: string
+    caption?: string
+}
 
 type DropdownListItem = DropdownOptionSection | DropdownOption
 
@@ -149,9 +173,7 @@ type DropdownListOptions = {
     onListItemClicked: FunctionParam
     onClickOutside?: FunctionParam
     onDismount?: FunctionParam
-    position?: {
-        top?: string, left?: string, bottom?: string, right?: string
-    }
+    position?: CSSAbsPos
     scroll?: {
         bar?: boolean
         goToIdx?: number
@@ -193,16 +215,16 @@ type WeeklyRoutine = {
 }
 
 type WeeklyRoutineBlocks = {
-    Mon: RoutineBlock[], Tue: RoutineBlock[]
-    Wed: RoutineBlock[], Thu: RoutineBlock[]
-    Fri: RoutineBlock[], Sat: RoutineBlock[]
-    Sun: RoutineBlock[]
+    Monday: RoutineBlock[] | DailyRoutine, Tuesday: RoutineBlock[] | DailyRoutine
+    Wednesday: RoutineBlock[] | DailyRoutine, Thursday: RoutineBlock[] | DailyRoutine
+    Friday: RoutineBlock[] | DailyRoutine, Saturday: RoutineBlock[] | DailyRoutine
+    Sunday: RoutineBlock[] | DailyRoutine
 }
 type WeekBlockElems = {
-    Mon: RoutineBlockElem[], Tue: RoutineBlockElem[]
-    Wed: RoutineBlockElem[], Thu: RoutineBlockElem[]
-    Fri: RoutineBlockElem[], Sat: RoutineBlockElem[]
-    Sun: RoutineBlockElem[]
+    Monday: RoutineBlockElem[], Tuesday: RoutineBlockElem[]
+    Wednesday: RoutineBlockElem[], Thursday: RoutineBlockElem[]
+    Friday: RoutineBlockElem[], Saturday: RoutineBlockElem[]
+    Sunday: RoutineBlockElem[]
 }
 type TagBreakDown = {
     tag: Tag,
@@ -302,8 +324,9 @@ type KeyContext = {
   
 /* Home */
 type GlobalContext = {
-    isNavMenuOpen: boolean
-    isTaskMenuOpen: boolean
+    isLeftNarrowBarOpen: boolean
+    isRightBarOpen: boolean
+    isLeftBarFloating: boolean
     isVideoViewOpen: boolean
     isMusicPlayerOpen: boolean
     hasToaster: boolean
@@ -531,7 +554,7 @@ type TaskListReorder = {
 
 type CSSPxVal   = `${number}px`
 type CSSREMVal   = `${number}rem`
-type CSSUnitVal = CSSPxVal | `${number}%` | "auto"
+type CSSUnitVal = CSSPxVal | `${number}%` | `calc(${string})` | "auto"
 type CSSMultiDimPxVal = `${number}px` | 
                         `${number}px ${number}px` | 
                         `${number}px ${number}px ${number}px` | 
@@ -541,16 +564,30 @@ type ContextMenuOptions = {
     width: CSSUnitVal
 }
 
+type DayBreakdown = {
+    cores: RoutineCores,
+    tags: TagBreakDown[],
+    day: string,
+    dayIdx: number,
+    linkedRoutine: {
+        name: string,
+        description: string
+    } | null
+}
+
 type StylingOptions = {
     width?: CSSUnitVal
-    height?: CSSPxVal
+    maxWidth?: CSSUnitVal
+    height?: CSSUnitVal
+    maxHeight?: CSSUnitVal
     padding?: CSSMultiDimPxVal
     margin?: CSSMultiDimPxVal
     fontSize?: CSSREMVal
-    fontWeight?: CSSPxVal
+    fontWeight?: string
     color?: string
     borderRadius?: CSSPxVal
     backgroundColor?: string
+    fontFamily?: string
 }
 
 type TasksListOptions<TaskListTypeCombos> = {

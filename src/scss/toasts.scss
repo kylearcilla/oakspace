@@ -245,7 +245,7 @@ $header-icon-size: 17px;
     }
 
     &__close-btn {
-        @include pos-abs-top-right-corner(-6px, -6px);
+        @include abs-top-right(-6px, -6px);
         @include text-style(0.5, 100, 1.8rem);
         @include circle(19px);
         @include center;

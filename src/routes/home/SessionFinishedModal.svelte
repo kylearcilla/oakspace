@@ -282,7 +282,7 @@
         }
         &__btn-container {
             width: 100%;
-            // @include pos-abs-bottom-left-corner(0px, 50px);
+            // @include abs-bottom-left(0px, 50px);
             @include flex(center, center);
 
             button {

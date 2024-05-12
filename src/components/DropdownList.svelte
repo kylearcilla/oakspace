@@ -1,56 +1,32 @@
 <script lang="ts">
 	import { themeState } from "$lib/store";
-	import { clickOutside, getElemById } from "$lib/utils-general";
+	import { clickOutside } from "$lib/utils-general";
 	import { onMount } from "svelte";
 	import Hotkeys from "./Hotkeys.svelte";
+	import BounceFade from "./BounceFade.svelte";
 
     export let id: string = ""
     export let isHidden: boolean
     export let options: DropdownListOptions
 
     let dropdownMenuRef: HTMLElement
+    let idxCount = 0
+    let listItems = options.listItems
 
     $: isDarkTheme = $themeState.isDarkTheme
-    $: toggleMenu(!isHidden)
-
+    $: resetCount(!isHidden)
+    
     $: if (!isHidden && dropdownMenuRef && options.scroll?.goToIdx) {
         goToStartingIdxLocation(options.scroll.goToIdx)
     }
+    $: if (!isHidden) {
+        // allow list items to change only as it opens
+        // avoid list items from changing immediately as the list fades out before unmount
+        listItems = options.listItems
+    }
 
-    let idxCount = 0
-    let removeTimeout: NodeJS.Timeout | null = null
-    let isMounted = false
-    let _isActive = true
-
-    const TRANSITION_DURATIONS_MS = 200
-
-    function toggleMenu(isActive: boolean) {
+    function resetCount(isActive: boolean) {
         idxCount = 0
-
-        // mount if active, mount on DOM, then toggle aniamtion
-        if (isActive) {
-            isMounted = true
-            requestAnimationFrame(() => _isActive = true)
-        }
-        // if timeout has been set but user quickly toggles active agin, remove the timeout
-        if (isActive && removeTimeout) {
-            clearTimeout(removeTimeout)
-            removeTimeout = null    
-        }
-        // if inactive, allow the animation, then dismount
-        if (!isActive) {
-            _isActive = false
-
-            removeTimeout = setTimeout(() => {
-                isMounted = false
-
-                if (options.onDismount) {
-                    options.onDismount()
-                }
-
-            }, TRANSITION_DURATIONS_MS)
-            removeTimeout = null
-        }
     }
     function onItemClicked(e: Event, idx: number) {
         options.onListItemClicked(e, idx)
@@ -82,32 +58,32 @@
     function initOptnIdx() {
         return idxCount++
     }
+    
 
     onMount(() => {
         goToStartingIdxLocation(options.scroll?.goToIdx ?? -1)
     })
 </script>
 
-{#if isMounted}
+<BounceFade 
+    {isHidden} 
+    onDismount={options.onDismount}
+    position={options.position}
+    zIndex={options?.styling?.zIndex ?? 1}
+>
     <ul 
         use:clickOutside on:click_outside={onClickOutside} 
-        id={`${id}--dropdown-menu`}
         bind:this={dropdownMenuRef}
+        id={`${id}--dropdown-menu`}
         class="dropdown-menu"
         class:dropdown-menu--dark={isDarkTheme}
-        class:dropdown-menu--shown={_isActive}
         class:dropdown-menu--has-scroll-bar={options.scroll?.bar ?? false}
-        style:top={options.position?.top}
-        style:left={options.position?.left}
-        style:right={options.position?.right}
-        style:bottom={options.position?.bottom}
-        style:z-index={options?.styling?.zIndex ?? 1}
         style:width={options?.styling?.width ?? "auto"}
         style:height={options?.styling?.height ?? "auto"}
         style:--font-family={options.styling?.fontFamily ?? "Manrope"}
         style:--font-size={options.styling?.fontSize ?? "1.24rem"}
     >
-        {#each options.listItems as item, idx}
+        {#each listItems as item, idx}
             <!-- Section Item -->
             {#if "options" in item}
                 {@const section = item}
@@ -206,7 +182,7 @@
             {/if}
         {/each}
     </ul>
-{/if}
+</BounceFade>
 
 <style lang="scss">
     @import "../scss/dropdown.scss";

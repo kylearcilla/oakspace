@@ -209,10 +209,11 @@
         position: relative;
         overflow: visible;
         padding: 0px 10px 2px 17px;
-        height: 38px;
+        height: 29px;
         transition: 0.14s ease-in-out;
         border-radius: 20px;
         white-space: nowrap;
+        @include txt-color(0.05, "bg");
 
         &--active {
             transform: scale(0.998);
@@ -326,7 +327,7 @@
 
         .dropdown-menu {
             width: 160px;
-            @include pos-abs-top-right-corner(35px, 0px);
+            @include abs-top-right(35px, 0px);
             z-index: 2000001;
 
             &__option-icon {

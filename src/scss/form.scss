@@ -32,7 +32,7 @@
     }
 
     &__error-msg {
-        @include pos-abs-bottom-left-corner(-23px, 0px);
+        @include abs-bottom-left(-23px, 0px);
         font-size: 1.1rem;
         color: #714040;
     }
@@ -51,7 +51,7 @@
     }
 
     &__error-msg {
-        @include pos-abs-bottom-left-corner(-23px, 0px);
+        @include abs-bottom-left(-23px, 0px);
         font-size: 1.1rem;
         font-weight: 500;
         color: #E19085;

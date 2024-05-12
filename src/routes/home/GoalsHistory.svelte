@@ -313,7 +313,7 @@
     }
     .goal-history__item-dotted-line {
         svg {
-            @include pos-abs-top-left-corner(14px, 3.5px);
+            @include abs-top-left(14px, 3.5px);
         }
         path {
             stroke: rgba(var(--textColor1), 0.14)

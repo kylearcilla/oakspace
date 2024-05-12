@@ -14,11 +14,12 @@
   export let options: IconOptions = {}
   
   let _options: IconOptions = {
-      id         : options?.id ?? DEFAULT_STYLING.id,
-      opacity    : options?.opacity ?? DEFAULT_STYLING.opacity,
-      strokeWidth: options?.strokeWidth ?? DEFAULT_STYLING.strokeWidth,
-      scale      : options?.scale ?? DEFAULT_STYLING.scale,
-      color      : options?.color ?? DEFAULT_STYLING.color,
+      ...DEFAULT_STYLING,
+      // id         : options?.id ?? DEFAULT_STYLING.id,
+      // opacity    : options?.opacity ?? DEFAULT_STYLING.opacity,
+      // strokeWidth: options?.strokeWidth ?? DEFAULT_STYLING.strokeWidth,
+      // scale      : options?.scale ?? DEFAULT_STYLING.scale,
+      // color      : options?.color ?? DEFAULT_STYLING.color,
       ...options
   }
 
@@ -34,6 +35,7 @@
   style:opacity={_options.opacity}
   style:--stroke-width={_options.strokeWidth}
   style:--path-color={`rgba(${_options.color})`}
+  style:--scale={_options.scale}
 >
   {#if icon === Icon.Settings}
       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="18" id={_options.id}>
@@ -44,15 +46,16 @@
         </g>
       </svg>
   {:else if icon === Icon.Add}
-      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="12" viewBox="0 0 13 12" fill="none" style={`transform: scale(${_options.scale});`}>
-        <path d="M6.46506 0.173828V11.8553M0.625 6.01495L12.3047 6.01495" stroke={_options.color} stroke-width={_options.strokeWidth}/>
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" style:transform={`scale(${_options.scale})`}>
+        <path stroke-linecap="round" d="M6 2v8M10 6H2" stroke-width={_options.strokeWidth} stroke={_options.color}>
+        </path>
       </svg>
   {:else if icon === Icon.Close}
       <svg 
           xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 9 9" fill="none" 
           style={`transform: scale(${_options.scale});`}
       >
-          <path d="M8.4082 8.55078L0.871094 1.01367M0.871094 8.55078L8.4082 1.01367">
+          <path d="M8.4082 8.55078L0.871094 1.01367M0.871094 8.55078L8.4082 1.01367" stroke={_options.color}>
       </svg>
   {:else if icon === Icon.ChevronLeft}
       <svg xmlns="http://www.w3.org/2000/svg" width="7" height="11" viewBox="0 0 7 11" fill="none">
@@ -126,15 +129,12 @@
             </defs>
       </svg>
   {:else if icon === Icon.Pin}
-      <svg 
-          xmlns="http://www.w3.org/2000/svg" width="9" height="11" viewBox="0 0 9 11" fill="none" 
-          style={`transform: scale(${_options.scale});`}
-      >
-          <path 
-          d="M0.567985 6.8139L0.691562 6.32126C0.895505 5.50414 1.39151 4.6435 2.05134 4.19636L2.26581 1.40866H1.65703C1.56918 1.40866 1.48707 1.38492 1.41644 1.34337C1.27636 1.26087 1.18219 1.10833 1.18219 0.933823C1.18219 0.671672 1.39488 0.458984 1.65703 0.458984H7.03853C7.30167 0.458984 7.51336 0.671672 7.51336 0.933823C7.51336 1.10833 7.4184 1.26087 7.2799 1.34337C7.20868 1.38492 7.12558 1.40866 7.03853 1.40866H6.42915L6.64481 4.19636C7.30364 4.6435 7.80025 5.50414 8.00403 6.32126L8.1267 6.8139C8.14454 6.88554 8.14589 7.00313 8.14589 7.07868C8.14589 7.64046 6.69617 7.76769 4.82262 7.8355V10.114C4.82262 10.3772 4.61092 10.5889 4.32997 10.5889C4.08464 10.5889 3.85513 10.3772 3.85513 10.114L3.86918 7.83538C1.99717 7.76716 0.549071 7.64014 0.549071 7.07868C0.546044 7.00671 0.552434 6.94193 0.567985 6.8139ZM2.96283 4.72659L2.58494 4.9838C2.11228 5.30233 1.73781 5.93498 1.59108 6.63645C2.96283 6.96397 5.71491 6.91273 7.07329 6.6648C6.92886 6.08115 6.56567 5.30233 6.11061 4.9838L5.71492 4.72659L5.4775 1.40866H3.21806L2.96283 4.72659Z" 
-          fill={_options.color}
+      <svg width="9" height="13" viewBox="0 0 9 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path 
+            d="M0.0154065 8.1555L0.161464 7.57324C0.402507 6.60748 0.988746 5.59027 1.76861 5.06179L2.02209 1.76697H1.30256C1.19874 1.76697 1.10169 1.73891 1.01821 1.6898C0.852651 1.59229 0.741342 1.412 0.741342 1.20575C0.741342 0.89591 0.992721 0.644531 1.30256 0.644531H7.66303C7.97404 0.644531 8.22425 0.89591 8.22425 1.20575C8.22425 1.412 8.11201 1.59229 7.94832 1.6898C7.86414 1.73891 7.76592 1.76697 7.66303 1.76697H6.9428L7.19769 5.06179C7.97638 5.59027 8.56332 6.60748 8.80418 7.57324L8.94916 8.1555C8.97025 8.24018 8.97184 8.37915 8.97184 8.46845C8.97184 9.13242 7.2584 9.2828 5.04402 9.36294V12.056C5.04402 12.367 4.79381 12.6172 4.46175 12.6172C4.17179 12.6172 3.90053 12.367 3.90053 12.056L3.91714 9.3628C1.70458 9.28217 -0.00694874 9.13205 -0.00694874 8.46845C-0.0105265 8.38338 -0.00297344 8.30682 0.0154065 8.1555ZM2.84591 5.68848L2.39927 5.99247C1.84063 6.36896 1.39804 7.11669 1.22462 7.94577C2.84591 8.33287 6.09864 8.27231 7.70412 7.97928C7.53342 7.28945 7.10415 6.36896 6.56632 5.99247L6.09864 5.68848L5.81803 1.76697H3.14757L2.84591 5.68848Z" 
+            fill={_options.color}  
         />
-      </svg>
+      </svg>    
   {:else if icon === Icon.Sublink}
         <svg 
             width="14" height="13" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -145,8 +145,12 @@
             <path d="M5.13876 2.85941C5.13876 4.04805 4.18124 5.0069 3.0059 5.0069C1.83057 5.0069 0.873047 4.04805 0.873047 2.85941C0.873047 1.67076 1.83057 0.711914 3.0059 0.711914C4.18124 0.711914 5.13876 1.67076 5.13876 2.85941Z" stroke={_options.color} stroke-width={_options.strokeWidth}/>
         </svg>
   {:else}
-      <svg xmlns="http://www.w3.org/2000/svg" width="6" height="5" viewBox="0 0 6 5" fill="none">
-            <path d="M2.76221 4.45654L0.343848 0.267823L5.18057 0.267822L2.76221 4.45654Z" fill={_options.color}/>
+      <svg xmlns="http://www.w3.org/2000/svg" width={_options.width} height={_options.height} fill="none">
+        <path 
+            stroke-linecap="round" stroke-linejoin="round" stroke={_options.color}
+            d="M9 4.6 6.341 7.08a.5.5 0 0 1-.682 0L3 4.6"
+        >
+        </path>
       </svg>
   {/if}
 </div>
@@ -155,10 +159,10 @@
 <style lang="scss">
   .svg-icon {
     @include center;
+    transform: scale(var(--scale));
 
     path {
-      stroke-width: var(--stroke-width);
-      stroke: var(--path-color);
+      // stroke-width: var(--stroke-width);
     }
   }
   .day-icon {

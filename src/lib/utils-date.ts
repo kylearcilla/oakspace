@@ -520,7 +520,7 @@ export function minsFromStartToHHMM(minsFromStart: number, doShorten = true) {
  * @returns  A formatted time string in the format "hour AM/PM".
  * @example
  * 
- * ``` ts
+ * ```
  * const timeIdx = 14;
  * const formattedTime = getTimeFromIdx(timeIdx);
  * console.log(formattedTime); // Output: "2 PM"
@@ -538,4 +538,66 @@ export function getTimeFromIdx(timeIdx: number, lowerCase = false) {
     else {
         return str
     }
+}
+
+/**
+ * 
+ * Check if time of day is valid.
+ * 
+ * @param h       The hours portion of the time (0-12)
+ * @param m       The minutes portion of the time (0-59)
+ * @param ampm    Indicates whether it's AM or PM
+ * @param strict  Wether am or pm rules should be enforced
+ * 
+ * @throws Error if the input values for hours or minutes are invalid.
+ * 
+ */
+export function validateTimeOfDay(h: number, m: number, ampm?: "am" | "pm", strict = true) {
+    if (h < 0 || h > 24) {
+        throw new Error("Invalid value for hours. Hours must be between 0 and 24.")
+    }
+    if (ampm && strict && ampm === "am" && (h > 12 || h === 0)) {
+        throw new Error("Invalid value for hours.")
+    }
+    if (ampm && strict && ampm === "pm" && (h > 12 || h === 0)) {
+        throw new Error("Invalid value for hours.")
+    }
+    if (m < 0 || m > 59) {
+        throw new Error("Invalid value for minutes. Minutes must be between 0 and 59.")
+    }
+}
+
+/**
+ * From a given time of day, return the number of minutes elapsed from the start of day to that time
+ * 
+ * @param h     The hours portion of the time (0-12)
+ * @param m     The minutes portion of the time (0-59)
+ * @param ampm  Indicates whether it's AM or PM
+ * 
+ * @throws      Error if the input values for hours or minutes are invalid.
+ * @returns     The total number of minutes elapsed
+ * 
+ * `1:00 AM  = 60` 
+ * `1:00 pm  = 780`
+ * `13:00    = 780`
+ * `13:00 am = 780`
+ * `13:00 pm = 780`
+ * 
+ */
+export function timeStrToMins(h: number, m: number, ampm?: "am" | "pm") {
+    validateTimeOfDay(h, m, ampm, false)
+
+    if (h === 24 || h === 0) {
+        h = 0
+    }
+    else if (h > 12) {
+        h = h
+    }
+    else if (ampm === "pm" && h !== 12) {
+        h += 12
+    } 
+    else if (ampm === "am" && h === 12) {
+        h = 0
+    }
+    return (h * 60) + m
 }

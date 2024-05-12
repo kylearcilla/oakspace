@@ -521,7 +521,7 @@
             }
         }
         &__user-profile {
-            @include pos-abs-top-right-corner(40px, 0px);
+            @include abs-top-right(40px, 0px);
             border-radius: 13px;
             padding: 15px 14px 15px 14px;
             min-width: 170px;
@@ -617,7 +617,7 @@
             z-index: 0;
         }
         .img-bg-gradient {
-            @include pos-abs-bottom-left-corner;
+            @include abs-bottom-left;
             width: 100%;
             height: 100%;
             z-index: 1;
@@ -715,10 +715,10 @@
             @include not-visible;
 
             &--left {
-                @include pos-abs-top-left-corner(50%, 5px);
+                @include abs-top-left(50%, 5px);
             }
             &--right {
-                @include pos-abs-top-right-corner(50%, 5px);
+                @include abs-top-right(50%, 5px);
             }
             
 
@@ -735,7 +735,7 @@
             position: relative;
 
             .divider {
-                @include pos-abs-top-right-corner(-5px, 0px);
+                @include abs-top-right(-5px, 0px);
                 height: 12px;
                 width: 1px;
                 background-color: rgba(var(--textColor1), 0.1);
@@ -827,7 +827,7 @@
                 margin-bottom: 70px;
             }
             .divider {
-                @include pos-abs-bottom-left-corner(0px, 0px);
+                @include abs-bottom-left(0px, 0px);
             }
         }
         &__playlist-item-img-container {
@@ -886,7 +886,7 @@
             }
         }
         &__playlist-item-vid-count, &__playlist-item-channel-details {
-            @include pos-abs-bottom-left-corner(0px, 0px);
+            @include abs-bottom-left(0px, 0px);
             margin-top: 12px;
             font-weight: 300;
             color: rgba(var(--textColor1), 0.4);

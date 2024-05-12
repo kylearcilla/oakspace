@@ -608,7 +608,7 @@
             margin: 7px 0px 5px 0px;
         }
         &__handle {
-            @include pos-abs-top-left-corner(12px);
+            @include abs-top-left(12px);
         }
     }
     .goals-repo-item {
@@ -651,7 +651,7 @@
             }
         }
         &--card &__drop-divider {
-            @include pos-abs-top-left-corner;
+            @include abs-top-left;
             display: block;
         }
         &--card &__handle {
@@ -693,7 +693,7 @@
         &__divider {
             margin-left: 25px;
             @include divider(0.045, 0.5px, calc(100% - 50px));
-            @include pos-abs-top-left-corner;
+            @include abs-top-left;
         }
         &__drop-divider {
             width: 100%;
@@ -708,7 +708,7 @@
         }
         &__handle {
             transform: translateY(100%);
-            @include pos-abs-top-left-corner;
+            @include abs-top-left;
         }
     }
 </style>

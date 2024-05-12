@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { themeState } from "$lib/store"
-	import { TEST_TAGS, clickOutside, getColorTrio } from "$lib/utils-general"
+	import { TEST_TAGS, clickOutside, getColorTrio, inlineStyling } from "$lib/utils-general"
 	import { onMount } from "svelte"
 	import SvgIcon from "./SVGIcon.svelte"
 	import { Icon } from "$lib/enums"
+	import BounceFade from "./BounceFade.svelte";
     
     $: isDarkTheme = $themeState.isDarkTheme
 
@@ -12,6 +13,7 @@
     export let onTagOptionClicked: (newTag: Tag | null) => void
     export let onClickOutside: FunctionParam
     export let onClick: FunctionParam
+    export let styling: StylingOptions | undefined = undefined
 
     let isPickerMounted = true
     let _isActive = true
@@ -45,9 +47,8 @@
     function onClickNewTagBtn() {
     }
 
-    onMount(() => console.log())
+    onMount(() => console.log(inlineStyling(styling)))
 </script>
-
 
 <div class="tag-picker">
     <button 
@@ -59,6 +60,7 @@
         style:--tag-color-1={tagColor ? tagColor[0] : ""}
         style:--tag-color-2={tagColor ? tagColor[1] : ""}
         style:--tag-color-3={tagColor ? tagColor[2] : ""}
+        style={inlineStyling(styling)}
         on:click={onClick}
     >
         <!-- Tag Content -->
@@ -77,19 +79,24 @@
         <!-- Tag Dropdown Arrow -->
         {#if isEmpty || (!isEmpty && !isActive)}
             <div class="tag-picker__dropdown-btn-arrow">
-                <SvgIcon icon={Icon.Dropdown}/>
+                <SvgIcon 
+                    icon={Icon.Dropdown}
+                    options={{
+                        scale: 1.1, height: 12, width: 12, strokeWidth: 1.4
+                    }}
+                />
             </div>
         {:else}
             <button 
                 class="tag-picker__dropdown-btn-close"
                 on:click|stopPropagation={() => onTagOptionClicked(null)}
             >
-                <SvgIcon icon={Icon.Close} options={{ scale: 0.9, strokeWidth: 1.2 }} />
+                <SvgIcon icon={Icon.Close} options={{ scale: 0.9, strokeWidth: 1.5 }} />
             </button>
         {/if}
     </button>
     <!-- Tag Dropdown Menu -->
-    {#if isPickerMounted}
+    <BounceFade isHidden={!isActive}>
         <div 
             id="tag-picker--dropdown-menu"
             class="tag-picker__dropdown-menu-container"
@@ -153,15 +160,13 @@
                 </button>
             </div>
         </div>
-    {/if}
+    </BounceFade>
 </div>
-
 
 <style lang="scss">
     @import "../scss/dropdown.scss";
 
     .tag {
-        border-radius: 9px !important;
         &__symbol {
             cursor: pointer;
         }
@@ -212,7 +217,7 @@
             }
         }
         &__dropdown-menu-container {
-            @include pos-abs-top-left-corner(28px);
+            @include abs-top-left(28px);
             background-color: var(--dropdownMenuBgColor1);
             border: 1px solid rgba(white, 0.03);
             padding: 8px 4px 8px 8px;
@@ -276,7 +281,7 @@
             }
             &-settings-btn {
                 @include not-visible;
-                @include pos-abs-top-right-corner(5px, 5px);   
+                @include abs-top-right(5px, 5px);   
             }
         }
         &__dropdown-option-btn {

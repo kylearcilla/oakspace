@@ -140,7 +140,7 @@
             
             &--bg {
                 transform: translateY(5px);
-                @include pos-abs-top-left-corner(0px, 0px);
+                @include abs-top-left(0px, 0px);
                 background-color: var(--midPanelAccentColor2);
             }
             &--word {

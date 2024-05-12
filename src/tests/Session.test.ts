@@ -549,6 +549,8 @@ describe('Scoring Sessions', () => {
     })
 })
 
+const func = () => console.log("XS")
+
 describe('Skipping & Restarting Sessions', () => {
     let session: Session | null
 

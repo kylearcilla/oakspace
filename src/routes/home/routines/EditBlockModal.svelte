@@ -1,35 +1,33 @@
 <script lang="ts">
-	import { onMount } from "svelte";
-	import Modal from "../../../../components/Modal.svelte";
-	import { InputManager, TextEditorManager } from "$lib/inputs"
-	import SvgIcon from "../../../../components/SVGIcon.svelte"
+	import type { Writable } from "svelte/store"
+
 	import { Icon } from "$lib/enums"
+	import { toast } from "$lib/utils-toast"
 	import { themeState } from "$lib/store"
-	import DropdownList from "../../../../components/DropdownList.svelte"
-	import DropdownBtn from "../../../../components/DropdownBtn.svelte"
-	import TasksList from "../../../../components/TasksList.svelte"
-	import { TEST_MILESTONES } from "$lib/utils-goals"
-	import TimePicker from "../../../../components/TimePicker.svelte"
-	import ColorPicker from "../../../../components/ColorPicker.svelte"
+	import { InputManager, TextEditorManager } from "$lib/inputs"
+    import type { RoutinesManager } from "$lib/routines-manager"
 	import { ROUTINE_CORE_KEYS, getCoreStr } from "$lib/utils-routines"
-	import TagPicker from "../../../../components/TagPicker.svelte"
-	import AsyncButton from "../../../../components/AsyncButton.svelte"
-	import ConfirmationModal from "../../../../components/ConfirmationModal.svelte";
-	import { toast } from "$lib/utils-toast";
-	import type { Writable } from "svelte/store";
-    import type { RoutinesManager } from "$lib/routines-manager";
+
+	import Modal from "../../../components/Modal.svelte"
+	import SvgIcon from "../../../components/SVGIcon.svelte"
+	import TagPicker from "../../../components/TagPicker.svelte"
+	import AsyncButton from "../../../components/AsyncButton.svelte"
+	import TasksList from "../../../components/TasksList.svelte"
+	import TimePicker from "../../../components/TimePicker.svelte"
+	import ColorPicker from "../../../components/ColorPicker.svelte"
+	import DropdownBtn from "../../../components/DropdownBtn.svelte"
+	import DropdownList from "../../../components/DropdownList.svelte"
+	import ConfirmationModal from "../../../components/ConfirmationModal.svelte"
 
     export let routineManager: RoutinesManager
     export let block: RoutineBlockElem
     
-    let settingsOpen = false
-    let coresOpen = false
-    let colorsOpen = false
-    let tagsOpen = false
+    let settingsOpen = false, coresOpen = false
+    let colorsOpen = false, tagsOpen = false
     
     let { 
-        startTime, endTime, title, description, yOffset, height,
-        tasks
+        startTime, endTime, title, 
+        description, yOffset, height, tasks
     } = block
     
     let updatedTasks: Task[] = []
@@ -51,7 +49,7 @@
     $: initDescriptionEditor(description)
 
     function onMadeChanges(updatedBlock: RoutineBlockElem | null) {
-        routineManager.onEditModalClose(updatedBlock)
+        routineManager.onConcludeModalEdit(updatedBlock)
     }
 
     /* Time Changes */
@@ -253,11 +251,14 @@
                 </div>
             </div>
             <button 
+                on:click={() => settingsOpen = !settingsOpen}
                 class="edit-routine__settings-btn dropdown-btn dropdown-btn--settings"
                 id={"edit-routine-settings--dropdown-btn"}
-                on:click={() => settingsOpen = !settingsOpen}
             >
-                <SvgIcon icon={Icon.Settings} options={{ opacity: 0.4}}/>
+                <SvgIcon 
+                    icon={Icon.Settings} 
+                    options={{ opacity: 0.6}}
+                />
             </button>
             <!-- Settings Dropdown -->
             <DropdownList 
@@ -287,6 +288,7 @@
                             onTagOptionClicked={(newTag) => onTagChange(newTag)}
                             onClick={() => tagsOpen = !tagsOpen}
                             onClickOutside={() => tagsOpen = false}
+                            styling={{ borderRadius: "12px" }}
                         />
                     </div>
                 </div>
@@ -304,7 +306,7 @@
                             options={{
                                 allowEmpty: true,
                                 onClick: () => coresOpen = !coresOpen,
-                                onRemove: () => onRemoveCore(),
+                                onRemove:() => onRemoveCore(),
                                 pickedOptionName: getCoreStr(block.activity),
                                 styles: { fontSize: "1.18rem", padding: "4px 12px 4px 11px" }
                             }} 
@@ -361,7 +363,6 @@
                 <div class="edit-routine__info-title">Description</div>
             </div>
             {#if descriptionEditor}
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <div 
                     class="edit-routine__description-text-editor text-editor"
                     data-placeholder={$descriptionEditor.placeholder}
@@ -394,71 +395,104 @@
                     <span>Add</span>
                 </button>
             </div>
-            <div class="edit-routine__list-container" bind:this={routineListRef}>
-                {#if routineListRef}
-                    <TasksList 
-                        on:tasksUpdated={onTaskChange}
-                        options={{
-                            id:   "edit-routine",
-                            type: "subtasks numbered",
-                            isCreatingNewTask: doCreateNewTask,
-                            containerRef: routineListRef,
-                            tasks: TEST_MILESTONES.map((task) => ({ ...task, subtasks: []})),
-                            styling: {
-                                task:    { fontSize: "1.23rem", height: "30px", padding: "7px 0px 5px 0px" },
-                                subtask: { fontSize: "1.23rem", padding: "8px 0px 8px 0px" },
-                                num:     { width: "24px", margin: "1px 0px 0px 26px" },
-                                description:      { margin: "4px 0px 2px 0px"},
-                                descriptionInput: { fontSize: "1.23rem" }
-                            },
-                            cssVariables: { maxDescrLines: 2 },
-                            contextMenuOptions: { width: "170px" },
-                            ui: { 
-                                hasTaskDivider: false,
-                                sidePadding: "25px", listHeight: "100%"
-                            }
-                        }}
-                    />
-                {/if}
-            </div>
+            {#if routineListRef}
+                <div class="edit-routine__list-container" bind:this={routineListRef}>
+                        <TasksList 
+                            on:tasksUpdated={onTaskChange}
+                            options={{
+                                id:   "edit-routine",
+                                type: "subtasks numbered",
+                                isCreatingNewTask: doCreateNewTask,
+                                containerRef: routineListRef,
+                                tasks,
+                                styling: {
+                                    task: { 
+                                        fontSize: "1.23rem", height: "30px", padding: "7px 0px 5px 0px" 
+                                    },
+                                    subtask: { 
+                                        fontSize: "1.23rem", padding: "8px 0px 8px 0px" 
+                                    },
+                                    num: { 
+                                        width: "24px", margin: "1px 0px 0px 26px" 
+                                    },
+                                    description: { 
+                                        margin: "4px 0px 2px 0px"
+                                    },
+                                    descriptionInput: { 
+                                        fontSize: "1.23rem" 
+                                    }
+                                },
+                                cssVariables: { 
+                                    maxDescrLines: 2 
+                                },
+                                contextMenuOptions: { 
+                                    width: "170px" 
+                                },
+                                ui: { 
+                                    hasTaskDivider: false,
+                                    sidePadding: "25px", listHeight: "100%"
+                                }
+                            }}
+                        />
+                    </div>
+            {/if}
         </div>
         <!-- Buttons -->
         <div class="edit-routine__btns">
             <button 
-                class="edit-routine__cancel-btn"
                 on:click={onAttemptClose}
-                disabled={isSaving}
+                class="edit-routine__cancel-btn" disabled={isSaving}
             >
                 Cancel
             </button>
-            <AsyncButton
-                isLoading={isSaving}
-                actionFunc={saveChanges}
-            />
+            <AsyncButton isLoading={isSaving} actionFunc={saveChanges} />
         </div>
     </div>
 </Modal>
 
 {#if confirmModalOpen} 
     <ConfirmationModal 
-        msg="Discard unsaved changes?"
+        text="Discard unsaved changes?"
         onCancel={cancelCloseAttempt}
         onOk={confirmUnsavedClose}
-        options={{ okMsg: "Discard" }}
+        options={{ ok: "Discard", caption: "Heads Up!" }}
     /> 
 {/if}
 
 <style lang="scss">
-    @import "../../../../scss/inputs.scss";
-    @import "../../../../scss/dropdown.scss";
+    @import "../../../scss/inputs.scss";
+    @import "../../../scss/dropdown.scss";
 
     .edit-routine {
         height: 75vh;
         width: clamp(420px, 70vw, 600px);
         padding: 0px;
 
+        &--light &__info-title {
+            @include text-style(0.9, 500);
+        }
+        &--light &__title-container input {
+            @include text-style(1, 500);
+        }
+        &--light &__description-text-editor {
+            @include text-style(0.72, 500);
+        }
+        &--light &__info-icon {
+            @include text-style(0.38, 400);
+        }
+        &--light &__cancel-btn {
+            @include txt-color(0.08, "bg");
+            @include text-style(1, 500);
+        }
         &--light {
 
+        }
+        &--light &__time span {
+            opacity: 0.4;
+            @include text-style(1, 600);
+        }
+        &--light div[contenteditable]:empty:before {
+            opacity: 0.4;
         }
         &--dark .dropdown-btn {
             @include dropdown-btn-dark;
@@ -476,7 +510,7 @@
 
             &-left {
                 @include flex(center);
-                width: 100%;
+            width: 100%;
                 position: relative;
             }
         }
@@ -501,7 +535,7 @@
             }
         }
         &__color-picker-container {
-            @include pos-abs-top-left-corner(22px, 5px);
+            @include abs-top-left(22px, 5px);
             z-index: 100;
         }
         /* Title */
@@ -524,10 +558,10 @@
         }
         /* Dropdowns */
         &__settings-dropdown {
-            @include pos-abs-top-right-corner(28px);
+            @include abs-top-right(28px);
         }
         &__color-dropdown {
-            @include pos-abs-top-left-corner(28px);
+            @include abs-top-left(28px);
         }
 
         /* Info */
@@ -588,7 +622,7 @@
         }
         &__description-header {
             @include flex(center);
-            margin-bottom: 8px;
+            margin-bottom: 5px;
         }
         &__description-text-editor {
             max-width: 100%;

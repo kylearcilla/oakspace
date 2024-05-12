@@ -138,11 +138,10 @@
 
     .vid-view {
         position: relative;
-        // @include flex(center, center);
-        @include pos-abs-top-left-corner;
+        @include abs-top-left(26px);
         width: 100%;
         height: 100%;
-        padding: 28px 30px 20px 30px;
+        padding: 28px 25px 20px 30px;
         z-index: 1;
 
         &--hidden {
@@ -155,7 +154,7 @@
         &__playlist-title {
             color: rgba(255, 255, 255, 0.9);
             float: right;
-            @include pos-abs-top-right-corner(5px, 0px);
+            @include abs-top-right(5px, 0px);
         }
         &__container {
             background-color: none;

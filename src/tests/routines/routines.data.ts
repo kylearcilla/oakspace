@@ -1,7 +1,140 @@
-import { CoreStatus } from "$lib/enums"
 import { COLOR_SWATCHES, TEST_TAGS } from "$lib/utils-general"
 
 const TEST_CONTAINER_HT = 750
+
+type PresetRoutines = {
+    hs: RoutineBlock[][],
+    uni: RoutineBlock[][],
+}
+
+export const TAGS = [
+  {
+    id: "0",
+    orderIdx: 0,
+    name: "Body",
+    symbol: {
+      color: COLOR_SWATCHES.d[9],
+      emoji: "💪"
+    }
+  },
+  {
+    id: "1",
+    orderIdx: 1,
+    name: "JS",
+    symbol: {
+      color: COLOR_SWATCHES.d[1],
+      emoji: "👨‍💻"
+    }
+  },
+  {
+    id: "2",
+    orderIdx: 2,
+    name: "French",
+    symbol: {
+      color: COLOR_SWATCHES.d[4],
+      emoji: "🇫🇷"
+    }
+  },
+  {
+    id: "3",
+    orderIdx: 3,
+    name: "Cooking",
+    symbol: {
+      color: COLOR_SWATCHES.d[2],
+      emoji: "🍖"
+    }
+  },
+  {
+    id: "4",
+    orderIdx: 4,
+    name: "SWE",
+    symbol: {
+      color: COLOR_SWATCHES.d[4],
+      emoji: "👨‍💻"
+    }
+  },
+  {
+    id: "5",
+    orderIdx: 5,
+    name: "BBall",
+    symbol: {
+      color: COLOR_SWATCHES.d[2],
+      emoji: "🏀"
+    }
+  },
+  {
+    id: "6",
+    orderIdx: 6,
+    name: "Running",
+    symbol: {
+      color: COLOR_SWATCHES.d[2],
+      emoji: "🏃‍♂️"
+    }
+  },
+  {
+    id: "7",
+    orderIdx: 7,
+    name: "Meditation",
+    symbol: {
+      color: COLOR_SWATCHES.d[3],
+      emoji: "🌿"
+    }
+  },
+  {
+    id: "8",
+    orderIdx: 8,
+    name: "Art",
+    symbol: {
+      color: COLOR_SWATCHES.d[13],
+      emoji: "🌁"
+    }
+  },
+  {
+    id: "9",
+    orderIdx: 9,
+    name: "Sport",
+    symbol: {
+      color: COLOR_SWATCHES.d[1],
+      emoji: "⚾️"
+    }
+  },
+  {
+    id: "10",
+    orderIdx: 10,
+    name: "Learning",
+    symbol: {
+      color: COLOR_SWATCHES.d[7],
+      emoji: "📖"
+    }
+  },
+  {
+    id: "11",
+    orderIdx: 11,
+    name: "Hustle",
+    symbol: {
+      color: COLOR_SWATCHES.d[3],
+      emoji: "💵"
+    }
+  },
+  {
+    id: "12",
+    orderIdx: 12,
+    name: "School",
+    symbol: {
+      color: COLOR_SWATCHES.d[1],
+      emoji: "🎒"
+    }
+  },
+  {
+    id: "13",
+    orderIdx: 13,
+    name: "Extracurriculars",
+    symbol: {
+      color: COLOR_SWATCHES.d[15],
+      emoji: "🎯"
+    }
+  },
+]
 
 // test
 export const TEST_ROUTINE_BLOCK_ELEMS = [
@@ -15,6 +148,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -32,6 +166,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -49,6 +184,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -65,6 +201,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -81,6 +218,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -97,6 +235,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -113,6 +252,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -129,6 +269,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -145,6 +286,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -161,6 +303,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -177,6 +320,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -193,6 +337,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -209,6 +354,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -225,6 +371,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -241,6 +388,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -257,6 +405,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -273,6 +422,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -289,6 +439,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -305,6 +456,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -321,6 +473,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -337,6 +490,7 @@ export const TEST_ROUTINE_BLOCK_ELEMS = [
             activity: null,
             tag: null,
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         elemProps: {
@@ -354,7 +508,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -364,7 +519,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -374,7 +530,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -384,7 +541,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -394,7 +552,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -404,7 +563,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -414,7 +574,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     // Monday: DAILY_ROUTINES[0],
@@ -428,7 +589,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -438,7 +600,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -448,7 +611,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -458,7 +622,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -468,7 +633,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -478,7 +644,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -488,7 +655,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Wednesday: [
@@ -500,7 +668,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -510,7 +679,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -520,7 +690,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -530,7 +701,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -540,7 +712,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -550,7 +723,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -560,7 +734,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Thursday: [
@@ -572,7 +747,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -582,7 +758,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -592,7 +769,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -602,7 +780,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -612,7 +791,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -622,7 +802,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -632,7 +813,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     // Friday: DAILY_ROUTINES[1],
@@ -645,7 +827,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -655,7 +838,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -665,7 +849,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -675,7 +860,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -685,7 +871,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -695,7 +882,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -705,7 +893,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Saturday: [
@@ -717,7 +906,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🏃‍♂️ Running",
@@ -727,7 +917,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[6],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -737,7 +928,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🌁 Art",
@@ -747,7 +939,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: TEST_TAGS[8],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "💪 Gym (Push)",
@@ -755,9 +948,10 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             startTime: 1000,
             endTime: 1100,
             activity: "body",
-            tag: TEST_TAGS[0],
+            tag: TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -767,7 +961,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -777,7 +972,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Sunday: [
@@ -789,7 +985,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🏃‍♂️ Running",
@@ -799,7 +996,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[6],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -809,7 +1007,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🌁 Art",
@@ -819,7 +1018,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: TEST_TAGS[8],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "💪 Gym (Push)",
@@ -827,9 +1027,10 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             startTime: 1000,
             endTime: 1100,
             activity: "body",
-            tag: TEST_TAGS[0],
+            tag: TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -839,7 +1040,8 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -849,12 +1051,143 @@ export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ]
 }
 
-export const PRESET_ROUTINES = {
+// test & core breakdown testing
+const BREAKDOWN_TEST_DAILY_BLOCKS = [
+    [
+        { title: "A", startTime: 0, endTime: 20, tagIdx: 0, activity: "working" },
+        { title: "Y", startTime: 941, endTime: 980, tagIdx: 0, activity: "working" },
+        { title: "I", startTime: 301, endTime: 340, tagIdx: 0, activity: "working" },
+
+        { title: "K", startTime: 381, endTime: 420, tagIdx: 1, activity: "working" },
+        { title: "V", startTime: 821, endTime: 860, tagIdx: 1, activity: "working" },
+
+        { title: "D", startTime: 101, endTime: 140, tagIdx: 2, activity: "working" },
+        { title: "T", startTime: 741, endTime: 780, tagIdx: 2, activity: "working" },
+        { title: "AF", startTime: 1221, endTime: 1260, tagIdx: 2, activity: "working" },
+
+        { title: "P", startTime: 581, endTime: 620, tagIdx: 3, activity: "body" },
+        { title: "AC", startTime: 1100, endTime: 1140, tagIdx: 3, activity: "body" },
+
+        { title: "G", startTime: 221, endTime: 260, tagIdx: 4, activity: "body" },
+        { title: "X", startTime: 901, endTime: 940, tagIdx: 4, activity: "body" },
+
+        { title: "R", startTime: 661, endTime: 700, tagIdx: 5, activity: "body" },
+        { title: "C", startTime: 61, endTime: 100, tagIdx: 5, activity: "body" },
+        { title: "AE", startTime: 1181, endTime: 1220, tagIdx: 5, activity: "body" },
+
+        { title: "J", startTime: 341, endTime: 380, tagIdx: 6, activity: "body" },
+        { title: "Z", startTime: 981, endTime: 1020, tagIdx: 6, activity: "body" },
+
+        { title: "AH", startTime: 1301, endTime: 1339, tagIdx: 7, activity: "selfCare" },
+        { title: "Q", startTime: 621, endTime: 660, tagIdx: 7, activity: "selfCare" },
+        { title: "F", startTime: 181, endTime: 220, tagIdx: 7, activity: "selfCare" },
+
+        { title: "H", startTime: 261, endTime: 300, tagIdx: 8, activity: "selfCare" },
+        { title: "S", startTime: 701, endTime: 740, tagIdx: 8, activity: "selfCare" },
+
+        { title: "AD", startTime: 1141, endTime: 1180, tagIdx: 9, activity: "selfCare" },
+        { title: "O", startTime: 540, endTime: 580, tagIdx: 9, activity: "selfCare" },
+        { title: "B", startTime: 21, endTime: 60, tagIdx: 9, activity: "selfCare" },
+
+        { title: "L", startTime: 421, endTime: 460, tagIdx: 10, activity: "mind" },
+        { title: "U", startTime: 781, endTime: 820, tagIdx: 10, activity: "mind" },
+
+        { title: "W", startTime: 861, endTime: 900, tagIdx: 11, activity: "mind" },
+        { title: "AG", startTime: 1261, endTime: 1300, tagIdx: 11, activity: "mind" },
+        { title: "E", startTime: 141, endTime: 180, tagIdx: 11, activity: "mind" },
+
+        { title: "M", startTime: 461, endTime: 500, tagIdx: 12, activity: "mind" },
+        { title: "AA", startTime: 1021, endTime: 1060, tagIdx: 12, activity: "mind" },
+
+        { title: "N", startTime: 501, endTime: 540, tagIdx: 13, activity: "sleeping" },
+        { title: "AB", startTime: 1400, endTime: 1439, tagIdx: 13, activity: "sleeping" },
+    ],
+    [
+        { title: "A", startTime: 0, endTime: 20, tagIdx: 0, activity: "working" },
+        { title: "B", startTime: 941, endTime: 980, tagIdx: 1, activity: "working" },
+        
+        { title: "D", startTime: 381, endTime: 420, tagIdx: 2, activity: "body" },
+        { title: "E", startTime: 821, endTime: 860, tagIdx: 3, activity: "body" },
+        
+        { title: "F", startTime: 101, endTime: 140, tagIdx: 5, activity: "body" },
+        { title: "G", startTime: 741, endTime: 780, tagIdx: 6, activity: "selfCare" },
+        { title: "C", startTime: 301, endTime: 340, tagIdx: 7, activity: "sleeping" },
+        { title: "H", startTime: 1221, endTime: 1260, tagIdx: 7, activity: "sleeping" },
+    ],
+    [
+        { title: "A", startTime: 0, endTime: 20, tagIdx: 11, activity: "selfCare" },
+        { title: "B", startTime: 941, endTime: 980, tagIdx: 12, activity: "selfCare" },
+        { title: "C", startTime: 301, endTime: 340, tagIdx: 13, activity: "sleeping" },
+    ],
+]
+
+const BREAKDOWN_TEST_WEEKLY_BLOCKS = {
+    Monday: BREAKDOWN_TEST_DAILY_BLOCKS[0].map((data) => ({ 
+        ...data, 
+        color: COLOR_SWATCHES.d[0], 
+        description: "", tasks: [],
+        orderContext: "middle",
+        tag: TAGS[data.tagIdx],
+        activity: data.activity as keyof RoutineCores
+    })),
+    Tuesday: BREAKDOWN_TEST_DAILY_BLOCKS[1].map((data) => ({ 
+        ...data, 
+        color: COLOR_SWATCHES.d[0], 
+        description: "", tasks: [],
+        orderContext: "middle",
+        tag: TAGS[data.tagIdx],
+        activity: data.activity as keyof RoutineCores
+    })),
+    Wednesday: BREAKDOWN_TEST_DAILY_BLOCKS[0].map((data) => ({ 
+        ...data, 
+        color: COLOR_SWATCHES.d[0], 
+        description: "", tasks: [],
+        orderContext: "middle",
+        tag: TAGS[data.tagIdx],
+        activity: data.activity as keyof RoutineCores
+    })),
+    Thursday: BREAKDOWN_TEST_DAILY_BLOCKS[1].map((data) => ({ 
+        ...data, 
+        color: COLOR_SWATCHES.d[0], 
+        description: "", tasks: [],
+        orderContext: "middle",
+        tag: TAGS[data.tagIdx],
+        activity: data.activity as keyof RoutineCores
+    })),
+    Friday: BREAKDOWN_TEST_DAILY_BLOCKS[1].map((data) => ({ 
+        ...data, 
+        color: COLOR_SWATCHES.d[0], 
+        description: "", tasks: [],
+        orderContext: "middle",
+        tag: TAGS[data.tagIdx],
+        activity: data.activity as keyof RoutineCores
+    })),
+    Saturday: BREAKDOWN_TEST_DAILY_BLOCKS[2].map((data) => ({ 
+        ...data, 
+        color: COLOR_SWATCHES.d[0], 
+        description: "", tasks: [],
+        orderContext: "middle",
+        tag: TAGS[data.tagIdx],
+        activity: data.activity as keyof RoutineCores
+    })),
+    Sunday: BREAKDOWN_TEST_DAILY_BLOCKS[2].map((data) => ({ 
+        ...data, 
+        color: COLOR_SWATCHES.d[0], 
+        description: "", tasks: [],
+        orderContext: "middle",
+        tag: TAGS[data.tagIdx],
+        activity: data.activity as keyof RoutineCores
+    }))
+}
+
+// daily routines
+export const PRESET_ROUTINES: PresetRoutines = {
     hs: [
         [
             {
@@ -865,47 +1198,52 @@ export const PRESET_ROUTINES = {
                 activity: null,
                 tag: null,
                 description: "Wake up, stretches, brush teeth, shower, get dressed.",
-                tasks: []
+                tasks: [],
+                orderContext: "first",
             },
             {
                 title: "🎒 School",
                 color: COLOR_SWATCHES.d[1],
                 startTime: 420,  // 7:00 AM
                 endTime: 900,    // 3:00 PM
-                activity: null,
-                tag: null,
+                activity: "working",
+                tag: TAGS[12],
                 description: "Attend classes, study breaks, lunch",
-                tasks: []
+                tasks: [],
+                orderContext: "middle",
             },
             {
                 title: "🎾 Tennis Practice",
                 color: COLOR_SWATCHES.d[3],
                 startTime: 915,  // 3:15 PM
                 endTime: 990,   // 4:30 PM
-                activity: null,
-                tag: null,
+                activity: "body",
+                tag: TAGS[9],
                 description: "Tennis grind shit.",
-                tasks: []
+                tasks: [],
+                orderContext: "middle",
             },
             {
                 title: "👨‍💻 HW and Study",
                 color: COLOR_SWATCHES.d[0],
                 startTime: 1000,  // 4:40 PM
                 endTime: 1065,    // 5:45 PM
-                activity: null,
-                tag: null,
+                activity: "working",
+                tag: TAGS[12],
                 description: "Tennis grind shit.",
-                tasks: []
+                tasks: [],
+                orderContext: "middle",
             },
             {
                 title: "🌿 Relaxation Time",
                 color: COLOR_SWATCHES.d[17],
                 startTime: 1080,  // 6:00 PM
                 endTime: 1140,    // 7:00 PM
-                activity: null,
+                activity: "selfCare",
                 tag: null,
                 description: "After-school relax. Nap time. Snack. Walk outisde.",
-                tasks: []
+                tasks: [],
+                orderContext: "middle",
             },
             {
                 title: "Dinner",
@@ -915,37 +1253,41 @@ export const PRESET_ROUTINES = {
                 activity: null,
                 tag: null,
                 description: "Enjoy dinner with family, discuss day's events",
-                tasks: []
+                tasks: [],
+                orderContext: "middle",
             },
             {
                 title: "👨‍💻 HW and Study",
                 color: COLOR_SWATCHES.d[0],
                 startTime: 1220,   // 8:20 PM
                 endTime: 1320,     // 9:00 PM
-                activity: null,
-                tag: null,
+                activity: "working",
+                tag: TAGS[12],
                 description: "More studying if needed. Project. 🏫 College research",
-                tasks: []
+                tasks: [],
+                orderContext: "middle",
             },
             {
                 title: "🌿 Chill",
                 color: COLOR_SWATCHES.d[13],
                 startTime: 1325,   // 9:05 PM
                 endTime: 1360,     // 10:40 PM
-                activity: null,
+                activity: "selfCare",
                 tag: null,
                 description: "Relax, watch TV, play video games, read",
-                tasks: []
+                tasks: [],
+                orderContext: "middle",
             },
             {
                 title: "🌙 Evening Routine",
                 color: COLOR_SWATCHES.d[19],
                 startTime: 1365,   // 10:45 PM
                 endTime: 1395,     // 11:30 PM
-                activity: null,
+                activity: "selfCare",
                 tag: null,
                 description: "Skincare. Music. Light Reading. Shower. Sleep. White Noise. Plan for the next day.",
-                tasks: []
+                tasks: [],
+                orderContext: "last",
             },
         ],
         [
@@ -957,17 +1299,19 @@ export const PRESET_ROUTINES = {
                 activity: null,
                 tag: null,
                 description: "Wake up, stretches, brush teeth, shower, get dressed.",
-                tasks: []
+                tasks: [],
+                orderContext: "middle",
             },
             {
-                title: "🏃‍♂️ Morning Runing",
+                title: "🏃‍♂️ Morning Run",
                 color: COLOR_SWATCHES.d[9],
                 startTime: 555,  // 9:15 AM
                 endTime: 630,    // 10:30 PM
-                activity: null,
-                tag: null,
+                activity: "body",
+                tag: TAGS[6],
                 description: "Morning run.",
-                tasks: []
+                tasks: [],
+                orderContext: "middle",
             },
             {
                 title: "Lunch",
@@ -977,17 +1321,19 @@ export const PRESET_ROUTINES = {
                 activity: null,
                 tag: null,
                 description: "Tennis grind shit.",
-                tasks: []
+                tasks: [],
+                orderContext: "middle",
             },
             {
                 title: "💵 Work",
                 color: COLOR_SWATCHES.d[21],
                 startTime: 810,  // 1:30 PM
                 endTime: 1110,    // 6:30 PM
-                activity: null,
-                tag: null,
+                activity: "working",
+                tag: TAGS[11],
                 description: "Get the fucking bread bitch.",
-                tasks: []
+                tasks: [],
+                orderContext: "middle",
             },
             {
                 title: "Dinner",
@@ -997,27 +1343,30 @@ export const PRESET_ROUTINES = {
                 activity: null,
                 tag: null,
                 description: "Enjoy dinner with family, discuss day's events",
-                tasks: []
+                tasks: [],
+                orderContext: "middle",
             },
             {
                 title: "🌿 Chill",
                 color: COLOR_SWATCHES.d[13],
                 startTime: 1215,   // 8:15 PM
                 endTime: 1360,     // 10:40 PM
-                activity: null,
+                activity: "selfCare",
                 tag: null,
                 description: "Relax, watch TV, play video games, read",
-                tasks: []
+                tasks: [],
+                orderContext: "middle",
             },
             {
                 title: "🌙 Evening Routine",
                 color: COLOR_SWATCHES.d[19],
                 startTime: 1365,   // 10:45 PM
                 endTime: 1395,     // 11:30 PM
-                activity: null,
+                activity: "selfCare",
                 tag: null,
                 description: "Skincare. Music. Light Reading. Shower. Sleep. White Noise. Plan for the next day.",
-                tasks: []
+                tasks: [],
+                orderContext: "middle",
             },
         ]
     ],
@@ -1031,7 +1380,8 @@ export const PRESET_ROUTINES = {
                     activity: null,
                     tag: null,
                     description: "Wake up, stretches, brush teeth, shower, get dressed.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "📝 Day Planning",
@@ -1041,27 +1391,30 @@ export const PRESET_ROUTINES = {
                     activity: null,
                     tag: null,
                     description: "Plan the day. Study Plan. Free time plan.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "💪 Gym (Push)",
                     color: COLOR_SWATCHES.d[8],
                     startTime: 480, // 8:00 AM
                     endTime: 540,   // 9:00 PM
-                    activity: null,
-                    tag: null,
+                    activity: "body",
+                    tag: TAGS[0],
                     description: "Tennis grind shit.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "📖 Morning Lecture",
                     color: COLOR_SWATCHES.d[5],
                     startTime: 570,  // 9:30 PM
                     endTime: 690,    // 11:30 PM
-                    activity: null,
-                    tag: null,
+                    activity: "working",
+                    tag: TAGS[12],
                     description: "Attend morning lecture.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "Lunch",
@@ -1071,47 +1424,52 @@ export const PRESET_ROUTINES = {
                     activity: null,
                     tag: null,
                     description: "Lunch",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "👨‍💻 Deep Work Session",
                     color: COLOR_SWATCHES.d[26],
                     startTime: 840, // 2:00 PM
                     endTime: 960,   // 4:00 PM
-                    activity: null,
-                    tag: null,
+                    activity: "working",
+                    tag: TAGS[12],
                     description: "Relax, watch TV, play video games, read",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "🌿 Relaxation",
                     color: COLOR_SWATCHES.d[17],
                     startTime: 960, // 4:00 PM
                     endTime: 990,   // 4:30 PM
-                    activity: null,
+                    activity: "selfCare",
                     tag: null,
                     description: "Relax, watch TV, play video games, read",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "👨‍💻 Deep Work Session",
                     color: COLOR_SWATCHES.d[26],
                     startTime: 990,  // 4:30 PM
                     endTime: 1110,   // 6:30 PM
-                    activity: null,
-                    tag: null,
+                    activity: "working",
+                    tag: TAGS[12],
                     description: "Skincare. Music. Light Reading. Shower. Sleep. White Noise. Plan for the next day.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "🌿 Relaxation",
                     color: COLOR_SWATCHES.d[17],
                     startTime: 1110,   // 6:30 PM
                     endTime: 1140,     // 7:30 PM
-                    activity: null,
+                    activity: "selfCare",
                     tag: null,
                     description: "Relax, watch TV, play video games, read",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "Dinner",
@@ -1121,37 +1479,41 @@ export const PRESET_ROUTINES = {
                     activity: null,
                     tag: null,
                     description: "Cook or order or go out with a friend/friends.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "Internship / Research Grind",
                     color: COLOR_SWATCHES.d[20],
                     startTime: 1275,   // 9:15 PM
                     endTime: 1335,     // 10:15 PM
-                    activity: null,
-                    tag: null,
+                    activity: "working",
+                    tag: TAGS[12],
                     description: "Work on resume, look for opportunities, interview practice.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "🌿 Relaxation",
                     color: COLOR_SWATCHES.d[17],
                     startTime: 1335,   // 10:15 PM
                     endTime: 1380,     // 11:00 PM
-                    activity: null,
+                    activity: "selfCare",
                     tag: null,
                     description: "Gaming / Books / Movies / Shows",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "🌙 Evening Routine",
                     color: COLOR_SWATCHES.d[19],
                     startTime: 1380,   // 11:05 PM
                     endTime: 1410,     // 11:30 PM
-                    activity: null,
+                    activity: "selfCare",
                     tag: null,
                     description: "Skincare. Music. Light Reading. Shower. Sleep. White Noise. Plan for the next day.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
             ],
             [
@@ -1163,7 +1525,8 @@ export const PRESET_ROUTINES = {
                     activity: null,
                     tag: null,
                     description: "Wake up, stretches, brush teeth, shower, get dressed.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "📝 Day Planning",
@@ -1173,46 +1536,51 @@ export const PRESET_ROUTINES = {
                     activity: null,
                     tag: null,
                     description: "Plan the day. Study Plan. Free time plan.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "🏃‍♂️ Morning Run",
                     color: COLOR_SWATCHES.d[8],
                     startTime: 540, // 9:30 AM
                     endTime: 630,   // 11:00 AM
-                    activity: null,
-                    tag: null,
+                    activity: "body",
+                    tag: TAGS[6],
                     description: "Morning Cardio",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "👨‍💻 Deep Work Session",
                     color: COLOR_SWATCHES.d[26],
                     startTime: 645, // 10:45 PM
-                    endTime: 750,   // 4:00 PM
-                    activity: null,
-                    tag: null,
+                    endTime: 750,   // 12:30 PM
+                    activity: "working",
+                    tag: TAGS[12],
                     description: "Relax, watch TV, play video games, read",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "Lunch",
                     color: COLOR_SWATCHES.d[0],
-                    startTime: 760, endTime: 620,
+                    startTime: 760, endTime: 790,
                     activity: null,
                     tag: null,
                     description: "Lunch",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "Tutoring",
-                    color: COLOR_SWATCHES.d[26],
+                    color: COLOR_SWATCHES.d[3],
                     startTime: 900,  // 3 PM
                     endTime: 1140,   // 7 PM
-                    activity: null,
-                    tag: null,
+                    activity: "working",
+                    tag: TAGS[11],
                     description: "Get that bread.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "Dinner",
@@ -1222,7 +1590,8 @@ export const PRESET_ROUTINES = {
                     activity: null,
                     tag: null,
                     description: "Cook or order or go out with a friend/friends.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "🍊 Life Stuff",
@@ -1232,27 +1601,30 @@ export const PRESET_ROUTINES = {
                     activity: null,
                     tag: null,
                     description: "Finance. Health. Productivity. Career. Travel. Relationships. Side Hustle. GOal Settings. Etc.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "🌿 Relaxation",
                     color: COLOR_SWATCHES.d[17],
                     startTime: 1320,   // 10:00 PM
                     endTime: 1380,     // 11:00 PM
-                    activity: null,
+                    activity: "selfCare",
                     tag: null,
                     description: "Gaming / Books / Movies / Shows",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "🌙 Evening Routine",
                     color: COLOR_SWATCHES.d[19],
                     startTime: 1380,   // 11:05 PM
                     endTime: 1410,     // 11:30 PM
-                    activity: null,
+                    activity: "selfCare",
                     tag: null,
                     description: "Skincare. Music. Light Reading. Shower. Sleep. White Noise. Plan for the next day.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
             ],
             [
@@ -1264,7 +1636,8 @@ export const PRESET_ROUTINES = {
                     activity: null,
                     tag: null,
                     description: "Wake up, stretches, brush teeth, shower, get dressed.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "📝 Day Planning",
@@ -1274,30 +1647,35 @@ export const PRESET_ROUTINES = {
                     activity: null,
                     tag: null,
                     description: "Plan the day. Study Plan. Free time plan.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "👨‍💻 Deep Work Session",
-                    color: COLOR_SWATCHES.d[26], tag: null,
+                    color: COLOR_SWATCHES.d[26], tag: TAGS[12],
                     startTime: 480, endTime: 600,
-                    activity: null, description: "", tasks: [],
+                    activity: "working", description: "", tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "🌿 Relaxation",
                     startTime: 600, endTime: 630,
-                    activity: null, description: "", tasks: [],
+                    activity: "selfCare", description: "", tasks: [],
+                    orderContext: "middle",
                     color: COLOR_SWATCHES.d[17], tag: null,
                 },
                 {
                     title: "👨‍💻 Deep Work Session",
                     startTime: 630, endTime: 750,
-                    activity: null, description: "", tasks: [],
-                    color: COLOR_SWATCHES.d[26], tag: null,
+                    activity: "working", description: "", tasks: [],
+                    orderContext: "middle",
+                    color: COLOR_SWATCHES.d[26], tag: TAGS[12],
                 },
                 {
                     title: "Lunch",
-                    startTime: 760, endTime: 620,
+                    startTime: 760, endTime: 790,
                     activity: null, description: "", tasks: [],
+                    orderContext: "middle",
                     color: COLOR_SWATCHES.d[0], tag: null,
                 },
                 {
@@ -1305,30 +1683,33 @@ export const PRESET_ROUTINES = {
                     color: COLOR_SWATCHES.d[5],
                     startTime: 800, // 1:20 PM
                     endTime: 950,   // 3:50 PM
-                    activity: null,
-                    tag: null,
+                    activity: "working",
+                    tag: TAGS[12],
                     description: "Relax, watch TV, play video games, read",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "🌿 Relaxation",
                     color: COLOR_SWATCHES.d[17],
                     startTime: 950, // 3:50 PM
                     endTime: 1000,   // 4:50 PM
-                    activity: null,
+                    activity: "selfCare",
                     tag: null,
                     description: "Relax, watch TV, play video games, read",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "Afternoon Lecture",
                     color: COLOR_SWATCHES.d[5],
                     startTime: 1000,  // 4:50 PM
                     endTime: 1150,    // 7:20 PM
-                    activity: null,
-                    tag: null,
+                    activity: "working",
+                    tag: TAGS[12],
                     description: "Skincare. Music. Light Reading. Shower. Sleep. White Noise. Plan for the next day.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "Dinner",
@@ -1338,23 +1719,26 @@ export const PRESET_ROUTINES = {
                     activity: null,
                     tag: null,
                     description: "Cook or order or go out with a friend/friends.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
                 {
                     title: "👨‍💻 Late Night Grind",
                     startTime: 1260, endTime: 1380,
-                    activity: null, description: "", tasks: [],
-                    color: COLOR_SWATCHES.d[26], tag: null,
+                    activity: "working", description: "", tasks: [],
+                    orderContext: "middle",
+                    color: COLOR_SWATCHES.d[26], tag: TAGS[12],
                 },
                 {
                     title: "🌙 Evening Routine",
                     color: COLOR_SWATCHES.d[19],
                     startTime: 1380,   // 11:05 PM
                     endTime: 1410,     // 11:30 PM
-                    activity: null,
+                    activity: "selfCare",
                     tag: null,
                     description: "Skincare. Music. Light Reading. Shower. Sleep. White Noise. Plan for the next day.",
-                    tasks: []
+                    tasks: [],
+                    orderContext: "middle",
                 },
             ],
     ]
@@ -1364,37 +1748,18 @@ export const PRESET_ROUTINES = {
 export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
     { 
         id: "0",
-        name: "Workday 1.0",
+        name: "Routine 1.0",
         description: "Regular work day",
         blocks: [
             {
-                title: "First",
-                color: COLOR_SWATCHES.d[0],
-                startTime: 0,   // 12:00 AM
-                endTime: 10,    // 12:10 AM
-                activity: null,
-                tag: null,
-                tasks: [],
-                description: ""
-            },
-            {
-                title: "Second",
-                color: COLOR_SWATCHES.d[0],
-                startTime: 10,  // 12:10 AM
-                endTime: 15,    // 12:15 AM
-                activity: null,
-                tag: null,
-                tasks: [],
-                description: ""
-            },
-            {
                 title: "Fruit 🍑",
                 color: COLOR_SWATCHES.d[1],
-                startTime: 370,  // 6:10 AM
+                startTime: 360,  // 6:00 AM
                 endTime: 420,    // 7:00 AM
-                activity: null,
-                tag: null,
+                activity: "mind",
+                tag: TAGS[1],
                 tasks: [],
+                orderContext: "middle",
                 description: ""
             },
             {
@@ -1403,8 +1768,9 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
                 startTime: 525,  // 8:45 AM
                 endTime: 720,    // 12:00 PM
                 activity: "working",
-                tag: TEST_TAGS[1],
+                tag: TAGS[12],
                 tasks: [],
+                orderContext: "middle",
                 description: ""
             },
             {
@@ -1415,6 +1781,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
                 activity: null,
                 tag: null,
                 tasks: [],
+                orderContext: "middle",
                 description: ""
             },
             {
@@ -1423,8 +1790,9 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
                 startTime: 885,  // 2:45 PM
                 endTime: 1080,   // 6:00  PM
                 activity: "working",
-                tag: TEST_TAGS[1],
+                tag: TAGS[12],
                 tasks: [],
+                orderContext: "middle",
                 description: ""
             },
             {
@@ -1433,8 +1801,9 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
                 startTime: 1080,  // 6:00 PM
                 endTime: 1140,    // 7:00 PM
                 activity: "body",
-                tag: TEST_TAGS[0],
+                tag: TAGS[0],
                 tasks: [],
+                orderContext: "middle",
                 description: ""
             },
             {
@@ -1445,6 +1814,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
                 activity: null,
                 tag: TEST_TAGS[3],
                 tasks: [],
+                orderContext: "middle",
                 description: ""
             },
             {
@@ -1455,6 +1825,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
                 activity: "selfCare",
                 tag: null,
                 tasks: [],
+                orderContext: "middle",
                 description: ""
             },
             {
@@ -1465,6 +1836,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
                 activity: "selfCare",
                 tag: null,
                 tasks: [],
+                orderContext: "middle",
                 description: ""
             },
         ]
@@ -1482,20 +1854,22 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
             color: COLOR_SWATCHES.d[15],
             startTime: 915,  // 3:15 PM
             endTime: 990,   // 4:30 PM
-            activity: null,
-            tag: null,
+            activity: "working",
+            tag: TAGS[13],
             description: "Tennis grind shit.",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "💵 Work",
             color: COLOR_SWATCHES.d[21],
             startTime: 1000,  // 4:40 PM
             endTime: 1155,    // 7:15 PM
-            activity: null,
-            tag: null,
+            activity: "working",
+            tag: TAGS[11],
             description: "Get the fucking bread bitch.",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         ...PRESET_ROUTINES.hs[0].filter((block, idx) => ![2, 3, 4].includes(idx))
     ],
@@ -1506,19 +1880,21 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
             startTime: 915,  // 3:15 PM
             endTime: 975,    // 4:15 PM
             activity: null,
-            tag: null,
+            tag: TAGS[13],
             description: "Tennis grind shit.",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "💵 Work",
             color: COLOR_SWATCHES.d[21],
             startTime: 1000,  // 4:40 PM
             endTime: 1155,    // 7:15 PM
-            activity: null,
-            tag: null,
+            activity: "working",
+            tag: TAGS[11],
             description: "Get the fucking bread bitch.",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         ...PRESET_ROUTINES.hs[0].filter((block, idx) => ![2, 3, 4].includes(idx))
     ],
@@ -1528,44 +1904,37 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
             color: COLOR_SWATCHES.d[21],
             startTime: 1000,  // 4:40 PM
             endTime: 1155,    // 7:15 PM
-            activity: null,
-            tag: null,
+            activity: "working",
+            tag: TAGS[11],
             description: "Get the fucking bread bitch.",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🌿 Chill",
             color: COLOR_SWATCHES.d[13],
             startTime: 1215,   // 8:15 PM
             endTime: 1360,     // 10:40 PM
-            activity: null,
+            activity: "selfCare",
             tag: null,
             description: "Relax, watch TV, play video games, read",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         ...PRESET_ROUTINES.hs[0].filter((block, idx) => ![3, 4, 6, 7].includes(idx))
     ],
     PRESET_ROUTINES.hs[1],
     [
         {
-            title: "🌤️ Morning Routine",
-            color: COLOR_SWATCHES.d[2],
-            startTime: 480, // 8:00 AM
-            endTime: 540,    // 9:00 AM
-            activity: null,
-            tag: null,
-            description: "Wake up, stretches, brush teeth, shower, get dressed.",
-            tasks: []
-        },
-        {
             title: "💪 Gym",
             color: COLOR_SWATCHES.d[12],
             startTime: 810,  // 1:30 PM
             endTime: 900,    // 3:00 PM
-            activity: null,
-            tag: null,
+            activity: "body",
+            tag: TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "📌 College Prep",
@@ -1575,7 +1944,8 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         ...PRESET_ROUTINES.hs[1].filter((block, idx) => ![1, 3].includes(idx))
     ],
@@ -1585,6 +1955,8 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
         {
             ...PRESET_ROUTINES.uni[0][2],
             title: "💪 Gym (Pull)",
+            tag: TAGS[0],
+            activity: "body",
         },
         ...PRESET_ROUTINES.uni[0].filter((block, idx) => idx != 2)
     ],
@@ -1592,6 +1964,8 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
         {
             ...PRESET_ROUTINES.uni[0][2],
             title: "💪 Gym (Legs)",
+            tag: TAGS[0],
+            activity: "body",
         },
         ...PRESET_ROUTINES.uni[0].filter((block, idx) => idx != 2)
     ],
@@ -1614,9 +1988,10 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
             title: "💵 Side Hustle",
             color: COLOR_SWATCHES.d[15],
             startTime: 800, endTime: 900,
-            activity: null,
-            tag: null,
+            activity: "working",
+            tag: TAGS[11],
             tasks: [],
+            orderContext: "middle",
             description: ""
         },
         {
@@ -1629,8 +2004,54 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
 
     /* All Around */
 ]
+export const SET_DAILY_ROUTINES: DailyRoutine[] = [
+    DAILY_ROUTINES[0] as DailyRoutine,
+    DAILY_ROUTINES[1] as DailyRoutine,
+    { 
+        id: "3",
+        name: "HS Regular Weekday",
+        description: "Light weekday",
+        blocks: DAILY_ROUTINES[1] as RoutineBlock[],
+    },
+    { 
+        id: "4",
+        name: "HS EC Weekday",
+        description: "Weekday with extracurriculars.",
+        blocks: DAILY_ROUTINES[2] as RoutineBlock[],
+    },
+    { 
+        id: "5",
+        name: "HS Sunday Routine",
+        description: "Chill & productive sunday routine.",
+        blocks: DAILY_ROUTINES[6] as RoutineBlock[],
+    },
+    { 
+        id: "6",
+        name: "Uni Light Weekday",
+        description: "Light weekday",
+        blocks: DAILY_ROUTINES[7] as RoutineBlock[],
+    },
+    { 
+        id: "7",
+        name: "Uni Grind Weekday",
+        description: "Busy weekday",
+        blocks: DAILY_ROUTINES[10] as RoutineBlock[],
+    },
+    { 
+        id: "8",
+        name: "Uni Sunday",
+        description: "Deep works + Side Hustle",
+        blocks: DAILY_ROUTINES[12] as RoutineBlock[],
+    },
+    { 
+        id: "9",
+        name: "Empty",
+        description: "Empty",
+        blocks: [] as RoutineBlock[],
+    },
+]
 
-// weekly routines
+// weekly routines sets
 export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
     Monday: [
         {
@@ -1641,7 +2062,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -1651,7 +2073,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -1661,7 +2084,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -1671,7 +2095,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -1681,7 +2106,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -1691,7 +2117,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -1701,7 +2128,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     // Monday: DAILY_ROUTINES[0],
@@ -1715,7 +2143,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -1725,7 +2154,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -1735,7 +2165,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -1745,7 +2176,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -1755,7 +2187,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -1765,7 +2198,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -1775,7 +2209,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Wednesday: [
@@ -1787,7 +2222,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -1797,7 +2233,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -1807,7 +2244,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -1817,7 +2255,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -1827,7 +2266,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -1837,7 +2277,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -1847,7 +2288,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Thursday: [
@@ -1859,7 +2301,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -1869,7 +2312,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -1879,7 +2323,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -1889,7 +2334,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -1899,7 +2345,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -1909,7 +2356,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -1919,7 +2367,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     // Friday: DAILY_ROUTINES[1],
@@ -1932,7 +2381,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -1942,7 +2392,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -1952,7 +2403,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -1962,7 +2414,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -1972,7 +2425,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -1982,7 +2436,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -1992,7 +2447,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Saturday: [
@@ -2004,7 +2460,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🏃‍♂️ Running",
@@ -2014,7 +2471,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[6],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -2024,7 +2482,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🌁 Art",
@@ -2034,7 +2493,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: TEST_TAGS[8],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "💪 Gym (Push)",
@@ -2042,9 +2502,10 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             startTime: 1000,
             endTime: 1100,
             activity: "body",
-            tag: TEST_TAGS[0],
+            tag: TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -2054,7 +2515,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -2064,7 +2526,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Sunday: [
@@ -2076,7 +2539,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🏃‍♂️ Running",
@@ -2086,7 +2550,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[6],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -2096,7 +2561,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🌁 Art",
@@ -2106,7 +2572,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: TEST_TAGS[8],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "💪 Gym (Push)",
@@ -2114,9 +2581,10 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             startTime: 1000,
             endTime: 1100,
             activity: "body",
-            tag: TEST_TAGS[0],
+            tag: TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -2126,7 +2594,8 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -2136,27 +2605,28 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ]
 }
 export const WEEKLY_HS_STUDENT: WeeklyRoutineBlocks = {
-    Monday: DAILY_ROUTINES[1],
+    Monday: structuredClone(DAILY_ROUTINES[1]),
     Tuesday: DAILY_ROUTINES[2],
-    Wednesday: DAILY_ROUTINES[1],
+    Wednesday: structuredClone(DAILY_ROUTINES[1]),
     Thursday: DAILY_ROUTINES[3],
     Friday: DAILY_ROUTINES[4],
     Saturday: DAILY_ROUTINES[5],
     Sunday: DAILY_ROUTINES[6]
 }
 export const WEEKLY_UNI_STUDENT: WeeklyRoutineBlocks = {
-    Monday: DAILY_ROUTINES[7],
-    Tuesday: DAILY_ROUTINES[8],
-    Wednesday: DAILY_ROUTINES[9],
+    Monday: structuredClone(DAILY_ROUTINES[7]),
+    Tuesday: structuredClone(DAILY_ROUTINES[8]),
+    Wednesday: structuredClone(DAILY_ROUTINES[9]),
     Thursday: DAILY_ROUTINES[10],
     Friday: DAILY_ROUTINES[10],
-    Saturday: DAILY_ROUTINES[11],
-    Sunday: DAILY_ROUTINES[12]
+    Saturday: structuredClone(DAILY_ROUTINES[11]),
+    Sunday: structuredClone(DAILY_ROUTINES[12])
 }
 export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
     Monday: [
@@ -2168,7 +2638,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -2178,7 +2649,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -2188,7 +2660,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -2198,7 +2671,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -2208,7 +2682,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -2218,7 +2693,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -2228,7 +2704,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     // Monday: DAILY_ROUTINES[0],
@@ -2242,7 +2719,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -2252,7 +2730,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -2262,7 +2741,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -2272,7 +2752,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -2282,7 +2763,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -2292,7 +2774,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -2302,7 +2785,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Wednesday: [
@@ -2314,7 +2798,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -2324,7 +2809,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -2334,7 +2820,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -2344,7 +2831,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -2354,7 +2842,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -2364,7 +2853,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -2374,7 +2864,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Thursday: [
@@ -2386,7 +2877,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -2396,7 +2888,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -2406,7 +2899,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -2416,7 +2910,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -2426,7 +2921,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -2436,7 +2932,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -2446,7 +2943,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     // Friday: DAILY_ROUTINES[1],
@@ -2459,7 +2957,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -2469,7 +2968,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -2479,7 +2979,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -2489,7 +2990,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -2499,7 +3001,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -2509,7 +3012,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -2519,7 +3023,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Saturday: [
@@ -2531,7 +3036,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🏃‍♂️ Running",
@@ -2541,7 +3047,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[6],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -2551,7 +3058,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🌁 Art",
@@ -2561,7 +3069,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: TEST_TAGS[8],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "💪 Gym (Push)",
@@ -2569,9 +3078,10 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             startTime: 1000,
             endTime: 1100,
             activity: "body",
-            tag: TEST_TAGS[0],
+            tag: TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -2581,7 +3091,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -2591,7 +3102,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Sunday: [
@@ -2603,7 +3115,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🏃‍♂️ Running",
@@ -2613,7 +3126,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[6],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -2623,7 +3137,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🌁 Art",
@@ -2633,7 +3148,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: TEST_TAGS[8],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "💪 Gym (Push)",
@@ -2641,9 +3157,10 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             startTime: 1000,
             endTime: 1100,
             activity: "body",
-            tag: TEST_TAGS[0],
+            tag: TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -2653,7 +3170,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -2663,7 +3181,8 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ]
 }
@@ -2677,7 +3196,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -2687,7 +3207,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -2697,7 +3218,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -2707,7 +3229,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -2717,7 +3240,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -2727,7 +3251,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -2737,7 +3262,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     // Monday: DAILY_ROUTINES[0],
@@ -2751,7 +3277,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -2761,7 +3288,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -2771,7 +3299,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -2781,7 +3310,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -2791,7 +3321,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -2801,7 +3332,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -2811,7 +3343,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Wednesday: [
@@ -2823,7 +3356,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -2833,7 +3367,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -2843,7 +3378,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -2853,7 +3389,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -2863,7 +3400,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -2873,7 +3411,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -2883,7 +3422,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Thursday: [
@@ -2895,7 +3435,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -2905,7 +3446,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -2915,7 +3457,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -2925,7 +3468,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -2935,7 +3479,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -2945,7 +3490,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -2955,7 +3501,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     // Friday: DAILY_ROUTINES[1],
@@ -2968,7 +3515,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -2978,7 +3526,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -2988,7 +3537,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -2998,7 +3548,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -3008,7 +3559,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -3018,7 +3570,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -3028,7 +3581,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Saturday: [
@@ -3040,7 +3594,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🏃‍♂️ Running",
@@ -3050,7 +3605,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[6],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -3060,7 +3616,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🌁 Art",
@@ -3070,7 +3627,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: TEST_TAGS[8],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "💪 Gym (Push)",
@@ -3078,9 +3636,10 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             startTime: 1000,
             endTime: 1100,
             activity: "body",
-            tag: TEST_TAGS[0],
+            tag: TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -3090,7 +3649,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -3100,7 +3660,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Sunday: [
@@ -3112,7 +3673,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🏃‍♂️ Running",
@@ -3122,7 +3684,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[6],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -3132,7 +3695,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🌁 Art",
@@ -3142,7 +3706,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: TEST_TAGS[8],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "💪 Gym (Push)",
@@ -3150,9 +3715,10 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             startTime: 1000,
             endTime: 1100,
             activity: "body",
-            tag: TEST_TAGS[0],
+            tag: TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -3162,7 +3728,8 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -3172,11 +3739,11 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ]
 }
-
 export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     // Monday: [
     //     {
@@ -3187,7 +3754,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     //         activity: null,
     //         tag: null,
     //         description: "",
-    //         tasks: []
+    //         tasks: [],
+    // orderContext: "middle",
     //     },
     //     {
     //         title: "Orange",
@@ -3197,7 +3765,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     //         activity: "working",
     //         tag: TEST_TAGS[1],
     //         description: "",
-    //         tasks: []
+    //         tasks: [],
+    // orderContext: "middle",
     //     },
     //     {
     //         title: "Yellow",
@@ -3207,7 +3776,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     //         activity: null,
     //         tag: null,
     //         description: "",
-    //         tasks: []
+    //         tasks: [],
+    // orderContext: "middle",
     //     },
     //     {
     //         title: "Green",
@@ -3217,7 +3787,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     //         activity: "working",
     //         tag: TEST_TAGS[1],
     //         description: "",
-    //         tasks: []
+    //         tasks: [],
+    // orderContext: "middle",
     //     },
     //     {
     //         title: "Teal",
@@ -3227,7 +3798,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     //         activity: "body",
     //         tag: TEST_TAGS[0],
     //         description: "",
-    //         tasks: []
+    //         tasks: [],
+    // orderContext: "middle",
     //     },
     //     {
     //         title: "Blue",
@@ -3237,7 +3809,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     //         activity: null,
     //         tag: TEST_TAGS[3],
     //         description: "",
-    //         tasks: []
+    //         tasks: [],
+    // orderContext: "middle",
     //     },
     //     {
     //         title: "Purple",
@@ -3247,7 +3820,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     //         activity: "selfCare",
     //         tag: null,
     //         description: "",
-    //         tasks: []
+    //         tasks: [],
+    // orderContext: "middle",
     //     },
     // ],
     Monday: DAILY_ROUTINES[1],
@@ -3261,7 +3835,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -3271,7 +3846,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -3281,7 +3857,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -3291,7 +3868,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -3301,7 +3879,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -3311,7 +3890,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -3321,7 +3901,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Wednesday: [
@@ -3333,7 +3914,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -3343,7 +3925,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -3353,7 +3936,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -3363,7 +3947,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -3373,7 +3958,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -3383,7 +3969,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -3393,7 +3980,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Thursday: [
@@ -3405,7 +3993,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Orange",
@@ -3415,7 +4004,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -3425,7 +4015,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -3435,7 +4026,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -3445,7 +4037,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -3455,7 +4048,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -3465,7 +4059,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     // Friday: DAILY_ROUTINES[1],
@@ -3478,7 +4073,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -3488,7 +4084,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -3498,7 +4095,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Green",
@@ -3508,7 +4106,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[1],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Teal",
@@ -3518,7 +4117,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "body",
             tag: TEST_TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -3528,7 +4128,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -3538,7 +4139,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Saturday: [
@@ -3550,7 +4152,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🏃‍♂️ Running",
@@ -3560,7 +4163,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[6],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -3570,7 +4174,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🌁 Art",
@@ -3580,7 +4185,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: TEST_TAGS[8],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "💪 Gym (Push)",
@@ -3588,9 +4194,10 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             startTime: 1000,
             endTime: 1100,
             activity: "body",
-            tag: TEST_TAGS[0],
+            tag: TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -3600,7 +4207,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -3610,7 +4218,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ],
     Sunday: [
@@ -3622,7 +4231,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🏃‍♂️ Running",
@@ -3632,7 +4242,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "working",
             tag: TEST_TAGS[6],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Yellow",
@@ -3642,7 +4253,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "🌁 Art",
@@ -3652,7 +4264,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: TEST_TAGS[8],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "💪 Gym (Push)",
@@ -3660,9 +4273,10 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             startTime: 1000,
             endTime: 1100,
             activity: "body",
-            tag: TEST_TAGS[0],
+            tag: TAGS[0],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Blue",
@@ -3672,7 +4286,8 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: null,
             tag: TEST_TAGS[3],
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
         {
             title: "Purple",
@@ -3682,10 +4297,13 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
             activity: "selfCare",
             tag: null,
             description: "",
-            tasks: []
+            tasks: [],
+            orderContext: "middle",
         },
     ]
 }
+
+// weekly routines
 export const WEEKLY_ROUTINES: WeeklyRoutine[] = [
     {
         id: "0",
@@ -3721,5 +4339,356 @@ export const WEEKLY_ROUTINES: WeeklyRoutine[] = [
             Thursday: WEEKLY_ROUTINES_BLOCKS.Saturday,
             Friday: WEEKLY_ROUTINES_BLOCKS.Saturday,
         }
+    },
+]
+
+// tag breakdown testing
+export const TEST_DAILY_BREAKDOWN = [
+    {
+        blocks: WEEKLY_HS_STUDENT.Monday,
+        tagBreakdown: [
+            { tag: TAGS[12], data: { avgTime: 215, totalTime: 645, total: 3 } },
+            { tag: TAGS[9],data: { avgTime: 75, totalTime: 75, total: 1 } }
+        ],
+        coreBreakdown: {
+            sleeping: { status: 0, totalTime: 405, avgTime: 0, total: 0 },
+            working:  { status: 0, totalTime: 645, avgTime: 215, total: 3 },
+            mind:     { status: 0, totalTime: 0, avgTime: 0, total: 0 },
+            body:     { status: 0, totalTime: 75, avgTime: 75, total: 1 },
+            selfCare: { status: 0, totalTime: 125, avgTime: 41, total: 3 },
+            awake:    { status: 0, totalTime: 1035, avgTime: 0, total: 0 },
+        }
+    },
+    {
+        blocks: WEEKLY_HS_STUDENT.Tuesday,
+        tagBreakdown: [
+            { tag: TAGS[12], data: { avgTime: 290, totalTime: 580, total: 2 } },
+            { tag: TAGS[11], data: { avgTime: 155, totalTime: 155, total: 1 } },
+            { tag: TAGS[13], data: { avgTime: 75, totalTime: 75, total: 1 } }
+        ],
+        coreBreakdown: {
+            sleeping: { status: 0, totalTime: 405, avgTime: 0, total: 0 },
+            working:  { status: 0, totalTime: 810, avgTime: 202, total: 4 },
+            mind:     { status: 0, totalTime: 0, avgTime: 0, total: 0 },
+            body:     { status: 0, totalTime: 0, avgTime: 0, total: 0 } ,
+            selfCare: { status: 0, totalTime: 65, avgTime: 32, total: 2 },
+            awake:    { status: 0, totalTime: 1035, avgTime: 0, total: 0 },
+        }
+    },
+    {
+        blocks: WEEKLY_HS_STUDENT.Saturday,
+        tagBreakdown: [
+            { tag: TAGS[11], data: { avgTime: 300, totalTime: 300, total: 1 } },
+            { tag: TAGS[6], data: { avgTime: 75, totalTime: 75, total: 1 } }
+        ],
+        coreBreakdown: {
+            sleeping: { status: 0, totalTime: 525, avgTime: 0, total: 0 },
+            working:  { status: 0, totalTime: 300, avgTime: 300, total: 1 },
+            mind:     { status: 0, totalTime: 0, avgTime: 0, total: 0 },
+            body:     { status: 0, totalTime: 75, avgTime: 75, total: 1 },
+            selfCare: { status: 0, totalTime: 175, avgTime: 87, total: 2 },
+            awake:    { status: 0, totalTime: 915, avgTime: 0, total: 0 },
+        }
+    },
+    {
+        blocks: WEEKLY_UNI_STUDENT.Monday,
+        tagBreakdown: [
+            { tag: TAGS[12], data: { avgTime: 105, totalTime: 420, total: 4 } },
+            { tag: TAGS[0], data: { avgTime: 60, totalTime: 60, total: 1 } } 
+        ],
+        coreBreakdown: {
+            sleeping: { status: 0, totalTime: 450, avgTime: 0, total: 0 },
+            working:  { status: 0, totalTime: 420, avgTime: 105, total: 4 },
+            mind:     { status: 0, totalTime: 0, avgTime: 0, total: 0 },
+            body:     { status: 0, totalTime: 60, avgTime: 60, total: 1 },
+            selfCare: { status: 0, totalTime: 135, avgTime: 33, total: 4 },
+            awake:    { status: 0, totalTime: 990, avgTime: 0, total: 0 },
+        }
+    },
+    {
+        blocks: BREAKDOWN_TEST_DAILY_BLOCKS[0].map((data) => ({ 
+            ...data, 
+            color: COLOR_SWATCHES.d[0], 
+            description: "", tasks: [],
+            orderContext: "middle",
+            tag: TAGS[data.tagIdx],
+            activity: data.activity as keyof RoutineCores
+        })),
+        tagBreakdown: [
+            { tag: TAGS[9], data: { avgTime: 39, totalTime: 118, total: 3 } },
+            { tag: TAGS[2], data: { avgTime: 39, totalTime: 117, total: 3 } },
+            { tag: TAGS[5], data: { avgTime: 39, totalTime: 117, total: 3 } },
+            { tag: TAGS[11], data: { avgTime: 39, totalTime: 117, total: 3 } },
+            { tag: TAGS[7], data: { avgTime: 38, totalTime: 116, total: 3 } },
+            { tag: TAGS[0], data: { avgTime: 32, totalTime: 98, total: 3 } },
+            { tag: TAGS[3], data: { avgTime: 39, totalTime: 79, total: 2 } },
+            { tag: TAGS[1], data: { avgTime: 39, totalTime: 78, total: 2 } },
+            { tag: TAGS[4], data: { avgTime: 39, totalTime: 78, total: 2 } },
+            { tag: TAGS[6], data: { avgTime: 39, totalTime: 78, total: 2 } },
+            { tag: TAGS[8], data: { avgTime: 39, totalTime: 78, total: 2 } },
+            { tag: TAGS[10], data: { avgTime: 39, totalTime: 78, total: 2 } },
+            { tag: TAGS[12], data: { avgTime: 39, totalTime: 78, total: 2 } },
+            { tag: TAGS[13], data: { avgTime: 39, totalTime: 78, total: 2 } },
+        ],
+        coreBreakdown: {
+            sleeping: { status: 0, totalTime: 79, avgTime: 39, total: 2 },
+            working:  { status: 0, totalTime: 293, avgTime: 36, total: 8 },
+            mind:     { status: 0, avgTime: 39, totalTime: 273, total: 7 },
+            body:     { status: 0, avgTime: 39, totalTime: 352, total: 9},
+            selfCare: { status: 0, avgTime: 39, totalTime: 312, total: 8  },
+            awake:    { status: 0, totalTime: 1361, avgTime: 0, total: 0 },
+        }
+    },
+    // {
+    //     blocks: [
+    //         {
+    //             title: "Morning Routine",
+    //             color: COLOR_SWATCHES.d[0],
+    //             startTime: 0,
+    //             endTime: 100,
+    //             activity: "working",
+    //             tag: null,
+    //             description: "",
+    //             tasks: ],
+    // orderContext: "middle",
+    //         },
+    //     ],
+    //     tagBreakdown: [],
+    //     coreBreakdown: {
+    //         sleeping: { status: 0, avgTime: -1, totalTime: -1, total: -1 },
+    //         working:  { status: 0, totalTime: 100, avgTime: 100, total: 1 },
+    //         mind:     { status: 0, avgTime: 0, totalTime: 0, total: 0 },
+    //         body:     { status: 0, avgTime: 0, totalTime: 0, total: 0 },
+    //         selfCare: { status: 0, avgTime: -1, totalTime: -1, total: -1 },
+    //         awake:    null
+    //     }
+    // },
+]
+
+export const TEST_WEEKLY_BREAKDOWN = [
+    {
+        weekRoutine: WEEKLY_ROUTINES[0],
+        tagBreakdown: [
+            { tag: TAGS[12], data: { avgTime: 418, totalTime: 2930, total: 11 } },
+            { tag: TAGS[11], data: { avgTime: 109, totalTime: 765, total: 4 } },
+            { tag: TAGS[9], data: { avgTime: 32, totalTime: 225, total: 3 } },
+            { tag: TAGS[13], data: { avgTime: 19, totalTime: 135, total: 2 } },
+            { tag: TAGS[0], data: { avgTime: 12, totalTime: 90, total: 1 } },
+            { tag: TAGS[6], data: { avgTime: 10, totalTime: 75, total: 1 } },
+        ],
+    },
+    {
+        weekRoutine: WEEKLY_ROUTINES[1],
+        tagBreakdown: [
+            { tag: TAGS[12], data: { avgTime: 409, totalTime: 2865, total: 25 } },
+            { tag: TAGS[11], data: { avgTime: 48, totalTime: 340, total: 2 } },
+            { tag: TAGS[0], data: { avgTime: 25, totalTime: 180, total: 3 } },
+            { tag: TAGS[6], data: { avgTime: 12, totalTime: 90, total: 1 } }
+        ],
+    },
+    {
+        weekRoutine: {
+            id: "",
+            name: "",
+            description: "",
+            blocks: BREAKDOWN_TEST_WEEKLY_BLOCKS
+        },
+        tagBreakdown: [
+            { tag: TAGS[7], data: { avgTime: 66, totalTime: 466, total: 12 } },
+            { tag: TAGS[2], data: { avgTime: 50, totalTime: 351, total: 9 } },
+            { tag: TAGS[5], data: { avgTime: 50, totalTime: 351, total: 9 } },
+            { tag: TAGS[3], data: { avgTime: 39, totalTime: 275, total: 7 } },
+            { tag: TAGS[11], data: { avgTime: 39, totalTime: 274, total: 8 } },
+            { tag: TAGS[1], data: { avgTime: 39, totalTime: 273, total: 7 } },
+            { tag: TAGS[6], data: { avgTime: 39, totalTime: 273, total: 7 } },
+            { tag: TAGS[0], data: { avgTime: 36, totalTime: 256, total: 9 } },
+            { tag: TAGS[9], data: { avgTime: 33, totalTime: 236, total: 6 } },
+            { tag: TAGS[12], data: { avgTime: 33, totalTime: 234, total: 6 } },
+            { tag: TAGS[13], data: { avgTime: 33, totalTime: 234, total: 6 } },
+            { tag: TAGS[4], data: { avgTime: 22, totalTime: 156, total: 4 } },
+            { tag: TAGS[8], data: { avgTime: 22, totalTime: 156, total: 4 } },
+            { tag: TAGS[10], data: { avgTime: 22, totalTime: 156, total: 4 } },
+        ],
+    },
+]
+
+export const TEST_BLOCK_MOVE_TO_NEW_COL = [
+    {
+        blocks: WEEKLY_HS_STUDENT.Sunday,
+        editBlock: {
+            title: "",
+            color: COLOR_SWATCHES.d[2],
+            startTime: 0,  endTime: 0,   
+            activity: null,
+            tag: null,
+            description: "",
+            tasks: [],
+            orderContext: "middle",
+        },
+        newStartTime: 600,
+        newEndTime: 630,
+        resultStartTime: 600
+    },
+    {   // short move down
+        blocks: WEEKLY_HS_STUDENT.Sunday,
+        editBlock: {
+            title: "",
+            color: COLOR_SWATCHES.d[2],
+            startTime: 0,  endTime: 0,   
+            activity: null,
+            tag: null,
+            description: "",
+            tasks: [],
+            orderContext: "middle",
+        },
+        newStartTime: 539,
+        newEndTime: 600,
+        resultStartTime: 540
+    },
+    {   // short move up
+        blocks: WEEKLY_HS_STUDENT.Sunday,
+        editBlock: {
+            title: "",
+            color: COLOR_SWATCHES.d[2],
+            startTime: 0,  endTime: 0,   
+            activity: null,
+            tag: null,
+            description: "",
+            tasks: [],
+            orderContext: "middle",
+        },
+        newStartTime: 406,
+        newEndTime: 481,
+        resultStartTime: 405
+    },
+    {   // long move up
+        blocks: WEEKLY_HS_STUDENT.Friday,
+        editBlock: {
+            title: "",
+            color: COLOR_SWATCHES.d[2],
+            startTime: 0,  endTime: 0,   
+            activity: null,
+            tag: null,
+            description: "",
+            tasks: [],
+            orderContext: "middle",
+        },
+        newStartTime: 495,
+        newEndTime: 640,
+        resultStartTime: 215
+    },
+    {   // long move down
+        blocks: [
+            {
+                title: "A",
+                color: COLOR_SWATCHES.d[0],
+                startTime: 0,
+                endTime: 600,
+                activity: null,
+                tag: null,
+                description: "",
+                tasks: [],
+                orderContext: "middle",
+            },
+            {
+                title: "B",
+                color: COLOR_SWATCHES.d[0],
+                startTime: 700,
+                endTime: 800,
+                activity: null,
+                tag: null,
+                description: "",
+                tasks: [],
+                orderContext: "middle",
+            },
+            {
+                title: "C",
+                color: COLOR_SWATCHES.d[0],
+                startTime: 901,
+                endTime: 980,
+                activity: null,
+                tag: null,
+                description: "",
+                tasks: [],
+                orderContext: "middle",
+            },
+        ],
+        editBlock: {
+            title: "",
+            color: COLOR_SWATCHES.d[2],
+            startTime: 0,  endTime: 0,   
+            activity: null,
+            tag: null,
+            description: "",
+            tasks: [],
+            orderContext: "middle",
+        },
+        newStartTime: 0,
+        newEndTime: 101,
+        resultStartTime: 800
+    },
+    {   // close up
+        blocks: WEEKLY_HS_STUDENT.Friday,
+        editBlock: {
+            title: "",
+            color: COLOR_SWATCHES.d[2],
+            startTime: 0,  endTime: 0,   
+            activity: null,
+            tag: null,
+            description: "",
+            tasks: [],
+            orderContext: "middle",
+        },
+        newStartTime: 860,
+        newEndTime: 890,
+        resultStartTime: 330
+    },
+    {   // close down
+        blocks: WEEKLY_HS_STUDENT.Friday,
+        editBlock: {
+            title: "",
+            color: COLOR_SWATCHES.d[2],
+            startTime: 0,  endTime: 0,   
+            activity: null,
+            tag: null,
+            description: "",
+            tasks: [],
+            orderContext: "middle",
+        },
+        newStartTime: 865,
+        newEndTime: 895,
+        resultStartTime: 1395
+    },
+    {  // no space, blocked by bottom
+        blocks: WEEKLY_HS_STUDENT.Friday,
+        editBlock: {
+            title: "",
+            color: COLOR_SWATCHES.d[2],
+            startTime: 0,  endTime: 0,   
+            activity: null,
+            tag: null,
+            description: "",
+            tasks: [],
+            orderContext: "middle",
+        },
+        newStartTime: 1395,
+        newEndTime: 1425,
+        resultStartTime: 1395
+    },
+    {   // no space, blocked by top
+        blocks: WEEKLY_HS_STUDENT.Friday,
+        editBlock: {
+            title: "",
+            color: COLOR_SWATCHES.d[2],
+            startTime: 0,  endTime: 0,   
+            activity: null,
+            tag: null,
+            description: "",
+            tasks: [],
+            orderContext: "middle",
+        },
+        newStartTime: 0,
+        newEndTime: 361,
+        resultStartTime: 1440
     },
 ]

@@ -5,6 +5,7 @@
 	import SvgIcon from "./SVGIcon.svelte"
 	import { Icon } from "$lib/enums"
 	import BounceFade from "./BounceFade.svelte";
+	import { TAGS } from "../tests/routines/routines.data";
     
     $: isDarkTheme = $themeState.isDarkTheme
 
@@ -46,8 +47,6 @@
     }
     function onClickNewTagBtn() {
     }
-
-    onMount(() => console.log(inlineStyling(styling)))
 </script>
 
 <div class="tag-picker">
@@ -91,7 +90,12 @@
                 class="tag-picker__dropdown-btn-close"
                 on:click|stopPropagation={() => onTagOptionClicked(null)}
             >
-                <SvgIcon icon={Icon.Close} options={{ scale: 0.9, strokeWidth: 1.5 }} />
+                <SvgIcon 
+                    icon={Icon.Close} 
+                    options={{ 
+                        scale: 0.9, height: 12, width: 12, strokeWidth: 1.6
+                    }} 
+                />
             </button>
         {/if}
     </button>
@@ -111,7 +115,7 @@
             <ul 
                 class="tag-picker__dropdown-menu"
             >
-                {#each TEST_TAGS as tagOption}
+                {#each TAGS as tagOption}
                     {@const tagOptColor = getColorTrio(tagOption.symbol.color, isDarkTheme)}
                     <li 
                         class="tag-picker__dropdown-option"
@@ -174,6 +178,7 @@
             font-weight: 500;
             margin-right: 9px;
             cursor: pointer;
+            color: rgba(var(--tag-color-1), 1);
         }
     }
 
@@ -292,7 +297,6 @@
             border-radius: 8px;
             background-color: rgba(var(--tag-color-2), 1);
             padding: 2.5px 5px 2.5px 9px;
-            // border: 1px solid rgba(var(--tag-color-1), 0.03);
             
             &__title {
                 font-weight: 600;

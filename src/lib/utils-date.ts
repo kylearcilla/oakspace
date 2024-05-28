@@ -24,7 +24,7 @@ export const getDayOfWeek = () => {
  * @returns      Total seconds
  */
 export const minsSecondsToSecs = (mins: number, secs: number): number => {
-    return mins * 60 + secs
+    return mins * 60 + secs 
 }
 
 export function prefer12HourFormat() {
@@ -280,19 +280,19 @@ export function minsToHHMM(inputMins: number, formatOption: HhMmFormat = "min-le
 
     if (formatOption === "mid-letters") {
         hrsStr = `${hours} ${hours > 1 ? "hrs" : "hr" }`
-        minsStr = minutes === 0 ? "" : ` ${String(minutes).padStart(2, '0')} mins`
+        minsStr = minutes === 0 ? "" : ` ${minutes} mins`
 
         return `${hrsStr}${minsStr}`
     }
     else if (formatOption === "min-letters") {
         hrsStr = `${hours}h`
-        minsStr = minutes === 0 ? "" : ` ${String(minutes).padStart(2, '0')}m`
+        minsStr = minutes === 0 ? "" : ` ${minutes}m`
 
         return `${hrsStr}${minsStr}`
     }
     else {
-        hrsStr = `${String(hours).padStart(2, '0')}`
-        minsStr = `${String(minutes).padStart(2, '0')}`
+        hrsStr = `${hours}`
+        minsStr = `${minutes}`
 
         return `${hrsStr}"${minsStr}`
     }

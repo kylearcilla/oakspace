@@ -118,7 +118,7 @@
                     name: task.title 
                 })),
                 onListItemClicked: (idx) => currTaskGroupIdx = idx,
-                pickedItemIdx: currTaskGroupIdx,
+                pickedItem: currTaskGroupIdx,
                 onClickOutside: () => isTaskGroupDrodownOpen = false,
                 position: { left: "15px", top: "35px" }
             }}
@@ -132,7 +132,7 @@
                     { name: "Rename Group", leftIcon: "fa-solid fa-pencil" },
                     { name: "Delete Group", leftIcon: "fa-solid fa-trash-can" }
                 ],
-                pickedItemIdx: currTaskGroupIdx,
+                pickedItem: currTaskGroupIdx,
                 onListItemClicked: (idx) => console.log(idx),
                 onClickOutside: () => isTasksSettingsDropdownOpen = false,
                 position: { right: "17px", top: "32px" },

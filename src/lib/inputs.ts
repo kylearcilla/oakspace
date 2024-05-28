@@ -224,7 +224,6 @@ export class TextEditorManager extends InputManager {
             }
         })
 
-
         // editor values always comes form value member
         if (!this.value) {
             this.updateState({ value: this.value })

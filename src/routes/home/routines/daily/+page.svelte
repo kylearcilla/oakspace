@@ -6,9 +6,8 @@
 	import { themeState } from '$lib/store'
 	import { toast } from '$lib/utils-toast'
 	import { getColorTrio } from '$lib/utils-general'
-	import { DAILY_ROUTINES, EDIT_BLOCK_OPTIONS, getBlockStyling } from '$lib/utils-routines'
+	import { EDIT_BLOCK_OPTIONS, ROUTINE_BLOCKS_CONTAINER_ID, formatCoreData, getBlockStyling } from '$lib/utils-routines'
 	import { InputManager, TextEditorManager } from '$lib/inputs'
-	import { DailyRoutinesManager } from '$lib/routines-manager'
 	import { getTimeFromIdx, minsFromStartToHHMM, minsToHHMM } from '$lib/utils-date'
 
 	import EditBlockModal from '../EditBlockModal.svelte'
@@ -17,18 +16,19 @@
 	import DropdownList from '../../../../components/DropdownList.svelte'
 	import ConfirmationModal from '../../../../components/ConfirmationModal.svelte'
 	import SvgIcon from '../../../../components/SVGIcon.svelte'
+	import { DailyRoutinesManager } from '$lib/routines-daily-manager'
 
-    // export let data: PageData;
-    const HOZ_DIVIDER_TOP_OFFSET = 3
+    export let data: { routines: DailyRoutine[] }
+
     const BLOCKS_CONTAINER_LEFT_OFFSET = 45
-    const BOARD_PAD_BOTTOM  = 18
 
     // DOM
     let timeBoxElem: HTMLElement
     let blocksContainerRef: HTMLElement
     let routinesListContainerRef: HTMLElement
+    let blocksContainerWidth = 0
     
-    let manager = new DailyRoutinesManager(DAILY_ROUTINES)
+    let manager = new DailyRoutinesManager(data.routines)
 
     let isContextMenuOpen = false
     let hasSetPointerCapture = false
@@ -42,36 +42,40 @@
     let isDeleteDailyRoutineConfirmOpen = false
     let editDailyRoutineIdx = -1
     let openNewRoutineModal = false
+    let rightClickedRoutineItemIdx = -1
 
-    let _userRoutines  = manager.userRoutines!
-    let _focusedDayRoutineElems = manager.focusedDayRoutineElems
-    let _focusedDayRoutine = manager.focusedDayRoutine
-    let _currCores = manager.currCores
-    let _tagBreakdown = manager.currTagBreakdown
+    let _dailyRoutines  = manager.dailyRoutines!
+    let _editDayRoutineElems = manager.editDayRoutineElems
+    let _editDayRoutine = manager.editDayRoutine
+    let _coreBreakdown = manager.coreBreakdown
+    let _tagBreakdown = manager.tagBreakdown
     let _editingBlock = manager.editingBlock
     let _editContext = manager.editContext
     let _contextMenuPos = manager.contextMenuPos
 
-    $: userRoutines   = $_userRoutines as DailyRoutine[]
-    $: focusedDayRoutineElems = $_focusedDayRoutineElems ?? []
-    $: focusedDayRoutine = $_focusedDayRoutine as DailyRoutine | null
-    $: currCores     = $_currCores
+    $: dailyRoutines   = $_dailyRoutines as DailyRoutine[]
+    $: editDayRoutineElems = $_editDayRoutineElems ?? []
+    $: editDayRoutine = $_editDayRoutine as DailyRoutine | null
+    $: coreBreakdown     = $_coreBreakdown
     $: editingBlock  = $_editingBlock
     $: editContext   = $_editContext
     $: tagBreakdown  = $_tagBreakdown ?? []
     $: isLightTheme  = !$themeState.isDarkTheme
-    $: focusedId     = focusedDayRoutine?.id ?? "0"
+    $: focusedId     = editDayRoutine?.id ?? "0"
+    $: lockInteraction   = isContextMenuOpen || colorsOpen
 
     $: contextMenuPos = $_contextMenuPos
-    $: disableScroll  = colorsOpen || isContextMenuOpen
 
-    $: initTextEditors(focusedDayRoutine)
+    $: initTextEditors(editDayRoutine)
+
+    $: console.log(editingBlock?.isDragging)
 
     let titleInput: Writable<InputManager>
     let description: Writable<InputManager>
 
-    /* Routine Item Edits */
-    function onRoutineItemContextMenu(e: Event, routineIdx: number) {
+    /* Daily Routine Edits */
+
+    function onDailyRoutineContextMenu(e: Event, routineIdx: number) {
         const pe = e as PointerEvent
         pe.preventDefault()
 
@@ -81,20 +85,25 @@
         const top  = pe.clientY - rect.top
         let left = pe.clientX - rect.left
         
-        editDailyRoutineIdx    = routineIdx
+        editDailyRoutineIdx = routineIdx
+        rightClickedRoutineItemIdx = routineIdx
         routineSettingsOpen = true
         routineSettingsPos  = { top, left }
     }
-    function onRoutineItemOptnClicked(itemIdx: number, optIdx: number) {
+
+    function onDailyRoutineOptnClicked(itemIdx: number, optIdx: number) {
         if (optIdx === 0) {
             editDailyRoutineIdx = -1
-            onRoutineItemClicked(itemIdx)
+            onDailyRoutineClicked(itemIdx)
         }
         else {
             isDeleteDailyRoutineConfirmOpen = true
         }
+
+        rightClickedRoutineItemIdx = -1
         routineSettingsOpen = false
     }
+
     function onFinishNewDailyRoutineEdit(newRoutine: DailyRoutine | null) {
         openNewRoutineModal = false
 
@@ -102,13 +111,15 @@
 
         manager.newDailyRoutine(newRoutine)
     }
-    function onRoutineItemClicked(routineIdx: number) {
-        if (userRoutines[routineIdx].id === focusedId)  return
+
+    function onDailyRoutineClicked(routineIdx: number) {
+        if (dailyRoutines[routineIdx].id === focusedId)  return
         
-        manager.initFocusRoutine(userRoutines[routineIdx])
+        manager.initEditRoutine(dailyRoutines[routineIdx])
     }
+
     function removeDailyRoutine(idx: number) {
-        manager.removeDailyRoutine(userRoutines[idx].id)
+        manager.removeDailyRoutine(dailyRoutines[idx].id)
         toast("success", { message: "Weekly routine deleted." })
 
         isDeleteDailyRoutineConfirmOpen = false
@@ -116,11 +127,11 @@
     }
 
     /* Text Editors */
-    function initTextEditors(focusedDayRoutine: DailyRoutine | null) {
-        if (!focusedDayRoutine) return 
+    function initTextEditors(editDayRoutine: DailyRoutine | null) {
+        if (!editDayRoutine) return 
 
         titleInput = (new TextEditorManager({ 
-            initValue: focusedDayRoutine.name,
+            initValue: editDayRoutine.name,
             placeholder: "Routine Title",
             maxLength: 100,
             id: "routine-title-input",
@@ -131,7 +142,7 @@
         })).state
     
         description = (new TextEditorManager({ 
-            initValue: focusedDayRoutine.description,
+            initValue: editDayRoutine.description,
             placeholder: "Type description here...",
             maxLength: 500,
             id: "routine-description",
@@ -147,6 +158,7 @@
         manager.onBlockContextMenu(id)
         isContextMenuOpen = true
     }
+
     function onBlockPointerDown(e: PointerEvent) {
         if (hasSetPointerCapture) return
 
@@ -154,7 +166,8 @@
         const target = e.target as HTMLElement
         target.setPointerCapture(e.pointerId)
     }
-    function onContextMenuOptClicked(e: Event, idx: number) {
+
+    function onContextMenuOptClicked(idx: number) {
         if (idx === 0) {
             manager.openEditBlockModal()
         }
@@ -163,16 +176,16 @@
             colorsOpen = true
         }
         else if (idx === 2) {
-            manager.duplicateEditBlockElem()
-            manager.resetEditState()
+            manager.onDuplicateBlock()
         }
         else {
-            manager.deleteEditBlockElem()
+            manager.deleteEditBlock()
             manager.resetEditState()
         }
 
         isContextMenuOpen = false
     }
+    
     function onContextMenuDismount() {
         const isEditModalOpen = editContext === "details"
         manager.closeContextMenu(isEditModalOpen || colorsOpen)
@@ -181,7 +194,7 @@
     onMount(() =>{
         requestAnimationFrame(() => {
             manager.initContainer(timeBoxElem, blocksContainerRef)
-            manager.initFocusRoutine(userRoutines[0])
+            manager.initEditRoutine(dailyRoutines[0])
         })
     })
 </script>
@@ -204,13 +217,14 @@
                     options={{ scale: 0.89, strokeWidth: 2 }}
                 />
             </button>
-            {#each userRoutines as routine, routineIdx}
+            {#each dailyRoutines as routine, routineIdx}
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <li 
                     class="routines__routine-item" 
                     class:routines__routine-item--clicked={routine.id === focusedId}
-                    on:click={() => onRoutineItemClicked(routineIdx)}
-                    on:contextmenu={(e) => onRoutineItemContextMenu(e, routineIdx)}
+                    class:routines__routine-item--active={routineIdx === rightClickedRoutineItemIdx}
+                    on:click={() => onDailyRoutineClicked(routineIdx)}
+                    on:contextmenu={(e) => onDailyRoutineContextMenu(e, routineIdx)}
                 >
                     <span>
                         {routine.name}
@@ -219,18 +233,19 @@
             {/each}
         </ul>
         <DropdownList
-            id={"wk-routines"}
+            id={"daily-routines"}
             isHidden={!routineSettingsOpen}
             options={{
                 listItems: [
                     { options: [{ name: "View Routine" }] },
                     { name: "Delete Routine" }
                 ],
-                onListItemClicked: (e, optIdx) => {
-                    onRoutineItemOptnClicked(editDailyRoutineIdx, optIdx)
+                onListItemClicked: (context) => {
+                    onDailyRoutineOptnClicked(editDailyRoutineIdx, context.idx)
                 },
                 onClickOutside: () => {
                     routineSettingsOpen = false
+                    rightClickedRoutineItemIdx = -1
                 },
                 styling: { 
                     width: "140px", zIndex: 2001 
@@ -283,20 +298,20 @@
         <div class="routine__breakdown">
             <!-- Cores -->
             <div class="routine__core-breakdown">
-                <h3>Routine Cores</h3>
-                {#if currCores}
+                <h3>Cores</h3>
+                {#if coreBreakdown}
                     <div class="routine__cores">
                         <div class="routine__cores-col">
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Sleeping</div>
                                 <div class="routine__cores-value">
-                                    {minsToHHMM(currCores.sleeping.totalTime)}
+                                    {formatCoreData(coreBreakdown.sleeping.totalTime)}
                                 </div>
                             </div>
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Awake</div>
                                 <div class="routine__cores-value">
-                                    {minsToHHMM(currCores.awake.totalTime)}
+                                    {formatCoreData(coreBreakdown.awake.totalTime)}
                                 </div>
                             </div>
                         </div>
@@ -305,13 +320,13 @@
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Working</div>
                                 <div class="routine__cores-value">
-                                    {minsToHHMM(currCores.working.totalTime)}
+                                    {formatCoreData(coreBreakdown.working.totalTime)}
                                 </div>
                             </div>
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Self-Care</div>
                                 <div class="routine__cores-value">
-                                    {minsToHHMM(currCores.selfCare.totalTime)}
+                                    {formatCoreData(coreBreakdown.selfCare.totalTime)}
                                 </div>
                             </div>
                         </div>
@@ -320,46 +335,48 @@
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Mind</div>
                                 <div class="routine__cores-value">
-                                    {minsToHHMM(currCores.mind.totalTime)}
+                                    {formatCoreData(coreBreakdown.mind.totalTime)}
                                 </div>
                             </div>
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Body</div>
                                 <div class="routine__cores-value">
-                                    {minsToHHMM(currCores.body.totalTime)}
+                                    {formatCoreData(coreBreakdown.body.totalTime)}
                                 </div>
                             </div>
                         </div>
                     </div>
                 {/if}
             </div>
-            <!-- Tag Breakdown -->
-            <div class="routine__tag-breakdown">
-                <h3>Tag Breakdown</h3>
-                {#each tagBreakdown as tagData}
-                    {@const colorTrio = getColorTrio(tagData.tag.symbol.color, isLightTheme)}
-                    <div class="routine__tag-row">
-                        <div 
-                            class="tag"
-                            class:tag--light={isLightTheme}
-                            style:--tag-color-primary={tagData.tag.symbol.color.primary}
-                            style:--tag-color-1={colorTrio[0]}
-                            style:--tag-color-2={colorTrio[1]}
-                            style:--tag-color-3={colorTrio[2]}
-                        >
-                            <span class="tag__symbol">
-                                {tagData.tag.symbol.emoji}
-                            </span>
-                            <div class="tag__title">
-                                {tagData.tag.name}
+            {#if tagBreakdown.length > 0}
+                <!-- Tag Breakdown -->
+                <div class="routine__tag-breakdown">
+                    <h3>Tags</h3>
+                    {#each tagBreakdown as tagData}
+                        {@const colorTrio = getColorTrio(tagData.tag.symbol.color, isLightTheme)}
+                        <div class="routine__tag-row">
+                            <div 
+                                class="tag"
+                                class:tag--light={isLightTheme}
+                                style:--tag-color-primary={tagData.tag.symbol.color.primary}
+                                style:--tag-color-1={colorTrio[0]}
+                                style:--tag-color-2={colorTrio[1]}
+                                style:--tag-color-3={colorTrio[2]}
+                            >
+                                <span class="tag__symbol">
+                                    {tagData.tag.symbol.emoji}
+                                </span>
+                                <div class="tag__title">
+                                    {tagData.tag.name}
+                                </div>
+                            </div>
+                            <div class="routine__tag-stat">
+                                {minsToHHMM(tagData.data.totalTime)}
                             </div>
                         </div>
-                        <div class="routine__tag-stat">
-                            {minsToHHMM(tagData.data.totalTime)}
-                        </div>
-                    </div>
-                {/each}
-            </div>
+                    {/each}
+                </div>
+            {/if}
         </div>
     </div>
     <div class="routines__divider routines__divider--last"></div>
@@ -367,7 +384,7 @@
     <div 
         class="routine-blocks-container" 
         class:routine-blocks-container--light={isLightTheme}
-        class:routine-blocks-container--no-scroll={disableScroll}
+        class:routine-blocks-container--no-scroll={lockInteraction}
         class:routine-blocks-container--ns-resize={editContext?.includes("stretch")}
         bind:this={timeBoxElem}
         on:pointermove={manager.onBlocksContainerPointerMove}
@@ -375,25 +392,28 @@
         <!-- Time Box Content -->
         <div 
             bind:this={blocksContainerRef}
+            bind:clientWidth={blocksContainerWidth}
             class="routines__blocks-wrapper"
-            style:--board-pad-bottom={`${BOARD_PAD_BOTTOM}px`}
+            class:no-pointer-events={lockInteraction}
         >
             <div 
-                on:pointerdown={(e) => manager.onTimeBoxMouseDown(e)}
+                on:pointerdown={(e) => manager.onScrollContainerPointerDown(e)}
                 on:contextmenu={(e) => {
                     if (editContext === "lift") e.preventDefault()
                 }}
-                id={manager.ROUTINE_BLOCKS_CONTAINER_ID}
+                id={ROUTINE_BLOCKS_CONTAINER_ID}
                 class="routine-blocks"
                 class:routine-blocks--editing={editContext}
                 class:routine-blocks--light={false}
                 style:--left-offset={`${BLOCKS_CONTAINER_LEFT_OFFSET}px`}
             >
-                {#each focusedDayRoutineElems as block (block.id)}
+                {#each editDayRoutineElems as block (block.id)}
                     {@const colorTrio    = getColorTrio(block.color, isLightTheme)}
                     {@const isEditBlock  = editingBlock?.id === block.id && (["old-stretch", "lift"].includes(editContext ?? ""))}
                     {@const startTimeStr = minsFromStartToHHMM(block.startTime)}
                     {@const endTimeStr   = minsFromStartToHHMM(block.endTime)}
+                    {@const isFirstLast  = ["first", "last"].includes(block.orderContext ?? "")}
+                    {@const isFirst      = block.orderContext === "first"}
 
                     <!-- Routine Block -->
                     <div 
@@ -411,6 +431,19 @@
                     >
                         <div class="routine-blocks__block-content">
                             <div class="flx flx--algn-center">
+                                {#if isFirstLast}
+                                    <div 
+                                        class="routine-blocks__block-order-icon"
+                                        title={`${isFirst ? "First routine of the day." : "Last routine of the day."}`}
+                                    >
+                                        <SvgIcon 
+                                            icon={isFirst ? Icon.Sun : Icon.Moon} 
+                                            options={{
+                                                height: 16, width: 16, opacity: 0.4, scale: 0.58, color: `rgba(${colorTrio[0]}, 0.5)`
+                                            }}
+                                        />
+                                    </div>
+                                {/if}
                                 <span class="routine-blocks__block-title">
                                     {block.title}
                                 </span>
@@ -420,24 +453,29 @@
                                 <span>-</span>
                                 <span>{endTimeStr}</span>
                             </div>
+                            <div class="routine-blocks__block-spine"></div>
                         </div>
-                        <div class="routine-blocks__block-spine"></div>
                     </div>
                 {/each}
 
                 <!-- Floating Block or New Block  -->
                 {#if editingBlock}
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
                     {@const colorTrio = getColorTrio(editingBlock.color, isLightTheme)}
                     {@const startTimeStr = minsFromStartToHHMM(editingBlock.startTime)}
                     {@const endTimeStr = minsFromStartToHHMM(editingBlock.endTime)}
                     {@const isLift = editContext === "lift"}
                     {@const isStretch = editContext === "old-stretch"}
+                    {@const isDragging   = editingBlock.isDragging}
+                    {@const dropArea     = editingBlock.dropArea}
+                    {@const isFirstLast  = ["first", "last"].includes(editingBlock.orderContext ?? "")}
+                    {@const isFirst = editingBlock.orderContext === "first"}
 
                     <div 
                         class={`routine-blocks__block ${getBlockStyling(editingBlock.height)}`}
                         class:routine-blocks__block--day-floating={isLift}
+                        class:routine-blocks__block--dup-floating={editContext === "duplicate"}
                         class:routine-blocks__block--old-stretch={isStretch}
+                        class:routine-blocks__block--use-x-offset={isLift || (editContext === "duplicate" && isDragging)}
                         style:top={`${editingBlock.yOffset}px`}
                         style:--left-x-offset={`${editingBlock.xOffset}px`}
                         style:--block-height={`${editingBlock.height}px`}
@@ -450,6 +488,19 @@
                     >
                         <div class="routine-blocks__block-content">
                             <div class="flx flx--algn-center">
+                                {#if isFirstLast}
+                                    <div 
+                                        class="routine-blocks__block-order-icon"
+                                        title={`${isFirst ? "First routine of the day." : "Last routine of the day."}`}
+                                    >
+                                        <SvgIcon 
+                                            icon={isFirst ? Icon.Sun : Icon.Moon} 
+                                            options={{
+                                                height: 16, width: 16, opacity: 0.4, scale: 0.58, color: `rgba(${colorTrio[0]}, 0.5)`
+                                            }}
+                                        />
+                                    </div>
+                                {/if}
                                 <span class="routine-blocks__block-title">
                                     {editingBlock.title}
                                 </span>
@@ -459,13 +510,39 @@
                                 <span>-</span>
                                 <span>{endTimeStr}</span>
                             </div>
+                            <div class="routine-blocks__block-spine"></div>
                         </div>
-                        <div class="routine-blocks__block-spine"></div>
+
+
+                        <!-- Confirm Buttons for Duplicate Edit -->
+                        {#if editContext === "duplicate" && !isDragging}
+                            {@const placement = manager.findDupBtnPlacement()}
+
+                            <div 
+                                class="routine-blocks__block-buttons"
+                                class:routine-blocks__block-buttons--left={placement === "left"}
+                                class:routine-blocks__block-buttons--right={placement === "right"}
+                                class:routine-blocks__block-buttons--top={placement === "top"}
+                                class:routine-blocks__block-buttons--bottom={placement === "bottom"}
+                            >
+                                {#if (dropArea?.offsetIdx ?? -1) >= 0}
+                                    <button on:click={() => manager.confirmDuplicate()}>
+                                        <i class="fa-solid fa-check"></i>
+                                    </button>
+                                {/if}
+                                <button on:click={() => manager.closeDuplicateEdit()}>
+                                    <SvgIcon 
+                                        icon={Icon.Close} 
+                                        options={{ scale: 0.84, strokeWidth: 1.8, width: 10, height: 10 }}
+                                    />
+                                </button>
+                            </div>
+                        {/if}
                     </div>
                 {/if}
 
                 <!-- Drop Area Block -->
-                {#if editingBlock && editingBlock.dropArea && editContext === "lift"}
+                {#if editingBlock?.dropArea?.doShow && (editContext === "lift" || editContext === "duplicate")}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     {@const colorTrio = getColorTrio(editingBlock.color, isLightTheme)}
                     {@const startTimeStr = minsFromStartToHHMM(editingBlock.startTime)}
@@ -495,8 +572,7 @@
                                 <span>{endTimeStr}</span>
                             </div>
                         </div>
-                        <div class="routine-blocks__block-spine"></div>
-                        </div>
+                    </div> 
                 {/if}
             </div>
             
@@ -513,7 +589,7 @@
                             class="hour-blocks__block"
                             class:hidden={timeIdx === 0}
                             style:height={`${height}%`}
-                            style:top={`calc(${headOffsetPerc}% + ${HOZ_DIVIDER_TOP_OFFSET}px)`}
+                            style:top={`calc(${headOffsetPerc}% - 1.5px)`}
                         >
                             <span>
                                 {getTimeFromIdx(timeIdx).toLowerCase()}
@@ -527,21 +603,19 @@
                     {/each}
                 </div>
             </div>
+
             <!-- Grid -->
-            <div 
-                class="wk-grid"
-                class:wk-grid--light={isLightTheme}
-            >
+            <div class="wk-grid" class:wk-grid--light={isLightTheme}>
                 <div class="wk-grid__hoz-lines">
                     {#if timeBoxElem}
-                        {@const width = blocksContainerRef.clientWidth}
+                        {@const width = blocksContainerWidth}
                         {#each Array.from({ length: 24 }, (_, i) => i) as timeIdx}
                             {@const headOffsetPerc = ((timeIdx * 60) / 1440) * 100}
                             {@const height = (60 / 1440) * 100}
                             <div 
                                 class="wk-grid__hoz-line"
                                 class:hidden={timeIdx === 0}
-                                style:top={`calc(${headOffsetPerc}% + 7px)`}
+                                style:top={`calc(${headOffsetPerc}% - 2px)`}
                                 style:height={`${height}%`}
                             >
                                 <div class="wk-grid__hoz-line-content">
@@ -556,18 +630,18 @@
                 <div class="wk-grid__vert-lines">
                     {#if timeBoxElem}
                         {@const height = blocksContainerRef.clientHeight}
-                            <div 
-                                class="wk-grid__vert-line"
-                                style:top="0px"
-                                style:left="0px"
-                                style:height={`${height}px`}
-                            >
-                                <div class="wk-grid__vert-line-content">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="2" {height} viewBox="0" fill="none">
-                                        <path d={`M1 ${height}L1 1`} stroke-width="0.7" stroke-dasharray="3 3"/>
-                                    </svg>
-                                </div>
+                        <div 
+                            class="wk-grid__vert-line"
+                            style:top="-1px"
+                            style:left="0px"
+                            style:height={`${height}px`}
+                        >
+                            <div class="wk-grid__vert-line-content">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="2" {height} viewBox="0" fill="none">
+                                    <path d={`M1 ${height}L1 1`} stroke-width="0.7" stroke-dasharray="3 3"/>
+                                </svg>
                             </div>
+                        </div>
                     {/if}
                 </div>
             </div>
@@ -579,7 +653,7 @@
             options={{
                 styling: { width: "140px" },
                 listItems: EDIT_BLOCK_OPTIONS,
-                onListItemClicked: onContextMenuOptClicked,
+                onListItemClicked: (context) => onContextMenuOptClicked(context.idx),
                 onDismount: onContextMenuDismount,
                 onClickOutside:() => {
                     isContextMenuOpen = false
@@ -599,11 +673,11 @@
             chosenColor={editingBlock?.color}
             onChoose={(color) => {
                 colorsOpen = false
-                manager.changeEditBlockColor(color)
+                manager.setEditBlockColor(color)
                 manager.resetEditState()
             }}
             onClickOutside={() => {
-                manager.changeEditBlockColor(null)
+                manager.setEditBlockColor(null)
                 manager.resetEditState()
                 colorsOpen = false
             }}
@@ -709,19 +783,19 @@
             &--clicked span {
                 opacity: 0.9 !important;
             }
+            &--active span {
+                opacity: 0.7 !important;
+            }
             
             &:active {
                 transform: scale(0.995);
-            }
-            &:hover {
-                opacity: 1;
-                @include txt-color(0.02, "bg");
             }
             &:hover span {
                 opacity: 0.7;
             }
             span {
                 @include text-style(1, 300, 1.28rem, "DM Sans");
+                transition: 0.08s ease-in-out;
                 opacity: 0.4;
             }
         }
@@ -752,7 +826,6 @@
             display: flex;
             height: calc(($hour-block-height * 24));
             padding-right: 20px;
-            padding-bottom: var(--board-pad-bottom);
         }
         .routine {
             width: clamp(270px, 30%, 320px);
@@ -774,11 +847,6 @@
         &--light &__cores-value {
             @include text-style(0.54, 500);
         }
-        &--light &__core-breakdown, &--light &__tag-breakdown  {
-            border: 1px solid rgba(var(--textColor1), 0.03);
-            @include txt-color(0.02, "bg");
-            margin-bottom: 10px;
-        }
 
         &__title {
             font-size: 2.2rem;
@@ -789,29 +857,32 @@
             max-height: 190px;
         }
         &__details {
-            margin-bottom: 10px;
+            margin-bottom: 0px;
         }
         &__breakdown h3 {
             @include text-style(0.72, 400, 1.32rem);
             margin-bottom: 12px;
         }
         &__core-breakdown, &__tag-breakdown {
-            padding: 12px 20px 8px 17px;
+            padding: 12px 8px 8px 6px;
             border-radius: 14px;
-            border: 1px solid rgba(var(--textColor1), 0.02);
-            @include txt-color(0.013, "bg");
+            background: none;
+            border: none;
         }
         &__core-breakdown {
-            margin: 0px 0px 12px -6px;
+            margin: 0px 0px 2px -6px;
         }
         &__cores-title {
             opacity: 0.7;
         }
         &__tag-breakdown {
-            margin: 0px 0px 0px -6px;
+            margin: 12px 0px 0px -6px;
         }
         &__tag-breakdown h3 {
             margin-bottom: 15px;
+        }
+        &__tag-stat, &__cores-value {
+            @include text-style(0.34);
         }
     }
 
@@ -822,11 +893,11 @@
     .routine-blocks-container {
         flex: 1;
         position: relative;
-        height: 100%;
+        height: calc(100% - 37px);
         overflow-y: scroll;
         overflow-x: hidden;
-        padding-bottom: 20px;
     }
+
     .routine-blocks {
         @include abs-top-left(-2px, var(--left-offset));
         width: calc(100% - var(--left-offset));

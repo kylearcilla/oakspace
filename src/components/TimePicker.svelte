@@ -127,11 +127,11 @@
         prevOffset = e.clientX
         updateCurrentTime(diff)
     }
-    function onDropdownOptionClicked(e: Event, idx: number) {
+    function onDropdownOptionClicked(context: DropdownItemClickedContext) {
         isInputActive = false
         toggleInput(false)
 
-        const newVal = clamp(minTime, idx * DROPDOWN_OPTION_INTERVAL, maxTime)
+        const newVal = clamp(minTime, context.idx * DROPDOWN_OPTION_INTERVAL, maxTime)
         
         _onSet(newVal)
     }

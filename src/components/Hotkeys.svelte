@@ -10,7 +10,7 @@
 
     const DEFAULT_STYLING: HotKeyStyling = {
         opacity: 0.3,
-        fontSize: "1.2 rem",
+        fontSize: "0.98rem",
         gap: "3px",
         symbolWidth: "auto"
     }
@@ -79,6 +79,8 @@
         display: flex;
 
         &__key {
+            @include center;
+            font-family: "DM Mono";
             opacity: var(--opacity);
             font-size: var(--font-size);
 
@@ -86,8 +88,13 @@
                 margin-right: var(--gap);
             }
         }
+        &__key--meta {
+            font-size: calc(var(--font-size) + 0.2rem);
+            margin-top: 0.5px;
+        }
         &__key--symbol {
             width: var(--symbol-width);
+            font-size: calc(var(--font-size) + 0rem);
         }
     }
 </style>

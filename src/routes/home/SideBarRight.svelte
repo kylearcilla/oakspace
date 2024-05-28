@@ -114,9 +114,9 @@
                 </button>
                 <div class="task-view__header-day-icon">
                     {#if isDayTime}
-                        <SvgIcon icon={Icon.Sun} />
+                        <SvgIcon icon={Icon.ColorSun} />
                     {:else}
-                        <SvgIcon icon={Icon.Moon} />
+                        <SvgIcon icon={Icon.ColorMoon} />
                     {/if}
                 </div>
             </div>

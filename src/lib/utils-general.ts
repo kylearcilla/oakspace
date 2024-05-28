@@ -63,7 +63,7 @@ export const findAncestor = (options: AncestoryQueryOptions): HTMLElement | null
   const max = options.max ?? 15
   const strict = options.strict === undefined ? false : options.strict
   const queryStr = options.queryStr
-  const byId = options.queryBy === "id"
+  const byId = options.queryBy ? options.queryBy === "id" : true
 
   while (currentElement && i++ < max) {
     if (strict && byId && currentElement!.id === queryStr) {
@@ -82,6 +82,11 @@ export const findAncestor = (options: AncestoryQueryOptions): HTMLElement | null
     currentElement = currentElement.parentElement
   }
   return null
+}
+
+export function isTargetTextEditor(target: HTMLElement) {
+    const isTargetContentEditable = target.contentEditable === "true"
+    return target.tagName === "INPUT" || target.tagName === "TEXTAREA" || isTargetContentEditable
 }
 
 /**
@@ -321,37 +326,32 @@ export function base64encode(input: any): string {
 
 export function getAdditionTopPadding(element: HTMLElement) {
   const styles = getComputedStyle(element)
-
-  // Extract margin, padding, and border widths
   const marginTop = parseInt(styles.marginTop)
-  const paddingTop = parseInt(styles.paddingTop)
   const borderTopWidth = parseInt(styles.borderTopWidth)
 
-  return marginTop + paddingTop + borderTopWidth
+  return marginTop + borderTopWidth
 }
 
 export function getAdditionBottomPadding(element: HTMLElement) {
   const styles = getComputedStyle(element)
-
   const marginBottom = parseInt(styles.marginBottom)
-  const paddingBottom = parseInt(styles.paddingBottom)
   const borderBottomWidth = parseInt(styles.borderBottomWidth)
 
-  return marginBottom + paddingBottom + borderBottomWidth
+  return marginBottom + borderBottomWidth
 }
 
 /**
- * Calculates the additional heights of an element, including margin, padding, and border widths.
+ * Calculates the additional heights of an element, including margin and border width.
  * 
  * @param element - The HTMLElement to calculate additional heights for.
- * @returns The sum of margin, padding, and border widths of the element.
+ * @returns The sum of margin and border width of the element.
  */
 export function getAdditionalHeights(element: HTMLElement): number {
   return getAdditionTopPadding(element) + getAdditionBottomPadding(element)
 }
 
 /**
- * Calculates the total height of an element, including its client height and additional heights (margin, padding, border).
+ * Calculates the total height of an element, including its client height and additional heights (margin border).
  * 
  * @param element - The HTMLElement to calculate the total height for.
  * @returns The total height of the element, including client height and additional heights.
@@ -362,10 +362,10 @@ export function getElemTrueHeight(element: HTMLElement): number {
 }
 
 /**
- * Calculates the additional widths of an element, including margin, padding, and border widths.
+ * Calculates the additional widths of an element, including margin and border widths.
  * 
  * @param element - The HTMLElement to calculate additional widths for.
- * @returns The sum of margin, padding, and border widths of the element.
+ * @returns The sum of margin and border widths of the element.
  */
 export function getAdditionalWidths(element: HTMLElement): number {
   const styles = getComputedStyle(element)
@@ -373,13 +373,11 @@ export function getAdditionalWidths(element: HTMLElement): number {
   // Extract margin, padding, and border widths
   const marginLeft = parseInt(styles.marginLeft)
   const marginRight = parseInt(styles.marginRight)
-  const paddingLeft = parseInt(styles.paddingLeft)
-  const paddingRight = parseInt(styles.paddingRight)
   const borderLeftWidth = parseInt(styles.borderLeftWidth)
   const borderRightWidth = parseInt(styles.borderRightWidth)
 
   // Calculate the sum of additional widths
-  return marginLeft + marginRight + paddingLeft + paddingRight + borderLeftWidth + borderRightWidth
+  return marginLeft + marginRight + borderLeftWidth + borderRightWidth
 }
 
 /**
@@ -1097,7 +1095,7 @@ export const TEST_TAGS: Tag[] = [
 export function roundUpToNearestTen(num: number) {
   return Math.ceil(num / 10) * 10;
 }
-export function roundUpToNearestFive(num: number) {
+export function roundUpFive(num: number) {
   return Math.ceil(num / 5) * 5;
 }
 
@@ -1190,7 +1188,7 @@ export function showElement(element: HTMLElement) {
 }
 
 
-export function getDistanceBetweenTwoPoints(pointA: OffsetPoint, pointB: OffsetPoint) {
+export function getDistBetweenTwoPoints(pointA: OffsetPoint, pointB: OffsetPoint) {
   const deltaX = pointB.left - pointA.left
   const deltaY = pointB.top - pointA.top
   
@@ -1251,18 +1249,28 @@ export function clamp(min: number, value: number, max: number): number {
   return Math.min(Math.max(value, min), max)
 }
 
-export function getVertDistanceBetweenTwoElems(a: HTMLElement, b: HTMLElement) {
-  const aRect = a.getBoundingClientRect()
-  const bRect = b.getBoundingClientRect()
-  
-  return bRect.top - aRect.bottom
+export function getVertDistanceBetweenTwoElems(top: HTMLElement, bottom: HTMLElement, useTopElemBottom = true) {
+  const topRect = top.getBoundingClientRect()
+  const bottomRect = bottom.getBoundingClientRect()
+
+  if (useTopElemBottom) {
+    return bottomRect.top - topRect.bottom
+  }
+  else {
+    return bottomRect.top - topRect.top
+  }
 }
 
-export function getHozDistanceBetweenTwoElems(a: HTMLElement, b: HTMLElement) {
-  const aRect = a.getBoundingClientRect()
-  const bRect = b.getBoundingClientRect()
-  
-  return bRect.left - aRect.right
+export function getHozDistanceBetweenTwoElems(left: HTMLElement, right: HTMLElement, useLeftElemRight = true) {
+  const leftRect = left.getBoundingClientRect()
+  const rightRect = right.getBoundingClientRect()
+
+  if (useLeftElemRight) {
+    return rightRect.left - leftRect.right
+  }
+  else {
+    return rightRect.left - leftRect.left
+  }
 }
 
 /**
@@ -1286,24 +1294,33 @@ export function extractQuadCSSValue(val: CSSMultiDimPxVal | undefined) {
 
 
 /**
- * Get the context menu positioning. Ensures that it will not get clipped but its parent.
+ * Ensures that a floating element inside a parent conatiner always fit inside the parent.
+ * Context menu or an element being dragged and dropped.
  * 
- * @param menuDims        Context menu width and height (does not have to be compeletely accurate)
+ * @param dims          - Float element width and height (does not have to be compeletely accurate)
+ * @param cursorPos     - Current cursor position (in terms of the parent) where menu was invoked. 
  * 
- * @param cursorPos       Current cursor position (in terms of the container) where menu was invoked. 
- * 
- * @param containerDims   Height and width dimensions of the container element.
+ * @param containerDims - Height and width dimensions of the container element.
  *                        This container is the menu will be position relatively of.
  *                        This is the scrollable element / window (not the overflow element.)
  * 
+ * @param clientOffset  - Drag touch point position within the floating element.
+ * 
  * @returns Left and top offset where the menu should end postioned.
  */
-export function intContextMenuPos(menuDims: BoxSize, cursorPos: OffsetPoint, containerDims: BoxSize) {
-  const { width: menuWidth, height: menuHeight } = menuDims
+export function initFloatElemPos(context: {
+  dims: BoxSize, cursorPos: OffsetPoint, containerDims: BoxSize, clientOffset?: OffsetPoint
+}) {
+  
+  const { dims, cursorPos, containerDims, clientOffset } = context
+  const { width: menuWidth, height: menuHeight } = dims
   const { width: containerWidth, height: containerHeight } = containerDims
 
-  let left = cursorPos.left
-  let top = cursorPos.top
+  const clientOffsetLeft = clientOffset?.left ?? 0
+  const clientOffsetTop = clientOffset?.top ?? 0
+
+  let left = cursorPos.left - clientOffsetLeft
+  let top = cursorPos.top - clientOffsetTop
 
   const containerRightEdge  = containerWidth
   const containerBottomEdge = containerHeight
@@ -1311,7 +1328,7 @@ export function intContextMenuPos(menuDims: BoxSize, cursorPos: OffsetPoint, con
   const dropdownRightEdge  = menuWidth + left
   const dropdownBottomEdge = menuHeight + top
 
-if (dropdownRightEdge >= containerRightEdge) {
+  if (dropdownRightEdge >= containerRightEdge) {
       const xOffset = dropdownRightEdge - containerRightEdge
       left -= xOffset
   }
@@ -1320,6 +1337,50 @@ if (dropdownRightEdge >= containerRightEdge) {
       top -= yOffset + 10
   }
 
+  left = Math.max(left, 0)
+  top = Math.max(top, 0)
+
   return { left, top }
 }
 
+/**
+ * Check if cursor is near a border and should scroll towards the moving block. if there's space left.
+ * 
+ * @param containerElem       - The container of the floating item
+ * @param cursorPosFromWindow - Positioning of the cursor inside the scroll window / container element
+ * 
+ * @returns  Direction the scroll should be to. Null if a scroll is not needed
+ */
+export function isNearBorderAndShouldScroll(containerElem: HTMLElement, cursorPosFromWindow: OffsetPoint) {
+  const { 
+      scrollTop, 
+      scrollLeft, 
+      scrollHeight, 
+      scrollWidth,
+      clientHeight: windowHeight, 
+      clientWidth: windowWidth
+  } = containerElem!
+
+  const windowTopOffset   = cursorPosFromWindow.top
+  const windowLeftOffset  = cursorPosFromWindow.left
+
+  const hasReachedBottom   = scrollTop >= scrollHeight - windowHeight
+  const hasReachedRightEnd = scrollLeft >= scrollWidth - windowWidth
+
+
+  if (windowTopOffset < 10 && scrollTop != 0) {
+      return "up"
+  }
+  else if (windowHeight - windowTopOffset < 20 && !hasReachedBottom) {
+      return "down"
+  }
+  else if (windowLeftOffset < 10 && scrollLeft != 0) {
+      return "left"
+  }
+  else if (windowWidth - windowLeftOffset < 20 && !hasReachedRightEnd) {
+      return "right"
+  }
+  else {
+      return null
+}
+} 

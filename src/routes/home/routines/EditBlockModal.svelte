@@ -1,12 +1,10 @@
 <script lang="ts">
-	import type { Writable } from "svelte/store"
-
-	import { Icon } from "$lib/enums"
+    import { Icon } from "$lib/enums"
 	import { toast } from "$lib/utils-toast"
 	import { themeState } from "$lib/store"
 	import { InputManager, TextEditorManager } from "$lib/inputs"
     import type { RoutinesManager } from "$lib/routines-manager"
-	import { ROUTINE_CORE_KEYS, getCoreStr } from "$lib/utils-routines"
+	import { CORE_OPTIONS, getCoreActivityIdx, getCoreStr } from "$lib/utils-routines"
 
 	import Modal from "../../../components/Modal.svelte"
 	import SvgIcon from "../../../components/SVGIcon.svelte"
@@ -18,63 +16,104 @@
 	import DropdownBtn from "../../../components/DropdownBtn.svelte"
 	import DropdownList from "../../../components/DropdownList.svelte"
 	import ConfirmationModal from "../../../components/ConfirmationModal.svelte"
+	import type { Writable } from "svelte/store"
+	import { TEST_TASKS } from "$lib/utils-right-bar"
+	import { minsFromStartToHHMM } from "$lib/utils-date"
 
     export let routineManager: RoutinesManager
     export let block: RoutineBlockElem
-    
+
+    class EditError extends Error { }
+
     let settingsOpen = false, coresOpen = false
     let colorsOpen = false, tagsOpen = false
     
     let { 
-        startTime, endTime, title, 
-        description, yOffset, height, tasks
+        id, startTime, endTime, title, 
+        description, tasks, orderContext, activity
     } = block
+    let _blocks = routineManager.editDayRoutineElems
     
-    let updatedTasks: Task[] = []
-    let pickedCoreItemIdx = 0
+    let updatedTasks: Task[] = tasks
     let doCreateNewTask = false
+    let pickedCoreItemIdx = getCoreActivityIdx(activity)
 
+    let newStartTime = startTime
+    let newEndTime = endTime
+    let newOrderContext = orderContext
+    let orderOptnText = ""
+    
     let editHasBeenMade = false
     let isSaving = false
     let confirmModalOpen = false
-
+    let actualOrder: BlockOrderContext = "middle"
+    
     let routineListRef: HTMLElement
     let titleInput: Writable<InputManager>
     let descriptionEditor: Writable<InputManager>
 
-    $: totalTime = endTime - startTime
     $: isDarkTheme = $themeState.isDarkTheme
+    $: blocks = $_blocks
 
     $: initTitleEditor(title)
     $: initDescriptionEditor(description)
+    $: initOrderIdx(blocks) 
 
+    function toggleEditMade() {
+        editHasBeenMade = true
+    }
     function onMadeChanges(updatedBlock: RoutineBlockElem | null) {
         routineManager.onConcludeModalEdit(updatedBlock)
     }
-
-    /* Time Changes */
-    function onStartTimeChange(time: number) {
-        const res = routineManager.getSafePropsAfterLift({ 
-            startTime: time, endTime: time + totalTime, blockTotalTime: totalTime 
-        })
-
-        startTime = res.startTime
-        endTime = res.endTime
-        yOffset = res.yOffset
-        height = res.height
-
-        toggleEditMade()
-    }
-    function onEndTimeChange(time: number) {
-        const res = routineManager.onEndTimeChangeFromModal(startTime, endTime, time)
-
-        endTime = res.endTime
-        height = res.height
-
-        toggleEditMade()
+    function onSettingsOptionsClicked(idx: number) {
+        if (idx === 0) {
+            updateOrderIdx()
+        }
+        settingsOpen = false
     }
 
-    /* Text Editors */
+    /* Order */
+
+    function initOrderIdx(blocks: RoutineBlockElem[] | null) {
+        if (!blocks) return
+        const orderIdx = routineManager.getBlockOrderFromStartTime(startTime, blocks!)
+        
+        if (orderIdx === 0) {
+            actualOrder = blocks!.length === 1 ? "only" : "first"
+        }
+        else if (orderIdx === blocks!.length - 1) {
+            actualOrder = "last"
+        }
+        else {
+            actualOrder = "middle"
+        }
+
+        updateOrderOptnText()
+    }
+    function updateOrderIdx() {
+        if (actualOrder === "first") {
+            newOrderContext = newOrderContext === "first" ? null : "first"
+        }
+        else {
+            newOrderContext = newOrderContext === "last" ? null : "last"
+        }
+
+        updateOrderOptnText()
+    }
+    function updateOrderOptnText() {
+        if (actualOrder === "first") {
+            orderOptnText = newOrderContext === "first" ? "Unmark as First Routine" : "Mark as First Routine"
+        }
+        else if (actualOrder === "last") {
+            orderOptnText = newOrderContext === "first" ? "Unmark as Last Routine" : "Mark as Last Routine"
+        }
+        else {
+            orderOptnText = ""
+        }
+    }
+
+    /* Text Stuff */
+
     function initTitleEditor(_title: string) {
         titleInput = (new InputManager({ 
             initValue: _title,
@@ -86,6 +125,7 @@
             }
         })).state
     }
+
     function initDescriptionEditor(_description: string) {
         descriptionEditor = (new TextEditorManager({ 
             initValue: _description,
@@ -98,40 +138,29 @@
             }
         })).state
     }
-    function toggleEditMade() {
-        editHasBeenMade = true
-    }
 
-    /* Text Info */
     function onTitleChange(newTitle: string) {
         title = newTitle
         toggleEditMade()
     }
+
     function onDescriptionChange(newDescription: string) {
         description = newDescription
         toggleEditMade()
     }
 
     /* Info */
+    
     function onTagChange(tag: Tag | null) {
         tagsOpen = false
         block = { ...block, tag }
 
         toggleEditMade()
     }
-    function onSettingsOptionsClicked(idx: number) {
-        settingsOpen = false
-    }
     function onCoresOptionListClicked(idx: number) {
         coresOpen = false
         pickedCoreItemIdx = idx
-        block = { ...block, activity: ROUTINE_CORE_KEYS[idx][0] }
-
-        toggleEditMade()
-    }
-    function onColorOptionsChosen(color: Color) {
-        block = { ...block, color }
-        colorsOpen = false
+        block = { ...block, activity: CORE_OPTIONS[pickedCoreItemIdx][0] }
 
         toggleEditMade()
     }
@@ -141,20 +170,35 @@
 
         toggleEditMade()
     }
+    function onColorOptionsChosen(color: Color) {
+        block = { ...block, color }
+        colorsOpen = false
+
+        toggleEditMade()
+    }
     function onTimePickerClicked() {
         if (settingsOpen) settingsOpen = false
         if (coresOpen) coresOpen = false
         if (tagsOpen) tagsOpen = false
     }
-
-    /* Action Item */
-    function onNewActionItemBtnClicked() {
-        doCreateNewTask = true
-        requestAnimationFrame(() => doCreateNewTask = false)
-    }
     function onTaskChange(event: CustomEvent) {
+        toggleEditMade()
         const _updatedTasks = event.detail
         updatedTasks = _updatedTasks
+    }
+
+    /* Action Items */
+
+    function verifyChanges() {
+        const overlapBlock = routineManager.getOverlappingBlock(blocks!, newStartTime, newEndTime, id)
+
+        if (overlapBlock) {
+            const { title, startTime, endTime } = overlapBlock
+            const startTimeStr = minsFromStartToHHMM(startTime)
+            const endTimeStr = minsFromStartToHHMM(endTime)
+
+            throw new EditError(`Changes couldn't be saved. his block would overlap with \"${title}\" (${startTimeStr} - ${endTimeStr})`)
+        }
     }
 
     /* Conclude Changes */
@@ -165,20 +209,23 @@
     }
     async function saveChanges() {
         if (isSaving) return
+        
         try {
             isSaving = true
             await asyncCall()
+            verifyChanges()
             
             onMadeChanges({
-                ...block, startTime, endTime, 
-                title, description,
-                yOffset, height, tasks: updatedTasks
+                ...block, 
+                startTime: newStartTime, endTime: newEndTime,
+                title, description, tasks: updatedTasks, orderContext: newOrderContext
             })
 
             toast("success", { message: "Changes saved!" })
         }
-        catch(e) {
-            toast("error", { message: "Error saving your changes." })
+        catch(e: any) {
+            const message = e instanceof EditError ? e.message : "Error saving your changes."
+            toast("error", { message })
         }
         finally {
             isSaving = false
@@ -234,6 +281,20 @@
                     />
                 </div>
                 <div class="edit-routine__title-container">
+                    {#if newOrderContext === "first" || newOrderContext === "last"}
+                        {@const isFirst = newOrderContext === "first"}
+                        <div 
+                            class="edit-routine__order-context-icon"
+                            title={`${isFirst ? "First routine of the day." : "Last routine of the day."}`}
+                        >
+                            <SvgIcon 
+                                icon={isFirst ? Icon.Sun : Icon.Moon} 
+                                options={{
+                                    height: 16, width: 16, opacity: 0.2, scale: 0.7
+                                }}
+                            />
+                        </div>
+                    {/if}
                     {#if titleInput}
                         <input 
                             type="text"
@@ -244,6 +305,7 @@
                             value={$titleInput.value}
                             placeholder={$titleInput.placeholder}
                             maxlength={$titleInput.maxLength}
+                            autocomplete="false"
                             on:blur={(e) => $titleInput.onBlurHandler(e)}
                             on:input={(e) => $titleInput.onInputHandler(e)}
                         >
@@ -255,20 +317,25 @@
                 class="edit-routine__settings-btn dropdown-btn dropdown-btn--settings"
                 id={"edit-routine-settings--dropdown-btn"}
             >
-                <SvgIcon 
-                    icon={Icon.Settings} 
-                    options={{ opacity: 0.6}}
-                />
+                <SvgIcon icon={Icon.Settings} options={{ opacity: 0.6}} />
             </button>
             <!-- Settings Dropdown -->
             <DropdownList 
                 id={"edit-routine-settings"}
                 isHidden={!settingsOpen} 
                 options={{
-                    listItems: [{ name: "Duplicate Block" }, { name: "Delete Block" }],
-                    onListItemClicked: onSettingsOptionsClicked,
+                    listItems: [
+                        { 
+                            options: [
+                                ...(actualOrder !== "middle" ? [{ name: orderOptnText }] : []),
+                                { name: "Duplicate Block" }
+                            ]
+                        },
+                        { name: "Delete Block" }
+                    ],
                     position: { top: "45px", right: "0px" },
-                    styling: { width: "140px" },
+                    styling: { width: "160px" },
+                    onListItemClicked: (context) => onSettingsOptionsClicked(context.idx),
                     onClickOutside: () => settingsOpen = false
                 }}
             />
@@ -308,18 +375,18 @@
                                 onClick: () => coresOpen = !coresOpen,
                                 onRemove:() => onRemoveCore(),
                                 pickedOptionName: getCoreStr(block.activity),
-                                styles: { fontSize: "1.18rem", padding: "4px 12px 4px 11px" }
+                                styles: { fontSize: "1.24rem", padding: "4px 12px 4px 11px" }
                             }} 
                         />
                         <DropdownList 
                             id={"core-dropdown"}
                             isHidden={!coresOpen} 
                             options={{
-                                listItems: ROUTINE_CORE_KEYS.map((coreKey) => ({ name: coreKey[1] })),
-                                pickedItemIdx: pickedCoreItemIdx,
+                                listItems: CORE_OPTIONS.map((coreKey) => ({ name: coreKey[1] })),
+                                pickedItem: pickedCoreItemIdx,
                                 position: { top: "28px", left: "0px" },
                                 styling: { width: "88px" },
-                                onListItemClicked: (e, idx) => onCoresOptionListClicked(idx),
+                                onListItemClicked: (context) => onCoresOptionListClicked(context.idx),
                                 onClickOutside: () => coresOpen = false
                             }}
                         />
@@ -336,17 +403,23 @@
                         <div class="edit-routine__time-input-container">
                             <TimePicker
                                 id="start"
-                                options={{ start: startTime, max: endTime }}
-                                onSet={onStartTimeChange}
+                                options={{ start: newStartTime, max: newEndTime }}
+                                onSet={(time) => { 
+                                    newStartTime = time
+                                    toggleEditMade()
+                                }}
                                 onClick={() => onTimePickerClicked()}
-                                />
-                            </div>
-                            <span>to</span>
-                            <div class="edit-routine__time-input-container">
-                                <TimePicker 
+                            />
+                        </div>
+                        <span>to</span>
+                        <div class="edit-routine__time-input-container">
+                            <TimePicker 
                                 id="end"
-                                options={{ start: endTime, min: startTime }}
-                                onSet={onEndTimeChange}
+                                options={{ start: newEndTime, min: newStartTime }}
+                                onSet={(time) => { 
+                                    newEndTime = time
+                                    toggleEditMade()
+                                }}
                                 onClick={() => onTimePickerClicked()}
                             />
                         </div>
@@ -385,57 +458,53 @@
                     </div>
                     <div class="edit-routine__info-title">Action Items</div>
                 </div>
-                <button 
-                    class="edit-routine__list-add-btn"
-                    on:click={onNewActionItemBtnClicked}
-                >
-                    <div class="edit-routine__list-add-btn-icon">
-                        <SvgIcon icon={Icon.Add} options={{ scale: 0.6, strokeWidth: 1.3 }} />
-                    </div>
-                    <span>Add</span>
-                </button>
+                <span class="edit-routine__list-count">
+                    {updatedTasks.length}
+                </span>
             </div>
-            {#if routineListRef}
-                <div class="edit-routine__list-container" bind:this={routineListRef}>
-                        <TasksList 
-                            on:tasksUpdated={onTaskChange}
-                            options={{
-                                id:   "edit-routine",
-                                type: "subtasks numbered",
-                                isCreatingNewTask: doCreateNewTask,
-                                containerRef: routineListRef,
-                                tasks,
-                                styling: {
-                                    task: { 
-                                        fontSize: "1.23rem", height: "30px", padding: "7px 0px 5px 0px" 
-                                    },
-                                    subtask: { 
-                                        fontSize: "1.23rem", padding: "8px 0px 8px 0px" 
-                                    },
-                                    num: { 
-                                        width: "24px", margin: "1px 0px 0px 26px" 
-                                    },
-                                    description: { 
-                                        margin: "4px 0px 2px 0px"
-                                    },
-                                    descriptionInput: { 
-                                        fontSize: "1.23rem" 
-                                    }
-                                },
-                                cssVariables: { 
-                                    maxDescrLines: 2 
-                                },
-                                contextMenuOptions: { 
-                                    width: "170px" 
-                                },
-                                ui: { 
-                                    hasTaskDivider: false,
-                                    sidePadding: "25px", listHeight: "100%"
-                                }
-                            }}
-                        />
-                    </div>
-            {/if}
+            <div class="edit-routine__list-container" bind:this={routineListRef}>
+                <TasksList 
+                    on:tasksUpdated={onTaskChange}
+                    options={{
+                        id:   "edit-routine",
+                        type: "subtasks numbered",
+                        isCreatingNewTask: doCreateNewTask,
+                        containerRef: routineListRef,
+                        tasks: TEST_TASKS,
+                        styling: {
+                            task: { 
+                                fontSize: "1.3rem", height: "30px", padding: "5px 0px 5px 0px" 
+                            },
+                            subtask: { 
+                                fontSize: "1.23rem", padding: "8px 0px 9px 0px" 
+                            },
+                            num: { 
+                                width: "24px", margin: "1px 0px 0px 26px" 
+                            },
+                            description: { 
+                                padding: "5px 0px 2px 0px"
+                            },
+                            descriptionInput: { 
+                                fontSize: "1.23rem"
+                            }
+                        },
+                        addBtn: {
+                            style: { fontSize: "1.25rem" }
+                        },
+                        cssVariables: { 
+                            maxDescrLines: 2 
+                        },
+                        contextMenuOptions: { 
+                            width: "170px" 
+                        },
+                        ui: { 
+                            hasTaskDivider: false,
+                            sidePadding: "25px", 
+                            listHeight: "100%"
+                        }
+                    }}
+                />
+            </div>
         </div>
         <!-- Buttons -->
         <div class="edit-routine__btns">
@@ -445,7 +514,11 @@
             >
                 Cancel
             </button>
-            <AsyncButton isLoading={isSaving} actionFunc={saveChanges} />
+            <AsyncButton 
+                styling={{ height: "35px", borderRadius: "13px" }}
+                isLoading={isSaving}
+                actionFunc={saveChanges} 
+            />
         </div>
     </div>
 </Modal>
@@ -467,6 +540,7 @@
         height: 75vh;
         width: clamp(420px, 70vw, 600px);
         padding: 0px;
+        position: relative;
 
         &--light &__info-title {
             @include text-style(0.9, 500);
@@ -494,10 +568,6 @@
         &--light div[contenteditable]:empty:before {
             opacity: 0.4;
         }
-        &--dark .dropdown-btn {
-            @include dropdown-btn-dark;
-        }
-
 
         /* Header */
         &__header {
@@ -517,36 +587,36 @@
         /* Color */
         &__color {
             background-color: rgba(var(--routine-color));
-            @include circle(5px);
+            @include circle(6px);
             cursor: pointer;
         }
         &__color-dropdown-btn {
             @include center;
             padding: 8px;
-            margin-right: 4.5px;
+            margin-right: 6px;
             
             &:hover {
-                @include txt-color(0.08, "bg");
+                @include txt-color(0.1, "bg");
                 transition: 0.01s ease-in-out;
             }
             &:active {
-                @include txt-color(0.08, "bg");
+                @include txt-color(0.1, "bg");
                 transform: scale(0.97);
             }
         }
         &__color-picker-container {
-            @include abs-top-left(22px, 5px);
+            @include abs-top-left(30px, 0px);
             z-index: 100;
         }
         /* Title */
         &__title-container {
-            font-family: "DM Sans";
             width: 100%;
+            @include flex(center);
         }
         &__title-container input {
-            @include text-style(1, 300, 1.64rem);
-            width: fit-content;
-            max-width: 100%;
+            @include text-style(1, 400, 1.64rem);
+            width: calc(100% - 20px);
+            position: relative;
             
             &::placeholder {
                 @include text-style(0.2);
@@ -555,6 +625,9 @@
                 transition: 0.4s ease-in-out;
                 transform: scale(0.99);
             }
+        }
+        &__order-context-icon {
+            margin: 0px 5px 0px -5px;
         }
         /* Dropdowns */
         &__settings-dropdown {
@@ -566,7 +639,7 @@
 
         /* Info */
         &__info {
-            height: 94px;
+            height: 98px;
             padding: 0px 20px 0px 25px;
         }
         &__info-row {
@@ -626,26 +699,18 @@
         }
         &__description-text-editor {
             max-width: 100%;
-            @include text-style(0.8, 400, 1.24rem);
+            @include text-style(0.9, 400, 1.28rem);
         }
         &__list-header {
             padding: 30px 20px 10px 25px;
             @include flex(center, space-between);
         }
         &__list {
-            height: calc(100% - (90px + 40px + 94px + 75px));
+            height: calc(100% - 260px);
             width: 100%;
         }
-        &__list-add-btn {
-            @include flex(center);
-            opacity: 0.5;
-            @include text-style(0.8, 300, 1.22rem);
-
-            &:hover {
-                opacity: 1;
-            }
-        }
-        &__list-add-btn-icon {
+        &__list-count {
+            @include text-style(0.3, 400, 1.1rem, "DM Sans");
             margin-right: 5px;
         }
         &__list-container {
@@ -655,14 +720,13 @@
         }
         &__btns {
             @include flex(center, flex-end);
-            padding-right: 20px;
-            margin-top: 13px;
+            @include abs-bottom-right(20px, 24px);
         }
         &__cancel-btn {
             margin-right: 7px;
-            height: 39px;
+            height: 35px;
             width: 94px;
-            border-radius: 15px;
+            border-radius: 13px;
             @include center;
             @include txt-color(0.03, "bg");
             @include text-style(1, 400, 1.26rem);

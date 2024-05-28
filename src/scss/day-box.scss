@@ -9,6 +9,9 @@
     &--ns-resize * {
         cursor: ns-resize !important;
     }
+    &--grabbing * {
+        cursor: grabbing !important;
+    }
     &--light .routine-blocks__block-title {
         @include text-style(_, 600);
     }
@@ -46,14 +49,12 @@
 
     &__block {
         position: absolute;
-        overflow: hidden;
-        cursor: pointer;
-        border-radius: 9px;        
+        // overflow: hidden;
         height: var(--block-height);
         max-height: var(--block-height);
-        background-color: rgba(var(--block-color-2), 1);
-        border-top: 0.5px solid var(--primaryBgColor); // prevent collision with neighbors
         transition: 0.1s transform ease-in-out;
+    
+        cursor: pointer;
 
         &--md &-content {
             @include flex(center);
@@ -64,9 +65,9 @@
 
         // drop area
         &--drop-area {
-            border: 1px dashed rgba(var(--block-color-1), 0.77);
-            background-color: rgba(var(--block-color-2), 0.4);
-            transform: scale(0.998);
+            border: 1px dashed rgba(var(--block-color-1), 0.4);
+            background-color: rgba(var(--block-color-2), 0.5);
+            border-radius: 4px;
         }
         &--drop-area &-title {
             display: none;
@@ -93,19 +94,43 @@
             }
         }
 
-        &--day-floating {
+        &--use-x-offset {
             left: var(--left-x-offset) !important;
         }
         &--day-floating, &--wk-floating {
-            border: 1px solid rgba(var(--block-color-3), 0.04);
-            box-shadow: 0px 1px 16.4px 4px rgba(0, 0, 0, 0.08);
             transition: 0s !important;
-            cursor: grabbing;
-            opacity: 0.8;
+        }
+        &--day-floating &-content, &--wk-floating &-content {
+            border-top: 1.5px solid rgba(var(--block-color-3), 0.04);
+            border-right: 1.5px solid rgba(var(--block-color-3), 0.04);
+            border-bottom: 1.5px solid rgba(var(--block-color-3), 0.04);
+
+            box-shadow: 0px 1px 16.4px 4px rgba(black, 0.08);
+        }
+        &--day-floating, &--wk-floating {
+            cursor: grabbing !important;
+        }
+        &--dup-floating {
+            animation: wobble 1s ease-in-out;
+        }
+        &--dup-floating &-content {
+            box-shadow: 0px 1px 16.4px 4px rgba(black, 0.4);
+            border: 1px dashed rgba(var(--block-color-1, 0.5)) !important;
+        }
+        &--dup-floating * {
+            pointer-events: all;
+        }
+        &--dup-floating:hover * {
+            cursor: grab;
+        }
+        &--dup-floating &-buttons {
+            @include visible;
+        }
+        &--dup-floating &-spine {
+            display: none;
         }
 
         &:hover {
-            background-color: rgba(var(--block-color-2), 1);
             transition: 0.04s ease-in-out;
         }
         &:active {
@@ -126,12 +151,15 @@
         }
     }
     &__block-content {
+        background-color: rgba(var(--block-color-2), 1);
+        border-top: 0.5px solid var(--primaryBgColor);
         padding: 5px 8px 5px 11px;
         overflow: hidden;
         white-space: nowrap;
         position: relative;
         height: 100%;
         border-left: none;
+        border-radius: 9px;
     }
     &__block-title {
         @include text-style(_,  500, 1.14rem);
@@ -146,15 +174,63 @@
         color: rgba(var(--block-color-3), 1);
     }
     &__block-spine {
-        @include abs-top-left(-1px, -1px);
-        height: calc(100% + 1px);
-        width: 3px;
+        @include abs-top-left(0px, 1px);
+        height: calc(100%);
+        width: 2.5px;
         background-color: rgb(var(--block-color-1));
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
     }
-    &__block-handler {
-        &:last-child {
-            @include abs-bottom-left();
+    &__block-handler:last-child {
+        @include abs-bottom-left();
+    }
+    &__block-buttons {
+        display: block;
+        @include not-visible;
+        @include flex(center);
+        cursor: pointer !important;
+
+        * {
+            cursor: pointer !important;
         }
+    }
+    &__block-order-icon {
+        margin: -2px -1px 0px -5px;
+    }
+    &__block-buttons--left {
+        display: block;
+        @include abs-top-left(4px, -24px);
+    }
+    &__block-buttons--right {
+        display: block;
+        @include abs-top-right(-1px, -27px);
+    }
+    &__block-buttons--top {
+        display: flex;
+        @include abs-top-left(-22px, 1px);
+    }
+    &__block-buttons--bottom {
+        display: flex;
+        @include abs-bottom-left(-28px, 1px);
+    }
+    &__block-buttons button {
+        @include circle(16px);
+        @include center;
+        background-color: #303031;
+        border: 1px solid rgba(white, 0.02);
+        margin: 0px 5px 5px 0px;
+        transition: 0.04s ease-in-out;
+
+        &:hover {
+            background-color: #3f3f3f;
+        }
+        &:active {
+            scale: 0.95;
+        }
+    }
+    &__block-buttons button i {
+        font-size: 0.9rem;
+
     }
 }
 
@@ -276,3 +352,34 @@ $hour-block-height: 50px;
         border-radius: 4px;
     }
 }
+
+@keyframes wobble {
+    0% {
+      transform: none
+    }
+  
+    15% {
+      transform: rotate3d(0, 0, 1, -5deg)
+    }
+  
+    30% {
+      transform: rotate3d(0, 0, 1, 3deg)
+    }
+  
+    45% {
+      transform: rotate3d(0, 0, 1, -3deg)
+    }
+  
+    60% {
+      transform: rotate3d(0, 0, 1, 2deg)
+    }
+  
+    75% {
+      transform: rotate3d(0, 0, 1, -1deg)
+    }
+  
+    100% {
+      transform: none
+    }
+  }
+  

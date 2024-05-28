@@ -4,19 +4,19 @@
         background-color: rgba(var(--tag-color-2), 1);
     }
     &--light &__title {
-        @include text-style(_, 500);
+        @include text-style(_, 600);
     }
     &--light &__description {
-        @include text-style(0.85, 500);
+        @include text-style(0.75, 600);
     }
     &--light &__breakdown h3 {
         @include text-style(1, 600);
     }
     &--light &__cores-title {
-        @include text-style(0.84, 500);
+        @include text-style(0.9, 500);
     }
     &--light &__cores-value {
-        @include text-style(0.4, 400);
+        @include text-style(0.7, 400);
     }
     &--light &__cores-col-divider {
         @include divider(0.08, 1px);
@@ -26,7 +26,7 @@
         @include text-style(0.84, 600);
     }
     &--light &__tag-stat {
-        @include text-style(0.54, 500);
+        @include text-style(0.8, 400);
     }
 
     &__details {
@@ -40,12 +40,12 @@
     &__title {
         padding: 0px;
         overflow: scroll;
-        @include text-style(1, 400, _, "DM Sans");
+        @include text-style(1, 400, _, "Manrope");
     }
     &__description {
         overflow: scroll;
         display: inline-block;
-        @include text-style(0.3, 300, 1.4rem, "DM Sans");
+        @include text-style(0.3, 300, 1.4rem, "Manrope");
     }
 
     /* Breakdown */
@@ -57,7 +57,7 @@
         }
         &-header {
             @include flex(center, space-between);
-            margin-bottom: 14px;
+            // margin-bottom: 8px;
             position: relative;
         }
         &-options {
@@ -69,7 +69,7 @@
         &-options-btn {
             opacity: 0.4;
             transition: 0s;
-            @include text-style(1, 300, 1.2rem);
+            @include text-style(1, 300, 1.14rem, "DM Mono");
 
             &:hover {
                 opacity: 1;
@@ -81,7 +81,7 @@
     }
     /* Core Breakdown */
     &__core-breakdown {
-        user-select: text;
+        padding-top: 8px;
     }
     &__cores {
         @include text-style(0.4, 400, 1.3rem);
@@ -112,12 +112,28 @@
         margin-bottom: 6px;
     }
     &__tag-stat {
-        @include text-style(0.25, 300, 1.34rem, "DM Sans");
+        @include text-style(0.34, 300, 1.32rem, "DM Sans");
+    }
+    &__tag-breakdown {
+        position: relative;
+        min-height: 180px;
+        max-height: 240px;
+        overflow: scroll;
+        padding: 13px 15px 0px 3px;
+        width: calc(100% + 15px);
+        margin-left: -3px;
     }
     &__tag-breakdown .tag {
         padding: 3px 12px 3.5px 10px;
         background-color: rgba(var(--tag-color-2), 1);
         margin-left: -3px;
+    }
+    &__tag-breakdown-empty {
+        @include text-style(0.15, 400, 1.32rem);
+        position: absolute;
+        top: calc(50% - 22px);
+        left: 50%;
+        transform: translate(-50%, -50%);
     }
 }
 

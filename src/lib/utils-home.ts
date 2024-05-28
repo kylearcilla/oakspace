@@ -7,6 +7,7 @@ import { conintueWorkSession, didInitSession } from "./utils-session"
 import { didInitMusicUser, loadMusicUserData, musicLogin } from "./utils-music"
 import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer } from "./utils-youtube"
 import { didSpotifyUserAuthApp, getSpotifyCodeFromURLAndLogin } from "./api-spotify"
+import { isTargetTextEditor } from "./utils-general"
 
 const LEFT_BAR_LEFT_BOUND = 20
 const LEFT_BAR_RIGHT_BOUND = 80
@@ -57,7 +58,7 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
         lastKeysPressed: { keyCode: code, altKey, metaKey, shiftKey }
     })
     
-    if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || isTargetContentEditable) { 
+    if (isTargetTextEditor(target)) { 
         // Enter for save, Shift + Enter for break.
         if (isTargetContentEditable && ((key === "Enter" && !shiftKey) || key == "Escape")) {
             target.blur()
@@ -155,7 +156,12 @@ const loadHomeViewLayOutUIData = () => {
     const storedData = localStorage.getItem("home-ui")
     if (!storedData) return
 
-    let data: GlobalContext = JSON.parse(storedData)
+    const data: GlobalContext = JSON.parse(storedData)
+
+    if (data.isLeftBarFloating) {
+        data.isLeftNarrowBarOpen = false
+    }
+
     globalContext.set({ ...data, modalsOpen: [] })
     updteGlobalContext({ ...data, modalsOpen: [] })
 }

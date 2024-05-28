@@ -49,7 +49,7 @@
             <SvgIcon 
                 icon={Icon.Dropdown}
                 options={{
-                    scale: 1.1, height: 12, width: 12, strokeWidth: 1.4
+                    scale: 1.1, height: 12, width: 12, strokeWidth: 1.2
                 }}
             />
         </div>
@@ -78,7 +78,7 @@
             class="dropdown-btn__icon dropdown-btn__icon--close-btn"
             on:click={onRemoveBtnClicked}
         >
-            <SvgIcon icon={Icon.Close} options={{ scale: 0.9, strokeWidth: 1.5 }} />
+            <SvgIcon icon={Icon.Close} options={{ scale: 0.9, strokeWidth: 1.6, height: 12, width: 12, }} />
         </button>
     {/if}
 </button>
@@ -97,6 +97,9 @@
         &__icon--close-btn {
             transition: 0.05s ease-in-out;
             opacity: 0.4;
+            margin-bottom: -2px;
+            @include center;
+
             &:hover {
                 opacity: 1;
             }

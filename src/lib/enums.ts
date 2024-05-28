@@ -17,7 +17,8 @@ export enum LogoIcon {
     AppleMusic, Spotify, YoutubeMusic, Soundcloud, Youtube, Session, Google, Luciole
 }
 export enum Icon {
-    Settings, Dropdown, Add, Close, ChevronLeft, ChevronRight, DragDots, Archive, Tune, Sun, Moon, Pin, Sublink
+    Settings, Dropdown, Add, Close, ChevronLeft, ChevronRight, DragDots, Archive, Tune, Sun, Moon, Pin, Sublink,
+    ColorSun, ColorMoon
 }
 export enum ModalType { 
     Settings, Youtube, Music, Stats, Journal, Appearance, Quote, NewSession, ActiveSession,

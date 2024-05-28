@@ -8,8 +8,8 @@
 	import { getColorTrio } from "$lib/utils-general"
 	import { InputManager, TextEditorManager } from "$lib/inputs"
 	import { getTimeFromIdx, minsFromStartToHHMM, minsToHHMM } from "$lib/utils-date"
-	import { WeeklyRoutinesManager } from "$lib/routines-manager"
-	import { BreakdownView, EDIT_BLOCK_OPTIONS, ViewOption, getBlockStyling, isDayRoutinedLinked } from "$lib/utils-routines"
+	import { WeeklyRoutinesManager } from "$lib/routines-weekly-manager"
+	import { BreakdownView, EDIT_BLOCK_OPTIONS, ViewOption, formatCoreData, getBlockStyling, isDayRoutinedLinked, getTimeForNowBar, ROUTINE_BLOCKS_CONTAINER_ID } from "$lib/utils-routines"
     
 	import EditBlockModal from "../EditBlockModal.svelte"
 	import NewRoutineModal from "../NewRoutineModal.svelte"
@@ -19,6 +19,7 @@
 	import DropdownBtn from "../../../../components/DropdownBtn.svelte"
 	import DropdownList from "../../../../components/DropdownList.svelte"
 	import ConfirmationModal from "../../../../components/ConfirmationModal.svelte"
+	import { SET_DAILY_ROUTINES } from "../../../../tests/routines/routines.data";
 
     export let data: { routines: WeeklyRoutine[] }
 
@@ -27,7 +28,9 @@
     const DAY_DROPDOWN_WIDTH = 255
     const WK_ROUTINES_SETTINGS_DROPDOWN_WIDTH  = 140
     const WK_BOARD_PAD_BOTTOM  = 35
+    const INIT_SCROLL_TOP = 280
     
+    const DAILY_ROUTINES: DailyRoutine[] = SET_DAILY_ROUTINES
     let WEEK_ROUTINES = data.routines
     
     // DOM
@@ -41,16 +44,23 @@
     let routineDetailsHeight = 0
     let breakdownHeight = 0
     let containerWidth = 0
+
+    let confirmOptions: {
+        text: string,
+        onCancel: FunctionParam,
+        onOk: FunctionParam,
+        options: ConfirmOptions,
+    } | null = null
     
     // Weekly Routines
     let chosenWeekRoutineIdx = 0
     let clickedWeekRoutineIdx = chosenWeekRoutineIdx
     let editWkRoutineIdx = -1
+    let rightClickedWkRoutineItemIdx = -1
     let manager = new WeeklyRoutinesManager(WEEK_ROUTINES[chosenWeekRoutineIdx])
     
     let isWkRoutinesOpen = true
     let isWkRoutineSettingsOpen = false
-    let isDeleteWkRoutineConfirmOpen = false
     let openNewRoutineModal = false
     let wkRoutineSettingsPos = { left: 0, top: 0 }
 
@@ -58,10 +68,12 @@
     let pickedBreakdownView = BreakdownView.Cores
     let isAvg = true
     let isViewingCore = true
+    let dayBreakdownDropdownOptions: DropdownOption[] = []
+    let dailyRoutinesOpen = false
     
     // Week View
-    let minuteTimeout: NodeJS.Timeout | null = null
-    let currTime = getCurrentTime()
+    let minuteInterval: NodeJS.Timeout | null = null
+    let currTime = getTimeForNowBar()
 
     let daysInView = manager.DAYS_WEEK
     let viewOptionOpen = false
@@ -78,16 +90,16 @@
     
     let isDayBreakdownViewOptOpen = false
     let isDayBreakdownAvg = false
-    let dailyRoutinesListOpen = false
+    let dayBreakdownSettingsOpen = false
     let breakdownDropdownXOffset = ""
     let isBreakdownDropdownOpen = false
     let hasSetEditPointerCapture = false
 
     // Stores
-    let _currWeekRoutine      = manager.currWeekRoutine
-    let _currWeekRoutineElems = manager.currWeekRoutineElems
-    let _currCores      = manager.currCores
-    let _tagBreakdown   = manager.currTagBreakdown
+    let _weekRoutine      = manager.weekRoutine
+    let _weekRoutineElems = manager.weekRoutineElems
+    let _coreBreakdown    = manager.coreBreakdown
+    let _tagBreakdown   = manager.tagBreakdown
     let _editingBlock   = manager.editingBlock
     let _editContext    = manager.editContext
     let _contextMenuPos = manager.contextMenuPos
@@ -97,10 +109,10 @@
     let titleInput:  Writable<InputManager>
     let description: Writable<InputManager>
     
-    $: currWeekRoutine      = $_currWeekRoutine
-    $: currWeekRoutineElems = $_currWeekRoutineElems as WeekBlockElems ?? []
-    $: currCores            = $_currCores
-    $: tagBreakdown         = $_tagBreakdown
+    $: weekRoutine       = $_weekRoutine
+    $: weekRoutineElems  = $_weekRoutineElems as WeekBlockElems ?? []
+    $: coreBreakdown     = $_coreBreakdown
+    $: tagBreakdown      = $_tagBreakdown
     $: currViewOption    = $_currViewOption
     $: editContext       = $_editContext
     $: editingBlock      = $_editingBlock
@@ -109,9 +121,9 @@
     $: selectedTimeFrame = isViewingCore ? "Cores" : "Tags"
     $: dayBreakdown      = $_dayBreakdown
     
-    $: initTextEditors(currWeekRoutine)
-    $: breakdownOpt    = isAvg ? "avgTime" : "totalTime" as keyof typeof currCores.sleeping
-    $: dayBreakdownOpt = isDayBreakdownAvg ? "avgTime" : "totalTime" as keyof typeof currCores.sleeping
+    $: initTextEditors(weekRoutine)
+    $: breakdownOpt    = isAvg ? "avgTime" : "totalTime" as keyof typeof coreBreakdown.sleeping
+    $: dayBreakdownOpt = isDayBreakdownAvg ? "avgTime" : "totalTime" as keyof typeof coreBreakdown.sleeping
 
     $: isMin        = containerWidth < MIN_VIEW_MAX_WIDTH
     $: isLightTheme = !$themeState.isDarkTheme
@@ -119,9 +131,11 @@
     $: detailsMaxHt = `calc(100% - ${routineDetailsHeight + breakdownHeight + 100}px)`
     $: if (isMin) isWkRoutinesOpen = false
     
-    _currViewOption.subscribe(() => daysInView = manager.daysInView)
-    _dayBreakdown.subscribe((data) => breakdownDropdownXOffset = updateDayBreakdowXOffset(data))
-
+    _dayBreakdown.subscribe((data) => breakdownDropdownXOffset = setDayBreakdownXOffset(data))
+    _currViewOption.subscribe((newOptn) => {
+        currViewOption = newOptn
+        daysInView = manager.daysInView
+    })
 
     function initTextEditors(weeklyRoutine: WeeklyRoutine | null) {
         if (!weeklyRoutine) return
@@ -148,15 +162,23 @@
         })).state
     }
 
-    /* Week Routines */
+    /* User Week Routines */
+
+    function setWkBreakdownView(viewOptnIdx: number) {
+        pickedBreakdownView = viewOptnIdx
+        isViewingCore = viewOptnIdx === BreakdownView.Cores
+        isBreakdownDropdownOpen = false
+    }
     function onWkRoutineContextMenu(e: Event, routineIdx: number) {
-        const pe = e as PointerEvent;
-        pe.preventDefault();
+        const pe = e as PointerEvent
+        pe.preventDefault()
 
         const container = wkRoutinesContainerRef
-
         const rect = container.getBoundingClientRect()
         const top  = pe.clientY - rect.top
+
+        rightClickedWkRoutineItemIdx = routineIdx
+
         let left = pe.clientX - rect.left
 
         // if will go out of bounds
@@ -186,11 +208,17 @@
             chosenWeekRoutineIdx = itemIdx
         }
         else {
-            isDeleteWkRoutineConfirmOpen = true            
+            confirmOptions = {
+                text: "Are you sure you want to proceed with deleting this weekly routine?",
+                onOk: onDeleteWkEditRoutineItem,
+                onCancel: () => editWkRoutineIdx = -1,
+                options: { 
+                    ok: "Delete", caption: "Heads Up!", type: "delete"  
+                }
+            }
         }
 
-        if (isMin) isWkRoutinesOpen = false
-
+        isWkRoutinesOpen = !isMin
         isWkRoutineSettingsOpen = false
     }
     function onFinishNewWeekRoutineEdit(newRoutine: WeeklyRoutine | null) {
@@ -201,11 +229,11 @@
         WEEK_ROUTINES.push(newRoutine)
         WEEK_ROUTINES = WEEK_ROUTINES
     }
-    function onRoutineAdd() {
+    function onWkRoutineAdd() {
         openNewRoutineModal = true
     }
     function onDeleteWkEditRoutineItem() {
-        isDeleteWkRoutineConfirmOpen = false
+        confirmOptions = null
         WEEK_ROUTINES = WEEK_ROUTINES.filter((_, routineIdx) => routineIdx != editWkRoutineIdx)
 
         toast("success", { message: "Weekly routine deleted." })
@@ -219,7 +247,8 @@
     }
 
     /* Edit Block */
-    function onContextMenuOptClicked(e: Event, idx: number) {
+
+    function onContextMenuOptClicked(idx: number) {
         if (idx === 0) {
             manager.openEditBlockModal()
         }
@@ -228,58 +257,175 @@
             colorsOpen = true
         }
         else if (idx === 2) {
-            manager.duplicateEditBlockElem()
-            manager.resetEditState()
+            manager.onDuplicateBlock()
         }
         else {
-            manager.deleteEditBlockElem()
+            manager.deleteEditBlock()
             manager.resetEditState()
         }
         isContextMenuOpen = false
     }
     
-    /* Routine Breakdowns */
-    function setWeekBreakdownView(viewOptnIdx: number) {
-        pickedBreakdownView = viewOptnIdx
-        isViewingCore = viewOptnIdx === BreakdownView.Cores
-        isBreakdownDropdownOpen = false
+    /* Daily Routines */
+
+    function onDailyRoutinesListOptClicked(e: Event) {
+        const target = e.target as HTMLElement
+        const optnText = target.innerText.trim()
+
+        const close = () => {
+            dayBreakdownSettingsOpen = false
+            confirmOptions = null
+            isDayBreakdownOpen = false
+            dailyRoutinesOpen = false
+            manager.initDayRoutineBreakdown(null)
+        }
+
+        if (optnText === "Unlink routine") {
+            confirmOptions = {
+                text: "Are you sure?",
+                onCancel: close,
+                options: { 
+                    ok: "Unlink", caption: "Heads Up!"
+                },
+                onOk: () => {
+                    manager.unlinkSetDailyRoutine()
+                    close()
+                },
+            }
+        }
+        else if (optnText === "Link Routine" || optnText === "Replace Routine") {
+        }
+        else if (optnText === "Clear Routine") {
+            confirmOptions = {
+                text: "Are you sure?",
+                onCancel: close,
+                options: {  
+                    ok: "Clear", caption: "Heads Up!"
+                },
+                onOk: () => {
+                    manager.clearDayRoutine()
+                    close()
+                }
+            }
+        }
+        else if (optnText === "Use template") {
+        }
     }
-    function setDayBreakdownView(idx: number | null) {
-        if (idx === dayBreakdownColIdx) {
+
+    function onNewDayRoutineClicked(chooseContext: DropdownItemClickedContext) {
+        const { parentName, idx } = chooseContext
+        const close = () => {
+            dayBreakdownSettingsOpen = false
+            confirmOptions = null
+            isDayBreakdownOpen = false
+            dailyRoutinesOpen = false
+            manager.initDayRoutineBreakdown(null)
+        }
+
+        const isEmpty = dayBreakdown!.blocksLength
+        const chosenDayRoutine = DAILY_ROUTINES[idx]
+
+        if (parentName === "Link a Routine" && isEmpty) {
+            manager.linkDayRoutine(chosenDayRoutine)
+            close()
+        }
+        else if (parentName === "Link a Routine") {
+            confirmOptions = {
+                text: "Are you sure? Doing this will replace your current routine.",
+                onOk: () => {
+                    manager.linkDayRoutine(chosenDayRoutine)
+                    close()
+                },
+                onCancel: close,
+                options: { 
+                    ok: "Link a Routine", caption: "Heads Up!"  
+                }
+            }
+        }
+        else {
+            confirmOptions = {
+                text: "Are you sure? Doing this will replace your current routine.",
+                onOk: () => {
+                    manager.linkDayRoutine(chosenDayRoutine)
+                    close()
+                },
+                onCancel: close,
+                options: { 
+                    ok: "Replace", caption: "Heads Up!"  
+                }
+            }
+        }
+    }
+
+    /* Breakdowns */
+
+    function setBreakdownForDay(dayIdx: number | null) {
+        dayBreakdownSettingsOpen = false
+
+        if (dayIdx === dayBreakdownColIdx) {
             isDayBreakdownOpen = false
         }
-        else if (idx != null) {
-            dayBreakdownColIdx = idx
+        else if (dayIdx != null) {
+            dayBreakdownColIdx = dayIdx
             isDayBreakdownOpen = true
-            manager.initDayRoutineBreakdown(idx)
+            manager.initDayRoutineBreakdown(dayIdx)
         }
     }
-    function setDayBreakdownViewOptn(viewOptIdx: number) {
-        pickedDayBreakdownView = viewOptIdx
-        dayBreakdownIsCore = viewOptIdx === BreakdownView.Cores
-        isBreakdownDropdownOpen = false
-    }
+
     function closeDayBreakdown() {
         manager.initDayRoutineBreakdown(null)
         dayBreakdownColIdx = -1
     }
-    function onLinkBtnClicked(isLinked: boolean) {
+
+    function setDayBreakdownOption(viewOptIdx: number) {
+        pickedDayBreakdownView = viewOptIdx
+        dayBreakdownIsCore = viewOptIdx === BreakdownView.Cores
+        isDayBreakdownViewOptOpen = false
+    }
+
+    function onDayBreakdownSettingsClicked(isLinked: boolean) {
         if (isLinked) {
-            manager.unlinkCurrBreakdownDay()
+            dayBreakdownDropdownOptions = [
+                { 
+                    name: "Replace routine",
+                    rightIcon: { type: "right-arrow" },
+                    onPointerOver: () => dailyRoutinesOpen = true,
+                    onPointerLeave: () => dailyRoutinesOpen = false
+                },
+                { 
+                    name: "Unlink routine", 
+                } 
+            ]
         }
         else {
-            dailyRoutinesListOpen = !dailyRoutinesListOpen
+            dayBreakdownDropdownOptions = [
+                { 
+                    name: "Link a routine", 
+                    rightIcon: { type: "right-arrow" },
+                    onPointerOver: () => dailyRoutinesOpen = true,
+                    onPointerLeave: () => dailyRoutinesOpen = false
+                }
+            ]
         }
+
+        if (dayBreakdown!.blocksLength > 0)  {
+            dayBreakdownDropdownOptions.push({ name: "Clear Routine" })
+        }
+        else {
+            dayBreakdownDropdownOptions = dayBreakdownDropdownOptions.filter((optn) => optn.name != "Clear Routine")
+        }
+
+        dayBreakdownSettingsOpen = !dayBreakdownSettingsOpen
     }
-    function onDailyRoutinesListOptClicked(idx: number) {
-    }
-    function updateDayBreakdowXOffset(dayBreakdown: DayBreakdown | null) {
+
+    function setDayBreakdownXOffset(dayBreakdown: DayBreakdown | null) {
         if (!dayBreakdown) return ""
 
         return `clamp(10px, calc(((100% / 7) * ${dayBreakdownColIdx}) + 10px), calc(100% - ${DAY_DROPDOWN_WIDTH}px))`;
     }
 
-    /* Editing Blocks */
+    /* Edit Blocks */
+
     function onEditBlockPointerDown(e: PointerEvent) {
         if (!hasSetEditPointerCapture) {
             hasSetEditPointerCapture = true
@@ -287,13 +433,15 @@
             target.setPointerCapture(e.pointerId)
         }
     }
+
     function onBlockContextMenu(e: MouseEvent, id: string) {
         e.preventDefault()
         manager.onBlockContextMenu(id)
         isContextMenuOpen = true
     }
 
-    /* UI Stuff */
+    /* DOM Stuff */
+
     function onBoardScroll(e: Event) {
         const target = e.target as HTMLElement
 
@@ -308,28 +456,28 @@
         weekDaysElem.scrollLeft = target.scrollLeft
         weekDaysElem.style.overflow = "scroll"
     }
-    function getCurrentTime() {
-        const date = new Date()
-        const hours = date.getHours()
-        const minutes = date.getMinutes()
-        const dayIdx = new Date().getDay()
-        
-        return {
-            dayIdx: (dayIdx + 6) % 7,
-            minutes: hours * 60 + minutes
-        }
+    function onKeyPress(e: KeyboardEvent) {
+        if (!manager) return
+
+        viewOptionOpen = false
+        manager.hotkeyHandler(e)
     }
     
     onMount(() => {
+        hourBlocksElem.scrollTop += INIT_SCROLL_TOP
+        scrollableContainer.scrollTop += INIT_SCROLL_TOP
+
         requestAnimationFrame(() => { 
             manager.initContainer(scrollableContainer, scrollableContent)
             manager.processWeeklyRoutine()
         })
-        minuteTimeout = setTimeout(() => currTime = getCurrentTime(), 1000)
+        minuteInterval = setInterval(() => currTime = getTimeForNowBar(), 1000)
     })
 
-    onDestroy(() => clearTimeout(minuteTimeout!))
+    onDestroy(() => clearInterval(minuteInterval!))
 </script>
+
+<svelte:window on:keypress={onKeyPress} />
 
 <div 
     class="routine" 
@@ -351,11 +499,11 @@
             {#if isMin}
                 <div class="routine__details-header">
                     <h1 class="routine__title">
-                        {currWeekRoutine?.name}
+                        {weekRoutine?.name}
                     </h1>
                 </div>
                 <h1 class="routine__description">
-                    {currWeekRoutine?.description}
+                    {weekRoutine?.description}
                 </h1>
             {:else if $titleInput}
                 <div class="routine__details-header">
@@ -396,13 +544,14 @@
                     </div>
                 {:else}
                     <DropdownBtn 
-                        id={"weekly-routine-breakdown"}
+                        id={"breakdown-option"}
                         isActive={isBreakdownDropdownOpen}
                         options={{
                             noBg: true,
                             pickedOptionName: selectedTimeFrame,
                             styles: { 
-                                fontSize: "1.3rem", padding: "4px 12px 4px 11px", margin: "0px 0px 0px -10px" 
+                                fontSize: "1.2rem", padding: "4px 12px 4px 11px", margin: "0px 0px 0px -10px",
+                                opacity: 0.8
                             },
                             onClick: () => { 
                                 isBreakdownDropdownOpen = !isBreakdownDropdownOpen
@@ -423,37 +572,39 @@
                         class:full-opacity={!isAvg}
                         on:click={() => isAvg = false}
                     >
-                        Total
+                        Sum
                     </button>
                 </div>
                 <DropdownList 
-                    id={"weekly-routine-breakdown-option"}
+                    id={"breakdown-option"}
                     isHidden={!isBreakdownDropdownOpen} 
                     options={{
                         listItems: [{ name: "Cores" }, { name: "Tag" }],
-                        pickedItemIdx: pickedBreakdownView,
-                        position: { top: "30px", left: "-10px" },
-                        styling:  { width: "10px" },
-                        onClickOutside:    () => isBreakdownDropdownOpen = false,
-                        onListItemClicked: (e, idx) => setWeekBreakdownView(idx)
+                        pickedItem: pickedBreakdownView,
+                        position: { top: "26px", left: "-10px" },
+                        styling:  { width: "80px" },
+                        onClickOutside: () => { 
+                            isBreakdownDropdownOpen = false
+                        },
+                        onListItemClicked: (context) => setWkBreakdownView(context.idx)
                     }}
                 />
             </div>
             <!-- Cores -->
             <div class="routine__core-breakdown" class:hide={!isViewingCore}>
                 <div class="routine__cores">
-                    {#if currCores}
+                    {#if coreBreakdown}
                         <div class="routine__cores-col">
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Sleeping</div>
                                 <div class="routine__cores-value">
-                                    {minsToHHMM(currCores.sleeping[breakdownOpt])}
+                                    {formatCoreData(coreBreakdown.sleeping[breakdownOpt])}
                                 </div>
                             </div>
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Awake</div>
                                 <div class="routine__cores-value">
-                                    {minsToHHMM(currCores.awake[breakdownOpt])}
+                                    {formatCoreData(coreBreakdown.awake[breakdownOpt])}
                                 </div>
                             </div>
                         </div>
@@ -462,13 +613,13 @@
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Working</div>
                                 <div class="routine__cores-value">
-                                    {minsToHHMM(currCores.working[breakdownOpt])}
+                                    {formatCoreData(coreBreakdown.working[breakdownOpt])}
                                 </div>
                             </div>
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Self-Care</div>
                                 <div class="routine__cores-value">
-                                    {minsToHHMM(currCores.selfCare[breakdownOpt])}
+                                    {formatCoreData(coreBreakdown.selfCare[breakdownOpt])}
                                 </div>
                             </div>
                         </div>
@@ -477,13 +628,13 @@
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Mind</div>
                                 <div class="routine__cores-value">
-                                    {minsToHHMM(currCores.mind[breakdownOpt])}
+                                    {formatCoreData(coreBreakdown.mind[breakdownOpt])}
                                 </div>
                             </div>
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Body</div>
                                 <div class="routine__cores-value">
-                                    {minsToHHMM(currCores.body[breakdownOpt])}
+                                    {formatCoreData(coreBreakdown.body[breakdownOpt])}
                                 </div>
                             </div>
                         </div>
@@ -492,32 +643,39 @@
             </div>
             <!-- Tag Breakdown -->
             <div class="routine__tag-breakdown" class:hide={isViewingCore}>
-                {#each tagBreakdown as tagData}
-                    {@const colorTrio = getColorTrio(tagData.tag.symbol.color, isLightTheme)}
-                    <div class="routine__tag-row">
-                        <div 
-                            class="tag"
-                            style:--tag-color-primary={tagData.tag.symbol.color.primary}
-                            style:--tag-color-1={colorTrio[0]}
-                            style:--tag-color-2={colorTrio[1]}
-                            style:--tag-color-3={colorTrio[2]}
-                        >
-                            <span class="tag__symbol">
-                                {tagData.tag.symbol.emoji}
-                            </span>
-                            <div class="tag__title">
-                                {tagData.tag.name}
+                {#if tagBreakdown.length > 0}
+                    {#each tagBreakdown as tagData}
+                        {@const colorTrio = getColorTrio(tagData.tag.symbol.color, isLightTheme)}
+                        <div class="routine__tag-row">
+                            <div 
+                                class="tag"
+                                class:tag--light={isLightTheme}
+                                style:--tag-color-primary={tagData.tag.symbol.color.primary}
+                                style:--tag-color-1={colorTrio[0]}
+                                style:--tag-color-2={colorTrio[1]}
+                                style:--tag-color-3={colorTrio[2]}
+                            >
+                                <span class="tag__symbol">
+                                    {tagData.tag.symbol.emoji}
+                                </span>
+                                <div class="tag__title">
+                                    {tagData.tag.name}
+                                </div>
+                            </div>
+                            <div class="routine__tag-stat">
+                                {#if breakdownOpt === "avgTime"}
+                                    {minsToHHMM(tagData.data.avgTime)}
+                                {:else}
+                                    {minsToHHMM(tagData.data.totalTime)}
+                                {/if}
                             </div>
                         </div>
-                        <div class="routine__tag-stat">
-                            {#if breakdownOpt === "avgTime"}
-                                {minsToHHMM(tagData.data.avgTime)}
-                            {:else}
-                                {minsToHHMM(tagData.data.totalTime)}
-                            {/if}
-                        </div>
+                    {/each}
+                {:else}
+                    <div class="routine__tag-breakdown-empty">
+                        No Tags
                     </div>
-                {/each}
+                {/if}
             </div>
         </div>
         <!-- User Week Routines -->
@@ -551,12 +709,9 @@
                     {/key}
                     <button 
                         class="routine__wk-routines-add-btn"
-                        on:click={onRoutineAdd}
+                        on:click={onWkRoutineAdd}
                     >
-                        <SvgIcon 
-                            icon={Icon.Add}
-                            options={{ scale: 1, strokeWidth: 1.7 }}
-                        />
+                        <SvgIcon icon={Icon.Add} options={{ scale: 1, strokeWidth: 1.7 }} />
                     </button>
                 </div>
                 <span class="routine__wk-routines-count">
@@ -588,6 +743,7 @@
                             class="routine__wk-routines-item"
                             class:routine__wk-routines-item--clicked={idx === clickedWeekRoutineIdx}
                             class:routine__wk-routines-item--chosen={idx === chosenWeekRoutineIdx}
+                            class:routine__wk-routines-item--active={idx === rightClickedWkRoutineItemIdx}
                             on:click={() => onWkRoutineItemClicked(idx)}
                             on:contextmenu={(e) => onWkRoutineContextMenu(e, idx)}
                         >
@@ -610,11 +766,13 @@
                         },
                         {  name: "Delete Routine"  }
                     ],
-                    onListItemClicked: (e, optIdx) => {
-                        onWkSettingsItemOptnClicked(editWkRoutineIdx, optIdx)
+                    onListItemClicked: (context) => {
+                        onWkSettingsItemOptnClicked(editWkRoutineIdx, context.idx)
+                        rightClickedWkRoutineItemIdx = -1
                     },
                     onClickOutside: () => {
                         isWkRoutineSettingsOpen = false
+                        rightClickedWkRoutineItemIdx = -1
                     },
                     styling: { 
                         width: "140px", zIndex: 2001 
@@ -658,19 +816,24 @@
                         id="view-option"
                         isHidden={!viewOptionOpen} 
                         options={{
-                            pickedItemIdx: currViewOption,
-                            listItems: [{ name: "Today" }, { name: "Weekly" }, { name: "M T W T" }, { name: "F S S" }],
+                            pickedItem: currViewOption,
+                            listItems: [
+                                { name: "Today", rightIcon: { type: "hotkey", icon: ["1"] } }, 
+                                { name: "Weekly", rightIcon: { type: "hotkey", icon: ["2"] } }, 
+                                { name: "M T W T", rightIcon: { type: "hotkey", icon: ["3"] } }, 
+                                { name: "F S S", rightIcon: { type: "hotkey", icon: ["4"] } }
+                            ],
                             position: { 
                                 top: "22px", left: containerWidth < MIN_VIEW_MAX_WIDTH ? "0px" : "10px" 
                             },
                             styling: { 
-                                width: "88px", zIndex: 2000 
+                                width: "94px", zIndex: 2000 
                             },
                             onClickOutside: () => {
                                 viewOptionOpen = false
                             },
-                            onListItemClicked: (e, idx) => {
-                                manager.updateCurrViewOption(idx)
+                            onListItemClicked: (context) => {
+                                manager.updateCurrViewOption(context.idx)
                                 viewOptionOpen = false
                             },
                         }}
@@ -684,10 +847,10 @@
                     bind:this={weekDaysElem}
                 >
                     <div class="week-view__days">
-                        {#if currWeekRoutine}
+                        {#if weekRoutine}
                             {#each daysInView as day, idx}
-                                {@const dayKey   = manager.getDayIdx(day)}
-                                {@const isLinked = isDayRoutinedLinked(currWeekRoutine, dayKey)}
+                                {@const dayKey   = manager.getDayKey(day)}
+                                {@const isLinked = isDayRoutinedLinked(weekRoutine, dayKey)}
                                 <div 
                                     class="week-view__days-day"
                                     class:week-view__days-day--linked={isLinked}
@@ -696,21 +859,21 @@
                                         class="week-view__days-header"
                                         class:week-view__days-header--active={dayBreakdownColIdx === idx && isDayBreakdownOpen}
                                         title={isLinked ? 
-                                            "This routine is linked to a daily routine preset. Any changes to it will be reflected in every routine that is linked to it." : 
+                                            "This routine is linked to a daily routine preset. Any changes to it will be reflected in every other routine that is linked to it." : 
                                             ""
                                         }
                                     >
                                         <button 
                                             id={`day-breakdown--${idx}--dropdown-btn`}
                                             class="week-view__days-dropdown-btn" 
-                                            on:click={() => setDayBreakdownView(idx)}
+                                            on:click={() => setBreakdownForDay(idx)}
                                         >
                                             <div class="week-view__days-day-linked-indicator"></div>
-                                            {#if containerWidth < DAYS_MIN_VIEW_MAX_WIDTH}
-                                                {day.substring(0, 3)}
-                                            {:else}
-                                                {day}s
-                                            {/if}
+                                                {#if containerWidth < DAYS_MIN_VIEW_MAX_WIDTH}
+                                                    {day.substring(0, 3)}
+                                                {:else}
+                                                    {day}s
+                                                {/if}
                                             <div class="week-view__days-header-arrow">
                                                 <SvgIcon 
                                                     icon={Icon.Dropdown}
@@ -751,11 +914,11 @@
                         bind:this={scrollableContent}
                         >
                         <div 
-                            id={manager.ROUTINE_BLOCKS_CONTAINER_ID}    
+                            id={ROUTINE_BLOCKS_CONTAINER_ID}    
+                            on:pointerdown={manager.onScrollContainerPointerDown}
                             on:contextmenu={(e) => {
                                 if (editContext === "lift") e.preventDefault()
                             }}
-                            on:pointerdown={manager.onTimeBoxMouseDown}
                             class="routine-blocks"
                             class:routine-blocks--editing={editContext}
                             class:routine-blocks--light={false}
@@ -769,14 +932,16 @@
                         >
                             <!-- Routine Blocks -->
                             {#each daysInView as day, dayIdx}
-                                {@const dayKey = manager.getDayIdx(day)}
+                                {@const dayKey = manager.getDayKey(day)}
     
-                                {#each currWeekRoutineElems[dayKey] as block (block.id)}
+                                {#each weekRoutineElems[dayKey] as block (block.id)}
                                     {@const colorTrio    = getColorTrio(block.color, isLightTheme)}
                                     {@const startTimeStr = minsFromStartToHHMM(block.startTime)}
                                     {@const endTimeStr   = minsFromStartToHHMM(block.endTime)}
-                                    {@const xOffset      = `calc(((100% / ${daysInView.length}) * ${dayIdx}) + ${2}px)`}
+                                    {@const xOffset      = `calc(((100% / ${daysInView.length}) * ${dayIdx}) + 2px)`}
                                     {@const isEditBlock  = editingBlock?.id === block.id && (["old-stretch", "lift"].includes(editContext ?? ""))}
+                                    {@const isFirstLast  = ["first", "last"].includes(block.orderContext ?? "")}
+                                    {@const isFirst      = block.orderContext === "first"}
     
                                     <div 
                                         id={block.id}
@@ -795,6 +960,19 @@
                                     >
                                         <div class="routine-blocks__block-content">
                                             <div class="flx flx--algn-center">
+                                                {#if isFirstLast}
+                                                    <div 
+                                                        class="routine-blocks__block-order-icon"
+                                                        title={`${isFirst ? "First routine of the day." : "Last routine of the day."}`}
+                                                    >
+                                                        <SvgIcon 
+                                                            icon={isFirst ? Icon.Sun : Icon.Moon} 
+                                                            options={{
+                                                                height: 16, width: 16, opacity: 0.4, scale: 0.58, color: `rgba(${colorTrio[0]}, 0.5)`
+                                                            }}
+                                                        />
+                                                    </div>
+                                                {/if}
                                                 <span class="routine-blocks__block-title">
                                                     {block.title}
                                                 </span>
@@ -804,25 +982,55 @@
                                                 <span>-</span>
                                                 <span>{endTimeStr}</span>
                                             </div>
+                                            <div class="routine-blocks__block-spine"></div>
                                         </div>
-                                        <div class="routine-blocks__block-spine"></div>
                                     </div>
                                 {/each}
                             {/each}
+
+                            <!-- Current Day / Time Indicator  -->
+                            {#if 
+                                currViewOption === ViewOption.Today || currViewOption === ViewOption.Weekly || 
+                                currViewOption === ViewOption.MTWT && currTime.dayIdx < 4 ||
+                                currViewOption === ViewOption.FSS && currTime.dayIdx >= 4
+                            }
+                                {@const offsetIdx = 
+                                    currViewOption === ViewOption.FSS ? 
+                                    currTime.dayIdx - 4 :
+                                    currViewOption === ViewOption.Today ? 
+                                    0 :
+                                    currTime.dayIdx
+                                }
+                                {@const TOP_OFFSET = WK_BOARD_PAD_BOTTOM - 2}
+
+                                <div 
+                                    class="now-line"
+                                    style:top={`calc(${(currTime.minutes / 1440) * 100}% - ${TOP_OFFSET}px)`}
+                                    style:left={`calc(((100% / ${daysInView.length}) * ${offsetIdx} + 0px)`}
+                                    style:width={`calc((100% / ${daysInView.length}) + 0.5px)`}
+                                >
+                                    <div class="now-line__content"></div>
+                                </div>
+                            {/if}
     
                             <!-- Floating Block or New Block  -->
                             {#if editingBlock}
                                 {@const colorTrio    = getColorTrio(editingBlock.color, isLightTheme)}
                                 {@const startTimeStr = minsFromStartToHHMM(editingBlock.startTime)}
                                 {@const endTimeStr   = minsFromStartToHHMM(editingBlock.endTime)}
-                                {@const isLift       = editContext === "lift"}
+                                {@const xOffset      = manager.getEditBlockXOffset(editingBlock)}
+                                {@const dropArea     = editingBlock.dropArea}
+                                {@const isDragging   = editingBlock.isDragging}
+                                {@const isFirstLast  = ["first", "last"].includes(editingBlock.orderContext ?? "")}
+                                {@const isFirst = editingBlock.orderContext === "first"}
             
                                 <div 
                                     class={`routine-blocks__block ${getBlockStyling(editingBlock.height)}`}
-                                    class:routine-blocks__block--wk-floating={isLift}
+                                    class:routine-blocks__block--wk-floating={editContext === "lift"}
+                                    class:routine-blocks__block--dup-floating={editContext === "duplicate"}
                                     class:no-pointer-events={lockInteraction}
                                     style:top={`${editingBlock.yOffset}px`}
-                                    style:left={`${editingBlock.xOffset + 2}px`}
+                                    style:left={xOffset}
                                     style:--block-height={`${editingBlock.height}px`}
                                     style:--block-color-1={colorTrio[0]}
                                     style:--block-color-2={colorTrio[1]}
@@ -830,9 +1038,23 @@
                                     style:z-index={2000}
                                     id="edit-block"
                                     on:pointerdown={onEditBlockPointerDown}
+                                    on:contextmenu|preventDefault={() => {}}
                                 >
                                     <div class="routine-blocks__block-content">
                                         <div class="flx flx--algn-center">
+                                            {#if isFirstLast}
+                                                <div 
+                                                    class="routine-blocks__block-order-icon"
+                                                    title={`${isFirst ? "First routine of the day." : "Last routine of the day."}`}
+                                                >
+                                                    <SvgIcon 
+                                                        icon={isFirst ? Icon.Sun : Icon.Moon} 
+                                                        options={{
+                                                            height: 16, width: 16, opacity: 0.4, scale: 0.58, color: `rgba(${colorTrio[0]}, 0.5)`
+                                                        }}
+                                                    />
+                                                </div>
+                                            {/if}
                                             <span class="routine-blocks__block-title">
                                                 {editingBlock.title}
                                             </span>
@@ -842,13 +1064,38 @@
                                             <span>-</span>
                                             <span>{endTimeStr}</span>
                                         </div>
+                                        <div class="routine-blocks__block-spine"></div>
                                     </div>
-                                    <div class="routine-blocks__block-spine"></div>
+
+                                    <!-- Confirm Buttons for Duplicate Edit -->
+                                    {#if editContext === "duplicate" && !isDragging}
+                                        {@const placement = manager.findDupBtnPlacement()}
+
+                                        <div 
+                                            class="routine-blocks__block-buttons"
+                                            class:routine-blocks__block-buttons--left={placement === "left"}
+                                            class:routine-blocks__block-buttons--right={placement === "right"}
+                                            class:routine-blocks__block-buttons--top={placement === "top"}
+                                            class:routine-blocks__block-buttons--bottom={placement === "bottom"}
+                                        >
+                                            {#if (dropArea?.offsetIdx ?? -1) >= 0}
+                                                <button on:click={() => manager.confirmDuplicate()}>
+                                                    <i class="fa-solid fa-check"></i>
+                                                </button>
+                                            {/if}
+                                            <button on:click={() => manager.closeDuplicateEdit()}>
+                                                <SvgIcon 
+                                                    icon={Icon.Close} 
+                                                    options={{ scale: 0.84, strokeWidth: 1.8, width: 10, height: 10 }}
+                                                />
+                                            </button>
+                                        </div>
+                                    {/if}
                                 </div>
                             {/if}
             
                             <!-- Drop Area Block -->
-                            {#if editingBlock && editingBlock.dropArea && editContext === "lift"}
+                            {#if editingBlock?.dropArea?.doShow && (editContext === "lift" || editContext === "duplicate")}
                                 {@const colorTrio = getColorTrio(editingBlock.color, isLightTheme)}
                                 {@const startTimeStr = minsFromStartToHHMM(editingBlock.startTime)}
                                 {@const endTimeStr = minsFromStartToHHMM(editingBlock.endTime)}
@@ -881,31 +1128,6 @@
                                             <span>{endTimeStr}</span>
                                         </div>
                                     </div>
-                                    <div class="routine-blocks__block-spine"></div>
-                                </div>
-                            {/if}
-
-                            <!-- Current Day / Time Indicator  -->
-                            {#if 
-                                currViewOption === ViewOption.Today || currViewOption === ViewOption.Weekly || 
-                                currViewOption === ViewOption.MTWT && currTime.dayIdx < 4 ||
-                                currViewOption === ViewOption.FSS && currTime.dayIdx >= 4
-                            }
-                                {@const offsetIdx = 
-                                    currViewOption === ViewOption.FSS ? 
-                                    currTime.dayIdx - 4 :
-                                    currViewOption === ViewOption.Today ? 
-                                    0 :
-                                    currTime.dayIdx
-                                }
-
-                                <div 
-                                    class="now-line"
-                                    style:top={`calc((${currTime.minutes / 1440} * 100%) + 2px)`}
-                                    style:left={`calc(((100% / ${daysInView.length}) * ${offsetIdx} + 0px)`}
-                                    style:width={`calc((100% / ${daysInView.length}) + 0.5px)`}
-                                >
-                                    <div class="now-line__content"></div>
                                 </div>
                             {/if}
                         </div>
@@ -924,7 +1146,7 @@
                                         <div 
                                             class="wk-grid__hoz-line"
                                             class:hidden={timeIdx === 0}
-                                            style:top={`calc(${headOffsetPerc}% - 2px)`}
+                                            style:top={`calc(${headOffsetPerc}% - 1px)`}
                                             style:height={`${height}%`}
                                         >
                                             <div class="wk-grid__hoz-line-content">
@@ -965,7 +1187,7 @@
                             options={{
                                 styling: { width: "140px" },
                                 listItems: EDIT_BLOCK_OPTIONS,
-                                onListItemClicked: onContextMenuOptClicked,
+                                onListItemClicked: (context) => onContextMenuOptClicked(context.idx),
                                 onClickOutside:() => { 
                                     isContextMenuOpen = false
                                 },
@@ -988,11 +1210,11 @@
                             chosenColor={editingBlock?.color}
                             onChoose={(color) => {
                                 colorsOpen = false
-                                manager.changeEditBlockColor(color)
+                                manager.setEditBlockColor(color)
                                 manager.resetEditState()
                             }}
                             onClickOutside={() => {
-                                manager.changeEditBlockColor(null)
+                                manager.setEditBlockColor(null)
                                 manager.resetEditState()
                                 colorsOpen = false
                             }}
@@ -1017,7 +1239,7 @@
                                     {@const height         = (60 / 1440) * 100}
                                     <div 
                                         class="hour-blocks__block"
-                                        style:top={`calc(${headOffsetPerc}% - 3px)`}
+                                        style:top={`calc(${headOffsetPerc}% - 1px)`}
                                         style:height={`${height}%`}
                                     >
                                         <span>{getTimeFromIdx(timeIdx, true)}</span>
@@ -1037,7 +1259,10 @@
                     id="day-breakdown--dropdown-menu"
                     isHidden={!isDayBreakdownOpen}
                     position={{ top: "-6px", left: breakdownDropdownXOffset }}
-                    onClickOutside={() => isDayBreakdownOpen = false}
+                    onClickOutside={() => {
+                        if (confirmOptions) return
+                        isDayBreakdownOpen = false
+                    }}
                     onDismount={closeDayBreakdown}
                 >
                     {@const isLinked = dayBreakdown?.linkedRoutine != null}
@@ -1046,25 +1271,12 @@
                         style:width={`${DAY_DROPDOWN_WIDTH}px`}
                     >
                         <!-- Header -->
-                        <div class="week-view__day-breakdown-day">
-                            {dayBreakdown?.day}
-                        </div>
                         <button 
-                            class="week-view__day-breakdown-settings-btn dropdown-btn"
-                            class:dropdown-btn--dark={!isLightTheme}
+                            class="week-view__day-breakdown-settings-btn"
                             id={"day-breakdown--dropdown-btn"}
-                            title={`${
-                                isLinked ? 
-                                "Unlink daily routine preset." : 
-                                "Link to a daily preset routine for this day."
-                            }`}
-                            on:click={() => onLinkBtnClicked(isLinked)}
+                            on:click={() => onDayBreakdownSettingsClicked(isLinked)}
                         >
-                            {#if isLinked}
-                                <i class="fa-solid fa-link-slash"></i>
-                            {:else}
-                                <i class="fa-solid fa-link"></i>
-                            {/if}
+                            <SvgIcon icon={Icon.Settings}/>
                         </button>
                         <!-- Title + Description -->
                         {#if dayBreakdown?.linkedRoutine}
@@ -1076,17 +1288,26 @@
                                     {dayBreakdown?.linkedRoutine.description}
                                 </p>
                             </div>
+                        {:else}
+                            <span class="week-view__day-breakdown-unlinked">
+                                Unlinked
+                            </span>
                         {/if}
                         <!-- Breakdown -->
                         <div class="routine__breakdown-header">
                             <DropdownBtn 
-                                id={"weekly-routine-breakdown"}
+                                id={"day-breakdown"}
                                 isActive={isDayBreakdownViewOptOpen}
                                 options={{
                                     noBg: true,
-                                    onClick: () => isDayBreakdownViewOptOpen = !isDayBreakdownViewOptOpen,
-                                    pickedOptionName: selectedTimeFrame,
-                                    styles: { fontSize: "1.3rem", padding: "4px 12px 4px 11px", margin: "0px 0px 0px -10px" }
+                                    pickedOptionName: BreakdownView[pickedDayBreakdownView],
+                                    onClick: () => {
+                                        isDayBreakdownViewOptOpen = !isDayBreakdownViewOptOpen
+                                    },
+                                    styles: { 
+                                        fontSize: "1.2rem", padding: "4px 12px 4px 11px", margin: "0px 0px 0px -10px",
+                                        opacity: 0.8
+                                    }
                                 }} 
                             />
                             <div class="routine__breakdown-options">
@@ -1102,37 +1323,75 @@
                                     class:full-opacity={!isDayBreakdownAvg}
                                     on:click={() => isDayBreakdownAvg = false}
                                 >
-                                    Total
+                                    Sum
                                 </button>
                             </div>
                             <DropdownList 
-                                id={"weekly-routine-breakdown-option"}
+                                id={"day-breakdown"}
                                 isHidden={!isDayBreakdownViewOptOpen} 
                                 options={{
-                                    listItems: [{ name: "Cores" }, { name: "Tag" }],
-                                    pickedItemIdx: pickedDayBreakdownView,
-                                    position: { top: "30px", left: "-10px" },
-                                    styling: { width: "80px" },
-                                    onListItemClicked: (e, idx) => setDayBreakdownViewOptn(idx),
-                                    onClickOutside: () => isDayBreakdownViewOptOpen = false
+                                    listItems: [{ name: "Cores" }, { name: "Tags" }],
+                                    pickedItem: pickedDayBreakdownView,
+                                    position: { top: "26px", left: "-10px" },
+                                    styling:  { width: "80px" },
+                                    onClickOutside: () => {
+                                        isDayBreakdownViewOptOpen = false
+                                    },
+                                    onListItemClicked: (context) => setDayBreakdownOption(context.idx),
                                 }}
                             />
                         </div>
+
+                        <!-- Settings Dropdown -->
+                        <DropdownList 
+                            id={"day-settings-breakdown"}
+                            isHidden={!dayBreakdownSettingsOpen} 
+                            options={{
+                                listItems: dayBreakdownDropdownOptions,
+                                position: { top: "35px", right: "10px" },
+                                styling:  { width: "130px" },
+                                childId: "daily-routine",
+                                onListItemClicked: (context) => onDailyRoutinesListOptClicked(context.event),
+                                onClickOutside: () => dayBreakdownSettingsOpen = false
+                            }}
+                        />
+
+                        <!-- Daily Routines Dropdown -->
+                        <DropdownList 
+                            id={"daily-routine"}
+                            isHidden={!dailyRoutinesOpen}
+                            options={{
+                                pickedItem: dayBreakdown?.linkedRoutine?.name,
+                                listItems: DAILY_ROUTINES.map((dr) => ({ name: dr.name })),
+                                position: { top: "35px", right: "-120px" },
+                                styling:  { width: "125px", maxHeight: "300px" },
+                                scroll:   { bar: true },
+                                onListItemClicked: onNewDayRoutineClicked,
+                                parent: {
+                                    id: "day-settings-breakdown",
+                                    optnIdx: 0,
+                                    optnName: isLinked ? "Replace Routine" : "Link a Routine"
+                                },
+                                onPointerLeave: () => dailyRoutinesOpen = false
+                            }}
+                        />
+
                         <!-- Cores -->
                         <div class="routine__core-breakdown" class:hide={!dayBreakdownIsCore}>
                             <div class="routine__cores">
-                                {#if currCores}
+                                {#if dayBreakdown}
+                                    {@const cores = dayBreakdown.cores}
                                     <div class="routine__cores-col">
                                         <div class="routine__cores-core">
                                             <div class="routine__cores-title">Sleeping</div>
                                             <div class="routine__cores-value">
-                                                {minsToHHMM(currCores.sleeping[dayBreakdownOpt])}
+                                                {formatCoreData(cores.sleeping[dayBreakdownOpt])}
                                             </div>
                                         </div>
                                         <div class="routine__cores-core">
                                             <div class="routine__cores-title">Awake</div>
                                             <div class="routine__cores-value">
-                                                {minsToHHMM(currCores.awake[dayBreakdownOpt])}
+                                                {formatCoreData(cores.awake[dayBreakdownOpt])}
                                             </div>
                                         </div>
                                     </div>
@@ -1141,13 +1400,13 @@
                                         <div class="routine__cores-core">
                                             <div class="routine__cores-title">Working</div>
                                             <div class="routine__cores-value">
-                                                {minsToHHMM(currCores.working[dayBreakdownOpt])}
+                                                {formatCoreData(cores.working[dayBreakdownOpt])}
                                             </div>
                                         </div>
                                         <div class="routine__cores-core">
                                             <div class="routine__cores-title">Self-Care</div>
                                             <div class="routine__cores-value">
-                                                {minsToHHMM(currCores.selfCare[dayBreakdownOpt])}
+                                                {formatCoreData(cores.selfCare[dayBreakdownOpt])}
                                             </div>
                                         </div>
                                     </div>
@@ -1156,13 +1415,13 @@
                                         <div class="routine__cores-core">
                                             <div class="routine__cores-title">Mind</div>
                                             <div class="routine__cores-value">
-                                                {minsToHHMM(currCores.mind[dayBreakdownOpt])}
+                                                {formatCoreData(cores.mind[dayBreakdownOpt])}
                                             </div>
                                         </div>
                                         <div class="routine__cores-core">
                                             <div class="routine__cores-title">Body</div>
                                             <div class="routine__cores-value">
-                                                {minsToHHMM(currCores.body[dayBreakdownOpt])}
+                                                {formatCoreData(cores.body[dayBreakdownOpt])}
                                             </div>
                                         </div>
                                     </div>
@@ -1171,45 +1430,42 @@
                         </div>
                         <!-- Tag Breakdown -->
                         <div class="routine__tag-breakdown" class:hide={dayBreakdownIsCore}>
-                            {#each tagBreakdown as tagData}
-                                {@const colorTrio = getColorTrio(tagData.tag.symbol.color, !isLightTheme)}
-                                <div class="routine__tag-row">
-                                    <div 
-                                        class="tag"
-                                        style:--tag-color-primary={tagData.tag.symbol.color.primary}
-                                        style:--tag-color-1={colorTrio[0]}
-                                        style:--tag-color-2={colorTrio[1]}
-                                        style:--tag-color-3={colorTrio[2]}
-                                    >
-                                        <span class="tag__symbol">
-                                            {tagData.tag.symbol.emoji}
-                                        </span>
-                                        <div class="tag__title">
-                                            {tagData.tag.name}
+                            {#if dayBreakdown}
+                                {#if dayBreakdown.tags.length > 0}
+                                    {#each dayBreakdown.tags as tagData}
+                                        {@const colorTrio = getColorTrio(tagData.tag.symbol.color, isLightTheme)}
+                                        <div class="routine__tag-row">
+                                            <div 
+                                                class="tag"
+                                                class:tag--light={isLightTheme}
+                                                style:--tag-color-primary={tagData.tag.symbol.color.primary}
+                                                style:--tag-color-1={colorTrio[0]}
+                                                style:--tag-color-2={colorTrio[1]}
+                                                style:--tag-color-3={colorTrio[2]}
+                                            >
+                                                <span class="tag__symbol">
+                                                    {tagData.tag.symbol.emoji}
+                                                </span>
+                                                <div class="tag__title">
+                                                    {tagData.tag.name}
+                                                </div>
+                                            </div>
+                                            <div class="routine__tag-stat">
+                                                {#if dayBreakdownOpt === "avgTime"}
+                                                    {minsToHHMM(tagData.data.avgTime)}
+                                                {:else}
+                                                    {minsToHHMM(tagData.data.totalTime)}
+                                                {/if}
+                                            </div>
                                         </div>
+                                    {/each}
+                                {:else}
+                                    <div class="routine__tag-breakdown-empty">
+                                        No Tags
                                     </div>
-                                    <div class="routine__tag-stat">
-                                        {#if dayBreakdownOpt === "avgTime"}
-                                            {minsToHHMM(tagData.data.avgTime)}
-                                        {:else}
-                                            {minsToHHMM(tagData.data.totalTime)}
-                                        {/if}
-                                    </div>
-                                </div>
-                            {/each}
+                                {/if}
+                            {/if}
                         </div>
-
-                        <!-- Settings Dropdown -->
-                        <DropdownList 
-                            id={"day-breakdown"}
-                            isHidden={!dailyRoutinesListOpen} 
-                            options={{
-                                listItems: [{ name: "Routine 1.0" }, { name: "Routine 2.0" }],
-                                position: { top: "30px", right: "0px" },
-                                onListItemClicked: (e, idx) => onDailyRoutinesListOptClicked(idx),
-                                onClickOutside: () => dailyRoutinesListOpen = false
-                            }}
-                        />
                     </div>
                 </BounceFade>
             </div>
@@ -1221,15 +1477,12 @@
     <EditBlockModal block={editingBlock} routineManager={manager} />
 {/if}
 
-{#if isDeleteWkRoutineConfirmOpen} 
+{#if confirmOptions} 
     <ConfirmationModal 
-        text="Are you sure you want to proceed with deleting this weekly routine?"
-        onCancel={() => { 
-            isDeleteWkRoutineConfirmOpen = false
-            editWkRoutineIdx = -1
-        }}
-        onOk={onDeleteWkEditRoutineItem}
-        options={{ ok: "Delete", caption: "Heads Up!", type: "delete" }}
+        text={confirmOptions.text}
+        onCancel={confirmOptions.onCancel}
+        onOk={confirmOptions.onOk}
+        options={confirmOptions.options}
     /> 
 {/if}
 
@@ -1311,17 +1564,17 @@
         &--narrow &__details h2 {
             margin-bottom: 0px;
         }
-        &--narrow  &__details-container &__core-breakdown {
+        &--narrow  &__details-container {
             width: 100%;
             margin: 0px 0px 0px 0px;
         }
-        &--narrow &__details-container &__breakdown {
+        &--narrow &__details-container {
             width: 100%;
             width: 100%;
             padding-top: 6px;
         }
         &--narrow &__title {
-            max-height: 22px;
+            max-height: 30px;
             @include multi-line-elipses-overflow(1);
         }
         &--narrow &__description {
@@ -1331,33 +1584,14 @@
             overflow: hidden;
         }
         &--narrow &__breakdown {
-            margin-left: -10px;
-            width: calc(100% + 10px) !important;
-            // display: none;
-        }
-        &--narrow &__breakdown-header {
-            margin-bottom: 5px;
-        }
-        &--narrow &__details-container &__cores {
-            @include flex(center);
-            width: 100%;
-
-            &-col {
-                width: 30%;
-                align-items: center;
-            }
-            &-col-divider {
-                @include divider(0.06, 38px, 1px);
-                margin: 0px max(18px, 4%);
-                margin-top: -10px;
-            }
+            display: none;
         }
         &--narrow &__details-chosen-routine {
             margin-bottom: 2px;
         }
         &--narrow &__week {
             margin-top: 11px;
-            height: calc(100% - 245px);
+            height: calc(100% - 155px);
             width: 100%;
             border-color: transparent;
         }
@@ -1447,7 +1681,7 @@
         &__breakdown {
             width: 90%;
             margin-left: -6px;
-            padding: 7px 20px 8px 15px;
+            padding: 7px 20px 10px 15px;
             border-radius: 14px;
             border: 1px solid rgba(var(--textColor1), 0.02);
             @include txt-color(0.013, "bg");
@@ -1512,12 +1746,14 @@
             @include flex(center, space-between);
             
             &:hover {
-                transition: 0s;
                 cursor: pointer;
-                @include txt-color(0.01, "bg");
             }
             &:hover span {
-                @include text-style(0.75);
+                transition: 0.08s ease-in-out;
+                @include text-style(0.5);
+            }
+            &--active span {
+                color: rgba(var(--textColor1), 0.5) !important;
             }
             &:active {
                 transition: 0.15s cubic-bezier(.4,0,.2,1);
@@ -1575,14 +1811,8 @@
         &--light &__days-dropdown-btn {
             @include text-style(0.82, 500);
         }
-        &--light &__day-breakdown-day {
-            @include text-style(0.58, 500);
-        }
         &--light &__day-breakdown .routine__description {
-            @include text-style(0.35, 400);
-        }
-        &--light &__day-breakdown .routine__breakdown-header {
-            margin-bottom: 12px;
+            @include text-style(0.5, 500);
         }
         &--light &__day-breakdown .routine__cores-title {
             @include text-style(0.94);
@@ -1693,41 +1923,49 @@
         /* Day Breakdown */
         &__day-breakdown {
             position: absolute;
-            padding: 9px 15px 10px 15px;
-            border-radius: 12px;
+            padding: 11px 18px 9px 18px;
+            border-radius: 18px;
         }
         &__day-breakdown-settings-btn {
-            @include abs-top-right(5px, 8px);
+            @include abs-top-right(8px, 14px);
             @include circle(22px);
             @include center;
+            z-index: 1;
             padding: 0px;
-            opacity: 0.3;
+            opacity: 0.5;
+            background-color: rgba(var(--textColor1), 0.08);
 
             &:hover {
                 opacity: 1;
             }
         }
-        &__day-breakdown-day {
-            @include text-style(0.2, 300, 1.2rem, "DM Sans");
-            margin-bottom: 5px;
-        }
-        &__day-breakdown .routine__breakdown-header {
-            margin-bottom: 9px;
+        &__day-breakdown-unlinked {
+            @include text-style(0.2, 500, 1.2rem);
         }
         &__day-breakdown .routine__details {
             width: 100%;
-            margin-bottom: 11px;
+            margin-bottom: 4px;
         }
         &__day-breakdown .routine__title {
-            width: 100%;
-            font-size: 1.5rem;
-            margin-bottom: -2px;
+            max-width: calc(100% - 20px);
+            font-size: 1.6rem;
             @include multi-line-elipses-overflow(2);
         }
         &__day-breakdown .routine__description {
             width: 100%;
             font-size: 1.34rem;
+            margin-top: 0px;
+            padding-top: 4px;
             @include multi-line-elipses-overflow(2);
+        }
+        &__day-breakdown {
+            overflow: visible;
+        }
+        &__day-breakdown .routine__breakdown-header {
+            margin-top: 6px;
+        }
+        &__day-breakdown .routine__tag-breakdown {
+            min-height: 200px;
         }
 
         /* Main Content */
@@ -1768,6 +2006,8 @@
         &-container {
             overflow: hidden;
             height: calc(100% - 50px);
+            min-height: calc(100% - 50px);
+            max-height: calc(100% - 50px);
             @include abs-top-left(0px, 1px);
         }
         &-wrapper {

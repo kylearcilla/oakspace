@@ -10,6 +10,8 @@ type Result<T, E> = {
 InputOptions
 type HhMmFormat = "full-letters" | "mid-letters" | "min-letters" | "numbers"
 
+type RoutineBlockEditContext = "old-stretch" | "lift" | "details" | "new-stretch" | "duplicate"
+
 type IconOptions = {
     id?: string
     width?: number
@@ -18,45 +20,6 @@ type IconOptions = {
     scale?: number
     color?: string
     opacity?: number   
-}
-
-type RoutineCores = { 
-    sleeping: {
-        status: CoreStatus
-        totalTime: number
-        avgTime: number
-        total: number
-    },
-    working: {
-        status: CoreStatus
-        totalTime: number
-        avgTime: number
-        total: number
-    },
-    mind: {
-        status: CoreStatus
-        totalTime: number
-        avgTime: number
-        total: number
-    },
-    awake: {
-        status: CoreStatus
-        totalTime: number
-        avgTime: number
-        total: number
-    },
-    body: {
-        status: CoreStatus
-        totalTime: number
-        avgTime: number
-        total: number
-    },
-    selfCare: {
-        status: CoreStatus
-        totalTime: number
-        avgTime: number
-        total: number
-    }
 }
 
 type AsyncButtonOptions = {
@@ -117,15 +80,17 @@ type OffsetPoint = {
 }
 
 type HotKeyCombo = string[]
-type DropdDownListItemIconType = "default" | "unit" | "hotkey"
+type DropdDownListItemIconType = "default" | "unit" | "hotkey" | "right-arrow"
 
 type DropdownOption = {
     name: string,
     leftIcon?: string,
     rightIcon?: { 
         type: DropdDownListItemIconType
-        icon: string | HotKeyCombo 
+        icon?: string | HotKeyCombo 
     }
+    onPointerOver?: FunctionParam
+    onPointerLeave?: FunctionParam
 }
 
 type DropdownOptionSection = {
@@ -166,13 +131,23 @@ type ConfirmOptions = {
 }
 
 type DropdownListItem = DropdownOptionSection | DropdownOption
+type DropdownItemClickedContext = {
+    event: Event, idx: number, parentName?: string
+}
 
 type DropdownListOptions = {
     listItems: DropdownListItem[]
-    pickedItemIdx?: number
-    onListItemClicked: FunctionParam
+    childId?: string
+    parent?: {
+        id: string,
+        optnIdx: number
+        optnName: string
+    }
+    pickedItem?: string | number
+    onListItemClicked: (context: DropdownItemClickedContext) => void
     onClickOutside?: FunctionParam
     onDismount?: FunctionParam
+    onPointerLeave?: FunctionParam
     position?: CSSAbsPos
     scroll?: {
         bar?: boolean
@@ -181,11 +156,13 @@ type DropdownListOptions = {
     styling?: {
         zIndex?: number
         width?: string
+        height?: string
+        maxHeight?: string
         optionWidth?: string
         optionHeight?: string
-        height?: string
         fontSize?: string,
         fontFamily?: string
+        overflow?: "scroll" | "visible"
     }
 }
 
@@ -202,9 +179,39 @@ type Color = {
     isDark: boolean
 }
 
-type WeeklyRoutineSetUp = {
-    weeklyRoutine: WeeklyRoutine,
-    currentRoutine: DailyRoutine
+/* Routines */
+
+type RoutineBlock = {
+    title: string
+    color: Color
+    description: string
+    startTime: number
+    endTime: number
+    orderContext: BlockOrderContext | null
+    tag: Tag | null
+    activity: RoutineActvity | null
+    tasks: Task[]
+}
+
+type RoutineBlockElem = {
+    id: string, height: number, xOffset: number, yOffset: number
+} & RoutineBlock
+
+type RoutineEditBlock = RoutineBlockElem & { 
+    isDragging: boolean
+    dropArea?: {
+        top: number,
+        left: number
+        offsetIdx: number
+        doShow: boolean
+    } 
+}
+
+type DailyRoutine = {
+    id: string
+    name: string
+    description: string
+    blocks: RoutineBlock[]
 }
 
 type WeeklyRoutine = {
@@ -220,42 +227,63 @@ type WeeklyRoutineBlocks = {
     Friday: RoutineBlock[] | DailyRoutine, Saturday: RoutineBlock[] | DailyRoutine
     Sunday: RoutineBlock[] | DailyRoutine
 }
+
 type WeekBlockElems = {
     Monday: RoutineBlockElem[], Tuesday: RoutineBlockElem[]
     Wednesday: RoutineBlockElem[], Thursday: RoutineBlockElem[]
     Friday: RoutineBlockElem[], Saturday: RoutineBlockElem[]
     Sunday: RoutineBlockElem[]
 }
-type TagBreakDown = {
-    tag: Tag,
+
+type RoutineTags = {
+    tag: Tag
     data: {
-        avgTime: number,
-        totalTime : number,
+        avgTime: number
+        totalTime : number
         total: number
     }
 }
 
-type RoutineBlock = {
-    title: string
-    color: Color
-    description: string
-    startTime: number
-    endTime: number
-    tag: Tag | null
-    activity: RoutineActvity | null
-    tasks: Task[]
+type RoutineCores = { 
+    sleeping: {
+        status: CoreStatus | null
+        totalTime: number
+        avgTime: number
+        total: number
+    },
+    working: {
+        status: CoreStatus | null
+        totalTime: number
+        avgTime: number
+        total: number
+    },
+    mind: {
+        status: CoreStatus | null
+        totalTime: number
+        avgTime: number
+        total: number
+    },
+    awake: {
+        status: CoreStatus | null
+        totalTime: number
+        avgTime: number
+        total: number
+    },
+    body: {
+        status: CoreStatus | null
+        totalTime: number
+        avgTime: number
+        total: number
+    },
+    selfCare: {
+        status: CoreStatus | null
+        totalTime: number
+        avgTime: number
+        total: number
+    }
 }
 
-type RoutineBlockElem = {
-    id: string, height: number, xOffset: number, yOffset: number
-} & RoutineBlock
-
-type DailyRoutine = {
-    id: string
-    name: string
-    description: string
-    blocks: RoutineBlock[]
-}
+type BlockOrderContext = "first" | "only" | "middle" | "last"
 
 // Dates 
 type MonthData = {
@@ -566,12 +594,13 @@ type ContextMenuOptions = {
 
 type DayBreakdown = {
     cores: RoutineCores,
-    tags: TagBreakDown[],
-    day: string,
+    tags: RoutineTags[],
+    day: keyof WeeklyRoutineBlocks,
     dayIdx: number,
+    blocksLength: number
     linkedRoutine: {
         name: string,
-        description: string
+        description: string,
     } | null
 }
 
@@ -588,6 +617,7 @@ type StylingOptions = {
     borderRadius?: CSSPxVal
     backgroundColor?: string
     fontFamily?: string
+    opacity?: number
 }
 
 type TasksListOptions<TaskListTypeCombos> = {
@@ -622,6 +652,11 @@ type TasksListOptions<TaskListTypeCombos> = {
         maxTitleLines?: number
         maxDescrLines?: number
     },
+    addBtn?: {
+        style?: StylingOptions
+        text?: string
+        pos?: "top" | "bottom"
+    }
     dragAndDrop?: DragAndDropHandler
     contextMenuOptions: ContextMenuOptions
 }

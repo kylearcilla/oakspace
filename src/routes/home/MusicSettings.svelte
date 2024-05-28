@@ -303,7 +303,7 @@
                                             Pick Library
                                         </span>
                                         <div class="dropdown-menu__option-icon">
-                                        <i class="fa-solid fa-arrow-right"></i>
+                                            <i class="fa-solid fa-arrow-right"></i>
                                         </div>
                                     </button>
                                 </li>

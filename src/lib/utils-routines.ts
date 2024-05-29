@@ -1,5 +1,5 @@
 import { CoreStatus } from "./enums"
-import { minsToHHMM } from "./utils-date"
+import { DAYS_OF_WEEK, getNowMins, minsToHHMM } from "./utils-date"
 import { getElemById, getElemNumStyle } from "./utils-general"
 
 export const ROUTINE_BLOCKS_CONTAINER_ID = "routine-blocks-container"        // container for blocks
@@ -10,18 +10,6 @@ export enum BreakdownView {
 }
 export enum ViewOption {
     Today, Weekly, MTWT, FSS
-}
-
-export function getTimeForNowBar() {
-    const date = new Date()
-    const hours = date.getHours()
-    const minutes = date.getMinutes()
-    const dayIdx = new Date().getDay()
-    
-    return {
-        dayIdx: (dayIdx + 6) % 7,
-        minutes: (hours * 60) + minutes
-    }
 }
 
 export function getCoreStr(core: RoutineActvity | null) {
@@ -60,6 +48,85 @@ export function isDayRoutinedLinked(weekRoutine: WeeklyRoutine, dayKey: keyof We
 export function formatCoreData(mins: number) {
     if (mins < 0) return "--"
     return minsToHHMM(mins)
+}
+
+export function initTodayRoutine(wkRoutine: WeeklyRoutine | null, currTime: { dayIdx: number, minutes: number }) {
+    if (!wkRoutine) return null
+
+    const { dayIdx } = currTime
+    const currDayKey = DAYS_OF_WEEK[dayIdx] as keyof WeeklyRoutineBlocks
+
+    return wkRoutine.blocks[currDayKey]!
+}
+
+export function initCurrentBlock(dailyRoutine: RoutineBlock[] | DailyRoutine | null,  currMin: number) {
+    if (!dailyRoutine) return null
+
+    const blocks: RoutineBlock[] = "id" in dailyRoutine ? dailyRoutine.blocks : dailyRoutine
+    const blockIdx = blocks.findIndex((block) =>  block.startTime <= currMin && currMin <= block.endTime)
+
+    if (blockIdx < 0) return null
+
+    return { idx: blockIdx, block: blocks[blockIdx] }
+}
+
+export function getBlockFromOrderIdx(orderIdx: number, dailyRoutine: RoutineBlock[] | DailyRoutine) {
+    const blocks: RoutineBlock[] = "id" in dailyRoutine ? dailyRoutine.blocks : dailyRoutine
+    blocks.sort((a , b) => a.startTime - b.startTime)
+
+    if (orderIdx < 0 || orderIdx >= blocks.length) {
+        return null
+    }
+
+    return { block: blocks[orderIdx], idx: orderIdx }
+
+}
+
+export function getNowBlock(mins: number, dailyRoutine: RoutineBlock[] | DailyRoutine) {
+    const blocks: RoutineBlock[] = "id" in dailyRoutine ? dailyRoutine.blocks : dailyRoutine
+
+    return blocks.find((block) =>  block.startTime <= mins && mins <= block.endTime)
+}
+
+export function getUpcomingBlock(mins: number, dailyRoutine: RoutineBlock[] | DailyRoutine) {
+    const blocks: RoutineBlock[] = "id" in dailyRoutine ? dailyRoutine.blocks : dailyRoutine
+
+    return blocks.reduce((next: { block: RoutineBlock, idx: number } | null, block: RoutineBlock, idx: number) => {
+        if (mins < block.startTime && (!next || block.startTime < next.block.startTime)) {
+            return { block, idx }
+        }
+        else {
+            return next
+        }
+    }, null)
+}
+
+export function getMostRecentBlock(mins: number, dailyRoutine: RoutineBlock[] | DailyRoutine) {
+    const blocks: RoutineBlock[] = "id" in dailyRoutine ? dailyRoutine.blocks : dailyRoutine;
+
+    return blocks.reduce((mostRecent: { block: RoutineBlock, idx: number } | null, block: RoutineBlock, idx: number ) => {
+        if (mins > block.endTime && (!mostRecent || block.endTime > mostRecent.block.endTime)) {
+            return { block, idx }
+        } else {
+            return mostRecent
+        }
+    }, null)
+}
+
+export function getMextTimeCheckPointInfo(dailyRoutine: RoutineBlock[] | DailyRoutine | null) {
+    if (!dailyRoutine) return
+
+    const nowMins = getNowMins()
+
+    const nowBlock = getNowBlock(nowMins, dailyRoutine)
+    if (nowBlock != null) {
+        return nowBlock.endTime === nowMins ? "Now" : `${minsToHHMM(nowBlock.endTime - nowMins)}`
+    }
+    
+    const nextBlock = getUpcomingBlock(nowMins, dailyRoutine)
+
+
+    return nextBlock ? `in ${minsToHHMM(nextBlock.block.startTime - nowMins)}` : ""
 }
 
 export const EDIT_BLOCK_OPTIONS: DropdownListItem[] = [

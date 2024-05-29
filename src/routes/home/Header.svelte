@@ -1,42 +1,47 @@
 <script lang="ts">
     import { Icon, ModalType } from "$lib/enums"
-	import { openModal } from "$lib/utils-home"
-	import { themeState, musicDataStore, ytPlayerStore, sessionStore, musicPlayerStore, weekRoutine } from "$lib/store"
+	import { openModal, toggleActiveRoutine } from "$lib/utils-home"
+	import { themeState, ytPlayerStore, sessionStore, weekRoutine } from "$lib/store"
 
 	import SessionHeaderView from "./SessionHeaderView.svelte"
 	import { onDestroy, onMount } from "svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte";
 	import { getColorTrio } from "$lib/utils-general";
-
-    let dropdownMenu: HTMLElement
-    let doMinHeaderUI = false
-    let headerWidth = 0
-    let isColorThemeDefault = true
-    let nowBlock: RoutineBlock | null = null
-    let nowBlockTitle = ""
+	import { initTodayRoutine, initCurrentBlock, getMextTimeCheckPointInfo, getUpcomingBlock } from "$lib/utils-routines";
+	import { getDayIdxMinutes } from "$lib/utils-date";
 
     const NO_SESS_MD_MAX_WIDTH = 270
     const MD_MAX_WIDTH = 800
     const SM_MAX_WIDTH = 550
 
-    $: activeSession = $sessionStore != null
+    let dropdownMenu: HTMLElement
+    let headerWidth = 0
+    let minuteInterval: NodeJS.Timeout | null = null
+    let currTime = getDayIdxMinutes()
+
     $: dayRoutine = $weekRoutine?.blocks.Friday
     $: isDarkTheme = $themeState!.isDarkTheme
 
-    $: {
-        doMinHeaderUI = $ytPlayerStore?.doShowPlayer ?? false
-        isColorThemeDefault = ["Dark Mode", "Light Mode"].includes($themeState.title)
-    }
+    // active routine
+    let todayRoutine: RoutineBlock[] | DailyRoutine | null = null 
+    let nowBlock: RoutineBlock | null = null
+    let upcomingBlock: RoutineBlock | null = null
+    let nowBlockIdx = 0
+    let currBlockViewIdx = -1
+    let nowBlockTitle = ""
+    let colorTrio = ["", "", ""]
 
-    // new block
-    $: if (dayRoutine && "id" in dayRoutine) {
-        nowBlock = dayRoutine.blocks[0]
-    }
-    else if (dayRoutine) {
-        nowBlock = dayRoutine[0]
-    }
+    $: doMinHeaderUI       = $ytPlayerStore?.doShowPlayer ?? false
+    $: isColorThemeDefault = ["Dark Mode", "Light Mode"].includes($themeState.title)
 
-    // new block title
+    // session
+    $: activeSession = $sessionStore != null
+
+    // routines
+    $: routine      = $weekRoutine
+    $: todayRoutine = initTodayRoutine(routine, currTime)
+    $: initNowBlock(todayRoutine)
+
     $: if (!dayRoutine) {
         nowBlockTitle = "You current don't have a routine set."
     }
@@ -44,7 +49,25 @@
         nowBlockTitle = "Free time. No active routine block at this moment."
     }
     else {
-        nowBlockTitle = `"${nowBlock.title}". Your current routine at this moment from your "${$weekRoutine?.name}" weekly routine.`
+        nowBlockTitle = `"${nowBlock.title}". From "${$weekRoutine?.name}".`
+    }
+
+    /* Week Routins */
+    function initNowBlock(todayRoutine: RoutineBlock[] | DailyRoutine | null) {
+        if (!todayRoutine) return
+
+        const currBlock = initCurrentBlock(todayRoutine, currTime.minutes)
+        upcomingBlock   = getUpcomingBlock(currTime.minutes, todayRoutine)?.block ?? null
+
+        if (currBlock) {
+            nowBlockIdx = currBlock.idx
+            nowBlock = currBlock.block
+
+            colorTrio = nowBlock ? getColorTrio((nowBlock as RoutineBlock).color, !isDarkTheme) : ["", "", ""]
+        }
+        else {
+            nowBlock = null
+        }
     }
 
     /* Event Handlers */
@@ -69,8 +92,10 @@
 
     onMount(() => {
         window.addEventListener("resize", handleResize)
+        minuteInterval = setInterval(() => currTime = getDayIdxMinutes(), 1000)
     })
     onDestroy(() => {
+        clearInterval(minuteInterval!)
         window.removeEventListener("resize", handleResize)
     })
 </script>
@@ -85,46 +110,44 @@
     class:header--md={activeSession && headerWidth < MD_MAX_WIDTH}
     class:header--sm={activeSession && headerWidth < SM_MAX_WIDTH}
 >
-    <!-- Left Side -->
-    {#if nowBlock}
-        {@const colorTrio = getColorTrio(nowBlock.color, !isDarkTheme)}
-        <button 
-            class="header__now-block"
-            class:header__now-block--default={!dayRoutine || !nowBlock}
-            class:header__now-block--md={headerWidth < NO_SESS_MD_MAX_WIDTH}
-            class:header__now-block--sm={activeSession && headerWidth < SM_MAX_WIDTH}
-            style:--block-color-1={colorTrio[0]}
-            style:--block-color-2={colorTrio[1]}
-            style:--block-color-3={colorTrio[2]}
-            title={nowBlockTitle}
-        >
-            <div class="header__now-block-circle"></div>
-            <div class="header__now-block-title">
-                {#if !dayRoutine}
-                    Empty
-                {:else if !nowBlock}
-                    Free
-                {:else}
-                    Deep Work
-                {/if}
-            </div>
-            {#if nowBlock}
-                <div class="header__now-block-time">
-                    42m
-                </div>
+    <!-- Active Routine Block -->
+    <button 
+        class="header__now-block"
+        class:header__now-block--empty={!nowBlock}
+        class:header__now-block--md={headerWidth < NO_SESS_MD_MAX_WIDTH}
+        class:header__now-block--sm={activeSession && headerWidth < SM_MAX_WIDTH}
+        style:--block-color-1={colorTrio[0]}
+        style:--block-color-2={colorTrio[1]}
+        style:--block-color-3={colorTrio[2]}
+        title={nowBlockTitle}
+        id="active-routine--dropdown-btn"
+        on:click={toggleActiveRoutine}
+    >
+        <div class="header__now-block-circle"></div>
+        <div class="header__now-block-title">
+            {#if !dayRoutine}
+                Empty
+            {:else if !nowBlock && upcomingBlock}
+                {upcomingBlock.title}
+            {:else if nowBlock}
+                {nowBlock.title}
+            {:else}
+                Free
             {/if}
-        </button>
-    {/if}
+        </div>
+        <div class="header__now-block-time">
+            {getMextTimeCheckPointInfo(todayRoutine)}
+        </div>
+    </button>
 
     <!-- Active Session Component -->
     {#if $sessionStore != null && $ytPlayerStore?.doShowPlayer}
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div class={`header-session-container ${$themeState.isDarkTheme ? "" : "header-session-container--light-mode"}`}>
             <SessionHeaderView />
         </div>
     {/if}
 
-    <!-- Right Side -->
+    <!-- New Session Button -->
     <div class="header__right-section header__section">
         <!-- New Session -->
         <button 
@@ -218,17 +241,17 @@
             padding: 8.5px 10px 9px 13px;
             border-radius: 12px;
             
-            &--default {
-                @include txt-color(0.055, "bg");
+            &--empty {
+                background-color: rgba(var(--textColor1), 0.055);
             }
-            &--default &-circle {
-                @include txt-color(0.14, "bg");
+            &--empty &-circle {
+                background-color: rgba(var(--textColor1), 0.2);
             }
-            &--default &-title {
-                @include txt-color(0.6);
+            &--empty &-title {
+                color: rgba(var(--textColor1), 0.8);
             }
-            &--default &-time {
-                @include txt-color(0.2);
+            &--empty &-time {
+                color: rgba(var(--textColor1), 0.3);
             }
             &--md  {
                 padding: 8.5px 10px 9px 11px;
@@ -264,17 +287,15 @@
             }
             &-title {
                 color: rgba(var(--block-color-1));
-                font-size: 1.14rem;
-                font-weight: 500;
+                @include text-style(_, 500, 1.14rem);
+                @include elipses-overflow;
                 margin: 0px 0px 0px 8px;
                 max-width: 80px;
-                @include elipses-overflow;
             }
             &-time {
-                font-weight: 500;
-                font-size: 1.08rem;
-                margin-left: 9px;
+                @include text-style(_, 400, 1.08rem, "DM Sans");
                 color: rgba(var(--block-color-3));
+                margin-left: 9px;
             }
         }
 

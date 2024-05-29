@@ -360,6 +360,7 @@ type GlobalContext = {
     hasToaster: boolean
     minModeSrc: string | null
     isLeftWideMenuOpen: boolean
+    doOpenActiveRoutine: boolean
     shortcutsFocus: ShortcutSectionInFocus
     modalsOpen: ModalType[]
     lastKeysPressed: KeyContext
@@ -620,12 +621,17 @@ type StylingOptions = {
     opacity?: number
 }
 
-type TasksListOptions<TaskListTypeCombos> = {
+type TasksListOptions = {
     id: string
-    type?: TaskListTypeCombos
     tasks: Task[]
-    isCreatingNewTask: boolean
+    isCreatingNewTask?: boolean
     containerRef: HTMLElement
+    settings?: {
+        numbered?: boolean,
+        tasksLinked?: boolean
+        subtasks?: boolean,
+        subtasksLinked?: boolean
+    }
     styling?: {
         list?: StylingOptions
         task?: StylingOptions
@@ -637,7 +643,6 @@ type TasksListOptions<TaskListTypeCombos> = {
     }
     ui?: {
         showDragHandle?: boolean
-        hideTaskBtn?: boolean
         sidePadding?: CSSUnitVal
         hasTaskDivider?: boolean
         listHeight?: CSSUnitVal
@@ -653,15 +658,17 @@ type TasksListOptions<TaskListTypeCombos> = {
         maxDescrLines?: number
     },
     addBtn?: {
-        style?: StylingOptions
-        text?: string
-        pos?: "top" | "bottom"
+        iconScale?: number,
+        doShow?: boolean,
+        style?: StylingOptions,
+        text?: string,
+        pos?: "top" | "bottom",
     }
     dragAndDrop?: DragAndDropHandler
     contextMenuOptions: ContextMenuOptions
 }
 
-interface TaskListOptionsInterface extends TasksListOptions<TaskListTypeCombos> { }
+// interface TaskListOptionsInterface extends TasksListOptions<TaskListTypeCombos> { }
 
 type MediaCollection = Playlist | Album | ArtistTopSongs | LibTracks | LibAlbums | LibEpisodes | LibAudiobooks
 

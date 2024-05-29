@@ -228,10 +228,10 @@ export class RoutinesManager {
      */
     getBlockCoreBreakdown(blocks: RoutineBlock[]): RoutineCores {
         const cores      = structuredClone(EMPTY_CORES)
-        const firstBlock = blocks.reduce((min, current) => current.startTime < min.startTime ? current : min, blocks[0])
-        const lastBlock  = blocks.reduce((max, current) => current.startTime > max.startTime ? current : max, blocks[0])
 
-        const doGetSleepAwake = firstBlock?.orderContext === "first" && lastBlock?.orderContext === "last"
+        const firstBlock = blocks.find((block) => block.orderContext === "first")
+        const lastBlock = blocks.find((block) => block.orderContext === "last")
+        const doGetSleepAwake = firstBlock && lastBlock && firstBlock.endTime < lastBlock.startTime
 
         for (let block of blocks) {
             this.tallyBlockForCoreBreakdown(block, cores)
@@ -322,9 +322,40 @@ export class RoutinesManager {
         updatedBlock.height = height
         updatedBlock.yOffset = yOffset
 
-        this.editDayRoutineElems.update((blocks) => (
-            blocks!.map((block) => block.id === updatedBlock.id ? { ...block, ...updatedBlock } : block)
-        ))
+        this.editDayRoutineElems.update((_blocks) => {
+            let blocks           = _blocks!
+            let editBlockIdx     = blocks.findIndex((block) => block.id === updatedBlock.id)!
+            let editBlock        = blocks[editBlockIdx]
+            let prevOrderContext = editBlock.orderContext
+
+            editBlock = { ...editBlock, ...updatedBlock }
+            blocks[editBlockIdx] = editBlock
+
+            if (prevOrderContext != "first" && editBlock.orderContext === "first") {
+                blocks = blocks.map((block) => block.id != updatedBlock.id && block.orderContext === "first" ? { ...block, orderContext: null } : block)
+            }
+            else if (prevOrderContext != "last" && editBlock.orderContext === "last") {
+                blocks = blocks.map((block) => block.id != updatedBlock.id && block.orderContext === "last" ? { ...block, orderContext: null } : block)
+            }
+
+            return blocks
+        })
+
+        // also update the raw routines
+        const rawBlocks = get(this.editDayRoutineElems)!.map((block) => {
+            const { id, height, xOffset, yOffset, ...rest } = block
+            return rest
+        })
+
+        this.editDayRoutine.update((routine) => {
+            if ("id" in routine!) {
+                (routine as DailyRoutine).blocks = rawBlocks
+            }
+            else {
+                routine = rawBlocks
+            }
+            return routine
+        })
     }
 
     /**
@@ -379,7 +410,9 @@ export class RoutinesManager {
      * @param  event Pointer Event
      */
     onBlocksContainerPointerMove = (event: PointerEvent) => {
-        const blocksRect = this.blocksContainerRef!.getBoundingClientRect()
+        if (!this.blocksContainerRef) return
+
+        const blocksRect = this.blocksContainerRef.getBoundingClientRect()
         const windowRect = this.containerElem!.getBoundingClientRect()
         
         const blocksLeft = event.clientX - blocksRect.left

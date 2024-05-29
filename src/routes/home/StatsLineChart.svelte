@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import * as d3 from 'd3';
-	import { daysOfWeek, twentyFourToTwelveHrFormat } from "$lib/utils-date";
+	import { DAYS_OF_WEEK, twentyFourToTwelveHrFormat } from "$lib/utils-date";
 	import { themeState } from "$lib/store"
 
     export let timeFrameActivityData: TimeFrameActivity[]
@@ -93,7 +93,7 @@
                     .tickSizeInner(0)
                     .tickSizeOuter(0)
                     .tickValues([0, 1, 2, 3, 4, 5, 6])
-                    .tickFormat((i) => daysOfWeek[i].slice(0, 2))
+                    .tickFormat((i) => DAYS_OF_WEEK[i].slice(0, 2))
             )
             
         const xTickOffsetLeft = (width + 8) / 7  

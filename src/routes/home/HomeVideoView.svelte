@@ -138,10 +138,10 @@
 
     .vid-view {
         position: relative;
-        @include abs-top-left(26px);
+        @include abs-top-left(56px);
         width: 100%;
         height: 100%;
-        padding: 28px 25px 20px 30px;
+        padding: 0px 25px 20px 30px;
         z-index: 1;
 
         &--hidden {

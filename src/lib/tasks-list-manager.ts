@@ -1,8 +1,9 @@
 import { get, writable, type Writable } from "svelte/store"
 import { 
         addItemToArray, extractNum, extractQuadCSSValue, findAncestor, getDistBetweenTwoPoints, getElemById, getElemNumStyle, 
-        getElemsByClass, getElemTrueHeight, getHozDistanceBetweenTwoElems, getVertDistanceBetweenTwoElems, initFloatElemPos, isEditTextElem, isKeyAlphaNumeric, isNearBorderAndShouldScroll, moveElementInArr 
+        getElemTrueHeight, getHozDistanceBetweenTwoElems, getVertDistanceBetweenTwoElems, initFloatElemPos, isEditTextElem, isKeyAlphaNumeric, isNearBorderAndShouldScroll, moveElementInArr 
 } from "./utils-general"
+import { createEventDispatcher } from "svelte"
 
 type SubtaskLinkProp = {
     idx: number, height: number, width: number, top: number, left: number
@@ -19,15 +20,16 @@ type TaskHeightChangeContext = {
  * Contains reactive store.
  */
 export class TasksListManager {
-    options: TaskListOptionsInterface
+    options: TasksListOptions
     state: Writable<Omit<TasksListManager, "tasks">>
+    dispatch = createEventDispatcher()
 
     /* Options */
-    types: Record<TaskListType, boolean> = {
-        "subtasks-linked": false,
-        "tasks-linked": false,
-        "numbered": false,
-        "subtasks": false
+    settings = {
+        numbered: false,
+        tasksLinked: false,
+        subtasks: false,
+        subtasksLinked: false
     }
     styling?: {
         list?: StylingOptions
@@ -40,7 +42,6 @@ export class TasksListManager {
     }
     ui: {
         showDragHandle: boolean
-        hideTaskBtn: boolean
         sidePadding: CSSUnitVal
         hasTaskDivider: boolean
         listHeight: string
@@ -57,6 +58,8 @@ export class TasksListManager {
         maxDescrLines: number
     }
     addBtn: {
+        iconScale: number
+        doShow: boolean
         style?: StylingOptions
         text: string
         pos: "top" | "bottom"
@@ -176,7 +179,7 @@ export class TasksListManager {
     MAX_DESCRIPTION_LENGTH = 300
     MAX_X_CONTEXT_MENU_POS = 70
 
-    constructor(options: TaskListOptionsInterface) {
+    constructor(options: TasksListOptions) {
         this.options = options
         this.tasks = writable(options.tasks)
 
@@ -185,32 +188,32 @@ export class TasksListManager {
         // wrapper around the whole component
         this.containerRef = options.containerRef
 
-        // type
-        if (options.type) {
-            const types = options.type.split(" ")
-            this.types["subtasks-linked"] = types.includes("subtasks-linked")
-            this.types["numbered"] = types.includes("numbered")
-            this.types["tasks-linked"] = types.includes("tasks-linked")
-            this.types["subtasks"] = types.includes("subtasks")
+        // settings type
+        if (options.settings) {
+            this.settings.numbered = options.settings.numbered ?? false
+            this.settings.tasksLinked = options.settings.tasksLinked ?? false
+            this.settings.subtasks = options.settings.subtasks ?? true
+            this.settings.subtasksLinked = options.settings.subtasksLinked ?? false
         }
-        if (this.types["subtasks-linked"]) {
-            this.types["subtasks"] = true
+        if (this.settings.subtasksLinked) {
+            this.settings.subtasks = true
         }
 
         // ui options
         this.ui = {
             showDragHandle: options.ui?.showDragHandle ?? true,
-            hideTaskBtn:    options.ui?.hideTaskBtn ?? false,
             sidePadding:    options.ui?.sidePadding ?? "18px",
             hasTaskDivider: options.ui?.hasTaskDivider ?? true,
             listHeight:     options.ui?.listHeight ?? "auto"
         }
 
         // add btn
-        this.addBtn  = {
+        this.addBtn = {
+            doShow: options.addBtn?.doShow ?? true,
             style: options.addBtn?.style,
             text: options.addBtn?.text ?? "Add an Item",
-            pos: options.addBtn?.pos ?? "bottom"
+            pos: options.addBtn?.pos ?? "bottom",
+            iconScale: options.addBtn?.iconScale ?? 0.96
         }
 
         // styling 
@@ -223,7 +226,7 @@ export class TasksListManager {
         // css variables
         this.cssVariables = {
             checkBoxFill:        options.cssVariables?.checkBoxFill  ?? "rgba(var(--textColor1), 1)",
-            checkBoxEmpty:       options.cssVariables?.checkBoxEmpty ?? "rgba(var(--textColor1), 0.3)",
+            checkBoxEmpty:       options.cssVariables?.checkBoxEmpty ?? "rgba(var(--textColor1), 0.2)",
             checkIcon:           options.cssVariables?.checkIcon     ?? "rgba(var(--textColor2), 1)",
             taskBgColor:         options.cssVariables?.taskBgColor   ?? "rgba(var(--textColor1), 1)",
             taskHoverBgColor:    options.cssVariables?.taskHoverBgColor    ?? "rgba(var(--textColor1), 0.01)",
@@ -255,7 +258,7 @@ export class TasksListManager {
         const bottomPadding = taskPadding.bottom ?? 5
 
         // left section width
-        const leftSectionObj   = this.types["numbered"] ? this.styling?.num : this.styling?.checkbox
+        const leftSectionObj   = this.settings.numbered ? this.styling?.num : this.styling?.checkbox
         const { left, right }  = extractQuadCSSValue(leftSectionObj!.margin)
         const leftSectionWidth = extractNum(leftSectionObj!.width!)[0] + left + right
         
@@ -703,7 +706,7 @@ export class TasksListManager {
         }
 
         /* Rest of the Subtasks Height */
-        let doGetSubtaskHeight = this.types["subtasks"] && this.getCurrSubtasks().length > 0
+        let doGetSubtaskHeight = this.settings.subtasks && this.getCurrSubtasks().length > 0
 
         if (doGetSubtaskHeight) {
             const subtasksListElement = this.getElemById(`task-subtasks-id--${this.pickedTaskIdx}`)!
@@ -727,7 +730,7 @@ export class TasksListManager {
         taskElem.style.transition = doAnimate ? this.TASK_HT_TRANSITION : "0s"
 
         /* Connectors */
-        if (doGetSubtaskHeight && this.types["subtasks-linked"] && !this.types["numbered"]) {
+        if (doGetSubtaskHeight && this.settings.subtasksLinked && !this.settings.numbered) {
             requestAnimationFrame(() => this.initSubtasksLinks(context))
         }
     }
@@ -906,10 +909,13 @@ export class TasksListManager {
      */
     handleTaskCheckboxClicked(pickedTask: Task) {
         const tasks = get(this.tasks)
-        let taskIdx = pickedTask.idx
+        const taskIdx = pickedTask.idx 
         tasks![taskIdx].isChecked = !tasks![taskIdx].isChecked
 
-        if (tasks![taskIdx].isChecked) {
+        const isChecked = tasks![taskIdx].isChecked
+        let subtasksChecked: number[] = []
+
+        if (isChecked) {
             this.taskCheckBoxJustChecked = taskIdx
             let subtasks = this.getSubtasks(pickedTask.idx)!
             
@@ -919,7 +925,10 @@ export class TasksListManager {
                 this.subtasksCheckedFromTaskCheck.push(subtask.idx)
                 subtasks[idx] = { ...subtask, isChecked: true }
             })
+
+            subtasksChecked = this.subtasksCheckedFromTaskCheck
         }
+        // if uncheck task, uncheck all the subtasks that have been checked as a result of checking the task
         else if (this.subtasksCheckedFromTaskCheck.length > 0) {
             let subtasks = this.getSubtasks(pickedTask.idx)!
 
@@ -935,6 +944,16 @@ export class TasksListManager {
         }
 
         this.tasks.set(tasks)
+
+        // this.dispatch("tasksUpdated", { 
+        //     tasks: this.tasks,
+        //     type: "task-check", 
+        //     idx: taskIdx,
+        //     context: { 
+        //         isChecked, 
+        //         subtasksChecked
+        //     }
+        // })
     }
 
     doAnimatedCheckedSubtaskTitle(subtaskIdx: number) {
@@ -954,8 +973,17 @@ export class TasksListManager {
             this.subtaskCheckBoxJustChecked = subtaskIdx
         }
 
-        // this.update({ tasks: this.tasks! })
         this.tasks.set(get(this.tasks))
+
+        // this.dispatch("tasksUpdated", { 
+        //     tasks: this.tasks,
+        //     type: "subtask-check", 
+        //     idx: this.pickedTaskIdx,
+        //     context: { 
+        //         subtaskIdx,
+        //         isChecked: subtask.isChecked,
+        //     }
+        // })
     }
 
     /**
@@ -1110,12 +1138,13 @@ export class TasksListManager {
         const floatingItemWidth = listWidth * this.FLOATING_WIDTH_PERCENT
         const floatItemHeight   = this.getElemById(`floating-item-id--${this.floatingItem!.idx}`)?.clientHeight ?? 0
 
-        const { left, top } = initFloatElemPos(
-            { width: floatingItemWidth, height: floatItemHeight },
-            this.cursorPos!,
-            { width: listWidth, height: this.tasksList!.clientHeight },
-            this.dragStartOffset!
-        )
+        const { left, top } = initFloatElemPos({
+            dims: { height: floatItemHeight, width: floatingItemWidth }, 
+            cursorPos: this.cursorPos!,
+            containerDims: { height: this.tasksList!.clientHeight, width: listWidth },
+            clientOffset: this.dragStartOffset!
+        })
+
         
         this.floatingItemOffset = { top, left }
         this.update({ floatingItemOffset: this.floatingItemOffset  })
@@ -1262,8 +1291,10 @@ export class TasksListManager {
      * Closes the current task-editing state.
      */
     saveNewTitle() {
+        const newTitle = this.newText
         const tasks = get(this.tasks)
         tasks![this.pickedTaskIdx].title = this.newText || "Untitled"
+
         this.newText = ""
         this.isEditingTitle = false
         this.isMakingNewTask = false
@@ -1275,7 +1306,14 @@ export class TasksListManager {
         })
         this.tasks.set(tasks)
 
-        // this.dispatch("taskEdited", tasks![this.pickedTaskIdx]!)
+        // this.dispatch("tasksUpdated", { 
+        //     tasks: this.tasks,
+        //     type: "title", 
+        //     idx: this.pickedTaskIdx, 
+        //     context: { 
+        //         text: newTitle 
+        //     }
+        // })
     }
 
     /**
@@ -1283,8 +1321,11 @@ export class TasksListManager {
      * Closes the current task-editing state.
      */
     saveNewDescription = () => {
+        const newDescription = this.newText
         const tasks = get(this.tasks)
+
         tasks![this.pickedTaskIdx].description = this.newText
+
         this.newText = ""
         this.textAreaHasSpellCheck = false
         
@@ -1294,7 +1335,14 @@ export class TasksListManager {
         })
         this.tasks.set(tasks)
 
-        // this.dispatch("taskEdited", tasks![this.pickedTaskIdx]!)
+        // this.dispatch("tasksUpdated", {
+        //     tasks: this.tasks,
+        //     type: "description", 
+        //     idx: this.pickedTaskIdx, 
+        //     context: {
+        //         text: newDescription 
+        //     }
+        // })
     }
 
     /**
@@ -1597,7 +1645,7 @@ export class TasksListManager {
         let isForTitle       = (isDown && freshExpand) || (!isDown && this.isDescriptionFocused) || fromTaskToTitle
         let isForDescription = !isForTitle && ((isDown && this.isTitleFocused) || (!isDown && subtaskIdx === 0))
 
-        let isForSubtasks    =  this.types["subtasks"] && isExpanded && !isForDescription && this.focusedTaskIdx === this.pickedTaskIdx
+        let isForSubtasks    =  this.settings.subtasks && isExpanded && !isForDescription && this.focusedTaskIdx === this.pickedTaskIdx
                                 && subtasksLength > 0 && ((this.isDescriptionFocused && isDown) || subtaskIdx >= 0)
 
         if (isForSubtasks) {
@@ -1771,10 +1819,10 @@ export class TasksListManager {
             top: this.cursorPos.top - scrollTop
         }
 
-        const { left, top } = initFloatElemPos(
-            { height: 220, width: this.contextMenuWidth }, cursorPos,
-            { height: containerElem.clientHeight, width: containerElem.clientWidth }
-        )
+        const { left, top } = initFloatElemPos({
+            dims: { height: 220, width: this.contextMenuWidth }, cursorPos,
+            containerDims: { height: containerElem.clientHeight, width: containerElem.clientWidth }
+        })
 
         this.contextMenuX = left
         this.contextMenuY = top
@@ -1807,10 +1855,13 @@ export class TasksListManager {
             left: this.cursorPos.left,
             top: this.cursorPos.top - scrollTop
         }
-        const { left, top } = initFloatElemPos(
-            { height: 220, width: this.contextMenuWidth }, cursorPos,
-            { height: containerElem.clientHeight, width: containerElem.clientWidth }
-        )
+
+
+        const { left, top } = initFloatElemPos({
+            dims: { height: 220, width: this.contextMenuWidth }, 
+            cursorPos,
+            containerDims: { height: containerElem.clientHeight, width: containerElem.clientWidth },
+        })
 
         this.contextMenuX = left
         this.contextMenuY = top
@@ -1867,7 +1918,7 @@ export class TasksListManager {
         const hasFocusedSubtask = focusedSubtaskIdx >= 0
         const pickedTaskIdx     = this.pickedTaskIdx
         const isAlphaNumericKey = isKeyAlphaNumeric(event)
-        const hasCheckbox       = this.types["numbered"]
+        const hasCheckbox       = this.settings.subtasksLinked
         const subtaskLength = this.getSubtasksLength(this.focusedTaskIdx)
 
         if (key === "Backspace" && !hasFocusedSubtask) {

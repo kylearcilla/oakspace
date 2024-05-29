@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store'
+import { derived, writable } from 'svelte/store'
 import type { Session } from './pom-session'
 import type { MusicPlayer } from './music-player'
 import type { MusicUserData } from './music-user-data'
@@ -23,6 +23,7 @@ export const globalContext = writable<GlobalContext>({
     isVideoViewOpen: false,
     isMusicPlayerOpen: false,
     isLeftWideMenuOpen: true,
+    doOpenActiveRoutine: false,
     shortcutsFocus: ShortcutSectionInFocus.MAIN,
     minModeSrc: null,
     hasToaster: false,
@@ -45,9 +46,13 @@ export const themeState = writable<ThemeState>({
 export const googleData = writable<GoogleUserData | null>(null)
 
 /* Home View Stuff */
-export const tasksViewStore = writable<TasksViewManager | null>(null)
+export const tasksViewStore  = writable<TasksViewManager | null>(null)
 export const mediaEmbedStore = writable<FloatingMediaEmbed | null>(null)
-export const weekRoutine = writable<WeeklyRoutine | null>(WEEKLY_ROUTINES[0])
+export const weekRoutine     = writable<WeeklyRoutine | null>(WEEKLY_ROUTINES[0])
+
+export const wkRoutine = derived(weekRoutine, ($weekRoutine) => {
+    return $weekRoutine
+}, WEEKLY_ROUTINES[0])
 
 /* Goals Stuff */
 export const goalsManager = writable<GoalsManager | null>(null)

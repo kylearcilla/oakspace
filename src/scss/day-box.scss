@@ -241,6 +241,7 @@ $hour-block-height: 50px;
     height: calc(($hour-block-height * 24));
     position: relative;
     width: 50px;
+    overflow: scroll;
 
     &--light &__block span {
         @include text-style(0.45, 500);

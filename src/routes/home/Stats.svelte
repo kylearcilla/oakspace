@@ -7,7 +7,7 @@
 	import TagBarGraph from "./StatsTagBarGraph.svelte"
 	import ProdStackedBarGraph from "./StatsStackedBarGraph.svelte"
 	import CalendarHeatMap from "./StatsHeatMap.svelte"
-	import { daysOfWeek, hoursToHhMm } from "$lib/utils-date"
+	import { DAYS_OF_WEEK, hoursToHhMm } from "$lib/utils-date"
 	import StatsTagRanking from "./StatsTagRanking.svelte"
 	import { ModalType } from "$lib/enums";
 	import { closeModal } from "$lib/utils-home";
@@ -565,7 +565,7 @@
         }
         const timePointDate = timeFrameDataSet[keySelected].date
 
-        return `${daysOfWeek[timePointDate.getDay()]}  ${timePointDate.getMonth() + 1}/${timePointDate.getDate()}`
+        return `${DAYS_OF_WEEK[timePointDate.getDay()]}  ${timePointDate.getMonth() + 1}/${timePointDate.getDate()}`
     }
     const getTimeFrameData = (timeFrame: TimeFrame) => {
         if (timeFrame === TimeFrame.THIS_WEEK) {

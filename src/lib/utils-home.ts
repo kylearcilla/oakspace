@@ -244,3 +244,9 @@ export function toggleFloatSideBar() {
         return { ...state, isLeftBarFloating: !state.isLeftBarFloating }
     })
 }
+
+export function toggleActiveRoutine() {
+    globalContext.update((state: GlobalContext) => {
+        return { ...state, doOpenActiveRoutine: !state.doOpenActiveRoutine }
+    })
+}

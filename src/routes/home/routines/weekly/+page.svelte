@@ -7,9 +7,9 @@
 	import { toast } from "$lib/utils-toast"
 	import { getColorTrio } from "$lib/utils-general"
 	import { InputManager, TextEditorManager } from "$lib/inputs"
-	import { getTimeFromIdx, minsFromStartToHHMM, minsToHHMM } from "$lib/utils-date"
+	import { getDayIdxMinutes, getTimeFromIdx, minsFromStartToHHMM, minsToHHMM } from "$lib/utils-date"
 	import { WeeklyRoutinesManager } from "$lib/routines-weekly-manager"
-	import { BreakdownView, EDIT_BLOCK_OPTIONS, ViewOption, formatCoreData, getBlockStyling, isDayRoutinedLinked, getTimeForNowBar, ROUTINE_BLOCKS_CONTAINER_ID } from "$lib/utils-routines"
+	import { BreakdownView, EDIT_BLOCK_OPTIONS, ViewOption, formatCoreData, getBlockStyling, isDayRoutinedLinked, ROUTINE_BLOCKS_CONTAINER_ID } from "$lib/utils-routines"
     
 	import EditBlockModal from "../EditBlockModal.svelte"
 	import NewRoutineModal from "../NewRoutineModal.svelte"
@@ -27,7 +27,6 @@
     const DAYS_MIN_VIEW_MAX_WIDTH = 1100
     const DAY_DROPDOWN_WIDTH = 255
     const WK_ROUTINES_SETTINGS_DROPDOWN_WIDTH  = 140
-    const WK_BOARD_PAD_BOTTOM  = 35
     const INIT_SCROLL_TOP = 280
     
     const DAILY_ROUTINES: DailyRoutine[] = SET_DAILY_ROUTINES
@@ -73,7 +72,7 @@
     
     // Week View
     let minuteInterval: NodeJS.Timeout | null = null
-    let currTime = getTimeForNowBar()
+    let currTime = getDayIdxMinutes()
 
     let daysInView = manager.DAYS_WEEK
     let viewOptionOpen = false
@@ -444,17 +443,10 @@
 
     function onBoardScroll(e: Event) {
         const target = e.target as HTMLElement
-
-        hourBlocksElem.scrollTop = target.scrollTop
-        hourBlocksElem.style.overflow = "scroll"
-
-        // keep y scroll pos of board and time in sync
-        if (hourBlocksElem.scrollTop != target.scrollTop) {
-            target.scrollTop = hourBlocksElem.scrollTop
-        }
-
-        weekDaysElem.scrollLeft = target.scrollLeft
-        weekDaysElem.style.overflow = "scroll"
+        const { scrollTop, scrollLeft } = target
+    
+        hourBlocksElem.style.top = `-${scrollTop}px`
+        weekDaysElem.style.left = `-${scrollLeft}px`
     }
     function onKeyPress(e: KeyboardEvent) {
         if (!manager) return
@@ -464,14 +456,13 @@
     }
     
     onMount(() => {
-        hourBlocksElem.scrollTop += INIT_SCROLL_TOP
         scrollableContainer.scrollTop += INIT_SCROLL_TOP
 
         requestAnimationFrame(() => { 
             manager.initContainer(scrollableContainer, scrollableContent)
             manager.processWeeklyRoutine()
         })
-        minuteInterval = setInterval(() => currTime = getTimeForNowBar(), 1000)
+        minuteInterval = setInterval(() => currTime = getDayIdxMinutes(), 1000)
     })
 
     onDestroy(() => clearInterval(minuteInterval!))
@@ -840,13 +831,11 @@
                     />
                 </div>
                 <!-- Days of Week Header -->
-                <div 
-                    class="week-view__days-container"
-                    class:scroll-bar-hidden={true}
-                    on:pointerover={() => weekDaysElem.style.overflow = "hidden"}
-                    bind:this={weekDaysElem}
-                >
-                    <div class="week-view__days">
+                <div class="week-view__days-container">
+                    <div 
+                        class="week-view__days"
+                        bind:this={weekDaysElem}
+                    >
                         {#if weekRoutine}
                             {#each daysInView as day, idx}
                                 {@const dayKey   = manager.getDayKey(day)}
@@ -891,10 +880,7 @@
                 </div>
             </div>
             <!-- Scrollable Board -->
-            <div 
-                class="week-view__board"
-                style:--wk-board-pad-bottom={`${WK_BOARD_PAD_BOTTOM}px`}
-            >
+            <div class="week-view__board">
                 <div 
                     on:scroll={onBoardScroll}
                     bind:this={scrollableContainer}
@@ -1001,7 +987,7 @@
                                     0 :
                                     currTime.dayIdx
                                 }
-                                {@const TOP_OFFSET = WK_BOARD_PAD_BOTTOM - 2}
+                                {@const TOP_OFFSET = -2}
 
                                 <div 
                                     class="now-line"
@@ -1160,7 +1146,7 @@
                             </div>
                             <div class="wk-grid__vert-lines">
                                 {#if scrollableContent}
-                                    {@const height = scrollableContent.scrollHeight - WK_BOARD_PAD_BOTTOM }
+                                    {@const height = scrollableContent.scrollHeight}
                                     {@const TOP_OFFSET = 2}
                                     {#each Array.from({ length: daysInView.length }, (_, i) => i) as dayIdx}
                                         <div 
@@ -1222,15 +1208,11 @@
                     </div>
                 </div>
                 <!-- Hour Blocks -->
-                <div 
-                    class="hour-blocks-container" 
-                    class:scroll-bar-hidden={true}
-                    on:pointerover={() => hourBlocksElem.style.overflow = "hidden"}
-                    bind:this={hourBlocksElem} 
-                    >
+                <div class="hour-blocks-container" >
                     <div class="hour-blocks-wrapper">
                         <div 
                             class="hour-blocks"
+                            bind:this={hourBlocksElem} 
                             class:hour-blocks--light={isLightTheme}
                         >
                             {#if containerWidth > 0}
@@ -1859,10 +1841,15 @@
         &__days-container {
             width: calc(100% - $hr-col-width);
             padding: 8px 0px 10px 0px;
+            position: relative;
+            overflow: hidden;
         }
         &__days {
             @include flex(_, space-between);
             min-width: var(--min-width);
+            width: 100%;
+            position: absolute;
+            bottom: -3px;
         }
         &__days-day {
             width: calc((100% / var(--days-length)));
@@ -1976,8 +1963,7 @@
         &__blocks-wrapper {
             min-width: var(--min-width);
             position: relative;
-            height: calc(($hr-col-height * 24) + var(--wk-board-pad-bottom));
-            padding-bottom: var(--wk-board-pad-bottom);
+            height: calc($hr-col-height * 24);
         }
     }
     .routine-blocks-container {
@@ -2009,9 +1995,6 @@
             min-height: calc(100% - 50px);
             max-height: calc(100% - 50px);
             @include abs-top-left(0px, 1px);
-        }
-        &-wrapper {
-            padding-bottom: var(--wk-board-pad-bottom);
         }
         &__blocks {
             height: calc($hr-col-height * 24);

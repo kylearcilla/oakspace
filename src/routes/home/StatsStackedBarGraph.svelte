@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import * as d3 from 'd3';
 	import { roundToNearestFive } from '$lib/utils-general'
-	import { daysOfWeek, hoursToHhMm, months } from '$lib/utils-date'
+	import { DAYS_OF_WEEK, hoursToHhMm, months } from '$lib/utils-date'
 	import { themeState } from "$lib/store"
 
     enum TimeFrame { THIS_WEEK, TWO_WEEKS, THREE_WEEKS, THREE_MONTHS, SIX_MONTHS, THIS_YEAR, ALL_TIME }
@@ -374,10 +374,10 @@
     }
     function getXTickFormat(d: any) {
         if (timeFrame === TimeFrame.THIS_WEEK) {
-            return daysOfWeek[d.getDay()].slice(0, 2)
+            return DAYS_OF_WEEK[d.getDay()].slice(0, 2)
         }
         else if ([TimeFrame.TWO_WEEKS, TimeFrame.THREE_WEEKS].includes(timeFrame)) {
-            return daysOfWeek[d.getDay()].slice(0, 1)
+            return DAYS_OF_WEEK[d.getDay()].slice(0, 1)
         }
         else if ([TimeFrame.THREE_MONTHS, TimeFrame.SIX_MONTHS].includes(timeFrame)) {
             return months[d.getMonth()]

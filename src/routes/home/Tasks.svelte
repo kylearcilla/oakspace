@@ -117,7 +117,7 @@
                 listItems: ($tasksViewStore?.taskGroups ?? []).map((task) => ({ 
                     name: task.title 
                 })),
-                onListItemClicked: (idx) => currTaskGroupIdx = idx,
+                onListItemClicked: (context) => currTaskGroupIdx = context.idx,
                 pickedItem: currTaskGroupIdx,
                 onClickOutside: () => isTaskGroupDrodownOpen = false,
                 position: { left: "15px", top: "35px" }
@@ -149,7 +149,7 @@
             <TasksList 
                 options={{
                     id: "todos",
-                    type: "subtasks subtasks-linked",
+                    settings: { subtasksLinked: true },
                     tasks: TEST_TASKS,
                     containerRef: todoListContainer,
                     styling: {
@@ -160,7 +160,7 @@
                     },
                     contextMenuOptions: { width: "170px" },
                     ui: { 
-                        sidePadding: "17px", isMin: false, hasTaskDivider: false, showDragHandle: false,
+                        sidePadding: "17px", hasTaskDivider: false, showDragHandle: false,
                         listHeight: "100%"
                     }
                 }}

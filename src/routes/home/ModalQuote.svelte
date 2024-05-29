@@ -154,7 +154,6 @@
             font-size: 1.19rem;
             color: rgba(179, 179, 179, 0.5) !important;
             font-weight: 400;
-            white-space: nowrap;
             @include elipses-overflow;
             
             i {

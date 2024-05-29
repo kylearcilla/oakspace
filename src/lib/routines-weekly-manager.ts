@@ -477,7 +477,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
             editDayKey,
             updateLinked: context === "edited"
         })
-    
+
         this.updateBreakdownData()
     }
 

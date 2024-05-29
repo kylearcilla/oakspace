@@ -37,19 +37,16 @@
 
   } from "$lib/utils-home"
 	import MediaEmbed from "./MediaEmbed.svelte"
-	import type { Position } from "$lib/types-toast"
 	import { getElemById } from "$lib/utils-general";
-
-  let expand = false
-	let position: Position = 'bottom-right'
-	let richColors = false
-	let closeButton = true
+	import ActiveRoutine from "./ActiveRoutine.svelte";
 
   let toggledLeftBarWithKey = false
   let totalWidth = 0
   let isLeftNarrowBarOpen = true
   let isLeftWideBarOpen = true
   let isRightBarOpen = true
+
+  let isAciveRoutineOpen = false
 
   let leftSideBarWidth = 0
   let rightSideBarWidth = 0
@@ -202,6 +199,8 @@
           <TaskView />
       </nav>
   </div>
+
+  <ActiveRoutine />
     
   {#if $mediaEmbedStore}
      <MediaEmbed />
@@ -243,7 +242,9 @@
 
   <!-- Toasts -->
   {#if $globalContext.hasToaster}
-    <Toaster {expand} {position} {richColors} {closeButton} />
+    <Toaster 
+      expand={true} richColors={true} closeButton={true} position="bottom-right" 
+    />
   {/if}
 </div>
 
@@ -319,11 +320,11 @@
       }
       &__floating-nav-menu-container {
         width: 185px;
-        background-color: var(--navMenuBgColor);
         position: fixed;
         top: 48px;
         left: 9px;
         z-index: 999;
+        background-color: var(--navMenuBgColor);
         border: 1px solid rgba(var(--textColor1), 0.04);
         border-radius: 12px;
         

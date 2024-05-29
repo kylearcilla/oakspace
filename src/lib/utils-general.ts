@@ -1125,13 +1125,15 @@ export function capitalizeString(str: string) {
 }
 
 /**
- * Get the pair of color properties based on the theme.
- * @param    color - The color object containing light and dark properties.
+ * Get the trio of color properties based on the theme
+ * @param    color      - The color object containing light and dark properties.
  * @param    doGetLight - Boolean value indicating whether the theme is light or dark.
+ * 
  * @returns  An tuple containing a color's light or dark color trio.
  */
 export function getColorTrio(color: Color, doGetLight: boolean): [string, string, string] {
   const colorTrio = doGetLight ? [color.light1, color.light2, color.light3] : [color.dark1, color.dark2, color.dark3]
+
   return colorTrio as [string, string, string]
 }
 

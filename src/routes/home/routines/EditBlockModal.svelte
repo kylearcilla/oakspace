@@ -46,7 +46,8 @@
     let editHasBeenMade = false
     let isSaving = false
     let confirmModalOpen = false
-    let actualOrder: BlockOrderContext = "middle"
+    let firstBlockExists = false
+    let lastBlockExists = false
     
     let routineListRef: HTMLElement
     let titleInput: Writable<InputManager>
@@ -65,51 +66,38 @@
     function onMadeChanges(updatedBlock: RoutineBlockElem | null) {
         routineManager.onConcludeModalEdit(updatedBlock)
     }
-    function onSettingsOptionsClicked(idx: number) {
-        if (idx === 0) {
-            updateOrderIdx()
+    function onSettingsOptionsClicked(event: Event) {
+        const target = event.target as HTMLElement
+        const optionName = target.innerText
+
+        
+        if (optionName === "Unset as first block") {
+            newOrderContext = null
+        }
+        else if (optionName === "Unset as last block") {
+            newOrderContext = null
+        }
+        else if (optionName === "Set first block" || optionName === "Set new first block") {
+            newOrderContext = "first"
+        }
+        else if (optionName === "Set last block" || optionName === "Set new last block") {
+            newOrderContext = "last"
+        }
+        else if (optionName === "Delete Block") {
+
         }
         settingsOpen = false
     }
 
     /* Order */
-
     function initOrderIdx(blocks: RoutineBlockElem[] | null) {
         if (!blocks) return
-        const orderIdx = routineManager.getBlockOrderFromStartTime(startTime, blocks!)
-        
-        if (orderIdx === 0) {
-            actualOrder = blocks!.length === 1 ? "only" : "first"
-        }
-        else if (orderIdx === blocks!.length - 1) {
-            actualOrder = "last"
-        }
-        else {
-            actualOrder = "middle"
-        }
 
-        updateOrderOptnText()
-    }
-    function updateOrderIdx() {
-        if (actualOrder === "first") {
-            newOrderContext = newOrderContext === "first" ? null : "first"
-        }
-        else {
-            newOrderContext = newOrderContext === "last" ? null : "last"
-        }
+        firstBlockExists = blocks.find((block) => 
+            block.orderContext === "first" && block.startTime != startTime) != null
 
-        updateOrderOptnText()
-    }
-    function updateOrderOptnText() {
-        if (actualOrder === "first") {
-            orderOptnText = newOrderContext === "first" ? "Unmark as First Routine" : "Mark as First Routine"
-        }
-        else if (actualOrder === "last") {
-            orderOptnText = newOrderContext === "first" ? "Unmark as Last Routine" : "Mark as Last Routine"
-        }
-        else {
-            orderOptnText = ""
-        }
+        lastBlockExists = blocks.find((block) => 
+            block.orderContext === "last" && block.startTime != startTime) != null
     }
 
     /* Text Stuff */
@@ -327,15 +315,16 @@
                     listItems: [
                         { 
                             options: [
-                                ...(actualOrder !== "middle" ? [{ name: orderOptnText }] : []),
-                                { name: "Duplicate Block" }
+                                ...(newOrderContext !== "last" ? [{ name: newOrderContext === "first" ? "Unset as first block" : firstBlockExists ? "Set new first block" : "Set first block" }] : []),
+                                ...(newOrderContext !== "first" ? [{ name: newOrderContext === "last" ? "Unset as last block" : lastBlockExists ? "Set new last block" : "Set last block" }] : []),
+                                // { name: "Duplicate Block" }
                             ]
                         },
                         { name: "Delete Block" }
                     ],
                     position: { top: "45px", right: "0px" },
                     styling: { width: "160px" },
-                    onListItemClicked: (context) => onSettingsOptionsClicked(context.idx),
+                    onListItemClicked: (context) => onSettingsOptionsClicked(context.event),
                     onClickOutside: () => settingsOpen = false
                 }}
             />
@@ -467,7 +456,9 @@
                     on:tasksUpdated={onTaskChange}
                     options={{
                         id:   "edit-routine",
-                        type: "subtasks numbered",
+                        settings: {
+                            numbered: true
+                        },
                         isCreatingNewTask: doCreateNewTask,
                         containerRef: routineListRef,
                         tasks: TEST_TASKS,

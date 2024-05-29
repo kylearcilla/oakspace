@@ -6,7 +6,7 @@ export const months = [
     "July", "August", "September", "October", "November", "December"
   ]
   
-export const daysOfWeek = [
+export const DAYS_OF_WEEK = [
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
 ]
 
@@ -14,7 +14,7 @@ export const TOTAL_DAY_MINS = 1440
 
 export const getDayOfWeek = () => {
     const today = new Date()
-    return `${daysOfWeek[today.getDay()]}`
+    return `${DAYS_OF_WEEK[today.getDay()]}`
 }
 
 /**
@@ -600,4 +600,28 @@ export function timeStrToMins(h: number, m: number, ampm?: "am" | "pm") {
         h = 0
     }
     return (h * 60) + m
+}
+
+export function getNowMins() {
+    const date = new Date()
+    const hours = date.getHours()
+    const minutes = date.getMinutes()
+    
+    return hours * 60 + minutes
+}
+
+/**
+ * Gets the current day index (0 for Monday, 6 for Sunday) and the current time in minutes since midnight.
+ * 
+ * @returns An object containing:
+ *             - dayIdx: The current day of the week, with Monday as 0 and Sunday as 6.
+ *             - minutes: The current time in minutes since midnight.
+ */
+export function getDayIdxMinutes() {
+    const dayIdx = new Date().getDay()
+    
+    return {
+        dayIdx: (dayIdx + 6) % 7,
+        minutes: getNowMins()
+    }
 }

@@ -999,7 +999,7 @@ export class TasksListManager {
 
         pe.preventDefault()
 
-        const { left, top } = this.cursorPos
+        const { top } = this.cursorPos
         const isTask = this.isDraggingTask
         const pointerId = pe.pointerId
 
@@ -1012,13 +1012,15 @@ export class TasksListManager {
 
         listChildren.forEach((item) => {
             const _item              = item as HTMLElement
-            const isElemSubtask      = _item.classList[0].includes("subtask")
+            const isElemSubtask      = _item.getAttribute("data-task-type") === "subtask"
             const isFloating         = _item.classList?.value.includes("--floating")
             const isOtherItem        = isTask && isElemSubtask ? true : !isTask && !isElemSubtask ? true : false
 
             const topEdgePosition    = this.getTaskItemOffsetFromTop(_item)
             const bottomEdgePosition = topEdgePosition + _item.clientHeight
             const _top               = this.floatingItemElem ? top : this.dragStartPoint!.top
+
+            console.log(_item)
             
             if (!isOtherItem && !isFloating && _top >= topEdgePosition && _top <= bottomEdgePosition && _item.id) {
                 overItemIdx = +_item.id.split("id--")[1]
@@ -1049,7 +1051,7 @@ export class TasksListManager {
             this.initDragOverElem(overItemIdx, overItemElem as HTMLElement)
         }
 
-        this.updateFloatingTaskPos(pe)
+        this.updateFloatingTaskPos()
     }
 
     onTaskListPointerMove = (event: PointerEvent) => {
@@ -1076,7 +1078,6 @@ export class TasksListManager {
                 this.allowDrag = true
             }
         }
-    
 
         if (this.allowDrag) {
             this.taskSubtaskDragHandler(event)
@@ -1113,7 +1114,10 @@ export class TasksListManager {
         const { top: cTop, left: cLeft } = this.cursorPos
 
         const floatItemTopOffset  = this.getTaskItemOffsetFromTop(sourceElem)
-        const floatItemLeftOffset = getHozDistanceBetweenTwoElems(container, sourceElem, false)
+        const floatItemLeftOffset = getHozDistanceBetweenTwoElems({
+            left: { elem: container, edge: "left" },
+            right: { elem: sourceElem, edge: "left" }
+        })
 
         const listWidth         = this.tasksList!.clientWidth
         const floatingItemWidth = listWidth * this.FLOATING_WIDTH_PERCENT
@@ -1133,7 +1137,7 @@ export class TasksListManager {
      * @param left  Left offset from list 
      * @param top   Top offset from list 
      */
-    updateFloatingTaskPos(pe: PointerEvent) {
+    updateFloatingTaskPos() {
         const listWidth         = this.tasksList!.clientWidth
         const floatingItemWidth = listWidth * this.FLOATING_WIDTH_PERCENT
         const floatItemHeight   = this.getElemById(`floating-item-id--${this.floatingItem!.idx}`)?.clientHeight ?? 0
@@ -1258,15 +1262,6 @@ export class TasksListManager {
             this.dragOverItemElem = null
         }
 
-        // if dragging subtask, keep open
-        if (draggedItem === "task") {
-            this.pickedTaskIdx = -1
-            this.updateTaskFocusIdx(toIdx)
-        }
-        if (draggedItem === "subtask") {
-            this.updateSubtaskFocusIdx(toIdx)
-        }
-
         // do not allow a transition animation on new DOM location
         const taskElem = this.getTaskElem(this.floatingItem.idx)
         taskElem.style.transition = "0s"
@@ -1281,6 +1276,16 @@ export class TasksListManager {
             this.floatingItem = null
             this.floatingItemElem = null
             this.update({ floatingItem: null, floatingItemOffset: null  })
+
+            // if dragging subtask, keep open
+            if (draggedItem === "task") {
+                this.pickedTaskIdx = -1
+                this.updateTaskFocusIdx(toIdx)
+            }
+            if (draggedItem === "subtask") {
+                console.log({ toIdx })
+                this.updateSubtaskFocusIdx(toIdx)
+            }
         })
     }
 
@@ -1592,12 +1597,13 @@ export class TasksListManager {
         const tasksLength = get(this.tasks).length
         if (tasksLength === 0) return
 
-        let _newIdx = this.focusedSubtaskIdx
+        let _newIdx = this.focusedTaskIdx
 
         if (idx != undefined) {
             _newIdx = idx
         }
         if (key === "ArrowUp") {
+            console.log("UP")
             _newIdx--
             _newIdx = _newIdx < 0 ? tasksLength - 1 : _newIdx
         } 
@@ -1605,11 +1611,12 @@ export class TasksListManager {
             _newIdx++
             _newIdx = _newIdx === tasksLength ? 0 : _newIdx
         }
+
         this.updateTaskFocusIdx(_newIdx)
     }
 
     /**
-     * User to navigate between elements in a Task list.
+     * User to navigate between elements.
      * This includes title, description, subtasks, and other tasks.
      * @param key   Arrow key pressed.
      */
@@ -1626,6 +1633,7 @@ export class TasksListManager {
 
         // if title is focused and up, the task is now in focus
         if (this.isTitleFocused && !isDown) {
+            console.log("Z")
             this.isTitleFocused = false
             this.isDescriptionFocused = false
             this.updateTaskFocusIdxFromStroke(key)
@@ -1640,7 +1648,7 @@ export class TasksListManager {
         // moving task focus up / down to an expanded task
         const focusTaskDown    = isDown && this.focusedTaskIdx + 1 === this.pickedTaskIdx
         const focusTaskUp      = !isDown && this.focusedTaskIdx - 1 === this.pickedTaskIdx
-        const fromTaskToTitle  =  noActiveSubElemFocus && (focusTaskDown || focusTaskUp)
+        const fromTaskToTitle  = noActiveSubElemFocus && (focusTaskDown || focusTaskUp)
 
         let isForTitle       = (isDown && freshExpand) || (!isDown && this.isDescriptionFocused) || fromTaskToTitle
         let isForDescription = !isForTitle && ((isDown && this.isTitleFocused) || (!isDown && subtaskIdx === 0))
@@ -1649,10 +1657,12 @@ export class TasksListManager {
                                 && subtasksLength > 0 && ((this.isDescriptionFocused && isDown) || subtaskIdx >= 0)
 
         if (isForSubtasks) {
+            console.log("A")
             this.isDescriptionFocused = false
             this.updateSubTaskFocusIdxFromStroke(key)
         }
         else if (isForTitle) {
+            console.log("B")
             this.isDescriptionFocused = false
             this.isTitleFocused = true
 
@@ -1664,6 +1674,7 @@ export class TasksListManager {
             }
         }
         else if (isForDescription) {
+            console.log("C")
             this.isTitleFocused = false
             this.focusedSubtaskIdx = -1
             this.isDescriptionFocused = true
@@ -1671,6 +1682,7 @@ export class TasksListManager {
             this.focusDescription()
         }
         else {
+            console.log("D")
             this.isDescriptionFocused = false
             this.updateTaskFocusIdxFromStroke(key)
         }
@@ -1820,7 +1832,7 @@ export class TasksListManager {
         }
 
         const { left, top } = initFloatElemPos({
-            dims: { height: 220, width: this.contextMenuWidth }, cursorPos,
+            dims: { height: 220, width: this.contextMenuWidth + 10 }, cursorPos,
             containerDims: { height: containerElem.clientHeight, width: containerElem.clientWidth }
         })
 
@@ -1858,7 +1870,7 @@ export class TasksListManager {
 
 
         const { left, top } = initFloatElemPos({
-            dims: { height: 220, width: this.contextMenuWidth }, 
+            dims: { height: 220, width: this.contextMenuWidth + 10 }, 
             cursorPos,
             containerDims: { height: containerElem.clientHeight, width: containerElem.clientWidth },
         })
@@ -2000,7 +2012,12 @@ export class TasksListManager {
     }
 
     getHozDistanceBetweenCheckboxElems(higherCheckbox: HTMLElement, lowerCheckbox: HTMLElement) {
-        return Math.abs(getHozDistanceBetweenTwoElems(higherCheckbox, lowerCheckbox))
+        const dist = getHozDistanceBetweenTwoElems({
+            left: { elem: higherCheckbox, edge: "right" },
+            right: { elem: lowerCheckbox, edge: "left" }
+        })
+        
+        return Math.abs(dist)
     }
 
     getVertDistanceBetweenCheckboxElems(higherCheckbox: HTMLElement, lowerCheckbox: HTMLElement) {

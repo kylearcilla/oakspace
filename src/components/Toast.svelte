@@ -5,7 +5,7 @@
 	import { onDestroy, onMount } from 'svelte'
 	import Logo from './Logo.svelte'
 	import SvgIcon from './SVGIcon.svelte'
-	import { themeState } from '$lib/store';
+	import { globalContext, themeState } from '$lib/store';
 	import { COLOR_SWATCHES, extractNum, getColorTrio } from '$lib/utils-general';
 
 	type $$Props = Expand<ToastProps>
@@ -73,7 +73,6 @@
 		loading: ''
 	}
 	const { toasts, heights, removeHeight, addHeight, dismiss } = toasterManager!
-
 	
 	$: classes = { ...defaultClasses, ...classes }
 	$: isFront = index === 0
@@ -87,6 +86,8 @@
 	$: disabled = toastType === 'loading'
 	$: offset = heightIdx * EXPANDED_GAP + toastsHeightBefore
 	$: isPromiseLoadingOrInfiniteDuration = (toast.promise && toastType === 'loading') || toast.duration === Number.POSITIVE_INFINITY
+
+	$: isLight = !$themeState.isDarkTheme
 
 	// Height index is used to calculate the offset as it gets updated before the toast array, which means we can calculate the new layout faster.
 	$: heightIdx = $heights.findIndex((height: any) => height.toastId === toast.id) || 0
@@ -248,7 +249,7 @@
 	}
 	function getToastIconColor() {
 		if (isContextMsg) {
-			return getContextColors()[0]
+			return `rgba(${getContextColors()[0]})`
 		}
 		else {
 			return undefined
@@ -259,13 +260,13 @@
 		let color
 
 		if (toastType === 'success') {
-			color = COLOR_SWATCHES.d[10]
+			color = COLOR_SWATCHES.d[17]
 		}
 		else if (toastType === 'warning') {
-			color = COLOR_SWATCHES.d[9]
+			color = COLOR_SWATCHES.d[2]
 		}
 		else if (toastType === 'info') {
-			color = COLOR_SWATCHES.d[26]
+			color = COLOR_SWATCHES.d[5]
 		}
 		else {
 			color = COLOR_SWATCHES.d[14]
@@ -307,6 +308,7 @@
     class:toast--warning={toastType === 'warning'}
     class:toast--info={toastType === 'info'}
     class:toast--error={toastType === 'error'}
+    class:toast--light={isLight}
 	data-sonner-toast=""
 	data-styled={!(toast.component || toast?.unstyled || unstyled)}
 	data-mounted={mounted}
@@ -321,7 +323,7 @@
 	data-type={toastType}
 	data-invert={invert}
 	data-swipe-out={swipeOut}
-	data-expanded={Boolean(expanded || (expandByDefault && mounted))}
+	data-expanded={expanded}
 	style={`${$$props.style} ${toast.style} ${isContextMsg ? initContextColorVars() : ""}`}
 	style:--index={index}
 	style:--toasts-before={index}
@@ -349,7 +351,7 @@
                 <SvgIcon 
 					icon={Icon.Close} 
 					options={{ 
-						scale: 0.88, strokeWidth: 1.2, color: toastIconColor
+						height: 10, width: 10, scale: 0.88, strokeWidth: 2, color: toastIconColor
 					}} 
 				/>
             </div>

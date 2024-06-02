@@ -1,47 +1,54 @@
 <script lang="ts">
-	import BounceFade from "../../components/BounceFade.svelte"
+    import { onMount } from "svelte"
+	import type { Writable } from "svelte/store"
 	import { globalContext, themeState, weekRoutine } from "$lib/store"
-	import { onMount } from "svelte"
-	import { DAYS_OF_WEEK, getDayIdxMinutes, minsFromStartToHHMM } from "$lib/utils-date"
-	import { getBlockFromOrderIdx, getCoreStr, getMostRecentBlock, getUpcomingBlock, initCurrentBlock, initTodayRoutine } from "$lib/utils-routines"
-	import { getColorTrio, getMaskedGradientStyle } from "$lib/utils-general"
-	import TasksList from "../../components/TasksList.svelte"
-	import { TEST_TASKS } from "$lib/utils-right-bar"
-	import SvgIcon from "../../components/SVGIcon.svelte"
+
 	import { Icon } from "$lib/enums"
-	import { toggleActiveRoutine } from "$lib/utils-home";
-	import { TextEditorManager, type InputManager } from "$lib/inputs";
-	import type { Writable } from "svelte/store";
+	import { TEST_TASKS } from "$lib/utils-right-bar"
+	import { toggleActiveRoutine } from "$lib/utils-home"
+	import { TextEditorManager, type InputManager } from "$lib/inputs"
+	import { getColorTrio, getMaskedGradientStyle } from "$lib/utils-general"
+	import { DAYS_OF_WEEK, getDayIdxMinutes, minsFromStartToHHMM } from "$lib/utils-date"
+	import { 
+            getBlockFromOrderIdx, getCoreStr, getMextTimeCheckPointInfo, getMostRecentBlock, 
+            getUpcomingBlock, initCurrentBlock, initTodayRoutine } from "$lib/utils-routines"
+    
+	import SvgIcon from "../../components/SVGIcon.svelte"
+	import TasksList from "../../components/TasksList.svelte"
+	import BounceFade from "../../components/BounceFade.svelte"
 
     $: isOpen      = $globalContext.doOpenActiveRoutine
     $: routine     = $weekRoutine
     $: isDarkTheme = $themeState.isDarkTheme
 
+    const DESCR_MAX = 300
+
     let todayRoutine: RoutineBlock[] | DailyRoutine | null = null 
+    let doInitNow = true
+    let noneActive = false
     let nowBlockIdx = 0
-    let colorTrio = ["", "", ""]
-    let isDescrExpanded = false
-    
+    let isCreatingNewTask = false
+
     let nowBlock:      { block: RoutineBlock, idx: number } | null = null
     let nextViewBlock: { block: RoutineBlock, idx: number } | null = null
     let prevViewBlock: { block: RoutineBlock, idx: number } | null = null
     
-    let newDescription = ""
-    let doInitNow = true
     let hasInitDescr = false
-    let noneActive = false
+    let isDescrExpanded = false
+    let newDescription = ""
+    let maskListGradient = ""
+    let currDescriptionLength = 0
 
     // time
     let minuteInterval: NodeJS.Timeout | null = null
     let currTime = getDayIdxMinutes()
-
+    
     let descriptionRef: HTMLElement
     let routineItemsRef: HTMLElement
     let descriptionEditor: Writable<InputManager>
-    let maskListGradient = ""
 
+    $: colorTrio = nowBlock ? getColorTrio((nowBlock as any).block.color, !isDarkTheme) : ["", "", ""]
     $: todayRoutine = initTodayRoutine(routine, currTime)
-    $: colorTrio    = nowBlock ? getColorTrio(nowBlock.block.color, !isDarkTheme) : ["", "", ""]
     $: initNowBlock(todayRoutine)
     $: initDescriptionEditor(nowBlock?.block?.description ?? "")
 
@@ -52,10 +59,11 @@
         initDescriptionGradient()
     }
     
+    /* Blocks */
     function initNowBlock(todayRoutine: RoutineBlock[] | DailyRoutine | null) {
         if (!todayRoutine || !doInitNow) return
 
-        const now = initCurrentBlock(todayRoutine, currTime.minutes)
+        const now  = initCurrentBlock(todayRoutine, currTime.minutes)
         const prev = getMostRecentBlock(currTime.minutes, todayRoutine)
         const next = getUpcomingBlock(currTime.minutes, todayRoutine)
 
@@ -66,8 +74,7 @@
             nowBlockIdx = now.idx
             nowBlock = now
             noneActive = false
-            
-            colorTrio = getColorTrio(nowBlock.block.color, !isDarkTheme)
+            colorTrio = nowBlock.block.tag ? getColorTrio(nowBlock.block.tag.symbol.color, !isDarkTheme) : colorTrio
         }
         else {
             noneActive = true
@@ -122,14 +129,15 @@
         prevViewBlock = getBlockFromOrderIdx(nowBlockIdx - 1, todayRoutine)
         nextViewBlock = getBlockFromOrderIdx(nowBlockIdx + 1, todayRoutine)
 
-
         requestAnimationFrame(initDescriptionGradient)
     }
+
+    /* Description */
     function initDescriptionGradient() {
-        if (!descriptionRef) return
+        if (!descriptionRef || !isDarkTheme) return
 
         maskListGradient = getMaskedGradientStyle(descriptionRef, {
-            head: { end: "0%" }, tail: { start: "0%" }
+            head: { end: "0%" }, tail: { start: "50%" }
         }).styling
     }
     function initDescriptionEditor(_description: string) {
@@ -140,19 +148,17 @@
             initValue: _description,
             placeholder: "Type description here...",
             doAllowEmpty: true,
-            maxLength: 500,
+            maxLength: DESCR_MAX,
             id: "active-routine-description",
             handlers: {
                 onBlurHandler: () => onDescriptionSave(),
-                onInputHandler: (e, text) => newDescription = text
+                onInputHandler: (e, text, length) => {
+                    newDescription = text
+                    currDescriptionLength = length
+                }
             }
         })).state
     }
-
-    function onExpandDescription() {
-        isDescrExpanded = true
-    }
-
     function onDescriptionSave() {
         hasInitDescr = false
         isDescrExpanded = false
@@ -178,10 +184,14 @@
             return { ...routine!, blocks: { ...routine.blocks, [currDayKey]: newDayRoutine }}
         })
 
-        initDescriptionGradient()
+
+        nowBlock!.block.description = newDescription        
         newDescription = ""
+
+        requestAnimationFrame(initDescriptionGradient)
     }
 
+    /* Tasks */
     function onTasksUpdated(event: CustomEvent) {
         if (!nowBlock) return
         const updatedTasks = event.detail
@@ -206,6 +216,9 @@
 
             return { ...routine!, blocks: { ...routine.blocks, [currDayKey]: newDayRoutine }}
         })
+
+        isCreatingNewTask = false
+        nowBlock!.block.tasks = updatedTasks
     }
 
     onMount(() => {
@@ -218,16 +231,18 @@
 
 <BounceFade 
     isHidden={!isOpen}
-    position={{ top: "44px", left: "13px" }}
-    zIndex={100}
+    position={{ top: "38px", left: "0px" }}
+    zIndex={99999}
     onClickOutside={toggleActiveRoutine}
     id={"active-routine--dropdown-menu"}
 >
     <div 
         class="active-routine"
         class:active-routine--empty={!nowBlock}
+        class:active-routine--light={!isDarkTheme}
     >
         {#if nowBlock}
+            {@const description = nowBlock.block.description}
             <div class="active-routine__header">
                 <!-- Title -->
                 <div 
@@ -247,10 +262,7 @@
                             <SvgIcon icon={Icon.ChevronLeft} options={{ scale: 0.85 }}/>
                         </div>
                     </button>
-                    <button 
-                        on:click={onNowBlock}
-                        title="Go to current block"
-                    >
+                    <button on:click={onNowBlock} title="Go to current block">
                         <div class="active-routine__now-icon">
                         </div>
                     </button>
@@ -268,11 +280,11 @@
                     </button>
                 </div>
             </div>
-            <!-- Categories -->
-            {#if nowBlock && (nowBlock.block.tag || nowBlock.block.activity)}
+            <!-- Subheader -->
+            {#if nowBlock}
                 {@const tag = nowBlock.block.tag}
                 {@const activity = nowBlock.block.activity}
-                <div class="active-routine__categories">
+                <div class="active-routine__subheader">
                     {#if tag}
                         <div 
                             class="tag"
@@ -280,6 +292,7 @@
                             style:--tag-color-1={colorTrio[0]}
                             style:--tag-color-2={colorTrio[1]}
                             style:--tag-color-3={colorTrio[2]}
+                            title={tag.name}
                         >
                             <span class="tag__symbol">
                                 {tag?.symbol.emoji}
@@ -292,51 +305,69 @@
                     <div 
                         class="active-routine__core" 
                         class:hidden={!activity}
+                        title={activity}
                     >
                         <span>
                             {getCoreStr(activity)}
                         </span>
                     </div>
+                    <!-- Time -->
+                    <div class="active-routine__time">
+                        {#if nowBlock}
+                            <span>
+                                {minsFromStartToHHMM(nowBlock.block.startTime)}
+                            </span>
+                            <span>-</span>
+                            <span>
+                                {minsFromStartToHHMM(nowBlock.block.endTime)}
+                            </span>
+                        {/if}
+                    </div>
                 </div>
             {/if}
             <!-- Description -->
-            {#if nowBlock.block.description}
-                <div class="active-routine__description-container">
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <div 
-                        class="active-routine__description"
-                        style={maskListGradient}
-                        bind:this={descriptionRef}
-                        on:click={onExpandDescription}
-                        on:scroll={initDescriptionGradient}
-                    >
-                        {nowBlock.block.description}
-                    </div>
-                    <BounceFade 
-                        isHidden={!isDescrExpanded}
-                        position={{ top: "0px", left: "13px" }}
-                        styling={{ width: "100%" }}
-                        zIndex={100}
-                        onClickOutside={() => isDescrExpanded = false}
-                    >
-                        <div class="active-routine__description-floating">
-                            {#if descriptionEditor}
-                                <div 
-                                    class="active-routine__description-editor text-editor"
-                                    data-placeholder={$descriptionEditor.placeholder}
-                                    contenteditable
-                                    bind:innerHTML={$descriptionEditor.value}
-                                    on:paste={(e) => $descriptionEditor.onPaste(e)}
-                                    on:input={(e) => $descriptionEditor.onInputHandler(e)}
-                                    on:focus={(e) => $descriptionEditor.onFocusHandler(e)}
-                                    on:blur={(e)  => $descriptionEditor.onBlurHandler(e)}
-                                >
-                                </div>
-                            {/if}
-                        </div>
-                    </BounceFade>
+            <div class="active-routine__description-container">
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div 
+                    class="active-routine__description"
+                    class:active-routine__description--no-description={description.length === 0}
+                    style={maskListGradient}
+                    bind:this={descriptionRef}
+                    on:click={() => isDescrExpanded = true}
+                    on:scroll={initDescriptionGradient}
+                >
+                    {description.length === 0 ? "No Description" : description}
                 </div>
-            {/if}
+                <BounceFade 
+                    isHidden={!isDescrExpanded}
+                    position={{ top: "0px", left: "13px" }}
+                    styling={{ width: "100%" }}
+                    zIndex={100}
+                    onClickOutside={() => isDescrExpanded = false}
+                >
+                    <div class="active-routine__description-floating input-box input-box--border">
+                        {#if descriptionEditor}
+                            <div 
+                                class="active-routine__description-editor text-editor"
+                                data-placeholder={$descriptionEditor.placeholder}
+                                contenteditable
+                                bind:innerHTML={$descriptionEditor.value}
+                                on:paste={(e) => $descriptionEditor.onPaste(e)}
+                                on:input={(e) => $descriptionEditor.onInputHandler(e)}
+                                on:focus={(e) => $descriptionEditor.onFocusHandler(e)}
+                                on:blur={(e)  => $descriptionEditor.onBlurHandler(e)}
+                            >
+                            </div>
+                        {/if}
+                        <div 
+                            class="input-box__count"
+                            class:input-box__count--over={currDescriptionLength > DESCR_MAX}
+                        >
+                            {DESCR_MAX - currDescriptionLength}
+                        </div>
+                    </div>
+                </BounceFade>
+            </div>
             <!-- Tasks List -->
             {#if nowBlock.block.tasks.length >= 0}
                 <div class="active-routine__action-items-header">
@@ -347,19 +378,32 @@
                             Action Items
                         </div>
                     </div>
-                    <div class="active-routine__progress">
-                        <span>3</span>
-                        <span>/</span>
-                        <span>12</span>
+                    <div class="flx flx--algn-center">
+                        <div class="active-routine__progress">
+                            <span>12</span>
+                        </div>
+                        <button 
+                            class="active-routine__new-item-btn"
+                            on:click={() => isCreatingNewTask = !isCreatingNewTask}
+                        >
+                            <SvgIcon 
+                                icon={Icon.Add} 
+                                options={{ strokeWidth: 1.8, scale: 0.95 }} 
+                            />
+                        </button>
                     </div>
                 </div>
                 <div class="active-routine__action-items" bind:this={routineItemsRef}>
                     <TasksList 
                         on:tasksUpdated={onTasksUpdated}
                         options={{
-                            id:   "edit-routine",
+                            id:   "active-routine",
                             containerRef: routineItemsRef,
                             tasks: TEST_TASKS,
+                            isCreatingNewTask,
+                            settings: {
+                                subtasks: true
+                            },
                             styling: {
                                 task: { 
                                     fontSize: "1.12rem", height: "30px", padding: "5px 0px 5px 0px" 
@@ -378,11 +422,7 @@
                                 }
                             },
                             addBtn: {
-                                pos: "bottom",
-                                iconScale: 0.96,
-                                style: {
-                                    fontSize: "1.18rem", margin: "10px 0px 0px 18px"
-                                }
+                                doShow: false
                             },
                             cssVariables: { 
                                 maxDescrLines: 2 
@@ -399,27 +439,6 @@
                     />
                 </div>
             {/if}
-            <div 
-                class="active-routine__bottom-container"
-                class:active-routine__bottom-container--has-tasks={nowBlock.block.tasks.length >= 0}
-            >
-                <!-- Time -->
-                <div class="active-routine__time">
-                    {#if nowBlock}
-                        <span>
-                            {minsFromStartToHHMM(nowBlock.block.startTime)}
-                        </span>
-                        <span>-</span>
-                        <span>
-                            {minsFromStartToHHMM(nowBlock.block.endTime)}
-                        </span>
-                    {/if}
-                </div>
-                <!-- Week Routine -->
-                <div class="active-routine__wk-routine">
-                    {routine?.name}
-                </div>
-            </div>
         {:else}
             <div class="text-aln-center">
                 <div class="active-routine__no-routine">
@@ -427,13 +446,19 @@
                 </div>
                 <div class="active-routine__no-routine-subtitle">
                     {#if nextViewBlock}
-                        Deep Work in <strong>6h 20m</strong>
+                        {nextViewBlock.block.title}
+                        <strong>
+                            {getMextTimeCheckPointInfo(todayRoutine) ?? ""}
+                        </strong>
                     {:else}
                         Done for the Day!
                     {/if}
                 </div>
             </div>
-            <div class="active-routine__bottom-container active-routine__btns">
+            <div 
+                class="active-routine__bottom-container active-routine__btns"
+                style="margin-bottom: -5px"
+            >
                 <button 
                     on:click={onPrevBlock}
                     disabled={prevViewBlock === null}
@@ -467,15 +492,45 @@
     @import "../../scss/inputs.scss";
 
     .active-routine {
-        background-color: var(--navMenuBgColor);
+        background-color: var(--bg-2);
         border: 1px solid rgba(var(--textColor1), 0.04);
         border-radius: 16px;
-        padding: 0px 0px 9px 0px;
+        padding: 0px 0px 10px 0px;
         width: 290px;
         position: relative;
 
+        &--light {
+            border: 1.5px solid rgba(var(--textColor1), 0.1);
+        }
+        &--light .input-box {
+            @include input-box--light;        
+        }
+        &--light &__title {
+            @include text-style(0.9, 600);
+        }
+        &--light &__action-items-title {
+            @include text-style(0.8, 600);
+        }
+        &--light &__description {
+            @include text-style(0.85, 600);
+        }
+        &--light &__progress {
+            @include text-style(0.4, 500);
+        }
+        &--light &__time {
+            @include text-style(0.4, 500);
+        }
+        &--light &__no-routine {
+            @include text-style(0.95, 600);
+        }
+        &--light &__no-routine-subtitle {
+            @include text-style(0.6, 500);
+        }
+        &--light &__no-routine-subtitle strong {
+            @include text-style(0.3, 500);
+        }
         &--empty &__bottom-container {
-            padding: 0px 18px 0px 19px;
+            padding: 0px 18px 0px 9px;
             margin-top: -8px;
         }
 
@@ -493,22 +548,22 @@
         }
         &__btns {
             @include flex(center);
-            margin-top: -5px;
+            margin: -5px -5px 0px 0px;
         }
         &__btns button {
-            @include text-style(_, 500, 1.14rem);
+            @include text-style(1, 600, 1.14rem);
             @include flex(center);
-            opacity: 0.22;
-            padding: 0px 2px;
+            opacity: 0.4;
+            padding: 0px 6px;
             
             &:nth-last-child(2) {
                 padding: 8px 8px;
             }
             &:last-child {
-                padding-right: 0px;
+                padding-right: 5px;
             }
             &:disabled {
-                opacity: 0.1 !important;
+                opacity: 0.15 !important;
             }
             &:hover {
                 opacity: 0.8;
@@ -522,79 +577,107 @@
             margin: 0px 4px;
             background-color: rgba(var(--textColor1), 0.85);
         }
-        &__categories {
+        &__subheader {
             @include flex(center);
-            margin: 4px 0px 7px -2px;
+            margin: 0.5px 0px 7px -2px;
             padding: 0px 18px 0px 18px;
 
             .tag {
                 margin: 0px 5px 0px 0px;
-                padding: 2px 11.5px 2px 9.5px;
+                padding: 2.5px 11.5px 2.5px 8px;
+                max-width: 105px;
             }
             .tag__title {
                 font-size: 1rem;
-                font-weight: 500;
+                font-weight: 600;
             }
             .tag__symbol {
                 font-size: 0.7rem !important;
                 margin-right: 5px;
             }
         }
+        &__time {
+            @include text-style(0.2, 400, 1.1rem, "DM Sans");
+            white-space: nowrap;
+        }
         &__core {
-            background-color: rgba(var(--textColor1), 0.05);
-            @include text-style(0.7, 400, 1rem);
+            background-color: rgba(var(--textColor1), 0.07);
+            @include text-style(0.7, 600, 1rem);
             padding: 2.5px 11px;
             border-radius: 10px;
+            margin-right: 8px;
         }
         &__description-container {
             position: relative;
-            margin-bottom: 10px;
+            margin: 0px 0px 14px 0px;
+            @include text-style(0.8, 500, 1.1rem);
         }
         &__description {
-            @include text-style(0.5, 400, 1.18rem);
-            max-height: 50px;
+            @include text-style(0.4);
+            max-height: 48px;
             overflow: scroll;
             padding: 0px 18px 0px 18px;
-            cursor: pointer;
+            max-width: calc(100% - 0px);
+            word-wrap: break-word;
+
+            &--no-description {
+                opacity: 0.3;
+            }
         }
         &__description-floating {
-            background: #181818;
-            border: 1px solid rgba(var(--textColor1), 0.1);
+            background-color: var(--bg-3);
+            // border: 1px solid rgba(var(--textColor1), 0.04);
             border-radius: 12px;
-            padding: 9px 12px 9px 12px;
-            width: calc(100% - 36px);
+            padding: 8px 15px 5px 15px;
+            max-width: calc(100% - 30px);
         }
         &__description-editor {
-            @include text-style(0.7, 400, 1.17rem);
+            @include text-style(0.75, 600, 1.1rem);
             padding: 0px;
+        }
+        .input-box {
+            padding-bottom: 22px;
+            display: block;
+
+            &__count {
+                font-size: 1.1rem;
+            }
         }
         &__action-items-header {
             margin: 2px 0px 6px 0px;
             padding: 0px 18px 0px 18px;
             @include flex(center, space-between);
         }
-        &__action-items-icon {
-
-        }
         &__action-items-title {
-            @include text-style(0.9, 400, 1.12rem);
+            @include text-style(0.25, 500, 1.12rem);
+        }
+        &__new-item-btn {
+            opacity: 0.2;
+            
+            &:hover {
+                opacity: 1;
+            }
+            &:active {
+                transform: scale(0.85);
+            }
         }
         &__progress {
             @include text-style(0.4, 400, 1.1rem, "DM Sans");
+            margin-right: 7px;
         }
         &__action-items {
-            max-height: 200px;
-            height: 200px;
-            margin-bottom: 5px;
+            max-height: 270px;
+            height: 270px;
+            margin-bottom: 0px;
             position: relative;
         }
         &__no-routine {
-            @include text-style(0.55, 400, 1.14rem);
-            padding: 11px 0px 6px 0px;
+            @include text-style(0.55, 400, 1.21rem);
+            padding: 11px 0px 5px 0px;
         }
         &__no-routine-subtitle {
             @include text-style(0.2, 400, 1.14rem, "DM Sans");
-            margin-bottom: 16px;
+            margin-bottom: 12px;
 
             strong {
                 @include text-style(0.3, 400);
@@ -603,19 +686,7 @@
         }
         &__bottom-container {
             @include flex(center, space-between);
-            padding: 6px 18px 0px 19px;
-        }
-        &__bottom-container--has-tasks {
-            @include abs-bottom-right(14px, 0px);
-            padding-bottom: 0px;
-        }
-        &__time {
-            @include text-style(0.4, 400, 1.1rem, "DM Sans");
-            white-space: nowrap;
-        }
-        &__wk-routine {
-            display: none;
-            @include text-style(0.1, 400, 1.1rem, "DM Sans");
+            padding: 6px 18px 0px 18px;
         }
     }
 </style>

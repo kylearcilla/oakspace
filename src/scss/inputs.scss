@@ -92,25 +92,28 @@ div[contenteditable]:focus {
 
 /* Box Input */
 @mixin input-box--light {
-    border: 1.5px solid rgba(var(--textColor1), 0.12);
-
     input {
-        @include text-style(0.8, 500);
+        @include text-style(0.8, 600);
     }
     input::placeholder {
-        @include text-style(0.15, 500);
+        @include text-style(0.15, 600);
     }
 
     &--border {
-        border: 1px solid rgba(var(--textColor1), 0.06);
-        @include txt-color(0.03, "bg");
+        box-shadow: rgba(var(--textColor1), 0) 0px 0px 0px 1px inset, 
+                    rgba(var(--textColor1), 0.065) 0px 0px 0px 1.5px;
+    }
+    &--border-focus {
+        @include txt-color(0.048, "bg");
+        box-shadow: rgba(var(--textColor1), 0.09) 0px 0px 0px 1px inset,
+                    rgba(var(--textColor1), 0.06) 0px 0px 0px 3px;
     }
     .text-editor {
-        color: rgba(var(--textColor1), 0.8) !important;
-        font-weight: 500 !important;
+        color: rgba(var(--textColor1), 0.8);
+        font-weight: 600;
     }
     &__count {
-        @include text-style(0.34, 400);
+        @include text-style(0.44, 500);
     }
     &__error-text {
         font-weight: 500;
@@ -119,7 +122,7 @@ div[contenteditable]:focus {
         @include text-style(0.7, 500);
 
         &:hover, &:focus {
-            @include text-style(0.4, 500);
+            @include text-style(0.4, 400);
         }
         &:disabled {
             opacity: 0.4;
@@ -129,9 +132,12 @@ div[contenteditable]:focus {
 
 .input-box {
     @include flex(center, space-between);
-    border: 1px solid rgba(var(--textColor1), 0.05);
+    border: none;
     border-radius: 12px;
     padding: 5px 10px 5px 12px;
+    position: relative;
+    transition: box-shadow 0.2s ease-in-out,
+                background-color 0.1s ease-in-out;
 
     input {
         padding: 0px 0px 3px 0px;
@@ -143,8 +149,14 @@ div[contenteditable]:focus {
     }
 
     &--border {
-        border: 0.5px solid rgba(var(--textColor1), 0.04);
-        @include txt-color(0.01, "bg");
+        @include txt-color(0.015, "bg");
+        box-shadow: rgba(var(--textColor1), 0) 0px 0px 0px 1px inset, 
+                    rgba(var(--textColor1), 0.04) 0px 0px 0px 1.5px;
+    }
+    &--border-focus {
+        @include txt-color(0.025, "bg");
+        box-shadow: rgba(var(--textColor1), 0.035) 0px 0px 0px 1px inset, 
+                    rgba(var(--textColor1), 0.024) 0px 0px 0px 3px;
     }
     &--no-highlight {
         border: 0px solid !important;
@@ -154,7 +166,8 @@ div[contenteditable]:focus {
     }
 
     &__count {
-        @include text-style(0.14, 200, 1.3rem, "DM Mono");
+        @include text-style(0.2, 200, 1.3rem, "DM Mono");
+        float: right;
 
         &--over {
             color: #CB7272 !important;
@@ -163,6 +176,7 @@ div[contenteditable]:focus {
     &__error-text {
         display: block;
         margin: 6px 0px 0px 5px;
+        font-weight: 500;
         color: #CB7272;
     }
     &__btn-container {

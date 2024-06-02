@@ -1,13 +1,12 @@
 <script lang="ts">
 	import { themeState } from "$lib/store"
 	import { TEST_TAGS, clickOutside, getColorTrio, inlineStyling } from "$lib/utils-general"
-	import { onMount } from "svelte"
 	import SvgIcon from "./SVGIcon.svelte"
 	import { Icon } from "$lib/enums"
 	import BounceFade from "./BounceFade.svelte";
 	import { TAGS } from "../tests/routines/routines.data";
     
-    $: isDarkTheme = $themeState.isDarkTheme
+    let isDarkTheme = $themeState.isDarkTheme
 
     export let tag: Tag | null
     export let isActive: boolean
@@ -49,10 +48,14 @@
     }
 </script>
 
-<div class="tag-picker">
+<div 
+    class="tag-picker"
+    class:tag-picker--light={!isDarkTheme}
+>
     <button 
         id="tag-picker--dropdown-btn"
         class="tag-picker__dropdown-btn dropdown-btn tag"
+        class:tag--is-light={tag?.symbol.color.isLight && !isDarkTheme}
         class:tag-picker__dropdown-btn--active={_isActive}
         class:tag-picker__dropdown-btn--empty={!tag}
         style:--tag-color-primary={tag?.symbol.color.primary}
@@ -100,7 +103,10 @@
         {/if}
     </button>
     <!-- Tag Dropdown Menu -->
-    <BounceFade isHidden={!isActive}>
+    <BounceFade 
+        isHidden={!isActive}
+        position={{ top: "0px", left: "0px" }}
+    >
         <div 
             id="tag-picker--dropdown-menu"
             class="tag-picker__dropdown-menu-container"
@@ -108,15 +114,9 @@
             style:--trans-duration={`${TRANSITION_DURATIONS_MS}ms`}
             use:clickOutside on:click_outside={() => onClickOutside()}
         >
-            <div class="tag-picker__dropdown-menu-title">
-                <h3>Pick a Tag</h3>
-                <div class="divider"></div>
-            </div>
-            <ul 
-                class="tag-picker__dropdown-menu"
-            >
+            <ul class="tag-picker__dropdown-menu">
                 {#each TAGS as tagOption}
-                    {@const tagOptColor = getColorTrio(tagOption.symbol.color, isDarkTheme)}
+                    {@const tagOptColor = getColorTrio(tagOption.symbol.color, !isDarkTheme)}
                     <li 
                         class="tag-picker__dropdown-option"
                         class:tag-picker__dropdown-option--picked={tag?.name === tagOption.name}
@@ -127,6 +127,7 @@
                         >
                             <div 
                                 class="tag"
+                                class:tag--is-light={tagOption.symbol.color.isLight && !isDarkTheme}
                                 style:--tag-color-primary={tagOption.symbol.color.primary}
                                 style:--tag-color-1={tagOptColor[0]}
                                 style:--tag-color-2={tagOptColor[1]}
@@ -143,11 +144,11 @@
                                 <i class="fa-solid fa-check"></i>
                             </div>
                         </button>
-                        <button 
+                        <!-- <button 
                             class="tag-picker__dropdown-option-settings-btn dropdown-btn dropdown-btn--settings"
                         >
                             <SvgIcon icon={Icon.Settings} />
-                        </button>
+                        </button> -->
                     </li>
                 {/each}
             </ul>
@@ -157,9 +158,9 @@
                     class="tag-picker__dropdown-menu-add-btn"
                     on:click={onClickNewTagBtn}
                 >
-                    <span>Create</span>
+                    <span>Add New</span>
                     <div class="tag-picker__dropdown-menu-add-icon">
-                        <SvgIcon icon={Icon.Add} options={{ scale: 0.7, strokeWidth: 1.7 }} />
+                        <SvgIcon icon={Icon.Add} options={{ scale: 0.92, strokeWidth: 1.7 }} />
                     </div>
                 </button>
             </div>
@@ -171,11 +172,14 @@
     @import "../scss/dropdown.scss";
 
     .tag {
+        border-radius: 12px !important;
+
         &__symbol {
             cursor: pointer;
         }
         &__title {
             font-weight: 500;
+            font-size: 1.25rem;
             margin-right: 9px;
             cursor: pointer;
             color: rgba(var(--tag-color-1), 1);
@@ -186,17 +190,43 @@
         position: relative;
         transition: 0.12s ease-in-out;
 
-        .divider {
+        &--light &__dropdown-menu-container {
+            border: 1px solid rgba(var(--textColor1), 0.075);
         }
+        &--light &__dropdown-menu-container h3 {
+            @include text-style(1, 600);
+        }
+        &--light &__dropdown-menu-add {
+            border-top: 1px solid rgba(var(--textColor1), 0.1);
+        }
+        &--light &__dropdown-option:hover {
+            @include txt-color(0.05, "bg");
+        }
+        &--light &__dropdown-menu-add-btn {
+            opacity: 0.8;
+            &:hover {
+                opacity: 1 !important;
+            }
+            span {
+                @include text-style(1, 600);   
+            }
+        }
+        &--light h3 {
+            @include text-style(1, 500);
+        }
+        &--light &__dropdown-option:hover {
+            filter: brightness(1);
+        }
+        
         &__dropdown-btn.tag {
             background-color: rgba(var(--tag-color-2), 1);
             padding: 4px 12px 4px 11px;
         }
-        &__dropdown-btn {
-            &--empty .tag__title {
-                opacity: 0.45;
+        &__dropdown-btn--empty {
+            .tag__title {
+                opacity: 0.6;
             }
-            &--empty:hover {
+            &:hover {
                 @include txt-color(0.04, "bg");
             }
         }
@@ -216,29 +246,39 @@
                 transform: rotate(-180deg);
             }
         }
-        &__dropdown-btn-close {
-            &:hover {
-                opacity: 0.5;
-            }
+        &__dropdown-btn-close:hover {
+            opacity: 0.5;
         }
         &__dropdown-menu-container {
             @include abs-top-left(28px);
-            background-color: var(--dropdownMenuBgColor1);
-            border: 1px solid rgba(white, 0.03);
-            padding: 8px 4px 8px 8px;
-            border-radius: 18px;
+            background-color: var(--bg-2);
+            padding: 2px 0px 8px 0px;
+            border-radius: 10px;
             z-index: 1000;
-            width: 200px;
+            width: 150px;
             transition: var(--trans-duration) opacity cubic-bezier(.2, .45, 0, 1),
                         var(--trans-duration) visibility cubic-bezier(.2, .45, 0, 1),
                         var(--trans-duration) transform cubic-bezier(.2, .45, 0, 1);
             transform: scale(0.9);
+            border: 1px solid rgba(var(--textColor1), 0.04);
             @include not-visible;
 
             &--shown {
                 transform: scale(1);
                 @include visible;
             }
+        }
+        &__dropdown-menu .tag {
+            border-radius: 6px !important;
+            transition: 0.1s ease-in-out;
+            margin-right: 7px;
+            min-width: 0px;
+        }
+        &__dropdown-menu .tag__symbol {
+            font-size: 0.85rem;
+        }
+        &__dropdown-menu .tag__title {
+            font-size: 1.05rem;
         }
         &__dropdown-menu {
             max-height: 200px;
@@ -256,19 +296,21 @@
         }
         &__dropdown-option {
             transition: 0s ease-in-out;
-            border-radius: 12px;
-            padding: 4.5px 8px 4.5px 6px;
+            border-radius: 9px;
+            padding: 3px 9px 3px 4px;
             user-select: text;
-            width: calc(100% - 9px);
             position: relative;
+            width: calc(100% - 9px);
+            margin-left: 4px;
             cursor: pointer;
             
             &:hover {
-                @include txt-color(0.05, "bg");
+                @include txt-color(0.01, "bg");
+                filter: brightness(1.2);
             }
-            &:hover &-check {
-                display: none;
-            }
+            // &:hover &-check {
+            //     display: none;
+            // }
             &:hover &-settings-btn {
                 @include visible(0.2);
                 @include txt-color(0, "bg");
@@ -304,6 +346,7 @@
         }
         &__dropdown-menu-add {
             width: 100%;
+            border-top: 1px solid rgba(var(--textColor1), 0.05);
 
             &:hover &-btn {
                 opacity: 0.8;
@@ -320,21 +363,17 @@
         }
         &__dropdown-menu-add-btn {
             @include flex(center, space-between);
-            width: calc(100% - 14px);
-            padding: 6px 8px 6px 8px;
+            width: calc(100% - 22px);
+            padding: 2px 0px 0px 10px;
             border-radius: 12px;
-            margin-left: -3px;
+            margin-left: 0px;
             transition: 0.02s ease-in-out;
 
-            &:hover {
-                @include txt-color(0.014, "bg");
-            }
             &:active {
                 transition: 0.14s ease-in-out;
             }
-
             span {
-                @include text-style(1, 400, 1.28rem);
+                @include text-style(1, 400, 1.1rem);
             }
         }
     }

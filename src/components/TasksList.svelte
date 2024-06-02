@@ -122,7 +122,7 @@
 
     const dispatch = createEventDispatcher()
     $: dispatch("tasksUpdated", tasks)
-    // $: createNewTask(options.isCreatingNewTask)
+    $: createNewTask(options?.isCreatingNewTask ?? false)
 
     $: isDarkTheme       = $themeState.isDarkTheme
     $: pickedTaskIdx     = $manager.pickedTaskIdx
@@ -238,10 +238,11 @@
     })
 </script>
 
-<svelte:window on:keydown={(e) => keyboardShortcutsHandler(e)}  on:resize={onWindowResize} /> 
+<svelte:window on:keydown={keyboardShortcutsHandler}  on:resize={onWindowResize} /> 
 
 <div 
     class="tasks-wrapper"
+    class:tasks-wrapper--light={!isDarkTheme}
     class:tasks-wrapper--top-btn={$manager.addBtn?.pos === "top"}
     class:tasks-wrapper--empty-list={tasks.length === 0}
     class:no-pointer-events={isContextMenuOpen}
@@ -298,7 +299,11 @@
                 <li
                     role="button" tabindex="0" 
                     id={`${idPrefix}--task-id--${taskIdx}`}
+                    data-task-type={"task"}
                     class="task"
+                    class:task--light={!isDarkTheme}
+                    class:task--hide-top-border={taskIdx != 0 && taskIdx - 1 === focusedIdx}
+                    class:task--hide-bottom-border={taskIdx + 1 === focusedIdx}
                     class:task--no-divider={!$manager.ui.hasTaskDivider}
                     class:task--hide-drag-handle={!$manager.ui.showDragHandle}
                     class:task--expanded={taskIdx === pickedIdx}
@@ -306,15 +311,20 @@
                     class:task--drag-src={isDraggingTask && $manager.floatingItem?.idx === taskIdx}
                     class:task--min={taskIdx != pickedIdx}
                     class:task--subtask-dragging-state={$manager.isDraggingSubtask}
-                    class:task--light={!isDarkTheme}
                     class:task--focused={pickedIdx === taskIdx}
                     class:task--full-divider={(focusedIdx === taskIdx && pickedIdx === taskIdx) || (taskIdx > 0 && focusedIdx === taskIdx - 1 && pickedIdx === taskIdx - 1)}
                     class:task--checked={task.isChecked}
                     class:task--subtasks-no-link={subtasksNoLink}
                     style={`${inlineStyling($manager.styling?.task)}`}
-                    on:click={(event) => $manager.onTaskClicked(event, taskIdx)}
-                    on:pointerdown={$manager.onTaskPointerDown}
-                    on:contextmenu|preventDefault={(e) => onTaskContextMenu(e, taskIdx)}
+                    on:click={(event) => {
+                        $manager.onTaskClicked(event, taskIdx)
+                    }}
+                    on:pointerdown={(e) => {
+                        $manager.onTaskPointerDown(e)
+                    }}
+                    on:contextmenu|preventDefault={(e) => {
+                        onTaskContextMenu(e, taskIdx)
+                    }}
                 >
                     <div class="task__top">
                         <!-- CheckBox Or Nunber  -->
@@ -338,12 +348,11 @@
                                 <div class="task__drag-handle-dots">
                                     <SvgIcon 
                                         icon={Icon.DragDots} 
-                                        options={{ scale: 0.85, width: 25, height: 20 }}
+                                        options={{ scale: 0.85, width: 25, height: 24 }}
                                     />
                                 </div>
                             </div>
                         </div>
-                        <!-- Content -->
                         <div class="task__right">
                             <!-- Title -->
                             <div class="task__title-container">
@@ -419,32 +428,46 @@
                     </div>
                     <!-- Subtasks -->
                     {#if settings.subtasks && subtasks.length > 0 && taskIdx === $manager.pickedTaskIdx}
+                        {@const dragOverIdx         = $manager.dragOverItemElemIdx}
+
                         <ul class="task__subtasks-list" id={`${idPrefix}--task-subtasks-id--${taskIdx}`}>
                             {#each subtasks as subtask, subtaskIdx (`${taskIdx}--${subtaskIdx}`)}
-                                {@const focused             = $manager.rightClickedSubtask?.idx === subtaskIdx || $manager.focusedSubtaskIdx === subtaskIdx}
+                                {@const focusedSubtaskIdx   =  $manager.focusedSubtaskIdx}
+                                {@const focused             = $manager.rightClickedSubtask?.idx === subtaskIdx || focusedSubtaskIdx === subtaskIdx}
                                 {@const subtaskAnimDuration = subtasks.length < 8 ? 200 : 95}
                                 {@const subtaskDelayFactor  = subtasks.length < 8 ? 30  : 18}
                                 {@const subtaskDelay        = subtask.title ? (subtaskDelayFactor * subtaskIdx) : 0}
                                 {@const noSubtaskLink       = !settings.subtasksLinked}
+                                {@const hideDivider         = false}
+
                                     <li 
                                         role="button" tabindex="0" 
-                                        class="subtask"
+                                        class="task subtask"
+                                        data-task-type={"subtask"}
                                         id={`${idPrefix}--subtask-id--${subtaskIdx}`}
-                                        class:subtask--checked={subtask.isChecked}
+                                        style={inlineStyling($manager.styling?.subtask)}
+                                        class:task--light={!isDarkTheme}
                                         class:subtask--light={!isDarkTheme}
+                                        class:task--hide-top-border={dragOverIdx < 0 && subtaskIdx != 0 && subtaskIdx - 1 === focusedSubtaskIdx}
+                                        class:task--hide-bottom-border={dragOverIdx < 0 && subtaskIdx + 1 === focusedSubtaskIdx}
+                                        class:subtask--checked={subtask.isChecked}
                                         class:subtask--focused={focused}
                                         class:subtask--no-link={noSubtaskLink}
                                         class:subtask--dragging-state={$manager.isDraggingSubtask}
                                         class:subtask--drag-over={!isDraggingTask && subtaskIdx === $manager.dragOverItemElemIdx}
                                         class:subtask--drag-src={isDraggingSubtask && subtaskIdx === $manager.floatingItem?.idx}
-                                        style={inlineStyling($manager.styling?.subtask)}
                                         style:--subtask-animation-duration={`${subtaskAnimDuration}ms`}
                                         style:--subtask-idx-delay={`${subtaskDelay}ms`}
-                                        use:clickOutside on:click_outside={() => $manager.resetCurrentFocusedSubtaskIdx()}
-                                        on:click={() => $manager.onSubtaskClicked(taskIdx, subtaskIdx)}
-                                        on:contextmenu|preventDefault={() => onSubtaskContextMenu(taskIdx, subtaskIdx)}
+                                        use:clickOutside on:click_outside={() => {
+                                            $manager.resetCurrentFocusedSubtaskIdx()
+                                        }}
+                                        on:click={() => {
+                                            $manager.onSubtaskClicked(taskIdx, subtaskIdx)
+                                        }}
+                                        on:contextmenu|preventDefault={() => {
+                                            onSubtaskContextMenu(taskIdx, subtaskIdx)
+                                        }}
                                     >
-                                        <!-- Main Content -->
                                         <div class="subtask__content">
                                             <div class="subtask__content-main">
                                                 <div class="subtask__left">
@@ -520,20 +543,25 @@
                                             </button>
                                         </div>
                                         <!-- Drag Handle -->
-                                        <div class="subtask__drag-handle">
-                                            <div class="subtask__drag-handle-dots">
-                                                <SvgIcon icon={Icon.DragDots}  options={{ width: 18, height: 18, scale: 0.865 }} />
+                                        <div class="subtask__drag-handle task__drag-handle">
+                                            <div class="subtask__drag-handle-dots task__drag-handle-dots">
+                                                <SvgIcon 
+                                                    icon={Icon.DragDots}  
+                                                    options={{ width: 20, height: 20, scale: 0.865 }}
+                                                />
                                             </div>
                                         </div>
                                         <!-- Divider -->
-                                        <div class="subtask__divider"></div>
+                                        {#if !hideDivider}
+                                            <div class="subtask__divider"></div>
+                                        {/if}
                                     </li>
                                 {/each}
                                 <!-- Dummy Subtask Task -->
                                 <li 
-                                    class="subtask subtask--dummy" 
+                                    class="subtask--dummy" 
                                     class:subtask--dummy-min={!$manager.floatingItem}
-                                    class:subtask--drag-over={subtasks.length === $manager.dragOverItemElemIdx}
+                                    class:subtask--drag-over={subtasks.length === dragOverIdx}
                                     id={`${idPrefix}--subtask-id--${subtasks.length}`}
                                 >
                                 </li>
@@ -625,7 +653,7 @@
     </div>
     {#if $manager.addBtn.doShow}
         <button 
-            class="tasks-add-btn"
+            class="tasks-wrapper__add-btn"
             style={inlineStyling($manager.addBtn.style)}
             on:click={() => $manager.addingNewTask(0)}
         >
@@ -666,6 +694,33 @@
 <style lang="scss">
     @import "../scss/inputs.scss";
 
+    .tasks-wrapper {
+
+        &--light &__add-btn {
+            opacity: 0.6;
+            &:hover {
+                opacity: 1;
+            }
+            span {
+                font-weight: 600;
+            }
+        }
+        &__add-btn {
+            margin: 14px 0px 14px var(--side-padding);
+            font-weight: 400;
+            opacity: 0.2;
+            max-width: 100px;
+            @include flex(center);
+
+            span {
+                margin-right: 7px;
+            }
+            &:hover {
+                opacity: 0.6;
+            }
+        }
+    }
+
     .tasks {
         position: relative;
         height: 100%;
@@ -686,20 +741,6 @@
             overflow-y: scroll;
             max-height: var(--tasks-max-height);
         }
-        &-add-btn {
-            margin: 14px 0px 14px var(--side-padding);
-            font-weight: 400;
-            opacity: 0.2;
-            max-width: 100px;
-            @include flex(center);
-
-            span {
-                margin-right: 7px;
-            }
-            &:hover {
-                opacity: 0.6;
-            }
-        }
         &--dragging-state * {
             user-select: none;
             cursor: grabbing !important; 
@@ -711,9 +752,24 @@
         cursor: pointer;
         width: 100%;
         border-top: 1px solid transparent;
+        border-bottom: 1px solid transparent;
         position: relative;
         font-family: "DM Sans";
         user-select: none;
+
+        &:first-child &__checkbox-link {
+            display: none;
+        }
+        &:hover, &:focus, &--focused, &--selected, &--drag-over {
+            background-color: rgba(var(--textColor1), 0.024);
+            @include txt-color(0.015, "border");
+        }
+        &:hover {
+            user-select: auto;
+        }
+        &:hover &__divider {
+            display: none;
+        }
         
         &--not-animated {
             transition: 0s;
@@ -728,27 +784,36 @@
 
         /* Light & Dark Adjustments */
         &--light {
-            border: none !important;
+            border-width: 1.5px;
+        }
+        &--light:hover,  
+        &--light:focus,
+        &--light#{&}--focused, 
+        &--light#{&}--selected, 
+        &--light#{&}--drag-over {
+            @include txt-color(0.03, "border");
         }
         &--light &__title-input, &--light &__title {
             @include text-style(0.8, 500)
         }
-        &--light &__description, &--light &__description-text-area {
+        &--light &__description, &--light &__description-input {
             @include text-style(0.6, 500)
         }
         &--light &__checkbox {
             border-width: 1.5px;
         }
-        
-        &:first-child &__checkbox-link {
-            display: none;
+        &--light &__number {
+            @include text-style(0.7);
         }
-        &:hover, &:focus, &--focused, &--selected, &--drag-over {
-            background-color: var(--task-bg-hover-color);
-            @include txt-color(0.015, "border");
+        &--light &__drag-handle-dots {
+            opacity: 0.5;
         }
-        &:hover {
-            user-select: auto;
+        &--light &__subtask-progress span {
+            @include text-style(0.3, 600);
+        }
+        &--light#{&}--floating {
+            box-shadow: 0px 1px 14px 4px rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(var(--textColor1), 0.09) !important;
         }
 
         /* Expanded UI */
@@ -813,14 +878,22 @@
             padding-top: 5px;
         }
 
+        /* Hover UI */
+        &--hide-top-border {
+            border-top-color: transparent !important;
+        }
+        &--hide-bottom-border {
+            border-bottom-color: transparent !important;
+        }
+
         /* Floating UI */
         &--floating {
             position: absolute;
-            background-color: var(--floating-task-bg-color) !important;
+            background-color: var(--bg-2);
             border-radius: 12px;
             z-index: 100;
             box-shadow: 0px 1px 16.4px 4px rgba(0, 0, 0, 0.14);
-            border: 1px solid rgba(white, 0.04);
+            border: 1px solid rgba(var(--textColor1), 0.04) !important;
             height: auto !important;
             padding: 8px 0px 11px 0px !important;
         }
@@ -888,7 +961,7 @@
             @include center;
         }
         &__number {
-            @include text-style(0.35, 400);
+            @include text-style(0.4, 500);
             font-size: calc(var(--title-font-size) - 1px);
         }
         &__checkbox {
@@ -952,7 +1025,7 @@
             margin: 1px 0px 0px 6px;
 
             span {
-                @include text-style(0.2, 400, calc(var(--title-font-size) - 2px));
+                @include text-style(0.1, 400, calc(var(--title-font-size) - 2px));
             }
             span:nth-last-child(2) {
                 display: inline-block;
@@ -966,7 +1039,7 @@
             width: 100%;
         }
         &__divider {
-            @include divider(0.05, 0.5px, calc(100% - calc(2 * var(--side-padding))));
+            @include divider(0.08, 0.5px, calc(100% - calc(2 * var(--side-padding))));
             @include abs-top-left(0px, var(--side-padding));
         }
     }
@@ -976,16 +1049,15 @@
         visibility: hidden;
         width: 100%;
         animation: fade-in var(--subtask-animation-duration) cubic-bezier(.5,.84,.42,.9) var(--subtask-idx-delay) forwards;
-        padding: 5px 0px 5px 0px;
+        padding: 4.5px 0px 4.5px 0px !important;
         padding-left: var(--left-section-width) !important;
-        border-top: 1px solid transparent;
         
         &:focus, &--focused {
-            background-color: var(--task-bg-hover-color);
+            background-color: rgba(var(--textColor1), 0.024);
             outline: none;
         }
         &:hover {
-            background-color: var(--task-bg-hover-color);
+            background-color: rgba(var(--textColor1), 0.024);
         }
         &:hover &__settings-btn {
             @include visible(0.12);
@@ -994,13 +1066,33 @@
             @include visible;
         }
 
+        &:hover &__divider, 
+        &:focus &__divider, 
+        &--focused &__divider {
+            display: none;
+        }
+        &:hover + .subtask .subtask__divider,
+        &:focus + .subtask .subtask__divider, 
+        &--focused + .subtask .subtask__divider {
+            display: none;
+        }
+
+        /* Light & Dark Adjustments */
+        &--light:hover &__settings-btn {
+            @include visible(0.4);
+        }
         &--light &__title, &--light &__title-input {
             font-weight: 500;
             color: rgba(var(--textColor1), 0.6);
         }
         &--light &__settings-btn:hover {
             opacity: 0.7 !important;
+            @include txt-color(0.08, "bg");
         }
+        &--light &__divider {
+            @include divider(0.06, 1px, calc(100% - (var(--side-padding) + var(--left-section-width))));
+        }
+
         &--hidden {
             display: none !important;
             height: 0px !important;
@@ -1026,7 +1118,7 @@
             padding-left: var(--left-section-width) !important;
         }
         &--no-link &__drag-handle {
-            @include abs-top-left(7px, calc(var(--side-padding) - 3px));
+            @include abs-top-left(4px, calc(var(--side-padding) - 3px));
         }
         &--no-link &__settings-btn {
             // margin-right: var(--side-padding);
@@ -1040,15 +1132,23 @@
         &--dragging-state {
             padding: 5.5px 0px 5.5px var(--left-section-width);
         }
+        &--drag-over &__divider {
+            display: none !important;
+        }
+        &--drag-over {
+            border-top: 1px solid rgba(var(--textColor1), 0.1) !important;
+        }
         &--drag-src {
+            padding: 0px !important;
+        }
+        &--drag-src &__drag-handle {
+            display: none;
+        }
+        &--drag-src &__content {
             height: 0px !important;
             opacity: 0 !important; 
             visibility: none !important; 
             padding: 0px !important; 
-        }
-        &--drag-over {
-            border-top-color: rgba(var(--textColor1), 0.05) !important;
-            background-color: var(--task-bg-hover-color);
         }
         &--dummy {
             height: 25px !important;
@@ -1130,21 +1230,8 @@
         }
         &__divider {
             display: none;
-            @include divider(0.03, 0.5px, calc(100% - (var(--side-padding) + var(--left-section-width))));
+            @include divider(0.04, 0.5px, calc(100% - (var(--side-padding) + var(--left-section-width))));
             @include abs-top-left(0px, var(--left-section-width));
-        }
-    }
-
-    /* Shared Styling Classes */
-    .dragging-source-hidden {
-        opacity: 0 !important;
-        visibility: hidden !important;
-        height: 0px !important;
-        padding: 0px !important;
-        border-width: 0px !important;
-
-        * {
-            display: none !important;
         }
     }
 </style>

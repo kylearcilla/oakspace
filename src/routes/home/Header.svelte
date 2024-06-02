@@ -9,6 +9,7 @@
 	import { getColorTrio } from "$lib/utils-general";
 	import { initTodayRoutine, initCurrentBlock, getMextTimeCheckPointInfo, getUpcomingBlock } from "$lib/utils-routines";
 	import { getDayIdxMinutes } from "$lib/utils-date";
+	import ActiveRoutine from "./ActiveRoutine.svelte";
 
     const NO_SESS_MD_MAX_WIDTH = 270
     const MD_MAX_WIDTH = 800
@@ -26,8 +27,6 @@
     let todayRoutine: RoutineBlock[] | DailyRoutine | null = null 
     let nowBlock: RoutineBlock | null = null
     let upcomingBlock: RoutineBlock | null = null
-    let nowBlockIdx = 0
-    let currBlockViewIdx = -1
     let nowBlockTitle = ""
     let colorTrio = ["", "", ""]
 
@@ -46,10 +45,13 @@
         nowBlockTitle = "You current don't have a routine set."
     }
     else if (!nowBlock) {
-        nowBlockTitle = "Free time. No active routine block at this moment."
+        nowBlockTitle = "Free time."
     }
-    else {
-        nowBlockTitle = `"${nowBlock.title}". From "${$weekRoutine?.name}".`
+    else if ($weekRoutine) {
+        nowBlockTitle = "No weekly routine set"
+    }
+    else if ($weekRoutine!.name) {
+        nowBlockTitle = `"${nowBlock.title}". From "${$weekRoutine!.name}".`
     }
 
     /* Week Routins */
@@ -60,9 +62,7 @@
         upcomingBlock   = getUpcomingBlock(currTime.minutes, todayRoutine)?.block ?? null
 
         if (currBlock) {
-            nowBlockIdx = currBlock.idx
             nowBlock = currBlock.block
-
             colorTrio = nowBlock ? getColorTrio((nowBlock as RoutineBlock).color, !isDarkTheme) : ["", "", ""]
         }
         else {
@@ -113,9 +113,11 @@
     <!-- Active Routine Block -->
     <button 
         class="header__now-block"
+        class:header__now-block--no-routine={!$weekRoutine}
         class:header__now-block--empty={!nowBlock}
         class:header__now-block--md={headerWidth < NO_SESS_MD_MAX_WIDTH}
         class:header__now-block--sm={activeSession && headerWidth < SM_MAX_WIDTH}
+        disabled={!$weekRoutine}
         style:--block-color-1={colorTrio[0]}
         style:--block-color-2={colorTrio[1]}
         style:--block-color-3={colorTrio[2]}
@@ -126,7 +128,7 @@
         <div class="header__now-block-circle"></div>
         <div class="header__now-block-title">
             {#if !dayRoutine}
-                Empty
+                No Routine
             {:else if !nowBlock && upcomingBlock}
                 {upcomingBlock.title}
             {:else if nowBlock}
@@ -136,7 +138,7 @@
             {/if}
         </div>
         <div class="header__now-block-time">
-            {getMextTimeCheckPointInfo(todayRoutine)}
+            {getMextTimeCheckPointInfo(todayRoutine) ?? ""}
         </div>
     </button>
 
@@ -173,6 +175,8 @@
         </div>
     </div>
 
+    <!-- Active Routine Pop Up -->
+    <ActiveRoutine />
 </header>
 
 <style global lang="scss">
@@ -240,14 +244,27 @@
             background-color: rgba(var(--block-color-1), 0.08);
             padding: 8.5px 10px 9px 13px;
             border-radius: 12px;
+            margin-top: -3px;
             
+            &:disabled {
+                opacity: 0.5;
+            }
+            &--no-routine {
+                padding: 0px 0px 0px 13px;
+                margin-top: -5px;
+                background: none !important;
+            }
+            &--no-routine &-title {
+                opacity: 0.7;
+                margin-left: 10px;
+            }
             &--empty {
                 background-color: rgba(var(--textColor1), 0.055);
             }
-            &--empty &-circle {
+            &--empty &-circle, &--no-routine &-circle  {
                 background-color: rgba(var(--textColor1), 0.2);
             }
-            &--empty &-title {
+            &--empty &-title, &--no-routine &-title {
                 color: rgba(var(--textColor1), 0.8);
             }
             &--empty &-time {
@@ -287,15 +304,15 @@
             }
             &-title {
                 color: rgba(var(--block-color-1));
-                @include text-style(_, 500, 1.14rem);
+                @include text-style(_, 600, 1.14rem);
                 @include elipses-overflow;
                 margin: 0px 0px 0px 8px;
                 max-width: 80px;
             }
             &-time {
-                @include text-style(_, 400, 1.08rem, "DM Sans");
-                color: rgba(var(--block-color-3));
-                margin-left: 9px;
+                @include text-style(_, 500, 1.08rem, "DM Sans");
+                color: rgba(var(--block-color-3), 0.8);
+                margin-left: 6px;
             }
         }
 

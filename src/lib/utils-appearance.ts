@@ -28,7 +28,6 @@ export function loadTheme() {
       isDarkTheme: themeItem!.styling.isDark,
       themeToggleBtnIconColor: themeItem!.styling.iconToggleBtnBgColor,
       twinTheme: themeItem!.twinTheme,
-      textColor: themeItem!.styling.textColor1
     })
     setRootColors(themeItem!.styling)
 }
@@ -81,7 +80,9 @@ export function setRootColors(theme: ColorThemeProps) {
   
     styleTag.innerHTML = `
       :root {
-          --primaryBgColor: ${theme.primaryBgColor};
+          --bg-1: ${theme.backgroundOne};
+          --bg-2: ${theme.backgroundTwo};
+          --bg-3: ${theme.backgroundThree};
           --fgColor1: ${theme.fgColor1};
           --fgColor2: ${theme.fgColor2};
           --sessionBgColor: ${theme.sessionBgColor};
@@ -153,8 +154,6 @@ export function setRootColors(theme: ColorThemeProps) {
           --tasksCheckBoxColorComplete: ${theme.tasksCheckBoxColorComplete};
           --tasksSubtaskFocusColor: ${theme.tasksSubtaskFocusColor};
           --tasksLightTextColor: ${theme.tasksLightTextColor};
-          --dropdownMenuBgColor1: ${theme.dropdownMenuBgColor1};
-          --dropdownMenuBgHoverColor1: ${theme.dropdownMenuBgHoverColor1};
       }
     `
     headTag.appendChild(styleTag)

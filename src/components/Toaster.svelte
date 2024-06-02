@@ -136,7 +136,9 @@
 				{...$$restProps}
 				on:blur={handleBlur}
 				on:focus={handleFocus}
-				on:mouseenter={() => expanded = true}
+				on:mouseenter={() => {
+					expanded = true
+				}}
 				on:pointerdown={() => interacting = true}
 				on:pointerup={() => interacting = false}
 				on:mousemove={() => expanded = true}

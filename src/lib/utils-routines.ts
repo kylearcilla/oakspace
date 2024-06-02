@@ -40,8 +40,10 @@ export function getBlockStyling(height: number) {
     return classes.join(" ")
 }
 
-export function isDayRoutinedLinked(weekRoutine: WeeklyRoutine, dayKey: keyof WeeklyRoutineBlocks) {
+export function isDayRoutinedLinked(weekRoutine: WeeklyRoutine | null, dayKey: keyof WeeklyRoutineBlocks) {
+    if (!weekRoutine) return false
     const dayRoutine = weekRoutine!.blocks[dayKey]
+
     return "id" in dayRoutine
 }
 

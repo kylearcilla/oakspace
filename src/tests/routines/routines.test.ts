@@ -1,7 +1,9 @@
-import { DailyRoutinesManager, RoutinesManager, WeeklyRoutinesManager } from '$lib/routines-manager'
+import { RoutinesManager } from '$lib/routines-manager'
 import { get } from 'svelte/store'
-import { describe, expect, vi } from 'vitest'
-import { TEST_DAILY_BREAKDOWN, WEEKLY_ROUTINES, TEST_WEEKLY_BREAKDOWN, TEST_BLOCK_MOVE_TO_NEW_COL, PRESET_ROUTINES } from './routines.data'
+import { describe, expect } from 'vitest'
+import { TEST_DAILY_BREAKDOWN, TEST_WEEKLY_BREAKDOWN, TEST_BLOCK_MOVE_TO_NEW_COL, PRESET_ROUTINES } from './routines.data'
+import { DailyRoutinesManager } from '$lib/routines-daily-manager'
+import { WeeklyRoutinesManager } from '$lib/routines-weekly-manager'
 
 const TOTAL_DAY_MINS = 1440
 const DAYS_WEEK = [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" ]

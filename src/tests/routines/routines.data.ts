@@ -1,11 +1,11 @@
 import { COLOR_SWATCHES, TEST_TAGS } from "$lib/utils-general"
 
-const TEST_CONTAINER_HT = 750
-
 type PresetRoutines = {
     hs: RoutineBlock[][],
     uni: RoutineBlock[][],
 }
+
+const TEST_CONTAINER_HT = 750
 
 export const TAGS = [
   {
@@ -136,1057 +136,7 @@ export const TAGS = [
   },
 ]
 
-// test
-export const TEST_ROUTINE_BLOCK_ELEMS = [
-    {
-        testIdx: 0,
-        rawBlock: {
-            title: "A",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 0,
-            endTime: 10,
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height:  TEST_CONTAINER_HT * (10 / 1440), 
-            yOffset: TEST_CONTAINER_HT * (0 / 1440)
-        }
-    },
-    {
-        testIdx: 1,
-        rawBlock: {
-            title: "B",
-            color: COLOR_SWATCHES.d[1],
-            startTime: 120,   // 2:00 AM
-            endTime: 130,     // 2:10 AM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, 
-            yOffset: 0
-        }
-    },
-    {
-        testIdx: 2,
-        rawBlock: {
-            title: "C",
-            color: COLOR_SWATCHES.d[2],
-            startTime: 130,   // 2:10 AM
-            endTime: 140,     // 2:20 AM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 3,
-        rawBlock: {
-            title: "D",
-            color: COLOR_SWATCHES.d[3],
-            startTime: 140,   // 2:20 AM
-            endTime: 150,     // 2:30 AM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 4,
-        rawBlock: {
-            title: "E",
-            color: COLOR_SWATCHES.d[4],
-            startTime: 150,   // 2:30 AM
-            endTime: 160,     // 2:40 AM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 5,
-        rawBlock: {
-            title: "F",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 160,   // 2:40 AM
-            endTime: 170,     // 2:50 AM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 6,
-        rawBlock: {
-            title: "G",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 170,   // 2:50 AM
-            endTime: 180,     // 3:00 AM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 7,
-        rawBlock: {
-            title: "H",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 180,   // 3:00 AM
-            endTime: 200,     // 3:10 AM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 8,
-        rawBlock: {
-            title: "I",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 200,   // 3:10 AM
-            endTime: 210,     // 3:20 AM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 9,
-        rawBlock: {
-            title: "J",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 210,   // 3:30 AM
-            endTime: 220,     // 3:40 AM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 10,
-        rawBlock: {
-            title: "K",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 220,   // 3:40 AM
-            endTime: 230,     // 3:50 AM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 11,
-        rawBlock: {
-            title: "L",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 230,   // 3:50 AM
-            endTime: 240,     // 4:00 AM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 12,
-        rawBlock: {
-            title: "L",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 230,   // 3:50 AM
-            endTime: 240,     // 4:00 AM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 13,
-        rawBlock: {
-            title: "M",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 240, // 4:00 AM
-            endTime: 435,   // 7:15 AM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 14,
-        rawBlock: {
-            title: "M",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 443, // 7:23 AM
-            endTime: 484,   // 8:04 AM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 15,
-        rawBlock: {
-            title: "M",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 719, // 11:59 AM
-            endTime: 729,   // 12:09 PM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 16,
-        rawBlock: {
-            title: "M",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 0,   // 12:00 AM
-            endTime: 1439,  // 11:59 AM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 17,
-        rawBlock: {
-            title: "M",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 750, // 12:30 PM
-            endTime: 1019,  // 4:59 PM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 18,
-        rawBlock: {
-            title: "M",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 1019, // 4:59 PM
-            endTime: 1271,   // 9:11 PM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 19,
-        rawBlock: {
-            title: "M",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 1272, // 9:12 PM
-            endTime: 1331,   // 10:11 PM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-    {
-        testIdx: 20,
-        rawBlock: {
-            title: "M",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 1429, // 11
-            endTime: 1439,   // 11:59 PM
-            activity: null,
-            tag: null,
-            tasks: [],
-            orderContext: "middle",
-            description: ""
-        },
-        elemProps: {
-            height: 0, yOffset: 0
-        }
-    },
-]
-export const WEEKLY_TEST_1: WeeklyRoutineBlocks = {
-    Monday: [
-        {
-            title: "Red",
-            color: COLOR_SWATCHES.d[0],
-            startTime: 360,
-            endTime: 420,
-            activity: null,
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Orange",
-            color: COLOR_SWATCHES.d[1],
-            startTime: 525,
-            endTime: 720,
-            activity: "working",
-            tag: TEST_TAGS[1],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Yellow",
-            color: COLOR_SWATCHES.d[2],
-            startTime: 730,
-            endTime: 800,
-            activity: null,
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Green",
-            color: COLOR_SWATCHES.d[3],
-            startTime: 885,
-            endTime: 1080,
-            activity: "working",
-            tag: TEST_TAGS[1],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Teal",
-            color: COLOR_SWATCHES.d[4],
-            startTime: 1080,
-            endTime: 1140,
-            activity: "body",
-            tag: TEST_TAGS[0],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Blue",
-            color: COLOR_SWATCHES.d[5],
-            startTime: 1140,
-            endTime: 1200,
-            activity: null,
-            tag: TEST_TAGS[3],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Purple",
-            color: COLOR_SWATCHES.d[6],
-            startTime: 1310,
-            endTime: 1395,
-            activity: "selfCare",
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-    ],
-    // Monday: DAILY_ROUTINES[0],
-    // Tuesday: DAILY_ROUTINES[1],
-    Tuesday: [
-        {
-            title: "Red",
-            color: COLOR_SWATCHES.d[7],
-            startTime: 360,
-            endTime: 420,
-            activity: null,
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Orange",
-            color: COLOR_SWATCHES.d[8],
-            startTime: 525,
-            endTime: 720,
-            activity: "working",
-            tag: TEST_TAGS[1],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Yellow",
-            color: COLOR_SWATCHES.d[9],
-            startTime: 730,
-            endTime: 800,
-            activity: null,
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Green",
-            color: COLOR_SWATCHES.d[10],
-            startTime: 885,
-            endTime: 1080,
-            activity: "working",
-            tag: TEST_TAGS[1],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Teal",
-            color: COLOR_SWATCHES.d[11],
-            startTime: 1080,
-            endTime: 1140,
-            activity: "body",
-            tag: TEST_TAGS[0],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Blue",
-            color: COLOR_SWATCHES.d[12],
-            startTime: 1140,
-            endTime: 1200,
-            activity: null,
-            tag: TEST_TAGS[3],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Purple",
-            color: COLOR_SWATCHES.d[13],
-            startTime: 1310,
-            endTime: 1395,
-            activity: "selfCare",
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-    ],
-    Wednesday: [
-        {
-            title: "Red",
-            color: COLOR_SWATCHES.d[14],
-            startTime: 370,
-            endTime: 420,
-            activity: null,
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Orange",
-            color: COLOR_SWATCHES.d[15],
-            startTime: 525,
-            endTime: 720,
-            activity: "working",
-            tag: TEST_TAGS[1],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Yellow",
-            color: COLOR_SWATCHES.d[16],
-            startTime: 730,
-            endTime: 800,
-            activity: null,
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Green",
-            color: COLOR_SWATCHES.d[17],
-            startTime: 885,
-            endTime: 1080,
-            activity: "working",
-            tag: TEST_TAGS[1],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Teal",
-            color: COLOR_SWATCHES.d[18],
-            startTime: 1080,
-            endTime: 1140,
-            activity: "body",
-            tag: TEST_TAGS[0],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Blue",
-            color: COLOR_SWATCHES.d[19],
-            startTime: 1140,
-            endTime: 1200,
-            activity: null,
-            tag: TEST_TAGS[3],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Purple",
-            color: COLOR_SWATCHES.d[20],
-            startTime: 1310,
-            endTime: 1395,
-            activity: "selfCare",
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-    ],
-    Thursday: [
-        {
-            title: "Red",
-            color: COLOR_SWATCHES.d[21],
-            startTime: 370,
-            endTime: 420,
-            activity: null,
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Orange",
-            color: COLOR_SWATCHES.d[22],
-            startTime: 525,
-            endTime: 720,
-            activity: "working",
-            tag: TEST_TAGS[1],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Yellow",
-            color: COLOR_SWATCHES.d[23],
-            startTime: 730,
-            endTime: 800,
-            activity: null,
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Green",
-            color: COLOR_SWATCHES.d[24],
-            startTime: 885,
-            endTime: 1080,
-            activity: "working",
-            tag: TEST_TAGS[1],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Teal",
-            color: COLOR_SWATCHES.d[25],
-            startTime: 1080,
-            endTime: 1140,
-            activity: "body",
-            tag: TEST_TAGS[0],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Blue",
-            color: COLOR_SWATCHES.d[26],
-            startTime: 1140,
-            endTime: 1200,
-            activity: null,
-            tag: TEST_TAGS[3],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Purple",
-            color: COLOR_SWATCHES.d[27],
-            startTime: 1310,
-            endTime: 1395,
-            activity: "selfCare",
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-    ],
-    // Friday: DAILY_ROUTINES[1],
-    Friday: [
-        {
-            title: "Red",
-            color: COLOR_SWATCHES.d[1],
-            startTime: 370,
-            endTime: 420,
-            activity: null,
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Green",
-            color: COLOR_SWATCHES.d[5],
-            startTime: 525,
-            endTime: 720,
-            activity: "working",
-            tag: TEST_TAGS[1],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Yellow",
-            color: COLOR_SWATCHES.d[2],
-            startTime: 730,
-            endTime: 800,
-            activity: null,
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Green",
-            color: COLOR_SWATCHES.d[5],
-            startTime: 885,
-            endTime: 1080,
-            activity: "working",
-            tag: TEST_TAGS[1],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Teal",
-            color: COLOR_SWATCHES.d[3],
-            startTime: 1080,
-            endTime: 1140,
-            activity: "body",
-            tag: TEST_TAGS[0],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Blue",
-            color: COLOR_SWATCHES.d[4],
-            startTime: 1140,
-            endTime: 1200,
-            activity: null,
-            tag: TEST_TAGS[3],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Purple",
-            color: COLOR_SWATCHES.d[1],
-            startTime: 1310,
-            endTime: 1395,
-            activity: "selfCare",
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-    ],
-    Saturday: [
-        {
-            title: "Red",
-            color: COLOR_SWATCHES.p[0],
-            startTime: 480,
-            endTime: 520,
-            activity: null,
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "🏃‍♂️ Running",
-            color: COLOR_SWATCHES.p[1],
-            startTime: 600,
-            endTime: 690,
-            activity: "working",
-            tag: TEST_TAGS[6],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Yellow",
-            color: COLOR_SWATCHES.p[2],
-            startTime: 730,
-            endTime: 800,
-            activity: null,
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "🌁 Art",
-            color: COLOR_SWATCHES.p[3],
-            startTime: 885,
-            endTime: 920,
-            activity: "selfCare",
-            tag: TEST_TAGS[8],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "💪 Gym (Push)",
-            color: COLOR_SWATCHES.p[4],
-            startTime: 1000,
-            endTime: 1100,
-            activity: "body",
-            tag: TAGS[0],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Blue",
-            color: COLOR_SWATCHES.p[5],
-            startTime: 1130,
-            endTime: 1200,
-            activity: null,
-            tag: TEST_TAGS[3],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Purple",
-            color: COLOR_SWATCHES.p[6],
-            startTime: 1310,
-            endTime: 1395,
-            activity: "selfCare",
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-    ],
-    Sunday: [
-        {
-            title: "Red",
-            color: COLOR_SWATCHES.p[7],
-            startTime: 480,
-            endTime: 520,
-            activity: null,
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "🏃‍♂️ Running",
-            color: COLOR_SWATCHES.p[8],
-            startTime: 600,
-            endTime: 690,
-            activity: "working",
-            tag: TEST_TAGS[6],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Yellow",
-            color: COLOR_SWATCHES.p[9],
-            startTime: 730,
-            endTime: 800,
-            activity: null,
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "🌁 Art",
-            color: COLOR_SWATCHES.p[10],
-            startTime: 885,
-            endTime: 920,
-            activity: "selfCare",
-            tag: TEST_TAGS[8],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "💪 Gym (Push)",
-            color: COLOR_SWATCHES.p[11],
-            startTime: 1000,
-            endTime: 1100,
-            activity: "body",
-            tag: TAGS[0],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Blue",
-            color: COLOR_SWATCHES.p[12],
-            startTime: 1130,
-            endTime: 1200,
-            activity: null,
-            tag: TEST_TAGS[3],
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-        {
-            title: "Purple",
-            color: COLOR_SWATCHES.p[13],
-            startTime: 1310,
-            endTime: 1395,
-            activity: "selfCare",
-            tag: null,
-            description: "",
-            tasks: [],
-            orderContext: "middle",
-        },
-    ]
-}
-
-// test & core breakdown testing
-const BREAKDOWN_TEST_DAILY_BLOCKS = [
-    [
-        { title: "A", startTime: 0, endTime: 20, tagIdx: 0, activity: "working" },
-        { title: "Y", startTime: 941, endTime: 980, tagIdx: 0, activity: "working" },
-        { title: "I", startTime: 301, endTime: 340, tagIdx: 0, activity: "working" },
-
-        { title: "K", startTime: 381, endTime: 420, tagIdx: 1, activity: "working" },
-        { title: "V", startTime: 821, endTime: 860, tagIdx: 1, activity: "working" },
-
-        { title: "D", startTime: 101, endTime: 140, tagIdx: 2, activity: "working" },
-        { title: "T", startTime: 741, endTime: 780, tagIdx: 2, activity: "working" },
-        { title: "AF", startTime: 1221, endTime: 1260, tagIdx: 2, activity: "working" },
-
-        { title: "P", startTime: 581, endTime: 620, tagIdx: 3, activity: "body" },
-        { title: "AC", startTime: 1100, endTime: 1140, tagIdx: 3, activity: "body" },
-
-        { title: "G", startTime: 221, endTime: 260, tagIdx: 4, activity: "body" },
-        { title: "X", startTime: 901, endTime: 940, tagIdx: 4, activity: "body" },
-
-        { title: "R", startTime: 661, endTime: 700, tagIdx: 5, activity: "body" },
-        { title: "C", startTime: 61, endTime: 100, tagIdx: 5, activity: "body" },
-        { title: "AE", startTime: 1181, endTime: 1220, tagIdx: 5, activity: "body" },
-
-        { title: "J", startTime: 341, endTime: 380, tagIdx: 6, activity: "body" },
-        { title: "Z", startTime: 981, endTime: 1020, tagIdx: 6, activity: "body" },
-
-        { title: "AH", startTime: 1301, endTime: 1339, tagIdx: 7, activity: "selfCare" },
-        { title: "Q", startTime: 621, endTime: 660, tagIdx: 7, activity: "selfCare" },
-        { title: "F", startTime: 181, endTime: 220, tagIdx: 7, activity: "selfCare" },
-
-        { title: "H", startTime: 261, endTime: 300, tagIdx: 8, activity: "selfCare" },
-        { title: "S", startTime: 701, endTime: 740, tagIdx: 8, activity: "selfCare" },
-
-        { title: "AD", startTime: 1141, endTime: 1180, tagIdx: 9, activity: "selfCare" },
-        { title: "O", startTime: 540, endTime: 580, tagIdx: 9, activity: "selfCare" },
-        { title: "B", startTime: 21, endTime: 60, tagIdx: 9, activity: "selfCare" },
-
-        { title: "L", startTime: 421, endTime: 460, tagIdx: 10, activity: "mind" },
-        { title: "U", startTime: 781, endTime: 820, tagIdx: 10, activity: "mind" },
-
-        { title: "W", startTime: 861, endTime: 900, tagIdx: 11, activity: "mind" },
-        { title: "AG", startTime: 1261, endTime: 1300, tagIdx: 11, activity: "mind" },
-        { title: "E", startTime: 141, endTime: 180, tagIdx: 11, activity: "mind" },
-
-        { title: "M", startTime: 461, endTime: 500, tagIdx: 12, activity: "mind" },
-        { title: "AA", startTime: 1021, endTime: 1060, tagIdx: 12, activity: "mind" },
-
-        { title: "N", startTime: 501, endTime: 540, tagIdx: 13, activity: "sleeping" },
-        { title: "AB", startTime: 1400, endTime: 1439, tagIdx: 13, activity: "sleeping" },
-    ],
-    [
-        { title: "A", startTime: 0, endTime: 20, tagIdx: 0, activity: "working" },
-        { title: "B", startTime: 941, endTime: 980, tagIdx: 1, activity: "working" },
-        
-        { title: "D", startTime: 381, endTime: 420, tagIdx: 2, activity: "body" },
-        { title: "E", startTime: 821, endTime: 860, tagIdx: 3, activity: "body" },
-        
-        { title: "F", startTime: 101, endTime: 140, tagIdx: 5, activity: "body" },
-        { title: "G", startTime: 741, endTime: 780, tagIdx: 6, activity: "selfCare" },
-        { title: "C", startTime: 301, endTime: 340, tagIdx: 7, activity: "sleeping" },
-        { title: "H", startTime: 1221, endTime: 1260, tagIdx: 7, activity: "sleeping" },
-    ],
-    [
-        { title: "A", startTime: 0, endTime: 20, tagIdx: 11, activity: "selfCare" },
-        { title: "B", startTime: 941, endTime: 980, tagIdx: 12, activity: "selfCare" },
-        { title: "C", startTime: 301, endTime: 340, tagIdx: 13, activity: "sleeping" },
-    ],
-]
-
-const BREAKDOWN_TEST_WEEKLY_BLOCKS = {
-    Monday: BREAKDOWN_TEST_DAILY_BLOCKS[0].map((data) => ({ 
-        ...data, 
-        color: COLOR_SWATCHES.d[0], 
-        description: "", tasks: [],
-        orderContext: "middle",
-        tag: TAGS[data.tagIdx],
-        activity: data.activity as keyof RoutineCores
-    })),
-    Tuesday: BREAKDOWN_TEST_DAILY_BLOCKS[1].map((data) => ({ 
-        ...data, 
-        color: COLOR_SWATCHES.d[0], 
-        description: "", tasks: [],
-        orderContext: "middle",
-        tag: TAGS[data.tagIdx],
-        activity: data.activity as keyof RoutineCores
-    })),
-    Wednesday: BREAKDOWN_TEST_DAILY_BLOCKS[0].map((data) => ({ 
-        ...data, 
-        color: COLOR_SWATCHES.d[0], 
-        description: "", tasks: [],
-        orderContext: "middle",
-        tag: TAGS[data.tagIdx],
-        activity: data.activity as keyof RoutineCores
-    })),
-    Thursday: BREAKDOWN_TEST_DAILY_BLOCKS[1].map((data) => ({ 
-        ...data, 
-        color: COLOR_SWATCHES.d[0], 
-        description: "", tasks: [],
-        orderContext: "middle",
-        tag: TAGS[data.tagIdx],
-        activity: data.activity as keyof RoutineCores
-    })),
-    Friday: BREAKDOWN_TEST_DAILY_BLOCKS[1].map((data) => ({ 
-        ...data, 
-        color: COLOR_SWATCHES.d[0], 
-        description: "", tasks: [],
-        orderContext: "middle",
-        tag: TAGS[data.tagIdx],
-        activity: data.activity as keyof RoutineCores
-    })),
-    Saturday: BREAKDOWN_TEST_DAILY_BLOCKS[2].map((data) => ({ 
-        ...data, 
-        color: COLOR_SWATCHES.d[0], 
-        description: "", tasks: [],
-        orderContext: "middle",
-        tag: TAGS[data.tagIdx],
-        activity: data.activity as keyof RoutineCores
-    })),
-    Sunday: BREAKDOWN_TEST_DAILY_BLOCKS[2].map((data) => ({ 
-        ...data, 
-        color: COLOR_SWATCHES.d[0], 
-        description: "", tasks: [],
-        orderContext: "middle",
-        tag: TAGS[data.tagIdx],
-        activity: data.activity as keyof RoutineCores
-    }))
-}
-
-// daily routines
+/* themed daily routine */
 export const PRESET_ROUTINES: PresetRoutines = {
     hs: [
         [
@@ -1744,7 +694,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
     ]
 }
 
-// daily routines
+/* daily routines */
 export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
     { 
         id: "0",
@@ -2004,6 +954,8 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
 
     /* All Around */
 ]
+
+/* daily routines list */
 export const SET_DAILY_ROUTINES: DailyRoutine[] = [
     DAILY_ROUTINES[0] as DailyRoutine,
     DAILY_ROUTINES[1] as DailyRoutine,
@@ -2051,7 +1003,7 @@ export const SET_DAILY_ROUTINES: DailyRoutine[] = [
     },
 ]
 
-// weekly routines sets
+/* weekly routines */
 export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
     Monday: [
         {
@@ -4303,7 +3255,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     ]
 }
 
-// weekly routines
+/* weekly routines list */
 export const WEEKLY_ROUTINES: WeeklyRoutine[] = [
     {
         id: "0",
@@ -4340,9 +3292,143 @@ export const WEEKLY_ROUTINES: WeeklyRoutine[] = [
             Friday: WEEKLY_ROUTINES_BLOCKS.Saturday,
         }
     },
+    {
+        id: "4",
+        name: "Full Colors",
+        description: "All colors for testing.",
+        blocks: WEEKLY_FULL_COLORS
+    },
 ]
 
-// tag breakdown testing
+/* tag breakdown testing */
+const BREAKDOWN_TEST_DAILY_BLOCKS = [
+    [
+        { title: "A", startTime: 0, endTime: 20, tagIdx: 0, activity: "working" },
+        { title: "Y", startTime: 941, endTime: 980, tagIdx: 0, activity: "working" },
+        { title: "I", startTime: 301, endTime: 340, tagIdx: 0, activity: "working" },
+
+        { title: "K", startTime: 381, endTime: 420, tagIdx: 1, activity: "working" },
+        { title: "V", startTime: 821, endTime: 860, tagIdx: 1, activity: "working" },
+
+        { title: "D", startTime: 101, endTime: 140, tagIdx: 2, activity: "working" },
+        { title: "T", startTime: 741, endTime: 780, tagIdx: 2, activity: "working" },
+        { title: "AF", startTime: 1221, endTime: 1260, tagIdx: 2, activity: "working" },
+
+        { title: "P", startTime: 581, endTime: 620, tagIdx: 3, activity: "body" },
+        { title: "AC", startTime: 1100, endTime: 1140, tagIdx: 3, activity: "body" },
+
+        { title: "G", startTime: 221, endTime: 260, tagIdx: 4, activity: "body" },
+        { title: "X", startTime: 901, endTime: 940, tagIdx: 4, activity: "body" },
+
+        { title: "R", startTime: 661, endTime: 700, tagIdx: 5, activity: "body" },
+        { title: "C", startTime: 61, endTime: 100, tagIdx: 5, activity: "body" },
+        { title: "AE", startTime: 1181, endTime: 1220, tagIdx: 5, activity: "body" },
+
+        { title: "J", startTime: 341, endTime: 380, tagIdx: 6, activity: "body" },
+        { title: "Z", startTime: 981, endTime: 1020, tagIdx: 6, activity: "body" },
+
+        { title: "AH", startTime: 1301, endTime: 1339, tagIdx: 7, activity: "selfCare" },
+        { title: "Q", startTime: 621, endTime: 660, tagIdx: 7, activity: "selfCare" },
+        { title: "F", startTime: 181, endTime: 220, tagIdx: 7, activity: "selfCare" },
+
+        { title: "H", startTime: 261, endTime: 300, tagIdx: 8, activity: "selfCare" },
+        { title: "S", startTime: 701, endTime: 740, tagIdx: 8, activity: "selfCare" },
+
+        { title: "AD", startTime: 1141, endTime: 1180, tagIdx: 9, activity: "selfCare" },
+        { title: "O", startTime: 540, endTime: 580, tagIdx: 9, activity: "selfCare" },
+        { title: "B", startTime: 21, endTime: 60, tagIdx: 9, activity: "selfCare" },
+
+        { title: "L", startTime: 421, endTime: 460, tagIdx: 10, activity: "mind" },
+        { title: "U", startTime: 781, endTime: 820, tagIdx: 10, activity: "mind" },
+
+        { title: "W", startTime: 861, endTime: 900, tagIdx: 11, activity: "mind" },
+        { title: "AG", startTime: 1261, endTime: 1300, tagIdx: 11, activity: "mind" },
+        { title: "E", startTime: 141, endTime: 180, tagIdx: 11, activity: "mind" },
+
+        { title: "M", startTime: 461, endTime: 500, tagIdx: 12, activity: "mind" },
+        { title: "AA", startTime: 1021, endTime: 1060, tagIdx: 12, activity: "mind" },
+
+        { title: "N", startTime: 501, endTime: 540, tagIdx: 13, activity: "sleeping" },
+        { title: "AB", startTime: 1400, endTime: 1439, tagIdx: 13, activity: "sleeping" },
+    ],
+    [
+        { title: "A", startTime: 0, endTime: 20, tagIdx: 0, activity: "working" },
+        { title: "B", startTime: 941, endTime: 980, tagIdx: 1, activity: "working" },
+        
+        { title: "D", startTime: 381, endTime: 420, tagIdx: 2, activity: "body" },
+        { title: "E", startTime: 821, endTime: 860, tagIdx: 3, activity: "body" },
+        
+        { title: "F", startTime: 101, endTime: 140, tagIdx: 5, activity: "body" },
+        { title: "G", startTime: 741, endTime: 780, tagIdx: 6, activity: "selfCare" },
+        { title: "C", startTime: 301, endTime: 340, tagIdx: 7, activity: "sleeping" },
+        { title: "H", startTime: 1221, endTime: 1260, tagIdx: 7, activity: "sleeping" },
+    ],
+    [
+        { title: "A", startTime: 0, endTime: 20, tagIdx: 11, activity: "selfCare" },
+        { title: "B", startTime: 941, endTime: 980, tagIdx: 12, activity: "selfCare" },
+        { title: "C", startTime: 301, endTime: 340, tagIdx: 13, activity: "sleeping" },
+    ],
+]
+
+const BREAKDOWN_TEST_WEEKLY_BLOCKS = {
+    Monday: BREAKDOWN_TEST_DAILY_BLOCKS[0].map((data) => ({ 
+        ...data, 
+        color: COLOR_SWATCHES.d[0], 
+        description: "", tasks: [],
+        orderContext: "middle",
+        tag: TAGS[data.tagIdx],
+        activity: data.activity as keyof RoutineCores
+    })),
+    Tuesday: BREAKDOWN_TEST_DAILY_BLOCKS[1].map((data) => ({ 
+        ...data, 
+        color: COLOR_SWATCHES.d[0], 
+        description: "", tasks: [],
+        orderContext: "middle",
+        tag: TAGS[data.tagIdx],
+        activity: data.activity as keyof RoutineCores
+    })),
+    Wednesday: BREAKDOWN_TEST_DAILY_BLOCKS[0].map((data) => ({ 
+        ...data, 
+        color: COLOR_SWATCHES.d[0], 
+        description: "", tasks: [],
+        orderContext: "middle",
+        tag: TAGS[data.tagIdx],
+        activity: data.activity as keyof RoutineCores
+    })),
+    Thursday: BREAKDOWN_TEST_DAILY_BLOCKS[1].map((data) => ({ 
+        ...data, 
+        color: COLOR_SWATCHES.d[0], 
+        description: "", tasks: [],
+        orderContext: "middle",
+        tag: TAGS[data.tagIdx],
+        activity: data.activity as keyof RoutineCores
+    })),
+    Friday: BREAKDOWN_TEST_DAILY_BLOCKS[1].map((data) => ({ 
+        ...data, 
+        color: COLOR_SWATCHES.d[0], 
+        description: "", tasks: [],
+        orderContext: "middle",
+        tag: TAGS[data.tagIdx],
+        activity: data.activity as keyof RoutineCores
+    })),
+    Saturday: BREAKDOWN_TEST_DAILY_BLOCKS[2].map((data) => ({ 
+        ...data, 
+        color: COLOR_SWATCHES.d[0], 
+        description: "", tasks: [],
+        orderContext: "middle",
+        tag: TAGS[data.tagIdx],
+        activity: data.activity as keyof RoutineCores
+    })),
+    Sunday: BREAKDOWN_TEST_DAILY_BLOCKS[2].map((data) => ({ 
+        ...data, 
+        color: COLOR_SWATCHES.d[0], 
+        description: "", tasks: [],
+        orderContext: "middle",
+        tag: TAGS[data.tagIdx],
+        activity: data.activity as keyof RoutineCores
+    }))
+}
+
 export const TEST_DAILY_BREAKDOWN = [
     {
         blocks: WEEKLY_HS_STUDENT.Monday,
@@ -4512,6 +3598,7 @@ export const TEST_WEEKLY_BREAKDOWN = [
     },
 ]
 
+/* lift edit testing */
 export const TEST_BLOCK_MOVE_TO_NEW_COL = [
     {
         blocks: WEEKLY_HS_STUDENT.Sunday,

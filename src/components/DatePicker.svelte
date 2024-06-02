@@ -137,7 +137,7 @@
         width: 220px;
         border-radius: 12px;
         padding-bottom: 12px;
-        background-color: var(--dropdownMenuBgColor1);
+        background-color: var(--bg-2);
         border: var(--bentoBoxBorder);
         box-shadow: var(--bentoBoxShadow);
 

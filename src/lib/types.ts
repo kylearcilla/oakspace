@@ -1093,7 +1093,9 @@ interface VideoTheme extends Theme {
 type ColorThemeProps = {
     isDark: boolean
     hasTwin: boolean
-    primaryBgColor: string
+    backgroundOne: string
+    backgroundTwo: string
+    backgroundThree: string
     fgColor1: string
     fgColor2: string
     sessionBgColor: string
@@ -1164,6 +1166,4 @@ type ColorThemeProps = {
     tasksSubtaskFocusColor: string
     tasksCheckColor: string
     tasksLightTextColor: string
-    dropdownMenuBgColor1: string
-    dropdownMenuBgHoverColor1: string
 }

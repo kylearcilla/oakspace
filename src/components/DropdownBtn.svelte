@@ -44,7 +44,7 @@
     {#if doShowArrow && arrowLeft}
         <div 
             class="dropdown-btn__icon dropdown-btn__icon--arrow"
-        style={inlineStyling(options.arrowStyles)}
+            style={inlineStyling(options.arrowStyles)}
         >
             <SvgIcon 
                 icon={Icon.Dropdown}
@@ -57,6 +57,7 @@
     <span 
         class="dropdown-btn__title"
         style:font-size={options?.styles?.fontSize}
+        style:font-family={options?.styles?.fontFamily ?? "Manrope"}
     >
         {pickedOptionName ?? "None"}
     </span>

@@ -922,8 +922,11 @@ $settings-modal-padding: 20px 25px 25px 25px;
     @include flex(center);
     background-color: rgba(var(--tag-color-2), 1);
     padding: 3px 9px 3px 9px;
-    border-radius: 9px;
+    border-radius: 12px;
 
+    &--is-light {
+        box-shadow: rgba(var(--tag-color-1), 0.07) 0px 0px 0px 1.1px inset;
+    }
     &--light {
         background-color: rgba(var(--tag-color-1), 0.8);
     }
@@ -942,6 +945,8 @@ $settings-modal-padding: 20px 25px 25px 25px;
         @include text-style(_, 400, 1.18rem);
         color: rgba(var(--tag-color-1), 0.8);
         cursor: text;
+        max-width: 120px;
+        @include elipses-overflow;
     }
 }
 

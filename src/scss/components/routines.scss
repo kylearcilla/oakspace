@@ -9,24 +9,34 @@
     &--light &__description {
         @include text-style(0.75, 600);
     }
+    &--light &__breakdown {
+        @include txt-color(0.028, "bg");
+        border: 1px solid rgba(var(--textColor1), 0.04);
+    }
     &--light &__breakdown h3 {
         @include text-style(1, 600);
     }
     &--light &__cores-title {
-        @include text-style(0.9, 500);
+        @include text-style(0.96, 500);
     }
     &--light &__cores-value {
-        @include text-style(0.7, 400);
+        @include text-style(0.5, 500);
     }
     &--light &__cores-col-divider {
         @include divider(0.08, 1px);
     }
     &--light &__breakdown-options-btn {
         opacity: 0.4;
-        @include text-style(0.84, 600);
+        @include text-style(0.9, 600);
+    }
+    &--light .tag__title {
+        color: rgba(var(--tag-color-1), 1);
     }
     &--light &__tag-stat {
-        @include text-style(0.8, 400);
+        @include text-style(0.5, 500);
+    }
+    &--light &__collection-empty {
+        @include text-style(0.3);
     }
 
     &__details {
@@ -40,17 +50,23 @@
     &__title {
         padding: 0px;
         overflow: scroll;
-        @include text-style(1, 400, _, "Manrope");
+        @include text-style(1, 400, _);
     }
     &__description {
         overflow: scroll;
         display: inline-block;
-        @include text-style(0.3, 300, 1.4rem, "Manrope");
+        @include text-style(0.4, 400, 1.4rem);
     }
 
     /* Breakdown */
     &__breakdown {
-        width: 100%;
+        width: 90%;
+        margin-left: -6px;
+        padding: 7px 20px 10px 15px;
+        border-radius: 14px;
+        border: 1px solid rgba(var(--textColor1), 0.02);
+        @include txt-color(0.019, "bg");
+
         h3 {
             margin-bottom: 12px;
             @include text-style(0.95, 400, 1.64rem);
@@ -102,6 +118,10 @@
     &__cores-core {
         @include flex(center, space-between);
         margin-bottom: 10px;
+
+        &:last-child {
+            margin-bottom: 5px;
+        }
     }
     /* Tag Breakdown */
     &__tag-breakdown h3 {
@@ -129,11 +149,16 @@
         margin-left: -3px;
     }
     &__tag-breakdown-empty {
-        @include text-style(0.15, 400, 1.32rem);
+        @include text-style(0.17, 500, 1.28rem);
         position: absolute;
-        top: calc(50% - 22px);
+        top: calc(50% - 10px);
         left: 50%;
         transform: translate(-50%, -50%);
+    }
+    /* Collection */
+    &__collection-empty {
+        display: block;
+        @include text-style(0.14, 500, 1.3rem);
     }
 }
 

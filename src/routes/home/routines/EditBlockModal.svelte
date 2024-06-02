@@ -19,6 +19,7 @@
 	import type { Writable } from "svelte/store"
 	import { TEST_TASKS } from "$lib/utils-right-bar"
 	import { minsFromStartToHHMM } from "$lib/utils-date"
+	import { getColorTrio } from "$lib/utils-general";
 
     export let routineManager: RoutinesManager
     export let block: RoutineBlockElem
@@ -30,9 +31,11 @@
     
     let { 
         id, startTime, endTime, title, 
-        description, tasks, orderContext, activity
+        description, tasks, orderContext, activity, tag
     } = block
+
     let _blocks = routineManager.editDayRoutineElems
+    let isNew   = routineManager.isMakingNewBlock
     
     let updatedTasks: Task[] = tasks
     let doCreateNewTask = false
@@ -42,6 +45,7 @@
     let newEndTime = endTime
     let newOrderContext = orderContext
     let orderOptnText = ""
+    let hasInitTasks = false
     
     let editHasBeenMade = false
     let isSaving = false
@@ -55,6 +59,7 @@
 
     $: isDarkTheme = $themeState.isDarkTheme
     $: blocks = $_blocks
+    $: colors = getColorTrio(block.color, !isDarkTheme)
 
     $: initTitleEditor(title)
     $: initDescriptionEditor(description)
@@ -170,6 +175,11 @@
         if (tagsOpen) tagsOpen = false
     }
     function onTaskChange(event: CustomEvent) {
+        if (!hasInitTasks) {
+            hasInitTasks = true
+            return
+        }
+
         toggleEditMade()
         const _updatedTasks = event.detail
         updatedTasks = _updatedTasks
@@ -223,7 +233,7 @@
         if (isSaving) {
             return
         }
-        else if (editHasBeenMade) {
+        else if (editHasBeenMade || isNew) {
             confirmModalOpen = true
         }
         else {
@@ -256,7 +266,9 @@
                 >
                     <div 
                         class="edit-routine__color"
-                        style:--routine-color={block.color.primary}
+                        class:edit-routine__color--light={tag?.symbol.color.isLight}
+                        style:--routine-bg-color={colors[1]}
+                        style:--routine-border-color={colors[0]}
                     >
                     </div>
                 </button>
@@ -315,8 +327,8 @@
                     listItems: [
                         { 
                             options: [
-                                ...(newOrderContext !== "last" ? [{ name: newOrderContext === "first" ? "Unset as first block" : firstBlockExists ? "Set new first block" : "Set first block" }] : []),
-                                ...(newOrderContext !== "first" ? [{ name: newOrderContext === "last" ? "Unset as last block" : lastBlockExists ? "Set new last block" : "Set last block" }] : []),
+                                ...(newOrderContext !== "last" ? [{ name: newOrderContext === "first" ? "Unset as first block" : firstBlockExists ? "Set new as first block" : "Set as first block" }] : []),
+                                ...(newOrderContext !== "first" ? [{ name: newOrderContext === "last" ? "Unset as last block" : lastBlockExists ? "Set as new last block" : "Set as last block" }] : []),
                                 // { name: "Duplicate Block" }
                             ]
                         },
@@ -480,7 +492,9 @@
                             }
                         },
                         addBtn: {
-                            style: { fontSize: "1.25rem" }
+                            style: { 
+                                fontSize: "1.25rem", fontWeight: "500", margin: "10px 0px 0px 25px"
+                            }
                         },
                         cssVariables: { 
                             maxDescrLines: 2 
@@ -516,10 +530,12 @@
 
 {#if confirmModalOpen} 
     <ConfirmationModal 
-        text="Discard unsaved changes?"
+        text={`${isNew ? "Undo block creation?" :  "Discard unsaved changes?"}`}
         onCancel={cancelCloseAttempt}
         onOk={confirmUnsavedClose}
-        options={{ ok: "Discard", caption: "Heads Up!" }}
+        options={{ 
+            ok: `${isNew ? "Yes" : "Discard"}`, caption: "Heads Up!" 
+        }}
     /> 
 {/if}
 
@@ -534,7 +550,7 @@
         position: relative;
 
         &--light &__info-title {
-            @include text-style(0.9, 500);
+            @include text-style(0.9, 600);
         }
         &--light &__title-container input {
             @include text-style(1, 500);
@@ -577,8 +593,9 @@
         }
         /* Color */
         &__color {
-            background-color: rgba(var(--routine-color));
-            @include circle(6px);
+            background-color: rgba(var(--routine-bg-color));
+            border: 1.5px solid rgba(var(--routine-border-color), 0.2);
+            @include circle(9px);
             cursor: pointer;
         }
         &__color-dropdown-btn {
@@ -690,23 +707,23 @@
         }
         &__description-text-editor {
             max-width: 100%;
-            @include text-style(0.9, 400, 1.28rem);
+            @include text-style(0.9, 500, 1.28rem);
         }
         &__list-header {
             padding: 30px 20px 10px 25px;
             @include flex(center, space-between);
         }
         &__list {
-            height: calc(100% - 260px);
+            height: calc(100% - 255px);
             width: 100%;
         }
         &__list-count {
-            @include text-style(0.3, 400, 1.1rem, "DM Sans");
+            @include text-style(0.6, 500, 1.2rem, "DM Sans");
             margin-right: 5px;
         }
         &__list-container {
             position: relative;
-            height: calc(100% - 56.5px);
+            height: calc(100% - 55px);
             max-width: 100%;
         }
         &__btns {

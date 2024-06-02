@@ -199,8 +199,6 @@
           <TaskView />
       </nav>
   </div>
-
-  <ActiveRoutine />
     
   {#if $mediaEmbedStore}
      <MediaEmbed />
@@ -259,7 +257,7 @@
     }
 
     .home {
-      background-color: var(--primaryBgColor);
+      background-color: var(--bg-1);
       height: 100%;
       min-height: 100vh;
       font-family: 'Apercu Medium' system-ui;
@@ -348,7 +346,7 @@
         &-slot-container {
           padding: inherit;
           @include abs-top-left(38px);
-          background-color: var(--primaryBgColor);
+          background-color: var(--bg-1);
           width: 100%;
           height: 100%;
           z-index: 300;

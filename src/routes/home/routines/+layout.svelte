@@ -1,13 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation'
 	import { themeState } from '$lib/store'
-    import type { PageData } from '../$types';
-    
-    export let data: PageData;
 
-    enum RoutinesTab {
-        Weekly, Daily
-    }
+    enum RoutinesTab { Weekly, Daily }
 
     let currTab = RoutinesTab.Weekly
 

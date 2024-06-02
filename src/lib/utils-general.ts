@@ -495,10 +495,10 @@ export const COLOR_SWATCHES = {
     /* First Row */
     {
       id: "d0-0",
-      primary: "255, 163, 174",
-      light1: "108, 59, 65",
-      light2: "247, 167, 181",
-      light3: "149, 102, 108",
+      primary: "245, 191, 191",
+      light1: "108, 56, 62",
+      light2: "229, 190, 190",
+      light3: "173, 123, 130",
       dark1:  "236, 174, 189",
       dark2:  "32, 20, 21",
       dark3:  "103, 78, 81",
@@ -581,9 +581,9 @@ export const COLOR_SWATCHES = {
     {
       id: "d1-0",
       primary: "243, 144, 174",
-      light1: "83, 58, 58",
-      light2: "191, 145, 145",
-      light3: "133, 97, 97",
+      light1: "108, 59, 65",
+      light2: "247, 167, 181",
+      light3: "149, 102, 108",
       dark1:  "243, 144, 192",
       dark2:  "31, 20, 25",
       dark3:  "109, 75, 98",
@@ -611,15 +611,15 @@ export const COLOR_SWATCHES = {
       dark1:  "251, 235, 154",
       dark2:  "27, 24, 15",
       dark3:  "129, 117, 74",
-      isLight: true,
-      isDark: true,
+      isLight: false,
+      isDark: false,
     },
     {
       id: "d1-3",
-      primary: "192, 247, 101",
-      light1: "79, 91, 58",
-      light2: "208, 249, 139",
-      light3: "129, 153, 87",
+      primary: "189, 244, 163",
+      light1:  "65, 75, 46",
+      light2:  "207, 229, 171",
+      light3:  "117, 134, 87",
       dark1:  "222, 248, 149",
       dark2:  "22, 27, 19",
       dark3:  "129, 141, 94",
@@ -665,13 +665,13 @@ export const COLOR_SWATCHES = {
     /* Third Row */
     {
       id: "d2-0",
-      primary: "255, 124, 124",
-      light1: "111, 76, 44",
-      light2: "255, 190, 131",
-      light3: "161, 121, 84",
-      dark1:  "246, 171, 155",
-      dark2:  "40, 28, 27",
-      dark3:  "125, 86, 77",
+      primary: "255, 174, 163",
+      light1: "136, 74, 81",
+      light2: "255, 182, 172",
+      light3: "192, 112, 121",
+      dark1:  "254, 157, 157",
+      dark2:  "37, 19, 19",
+      dark3:  "131, 85, 85",
       isLight: false,
       isDark: true,
     },
@@ -705,9 +705,9 @@ export const COLOR_SWATCHES = {
       light1: "59, 94, 57",
       light2: "212, 251, 187",
       light3: "116, 171, 112",
-      dark1:  "193, 240, 182",
-      dark2:  "22, 29, 22",
-      dark3:  "96, 115, 94",
+      dark1:  "203, 235, 178",
+      dark2:  "20, 27, 18",
+      dark3:  "129, 145, 117",
       isLight: false,
       isDark: false,
     },
@@ -736,23 +736,23 @@ export const COLOR_SWATCHES = {
       isDark: false,
     },
     {
-      id: "d3-6",
-      primary: "240, 152, 236",
-      light1: "109, 69, 107",
-      light2: "232, 163, 229",
-      light3:  "150, 102, 147",
-      dark1:  "240, 152, 236",
-      dark2:  "32, 19, 30",
-      dark3:  "154, 112, 152",
+      id: "d2-6",
+      primary: "161, 137, 229",
+      light1: "115, 72, 123",
+      light2: "240, 199, 247",
+      light3: "175, 125, 184",
+      dark1:  "161, 137, 229",
+      dark2:  "33, 23, 40",
+      dark3:  "107, 95, 142",
       isLight: false,
       isDark: false,
     },
     /* Fourth Row */
     {
       id: "d3-0",
-      primary: "236, 100, 81",
+      primary: "254, 149, 123",
       light1: "137, 80, 68",
-      light2: "254, 162, 139",
+      light2: "255, 168, 146",
       light3: "182, 110, 94",
       dark1:  "255, 146, 122",
       dark2:  "35, 23, 21",
@@ -821,14 +821,14 @@ export const COLOR_SWATCHES = {
       isDark: false,
     },
     {
-      id: "d2-6",
-      primary: "161, 137, 229",
-      light1: "115, 72, 123",
-      light2: "240, 199, 247",
-      light3: "175, 125, 184",
-      dark1:  "161, 137, 229",
-      dark2:  "33, 23, 40",
-      dark3:  "107, 95, 142",
+      id: "d3-6",
+      primary: "197, 161, 240",
+      light1: "82, 61, 108",
+      light2: "194, 163, 232",
+      light3:  "118, 97, 145",
+      dark1:  "164, 141, 227",
+      dark2:  "28, 22, 38",
+      dark3:  "76, 65, 107",
       isLight: false,
       isDark: false,
     },
@@ -868,7 +868,7 @@ export const COLOR_SWATCHES = {
       dark1:  "221, 223, 147",
       dark2:  "42, 43, 36",
       dark3:  "103, 103, 79",
-      isLight: true,
+      isLight: false,
       isDark: false
     },
     {
@@ -880,7 +880,7 @@ export const COLOR_SWATCHES = {
       dark1:  "177, 192, 172",
       dark2:  "53, 58, 52",
       dark3:  "114, 126, 110",
-      isLight: true,
+      isLight: false,
       isDark: true,
     },
     {
@@ -892,7 +892,7 @@ export const COLOR_SWATCHES = {
       dark1:  "193, 218, 216",
       dark2:  "48, 53, 54",
       dark3:  "109, 117, 117",
-      isLight: true,
+      isLight: false,
       isDark: false,
     },
     {
@@ -904,7 +904,7 @@ export const COLOR_SWATCHES = {
       dark1:  "197, 207, 221",
       dark2:  "44, 44, 58",
       dark3:  "110, 118, 129",
-      isLight: true,
+      isLight: false,
       isDark: false,
     },
     {
@@ -916,7 +916,7 @@ export const COLOR_SWATCHES = {
       dark1:  "220, 190, 224",
       dark2:  "47, 43, 48",
       dark3:  "112, 96, 115",
-      isLight: true,
+      isLight: false,
       isDark: false,
     },
     /* Second Row */
@@ -953,14 +953,14 @@ export const COLOR_SWATCHES = {
       dark1:  "214, 215, 163",
       dark2:  "53, 54, 37",
       dark3:  "113, 114, 74",
-      isLight: true,
+      isLight: false,
       isDark: true,
     },
     {
       id: "p1-3",
       primary: "120, 138, 114",
       light1:  "58, 65, 55",
-      light2:  "138, 158, 132",
+      light2:  "201, 233, 147",
       light3:  "93, 109, 85",
       dark1: "177, 192, 172",
       dark2: "41, 44, 40",
@@ -1263,16 +1263,17 @@ export function getVertDistanceBetweenTwoElems(top: HTMLElement, bottom: HTMLEle
   }
 }
 
-export function getHozDistanceBetweenTwoElems(left: HTMLElement, right: HTMLElement, useLeftElemRight = true) {
-  const leftRect = left.getBoundingClientRect()
-  const rightRect = right.getBoundingClientRect()
+export function getHozDistanceBetweenTwoElems(options: { left: { elem: HTMLElement, edge?: "left" | "right"}, right: { elem: HTMLElement, edge?: "left" | "right"} }) {
+  const leftRect  = options.left.elem.getBoundingClientRect()
+  const rightRect = options.right.elem.getBoundingClientRect()
 
-  if (useLeftElemRight) {
-    return rightRect.left - leftRect.right
-  }
-  else {
-    return rightRect.left - leftRect.left
-  }
+  options.left.edge  = options.left.edge ?? "right"
+  options.right.edge = options.right.edge ?? "left"
+
+  const leftEdge  = options.left.edge === "right" ? leftRect.right : leftRect.left
+  const rightEdge = options.right.edge === "right" ? rightRect.right : rightRect.left
+
+  return rightEdge - leftEdge
 }
 
 /**
@@ -1386,3 +1387,11 @@ export function isNearBorderAndShouldScroll(containerElem: HTMLElement, cursorPo
       return null
 }
 } 
+
+
+export function capitalize(str: string) {
+  if (str.length === 0) {
+      return str
+  }
+  return str.charAt(0).toUpperCase() + str.slice(1)
+}

@@ -127,12 +127,11 @@
     }
 
     &__title {
-        @include text-style(0.85, 500, 1.24rem);
+        @include text-style(1, 500, 1.24rem, "DM Sans");
         white-space: nowrap;
         margin-right: 9px;
         flex: 1;
     }
-
     &__icon {
         @include center;
         position: relative;
@@ -173,7 +172,7 @@
     z-index: 1000;
     padding: 4px 3px 5px 3px;
     border-radius: 10px;
-    background-color: var(--dropdownMenuBgColor1);
+    background-color: var(--bg-2);
     box-shadow: 0px 1px 16.4px 4px rgba(0, 0, 0, 0.05);
     border: 1px solid rgba(0, 0, 0, 0.08);
     width: auto;

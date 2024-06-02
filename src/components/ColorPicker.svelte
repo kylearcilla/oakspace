@@ -76,16 +76,17 @@
     .color-picker {
         padding: 16px 15px 17px 15px;
         border-radius: 18px;
-        background-color: var(--dropdownMenuBgColor1);
+        background-color: var(--bg-2);
         border: 1px solid rgba(var(--textColor1), 0.03);
         
         &--light {
-            background-color: var(--dropdownMenuBgColor1);
+            background-color: var(--bg-2);
             box-shadow: 0px 1px 16.4px 4px rgba(0, 0, 0, 0.05);
             border-color: rgba(0, 0, 0, 0.08);
         }
         &--light &__swatch--picked {
-            border-color: #88A6F3;
+            border-color: #88A6F3 !important;
+            border-width: 2px !important;
         }
         &--light &__swatch {
             border: 1.5px solid rgb(var(--border-color), 0.11);

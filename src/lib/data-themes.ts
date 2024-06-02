@@ -7,7 +7,9 @@ export const defaultThemes: DefaultTheme[] = [
         styling: {
             isDark: true,
             hasTwin: true,
-            primaryBgColor: "#0C0B0C",
+            backgroundOne: "#0C0B0C",
+            backgroundTwo: "#141314",
+            backgroundThree: "#1b1b1b",
             fgColor1: "163, 182, 255",
             fgColor2: "163, 182, 255",
             textColor1: "255, 255, 255",
@@ -78,8 +80,6 @@ export const defaultThemes: DefaultTheme[] = [
             tasksCheckColor: "#110F11",
             tasksSubtaskFocusColor: "",
             tasksLightTextColor: "#242224",
-            dropdownMenuBgColor1: "#141314",
-            dropdownMenuBgHoverColor1: "#1b1b1b",
         }
     } as DefaultTheme,
     {
@@ -90,7 +90,9 @@ export const defaultThemes: DefaultTheme[] = [
         styling: {
             isDark: false,
             hasTwin: false,
-            primaryBgColor: "#FFFEFF",
+            backgroundOne: "#FFFEFF",
+            backgroundTwo: "#ffffff",
+            backgroundThree: "#ffffff",
             fgColor1: "163, 182, 255",
             fgColor2: "163, 182, 255",
             sessionBgColor: "#CEC4B0",
@@ -161,8 +163,6 @@ export const defaultThemes: DefaultTheme[] = [
             tasksCheckColor: "#FDF8F0",
             tasksSubtaskFocusColor: "",
             tasksLightTextColor: "#D3CAC1",
-            dropdownMenuBgColor1: "#ffffff",
-            dropdownMenuBgHoverColor1: "#ffffff",
         }
     } as DefaultTheme
 ]
@@ -175,7 +175,9 @@ export const darkColorThemes: ColorTheme[] = [
         styling: {
             isDark: true,
             hasTwin: false,
-            primaryBgColor: "#120e11",
+            backgroundOne: "#120e11",
+            backgroundTwo: "#131012",
+            backgroundThree: "#171415",
             fgColor1: "228, 188, 150",
             fgColor2: "228, 188, 150",
             sessionBgColor: "#FAF6ED",
@@ -246,8 +248,6 @@ export const darkColorThemes: ColorTheme[] = [
             tasksCheckColor: "#1C1A19",
             tasksSubtaskFocusColor: "",
             tasksLightTextColor: "#2A2427",
-            dropdownMenuBgColor1: "#131012",
-            dropdownMenuBgHoverColor1: "#171415",
         }
     },
     {
@@ -258,7 +258,9 @@ export const darkColorThemes: ColorTheme[] = [
         styling: {
             isDark: true,
             hasTwin: false,
-            primaryBgColor: "#12100f",
+            backgroundOne: "#12100f",
+            backgroundTwo: "#191817",
+            backgroundThree: "#201f1e",
             fgColor1: "86, 78, 64",
             fgColor2: "148, 113, 93",
             sessionBgColor: "#FAF6ED",
@@ -329,8 +331,6 @@ export const darkColorThemes: ColorTheme[] = [
             tasksCheckColor: "#1C1A19",
             tasksSubtaskFocusColor: "",
             tasksLightTextColor: "#363331",
-            dropdownMenuBgColor1: "#191817",
-            dropdownMenuBgHoverColor1: "#201f1e",
         }
     },
     /* {
@@ -341,7 +341,9 @@ export const darkColorThemes: ColorTheme[] = [
         styling: {
             isDark: true,
             hasTwin: false,
-            primaryBgColor: "#0D0C0D",
+            backgroundOne: "#0D0C0D",
+            backgroundTwo: "#141314",
+            backgroundThree: "#141314",
             fgColor1: "175, 159, 217",
             fgColor2: "238, 214, 172",
             sessionBgColor: "#FAF6ED",
@@ -412,8 +414,6 @@ export const darkColorThemes: ColorTheme[] = [
             tasksCheckColor: "#FDF8F0",
             tasksSubtaskFocusColor: "",
             tasksLightTextColor: "#D3CAC1",
-            dropdownMenuBgColor1: "#141314",
-            dropdownMenuBgHoverColor1: "#141314",
         }
     } */
 ]
@@ -428,7 +428,9 @@ export const lightColorThemes: ColorTheme[] = [
         styling: {
             isDark: false,
             hasTwin: false,
-            primaryBgColor: "#ECE7D6",
+            backgroundOne: "#ECE7D6",
+            backgroundTwo: "#FBF7E9",
+            backgroundThree: "#F4F0E3",
             fgColor1: "160, 148, 113",
             fgColor2: "160, 148, 113",
             sessionBgColor: "#FAF6ED",
@@ -499,8 +501,6 @@ export const lightColorThemes: ColorTheme[] = [
             tasksCheckColor: "#898780",
             tasksSubtaskFocusColor: "",
             tasksLightTextColor: "#A6A39A",
-            dropdownMenuBgColor1: "#FBF7E9",
-            dropdownMenuBgHoverColor1: "#F4F0E3",
         }
     },
     {
@@ -511,7 +511,9 @@ export const lightColorThemes: ColorTheme[] = [
         styling: {
             isDark: false,
             hasTwin: false,
-            primaryBgColor: "#fef9f0",
+            backgroundOne: "#fef9f0",
+            backgroundTwo: "#FFFCF6",
+            backgroundThree: "#F8F5EF",
             fgColor1: "156, 160, 140",
             fgColor2: "206, 196, 176",
             sessionBgColor: "#CEC4B0",
@@ -582,8 +584,6 @@ export const lightColorThemes: ColorTheme[] = [
             tasksCheckColor: "#FAF5EB",
             tasksSubtaskFocusColor: "",
             tasksLightTextColor: "#D3CAC",
-            dropdownMenuBgColor1: "#FFFCF6",
-            dropdownMenuBgHoverColor1: "#F8F5EF",
         }
     },
     {
@@ -594,7 +594,9 @@ export const lightColorThemes: ColorTheme[] = [
         styling: {
             isDark: false,
             hasTwin: false,
-            primaryBgColor: "#FAF5EB",
+            backgroundOne: "#FAF5EB",
+            backgroundTwo: "#fff9ee",
+            backgroundThree: "#f6f0e4",
             fgColor1: "109, 120, 154",
             fgColor2: "211, 198, 175",
             sessionBgColor: "#FEFBF4",
@@ -665,8 +667,6 @@ export const lightColorThemes: ColorTheme[] = [
             tasksCheckColor: "#FFF9EE",
             tasksSubtaskFocusColor: "",
             tasksLightTextColor: "#D3CAC",
-            dropdownMenuBgColor1: "#fff9ee",
-            dropdownMenuBgHoverColor1: "#f6f0e4",
         }
     },
     {
@@ -677,7 +677,9 @@ export const lightColorThemes: ColorTheme[] = [
         styling: {
             isDark: false,
             hasTwin: false,
-            primaryBgColor: "#FAF5EB",
+            backgroundOne: "#FAF5EB",
+            backgroundTwo: "#fff9ee",
+            backgroundThree: "#f6f0e4",
             fgColor1: "117, 126, 108",
             fgColor2: "211, 198, 175",
             sessionBgColor: "#FEFBF4",
@@ -748,8 +750,6 @@ export const lightColorThemes: ColorTheme[] = [
             tasksCheckColor: "#FFF9EE",
             tasksSubtaskFocusColor: "",
             tasksLightTextColor: "#D3CAC",
-            dropdownMenuBgColor1: "#fff9ee",
-            dropdownMenuBgHoverColor1: "#f6f0e4",
         }
     },
     {
@@ -760,7 +760,9 @@ export const lightColorThemes: ColorTheme[] = [
         styling: {
             isDark: false,
             hasTwin: false,
-            primaryBgColor: "#FAF5EB",
+            backgroundOne: "#FAF5EB",
+            backgroundTwo: "#f8f4ed",
+            backgroundThree: "#f2eee7",
             fgColor1: "211, 205, 190",
             fgColor2: "218, 198, 178",
             sessionBgColor: "#FEFBF4",
@@ -831,8 +833,6 @@ export const lightColorThemes: ColorTheme[] = [
             tasksSubtaskFocusColor: "",
             tasksLightTextColor: "#D3CAC1",
             midPanelAccentTextColor: "#F5F0E6",
-            dropdownMenuBgColor1: "#f8f4ed",
-            dropdownMenuBgHoverColor1: "#f2eee7",
         }
     },
     {
@@ -843,7 +843,9 @@ export const lightColorThemes: ColorTheme[] = [
         styling: {
             isDark: false,
             hasTwin: false,
-            primaryBgColor: "#FEFAF9",
+            backgroundOne: "#FEFAF9",
+            backgroundTwo: "#ffffff",
+            backgroundThree: "#F8F8F8",
             fgColor1: "188, 161, 155",
             fgColor2: "195, 183, 183",
             sessionBgColor: "#DACDCD",
@@ -914,8 +916,6 @@ export const lightColorThemes: ColorTheme[] = [
             tasksCheckColor: "#FEFAF9",
             tasksSubtaskFocusColor: "",
             tasksLightTextColor: "#E4E2E",
-            dropdownMenuBgColor1: "#ffffff",
-            dropdownMenuBgHoverColor1: "#F8F8F8",
         }
     },
     {
@@ -926,7 +926,9 @@ export const lightColorThemes: ColorTheme[] = [
         styling: {
             isDark: false,
             hasTwin: false,
-            primaryBgColor: "#FFF9F1",
+            backgroundOne: "#FFF9F1",
+            backgroundTwo: "#fffbf6",
+            backgroundThree: "#fbf7f2",
             fgColor1: "168, 169, 153",
             fgColor2: "168, 169, 153",
             sessionBgColor: "#DACDCD",
@@ -997,8 +999,6 @@ export const lightColorThemes: ColorTheme[] = [
             tasksCheckColor: "#FAF5EB",
             tasksSubtaskFocusColor: "",
             tasksLightTextColor: "#D3CAC",
-            dropdownMenuBgColor1: "#fffbf6",
-            dropdownMenuBgHoverColor1: "#fbf7f2",
         }
     },
     {
@@ -1009,7 +1009,9 @@ export const lightColorThemes: ColorTheme[] = [
         styling: {
             isDark: false,
             hasTwin: false,
-            primaryBgColor: "#FFFBF4",
+            backgroundOne: "#FFFBF4",
+            backgroundTwo: "#FFFBF4",
+            backgroundThree: "#F8F4ED",
             fgColor1: "213, 172, 154",
             fgColor2: "125, 130, 114",
             sessionBgColor: "#FFFFFC",
@@ -1080,8 +1082,6 @@ export const lightColorThemes: ColorTheme[] = [
             tasksCheckColor: "#FAF5EB",
             tasksSubtaskFocusColor: "",
             tasksLightTextColor: "#DBDBD",
-            dropdownMenuBgColor1: "#FFFBF4",
-            dropdownMenuBgHoverColor1: "#F8F4ED",
         }
     },
     {
@@ -1092,7 +1092,9 @@ export const lightColorThemes: ColorTheme[] = [
         styling: {
             isDark: false,
             hasTwin: false,
-            primaryBgColor: "#FFF7E9",
+            backgroundOne: "#FFF7E9",
+            backgroundTwo: "#fff9ef#D3CAC1",
+            backgroundThree: "#f7f1e6",
             fgColor1: "189, 177, 163",
             fgColor2: "189, 177, 163",
             sessionBgColor: "#CEC4B0",
@@ -1163,8 +1165,6 @@ export const lightColorThemes: ColorTheme[] = [
             tasksCheckColor: "#FFF7E9",
             tasksSubtaskFocusColor: "",
             tasksLightTextColor: "#D3CAC1",
-            dropdownMenuBgColor1: "#fff9ef#D3CAC1",
-            dropdownMenuBgHoverColor1: "#f7f1e6",
         }
     },
     {
@@ -1175,7 +1175,9 @@ export const lightColorThemes: ColorTheme[] = [
         styling: {
             isDark: false,
             hasTwin: false,
-            primaryBgColor: "#FFF9F4",
+            backgroundOne: "#FFF9F4",
+            backgroundTwo: "#fffaf5",
+            backgroundThree: "#F8F4F0",
             fgColor1: "167, 177, 194",
             fgColor2: "208, 194, 216",
             sessionBgColor: "#FFFFFC",
@@ -1246,8 +1248,6 @@ export const lightColorThemes: ColorTheme[] = [
             tasksCheckColor: "#FDF8F0",
             tasksSubtaskFocusColor: "",
             tasksLightTextColor: "#D3CAC1",
-            dropdownMenuBgColor1: "#fffaf5",
-            dropdownMenuBgHoverColor1: "#F8F4F0",
         }
     },
     {
@@ -1258,7 +1258,9 @@ export const lightColorThemes: ColorTheme[] = [
         styling: {
             isDark: false,
             hasTwin: false,
-            primaryBgColor: "#FFFBF4",
+            backgroundOne: "#FFFBF4",
+            backgroundTwo: "#fffaf5",
+            backgroundThree: "#F8F4F0",
             fgColor1: "177, 196, 205",
             fgColor2: "224, 197, 173",
             sessionBgColor: "#FFFFFC",
@@ -1329,8 +1331,6 @@ export const lightColorThemes: ColorTheme[] = [
             tasksCheckColor: "#FDF8F0",
             tasksSubtaskFocusColor: "",
             tasksLightTextColor: "#D3CAC1",
-            dropdownMenuBgColor1: "#fffaf5",
-            dropdownMenuBgHoverColor1: "#F8F4F0",
         }
     },
     {
@@ -1341,7 +1341,9 @@ export const lightColorThemes: ColorTheme[] = [
         styling: {
             isDark: false,
             hasTwin: false,
-            primaryBgColor: "#f7f2ea",
+            backgroundOne: "#f7f2ea",
+            backgroundTwo: "#f9f6ed",
+            backgroundThree: "#f1eddf",
             fgColor1: "168, 158, 179",
             fgColor2: "168, 158, 179",
             sessionBgColor: "#FFFFFC",
@@ -1412,8 +1414,6 @@ export const lightColorThemes: ColorTheme[] = [
             tasksCheckColor: "#FDF8F0",
             tasksSubtaskFocusColor: "",
             tasksLightTextColor: "#D3CAC",
-            dropdownMenuBgColor1: "#f9f6ed",
-            dropdownMenuBgHoverColor1: "#f1eddf",
         }
     } as ColorTheme
 ]

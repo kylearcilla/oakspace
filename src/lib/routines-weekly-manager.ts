@@ -1,6 +1,6 @@
 import { writable, type Writable, get } from "svelte/store"
 import { RoutinesManager } from "./routines-manager"
-import { getElemById, getDistBetweenTwoPoints, initFloatElemPos, isTargetTextEditor, getElemNumStyle, findAncestor } from "./utils-general"
+import { getElemById, getDistBetweenTwoPoints, initFloatElemPos, isTargetTextEditor, getElemNumStyle, findAncestor, clamp } from "./utils-general"
 import { ViewOption, EMPTY_CORES, ROUTINE_BLOCKS_CONTAINER_ID } from "./utils-routines"
 
 /**
@@ -15,8 +15,8 @@ export class WeeklyRoutinesManager extends RoutinesManager {
     weekRoutineElems: Writable<WeekBlockElems | null> = writable(null)
     dayBreakdown:     Writable<DayBreakdown| null> = writable(null)
 
-    editDayKey: keyof WeeklyRoutineBlocks | null = null
-    editDayKeyStore: Writable<keyof WeeklyRoutineBlocks | null> = writable(null)
+    editDayKey:       keyof WeeklyRoutineBlocks | null = null
+    editDayKeyStore:  Writable<keyof WeeklyRoutineBlocks | null> = writable(null)
 
     editDayIdx = -1
     editOffsetIdx = -1
@@ -29,19 +29,18 @@ export class WeeklyRoutinesManager extends RoutinesManager {
     /**
      * @param weekRoutine   User's currently chosen routine which should be in view
      */
-    constructor(weekRoutine?: WeeklyRoutine) {
+    constructor(weekRoutine?: WeeklyRoutine | null) {
         super()
-
-        if (weekRoutine) {
-            this.updateCurrentWeekRoutine(weekRoutine, false)
-        }
+        this.updateCurrentWeekRoutine(weekRoutine ?? null, false)
     }
 
     /**
      * Updates current weekly routine in view.
      * 
-     * @param  weekRoutine     Set the current routine in view to this
-     * @param  doPrcessBlocks  Should create the routine elements of the set weekly routine.
+     * @param  weekRoutine     - Set the current routine in view to this
+     * 
+     * @param  doPrcessBlocks  - Should create the routine elements of the set weekly routine.
+     *                           Used in subsequent initializations of routines. (At initial, component wait for mount first.)
      */
     updateCurrentWeekRoutine(weekRoutine: WeeklyRoutine | null, doProcessBlocks = true) {
         this.chosenRoutine = weekRoutine
@@ -68,6 +67,8 @@ export class WeeklyRoutinesManager extends RoutinesManager {
      * 
      */
     processWeeklyRoutine() {
+        if (this.isViewEmpty()) return
+
         const routineElems = get(this.weekRoutineElems)!
 
         // analytics
@@ -103,9 +104,9 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         }
         
         this.weekCores = this.getWeekCoreAvgs(weekCores)
-
         this.coreBreakdown.set(weekCores)
         this.tagBreakdown.set(weekTagData.sort((a, b) => b.data.totalTime - a.data.totalTime))
+
         this.weekRoutineElems.set(routineElems)
     }
 
@@ -495,6 +496,8 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         const leftPos = leftOffset
 
         this.editDayIdx = Math.floor(leftPos / colWidth)
+        this.editDayIdx = clamp(0, this.editDayIdx, 6)
+
         this.initEditDayContextFromIdx(this.editDayIdx)
     }
 
@@ -715,13 +718,19 @@ export class WeeklyRoutinesManager extends RoutinesManager {
 
     onBlockStretchEditEnd = () => {
         this.removeStretchEventListeners()
+
         if (!this.allowStrechEdit) return
 
+        const editContext = get(this.editContext)
+
         super.onBlockStretchEditEnd()
-        this.updateSingleDayEdit()
-        this.updateBreakdownData()
-        
-        this.resetEditState()
+
+        if (editContext === "old-stretch") {
+            this.updateSingleDayEdit()
+            this.updateBreakdownData()
+            
+            this.resetEditState()
+        }
     }
 
     removeStretchEventListeners() {
@@ -908,8 +917,13 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         this.updateSingleDayEdit()
     }
 
+    /**
+     * Called when user has updated the block after editing it in the edit modal.
+     * @param updatedBlock
+     */
     onConcludeModalEdit(updatedBlock: RoutineBlockElem | null) {
         super.onConcludeModalEdit(updatedBlock)
+
         this.updateSingleDayEdit()
     }
 
@@ -1027,6 +1041,13 @@ export class WeeklyRoutinesManager extends RoutinesManager {
     }
 
     /* Misc Handlers */
+
+    isViewEmpty() {
+        const routineElems = get(this.weekRoutineElems)!
+        const rawRoutine   = get(this.weekRoutine)!
+
+        return !routineElems || !rawRoutine
+    }
 
     /**
      * Update the current view option for week view.

@@ -126,9 +126,12 @@ export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boo
     const mouseX = event.clientX
     const context = get(globalContext)
 
-    let rightBound = context.isLeftWideMenuOpen ? LEFT_BAR_RIGHT_BOUND_BIG : LEFT_BAR_RIGHT_BOUND
+    // let rightBound = context.isLeftWideMenuOpen ? LEFT_BAR_RIGHT_BOUND_BIG : LEFT_BAR_RIGHT_BOUND
+    let isInArea = mouseX < LEFT_BAR_LEFT_BOUND
+    let isActiveRoutineOpen = context.doOpenActiveRoutine
+    let isLeftNarrowBarOpen = context.isLeftNarrowBarOpen
 
-    if (!context.isLeftNarrowBarOpen && mouseX < LEFT_BAR_LEFT_BOUND) {
+    if (!isLeftNarrowBarOpen && !isActiveRoutineOpen && isInArea) {
         updteGlobalContext({ ...get(globalContext), isLeftNarrowBarOpen: true  })
         return false
     }
@@ -247,6 +250,6 @@ export function toggleFloatSideBar() {
 
 export function toggleActiveRoutine() {
     globalContext.update((state: GlobalContext) => {
-        return { ...state, doOpenActiveRoutine: !state.doOpenActiveRoutine }
+        return { ...state, doOpenActiveRoutine: !state.doOpenActiveRoutine, isLeftNarrowBarOpen: false }
     })
 }

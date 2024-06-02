@@ -9,9 +9,9 @@
 
     $: isDarkTheme  = $themeState.isDarkTheme
     $: deleteColors = {
-        color1: isDarkTheme ? "#ECAAAE" : "",
-        color2: isDarkTheme ? "#181111" : "",
-        color3: isDarkTheme ? "#301617" : ""
+        color1: isDarkTheme ? "#ECAAAE" : "#583e40",
+        color2: isDarkTheme ? "#181111" : "#d4ac9e",
+        color3: isDarkTheme ? "#322122" : "#C29B90"
     }
 
     let _options = {
@@ -25,12 +25,17 @@
     let holdEnd = false
     let isDelete = options.type === "delete"
 
-    function onBtnPointerDown() {
-        if (_options.type !== "delete") {
+    function onConfirmPointerDown(pe: PointerEvent) {
+        if (pe.button === 2) return
+        isHolding = true
+    }
+    function onConfirmPointerUp(pe: PointerEvent) {
+        if (pe.button === 2) return
+        isHolding = false
+
+        if (_options.type != "delete") {
             onOk()
-            return
         }
-        if (!holdEnd) isHolding = true
     }
     function onHoldEnd() {
         holdEnd = true
@@ -48,12 +53,22 @@
     }
 </script>
 
-<Modal options={{ borderRadius: "14px"}} onClickOutSide={() => onCancel()}>
-    <div class="confirm" on:pointerup={onPointerUp} on:mouseleave={onMouseLeave}>
+<Modal options={{ borderRadius: "10px"}} onClickOutSide={() => onCancel()}>
+    <div 
+        class="confirm"
+        class:confirm--light={!isDarkTheme}
+        class:confirm--non-delete={_options.type != "delete"}
+        on:pointerup={onPointerUp} 
+        on:mouseleave={onMouseLeave}
+    >
         {#if _options.caption}
-            <span>{_options.caption}</span>
+            <span class="confirm__caption">
+                {_options.caption}
+            </span>
         {/if}
-        <h1>{text}</h1>
+        <div class="confirm__text">
+            {text}
+        </div>
         <div class="confirm__btns-container">
             <button
                 class="confirm__cancel-btn"
@@ -66,12 +81,16 @@
                 class:confirm__ok-btn--holding={isHolding}
                 style:background-color={`${isDelete ? deleteColors.color2 : "rgba(var(--fgColor1)"}`}
                 style:--hold-fill-color={`${deleteColors.color3}`}
-                on:pointerdown={onBtnPointerDown}
-                on:mouseup={() => isHolding = false}
+                on:pointerdown={onConfirmPointerDown}
+                on:pointerup={onConfirmPointerUp}
                 on:animationend={onHoldEnd}
             >
                 <span style:color={`${isDelete ? deleteColors.color1 : "rgba(var(--textColor1)"}`}>
-                    {_options.ok}
+                    {#if isHolding && _options.type === "delete"}
+                        Deleting...
+                    {:else}
+                        {_options.ok}
+                    {/if}
                 </span>
             </button>
         </div>
@@ -83,22 +102,42 @@
 
     .confirm { 
         width: 350px;
-        padding: 25px 34px 24px 34px;
-        span {
-            @include text-style(0.2, 400, 1.25rem);
-            margin-bottom: 10px;
+        padding: 16px 21px 19px 21px;
+
+        &--light &__caption {
+            @include text-style(0.7, 600);
+        }
+        &--light &__text {
+            @include text-style(1, 600);
+        }
+        &--light &__cancel-btn {
+            @include txt-color(0.08, "bg");
+            font-weight: 600;
+        }
+        &--light &__ok-btn:hover {
+            filter: brightness(0.94);
+        }
+        &--light#{&}--non-delete &__ok-btn span {
+            color: var(--modalBgColor) !important;
+        }
+
+        &__caption {
+            @include text-style(0.2, 500, 1.25rem);
+            margin-bottom: 7px;
             display: block;
         }
-        h1 {
-            @include text-style(0.85, 400, 1.44rem, "DM Sans");
+        &__text {
+            @include text-style(0.85, 400, 1.44rem);
             margin-bottom: 32px;
         }
         button {
-            padding: 14px 25px;
+            padding: 12px 25px;
             border-radius: 9px;
             @include center;
-            @include text-style(1, _, 1.34rem, "DM Sans");
+            @include text-style(1, _, 1.34rem);
+            transition: 0.01s ease-in-out;
         }
+
         &__btns-container {
             width: 100%;
             @include flex(center);
@@ -118,6 +157,7 @@
             font-weight: 500;
             position: relative;
             overflow: hidden;
+            transition: 0.14s cubic-bezier(.4,0,.2,1) !important;
             
             &--holding::before {
                 animation: hold-confirm 1.5s ease-in-out;

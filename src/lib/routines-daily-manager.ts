@@ -394,7 +394,11 @@ export class DailyRoutinesManager extends RoutinesManager {
     }
 
     newDailyRoutine(newRoutine: DailyRoutine) {
-        this.dailyRoutines.update((routines) => [...routines!, newRoutine])
+        this.dailyRoutines.update((routines) => {
+            const length = routines!.length
+
+            return [...routines!, { ...newRoutine, id: length + "" } ]
+        })
     }
 
     /* DOM Helpers */

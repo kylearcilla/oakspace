@@ -498,11 +498,11 @@
     }
     .gradient-container {
         &--top {
-            background: linear-gradient(180deg, var(--primaryBgColor) 20%, transparent) !important;
+            background: linear-gradient(180deg, var(--bg-1) 20%, transparent) !important;
             height: 20px;
         }
         &--bottom {
-            background: linear-gradient(0deg, var(--primaryBgColor) 20%, transparent) !important;
+            background: linear-gradient(0deg, var(--bg-1) 20%, transparent) !important;
             height: 20px;
         }
     }

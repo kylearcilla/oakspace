@@ -55,7 +55,7 @@ export class InputManager {
         this.updateState({ value: newVal })
 
         if (this.handlers?.onInputHandler) {
-            this.handlers!.onInputHandler(e, newVal)
+            this.handlers!.onInputHandler(e, newVal, newVal.length)
         }
     }
     updateState(newState: Partial<InputManager>) {

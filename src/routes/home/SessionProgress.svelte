@@ -186,7 +186,7 @@
         }
         &--home &__checkpoint {
             border: 1px solid var(--baseTrackColor1);
-            background-color: var(--primaryBgColor);
+            background-color: var(--bg-1);
             
             &--finished {
                 margin-bottom: 0px;
@@ -215,7 +215,7 @@
             top: 28.5px;
         }
         &--home &__checkpoint {
-            background-color: var(--primaryBgColor);
+            background-color: var(--bg-1);
             border: 1px solid var(--baseTrackColor1);
         }
         &--light &__progress-line {

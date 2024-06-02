@@ -16,6 +16,7 @@
 </script>
 
 <button 
+    type="submit"
     class="async-btn" 
     class:async-btn--loading={isLoading}
     class:async-btn--light={isLight}

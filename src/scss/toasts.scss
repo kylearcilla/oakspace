@@ -118,7 +118,7 @@ $header-icon-size: 17px;
     // // width: 250px;
     // border-radius: 14px;
     // padding: $padding-top $padding-right $padding-bottom $padding-left;
-    // background-color: var(--dropdownMenuBgColor1);
+    // background-color: var(--bg-2);
     // border: 0.5px solid rgba(white, 0.05);
 }
 
@@ -128,15 +128,15 @@ $header-icon-size: 17px;
     /* Padding */
     --padding-top: 11px;
     --padding-right: 25px;
-    --padding-bottom: 7px;
+    --padding-bottom: 9px;
     --padding-left: 16px;
 
     gap: 6px;
-    border-radius: 14px;
+    border-radius: 18px;
     background: var(--normal-bg);
     width: var(--width);
     padding: var(--padding-top) var(--padding-right) var(--padding-bottom) var(--padding-left);
-    background-color: var(--dropdownMenuBgColor1);
+    background-color: var(--bg-2);
     border: 0.5px solid rgba(white, 0.05);
     
     // Context Message UI
@@ -183,6 +183,14 @@ $header-icon-size: 17px;
     }
     &--context &__content {
         @include flex(center);
+    }
+
+    // light adjustments
+    &--light {
+        border: 1px solid rgba(var(--context-rich-color-1), 0.17) !important;
+    }
+    &--light &__header-title {
+        font-weight: 600;
     }
 
     /* For display case only */
@@ -265,7 +273,6 @@ $header-icon-size: 17px;
     }
     &__close-btn-icon {
         opacity: 0.5;
-        @include circle(9px);
         @include center;
     }
 }

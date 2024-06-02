@@ -5,7 +5,7 @@
 	import { Icon } from '$lib/enums';
 	import { themeState } from '$lib/store'
 	import { toast } from '$lib/utils-toast'
-	import { getColorTrio } from '$lib/utils-general'
+	import { capitalize, getColorTrio } from '$lib/utils-general'
 	import { EDIT_BLOCK_OPTIONS, ROUTINE_BLOCKS_CONTAINER_ID, formatCoreData, getBlockStyling } from '$lib/utils-routines'
 	import { InputManager, TextEditorManager } from '$lib/inputs'
 	import { getTimeFromIdx, minsFromStartToHHMM, minsToHHMM } from '$lib/utils-date'
@@ -17,6 +17,7 @@
 	import ConfirmationModal from '../../../../components/ConfirmationModal.svelte'
 	import SvgIcon from '../../../../components/SVGIcon.svelte'
 	import { DailyRoutinesManager } from '$lib/routines-daily-manager'
+	import DropdownBtn from '../../../../components/DropdownBtn.svelte'
 
     export let data: { routines: DailyRoutine[] }
 
@@ -28,7 +29,7 @@
     let routinesListContainerRef: HTMLElement
     let blocksContainerWidth = 0
     
-    let manager = new DailyRoutinesManager(data.routines)
+    let manager = new DailyRoutinesManager([])
 
     let isContextMenuOpen = false
     let hasSetPointerCapture = false
@@ -37,6 +38,11 @@
 
     let colorsOpen = false
     let colorsPos: OffsetPoint | null = null
+
+    // breakdown
+    let isBreakdownDropdownOpen = false
+    let breakdownOption: "tags" | "cores" = "cores"
+    let breakdownVal: "avg" | "sum" = "avg"
 
     // daily routines
     let isDeleteDailyRoutineConfirmOpen = false
@@ -65,10 +71,7 @@
     $: lockInteraction   = isContextMenuOpen || colorsOpen
 
     $: contextMenuPos = $_contextMenuPos
-
     $: initTextEditors(editDayRoutine)
-
-    $: console.log(editingBlock?.isDragging)
 
     let titleInput: Writable<InputManager>
     let description: Writable<InputManager>
@@ -110,6 +113,13 @@
         if (!newRoutine) return
 
         manager.newDailyRoutine(newRoutine)
+
+        requestAnimationFrame(() => {
+            if (dailyRoutines.length === 1) {
+                manager.initEditRoutine(dailyRoutines[0])
+            }
+        })
+
     }
 
     function onDailyRoutineClicked(routineIdx: number) {
@@ -137,7 +147,7 @@
             id: "routine-title-input",
             doAllowEmpty: false,
             handlers: {
-                onInputHandler: manager.updateTitle
+                onInputHandler: (e, val) => manager.updateTitle(val)
             }
         })).state
     
@@ -147,7 +157,7 @@
             maxLength: 500,
             id: "routine-description",
             handlers: {
-                onInputHandler:  manager.updateDescription
+                onInputHandler: (e, val) => manager.updateDescription(val)
             }
         })).state
     }
@@ -203,20 +213,24 @@
     class="routines"
     class:routines--light={isLightTheme}
     class:routines--dark={!isLightTheme}
+    class:routines--empty={dailyRoutines.length === 0}
 >
     <!-- Routines List -->
     <div class="routines__collection" bind:this={routinesListContainerRef}>
-        <ul>
+        <div class="routines__collection-header">
+            <h3>Routines</h3>
             <button 
                 class="routines__add-new-routine"
                 on:click={() => openNewRoutineModal = true}
             >
-                <span>New Routine</span>
+                <span>Add</span>
                 <SvgIcon 
                     icon={Icon.Add}
-                    options={{ scale: 0.89, strokeWidth: 2 }}
+                    options={{ scale: 0.92, strokeWidth: 2 }}
                 />
             </button>
+        </div>
+        <ul>
             {#each dailyRoutines as routine, routineIdx}
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <li 
@@ -256,6 +270,11 @@
                 }
             }}
         />
+        {#if dailyRoutines.length === 0}
+            <span class="routine__collection-empty">
+                Empty
+            </span>
+        {/if}
     </div>
     <div class="routines__divider routines__divider--first"></div>
     <!-- Picked Routine Details -->
@@ -296,22 +315,72 @@
         </div>
         <!-- Breakdown -->
         <div class="routine__breakdown">
+            <div class="routine__breakdown-header">
+                <DropdownBtn 
+                    id={"breakdown-option"}
+                    isActive={isBreakdownDropdownOpen}
+                    options={{
+                        noBg: true,
+                        pickedOptionName: capitalize(breakdownOption),
+                        styles: { 
+                            fontSize: "1.2rem", padding: "4px 12px 4px 11px", margin: "0px 0px 0px -10px",
+                            opacity: 1, fontFamily: "DM Mono"
+                        },
+                        onClick: () => { 
+                            isBreakdownDropdownOpen = !isBreakdownDropdownOpen
+                        },
+                    }}
+                />
+                <div class="routine__breakdown-options">
+                    <button 
+                        class="routine__breakdown-options-btn" 
+                        class:full-opacity={breakdownVal === "avg"}
+                        on:click={() => breakdownVal = "avg"}
+                    >
+                        Avg
+                    </button>
+                    <button 
+                        class="routine__breakdown-options-btn" 
+                        class:full-opacity={breakdownVal === "sum"}
+                        on:click={() => breakdownVal = "sum"}
+                    >
+                        Sum
+                    </button>
+                </div>
+                <DropdownList 
+                    id={"breakdown-option"}
+                    isHidden={!isBreakdownDropdownOpen} 
+                    options={{
+                        listItems: [{ name: "Cores" }, { name: "Tags" }],
+                        pickedItem: capitalize(breakdownOption),
+                        position: { top: "26px", left: "-10px" },
+                        styling:  { width: "80px" },
+                        onClickOutside: () => { 
+                            isBreakdownDropdownOpen = false
+                        },
+                        onListItemClicked: (context) => {
+                            breakdownOption = context.idx === 0 ? "cores" : "tags"
+                            isBreakdownDropdownOpen = false
+                        }
+                    }}
+                />
+            </div>
             <!-- Cores -->
-            <div class="routine__core-breakdown">
-                <h3>Cores</h3>
-                {#if coreBreakdown}
-                    <div class="routine__cores">
+            <div class="routine__core-breakdown" class:hide={breakdownOption === "tags"}>
+                <div class="routine__cores">
+                    {#if coreBreakdown}
+                        {@const prop = breakdownVal === "avg" ? "avgTime" : "totalTime"}
                         <div class="routine__cores-col">
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Sleeping</div>
                                 <div class="routine__cores-value">
-                                    {formatCoreData(coreBreakdown.sleeping.totalTime)}
+                                    {formatCoreData(coreBreakdown.sleeping[prop])}
                                 </div>
                             </div>
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Awake</div>
                                 <div class="routine__cores-value">
-                                    {formatCoreData(coreBreakdown.awake.totalTime)}
+                                    {formatCoreData(coreBreakdown.awake[prop])}
                                 </div>
                             </div>
                         </div>
@@ -320,13 +389,13 @@
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Working</div>
                                 <div class="routine__cores-value">
-                                    {formatCoreData(coreBreakdown.working.totalTime)}
+                                    {formatCoreData(coreBreakdown.working[prop])}
                                 </div>
                             </div>
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Self-Care</div>
                                 <div class="routine__cores-value">
-                                    {formatCoreData(coreBreakdown.selfCare.totalTime)}
+                                    {formatCoreData(coreBreakdown.selfCare[prop])}
                                 </div>
                             </div>
                         </div>
@@ -335,24 +404,24 @@
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Mind</div>
                                 <div class="routine__cores-value">
-                                    {formatCoreData(coreBreakdown.mind.totalTime)}
+                                    {formatCoreData(coreBreakdown.mind[prop])}
                                 </div>
                             </div>
                             <div class="routine__cores-core">
                                 <div class="routine__cores-title">Body</div>
                                 <div class="routine__cores-value">
-                                    {formatCoreData(coreBreakdown.body.totalTime)}
+                                    {formatCoreData(coreBreakdown.body[prop])}
                                 </div>
                             </div>
                         </div>
-                    </div>
-                {/if}
+                    {/if}
+                </div>
             </div>
-            {#if tagBreakdown.length > 0}
-                <!-- Tag Breakdown -->
-                <div class="routine__tag-breakdown">
-                    <h3>Tags</h3>
+            <!-- Tag Breakdown -->
+            <div class="routine__tag-breakdown" class:hide={breakdownOption === "cores"}>
+                {#if tagBreakdown.length > 0}
                     {#each tagBreakdown as tagData}
+                        {@const data = tagData.data}
                         {@const colorTrio = getColorTrio(tagData.tag.symbol.color, isLightTheme)}
                         <div class="routine__tag-row">
                             <div 
@@ -371,12 +440,16 @@
                                 </div>
                             </div>
                             <div class="routine__tag-stat">
-                                {minsToHHMM(tagData.data.totalTime)}
+                                {minsToHHMM(breakdownVal === "avg" ? data.avgTime : data.totalTime)}
                             </div>
                         </div>
                     {/each}
-                </div>
-            {/if}
+                {:else}
+                    <div class="routine__tag-breakdown-empty">
+                        No Tags
+                    </div>
+                {/if}
+            </div>
         </div>
     </div>
     <div class="routines__divider routines__divider--last"></div>
@@ -732,8 +805,30 @@
         width: 100%;
         height: calc(100% - 58px);
 
+        &--light &__collection {
+            @include text-style(1, 500);
+        }
+        &--light &__collection h3 {
+            @include text-style(1, 500);
+        }
         &--light &__divider {
-            @include divider(0.064, _, 1px);
+            @include divider(0.064, 100%, 1px);
+        }
+        &--light &__routine-item {
+            opacity: 0.85;
+        }
+        &--light &__routine-item--clicked,
+        &--light &__routine-item--active {
+            opacity: 1;
+        }
+        &--light &__routine-item:hover {
+            opacity: 0.9;
+        }
+        &--light &__routine-item:hover span {
+            opacity: 0.9;
+        }
+        &--light &__routine-item--active span {
+            opacity: 0.8 !important;
         }
         &--light &__routine-item span {
             @include text-style(1, 500);
@@ -752,27 +847,59 @@
         &--dark .dropdown-btn {
             @include dropdown-btn-dark;
         }
+        &--empty .routine {
+            display: none;
+        }
+        &--empty .routine__collection-empty {
+            @include text-style(0.3);
+        }
+        &--empty .routines__divider {
+            margin: 0px 15px 0px 25px !important;
+        }
+        &--empty .routines__divider--last {
+            display: none;
+        }
 
         &__collection {
             padding-top: 16px;
             width: clamp(170px, 20%, 195px);
             position: relative;
+            height: calc(100% - 100px);
+            @include text-style(1, 300, 1.28rem, "DM Sans");
 
             h3 {
-                @include text-style(1, 400, 1.7rem);
-                margin-bottom: 12px;
+                @include text-style(1, 500, 1.34rem);
             }
             ul {
-                width: 100%;
+                width: calc(100% + 32px);
+                overflow-y: scroll;
+                max-height: 100%;
+                margin-left: -12px;
+            }
+        }
+        &__collection-header {
+            @include flex(center, space-between);
+            margin-bottom: 16px;
+        }
+        &__add-new-routine {
+            @include text-style(1, 400, 1.24rem);
+            @include flex(center);
+            opacity: 0.2;
+            
+            &:hover {
+                opacity: 0.5;
+            }
+            span {
+                margin-right: 7px;
             }
         }
         &__routine-item {
-            margin: 0px 0px 3px -12px;
+            margin: 0px 20px 5px 0px;
             padding: 5.5px 12px;
-            border-radius: 8px;
-            transition: 0.03s ease-in-out;
-            opacity: 0.8;
+            border-radius: 10px;
+            opacity: 0.4;
             cursor: pointer;
+            transition: 0.03s ease-in-out;
             @include flex(center, space-between);
             @include elipses-overflow;
 
@@ -794,28 +921,12 @@
                 opacity: 0.7;
             }
             span {
-                @include text-style(1, 300, 1.28rem, "DM Sans");
-                transition: 0.08s ease-in-out;
                 opacity: 0.4;
-            }
-        }
-        &__add-new-routine {
-            @include text-style(1, 300, 1.28rem, "DM Sans");
-            @include flex(center);
-            // @include txt-color(0.4, "bg");
-            margin-bottom: 14px;
-            opacity: 0.2;
-            
-            &:hover {
-                opacity: 0.5;
-            }
-            span {
-                margin-right: 7px;
             }
         }
         &__divider {
             @include divider(0.04, calc(100% - 20px), 0.5px);
-            margin: 0px min(27px, 4%) 0px min(25px, 4%);
+            margin: 0px min(25px, 4%);
 
             &--first {
                 margin-left: min(20px, 4%);
@@ -825,10 +936,9 @@
             width: 100%;
             display: flex;
             height: calc(($hour-block-height * 24));
-            padding-right: 20px;
         }
         .routine {
-            width: clamp(270px, 30%, 320px);
+            width: 290px;
             position: relative;
         }
     }
@@ -837,19 +947,8 @@
     .routine {
         padding-top: 16px;
 
-        &--light &__description {
-            @include text-style(0.55);
-        }
-        &--light &__cores-title {
-            opacity: 1;
-            @include text-style(0.8, 500);
-        }
-        &--light &__cores-value {
-            @include text-style(0.54, 500);
-        }
-
         &__title {
-            font-size: 2.2rem;
+            font-size: 1.8rem;
             max-height: 70px;
         }
         &__description {
@@ -859,30 +958,15 @@
         &__details {
             margin-bottom: 0px;
         }
-        &__breakdown h3 {
-            @include text-style(0.72, 400, 1.32rem);
-            margin-bottom: 12px;
-        }
-        &__core-breakdown, &__tag-breakdown {
-            padding: 12px 8px 8px 6px;
-            border-radius: 14px;
-            background: none;
-            border: none;
-        }
-        &__core-breakdown {
-            margin: 0px 0px 2px -6px;
-        }
-        &__cores-title {
-            opacity: 0.7;
+        &__breakdown {
+            margin: 14px 0px 0px 0px;
+            width: 100%;
         }
         &__tag-breakdown {
-            margin: 12px 0px 0px -6px;
+            min-height: 30px;
         }
-        &__tag-breakdown h3 {
-            margin-bottom: 15px;
-        }
-        &__tag-stat, &__cores-value {
-            @include text-style(0.34);
+        &__collection-empty {
+            margin-top: -7px;
         }
     }
 
@@ -899,7 +983,7 @@
     }
 
     .routine-blocks {
-        @include abs-top-left(-2px, var(--left-offset));
+        @include abs-top-left(0px, var(--left-offset));
         width: calc(100% - var(--left-offset));
         height: calc(($hour-block-height * 24));
         

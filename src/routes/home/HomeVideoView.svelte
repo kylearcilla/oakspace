@@ -176,7 +176,7 @@
                 display: none;
             }
             #home-yt-player {
-                background-color: var(--primaryBgColor);
+                background-color: var(--bg-1);
                 border-radius: 7.5px;
             }
         }

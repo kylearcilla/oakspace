@@ -15,7 +15,10 @@
     let pickedItem = options.pickedItem
 
     $: isDarkTheme = $themeState.isDarkTheme
-    $: resetCount(!isHidden)
+
+    $: if (isHidden != undefined) { 
+        resetCount(!isHidden)
+    }
     
     $: if (!isHidden && dropdownMenuRef && options.scroll?.goToIdx) {
         goToStartingIdxLocation(options.scroll.goToIdx)

@@ -266,6 +266,7 @@
         bind:this={tasksListContainerElem}
         bind:clientHeight={containerHeight}
         class="tasks-container"
+        class:tasks-container--empty={tasks.length === 0}
         id={`${idPrefix}--tasks-list-container`}
         style={`${inlineStyling($manager.styling?.list)}`}
         style:height={$manager.ui.listHeight}
@@ -706,7 +707,7 @@
             }
         }
         &__add-btn {
-            margin: 14px 0px 14px var(--side-padding);
+            margin: 0px 0px 14px var(--side-padding) !important;
             font-weight: 400;
             opacity: 0.2;
             max-width: 100px;
@@ -740,6 +741,10 @@
         &-container {
             overflow-y: scroll;
             max-height: var(--tasks-max-height);
+            margin-bottom: 10px;
+        }
+        &-container--empty {
+            margin-bottom: 5px !important;
         }
         &--dragging-state * {
             user-select: none;

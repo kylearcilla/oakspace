@@ -1,6 +1,5 @@
-import { get, writable, type Writable } from "svelte/store"
-import { globalContext } from "./store"
-import { clamp, extractNum, extractNumStr, getContentEditableSelectionRange, getElemById, isInRange, setCursorPos } from "./utils-general"
+import { writable, type Writable } from "svelte/store"
+import { clamp, extractNumStr, getContentEditableSelectionRange, getElemById, isInRange, setCursorPos } from "./utils-general"
 import { minsFromStartToHHMM } from "./utils-date"
 
 /**
@@ -38,10 +37,7 @@ export class InputManager {
 
         this.state = writable(this)
 
-        requestAnimationFrame(() => {
-            this.initElem()
-                this.inputElem = getElemById(this.id) as HTMLInputElement
-        })
+        requestAnimationFrame(() => this.initElem())
     }
 
     onPaste(e: Event) {
@@ -217,26 +213,20 @@ export class TextEditorManager extends InputManager {
     constructor(options: InputOptions) {
         super(options)
 
-        requestAnimationFrame(() => {
-            if (this.inputElem) {
-                this.initElem()
-                this.inputElem.addEventListener("keydown", this.keydownHandler)
-            }
-        })
-
-        // editor values always comes form value member
-        if (!this.value) {
-            this.updateState({ value: this.value })
-        }
+        requestAnimationFrame(() => this.initElem())
     }
 
     initElem() {
-        super.initElem()
+        this.inputElem = getElemById(this.id) as HTMLInputElement
+        if (!this.inputElem) return
 
-        // attach placeholder
-        if (this.inputElem) {
-            this.inputElem.style.setProperty('--placeholder-val', this.placeholder);
-        }
+        this.inputElem!.addEventListener("keydown", this.keydownHandler)
+        this.inputElem.style.setProperty('--placeholder-val', this.placeholder)
+
+        // initialize text
+        this.prevVal = this.value
+        this.value = this.value
+        this.updateState({ value: this.value })
     }
 
     quit() {
@@ -330,8 +320,7 @@ export class TextEditorManager extends InputManager {
 
         // move the cursor ups
         const newCursorPos = start + pastedText.length
-        setCursorPos(target, newCursorPos)
-
+        // setCursorPos(target, newCursorPos)
         this.undoHandler(newValue)
         
         // save
@@ -352,6 +341,7 @@ export class TextEditorManager extends InputManager {
 
             this.value = this.prevVal    // on blur, value won't contain preVal
             this.undoHandler(this.prevVal)
+
             setCursorPos(target, this.prevVal.length)
 
             return

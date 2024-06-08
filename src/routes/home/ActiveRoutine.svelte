@@ -6,6 +6,7 @@
 	import { Icon } from "$lib/enums"
 	import { TEST_TASKS } from "$lib/utils-right-bar"
 	import { toggleActiveRoutine } from "$lib/utils-home"
+    import { RoutinesManager } from "$lib/routines-manager"
 	import { TextEditorManager, type InputManager } from "$lib/inputs"
 	import { getColorTrio, getMaskedGradientStyle } from "$lib/utils-general"
 	import { DAYS_OF_WEEK, getDayIdxMinutes, minsFromStartToHHMM } from "$lib/utils-date"
@@ -20,8 +21,8 @@
     $: isOpen      = $globalContext.doOpenActiveRoutine
     $: routine     = $weekRoutine
     $: isDarkTheme = $themeState.isDarkTheme
-
-    const DESCR_MAX = 300
+    
+    const DESCR_MAX = RoutinesManager.MAX_DESCRIPTION
 
     let todayRoutine: RoutineBlock[] | DailyRoutine | null = null 
     let doInitNow = true

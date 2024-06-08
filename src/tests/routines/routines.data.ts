@@ -5,8 +5,6 @@ type PresetRoutines = {
     uni: RoutineBlock[][],
 }
 
-const TEST_CONTAINER_HT = 750
-
 export const TAGS = [
   {
     id: "0",
@@ -134,6 +132,20 @@ export const TAGS = [
       emoji: "🎯"
     }
   },
+]
+
+export const ROUTINE_BLOCKS: RoutineBlock[] = [
+    {
+        title: "",
+        color: COLOR_SWATCHES.d[2],
+        startTime: 0,
+        endTime: 0,
+        activity: null,
+        tag: null,
+        description: "",
+        tasks: [],
+        orderContext: "first"
+    },
 ]
 
 /* themed daily routine */
@@ -694,6 +706,8 @@ export const PRESET_ROUTINES: PresetRoutines = {
     ]
 }
 
+let currentTime = 0
+
 /* daily routines */
 export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
     { 
@@ -949,10 +963,122 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
             startTime: 1260, endTime: 1380,
         },
         ...PRESET_ROUTINES.uni[1].filter((block, idx) => ![2, 3, 5, 7, 8].includes(idx))
-    ]
+    ],
     /* Full Time */
-
     /* All Around */
+    /* Test */
+    [
+        {
+            title: "0-0",
+            color: COLOR_SWATCHES.d[15],
+            startTime: 0,
+            endTime: 1439,
+            activity: "working",
+            tag: TAGS[13],
+            description: "Tennis grind shit.",
+            tasks: [],
+            orderContext: "middle",
+        },
+    ],
+    [
+        ...Array.from({ length: 24 }, (_, i) => ({
+            ...ROUTINE_BLOCKS[0],
+            title: `1-${i}`,
+            id: `1-${i}`,
+            color: COLOR_SWATCHES.d[i % COLOR_SWATCHES.d.length],
+            startTime: i * 60,
+            endTime: Math.min((i + 1) * 60, 1439),
+        }))
+    ],
+    [
+        {
+            title: "2-0",
+            color: COLOR_SWATCHES.d[0],
+            startTime: 0,
+            endTime: 15,
+            activity: "mind",
+            tag: TAGS[13],
+            description: "Tennis grind shit.",
+            tasks: [],
+            orderContext: "middle",
+        },
+        {
+            title: "2-1",
+            color: COLOR_SWATCHES.d[1],
+            startTime: 15,
+            endTime: 1424,
+            activity: "working",
+            tag: TAGS[13],
+            description: "Tennis grind shit.",
+            tasks: [],
+            orderContext: "middle",
+        },
+        {
+            title: "2-2",
+            color: COLOR_SWATCHES.d[2],
+            startTime: 1424,
+            endTime: 1439,
+            activity: "body",
+            tag: TAGS[13],
+            description: "Tennis grind shit.",
+            tasks: [],
+            orderContext: "middle",
+        },
+    ],
+    [
+        ...Array.from({ length: 96 }, (_, i) => ({
+            ...ROUTINE_BLOCKS[0],
+            title: `3-${i}`,
+            id: `3-${i}`,
+            color: COLOR_SWATCHES.d[i % COLOR_SWATCHES.d.length],
+            startTime: i * 15,
+            endTime: Math.min((i + 1) * 15, 1439),
+        }))
+    ],
+    [
+        ...Array.from({ length: 39 }, (_, i) => {
+            const isFifteenMinuteBlock = i % 2 === 0;
+            const duration = isFifteenMinuteBlock ? 15 : 60;
+            const prevEndTime = i === 0 ? 0 : currentTime;
+            const startTime = prevEndTime;
+            const endTime = startTime + duration;
+            currentTime = endTime
+            
+            return {
+                ...ROUTINE_BLOCKS[0],
+                id: `4-${i}`,
+                title: `4-${i}`,
+                color: COLOR_SWATCHES.d[i % COLOR_SWATCHES.d.length],
+                startTime,
+                endTime: Math.min(endTime, 1439),
+            }
+        })
+    ],
+    [],
+    [
+        {
+            title: "5-0",
+            color: COLOR_SWATCHES.d[0],
+            startTime: 0,
+            endTime: 720,
+            activity: "mind",
+            tag: TAGS[13],
+            description: "Tennis grind shit.",
+            tasks: [],
+            orderContext: "middle",
+        },
+        {
+            title: "5-1",
+            color: COLOR_SWATCHES.d[1],
+            startTime: 719,
+            endTime: 1439,
+            activity: "working",
+            tag: TAGS[13],
+            description: "Tennis grind shit.",
+            tasks: [],
+            orderContext: "middle",
+        },
+    ]
 ]
 
 /* daily routines list */
@@ -3254,6 +3380,15 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
     ]
 }
+export const WEEKLY_TEST: WeeklyRoutineBlocks = {
+    Monday: DAILY_ROUTINES[13],
+    Tuesday: DAILY_ROUTINES[14],
+    Wednesday: DAILY_ROUTINES[15],
+    Thursday: DAILY_ROUTINES[16],
+    Friday: DAILY_ROUTINES[17],
+    Saturday: DAILY_ROUTINES[18],
+    Sunday: DAILY_ROUTINES[19]
+}
 
 /* weekly routines list */
 export const WEEKLY_ROUTINES: WeeklyRoutine[] = [
@@ -3282,14 +3417,11 @@ export const WEEKLY_ROUTINES: WeeklyRoutine[] = [
     {
         id: "3",
         name: "All Around",
-        description: "Relax & Unwind",
+        description: "Grind shit",
         blocks: {
             ...WEEKLY_ROUTINES_BLOCKS,
-            Monday: WEEKLY_ROUTINES_BLOCKS.Saturday,
-            Tuesday: WEEKLY_ROUTINES_BLOCKS.Saturday,
-            Wednesday: WEEKLY_ROUTINES_BLOCKS.Saturday,
-            Thursday: WEEKLY_ROUTINES_BLOCKS.Saturday,
-            Friday: WEEKLY_ROUTINES_BLOCKS.Saturday,
+            Saturday: WEEKLY_ROUTINES_BLOCKS.Monday,
+            Sunday: WEEKLY_ROUTINES_BLOCKS.Monday
         }
     },
     {
@@ -3297,6 +3429,26 @@ export const WEEKLY_ROUTINES: WeeklyRoutine[] = [
         name: "Full Colors",
         description: "All colors for testing.",
         blocks: WEEKLY_FULL_COLORS
+    },
+    {
+        id: "5",
+        name: "Test",
+        description: "Relax & Unwind",
+        blocks: WEEKLY_TEST
+    },
+    {
+        id: "6",
+        name: "Empty",
+        description: "Relax & Unwind",
+        blocks: {
+            Monday: [],
+            Tuesday: [],
+            Wednesday: [],
+            Thursday: [],
+            Friday: [],
+            Saturday: [],
+            Sunday:[]
+        }
     },
 ]
 

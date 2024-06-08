@@ -33,7 +33,7 @@ describe('Weekly Tag Breakdown', () => {
         blocks = testCase.blocks
         breakdown = testCase.tagBreakdown
         
-        result = manager.getBlockTagBreakdown("id" in blocks ? blocks.blocks : blocks)
+        result = manager.getBlockTagBreakdown("id" in blocks ? blocks.blocks : blocks as RoutineBlock[])
         expect(result).toEqual(breakdown)
     })
 
@@ -42,7 +42,7 @@ describe('Weekly Tag Breakdown', () => {
         blocks = testCase.blocks
         breakdown = testCase.tagBreakdown
         
-        result = manager.getBlockTagBreakdown("id" in blocks ? blocks.blocks : blocks)
+        result = manager.getBlockTagBreakdown("id" in blocks ? blocks.blocks : blocks as RoutineBlock[])
         expect(result).toEqual(breakdown)
     })
 
@@ -51,7 +51,7 @@ describe('Weekly Tag Breakdown', () => {
         blocks = testCase.blocks
         breakdown = testCase.tagBreakdown
         
-        result = manager.getBlockTagBreakdown("id" in blocks ? blocks.blocks : blocks)
+        result = manager.getBlockTagBreakdown("id" in blocks ? blocks.blocks : blocks as RoutineBlock[])
         expect(result).toEqual(breakdown)
     })
     test('College Student Monday routine', () => {
@@ -59,7 +59,7 @@ describe('Weekly Tag Breakdown', () => {
         blocks = testCase.blocks
         breakdown = testCase.tagBreakdown
         
-        result = manager.getBlockTagBreakdown("id" in blocks ? blocks.blocks : blocks)
+        result = manager.getBlockTagBreakdown("id" in blocks ? blocks.blocks : blocks as RoutineBlock[])
         expect(result).toEqual(breakdown)
     })
     test('Busy routine breakdown', () => {
@@ -67,7 +67,7 @@ describe('Weekly Tag Breakdown', () => {
         blocks = testCase.blocks
         breakdown = testCase.tagBreakdown
         
-        result = manager.getBlockTagBreakdown("id" in blocks ? blocks.blocks : blocks)
+        result = manager.getBlockTagBreakdown("id" in blocks ? blocks.blocks : blocks as RoutineBlock[])
         expect(result).toEqual(breakdown)
     })
 })
@@ -78,10 +78,10 @@ describe('Weekly Tag Breakdown', () => {
 
     test('Highschool weekly routine breakdown.', () => {
         testCase = TEST_WEEKLY_BREAKDOWN[0]
-        weekRoutine = testCase.weekRoutine
+        weekRoutine = testCase.weekRoutine as WeeklyRoutine
         breakdown = testCase.tagBreakdown
 
-        manager.updateCurrentWeekRoutine(weekRoutine)
+        manager.updateCurrentWeekRoutine(weekRoutine, false)
         result = get(manager.tagBreakdown)
 
         expect(result).toEqual(breakdown)
@@ -89,10 +89,10 @@ describe('Weekly Tag Breakdown', () => {
 
     test('College weekly routine breakdown.', () => {
         testCase = TEST_WEEKLY_BREAKDOWN[1]
-        weekRoutine = testCase.weekRoutine
+        weekRoutine = testCase.weekRoutine as WeeklyRoutine
         breakdown = testCase.tagBreakdown
 
-        manager.updateCurrentWeekRoutine(weekRoutine)
+        manager.updateCurrentWeekRoutine(weekRoutine, false)
         result = get(manager.tagBreakdown)
 
         expect(result).toEqual(breakdown)
@@ -100,10 +100,10 @@ describe('Weekly Tag Breakdown', () => {
 
     test('Busy routine breakdown.', () => {
         testCase = TEST_WEEKLY_BREAKDOWN[1]
-        weekRoutine = testCase.weekRoutine
+        weekRoutine = testCase.weekRoutine as WeeklyRoutine
         breakdown = testCase.tagBreakdown
 
-        manager.updateCurrentWeekRoutine(weekRoutine)
+        manager.updateCurrentWeekRoutine(weekRoutine, false)
         result = get(manager.tagBreakdown)
 
         expect(result).toEqual(breakdown)
@@ -132,7 +132,7 @@ describe('Weekly Tag Breakdown', () => {
 describe('Move block into new day column', () => {
     const manager = new RoutinesManager()
     let testCase = TEST_BLOCK_MOVE_TO_NEW_COL[0]
-    let blocks = []
+    let blocks: RoutineBlock[] = []
     let resTime = 0
 
     const processTestBlocks = (blocks: RoutineBlock[]) => {
@@ -150,7 +150,7 @@ describe('Move block into new day column', () => {
             blocks = testCase.blocks.blocks
         }
         else {
-            blocks = testCase.blocks
+            blocks = testCase.blocks as RoutineBlock[]
         }
 
         resTime = manager.getStartTimeFromDragLiftEdit({
@@ -170,7 +170,7 @@ describe('Move block into new day column', () => {
             blocks = testCase.blocks.blocks
         }
         else {
-            blocks = testCase.blocks
+            blocks = testCase.blocks as RoutineBlock[]
         }
 
         resTime = manager.getStartTimeFromDragLiftEdit({
@@ -190,7 +190,7 @@ describe('Move block into new day column', () => {
             blocks = testCase.blocks.blocks
         }
         else {
-            blocks = testCase.blocks
+            blocks = testCase.blocks as RoutineBlock[]
         }
 
         resTime = manager.getStartTimeFromDragLiftEdit({
@@ -210,7 +210,7 @@ describe('Move block into new day column', () => {
             blocks = testCase.blocks.blocks
         }
         else {
-            blocks = testCase.blocks
+            blocks = testCase.blocks as RoutineBlock[]
         }
 
         resTime = manager.getStartTimeFromDragLiftEdit({
@@ -230,7 +230,7 @@ describe('Move block into new day column', () => {
             blocks = testCase.blocks.blocks
         }
         else {
-            blocks = testCase.blocks
+            blocks = testCase.blocks as RoutineBlock[]
         }
 
         resTime = manager.getStartTimeFromDragLiftEdit({
@@ -250,7 +250,7 @@ describe('Move block into new day column', () => {
             blocks = testCase.blocks.blocks
         }
         else {
-            blocks = testCase.blocks
+            blocks = testCase.blocks as RoutineBlock[]
         }
 
         resTime = manager.getStartTimeFromDragLiftEdit({
@@ -270,7 +270,7 @@ describe('Move block into new day column', () => {
             blocks = testCase.blocks.blocks
         }
         else {
-            blocks = testCase.blocks
+            blocks = testCase.blocks as RoutineBlock[]
         }
 
         resTime = manager.getStartTimeFromDragLiftEdit({
@@ -290,7 +290,7 @@ describe('Move block into new day column', () => {
             blocks = testCase.blocks.blocks
         }
         else {
-            blocks = testCase.blocks
+            blocks = testCase.blocks as RoutineBlock[]
         }
 
         resTime = manager.getStartTimeFromDragLiftEdit({
@@ -310,7 +310,7 @@ describe('Move block into new day column', () => {
             blocks = testCase.blocks.blocks
         }
         else {
-            blocks = testCase.blocks
+            blocks = testCase.blocks as RoutineBlock[]
         }
 
         resTime = manager.getStartTimeFromDragLiftEdit({

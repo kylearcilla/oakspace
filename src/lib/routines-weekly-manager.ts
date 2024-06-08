@@ -601,7 +601,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         if (!this.allowLiftEdit) { 
             const dragDistance = getDistBetweenTwoPoints(this.dragStartPoint!, this.cursorPos!)
 
-            if (dragDistance > this.STRETCH__DRAG_DISTANCE_THRESHOLD) {
+            if (dragDistance > RoutinesManager.STRETCH__DRAG_DISTANCE_THRESHOLD) {
                 this.intDragLiftMoveEdit(this.blockOnPointerDown!)
                 this.allowLiftEdit = true
             }
@@ -641,7 +641,6 @@ export class WeeklyRoutinesManager extends RoutinesManager {
             clearInterval(this.scrollInterval)
             this.scrollInterval = null
         }
-
         if (this.allowLiftEdit) {
             // extract needed props
             const dropAreaBlock = get(this.editingBlock)!
@@ -677,11 +676,14 @@ export class WeeklyRoutinesManager extends RoutinesManager {
             return
         }
 
+        console.log(e.clientX, e.clientY)
+        target.setPointerCapture(e.pointerId)
+
         this.initEditDayContextFromLeftOffset(this.cursorPos.left)
         this.initDayEditFromContext()
 
-        this.stretchPivotPointTopOffset = this.getDragPivotPointTopOffset(0, this.cursorPos.top, false)
-        this.dragStartPoint      = this.cursorPos
+        this.stretchPivotPointTopOffset = this.cursorPos.top
+        this.dragStartPoint = this.cursorPos
 
         // doesn't use handler directly as drag distance must surpass the drag distance threshold
         this.containerElem!.addEventListener("pointermove", this.onScrollContainerPointerMove)
@@ -1071,9 +1073,9 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         this.currViewOption.set(newOptn)
     }
 
-    hotkeyHandler = (e: KeyboardEvent) => {
-        const target = e.target as HTMLElement
-        const { code } = e
+    hotkeyHandler = (ke: KeyboardEvent) => {
+        const target = ke.target as HTMLElement
+        const { code } = ke
 
         if (isTargetTextEditor(target)) return
 

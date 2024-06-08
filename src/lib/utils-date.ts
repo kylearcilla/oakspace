@@ -577,11 +577,7 @@ export function validateTimeOfDay(h: number, m: number, ampm?: "am" | "pm", stri
  * @throws      Error if the input values for hours or minutes are invalid.
  * @returns     The total number of minutes elapsed
  * 
- * `1:00 AM  = 60` 
- * `1:00 pm  = 780`
- * `13:00    = 780`
- * `13:00 am = 780`
- * `13:00 pm = 780`
+ * `1:00 AM  = 60`
  * 
  */
 export function timeStrToMins(h: number, m: number, ampm?: "am" | "pm") {

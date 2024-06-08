@@ -24,7 +24,8 @@
     let isDescrFocused = false
     let isTitleFocused = false
 
-    $: isLight  = !$themeState.isDarkTheme
+    $: isLight      = !$themeState.isDarkTheme
+    $: closeRightAway = currTitleLength === 0 && currDescriptionLength === 0
 
     const newWkRoutine: WeeklyRoutine = {
         id: "",
@@ -75,7 +76,6 @@
                 isDescrFocused = false
             },
             onInputHandler: (_, __, length) => {
-                editHasBeenMade = true
                 currDescriptionLength = length
             },
             onFocusHandler: () => isDescrFocused = true
@@ -92,13 +92,10 @@
         if (currTitleLength === 0) {
             emptyTitleError = true
             throw new Error("Name is missing")
-            // throw new Error("Name is missing.")
         }
-        else if (currTitleLength > bounds.titleMax) {
-            throw new Error("Title is too long.")
-        }
-        else if (currDescriptionLength > bounds.descrMax) {
-            throw new Error("Description is too long.")
+        else {
+            newRoutine.name = newRoutine.name.slice(0, bounds.titleMax)
+            newRoutine.description = newRoutine.description.slice(0, bounds.descrMax)
         }
     }
     async function saveChanges() {
@@ -126,11 +123,11 @@
         if (isSaving) {
             return
         }
-        else if (editHasBeenMade) {
-            confirmModalOpen = true
+        else if (closeRightAway) {
+            confirmUnsavedClose()
         }
         else {
-            confirmUnsavedClose()
+            confirmModalOpen = true
         }
     }
     function cancelCloseAttempt() {
@@ -142,6 +139,7 @@
     }
     function onKeyPress(e: KeyboardEvent) {
         if (e.key === "Enter" && !e.shiftKey) saveChanges()
+        if (e.key === "Escape" && !e.shiftKey) onAttemptClose()
     }
 
     onMount(() => {
@@ -149,10 +147,10 @@
     })
 </script>
 
-<svelte:window on:keydown={onKeyPress} /> 
+<svelte:window on:keyup={onKeyPress} /> 
 
 <Modal options={{ borderRadius: "18px", overflowY: "hidden" }} onClickOutSide={onAttemptClose}>
-    <div class="new-routine" class:new-routine--light={isLight} on:keydown={onKeyPress}>
+    <div class="new-routine" class:new-routine--light={isLight} on:keyup={onKeyPress}>
         <form>
             <h1 class="new-routine__heading">
                 {#if isForWeek}
@@ -205,11 +203,11 @@
                     class:input-box--border-focus={isDescrFocused}
                 >
                     <div 
+                        id="new-routine-description"
                         class="edit-routine__description-text-editor text-editor"
                         data-placeholder={$descriptionEditor.placeholder}
-                        id="new-routine-description"
                         contenteditable
-                        bind:innerHTML={$descriptionEditor.value}
+                        bind:textContent={$descriptionEditor.value}
                         on:paste={(e) => $descriptionEditor.onPaste(e)}
                         on:input={(e) => $descriptionEditor.onInputHandler(e)}
                         on:focus={(e) => $descriptionEditor.onFocusHandler(e)}

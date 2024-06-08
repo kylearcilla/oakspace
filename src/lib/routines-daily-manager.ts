@@ -184,7 +184,7 @@ export class DailyRoutinesManager extends RoutinesManager {
             return
         }
 
-        this.stretchPivotPointTopOffset = this.getDragPivotPointTopOffset(0, this.cursorPos.top, false)
+        this.stretchPivotPointTopOffset = this.cursorPos.top
         this.dragStartPoint = this.cursorPos
 
         this.containerElem!.addEventListener("pointermove", this.onScrollContainerPointerMove)

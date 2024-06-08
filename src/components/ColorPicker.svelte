@@ -74,7 +74,7 @@
 
 <style lang="scss">
     .color-picker {
-        padding: 16px 15px 17px 15px;
+        padding: 11px 12px 11px 12px;
         border-radius: 18px;
         background-color: var(--bg-2);
         border: 1px solid rgba(var(--textColor1), 0.03);

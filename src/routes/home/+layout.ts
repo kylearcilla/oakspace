@@ -1,2 +1,5 @@
 export const ssr = false
-export const load = () => {}
+export const load = () => {
+    // @ts-ignore
+    window.LUCIOLE = {}
+}

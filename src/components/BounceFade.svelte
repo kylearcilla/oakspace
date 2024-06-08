@@ -35,12 +35,10 @@
             
             removeTimeout = setTimeout(() => {
                 isMounted = false
-                
+                removeTimeout = null
+
                 if (onDismount) onDismount()
             }, TRANSITION_DURATIONS_MS)
-
-
-            removeTimeout = null
         }
     }
 </script>

@@ -25,6 +25,8 @@
     let holdEnd = false
     let isDelete = options.type === "delete"
 
+    const HOLD_DOWN_DELETE_CONFIRM = 1.5
+
     function onConfirmPointerDown(pe: PointerEvent) {
         if (pe.button === 2) return
         isHolding = true
@@ -58,6 +60,7 @@
         class="confirm"
         class:confirm--light={!isDarkTheme}
         class:confirm--non-delete={_options.type != "delete"}
+        style:--hold-down-length={`${HOLD_DOWN_DELETE_CONFIRM}s`}
         on:pointerup={onPointerUp} 
         on:mouseleave={onMouseLeave}
     >
@@ -160,7 +163,7 @@
             transition: 0.14s cubic-bezier(.4,0,.2,1) !important;
             
             &--holding::before {
-                animation: hold-confirm 1.5s ease-in-out;
+                animation: hold-confirm var(--hold-down-length) ease-in-out;
                 visibility: visible !important;
             }
             

@@ -1,9 +1,13 @@
 <script lang="ts">
+	import type { Writable } from "svelte/store"
+
     import { Icon } from "$lib/enums"
-	import { toast } from "$lib/utils-toast"
 	import { themeState } from "$lib/store"
-	import { InputManager, TextEditorManager } from "$lib/inputs"
+	import { toast } from "$lib/utils-toast"
+	import { getColorTrio } from "$lib/utils-general"
+	import { minsFromStartToHHMM } from "$lib/utils-date"
     import type { RoutinesManager } from "$lib/routines-manager"
+	import { InputManager, TextEditorManager } from "$lib/inputs"
 	import { CORE_OPTIONS, getCoreActivityIdx, getCoreStr } from "$lib/utils-routines"
 
 	import Modal from "../../../components/Modal.svelte"
@@ -16,15 +20,13 @@
 	import DropdownBtn from "../../../components/DropdownBtn.svelte"
 	import DropdownList from "../../../components/DropdownList.svelte"
 	import ConfirmationModal from "../../../components/ConfirmationModal.svelte"
-	import type { Writable } from "svelte/store"
-	import { TEST_TASKS } from "$lib/utils-right-bar"
-	import { minsFromStartToHHMM } from "$lib/utils-date"
-	import { getColorTrio } from "$lib/utils-general";
 
     export let routineManager: RoutinesManager
     export let block: RoutineBlockElem
 
     class EditError extends Error { }
+
+    const DESCR_MAX = 300
 
     let settingsOpen = false, coresOpen = false
     let colorsOpen = false, tagsOpen = false
@@ -56,6 +58,8 @@
     let routineListRef: HTMLElement
     let titleInput: Writable<InputManager>
     let descriptionEditor: Writable<InputManager>
+    let isDescrFocused = false 
+    let descrLength = description.length
 
     $: isDarkTheme = $themeState.isDarkTheme
     $: blocks = $_blocks
@@ -127,7 +131,18 @@
             maxLength: 500,
             id: "routine-block-description",
             handlers: {
-                onBlurHandler: (e, val) => onDescriptionChange(val)
+                onBlurHandler: (e, val, length) => { 
+                    isDescrFocused = false
+                    descrLength = length
+                    onDescriptionChange(val)
+                },
+                onInputHandler: (e, val, length) => {
+                    descrLength = length
+                },
+                onFocusHandler: () => {
+                    isDescrFocused = true
+                    descrLength = description.length
+                }
             }
         })).state
     }
@@ -249,7 +264,7 @@
     }
 </script>
 
-<Modal options={{ borderRadius: "20px", overflowY: "hidden" }} onClickOutSide={onAttemptClose}>
+<Modal options={{ borderRadius: "14px", overflowY: "hidden" }} onClickOutSide={onAttemptClose}>
     <div 
         class="edit-routine"
         class:edit-routine--dark={isDarkTheme}
@@ -431,10 +446,14 @@
         <!-- Description -->
         <div class="edit-routine__description">
             <div class="edit-routine__description-header">
-                <div class="edit-routine__info-icon">
-                    <i class="fa-solid fa-align-left"></i>
-                </div>
                 <div class="edit-routine__info-title">Description</div>
+                <div 
+                    class="input-box__count"
+                    class:input-box__count--over={descrLength > DESCR_MAX}
+                    class:hidden={!isDescrFocused}
+                >
+                    {DESCR_MAX - descrLength}
+                </div>
             </div>
             {#if descriptionEditor}
                 <div 
@@ -449,14 +468,12 @@
                 >
                 </div>
             {/if}
+
         </div>
         <!-- List -->
         <div class="edit-routine__list">
             <div class="edit-routine__list-header">
                 <div class="edit-routine__info-title-container">
-                    <div class="edit-routine__info-icon">
-                        <i class="fa-solid fa-list-ol"></i>
-                    </div>
                     <div class="edit-routine__info-title">Action Items</div>
                 </div>
                 <span class="edit-routine__list-count">
@@ -473,7 +490,7 @@
                         },
                         isCreatingNewTask: doCreateNewTask,
                         containerRef: routineListRef,
-                        tasks: TEST_TASKS,
+                        tasks,
                         styling: {
                             task: { 
                                 fontSize: "1.3rem", height: "30px", padding: "5px 0px 5px 0px" 
@@ -482,7 +499,7 @@
                                 fontSize: "1.23rem", padding: "8px 0px 9px 0px" 
                             },
                             num: { 
-                                width: "24px", margin: "1px 0px 0px 26px" 
+                                width: "24px", margin: "1px 0px 0px 20px" 
                             },
                             description: { 
                                 padding: "5px 0px 2px 0px"
@@ -493,7 +510,7 @@
                         },
                         addBtn: {
                             style: { 
-                                fontSize: "1.25rem", fontWeight: "500", margin: "10px 0px 0px 25px"
+                                fontSize: "1.25rem", fontWeight: "500", 
                             }
                         },
                         cssVariables: { 
@@ -504,7 +521,7 @@
                         },
                         ui: { 
                             hasTaskDivider: false,
-                            sidePadding: "25px", 
+                            sidePadding: "20px", 
                             listHeight: "100%"
                         }
                     }}
@@ -544,8 +561,8 @@
     @import "../../../scss/dropdown.scss";
 
     .edit-routine {
-        height: 75vh;
-        width: clamp(420px, 70vw, 600px);
+        height: auto;
+        width: clamp(420px, 60vw, 450px);
         padding: 0px;
         position: relative;
 
@@ -565,8 +582,8 @@
             @include txt-color(0.08, "bg");
             @include text-style(1, 500);
         }
-        &--light {
-
+        &--light &__list-count {
+            @include text-style(0.44, 600);
         }
         &--light &__time span {
             opacity: 0.4;
@@ -575,14 +592,23 @@
         &--light div[contenteditable]:empty:before {
             opacity: 0.4;
         }
+        &--light .input-box {
+            @include input-box--light;
+        }
+         
+        .input-box {
+            &__count {
+                font-size: 1.14rem;
+            }
+        }
 
         /* Header */
         &__header {
             @include flex(center, space-between);
-            margin: 0px 0px 14px -7px;
+            margin: 0px 0px 1px -7px;
             position: relative;
             width: 100%;
-            padding: 18px 14px 0px 25px;
+            padding: 6px 14px 0px 20px;
             height: 40px;
 
             &-left {
@@ -622,7 +648,7 @@
             @include flex(center);
         }
         &__title-container input {
-            @include text-style(1, 400, 1.64rem);
+            @include text-style(1, 400, 1.55rem);
             width: calc(100% - 20px);
             position: relative;
             
@@ -648,7 +674,7 @@
         /* Info */
         &__info {
             height: 98px;
-            padding: 0px 20px 0px 25px;
+            padding: 0px 20px 0px 20px;
         }
         &__info-row {
             margin-bottom: 9px;
@@ -698,32 +724,35 @@
 
         }
         &__description {
-            padding: 5px 20px 12px 25px;
-            height: 80px;
+            padding: 5px 20px 0px 20px;
+            margin-bottom: 28px;
         }
         &__description-header {
-            @include flex(center);
-            margin-bottom: 5px;
+            @include flex(center, space-between);
+            margin-bottom: 3px;
+            width: 100%;
         }
         &__description-text-editor {
             max-width: 100%;
-            @include text-style(0.9, 500, 1.28rem);
+            max-height: 74px;
+            @include text-style(0.8, 500, 1.28rem);
         }
         &__list-header {
-            padding: 30px 20px 10px 25px;
+            width: 100%;
+            padding: 2px 20px 4px 20px;
             @include flex(center, space-between);
         }
         &__list {
-            height: calc(100% - 255px);
+            height: 300px;
             width: 100%;
         }
         &__list-count {
-            @include text-style(0.6, 500, 1.2rem, "DM Sans");
+            @include text-style(0.2, 300, 1.1rem, "DM Mono");
             margin-right: 5px;
         }
         &__list-container {
             position: relative;
-            height: calc(100% - 55px);
+            height: calc(100% - 35px);
             max-width: 100%;
         }
         &__btns {

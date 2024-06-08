@@ -22,6 +22,8 @@
 	import DropdownList from "../../../../components/DropdownList.svelte"
 	import ConfirmationModal from "../../../../components/ConfirmationModal.svelte"
 	import { SET_DAILY_ROUTINES } from "../../../../tests/routines/routines.data"
+	import { RoutinesManager } from "$lib/routines-manager";
+	import { MAX_TITLE_LENGTH } from "$lib/utils-right-bar";
 
     export let data: { routines: WeeklyRoutine[] }
 
@@ -32,8 +34,8 @@
     const INIT_SCROLL_TOP = 280
     
     const DAILY_ROUTINES: DailyRoutine[] = SET_DAILY_ROUTINES
-    let WEEK_ROUTINES: WeeklyRoutine[] = []
-    
+    let WEEK_ROUTINES: WeeklyRoutine[] = data.routines
+
     // DOM
     let hourBlocksElem: HTMLElement
     let weekDaysElem: HTMLElement
@@ -55,12 +57,12 @@
     } | null = null
     
     // Weekly Routines
-    let chosenWeekRoutineIdx = -1
-    let clickedWeekRoutineIdx = chosenWeekRoutineIdx
     let editWkRoutineIdx = -1
     let rightClickedWkRoutineItemIdx = -1
-    let initRoutine = chosenWeekRoutineIdx >= 0 && WEEK_ROUTINES.length > 0 ? WEEK_ROUTINES[chosenWeekRoutineIdx] : null
-    let manager     = new WeeklyRoutinesManager(initRoutine)
+    let setWeekRoutineIdx  = WEEK_ROUTINES.length > 0 ? 0 : -1
+    let viewWkRoutineIdx = setWeekRoutineIdx
+
+    let manager = new WeeklyRoutinesManager(WEEK_ROUTINES[setWeekRoutineIdx] ?? null)
     
     let isWkRoutinesOpen = true
     let isWkRoutineSettingsOpen = false
@@ -144,21 +146,27 @@
         titleInput = (new TextEditorManager({ 
             initValue: weeklyRoutine.name,
             placeholder: "Routine Title",
-            maxLength: 100,
+            maxLength: RoutinesManager.MAX_TITLE,
             id: "routine-title",
             doAllowEmpty: false,
             handlers: {
-                onBlurHandler: (e, val) => manager.updateTitle(val)
+                onBlurHandler: (e, val) => {
+                    manager.updateTitle(val)
+                    WEEK_ROUTINES = WEEK_ROUTINES.map((routine, idx) => idx != viewWkRoutineIdx ? routine : { ...routine!, name: val })
+                }
             }
         })).state
         
         description = (new TextEditorManager({ 
             initValue: weeklyRoutine.description,
             placeholder: "Type description here...",
-            maxLength: 500,
+            maxLength: RoutinesManager.MAX_DESCRIPTION,
             id: "routine-description",
             handlers: {
-                onBlurHandler: (e, val) => manager.updateDescription(val)
+                onBlurHandler: (e, val) => {
+                    manager.updateDescription(val)
+                    WEEK_ROUTINES = WEEK_ROUTINES.map((routine, idx) => idx != viewWkRoutineIdx ? routine : { ...routine!, description: val })
+                }
             }
         })).state
     }
@@ -198,17 +206,17 @@
         wkRoutineSettingsPos    = { top, left }
     }
     function onWkSettingsItemOptnClicked(itemIdx: number, optIdx: number) {
-        const isChosen = itemIdx === chosenWeekRoutineIdx
+        const isChosen = itemIdx === setWeekRoutineIdx
 
         if (optIdx === 0 && isChosen) {
             editWkRoutineIdx = -1
-            chosenWeekRoutineIdx = -1
+            setWeekRoutineIdx = -1
 
             setWeekRoutine.set(null)
         }
         else if (optIdx === 0) {
             editWkRoutineIdx = -1
-            chosenWeekRoutineIdx = itemIdx
+            setWeekRoutineIdx = itemIdx
 
             setWeekRoutine.set(WEEK_ROUTINES[itemIdx])
         }
@@ -241,20 +249,28 @@
             onWkRoutineItemClicked(0)
         }
     }
-    function onWkRoutineAdd() {
-        openNewRoutineModal = true
-    }
     function onDeleteWkEditRoutineItem() {
         confirmOptions = null
         WEEK_ROUTINES = WEEK_ROUTINES.filter((_, routineIdx) => routineIdx != editWkRoutineIdx)
 
+        if (setWeekRoutineIdx === editWkRoutineIdx) {
+            setWeekRoutineIdx = -1
+        }
+        if (editWkRoutineIdx === viewWkRoutineIdx) {
+            editWkRoutineIdx = -1
+            viewWkRoutineIdx = -1
+
+            manager.updateCurrentWeekRoutine(null)
+            setWeekRoutine.set(null)
+        }
+
         toast("success", { message: "Weekly routine deleted." })
     }
     function onWkRoutineItemClicked(routineIdx: number) {
-        if (routineIdx === clickedWeekRoutineIdx) return
+        if (routineIdx === viewWkRoutineIdx) return
         if (isMin) isWkRoutinesOpen = false
         
-        clickedWeekRoutineIdx = routineIdx
+        viewWkRoutineIdx = routineIdx
         manager.updateCurrentWeekRoutine(WEEK_ROUTINES[routineIdx])
     }
 
@@ -470,10 +486,11 @@
     }
 
     /* DOM Stuff */
-
     function onBoardScroll(e: Event) {
         const target = e.target as HTMLElement
         const { scrollTop, scrollLeft } = target
+        
+        console.log(scrollableContent.getBoundingClientRect().left)
     
         hourBlocksElem.style.top = `-${scrollTop}px`
         weekDaysElem.style.left = `-${scrollLeft}px`
@@ -481,8 +498,18 @@
     function onKeyPress(e: KeyboardEvent) {
         if (!manager) return
 
-        // viewOptionOpen = false
-        // manager.hotkeyHandler(e)
+        viewOptionOpen = false
+        manager.hotkeyHandler(e)
+    }
+
+    function initTestData() {
+        // @ts-ignore
+        window.LUCIOLE.pw_set_test = (data) => {
+            WEEK_ROUTINES = data
+            setWeekRoutineIdx = 0
+            viewWkRoutineIdx  = 0
+            manager.updateCurrentWeekRoutine(WEEK_ROUTINES[0])
+        }
     }
     
     onMount(() => {
@@ -492,7 +519,10 @@
             manager.initContainer(scrollableContainer, scrollableContent)
             manager.processWeeklyRoutine()
         })
+
         minuteInterval = setInterval(() => currTime = getDayIdxMinutes(), 1000)
+
+        if (import.meta.env.MODE === "development") initTestData()
     })
 
     onDestroy(() => clearInterval(minuteInterval!))
@@ -514,7 +544,7 @@
         {#if weekRoutine}
             <!-- Title + Description -->
             <div class="routine__details" bind:clientHeight={routineDetailsHeight}>
-                {#if chosenWeekRoutineIdx === clickedWeekRoutineIdx}
+                {#if setWeekRoutineIdx === viewWkRoutineIdx}
                     <div class="routine__details-chosen-routine">
                         Current
                     </div>
@@ -528,16 +558,17 @@
                     <h1 class="routine__description">
                         {weekRoutine?.description}
                     </h1>
-                {:else if $titleInput}
+                {:else}
                     <div class="routine__details-header">
                         <div 
+                            id={$titleInput.id}
                             class="routine__title text-editor"
                             aria-label="Title"
                             data-unstyled
                             contenteditable
                             spellcheck="false"
                             data-placeholder={$titleInput.placeholder}
-                            bind:innerHTML={$titleInput.value}
+                            bind:textContent={$titleInput.value}
                             on:paste={(e) => $titleInput.onPaste(e)}
                             on:input={(e) => $titleInput.onInputHandler(e)}
                             on:focus={(e) => $titleInput.onFocusHandler(e)}
@@ -546,12 +577,14 @@
                         </div>
                     </div>
                     <div 
+                        id={$description.id}
                         class="routine__description text-editor"
                         aria-label="Description"
-                        data-placeholder={$description.placeholder}
+                        data-unstyled
                         contenteditable
                         spellcheck="false"
-                        bind:innerHTML={$description.value}
+                        data-placeholder={$description.placeholder}
+                        bind:textContent={$description.value}
                         on:paste={(e) => $description.onPaste(e)}
                         on:input={(e) => $description.onInputHandler(e)}
                         on:focus={(e) => $description.onFocusHandler(e)}
@@ -706,7 +739,7 @@
                 <div class="routine__wk-routines-left">
                     {#key isMin}
                         <DropdownBtn
-                            id="wk-routines"
+                            id="wk-routines-list"
                             isActive={isWkRoutinesOpen}
                             options={{
                                 noBg: true,
@@ -728,7 +761,7 @@
                     {/key}
                     <button 
                         class="routine__wk-routines-add-btn"
-                        on:click={onWkRoutineAdd}
+                        on:click={() => openNewRoutineModal = true}
                     >
                         <SvgIcon icon={Icon.Add} options={{ scale: 1, strokeWidth: 1.7 }} />
                     </button>
@@ -739,7 +772,7 @@
             </div>
             <!-- Week Routines List  -->
             <BounceFade
-                id="wk-routines--dropdown-menu"
+                id="wk-routines-list--dropdown-menu"
                 isHidden={!isWkRoutinesOpen}
                 styling={{ height: "100%" }}
                 isAnim={isMin}
@@ -760,8 +793,8 @@
                             role="button"
                             tabindex="0"
                             class="routine__wk-routines-item"
-                            class:routine__wk-routines-item--clicked={idx === clickedWeekRoutineIdx}
-                            class:routine__wk-routines-item--chosen={idx === chosenWeekRoutineIdx}
+                            class:routine__wk-routines-item--clicked={idx === viewWkRoutineIdx}
+                            class:routine__wk-routines-item--chosen={idx === setWeekRoutineIdx}
                             class:routine__wk-routines-item--active={idx === rightClickedWkRoutineItemIdx}
                             on:click={() => onWkRoutineItemClicked(idx)}
                             on:contextmenu={(e) => onWkRoutineContextMenu(e, idx)}
@@ -785,7 +818,7 @@
                     listItems: [
                         { 
                             options: [{ 
-                                name: editWkRoutineIdx === chosenWeekRoutineIdx ? "Unselect Routine" : "Choose as Current" 
+                                name: editWkRoutineIdx === setWeekRoutineIdx ? "Unselect Routine" : "Choose as Current" 
                             }]
                         },
                         {  name: "Delete Routine"  }
@@ -1168,7 +1201,7 @@
                                             style:height={`${height}%`}
                                         >
                                             <div class="wk-grid__hoz-line-content">
-                                                <svg xmlns="http://www.w3.org/2000/svg" {width} height="2" viewBox="0" fill="none">
+                                                <svg xmlns="http://www.w3.org/2000/svg" {width} height="2" fill="none">
                                                     <path d={`M0 1H ${width}`} stroke-width="0.7" stroke-dasharray="3 3"/>
                                                 </svg>
                                             </div>
@@ -1187,7 +1220,7 @@
                                             style:left={`calc(((100% / ${daysInView.length}) * ${dayIdx}) + ${0}px)`}
                                             >
                                             <div class="wk-grid__vert-line-content">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="2" {height} viewBox="0" fill="none">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="2" {height} fill="none">
                                                     <path d={`M1 ${height}L1 1`} stroke-width="0.7" stroke-dasharray="3 3"/>
                                                 </svg>
                                             </div>
@@ -1505,7 +1538,7 @@
         onFinishEdit={onFinishNewWeekRoutineEdit}
         isForWeek={true}
         bounds={{ 
-            titleMax: 200, descrMax: 300
+            titleMax: RoutinesManager.MAX_TITLE, descrMax: RoutinesManager.MAX_DESCRIPTION
         }}
     />
 {/if}

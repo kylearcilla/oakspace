@@ -18,6 +18,7 @@
 	import SvgIcon from '../../../../components/SVGIcon.svelte'
 	import { DailyRoutinesManager } from '$lib/routines-daily-manager'
 	import DropdownBtn from '../../../../components/DropdownBtn.svelte'
+	import { RoutinesManager } from '$lib/routines-manager';
 
     export let data: { routines: DailyRoutine[] }
 
@@ -779,7 +780,7 @@
         onFinishEdit={onFinishNewDailyRoutineEdit}
         isForWeek={false}
         bounds={{ 
-            titleMax: 200, descrMax: 300
+            titleMax: RoutinesManager.MAX_TITLE, descrMax: RoutinesManager.MAX_DESCRIPTION
         }}
     />
 {/if}

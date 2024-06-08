@@ -58,16 +58,20 @@ export class RoutinesManager {
     cursorPosFromWindow: OffsetPoint = { left: 0, top: 0 }
 
     earliestBlockHeadPos = TOTAL_DAY_MINS
-    scrollInterval: NodeJS.Timer | null = null
+    scrollInterval: any = null
     
     // context menu
     contextMenuPos: Writable<OffsetPoint> = writable({ left: -1, top: -1 })
     isContextMenuOpen = false
 
     // top offset comes from the offseted hoz lines to be vertically center aligned with the hours
-    MIN_BLOCK_DURATION_MINS = 15
-    STRETCH__DRAG_DISTANCE_THRESHOLD = 5
-    NEW_STRETCH_DRAG_DIST_THRESHOLD = 4
+    static MIN_BLOCK_DURATION_MINS = 15
+    static STRETCH__DRAG_DISTANCE_THRESHOLD = 5
+    static NEW_STRETCH_DRAG_DIST_THRESHOLD = 12.5
+
+    // constants
+    static MAX_TITLE = 200
+    static MAX_DESCRIPTION = 300
 
     /**
      * Initialize references to parent containers. Called after mounted.
@@ -269,8 +273,8 @@ export class RoutinesManager {
     }
     
     /**
-     * Update the currently-being-edit routine (raw and display elems).
-     * How the update is handled depedns on the edit that was made
+     * Incorporate changes made to  the currently-being-edit routine.
+     * How the update is handled depedns on the edit that was made.
      * 
      * @param editBlock  The edited block elem.
      * @param edtt       Edit that was made.
@@ -291,18 +295,18 @@ export class RoutinesManager {
 
             this.editDayRoutineElems.update((_blocks) => {
                 let blocks           = _blocks!
-                let editBlockIdx     = blocks.findIndex((block) => block.id === editBlock.id)! as number
-                let editBlock        = blocks[editBlockIdx]
+                let editBlockIdx     = blocks.findIndex((block) => block.id === editBlock.id)!!
+                let _editBlock        = blocks[editBlockIdx]
                 let prevOrderContext = editBlock.orderContext
 
-                editBlock = { ...editBlock, ...editBlock }
+                _editBlock = { ..._editBlock, ...editBlock }
                 blocks[editBlockIdx] = editBlock
 
-                if (prevOrderContext != "first" && editBlock.orderContext === "first") {
-                    blocks = blocks.map((block) => block.id != editBlock.id && block.orderContext === "first" ? { ...block, orderContext: null } : block)
+                if (prevOrderContext != "first" && _editBlock.orderContext === "first") {
+                    blocks = blocks.map((block) => block.id != _editBlock.id && block.orderContext === "first" ? { ...block, orderContext: null } : block)
                 }
-                else if (prevOrderContext != "last" && editBlock.orderContext === "last") {
-                    blocks = blocks.map((block) => block.id != editBlock.id && block.orderContext === "last" ? { ...block, orderContext: null } : block)
+                else if (prevOrderContext != "last" && _editBlock.orderContext === "last") {
+                    blocks = blocks.map((block) => block.id != _editBlock.id && block.orderContext === "last" ? { ...block, orderContext: null } : block)
                 }
 
                 return blocks
@@ -588,11 +592,12 @@ export class RoutinesManager {
      * @param isEditingExisting  Is user stretch-editing a new block!
      */
     initDragStretchEdit(block: RoutineBlockElem, isEditingExisting = false) {
-        const isDraggingByTail = !this.isDragLiftFromHead
+        // const isDraggingByTail = !this.isDragLiftFromHead
+        const isDraggingByTail = this.cursorPos.top > this.dragStartPoint.top
+        const pivotTime        = isDraggingByTail ? block.startTime : block.endTime
 
-        this.stretchPivotPointTopOffset = this.getDragPivotPointTopOffset(
-            block.height, this.cursorPos.top, isDraggingByTail
-        )
+        this.stretchPivotPointTopOffset = this.getTopOffsetFromTime(pivotTime)
+        this.stretchPivotTime = pivotTime
 
         if (isEditingExisting) {
             this.editContext.set("old-stretch")
@@ -615,17 +620,20 @@ export class RoutinesManager {
      * @returns  Edit block from the edit. Will be null if too small or overlapping.
      */
     createBlockFromStretchEdit(): RoutineEditBlock | null {
-        const stretchPivotTime       = this.getTimeAndOffsetFromTopPos(this.dragStartPoint!.top).time
-        const { startTime, endTime } = this.getTimesFromStretch({
+        const stretchPivotTime     = this.getTimeAndOffsetFromTopPos(this.stretchPivotPointTopOffset, false).time
+        let { startTime, endTime } = this.getTimesFromStretch({
             pivotPointOffset:  this.stretchPivotPointTopOffset, 
             topOffset:         this.cursorPos!.top, 
             stretchPivotTime:  stretchPivotTime,
             isDraggingByTail:  true
         })
+        startTime = Math.max(roundUpFive(startTime), 0)
+        endTime   = Math.min(Math.max(roundUpFive(endTime), 0), 1439)
+
         const elapsedTime = endTime - startTime
         const blocks      = get(this.editDayRoutineElems)!
 
-        if (elapsedTime < this.MIN_BLOCK_DURATION_MINS || this.getOverlappingBlock(blocks, startTime, endTime)) {
+        if (elapsedTime < RoutinesManager.MIN_BLOCK_DURATION_MINS || this.getOverlappingBlock(blocks, startTime, endTime)) {
             return null
         }
 
@@ -634,7 +642,8 @@ export class RoutinesManager {
             id: blocks.length + "",
             title: "Untitled Block",
             color: randomArrayElem(COLOR_SWATCHES.d),
-            startTime, endTime,
+            startTime, 
+            endTime,
             height: 0, xOffset: 0, yOffset: this.getTopOffsetFromTime(startTime),
             description: "",
             orderContext: null,
@@ -664,7 +673,7 @@ export class RoutinesManager {
         } = gestureContext
 
         const containerHt    = this.containerElemHt
-        const yOffsetMins    = (topOffset / containerHt) * TOTAL_DAY_MINS
+        const yOffsetMins    = Math.floor((topOffset / containerHt) * TOTAL_DAY_MINS)
         const yChange        = pivotPointOffset - topOffset
         const belowPivotLine = yChange < 0
 
@@ -713,7 +722,7 @@ export class RoutinesManager {
         endTime = _endTime
         startTime = _startTime
 
-        if (endTime - startTime < this.MIN_BLOCK_DURATION_MINS) return null
+        if (endTime - startTime < RoutinesManager.MIN_BLOCK_DURATION_MINS) return null
 
         const updatedProps = {
             startTime, endTime,
@@ -737,7 +746,7 @@ export class RoutinesManager {
         let doUpdate = editBlock != null
         
         if (editBlock) {
-            doUpdate = editBlock!.endTime - editBlock!.startTime >= this.MIN_BLOCK_DURATION_MINS
+            doUpdate = editBlock!.endTime - editBlock!.startTime >= RoutinesManager.MIN_BLOCK_DURATION_MINS
         }
         if (editContext === "new-stretch" && doUpdate) {
             this.isMakingNewBlock = true
@@ -821,11 +830,10 @@ export class RoutinesManager {
      * @param topOffset  Y offset cursor position
      * @returns          Start time in minuts from offset cursor position and the corresponding offset form from it.
      */
-    getTimeAndOffsetFromTopPos(topOffset: number) {
+    getTimeAndOffsetFromTopPos(topOffset: number, roundToFive = true) {
         const containerHt   = this.containerElemHt
-        
         const topOffsetMins = (topOffset / containerHt) * TOTAL_DAY_MINS
-        const time          = Math.max(roundUpFive(topOffsetMins), 0)
+        const time          = roundToFive ? Math.max(roundUpFive(topOffsetMins), 0) : Math.floor(topOffsetMins)
         const yOffset       = this.getTopOffsetFromTime(time)
 
         return { time, yOffset }
@@ -1141,8 +1149,11 @@ export class RoutinesManager {
     * @returns  True if the drag distance is within the stretch edit threshold, otherwise false.
     */
     isDragWithinStretchThreshold() {
-        const dragDistance = getDistBetweenTwoPoints(this.dragStartPoint!, this.cursorPos!)
-        return dragDistance >= this.NEW_STRETCH_DRAG_DIST_THRESHOLD
+        const dragDistance = Math.abs(this.cursorPos.top - this.dragStartPoint.top)
+
+        console.log({ dragDistance })
+
+        return dragDistance >= RoutinesManager.NEW_STRETCH_DRAG_DIST_THRESHOLD
     }
 
     /**
@@ -1168,7 +1179,7 @@ export class RoutinesManager {
                 this.containerElem!.scrollLeft -= 10
             }
             else if (!moveDirection) {
-                clearInterval(this.scrollInterval!)
+                clearInterval(this.scrollInterval as any)
                 this.scrollInterval = null
             }
         }, 25)

@@ -5,8 +5,7 @@
 	import { Icon } from "$lib/enums"
 	import BounceFade from "./BounceFade.svelte";
 	import { TAGS } from "../tests/routines/routines.data";
-    
-    let isDarkTheme = $themeState.isDarkTheme
+
 
     export let tag: Tag | null
     export let isActive: boolean
@@ -22,6 +21,7 @@
     const TRANSITION_DURATIONS_MS = 200
 
     $: isEmpty = !tag
+    $: isDarkTheme = $themeState.isDarkTheme
     $: toggleMenu(isActive)
 
     $: tagColor = tag ? getColorTrio(tag.symbol.color, !isDarkTheme) : null

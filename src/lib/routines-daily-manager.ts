@@ -14,7 +14,13 @@ export class DailyRoutinesManager extends RoutinesManager {
      */
     constructor(dailyRoutines?: (DailyRoutine[] | null)) {
         super()
+        this.updateDailyRoutines(dailyRoutines)
+    }
 
+    updateDailyRoutines(dailyRoutines?: (DailyRoutine[] | null)) {
+        if (!dailyRoutines) {
+            this.dailyRoutines.set([])
+        }
         if (dailyRoutines) {
             this.dailyRoutines.set(dailyRoutines)
         }
@@ -27,11 +33,14 @@ export class DailyRoutinesManager extends RoutinesManager {
      * @param routine    Edit routine.
      */
     initEditRoutine(routine: DailyRoutine | null) {
+        if (get(this.editContext) === "duplicate") {
+            this.closeDuplicateEdit()
+        }
         if (!routine) {
             this.coreBreakdown.set(EMPTY_CORES)
             this.tagBreakdown.set([])
+            this.editDayRoutine.set(null)
             this.editDayRoutineElems.set(null)
-
             return
         }
 
@@ -53,12 +62,23 @@ export class DailyRoutinesManager extends RoutinesManager {
 
     /* Detail Edits */
 
+    toggleEditModal(blockId: string) {
+        this.blockOnPointerDown = this.getBlockElem(blockId)!
+        this.editingBlockRef = this.getDOMBlockElem(blockId)
+        this.editingBlock.set({
+            ...this.blockOnPointerDown, isDragging: false
+        })
+
+        this.editContext.set("details")
+    }
+
     /**
      * Updates a selected daily routine's title
      * @param name 
      */
     updateTitle = (name: string) => {
         this.editDayRoutine.update((routine) => ({ ...routine!, name }))
+        this.updateRoutinesFromRoutine(get(this.editDayRoutine) as DailyRoutine)
     }
 
     /**
@@ -67,6 +87,18 @@ export class DailyRoutinesManager extends RoutinesManager {
      */
     updateDescription = (description: string) => {
         this.editDayRoutine.update((routine) => ({ ...routine!, description } ))
+        // this.updateRoutinesFromRoutine(get(this.editDayRoutine) as DailyRoutine)
+    }
+
+    updateRoutinesFromRoutine = (updatedRoutine: DailyRoutine) => {
+        this.dailyRoutines.update((routines) => {
+            return routines!.map((routine) => updatedRoutine.id === routine.id ? updatedRoutine : routine)
+        })
+    }
+
+    onConcludeModalEdit(updatedBlock: RoutineBlockElem | null) {
+        super.onConcludeModalEdit(updatedBlock)
+        this.updateBreakdownData()
     }
 
     /* Block / Blocks Container Event Handler */
@@ -123,9 +155,13 @@ export class DailyRoutinesManager extends RoutinesManager {
     onLiftBlockPointerMove = (e: PointerEvent) => {
         e.preventDefault()
 
-        if (!this.allowLiftEdit && this.isDragWithinStretchThreshold()) { 
-            this.intDragLiftMoveEdit(this.blockOnPointerDown!)
-            this.allowLiftEdit = true
+        if (!this.allowLiftEdit) { 
+            const threshold = RoutinesManager.LIFT_DRAG_DIST_THRESHOLD
+
+            if (this.isAbsDragWithinStretchThreshold(threshold)) {
+                this.intDragLiftMoveEdit(this.blockOnPointerDown!)
+                this.allowLiftEdit = true
+            }
         }
         if (this.allowLiftEdit) {
             this.onBlockLiftMove()
@@ -153,14 +189,22 @@ export class DailyRoutinesManager extends RoutinesManager {
      * Handler for when ending an old stretch or lift edit.
      */
     onBlockStretchEditEnd = () => {
+        this.removeStretchEventListeners()
+
+        if (!this.allowStrechEdit) {
+            this.editingBlock.set(null)
+            return
+        }
+        
         super.onBlockStretchEditEnd()
         this.updateBreakdownData()
+        this.dragStartPoint = { left: -1, top: -1 }
+    }
 
+    removeStretchEventListeners() {
         this.containerElem!.removeEventListener("pointermove", this.onScrollContainerPointerMove)
         this.containerElem!.removeEventListener("pointermove", this.onBlockStretchMove)
-
         this.containerElem!.removeEventListener("pointerup", this.onBlockStretchEditEnd)
-        this.dragStartPoint = { left: -1, top: -1 }
     }
 
     onBlockContextMenu(id: string) {
@@ -198,7 +242,9 @@ export class DailyRoutinesManager extends RoutinesManager {
      * @param e   Pointer Event
      */
     onScrollContainerPointerMove = (e: PointerEvent) => {
-        if (!this.allowStrechEdit && this.isDragWithinStretchThreshold()) {    
+        if (!this.allowStrechEdit) {    
+            const threshold = RoutinesManager.NEW_STRETCH_DRAG_DIST_THRESHOLD
+            if (!this.isHozDragWithinStretchThreshold(threshold)) return
 
             // attempt to make a valid block
             const editBlock = this.createBlockFromStretchEdit()
@@ -226,19 +272,26 @@ export class DailyRoutinesManager extends RoutinesManager {
     onBlockLiftMove() {
         const { safeProps, xOffset, yOffset } = this.getLiftBlockPosition()
 
-        // drop area block uses safe positions
-        this.editingBlock.update((block) => ({ 
-            ...block!, ...safeProps, 
-            xOffset, 
-            yOffset,
-            isDragging: true,
-            dropArea: {
-                doShow: true,
-                top: safeProps!.yOffset, 
-                left: 0,
-                offsetIdx: 0
-            }
-        })) 
+        if (safeProps) {
+            this.editingBlock.update((block) => ({ 
+                ...block!, 
+                ...safeProps, 
+                xOffset, 
+                yOffset, 
+                isDragging: true,
+                dropArea: {
+                    top: safeProps.yOffset, 
+                    left: 0, 
+                    doShow: true,
+                    offsetIdx: 0
+                }
+            }))
+        }
+        else {
+            this.editingBlock.update((block) => ({ 
+                ...block!, xOffset, yOffset, isDragging: true
+            })) 
+        }
     }
 
     /**
@@ -275,12 +328,16 @@ export class DailyRoutinesManager extends RoutinesManager {
 
     onDupBlockPointerUp = () => {
         this.editingBlock.update((block) => { 
-            const dropArea = block!.dropArea!
-            const yOffset = dropArea.top ?? block!.yOffset
+            if (!block) return block
+
+            const dropArea = block.dropArea!
+            const yOffset  = dropArea.offsetIdx >= 0 ? dropArea.top : block.yOffset
             
             return { 
-                ...block!, isDragging: false, yOffset, xOffset: dropArea.left,
-                dropArea: { ...dropArea, doShow: false }  
+                ...block, 
+                yOffset, 
+                isDragging: false, 
+                dropArea: { ...block.dropArea!, doShow: false }  
             }
         })
         this.removeDupEventListeners()
@@ -391,6 +448,11 @@ export class DailyRoutinesManager extends RoutinesManager {
 
     removeDailyRoutine(routineId: string) {
         this.dailyRoutines.update((routines) => (routines!.filter((r) => r.id != routineId)))
+
+        const editDayRoutine = get(this.editDayRoutine) as DailyRoutine
+        if (routineId === editDayRoutine?.id) {
+            this.initEditRoutine(null)
+        }
     }
 
     newDailyRoutine(newRoutine: DailyRoutine) {
@@ -409,6 +471,6 @@ export class DailyRoutinesManager extends RoutinesManager {
      * @returns    Block elem's corresponding dom block element.
      */
     getDOMBlockElem(id: string) {
-        return getElemById(`daily-routine-block--${id}`) as HTMLElement
+        return getElemById(`rblock--${id}`) as HTMLElement
     }
 }

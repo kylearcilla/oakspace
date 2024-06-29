@@ -53,15 +53,15 @@ export class YoutubeUserData {
             const authRes = await authYoutubeClient()
             await this.initData(authRes)
         }
-        catch(error) {
+        catch(error: any) {
             if (!hasSignedIn) {
                 this.quit()
             }
-            if (error instanceof APIError && error.code === APIErrorCode.AUTH_DENIED)  {
+            if (error.code === APIErrorCode.AUTH_DENIED)  {
                 throw error
             }
             else {
-                throw new APIError(APIErrorCode.AUTHORIZATION_ERROR)
+                throw new APIError(APIErrorCode.AUTHORIZATION_ERROR, error.message)
             }
         }
     }
@@ -199,9 +199,12 @@ export class YoutubeUserData {
             this.updateYoutubeUserData({ userPlsSecondPageToken: this.userPlsSecondPageToken })            
         }
         catch(error: any) {
-            if (error instanceof APIError && error.code === APIErrorCode.EXPIRED_TOKEN) {
+            if (error.code === APIErrorCode.EXPIRED_TOKEN) {
                 this.setTokenHasExpired(true)
                 this.onError(error)
+            }
+            else if (error.code === APIErrorCode.RESOURCE_NOT_FOUND){
+                this.onError(new APIError(APIErrorCode.RESOURCE_NOT_FOUND, error.message))
             }
             else {
                 this.onError(new APIError(APIErrorCode.GENERAL, `There was an refreshing your playlists. Please try again later.`))

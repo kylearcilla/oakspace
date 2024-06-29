@@ -11,7 +11,7 @@ import { toast } from "./utils-toast"
 const INIT_PLAYLIST_REQUEST_DELAY = 1000
 export const USER_PLS_MAX_PER_REQUEST = 15
 
-
+/* Settings Handlers */
 /**
  * Attempt to log in Youtube User. Initialize client credentials & user data.
  * Goes through an auth flow process. Called when logging for the first time or after a refresh after a log in.
@@ -108,6 +108,7 @@ export async function getYtMediaId(url: string): Promise<YoutubeMediaId | { erro
  * @param playlist   Playlist user clicked on.
  */
 export async function handleChoosePlaylist (playlist: YoutubePlaylist) {
+    console.log({ playlist })
     let ytPlayer = get(ytPlayerStore)
     const hasInitPlayer = ytPlayer != null
 
@@ -146,6 +147,9 @@ export function youtubeAPIErrorHandler(error: APIError) {
 
     const errorMessage = error.message
     const hasNoMsg = errorMessage != undefined && errorMessage
+
+
+    console.log({ errorMessage })
 
     if (error.code === APIErrorCode.EXPIRED_TOKEN) {
         toastOptions = {
@@ -266,4 +270,73 @@ export function saveYtPlayerData(newData: YoutubePlayerData) {
 
 export function deleteYtPlayerData() {
     localStorage.removeItem('yt-player-data')
+}
+
+/* Misc */
+export function initTestYTGroups(playlistGroups: YoutubePlaylistGroup[]) {
+    const testPlaylists = [ 
+        {
+            id: "PLDrC2_x2IOG3Wq6caRAmSoZJCKxO81j5G",
+            title: "public w invalid first vid",
+            description: "",
+            vidCount: 2,
+            channelId: "UCiFf9w1AjJNfPwvtWkXz-mw",
+            channelTitle: "Napoleon Bonaparte",
+            thumbnailURL: "https://i.ytimg.com/vi/1ex_bNIFR1A/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLBTS_NLHqGYSPE6R9NIXCdcFHB55A",
+            channelImgSrc: "",
+            channelURL: "https://www.youtube.com/channel/UCiFf9w1AjJNfPwvtWkXz-mw",
+            firstVidId: null
+        },
+        {
+            id: "PLDrC2_x2IOG1l20JgR2LNKhh3nfK2lbQY",
+            title: "public w invalid 2nd vid",
+            description: "",
+            vidCount: 3,
+            channelId: "UCiFf9w1AjJNfPwvtWkXz-mw",
+            channelTitle: "Napoleon Bonaparte",
+            thumbnailURL: "https://i.ytimg.com/vi/heO5wE0UV0A/hqdefault.jpg?sqp=-oaymwExCNACELwBSFryq4qpAyMIARUAAIhCGAHwAQH4Af4JgALQBYoCDAgAEAEYViBlKDwwDw==&rs=AOn4CLAb8WbjgoBturwXonBBULaP_053LA",
+            channelImgSrc: "",
+            channelURL: "https://www.youtube.com/channel/UCiFf9w1AjJNfPwvtWkXz-mw",
+            firstVidId: null
+        },
+        {
+            id: "PLDrC2_x2IOG0HaQiP2jMOWzVk1Mlqvyg5",
+            title: "unlisted",
+            description: "",
+            vidCount: 1,
+            channelId: "UCiFf9w1AjJNfPwvtWkXz-mw",
+            channelTitle: "Napoleon Bonaparte",
+            thumbnailURL: "https://i.ytimg.com/vi/hNleOVGEw60/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLARM_orE_-zR-JsASB2dlm4B4BZKg",
+            channelImgSrc: "",
+            channelURL: "https://www.youtube.com/channel/UCiFf9w1AjJNfPwvtWkXz-mw",
+            firstVidId: null
+        },
+        {
+            id: "PLDrC2_x2IOG0LPe04RiAnxDMVtjzmVvdn",
+            title: "private",
+            description: "",
+            vidCount: 1,
+            channelId: "UCiFf9w1AjJNfPwvtWkXz-mw",
+            channelTitle: "Napoleon Bonaparte",
+            thumbnailURL: "https://i.ytimg.com/vi/kyqpSycLASY/hqdefault.jpg?sqp=-oaymwExCNACELwBSFryq4qpAyMIARUAAIhCGAHwAQH4Af4JgALQBYoCDAgAEAEYSyBlKDkwDw==&rs=AOn4CLCmJhdMZTrxUZ0UeEoPlweKve9tqQ",
+            channelImgSrc: "",
+            channelURL: "https://www.youtube.com/channel/UCiFf9w1AjJNfPwvtWkXz-mw",
+            firstVidId: null
+        },
+        {
+            id: "PLDrC2_x2IOG0DTpP7RuNYe8-vjcHNHp8b",
+            title: "empty",
+            description: "",
+            vidCount: 0,
+            channelId: "UCiFf9w1AjJNfPwvtWkXz-mw",
+            channelTitle: "Napoleon Bonaparte",
+            thumbnailURL: "https://i.ytimg.com/img/no_thumbnail.jpg",
+            channelImgSrc: "",
+            channelURL: "https://www.youtube.com/channel/UCiFf9w1AjJNfPwvtWkXz-mw",
+            firstVidId: null
+        }
+    ]
+
+    playlistGroups[0].playlists = [...testPlaylists, ...playlistGroups[0].playlists]
+    return playlistGroups
 }

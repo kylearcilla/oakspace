@@ -1294,8 +1294,6 @@ export function extractQuadCSSValue(val: CSSMultiDimPxVal | undefined) {
   return { ...res, top, right, bottom, left }
 }
 
-
-
 /**
  * Ensures that a floating element inside a parent conatiner always fit inside the parent.
  * Context menu or an element being dragged and dropped.
@@ -1370,28 +1368,53 @@ export function isNearBorderAndShouldScroll(containerElem: HTMLElement, cursorPo
   const hasReachedBottom   = scrollTop >= scrollHeight - windowHeight
   const hasReachedRightEnd = scrollLeft >= scrollWidth - windowWidth
 
+  const canScrollHoz  = scrollWidth > windowWidth
+  const canScrollVert = scrollHeight > windowHeight
 
-  if (windowTopOffset < 10 && scrollTop != 0) {
+  if (windowTopOffset < 10 && scrollTop != 0 && canScrollVert) {
       return "up"
   }
-  else if (windowHeight - windowTopOffset < 20 && !hasReachedBottom) {
+  else if (windowHeight - windowTopOffset < 20 && !hasReachedBottom && canScrollVert) {
       return "down"
   }
-  else if (windowLeftOffset < 10 && scrollLeft != 0) {
+  else if (windowLeftOffset < 10 && scrollLeft != 0 && canScrollHoz) {
       return "left"
   }
-  else if (windowWidth - windowLeftOffset < 20 && !hasReachedRightEnd) {
+  else if (windowWidth - windowLeftOffset < 20 && !hasReachedRightEnd && canScrollHoz) {
       return "right"
   }
   else {
       return null
-}
+  }
 } 
 
-
 export function capitalize(str: string) {
-  if (str.length === 0) {
-      return str
-  }
+  if (str.length === 0) return str
+
   return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
+/**
+ * Used to prevent scroll from tab indexing which would force scroll on overflow hidden elements.
+ * @param e 
+ */
+export function preventScroll(e: Event) {
+  const target = e.target as HTMLElement
+  
+  target.scrollTop = 0
+  target.scrollLeft = 0
+}
+
+/**
+ * Formats a string to its plural form based on the given count.
+ * i.e.  "3 Videos"
+ * 
+ * @param str 
+ * @param count 
+ * @returns 
+ */
+export function formatPlural(str: string, count: number) {
+  const noun = count === 1 ? str : `${str}s`
+
+  return `${count} ${noun}`
 }

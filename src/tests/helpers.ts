@@ -1,9 +1,10 @@
 type GenerateStringOptions = {
     length: number;
-    includeEmojis?: boolean;
-    leadingSpace?: number;
-    trailingSpace?: number;
+    includeEmojis?: boolean
+    leadingSpace?: number
+    trailingSpace?: number
     exclude?: string[]
+    excludeEntities?: boolean
 }
 
 export function looseEqualTo(x: number, y: number, diff = 5) {
@@ -15,15 +16,26 @@ export function neg(num: number) {
 }
   
 export function generateRandomString(options: GenerateStringOptions): string {
-    const { length, includeEmojis = false, leadingSpace = 0, trailingSpace = 0, exclude = [] } = options
+    const { 
+        length, 
+        includeEmojis = false, 
+        leadingSpace = 0, 
+        trailingSpace = 0, 
+        exclude = ["�", "�"], 
+        excludeEntities = false 
+    } = options
     const emojiRange = [128512, 128591]
     const startAscii = 33
     const endAscii = 126
     const asciiRange = endAscii - startAscii + 1
     let result = ''
 
-    const getRandomChar = (force: "alpha-num" | "emoji" | null = null) => {
-        if (includeEmojis && (force === "emoji" || (force !== "alpha-num" && Math.random() < 0.1))) {
+    if (excludeEntities) {
+        exclude.push(...[">", "<", "&"])
+    }
+
+    const getRandomChar = () => {
+        if (includeEmojis && Math.random() < 0.1) {
             const randomEmoji = Math.floor(Math.random() * (emojiRange[1] - emojiRange[0] + 1)) + emojiRange[0]
             return String.fromCodePoint(randomEmoji)
         } 
@@ -40,7 +52,8 @@ export function generateRandomString(options: GenerateStringOptions): string {
     };
 
     for (let i = 0; i < length; i++) {
-        result += getRandomChar((length - 1 - i) < 1 ? "alpha-num" : null)
+        const randomChar = getRandomChar()
+        result += randomChar === '\uFFFD' ? "a" : randomChar
     }
 
     const leadingSpaces = ' '.repeat(leadingSpace)
@@ -57,6 +70,7 @@ export function generateRandomString(options: GenerateStringOptions): string {
         while (exclude.includes(String.fromCharCode(randomAscii)))
             
         return res.slice(0, -1) + String.fromCharCode(randomAscii)
+
     } else {
         return res;
     }

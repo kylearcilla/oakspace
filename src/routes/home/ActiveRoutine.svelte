@@ -29,6 +29,7 @@
     let noneActive = false
     let nowBlockIdx = 0
     let isCreatingNewTask = false
+    let descriptionInputRef: HTMLElement
 
     let nowBlock:      { block: RoutineBlock, idx: number } | null = null
     let nextViewBlock: { block: RoutineBlock, idx: number } | null = null
@@ -48,7 +49,7 @@
     let routineItemsRef: HTMLElement
     let descriptionEditor: Writable<InputManager>
 
-    $: colorTrio = nowBlock ? getColorTrio((nowBlock as any).block.color, !isDarkTheme) : ["", "", ""]
+    $: colorTrio    = nowBlock?.block.tag ? getColorTrio((nowBlock as any).block.tag.symbol.color, !isDarkTheme) : ["", "", ""]
     $: todayRoutine = initTodayRoutine(routine, currTime)
     $: initNowBlock(todayRoutine)
     $: initDescriptionEditor(nowBlock?.block?.description ?? "")
@@ -330,11 +331,16 @@
             <div class="active-routine__description-container">
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <div 
+                    tabindex="0"
+                    role="button"
                     class="active-routine__description"
                     class:active-routine__description--no-description={description.length === 0}
                     style={maskListGradient}
                     bind:this={descriptionRef}
-                    on:click={() => isDescrExpanded = true}
+                    on:click={() => {
+                        isDescrExpanded = true
+                        setTimeout(() => descriptionInputRef.focus(), 50)
+                    }}
                     on:scroll={initDescriptionGradient}
                 >
                     {description.length === 0 ? "No Description" : description}
@@ -352,6 +358,7 @@
                                 class="active-routine__description-editor text-editor"
                                 data-placeholder={$descriptionEditor.placeholder}
                                 contenteditable
+                                bind:this={descriptionInputRef}
                                 bind:innerHTML={$descriptionEditor.value}
                                 on:paste={(e) => $descriptionEditor.onPaste(e)}
                                 on:input={(e) => $descriptionEditor.onInputHandler(e)}
@@ -378,20 +385,20 @@
                         <div class="active-routine__action-items-title">
                             Action Items
                         </div>
-                    </div>
-                    <div class="flx flx--algn-center">
-                        <div class="active-routine__progress">
-                            <span>12</span>
-                        </div>
                         <button 
                             class="active-routine__new-item-btn"
                             on:click={() => isCreatingNewTask = !isCreatingNewTask}
                         >
                             <SvgIcon 
                                 icon={Icon.Add} 
-                                options={{ strokeWidth: 1.8, scale: 0.95 }} 
+                                options={{ strokeWidth: 1.8, scale: 0.9 }} 
                             />
                         </button>
+                    </div>
+                    <div class="flx flx--algn-center">
+                        <div class="active-routine__progress">
+                            <span>12</span>
+                        </div>
                     </div>
                 </div>
                 <div class="active-routine__action-items" bind:this={routineItemsRef}>
@@ -496,7 +503,7 @@
         background-color: var(--bg-2);
         border: 1px solid rgba(var(--textColor1), 0.04);
         border-radius: 16px;
-        padding: 0px 0px 10px 0px;
+        padding: 0px 0px 5px 0px;
         width: 290px;
         position: relative;
 
@@ -519,16 +526,16 @@
             @include text-style(0.4, 500);
         }
         &--light &__time {
-            @include text-style(0.4, 500);
+            @include text-style(0.6, 500);
         }
         &--light &__no-routine {
             @include text-style(0.95, 600);
         }
         &--light &__no-routine-subtitle {
-            @include text-style(0.6, 500);
+            @include text-style(0.7, 500);
         }
         &--light &__no-routine-subtitle strong {
-            @include text-style(0.3, 500);
+            @include text-style(0.4, 500);
         }
         &--empty &__bottom-container {
             padding: 0px 18px 0px 9px;
@@ -555,7 +562,7 @@
             @include text-style(1, 600, 1.14rem);
             @include flex(center);
             opacity: 0.4;
-            padding: 0px 6px;
+            padding: 4px 6px;
             
             &:nth-last-child(2) {
                 padding: 8px 8px;
@@ -569,6 +576,9 @@
             &:hover {
                 opacity: 0.8;
             }
+            &:focus-visible {
+                opacity: 0.8;
+            }
             &:active {
                 transform: scale(0.9);
             }
@@ -580,7 +590,7 @@
         }
         &__subheader {
             @include flex(center);
-            margin: 0.5px 0px 7px -2px;
+            margin: 2px 0px 7px -2px;
             padding: 0px 18px 0px 18px;
 
             .tag {
@@ -610,7 +620,7 @@
         }
         &__description-container {
             position: relative;
-            margin: 0px 0px 14px 0px;
+            margin: 0px 0px 8px 0px;
             @include text-style(0.8, 500, 1.1rem);
         }
         &__description {
@@ -627,17 +637,17 @@
         }
         &__description-floating {
             background-color: var(--bg-3);
-            // border: 1px solid rgba(var(--textColor1), 0.04);
             border-radius: 12px;
             padding: 8px 15px 5px 15px;
             max-width: calc(100% - 30px);
         }
         &__description-editor {
             @include text-style(0.75, 600, 1.1rem);
+            margin-bottom: 5px;
             padding: 0px;
         }
         .input-box {
-            padding-bottom: 22px;
+            padding-bottom: 25px;
             display: block;
 
             &__count {
@@ -645,15 +655,18 @@
             }
         }
         &__action-items-header {
-            margin: 2px 0px 6px 0px;
+            margin: 0px 0px 6px 0px;
             padding: 0px 18px 0px 18px;
             @include flex(center, space-between);
+            display: none;
         }
         &__action-items-title {
-            @include text-style(0.25, 500, 1.12rem);
+            @include text-style(0.3, 500, 1.12rem);
+            margin-left: -1px;
         }
         &__new-item-btn {
-            opacity: 0.2;
+            opacity: 0;
+            margin-left: 6px;
             
             &:hover {
                 opacity: 1;
@@ -663,25 +676,24 @@
             }
         }
         &__progress {
-            @include text-style(0.4, 400, 1.1rem, "DM Sans");
-            margin-right: 7px;
+            @include text-style(0.18, 400, 1rem, "DM Mono");
         }
         &__action-items {
-            max-height: 270px;
-            height: 270px;
+            max-height: 280px;
+            height: 280px;
             margin-bottom: 0px;
             position: relative;
         }
         &__no-routine {
-            @include text-style(0.55, 400, 1.21rem);
-            padding: 11px 0px 5px 0px;
+            @include text-style(0.55, 500, 1.14rem);
+            padding: 11px 0px 8px 0px;
         }
         &__no-routine-subtitle {
-            @include text-style(0.2, 400, 1.14rem, "DM Sans");
+            @include text-style(0.3, 400, 1.14rem, "DM Sans");
             margin-bottom: 12px;
 
             strong {
-                @include text-style(0.3, 400);
+                @include text-style(0.18, 400);
                 margin-left: 1.5px;
             }
         }

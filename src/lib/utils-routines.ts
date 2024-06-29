@@ -4,6 +4,7 @@ import { getElemById, getElemNumStyle } from "./utils-general"
 
 export const ROUTINE_BLOCKS_CONTAINER_ID = "routine-blocks-container"        // container for blocks
 export const ROUTINE_SCROLL_CONTAINER_ID = "routine-blocks-scroll-container" // container of blocks container
+export const DAY_DROPDOWN_WIDTH = 255
 
 export enum BreakdownView {
     Cores, Tags
@@ -49,7 +50,7 @@ export function isDayRoutinedLinked(weekRoutine: WeeklyRoutine | null, dayKey: k
 
 export function formatCoreData(mins: number) {
     if (mins < 0) return "--"
-    return minsToHHMM(mins)
+    return minsToHHMM(Math.floor(mins))
 }
 
 export function initTodayRoutine(wkRoutine: WeeklyRoutine | null, currTime: { dayIdx: number, minutes: number }) {
@@ -126,9 +127,19 @@ export function getMextTimeCheckPointInfo(dailyRoutine: RoutineBlock[] | DailyRo
     }
     
     const nextBlock = getUpcomingBlock(nowMins, dailyRoutine)
-
-
     return nextBlock ? `in ${minsToHHMM(nextBlock.block.startTime - nowMins)}` : ""
+}
+
+export function setDayBreakdownXOffset(dayBreakdownColIdx: number, numViewDays: number) {
+    if (numViewDays === 1) {
+        return `calc(50% - ${(DAY_DROPDOWN_WIDTH / 2) - 30}px)`
+    }
+    else if (numViewDays === 7) {
+        return `clamp(10px, calc(((100% / ${numViewDays}) * ${dayBreakdownColIdx}) + 0px), calc(100% - ${DAY_DROPDOWN_WIDTH + 10}px))`;
+    }
+    else {
+        return `clamp(10px, calc(((100% / ${numViewDays}) * ${dayBreakdownColIdx}) + 40px), calc(100% - ${DAY_DROPDOWN_WIDTH}px))`;
+    }
 }
 
 export const EDIT_BLOCK_OPTIONS: DropdownListItem[] = [
@@ -148,9 +159,9 @@ export const ROUTINE_CORE_KEYS: [RoutineActvity, string][] = [
     ["mind", "Mind"],
     ["awake", "Awake"],
     ["body", "Body"],
-    ["selfCare", "Self Care"]
+    ["selfCare", "Self-Care"]
 ]
-export const CORE_OPTIONS = ROUTINE_CORE_KEYS.filter((pair) => pair[0] != "awake")
+export const CORE_OPTIONS = ROUTINE_CORE_KEYS.filter((pair) => pair[0] != "awake" && pair[0] != "sleeping")
 
 export const EMPTY_CORES: RoutineCores = {
     sleeping: {

@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { globalContext, mediaEmbedStore, sessionStore } from "./store"
-import { MediaEmbedFixed, MediaEmbedType, ModalType, MusicPlatform, ShortcutSectionInFocus, ToasterPosition } from "./enums"
+import { MediaEmbedFixed, MediaEmbedType, ModalType, ShortcutSectionInFocus } from "./enums"
 
 import { loadTheme } from "./utils-appearance"
 import { conintueWorkSession, didInitSession } from "./utils-session"

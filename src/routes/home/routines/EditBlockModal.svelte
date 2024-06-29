@@ -1,12 +1,12 @@
-<script lang="ts">
+ <script lang="ts">
 	import type { Writable } from "svelte/store"
 
     import { Icon } from "$lib/enums"
 	import { themeState } from "$lib/store"
 	import { toast } from "$lib/utils-toast"
-	import { getColorTrio } from "$lib/utils-general"
+	import { getColorTrio, isTargetTextEditor } from "$lib/utils-general"
 	import { minsFromStartToHHMM } from "$lib/utils-date"
-    import type { RoutinesManager } from "$lib/routines-manager"
+    import { RoutinesManager } from "$lib/routines-manager"
 	import { InputManager, TextEditorManager } from "$lib/inputs"
 	import { CORE_OPTIONS, getCoreActivityIdx, getCoreStr } from "$lib/utils-routines"
 
@@ -26,14 +26,12 @@
 
     class EditError extends Error { }
 
-    const DESCR_MAX = 300
-
     let settingsOpen = false, coresOpen = false
     let colorsOpen = false, tagsOpen = false
     
     let { 
         id, startTime, endTime, title, 
-        description, tasks, orderContext, activity, tag
+        description, tasks, order, activity, tag
     } = block
 
     let _blocks = routineManager.editDayRoutineElems
@@ -45,8 +43,7 @@
 
     let newStartTime = startTime
     let newEndTime = endTime
-    let newOrderContext = orderContext
-    let orderOptnText = ""
+    let newOrderContext = order
     let hasInitTasks = false
     
     let editHasBeenMade = false
@@ -79,6 +76,9 @@
         const target = event.target as HTMLElement
         const optionName = target.innerText
 
+        if (optionName.toLowerCase().includes("set")) {
+            toggleEditMade()
+        }
         
         if (optionName === "Unset as first block") {
             newOrderContext = null
@@ -86,10 +86,10 @@
         else if (optionName === "Unset as last block") {
             newOrderContext = null
         }
-        else if (optionName === "Set first block" || optionName === "Set new first block") {
+        else if (optionName === "Set as first block" || optionName === "Set as new first block") {
             newOrderContext = "first"
         }
-        else if (optionName === "Set last block" || optionName === "Set new last block") {
+        else if (optionName === "Set as last block" || optionName === "Set as new last block") {
             newOrderContext = "last"
         }
         else if (optionName === "Delete Block") {
@@ -103,62 +103,62 @@
         if (!blocks) return
 
         firstBlockExists = blocks.find((block) => 
-            block.orderContext === "first" && block.startTime != startTime) != null
+            block.order === "first" && block.startTime != startTime) != null
 
         lastBlockExists = blocks.find((block) => 
-            block.orderContext === "last" && block.startTime != startTime) != null
+            block.order === "last" && block.startTime != startTime) != null
     }
 
     /* Text Stuff */
-
     function initTitleEditor(_title: string) {
         titleInput = (new InputManager({ 
             initValue: _title,
             placeholder: "Block Title...",
-            maxLength: 100,
+            maxLength: RoutinesManager.MAX_BLOCK_TITLE,
             id: "routine-block-title-input",
+            doAllowEmpty: false,
             handlers: {
-                onBlurHandler: (e, val) => onTitleChange(val)
+                onBlurHandler: (e, val) => onTitleChange(val),
+                onInputHandler: () => editHasBeenMade = true
             }
         })).state
     }
-
     function initDescriptionEditor(_description: string) {
         descriptionEditor = (new TextEditorManager({ 
             initValue: _description,
             placeholder: "Type description here...",
             doAllowEmpty: true,
-            maxLength: 500,
+            maxLength: RoutinesManager.MAX_BLOCK_DESCRIPTION,
             id: "routine-block-description",
             handlers: {
                 onBlurHandler: (e, val, length) => { 
                     isDescrFocused = false
-                    descrLength = length
                     onDescriptionChange(val)
                 },
                 onInputHandler: (e, val, length) => {
                     descrLength = length
+                    description = val
+                    console.log({ val })
+                    editHasBeenMade = true
                 },
-                onFocusHandler: () => {
+                onFocusHandler: (e, val, length) => {
                     isDescrFocused = true
-                    descrLength = description.length
+                    descrLength = length
+                    console.log({ length })
                 }
             }
         })).state
     }
-
     function onTitleChange(newTitle: string) {
         title = newTitle
         toggleEditMade()
     }
-
     function onDescriptionChange(newDescription: string) {
         description = newDescription
         toggleEditMade()
     }
 
     /* Info */
-    
     function onTagChange(tag: Tag | null) {
         tagsOpen = false
         block = { ...block, tag }
@@ -201,23 +201,35 @@
     }
 
     /* Action Items */
-
     function verifyChanges() {
-        const overlapBlock = routineManager.getOverlappingBlock(blocks!, newStartTime, newEndTime, id)
+        if (newEndTime >= 1440 || newEndTime === 0) {
+            throw new EditError("Invalid end time")
+        }
+        if (newEndTime - newStartTime < 0) {
+            throw new EditError("Invalid time")
+        }
+        if (newEndTime - newStartTime < RoutinesManager.MIN_BLOCK_DURATION_MINS) {
+            throw new EditError(`Blocks must be at least ${RoutinesManager.MIN_BLOCK_DURATION_MINS} minutes long`)
+        }
+
+        // looks for the earliest overlapping block
+        const overlapBlock = routineManager.getOverlappingBlock({
+            blocks: blocks!, startTime: newStartTime, endTime: newEndTime, excludeId: id
+        })
 
         if (overlapBlock) {
             const { title, startTime, endTime } = overlapBlock
             const startTimeStr = minsFromStartToHHMM(startTime)
             const endTimeStr = minsFromStartToHHMM(endTime)
 
-            throw new EditError(`Changes couldn't be saved. his block would overlap with \"${title}\" (${startTimeStr} - ${endTimeStr})`)
+            throw new EditError(`Changes couldn't be saved. Overlaps with \"${title}\" (${startTimeStr} - ${endTimeStr})`)
         }
     }
 
     /* Conclude Changes */
     function asyncCall() {
         return new Promise((resolve, reject) => {
-            setTimeout(() => resolve("Mock data"), 1400)
+            setTimeout(() => resolve("Mock data"), 200)
         })
     }
     async function saveChanges() {
@@ -231,12 +243,13 @@
             onMadeChanges({
                 ...block, 
                 startTime: newStartTime, endTime: newEndTime,
-                title, description, tasks: updatedTasks, orderContext: newOrderContext
+                title, description, tasks: updatedTasks, order: newOrderContext
             })
 
             toast("success", { message: "Changes saved!" })
         }
         catch(e: any) {
+            console.error(e)
             const message = e instanceof EditError ? e.message : "Error saving your changes."
             toast("error", { message })
         }
@@ -262,7 +275,22 @@
         confirmModalOpen = false
         onMadeChanges(null)
     }
+    function onKeyPress(e: KeyboardEvent) {
+        const target = e.target as HTMLElement
+        if (isTargetTextEditor(target)) return
+        
+        const { metaKey, key } = e
+        
+        if (key == "Escape") {
+            onAttemptClose()
+        }
+        else if (metaKey && key === "Enter") {
+            saveChanges()
+        }
+    }
 </script>
+
+<svelte:window on:keydown={onKeyPress} />
 
 <Modal options={{ borderRadius: "14px", overflowY: "hidden" }} onClickOutSide={onAttemptClose}>
     <div 
@@ -320,7 +348,7 @@
                             value={$titleInput.value}
                             placeholder={$titleInput.placeholder}
                             maxlength={$titleInput.maxLength}
-                            autocomplete="false"
+                            autocomplete="off"
                             on:blur={(e) => $titleInput.onBlurHandler(e)}
                             on:input={(e) => $titleInput.onInputHandler(e)}
                         >
@@ -342,7 +370,7 @@
                     listItems: [
                         { 
                             options: [
-                                ...(newOrderContext !== "last" ? [{ name: newOrderContext === "first" ? "Unset as first block" : firstBlockExists ? "Set new as first block" : "Set as first block" }] : []),
+                                ...(newOrderContext !== "last" ? [{ name: newOrderContext === "first" ? "Unset as first block" : firstBlockExists ? "Set as new first block" : "Set as first block" }] : []),
                                 ...(newOrderContext !== "first" ? [{ name: newOrderContext === "last" ? "Unset as last block" : lastBlockExists ? "Set as new last block" : "Set as last block" }] : []),
                                 // { name: "Duplicate Block" }
                             ]
@@ -419,7 +447,7 @@
                         <div class="edit-routine__time-input-container">
                             <TimePicker
                                 id="start"
-                                options={{ start: newStartTime, max: newEndTime }}
+                                options={{ start: newStartTime }}
                                 onSet={(time) => { 
                                     newStartTime = time
                                     toggleEditMade()
@@ -431,7 +459,7 @@
                         <div class="edit-routine__time-input-container">
                             <TimePicker 
                                 id="end"
-                                options={{ start: newEndTime, min: newStartTime }}
+                                options={{ start: newEndTime }}
                                 onSet={(time) => { 
                                     newEndTime = time
                                     toggleEditMade()
@@ -449,10 +477,11 @@
                 <div class="edit-routine__info-title">Description</div>
                 <div 
                     class="input-box__count"
-                    class:input-box__count--over={descrLength > DESCR_MAX}
-                    class:hidden={!isDescrFocused}
+                    class:input-box__count--over={descrLength > RoutinesManager.MAX_BLOCK_DESCRIPTION}
+                    class:hidden={!isDescrFocused && descrLength <= RoutinesManager.MAX_BLOCK_DESCRIPTION}
                 >
-                    {DESCR_MAX - descrLength}
+                    <!-- This can show negative when count include decoded HTML entities -->
+                    {RoutinesManager.MAX_BLOCK_DESCRIPTION - descrLength}
                 </div>
             </div>
             {#if descriptionEditor}
@@ -468,7 +497,6 @@
                 >
                 </div>
             {/if}
-
         </div>
         <!-- List -->
         <div class="edit-routine__list">
@@ -538,6 +566,7 @@
             </button>
             <AsyncButton 
                 styling={{ height: "35px", borderRadius: "13px" }}
+                disabled={RoutinesManager.MAX_BLOCK_DESCRIPTION - descrLength < 0}
                 isLoading={isSaving}
                 actionFunc={saveChanges} 
             />

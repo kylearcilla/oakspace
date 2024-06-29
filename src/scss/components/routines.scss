@@ -20,7 +20,7 @@
         @include text-style(0.96, 500);
     }
     &--light &__cores-value {
-        @include text-style(0.5, 500);
+        @include text-style(0.8, 500);
     }
     &--light &__cores-col-divider {
         @include divider(0.08, 1px);
@@ -33,7 +33,7 @@
         color: rgba(var(--tag-color-1), 1);
     }
     &--light &__tag-stat {
-        @include text-style(0.5, 500);
+        @include text-style(0.8, 500);
     }
     &--light &__collection-empty {
         @include text-style(0.3);
@@ -71,6 +71,9 @@
             margin-bottom: 12px;
             @include text-style(0.95, 400, 1.64rem);
         }
+        &-title {
+            @include text-style(1, 500, 1.24rem, "DM Mono");
+        }
         &-header {
             @include flex(center, space-between);
             // margin-bottom: 8px;
@@ -78,6 +81,7 @@
         }
         &-options {
             @include flex(center);
+            margin-right: -6px;
         }
         &-options-menu {
             @include abs-top-left(28px, -10px);
@@ -85,13 +89,14 @@
         &-options-btn {
             opacity: 0.4;
             transition: 0s;
+            padding: 2px 6px;
             @include text-style(1, 300, 1.14rem, "DM Mono");
 
             &:hover {
                 opacity: 1;
             }
-            &:first-child {
-                margin-right: 12px;
+            &:focus {
+                opacity: 0.8;
             }
         }
     }
@@ -117,7 +122,7 @@
     }
     &__cores-core {
         @include flex(center, space-between);
-        margin-bottom: 10px;
+        margin-bottom: 6px;
 
         &:last-child {
             margin-bottom: 5px;
@@ -151,7 +156,7 @@
     &__tag-breakdown-empty {
         @include text-style(0.17, 500, 1.28rem);
         position: absolute;
-        top: calc(50% - 10px);
+        top: calc(50% - 4px);
         left: 50%;
         transform: translate(-50%, -50%);
     }

@@ -1,12 +1,12 @@
-const ytRecsPlaylists: { title: string, playlists: YoutubePlaylist[] }[] = [
+const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
     {
         title: "Lofi / Chill",
         playlists: [
             {
-                id: "PLDbJgJ7-hEUXmQoTwvsqGPshb2cPopUKi",
+                id: "PL6NdkXsPL07KN01gH2vucrHCEyyNmVEx4",
                 title: "Lofi Girl - Compilations",
                 description: "Curated compilation of Lofi Girl's beloved and soothing videos for ultimate relaxation and chill vibes.",
-                vidCount: 16,
+                vidCount: 26,
                 channelId: "",
                 channelTitle: "Lofi Girl",
                 thumbnailURL: "https://i.ytimg.com/vi/zFhfksjf_mY/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBQgYKl48s3nIAYnxSDbiy65PL42g",
@@ -119,7 +119,7 @@ const ytRecsPlaylists: { title: string, playlists: YoutubePlaylist[] }[] = [
                 channelTitle: "Chill Village",
                 thumbnailURL: "https://i.ytimg.com/vi/guan9sTiXM0/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLBmfXE2t8nMURTkZR6sTPRpfOJeNg",
                 channelImgSrc: "https://yt3.ggpht.com/1sjrCoAFx_Ak9g77xLRKv5na7Uz3MlvZ1KQQs-uhCtkdxFiLLTasPHH7e_NEuBO9DmPO_m9_=s88-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@https://www.youtube.com/@Chill_Village",
+                channelURL: "https://www.youtube.com/@Chill_Village",
                 firstVidId: null
             },
             {
@@ -987,4 +987,4 @@ const ytRecsPlaylists: { title: string, playlists: YoutubePlaylist[] }[] = [
     }
 ]
 
-export default ytRecsPlaylists
+export default YT_PLAYLIST_GROUPS

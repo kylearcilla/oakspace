@@ -1,17 +1,21 @@
 <script lang="ts">
+	import { onMount } from "svelte"
+    
+    import { closeModal } from "$lib/utils-home"
+    import { LogoIcon, ModalType } from "$lib/enums"
+	import { themeState, ytPlayerStore, ytUserDataStore } from "$lib/store"
+    import { formatPlural, getMaskedGradientStyle, preventScroll } from "../../lib/utils-general"
+	import { handleChoosePlaylist, refreshToken, youtubeLogOut, youtubeLogin } from "$lib/utils-youtube"
+
     import Modal from "../../components/Modal.svelte"
     import Logo from "../../components/Logo.svelte"
+	import BounceFade from "../../components/BounceFade.svelte"
     
-	import { closeModal } from "$lib/utils-home"
-    import { LogoIcon, ModalType } from "$lib/enums"
-    import ytRecsPlaylists from '$lib/data-yt-playlists'
-    import { clickOutside, getMaskedGradientStyle } from "../../lib/utils-general"
-	import { themeState, ytPlayerStore, ytUserDataStore } from "$lib/store"
-	import { handleChoosePlaylist, refreshToken, youtubeLogOut, youtubeLogin } from "$lib/utils-youtube"
-	import { onMount } from "svelte";
+    export let ytPlaylists
     
+    let YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = ytPlaylists
     let isUserProfileDropdownOpen = false
-    let selectedPlsGroup = ytRecsPlaylists[0]
+    let selectedPlsGroup = YT_PLAYLIST_GROUPS[0]
 
     let isScrollableLeft = false
     let isScrollableRight = true
@@ -31,35 +35,30 @@
     const FETCH_PLAYLIST_DELAY = 500
     const DEFAULT_PROFILE_PIC = "https://media.tenor.com/-OpJG9GeK3EAAAAC/kanye-west-stare.gif"
 
-    $: isDarkTheme = $themeState.isDarkTheme
-
-    $: hasSignedIn = $ytUserDataStore?.hasUserSignedIn ?? false
-    $: playlist = $ytPlayerStore?.playlist ?? null    
-    $: userData = $ytUserDataStore
+    $: isDarkTheme     = $themeState.isDarkTheme
+    $: hasSignedIn     = $ytUserDataStore?.hasUserSignedIn ?? false
+    $: playlist        = $ytPlayerStore?.playlist ?? null    
+    $: userData        = $ytUserDataStore
     $: hasTokenExpired = userData?.hasTokenExpired ?? false
 
-    $: {
-        // if on playlists and loggin out
-        if (!userData && selectedPlsGroup.title === "My Playlists") {
-            selectedPlsGroup = ytRecsPlaylists[0]
-        }
+    $: console.log({ hasTokenExpired })
+
+    // if loggin out but user playlists is selected
+    $: if (!userData && selectedPlsGroup.title === "My Playlists") {
+        selectedPlsGroup = YT_PLAYLIST_GROUPS[0]
     }
-    $: {
-        if (hasSignedIn) {
-            userPlaylists = $ytUserDataStore?.userPlaylists ?? []
-        }
+    $: if (hasSignedIn) {
+        userPlaylists = $ytUserDataStore?.userPlaylists ?? []
     }
-    $: {
+    $: if (selectedPlsGroup.title === "My Playlists") {
         // updating playlists (refresh, more items)
-        if (selectedPlsGroup.title === "My Playlists") {
-            selectedPlsGroup.playlists = userPlaylists
-        }
+        selectedPlsGroup.playlists = userPlaylists
     }
 
     /* Account */
     function profileBtnClickedHandler() { 
         if ($ytUserDataStore) {
-            isUserProfileDropdownOpen = true 
+            isUserProfileDropdownOpen = !isUserProfileDropdownOpen
         }
         else {
             youtubeLogin()
@@ -76,18 +75,20 @@
     }
     
     /* UI Handlers */
-    function hasReachedEndOfList() { 
+    function hasReachedEndOfList() {
         return Math.ceil(scrollTop) >= scrollHeight - scrollWindow
     }
     async function userPlsInfiniteScrollHandler(event: Event) {
-        if (selectedPlsGroup.title != "My Playlists") return
+        if (selectedPlsGroup.title != "My Playlists" || isPlsLoading) return
 
         const list = event.target as HTMLElement
         scrollTop = list.scrollTop
         scrollHeight = list!.scrollHeight
         scrollWindow = list!.clientHeight 
+
         
-        if (!hasReachedEndOfList()) return
+        if (!hasReachedEndOfList() || isPlsLoading) return
+        console.log({ scrollTop, isPlsLoading })
         getMorePlaylists()
     }
     async function refreshUserPlaylsts() {
@@ -110,23 +111,34 @@
     function getMorePlaylists() {
         const haltFetchMore = isPlsLoading || userData!.hasFetchedAllUserPls || hasLibError || hasTokenExpired 
         if (haltFetchMore) return
+        console.log("PASSED")
         
-        isPlsLoading = true
         setTimeout(async () => { 
             try {
+                isPlsLoading = true
+                console.log("FETCHING MORE SHIT")
                 await $ytUserDataStore!.loadMorePlaylistItems()
                 userPlaylists = $ytUserDataStore!.userPlaylists
 
                 isPlsLoading = false
                 hasLibError = false
 
-                if (hasReachedEndOfList()) getMorePlaylists()
+                // if (hasReachedEndOfList()) getMorePlaylists()
             }
             catch(error: any) {
                 isPlsLoading = false
                 hasLibError = true
             }
         }, FETCH_PLAYLIST_DELAY)
+    }
+    function onPlaylistItemTabEnter(e: KeyboardEvent, playlist: YoutubePlaylist) {
+        const target = e.target as HTMLElement
+        if (target.tagName === "A") return
+
+        if (e.key === 'Enter' || e.code == "Space") {
+            e.preventDefault()
+            handleChoosePlaylist(playlist);
+        }
     }
 
     /* Recommended Section */
@@ -141,7 +153,7 @@
             selectedPlsGroup = { title: "My Playlists", playlists: $ytUserDataStore!.userPlaylists }
             return
         }
-        selectedPlsGroup = ytRecsPlaylists[index]
+        selectedPlsGroup = YT_PLAYLIST_GROUPS[index]
     }
     function updateTabListStyle() {
         const res = getMaskedGradientStyle(groupTabList, {
@@ -154,10 +166,22 @@
         isScrollableRight = !res.scrollStatus.hasReachedEnd
         tabListGradientStyle = res.styling
     }
+    function onKeyPress(e: KeyboardEvent) {
+        const { key } = e
+
+        if (key == "Escape") {
+            closeModal(ModalType.Youtube)
+        }
+    }
     onMount(() => updateTabListStyle())
 </script>
 
-<Modal onClickOutSide={() => closeModal(ModalType.Youtube)}>
+<svelte:window on:keydown={onKeyPress} />
+
+<Modal 
+    options={{ closeOnEsc: true }}
+    onClickOutSide={() => closeModal(ModalType.Youtube)}
+>
     <div 
         class="yt-settings"
         class:yt-settings--light={!$themeState.isDarkTheme}
@@ -173,12 +197,19 @@
                 <div class="yt-settings__header-yt-logo">
                     <Logo 
                         logo={LogoIcon.Youtube}
-                        options={{ hasBgColor: false, containerWidth: "18px", iconWidth: "70%" }}
+                        options={{ 
+                            hasBgColor: false, containerWidth: "20px", iconWidth: "100%"
+                        }}
                     />
                 </div>
             </div>
+            <!-- Account -->
             <div class="yt-settings__user-profile-container">
-                <button class="yt-settings__user-capsule" on:click={profileBtnClickedHandler}>
+                <button 
+                    id="yt-settings--dropdown-btn"
+                    class="yt-settings__user-capsule" 
+                    on:click={profileBtnClickedHandler}
+                >
                     {#if hasSignedIn && userData}
                         <img src={userData.profileImgSrc ?? DEFAULT_PROFILE_PIC} alt="yt-profile" />
                     {:else}
@@ -194,44 +225,54 @@
                     </span>
                 </button>
                 <!-- Dropdown -->
-                <div 
-                    class="yt-settings__user-profile dropdown-menu" 
-                    class:dropdown-menu--hidden={!isUserProfileDropdownOpen || !hasSignedIn || !userData}
-                    use:clickOutside on:click_outside={() => isUserProfileDropdownOpen = false}
+                <BounceFade
+                    id="yt-settings--dropdown-menu"
+                    isHidden={!isUserProfileDropdownOpen || !hasSignedIn || !userData}
+                    onClickOutside={() => {
+                        isUserProfileDropdownOpen = false
+                    }}
                 >
-                    <div class="yt-settings__user-profile-img-container">
-                        <img src={userData?.profileImgSrc} alt="yt-profile" />
-                    </div>
-                    <div class="yt-settings__user-profile-details">
-                        <div class="yt-settings__user-profile-details-header">
-                            Gmail Account
+                    <div class="yt-settings__user-profile dropdown-menu" >
+                        <div class="yt-settings__user-profile-img-container">
+                            <img src={userData?.profileImgSrc} alt="yt-profile" />
                         </div>
-                        <span>
-                            {userData?.email}
-                        </span>
-                        <div class="yt-settings__user-profile-details-header">
-                            Youtube Channel
+                        <div class="yt-settings__user-profile-details">
+                            <div class="yt-settings__user-profile-details-header">
+                                Gmail Account
+                            </div>
+                            <span>
+                                {userData?.email}
+                            </span>
+                            <div class="yt-settings__user-profile-details-header">
+                                Youtube Channel
+                            </div>
+                            <span>
+                                {userData?.username}
+                            </span>
                         </div>
-                        <span>
-                            {userData?.username}
-                        </span>
+                        <div class="yt-settings__user-profile-btns-container">
+                            <button 
+                                class="text-only" 
+                                on:click={onProfileDropdownFirstBtnClicked}
+                            >
+                                {`${hasTokenExpired ? "Refresh Token" : "Refresh Playlists"}`}
+                            </button>                                
+                            <button 
+                                class="text-only" 
+                                on:click={() => { youtubeLogOut(); isUserProfileDropdownOpen = false }}
+                            >
+                                Log Out
+                            </button>                                
+                        </div>
                     </div>
-                    <div class="yt-settings__user-profile-btns-container">
-                        <button class="text-only" on:click={onProfileDropdownFirstBtnClicked}>
-                            {`${hasTokenExpired ? "Refresh Token" : "Refresh Playlists"}`}
-                        </button>                                
-                        <button class="text-only" on:click={() => { youtubeLogOut(); isUserProfileDropdownOpen = false }}>
-                            Log Out
-                        </button>                                
-                    </div>
-                </div>
+                </BounceFade>
             </div>
         </div>
         <div class="yt-settings__content-container">
-            <div class="yt-settings__left">
-                <!-- Chosen Playlist -->
-                <div class="chosen-playlist bento-box">
-                    {#if playlist}
+            {#if playlist}
+                <div class="yt-settings__left">
+                    <!-- Chosen Playlist -->
+                    <div class="chosen-playlist bento-box">
                         <img class="img-bg" src={playlist.thumbnailURL} alt="chosen-playlist">
                         <div class="img-bg-gradient gradient-container gradient-container--bottom"></div>
                         <div 
@@ -253,7 +294,7 @@
                                             {playlist.channelTitle}
                                         </span>
                                         <span>
-                                            {`${playlist.vidCount} video${playlist.title.length === 1 ? "" : "s"}`}
+                                            {formatPlural("video", playlist.vidCount)}
                                         </span>
                                     </div>
                                     <p class="chosen-playlist__playlist-description" title={playlist.description}>
@@ -262,17 +303,14 @@
                                 </div>
                             </div>
                         </div>
-                    {:else}
-                        <div class="chosen-playlist__no-playlist-msg">
-                            No Playlist Chosen
-                        </div>
-                    {/if}
+                    </div>
                 </div>
-            </div>
+            {/if}
             <!-- Playlist Recommendations Section -->
             <div 
                 class="recs bento-box bento-box--no-padding"
-                class:recs--min={userData?.username}
+                class:recs--expanded={!playlist}
+                on:scroll={preventScroll}
             >
                 <div class="recs__header bento-box__header">
                     <h3 class="bento-box__title">Recommendations</h3>
@@ -283,7 +321,10 @@
                 <!-- Horizontal Tabs Carousel -->
                 <div class="recs__groups-list-container">
                     {#if isScrollableLeft}
-                        <button class="recs__tab-arrow recs__tab-arrow--left" on:click={handleShiftTabCategoryLeft}>
+                        <button 
+                            class="recs__tab-arrow recs__tab-arrow--left" 
+                            on:click={handleShiftTabCategoryLeft}
+                        >
                             <i class="fa-solid fa-chevron-left"></i>
                         </button>
                     {/if}
@@ -291,7 +332,11 @@
                         class="recs__groups-list-wrapper"
                         style={`${tabListGradientStyle}`}
                     >
-                        <ul class="recs__groups-list" bind:this={groupTabList} on:scroll={updateTabListStyle}>
+                        <ul 
+                            class="recs__groups-list" 
+                            bind:this={groupTabList} 
+                            on:scroll={updateTabListStyle}
+                        >
                             <li><div class="recs__tab-group-padding recs__tab-group-padding--left"></div></li>
                             <!-- Tab Item -->
                             {#if hasSignedIn}
@@ -307,7 +352,7 @@
                                     <div class="divider divider--vertical"></div>
                                 </li>
                             {/if}
-                            {#each ytRecsPlaylists as group, idx}
+                            {#each YT_PLAYLIST_GROUPS as group, idx}
                                 <li class="recs__groups-list-rec-tab">
                                     <button 
                                         on:click={() => handleRecTabBtnClicked(idx)}
@@ -323,7 +368,10 @@
                         </ul>
                     </div>
                     {#if isScrollableRight}
-                        <button class="recs__tab-arrow recs__tab-arrow--right" on:click={handleShiftTabCategoryRight}>
+                        <button 
+                            class="recs__tab-arrow recs__tab-arrow--right" 
+                            on:click={handleShiftTabCategoryRight}
+                        >
                             <i class="fa-solid fa-chevron-right"></i>
                         </button>
                     {/if}
@@ -334,9 +382,12 @@
                     {#each selectedPlsGroup.playlists as playlist}
                         <li 
                             on:dblclick={() => handleChoosePlaylist(playlist)}
+                            role="button"
+                            tabindex="0"
                             class="recs__playlist-item"
                             class:recs__playlist-item--selected={playlist.id === playlist.id}
                             class:recs__playlist-item--user-pl={selectedPlsGroup.title === "My Playlists"}
+                            on:keydown={(e) => onPlaylistItemTabEnter(e, playlist)}
                         >
                             <div class="recs__playlist-item-img-container">
                                 <img class="recs__playlist-item-img" src={playlist.thumbnailURL} alt="playlist-item-thumbnail"/>
@@ -351,7 +402,7 @@
                                 {#if selectedPlsGroup.title === "My Playlists"}
                                     <div class="recs__playlist-item-vid-count">
                                         <span>
-                                            {`${playlist.vidCount} Video${playlist.vidCount === 1 ? "" : "s"}`}
+                                            {formatPlural("Video", playlist.vidCount)}
                                         </span>
                                     </div>
                                 {:else}
@@ -390,7 +441,7 @@
                             </li>
                         {/each} 
                     {/if}
-                    {#if selectedPlsGroup.playlists.length === 0}
+                    {#if !isPlsLoading && selectedPlsGroup.playlists.length === 0}
                         <div class="recs__playlists-empty-txt">
                             <p>This collection is empty!</p>
                         </div>
@@ -437,30 +488,44 @@
         &--light .skeleton-bg {
             @include skeleton-bg(light);
         }
-        &--light .divider {
-            background-color: rgba(var(--textColor1), 0.06);
-            height: 1px !important;
+        &--light .recs .divider {
+            background-color: rgba(var(--textColor1), 0.2);
         }
-        &--light .recs {
-            &__playlist-item-title {
+        &--light .recs__playlist-item {
+            &-title {
                 font-weight: 600;
             }
-            &__playlist-item-description {
-                font-weight: 400;
+            &-description {
+                @include text-style(0.8, 500);
             }
-            &__playlist-item-channel-details, &__playlist-item-vid-count {
+            &-channel-details, &-vid-count {
                 span, a {
-                    font-weight: 500;
+                    @include text-style(0.5, 600);
                 }
             }
         }
-        &--light .chosen-playlist {
-            .img-bg-gradient {
-                height: 70%;
-                background: linear-gradient(0deg, var(--modalBgColor) 10%, transparent) !important;
+        &--light .chosen-playlist .img-bg-gradient {
+            height: 70%;
+            background: linear-gradient(0deg, var(--modalBgColor) 10%, transparent) !important;
+        }
+        &--light .chosen-playlist .blur-bg {
+            background: rgba(96, 96, 96, 0.35);
+        }
+        &--light .chosen-playlist__playlist {
+            &-title {
+                font-weight: 500;
             }
-            .blur-bg {
-                background: rgba(96, 96, 96, 0.35);
+            &-description {
+                font-weight: 400;
+                color: rgb(white, 0.7);
+            }
+            &-metadata span:first-child {
+                color: rgba(white, 0.6);
+                font-weight: 500;
+            }
+            &-metadata span {
+                color: rgba(white, 0.3);
+                font-weight: 500;
             }
         }
         &--light &__user-capsule {
@@ -473,11 +538,10 @@
         &--light &__user-profile {
             box-shadow: var(--bentoBoxShadow);
             span {
-                font-weight: 500;
+                @include text-style(0.6, 500)
             }
             &-details-header {
-                font-weight: 600;
-                color: rgba(var(--textColor1), 0.78);
+                @include text-style(1, 600)
             }
             &-btns-container button {
                 font-weight: 600;
@@ -500,7 +564,7 @@
         }
         &__user-capsule {
             @include flex(center, _);
-            background-color: var(--hoverColor);
+            background-color: var(--bg-2);
             padding: 5px 13px 5px 7px;
             border-radius: 15px;
             transition: 0.12s ease-in-out;
@@ -521,7 +585,7 @@
             }
         }
         &__user-profile {
-            @include abs-top-right(40px, 0px);
+            @include abs-top-right(5px, -2px);
             border-radius: 13px;
             padding: 15px 14px 15px 14px;
             min-width: 170px;
@@ -552,18 +616,17 @@
             font-size: 1.28rem;
         }
         &__user-profile-btns-container {
-            padding-top: 10px;
             @include flex(center, space-evenly);
+            padding-top: 10px;
             width: 100%;
+        }
+        &__user-profile-btns-container button {
+            padding: 0px;
+            white-space: nowrap;
+            @include text-style(0.5, 400, 1.2rem);
 
-            button {
-                padding: 0px;
-                @include text-style(0.5, 400, 1.2rem);
-                white-space: nowrap;
-
-                &:first-child {
-                    margin-right: 11px;
-                }
+            &:first-child {
+                margin-right: 11px;
             }
         }
 
@@ -593,7 +656,7 @@
     .chosen-playlist {
         width: 100%;
         position: relative;
-        color: rgb(255, 255, 255, 1);
+        color: rgb(white, 1);
         height: 100%;
         padding: 10px;
         border-radius: 16.5px;
@@ -648,7 +711,7 @@
                 margin-bottom: 6px;
                 font-weight: 400;
                 font-size: 1.2rem;
-                color: rgba(255, 255, 255, 0.4);
+                color: rgba(white, 0.4);
                 display: none;
             }
         }
@@ -664,35 +727,39 @@
             width: 95%;
             overflow: hidden;
             position: relative;
-            font-size: 1.06rem;
-            color: rgb(255, 255, 255, 0.54);
+            font-size: 1.28rem;
+            color: rgb(white, 0.54);
         }
         &__playlist-metadata {
             margin-top: 6px;
             width: 100%;
             @include flex(center, flex-start);
-
-            span {
-                font-size: 1.05rem;
-                color: rgb(255, 255, 255, 0.4);
-                @include elipses-overflow;
+        }
+        &__playlist-metadata span {
+            font-size: 1.2rem;
+                color: rgb(white, 0.2);
                 max-width: 64%;
-
+                @include elipses-overflow;
+                
                 &:first-child {
-                    margin-right: 7px;
+                    color: rgb(white, 0.4);
+                    margin-right: 12px;
                 }
-            }
         }
         &__no-playlist-msg {
             font-weight: 600;
             font-size: 1.3rem;
-            color: rgba(255, 255, 255, 0.5);
+            color: rgba(white, 0.5);
             @include abs-center;
             top: 45%;
         }
     }
     .recs {
         overflow: hidden;
+
+        &--expanded {
+            width: 100%;
+        }
 
         &__header {
             padding: 17px 0px 0px $recs-section-padding-left;
@@ -701,7 +768,7 @@
             } 
         }
         &__copy {
-            margin: 3px 0px 7px 0px;
+            margin: 2px 0px 7px 0px;
             padding: 0px 0px 0px $recs-section-padding-left;
         }
         &__tab-arrow {
@@ -711,14 +778,14 @@
             opacity: 0.7;
             @include circle(15px);
             @include center;
-            padding: 5px;
             @include not-visible;
+            padding: 5px;
 
             &--left {
-                @include abs-top-left(50%, 5px);
+                @include abs-top-left(18px, 5px);
             }
             &--right {
-                @include abs-top-right(50%, 5px);
+                @include abs-top-right(18px, 5px);
             }
             
 
@@ -726,20 +793,20 @@
                 opacity: 1;
             }
             &:active {
-                transform: scale(0.9) translateY(-50%);
+                transform: scale(0.9);
             }
         }
         &__groups-list-user-pl-tab {
             padding-right: 5px;
             margin-right: 8px;
             position: relative;
+        }
+        &__groups-list-user-pl-tab .divider {
+            @include abs-top-right(50%);
+            height: 12px;
+            width: 1px;
+            background-color: rgba(var(--textColor1), 0.1);
 
-            .divider {
-                @include abs-top-right(-5px, 0px);
-                height: 12px;
-                width: 1px;
-                background-color: rgba(var(--textColor1), 0.1);
-            }
         }
         /* Horizontal Carousel Tab Container */
         &__groups-list-container {
@@ -786,15 +853,14 @@
         &__playlists-empty-txt {
             @include abs-center;
             top: 45%;
-            font-size: 1.2rem;
-            color: rgb(var(--textColor1), 0.6);
+            @include text-style(0.6, 600, 1.2rem);
         }
         /* Playlist Item */
         &__playlist-item {
             transition: opacity 0.1s ease-in-out;
             display: flex;
             overflow: hidden;
-            padding: 20px 0px;
+            padding: 14px 0px;
             position: relative;
             max-width: 100%;
             
@@ -848,10 +914,9 @@
         }
         &__playlist-item-title {
             margin-bottom: 4px;
-            @include elipses-overflow;
             max-width: 90%;
-            font-weight: 500;
-            font-size: 1.25rem;
+            @include elipses-overflow;
+            @include text-style(1, 500, 1.25rem);
 
             &--skeleton {
                 height: 14px;
@@ -868,12 +933,11 @@
             width: 90%;
             max-height: 33px;
             overflow: hidden;
-            font-weight: 300;
-            font-size: 1.1rem;
+            @include text-style(0.45, 400, 1.2rem);
             @include multi-line-elipses-overflow(2);
-            color: rgb(var(--textColor1), 0.6);
 
-            &-second-line { // for skeleton only
+            // for skeleton only
+            &-second-line { 
                 margin: 5px 0px 20px 0px;
                 width: 40% !important;
             }
@@ -886,15 +950,12 @@
             }
         }
         &__playlist-item-vid-count, &__playlist-item-channel-details {
-            @include abs-bottom-left(0px, 0px);
             margin-top: 12px;
-            font-weight: 300;
-            color: rgba(var(--textColor1), 0.4);
-            font-size: 1.1rem;
+            @include abs-bottom-left(0px, 0px);
+            @include text-style(0.4, 400, 1.1rem);
             
             a, span {
-                font-weight: 300;
-                color: rgba(var(--textColor1), 0.4);
+                @include text-style(0.4, 400);
             }
 
             &--skeleton {

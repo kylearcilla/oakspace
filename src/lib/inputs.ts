@@ -8,6 +8,7 @@ import { minsFromStartToHHMM } from "./utils-date"
 export class InputManager {
     oldTitle: string
     value: string 
+    valLength = 0
     id: string 
     maxLength: number
     state: Writable<InputManager>
@@ -71,7 +72,7 @@ export class InputManager {
     }
     onFocusHandler(event: Event) {
         if (this.handlers?.onFocusHandler) {
-            this.handlers?.onFocusHandler(event)
+            this.handlers?.onFocusHandler(event, this.value, this.valLength)
         }
     }
     onBlurHandler(event: Event) {
@@ -202,8 +203,6 @@ export class TextAreaManager extends InputManager {
  * Custom functionality for redo / undo and copy paste/
  */
 export class TextEditorManager extends InputManager {
-    valLength = 0
-
     undoStack: string[] = []
     redoStack: string[] = []
     currentIntervalLength = 0
@@ -290,6 +289,7 @@ export class TextEditorManager extends InputManager {
     updateTextEditorVal(event: Event, newVal: string, doUpdateCursorPos = false) {
         this.prevVal = this.value
         this.value = newVal
+        console.log({ newVal })
         this.updateState({ value: newVal })
 
         if (doUpdateCursorPos) {
@@ -350,8 +350,19 @@ export class TextEditorManager extends InputManager {
         const newValue = target.innerHTML
         this.valLength = target.innerText.length
 
+        console.log("=======")
+        console.log(target.innerText)
+        console.log(target.innerHTML)
+
+
         this.undoHandler(newValue)
         this.updateTextEditorVal(event, newValue)
+    }
+    onFocusHandler(event: Event) {
+        const target = event.target as HTMLElement
+        this.valLength = target.innerText.length
+
+        super.onFocusHandler(event)
     }
     onBlurHandler(event: FocusEvent): void {
         const value = this.value || (this.doAllowEmpty ? "" : "Untitled")

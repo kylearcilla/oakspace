@@ -33,9 +33,6 @@
     &--light &__block-title {
         font-weight: 500;
     }
-    &--light &__block--wk-drop-area {
-        background-color: red !important;
-    }
     &--grabbing * {
         cursor: text !important;
     }
@@ -52,10 +49,16 @@
 
     &__block {
         position: absolute;
-        // overflow: hidden;
         height: var(--block-height);
         max-height: var(--block-height);
         transition: 0.1s transform ease-in-out;
+
+        &:focus-visible {
+            transform: scale(1.01);
+        }
+        &:focus-visible &-content {
+            @include border-focus;
+        }
     
         cursor: pointer;
 
@@ -204,7 +207,7 @@
     &__block-buttons--left {
         display: block;
         @include abs-top-left(4px, -24px);
-    }
+    }   
     &__block-buttons--right {
         display: block;
         @include abs-top-right(-1px, -27px);
@@ -220,14 +223,14 @@
     &__block-buttons button {
         @include circle(16px);
         @include center;
-        background-color: var(--bg-2);
-        border: 1px solid rgba(var(--textColor1), 0.02);
+        background-color: var(--bg-3);
+        border: 1px solid rgba(var(--textColor1), 0.06);
         margin: 0px 5px 5px 0px;
         transition: 0.04s ease-in-out;
         color: rgb(var(--textColor1));
 
         &:hover {
-            background: rgba(var(--textColor1), 0.1);
+            background: rgba(var(--textColor1), 0.2);
         }
         &:active {
             scale: 0.95;

@@ -4,6 +4,7 @@ import {
         getElemTrueHeight, getHozDistanceBetweenTwoElems, getVertDistanceBetweenTwoElems, initFloatElemPos, isEditTextElem, isKeyAlphaNumeric, isNearBorderAndShouldScroll, moveElementInArr 
 } from "./utils-general"
 import { createEventDispatcher } from "svelte"
+import { toast } from "./utils-toast"
 
 type SubtaskLinkProp = {
     idx: number, height: number, width: number, top: number, left: number
@@ -142,6 +143,11 @@ export class TasksListManager {
     rightClickedTask: null | { task: Task, idx: number }  = null
     rightClickedSubtask: null | { subtask: Subtask, idx: number } = null
 
+    max: number
+    subtaskMax: number
+    maxToastMsg: string | null
+    subtaskMaxToastMsg: string | null
+
     /* Misc */
     newText = ""
     cursorPos: OffsetPoint = { left: 0, top: 0 }
@@ -155,7 +161,7 @@ export class TasksListManager {
     hasInputBlurred = false
     
     /* Constants */
-    STRETCH__DRAG_DISTANCE_THRESHOLD = 5
+    STRETCH_DRAG_DISTANCE_THRESHOLD = 5
     FLOATING_WIDTH_PERCENT = 0.75
     FLOATING_MAX_SIDE_OFFSET = 10
     FLOATING_CLIENT_Y_TOP_OFFSET = 150
@@ -235,6 +241,12 @@ export class TasksListManager {
             maxDescrLines:       options.cssVariables?.maxDescrLines ?? 1,
             subTaskLinkSolidColor: "#313131"
         }
+
+        // caps
+        this.max = options.max ?? 25
+        this.subtaskMax = options.subtaskMax ?? 25
+        this.maxToastMsg = options.maxToastMsg ?? `Task number exceeded.`
+        this.subtaskMaxToastMsg = options.subtaskMaxToastMsg ?? `Subtasks number exceeded.`
         
         // set collapsed task height
         const { top: padTop, bottom: padBottom } = extractQuadCSSValue(this.styling?.task?.padding)
@@ -311,6 +323,11 @@ export class TasksListManager {
      * @param newTask        - Add task with non-default empty properties. 
      */
     addingNewTask(atIdx: number, doToggleInput = true, newTask?: Task) {
+        if (get(this.tasks).length === this.max && this.maxToastMsg) {
+            toast("warning", { message: this.maxToastMsg })
+            return
+        }
+
         this.minimizeExpandedTask()
         this.addNewTask(atIdx, newTask)
         
@@ -444,7 +461,20 @@ export class TasksListManager {
         this.addingNewSubtask(taskIdx, dupIdx + 1, false, dupSubtask)
     }
 
-    addingNewSubtask(taskIdx: number, subtaskIdx = get(this.tasks)[taskIdx].subtasks!.length, doToggleInput = true, newSubtask?: Subtask) {
+    addingNewSubtask(
+        taskIdx: number, 
+        subtaskIdx = get(this.tasks)[taskIdx].subtasks!.length, 
+        doToggleInput = true, 
+        newSubtask?: Subtask
+    ) {
+        const task         = get(this.tasks)[taskIdx]
+        const taskSubtasks = task.subtasks!
+
+        if (taskSubtasks.length === this.subtaskMax && this.subtaskMaxToastMsg) {
+            toast("warning", { message: this.subtaskMaxToastMsg })
+            return
+        }
+
         // add empty subtask
         this.addNewSubtask(taskIdx, subtaskIdx, newSubtask)
         requestAnimationFrame(() => this.updateOpenTaskHeight())
@@ -1074,7 +1104,7 @@ export class TasksListManager {
         if (this.dragStartPoint && !this.allowDrag) {
             this.dragDistance = getDistBetweenTwoPoints(this.dragStartPoint!, this.cursorPos!)
 
-            if (this.dragDistance > this.STRETCH__DRAG_DISTANCE_THRESHOLD) {
+            if (this.dragDistance > this.STRETCH_DRAG_DISTANCE_THRESHOLD) {
                 this.allowDrag = true
             }
         }
@@ -1179,7 +1209,7 @@ export class TasksListManager {
                 this.tasksListContainer!.scrollLeft -= 10
             }
             else if (!moveDirection) {
-                clearInterval(this.scrollInterval!)
+                clearInterval(this.scrollInterval! as any)
                 this.scrollInterval = null
             }
         }, 25)

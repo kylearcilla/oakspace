@@ -1,4 +1,8 @@
-import { PlaywrightTestConfig, devices } from '@playwright/test';
+import { PlaywrightTestConfig, devices } from '@playwright/test'
+import dotenv from 'dotenv'
+import path from 'path'
+
+dotenv.config({ path: path.resolve("./", '.env') })
 
 const config: PlaywrightTestConfig = {
 	webServer: {
@@ -7,6 +11,7 @@ const config: PlaywrightTestConfig = {
 	},
 	testDir: './src/tests',
 	testMatch: '*.spec.ts',
+	timeout: 60000,
 	/* Run tests in files in parallel */
 	fullyParallel: true,
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -37,7 +42,6 @@ const config: PlaywrightTestConfig = {
 		name: 'firefox',
 		use: { ...devices['Desktop Firefox'] },
 	  },
-  
 	  {
 		name: 'webkit',
 		use: { ...devices['Desktop Safari'] },

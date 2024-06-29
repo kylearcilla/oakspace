@@ -66,8 +66,8 @@ export const getFreshToken = async (): Promise<string> => {
       const credential = popUpResponse.credential
 
       return credential.accessToken
-
-  } catch (error: any) {
+  } 
+  catch (error: any) {
     console.error(error)
 
     throw throwFireBaseAPIError(error)
@@ -92,12 +92,16 @@ export const getUserYtPlaylists = async (accessToken: string, max: number, nextP
   const data = await res.json()
   
   if (!res.ok) {
-    console.error(`Error fetching user playlists. Location: ${data.error.errors[0].location}. Message: ${data.error.message}.`)
-    throw throwYoutubeDataAPIError(data.error.code)
+      console.error(`Error fetching user playlists. Location: ${data.error.errors[0].location}. Message: ${data.error.message} Code: ${data.error.code}`)
+      throw throwYoutubeDataAPIError({
+        location: data.error.errors[0].location,
+        message: data.error.message,
+        status: data.error.code
+      })
   }
 
   const playlists: YoutubePlaylist[] = []
-
+ 
   data.items.map((playlist: any) => {
       playlists.push({
           id: playlist.id,
@@ -133,8 +137,12 @@ export const getVidDetails = async (videoId: string): Promise<YoutubeVideo> => {
     const data = await res.json()
 
     if (!res.ok) {
-      console.error(`Error fetching video details: Location: ${data.error.errors[0].location}. Message: ${data.error.message}}.`)
-      throw throwYoutubeDataAPIError(data.error.code)
+      console.error(`Error fetching video details: Location: ${data.error.errors[0].location}. Message: ${data.error.message}}. Code: ${data.error.code}`)
+      throw throwYoutubeDataAPIError({
+        location: data.error.errors[0].location,
+        message: data.error.message,
+        status: data.error.code
+      })
     }
 
     const channelDetails = await getChannelDetails(data.items[0].snippet.channelId)
@@ -169,8 +177,12 @@ export const getPlayListItemsDetails = async (playlistId: string, maxResults = 1
   const data = await res.json()
 
   if (!res.ok) {
-    console.error(`Error fetching playlist details: Location: ${data.error.errors[0].location}. Message: ${data.error.message}.`)
-    throw throwYoutubeDataAPIError(data.error.code)
+    console.error(`Error fetching playlist details: Location: ${data.error.errors[0].location}. Message: ${data.error.message}. Code: ${data.error.code}`)
+    throw throwYoutubeDataAPIError({
+      location: data.error.errors[0].location,
+      message: data.error.message,
+      status: data.error.code
+    })
   }
 
   const playlistItems: YoutubeVideo[] = []
@@ -274,9 +286,18 @@ export const getChannelDetails = async (channelId: string): Promise<YoutubeChann
  * @param   context  In what API context is the error origination from
  * @returns          Error type and context will be relevant in how the error will be displayed to the user.
  */
-const throwYoutubeDataAPIError = (status: number) => {
+const throwYoutubeDataAPIError = (context: {
+  status?: number,
+  location?: string,
+  message?: string
+}) => {
+    const { status, location, message } = context
+
     if (status === 401) {
         throw new APIError(APIErrorCode.AUTHORIZATION_ERROR, "Invalid Credentials.")
+    }
+    else if (status === 404 && location === "channelId") {
+        throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Your Google account is not associated with any YouTube account.")
     }
     else if (status === 404) {
         throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Requested media unavailable.")
@@ -314,7 +335,9 @@ function throwFireBaseAPIError(error: any) {
  * Return the appopriate error with the right context based on the error code return from Youtube iFrame API.
  * @param error  Error code returned from Youtube iFrame Player API
  */
-export function getYtIframeAPIError(code: number) {
+export function getYtIframeAPIError(code: number, target?: any) {
+  const playlistIdx = target?.getPlaylistIndex() ?? -1
+
   if (code === 2) {
     return new APIError(APIErrorCode.PLAYER, "Player error. Invalid playlist / video id.")
   }
@@ -324,8 +347,11 @@ export function getYtIframeAPIError(code: number) {
   else if (code === 100) {
     return new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Player error. Resource request not found.")
   }
+  else if (code === 150 && playlistIdx > 0) {
+    return new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Video couldn't be played due to privacy or embed playback restrictions.")
+  }
   else if (code === 101 || code === 150) {
-    return new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Player error. Playback on other websites has been disabled by playlist owner.")
+    return new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Playlist couldn't be played due to privacy or embed playback restrictions.")
   }
   else {
     return new APIError(APIErrorCode.PLAYER)

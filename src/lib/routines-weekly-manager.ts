@@ -1,6 +1,6 @@
 import { writable, type Writable, get } from "svelte/store"
 import { RoutinesManager } from "./routines-manager"
-import { getElemById, getDistBetweenTwoPoints, initFloatElemPos, isTargetTextEditor, getElemNumStyle, findAncestor, clamp } from "./utils-general"
+import { getElemById, initFloatElemPos, isTargetTextEditor, getElemNumStyle, findAncestor, clamp } from "./utils-general"
 import { ViewOption, EMPTY_CORES, ROUTINE_BLOCKS_CONTAINER_ID } from "./utils-routines"
 
 /**
@@ -76,7 +76,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         const weekTagData: RoutineTags[] = []
         
         let i = 0
-        let doIgnoreSleepAwake = false
+        let doGetSleepAwake = true
         
         for (let day of this.DAYS_WEEK) {
             const dayKey     = day as keyof WeeklyRoutineBlocks
@@ -84,10 +84,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
             const rawBlocks  = "id" in dayRoutine ? dayRoutine.blocks : dayRoutine
 
             const { coreBreakdown, earliestBlock, blockElems, tagBreakdown } = this.processRoutineBlocks(rawBlocks)
-            
-            if (coreBreakdown.awake.totalTime < 0) {
-                doIgnoreSleepAwake = coreBreakdown.awake.totalTime < 0
-            }
+            doGetSleepAwake &&= this.doGetSleepAwakeData(rawBlocks)
 
             // create block elements array + set up ids
             routineElems[dayKey]!.push(
@@ -97,8 +94,8 @@ export class WeeklyRoutinesManager extends RoutinesManager {
             )
             this.earliestBlockHeadPos = Math.min(earliestBlock, this.earliestBlockHeadPos)
 
-            // tally up the stats
-            this.tallyWeeklyCores(coreBreakdown, weekCores, doIgnoreSleepAwake)
+            // tally up the breakdown data
+            this.tallyWeeklyCores(coreBreakdown, weekCores, !doGetSleepAwake)
             this.tallyWeekTagData(tagBreakdown, weekTagData)
             i++
         }
@@ -163,16 +160,15 @@ export class WeeklyRoutinesManager extends RoutinesManager {
     tallyWeeklyCores(dayCores: RoutineCores, weekCores: RoutineCores, doIgnoreSleepAwake: boolean) {
         for (const key in weekCores) {
             const _key = key as keyof typeof weekCores
-            const isActivityCore = key != "sleeping" && key != "awake"
+            const sleepAwake = key === "sleeping" || key === "awake"
 
             weekCores[_key].totalTime += dayCores[_key].totalTime
 
-            if (isActivityCore) {
+            if (!sleepAwake) {
                 weekCores[_key].total += dayCores[_key].total
             }
-
             // is sleep or awake core
-            if (!isActivityCore && doIgnoreSleepAwake) {
+            if (sleepAwake && doIgnoreSleepAwake) {
                 weekCores[_key].totalTime = -1
                 weekCores[_key].total = -1
                 weekCores[_key].avgTime = -1
@@ -199,17 +195,23 @@ export class WeeklyRoutinesManager extends RoutinesManager {
 
     /**
      * Initialize a day routine's tag and core breakdown
+     * 
      * @param dayIdx   Idx of day (0 -> Monday)
      */
     initDayRoutineBreakdown(dayIdx: number | null) {
+        const viewOpt = get(this.currViewOption)
+
         if (dayIdx === null) {
             this.dayBreakdown.set(null)
             this.resetEditState()
             return 
         }
 
+        this.editDayIdx  = dayIdx
+        this.editDayIdx += viewOpt === ViewOption.FSS ? 4 : 0
+
         // init breakdown data
-        const _dayKey    = this.DAYS_WEEK[dayIdx]
+        const _dayKey    = this.DAYS_WEEK[this.editDayIdx]
         const dayKey     = _dayKey as keyof WeeklyRoutineBlocks
         const dayRoutine = get(this.weekRoutine)!.blocks[dayKey]
         const isLinked   = "id" in dayRoutine
@@ -221,17 +223,14 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         } : null
         
         this.dayBreakdown.set({
-            cores: this.getBlockCoreBreakdown(blocks),
-            tags: this.getBlockTagBreakdown(blocks),
+            cores: this.getRoutineCoreBreakdown(blocks),
+            tags: this.getRoutineTagBreakdown(blocks),
             day: dayKey,
             dayIdx,
             linkedRoutine,
             blocksLength: blocks.length
         })
-
-        // init edit data
-        this.editDayIdx = dayIdx
-        this.editDayKey = dayKey
+        this.editDayKey  = dayKey
 
         this.initDayEditFromContext()
     }
@@ -243,17 +242,19 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         const weekCores = structuredClone(EMPTY_CORES)
         const weekTagData: RoutineTags[] = []
 
+        let doGetSleepAwake = true
+
         for (let day of this.DAYS_WEEK) {
             const dayKey     = day as keyof WeeklyRoutineBlocks
             const dayRoutine = get(this.weekRoutine)!.blocks[dayKey]
             const rawBlocks  = "id" in dayRoutine ? dayRoutine.blocks : dayRoutine
 
-            const cores = this.getBlockCoreBreakdown(rawBlocks)
-            const tagBreakdown = this.getBlockTagBreakdown(rawBlocks)
-            const doIgnoreSleepAwake = cores.awake.totalTime < 0
+            const cores = this.getRoutineCoreBreakdown(rawBlocks)
+            const tagBreakdown = this.getRoutineTagBreakdown(rawBlocks)
+            doGetSleepAwake &&= this.doGetSleepAwakeData(rawBlocks)
 
             // tally up the stats
-            this.tallyWeeklyCores(cores, weekCores, doIgnoreSleepAwake)
+            this.tallyWeeklyCores(cores, weekCores, !doGetSleepAwake)
             this.tallyWeekTagData(tagBreakdown, weekTagData)
         }
 
@@ -277,14 +278,15 @@ export class WeeklyRoutinesManager extends RoutinesManager {
     applyRoutineElemsUpdates(data: {
         newRoutineElems: RoutineBlockElem[], 
         editDayKey: keyof WeekBlockElems, 
-        updateIdices?: boolean
-        updateLinked?: boolean
+        updateIdices?: boolean,
+        editContext?: "unlinked" | "cleared" | "linked" | "edited"
     }) {
-        const { newRoutineElems, editDayKey, updateIdices = true, updateLinked = true } = data
+        const { newRoutineElems, editDayKey, updateIdices = true, editContext = "edited" } = data
 
-        const weekRoutine = get(this.weekRoutine)!
+        const weekRoutine      = get(this.weekRoutine)!
         const weekRoutineElems = get(this.weekRoutineElems)!
-        const isSetRoutine = "id" in weekRoutine.blocks[editDayKey]
+        const updateLinked     = editContext === "edited"
+        const isSetRoutine     = "id" in weekRoutine.blocks[editDayKey]
 
         // if not a set day routine then just update that day
         if (!isSetRoutine) {
@@ -325,17 +327,18 @@ export class WeeklyRoutinesManager extends RoutinesManager {
      * @param data.updateLinked    - Optional flag to indicate whether to update other daily routines that share the same routine
      */
     applyRoutineUpdates(data: {
-        newRoutineElems: DailyRoutine | RoutineBlock[], 
+        newRoutine: DailyRoutine | RoutineBlock[], 
         editDayKey: keyof WeekBlockElems,
-        updateLinked?: boolean
+        editContext?: "unlinked" | "cleared" | "linked" | "edited",
     }) {
-        const { newRoutineElems, editDayKey, updateLinked = true } = data
-        const weekRoutine = get(this.weekRoutine)!
+        const { newRoutine, editDayKey, editContext = "edited" } = data
+        const updateLinked = editContext === "edited"
+        const weekRoutine  = get(this.weekRoutine)!
         const isSetRoutine = "id" in weekRoutine.blocks[editDayKey]
 
         // if not a set day routine then just update that day
-        if (!isSetRoutine) {
-            weekRoutine.blocks[editDayKey] = newRoutineElems
+        if (!isSetRoutine || editContext === "unlinked" || editContext === "cleared") {
+            weekRoutine.blocks[editDayKey] = newRoutine
             this.weekRoutine.set(weekRoutine)
             return
         }
@@ -347,11 +350,11 @@ export class WeeklyRoutinesManager extends RoutinesManager {
                 weekRoutine, srcKey: editDayKey, queryKey: dayKey
             }) : dayKey === editDayKey
             
-            if (doUpdate && "id" in newRoutineElems) {
-                (weekRoutine.blocks[dayKey] as DailyRoutine) = newRoutineElems as DailyRoutine
+            if (doUpdate && "id" in newRoutine) {
+                (weekRoutine.blocks[dayKey] as DailyRoutine) = newRoutine as DailyRoutine
             }
             else if (doUpdate) {
-                (weekRoutine.blocks[dayKey] as DailyRoutine).blocks = newRoutineElems as RoutineBlock[]
+                (weekRoutine.blocks[dayKey] as DailyRoutine).blocks = newRoutine as RoutineBlock[]
             }
         }
 
@@ -382,9 +385,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         let newDayRoutine = []
 
         newDayRoutine = isSameDay ? oldRoutine : weekElems[this.editDayKey!]
-        newDayRoutine = [...newDayRoutine, { 
-            ...editBlockElem, orderContext: isSameDay ? editBlockElem.orderContext : null 
-        }]
+        newDayRoutine = [...newDayRoutine, {  ...editBlockElem, order: isSameDay ? editBlockElem.order : null }]
         newDayRoutine = newDayRoutine.sort((a, b) => a.startTime - b.startTime)
         newDayRoutine = newDayRoutine.map((block, idx) => ({ ...block, id: `${this.editDayIdx}--${idx}`}))
 
@@ -394,8 +395,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         if (!isSameDay && this.hasSameLinkedRoutine({
             weekRoutine, srcKey: oldRoutineDayKey, queryKey: newRoutineDayKey
         })) {
-
-            oldRoutine = [..._oldRoutine, { ...editBlockElem }]
+            oldRoutine = [..._oldRoutine, { ...editBlockElem }].sort((a, b) => a.startTime - b.startTime)
             newDayRoutine = oldRoutine
 
             newRoutineDayKey = oldRoutineDayKey
@@ -413,7 +413,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         // update the display weekly routine elements
         this.applyRoutineElemsUpdates({ 
             newRoutineElems: oldRoutine, 
-            editDayKey: oldRoutineDayKey, 
+            editDayKey: oldRoutineDayKey,
         })
         this.applyRoutineElemsUpdates({ 
             newRoutineElems: newDayRoutine, 
@@ -422,11 +422,11 @@ export class WeeklyRoutinesManager extends RoutinesManager {
 
         // update the raw weekly routine
         this.applyRoutineUpdates({ 
-            newRoutineElems: rawOldDayRoutine, 
+            newRoutine: rawOldDayRoutine, 
             editDayKey: oldRoutineDayKey, 
         })
         this.applyRoutineUpdates({ 
-            newRoutineElems: rawNewDayRoutine, 
+            newRoutine: rawNewDayRoutine, 
             editDayKey: newRoutineDayKey
         })
 
@@ -447,8 +447,8 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         // upate the block elems
         this.applyRoutineElemsUpdates({ 
             newRoutineElems: updatedDayRoutineElems, 
-            editDayKey: this.editDayKey!,
-            updateLinked: context === "edited"
+            editDayKey:      this.editDayKey!,
+            editContext:     context
         })
 
         // update the raw blocks
@@ -474,9 +474,9 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         }
 
         this.applyRoutineUpdates({ 
-            newRoutineElems: dayRoutine, 
+            newRoutine: dayRoutine, 
             editDayKey,
-            updateLinked: context === "edited"
+            editContext: context
         })
 
         this.updateBreakdownData()
@@ -495,16 +495,15 @@ export class WeeklyRoutinesManager extends RoutinesManager {
 
         const leftPos = leftOffset
 
-        this.editDayIdx = Math.floor(leftPos / colWidth)
-        this.editDayIdx = clamp(0, this.editDayIdx, 6)
+        let editDayIdx = Math.floor(leftPos / colWidth)
+        editDayIdx = clamp(0, editDayIdx, 6)
 
-        this.initEditDayContextFromIdx(this.editDayIdx)
+        this.initEditDayContextFromIdx(editDayIdx)
     }
 
     /**
-     * 
-     * Initialize the day routine being edited through the day index.
-     * @param dayIdx  Index of the day
+     * Initialize the edit day idx, key, and offset idx with current view in mind from the edit day idx.
+     * @param dayIdx  Index of the day idx being edited.
      */
     initEditDayContextFromIdx(dayIdx: number) {
         const viewOpt = get(this.currViewOption)
@@ -522,9 +521,14 @@ export class WeeklyRoutinesManager extends RoutinesManager {
             this.dayColXOffset = 0
         }
         else {
-            this.editOffsetIdx = this.editDayIdx
-            this.editDayIdx += viewOpt === ViewOption.FSS ? 4 : 0
-            this.editDayKey  = this.getDayKeyFromIdx(this.editDayIdx)
+            const maxEditDayIdx       = viewOpt === ViewOption.MTWT ? 3 : 6
+            const maxEditOffsetDayIdx = viewOpt === ViewOption.MTWT ? 3 : viewOpt === ViewOption.FSS ? 2 : 6
+
+            this.editOffsetIdx = clamp(0, this.editDayIdx , maxEditOffsetDayIdx)
+
+            this.editDayIdx   += viewOpt === ViewOption.FSS ? 4 : 0
+            this.editDayIdx    = clamp(0, this.editDayIdx , maxEditDayIdx)
+            this.editDayKey    = this.getDayKeyFromIdx(this.editDayIdx)
 
             this.dayColXOffset = (colWidth * this.editOffsetIdx)
         }
@@ -549,6 +553,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         this.initEditDayContextFromLeftOffset(this.cursorPos.left)
         this.initDayEditFromContext()
 
+        this.dragStartPoint = this.cursorPos
         this.blockOnPointerDown = this.getWeekBlockFromId(id)!
         
         const { isOnTopEdge, isOnBottomEdge } = this.isBlockPointerDownOnEdge(e)
@@ -562,10 +567,6 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         // do a strech or lift edit
         if (isOnTopEdge || isOnBottomEdge) {
             this.isDragLiftFromHead = isOnTopEdge
-            this.allowStrechEdit = true
-
-            // init directly as there is no drag distance threshold
-            this.initDragStretchEdit(this.blockOnPointerDown! , true)
     
             requestAnimationFrame(() => {
                 const stretchBlock = getElemById("edit-block")
@@ -576,8 +577,6 @@ export class WeeklyRoutinesManager extends RoutinesManager {
             this.containerElem!.addEventListener("pointerup", this.onBlockStretchEditEnd)
         }
         else {
-            this.dragStartPoint = this.cursorPos
-
             requestAnimationFrame(() => {
                 const floatingBlock = getElemById("edit-block")
                 floatingBlock?.setPointerCapture(e.pointerId)
@@ -586,6 +585,34 @@ export class WeeklyRoutinesManager extends RoutinesManager {
             this.containerElem!.addEventListener("pointermove", this.onLiftBlockPointerMove)
             this.containerElem!.addEventListener("pointerup", this.onLiftBlockPointerUp)
         }
+    }
+
+    intDragLiftMoveEdit(block: RoutineBlockElem) {
+        const editBlock           =  get(this.editingBlock)!
+        const editBlockLeftOffset =  getElemNumStyle(this.editingBlockRef!, "left")
+
+        this.editingBlockTotalTime     = editBlock.endTime - editBlock.startTime
+        this.editingBlockInitStartTime = editBlock.startTime
+
+        // left and top offsets differences between cursor and top / left edges of block
+        // allows drag point to be not just be the very top left corner of block
+        this.initDragLiftOffsets = {
+            top: this.cursorPos.top   - editBlock.yOffset,
+            left: this.cursorPos.left - editBlockLeftOffset
+        }
+
+        // set edit state
+        this.editingBlock.set({ 
+            ...block, 
+            isDragging: true,
+            dropArea: {
+                top: block.yOffset, 
+                left: 0, 
+                doShow: true,
+                offsetIdx: this.editOffsetIdx
+            }
+        })
+        this.editContext.set("lift")
     }
 
     /**
@@ -599,9 +626,9 @@ export class WeeklyRoutinesManager extends RoutinesManager {
 
         // only allow the edit if the user has moved he cursor far enough
         if (!this.allowLiftEdit) { 
-            const dragDistance = getDistBetweenTwoPoints(this.dragStartPoint!, this.cursorPos!)
+            const threshold = RoutinesManager.LIFT_DRAG_DIST_THRESHOLD
 
-            if (dragDistance > RoutinesManager.STRETCH__DRAG_DISTANCE_THRESHOLD) {
+            if (this.isAbsDragWithinStretchThreshold(threshold)) {
                 this.intDragLiftMoveEdit(this.blockOnPointerDown!)
                 this.allowLiftEdit = true
             }
@@ -618,25 +645,39 @@ export class WeeklyRoutinesManager extends RoutinesManager {
             this.initDayEditFromContext()
         }
 
+        // see if linked routine
+        this.isLiftOnLinkedSibling = this.hasSameLinkedRoutine({
+            weekRoutine: get(this.weekRoutine)!,
+            srcKey: this.getDayKeyFromIdx(this.getEditOriginDayKey()),
+            queryKey: this.editDayKey!
+        })
+
         // safeProps will be null if there was no space in current day col the cursos is in
         const { safeProps, xOffset, yOffset } = this.getLiftBlockPosition()
 
         if (safeProps) {
             this.editingBlock.update((block) => ({ 
-                ...block!, ...safeProps, 
-                xOffset, yOffset, isDragging: true,
+                ...block!, 
+                ...safeProps, 
+                xOffset, 
+                yOffset, 
+                isDragging: true,
                 dropArea: {
-                    top: safeProps.yOffset, left: xOffset, doShow: true,
+                    top: safeProps.yOffset, 
+                    left: 0, 
+                    doShow: true,
                     offsetIdx: this.editOffsetIdx
                 }
             }))
         }
         else {
-            this.editingBlock.update((block) => ({ ...block!, xOffset, yOffset })) 
+            this.editingBlock.update((block) => ({ 
+                ...block!, xOffset, yOffset, isDragging: true
+            })) 
         }
     }
 
-    onLiftBlockPointerUp = () => {
+    onLiftBlockPointerUp = (e: PointerEvent) => {        
         if (this.scrollInterval) {
             clearInterval(this.scrollInterval)
             this.scrollInterval = null
@@ -671,13 +712,11 @@ export class WeeklyRoutinesManager extends RoutinesManager {
     /* Scroll Container Event Handlers */
 
     onScrollContainerPointerDown = (e: PointerEvent) => {
-        const target = e.target as HTMLElement
-        if (target.id != ROUTINE_BLOCKS_CONTAINER_ID || e.button === 2) {
+        const target    = e.target as HTMLElement
+        const isDupEdit = get(this.editContext) === "duplicate"
+        if (target.id != ROUTINE_BLOCKS_CONTAINER_ID || isDupEdit || e.button === 2) {
             return
         }
-
-        console.log(e.clientX, e.clientY)
-        target.setPointerCapture(e.pointerId)
 
         this.initEditDayContextFromLeftOffset(this.cursorPos.left)
         this.initDayEditFromContext()
@@ -692,7 +731,8 @@ export class WeeklyRoutinesManager extends RoutinesManager {
 
     onScrollContainerPointerMove = (e: PointerEvent) => {
         if (!this.allowStrechEdit) {
-            if (!this.isDragWithinStretchThreshold()) return
+            const threshold = RoutinesManager.NEW_STRETCH_DRAG_DIST_THRESHOLD
+            if (!this.isHozDragWithinStretchThreshold(threshold)) return
             
             // attempt to make a valid block
             const editBlock = this.createBlockFromStretchEdit()
@@ -721,10 +761,12 @@ export class WeeklyRoutinesManager extends RoutinesManager {
     onBlockStretchEditEnd = () => {
         this.removeStretchEventListeners()
 
-        if (!this.allowStrechEdit) return
+        if (!this.allowStrechEdit) {
+            this.editingBlock.set(null)
+            return
+        }
 
         const editContext = get(this.editContext)
-
         super.onBlockStretchEditEnd()
 
         if (editContext === "old-stretch") {
@@ -802,11 +844,16 @@ export class WeeklyRoutinesManager extends RoutinesManager {
 
     onDupBlockPointerUp = () => {
         this.editingBlock.update((block) => { 
-            const yOffset = block!.dropArea?.top ?? block!.yOffset
+            if (!block) return block
+
+            const dropArea = block.dropArea!
+            const yOffset  = dropArea.offsetIdx >= 0 ? dropArea.top : block.yOffset
             
             return { 
-                ...block!, isDragging: false, yOffset, 
-                dropArea: { ...block!.dropArea!, doShow: false }  
+                ...block, 
+                yOffset, 
+                isDragging: false, 
+                dropArea: { ...block.dropArea!, doShow: false }  
             }
         })
         this.removeDupEventListeners()
@@ -853,8 +900,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         const dupBlockElem = this.getWeekBlockFromId(editBlock.id)!
         const dayIdx = +dupBlockElem.id.split("--")[0]
         
-        this.initEditDayContextFromIdx(dayIdx)
-        this.initDayEditFromContext()
+        // col edit init already set when on right click
         
         const containerWidth = this.blocksContainerRef!.clientWidth
         const containerHeight = this.blocksContainerRef!.clientHeight
@@ -876,7 +922,8 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         this.editContext.set("duplicate")
 
         this.editingBlock.set({ 
-            ...dupBlockElem, yOffset: top, xOffset: left, isDragging: false, dropArea: {
+            ...dupBlockElem, yOffset: top, xOffset: left, isDragging: false, 
+            dropArea: {
                 top: 0, left: 0, offsetIdx: -1, doShow: false
             }
         })
@@ -889,7 +936,8 @@ export class WeeklyRoutinesManager extends RoutinesManager {
 
     confirmDuplicate() {
         const editBlock = get(this.editingBlock)!
-        const dayIdx = editBlock!.dropArea!.offsetIdx
+        const view    = get(this.currViewOption)!
+        const dayIdx = editBlock!.dropArea!.offsetIdx += (view === ViewOption.FSS ? 4 : 0)
         editBlock.id = `${dayIdx}--${0}`
 
         this.updateRoutineAfterBlockUpdate(editBlock, "duplicate")
@@ -919,6 +967,21 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         this.updateSingleDayEdit()
     }
 
+    toggleEditModal(blockId: string) {
+        this.initEditDayContextFromIdx(+blockId.split("--")[0])
+        this.initDayEditFromContext()
+
+        this.blockOnPointerDown = this.getWeekBlockFromId(blockId)!
+        this.editingBlockRef = this.getDOMBlockElem(blockId)
+        this.editingBlock.set({ 
+            ...this.blockOnPointerDown, 
+            xOffset: this.dayColXOffset,
+            isDragging: false
+        })
+
+        this.editContext.set("details")
+    }
+
     /**
      * Called when user has updated the block after editing it in the edit modal.
      * @param updatedBlock
@@ -943,6 +1006,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         this.dragStartPoint = { left: -1, top: -1 }
         this.initDragLiftOffsets = { left: -1, top: -1 }
         this.allowLiftEdit = false
+        this.allowStrechEdit = false
         this.editTargetElem = null
         this.initDragLiftOffsets = { top: -1, left: -1 }
 
@@ -1004,8 +1068,11 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         return "id" in dayRoutine
     }
 
-    /* Day Specific Edits */
+    getEditOriginDayKey() {
+        return +get(this.editingBlock)!.id.split("--")[0]
+    }
 
+    /* Day Specific Edits */
     useTemplateOnDayRoutine(dailyRoutine: RoutineBlockElem[] | DailyRoutine) {
         const rawBlocks = "id" in dailyRoutine ? dailyRoutine.blocks : dailyRoutine
 
@@ -1023,27 +1090,20 @@ export class WeeklyRoutinesManager extends RoutinesManager {
     }
 
     linkDayRoutine(dailyRoutine: DailyRoutine) {
-        this.editDayRoutineElems.set(this.processRoutineBlocks(dailyRoutine).blockElems)
+        const blocks = this.processRoutineBlocks(dailyRoutine).blockElems
+
+        this.editDayRoutineElems.set(blocks.map((block, idx) => ({ ...block!, id: `${this.editDayIdx}--${idx}` })))
         this.editDayRoutine.set(dailyRoutine)
 
         this.updateSingleDayEdit("linked")
     }
 
     unlinkSetDailyRoutine() {
-        const dayIdx = get(this.dayBreakdown)!.dayIdx
-        const dayKey = this.getDayKeyFromIdx(dayIdx)
-        const weekRoutine = get(this.weekRoutine)!
-        const linkedDayRoutine = weekRoutine.blocks[dayKey] as DailyRoutine
-        const blocks = linkedDayRoutine.blocks
-
-        this.editDayRoutineElems.set(this.processRoutineBlocks(blocks).blockElems)
-        this.editDayRoutine.set(blocks)
-
+        this.editDayRoutine.update((data) => (data! as DailyRoutine).blocks as RoutineBlock[])
         this.updateSingleDayEdit("unlinked")
     }
 
     /* Misc Handlers */
-
     isViewEmpty() {
         const routineElems = get(this.weekRoutineElems)!
         const rawRoutine   = get(this.weekRoutine)!
@@ -1077,7 +1137,10 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         const target = ke.target as HTMLElement
         const { code } = ke
 
-        if (isTargetTextEditor(target)) return
+        const editContext = get(this.editContext)
+        const isInvalidEditState = editContext === "duplicate" || editContext === "lift" || editContext === "details"
+
+        if (isTargetTextEditor(target) || isInvalidEditState) return
 
         if (code === "Digit1") {
             this.updateCurrViewOption(ViewOption.Today)
@@ -1094,23 +1157,29 @@ export class WeeklyRoutinesManager extends RoutinesManager {
     }
 
     getXOffsetFromDayIdx(dayIdx: number) {
-        const _dayIdx = dayIdx >= 0 ? dayIdx : this.editDayIdx
-        return `calc(((100% / ${this.daysInView.length}) * ${_dayIdx}))`
+        return `calc(((100% / ${this.daysInView.length}) * ${dayIdx}) + 2px)`
     }
 
+    /**
+     * Get the curent edit block's x offset (floating).
+     * For both pre-existing blocks on lift or stretch and duplicate blocks.
+     */
     getEditBlockXOffset(editBlock: RoutineEditBlock) {
         const isDragging = editBlock.isDragging
-        const isDupEditAndAtRest = get(this.editContext) === "duplicate" && !isDragging
+        const isDuplicate = get(this.editContext) === "duplicate"
 
-        if (isDupEditAndAtRest) {
-            return this.getXOffsetFromDayIdx(editBlock.dropArea?.offsetIdx ?? -1)
+        // after user has released after dragging a duplicate edit block
+        if (isDuplicate && !isDragging) {
+            const landingOffsetIdx = editBlock.dropArea!.offsetIdx
+            const offsetIdx        = landingOffsetIdx >= 0 ? landingOffsetIdx : this.editOffsetIdx
+
+            return this.getXOffsetFromDayIdx(offsetIdx)
         }
         else {
             return `${editBlock.xOffset + 2}px`
         }
     }
     
-
     getDOMBlockElem(id: string) {
         return getElemById(id) as HTMLElement
     }

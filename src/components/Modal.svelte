@@ -3,11 +3,12 @@
 	import { onMount } from "svelte"
 
     type ModalOptions = {
-        borderRadius?: string,   // default: 0px 
-        overflowX?: string,      // default: hidden
-        overflowY?: string,      // default: visible
+        borderRadius?: string   // default: 0px 
+        overflowX?: string      // default: hidden
+        overflowY?: string      // default: visible
         overflow?: string        // default: hidden
         zIndex?: string          // default: 300000
+        closeOnEsc?: boolean
     }
 
     export let options: ModalOptions = {}
@@ -40,12 +41,22 @@
 
         styling = arr.join('; ')
     }
+    function onKeyPress(e: KeyboardEvent) {
+        const { key } = e
+        if (key == "Escape" && options.closeOnEsc && onClickOutSide) {
+            onClickOutSide(e as Event)
+        }
+    }
 
     onMount(makeModalStyling)
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-<div class={`modal-bg ${$themeState?.isDarkTheme ? "" : "modal-bg--light"}`} on:pointerdown={handleClickOutside}>
+<svelte:window on:keydown={onKeyPress} />
+
+<div 
+    class={`modal-bg ${$themeState?.isDarkTheme ? "" : "modal-bg--light"}`} 
+    on:pointerdown={handleClickOutside}
+>
     <div 
         class={`modal-bg__content modal-bg__content--overflow-y-scroll`}
         style={styling}

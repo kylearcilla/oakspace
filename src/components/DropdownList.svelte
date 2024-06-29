@@ -160,7 +160,10 @@
                                 class="dropdown-menu__option"
                                 class:dropdown-menu__option--selected={pickedItem === optnIdx}
                             >
-                                <button class="dropdown-menu__option-btn" on:click={(e) => onItemClicked(e, optnIdx)}>
+                                <button 
+                                    class="dropdown-menu__option-btn" 
+                                    on:click={(e) => onItemClicked(e, optnIdx)}
+                                >
                                     <!-- Left Icon -->
                                     {#if option.leftIcon}
                                         <div class="dropdown-menu__option-icon dropdown-menu__option-icon--left">

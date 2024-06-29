@@ -6,6 +6,13 @@
 
     let currTab = RoutinesTab.Weekly
 
+    $: if (window.location.href.includes("/home/routines/daily") ) {   
+        currTab = RoutinesTab.Daily
+    }
+    else {
+        currTab = RoutinesTab.Weekly
+    }
+
     function onTabClicked(tab: RoutinesTab) {
         if (tab === currTab) return
         currTab = tab
@@ -85,7 +92,7 @@
                 transform: scale(0.985);
                 transition: 0.14s ease-in-out;
             }
-            &:hover {
+            &:hover, &:focus {
                 transition: 0.04s ease-in-out;
                 background: rgba(var(--textColor1), 0.02);
                 opacity: 0.85;

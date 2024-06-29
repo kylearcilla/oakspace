@@ -32,7 +32,6 @@ div[contenteditable]:focus {
 .text-editor {
     padding: 4px 4px 4px 0px;
     transition: 0.2s border ease-in-out;
-    border-radius: 4px;
     max-height: 100%;
     overflow-y: scroll;
     @include text-style(0.8, 400, 1.3rem);

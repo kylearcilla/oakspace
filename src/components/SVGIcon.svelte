@@ -10,6 +10,7 @@
       height: 18,
       strokeWidth: 1, 
       scale: 1, 
+      fullOnHover: false,
       id: "",
       color: getThemeStyling("textColor1")
   }
@@ -17,24 +18,39 @@
   export let icon: Icon
   export let options: IconOptions = {}
   
-  const _options: any = { ...DEFAULT_STYLING, ...options }
-
   let {
-    opacity, width, height, strokeWidth,
-    scale, id, color 
-  } = _options
+    opacity, 
+    width, 
+    height, 
+    strokeWidth,
+    scale, 
+    id, 
+    fullOnHover,
+    color 
+  } = DEFAULT_STYLING
+
+  $: {
+    opacity = options.opacity 
+    width = options.width
+    height = options.height
+    strokeWidth = options.strokeWidth
+    scale = options.scale 
+    id = options.id 
+    color = options.color 
+    fullOnHover = options.fullOnHover 
+  }
   
   $: if ($themeState && !options?.color) {
       color = `rgba(${getThemeStyling("textColor1")})`
   }
-
 </script>
 
 <div 
   class="svg-icon"
+  class:svg-icon--full-on-hover={fullOnHover}
   style:opacity={opacity}
   style:--stroke-width={strokeWidth}
-  style:--path-color={`rgba(${color})`}
+  style:--path-color={color}
   style:--scale={scale}
 >
   {#if icon === Icon.Settings}
@@ -100,8 +116,9 @@
   {:else if icon === Icon.Sun}
       <svg 
           width={width} height={height}
-          viewBox={`0 0 ${width + 2} ${height + 2}`}
+          viewBox={`0 0 ${width ?? 0 + 2} ${height ?? 0 + 2}`}
           xmlns="http://www.w3.org/2000/svg"
+          data-icon="sun"
       >
           <path 
               d="M9.23877 0.507812C9.7419 0.507812 10.1498 0.91568 10.1498 1.4188V2.81219C10.1498 3.31531 9.7419 3.72318 9.23877 3.72318C8.73565 3.72318 8.32778 3.31531 8.32778 2.81219V1.4188C8.32778 0.91568 8.73565 0.507812 9.23877 0.507812ZM13.0436 9.08209C13.0436 11.065 11.436 12.6725 9.45307 12.6725C7.47014 12.6725 5.86268 11.065 5.86268 9.08209C5.86268 7.09916 7.47014 5.49159 9.45307 5.49159C11.436 5.49159 13.0436 7.09916 13.0436 9.08209ZM0.878906 9.29638C0.878906 8.79326 1.28677 8.38539 1.7899 8.38539H3.18317C3.68629 8.38539 4.09416 8.79326 4.09416 9.29638C4.09416 9.79951 3.68629 10.2074 3.18317 10.2074H1.7899C1.28677 10.2074 0.878906 9.79951 0.878906 9.29638ZM17.1164 9.77867C17.6195 9.77867 18.0273 9.3708 18.0273 8.86768C18.0273 8.36455 17.6195 7.95669 17.1164 7.95669H15.723C15.2198 7.95669 14.812 8.36455 14.812 8.86768C14.812 9.3708 15.2198 9.77867 15.723 9.77867H17.1164ZM8.75649 16.7453C8.75649 17.2484 9.16436 17.6562 9.66748 17.6562C10.1706 17.6562 10.5785 17.2484 10.5785 16.7453V15.352C10.5785 14.8489 10.1706 14.441 9.66748 14.441C9.16436 14.441 8.75649 14.8489 8.75649 15.352V16.7453ZM3.23867 3.17067C3.59432 2.81491 4.17118 2.81491 4.52695 3.17067L5.51224 4.15597C5.868 4.51173 5.868 5.08859 5.51224 5.44435C5.15647 5.80012 4.57961 5.80012 4.22385 5.44435L3.23867 4.45906C2.88279 4.1033 2.88279 3.52644 3.23867 3.17067ZM14.3792 14.9935C14.735 15.3493 15.3118 15.3493 15.6676 14.9935C16.0233 14.6376 16.0233 14.0609 15.6676 13.7051L14.6824 12.7198C14.3266 12.3641 13.7498 12.3641 13.394 12.7198C13.0382 13.0756 13.0382 13.6524 13.394 14.0082L14.3792 14.9935ZM15.3645 2.86758C15.7203 3.22346 15.7203 3.8002 15.3645 4.15597L14.3792 5.14126C14.0234 5.49702 13.4466 5.49702 13.0908 5.14126C12.735 4.78549 12.735 4.20863 13.0908 3.85287L14.0761 2.86769C14.4319 2.51181 15.0087 2.51181 15.3645 2.86758ZM3.54177 14.0082C3.186 14.364 3.186 14.9408 3.54177 15.2966C3.89753 15.6523 4.47439 15.6523 4.83016 15.2966L5.81534 14.3113C6.1711 13.9555 6.1711 13.3787 5.81534 13.0229C5.45957 12.6672 4.88271 12.6672 4.52695 13.0229L3.54177 14.0082Z" 
@@ -114,6 +131,7 @@
           viewBox={`0 0 ${width} ${height}`}
           fill="none" xmlns="http://www.w3.org/2000/svg"
           style={`transform: scale(0.8)`}
+          data-icon="moon"
       >
           <path 
               d="M8.08898 0.0458984C3.62355 0.0458984 0.0078125 3.61383 0.0078125 8.01416C0.0078125 12.4145 3.62355 15.9824 8.08898 15.9824C10.2801 15.9824 12.2652 15.1216 13.7223 13.7271C13.9031 13.5528 13.9501 13.2825 13.8344 13.0619C13.7187 12.8414 13.4692 12.7169 13.2197 12.7595C12.8654 12.82 12.5038 12.852 12.1314 12.852C8.62773 12.852 5.78576 10.0489 5.78576 6.59125C5.78576 4.25058 7.08742 2.21227 9.01461 1.13798C9.23517 1.01347 9.34726 0.764465 9.29302 0.522571C9.23879 0.280677 9.02907 0.0992574 8.77597 0.0779138C8.54818 0.0601275 8.32039 0.0494556 8.08898 0.0494556V0.0458984Z" 
@@ -123,6 +141,7 @@
   {:else if icon === Icon.ColorSun}
       <svg 
           xmlns="http://www.w3.org/2000/svg" width="54" height="54" viewBox="0 0 54 54" fill="none"
+          data-icon="color-sun"
           style="fill: linear-gradient(180deg, #F8E7CE -13.16%, #E5AF7C 103.76%); filter: drop-shadow(0px 0px 22px rgba(245, 221, 192, 0.1);"
           class="day-icon"
       >
@@ -147,7 +166,10 @@
           </defs>
       </svg>
   {:else if icon === Icon.ColorMoon}
-      <svg width="37" height="37" viewBox="0 0 37 37" fill="none" xmlns="http://www.w3.org/2000/svg" class="day-icon">
+      <svg 
+          width="37" height="37" viewBox="0 0 37 37" fill="none" xmlns="http://www.w3.org/2000/svg" class="day-icon"
+          data-icon="color-moon"
+      >
             <g filter="url(#filter0_d_2572_18359)"> 
             <path 
                 fill="url(#paint0_linear_2572_18359)"
@@ -204,6 +226,10 @@
   .svg-icon {
     @include center;
     transform: scale(var(--scale));
+
+    &--full-on-hover:hover {
+      opacity: 1 !important;
+    }
 
     path {
       // stroke-width: var(--stroke-width);

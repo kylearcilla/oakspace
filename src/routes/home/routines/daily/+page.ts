@@ -7,10 +7,10 @@ export const load = (async () => {
     const isDev = import.meta.env.MODE === "development"
 
     if (isDev) {
-        return { routines: [] }
+        return { routines: SET_DAILY_ROUTINES }
     }
     else {
-        return { routines: [] }
+        return { routines: SET_DAILY_ROUTINES }
     }
 
 }) satisfies PageLoad

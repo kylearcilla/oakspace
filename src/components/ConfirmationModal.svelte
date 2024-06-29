@@ -14,12 +14,13 @@
         color3: isDarkTheme ? "#322122" : "#C29B90"
     }
 
-    let _options = {
+    const _options = {
         type:    options?.type ?? "default",
         cancel:  options?.cancel ?? "Cancel",
         ok:      options?.ok ?? "OK",
         caption: options?.caption
     }
+    const { type, cancel, ok, caption } = _options
 
     let isHolding = false
     let holdEnd = false
@@ -35,7 +36,7 @@
         if (pe.button === 2) return
         isHolding = false
 
-        if (_options.type != "delete") {
+        if (type != "delete") {
             onOk()
         }
     }
@@ -59,14 +60,14 @@
     <div 
         class="confirm"
         class:confirm--light={!isDarkTheme}
-        class:confirm--non-delete={_options.type != "delete"}
+        class:confirm--non-delete={type != "delete"}
         style:--hold-down-length={`${HOLD_DOWN_DELETE_CONFIRM}s`}
         on:pointerup={onPointerUp} 
         on:mouseleave={onMouseLeave}
     >
-        {#if _options.caption}
+        {#if caption}
             <span class="confirm__caption">
-                {_options.caption}
+                {caption}
             </span>
         {/if}
         <div class="confirm__text">
@@ -77,11 +78,11 @@
                 class="confirm__cancel-btn"
                 on:click={onCancel}
             >
-                {_options.cancel}
+                {cancel}
             </button>
             <button
                 class="confirm__ok-btn"
-                class:confirm__ok-btn--holding={isHolding}
+                class:confirm__ok-btn--holding={type === "delete" && isHolding}
                 style:background-color={`${isDelete ? deleteColors.color2 : "rgba(var(--fgColor1)"}`}
                 style:--hold-fill-color={`${deleteColors.color3}`}
                 on:pointerdown={onConfirmPointerDown}
@@ -89,10 +90,10 @@
                 on:animationend={onHoldEnd}
             >
                 <span style:color={`${isDelete ? deleteColors.color1 : "rgba(var(--textColor1)"}`}>
-                    {#if isHolding && _options.type === "delete"}
+                    {#if isHolding && type === "delete"}
                         Deleting...
                     {:else}
-                        {_options.ok}
+                        {ok}
                     {/if}
                 </span>
             </button>

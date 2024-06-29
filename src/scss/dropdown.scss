@@ -25,7 +25,6 @@
 @mixin dropdown-menu-dark {
     box-shadow: none;
     border: 1px solid rgba(white, 0.03);
-    box-shadow: none !important;
 }
 
 .dropdown-btn {
@@ -34,16 +33,12 @@
     border-radius: 18px;
     padding: 6px 12px;
     width: fit-content;
-    // box-shadow: var(--bentoBoxShadow);
     cursor: pointer;
     @include flex(center);
 
     &:hover {
         @include txt-color(0.054, "bg");
         transition: 0s ease-in-out;
-    }
-    &:focus {
-        @include txt-color(0.054, "bg");
     }
     &:active {
         transform: scale(0.978);
@@ -62,6 +57,9 @@
         i {
             color: rgba(var(--textColor1), 0.65);
         }
+    }
+    &--no-focus:focus-visible {
+        box-shadow: none !important;
     }
     &--settings#{&}--dark {
         @include txt-color(0.04, "bg");
@@ -263,9 +261,12 @@
         &:last-child {
             padding-bottom: 0px;
         }
-        &:focus, &:hover &-btn {
+        &:hover &-btn {
             background-color: rgba(var(--textColor1), 0.04);
             opacity: 1;
+        }
+        &:focus-visible {
+            @include border-focus;
         }
         &--selected {
             opacity: 1;
@@ -323,7 +324,6 @@
         &--unclickable:active {
             transition: 0s !important;
         }
-
         &:active {
             transition: 0.12s ease-in-out;
             transform: scale(0.984);

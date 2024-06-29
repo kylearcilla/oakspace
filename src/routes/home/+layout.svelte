@@ -25,6 +25,8 @@
 	import SessionFinishedModal from "./SessionFinishedModal.svelte"
 	import SessionCanceledModal from "./SessionCanceledModal.svelte"
 
+  export let data
+
   // misc. elems
 	import Toaster from "../../components/Toaster.svelte"
   
@@ -212,7 +214,9 @@
   <!-- Main Modals -->
   {#if $globalContext.modalsOpen.includes(ModalType.Stats)} <Stats/> {/if}
   {#if $globalContext.modalsOpen.includes(ModalType.Settings)} <Settings/> {/if}
-  {#if $globalContext.modalsOpen.includes(ModalType.Youtube)} <YoutubeSettings/> {/if}
+  {#if $globalContext.modalsOpen.includes(ModalType.Youtube)} 
+      <YoutubeSettings ytPlaylists={data.ytPlaylists} /> 
+  {/if}
   {#if $globalContext.modalsOpen.includes(ModalType.Appearance)} <Appearance /> {/if}
   {#if $globalContext.modalsOpen.includes(ModalType.Music)} <MusicSettings /> {/if}
   {#if $globalContext.modalsOpen.includes(ModalType.Journal)} <Journal /> {/if}

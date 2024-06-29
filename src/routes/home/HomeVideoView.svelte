@@ -7,24 +7,23 @@
     let doShowInvalidUI = false
     let doMinimizeYtPanel = false
 
-    $: video     = $ytPlayerStore?.vid
-    $: playlist  = $ytPlayerStore?.playlist
+    $: video        = $ytPlayerStore?.vid
+    $: playlist     = $ytPlayerStore?.playlist
     $: isDarkTheme  = $themeState.isDarkTheme
     $: doShowPlayer = $ytPlayerStore?.doShowPlayer ?? true
 
     $: {
-        const error: any = $ytPlayerStore?.error
-        if (error?.code === APIErrorCode.PLAYER_MEDIA_INVALID) {
+        const error: any  = $ytPlayerStore?.error
+        const isInValidVid = error?.message === "Video couldn't be played due to privacy or embed playback restrictions."
+
+        // only disable if no playlist at all is unplayable
+        if (error?.code === APIErrorCode.PLAYER_MEDIA_INVALID && !isInValidVid) {
             doShowInvalidUI = true
         }
         else {
             doShowInvalidUI = false
         }
     }
-
-    onMount(() => {
-
-    })
 </script>
 
 <div class="vid-view" class:vid-view--hidden={!doShowPlayer}>
@@ -44,7 +43,7 @@
             {:else if doShowInvalidUI}
                 <div class="vid-view__empty-vid-view">
                     <div class="text-aln-center">
-                        <h4 class="vid-view__empty-msg">Playlist / Video can't be played</h4>
+                        <h4 class="vid-view__empty-msg">Playlist / video can't be played</h4>
                             <a
                                 class="vid-view-support-link"
                                 target="_blank"

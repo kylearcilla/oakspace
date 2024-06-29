@@ -179,7 +179,10 @@
 </script>
 
 <div class="time-picker-container" on:mousedown={() => onClicked()}>
-    <div 
+    <div
+        bind:this={timePickerRef}
+        role="button"
+        tabindex="0"
         id={`${id}--dropdown-btn`}
         class="time-picker" 
         class:time-picker--light={isLight}
@@ -187,8 +190,13 @@
         class:time-picker--active-input={isInputActive}
         class:select-none={isDragging}
         on:mousedown={onPickerMouseDown}
+        on:keydown={(e) => {
+            if (e.code === 'Enter' || e.code === 'Space') {
+                isInputActive = true
+                requestAnimationFrame(() => inputElem.focus())
+            }
+        }}
         use:clickOutside on:click_outside={() => isInputActive = false}
-        bind:this={timePickerRef}
     >
         {#if isInputActive}
             <input 
@@ -253,6 +261,9 @@
         }
         &--active-input {
             @include txt-color(0.08, "bg");
+        }
+        &:focus-visible {
+            @include border-focus;
         }
         &:active {
             transform: scale(0.994);

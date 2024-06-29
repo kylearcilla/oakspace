@@ -20,6 +20,7 @@ type IconOptions = {
     scale?: number
     color?: string
     opacity?: number   
+    fullOnHover?: boolean
 }
 
 type AsyncButtonOptions = {
@@ -187,7 +188,7 @@ type RoutineBlock = {
     description: string
     startTime: number
     endTime: number
-    orderContext: BlockOrderContext | null
+    order?: BlockOrderContext | null
     tag: Tag | null
     activity: RoutineActvity | null
     tasks: Task[]
@@ -666,6 +667,10 @@ type TasksListOptions = {
     }
     dragAndDrop?: DragAndDropHandler
     contextMenuOptions: ContextMenuOptions
+    max?: number,
+    subtaskMax?: number,
+    maxToastMsg?: string
+    subtaskMaxToastMsg?: string
 }
 
 // interface TaskListOptionsInterface extends TasksListOptions<TaskListTypeCombos> { }
@@ -893,6 +898,11 @@ type YoutubePlaylist = {
     channelImgSrc: string,
     channelURL: string,
     firstVidId: string | null
+}
+
+type YoutubePlaylistGroup = {
+    title: string
+    playlists: YoutubePlaylist[]
 }
 
 type YoutubePlayerOptions = {

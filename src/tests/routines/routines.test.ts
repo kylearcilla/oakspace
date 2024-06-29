@@ -1,9 +1,10 @@
 import { RoutinesManager } from '$lib/routines-manager'
 import { get } from 'svelte/store'
 import { describe, expect } from 'vitest'
-import { TEST_DAILY_BREAKDOWN, TEST_WEEKLY_BREAKDOWN, TEST_BLOCK_MOVE_TO_NEW_COL, PRESET_ROUTINES } from './routines.data'
+import { TEST_DAILY_BREAKDOWN, TEST_WEEKLY_BREAKDOWN, TEST_BLOCK_MOVE_TO_NEW_COL, PRESET_ROUTINES, BREAKDOWN_TEST_DAILY_BLOCKS } from './routines.data'
 import { DailyRoutinesManager } from '$lib/routines-daily-manager'
 import { WeeklyRoutinesManager } from '$lib/routines-weekly-manager'
+import { COLOR_SWATCHES } from '$lib/utils-general'
 
 const TOTAL_DAY_MINS = 1440
 const DAYS_WEEK = [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" ]
@@ -20,116 +21,175 @@ blocksContainer.style.height = "1210px"
 blocksContainer.style.width = "750px"
 blocksContainer.style.display = "block"
 
-function getBlocksFromFile() {
-
+function rawDataToBlocks(data: any) {
+    return data.map((data: any) => ({ 
+        ...data, 
+        color: COLOR_SWATCHES.d[0], 
+        description: "", tasks: [],
+        tag: null,
+        activity: data.activity as keyof RoutineCores
+    })) as RoutineBlock[]
 }
 
-describe('Weekly Tag Breakdown', () => {
+describe('daily - tag', () => {
     const manager = new DailyRoutinesManager()
     let testCase, blocks, breakdown, result
 
-    test('HS Student Monday routine', () => {
+    test('hs student monday routine', () => {
         testCase = TEST_DAILY_BREAKDOWN[0]
         blocks = testCase.blocks
         breakdown = testCase.tagBreakdown
         
-        result = manager.getBlockTagBreakdown("id" in blocks ? blocks.blocks : blocks as RoutineBlock[])
+        result = manager.getRoutineTagBreakdown("id" in blocks ? blocks.blocks : blocks as RoutineBlock[])
         expect(result).toEqual(breakdown)
     })
 
-    test('HS Student Tuesday routine', () => {
+    test('hs student tuesday routine', () => {
         testCase = TEST_DAILY_BREAKDOWN[0]
         blocks = testCase.blocks
         breakdown = testCase.tagBreakdown
         
-        result = manager.getBlockTagBreakdown("id" in blocks ? blocks.blocks : blocks as RoutineBlock[])
+        result = manager.getRoutineTagBreakdown("id" in blocks ? blocks.blocks : blocks as RoutineBlock[])
         expect(result).toEqual(breakdown)
     })
 
-    test('HS Student Saturday routine', () => {
+    test('hs student saturday routine', () => {
         testCase = TEST_DAILY_BREAKDOWN[0]
         blocks = testCase.blocks
         breakdown = testCase.tagBreakdown
         
-        result = manager.getBlockTagBreakdown("id" in blocks ? blocks.blocks : blocks as RoutineBlock[])
+        result = manager.getRoutineTagBreakdown("id" in blocks ? blocks.blocks : blocks as RoutineBlock[])
         expect(result).toEqual(breakdown)
     })
-    test('College Student Monday routine', () => {
+    test('college student monday routine', () => {
         testCase = TEST_DAILY_BREAKDOWN[0]
         blocks = testCase.blocks
         breakdown = testCase.tagBreakdown
         
-        result = manager.getBlockTagBreakdown("id" in blocks ? blocks.blocks : blocks as RoutineBlock[])
-        expect(result).toEqual(breakdown)
-    })
-    test('Busy routine breakdown', () => {
-        testCase = TEST_DAILY_BREAKDOWN[0]
-        blocks = testCase.blocks
-        breakdown = testCase.tagBreakdown
-        
-        result = manager.getBlockTagBreakdown("id" in blocks ? blocks.blocks : blocks as RoutineBlock[])
+        result = manager.getRoutineTagBreakdown("id" in blocks ? blocks.blocks : blocks as RoutineBlock[])
         expect(result).toEqual(breakdown)
     })
 })
 
-describe('Weekly Tag Breakdown', () => {
+describe('weekly - tag', () => {
     const manager = new WeeklyRoutinesManager()
     let testCase, weekRoutine, breakdown, result
 
-    test('Highschool weekly routine breakdown.', () => {
+    test('highschool weekly routine breakdown', () => {
         testCase = TEST_WEEKLY_BREAKDOWN[0]
         weekRoutine = testCase.weekRoutine as WeeklyRoutine
         breakdown = testCase.tagBreakdown
 
-        manager.updateCurrentWeekRoutine(weekRoutine, false)
+        manager.updateCurrentWeekRoutine(weekRoutine)
         result = get(manager.tagBreakdown)
 
         expect(result).toEqual(breakdown)
     })
 
-    test('College weekly routine breakdown.', () => {
+    test('college weekly routine breakdown', () => {
         testCase = TEST_WEEKLY_BREAKDOWN[1]
         weekRoutine = testCase.weekRoutine as WeeklyRoutine
         breakdown = testCase.tagBreakdown
 
-        manager.updateCurrentWeekRoutine(weekRoutine, false)
+        manager.updateCurrentWeekRoutine(weekRoutine)
         result = get(manager.tagBreakdown)
 
         expect(result).toEqual(breakdown)
     })
 
-    test('Busy routine breakdown.', () => {
+})
+
+describe('daily - core', () => {
+    test('daily core breakdown - valid', () => {
+        const manager = new DailyRoutinesManager()
+
+        let blocks, breakdown, res
+
+        for (let i = 0; i < 3; i++) {
+            const testCase = TEST_DAILY_BREAKDOWN[i]
+            blocks = testCase.blocks
+            blocks = "id" in blocks ? blocks.blocks : blocks
+            breakdown = testCase.coreBreakdown
+
+            res = manager.getRoutineCoreBreakdown(blocks as RoutineBlock[])
+            
+            expect(res).toEqual(breakdown)
+        }
+    })
+    test('daily core breakdown - invalid sleeping / awake', () => {
+        const manager = new DailyRoutinesManager()
+
+        const expectSleepAwakeEmpty = (res: RoutineCores) => {
+            expect(res.awake.totalTime).toBe(-1)
+            expect(res.awake.avgTime).toBe(-1)
+            expect(res.awake.total).toBe(-1)
+
+            expect(res.sleeping.totalTime).toBe(-1)
+            expect(res.sleeping.avgTime).toBe(-1)
+            expect(res.sleeping.total).toBe(-1)
+        }
+
+        let testBlocks, breakdown, res
+
+        /* only first block set */
+        testBlocks = rawDataToBlocks(BREAKDOWN_TEST_DAILY_BLOCKS[1])
+        res = manager.getRoutineCoreBreakdown(testBlocks)
+
+        expectSleepAwakeEmpty(res)
+
+        /* only last block set */
+        testBlocks = rawDataToBlocks(BREAKDOWN_TEST_DAILY_BLOCKS[2])
+        res = manager.getRoutineCoreBreakdown(testBlocks)
+
+        expectSleepAwakeEmpty(res)
+
+        /* only last first then first set */
+        testBlocks = rawDataToBlocks(BREAKDOWN_TEST_DAILY_BLOCKS[3])
+        res = manager.getRoutineCoreBreakdown(testBlocks)
+
+        expectSleepAwakeEmpty(res)
+
+        /* only first and last next to each other set */
+        testBlocks = rawDataToBlocks(BREAKDOWN_TEST_DAILY_BLOCKS[4])
+        res = manager.getRoutineCoreBreakdown(testBlocks)
+
+        expect(res.awake.totalTime).toBe(150)
+        expect(res.awake.avgTime).toBe(0)
+        expect(res.awake.total).toBe(0)
+
+        expect(res.sleeping.totalTime).toBe(1290)
+        expect(res.sleeping.avgTime).toBe(0)
+        expect(res.sleeping.total).toBe(0)
+    })
+})
+
+describe('weekly - core', () => { 
+    const manager = new WeeklyRoutinesManager()
+    let testCase, weekRoutine, breakdown, result
+
+    test('highschool weekly routine breakdown', () => {
+        testCase = TEST_WEEKLY_BREAKDOWN[0]
+        weekRoutine = testCase.weekRoutine as WeeklyRoutine
+        breakdown = testCase.coreBreakdown
+
+        manager.updateCurrentWeekRoutine(weekRoutine)
+        result = get(manager.coreBreakdown)
+
+        expect(result).toEqual(breakdown)
+    })
+    test('uni weekly routine breakdown', () => {
         testCase = TEST_WEEKLY_BREAKDOWN[1]
         weekRoutine = testCase.weekRoutine as WeeklyRoutine
-        breakdown = testCase.tagBreakdown
+        breakdown = testCase.coreBreakdown
 
-        manager.updateCurrentWeekRoutine(weekRoutine, false)
-        result = get(manager.tagBreakdown)
+        manager.updateCurrentWeekRoutine(weekRoutine)
+        result = get(manager.coreBreakdown)
 
         expect(result).toEqual(breakdown)
     })
 })
 
-// describe('Core Breakdown', () => {
-//     test('Daily core breakdown', () => {
-//         const manager = new DailyRoutinesManager()
-
-//         let blocks, breakdown, res
-//         let i = 0
-
-//         for (let testCase of TEST_DAILY_BREAKDOWN) {
-//             blocks = testCase.blocks
-//             breakdown = testCase.coreBreakdown
-
-//             res = manager.getBlockCoreBreakdown("id" in blocks ? blocks.blocks : blocks)
-            
-//             expect(res).toEqual(breakdown)
-//             console.log(i++)
-//         }
-//     })
-// })
-
-describe('Move block into new day column', () => {
+describe('move block into new day column', () => {
     const manager = new RoutinesManager()
     let testCase = TEST_BLOCK_MOVE_TO_NEW_COL[0]
     let blocks: RoutineBlock[] = []
@@ -142,7 +202,7 @@ describe('Move block into new day column', () => {
         })).sort((a, b) => a.startTime - b.endTime)
     }
     
-    test('Target start time valid', () => {
+    test('target start time valid', () => {
         testCase = TEST_BLOCK_MOVE_TO_NEW_COL[0]
         blocks = []
 
@@ -162,7 +222,7 @@ describe('Move block into new day column', () => {
 
         expect(resTime).toBe(testCase.resultStartTime)
     })
-    test('Blocked, moved slighly down from top neighbor.', () => {
+    test('clash, moved slighly down from top neighbor', () => {
         testCase = TEST_BLOCK_MOVE_TO_NEW_COL[1]
         blocks = []
 
@@ -182,7 +242,7 @@ describe('Move block into new day column', () => {
 
         expect(resTime).toBe(testCase.resultStartTime)
     })
-    test('Blocked, moved slighly above from top neighbor.', () => {
+    test('clash, moved slighly above from top neighbor', () => {
         testCase = TEST_BLOCK_MOVE_TO_NEW_COL[2]
         blocks = []
 
@@ -202,7 +262,7 @@ describe('Move block into new day column', () => {
 
         expect(resTime).toBe(testCase.resultStartTime)
     })
-    test('Blocked, moved way up from top neighbor.', () => {
+    test('clash, moved way up from top neighbor', () => {
         testCase = TEST_BLOCK_MOVE_TO_NEW_COL[3]
         blocks = []
 
@@ -222,7 +282,7 @@ describe('Move block into new day column', () => {
 
         expect(resTime).toBe(testCase.resultStartTime)
     })
-    test('Blocked, moved way down from top neighbor.', () => {
+    test('clash, moved way down from top neighbor', () => {
         testCase = TEST_BLOCK_MOVE_TO_NEW_COL[4]
         blocks = []
 
@@ -242,7 +302,7 @@ describe('Move block into new day column', () => {
 
         expect(resTime).toBe(testCase.resultStartTime)
     })
-    test('Blocked, going up gives a new start time that is closest to desired start time.', () => {
+    test('clash, going up gives a new start time that is closest to desired start time', () => {
         testCase = TEST_BLOCK_MOVE_TO_NEW_COL[5]
         blocks = []
 
@@ -262,7 +322,7 @@ describe('Move block into new day column', () => {
 
         expect(resTime).toBe(testCase.resultStartTime)
     })
-    test('Blocked, going down gives a new start time that is closest to desired start time.', () => {
+    test('clash, going down gives a new start time that is closest to desired start time', () => {
         testCase = TEST_BLOCK_MOVE_TO_NEW_COL[6]
         blocks = []
 
@@ -282,7 +342,7 @@ describe('Move block into new day column', () => {
 
         expect(resTime).toBe(testCase.resultStartTime)
     })
-    test('Blocked, not space, blocked by the start of day', () => {
+    test('clash, not space, blocked by the start of day', () => {
         testCase = TEST_BLOCK_MOVE_TO_NEW_COL[7]
         blocks = []
 
@@ -302,7 +362,7 @@ describe('Move block into new day column', () => {
 
         expect(resTime).toBe(testCase.resultStartTime)
     })
-    test('Blocked, not space, blocked by the end of day', () => {
+    test('clash, not space, blocked by the end of day', () => {
         testCase = TEST_BLOCK_MOVE_TO_NEW_COL[8]
         blocks = []
 
@@ -324,41 +384,41 @@ describe('Move block into new day column', () => {
     })
 })
 
-describe('Finding closest neighbors of a routine block', () => {
+describe('finding closest neighbors of a routine block', () => {
     const blocks = PRESET_ROUTINES.uni[0]
     const manager = new RoutinesManager()
 
-    test("Top nbr non-touching, sandwiched", () => {
+    test("top nbr non-touching, sandwiched", () => {
         const { startTime, endTime } = blocks[2]
         const topNbr = manager.findBlockClosestTopNbr(blocks, startTime, endTime)
         
         expect(topNbr).toBe(blocks[1])
     })
-    test("Bottom nbr non-touching, sandwiched", () => {
+    test("bottom nbr non-touching, sandwiched", () => {
         const { startTime, endTime } = blocks[2]
         const bottomNbr = manager.findBlockClosestBottomNbr(blocks, startTime, endTime)
         
         expect(bottomNbr).toBe(blocks[3])
     })
-    test("Top nbr touching, sandwiched", () => {
+    test("top nbr touching, sandwiched", () => {
         const { startTime, endTime } = blocks[6]
         const bottomNbr = manager.findBlockClosestTopNbr(blocks, startTime, endTime)
         
         expect(bottomNbr).toBe(blocks[5])
     })
-    test("Bottom nbr touching, sandwiched", () => {
+    test("bottom nbr touching, sandwiched", () => {
         const { startTime, endTime } = blocks[6]
         const bottomNbr = manager.findBlockClosestBottomNbr(blocks, startTime, endTime)
         
         expect(bottomNbr).toBe(blocks[7])
     })
-    test("Topmost", () => {
+    test("topmost", () => {
         const { startTime, endTime } = blocks[0]
         const topNbr = manager.findBlockClosestTopNbr(blocks, startTime, endTime)
         
         expect(topNbr).toBe(null)
     })
-    test("Bottomost", () => {
+    test("bottomost", () => {
         const { startTime, endTime } = blocks[blocks.length - 1]
         const bottomNbr = manager.findBlockClosestBottomNbr(blocks, startTime, endTime)
         

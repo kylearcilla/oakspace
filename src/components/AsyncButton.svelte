@@ -4,6 +4,7 @@
 
     export let title = "Save"
     export let isLoading: boolean
+    export let disabled: boolean
     export let actionFunc: AsyncFunc
     export let styling: StylingOptions | undefined = undefined
 
@@ -21,7 +22,7 @@
     class:async-btn--loading={isLoading}
     class:async-btn--light={isLight}
     style={inlineStyling(styling)}
-    disabled={isLoading}
+    disabled={isLoading || disabled}
     on:click={_actionFunc}
 >
     {#if isLoading}

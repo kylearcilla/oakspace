@@ -1,6 +1,6 @@
 import { get, writable, type Writable } from "svelte/store"
 import { TOTAL_DAY_MINS } from "./utils-date"
-import { EMPTY_CORES, ViewOption } from "./utils-routines"
+import { EMPTY_CORES } from "./utils-routines"
 
 import { 
     COLOR_SWATCHES, findAncestor, getDistBetweenTwoPoints, getElemById, 
@@ -44,6 +44,7 @@ export class RoutinesManager {
     dragStartPoint:      OffsetPoint = { left: -1, top: -1 }
     allowLiftEdit     = false
     allowStrechEdit   = false
+    isLiftOnLinkedSibling = false
     
     // edit gesture context
     isDragLiftFromHead: boolean | null = null
@@ -53,9 +54,10 @@ export class RoutinesManager {
     // DOM stuff    
     containerElem: HTMLElement | null = null
     blocksContainerRef: HTMLElement | null = null
-    containerElemHt      = 1200
+    containerElemHt        = 1200
     cursorPos: OffsetPoint = { left: 0, top: 0 }
     cursorPosFromWindow: OffsetPoint = { left: 0, top: 0 }
+    allowAutoScroll = true
 
     earliestBlockHeadPos = TOTAL_DAY_MINS
     scrollInterval: any = null
@@ -66,12 +68,19 @@ export class RoutinesManager {
 
     // top offset comes from the offseted hoz lines to be vertically center aligned with the hours
     static MIN_BLOCK_DURATION_MINS = 15
-    static STRETCH__DRAG_DISTANCE_THRESHOLD = 5
+    static STRETCH_DRAG_DISTANCE_THRESHOLD = 5
     static NEW_STRETCH_DRAG_DIST_THRESHOLD = 12.5
+    static LIFT_DRAG_DIST_THRESHOLD = 5
+    static BLOCK_EDGE_THRESHOLD = 4
 
     // constants
     static MAX_TITLE = 200
     static MAX_DESCRIPTION = 300
+
+    static MAX_BLOCK_TITLE = 200
+    static MAX_BLOCK_DESCRIPTION = 300
+
+    static MAX_ACTION_ITEMS = 25
 
     /**
      * Initialize references to parent containers. Called after mounted.
@@ -91,15 +100,17 @@ export class RoutinesManager {
      * @param blocks        Daily routiune blocks. Could be a linked Daily Routine object or just an array of routine blocks.
      * @returns             Given a routine's blocks, get the core and tag breakdowns, block elems, and earliest block.
      */
-    processRoutineBlocks(routines: RoutineBlock[] | DailyRoutine) {
+    processRoutineBlocks(routine: RoutineBlock[] | DailyRoutine) {
         let coreBreakdown = structuredClone(EMPTY_CORES)
         let tagBreakdown: RoutineTags[] = []
         let blockElems = []
         
-        let blocks: RoutineBlock[] = "id" in routines ? routines.blocks : routines
+        let blocks: RoutineBlock[] = "id" in routine ? routine.blocks : routine
         let earliestBlock = Infinity
         let tagMap = new Map<string, RoutineTags>()
         let firstBlock, lastBlock
+
+        blocks.sort((a, b) => a.startTime - b.startTime)
 
         // process each block
         for (let i = 0; i < blocks.length; i++) {
@@ -119,10 +130,8 @@ export class RoutinesManager {
         }
 
         // get the sleeping and awake data
-        coreBreakdown = this.initSleepAwakeData(coreBreakdown, firstBlock, lastBlock)
+        coreBreakdown = this.initSleepAwakeData(coreBreakdown, blocks)
         tagBreakdown  = [...tagMap.values()].sort((a, b) => b.data.totalTime - a.data.totalTime)
-
-        blockElems.sort((a, b) => a.startTime - b.startTime)
 
         return { coreBreakdown, earliestBlock, blockElems, tagBreakdown }
     }
@@ -192,7 +201,7 @@ export class RoutinesManager {
      * @param blocks  Array of routine blocks whose tags need to be processed.
      * @returns       Tag brakdown data.
      */
-    getBlockTagBreakdown(blocks: RoutineBlock[]): RoutineTags[] {
+    getRoutineTagBreakdown(blocks: RoutineBlock[]): RoutineTags[] {
         const tagMap = new Map<string, RoutineTags>()
 
         for (let i = 0; i < blocks.length; i++) {
@@ -231,29 +240,35 @@ export class RoutinesManager {
      * @param blocks  Blocks of a routine.
      * @returns       Core breakdown data
      */
-    getBlockCoreBreakdown(blocks: RoutineBlock[]): RoutineCores {
+    getRoutineCoreBreakdown(blocks: RoutineBlock[]): RoutineCores {
         const cores      = structuredClone(EMPTY_CORES)
 
-        const firstBlock = blocks.find((block) => block.orderContext === "first")
-        const lastBlock = blocks.find((block) => block.orderContext === "last")
-        const doGetSleepAwake = firstBlock && lastBlock && firstBlock.endTime < lastBlock.startTime
+        const firstBlock      = blocks.find((block) => block.order === "first")
+        const lastBlock       = blocks.find((block) => block.order === "last")
+        const doGetSleepAwake = this.doGetSleepAwakeData(blocks)
 
         for (let block of blocks) {
             this.tallyBlockForCoreBreakdown(block, cores)
         }
 
         if (doGetSleepAwake) {
-            const firstAwakeMin  = firstBlock.startTime
-            const asleepAtMin  = lastBlock.endTime
+            const firstAwakeMin  = firstBlock!.startTime
+            const asleepAtMin  = lastBlock!.endTime
 
-            cores.sleeping.totalTime += firstAwakeMin + (TOTAL_DAY_MINS - asleepAtMin)
-            cores.awake.totalTime    =  TOTAL_DAY_MINS - cores.sleeping.totalTime
+            cores.sleeping.totalTime += firstAwakeMin + (TOTAL_DAY_MINS - asleepAtMin) - 1
+            cores.sleeping.avgTime   += firstAwakeMin + (TOTAL_DAY_MINS - asleepAtMin) - 1
+
+            cores.awake.totalTime =  TOTAL_DAY_MINS - cores.sleeping.totalTime
+            cores.awake.avgTime   =  TOTAL_DAY_MINS - cores.sleeping.totalTime
         }
         else {
             cores.sleeping.totalTime = -1
-            cores.awake.totalTime    = -1
             cores.sleeping.avgTime   = -1
-            cores.awake.avgTime      = -1
+            cores.sleeping.total     = -1
+
+            cores.awake.totalTime = -1
+            cores.awake.avgTime   = -1
+            cores.awake.total     = -1
         }
 
         return cores
@@ -268,8 +283,8 @@ export class RoutinesManager {
         const dayRoutine = get(this.editDayRoutine)!
         let blocks = "id" in dayRoutine ? dayRoutine.blocks : dayRoutine
  
-        this.coreBreakdown.set(this.getBlockCoreBreakdown(blocks))
-        this.tagBreakdown.set(this.getBlockTagBreakdown(blocks))
+        this.coreBreakdown.set(this.getRoutineCoreBreakdown(blocks))
+        this.tagBreakdown.set(this.getRoutineTagBreakdown(blocks))
     }
     
     /**
@@ -284,33 +299,16 @@ export class RoutinesManager {
             this.addNewBlockToEditRoutine(editBlock)
         }
         else if (edit === "delete") {
-            this.editDayRoutineElems.update((blocks) => (
-                blocks!.filter((block) => block.id !== editBlock.id)
-            ))
+            this.removeBlockFromEditRoutine(editBlock.id)
         }
         else {
             const { height, yOffset } = this.getEditBlockSafeProps(editBlock.startTime, editBlock.endTime)!
             editBlock.height = height
             editBlock.yOffset = yOffset
 
-            this.editDayRoutineElems.update((_blocks) => {
-                let blocks           = _blocks!
-                let editBlockIdx     = blocks.findIndex((block) => block.id === editBlock.id)!!
-                let _editBlock        = blocks[editBlockIdx]
-                let prevOrderContext = editBlock.orderContext
-
-                _editBlock = { ..._editBlock, ...editBlock }
-                blocks[editBlockIdx] = editBlock
-
-                if (prevOrderContext != "first" && _editBlock.orderContext === "first") {
-                    blocks = blocks.map((block) => block.id != _editBlock.id && block.orderContext === "first" ? { ...block, orderContext: null } : block)
-                }
-                else if (prevOrderContext != "last" && _editBlock.orderContext === "last") {
-                    blocks = blocks.map((block) => block.id != _editBlock.id && block.orderContext === "last" ? { ...block, orderContext: null } : block)
-                }
-
-                return blocks
-            })
+            // remove old edit block and completely replace with new one
+            this.removeBlockFromEditRoutine(editBlock.id)
+            this.addNewBlockToEditRoutine(editBlock)
         }
 
         const rawBlocks = get(this.editDayRoutineElems)!.map((block) => {
@@ -329,6 +327,10 @@ export class RoutinesManager {
         })
     }
 
+    removeBlockFromEditRoutine(id: string) {
+        this.editDayRoutineElems.update((blocks) =>blocks!.filter((block) => block.id !== id))
+    }
+
     /* Routine Edits */
 
     openEditBlockModal() {
@@ -336,23 +338,13 @@ export class RoutinesManager {
     }
 
     onConcludeModalEdit(updatedBlock: RoutineBlockElem | null) {
-        const wasMakingNewBlock = Boolean(this.isMakingNewBlock && updatedBlock)
-
         this.editingBlock.set(null)
         this.editContext.set(null)
         this.editingBlockRef = null
         this.isMakingNewBlock = false
 
-        if (wasMakingNewBlock) {
-            this.updateRoutineAfterBlockUpdate(updatedBlock!, "new-stretch")
-            return
-        }        
-        if (!updatedBlock) {
-            return
-        }
-
+        if (!updatedBlock) return
         this.updateRoutineAfterBlockUpdate(updatedBlock, "details")
-
     }
 
     /**
@@ -361,6 +353,20 @@ export class RoutinesManager {
      */
     addNewBlockToEditRoutine(newBlockElem: RoutineBlockElem) {
         let blocks = get(this.editDayRoutineElems)!
+
+        // must only be one first and last block each
+        const newOrderContext = newBlockElem.order
+
+        if (newOrderContext === "first") {
+            const oldFirstIdx = blocks.findIndex((block) => block.order === "first")
+
+            if (oldFirstIdx >= 0) blocks[oldFirstIdx].order = null
+        }
+        else if (newOrderContext === "last") {
+            const oldLastIdx = blocks.findIndex((block) => block.order === "last")
+
+            if (oldLastIdx >= 0) blocks[oldLastIdx].order = null
+        }
 
         blocks.push(newBlockElem)
         blocks.sort((a, b) => a.startTime - b.startTime)
@@ -375,6 +381,8 @@ export class RoutinesManager {
         })
 
         this.editDayRoutineElems.set(blocks)
+
+        console.log(get(this.editDayRoutineElems))
     }
 
     /* Block Edits */
@@ -436,10 +444,10 @@ export class RoutinesManager {
         })
 
         const { top, bottom } = block!.getBoundingClientRect()
-        const edgeThreshold = 4
+        const edgeThreshold = RoutinesManager.BLOCK_EDGE_THRESHOLD
 
-        const isOnTopEdge    = event.clientY <= top + edgeThreshold
-        const isOnBottomEdge = event.clientY >= bottom - edgeThreshold
+        const isOnTopEdge    = event.clientY < top + edgeThreshold
+        const isOnBottomEdge = event.clientY > bottom - edgeThreshold
 
         return { isOnTopEdge, isOnBottomEdge }
     }
@@ -481,17 +489,13 @@ export class RoutinesManager {
         let dragTopOffset  = this.cursorPos.top - this.initDragLiftOffsets.top
         let dragLeftOffset = this.cursorPos.left - this.initDragLiftOffsets.left
         
-        let { time: startTime, yOffset } = this.getTimeAndOffsetFromTopPos(dragTopOffset)
-
-        const endTime = startTime + this.editingBlockTotalTime
+        let offsetData = this.getTimeAndOffsetFromTopPos(dragTopOffset)
         
-        // prevent end time out of bounds
-        if (endTime < TOTAL_DAY_MINS) {
-            editBlock = { ...editBlock, startTime, yOffset, endTime }
-        }
-        else {
-            yOffset = editBlock.yOffset
-        }
+        // normalize start / end times
+        const maxStartTime = TOTAL_DAY_MINS - this.editingBlockTotalTime - 1
+        let startTime      = Math.min(offsetData.time, maxStartTime)
+        let endTime        = startTime + this.editingBlockTotalTime
+        let yOffset        = this.getTopOffsetFromTime(startTime)
         
         // prevent x offset out of bounds
         let xOffset         = Math.max(dragLeftOffset, 0)
@@ -506,14 +510,16 @@ export class RoutinesManager {
                 xOffset = editBlock.xOffset
             }
         }
+
+        // prevent y from out of bounds
         
         this.scrollWhenNearContainerBounds()
 
         // update positioning and times of drop area and floating
         const safeProps = this.getPropsAfterLift({
-            startTime: editBlock.startTime, 
-            endTime: editBlock.endTime, 
-            blockTotalTime: editBlock.endTime - editBlock.startTime
+            startTime, 
+            endTime, 
+            blockTotalTime: endTime - startTime
         })
 
         return { safeProps, xOffset, yOffset }
@@ -542,7 +548,7 @@ export class RoutinesManager {
         
         let _endTime  = startTime + times.blockTotalTime
 
-        // if no availalbe space, startTIme will be @ 1440
+        // if no availalbe space, startTime will be @ 1440
         if (startTime === 1440) return null
 
         // find closest nbrs
@@ -574,7 +580,13 @@ export class RoutinesManager {
         newEndTime: number
     }) {
         const { editId, newStartTime, newEndTime, blocks } = context
-        const blockingBlock = this.getOverlappingBlock(blocks, newStartTime, newEndTime, editId)
+        const blockingBlock = this.getOverlappingBlock({
+            blocks, 
+            startTime: newStartTime, 
+            endTime: newEndTime, 
+            excludeId: editId, 
+            excludeDayCompare: this.isLiftOnLinkedSibling
+        })
 
         // Check for overlapping intervals
         if (!blockingBlock) {
@@ -592,22 +604,25 @@ export class RoutinesManager {
      * @param isEditingExisting  Is user stretch-editing a new block!
      */
     initDragStretchEdit(block: RoutineBlockElem, isEditingExisting = false) {
-        // const isDraggingByTail = !this.isDragLiftFromHead
-        const isDraggingByTail = this.cursorPos.top > this.dragStartPoint.top
-        const pivotTime        = isDraggingByTail ? block.startTime : block.endTime
-
-        this.stretchPivotPointTopOffset = this.getTopOffsetFromTime(pivotTime)
-        this.stretchPivotTime = pivotTime
+        let isDraggingByTail = false
 
         if (isEditingExisting) {
             this.editContext.set("old-stretch")
+
+            // set by block pointer down handler
+            isDraggingByTail = !this.isDragLiftFromHead
         }
         else {
             this.editContext.set("new-stretch")
+
+            // calculated from where user first touched the board to where user is now as a strech state is initialized
+            isDraggingByTail = this.cursorPos.top > this.dragStartPoint.top
         }
 
-        // the time where if the start / end passes (passed the pivot poimt) the start and end time switches
-        this.stretchPivotTime = isDraggingByTail ? block.startTime : block.endTime
+        const pivotTime = isDraggingByTail ? block.startTime : block.endTime
+
+        this.stretchPivotPointTopOffset = this.getTopOffsetFromTime(pivotTime)
+        this.stretchPivotTime = pivotTime
 
         // find closest nbrs
         this.editBlockTopNbr = this.findBlockClosestTopNbr(get(this.editDayRoutineElems)!, block.startTime, block.endTime)
@@ -633,7 +648,9 @@ export class RoutinesManager {
         const elapsedTime = endTime - startTime
         const blocks      = get(this.editDayRoutineElems)!
 
-        if (elapsedTime < RoutinesManager.MIN_BLOCK_DURATION_MINS || this.getOverlappingBlock(blocks, startTime, endTime)) {
+        if (elapsedTime < RoutinesManager.MIN_BLOCK_DURATION_MINS || this.getOverlappingBlock({
+            blocks, startTime, endTime
+        })) {
             return null
         }
 
@@ -646,7 +663,7 @@ export class RoutinesManager {
             endTime,
             height: 0, xOffset: 0, yOffset: this.getTopOffsetFromTime(startTime),
             description: "",
-            orderContext: null,
+            order: null,
             activity: null, tag: null,
             isDragging: true,
             tasks: []
@@ -703,6 +720,19 @@ export class RoutinesManager {
     onBlockStretchMove = (e: Event) => {
         e.preventDefault()
 
+        // only allow the edit if the user has moved he cursor far enough
+        if (!this.allowStrechEdit) { 
+            const threshold = RoutinesManager.STRETCH_DRAG_DISTANCE_THRESHOLD
+
+            if (this.isHozDragWithinStretchThreshold(threshold)) {
+                this.initDragStretchEdit(this.blockOnPointerDown! , true)
+                this.allowStrechEdit = true
+            }
+        }
+        if (!this.allowStrechEdit) {
+            return
+        }
+
         if (!this.editTargetElem) {
             this.editTargetElem = e.target as HTMLElement
             this.editTargetElem.style.cursor = "ns-resize"
@@ -714,10 +744,10 @@ export class RoutinesManager {
             stretchPivotTime:  this.stretchPivotTime,
             isDraggingByTail: !this.isDragLiftFromHead
         })
-
+        
         startTime = Math.max(roundUpFive(startTime), 0)
         endTime   = Math.max(roundUpFive(endTime), 0)
-
+        
         const { height, yOffset, endTime: _endTime, startTime: _startTime }  = this.getEditBlockSafeProps(startTime, endTime)
         endTime = _endTime
         startTime = _startTime
@@ -821,7 +851,7 @@ export class RoutinesManager {
     /* Edit Helpers */
 
     getTopOffsetFromTime(time: number) {
-        return Math.ceil((time / TOTAL_DAY_MINS) * this.containerElemHt)
+        return ((time / TOTAL_DAY_MINS) * this.containerElemHt)
     }
 
     /**
@@ -833,7 +863,10 @@ export class RoutinesManager {
     getTimeAndOffsetFromTopPos(topOffset: number, roundToFive = true) {
         const containerHt   = this.containerElemHt
         const topOffsetMins = (topOffset / containerHt) * TOTAL_DAY_MINS
-        const time          = roundToFive ? Math.max(roundUpFive(topOffsetMins), 0) : Math.floor(topOffsetMins)
+
+        let time = roundToFive ? Math.max(roundUpFive(topOffsetMins), 0) : Math.floor(topOffsetMins)
+        time     = Math.min(1439, time)
+
         const yOffset       = this.getTopOffsetFromTime(time)
 
         return { time, yOffset }
@@ -859,23 +892,21 @@ export class RoutinesManager {
             endTime   = bottomCollision ? this.editBlockBottomNbr!.startTime : endTime
         }
 
+        endTime = Math.min(1439, endTime)
+
         let yOffset = this.getTopOffsetFromTime(startTime)
 
-        // top position is the position of top nbr's bottom edge position
+        // top position is the position of top nbr's bottom edge positiond
         if (topCollision) {
             const topNbrTopOffset = this.editBlockTopNbr!.yOffset
             const topNbrHeight = this.editBlockTopNbr!.height
 
             yOffset = topNbrHeight + topNbrTopOffset
         }
-
-        endTime = Math.min(endTime, 1439)
         
-        // if less than min, then use the prev allowed time || don't make at all
         const elapsedTimeMins = endTime - startTime 
         const height  = Math.floor((elapsedTimeMins / TOTAL_DAY_MINS) * containerHt)
 
-        
         return { height, yOffset, endTime, startTime }
     }
 
@@ -957,9 +988,23 @@ export class RoutinesManager {
      * 
      * @returns          The overlapping block, null otherwise
      */
-    getOverlappingBlock(blocks: RoutineBlockElem[], startTime: number, endTime: number, id?: string) {
+    getOverlappingBlock(options: {
+        blocks: RoutineBlockElem[], 
+        startTime: number, 
+        endTime: number, 
+        excludeId?: string,
+        excludeDayCompare?: boolean
+    }) { 
+        const { blocks, startTime, endTime, excludeId, excludeDayCompare  = false }= options
+
         const overlappingInterval = blocks.find((block) => {
-            if (block.id === id) return false
+            // if lifting to a daily routine that has the same likned routine, the block can overlap itself
+            if (excludeDayCompare && excludeId && this.samePosSameRoutine(block.id, excludeId!)) {
+                return false
+            }
+            else if (block.id === excludeId) {
+                return false
+            }
 
             const { startTime: intStart, endTime: intEnd } = block
 
@@ -985,11 +1030,18 @@ export class RoutinesManager {
     /* Routine Helpers  */
 
     doesRoutineHaveSetFirstDay(routine: RoutineBlock[] | RoutineBlockElem[]) {
-        return routine.findIndex((routine) => routine.orderContext === "first")
+        return routine.findIndex((routine) => routine.order === "first")
     }
 
     doesRoutineHaveSetLastDay(routine: RoutineBlock[] | RoutineBlockElem[]) {
-        return routine.findIndex((routine) => routine.orderContext === "last")
+        return routine.findIndex((routine) => routine.order === "last")
+    }
+
+    doGetSleepAwakeData(blocks: RoutineBlock[]) {
+        const firstBlock = blocks.find((block) => block.order === "first")
+        const lastBlock = blocks.find((block) => block.order === "last")
+
+        return Boolean(firstBlock && lastBlock && firstBlock.endTime <= lastBlock.startTime)
     }
 
     /**
@@ -999,14 +1051,19 @@ export class RoutinesManager {
      * @param lastBlock   - Last block of a routine.
      * @returns           - Update core breakdown data with sleep and awake data.
      */
-    initSleepAwakeData(cores: RoutineCores, firstBlock?: RoutineBlock, lastBlock?: RoutineBlock) {
-        const doGetSleepAwake = firstBlock?.orderContext === "first" && lastBlock?.orderContext === "last"
-        if (doGetSleepAwake) {
+    initSleepAwakeData(cores: RoutineCores, blocks: RoutineBlock[]) {
+        if (this.doGetSleepAwakeData(blocks)) {
+            const firstBlock = blocks.find((block) => block.order === "first")
+            const lastBlock = blocks.find((block) => block.order === "last")
+
             const firstAwakeMin = firstBlock!.startTime
             const asleepAtMin   = lastBlock!.endTime
 
-            cores.sleeping.totalTime += firstAwakeMin + (TOTAL_DAY_MINS - asleepAtMin)
+            cores.sleeping.totalTime += firstAwakeMin + (TOTAL_DAY_MINS - asleepAtMin) - 1
             cores.awake.totalTime    =  TOTAL_DAY_MINS - cores.sleeping.totalTime
+
+            cores.awake.avgTime    =  cores.awake.totalTime
+            cores.sleeping.avgTime =  cores.sleeping.totalTime
         }
         else {
             cores.sleeping.totalTime = -1
@@ -1037,24 +1094,44 @@ export class RoutinesManager {
 
         let nearestStartTime = 1440
         let shortestDistanceToDesiredStart = Infinity
+
+        const isValidCandidate = (id: string, idx: number) => {
+            const isValid = blocks[idx].id != editId
+            const isSame  = this.isLiftOnLinkedSibling && this.samePosSameRoutine(id, editId)
+
+            return isValid && !isSame
+        }
+        const isValidNbrCandidate = (idx: number) => {
+            if (idx < 0) return false
+
+            const isValid = blocks[idx].id != editId
+            const isSame  = this.isLiftOnLinkedSibling && this.samePosSameRoutine(blocks[idx].id, editId)
+
+            if (isSame) {
+                return false
+            }
+            else {
+                return isValid
+            }
+        }
     
         // find the closest available space (either very top or bottom of any given interval)
         blocks.forEach((block, idx) => {
-            if (block.id === editId) return
+            if (!isValidCandidate(block.id, idx)) return
 
             const int = [block.startTime, block.endTime]
             const [intStart, intEnd] = int
 
             // prev interval
             const prevIdx     = idx - 1 >= 0 ? idx - 1 : -1
-            const isPrevValid = prevIdx >= 0 && blocks[prevIdx].id != editId
+            const isPrevValid = isValidNbrCandidate(prevIdx)
             let prevInterval  = isPrevValid ? [blocks[prevIdx].startTime, blocks[prevIdx].endTime] : null
 
             const prevIntervalEnd = prevInterval ? prevInterval[1] : 0
 
             // next interval
             const nextIdx     = idx + 1  < blocks.length ? idx + 1 : -1
-            const isNextValid = nextIdx >= 0 && blocks[nextIdx].id != editId 
+            const isNextValid = isValidNbrCandidate(nextIdx)
             let nextInterval  = isNextValid ? [blocks[nextIdx].startTime, blocks[nextIdx].endTime]  : null
 
             const nextIntervalStart = nextInterval ? nextInterval[0] : TOTAL_DAY_MINS
@@ -1071,7 +1148,7 @@ export class RoutinesManager {
 
             // find starting point in terms of current interval's top edge or bottom edge
             if (canFitTop) {
-                // interval start is the new end point for edit interval
+                // interval start - time length is the new end point for edit interval
                 topStartingPoint = intStart - timeLength 
             }
             if (canFitBottom) {
@@ -1079,7 +1156,7 @@ export class RoutinesManager {
                 bottomStartingPoint = intEnd 
             }
 
-            // get the time distance between the desired start time and calculated start time
+            // find if its shorter to move right above or below an overlapping block
             const movedUpDistance    = canFitTop ? Math.abs(topStartingPoint - newStartTime) : TOTAL_DAY_MINS        // dinstance when moved above interval
             const movedDownDistance  = canFitBottom ? Math.abs(bottomStartingPoint - newStartTime) : TOTAL_DAY_MINS  // dist when moved below interval
 
@@ -1090,13 +1167,22 @@ export class RoutinesManager {
             const _shortestDistanceToDesiredStart = shouldMoveUp ? movedUpDistance : movedDownDistance
             const _nearestStartTime               = shouldMoveUp ? topStartingPoint : bottomStartingPoint
 
+            
             if (_shortestDistanceToDesiredStart < shortestDistanceToDesiredStart) {
+                if (newStartTime === 865) {
+                }
                 nearestStartTime = _nearestStartTime
                 shortestDistanceToDesiredStart = _shortestDistanceToDesiredStart
             }
         })
 
         return nearestStartTime
+    }
+
+    samePosSameRoutine(xId: string, yId: string) {
+        if (xId.includes("--") && yId.includes("--")) {
+            return xId.split("--")[1] === yId.split("--")[1]
+        }
     }
 
     /* DOM Helpers */
@@ -1148,12 +1234,21 @@ export class RoutinesManager {
     * 
     * @returns  True if the drag distance is within the stretch edit threshold, otherwise false.
     */
-    isDragWithinStretchThreshold() {
+    isHozDragWithinStretchThreshold(threshold: number) {
         const dragDistance = Math.abs(this.cursorPos.top - this.dragStartPoint.top)
 
-        console.log({ dragDistance })
+        return dragDistance >= threshold
+    }
 
-        return dragDistance >= RoutinesManager.NEW_STRETCH_DRAG_DIST_THRESHOLD
+    /**
+    * Checks if the drag distance is within the threshold for a stretch edit.
+    * 
+    * @returns  True if the drag distance is within the stretch edit threshold, otherwise false.
+    */
+    isAbsDragWithinStretchThreshold(threshold: number) {
+        const dragDistance = getDistBetweenTwoPoints(this.cursorPos, this.dragStartPoint)
+
+        return dragDistance >= threshold
     }
 
     /**
@@ -1161,6 +1256,7 @@ export class RoutinesManager {
      * If far from the borders, avoid scrolling.
      */
     scrollWhenNearContainerBounds() {
+        if (!this.allowAutoScroll) return
         if (this.scrollInterval) return
         
         this.scrollInterval = setInterval(() => {
@@ -1195,5 +1291,9 @@ export class RoutinesManager {
      */
     getDragPivotPointTopOffset(height: number, cursorTop: number,  isDraggingByTail: boolean) {
         return isDraggingByTail ? cursorTop - height : cursorTop + height
+    }
+
+    toggleAutoScroll(allow: boolean) {
+        this.allowAutoScroll = allow
     }
 }

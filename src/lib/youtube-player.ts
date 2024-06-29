@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { ytPlayerStore } from "./store"
-import { PlayerError, APIError } from "./errors"
+import { APIError } from "./errors"
 import { getPlayListItemsDetails, getVidDetails, getYtIframeAPIError } from "./api-youtube"
 import { loadYtPlayerData, saveYtPlayerData, deleteYtPlayerData } from "./utils-youtube"
 import { APIErrorCode } from "./enums"
@@ -21,11 +21,12 @@ export class YoutubePlayer {
     error: any = null
     doShowPlayer = true
     hasActiveSession = false
-    hasActiveiFrameSession = false
+    justLoaded = false
+    state: number = -1
         
     iFramePlaylistId = ""
     IFRAME_CLASS = "home-yt-player"
-    LOOK_BACK_DELAY = 1000
+    LOOK_BACK_DELAY = 1400
     lookBackTimeOut: NodeJS.Timeout | null = null
 
     YT_PLAYER_OPTIONS: YoutubePlayerOptions = {
@@ -123,17 +124,17 @@ export class YoutubePlayer {
      * Sets playlist / video where user left off.
      */
     onYtPlayerReadyHandler = async () => {
-        this.hasActiveiFrameSession = true
-
+        this.justLoaded = true
         if (!this.playlist) return 
+
         try {
             this.player.cuePlaylist({ 
                 listType: "playlist",  list: this.playlist!.id,  
                 index: this.playlistVidIdx,  startSeconds: 0 
             })
         }
-        catch(e: any) {
-            this.onError(e)
+        catch {
+            this.onError(APIErrorCode.PLAYER)
         }
     }
 
@@ -153,21 +154,25 @@ export class YoutubePlayer {
      * @param  event  Event object passed by the iFrame API, stores enum state and player object.          
      */
     oniFrameStateChanged = async (event: any) => {
-        const player = event.target
-        const state = event.data
+        const player    = event.target
+        const state     = event.data
+        const videoData = player.getVideoData()
+
+        this.state = state
         this.iFramePlaylistId = event.target.getPlaylistId()
 
-        // edge case when first vid is not valid
-        this.disabledVidPlaypackHandler(state)
-        if (state === 5 && this.hasActiveiFrameSession) {
-            this.hasActiveiFrameSession = false
-        }
+        this.disabledVidPlaypackHandler(state, player.getPlaylistIndex())
 
         // do not update vid id unless necessary
-        const vidId  = player.getVideoData().video_id
+        const vidId          = videoData.video_id
         const doNotUpdateVid = state < 0 || state === 5 || !vidId || vidId === this.vid?.id
 
-        if (doNotUpdateVid) return
+        if (this.justLoaded && [3, 1].includes(state)) {
+            this.justLoaded = false
+        }
+        if (doNotUpdateVid) {
+            return
+        }
         if (this.error) {
             this.removeError()
         }
@@ -200,35 +205,48 @@ export class YoutubePlayer {
      * @param error   Error returned by Youtube Player API
      */
     onIframeError = (error: any) => {
-        console.error(error)
-        const errorCode = error.data
+        const { data, target } = error
+        const errorCode = data
 
-        if (errorCode === null) return
-        this.onError(getYtIframeAPIError(errorCode))
+        console.log( { errorCode })
+
+        if (errorCode === null || errorCode === undefined) return
+        this.onError(getYtIframeAPIError(errorCode, target))
     }
 
     /**
-     * Handles cases where user selects a playlist whose first vid's ability to be played in other sites has been disabled.
+     * Handles cases where user selects a playlist that cannot be played.
+     * Private or unlisted playlist. Or embed playback disabled. 
+     * Also for public but vid queued up is private / unlisted / embed playback disabled.
      * 
      * New Queued Playlist Queued Up State Sequences:
      * 
-     * Valid Video:         -1, 5, ... 3, 1
-     * Video with disabled: -1 5 
+     * Valid:    -1, 5, ... 3, 1
+     * Invalid:  -1 5 
      * 
-     * This method waits and checks if the state has progressed from 5. If so then it's a valid video.
-     * Also at state 5, the playlist array in the player will be empty. 
+     * Sees is the player is stuck at state 5. If so then player's media is invalid.
+     * 
      */
-    disabledVidPlaypackHandler = (state: number) => {
-        if (this.hasActiveiFrameSession || ![-1, 5].includes(state) || this.lookBackTimeOut) return
+    disabledVidPlaypackHandler = (state: number, playlistIdx: number) => {
+        const isCueLoading = [-1, 5].includes(state) 
+
+        // only call when a playlist / video is first being cueued
+        // the invalid pattern also occurs when the iframe is first loaded (after a refresh)
+        if (this.justLoaded || !isCueLoading || this.lookBackTimeOut) {
+            return
+        }
         
         this.lookBackTimeOut = setTimeout(() => {
-            this.lookBackTimeOut = null
-            const playerInfo = this.player.playerInfo
+            this.clearLookBackTimeout()
 
-            // player's playlist will still contain prev playlist after removeCurrentPlaylist() is triggered
-            if ([1, 3].includes(playerInfo.playerState) || playerInfo.playlist.length > 0) return 
+            // if playlist idx > 1 and error, let the onError handle that
+            if ([0, 1, 2, 3].includes(this.player.playerInfo.playerState) || playlistIdx > 0) {
+                return
+            } 
 
-            this.onError(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Playback on other websites has been disabled by playlist owner."))
+            let errorMessage = "Playlist couldn't be played due to privacy or embed playback restrictions."
+            this.onError(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, errorMessage))
+
         }, this.LOOK_BACK_DELAY)
     }
 
@@ -247,13 +265,37 @@ export class YoutubePlayer {
      */
     async playPlaylist(playlist: YoutubePlaylist, startingIdx: number = 0) {    
         if (this.error)           this.removeError()
-        if (this.lookBackTimeOut) clearTimeout(this.lookBackTimeOut)
-        
-        this.player.stopVideo()
-        this.player!.loadPlaylist({ list: playlist.id, listType: "playlist", index: startingIdx })
+        if (this.lookBackTimeOut) this.clearLookBackTimeout()
 
-        // allow state change handler to set playlist to disallow player from setting an invalid playlist
-        this.playlistClicked = playlist
+        try {
+            this.player.stopVideo()
+            this.player!.loadPlaylist({ list: playlist.id, listType: "playlist", index: startingIdx })
+    
+            // allow state change handler to set playlist to disallow player from setting an invalid playlist
+            this.playlistClicked = playlist
+
+            // if an invalid playlist is selected when suer just loaded, there won't be an iframe state update
+            await new Promise<void>((resolve, reject) => {
+                setTimeout(() => {
+                    if (this.state < 0 && this.justLoaded) {
+                        reject(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Playlist couldn't be played due to privacy or embed playback restrictions."))
+                    } 
+                    else {
+                        resolve()
+                    }
+                }, 200)
+            })
+        }
+        catch(e: any) {
+            if (e.code === APIErrorCode.PLAYER_MEDIA_INVALID) {
+                this.onError(e)
+            }
+            else {
+                this.onError(new APIError(APIErrorCode.PLAYER))
+
+            }
+        }
+        
     }
 
     /**
@@ -281,7 +323,12 @@ export class YoutubePlayer {
     }
 
     removeCurrentPlaylist() {
-        this.player.stopVideo()
+        try {
+            this.player.stopVideo()
+        }
+        catch {
+            this.onError(APIErrorCode.PLAYER)
+        }
 
         this.playlist = null
         this.vid = null
@@ -330,6 +377,13 @@ export class YoutubePlayer {
         this.doShowPlayer = !this.doShowPlayer
         this.player.stopVideo()
         this.updateYtPlayerState({ doShowPlayer: this.doShowPlayer })
+    }
+
+    clearLookBackTimeout() {
+        if (this.lookBackTimeOut) {
+            this.lookBackTimeOut = null
+            clearTimeout(this.lookBackTimeOut!)    
+        }
     }
 
     /**

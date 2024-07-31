@@ -371,7 +371,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
                 this.onError(error)
             }
             else {
-                this.onError(new APIError(APIErrorCode.GENERAL, `There was an loading your ${media.toLowerCase()} from your library. Please try again later.`))
+                this.onError(new APIError(APIErrorCode.GENERAL, `There was an error loading your ${media.toLowerCase()} from your library. Please try again later.`))
             }
             throw error
         }
@@ -400,7 +400,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
                 this.onError(error)
             }
             else {
-                this.onError(new APIError(APIErrorCode.GENERAL, `There was an refreshing ${this.currentUserMedia.toLowerCase()} from your library. Please try again later.`))
+                this.onError(new APIError(APIErrorCode.GENERAL, `There was an error refreshing ${this.currentUserMedia.toLowerCase()} from your library. Please try again later.`))
             }
             throw error
         }
@@ -429,7 +429,7 @@ export class AppleMusicUserData extends MusicUserData implements MusicUserDataSt
                 this.onError(error)
             }
             else {
-                this.onError(new APIError(APIErrorCode.GENERAL, `There was an loading more ${this.currentUserMedia.toLowerCase()} from your library. Please try again later.`))
+                this.onError(new APIError(APIErrorCode.GENERAL, `There was an error loading more ${this.currentUserMedia.toLowerCase()} from your library. Please try again later.`))
             }
             throw error
         }

@@ -18,7 +18,7 @@ export enum LogoIcon {
 }
 export enum Icon {
     Settings, Dropdown, Add, Close, ChevronLeft, ChevronRight, DragDots, Archive, Tune, Sun, Moon, Pin, Sublink,
-    ColorSun, ColorMoon
+    ColorSun, ColorMoon, MiniPlayer
 }
 export enum ModalType { 
     Settings, Youtube, Music, Stats, Journal, Appearance, Quote, NewSession, ActiveSession,

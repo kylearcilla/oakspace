@@ -7,11 +7,9 @@ import { deleteYtUserData, deleteYtCredentials, saveYtCredentials,
 import { APIErrorCode } from "./enums"
 
 /**
- * Used to initialize Youtube user data. 
+ * Manages a logged Youtube user's data. 
  * Leverages Firebase for Google Authentication for Youtube Log In.
  * Is itself a reactive class / data store (set during instantiation).
- * Stores and manages state for user-related data including tokens to fetch user data.
- * Errors are handled by functions calls to this instance.
  */
 export class YoutubeUserData {
     didUserSign = false
@@ -221,7 +219,7 @@ export class YoutubeUserData {
             await this.getUserPlaylists()
         }
         catch(error: any) {
-            if (error instanceof APIError && error.code === APIErrorCode.EXPIRED_TOKEN) {
+            if (error?.code === APIErrorCode.EXPIRED_TOKEN) {
                 this.setTokenHasExpired(true)
                 this.onError(error)
             }

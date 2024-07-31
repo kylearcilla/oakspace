@@ -7,33 +7,44 @@ import { APIErrorCode } from "./enums"
 import { youtubeAPIErrorHandler } from "./utils-youtube"
 
 /**
- * Youtube Player class for initializing a Youtube iFrame Player using YouTube Player API
+ * Used for managing a youtube player, leveraging the YouTube iFrame API
  * Is itself a store / reactive class (initialized in instantiation).
  * Offers methods to control player. Used to play playlists only.
- * Decoupled from Youtube Data. 
  */
 export class YoutubePlayer {
     player: any
+
     vid: YoutubeVideo | null = null
     playlist: YoutubePlaylist | null = null
     playlistClicked: YoutubePlaylist | null = null
     playlistVidIdx: number | null = null
-    error: any = null
-    doShowPlayer = true
-    hasActiveSession = false
-    justLoaded = false
-    state: number = -1
-        
+    
     iFramePlaylistId = ""
-    IFRAME_CLASS = "home-yt-player"
-    LOOK_BACK_DELAY = 1400
+
+    floatLayout      = { width: -1, height: -1, left: -1, top: -1 }
+    doShowPlayer     = true
+    hasActiveSession = false
+    justLoaded       = false
+    isReady          = false
+    
+    error: any = null
+    state      = -1
+        
+    IFRAME_CLASS    = "yt-player"
+    LOOK_BACK_DELAY = 1200
+    READY_DELAY     = 2000
     lookBackTimeOut: NodeJS.Timeout | null = null
 
-    YT_PLAYER_OPTIONS: YoutubePlayerOptions = {
+    YT_PLAYER_OPTIONS: any = {
         height: "100%", width: "100%",
         playerVars: {
-            rel: 0, volume: 50,
-            autoplay: 1, modestbranding: 1,
+            rel: 0, 
+            volume: 50,
+            autoplay: 1,
+            // controls: 0,
+            showinfo: 0,
+            disablekb: 1,
+            modestbranding: 1
         },
         events: {
             onReady: null, onStateChange: null, onError: null
@@ -64,7 +75,6 @@ export class YoutubePlayer {
             if (!this.hasActiveSession) {
                 this.quit()
             }
-
             throw error
         }
     }
@@ -72,7 +82,7 @@ export class YoutubePlayer {
     /**
      * Initialize iFrame Player API asynchrnously
      */
-    async initIframePlayerAPI() {
+    initIframePlayerAPI = async () => {
         this.setYoutubeScript()
         await this.waitForPlayerReadyAndSetPlayerInstance()
     }
@@ -85,24 +95,25 @@ export class YoutubePlayer {
         tag.src = 'https://www.youtube.com/iframe_api'
 
         const ytScriptTag = document.getElementsByTagName('script')[0]
-        ytScriptTag.id = "ytScriptTag"
         ytScriptTag!.parentNode!.insertBefore(tag, ytScriptTag)
     }
 
     /**
-     * Initializes a new YouTube iframe player instance.
-     * Waits for YoutubeAPI on iFrame API to fire the event then initializes a player.
-     * Resolves the promise afterwards
-     * 
-     * @throws   Error that occured when initializing Youtube iFrame API
+     * Initializes a new YouTube iframe player instance on API ready
      */
-    waitForPlayerReadyAndSetPlayerInstance(): Promise<void> {
-        // @ts-ignore
-        return new Promise<void>((resolve) => window.onYouTubeIframeAPIReady = () => {
-            // @ts-ignore
-            this.player = new YT.Player(this.IFRAME_CLASS, this.YT_PLAYER_OPTIONS)
+    waitForPlayerReadyAndSetPlayerInstance() {
+        return new Promise<void>((resolve) => (window as any).onYouTubeIframeAPIReady = () => {
+            this.initIFramePlayer()
             resolve()
         })
+    }
+
+    /**
+     * Initializes a new iFrame player instance.
+     */
+    initIFramePlayer() {
+        // @ts-ignore
+        this.player = new YT.Player(this.IFRAME_CLASS, this.YT_PLAYER_OPTIONS)
     }
     
 
@@ -111,10 +122,7 @@ export class YoutubePlayer {
      * @param newData  Incorporate new data from here.
      */
     updateYtPlayerState(newData: Partial<YoutubePlayer>) {
-        ytPlayerStore.update((data: YoutubePlayer | null) => { 
-           return this.getNewStateObj(newData, data!)
-        })
-
+        ytPlayerStore.update((data) => (this.getNewStateObj(newData, data!)))
         this.saveStateData()
     }
 
@@ -125,7 +133,11 @@ export class YoutubePlayer {
      */
     onYtPlayerReadyHandler = async () => {
         this.justLoaded = true
-        if (!this.playlist) return 
+        setTimeout(() => this.isReady = true, this.READY_DELAY)
+
+        if (!this.playlist) {
+            return
+        } 
 
         try {
             this.player.cuePlaylist({ 
@@ -149,7 +161,7 @@ export class YoutubePlayer {
      *  1 (playing)
      *  2 (paused)
      *  3 (buffering)
-     *  5 (video cued).
+     *  5 (video cued)
      * 
      * @param  event  Event object passed by the iFrame API, stores enum state and player object.          
      */
@@ -157,7 +169,7 @@ export class YoutubePlayer {
         const player    = event.target
         const state     = event.data
         const videoData = player.getVideoData()
-
+        
         this.state = state
         this.iFramePlaylistId = event.target.getPlaylistId()
 
@@ -208,9 +220,7 @@ export class YoutubePlayer {
         const { data, target } = error
         const errorCode = data
 
-        console.log( { errorCode })
-
-        if (errorCode === null || errorCode === undefined) return
+        if (errorCode === null || errorCode === undefined || !this.isReady) return
         this.onError(getYtIframeAPIError(errorCode, target))
     }
 
@@ -228,8 +238,8 @@ export class YoutubePlayer {
      * 
      */
     disabledVidPlaypackHandler = (state: number, playlistIdx: number) => {
-        const isCueLoading = [-1, 5].includes(state) 
-
+        const isCueLoading = [-1, 5].includes(state)
+        
         // only call when a playlist / video is first being cueued
         // the invalid pattern also occurs when the iframe is first loaded (after a refresh)
         if (this.justLoaded || !isCueLoading || this.lookBackTimeOut) {
@@ -244,9 +254,10 @@ export class YoutubePlayer {
                 return
             } 
 
+            console.log(this.state)
+
             let errorMessage = "Playlist couldn't be played due to privacy or embed playback restrictions."
             this.onError(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, errorMessage))
-
         }, this.LOOK_BACK_DELAY)
     }
 
@@ -263,11 +274,14 @@ export class YoutubePlayer {
     /**
      * Triggers when user wants to play a new playlist.
      */
-    async playPlaylist(playlist: YoutubePlaylist, startingIdx: number = 0) {    
+    async playPlaylist(playlist: YoutubePlaylist, startingIdx = 0) {    
         if (this.error)           this.removeError()
         if (this.lookBackTimeOut) this.clearLookBackTimeout()
+        if (this.state === 3 )    return   // if a prev loaded vid was buffering do not cue a new playlist
 
         try {
+
+
             this.player.stopVideo()
             this.player!.loadPlaylist({ list: playlist.id, listType: "playlist", index: startingIdx })
     
@@ -292,10 +306,8 @@ export class YoutubePlayer {
             }
             else {
                 this.onError(new APIError(APIErrorCode.PLAYER))
-
             }
         }
-        
     }
 
     /**
@@ -338,8 +350,7 @@ export class YoutubePlayer {
     }
 
     /**
-     * Update error.
-     * 
+     * Update error. Will show error to user if necessary.
      * @param error 
      */
     onError(error: any) {
@@ -354,18 +365,21 @@ export class YoutubePlayer {
     quit() {
         ytPlayerStore.set(null)
         this.clearYoutubeUserData()
+
         this.player.stopVideo()
 
         // @ts-ignore
         window.onYouTubeIframeAPIReady = null
     }
 
-    /**
-     * Remove current error.
-     */
     removeError() {
         this.error = null
         this.updateYtPlayerState({ error: null })
+    }
+
+    updateFloatPosition(floatLayout: BoxLayout) {
+        this.floatLayout = structuredClone(floatLayout)
+        this.updateYtPlayerState({ floatLayout: this.floatLayout })
     }
 
     /**
@@ -381,8 +395,8 @@ export class YoutubePlayer {
 
     clearLookBackTimeout() {
         if (this.lookBackTimeOut) {
+            clearTimeout(this.lookBackTimeOut)
             this.lookBackTimeOut = null
-            clearTimeout(this.lookBackTimeOut!)    
         }
     }
 
@@ -400,6 +414,7 @@ export class YoutubePlayer {
         if (newState.playlist != undefined)        newStateObj.playlist = newState.playlist
         if (newState.playlistVidIdx != undefined)  newStateObj.playlistVidIdx = newState.playlistVidIdx
         if (newState.doShowPlayer != undefined)    newStateObj.doShowPlayer = newState.doShowPlayer
+        if (newState.floatLayout != undefined)     newStateObj.floatLayout = newState.floatLayout
 
         return newStateObj
     }
@@ -423,6 +438,7 @@ export class YoutubePlayer {
             vid:            player.vid!,
             playlist:       player.playlist!,
             playlistVidIdx: player.playlistVidIdx!,
+            floatLayout:    player.floatLayout!,
             doShowPlayer:   player.doShowPlayer
         })
     }

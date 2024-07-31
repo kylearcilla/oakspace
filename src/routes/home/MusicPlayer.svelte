@@ -1,30 +1,39 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte'
-	import { musicPlayerStore, themeState, globalContext, musicDataStore, musicPlayerManager } from '$lib/store'
+	import { musicPlayerStore, musicDataStore, musicPlayerManager } from '$lib/store'
 
 	import Logo from '../../components/Logo.svelte'
 	import { msToHHMMSS } from '$lib/utils-date'
 	import { MusicPlayerManager } from '$lib/music-player-manager'
 
     import { MusicPlatform, PlaybackGesture } from "$lib/enums"
-	import type { MusicPlayer } from '$lib/music-player';
-
-    let manager: MusicPlayerManager | null = null
+	import type { MusicPlayer } from '$lib/music-player'
+	import { INPUT_RANGE_BG_COLOR } from '$lib/utils-music-player'
 
     const LOGO_WIDTH = 19
     const BORDER_RADIUS = 100
+
+    let manager: MusicPlayerManager | null = null
+    let musicPlayerRef: HTMLElement
+    
+    let timeTipWidth  = 0
+    let timeTipLeft   = 0
+    let progressMs    = 0
+    let durationMs    = 0
     
     $: playerStore     = $musicPlayerStore
     $: mediaItem       = $musicPlayerStore?.mediaItem
     $: mediaCollection = $musicPlayerStore?.mediaCollection! as MediaCollection
     $: hasItemChanged  = $musicPlayerStore?.hasItemUpdated ?? false
+    $: isSeeking       = $musicPlayerManager?.isSeeking
     $: isDisabled      = $musicPlayerStore?.isDisabled ?? false
     $: isOnCooldown    = $musicPlayerManager?.onCooldown ?? false
-    
     $: musicPlatform   = $musicDataStore?.musicPlatform
 
-    let progressMs = 0
-    let durationMs = -1
+    $: {
+        onPlaybackUpdate($musicPlayerStore)
+        onMediaItemUpdate($musicPlayerStore)
+    }
 
     // reactive statements with progresMS does not work
     musicPlayerManager.subscribe((data: MusicPlayerManagerState | null) => {
@@ -33,11 +42,6 @@
         progressMs = data!.progressMs
         durationMs = data!.durationMs
     })
-
-    $: {
-        onPlaybackUpdate($musicPlayerStore)
-        onMediaItemUpdate($musicPlayerStore)
-    }
 
     function onPlaybackUpdate (store: MusicPlayer | null) {
         if (!manager || !store) return
@@ -62,115 +66,101 @@
 </script>
 
 
-<svelte:window on:keyup={manager?.handleKeyUp} on:keydown={manager?.handleKeyDown} />
+<svelte:window 
+    on:keyup={manager?.handleKeyUp} 
+    on:keydown={manager?.handleKeyDown} 
+/>
 
-<div class={`music-player ${$globalContext.isLeftNarrowBarOpen ? "music-player--left-bar-open" : ""} ${playerStore?.doShowPlayer ? "" : "music-player--hidden"} ${!$themeState.isDarkTheme ? "music-player--solid-bg" : ""}`}>
-    <div class="music-player__wrapper">
-    <img class="img-bg" src={mediaItem?.artworkImgSrc} alt="track-artwork"/>
-    <div class="blur-bg"></div>
-    <div class="content-bg">
-        <!-- svelte-ignore a11y-missing-attribute -->
-        {#if mediaItem}
-            <div class="music-player-track" title={`${mediaItem.name} – ${mediaItem.author}`}>
-                <img class="music-player-track__art" src={mediaItem.artworkImgSrc} alt="">
-                <div class="music-player-track__details">
-                    <div class={`music-player-track__title-container ${$musicPlayerManager?.trackTitleElAnimationObj ? "music-player-track__title-container--masked" : ""}`}>
-                        <h5 class="music-player-track__title"  id="track-title">
-                            {mediaItem.name ?? ""}
-                        </h5>
-                    </div>
-                    <div class={`music-player-track__artist-container ${$musicPlayerManager?.trackArtistElAnimationObj ? "music-player-track__artist-container--masked" : ""}`}>
-                        <span 
-                            class={`music-player-track__artist ${!$themeState.isDarkTheme ? "caption-2--light-theme" : ""}`} id="track-artist"
+<div 
+    class="mp"
+    class:mp--hidden={!playerStore?.doShowPlayer}
+    class:mp--volume-hidden={musicPlatform === MusicPlatform.Spotify}
+    style:--INPUT_RANGE_BG_COLOR={INPUT_RANGE_BG_COLOR}
+    bind:this={musicPlayerRef}
+>
+    <div class="mp__wrapper">
+        <img class="img-bg" src={mediaItem?.artworkImgSrc} alt="track-artwork"/>
+        <div class="blur-bg"></div>
+        <div class="content-bg">
+            {#if mediaItem}
+                <div class="mp-track" title={`${mediaItem.name} – ${mediaItem.author}`}>
+                    <div class="mp-track__img-container">
+                        <img 
+                            class="mp-track__art" 
+                            src={mediaItem.artworkImgSrc} 
+                            alt="media"
                         >
-                            {mediaItem.author ?? mediaCollection?.description ?? ""}
-                        </span>
+                    </div>
+                    <div class="mp-track__details">
+                        <div 
+                            class="mp-track__title-container"
+                            class:mp-track__title-container--masked={$musicPlayerManager?.trackTitleElAnimationObj}
+                        >
+                            <div class="mp-track__title"  id="track-title">
+                                {mediaItem.name ?? ""}
+                            </div>
+                        </div>
+                        <div 
+                            class="mp-track__artist-container"
+                            class:mp-track__artist-container--masked={$musicPlayerManager?.trackArtistElAnimationObj}
+                        >
+                            <div class="mp-track__artist" id="track-artist">
+                                {mediaItem.author ?? mediaCollection?.description ?? ""}
+                            </div>
+                        </div>
                     </div>
                 </div>
+            {/if}
+            <div class="mp-controls">
+                <button 
+                    class="mp-controls__shuffle-btn"
+                    class:mp-controls__shuffle-btn--isShuffled={playerStore?.isShuffled}
+                    disabled={isDisabled || isOnCooldown}
+                    on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SHUFFLE)} 
+                >
+                        <i class="fa-solid fa-shuffle"></i>
+                </button>
+                <button 
+                    class="mp-controls__prev-btn"
+                    class:mp-controls__prev-btn--active={$musicPlayerManager?.isPrevBtnActive}
+                    disabled={isDisabled || isOnCooldown}
+                    on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SKIP_PREV)} 
+                >
+                        <i class="fa-solid fa-backward"></i>
+                </button>
+                <button 
+                    class="mp-controls__playback-btn"
+                    class:mp-controls__playback-btn--active={$musicPlayerManager?.isPausePlayBtnActive}
+                    disabled={isDisabled || isOnCooldown}
+                    on:click={() => manager?.onPlaybackGesture(PlaybackGesture.PLAY_PAUSE)} 
+                >
+                        <i class={`${playerStore?.isPlaying ? "fa-solid fa-pause" : "fa-solid fa-play"}`}></i>
+                </button>
+                <button 
+                    class="mp-controls__next-btn"
+                    class:mp-controls__next-btn--active={$musicPlayerManager?.isNextBtnActive}
+                    disabled={isDisabled || isOnCooldown}
+                    on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SKIP_NEXT)} 
+                >
+                        <i class="fa-solid fa-forward"></i>
+                </button>
+                <button 
+                    class="mp-controls__repeat-btn"
+                    class:mp-controls__repeat-btn--isRepeating={playerStore?.isRepeating}
+                    disabled={isDisabled || isOnCooldown}
+                    on:click={() => manager?.onPlaybackGesture(PlaybackGesture.LOOP)} 
+                >
+                        <i class="fa-solid fa-repeat"></i>
+                </button>
             </div>
-        {/if}
-        <div class="music-player-controls">
-            <button 
-                on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SHUFFLE)} 
-                class={`music-player-controls__shuffle-btn ${playerStore?.isShuffled ? "music-player-controls__shuffle-btn--isShuffled" : ""}`} 
-                disabled={isDisabled || isOnCooldown}
-            >
-                    <i class="fa-solid fa-shuffle"></i>
-            </button>
-            <button 
-                on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SKIP_PREV)} 
-                class={`music-player-controls__prev-btn ${$musicPlayerManager?.isPrevBtnActive ? "music-player-controls__prev-btn--active" : ""}`} 
-                disabled={isDisabled || isOnCooldown}
-            >
-                    <i class="fa-solid fa-backward"></i>
-            </button>
-            <button 
-                on:click={() => manager?.onPlaybackGesture(PlaybackGesture.PLAY_PAUSE)} 
-                class={`music-player-controls__playback-btn ${$musicPlayerManager?.isPausePlayBtnActive ? "music-player-controls__playback-btn--active" : ""}`}
-                disabled={isDisabled || isOnCooldown}
-                >
-                    <i class={`${playerStore?.isPlaying ? "fa-solid fa-pause" : "fa-solid fa-play"}`}></i>
-            </button>
-            <button 
-                on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SKIP_NEXT)} 
-                class={`music-player-controls__next-btn ${$musicPlayerManager?.isNextBtnActive ? "music-player-controls__next-btn--active" : ""}`} 
-                disabled={isDisabled || isOnCooldown}
-                >
-                    <i class="fa-solid fa-forward"></i>
-            </button>
-            <button 
-                on:click={() => manager?.onPlaybackGesture(PlaybackGesture.LOOP)} 
-                class={`music-player-controls__repeat-btn ${playerStore?.isRepeating ? "music-player-controls__repeat-btn--isRepeating" : ""}`} 
-                disabled={isDisabled || isOnCooldown}
-                >
-                    <i class="fa-solid fa-repeat"></i>
-            </button>
-        </div>
-        <div class="music-player-progress-bar-wrapper">
-            <div class="music-player-progress-bar-wrapper__playback-bar">
-                {#if musicPlatform === MusicPlatform.AppleMusic}
-                    <apple-music-progress 
-                        style="width: 100%; font-size: 20px; margin-top: 12px; padding: 0px 18px 0px 10px;" 
-                        theme="dark"
-                    >
-                    </apple-music-progress>
-                {:else }
-                    <div class="music-player-progress-bar-wrapper__time music-playback__time--elapsed">
-                        {#if progressMs >= 0}
-                            {msToHHMMSS(progressMs)}
-                        {:else}
-                            --:--
-                        {/if}
-                    </div>
-                    <input
-                        class="input-range"
-                        id="playback-input"
-                        on:input={() => manager?.trackProgressOnInput()}
-                        on:change={() => manager?.trackProgressOnChange()}
-                        on:mousedown={() => manager?.onInputMouseDown()}
-                        on:mouseup={(e) => manager?.onInputMouseUp(e)}
-                        value="0" type="range"
-                        min="0" max="100" step="0.1"
-                        disabled={hasItemChanged}
-                    />
-                    <div class="music-player-progress-bar-wrapper__time music-playback__time--total">
-                        {#if durationMs >= 0}
-                            {msToHHMMSS(durationMs)}
-                        {:else}
-                            --:--
-                        {/if}
-                    </div>
-                {/if}
-            </div>
-        </div>
-        <div class="music-player-right-container">
             <div 
-                class={`music-player-volume ${musicPlatform === MusicPlatform.Spotify ? "music-player-volume--disabled" : ""}`}
-                title={`${musicPlatform === MusicPlatform.Spotify ? "Volume is unavailable for Spotify iFrame API." : ""}`}
+                class="mp-volume-container"
+                class:mp-volume-container--disabled={musicPlatform === MusicPlatform.Spotify}
             >
-                {#if musicPlatform === MusicPlatform.AppleMusic}
-                    <apple-music-volume style="width: 100%;" theme="dark"></apple-music-volume>
-                {:else}
+                <div 
+                    class={`mp-volume ${musicPlatform === MusicPlatform.Spotify ? "mp-volume--disabled" : ""}`}
+                    title={`${musicPlatform === MusicPlatform.Spotify ? "Volume is unavailable for Spotify iFrame API." : ""}`}
+                >
                     <button class="icon"><i class="fa-solid fa-volume-high"></i></button>
                     <input
                         class="input-range input-range--show-thumb"
@@ -180,20 +170,40 @@
                         step="0.1"
                         disabled={isDisabled}
                     />
-                {/if}
-            </div>
-            <div class="music-player-context-container">
-                {#if manager && manager.icon != null}
-                    <Logo  
-                        logo={manager.icon} 
-                        options={{ 
-                            containerWidth: `${LOGO_WIDTH}px`, borderRadius: `${BORDER_RADIUS}px`, ...manager.iconOptions 
-                        }}
-                    />
-                {/if}
+                </div>
             </div>
         </div>
     </div>
+    <div class="mp-progress">
+        <div class="mp-progress__playback-bar">
+            <input
+                class="input-range"
+                id="playback-input"
+                on:input={() => manager?.trackProgressOnInput()}
+                on:change={() => manager?.trackProgressOnChange()}
+                on:mousedown={() => manager?.onInputMouseDown()}
+                on:mouseup={(e) => manager?.onInputMouseUp(e)}
+                value="0" type="range"
+                min="0" max="100" step="0.1"
+                disabled={hasItemChanged}
+            />
+            {#if durationMs > 0 && progressMs >= 0}            
+                <div 
+                    class="mp-progress__time-tip"
+                    style:left={`calc(${(progressMs / durationMs) * 100}% - ${timeTipWidth / 2}px + -2px)`}
+                    class:visible={isSeeking}
+                    bind:clientWidth={timeTipWidth}
+                >
+                    <div class="mp-progress__time">
+                        {msToHHMMSS(progressMs)}
+                    </div>
+                    <div class="divider"></div>
+                    <div class="mp-progress__time" style:opacity={0.5}>
+                        {msToHHMMSS(durationMs)}
+                    </div>
+                </div>
+            {/if}
+        </div>
     </div>
 </div>
 
@@ -201,26 +211,18 @@
     @import "../../scss/blurred-bg.scss";
     @import "../../scss/brands.scss";
 
-    $media-container-width: 22%;
-    $conrols-width: 22%;
-    $volume-width: 10%;
-    $icon-width: 10%;
-
-    .music-player {
-        min-width: 470px;
-        height: 53px;
-        width: 90%;
-        max-width: 1100px;
+    .mp {
+        width: 540px;
+        height: 50px;
         transition: 0.16s ease-in-out;
         align-items: center;
         display: flex;
         z-index: 200001;
-        border-radius: 20px;
-        overflow: hidden;
-        border: 1px solid rgba(70, 70, 70, 0.3);
+        overflow: visible;
         position: fixed;
         left: 50%;
-        bottom: 7px;
+        bottom: 10px;
+        overflow: visible;
         transform: translate(-50%, 0%);
         
         &--left-bar-open {
@@ -246,18 +248,22 @@
                 display: none;
             }
         }
+        &--volume-hidden &-track {
+            width: 160px;
+        }
         &__wrapper {
+            border: 1.5px solid rgba(white, 0.06);
             width: 100%;
             height: 100%;
             position: relative;
-            border-radius: 15px;
             overflow: hidden;
-        }
+            border-radius: 12px 13px 14px 12px;
 
+        }
         .img-bg {
             width: 99.8%; // avoid background img from peeking over the blurred bg
             height: 90%;
-            border-radius: 20px;
+            border-radius: 9px;
         }
         .blur-bg {
             width: 100%;
@@ -265,19 +271,18 @@
             background: rgba(30, 30, 30, 0.4);
             backdrop-filter: blur(100px);
             -webkit-backdrop-filter: blur(100px);
-            border-radius: 15px;
+            border-radius: 5px;
         }
         .content-bg {
             display: flex;
-            padding: 10px 10px 12px 15px;
-            border-radius: 15px;
+            border-radius: 4px;
         }
     }
     /* Left Section */
-    .music-player-track {
+    .mp-track {
         height: 100%;
         overflow: hidden;
-        width: $media-container-width;
+        width: 140px;
         @include flex(center, _);
 
         &__details {
@@ -292,21 +297,22 @@
             &-container {
                 height: 20px;
             }
-            @include abs-top-left(5px, 0px);
+            @include abs-top-left(5px);
+            @include text-style(_, 500, 1.1rem);
             white-space: nowrap;
             width: auto;
-            font-size: 1.1rem;
             padding: 0px 10px;
         }
         &__artist {
             &-container {
                 height: 15px;
             }
+            @include abs-bottom-left(-1px);
+            @include text-style(_, 500, 0.95rem);
             padding: 0px 10px;
-            @include abs-bottom-left(1px, 0px);
             white-space: nowrap;
             width: auto;
-            font-size: 0.95rem;
+            opacity: 0.3;
         }
         &__title-container, &__artist-container {
             &--masked {
@@ -314,19 +320,23 @@
                 mask-image: linear-gradient(90deg, transparent 2%, black 9%, black 80%, transparent 100%);
             }
         }
+        &__img-container {
+            aspect-ratio: calc(1 / 1);
+            height: 37px;
+            margin-left: 5px;
+        }
         &__art {
-            width: 30px;
-            aspect-ratio: 1 / 1;
+            border-radius: 7px;
+            width: 100%;
+            height: 100%;
         }
     }
     /* Music Controls */
-    .music-player-controls {
-        width: $conrols-width;
-        min-width: 150px;
-        max-width: 180px;
-        margin: 0px 15px 0px 15px;
-
+    .mp-controls {
+        flex: 1;
+        padding: 0px 35px 0px 35px;
         @include flex(center, space-around);
+
         button {
             transition: 0s ease-in-out;
         }
@@ -375,26 +385,14 @@
         }
         &__repeat-btn {
             position: relative;
-            &--isRepeating {
-                &::after {
-                    content: "";
-                    position: absolute;
-                    bottom: -5px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    @include circle(2px);
-                    background-color: white;
-                }
-            }
-        }
-        @include sm(max-width) {
-            justify-content: space-evenly;
-            min-width: 130px;
-            margin: 0px 0px;
-
-            &__playback-btn {
-                padding: 5px;
-                @include circle(10px);
+            &--isRepeating::after {
+                content: "";
+                position: absolute;
+                bottom: -5px;
+                left: 50%;
+                transform: translateX(-50%);
+                @include circle(2px);
+                background-color: white;
             }
         }
     }
@@ -403,8 +401,9 @@
     $progress-bar-padding: 12px;
 
     /* Playback Bar */
-    .music-player-progress-bar-wrapper {
-        @include flex(center, center);
+    .mp-progress {
+        @include abs-top-left(-0.5px, 9px);
+        width: calc(100% - 20px);
         flex: 1;
 
         &__playback-bar {
@@ -412,19 +411,31 @@
             display: flex;
             align-items: center;
             min-width: 100px;
-            height: 23px;
             position: relative;
-
-            input {
-                width: calc(100% - ($time-width * 2) - ($progress-bar-padding * 2));
-                margin: 0px $progress-bar-padding;
+        }
+        &__playback-bar input {    
+            transition: ease-in-out 0.15s;
+            height: 2px;
+            background-color: var(--INPUT_RANGE_BG_COLOR);
+            opacity: 0.1;
+            
+            &:hover {
+                opacity: 1;
+                height: 3px;
+                top: -3px;
+            }
+            &:hover::-moz-range-thumb {
+                @include circle(7px);
+            }
+            &:hover::-webkit-slider-thumb {
+                @include circle(7px);
             }
         }
         &__time {
-            width: $time-width;
             white-space: nowrap;
             @include center;
-            @include text-style(0.88, 500, 1.1rem, "DM Sans");
+            @include text-style(0.9, 400, 1.1rem, "DM Sans");
+            border-radius: 10px;
 
             &:first-child {
                 justify-content: flex-end;
@@ -433,23 +444,39 @@
                 justify-content: flex-start;
             }
         }
-
-        @include sm(max-width) {
-            width: 55%;
+        &__time-tip {
+            @include flex(center);
+            @include abs-top-left(-30px, 0px);
+            @include not-visible;
+            background: var(--bg-3);
+            transition: opacity 0.1s ease-in-out,
+                        visibility 0.1s ease-in-out;
+            border-radius: 20px;
+            border: 1px solid rgba(white, 0.02);
+            height: 23px;
+            padding: 4px 8.5px;
+        }
+        &__time-tip .divider {
+            @include divider(_, 70%, 1px);
+            background-color: rgba(white, 0.09);
+            margin: 0px 7px;
         }
     }
     /* Right Section */
-    .music-player-right-container {
-        @include flex(center, flex-end);
+    .mp-volume-container {
+        @include flex(center);
+        padding: 0px 25px 0px 8px;
+        width: 120px;
 
-        @include sm(max-width) {
-            width: 30px;
+        &--disabled {
+            width: 90px;
+            justify-content: flex-end;
+            padding-right: 15px;
         }
     }
-    .music-player-volume {
+    .mp-volume {
         @include flex(center, center);
         position: relative;
-        margin-right: 5px;
 
         &--disabled {
             margin: 0px 0px 0px 5px;
@@ -466,7 +493,6 @@
             i {
                 font-size: 1.15rem;
             }
-
         }
         &--disabled .input-range {
             display: none;
@@ -486,12 +512,9 @@
                 @include circle(7px);
             }
         }
-
-        @include sm(max-width) {
-            display: none;
-        }
     }
-    .music-player-context-container {
+    .mp-context-container {
+        display: none !important;
         height: 40px;
         @include flex(center, center);
         border-radius: 15px;
@@ -499,8 +522,20 @@
         transition: 0.15 ease-in-out;
         width: 35px;
     }
-    .music-player-platform-logo {
-        border-radius: 100%;
-        margin-left: 11px;
+
+    @media (max-width: 660px) {
+        .mp {
+            width: 400px;
+        }
+        .mp-track {
+            width: 120px;
+        }
+        .mp-controls {
+            padding: 0px 12px 0px 12px;
+        }
+        .mp-right-container {
+            width: 100px;
+            padding: 0px 15px 0px 8px;
+        }
     }
 </style>

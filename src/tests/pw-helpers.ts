@@ -1,4 +1,3 @@
-export type Position = "top-left" | "top" | "top-right" | "bottom-left" | "middle" | "right" | "left" | "bottom-right" | "bottom"
 export type Offset   = { x: number, y: number }
 export type DragPosition = Position | { x: number | Position, y: number | Position } 
 export type DragPoint = { 

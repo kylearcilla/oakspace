@@ -1,21 +1,21 @@
 <script lang="ts">
+	import { onDestroy, onMount } from "svelte"
+
     import { Icon, ModalType } from "$lib/enums"
+	import { getColorTrio } from "$lib/utils-general"
+	import { getDayIdxMinutes } from "$lib/utils-date"
 	import { openModal, toggleActiveRoutine } from "$lib/utils-home"
 	import { themeState, ytPlayerStore, sessionStore, weekRoutine } from "$lib/store"
-
+	import { initTodayRoutine, initCurrentBlock, getMextTimeCheckPointInfo, getUpcomingBlock } from "$lib/utils-routines"
+    
+	import ActiveRoutine from "./ActiveRoutine.svelte"
+	import SvgIcon from "../../components/SVGIcon.svelte"
 	import SessionHeaderView from "./SessionHeaderView.svelte"
-	import { onDestroy, onMount } from "svelte"
-	import SvgIcon from "../../components/SVGIcon.svelte";
-	import { getColorTrio } from "$lib/utils-general";
-	import { initTodayRoutine, initCurrentBlock, getMextTimeCheckPointInfo, getUpcomingBlock } from "$lib/utils-routines";
-	import { getDayIdxMinutes } from "$lib/utils-date";
-	import ActiveRoutine from "./ActiveRoutine.svelte";
 
     const NO_SESS_MD_MAX_WIDTH = 270
     const MD_MAX_WIDTH = 800
     const SM_MAX_WIDTH = 550
 
-    let dropdownMenu: HTMLElement
     let headerWidth = 0
     let minuteInterval: NodeJS.Timeout | null = null
     let currTime = getDayIdxMinutes()
@@ -71,18 +71,6 @@
     }
 
     /* Event Handlers */
-    function handleDropdownOption(idx: number) {
-        if (idx === 0) {
-            openModal(ModalType.Quote)
-        }
-        else if (idx === 1) {
-            openModal(ModalType.Shortcuts)
-        }
-        else {
-            console.log("LOGGING OUT USER")
-        }
-        dropdownMenu.style.display = "none"
-    }
     function handleResize() {
         if (!$ytPlayerStore?.doShowPlayer) return
 
@@ -150,8 +138,7 @@
     {/if}
 
     <!-- New Session Button -->
-    <div class="header__right-section header__section">
-        <!-- New Session -->
+    <div class="header__session header__section">
         <button 
             title="Create new session"
             class="header__new-session-btn"
@@ -170,7 +157,6 @@
         </div>
         <!-- Total Session Time -->
         <div class="header__session-time" title="Total session time for today.">
-            <i class="fa-regular fa-clock"></i>
             <span>1h 46m</span>
         </div>
     </div>
@@ -189,48 +175,13 @@
         position: relative;
         @include flex(center, space-between);
         
-        &--light &__ctrl-btns {
-            margin-right: 11px;
-            i {
-                color: rgba(var(--fgColor1), 1) !important;
-            }
+        &--light &__session-time span {
+            @include text-style(_, 400, 1.18rem);
+            font-weight: 400;
+            opacity: 1;
         }
-        &--light &__ctrl-btn {
-            margin-right: 13px;
-
-            i {
-                font-size: 1.3rem;
-            }
-        }
-        &--light &__session-time {
-            i {
-                opacity: 1;
-            }
-            span {
-                font-weight: 400;
-                @include text-style(_, 400, 1.18rem);
-                opacity: 1;
-            }
-        }
-        &--non-default &__ctrl-btn i {
-            color: var(--headerIconColor) !important;
-        }
-        &--non-default &__ctrl-btn--inactive i {
-            opacity: 0.5;
-
-            &:hover {
-                opacity: 1;
-            }
-        }
-        &--md .header-session-container {
-            width: 74%;
-        }
-        &--sm &__right-section {
+        &--sm &__session {
             display: none;
-        }
-        &--sm .header-session-container {
-            width: 80%;
-            margin-left: 14px;
         }
 
         &__section {
@@ -240,11 +191,11 @@
         /* Now Block */
         &__now-block {
             @include flex(center);
-            height: 10px;
-            background-color: rgba(var(--block-color-1), 0.08);
-            padding: 8.5px 10px 9px 13px;
+            height: 27.5px;
             border-radius: 12px;
-            margin-top: -3px;
+            margin: -3px 0px 0px -5px;
+            background-color: rgba(var(--block-color-1), 0.08);
+            padding: 0px 10px 0px 13px;
             
             &:disabled {
                 opacity: 0.5;
@@ -271,7 +222,6 @@
                 color: rgba(var(--textColor1), 0.3);
             }
             &--md  {
-                padding: 8.5px 10px 9px 11px;
                 border-radius: 14px;
             }
             &--md &-title, &--sm &-title {
@@ -317,6 +267,14 @@
         }
 
         /* New Session Button */
+        &__session {
+            @include flex(center);
+            border-radius: 12px;
+            margin-top: -3px;
+            height: 27.5px;
+            padding: 0px 12px 0px 10px;
+            @include txt-color(0.055, "bg");
+        }
         &__new-session-btn {
             @include center;
             @include circle(16px);
@@ -327,32 +285,19 @@
                 transition: 0.1s ease-in-out;
                 opacity: 0.9;
             }
+            &:active {
+                transform: scale(0.9);
+            }
         }
         &__new-session-btn-divider {
-            @include divider(0.2, 9px, 1px);
-            margin: 0px 11px;
+            @include divider(0.14, 9px, 1px);
+            margin: 0px 9px 0px 10px;
         }
-
         /* Session Time */
         &__session-time {
             @include flex(center);
+            @include text-style(0.7, 400, 1.15rem, "DM Mono");
             white-space: nowrap;
-            i {
-                opacity: 0.38;
-                font-size: 1.02rem;
-            }
-            span {
-                @include text-style(0.4, 400, 1.15rem, "DM Sans");
-                font-family: "DM Sans";
-                margin-left: 7px;
-            }
         }
-    }
-
-    /* Active Session Component  */
-    .header-session-container {
-        align-items: center;
-        z-index: 999;
-        width: 70%;
     }
 </style>

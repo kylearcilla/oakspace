@@ -17,16 +17,15 @@ import { WEEKLY_ROUTINES } from '../tests/routines/routines.data'
 
 /* App UI State */
 export const globalContext = writable<GlobalContext>({
-    isLeftNarrowBarOpen: true,
-    isRightBarOpen: true,
-    isLeftBarFloating: true,
+    leftBarOpen: true,
+    rightBarOpen: true,
     isVideoViewOpen: false,
     isMusicPlayerOpen: false,
-    isLeftWideMenuOpen: true,
+    hasToaster: false,
+    minModeSrc: null,
     doOpenActiveRoutine: false,
     shortcutsFocus: ShortcutSectionInFocus.MAIN,
-    minModeSrc: null,
-    hasToaster: false,
+    mediaPlayer: null,
     modalsOpen: [],
     lastKeysPressed: {
         shiftKey: false,

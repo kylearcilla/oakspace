@@ -1310,32 +1310,62 @@ export function extractQuadCSSValue(val: CSSMultiDimPxVal | undefined) {
  * @returns Left and top offset where the menu should end postioned.
  */
 export function initFloatElemPos(context: {
-  dims: BoxSize, cursorPos: OffsetPoint, containerDims: BoxSize, clientOffset?: OffsetPoint
+  dims: BoxSize, 
+  cursorPos: OffsetPoint, 
+  containerDims: BoxSize, 
+  clientOffset?: OffsetPoint,
+  margins?: { ns: number, ew: number },
 }) {
   
-  const { dims, cursorPos, containerDims, clientOffset } = context
+  const { 
+    dims, 
+    cursorPos, 
+    containerDims, 
+    clientOffset, 
+    margins = { ns: 0, ew: 0 }
+  } = context
+
   const { width: menuWidth, height: menuHeight } = dims
   const { width: containerWidth, height: containerHeight } = containerDims
 
   const clientOffsetLeft = clientOffset?.left ?? 0
-  const clientOffsetTop = clientOffset?.top ?? 0
+  const clientOffsetTop = clientOffset?.top ?? 0 
 
   let left = cursorPos.left - clientOffsetLeft
   let top = cursorPos.top - clientOffsetTop
 
-  const containerRightEdge  = containerWidth
-  const containerBottomEdge = containerHeight
+  const marginOffset = {
+    left:   margins.ew,
+    top:    margins.ns,
+    bottom: margins.ns,
+    right:  margins.ew
+  }
+  const containerEdges = {
+    top:    marginOffset.top,
+    left:   marginOffset.left,
+    right:  containerWidth - marginOffset.right,
+    bottom: containerHeight  - marginOffset.bottom
+  }
+  const elemPos = {
+    right:  menuWidth + left,
+    bottom: menuHeight + top,
+    top,
+    left
+  }
 
-  const dropdownRightEdge  = menuWidth + left
-  const dropdownBottomEdge = menuHeight + top
-
-  if (dropdownRightEdge >= containerRightEdge) {
-      const xOffset = dropdownRightEdge - containerRightEdge
+  if (elemPos.left < containerEdges.left) {
+      left = containerEdges.left
+  }
+  if (elemPos.top < containerEdges.top) {
+      top = containerEdges.top
+  }
+  if (elemPos.right >= containerEdges.right) {
+      const xOffset = elemPos.right - containerEdges.right
       left -= xOffset
   }
-  if (dropdownBottomEdge >= containerBottomEdge) {
-      const yOffset = dropdownBottomEdge - containerBottomEdge
-      top -= yOffset + 10
+  if (elemPos.bottom >= containerEdges.bottom) {
+      const yOffset = elemPos.bottom - containerEdges.bottom
+      top -= yOffset
   }
 
   left = Math.max(left, 0)
@@ -1417,4 +1447,9 @@ export function formatPlural(str: string, count: number) {
   const noun = count === 1 ? str : `${str}s`
 
   return `${count} ${noun}`
+}
+
+export function containsHtmlTags(str: string) {
+  const regex = /<\/?[^>]+(>|$)/;
+  return regex.test(str)
 }

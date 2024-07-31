@@ -12,6 +12,7 @@ html {
 a {
     text-decoration: none;
     display: inline-block;
+    color: rgba(var(--textColor1), 0.8);
 
     &:hover {
         text-decoration: underline;
@@ -750,7 +751,7 @@ $bento-box-padding: 8px;
     }
     &__copy {
         font-weight: 500;
-        color: rgb(var(--textColor1), 0.6);
+        color: rgb(var(--textColor1), 0.5);
     }
 }
 
@@ -900,6 +901,10 @@ $settings-modal-padding: 20px 25px 25px 25px;
 
 .hidden {
     display: none;
+}
+.visible {
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 @mixin not-visible {

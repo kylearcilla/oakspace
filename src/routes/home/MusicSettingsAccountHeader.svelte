@@ -7,6 +7,7 @@
 	import { onMount } from "svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte";
 	import BounceFade from "../../components/BounceFade.svelte";
+	import DropdownList from "../../components/DropdownList.svelte";
 
     export let onBtnClick: (platform: MusicPlatform) => void
     
@@ -49,7 +50,7 @@
 >
     <div class="active-account-header__btn-container">
         <button 
-            id="music-platforms--dropdown-btn"
+            id="music-logout--dropdown-btn"
             class="active-account-header__btn dropdown-btn" 
             class:active-account-header__btn--active={isPlatformListOpen} 
             on:click={() => isPlatformListOpen = !isPlatformListOpen}
@@ -96,111 +97,30 @@
             </div>
         </div>
     {/if}
-    <!-- Music Platform Dropdown List -->
-
-    <BounceFade
-        zIndex={100}
-        isHidden={!isPlatformListOpen}
-    >
-        <ul 
-            id="music-platforms--dropdown-menu"
-            class={`platform-list dropdown-menu
-                        ${$themeState.isDarkTheme ? "" : "platform-list--light"}
-                        ${musicStore && isPlatformListOpen ? "" : "dropdown-menu--hidden"}
-                `} 
-            use:clickOutside on:click_outside={() => isPlatformListOpen = false}
-            
-        >
-            <li class="platform-list__item">
-                <div class="flx">
-                    <div class="platform-list__item-logo">
-                        <Logo 
-                            logo={LogoIcon.Soundcloud} 
-                            options={{ containerWidth: "20px", borderRadius: "9px", iconWidth: "65%" }} 
-                        />
-                    </div>
-                    <div class="platform-list__item-text">
-                        <div class="platform-list__item-name">Soundcloud</div>
-                        <div class="platform-list__item-content">Playlists</div>
-                    </div>
-                </div>
-                <button 
-                    class={`platform-list__item-btn ${platform === MusicPlatform.Soundcloud ? "platform-list__item-btn--selected" : ""}`}
-                    on:click={() => onBtnClick(MusicPlatform.Soundcloud)}
-                >
-                    {platform === MusicPlatform.Soundcloud ? "Disconnect" : "Connect"}
-                </button>
-            </li>
-            <li class="platform-list__item">
-                <div class="flx">
-                    <div class="platform-list__item-logo">
-                        <Logo 
-                            logo={LogoIcon.YoutubeMusic} 
-                            options={{ containerWidth: "20px", borderRadius: "7px", iconWidth: "66%" }} 
-                        />
-                    </div>
-                    <div class="platform-list__item-text">
-                        <div class="platform-list__item-name">Youtube Music</div>
-                        <div class="platform-list__item-content">Playlists, Live Videos</div>
-                    </div>
-                </div>
-                <button 
-                    class={`platform-list__item-btn ${platform === MusicPlatform.YoutubeMusic ? "platform-list__item-btn--selected" : ""}`}
-                    on:click={() => onBtnClick(MusicPlatform.YoutubeMusic)}
-                >
-                    {platform === MusicPlatform.YoutubeMusic ? "Disconnect" : "Connect"}
-                </button>
-            </li>
-            <li class="platform-list__item">
-                <div class="flx">
-                    <div class="platform-list__item-logo">
-                        <Logo 
-                            logo={LogoIcon.AppleMusic} 
-                            options={{ containerWidth: "20px", borderRadius: "10px", iconWidth: "50%" }} 
-                        />
-                    </div>
-                    <div class="platform-list__item-text">
-                        <div class="platform-list__item-name">Apple Music</div>
-                        <div class="platform-list__item-content">Playlists, Live Radio</div>
-                    </div>
-                </div>
-                <button 
-                    class={`platform-list__item-btn ${platform === MusicPlatform.AppleMusic ? "platform-list__item-btn--selected" : ""}`}
-                    on:click={() => onBtnClick(MusicPlatform.AppleMusic)}
-                >
-                    {#if platform === MusicPlatform.AppleMusic && hasTokenExpired}
-                        Reconnect
-                    {:else}
-                        {platform === MusicPlatform.AppleMusic ? "Disconnect" : "Connect"}
-                    {/if}
-                </button>
-            </li>
-            <li class="platform-list__item">
-                <div class="flx">
-                    <div class="platform-list__item-logo">
-                        <Logo 
-                            logo={LogoIcon.Spotify} 
-                            options={{ containerWidth: "19px", borderRadius: "7px", iconWidth: "90%" }} 
-                        />
-                    </div>
-                    <div class="platform-list__item-text">
-                        <div class="platform-list__item-name">Spotify</div>
-                        <div class="platform-list__item-content">Playlists, Podcasts</div>
-                    </div>
-                </div>
-                <button 
-                    class={`platform-list__item-btn ${platform === MusicPlatform.Spotify ? "platform-list__item-btn--selected" : ""}`}
-                    on:click={() => onBtnClick(MusicPlatform.Spotify)}
-                >
-                    {#if platform === MusicPlatform.Spotify && hasTokenExpired}
-                        Reconnect
-                    {:else}
-                        {platform === MusicPlatform.Spotify ? "Disconnect" : "Connect"}
-                    {/if}
-                </button>
-            </li>
-        </ul>
-    </BounceFade>
+    <!-- Logout -->
+    <DropdownList 
+        id="music-logout"
+        isHidden={!isPlatformListOpen} 
+        options={{
+            listItems: [{ name: "Log out" }],
+            position: { 
+                top: "45px",
+                right: platform === MusicPlatform.AppleMusic ? "25px" : "90px"
+            },
+            styling:  { 
+                width: "140px",
+                zIndex: 100
+            },
+            onListItemClicked: () => {
+                if (platform || platform === 0) {
+                    onBtnClick(platform)
+                }
+            },
+            onClickOutside: () => {
+                isPlatformListOpen = false
+            }
+        }}
+    />
 </div>
 
 <style lang="scss">
@@ -226,6 +146,7 @@
         
         &__btn-container {
             @include flex(center);
+
             &:hover .active-account-header__btn-divider {
                 @include not-visible;
             }
@@ -248,7 +169,7 @@
             }
             span {
                 margin: 0px 5.5px 0px 8px;
-                @include text-style(0.7, 400, 1.1rem);
+                @include text-style(0.7, 500, 1.1rem);
             }
         }
         &__btn-arrow {
@@ -259,7 +180,7 @@
             opacity: 0.2;
         }
         &__btn-divider {
-            width: 0.5px;
+            width: 1px;
             height: 10px;
             background-color: rgba(var(--textColor1), 0.14);
             margin: 0px 9px 0px 0px;
@@ -271,7 +192,7 @@
         }
         &__user-name {
             margin: -1px 9px 0px 0px;
-            @include text-style(0.85, 300, 1.14rem)
+            @include text-style(0.85, 500, 1.14rem)
         }
         &__user-profile-pic img {
             @include circle(16px);
@@ -280,74 +201,6 @@
         .fa-chevron-down {
             font-size: 0.9rem;
             color: rgb(var(--textColor1));
-        }
-    }
-    
-    .platform-list {
-        z-index: 10000;
-        width: 250px;
-        @include abs-top-right(20px, 25px);
-        padding: 11px 15px 15px 8px;
-        border-radius: 18px;
-
-        &--light &__item-btn {
-            font-weight: 600 !important;
-            font-size: 1rem !important;
-        }
-        &--light &__item-text {
-            h5 {
-                font-weight: 600;
-                font-size: 1.05rem;
-            }
-            span {
-                color: rgba(var(--textColor1), 0.5);
-                font-weight: 500;
-            }
-            button {
-                font-weight: 600 !important;
-            }
-        }
-
-        &__item {
-            @include flex(center, space-between);
-            margin-bottom: 14px;
-
-            &:last-child {
-                margin-bottom: 0px;
-            }
-            &--logged-out {
-                margin-bottom: 18px;
-            }
-        }
-        &__item-logo {
-            @include flex(center, center);
-            width: 30px;
-            height: 30px;
-        }
-        &__item-text {
-            margin: -2px 0px 0px 7px;
-        }
-        &__item-name {
-            @include text-style(1, 400, 1.2rem);
-            margin-bottom: 2.5px;
-        }
-        &__item-content {
-            @include text-style(0.4, 300, 1.1rem, "DM Sans");
-        }
-        &__item-btn {
-            padding: 7px 0px 7px 10px;
-            transition: 0.1s ease-in-out;
-            float: right;
-            width: 60px;
-            @include text-style(0.6, 400, 1.1rem, "DM Sans");
-            @include center;
-
-            &:hover {
-                opacity: 0.4;
-            }
-            &:active {
-                transform: scale(0.95);
-            }
         }
     }
 </style>

@@ -5,7 +5,7 @@
     import { closeModal } from "$lib/utils-home"
     import { musicCategories } from "$lib/data-music-collections"
     import { addSpacesToCamelCaseStr, clickOutside } from "$lib/utils-general"
-	import {  musicLogin, LIBRARY_COLLECTION_LIMIT } from "$lib/utils-music"
+	import { musicLogin, LIBRARY_COLLECTION_LIMIT } from "$lib/utils-music"
 
 	import { getMediaContext, getMediaItemInfo, getMediaLength, getMediaDescription, getMediaTypeStr } from "$lib/utils-music-settings"
     
@@ -16,6 +16,7 @@
     
     import { ModalType, MusicPlatform, MusicMoodCategory, UserLibraryMedia, Icon, MusicMediaType, LibError } from "$lib/enums"
 	import { MusicSettingsManager } from "$lib/music-settings-manager";
+	import DropdownList from "../../components/DropdownList.svelte";
 
     $: isLight = !$themeState.isDarkTheme
 
@@ -36,11 +37,10 @@
     $: isScrollableLeft      = $musicSettingsManager?.isScrollableLeft
     $: isScrollableRight     = $musicSettingsManager?.isScrollableRight
     
-    $: libListGradient        = $musicSettingsManager?.libListGradient
     $: categoriesListGradient = $musicSettingsManager?.categoriesListGradient
 
-    $: {
-        if (isSignedIn) onMusicInit(platform)
+    $: if (isSignedIn) {
+        onMusicInit(platform)
     }
 
     let hasCollectionItemsLoaded = true
@@ -64,35 +64,53 @@
         requestAnimationFrame(() => {
             manager!.fetchHTMLElements()
             manager!.handleCategoriesScroll()
-            manager!.handleLibListScroll()
         })
     }
 
+    /* Library Dropdown */
+    function onDailyRoutinesListOptClicked(e: Event) {
+        const target = e.target as HTMLElement
+        const optnText = target.innerText.trim()
+
+        if (optnText === "Refresh Playlists") {
+            manager?.refreshCurrentLibraryMedia() 
+            isLibraryDropdownOpen = false
+        }
+    }
+
     /* Event Listeners */
-    function onLibOptionClicked(lib: UserLibraryMedia) {
+    function onLibOptionClicked(idx: number) {
+        if (!manager) return
+
         closeLibDropdowns()
-        manager!.updateLibraryMedia(lib)
+        manager!.updateLibraryMedia(manager.libOptions[idx])
+    }
+    function openLibMediaOptions(e: Event) {
+        const target = e.target as HTMLElement
+        const optnText = target.innerText.trim()
+
+        if (optnText.startsWith("Refresh")) {
+            manager!.refreshCurrentLibraryMedia()
+        }
+
+        closeLibDropdowns()
     }
     function closeLibDropdowns() {
         isLibraryDropdownOpen = false
         isLibraryOptionsDropdownOpen = false
     }
-    function onMousLeavePlaylistOption(event: MouseEvent) {
-        const toTarget = (event as any).toElement as HTMLElement
-        const classes = toTarget.classList.value
-
-        if (!classes.includes("library-options-dropdown")) {
-            isLibraryOptionsDropdownOpen = false
-        }
+    function onLibDropdownPointerLeave() {
+        isLibraryOptionsDropdownOpen = false
     }
 
-    onMount(() => {
-        initMusicManager()
-    })
+    onMount(initMusicManager)
 </script>
 
-{#if manager}
-    <Modal onClickOutSide={() => closeModal(ModalType.Music)}> 
+{#if isSignedIn && manager}
+    <Modal 
+        onClickOutSide={() => closeModal(ModalType.Music)}
+        options={{ borderRadius: "20px" }}
+    >
         <div 
             class="music"
             class:music--light={isLight}
@@ -113,11 +131,14 @@
                         class="now-playing bento-box"
                         class:now-playing--empty={!mediaCollection}
                     >
-                        <img class="img-bg" src={mediaCollection?.artworkImgSrc} alt="">
+                        <div class="img-bg-container">
+                            <img class="img-bg" src={mediaCollection?.artworkImgSrc} alt="">
+                        </div>
                         {#if mediaCollection}
-                            <div class="img-bg-gradient gradient-container gradient-container--bottom"></div>
+                            <div class="img-bg-gradient"></div>
                         {/if}
-                        <div class={`blur-bg blur-bg--blurred-bg ${mediaCollection ?? "blur-bg--solid-color"}`}></div>
+                        <div class={`blur-bg blur-bg--blurred-bg ${mediaCollection ?? "blur-bg--solid-color"}`}>
+                        </div>
                         <div class="content-bg">
                             {#if mediaCollection}
                                 {@const description = getMediaDescription(mediaCollection)}
@@ -126,9 +147,11 @@
                                 <div class="now-playing__details-container">
                                     <!-- Header -->
                                     <div class="now-playing__details-header">
-                                        <span class="now-playing__description-author">
-                                            {mediaCollection.author}
-                                        </span>
+                                        {#if description}
+                                            <span class="now-playing__description-author">
+                                                {mediaCollection.author}
+                                            </span>
+                                        {/if}
                                         <div class="now-playing__collection-details">
                                             <span class="now-playing__collection-type">
                                                 {type}
@@ -136,7 +159,10 @@
                                         </div>
                                     </div>
                                     <!-- Artwork -->
-                                    <div class={`now-playing__artwork ${mediaCollection.artworkImgSrc ? "" : "now-playing__artwork--empty"}`}>
+                                    <div 
+                                        class="now-playing__artwork"
+                                        class:now-playing__artwork--empty={!mediaCollection.artworkImgSrc}
+                                    >
                                         <img src={mediaCollection.artworkImgSrc} alt="current-collection">
                                         <i class="fa-solid fa-music abs-center"></i>
                                     </div>
@@ -153,11 +179,12 @@
                                                 {mediaCollection.name}
                                             </h4>
                                         {/if}
-                                        {#if description != ""}
-                                            <p class="now-playing__description-text">
-                                                {description}
-                                            </p>
-                                        {/if}
+                                        <p 
+                                            class="now-playing__description-text"
+                                            class:now-playing__description-text--author={!description}
+                                        >
+                                            {@html description ? description : mediaCollection.author}
+                                        </p>
                                     </div>
                                 </div>             
                             {:else}
@@ -181,15 +208,20 @@
                                 {/if}
                             </div>
                             {#if !libError}
-                                <button class="my-playlists__dropdown-btn settings-btn" on:click={() => isLibraryDropdownOpen = !isLibraryDropdownOpen}>
+                                <button 
+                                    id="lib--dropdown-btn"
+                                    class="my-playlists__dropdown-btn settings-btn" 
+                                    on:click={() => isLibraryDropdownOpen = !isLibraryDropdownOpen}
+                                >
                                     <SVGIcon icon={Icon.Settings} options={{ opacity: 0.3 }}/>
                                 </button>
                             {/if}
                         </div>
                         <!-- Library Items -->   
                         <ul 
-                            class="my-playlists__collection-list" id="library-list" 
-                            on:scroll={() => manager?.handleLibListScroll()} style={`${libListGradient}`}
+                            class="my-playlists__collection-list" 
+                            id="library-list"
+                            on:scroll={() => manager?.handleLibListScroll()}
                         >
                             {#if userLibrary && (userLibrary?.items || (userLibrary?.items && libError != LibError.NEW_COLLECTION))}
                                 {@const isTrack      = currLibraryCollection === UserLibraryMedia.LikedTracks}
@@ -288,68 +320,53 @@
                             </div>
                         {/if}
                         <!-- Library Dropdown -->
-                        <div class="my-playlists__library-dropdown-container dropdown-menu-container">
-                            <ul 
-                                use:clickOutside on:click_outside={() => isLibraryDropdownOpen = false} 
-                                class={`my-playlists__library-dropdown dropdown-menu ${isLibraryDropdownOpen ? "" : "dropdown-menu--hidden"}`}
-                            >
-                                <li class="dropdown-menu__option">
-                                    <button 
-                                        class="dropdown-element"
-                                        on:mouseenter={() => isLibraryOptionsDropdownOpen = true}
-                                        on:mouseleave={(e) => onMousLeavePlaylistOption(e)}
-                                    >
-                                        <span class="dropdown-menu__option-text">
-                                            Pick Library
-                                        </span>
-                                        <div class="dropdown-menu__option-icon">
-                                            <i class="fa-solid fa-arrow-right"></i>
-                                        </div>
-                                    </button>
-                                </li>
-                                <li class="dropdown-menu__option">
-                                    <button 
-                                        class="dropdown-element"
-                                        on:click={() => { 
-                                            manager?.refreshCurrentLibraryMedia() 
-                                            isLibraryDropdownOpen = false
-                                        }}
-                                    >
-                                        <span class="dropdown-menu__option-text">
-                                            {`Refresh ${currLibraryCollection}`}
-                                        </span>
-                                        <div class="dropdown-menu__option-icon">
-                                            <i class="fa-solid fa-rotate-right"></i>
-                                        </div>
-                                    </button>
-                                </li>
-                            </ul>
-                            <div 
-                                class={`my-playlists__library-options-dropdown-container dropdown-menu__menu-container ${isLibraryDropdownOpen ? "" : "hidden"}`}
-                                on:mouseleave={() => isLibraryDropdownOpen = false}
-                            >
-                                    <ul 
-                                        use:clickOutside on:click_outside={() => closeLibDropdowns()} 
-                                        class={`my-playlists__library-dropdown dropdown-menu ${isLibraryOptionsDropdownOpen ? "" : "dropdown-menu--hidden"}`}
-                                    >
-                                        {#each manager.libOptions as lib, idx}
-                                            <li class={`dropdown-menu__option ${currLibraryCollection === lib ? "dropdown-menu__option--selected" : ""}`}>
-                                                <button 
-                                                    class="dropdown-element"
-                                                    on:click={() => onLibOptionClicked(lib)}
-                                                >
-                                                    <span class="dropdown-menu__option-text">
-                                                        {lib}
-                                                    </span>
-                                                    <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
-                                                        <i class="fa-solid fa-check"></i>
-                                                    </div>
-                                                </button>
-                                            </li>
-                                        {/each}
-                                    </ul>
-                            </div>
-                        </div>
+                        <DropdownList 
+                            id={"lib"}
+                            isHidden={!isLibraryDropdownOpen} 
+                            options={{
+                                listItems: [
+                                    { 
+                                        name: "Pick Library",
+                                        rightIcon: { type: "fa", icon: "fa-solid fa-chevron-right" },
+                                        onPointerOver: () => isLibraryOptionsDropdownOpen = true,
+                                        onPointerLeave: onLibDropdownPointerLeave
+                                    },
+                                    { 
+                                        name: `Refresh ${currLibraryCollection}`,
+                                        rightIcon: { type: "fa", icon: "fa-solid fa-rotate-right" },
+                                        onPointerLeave: () => isLibraryOptionsDropdownOpen = false
+                                    } 
+                                ],
+                                position: { top: "35px", right: "10px"},
+                                styling:  { width: "160px" },
+                                childId: "lib-media",
+                                onListItemClicked: (context) => {
+                                    openLibMediaOptions(context.event)
+                                },
+                                onClickOutside: () => {
+                                    isLibraryDropdownOpen = false
+                                    isLibraryOptionsDropdownOpen = false
+                                }
+                            }}
+                        />
+                        <!-- Library Media Dropdown -->
+                        <DropdownList 
+                            id={"lib-media"}
+                            isHidden={!isLibraryOptionsDropdownOpen || !isLibraryDropdownOpen}
+                            options={{
+                                pickedItem: currLibraryCollection,
+                                listItems:  manager.libOptions.map((media) => ({ name: media })),
+                                styling:  { width: "125px", maxHeight: "300px" },
+                                onListItemClicked: (context) => onLibOptionClicked(context.idx),
+                                position: { top: "35px", right: "-120px" },
+                                parent: {
+                                    id: "lib",
+                                    optnIdx: 0,
+                                    optnName: "Pick Library"
+                                },
+                                onPointerLeave: () => isLibraryOptionsDropdownOpen = false
+                            }}
+                        />
                     </div>
                 </div>
                 <div class="music__right-section">
@@ -361,7 +378,7 @@
                             </h3>
                         {/if}
                         <p class="discover__copy bento-box__copy">
-                            Get in the zone with music that matches your vibe. Select a mood / genre and discover new tunes to fuel your day.
+                            Get in the zone and discover music that matches your vibe.
                         </p>
                         <div class="discover__collection-list-container">
                             {#if isScrollableLeft}
@@ -458,7 +475,7 @@
                                             </div>
                                         </div>
                                         <div class="discover__collection-item-type">
-                                            {type}
+                                            {type === "RadioStation" ? "Radio" : type}
                                         </div>
                                         <div class="discover__collection-item-genre">
                                             {collection.genre}
@@ -529,8 +546,8 @@
         width: 87vw;
         height: 87vh;
         min-width: 390px;
-        max-width: 1200px;
-        padding: $settings-modal-padding;
+        max-width: 1050px;
+        padding: 14px 25px 17px 25px;
 
         .skeleton-bg {
             @include skeleton-bg(dark);   
@@ -547,13 +564,13 @@
         &__content {
             margin-top: 15px;
             display: flex;
-            height: 95%;
+            height: calc(100% - (25px + 14px ));
             padding-bottom: 10px;
+            min-height: 650px;
         }
         &__left-section {
             margin-right: $section-spacing;
             width: calc(30% - ($section-spacing / 2));
-            height: 100%;
             min-width: 240px;
             max-width: 270px;
         }
@@ -562,11 +579,6 @@
             flex: 1;
         }
 
-        &--dark .dropdown-menu {
-            @include dropdown-menu-dark;
-
-        }
-        /* Light Theme */
         &--light .modal-bg {
             @include modal-bg-light;
         }
@@ -613,6 +625,15 @@
                 color: rgba(var(--textColor1), 0.65);
                 font-weight: 500;
             }
+        }
+        &--dark .dropdown-menu {
+            @include dropdown-menu-dark;
+
+        }
+        &--dark .img-bg {
+            top: -80px;  // includes a dark gradient at the bottom
+            left: 0px;
+            transform: none;
         }
     }
     
@@ -710,13 +731,18 @@
             &-text {
                 color: rgba(229, 229, 229, 0.5);
                 overflow-y: scroll;
-                font-size: 1.1rem;
+                font-size: 1.2rem;
                 @include multi-line-elipses-overflow(2);
+            }
+            &-text--author {
+                margin-top: -1px;
             }
 
             a {
-                color: white;
                 width: auto;
+                color: rgba(229, 229, 229, 0.5);
+                font-size: 1.2rem;
+                display: inline;
             }
         }
         &__collection-details {
@@ -726,7 +752,7 @@
             color: rgba(219, 219, 219, 0.5);
 
             span {
-                margin-left: 4px;
+                margin-left: 0px;
                 white-space: nowrap;
 
             }
@@ -737,12 +763,12 @@
             @include elipses-overflow();
             @include abs-center;
         }
-
         .img-bg {
-            width: 99.5%;
             z-index: 0;
+            border-radius: 10px;
         }
         .img-bg-gradient {
+            border-radius: 10px;
             width: 100%;
             height: 2%;
             z-index: 1;
@@ -752,10 +778,12 @@
             background: rgba(14, 14, 14, 0.25);
             backdrop-filter: blur(45px);
             z-index: 2;
+            @include abs-top-left;
+            transform: none;
         }
         .content-bg {
             top: 0px;
-            padding: 12px 17px;
+            padding: 10px 15px 12px 14px;
             z-index: 3;
         }
         .content-bg, .img-bg, .blur-bg {
@@ -776,8 +804,8 @@
             margin-bottom: 10px;
         }
         &__count {
-            @include text-style(0.3, 300, 1.2rem, "DM Sans");
-            margin: 0px 0px 4.5px 10px;
+            @include text-style(0.3, 400, 1.2rem, "DM Sans");
+            margin: 0px 0px 3px 10px;
         }
         &__dropdown-btn {
             @include txt-color(0.02, "bg");
@@ -844,10 +872,9 @@
             }
         }
         &__playlist-img {
-            min-width: 40px;
-            max-width: 40px;
-            height: 40px;
-            margin: 0px 14px 0px 2px;
+            width: 45px;
+            height: 45px;
+            margin: 0px 15px 0px 2px;
             background-color: var(--hoverColor2);
             box-shadow: var(--shadowVal);
             position: relative;
@@ -855,8 +882,8 @@
             
             img {
                 border-radius: 0px !important;
-                width: 40px;
-                height: 40px;
+                width: 45px;
+                height: 45px;
                 object-fit: cover;
             }
             i {
@@ -869,37 +896,28 @@
             width: calc(100% - 70px);
             
             &-title {
-                display: inline-block;
                 width: min-content;
-                font-size: 1.1rem;
-                font-weight: 500;
                 margin-bottom: 4px;
                 max-width: 95%;
-                display:inline-block;
+                display: inline-block;
+                @include text-style(1, 500, 1.13rem);
                 @include elipses-overflow;
-            }
-            &-description {
-                @include elipses-overflow;
-                width: 100%;
-                font-size: 1.07rem;
-                font-weight: 300;
-                color: rgba(var(--textColor1), 0.53);
             }
         }
         &__playlist-media-details {
             @include flex(center);
         }
         &__playlist-media-subtitle-1 {
-            @include text-style(0.5, 300, 1.05rem, "DM Sans");
+            @include text-style(0.5, 300, 1.11rem, "DM Sans");
             margin-right: 7px;
             white-space: nowrap;
         }
         &__playlist-media-subtitle-2 {
-            @include text-style(0.3, 400, 1rem, "DM Sans");
+            @include text-style(0.3, 400, 1.12rem, "DM Sans");
             @include elipses-overflow;
         }
         &__empty-msg {
-            @include text-style(0.2, 400, 1.4rem, "DM Sans");
+            @include text-style(0.2, 400, 1.45rem, "DM Sans");
             @include abs-center;
             text-align: center;
         }
@@ -937,13 +955,13 @@
         }
         .bento-box__copy {
             padding-left: $my-playlists-section-padding-left;
+            margin: 5px 0px 15px 0px;
         }
         &__header {
             padding: 17px 0px 0px $my-playlists-section-padding-left;
         }
         &__copy {
             padding-left: $my-playlists-section-padding-left;
-            color: rgba(var(--textColor1), 0.4);
         }
         &__description {
             width: 100%;
@@ -953,7 +971,7 @@
         /* Discover Collections Carousel */
         &__collection-list-container {
             position: relative;
-            margin-bottom: 20px;
+            margin-bottom: 14px;
 
             &:hover &-btn {
                 opacity: 1;
@@ -992,11 +1010,9 @@
             }
         }
         &__collection-list {
-            margin-top: 25px;
             display: flex;
             overflow-x: scroll;
             scroll-behavior: smooth;
-
 
             &::-webkit-scrollbar {
                 display: none;
@@ -1090,6 +1106,7 @@
             span {
                 color: rgba(255, 255, 255, 0.64);
                 display: block;
+                font-weight: 500;
             }
             img {
                 width: 101%;
@@ -1105,26 +1122,24 @@
                 padding: 12px;
             }
             &-description {
-                color: rgba(var(--textColor2), 0.64);
+                color: rgba(white, 0.64);
+                font-weight: 400;
             }
         }
 
         /* Discover Category Collections List Section */
         &__collection-title {
-            margin: 8px 0px 0px $my-playlists-section-padding-left;
-            font-weight: 400;
-            font-size: 1.4rem;
+            margin: 0px 0px 0px $my-playlists-section-padding-left;
+            @include text-style(1, 500, 1.3rem);
         }
         /* List Column Header Section */
         &__collection-header {
             width: 100%;
-            opacity: 0.7;
             height: 18px;
             overflow: hidden;
             margin-top: 12px;
             display: flex;
-            font-size: 1.04rem;
-            font-weight: 400; 
+            @include text-style(0.7, 500, 1.04rem);
         }
         &__collection-header-num {
             width: 25px;
@@ -1154,7 +1169,7 @@
         &__collection-item {
             @include flex(center, _);
             position: relative;
-            height: 68px;
+            height: 70px;
             width: 100%;
 
             &:first-child {
@@ -1205,9 +1220,8 @@
         }
         &__collection-item-num {
             margin-left: $my-playlists-section-padding-left;
-            opacity: 0.7;
+            opacity: 0.3;
             width: 25px;
-            color: rgba(var(--textColor1), 0.7);
             font-family: "DM Sans";
         }
         &__collection-item-details-container {
@@ -1220,10 +1234,11 @@
             overflow: hidden;
             &-img {
                 background-color: var(--hoverColor);
-                width: 35px;
-                height: 35px;
-                margin-right: 10px;
-                aspect-ratio: 1/ 1;
+                max-width: 40px;
+                max-width: 40px;
+                min-width: 40px;
+                min-height: 40px;
+                margin-right: 16px;
             }
             &-img img {
                 object-fit: cover;
@@ -1232,16 +1247,12 @@
             }
             &-title {
                 margin-bottom: 2.5px;
-                font-size: 1.1rem;
-                font-weight: 500; 
                 max-width: 95%;
-                color: rgba(var(--textColor1), 1);
+                @include text-style(1, 500, 1.1rem);
                 @include elipses-overflow;
             }
             &-author {
-                color: rgba(var(--textColor1), 0.4);
-                font-weight: 400;
-                font-size: 1.05rem;
+                @include text-style(0.4, 500, 1.08rem);
                 width: fit-content;
                 max-width: 95%;
                 display: block;
@@ -1257,9 +1268,7 @@
         &__collection-item-length {
             width: 21%;
             text-align: center;
-            color: rgba(var(--textColor1), 0.4);
-            font-size: 1.05rem;
-            font-weight: 400;
+            @include text-style(0.4, 400, 1.14rem);
         }
     }
     

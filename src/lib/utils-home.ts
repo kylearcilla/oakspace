@@ -9,9 +9,8 @@ import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer } from 
 import { didSpotifyUserAuthApp, getSpotifyCodeFromURLAndLogin } from "./api-spotify"
 import { isTargetTextEditor } from "./utils-general"
 
+export const LEFT_BAR_WIDTH = 63
 const LEFT_BAR_LEFT_BOUND = 20
-const LEFT_BAR_RIGHT_BOUND = 80
-const LEFT_BAR_RIGHT_BOUND_BIG = 160
 
 /**
  * Initialize app state.
@@ -53,7 +52,7 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
     const { altKey, metaKey, shiftKey, code, key, ctrlKey } = event
     const isTargetContentEditable = target.contentEditable === "true"
 
-    updteGlobalContext({ 
+    updateGlobalContext({ 
         ...context, 
         lastKeysPressed: { keyCode: code, altKey, metaKey, shiftKey }
     })
@@ -70,10 +69,7 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
         return toggledLeftBarWithKey
     }
 
-
-    const { isLeftNarrowBarOpen, isLeftWideMenuOpen, isLeftBarFloating } = get(globalContext)
-    const leftBarFull =  isLeftWideMenuOpen && isLeftNarrowBarOpen
-    const doNotOpenRightBar = !isLeftBarFloating && leftBarFull && totalWidth < 80
+    const doNotOpenRightBar = false
 
     // if (key === "Escape" && context.modalsOpen.length != 0) {
     //     const modals = get(globalContext).modalsOpen
@@ -82,10 +78,10 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
     //     closeModal(modals[modals.length - 1])
     // }
     if (event.ctrlKey && key === "]" && !doNotOpenRightBar) {
-        updteGlobalContext({ ...context, isRightBarOpen: !context.isRightBarOpen })
+        updateGlobalContext({ ...context, rightBarOpen: !context.rightBarOpen })
     }
     else if (ctrlKey && key === "[") {
-        updteGlobalContext({ ...context, isLeftNarrowBarOpen: !context.isLeftNarrowBarOpen })
+        updateGlobalContext({ ...context, leftBarOpen: !context.leftBarOpen })
         return true
     }
     else if (key === "?" && (context.modalsOpen.length === 0 || isModalOpen(ModalType.Shortcuts))) {
@@ -125,20 +121,23 @@ export const keyboardShortCutHandlerKeyUp = (event: KeyboardEvent) => {
 export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boolean): boolean => {
     const mouseX = event.clientX
     const context = get(globalContext)
+    const target = event.target as HTMLElement
 
-    // let rightBound = context.isLeftWideMenuOpen ? LEFT_BAR_RIGHT_BOUND_BIG : LEFT_BAR_RIGHT_BOUND
-    let isInArea = mouseX < LEFT_BAR_LEFT_BOUND
-    let isActiveRoutineOpen = context.doOpenActiveRoutine
-    let isLeftNarrowBarOpen = context.isLeftNarrowBarOpen
-
-    if (!isLeftNarrowBarOpen && !isActiveRoutineOpen && isInArea) {
-        updteGlobalContext({ ...get(globalContext), isLeftNarrowBarOpen: true  })
-        return false
+    if (target.classList.value.includes("media-player")) {
+        return toggledLeftBarWithKey
     }
 
-    // else if (!context.isLeftBarFloating && !toggledLeftBarWithKey && context.isLeftNarrowBarOpen && mouseX > rightBound) { 
-    //     updteGlobalContext({ ...get(globalContext), isLeftNarrowBarOpen: false  })
-    // }
+    let isInArea = mouseX < LEFT_BAR_LEFT_BOUND
+    let isActiveRoutineOpen = context.doOpenActiveRoutine
+    let leftBarOpen = context.leftBarOpen
+
+    if (!leftBarOpen && !isActiveRoutineOpen && isInArea) {
+        updateGlobalContext({ ...get(globalContext), leftBarOpen: true  })
+        return false
+    }
+    else if (!toggledLeftBarWithKey && context.leftBarOpen && mouseX > LEFT_BAR_WIDTH) { 
+        updateGlobalContext({ ...get(globalContext), leftBarOpen: false  })
+    }
 
     return toggledLeftBarWithKey
 }
@@ -147,7 +146,7 @@ export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boo
  * Update UI Layout of app.
  * @param newLayout      New layout
  */
-export const updteGlobalContext = (newLayout: GlobalContext) => {
+export const updateGlobalContext = (newLayout: GlobalContext) => {
     globalContext.set(newLayout)
     localStorage.setItem("home-ui", JSON.stringify(newLayout))
 }
@@ -159,52 +158,18 @@ const loadHomeViewLayOutUIData = () => {
     const storedData = localStorage.getItem("home-ui")
     if (!storedData) return
 
+
     const data: GlobalContext = JSON.parse(storedData)
 
-    if (data.isLeftBarFloating) {
-        data.isLeftNarrowBarOpen = false
-    }
-
-    globalContext.set({ ...data, modalsOpen: [] })
-    updteGlobalContext({ ...data, modalsOpen: [] })
-}
-
-export function hideWideMenuBar() {
-    updteGlobalContext({ ...get(globalContext), isLeftWideMenuOpen: false  })
-}
-
-export function showWideMenuBar() {
-    updteGlobalContext({ ...get(globalContext), isLeftWideMenuOpen: true  })
+    updateGlobalContext({ ...data, modalsOpen: [] })
 }
 
 export function hideRightBar() {
-    updteGlobalContext({ ...get(globalContext), isRightBarOpen: false  })
+    updateGlobalContext({ ...get(globalContext), rightBarOpen: false  })
 }
 
 export function showRightBar() {
-    updteGlobalContext({ ...get(globalContext), isRightBarOpen: true  })
-}
-
-export function initFloatingEmbed(type: MediaEmbedType) {
-    const width = 600
-    const height = 80
-
-    const leftOffset = "50%"
-    const topOffset = "100%"
-    
-    const leftPos = `calc(${leftOffset} - ${width / 2}px)`
-    const leftTransform = `calc(-1 * calc(${leftOffset} - ${width / 2}px))`
-
-    const topPos = `calc(${topOffset} + ${height}px)`
-    const topTransform = `calc(calc(-1 * calc(${topOffset} - ${height}px)))`
-
-    mediaEmbedStore.set({
-        mediaEmbedType: type,
-        fixed: MediaEmbedFixed.Bottom,
-        leftPos, leftTransform,
-        topPos, topTransform,
-        width:`${width}`, height: `${height}`
-    })
+    updateGlobalContext({ ...get(globalContext), rightBarOpen: true  })
 }
 /**
  * Add modal to "open modals" array
@@ -242,14 +207,18 @@ export const setShortcutsFocus = (section: ShortcutSectionInFocus) => {
     })
 }
 
-export function toggleFloatSideBar() {
+export function toggleActiveRoutine() {
     globalContext.update((state: GlobalContext) => {
-        return { ...state, isLeftBarFloating: !state.isLeftBarFloating }
+        return { ...state, doOpenActiveRoutine: !state.doOpenActiveRoutine }
     })
 }
 
-export function toggleActiveRoutine() {
-    globalContext.update((state: GlobalContext) => {
-        return { ...state, doOpenActiveRoutine: !state.doOpenActiveRoutine, isLeftNarrowBarOpen: false }
-    })
+export function toggleYoutubePlayerFloat() {
+    const oldState    = get(globalContext)
+    const mediaPlayer = oldState.mediaPlayer ?? { music: false, youtube: false }
+
+    updateGlobalContext({ 
+        ...oldState, 
+        mediaPlayer: { ...mediaPlayer, youtube: !mediaPlayer.youtube } 
+    })   
 }

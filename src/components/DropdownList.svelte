@@ -182,18 +182,13 @@
                                                 <i class="fa-solid fa-check"></i>
                                             </div>
                                         {/if}
-                                        <!-- Right Icon -->
-                                        {#if option.rightIcon && type === "default"}
-                                            <div class="dropdown-menu__option-icon">
+                                        {#if option.rightIcon && type != "hotkey"}
+                                            <div class={`dropdown-menu__option-icon dropdown-menu__option-icon--${type}`}>
                                                 <i class={getDefaultIcon(option)}></i>
                                             </div>
-                                        {:else if option.rightIcon && type === "unit"}
-                                            <div class="dropdown-menu__option-icon dropdown-menu__option-icon--unit">
-                                                {getDefaultIcon(option)}
-                                            </div>
-                                        <!-- Hot Key -->
                                         {:else if option.rightIcon}
-                                            <Hotkeys hotkeys={getHotkeys(option)}  />
+                                            <!-- Hot Key -->
+                                            <Hotkeys hotkeys={getHotkeys(option)} />
                                         {/if}
                                     </div>
                                 </button>
@@ -240,27 +235,9 @@
                                         <i class="fa-solid fa-check"></i>
                                     </div>
                                 {/if}
-                                
-                                <!-- Default -->
-                                {#if type === "default"}
-                                    <div class="dropdown-menu__option-icon">
+                                {#if option.rightIcon && type != "hotkey"}
+                                    <div class={`dropdown-menu__option-icon dropdown-menu__option-icon--${type}`}>
                                         <i class={getDefaultIcon(option)}></i>
-                                    </div>
-                                {:else if type === "right-arrow"}
-                                    <!-- Right Arrow Icon -->
-                                    <div 
-                                        class="dropdown-menu__option-icon"
-                                        class:dropdown-menu__option-icon--right={true}
-                                    >
-                                        <i class="fa-solid fa-chevron-right"></i>
-                                    </div>
-                                {:else if type === "unit"}
-                                    <!-- Unit -->
-                                    <div 
-                                        class="dropdown-menu__option-icon"
-                                        class:dropdown-menu__option-icon--unit={true}
-                                    >
-                                        {getDefaultIcon(option)}
                                     </div>
                                 {:else if option.rightIcon}
                                     <!-- Hot Key -->

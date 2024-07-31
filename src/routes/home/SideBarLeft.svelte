@@ -1,17 +1,15 @@
 <script lang="ts">
-    import { Icon, ModalType, MusicPlatform, TextTab } from "$lib/enums"
+    import { Icon, ModalType } from "$lib/enums"
     import { getThemeFromSection, setNewTheme } from "$lib/utils-appearance"
 	import { themeState, globalContext, musicPlayerStore } from "$lib/store"
-	import { hideWideMenuBar, openModal, showWideMenuBar, toggleFloatSideBar } from "$lib/utils-home"
+	import { openModal } from "$lib/utils-home"
 	import { createEventDispatcher, onMount } from "svelte"
-	import { findAncestor, getElemById, getLogoIconFromEnum, getMaskedGradientStyle } from "$lib/utils-general"
-	import SideBarCalendar from "./SideBarCalendar.svelte"
+	import { findAncestor, getElemById, getMaskedGradientStyle } from "$lib/utils-general"
 	import { goto } from "$app/navigation"
-	import { toast } from "$lib/utils-toast"
-	import Dashboard from "./Dashboard.svelte";
-	import { TextEditorManager } from "$lib/inputs";
-	import BounceFade from "../../components/BounceFade.svelte";
-	import SvgIcon from "../../components/SVGIcon.svelte";
+	import Dashboard from "./Dashboard.svelte"
+	import { TextEditorManager } from "$lib/inputs"
+	import BounceFade from "../../components/BounceFade.svelte"
+	import SvgIcon from "../../components/SVGIcon.svelte"
 
     const NAV_MENU_NARROW_BAR_WIDTH = 58
     const NAV_MENU_WIDE_BAR_WIDTH = 220
@@ -21,35 +19,28 @@
     }
 
     const tabs = [
-        { name: "Workspace", icon: "fa-solid fa-ruler-combined" }, { name: "Productivity", icon: "fa-solid fa-chart-line" }, 
-        { name: "Goals", icon: "fa-solid fa-bullseye" },     { name: "Habits", icon: "fa-solid fa-cubes-stacked" }, 
-        { name: "Routines", icon: "fa-solid fa-spa" },       { name: "Youtube", icon: "fa-brands fa-youtube" },
-        { name: "Music", icon: "fa-solid fa-record-vinyl" }, { name: "Themes", icon: "fa-solid fa-brush" }
+        { name: "Workspace", icon: "fa-solid fa-ruler-combined" }, 
+        { name: "Goals", icon: "fa-solid fa-bullseye" },     
+        { name: "Habits", icon: "fa-solid fa-cubes-stacked" }, 
+        { name: "Routines", icon: "fa-solid fa-spa" },       
+        { name: "Themes", icon: "fa-solid fa-brush" },
+        { name: "Music", icon: "fa-solid fa-record-vinyl" }, 
+        { name: "Youtube", icon: "fa-brands fa-youtube" },
     ]
-    const BULLETIN_MAX = 200
     const dispatch = createEventDispatcher()
 
     let selectedTabButtonElement: HTMLElement
     let hoveredTabButtonElement: HTMLElement | null = null
-    let bulletinTextAreaElem: HTMLElement
     let selectedTabTabModifier = ""
     let settingsOpen = false
 
-    let hasBulletin = false
-    let currBulletinLength = 0
-    let isEditBulletin = false
-    let bulletinGradient = ""
-    let bulletinText = ""
     let initDragXPos = -1
     let isWideBarMenuOpen = true
-    let bulletinHeight = 0
 
     $: isDarkTheme = $themeState.isDarkTheme
-    $: isFloating = $globalContext.isLeftBarFloating
-    $: isWideBarMenuOpen = $globalContext.isLeftWideMenuOpen
 
     $: {
-        const isDefaultTheme = ["Dark Mode", "Light Mode"].includes($themeState.title)
+        const isDefaultTheme = ["Dark", "Light"].includes($themeState.title)
         removeBtnStyling(selectedTabButtonElement)
 
         if (isDefaultTheme) {
@@ -61,43 +52,13 @@
         highlightTabBtn(selectedTabButtonElement)
     }
 
-    const bulletinInput = (new TextEditorManager({ 
-          initValue: bulletinText,
-          placeholder: "Type something...",
-          doAllowEmpty: true,
-          id: "bulletin-description",
-          maxLength: 200,
-          handlers: {
-            onInputHandler: (e, val, length) => onBulletinInput(e, val, length),
-            onBlurHandler: (e, val) => onBulletinBlur(e),
-            onFocusHandler: (e) => onBulletinFocus(e)
-          }
-    })).state
-
     /* Resizer */
-    function onResizerClicked(event: Event) {
-        const pe = event as PointerEvent
-
-        window.addEventListener("mousemove", onResizerDrag)
-        window.addEventListener("mouseup", onResizerEndDrag)
-
-        initDragXPos = pe.clientX
-    }
     function onResizerDrag(event: Event) {
         const pe = event as MouseEvent
         const newDragXOffSet = pe.clientX
         const xOffset = initDragXPos - newDragXOffSet
 
         pe.preventDefault()
-
-        if (xOffset > 0 && isWideBarMenuOpen) {
-            hideWideMenuBar()
-            removeDragEventListener()
-        }
-        else if (xOffset < 0 && !isWideBarMenuOpen) {
-            showWideMenuBar()
-            removeDragEventListener()
-        }
     }
     function onResizerEndDrag() {
         removeDragEventListener()
@@ -108,24 +69,19 @@
         window.removeEventListener("mousemove", onResizerDrag)
         window.removeEventListener("mouseup", onResizerEndDrag)
     }
-    function onWideBarResize(event: Event) {
-        console.log(event)
-    }
-
-    /* Wide Bar Btns */
-    function highlightTabBtn(elem: HTMLElement , doSelect = false) {
+    /* Ta Buttons */
+    function highlightTabBtn(elem: HTMLElement, doSelect = false) {
         const buttonElem = findAncestor({
-            child: elem, queryBy: "class", queryStr: "wide-bar__tab-btn", strict: true
+            child: elem, queryBy: "class", queryStr: "bar__icon-tab", strict: true
         })
 
         if (!buttonElem) return
-        buttonElem.classList.add(`wide-bar__tab-btn${selectedTabTabModifier}`)
+        buttonElem.classList.add(`bar__icon-tab${selectedTabTabModifier}`)
         
         if (doSelect) {
             selectedTabButtonElement = buttonElem
         }
         else if (!doSelect && buttonElem != hoveredTabButtonElement) {
-
             // do not remove prev hov if it was selected
             if (hoveredTabButtonElement != selectedTabButtonElement) {
                 removeBtnStyling(hoveredTabButtonElement)
@@ -136,7 +92,7 @@
     }
     function removeBtnStyling(btn: HTMLElement | null) {
         if (!btn) return
-        btn.classList.remove(`wide-bar__tab-btn${selectedTabTabModifier}`)
+        btn.classList.remove(`bar__icon-tab${selectedTabTabModifier}`)
     }
 
     /* Event Listeners */
@@ -152,22 +108,23 @@
         }
         hoveredTabButtonElement = null
     }
-    function handleTabBtnClicked(event: Event, textTab: SideBarTab) {
+    function handleTabBtnClicked(event: Event, textTab: string) {
         removeBtnStyling(selectedTabButtonElement)
         
         const target = event.target! as HTMLElement
         selectTabBtn(target, textTab)
     }
-    function selectTabBtn(target: HTMLElement, textTab: SideBarTab) {
-        highlightTabBtn(target, true)
-        dispatch("routeChange", textTab)
-        
+    function selectTabBtn(target: HTMLElement, textTab: string) {
+        const isModal = ["Themes", "Music", "Youtube"].includes(textTab)
+        if (!isModal) {
+            dispatch("routeChange", textTab)
+        }
+        highlightTabBtn(target, !isModal)
 
-        if (textTab === SideBarTab.Workspace) {
+        if (textTab === "Workspace") {
             goto("/home")
         }
-        else if (textTab === SideBarTab.Productivity) {
-
+        else if (textTab === "Goals") {
             // toast("default", {
             //     message: "x",
             //     description: "Hello world",
@@ -179,62 +136,35 @@
             // })
 
             // goto("/home/productivity")
-        }
-        else if (textTab === SideBarTab.Goals) {
+
             goto("/home/goals")
         }
-        else if (textTab === SideBarTab.Habits) {
+        else if (textTab === "Habits") {
             goto("/home/habits")
         }
-        else {
+        else if (textTab === "Routines") {
             goto("/home/routines")
+        }
+        else if (textTab === "Themes") {
+            openModal(ModalType.Appearance)
+        }
+        else if (textTab === "Music") {
+            openModal(ModalType.Music)   
+        }
+        else {
+            openModal(ModalType.Youtube)   
         }
     }
 
     /* Util Buttons */
-    function handleUtilTabBtnClicked(tab: SideBarTab) {
-        if (tab === SideBarTab.Youtube) {
-            openModal(ModalType.Youtube)   
-        }
-        else if (tab === SideBarTab.Music) {
-            openModal(ModalType.Music)   
-        }
-        else {
-            openModal(ModalType.Appearance)
-        }
-    }
     function handleToggleThemeMode() {
         const title = $themeState!.twinTheme!.sectionName as keyof AppearanceSectionToThemeMap
         const idx = $themeState!.twinTheme!.index
         setNewTheme(getThemeFromSection(title, idx))
     }
     function _toggleFloatSideBar() {
-        toggleFloatSideBar()
+        // toggleFloatSideBar()
         settingsOpen = false
-    }
-    /* Bulleting */
-    function toggleBulletin() {
-        hasBulletin = !hasBulletin
-        settingsOpen = false
-
-        requestAnimationFrame(() => bulletinTextAreaElem.focus())
-
-        if (!hasBulletin) bulletinHeight = 0
-    }
-    function onBulletinInput(e: Event, val: string, length: number) {
-        currBulletinLength = length
-    }
-    function onBulletinBlur(e: FocusEvent) {
-        isEditBulletin = false
-        bulletinScrollHandler(bulletinTextAreaElem)
-    }
-    function onBulletinFocus(e: FocusEvent) {
-        isEditBulletin = true
-    }
-    function bulletinScrollHandler(contentList: HTMLElement) {
-        bulletinGradient = getMaskedGradientStyle(contentList, {
-            head: { end: "70%" }, tail: { start: "45%" }
-        }).styling
     }
 
     onMount(() => {
@@ -254,8 +184,8 @@
             selectedTab = SideBarTab.Productivity
         }
 
-        const tabBtn = getElemById(`workspace-btn--${selectedTab}`)! as HTMLButtonElement
-        selectTabBtn(tabBtn, selectedTab)
+        // const tabBtn = getElemById(`workspace-btn--${selectedTab}`)! as HTMLButtonElement
+        // selectTabBtn(tabBtn, selectedTab)
     })
 </script>
 
@@ -263,16 +193,11 @@
     class="bar"
     class:bar--dark-theme={isDarkTheme}
     class:bar--light-theme={!isDarkTheme}
-    class:bar--floating={isFloating}
 >
     <!-- Narrow Bar -->
-    <div 
-        class="bar__narrow-bar"
-        style:display={`${isFloating ? "none" : "flex"}`}
-    >
+    <div class="bar__narrow-bar">
         <div>
             <span class="bar__temp-logo">S</span>
-            <div class="bar__divider"></div>
             <div 
                 class="bar__icon-tabs"
                 class:bar__icon-tabs--dark-theme={isDarkTheme}
@@ -280,82 +205,81 @@
                 class:bar__icon-tabs--light-default={$themeState.title === "Light Mode"}
                 class:bar__icon-tabs--simple-styling={$themeState.title != "Light Mode"}
             >
-                <button 
-                    class="bar__icon-tab bar__icon-tab--appearance" 
-                    on:click={() => openModal(ModalType.Appearance)}
-                >
-                    <i class="fa-solid fa-brush"></i>
-                </button>
-                <button 
-                    class="bar__icon-tab bar__icon-tab--music" 
-                    on:click={() => openModal(ModalType.Music)}
-                >
-                    <i class="fa-solid fa-compact-disc"></i>
-                </button>
-                <button 
-                    class="bar__icon-tab bar__icon-tab--vid" 
-                    on:click={() => openModal(ModalType.Youtube)}
-                >
-                    <i class="fa-brands fa-youtube"></i>
-                </button>
+                {#each tabs as tab, tabIdx}
+                    {@const name = tab.name}
+                    {@const icon = tab.icon}
+
+                    {#if name === "Themes"}
+                        <div class="bar__divider"></div>
+                    {/if}
+                    <div class="bar__icon-tab-container">
+                        <button 
+                            class={`bar__icon-tab bar__icon-tab--${name.toLocaleLowerCase()}`}
+                            data-tab-name={name.toLocaleLowerCase()}
+                            on:click={(e) => handleTabBtnClicked(e, name)}
+                            on:mouseenter={onTabBtnMouseOver}
+                            on:mouseleave={onTabBtnMouseLeave}
+                        >
+                            <i class={`${icon} bar__icon-tab-icon`}></i>
+                            <!-- <span>{name}</span> -->
+                        </button>
+                        <div class="bar__icon-tab-tool-tip">
+                            {tab.name}
+                        </div>
+                    </div>
+                {/each}
             </div>
         </div>
-        {#if !isFloating}
-            <button 
-                on:click={handleToggleThemeMode}
-                class="narrow-theme-toggle"
-                class:narrow-theme-toggle--dark={isDarkTheme}
-                class:narrow-theme-toggle--light={!isDarkTheme}
-                class:narrow-theme-toggle--music-player-active={!$musicPlayerStore?.doShowPlayer}
-            >
-                <div class="narrow-theme-toggle__container">
-                    <div class="narrow-theme-toggle__sun">
-                        <svg width="19" height="18" viewBox="0 0 19 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path 
-                                d="M9.23877 0.507812C9.7419 0.507812 10.1498 0.91568 10.1498 1.4188V2.81219C10.1498 3.31531 9.7419 3.72318 9.23877 3.72318C8.73565 3.72318 8.32778 3.31531 8.32778 2.81219V1.4188C8.32778 0.91568 8.73565 0.507812 9.23877 0.507812ZM13.0436 9.08209C13.0436 11.065 11.436 12.6725 9.45307 12.6725C7.47014 12.6725 5.86268 11.065 5.86268 9.08209C5.86268 7.09916 7.47014 5.49159 9.45307 5.49159C11.436 5.49159 13.0436 7.09916 13.0436 9.08209ZM0.878906 9.29638C0.878906 8.79326 1.28677 8.38539 1.7899 8.38539H3.18317C3.68629 8.38539 4.09416 8.79326 4.09416 9.29638C4.09416 9.79951 3.68629 10.2074 3.18317 10.2074H1.7899C1.28677 10.2074 0.878906 9.79951 0.878906 9.29638ZM17.1164 9.77867C17.6195 9.77867 18.0273 9.3708 18.0273 8.86768C18.0273 8.36455 17.6195 7.95669 17.1164 7.95669H15.723C15.2198 7.95669 14.812 8.36455 14.812 8.86768C14.812 9.3708 15.2198 9.77867 15.723 9.77867H17.1164ZM8.75649 16.7453C8.75649 17.2484 9.16436 17.6562 9.66748 17.6562C10.1706 17.6562 10.5785 17.2484 10.5785 16.7453V15.352C10.5785 14.8489 10.1706 14.441 9.66748 14.441C9.16436 14.441 8.75649 14.8489 8.75649 15.352V16.7453ZM3.23867 3.17067C3.59432 2.81491 4.17118 2.81491 4.52695 3.17067L5.51224 4.15597C5.868 4.51173 5.868 5.08859 5.51224 5.44435C5.15647 5.80012 4.57961 5.80012 4.22385 5.44435L3.23867 4.45906C2.88279 4.1033 2.88279 3.52644 3.23867 3.17067ZM14.3792 14.9935C14.735 15.3493 15.3118 15.3493 15.6676 14.9935C16.0233 14.6376 16.0233 14.0609 15.6676 13.7051L14.6824 12.7198C14.3266 12.3641 13.7498 12.3641 13.394 12.7198C13.0382 13.0756 13.0382 13.6524 13.394 14.0082L14.3792 14.9935ZM15.3645 2.86758C15.7203 3.22346 15.7203 3.8002 15.3645 4.15597L14.3792 5.14126C14.0234 5.49702 13.4466 5.49702 13.0908 5.14126C12.735 4.78549 12.735 4.20863 13.0908 3.85287L14.0761 2.86769C14.4319 2.51181 15.0087 2.51181 15.3645 2.86758ZM3.54177 14.0082C3.186 14.364 3.186 14.9408 3.54177 15.2966C3.89753 15.6523 4.47439 15.6523 4.83016 15.2966L5.81534 14.3113C6.1711 13.9555 6.1711 13.3787 5.81534 13.0229C5.45957 12.6672 4.88271 12.6672 4.52695 13.0229L3.54177 14.0082Z" 
-                                fill={$themeState.themeToggleBtnIconColor}
-                            />
-                        </svg>
-                    </div>
-                    <div class="narrow-theme-toggle__moon">
-                        <svg width="37" height="37" viewBox="0 0 37 37" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <g filter="url(#filter0_d_2572_18359)">
-                            <path 
-                                fill={`${isDarkTheme ? "url(#paint0_linear_2572_18359)" : $themeState.themeToggleBtnIconColor}`}
-                                d="M18.2197 12.3918C14.7036 12.7697 12.1435 15.7469 12.4976 19.0413C12.8516 22.3358 15.9858 24.701 19.502 24.3231C21.2273 24.1377 22.7211 23.3252 23.7563 22.1579C23.8847 22.0121 23.8999 21.8057 23.7911 21.6504C23.6822 21.4951 23.4758 21.423 23.2827 21.476C23.0086 21.5513 22.7264 21.6059 22.4332 21.6374C19.6743 21.9339 17.211 20.0757 16.9328 17.4871C16.7444 15.7347 17.6054 14.0985 19.0365 13.1311C19.2001 13.0192 19.2684 12.8233 19.2062 12.6468C19.144 12.4703 18.9643 12.3522 18.7633 12.3577C18.5825 12.3636 18.4022 12.3749 18.22 12.3945L18.2197 12.3918Z"
-                            />
-                            </g>
-                            {#if isDarkTheme}
-                                <defs>
-                                    <filter id="filter0_d_2572_18359" x="0.464844" y="0.357422" width="35.3984" height="36.0054" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-                                    <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-                                    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-                                    <feOffset/>
-                                    <feGaussianBlur stdDeviation="6"/>
-                                    <feComposite in2="hardAlpha" operator="out"/>
-                                    <feColorMatrix type="matrix" values="0 0 0 0 0.945098 0 0 0 0 0.8 0 0 0 0 0.643137 0 0 0 0.31 0"/>
-                                    <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2572_18359"/>
-                                    <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2572_18359" result="shape"/>
-                                    </filter>
-                                    <linearGradient id="paint0_linear_2572_18359" x1="17.023" y1="9.67795" x2="18.2169" y2="20.7874" gradientUnits="userSpaceOnUse">
-                                    <stop stop-color="#FAEEE3"/>
-                                    <stop offset="1" stop-color="#F2C59C"/>
-                                    </linearGradient>
-                                </defs>
-                            {/if}
-                        </svg>
-                    </div>
-                    <div class="narrow-theme-toggle__highlighter"></div>
+        <button 
+            on:click={handleToggleThemeMode}
+            class="narrow-theme-toggle"
+            class:narrow-theme-toggle--dark={isDarkTheme}
+            class:narrow-theme-toggle--light={!isDarkTheme}
+        >
+            <div class="narrow-theme-toggle__container">
+                <div class="narrow-theme-toggle__sun">
+                    <svg width="19" height="18" viewBox="0 0 19 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path 
+                            d="M9.23877 0.507812C9.7419 0.507812 10.1498 0.91568 10.1498 1.4188V2.81219C10.1498 3.31531 9.7419 3.72318 9.23877 3.72318C8.73565 3.72318 8.32778 3.31531 8.32778 2.81219V1.4188C8.32778 0.91568 8.73565 0.507812 9.23877 0.507812ZM13.0436 9.08209C13.0436 11.065 11.436 12.6725 9.45307 12.6725C7.47014 12.6725 5.86268 11.065 5.86268 9.08209C5.86268 7.09916 7.47014 5.49159 9.45307 5.49159C11.436 5.49159 13.0436 7.09916 13.0436 9.08209ZM0.878906 9.29638C0.878906 8.79326 1.28677 8.38539 1.7899 8.38539H3.18317C3.68629 8.38539 4.09416 8.79326 4.09416 9.29638C4.09416 9.79951 3.68629 10.2074 3.18317 10.2074H1.7899C1.28677 10.2074 0.878906 9.79951 0.878906 9.29638ZM17.1164 9.77867C17.6195 9.77867 18.0273 9.3708 18.0273 8.86768C18.0273 8.36455 17.6195 7.95669 17.1164 7.95669H15.723C15.2198 7.95669 14.812 8.36455 14.812 8.86768C14.812 9.3708 15.2198 9.77867 15.723 9.77867H17.1164ZM8.75649 16.7453C8.75649 17.2484 9.16436 17.6562 9.66748 17.6562C10.1706 17.6562 10.5785 17.2484 10.5785 16.7453V15.352C10.5785 14.8489 10.1706 14.441 9.66748 14.441C9.16436 14.441 8.75649 14.8489 8.75649 15.352V16.7453ZM3.23867 3.17067C3.59432 2.81491 4.17118 2.81491 4.52695 3.17067L5.51224 4.15597C5.868 4.51173 5.868 5.08859 5.51224 5.44435C5.15647 5.80012 4.57961 5.80012 4.22385 5.44435L3.23867 4.45906C2.88279 4.1033 2.88279 3.52644 3.23867 3.17067ZM14.3792 14.9935C14.735 15.3493 15.3118 15.3493 15.6676 14.9935C16.0233 14.6376 16.0233 14.0609 15.6676 13.7051L14.6824 12.7198C14.3266 12.3641 13.7498 12.3641 13.394 12.7198C13.0382 13.0756 13.0382 13.6524 13.394 14.0082L14.3792 14.9935ZM15.3645 2.86758C15.7203 3.22346 15.7203 3.8002 15.3645 4.15597L14.3792 5.14126C14.0234 5.49702 13.4466 5.49702 13.0908 5.14126C12.735 4.78549 12.735 4.20863 13.0908 3.85287L14.0761 2.86769C14.4319 2.51181 15.0087 2.51181 15.3645 2.86758ZM3.54177 14.0082C3.186 14.364 3.186 14.9408 3.54177 15.2966C3.89753 15.6523 4.47439 15.6523 4.83016 15.2966L5.81534 14.3113C6.1711 13.9555 6.1711 13.3787 5.81534 13.0229C5.45957 12.6672 4.88271 12.6672 4.52695 13.0229L3.54177 14.0082Z" 
+                            fill={$themeState.themeToggleBtnIconColor}
+                        />
+                    </svg>
                 </div>
-            </button>
-        {/if}
-        <div class="bar__divider"></div>
+                <div class="narrow-theme-toggle__moon">
+                    <svg width="37" height="37" viewBox="0 0 37 37" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <g filter="url(#filter0_d_2572_18359)">
+                        <path 
+                            fill={`${isDarkTheme ? "url(#paint0_linear_2572_18359)" : $themeState.themeToggleBtnIconColor}`}
+                            d="M18.2197 12.3918C14.7036 12.7697 12.1435 15.7469 12.4976 19.0413C12.8516 22.3358 15.9858 24.701 19.502 24.3231C21.2273 24.1377 22.7211 23.3252 23.7563 22.1579C23.8847 22.0121 23.8999 21.8057 23.7911 21.6504C23.6822 21.4951 23.4758 21.423 23.2827 21.476C23.0086 21.5513 22.7264 21.6059 22.4332 21.6374C19.6743 21.9339 17.211 20.0757 16.9328 17.4871C16.7444 15.7347 17.6054 14.0985 19.0365 13.1311C19.2001 13.0192 19.2684 12.8233 19.2062 12.6468C19.144 12.4703 18.9643 12.3522 18.7633 12.3577C18.5825 12.3636 18.4022 12.3749 18.22 12.3945L18.2197 12.3918Z"
+                        />
+                        </g>
+                        {#if isDarkTheme}
+                            <defs>
+                                <filter id="filter0_d_2572_18359" x="0.464844" y="0.357422" width="35.3984" height="36.0054" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                                <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+                                <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                                <feOffset/>
+                                <feGaussianBlur stdDeviation="6"/>
+                                <feComposite in2="hardAlpha" operator="out"/>
+                                <feColorMatrix type="matrix" values="0 0 0 0 0.945098 0 0 0 0 0.8 0 0 0 0 0.643137 0 0 0 0.31 0"/>
+                                <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2572_18359"/>
+                                <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2572_18359" result="shape"/>
+                                </filter>
+                                <linearGradient id="paint0_linear_2572_18359" x1="17.023" y1="9.67795" x2="18.2169" y2="20.7874" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#FAEEE3"/>
+                                <stop offset="1" stop-color="#F2C59C"/>
+                                </linearGradient>
+                            </defs>
+                        {/if}
+                    </svg>
+                </div>
+                <div class="narrow-theme-toggle__highlighter"></div>
+            </div>
+        </button>
     </div>
     <!-- Wide Bar -->
     <div 
         class="wide-bar" 
-        class:wide-bar--floating={isFloating}
-        class:wide-bar--has-bulletin={hasBulletin}
         class:wide-bar--dark={isDarkTheme}
         class:wide-bar--light={!isDarkTheme}
         style:display={`${isWideBarMenuOpen ? "block" : "none"}`}
@@ -484,7 +408,6 @@
                             <button 
                                 title="Pin bar to edge"
                                 class="wide-bar__bar-option-btn"
-                                class:wide-bar__bar-option-btn--selected={isFloating}
                                 on:click={_toggleFloatSideBar}
                             >
                                 <i class="fa-solid fa-compress"></i>
@@ -492,27 +415,11 @@
                             <button 
                                 title="Float side bar"
                                 class="wide-bar__bar-option-btn"
-                                class:wide-bar__bar-option-btn--selected={!isFloating}
                                 on:click={_toggleFloatSideBar}
                             >
                                 <i class="fa-solid fa-expand"></i>
                             </button>
                         </div>
-                    </li>
-                    <li class="dropdown-menu__option" id="bulletin-optn">
-                        <button 
-                            id="bulletin-option" 
-                            class="dropdown-menu__option-btn"
-                            on:click={toggleBulletin}
-                        >
-                            <span class="dropdown-menu__option-text">
-                                {#if hasBulletin}
-                                    Hide Bulletin
-                                {:else}
-                                    Show Bulletin
-                                {/if}
-                            </span>
-                        </button>
                     </li>
                 </ul>
             </BounceFade>
@@ -526,43 +433,9 @@
             class:wide-bar__tabs--simple-styling={$themeState.title !== "Light Mode"}
         >   
             <!-- Core Features -->
-            {#each [0, 1, 2, 3, 4] as tabIdx}
-                {@const name = tabs[tabIdx].name}
-                {@const icon = tabs[tabIdx].icon}
-                <!-- svelte-ignore a11y-mouse-events-have-key-events -->
-                <button 
-                    class={`wide-bar__tab-btn wide-bar__tab-btn--${name.toLocaleLowerCase()}`} 
-                    id={`workspace-btn--${SideBarTab.Workspace}`} 
-                    on:click={(e) => handleTabBtnClicked(e, tabIdx)}
-                    on:mouseover={onTabBtnMouseOver}
-                    on:mouseleave={onTabBtnMouseLeave}
-                >
-                    <i class={`${icon} wide-bar__tab-btn-icon`}></i>
-                    <span>{name}</span>
-                </button>
-            {/each}
 
             <!-- Utilities -->
-            {#if isFloating}
-                <span class="wide-bar__section-title">
-                    Utilities
-                </span>
-                {#each [5, 6, 7] as tabIdx}
-                    {@const name = tabs[tabIdx].name}
-                    {@const icon = tabs[tabIdx].icon}
-                    <!-- svelte-ignore a11y-mouse-events-have-key-events -->
-                    <button 
-                        class={`wide-bar__tab-btn wide-bar__tab-btn--${name.toLocaleLowerCase()}`} 
-                        id={`workspace-btn--${SideBarTab.Workspace}`} 
-                        on:click={(e) => handleUtilTabBtnClicked(tabIdx)}
-                        on:mouseover={onTabBtnMouseOver}
-                        on:mouseleave={onTabBtnMouseLeave}
-                    >
-                        <i class={`${icon} wide-bar__tab-btn-icon`}></i>
-                        <span>{name}</span>
-                    </button>
-                {/each}
-            {/if}
+ 
         </div>
 
         <div class="wide-bar__divider"></div>
@@ -571,52 +444,16 @@
             <!-- Dashboard -->
             <div 
                 class="wide-bar__dashboard-container"
-                style:height={`calc(100% - ${bulletinHeight}px`}
+                style:height={`calc(100%}px`}
             >
-                <Dashboard 
+                <!-- <Dashboard 
                     options={{ 
                         type: isFloating ? "min" : "default",     
                         view: "habits" 
                     }}
-                />
+                /> -->
             </div>
-    
-            <!-- Bulletin -->
-            {#if hasBulletin}
-                <div 
-                    class="wide-bar__bulletin"
-                    class:wide-bar__bulletin--edit={isEditBulletin}
-                    bind:clientHeight={bulletinHeight}
-                >
-                    <span>Bulletin</span>
-                    {#if bulletinInput}
-                        <div 
-                            class="text-editor"
-                            style={bulletinGradient}
-                            id={$bulletinInput.id}
-                            data-placeholder={$bulletinInput.placeholder}
-                            contenteditable
-                            on:scroll={() => bulletinScrollHandler(bulletinTextAreaElem)}
-                            on:input={(e) => $bulletinInput.onInputHandler(e)}
-                            on:blur={(e)  => $bulletinInput.onBlurHandler(e)}
-                            on:focus={(e)  => $bulletinInput.onFocusHandler(e)}
-                            on:paste={(e) => $bulletinInput.onPaste(e)}
-                            bind:this={bulletinTextAreaElem}
-                            spellcheck="false"
-                        ></div>
-                    {/if}
-                    {#if isEditBulletin}
-                        <div class="wide-bar__bulletin-count">
-                            {currBulletinLength}/{BULLETIN_MAX}
-                        </div>
-                    {/if}
-                </div>
-            {/if}
         </div>
-    </div>
-    <div 
-        class="bar__resize-handle" 
-        on:mousedown={onResizerClicked}>
     </div>
 </div>
 
@@ -624,21 +461,18 @@
     @import "../../scss/dropdown.scss";
     @import "../../scss/inputs.scss";
 
-    $bar-width: 58px;
+    $bar-width: 62px;
 
     .bar {
         height: 100%;
         left: 0px;
         display: flex;
         position: relative;
-        
-        &--floating {
-            position: relative;
-            padding: 2px 0px 14px 0px;
-            width: 205px;
-        }
-        &--floating &__resize-handle {
-            display: none;
+
+        &--light-theme &__icon-tab-tool-tip {
+            border: 1.5px solid rgba(var(--textColor1), 0.1);
+            @include abs-top-left(4px, 44px);
+            @include text-style(0.9, 500);
         }
         
         &__narrow-bar {
@@ -650,14 +484,13 @@
             @include flex(center, space-between);
             z-index: 1;
             box-shadow: var(--navMenuBoxShadow);
-            border-right: var(--navMenuBorder);
+            border-right: 1.5px solid rgba((var(--textColor1)), 0.022);
             width: $bar-width;
             position: relative;
         }
         &__wide-bar {
             background-color: var(--wideLeftBarColor);
             box-shadow: var(--wideLeftBarBoxShadow);
-            border-right: 1.5px solid rgba((var(--textColor1)), 0.022);
             width: 100%;
             border-top: 0px solid;
             padding: 10px 0px 0px 0px;
@@ -671,63 +504,28 @@
         &__temp-logo {
             font-family: "Apercu";
             @include text-style(_, 500, 1.8rem);
-            position: relative;
             color: var(--navIconColor);
+            position: relative;
 
             &:after {
                 content: " ";
-                @include abs-bottom-right(-5px, 3px);
+                @include abs-bottom-right(3.5px, -5px);
                 @include circle(3px);
                 background-color: #FFA8A0;
             }
         }
         &__divider {
-            @include divider(0, 0.5px, 25px);
-            margin: 8px auto;
-        }
-        &__divider:last-child {
-            @include divider(0.045, 100%, 0.5px);
-            @include abs-top-right(0px, 0px);
-            margin: 0px;
+            @include divider(0.1, 1px, 25px);
+            margin: 15px auto;
         }
         &__icon-tabs {
-            &--dark-theme .bar__icon-tab {
-                &:focus {
-                    filter: brightness(1.3) !important;
-                }
-            }
-            &--dark-default, &--light-default {
-                .fa-brush  {
-                    color: #A6ADE9 !important;
-                }
-                .fa-compact-disc {
-                    color: #DDA3F2 !important;
-                }
-                .fa-youtube {
-                    color: #EE8A9C !important;
-                }
-            }
-            &--light-default {
-                .bar__icon-tab--stats {
-                    background-color: #F5F9FF !important;
-                }
-                .bar__icon-tab--journal {
-                    background-color: #F3F5FF !important;
-                }
-                .bar__icon-tab--music {
-                    background-color: #F6F2FF !important;
-                }
-                .bar__icon-tab--appearance {
-                    background-color: #FFF2FB !important;
-                }
-                .bar__icon-tab--settings {
-                    background-color: #fff4f7 !important;
-                }
-            }
-            &--simple-styling {
-                i {
-                    color: var(--navIconColor) !important;
-                }
+            margin-top: 12px;
+        }
+        &__icon-tab-container {
+            position: relative;
+
+            &:hover .bar__icon-tab-tool-tip {
+                @include visible;
             }
         }
         &__icon-tab {
@@ -736,24 +534,18 @@
             position: relative;
             font-size: 1rem;
             margin-bottom: 10px;
-            padding: 0px;
-            border-radius: 15px;
-            transition: 0.14s ease-in-out;
+            border-radius: 16px;
+            transition: 0.04s ease-in-out;
             background-color: var(--navIconBgColor);
             @include flex(center, center);
             
             &:active {
-                transform: scale(0.91);
-            }
-            &:hover {
-                border-radius: 100%;
-            }
-            &:focus {
-                border-radius: 100%;
-                filter: brightness(0.98);
+                transition: 0.1s ease-in-out;
+                transform: scale(0.92);
             }
             i {
                 font-size: 1.3rem;
+                @include text-style(0.3);
             }
             .fa-compact-disc {
                 font-size: 1.4rem;
@@ -766,12 +558,68 @@
                 display: none;
             }
         }
-        &__resize-handle {
-            @include abs-top-right(0px, -2px);
-            width: 5px;
-            height: 100%;
-            z-index: 1000;
-            cursor: ew-resize;
+        // dark default styling
+        &__icon-tab {
+            &--selected--dark-default#{&}--workspace {
+                background-color: rgba(#A3C2FF, 0.045);
+                i {
+                    color: #A3C2FF;
+                }
+            }
+            &--selected--dark-default#{&}--productivity {
+                background-color: rgba(#949FFF, 0.045);
+                i {
+                    color: #949FFF;
+                }
+            }
+            &--selected--dark-default#{&}--music {
+                background-color: rgba(#949FFF, 0.045);
+                i {
+                    color: #949FFF;
+                }
+            }
+            &--selected--dark-default#{&}--goals {
+                background-color: rgba(#FFA3C4, 0.045);
+                i {
+                    color: #FFA3C4;
+                }
+            }
+            &--selected--dark-default#{&}--youtube {
+                background-color: rgba(#FFA3C4, 0.045);
+                i {
+                    color: #FFA3C4;
+                }
+            }
+            &--selected--dark-default#{&}--habits {
+                background-color: rgba(#FFCFA3, 0.045);
+                i {
+                    color: #FFCFA3;
+                }
+            }
+            &--selected--dark-default#{&}--themes {
+                background-color: rgba(#FFCFA3, 0.045);
+                i {
+                    color: #FFCFA3;
+                }
+            }
+            &--selected--dark-default#{&}--routines {
+                background-color: rgba(#C3F493, 0.045);
+                i {
+                    color: #C3F493;
+                }
+            }
+        }
+        &__icon-tab-tool-tip {
+            position: absolute;
+            z-index: 200;
+            padding: 6px 14px;
+            border-radius: 11px;
+            transition: 0.08s ease-in-out;
+            background-color: var(--bg-3);
+            border: 1px solid rgba(var(--textColor1), 0.05);
+            @include abs-top-left(4px, 44px);
+            @include text-style(0.94, 400, 1.1rem, "DM Mono");
+            @include not-visible;
         }
     }
 
@@ -781,8 +629,9 @@
         border-top: 0px solid;
         padding: 11px 0px 0px 0px;
         position: relative;
-        width: 219px;
         height: 100%;
+        width: 0px !important;
+        display: none !important;
 
         &--floating {
             width: 100%;
@@ -791,19 +640,12 @@
         &--floating &__dashboard-container {
             max-height: 340px;
         }
-        &--floating &__bulletin {
-            margin: 15px 0px 0px 12px;
-        }
         &--floating &__divider {
             margin: 16.5px 0px 6px 0px;
         }
         &--floating &__divider--first {
             margin: 12px 0px 7px 0px;
         }
-        &--has-bulletin &__below-tabs {
-            height: calc(100% - 230px);
-        }
-
         /* User Info */
         &__profile {
             position: relative;
@@ -891,9 +733,6 @@
                 padding-top: 0px;
                 margin-top: -3px;
             }
-            #bulletin-optn {
-                margin-top: 3px;
-            }
             span {
                 font-size: 1.15rem;
             }
@@ -904,11 +743,6 @@
             margin-bottom: 0px;
             padding-left: 8px;
 
-            &--dark-theme .wide-bar__tab-btn {
-                &:focus {
-                    filter: brightness(1.3) !important;
-                }
-            }
             &--light-default {
                 .wide-bar__tab-btn--workspace {
                     background-color: #F5F9FF !important;
@@ -966,56 +800,6 @@
                 opacity: 1 !important;
             }
 
-            // dark default styling
-            &--selected--dark-default#{&}--workspace {
-                background-color: rgba(#A3C2FF, 0.02);
-                i {
-                    color: #A3C2FF;
-                }
-            }
-            &--selected--dark-default#{&}--productivity {
-                background-color: rgba(#949FFF, 0.02);
-                i {
-                    color: #949FFF;
-                }
-            }
-            &--selected--dark-default#{&}--music {
-                background-color: rgba(#949FFF, 0.02);
-                i {
-                    color: #949FFF;
-                }
-            }
-            &--selected--dark-default#{&}--goals {
-                background-color: rgba(#FFA3C4, 0.02);
-                i {
-                    color: #FFA3C4;
-                }
-            }
-            &--selected--dark-default#{&}--youtube {
-                background-color: rgba(#FFA3C4, 0.02);
-                i {
-                    color: #FFA3C4;
-                }
-            }
-            &--selected--dark-default#{&}--habits {
-                background-color: rgba(#FFCFA3, 0.02);
-                i {
-                    color: #FFCFA3;
-                }
-            }
-            &--selected--dark-default#{&}--themes {
-                background-color: rgba(#FFCFA3, 0.02);
-                i {
-                    color: #FFCFA3;
-                }
-            }
-            &--selected--dark-default#{&}--routines {
-                background-color: rgba(#C3F493, 0.02);
-                i {
-                    color: #C3F493;
-                }
-            }
-
             &-icon {
                 margin-right: 13px;
                 width: 10px;
@@ -1046,39 +830,12 @@
             display: flex;
             flex-direction: column;
             height: calc(100% - 200px);
-            overflow: hidden;
             padding-bottom: 2px;
         }
         &__dashboard-container {
         }
         &__settings {
             @include flex(center, space-between);
-        }
-
-        /* Bulleting Board */
-        &__bulletin {
-            width: calc(100% - 24px);
-            @include txt-color(0.012, "bg");
-            border: 1px dashed rgba(var(--textColor1), 0.06);
-            border-radius: 12px;
-            margin: 0px 0px 0px 12px;
-            padding: 7.5px 10px 3px 11px;
-
-            &--edit {
-                padding-bottom: 9px;
-            }
-
-            span {
-                @include text-style(0.2, 600, 0.9rem);
-            }
-            .text-editor {
-                @include text-style(0.7, 400, 1.1rem);
-                margin: 0px 0px 6px 0px;
-                max-height: 70px;
-            }
-            &-count {
-                @include text-style(0.3, 200, 1rem, "DM Mono");
-            }
         }
     }
 
@@ -1103,11 +860,6 @@
         }
         &--dark &__highlighter {
             @include abs-bottom-right(1px, 1px);
-        }
-        &--music-player-active {
-            @include mq-custom(max-width, 34.375em) {
-                margin-bottom: 55px;
-            }
         }
         &__container {
             position: relative;

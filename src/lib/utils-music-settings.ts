@@ -1,5 +1,6 @@
 import { acousticCollections, classicalCollections, lofiCollections, sereneCollections, soundtrackCollections, summerCollections, upbeatCollections, zenCollections } from "./data-music-collections"
 import { MusicMediaType, MusicMoodCategory, UserLibraryMedia } from "./enums"
+import { containsHtmlTags } from "./utils-general"
 
 /**
  * Requests for more discover media items once scrolled down far enough.
@@ -86,15 +87,15 @@ export function getMediaTypeStr(type: MusicMediaType): string {
  * @param media 
  * @returns     Get the number of items of a collection
  */
-export function getMediaLength(media: Media): number {
+export function getMediaLength(media: Media): string {
     const _media: any = media
 
     if ("length" in media) {
         const length = _media.length
-        return length > 100 ? "100+" : length
+        return length > 100 ? "100+" : length + ""
     }
 
-    return -1
+    return "100+"
 }
 
 /**

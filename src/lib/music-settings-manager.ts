@@ -1,16 +1,17 @@
 import { get } from "svelte/store"
-import { MusicMoodCategory, LibError, MusicPlatform, UserLibraryMedia } from "./enums"
+import { MusicMoodCategory, LibError, MusicPlatform, UserLibraryMedia, APIErrorCode } from "./enums"
 import { musicDataStore, musicSettingsManager } from "./store"
 import { getElemById, getHozScrollStatus, getVertScrollStatus } from "./utils-general"
 import { getLibMediaCollection, getPlatfromPropName, handlePlaylistItemClicked, musicAPIErrorHandler, musicLogin, musicLogout, refreshMusicSession } from "./utils-music"
 import { getDiscoverCollectionList } from "./utils-music-settings"
+import { APIError } from "./errors"
 
 export class MusicSettingsManager {
     // discover
     chosenMood = MusicMoodCategory.Serene
     chosenMusicCollection: (Playlist | Album | RadioStation)[] = []
 
-    isScrollableLeft = false
+    isScrollableLeft  = false
     isScrollableRight = true
     collectionList: HTMLElement | null = null
     hasCollectionItemsLoaded = true
@@ -23,7 +24,8 @@ export class MusicSettingsManager {
     isLibraryOptionsDropdownOpen = false
     currLibraryCollection = UserLibraryMedia.Playlists
     
-    debounceTimeout: NodeJS.Timeout | null = null
+    debounceTimeout:      NodeJS.Timeout | null = null
+    fetchLibItemsTimeout: NodeJS.Timeout | null = null
     libOptions: UserLibraryMedia[] = [
         UserLibraryMedia.Playlists, UserLibraryMedia.Albums, UserLibraryMedia.LikedTracks
     ]
@@ -84,31 +86,39 @@ export class MusicSettingsManager {
     async handleMediaClicked(mediaClicked: Partial<Media>, idx: number) {
         if (this.debounceTimeout != null) return
 
-        let _mediaClicked: Media
-        let isLib = "fromLib" in mediaClicked
+        let mediaCollection: MediaCollection
+        let isLib           = "fromLib" in mediaClicked
+        let doPlayMediaItem = true
 
-        if (isLib) {
-            _mediaClicked = mediaClicked as Media
+        if (!isLib) {
+            mediaCollection = { ...mediaClicked, description: "", fromLib: false } as MediaCollection
         }
         else {
-            _mediaClicked = { ...mediaClicked, description: "", fromLib: false } as Media
+            mediaCollection = mediaClicked as MediaCollection
         }
 
-        // make a collection for non-collection itmems (tracks, podcast eps, etc...) & verify collection is updated
+        // make a collection for non-collection media items (tracks, podcast eps, etc...) & verify collection is updated
         if (isLib) {
             try {
-                _mediaClicked = await getLibMediaCollection(_mediaClicked, idx) 
+                mediaCollection = await getLibMediaCollection(mediaCollection, idx) 
             }
             catch(e: any) {
+                doPlayMediaItem = false
                 musicAPIErrorHandler(e)
             }
         }
+        if (mediaCollection.length === 0) {
+            musicAPIErrorHandler(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Cannot play empty collections."))
+            doPlayMediaItem = false
+        }
+        if (doPlayMediaItem) {
+            await handlePlaylistItemClicked(mediaCollection! as MediaCollection, mediaClicked as Media, idx)
+        }
 
-        await handlePlaylistItemClicked(_mediaClicked! as MediaCollection, _mediaClicked, idx)
-    
         this.debounceTimeout = setTimeout(() => { 
             this.debounceTimeout = null
             clearTimeout(this.debounceTimeout!)
+
         }, this.NEW_COLLECTION_COOLDOWN_MS)
     }
 
@@ -147,12 +157,16 @@ export class MusicSettingsManager {
         this.currLibraryCollection  = data.currentUserMedia
         this.userLibrary            = data.getCurrentLibraryDetails()
 
-        this.updateState({ userLibrary: this.userLibrary, currLibraryCollection: this.currLibraryCollection })
+        this.updateState({ 
+            userLibrary: this.userLibrary, 
+            currLibraryCollection: this.currLibraryCollection 
+        })
     }
 
     /**
-     * Called when user clicks on a new Library collectino to view.
+     * Called when user clicks on a new lib collection to view.
      * If view has not been initialized yet, request for it.
+     * 
      * @param toMedia   New library view option.
      * @returns 
      */
@@ -161,7 +175,7 @@ export class MusicSettingsManager {
             if (toMedia === this.currLibraryCollection) return
 
             const musicStore = get(musicDataStore)
-            const _toMedia = musicStore!.getLibraryDetails(toMedia)
+            const _toMedia   = musicStore!.getLibraryDetails(toMedia)
             const isFetchingForFirstTime = !_toMedia.hasFetchedAll && _toMedia.items.length === 0
     
             if (isFetchingForFirstTime) {
@@ -181,23 +195,25 @@ export class MusicSettingsManager {
     }
 
     /**
-     * For pagination. Gets more items of current library collection when user scrolls down far enough.
+     * For infinit scroll. Gets more items of current library collection when user scrolls down far enough.
      */
     getMoreLibItems() {
         if (!this.shouldGetMoreLibItems()) return
-        this.setLibraryLoading()
         
-        setTimeout(async () => { 
+        this.fetchLibItemsTimeout = setTimeout(async () => {
             const musicStore = get(musicDataStore)
             try {
+                this.setLibraryLoading()
                 await musicStore!.getMoreLibraryItems()
-                this.setLibraryLoaded()
                 this.updateLibrary()
-                
-                if (this.hasReachedEndOfList()) this.getMoreLibItems()
             }
             catch(error: any) {
                 this.setLibraryLoaded(LibError.MORE_ITEMS)
+            }
+            finally {
+                this.setLibraryLoaded()
+                clearTimeout(this.fetchLibItemsTimeout!)
+                this.fetchLibItemsTimeout = null
             }
         }, this.FETCH_MORE_LIB_ITEMS_COOLDOWN_MS)
     }
@@ -229,7 +245,8 @@ export class MusicSettingsManager {
     shouldGetMoreLibItems() {
         return !this.isUserLibraryLoading &&            
                !this.userLibrary?.hasFetchedAll &&     
-               !this.hasTokenExpired() &&            
+               !this.hasTokenExpired() &&
+               !this.fetchLibItemsTimeout &&
                !this.libError
     }
 
@@ -249,8 +266,12 @@ export class MusicSettingsManager {
      * Scroll handler for the libray list section.
      */
     handleLibListScroll() {
-        const scrollStatus = getVertScrollStatus(this.libraryList!)
-        this.handleLibListStyling(scrollStatus)
+        // const scrollStatus = getVertScrollStatus(this.libraryList!)
+        // this.handleLibListStyling(scrollStatus)
+
+        if (this.hasReachedEndOfList()) {
+            this.getMoreLibItems()
+        }
     }
 
     hasReachedEndOfList() {

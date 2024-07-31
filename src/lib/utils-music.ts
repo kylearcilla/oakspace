@@ -17,8 +17,8 @@ import { AppleMusicPlayer } from "./music-apple-player"
 import { toast } from "./utils-toast"
 
 export const USER_PLAYLISTS_REQUEST_LIMIT = 10
-export const SPOTIFY_IFRAME_ID = "spotify-iframe"
-export const LIBRARY_COLLECTION_LIMIT = 25
+export const SPOTIFY_IFRAME_ID            = "spotify-iframe"
+export const LIBRARY_COLLECTION_LIMIT     = 25
 
 /**
  * Attempt to log in user to desired music platform. 
@@ -97,17 +97,25 @@ async function initPlayer(platform: MusicPlatform, selectContext?: MusicMediaSel
 export async function handlePlaylistItemClicked (collection: MediaCollection, itemClicked: Media, idx: number) {
     const musicData = get(musicDataStore)
     const selectContext = { collection, itemClicked, idx }
-
     let player = get(musicPlayerStore)
-    player ??= await initPlayer(musicData!.musicPlatform, selectContext)
+    
+    try {
+        player ??= await initPlayer(musicData!.musicPlatform, selectContext)
+    }
+    catch(e: any) {
+        musicAPIErrorHandler(e)
+        return
+    }
 
     await player.updateMediaCollection(selectContext)
     player.loadCurrentItem(true)
 }
 
+
 /**
  * Check to see if player has been initialized in a previous session.
  * If so then init the player.
+ * 
  * @param platform    Current platform user is using.
  */
 export async function verifyForPlayerSession(platform: MusicPlatform) {
@@ -118,7 +126,12 @@ export async function verifyForPlayerSession(platform: MusicPlatform) {
         return
     }
     if (playerData) {
-        await initPlayer(platform)
+        try {
+            await initPlayer(platform)
+        }
+        catch(e: any) {
+            musicAPIErrorHandler(e)
+        }
     }
 }
 
@@ -290,17 +303,20 @@ export function initMusicToast(context: MusicPlatform, message: string) {
 export function musicAPIErrorHandler(error: APIError, musicPlatform?: MusicPlatform) {
     let toastOptions: ToastInitOptions
 
-    const platform = musicPlatform === undefined ? get(musicDataStore)!.musicPlatform! : musicPlatform
+    const musicData = get(musicDataStore)
+    const platform  = musicPlatform === undefined ? musicData?.musicPlatform : musicPlatform
+
+    if (!platform) return
+
+    console.error(error)
+
     const platformStr = getPlatformString(platform)
-
     const errorMessage = error.message 
-    const hasNoMsg = errorMessage != undefined && errorMessage
-
-    console.error("xx")
+    const hasMsg = errorMessage != undefined && errorMessage
 
     if (error.code === APIErrorCode.EXPIRED_TOKEN) {
         toastOptions = {
-            message: hasNoMsg ? errorMessage : "Token has expired. Log in again to continue.",
+            message: hasMsg ? errorMessage : "Token has expired. Log in again to continue.",
             action: {
                 label: "Continue session",
                 onClick: () => refreshMusicSession()
@@ -309,17 +325,17 @@ export function musicAPIErrorHandler(error: APIError, musicPlatform?: MusicPlatf
     }
     else if (error.code === APIErrorCode.PLAYER) {
         toastOptions = {
-            message: hasNoMsg ? errorMessage : "Player error. Try again later.",
+            message: hasMsg ? errorMessage : "Player error. Try again later.",
         }
     }
     else if (error.code === APIErrorCode.FAILED_TOKEN_REFRESH) {
         toastOptions = {
-            message: hasNoMsg ? errorMessage : "Token refresh failed. Please try again.",
+            message: hasMsg ? errorMessage : "Token refresh failed. Please try again.",
         }
     }
     else if (error.code === APIErrorCode.AUTHORIZATION_ERROR) {
         toastOptions = {
-            message: hasNoMsg ? errorMessage : `${platformStr} authorization failed.`,
+            message: hasMsg ? errorMessage : `${platformStr} authorization failed.`,
         }
     }
     else if (error.code === APIErrorCode.RATE_LIMIT_HIT) {
@@ -329,12 +345,12 @@ export function musicAPIErrorHandler(error: APIError, musicPlatform?: MusicPlatf
     }
     else if (error instanceof TypeError) {
         toastOptions = {
-            message: hasNoMsg ? errorMessage : "There was an error. Please try again."
+            message: hasMsg ? errorMessage : "There was an error. Please try again."
         }
     }
     else {
         toastOptions = {
-            message: hasNoMsg ? errorMessage : `There was an error with ${platformStr} Please try again later.` ,
+            message: hasMsg ? errorMessage : `There was an error with ${platformStr} Please try again later.` ,
         }
     }
 

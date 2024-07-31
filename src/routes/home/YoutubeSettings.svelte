@@ -2,7 +2,7 @@
 	import { onMount } from "svelte"
     
     import { closeModal } from "$lib/utils-home"
-    import { LogoIcon, ModalType } from "$lib/enums"
+    import { APIErrorCode, LogoIcon, ModalType } from "$lib/enums"
 	import { themeState, ytPlayerStore, ytUserDataStore } from "$lib/store"
     import { formatPlural, getMaskedGradientStyle, preventScroll } from "../../lib/utils-general"
 	import { handleChoosePlaylist, refreshToken, youtubeLogOut, youtubeLogin } from "$lib/utils-youtube"
@@ -25,9 +25,10 @@
     let scrollTop = 0
     let scrollHeight = 0
     let scrollWindow = 0
+    let playlistTimeout: NodeJS.Timeout | null = null
 
     let tabListGradientStyle = ""
-    let hasLibError = false
+    let ytError: any = null
     let userPlaylists: YoutubePlaylist[] = []
 
     const SCROLL_STEP = 200
@@ -38,21 +39,23 @@
     $: isDarkTheme     = $themeState.isDarkTheme
     $: hasSignedIn     = $ytUserDataStore?.hasUserSignedIn ?? false
     $: playlist        = $ytPlayerStore?.playlist ?? null    
-    $: userData        = $ytUserDataStore
-    $: hasTokenExpired = userData?.hasTokenExpired ?? false
+    $: userData             = $ytUserDataStore
+    $: hasTokenExpired      = userData?.hasTokenExpired ?? false
+    $: hasFetchedAllUserPls = userData?.hasFetchedAllUserPls ?? false
 
-    $: console.log({ hasTokenExpired })
-
-    // if loggin out but user playlists is selected
-    $: if (!userData && selectedPlsGroup.title === "My Playlists") {
-        selectedPlsGroup = YT_PLAYLIST_GROUPS[0]
+    $: if (ytError?.code === APIErrorCode.EXPIRED_TOKEN && !hasTokenExpired) {
+        ytError = null
     }
     $: if (hasSignedIn) {
         userPlaylists = $ytUserDataStore?.userPlaylists ?? []
     }
+    // updating playlists (refresh, more items)
     $: if (selectedPlsGroup.title === "My Playlists") {
-        // updating playlists (refresh, more items)
         selectedPlsGroup.playlists = userPlaylists
+    }
+    // if loggin out but user playlists is selected
+    $: if (!userData && selectedPlsGroup.title === "My Playlists") {
+        selectedPlsGroup = YT_PLAYLIST_GROUPS[0]
     }
 
     /* Account */
@@ -85,10 +88,8 @@
         scrollTop = list.scrollTop
         scrollHeight = list!.scrollHeight
         scrollWindow = list!.clientHeight 
-
         
         if (!hasReachedEndOfList() || isPlsLoading) return
-        console.log({ scrollTop, isPlsLoading })
         getMorePlaylists()
     }
     async function refreshUserPlaylsts() {
@@ -98,36 +99,35 @@
             userPlaylists = []
             isPlsLoading = true
             await userData!.refreshUserPlaylists()
-            hasLibError = false
+            ytError = null
         }
-        catch {
+        catch(e) {
             userPlaylists = _userPlaylists
-            hasLibError = true
+            ytError = e
         }
         finally {
             isPlsLoading = false
         }
     }
     function getMorePlaylists() {
-        const haltFetchMore = isPlsLoading || userData!.hasFetchedAllUserPls || hasLibError || hasTokenExpired 
+        const haltFetchMore = isPlsLoading || hasFetchedAllUserPls || ytError || hasTokenExpired || playlistTimeout
         if (haltFetchMore) return
-        console.log("PASSED")
         
-        setTimeout(async () => { 
+        playlistTimeout = setTimeout(async () => { 
             try {
                 isPlsLoading = true
-                console.log("FETCHING MORE SHIT")
                 await $ytUserDataStore!.loadMorePlaylistItems()
                 userPlaylists = $ytUserDataStore!.userPlaylists
 
-                isPlsLoading = false
-                hasLibError = false
-
-                // if (hasReachedEndOfList()) getMorePlaylists()
+                ytError = null
             }
             catch(error: any) {
+                ytError = error
+            }
+            finally {
                 isPlsLoading = false
-                hasLibError = true
+                clearInterval(playlistTimeout!)
+                playlistTimeout = null
             }
         }, FETCH_PLAYLIST_DELAY)
     }
@@ -137,7 +137,7 @@
 
         if (e.key === 'Enter' || e.code == "Space") {
             e.preventDefault()
-            handleChoosePlaylist(playlist);
+            handleChoosePlaylist(playlist)
         }
     }
 
@@ -149,11 +149,12 @@
         groupTabList!.scrollLeft -= SCROLL_STEP
     }
     function handleRecTabBtnClicked(index: number){
-        if (index < 0) {
-            selectedPlsGroup = { title: "My Playlists", playlists: $ytUserDataStore!.userPlaylists }
-            return
+        if (index >= 0) {
+            selectedPlsGroup = YT_PLAYLIST_GROUPS[index]
         }
-        selectedPlsGroup = YT_PLAYLIST_GROUPS[index]
+        else {
+            selectedPlsGroup = { title: "My Playlists", playlists: $ytUserDataStore!.userPlaylists }
+        }
     }
     function updateTabListStyle() {
         const res = getMaskedGradientStyle(groupTabList, {
@@ -179,7 +180,7 @@
 <svelte:window on:keydown={onKeyPress} />
 
 <Modal 
-    options={{ closeOnEsc: true }}
+    options={{ closeOnEsc: true, borderRadius: "18px" }}
     onClickOutSide={() => closeModal(ModalType.Youtube)}
 >
     <div 
@@ -198,7 +199,7 @@
                     <Logo 
                         logo={LogoIcon.Youtube}
                         options={{ 
-                            hasBgColor: false, containerWidth: "20px", iconWidth: "100%"
+                            hasBgColor: true, containerWidth: "16px", iconWidth: "72%"
                         }}
                     />
                 </div>
@@ -244,7 +245,7 @@
                                 {userData?.email}
                             </span>
                             <div class="yt-settings__user-profile-details-header">
-                                Youtube Channel
+                                Youtube
                             </div>
                             <span>
                                 {userData?.username}
@@ -315,7 +316,7 @@
                 <div class="recs__header bento-box__header">
                     <h3 class="bento-box__title">Recommendations</h3>
                 </div>
-                <p class="recs__copy bento-box__copy paragraph-2">
+                <p class="recs__copy bento-box__copy">
                     Discover new playlists with our staff recommended playlist picks!
                 </p>
                 <!-- Horizontal Tabs Carousel -->
@@ -468,7 +469,7 @@
         width: 86vw;
         height: 86vh;
         max-width: 1200px;
-        padding: $settings-modal-padding;
+        padding: 15px 25px 17px 25px;
 
         .skeleton-bg {
             @include skeleton-bg(dark);   
@@ -531,7 +532,6 @@
         &--light &__user-capsule {
             background-color: var(--bentoBoxBgColor);
             span {
-                color: rgba(var(--textColor1), 0.65);
                 font-weight: 600;
             }
         }
@@ -547,6 +547,9 @@
                 font-weight: 600;
             }
         }
+        &--light .recs__playlist-item img {
+            border-radius: 5px;
+        }
         &__header {
             @include flex(flex-start, space-between);
             height: $header-height;
@@ -555,7 +558,7 @@
                 @include center;
             }
             &-yt-logo {
-                margin-left: 8px;
+                margin-left: 9px;
             }
         }
         /* User Profile Tab */
@@ -570,15 +573,14 @@
             transition: 0.12s ease-in-out;
 
             &-google-logo {
-                margin-right: 8px;
+                margin-right: 10px;
             }
             img {
                 @include circle(14px);
                 margin-right: 8px;
             }
             span {
-                font-weight: 400;
-                font-size: 1.2rem;
+                @include text-style(1, 600, 1.15rem);
             }
             &:hover {
                 background-color: var(--hoverColor2);
@@ -605,10 +607,8 @@
 
             span {
                 display: block;
-                color: rgb(var(--textColor1), 0.4);
                 margin: 5px 0px 20px 0px;
-                font-weight: 200;
-                font-size: 1.14rem;
+                @include text-style(0.4, 200, 1.14rem);
             }
         }
         &__user-profile-details-header {

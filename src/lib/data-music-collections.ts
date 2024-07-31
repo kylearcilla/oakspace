@@ -1,59 +1,84 @@
 import { MusicMediaType, MusicMoodCategory } from "./enums"
 
+import sereneImg   from '$lib/images/collection_serene.png'
+import sereneImgBg from '$lib/images/collection_serene_bg.png'
+
+import lofiImg   from '$lib/images/collection_lofi.png'
+import lofiImgBg   from '$lib/images/collection_lofi_bg.png'
+
+import classicalImg   from '$lib/images/collection_classical.png'
+import classicalImgBg   from '$lib/images/collection_classical_bg.png'
+
+import upbeatImg   from '$lib/images/collection_upbeat.png'
+import upbeatImgBg   from '$lib/images/collection_upbeat_bg.png'
+
+import soundtracksImg   from '$lib/images/collection_soundtracks.png'
+import soundtracksImgBg   from '$lib/images/collection_soundtracks_bg.png'
+
+import acousticImg   from '$lib/images/collection_acoustic.png'
+import acousticImgBg from '$lib/images/collection_acoustic_bg.png'
+
+import zenImg   from '$lib/images/collection_zen.png'
+import zenImgBg   from '$lib/images/collection_zen_bg.png'
+
+import summerImg   from '$lib/images/collection_summer.png'
+import summerImgBg   from '$lib/images/collection_summer_bg.png'
+
+
 export const musicCategories: MusicCollectionCategory[] = [
     {
         moodType: MusicMoodCategory.Serene,
-        artworkSrc: "/collection_serene.png",
-        artworkBlurredSrc: "/collection_serene_bg.png",
+        artworkSrc: sereneImg,
+        artworkBlurredSrc: sereneImgBg,
         artistCredit: "Photo by Brodie McCabe",
         description: "Music for maximum chill & serenity."
     },
     {
         moodType: MusicMoodCategory.Lofi,
-        artworkSrc: "/collection_lofi.png",
-        artworkBlurredSrc: "/collection_lofi_bg.png",
+        artworkSrc: lofiImg,
+        artworkBlurredSrc: lofiImgBg,
         artistCredit: "Art by Minjin Kang and Mijoo Kim",
         description: "The ideal relaxing musical backdrop for any activity.",
     },
     {
         moodType: MusicMoodCategory.Classical,
-        artworkSrc: "/collection_classical.png",
-        artworkBlurredSrc: "/collection_classical_bg.png",
+        artworkSrc: classicalImg,
+        artworkBlurredSrc: classicalImgBg,
         artistCredit: "Art by KangHee Kim",
         description: "Timeless masterpieces & modern works for productive inspiration.",
     },
     {
         moodType: MusicMoodCategory.Upbeat,
-        artworkSrc: "/collection_upbeat.png",
-        artworkBlurredSrc: "/collection_upbeat_bg.png",
+        artworkSrc: upbeatImg,
+        artworkBlurredSrc: upbeatImgBg,
         artistCredit: "Art by David Stenbeck",
         description: "Music to spark your energy and uplift the soul.",
     },
     {
         moodType: MusicMoodCategory.Soundtracks,
-        artworkSrc: "/collection_soundtracks.png",
-        artworkBlurredSrc: "/collection_soundtracks_bg.png",
+        artworkSrc: soundtracksImg,
+        artworkBlurredSrc: soundtracksImgBg,
         artistCredit: "Art by Studio Ghibli",
         description: "Iconic sountracks for cinematic experiences.",
     },
     {
         moodType: MusicMoodCategory.Acoustic,
-        artworkSrc: "/collection_acoustic.png",
-        artworkBlurredSrc: "/collection_acoustic_bg.png",
+        artworkSrc: acousticImg,
+        artworkBlurredSrc: acousticImgBg,
         artistCredit: "",
         description: "Intimate, soft, and stripped-down arrangements for the soul.",
     },
     {
         moodType: MusicMoodCategory.Zen,
-        artworkSrc: "/collection_zen.png",
-        artworkBlurredSrc: "/collection_zen_bg.png",
+        artworkSrc: zenImg,
+        artworkBlurredSrc: zenImgBg,
         artistCredit: "",
         description: "Soothing & ambient sounds for tranquility and inner piece.",
     },
     {
         moodType: MusicMoodCategory.Summer,
-        artworkSrc: "/collection_summer.png",
-        artworkBlurredSrc: "/collection_summer_bg.png",
+        artworkSrc: summerImg,
+        artworkBlurredSrc: summerImgBg,
         artistCredit: "Photo by Julie Christina",
         description: "Warm and lush soundscapes for summertime bliss.",
     },
@@ -71,6 +96,16 @@ export const sereneCollections: DiscoverCollection = {
             id: "pl.cb4d1c09a2df4230a78d0395fe1f8fde",
             url: "https://music.apple.com/ca/playlist/piano-chill/pl.cb4d1c09a2df4230a78d0395fe1f8fde",
             type: MusicMediaType.Playlist
+        },
+        {
+            name: "Soft Pop Station",
+            author: "Apple Music Pop",
+            authorUrl: "https://music.apple.com/us/curator/apple-music-pop/976439548",
+            artworkImgSrc: "https://is1-ssl.mzstatic.com/image/thumb/Features126/v4/1c/ba/5e/1cba5e0c-b86f-6978-ec0c-fcbcb554800f/9184a97e-d180-4288-9b48-59ddde98b205.png/592x592sr.webp",
+            genre: "Pop",
+            id: "ra.991200508",
+            url: "https://music.apple.com/us/station/soft-pop-station/ra.991200508",
+            type: MusicMediaType.RadioStation
         },
         {
             name: "Lo-Fi Chill",
@@ -115,16 +150,6 @@ export const sereneCollections: DiscoverCollection = {
             id: "pl.aa28cc9ba96a4e719da7e2ddc5ffccb3",
             url: "https://music.apple.com/us/playlist/pure-ambient/pl.aa28cc9ba96a4e719da7e2ddc5ffccb3",
             type: MusicMediaType.Playlist
-        },
-        {
-            name: "Soft Pop Station",
-            author: "Apple Music Pop",
-            authorUrl: "https://music.apple.com/us/curator/apple-music-pop/976439548",
-            artworkImgSrc: "https://is1-ssl.mzstatic.com/image/thumb/Features126/v4/1c/ba/5e/1cba5e0c-b86f-6978-ec0c-fcbcb554800f/9184a97e-d180-4288-9b48-59ddde98b205.png/592x592sr.webp",
-            genre: "Pop",
-            id: "ra.991200508",
-            url: "https://music.apple.com/us/station/soft-pop-station/ra.991200508",
-            type: MusicMediaType.RadioStation
         },
         {
             name: "Laidback",
@@ -306,12 +331,78 @@ export const sereneCollections: DiscoverCollection = {
         {
             name: "Chill Vibes",
             author: "Spotify - Chill",
-            authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLjXHdXxUCd2E",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002f2d08778548e125bcb867692",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFFzDl7qN9Apr",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000243cc4425ca68418fcab705fd",
             genre: "Lofi / Indie",
             length: 140,
             id: "37i9dQZF1DX889U0CL85jj",
             url: "https://open.spotify.com/playlist/37i9dQZF1DX889U0CL85jj",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "lofi chill",
+            author: "Spotify - Chill",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFFzDl7qN9Apr",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000027912be812c88dbc15ec2fe38",
+            genre: "Lofi",
+            length: 379,
+            id: "37i9dQZF1DWYoYGBbGKurt",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DWYoYGBbGKurt",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Park Hangs",
+            author: "Spotify",
+            authorUrl: "https://open.spotify.com/genre/section0JQ5IMCbQBLnXKxaLEeS77",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002a946900e97683496f9faedd5",
+            genre: "Pop",
+            length: 100,
+            id: "37i9dQZF1DWSP55jZj2ES3",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DWSP55jZj2ES3",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "aesthetic",
+            author: "Spotify",
+            authorUrl: "https://open.spotify.com/genre/section0JQ5IMCbQBLnXKxaLEeS77",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000211745a8204b55717393c39b6",
+            genre: "Pop / Indie",
+            length: 75,
+            id: "37i9dQZF1DX8uc99HoZBLU",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX8uc99HoZBLU",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Nightstorms",
+            author: "Spotify - Rain",
+            authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLlqNc4G2gD7Z",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002d9e758880a1effe4f5d62062",
+            genre: "Nature",
+            length: 250,
+            id: "37i9dQZF1DX4aYNO8X5RpR",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX4aYNO8X5RpR",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Chilled Dance Hits",
+            author: "Spotify - Chill",
+            authorUrl: "https://open.spotify.com/playlist/37i9dQZF1DWYoYGBbGKurt",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000024398f111095898becb38b7f5",
+            genre: "Dance / Pop",
+            length: 100,
+            id: "37i9dQZF1DXccH49bh52dB",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DXccH49bh52dB",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Deep House Relax",
+            author: "Spotify - Dance / Electronic",
+            authorUrl: "https://open.spotify.com/genre/edm_dance",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000236b7c4ece12f6a254f41d5c1",
+            genre: "House",
+            length: 200,
+            id: "37i9dQZF1DX2TRYkJECvfC",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX2TRYkJECvfC",
             type: MusicMediaType.Playlist
         },
         {
@@ -328,12 +419,12 @@ export const sereneCollections: DiscoverCollection = {
         {
             name: "Chillhop",
             author: "Spotify - Chill",
-            authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLjXHdXxUCd2",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFFzDl7qN9Apr",
             artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002ec94bf1083be30463d4b731d",
             genre: "Indie / Pop",
             length: 100,
             id: "37i9dQZF1DXdLK5wjKyhVm",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DWYoYGBbGKurt",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DXdLK5wjKyhVm",
             type: MusicMediaType.Playlist
         },
         {
@@ -350,8 +441,8 @@ export const sereneCollections: DiscoverCollection = {
         {
             name: "creamy",
             author: "Spotify - Chill",
-            authorUrl: "https://open.spotify.com/genre/edm_dance",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002787e703b974ea53ce0294518",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFFzDl7qN9Apr",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002c900b0f40243c074a997b77e",
             genre: "EDM / House",
             length: 100,
             id: "37i9dQZF1DXdgz8ZB7c2CP",
@@ -359,30 +450,8 @@ export const sereneCollections: DiscoverCollection = {
             type: MusicMediaType.Playlist
         },
         {
-            name: "Deep House Relax",
-            author: "house",
-            authorUrl: "https://open.spotify.com/genre/edm_dance",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000236b7c4ece12f6a254f41d5c1",
-            genre: "House",
-            length: 200,
-            id: "37i9dQZF1DX2TRYkJECvfC",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DX2TRYkJECvfC",
-            type: MusicMediaType.Playlist
-        },
-        {
-            name: "Chilled Dance Hits",
-            author: "Spotify - Chill",
-            authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLjXHdXxUCd2",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000024398f111095898becb38b7f5",
-            genre: "Dance / Pop",
-            length: 100,
-            id: "37i9dQZF1DXccH49bh52dB",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DWYoYGBbGKurt",
-            type: MusicMediaType.Playlist
-        },
-        {
             name: "Stress Relief",
-            author: "Spotify - Chill",
+            author: "Spotify - Ambient",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFLjmiZRss79w",
             artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000231ca8abcbff3f5a3eb1fd339",
             genre: "Ambient",
@@ -400,17 +469,6 @@ export const sereneCollections: DiscoverCollection = {
             length: 50,
             id: "37i9dQZF1DX17TxDoLeXxl",
             url: "https://open.spotify.com/playlist/37i9dQZF1DX17TxDoLeXxl",
-            type: MusicMediaType.Playlist
-        },
-        {
-            name: "Nightstorms",
-            author: "Spotify - Rain",
-            authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLlqNc4G2gD7Z",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002d9e758880a1effe4f5d62062",
-            genre: "Nature",
-            length: 250,
-            id: "37i9dQZF1DX4aYNO8X5RpR",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DX4aYNO8X5RpR",
             type: MusicMediaType.Playlist
         },
         {
@@ -469,17 +527,6 @@ export const sereneCollections: DiscoverCollection = {
             type: MusicMediaType.Playlist
         },
         {
-            name: "aesthetic",
-            author: "Spotify",
-            authorUrl: "https://open.spotify.com/genre/section0JQ5IMCbQBLnXKxaLEeS77",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000211745a8204b55717393c39b6",
-            genre: "Pop / Indie",
-            length: 75,
-            id: "37i9dQZF1DX8uc99HoZBLU",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DX8uc99HoZBLU",
-            type: MusicMediaType.Playlist
-        },
-        {
             name: "my life is a movie",
             author: "Spotify",
             authorUrl: "https://open.spotify.com/genre/section0JQ5IMCbQBLnXKxaLEeS77",
@@ -524,17 +571,6 @@ export const sereneCollections: DiscoverCollection = {
             type: MusicMediaType.Playlist
         },
         {
-            name: "lofi chill",
-            author: "Spotify - Chill",
-            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFFzDl7qN9Apr",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000027912be812c88dbc15ec2fe38",
-            genre: "Lofi",
-            length: 379,
-            id: "37i9dQZF1DWYoYGBbGKurt",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DWYoYGBbGKurt",
-            type: MusicMediaType.Playlist
-        },
-        {
             name: "Classical Focus",
             author: "Spotify - Focus",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFCbimwdOYlsl",
@@ -546,22 +582,11 @@ export const sereneCollections: DiscoverCollection = {
             type: MusicMediaType.Playlist
         },
         {
-            name: "Park Hangs",
-            author: "Spotify",
-            authorUrl: "https://open.spotify.com/genre/section0JQ5IMCbQBLnXKxaLEeS77",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002a946900e97683496f9faedd5",
-            genre: "Pop",
-            length: 100,
-            id: "37i9dQZF1DWSP55jZj2ES3",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DWSP55jZj2ES3",
-            type: MusicMediaType.Playlist
-        },
-        {
             name: "Pop Study",
             author: "Spotify - Focus",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFCbimwdOYlsl",
             artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002c9ad0a5b71a7c80ddcf621f4",
-            genre: "Lofi / Ambient",
+            genre: "Pop",
             length: 100,
             id: "37i9dQZF1DWSoyxGghlqv5",
             url: "https://open.spotify.com/playlist/37i9dQZF1DWSoyxGghlqv5",
@@ -571,7 +596,7 @@ export const sereneCollections: DiscoverCollection = {
             name: "Indie Pop Hits",
             author: "Spotify",
             authorUrl: "https://open.spotify.com/genre/section0JQ5IMCbQBLnXKxaLEeS77",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000286e2e8be4566f5feabb50880",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000027b508eee41245c75d1744ed3",
             genre: "Indie / Pop",
             length: 103,
             id: "37i9dQZF1DXbO6rt3GhXDY",
@@ -729,14 +754,25 @@ export const lofiCollections = {
             type: MusicMediaType.Playlist
         },
         {
-            name: "lofi covers",
+            name: "rainy day lofi",
             author: "Spotify - Lofi",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFKDIyhfS9NTT",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002e54160e97691747f6ff0ca19",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000240e0b4acc10c859fa3268c27",
             genre: "Lofi",
-            length: 161,
-            id: "37i9dQZF1DX4nNmLlb3JR2",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DX4nNmLlb3JR2",
+            length: 82,
+            id: "37i9dQZF1DXdaIjAsPE9ht",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DXdaIjAsPE9ht",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Lush Lofi",
+            author: "Spotify - Lofi",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFKDIyhfS9NTT",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002d6f1ecdd88c833a90cbb2350",
+            genre: "Lofi",
+            length: 400,
+            id: "37i9dQZF1DXc8kgYqQLMfH",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DXc8kgYqQLMfH",
             type: MusicMediaType.Playlist
         },
         {
@@ -850,17 +886,6 @@ export const lofiCollections = {
             type: MusicMediaType.Playlist
         },
         {
-            name: "Lush Lofi",
-            author: "Spotify - Lofi",
-            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFKDIyhfS9NTT",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002d6f1ecdd88c833a90cbb2350",
-            genre: "Lofi",
-            length: 400,
-            id: "37i9dQZF1DXc8kgYqQLMfH",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DXc8kgYqQLMfH",
-            type: MusicMediaType.Playlist
-        },
-        {
             name: "Boom Bap Focus",
             author: "Spotify - Lofi",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFKDIyhfS9NTT",
@@ -894,14 +919,14 @@ export const lofiCollections = {
             type: MusicMediaType.Playlist
         },
         {
-            name: "rainy day lofi",
+            name: "lofi covers",
             author: "Spotify - Lofi",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFKDIyhfS9NTT",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000240e0b4acc10c859fa3268c27",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002e54160e97691747f6ff0ca19",
             genre: "Lofi",
-            length: 82,
-            id: "37i9dQZF1DXdaIjAsPE9ht",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DXdaIjAsPE9ht",
+            length: 161,
+            id: "37i9dQZF1DX4nNmLlb3JR2",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX4nNmLlb3JR2",
             type: MusicMediaType.Playlist
         },
         {
@@ -1313,6 +1338,72 @@ export const upbeatCollections = {
     ],
     spotify: [
         {
+            name: "Today's Top Hits",
+            author: "Spotify - Pop",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFEC4WFtoNRpw",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000297cecbb4273bd8dc99e80761",
+            genre: "Pop",
+            length: 59,
+            id: "37i9dQZF1DXcBWIGoYBM5M",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Mood Booster",
+            author: "Spotify - Pop",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFEC4WFtoNRpw",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002bd0e19e810bb4b55ab164a95",
+            genre: "Pop",
+            length: 85,
+            id: "37i9dQZF1DX3rxVfibe1L0",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX3rxVfibe1L0",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "just hits",
+            author: "Spotify - Pop",
+            authorUrl: "https://open.spotify.com/genre/section0JQ5IMCbQBLoSVpnseIhn6",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002fc50948ba931e20a2d0dc8bd",
+            genre: "Pop",
+            length: 100,
+            id: "37i9dQZF1DXcRXFNfZr7Tp",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DXcRXFNfZr7Tp",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Afro Hits",
+            author: "Spotify - Afro",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFNQ0fGp4byGU",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002309fe29c52c89c66b9005a06",
+            genre: "Afro",
+            length: 50,
+            id: "37i9dQZF1DWX0o6sD1a6P5",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DWX0o6sD1a6P5",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Afropop",
+            author: "Spotify - Afro",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFNQ0fGp4byGU",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000022ee4608e79f9ccb2b2c48b3f",
+            genre: "Afro",
+            length: 70,
+            id: "37i9dQZF1DWYs2pvwxWA7l",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DWYs2pvwxWA7l",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "R&B UK",
+            author: "Spotify - R&B",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFEZPnFQSFB1T",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000024528535a08110e89cf184aa3",
+            genre: "R&B",
+            length: 60,
+            id: "37i9dQZF1DX942d1NzGgzk",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX942d1NzGgzk",
+            type: MusicMediaType.Playlist
+        },
+        {
             name: "This is Taylor Swift",
             author: "Taylor Swift",
             authorUrl: "https://open.spotify.com/artist/06HL4z0CvFAxyc27GXpf02",
@@ -1357,39 +1448,6 @@ export const upbeatCollections = {
             type: MusicMediaType.Playlist
         },
         {
-            name: "Today's Top Hits",
-            author: "Spotify - Pop",
-            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFEC4WFtoNRpw",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000026b54553d2151369598998b78",
-            genre: "Pop",
-            length: 59,
-            id: "37i9dQZF1DXcBWIGoYBM5M",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M",
-            type: MusicMediaType.Playlist
-        },
-        {
-            name: "Mood Booster",
-            author: "Spotify - Pop",
-            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFEC4WFtoNRpw",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002bd0e19e810bb4b55ab164a95",
-            genre: "Pop",
-            length: 85,
-            id: "37i9dQZF1DX3rxVfibe1L0",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DX3rxVfibe1L0",
-            type: MusicMediaType.Playlist
-        },
-        {
-            name: "just hits",
-            author: "Spotify - Pop",
-            authorUrl: "https://open.spotify.com/genre/section0JQ5IMCbQBLoSVpnseIhn6",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000029b3325d75faf3aff74a4753d",
-            genre: "Pop",
-            length: 100,
-            id: "37i9dQZF1DXcRXFNfZr7Tp",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DXcRXFNfZr7Tp",
-            type: MusicMediaType.Playlist
-        },
-        {
             name: "Deep House Relax",
             author: "Spotify - House",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFHOzuVTgTizF",
@@ -1412,39 +1470,6 @@ export const upbeatCollections = {
             type: MusicMediaType.Playlist
         },
         {
-            name: "Afro Hits",
-            author: "Spotify - Afro",
-            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFNQ0fGp4byGU",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002309fe29c52c89c66b9005a06",
-            genre: "Afro",
-            length: 50,
-            id: "37i9dQZF1DWX0o6sD1a6P5",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DWX0o6sD1a6P5",
-            type: MusicMediaType.Playlist
-        },
-        {
-            name: "Afropop",
-            author: "Spotify - Afro",
-            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFNQ0fGp4byGU",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002c4da268d3a57985d922c91b5",
-            genre: "Afro",
-            length: 70,
-            id: "37i9dQZF1DWYs2pvwxWA7l",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DWYs2pvwxWA7l",
-            type: MusicMediaType.Playlist
-        },
-        {
-            name: "R&B UK",
-            author: "Spotify - R&B",
-            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFEZPnFQSFB1T",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002607971950c8b09ebbca0d97a",
-            genre: "R&B",
-            length: 60,
-            id: "37i9dQZF1DX942d1NzGgzk",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DX942d1NzGgzk",
-            type: MusicMediaType.Playlist
-        },
-        {
             name: "R&B X",
             author: "Spotify - R&B",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFEZPnFQSFB1T",
@@ -1464,50 +1489,6 @@ export const upbeatCollections = {
             length: 168,
             id: "37i9dQZF1DX2UgsUIg75Vg",
             url: "https://open.spotify.com/playlist/37i9dQZF1DX2UgsUIg75Vg",
-            type: MusicMediaType.Playlist
-        },
-        {
-            name: "All Out 90s",
-            author: "Spotify",
-            authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLx69IrI8Kg6F",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002eab4de563894f4eba51ebb45",
-            genre: "Multi-Genre",
-            length: 150,
-            id: "37i9dQZF1DXbTxeAdrVG2l",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DXbTxeAdrVG2l",
-            type: MusicMediaType.Playlist
-        },
-        {
-            name: "All Out 2000s",
-            author: "Spotify",
-            authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLx69IrI8Kg6F",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002603c97e588c19d27695b69c5",
-            genre: "Multi-Genre",
-            length: 150,
-            id: "37i9dQZF1DX4o1oenSJRJd",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DX4o1oenSJRJd",
-            type: MusicMediaType.Playlist
-        },
-        {
-            name: "All Out 2010s",
-            author: "Spotify",
-            authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLx69IrI8Kg6F",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002b9258fe529cc5eab647048e1",
-            genre: "Multi-Genre",
-            length: 150,
-            id: "37i9dQZF1DX5Ejj0EkURtP",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DX5Ejj0EkURtP",
-            type: MusicMediaType.Playlist 
-        },
-        {
-            name: "All Out 80s",
-            author: "Spotify",
-            authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLx69IrI8Kg6F",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002fe154a455809e72e4d854880",
-            genre: "Multi-Genre",
-            length: 150,
-            id: "37i9dQZF1DX4UtSsGT1Sbe",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DX4UtSsGT1Sbe",
             type: MusicMediaType.Playlist
         },
         {
@@ -1536,11 +1517,55 @@ export const upbeatCollections = {
             name: "KimBops!",
             author: "Spotify - K-pop",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFGvOw3O4nLAf",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002e613b1a0a9d3dd88ce1610bc",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000211cb592433a0f1349dff3009",
             genre: "K-pop",
-            length: 70,
+            length: 71,
             id: "37i9dQZF1DX0018ciYu6bM",
             url: "https://open.spotify.com/playlist/37i9dQZF1DX0018ciYu6bM",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "All Out 90s",
+            author: "Spotify",
+            authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLx69IrI8Kg6F",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002eab4de563894f4eba51ebb45",
+            genre: "Multi-Genre",
+            length: 150,
+            id: "37i9dQZF1DXbTxeAdrVG2l",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DXbTxeAdrVG2l",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "All Out 2000s",
+            author: "Spotify",
+            authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLx69IrI8Kg6F",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002603c97e588c19d27695b69c5",
+            genre: "Multi-Genre",
+            length: 150,
+            id: "37i9dQZF1DX4o1oenSJRJd",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX4o1oenSJRJd",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "All Out 2010s",
+            author: "Spotify",
+            authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLx69IrI8Kg6F",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002afd7da10855c6f8c091a77b3",
+            genre: "Multi-Genre",
+            length: 150,
+            id: "37i9dQZF1DX5Ejj0EkURtP",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX5Ejj0EkURtP",
+            type: MusicMediaType.Playlist 
+        },
+        {
+            name: "All Out 80s",
+            author: "Spotify",
+            authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLx69IrI8Kg6F",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002fe154a455809e72e4d854880",
+            genre: "Multi-Genre",
+            length: 150,
+            id: "37i9dQZF1DX4UtSsGT1Sbe",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX4UtSsGT1Sbe",
             type: MusicMediaType.Playlist
         },
     ]
@@ -1792,6 +1817,61 @@ export const soundtrackCollections = {
     ],
     spotify: [
         {
+            name: "Cinematic Chillout",
+            author: "Spotify - Soundtracks and Scores",
+            authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLkWixh1R8OY4",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002eca5de50dbd9e0a230fb6bce",
+            genre: "Multiple Genres",
+            length: 58,
+            id: "37i9dQZF1DWVFJtzvDHN4L",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DWVFJtzvDHN4L",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Interstellar (Original Motion Picture Soundtrack) [Expanded Edition]",
+            author: "Hans Zimmer",
+            authorUrl: "https://open.spotify.com/artist/0YC192cP3KPCRWx8zr8MfZ",
+            artworkImgSrc: "https://i.scdn.co/image/ab67616d00001e02ac29a65e7ffcfa6f9cb0d342",
+            genre: "Orchestral",
+            length: 30,
+            id: "3B61kSKTxlY36cYgzvf3cP",
+            url: "https://open.spotify.com/album/3B61kSKTxlY36cYgzvf3cP",
+            type: MusicMediaType.Album
+        },
+        {
+            name: "This Is STUDIO GHIBLI -スタジオジブリ-",
+            author: "Spotify - TV & Movies",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFOzQeOmemkuw",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000238e1ed712d961db6b61cd1af",
+            genre: "Orchestral",
+            length: 70,
+            id: "37i9dQZF1DX7GTqMQDhOum",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX7GTqMQDhOum",
+            type: MusicMediaType.Playlist
+        },
+        {
+            name: "Minecraft - Volume Alpha",
+            author: "C418",
+            authorUrl: "https://open.spotify.com/artist/4uFZsG1vXrPcvnZ4iSQyrx",
+            artworkImgSrc: "https://i.scdn.co/image/ab67616d00001e02aaeb5c9fb6131977995b7f0e",
+            genre: "Electronic / Ambient",
+            length: 24,
+            id: "3Gt7rOjcZQoHCfnKl5AkK7",
+            url: "https://open.spotify.com/album/3Gt7rOjcZQoHCfnKl5AkK7",
+            type: MusicMediaType.Album
+        },
+        {
+            name: "Minecraft - Volume Beta",
+            author: "C418",
+            authorUrl: "https://open.spotify.com/artist/4uFZsG1vXrPcvnZ4iSQyrx",
+            artworkImgSrc: "https://i.scdn.co/image/ab67616d00001e024cf0b29eb06a92aa96acae64",
+            genre: "Electronic / Ambient",
+            length: 30,
+            id: "7CYDRyFCKtAYJBSpfovLyX",
+            url: "https://open.spotify.com/album/7CYDRyFCKtAYJBSpfovLyX",
+            type: MusicMediaType.Album
+        },
+        {
             name: "The Lord of the Rings: The Fellowship of the Ring - the Complete Recordings",
             author: "Howard Shore",
             authorUrl: "https://open.spotify.com/artist/0OcclcP5o8VKH2TRqSY2A7",
@@ -1825,17 +1905,6 @@ export const soundtrackCollections = {
             type: MusicMediaType.Album
         },
         {
-            name: "Interstellar (Original Motion Picture Soundtrack) [Expanded Edition]",
-            author: "Hans Zimmer",
-            authorUrl: "https://open.spotify.com/artist/0YC192cP3KPCRWx8zr8MfZ",
-            artworkImgSrc: "https://i.scdn.co/image/ab67616d00001e02ac29a65e7ffcfa6f9cb0d342",
-            genre: "Orchestral",
-            length: 30,
-            id: "3B61kSKTxlY36cYgzvf3cP",
-            url: "https://open.spotify.com/album/3B61kSKTxlY36cYgzvf3cP",
-            type: MusicMediaType.Album
-        },
-        {
             name: "Soundtracks for Studying",
             author: "Spotify - Study",
             authorUrl: "https://open.spotify.com/genre/section0JQ5IMCbQBLrJ8yYHGwaev",
@@ -1858,17 +1927,6 @@ export const soundtrackCollections = {
             type: MusicMediaType.Playlist
         },
         {
-            name: "Best Tracks from Tarantino Films",
-            author: "Spotify - TV & Movies",
-            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFOzQeOmemkuw",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002a98dca9a83374138e21b713a",
-            genre: "Multiple Genres",
-            length: 47,
-            id: "37i9dQZF1DX3b9hbbPi5hD",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DX3b9hbbPi5hD",
-            type: MusicMediaType.Playlist
-        },
-        {
             name: "Iconic Soundtracks",
             author: "Spotify - TV & Movies",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFOzQeOmemkuw",
@@ -1883,22 +1941,11 @@ export const soundtrackCollections = {
             name: "Pixar Hits",
             author: "Spotify - TV & Movies",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFOzQeOmemkuw",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002d1a8e3b35cc3d1289e3a28df",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000021387a1ac142a7b79bd2f6a8e",
             genre: "Multiple Genres",
             length: 75,
             id: "37i9dQZF1DXbmaHM5tnxzO",
             url: "https://open.spotify.com/playlist/37i9dQZF1DXbmaHM5tnxzO",
-            type: MusicMediaType.Playlist
-        },
-        {
-            name: "This Is STUDIO GHIBLI -スタジオジブリ-",
-            author: "Spotify - TV & Movies",
-            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFOzQeOmemkuw",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000238e1ed712d961db6b61cd1af",
-            genre: "Orchestral",
-            length: 70,
-            id: "37i9dQZF1DX7GTqMQDhOum",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DX7GTqMQDhOum",
             type: MusicMediaType.Playlist
         },
         {
@@ -1913,28 +1960,6 @@ export const soundtrackCollections = {
             type: MusicMediaType.Playlist
         },
         {
-            name: "Minecraft - Volume Alpha",
-            author: "C418",
-            authorUrl: "https://open.spotify.com/artist/4uFZsG1vXrPcvnZ4iSQyrx",
-            artworkImgSrc: "https://i.scdn.co/image/ab67616d00001e02aaeb5c9fb6131977995b7f0e",
-            genre: "Electronic / Ambient",
-            length: 24,
-            id: "3Gt7rOjcZQoHCfnKl5AkK7",
-            url: "https://open.spotify.com/album/3Gt7rOjcZQoHCfnKl5AkK7",
-            type: MusicMediaType.Album
-        },
-        {
-            name: "Minecraft - Volume Beta",
-            author: "C418",
-            authorUrl: "https://open.spotify.com/artist/4uFZsG1vXrPcvnZ4iSQyrx",
-            artworkImgSrc: "https://i.scdn.co/image/ab67616d00001e024cf0b29eb06a92aa96acae64",
-            genre: "Electronic / Ambient",
-            length: 30,
-            id: "7CYDRyFCKtAYJBSpfovLyX",
-            url: "https://open.spotify.com/album/7CYDRyFCKtAYJBSpfovLyX",
-            type: MusicMediaType.Album
-        },
-        {
             name: "Disney Classical",
             author: "Spotify - Soundtracks and Scores",
             authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLkWixh1R8OY4",
@@ -1946,14 +1971,14 @@ export const soundtrackCollections = {
             type: MusicMediaType.Playlist
         },
         {
-            name: "Cinematic Chillout",
-            author: "Spotify - Soundtracks and Scores",
-            authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLkWixh1R8OY4",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002eca5de50dbd9e0a230fb6bce",
+            name: "Best Tracks from Tarantino Films",
+            author: "Spotify - TV & Movies",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFOzQeOmemkuw",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002a98dca9a83374138e21b713a",
             genre: "Multiple Genres",
-            length: 58,
-            id: "37i9dQZF1DWVFJtzvDHN4L",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DWVFJtzvDHN4L",
+            length: 47,
+            id: "37i9dQZF1DX3b9hbbPi5hD",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DX3b9hbbPi5hD",
             type: MusicMediaType.Playlist
         },
         {
@@ -1974,7 +1999,7 @@ export const soundtrackCollections = {
             artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002678b81229c4b783dd816d87a",
             genre: "Multiple Genres",
             length: 85,
-            id: "37i9dQZF1DWT8aqnwgRt92z",
+            id: "37i9dQZF1DWT8aqnwgRt92",
             url: "https://open.spotify.com/playlist/37i9dQZF1DWT8aqnwgRt92",
             type: MusicMediaType.Playlist
         },
@@ -2260,17 +2285,6 @@ export const acousticCollections = {
             type: MusicMediaType.Playlist
         },
         {
-            name: "Piano in the Background",
-            author: "Spotify - Piano",
-            authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLwsgCtTD4Q02",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000028fecafb621f6c439e6e30c5c",
-            genre: "Piano",
-            length: 276,
-            id: "37i9dQZF1DX7K31D69s4M1",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DX7K31D69s4M1",
-            type: MusicMediaType.Playlist
-        },
-        {
             name: "Atmospheric Piano",
             author: "Spotify - Piano",
             authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLwsgCtTD4Q02",
@@ -2312,17 +2326,6 @@ export const acousticCollections = {
             length: 252,
             id: "37i9dQZF1DWTC99MCpbjP8",
             url: "https://open.spotify.com/playlist/37i9dQZF1DWTC99MCpbjP8",
-            type: MusicMediaType.Playlist
-        },
-        {
-            name: "Reading Soundtrack",
-            author: "Spotify - Piano",
-            authorUrl: "https://open.spotify.com/genre/0JQ5IMCbQBLwsgCtTD4Q02",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000206e9985e6f16aa8985e0f37c",
-            genre: "Piano",
-            length: 298,
-            id: "37i9dQZF1DWZwtERXCS82H",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DWZwtERXCS82H",
             type: MusicMediaType.Playlist
         },
         {
@@ -2513,7 +2516,7 @@ export const classicalCollections = {
             author: "Spotify - Classical",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFPrEiAOxgac3",
             artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000204342edaafe98ad14f6b8b70",
-            genre: "Piano",
+            genre: "Classical",
             length: 159,
             id: "37i9dQZF1DWWEJlAGA9gs0",
             url: "https://open.spotify.com/playlist/37i9dQZF1DWWEJlAGA9gs0",
@@ -2598,7 +2601,7 @@ export const classicalCollections = {
         },
         {
             name: "Dramatic Classical",
-            author: "Classical",
+            author: "Spotify - Classical",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFPrEiAOxgac3",
             artworkImgSrc: "https://i.scdn.co/image/ab67706f0000000203bb12fc963cf58d38f9064b",
             genre: "Classical",
@@ -2609,7 +2612,7 @@ export const classicalCollections = {
         },
         {
             name: "Mello Cello",
-            author: "Classical",
+            author: "Spotify - Classical",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFPrEiAOxgac3",
             artworkImgSrc: "https://i.scdn.co/image/ab67706f000000023b87314dafe288546202fe5b",
             genre: "Classical",
@@ -2620,7 +2623,7 @@ export const classicalCollections = {
         },
         {
             name: "hopeless romantic",
-            author: "Classical",
+            author: "Spotify - Classical",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFPrEiAOxgac3",
             artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002c877a7e16effe08b548fe5dd",
             genre: "Classical",
@@ -2631,7 +2634,7 @@ export const classicalCollections = {
         },
         {
             name: "medieval vibes",
-            author: "Classical",
+            author: "Spotify - Classical",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFPrEiAOxgac3",
             artworkImgSrc: "https://i.scdn.co/image/ab67706f000000024ba15f5d0a3e3eb612a5dc00",
             genre: "Classical",
@@ -2879,6 +2882,17 @@ export const zenCollections = {
             type: MusicMediaType.Playlist
         },
         {
+            name: "Electronic X",
+            author: "Spotify - Ambient",
+            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFLjmiZRss79w",
+            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000028912ff7631c65a1d4b20d764",
+            genre: "Electronic / Ambient",
+            length: 100,
+            id: "37i9dQZF1DWVXNkY9grbsT",
+            url: "https://open.spotify.com/playlist/37i9dQZF1DWVXNkY9grbsT",
+            type: MusicMediaType.Playlist
+        },
+        {
             name: "Peaceful Meditation",
             author: "Spotify - Meditation",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFAvcDtBn1DlT",
@@ -2956,17 +2970,6 @@ export const zenCollections = {
             type: MusicMediaType.Playlist
         },
         {
-            name: "Peaceful Retreat",
-            author: "Spotify - Ambient",
-            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFLjmiZRss79w",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002211568fb8b49893905829bc1",
-            genre: "Ambient",
-            length: 233,
-            id: "37i9dQZF1DX1T2fEo0ROQ2",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DX1T2fEo0ROQ2",
-            type: MusicMediaType.Playlist
-        },
-        {
             name: "Atmosphere",
             author: "Spotify - Ambient",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFLjmiZRss79w",
@@ -3000,17 +3003,6 @@ export const zenCollections = {
             type: MusicMediaType.Playlist
         },
         {
-            name: "Rise",
-            author: "Spotify - Ambient",
-            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFLjmiZRss79w",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002fe40f28bee10a88c682f4cfa",
-            genre: "Ambient",
-            length: 215,
-            id: "37i9dQZF1DWUOhRIDwDB7M",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DWUOhRIDwDB7M",
-            type: MusicMediaType.Playlist
-        },
-        {
             name: "Ambient Study",
             author: "Spotify - Ambient",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFLjmiZRss79w",
@@ -3019,17 +3011,6 @@ export const zenCollections = {
             length: 127,
             id: "37i9dQZF1DWWb1L5n1gkOJ",
             url: "https://open.spotify.com/playlist/37i9dQZF1DWWb1L5n1gkOJ",
-            type: MusicMediaType.Playlist
-        },
-        {
-            name: "Electronic X",
-            author: "Spotify - Ambient",
-            authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFLjmiZRss79w",
-            artworkImgSrc: "https://i.scdn.co/image/ab67706f000000028912ff7631c65a1d4b20d764",
-            genre: "Ambient",
-            length: 100,
-            id: "37i9dQZF1DWVXNkY9grbsT",
-            url: "https://open.spotify.com/playlist/37i9dQZF1DWVXNkY9grbsT",
             type: MusicMediaType.Playlist
         }
     ]
@@ -3296,14 +3277,14 @@ export const summerCollections = {
             author: "Spotify - Summer",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFLVaM30PMBm4",
             artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002da3856c6073117386958fd48",
-            genre: "Multi-Genre",
+            genre: "Piano",
             length: 100,
             id: "37i9dQZF1DWTjLfR5thd2p",
             url: "https://open.spotify.com/playlist/37i9dQZF1DWTjLfR5thd2p",
             type: MusicMediaType.Playlist
         },
         {
-            name: "Sumset Chill",
+            name: "Sunset Chill",
             author: "Spotify - Summer",
             authorUrl: "https://open.spotify.com/genre/0JQ5DAqbMKFLVaM30PMBm4",
             artworkImgSrc: "https://i.scdn.co/image/ab67706f00000002a7caa3ecd43db36d8a132b5c",

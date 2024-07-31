@@ -3,10 +3,10 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
         title: "Lofi / Chill",
         playlists: [
             {
-                id: "PL6NdkXsPL07KN01gH2vucrHCEyyNmVEx4",
-                title: "Lofi Girl - Compilations",
-                description: "Curated compilation of Lofi Girl's beloved and soothing videos for ultimate relaxation and chill vibes.",
-                vidCount: 26,
+                id: "PLTlW3nrfe71SiLOgo5nTEwQ5XLDBkCgBw",
+                title: "lofi girl",
+                description: "Enjoy a compilation of Lofi Girl's most beloved videos and live streams for chill vibes.",
+                vidCount: 17,
                 channelId: "",
                 channelTitle: "Lofi Girl",
                 thumbnailURL: "https://i.ytimg.com/vi/zFhfksjf_mY/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBQgYKl48s3nIAYnxSDbiy65PL42g",
@@ -15,8 +15,8 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 firstVidId: null
             },
             {
-                id: "PLpEqmyo6EfvIY2AHFkx07G2tBQcW6oTm3",
-                title: "Studio Ghibli Music",
+                id: "PLTlW3nrfe71Qzen8aBUryHJgv9dZa8XHv",
+                title: "Studio Ghibli",
                 description: "The magic of Studio Ghibli, mixed into a visual & sonic experience.",
                 vidCount: 14,
                 channelId: "",
@@ -27,10 +27,10 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 firstVidId: null
             },
             {
-                id: "PLpEqmyo6EfvLDZkhQggdz7bx5VWWi-kKA",
+                id: "PLTlW3nrfe71TBc9e7QcO2_L_VOjs7Fjfy",
                 title: "Romantic Chill",
                 description: "For the romantics of the classical / dark-academia aesthetics.",
-                vidCount: 21,
+                vidCount: 17,
                 channelId: "",
                 channelTitle: "Multiple Authors",
                 thumbnailURL: "https://i.ytimg.com/vi/Y56ODjb8ZMo/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLCK4yCIusXl4LoiDrvIxqq9C5RunA",
@@ -39,22 +39,10 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 firstVidId: null
             },
             {
-                id: "PLUAsF5s_xnHtw0CAoHTYDESe9o2BKCRIN",
-                title: "The Jazz Hop Café - Mixes",
-                description: "Explore a captivating collection of lo-fi and jazz playlists, perfect for cozy moments and relaxing vibes.",
-                vidCount: 108,
-                channelId: "",
-                channelTitle: "The Jazz Hop Café",
-                thumbnailURL: "https://i.ytimg.com/vi/TYCBicKyVhs/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLAxH2OcNzH6KHMd839rWzwG0r8koA",
-                channelImgSrc: "https://yt3.ggpht.com/WqdmWxOq6FRiTtaz8u4evDCz_Dh5zN8OjlY0rGLBIHPdmx-mk8HoIA3y87RGOM9a8HJnec074pw=s88-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@TheJazzHopCafe",
-                firstVidId: null
-            },
-            {
-                id: "PLpEqmyo6EfvK4MCsYvLENDGlej8mentJ-",
+                id: "PLTlW3nrfe71R4__x5h3omOh8FXf1nf8Up",
                 title: "Gaming Relax & Chill",
                 description: "Escape into tranquility with melodies from Zelda, Animal Crossing, and other Nintendo favorites in this calming playlist.",
-                vidCount: 22,
+                vidCount: 15,
                 channelId: "",
                 channelTitle: "Mutliple Authors",
                 thumbnailURL: "https://i.ytimg.com/vi/EdHGrnuCEo4/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhdIGUoUTAP&rs=AOn4CLCRjy5XbgxBm3xltMq0G7SdSXInqQ",
@@ -63,10 +51,10 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 firstVidId: null
             },
             {
-                id: "PLpEqmyo6EfvLOjpfCCoFMRIa-MCZxT-_M",
+                id: "PLTlW3nrfe71QGDL4exacmUwyriixlc2K7",
                 title: "Coding Lofi CHill",
                 description: "Because debugging is less painful with chill beats :)",
-                vidCount: 20,
+                vidCount: 12,
                 channelId: "",
                 channelTitle: "Multiple Authors",
                 thumbnailURL: "https://i.ytimg.com/vi/_ITiwPMUzho/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCdFE2e_RZb_9O5SPsNeuI9HiSctA",
@@ -75,7 +63,19 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 firstVidId: null
             },
             {
-                id: "PLpEqmyo6EfvJ71ObeeTRRpBpgIqOpb3bq",
+                id: "PLTlW3nrfe71Sx6SiZbz7LwZ1fJi5BVcZa",
+                title: "Lofi Chill",
+                description: "Explore a captivating collection of lo-fi and jazz playlists, perfect for cozy moments and relaxing vibes.",
+                vidCount: 18,
+                channelId: "",
+                channelTitle: "Multiple Authors",
+                thumbnailURL: "https://i.ytimg.com/vi/TYCBicKyVhs/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLAxH2OcNzH6KHMd839rWzwG0r8koA",
+                channelImgSrc: "",
+                channelURL: "",
+                firstVidId: null
+            },
+            {
+                id: "PLTlW3nrfe71QuWLeoSF_EQ3OkwfVua5bP",
                 title: "Pokémon Chill",
                 description: "From Kanto's beginnings to the wonders of Galar and all the adventures that link them, experience the magic of Pokémon's cherished music.",
                 vidCount: 21,
@@ -87,10 +87,10 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 firstVidId: null
             },
             {
-                id: "PLpEqmyo6EfvLb86V0Rv3t_SeWUv9T4GHL",
+                id: "PLTlW3nrfe71QicutfuzVOH7jIEc-5HHjF",
                 title: "Minecraft Ambience",
                 description: "Nostalgic ambience, peaceful gameplay, & fan-made mixes of the iconic soundtrack.",
-                vidCount: 28,
+                vidCount: 17,
                 channelId: "",
                 channelTitle: "Multiple Authors",
                 thumbnailURL: "https://i.ytimg.com/vi/ANkxRGvl1VY/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLAsueBQ4bMBQPAfcpz3O02TV-briA",
@@ -99,7 +99,7 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 firstVidId: null
             },
             {
-                id: "PLpEqmyo6EfvKCKd5DJNIwN9ptmNDoLQ8-",
+                id: "PLTlW3nrfe71Qdt9F30kXuUboW7bJdmtJy",
                 title: "Anime Chill",
                 description: "Unwind to the calming melodies and sounds of anime.",
                 vidCount: 21,
@@ -111,27 +111,15 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 firstVidId: null
             },
             {
-                id: "PLweC10nDnpdUENOuwiKckr_KinlM24sS3",
-                title: "Study/Work with Cédric 📚 Chill Village",
-                description: "Productive and calming lofi beats for a focused work environment in the office.",
-                vidCount: 20,
+                id: "PLTlW3nrfe71QSdeLCRIk9iPOodZZMksx2",
+                title: "Disney / Pixar Chill",
+                description: "Unwind in the beloved worlds of Disney & Pixar.",
+                vidCount: 9,
                 channelId: "",
-                channelTitle: "Chill Village",
-                thumbnailURL: "https://i.ytimg.com/vi/guan9sTiXM0/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLBmfXE2t8nMURTkZR6sTPRpfOJeNg",
-                channelImgSrc: "https://yt3.ggpht.com/1sjrCoAFx_Ak9g77xLRKv5na7Uz3MlvZ1KQQs-uhCtkdxFiLLTasPHH7e_NEuBO9DmPO_m9_=s88-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@Chill_Village",
-                firstVidId: null
-            },
-            {
-                id: "PLUAsF5s_xnHuViowfw54GzAVxamBYSiE2",
-                title: "The Jazz Hop Café - Compilations",
-                description: "Jazz meets hip-hop in a playlist that's jam-packed with chilled-out vibes!",
-                vidCount: 28,
-                channelId: "",
-                channelTitle: "The Jazz Hop Café",
-                thumbnailURL: "https://i.ytimg.com/vi/2gliGzb2_1I/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAvqDPQMFti6xB4MeLC2wjqf23lRQ",
-                channelImgSrc: "https://yt3.ggpht.com/WqdmWxOq6FRiTtaz8u4evDCz_Dh5zN8OjlY0rGLBIHPdmx-mk8HoIA3y87RGOM9a8HJnec074pw=s88-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@TheJazzHopCafe",
+                channelTitle: "Multiple Authors",
+                thumbnailURL: "https://i.ytimg.com/vi/UP8OO7g07B4/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAUNjVzaM_omS1oLQGSjbxQ9E6jog",
+                channelImgSrc: "",
+                channelURL: "",
                 firstVidId: null
             },
         ]
@@ -140,22 +128,22 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
         title: "Eclectic Mix",
         playlists: [
             { 
-                id: "PLpEqmyo6EfvLV0xdsE3B8QOSAx8pLLGv0",
+                id: "PLTlW3nrfe71Qp2mZn7GVJYeC6ZGIZJQHE",
                 title: "Eclectic Grooves Sessions.",
                 description: "MAJ and Friends explore rare grooves around the world on vinyl.",
                 vidCount: 20,
                 channelId: "",
                 channelTitle: "My Analog Journal",
-                thumbnailURL: "https://i.ytimg.com/vi/GyU8jToVmI8/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAwLumpGcDxJfq3Ut686QmOYhu49w",
+                thumbnailURL: "https://i.ytimg.com/vi/Beld090NIoo/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDY32Pw8QZqFOdxA03H59IVQi68gA",
                 channelImgSrc: "https://yt3.googleusercontent.com/INosGb8ZVriDTJNZv_1E9Pw_TiPx0iddBfnFcSToUYDqqqINXDXLAHT0pJqJ5PuZqznx1XUUoA=s176-c-k-c0x00ffffff-no-rj",
                 channelURL: "https://www.youtube.com/@MyAnalogJournal",
                 firstVidId: null
             },
             { 
-                id: "PLpEqmyo6EfvK3D9g_9K8_AX2D6E8pvCei",
+                id: "PLTlW3nrfe71SVLqTz8Xrk_bJOXeFSrtKz",
                 title: "NPR Tiny Desk Live Performances.",
                 description: "Live, intimate artistry from the famous NPR Tiny Desk Concerts.",
-                vidCount: 27,
+                vidCount: 21,
                 channelId: "",
                 channelTitle: "NPR Music",
                 thumbnailURL: "https://i.ytimg.com/vi/uwUt1fVLb3E/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLA0RnQkpSErBTz9d3YXJrYrG3LN3g",
@@ -167,7 +155,7 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 id: "UULP2Qw1dzXDBAZPwS7zm37g8g",
                 title: "Colors Shows.",
                 description: "Minimalistic shows from burgeoning musicians.",
-                vidCount: 27,
+                vidCount: 800,
                 channelId: "",
                 channelTitle: "COLORS",
                 thumbnailURL: "https://thisisrnb.com/wp-content/uploads/2018/04/Jorja-Smith-Colors.jpg",
@@ -176,33 +164,21 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 firstVidId: null
             },
             { 
-                id: "PLpEqmyo6EfvLVsfSgIHgh6TItYZbO1Zc1",
-                title: "Japanese City Pop",
-                description: "Distinct retro aesthetics of 70s / 80s Japanese City pop.",
-                vidCount: 13,
+                id: "PLTlW3nrfe71T40CwkmwP5zmR02roT7EEn",
+                title: "Live House Mixes",
+                description: "Live house mixes for non-stop, immersive electronic dance vibes.",
+                vidCount: 20,
                 channelId: "",
                 channelTitle: "Multiple Authors",
-                thumbnailURL: "https://i.pinimg.com/564x/f7/0d/2c/f70d2cb27c271f733744445929ed7845.jpg",
+                thumbnailURL: "https://i.ytimg.com/vi/z-8vVxz-If0/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLC2KHvrENtncWgQRhC7_3f9ep76eg",
                 channelImgSrc: "",
                 channelURL: "",
                 firstVidId: null
             },
             { 
-                id: "PLpEqmyo6EfvKjlp0-7brbP6gXAZH0T84z",
-                title: "Hip Hop Gems & Classics",
-                description: "Underground tracks, classics hits, and fan-made mixes.",
-                vidCount: 17,
-                channelId: "",
-                channelTitle: "Multiple Authors",
-                thumbnailURL: "https://i.ytimg.com/vi/8nmo0PyuQQo/hqdefault.jpg?sqp=-oaymwExCNACELwBSFryq4qpAyMIARUAAIhCGAHwAQH4Af4JgALQBYoCDAgAEAEYPSBlKEgwDw==&rs=AOn4CLD1sKTtWscyYN9bWjGSmhuG5yrvOg",
-                channelImgSrc: "",
-                channelURL: "",
-                firstVidId: null
-            },
-            { 
-                id: "PLpEqmyo6EfvL0GMKgfZpFWgm8h9i1gNYN",
+                id: "PLTlW3nrfe71RWu84YggxarmAm5IdyBUOk",
                 title: "Jazz Gems & Classics",
-                description: "An eclectic jazz mix, spanning hidden gems to classic works.",
+                description: "An eclectic jazz mix, frin modern to classics.",
                 vidCount: 15,
                 channelId: "",
                 channelTitle: "Multiple Authors",
@@ -211,22 +187,22 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 channelURL: "",
                 firstVidId: null
             },
+            // { 
+            //     id: "PLpEqmyo6EfvLxItVKqjJpZOS8RChsWv18",
+            //     title: "Eclectic Mixes",
+            //     description: "Live or in-studio. Pop, funk, jazz, lofi, or indie. A little bit of everything for diverse tastes.",
+            //     vidCount: 15,
+            //     channelId: "",
+            //     channelTitle: "Multiple Authors",
+            //     thumbnailURL: "https://i.ytimg.com/vi/AmmFD2OIs_k/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLBoz9W8WqJcHGhODrLY6598rAppaw",
+            //     channelImgSrc: "",
+            //     channelURL: "",
+            //     firstVidId: null
+            // },
             { 
-                id: "PLpEqmyo6EfvLxItVKqjJpZOS8RChsWv18",
-                title: "Eclectic Mixes",
-                description: "Live or in-studio. Pop, funk, jazz, lofi, or indie. A little bit of everything for diverse tastes.",
-                vidCount: 15,
-                channelId: "",
-                channelTitle: "Multiple Authors",
-                thumbnailURL: "https://i.ytimg.com/vi/AmmFD2OIs_k/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLBoz9W8WqJcHGhODrLY6598rAppaw",
-                channelImgSrc: "",
-                channelURL: "",
-                firstVidId: null
-            },
-            { 
-                id: "PLpEqmyo6EfvJw_sNjuNw5JC3a7irQwF8J",
-                title: "Atmoshpheric & Ambient",
-                description: "Tranquil soundscapes from seminal works and mixes of eclectic gems.",
+                id: "PLTlW3nrfe71RF4KvL9pkfhLk53nRPnO6a",
+                title: "Ambient & Electronic",
+                description: "Tranquil soundscapes from seminal works to eclectic gems.",
                 vidCount: 15,
                 channelId: "",
                 channelTitle: "Multiple Authors",
@@ -234,19 +210,7 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 channelImgSrc: "",
                 channelURL: "",
                 firstVidId: null
-            },
-            { 
-                id: "PLpEqmyo6EfvKgNlISvuNHERoKnNNptGjk",
-                title: "Latin American",
-                description: "Vibrant rhythms from Latin America, from Brazilian samba to Caribbean Reggae.",
-                vidCount: 15,
-                channelId: "",
-                channelTitle: "Multiple Authors",
-                thumbnailURL: "https://i.ytimg.com/vi/p8HoEvDh70Y/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC0r_IB7RXSxegJtD-2fLaayYzctQ",
-                channelImgSrc: "",
-                channelURL: "",
-                firstVidId: null
-            },
+            }
         ]
     },
     {
@@ -255,13 +219,25 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
             {
                 id: "PLr5OsF2umninLmW-yux0oONqNaQiIpJhw",
                 title: "🎸Study with Calm Lofi/Quiet Jazz - Pomodoro Timer/Study/Work",
-                description: "Study and work with many Calm Lofi Track and Quiet Jazz Music.",
+                description: "Study and work with many calm lofi track and quiet jazz music.",
                 vidCount: 10,
                 channelId: "",
                 channelTitle: "Abao in Tokyo",
                 thumbnailURL: "https://i.ytimg.com/vi/grBFMP3HDZA/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAAGAboCwXsa6WC-fZvCc9atdetYA",
                 channelImgSrc: "https://yt3.googleusercontent.com/NrIEzYVk5mBH9yRIefVDnvyD7YQpvbmOUx-LRNaC7KCc1DQ82B-bvURmZbEhZoCllobJjCBq=s176-c-k-c0x00ffffff-no-rj",
                 channelURL: "https://www.youtube.com/@abaointokyo",
+                firstVidId: null
+            },
+            {
+                id: "PLTlW3nrfe71QNhPlrzUo0yr_4amhoJx9K",
+                title: "Scenic Study with Me",
+                description: "Study with me from cool desk setups with scenic views and chill music. ",
+                vidCount: 19,
+                channelId: "",
+                channelTitle: "Multiple Authors",
+                thumbnailURL: "https://i.ytimg.com/vi/vC4dLeqnvAw/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLAH0GWr0Nf2U1vhPmQ7icFHVzXocw",
+                channelImgSrc: "",
+                channelURL: "",
                 firstVidId: null
             },
             {
@@ -312,131 +288,105 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 channelURL: "https://www.youtube.com/@TheStriveStudies",
                 firstVidId: null
             },
-            {
-                id: "PLnBcyEFLuLUtrJZbnFCv6_IO7AfZcD7E8",
-                title: "StudyMD - Study with Me",
-                description: "Join productivity master StufyMD for some study sessions to help you stay motivated!",
-                vidCount: 23,
-                channelId: "",
-                channelTitle: "StudyMD",
-                thumbnailURL: "https://i.ytimg.com/vi/08DochENii8/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLClxqpVojlNsbhAHIKVj_1_XO2klA",
-                channelImgSrc: "https://yt3.googleusercontent.com/L0W93fDHgz9L_GGkmZvouFGNbbvHARFVhPsDVjK5NP-GqdUPPTDGwFQkUlDzh-WaOJmsx0DN3w=s176-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@StudyMD",
-                firstVidId: null
-            },
         ]
     },
     {
         title: "Ambience",
         playlists: [
             {
-                id: "PLkmb1BBi8y93GnJ_yClUZei92tCg49Do4",
-                title: "City Ambience",
-                description: "Ambient sounds from cities around the world.",
-                vidCount: 49,
-                channelId: "",
-                channelTitle: "Nomadic Ambience",
-                thumbnailURL: "https://i.ytimg.com/vi/F8MN0o6RS9o/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLCF3DJWwdAlGhhYB0E1KoB17ooDLA",
-                channelImgSrc: "https://yt3.googleusercontent.com/ytc/AGIKgqOr7XmI5VtjkmGkcrNtf_6cPLX0tsk94QOEJnGZSw=s176-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@NomadicAmbience",
-                firstVidId: null
-
-            },
-            {
-                id: "PLpEqmyo6EfvKqGFfjS3r8OXZtjKexkikR",
-                title: "Nature Ambience",
-                description: "The serenity of nature in a soothing, 4k ambient experience.",
-                vidCount: 13,
-                channelId: "",
-                channelTitle: "Nature Soundscapes",
-                thumbnailURL: "https://i.ytimg.com/vi/qRTVg8HHzUo/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCgM2LaUhy3mSWfKCzJ8ysmYiwv6Q",
-                channelImgSrc: "https://yt3.googleusercontent.com/SWhM3bV2uPbAMb-Qx9F3pxT5EuDCRkFtlrCC0uxvHuPigTXQDtJhhOSu8BiP2tmLfKKYb4f-Nw=s176-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@Nature_Soundscapes",
-                firstVidId: null
-
-            },
-            {
-                id: "PLkmb1BBi8y93GnJ_yClUZei92tCg49Do4",
-                title: "Rain Ambience",
-                description: "Collection of relaxing rain ambience sounds videos from around the world.",
-                vidCount: 46,
-                channelId: "",
-                channelTitle: "Nomadic Ambience",
-                thumbnailURL: "https://i.ytimg.com/vi/V_vj7BMawAI/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLC8qxKnT8LysNMSeYhJ2wwO0-nYIg",
-                channelImgSrc: "https://yt3.googleusercontent.com/ytc/AGIKgqOr7XmI5VtjkmGkcrNtf_6cPLX0tsk94QOEJnGZSw=s176-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@NomadicAmbience",
-                firstVidId: null
-            },
-            {
-                id: "PLpEqmyo6EfvKUkEnRlAdbVvpMBACpu7Lu",
-                title: "Natural Soundscapes Mix",
-                description: "Nature's music, from rainy forests and snowy hills to cozy fires and distant thunder. From within nature or in civilization.",
-                vidCount: 35,
+                id: "PLpEqmyo6EfvJseQSBPD78gFiwgI6t9p1K",
+                title: "Nature Docs",
+                description: "Find serenity in Earth's natural treasures, from the heart of the Amazon Rain Forest to the vast stretches of the African Savannah.",
+                vidCount: 11,
                 channelId: "",
                 channelTitle: "Multiple Authors",
-                thumbnailURL: "https://i.ytimg.com/vi/SnUBb-FAlCY/hqdefault.jpg?sqp=-oaymwExCNACELwBSFryq4qpAyMIARUAAIhCGAHwAQH4Af4JgALQBYoCDAgAEAEYMCBlKEkwDw==&rs=AOn4CLBiDPsaBueqw3dcsR83moVY1C38MQ",
+                thumbnailURL: "https://i.ytimg.com/vi/JkaxUblCGz0/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCHAgPno9ZlrIdpdJ1IjPcT0CsrcQ",
                 channelImgSrc: "",
                 channelURL: "",
                 firstVidId: null
             },
             {
-                id: "PLkmb1BBi8y93qIwNcnuo3e9oyLxc8PVGB",
-                title: "Nature Ambience Sounds",
-                description: "Collection of relaxing nature ambience sounds videos from around the world.",
-                vidCount: 35,
+                id: "PLTlW3nrfe71TklS6p1JBCTgkL1RqI7nBV",
+                title: "Nature Relaxation",
+                description: "The serenity of nature in a soothing, 4k ambient experience.",
+                vidCount: 19,
+                channelId: "",
+                channelTitle: "Multiple Authors",
+                thumbnailURL: "https://i.ytimg.com/vi/B_8bbKn3amE/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCtRXwToQ_BcNfIwtDYg9D-N2OMdg",
+                channelImgSrc: "",
+                channelURL: "",
+                firstVidId: null
+            },
+            {
+                id: "PLTlW3nrfe71SMAnbHgRrm-G7eCiMO9qLx",
+                title: "Weather Ambience",
+                description: "Relax to the calming sounds of rain, thunder, snow, and more.",
+                vidCount: 10,
+                channelId: "",
+                channelTitle: "Multiple Authors",
+                thumbnailURL: "https://i.ytimg.com/vi/SnUBb-FAlCY/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLAAUNSRxvRChtlMqz36pS4mypK_6g",
+                channelImgSrc: "",
+                channelURL: "",
+                firstVidId: null
+            },
+            {
+                id: "PLpEqmyo6EfvKJaI7Rl1Y0zvxkPVjqfPwX",
+                title: "Kraig Adams Hiking Videos",
+                description: "Experience some of the world's pretties natural wonders with Kraid Adams' theraputic hiking videos.",
+                vidCount: 22,
+                channelId: "",
+                channelTitle: "Kraig Adams",
+                thumbnailURL: "https://i.ytimg.com/vi/WKcnvPDgifA/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAQhlIq7mkeUHGT6-QFER1u4-qcUw",
+                channelImgSrc: "https://yt3.googleusercontent.com/Q5rf5ItB1wumirWCX0cVO7d31Hi4N1B5vIWthJ7Bx8_1KyIAiFXFkGS0CLqBpowSicJMdI32B40=s176-c-k-c0x00ffffff-no-rj",
+                channelURL: "https://www.youtube.com/@kraigadams",
+                firstVidId: null
+            },
+            {
+                id: "PLTlW3nrfe71QBw6h3hPy23w5Nw8AmElb_",
+                title: "City Ambience",
+                description: "Ambient sounds from cities around the world.",
+                vidCount: 8,
                 channelId: "",
                 channelTitle: "Nomadic Ambience",
-                thumbnailURL: "https://i.ytimg.com/vi/3raVUTPAd-w/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBZQfehA5iuyiPzh6SdBJsk9dCtvw",
+                thumbnailURL: "https://i.ytimg.com/vi/sBtYWK817-0/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLA1oTe3bknrb7fvx76rYxkpIuyuRg",
                 channelImgSrc: "https://yt3.googleusercontent.com/ytc/AGIKgqOr7XmI5VtjkmGkcrNtf_6cPLX0tsk94QOEJnGZSw=s176-c-k-c0x00ffffff-no-rj",
                 channelURL: "https://www.youtube.com/@NomadicAmbience",
                 firstVidId: null
             },
             {
-                id: "PLvTaXqHhgyZ7XuuhDZtQeTif54Warh0Db",
-                title: "Rain Ambience",
-                description: "Relaxing rain sounds for focusing, meditating, sleeping, and calming anxiety.",
-                vidCount: 35,
-                channelId: "",
-                channelTitle: "Calmed By Nature",
-                thumbnailURL: "https://i.ytimg.com/vi/c0_ejQQcrwI/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDIMjFPok4MQ53trfOj9U5NdIAs5g",
-                channelImgSrc: "https://yt3.googleusercontent.com/ytc/AGIKgqM5X1aJOEuFHVtUqrKuUYJJ9TGZFGBe4U0KL6hg=s176-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@CalmedByNature",
-                firstVidId: null
-            },
-            {
-                id: "PLYSqJ3BBUHqhGnPS7yQk0ss3LM58TiYSP",
-                title: "Lord of the Rings Music & Ambience",
+                id: "PLTlW3nrfe71QjvbI1d6q9lTz5d0tmN3zF",
+                title: "Middle Earth Ambience",
                 description: "Step into Middle-Earth and enjoy the sights and sounds of your favorite iconic locations.",
-                vidCount: 35,
+                vidCount: 14,
                 channelId: "",
-                channelTitle: "Ambient Worlds",
-                thumbnailURL: "https://i.ytimg.com/vi/uBmbI8dzc-M/hqdefault.jpg?sqp=-oaymwEbCMQBEG5IVfKriqkDDggBFQAAiEIYAXABwAEG&rs=AOn4CLCHJeuVTDQpFrGmbdbe5mWnOyoZ5Q",
-                channelImgSrc: "https://yt3.ggpht.com/ytc/AGIKgqPonRm9_hPy4ZNSCP-Oh9wfwrtACCF7EzdcuC2IYg=s88-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@AmbientWorlds",
+                channelTitle: "Multiple Authors",
+                thumbnailURL: "https://i.ytimg.com/vi/UpeYqEeIBO4/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhlIFsoSjAP&rs=AOn4CLBk3FLmYL8Mp2kGeMHgeTBWUNvjtg",
+                channelImgSrc: "",
+                channelURL: "",
                 firstVidId: null
             },
             {
-                id: "PLYSqJ3BBUHqho9Af8rZQCfJwiYtNGdzAA",
-                title: "Harry Potter Music and Ambience",
+                id: "PLTlW3nrfe71T3rauOjTtMi164cECkr4-J",
+                title: "Harry Potter Ambience",
                 description: "Escape into the the Wizarding World of Harry Potter!",
-                vidCount: 40,
+                vidCount: 10,
                 channelId: "",
                 channelTitle: "Ambient Worlds",
-                thumbnailURL: "https://i.ytimg.com/vi/xLwm252AqJ8/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDzi3ykbRPFH_HRqTvZ3TOyI69lRw",
+                thumbnailURL: "https://i.ytimg.com/vi/pQdTu0IeVho/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLA9CmDigiNZto1X2xjiGUQuAHN4iQ",
                 channelImgSrc: "https://yt3.ggpht.com/ytc/AGIKgqPonRm9_hPy4ZNSCP-Oh9wfwrtACCF7EzdcuC2IYg=s88-c-k-c0x00ffffff-no-rj",
                 channelURL: "https://www.youtube.com/@AmbientWorlds",
                 firstVidId: null
             },
             {
-                id: "PLYSqJ3BBUHqgjle62yugHm494ENDefd57",
+                id: "PLTlW3nrfe71RpZbGmZQHm4W4RCxrRSd0M",
                 title: "Star Wars Music & Ambience",
                 description: "Atmospheric soundscapes from a distant galaxy, far, far away.",
-                vidCount: 9,
+                vidCount: 8,
                 channelId: "",
-                channelTitle: "Ambient Worlds",
-                thumbnailURL: "https://i.ytimg.com/vi/83n4pLUhTmk/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBd_45I6xQG17TaVSPJTnCZdWHDJQ",
-                channelImgSrc: "https://yt3.ggpht.com/ytc/AGIKgqPonRm9_hPy4ZNSCP-Oh9wfwrtACCF7EzdcuC2IYg=s88-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@AmbientWorlds",
+                channelTitle: "Multiple Authors",
+                thumbnailURL: "https://i.ytimg.com/vi/UJ4e4XVQQcY/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARh_IB4oMDAP&rs=AOn4CLCq16EGg2K-Jqfb39hxphVYO-wqbg",
+                channelImgSrc: "",
+                channelURL: "",
                 firstVidId: null
             },
         ]
@@ -445,33 +395,9 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
         title: "Archictecture",
         playlists: [
             {
-                id: "PLpi4YdMCC439sN_5vIza6IfQm0qc-IqPO",
-                title: "Open Door: Inside Celebrity Homes",
-                description: "Visit the extravagant homes of your favorite athletes, artists, musicians, & actors.",
-                vidCount: 150,
-                channelId: "",
-                channelTitle: "Architectural Digest",
-                thumbnailURL: "https://i.ytimg.com/vi/D-qQneOnJl0/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLADKxJSiTHX6Vt_69xRORV_DbvHVg",
-                channelImgSrc: "https://yt3.googleusercontent.com/ytc/AGIKgqMlG0_fNgw1y0MdSRE6rnc9lNUsK_3Igg_1nu7Fh-4=s176-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@Archdigest",
-                firstVidId: null
-            },
-            {
-                id: "PLpi4YdMCC439LJOnJyIgLR98zCazUGNwq",
-                title: "Walking Tour",
-                description: "Explore world famous cultural sites from Tokyo to the Côte d'Azure while staying cozy in your PJs!",
-                vidCount: 12,
-                channelId: "",
-                channelTitle: "Architectural Digest",
-                thumbnailURL: "https://i.ytimg.com/vi/EuNguMnSKnA/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLChHTKsXAKbartzBAC7F3XakBbNsQ",
-                channelImgSrc: "https://yt3.googleusercontent.com/ytc/AGIKgqMlG0_fNgw1y0MdSRE6rnc9lNUsK_3Igg_1nu7Fh-4=s176-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@Archdigest",
-                firstVidId: null
-            },
-            {
                 id: "UULPgxg48_pay4R67s-7WOgWFA",
-                title: "Local Project House Tours",
-                description: "Experience the ingenuity of Austrialia's best architects.",
+                title: "Local Project Popular Videos",
+                description: "The Local Project's amazing house tours that explores architecture and interior design stories across Australia, New Zealand, and North America.",
                 vidCount: 184,
                 channelId: "",
                 channelTitle: "The Local Project",
@@ -483,7 +409,7 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
             {
                 id: "PLirM94SQW73BAPwA09CDbGd6RRMK4SJpp",
                 title: "An Architect's Own Home",
-                description: "Step inside architects' abodes for design revelations and personal inspirations.",
+                description: "Tours of homes designed by the owners themselves.",
                 vidCount: 30,
                 channelId: "",
                 channelTitle: "The Local Project",
@@ -502,6 +428,30 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 thumbnailURL: "https://i.ytimg.com/vi/9Eu0nHapqf0/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCks4Pc293qBBzIKMf8ejy6Q76S0g",
                 channelImgSrc: "https://yt3.googleusercontent.com/NhCDTmydHHsvQKhwoknxIGAztUNtyi9CQg4HI3gt70Z_9f3BD9etb_uB4a5V2AhWJ2B6Tl1awbE=s176-c-k-c0x00ffffff-no-rj",
                 channelURL: "https://www.youtube.com/@TheLocalProject",
+                firstVidId: null
+            },
+            {
+                id: "PLpi4YdMCC439LJOnJyIgLR98zCazUGNwq",
+                title: "Walking Tours",
+                description: "Explore world famous cultural sites from Tokyo to the Côte d'Azure while staying cozy in your PJs!",
+                vidCount: 12,
+                channelId: "",
+                channelTitle: "Architectural Digest",
+                thumbnailURL: "https://i.ytimg.com/vi/EuNguMnSKnA/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLChHTKsXAKbartzBAC7F3XakBbNsQ",
+                channelImgSrc: "https://yt3.googleusercontent.com/ytc/AGIKgqMlG0_fNgw1y0MdSRE6rnc9lNUsK_3Igg_1nu7Fh-4=s176-c-k-c0x00ffffff-no-rj",
+                channelURL: "https://www.youtube.com/@Archdigest",
+                firstVidId: null
+            },
+            {
+                id: "PLpi4YdMCC439sN_5vIza6IfQm0qc-IqPO",
+                title: "Open Door: Inside Celebrity Homes",
+                description: "Visit the extravagant homes of your favorite athletes, artists, musicians, & actors.",
+                vidCount: 150,
+                channelId: "",
+                channelTitle: "Architectural Digest",
+                thumbnailURL: "https://i.ytimg.com/vi/D-qQneOnJl0/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLADKxJSiTHX6Vt_69xRORV_DbvHVg",
+                channelImgSrc: "https://yt3.googleusercontent.com/ytc/AGIKgqMlG0_fNgw1y0MdSRE6rnc9lNUsK_3Igg_1nu7Fh-4=s176-c-k-c0x00ffffff-no-rj",
+                channelURL: "https://www.youtube.com/@Archdigest",
                 firstVidId: null
             },
             {
@@ -541,9 +491,21 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 firstVidId: null
             },
             {
+                id: "PLVRtRwc2n-r6ToS9OapZq9OilGU3zqrbi",
+                title: "Une Fille, Une Style",
+                description: "Influenceuses, actrices, filles en vue et stylées invitent Vogue dans leur appartement pour évoquer leurs influences, inspirations mode et autres trouvailles vintage.",
+                vidCount: 77,
+                channelId: "",
+                channelTitle: "Vogue France",
+                thumbnailURL: "https://i.ytimg.com/vi/EwPiQD1w4uU/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCL_IRH-w11yatDduLJsjeq_oIlDw",
+                channelImgSrc: "",
+                channelURL: "https://www.youtube.com/@VogueFrance",
+                firstVidId: null
+            },
+            {
                 id: "PLpi4YdMCC439_CyF_AcdIhHNZXGmejGtw",
                 title: "Architects do Makeovers",
-                description: "A close look at the design processes of accomplished architects.",
+                description: "A close look at the design processes of accomplished architects and designers.",
                 vidCount: 16,
                 channelId: "",
                 channelTitle: "Architectural Digest",
@@ -551,7 +513,7 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 channelImgSrc: "",
                 channelURL: "https://www.youtube.com/@Archdigest",
                 firstVidId: null
-            },
+            }
         ]
     },
     {
@@ -561,10 +523,22 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 id: "PLpEqmyo6EfvLFKVCc1RzCoUGfGMqJV_Kg",
                 title: "Art of Craft",
                 description: "Find inspiration from artist profiles & demonstrations of their craft.",
-                vidCount: 36,
+                vidCount: 23,
                 channelId: "",
                 channelTitle: "Different Authors",
                 thumbnailURL: "https://i.ytimg.com/vi/vcoRoP3Abt8/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBR8SjK-LpyqF8EP5mYNTOpUumqWg",
+                channelImgSrc: "",
+                channelURL: "",
+                firstVidId: null
+            },
+            {
+                id: "PLTlW3nrfe71T_faAoGOjTff65G4yZR3Mg",
+                title: "The Beauty of Films",
+                description: "Experience the magic of cinema with this playlist brimming with stunning imagery, accompanies by amazing soundtracks.",
+                vidCount: 40,
+                channelId: "",
+                channelTitle: "Different Authors",
+                thumbnailURL: "https://i.ytimg.com/vi/-FGVJS3rT80/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLABS_5dT0OZkhI1BCBLyNCS2GNVyg",
                 channelImgSrc: "",
                 channelURL: "",
                 firstVidId: null
@@ -674,10 +648,10 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
         title: "History",
         playlists: [
             {
-                id: "PLpEqmyo6EfvJFLREnGokXuPh7gOHi1Tug",
+                id: "PLTlW3nrfe71SKOxD3-wQXFeBis96X49RU",
                 title: "Hellenic Cultures",
                 description: "An odyssey through Greek cultures, from the Spartans to the Macedonians.",
-                vidCount: 11,
+                vidCount: 14,
                 channelId: "",
                 channelTitle: "Multiple Authors",
                 thumbnailURL: "https://i.ytimg.com/vi/6eMKOoZdvJo/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDTQAOBxMLn7sozyz8JDgrCaPslzg",
@@ -686,22 +660,22 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 firstVidId: null
             },
             {
-                id: "PLpEqmyo6EfvJPF7dX3T5r6PN0ocjO74l6",
+                id: "PLTlW3nrfe71QKHBQDJQToNoDFalofe7n5",
                 title: "Asiatic and Middle Eastern",
                 description: "History stretching from the Persians and the Abassids to the Chinese dynasties and Feudal Japan.",
-                vidCount: 19,
+                vidCount: 13,
                 channelId: "",
                 channelTitle: "Multiple Authors",
-                thumbnailURL: "https://i.ytimg.com/vi/XdOxBCpk39c/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLBUQMtelhX0WsEBDOXY-vRDqrJ3Yw",
+                thumbnailURL: "https://i.ytimg.com/vi/ZnRX_Cqhwb8/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBPL37UVlwOZ_HiVzq5JKB6AMgsQg",
                 channelImgSrc: "",
                 channelURL: "",
                 firstVidId: null
             },
             {
-                id: "PLpEqmyo6EfvKTRi2DsmY76zIDxNw81uGf",
+                id: "PLTlW3nrfe71RxHW8F2phUtDAxJsKQxsaP",
                 title: "Rome",
                 description: "Travel back to the time when togas and imperical conquest were all the rage.",
-                vidCount: 8,
+                vidCount: 23,
                 channelId: "",
                 channelTitle: "Multiple Authors",
                 thumbnailURL: "https://i.ytimg.com/vi/CU2AOz8sav4/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAl9frJrxtNp4plAzkcENOoxwSN0Q",
@@ -722,7 +696,7 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 firstVidId: null
             },
             {
-                id: "PLpEqmyo6EfvKQWp9RPpTQVppb7Ix_a_Lg",
+                id: "PLTlW3nrfe71QnPQOPKt8cvY3U05BPx7zs",
                 title: "Ancient Egypt",
                 description: "Unearth the mysteries and wonders of Ancient Egypt's rich history.",
                 vidCount: 12,
@@ -746,10 +720,10 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 firstVidId: null
             },
             {
-                id: "PLpEqmyo6EfvJkYaea8zUmutNpt3jiZXp5",
+                id: "PLTlW3nrfe71TD1rvpmiCa13A0jImzJkbQ",
                 title: "Prehistory",
                 description: "Explore the roots human ancestry and the animals they lived with from the Stone Age to Bronze Age.",
-                vidCount: 8,
+                vidCount: 17,
                 channelId: "",
                 channelTitle: "Multiple Authors",
                 thumbnailURL: "https://i.ytimg.com/vi/vJybfmbrOCE/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBH-W80DpEAvzmwOE6BVlThyFB3Zg",
@@ -795,8 +769,8 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
             },
             {
                 id: "PLOjUdznmpOjiJQD_rOpw4iX8Vj-AoxGUe",
-                title: "Game of Thrones",
-                description: "Not exactly history but GOT has the grounded realism to feel like so.",
+                title: "ASOIF History",
+                description: "Battles from George R.R. Martin's widely beloved ASOIF universe.",
                 vidCount: 5,
                 channelId: "",
                 channelTitle: "Baz Battles",
@@ -811,42 +785,6 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
         title: "Culture",
         playlists: [
             {
-                id: "PLpEqmyo6EfvKJaI7Rl1Y0zvxkPVjqfPwX",
-                title: "Kraig Adams Hiking Videos",
-                description: "Experience some of the world's pretties natural wonders with Kraid Adams' theraputic hiking videos.",
-                vidCount: 22,
-                channelId: "",
-                channelTitle: "Kraig Adams",
-                thumbnailURL: "https://i.ytimg.com/vi/WKcnvPDgifA/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAQhlIq7mkeUHGT6-QFER1u4-qcUw",
-                channelImgSrc: "https://yt3.googleusercontent.com/Q5rf5ItB1wumirWCX0cVO7d31Hi4N1B5vIWthJ7Bx8_1KyIAiFXFkGS0CLqBpowSicJMdI32B40=s176-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@kraigadams",
-                firstVidId: null
-            },
-            {
-                id: "PLpEqmyo6EfvJseQSBPD78gFiwgI6t9p1K",
-                title: "Nature Docs",
-                description: "Find serenity in Earth's natural treasures, from the heart of the Amazon Rain Forest to the vast stretches of the African Savannah.",
-                vidCount: 11,
-                channelId: "",
-                channelTitle: "Multiple Authors",
-                thumbnailURL: "https://i.ytimg.com/vi/JkaxUblCGz0/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCHAgPno9ZlrIdpdJ1IjPcT0CsrcQ",
-                channelImgSrc: "",
-                channelURL: "",
-                firstVidId: null
-            },
-            {
-                id: "PLpEqmyo6EfvKXJDoVj2k3Xo6wcZM7qgXt",
-                title: "THR Roundtables",
-                description: "Candid conversations with titans of the film industry.",
-                vidCount: 20,
-                channelId: "",
-                channelTitle: "The Hollywood Reporter",
-                thumbnailURL: "https://i.ytimg.com/vi/hJH2EyvvEBA/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAjkFRfVJjH-DS2rBdGRA1TrU7UcQ",
-                channelImgSrc: "https://yt3.googleusercontent.com/7FPGaZ3f81d6IXj-eZwD5_f8UhKNFTMg6jvesjs42nnEwTKrFGnIBGqxbP0QZs2MyAKF2zQHmFA=s176-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@hollywoodreporter",
-                firstVidId: null
-            },
-            {
                 id: "PLW1Mwtj8qAjmvVnVEbBhbcBOAFWlj8mOs",
                 title: "Regional Eats",
                 description: "We travel to a food's area of origin to see how it's made, find out its history.",
@@ -856,18 +794,6 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 thumbnailURL: "https://i.ytimg.com/vi/ZyZh_FIhGlU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAwFZ0JRuVsIJ-rl4mYJFNUY-HI8g",
                 channelImgSrc: "https://yt3.googleusercontent.com/my5fZEjea_-N5p8mhqrdNIxghb-KjP9AcH4lQlYzNrRlwzjx3Gbay0JlOCZqJOcp_sTjF3rmBV8=s176-c-k-c0x00ffffff-no-rj",
                 channelURL: "https://www.youtube.com/@InsiderFood",
-                firstVidId: null
-            },
-            {
-                id: "PLpEqmyo6EfvLXwNAneyYbEgxM4o5GinX6",
-                title: "Walking Tours",
-                description: "Explore world famous cultural sites from Tokyo to the Côte d'Azure while staying cozy in your PJs!.",
-                vidCount: 8,
-                channelId: "",
-                channelTitle: "Multiple Authors",
-                thumbnailURL: "https://i.ytimg.com/vi/F8MN0o6RS9o/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDJkmw9p12FfxuO2OnDi-PTJ1FwyA",
-                channelImgSrc: "",
-                channelURL: "",
                 firstVidId: null
             },
             {
@@ -907,10 +833,10 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 firstVidId: null
             },
             {
-                id: "PLpEqmyo6EfvLNXuV81RFTboiERUsr73Yf",
+                id: "UULFcAd5Np7fO8SeejB1FVKcYw",
                 title: "Best Ever Food Review Show",
-                description: "Sonny’s culinary journeys around the world offers some of the most entertaining and enriching food content available.",
-                vidCount: 82,
+                description: "Sonny's culinary journeys around the world offers some of the most entertaining and enriching food content available.",
+                vidCount: 700,
                 channelId: "",
                 channelTitle: "Best Ever Food Review Show",
                 thumbnailURL: "https://i.ytimg.com/vi/a5yP1yqGEMo/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBYc1gfrW0rEMDlyfIldjr9TDL3OQ",
@@ -919,34 +845,22 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 firstVidId: null
             },
             {
-                id: "PL1OajwstW05Hlp6Le5OgA1yZ9QEyxfBnJ",
-                title: "Rick Stevens Travel Guide",
-                description: "Rich Stevens famous travel guide series explores most beautiful sites in Europe.",
-                vidCount: 123,
+                id: "PLpEqmyo6EfvKXJDoVj2k3Xo6wcZM7qgXt",
+                title: "THR Roundtables",
+                description: "Candid conversations with titans of the film industry.",
+                vidCount: 20,
                 channelId: "",
-                channelTitle: "Rick Steves' Europe",
-                thumbnailURL: "https://i.ytimg.com/vi/WP316ABiTt0/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDfOJ-d49kBNplh2Bqr1ggtsHSmIw",
-                channelImgSrc: "https://yt3.googleusercontent.com/ytc/AGIKgqMx_-Mkmuil3vVoHCg6KgDpC-5EUzGr616CwhTg7g=s176-c-k-c0x00ffffff-no-rj",
-                channelURL: "https://www.youtube.com/@ricksteves",
+                channelTitle: "The Hollywood Reporter",
+                thumbnailURL: "https://i.ytimg.com/vi/hJH2EyvvEBA/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAjkFRfVJjH-DS2rBdGRA1TrU7UcQ",
+                channelImgSrc: "https://yt3.googleusercontent.com/7FPGaZ3f81d6IXj-eZwD5_f8UhKNFTMg6jvesjs42nnEwTKrFGnIBGqxbP0QZs2MyAKF2zQHmFA=s176-c-k-c0x00ffffff-no-rj",
+                channelURL: "https://www.youtube.com/@hollywoodreporter",
                 firstVidId: null
-            },
+            }
         ]
     },
     {
         title: "News & Politics",
         playlists: [
-            {
-                id: "PLMFGVXWuJ1C7Bcu6apMqmP3B0yL0BeJRe",
-                title: "Great Big Picture",
-                description: "Delivering unique and enriching stories about people from around the global that often overlooked by mainstream media.",
-                vidCount: 16,
-                channelId: "",
-                channelTitle: "Great Big Story",
-                thumbnailURL: "https://i.ytimg.com/vi/ykYfP7iqOto/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCmWZk7rMfkihhm7npvAE7Au3r1ew",
-                channelImgSrc: "",
-                channelURL: "https://www.youtube.com/@GreatBigStory",
-                firstVidId: null
-            },
             {
                 id: "PLw613M86o5o7q1cjb26MfCgdxJtshvRZ-",
                 title: "Vice News",
@@ -960,6 +874,30 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 firstVidId: null
             },
             {
+                id: "UULFsD-Qms-AkXDrsU962OicLw",
+                title: "The New Yorker | Latest",
+                description: "The New Yorker delivers reporting and commentary on politics, foreign affairs, business, technology, culture, arts, humor, fiction, poetry, and cartoons.",
+                vidCount:  1000,
+                channelId: "",
+                channelTitle: "New Yorker",
+                thumbnailURL: "https://i.ytimg.com/vi/h-hJYtfsNB0/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBAVwFcXbpQ0luaEJuNR8diDhGc5g",
+                channelImgSrc: "",
+                channelURL: "https://www.youtube.com/@newyorker",
+                firstVidId: null
+            },
+            {
+                id: "PL4CGYNsoW2iBfrlL3yvnqQqCMdiBQol1D",
+                title: "Latest News | The New York Times",
+                description: "The New York Times is the most powerful engine for independent, boots-on-the-ground and deeply reported journalism.",
+                vidCount:  1000,
+                channelId: "",
+                channelTitle: "The New York Times",
+                thumbnailURL: "https://i.ytimg.com/vi/SE_S-dY5ZHM/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD2OeE1aO03LezOdUnozGjne47F3w",
+                channelImgSrc: "",
+                channelURL: "https://www.youtube.com/@nytimes",
+                firstVidId: null
+            },
+            {
                 id: "PLpEqmyo6EfvKcNODQCgDNAO5o09yXvJD-",
                 title: "Best of Vice News",
                 description: "Our favorite pieces of journalism from Vice News.",
@@ -969,6 +907,18 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 thumbnailURL: "https://i.ytimg.com/vi/iIFi_Rgm-T8/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLAWPRdAGdU3LNv__jDWjXvRNYEASw",
                 channelImgSrc: "",
                 channelURL: "https://www.youtube.com/@VICENews",
+                firstVidId: null
+            },
+            {
+                id: "PLMFGVXWuJ1C7Bcu6apMqmP3B0yL0BeJRe",
+                title: "Great Big Picture",
+                description: "Delivering unique and enriching stories about people from around the global that often overlooked by mainstream media.",
+                vidCount: 16,
+                channelId: "",
+                channelTitle: "Great Big Story",
+                thumbnailURL: "https://i.ytimg.com/vi/t-vMC5a9I0Y/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB5n7w9khkh-SrnHNkza_swIkoXBw",
+                channelImgSrc: "",
+                channelURL: "https://www.youtube.com/@GreatBigStory",
                 firstVidId: null
             },
             {

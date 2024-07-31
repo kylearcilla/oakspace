@@ -1,14 +1,20 @@
 import { musicDataStore, musicPlayerStore, } from "./store"
 import { get } from "svelte/store"
 
-import { initFloatingEmbed } from "./utils-home"
 import { MusicPlayer, type MusicPlayerStore } from "./music-player"
 import { MusicPlaylistShuffler } from "./music-playlist-shuffler"
-import { SPOTIFY_IFRAME_ID, isMediaTypeACollection, loadMusicPlayerData, loadMusicShuffleData, removeMusicPlayerData, removeMusicShuffleData, saveMusicPlayerData } from "./utils-music"
+import { 
+        SPOTIFY_IFRAME_ID, isMediaTypeACollection, loadMusicPlayerData, 
+        loadMusicShuffleData, removeMusicPlayerData, removeMusicShuffleData, saveMusicPlayerData 
+} from "./utils-music"
 
 import { APIError } from "./errors"
 import { APIErrorCode, MediaEmbedType, MusicMediaType, MusicPlatform } from "./enums"
-import { getAlbumItem, getSpotifyMediaUri, getLibAudiobooksItem, getLibPodcastEpisdesItem, getLibTracksItem, getPlaylistItem, getPlaylistDetails, getAlbumDetails } from "./api-spotify"
+import { 
+        getAlbumItem, getSpotifyMediaUri, getLibAudiobooksItem, getLibPodcastEpisdesItem, 
+        getLibTracksItem, getPlaylistItem, getPlaylistDetails, getAlbumDetails 
+} from "./api-spotify"
+import { getElemById } from "./utils-general"
 
 /**
  * User data class that wraps over the Spotify iFrame API.
@@ -52,6 +58,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
     naturalEndTimeout: NodeJS.Timer | null = null
     
     PROGRESS_TO_NEX_DELAY = 1000
+    SPOTIFY_IFRAME_URI    = "https://open.spotify.com/embed/iframe-api/v1"
     PLAYER_OPTIONS = {
         width: '100%', height: '100%',
         uri: ''
@@ -73,8 +80,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
     */
    async init(context?: MediaClickedContext) {
        try {
-            initFloatingEmbed(MediaEmbedType.Spotify)
-            this.loadSpotifyiFrameAPI()
+            // this.setSpotifyiFrameAPI()
             this.doIgnoreAutoPlay = true
 
             if (context) {
@@ -84,13 +90,20 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
             this.PLAYER_OPTIONS.uri = getSpotifyMediaUri(this.mediaItem!)
 
             await this.waitForPlayerReadyAndSetPlayerInstance()
-            this.loadCurrentItem()
+            this.loadCurrentItem(false)
 
             if (!this.doShowPlayer) this.toggleShow(true)
         }
         catch(error: any) {
-            if (this.isDisabled) this.undisablePlayer()
-            if (context)  this.quit()  // if init for the first time
+            console.error(error)
+
+            if (this.isDisabled) {
+                this.undisablePlayer()
+            }
+            // if init for the first time
+            if (context) {
+                this.quit()
+            }
             
             throw new APIError(APIErrorCode.PLAYER, "There was an error initializing Spotify player. Try again later.")
         }
@@ -98,13 +111,17 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
 
     /**
      * Load the Spotify iFrame Player API asynchornously.
+     * This does not work, has to be manually written in the app.html otherwise API won't work
      */
-    loadSpotifyiFrameAPI() {
+    setSpotifyiFrameAPI() {
         const body = document.getElementsByTagName('body')[0]
-
         const script = document.getElementsByTagName('script')[0]
-        script.src = 'https://open.spotify.com/embed/iframe-api/v1'
+
+        script.src   = this.SPOTIFY_IFRAME_URI
         script.async = true
+        script.removeAttribute("type")
+        script.removeAttribute("id")
+
         body.appendChild(script)
     } 
 
@@ -124,7 +141,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
     waitForPlayerReadyAndSetPlayerInstance(): Promise<void> {
         return new Promise<void>((resolve, reject) => (window as any).onSpotifyIframeApiReady = (IFrameAPI: any) => {
             try {
-                const element = document.getElementById(SPOTIFY_IFRAME_ID);
+                const element = document.getElementById(SPOTIFY_IFRAME_ID)
                 IFrameAPI.createController(element, this.PLAYER_OPTIONS, (controller: any) => this.createControllerCallback(controller))
                 resolve()
             }
@@ -189,7 +206,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
 
             this.naturalEndTimeout = setTimeout(() => {
                 this.skipToNextTrack()
-                clearTimeout(this.naturalEndTimeout!)
+                clearTimeout(this.naturalEndTimeout! as any)
 
                 this.naturalEndTimeout = null
             }, this.PROGRESS_TO_NEX_DELAY)
@@ -224,7 +241,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
     clearNaturalEndTimeout() {
         if (!this.naturalEndTimeout) return
 
-        clearTimeout(this.naturalEndTimeout)
+        clearTimeout(this.naturalEndTimeout as any)
         this.naturalEndTimeout = null
     }
 
@@ -263,7 +280,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
     async skipToNextTrack() {
         this.clearNaturalEndTimeout()
 
-        try {    
+        try {
             await this.loadNextMediaItem(true)
         }
         catch(error: any) {
@@ -296,28 +313,38 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
      * @param posSecs - The position to seek to, in seconds.
      */
     seekTo(posSecs: number) {
-        this.hasSeekedTo = posSecs * 1000
-        if (posSecs === 0) {
-            this.controller.playFromStart()
+        try {
+            this.hasSeekedTo = posSecs * 1000
+            if (posSecs === 0) {
+                this.controller.playFromStart()
+            }
+            else {
+                this.controller.seek(posSecs)
+            }
         }
-        else {
-            this.controller.seek(posSecs)
+        catch(error: any) {
+            this.onError(error)
         }
     }
 
     toggleRepeat(): void {
-        this.isRepeating = !this.isRepeating
-        this.updateState({ isRepeating: this.isRepeating })
+        
+        try {
+            this.isRepeating = !this.isRepeating
+            this.updateState({ isRepeating: this.isRepeating })
+        }
+        catch(e) {
+            this.onError(e)
+        }
     }
 
-    toggleShuffle(): void {
+    toggleShuffle(flag?: boolean): void {
         try {
             const media = this.mediaCollection as Playlist | Album
             const currIndex = this.currentIdx
-    
-            this.isShuffled = !this.isShuffled
+
+            this.isShuffled = flag != undefined ? flag : !this.isShuffled    
             this.hasReachedEnd = false
-    
 
             if (this.isShuffled) {
                 this.musicPlaylistShuffler = new MusicPlaylistShuffler(currIndex, media.length)
@@ -356,7 +383,7 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
         }
         else if (isNext) {
             nextIdx = this.getNextIndex()
-            doPlay = this.currentIdx === 0 ? this.isRepeating : true
+            doPlay = nextIdx === 0 ? this.isRepeating : true
         }
         else if (!isNext && shuffler) {
             nextIdx = shuffler.getPrevIndex(this.isRepeating)
@@ -422,8 +449,9 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
             this.controller!.play()
         }
         else {
-            this.controller!.play()
-            // this.controller!.pause() does not work
+            this.controller!.pause()  // will pause but there ill be a playback error
+            this.isPlaying = false
+            this.updateState({ isPlaying: this.isPlaying })
         }
     }
 
@@ -434,17 +462,20 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
      */
     async updateMediaCollection(context: MediaClickedContext) {
         try {
+            if (this.mediaCollection?.id === context.collection.id) {
+                return
+            }
             if (!this.doShowPlayer) {
                 this.toggleShow(true)
             }
 
-            const accessToken = await this.validateAndGetAccessToken()
+            const accessToken       = await this.validateAndGetAccessToken()
             const isMediaCollection = isMediaTypeACollection(context.itemClicked.type) 
-            const _idx = isMediaCollection ? 0 : context.idx
-            const isFromLib = context.collection.fromLib
-            const collectionType = context.collection.type
-            const mediaItem = await this.getItemFromIdx(context.collection!, _idx)
-            
+            const _idx              = isMediaCollection ? 0 : context.idx
+            const isFromLib         = context.collection.fromLib
+            const collectionType    = context.collection.type
+            const mediaItem         = await this.getItemFromIdx(context.collection!, _idx)
+
             this.mediaCollection = context.collection!
             
             // make sure hard-coded reccommended media always has updated data
@@ -469,8 +500,14 @@ export class SpotifyMusicPlayer extends MusicPlayer implements MusicPlayerStore<
             this.mediaItem = mediaItem
 
             this.updateState({ 
-                mediaItem: this.mediaItem, mediaCollection: this.mediaCollection, currentIdx: this.currentIdx 
+                mediaItem: this.mediaItem, 
+                mediaCollection: this.mediaCollection, 
+                currentIdx: this.currentIdx 
             })
+
+            if (this.isShuffled) {
+                this.toggleShuffle(true)
+            }
         }
         catch(error) {
             this.onError(error)

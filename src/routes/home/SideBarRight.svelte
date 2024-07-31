@@ -18,11 +18,11 @@
     let interval: NodeJS.Timer | null = null
     let selectedTab: RightSideTab = RightSideTab.OVERVIEW
 
-    let isRightBarOpen = true
+    let rightBarOpen = true
     let initDragXPos = -1
 
     $: {
-        isRightBarOpen = $globalContext.isRightBarOpen
+        rightBarOpen = $globalContext.rightBarOpen
     }
 
     /* General UI Handlers */
@@ -47,11 +47,11 @@
 
         pe.preventDefault()
 
-        if (xOffset > 0 && isRightBarOpen) {
+        if (xOffset > 0 && rightBarOpen) {
             hideRightBar()
             removeDragEventListener()
         }
-        else if (xOffset < 0 && !isRightBarOpen) {
+        else if (xOffset < 0 && !rightBarOpen) {
             showRightBar()
             removeDragEventListener()
         }
@@ -86,7 +86,7 @@
         new TasksViewManager(taskGroups)
     })
     onDestroy(() => {
-        clearInterval(interval!)
+        clearInterval(interval! as any)
     })
 </script>
 

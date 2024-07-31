@@ -12,6 +12,8 @@ type HhMmFormat = "full-letters" | "mid-letters" | "min-letters" | "numbers"
 
 type RoutineBlockEditContext = "old-stretch" | "lift" | "details" | "new-stretch" | "duplicate"
 
+type Position = "top-left" | "top" | "top-right" | "bottom-left" | "middle" | "right" | "left" | "bottom-right" | "bottom"
+
 type IconOptions = {
     id?: string
     width?: number
@@ -81,7 +83,7 @@ type OffsetPoint = {
 }
 
 type HotKeyCombo = string[]
-type DropdDownListItemIconType = "default" | "unit" | "hotkey" | "right-arrow"
+type DropdDownListItemIconType = "default" | "fa" | "unit" | "hotkey" | "right-arrow"
 
 type DropdownOption = {
     name: string,
@@ -353,18 +355,20 @@ type KeyContext = {
   
 /* Home */
 type GlobalContext = {
-    isLeftNarrowBarOpen: boolean
-    isRightBarOpen: boolean
-    isLeftBarFloating: boolean
+    leftBarOpen: boolean
+    rightBarOpen: boolean
     isVideoViewOpen: boolean
     isMusicPlayerOpen: boolean
     hasToaster: boolean
     minModeSrc: string | null
-    isLeftWideMenuOpen: boolean
     doOpenActiveRoutine: boolean
     shortcutsFocus: ShortcutSectionInFocus
     modalsOpen: ModalType[]
     lastKeysPressed: KeyContext
+    mediaPlayer: {
+        youtube: boolean,
+        music: boolean
+    } | null
 }
 
 type ToastInitOptions = {
@@ -675,7 +679,7 @@ type TasksListOptions = {
 
 // interface TaskListOptionsInterface extends TasksListOptions<TaskListTypeCombos> { }
 
-type MediaCollection = Playlist | Album | ArtistTopSongs | LibTracks | LibAlbums | LibEpisodes | LibAudiobooks
+type MediaCollection = Playlist | Album | LibTracks | LibAlbums | LibEpisodes | LibAudiobooks
 
 interface Media {
     id: string
@@ -883,8 +887,16 @@ type YoutubePlaylistResponse = {
 type YoutubePlayerData = {
     playlist: YoutubePlaylist
     vid: YoutubeVideo
+    floatLayout: BoxLayout
     playlistVidIdx: number
     doShowPlayer: boolean
+}
+
+type BoxLayout = { 
+    width: number 
+    height: number 
+    top: number 
+    left: number 
 }
 
 type YoutubePlaylist = {

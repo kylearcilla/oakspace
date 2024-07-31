@@ -5,7 +5,7 @@ async function openYoutube(page: any) {
     await page.goto('http://localhost:5173/home')
     await page.waitForTimeout(1000)
     await page.mouse.move(0, 20)
-    await page.locator(".wide-bar__tab-btn").filter({ hasText: "Youtube" }).click()
+    await page.locator('.bar__icon-tab[data-tab-name="youtube"]').click()
 }
 async function clickOnLogin(page: any) {
     const consentScreen = page.waitForEvent('popup')
@@ -56,15 +56,23 @@ async function clickExpectChoosePlaylist(options: {
     category: string,
     playlist: string,
     doVerify?: boolean,
+    scrollCount?: number,
     dbl?: boolean
 }) {
-    const { page, category, playlist, doVerify = true, dbl = false } = options
+    const { page, category, playlist, scrollCount, doVerify = true, dbl = false } = options
+    const listElem = page.locator(".recs__playlists-list")
 
     if (category === "My Playlists") {
         await page.locator(".recs__groups-list-user-pl-tab").click()
     }
     else {
         await page.locator(".recs__groups-list-rec-tab").filter({ hasText: category }).click()    
+    }
+    if (scrollCount) {
+        for (let i = 0; i < scrollCount; i++) {
+            await vertScrollElem({ elem: listElem, to: "bottom" })
+            await page.waitForTimeout(800)
+        }
     }
 
     const playlisItem = await page.locator(".recs__playlist-item-title").filter({ hasText: playlist })
@@ -160,9 +168,17 @@ test.describe("basic functionality", () => {
         await expect(page.locator(".yt-settings__user-profile-container")).toHaveText("Log In")
         
         await clickExpectChoosePlaylist({ page, category: "Lofi / Chill", playlist: "Romantic Chill" })
+        await page.waitForTimeout(800)
+
         await clickExpectChoosePlaylist({ page, category: "Lofi / Chill", playlist: "Anime Chill" })
-        await clickExpectChoosePlaylist({ page, category: "Ambience", playlist: "Natural Soundscapes Mix" })
+        await page.waitForTimeout(800)
+
+        await clickExpectChoosePlaylist({ page, category: "Ambience", playlist: "Weather Ambience" })
+        await page.waitForTimeout(800)
+
         await clickExpectChoosePlaylist({ page, category: "History", playlist: "Rome" })
+        await page.waitForTimeout(800)
+
     })
     test('first playlist played is invalid', async ({ page }) => {
         await openYoutube(page)
@@ -289,7 +305,7 @@ test.describe("basic functionality", () => {
             page,
         })
 
-        await page.waitForTimeout(200)
+        await page.waitForTimeout(800)
 
         /* 3rd */
         await clickOnVideo({ page, idx: 2 })
@@ -298,21 +314,21 @@ test.describe("basic functionality", () => {
             page,
         })
 
-        await page.waitForTimeout(200)
+        await page.waitForTimeout(800)
 
         /* 6th */
-        await clickOnVideo({ page, isOpen: true, idx: 5 })
+        await clickOnVideo({ page, isOpen: true, idx: 4 })
         await expectVideoDetails({ 
             title: "Relaxing Zelda Music with Campfire Ambience",
             page,
         })
 
-        await page.waitForTimeout(200)
+        await page.waitForTimeout(800)
 
-        /* 22nd */
-        await clickOnVideo({ page, isOpen: true, idx: 21 })
+        /* 18th */
+        await clickOnVideo({ page, isOpen: true, idx: 17 })
         await expectVideoDetails({ 
-            title: "Soothing and Relaxing Nintendo Music to Chill Out to",
+            title: "nintendo frutiger aero chill mix",
             page,
         })
     })
@@ -413,6 +429,7 @@ test.describe("logged in", () => {
             page,
             category: "My Playlists", 
             playlist: "private",
+            scrollCount: 3,
             doVerify: false 
         })
         await expectInvalidMedia({ 

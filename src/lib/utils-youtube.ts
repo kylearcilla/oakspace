@@ -108,7 +108,6 @@ export async function getYtMediaId(url: string): Promise<YoutubeMediaId | { erro
  * @param playlist   Playlist user clicked on.
  */
 export async function handleChoosePlaylist (playlist: YoutubePlaylist) {
-    console.log({ playlist })
     let ytPlayer = get(ytPlayerStore)
     const hasInitPlayer = ytPlayer != null
 
@@ -116,20 +115,16 @@ export async function handleChoosePlaylist (playlist: YoutubePlaylist) {
         await initYoutubePlayer()
         ytPlayer = get(ytPlayerStore)!
     }
-
-    // do no not play if self OR clicking self after an invalid media request
-    if (playlist.id != ytPlayer?.playlist?.id || ytPlayer.error?.code === APIErrorCode.PLAYER_MEDIA_INVALID) {
+    if (playlist.id != ytPlayer?.playlist?.id) {
         setTimeout(() =>  ytPlayer!.playPlaylist(playlist), hasInitPlayer ? 0 : INIT_PLAYLIST_REQUEST_DELAY)
-    }
-    else {
-        ytPlayer!.removeCurrentPlaylist()
     }
 }
 
 /**
  * Toggle pointer events for all Youtube iFrames.
  * Done to avoid weird behavior with certain events over an active iFrame
- * @param isPointerEventsEnabled   Should iframes have pointer events.
+ * 
+ * @param isPointerEventsEnabled   Should iframes have pointer events
  */
 export function toggleYTIFramePointerEvents(isPointerEventsEnabled: boolean) {
     const ytPlayers = getElemsByClass("iframe-vid-player") as HTMLElement[]
@@ -148,9 +143,6 @@ export function youtubeAPIErrorHandler(error: APIError) {
     const errorMessage = error.message
     const hasNoMsg = errorMessage != undefined && errorMessage
 
-
-    console.log({ errorMessage })
-
     if (error.code === APIErrorCode.EXPIRED_TOKEN) {
         toastOptions = {
             message: hasNoMsg ? errorMessage : "Token has expired. Log in again to continue.",
@@ -165,11 +157,12 @@ export function youtubeAPIErrorHandler(error: APIError) {
             message: hasNoMsg ? errorMessage : "Player error. Try again later.",
         }
     }
-    else if (error.code === APIErrorCode.FAILED_TOKEN_REFRESH) {
-        toastOptions = {
-            message: hasNoMsg ? errorMessage : "Token refresh failed.",
-        }
-    }
+    // else if (error.code === APIErrorCode.FAILED_TOKEN_REFRESH) {
+    //     return
+    //     toastOptions = {
+    //         message: hasNoMsg ? errorMessage : "Token refresh failed."
+    //     }
+    // }
     else if (error.code === APIErrorCode.AUTHORIZATION_ERROR) {
         toastOptions = {
             message: hasNoMsg ? errorMessage : `Youtube authorization failed. Please try again.`,
@@ -337,6 +330,6 @@ export function initTestYTGroups(playlistGroups: YoutubePlaylistGroup[]) {
         }
     ]
 
-    playlistGroups[0].playlists = [...testPlaylists, ...playlistGroups[0].playlists]
+    playlistGroups[0].playlists = [...playlistGroups[0].playlists, ...testPlaylists]
     return playlistGroups
 }

@@ -438,7 +438,7 @@
             dayBreakdownDropdownOptions = [
                 { 
                     name: "Replace routine",
-                    rightIcon: { type: "right-arrow" },
+                    rightIcon: { type: "fa", icon: "fa-solid fa-chevron-right" },
                     onPointerOver: onOpenDailyRoutinesList,
                     onPointerLeave: () => dailyRoutinesOpen = false
                 },
@@ -451,7 +451,7 @@
             dayBreakdownDropdownOptions = [
                 { 
                     name: "Link a routine", 
-                    rightIcon: { type: "right-arrow" },
+                    rightIcon: { type: "fa", icon: "fa-solid fa-chevron-right" },
                     onPointerOver: onOpenDailyRoutinesList,
                     onPointerLeave: () => dailyRoutinesOpen = false
                 }

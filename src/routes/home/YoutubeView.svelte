@@ -1,8 +1,11 @@
 <script lang="ts">
-    import { onMount } from 'svelte'
-    import { ytPlayerStore, themeState } from "$lib/store"
-	import { APIErrorCode, LogoIcon } from '$lib/enums';
-	import Logo from '../../components/Logo.svelte';
+    import { ytPlayerStore, themeState, globalContext } from "$lib/store"
+	import { APIErrorCode, Icon, LogoIcon } from '$lib/enums'
+	import Logo from '../../components/Logo.svelte'
+	import { toggleYoutubePlayerFloat } from "$lib/utils-home"
+	import SvgIcon from "../../components/SVGIcon.svelte";
+
+    export let type: "float" | "base" = "base"
 
     let doShowInvalidUI = false
     let doMinimizeYtPanel = false
@@ -11,12 +14,16 @@
     $: playlist     = $ytPlayerStore?.playlist
     $: isDarkTheme  = $themeState.isDarkTheme
     $: doShowPlayer = $ytPlayerStore?.doShowPlayer ?? true
+    $: isFloating   = $globalContext.mediaPlayer?.youtube
+    $: rightBarOpen = $globalContext.rightBarOpen
+    $: hideDetails      = type === "float"
+    $: showFloatScreen  = type === "base" && isFloating
 
     $: {
         const error: any  = $ytPlayerStore?.error
         const isInValidVid = error?.message === "Video couldn't be played due to privacy or embed playback restrictions."
 
-        // only disable if no playlist at all is unplayable
+        // only disable if playlist is unplayable
         if (error?.code === APIErrorCode.PLAYER_MEDIA_INVALID && !isInValidVid) {
             doShowInvalidUI = true
         }
@@ -26,32 +33,51 @@
     }
 </script>
 
-<div class="vid-view" class:vid-view--hidden={!doShowPlayer}>
+<div 
+    class="vid-view" 
+    class:vid-view--hidden={!doShowPlayer}
+    class:vid-view--iframe-only={hideDetails}
+    class:vid-view--right-bar-open={rightBarOpen}
+>
     <div class="vid-view__content">
         <!-- Video Player -->
         <div class="vid-view__container">
             <div 
-                class="vid-view__iframe-player-container"
-                class:vid-view__iframe-player-container--container={doShowInvalidUI}
+                class="vid-view__iframe-container"
+                id="yt-iframe-container"
             >
-                <div class="vid-view__iframe-player iframe-vid-player" id="home-yt-player"></div>
             </div>
             {#if !doShowInvalidUI && playlist === null}
                 <div class="vid-view__empty-vid-view">
-                    <p class="vid-view__empty-msg">No Playlist Selected</p>
+                    <p class="vid-view__empty-msg">
+                        No Playlist Selected
+                    </p>
                 </div>
             {:else if doShowInvalidUI}
+                <div 
+                    class="vid-view__empty-vid-view"
+                    id="youtub"
+                >
+                    <div class="text-aln-center">
+                        <h4 class="vid-view__empty-msg">
+                            Playlist / video can't be played
+                        </h4>
+                        <a
+                            class="vid-view-support-link"
+                            target="_blank"
+                            href="https://support.google.com/youtube/answer/97363?hl=en"
+                            rel="noreferrer"
+                        >
+                            More info on unplayable embeded youtube content.
+                        </a>
+                    </div>
+                </div>
+            {:else if showFloatScreen}
                 <div class="vid-view__empty-vid-view">
                     <div class="text-aln-center">
-                        <h4 class="vid-view__empty-msg">Playlist / video can't be played</h4>
-                            <a
-                                class="vid-view-support-link"
-                                target="_blank"
-                                href="https://support.google.com/youtube/answer/97363?hl=en"
-                                rel="noreferrer"
-                            >
-                                More info on unplayable embeded youtube content.
-                            </a>
+                        <h4 class="vid-view__empty-msg">
+                            Playing picture in picture
+                        </h4>
                     </div>
                 </div>
             {/if}
@@ -96,8 +122,20 @@
                         <div 
                             class="playlist-panel__pl-details-img-container"
                             class:playlist-panel__pl-details-img-container--empty={playlist === null}
+                            title="Toggle miniplayer"
                         >
                             <img src={playlist?.thumbnailURL} alt="pl-thumbnial"/>
+                            <button 
+                                class="playlist-panel__miniplayer-btn"
+                                on:click={toggleYoutubePlayerFloat}
+                            >   
+                                <SvgIcon
+                                    icon={Icon.MiniPlayer}
+                                    options={{ 
+                                        height: 15, width: 15, scale: 1, opacity: 1, color: "#FFFFFF"
+                                    }}
+                                />
+                            </button>
                         </div>
                         <div class="playlist-panel__pl-details-right-wrapper">
                             <!-- Header -->
@@ -106,8 +144,8 @@
                                     <Logo 
                                         logo={LogoIcon.Youtube} 
                                         options={{
-                                            containerWidth: "15px",
-                                            iconWidth: "80%"
+                                            containerWidth: "12px",
+                                            iconWidth: "75%"
                                         }}
                                     />
                                 </div>
@@ -121,7 +159,7 @@
                                 {#if playlist != null}
                                     {playlist?.description ?? "No Description"}
                                 {:else}
-                                    {"Pick a playlist to start watching"}
+                                    Pick a playlist to start watching
                                 {/if}
                             </p>
                         </div>
@@ -140,20 +178,47 @@
         @include abs-top-left(56px);
         width: 100%;
         height: 100%;
-        padding: 0px 25px 20px 30px;
+        padding: 0px 25px 20px 25px;
         z-index: 1;
 
         &--hidden {
             display: none;
         }
-        &__content {
-            max-width: 1400px;
+        &--iframe-only {
+            padding: 0px;
+            @include abs-top-left;
+        }
+        &--iframe-only &__content {
+            max-width: none;
+            margin: auto;
+            height: 100%;
             width: 100%;
+        }
+        &--iframe-only &__container {
+            max-height: none;
+            height: 100%;
+            width: 100%;
+            aspect-ratio: auto;
+        }
+        &--iframe-only .vid-details {
+            display: none;
+        }
+        &--iframe-only .playlist-panel {
+            display: none;
+        }
+        &__content {
+            max-width: 1300px;
+            width: 100%;
+            margin: 0 auto;
         }
         &__playlist-title {
             color: rgba(255, 255, 255, 0.9);
             float: right;
-            @include abs-top-right(5px, 0px);
+            @include abs-top-right(5px);
+        }
+        &__iframe-container {
+            width: 100%;
+            height: 100%;
         }
         &__container {
             background-color: none;
@@ -165,18 +230,6 @@
 
             &--hidden {
                 display: none;
-            }
-        }
-        &__iframe-player-container {
-            width: 100%;
-            height: 100%;
-
-            &--private {
-                display: none;
-            }
-            #home-yt-player {
-                background-color: var(--bg-1);
-                border-radius: 7.5px;
             }
         }
         &__empty-msg {
@@ -192,6 +245,7 @@
             height: 100%;
             @include center;
             background-color: var(--midPanelBaseColor);
+
             a {
                 padding-top: 20px;
                 font-weight: 400;
@@ -211,19 +265,19 @@
         }
         &__title {
             margin-top: 12px;
-            color: rgba(var(--textColor1), 1);
-            font-weight: 500;
+            @include multi-line-elipses-overflow(1);
+            @include text-style(1, 500, 1.28rem);
         }
         &__channel {
-            margin: 10px 0px 0px 0px;
+            margin: 9px 0px 0px 0px;
             position: relative;
             width: 100%;
-            @include flex(center, _);
             color: rgba(var(--textColor1), 0.7);
+            @include flex(center);
             
             img {
                 border-radius: 100%;
-                width: 25px;
+                width: 30px;
                 aspect-ratio: 1 / 1;
                 margin-right: 10px;
             }
@@ -237,25 +291,22 @@
             }
         }
         &__channel-details-name {
-            color: rgba(var(--textColor1), 0.9);
-            font-weight: 600;
-            font-size: 1.1rem;
+            @include text-style(0.85, 500, 1.1rem);
         }
         &__channel-details-subcount {
-            color: rgba(var(--textColor1), 0.5);
+            @include text-style(0.5, 400, 1rem);
             margin-top: 2px;
-            font-weight: 400;
         }
     }
     .playlist-panel {
         position: relative;
         margin: 25px 0px 160px 0px;
         border-radius: 15px;
-        color: white;
         overflow: hidden;
         background-color: var(--midPanelBaseColor);
         overflow: visible;
         width: 100%;
+        border: 1px solid rgba(var(--textColor1), 0.03);
         
         /* Dark Theme */
         &--dark .divider {
@@ -301,7 +352,6 @@
                 }
             }
         }
-
         /* Containers */
         &__content-container {
             width: 100%;
@@ -320,7 +370,7 @@
         &__pl-details {
             display: flex;
             position: relative;
-            padding: 6.5px;
+            padding: 7px 6.5px 7px 8px;
             width: 100%;
         }
         &__pl-details-header-yt-logo {
@@ -329,8 +379,24 @@
         /* Img */
         &__pl-details-img-container {
             margin-right: 15px;
-            max-width: 90px;
-            min-width: 90px;
+            min-width: 85px;
+            height: 50px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+
+            &:hover:after {
+                opacity: 0;
+                content: " ";
+                border-radius: 10px;
+                width: calc(100%);
+                height: calc(100%);
+                @include abs-top-left;
+                background-color: rgba(black, 0.5);
+            }
+            &:hover:after {
+                opacity: 1;
+            }
 
             &--empty {
                 background: rgba(50, 50, 50, 0.05);
@@ -341,8 +407,24 @@
             }
             img {
                 width: 100%;
-                border-radius: 7px;
+                height: 100%;
+                border-radius: 9.5px;
                 object-fit: cover;
+            }
+        }
+        &__pl-details-img-container:hover &__miniplayer-btn,
+        &__miniplayer-btn:focus-visible {
+            opacity: 1;
+        }
+        &__miniplayer-btn {
+            opacity: 0;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            @include abs-top-left;
+
+            &:active {
+                transform: scale(1) !important;
             }
         }
         &__pl-details-right-wrapper {
@@ -351,22 +433,14 @@
         }
         /* Header */
         &__pl-details-header {
-            margin: 5px 0px 7px 0px;
+            margin: 4px 0px 4px 0px;
             position: relative;
             width: 98%;
-            @include flex(center, center);
-
-            span {
-                margin: 0px 0px 3px 7px;
-                opacity: 0.7;
-                font-weight: 300;
-                white-space: nowrap;
-            }
+            @include flex(center);
         }
         &__pl-details-title {
-            width: 100%;
-            font-weight: 400;
-            font-size: 1.3rem;
+            max-width: 60%;
+            @include text-style(1, 500, 1.28rem);
             @include elipses-overflow;
         }
         /* Current Playlist Description */
@@ -374,10 +448,19 @@
             width: 100%;
             max-height: 40px;
             min-width: 0px;
-            font-weight: 300;
-            font-size: 1.15rem;
-            color: rgba(var(--textColor1), 0.6);
+            max-width: 92%;
+            @include text-style(0.58, 400, 1.2rem);
             @include elipses-overflow;
+        }
+    }
+
+    @media (max-width: 540px) {
+        .vid-view--right-bar-open .vid-details__channel {
+            // display: none;
+        }
+        .vid-view--right-bar-open .playlist-panel {
+            display: none;
+            margin-top: 12px;
         }
     }
 </style>

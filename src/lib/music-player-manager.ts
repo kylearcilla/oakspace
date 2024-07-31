@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { musicPlayerManager, musicPlayerStore } from "./store"
 
 import { getElemById, getLogoIconFromEnum } from "./utils-general"
-import { INPUT_RANGE_BG_COLOR, getSeekPositionSecs, getSlidingTextAnimation } from "./utils-music-player"
+import { INPUT_RANGE_BG_COLOR, INPUT_RANGE_FG_COLOR, getSeekPositionSecs, getSlidingTextAnimation } from "./utils-music-player"
 
 import { LogoIcon, MusicPlatform, PlaybackGesture } from "./enums"
 import type { SpotifyMusicPlayer } from "./music-spotify-player"
@@ -213,7 +213,6 @@ export class MusicPlayerManager {
      * If on cool-down user gestures to perform these actions will be temporarily disabled
      */
     setCooldown() {
-        console.log("XX")
         this.toggleCooldown(true)
 
         this.cooldownTimeOut = setTimeout(() => {
@@ -257,7 +256,7 @@ export class MusicPlayerManager {
         this.toggleSeeking(false)
     }
     updatePlaybackBarStyleAfterUpdatte() {
-        this.trackPlaybackBar!.style.background = `linear-gradient(to right, white 0%, white ${this.progressValue}%, ${INPUT_RANGE_BG_COLOR} ${this.progressValue}%, ${INPUT_RANGE_BG_COLOR} 100%)`
+        this.trackPlaybackBar!.style.background = `linear-gradient(to right, ${INPUT_RANGE_FG_COLOR} 0%, ${INPUT_RANGE_FG_COLOR} ${this.progressValue}%, ${INPUT_RANGE_BG_COLOR} ${this.progressValue}%, ${INPUT_RANGE_BG_COLOR} 100%)`
         this.trackPlaybackBar!.value = `${this.progressValue}`
     }
     onInputMouseDown() {

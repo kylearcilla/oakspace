@@ -6,7 +6,7 @@
   import NavMenu from "./SideBarLeft.svelte"
   import TaskView from "./SideBarRight.svelte"
   import MusicPlayer from "./MusicPlayer.svelte"
-  import VideoView from "./HomeVideoView.svelte"
+  import YoutubeView from "./YoutubeView.svelte"
 
   // main modals
 	import Stats from "./Stats.svelte"
@@ -30,120 +30,84 @@
   // misc. elems
 	import Toaster from "../../components/Toaster.svelte"
   
-	import { ModalType, TextTab } from "$lib/enums"
-	import { globalContext, musicPlayerStore, mediaEmbedStore, ytPlayerStore } from "$lib/store"
+	import { ModalType, MusicPlatform } from "$lib/enums"
+	import { globalContext, musicDataStore, musicPlayerStore, ytPlayerStore } from "$lib/store"
 	import { 
-	      hideRightBar,
         initAppState, keyboardShortCutHandlerKeyDown, 
-        keyboardShortCutHandlerKeyUp, onMouseMoveHandler, updteGlobalContext
-
+        keyboardShortCutHandlerKeyUp, LEFT_BAR_WIDTH, onMouseMoveHandler
   } from "$lib/utils-home"
-	import MediaEmbed from "./MediaEmbed.svelte"
-	import { getElemById } from "$lib/utils-general";
-	import ActiveRoutine from "./ActiveRoutine.svelte";
+	import FloatMediaPlayer from "./FloatMediaPlayer.svelte"
+	import { SPOTIFY_IFRAME_ID } from "$lib/utils-music";
 
   let toggledLeftBarWithKey = false
   let totalWidth = 0
-  let isLeftNarrowBarOpen = true
-  let isLeftWideBarOpen = true
-  let isRightBarOpen = true
 
-  let isAciveRoutineOpen = false
-
+  let leftBarOpen = true
+  let rightBarOpen = true
   let leftSideBarWidth = 0
   let rightSideBarWidth = 0
-  let homeViewClasses = ""
-  let currentRoute = TextTab.Workspace
   let middleViewMarginLeft = ""
   let middleViewWidth = ""
-  let isFloating = false
 
-  const NAV_MENU_NARROW_BAR_WIDTH = 58
-  const NAV_MENU_WIDE_BAR_WIDTH = 220
-  const NAV_MENU_FULL_WIDTH = NAV_MENU_WIDE_BAR_WIDTH + NAV_MENU_NARROW_BAR_WIDTH
-  const RIGHT_SIDE_BAR_WIDTH = 240
+  let isAciveRoutineOpen = false
+  let homeViewClasses = ""
+  let currentRoute    = "Workspace"
 
+  const RIGHT_BAR_WIDTH = 240
+  const SMALL_WIDTH = 740
 
   $: if (totalWidth > 0) {
     updateMiddleView()
   }
-  $: if (isFloating != $globalContext.isLeftBarFloating) { 
-
-    isFloating = $globalContext.isLeftBarFloating
-    toggledLeftBarWithKey = false
-    updateMiddleView()
-  }
-
-  $: isLeftWideMenuOpen = $globalContext.isLeftWideMenuOpen
-  $: showYoutubePlayer = $ytPlayerStore?.doShowPlayer ?? true
+  $: showYoutubeView = $ytPlayerStore?.doShowPlayer ?? true
 
   globalContext.subscribe((state: GlobalContext) => {
-    isLeftNarrowBarOpen = state.isLeftNarrowBarOpen
-    isLeftWideBarOpen = state.isLeftWideMenuOpen
-    isRightBarOpen = state.isRightBarOpen
+    leftBarOpen = state.leftBarOpen
+    rightBarOpen = state.rightBarOpen
 
-    if (isLeftNarrowBarOpen) {
-      leftSideBarWidth = isLeftWideBarOpen ? NAV_MENU_NARROW_BAR_WIDTH + NAV_MENU_WIDE_BAR_WIDTH : NAV_MENU_NARROW_BAR_WIDTH
+    if (leftBarOpen) {
+      leftSideBarWidth = 58
     }
     else {
       leftSideBarWidth = 0
     }
-    rightSideBarWidth = isRightBarOpen ? RIGHT_SIDE_BAR_WIDTH : 0
+    rightSideBarWidth = rightBarOpen ? RIGHT_BAR_WIDTH : 0
 
     updateMiddleView()
   })
 
   function onRouteChange(e: CustomEvent) {
-    currentRoute = e.detail as TextTab
+    currentRoute = e.detail as string
   }
 
   function updateMiddleView() {
-    isLeftNarrowBarOpen = $globalContext.isLeftNarrowBarOpen
-    isLeftWideBarOpen = $globalContext.isLeftWideMenuOpen
-    isRightBarOpen = $globalContext.isRightBarOpen
+    leftBarOpen = $globalContext.leftBarOpen
+    rightBarOpen = $globalContext.rightBarOpen
 
-    let width = `calc(100% - (${leftSideBarWidth}px + ${rightSideBarWidth}px))`
-    let marginLeft = `${leftSideBarWidth}px`
+    const full = rightBarOpen && leftBarOpen
 
-    const leftBarFull =  isLeftNarrowBarOpen && isLeftWideBarOpen
-    const isAllBarsFullOpen = leftBarFull && isRightBarOpen
-
-    if (isAllBarsFullOpen && totalWidth < 920) {
-      width = "100%"
-      marginLeft = "0px"
+    if (rightBarOpen && !leftBarOpen) {
+      middleViewWidth = `calc(100% - ${rightSideBarWidth}px)`
+      middleViewMarginLeft = "0px"
     }
-    else if (isFloating && isRightBarOpen) {
-      width = `calc(100% - ${rightSideBarWidth}px)`
+    else if (leftBarOpen && !rightBarOpen) {
+      middleViewWidth      = `calc(100% - ${LEFT_BAR_WIDTH}px)`
+      middleViewMarginLeft = `${LEFT_BAR_WIDTH}px`
     }
-    else if (isFloating) {
-      width = "100%"
+    else if (!leftBarOpen && !rightBarOpen) {
+      middleViewWidth      = `100%`
+      middleViewMarginLeft = "0px"
     }
-    else if (leftBarFull && !isRightBarOpen && totalWidth < 670) {
-      width = "100%"
-      marginLeft = "0px"
+    else if (totalWidth <= SMALL_WIDTH && full) {
+      middleViewWidth      = `calc(100% - ${rightSideBarWidth}px)`
+      middleViewMarginLeft = "0px"
     }
-    else if (isLeftNarrowBarOpen && isRightBarOpen && totalWidth < 610) {
-      width = "100%"
+    else {
+      middleViewWidth      = `calc(100% - ${LEFT_BAR_WIDTH + rightSideBarWidth}px)`
+      middleViewMarginLeft = `${LEFT_BAR_WIDTH}px`
     }
-
-    if (!isFloating && isAllBarsFullOpen && totalWidth < 800) {
-      hideRightBar()
-      return
-    }
-    
-    middleViewMarginLeft = isFloating ? "0px" : marginLeft
-    middleViewWidth = width
   }
 
-
-  function onFloatSideBarMouseLeave(e: MouseEvent) {
-    const isModalOpen = $globalContext.modalsOpen.length > 0
-    const isSettingsOpen = getElemById("left-bar--dropdown-menu")
-
-    if (isModalOpen || isSettingsOpen || toggledLeftBarWithKey) return
-
-    updteGlobalContext({ ...$globalContext, isLeftNarrowBarOpen: false })
-  }
   function handleKeyDown(event: KeyboardEvent) {
     toggledLeftBarWithKey = keyboardShortCutHandlerKeyDown(event, toggledLeftBarWithKey, totalWidth)!
   }
@@ -167,11 +131,8 @@
     <!-- Left -->
       <nav 
         class="home__nav-menu-container smooth-bounce" 
-        class:home__nav-menu-container--floating={isFloating} 
-        class:home__nav-menu-container--float-hidden={isFloating && !isLeftNarrowBarOpen} 
         style:width={`${leftSideBarWidth}px`}
-        style:margin-left={`${leftSideBarWidth === 0 ? `-${isLeftWideMenuOpen ? NAV_MENU_FULL_WIDTH : NAV_MENU_NARROW_BAR_WIDTH}px` : ""}`}
-        on:mouseleave={onFloatSideBarMouseLeave}
+        style:margin-left={`${leftSideBarWidth === 0 ? `-${LEFT_BAR_WIDTH}px` : ""}`}
       >
         <NavMenu on:routeChange={onRouteChange}/>
       </nav>
@@ -185,41 +146,61 @@
             <Header/>
           </div>
             <!-- Do not show /workspace if a player is active as it will it lay on top -->
-            {#if !showYoutubePlayer || showYoutubePlayer && currentRoute != TextTab.Workspace}
-              <div class="home__middle-view-slot-container">
-                <slot />
-              </div>
+            {#if !showYoutubeView || showYoutubeView && currentRoute != "Workspace"}
+                <div class="home__middle-view-slot-container">
+                  <slot />
+                </div>
             {/if}
-            <VideoView />
+            <YoutubeView />
         </div>
     <!-- Right -->
       <nav 
         class="home__task-view-container smooth-bounce" 
         style:width={`${rightSideBarWidth}px`}
-        style:margin-right={`${rightSideBarWidth === 0 ? `-${RIGHT_SIDE_BAR_WIDTH}px` : ""}`}
+        style:margin-right={`${rightSideBarWidth === 0 ? `-${RIGHT_BAR_WIDTH}px` : ""}`}
       >
           <TaskView />
       </nav>
   </div>
-    
-  {#if $mediaEmbedStore}
-     <MediaEmbed />
+
+  {#if $ytPlayerStore}
+    <FloatMediaPlayer 
+        type="youtube" 
+        isFloating={$globalContext.mediaPlayer?.youtube} 
+    />
   {/if}
 
   <!-- Music Player -->
   {#if $musicPlayerStore}
-    <MusicPlayer />
+      <MusicPlayer />
+  {/if}
+  {#if $musicDataStore?.musicPlatform === MusicPlatform.Spotify}
+      <div class="spotify-iframe-container">
+          <div id={SPOTIFY_IFRAME_ID}></div>
+      </div>
   {/if}
 
   <!-- Main Modals -->
-  {#if $globalContext.modalsOpen.includes(ModalType.Stats)} <Stats/> {/if}
-  {#if $globalContext.modalsOpen.includes(ModalType.Settings)} <Settings/> {/if}
-  {#if $globalContext.modalsOpen.includes(ModalType.Youtube)} 
-      <YoutubeSettings ytPlaylists={data.ytPlaylists} /> 
+  {#if $globalContext.modalsOpen.includes(ModalType.Stats)} 
+      <Stats/> 
   {/if}
-  {#if $globalContext.modalsOpen.includes(ModalType.Appearance)} <Appearance /> {/if}
-  {#if $globalContext.modalsOpen.includes(ModalType.Music)} <MusicSettings /> {/if}
-  {#if $globalContext.modalsOpen.includes(ModalType.Journal)} <Journal /> {/if}
+  {#if $globalContext.modalsOpen.includes(ModalType.Settings)} 
+      <Settings/> 
+  {/if}
+  {#if $globalContext.modalsOpen.includes(ModalType.Youtube)} 
+      <YoutubeSettings  
+        ytPlaylists={data.ytPlaylists} 
+      /> 
+  {/if}
+  {#if $globalContext.modalsOpen.includes(ModalType.Appearance)} 
+      <Appearance /> 
+  {/if}
+  {#if $globalContext.modalsOpen.includes(ModalType.Music)} 
+      <MusicSettings /> 
+  {/if}
+  {#if $globalContext.modalsOpen.includes(ModalType.Journal)} 
+      <Journal /> 
+  {/if}
 
   <!-- Session Modals -->
   {#if $globalContext.modalsOpen.includes(ModalType.NewSession)} 
@@ -280,9 +261,8 @@
       }
 
       &__header-container {
-        width: calc(100% + 15px);
-        padding: 0px 25px 15px 0px;
-        margin-left: -15px;
+        width: calc(100%);
+        // padding: 0px 25px;
       }
       &__nav-menu-container {
         background-color: var(--navMenuBgColor);
@@ -291,58 +271,14 @@
         margin-left: 0px;
         z-index: 1000;
         position: fixed;
-        border-right: 1.5px solid rgba(var(--textColor1), 0.022);
-
-        &--floating {
-          height: auto;
-          width: auto !important;
-          transition: 0.18s cubic-bezier(.4,0,.2,1);
-          background-color: var(--navMenuBgColor);
-          top: 48px;
-          left: 9px;
-          z-index: 999;
-          border: 1px solid rgba(var(--textColor1), 0.04);
-          border-radius: 12px;
-          margin-left: 0px !important;
-        }
-        &--float-hidden {
-          left: -250px;
-        }
-        &--floating::before {
-          content: " ";
-          width: 14px;
-          height: 100%;
-          @include abs-top-left(0px, -14px);
-        }
-
 
         // background: rgba(32, 31, 31, 0.1);
         // backdrop-filter: blur(10px);
         // border-right: 1px solid rgba(138, 138, 138, 0.3);
       }
-      &__floating-nav-menu-container {
-        width: 185px;
-        position: fixed;
-        top: 48px;
-        left: 9px;
-        z-index: 999;
-        background-color: var(--navMenuBgColor);
-        border: 1px solid rgba(var(--textColor1), 0.04);
-        border-radius: 12px;
-        
-        &--hidden {
-          left: -185px;
-        }
-        &::before {
-          content: " ";
-          width: 14px;
-          height: 100%;
-          @include abs-top-left(0px, -14px);
-        }
-      }
 
       &__middle-view {
-        padding: 6px 0px 20px 30px;
+        padding: 6px 25px 20px 25px;
         width: 100%;
         height: 100%;
         position: relative;
@@ -375,5 +311,12 @@
           margin-right: -300px; 
         }
       }
+    }
+
+    .spotify-iframe-container {
+      @include abs-bottom-left(-1000px, -1000px);
+      z-index: -100;
+      opacity: 0;
+      visibility: hidden;
     }
 </style>

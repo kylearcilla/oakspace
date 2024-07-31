@@ -10,7 +10,6 @@ import {
     getSpotifyUserData, getUserPodcastsEps, refreshAccessToken
 } from "./api-spotify"
 import { APIError } from "./errors"
-import { getDifferenceInSecs } from "./utils-date"
 
 /**
  * User data class for the Spotify Web API.
@@ -90,10 +89,10 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
      */
     async init(initData: SpotifyInitData) {
         try {
-            this.accessToken = initData.accessToken
-            this.refreshToken = initData.refreshToken
+            this.accessToken      = initData.accessToken
+            this.refreshToken     = initData.refreshToken
             this.tokenExpiresInMs = initData.expiresIn
-            this.authCode = initData.authCode
+            this.authCode         = initData.authCode
             this.accessTokenCreationDate = new Date()
         
             this.updateState({ 
@@ -136,8 +135,8 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
      * @returns    Will token expire
      */
     hasAccessTokenExpired() {
-        const currentTime = new Date().getTime()
-        const timeElapsed = currentTime - new Date(this.accessTokenCreationDate!).getTime()
+        const currentTime   = new Date().getTime()
+        const timeElapsed   = currentTime - new Date(this.accessTokenCreationDate!).getTime()
         const timeRemaining = this.tokenExpiresInMs - timeElapsed
     
         const threshold = this.ACTIVE_TOKEN_THRESHOLD_SECS * 1000 
@@ -275,6 +274,8 @@ export class SpotifyMusicUserData extends MusicUserData implements MusicUserData
             }
         }
         catch (error: any) {
+            console.error(error)
+
             if (error instanceof APIError && error.code === APIErrorCode.EXPIRED_TOKEN) {
                 this.setTokenHasExpired(true)
                 musicAPIErrorHandler(error)

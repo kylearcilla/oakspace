@@ -1453,3 +1453,7 @@ export function containsHtmlTags(str: string) {
   const regex = /<\/?[^>]+(>|$)/;
   return regex.test(str)
 }
+
+export function looseEqualTo(x: number, y: number, diff = 5) {
+  return Math.abs(x - y) <= diff
+}

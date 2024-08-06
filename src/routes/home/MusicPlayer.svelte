@@ -9,6 +9,7 @@
     import { MusicPlatform, PlaybackGesture } from "$lib/enums"
 	import type { MusicPlayer } from '$lib/music-player'
 	import { INPUT_RANGE_BG_COLOR } from '$lib/utils-music-player'
+	import { getMediaImgSrc } from '$lib/utils-music-settings';
 
     const LOGO_WIDTH = 19
     const BORDER_RADIUS = 100
@@ -20,11 +21,12 @@
     let timeTipLeft   = 0
     let progressMs    = 0
     let durationMs    = 0
+    let isMute        = false
+    let volume        = 0
     
     $: playerStore     = $musicPlayerStore
     $: mediaItem       = $musicPlayerStore?.mediaItem
     $: mediaCollection = $musicPlayerStore?.mediaCollection! as MediaCollection
-    $: hasItemChanged  = $musicPlayerStore?.hasItemUpdated ?? false
     $: isSeeking       = $musicPlayerManager?.isSeeking
     $: isDisabled      = $musicPlayerStore?.isDisabled ?? false
     $: isOnCooldown    = $musicPlayerManager?.onCooldown ?? false
@@ -39,8 +41,10 @@
     musicPlayerManager.subscribe((data: MusicPlayerManagerState | null) => {
         if (!data || musicPlatform === MusicPlatform.AppleMusic) return
         
-        progressMs = data!.progressMs
-        durationMs = data!.durationMs
+        isMute     = data.isMuted
+        volume     = data.volume
+        progressMs = data.progressMs
+        durationMs = data.durationMs
     })
 
     function onPlaybackUpdate (store: MusicPlayer | null) {
@@ -78,16 +82,20 @@
     style:--INPUT_RANGE_BG_COLOR={INPUT_RANGE_BG_COLOR}
     bind:this={musicPlayerRef}
 >
-    <div class="mp__wrapper">
-        <img class="img-bg" src={mediaItem?.artworkImgSrc} alt="track-artwork"/>
-        <div class="blur-bg"></div>
-        <div class="content-bg">
-            {#if mediaItem}
+    {#if mediaItem}
+        <div class="mp__wrapper">
+            <img 
+                class="img-bg" 
+                src={getMediaImgSrc(mediaItem?.artworkImgSrc)} 
+                alt="track-artwork"
+            />
+            <div class="blur-bg"></div>
+            <div class="content-bg">
                 <div class="mp-track" title={`${mediaItem.name} – ${mediaItem.author}`}>
                     <div class="mp-track__img-container">
                         <img 
-                            class="mp-track__art" 
-                            src={mediaItem.artworkImgSrc} 
+                            class="mp-track__art"
+                            src={getMediaImgSrc(mediaItem?.artworkImgSrc)} 
                             alt="media"
                         >
                     </div>
@@ -110,82 +118,95 @@
                         </div>
                     </div>
                 </div>
-            {/if}
-            <div class="mp-controls">
-                <button 
-                    class="mp-controls__shuffle-btn"
-                    class:mp-controls__shuffle-btn--isShuffled={playerStore?.isShuffled}
-                    disabled={isDisabled || isOnCooldown}
-                    on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SHUFFLE)} 
-                >
-                        <i class="fa-solid fa-shuffle"></i>
-                </button>
-                <button 
-                    class="mp-controls__prev-btn"
-                    class:mp-controls__prev-btn--active={$musicPlayerManager?.isPrevBtnActive}
-                    disabled={isDisabled || isOnCooldown}
-                    on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SKIP_PREV)} 
-                >
-                        <i class="fa-solid fa-backward"></i>
-                </button>
-                <button 
-                    class="mp-controls__playback-btn"
-                    class:mp-controls__playback-btn--active={$musicPlayerManager?.isPausePlayBtnActive}
-                    disabled={isDisabled || isOnCooldown}
-                    on:click={() => manager?.onPlaybackGesture(PlaybackGesture.PLAY_PAUSE)} 
-                >
-                        <i class={`${playerStore?.isPlaying ? "fa-solid fa-pause" : "fa-solid fa-play"}`}></i>
-                </button>
-                <button 
-                    class="mp-controls__next-btn"
-                    class:mp-controls__next-btn--active={$musicPlayerManager?.isNextBtnActive}
-                    disabled={isDisabled || isOnCooldown}
-                    on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SKIP_NEXT)} 
-                >
-                        <i class="fa-solid fa-forward"></i>
-                </button>
-                <button 
-                    class="mp-controls__repeat-btn"
-                    class:mp-controls__repeat-btn--isRepeating={playerStore?.isRepeating}
-                    disabled={isDisabled || isOnCooldown}
-                    on:click={() => manager?.onPlaybackGesture(PlaybackGesture.LOOP)} 
-                >
-                        <i class="fa-solid fa-repeat"></i>
-                </button>
-            </div>
-            <div 
-                class="mp-volume-container"
-                class:mp-volume-container--disabled={musicPlatform === MusicPlatform.Spotify}
-            >
+                <div class="mp-controls">
+                    <button 
+                        class="mp-controls__shuffle-btn"
+                        class:mp-controls__shuffle-btn--isShuffled={playerStore?.isShuffled}
+                        disabled={isDisabled || isOnCooldown}
+                        on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SHUFFLE)} 
+                    >
+                            <i class="fa-solid fa-shuffle"></i>
+                    </button>
+                    <button 
+                        class="mp-controls__prev-btn"
+                        class:mp-controls__prev-btn--active={$musicPlayerManager?.isPrevBtnActive}
+                        disabled={isDisabled || isOnCooldown}
+                        on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SKIP_PREV)} 
+                    >
+                            <i class="fa-solid fa-backward"></i>
+                    </button>
+                    <button 
+                        class="mp-controls__playback-btn"
+                        class:mp-controls__playback-btn--active={$musicPlayerManager?.isPausePlayBtnActive}
+                        disabled={isDisabled || isOnCooldown}
+                        on:click={() => manager?.onPlaybackGesture(PlaybackGesture.PLAY_PAUSE)} 
+                    >
+                            <i class={`${playerStore?.isPlaying ? "fa-solid fa-pause" : "fa-solid fa-play"}`}></i>
+                    </button>
+                    <button 
+                        class="mp-controls__next-btn"
+                        class:mp-controls__next-btn--active={$musicPlayerManager?.isNextBtnActive}
+                        disabled={isDisabled || isOnCooldown}
+                        on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SKIP_NEXT)} 
+                    >
+                            <i class="fa-solid fa-forward"></i>
+                    </button>
+                    <button 
+                        class="mp-controls__repeat-btn"
+                        class:mp-controls__repeat-btn--isRepeating={playerStore?.isRepeating}
+                        disabled={isDisabled || isOnCooldown}
+                        on:click={() => manager?.onPlaybackGesture(PlaybackGesture.LOOP)} 
+                    >
+                            <i class="fa-solid fa-repeat"></i>
+                    </button>
+                </div>
                 <div 
-                    class={`mp-volume ${musicPlatform === MusicPlatform.Spotify ? "mp-volume--disabled" : ""}`}
-                    title={`${musicPlatform === MusicPlatform.Spotify ? "Volume is unavailable for Spotify iFrame API." : ""}`}
+                    class="mp-volume-container"
+                    class:mp-volume-container--disabled={musicPlatform === MusicPlatform.Spotify}
                 >
-                    <button class="icon"><i class="fa-solid fa-volume-high"></i></button>
-                    <input
-                        class="input-range input-range--show-thumb"
-                        id="volume-input"
-                        value="90" type="range"
-                        min="0" max="100"
-                        step="0.1"
-                        disabled={isDisabled}
-                    />
+                    <div 
+                        class={`mp-volume ${musicPlatform === MusicPlatform.Spotify ? "mp-volume--disabled" : ""}`}
+                        title={`${musicPlatform === MusicPlatform.Spotify ? "Volume is unavailable for Spotify iFrame API." : ""}`}
+                    >
+                        <button 
+                            on:click={() => manager?.toggleMute()}
+                            class="mp-volume__icon"
+                        >
+                            {#if volume === 0 || isMute}
+                                <i class="fa-solid fa-volume-xmark"></i>
+                            {:else if volume < 30}
+                                <i class="fa-solid fa-volume-low"></i>
+                            {:else}
+                                <i class="fa-solid fa-volume-high"></i>
+                            {/if}
+                        </button>
+                        <input
+                            class="input-range input-range--show-thumb"
+                            id="volume-input"
+                            on:input={() => manager?.volumneOnInput()}
+                            on:change={() => manager?.volumneOnChange()}
+                            value="0" type="range"
+                            min="0" max="100"
+                            step="0.1"
+                            disabled={isDisabled}
+                        />
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="mp-progress">
+    {/if}
+    <div 
+        class="mp-progress"
+        class:hidden={playerStore?.isLive}
+    >
         <div class="mp-progress__playback-bar">
             <input
                 class="input-range"
                 id="playback-input"
                 on:input={() => manager?.trackProgressOnInput()}
                 on:change={() => manager?.trackProgressOnChange()}
-                on:mousedown={() => manager?.onInputMouseDown()}
-                on:mouseup={(e) => manager?.onInputMouseUp(e)}
                 value="0" type="range"
                 min="0" max="100" step="0.1"
-                disabled={hasItemChanged}
             />
             {#if durationMs > 0 && progressMs >= 0}            
                 <div 
@@ -286,7 +307,7 @@
         @include flex(center, _);
 
         &__details {
-            width: 75%;
+            flex: 1;
             overflow: hidden;
             color: white;
             margin-top: -5px;
@@ -321,9 +342,8 @@
             }
         }
         &__img-container {
-            aspect-ratio: calc(1 / 1);
             height: 37px;
-            margin-left: 5px;
+            margin: 0px 4px 0px 5px;
         }
         &__art {
             border-radius: 7px;
@@ -497,20 +517,30 @@
         &--disabled .input-range {
             display: none;
         }
-        
         button {
             font-size: 1rem;
             margin-right: 4px;
         }
-        .input-range {
+        input {
             min-width: 30px;
-
+            transition: ease-in-out 0.15s;
+            background-color: var(--INPUT_RANGE_BG_COLOR);
+            
+            &:hover {
+                height: 4px;
+            }
             &::-moz-range-thumb {
                 @include circle(7px);
             }
             &::-webkit-slider-thumb {
                 @include circle(7px);
             }
+        }
+
+        &__icon {
+            padding: 5px;
+            height: 15px;
+            width: 15px;
         }
     }
     .mp-context-container {

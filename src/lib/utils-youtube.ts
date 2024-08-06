@@ -3,12 +3,13 @@ import { APIErrorCode, LogoIcon, YTMediaLinkType } from "./enums"
 import { ytUserDataStore, ytPlayerStore } from "./store"
 import { YoutubeUserData } from "./youtube-user-data"
 import { YoutubePlayer } from "./youtube-player"
-import type { APIError } from "./errors"
-import { getPlaylistDetails, getVidDetails } from "./api-youtube"
+import { APIError } from "./errors"
+import { getPlayListItemsDetails, getPlaylistDetails, getVidDetails } from "./api-youtube"
 import { getElemsByClass } from "./utils-general"
 import { toast } from "./utils-toast"
+import { didInitMusicPlayer } from "./utils-music"
 
-const INIT_PLAYLIST_REQUEST_DELAY = 1000
+export const INIT_PLAYLIST_REQUEST_DELAY = 1000
 export const USER_PLS_MAX_PER_REQUEST = 15
 
 /* Settings Handlers */
@@ -20,7 +21,7 @@ export const USER_PLS_MAX_PER_REQUEST = 15
 export async function youtubeLogin() {
     try {
         const hasPrevSession = didInitYtUser()
-        const ytData = new YoutubeUserData()
+        const ytData = new YoutubeUserData(ytUserDataStore)
         await ytData.init()
 
         if (!hasPrevSession) {
@@ -29,7 +30,7 @@ export async function youtubeLogin() {
     }
     catch(error: any) {
         if (error.code != APIErrorCode.AUTH_DENIED) {
-            youtubeAPIErrorHandler(error)
+            youtubeAPIErrorHandler(new APIError(APIErrorCode.AUTHORIZATION_ERROR))
         }
     }    
 }
@@ -37,9 +38,11 @@ export async function youtubeLogin() {
 /**
  * Initialize Youtube Player using Youtube iFrame Player API.
  */
-export async function initYoutubePlayer() {
+export async function initYoutubePlayer(initApi: boolean) {
     const ytPlayer = new YoutubePlayer()
-    await ytPlayer.initYtPlayer()
+    await ytPlayer.initYtPlayer(initApi)
+
+    return ytPlayer
 }
 
 /**
@@ -55,14 +58,6 @@ export function youtubeLogOut() {
     catch(error: any) {
         youtubeAPIErrorHandler(error)
     }
-}
-
-/**
- * Called after token has expired and user wants to authorize the app again.
- */
-export async function refreshToken() {
-    await get(ytUserDataStore)!.refreshAccessToken()
-    initToast("Token Refreshed!")
 }
 
 /**
@@ -107,17 +102,18 @@ export async function getYtMediaId(url: string): Promise<YoutubeMediaId | { erro
  * 
  * @param playlist   Playlist user clicked on.
  */
-export async function handleChoosePlaylist (playlist: YoutubePlaylist) {
-    let ytPlayer = get(ytPlayerStore)
-    const hasInitPlayer = ytPlayer != null
+export async function handleChoosePlaylist(playlist: YoutubePlaylist) {
+    let ytPlayer      = get(ytPlayerStore)
+    let hasInitPlayer = ytPlayer != null
 
-    if (!hasInitPlayer) {
-        await initYoutubePlayer()
-        ytPlayer = get(ytPlayerStore)!
-    }
-    if (playlist.id != ytPlayer?.playlist?.id) {
-        setTimeout(() =>  ytPlayer!.playPlaylist(playlist), hasInitPlayer ? 0 : INIT_PLAYLIST_REQUEST_DELAY)
-    }
+    ytPlayer ??= await initYoutubePlayer(!didInitMusicPlayer())
+
+    if (playlist.id === ytPlayer.playlist?.id) return
+    
+    setTimeout(() => {
+        ytPlayer.playPlaylist(playlist)
+
+    }, hasInitPlayer ? 0 : 2000)
 }
 
 /**
@@ -138,34 +134,19 @@ export function toggleYTIFramePointerEvents(isPointerEventsEnabled: boolean) {
  */
 export function youtubeAPIErrorHandler(error: APIError) {
     let toastOptions: ToastInitOptions
-    console.error(error)
 
-    const errorMessage = error.message
-    const hasNoMsg = errorMessage != undefined && errorMessage
+    const isNotAPIError = error.code === undefined
+    const errorMessage  = isNotAPIError ? "" : error.message
+    const hasMsg        = errorMessage != undefined && errorMessage
 
-    if (error.code === APIErrorCode.EXPIRED_TOKEN) {
+    if (error.code === APIErrorCode.PLAYER) {
         toastOptions = {
-            message: hasNoMsg ? errorMessage : "Token has expired. Log in again to continue.",
-            action: {
-                label: "Continue session",
-                onClick: () => refreshToken()
-            }
+            message: hasMsg ? errorMessage : "Player error. Try again later.",
         }
     }
-    else if (error.code === APIErrorCode.PLAYER) {
-        toastOptions = {
-            message: hasNoMsg ? errorMessage : "Player error. Try again later.",
-        }
-    }
-    // else if (error.code === APIErrorCode.FAILED_TOKEN_REFRESH) {
-    //     return
-    //     toastOptions = {
-    //         message: hasNoMsg ? errorMessage : "Token refresh failed."
-    //     }
-    // }
     else if (error.code === APIErrorCode.AUTHORIZATION_ERROR) {
         toastOptions = {
-            message: hasNoMsg ? errorMessage : `Youtube authorization failed. Please try again.`,
+            message: hasMsg ? errorMessage : `Youtube authorization failed. Please try again.`,
         }
     }
     else if (error.code === APIErrorCode.RATE_LIMIT_HIT) {
@@ -175,12 +156,12 @@ export function youtubeAPIErrorHandler(error: APIError) {
     }
     else if (error instanceof TypeError) {
         toastOptions = {
-            message: hasNoMsg ? errorMessage : "There was an error. Please try again."
+            message: hasMsg ? errorMessage : "There was an error. Please try again."
         }
     }
     else {
         toastOptions = {
-            message: hasNoMsg ? errorMessage : `There was an error with Youtube Please try again later.` ,
+            message: hasMsg ? errorMessage : `There was an error with Youtube Please try again later.` ,
         }
     }
 
@@ -215,6 +196,93 @@ export function didInitYtUser() {
     }
 
     return true
+}
+
+/**
+ * Initialize iFrame Player API asynchrnously
+ */
+export const initIframePlayerAPI = async (options: { 
+    initApi: boolean,
+    iframeClass: string, 
+    playerOptions: any
+}) => {
+    const { initApi, iframeClass, playerOptions } = options
+    
+    if (initApi) {
+        setYoutubeScript()
+        return new Promise<void>((resolve) => (window as any).onYouTubeIframeAPIReady = () => {
+            // @ts-ignore
+            resolve(new YT.Player(this.IFRAME_CLASS, this.YT_PLAYER_OPTIONS))
+        })
+    }
+    else {
+        // @ts-ignore
+        return new YT.Player(iframeClass, playerOptions)
+    }
+}
+
+/**
+ * Ensure that the playlist will be embeddable and playable.
+ * It cannot be:
+ * 
+ *  1. Playlist is private.
+ *  2. Playlist is unembeddable.
+ *  3. Playlist is public but first video is private
+ *  4. Playlist is public but first video is unembeddable.
+ * 
+ * @param     playlistId 
+ * @returns   If playlist is valid
+ */
+export async function validateYtPlaylist(playlistId: string) {
+    try {
+        const res = await getPlayListItemsDetails({ playlistId, channel: false })
+
+        if (res.playlistLength === 0) {
+            youtubeAPIErrorHandler(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Cannot play empty playlists."))
+            return false
+        }
+
+        // vid id that start with a "-" in a playlist are private, but the playlist is still playable
+        const firstVidId = res.videos[0].id
+        if (firstVidId.startsWith("-")) return true
+
+        const firstVidDetails = await getVidDetails(firstVidId, false)
+        
+        if (!firstVidDetails) {
+            youtubeAPIErrorHandler(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Playlist couldn't be played due to privacy restriction."))
+            return false
+        }
+        else if (firstVidDetails.embeddable != undefined && !firstVidDetails.embeddable)  {
+            youtubeAPIErrorHandler(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Playlist couldn't be played due to embed restriction."))
+            return false
+        }
+
+        return true
+    }
+    catch(e: any) {
+        console.error(e)
+        const code = e?.code
+
+        // api will throw 404 if playlist is private / unembedable / invalid id.
+        if (code === APIErrorCode.RESOURCE_NOT_FOUND) {
+            youtubeAPIErrorHandler(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Playlist couldn't be played due to embed or privacy restrictions, or because of invalid ID."))
+        }
+        else {
+            youtubeAPIErrorHandler(new APIError(APIErrorCode.PLAYER, "Video couldn't be played due to privacy restriction."))
+        }
+        return false
+    }
+}
+
+/**
+ * Load the iFrame Player API to app
+ */
+export function setYoutubeScript() {
+    const tag = document.createElement('script')
+    tag.src = 'https://www.youtube.com/iframe_api'
+
+    const ytScriptTag = document.getElementsByTagName('script')[0]
+    ytScriptTag!.parentNode!.insertBefore(tag, ytScriptTag)
 }
 
 /* Youtube Creds */

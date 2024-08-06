@@ -38,6 +38,7 @@
   } from "$lib/utils-home"
 	import FloatMediaPlayer from "./FloatMediaPlayer.svelte"
 	import { SPOTIFY_IFRAME_ID } from "$lib/utils-music";
+	import { YoutubeMusicPlayer } from "$lib/youtube-music-player";
 
   let toggledLeftBarWithKey = false
   let totalWidth = 0
@@ -163,12 +164,10 @@
       </nav>
   </div>
 
-  {#if $ytPlayerStore}
-    <FloatMediaPlayer 
-        type="youtube" 
-        isFloating={$globalContext.mediaPlayer?.youtube} 
-    />
-  {/if}
+  <FloatMediaPlayer 
+      type="youtube" 
+      isFloating={$globalContext.mediaPlayer?.youtube}
+  />
 
   <!-- Music Player -->
   {#if $musicPlayerStore}
@@ -229,6 +228,13 @@
       expand={true} richColors={true} closeButton={true} position="bottom-right" 
     />
   {/if}
+
+  <div 
+    class="yt-music-player"
+    id={YoutubeMusicPlayer.IFRAME_CLASS}
+  >
+
+  </div>
 </div>
 
 
@@ -239,6 +245,10 @@
       position: absolute;
       right: 400px;
       top: 150px;
+    }
+
+    .yt-music-player {
+      @include abs-bottom-left(-100px, -100px);
     }
 
     .home {

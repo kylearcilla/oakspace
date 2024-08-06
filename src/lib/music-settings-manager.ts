@@ -2,24 +2,23 @@ import { get } from "svelte/store"
 import { MusicMoodCategory, LibError, MusicPlatform, UserLibraryMedia, APIErrorCode } from "./enums"
 import { musicDataStore, musicSettingsManager } from "./store"
 import { getElemById, getHozScrollStatus, getVertScrollStatus } from "./utils-general"
-import { getLibMediaCollection, getPlatfromPropName, handlePlaylistItemClicked, musicAPIErrorHandler, musicLogin, musicLogout, refreshMusicSession } from "./utils-music"
+import { getPlatfromPropName, handlePlaylistItemClicked, musicAPIErrorHandler } from "./utils-music"
 import { getDiscoverCollectionList } from "./utils-music-settings"
 import { APIError } from "./errors"
+import { YoutubeMusicUserData } from "./youtube-music-user-data"
 
 export class MusicSettingsManager {
     // discover
     chosenMood = MusicMoodCategory.Serene
-    chosenMusicCollection: (Playlist | Album | RadioStation)[] = []
+    chosenMusicCollection: (MediaCollection)[] = []
 
     isScrollableLeft  = false
     isScrollableRight = true
-    collectionList: HTMLElement | null = null
     hasCollectionItemsLoaded = true
     
     // user library
     userLibrary: UserLibraryCollection | null = null
     isUserLibraryLoading = false
-    libraryList: HTMLElement | null = null
     isLibraryDropdownOpen = false
     isLibraryOptionsDropdownOpen = false
     currLibraryCollection = UserLibraryMedia.Playlists
@@ -29,44 +28,43 @@ export class MusicSettingsManager {
     libOptions: UserLibraryMedia[] = [
         UserLibraryMedia.Playlists, UserLibraryMedia.Albums, UserLibraryMedia.LikedTracks
     ]
-
+    
     NEW_COLLECTION_COOLDOWN_MS = 2000
     FETCH_MORE_LIB_ITEMS_COOLDOWN_MS = 500
     SCROLL_STEP = 400
     
     libListGradient = ""
     categoriesListGradient = ""
+
+    collectionList: HTMLElement | null = null
+    libraryList: HTMLElement | null = null
+    
     libError: LibError | null = null
     platform: MusicPlatform
 
-    constructor(platform: MusicPlatform) {
-        if (platform === MusicPlatform.Spotify) {
-            this.libOptions.push(UserLibraryMedia.Audiobooks)
-            this.libOptions.push(UserLibraryMedia.PodcastEps)
-        }
-        else if (platform === MusicPlatform.YoutubeMusic) {
-            this.libOptions = [UserLibraryMedia.Playlists]
-        }
-
-        this.platform = platform
+    constructor() {
+        this.platform = MusicPlatform.YoutubeMusic
         musicSettingsManager.set(this)
 
         this.handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
     }
 
     /* Signing In & Out */
-    onPlatformOptionClicked(platform: MusicPlatform) {
-        if (platform != this.platform) {
-            musicLogout()
-            musicLogin(platform)
+    initFromVideoData() {
+        this.libError = null
+        if (this.libError) {
+            this.setLibraryLoaded({ error: null })
         }
-        else if (this.hasTokenExpired()) {
-            refreshMusicSession()
-        }
-        else {
-            musicLogout()
-            musicSettingsManager.set(null)
-        }
+
+        new YoutubeMusicUserData()
+        let musicStore = get(musicDataStore)!
+
+        musicStore.initFromVideoData()
+        this.updateLibrary()
+
+        requestAnimationFrame(() => {
+            this.fetchHTMLElements()
+        })
     }
 
     hasTokenExpired() {
@@ -83,36 +81,17 @@ export class MusicSettingsManager {
      * @param mediaClicked   Media user has clicked, reccomended data only contains a subset of Media type
      * @param idx            Index location of the item clicked.
      */
-    async handleMediaClicked(mediaClicked: Partial<Media>, idx: number) {
+    async handleMediaClicked(mediaCollection: MediaCollection, idx: number) {
         if (this.debounceTimeout != null) return
-
-        let mediaCollection: MediaCollection
-        let isLib           = "fromLib" in mediaClicked
+        
         let doPlayMediaItem = true
 
-        if (!isLib) {
-            mediaCollection = { ...mediaClicked, description: "", fromLib: false } as MediaCollection
-        }
-        else {
-            mediaCollection = mediaClicked as MediaCollection
-        }
-
-        // make a collection for non-collection media items (tracks, podcast eps, etc...) & verify collection is updated
-        if (isLib) {
-            try {
-                mediaCollection = await getLibMediaCollection(mediaCollection, idx) 
-            }
-            catch(e: any) {
-                doPlayMediaItem = false
-                musicAPIErrorHandler(e)
-            }
-        }
         if (mediaCollection.length === 0) {
             musicAPIErrorHandler(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Cannot play empty collections."))
             doPlayMediaItem = false
         }
         if (doPlayMediaItem) {
-            await handlePlaylistItemClicked(mediaCollection! as MediaCollection, mediaClicked as Media, idx)
+            await handlePlaylistItemClicked(mediaCollection, idx)
         }
 
         this.debounceTimeout = setTimeout(() => { 
@@ -138,12 +117,15 @@ export class MusicSettingsManager {
         })
     }
 
-    setLibraryLoaded(error: any = null) {
-        this.isUserLibraryLoading = false
-        this.libError = error
+    setLibraryLoaded(context?: { error: any }) {
+        if (context?.error != undefined) {
+            this.libError = context.error
+            this.updateState({ libError: this.libError })
+        }
 
+        this.isUserLibraryLoading = false
         this.updateState({ 
-            isUserLibraryLoading: this.isUserLibraryLoading, libError: error
+            isUserLibraryLoading: this.isUserLibraryLoading, 
         })
     }
 
@@ -151,47 +133,15 @@ export class MusicSettingsManager {
      * Update the current library colelction after an update to the current collection.
      */
     updateLibrary() {
-        const data = get(musicDataStore)
-        if (!data) return
+        const musicStore = get(musicDataStore)
+        if (!musicStore) return
 
-        this.currLibraryCollection  = data.currentUserMedia
-        this.userLibrary            = data.getCurrentLibraryDetails()
+        this.userLibrary = musicStore.getLibrary()
 
         this.updateState({ 
             userLibrary: this.userLibrary, 
             currLibraryCollection: this.currLibraryCollection 
         })
-    }
-
-    /**
-     * Called when user clicks on a new lib collection to view.
-     * If view has not been initialized yet, request for it.
-     * 
-     * @param toMedia   New library view option.
-     * @returns 
-     */
-    async updateLibraryMedia(toMedia: UserLibraryMedia) {
-        try {
-            if (toMedia === this.currLibraryCollection) return
-
-            const musicStore = get(musicDataStore)
-            const _toMedia   = musicStore!.getLibraryDetails(toMedia)
-            const isFetchingForFirstTime = !_toMedia.hasFetchedAll && _toMedia.items.length === 0
-    
-            if (isFetchingForFirstTime) {
-                this.setLibraryLoading(true)
-            }
-
-            await musicStore!.updateLibraryMedia(toMedia, isFetchingForFirstTime)
-            this.updateLibrary()
-            this.setLibraryLoaded()
-
-            // TODO: get rid of this
-            setTimeout(() => this.isUserLibraryLoading = false, 1000)
-        }
-        catch {
-            this.setLibraryLoaded(LibError.NEW_COLLECTION)
-        }
     }
 
     /**
@@ -208,7 +158,7 @@ export class MusicSettingsManager {
                 this.updateLibrary()
             }
             catch(error: any) {
-                this.setLibraryLoaded(LibError.MORE_ITEMS)
+                this.setLibraryLoaded({ error: LibError.MORE_ITEMS })
             }
             finally {
                 this.setLibraryLoaded()
@@ -221,20 +171,20 @@ export class MusicSettingsManager {
     /**
      * Gets a fresh batch of items for the current library collection.
      */
-    async refreshCurrentLibraryMedia() {
+    async refreshLibrary() {
         let _userLibrary = this.userLibrary
         
         try {
             const musicStore = get(musicDataStore)
 
             this.setLibraryLoading(true)
-            await musicStore!.refreshCurrentLibraryMedia()
+            await musicStore!.refreshLibrary()
             this.updateLibrary()
             this.setLibraryLoaded()
         }
         catch {
             this.userLibrary = _userLibrary
-            this.setLibraryLoaded(LibError.REFRESH)
+            this.setLibraryLoaded({ error: LibError.REFRESH })
         }
     }
 
@@ -255,7 +205,7 @@ export class MusicSettingsManager {
         const platformProp = getPlatfromPropName(this.platform)
 
         this.chosenMood = moodType
-        this.chosenMusicCollection = getDiscoverCollectionList(moodType, platformProp) as (Playlist | Album | RadioStation)[]
+        this.chosenMusicCollection = getDiscoverCollectionList(moodType, platformProp) as (MediaCollection)[]
 
         this.updateState({ chosenMood: this.chosenMood, chosenMusicCollection: this.chosenMusicCollection })
     }
@@ -266,8 +216,8 @@ export class MusicSettingsManager {
      * Scroll handler for the libray list section.
      */
     handleLibListScroll() {
-        // const scrollStatus = getVertScrollStatus(this.libraryList!)
-        // this.handleLibListStyling(scrollStatus)
+        const scrollStatus = getVertScrollStatus(this.libraryList!)
+        this.handleLibListStyling(scrollStatus)
 
         if (this.hasReachedEndOfList()) {
             this.getMoreLibItems()
@@ -332,7 +282,7 @@ export class MusicSettingsManager {
         this.categoriesListGradient += "-webkit-mask-image: " + gradientStyle + "; "
 
         this.updateState({
-            isScrollableLeft: this.isScrollableLeft,isScrollableRight: this.isScrollableRight
+            isScrollableLeft: this.isScrollableLeft, isScrollableRight: this.isScrollableRight
         })
     }
 
@@ -368,16 +318,13 @@ export class MusicSettingsManager {
         
         // lists
         if (newState.categoriesListGradient != undefined) newStateObj.categoriesListGradient = newState.categoriesListGradient
-        if (newState.libListGradient != undefined)        newStateObj.libListGradient = newState.libListGradient
         if (newState.isScrollableLeft != undefined)       newStateObj.isScrollableLeft = newState.isScrollableLeft
         if (newState.isScrollableRight != undefined)      newStateObj.isScrollableRight = newState.isScrollableRight
         
         // lib
-        if (newState.currLibraryCollection != undefined) newStateObj.currLibraryCollection = newState.currLibraryCollection
         if (newState.isUserLibraryLoading != undefined)  newStateObj.isUserLibraryLoading = newState.isUserLibraryLoading
         if (newState.userLibrary != undefined)           newStateObj.userLibrary = newState.userLibrary
         if (newState.libError != undefined)              newStateObj.libError = newState.libError
-        if (newState.libOptions != undefined)            newStateObj.libOptions = newState.libOptions
         
         return newStateObj
     }

@@ -5,7 +5,7 @@
     import { APIErrorCode, LogoIcon, ModalType } from "$lib/enums"
 	import { themeState, ytPlayerStore, ytUserDataStore } from "$lib/store"
     import { formatPlural, getMaskedGradientStyle, preventScroll } from "../../lib/utils-general"
-	import { handleChoosePlaylist, refreshToken, youtubeLogOut, youtubeLogin } from "$lib/utils-youtube"
+	import { handleChoosePlaylist, youtubeLogOut, youtubeLogin } from "$lib/utils-youtube"
 
     import Modal from "../../components/Modal.svelte"
     import Logo from "../../components/Logo.svelte"
@@ -37,7 +37,7 @@
     const DEFAULT_PROFILE_PIC = "https://media.tenor.com/-OpJG9GeK3EAAAAC/kanye-west-stare.gif"
 
     $: isDarkTheme     = $themeState.isDarkTheme
-    $: hasSignedIn     = $ytUserDataStore?.hasUserSignedIn ?? false
+    $: hasSignedIn     = $ytUserDataStore?.isSignedIn ?? false
     $: playlist        = $ytPlayerStore?.playlist ?? null    
     $: userData             = $ytUserDataStore
     $: hasTokenExpired      = userData?.hasTokenExpired ?? false
@@ -69,7 +69,7 @@
     }
     function onProfileDropdownFirstBtnClicked() {
         if (hasTokenExpired) {
-            refreshToken()
+            $ytUserDataStore!.refreshAccessToken()
         }
         else {
             refreshUserPlaylsts()
@@ -245,7 +245,7 @@
                                 {userData?.email}
                             </span>
                             <div class="yt-settings__user-profile-details-header">
-                                Youtube
+                                Username
                             </div>
                             <span>
                                 {userData?.username}
@@ -684,7 +684,7 @@
             width: 100%;
             height: 100%;
             z-index: 1;
-            background: linear-gradient(0deg, #080808 20%, transparent) !important;
+            background: linear-gradient(0deg, #080808 20%, transparent);
         }
         .blur-bg {
             width: 100%;

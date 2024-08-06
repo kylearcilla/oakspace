@@ -1,8 +1,8 @@
 import { get } from "svelte/store"
 import { ytPlayerStore } from "./store"
 import { APIError } from "./errors"
-import { getPlayListItemsDetails, getVidDetails, getYtIframeAPIError } from "./api-youtube"
-import { loadYtPlayerData, saveYtPlayerData, deleteYtPlayerData } from "./utils-youtube"
+import { getVidDetails, getYtIframeAPIError } from "./api-youtube"
+import { loadYtPlayerData, saveYtPlayerData, deleteYtPlayerData, setYoutubeScript } from "./utils-youtube"
 import { APIErrorCode } from "./enums"
 import { youtubeAPIErrorHandler } from "./utils-youtube"
 
@@ -20,6 +20,7 @@ export class YoutubePlayer {
     playlistVidIdx: number | null = null
     
     iFramePlaylistId = ""
+    iFrameVidId      = ""
 
     floatLayout      = { width: -1, height: -1, left: -1, top: -1 }
     doShowPlayer     = true
@@ -35,42 +36,41 @@ export class YoutubePlayer {
     READY_DELAY     = 2000
     lookBackTimeOut: NodeJS.Timeout | null = null
 
-    YT_PLAYER_OPTIONS: any = {
-        height: "100%", width: "100%",
+    PLAYER_OPTIONS: any = {
+        height: "100%", 
+        width: "100%",
         playerVars: {
-            rel: 0, 
             volume: 50,
             autoplay: 1,
-            // controls: 0,
-            showinfo: 0,
-            disablekb: 1,
             modestbranding: 1
         },
         events: {
-            onReady: null, onStateChange: null, onError: null
+            onReady: null, 
+            onStateChange: null, 
+            onError: null
         }
     }
 
     constructor() {
         ytPlayerStore.set(this)
         this.loadAndSetPlayerData()
-        this.initEventHandlers()
     }
 
+    /* iFrame API Set Up */
+
     /**
-     * Initialize Youtbe iFrame Player API.
+     * Initialize Youtube iFrame Player API.
      * Must initialize after refreshes.
      */
-    async initYtPlayer() {
+    async initYtPlayer(initApi: boolean) {
         try {
-            await this.initIframePlayerAPI()
-            this.initEventHandlers()
+            await this.initIframePlayerAPI(initApi)
             this.updateYtPlayerState({ doShowPlayer: true }) 
             
             this.hasActiveSession = true
         }
         catch(error: any) {
-            this.onError(new APIError(APIErrorCode.PLAYER, "There was a problem initializing the Youtbe Player. Please try again later."))
+            this.onError(new APIError(APIErrorCode.PLAYER, "There was a problem initializing the Youtube Player. Please try again later."))
             
             if (!this.hasActiveSession) {
                 this.quit()
@@ -82,40 +82,32 @@ export class YoutubePlayer {
     /**
      * Initialize iFrame Player API asynchrnously
      */
-    initIframePlayerAPI = async () => {
-        this.setYoutubeScript()
-        await this.waitForPlayerReadyAndSetPlayerInstance()
-    }
+    initIframePlayerAPI = async (initApi: boolean) => {
+        this.initEventHandlers()
 
-    /**
-     * Load the iFrame Player API to app
-     */
-    setYoutubeScript() {
-        const tag = document.createElement('script')
-        tag.src = 'https://www.youtube.com/iframe_api'
-
-        const ytScriptTag = document.getElementsByTagName('script')[0]
-        ytScriptTag!.parentNode!.insertBefore(tag, ytScriptTag)
+        if (initApi) {
+            setYoutubeScript()
+            await this.initPlayerOnAPIReady()
+        }
+        else {
+            this.initPlayerInstance()
+        }
     }
 
     /**
      * Initializes a new YouTube iframe player instance on API ready
      */
-    waitForPlayerReadyAndSetPlayerInstance() {
+    initPlayerOnAPIReady() {
         return new Promise<void>((resolve) => (window as any).onYouTubeIframeAPIReady = () => {
-            this.initIFramePlayer()
+            this.initPlayerInstance()
             resolve()
         })
     }
 
-    /**
-     * Initializes a new iFrame player instance.
-     */
-    initIFramePlayer() {
+    initPlayerInstance() {
         // @ts-ignore
-        this.player = new YT.Player(this.IFRAME_CLASS, this.YT_PLAYER_OPTIONS)
+        this.player = new YT.Player(this.IFRAME_CLASS, this.PLAYER_OPTIONS)
     }
-    
 
     /**
      * Update data store for Youtube Player.
@@ -133,11 +125,7 @@ export class YoutubePlayer {
      */
     onYtPlayerReadyHandler = async () => {
         this.justLoaded = true
-        setTimeout(() => this.isReady = true, this.READY_DELAY)
-
-        if (!this.playlist) {
-            return
-        } 
+        if (!this.playlist) return
 
         try {
             this.player.cuePlaylist({ 
@@ -168,44 +156,65 @@ export class YoutubePlayer {
     oniFrameStateChanged = async (event: any) => {
         const player    = event.target
         const state     = event.data
-        const videoData = player.getVideoData()
-        
+
         this.state = state
-        this.iFramePlaylistId = event.target.getPlaylistId()
-
-        this.disabledVidPlaypackHandler(state, player.getPlaylistIndex())
-
-        // do not update vid id unless necessary
-        const vidId          = videoData.video_id
-        const doNotUpdateVid = state < 0 || state === 5 || !vidId || vidId === this.vid?.id
+        // this.updatePlayerState(state)
 
         if (this.justLoaded && [3, 1].includes(state)) {
             this.justLoaded = false
         }
-        if (doNotUpdateVid) {
-            return
+
+        // validate data
+        const vidDetails = await this.validateMediaItem(player)
+        if (!vidDetails) return
+        
+        this.removeError()
+        this.iFramePlaylistId = event.target.getPlaylistId()
+
+        // update media data
+        const doNotUpdateItem = state < 0 || state === 5 || vidDetails.id === this.vid?.id
+        if (doNotUpdateItem) return
+
+
+        // video
+        const playlistVidIdx = player.getPlaylistIndex()
+        this.updateVideo(vidDetails, playlistVidIdx)
+    }
+
+    /**
+     * 
+     * Check to see if Youtube video can be played.
+     * If not show an error.
+     * 
+     * Used to catch the following error cases of playing an invalid video in a public playlist (non-first video).
+     */
+    validateMediaItem = async (player: any) => {
+        const playlist  = player.getPlaylist()
+
+        // will be empty on -1, 5 states
+        // note playlist will always be > 1, validate after collection choice
+        if (playlist.length === 0) return null
+        
+        const idx       = player.getPlaylistIndex()
+        const currVidId = playlist[idx]
+
+        // if already validated the same id, do not check again
+        if (currVidId === this.iFrameVidId) return null
+
+        const vidDetails = await getVidDetails(currVidId)
+
+        this.iFrameVidId = currVidId
+
+        if (!vidDetails) {
+            this.onError(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Video couldn't be played due to privacy restriction."))
+            return null
         }
-        if (this.error) {
-            this.removeError()
+        else if (vidDetails.embeddable != undefined && !vidDetails.embeddable) {
+            this.onError(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Video couldn't be played due to embed restriction."))
+            return null
         }
-
-        try {
-            // playlist
-            if (this.iFramePlaylistId != this.playlist?.id) {
-                this.playlist = this.playlistClicked
-
-                const { playlistLength } = await getPlayListItemsDetails(this.playlist!.id)
-                this.updateCurrentPlaylist({ ...this.playlist!, vidCount: playlistLength })
-            }
-
-            // video
-            const playlistVidIdx = player.getPlaylistIndex()
-            const vid = await getVidDetails(vidId)
-
-            this.updateVideo(vid, playlistVidIdx)
-        }
-        catch(e: any) {
-            this.onError(e)        // error if id does not exists or is privated
+        else {
+            return vidDetails
         }
     }
 
@@ -254,8 +263,6 @@ export class YoutubePlayer {
                 return
             } 
 
-            console.log(this.state)
-
             let errorMessage = "Playlist couldn't be played due to privacy or embed playback restrictions."
             this.onError(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, errorMessage))
         }, this.LOOK_BACK_DELAY)
@@ -266,9 +273,9 @@ export class YoutubePlayer {
      * Youtube Player state updates are triggered by events dispatched from Youtube API.
      */
     initEventHandlers() {
-        this.YT_PLAYER_OPTIONS.events.onReady = this.onYtPlayerReadyHandler
-        this.YT_PLAYER_OPTIONS.events.onStateChange = this.oniFrameStateChanged
-        this.YT_PLAYER_OPTIONS.events.onError = this.onIframeError
+        this.PLAYER_OPTIONS.events.onReady = this.onYtPlayerReadyHandler
+        this.PLAYER_OPTIONS.events.onStateChange = this.oniFrameStateChanged
+        this.PLAYER_OPTIONS.events.onError = this.onIframeError
     }
 
     /**
@@ -280,18 +287,19 @@ export class YoutubePlayer {
         if (this.state === 3 )    return   // if a prev loaded vid was buffering do not cue a new playlist
 
         try {
-
-
             this.player.stopVideo()
             this.player!.loadPlaylist({ list: playlist.id, listType: "playlist", index: startingIdx })
     
             // allow state change handler to set playlist to disallow player from setting an invalid playlist
             this.playlistClicked = playlist
 
-            // if an invalid playlist is selected when suer just loaded, there won't be an iframe state update
+            // if an invalid playlist is selected when iframe has just loaded with a vid queued (after a refresh)
+            // there won't be an iframe state update so do the check here
             await new Promise<void>((resolve, reject) => {
                 setTimeout(() => {
-                    if (this.state < 0 && this.justLoaded) {
+                    const inactive = [-1, 5].includes(this.state)
+
+                    if (inactive && this.justLoaded) {
                         reject(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Playlist couldn't be played due to privacy or embed playback restrictions."))
                     } 
                     else {
@@ -301,6 +309,7 @@ export class YoutubePlayer {
             })
         }
         catch(e: any) {
+            console.error(e)
             if (e.code === APIErrorCode.PLAYER_MEDIA_INVALID) {
                 this.onError(e)
             }
@@ -354,9 +363,22 @@ export class YoutubePlayer {
      * @param error 
      */
     onError(error: any) {
-        this.error = error
-        this.updateYtPlayerState({ error })
-        youtubeAPIErrorHandler(error)
+        if (this.error) return
+
+        const isAPINotLoadedYetMsg = /^this\.player\.\w+\s*is not a function$/.test(error.message)
+
+        if (isAPINotLoadedYetMsg) {
+            this.error = new APIError(APIErrorCode.PLAYER, "Player hasn't loaded yet. Try again later.")
+        }
+        else if (error.code != undefined) {
+            this.error = error
+        }
+        else {
+            this.error = new APIError(APIErrorCode.PLAYER)
+        }
+
+        this.updateYtPlayerState({ error: this.error })
+        youtubeAPIErrorHandler(this.error)
     }
 
     /**

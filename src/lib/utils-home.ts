@@ -1,13 +1,13 @@
 import { get } from "svelte/store"
-import { globalContext, mediaEmbedStore, sessionStore } from "./store"
-import { MediaEmbedFixed, MediaEmbedType, ModalType, ShortcutSectionInFocus } from "./enums"
+import { globalContext, sessionStore } from "./store"
+import { ModalType, MusicPlatform, ShortcutSectionInFocus } from "./enums"
 
 import { loadTheme } from "./utils-appearance"
 import { conintueWorkSession, didInitSession } from "./utils-session"
-import { didInitMusicUser, loadMusicUserData, musicLogin } from "./utils-music"
+import { didInitMusicPlayer, didInitMusicUser, initMusicPlayer, musicLogin } from "./utils-music"
 import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer } from "./utils-youtube"
-import { didSpotifyUserAuthApp, getSpotifyCodeFromURLAndLogin } from "./api-spotify"
 import { isTargetTextEditor } from "./utils-general"
+import { initMusicSettings } from "./utils-music-settings"
 
 export const LEFT_BAR_WIDTH = 63
 const LEFT_BAR_LEFT_BOUND = 20
@@ -27,15 +27,16 @@ export const initAppState = async () => {
         youtubeLogin()
     }
     if (didInitYtPlayer()) {
-        initYoutubePlayer()
+        await initYoutubePlayer(true)
+    }
+    if (didInitMusicPlayer()) {
+        await initMusicPlayer(MusicPlatform.YoutubeMusic, !didInitYtPlayer())
     }
     if (didInitMusicUser()) {
-        const musicPlatform = loadMusicUserData()!.musicPlatform!
-        await musicLogin(musicPlatform)
+        await musicLogin()
     }
-    if (didSpotifyUserAuthApp()) {
-        getSpotifyCodeFromURLAndLogin()
-    }
+
+    initMusicSettings()
 }
 
 /**

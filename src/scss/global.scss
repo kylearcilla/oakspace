@@ -899,6 +899,12 @@ $settings-modal-padding: 20px 25px 25px 25px;
     }
 }
 
+@mixin not-visible {
+    opacity: 0;
+    visibility: hidden;
+}
+
+
 .hidden {
     display: none;
 }
@@ -906,10 +912,8 @@ $settings-modal-padding: 20px 25px 25px 25px;
     opacity: 1 !important;
     visibility: visible !important;
 }
-
-@mixin not-visible {
-    opacity: 0;
-    visibility: hidden;
+.not-visible {
+    @include not-visible;
 }
 
 @keyframes strike {

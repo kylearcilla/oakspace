@@ -1,20 +1,15 @@
 import { get } from "svelte/store"
-import { musicDataStore, musicPlayerStore } from "./store"
-
-import { getAppleMusicUserAlbums, getAppleMusicUserLikedTracks, getAppleMusicUserPlaylists, initAppleMusic } from "./api-apple-music"
-import { SpotifyMusicPlayer } from "./music-spotify-player"
+import { musicDataStore, musicPlayerStore, musicSettingsManager } from "./store"
 import { getLogoIconFromEnum } from "./utils-general"
-import { 
-    getSpotfifyUserLikedTracks, getSpotfifyUserPlaylists, getSpotifyUserAlbums, getSpotifyUserAudioBooks, getUserPodcastsEps, initSpotifyMusic
-} from "./api-spotify"
 
 import type { MusicPlayer } from "./music-player"
-import type { AppleMusicUserData } from "./music-apple-user-data"
-import type { SpotifyMusicUserData } from "./music-spotify-user-data"
 import {  APIErrorCode, MusicMediaType, MusicPlatform } from "./enums"
 import { APIError } from "./errors"
-import { AppleMusicPlayer } from "./music-apple-player"
 import { toast } from "./utils-toast"
+import { YoutubeMusicPlayer } from "./youtube-music-player"
+import { INIT_PLAYLIST_REQUEST_DELAY, didInitYtPlayer, didInitYtUser, initToast, validateYtPlaylist, youtubeAPIErrorHandler } from "./utils-youtube"
+import type { YoutubeUserData } from "./youtube-user-data"
+import { YoutubeMusicUserData } from "./youtube-music-user-data"
 
 export const USER_PLAYLISTS_REQUEST_LIMIT = 10
 export const SPOTIFY_IFRAME_ID            = "spotify-iframe"
@@ -26,14 +21,24 @@ export const LIBRARY_COLLECTION_LIMIT     = 25
  * Makes a new music user and player instance.
  * End of error pipeline.
  * 
- * @param platform          Current music streaming platform being used.
  */
-export async function musicLogin(platform: MusicPlatform) {
-    if (platform === MusicPlatform.AppleMusic) {
-        await initAppleMusic()
+export async function musicLogin() {
+    try {
+        const hasPrevSession = didInitMusicUser()
+        const ytData         = new YoutubeMusicUserData()
+        await ytData.init()
+
+        if (!hasPrevSession) {
+            initToast("Log in Successful!")
+        }
+
+        get(musicSettingsManager)?.updateLibrary()
     }
-    else if (platform === MusicPlatform.Spotify) {
-        await initSpotifyMusic()
+    catch(error: any) {
+        console.error(error)
+        if (error.code != APIErrorCode.AUTH_DENIED) {
+            youtubeAPIErrorHandler(new APIError(APIErrorCode.AUTHORIZATION_ERROR))
+        }
     }
 }
 
@@ -41,9 +46,9 @@ export async function musicLogin(platform: MusicPlatform) {
  * Called when user logs out of music platform.
  */
 export async function musicLogout() {
-    const musicStore = get(musicDataStore)
+    const musicStore  = get(musicDataStore)
     const playerStore = get(musicPlayerStore)
-    const platform = musicStore!.musicPlatform
+    const platform    = MusicPlatform.YoutubeMusic
 
     try {
         musicStore!.quit()
@@ -64,7 +69,7 @@ export async function refreshMusicSession() {
         const musicStore = get(musicDataStore)
         await musicStore!.refreshAccessToken()
     
-        initMusicToast(musicStore!.musicPlatform, "Refresh Success!")
+        initMusicToast(MusicPlatform.YoutubeMusic, "Refresh Success!")
     }
     catch(e: any) {
         console.error(e)
@@ -72,16 +77,12 @@ export async function refreshMusicSession() {
     }
 }
 
-async function initPlayer(platform: MusicPlatform, selectContext?: MusicMediaSelectContext): Promise<MusicPlayer> {
-    let playerStore: MusicPlayer
+export async function initMusicPlayer(platform: MusicPlatform, initApi: boolean): Promise<MusicPlayer> {
+    let player: MusicPlayer
 
-    if (platform === MusicPlatform.Spotify) {
-        playerStore = new SpotifyMusicPlayer()
-        await playerStore.init(selectContext)
-    }
-    else {
-        playerStore = new AppleMusicPlayer()
-        await playerStore.init()
+    if (platform === MusicPlatform.YoutubeMusic) {
+        player = new YoutubeMusicPlayer()
+        await player.init(initApi)
     }
 
     return get(musicPlayerStore)!
@@ -94,21 +95,28 @@ async function initPlayer(platform: MusicPlatform, selectContext?: MusicMediaSel
  * @param itemClicked  Media item user has clicked.
  * @param idx          Idx location of clicked
  */
-export async function handlePlaylistItemClicked (collection: MediaCollection, itemClicked: Media, idx: number) {
-    const musicData = get(musicDataStore)
-    const selectContext = { collection, itemClicked, idx }
-    let player = get(musicPlayerStore)
+export async function handlePlaylistItemClicked(collection: MediaCollection, idx: number) {
+    const selectContext    = { collection, idx }
+    let player             = get(musicPlayerStore)
+    let hasinitMusicPlayer = player != null
     
     try {
-        player ??= await initPlayer(musicData!.musicPlatform, selectContext)
+        player ??= await initMusicPlayer(MusicPlatform.YoutubeMusic, !didInitYtPlayer())
     }
     catch(e: any) {
         musicAPIErrorHandler(e)
         return
     }
 
-    await player.updateMediaCollection(selectContext)
-    player.loadCurrentItem(true)
+    if (!(await validateYtPlaylist(collection.id))) {
+        return
+    }
+
+    setTimeout(async () => {
+        await player.updateMediaCollection(selectContext)
+        player.playMediaCollection()
+
+    }, hasinitMusicPlayer ? 0 : INIT_PLAYLIST_REQUEST_DELAY)
 }
 
 
@@ -127,155 +135,12 @@ export async function verifyForPlayerSession(platform: MusicPlatform) {
     }
     if (playerData) {
         try {
-            await initPlayer(platform)
+            await initMusicPlayer(platform, false)
         }
         catch(e: any) {
             musicAPIErrorHandler(e)
         }
     }
-}
-
-
-/**
- * Get the collection associated with the lib media clicked.
- * There must always be a collection in the player.
- * If not a collection (clicked on a track from saved tracks for example), then create a collection for it.
- * 
- * Ensure that the media user clicks is consistent with the actual media located in that index (make sure it hasn't been deleted or moved).
- * This is crucial in cases where the player requires an idx-based media id parameter or special lib id for certain media.
- * 
- * @param mediaClicked  Clicked media
- * @returns             Media associated collection
- */ 
-export async function getLibMediaCollection(mediaClicked: Media, itemIdx: number): Promise<MediaCollection> {
-    const musicStore = get(musicDataStore)!
-    const accessToken = await musicStore.verifyAccessToken()
-    const platform = musicStore.musicPlatform
-
-    if (mediaClicked.type === MusicMediaType.Playlist) {
-        const details = (await getUserPlaylist(platform, itemIdx, 1))!
-        const item = details.items[0]
-
-        if (!details || details.total === 0 || !item || item.id != mediaClicked.id) {
-            throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Outdated library. Please refresh.")
-        }
-        else {
-            return item as MediaCollection
-        }
-    }
-    else if (mediaClicked.type === MusicMediaType.Album) {
-        const details = (await getUserAlbums(platform, itemIdx, 1))!
-        const item = details.items[0]
-
-        if (!details || details.total === 0 || !item || item.id != mediaClicked.id) {
-            throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Outdated library. Please refresh.")
-        }
-        else {
-            return item as MediaCollection
-        }
-    }
-    else if (mediaClicked.type === MusicMediaType.PodcastEpisode) {
-        const details = await getUserPodcastsEps(accessToken, itemIdx, 1)
-        const item = details.items[0]
-
-        if (!details || details.total === 0 || !item || item.id != mediaClicked.id) {
-            throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Outdated library. Please refresh.")
-        }
-
-        const artwork = musicStore.userDetails?.profileImgBig ?? item.artworkImgSrc
-
-        return {
-            id: "",
-            name: "My Library",
-            description: "Your saved podcast episodes.",
-            artworkImgSrc: artwork ?? item.artworkImgSrc,
-            author: musicStore.userDetails!.username,
-            authorUrl: musicStore.userDetails!.url,
-            genre: "",
-            type: MusicMediaType.SavedEpisodes,
-            length: details.total,
-            fromLib: true,
-            url: ""
-        }
-    }
-    else if (mediaClicked.type === MusicMediaType.Track) {
-        const details = (await getUserLikedTracks(platform, itemIdx, 1))!
-        const item = details.items[0]
-
-        if (!details || details.total === 0 || !item || item.id != mediaClicked.id) {
-            throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Outdated library. Please refresh.")
-        }
-        
-        const artwork = musicStore.userDetails?.profileImgBig ?? item.artworkImgSrc
-
-        return {
-            id: "",
-            name: "My Library",
-            description: "Your saved tracks.",
-            artworkImgSrc: artwork ?? item.artworkImgSrc,
-            author: musicStore.userDetails?.username ?? "",
-            authorUrl: musicStore.userDetails?.url ?? "",
-            genre: "",
-            type: MusicMediaType.SavedTracks,
-            length: details.total,
-            fromLib: true,
-            url: ""
-        } 
-    }
-    else {
-        const details = await getSpotifyUserAudioBooks(accessToken, itemIdx, 1)!
-        const item = details.items[0]
-
-        if (!details || details.total === 0 || !item || item.id != mediaClicked.id) {
-            throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Outdated library. Please refresh.")
-        }
-
-        const artwork = musicStore.userDetails?.profileImgBig ?? item.artworkImgSrc
-
-        return {
-            id: "",
-            name: "My Library",
-            description: "Your saved audiobooks. (These are preview-only.)",
-            artworkImgSrc: artwork ?? item.artworkImgSrc,
-            author: musicStore.userDetails!.username,
-            authorUrl: musicStore.userDetails!?.url,
-            genre: "",
-            type: MusicMediaType.SavedAudioBooks,
-            length: details.total,
-            url: "",
-            fromLib: true
-        }
-    }
-}
-
-async function getUserAlbums(platform: MusicPlatform, offset: number,limit: number) {
-    const accessToken = await get(musicDataStore)!.verifyAccessToken()
-
-    if (platform === MusicPlatform.AppleMusic) {
-        return await getAppleMusicUserAlbums(limit, offset)
-    }
-
-    return await getSpotifyUserAlbums(accessToken, offset, limit)
-}
-
-async function getUserPlaylist(platform: MusicPlatform, offset: number,limit: number) {
-    const accessToken = await get(musicDataStore)!.verifyAccessToken()
-
-    if (platform === MusicPlatform.AppleMusic) {
-        return await getAppleMusicUserPlaylists(limit, offset)
-    }
-
-    return await getSpotfifyUserPlaylists(accessToken, offset, limit)
-}
-
-async function getUserLikedTracks(platform: MusicPlatform, offset: number,limit: number) {
-    const accessToken = await get(musicDataStore)!.verifyAccessToken()
-
-    if (platform === MusicPlatform.AppleMusic) {
-        return await getAppleMusicUserLikedTracks(limit, offset)
-    }
-
-    return await getSpotfifyUserLikedTracks(accessToken, offset, limit)
 }
 
 /**
@@ -308,11 +173,11 @@ export function musicAPIErrorHandler(error: APIError, musicPlatform?: MusicPlatf
 
     if (!platform) return
 
-    console.error(error)
 
-    const platformStr = getPlatformString(platform)
-    const errorMessage = error.message 
-    const hasMsg = errorMessage != undefined && errorMessage
+    const isNotAPIError = error.code === undefined
+    const platformStr   = getPlatformString(platform)
+    const errorMessage  = isNotAPIError ? "" : error.message
+    const hasMsg        = errorMessage != undefined && errorMessage
 
     if (error.code === APIErrorCode.EXPIRED_TOKEN) {
         toastOptions = {
@@ -406,35 +271,38 @@ export function getPlatfromPropName(platFormIdx: MusicPlatform): MusicPlatformPr
         propName = "appleMusic"
     }
     else if (platFormIdx === MusicPlatform.YoutubeMusic) {
-        propName = "youtubeMusic"
+        propName = "youtube"
     }
     else {
         propName = MusicPlatform[platFormIdx].toLowerCase() as MusicPlatformPropNames
     }
 
-    return propName as MusicPlatformPropNames
+    return "youtube" as MusicPlatformPropNames
 }
 
-/**
- * Check to see if there is an existing music session.
- * Removes additional music-related not previously removed if there wasn't a session.
- * @returns 
- */
 export function didInitMusicUser() { 
     const hasData = localStorage.getItem("music-user-data") != null
 
-    //  if no user data, no music-related data must be stored
     if (!hasData) {
         removeAppleMusicTokens()
-        removeMusicPlayerData() 
         removeMusicShuffleData() 
     }
     return hasData
 }
 
+export function didInitMusicPlayer() { 
+    const hasData = localStorage.getItem("music-player-data") != null
+
+    if (!hasData) {
+        removeMusicPlayerData()
+    }
+
+    return hasData
+}
+
 /* Load */
 
-export function loadMusicUserData(): Partial<AppleMusicUserData | SpotifyMusicUserData> | null {
+export function loadMusicUserData(): YoutubeUserData | null {
     const userData = localStorage.getItem("music-user-data")
     
     return userData ? JSON.parse(userData!) : null
@@ -452,10 +320,10 @@ export function loadMusicShuffleData(): MusicShufflerData | null {
 
 /* Updates */
 
-export function saveMusicUserData(newState: AppleMusicUserData | SpotifyMusicUserData) {
+export function saveMusicUserData(newState: Partial<YoutubeUserData>) {
     localStorage.setItem("music-user-data", JSON.stringify(newState))
 }
-export function saveMusicPlayerData(newState: MusicPlayer | SpotifyMusicPlayer) {
+export function saveMusicPlayerData(newState: MusicPlayer) {
     localStorage.setItem("music-player-data", JSON.stringify(newState))
 }
 export function saveMusicShuffleData(shuffleData: MusicShufflerData) {

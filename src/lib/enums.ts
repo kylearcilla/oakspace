@@ -120,7 +120,7 @@ export enum PlaybackGesture {
 }
 export enum MusicMoodCategory { 
     Serene = "Serene", Lofi = "Lo-Fi", Upbeat = "Upbeat", Soundtracks = "Soundtracks", 
-    Acoustic = "Acoustic", Classical = "Classical", Zen = "Zen", Summer = "Summer"
+    Acoustic = "Acoustic", Classical = "Classical", Zen = "Zen", Summer = "Summer", Podcasts = "Podcasts"
 }
 export enum LibError {
     REFRESH, NEW_COLLECTION, MORE_ITEMS
@@ -132,7 +132,7 @@ export enum MusicShufflerState {
     CAN_CONTINUE_CHUNK, HAS_ENDED_AND_MORE_CHUNKS, HAS_ENDED_NO_CHUNKS,
 }
 export enum MusicMediaType {
-    Playlist, Track, Album, PodcastEpisode, AudioBook, RadioStation, SavedTracks, SavedAudioBooks, SavedEpisodes
+    Playlist, Track, Album, PodcastEpisode, AudioBook, RadioStation, SavedTracks, SavedAudioBooks, SavedEpisodes, Podcast
 }
 export enum UserLibraryMedia {
     Playlists = "Playlists", LikedTracks = "Tracks", Albums = "Albums", PodcastEps = "Episodes", Audiobooks = "Audiobooks", Artists = "Artists"

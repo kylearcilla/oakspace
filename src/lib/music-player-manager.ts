@@ -1,15 +1,15 @@
 import { get } from "svelte/store"
 import { musicPlayerManager, musicPlayerStore } from "./store"
 
-import { getElemById, getLogoIconFromEnum } from "./utils-general"
+import { getElemById, getLogoIconFromEnum, looseEqualTo } from "./utils-general"
 import { INPUT_RANGE_BG_COLOR, INPUT_RANGE_FG_COLOR, getSeekPositionSecs, getSlidingTextAnimation } from "./utils-music-player"
 
 import { LogoIcon, MusicPlatform, PlaybackGesture } from "./enums"
-import type { SpotifyMusicPlayer } from "./music-spotify-player"
 import type { MusicPlayer } from "./music-player"
+
 /**
- * Manager class for handling state changes from music data class and changes from user gestures.
- * Handles Music Player UI chanegs.
+ * Manager class, a wrapper over the music player component, that manages UI and music player store changes
+ * Only handles music player state changes that is heavily involved with the UI (seek, volume).
  */
 export class MusicPlayerManager {
     musicPlatform: MusicPlatform
@@ -18,11 +18,16 @@ export class MusicPlayerManager {
     iconOptions: LogoContainerOptions
     
     isSeeking = false    
+    hasSeeked = false    
     progressValue = "0"
-    isMouseDownOnInput = false
-    hasOnChangeFired = false
     didJustMouseUp = false
     onCooldown = false
+
+    isVolSeeking = false
+    volume      = -1
+    isMuted     = false
+    hasSeekedToSecs = -1
+    isDisabled  = false
     
     progressMs = -1
     durationMs = -1
@@ -36,8 +41,9 @@ export class MusicPlayerManager {
     
     trackTitleElement: HTMLElement | null = null
     trackArtistNameElement: HTMLElement | null = null
+
     trackPlaybackBar: HTMLInputElement | null = null
-    musicPlaybackBar: HTMLInputElement | null = null
+    volumeTrackBar:  HTMLInputElement | null = null
     
     trackTitleElAnimationObj: Animation | null = null
     trackArtistElAnimationObj: Animation | null = null
@@ -67,8 +73,6 @@ export class MusicPlayerManager {
         
         const iconStrIdx = LogoIcon[this.icon] as keyof typeof this.MUSIC_PLAYER_ICON_OPTIONS
         this.iconOptions = this.MUSIC_PLAYER_ICON_OPTIONS[iconStrIdx]
-        console.log(LogoIcon[this.icon])
-        console.log(this.iconOptions)
 
         musicPlayerManager.set({
             progressMs: this.progressMs, 
@@ -78,7 +82,9 @@ export class MusicPlayerManager {
             isSeeking: false,
             isMouseDownOnInput: false, isPausePlayBtnActive: false,
             isPrevBtnActive: false, isNextBtnActive: false,
-            onCooldown: false
+            onCooldown: false,
+            isMuted: false,
+            volume: this.volume
         })
 
         this.initPlayerElements()
@@ -98,6 +104,8 @@ export class MusicPlayerManager {
             if (newState.isPrevBtnActive != undefined)            _state.isPrevBtnActive = newState.isPrevBtnActive
             if (newState.isNextBtnActive != undefined)            _state.isNextBtnActive = newState.isNextBtnActive
             if (newState.onCooldown != undefined)                 _state.onCooldown = newState.onCooldown
+            if (newState.volume != undefined)                     _state.volume = newState.volume
+            if (newState.isMuted != undefined)                    _state.isMuted = newState.isMuted
 
             return _state
         })
@@ -105,29 +113,21 @@ export class MusicPlayerManager {
 
     /* Controls */
     onPlaybackGesture(gesture: PlaybackGesture) {
-        const player = get(musicPlayerStore)!
-
         if (gesture === PlaybackGesture.PLAY_PAUSE) {
-            player.togglePlayback()
+            this.togglePlayback()
         }
         else if (gesture === PlaybackGesture.SKIP_NEXT) {
-            player.skipToNextTrack()
+            
+            this.skipToNext()
         }
         else if (gesture === PlaybackGesture.SKIP_PREV) {
-            player.skipToPrevTrack()
+            this.skipToPRev()
         }
         else if (gesture === PlaybackGesture.SHUFFLE) {
-            player.toggleShuffle()
+            this.toggleShuffle()
         }
         else  if (gesture === PlaybackGesture.LOOP) {
-            player.toggleRepeat()
-        }
-        
-        const isPlayingLive = player.isPlayingLive
-        const doSetCooldown = [PlaybackGesture.SKIP_NEXT, PlaybackGesture.SKIP_PREV].includes(gesture) && !isPlayingLive
-
-        if (doSetCooldown) {
-            this.setCooldown()
+            this.toggleRepeat()
         }
     }
 
@@ -140,18 +140,11 @@ export class MusicPlayerManager {
         this.durationMs = durationMs
         this.updateState({ durationMs })
     }
-
     toggleSeeking(isSeeking: boolean) {
         this.isSeeking = isSeeking
         this.updateState({ isSeeking })
     }
     
-    toggleIsMouseDownOnInput(isMouseDownOnInput: boolean) {
-        this.isMouseDownOnInput = isMouseDownOnInput
-        this.updateState({ isMouseDownOnInput })
-    }
-
-
     /* Listeners */
     onMediaItemUpdate(store: MusicPlayer) {
         const mediaItem = store.mediaItem
@@ -169,26 +162,41 @@ export class MusicPlayerManager {
     }
 
     onPlaybackUpdate(store: MusicPlayer) {
-        const _progressMs = store!.currentPosition
-        const _durationMs = store!.currentDuration
-        const doAllowUpdate = store!.doAllowUpdate
+        const { progressMs, durationMs, isMuted, volume } = store
+        const doAllowUpdate = store.doAllowUpdate
 
-        // isSeeking will be false despite clearing timeout on mousedown
-        const doUpdate = !this.isSeeking && !this.isMouseDownOnInput && doAllowUpdate
-        const doUpdateDuration = doUpdate && _durationMs != this.durationMs
-        const doUpdateProgress = doUpdate && _progressMs != this.progressMs
+        const seekedWrongTime  = this.hasSeekedWrongTime(progressMs)
+        const doUpdate         = !this.isSeeking && doAllowUpdate && !seekedWrongTime && durationMs > 0
+        const doUpdateDuration = doUpdate && durationMs != this.durationMs
+        const doUpdateProgress = doUpdate && progressMs != this.progressMs
 
-        // update only when neeeded
-        if (!doUpdateDuration && !doUpdateProgress) return
-
+        // will be 0 on loading new videos
+        if (durationMs === 0) {
+            this.updateProgressOnUpdate(0)
+        }
         if (doUpdateDuration) {
-            this.updateMediaItemTimeDuration(_durationMs)
+            this.updateMediaItemTimeDuration(durationMs)
         }
         if (doUpdateProgress) {
-            this.updateMediaItemProgress(_progressMs)
+            this.updateProgressOnUpdate(progressMs)
+            this.hasSeekedToSecs = -1
         }
 
-        this.updateProgressOnUpdate()
+        // sound
+        if (this.isVolSeeking) {
+            return
+        }
+
+        this.isMuted = isMuted
+        this.volume = volume
+        this.updateState({ isMuted })
+        
+        if (this.isMuted) {
+            this.updateVolume(0)
+        }
+        else {
+            this.updateVolume(volume)
+        }
     }
     handleKeyUp(event: KeyboardEvent) {
         if (event.code !== "Space") return
@@ -216,87 +224,132 @@ export class MusicPlayerManager {
         this.toggleCooldown(true)
 
         this.cooldownTimeOut = setTimeout(() => {
+            
             this.toggleCooldown(false)
-
-            clearTimeout(this.cooldownTimeOut!)
-            this.cooldownTimeOut = null
-
         }, this.GESTURE_COOL_DOWN_MS)
     }
     
     toggleCooldown(onCooldown: boolean) {
+        if (!onCooldown) {
+            clearTimeout(this.cooldownTimeOut!)
+            this.cooldownTimeOut = null
+        }
         this.updateState({ onCooldown: onCooldown })
     }
 
-    /* Input Range Functionality */
-    updateProgressOnUpdate() {
-        if (!this.trackPlaybackBar || this.isSeeking || this.didJustMouseUp) return
+    /* Seek */
+
+    /**
+     * Handler for when progress updates
+     */
+    updateProgressOnUpdate(progressMs: number) {
+        this.updateMediaItemProgress(progressMs)
 
         this.progressValue = `${this.durationMs >= 0 ? ((this.progressMs / this.durationMs) * 100) : 0}`
-        this.updatePlaybackBarStyleAfterUpdatte()
+        this.updatePlaybackBarStyleAfterUpdate()
     }
+
+    /**
+     * Handler on input events from input range element.
+     */
     trackProgressOnInput() {
+        this.toggleSeeking(true)
+
         this.progressValue = this.trackPlaybackBar!.value
-        this.updatePlaybackBarStyleAfterUpdatte()
+        this.updatePlaybackBarStyleAfterUpdate()
 
         this.updateMediaItemProgress((+this.progressValue / 100) * this.durationMs)
     }
+
+    /**
+     * Handler on input events from input range element.
+     */
     trackProgressOnChange() {
-        this.hasOnChangeFired = true
-        this.didJustMouseUp = false
-        this.changeProgressValueAfterGesture(this.trackPlaybackBar!.value)
-    }
-    changeProgressValueAfterGesture(val: string) {
-        this.progressValue = val
-        this.updatePlaybackBarStyleAfterUpdatte()
+        this.progressValue    = this.trackPlaybackBar!.value
+        this.hasSeekedToSecs  = getSeekPositionSecs(+this.progressValue, this.durationMs)
+        this.updatePlaybackBarStyleAfterUpdate()
 
-        const seekToSecs = getSeekPositionSecs(+this.progressValue, this.durationMs)
-        this.seekTo(seekToSecs)
-
+        this.seekTo(this.hasSeekedToSecs)
         this.toggleSeeking(false)
     }
-    updatePlaybackBarStyleAfterUpdatte() {
+
+    /**
+     * Updates the look of the progress bar.
+     */
+    updatePlaybackBarStyleAfterUpdate() {
         this.trackPlaybackBar!.style.background = `linear-gradient(to right, ${INPUT_RANGE_FG_COLOR} 0%, ${INPUT_RANGE_FG_COLOR} ${this.progressValue}%, ${INPUT_RANGE_BG_COLOR} ${this.progressValue}%, ${INPUT_RANGE_BG_COLOR} 100%)`
         this.trackPlaybackBar!.value = `${this.progressValue}`
     }
-    onInputMouseDown() {
-        if (this.musicPlatform === MusicPlatform.Spotify && (get(musicPlayerStore)! as SpotifyMusicPlayer).doIgnoreAutoPlay) {
+
+    /* Volume */
+    volumneOnInput() {
+        this.isVolSeeking = true
+        this.updateVolume(+this.volumeTrackBar!.value)
+    }
+    volumneOnChange() {
+        this.isVolSeeking = false
+        this.setPlayVolume(+this.volumeTrackBar!.value)
+    }
+    updateVolume(val: number) {
+        if (!this.volumeTrackBar) {
             return
         }
-
-        this.toggleSeeking(true)
-        this.toggleIsMouseDownOnInput(true)
-    }
-    onInputMouseUp(e: MouseEvent) {
-        this.toggleIsMouseDownOnInput(false)
-        this.didJustMouseUp = true
-
-        // onChange sometimes will not fire when it should
-        this.mouseUpTimeOut = setTimeout(() => {
-            this.mouseUpTimeOut = null
-            clearTimeout(this.mouseUpTimeOut!)
-            
-            if (this.hasOnChangeFired) return
-
-            const progressVal = (e.offsetX / this.trackPlaybackBar!.clientWidth) * 100
-            this.changeProgressValueAfterGesture(`${Math.min(Math.max(0, progressVal), 100)}`)
-            this.didJustMouseUp = false
-            this.hasOnChangeFired = false
-        }, 0)
+        val = Math.floor(val)
+        
+        this.volumeTrackBar.style.background = `linear-gradient(to right, ${INPUT_RANGE_FG_COLOR} 0%, ${INPUT_RANGE_FG_COLOR} ${val}%, ${INPUT_RANGE_BG_COLOR} ${val}%, ${INPUT_RANGE_BG_COLOR} 100%)`
+        this.volumeTrackBar!.value = val + ""
+        
+        this.volume  = val
+        this.updateState({ volume: val })
     }
 
     /* Player Functionality  */
     togglePlayback() {
         this.playerStore!.togglePlayback()
     }
+    toggleMute() {
+        this.playerStore!.toggleMute()
+    }
+    toggleShuffle() {
+        this.playerStore!.toggleShuffle()
+    }
+    toggleRepeat() {
+        this.playerStore!.toggleRepeat()
+    }
     seekTo(secs: number) {
         this.playerStore!.seekTo(secs)
     }
     skipToNext() {
-        this.playerStore!.togglePlayback()
+        this.hasSeekedToSecs = -1
+        this.playerStore!.skipToNextTrack()
     }
     skipToPRev() {
-        this.playerStore!.togglePlayback()
+        this.hasSeekedToSecs = -1
+        this.playerStore!.skipToPrevTrack()
+    }
+    setPlayVolume(vol: number) {
+        this.playerStore!.setVolume(vol)
+    }
+
+    /* Utils */
+
+    /**
+     * Ensure that the new progress will always be at the place where the user will seek to.
+     * Sometimes the player will briefly jump to the previous time and back to the appropriate time.
+     * 
+     * @param playerProgress   Current progress spit out by the player.
+     * @returns                If the progress player's progress time doesn't match the just-seeked-to time. 
+     */
+    hasSeekedWrongTime(playerProgress: number) {
+        if (this.hasSeekedToSecs < 0) return false
+
+        // if near end, the progress will soon be 0 seconds so the new progress time is expected to be different
+        const hasSeekedToSecsNearEnd = playerProgress < 1000 && looseEqualTo(this.durationMs / 1000, this.hasSeekedToSecs, 2)
+        if (hasSeekedToSecsNearEnd) {
+            return false
+        }
+
+        return !looseEqualTo(this.hasSeekedToSecs, playerProgress / 1000, 10)
     }
 
     /* Media Session */
@@ -364,6 +417,6 @@ export class MusicPlayerManager {
         this.trackArtistNameElement = getElemById("track-artist")!
 
         this.trackPlaybackBar = getElemById("playback-input")! as HTMLInputElement
-        this.musicPlaybackBar = getElemById("volume-input")! as HTMLInputElement
+        this.volumeTrackBar = getElemById("volume-input")! as HTMLInputElement
     }
 }

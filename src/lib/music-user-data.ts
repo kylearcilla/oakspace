@@ -28,7 +28,7 @@ export abstract class MusicUserData {
     // lib
     abstract getMoreLibraryItems(): void
     abstract updateLibraryMedia(media: UserLibraryMedia, isSwitchingTheFirstTime: boolean): void
-    abstract refreshCurrentLibraryMedia(): void
+    abstract refreshLibrary(): void
     abstract getCurrentLibraryDetails(): UserLibraryCollection
     abstract getLibraryDetails(currentUserMedia: UserLibraryMedia): UserLibraryCollection
 

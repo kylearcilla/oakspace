@@ -1,7 +1,8 @@
 import { APIErrorCode, MusicPlatform } from "./enums"
 import { APIError, type CustomError } from "./errors"
+import { MusicPlaylistShuffler } from "./music-playlist-shuffler"
 import { musicPlayerManager, musicPlayerStore } from "./store"
-import { getPlatformString, musicAPIErrorHandler, removeMusicPlayerData, removeMusicShuffleData } from "./utils-music"
+import { getPlatformString, loadMusicPlayerData, loadMusicShuffleData, musicAPIErrorHandler, removeMusicPlayerData, removeMusicShuffleData, saveMusicPlayerData } from "./utils-music"
 
 /**
  * @abstract 
@@ -9,47 +10,97 @@ import { getPlatformString, musicAPIErrorHandler, removeMusicPlayerData, removeM
  * ...that interact with popular Music Platform APIs (e.g., Spotify, Youtube Music, Apple Music).
  */
 export abstract class MusicPlayer {
-    abstract currentIdx: number
+    mediaItem:       Media | null = null
+    mediaCollection: MediaCollection | null = null
 
-    // media item will always be playing on the player never collection
-    abstract mediaItem: Track | PodcastEpisode | AudioBook | null
-    abstract mediaCollection: Media | null
+    currentIdx = -1
 
-    // all
-    abstract error: CustomError | null
-    abstract doShowPlayer: boolean
-    abstract isPlaying: boolean
-    abstract isDisabled: boolean
-    abstract isRepeating: boolean
-    abstract isBuffering: boolean
-    abstract isShuffled: boolean
-    abstract isPlayingLive: boolean
+    // player state
+    error: CustomError | null = null
+    doShowPlayer  = false
+    isPlaying     = false
+    isDisabled    = false
+    isRepeating   = false
+    isBuffering   = false
+    isShuffled    = false
+    isLive        = false
+    justLoaded    = false
+    justInit      = false
     
-    // spotify only
-    abstract currentDuration: number
-    abstract currentPosition: number
+    progressMs = 0
+    durationMs = 0
+    isMuted = false
+    volume  = 25
+
+    musicPlaylistShuffler: MusicPlaylistShuffler | null = null
 
     // used to disallow updates if old data is still present after skip or seek
-    abstract hasSeekedTo: number
-    abstract hasItemUpdated: boolean
-    abstract doAllowUpdate: boolean
-    
-    serverURL = "http://localhost:3000/"
+    hasSeekedTo    = -1
+    hasItemUpdated = false
+    hasReachedEnd  = false
+    doAllowUpdate  = true
 
-    abstract init(param?: any): Promise<void>;
+    platform: MusicPlatform = MusicPlatform.YoutubeMusic
+
+    abstract init(justInit: boolean): Promise<void>;
     abstract togglePlayback(): void;
+    abstract toggleMute(): void;
     abstract skipToNextTrack(): void;
     abstract skipToPrevTrack(): void;
-    abstract toggleShuffle(): void;
-    abstract toggleRepeat(): void;
     abstract seekTo(time: number): void;
+    abstract setVolume(volume: number): void;
     
     abstract updateMediaCollection(collectionContext: MediaClickedContext): Promise<void>
-    abstract loadCurrentItem(doPlay: boolean): void
-    abstract removeCurrentCollection(): void
+    abstract playMediaCollection(doPlay?: boolean): void
+    abstract updateState(newPlayerState: Partial<MusicPlayerState>, doSave?: boolean): void
+
+    updateMediaTime(posMs: number, durMs: number) {
+        this.progressMs = posMs
+        this.durationMs = durMs
+    }
+
+    toggleRepeat(): void {
+        try {
+            this.isRepeating = !this.isRepeating
+            this.updateState({ isRepeating: this.isRepeating })
+        }
+        catch(e) {
+            this.onError(e, this.platform)
+        }
+    }
+
+    toggleShuffle(flag?: boolean): void {
+        try {
+            const media = this.mediaCollection
+            const currIndex = this.currentIdx
+
+            this.isShuffled = flag != undefined ? flag : !this.isShuffled    
+            this.hasReachedEnd = false
+
+            if (this.isShuffled) {
+                this.musicPlaylistShuffler = new MusicPlaylistShuffler(currIndex, media!.length)
+            }
+            else {
+                this.musicPlaylistShuffler!.quit()
+                this.musicPlaylistShuffler = null
+            }
     
-    abstract updateState(newPlayerState: Partial<MusicPlayerState>): void
-    abstract resetMusicPlayerStateToEmptyState(): void
+            this.updateState({ isShuffled: this.isShuffled })
+        }
+        catch (error: any) {
+            console.error("There was an error toggling shuffle.")
+            this.onError(error, this.platform)
+        }
+    }
+
+    /**
+     * If track is close from the beginning, then resetart.
+     * @returns Should restart current track
+     */
+    shouldRestartTrackAfterSkipPrev() {
+        const trackProgressPerc = (this.progressMs / this.durationMs) * 100
+        return !this.isRepeating && (this.currentIdx === 0 || trackProgressPerc > 15)   
+    }
 
     toggleShow(doShow: boolean) {
         this.doShowPlayer = doShow
@@ -72,17 +123,63 @@ export abstract class MusicPlayer {
         musicPlayerManager.set(null)
     }
 
+    /**
+     * Load and set from previous music player session.
+     */
+    loadAndSetPlayerData() {
+        const savedData = loadMusicPlayerData()
+        if (!savedData) return
+
+        this.mediaItem       =  savedData!.mediaItem
+        this.mediaCollection =  savedData!.mediaCollection
+        this.currentIdx      =  savedData!.currentIdx
+
+        this.isRepeating     =  savedData!.isRepeating
+        this.isShuffled      =  savedData!.isShuffled
+        this.volume          =  savedData!.volume
+        this.isMuted         =  savedData!.isMuted
+        this.doShowPlayer    =  savedData!.doShowPlayer
+        this.justInit        =  savedData!.justInit    
+        this.isPlaying       = false
+        
+        this.updateState({...savedData }, false)
+    }
+
+    /**
+     * Saves updated data to persist state between refreshes.
+     * Only saves what it needs=.
+     */
+    saveState() {
+        let newData = {} as MusicPlayer
+
+        newData.mediaItem       = this.mediaItem
+        newData.mediaCollection = this.mediaCollection
+        newData.currentIdx      = this.currentIdx
+        newData.volume          = this.volume
+        newData.isMuted         = this.isMuted
+
+        newData.isRepeating  = this.isRepeating
+        newData.isShuffled   = this.isShuffled
+        newData.doShowPlayer = this.doShowPlayer
+
+        saveMusicPlayerData(newData)
+    }
+
+    /**
+     * Delete player data.
+     */
     deleteMusicPlayerData() {
-        if (this.isShuffled) { 
+        if (this.isShuffled) {
             removeMusicShuffleData()
         }
         removeMusicPlayerData()
-    }  
+    }
 
 
     onError(error: any, platform: MusicPlatform) {
         console.error(error)
         this.error = error
+        platform = MusicPlatform.YoutubeMusic
 
         if (error instanceof APIError) {
             musicAPIErrorHandler(error, platform)

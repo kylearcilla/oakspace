@@ -473,14 +473,15 @@ export function msToHHMMSS(ms: number) {
 
     // Format the time components as HH:MM:SS
     let formattedTime = ''
+
     if (hours > 0) {
         formattedTime += hours + ':'
-    }
-    if (minutes > 0 || hours > 0) {
+        formattedTime += (minutes < 10 ? '0' : '') + minutes + ':'
+    } 
+    else {
         formattedTime += minutes + ':'
-    } else {
-        formattedTime += '0:'
     }
+
     formattedTime += (seconds < 10 ? '0' : '') + seconds
 
     return formattedTime

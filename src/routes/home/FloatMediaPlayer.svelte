@@ -22,8 +22,8 @@
     let displayObserver: ResizeObserver | null = null
     let displayContainerRef: HTMLElement
     let cursor = { pos: "middle", type: "default" }
+    
     let isHidden = false
-
     let windowWidth = 0
     let windowHeight = 0
     $: marginRight  = windowWidth - SAFE_MARGIN
@@ -37,6 +37,7 @@
         left: SAFE_MARGIN 
     }
 
+    let ytPlayer      = $ytPlayerStore
     let isPointerDown = false
     let shouldMove    = false
     let isResizing    = false
@@ -76,6 +77,7 @@
         boxProps.width = width
     }
     function initLayout() {
+        if (!ytPlayer) return
         const savedLayout = $ytPlayerStore!.floatLayout
 
         if (savedLayout && savedLayout.left >= 0) {
@@ -187,6 +189,8 @@
         }
     }
     function resizeHandler(clientX: number, clientY: number) {
+        if (!ytPlayer) return
+
         const { pos } = cursor
         const currPos  = { left: clientX, top: clientY }
 
@@ -267,6 +271,7 @@
         return rightEdge > marginRight || bottomEdge > marginBottom
     }
     function moveHandler(clientX: number, clientY: number, onResize = false) { 
+        if (!ytPlayer) return
         if (!onResize && (!isPointerDown || !shouldMove)) return
 
         const newPos = initFloatElemPos({
@@ -340,6 +345,7 @@
     function handleKeyUp(ke: KeyboardEvent) {
         const { code, key, shiftKey, target } = ke
         if (isTargetTextEditor(target as HTMLElement)) return
+        if (!ytPlayer) return
 
         shouldMove = code === "Space" ? false : shouldMove
 

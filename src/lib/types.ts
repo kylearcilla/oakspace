@@ -551,12 +551,6 @@ type UserLibraryCollection = {
     totalItems: number
 }
 
-type MusicMediaSelectContext = {
-    collection: MediaMediaCollection
-    itemClicked: Media
-    idx: number
-}
-
 interface Task {
     id: string,
     idx: number,
@@ -686,11 +680,12 @@ interface Media {
     name: string
     author: string
     authorUrl: string
-    artworkImgSrc: string
+    artworkImgSrc: string | { url: string, artist: string }
     genre: string
     url: string
     type: MusicMediaType
-    fromLib: boolean
+    fromLib?: boolean
+    description?: string
 }
 
 interface ArtistTopSongs extends Media {
@@ -743,7 +738,6 @@ interface LibAudiobooks extends Media {
 
 type MediaClickedContext = {
     collection: MediaCollection
-    itemClicked: Media
     idx: number
 }
 
@@ -770,6 +764,8 @@ type MusicPlayerManagerState = {
     isPrevBtnActive: boolean
     isNextBtnActive: boolean
     onCooldown: boolean
+    isMuted: boolean
+    volume: number
 }
 
 type MusicPlayerState = {
@@ -793,10 +789,10 @@ type MusicShufflerData = {
     state: MusicShufflerState
 }
 
-type MusicPlatformPropNames = "appleMusic" | "spotify"
+type MusicPlatformPropNames = "youtube"
 
 type DiscoverCollection = {
-    [platform in MusicPlatformPropNames]: Partial<Media & { length: number}>[]
+    [platform in MusicPlatformPropNames]: MediaCollection[]
 }
 
 type MusicContext = {
@@ -942,11 +938,13 @@ type YoutubeVideo = {
     likeCount: string
     viewCount: string
     publishedAt: string
+    thumbnailSrc: string
     channelId: string
     channelName: string
     channelImgSrc: string
     channelSubs: string
     channelUrl: string
+    embeddable?: boolean
 };
 
 type YoutubeMediaId = { 

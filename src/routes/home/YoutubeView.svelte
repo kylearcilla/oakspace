@@ -3,7 +3,7 @@
 	import { APIErrorCode, Icon, LogoIcon } from '$lib/enums'
 	import Logo from '../../components/Logo.svelte'
 	import { toggleYoutubePlayerFloat } from "$lib/utils-home"
-	import SvgIcon from "../../components/SVGIcon.svelte";
+	import SvgIcon from "../../components/SVGIcon.svelte"
 
     export let type: "float" | "base" = "base"
 
@@ -172,7 +172,7 @@
 
 <style lang="scss">
     @import "../../scss/dropdown.scss";
-
+    
     .vid-view {
         position: relative;
         @include abs-top-left(56px);
@@ -300,7 +300,7 @@
     }
     .playlist-panel {
         position: relative;
-        margin: 25px 0px 160px 0px;
+        margin: 25px 0px 0px 0px;
         border-radius: 15px;
         overflow: hidden;
         background-color: var(--midPanelBaseColor);

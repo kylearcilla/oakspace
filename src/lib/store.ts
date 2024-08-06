@@ -10,10 +10,9 @@ import type { GoalsManager } from './goals-manager'
 import { ShortcutSectionInFocus } from './enums'
 import type { EditGoalManager } from './edit-goal-manager'
 import type { DatePickerManager } from './date-picker-manager'
-import type { AppleMusicUserData } from './music-apple-user-data'
-import type { SpotifyMusicUserData } from './music-spotify-user-data'
 import type { MusicSettingsManager } from './music-settings-manager'
 import { WEEKLY_ROUTINES } from '../tests/routines/routines.data'
+import type { YoutubeMusicUserData } from './youtube-music-user-data'
 
 /* App UI State */
 export const globalContext = writable<GlobalContext>({
@@ -62,7 +61,7 @@ export const ytPlayerStore = writable<YoutubePlayer| null>(null)
 
 /* Music Stuff: Music Player State */
 export const musicPlayerStore = writable<MusicPlayer | null>(null)
-export const musicDataStore = writable<AppleMusicUserData | SpotifyMusicUserData | null>(null)
+export const musicDataStore = writable<YoutubeMusicUserData | null>(null)
 
 export const musicPlayerManager = writable<MusicPlayerManagerState | null>(null)
 export const musicSettingsManager = writable<MusicSettingsManager | null>(null)

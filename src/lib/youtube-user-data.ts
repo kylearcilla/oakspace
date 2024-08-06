@@ -1,10 +1,20 @@
 import { APIError, type CustomError } from "./errors"
-import { ytUserDataStore } from "./store"
+import { musicDataStore, ytUserDataStore } from "./store"
 import { authYoutubeClient,  getFreshToken,  getUserYtPlaylists, logOutUser } from "./api-youtube"
-import { deleteYtUserData, deleteYtCredentials, saveYtCredentials, 
-         saveYtUserData, loadYtCredentials, loadYtUserData, USER_PLS_MAX_PER_REQUEST, youtubeAPIErrorHandler 
+import { 
+        deleteYtUserData, 
+        deleteYtCredentials, 
+        saveYtCredentials, 
+        saveYtUserData, 
+        loadYtCredentials, 
+        loadYtUserData, 
+        USER_PLS_MAX_PER_REQUEST, 
+        youtubeAPIErrorHandler, 
+        initToast
 } from "./utils-youtube"
-import { APIErrorCode } from "./enums"
+import { APIErrorCode, LogoIcon } from "./enums"
+import { get, type Writable } from "svelte/store"
+import { toast } from "./utils-toast"
 
 /**
  * Manages a logged Youtube user's data. 
@@ -12,12 +22,12 @@ import { APIErrorCode } from "./enums"
  * Is itself a reactive class / data store (set during instantiation).
  */
 export class YoutubeUserData {
-    didUserSign = false
-    hasUserSignedIn = false
-    username = ""
+    isSignedIn    = false
+    username      = ""
     profileImgSrc = ""
-    email = ""
-    error: CustomError | null = null
+    email         = ""
+    error: any = null
+    forMusic = false
     
     userPlaylists: YoutubePlaylist[] = []
     userPlsNextPageToken = ""
@@ -31,11 +41,18 @@ export class YoutubeUserData {
     tokenExpiresInSecs = 3600
     hasTokenExpired = false
 
+    store: Writable<YoutubeUserData | null> | null = null
+
     ACTIVE_TOKEN_THRESHOLD_SECS = 60
     
-    constructor() {
-        ytUserDataStore.set(this)
-        this.loadAndSetUserData()
+    constructor(store: Writable<YoutubeUserData | null>, doLoadData = true) {
+        store.set(this)
+
+        this.store = store
+
+        if (doLoadData) {
+            this.loadAndSetUserData()
+        }
     }
 
     /**
@@ -90,9 +107,9 @@ export class YoutubeUserData {
 
         this.userPlsSecondPageToken = this.userPlsNextPageToken
 
-        this.hasUserSignedIn = true
+        this.isSignedIn = true
         this.updateYoutubeUserData({ 
-            ...ytCreds, ...ytUserData, hasUserSignedIn: true,
+            ...ytCreds, ...ytUserData, isSignedIn: true,
             userPlsSecondPageToken: this.userPlsSecondPageToken
         })
     }
@@ -114,9 +131,21 @@ export class YoutubeUserData {
 
     async verifyAccessToken() {
         if (this.hasAccessTokenExpired()) {
-            throw new APIError(APIErrorCode.EXPIRED_TOKEN)
+            toast("default", {
+                message: "Youtube",
+                description: "Token has expired. Log in again to continue.",
+                logoIcon: LogoIcon.Youtube,
+                action: {
+                    label:  "Continue session",
+                    onClick: () => this.refreshAccessToken()
+                }
+            })
+
+            this.setTokenHasExpired(true)
+
+            return false
         }
-        return this.accessToken
+        return true
     }
 
     /**
@@ -126,28 +155,28 @@ export class YoutubeUserData {
      */
     async refreshAccessToken() {
         try {
-            const accessToken = await getFreshToken()
-
-            this.accessToken = accessToken
-            this.accessTokenCreationDate = new Date()
-
-            this.updateYoutubeUserData({ 
-                accessToken: this.accessToken, 
-                accessTokenCreationDate: this.accessTokenCreationDate
-            })
-
-            if (this.hasTokenExpired) {
-                this.setTokenHasExpired(false)
+            const accessToken    = await getFreshToken()
+            const freshTokenData = {
+                token: accessToken, creationDate: new Date() 
             }
+
+            this.updateOtherYtStoreToken(freshTokenData)
+            this.updateTokenAfterRefresh(freshTokenData)
+
+            initToast("Token refreshed!")
         }
-        catch(error) {
-            this.onError(new APIError(APIErrorCode.FAILED_TOKEN_REFRESH))
-            throw error
+        catch(error: any) {
+            if (error.code != APIErrorCode.AUTH_DENIED) {
+                this.onError(new APIError(APIErrorCode.FAILED_TOKEN_REFRESH))
+            }
         }
     }
 
     onError(error: any) {
         console.error(error)
+        this.error = error
+        this.updateYoutubeUserData({ error })
+    
         if (error instanceof APIError) {
             youtubeAPIErrorHandler(error)
         }
@@ -169,8 +198,9 @@ export class YoutubeUserData {
     }
 
     quit() {
-        ytUserDataStore.set(null)
-        this.clearYoutubeUserData()
+        this.store!.set(null)
+        deleteYtCredentials()
+        deleteYtUserData()
     }
 
     /**
@@ -178,7 +208,7 @@ export class YoutubeUserData {
      * @param newData   New data to be incorporated.
      */
     updateYoutubeUserData(newData: Partial<YoutubeUserData>, doSave: boolean = true) {
-        ytUserDataStore.update((data: YoutubeUserData | null) => { 
+        this.store!.update((data: YoutubeUserData | null) => { 
             return this.getNewStateObj(newData, data!)
         })
 
@@ -190,13 +220,17 @@ export class YoutubeUserData {
 
     async refreshUserPlaylists() {
         try {
-            await this.verifyAccessToken()
+            const isTokenValid = await this.verifyAccessToken()
+            if (!isTokenValid) return
+
             await this.getUserPlaylists(true)
 
             this.userPlsSecondPageToken = this.userPlsNextPageToken
             this.updateYoutubeUserData({ userPlsSecondPageToken: this.userPlsSecondPageToken })            
         }
         catch(error: any) {
+            console.error(error)
+            
             if (error.code === APIErrorCode.EXPIRED_TOKEN) {
                 this.setTokenHasExpired(true)
                 this.onError(error)
@@ -215,10 +249,14 @@ export class YoutubeUserData {
         try {
             if (this.hasFetchedAllUserPls) return
 
-            await this.verifyAccessToken()
+            const isTokenValid = await this.verifyAccessToken()
+            if (!isTokenValid) return
+
             await this.getUserPlaylists()
         }
         catch(error: any) {
+            console.error(error)
+
             if (error?.code === APIErrorCode.EXPIRED_TOKEN) {
                 this.setTokenHasExpired(true)
                 this.onError(error)
@@ -227,6 +265,39 @@ export class YoutubeUserData {
                 this.onError(new APIError(APIErrorCode.GENERAL, `There was an error loading more playlists from your library. Please try again later.`))
             }
             throw error
+        }
+    }
+
+    updateOtherYtStoreToken(creds: { token: string, creationDate: Date }) {
+        if (this.forMusic) {
+            const store = get(ytUserDataStore)
+
+            if (store?.username === this.username) {
+                store.updateTokenAfterRefresh(creds)
+            }
+        }
+        else {
+            const store = get(musicDataStore)
+
+            if (store?.username === this.username) {
+                store.updateTokenAfterRefresh(creds)
+            }
+        }
+    }
+
+    updateTokenAfterRefresh(creds: { token: string, creationDate: Date }) {
+        const { token, creationDate } = creds
+
+        this.accessToken = token
+        this.accessTokenCreationDate = creationDate
+
+        this.updateYoutubeUserData({ 
+            accessToken: token, 
+            accessTokenCreationDate: creationDate
+        })
+
+        if (this.hasTokenExpired) {
+            this.setTokenHasExpired(false)
         }
     }
 
@@ -275,7 +346,7 @@ export class YoutubeUserData {
         this.accessToken      = ytCreds.accessToken
         this.refreshToken     = ytCreds.refreshToken
         this.accessTokenCreationDate = ytCreds.accessTokenCreationDate
-        this.hasUserSignedIn  = true
+        this.isSignedIn  = true
 
         this.username      = userData.username!
         this.profileImgSrc = userData.profileImgSrc!
@@ -286,7 +357,7 @@ export class YoutubeUserData {
         this.userPlsSecondPageToken = userData.userPlsSecondPageToken
         this.userPlsNextPageToken   = userData.userPlsSecondPageToken
 
-        this.updateYoutubeUserData({ ...ytCreds, ...userData, hasUserSignedIn: true })
+        this.updateYoutubeUserData({ ...ytCreds, ...userData, isSignedIn: true })
     }
 
     saveYtCredentials() {
@@ -304,7 +375,7 @@ export class YoutubeUserData {
             email:          this.email!,
             accessTokenCreationDate:  this.accessTokenCreationDate!,
             userPlaylists:            this.userPlaylists!.slice(0, USER_PLS_MAX_PER_REQUEST),
-            userPlaylistsTotal:       this.userPlaylistsTotal!,
+            userPlaylistsTotal:     this.userPlaylistsTotal!,
             userPlsSecondPageToken: this.userPlsSecondPageToken
         })
     }
@@ -322,19 +393,11 @@ export class YoutubeUserData {
         if (newState.username != undefined)             newStateObj.username = newState.username
         if (newState.profileImgSrc != undefined)        newStateObj.profileImgSrc = newState.profileImgSrc
         if (newState.email != undefined)                newStateObj.email = newState.email
-        if (newState.hasUserSignedIn != undefined)      newStateObj.hasUserSignedIn = newState.hasUserSignedIn
+        if (newState.isSignedIn != undefined)           newStateObj.isSignedIn = newState.isSignedIn
         if (newState.userPlaylists != undefined)        newStateObj.userPlaylists = newState.userPlaylists
         if (newState.userPlaylistsTotal != undefined)   newStateObj.userPlaylistsTotal = newState.userPlaylistsTotal
         if (newState.hasFetchedAllUserPls != undefined) newStateObj.hasFetchedAllUserPls = newState.hasFetchedAllUserPls
 
         return newStateObj
-    }
-
-    /**
-     * Clear youtube user and creds data from local storage. 
-     */
-    clearYoutubeUserData() {
-        deleteYtCredentials()
-        deleteYtUserData()
     }
 }

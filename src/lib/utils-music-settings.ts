@@ -1,6 +1,20 @@
-import { acousticCollections, classicalCollections, lofiCollections, sereneCollections, soundtrackCollections, summerCollections, upbeatCollections, zenCollections } from "./data-music-collections"
-import { MusicMediaType, MusicMoodCategory, UserLibraryMedia } from "./enums"
-import { containsHtmlTags } from "./utils-general"
+import { get } from "svelte/store"
+import { acousticCollections, podcastCollections, sereneCollections, soundtrackCollections, upbeatCollections, zenCollections } from "./data-music-collections"
+import { MusicMediaType, MusicMoodCategory, MusicPlatform, UserLibraryMedia } from "./enums"
+import { MusicSettingsManager } from "./music-settings-manager"
+import { musicSettingsManager } from "./store"
+
+export function initMusicSettings(platform = MusicPlatform.YoutubeMusic) {
+    if (platform === undefined) return
+
+    const manager = new MusicSettingsManager()
+    const store = get(musicSettingsManager)
+
+    store!.updateLibrary()
+    store!.handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
+
+    return manager
+}
 
 /**
  * Requests for more discover media items once scrolled down far enough.
@@ -29,24 +43,20 @@ export async function discoverPlsPaginationScrollHandler(event: Event) {
  * @param   platformProp       MusicPlatform in object property, used to index for that platform's collection
  * @returns                    Music media items under given mood category for a specific platform.
  */
-export function getDiscoverCollectionList(discoverCategory: MusicMoodCategory, platformProp: MusicPlatformPropNames): Partial<Media>[] {
+export function getDiscoverCollectionList(discoverCategory: MusicMoodCategory, platformProp: MusicPlatformPropNames): MediaCollection[] {
     switch (discoverCategory) {
         case MusicMoodCategory.Serene:
             return sereneCollections[platformProp]
-        case MusicMoodCategory.Lofi:
-            return lofiCollections[platformProp]
         case MusicMoodCategory.Upbeat:
             return upbeatCollections[platformProp]
         case MusicMoodCategory.Soundtracks:
             return soundtrackCollections[platformProp]
         case MusicMoodCategory.Acoustic:
             return acousticCollections[platformProp]
-        case MusicMoodCategory.Classical:
-            return classicalCollections[platformProp]
         case MusicMoodCategory.Zen:
             return zenCollections[platformProp]
-        case MusicMoodCategory.Summer:
-            return summerCollections[platformProp]
+        default:
+            return podcastCollections[platformProp]
     }
 }
 
@@ -62,6 +72,32 @@ export function getMediaDescription(media: Media): string {
     }
 
     return ""
+}
+
+export function getArtworkCredit(artwork: string | { url: string, artist: string }) {
+    const _artwork: any = artwork
+
+    if (typeof artwork === "string") {
+        return ""
+    }
+    else {
+        return _artwork.artist
+    }
+}
+
+/**
+ * @param media 
+ * @returns     Get media description.
+ */
+export function getMediaImgSrc(artwork: string | { url: string, artist: string }): string {
+    const _artwork: any = artwork
+
+    if (typeof artwork === "string") {
+        return artwork as string
+    }
+    else {
+        return _artwork.url
+    }
 }
 
 /**

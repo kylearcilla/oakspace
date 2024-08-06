@@ -33,19 +33,7 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 vidCount: 17,
                 channelId: "",
                 channelTitle: "Multiple Authors",
-                thumbnailURL: "https://i.ytimg.com/vi/Y56ODjb8ZMo/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLCK4yCIusXl4LoiDrvIxqq9C5RunA",
-                channelImgSrc: "",
-                channelURL: "",
-                firstVidId: null
-            },
-            {
-                id: "PLTlW3nrfe71R4__x5h3omOh8FXf1nf8Up",
-                title: "Gaming Relax & Chill",
-                description: "Escape into tranquility with melodies from Zelda, Animal Crossing, and other Nintendo favorites in this calming playlist.",
-                vidCount: 15,
-                channelId: "",
-                channelTitle: "Mutliple Authors",
-                thumbnailURL: "https://i.ytimg.com/vi/EdHGrnuCEo4/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhdIGUoUTAP&rs=AOn4CLCRjy5XbgxBm3xltMq0G7SdSXInqQ",
+                thumbnailURL: "https://i.ytimg.com/vi/03IAR5O07h0/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhjIGUoKzAP&rs=AOn4CLCy8NZG0EvdWRN2v6N1cNLFu4Ue2g",
                 channelImgSrc: "",
                 channelURL: "",
                 firstVidId: null
@@ -58,6 +46,18 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 channelId: "",
                 channelTitle: "Multiple Authors",
                 thumbnailURL: "https://i.ytimg.com/vi/_ITiwPMUzho/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCdFE2e_RZb_9O5SPsNeuI9HiSctA",
+                channelImgSrc: "",
+                channelURL: "",
+                firstVidId: null
+            },
+            {
+                id: "PLTlW3nrfe71R4__x5h3omOh8FXf1nf8Up",
+                title: "Gaming Relax & Chill",
+                description: "Escape into tranquility with melodies from Zelda, Animal Crossing, and other Nintendo favorites in this calming playlist.",
+                vidCount: 15,
+                channelId: "",
+                channelTitle: "Mutliple Authors",
+                thumbnailURL: "https://i.ytimg.com/vi/EdHGrnuCEo4/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhdIGUoUTAP&rs=AOn4CLCRjy5XbgxBm3xltMq0G7SdSXInqQ",
                 channelImgSrc: "",
                 channelURL: "",
                 firstVidId: null

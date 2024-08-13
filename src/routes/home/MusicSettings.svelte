@@ -4,7 +4,7 @@
 
     import { closeModal } from "$lib/utils-home"
     import { musicCategories } from "$lib/data-music-collections"
-	import { LIBRARY_COLLECTION_LIMIT, musicLogin } from "$lib/utils-music"
+	import { LIBRARY_COLLECTION_LIMIT, musicLogin, exitMusicPlayer, musicLogOut } from "$lib/utils-music"
 
 	import { getMediaContext, getMediaItemInfo, getMediaLength, getMediaDescription, getMediaTypeStr, getMediaImgSrc, getArtworkCredit } from "$lib/utils-music-settings"
     
@@ -13,8 +13,8 @@
     
     import { ModalType, Icon, MusicMediaType, LibError, LogoIcon } from "$lib/enums"
 	import DropdownList from "../../components/DropdownList.svelte"
-	import Logo from "../../components/Logo.svelte";
-	import { initToast, youtubeAPIErrorHandler } from "$lib/utils-youtube"
+	import Logo from "../../components/Logo.svelte"
+	import SvgIcon from "../../components/SVGIcon.svelte"
 
     $: isLight = !$themeState.isDarkTheme
 
@@ -39,17 +39,9 @@
     let isLibraryDropdownOpen = false
     let isHoverOverArt = false
     let isLogInDropdownOpen = false
+    let isSettingsOpen = false
 
     /* Library Dropdown */
-    function onDailyRoutinesListOptClicked(e: Event) {
-        const target = e.target as HTMLElement
-        const optnText = target.innerText.trim()
-
-        if (optnText === "Refresh Playlists") {
-            manager?.refreshLibrary() 
-            isLibraryDropdownOpen = false
-        }
-    }
     function onLogInDropdownItemClicked(e: Event) {
         const target = e.target as HTMLElement
         const optnText = target.innerText.trim()
@@ -57,13 +49,7 @@
         isLogInDropdownOpen = false
 
         if (optnText === "Log out") {
-            try {
-                $musicDataStore!.quit()
-                initToast("Logged out successfully!")
-            }
-            catch(error: any) {
-                youtubeAPIErrorHandler(error)
-            }
+            musicLogOut()
         }
         else if (optnText === "As different user") {
             musicLogin()
@@ -81,7 +67,7 @@
             isLogInDropdownOpen = !isLogInDropdownOpen
         }
         else if (!isSignedIn) {
-            
+            musicLogin()
         }
         else {
             isLogInDropdownOpen = !isLogInDropdownOpen
@@ -117,8 +103,9 @@
 >
     <div 
         class="music"
-        class:music--signed-out={!isSignedIn && !mediaCollection}
-        class:music--collection-signed-out={!isSignedIn && mediaCollection}
+        class:music--no-collection-signed-out={!isSignedIn && !mediaCollection}
+        class:music--has-collection-signed-out={!isSignedIn && mediaCollection}
+        class:music--no-collection-signed-in={isSignedIn && !mediaCollection}
         class:music--light={isLight}
         class:music--dark={!isLight}
     >
@@ -197,8 +184,8 @@
                         <div class="img-bg-container">
                             <img 
                                 class="img-bg" 
-                                src={getMediaImgSrc(mediaCollection.artworkImgSrc)}
                                 alt="collection"
+                                src={getMediaImgSrc(mediaCollection.artworkImgSrc)}
                             >
                         </div>
                         <div class="img-bg-gradient"></div>
@@ -212,6 +199,13 @@
                                 <div class="now-playing__details-container">
                                     <!-- Header -->
                                     <div class="now-playing__details-header">
+                                        <button
+                                            id="now-playing--dropdown-btn"
+                                            class="now-playing__settings-btn"
+                                            on:click={() => isSettingsOpen = !isSettingsOpen}
+                                        >
+                                            <SvgIcon icon={Icon.Settings} />                                            
+                                        </button>
                                         {#if description || fullColumn}
                                             <span 
                                                 class="now-playing__description-author"
@@ -220,17 +214,6 @@
                                             >
                                                 {mediaCollection.author}
                                             </span>
-                                        {/if}
-                                        {#if !fullColumn}
-                                            <div 
-                                                class="now-playing__collection-details"
-                                                class:not-visible={isHoverOverArt}
-                                                class:visible={!isHoverOverArt}
-                                            >
-                                                <span class="now-playing__collection-type">
-                                                    {type}
-                                                </span>
-                                            </div>
                                         {/if}
                                         {#if artist}
                                             <span 
@@ -293,6 +276,28 @@
                             {/if}
                         </div>
                     </div>
+
+                    <DropdownList 
+                        id={"now-playing"}
+                        isHidden={!isSettingsOpen} 
+                        options={{
+                            listItems: [{ 
+                                name: "Exit Player",
+                            }],
+                            position: { top: "30px", right: "-20px"},
+                            styling:  { 
+                                width: "160px",
+                                zIndex: 500
+                            },
+                            onListItemClicked: () => {
+                                isSettingsOpen = false
+                                exitMusicPlayer()
+                            },
+                            onClickOutside: () => {
+                                isSettingsOpen = false
+                            }
+                        }}
+                    />
                 {/if}
                 {#if manager && isSignedIn}
                     <!-- User Library Section -->
@@ -592,23 +597,26 @@
         }
 
         /* states */
-        &--signed-out {
+        &--no-collection-signed-out {
             max-width: 800px;
         }
-        &--signed-out &__left-section {
+        &--no-collection-signed-out &__left-section {
             display: none;
         }
-        &--signed-out &__right-section {
+        &--no-collection-signed-out &__right-section {
             width: 100%;
         }
-        &--collection-signed-out .now-playing {
+        &--has-collection-signed-out .now-playing {
             height: 100%;
         }
-        &--collection-signed-out .now-playing .img-bg-gradient {
+        &--has-collection-signed-out .now-playing .img-bg-gradient {
             @include abs-bottom-left;
         }
-        &--collection-signed-out .my-playlists {
+        &--has-collection-signed-out .my-playlists {
             display: none;
+        }
+        &--no-collection-signed-in .my-playlists {
+            height: 100%;
         }
 
         /* light / dark adjustments */
@@ -717,7 +725,7 @@
         &__left-section {
             margin-right: $section-spacing;
             width: 240px;
-            min-height: 250px;
+            position: relative;
         }
         &__right-section {
             width: calc(100% - ($section-spacing + 240px));
@@ -767,6 +775,17 @@
         a {
             width: 90%;
             @include elipses-overflow;
+        }
+        &__settings-btn {
+            opacity: 0.2;
+            @include abs-top-right(-2px, -4px);
+            @include circle(19px);
+            @include center;
+            
+            &:hover {
+                opacity: 0.52;
+                background: rgba(white, 0.14);
+            }
         }
         &__details-container {
             position: relative;
@@ -1418,6 +1437,10 @@
             }
         }
         .music {
+            &--no-collection-signed-out &__left-section,
+            &--has-collection-signed-out &__left-section {
+                height: 250px;
+            }
             &__content {
                 flex-direction: column;
                 height: auto;
@@ -1434,6 +1457,10 @@
         }
         .now-playing, .discover, .my-playlists {
             width: 100%;
+        }
+        .my-playlists {
+            max-height: 400px;
+            overflow: scroll;
         }
         .now-playing {
             &__description-text {

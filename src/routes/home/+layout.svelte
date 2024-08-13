@@ -231,7 +231,7 @@
 
   <div 
     class="yt-music-player"
-    id={YoutubeMusicPlayer.IFRAME_CLASS}
+    id={YoutubeMusicPlayer.IFRAME_ID}
   >
 
   </div>

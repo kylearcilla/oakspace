@@ -1,13 +1,11 @@
 <script lang="ts">
     import { Icon, ModalType } from "$lib/enums"
     import { getThemeFromSection, setNewTheme } from "$lib/utils-appearance"
-	import { themeState, globalContext, musicPlayerStore } from "$lib/store"
+	import { themeState } from "$lib/store"
 	import { openModal } from "$lib/utils-home"
 	import { createEventDispatcher, onMount } from "svelte"
-	import { findAncestor, getElemById, getMaskedGradientStyle } from "$lib/utils-general"
+	import { findAncestor, } from "$lib/utils-general"
 	import { goto } from "$app/navigation"
-	import Dashboard from "./Dashboard.svelte"
-	import { TextEditorManager } from "$lib/inputs"
 	import BounceFade from "../../components/BounceFade.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
 
@@ -135,9 +133,7 @@
             //     }
             // })
 
-            // goto("/home/productivity")
-
-            goto("/home/goals")
+            // goto("/home/goals")
         }
         else if (textTab === "Habits") {
             goto("/home/habits")
@@ -436,23 +432,6 @@
 
             <!-- Utilities -->
  
-        </div>
-
-        <div class="wide-bar__divider"></div>
-        
-        <div class="wide-bar__below-tabs">
-            <!-- Dashboard -->
-            <div 
-                class="wide-bar__dashboard-container"
-                style:height={`calc(100%}px`}
-            >
-                <!-- <Dashboard 
-                    options={{ 
-                        type: isFloating ? "min" : "default",     
-                        view: "habits" 
-                    }}
-                /> -->
-            </div>
         </div>
     </div>
 </div>

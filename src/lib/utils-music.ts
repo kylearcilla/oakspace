@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { musicDataStore, musicPlayerStore, musicSettingsManager } from "./store"
-import { getLogoIconFromEnum } from "./utils-general"
+import { getLogoIconFromEnum, toastApiErrorHandler } from "./utils-general"
 
 import type { MusicPlayer } from "./music-player"
 import {  APIErrorCode, MusicMediaType, MusicPlatform } from "./enums"
@@ -42,24 +42,27 @@ export async function musicLogin() {
     }
 }
 
+export function musicLogOut() {
+    const store = get(musicDataStore)
+    if (!store) return
+
+    try {
+        store.quit()
+        initToast("Logged out successfully!")
+    }
+    catch(error: any) {
+        youtubeAPIErrorHandler(error)
+    }
+}
+
 /**
  * Called when user logs out of music platform.
  */
-export async function musicLogout() {
-    const musicStore  = get(musicDataStore)
-    const playerStore = get(musicPlayerStore)
-    const platform    = MusicPlatform.YoutubeMusic
-
-    try {
-        musicStore!.quit()
-        playerStore?.quit()
-
-        initMusicToast(platform, "Log out success!")
-    }
-    catch(error: any) {
-        musicAPIErrorHandler(error)
-    }
+export async function exitMusicPlayer() {
+    musicLogOut()
+    get(musicPlayerStore)?.quit()
 }
+
 
 /**
  * Called when user wants to log in again after token has expired.
@@ -100,13 +103,7 @@ export async function handlePlaylistItemClicked(collection: MediaCollection, idx
     let player             = get(musicPlayerStore)
     let hasinitMusicPlayer = player != null
     
-    try {
-        player ??= await initMusicPlayer(MusicPlatform.YoutubeMusic, !didInitYtPlayer())
-    }
-    catch(e: any) {
-        musicAPIErrorHandler(e)
-        return
-    }
+    player ??= await initMusicPlayer(MusicPlatform.YoutubeMusic, !didInitYtPlayer())
 
     if (!(await validateYtPlaylist(collection.id))) {
         return
@@ -148,10 +145,10 @@ export async function verifyForPlayerSession(platform: MusicPlatform) {
  * @param context   Music Platform
  * @param message 
  */
-export function initMusicToast(context: MusicPlatform, message: string) {
+export function initMusicToast(platform: MusicPlatform, message: string) {
     toast("default", {
-        logoIcon: getLogoIconFromEnum(context, MusicPlatform),
-        message: MusicPlatform[context],
+        logoIcon: getLogoIconFromEnum(platform, MusicPlatform),
+        message: getPlatformString(platform),
         description: message
     })
 }
@@ -166,64 +163,19 @@ export function initMusicToast(context: MusicPlatform, message: string) {
  * @returns             Toast message to be disaplyed in a Toast component.
  */
 export function musicAPIErrorHandler(error: APIError, musicPlatform?: MusicPlatform) {
-    let toastOptions: ToastInitOptions
-
     const musicData = get(musicDataStore)
     const platform  = musicPlatform === undefined ? musicData?.musicPlatform : musicPlatform
 
     if (!platform) return
 
-
-    const isNotAPIError = error.code === undefined
-    const platformStr   = getPlatformString(platform)
-    const errorMessage  = isNotAPIError ? "" : error.message
-    const hasMsg        = errorMessage != undefined && errorMessage
-
-    if (error.code === APIErrorCode.EXPIRED_TOKEN) {
-        toastOptions = {
-            message: hasMsg ? errorMessage : "Token has expired. Log in again to continue.",
-            action: {
-                label: "Continue session",
-                onClick: () => refreshMusicSession()
-            }
-        }
-    }
-    else if (error.code === APIErrorCode.PLAYER) {
-        toastOptions = {
-            message: hasMsg ? errorMessage : "Player error. Try again later.",
-        }
-    }
-    else if (error.code === APIErrorCode.FAILED_TOKEN_REFRESH) {
-        toastOptions = {
-            message: hasMsg ? errorMessage : "Token refresh failed. Please try again.",
-        }
-    }
-    else if (error.code === APIErrorCode.AUTHORIZATION_ERROR) {
-        toastOptions = {
-            message: hasMsg ? errorMessage : `${platformStr} authorization failed.`,
-        }
-    }
-    else if (error.code === APIErrorCode.RATE_LIMIT_HIT) {
-        toastOptions = {
-            message: "Rate limit exceeded. Try again later.",
-        }
-    }
-    else if (error instanceof TypeError) {
-        toastOptions = {
-            message: hasMsg ? errorMessage : "There was an error. Please try again."
-        }
-    }
-    else {
-        toastOptions = {
-            message: hasMsg ? errorMessage : `There was an error with ${platformStr} Please try again later.` ,
-        }
-    }
-
-    toast("default", {
-        message: platformStr,
-        description: toastOptions.message,
-        logoIcon: getLogoIconFromEnum(platform, MusicPlatform),
-        action: toastOptions.action
+    toastApiErrorHandler({
+         error,
+         title:    getPlatformString(platform),
+         logoIcon: getLogoIconFromEnum(platform, MusicPlatform),
+         action:   error.code === APIErrorCode.EXPIRED_TOKEN ? {
+            label: "Continue session",
+            onClick: () => refreshMusicSession()
+        } : undefined
     })
 }
 

@@ -107,66 +107,68 @@
             </div>
         {/if}
         <!-- Playlist Panel -->
-        <div 
-            class="playlist-panel"
-            class:playlist-panel--small={doMinimizeYtPanel}
-            class:playlist-panel--light={!isDarkTheme}
-            class:playlist-panel--dark={isDarkTheme}
-        >
-            <!-- Content -->
-            <div class="playlist-panel__content-container">
-                <div class="playlist-panel__pl-details-wrapper">
-                    <!-- Current Playlist Details -->
-                    <div class="playlist-panel__pl-details">
-                        <!-- Img -->
-                        <div 
-                            class="playlist-panel__pl-details-img-container"
-                            class:playlist-panel__pl-details-img-container--empty={playlist === null}
-                            title="Toggle miniplayer"
-                        >
-                            <img src={playlist?.thumbnailURL} alt="pl-thumbnial"/>
-                            <button 
-                                class="playlist-panel__miniplayer-btn"
-                                on:click={toggleYoutubePlayerFloat}
-                            >   
-                                <SvgIcon
-                                    icon={Icon.MiniPlayer}
-                                    options={{ 
-                                        height: 15, width: 15, scale: 1, opacity: 1, color: "#FFFFFF"
-                                    }}
-                                />
-                            </button>
-                        </div>
-                        <div class="playlist-panel__pl-details-right-wrapper">
-                            <!-- Header -->
-                            <div class="playlist-panel__pl-details-header">
-                                <div class="playlist-panel__pl-details-header-yt-logo">
-                                    <Logo 
-                                        logo={LogoIcon.Youtube} 
-                                        options={{
-                                            containerWidth: "12px",
-                                            iconWidth: "75%"
+         {#if playlist}
+            <div 
+                class="playlist-panel"
+                class:playlist-panel--small={doMinimizeYtPanel}
+                class:playlist-panel--light={!isDarkTheme}
+                class:playlist-panel--dark={isDarkTheme}
+            >
+                <!-- Content -->
+                <div class="playlist-panel__content-container">
+                    <div class="playlist-panel__pl-details-wrapper">
+                        <!-- Current Playlist Details -->
+                        <div class="playlist-panel__pl-details">
+                            <!-- Img -->
+                            <div 
+                                class="playlist-panel__pl-details-img-container"
+                                class:playlist-panel__pl-details-img-container--empty={playlist === null}
+                                title="Toggle miniplayer"
+                            >
+                                <img src={playlist?.thumbnailURL} alt="pl-thumbnial"/>
+                                <button 
+                                    class="playlist-panel__miniplayer-btn"
+                                    on:click={toggleYoutubePlayerFloat}
+                                >   
+                                    <SvgIcon
+                                        icon={Icon.MiniPlayer}
+                                        options={{ 
+                                            height: 15, width: 15, scale: 1, opacity: 1, color: "#FFFFFF"
                                         }}
                                     />
-                                </div>
-                                <!-- Title -->
-                                <h1 class="playlist-panel__pl-details-title">
-                                    {playlist?.title ?? "No Playlist Chosen"}
-                                </h1>
+                                </button>
                             </div>
-                            <!-- Description -->
-                            <p class="playlist-panel__pl-details-description">
-                                {#if playlist != null}
-                                    {playlist?.description ?? "No Description"}
-                                {:else}
-                                    Pick a playlist to start watching
-                                {/if}
-                            </p>
+                            <div class="playlist-panel__pl-details-right-wrapper">
+                                <!-- Header -->
+                                <div class="playlist-panel__pl-details-header">
+                                    <div class="playlist-panel__pl-details-header-yt-logo">
+                                        <Logo 
+                                            logo={LogoIcon.Youtube} 
+                                            options={{
+                                                containerWidth: "12px",
+                                                iconWidth: "75%"
+                                            }}
+                                        />
+                                    </div>
+                                    <!-- Title -->
+                                    <h1 class="playlist-panel__pl-details-title">
+                                        {playlist?.title ?? "No Playlist Chosen"}
+                                    </h1>
+                                </div>
+                                <!-- Description -->
+                                <p class="playlist-panel__pl-details-description">
+                                    {#if playlist != null}
+                                        {playlist?.description ?? "No Description"}
+                                    {:else}
+                                        Pick a playlist to start watching
+                                    {/if}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+         {/if}
     </div>
 </div> 
 
@@ -174,11 +176,11 @@
     @import "../../scss/dropdown.scss";
     
     .vid-view {
+        @include abs-top-left(20px);
         position: relative;
-        @include abs-top-left(56px);
         width: 100%;
         height: 100%;
-        padding: 0px 25px 20px 25px;
+        padding: 0px 0px 20px 0px;
         z-index: 1;
 
         &--hidden {

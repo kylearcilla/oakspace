@@ -1,69 +1,126 @@
 <script lang="ts">
-	import { TasksViewManager } from "$lib/tasks-view-manager"
-	import { formatDatetoStr, formatTimeToHHMM, getUserHourCycle, isNightTime, prefer12HourFormat } from "$lib/utils-date"
-	import { hideRightBar, setShortcutsFocus, showRightBar } from "$lib/utils-home"
-	import { clickOutside } from "$lib/utils-general"
 	import { onDestroy, onMount } from "svelte"
-    import { globalContext, tasksViewStore, themeState } from "$lib/store"    
-	import { RightSideTab, ShortcutSectionInFocus, Icon } from "$lib/enums"
+    
+	import { clamp, clickOutside } from "$lib/utils-general"
     import { taskGroups } from "$lib/utils-right-bar"
+    import { globalContext, themeState } from "$lib/store"    
+	import { RightSideTab, ShortcutSectionInFocus, Icon, ModalType } from "$lib/enums"
+	import { closeModal, openModal, setShortcutsFocus } from "$lib/utils-home"
+	import { formatDatetoStr, formatTimeToHHMM, isNightTime, prefer12HourFormat } from "$lib/utils-date"
+
 	import Tasks from "./Tasks.svelte"
+	import Overview from "./Overview.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
-	import Dashboard from "./Dashboard.svelte"
-	import SideBarCalendar from "./SideBarCalendar.svelte";
+	import DropdownList from "../../components/DropdownList.svelte";
+	import ImgUpload from "../../components/ImgUpload.svelte";
+	import { TasksViewManager } from "$lib/tasks-view-manager";
 
-    let currentTimeStr = ""
-    let isDayTime = true
-    let doUse12HourFormat = prefer12HourFormat()
-    let interval: NodeJS.Timer | null = null
+    const SETTINGS_BTN_CUT_OFF_Y = 30
+
     let selectedTab: RightSideTab = RightSideTab.OVERVIEW
+    let headerRef: HTMLElement
+    
+    /* time */
+    let isDayTime = true
+    let currentTimeStr = ""
+    let interval: NodeJS.Timer | null = null
+    let doUse12HourFormat = prefer12HourFormat()
+    
+    /* header image */
+    let opacity = 0.5
+    let settingsOpen = false
+    let bgImgSrc = "https://i.pinimg.com/originals/9b/a2/8f/9ba28fe01fc1a24b757bf972a40a7339.gif"
+    let showSettingsBtn = false
 
-    let rightBarOpen = true
-    let initDragXPos = -1
+    let topOffset = 0
+    let ogTopOffset = 0
+    let initDragY = 0
+    let isDragging = false
+    let bgImgRef: HTMLImageElement
+    let DRAG_OFFSET_THRESHOLD = 5
 
-    $: {
-        rightBarOpen = $globalContext.rightBarOpen
+    $: isLightTheme = !$themeState.isDarkTheme
+    $: if (bgImgSrc && bgImgRef) {
+        requestAnimationFrame(() => {
+            const MAX = getMaxHeaderImgOffset()
+            topOffset = -(MAX / 2)
+        })
+    }
+
+    /* Header Image */
+    function onPointerDown(pe: PointerEvent) {
+        if (!bgImgSrc) return
+
+        const target = pe.target as HTMLElement
+        const { clientY } = pe
+        initDragY = clientY
+
+        target.addEventListener("pointermove", onDrag)
+        target.addEventListener("pointerup", onPointerUp)
+    }
+    function onDrag(pe: PointerEvent) {
+        const { clientY } = pe
+        const offset = initDragY - clientY
+        const target = pe.target as HTMLElement
+        const MAX    = getMaxHeaderImgOffset()
+
+        if (Math.abs(offset) >= DRAG_OFFSET_THRESHOLD && !isDragging) {
+            target.setPointerCapture(pe.pointerId)
+            ogTopOffset = topOffset
+            isDragging = true
+        }
+        if (isDragging) {
+            topOffset = clamp(-MAX, (ogTopOffset + -offset), 0)
+        }
+    }
+    function onPointerUp(pe: PointerEvent) {
+        const target = pe.target as HTMLElement
+
+        ogTopOffset = 0
+        initDragY = -1
+        isDragging = false
+
+        target.removeEventListener("pointermove", onDrag)
+        target.removeEventListener("pointerup", onPointerUp)
+    }
+    function getMaxHeaderImgOffset() {
+        return (bgImgRef.clientHeight - headerRef.clientHeight) - 20
     }
 
     /* General UI Handlers */
     function handleTabClicked(newTab: RightSideTab) {
         if (newTab === RightSideTab.TASKS) {
-            $tasksViewStore!.hasTabBarClicked()
+            
         }
         selectedTab = newTab
     }
-    function onResizerClicked(event: Event) {
-        const pe = event as PointerEvent
+    function imgSettingsHandler(context: DropdownItemClickedContext) {
+        const target   = context.event.target as HTMLElement
+        const optnText = target.innerText.trim()
 
-        window.addEventListener("mousemove", onResizerDrag)
-        window.addEventListener("mouseup", onResizerEndDrag)
-
-        initDragXPos = pe.clientX
-    }
-    function onResizerDrag(event: Event) {
-        const pe = event as MouseEvent
-        const newDragXOffSet = pe.clientX
-        const xOffset = (initDragXPos - newDragXOffSet) * -1
-
-        pe.preventDefault()
-
-        if (xOffset > 0 && rightBarOpen) {
-            hideRightBar()
-            removeDragEventListener()
+        if (optnText === "Replace Background") {
+            openModal(ModalType.ImgUpload)
         }
-        else if (xOffset < 0 && !rightBarOpen) {
-            showRightBar()
-            removeDragEventListener()
+        else if (optnText === "Add Header Background") {
+            openModal(ModalType.ImgUpload)
         }
-    }
-    function onResizerEndDrag() {
-        removeDragEventListener()
-    }
-    function removeDragEventListener() {
-        initDragXPos = -1
+        else {
+            bgImgSrc = ""
+        }
 
-        window.removeEventListener("mousemove", onResizerDrag)
-        window.removeEventListener("mouseup", onResizerEndDrag)
+        settingsOpen = false
+    }
+    function onPointerMove(pe: PointerEvent) {
+        if (!headerRef || isDragging) return
+        const { clientY, clientX } = pe
+        const SETTINGS_BTN_CUT_OFF_X = headerRef.getBoundingClientRect().left
+
+        if (clientX >= SETTINGS_BTN_CUT_OFF_X && clientY <= SETTINGS_BTN_CUT_OFF_Y) {
+            showSettingsBtn = true
+        }
+        else {
+            showSettingsBtn = false
+        }
     }
 
     /* Time Stuff*/
@@ -90,66 +147,157 @@
     })
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
 <div 
-    class={`task-view ${$themeState.isDarkTheme ? "task-view--dark-theme" : "task-view--light-theme"}`}
-    on:click={() => setShortcutsFocus(ShortcutSectionInFocus.TASK_BAR)}
+    class="bar"
+    class:bar--dark-theme={!isLightTheme}
+    class:bar--light-theme={isLightTheme}
+    class:bar--empty={!bgImgSrc}
+    on:pointermove={onPointerMove}
+    on:mousedown={() => setShortcutsFocus(ShortcutSectionInFocus.TASK_BAR)}
     use:clickOutside on:click_outside={() => setShortcutsFocus(ShortcutSectionInFocus.MAIN)}
 >
     <div 
-        class="task-view__header"
-        style={`background-image: linear-gradient(0deg, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(https://i.pinimg.com/originals/9b/a2/8f/9ba28fe01fc1a24b757bf972a40a7339.gif)`}
+        class="bar__header"
+        style:cursor={isDragging ? "ns-resize" : "default"}
+        bind:this={headerRef}
+        on:pointerdown={onPointerDown}
     > 
-        <div class="task-view__header-img">
-            <img src="https://i.pinimg.com/564x/08/a0/7a/08a07aa5639369bc7e80ff11ee4722a3.jpg" alt="">
+        <div class="bar__header-img-wrapper">
+            <div class="bar__header-img-container">
+                <img
+                    bind:this={bgImgRef}
+                    class="bar__header-img"
+                    style:top={`${topOffset}px`}
+                    style:left={`${0}px`}
+                    src={bgImgSrc} 
+                    alt=""
+                >
+            </div>
+        </div>
+        <div class="bar__header-overlay" style:background={`rgba(0, 0, 0, ${opacity}`}>
         </div>
         <!-- Header -->
-        <div class="task-view__header-time-date">
-            <div class="task-view__header-date">
+        <div class="bar__header-time-date">
+            <div class="bar__header-date">
                 {`${formatDatetoStr(new Date(), { weekday: "short", day: "2-digit", month: "short" })}`}
+                {#if !bgImgSrc}
+                    <button 
+                        class="bar__header-date-time"
+                        on:click={toggleTimeFormatting}
+                    >
+                        {currentTimeStr}
+                    </button>
+                    <div class="bar__header-day-icon bar__header-day-icon--top">
+                        {#if isDayTime}
+                            <SvgIcon icon={Icon.ColorSun} options={{ scale: 0.65 }} />
+                        {:else}
+                            <SvgIcon icon={Icon.ColorMoon} />
+                        {/if}
+                    </div>
+                {/if}
             </div>
-            <div class="task-view__header-time-container">
-                <button class="task-view__header-time" title={currentTimeStr} on:click={toggleTimeFormatting}>
+            <button 
+                class="bar__header-time-container"
+                on:click={toggleTimeFormatting}
+            >
+                <div class="bar__header-time">
                     <h1>{currentTimeStr}</h1>
-                </button>
-                <div class="task-view__header-day-icon">
+                </div>
+                <div class="bar__header-day-icon">
                     {#if isDayTime}
                         <SvgIcon icon={Icon.ColorSun} />
                     {:else}
                         <SvgIcon icon={Icon.ColorMoon} />
                     {/if}
                 </div>
+            </button>
+        </div>
+        <div 
+            class="bar__header-blur-layer"
+        >
+            <div 
+                class="blur-bg blur-bg--blurred-bg"
+                style:background={`rgba(0, 0, 0, ${0.1})`}
+            >
             </div>
         </div>
-        <div class="task-view__header-blur-layer">
-            <div class="blur-bg blur-bg--blurred-bg"></div>
-        </div>
     </div>
-    <div class="task-view__tab-btns">
+    <div class="bar__tab-btns">
         <button 
             on:click={() => handleTabClicked(RightSideTab.OVERVIEW)}
-            class={`tab-btn ${$themeState.isDarkTheme ? "tab-btn--txt-only" : ""} ${selectedTab === RightSideTab.OVERVIEW ? (!$themeState.isDarkTheme ? "tab-btn--selected" : "tab-btn--txt-only-selected") : ""}`}
+            class="bar__tab-btn"
+            class:bar__tab-btn--active={selectedTab === RightSideTab.OVERVIEW}
         >
             Overview
         </button>
         <button 
             on:click={() => handleTabClicked(RightSideTab.TASKS)}
-            class={`tab-btn ${$themeState.isDarkTheme ? "tab-btn--txt-only" : ""} ${selectedTab === RightSideTab.TASKS ? (!$themeState.isDarkTheme ? "tab-btn--selected" : "tab-btn--txt-only-selected") : ""}`}
+            class="bar__tab-btn"
+            class:bar__tab-btn--active={selectedTab === RightSideTab.TASKS}
         >
             Tasks            
         </button>
     </div>
-    <div class="task-view__main-content">
+    <div class="bar__main-content">
         {#if selectedTab === RightSideTab.TASKS}
-            <!-- Tasks Section -->
             <Tasks />
         {:else if selectedTab === RightSideTab.OVERVIEW}
-            <div class="task-view__calendar-container">
-                <SideBarCalendar/>
-            </div>
+            <Overview/>
         {/if}
     </div>
-    <div class="task-view__resize-handle" on:mousedown={onResizerClicked}></div>
+
+    <!-- Header Img Stuff -->
+    <button 
+        class="bar__settings-btn" 
+        id="right-bar--dropdown-btn"
+        class:bar__settings-btn--show={showSettingsBtn}
+        on:click={() => {
+            settingsOpen = !settingsOpen
+        }}
+    >
+        <SvgIcon 
+            icon={Icon.Settings} options={{ opacity: 0.4, scale: 0.9 }} 
+        />
+    </button>
+
+    <DropdownList 
+        id={"right-bar"}
+        isHidden={!settingsOpen} 
+        options={{
+            listItems: !bgImgSrc ? 
+                [{ name: "Add Header Background"}] : 
+                [{ name: "Replace Background" }, { name: "Remove" }],
+            position: { 
+                top: "28px", right: "10px"
+            },
+            styling:  {
+                width: bgImgSrc ? "150px" : "170px",
+                fontSize: "1.2rem",
+                zIndex: 500
+            },
+            onListItemClicked: (context) => {
+                imgSettingsHandler(context)
+            },
+            onClickOutside: () => {
+                settingsOpen = false
+            }
+        }}
+    />
+
+    {#if $globalContext.modalsOpen.includes(ModalType.ImgUpload)} 
+        <ImgUpload
+            title="Header Background"
+            constraints={{ 
+                maxMbSize: 5
+            }}
+            onSubmit={(img) => {
+                if (bgImgSrc != img) {
+                    bgImgSrc = img
+                    closeModal(ModalType.ImgUpload)
+                }
+            }}
+        />
+    {/if}
 </div>
 
 <style lang="scss">
@@ -161,7 +309,7 @@
     $color-a: rgba(var(--textColor1), 0.15);
     $todo-minimized-height: 40px;
 
-    .task-view {
+    .bar {
         width: 100%;
         height: 100vh;
         position: relative;
@@ -218,55 +366,111 @@
         &--light-theme &__main-content {
             height: calc(100% - 130.5px);
         }
-        &--light-theme &__context-menu {
-            &-command {
-                @include txt-color(0.6);
-            }
+
+        /* no bg image */
+        &--empty &__header-time,
+        &--empty &__header-day-icon,
+        &--empty &__header-img-wrapper,
+        &--empty &__header-blur-layer,
+        &--empty &__header-overlay {
+            display: none;
+        }
+        &--empty &__header-day-icon--top {
+            display: none;
+        }
+        &--empty &__header {
+            height: 58px;
+        }
+        &--empty &__header-date {
+            @include flex(center);
+        }
+        &--empty &__header-time-date {
+            opacity: 0.8;
+        }
+        &--empty &__tab-btns {
+            top: 34px;
+            margin-left: -5px;
+        }
+        &--empty &__tab-btn {
+            padding: 4px 10px 5px 10px;
+            font-size: 1.3rem;
+            margin-right: 0px;
+        }
+        &--empty &__tab-btn--active {
+            background-color: rgba((var(--textColor1)), 0.035);
+            border: 1px solid rgba((var(--textColor1)), 0.02);
+        }
+        &--empty &__main-content {
+            height: calc(100% - 58px);   
         }
         
+        /* Top Header */
         &__header {
             width: 100%;
-            margin: 0px 0px 15px 0px;
-            background-size: cover; 
-            background-position: center; 
-            background-repeat: no-repeat;
-            background-color: rgba(black, 0.15);
-            height: 74px;
+            margin: 0px 0px 13px 0px;
+            height: 72px;
             position: relative;
 
+            &-img-wrapper {
+                height: 100%;
+                width: 100%;
+                background-size: cover; 
+                background-position: center; 
+                background-repeat: no-repeat;
+                position: absolute;
+                @include abs-top-left;
+            }
+            &-img-container {
+                height: 100%;
+                width: 100%;
+                position: relative;
+                overflow: hidden;
+            }
             &-img {
                 width: 100%;
-                margin-bottom: 0px;
-                height: 50px;
-                display: none;
-
-                img {
-                    height: 100%;
-                    width: 100%;
-                    object-fit: cover;
-                }
+                position: absolute;
+            }
+            &-overlay {
+                height: 100%;
+                width: 100%;
+                @include abs-top-left;
             }
             &-time-date {
-                @include abs-top-left(12px, 14px);
+                @include abs-top-left(11px, 14px);
                 z-index: 1;
             }
+            &-date {
+                @include text-style(0.5, 400, 1.1rem, "DM Sans");
+                margin-bottom: 3px;
+            }
+            &-date-time {
+                @include text-style(0.6, 400, 1.1rem, "DM Sans");
+                margin-left: 10px;
+                opacity: 0.4;
+            }
             &-time h1 {
-                @include text-style(1, 400, 1.8rem, "DM Sans");
-                margin-right: 11px;
+                @include text-style(1, 400, 1.7rem, "DM Sans");
+                margin-right: 7px;
                 white-space: nowrap;
             }
             &-time-container {
+                position: relative;
                 display: flex;
+                cursor: default;
             }
             &-day-icon {
-                overflow: visible;
                 height: 20px;
                 width: 20px;
+                overflow: visible;
                 position: relative;
+                @include center;
             }
-            &-date {
-                @include text-style(0.5, 300, 1.1rem, "DM Sans");
-                margin-bottom: 3px;
+            &-day-icon--top {
+                margin: 0px 0px 1.5px 3px;
+                height: 10px;
+            }
+            &-day-icon .svg-icon {
+                @include abs-center;
             }
             &-text {
                 margin-top: 3px;
@@ -276,67 +480,75 @@
             }
         }
         &__header-blur-layer {
-            @include abs-top-left(0px);
+            @include abs-top-left(0px, -2px);
             z-index: 0;
-            width: 100%;
+            width: calc(100% + 2px);
             height: 130px;
         }
         &__header-blur-layer .blur-bg {
             position: relative;
             border-radius: 0px;
-            @include blur-bg(20px, rgba(0, 0, 0, 0.1));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+
             -webkit-mask-image: linear-gradient(
                     180deg, 
-                    transparent 0%, rgba(0, 0, 0, 0.45) 9px, 
-                    rgba(0, 0, 0, 0.64) 25px, black 75px, 
-                    black 85%, transparent 100%
+                    transparent 0%, 
+                    rgba(0, 0, 0, 0.45) 9px, 
+                    rgba(0, 0, 0, 0.64) 25px, 
+                    rgba(0, 0, 0, 1) 75px, 
+                    rgba(0, 0, 0, 1) 85%, 
+                    transparent 100%
             );
             mask-image: linear-gradient(
                     180deg, 
-                    transparent 0%, rgba(0, 0, 0, 0.45) 9px, 
-                    rgba(0, 0, 0, 0.64) 25px, black 75px, 
-                    black 85%, transparent 100%
+                    transparent 0%, 
+                    rgba(0, 0, 0, 0.45) 9px, 
+                    rgba(0, 0, 0, 0.64) 25px, 
+                    rgba(0, 0, 0, 1) 75px, 
+                    rgba(0, 0, 0, 1) 85%, 
+                    transparent 100%
             );
         }
-        &__resize-handle {
-            @include abs-top-left();
-            width: 5px;
-            height: 100%;
-            cursor: ew-resize;
+        &__settings-btn {
+            @include circle(20px);
+            @include center;
+            @include abs-top-right;
+            @include not-visible;
+            margin: 6px 6px 0px 0px;
+            
+            &--show {
+                @include visible(0.5);
+            }
+            &:hover {
+                background-color: rgba(var(--textColor1), 0.08);
+                @include visible(1);
+            }
         }
         &__tab-btns {
             @include flex(center);
-            @include abs-top-left(62px, $side-padding - 3px);
+            @include abs-top-left(55px, $side-padding - 3px);
             z-index: 2;
         }
+        &__tab-btn {
+            @include text-style(0.9, 500, 1.4rem);
+            opacity: 0.3;
+            background: transparent;
+            border-radius: 11px;
+            border: 1px solid transparent;
+            margin-right: 10px;
+
+            &:hover {
+                opacity: 0.6;
+            }
+            &--active {
+                opacity: 1 !important;
+            }
+        }
+
+        /* Calendar */
         &__main-content {
-            height: calc(100% - 40px);
-            width: 100%;
-            position: relative;
-            z-index: 100;
-        }
-        &__calendar-container {
-            padding: 0px 6px;
-            height: calc(100% - 70px);
-        }
-        &__context-menu {
-            position: absolute;
-
-            &-command span {
-                margin-right: 2px;
-                width: 9px;
-            }
-            &-command {
-                width: 25px;
-                @include flex(center, center);
-                font-weight: 200;
-                @include txt-color(0.3);
-                font-size: 0.9rem;
-
-                &--plus {
-                    font-size: 1.3rem;
-                }
-            }
+            height: calc(100% - 72px);
         }
     }
 </style>

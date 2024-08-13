@@ -9,8 +9,8 @@
     export let isActive = false
     
     $: isDarkTheme = $themeState.isDarkTheme
-    $: pickedOptionName = options.pickedOptionName
-    $: isEmpty = !pickedOptionName
+    $: title = options.pickedOptionName
+    $: isEmpty = !title
 
     $: doShowArrow = hasArrow && (!allowEmpty || ((allowEmpty && !isActive) || (allowEmpty && isEmpty)))
     
@@ -59,7 +59,7 @@
         style:font-size={options?.styles?.fontSize}
         style:font-family={options?.styles?.fontFamily ?? "Manrope"}
     >
-        {pickedOptionName ?? "None"}
+        {title ?? "None"}
     </span>
     {#if doShowArrow && !arrowLeft}
         <div 

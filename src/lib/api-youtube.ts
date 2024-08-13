@@ -1,11 +1,9 @@
-import auth from  "./firebase"
-import firebase from "firebase/compat/app"
-
-import { APIErrorCode, ErrorCode, YTAPIErrorContext } from "./enums"
+import { APIErrorCode } from "./enums"
 import { shorterNum } from "./utils-general"
 import { getAuth, signOut } from "firebase/auth"
 import { PUBLIC_YT_DATA_V3_API_KEY } from '$env/static/public'
-import { APIError, ApiError, AuthorizationError, CustomError, ExpiredTokenError, PlayerError, ResourceNotFoundError } from "./errors"
+import { APIError } from "./errors"
+import { authGoogleUser } from "./api-google"
 
 const YT_DATA_API_URL = "https://youtube.googleapis.com/youtube/v3"
 
@@ -17,23 +15,18 @@ const YT_DATA_API_URL = "https://youtube.googleapis.com/youtube/v3"
  * @returns  User profile data & credentials (no refresh token provided)
  * 
  */
-export const authYoutubeClient = async (): Promise<YTOAuthResponse> => {
+export const authYoutubeClient = async (): Promise<GoogleAuthResponse> => {
   try {
-    const provider = new firebase.auth.GoogleAuthProvider()
-    provider.addScope("https://www.googleapis.com/auth/youtube.readonly")
-    const popUpResponse = await auth.signInWithPopup(provider) as any
-    const credential = popUpResponse.credential
-
-      const authYoutubeClientResponse = {
-        accessToken: credential.accessToken,
-        email: popUpResponse.additionalUserInfo.profile.email,
-        username: popUpResponse.additionalUserInfo.profile.name,
-        profileImgSrc: popUpResponse.additionalUserInfo.profile.picture,
+    const res = await authGoogleUser(["youtube.readonly"])
+    
+      return {
+        accessToken:   res.credential.accessToken,
+        email:         res.additionalUserInfo.profile.email,
+        username:      res.additionalUserInfo.profile.name,
+        profileImgSrc: res.additionalUserInfo.profile.picture,
       }
-
-      return authYoutubeClientResponse
-
-  } catch (error: any) {
+  } 
+  catch (error: any) {
       console.error(error)
       throw throwFireBaseAPIError(error)
   }
@@ -54,18 +47,14 @@ export const logOutUser = async () => {
 
 /**
  * Requests new fresh token. Calls the same Firebase method when logging in.
- * Does not actually get a new token from a refresh token (unavailable with firebase)
+ * NOTE: Does not actually get a new token from a refresh token (unavailable with firebase)
  * 
  * @returns Fresh new token from auth response.
  */
 export const getFreshToken = async (): Promise<string> => {
   try {
-      const provider = new firebase.auth.GoogleAuthProvider()
-      provider.addScope("https://www.googleapis.com/auth/youtube.readonly")
-      const popUpResponse = await auth.signInWithPopup(provider) as any
-      const credential = popUpResponse.credential
-
-      return credential.accessToken
+      const res = await authYoutubeClient()
+      return res.accessToken
   } 
   catch (error: any) {
     console.error(error)
@@ -83,8 +72,6 @@ export const getFreshToken = async (): Promise<string> => {
  */
 export const getUserYtPlaylists = async (accessToken: string, max: number, nextPageToken: string = ""): Promise<YoutubeUserPlaylistResponse> => {
   const url = `${YT_DATA_API_URL}/playlists?part=snippet%2CcontentDetails&maxResults=${max}&mine=true&key=${PUBLIC_YT_DATA_V3_API_KEY}&pageToken=${nextPageToken}`
-
-  console.log({ accessToken })
   
   const headers = new Headers()
   headers.append("Content-Type", "application/json")
@@ -316,13 +303,12 @@ export const getChannelDetails = async (channelId: string): Promise<YoutubeChann
 
 /**
  * Get the right error object to throw after a failed request.
- * Codes / error messages are based on Youtube Data v3 API.
+ * Codes / error messages are based on Youtube Data v3 API docs.
  * 
- * Based on Core API Errors from Docs
  * https://developers.google.com/youtube/v3/docs/errors 
  * 
  * @param   code     HTTP Status error code returned from Youtube Data API
- * @param   context  In what API context is the error origination from
+ * @param   context  In what API context is the error originating from
  * @returns          Error type and context will be relevant in how the error will be displayed to the user.
  */
 const throwYoutubeDataAPIError = (context: {
@@ -332,17 +318,11 @@ const throwYoutubeDataAPIError = (context: {
 }) => {
     const { status, location, message } = context
 
-    if (status === 401) {
-        throw new APIError(APIErrorCode.AUTHORIZATION_ERROR, "Invalid Credentials.")
-    }
-    else if (status === 404 && location === "channelId") {
+    if (status === 404 && location === "channelId") {
         throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Your Google account is not associated with any YouTube account.")
     }
     else if (status === 404) {
         throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Requested media unavailable.")
-    }
-    else if (status === 429) {
-        throw new APIError(APIErrorCode.RATE_LIMIT_HIT)
     }
     else {
         throw new APIError(APIErrorCode.GENERAL, "There was an error with Youtube. Please try again later.")
@@ -355,7 +335,7 @@ const throwYoutubeDataAPIError = (context: {
  * 
  * @param error 
  */
-function throwFireBaseAPIError(error: any) {
+export function throwFireBaseAPIError(error: any) {
     const errorStr = error.toString()
     const matches = errorStr.match(/\(([^)]+)\)/)
     const contextCode = matches[1]

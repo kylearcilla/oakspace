@@ -27,7 +27,7 @@ export const initAppState = async () => {
         youtubeLogin()
     }
     if (didInitYtPlayer()) {
-        await initYoutubePlayer(true)
+        await initYoutubePlayer()
     }
     if (didInitMusicPlayer()) {
         await initMusicPlayer(MusicPlatform.YoutubeMusic, !didInitYtPlayer())

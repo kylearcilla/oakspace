@@ -9,7 +9,7 @@ import { youtubeAPIErrorHandler } from "./utils-youtube"
 /**
  * Used for managing a youtube player, leveraging the YouTube iFrame API
  * Is itself a store / reactive class (initialized in instantiation).
- * Offers methods to control player. Used to play playlists only.
+ * Used to play playlists only.
  */
 export class YoutubePlayer {
     player: any
@@ -21,17 +21,18 @@ export class YoutubePlayer {
     
     iFramePlaylistId = ""
     iFrameVidId      = ""
-
+    
     floatLayout      = { width: -1, height: -1, left: -1, top: -1 }
     doShowPlayer     = true
     hasActiveSession = false
+    isFetchingVid    = false
     justLoaded       = false
     isReady          = false
     
     error: any = null
     state      = -1
         
-    IFRAME_CLASS    = "yt-player"
+    static IFRAME_ID    = "yt-player"
     LOOK_BACK_DELAY = 1200
     READY_DELAY     = 2000
     lookBackTimeOut: NodeJS.Timeout | null = null
@@ -62,10 +63,10 @@ export class YoutubePlayer {
      * Initialize Youtube iFrame Player API.
      * Must initialize after refreshes.
      */
-    async initYtPlayer(initApi: boolean) {
+    async initYtPlayer() {
         try {
-            await this.initIframePlayerAPI(initApi)
-            this.updateYtPlayerState({ doShowPlayer: true }) 
+            await this.initIframePlayerAPI()
+            this.updateState({ doShowPlayer: true }) 
             
             this.hasActiveSession = true
         }
@@ -82,10 +83,11 @@ export class YoutubePlayer {
     /**
      * Initialize iFrame Player API asynchrnously
      */
-    initIframePlayerAPI = async (initApi: boolean) => {
+    initIframePlayerAPI = async () => {
         this.initEventHandlers()
 
-        if (initApi) {
+        // @ts-ignore
+        if (!window.YT) {
             setYoutubeScript()
             await this.initPlayerOnAPIReady()
         }
@@ -106,14 +108,14 @@ export class YoutubePlayer {
 
     initPlayerInstance() {
         // @ts-ignore
-        this.player = new YT.Player(this.IFRAME_CLASS, this.PLAYER_OPTIONS)
+        this.player = new YT.Player(YoutubePlayer.IFRAME_ID, this.PLAYER_OPTIONS)
     }
 
     /**
      * Update data store for Youtube Player.
      * @param newData  Incorporate new data from here.
      */
-    updateYtPlayerState(newData: Partial<YoutubePlayer>) {
+    updateState(newData: Partial<YoutubePlayer>) {
         ytPlayerStore.update((data) => (this.getNewStateObj(newData, data!)))
         this.saveStateData()
     }
@@ -172,9 +174,8 @@ export class YoutubePlayer {
         this.iFramePlaylistId = event.target.getPlaylistId()
 
         // update media data
-        const doNotUpdateItem = state < 0 || state === 5 || vidDetails.id === this.vid?.id
+        const doNotUpdateItem = state === 3 || state === 5 || vidDetails.id === this.vid?.id
         if (doNotUpdateItem) return
-
 
         // video
         const playlistVidIdx = player.getPlaylistIndex()
@@ -193,7 +194,7 @@ export class YoutubePlayer {
 
         // will be empty on -1, 5 states
         // note playlist will always be > 1, validate after collection choice
-        if (playlist.length === 0) return null
+        if (playlist.length === 0 || this.isFetchingVid) return null
         
         const idx       = player.getPlaylistIndex()
         const currVidId = playlist[idx]
@@ -201,8 +202,10 @@ export class YoutubePlayer {
         // if already validated the same id, do not check again
         if (currVidId === this.iFrameVidId) return null
 
+        this.isFetchingVid = true
         const vidDetails = await getVidDetails(currVidId)
 
+        this.isFetchingVid = false
         this.iFrameVidId = currVidId
 
         if (!vidDetails) {
@@ -287,35 +290,19 @@ export class YoutubePlayer {
         if (this.state === 3 )    return   // if a prev loaded vid was buffering do not cue a new playlist
 
         try {
+            this.playlistClicked = playlist
+            this.updateState({ playlist })
+
+            if (!this.player.stopVideo) {
+                window.location.reload()
+                return
+            }
+
             this.player.stopVideo()
             this.player!.loadPlaylist({ list: playlist.id, listType: "playlist", index: startingIdx })
-    
-            // allow state change handler to set playlist to disallow player from setting an invalid playlist
-            this.playlistClicked = playlist
-
-            // if an invalid playlist is selected when iframe has just loaded with a vid queued (after a refresh)
-            // there won't be an iframe state update so do the check here
-            await new Promise<void>((resolve, reject) => {
-                setTimeout(() => {
-                    const inactive = [-1, 5].includes(this.state)
-
-                    if (inactive && this.justLoaded) {
-                        reject(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Playlist couldn't be played due to privacy or embed playback restrictions."))
-                    } 
-                    else {
-                        resolve()
-                    }
-                }, 200)
-            })
         }
         catch(e: any) {
-            console.error(e)
-            if (e.code === APIErrorCode.PLAYER_MEDIA_INVALID) {
-                this.onError(e)
-            }
-            else {
-                this.onError(new APIError(APIErrorCode.PLAYER))
-            }
+            this.onError(e)
         }
     }
 
@@ -326,7 +313,7 @@ export class YoutubePlayer {
     updateVideo(vid: YoutubeVideo, playlistVidIdx: number) {
         this.vid = vid
         this.playlistVidIdx = playlistVidIdx
-        this.updateYtPlayerState({ vid, playlistVidIdx })
+        this.updateState({ vid, playlistVidIdx })
     }
 
     /**
@@ -336,7 +323,7 @@ export class YoutubePlayer {
     updateCurrentPlaylist(playlist: YoutubePlaylist) {
         this.playlist = playlist
 
-        this.updateYtPlayerState({ 
+        this.updateState({ 
             playlist,
             playlistVidIdx: 0
         })
@@ -355,7 +342,9 @@ export class YoutubePlayer {
         this.vid = null
         this.playlistVidIdx = null
 
-        this.updateYtPlayerState({ playlist: null, vid: null, playlistVidIdx: null })
+        this.updateState({ 
+            playlist: null, vid: null, playlistVidIdx: null
+        })
     }
 
     /**
@@ -364,6 +353,7 @@ export class YoutubePlayer {
      */
     onError(error: any) {
         if (this.error) return
+        console.error(error)
 
         const isAPINotLoadedYetMsg = /^this\.player\.\w+\s*is not a function$/.test(error.message)
 
@@ -377,7 +367,7 @@ export class YoutubePlayer {
             this.error = new APIError(APIErrorCode.PLAYER)
         }
 
-        this.updateYtPlayerState({ error: this.error })
+        this.updateState({ error: this.error })
         youtubeAPIErrorHandler(this.error)
     }
 
@@ -386,22 +376,18 @@ export class YoutubePlayer {
      */
     quit() {
         ytPlayerStore.set(null)
-        this.clearYoutubeUserData()
-
+        this.clearYoutubePlayerData()
         this.player.stopVideo()
-
-        // @ts-ignore
-        window.onYouTubeIframeAPIReady = null
     }
 
     removeError() {
         this.error = null
-        this.updateYtPlayerState({ error: null })
+        this.updateState({ error: null })
     }
 
     updateFloatPosition(floatLayout: BoxLayout) {
         this.floatLayout = structuredClone(floatLayout)
-        this.updateYtPlayerState({ floatLayout: this.floatLayout })
+        this.updateState({ floatLayout: this.floatLayout })
     }
 
     /**
@@ -412,7 +398,7 @@ export class YoutubePlayer {
     toggledShowPlayer() {
         this.doShowPlayer = !this.doShowPlayer
         this.player.stopVideo()
-        this.updateYtPlayerState({ doShowPlayer: this.doShowPlayer })
+        this.updateState({ doShowPlayer: this.doShowPlayer })
     }
 
     clearLookBackTimeout() {
@@ -451,7 +437,7 @@ export class YoutubePlayer {
         if (!savedData) return
 
         this.hasActiveSession = true
-        this.updateYtPlayerState({ ...savedData })
+        this.updateState({ ...savedData })
     }
 
     saveStateData() {
@@ -468,7 +454,7 @@ export class YoutubePlayer {
     /**
      * Clear youtube user and creds data from local storage. 
      */
-    clearYoutubeUserData() {
+    clearYoutubePlayerData() {
         deleteYtPlayerData()
     }
 }

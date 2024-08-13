@@ -3,20 +3,30 @@
 
 	import { onMount } from "svelte"
 	import { themeState } from "$lib/store"
-	import type { Calendar } from "$lib/calendar"
-	import { DateBoundState, Icon } from "$lib/enums"
+	import { Icon } from "$lib/enums"
 	import { isSameDay, months } from "$lib/utils-date"
 	import { ProductivityCalendar } from "$lib/productivity-calendar"
 
     enum CalendarType {
         Basic, Productivity
     }
-
-    export let calendar: Calendar
-    export let onDateCellPressed: any
+    export let isDisabled = false
+    export let calendar: ProductivityCalendar
+    export let focusDate: Date | null = new Date()
+    export let onDayUpdate: (date: Date) => void
 
     let type: CalendarType | null = null
+    $: store = calendar._store
 
+    $: if ($store.pickedDate != focusDate && focusDate && !isDisabled) {
+        $store.setNewPickedDate(focusDate)
+    }
+
+    function _onDayUpdate(day: Date) {
+        if (isDisabled) return
+        
+        onDayUpdate(day)
+    }
     function initDayClasses(day: any) {
         if (type === CalendarType.Basic) return
         
@@ -47,7 +57,6 @@
             return "Completed a Session."
         }
     }
-
     onMount(() => {
         if (calendar instanceof ProductivityCalendar) {
             type = CalendarType.Productivity
@@ -64,29 +73,30 @@
         <div class="calendar__focus-header">
             <div class="calendar__month-title">
                 <strong>
-                    {months[calendar.currMonth.monthIdx].substring(0, 3)}
+                    {months[$store.currMonth.monthIdx].substring(0, 3)}
                 </strong> 
-                {calendar.currMonth.year}
+                {$store.currMonth.year}
             </div>
             <div class="calendar__btns-container">
                 <button 
                     class="calendar__next-prev-btn"
-                    on:click={() => calendar.getPrevMonthCalendar()}
-                    disabled={!calendar.isPrevMonthAvailable}
+                    on:click={() => $store.getPrevMonthCalendar()}
+                    disabled={!$store.isPrevMonthAvailable}
                 >
                     <SVGIcon icon={Icon.ChevronLeft}/>
                 </button>
                 <button
+                    disabled={isDisabled}
                     title="Go to current month."
                     class="calendar__today-btn"
-                    on:click={() => calendar.getThisMonth()}
+                    on:click={() => $store.getThisMonth()}
                 >
                     •
                 </button>
                 <button 
                     class="calendar__next-prev-btn"
-                    on:click={() => calendar.getNextMonthCalendar()}
-                    disabled={!calendar.isNextMonthAvailable}
+                    on:click={() => $store.getNextMonthCalendar()}
+                    disabled={!$store.isNextMonthAvailable}
                 >
                 <SVGIcon icon={Icon.ChevronRight}/>
             </button>
@@ -105,19 +115,28 @@
     <!-- Month Calendar -->
     <div class="calendar__month">
         <ul>
-            {#each calendar.currMonth.days as day}
+            {#each $store.currMonth.days as day}
                 <li class={`calendar__month-day-container ${day ? "" : "calendar__month-day-container--empty"}`}>
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div 
-                        role="button" tabindex="0" title={initDayTitle(day)}
+                        role="button" 
+                        tabindex="0" 
+                        title={initDayTitle(day)}
                         class={`calendar__month-day 
                                     ${day.isInCurrMonth ? "" : "calendar__month-day--not-curr-month"}
-                                    ${calendar.getDateBoundState(day.date) === DateBoundState.InBounds ? "" : "calendar__month-day--disabled"}
                                     ${isSameDay(day.date, new Date) ? "calendar__month-day--today" : ""}
-                                    ${isSameDay(day.date, calendar.pickedDate) ? "calendar__month-day--picked" : ""}
+                                    ${isSameDay(day.date, $store.pickedDate) ? "calendar__month-day--picked" : ""}
                                     ${initDayClasses(day)}
                         `}
-                        on:click={() => onDateCellPressed(day)}
+                        on:keydown={(e) => {
+                            if (e.key === 'Enter' || e.code === 'Space') {
+                                e.preventDefault()
+                                _onDayUpdate(day.date)
+                            }
+                        }}
+                        on:click={() => {
+                            _onDayUpdate(day.date)
+                        }}
                     >
                         {`${day.date.getDate()}`}
                     </div>
@@ -130,7 +149,7 @@
 
 <style lang="scss">
     .calendar {
-        // light / dark themes adjustments
+        /* light / dark themes adjustments */
         &--light &__today-btn {
             @include text-style(0.5, 600);
         }
@@ -233,37 +252,17 @@
         }
         &--productivity &__days-of-week {
             padding-bottom: 4px; 
-            * {
-                @include text-style(0.5, 300, 0.97rem);
-            }
         }
         &--productivity &__month-day {
-            @include text-style(0.28, 300, 1rem, "DM Sans");
+            @include text-style(0.6, 500, 1rem, "DM Sans");
             width: 80%; 
             height: 100%;
             background: none;
-            border-radius: 10px;
-            border: 0.5px solid transparent;
-            cursor: default;
+            border-radius: 11px;
+            cursor: pointer;
             
             &:hover {
                 background: rgba(var(--textColor1), 0.04);
-            }
-            &:active {
-                transform: scale(1);
-            }
-            &--picked {
-                background-color: rgba(var(--textColor1), 0.03) !important;
-                color: rgba(var(--textColor1), 0.7) !important;
-                border: 0.5px solid rgba(var(--textColor1), 0.04) ;
-            }
-            &--had-session:active {
-                transition: 0.1s ease-in-out;
-                transform: scale(0.93);
-            }
-            &--had-session {
-                cursor: pointer;
-                @include text-style(0.6, 500);
             }
             &-container {
                 height: 28px;
@@ -278,7 +277,7 @@
         
         &__focus-header {
             @include flex(center, space-between);
-            padding: 4px 4px 0px 8px;
+            padding: 0px 4px 0px 8px;
         }
         &__btns-container {
             @include flex(center);
@@ -290,6 +289,7 @@
             width: 12px;
             height: 12px;
             padding: 0px 5px;
+            opacity: 1 !important;
             
             &:hover {
                 @include text-style(0.6);
@@ -330,19 +330,17 @@
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             font-family: "DM Sans";
-            padding: 15px 1px 6px 1px;
+            padding: 12px 1px 6px 1px;
             width: 100%;
 
             * {
-                @include text-style(1, 300, 1.1rem);
+                @include text-style(0.4, 500, 0.97rem);
                 @include center;
             }
         }
         &__month {
-            height: 175px;
             width: 100%;
             padding: 0px 1px 25px 1px;
-            margin-bottom: 5px;
 
             ul {
                 display: grid;
@@ -389,16 +387,20 @@
             }
         
             &--today {
-                @include text-style(0.89);
-                background: rgba(var(--textColor1), 0.08);
+                color:rgba(var(--textColor1), 0.7);
+                background: rgba(var(--textColor1), 0.04) !important;
             }
             &--picked {
-                background-color: white !important;
-                color: #111010 !important;
-                font-weight: 500 !important;
+                font-weight: 500;
+                background-color: rgba(var(--textColor1), 0.04) !important;
+                color: rgba(var(--textColor1), 1) !important;
+                border: 1px solid rgba(var(--textColor1), 0.05);
             }
             &--not-curr-month {
                 opacity: 0.25 !important;
+            }
+            &--not-curr-month:hover {
+                background-color: rgba(var(--textColor1), 0.08) !important;
             }
             &--disabled {
                 opacity: 0.52;

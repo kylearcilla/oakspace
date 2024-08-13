@@ -984,7 +984,8 @@ export class RoutinesManager {
      * @param blocks     The list of blocks to check for overlap.
      * @param startTime  Start time of the block in question.
      * @param endTime    End time of the block in question.
-     * @param id         Id of the block in question. Used to exclude the block itself it exists insde the blocks list.
+     * @param excludeId  Id of the block in question. Used to exclude the block itself it exists insde the blocks list.
+     * @param excludeDayCompare  Exclude the blocks' day column for looking an overlapping block.
      * 
      * @returns          The overlapping block, null otherwise
      */
@@ -998,7 +999,7 @@ export class RoutinesManager {
         const { blocks, startTime, endTime, excludeId, excludeDayCompare  = false }= options
 
         const overlappingInterval = blocks.find((block) => {
-            // if lifting to a daily routine that has the same likned routine, the block can overlap itself
+            // if lifting to a day col to another day col with both cols sharing the same linked routine, the block can overlap itself
             if (excludeDayCompare && excludeId && this.samePosSameRoutine(block.id, excludeId!)) {
                 return false
             }

@@ -1,4 +1,5 @@
-import { COLOR_SWATCHES, TEST_TAGS } from "$lib/utils-general"
+import { COLOR_SWATCHES } from "$lib/utils-general"
+import { TEST_TAGS } from "$lib/mock-data"
 
 type PresetRoutines = {
     hs: RoutineBlock[][],

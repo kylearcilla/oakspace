@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { themeState } from "$lib/store"
-	import { TEST_TAGS, clickOutside, getColorTrio, inlineStyling } from "$lib/utils-general"
+	import { clickOutside, getColorTrio, inlineStyling } from "$lib/utils-general"
 	import SvgIcon from "./SVGIcon.svelte"
 	import { Icon } from "$lib/enums"
 	import BounceFade from "./BounceFade.svelte";
 	import { TAGS } from "../tests/routines/routines.data";
+    import { TEST_TAGS } from "$lib/mock-data"
 
 
     export let tag: Tag | null

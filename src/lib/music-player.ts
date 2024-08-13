@@ -2,7 +2,7 @@ import { APIErrorCode, MusicPlatform } from "./enums"
 import { APIError, type CustomError } from "./errors"
 import { MusicPlaylistShuffler } from "./music-playlist-shuffler"
 import { musicPlayerManager, musicPlayerStore } from "./store"
-import { getPlatformString, loadMusicPlayerData, loadMusicShuffleData, musicAPIErrorHandler, removeMusicPlayerData, removeMusicShuffleData, saveMusicPlayerData } from "./utils-music"
+import { getPlatformString, loadMusicPlayerData, musicAPIErrorHandler, removeMusicPlayerData, saveMusicPlayerData } from "./utils-music"
 
 /**
  * @abstract 
@@ -51,7 +51,7 @@ export abstract class MusicPlayer {
     abstract setVolume(volume: number): void;
     
     abstract updateMediaCollection(collectionContext: MediaClickedContext): Promise<void>
-    abstract playMediaCollection(doPlay?: boolean): void
+    abstract playMediaCollection(): void
     abstract updateState(newPlayerState: Partial<MusicPlayerState>, doSave?: boolean): void
 
     updateMediaTime(posMs: number, durMs: number) {
@@ -169,9 +169,6 @@ export abstract class MusicPlayer {
      * Delete player data.
      */
     deleteMusicPlayerData() {
-        if (this.isShuffled) {
-            removeMusicShuffleData()
-        }
         removeMusicPlayerData()
     }
 

@@ -24,8 +24,8 @@ export class MusicPlayerManager {
     onCooldown = false
 
     isVolSeeking = false
-    volume      = -1
-    isMuted     = false
+    volume       = -1
+    isMuted      = false
     hasSeekedToSecs = -1
     isDisabled  = false
     
@@ -50,7 +50,7 @@ export class MusicPlayerManager {
 
     cooldownTimeOut: NodeJS.Timeout | null = null
 
-    GESTURE_COOL_DOWN_MS = 500
+    GESTURE_COOL_DOWN_MS = 1200
     LOGO_WIDTH = 19
     BORDER_RADIUS = 100
 
@@ -84,6 +84,7 @@ export class MusicPlayerManager {
             isPrevBtnActive: false, isNextBtnActive: false,
             onCooldown: false,
             isMuted: false,
+            isDisabled: false,
             volume: this.volume
         })
 
@@ -106,6 +107,7 @@ export class MusicPlayerManager {
             if (newState.onCooldown != undefined)                 _state.onCooldown = newState.onCooldown
             if (newState.volume != undefined)                     _state.volume = newState.volume
             if (newState.isMuted != undefined)                    _state.isMuted = newState.isMuted
+            if (newState.isDisabled != undefined)                 _state.isDisabled = newState.isDisabled
 
             return _state
         })
@@ -117,7 +119,6 @@ export class MusicPlayerManager {
             this.togglePlayback()
         }
         else if (gesture === PlaybackGesture.SKIP_NEXT) {
-            
             this.skipToNext()
         }
         else if (gesture === PlaybackGesture.SKIP_PREV) {
@@ -128,6 +129,11 @@ export class MusicPlayerManager {
         }
         else  if (gesture === PlaybackGesture.LOOP) {
             this.toggleRepeat()
+        }
+
+        const doSetCooldown = [PlaybackGesture.SKIP_NEXT, PlaybackGesture.SKIP_PREV].includes(gesture)
+        if (doSetCooldown) {
+            this.setCooldown()
         }
     }
 
@@ -200,8 +206,6 @@ export class MusicPlayerManager {
     }
     handleKeyUp(event: KeyboardEvent) {
         if (event.code !== "Space") return
-        // togglePlayback()
-        // isPausePlayBtnActive = false
     }
     handleKeyDown(event: KeyboardEvent) {
         if (event.code !== "Space") return
@@ -220,21 +224,29 @@ export class MusicPlayerManager {
      * Sets a coold down to actions that may overwhelm the API.
      * If on cool-down user gestures to perform these actions will be temporarily disabled
      */
-    setCooldown() {
-        this.toggleCooldown(true)
-
-        this.cooldownTimeOut = setTimeout(() => {
+    setCooldown(onCooldown = true) {
+        if (onCooldown && !this.onCooldown) {
+            this.onCooldown = true
+            this.updateState({ onCooldown: true })
             
-            this.toggleCooldown(false)
-        }, this.GESTURE_COOL_DOWN_MS)
-    }
-    
-    toggleCooldown(onCooldown: boolean) {
-        if (!onCooldown) {
-            clearTimeout(this.cooldownTimeOut!)
-            this.cooldownTimeOut = null
+            this.cooldownTimeOut = setTimeout(() => {
+                this.clearCooldown()
+
+            }, this.GESTURE_COOL_DOWN_MS)
         }
-        this.updateState({ onCooldown: onCooldown })
+        else if (!onCooldown && this.onCooldown) {
+            this.clearCooldown()
+        }
+    }
+
+    clearCooldown() {
+        if (!this.cooldownTimeOut) return
+
+        clearTimeout(this.cooldownTimeOut)
+        this.cooldownTimeOut = null
+        
+        this.onCooldown = false
+        this.updateState({ onCooldown: false })
     }
 
     /* Seek */
@@ -265,8 +277,16 @@ export class MusicPlayerManager {
      * Handler on input events from input range element.
      */
     trackProgressOnChange() {
-        this.progressValue    = this.trackPlaybackBar!.value
-        this.hasSeekedToSecs  = getSeekPositionSecs(+this.progressValue, this.durationMs)
+        this.progressValue = this.trackPlaybackBar!.value
+        const seekedTo     = getSeekPositionSecs(+this.progressValue, this.durationMs)
+
+        // prevents seeing previous time data while seeking during transition to new media item
+        const isNearEnd = looseEqualTo(this.durationMs / 1000, seekedTo, 2)
+        if (isNearEnd && !this.cooldownTimeOut) {
+            this.setCooldown()
+        }
+
+        this.hasSeekedToSecs = seekedTo
         this.updatePlaybackBarStyleAfterUpdate()
 
         this.seekTo(this.hasSeekedToSecs)
@@ -334,11 +354,13 @@ export class MusicPlayerManager {
     /* Utils */
 
     /**
-     * Ensure that the new progress will always be at the place where the user will seek to.
-     * Sometimes the player will briefly jump to the previous time and back to the appropriate time.
      * 
-     * @param playerProgress   Current progress spit out by the player.
-     * @returns                If the progress player's progress time doesn't match the just-seeked-to time. 
+     * Checks if the player briefly jumps to the old progress time after a seek.
+     * Sometimes the player will briefly jump to the previous time and back to the right time.
+     * Ensures that the new progress to will always be at the place where the user will seeked to.
+     * 
+     * @param playerProgress  Current progress spit out by the player.
+     * @returns               Checks if the progress player's current progress time doesn't match the just-seeked-to time. 
      */
     hasSeekedWrongTime(playerProgress: number) {
         if (this.hasSeekedToSecs < 0) return false

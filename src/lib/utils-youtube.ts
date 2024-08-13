@@ -5,9 +5,8 @@ import { YoutubeUserData } from "./youtube-user-data"
 import { YoutubePlayer } from "./youtube-player"
 import { APIError } from "./errors"
 import { getPlayListItemsDetails, getPlaylistDetails, getVidDetails } from "./api-youtube"
-import { getElemsByClass } from "./utils-general"
+import { getElemsByClass, toastApiErrorHandler } from "./utils-general"
 import { toast } from "./utils-toast"
-import { didInitMusicPlayer } from "./utils-music"
 
 export const INIT_PLAYLIST_REQUEST_DELAY = 1000
 export const USER_PLS_MAX_PER_REQUEST = 15
@@ -38,9 +37,9 @@ export async function youtubeLogin() {
 /**
  * Initialize Youtube Player using Youtube iFrame Player API.
  */
-export async function initYoutubePlayer(initApi: boolean) {
+export async function initYoutubePlayer() {
     const ytPlayer = new YoutubePlayer()
-    await ytPlayer.initYtPlayer(initApi)
+    await ytPlayer.initYtPlayer()
 
     return ytPlayer
 }
@@ -49,15 +48,21 @@ export async function initYoutubePlayer(initApi: boolean) {
  * Log out Youtube User.
  */
 export function youtubeLogOut() {
-    const ytData = get(ytUserDataStore)
+    const store = get(ytUserDataStore)
+    if (!store) return
 
     try {
-        ytData!.logOutUser()
+        store!.logOutUser()
         initToast("Logged Out Successfully!")
     }
     catch(error: any) {
         youtubeAPIErrorHandler(error)
     }
+}
+
+export function exitYoutubePlayer() {
+    youtubeLogOut()
+    get(ytPlayerStore)?.quit()
 }
 
 /**
@@ -105,11 +110,12 @@ export async function getYtMediaId(url: string): Promise<YoutubeMediaId | { erro
 export async function handleChoosePlaylist(playlist: YoutubePlaylist) {
     let ytPlayer      = get(ytPlayerStore)
     let hasInitPlayer = ytPlayer != null
-
-    ytPlayer ??= await initYoutubePlayer(!didInitMusicPlayer())
-
-    if (playlist.id === ytPlayer.playlist?.id) return
     
+    ytPlayer ??= await initYoutubePlayer()
+
+    if (playlist.id === ytPlayer.playlist?.id)    return
+    if (!(await validateYtPlaylist(playlist.id))) return
+
     setTimeout(() => {
         ytPlayer.playPlaylist(playlist)
 
@@ -133,43 +139,10 @@ export function toggleYTIFramePointerEvents(isPointerEventsEnabled: boolean) {
  * @returns      Toast message to be disaplyed in a Toast component.
  */
 export function youtubeAPIErrorHandler(error: APIError) {
-    let toastOptions: ToastInitOptions
-
-    const isNotAPIError = error.code === undefined
-    const errorMessage  = isNotAPIError ? "" : error.message
-    const hasMsg        = errorMessage != undefined && errorMessage
-
-    if (error.code === APIErrorCode.PLAYER) {
-        toastOptions = {
-            message: hasMsg ? errorMessage : "Player error. Try again later.",
-        }
-    }
-    else if (error.code === APIErrorCode.AUTHORIZATION_ERROR) {
-        toastOptions = {
-            message: hasMsg ? errorMessage : `Youtube authorization failed. Please try again.`,
-        }
-    }
-    else if (error.code === APIErrorCode.RATE_LIMIT_HIT) {
-        toastOptions = {
-            message: "Rate limit exceeded. Try again later.",
-        }
-    }
-    else if (error instanceof TypeError) {
-        toastOptions = {
-            message: hasMsg ? errorMessage : "There was an error. Please try again."
-        }
-    }
-    else {
-        toastOptions = {
-            message: hasMsg ? errorMessage : `There was an error with Youtube Please try again later.` ,
-        }
-    }
-
-    toast("default", {
-        message: "Youtube",
-        description: toastOptions.message,
+    toastApiErrorHandler({ 
+        error, 
         logoIcon: LogoIcon.Youtube,
-        action: toastOptions.action
+        title: "Youtube"
     })
 }
 
@@ -212,7 +185,7 @@ export const initIframePlayerAPI = async (options: {
         setYoutubeScript()
         return new Promise<void>((resolve) => (window as any).onYouTubeIframeAPIReady = () => {
             // @ts-ignore
-            resolve(new YT.Player(this.IFRAME_CLASS, this.YT_PLAYER_OPTIONS))
+            resolve(new YT.Player(this.IFRAME_ID, this.YT_PLAYER_OPTIONS))
         })
     }
     else {

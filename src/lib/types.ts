@@ -111,15 +111,6 @@ type AncestoryQueryOptions = {
     strict?: boolean
 }
 
-type DashboardType = "min" | "default"
-type DashboardView = "goals" | "habits"
-
-type DashboardOptions = {
-    type: string
-    view?: DashboardView
-}
-
-
 type CSSAbsPos = {
     top?: string, left?: string, bottom?: string, right?: string
 }
@@ -456,6 +447,21 @@ type SubTask_ = {
 }
 
 /* Session Stuff */
+type Session = {
+    id: string,
+    name: string,
+    tag: Tag,
+    pomTime: number,
+    pomPeriods: number,
+    breakTime: number,
+    startTime: Date,
+    endTime: Date,
+    calculatedEndTime: number,
+    todos: { name: string, isDone: boolean }[],
+    totalElapsedTime: number,
+    timePeriodString: string
+}
+
 type Medal = "🏅" | "🥈" | "🥉"
 
 type SessionResult = { 
@@ -766,6 +772,7 @@ type MusicPlayerManagerState = {
     onCooldown: boolean
     isMuted: boolean
     volume: number
+    isDisabled: boolean
 }
 
 type MusicPlayerState = {
@@ -855,7 +862,7 @@ type MusicUserDetails = {
 }
 
 /* Youtube Stuff */
-type YTOAuthResponse = {
+type GoogleAuthResponse = {
     accessToken: string,
     email: string,
     username: string,
@@ -952,6 +959,41 @@ type YoutubeMediaId = {
     id: string 
 }
 
+/* Google Calendar */
+type GoogleCalendar = {
+    id: string
+    color: {
+        id: string
+        bgColor: string
+        fgColor: string
+    }
+    title: string
+    description: string
+    user: string
+    email: string
+    isChecked: boolean
+}
+
+type GoogleCalendarEvent = {
+    id: string
+    calendarId: string
+    title: string
+    color: {
+        id: string
+        fgColor: string
+        bgColor: string
+    }
+    allDay: boolean
+    timeStart: number
+    timeEnd: number
+    idx: number
+    url: string
+    height: string
+    top: string
+    left: string
+    width: string
+}
+
 /* Goals */
 type Goal = {
     id: string
@@ -1013,6 +1055,20 @@ type Accomplishment = {
         title: string
     }
     isMilestone: boolean
+}
+
+type ImgUploadConstraints = {
+    maxMbSize?: number,
+    dims?: {
+        height?: {
+            max?: number
+            min?: number
+        },
+        width?: {
+            max?: number
+            min?: number
+        }
+    }
 }
 
 /* Analytics Stuff */

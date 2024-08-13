@@ -1,4 +1,6 @@
-import { LogoIcon } from "./enums"
+import { APIErrorCode, LogoIcon } from "./enums"
+import type { APIError } from "./errors"
+import { toast } from "./utils-toast"
 
 /**
  * Custom click outside use directive.
@@ -567,13 +569,13 @@ export const COLOR_SWATCHES = {
     },
     {
       id: "d0-6",
-      primary: "227, 196, 217",
+      primary: "219, 209, 236",
       light1: "115, 95, 125",
       light2: "226, 211, 233",
       light3: "156, 140, 165",
-      dark1:  "234, 213, 255",
-      dark2:  "33, 32, 34",
-      dark3:  "100, 87, 116",
+      dark1:  "226, 213, 255",
+      dark2:  "30, 27, 37",
+      dark3:  "97, 87, 116",
       isLight: true,
       isDark: false,
     },
@@ -1007,90 +1009,59 @@ export const COLOR_SWATCHES = {
   ]
 }
 
-/* Tags */
-export const TEST_TAGS: Tag[] = [
-  {
-    id: "",
-    orderIdx: 0,
-    name: "Body",
-    symbol: {
-      color: COLOR_SWATCHES.d[0],
-      emoji: "💪"
+/**
+ * Given a hexadecimal color find the closest color from app pre-drefined app colors.
+ * 
+ * @param    hexColor - The hexadecimal color string to match (e.g., "9FC6E7").
+ * @returns  The color swatch object that is closest to the given color, or null if no swatch is found.
+ */
+export function findClosestColorSwatch(hexColor: string): Color {
+  const rgbColor = hexToRgb(hexColor);
+  let closestColor = null
+  let minDistance = Infinity
+
+  for (const groupKey in COLOR_SWATCHES) {
+    const colorGroup = COLOR_SWATCHES[groupKey as keyof typeof COLOR_SWATCHES]
+
+    for (const color of colorGroup) {
+      const primaryRgb = color.primary.split(", ").map(Number)
+      const distance = getEuclideanDistance(rgbColor, primaryRgb)
+
+      if (distance < minDistance) {
+          minDistance = distance
+          closestColor = color
+      }
     }
-  },
-  {
-    id: "",
-    orderIdx: 1,
-    name: "SWE",
-    symbol: {
-      color: COLOR_SWATCHES.d[1],
-      emoji: "👨‍💻"
-    }
-  },
-  {
-    id: "",
-    orderIdx: 2,
-    name: "French",
-    symbol: {
-      color: COLOR_SWATCHES.d[4],
-      emoji: "🇫🇷"
-    }
-  },
-  {
-    id: "",
-    orderIdx: 3,
-    name: "Cooking",
-    symbol: {
-      color: COLOR_SWATCHES.d[2],
-      emoji: "🍖"
-    }
-  },
-  {
-    id: "",
-    orderIdx: 4,
-    name: "SWE",
-    symbol: {
-      color: COLOR_SWATCHES.d[4],
-      emoji: "👨‍💻"
-    }
-  },
-  {
-    id: "",
-    orderIdx: 5,
-    name: "BBall",
-    symbol: {
-      color: COLOR_SWATCHES.d[2],
-      emoji: "🏀"
-    }
-  },
-  {
-    id: "",
-    orderIdx: 6,
-    name: "Running",
-    symbol: {
-      color: COLOR_SWATCHES.d[2],
-      emoji: "🏃‍♂️"
-    }
-  },
-  {
-    id: "",
-    orderIdx: 7,
-    name: "Meditation",
-    symbol: {
-      color: COLOR_SWATCHES.d[3],
-      emoji: "🌿"
-    }
-  },
-  {
-    id: "",
-    orderIdx: 8,
-    name: "Art",
-    symbol: {
-      color: COLOR_SWATCHES.d[0],
-      emoji: "🌁"
-    }
-  },
-]
+  }
+
+  return closestColor!
+}
+
+function hexToRgb(hex: string) {
+  hex = hex.replace(/^#/, '')
+  const bigint = parseInt(hex, 16)
+  const r = (bigint >> 16) & 255
+  const g = (bigint >> 8) & 255
+  const b = bigint & 255
+
+  return [r, g, b]
+}
+
+/**
+ * Calculates the Euclidean distance between two RGB colors.
+ * 
+ * @param rgb1 The first RGB color as an array [r, g, b].
+ * @param rgb2 The second RGB color as an array [r, g, b].
+ * @returns    The Euclidean distance between the two colors.
+ * 
+ */
+function getEuclideanDistance(rgb1: number[], rgb2: number[]) {
+  const rDiff = rgb1[0] - rgb2[0]
+  const gDiff = rgb1[1] - rgb2[1]
+  const bDiff = rgb1[2] - rgb2[2]
+
+  return Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff)
+}
 
 export function roundUpToNearestTen(num: number) {
   return Math.ceil(num / 10) * 10;
@@ -1456,4 +1427,63 @@ export function containsHtmlTags(str: string) {
 
 export function looseEqualTo(x: number, y: number, diff = 5) {
   return Math.abs(x - y) <= diff
+}
+
+/**
+ * Error handler for working with APIs
+ * @param options 
+ */
+export function toastApiErrorHandler(options: {
+  error: APIError, 
+  title: string,
+  logoIcon: LogoIcon
+  action?: { 
+    label: string, onClick: (event: MouseEvent) => void 
+  }
+}) {
+  let { error, title, logoIcon, action } = options
+  let toastOptions: ToastInitOptions
+
+  const isNotAPIError = error.code === undefined
+  const errorMessage  = isNotAPIError ? "" : error.message
+  const hasMsg        = errorMessage != undefined && errorMessage
+
+  if (error.code === APIErrorCode.PLAYER) {
+      toastOptions = {
+          message: hasMsg ? errorMessage : "Player error. Try again later.",
+      }
+  }
+  else if (error.code === APIErrorCode.AUTHORIZATION_ERROR) {
+      toastOptions = {
+          message: hasMsg ? errorMessage : `Authorization failed. Please try again.`,
+      }
+  }
+  else if (error.code === APIErrorCode.EXPIRED_TOKEN) {
+      toastOptions = {
+          message: hasMsg ? errorMessage : `Token has expired. Log in again to continue.`,
+      }
+  }
+  else if (error.code === APIErrorCode.RATE_LIMIT_HIT) {
+      toastOptions = {
+          message: "Rate limit exceeded. Try again later.",
+      }
+  }
+  else if (error instanceof TypeError) {
+      toastOptions = {
+          message: hasMsg ? errorMessage : "There was an error. Please try again."
+      }
+  }
+  else {
+      toastOptions = {
+          message: hasMsg ? errorMessage : `There was an error with Youtube Please try again later.` ,
+      }
+  }
+  toastOptions.action = action
+
+  toast("default", {
+      message: title,
+      description: toastOptions.message,
+      logoIcon,
+      action: toastOptions.action
+  })
 }

@@ -66,11 +66,6 @@ img {
     background-color: rgba(var(--textColor1), $opacity);
 }
 
-@mixin visible($opacity: 1) {
-    opacity: $opacity;
-    visibility: visible;
-}
-
 @mixin txt-color($opacity: 1, $type: "text") {
     @if $type == "stroke" {
         stroke: rgba(var(--textColor1), $opacity);
@@ -334,6 +329,10 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     display: none;
 }
 
+.no-scroll-bar::-webkit-scrollbar {
+    display: none;
+}
+
 
 
 .pos-relative {
@@ -397,10 +396,8 @@ $screen-xl: 112.5em;   // extra large (1800 px)
                 rgba(#0C8CE9, 0.1) 0px 0px 0px 2.5px !important;
 }
 
-[role="button"] {
-    &:focus-visible {
-        @include border-focus;
-    }
+[role="button"]:focus-visible {
+    @include border-focus;
 }
 a:focus-visible {
     @include border-focus;
@@ -470,7 +467,7 @@ button.tab-btn {
         padding: 0px;
         margin-right: 14px;
         transition: 0.1s ease-in-out;
-        @include text-style(0.4, 300, 1.35rem);
+        @include text-style(0.4, 400, 1.35rem);
 
         &:hover {
             @include text-style(0.9);
@@ -903,10 +900,13 @@ $settings-modal-padding: 20px 25px 25px 25px;
     opacity: 0;
     visibility: hidden;
 }
-
+@mixin visible($opacity: 1) {
+    opacity: $opacity;
+    visibility: visible;
+}
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 .visible {
     opacity: 1 !important;

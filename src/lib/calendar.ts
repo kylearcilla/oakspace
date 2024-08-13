@@ -35,8 +35,12 @@ export abstract class Calendar<T extends MonthData = MonthData> {
      * @param newDate  New date that was picked by the user.
      */
     setNewPickedDate(newDate: Date | null) {
-        this.pickedDate = newDate ?? null
+        this.pickedDate = newDate
         this.pickedDateStr = newDate != null ? formatDateLong(newDate) : ""
+        
+        if (!isSameMonth(newDate!, this.currMonth.firstDay)) {
+            this.currMonth = this.genMonthCalendar(newDate!)
+        }
     }
 
     /*
@@ -74,6 +78,7 @@ export abstract class Calendar<T extends MonthData = MonthData> {
         this.currMonth = this.genMonthCalendar(new Date())
         this.isPrevMonthAvailable = !this.isForwards ?? true
         this.isNextMonthAvailable = this.isForwards ?? true
+        this.pickedDate = new Date()
     }
 
     /**

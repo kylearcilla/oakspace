@@ -23,16 +23,14 @@
     position: relative;
 
     &__container {
-        @include flex(center, _);
+        @include flex(center);
         margin-bottom: 12px;
         transition: 0.15s ease-in-out;
     }
     &__tab-btn {
-        font-size: 1.3rem;
-        font-weight: 300;
+        @include text-style(0.35, 400, 1.3rem);
         transition: 0.14s ease-in-out;
         margin-right: 20px;
-        color: rgba(var(--textColor1), 0.35);
         position: relative;
         width: fit-content;
         @include center;

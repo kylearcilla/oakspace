@@ -2,14 +2,16 @@
 	import { onMount } from "svelte"
     
     import { closeModal } from "$lib/utils-home"
-    import { APIErrorCode, LogoIcon, ModalType } from "$lib/enums"
+    import { APIErrorCode, Icon, LogoIcon, ModalType } from "$lib/enums"
 	import { themeState, ytPlayerStore, ytUserDataStore } from "$lib/store"
     import { formatPlural, getMaskedGradientStyle, preventScroll } from "../../lib/utils-general"
-	import { handleChoosePlaylist, youtubeLogOut, youtubeLogin } from "$lib/utils-youtube"
+	import { exitYoutubePlayer, handleChoosePlaylist, youtubeLogOut, youtubeLogin } from "$lib/utils-youtube"
 
     import Modal from "../../components/Modal.svelte"
     import Logo from "../../components/Logo.svelte"
 	import BounceFade from "../../components/BounceFade.svelte"
+	import DropdownList from "../../components/DropdownList.svelte"
+	import SvgIcon from "../../components/SVGIcon.svelte"
     
     export let ytPlaylists
     
@@ -26,6 +28,7 @@
     let scrollHeight = 0
     let scrollWindow = 0
     let playlistTimeout: NodeJS.Timeout | null = null
+    let settingsOpen = false
 
     let tabListGradientStyle = ""
     let ytError: any = null
@@ -301,6 +304,37 @@
                                     <p class="chosen-playlist__playlist-description" title={playlist.description}>
                                         {playlist.description === "" ? "No Description" : playlist.description}
                                     </p>
+
+                                    <!-- Settings -->
+                                    <button
+                                        id="chosen-playlist--dropdown-btn"
+                                        class="chosen-playlist__settings-btn"
+                                        on:click={() => settingsOpen = !settingsOpen}
+                                    >
+                                        <SvgIcon icon={Icon.Settings} />                                            
+                                    </button>
+
+                                    <DropdownList 
+                                        id={"chosen-playlist"}
+                                        isHidden={!settingsOpen} 
+                                        options={{
+                                            listItems: [{ 
+                                                name: "Exit Player",
+                                            }],
+                                            position: { top: "20px", right: "0px"},
+                                            styling:  { 
+                                                width: "160px",
+                                                zIndex: 500
+                                            },
+                                            onListItemClicked: () => {
+                                                settingsOpen = false
+                                                exitYoutubePlayer()
+                                            },
+                                            onClickOutside: () => {
+                                                settingsOpen = false
+                                            }
+                                        }}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -695,6 +729,18 @@
             position: relative;
             z-index: 3;
         }
+
+        &__settings-btn {
+            opacity: 0.2;
+            @include abs-top-right(-2px, 4px);
+            @include circle(19px);
+            @include center;
+            
+            &:hover {
+                opacity: 0.52;
+                background: rgba(white, 0.14);
+            }
+        }
         &__playlist-img {
             margin: 0px 15px 0px 0px;
             border-radius: 12px;
@@ -704,8 +750,8 @@
         }
         &__playlist-details {
             margin-top: 10px;
-            position: relative;
             padding-left: 4px;
+            position: relative;
 
             h3 {
                 margin-bottom: 6px;
@@ -718,9 +764,11 @@
         &__playlist-title {
             margin-top: 15px;
             max-height: 40px;
+            max-width: 90%;
             overflow: hidden;
             font-size: 1.4rem;
             font-weight: 400;
+
         }
         &__playlist-description {
             margin-top: 19px;

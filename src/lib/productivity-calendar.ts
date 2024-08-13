@@ -1,8 +1,9 @@
 import { writable, type Writable } from "svelte/store";
 import { Calendar, type CalendarStore } from "./calendar";
-import { isSameMonth } from "./utils-date";
+import { isSameDay, isSameMonth } from "./utils-date";
 
 export class ProductivityCalendar extends Calendar<ProductivityDate> implements CalendarStore<ProductivityCalendar> {
+    pickedDate: Date = new Date()
     _store: Writable<ProductivityCalendar>
 
     constructor(options: DatePickerOptions | null) {
@@ -30,22 +31,30 @@ export class ProductivityCalendar extends Calendar<ProductivityDate> implements 
         super.getThisMonth()
 
         this.updateDatePickerState({ 
-            currMonth: this.currMonth, isNextMonthAvailable: this.isNextMonthAvailable, isPrevMonthAvailable: this.isPrevMonthAvailable 
+            currMonth: this.currMonth, 
+            isNextMonthAvailable: this.isNextMonthAvailable, 
+            isPrevMonthAvailable: this.isPrevMonthAvailable,
+            pickedDate: this.pickedDate
         })
     }
 
-    setNewPickedDate(newDate: Date | null) {
+    setNewPickedDate(newDate: Date) {
         super.setNewPickedDate(newDate)
 
-        this.updateDatePickerState({ pickedDate: this.pickedDate, pickedDateStr: this.pickedDateStr})
+        this.updateDatePickerState({ 
+            currMonth: this.currMonth,
+            pickedDate: this.pickedDate
+        })
     }
     
     genMonthCalendar(inputDate: Date): ProductivityDate {
-        const firstDayOfMonth = new Date(inputDate.setDate(1))
+        const firstDayOfMonth = new Date(new Date(inputDate).setDate(1))
         const monthFirstDayOfWeek = firstDayOfMonth.getDay()
         const currMonth: ProductivityDate = { 
-            monthIdx: inputDate.getMonth(), days: [],
-            year: inputDate.getFullYear(), firstDay: firstDayOfMonth
+            firstDay: firstDayOfMonth,
+            monthIdx: inputDate.getMonth(), 
+            days: [],
+            year: inputDate.getFullYear(), 
         }
 
         // go to the first date in grid using negative offset from first day

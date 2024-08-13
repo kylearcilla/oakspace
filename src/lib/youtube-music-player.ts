@@ -7,8 +7,8 @@ import { youtubeAPIErrorHandler } from "./utils-youtube"
 import { MusicPlayer, type MusicPlayerStore } from "./music-player"
 
 /**
- * Player class that wraps over the Youtube iFrame API.
- * The app hides the embed iFrame and uses its own.
+ * Player class that wraps over the Youtube iFrame API for playing music / podcasts (which are just videos).
+ * The app hides the embed iFrame.
  * 
  * @extends     MusicPlayer
  * @implements  MusicPlayerStore<YoutubeMusicPlayer>
@@ -20,6 +20,7 @@ export class YoutubeMusicPlayer extends MusicPlayer implements MusicPlayerStore<
 
     doShowPlayer = true
     hasActiveSession = false
+    isFetchingVid = false
     isReady = false
     isLive  = false
     
@@ -29,7 +30,7 @@ export class YoutubeMusicPlayer extends MusicPlayer implements MusicPlayerStore<
     state = -1
         
     LOAD_PREV_PLAYER_STATE_DELAY = 1000
-    static IFRAME_CLASS = "yt-music-player"
+    static IFRAME_ID = "yt-music-player"
 
     PLAYER_OPTIONS: any = {
         height: "100px", 
@@ -58,15 +59,15 @@ export class YoutubeMusicPlayer extends MusicPlayer implements MusicPlayerStore<
      * Initialize Youtube iFrame Player API.
      * Must initialize after refreshes.
      */
-    async init(initApi: boolean) {
+    async init(justInit: boolean) {
         try {
-            await this.initIframePlayerAPI(initApi)
+            await this.initIframePlayerAPI()
             this.hasActiveSession = true
-            this.justInit = initApi
+            this.justInit = justInit
 
             this.updateState({ 
                 doShowPlayer: true, 
-                justInit: initApi
+                justInit
             }) 
         }
         catch(error: any) {
@@ -83,10 +84,11 @@ export class YoutubeMusicPlayer extends MusicPlayer implements MusicPlayerStore<
     /**
      * Initialize iFrame Player API asynchrnously
      */
-    initIframePlayerAPI = async (initApi: boolean) => {
+    initIframePlayerAPI = async () => {
         this.initEventHandlers()
 
-        if (initApi) {
+        // @ts-ignore
+        if (!window.YT) {
             setYoutubeScript()
             await this.initPlayerOnAPIReady()
         }
@@ -107,7 +109,7 @@ export class YoutubeMusicPlayer extends MusicPlayer implements MusicPlayerStore<
 
     initPlayerInstance() {
         // @ts-ignore
-        this.player = new YT.Player(YoutubeMusicPlayer.IFRAME_CLASS, this.PLAYER_OPTIONS)
+        this.player = new YT.Player(YoutubeMusicPlayer.IFRAME_ID, this.PLAYER_OPTIONS)
     }
 
 
@@ -182,7 +184,7 @@ export class YoutubeMusicPlayer extends MusicPlayer implements MusicPlayerStore<
         this.iFramePlaylistId = event.target.getPlaylistId()
 
         // update media data
-        const doNotUpdateItem = state < 0 || state === 5 || vidDetails.id === this.mediaItem?.id
+        const doNotUpdateItem = state === 3 || state === 5 || vidDetails.id === this.mediaItem?.id
         if (doNotUpdateItem) return
 
         // init video detals
@@ -211,7 +213,7 @@ export class YoutubeMusicPlayer extends MusicPlayer implements MusicPlayerStore<
 
         // will be empty on -1, 5 states
         // note playlist will always be > 1, validate after collection choice
-        if (playlist.length === 0) return null
+        if (playlist.length === 0 || this.isFetchingVid) return null
         
         const idx       = player.getPlaylistIndex()
         const currVidId = playlist[idx]
@@ -219,8 +221,10 @@ export class YoutubeMusicPlayer extends MusicPlayer implements MusicPlayerStore<
         // if already validated the same id, do not check again
         if (currVidId === this.iFrameVidId) return null
 
+        this.isFetchingVid = true
         const vidDetails = await getVidDetails(currVidId)
 
+        this.isFetchingVid = false
         this.iFrameVidId = currVidId
 
         if (!vidDetails) {
@@ -346,11 +350,9 @@ export class YoutubeMusicPlayer extends MusicPlayer implements MusicPlayerStore<
                 this.player.unMute()
             }
             else {
-                console.log("muting")
                 this.player.mute()
             }
             this.updateState({ isMuted: this.isMuted })
-            // this.player.isMuted()
         }
         catch(error: any) {
             this.onError(error)
@@ -358,7 +360,6 @@ export class YoutubeMusicPlayer extends MusicPlayer implements MusicPlayerStore<
     }
 
     setVolume(volume: number) {
-        console.log("setVolume", volume)
         try {
             this.volume = volume
             this.player.setVolume(volume)
@@ -371,8 +372,8 @@ export class YoutubeMusicPlayer extends MusicPlayer implements MusicPlayerStore<
 
     /**
      * 
-     * Initialize volume while iframe is in queued state.
-     * setVolume() does not work.
+     * Initialize volume while iframe is in-queued state after a refresh.
+     * setVolume() does not work
      */
     initVolumeOnMediaCue(isMute: boolean, volume: number) {
         setTimeout(() => this.player.mute(), 100)
@@ -390,23 +391,26 @@ export class YoutubeMusicPlayer extends MusicPlayer implements MusicPlayerStore<
      * 
      * @param doPlay   Play item
      */
-    async playMediaCollection(doPlay = true) {
-        if (this.state === 3 ) return   // if a prev loaded vid was buffering do not cue a new playlist
+    async playMediaCollection() {
+        if (this.state === 3 ) return
         this.removeError()
         
         try {
+            this.playlistClicked = this.mediaCollection
+
+            if (!this.player.stopVideo) {
+                window.location.reload()
+                return
+            }
+
             this.player.stopVideo()
             this.player!.loadPlaylist({ 
                 list:     this.mediaCollection!.id, 
                 listType: "playlist",
                 index:    0
             })
-    
-            // allow state change handler to set playlist to disallow player from setting an invalid playlist
-            this.playlistClicked = this.mediaCollection
         }
         catch(e: any) {
-            console.log({ e })
             if (e.code === APIErrorCode.PLAYER_MEDIA_INVALID) {
                 this.onError(e)
             }
@@ -563,12 +567,8 @@ export class YoutubeMusicPlayer extends MusicPlayer implements MusicPlayerStore<
         return newStateObj
     }
 
-    /* Misc */
     quit() {
         this.player.stopVideo()
-        // @ts-ignore
-        window.onYouTubeIframeAPIReady = null
-
         super.quit()
     }
 

@@ -144,7 +144,7 @@ type DayFormat = "numeric" | "2-digit" | undefined
 /**
  * Formats date to string representation. Format depends on the options passed in and geo-location.
  * @param date 
- * @returns Formatted Time (i.e. Apr 14, 2020)
+ * @returns Formatted Time (i.e. Apr 14, 2020 / Apr 14)
  */
 export function formatDatetoStr(date: Date, options: {
     weekday?: WeekMonthFormat, year?: YearFormat, month?: WeekMonthFormat, day?: DayFormat 
@@ -452,6 +452,10 @@ export function getTotalSecondsFromStartOfDay(date: Date): number {
     return totalSeconds
 }
 
+export function getMinsFromStartOfDay(date: Date): number {
+    return getTotalSecondsFromStartOfDay(date) / 60
+}
+
 export function minsToMMSS(mins: number) {
     return secsToMMSS(mins * 1000)
 }
@@ -621,4 +625,57 @@ export function getDayIdxMinutes() {
         dayIdx: (dayIdx + 6) % 7,
         minutes: getNowMins()
     }
+}
+
+/**
+ * Format date into ISO format
+ * 
+ * i.e. 2024-08-07T23:59:59+00:00
+ * 
+ * @param    options 
+ * @returns  Date in iso format
+ */
+export function formatDateToISO(options: { date: Date, type?: "start" | "end" | "abs", timeZoneOffset?: string }) {
+    const { date, type = "absolute", timeZoneOffset = '+00:00' } = options
+
+    if (type === 'start') {
+        date.setHours(0, 0, 0, 0)
+    } 
+    else if (type === 'end') {
+        date.setHours(23, 59, 59, 999)
+    } 
+
+    const isoString = date.toISOString().split('.')[0]    
+    return `${isoString}${timeZoneOffset}`
+}
+
+/**
+ * Gets the number of minutes from the start of the day given a date in ISO format
+ * 
+ * `i.e. 2024-08-07T23:59:59+00:00 -> 1439`
+ * 
+ * @param   date
+ * @returns mins from start of the date
+ */
+export function getIsoDateMinutesFromStartOfDay(isoDateString: string): number {
+    const [_, timePart] = isoDateString.split('T')
+
+    let offsetMinutes = 0
+    const offsetIndex = timePart.indexOf('+') !== -1 ? timePart.indexOf('+') : timePart.indexOf('-')
+    
+    if (offsetIndex !== -1) {
+      const offsetPart = timePart.substring(offsetIndex)
+      const cleanedOffsetPart = offsetPart.replace('Z', '')
+      const sign = cleanedOffsetPart[0]
+
+      const [hours, minutes] = cleanedOffsetPart.substring(1).split(':').map(Number)
+      offsetMinutes = (hours * 60 + minutes) * (sign === '-' ? -1 : 1)
+    }
+  
+    const date = new Date(isoDateString)
+    const hours = date.getUTCHours()
+    const minutes = date.getUTCMinutes()
+    
+    const totalMinutes = (hours * 60 + minutes) + offsetMinutes
+    return totalMinutes < 0 ? 1440 + totalMinutes : totalMinutes
 }

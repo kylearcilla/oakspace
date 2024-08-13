@@ -84,7 +84,7 @@ export class YoutubeUserData {
     /**
      * Initializes credential data and user data.
      */
-    async initData(res: YTOAuthResponse) {
+    async initData(res: GoogleAuthResponse) {
         const ytCreds: YoutubeUserCreds = {
             accessToken: res.accessToken,
             refreshToken: "",

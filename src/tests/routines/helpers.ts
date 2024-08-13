@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test"
 import { looseEqualTo } from "../helpers"
 import { getScrollData, getElemOrigin, getHozDistanceBetweenTwoElems, 
         vertScrollElem, elemLeftOffset, elemTopOffset,
-        type Position, dragFromTo, type DragPoint, type DragPosition,
+        dragFromTo, type DragPoint, type DragPosition,
         fillInput,
         expectInput,
         epectTextEditor,

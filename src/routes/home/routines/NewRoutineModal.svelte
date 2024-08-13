@@ -189,7 +189,7 @@
                     </div>
                 </div>
                 {#if emptyTitleError}
-                    <span class="input-box__error-text">
+                    <span class="input-box-error-text">
                         Title is empty
                     </span>
                 {/if}
@@ -230,7 +230,8 @@
                 >
                     Cancel
                 </button>
-                <AsyncButton 
+                <AsyncButton
+                    disabled={false}
                     isLoading={isSaving} 
                     actionFunc={saveChanges} 
                     styling={{

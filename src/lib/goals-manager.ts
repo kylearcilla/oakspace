@@ -3,8 +3,9 @@ import { GoalViewOption, GoalsDropdown, type GoalStatus, GoalItemUI } from "./en
 import { goalsManager } from "./store"
 import { getElemById, getVertScrollStatus, moveElementInArr } from "./utils-general"
 import { accomplishments2023, accomplishments2021, accomplishments2022 } from "./utils-goals"
-import { YR_CONTAINER_ID, YR_DIGIT_ANIMATION, YR_DIGIT_CLASS, TEST_GOALS } from "./utils-journal"
+import { YR_CONTAINER_ID, YR_DIGIT_ANIMATION, YR_DIGIT_CLASS } from "./utils-journal"
 import { goalSections } from "./utils-journal"
+import { TEST_GOALS } from "$lib/mock-data"
 
 /**
  * This class provides an abstract interface for interacing with the Journal modal.

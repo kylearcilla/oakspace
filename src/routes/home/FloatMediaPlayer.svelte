@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { getDistBetweenTwoPoints, getElemById, initFloatElemPos, isInRange, isTargetTextEditor } from "$lib/utils-general";
-	import { drag } from "d3";
-	import { onMount } from "svelte";
-	import { globalContext, ytPlayerStore } from "$lib/store";
+	import { getElemById, initFloatElemPos, isInRange, isTargetTextEditor } from "$lib/utils-general"
+	import { onMount } from "svelte"
+	import { ytPlayerStore } from "$lib/store"
 
     export let type: "youtube" | "spotify"
     import { page } from '$app/stores'
+	import { YoutubePlayer } from "$lib/youtube-player";
     export let isFloating = false
 
     const MAX_PLAYER_WIDTH = 600
@@ -18,6 +18,8 @@
     const BORDER_WIDTH = 8
     const SAFE_MARGIN = 8
 
+    $: ytPlayer = $ytPlayerStore
+
     let mediaPlayerRef: HTMLElement
     let displayObserver: ResizeObserver | null = null
     let displayContainerRef: HTMLElement
@@ -26,6 +28,7 @@
     let isHidden = false
     let windowWidth = 0
     let windowHeight = 0
+
     $: marginRight  = windowWidth - SAFE_MARGIN
     $: marginBottom = windowHeight - SAFE_MARGIN
 
@@ -37,7 +40,6 @@
         left: SAFE_MARGIN 
     }
 
-    let ytPlayer      = $ytPlayerStore
     let isPointerDown = false
     let shouldMove    = false
     let isResizing    = false
@@ -78,7 +80,7 @@
     }
     function initLayout() {
         if (!ytPlayer) return
-        const savedLayout = $ytPlayerStore!.floatLayout
+        const savedLayout = ytPlayer.floatLayout
 
         if (savedLayout && savedLayout.left >= 0) {
             boxProps = { ...savedLayout }
@@ -89,7 +91,7 @@
             boxProps.width = INIT_PLAYER_WIDTH
             boxProps.height = (9 / 16) * INIT_PLAYER_WIDTH
 
-            $ytPlayerStore!.updateFloatPosition(boxProps)
+            ytPlayer.updateFloatPosition(boxProps)
         }
     }
     /* box prop handlers */
@@ -425,6 +427,7 @@
     class:media-player--grab={shouldMove && !isPointerDown}
     class:media-player--grabbing={shouldMove && isPointerDown}
     class:media-player--hidden={isHidden}
+    class:media-player--iframe-hidden={!$ytPlayerStore}
     style:--BORDER_WIDTH={`${BORDER_WIDTH}px`}
     style:--SAFE_MARGIN={`${SAFE_MARGIN}px`}
     style:--cursor-type={cursor.type}
@@ -448,8 +451,8 @@
         <div class="media-player__grab-handle media-player__grab-handle--bottom">
         </div>
         <div 
-            class="vid-view__iframe-player iframe-vid-player" 
-            id="yt-player"
+            class="iframe-vid-player" 
+            id={YoutubePlayer.IFRAME_ID}
         >
         </div>
     </div>
@@ -479,6 +482,9 @@
         }
         &--grabbing {
             cursor: grabbing !important;
+        }
+        &--iframe-hidden .iframe-vid-player {
+            @include not-visible;
         }
         &__content {
             width: 100%;

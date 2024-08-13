@@ -51,8 +51,8 @@ export enum DateBoundState{
 }
 
 /* Image Upload */
-export enum ImgUploadInput {
-    Error, TooBig, TooSmall, InvalidFormat, InvalidURL
+export enum ImgUploadError {
+    General, Format, InvalidURL, Size, Dims
 }
 
 /* Tasks */

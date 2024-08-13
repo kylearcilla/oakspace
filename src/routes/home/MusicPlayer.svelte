@@ -23,13 +23,13 @@
     let durationMs    = 0
     let isMute        = false
     let volume        = 0
+    let isDisabled    = false
     
     $: playerStore     = $musicPlayerStore
     $: mediaItem       = $musicPlayerStore?.mediaItem
     $: mediaCollection = $musicPlayerStore?.mediaCollection! as MediaCollection
     $: isSeeking       = $musicPlayerManager?.isSeeking
-    $: isDisabled      = $musicPlayerStore?.isDisabled ?? false
-    $: isOnCooldown    = $musicPlayerManager?.onCooldown ?? false
+    $: onSeekCoolDown  = $musicPlayerManager?.onCooldown ?? false
     $: musicPlatform   = $musicDataStore?.musicPlatform
 
     $: {
@@ -41,6 +41,7 @@
     musicPlayerManager.subscribe((data: MusicPlayerManagerState | null) => {
         if (!data || musicPlatform === MusicPlatform.AppleMusic) return
         
+        isDisabled     = data.isDisabled
         isMute     = data.isMuted
         volume     = data.volume
         progressMs = data.progressMs
@@ -122,7 +123,7 @@
                     <button 
                         class="mp-controls__shuffle-btn"
                         class:mp-controls__shuffle-btn--isShuffled={playerStore?.isShuffled}
-                        disabled={isDisabled || isOnCooldown}
+                        disabled={isDisabled}
                         on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SHUFFLE)} 
                     >
                             <i class="fa-solid fa-shuffle"></i>
@@ -130,7 +131,7 @@
                     <button 
                         class="mp-controls__prev-btn"
                         class:mp-controls__prev-btn--active={$musicPlayerManager?.isPrevBtnActive}
-                        disabled={isDisabled || isOnCooldown}
+                        disabled={isDisabled}
                         on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SKIP_PREV)} 
                     >
                             <i class="fa-solid fa-backward"></i>
@@ -138,7 +139,7 @@
                     <button 
                         class="mp-controls__playback-btn"
                         class:mp-controls__playback-btn--active={$musicPlayerManager?.isPausePlayBtnActive}
-                        disabled={isDisabled || isOnCooldown}
+                        disabled={isDisabled}
                         on:click={() => manager?.onPlaybackGesture(PlaybackGesture.PLAY_PAUSE)} 
                     >
                             <i class={`${playerStore?.isPlaying ? "fa-solid fa-pause" : "fa-solid fa-play"}`}></i>
@@ -146,7 +147,7 @@
                     <button 
                         class="mp-controls__next-btn"
                         class:mp-controls__next-btn--active={$musicPlayerManager?.isNextBtnActive}
-                        disabled={isDisabled || isOnCooldown}
+                        disabled={isDisabled}
                         on:click={() => manager?.onPlaybackGesture(PlaybackGesture.SKIP_NEXT)} 
                     >
                             <i class="fa-solid fa-forward"></i>
@@ -154,7 +155,7 @@
                     <button 
                         class="mp-controls__repeat-btn"
                         class:mp-controls__repeat-btn--isRepeating={playerStore?.isRepeating}
-                        disabled={isDisabled || isOnCooldown}
+                        disabled={isDisabled}
                         on:click={() => manager?.onPlaybackGesture(PlaybackGesture.LOOP)} 
                     >
                             <i class="fa-solid fa-repeat"></i>
@@ -185,10 +186,11 @@
                             id="volume-input"
                             on:input={() => manager?.volumneOnInput()}
                             on:change={() => manager?.volumneOnChange()}
-                            value="0" type="range"
+                            value="0" 
                             min="0" max="100"
                             step="0.1"
                             disabled={isDisabled}
+                            type="range"
                         />
                     </div>
                 </div>
@@ -203,10 +205,14 @@
             <input
                 class="input-range"
                 id="playback-input"
+                disabled={onSeekCoolDown}
                 on:input={() => manager?.trackProgressOnInput()}
                 on:change={() => manager?.trackProgressOnChange()}
-                value="0" type="range"
-                min="0" max="100" step="0.1"
+                value="0" 
+                min="0" 
+                max="100" 
+                step="0.1"
+                type="range"
             />
             {#if durationMs > 0 && progressMs >= 0}            
                 <div 

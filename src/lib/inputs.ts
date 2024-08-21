@@ -289,7 +289,6 @@ export class TextEditorManager extends InputManager {
     updateTextEditorVal(event: Event, newVal: string, doUpdateCursorPos = false) {
         this.prevVal = this.value
         this.value = newVal
-        console.log({ newVal })
         this.updateState({ value: newVal })
 
         if (doUpdateCursorPos) {
@@ -349,11 +348,6 @@ export class TextEditorManager extends InputManager {
 
         const newValue = target.innerHTML
         this.valLength = target.innerText.length
-
-        console.log("=======")
-        console.log(target.innerText)
-        console.log(target.innerHTML)
-
 
         this.undoHandler(newValue)
         this.updateTextEditorVal(event, newValue)

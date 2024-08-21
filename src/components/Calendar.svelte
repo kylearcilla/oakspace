@@ -269,10 +269,11 @@
             }
         }
         &--productivity &__month-day--had-goal::after {
-            content: "*";
-            @include text-style(0.23, 300, 1.2rem,"Manrope");
-            @include abs-bottom-left(-6.5px, 50%);
+            content: "•";
+            @include text-style(0.23, 300, 1rem);
+            @include abs-bottom-left(-4px, 50%);
             transform: translateX(-50%);
+            opacity: 0.5;
         }
         
         &__focus-header {

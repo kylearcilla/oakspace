@@ -238,8 +238,8 @@
   .svg-icon {
     @include center;
     transform: scale(var(--scale));
-    height: 100%;
-    width: 100%;
+    // height: 100%;
+    // width: 100%;
 
     &--full-on-hover:hover {
       opacity: 1 !important;

@@ -393,7 +393,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
 
 @mixin border-focus {
     box-shadow: rgba(#0C8CE9, 0.35) 0px 0px 0px 2px inset, 
-                rgba(#0C8CE9, 0.1) 0px 0px 0px 2.5px !important;
+                rgba(#0C8CE9, 0.1) 0px 0px 0px 2.5px;
 }
 
 [role="button"]:focus-visible {
@@ -985,6 +985,10 @@ $settings-modal-padding: 20px 25px 25px 25px;
 
 .no-pointer-events {
     pointer-events: none !important;
+    
+    * {
+        pointer-events: none !important;
+    }
 }
 
 $loading-dots-width: 4px;

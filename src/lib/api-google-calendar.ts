@@ -3,7 +3,7 @@ import { authGoogleUser } from "./api-google"
 import { throwFireBaseAPIError } from "./api-youtube"
 import { APIErrorCode } from "./enums"
 import { APIError } from "./errors"
-import { formatDateToISO, getIsoDateMinutesFromStartOfDay, minsFromStartToHHMM } from "./utils-date"
+import { formatDateToISO, getIsoDateMinutesFromStartOfDay } from "./utils-date"
 
 const GOOGLE_CALENDAR_API_URL = "https://www.googleapis.com/calendar/v3/"
 const MAX_CALS_RESULTS = 50
@@ -191,11 +191,11 @@ const throwGoogleCalendarAPIError = (context: {
       else if (status === 404) {
           throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Requested data unavailable.")
       }
-      else if (status === 403) {
-          throw new APIError(APIErrorCode.RATE_LIMIT_HIT)
+      else if (status === 403 && message === "insufficientPermissions") {
+          throw new APIError(APIErrorCode.AUTH_DENIED, "Authorization failed. Required permissions not granted.")
       }
       else {
           throw new APIError(APIErrorCode.GENERAL, "There was an error with Google Calendar API. Please try again later.")
       }
-  }
+}
   

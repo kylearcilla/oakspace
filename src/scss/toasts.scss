@@ -137,7 +137,27 @@ $header-icon-size: 17px;
     width: var(--width);
     padding: var(--padding-top) var(--padding-right) var(--padding-bottom) var(--padding-left);
     background-color: var(--bg-2);
-    border: 0.5px solid rgba(white, 0.05);
+    border: 1px solid rgba(var(--textColor1), 0.05);
+
+    // flat
+    &--flat {
+        --padding-top: 14px;
+        --padding-left: 19px;
+        --padding-right: 19px;
+        --padding-bottom: 18px;
+
+        @include flex(center, space-between);
+    }
+    &--flat &__content {
+        flex: 1;
+    }
+    &--flat &__header {
+        margin-bottom: 0px;
+        min-width: 0px;
+    }
+    &--flat &__action-btn {
+        margin-bottom: 0px;
+    }
     
     // Context Message UI
     &--context {
@@ -171,9 +191,6 @@ $header-icon-size: 17px;
         &-title {
             color: rgba(var(--context-rich-color-1)) !important;
         }
-        &-icon {
-            margin-top: 2px;
-        }
     }
     &--context &__description {
         display: none;
@@ -184,7 +201,6 @@ $header-icon-size: 17px;
     &--context &__content {
         @include flex(center);
     }
-
     // light adjustments
     &--light {
         border: 1px solid rgba(var(--context-rich-color-1), 0.17) !important;
@@ -212,38 +228,37 @@ $header-icon-size: 17px;
     &__content {
     }
     &__header {
-        @include flex(center, _);
+        @include flex(flex-start);
         position: relative;
         margin-bottom: 6px;
     }
 
     &__header-icon {
-        margin-right: 6px;
+        font-size: 1.45rem;
+        margin-right: 8px;
         height: $header-icon-size;
         width: $header-icon-size;
         @include center;
     }
     &__header-title {
-        @include text-style(_, 400, 1.4rem);
-        margin-left: 5px;
+        @include text-style(0.9, 500, 1.4rem);
+        margin: -2px 0px 0px 0px;
         @include flex(center);
+        @include multi-line-elipses-overflow(2);
     }
     &__description {
         margin: 0px 0px 8px 0px;
-        // max-width: 250px;
-        @include text-style(0.5, 300, 1.27rem);
+        @include text-style(0.5, 400, 1.27rem);
     }
 
     &__bottom-container {
         @include flex(center, flex-end);
     }
     &__action-btn {
-        color: rgba(var(--textColor1), 0.9);
         padding: 0px 4px;
-        font-size: 1.2rem;
-        font-weight: 400;
         float: right;
         margin-bottom: 10px;
+        @include text-style(0.9, 500, 1.24rem);
         @include hov-opacity;
         
         &:active {

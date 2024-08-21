@@ -6,7 +6,7 @@
     let iconStyling = ""
 
     export let logo: LogoIcon
-    export let options: LogoContainerOptions | undefined
+    export let options: LogoContainerOptions | undefined = undefined
 
     function makeContainerStyling() {
         const arr: string[] = []
@@ -19,6 +19,9 @@
         }
         if (options?.hasBgColor != undefined && !options.hasBgColor) { 
             arr.push("background: transparent")
+        }
+        if (options?.colored != undefined && !options.colored) { 
+            arr.push("filter: saturate(0)")
         }
 
         bgStyling = arr.join('; ')
@@ -99,7 +102,18 @@
     </div>
 {:else if logo === LogoIcon.Luciole}
     <div class="logo-bg" style={bgStyling}>
-        <div class="logo" style={iconStyling}>
+        <div class="logo" style={iconStyling} data-icon="somara">
+        </div>
+    </div>
+{:else if logo === LogoIcon.Todoist}
+    <div class="logo-bg" style={bgStyling}>
+        <div class="logo" style={iconStyling} data-icon="todoist">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12.4801 0.203125H1.80116C0.820048 0.205322 0.0249038 1.00052 0.0214844 1.98291V12.6616C0.0214844 13.6405 0.822227 14.4414 1.80116 14.4414H12.4801C13.459 14.4414 14.2598 13.6405 14.2598 12.6616V1.98291C14.2598 1.00403 13.459 0.203125 12.4801 0.203125Z" fill="#E44332"/>
+                <path d="M3.03226 6.92393C3.28049 6.77898 8.61318 3.68 8.73508 3.60818C8.85698 3.53726 8.86363 3.31916 8.72622 3.24026C8.58969 3.1618 8.33036 3.01286 8.23417 2.95567C8.09683 2.88011 7.92991 2.88213 7.79444 2.96099C7.72617 3.00089 3.16967 5.64728 3.01763 5.73416C2.83455 5.83878 2.60981 5.84055 2.42806 5.73416L0.0214844 4.32187V5.52228C0.606617 5.86715 2.06369 6.72357 2.41654 6.92526C2.6271 7.04495 2.82879 7.04229 3.0327 6.92393" fill="white"/>
+                <path d="M3.03226 9.19151C3.28049 9.04656 8.61318 5.94757 8.73508 5.87576C8.85698 5.80484 8.86363 5.58674 8.72622 5.50784C8.58969 5.42938 8.33036 5.28043 8.23417 5.22325C8.09683 5.14769 7.92991 5.14971 7.79444 5.22857C7.72617 5.26847 3.16967 7.91486 3.01763 8.00174C2.83455 8.10636 2.60981 8.10813 2.42806 8.00174L0.0214844 6.58945V7.78985C0.606617 8.13473 2.06369 8.99115 2.41654 9.19284C2.6271 9.31253 2.82879 9.30987 3.0327 9.19151" fill="white"/>
+                <path d="M3.03226 11.6017C3.28049 11.4567 8.61318 8.35773 8.73508 8.28592C8.85698 8.21499 8.86363 7.9969 8.72622 7.91799C8.58969 7.83953 8.33036 7.69059 8.23417 7.63341C8.09683 7.55785 7.92991 7.55986 7.79444 7.63873C7.72617 7.67862 3.16967 10.325 3.01763 10.4119C2.83455 10.5165 2.60981 10.5183 2.42806 10.4119L0.0214844 8.9996V10.2C0.606617 10.5449 2.06369 11.4013 2.41654 11.603C2.6271 11.7227 2.82879 11.72 3.0327 11.6017" fill="white"/>
+            </svg>                                
         </div>
     </div>
 {/if}
@@ -116,5 +130,10 @@
     .logo {
         @include center;
         width: 55%;
+
+        img {
+            height: 100% !important;
+            width: 100% !important;
+        }
     }
 </style>

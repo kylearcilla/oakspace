@@ -134,7 +134,7 @@ export class YoutubeUserData {
             toast("default", {
                 message: "Youtube",
                 description: "Token has expired. Log in again to continue.",
-                logoIcon: LogoIcon.Youtube,
+                icon: LogoIcon.Youtube,
                 action: {
                     label:  "Continue session",
                     onClick: () => this.refreshAccessToken()

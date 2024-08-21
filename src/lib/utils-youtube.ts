@@ -148,7 +148,7 @@ export function youtubeAPIErrorHandler(error: APIError) {
 
 export function initToast(message: string) {
     toast("default", {
-        logoIcon: LogoIcon.Youtube,
+        icon: LogoIcon.Youtube,
         message: "Youtube",
         description: message
     })

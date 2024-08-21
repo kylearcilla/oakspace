@@ -21,16 +21,32 @@ export const DELETE_ITEM_DELAY = 120
  * @param type   Type of toast.
  * @param data   Toast configruation.
  */
-export function toast(type: keyof typeof toastAPI, data?: ExternalToast & { message: string | ComponentType }) {
+export function toast<ToastData>(
+	type: keyof typeof toastAPI, 
+	data?: ExternalToast & { message: string | ComponentType } | PromiseData<ToastData>,
+	promise?: PromiseT<ToastData>
+) {
 	const toastFunc = (toastAPI[type] as any)
+	const message = (data && "message" in data) ?? ""
+	const noToaster = !get(globalContext).hasToaster
 
-	if (!get(globalContext).hasToaster) {
+	if (noToaster) {
 		globalContext.update((data) => ({ ...data, hasToaster: true }))
 
-		requestAnimationFrame(() => toastFunc(data?.message, { ...data }))
+		requestAnimationFrame(() => {
+			if (type === "promise") {
+				toastFunc(promise, { ...data })		
+			}
+			else {
+				toastFunc(message, { ...data })
+			}
+		})
+	}
+	else if (type === "promise") {
+		toastFunc(promise, { ...data })
 	}
 	else {
-		toastFunc(data?.message, { ...data })
+		toastFunc(message, { ...data })
 	}
 }
 
@@ -69,30 +85,9 @@ export const toastAPI = {
 }
 
 
-function makeDefaultToast(message: string | ComponentType, data?: ExternalToast){
+function makeDefaultToast(message: string, data?: ExternalToast){
 	return toasterManager!.create({ message, ...data })
 }
-
-
-// export function initToasts() {
-// 	toasterManager = ToasterManager()
-
-// 	toast = Object.assign(makeDefaultToast, {
-// 		// toast types
-// 		message: toasterManager.makeMessageToast,
-// 		success: toasterManager.makeSuccessToast,
-// 		info:    toasterManager.makeInfoToast,
-// 		warning: toasterManager.makeWarningToast,
-// 		error:   toasterManager.makeErrorToast,
-// 		promise: toasterManager.makePromiseToast,
-// 		loading: toasterManager.makeLoadingToast,
-// 		custom: toasterManager.makeCustomToast,
-	
-// 		// dismiss
-// 		dismiss: toasterManager.dismiss
-
-// 	}) as ToastAPI
-// }
 
 /**
  * Function that creates an object that manages toasts and its heights states.
@@ -111,11 +106,12 @@ function ToasterManager() {
 	 */
 	function addToast(newToast: ToastT) {
 		toasts.update(prev => {
-			// update is set to true so toast can be notified and update new their dismissal times according to their new indices
-			const updatedToasts = prev.map(toast => ({ ...toast, updated: true }));
-
-			return [newToast, ...updatedToasts];
-		});
+			if (newToast.groupExclusive) {
+				prev = prev.filter(toast => toast.contextId !== newToast.contextId)
+			}
+			const updatedToasts = prev.map(toast => ({ ...toast, updated: true }))
+			return [newToast, ...updatedToasts]
+		})
 	}
 
 	/**
@@ -123,7 +119,7 @@ function ToasterManager() {
 	 * @param   data  New toast component data
 	 * @returns 
 	 */
-	function create(data: ExternalToast & { message?: string | ComponentType; type?: ToastTypes; promise?: PromiseT; }) {
+	function create(data: ExternalToast & { message?: string; type?: ToastTypes; promise?: PromiseT; }) {
 		const { message, ...rest } = data 
 
 		// if a valid id then use that, otherwise use its new idx
@@ -138,13 +134,13 @@ function ToasterManager() {
 			addToast({ ...rest, id, title: message, dismissable, type })
 		}
 		else {
-			toasts.update((_toasts) => {
-				return _toasts.map((toast) => 
+			toasts.update((_toasts) => (
+				_toasts.map((toast) => 
 					toast.id === id
 						? { ...toast, ...data, id, title: message, dismissable, type, updated: true }    // update existing toast
 						: { ...toast, updated: false }
 				)
-			})
+			))
 		}
 		return id
 	}
@@ -165,27 +161,27 @@ function ToasterManager() {
 
 	/* Methods for creating different toast types */
 
-	function makeMessageToast(message: string | ComponentType, data?: ExternalToast) {
+	function makeMessageToast(message: string, data?: ExternalToast) {
 		return create({ ...data, type: 'default', message })
 	}
 
-	function makeErrorToast(message: string | ComponentType, data?: ExternalToast) {
+	function makeErrorToast(message: string, data?: ExternalToast) {
 		return create({ ...data, type: 'error', message })
 	}
 
-	function makeSuccessToast(message: string | ComponentType, data?: ExternalToast) {
+	function makeSuccessToast(message: string, data?: ExternalToast) {
 		return create({ ...data, type: 'success', message })
 	}
 
-	function makeInfoToast(message: string | ComponentType, data?: ExternalToast) {
+	function makeInfoToast(message: string, data?: ExternalToast) {
 		return create({ ...data, type: 'info', message })
 	}
 
-	function makeWarningToast(message: string | ComponentType, data?: ExternalToast) {
+	function makeWarningToast(message: string, data?: ExternalToast) {
 		return create({ ...data, type: 'warning', message })
 	}
 
-	function makeLoadingToast(message: string | ComponentType, data?: ExternalToast) {
+	function makeLoadingToast(message: string, data?: ExternalToast) {
 		return create({ ...data, type: 'loading', message })
 	}
 
@@ -211,14 +207,14 @@ function ToasterManager() {
 
                 // @ts-ignore
 				const message = typeof data.error === 'function' ? data.error(`HTTP error! status: ${response.status}`) : data.error
-				create({ id, type: 'error', message })
+				create({ ...data, id, type: 'error', message })
 			} 
 			else if (data.success !== undefined) {
 				shouldDismiss = false
 
                 // @ts-ignore
 				const message =	typeof data.success === 'function' ? data.success(response) : data.success
-				create({ id, type: 'success', message })
+				create({ ...data, id, type: 'default', message })
 			}
 		})
 			.catch((error: any) => {
@@ -227,7 +223,7 @@ function ToasterManager() {
 
                     // @ts-ignore
 					const message = typeof data.error === 'function' ? data.error(error) : data.error
-					create({ id, type: 'error', message })
+					create({ ...data, id, type: 'error', message })
 				}
 			})
 			.finally(() => {

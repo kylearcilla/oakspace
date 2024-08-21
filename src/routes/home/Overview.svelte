@@ -20,8 +20,9 @@
 
     type ViewOption = "sessions" | "goals" | "calendar"
 
-    let calendar  = new ProductivityCalendar(null)
-    let focusDate = new Date()
+    export let calendar: ProductivityCalendar
+
+    let focusDate  = new Date()
     let calendarHt = 0
     let viewing: ViewOption = "sessions"
     
@@ -105,12 +106,9 @@
         googleCalendars = googleCal!.toggleViewCalendar(id) ?? []
         googleEvents    = googleCal!.events
     }
-    async function onCalSettingsHandler(context: DropdownItemClickedContext) {
+    async function onCalSettingsHandler(optnText: string) {
         googleCalDropdown = false
         googleCalSettings = false
-
-        const target   = context.event.target as HTMLElement
-        const optnText = target.innerText.trim()
         const isLoading = $googleCalState?.isLoading
 
         if (optnText === "Refresh Calendar" && !isLoading) {
@@ -148,7 +146,7 @@
         bind:clientHeight={calendarHt}
     >
         <Calendar 
-            focusDate={viewing === "calendar" ? googleCalDate : focusDate}
+            focusDate={viewing === "calendar" && isGoogleCalLinked ? googleCalDate : focusDate}
             isDisabled={$googleCalState?.isLoading}
             onDayUpdate={onDayUpdate}
             calendar={calendar} 
@@ -290,7 +288,7 @@
                     zIndex: 500
                 },
                 onListItemClicked: (context) => {
-                    onCalSettingsHandler(context)
+                    onCalSettingsHandler(context.name)
                 },
                 onClickOutside: () => {
                     googleCalSettings = false
@@ -329,6 +327,7 @@
     $hour-block-height: 45px;
 
     .overview {
+        margin-top: -5px;
         height: 100%;
 
         &--light &__day-view-header {

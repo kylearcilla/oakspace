@@ -6,7 +6,7 @@ export let TASK_HEIGHT_MIN_NO_DESCR = 28
 export let TASK_HEIGHT_MIN_HAS_DESCR = TASK_HEIGHT_MIN_NO_DESCR + TASK_DESCR_LINE_HT
 
 export let MAX_TITLE_LENGTH = 25
-export let MAX_TAK_GROUP_TITLE_LENGTH = 10
+export let MAX_TASK_GROUP_TITLE_LENGTH = 50
 export let MAX_DESCRIPTION_LENGTH = 300
 export let MAX_X_CONTEXT_MENU_POS = 70
 
@@ -14,7 +14,7 @@ export const TEST_TASKS: Task[] = [
     {
         id: "0",
         idx: 0,
-        title: "A",
+        title: "Finish A Game of Thrones",
         subtasks: [],
         description: "",
         isChecked: false
@@ -22,69 +22,125 @@ export const TEST_TASKS: Task[] = [
     {
         id: "1",
         idx: 1,
-        title: "B",
+        title: "Prepare for Math Exam",
         subtasks: [
             {
-                title: "Get ball scratcher",
+                title: "Review Lecture Notes",
                 isChecked: false,
-                id: "vvvv",
+                id: "a",
                 idx: 0,
-                taskId: "1"
+                parentId: "1"
             },
             {
-                title: "wfwefwef",
+                title: "Practice Problems",
                 isChecked: true,
-                id: "vvssvv",
+                id: "aa",
                 idx: 1,
-                taskId: "1"
+                parentId: "1"
             }
         ],
-        description: "wefiweo zzzdsd",
+        description: "Study for the upcoming calculus exam.",
         isChecked: false
     },
     {
         id: "2",
         idx: 2,
-        title: "wfwaifja ;woeifja;woefij awefijawo;efijaw o;efijaw;ofijwef;oj",
+        title: "Complete History Essay",
         subtasks: [
+            {
+                title: "Research",
+                isChecked: false,
+                id: "x",
+                idx: 0,
+                parentId: "2"
+            },
+            {
+                title: "Draft Outline",
+                isChecked: false,
+                id: "xx",
+                idx: 1,
+                parentId: "3"
+            },
             {
                 title: "Get ball scratcher",
                 isChecked: false,
-                id: "wwww",
-                idx: 0,
-                taskId: "2"
-            }
+                id: "xxx",
+                idx: 2,
+                parentId: "4"
+            },
         ],
-        description: "wpefkw'pefo aw'poefk aweiofja we;ofi aweo;fiajwef;o aiwjef;o awejf ;oaiwefj ao;weifj a;oweifja;oweijfawe",
+        description: "Write a 1500-word essay on the Industrial Revolution.",
         isChecked: false
     },
     {
         id: "3",
         idx: 3,
-        title: "D",
+        title: "Biology Lab Report",
         subtasks: [
             {
-                title: "Get ball scratcher",
+                title: "Get Analyze Data",
                 isChecked: false,
-                id: "ttt",
+                id: "f",
                 idx: 0,
-                taskId: "3"
-            }
+                parentId: "3"
+            },
+            {
+                title: "Write Report",
+                isChecked: false,
+                id: "ff",
+                idx: 1,
+                parentId: "3"
+            },
+            {
+                title: "Proof Read",
+                isChecked: false,
+                id: "fff",
+                idx: 2,
+                parentId: "3"
+            },
         ],
-        description: "zzoizoiwjsef",
+        description: "Write a report on the recent biology lab experiment.",
         isChecked: false
     },
     {
         id: "4",
         idx: 4,
-        title: "E",
+        title: "Grocery Shopping",
         subtasks: [
             {
-                title: "Get ball scratcher",
+                title: "Snacks",
+                isChecked: false,
+                id: "t",
+                idx: 0,
+                parentId: "3"
+            },
+            {
+                title: "Beer",
+                isChecked: false,
+                id: "tt",
+                idx: 1,
+                parentId: "3"
+            },
+            {
+                title: "Water",
                 isChecked: false,
                 id: "ttt",
-                idx: 0,
-                taskId: "3"
+                idx: 2,
+                parentId: "3"
+            },
+            {
+                title: "Paper Towel",
+                isChecked: false,
+                id: "ttt",
+                idx: 3,
+                parentId: "3"
+            },
+            {
+                title: "Napkins",
+                isChecked: false,
+                id: "tttt",
+                idx: 4,
+                parentId: "3"
             }
         ],
         description: "zzoizoiwjsef",
@@ -93,390 +149,182 @@ export const TEST_TASKS: Task[] = [
     {
         id: "5",
         idx: 5,
-        title: "F",
+        title: "Workout",
         subtasks: [
             {
-                title: "Get ball scratcher",
+                title: "Cario Session",
                 isChecked: false,
                 id: "ttt",
                 idx: 0,
-                taskId: "3"
-            }
+                parentId: "q"
+            },
+            {
+                title: "Stretching",
+                isChecked: false,
+                id: "ttt",
+                idx: 1,
+                parentId: "qq"
+            },
+            {
+                title: "Strength Training",
+                isChecked: false,
+                id: "ttt",
+                idx: 2,
+                parentId: "qqq"
+            },
         ],
-        description: "zzoizoiwjsef",
+        description: "Work out the legzzz.",
         isChecked: false
     },
     {
         id: "6",
         idx: 6,
-        title: "G",
+        title: "Plan Weekend Trip",
         subtasks: [
             {
-                title: "Get ball scratcher",
+                title: "Choose Destination",
                 isChecked: false,
                 id: "ttt",
                 idx: 0,
-                taskId: "3"
+                parentId: "y"
+            },
+            {
+                title: "Book Accommodation",
+                isChecked: false,
+                id: "ttt",
+                idx: 1,
+                parentId: "yy"
+            },
+            {
+                title: "Pack Bags",
+                isChecked: false,
+                id: "ttt",
+                idx: 2,
+                parentId: "yyy"
             }
         ],
-        description: "zzoizoiwjsef",
+        description: "Organize a short weekend getaway.",
         isChecked: false
     },
     {
         id: "7",
         idx: 7,
-        title: "H",
+        title: "Find a Summer Internship",
         subtasks: [
             {
-                title: "0",
+                title: "Research Potential Companies",
                 isChecked: false,
-                id: "ttt",
+                id: "t",
                 idx: 0,
-                taskId: "0"
+                parentId: "0"
             },
             {
-                title: "1",
+                title: "Narow down Companies",
                 isChecked: false,
-                id: "ttt",
-                idx: 0,
-                taskId: "1"
+                id: "tt",
+                idx: 1,
+                parentId: "1"
             },
             {
-                title: "2",
+                title: "Research desired companies.",
                 isChecked: false,
                 id: "ttt",
-                idx: 0,
-                taskId: "2"
+                idx: 2,
+                parentId: "2"
             },
             {
-                title: "3",
+                title: "Do mock interviews.",
                 isChecked: false,
-                id: "ttt",
-                idx: 0,
-                taskId: "3"
-            },
-            {
-                title: "Get ball scratcher",
-                isChecked: false,
-                id: "ttt",
-                idx: 0,
-                taskId: "4"
-            },
+                id: "tttt",
+                idx: 3,
+                parentId: "3"
+            }
         ],
-        description: "zzoizoiwjsef",
+        description: "Find a marketing internship (ideally tech).",
         isChecked: false
     },
 ]
 
-export const taskGroups = [
+export const TEST_INBOX_TASKS = {
+    title: "Inbox",
+    tasks: structuredClone(TEST_TASKS)
+}
+
+export const TEST_TASK_GROUPS = [
     {
         title: "SWE",
         tasks: [
             {
-                title: "Balls",
-                subtasks: [
-                    {
-                        title: "Get ball scratcher",
-                        isFinished: false
-                    }
-                ],
-                description: "Scarth my balls.             Scratch my balls. Scarth my balls. Scratch my balls Scarth my balls.  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls",
-                isFinished: false
-            },
-            {
-                title: "Balls",
-                subtasks: [
-                    {
-                        title: "Get ball scratcher",
-                        isFinished: false
-                    }
-                ],
-                description: "Scarth my balls.             Scratch my balls. Scarth my balls. Scratch my balls Scarth my balls.  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls",
-                isFinished: false
-            },
-            {
-                title: "Balls",
-                subtasks: [
-                    {
-                        title: "Get ball scratcher",
-                        isFinished: false
-                    }
-                ],
-                description: "Scarth my balls.             Scratch my balls. Scarth my balls. Scratch my balls Scarth my balls.  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls",
-                isFinished: false
-            },
-            {
-                title: "Balls",
-                subtasks: [
-                    {
-                        title: "Get ball scratcher",
-                        isFinished: false
-                    }
-                ],
-                description: "Scarth my balls.             Scratch my balls. Scarth my balls. Scratch my balls Scarth my balls.  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls",
-                isFinished: false
-            },
-            {
-                title: "Balls",
-                subtasks: [
-                    {
-                        title: "Get ball scratcher",
-                        isFinished: false
-                    }
-                ],
-                description: "Scarth my balls.             Scratch my balls. Scarth my balls. Scratch my balls Scarth my balls.  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls",
-                isFinished: false
-            },
-            {
-                title: "Balls",
-                subtasks: [
-                    {
-                        title: "Get ball scratcher",
-                        isFinished: false
-                    }
-                ],
-                description: "Scarth my balls.             Scratch my balls. Scarth my balls. Scratch my balls Scarth my balls.  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls",
-                isFinished: false
-            },
-            {
-                title: "Balls",
-                subtasks: [
-                    {
-                        title: "Get ball scratcher",
-                        isFinished: false
-                    }
-                ],
-                description: "Scarth my balls.             Scratch my balls. Scarth my balls. Scratch my balls Scarth my balls.  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls",
-                isFinished: false
-            },
-            {
-                title: "Balls",
-                subtasks: [
-                    {
-                        title: "Get ball scratcher",
-                        isFinished: false
-                    }
-                ],
-                description: "Scarth my balls.             Scratch my balls. Scarth my balls. Scratch my balls Scarth my balls.  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls  Scratch my balls Scarth my balls",
-                isFinished: false
-            },
-            {
-                title: "Balls",
-                subtasks: [
-                    {
-                        title: "Get ball scratcher",
-                        isFinished: false
-                    },
-                    {
-                        title: "Get ball scratcher",
-                        isFinished: false
-                    },
-                    {
-                        title: "Get ball scratcher",
-                        isFinished: false
-                    },
-                    {
-                        title: "Get ball scratcher",
-                        isFinished: false
-                    },
-                    {
-                        title: "Get ball scratcher",
-                        isFinished: false
-                    },
-                    {
-                        title: "Get ball scratcher",
-                        isFinished: false
-                    },
-                    {
-                        title: "Get ball scratcher",
-                        isFinished: false
-                    },
-                    {
-                        title: "Get ball scratcher",
-                        isFinished: false
-                    },
-                ],
-                description: "woweirfjuwoirfweuoewir owieruoweiru weoriwueor wier woeiruwoeiruwr98wyeur we orwiuroweiu",
-                isFinished: false
-            },
-            {
-                title: "Fart",
-                subtasks: [
-                    {
-                        title: "Empty Gas",
-                        isFinished: true
-                    },
-                    {
-                        title: "Eat more Tac Bell",
-                        isFinished: false
-                    },
-                ],
-                description: "Empty Stomach",
-                isFinished: false
-            },
-            {
-                title: "Read War and Peace",
-                subtasks: [
-                    {
-                        title: "Take Notes",
-                        isFinished: true
-                    },
-                ],
-                description: "Learn things.",
-                isFinished: true
-            },
-            {
-                title: "Read War and Peace",
-                subtasks: [],
-                description: "Learn things.",
-                isFinished: false
-            },
-            {
-                title: "Read War and Peace",
+                id: "0",
+                idx: 0,
+                title: "SWE Subtask",
                 subtasks: [],
                 description: "",
-                isFinished: false
-            },
-            {
-                title: "Balls Part 2",
-                subtasks: [],
-                description: "woweirfjuwoirfweuoewir owieruoweiru weoriwueor wier woeiruwoeiruwr98wyeur we orwiuroweiu",
-                isFinished: false
-            },
-            {
-                title: "Balls Part 3",
-                subtasks: [
-                    {
-                        title: "Take Notes",
-                        isFinished: true
-                    },
-                ],
-                description: "",
-                isFinished: false
+                isChecked: false
             },
         ]
     },
     {
         title: "Art",
-        tasks: []
+        tasks: [
+            {
+                id: "0",
+                idx: 0,
+                title: "Art Subtask 1",
+                subtasks: [],
+                description: "",
+                isChecked: true
+            },
+            {
+                id: "1",
+                idx: 1,
+                title: "Art Subtask 2",
+                subtasks: [],
+                description: "",
+                isChecked: true
+            },
+        ]
     },
     {
         title: "School",
-        tasks: []
+        tasks: [
+            {
+                id: "0",
+                idx: 0,
+                title: "School Subtask 0",
+                subtasks: [],
+                description: "",
+                isChecked: false
+            },
+            {
+                id: "1",
+                idx: 1,
+                title: "School Subtask 1",
+                subtasks: [],
+                description: "",
+                isChecked: false
+            },
+            {
+                id: "2",
+                idx: 2,
+                title: "School Subtask 2",
+                subtasks: [],
+                description: "",
+                isChecked: false
+            },
+        ]
     },
     {
         title: "Reading",
-        tasks: []
-    },
-]
-
-export const recentActivity = [
-    {
-        date: new Date(2023, 10, 16),  // Thursday
-        focusTime: 345,
-        sessions: [
+        tasks: [
             {
-                name: "SWE Work",
-                startTime: 16,
-                endTime: 19
-            },
-            {
-                name: "East of Eden CH 1",
-                startTime: 14,
-                endTime: 15
-            },
-            {
-                name: "Take a Nap",
-                startTime: 13,
-                endTime: 14
-            },
-            {
-                name: "Run Mle",
-                startTime: 12,
-                endTime: 13
-            },
-            {
-                name: "Calculus HW",
-                startTime: 9,
-                endTime: 11
-            },
-            {
-                name: "Calculus HW",
-                startTime: 9,
-                endTime: 11
-            },
-            {
-                name: "Calculus HW",
-                startTime: 9,
-                endTime: 11
-            },
-            {
-                name: "Calculus HW",
-                startTime: 9,
-                endTime: 11
-            },
-            {
-                name: "Calculus HW",
-                startTime: 9,
-                endTime: 11
-            },
-            {
-                name: "Calculus HW",
-                startTime: 9,
-                endTime: 11
+                id: "0",
+                idx: 0,
+                title: "Reading Subtask",
+                subtasks: [],
+                description: "",
+                isChecked: true
             },
         ]
     },
-    {
-        date: new Date(2023, 10, 15),  // Wednesday
-        focusTime: 132,
-        sessions: [
-            {
-                name: "SWE Work",
-                startTime: 16,
-                endTime: 19
-            },
-            {
-                name: "East of Eden CH 1",
-                startTime: 14,
-                endTime: 15
-            },
-            {
-                name: "East of Eden CH 1",
-                startTime: 14,
-                endTime: 15
-            },
-            {
-                name: "East of Eden CH 1",
-                startTime: 14,
-                endTime: 15
-            },
-        ]
-    },
-    {
-        date: new Date(2023, 10, 13),  // Monday
-        focusTime: 240,
-        sessions: [
-            {
-                name: "SWE Work",
-                startTime: 16,
-                endTime: 19
-            },
-            {
-                name: "SWE Work",
-                startTime: 16,
-                endTime: 19
-            },
-            {
-                name: "SWE Work",
-                startTime: 16,
-                endTime: 19
-            },
-            {
-                name: "SWE Work",
-                startTime: 16,
-                endTime: 19
-            },
-        ]
-    }
 ]

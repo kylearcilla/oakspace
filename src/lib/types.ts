@@ -83,15 +83,18 @@ type OffsetPoint = {
 }
 
 type HotKeyCombo = string[]
-type DropdDownListItemIconType = "default" | "fa" | "unit" | "hotkey" | "right-arrow"
+type DropDownOptionIconType = "default" | "fa" | "logo" | "unit" | "hotkey" | "right-arrow" | "check"
+type DropdownOptnIcon = {
+    type: DropDownOptionIconType
+    icon?: string | HotKeyCombo | LogoIcon
+    logoColored?: boolean
+    styling?: StylingOptions   
+}
 
 type DropdownOption = {
     name: string,
-    leftIcon?: string,
-    rightIcon?: { 
-        type: DropdDownListItemIconType
-        icon?: string | HotKeyCombo 
-    }
+    leftIcon?: DropdownOptnIcon
+    rightIcon?: DropdownOptnIcon
     onPointerOver?: FunctionParam
     onPointerLeave?: FunctionParam
 }
@@ -126,7 +129,10 @@ type ConfirmOptions = {
 
 type DropdownListItem = DropdownOptionSection | DropdownOption
 type DropdownItemClickedContext = {
-    event: Event, idx: number, parentName?: string
+    event: Event, 
+    idx: number, 
+    name: string, 
+    parentName?: string
 }
 
 type DropdownListOptions = {
@@ -150,7 +156,10 @@ type DropdownListOptions = {
     styling?: {
         zIndex?: number
         width?: string
+        minWidth?: CSSUnitVal
+        maxWidth?: CSSUnitVal
         height?: string
+        minHeight?: CSSUnitVal
         maxHeight?: string
         optionWidth?: string
         optionHeight?: string
@@ -327,6 +336,7 @@ type LogoContainerOptions = {
     containerWidth?: string
     iconWidth?: string
     borderRadius?: string
+    colored?: boolean
 }
 
 /* Authentication */
@@ -433,17 +443,7 @@ type VertScrollStatus = {
 /* Tasks */
 type TaskGroup = {
     title: string,
-    tasks: Task_[]
-}
-type Task_ = {
-    title: string,
-    subtasks: SubTask_[],
-    description: string,
-    isFinished: boolean
-}
-type SubTask_ = {
-    title: string, 
-    isFinished: boolean
+    tasks: Task[]
 }
 
 /* Session Stuff */
@@ -557,6 +557,7 @@ type UserLibraryCollection = {
     totalItems: number
 }
 
+/* Task List */
 interface Task {
     id: string,
     idx: number,
@@ -565,65 +566,76 @@ interface Task {
     description: string
     subtasks?: Subtask[]
 }
-interface Subtask implements Omit<Task, "description" | "subtasks"> { 
-    id: string,
-    idx: number,
-    isChecked: boolean,
-    title: string,
-    taskId: string
+
+interface Subtask extends Omit<Task, "description" | "subtasks"> { 
+    parentId: string
 }
 
-type TaskListType = "numbered" | "tasks-linked" | "subtasks-linked" | "subtasks"
-
-type TaskListTypeCombos = `${TaskListType} ${TaskListType} ${TaskListType} ${TaskListType}` | 
-                          `${TaskListType} ${TaskListType} ${TaskListType}` | 
-                          `${TaskListType} ${TaskListType}` |
-                          `${TaskListType}`
-
-type TaskListReorder = {
-    taskId: string
-    newIdx: number
-    oldIdx: number
+interface TodoistTask extends Omit<Task, "subtasks"> {
+    parentId: string
+    isRecurring: boolean
+    due: Date | null
+    isDeleted: boolean
+    subtasks: TodoistTask[]
 }
 
-type CSSPxVal   = `${number}px`
-type CSSREMVal   = `${number}rem`
-type CSSUnitVal = CSSPxVal | `${number}%` | `calc(${string})` | "auto"
-type CSSMultiDimPxVal = `${number}px` | 
-                        `${number}px ${number}px` | 
-                        `${number}px ${number}px ${number}px` | 
-                        `${number}px ${number}px ${number}px ${number}px` 
-
-type ContextMenuOptions = {
-    width: CSSUnitVal
+type TodoistItemPartialSyncOntext = {
+    action: "none" | "deleted" | "parent_changed" | "updated"
+    syncTask?: TodoistTask | null
+    idx: number
 }
 
-type DayBreakdown = {
-    cores: RoutineCores,
-    tags: RoutineTags[],
-    day: keyof WeeklyRoutineBlocks,
-    dayIdx: number,
-    blocksLength: number
-    linkedRoutine: {
-        name: string,
-        description: string,
-    } | null
+type TaskUpdateActions = "description" | "name" | "complete" | "incomplete" | "reorder"
+
+type TaskListClientHandlerContext = {
+    context: TaskUpdateActions | "add" | "delete",
+    payload: { 
+        taskId?: string,
+        subTaskId?: string, 
+        item: Task | Subtask
+    },
+    undoFunction?: FunctionParam
 }
 
-type StylingOptions = {
-    width?: CSSUnitVal
-    maxWidth?: CSSUnitVal
-    height?: CSSUnitVal
-    maxHeight?: CSSUnitVal
-    padding?: CSSMultiDimPxVal
-    margin?: CSSMultiDimPxVal
-    fontSize?: CSSREMVal
-    fontWeight?: string
-    color?: string
-    borderRadius?: CSSPxVal
-    backgroundColor?: string
-    fontFamily?: string
-    opacity?: number
+type TaskUpdateContext = {
+    action: TaskUpdateActions
+    payload: {
+        taskId: string
+        tasks: Tasks[]
+        subTaskId?: string
+        item: Task | Subtask
+    },
+    undoFunction?: FunctionParam
+}
+
+type TaskAddContext = {
+    payload: {
+        taskId?: string
+        tasks: Tasks[]
+        subTaskId?: string
+        name: string
+    },
+    undoFunction?: FunctionParam
+}
+
+type TaskDeleteContext = {
+    payload: {
+        taskId: string
+        tasks: Tasks[]
+        name: string
+        subTaskId?: string
+    },
+    undoFunction?: FunctionParam
+}
+
+type TaskListHandlersRes = {
+    context: "tasks" | "todoist" | "goal" | "routine-block"
+}
+
+type TaskListHandlers = {
+    onTaskUpdate: (context: TaskUpdateContext) => Promise<void>
+    onAddTask:    (context: TaskAddContext) => Promise<{ id: string }>
+    onDeleteTask: (context: TaskDeleteContext) => Promise<void>
 }
 
 type TasksListOptions = {
@@ -631,11 +643,15 @@ type TasksListOptions = {
     tasks: Task[]
     isCreatingNewTask?: boolean
     containerRef: HTMLElement
+    handlers?: TaskListHandlers
     settings?: {
         numbered?: boolean,
+        allowDuplicate?: boolean,
         tasksLinked?: boolean
-        subtasks?: boolean,
-        subtasksLinked?: boolean
+        subtasks?: boolean
+        reorder?: boolean
+        removeOnComplete?: boolean
+        progress?: "perc" | "count"
     }
     styling?: {
         list?: StylingOptions
@@ -675,6 +691,69 @@ type TasksListOptions = {
     subtaskMax?: number,
     maxToastMsg?: string
     subtaskMaxToastMsg?: string
+}
+
+type TaskListType = "numbered" | "tasks-linked" | "subtasks-linked" | "subtasks"
+
+type TaskListTypeCombos = `${TaskListType} ${TaskListType} ${TaskListType} ${TaskListType}` | 
+                          `${TaskListType} ${TaskListType} ${TaskListType}` | 
+                          `${TaskListType} ${TaskListType}` |
+                          `${TaskListType}`
+
+type TaskListReorder = {
+    taskId: string
+    newIdx: number
+    oldIdx: number
+}
+
+type TaskHeightChangeContext = {
+    isUserTyping?: boolean
+    hasWidthChanged?: boolean
+    doAnimate?: boolean
+}
+
+/* APIs */
+
+type CSSPxVal   = `${number}px`
+type CSSREMVal   = `${number}rem`
+type CSSUnitVal = CSSPxVal | `${number}%` | `calc(${string})` | "auto"
+type CSSMultiDimPxVal = `${number}px` | 
+                        `${number}px ${number}px` | 
+                        `${number}px ${number}px ${number}px` | 
+                        `${number}px ${number}px ${number}px ${number}px` 
+
+type ContextMenuOptions = {
+    width: CSSUnitVal
+}
+
+type DayBreakdown = {
+    cores: RoutineCores,
+    tags: RoutineTags[],
+    day: keyof WeeklyRoutineBlocks,
+    dayIdx: number,
+    blocksLength: number
+    linkedRoutine: {
+        name: string,
+        description: string,
+    } | null
+}
+
+type StylingOptions = {
+    width?: CSSUnitVal
+    maxWidth?: CSSUnitVal
+    minWidth?: CSSUnitVal
+    height?: CSSUnitVal
+    maxHeight?: CSSUnitVal
+    minHeight?: CSSUnitVal
+    padding?: CSSMultiDimPxVal
+    margin?: CSSMultiDimPxVal
+    fontSize?: CSSREMVal
+    fontWeight?: string
+    color?: string
+    borderRadius?: CSSPxVal
+    backgroundColor?: string
+    fontFamily?: string
+    opacity?: number
 }
 
 // interface TaskListOptionsInterface extends TasksListOptions<TaskListTypeCombos> { }

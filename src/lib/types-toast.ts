@@ -23,13 +23,14 @@ export type ToastTypes =
 	| 'success'
 	| 'info'
 	| 'warning'
+	| 'promise'
 	| 'error'
 	| 'loading'
 
 export type PromiseT<Data = unknown> = Promise<Data> | (() => Promise<Data>)
 
 export type PromiseData<ToastData = unknown> = ExternalToast & {
-	loading?: string | ComponentType
+	loading?: string
 	success?: string | ComponentType | ((data: ToastData) => ComponentType | string)
 	error?: string | ComponentType | ((error: unknown) => ComponentType | string)
 	finally?: () => void | Promise<void>
@@ -37,14 +38,16 @@ export type PromiseData<ToastData = unknown> = ExternalToast & {
 
 export type ToastT<T extends ComponentType = ComponentType> = {
 	id: number | string
-	title?: string | ComponentType
+	title?: string
 	type?: ToastTypes
-	icon?: ComponentType
-	logoIcon?: LogoIcon,
+	icon?: LogoIcon | string,
 	component?: T
 	componentProps?: ComponentProps<InstanceType<T>>
 	invert?: boolean
 	description?: string | ComponentType
+	contextId?: string
+	groupExclusive?: boolean
+	exclusive?: boolean
 	cancelButtonStyle?: string
 	actionButtonStyle?: string
 	duration?: number

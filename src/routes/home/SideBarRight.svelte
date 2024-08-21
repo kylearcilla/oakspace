@@ -1,24 +1,29 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte"
     
-	import { clamp, clickOutside } from "$lib/utils-general"
-    import { taskGroups } from "$lib/utils-right-bar"
     import { globalContext, themeState } from "$lib/store"    
-	import { RightSideTab, ShortcutSectionInFocus, Icon, ModalType } from "$lib/enums"
+	import { clamp, clickOutside } from "$lib/utils-general"
+	import { TEST_TASK_GROUPS } from "$lib/utils-right-bar"
+	import { TasksViewManager } from "$lib/tasks-view-manager"
+	import { ProductivityCalendar } from "$lib/productivity-calendar"
 	import { closeModal, openModal, setShortcutsFocus } from "$lib/utils-home"
+	import { RightSideTab, ShortcutSectionInFocus, Icon, ModalType } from "$lib/enums"
 	import { formatDatetoStr, formatTimeToHHMM, isNightTime, prefer12HourFormat } from "$lib/utils-date"
 
 	import Tasks from "./Tasks.svelte"
 	import Overview from "./Overview.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
-	import DropdownList from "../../components/DropdownList.svelte";
-	import ImgUpload from "../../components/ImgUpload.svelte";
-	import { TasksViewManager } from "$lib/tasks-view-manager";
+	import ImgUpload from "../../components/ImgUpload.svelte"
+	import DropdownList from "../../components/DropdownList.svelte"
 
     const SETTINGS_BTN_CUT_OFF_Y = 30
 
-    let selectedTab: RightSideTab = RightSideTab.OVERVIEW
+    let selectedTab: RightSideTab = RightSideTab.TASKS
     let headerRef: HTMLElement
+
+    /* tasks + overview */
+    let tasks = new TasksViewManager(TEST_TASK_GROUPS)
+    let calendar = new ProductivityCalendar(null)
     
     /* time */
     let isDayTime = true
@@ -40,7 +45,7 @@
     let DRAG_OFFSET_THRESHOLD = 5
 
     $: isLightTheme = !$themeState.isDarkTheme
-    $: if (bgImgSrc && bgImgRef) {
+    $: if (bgImgSrc && bgImgRef && headerRef) {
         requestAnimationFrame(() => {
             const MAX = getMaxHeaderImgOffset()
             topOffset = -(MAX / 2)
@@ -139,8 +144,6 @@
     onMount(() => {
         updateTimeStr()
         initDateTimer()
-
-        new TasksViewManager(taskGroups)
     })
     onDestroy(() => {
         clearInterval(interval! as any)
@@ -240,9 +243,9 @@
     </div>
     <div class="bar__main-content">
         {#if selectedTab === RightSideTab.TASKS}
-            <Tasks />
+            <Tasks manager={tasks} />
         {:else if selectedTab === RightSideTab.OVERVIEW}
-            <Overview/>
+            <Overview {calendar} />
         {/if}
     </div>
 
@@ -408,7 +411,7 @@
         &__header {
             width: 100%;
             margin: 0px 0px 13px 0px;
-            height: 72px;
+            height: 75px;
             position: relative;
 
             &-img-wrapper {
@@ -548,7 +551,7 @@
 
         /* Calendar */
         &__main-content {
-            height: calc(100% - 72px);
+            height: calc(100% - 75px);
         }
     }
 </style>

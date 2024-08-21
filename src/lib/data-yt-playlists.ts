@@ -178,7 +178,7 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
             { 
                 id: "PLTlW3nrfe71RWu84YggxarmAm5IdyBUOk",
                 title: "Jazz Gems & Classics",
-                description: "An eclectic jazz mix, frin modern to classics.",
+                description: "An eclectic jazz mix, from modern to classics.",
                 vidCount: 15,
                 channelId: "",
                 channelTitle: "Multiple Authors",
@@ -455,7 +455,7 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 firstVidId: null
             },
             {
-                id: "PL1WZky7MVeY_6H2ieeVKitXGd3npyPo-g",
+                id: "UULF_zQ777U6YTyatP3P1wi3xw",
                 title: "NEVER TOO SMALL Official Playlist",
                 description: "Explore space-saving marvels in the innovative designs of compact living environments.",
                 vidCount: 150,

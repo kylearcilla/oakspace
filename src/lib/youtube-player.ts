@@ -66,7 +66,7 @@ export class YoutubePlayer {
     async initYtPlayer() {
         try {
             await this.initIframePlayerAPI()
-            this.updateState({ doShowPlayer: true }) 
+            this.update({ doShowPlayer: true }) 
             
             this.hasActiveSession = true
         }
@@ -115,7 +115,7 @@ export class YoutubePlayer {
      * Update data store for Youtube Player.
      * @param newData  Incorporate new data from here.
      */
-    updateState(newData: Partial<YoutubePlayer>) {
+    update(newData: Partial<YoutubePlayer>) {
         ytPlayerStore.update((data) => (this.getNewStateObj(newData, data!)))
         this.saveStateData()
     }
@@ -291,7 +291,7 @@ export class YoutubePlayer {
 
         try {
             this.playlistClicked = playlist
-            this.updateState({ playlist })
+            this.update({ playlist })
 
             if (!this.player.stopVideo) {
                 window.location.reload()
@@ -313,7 +313,7 @@ export class YoutubePlayer {
     updateVideo(vid: YoutubeVideo, playlistVidIdx: number) {
         this.vid = vid
         this.playlistVidIdx = playlistVidIdx
-        this.updateState({ vid, playlistVidIdx })
+        this.update({ vid, playlistVidIdx })
     }
 
     /**
@@ -323,7 +323,7 @@ export class YoutubePlayer {
     updateCurrentPlaylist(playlist: YoutubePlaylist) {
         this.playlist = playlist
 
-        this.updateState({ 
+        this.update({ 
             playlist,
             playlistVidIdx: 0
         })
@@ -342,7 +342,7 @@ export class YoutubePlayer {
         this.vid = null
         this.playlistVidIdx = null
 
-        this.updateState({ 
+        this.update({ 
             playlist: null, vid: null, playlistVidIdx: null
         })
     }
@@ -367,7 +367,7 @@ export class YoutubePlayer {
             this.error = new APIError(APIErrorCode.PLAYER)
         }
 
-        this.updateState({ error: this.error })
+        this.update({ error: this.error })
         youtubeAPIErrorHandler(this.error)
     }
 
@@ -382,12 +382,12 @@ export class YoutubePlayer {
 
     removeError() {
         this.error = null
-        this.updateState({ error: null })
+        this.update({ error: null })
     }
 
     updateFloatPosition(floatLayout: BoxLayout) {
         this.floatLayout = structuredClone(floatLayout)
-        this.updateState({ floatLayout: this.floatLayout })
+        this.update({ floatLayout: this.floatLayout })
     }
 
     /**
@@ -398,7 +398,7 @@ export class YoutubePlayer {
     toggledShowPlayer() {
         this.doShowPlayer = !this.doShowPlayer
         this.player.stopVideo()
-        this.updateState({ doShowPlayer: this.doShowPlayer })
+        this.update({ doShowPlayer: this.doShowPlayer })
     }
 
     clearLookBackTimeout() {
@@ -437,7 +437,7 @@ export class YoutubePlayer {
         if (!savedData) return
 
         this.hasActiveSession = true
-        this.updateState({ ...savedData })
+        this.update({ ...savedData })
     }
 
     saveStateData() {

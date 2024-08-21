@@ -135,16 +135,9 @@
                     </div>
                 {/each}
             </div>
-        {:else}
-            {@const totalSessionMins = sessions.reduce((total, s) => {
-                const startTimeMins = getMinsFromStartOfDay(s.startTime)
-                const endTimeMins   = getMinsFromStartOfDay(s.endTime)
-            
-                return total + (endTimeMins - startTimeMins)
-            }, 0)}
-
+        {:else if viewing === "goals"}
             <div class="day-view__header-count">
-                {viewing === "goals" ? `${goals.length} Done` : minsToHHMM(totalSessionMins)}
+                Completed
             </div>
         {/if}
     </div>
@@ -373,10 +366,10 @@
 
         /* header */
         &__header {
-            display: flex;
             padding: 3px 0px 0px 0px;
             margin-left: var(--DAY_VIEW_SIDE_MARGINS);
             width: calc(100% - (var(--DAY_VIEW_SIDE_MARGINS) * 2));
+            display: flex;
             
             &--calendar {
                 border-bottom: 0.5px solid rgba(white, 0.055);

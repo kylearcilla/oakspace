@@ -109,14 +109,13 @@
         padding: 16px 21px 19px 21px;
 
         &--light &__caption {
-            @include text-style(0.7, 600);
+            @include text-style(0.7);
         }
         &--light &__text {
-            @include text-style(1, 600);
+            @include text-style(1);
         }
         &--light &__cancel-btn {
             @include txt-color(0.08, "bg");
-            font-weight: 600;
         }
         &--light &__ok-btn:hover {
             filter: brightness(0.94);
@@ -131,14 +130,14 @@
             display: block;
         }
         &__text {
-            @include text-style(0.85, 400, 1.44rem);
+            @include text-style(0.85, 500, 1.44rem);
             margin-bottom: 32px;
         }
         button {
             padding: 12px 25px;
             border-radius: 9px;
             @include center;
-            @include text-style(1, _, 1.34rem);
+            @include text-style(1, 500, 1.34rem);
             transition: 0.01s ease-in-out;
         }
 
@@ -158,7 +157,6 @@
         }
         &__ok-btn {
             width: calc(100% - (35% + 8px));
-            font-weight: 500;
             position: relative;
             overflow: hidden;
             transition: 0.14s cubic-bezier(.4,0,.2,1) !important;

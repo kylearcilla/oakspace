@@ -35,7 +35,6 @@ export const initAppState = async () => {
     if (didInitMusicUser()) {
         await musicLogin()
     }
-
     initMusicSettings()
 }
 

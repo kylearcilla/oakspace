@@ -1282,8 +1282,7 @@
                                     isContextMenuOpen = false
                                 },
                                 onDismount: () => {
-                                    const isEditModalOpen = editContext === "details"
-                                    manager.closeContextMenu(isEditModalOpen || colorsOpen)
+                                    manager.closeContextMenu(editContext === "details" || colorsOpen)
                                 },
                                 position: { 
                                     top: contextMenuPos.top + "px", 
@@ -1461,7 +1460,9 @@
                                 styling:  { width: "125px", maxHeight: "300px" },
                                 scroll:   { bar: true },
                                 onListItemClicked: onNewDayRoutineClicked,
-                                position: { top: "35px", right: `${dailyRoutinestXOffset}px` },
+                                position: { 
+                                    top: "35px", right: `${dailyRoutinestXOffset}px` 
+                                },
                                 parent: {
                                     id: "day-breakdown-settings",
                                     optnIdx: 0,

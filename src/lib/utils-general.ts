@@ -40,7 +40,12 @@ export const clickOutside = (node: any) => {
 
     // has clicked outside
     if (hasClickedOutside) {
-        node.dispatchEvent(new CustomEvent('click_outside', node))
+        const event = new CustomEvent('click_outside', {
+          ...node,
+          detail: { target, src: node }
+        })
+
+        node.dispatchEvent(event)
     }
   }
   document.addEventListener('click', handleClick, true)
@@ -65,7 +70,7 @@ export const findAncestor = (options: AncestoryQueryOptions): HTMLElement | null
   const max = options.max ?? 15
   const strict = options.strict === undefined ? false : options.strict
   const queryStr = options.queryStr
-  const byId = options.queryBy ? options.queryBy === "id" : true
+  const byId = options.queryBy ? options.queryBy === "id" : false
 
   while (currentElement && i++ < max) {
     if (strict && byId && currentElement!.id === queryStr) {
@@ -283,7 +288,6 @@ export const addSpacesToCamelCaseStr = (camelCaseStr: string) => {
   const words = camelCaseStr.replace(/([a-z])([A-Z])/g, '$1 $2');
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
-
 
 /**
  *  According to the PKCE standard, a code verifier is a high-entropy cryptographic random string with a length between 43 and 128 characters (the longer the better). 
@@ -1436,7 +1440,7 @@ export function looseEqualTo(x: number, y: number, diff = 5) {
 export function toastApiErrorHandler(options: {
   error: APIError, 
   title: string,
-  logoIcon: LogoIcon
+  logoIcon: LogoIcon,
   action?: { 
     label: string, onClick: (event: MouseEvent) => void 
   }
@@ -1447,6 +1451,7 @@ export function toastApiErrorHandler(options: {
   const isNotAPIError = error.code === undefined
   const errorMessage  = isNotAPIError ? "" : error.message
   const hasMsg        = errorMessage != undefined && errorMessage
+  const logoStr       = addSpacesToCamelCaseStr(LogoIcon[logoIcon])
 
   if (error.code === APIErrorCode.PLAYER) {
       toastOptions = {
@@ -1458,6 +1463,11 @@ export function toastApiErrorHandler(options: {
           message: hasMsg ? errorMessage : `Authorization failed. Please try again.`,
       }
   }
+  else if (error.code === APIErrorCode.RESOURCE_NOT_FOUND) {
+      toastOptions = {
+          message: hasMsg ? errorMessage : `Request resource not found.`,
+      }
+  }
   else if (error.code === APIErrorCode.EXPIRED_TOKEN) {
       toastOptions = {
           message: hasMsg ? errorMessage : `Token has expired. Log in again to continue.`,
@@ -1465,17 +1475,22 @@ export function toastApiErrorHandler(options: {
   }
   else if (error.code === APIErrorCode.RATE_LIMIT_HIT) {
       toastOptions = {
-          message: "Rate limit exceeded. Try again later.",
+          message: hasMsg ? errorMessage : "Rate limit exceeded. Try again later.",
       }
   }
-  else if (error instanceof TypeError) {
+  else if (error.code === APIErrorCode.AUTH_DENIED) {
       toastOptions = {
-          message: hasMsg ? errorMessage : "There was an error. Please try again."
+          message: hasMsg ? errorMessage : "Authorization denied.",
+      }
+  }
+  else if (error.code === APIErrorCode.API_ERROR) {
+      toastOptions = {
+          message: hasMsg ? errorMessage : `Error occured with ${title}. Try again later`,
       }
   }
   else {
       toastOptions = {
-          message: hasMsg ? errorMessage : `There was an error with Youtube Please try again later.` ,
+          message: hasMsg ? errorMessage : "An error has occured. Try again later."
       }
   }
   toastOptions.action = action
@@ -1483,7 +1498,15 @@ export function toastApiErrorHandler(options: {
   toast("default", {
       message: title,
       description: toastOptions.message,
-      logoIcon,
+      icon: logoIcon,
       action: toastOptions.action
   })
+}
+
+export function getAttrValue(elem: HTMLElement, attr: string) {
+  return elem.getAttribute(attr)
+}
+
+export function getCheerEmoji() {
+  return randomArrayElem(["👏", "🎉", "💪", "🙌", "🎈", "🎯"])
 }

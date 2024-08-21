@@ -347,7 +347,7 @@ export class GoogleCalendarManager {
 
     initToast(msg: string) {
         toast("default", {
-            logoIcon:    LogoIcon.Google,
+            icon:    LogoIcon.Google,
             message:    "Google Calendar",
             description: msg,
         })

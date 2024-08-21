@@ -650,6 +650,20 @@ export function formatDateToISO(options: { date: Date, type?: "start" | "end" | 
 }
 
 /**
+ * Formats date into YYYY-MM-DD format.
+ * 
+ * @param date  Date object
+ * @returns     Date in YYYY-MM-DD format.
+ */
+export function formatDateToSimpleIso(date: Date) {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`
+}
+
+/**
  * Gets the number of minutes from the start of the day given a date in ISO format
  * 
  * `i.e. 2024-08-07T23:59:59+00:00 -> 1439`
@@ -678,4 +692,8 @@ export function getIsoDateMinutesFromStartOfDay(isoDateString: string): number {
     
     const totalMinutes = (hours * 60 + minutes) + offsetMinutes
     return totalMinutes < 0 ? 1440 + totalMinutes : totalMinutes
+}
+
+export function isToday(date: Date) {
+    return isSameDay(date, new Date())
 }

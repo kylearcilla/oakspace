@@ -44,7 +44,6 @@ export const themeState = writable<ThemeState>({
 export const googleData = writable<GoogleUserData | null>(null)
 
 /* Home View Stuff */
-export const tasksViewStore  = writable<TasksViewManager | null>(null)
 export const mediaEmbedStore = writable<FloatingMediaEmbed | null>(null)
 
 /* Active Routine */

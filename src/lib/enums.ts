@@ -4,7 +4,7 @@ export enum ErrorCode {
 export enum APIErrorCode {
     EXPIRED_TOKEN, FAILED_TOKEN_REFRESH, LOGIN_IN, LOG_OUT, RESOURCE_NOT_FOUND, RESOURCE_UNAVAILABLE, 
     AUTHORIZATION_ERROR, UNAUTHORIZED, API_ERROR, GENERAL, RATE_LIMIT_HIT, PLAYER, APP_SERVER, AUTH_DENIED,
-    PLAYER_MEDIA_INVALID
+    PLAYER_MEDIA_INVALID, API_SERVER
 }
 /* General */
 export enum CoreStatus {
@@ -14,7 +14,7 @@ export enum TextTab {
     Workspace, Productivity, Goals, Habits, Mindhub, Routines
 }
 export enum LogoIcon {
-    AppleMusic, Spotify, YoutubeMusic, Soundcloud, Youtube, Session, Google, Luciole
+    AppleMusic, Spotify, YoutubeMusic, Soundcloud, Youtube, Session, Google, Luciole, Todoist
 }
 export enum Icon {
     Settings, Dropdown, Add, Close, ChevronLeft, ChevronRight, DragDots, Archive, Tune, Sun, Moon, Pin, Sublink,
@@ -58,9 +58,6 @@ export enum ImgUploadError {
 /* Tasks */
 export enum RightSideTab { 
     TASKS, OVERVIEW
-}
-export enum TaskSettingsOptions {
-    MAKE_NEW_TASK_GROUP, RENAME_TASK_GROUP, DELETE_TASK_GROUP
 }
 export enum ContextMenuOption {
     ADD_SUBTASK, DELETE_TASK, DELETE_SUBTASK

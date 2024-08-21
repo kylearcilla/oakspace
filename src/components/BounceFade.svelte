@@ -56,6 +56,7 @@
         style:left={position?.left}
         style:right={position?.right}
         style:bottom={position?.bottom}
+        on:contextmenu={(e) => e.preventDefault()}
         use:clickOutside on:click_outside={onClickOutside}
     >
         <slot></slot>

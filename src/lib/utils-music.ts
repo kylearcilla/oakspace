@@ -147,7 +147,7 @@ export async function verifyForPlayerSession(platform: MusicPlatform) {
  */
 export function initMusicToast(platform: MusicPlatform, message: string) {
     toast("default", {
-        logoIcon: getLogoIconFromEnum(platform, MusicPlatform),
+        icon: getLogoIconFromEnum(platform, MusicPlatform),
         message: getPlatformString(platform),
         description: message
     })

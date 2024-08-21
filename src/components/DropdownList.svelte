@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { themeState } from "$lib/store";
-	import { clickOutside, findAncestor } from "$lib/utils-general";
-	import { onMount } from "svelte";
-	import Hotkeys from "./Hotkeys.svelte";
-	import BounceFade from "./BounceFade.svelte";
+	import { themeState } from "$lib/store"
+	import { clickOutside, findAncestor } from "$lib/utils-general"
+	import { onMount } from "svelte"
+	import BounceFade from "./BounceFade.svelte"
+	import DropdownListOption from "./DropdownListOption.svelte"
 
     export let id: string = ""
     export let isHidden: boolean
@@ -35,16 +35,13 @@
     function resetCount(isActive: boolean) {
         idxCount = 0
     }
-    function onItemClicked(e: Event, idx: number) {
+    function onItemClicked(e: Event, idx: number, name: string) {
         options.onListItemClicked({
-            event: e, idx, parentName: options.parent?.optnName
+            event: e, 
+            name,
+            idx, 
+            parentName: options.parent?.optnName
         })
-    }
-    function getDefaultIcon(item: DropdownOption) {
-        return item.rightIcon!.icon as string
-    }
-    function getHotkeys(item: DropdownOption) {
-        return item.rightIcon!.icon as HotKeyCombo
     }
     function goToStartingIdxLocation(goToIdx: number) {
         if (goToIdx < 0) return
@@ -142,6 +139,8 @@
             class:dropdown-menu--dark={isDarkTheme}
             class:dropdown-menu--has-scroll-bar={options.scroll?.bar ?? false}
             style:width={options?.styling?.width ?? "auto"}
+            style:min-width={options?.styling?.minWidth ?? "auto"}
+            style:max-width={options?.styling?.maxWidth ?? "auto"}
             style:height={options?.styling?.height ?? "auto"}
             style:max-height={options?.styling?.maxHeight ?? "auto"}
             style:--font-family={options.styling?.fontFamily ?? "Manrope"}
@@ -151,101 +150,35 @@
                 <!-- Section Item -->
                 {#if "options" in item}
                     {@const section = item}
-                    <li class="dropdown-menu__section">
-                        <!-- Option Item -->
+                    <li 
+                        class="dropdown-menu__section"
+                        class:dropdown-menu__section--last={idx === listItems.length - 1}
+                    >
+                        {#if item.sectionName}
+                            <div class="dropdown-menu__section-name">
+                                {item.sectionName}
+                            </div>
+                        {/if}
                         {#each section.options as option}
-                            {@const type = option.rightIcon?.type}
-                            {@const optnIdx = initOptnIdx()}
-                            <li 
-                                class="dropdown-menu__option"
-                                class:dropdown-menu__option--selected={pickedItem === optnIdx}
-                            >
-                                <button 
-                                    class="dropdown-menu__option-btn" 
-                                    on:click={(e) => onItemClicked(e, optnIdx)}
-                                >
-                                    <!-- Left Icon -->
-                                    {#if option.leftIcon}
-                                        <div class="dropdown-menu__option-icon dropdown-menu__option-icon--left">
-                                            <i class={option.leftIcon}></i>
-                                        </div>
-                                    {/if}
-                                    <!-- Content -->
-                                    <span class="dropdown-menu__option-text">
-                                        {option.name}
-                                    </span>
-                                    <!-- Right Icon -->
-                                    <div class="dropdown-menu__option-right-icon-container">
-                                        <!-- Check -->
-                                        {#if pickedItem != undefined}
-                                            <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
-                                                <i class="fa-solid fa-check"></i>
-                                            </div>
-                                        {/if}
-                                        {#if option.rightIcon && type != "hotkey"}
-                                            <div class={`dropdown-menu__option-icon dropdown-menu__option-icon--${type}`}>
-                                                <i class={getDefaultIcon(option)}></i>
-                                            </div>
-                                        {:else if option.rightIcon}
-                                            <!-- Hot Key -->
-                                            <Hotkeys hotkeys={getHotkeys(option)} />
-                                        {/if}
-                                    </div>
-                                </button>
-                        </li>
+                            <DropdownListOption 
+                                {option}
+                                {pickedItem}
+                                idx={initOptnIdx()}
+                                onOptionClicked={onItemClicked}
+                            />
                         {/each}
                     </li>
                     <li class="dropdown-menu__section-divider"></li>
                 <!-- Option Item -->
                 {:else}
                     {@const option = item}
-                    {@const type = item.rightIcon?.type}
-                    {@const optnIdx = initOptnIdx()}
-                    {@const name = item.name}
-
-                    <li 
-                        class="dropdown-menu__option"
-                        class:dropdown-menu__option--selected={pickedItem === name || pickedItem === optnIdx}
-                        data-optn-idx={idx}
-                        on:pointerenter={item.onPointerOver}
-                        on:pointerleave={(e) => onItemPointerLeave(e, option)}
-                    >
-                        <button 
-                            class="dropdown-menu__option-btn" 
-                            on:click={(e) => onItemClicked(e, optnIdx)}
-                        >
-                            <!-- Left Icon -->
-                            {#if option.leftIcon}
-                                <div class="dropdown-menu__option-icon dropdown-menu__option-icon--left">
-                                    <i class={option.leftIcon}></i>
-                                </div>
-                            {/if}
-                            <!-- Content -->
-                            <span class="dropdown-menu__option-text">
-                                {name}
-                            </span>
-                            <!-- Right Icon -->
-                            <div class="dropdown-menu__option-right-icon-container">
-                                <!-- Check -->
-                                {#if pickedItem != undefined}
-                                    <div 
-                                        class="dropdown-menu__option-icon"
-                                        class:dropdown-menu__option-icon--check={true}
-                                    >
-                                        <i class="fa-solid fa-check"></i>
-                                    </div>
-                                {/if}
-                                {#if option.rightIcon && type != "hotkey"}
-                                    <div class={`dropdown-menu__option-icon dropdown-menu__option-icon--${type}`}>
-                                        <i class={getDefaultIcon(option)}></i>
-                                    </div>
-                                {:else if option.rightIcon}
-                                    <!-- Hot Key -->
-                                    <Hotkeys hotkeys={getHotkeys(option)} />
-                                {/if}
-                            </div>
-                        </button>
-                    </li>
+                    <DropdownListOption 
+                        {option}
+                        {pickedItem}
+                        idx={initOptnIdx()}
+                        onOptionClicked={onItemClicked}
+                        onOptionPointerLeave={onItemPointerLeave}
+                    />
                 {/if}
             {/each}
         </ul>

@@ -7,6 +7,7 @@
 	import SvgIcon from './SVGIcon.svelte'
 	import { globalContext, themeState } from '$lib/store';
 	import { COLOR_SWATCHES, extractNum, getColorTrio } from '$lib/utils-general';
+	import Loader from './Loader.svelte';
 
 	type $$Props = Expand<ToastProps>
 
@@ -43,7 +44,8 @@
 		Soundcloud:   { iconWidth: "60%" },
 		Youtube:      { iconWidth: "60%" },
 		Google:       { iconWidth: "60%" },
-		Luciole:      { iconWidth: "60%" }
+		Luciole:      { iconWidth: "60%" },
+		Todoist:      { iconWidth: "100%", containerWidth: "14px" }
 	}
 
 	let pointerDownTimeStamp = 0
@@ -73,6 +75,8 @@
 		loading: ''
 	}
 	const { toasts, heights, removeHeight, addHeight, dismiss } = toasterManager!
+
+	$: console.log({ toastType })
 	
 	$: classes = { ...defaultClasses, ...classes }
 	$: isFront = index === 0
@@ -97,8 +101,8 @@
 	$: if (toast.delete) {
 		deleteToast()
 	}
-	$: {
-		const iconStrIdx = LogoIcon[toast.logoIcon!] as keyof typeof TOAST_ICON_OPTIONS
+	$: if (typeof toast.icon === "number") {
+		const iconStrIdx = LogoIcon[toast.icon!] as keyof typeof TOAST_ICON_OPTIONS
 		iconOptions = TOAST_ICON_OPTIONS[iconStrIdx]
 	}
 	$: if (toast.updated) {
@@ -303,12 +307,14 @@
 	role="status"
 	tabIndex={0}
     class="toast"
+    class:toast--flat={!toast.description}
     class:toast--context={isContextMsg}
     class:toast--success={toastType === 'success'}
     class:toast--warning={toastType === 'warning'}
     class:toast--info={toastType === 'info'}
     class:toast--error={toastType === 'error'}
     class:toast--light={isLight}
+	data-toast-context={toast.contextId}
 	data-sonner-toast=""
 	data-styled={!(toast.component || toast?.unstyled || unstyled)}
 	data-mounted={mounted}
@@ -337,9 +343,8 @@
 	<div class="toast__grab-bar"></div>
 
     <!-- Close Button -->
-	{#if closeButton && !toast.component}
+	{#if closeButton && !toast.component && toastType != "loading"}
 		{@const toastIconColor = getToastIconColor()}
-
 		<button
             class="toast__close-btn" 
 			aria-label="Close toast"
@@ -361,38 +366,49 @@
 	<!-- Main Content -->
 	<div class="toast__content" data-content="">
 		<div class="toast__header">
-			<div class="toast__header-icon">
-				{#if toast.logoIcon != null}
-					<Logo 
-						logo={toast.logoIcon} 
-						options={{ containerWidth: `100%`, ...iconOptions}} 
-					/>
-				{:else if toastType === "success"}
-					<i class="fa-solid fa-circle-check"></i>
-				{:else if toastType === "info"}
-					<i class="fa-solid fa-circle-exclamation"></i>
-				{:else if toastType === "warning"}
-					<i class="fa-solid fa-triangle-exclamation"></i>
-				{:else if toastType === "error"}
-					<i class="fa-solid fa-circle-exclamation"></i>
-				{/if}
-			</div>
-			<div class="toast__header-title">
+			{#if toast.icon || ["success", "info", "warning", "error", "loading", "default"].includes(toastType)}
+				<div class="toast__header-icon">
+					{#if toastType === "loading"}
+						<Loader visible={true} />
+					{:else if typeof toast.icon === "number"}
+						<Logo 
+							logo={toast.icon} 
+							options={{ containerWidth: `100%`, ...iconOptions}} 
+						/>
+					{:else if toast.icon && toast.icon.startsWith("fa")}
+						<i class={toast.icon}></i>
+					{:else if toast.icon}
+						{toast.icon}
+					{:else if toastType === "success"}
+						<i class="fa-solid fa-circle-check"></i>
+					{:else if toastType === "info"}
+						<i class="fa-solid fa-circle-exclamation"></i>
+					{:else if toastType === "warning"}
+						<i class="fa-solid fa-triangle-exclamation"></i>
+					{:else if toastType === "error"}
+						<i class="fa-solid fa-circle-exclamation"></i>
+					{/if}
+				</div>
+			{/if}
+			<div class="toast__header-title" title={toast.title}>
 				{toast.title}
 			</div>
 		</div>
-		<div class="toast__description">
-			{#if typeof toast.description !== 'string'}
-				<svelte:component this={toast.description} {...toast.componentProps} />
-			{:else}
-				{toast.description}
-			{/if}
-		</div>
+		{#if toast.description}
+			<div class="toast__description">
+				{#if typeof toast.description !== 'string'}
+					<svelte:component this={toast.description} {...toast.componentProps} />
+				{:else}
+					{toast.description}
+				{/if}
+			</div>
+		{/if}
 	</div>
 	<div class="toast__bottom-container">
 		<!-- Cancel -->
 		{#if toast.cancel}
 			<button
+				data-toast-context={toast.contextId}
 				data-button data-cancel
 				style={cancelButtonStyle}
 				class={cn(classes?.cancelButton, toast?.classes?.cancelButton)}
@@ -404,8 +420,12 @@
 
 		<!-- Action -->
 		{#if toast.action}
-			<button class="toast__action-btn" on:click={actionBtnClickedHandler}>
-			{toast.action.label}
+			<button 
+				data-toast-context={toast.contextId}
+				class="toast__action-btn" 
+				on:click={actionBtnClickedHandler}
+			>
+				{toast.action.label}
 			</button>
 		{/if}
 	</div>

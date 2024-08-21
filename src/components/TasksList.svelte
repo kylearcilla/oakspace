@@ -1,133 +1,38 @@
 <script lang="ts">
-    import { createEventDispatcher, onMount } from "svelte"
-	import SvgIcon from "./SVGIcon.svelte"
-	import { themeState } from "$lib/store"
-	import DropdownList from "./DropdownList.svelte";
+	import type { Writable } from "svelte/store"
+    import { onMount } from "svelte"
+
 	import { Icon } from "$lib/enums"
-	import { clickOutside, inlineStyling } from "$lib/utils-general"
+	import { themeState } from "$lib/store"
 	import { TasksListManager } from "$lib/tasks-list-manager"
-	import { InputManager, TextEditorManager } from "$lib/inputs";
-	import type { Writable } from "svelte/store";
+	import { InputManager, TextEditorManager } from "$lib/inputs"
+	import { clickOutside, findAncestor, getAttrValue, inlineStyling } from "$lib/utils-general"
+    
+	import SvgIcon from "./SVGIcon.svelte"
+	import DropdownList from "./DropdownList.svelte"
 
     export let options: TasksListOptions
 
     const _manager   = new TasksListManager(options)
     const manager    = _manager.state
     const tasksStore = _manager.tasks 
-    const settings      = $manager.settings
+    const settings   = $manager.settings
     const { FLOATING_WIDTH_PERCENT, TASK_DESCR_LINE_HT } = $manager
 
-    const TASK_OPTIONS: DropdownListItem[] = [
-        {
-            options: [
-                { 
-                    name: "Rename"
-                },
-                ...(settings.subtasks ? [
-                    {
-                        name: "Add Subtask",
-                        rightIcon: {
-                            type: "hotkey",
-                            icon: ["shift", "plus"]
-                        }
-                    } as DropdownOption
-                ] : [])
-            ]
-        },
-        {
-            options: [
-                { 
-                    name: "Add Task Above",
-                    rightIcon: {
-                        type: "hotkey",
-                        icon: ["meta", "up"]
-                    }
-                },
-                { 
-                    name: "Add Task Below",
-                    rightIcon: {
-                        type: "hotkey",
-                        icon: ["meta", "down"]
-                    }
-                },
-                { 
-                    name: "Duplicate Task",
-                    rightIcon: {
-                        type: "hotkey",
-                        icon: ["meta", "d"]
-                    }
-                }
-            ]
-        },
-        { 
-            name: "Delete Task",
-            rightIcon: {
-                type: "hotkey",
-                icon: ["meta", "delete"]
-            }
-        },
-    ]
-    const SUBTASK_OPTIONS: DropdownListItem[] = [
-        {
-            options: [
-                { 
-                    name: "Rename"
-                },
-            ]
-        },
-        {
-            options: [
-                { 
-                    name: "Add Subtask Above",
-                    rightIcon: {
-                        type: "hotkey",
-                        icon: ["meta", "up"]
-                    }
-                },
-                { 
-                    name: "Add Subtask Below",
-                    rightIcon: {
-                        type: "hotkey",
-                        icon: ["meta", "down"]
-                    }
-                },
-                { 
-                    name: "Duplicate Subtask",
-                    rightIcon: {
-                        type: "hotkey",
-                        icon: ["meta", "d"]
-                    }
-                }
-            ]
-        },
-        { 
-            name: "Delete Subtask",
-            rightIcon: {
-                type: "hotkey",
-                icon: ["meta", "delete"]
-            }
-        },
-    ]
-        
+    const { tasksOptions, subTaskOptions } = _manager.getContextMenuOptions()
+
     let tasksListContainerElem: HTMLElement
     let tasksList: HTMLElement
-    let maskListGradient = ""
     let idPrefix = options.id
     let isContextMenuOpen = false
     let containerHeight = 0
-    let wrapperHeight = 0
-    let tasksHeight = 0
     let tasks: Task[] = []
-    let debounceTimeout: NodeJS.Timeout | null = null
 
-    const dispatch = createEventDispatcher()
-    $: dispatch("tasksUpdated", tasks)
+
     $: createNewTask(options?.isCreatingNewTask ?? false)
 
     $: isDarkTheme       = $themeState.isDarkTheme
     $: pickedTaskIdx     = $manager.pickedTaskIdx
-    $: justExpandedTask  = $manager.justExpandedTask
-    $: pickedTaskHT      = $manager.pickedTaskIdx
     $: editingSubtaskIdx = $manager.editingSubtaskIdx
     $: pickedTaskTitle   = $manager.getTask(pickedTaskIdx)?.title ?? ""
     $: pickedTaskDescription = $manager.getTask(pickedTaskIdx)?.description ?? ""
@@ -207,10 +112,6 @@
         const isSubask = $manager.didClickOnSubtaskElem(target)
 
         if (isSubask) return
-        if (isContextMenuOpen) {
-            isContextMenuOpen = false
-            return
-        }
         $manager.openContextMenu(e, taskIdx)
         isContextMenuOpen = true
     }
@@ -225,16 +126,25 @@
     function onWindowResize() {
         requestAnimationFrame(() => $manager.updateOpenTaskHeight({ hasWidthChanged: true }))
     }
-    function onClickedOutside() {
-        if (pickedTaskIdx < 0 || isContextMenuOpen) return
+    function onClickedOutside(event: CustomEvent) {
+        if (pickedTaskIdx < 0 || isContextMenuOpen || !event.detail?.target) return
+
+        const target = event.detail.target as HTMLElement
+        const toast = findAncestor({
+            child: target,
+            queryStr: "toast",
+            strict: true,
+            max: 5
+        })
+        
+        if (toast && getAttrValue(toast, "data-toast-context") === $manager.options.id) {
+            return
+        }
 
         $manager.minimizeExpandedTask()
     }
     onMount(() => {
         $manager.initAfterLoaded(tasksListContainerElem, tasksList)
-
-        // inital render will get incorrection collapsed task heights due to a larger than should be initial description height
-        requestAnimationFrame(() => tasks = tasks)
     })
 </script>
 
@@ -245,22 +155,32 @@
     class:tasks-wrapper--light={!isDarkTheme}
     class:tasks-wrapper--top-btn={$manager.addBtn?.pos === "top"}
     class:tasks-wrapper--empty-list={tasks.length === 0}
-    class:no-pointer-events={isContextMenuOpen}
     style:--side-padding={$manager.ui.sidePadding}
     style:--checkbox-fill={$manager.cssVariables.checkBoxFill}
     style:--checkbox-empty={$manager.cssVariables.checkBoxEmpty}
     style:--checkbox-icon={$manager.cssVariables.checkIcon}
+
     style:--task-bg-color={$manager.cssVariables.taskBgColor}
     style:--task-bg-hover-color={$manager.cssVariables.taskHoverBgColor}
+
     style:--floating-task-bg-color={$manager.cssVariables.floatingItemBgColor}
-    style:--subtask-link-color={$manager.cssVariables.subTaskLinkSolidColor}
     style:--max-title-lines={$manager.cssVariables.maxTitleLines}
     style:--max-descr-lines={$manager.cssVariables.maxDescrLines}
     style:--task-top-padding={`${$manager.taskLayout?.topPadding}px`}
-    style:--title-font-size={`${$manager.styling?.task?.fontSize ?? "1.25rem"}`}
     style:--left-section-width={`${$manager?.taskLayout?.leftSectionWidth}px`}
     style:--tasks-max-height={`${containerHeight + 5}px`}
-    bind:clientHeight={wrapperHeight}
+
+    style:--title-font-size={`${$manager.styling?.task?.fontSize ?? "1.25rem"}`}
+    style:--title-font-weight={`${$manager.styling?.task?.fontWeight ?? "400"}`}
+    style:--title-opacity={`${$manager.styling?.task?.opacity ?? 1}`}
+
+    style:--descr-font-size={`${$manager.styling?.description?.fontSize ?? "1rem"}`}
+    style:--descr-font-weight={`${$manager.styling?.description?.fontWeight ?? 400}`}
+    style:--descr-opacity={`${$manager.styling?.description?.opacity ?? 0.7}`}
+
+    style:--subtask-font-size={`${$manager.styling?.subtask?.fontSize ?? "1rem"}`}
+    style:--subtask-font-weight={`${$manager.styling?.subtask?.fontWeight ?? 400}`}
+    style:--subtask-opacity={`${$manager.styling?.subtask?.opacity ?? 0.7}`}
 >
     <div 
         bind:this={tasksListContainerElem}
@@ -274,7 +194,6 @@
     >
         <ul 
             bind:this={tasksList}
-            bind:clientHeight={tasksHeight}
             class="tasks"
             class:tasks--dragging-state={$manager.floatingItem}
             class:tasks--numbered={settings.numbered}
@@ -289,39 +208,38 @@
                 {@const pickedIdx = $manager.pickedTaskIdx}
                 {@const focusedIdx = $manager.focusedTaskIdx}
                 {@const subtaskProgress = settings.subtasks ? $manager.getSubtaskProgress(taskIdx) : null }
-                {@const subtasksNoLink = settings.subtasks && !settings.subtasksLinked}
                 {@const isDraggingTask = $manager.isDraggingTask}
                 {@const isDraggingSubtask = $manager.isDraggingSubtask}
                 {@const subtasks = task.subtasks ?? []}
                 {@const isPicked = taskIdx === $manager.pickedTaskIdx}
-                {@const height = $manager.initMinTaskHeight(task)}
+                {@const isDragSrc = isDraggingTask && $manager.floatingItem?.idx === taskIdx}
+                {@const _ = $manager.initMinTaskHeight(task)}
 
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <li
-                    role="button" tabindex="0" 
+                    role="button" 
+                    tabindex="0" 
                     id={`${idPrefix}--task-id--${taskIdx}`}
-                    data-task-type={"task"}
+                    data-task-type="task"
                     class="task"
                     class:task--light={!isDarkTheme}
-                    class:task--hide-top-border={taskIdx != 0 && taskIdx - 1 === focusedIdx}
-                    class:task--hide-bottom-border={taskIdx + 1 === focusedIdx}
                     class:task--no-divider={!$manager.ui.hasTaskDivider}
                     class:task--hide-drag-handle={!$manager.ui.showDragHandle}
                     class:task--expanded={taskIdx === pickedIdx}
-                    class:task--drag-over={isDraggingTask && (taskIdx === $manager.dragOverItemElemIdx)}
-                    class:task--drag-src={isDraggingTask && $manager.floatingItem?.idx === taskIdx}
+                    class:task--drag-over={isDraggingTask && taskIdx === $manager.dragOverItemElemIdx}
                     class:task--min={taskIdx != pickedIdx}
-                    class:task--subtask-dragging-state={$manager.isDraggingSubtask}
                     class:task--focused={pickedIdx === taskIdx}
                     class:task--full-divider={(focusedIdx === taskIdx && pickedIdx === taskIdx) || (taskIdx > 0 && focusedIdx === taskIdx - 1 && pickedIdx === taskIdx - 1)}
-                    class:task--checked={task.isChecked}
-                    class:task--subtasks-no-link={subtasksNoLink}
+                    class:task--checked={task.isChecked && !isDragSrc}
+                    class:drag-src={isDragSrc}
                     style={`${inlineStyling($manager.styling?.task)}`}
                     on:click={(event) => {
+                        if (isContextMenuOpen) return
                         $manager.onTaskClicked(event, taskIdx)
                     }}
                     on:pointerdown={(e) => {
-                        $manager.onTaskPointerDown(e)
+                        if (isContextMenuOpen) return
+                        $manager.onTaskPointerDown(e, taskIdx)
                     }}
                     on:contextmenu|preventDefault={(e) => {
                         onTaskContextMenu(e, taskIdx)
@@ -336,10 +254,10 @@
                                 </div>
                             {:else}
                                 <button 
-                                    class="task__checkbox" 
+                                    class="task__checkbox"
                                     id={`${idPrefix}--task-checkbox-id--${taskIdx}`}
                                     style={inlineStyling($manager.styling?.checkbox)}
-                                    on:click={() => $manager.handleTaskCheckboxClicked(task)}
+                                    on:click={() => $manager.toggleTaskComplete(task)}
                                 >
                                     <i class="fa-solid fa-check checkbox-check"></i>
                                 </button>
@@ -361,13 +279,15 @@
                                     <div 
                                         id={`${idPrefix}--task-title-id--${taskIdx}`}
                                         class="task__title-input"
+                                        spellcheck="false"
                                         data-placeholder={$titleTextEditor.placeholder}
                                         contenteditable
                                         bind:innerHTML={$titleTextEditor.value}
                                         on:paste={(e) => $titleTextEditor.onPaste(e)}
                                         on:input={(e) => $titleTextEditor.onInputHandler(e)}
-                                        on:focus={(e) => $titleTextEditor.onFocusHandler(e)}
-                                        on:blur={(e)  => $titleTextEditor.onBlurHandler(e)}
+                                        on:blur={(e)  => {
+                                            $titleTextEditor.onBlurHandler(e)
+                                        }}
                                     >
                                     </div>
                                 {:else}
@@ -383,13 +303,16 @@
                                 {/if}
                                 <!-- Subtask Progress -->
                                 {#if subtaskProgress && subtaskProgress.length > 0}
+                                    {@const frac = `${Math.floor((subtaskProgress.countDone / subtaskProgress.length) * 100)}%`}
+                                    {@const count = subtaskProgress.length}
+
                                     <div 
                                         class="task__subtask-progress"
                                         class:task__subtask-progress--min={settings.numbered}
                                     >    
-                                        <span>{subtaskProgress.countDone}</span>
-                                        <span>/</span>
-                                        <span>{subtaskProgress.length}</span>
+                                        <span>
+                                            {settings.progress === "count" ? count : frac}
+                                        </span>
                                     </div>
                                 {/if}
                             </div>
@@ -400,13 +323,13 @@
                                 style={inlineStyling($manager.styling?.description)}
                                 style:height={`${$manager.pickedTaskDescriptionHT ? `height: ${$manager.pickedTaskDescriptionHT}px` : "height: auto"}`}
                                 style:line-height={`${TASK_DESCR_LINE_HT}px`}
-                                style:--description-font-size={`${$manager.styling?.descriptionInput?.fontSize ?? "1.2rem"}`}
                             >
                                 {#if isPicked}
                                     <div 
                                         id={`${idPrefix}--task-description-input-id--${taskIdx}`}
                                         class="task__description-input"
                                         data-placeholder={$descriptionTextEditor.placeholder}
+                                        spellcheck="false"
                                         contenteditable
                                         bind:innerHTML={$descriptionTextEditor.value}
                                         on:paste={(e) => $descriptionTextEditor.onPaste(e)}
@@ -429,137 +352,108 @@
                     </div>
                     <!-- Subtasks -->
                     {#if settings.subtasks && subtasks.length > 0 && taskIdx === $manager.pickedTaskIdx}
-                        {@const dragOverIdx         = $manager.dragOverItemElemIdx}
+                        {@const dragOverIdx = $manager.dragOverItemElemIdx}
 
-                        <ul class="task__subtasks-list" id={`${idPrefix}--task-subtasks-id--${taskIdx}`}>
+                        <ul 
+                            class="task__subtasks-list" 
+                            id={`${idPrefix}--task-subtasks-id--${taskIdx}`}
+                        >
                             {#each subtasks as subtask, subtaskIdx (`${taskIdx}--${subtaskIdx}`)}
                                 {@const focusedSubtaskIdx   =  $manager.focusedSubtaskIdx}
                                 {@const focused             = $manager.rightClickedSubtask?.idx === subtaskIdx || focusedSubtaskIdx === subtaskIdx}
                                 {@const subtaskAnimDuration = subtasks.length < 8 ? 200 : 95}
                                 {@const subtaskDelayFactor  = subtasks.length < 8 ? 30  : 18}
                                 {@const subtaskDelay        = subtask.title ? (subtaskDelayFactor * subtaskIdx) : 0}
-                                {@const noSubtaskLink       = !settings.subtasksLinked}
                                 {@const hideDivider         = false}
 
-                                    <li 
-                                        role="button" tabindex="0" 
-                                        class="task subtask"
-                                        data-task-type={"subtask"}
-                                        id={`${idPrefix}--subtask-id--${subtaskIdx}`}
-                                        style={inlineStyling($manager.styling?.subtask)}
-                                        class:task--light={!isDarkTheme}
-                                        class:subtask--light={!isDarkTheme}
-                                        class:task--hide-top-border={dragOverIdx < 0 && subtaskIdx != 0 && subtaskIdx - 1 === focusedSubtaskIdx}
-                                        class:task--hide-bottom-border={dragOverIdx < 0 && subtaskIdx + 1 === focusedSubtaskIdx}
-                                        class:subtask--checked={subtask.isChecked}
-                                        class:subtask--focused={focused}
-                                        class:subtask--no-link={noSubtaskLink}
-                                        class:subtask--dragging-state={$manager.isDraggingSubtask}
-                                        class:subtask--drag-over={!isDraggingTask && subtaskIdx === $manager.dragOverItemElemIdx}
-                                        class:subtask--drag-src={isDraggingSubtask && subtaskIdx === $manager.floatingItem?.idx}
-                                        style:--subtask-animation-duration={`${subtaskAnimDuration}ms`}
-                                        style:--subtask-idx-delay={`${subtaskDelay}ms`}
-                                        use:clickOutside on:click_outside={() => {
-                                            $manager.resetCurrentFocusedSubtaskIdx()
-                                        }}
-                                        on:click={() => {
-                                            $manager.onSubtaskClicked(taskIdx, subtaskIdx)
-                                        }}
-                                        on:contextmenu|preventDefault={() => {
-                                            onSubtaskContextMenu(taskIdx, subtaskIdx)
-                                        }}
-                                    >
-                                        <div class="subtask__content">
-                                            <div class="subtask__content-main">
-                                                <div class="subtask__left">
-                                                    <!-- Links -->
-                                                    {#if settings.subtasksLinked && subtaskIdx === 0}
-                                                        <div 
-                                                            class="subtask__subtask-link"
-                                                            id={`${idPrefix}--subtask-link-id--${subtaskIdx}`}
-                                                            class:subtask__subtask-link--first={subtaskIdx === 0}
-                                                        >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none">
-                                                                <path stroke-dasharray="1.6 1.6"/>
-                                                            </svg>
-                                                        </div>
-                                                    {:else if settings.subtasksLinked }
-                                                        <div 
-                                                            class="subtask__subtask-link"
-                                                            id={`${idPrefix}--subtask-link-id--${subtaskIdx}`}
-                                                        >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none">
-                                                                <path stroke-dasharray="1.6 1.6"/>
-                                                            </svg>
-                                                        </div>
-                                                    {/if}
-                                                    <!-- Checkbox -->
-                                                    {#if settings.numbered}
-                                                        <div class="subtask__number task__number">
-                                                            {String.fromCharCode(subtaskIdx + 65 + 32)}.
-                                                        </div>
-                                                    {:else}
-                                                        <button 
-                                                            id={`${idPrefix}--subtask-checkbox-id--${subtaskIdx}`}
-                                                            style={inlineStyling($manager.styling?.checkbox)}
-                                                            class="subtask__checkbox task__checkbox" 
-                                                            on:click={() => $manager.handleSubtaskCheckboxClicked(subtaskIdx)}
-                                                        >
-                                                            <i class="fa-solid fa-check checkbox-check"></i>
-                                                        </button>
-                                                    {/if}
-                                                </div>
-                                                <!-- Main Content -->
-                                                <div class="subtask__right">
-                                                    {#if $manager.editingSubtaskIdx === subtaskIdx}
-                                                        <div 
-                                                            id={`${idPrefix}--task-subtask-title-input-id--${subtaskIdx}`}
-                                                            class="subtask__title-input"
-                                                            data-placeholder={$subtaskTextEditor.placeholder}
-                                                            contenteditable
-                                                            bind:innerHTML={$subtaskTextEditor.value}
-                                                            on:paste={(e) => $subtaskTextEditor.onPaste(e)}
-                                                            on:input={(e) => $subtaskTextEditor.onInputHandler(e)}
-                                                            on:focus={(e) => $subtaskTextEditor.onFocusHandler(e)}
-                                                            on:blur={(e)  => $subtaskTextEditor.onBlurHandler(e)}
-                                                        >
+                                <li 
+                                    role="button" 
+                                    tabindex="0" 
+                                    class="task subtask"
+                                    data-task-type="subtask"
+                                    id={`${idPrefix}--subtask-id--${subtaskIdx}`}
+                                    style={inlineStyling($manager.styling?.subtask)}
+                                    class:task--light={!isDarkTheme}
+                                    class:subtask--light={!isDarkTheme}
+                                    class:subtask--checked={subtask.isChecked}
+                                    class:subtask--focused={focused}
+                                    class:subtask--drag-over={!isDraggingTask && subtaskIdx === $manager.dragOverItemElemIdx}
+                                    class:drag-src={isDraggingSubtask && subtaskIdx === $manager.floatingItem?.idx}
+                                    style:--subtask-animation-duration={`${subtaskAnimDuration}ms`}
+                                    style:--subtask-idx-delay={`${subtaskDelay}ms`}
+                                    use:clickOutside on:click_outside={() => {
+                                        $manager.resetCurrentFocusedSubtaskIdx()
+                                    }}
+                                    on:click={() => {
+                                        $manager.onSubtaskClicked(taskIdx, subtaskIdx)
+                                    }}
+                                    on:contextmenu|preventDefault={() => {
+                                        onSubtaskContextMenu(taskIdx, subtaskIdx)
+                                    }}
+                                >
+                                    <div class="subtask__content">
+                                        <div class="subtask__content-main">
+                                            <div class="subtask__left">
+                                                <!-- Checkbox -->
+                                                {#if settings.numbered}
+                                                    <div class="subtask__number task__number">
+                                                        {String.fromCharCode(subtaskIdx + 65 + 32)}.
                                                     </div>
-                                                    {:else}
-                                                        <span 
-                                                            class="subtask__title"
-                                                            on:click={() => $manager.onSubtaskTitleClicked(subtaskIdx)}
-                                                        >
-                                                            {subtask.title}
-                                                        </span>
-                                                    {/if}
+                                                {:else}
+                                                    <button 
+                                                        id={`${idPrefix}--subtask-checkbox-id--${subtaskIdx}`}
+                                                        style={inlineStyling($manager.styling?.checkbox)}
+                                                        class="subtask__checkbox task__checkbox" 
+                                                        on:click={() => $manager.toggleSubtaskComplete(subtaskIdx)}
+                                                    >
+                                                        <i class="fa-solid fa-check checkbox-check"></i>
+                                                    </button>
+                                                {/if}
+                                            </div>
+                                            <!-- Main Content -->
+                                            <div class="subtask__right">
+                                                {#if $manager.editingSubtaskIdx === subtaskIdx}
+                                                    <div 
+                                                        id={`${idPrefix}--task-subtask-title-input-id--${subtaskIdx}`}
+                                                        class="subtask__title-input"
+                                                        data-placeholder={$subtaskTextEditor.placeholder}
+                                                        contenteditable
+                                                        bind:innerHTML={$subtaskTextEditor.value}
+                                                        on:paste={(e) => $subtaskTextEditor.onPaste(e)}
+                                                        on:input={(e) => $subtaskTextEditor.onInputHandler(e)}
+                                                        on:focus={(e) => $subtaskTextEditor.onFocusHandler(e)}
+                                                        on:blur={(e)  => $subtaskTextEditor.onBlurHandler(e)}
+                                                    >
                                                 </div>
-                                            </div>
-                                            <!-- Settings Button -->
-                                            <button 
-                                                id={`${idPrefix}--tasks-list--dropdown-btn`}
-                                                class="subtask__settings-btn settings-btn"
-                                                on:click={() => onSubtaskContextMenu(taskIdx, subtaskIdx, false)}
-                                            >
-                                                <SvgIcon icon={Icon.Settings}/>
-                                            </button>
-                                        </div>
-                                        <!-- Drag Handle -->
-                                        <div class="subtask__drag-handle task__drag-handle">
-                                            <div class="subtask__drag-handle-dots task__drag-handle-dots">
-                                                <SvgIcon 
-                                                    icon={Icon.DragDots}  
-                                                    options={{ width: 20, height: 20, scale: 0.865 }}
-                                                />
+                                                {:else}
+                                                    <span 
+                                                        class="subtask__title"
+                                                        on:click={() => $manager.onSubtaskTitleClicked(subtaskIdx)}
+                                                    >
+                                                        {subtask.title}
+                                                    </span>
+                                                {/if}
                                             </div>
                                         </div>
-                                        <!-- Divider -->
-                                        {#if !hideDivider}
-                                            <div class="subtask__divider"></div>
-                                        {/if}
-                                    </li>
-                                {/each}
+                                    </div>
+                                    <!-- Drag Handle -->
+                                    <div class="subtask__drag-handle task__drag-handle">
+                                        <div class="subtask__drag-handle-dots task__drag-handle-dots">
+                                            <SvgIcon 
+                                                icon={Icon.DragDots}  
+                                                options={{ width: 20, height: 20, scale: 0.865 }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <!-- Divider -->
+                                    {#if !hideDivider}
+                                        <div class="subtask__divider"></div>
+                                    {/if}
+                                </li>
+                            {/each}
                                 <!-- Dummy Subtask Task -->
                                 <li 
+                                    data-task-type="subtask"
                                     class="subtask--dummy" 
                                     class:subtask--dummy-min={!$manager.floatingItem}
                                     class:subtask--drag-over={subtasks.length === dragOverIdx}
@@ -600,29 +494,41 @@
                         <div class="task__left">
                             {#if settings.numbered}
                                 {@const marker = isTask ? floatingItem.idx + 1 : String.fromCharCode(floatingItem.idx + 65 + 32)}
-                                <div class="task__number" style={inlineStyling($manager.styling?.num)}>
+                                <div 
+                                    class="task__number" 
+                                    style={inlineStyling($manager.styling?.num)}
+                                >
                                     {marker}.
                                 </div>
                             {:else}
-                                <button class="task__checkbox" style={inlineStyling($manager.styling?.checkbox)}>
+                                <button 
+                                    class="task__checkbox" 
+                                    style={inlineStyling($manager.styling?.checkbox)}
+                                >
                                     <i class="fa-solid fa-check checkbox-check"></i>
                                 </button>
                             {/if}
                         </div>
                         <div class="task__right">
                             <div class="task__title-container">
-                                <h3 class="task__title ${floatingItem.isChecked ? "strike" : ""}">
+                                <h3 
+                                    class="task__title"
+                                    class:strike={floatingItem.isChecked}
+                                >
                                     {floatingItem.title}
                                 </h3>
                                 <!-- Subtask Progress -->
                                 {#if subtaskProgress && subtaskProgress.length > 0}
+                                    {@const frac = `${Math.floor((subtaskProgress.countDone / subtaskProgress.length) * 100)}%`}
+                                    {@const count = subtaskProgress.length}
+
                                     <div 
-                                        class="task__subtask-progress" 
+                                        class="task__subtask-progress"
                                         class:task__subtask-progress--min={settings.numbered}
-                                    >
-                                        <span>{subtaskProgress.countDone}</span>
-                                        <span>/</span>
-                                        <span>{subtaskProgress.length}</span>
+                                    >    
+                                        <span>
+                                            {settings.progress === "count" ? count : frac}
+                                        </span>
                                     </div>
                                 {/if}
                             </div>
@@ -631,7 +537,6 @@
                                     class="task__description-container"
                                     style={inlineStyling($manager.styling?.description)}
                                     style:line-height={`${TASK_DESCR_LINE_HT}px`}
-                                    style:--description-font-size={`${$manager.styling?.descriptionInput?.fontSize ?? "1.2rem"}`}
                                 >
                                     <p class="task__description">
                                         {description}
@@ -644,8 +549,10 @@
             {/if}
             <!-- Dummy Task -->
             <li 
+                data-task-type="task"
                 class="task task--dummy" 
                 class:task--drag-over={tasks.length === $manager.dragOverItemElemIdx}
+                class:task--hide-bottom-border={tasks.length === $manager.dragOverItemElemIdx}
                 class:task--hidden={!$manager.floatingItem}
                 id={`${idPrefix}--task-id--${tasks.length}`}
             >
@@ -653,15 +560,21 @@
         </ul>
     </div>
     {#if $manager.addBtn.doShow}
+        {@const { style, text } = $manager.addBtn}
         <button 
             class="tasks-wrapper__add-btn"
-            style={inlineStyling($manager.addBtn.style)}
+            style={inlineStyling(style)}
             on:click={() => $manager.addingNewTask(0)}
         >
-            <span>{$manager.addBtn.text ?? "Add an Item"}</span>
+            <span>
+                {text ?? "Add an Item"}
+            </span>
             <SvgIcon 
                 icon={Icon.Add} 
-                options={{ strokeWidth: 1.6, scale: $manager.addBtn.iconScale }} 
+                options={{ 
+                    strokeWidth: 1.8,
+                    scale: $manager.addBtn.iconScale 
+                }} 
             />
         </button>
     {/if}
@@ -669,18 +582,18 @@
 
 <!-- Context Menu -->
 <DropdownList
-    id={`${idPrefix}--tasks-list`}
+    id={`${idPrefix}--tasks`}
     isHidden={!isContextMenuOpen}
     options={{
-        listItems:   $manager.rightClickedTask ? TASK_OPTIONS : SUBTASK_OPTIONS,
-        onListItemClicked: (context) => requestAnimationFrame(() => {
-            $manager.contextMenuOptionClickedHandler(context.event)
-            isContextMenuOpen = false
-        }),
+        listItems:   $manager.rightClickedTask ? tasksOptions : subTaskOptions,
+        onListItemClicked: (context) => {
+            $manager.contextMenuOptionClickedHandler(context)
+        },
         onClickOutside: () => {
             isContextMenuOpen = false
         },
         onDismount: () => {
+            isContextMenuOpen = false
             $manager.onContextMenuClickedOutsideHandler()
         },
         styling: { 
@@ -696,6 +609,10 @@
     @import "../scss/inputs.scss";
 
     .tasks-wrapper {
+        height: 100%;
+        max-height: 100%;
+        display: flex;
+        flex-direction: column;
 
         &--light &__add-btn {
             opacity: 0.6;
@@ -707,10 +624,12 @@
             }
         }
         &__add-btn {
-            margin: 0px 0px 14px var(--side-padding) !important;
+            margin: 0px 0px 5px var(--side-padding) !important;
             font-weight: 400;
+            width: 100%;
             opacity: 0.2;
             max-width: 100px;
+            @include text-style(1, 500, 1.2rem);
             @include flex(center);
 
             span {
@@ -726,12 +645,6 @@
         position: relative;
         height: 100%;
 
-        &-wrapper {
-            height: auto;
-            max-height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
         &-wrapper--top-btn {
             flex-direction: column-reverse;
         }
@@ -759,15 +672,18 @@
         border-top: 1px solid transparent;
         border-bottom: 1px solid transparent;
         position: relative;
-        font-family: "DM Sans";
-        user-select: none;
+        opacity: 1 !important;
 
-        &:first-child &__checkbox-link {
-            display: none;
-        }
-        &:hover, &:focus, &--focused, &--selected, &--drag-over {
+        &:hover, 
+        &:focus,
+         &--focused, 
+         &--selected, 
+         &--drag-over {
             background-color: rgba(var(--textColor1), 0.024);
             @include txt-color(0.015, "border");
+        }
+        &:focus-visible {
+            box-shadow: none !important;
         }
         &:hover {
             user-select: auto;
@@ -802,7 +718,7 @@
             @include text-style(0.8, 500)
         }
         &--light &__description, &--light &__description-input {
-            @include text-style(0.6, 500)
+            @include text-style(0.6)
         }
         &--light &__checkbox {
             border-width: 1.5px;
@@ -824,6 +740,7 @@
         /* Expanded UI */
         &--expanded {
             padding-top: 6px;
+            height: calc-size(auto);
         }
         &--expanded &__title {
             white-space: normal;
@@ -874,19 +791,8 @@
         &--drag-over {
             border-top: 1px solid rgba(var(--textColor1), 0.1) !important;
         }
-        &--drag-src {
-            height: 0px !important;
-            padding: 0px !important;
-            @include not-visible;
-        }
-        &--subtask-dragging-state &__subtasks-list {
-            padding-top: 5px;
-        }
 
         /* Hover UI */
-        &--hide-top-border {
-            border-top-color: transparent !important;
-        }
         &--hide-bottom-border {
             border-bottom-color: transparent !important;
         }
@@ -894,7 +800,7 @@
         /* Floating UI */
         &--floating {
             position: absolute;
-            background-color: var(--bg-2);
+            background-color: var(--bg-3) !important;
             border-radius: 12px;
             z-index: 100;
             box-shadow: 0px 1px 16.4px 4px rgba(0, 0, 0, 0.14);
@@ -902,7 +808,8 @@
             height: auto !important;
             padding: 8px 0px 11px 0px !important;
         }
-        &--floating &__number, &--floating &__checkbox {
+        &--floating &__number, 
+        &--floating &__checkbox {
             margin-left: 18px !important;
         }
         &--floating &__title-container {
@@ -920,9 +827,6 @@
         }
         &--dummy:hover {
             border-top-color: transparent;
-        }
-        &--subtasks-no-link &__subtasks-list {
-            padding-top: 11px;
         }
         &--no-divider &__divider {
             display: none;
@@ -1003,20 +907,23 @@
             @include multi-line-elipses-overflow(var(--max-title-lines));
             max-width: 100%;
         }
-        &__title, &__title-input {
+        &__title, 
+        &__title-input {
             cursor: text;
             width: fit-content;
             white-space: pre-wrap;
             word-break: break-word;
-            @include text-style(0.9, 300);
-            font-size: var(--title-font-size);
+            user-select: none;
+            @include text-style(var(--title-opacity), var(--title-font-weight), var(--title-font-size));
         }
         &__description-container {
             width: 100%;
         }
-        &__description, &__description-input {
-            @include text-style(0.4, 300, var(--description-font-size));
-            padding: 0px 8px 0px 0px;
+        &__description, 
+        &__description-input {
+            @include text-style(var(--descr-opacity), var(--descr-font-weight), var(--descr-font-size));
+            user-select: none;
+            padding: 0px 8px 1.5px 0px;
             cursor: text;
         }
         &__description {
@@ -1027,10 +934,11 @@
         }
         &__subtask-progress {
             @include flex(center);
-            margin: 1px 0px 0px 6px;
+            margin: 0px 0px 0px 6px;
+            user-select: none;
 
             span {
-                @include text-style(0.1, 400, calc(var(--title-font-size) - 2px));
+                @include text-style(0.15, 400, calc(var(--title-font-size) - 1px), "DM Mono");
             }
             span:nth-last-child(2) {
                 display: inline-block;
@@ -1044,7 +952,7 @@
             width: 100%;
         }
         &__divider {
-            @include divider(0.08, 0.5px, calc(100% - calc(2 * var(--side-padding))));
+            @include divider(0.05, 0.5px, calc(100% - calc(2 * var(--side-padding))));
             @include abs-top-left(0px, var(--side-padding));
         }
     }
@@ -1054,7 +962,6 @@
         visibility: hidden;
         width: 100%;
         animation: fade-in var(--subtask-animation-duration) cubic-bezier(.5,.84,.42,.9) var(--subtask-idx-delay) forwards;
-        padding: 4.5px 0px 4.5px 0px !important;
         padding-left: var(--left-section-width) !important;
         
         &:focus, &--focused {
@@ -1063,9 +970,6 @@
         }
         &:hover {
             background-color: rgba(var(--textColor1), 0.024);
-        }
-        &:hover &__settings-btn {
-            @include visible(0.12);
         }
         &:hover &__drag-handle {
             @include visible;
@@ -1083,16 +987,9 @@
         }
 
         /* Light & Dark Adjustments */
-        &--light:hover &__settings-btn {
-            @include visible(0.4);
-        }
-        &--light &__title, &--light &__title-input {
-            font-weight: 500;
-            color: rgba(var(--textColor1), 0.6);
-        }
-        &--light &__settings-btn:hover {
-            opacity: 0.7 !important;
-            @include txt-color(0.08, "bg");
+        &--light &__title, 
+        &--light &__title-input {
+            @include text-style(0.6);
         }
         &--light &__divider {
             @include divider(0.06, 1px, calc(100% - (var(--side-padding) + var(--left-section-width))));
@@ -1101,6 +998,7 @@
         &--hidden {
             display: none !important;
             height: 0px !important;
+            border-width: 0px !important;
         }
         &--checked &__checkbox {
             border-color: transparent;
@@ -1115,45 +1013,11 @@
         &--checked &__title {
             text-decoration: line-through rgba(var(--textColor1), 0.2);
         }
-        &--no-link {
-            width: 100%;
-            padding-left: 0px !important;
-        }
-        &--no-link &__content {
-            padding-left: var(--left-section-width) !important;
-        }
-        &--no-link &__drag-handle {
-            @include abs-top-left(4px, calc(var(--side-padding) - 3px));
-        }
-        &--no-link &__settings-btn {
-            // margin-right: var(--side-padding);
-        }
-        &--no-link &__divider {
-            display: block;
-        }
-        &--dragging-state &__subtask-link {
-            @include not-visible;
-        }
-        &--dragging-state {
-            padding: 5.5px 0px 5.5px var(--left-section-width);
-        }
         &--drag-over &__divider {
             display: none !important;
         }
         &--drag-over {
             border-top: 1px solid rgba(var(--textColor1), 0.1) !important;
-        }
-        &--drag-src {
-            padding: 0px !important;
-        }
-        &--drag-src &__drag-handle {
-            display: none;
-        }
-        &--drag-src &__content {
-            height: 0px !important;
-            opacity: 0 !important; 
-            visibility: none !important; 
-            padding: 0px !important; 
         }
         &--dummy {
             height: 25px !important;
@@ -1164,15 +1028,6 @@
         &--dummy-min {
             height: 10px !important;
             padding: 4px !important;
-        }
-
-        &__subtask-link {
-            @include abs-top-left;
-            pointer-events: none;
-            z-index: -2;
-        }
-        &__subtask-link svg {
-            stroke: var(--subtask-link-color);
         }
         &__content {
             width: 100%;
@@ -1188,7 +1043,6 @@
             position: relative;
         }
         &__right {
-            margin-top: 2px;
             max-width: calc(100% - 55px);
         }
         &__drag-handle {
@@ -1210,33 +1064,31 @@
         &__number {
             padding-left: 5px;
         }
-        &__title {
-            transition: 0.1s ease-in-out;
-        }
-        &__title-input::placeholder {
-            opacity: 0.2;
-        }
-        &__title, &__title-input {
-            @include text-style(0.6, 300);
+        &__title,
+        &__title-input {
             white-space: pre-wrap;
             word-break: break-word;
             max-width: 100%;
             cursor: text;
+            transition: 0.1s ease-in-out;
+            @include text-style(var(--subtask-opacity), var(--subtask-font-weight), var(--subtask-font-size));
         }
-        &__settings-btn {
-            @include not-visible;
-            margin-right: var(--side-padding);
-            transition: 0.08s ease-in-out;
-
-            &:hover {
-                opacity: 0.6 !important;
-                @include txt-color(0.05, "bg");
-            }
+        &__title-input::placeholder {
+            opacity: 0.4;
         }
         &__divider {
             display: none;
             @include divider(0.04, 0.5px, calc(100% - (var(--side-padding) + var(--left-section-width))));
             @include abs-top-left(0px, var(--left-section-width));
         }
+    }
+
+    .drag-src {
+        // no display none as it will trigger an animation
+        height: 0px !important;
+        padding: 0px !important;
+        border-width: 0px !important;
+        opacity: 0 !important;
+        visibility: none !important;
     }
 </style>

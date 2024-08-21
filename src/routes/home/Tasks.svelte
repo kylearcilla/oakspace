@@ -1,173 +1,293 @@
 <script lang="ts">
-	import { Icon, ShortcutSectionInFocus, TaskSettingsOptions } from "$lib/enums";
-	import { globalContext, musicPlayerStore, tasksViewStore, themeState } from "$lib/store";
-	import { getVertScrollStatus } from "$lib/utils-general";
-	import { MAX_TAK_GROUP_TITLE_LENGTH, TEST_TASKS } from "$lib/utils-right-bar";
-	import { onMount } from "svelte";
-	import SvgIcon from "../../components/SVGIcon.svelte";
-	import TasksList from "../../components/TasksList.svelte";
-	import DropdownList from "../../components/DropdownList.svelte";
+	import { Icon, LogoIcon } from "$lib/enums"
+	import { themeState } from "$lib/store"
+	import { MAX_TASK_GROUP_TITLE_LENGTH } from "$lib/utils-right-bar"
 
-    let isTaskGroupDrodownOpen = false
-    let isTasksSettingsDropdownOpen = false
+	import SvgIcon from "../../components/SVGIcon.svelte"
+	import TasksList from "../../components/TasksList.svelte"
+	import DropdownList from "../../components/DropdownList.svelte"
+	import Logo from "../../components/Logo.svelte";
+	import { TasksViewManager } from "$lib/tasks-view-manager";
+	import ConfirmationModal from "../../components/ConfirmationModal.svelte"
+	import { toast } from "$lib/utils-toast";
+    
+    export let manager: TasksViewManager
+
+    const todoistGroupOption: DropdownListItem = {
+        options: [
+        { 
+            name: "Inbox",
+            leftIcon: {
+                type: "logo",
+                icon: LogoIcon.Todoist,
+                styling: {
+                    height: "12px",
+                    width: "12px",
+                    margin: "0px 7.5px 0px 0px"
+                }
+            }
+        }]
+    }
+    
+    let groupDropdown = false
+    let settingsOpen = false
     let todoListContainer: HTMLElement
-
+    let curTaskGroup: TaskGroup = manager.currTaskGroup
+    let tasks: Task[] = curTaskGroup.tasks
+    let confirmModalOpen = false
+    let pickedGroupIdx = -1
+    
     $: isDarkTheme = $themeState.isDarkTheme
+    $: store = manager.store
+    $: currTaskGroupAbsIdx = $store.currTaskGroupAbsIdx
+    $: todoistLinked = $store.todoistLinked
+    $: onTodoist = $store.onTodoist
+    $: taskGroups = $store.taskGroups.map((task) => ({ 
+        name: task.title 
+    }))
+    $: if ($store.isMakingNewGroup) {
+        tasks = []
+    }
+    $: {
+        curTaskGroup = $store.currTaskGroup
+        tasks = curTaskGroup.tasks
+    }
+    $: taskGroupSettingsOptions = $store.getTaskSettingsDropdown()
 
-    const TASK_DROPDOWN_WIDTH = 120
-    let currTaskGroupIdx = 0
+    function tasksSettingsHandler(option: string) {
+        settingsOpen = false
 
-    /* Shortcuts */
-    function keyboardShortcutsHandler(event: KeyboardEvent) {
-        if ($globalContext.shortcutsFocus != ShortcutSectionInFocus.TASK_BAR) {
-            return
+        if (option === "New Group") {
+            manager.initNewGroupEdit()
         }
-        const hasMenu = isTaskGroupDrodownOpen || isTasksSettingsDropdownOpen
-    }
-    function onTaskGroupItemClicked(idx: number) {
-        isTaskGroupDrodownOpen = false
-        console.log(idx)
-    }
-
-    /* Tasks */
-    function _addNewTaskBtnHandler() {
-        // $tasksViewStore!.addNewTaskBtnHandler()
-    }
-    function _taskGroupDropdownHandler(taskGroupIdx: number) {
-        isTaskGroupDrodownOpen = false
-        $tasksViewStore!.taskGroupDropdownHandler(taskGroupIdx)
-    }
-    function _tasksSettingsHandler(optionIdx: TaskSettingsOptions) {
-        isTasksSettingsDropdownOpen = false
+        else if (option === "Rename Group") {
+            manager.initEditGroupEdit()
+        }
+        else if (option === "Refresh Sync") {
+            manager.refreshTodoist()
+        }
+        else if (option === "Log Out") {
+            manager.logoutTodoist()
+        }
+        else if (option === "Delete Group") {
+            confirmModalOpen = true
+        }
+        else {
+            manager.loginTodoist()
+        }
     }
 
-    onMount(() => {
-        // contentListScrollHandler(contentList)
-    })
 </script>
 
-<svelte:window on:keydown={(e) => keyboardShortcutsHandler(e)} />
-
 <div 
-    class={`quick-todos ${$themeState.isDarkTheme ? "quick-todos--dark-theme" : "quick-todos--light-theme"}`}
-    class:quick-todos--dark-theme={isDarkTheme}
-    class:quick-todos--light-theme={!isDarkTheme}
+    class="tasks"
+    class:tasks--dark-theme={isDarkTheme}
+    class:tasks--light-theme={!isDarkTheme}
 >
     <!-- Header -->
-    <div class="quick-todos__header">
-        {#if $tasksViewStore?.isMakingNewGroup || $tasksViewStore?.isEditingGroup}
-            <div class="quick-todos__task-group-input-container">
+    <div class="tasks__header">
+        {#if $store.isMakingNewGroup || $store.isEditingGroup}
+            <div class="tasks__group-input-container">
                 <div 
-                    class={`quick-todos__task-group-input input-bottom-underline ${$tasksViewStore?.isNewTaskGroupFocused ? "input-bottom-underline--focus" : ""}`}
+                    class="tasks__group-input input-bottom-underline"
+                    class:input-bottom-underline--focus={true}
                 >
                     <input 
                         type="text"
                         name="new-task-group-input" 
-                        id={`task-group-input`}
-                        class="quick-todos__task-group-input__new-task-group-title-input"
-                        value={`${$tasksViewStore?.newText}`}
-                        maxlength={MAX_TAK_GROUP_TITLE_LENGTH}
-                        placeholder="New Task Group"
-                        on:input={(e) => $tasksViewStore?.inputTextHandler(e)}
-                        on:focus={(e) => $tasksViewStore?.onInputFocusHandler(e)}
-                        on:blur={(e) => $tasksViewStore?.onInputBlurHandler(e)}
+                        id={TasksViewManager.TASK_GROUP_INPUT_ID}
+                        class="tasks__group-input__new-task-group-title-input"
+                        maxlength={MAX_TASK_GROUP_TITLE_LENGTH}
+                        value={`${$store.newText}`}
+                        placeholder="Task Title Here..."
+                        on:input={(e) => $store.inputTextHandler(e)}
+                        on:blur={() => $store.onInputBlurHandler()}
                     >
                     <div class="input-bottom-underline__underline-container">
                         <div class="input-bottom-underline__underline"></div>
                     </div>
                 </div>
             </div>
-        {:else if $tasksViewStore && $tasksViewStore?.taskGroups.length > 0}
-            <button class="quick-todos__task-group-dropdown-btn" on:click={() => isTaskGroupDrodownOpen = !isTaskGroupDrodownOpen}>
-                {#if $tasksViewStore?.currTaskGroupIdx >= 0}
+        {:else}
+            <button
+                id="task-group--dropdown-btn"
+                class="tasks__group-dropdown-btn" 
+                class:tasks__group-dropdown-btn--active={groupDropdown}
+                on:click={() => groupDropdown = !groupDropdown}
+            >
+                {#if onTodoist}
+                    <div class="tasks__group-todoist-icon">
+                        <Logo
+                            logo={LogoIcon.Todoist}
+                            options={{ containerWidth: "14px", iconWidth: "100%" }}
+                        />
+                    </div>
                     <h1 
-                        class="quick-todos__task-group-dropdown-btn-title" 
-                        title={$tasksViewStore?.taskGroups[$tasksViewStore?.currTaskGroupIdx].title}
+                        class="tasks__group-dropdown-btn-title" 
+                        title={curTaskGroup.title}
                     >
-                        {$tasksViewStore?.taskGroups[$tasksViewStore?.currTaskGroupIdx].title}
+                        Inbox
                     </h1>
                 {:else}
                     <h1 
-                        class="quick-todos__task-group-dropdown-btn-title quick-todos__task-group-dropdown-btn-title--empty" 
+                        class="tasks__group-dropdown-btn-title" 
+                        title={curTaskGroup.title}
                     >
-                        No Task Selected
+                        {curTaskGroup.title}
                     </h1>
                 {/if}
                 <svg xmlns="http://www.w3.org/2000/svg" width="6" height="5" viewBox="0 0 6 5" fill="none">
                     <path d="M3.16357 4.92871L0.536317 0.914305L5.79083 0.914305L3.16357 4.92871Z" fill="#434343"/>
                 </svg>
             </button>
-        {:else if $tasksViewStore}
-            <h1 
-                class="quick-todos__task-group-dropdown-btn-title quick-todos__task-group-dropdown-btn-title--no-tasks" 
-            >
-                No Tasks
-            </h1>
         {/if}
         <button 
-            class="quick-todos__settings-dropdown-btn settings-btn" 
-            on:click={() => isTasksSettingsDropdownOpen = !isTasksSettingsDropdownOpen}
+            id="task-group-settings--dropdown-btn"
+            class="tasks__settings-dropdown-btn" 
+            on:click={() => settingsOpen = !settingsOpen}
          >
-            <SvgIcon icon={Icon.Settings} options={{ opacity: 0.45 }} />
+            <SvgIcon 
+                icon={Icon.Settings} 
+                options={{ opacity: 0.45 }} 
+            />
         </button>
         <!-- Task Group Dropdown List -->
         <DropdownList
-            isHidden={!isTaskGroupDrodownOpen} 
+            id="task-group"
+            isHidden={!groupDropdown} 
             options={{
-                listItems: ($tasksViewStore?.taskGroups ?? []).map((task) => ({ 
-                    name: task.title 
-                })),
-                onListItemClicked: (context) => currTaskGroupIdx = context.idx,
-                pickedItem: currTaskGroupIdx,
-                onClickOutside: () => isTaskGroupDrodownOpen = false,
-                position: { left: "15px", top: "35px" }
+                listItems: [
+                    ...(todoistLinked ? [todoistGroupOption] : []),
+                    {
+                        options: [{ name: "Inbox" }]
+                    },
+                    ...taskGroups
+                ],
+                pickedItem: currTaskGroupAbsIdx,
+                onListItemClicked: (context) => {
+                    manager.taskGroupDropdownHandler(context.idx)
+                    groupDropdown = false
+                },
+                onClickOutside: () => {
+                    groupDropdown = false
+                },
+                styling: {
+                    zIndex: 5,
+                    minWidth: "95px",
+                    maxWidth: "120px"
+                },
+                position: {
+                    left: "11px", top: "38px" 
+                }
             }}
         />
         <!-- Task Settings Dropdown -->
         <DropdownList
-            isHidden={!isTasksSettingsDropdownOpen} 
+            id="task-group-settings"
+            isHidden={!settingsOpen} 
             options={{
-                listItems: [
-                    { name: "New Group", leftIcon: "fa-solid fa-plus" },
-                    { name: "Rename Group", leftIcon: "fa-solid fa-pencil" },
-                    { name: "Delete Group", leftIcon: "fa-solid fa-trash-can" }
-                ],
-                pickedItem: currTaskGroupIdx,
-                onListItemClicked: (idx) => console.log(idx),
-                onClickOutside: () => isTasksSettingsDropdownOpen = false,
-                position: { right: "17px", top: "32px" },
+                listItems: taskGroupSettingsOptions,
+                onListItemClicked: (context) => {
+                    tasksSettingsHandler(context.name)
+                },
+                onClickOutside: () => {
+                    settingsOpen = false
+                },
+                styling: {
+                    zIndex: 5,
+                    width: "150px"
+                },
+                position: { 
+                    right: "17px", top: "32px" 
+                },
             }}
         />
     </div>
     <!-- Tasks List -->
     <div 
-        class="quick-todos__todo-list-container"
-        class:quick-todos__todo-list-container--short={$musicPlayerStore?.doShowPlayer}
+        class="tasks__todo-list-container"
         bind:this={todoListContainer}
     >
-        {#if todoListContainer}
-            <TasksList 
+        {#key tasks}
+            <TasksList
                 options={{
                     id: "todos",
-                    settings: { subtasksLinked: true },
-                    tasks: TEST_TASKS,
+                    handlers: {
+                        onTaskUpdate: manager.onTaskUpdate,
+                        onAddTask: manager.onAddTask,
+                        onDeleteTask: manager.onDeleteTask
+                    },
+                    settings: {
+                        reorder: !todoistLinked,
+                        allowDuplicate: !onTodoist,
+                        removeOnComplete: todoistLinked,
+                        progress: !todoistLinked ? "perc" : "count"
+                    },
+                    tasks,
                     containerRef: todoListContainer,
                     styling: {
-                        task:             { fontSize: "1.3rem", height: "36px", padding: "7px 0px 4px 0px" },
-                        subtask:          { fontSize: "1.3rem", padding: "4px 0px 4px 0px" },
-                        description:      { margin: "3px 0px 5px 0px" },
-                        descriptionInput: { fontSize: "1.3rem" }
+                        task: { 
+                            fontSize: "1.21rem",
+                            fontWeight: "500",
+                            opacity: 0.74,
+                            padding: "8px 0px 13px 0px"
+                        },
+                        subtask: { 
+                            fontSize: "1.2rem",
+                            fontWeight: "500",
+                            padding: "6px 0px 9px 0px",
+                            opacity: 0.65
+                        },
+                        description: { 
+                            margin: "6px 0px 7px 0px", 
+                            fontSize: "1.2rem",
+                            fontWeight: "500",
+                            opacity: 0.54
+                        },
+                        checkbox: {
+                            width: "11px",
+                            borderRadius: "4px",    
+                            height: "11px",
+                            margin: "1px 12px 0px 17px"
+                        }
                     },
-                    contextMenuOptions: { width: "170px" },
+                    addBtn: {
+                        style: { 
+                            fontSize: "1.25rem"
+                        },
+                        pos: "top"
+                    },
+                    contextMenuOptions: { 
+                        width: "170px" 
+                    },
                     ui: { 
-                        sidePadding: "17px", hasTaskDivider: false, showDragHandle: false,
+                        sidePadding: "17px", 
+                        showDragHandle: false,
+                        hasTaskDivider: false,   
                         listHeight: "100%"
                     }
                 }}
             />
-        {/if}
+        {/key}
     </div>
 </div>
+
+{#if confirmModalOpen} 
+    <ConfirmationModal 
+        text={`Are you sure you want to delete "${curTaskGroup.title}"?`}
+        onCancel={() => {
+            confirmModalOpen = false
+        }}
+        onOk={() => {
+            manager.deleteTaskGroup()
+            confirmModalOpen = false
+        }}
+        options={{ 
+            ok: "Delete!", caption: "Heads Up!" 
+        }}
+    /> 
+{/if}
+
 
 
 <style lang="scss">
@@ -179,11 +299,11 @@
     $todo-minimized-height: 40px;
 
     /* Tasks */
-    .quick-todos {
+    .tasks {
         height: 100%;
         width: 100%;
         border-radius: 10px;
-        margin-bottom: 2px;
+        margin: -7px 0px 0px 0px;
         position: relative;
 
         &--light-theme .input-bottom-underline {
@@ -195,7 +315,7 @@
         &--light-theme &__settings-dropdown-btn {
             @include settings-btn--light;
         }
-        &--light-theme &__task-group-dropdown-btn {
+        &--light-theme &__group-dropdown-btn {
         }
         &--light-theme &__add-btn {
             opacity: 0.45;
@@ -209,37 +329,51 @@
         &__header {
             @include flex(center, space-between);
             padding: 0px $side-padding 0px calc($side-padding - 8px);
-            margin-bottom: 5px;
+            margin-bottom: 1.5px;
             position: relative;
             width: 100%;
         }
         &__settings-dropdown-btn {
-            margin: -2px -5px 0px 10px;
-            @include circle(23px);
+            @include circle(20px);
             @include center;
+            margin: -2px -5px 0px 0px;
+            background-color: rgba(var(--textColor1), 0.05);
+            opacity: 0.5;
             
-            &:active {
-                transform: scale(0.94);
+            &:hover {
+                opacity: 1;
             }
         }
-        &__task-group-dropdown-btn {
-            @include flex(center, _);
+        &__group-dropdown-btn {
+            @include flex(center);
             padding: 5px 8px;
             border-radius: 12px;
-
+            border: 1px solid rgba(var(--textColor1), 0);
+            
+            &--active svg {
+                transform: rotate(90deg) !important;
+            }
             &:focus, &:hover {
-                background-color: rgba(white, 0.02);
+                background-color: rgba(var(--textColor1), 0.04);
+                border: 1px solid rgba(var(--textColor1), 0.03);
+
+                svg {
+                    opacity: 1;
+                }
+            }
+            svg {
+                opacity: 0;
+                transition: 0.1s cubic-bezier(.4,0,.2,1);
+                transform: rotate(0deg);
             }
         }
-        &__task-group-dropdown-btn-title {
-            font-size: 1.7rem;
-            font-weight: 400;
-            color: rgb(var(--textColor1), 0.9);
+        &__group-dropdown-btn-title {
+            @include text-style(0.9, 400, 1.7rem);
             @include elipses-overflow;
-            max-width: 100px;
+            max-width: 150px;
             margin-right: 7px;
 
-            &--empty, &--no-tasks {
+            &--no-tasks {
                 font-size: 1.2rem;
                 font-weight: 300; 
                 color: rgb(var(--textColor1), 0.4);
@@ -249,28 +383,27 @@
                 margin-left: 8px;
             }
         }
-        &__task-group-input-container {
+        &__group-todoist-icon {
+            margin: 1px 9px 0px 0px;
+        }
+        &__group-input-container {
             position: relative;
             width: 80%;
             margin: 0px 0px -7px 6px;
         }
-        &__task-group-input-container .input-bottom-underline {
+        &__group-input-container .input-bottom-underline {
             width: 100%;
-            font-size: 1.7rem;
-            font-weight: 400;
             border-radius: 5px 5px 0px 0px;
             
             input {
+                font-weight: 500;
                 padding: 5px 0px 6px 0px;
             }
         }
         &__todo-list-container {
-            height: calc(100% - (38px + 29.5px));
+            height: 100%;
             position: relative;
-            
-            &--short {
-                height: calc(100% - (38px + 29.5px + 60px));
-            }
+            margin-top: 6px;
         }
         &__todo-list {
             overflow-y: scroll;

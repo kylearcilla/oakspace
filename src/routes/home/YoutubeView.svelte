@@ -1,7 +1,6 @@
 <script lang="ts">
     import { ytPlayerStore, themeState, globalContext } from "$lib/store"
-	import { APIErrorCode, Icon, LogoIcon } from '$lib/enums'
-	import Logo from '../../components/Logo.svelte'
+	import { APIErrorCode, Icon } from '$lib/enums'
 	import { toggleYoutubePlayerFloat } from "$lib/utils-home"
 	import SvgIcon from "../../components/SVGIcon.svelte"
 
@@ -141,16 +140,6 @@
                             <div class="playlist-panel__pl-details-right-wrapper">
                                 <!-- Header -->
                                 <div class="playlist-panel__pl-details-header">
-                                    <div class="playlist-panel__pl-details-header-yt-logo">
-                                        <Logo 
-                                            logo={LogoIcon.Youtube} 
-                                            options={{
-                                                containerWidth: "12px",
-                                                iconWidth: "75%"
-                                            }}
-                                        />
-                                    </div>
-                                    <!-- Title -->
                                     <h1 class="playlist-panel__pl-details-title">
                                         {playlist?.title ?? "No Playlist Chosen"}
                                     </h1>
@@ -375,9 +364,6 @@
             padding: 7px 6.5px 7px 8px;
             width: 100%;
         }
-        &__pl-details-header-yt-logo {
-            margin-right: 8px;
-        }
         /* Img */
         &__pl-details-img-container {
             margin-right: 15px;
@@ -412,6 +398,7 @@
                 height: 100%;
                 border-radius: 9.5px;
                 object-fit: cover;
+                border: 2px solid white;
             }
         }
         &__pl-details-img-container:hover &__miniplayer-btn,

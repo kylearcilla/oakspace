@@ -1,7 +1,8 @@
 import { get, writable, type Writable } from "svelte/store"
+
 import { RoutinesManager } from "./routines-manager"
-import { findAncestor, getElemById, getElemNumStyle, initFloatElemPos } from "./utils-general"
 import { EMPTY_CORES, ROUTINE_BLOCKS_CONTAINER_ID } from "./utils-routines"
+import { findAncestor, getElemById, getElemNumStyle, initFloatElemPos } from "./utils-general"
 
 /**
  * Object for managing for the funcitonality and state of daily routines page.

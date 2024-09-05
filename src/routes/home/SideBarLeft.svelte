@@ -1,11 +1,13 @@
 <script lang="ts">
-    import { Icon, ModalType } from "$lib/enums"
-    import { getThemeFromSection, setNewTheme } from "$lib/utils-appearance"
-	import { themeState } from "$lib/store"
-	import { openModal } from "$lib/utils-home"
-	import { createEventDispatcher, onMount } from "svelte"
-	import { findAncestor, } from "$lib/utils-general"
+	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
+
+	import { themeState } from "$lib/store"
+    import { Icon, ModalType } from "$lib/enums"
+	import { findAncestor, } from "$lib/utils-general"
+	import { openModal, updateRoute } from "$lib/utils-home"
+    import { getThemeFromSection, setNewTheme } from "$lib/utils-appearance"
+    
 	import BounceFade from "../../components/BounceFade.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
 
@@ -23,9 +25,8 @@
         { name: "Routines", icon: "fa-solid fa-spa" },       
         { name: "Themes", icon: "fa-solid fa-brush" },
         { name: "Music", icon: "fa-solid fa-record-vinyl" }, 
-        { name: "Youtube", icon: "fa-brands fa-youtube" },
+        { name: "Youtube", icon: "fa-brands fa-youtube" }
     ]
-    const dispatch = createEventDispatcher()
 
     let selectedTabButtonElement: HTMLElement
     let hoveredTabButtonElement: HTMLElement | null = null
@@ -54,7 +55,6 @@
     function onResizerDrag(event: Event) {
         const pe = event as MouseEvent
         const newDragXOffSet = pe.clientX
-        const xOffset = initDragXPos - newDragXOffSet
 
         pe.preventDefault()
     }
@@ -114,15 +114,14 @@
     }
     function selectTabBtn(target: HTMLElement, textTab: string) {
         const isModal = ["Themes", "Music", "Youtube"].includes(textTab)
-        if (!isModal) {
-            dispatch("routeChange", textTab)
-        }
-        highlightTabBtn(target, !isModal)
+        const option = textTab.toLowerCase()
 
-        if (textTab === "Workspace") {
+        highlightTabBtn(target, !isModal)
+        
+        if (option === "workspace") {
             goto("/home")
         }
-        else if (textTab === "Goals") {
+        else if (option === "goals") {
             // toast("default", {
             //     message: "x",
             //     description: "Hello world",
@@ -135,16 +134,16 @@
 
             // goto("/home/goals")
         }
-        else if (textTab === "Habits") {
+        else if (option === "habits") {
             goto("/home/habits")
         }
-        else if (textTab === "Routines") {
+        else if (option === "routines") {
             goto("/home/routines")
         }
-        else if (textTab === "Themes") {
+        else if (option === "themes") {
             openModal(ModalType.Appearance)
         }
-        else if (textTab === "Music") {
+        else if (option === "music") {
             openModal(ModalType.Music)   
         }
         else {

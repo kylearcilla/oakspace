@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { globalContext, sessionStore } from "./store"
+import { globalContext, sessionManager } from "./store"
 import { ModalType, MusicPlatform, ShortcutSectionInFocus } from "./enums"
 
 import { loadTheme } from "./utils-appearance"
@@ -18,7 +18,7 @@ const LEFT_BAR_LEFT_BOUND = 20
  */
 export const initAppState = async () => {
     loadTheme()
-    loadHomeViewLayOutUIData()
+    loadGlobalContext()
 
     if (didInitSession()) {
         conintueWorkSession()
@@ -36,6 +36,13 @@ export const initAppState = async () => {
         await musicLogin()
     }
     initMusicSettings()
+}
+
+export function onQuitApp() {
+    // const session = get(sessionManager)
+    // if (session) {
+    //     session.stopTimer()
+    // }
 }
 
 /**
@@ -106,9 +113,13 @@ export const keyboardShortCutHandlerKeyUp = (event: KeyboardEvent) => {
         return
     }
 
-    if (!get(sessionStore) && key === "n" && get(globalContext).modalsOpen.length === 0) {
+    if (key === "n" && get(globalContext).modalsOpen.length === 0) {
         openModal(ModalType.NewSession)
     }
+}
+
+export function updateRoute(route: string) {
+    updateGlobalContext({ ...get(globalContext), route })
 }
 
 /**
@@ -144,32 +155,38 @@ export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boo
 
 /**
  * Update UI Layout of app.
- * @param newLayout      New layout
+ * @param newContext  New layout
  */
-export const updateGlobalContext = (newLayout: GlobalContext) => {
-    globalContext.set(newLayout)
-    localStorage.setItem("home-ui", JSON.stringify(newLayout))
+export const updateGlobalContext = (newState: Partial<GlobalContext>) => {
+    const oldState = get(globalContext)
+    const newGlobalContext = {
+        ...oldState, ...newState
+    }
+
+    globalContext.set(newGlobalContext)
+    localStorage.setItem("home-ui", JSON.stringify(newGlobalContext))
 }
   
 /**
  * Load previously set layout state.
  */
-const loadHomeViewLayOutUIData = () => {
+const loadGlobalContext = () => {
     const storedData = localStorage.getItem("home-ui")
     if (!storedData) return
 
-
     const data: GlobalContext = JSON.parse(storedData)
 
-    updateGlobalContext({ ...data, modalsOpen: [] })
+    updateGlobalContext({ 
+        ...data, modalsOpen: [] 
+    })
 }
 
 export function hideRightBar() {
-    updateGlobalContext({ ...get(globalContext), rightBarOpen: false  })
+    updateGlobalContext({ rightBarOpen: false  })
 }
 
 export function showRightBar() {
-    updateGlobalContext({ ...get(globalContext), rightBarOpen: true  })
+    updateGlobalContext({ rightBarOpen: true  })
 }
 /**
  * Add modal to "open modals" array
@@ -187,8 +204,11 @@ export const openModal = (modal: ModalType) => {
  */
 export const closeModal = (modalToRemove: ModalType) => {
     globalContext.update((data: GlobalContext) => {
-        const newArray = data.modalsOpen.filter((modal: ModalType) => modal !== modalToRemove)
-        return { ...data, modalsOpen: newArray }
+
+        return { 
+            ...data, 
+            modalsOpen: data.modalsOpen.filter((modal: ModalType) => modal !== modalToRemove)
+        }
     })
 }
 
@@ -218,7 +238,6 @@ export function toggleYoutubePlayerFloat() {
     const mediaPlayer = oldState.mediaPlayer ?? { music: false, youtube: false }
 
     updateGlobalContext({ 
-        ...oldState, 
         mediaPlayer: { ...mediaPlayer, youtube: !mediaPlayer.youtube } 
     })   
 }

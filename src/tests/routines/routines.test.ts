@@ -4,7 +4,7 @@ import { describe, expect } from 'vitest'
 import { TEST_DAILY_BREAKDOWN, TEST_WEEKLY_BREAKDOWN, TEST_BLOCK_MOVE_TO_NEW_COL, PRESET_ROUTINES, BREAKDOWN_TEST_DAILY_BLOCKS } from './routines.data'
 import { DailyRoutinesManager } from '$lib/routines-daily-manager'
 import { WeeklyRoutinesManager } from '$lib/routines-weekly-manager'
-import { COLOR_SWATCHES } from '$lib/utils-general'
+import { COLOR_SWATCHES } from "$lib/utils-colors"
 
 const TOTAL_DAY_MINS = 1440
 const DAYS_WEEK = [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" ]

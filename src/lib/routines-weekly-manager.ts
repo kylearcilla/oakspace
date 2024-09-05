@@ -1,7 +1,8 @@
 import { writable, type Writable, get } from "svelte/store"
+
 import { RoutinesManager } from "./routines-manager"
-import { getElemById, initFloatElemPos, isTargetTextEditor, getElemNumStyle, findAncestor, clamp } from "./utils-general"
 import { ViewOption, EMPTY_CORES, ROUTINE_BLOCKS_CONTAINER_ID } from "./utils-routines"
+import { getElemById, initFloatElemPos, isTargetTextEditor, getElemNumStyle, findAncestor, clamp } from "./utils-general"
 
 /**
  * Object for managing for the funcitonality and state of weely routines page.

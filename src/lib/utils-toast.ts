@@ -27,7 +27,7 @@ export function toast<ToastData>(
 	promise?: PromiseT<ToastData>
 ) {
 	const toastFunc = (toastAPI[type] as any)
-	const message = (data && "message" in data) ?? ""
+	const message = (data && "message" in data) ? data.message : ""
 	const noToaster = !get(globalContext).hasToaster
 
 	if (noToaster) {

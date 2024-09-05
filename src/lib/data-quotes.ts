@@ -240,10 +240,10 @@ const quotes: Quote[] = [
         quoteCredit: "J.R.R. Tolkien from <i>LOTR: The Return of the King</i>"
     },
     {
-        text: "Normality is a paved road: It’s comfortable to walk,﻿ but no flowers grow on it.",
+        text: "Mastering others is strength. Mastering yourself is true power.",
         bgImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Vincent_van_Gogh_-_Green_Wheat_Fields%2C_Auvers_%281890%29.jpg/1280px-Vincent_van_Gogh_-_Green_Wheat_Fields%2C_Auvers_%281890%29.jpg",
         artCredit: "<i>Green Wheat Fields, Auvers</i> by Vincent van Gogh",
-        quoteCredit: "Vincent van Gogh"
+        quoteCredit: "Lao Tzu"
     },
     {
         text: "How you gon' win when you ain't right within.",

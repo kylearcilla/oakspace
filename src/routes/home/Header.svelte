@@ -3,14 +3,14 @@
 
     import { Icon, ModalType } from "$lib/enums"
 	import { getColorTrio } from "$lib/utils-general"
-	import { getDayIdxMinutes } from "$lib/utils-date"
+	import { getDayIdxMinutes, secsToHHMM } from "$lib/utils-date"
 	import { openModal, toggleActiveRoutine } from "$lib/utils-home"
-	import { themeState, ytPlayerStore, sessionStore, weekRoutine } from "$lib/store"
+	import { themeState, ytPlayerStore, weekRoutine, sessionManager, globalContext } from "$lib/store"
 	import { initTodayRoutine, initCurrentBlock, getMextTimeCheckPointInfo, getUpcomingBlock } from "$lib/utils-routines"
     
 	import ActiveRoutine from "./ActiveRoutine.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
-	import SessionHeaderView from "./SessionHeaderView.svelte"
+	import ActiveSessionMini from "./ActiveSessionMini.svelte";
 
     const NO_SESS_MD_MAX_WIDTH = 270
     const MD_MAX_WIDTH = 800
@@ -34,7 +34,7 @@
     $: isColorThemeDefault = ["Dark Mode", "Light Mode"].includes($themeState.title)
 
     // session
-    $: activeSession = $sessionStore != null
+    $: session = $sessionManager
 
     // routines
     $: routine      = $weekRoutine
@@ -54,7 +54,7 @@
         nowBlockTitle = `"${nowBlock.title}". From "${$weekRoutine!.name}".`
     }
 
-    /* Week Routins */
+    /* Week Routines */
     function initNowBlock(todayRoutine: RoutineBlock[] | DailyRoutine | null) {
         if (!todayRoutine) return
 
@@ -77,7 +77,6 @@
         doMinHeaderUI = headerWidth < 840  
     }
 
-
     onMount(() => {
         window.addEventListener("resize", handleResize)
         minuteInterval = setInterval(() => currTime = getDayIdxMinutes(), 1000)
@@ -94,9 +93,6 @@
     class:header--dark={isDarkTheme}
     class:header--light={!isDarkTheme}
     class:header--non-default={isColorThemeDefault}
-    class:header--min={$sessionStore && doMinHeaderUI}
-    class:header--md={activeSession && headerWidth < MD_MAX_WIDTH}
-    class:header--sm={activeSession && headerWidth < SM_MAX_WIDTH}
 >
     <!-- Active Routine Block -->
     <button 
@@ -104,7 +100,6 @@
         class:header__now-block--no-routine={!$weekRoutine}
         class:header__now-block--empty={!nowBlock}
         class:header__now-block--md={headerWidth < NO_SESS_MD_MAX_WIDTH}
-        class:header__now-block--sm={activeSession && headerWidth < SM_MAX_WIDTH}
         disabled={!$weekRoutine}
         style:--block-color-1={colorTrio[0]}
         style:--block-color-2={colorTrio[1]}
@@ -130,36 +125,31 @@
         </div>
     </button>
 
-    <!-- Active Session Component -->
-    {#if $sessionStore != null && $ytPlayerStore?.doShowPlayer}
-        <div class={`header-session-container ${$themeState.isDarkTheme ? "" : "header-session-container--light-mode"}`}>
-            <SessionHeaderView />
+    <!-- Session Component -->
+     {#if !session}
+        <div class="header__session header__section">
+            <button 
+                title="Create new session"
+                class="header__new-session-btn"
+                on:click={() => openModal(ModalType.NewSession)}
+            >
+                <SvgIcon 
+                    icon={Icon.Add}
+                    options={{ scale: 0.9, strokeWidth: 1.75 }}
+                />
+            </button>
+            <div class="header__new-session-btn-divider">
+            </div>
+            <!-- Total Session Time -->
+            <div class="header__session-time" title="Today's total focus time.">
+                <span>
+                    {secsToHHMM($globalContext.focusTime)}
+                </span>
+            </div>
         </div>
-    {/if}
-
-    <!-- New Session Button -->
-    <div class="header__session header__section">
-        <button 
-            title="Create new session"
-            class="header__new-session-btn"
-            class:hidden={activeSession}
-            on:click={() => openModal(ModalType.NewSession)}
-        >
-            <SvgIcon 
-                icon={Icon.Add}
-                options={{ scale: 0.9, strokeWidth: 1.75 }}
-            />
-        </button>
-        <div 
-            class="header__new-session-btn-divider"
-            class:hidden={activeSession}
-        >
-        </div>
-        <!-- Total Session Time -->
-        <div class="header__session-time" title="Total session time for today.">
-            <span>1h 46m</span>
-        </div>
-    </div>
+     {:else}
+        <ActiveSessionMini />
+     {/if}
 
     <!-- Active Routine Pop Up -->
     <ActiveRoutine />
@@ -191,7 +181,7 @@
         /* Now Block */
         &__now-block {
             @include flex(center);
-            height: 27.5px;
+            height: 100%;
             border-radius: 12px;
             margin: -3px 0px 0px -5px;
             background-color: rgba(var(--block-color-1), 0.08);
@@ -270,9 +260,9 @@
         &__session {
             @include flex(center);
             border-radius: 12px;
-            margin-top: -3px;
             height: 27.5px;
             padding: 0px 12px 0px 10px;
+            margin: -3px 0px 0px -10px;
             @include txt-color(0.055, "bg");
         }
         &__new-session-btn {

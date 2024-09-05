@@ -4,6 +4,7 @@ import { get, writable, type Writable } from "svelte/store"
 import { toast } from "./utils-toast"
 import { 
         addItemToArray, extractNum, extractQuadCSSValue, findAncestor, 
+        getAttrValue, 
         getDistBetweenTwoPoints, getElemById, getElemTrueHeight, 
         getHozDistanceBetweenTwoElems, getVertDistanceBetweenTwoElems, initFloatElemPos, 
         isEditTextElem, isKeyAlphaNumeric, isNearBorderAndShouldScroll, moveElementInArr, 
@@ -97,7 +98,7 @@ export class TasksListManager {
     prevFocusedTodoIdx = -1
 
     /* Subtasks */
-    editingSubtaskIdx = -1
+    editSubtaskIdx = -1
     subtaskCheckBoxJustChecked = -1
     isAddingNewSubtask = false
 
@@ -434,7 +435,7 @@ export class TasksListManager {
     }
 
     getEditingSubtask() {
-        return this.getCurrSubtasks()[this.editingSubtaskIdx]
+        return this.getCurrSubtasks()[this.editSubtaskIdx]
     }
 
     getTask(taskIdx: number) {
@@ -525,7 +526,7 @@ export class TasksListManager {
         this.addNewSubtask(taskIdx, subtaskIdx, newSubtask)
         this.updateOpenTaskHeightOnChange()
         
-        this.editingSubtaskIdx = subtaskIdx
+        this.editSubtaskIdx = subtaskIdx
         this.isAddingNewSubtask = true
 
         if (this.pickedTaskIdx != taskIdx) {
@@ -535,7 +536,7 @@ export class TasksListManager {
         if (!doToggleInput) return
 
         this.update({
-            editingSubtaskIdx: this.editingSubtaskIdx,
+            editSubtaskIdx: this.editSubtaskIdx,
             isAddingNewSubtask: this.isAddingNewSubtask
         })
 
@@ -713,7 +714,7 @@ export class TasksListManager {
         /* Main Task Content Height  */
         let height = this.getTaskElemHeight(this.pickedTaskIdx)
         /* Subtask Editor */
-        const subtaskTitleElement = this.getElemById(`task-subtask-title-input-id--${this.editingSubtaskIdx}`)
+        const subtaskTitleElement = this.getElemById(`task-subtask-title-input-id--${this.editSubtaskIdx}`)
         if (subtaskTitleElement) {
             height += subtaskTitleElement!.clientHeight
         }
@@ -750,7 +751,7 @@ export class TasksListManager {
         this.isEditingTitle = false
         this.isEditingDescription = false
         this.pickedTaskIdx = -1
-        this.editingSubtaskIdx = -1
+        this.editSubtaskIdx = -1
         this.freshExpand = false
         this.justExpandedTask = false
 
@@ -763,7 +764,6 @@ export class TasksListManager {
 
         this.toggleInputBlurred(false)
 
-
         if (this.taskExpandTimeout) {
             clearTimeout(this.taskExpandTimeout)
             this.taskExpandTimeout = null
@@ -773,10 +773,9 @@ export class TasksListManager {
             isEditingTitle: false,
             isEditingDescription: false,
             pickedTaskIdx: -1,
-            editingSubtaskIdx: -1,
+            editSubtaskIdx: -1,
             focusedSubtaskIdx: -1,
             justExpandedTask: false,
-
             pickedTaskDescriptionHT: this.pickedTaskDescriptionHT,
             pickedTaskHT: this.pickedTaskHT,
             taskCheckBoxJustChecked: this.taskCheckBoxJustChecked,
@@ -808,7 +807,6 @@ export class TasksListManager {
         
         let height = this.getTaskElemHeight(task.idx)
         if (height < 0) return
-
         
         taskElem.style.height = height + "px"
     }
@@ -849,7 +847,7 @@ export class TasksListManager {
     onSubtaskTitleClicked(subtaskIdx: number) {
         if (window.getSelection()?.toString()) return
 
-        this.editingSubtaskIdx = subtaskIdx
+        this.editSubtaskIdx = subtaskIdx
 
         requestAnimationFrame(() => {
             const inputTextElem = this.getElemById(`task-subtask-title-input-id--${subtaskIdx}`) as HTMLInputElement
@@ -857,7 +855,7 @@ export class TasksListManager {
         })
 
         this.updateSubTaskFocusIdxFromStroke("", subtaskIdx)
-        this.update({ editingSubtaskIdx: this.editingSubtaskIdx })
+        this.update({ editSubtaskIdx: this.editSubtaskIdx })
     }
 
     didClickOnSubtaskElem(target: HTMLElement) {
@@ -1447,6 +1445,8 @@ export class TasksListManager {
     }
 
     async finalizeNewTitle(task: Task, newTask: boolean) {
+        if (!this.options.handlers?.onAddTask) return
+
         const clientHandlerParam: TaskListClientHandlerContext = {
             context: "add",
             payload: {
@@ -1456,10 +1456,11 @@ export class TasksListManager {
         }
 
         if (newTask) {
-            const { id: newId } = await this.clientHandler(clientHandlerParam)
+            const res = await this.clientHandler(clientHandlerParam)
+            if (!res) return
 
             this.tasks.update((tasks) => tasks.map((task) => (
-                task.id === task.id ? { ...task, id: newId } : task)
+                task.id === task.id ? { ...task, id: res.id } : task)
             ))
         }
         else {
@@ -1487,6 +1488,8 @@ export class TasksListManager {
     }
 
     async finalizeNewDescription(task: Task, description: string) {
+        if (!this.options.handlers?.onTaskUpdate) return
+
         this.clientHandler({
             context: "description",
             payload: { 
@@ -1506,12 +1509,12 @@ export class TasksListManager {
         const subtask = this.getEditingSubtask()
         subtask.title = this.newText || "Untitled"
 
-        this.editingSubtaskIdx = -1
+        this.editSubtaskIdx = -1
         this.newText = ""
         this.isAddingNewSubtask = false
 
         this.update({ 
-            editingSubtaskIdx: this.editingSubtaskIdx,
+            editSubtaskIdx: this.editSubtaskIdx,
             newText: this.newText,
             isAddingNewSubtask: this.isAddingNewSubtask
         })
@@ -1569,7 +1572,7 @@ export class TasksListManager {
 
         // close task group input when clicking on a new input
         if (targetClass.includes("subtask__title-input")) {
-            this.newText = this.getSubtask(this.pickedTaskIdx, this.editingSubtaskIdx)!.title
+            this.newText = this.getSubtask(this.pickedTaskIdx, this.editSubtaskIdx)!.title
         }
         else if (targetClass.includes("title-input")) {
             this.newText = tasks![this.pickedTaskIdx].title
@@ -1758,7 +1761,6 @@ export class TasksListManager {
 
     updateTaskFocusIdx(newTaskIdx: number) {
         this.focusedTaskIdx = newTaskIdx
-
         this.update({ focusedTaskIdx: newTaskIdx })
 
         if (newTaskIdx >= 0) {
@@ -2209,6 +2211,26 @@ export class TasksListManager {
         }
     }
 
+    onClickedOutside(event: CustomEvent) {
+        this.focusedTaskIdx = -1
+        this.update({ focusedTaskIdx: -1 })
+
+        if (this.pickedTaskIdx < 0 || this.isContextMenuOpen || !event.detail?.target) {
+            return
+        }
+        const target = event.detail.target as HTMLElement
+        const toast = findAncestor({
+            child: target, queryStr: "toast",
+            strict: true,  max: 5
+        })
+        
+        if (toast && getAttrValue(toast, "data-toast-context") === this.options.id) {
+            return
+        }
+
+        this.minimizeExpandedTask()
+    }
+
     /**
      * Manually calculate the height of a task.
      * Add the heights of ite children plus the padding.
@@ -2376,7 +2398,7 @@ export class TasksListManager {
         if (newState.isEditingDescription != undefined)      newStateObj.isEditingDescription = newState.isEditingDescription
         if (newState.isEditingTitle != undefined)            newStateObj.isEditingTitle = newState.isEditingTitle
         if (newState.newText != undefined)                    newStateObj.newText = newState.newText
-        if (newState.editingSubtaskIdx != undefined)          newStateObj.editingSubtaskIdx = newState.editingSubtaskIdx
+        if (newState.editSubtaskIdx != undefined)          newStateObj.editSubtaskIdx = newState.editSubtaskIdx
         if (newState.taskCheckBoxJustChecked != undefined)    newStateObj.taskCheckBoxJustChecked = newState.taskCheckBoxJustChecked
         if (newState.subtaskCheckBoxJustChecked != undefined) newStateObj.subtaskCheckBoxJustChecked = newState.subtaskCheckBoxJustChecked
         if (newState.textAreaHasSpellCheck != undefined)      newStateObj.textAreaHasSpellCheck = newState.textAreaHasSpellCheck

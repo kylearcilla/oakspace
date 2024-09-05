@@ -56,7 +56,7 @@
     }
 </script>
 
-<Modal options={{ borderRadius: "10px"}} onClickOutSide={() => onCancel()}>
+<Modal options={{ borderRadius: "18px"}} onClickOutSide={() => onCancel()}>
     <div 
         class="confirm"
         class:confirm--light={!isDarkTheme}
@@ -71,7 +71,7 @@
             </span>
         {/if}
         <div class="confirm__text">
-            {text}
+            {@html text}
         </div>
         <div class="confirm__btns-container">
             <button
@@ -102,7 +102,7 @@
 </Modal>
 
 
-<style lang="scss">
+<style global lang="scss">
 
     .confirm { 
         width: 350px;
@@ -165,7 +165,6 @@
                 animation: hold-confirm var(--hold-down-length) ease-in-out;
                 visibility: visible !important;
             }
-            
             &:hover {
                 filter: brightness(1.1);
             }

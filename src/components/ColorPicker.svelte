@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { themeState } from "$lib/store"
-	import { COLOR_SWATCHES, clickOutside } from "$lib/utils-general"
+	import { clickOutside } from "$lib/utils-general"
+	import { COLOR_SWATCHES } from "$lib/utils-colors"
 	import { onMount } from "svelte"
 	import BounceFade from "./BounceFade.svelte"
 

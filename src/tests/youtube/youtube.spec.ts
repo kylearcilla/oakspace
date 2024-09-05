@@ -1,5 +1,5 @@
-import { expect, test, chromium } from "@playwright/test"
-import { closeModal, closeToastMessage, expectSkeletonItems, expectToastMsg, getElemOrigin, googleLogIn, launchAuthBrowser, verifyInfiniteScoll, vertScrollElem } from "../pw-helpers"
+import { expect, test } from "@playwright/test"
+import { closeModal, closeToastMessage, expectSkeletonItems, expectToastMsg, googleLogIn, launchAuthBrowser, verifyInfiniteScoll, vertScrollElem } from "../pw-helpers"
 
 async function openYoutube(page: any) {
     await page.goto('http://localhost:5173/home')

@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { onMount } from "svelte"
+	import { onDestroy, onMount } from "svelte"
 
   // home components
 	import Header from "./Header.svelte"
-  import NavMenu from "./SideBarLeft.svelte"
-  import TaskView from "./SideBarRight.svelte"
+  import SideBarLeft from "./SideBarLeft.svelte"
   import MusicPlayer from "./MusicPlayer.svelte"
   import YoutubeView from "./YoutubeView.svelte"
+  import SideBarRight from "./SideBarRight.svelte"
 
   // main modals
 	import Stats from "./Stats.svelte"
@@ -19,26 +19,27 @@
   // modals
 	import ModalQuote from "./ModalQuote.svelte"
 	import ShortcutsModal from "./ShortcutsModal.svelte"
-	import SessionNewModal from "./SessionNewModal.svelte"
-  import SessionEditModal from "./SessionEditModal.svelte"
-	import SessionActiveModal from "./SessionActiveModal.svelte"
-	import SessionFinishedModal from "./SessionFinishedModal.svelte"
-	import SessionCanceledModal from "./SessionCanceledModal.svelte"
-
-  export let data
-
+  import SessionNewModal from "./SessionNewModal.svelte"
+  
   // misc. elems
 	import Toaster from "../../components/Toaster.svelte"
+  import FloatMediaPlayer from "./FloatMediaPlayer.svelte"
   
+  // utils
+  import { SPOTIFY_IFRAME_ID } from "$lib/utils-music"
 	import { ModalType, MusicPlatform } from "$lib/enums"
-	import { globalContext, musicDataStore, musicPlayerStore, ytPlayerStore } from "$lib/store"
+  import { YoutubeMusicPlayer } from "$lib/youtube-music-player"
+	import { globalContext, musicDataStore, musicPlayerStore, sessionManager } from "$lib/store"
 	import { 
-        initAppState, keyboardShortCutHandlerKeyDown, 
-        keyboardShortCutHandlerKeyUp, LEFT_BAR_WIDTH, onMouseMoveHandler
+    initAppState, keyboardShortCutHandlerKeyDown, keyboardShortCutHandlerKeyUp, 
+    onMouseMoveHandler, LEFT_BAR_WIDTH, updateRoute, onQuitApp
   } from "$lib/utils-home"
-	import FloatMediaPlayer from "./FloatMediaPlayer.svelte"
-	import { SPOTIFY_IFRAME_ID } from "$lib/utils-music";
-	import { YoutubeMusicPlayer } from "$lib/youtube-music-player";
+
+	import { afterNavigate } from "$app/navigation";
+	import SessionConcludeModal from "./SessionConcludeModal.svelte";
+
+  
+  export let data
 
   let toggledLeftBarWithKey = false
   let totalWidth = 0
@@ -52,15 +53,14 @@
 
   let isAciveRoutineOpen = false
   let homeViewClasses = ""
-  let currentRoute    = "Workspace"
 
   const RIGHT_BAR_WIDTH = 240
   const SMALL_WIDTH = 740
 
+  $: route = $globalContext.route
   $: if (totalWidth > 0) {
     updateMiddleView()
   }
-  $: showYoutubeView = $ytPlayerStore?.doShowPlayer ?? true
 
   globalContext.subscribe((state: GlobalContext) => {
     leftBarOpen = state.leftBarOpen
@@ -76,10 +76,6 @@
 
     updateMiddleView()
   })
-
-  function onRouteChange(e: CustomEvent) {
-    currentRoute = e.detail as string
-  }
 
   function updateMiddleView() {
     leftBarOpen = $globalContext.leftBarOpen
@@ -118,8 +114,19 @@
   function _onMouseMoveHandler(event: MouseEvent) {
     toggledLeftBarWithKey = onMouseMoveHandler(event, toggledLeftBarWithKey)
   }
+
+  afterNavigate(({ to }) => {
+    if (!to?.route?.id) return
+
+    const { id } = to.route
+    console.log({ route: id })
+    updateRoute(to.route.id)
+  })
   
   onMount(initAppState)
+  onDestroy(() => {
+    onQuitApp()
+  })
 </script>
 
 <svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} />
@@ -129,40 +136,39 @@
   on:mousemove={_onMouseMoveHandler} bind:clientWidth={totalWidth}
 >
   <div class="home__main">
-    <!-- Left -->
-      <nav 
-        class="home__nav-menu-container smooth-bounce" 
-        style:width={`${leftSideBarWidth}px`}
-        style:margin-left={`${leftSideBarWidth === 0 ? `-${LEFT_BAR_WIDTH}px` : ""}`}
-      >
-        <NavMenu on:routeChange={onRouteChange}/>
-      </nav>
-  <!-- Middle -->
-      <div 
-        class="home__middle-view smooth-bounce" 
-        style:width={middleViewWidth}
-        style:margin-left={middleViewMarginLeft}
-      >
-          <div class="home__header-container">
-            <Header/>
-          </div>
-            <!-- Do not show /workspace if a player is active as it will it lay on top -->
-            {#if !showYoutubeView || showYoutubeView && currentRoute != "Workspace"}
-                <div class="home__middle-view-slot-container">
-                  <slot />
-                </div>
-            {/if}
-            <YoutubeView />
-        </div>
-    <!-- Right -->
-      <nav 
-        class="home__task-view-container smooth-bounce" 
-        style:width={`${rightSideBarWidth}px`}
-        style:margin-right={`${rightSideBarWidth === 0 ? `-${RIGHT_BAR_WIDTH}px` : ""}`}
-      >
-          <TaskView />
-      </nav>
-  </div>
+    <!-- left -->
+    <nav 
+      class="home__nav-menu-container smooth-bounce" 
+      style:width={`${leftSideBarWidth}px`}
+      style:margin-left={`${leftSideBarWidth === 0 ? `-${LEFT_BAR_WIDTH}px` : ""}`}
+    >
+      <SideBarLeft />
+    </nav>
+    <!-- middle -->
+    <div
+      class="home__middle-view smooth-bounce" 
+      style:width={middleViewWidth}
+      style:margin-left={middleViewMarginLeft}
+    >
+      <div class="home__header-container">
+        <Header/>
+      </div>
+        {#if route != "/home"}
+            <div class="home__middle-view-slot-container">
+              <slot />
+            </div>
+        {/if}
+        <YoutubeView />
+    </div>
+    <!-- right -->
+    <nav 
+      class="home__task-view-container smooth-bounce" 
+      style:width={`${rightSideBarWidth}px`}
+      style:margin-right={`${rightSideBarWidth === 0 ? `-${RIGHT_BAR_WIDTH}px` : ""}`}
+    >
+      <SideBarRight /> 
+  </nav>
+</div>
 
   <FloatMediaPlayer 
       type="youtube" 
@@ -205,17 +211,8 @@
   {#if $globalContext.modalsOpen.includes(ModalType.NewSession)} 
     <SessionNewModal /> 
   {/if}
-  {#if $globalContext.modalsOpen.includes(ModalType.EditSession)} 
-    <SessionEditModal /> 
-  {/if}
-  {#if $globalContext.modalsOpen.includes(ModalType.SesssionFinished)} 
-    <SessionFinishedModal /> 
-  {/if}
-  {#if $globalContext.modalsOpen.includes(ModalType.SessionCanceled)}  
-    <SessionCanceledModal /> 
-  {/if}
-  {#if $globalContext.modalsOpen.includes(ModalType.ActiveSession)} 
-    <SessionActiveModal/>
+  {#if $globalContext.modalsOpen.includes(ModalType.SessionSummary) && $sessionManager} 
+    <SessionConcludeModal session={$sessionManager.session}/>
   {/if}
 
   <!-- Other Modals Modals -->
@@ -229,11 +226,7 @@
     />
   {/if}
 
-  <div 
-    class="yt-music-player"
-    id={YoutubeMusicPlayer.IFRAME_ID}
-  >
-
+  <div class="yt-music-player" id={YoutubeMusicPlayer.IFRAME_ID}>
   </div>
 </div>
 
@@ -275,7 +268,7 @@
         // padding: 0px 25px;
       }
       &__nav-menu-container {
-        background-color: var(--navMenuBgColor);
+        background-color: var(--SideBarLeftBgColor);
         transition: ease-in-out 0.15s;
         height: 100%;
         margin-left: 0px;

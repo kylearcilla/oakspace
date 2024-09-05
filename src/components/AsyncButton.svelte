@@ -4,7 +4,7 @@
 
     export let title = "Save"
     export let isLoading: boolean
-    export let disabled: boolean
+    export let disabled = false
     export let actionFunc: AsyncFunc
     export let styling: StylingOptions | undefined = undefined
 

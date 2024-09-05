@@ -1,9 +1,11 @@
 import { PUBLIC_YT_DATA_V3_API_KEY } from "$env/static/public"
+
 import { authGoogleUser } from "./api-google"
 import { throwFireBaseAPIError } from "./api-youtube"
-import { APIErrorCode } from "./enums"
-import { APIError } from "./errors"
 import { formatDateToISO, getIsoDateMinutesFromStartOfDay } from "./utils-date"
+
+import { APIError } from "./errors"
+import { APIErrorCode } from "./enums"
 
 const GOOGLE_CALENDAR_API_URL = "https://www.googleapis.com/calendar/v3/"
 const MAX_CALS_RESULTS = 50

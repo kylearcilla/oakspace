@@ -6,7 +6,7 @@
 	import { themeState } from "$lib/store"
 	import { TasksListManager } from "$lib/tasks-list-manager"
 	import { InputManager, TextEditorManager } from "$lib/inputs"
-	import { clickOutside, findAncestor, getAttrValue, inlineStyling } from "$lib/utils-general"
+	import { clickOutside, inlineStyling } from "$lib/utils-general"
     
 	import SvgIcon from "./SVGIcon.svelte"
 	import DropdownList from "./DropdownList.svelte"
@@ -28,15 +28,14 @@
     let containerHeight = 0
     let tasks: Task[] = []
 
-
     $: createNewTask(options?.isCreatingNewTask ?? false)
 
     $: isDarkTheme       = $themeState.isDarkTheme
     $: pickedTaskIdx     = $manager.pickedTaskIdx
-    $: editingSubtaskIdx = $manager.editingSubtaskIdx
+    $: editSubtaskIdx    = $manager.editSubtaskIdx
     $: pickedTaskTitle   = $manager.getTask(pickedTaskIdx)?.title ?? ""
     $: pickedTaskDescription = $manager.getTask(pickedTaskIdx)?.description ?? ""
-    $: editingSubtaskTitle   = $manager.getSubtask(pickedTaskIdx, editingSubtaskIdx)?.title ?? ""
+    $: editingSubtaskTitle   = $manager.getSubtask(pickedTaskIdx, editSubtaskIdx)?.title ?? ""
 
     $: if ($manager.isContextMenuOpen && tasksListContainerElem) {
         tasksListContainerElem.style.overflowY = "hidden"
@@ -62,22 +61,22 @@
     let subtaskTextEditor: Writable<InputManager> 
 
     $: initTaskTextEditors(pickedTaskIdx)
-    $: initSubtaskTextEditor(editingSubtaskIdx)
+    $: initSubtaskTextEditor(editSubtaskIdx)
 
     function createNewTask(doCreateNewTask: boolean) {
         if (!doCreateNewTask) return
 
         $manager.addingNewTask(0)
     }
-    function initSubtaskTextEditor(editingSubtaskIdx: number) {
-        if (editingSubtaskIdx < 0) return
+    function initSubtaskTextEditor(editSubtaskIdx: number) {
+        if (editSubtaskIdx < 0) return
 
         subtaskTextEditor = (new TextEditorManager({ 
             initValue: editingSubtaskTitle,
             placeholder: "Title goes here...",
             doAllowEmpty: false,
             maxLength: 150,
-            id: `${idPrefix}--task-subtask-title-input-id--${editingSubtaskIdx}`,
+            id: `${idPrefix}--task-subtask-title-input-id--${editSubtaskIdx}`,
             handlers
         })).state
     }
@@ -126,23 +125,6 @@
     function onWindowResize() {
         requestAnimationFrame(() => $manager.updateOpenTaskHeight({ hasWidthChanged: true }))
     }
-    function onClickedOutside(event: CustomEvent) {
-        if (pickedTaskIdx < 0 || isContextMenuOpen || !event.detail?.target) return
-
-        const target = event.detail.target as HTMLElement
-        const toast = findAncestor({
-            child: target,
-            queryStr: "toast",
-            strict: true,
-            max: 5
-        })
-        
-        if (toast && getAttrValue(toast, "data-toast-context") === $manager.options.id) {
-            return
-        }
-
-        $manager.minimizeExpandedTask()
-    }
     onMount(() => {
         $manager.initAfterLoaded(tasksListContainerElem, tasksList)
     })
@@ -168,7 +150,7 @@
     style:--max-descr-lines={$manager.cssVariables.maxDescrLines}
     style:--task-top-padding={`${$manager.taskLayout?.topPadding}px`}
     style:--left-section-width={`${$manager?.taskLayout?.leftSectionWidth}px`}
-    style:--tasks-max-height={`${containerHeight + 5}px`}
+    style:--tasks-max-height={`${containerHeight - 18}px`}
 
     style:--title-font-size={`${$manager.styling?.task?.fontSize ?? "1.25rem"}`}
     style:--title-font-weight={`${$manager.styling?.task?.fontWeight ?? "400"}`}
@@ -190,14 +172,13 @@
         id={`${idPrefix}--tasks-list-container`}
         style={`${inlineStyling($manager.styling?.list)}`}
         style:height={$manager.ui.listHeight}
-        use:clickOutside on:click_outside={onClickedOutside} 
+        use:clickOutside on:click_outside={(e) => $manager.onClickedOutside(e)} 
     >
         <ul 
             bind:this={tasksList}
             class="tasks"
             class:tasks--dragging-state={$manager.floatingItem}
             class:tasks--numbered={settings.numbered}
-            class:tasks--hhh={tasks.length > 0}
             id={`${idPrefix}--tasks-list`}
             style={inlineStyling($manager.styling?.list)}
             on:pointermove={$manager.onTaskListPointerMove}
@@ -228,9 +209,9 @@
                     class:task--expanded={taskIdx === pickedIdx}
                     class:task--drag-over={isDraggingTask && taskIdx === $manager.dragOverItemElemIdx}
                     class:task--min={taskIdx != pickedIdx}
-                    class:task--focused={pickedIdx === taskIdx}
-                    class:task--full-divider={(focusedIdx === taskIdx && pickedIdx === taskIdx) || (taskIdx > 0 && focusedIdx === taskIdx - 1 && pickedIdx === taskIdx - 1)}
+                    class:task--focused={focusedIdx === taskIdx}
                     class:task--checked={task.isChecked && !isDragSrc}
+                    class:task--full-border={$manager.styling?.task?.borderRadius ?? "0px" != "0px"}
                     class:drag-src={isDragSrc}
                     style={`${inlineStyling($manager.styling?.task)}`}
                     on:click={(event) => {
@@ -246,7 +227,7 @@
                     }}
                 >
                     <div class="task__top">
-                        <!-- CheckBox Or Nunber  -->
+                        <!-- checkbox or number  -->
                         <div class="task__left">
                             {#if settings.numbered}
                                 <div class="task__number" style={inlineStyling($manager.styling?.num)}>
@@ -412,7 +393,7 @@
                                             </div>
                                             <!-- Main Content -->
                                             <div class="subtask__right">
-                                                {#if $manager.editingSubtaskIdx === subtaskIdx}
+                                                {#if $manager.editSubtaskIdx === subtaskIdx}
                                                     <div 
                                                         id={`${idPrefix}--task-subtask-title-input-id--${subtaskIdx}`}
                                                         class="subtask__title-input"
@@ -463,7 +444,9 @@
                         </ul>
                     {/if}
                     <!-- Divider -->
-                    <div class="task__divider"></div>
+                    {#if taskIdx != 0 && (pickedIdx != taskIdx) && (pickedIdx != taskIdx - 1) && (focusedIdx != taskIdx) && (focusedIdx != taskIdx - 1)}
+                        <div class="task__divider"></div>
+                    {/if}
                 </li>
             {/each}
             <!-- Dragging Task -->
@@ -578,32 +561,34 @@
             />
         </button>
     {/if}
+
+    <!-- Context Menu -->
+    <DropdownList
+        id={`${idPrefix}--tasks`}
+        isHidden={!isContextMenuOpen}
+        options={{
+            listItems:   $manager.rightClickedTask ? tasksOptions : subTaskOptions,
+            onListItemClicked: (context) => {
+                isContextMenuOpen = false
+                $manager.contextMenuOptionClickedHandler(context)
+            },
+            onClickOutside: () => {
+                isContextMenuOpen = false
+            },
+            onDismount: () => {
+                isContextMenuOpen = false
+                $manager.onContextMenuClickedOutsideHandler()
+            },
+            styling: { 
+                width: options.contextMenuOptions.width 
+            },
+            position: { 
+                top: $manager.contextMenuY + "px", left: $manager.contextMenuX + "px" 
+            }
+        }}
+    />
 </div>
 
-<!-- Context Menu -->
-<DropdownList
-    id={`${idPrefix}--tasks`}
-    isHidden={!isContextMenuOpen}
-    options={{
-        listItems:   $manager.rightClickedTask ? tasksOptions : subTaskOptions,
-        onListItemClicked: (context) => {
-            $manager.contextMenuOptionClickedHandler(context)
-        },
-        onClickOutside: () => {
-            isContextMenuOpen = false
-        },
-        onDismount: () => {
-            isContextMenuOpen = false
-            $manager.onContextMenuClickedOutsideHandler()
-        },
-        styling: { 
-            width: options.contextMenuOptions.width 
-        },
-        position: { 
-            top: $manager.contextMenuY + "px", left: $manager.contextMenuX + "px" 
-        }
-    }}
-/>
 
 <style lang="scss">
     @import "../scss/inputs.scss";
@@ -613,6 +598,7 @@
         max-height: 100%;
         display: flex;
         flex-direction: column;
+        position: relative;
 
         &--light &__add-btn {
             opacity: 0.6;
@@ -624,7 +610,7 @@
             }
         }
         &__add-btn {
-            margin: 0px 0px 5px var(--side-padding) !important;
+            margin: 0px 0px 5px var(--side-padding);
             font-weight: 400;
             width: 100%;
             opacity: 0.2;
@@ -654,7 +640,7 @@
         &-container {
             overflow-y: scroll;
             max-height: var(--tasks-max-height);
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
         &-container--empty {
             margin-bottom: 5px !important;
@@ -673,14 +659,19 @@
         border-bottom: 1px solid transparent;
         position: relative;
         opacity: 1 !important;
+        margin-bottom: 1px;
 
-        &:hover, 
+        &:hover,
         &:focus,
          &--focused, 
          &--selected, 
          &--drag-over {
             background-color: rgba(var(--textColor1), 0.024);
             @include txt-color(0.015, "border");
+        }
+
+        &:hover + .task .task__divider {
+            display: none !important;
         }
         &:focus-visible {
             box-shadow: none !important;
@@ -691,13 +682,12 @@
         &:hover &__divider {
             display: none;
         }
-        
+        &--full-border {
+            border-right: 1px solid transparent;
+            border-left: 1px solid transparent;
+        }
         &--not-animated {
             transition: 0s;
-        }
-        &--full-divider &__divider {
-            @include divider(0.05, 0.5px, 100%);
-            @include abs-top-left;
         }
         &--min:hover &__drag-handle {
             @include visible;
@@ -714,7 +704,8 @@
         &--light#{&}--drag-over {
             @include txt-color(0.03, "border");
         }
-        &--light &__title-input, &--light &__title {
+        &--light &__title-input, 
+        &--light &__title {
             @include text-style(0.8, 500)
         }
         &--light &__description, &--light &__description-input {
@@ -740,7 +731,7 @@
         /* Expanded UI */
         &--expanded {
             padding-top: 6px;
-            height: calc-size(auto);
+            @include txt-color(0.015, "border");
         }
         &--expanded &__title {
             white-space: normal;

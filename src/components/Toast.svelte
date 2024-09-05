@@ -6,7 +6,8 @@
 	import Logo from './Logo.svelte'
 	import SvgIcon from './SVGIcon.svelte'
 	import { globalContext, themeState } from '$lib/store';
-	import { COLOR_SWATCHES, extractNum, getColorTrio } from '$lib/utils-general';
+	import { extractNum, getColorTrio } from '$lib/utils-general'
+	import { COLOR_SWATCHES } from "$lib/utils-colors"
 	import Loader from './Loader.svelte';
 
 	type $$Props = Expand<ToastProps>
@@ -366,7 +367,7 @@
 	<!-- Main Content -->
 	<div class="toast__content" data-content="">
 		<div class="toast__header">
-			{#if toast.icon || ["success", "info", "warning", "error", "loading", "default"].includes(toastType)}
+			{#if toast.icon || ["success", "info", "warning", "error", "loading"].includes(toastType) || toastType === "default"  && toast.icon}
 				<div class="toast__header-icon">
 					{#if toastType === "loading"}
 						<Loader visible={true} />

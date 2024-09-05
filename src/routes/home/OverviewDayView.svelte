@@ -4,7 +4,8 @@
 	import { formatDateLong, formatDatetoStr, getDayIdxMinutes, getMinsFromStartOfDay, getTimeFromIdx, isSameDay, minsFromStartToHHMM, minsToHHMM } from "$lib/utils-date"
     
 	import { GoogleCalendarManager } from "$lib/google-calendar-manager"
-	import { findClosestColorSwatch, getColorTrio, getMaskedGradientStyle } from "$lib/utils-general"
+	import { getColorTrio, getMaskedGradientStyle } from "$lib/utils-general"
+	import { findClosestColorSwatch } from "$lib/utils-colors";
 
     export let viewing:"sessions" | "goals" | "calendar"
     export let sessions: Session[] = []
@@ -215,7 +216,7 @@
                         {#if viewing === "sessions"}
                             {#each sessions as session}
                                 {@const startTimeMins = getMinsFromStartOfDay(session.startTime)}
-                                {@const endTimeMins   = getMinsFromStartOfDay(session.endTime)}
+                                {@const endTimeMins   = getMinsFromStartOfDay(session.result?.endTime ?? new Date())}
                                 {@const startTimeStr  = minsFromStartToHHMM(startTimeMins)}
                                 {@const endTimeStr    = minsFromStartToHHMM(endTimeMins)}
                                 {@const top       = `${Math.floor((startTimeMins / 1440) * scrollContainerHeight)}px`}

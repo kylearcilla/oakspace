@@ -1,5 +1,5 @@
 import { GoalStatus } from "./enums"
-import { COLOR_SWATCHES } from "./utils-general"
+import { COLOR_SWATCHES } from "./utils-colors"
 
 /* Tags */
 export const TEST_TAGS: Tag[] = [
@@ -340,57 +340,4 @@ export const TEST_GOALS: Goal[] = [
 ]
 
 /* Sessions */
-export const TEST_SESSIONS: Session[] = [
-  {
-    id: "0",
-    name: "Focus Session",
-    tag: TEST_TAGS[0],
-    pomTime: 25,
-    pomPeriods: 4,
-    breakTime: 5,
-    startTime: new Date("2024-08-09T09:00:00"),
-    endTime: new Date("2024-08-09T10:15:00"),
-    todos: [
-        { name: "Write report", isDone: false },
-        { name: "Review code", isDone: false }
-    ],
-    calculatedEndTime: new Date("2024-08-09T11:30:00").getTime(),
-    totalElapsedTime: 0,
-    timePeriodString: "9:00 AM - 11:30 AM"
-  },
-  {
-    id: "1",
-    name: "Study Session",
-    tag: TEST_TAGS[1],
-    pomTime: 50,
-    pomPeriods: 2,
-    breakTime: 10,
-    startTime: new Date("2024-08-09T14:00:00"),
-    endTime: new Date("2024-08-09T14:30:00"),
-    todos: [
-        { name: "Read Chapter 3", isDone: false },
-        { name: "Take Notes", isDone: true }
-    ],
-    calculatedEndTime: new Date("2024-08-09T16:00:00").getTime(),
-    totalElapsedTime: 3000000,
-    timePeriodString: "2:00 PM - 4:00 PM"
-  },
-  {
-    id: "2",
-    name: "Workout Session",
-    tag: TEST_TAGS[2],
-    pomTime: 20,
-    pomPeriods: 3,
-    breakTime: 5,
-    startTime: new Date("2024-08-09T18:00:00"),
-    endTime: new Date("2024-08-09T20:30:00"),
-    todos: [
-        { name: "Cardio", isDone: true },
-        { name: "Strength Training", isDone: false },
-        { name: "Stretching", isDone: false }
-    ],
-    calculatedEndTime: new Date("2024-08-09T19:45:00").getTime(),
-    totalElapsedTime: 6000000,
-    timePeriodString: "6:00 PM - 7:45 PM"
-  }
-]
+export const TEST_SESSIONS: Session[] = []

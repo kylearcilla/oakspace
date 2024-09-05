@@ -18,7 +18,7 @@
 
     const SETTINGS_BTN_CUT_OFF_Y = 30
 
-    let selectedTab: RightSideTab = RightSideTab.TASKS
+    let selectedTab: RightSideTab = RightSideTab.OVERVIEW
     let headerRef: HTMLElement
 
     /* tasks + overview */

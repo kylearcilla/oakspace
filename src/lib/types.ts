@@ -48,6 +48,8 @@ type InputOptions = {
     }
 }
 
+/* Time */
+
 type TimeInputOptions = {
     min?: number
     max?: number
@@ -63,6 +65,8 @@ type TimePickerOptions = {
     max?: number,
     start?: number
 }
+
+type TimeString = `${number}h` | `${number}m` | `${number}s`
 
 type DropdownBtnOptions = {
     pickedOptionName: string | null
@@ -360,6 +364,8 @@ type GlobalContext = {
     rightBarOpen: boolean
     isVideoViewOpen: boolean
     isMusicPlayerOpen: boolean
+    route: string
+    focusTime: number
     hasToaster: boolean
     minModeSrc: string | null
     doOpenActiveRoutine: boolean
@@ -447,19 +453,35 @@ type TaskGroup = {
 }
 
 /* Session Stuff */
+
 type Session = {
-    id: string,
-    name: string,
-    tag: Tag,
-    pomTime: number,
-    pomPeriods: number,
-    breakTime: number,
-    startTime: Date,
-    endTime: Date,
-    calculatedEndTime: number,
-    todos: { name: string, isDone: boolean }[],
-    totalElapsedTime: number,
-    timePeriodString: string
+    id: string
+    name: string
+    mode: SessionMode
+    focusTime: number
+    breakTime: number
+    startTime: Date
+    todos: Task[]
+    result?: {
+        endTime: Date
+        focusCount: number
+        breakCount: number
+        pauseCount: number
+        elapsedSecs: number
+        totalFocusTime: number
+        totalBreakTime: number
+        periods?: number
+    }
+}
+
+type SessionMode = "pom" | "flow"
+
+type SessionState = "focus" | "paused" | "break" | "to-focus" | "to-break" | "done"
+
+type SessionProgressSegment = {
+    type: SessionState | "progress"
+    start: Date
+    end: Date
 }
 
 type Medal = "🏅" | "🥈" | "🥉"
@@ -481,53 +503,6 @@ type Tag = {
     }
 }
 
-type SessionInputData = {
-    name: string
-    tag: Tag
-    pomTime: number
-    pomPeriods: number
-    breakTime: number
-    startTime: Date
-    isPlaying: boolean
-    endTime: Date | null
-    calculatedEndTime: Date
-    totalElapsedTime: string
-    timePeriodString: string
-    currentIndex: number
-    currentPomPeriod: number
-    lastFinishedPeriodIdx
-    sessionResult: SessionResult | null
-    todos: { title: string, isChecked: boolean }[]
-    todosCheckedCount: number
-    pomMessage: string,
-    state: SessionState
-    result: SessionResult | null
-    currentTime: { minutes: number, seconds: number },
-    userFocusTimeSecs: number,
-    userBreakTimeSecs: number,
-    currentSessionTimeSecs: number,
-    sessionDurationMins: number,
-}
-
-type ActiveSessionState = {
-    name: string,
-    tag: Tag,
-    pomTime: number,
-    pomPeriods: number,
-    breakTime: number,
-    startTime: Date,
-    calculatedEndTime: Date
-    totalElapsedTime: string,
-    timePeriodString: string,
-    currentIndex: number,
-    todos: { title: string, isChecked: boolean }[],
-    todosCheckedCount: number,
-    currentTime: { minutes: number, seconds: number } | null,
-    currentPomPeriod: number,
-    sessionState: SessionState,
-    resultScore: SessionResult | null,
-    pomMessage: string    
-}
 
 type FloatingMediaEmbed = {
     mediaEmbedType: MediaEmbedType
@@ -634,7 +609,7 @@ type TaskListHandlersRes = {
 
 type TaskListHandlers = {
     onTaskUpdate: (context: TaskUpdateContext) => Promise<void>
-    onAddTask:    (context: TaskAddContext) => Promise<{ id: string }>
+    onAddTask:    (context: TaskAddContext) => Promise<{ id: string } | void>
     onDeleteTask: (context: TaskDeleteContext) => Promise<void>
 }
 

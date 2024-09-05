@@ -76,4 +76,4 @@ const config: PlaywrightTestConfig = {
 	// },
 };
 
-export default config;
+export default config

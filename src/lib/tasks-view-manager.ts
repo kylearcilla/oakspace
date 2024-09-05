@@ -7,8 +7,9 @@ import { toast } from "./utils-toast"
 import { TEST_INBOX_TASKS } from "./utils-right-bar"
 import { getCheerEmoji, getElemById, removeItemFromArray, toastApiErrorHandler } from "./utils-general"
 import { 
-        addTodoistTask, deleteTodoistTask, didTodoistAPIRedirect, initTodoistAPI, syncTodoistUserItems, 
-        updateTodoistTask, updateTodoistTaskCompletion 
+        addTodoistTask, authTodoistAPI, deleteTodoistTask, didTodoistAPIRedirect, 
+        initTodoistAPI, syncTodoistUserItems, updateTodoistTask, 
+        updateTodoistTaskCompletion 
 } from "./api-todoist"
 
 
@@ -101,8 +102,6 @@ export class TasksViewManager {
                 currTaskGroupIdx: this.currTaskGroupIdx
             })
         }
-
-        return
         if (didTodoistAPIRedirect()) {
             toast("promise",
                 {
@@ -169,6 +168,7 @@ export class TasksViewManager {
      * @param event    Focus event.
      */
     onInputBlurHandler() {
+        return
         this.finishGroupEdit()
     }
 
@@ -312,9 +312,8 @@ export class TasksViewManager {
     }
 
     loginTodoist() {
-        // this.initTodoist()
-        this.continueTodoistAPIOAuthFlow()
-        // toast("promise", { loading: 'Logging in...' }, this.initTodoist())
+        this.initTodoist()
+        toast("promise", { loading: 'Logging in...' }, this.initTodoist())
     }
 
     /* Todoist Functionality */
@@ -322,7 +321,7 @@ export class TasksViewManager {
         await initTodoistAPI()
         
         // navigation to consent screen takes time
-        // return new Promise<void>((resolve) => setTimeout(() => resolve(), this.LOADING_TOAST_DURATION))
+        return new Promise<void>((resolve) => setTimeout(() => resolve(), this.LOADING_TOAST_DURATION))
     }
 
     logoutTodoist() {
@@ -351,9 +350,8 @@ export class TasksViewManager {
 
     async continueTodoistAPIOAuthFlow() {
         try {
-            // const authRes = await authTodoistAPI()
-            // this.todoistAccessToken = authRes.access_token
-            this.todoistAccessToken = "2c9576815ee7dda3be606410837ab8392835ee17"
+            const authRes = await authTodoistAPI()
+            this.todoistAccessToken = authRes.access_token
             await this.getTodistUserItems()
 
             this.todoistLinked = true
@@ -657,8 +655,8 @@ export class TasksViewManager {
         } 
         else if (action === "delete") {
             this.initUndoToast({
-                icon: LogoIcon.Todoist,
-                description: `"${name}" deleted from ${!todoist ? `"${group.title}"` : "your Inbox"}.`,
+                icon: !todoist ? undefined : LogoIcon.Todoist,
+                description: `"${name}" deleted from ${!todoist ? `${group.title}` : "your Inbox"}.`,
                 func
             })
         }
@@ -675,7 +673,7 @@ export class TasksViewManager {
      * Creates a toast with an undo function.
      * @param options  Toast details (description + function).
      */
-    initUndoToast(options: { icon: string | LogoIcon, description: string, func?: FunctionParam }) {
+    initUndoToast(options: { icon?: string | LogoIcon, description: string, func?: FunctionParam }) {
         const { description, func, icon } = options
         if (!func) return
 
@@ -749,41 +747,10 @@ export class TasksViewManager {
         return tasks
     }
 
-
-    /**
-     * Shortcut handler for tasks view component.
-     * @param event   Keyboard event
-     */
-    keyboardShortcutHandler(event: KeyboardEvent) {
-        const target = event.target as HTMLElement
-        const targetClass = target.classList.value
-        const key = event.key
-        const tag = target.tagName
-
-        // prevent scroll when editing
-        if (event.code === "Space" && tag != "INPUT" && tag != "TEXTAREA") {
-            event.preventDefault()
-        }
-
-        // GENERAL SHORTCUTS
-        if (["BODY", "LI"].includes(tag) && key === "ArrowUp" || key === "ArrowDown") {
-            event.preventDefault()                  // don't allow arrow keys to move scroll
-        }
-
-        const isEditing = ["INPUT", "TEXTAREA"].includes(tag)
-        const isEditShortCut = (key === "Enter" || key ==="Escape") && isEditing
-
-        // EDITING SHORTCUTS
-        if (isEditShortCut && targetClass.includes("task")) {
-            // this.finishGroupEdit(key === "Enter")
-        }
-    }
-
     /* state */
-
+    
     hasSession() {
-        return false
-        // return localStorage.getItem("tasks") != null
+        return localStorage.getItem("tasks") != null
     }
 
     saveStateData(state: TasksViewManager) {

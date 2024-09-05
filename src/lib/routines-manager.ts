@@ -1,13 +1,15 @@
 import { get, writable, type Writable } from "svelte/store"
-import { TOTAL_DAY_MINS } from "./utils-date"
 import { EMPTY_CORES } from "./utils-routines"
+import { TOTAL_DAY_MINS } from "./utils-date"
 
 import { 
-    COLOR_SWATCHES, findAncestor, getDistBetweenTwoPoints, getElemById, 
+    findAncestor, getDistBetweenTwoPoints, getElemById, 
     getElemNumStyle, initFloatElemPos, 
     isNearBorderAndShouldScroll, 
     randomArrayElem, roundUpFive 
 } from "./utils-general"
+
+import { COLOR_SWATCHES } from "$lib/utils-colors"
 
 /**
  * Parent manger class for editing and displaying routines.

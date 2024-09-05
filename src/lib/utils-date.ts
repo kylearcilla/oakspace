@@ -11,6 +11,7 @@ export const DAYS_OF_WEEK = [
 ]
 
 export const TOTAL_DAY_MINS = 1440
+export const TOTAL_DAY_SECS = 86_400
 
 export const getDayOfWeek = () => {
     const today = new Date()
@@ -146,7 +147,7 @@ type DayFormat = "numeric" | "2-digit" | undefined
  * @param date 
  * @returns Formatted Time (i.e. Apr 14, 2020 / Apr 14)
  */
-export function formatDatetoStr(date: Date, options: {
+export function formatDatetoStr(date: Date, options?: {
     weekday?: WeekMonthFormat, year?: YearFormat, month?: WeekMonthFormat, day?: DayFormat 
 }): string {
 
@@ -195,10 +196,10 @@ export function formatTimeToHHMM(date: Date, doUsehour12: boolean | null = null)
  * The start / end times in HH:MM format will determine difference in minutes.
  * So 12:34:49 PM and 12:34:00 PM will be 1 min.
  * 
- * @param start   Session start.
- * @param end     Session end.
+ * @param start   From start time.
+ * @param end     to end time.
  */
-export const getPomPeriodElapsedTime = (start: Date, end: Date) => {
+export const getElapsedTime = (start: Date, end: Date) => {
     const timePeriodString = getTimePeriodString(start, end)
     const diffSecs = getDifferenceInSecs(start, end)
     const diffStr = secsToHHMM(diffSecs)
@@ -267,7 +268,7 @@ export function minsToHHMM(inputMins: number, formatOption: HhMmFormat = "min-le
         return mins === 0 ? "0h" : `${mins} mins`
     }
     else if (mins < 60 && formatOption === "min-letters") {
-        return mins === 0 ? "0h" : `${mins}m`
+        return mins === 0 ? "0h 0m" : `${mins}m`
     }
     else if (mins < 60 && formatOption === "numbers") {
         return `00:${String(mins).padStart(2, '0')}`
@@ -439,34 +440,40 @@ export function addDaysToDate(d: Date, n: number): Date {
     return new Date(d.setDate(d.getDate() + n))
 }
 
-export function getTotalSecondsFromStartOfDay(date: Date): number {
+/**
+ * Calculates the total number of seconds that have elapsed since the start of the day.
+ * 
+ * @param date  The date object from which to calculate the elapsed time.
+ * @returns     The total number of secs elapsed from the start of the day to the specified date.
+ */
+export function startOfDay(date: Date): number {
     const currentDate = date.getTime()
   
     const startOfDay = new Date(date)
     startOfDay.setHours(0, 0, 0, 0)
     const startOfDayMillis = startOfDay.getTime()
-  
-    // Calculate the total seconds elapsed
     const totalSeconds = Math.floor((currentDate - startOfDayMillis) / 1000)
   
     return totalSeconds
 }
 
 export function getMinsFromStartOfDay(date: Date): number {
-    return getTotalSecondsFromStartOfDay(date) / 60
+    return startOfDay(date) / 60
 }
 
-export function minsToMMSS(mins: number) {
-    return secsToMMSS(mins * 1000)
+export function minsToHhMmSs(mins: number) {
+    return secsToHhMmSs(mins)
 }
 
-export function secsToMMSS(s: number) {
-    return msToHHMMSS(s * 1000)
+export function secsToHhMmSs(secs: number) {
+    return msToHHMMSS(secs * 1000)
 }
 
 /**
  * Converts milliseconds to a formatted string in the format HH:MM:SS.
+ * 
  * @param ms   The number of milliseconds to convert.
+ * @param hr   Include the hour section.
  * @returns    The formatted string in the format HH:MM:SS.
  */
 export function msToHHMMSS(ms: number) {
@@ -474,6 +481,8 @@ export function msToHHMMSS(ms: number) {
     const hours = Math.floor(totalSeconds / 3600)
     const minutes = Math.floor((totalSeconds % 3600) / 60)
     const seconds = totalSeconds % 60
+
+    
 
     // Format the time components as HH:MM:SS
     let formattedTime = ''
@@ -526,9 +535,9 @@ export function minsFromStartToHHMM(minsFromStart: number, doShorten = true) {
  * @example
  * 
  * ```
- * const timeIdx = 14;
- * const formattedTime = getTimeFromIdx(timeIdx);
- * console.log(formattedTime); // Output: "2 PM"
+ * const timeIdx = 14          // 14:00 / 2 PM
+ * const formattedTime = getTimeFromIdx(timeIdx)
+ * console.log(formattedTime) // 2 PM
  * ```
  */
 export function getTimeFromIdx(timeIdx: number, lowerCase = false) {
@@ -696,4 +705,47 @@ export function getIsoDateMinutesFromStartOfDay(isoDateString: string): number {
 
 export function isToday(date: Date) {
     return isSameDay(date, new Date())
+}
+
+
+/**
+ * Given a date add a time to it
+ * @param   arg  Date + time to be added (string or number in seconds).
+ * @returns      Date with the added time.
+ */
+export function addToDate(arg: { date: Date, time: TimeString | number }): Date {
+    const { date, time } = arg
+    const newDate = new Date(date)
+    if (typeof time === "number") {
+        newDate.setSeconds(newDate.getSeconds() + time)
+        return newDate
+    }
+
+    const value = parseInt(time, 10)
+    const unit = time.slice(-1)
+
+    switch (unit) {
+        case 'h':
+            newDate.setHours(newDate.getHours() + value)
+            break;
+        case 'm':
+            newDate.setMinutes(newDate.getMinutes() + value)
+            break;
+        case 's':
+            newDate.setSeconds(newDate.getSeconds() + value)
+            break;
+        default:
+            throw new Error('Invalid time unit')
+    }
+
+    return newDate
+}
+
+export function getNextHour(date: Date) {
+    const nearestHour = new Date(date)
+
+    nearestHour.setHours(nearestHour.getHours() + 1)
+    nearestHour.setMinutes(0, 0, 0)
+
+    return nearestHour
 }

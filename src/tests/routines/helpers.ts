@@ -17,7 +17,7 @@ import { getScrollData, getElemOrigin, getHozDistanceBetweenTwoElems,
 import { RoutinesManager } from "$lib/routines-manager"
 import { WEEKLY_ROUTINES } from "./routines.data"
 import { getCoreStr } from "$lib/utils-routines"
-import { COLOR_SWATCHES } from "$lib/utils-general"
+import { COLOR_SWATCHES } from "$lib/utils-colors"
 
 type RoutineCoreChange = {
     core: keyof RoutineCores

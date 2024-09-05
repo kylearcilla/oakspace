@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test"
 import { generateRandomString, looseEqualTo, neg } from "../helpers"
 import { TEST_DAILY_BREAKDOWN, TEST_WEEKLY_BREAKDOWN, WEEKLY_ROUTINES } from "./routines.data"
 import { DAYS_OF_WEEK, getDayIdxMinutes, getTimeFromIdx } from "$lib/utils-date"
-import { COLOR_SWATCHES } from "$lib/utils-general"
+import { COLOR_SWATCHES } from "$lib/utils-colors"
 
 import { 
     elemTopOffset, 

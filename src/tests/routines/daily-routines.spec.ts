@@ -54,7 +54,7 @@ import {
     makeRoutine,
     expectRoutinePage
 } from "./helpers"
-import { COLOR_SWATCHES } from "$lib/utils-general"
+import { COLOR_SWATCHES } from "$lib/utils-colors"
 
 /* Constants */
 const { 

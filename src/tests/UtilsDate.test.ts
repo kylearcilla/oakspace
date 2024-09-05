@@ -1,6 +1,6 @@
 import { HrsMinsFormatOption } from '$lib/enums';
 import { TimeInputManager } from '$lib/inputs';
-import { formatTimeToHHMM, getDifferenceInSecs, getPomPeriodElapsedTime, secsToHHMM } from '$lib/utils-date';
+import { formatTimeToHHMM, getDifferenceInSecs, getElapsedTime, secsToHHMM } from '$lib/utils-date';
 import { describe, expect } from 'vitest';
 
 const isQuoteOutDated = (quoteCreatedDate: Date, currDate: Date) => {
@@ -157,7 +157,7 @@ describe('ElapsedTimeBetweenTwoDates', () => {
         expect(diffSecs).toBe(1)
     
         // 12:28 PM - 12:29 PM
-        const elapsedTime = getPomPeriodElapsedTime(start, end)
+        const elapsedTime = getElapsedTime(start, end)
         expect(elapsedTime).toBe("1m")
     })
     test('Pom Display. Start mins less then end', () => {
@@ -171,7 +171,7 @@ describe('ElapsedTimeBetweenTwoDates', () => {
         expect(diffSecs).toBe(32 * 60 + 1)
     
         // 12:28 PM - 1:01 PM
-        const elapsedTime = getPomPeriodElapsedTime(start, end)
+        const elapsedTime = getElapsedTime(start, end)
         expect(elapsedTime).toBe("32m")
     })
     test('Pom Display. Hrs Included.', () => {
@@ -182,7 +182,7 @@ describe('ElapsedTimeBetweenTwoDates', () => {
         expect(diffSecs).toBe(272 * 60)
     
         // 12:28 PM - 5:01 PM
-        const elapsedTime = getPomPeriodElapsedTime(start, end)
+        const elapsedTime = getElapsedTime(start, end)
         expect(elapsedTime).toBe("4h 32m")
     })
 })

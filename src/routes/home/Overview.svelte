@@ -6,7 +6,8 @@
 	import { formatDatetoStr, isSameDay } from "$lib/utils-date"
 	import { ProductivityCalendar } from "$lib/productivity-calendar"
 	import { GoogleCalendarManager, initGoogleCalSession } from "$lib/google-calendar-manager"
-	import { clickOutside, findClosestColorSwatch } from "$lib/utils-general"
+	import { clickOutside } from "$lib/utils-general"
+	import { findClosestColorSwatch } from "$lib/utils-colors"
 	import { TEST_SESSIONS, TEST_TAGS } from "$lib/mock-data"
     
 	import OverviewDayView from "./OverviewDayView.svelte"
@@ -183,7 +184,6 @@
                     title="Google Calendar"
                     id="google-cal--dropdown-btn"
                     class="overview__day-view-btn"
-                    class:overview__day-view-btn--synced={isGoogleCalLinked && !$googleCalState?.tokenExpired}
                     class:overview__day-view-btn--active={viewing === "calendar"}
                     class:overview__day-view-btn--dropdown-active={googleCalDropdown}
                     on:click={() => onViewBtnClicked("calendar")}
@@ -407,9 +407,6 @@
             }
             &--dropdown-active &-arrow {
                 transform: rotate(180deg);
-            }
-            &--synced img {
-                filter: saturate(1) !important;
             }
             i {
                 opacity: 0.4;

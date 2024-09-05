@@ -1,11 +1,9 @@
 import { derived, writable } from 'svelte/store'
-import type { Session } from './pom-session'
 import type { MusicPlayer } from './music-player'
-import type { MusicUserData } from './music-user-data'
 import type { YoutubePlayer } from './youtube-player'
 import type { YoutubeUserData } from './youtube-user-data'
-import type { PomSessionManger } from './pom-session-manager'
-import type { TasksViewManager } from './tasks-view-manager'
+import type { SessionManager } from './session-manager'
+
 import type { GoalsManager } from './goals-manager'
 import { ShortcutSectionInFocus } from './enums'
 import type { EditGoalManager } from './edit-goal-manager'
@@ -22,7 +20,9 @@ export const globalContext = writable<GlobalContext>({
     isMusicPlayerOpen: false,
     hasToaster: false,
     minModeSrc: null,
+    route: "workspace",
     doOpenActiveRoutine: false,
+    focusTime: 0,
     shortcutsFocus: ShortcutSectionInFocus.MAIN,
     mediaPlayer: null,
     modalsOpen: [],
@@ -66,8 +66,7 @@ export const musicPlayerManager = writable<MusicPlayerManagerState | null>(null)
 export const musicSettingsManager = writable<MusicSettingsManager | null>(null)
 
 /* Session Stuff */
-export const sessionStore = writable<Session | null>(null)
-export const sessionManager = writable<PomSessionManger | null>(null)
+export const sessionManager = writable<SessionManager | null>(null)
 
 /* General Stuff */
 export const datePickerManager = writable<DatePickerManager | null>(null)

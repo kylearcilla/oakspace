@@ -12,7 +12,7 @@ export class InputManager {
     id: string 
     maxLength: number
     state: Writable<InputManager>
-    inputElem?: HTMLInputElement
+    inputElem?: HTMLElement
     placeholder: string
     prevVal: string
     isValidValue = true
@@ -40,10 +40,9 @@ export class InputManager {
 
         requestAnimationFrame(() => this.initElem())
     }
+    
+    /* helpers */
 
-    onPaste(e: Event) {
-        
-    }
     initElem() {
         this.inputElem = getElemById(this.id) as HTMLInputElement
     }
@@ -54,6 +53,18 @@ export class InputManager {
         if (this.handlers?.onInputHandler) {
             this.handlers!.onInputHandler(e, newVal, newVal.length)
         }
+    }
+
+    focus() {
+        this.inputElem?.focus()
+    }
+    blur() {
+        this.inputElem?.blur()
+    }
+
+    /* handlers */
+    onPaste(e: Event) {
+        
     }
     updateState(newState: Partial<InputManager>) {
         this.state.update((state) => {
@@ -84,6 +95,317 @@ export class InputManager {
         if (this.handlers?.onBlurHandler) {
             this.handlers?.onBlurHandler(event, value)
         }
+    }
+}
+
+/**
+ * Manager for text area inputs.
+ */
+export class TextAreaManager extends InputManager { 
+    constructor(options: InputOptions) {
+        super(options)
+    }
+}
+
+/**
+ * Manager for editor components with contenteditable attribute.
+ * Has a set max height and will disallow additions if it goes over.op[ro]
+ * Custom functionality for redo / undo and copy paste/
+ */
+export class TextEditorManager extends InputManager {
+    allowFormatting = false
+    state: Writable<TextEditorManager>
+
+    /* undo / redo stuff */
+    undoStack: string[] = []
+    redoStack: string[] = []
+    currentIntervalLength = 0
+    
+    /* caret stuff */
+    // caretPos = { x: 0, y: 0 }
+    // caretElem?: HTMLElement | null
+    // activeTimer: NodeJS.Timer | null = null
+    // caretAnimation: Animation | null = null
+
+    // CARET_IDLE_DELAY = 1000
+    // CARET_ANIMATION = {
+    //     keyframes: [
+    //         { opacity: 0, offset: 0 },
+    //         { opacity: 0, offset: 0.2 },
+    //         { opacity: 1, offset: 0.5 },
+    //         { opacity: 1, offset: 0.8 },
+    //         { opacity: 0, offset: 1 }
+    //     ],
+    //     options: {
+    //         duration: 1000,
+    //         iterations: Infinity
+    //     }
+    // }
+
+    UNDO_INTERVAL_LENGTH_THRSHOLD = 30
+
+    constructor(options: InputOptions) {
+        super(options)
+        this.state = writable(this)
+
+        requestAnimationFrame(() => this.initElem())
+    }
+
+    /* undo / redo */
+
+    /**
+     * When user redos, get the most recent state from redo stack.
+     * The current state will be put in the undo stack.
+     * 
+     * @param event 
+     */
+    redoEdit(event: KeyboardEvent) {
+        if (this.redoStack.length === 0) return
+
+        if (this.value) {
+            this.undoStack.push(this.value)
+        }
+
+        const recentUndo = this.redoStack.pop()!
+        this.updateTextEditorVal(event, recentUndo, true)
+    }
+    
+    /**
+     * When user undos, get the most recent state from undo stack.
+     * The current state will be put in the redo stack.
+     * 
+     * @param event 
+     */
+    undoEdit(event: KeyboardEvent) {
+        this.redoStack.push(this.value)
+
+        const recentEdit = this.undoStack.pop() ?? ""
+        this.updateTextEditorVal(event, recentEdit, true)
+    }
+
+    /**
+     * After every insertion of new text, check to see if the text added from prev undo state
+     * is big enough for the curent text to be put in the undo stack.
+     */
+    undoHandler(newValue: string) {
+        const recentEditLength = this.undoStack[this.undoStack.length - 1]?.length ?? 0
+        this.currentIntervalLength = Math.abs(recentEditLength - newValue.length)
+
+        if (this.currentIntervalLength < this.UNDO_INTERVAL_LENGTH_THRSHOLD) {
+            return
+        }
+
+        this.undoStack.push(newValue)
+        this.currentIntervalLength = 0
+    }
+
+    /* event handlers */
+
+    onPaste(event: ClipboardEvent) {
+        // don't allow formatted pasted content
+        const pastedText = event.clipboardData!.getData('text/plain')
+        const target = event.target as HTMLElement
+        event.preventDefault()
+
+        if (!pastedText) return
+
+        // place the pasted text in the appropriate cursor position of prev value
+        let preVal = target.innerText
+        let { start, end } = getContentEditableSelectionRange(target)
+        let newValue       = preVal.slice(0, start) + pastedText + preVal.slice(end)
+        newValue           = newValue.substring(0, this.maxLength)
+
+        target.innerHTML = newValue
+        this.valLength = target.innerText.length
+
+        // move the cursor ups
+        const newcaretPos = start + pastedText.length
+        // setCursorPos(target, newcaretPos)
+        this.undoHandler(newValue)
+        
+        // save
+        this.updateTextEditorVal(event, newValue)
+    }
+
+    onInputHandler(e: Event) {
+        const event = e as InputEvent
+        const target = event.target as HTMLElement
+
+        // this.getCaretPos()
+        
+        // allow paste handler to handle
+        if (event.inputType === "insertFromPaste") { 
+            target.innerHTML = this.prevVal
+            return
+        }
+
+        if (target.innerText.length - 1 === this.maxLength) {
+            target.innerHTML = this.prevVal
+
+            this.value = this.prevVal    // on blur, value won't contain preVal
+            this.undoHandler(this.prevVal)
+
+            setCursorPos(target, this.prevVal.length)
+
+            return
+        }
+
+        const newValue = target.innerHTML
+        this.valLength = target.innerText.length
+
+        this.undoHandler(newValue)
+        this.updateTextEditorVal(event, newValue)
+    }
+    
+    onFocusHandler(event: Event) {
+        const target = event.target as HTMLElement
+        this.valLength = target.innerText.length
+
+        // this.updateCaretStyle({ doShow: true })
+        super.onFocusHandler(event)
+    }
+
+    onBlurHandler(event: FocusEvent): void {
+        const value = this.value || (this.doAllowEmpty ? "" : "Untitled")
+
+        // this.updateCaretStyle({ doShow: false })
+
+        this.updateState({ oldTitle: value })
+        this.updateTextEditorVal(event, value)
+
+        if (this.handlers?.onBlurHandler) {
+            this.handlers?.onBlurHandler(event, value, this.valLength)
+        }
+    }
+
+    /* helpers */
+    updateState(newState: Partial<TextEditorManager>) {
+        this.state.update((state: TextEditorManager) => {
+            state.oldTitle = newState.oldTitle ?? state.oldTitle
+            state.value   = newState.value ?? state.value
+
+            this.oldTitle = state.oldTitle
+            this.value = state.value
+
+            return state
+        })
+    }
+
+    updateTextEditorVal(event: Event, newVal: string, doUpdatecaretPos = false) {
+        this.prevVal = this.value
+        this.value = newVal
+        this.updateState({ value: newVal })
+
+        if (doUpdatecaretPos) {
+            this.inputElem!.innerHTML = newVal
+            setCursorPos(this.inputElem!, newVal.length)
+        }
+        if (this.handlers?.onInputHandler) {
+            this.handlers?.onInputHandler(event, newVal, this.valLength)
+        }
+    }
+
+    keydownHandler = (event: KeyboardEvent) => {
+        const { ctrlKey, metaKey, key, shiftKey } = event
+        const formatted = metaKey && ['b', 'i', 'u'].includes(key)
+        const undoRedo  = (ctrlKey || metaKey) && key === "z"
+        const arrows = ["ArrowRight", "ArrowLeft"].includes(key)
+
+        if (arrows && !shiftKey) {
+            // this.getCaretPos()
+        }
+        if (arrows && shiftKey) {
+            // this.updateCaretStyle({ doShow: false })
+        }
+        if (!this.allowFormatting && formatted) {
+            event.preventDefault()
+        }
+        if (undoRedo) {
+            event.preventDefault()
+            shiftKey ? this.redoEdit(event) : this.undoEdit(event)
+        }
+    }
+
+    initElem() {
+        const elem = getElemById(this.id)!
+        if (!elem) return
+
+        this.inputElem = elem
+    
+        // const parentElem = elem.parentElement as HTMLElement
+        // this.caretElem = parentElem.querySelector(".text-editor-caret")
+        // this.updateCaretStyle({ doShow: true })
+
+        this.inputElem.addEventListener("keydown", (ke) => this.keydownHandler(ke))
+        // this.inputElem.addEventListener("keyup", (ke) => this.keydownHandler(ke))
+        // this.inputElem.addEventListener("pointerdown", () => this.getCaretPos())
+        // this.inputElem.addEventListener("pointerup", () => this.getCaretPos())
+        this.inputElem.style.setProperty('--placeholder-val', this.placeholder)
+
+        // initialize text
+        this.prevVal = this.value
+        this.value = this.value
+        this.updateState({ value: this.value })
+    }
+
+    // getCaretPos() {
+    //     if (!this.inputElem || !this.caretElem) return
+
+    //     const selection = window.getSelection()!
+    //     const range = selection.getRangeAt(0)
+    //     const caretRect = range.getBoundingClientRect()
+    //     const inputRect = this.inputElem!.getBoundingClientRect()
+        
+    //     const isAnchorText = selection.anchorNode!.nodeType === Node.TEXT_NODE
+
+    //     this.caretPos = {
+    //         x: isAnchorText ? caretRect.x - inputRect.x + 0.5 : 0.5, 
+    //         y: isAnchorText ? caretRect.y - inputRect.y + 1 : 5
+    //     }
+
+    //     this.caretElem.style.left = `${this.caretPos.x}px`
+    //     this.caretElem.style.top  = `${this.caretPos.y}px`
+
+    //     // idle styling for caret
+    //     if (this.activeTimer) {
+    //         clearTimeout(this.activeTimer as any)
+    //     }
+    //     this.updateCaretStyle({ isIdle: false })
+
+    //     this.activeTimer = setTimeout(() => {
+    //         this.updateCaretStyle({ isIdle: true })
+            
+    //     }, this.CARET_IDLE_DELAY)
+    // }
+
+    // updateCaretStyle(options: { doShow?: boolean, isIdle?: boolean }) {
+    //     if (!this.caretElem) return
+        
+    //     const caret = this.caretElem
+    //     const { doShow = true, isIdle = true } = options
+
+    //     /* update show */
+    //     if (doShow != undefined) {
+    //         caret.style.visibility = doShow ? "visible" : "hidden"
+    //     }
+    
+    //     /* update blinking */
+    //     const isBlinking = this.caretAnimation != null
+
+    //     if (isIdle && !isBlinking) {
+    //         this.caretAnimation = caret.animate(
+    //             this.CARET_ANIMATION.keyframes,
+    //             this.CARET_ANIMATION.options,
+    //         )
+    //     }
+    //     else if (!isIdle && isBlinking && this.caretAnimation){
+    //         this.caretAnimation.cancel()
+    //         this.caretAnimation = null
+    //     }
+    // }
+
+    quit() {
+        this.inputElem!.removeEventListener("keydown", this.keydownHandler)
     }
 }
 
@@ -185,187 +507,5 @@ export class TimeInputManager extends InputManager {
         }
 
         throw new Error("Invalid time input.")
-    }
-}
-
-/**
- * Manager for text area inputs.
- */
-export class TextAreaManager extends InputManager { 
-    constructor(options: InputOptions) {
-        super(options)
-    }
-}
-
-/**
- * Manager for editor components with contenteditable attribute.
- * Has a set max height and will disallow additions if it goes over.op[ro]
- * Custom functionality for redo / undo and copy paste/
- */
-export class TextEditorManager extends InputManager {
-    undoStack: string[] = []
-    redoStack: string[] = []
-    currentIntervalLength = 0
-
-    UNDO_INTERVAL_LENGTH_THRSHOLD = 30
-
-    constructor(options: InputOptions) {
-        super(options)
-
-        requestAnimationFrame(() => this.initElem())
-    }
-
-    initElem() {
-        this.inputElem = getElemById(this.id) as HTMLInputElement
-        if (!this.inputElem) return
-
-        this.inputElem!.addEventListener("keydown", this.keydownHandler)
-        this.inputElem.style.setProperty('--placeholder-val', this.placeholder)
-
-        // initialize text
-        this.prevVal = this.value
-        this.value = this.value
-        this.updateState({ value: this.value })
-    }
-
-    quit() {
-        this.inputElem!.removeEventListener("keydown", this.keydownHandler)
-    }
-
-    keydownHandler = (event: KeyboardEvent) => {
-        if ((!event.ctrlKey && !event.metaKey) || event.key != "z") {
-            return
-        }
-        event.preventDefault()
-        event.shiftKey ? this.redoEdit(event) : this.undoEdit(event)
-    }
-
-    /**
-     * When user redos, get the most recent state from redo stack.
-     * The current state will be put in the undo stack.
-     * 
-     * @param event 
-     */
-    redoEdit(event: KeyboardEvent) {
-        if (this.redoStack.length === 0) return
-
-        if (this.value) {
-            this.undoStack.push(this.value)
-        }
-
-        const recentUndo = this.redoStack.pop()!
-        this.updateTextEditorVal(event, recentUndo, true)
-    }
-    
-    /**
-     * When user undos, get the most recent state from undo stack.
-     * The current state will be put in the redo stack.
-     * 
-     * @param event 
-     */
-    undoEdit(event: KeyboardEvent) {
-        this.redoStack.push(this.value)
-
-        const recentEdit = this.undoStack.pop() ?? ""
-        this.updateTextEditorVal(event, recentEdit, true)
-    }
-
-    /**
-     * After every insertion of new text, check to see if the text added from prev undo state
-     * is big enough for the curent text to be put in the undo stack.
-     */
-    undoHandler(newValue: string) {
-        const recentEditLength = this.undoStack[this.undoStack.length - 1]?.length ?? 0
-        this.currentIntervalLength = Math.abs(recentEditLength - newValue.length)
-
-        if (this.currentIntervalLength < this.UNDO_INTERVAL_LENGTH_THRSHOLD) {
-            return
-        }
-
-        this.undoStack.push(newValue)
-        this.currentIntervalLength = 0
-    }
-
-    updateTextEditorVal(event: Event, newVal: string, doUpdateCursorPos = false) {
-        this.prevVal = this.value
-        this.value = newVal
-        this.updateState({ value: newVal })
-
-        if (doUpdateCursorPos) {
-            this.inputElem!.innerHTML = newVal
-            setCursorPos(this.inputElem!, newVal.length)
-        }
-        if (this.handlers?.onInputHandler) {
-            this.handlers?.onInputHandler(event, newVal, this.valLength)
-        }
-    }
-
-    onPaste(event: ClipboardEvent) {
-        // don't allow formatted pasted content
-        const pastedText = event.clipboardData!.getData('text/plain')
-        const target = event.target as HTMLElement
-        event.preventDefault()
-
-        if (!pastedText) return
-
-        // place the pasted text in the appropriate cursor position of prev value
-        let preVal = target.innerText
-        let { start, end } = getContentEditableSelectionRange(target)
-        let newValue       = preVal.slice(0, start) + pastedText + preVal.slice(end)
-        newValue           = newValue.substring(0, this.maxLength)
-
-        target.innerHTML = newValue
-        this.valLength = target.innerText.length
-
-        // move the cursor ups
-        const newCursorPos = start + pastedText.length
-        // setCursorPos(target, newCursorPos)
-        this.undoHandler(newValue)
-        
-        // save
-        this.updateTextEditorVal(event, newValue)
-    }
-
-    onInputHandler(event: InputEvent) {
-        const target = event.target as HTMLElement
-        
-        // allow paste handler to handle
-        if (event.inputType === "insertFromPaste") { 
-            target.innerHTML = this.prevVal
-            return
-        }
-
-        if (target.innerText.length - 1 === this.maxLength) {
-            target.innerHTML = this.prevVal
-
-            this.value = this.prevVal    // on blur, value won't contain preVal
-            this.undoHandler(this.prevVal)
-
-            setCursorPos(target, this.prevVal.length)
-
-            return
-        }
-
-        const newValue = target.innerHTML
-        this.valLength = target.innerText.length
-
-        this.undoHandler(newValue)
-        this.updateTextEditorVal(event, newValue)
-    }
-    onFocusHandler(event: Event) {
-        const target = event.target as HTMLElement
-        this.valLength = target.innerText.length
-
-        super.onFocusHandler(event)
-    }
-    onBlurHandler(event: FocusEvent): void {
-        const value = this.value || (this.doAllowEmpty ? "" : "Untitled")
-
-        this.updateState({ oldTitle: value })
-        this.updateTextEditorVal(event, value)
-
-        if (this.handlers?.onBlurHandler) {
-            this.handlers?.onBlurHandler(event, value, this.valLength)
-        }
     }
 }

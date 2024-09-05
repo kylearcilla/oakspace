@@ -19,22 +19,54 @@ div[contenteditable] {
     word-wrap: break-word;
     white-space: pre-wrap;
     max-width: 100%;
+    // caret-color: transparent;
 }
 div[contenteditable]:empty:before {
     content: attr(data-placeholder);
-    opacity: 0.4;
+    opacity: 0.2;
 }
 div[contenteditable]:focus {
     outline: none;
 }
 
 /* Rich Text Editing */
+
 .text-editor {
     padding: 4px 4px 4px 0px;
     transition: 0.2s border ease-in-out;
     max-height: 100%;
     overflow-y: scroll;
-    @include text-style(0.8, 400, 1.3rem);
+    position: relative;
+    @include text-style(0.8, 500, 1.3rem);
+
+    &-caret {
+        position: absolute;
+        width: 1.5px;
+        height: 15px;
+        border-radius: 10px;
+        background-color: rgb(var(--fgColor1));
+    }
+    &-caret--blinking {
+        animation: caret-flash-smooth 1s infinite;
+    }
+}
+
+@keyframes caret-flash-smooth {
+    0% {
+        opacity: 0
+    }
+    20% {
+        opacity: 0
+    }
+    50% {
+        opacity: 1
+    }
+    80% {
+        opacity: 1
+    }
+    100% {
+        opacity: 0
+    }
 }
 
 /* Underline Input */

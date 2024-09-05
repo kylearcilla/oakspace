@@ -254,7 +254,7 @@
             padding-bottom: 4px; 
         }
         &--productivity &__month-day {
-            @include text-style(0.6, 500, 1rem, "DM Sans");
+            @include text-style(0.6, 500, 1.08rem, "DM Sans");
             width: 80%; 
             height: 100%;
             background: none;
@@ -320,10 +320,10 @@
         }
         &__month-title {
             font-family: "DM Sans";
-            @include text-style(0.4, 200, 1.27rem);
+            @include text-style(0.4, 300, 1.27rem);
 
             strong {
-                @include text-style(1, 300, 1.27rem);
+                @include text-style(1, 400);
                 margin-right: 3px;
             }
         }
@@ -362,7 +362,7 @@
         &__month-day {
             font-family: "DM Mono";
             @include center;
-            @include text-style(0.7, 300, 1rem);
+            @include text-style(0.7, 300, 1.1rem);
             @include circle(90%);
             user-select: none;
             position: relative;

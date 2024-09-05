@@ -1,7 +1,3 @@
-import jwtDecode from "jwt-decode"
-import { googleData } from "$lib/store"
-import { initClientApp } from "$lib/api-google"
-import YT_PLAYLIST_GROUPS from "$lib/data-yt-playlists"
 import type { PageLoad } from "../$types"
 
 export const ssr = false

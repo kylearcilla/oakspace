@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from "svelte"
 	import { type Writable } from "svelte/store"
 
 	import { ModalType } from "$lib/enums"
@@ -10,7 +11,6 @@
 	import Modal from "../../components/Modal.svelte"
 	import TasksList from "../../components/TasksList.svelte"
 	import AsyncButton from "../../components/AsyncButton.svelte"
-	import { onMount } from "svelte"
 
     const TITLE_INPUT_ID = "session-title-input"
     let isSaving = false
@@ -21,6 +21,8 @@
     let mode: SessionMode = "pom"
     let focusTime = 25
     let breakTime = 5
+    let allowSfx = true
+    let allowChime = true
 
     let titleEditor: Writable<TextEditorManager>
     let tasksContainer: HTMLElement
@@ -51,6 +53,8 @@
             focusTime: focusTime * 60,
             breakTime: breakTime * 60,
             startTime,
+            allowChime,
+            allowSfx,
             todos: tasks
         })
 
@@ -170,6 +174,71 @@
             </div>
         </div>
 
+        <!-- Sound Effects -->
+         <div class="new-session__sfx">
+            <div>
+                <div class="new-session__sfx-name">
+                    {#if mode === "pom"}
+                        Sound Effects
+                    {:else}
+                        Lengthy Breaks
+                    {/if}
+                </div>
+                <span>
+                    {#if mode === "pom"}
+                        Soft sounds to mark periods.
+                    {:else}
+                        Pings during lengthly breaks.
+                    {/if}
+                </span>
+            </div>
+            <div class="new-session__sfx-btns">
+                <button 
+                    class="new-session__sfx-btn"
+                    class:new-session__sfx-btn--picked={allowSfx}
+                    on:click={() => allowSfx = true}
+                >
+                    <div class="new-session__sfx-btn-check-box"></div>
+                    <span>On</span>
+                </button>
+                <button 
+                    class="new-session__sfx-btn"
+                    class:new-session__sfx-btn--picked={!allowSfx}
+                    on:click={() => allowSfx = false}
+                >
+                    <div class="new-session__sfx-btn-check-box"></div>
+                    <span>Off</span>
+                </button>
+            </div>
+         </div>
+
+         <div class="new-session__sfx">
+            <div>
+                <div class="new-session__sfx-name">
+                    Time Blindness
+                </div>
+                <span>Gently chimes every {`${SessionManager.CHIME_PERIOD_SECS / 60}`} minutes.</span>
+            </div>
+            <div class="new-session__sfx-btns">
+                <button 
+                    class="new-session__sfx-btn"
+                    class:new-session__sfx-btn--picked={allowChime}
+                    on:click={() => allowChime = true}
+                >
+                    <div class="new-session__sfx-btn-check-box"></div>
+                    <span>On</span>
+                </button>
+                <button 
+                    class="new-session__sfx-btn"
+                    class:new-session__sfx-btn--picked={!allowChime}
+                    on:click={() => allowChime = false}
+                >
+                    <div class="new-session__sfx-btn-check-box"></div>
+                    <span>Off</span>
+                </button>
+            </div>
+         </div>
+
         <!-- Tasks -->
          <div class="new-session__tasks">
             <div class="new-session__tasks-header">
@@ -232,7 +301,7 @@
                         ui: { 
                             sidePadding: "7.5px",
                             showDragHandle: false,
-                            hasTaskDivider: true,   
+                            hasTaskDivider: true,
                             listHeight: "100%"
                         }
                     }}
@@ -269,7 +338,7 @@
 
     .new-session {
         width: 450px;
-        padding: 13px 25px 21px 25px;
+        padding: 13px 23px 21px 23px;
 
         &__title {
             position: relative;
@@ -320,7 +389,7 @@
             margin-top: 14px;
         }
         &__options--flow &__time {
-            // display: none;
+            display: none;
             opacity: 0.4;
             
             button {
@@ -329,14 +398,14 @@
         }
         &__time {
             width: calc(50% - 3.5px);
-            margin: 0px 7px 18px 0px;
+            margin: 0px 7px 17px 0px;
         }
         &__time span {
-            @include text-style(0.3, 500, 1.25rem);
+            @include text-style(0.5, 500, 1.25rem);
             padding-left: 7px;
         }
         &__time-input {
-            margin-top: 8px;
+            margin: 8px 0px 0px 0px;
             padding: 7px 8px;
             border-radius: 12px;
             background-color: rgba(var(--textColor1), 0.025);
@@ -362,11 +431,61 @@
                 background-color: rgba(var(--textColor1), 0.05);
             }
         }
+        /* sound effects */
+        &__sfx {
+            @include flex(center, space-between);
+            margin-bottom: 15px;
+            padding: 0px 5px;
+
+            span {
+                @include text-style(0.14, 500, 1.2rem);
+            }
+        }
+        &__sfx-name {
+            @include text-style(0.5, 500, 1.25rem);
+            margin-bottom: 3px;
+        }
+        &__sfx-btns {
+            @include center;
+        }
+        &__sfx-btn {
+            @include flex(center);
+            margin-left: 15px;
+            
+            span {
+                @include text-style(0.3, 500, 1.28rem, "DM Sans");
+            }
+            &--picked span {
+                @include text-style(0.8);
+            }
+            &--picked &-check-box {
+                border: 1.5px solid rgb(var(--fgColor1));
+            }
+            &--picked &-check-box:before {
+                display: block;
+            }
+        }
+        &__sfx-btn-check-box {
+            @include circle(12px);
+            position: relative;
+            border: 1.5px solid rgba(var(--textColor1), 0.2);
+            margin-right: 8px;
+            
+            &:before {
+                content: " ";
+                background-color: rgba(var(--fgColor1));
+                display: none;
+                @include circle(5px);
+                @include abs-center;
+            }
+        }
+
+        /* tasks */
         &__tasks {
-            margin-left: -1px;
+            margin: 17px 0px 0px -1px;
 
             h4 {
-                @include text-style(0.3, 500, 1.25rem);
+                @include text-style(0.5, 500, 1.25rem);
                 margin: 0px 10px 0px 7px;
             }
             span {
@@ -378,7 +497,8 @@
             margin-bottom: 7px;
         }
         &__tasks-container {
-            height: 240px;
+            min-height: 35px;
+            max-height: 200px;
         }
         &__btns {
             margin-top: 10px;

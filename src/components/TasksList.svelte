@@ -630,6 +630,7 @@
     .tasks {
         position: relative;
         height: 100%;
+        max-height: 100%;
 
         &-wrapper--top-btn {
             flex-direction: column-reverse;

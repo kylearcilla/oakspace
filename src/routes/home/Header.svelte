@@ -126,7 +126,7 @@
     </button>
 
     <!-- Session Component -->
-     {#if !session}
+     {#if !session || $sessionManager?.state === "done"}
         <div class="header__session header__section">
             <button 
                 title="Create new session"
@@ -148,7 +148,7 @@
             </div>
         </div>
      {:else}
-        <ActiveSessionMini />
+        <ActiveSessionMini {headerWidth} />
      {/if}
 
     <!-- Active Routine Pop Up -->

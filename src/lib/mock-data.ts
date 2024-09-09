@@ -340,4 +340,24 @@ export const TEST_GOALS: Goal[] = [
 ]
 
 /* Sessions */
-export const TEST_SESSIONS: Session[] = []
+export const TEST_SESSIONS: Session[] = [
+  {
+      id: "session-001",
+      name: "Morning Study Session",
+      mode: "pom",
+      focusTime: 1500, // 25 minutes
+      breakTime: 300,  // 5 minutes
+      startTime: new Date(2024, 8, 5, 9, 0), // September 5, 2024, 9:00 AM
+      todos: [],
+      result: {
+          endTime: new Date(2024, 8, 5, 10, 30), // September 5, 2024, 10:30 AM
+          focusCount: 3,
+          breakCount: 2,
+          pauseCount: 1,
+          elapsedSecs: 5400,    // 1.5 hours in seconds
+          totalFocusTime: 4500, // 1.25 hours in seconds
+          totalBreakTime: 900,  // 15 minutes in seconds
+          periods: 3
+      }
+  }
+]

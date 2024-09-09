@@ -1,10 +1,15 @@
 <script lang="ts">
 	import { goto } from "$app/navigation"
 	import { page } from "$app/stores";
-	import { SessionManager } from "$lib/session-manager";
+
 	import { sessionManager } from "$lib/store"
-	import { secsToHhMmSs } from "$lib/utils-date"
 	import { updateRoute } from "$lib/utils-home"
+	import { secsToHhMmSs } from "$lib/utils-date"
+	import { SessionManager } from "$lib/session-manager"
+
+    export let headerWidth: number
+    
+    const MIN_NORMAL_WIDTH = 370
 
     let settings = false
     let isPlaying = true
@@ -20,6 +25,8 @@
     $: isPlaying = manager!.isPlaying
     $: session   = manager!.session
     $: todosChecked = manager!.todosChecked
+    $: min = headerWidth < MIN_NORMAL_WIDTH
+    $: secs = transition ? TRANSITION_DUR_SECS - progressSecs : progressSecs
 
     function togglePlayback() {
 
@@ -53,6 +60,7 @@
     class="active-session"
     class:active-session--over={isOver}
     class:active-session--transition={transition}
+    class:active-session--min={min}
     style:--text-width={`${textWidth}px`}
     on:pointerdown|self={onPointerDown}
     on:pointerover={pointerOver}
@@ -70,7 +78,7 @@
         </div>
     </div>
     <div class="active-session__time">
-        {secsToHhMmSs(transition ? TRANSITION_DUR_SECS - progressSecs : progressSecs)}
+        {secs >= 0 ? secsToHhMmSs(secs) : "--:--"}
     </div>
     <div class="divider"></div>
     <div 
@@ -112,6 +120,17 @@
 
         --fg-color: rgba(196, 234, 47);
 
+        .divider {
+            @include divider(0.12, 9px, 1px);
+            margin: 0px 8px 0px 9px;
+        }
+
+        &--min &__message {
+            display: none;
+        }
+        &--min .divider {
+            margin-right: 4px;
+        }
         &--transition {
             --fg-color: rgba(var(--textColor1), 0.4);
         }
@@ -125,11 +144,6 @@
             transition: 0.1s cubic-bezier(.4,0,.2,1);
             transform: scale(0.99);
         }
-        .divider {
-            @include divider(0.12, 9px, 1px);
-            margin: 0px 8px 0px 9px;
-        }
-
         &__ring-container {
             @include center;
             transform: scale(0.94);

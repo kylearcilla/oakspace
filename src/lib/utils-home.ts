@@ -11,6 +11,7 @@ import { initMusicSettings } from "./utils-music-settings"
 
 export const LEFT_BAR_WIDTH = 63
 const LEFT_BAR_LEFT_BOUND = 20
+const SESSION_MIN_WIDTH = 750
 
 /**
  * Initialize app state.
@@ -99,6 +100,21 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
     }
 
     return toggledLeftBarWithKey
+}
+
+
+
+export function middleViewExpandHandler(args: { 
+    width: number, route: string, rightBarOpen: boolean
+}) {
+    const { route, width, rightBarOpen } = args
+
+    if (route === "/home/session" && rightBarOpen) {
+        return width < SESSION_MIN_WIDTH
+    }
+    else {
+        return false
+    }
 }
 
 /**

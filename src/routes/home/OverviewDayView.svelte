@@ -1,11 +1,15 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte"
 	import { themeState } from "$lib/store"
-	import { formatDateLong, formatDatetoStr, getDayIdxMinutes, getMinsFromStartOfDay, getTimeFromIdx, isSameDay, minsFromStartToHHMM, minsToHHMM } from "$lib/utils-date"
     
+	import { findClosestColorSwatch } from "$lib/utils-colors"
+	import SessionSummaryModal from "./SessionSummaryModal.svelte"
 	import { GoogleCalendarManager } from "$lib/google-calendar-manager"
 	import { getColorTrio, getMaskedGradientStyle } from "$lib/utils-general"
-	import { findClosestColorSwatch } from "$lib/utils-colors";
+	import { 
+        formatDateLong, formatDatetoStr, getDayIdxMinutes, getMinsFromStartOfDay, 
+        getTimeFromIdx, isSameDay, minsFromStartToHHMM 
+    } from "$lib/utils-date"
 
     export let viewing:"sessions" | "goals" | "calendar"
     export let sessions: Session[] = []
@@ -24,6 +28,7 @@
     let currTime = getDayIdxMinutes()
     let focusEventId = ""
     let scrollContainerHeight = 0
+    let sessionInView: Session | null = null
     
     $: isLightTheme = !$themeState.isDarkTheme
 
@@ -237,6 +242,9 @@
                                     style:left={`calc(10px + ${EVENT_BLOCK_LEFT_OFFSET}px)`}
                                     style:width="80%"
                                     style:height={isFocused ? heightNum <= 40 ? "80px" : height : height}
+                                    on:click={() => { 
+                                        sessionInView = session
+                                    }}
                                     on:focus={() => { 
                                         focusEventId = session.id
                                     }}
@@ -356,6 +364,15 @@
         </div>
     </div>
 </div>
+
+{#if sessionInView} 
+    <SessionSummaryModal
+        isReview={true}
+        session={sessionInView}
+        onClickOutside={() => sessionInView = null}
+    />
+{/if}
+
 <style lang="scss">
     @import "../../scss/day-box.scss";
     $header-left-offset: 16px;

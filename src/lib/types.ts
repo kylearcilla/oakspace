@@ -460,6 +460,8 @@ type Session = {
     mode: SessionMode
     focusTime: number
     breakTime: number
+    allowSfx: boolean
+    allowChime: boolean
     startTime: Date
     todos: Task[]
     result?: {

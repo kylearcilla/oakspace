@@ -1,20 +1,20 @@
 <script lang="ts">
 	import { goto } from "$app/navigation"
-    import { Icon, ModalType } from "$lib/enums"
-	import { SessionManager } from "$lib/session-manager"
-	import { globalContext, sessionManager } from "$lib/store"
-	import { secsToHhMmSs } from "$lib/utils-date"
-	import { capitalize, formatPlural } from "$lib/utils-general"
-	import { closeModal, openModal } from "$lib/utils-home"
 	import { toast } from "$lib/utils-toast"
+    import { Icon, ModalType } from "$lib/enums"
+	import { secsToHhMmSs } from "$lib/utils-date"
+	import { SessionManager } from "$lib/session-manager"
+	import { closeModal, openModal } from "$lib/utils-home"
+	import { globalContext, sessionManager } from "$lib/store"
+	import { capitalize, formatPlural } from "$lib/utils-general"
 
+	import TextModal from "../TextModal.svelte"
+	import SvgIcon from "../../../components/SVGIcon.svelte"
+	import SessionProgress from "./SessionProgress.svelte"
+	import TasksList from "../../../components/TasksList.svelte"
+	import HoldButton from "../../../components/HoldButton.svelte"
 	import DropdownList from "../../../components/DropdownList.svelte"
 	import ConfirmationModal from "../../../components/ConfirmationModal.svelte"
-	import HoldButton from "../../../components/HoldButton.svelte"
-	import SvgIcon from "../../../components/SVGIcon.svelte"
-	import TasksList from "../../../components/TasksList.svelte"
-	import TextModal from "../TextModal.svelte"
-	import SessionProgress from "./SessionProgress.svelte"
 
     $: manager = $sessionManager
     $: session = manager?.session
@@ -26,10 +26,12 @@
     $: totalFocusTime = manager?.totalFocusTime ?? 0
     $: totalBreakTime = manager?.totalBreakTime ?? 0
     $: pauseCount = manager?.pauseCount ?? 0
-    $: periods = manager?.periods ?? 0
 
     $: todosLength = session?.todos.length ?? 0
     $: todosChecked = manager?.todosChecked
+    $: transition = state?.startsWith("to-")
+    $: pom = session?.mode === "pom"
+    $: playBtnDisabled = transition || state === "break"
 
     let tasksContainer: HTMLElement
     let dropdown = false
@@ -51,7 +53,7 @@
         backToPrevPage()
         manager!.quit()
         toast("info", {
-            message: "Session cancelled."
+            message: "Session canceled."
         })
     }
     function finishSession(doCount = true) {
@@ -62,11 +64,11 @@
         else {
             manager!.quit()
             toast("info", {
-                message: "Session finished uncounted."
+                message: "Finished uncounted session."
             })
         }
     }
-    function toNextPeriod() {
+    function toNextPhase() {
         if (state === "focus") {
             manager!.break()
         }
@@ -77,7 +79,7 @@
     function onFinishSessionOptn() {
         const tooShort = elapsedSecs! / 60 < SessionManager.MIN_SESSION_TIME_MINS
 
-        if (false) {
+        if (tooShort) {
             confirmModalOpen = true
         }
         else {
@@ -90,7 +92,7 @@
             onFinishSessionOptn()
         }
         else {
-            toNextPeriod()
+            toNextPhase()
         }
     }
     function onTaskOptnClicked(optn: string) {
@@ -156,15 +158,14 @@
         <!-- Controls -->
         <div class="session__controls">
             <button
-                disabled={state?.startsWith("to-")}
+                disabled={playBtnDisabled}
                 class="session__control-btn" 
                 on:click={() => manager.togglePlay()}
             >
                 {isPlaying ? "Pause" : "Play"}
             </button>
             <HoldButton
-                text={mode === "pom" ? "Finish" : state === "focus" ? "Break" : "Focus"}
-                disabled={mode === "pom" && state?.startsWith("to-")}
+                text={pom ? "Finish" : state === "focus" ? "Break" : "Focus"}
                 onOk={onHoldCompleted}
                 styling={{
                     borderRadius: "20px",
@@ -184,7 +185,6 @@
                         options={{ opacity: 0.5, scale: 1.28 }} 
                     />
                 </button>
-
                 <DropdownList 
                     id={"session"}
                     isHidden={!dropdown} 
@@ -355,6 +355,7 @@
             @include flex(center, space-between);
             @include text-style(0.17, 400, 1.45rem, "DM Mono");
             margin: 6px 0px 0px 0px;
+            white-space: nowrap;
         }
 
         &__details .divider {
@@ -375,6 +376,11 @@
             button {
                 background: rgba(var(--textColor1), 0.02);
                 @include center;
+            }
+            button:disabled {
+                opacity: 0.55;
+                background: rgba(var(--textColor1), 0.02) !important;
+                cursor: not-allowed !important;
             }
             button:first-child {
                 width: 50px;
@@ -403,7 +409,7 @@
 
         /* tasks */
         &__tasks {
-            width: clamp(450px, 60%, 600px);
+            width: clamp(370px, 60%, 600px);
             margin-top: 30px;
             position: relative;
         }

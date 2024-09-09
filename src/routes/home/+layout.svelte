@@ -32,11 +32,13 @@
 	import { globalContext, musicDataStore, musicPlayerStore, sessionManager } from "$lib/store"
 	import { 
     initAppState, keyboardShortCutHandlerKeyDown, keyboardShortCutHandlerKeyUp, 
-    onMouseMoveHandler, LEFT_BAR_WIDTH, updateRoute, onQuitApp
+    onMouseMoveHandler, LEFT_BAR_WIDTH, updateRoute, onQuitApp,
+	  middleViewExpandHandler
+
   } from "$lib/utils-home"
 
-	import { afterNavigate } from "$app/navigation";
-	import SessionConcludeModal from "./SessionConcludeModal.svelte";
+	import { afterNavigate } from "$app/navigation"
+	import SessionSummaryModal from "./SessionSummaryModal.svelte"
 
   
   export let data
@@ -44,6 +46,7 @@
   let toggledLeftBarWithKey = false
   let totalWidth = 0
 
+  let stretchMiddleView = false
   let leftBarOpen = true
   let rightBarOpen = true
   let leftSideBarWidth = 0
@@ -58,7 +61,8 @@
   const SMALL_WIDTH = 740
 
   $: route = $globalContext.route
-  $: if (totalWidth > 0) {
+
+  $: if (totalWidth > 0 && route) {
     updateMiddleView()
   }
 
@@ -82,6 +86,12 @@
     rightBarOpen = $globalContext.rightBarOpen
 
     const full = rightBarOpen && leftBarOpen
+
+    stretchMiddleView = middleViewExpandHandler({ 
+      width: totalWidth,
+      rightBarOpen,
+      route 
+    })
 
     if (rightBarOpen && !leftBarOpen) {
       middleViewWidth = `calc(100% - ${rightSideBarWidth}px)`
@@ -119,21 +129,23 @@
     if (!to?.route?.id) return
 
     const { id } = to.route
-    console.log({ route: id })
     updateRoute(to.route.id)
   })
   
   onMount(initAppState)
-  onDestroy(() => {
-    onQuitApp()
-  })
+  onDestroy(onQuitApp)
 </script>
 
-<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} />
+<svelte:window
+  on:keydown={handleKeyDown} 
+  on:keyup={handleKeyUp}
+/>
 
 <div 
-  class={`home ${homeViewClasses}`} 
-  on:mousemove={_onMouseMoveHandler} bind:clientWidth={totalWidth}
+  class={`home ${homeViewClasses}`}
+  class:home--stretched={stretchMiddleView}
+  bind:clientWidth={totalWidth}
+  on:mousemove={_onMouseMoveHandler}
 >
   <div class="home__main">
     <!-- left -->
@@ -211,8 +223,11 @@
   {#if $globalContext.modalsOpen.includes(ModalType.NewSession)} 
     <SessionNewModal /> 
   {/if}
-  {#if $globalContext.modalsOpen.includes(ModalType.SessionSummary) && $sessionManager} 
-    <SessionConcludeModal session={$sessionManager.session}/>
+  {#if $sessionManager && $sessionManager?.state === "done"} 
+    <SessionSummaryModal 
+        isReview={false}
+        session={$sessionManager.session}
+    />
   {/if}
 
   <!-- Other Modals Modals -->
@@ -256,6 +271,11 @@
       // background-size: cover;
       // background-position: center;
       // background-repeat: no-repeat;
+
+      &--stretched &__middle-view {
+        width: 100% !important;
+        margin: 0px !important;
+      }
 
       /* Responsivness Modifiders */
       &__main {

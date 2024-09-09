@@ -482,8 +482,6 @@ export function msToHHMMSS(ms: number) {
     const minutes = Math.floor((totalSeconds % 3600) / 60)
     const seconds = totalSeconds % 60
 
-    
-
     // Format the time components as HH:MM:SS
     let formattedTime = ''
 

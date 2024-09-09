@@ -17,7 +17,7 @@
     let isHolding = false
 
     function onConfirmPointerDown(pe: PointerEvent) {
-        if (pe.button === 2) return
+        if (pe.button === 2 || disabled) return
         isHolding = true
     }
     function onConfirmPointerUp(pe: PointerEvent) {
@@ -75,15 +75,13 @@
             transform: scale(0.97);
         }
         &--holding &__cover {
+            display: flex;
             animation: hold-confirm var(--anim-length) forwards;
         }
-
         &__cover {
             width: 100%;
             height: 100%;
             text-align: center;
-            background-color: var(--cover-color);
-            color: rgb(var(--textColor2));
             @include center;
             @include abs-center;
 
@@ -95,6 +93,11 @@
 
             -webkit-mask-position: right;
                     mask-position: right;
+
+            background-color: var(--cover-color);
+            color: rgb(var(--textColor2));
+
+            display: none;
         }
     }
 

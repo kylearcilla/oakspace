@@ -3,9 +3,10 @@ import { redirect } from "@sveltejs/kit"
 import { get } from "svelte/store"
 
 export function load() {
-    const hasSession = get(sessionManager)
+    const session = get(sessionManager)
+    const notAllow = !session || session.state === "done"
 
-    if (!hasSession) {
+    if (notAllow) {
         throw redirect(301, "/home")
     }
 }

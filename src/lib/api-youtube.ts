@@ -340,7 +340,7 @@ export function throwFireBaseAPIError(error: any) {
     const matches = errorStr.match(/\(([^)]+)\)/)
     const contextCode = matches[1]
 
-    if (["auth/popup-closed-by-user", "auth/user-cancelled", "auth/cancelled-popup-request"].includes(contextCode)) {
+    if (["auth/popup-closed-by-user", "auth/user-canceled", "auth/canceled-popup-request"].includes(contextCode)) {
       throw new APIError(APIErrorCode.AUTH_DENIED)
     }
     else {

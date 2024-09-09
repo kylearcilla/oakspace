@@ -12,7 +12,10 @@
 	import AsyncButton from "../../components/AsyncButton.svelte"
 	import ConfirmationModal from "../../components/ConfirmationModal.svelte"
 
+    export let onClickOutside: (() => void) | undefined = undefined
     export let session: Session
+    export let isReview: boolean
+
     let confirmModalOpen = false
     let isSaving = false
 
@@ -30,8 +33,6 @@
     const key = activePerc >= MIN_GOOD_SCORE ? "good" : "bad"
     const txt = randomArrayElem(resultText[key])
     const img = randomArrayElem(resultImg[key])
-
-    const isReview = $sessionManager === null
     const divWidth = isReview ? 305 : 360
 
     const emojis = ["👏", "🎉", "💪", "🙌", "💪", "🤧"]
@@ -50,16 +51,16 @@
             message: "Session not counted."
         })
     }
-    function onClickOutside() {
-        if (isReview) {
-            closeModal(ModalType.SessionSummary)
+    function _onClickOutside() {
+        if (onClickOutside) {
+            onClickOutside()
         }
     }
 </script>
 
 <Modal 
     options={{ borderRadius: "24px" }}
-    onClickOutSide={onClickOutside}
+    onClickOutSide={_onClickOutside}
 >
     <div 
         class="conclude"
@@ -205,12 +206,12 @@
         width: 400px;
         text-align: center;
         flex-direction: column;
-        padding: 12px 8px 19px 8px;
+        padding: 13px 8px 19px 8px;
         @include flex(_, center);
 
         &--review {
             width: 350px;
-            padding: 12px 10px 25px 10px;
+            padding: 16px 10px 24px 10px;
         }
 
         img {
@@ -242,19 +243,19 @@
             }
         }
         &__review-header {
-            padding: 6px 0px 25px 0px;
+            padding: 6px 0px 30px 0px;
             text-align: center;
 
             span {
-                @include text-style(0.35, 500, 1.45rem);
+                @include text-style(0.35, 500, 1.45rem, "DM Sans");
             }
         }
         &__name {
-            @include text-style(0.65, 500, 1.45rem);
+            @include text-style(0.65, 500, 1.45rem, "DM Sans");
         }
         &__total-time {
-            @include text-style(1, 400, 5rem, "DM Mono");
-            margin: 2px 0px 4px 0px;
+            @include text-style(1, 400, 4.5rem, "DM Sans");
+            margin: 4px 0px 7px 0px;
         }
         &__stats {
             width: 100%;

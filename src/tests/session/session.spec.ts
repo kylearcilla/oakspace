@@ -5,18 +5,6 @@ const FOCUS_INIT_TIME = 25
 const BREAK_INIT_TIME = 5
 const TIME_INCREMENT = 5
 
-async function isTransition(args: { page: any, state: "to-break" | "to-focus" }) {
-
-}
-
-async function isMode(args: { page: any, mode: "to-break" | "to-focus" }) {
-
-}
-
-async function expectResultToBe(args: { page: any }) {
-
-}
-
 async function createSession(args: { page: any, mode: "flow" | "pom", focusTime: number, breakTime: number, name: string }) {
     const { page, mode, focusTime, breakTime, name } = args
     await page.locator(".header__new-session-btn").click()

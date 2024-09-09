@@ -1,15 +1,19 @@
-import { ModalType } from "./enums"
+import { goto } from "$app/navigation"
 import { sessionManager } from "./store"
-import { openModal } from "./utils-home"
-import { setDocumentTitle } from "./utils-general"
-import { addToDate, getDifferenceInSecs, getNextHour, secsToHhMmSs, startOfDay } from "./utils-date"
-import { get } from "svelte/store"
+
+import { toast } from "./utils-toast"
+import { formatPlural, setDocumentTitle } from "./utils-general"
+import { addToDate, getDifferenceInSecs, secsToHHMM, secsToHhMmSs } from "./utils-date"
+
+import focusSound  from '$lib/sounds/focus.mp3'
+import breakSound  from '$lib/sounds/break.mp3'
+import focusReminderSound  from '$lib/sounds/focus-reminder.mp3'
 
 export class SessionManager {
     session!: Session
     todosChecked = 0
 
-    periods = 1
+    periods = 0
     totalFocusTime = 0
     totalBreakTime = 0
 
@@ -17,63 +21,71 @@ export class SessionManager {
     breakCount = 0
     pauseCount = 0
     
-    transitionCount = 0
     elapsedSecs = 0
-    progressSecs = 0  // focus and break progress
+    progressSecs = 0
     nextBreakSecs = 0
     
     // visualizer
     visStart!: Date
     visEnd!: Date
-    progressTail!: Date
-    focusStart!: Date
-    breakStart!: Date
-    breakTail!: Date
-    prevDate!: Date
+    currDate!: Date
     visEndIncrementSecs = 0
 
     // segments include break and paused periods
     currSegmentIdx = -1
     segments: SessionProgressSegment[] = []
-    timer: Worker | NodeJS.Timer | null = null
+    intervalWorker: Worker | null = null
 
     isPlaying = false
     state: SessionState = "focus"
     
     prevPage = ""
+    timer: NodeJS.Timer | null = null
 
     static TRANSITION_DUR_SECS = 10
-    static MIN_SESSION_TIME_MINS = 15
+    static MIN_SESSION_TIME_MINS = 10
+
+    FOCUS_SOUND_VOL = 0.055
+    BREAK_SOUND_VOL = 0.125
+    FOCUS_REMINDER_SOUND_VOL = 0.01
+
+    static CHIME_PERIOD_SECS = 60 * 5
+    LENGTHY_BREAK_REMIND_SECS = 60 * 4
+    LENGTHY_BREAK_THRESHOLD_SECS = 60 * 20
+    
+    MAX_TIME_AWAY_MINS = 1
     NEXT_HOUR_DIST_MINS = 15
     MAX_SECS = 12 * 60 * 60
 
     constructor(session?: Session) {
         if (session) {
-            this.progressTail = new Date()
-            this.focusStart = new Date()
-            this.prevDate = new Date()
+            this.currDate = new Date()
             this.session = session
+
             this.isPlaying = true
             this.state = "focus"
         }
-        else {
-            this.load()
+        else if (!this.load()) {
+            this.inactiveWindowQuit()
+            return
         }
         this.todosChecked = this.session!.todos.reduce((count, todo) => {
             return count += (todo.isChecked ? 1 : 0)
         }, 0)
 
         sessionManager.set(this)
-        
-        this.initNextVisEndTimeIncrement()
-        this.initVisualStartEndTimes()
-        this.initTimer()
 
+        if (session) {
+            this.initNextVisEndTimeIncrement()
+            this.initVisualStartEndTimes()
+            this.updateVisEnd()
+        }
         if (session && this.session.mode === "pom") {
             this.initNextBreak()
         }
-
-        this.updateVisEnd()
+        if (this.state != "done") {
+            this.initTimer()
+        }
     }
 
     update(newState: Partial<SessionManager>) {
@@ -100,7 +112,6 @@ export class SessionManager {
     nearestFiveMinuteTime(date: Date) {
         const roundedDate = new Date(date)
         const minutes = roundedDate.getMinutes()
-
         const roundedMinutes = Math.floor(minutes / 5) * 5
         roundedDate.setMinutes(roundedMinutes)
         roundedDate.setSeconds(0)
@@ -110,10 +121,11 @@ export class SessionManager {
 
     initNextVisEndTimeIncrement() {
         if (this.session.mode === "pom") {
-            const firstPeriodMins  = this.session.focusTime + this.session.breakTime
-            const remainingMinutes = firstPeriodMins % 60
+            const firstPeriodMins = this.session.focusTime + this.session.breakTime
+            const mins = firstPeriodMins % 60
+            const hrs = Math.floor(firstPeriodMins / 60)
             const maxTime  = 60 - this.NEXT_HOUR_DIST_MINS
-            const nextHour = remainingMinutes >= maxTime ? 2 : 1
+            const nextHour = hrs + (mins >= maxTime ? 2 : 1)
         
             this.visEndIncrementSecs = nextHour * 60 * 60
         }
@@ -125,10 +137,6 @@ export class SessionManager {
     /* controls */
 
     togglePlay() {
-        if (this.state === "break" && this.isPlaying) {
-            this.isPlaying = true
-            this.update({ isPlaying: true })
-        }
         if (["to-focus", "to-break", "break"].includes(this.state)) {
             return
         }
@@ -147,108 +155,85 @@ export class SessionManager {
         else {
             this.currSegmentIdx = -1
         }
-
-        this.updateCounterTracker({ state: this.isPlaying ? "focus" : "break" })
     }
 
     /* timer */
-    updateCounterTracker(args: { state: "focus" | "break" | "pause" }) {
-        const { state } = args
-
-        if (state === "break" || state === "pause") {
-            this.breakStart = new Date()
-
-            this.breakTail = this.breakTail ? addToDate({
-                date: this.breakTail,
-                time: this.diff(this.focusStart, new Date())
-            }) : new Date()
-        }
-        else {
-            this.focusStart = new Date()
-
-            this.progressTail = this.breakStart ? addToDate({
-                date: this.progressTail,
-                time: this.diff(this.breakStart, new Date())
-            }) : new Date()
-        }
-    }
-
     initTimer() {
-        const isDev = import.meta.env.MODE === "development"
-
-        if (isDev) {
-            this.timer = setInterval(() => this.updateProgress(), 1000)
-        }
-        else {
-            // offload to background worker to avoid throttling
-            this.timer = new Worker(new URL('./workers/timeWorker.ts', import.meta.url))
-            this.timer.onmessage = (event) => {
-                if (event.data === 'tick') { 
-                    this.updateProgress()
-                }
+        // offload to background worker to avoid throttling
+        this.intervalWorker = new Worker(new URL('./workers/timeWorker.ts', import.meta.url))
+        this.intervalWorker.onmessage = (event) => {
+            if (event.data === 'tick') { 
+                this.updateProgress()
             }
-            this.timer.postMessage({ interval: 1000 })
         }
-
+        this.intervalWorker.postMessage({ interval: 1000 })
     }
 
     stopTimer() {
-        if (!this.timer) return
-        const isDev = import.meta.env.MODE === "development"
+        if (!this.intervalWorker) return
 
-        if (isDev) {
-            clearInterval(this.timer as any)
-        }
-        else {
-            (this.timer as Worker).terminate()
-        }
-        this.timer = null
+        this.intervalWorker.terminate()
+        this.intervalWorker = null
     }
 
     updateProgress() {
-        const { breakTime, startTime } = this.session
+        const { breakTime } = this.session
         const state = this.state
+        const mode = this.session.mode
         const focus = state === "focus"
-        const playing = this.isPlaying
         const transition = ["to-break", "to-focus"].includes(state)
         const TRANSITION_DUR_SECS = SessionManager.TRANSITION_DUR_SECS
+        const isPom = mode === "pom"
 
-        this.prevDate = new Date()
+        this.elapsedSecs += 1
+        this.update({ elapsedSecs: this.elapsedSecs })
+        this.currDate = new Date()
 
-        if (!transition) {
-            this.elapsedSecs = this.diff(new Date(), startTime)
+        if (this.elapsedSecs > this.MAX_SECS) {
+            this.reachedMaxElapsedTimeHandler()
+            return
         }
+    
+        // counter
         if (this.elapsedSecs > this.MAX_SECS) {
             this.finish()
         }
-        if (playing) {
-            this.progressSecs = this.diff(new Date(), this.progressTail)
+        if (this.isPlaying) {
+            this.progressSecs++
             this.update({ progressSecs: this.progressSecs })
         }
         if (!transition) {
-            const updateFocus = playing && focus
-            const updateBreak = !playing || !focus
-            this.totalFocusTime = updateFocus ? this.diff(new Date(), this.progressTail) : this.totalFocusTime
-            this.totalBreakTime = updateBreak ? this.diff(new Date(), playing ? this.progressTail : this.breakTail) : this.totalBreakTime
+            this.totalFocusTime += this.isPlaying && focus ? 1 : 0
+            this.totalBreakTime += !this.isPlaying || !focus ? 1 : 0
 
             this.update({
                 totalFocusTime: this.totalFocusTime,
                 totalBreakTime: this.totalBreakTime
             })
         }
-        if (focus && this.elapsedSecs === this.nextBreakSecs) {
+
+        // state
+        if (focus && this.elapsedSecs >= this.nextBreakSecs && !transition && isPom) {
             this.stateTransition("break")
         }
-        else if (!focus && this.progressSecs === breakTime) {
+        else if (!focus && this.progressSecs >= breakTime && !transition && isPom) {
             this.stateTransition("focus")
         }
-        if (state === "to-focus") {
-            setDocumentTitle("→⏰" + secsToHhMmSs(TRANSITION_DUR_SECS - this.progressSecs))
+
+        // other updates
+        if (transition) {
+            const toFocus = state === "to-focus"
+            const timeleft = TRANSITION_DUR_SECS - this.progressSecs
+            const emoji = toFocus ? "→⏰" : "→🌿"
+
+            setDocumentTitle(emoji + secsToHhMmSs(timeleft))
+            
+            if (timeleft <= 0 && this.session.mode === "pom" && toFocus) {
+                toFocus ? this.focus() : this.break()
+                this.initNextBreak()
+            }
         }
-        else if (state === "to-break") {
-            setDocumentTitle("→🌿" + secsToHhMmSs(TRANSITION_DUR_SECS - this.progressSecs))
-        }
-        else if (playing) {
+        else if (this.isPlaying) {
             const emoji = focus ? "⏰" : "🌿"
             setDocumentTitle(emoji + secsToHhMmSs(this.progressSecs))
         }
@@ -257,20 +242,55 @@ export class SessionManager {
             setDocumentTitle("⏸️" + secsToHhMmSs(this.progressSecs))
         }
 
+        this.soundHandler()
         this.updateVisEnd()
     }
 
+    /**
+     * Sound handler for playing time blindness chime and lengthly break pings.
+     */
+    soundHandler() {
+        const { allowChime, allowSfx, mode } = this.session
+        const flow = mode === "flow"
+        const elapsed = this.elapsedSecs        
+        const progress = this.progressSecs
+
+        if (flow && 
+            allowSfx && 
+            this.state === "break" && 
+            progress > this.LENGTHY_BREAK_THRESHOLD_SECS && 
+            progress % this.LENGTHY_BREAK_REMIND_SECS === 0
+        ) {
+            // plays at regular intervals if break is taking long
+            this.playBreakSound()
+        }
+        if (allowChime && elapsed > 0 && elapsed % SessionManager.CHIME_PERIOD_SECS === 0) {
+            this.playChimeSound()
+        }
+    }
+
+    /**
+     * Initialize a new break segment.
+     * Occurs during the conclusion of a break segment and on to a focus segment.
+     * Break segments start on the start of the transition to the break segment.
+     */
     initNextBreak() {
         const { focusTime, breakTime } = this.session
-        const firstbreakTail = addToDate({ date: new Date(), time: focusTime })
-        const firstBreakEnd   = addToDate({ date: firstbreakTail, time: breakTime })
-
-        this.nextBreakSecs = (this.periods * focusTime) + (breakTime * (this.periods - 1))
+        const transSecs = SessionManager.TRANSITION_DUR_SECS
+        const firstBreakStart = addToDate({ date: new Date(), time: focusTime })
+        const firstBreakEnd   = addToDate({ date: firstBreakStart, time: breakTime + (2 * transSecs) + 1 })
+        
+        this.periods++
+        this.nextBreakSecs = (this.periods * focusTime) + ((this.periods - 1) * breakTime) + ((this.periods - 1) * (2 * transSecs))
 
         this.segments.push({
-            start: firstbreakTail,
+            start: firstBreakStart,
             end: firstBreakEnd,
             type: "break"
+        })
+        this.update({
+            periods: this.periods,
+            nextBreakSecs: this.nextBreakSecs
         })
     }
 
@@ -296,27 +316,31 @@ export class SessionManager {
      * Ensures that there is always space for a full period (focus + break segments).
      */
     updateVisEnd() {
-        const elapsed = this.elapsedSecs
-        const incrsFromStart = elapsed / this.visEndIncrementSecs 
-        const { startTime } = this.session
+        const incrsFromStart = Math.floor(this.elapsedSecs / this.visEndIncrementSecs)
+        const start = this.visStart
 
         const recentIncrHr = addToDate({ 
-            date: startTime,
+            date: start,
             time: incrsFromStart * this.visEndIncrementSecs
         })
         const nextIncrHr = addToDate({ 
             date: recentIncrHr,
             time: this.visEndIncrementSecs
         })
-        const distFromNextHr = this.diff(nextIncrHr, new Date()) / 60
+        const distFromNextHrSecs = getDifferenceInSecs(nextIncrHr, addToDate({
+            date: this.session.startTime,
+            time: this.elapsedSecs
+        }))
+        const distFromNextHrMins = distFromNextHrSecs / 60
 
-        if (distFromNextHr <= this.NEXT_HOUR_DIST_MINS) {
-            this.visEnd = nextIncrHr
-            this.update({ visEnd: nextIncrHr })
-            
-            if (this.session.mode === "pom") {
-                this.initNextBreak()
-            }
+        if (distFromNextHrMins <= this.NEXT_HOUR_DIST_MINS) {
+            const nextNextIncrHr = addToDate({ 
+                date: nextIncrHr,
+                time: this.visEndIncrementSecs
+            })
+
+            this.visEnd = this.nearestFiveMinuteTime(nextNextIncrHr)
+            this.update({ visEnd: this.visEnd })
         }
     }
 
@@ -324,14 +348,14 @@ export class SessionManager {
     break() {
         this.progressSecs = 0
         this.breakCount++
-        this.periods++
         this.state = "break"
-        this.updateCounterTracker({ state: "break" })
+        this.isPlaying = true
 
         this.update({ 
             progressSecs: this.progressSecs,
             breakCount: this.breakCount,
             periods: this.periods,
+            isPlaying: true,
             state: "break"
         })
     }
@@ -340,7 +364,6 @@ export class SessionManager {
         this.progressSecs = 0
         this.focusCount++
         this.state = "focus"
-        this.updateCounterTracker({ state: "focus" })
 
         this.update({ 
             progressSecs: this.progressSecs,
@@ -350,38 +373,50 @@ export class SessionManager {
     }
 
     stateTransition(toState: "break" | "focus") {
-        const TRANSITION_DUR_SECS = SessionManager.TRANSITION_DUR_SECS
         this.progressSecs = 0
-        this.progressTail = new Date()
+        this.isPlaying = true
         
         if (toState === "break") {
             this.state = "to-break"
-            this.isPlaying = true
+            this.playBreakSound()
 
             this.update({ 
+                progressSecs: this.progressSecs,
                 state: "to-break",
                 isPlaying: true
             })
-
-            setTimeout(() => {
-                this.break()
-
-            }, TRANSITION_DUR_SECS * 1000)
         }
         else {
-            this.state = "to-focus"            
-            this.update({ state: "to-focus"})
+            this.state = "to-focus"
+            this.playFocusSound()
 
-            if (this.session.mode === "pom") {
-                this.initNextBreak()
-            }
-
-            setTimeout(() => {
-                this.focus()
-
-            }, TRANSITION_DUR_SECS * 1000)
+            this.update({ 
+                progressSecs: this.progressSecs,
+                isPlaying: true,
+                state: "to-focus"
+            })
         }
     }
+
+    playFocusSound() {
+        const audio = new Audio(focusSound)
+        audio.volume = this.FOCUS_SOUND_VOL
+        audio.play()
+    }
+
+    playBreakSound() {
+        const audio = new Audio(breakSound)
+        audio.volume = this.BREAK_SOUND_VOL
+        audio.play()
+    }
+
+    playChimeSound() {
+        const audio = new Audio(focusReminderSound)
+        audio.volume = this.FOCUS_REMINDER_SOUND_VOL
+        audio.play()
+    }
+
+    /* conclude  */
 
     finish() {
         const result = {
@@ -402,7 +437,8 @@ export class SessionManager {
             state: "done"
         })
 
-        openModal(ModalType.SessionSummary)
+        setDocumentTitle("Somara")
+        goto(this.prevPage)
     }
 
     newSegment(args: { type: SessionState }) {
@@ -413,11 +449,33 @@ export class SessionManager {
         return this.segments.length - 1
     }
 
-    /* conclude  */
-
     updatePrevPage(route: string) {
         this.prevPage = route
         this.update({ prevPage: route })
+    }
+
+    quit() {
+        this.stopTimer()
+        localStorage.removeItem("session")
+        sessionManager.set(null)
+        setDocumentTitle("Somara")
+    }
+
+    reachedMaxElapsedTimeHandler() {
+        setTimeout(() => {
+            toast("info", {
+                message: `Session fnished. Maximum elapsed time reached. (${secsToHHMM(this.MAX_SECS)}).`
+            })
+        }, 1000)
+        this.finish()
+    }
+    inactiveWindowQuit() {
+        setTimeout(() => {
+            toast("info", {
+                message: `Session canceled. Window was closed for more than ${formatPlural("minute", this.MAX_TIME_AWAY_MINS)}`
+            })
+        }, 1000)
+        this.quit()
     }
 
     /* tasks */
@@ -433,49 +491,62 @@ export class SessionManager {
         })
     }
 
-    diff(x: Date, y: Date) {
-        return getDifferenceInSecs(x, y)
-    }
-
     /* state */
-
-    quit() {
-        this.stopTimer()
-        localStorage.removeItem("session")
-        sessionManager.set(null)
-        setDocumentTitle("Somara")
-    }
 
     load() {
         const data = localStorage.getItem("session")
         if (!data) return
 
         const session = JSON.parse(data)
+        const isDone  = session.state === "done"
+        const currDate    = new Date(session.currDate)
+        const elapsedTime = isDone ? 0 : getDifferenceInSecs(currDate, new Date())
+        const maxTimeAway = this.MAX_TIME_AWAY_MINS * 60
+
+        if (elapsedTime > maxTimeAway && !isDone) {
+            return false
+        }
+
         this.session = session.session
         this.session.startTime = new Date(this.session.startTime)
-
         this.periods = session.periods
         this.totalFocusTime = session.totalFocusTime
         this.totalBreakTime = session.totalBreakTime
-        
+        this.elapsedSecs = session.elapsedSecs
+        this.progressSecs = session.progressSecs
         this.focusCount = session.focusCount
         this.breakCount = session.breakCount
         this.pauseCount = session.pauseCount
-        this.elapsedSecs = session.elapsedSecs
-        this.transitionCount = session.transitionCount
         this.segments = session.segments
         this.currSegmentIdx = session.currSegmentIdx
         this.nextBreakSecs = session.nextBreakSecs
-        this.progressTail = new Date()
-        this.prevDate = new Date(session.prevDate)
-
-        this.isPlaying = session.isPlaying
         this.state = session.state
         this.prevPage = session.prevPage
-        this.progressSecs = session.progressSecs
+        this.visStart = new Date(session.visStart)
+        this.visEnd = new Date(session.visEnd)
+        this.visEndIncrementSecs = session.visEndIncrementSecs
 
-        this.elapsedSecs += this.diff(this.prevDate, new Date())
-        this.prevDate = new Date()
+        const transition = this.state.startsWith("to-")
+
+        this.elapsedSecs += transition ? 0 : elapsedTime
+        this.progressSecs += this.isPlaying ? 0 : elapsedTime
+
+        if (isDone) {
+            const endTime = this.session.result!.endTime!
+            this.session.result!.endTime = new Date(endTime)
+        }
+        else {
+            this.isPlaying = session.isPlaying
+            this.currDate = new Date()
+        }
+        if ((this.state === "break" || this.state === "paused") && !isDone) {
+            this.totalBreakTime += elapsedTime
+        }
+        else if (this.state === "focus" && !isDone) {
+            this.totalFocusTime += elapsedTime
+        }
+
+        return true
     }
 
     save(state: SessionManager) {
@@ -490,11 +561,12 @@ export class SessionManager {
             pauseCount: state.pauseCount,
             elapsedSecs: state.elapsedSecs,
             segments: state.segments,
-            transitionCount: state.transitionCount,
             currSegmentIdx: state.currSegmentIdx,
             nextBreakSecs: state.nextBreakSecs,
-            progressTail: state.progressTail,
-            prevDate: state.prevDate,
+            visStart: state.visStart,
+            visEnd: state.visEnd,
+            visEndIncrementSecs: state.visEndIncrementSecs,
+            currDate: this.currDate,
     
             isPlaying: state.isPlaying,
             state: state.state,
@@ -520,7 +592,6 @@ export class SessionManager {
         if (newState.elapsedSecs)  oldState.elapsedSecs = newState.elapsedSecs
         if (newState.visStart)  oldState.visStart = newState.visStart
         if (newState.visEnd)  oldState.visEnd = newState.visEnd
-        if (newState.transitionCount)  oldState.transitionCount = newState.transitionCount
 
         return oldState
     }

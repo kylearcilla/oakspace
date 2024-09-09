@@ -1,25 +1,26 @@
 <script lang="ts">
 	import { sessionManager } from "$lib/store"
-	import { floatCompare } from "$lib/utils-general"
 	import { formatTimeToHHMM, isSameDay, startOfDay, TOTAL_DAY_SECS } from "$lib/utils-date"
 
     export let width: number
 
     const LINE_WIDTH = 2
-    const BOOK_END_LINE_COUNT = 8
+    const BOOK_END_LINE_COUNT = 12
 
     const ACTIVE_COLOR_RGB = "196, 234, 47"
     const PROGRESS_HEAD_COLOR = "#FFFFFF"
     const INVACTIVE_COLOR = "rgba(var(--textColor1), 0.095)"
+    const DATA_ATTR_INACTIVE_OPACITY = "data-inactive-opacity"
 
-    let totalLength = 0
     let lineSectionWidth = 30
     let timeStampCount = 5
+    let totalLength = 0
 
     $: if (width) {
         onWidthResize(width)
     }
 
+    /* store*/
     $: store = $sessionManager
     $: elapsedSecs = store!.elapsedSecs
     $: session = store!.session
@@ -27,28 +28,35 @@
     $: startTime = session.startTime
     $: segments = store!.segments
     $: isPlaying = store!.isPlaying
-    $: visEnd  = store!.visEnd 
-
-    $: lineNumber   = (timeStampCount - 1) * lineSectionWidth
-    $: secsPerLine  = Math.floor(totalLength / lineNumber)
-    $: currLineSecs = Math.floor(elapsedSecs % secsPerLine)
-    $: lineProgress = currLineSecs / secsPerLine
-
+    $: visEnd  = formatTimeToHHMM(store!.visEnd)
+    
+    /* visualizer */
+    let currVisEnd = ""
     let justInit = false
     let progressStart: Date
     let progressEnd: Date
     let progressStartOfDay = 0
     let progressEndOfDay = 0
     let currLineProgress = 0
-    
     let currLineIdx = -1
     let currentLineElem: HTMLElement
     let timeStamps: string[] = []
-    
-    $: getProgressTimes(visEnd)
+
+    /* progress */
+    let lineNumber  = (timeStampCount - 1) * lineSectionWidth
+    let secsPerLine = Math.floor(totalLength / lineNumber)
+
+    $: currLineSecs = Math.floor(elapsedSecs % secsPerLine)
+    $: complete     = elapsedSecs > 0 && currLineSecs === 0
+    $: lineProgress = complete ? 1 : currLineSecs / secsPerLine
+
+    $: if (currVisEnd != visEnd) {
+        currVisEnd = visEnd
+        getProgressTimes(store!.visEnd)
+    }
 
     // $: vars are initially undefined
-    $: if (!justInit && store && secsPerLine) {
+    $: if (!justInit && store && secsPerLine && currLineSecs && state === "focus") {        
         justInit = true
         currLineProgress = lineProgress
     }
@@ -57,7 +65,6 @@
     }
     $: if (elapsedSecs != undefined) {
         paintProgress()
-        getProgressLineIdx()
     }
 
     /* ui */
@@ -74,11 +81,13 @@
         else {
             progressEndOfDay = startOfDay(progressEnd) + TOTAL_DAY_SECS
         }
-
         totalLength = progressEndOfDay - progressStartOfDay
+        secsPerLine = Math.floor(totalLength / lineNumber)
+
+        updateVisualizer()
     }
     function updateVisualizer() {
-        currLineIdx = getProgressLineIdx()
+        currLineIdx = getCurrIdx()
         toggleTransition(currentLineElem, false)
 
         initTimeStamps()
@@ -90,10 +99,22 @@
             paintSegments()
         })
     }
-    function getProgressLineIdx() {
-        const currSecs = startOfDay(new Date()) - progressStartOfDay
+    function getIdxFromDate(date: Date) {
+        const sameDay = isSameDay(date, session.startTime)
+        const nowStartSecs = startOfDay(date)
+        let secs = 0
 
-        return Math.floor(currSecs / secsPerLine)
+        if (sameDay) {
+            secs = startOfDay(date) - progressStartOfDay
+        }
+        else {
+            secs = nowStartSecs + TOTAL_DAY_SECS - progressStartOfDay
+        }
+
+        return { idx: Math.floor(secs / secsPerLine), secs }
+    }
+    function getCurrIdx() {
+        return getIdxFromDate(new Date()).idx
     }
 
     /* paint */
@@ -101,29 +122,34 @@
         segments.forEach((s) => paintSegment(s))
     }
     function paintProgress() {
-        if (state === "to-break" || state === "to-focus") {
-            return
-        }
+        const transition = state === "to-break" || state === "to-focus"
         const timeStampsLength = timeStamps.length
         const lines = getMainLines()
         
         if (!lines || timeStampsLength === 0) {
             return
         }
-        if (currLineIdx < 0 || lineProgress * 100 < 1) {
-            currLineIdx = getProgressLineIdx()
+        if (currLineIdx < 0 || lineProgress === 1) {
+            currLineIdx = getCurrIdx()
         }
         
         const line = lines[currLineIdx]
 
+        if (!line) {
+            return
+        }
         if (!currentLineElem) {
             toggleTransition(line, true)
         }
-        if (!isPlaying || state === "break") {
+        if (!isPlaying || state === "break" || transition) {
             paintProgressOnBreak(line)
         }
         else if (isPlaying) {
+            currLineProgress += (1 / secsPerLine)
             paintProgressOnActive(line)
+        }
+        if (lineProgress === 1) {
+            currLineProgress = 0
         }
     }
     function paintProgressOnBreak(line: HTMLElement) {
@@ -131,39 +157,25 @@
             const useInactive = currLineProgress < 0.35
             const color = useInactive ? INVACTIVE_COLOR : `rgba(${ACTIVE_COLOR_RGB}, ${currLineProgress})`
 
-            console.log("paintProgressOnBreak", currLineProgress, currLineIdx)
-
             currentLineElem.style.backgroundColor = color
             toggleTransition(currentLineElem, false)
-            
-            line.style.backgroundColor = PROGRESS_HEAD_COLOR
             toggleTransition(line, true)
-            currLineProgress = 0
         }
-        else {
-            line.style.backgroundColor = PROGRESS_HEAD_COLOR
-        }
-
+        line.style.backgroundColor = PROGRESS_HEAD_COLOR
         currentLineElem = line
     }
     function paintProgressOnActive(line: HTMLElement) {
         if (currentLineElem && currentLineElem != line) {
-            const isComplete = floatCompare({ x: currLineProgress, op: "≥", y: 1 - (1 / secsPerLine)})
-            const opacity    = isComplete ? 1 : Math.min(Math.max(currLineProgress, 0.35), 1)
+            const opacity    = Math.min(Math.max(currLineProgress, 0.35), 1)
             currentLineElem.style.backgroundColor = `rgba(${ACTIVE_COLOR_RGB}, ${opacity})`
             toggleTransition(currentLineElem, false)
 
-            console.log("paintProgressOnActive", currLineProgress, currLineIdx)
             
             line.style.backgroundColor = `rgba(${ACTIVE_COLOR_RGB}, 0.35)`
             toggleTransition(line, true)
             currLineProgress = 0
         }
-        else {
-            currLineProgress += (1 / secsPerLine)
-            line.style.backgroundColor = `rgba(${ACTIVE_COLOR_RGB}, ${Math.max(currLineProgress, 0.35)})`
-        }
-
+        line.style.backgroundColor = `rgba(${ACTIVE_COLOR_RGB}, ${Math.max(currLineProgress, 0.35)})`
         currentLineElem = line
     }
     function repaintProgress() {
@@ -181,51 +193,46 @@
         }
 
         const { type, start, end } = segment
-        const startSecs = startOfDay(new Date(start)) - progressStartOfDay
-        const endSecs   = startOfDay(new Date(end)) - progressStartOfDay
-        const startIdx = Math.floor(startSecs / secsPerLine)
-        const endIdx   = Math.floor(endSecs / secsPerLine)
+        const { idx: startIdx, secs: startSecs }  = getIdxFromDate(new Date(start))
+        const { idx: endIdx, secs: endSecs }  = getIdxFromDate(new Date(end))
+
+        if (startIdx < 0 || startIdx >= lines.length) return
+        if (endIdx < 0 || endIdx >= lines.length)     return
 
         for (let i = startIdx; i <= endIdx; i++) {
             if (i === currLineIdx) continue
             const line = lines[i]
-            const lineColor  = line.style.backgroundColor ?? ""
-            const fullActive = lineColor === `rgb(${ACTIVE_COLOR_RGB})`
-            const colorArr  = lineColor.split(",")
             const inactive  = type === "break" || type === "paused"
-            const arrLength = colorArr.length
+            const lineEndSecs = (startIdx * secsPerLine) + secsPerLine
+            const lineStartSecs = (endIdx * secsPerLine) + 1
 
-            // multiple inactive can segments share the same line
-            // thus multiple segments can contribute to lowering the lines opacity
-            let inactiveOpacity = arrLength === 4 && !fullActive ? parseFloat(colorArr[3]) : 0
+            // multiple inactive segments can share the same line
+            const inactiveOpacity = parseFloat(line.getAttribute(DATA_ATTR_INACTIVE_OPACITY) ?? "0")
+            const prevBreakSecs   = Math.floor((secsPerLine * inactiveOpacity))
+
+            let totalBreak = 0, frac = 0
 
             // bookend lines for inactive states can have partial opacity
-            // 1. a segment's length fits in an line or
-            // 2. part of a segment fits is part of the line line
             if (i === startIdx && i == endIdx && inactive) {
-                const frac = ((endSecs - startSecs) / secsPerLine) + inactiveOpacity
-                const activeOpacity = 1 - Math.min(frac, 1) 
-
-                colorLine({ line, type, idx: i, activeOpacity })
+                totalBreak = endSecs - startSecs + prevBreakSecs
+                frac       = totalBreak / secsPerLine
+                colorLine({ line, type, idx: i, activeOpacity: 1 - Math.min(frac, 1) })
             }
             else if (i === startIdx && inactive) {
-                const lineEndSecs = (startIdx * secsPerLine) + secsPerLine
-                const frac = ((lineEndSecs - startSecs) / secsPerLine) + inactiveOpacity
-                const activeOpacity = 1 - Math.min(frac, 1) 
-
-                colorLine({ line, type, idx: i, activeOpacity })
+                totalBreak = lineEndSecs - startSecs + prevBreakSecs
+                frac       = totalBreak / secsPerLine
+                colorLine({ line, type, idx: i, activeOpacity: 1 - Math.min(frac, 1) })
             }
             else if (i === endIdx && inactive) {
-                const lineStartSecs = (endIdx * secsPerLine) + 1
-                const frac = ((endSecs - lineStartSecs) / secsPerLine) + inactiveOpacity
-                const activeOpacity = 1 - Math.min(frac, 1) 
-
-                colorLine({ line, type, idx: i, activeOpacity })
+                totalBreak = endSecs - lineStartSecs + prevBreakSecs
+                frac       = totalBreak / secsPerLine
+                colorLine({ line, type, idx: i, activeOpacity: 1 - Math.min(frac, 1) })
             }
             else {
                 colorLine({ line, type, idx: i })
             }
         }
+
     }
     function colorLine(args: { line: HTMLElement, type: SessionState | "progress", idx: number, activeOpacity?: number }) {
         const { line, type, idx, activeOpacity } = args
@@ -235,6 +242,7 @@
             line.style.backgroundColor = INVACTIVE_COLOR
         }
         else if (pastInactiveSegment) {
+            line.setAttribute(DATA_ATTR_INACTIVE_OPACITY, `${1 - activeOpacity}`)
             line.style.backgroundColor = activeOpacity === 0 ? INVACTIVE_COLOR : `rgba(${ACTIVE_COLOR_RGB}, ${Math.max(activeOpacity, 0.15)})`
         }
         else if (type === "progress") {
@@ -291,6 +299,8 @@
             timeStampCount = 5
             lineSectionWidth = 40
         }
+        lineNumber = (timeStampCount - 1) * lineSectionWidth
+        secsPerLine = Math.floor(totalLength / lineNumber)
     }
 </script>
 

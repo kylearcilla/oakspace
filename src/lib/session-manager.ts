@@ -24,6 +24,7 @@ export class SessionManager {
     elapsedSecs = 0
     progressSecs = 0
     nextBreakSecs = 0
+    minimal = false
     
     // visualizer
     visStart!: Date
@@ -47,9 +48,9 @@ export class SessionManager {
 
     FOCUS_SOUND_VOL = 0.055
     BREAK_SOUND_VOL = 0.125
-    FOCUS_REMINDER_SOUND_VOL = 0.01
+    FOCUS_REMINDER_SOUND_VOL = 0.02
 
-    static CHIME_PERIOD_SECS = 60 * 5
+    static CHIME_PERIOD_SECS = 60 * 1
     LENGTHY_BREAK_REMIND_SECS = 60 * 4
     LENGTHY_BREAK_THRESHOLD_SECS = 60 * 20
     
@@ -121,21 +122,21 @@ export class SessionManager {
 
     initNextVisEndTimeIncrement() {
         if (this.session.mode === "pom") {
-            const firstPeriodMins = this.session.focusTime + this.session.breakTime
+            const firstPeriodMins = (this.session.focusTime + this.session.breakTime) / 60
             const mins = firstPeriodMins % 60
-            const hrs = Math.floor(firstPeriodMins / 60)
+            const hrs  = Math.floor(firstPeriodMins / 60)
             const maxTime  = 60 - this.NEXT_HOUR_DIST_MINS
             const nextHour = hrs + (mins >= maxTime ? 2 : 1)
-        
+    
             this.visEndIncrementSecs = nextHour * 60 * 60
         }
         else {
             this.visEndIncrementSecs = 3_600
         }
+
     }
 
     /* controls */
-
     togglePlay() {
         if (["to-focus", "to-break", "break"].includes(this.state)) {
             return
@@ -155,6 +156,11 @@ export class SessionManager {
         else {
             this.currSegmentIdx = -1
         }
+    }
+
+    toggleMinimal() {
+        this.minimal = !this.minimal
+        this.update({ minimal: this.minimal })
     }
 
     /* timer */
@@ -228,7 +234,7 @@ export class SessionManager {
 
             setDocumentTitle(emoji + secsToHhMmSs(timeleft))
             
-            if (timeleft <= 0 && this.session.mode === "pom" && toFocus) {
+            if (timeleft <= 0 && this.session.mode === "pom") {
                 toFocus ? this.focus() : this.break()
                 this.initNextBreak()
             }
@@ -522,6 +528,7 @@ export class SessionManager {
         this.nextBreakSecs = session.nextBreakSecs
         this.state = session.state
         this.prevPage = session.prevPage
+        this.minimal = session.minimal
         this.visStart = new Date(session.visStart)
         this.visEnd = new Date(session.visEnd)
         this.visEndIncrementSecs = session.visEndIncrementSecs
@@ -569,6 +576,7 @@ export class SessionManager {
             currDate: this.currDate,
     
             isPlaying: state.isPlaying,
+            minimal: state.minimal,
             state: state.state,
             prevPage: state.prevPage,
             progressSecs: state.progressSecs
@@ -592,6 +600,7 @@ export class SessionManager {
         if (newState.elapsedSecs)  oldState.elapsedSecs = newState.elapsedSecs
         if (newState.visStart)  oldState.visStart = newState.visStart
         if (newState.visEnd)  oldState.visEnd = newState.visEnd
+        if (newState.minimal)  oldState.minimal = newState.minimal
 
         return oldState
     }

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { sessionManager } from "$lib/store"
+	import { globalContext, sessionManager, themeState } from "$lib/store"
 	import { formatTimeToHHMM, isSameDay, startOfDay, TOTAL_DAY_SECS } from "$lib/utils-date"
 
     export let width: number
@@ -7,14 +7,16 @@
     const LINE_WIDTH = 2
     const BOOK_END_LINE_COUNT = 12
 
-    const ACTIVE_COLOR_RGB = "196, 234, 47"
     const PROGRESS_HEAD_COLOR = "#FFFFFF"
-    const INVACTIVE_COLOR = "rgba(var(--textColor1), 0.095)"
     const DATA_ATTR_INACTIVE_OPACITY = "data-inactive-opacity"
 
     let lineSectionWidth = 30
     let timeStampCount = 5
     let totalLength = 0
+    
+    $: context = $globalContext
+    $: activeColorRGB = context.ambience ? "var(--fgColor1)" :  "196, 234, 47"
+    $: inactiveColor = context.ambience ? "rgba(var(--textColor1), 0.2)" : "rgba(var(--textColor1), 0.1)"
 
     $: if (width) {
         onWidthResize(width)
@@ -41,6 +43,7 @@
     let currLineIdx = -1
     let currentLineElem: HTMLElement
     let timeStamps: string[] = []
+
 
     /* progress */
     let lineNumber  = (timeStampCount - 1) * lineSectionWidth
@@ -155,7 +158,7 @@
     function paintProgressOnBreak(line: HTMLElement) {
         if (currentLineElem && currentLineElem != line) {
             const useInactive = currLineProgress < 0.35
-            const color = useInactive ? INVACTIVE_COLOR : `rgba(${ACTIVE_COLOR_RGB}, ${currLineProgress})`
+            const color = useInactive ? inactiveColor : `rgba(${activeColorRGB}, ${currLineProgress})`
 
             currentLineElem.style.backgroundColor = color
             toggleTransition(currentLineElem, false)
@@ -167,15 +170,15 @@
     function paintProgressOnActive(line: HTMLElement) {
         if (currentLineElem && currentLineElem != line) {
             const opacity    = Math.min(Math.max(currLineProgress, 0.35), 1)
-            currentLineElem.style.backgroundColor = `rgba(${ACTIVE_COLOR_RGB}, ${opacity})`
+            currentLineElem.style.backgroundColor = `rgba(${activeColorRGB}, ${opacity})`
             toggleTransition(currentLineElem, false)
 
             
-            line.style.backgroundColor = `rgba(${ACTIVE_COLOR_RGB}, 0.35)`
+            line.style.backgroundColor = `rgba(${activeColorRGB}, 0.35)`
             toggleTransition(line, true)
             currLineProgress = 0
         }
-        line.style.backgroundColor = `rgba(${ACTIVE_COLOR_RGB}, ${Math.max(currLineProgress, 0.35)})`
+        line.style.backgroundColor = `rgba(${activeColorRGB}, ${Math.max(currLineProgress, 0.35)})`
         currentLineElem = line
     }
     function repaintProgress() {
@@ -239,17 +242,17 @@
         const pastInactiveSegment = activeOpacity != undefined && (type === "paused" || type === "break")
 
         if (idx >= currLineIdx && type === "break") {
-            line.style.backgroundColor = INVACTIVE_COLOR
+            line.style.backgroundColor = inactiveColor
         }
         else if (pastInactiveSegment) {
             line.setAttribute(DATA_ATTR_INACTIVE_OPACITY, `${1 - activeOpacity}`)
-            line.style.backgroundColor = activeOpacity === 0 ? INVACTIVE_COLOR : `rgba(${ACTIVE_COLOR_RGB}, ${Math.max(activeOpacity, 0.15)})`
+            line.style.backgroundColor = activeOpacity === 0 ? inactiveColor : `rgba(${activeColorRGB}, ${Math.max(activeOpacity, 0.15)})`
         }
         else if (type === "progress") {
-            line.style.backgroundColor = `rgb(${ACTIVE_COLOR_RGB})`
+            line.style.backgroundColor = `rgb(${activeColorRGB})`
         }
         else {
-            line.style.backgroundColor = INVACTIVE_COLOR
+            line.style.backgroundColor = inactiveColor
         }
     }
     function toggleTransition(line: HTMLElement | null | undefined, hasTransition: boolean) {
@@ -307,6 +310,7 @@
 <div
     class="progress"
     style:--line-width={`${LINE_WIDTH}px`}
+    style:--txt-opacity={`${context.ambience ? "0.065" : "0.045"}`}
 >
     <div class="progress__segment-container">
         {#each new Array(BOOK_END_LINE_COUNT) as _}
@@ -391,7 +395,7 @@
             }
         }
         &__segment-time {
-            @include text-style(0.12, 400, 1.1rem, "DM Mono");
+            @include text-style(0.185, 400, 1.1rem, "DM Mono");
             @include abs-bottom-left(-24px);
             white-space: nowrap;
 
@@ -401,7 +405,7 @@
             }
         }
         &__line {
-            background-color: rgba(var(--textColor1), 0.045);
+            background-color: rgba(var(--textColor1), var(--txt-opacity));
             margin-right: 2px;
             height: 9px;
             min-width: var(--line-width);

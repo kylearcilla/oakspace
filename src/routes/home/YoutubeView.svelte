@@ -127,7 +127,7 @@
                                 <img src={playlist?.thumbnailURL} alt="pl-thumbnial"/>
                                 <button 
                                     class="playlist-panel__miniplayer-btn"
-                                    on:click={toggleYoutubePlayerFloat}
+                                    on:click={() => toggleYoutubePlayerFloat()}
                                 >   
                                     <SvgIcon
                                         icon={Icon.MiniPlayer}

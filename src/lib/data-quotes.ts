@@ -229,8 +229,8 @@ const quotes: Quote[] = [
     },
     {
         text: "So many things I still don't know<br />So many times I've changed my mind<br />Guess I was born to make mistakes<br />But I ain't scared to take the weight<br />So when I stumble off the path<br />I know my heart will guide me back",
-        bgImgSrc: "https://assets.vogue.com/photos/63dd36bd67ed6af5ba99d5cb/master/w_1600,c_limit/Eryka_Vogue_8_sRGB.jpg",
-        artCredit: "From Vogue, Photographed by Jamie Hawkesworth",
+        bgImgSrc: "https://i.pinimg.com/564x/b2/90/d4/b290d43e6a9f94e2c8347baaa5abcc9c.jpg",
+        artCredit: "",
         quoteCredit: "Erykah Badu"
     },
     {
@@ -250,6 +250,18 @@ const quotes: Quote[] = [
         bgImgSrc: "https://img.demorgen.be/ffe62b684685b866220486643b1063c42649cea0/the-miseducation-of-lauryn-hill-na-20-jaar-nog-altijd-brandend-actueel",
         artCredit: "Corbis via Getty Images",
         quoteCredit: "Lauryn Hill, <i>Doo Wop</i>"
+    },
+    {
+        text: "I would recognize you in total darkness, were you mute and I deaf. I would recognize you in another lifetime entirely, in different bodies, in different times. And I would love you in all of this, until the very last star in the sky burnt out into oblivion.",
+        bgImgSrc: "https://i.pinimg.com/564x/e2/dd/6d/e2dd6db778312ea84a2bb47b84dddfc4.jpg",
+        artCredit: "",
+        quoteCredit: "Patroclus to Achilles from <i>The Song of Achilles</i>"
+    },
+    {
+        text: "You only see clearly with your heart. The most important things are invisible to the eyes.",
+        bgImgSrc: "https://i.pinimg.com/736x/7b/2a/d6/7b2ad6820c4f97bf5ab40f97ceb2b8dd.jpg",
+        artCredit: "Art by Kyutae Lee",
+        quoteCredit: "The Fox to the Little Prince from <i>The Little Prince</i>"
     },
 ]
 

@@ -2,7 +2,7 @@
 	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
 
-	import { themeState } from "$lib/store"
+	import { globalContext, themeState } from "$lib/store"
     import { Icon, ModalType } from "$lib/enums"
 	import { findAncestor, } from "$lib/utils-general"
 	import { openModal, updateRoute } from "$lib/utils-home"
@@ -36,6 +36,7 @@
     let initDragXPos = -1
     let isWideBarMenuOpen = true
 
+    $: ambience = $globalContext.ambience
     $: isDarkTheme = $themeState.isDarkTheme
 
     $: {
@@ -188,6 +189,9 @@
     class="bar"
     class:bar--dark-theme={isDarkTheme}
     class:bar--light-theme={!isDarkTheme}
+    class:bar--ambience={ambience?.styling === "blur" || ambience?.styling === "clear"}
+    class:bar--ambience-solid={ambience?.styling === "solid"}
+    class:bar--ambience-clear={ambience?.styling === "clear"}
 >
     <!-- Narrow Bar -->
     <div class="bar__narrow-bar">
@@ -219,7 +223,7 @@
                             <!-- <span>{name}</span> -->
                         </button>
                         <div class="bar__icon-tab-tool-tip">
-                            {tab.name}
+                            {tab.name === "Themes" ? "Appearance" : tab.name}
                         </div>
                     </div>
                 {/each}
@@ -447,6 +451,48 @@
         display: flex;
         position: relative;
 
+        &--ambience &__narrow-bar,
+        &--ambient-solid &__narrow-bar {
+            justify-content: center;
+            padding: 0px 0px 0px 0px;
+        }
+        &--ambience &__divider {
+            margin: 10px auto;
+        }
+        &--ambience &__icon-tabs {
+            padding: 9px 0px 3px 0.5px;
+            margin: 0px;
+        }
+        &--ambience &__icon-tab {
+            border-radius: 25px;
+            background-color: rgba(white, 0.025);
+            margin-bottom: 6.5px;
+
+            // background-color: rgba(white, 0);
+            // margin-bottom: 4px;
+        }
+        &--ambience-clear &__icon-tabs {
+            padding-bottom: 8px;
+        }
+        &--ambience-clear &__icon-tab {
+            background-color: rgba(white, 0.04);
+        }
+        &--ambience-solid &__narrow-bar {
+            padding: 0px 0px 2px 0px;
+        }
+        &--ambience-solid &__icon-tab {
+            margin-bottom: 10px;
+        }
+        &--ambience &__icon-tab i {
+            font-size: 1.4rem;
+        }
+        &--ambience &__temp-logo,
+        &--ambience .narrow-theme-toggle,
+        &--ambience-solid &__temp-logo,
+        &--ambience-solid .narrow-theme-toggle {
+            display: none
+        }
+        
         &--light-theme &__icon-tab-tool-tip {
             border: 1.5px solid rgba(var(--textColor1), 0.1);
             @include abs-top-left(4px, 44px);
@@ -454,15 +500,15 @@
         }
         
         &__narrow-bar {
-            background-color: var(--navMenuBgColor);
+            // background-color: var(--navMenuBgColor);
+            // box-shadow: var(--navMenuBoxShadow);
+            // border-right: 1.5px solid rgba((var(--textColor1)), 0.022);
+            @include flex(center, space-between);
             position: relative;
             flex-direction: column;
-            padding: 8.5px 10px 12px 10px;
+            padding: 8.5px 0px 12px 0px;
             text-align: center;
-            @include flex(center, space-between);
             z-index: 1;
-            box-shadow: var(--navMenuBoxShadow);
-            border-right: 1.5px solid rgba((var(--textColor1)), 0.022);
             width: $bar-width;
             position: relative;
         }
@@ -502,6 +548,9 @@
         &__icon-tab-container {
             position: relative;
 
+            &:last-child {
+                margin-bottom: 0px !important;
+            }
             &:hover .bar__icon-tab-tool-tip {
                 @include visible;
             }

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onMount } from "svelte"
 	import { ModalType } from "$lib/enums"
-	import { closeModal } from "$lib/utils-home"
-	import { themeState } from "$lib/store"
+	import { globalContext, themeState } from "$lib/store"
 	import { getThemeFromSection, setNewTheme } from "$lib/utils-appearance"
+	import { closeAmbience, closeModal, setAmbience } from "$lib/utils-home"
     import { lightColorThemes, darkColorThemes, defaultThemes } from "$lib/data-themes"
 
     import dfImage1 from '$lib/images/df-theme-1.png'
@@ -12,36 +12,52 @@
 
 	import Modal from "../../components/Modal.svelte"
 
+    $: ambience = $globalContext.ambience
+
     let clickedTheme: Theme | null = null
     let selectedTheme: Theme | null = null
+    let isAmbienceClicked = false
 
     const themeImgs = [dfImage1, dfImage2, dfImage3]
 
     /* Theme item Stuff */
     function handleThemeSelected() {
-        const title = clickedTheme!.sectionDetails.title as keyof AppearanceSectionToThemeMap
-        const idx = clickedTheme!.sectionDetails.index
-        selectedTheme = getThemeFromSection(title, idx)
-        clickedTheme = null
+        if (isAmbienceClicked) {
+            setAmbience()
+            setNewTheme(defaultThemes[0])
+        }
+        else {
+            const title = clickedTheme!.sectionDetails.title as keyof AppearanceSectionToThemeMap
+            const idx   = clickedTheme!.sectionDetails.index
+            selectedTheme = getThemeFromSection(title, idx)
+            clickedTheme = null
+            setNewTheme(selectedTheme)
 
-        setNewTheme(selectedTheme)
+
+            if (ambience) {
+                closeAmbience()
+            }
+        }
     }
     function onThemeItemFocus(theme: Theme) {
-        const title = theme.sectionDetails.title
-        const idx = theme.sectionDetails.index
-        const isSelf = title === clickedTheme?.sectionDetails.title && idx === clickedTheme?.sectionDetails.index
-        const isPickedTheme = title === selectedTheme?.sectionDetails.title && idx === selectedTheme?.sectionDetails.index
+        const isSelf = theme?.title === clickedTheme?.title
 
         if (isSelf) {
             clickedTheme = null
         }
-        else if (!isPickedTheme) {
+        else {
             clickedTheme = theme
         }
+
+        isAmbienceClicked = false
     }
     function onThemeItemBlur(event: FocusEvent) {
         const target = event.relatedTarget as HTMLElement
         if (target?.classList.value.includes("apply-btn")) return
+        clickedTheme = null
+    }
+    function onAmbienceClicked() {
+        isAmbienceClicked = !isAmbienceClicked
         clickedTheme = null
     }
 
@@ -52,7 +68,11 @@
     }
 
     onMount(() => { 
-        selectedTheme = JSON.parse(localStorage.getItem("theme")!)
+        const saved = JSON.parse(localStorage.getItem("theme")!)
+        selectedTheme = ambience ? null : saved
+        clickedTheme  = ambience ? null : selectedTheme
+
+        isAmbienceClicked = !!ambience
     })
 </script>
 
@@ -69,12 +89,12 @@
         <!-- Default Themes -->
         <div class="default-themes bento-box">
             <h3 class="bento-box__title">
-                Default Themes
+                Default
             </h3>
             <div class="default-themes__selection">
                 {#each defaultThemes as theme, idx}
-                    {@const clicked  = "default" === clickedTheme?.sectionDetails.title && idx === clickedTheme?.sectionDetails.index}
-                    {@const selected = "default" === selectedTheme?.sectionDetails.title && idx === selectedTheme?.sectionDetails.index}
+                    {@const clicked  = clickedTheme?.title === theme.title}
+                    {@const selected = (ambience && theme.title === "Dark") ? false : selectedTheme?.title === theme.title}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div 
                         class="default-themes__item"
@@ -89,14 +109,29 @@
                         >
                             <img src={themeImgs[idx]} alt="theme-img">
                         </div>
-                        <span
-                            class:txt-selected={selected}
-                            class:txt-clicked={clicked}
-                        >
+                        <span>
                             {theme.title}
                         </span>
                     </div>
                 {/each}
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div 
+                    role="button"
+                    tabindex="0"
+                    class="default-themes__item"
+                    class:default-themes__item--selected={ambience}
+                    class:default-themes__item--clicked={isAmbienceClicked}
+                    on:click={() => onAmbienceClicked()}
+                >
+                    <div 
+                        class="default-themes__item-img-container"
+                    >
+                        <img src={dfImage3} alt="theme-img">
+                    </div>
+                    <span>
+                        Ambient
+                    </span>
+                </div>
             </div>
         </div>
         <!-- Color Themes -->
@@ -109,8 +144,8 @@
                 <div class="bento-box__subheading">Light Themes</div>
                 <ul class="color-themes__themes-list">
                     {#each lightColorThemes as theme, idx}
-                        {@const clicked  = "light" === clickedTheme?.sectionDetails.title && idx === clickedTheme?.sectionDetails.index}
-                        {@const selected = "light" === selectedTheme?.sectionDetails.title && idx === selectedTheme?.sectionDetails.index}
+                        {@const clicked  = clickedTheme?.title  === theme?.title}
+                        {@const selected = selectedTheme?.title  === theme?.title}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <li   
                             on:click={() => onThemeItemFocus(theme)}
@@ -148,8 +183,8 @@
                 <div class="bento-box__subheading">Dark Themes</div>
                 <ul class="color-themes__themes-list">
                     {#each darkColorThemes as theme, idx}
-                        {@const clicked  = "dark" === clickedTheme?.sectionDetails.title && idx === clickedTheme?.sectionDetails.index}
-                        {@const selected = "dark" === selectedTheme?.sectionDetails.title && idx === selectedTheme?.sectionDetails.index}                    
+                        {@const clicked  = clickedTheme?.title === theme?.title}
+                        {@const selected = selectedTheme?.title === theme?.title}                    
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <li 
                             on:click={() => onThemeItemFocus(theme)}
@@ -172,11 +207,7 @@
                                 {/each}
                             </ul>
                             <div class="theme-item__text theme-item__text--color-theme">
-                                <div 
-                                    class="color-themes__item-text"
-                                    class:txt-selected={selected}
-                                    class:txt-clicked={clicked}
-                                >
+                                <div class="color-themes__item-text">
                                     {theme.title}
                                 </div>
                             </div>
@@ -187,13 +218,13 @@
         </div>
         <div 
             class="appearance-apply-btn-container"
-            class:visible={clickedTheme}
+            class:visible={(clickedTheme && clickedTheme.title != selectedTheme?.title) || isAmbienceClicked && !ambience}
         >
             <button 
                 on:click={handleThemeSelected} 
                 class="appearance__apply-btn"
             >
-                {`Choose "${clickedTheme?.title}"`}
+                {`Choose "${clickedTheme?.title ?? "Ambient Mode"}"`}
             </button>
         </div>
     </div>
@@ -256,10 +287,9 @@
             padding: 8.5px 20px;
             font-size: 1.2rem;
             border-radius: 20px;
-            background-color: rgb(var(--fgColor2));
-            color: rgb(var(--textColor2));
+            background-color: var(--bg-3);
 
-            &:hover, &:focus {
+            &:hover {
                 filter: brightness(1.05);
             }
         }
@@ -307,7 +337,6 @@
         &__item {
             position: relative;
             transition: 0.11s ease-in-out;
-            cursor: pointer;
             border-radius: 5px;
             margin-right: 20px;
             outline: none;
@@ -319,10 +348,16 @@
                 transform: scale(0.994);
             }
             &--clicked &-img-container {
-                box-shadow: rgba(var(--textColor1), 0.4) 0px 0px 0px 2.5px;   
+                box-shadow: rgba(#0C8CE9, 0.85) 0px 0px 0px 2.5px !important;
+            }
+            &--clicked span {
+                color: rgba(#0C8CE9, 0.8) !important;
             }
             &--selected &-img-container {
-                box-shadow: rgba(#0C8CE9, 0.85) 0px 0px 0px 2.5px;
+                box-shadow: rgba(var(--textColor1), 0.4) 0px 0px 0px 2.5px; 
+            }
+            &--selected span {
+                color: rgba(var(--textColor1), 0.4);
             }
         } 
         &__item-img-container {
@@ -385,10 +420,10 @@
             display: flex;
 
             &--clicked {
-                box-shadow: rgba(var(--textColor1), 0.4) 0px 0px 0px 3px;
+                box-shadow: rgba(#0C8CE9, 0.85) 0px 0px 0px 3px;
             }
             &--selected {
-                box-shadow: rgba(#0C8CE9, 0.85) 0px 0px 0px 3px;
+                box-shadow: rgba(var(--textColor1), 0.4) 0px 0px 0px 3px;
             }
         }
         &__swatch {
@@ -409,9 +444,9 @@
         }
     }
     .txt-selected {
-        color: rgba(#0C8CE9, 0.8) !important;
+        color: rgba(var(--textColor1), 0.4) !important;
     }
     .txt-clicked {
-        color: rgba(var(--textColor1), 0.4) !important;
+        color: rgba(#0C8CE9, 0.8) !important;
     }
 </style>

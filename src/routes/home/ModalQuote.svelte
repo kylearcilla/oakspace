@@ -113,7 +113,7 @@
             }
             &-bottom-left .divider {
                 height: 8.5px;
-                width: 0.5px;
+                width: 1px;
                 margin: 0px 9px;
                 background-color: rgba(179, 179, 179, 0.3);
             }
@@ -125,35 +125,38 @@
             font-size: 1.5rem;
             margin: 2px 0px 7px 0px;
             font-weight: 500;
-            color: rgba(255, 255, 255, 0.82)
+            color: rgba(255, 255, 255, 0.9)
         }
         &__quote {
             font-size: 1.4rem;
-            font-weight: 300;
+            font-weight: 400;
             opacity: 0.85;
-            color: rgba(215, 215, 215, 0.72);
-            margin-bottom: 9px;
+            color: rgba(215, 215, 215, 0.92);
+            margin-bottom: 0px;
         }
         &__likes {
             white-space: nowrap;
+            font-family: "DM Sans";
             button {
                 &:active {
                     transform: scale(0.8);
                 }
             }
             button i {
-                color: rgba(241, 241, 241, 0.2);
-                margin-right: 3px;
+                color: rgba(241, 241, 241, 0.3);
+                margin-right: 4px;
+                font-size: 1.14rem;
             }
             span {
-                font-size: 1.15rem;
+                font-size: 1.2rem;
+                font-weight: 500;
                 color: rgba(179, 179, 179, 0.5);
             }
         }
         &__artist-credit {
-            font-size: 1.19rem;
+            font-size: 1.24rem;
             color: rgba(179, 179, 179, 0.5) !important;
-            font-weight: 400;
+            font-weight: 500;
             @include elipses-overflow;
             
             i {
@@ -167,14 +170,14 @@
         &__quote-credit {
             font-size: 1.25rem;
             min-width: 0;
-            font-weight: 400;
-            color: rgba(244, 244, 244, 0.5);
+            font-weight: 500;
+            color: rgba(244, 244, 244, 0.4);
             float: right;
             white-space: nowrap;
             margin-left: 12px;
 
             i {
-                color: rgba(244, 244, 244, 0.6);
+                color: rgba(244, 244, 244, 0.4);
                 margin-left: 3px;
             }
         }

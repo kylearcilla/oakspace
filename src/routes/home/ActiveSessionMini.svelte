@@ -2,7 +2,7 @@
 	import { goto } from "$app/navigation"
 	import { page } from "$app/stores";
 
-	import { sessionManager } from "$lib/store"
+	import { globalContext, sessionManager } from "$lib/store"
 	import { updateRoute } from "$lib/utils-home"
 	import { secsToHhMmSs } from "$lib/utils-date"
 	import { SessionManager } from "$lib/session-manager"
@@ -17,6 +17,9 @@
     let textWidth = 0
     let TRANSITION_DUR_SECS = SessionManager.TRANSITION_DUR_SECS
 
+    $: context = $globalContext
+    $: ambience = context.ambience
+
     $: manager = $sessionManager
     $: focusUI = ["focus", "to-focus"].includes(manager!.state)
     $: transition = manager!.state.startsWith("to-")
@@ -28,12 +31,6 @@
     $: min = headerWidth < MIN_NORMAL_WIDTH
     $: secs = transition ? TRANSITION_DUR_SECS - progressSecs : progressSecs
 
-    function togglePlayback() {
-
-    }
-    function toggleDropdown() {
-
-    }
     function onPointerDown() {
         if (!isOver) return
         const path = $page.url.pathname
@@ -58,9 +55,13 @@
 <div
     title={session.name}
     class="active-session"
+    class:active-session--ambience={ambience}
+    class:active-session--ambience-solid={ambience?.styling === "solid"}
     class:active-session--over={isOver}
     class:active-session--transition={transition}
     class:active-session--min={min}
+    class:ambient-blur={ambience?.styling === "blur"}
+    class:ambient-clear={ambience?.styling === "clear"}
     style:--text-width={`${textWidth}px`}
     on:pointerdown|self={onPointerDown}
     on:pointerover={pointerOver}
@@ -117,6 +118,7 @@
         padding: 0px 5px 0px 9px;
         border-radius: 15px;
         margin: 0px 0px 0px 0px;
+        z-index: 5;
 
         --fg-color: rgba(196, 234, 47);
 
@@ -125,6 +127,13 @@
             margin: 0px 8px 0px 9px;
         }
 
+        &--ambience {
+            height: 32px;
+            padding: 0px 8px 0px 9px;
+        }
+        &--ambience-solid {
+            background: var(--navMenuBgColor);
+        }
         &--min &__message {
             display: none;
         }
@@ -176,7 +185,7 @@
             margin-right: 6px;
         }
         &__message {
-            @include text-style(0.95, 500, 1.14rem, "Manrope");
+            @include text-style(0.95, 500, 1.175rem, "Manrope");
             margin: -1.5px 8px 0px 0px;
             max-width: 80px;
             @include elipses-overflow;

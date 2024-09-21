@@ -1,9 +1,10 @@
 import { musicPlayerStore } from "./store"
+
 import { APIError } from "./errors"
-import { getVidDetails, getYtIframeAPIError } from "./api-youtube"
-import { setYoutubeScript } from "./utils-youtube"
 import { APIErrorCode, MusicMediaType } from "./enums"
+import { setYoutubeScript } from "./utils-youtube"
 import { youtubeAPIErrorHandler } from "./utils-youtube"
+import { getVidDetails, getYtIframeAPIError } from "./api-youtube"
 import { MusicPlayer, type MusicPlayerStore } from "./music-player"
 
 /**

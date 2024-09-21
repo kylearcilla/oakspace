@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte'
-	import { musicPlayerStore, musicDataStore, musicPlayerManager } from '$lib/store'
+	import { musicPlayerStore, musicDataStore, musicPlayerManager, globalContext } from '$lib/store'
 
 	import Logo from '../../components/Logo.svelte'
 	import { msToHHMMSS } from '$lib/utils-date'
@@ -25,12 +25,15 @@
     let volume        = 0
     let isDisabled    = false
     
+    $: context = $globalContext
+    
     $: playerStore     = $musicPlayerStore
     $: mediaItem       = $musicPlayerStore?.mediaItem
     $: mediaCollection = $musicPlayerStore?.mediaCollection! as MediaCollection
     $: isSeeking       = $musicPlayerManager?.isSeeking
     $: onSeekCoolDown  = $musicPlayerManager?.onCooldown ?? false
     $: musicPlatform   = $musicDataStore?.musicPlatform
+
 
     $: {
         onPlaybackUpdate($musicPlayerStore)
@@ -85,11 +88,13 @@
 >
     {#if mediaItem}
         <div class="mp__wrapper">
-            <img 
-                class="img-bg" 
-                src={getMediaImgSrc(mediaItem?.artworkImgSrc)} 
-                alt="track-artwork"
-            />
+            {#if !context.ambience?.isOn}
+                <img 
+                    class="img-bg" 
+                    src={getMediaImgSrc(mediaItem?.artworkImgSrc)} 
+                    alt="track-artwork"
+                />
+            {/if}
             <div class="blur-bg"></div>
             <div class="content-bg">
                 <div class="mp-track" title={`${mediaItem.name} – ${mediaItem.author}`}>

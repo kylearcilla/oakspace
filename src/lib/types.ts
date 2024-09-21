@@ -364,6 +364,7 @@ type GlobalContext = {
     rightBarOpen: boolean
     isVideoViewOpen: boolean
     isMusicPlayerOpen: boolean
+    freeFloatYt: boolean
     route: string
     focusTime: number
     hasToaster: boolean
@@ -372,11 +373,38 @@ type GlobalContext = {
     shortcutsFocus: ShortcutSectionInFocus
     modalsOpen: ModalType[]
     lastKeysPressed: KeyContext
+    ambience?: AmbientOptions
     mediaPlayer: {
         youtube: boolean,
         music: boolean
     } | null
 }
+
+type AmbientOptions = {
+    opacity: number,
+    styling: "solid" | "blur" | "clear"
+    space: AmbientSpace
+}
+
+type AmbientSpace = {
+    title: string
+    subtitle: string
+    thumbnail: string
+    sourceId: string
+    type: "wallpaper" | "video"
+    group: AmbientSpaceGroupKey
+}
+
+type AmbientSpaceGroupKey = "nature" | "space" | "weather" | "city" | "worlds" |  "lofi"
+
+type AmbientSpaceGroup = {
+    [key in AmbientSpaceGroupKey]: {
+      wallpapers: AmbientSpace[]
+      videos: AmbientSpace[]
+    }
+  };
+  
+
 
 type ToastInitOptions = {
     message: string
@@ -513,6 +541,7 @@ type FloatingMediaEmbed = {
     fixed: MediaEmbedFixed
     width: string
     height: string
+    hidden: boolean
     leftTransform?: string
     topTransform?: string
 }
@@ -731,6 +760,7 @@ type StylingOptions = {
     backgroundColor?: string
     fontFamily?: string
     opacity?: number
+    zIndex?: number
 }
 
 // interface TaskListOptionsInterface extends TasksListOptions<TaskListTypeCombos> { }
@@ -949,6 +979,8 @@ type YoutubePlayerData = {
     floatLayout: BoxLayout
     playlistVidIdx: number
     doShowPlayer: boolean
+    isoVideo: boolean
+    volume: number
 }
 
 type BoxLayout = { 
@@ -1246,17 +1278,6 @@ type ColorThemeProps = {
     headerBoxShadow: string
     headerTextColor: string
     headerIconColor: string
-    headerProgressColor1: string
-    headerProgressColor2: string
-    headerTrackColor1: string
-    headerTrackColor2: string
-    baseProgressColor1: string
-    baseProgressColor2: string
-    baseTrackColor1: string
-    baseTrackColor2: string
-    progressBallGlow: string
-    pomToolTipBgColor: string
-    pomToolTipTextColor: string
     modalBgAccentColor: string
     modalBgColor: string
     bentoBoxBgColor: string
@@ -1269,23 +1290,10 @@ type ColorThemeProps = {
     navIconBgColor: string
     navMenuBorder: string
     navMenuBoxShadow: string
-    wideLeftBarColor: string
-    wideLeftBarBorder: string
-    wideLeftBarBoxShadow: string
-    wideLeftBarTabColor: string
-    wideLeftBarTabIconColor: string
     sessionBlockColor: string
-    rightBarMindNoteBgColor: string
     themeToggleBtnBgColor: string
     iconToggleBtnBgColor: string
     highlighterToggleBtnBgColor: string
-    midPanelBorder: string
-    midPanelShadow: string            
-    midPanelBaseColor: string
-    midPanelAccentColor1: string
-    midPanelAccentColor2: string
-    midPanelAccentColor3: string
-    midPanelAccentTextColor: string
     sidePanelBorder: string
     sidePanelShadow: string
     sidePanelTabBgColor: string
@@ -1295,7 +1303,6 @@ type ColorThemeProps = {
     rightBarBgBoxShadow: string
     tasksCheckBoxColorDefault: string
     tasksCheckBoxColorComplete: string
-    tasksSubtaskFocusColor: string
     tasksCheckColor: string
     tasksLightTextColor: string
 }

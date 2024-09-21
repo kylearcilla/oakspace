@@ -445,7 +445,7 @@ button.tab-btn {
     background-color: (var(--tabColor));
     @include text-style(0.6);
     border-radius: 15px;
-    padding: 3px 12px;
+    padding: 3px 12px 4px 12px;
     transition: 0.1s ease-in-out;
     white-space: nowrap;
     margin-right: 4px;
@@ -587,6 +587,10 @@ button.settings-btn {
     &:active {
         transform: scale(0.94);
     }
+}
+
+.cursor-pointer {
+    cursor: pointer;
 }
  
  /* Tool Tip */
@@ -1043,4 +1047,35 @@ $loading-dots-width: 4px;
 
 .text-shimmer {
     
+}
+
+@mixin bg-img($src: "hello", $opacity: 0.5) {
+    background-image: linear-gradient(rgba(0, 0, 0, $opacity), rgba(0, 0, 0, $opacity)), url($src);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.ambient-blur {
+    background: var(--ambient-bg-color) !important;
+    border: var(--ambient-border) !important;
+    backdrop-filter: var(--ambient-blur) !important;
+    -webkit-backdrop-filter: var(--ambient-blur) !important;
+}
+
+.ambient-dark-blur {
+    background: var(--ambient-dark-bg-color) !important;
+    border: var(--ambient-border) !important;
+    backdrop-filter: var(--ambient-blur) !important;
+    -webkit-backdrop-filter: var(--ambient-blur) !important;
+}
+
+.ambient-clear {
+    border: 1px solid rgba(white, 0.035) !important;
+    background: rgba(black, 0.2) !important;
+}
+
+.ambient-dark-clear {
+    border: 2px solid rgba(white, 0.035) !important;
+    background: rgba(black, 0.5) !important;
 }

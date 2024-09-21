@@ -100,12 +100,9 @@ export async function getYtMediaId(url: string): Promise<YoutubeMediaId | { erro
     }
 }
 
-/**
- * Play playlist that user clicked on the Settings Modal to play in the Youtube player.
- * Will log in initialize a new Youtube Player if not yet initialized.
- * Will remove current playlist if it's the same that user has clicked on.
- * 
- * @param playlist   Playlist user clicked on.
+/**  
+ * @param   playlist   Playlist user clicked on.
+ * @returns If operation was successful (no error).
  */
 export async function handleChoosePlaylist(playlist: YoutubePlaylist) {
     let ytPlayer      = get(ytPlayerStore)
@@ -113,14 +110,34 @@ export async function handleChoosePlaylist(playlist: YoutubePlaylist) {
     
     ytPlayer ??= await initYoutubePlayer()
 
-    if (playlist.id === ytPlayer.playlist?.id)    return
-    if (!(await validateYtPlaylist(playlist.id))) return
+    if (playlist.id === ytPlayer.playlist?.id)    return true
+    if (!(await validateYtPlaylist(playlist.id))) return false
 
     setTimeout(() => {
         ytPlayer.playPlaylist(playlist)
-
+        return true
     }, hasInitPlayer ? 0 : 2000)
 }
+
+/**
+ * @param   videoId  Youtube video id to be played
+ * @returns If operation was successful (no error).
+ */
+export async function handleChooseVideo(videoId: string) {
+    let ytPlayer      = get(ytPlayerStore)
+    let hasInitPlayer = ytPlayer != null
+    
+    ytPlayer ??= await initYoutubePlayer()
+
+    const video = await validateYtVideo(videoId)
+    if (!video) return false
+
+    setTimeout(() => {
+        ytPlayer.playVideo(video)
+    }, hasInitPlayer ? 0 : 2000)
+    return true
+}
+
 
 /**
  * Toggle pointer events for all Youtube iFrames.
@@ -195,6 +212,46 @@ export const initIframePlayerAPI = async (options: {
 }
 
 /**
+ * Ensure that the video will be embeddable and playable.
+ * It cannot be:
+ * 
+ *  1. Video is private.
+ *  2. Video is unembeddable.
+ * 
+ * @param     videoId
+ * @returns   Vid details
+ */
+export async function validateYtVideo(videoId: string) {
+    try {
+        const vid = await getVidDetails(videoId, false)
+            
+        if (!vid) {
+            youtubeAPIErrorHandler(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Video couldn't be played due to privacy restriction."))
+            return null
+        }
+        else if (vid.embeddable != undefined && !vid.embeddable)  {
+            youtubeAPIErrorHandler(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Video couldn't be played due to embed restriction."))
+            return null
+        }
+
+        return vid
+    }
+    catch(e: any) {
+        console.error(e)
+        const code = e?.code
+
+        // api will throw 404 if video is private / unembedable / invalid id.
+        if (code === APIErrorCode.RESOURCE_NOT_FOUND) {
+            youtubeAPIErrorHandler(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, "Video couldn't be played due to embed or privacy restrictions, or because of invalid ID."))
+        }
+        else {
+            youtubeAPIErrorHandler(new APIError(APIErrorCode.PLAYER, "Video couldn't be played due to privacy restriction."))
+        }
+        return null
+    }
+}
+
+/**
  * Ensure that the playlist will be embeddable and playable.
  * It cannot be:
  * 
@@ -204,7 +261,7 @@ export const initIframePlayerAPI = async (options: {
  *  4. Playlist is public but first video is unembeddable.
  * 
  * @param     playlistId 
- * @returns   If playlist is valid
+ * @returns   If playlist is valid to play via iFrame API
  */
 export async function validateYtPlaylist(playlistId: string) {
     try {
@@ -257,8 +314,9 @@ export function setYoutubeScript() {
     const ytScriptTag = document.getElementsByTagName('script')[0]
     ytScriptTag!.parentNode!.insertBefore(tag, ytScriptTag)
 }
-
+ 
 /* Youtube Creds */
+
 export function loadYtCredentials(): YoutubeUserCreds | null {
     const res = localStorage.getItem('yt-credentials')
     if (!res) return null
@@ -273,6 +331,7 @@ export function deleteYtCredentials() {
 }
 
 /* Youtube User Data */
+
 export function loadYtUserData(): YoutubeUserData | null {
     const res = localStorage.getItem('yt-user-data')
     if (!res) return null
@@ -291,6 +350,7 @@ export function didInitYtPlayer(): boolean {
 }
 
 /* Youtube Player Data */
+
 export function loadYtPlayerData(): YoutubePlayerData | null {
     const res = localStorage.getItem('yt-player-data')
     if (!res) return null
@@ -307,6 +367,7 @@ export function deleteYtPlayerData() {
 }
 
 /* Misc */
+
 export function initTestYTGroups(playlistGroups: YoutubePlaylistGroup[]) {
     const testPlaylists = [ 
         {

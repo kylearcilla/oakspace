@@ -67,9 +67,7 @@
         closeModal(ModalType.NewSession)
     }
 
-    onMount(() => {
-        titleInput.focus()
-    })
+    onMount(() => titleInput.focus())
 </script>
 
 <Modal 
@@ -188,7 +186,7 @@
                     {#if mode === "pom"}
                         Soft sounds to mark periods.
                     {:else}
-                        Pings during lengthly breaks.
+                        Pings during lengthy breaks.
                     {/if}
                 </span>
             </div>
@@ -389,7 +387,6 @@
             margin-top: 14px;
         }
         &__options--flow &__time {
-            display: none;
             opacity: 0.4;
             
             button {

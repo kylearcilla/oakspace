@@ -1,3 +1,4 @@
+import { POPULAR_SPACES, SPACES } from "./data-spaces"
 import { GoalStatus } from "./enums"
 import { COLOR_SWATCHES } from "./utils-colors"
 
@@ -349,6 +350,8 @@ export const TEST_SESSIONS: Session[] = [
       breakTime: 300,  // 5 minutes
       startTime: new Date(2024, 8, 5, 9, 0), // September 5, 2024, 9:00 AM
       todos: [],
+      allowChime: true,
+      allowSfx: true,
       result: {
           endTime: new Date(2024, 8, 5, 10, 30), // September 5, 2024, 10:30 AM
           focusCount: 3,
@@ -359,5 +362,17 @@ export const TEST_SESSIONS: Session[] = [
           totalBreakTime: 900,  // 15 minutes in seconds
           periods: 3
       }
+  }
+]
+
+/* Ambient */
+export const TEST_AMBIENT: AmbientOptions[] = [
+  {
+    isOn: true,
+    isVideo: false,
+    opacity: 0.5,
+    volume: 0.5,
+    styling: "blur",
+    space: POPULAR_SPACES.wallpapers[1]
   }
 ]

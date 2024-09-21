@@ -1,15 +1,15 @@
-import { get } from "svelte/store"
 import { ytPlayerStore } from "./store"
+
 import { APIError } from "./errors"
-import { getVidDetails, getYtIframeAPIError } from "./api-youtube"
-import { loadYtPlayerData, saveYtPlayerData, deleteYtPlayerData, setYoutubeScript } from "./utils-youtube"
 import { APIErrorCode } from "./enums"
 import { youtubeAPIErrorHandler } from "./utils-youtube"
+import { getVidDetails, getYtIframeAPIError } from "./api-youtube"
+import { loadYtPlayerData, saveYtPlayerData, deleteYtPlayerData, setYoutubeScript } from "./utils-youtube"
 
 /**
- * Used for managing a youtube player, leveraging the YouTube iFrame API
+ * Manager for a youtube player, leveraging the YouTube iFrame API
  * Is itself a store / reactive class (initialized in instantiation).
- * Used to play playlists only.
+ * Used to play playlists and videos only for Youtube Player and Live Ambient Spaces (videos).
  */
 export class YoutubePlayer {
     player: any
@@ -23,25 +23,28 @@ export class YoutubePlayer {
     iFrameVidId      = ""
     
     floatLayout      = { width: -1, height: -1, left: -1, top: -1 }
+    isPlaying = false
     doShowPlayer     = true
     hasActiveSession = false
     isFetchingVid    = false
     justLoaded       = false
     isReady          = false
+    volume: number = 50
     
+    // is playing isolated video (not being played)
+    isoVideo  = false
     error: any = null
     state      = -1
         
     static IFRAME_ID    = "yt-player"
-    LOOK_BACK_DELAY = 1200
+    AUTO_PLAY_DELAY = 1200
     READY_DELAY     = 2000
-    lookBackTimeOut: NodeJS.Timeout | null = null
 
     PLAYER_OPTIONS: any = {
         height: "100%", 
         width: "100%",
         playerVars: {
-            volume: 50,
+            volume: this.volume,
             autoplay: 1,
             modestbranding: 1
         },
@@ -130,10 +133,24 @@ export class YoutubePlayer {
         if (!this.playlist) return
 
         try {
-            this.player.cuePlaylist({ 
-                listType: "playlist",  list: this.playlist!.id,  
-                index: this.playlistVidIdx,  startSeconds: 0 
-            })
+
+            if (this.isoVideo) {
+                this.player.cueVideoById({ 
+                    videoId: this.vid!.id
+                })
+
+                setTimeout(() => {
+                    this.player.playVideo()
+                }, this.AUTO_PLAY_DELAY)
+            }
+            else {
+                this.player.cuePlaylist({ 
+                    listType: "playlist",
+                    list: this.playlist!.id,  
+                    index: this.playlistVidIdx,  
+                    startSeconds: 0 
+                })
+            }
         }
         catch {
             this.onError(APIErrorCode.PLAYER)
@@ -165,6 +182,17 @@ export class YoutubePlayer {
         if (this.justLoaded && [3, 1].includes(state)) {
             this.justLoaded = false
         }
+        if (this.isPlaying && state === 2) {
+            this.isPlaying = false
+            this.update({ isPlaying: false })
+        }
+        else if (!this.isPlaying && state === 1) {
+            this.isPlaying = true
+            this.update({ isPlaying: true })
+        } 
+
+
+        if (this.isoVideo) return
 
         // validate data
         const vidDetails = await this.validateMediaItem(player)
@@ -221,7 +249,6 @@ export class YoutubePlayer {
         }
     }
 
-
     /**
      * iFrame API Error Handler based on the iFrame API Docs.
      * https://developers.google.com/youtube/iframe_api_reference
@@ -237,41 +264,6 @@ export class YoutubePlayer {
     }
 
     /**
-     * Handles cases where user selects a playlist that cannot be played.
-     * Private or unlisted playlist. Or embed playback disabled. 
-     * Also for public but vid queued up is private / unlisted / embed playback disabled.
-     * 
-     * New Queued Playlist Queued Up State Sequences:
-     * 
-     * Valid:    -1, 5, ... 3, 1
-     * Invalid:  -1 5 
-     * 
-     * Sees is the player is stuck at state 5. If so then player's media is invalid.
-     * 
-     */
-    disabledVidPlaypackHandler = (state: number, playlistIdx: number) => {
-        const isCueLoading = [-1, 5].includes(state)
-        
-        // only call when a playlist / video is first being cueued
-        // the invalid pattern also occurs when the iframe is first loaded (after a refresh)
-        if (this.justLoaded || !isCueLoading || this.lookBackTimeOut) {
-            return
-        }
-        
-        this.lookBackTimeOut = setTimeout(() => {
-            this.clearLookBackTimeout()
-
-            // if playlist idx > 1 and error, let the onError handle that
-            if ([0, 1, 2, 3].includes(this.player.playerInfo.playerState) || playlistIdx > 0) {
-                return
-            } 
-
-            let errorMessage = "Playlist couldn't be played due to privacy or embed playback restrictions."
-            this.onError(new APIError(APIErrorCode.PLAYER_MEDIA_INVALID, errorMessage))
-        }, this.LOOK_BACK_DELAY)
-    }
-
-    /**
      * Initialize event handlers for iFrame Player to be used.
      * Youtube Player state updates are triggered by events dispatched from Youtube API.
      */
@@ -281,13 +273,57 @@ export class YoutubePlayer {
         this.PLAYER_OPTIONS.events.onError = this.onIframeError
     }
 
+    async togglePlayback(doPlay?: boolean) {
+        try {
+            if (this.state === 1 || doPlay === false) {
+                this.player.pauseVideo()
+            }
+            else if (this.state === 2 || this.state === 5 || doPlay) {
+                this.player.playVideo()
+            }
+        }
+        catch(error: any) {
+            this.onError(error)
+        }
+    }
+
     /**
-     * Triggers when user wants to play a new playlist.
+     * Plays an video
+     */
+    async playVideo(video: YoutubeVideo) {    
+        if (this.error)         this.removeError()
+        if (this.state === 3 )  return   // if a prev loaded vid was buffering do not cue a new playlist
+
+        this.isoVideo = true
+        this.vid = video
+        this.update({ 
+            isoVideo: true,
+            vid: video
+        })
+
+        try {
+            if (!this.player.stopVideo) {
+                window.location.reload()
+                return
+            }
+
+            this.player.stopVideo()
+            this.player!.loadVideoById(video.id)
+        }
+        catch(e: any) {
+            this.onError(e)
+        }
+    }
+
+    /**
+     * Play a new playlist.
      */
     async playPlaylist(playlist: YoutubePlaylist, startingIdx = 0) {    
         if (this.error)           this.removeError()
-        if (this.lookBackTimeOut) this.clearLookBackTimeout()
         if (this.state === 3 )    return   // if a prev loaded vid was buffering do not cue a new playlist
+
+        this.isoVideo = false
+        this.update({ isoVideo: false })
 
         try {
             this.playlistClicked = playlist
@@ -299,10 +335,45 @@ export class YoutubePlayer {
             }
 
             this.player.stopVideo()
-            this.player!.loadPlaylist({ list: playlist.id, listType: "playlist", index: startingIdx })
+            this.player!.loadPlaylist({ 
+                list: playlist.id, 
+                listType: "playlist", 
+                index: startingIdx
+            })
         }
         catch(e: any) {
             this.onError(e)
+        }
+    }
+
+    /**
+     * When playing an isolated video (not associated with current playlist), switch back to playing the playlist.
+     * If there is no playlist just stop the player.
+     * @returns  Returns true if there was a playlist and switched back to it.
+     */
+    async backToPlaylist() { 
+        try {
+            this.isoVideo = false
+            this.update({ isoVideo: false })
+            
+            if (this.playlist) {
+                this.player.cuePlaylist({ 
+                    listType: "playlist",
+                    list: this.playlist!.id,  
+                    index: this.playlistVidIdx,  
+                    startSeconds: 0 
+                })
+
+                return false
+            }
+            else {
+                this.player.stopVideo()
+                return true
+            }
+        }
+        catch (e: any) {
+            this.onError(e)
+            return false
         }
     }
 
@@ -390,6 +461,17 @@ export class YoutubePlayer {
         this.update({ floatLayout: this.floatLayout })
     }
 
+    setVolume(volume: number) {
+        try {
+            this.volume = volume
+            this.player.setVolume(volume)
+            this.update({ volume })
+        }
+        catch(error: any) {
+            this.onError(error)
+        }
+    }
+
     /**
      * Hide / show Youtube Player. 
      * Stops current video from playing.
@@ -399,13 +481,6 @@ export class YoutubePlayer {
         this.doShowPlayer = !this.doShowPlayer
         this.player.stopVideo()
         this.update({ doShowPlayer: this.doShowPlayer })
-    }
-
-    clearLookBackTimeout() {
-        if (this.lookBackTimeOut) {
-            clearTimeout(this.lookBackTimeOut)
-            this.lookBackTimeOut = null
-        }
     }
 
     /**
@@ -423,6 +498,7 @@ export class YoutubePlayer {
         if (newState.playlistVidIdx != undefined)  newStateObj.playlistVidIdx = newState.playlistVidIdx
         if (newState.doShowPlayer != undefined)    newStateObj.doShowPlayer = newState.doShowPlayer
         if (newState.floatLayout != undefined)     newStateObj.floatLayout = newState.floatLayout
+        if (newState.isPlaying != undefined)       newStateObj.isPlaying = newState.isPlaying
 
         return newStateObj
     }
@@ -437,17 +513,20 @@ export class YoutubePlayer {
         if (!savedData) return
 
         this.hasActiveSession = true
+        this.isoVideo  = savedData.isoVideo
+        this.volume  = savedData.volume
         this.update({ ...savedData })
     }
 
     saveStateData() {
-        const player = get(ytPlayerStore)!
         saveYtPlayerData({
-            vid:            player.vid!,
-            playlist:       player.playlist!,
-            playlistVidIdx: player.playlistVidIdx!,
-            floatLayout:    player.floatLayout!,
-            doShowPlayer:   player.doShowPlayer
+            vid:            this.vid!,
+            playlist:       this.playlist!,
+            playlistVidIdx: this.playlistVidIdx!,
+            floatLayout:     this.floatLayout!,
+            doShowPlayer:    this.doShowPlayer,
+            volume:   this.volume,
+            isoVideo: this.isoVideo
         })
     }
 

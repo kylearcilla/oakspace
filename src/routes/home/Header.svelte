@@ -2,7 +2,7 @@
 	import { onDestroy, onMount } from "svelte"
 
     import { Icon, ModalType } from "$lib/enums"
-	import { getColorTrio } from "$lib/utils-general"
+	import { capitalize, getColorTrio } from "$lib/utils-general"
 	import { getDayIdxMinutes, secsToHHMM } from "$lib/utils-date"
 	import { openModal, toggleActiveRoutine } from "$lib/utils-home"
 	import { themeState, ytPlayerStore, weekRoutine, sessionManager, globalContext } from "$lib/store"
@@ -10,36 +10,35 @@
     
 	import ActiveRoutine from "./ActiveRoutine.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
-	import ActiveSessionMini from "./ActiveSessionMini.svelte";
+	import AmbientSettings from "../AmbientSettings.svelte"
+	import ActiveSessionMini from "./ActiveSessionMini.svelte"
 
     const NO_SESS_MD_MAX_WIDTH = 270
-    const MD_MAX_WIDTH = 800
-    const SM_MAX_WIDTH = 550
 
     let headerWidth = 0
     let minuteInterval: NodeJS.Timeout | null = null
     let currTime = getDayIdxMinutes()
+    let ambientSettings = false
+    let overAmbient = false
+
+    $: context = $globalContext
+    $: ambience = context.ambience
 
     $: dayRoutine = $weekRoutine?.blocks.Friday
     $: isDarkTheme = $themeState!.isDarkTheme
-
+    $: isColorThemeDefault = ["Dark Mode", "Light Mode"].includes($themeState.title)
+    $: session = $sessionManager
+    $: routine      = $weekRoutine
+    $: initNowBlock(todayRoutine)
+    
     // active routine
     let todayRoutine: RoutineBlock[] | DailyRoutine | null = null 
     let nowBlock: RoutineBlock | null = null
     let upcomingBlock: RoutineBlock | null = null
     let nowBlockTitle = ""
     let colorTrio = ["", "", ""]
-
-    $: doMinHeaderUI       = $ytPlayerStore?.doShowPlayer ?? false
-    $: isColorThemeDefault = ["Dark Mode", "Light Mode"].includes($themeState.title)
-
-    // session
-    $: session = $sessionManager
-
-    // routines
-    $: routine      = $weekRoutine
+    
     $: todayRoutine = initTodayRoutine(routine, currTime)
-    $: initNowBlock(todayRoutine)
 
     $: if (!dayRoutine) {
         nowBlockTitle = "You current don't have a routine set."
@@ -70,11 +69,24 @@
         }
     }
 
+    /* Ambients */
+    function pointerDown() {
+        if (!overAmbient) return
+        openModal(ModalType.Spaces)
+    }
+    function pointerOver(pe: PointerEvent) {
+        const target = pe.target as HTMLElement
+        const classes = target.classList
+        const tag = target.tagName
+
+        overAmbient = classes.contains("header__ambient-controls") || 
+                      classes.contains("header__ambient-main") || 
+                      tag === "SPAN"
+    }
+
     /* Event Handlers */
     function handleResize() {
         if (!$ytPlayerStore?.doShowPlayer) return
-
-        doMinHeaderUI = headerWidth < 840  
     }
 
     onMount(() => {
@@ -93,66 +105,113 @@
     class:header--dark={isDarkTheme}
     class:header--light={!isDarkTheme}
     class:header--non-default={isColorThemeDefault}
+    class:header--ambient={!!ambience}
+    class:header--ambient-styling={ambience && ambience?.styling != "solid"}
+    class:header--ambient-solid={ambience?.styling === "solid"}
 >
-    <!-- Active Routine Block -->
-    <button 
-        class="header__now-block"
-        class:header__now-block--no-routine={!$weekRoutine}
-        class:header__now-block--empty={!nowBlock}
-        class:header__now-block--md={headerWidth < NO_SESS_MD_MAX_WIDTH}
-        disabled={!$weekRoutine}
-        style:--block-color-1={colorTrio[0]}
-        style:--block-color-2={colorTrio[1]}
-        style:--block-color-3={colorTrio[2]}
-        title={nowBlockTitle}
-        id="active-routine--dropdown-btn"
-        on:click={toggleActiveRoutine}
-    >
-        <div class="header__now-block-circle"></div>
-        <div class="header__now-block-title">
-            {#if !dayRoutine}
-                No Routine
-            {:else if !nowBlock && upcomingBlock}
-                {upcomingBlock.title}
-            {:else if nowBlock}
-                {nowBlock.title}
-            {:else}
-                Free
-            {/if}
-        </div>
-        <div class="header__now-block-time">
-            {getMextTimeCheckPointInfo(todayRoutine) ?? ""}
-        </div>
-    </button>
-
-    <!-- Session Component -->
-     {#if !session || $sessionManager?.state === "done"}
-        <div class="header__session header__section">
-            <button 
-                title="Create new session"
-                class="header__new-session-btn"
-                on:click={() => openModal(ModalType.NewSession)}
+    <!-- Ambient Island -->
+    {#if ambience}
+        <div class="flx-algn-center">
+            <div 
+                class="header__ambient-controls header__section"
+                class:header__ambient-controls--over={overAmbient}
+                class:ambient-blur={ambience?.styling === "blur"}
+                class:ambient-solid={ambience?.styling === "solid"}
+                class:ambient-clear={ambience?.styling === "clear"}
+                on:pointerover={pointerOver}
+                on:pointerdown={pointerDown}
             >
-                <SvgIcon 
-                    icon={Icon.Add}
-                    options={{ scale: 0.9, strokeWidth: 1.75 }}
-                />
-            </button>
-            <div class="header__new-session-btn-divider">
-            </div>
-            <!-- Total Session Time -->
-            <div class="header__session-time" title="Today's total focus time.">
-                <span>
-                    {secsToHHMM($globalContext.focusTime)}
-                </span>
+                <div class="header__ambient-main">
+                    Ambient Space: <span>{capitalize(ambience?.space.group ?? "")}</span>
+                    <div class="divider"></div>
+                    <button 
+                        id="ambient-header--dropdown-btn"
+                        class="header__ambient-settings-btn"
+                        on:click={() => ambientSettings = !ambientSettings}
+                    >
+                        <SvgIcon 
+                            icon={Icon.Settings} options={{ opacity: 0.4, scale: 0.9 }} 
+                        />
+                    </button>
+                </div>
             </div>
         </div>
-     {:else}
-        <ActiveSessionMini {headerWidth} />
-     {/if}
+    {/if}
+
+    <div class="header__main">
+        <!-- Active Routine Block -->
+        <button 
+            class="header__now-block header__section"
+            class:header__now-block--no-routine={!$weekRoutine}
+            class:header__now-block--empty={!nowBlock}
+            class:header__now-block--md={headerWidth < NO_SESS_MD_MAX_WIDTH}
+            class:ambient-blur={ambience?.styling === "blur"}
+            class:ambient-solid={ambience?.styling === "solid"}
+            class:ambient-clear={ambience?.styling === "clear"}
+            disabled={!$weekRoutine}
+            style:--block-color-1={ambience?.styling != "solid" ? "255, 255, 255" : colorTrio[0]}
+            style:--block-color-2={ambience?.styling != "solid" ? "255, 255, 255" : colorTrio[1]}
+            style:--block-color-3={ambience?.styling != "solid" ? "255, 255, 255" : colorTrio[2]}
+            title={nowBlockTitle}
+            id="active-routine--dropdown-btn"
+            on:click={toggleActiveRoutine}
+        >
+            <div class="header__now-block-circle"></div>
+            <div class="header__now-block-title">
+                {#if !dayRoutine}
+                    No Routine
+                {:else if !nowBlock && upcomingBlock}
+                    {upcomingBlock.title}
+                {:else if nowBlock}
+                    {nowBlock.title}
+                {:else}
+                    Free
+                {/if}
+            </div>
+            <div class="header__now-block-time">
+                {getMextTimeCheckPointInfo(todayRoutine) ?? ""}
+            </div>
+        </button>
+        <!-- Session Component -->
+        {#if !session || $sessionManager?.state === "done"}
+            <div 
+                class="header__session header__section"
+                class:ambient-blur={ambience?.styling === "blur"}
+                class:ambient-solid={ambience?.styling === "solid"}
+                class:ambient-clear={ambience?.styling === "clear"}
+            >
+                <button 
+                    title="Create new session"
+                    class="header__new-session-btn"
+                    on:click={() => openModal(ModalType.NewSession)}
+                >
+                    <SvgIcon 
+                        icon={Icon.Add}
+                        options={{ scale: 0.9, strokeWidth: 1.75 }}
+                    />
+                </button>
+                <div class="header__new-session-btn-divider">
+                </div>
+                <!-- Total Session Time -->
+                <div class="header__session-time" title="Today's total focus time.">
+                    <span>
+                        {secsToHHMM($globalContext.focusTime)}
+                    </span>
+                </div>
+            </div>
+        {:else}
+            <ActiveSessionMini {headerWidth} />
+        {/if}
+    </div>
 
     <!-- Active Routine Pop Up -->
-    <ActiveRoutine />
+    <ActiveRoutine pos={!!ambience ? "right" : "left"} />
+
+    <AmbientSettings
+        onClickOutside={() => ambientSettings = false}
+        open={ambientSettings} 
+    />
+
 </header>
 
 <style global lang="scss">
@@ -160,8 +219,8 @@
 
     .header {
         width: 100%;
-        height: 32px;
-        padding: 5px 0px 0px 0px;
+        height: 20px;
+        padding: 8px 25px 0px 25px;
         position: relative;
         @include flex(center, space-between);
         
@@ -173,19 +232,60 @@
         &--sm &__session {
             display: none;
         }
+        &--ambient &__section {
+            height: 31px;
+        }
+        &--ambient &__now-block {
+            margin-left: 4px;
+        }
+        &--ambient &__now-block-time {
+            @include text-style(_, 400, 1.15rem, "DM Mono");
+        }
+        &--ambient &__now-block-title {
+            font-weight: 500;
+            margin-right: 2px;
+        }
+        &--ambient-styling &__now-block-circle {
+            opacity: 0.7;
+        }
+        &--ambient-styling &__now-block-title {
+            color: rgba(var(--block-color-1), 1);
+            @include text-style(_, 500, 1.175rem);
+        }
+        &--ambient-styling &__now-block-time {
+            color: rgba(var(--block-color-3), 0.4);
+        }
+        &--ambient &__session-time {
+            @include text-style(0.685);
+        }
+        &--ambient &__main {
+            flex-direction: row-reverse;
+            width: auto;
+        }
+        &--ambient-solid &__session,
+        &--ambient-solid &__now-block,
+        &--ambient-solid &__ambient-controls {
+            background: var(--navMenuBgColor);
+        }
 
         &__section {
             @include flex(center);
+            height: 31px;
+        }
+        &__main {
+            @include flex(center, space-between);
+            width: 100%;
         }
 
         /* Now Block */
         &__now-block {
-            @include flex(center);
-            height: 100%;
-            border-radius: 12px;
-            margin: -3px 0px 0px -5px;
-            background-color: rgba(var(--block-color-1), 0.08);
-            padding: 0px 10px 0px 13px;
+            margin: 0px 0px 0px -5px;
+            // background-color: rgba(var(--block-color-1), 0.08);
+            border: 1px solid transparent;
+            padding: 0px 14px 0px 0px;
+            white-space: nowrap;
+            background: none !important;
+            z-index: 100;
             
             &:disabled {
                 opacity: 0.5;
@@ -202,11 +302,13 @@
             &--empty {
                 background-color: rgba(var(--textColor1), 0.055);
             }
-            &--empty &-circle, &--no-routine &-circle  {
-                background-color: rgba(var(--textColor1), 0.2);
+            &--empty &-circle, 
+            &--no-routine &-circle  {
+                background-color: rgba(var(--textColor1), 0.4);
             }
-            &--empty &-title, &--no-routine &-title {
-                color: rgba(var(--textColor1), 0.8);
+            &--empty &-title,
+            &--no-routine &-title {
+                color: rgba(var(--textColor1), 1);
             }
             &--empty &-time {
                 color: rgba(var(--textColor1), 0.3);
@@ -238,32 +340,31 @@
             &-circle {
                 // @include circle(3.5px);
                 background-color: rgba(var(--block-color-1));
-                height: 9px;
+                height: 10.5px;
                 width: 2px;
                 border-radius: 4px;
             }
             &-title {
                 color: rgba(var(--block-color-1));
-                @include text-style(_, 600, 1.14rem);
+                @include text-style(_, 500, 1.32rem, "DM Sans");
                 @include elipses-overflow;
                 margin: 0px 0px 0px 8px;
-                max-width: 80px;
+                max-width: 150px;
             }
             &-time {
-                @include text-style(_, 500, 1.08rem, "DM Sans");
-                color: rgba(var(--block-color-3), 0.8);
-                margin-left: 6px;
+                @include text-style(_, 500, 1.245rem, "DM Sans");
+                color: rgba(var(--block-color-3), 0.5);
+                margin-left: 10px;
             }
         }
 
         /* New Session Button */
         &__session {
             @include flex(center);
-            border-radius: 12px;
-            height: 27.5px;
-            padding: 0px 12px 0px 10px;
-            margin: -3px 0px 0px -10px;
-            @include txt-color(0.055, "bg");
+            padding: 0px 0px 0px 10px;
+            margin: 0px 0px 0px -10px;
+            height: 33px;
+            // @include txt-color(0.055, "bg");
         }
         &__new-session-btn {
             @include center;
@@ -288,6 +389,60 @@
             @include flex(center);
             @include text-style(0.7, 400, 1.15rem, "DM Mono");
             white-space: nowrap;
+        }
+
+        /* Ambient Controls */
+        &__ambient-controls {
+            @include flex(center);
+            @include text-style(1, 400, 1.225rem, "DM Mono");
+            margin: 0px 10px 0px -10px;
+            transition: 0.1s ease-in-out;
+            padding: 0px 4px 0px 15px;
+
+            &--over {
+                cursor: pointer;
+            }
+            &--over:active {
+                transform: scale(0.9945);
+            }
+        }
+        &__ambient-main {
+            margin-right: 4px;
+            @include flex(center);
+
+            span {
+                margin-left: 8px;
+                opacity: 0.35;
+            }
+        }
+        &__ambient-settings-btn {
+            @include circle(17px);
+            @include center;
+            background-color: rgba(var(--textColor1), 0.045);
+            
+            &:hover {
+                @include visible(1);
+            }
+        }
+        &__ambient-main .divider {
+            @include divider(0.15, 8.5px, 1px);
+            margin: 0px 10px 0px 8px;
+            // display: none;
+        }
+        &__ambient-range {
+            @include flex(center);
+            // display: none;
+        }
+        &__ambient-range-icon {
+            opacity: 0.8;
+            transform: scale(0.925);
+            svg {
+                margin: 3px 7px 0px 0px;
+            }
+        }
+        &__ambient-range-input {
+            margin: 0px 0px 0px 0px;
+            width: 40px;
         }
     }
 </style>

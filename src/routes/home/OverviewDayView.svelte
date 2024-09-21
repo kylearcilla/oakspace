@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte"
-	import { themeState } from "$lib/store"
+	import { reviewSession, themeState } from "$lib/store"
     
 	import { findClosestColorSwatch } from "$lib/utils-colors"
-	import SessionSummaryModal from "./SessionSummaryModal.svelte"
 	import { GoogleCalendarManager } from "$lib/google-calendar-manager"
 	import { getColorTrio, getMaskedGradientStyle } from "$lib/utils-general"
 	import { 
@@ -28,7 +27,6 @@
     let currTime = getDayIdxMinutes()
     let focusEventId = ""
     let scrollContainerHeight = 0
-    let sessionInView: Session | null = null
     
     $: isLightTheme = !$themeState.isDarkTheme
 
@@ -243,7 +241,7 @@
                                     style:width="80%"
                                     style:height={isFocused ? heightNum <= 40 ? "80px" : height : height}
                                     on:click={() => { 
-                                        sessionInView = session
+                                        reviewSession.set(session)
                                     }}
                                     on:focus={() => { 
                                         focusEventId = session.id
@@ -365,14 +363,6 @@
     </div>
 </div>
 
-{#if sessionInView} 
-    <SessionSummaryModal
-        isReview={true}
-        session={sessionInView}
-        onClickOutside={() => sessionInView = null}
-    />
-{/if}
-
 <style lang="scss">
     @import "../../scss/day-box.scss";
     $header-left-offset: 16px;
@@ -479,6 +469,7 @@
         }
         &--session &__content {
             background-color: var(--bg-3) !important;
+            border: 1px solid rgba(var(--textColor1), 0.03);
         }
         &--session &__title {
             @include text-style(1, 500);
@@ -504,14 +495,14 @@
         }
         &__content {
             background-color: rgba(var(--event-color-2), 1);
-            border: 0.5px solid var(--rightBarBgColor);
+            border: 1px solid rgba(var(--textColor1), 0.03);
             padding: 5px 8px 5px 11px;
             overflow: hidden;
             white-space: nowrap;
             position: relative;
             height: 100%;
             border-left: none;
-            border-radius: 9px;
+            border-radius: 12px;
         }
         &__title {
             @include text-style(_,  500, 1.14rem);
@@ -547,7 +538,7 @@
             cursor: pointer;
 
             &:hover {
-                background-color: var(--sidePanelLightAccentColor);
+                background-color: rgba(var(--textColor1), 0.02);
             }
             &:active {
                 transform: scale(0.994);

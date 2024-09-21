@@ -309,6 +309,7 @@
                                     <button
                                         id="chosen-playlist--dropdown-btn"
                                         class="chosen-playlist__settings-btn"
+                                        class:hidden={$ytPlayerStore?.isoVideo}
                                         on:click={() => settingsOpen = !settingsOpen}
                                     >
                                         <SvgIcon icon={Icon.Settings} />                                            

@@ -42,6 +42,8 @@
             />
         {:else if type === "hotkey"}
             <Hotkeys hotkeys={getHotkeys()} />
+        {:else if type === "check"}
+            <i class="fa-solid fa-check"></i> 
         {/if}
     </div>
 </div>

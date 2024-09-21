@@ -18,6 +18,8 @@
 	import TasksList from "../../components/TasksList.svelte"
 	import BounceFade from "../../components/BounceFade.svelte"
 
+    export let pos: "left" | "right"
+
     $: isOpen      = $globalContext.doOpenActiveRoutine
     $: routine     = $weekRoutine
     $: isDarkTheme = $themeState.isDarkTheme
@@ -233,7 +235,11 @@
 
 <BounceFade 
     isHidden={!isOpen}
-    position={{ top: "38px", left: "0px" }}
+    position={{ 
+        top: "38px", 
+        left: pos === "left" ? "0px" : "unset",
+        right: pos === "left" ? "unset" : "0px",
+    }}
     zIndex={99999}
     onClickOutside={toggleActiveRoutine}
     id={"active-routine--dropdown-menu"}

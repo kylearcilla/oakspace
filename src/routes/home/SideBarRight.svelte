@@ -18,6 +18,9 @@
 
     const SETTINGS_BTN_CUT_OFF_Y = 30
 
+    $: isLightTheme = !$themeState.isDarkTheme
+    $: ambient = $globalContext.ambience
+
     let selectedTab: RightSideTab = RightSideTab.OVERVIEW
     let headerRef: HTMLElement
 
@@ -34,7 +37,9 @@
     /* header image */
     let opacity = 0.5
     let settingsOpen = false
-    let bgImgSrc = "https://i.pinimg.com/originals/9b/a2/8f/9ba28fe01fc1a24b757bf972a40a7339.gif"
+    // let bgImgSrc = "https://i.pinimg.com/originals/9b/a2/8f/9ba28fe01fc1a24b757bf972a40a7339.gif"
+    let bgImgSrc = ""
+    let showHeaderImg = true
     let showSettingsBtn = false
 
     let topOffset = 0
@@ -44,7 +49,6 @@
     let bgImgRef: HTMLImageElement
     let DRAG_OFFSET_THRESHOLD = 5
 
-    $: isLightTheme = !$themeState.isDarkTheme
     $: if (bgImgSrc && bgImgRef && headerRef) {
         requestAnimationFrame(() => {
             const MAX = getMaxHeaderImgOffset()
@@ -149,12 +153,12 @@
         clearInterval(interval! as any)
     })
 </script>
-
 <div 
     class="bar"
     class:bar--dark-theme={!isLightTheme}
     class:bar--light-theme={isLightTheme}
-    class:bar--empty={!bgImgSrc}
+    class:bar--empty={ambient?.styling === "clear" || ambient?.styling === "blur" || !bgImgSrc || !showHeaderImg}
+    class:bar--ambient={ambient?.styling === "clear" || ambient?.styling === "blur"}
     on:pointermove={onPointerMove}
     on:mousedown={() => setShortcutsFocus(ShortcutSectionInFocus.TASK_BAR)}
     use:clickOutside on:click_outside={() => setShortcutsFocus(ShortcutSectionInFocus.MAIN)}
@@ -316,9 +320,12 @@
         width: 100%;
         height: 100vh;
         position: relative;
-        border-left: 1.5px solid rgba((var(--textColor1)), 0.022);
+        overflow: hidden;
         @include txt-color;
 
+        &--ambient &__settings-btn {
+            display: none !important;
+        }
         &--light-theme &__header {
             background-image: none !important;
             background-color: transparent ;
@@ -382,26 +389,20 @@
             display: none;
         }
         &--empty &__header {
-            height: 58px;
+            height: 30px;
         }
         &--empty &__header-date {
             @include flex(center);
         }
         &--empty &__header-time-date {
             opacity: 0.8;
+            display: none;
         }
         &--empty &__tab-btns {
-            top: 34px;
-            margin-left: -5px;
+            top: 10px;
         }
         &--empty &__tab-btn {
-            padding: 4px 10px 5px 10px;
-            font-size: 1.3rem;
-            margin-right: 0px;
-        }
-        &--empty &__tab-btn--active {
-            background-color: rgba((var(--textColor1)), 0.035);
-            border: 1px solid rgba((var(--textColor1)), 0.02);
+            margin-right: 10px;
         }
         &--empty &__main-content {
             height: calc(100% - 58px);   
@@ -534,10 +535,10 @@
             z-index: 2;
         }
         &__tab-btn {
-            @include text-style(0.9, 500, 1.4rem);
+            @include text-style(1, 500, 1.365rem);
             opacity: 0.3;
             background: transparent;
-            border-radius: 11px;
+            border-radius: 14px;
             border: 1px solid transparent;
             margin-right: 10px;
 

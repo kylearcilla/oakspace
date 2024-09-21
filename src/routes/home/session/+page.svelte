@@ -19,9 +19,11 @@
     $: manager = $sessionManager
     $: session = manager?.session
     $: isPlaying = manager?.isPlaying
+    $: minimal = manager?.minimal
     $: elapsedSecs = manager?.elapsedSecs
     $: state = manager?.state
     $: mode = session?.mode
+    $: ambience = $globalContext.ambience
 
     $: totalFocusTime = manager?.totalFocusTime ?? 0
     $: totalBreakTime = manager?.totalBreakTime ?? 0
@@ -104,14 +106,21 @@
         else if (optn === "Finish session") {
             onFinishSessionOptn()
         }
-        else {
+        else if (optn === "Cancel session"){
             cancelSession()
+        }
+        else {
+            $sessionManager!.toggleMinimal()
         }
     }
 </script>
 
 {#if manager && session}
-<div class="session" bind:clientWidth={width}>
+<div 
+    bind:clientWidth={width}
+    class="session"
+    class:session--min={minimal}
+>
     <!-- Back Btn -->
     <button 
         class="session__back-btn"
@@ -158,8 +167,10 @@
         <!-- Controls -->
         <div class="session__controls">
             <button
-                disabled={playBtnDisabled}
                 class="session__control-btn" 
+                class:ambient-blur={ambience?.styling === "blur"}
+                class:ambient-clear={ambience?.styling === "clear"}
+                disabled={playBtnDisabled}
                 on:click={() => manager.togglePlay()}
             >
                 {isPlaying ? "Pause" : "Play"}
@@ -176,9 +187,11 @@
             />
             <div class="session__dropdown-container">
                 <button
+                    class="session__dropdown-btn"
+                    class:ambient-blur={ambience?.styling === "blur"}
+                    class:ambient-clear={ambience?.styling === "clear"}
                     on:click={() => dropdown = !dropdown}
                     id="session--dropdown-btn"
-                    class="session__dropdown-btn"
                 >
                     <SvgIcon 
                         icon={Icon.Settings} 
@@ -191,6 +204,7 @@
                     options={{
                         listItems:
                             [
+                                { name: minimal ? "Show Tasks" : "Hide Tasks" }, 
                                 { name: "Rename session" }, 
                                 ...(mode === "flow" ? [{ name: "Finish session" }] : []),
                                 { name: "Cancel session" }
@@ -321,6 +335,22 @@
         width: 100%;
         position: relative;
 
+
+        &--min &__content {
+            margin-top: 19vh;
+        }
+        &--min &__focus-time {
+            font-size: 10rem;
+        }
+        &--min &__details {
+            font-size: 1.65rem;
+        }
+        &--min &__tasks {
+            height: 0px;
+            width: 0px;
+            @include not-visible;
+        }
+
         &__back-btn {
             @include text-style(1, 700, 1.2rem, "DM Mono");
             @include flex(center);
@@ -353,7 +383,7 @@
         /* details */
         &__details {
             @include flex(center, space-between);
-            @include text-style(0.17, 400, 1.45rem, "DM Mono");
+            @include text-style(0.2, 400, 1.45rem, "DM Mono");
             margin: 6px 0px 0px 0px;
             white-space: nowrap;
         }

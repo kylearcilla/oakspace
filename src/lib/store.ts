@@ -11,12 +11,14 @@ import type { DatePickerManager } from './date-picker-manager'
 import type { MusicSettingsManager } from './music-settings-manager'
 import { WEEKLY_ROUTINES } from '../tests/routines/routines.data'
 import type { YoutubeMusicUserData } from './youtube-music-user-data'
+import { TEST_AMBIENT } from './mock-data'
 
 /* App UI State */
 export const globalContext = writable<GlobalContext>({
     leftBarOpen: true,
     rightBarOpen: true,
     isVideoViewOpen: false,
+    freeFloatYt: false,
     isMusicPlayerOpen: false,
     hasToaster: false,
     minModeSrc: null,
@@ -67,6 +69,7 @@ export const musicSettingsManager = writable<MusicSettingsManager | null>(null)
 
 /* Session Stuff */
 export const sessionManager = writable<SessionManager | null>(null)
+export const reviewSession = writable<Session | null>(null)
 
 /* General Stuff */
 export const datePickerManager = writable<DatePickerManager | null>(null)

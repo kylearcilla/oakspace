@@ -1,17 +1,29 @@
 import { get } from "svelte/store"
-import { globalContext, sessionManager } from "./store"
+import { globalContext, ytPlayerStore } from "./store"
 import { ModalType, MusicPlatform, ShortcutSectionInFocus } from "./enums"
 
 import { loadTheme } from "./utils-appearance"
 import { conintueWorkSession, didInitSession } from "./utils-session"
 import { didInitMusicPlayer, didInitMusicUser, initMusicPlayer, musicLogin } from "./utils-music"
-import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer } from "./utils-youtube"
-import { isTargetTextEditor } from "./utils-general"
+import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer, handleChooseVideo } from "./utils-youtube"
+import { getElemById, isTargetTextEditor, randomArrayElem } from "./utils-general"
 import { initMusicSettings } from "./utils-music-settings"
+import { POPULAR_SPACES } from "./data-spaces"
 
-export const LEFT_BAR_WIDTH = 63
+/* constants */
+
+export const LEFT_BAR_WIDTH = 80
 const LEFT_BAR_LEFT_BOUND = 20
 const SESSION_MIN_WIDTH = 750
+const MAX_AMBIENT_OPACITY = 0.85
+
+/* blur */
+export const AMBIENT = {
+    BG_BLUR: "blur(50px)",
+    BG_COLOR: "rgba(10, 10, 10, 0.2)",
+    DARK_BG_COLOR: "rgba(10, 10, 10, 0.5)",
+    BORDER: "1px solid rgba(255, 255, 255, 0.055)"
+}
 
 /**
  * Initialize app state.
@@ -20,6 +32,7 @@ const SESSION_MIN_WIDTH = 750
 export const initAppState = async () => {
     loadTheme()
     loadGlobalContext()
+    loadAmbience()
 
     if (didInitSession()) {
         conintueWorkSession()
@@ -36,6 +49,7 @@ export const initAppState = async () => {
     if (didInitMusicUser()) {
         await musicLogin()
     }
+
     initMusicSettings()
 }
 
@@ -189,8 +203,8 @@ export const updateGlobalContext = (newState: Partial<GlobalContext>) => {
 const loadGlobalContext = () => {
     const storedData = localStorage.getItem("home-ui")
     if (!storedData) return
-
     const data: GlobalContext = JSON.parse(storedData)
+
 
     updateGlobalContext({ 
         ...data, modalsOpen: [] 
@@ -249,11 +263,86 @@ export function toggleActiveRoutine() {
     })
 }
 
-export function toggleYoutubePlayerFloat() {
+export function toggleYoutubePlayerFloat(doShow?: boolean) {
     const oldState    = get(globalContext)
-    const mediaPlayer = oldState.mediaPlayer ?? { music: false, youtube: false }
+    const mediaPlayer = oldState.mediaPlayer ?? { 
+        music: false, youtube: false 
+    }
 
     updateGlobalContext({ 
-        mediaPlayer: { ...mediaPlayer, youtube: !mediaPlayer.youtube } 
+        mediaPlayer: { ...mediaPlayer, youtube: doShow != undefined ? doShow : !mediaPlayer.youtube } 
     })   
+}
+
+function loadAmbience() {
+    const homeRef = getElemById("home")!
+    const context = get(globalContext)
+    const ambience = context.ambience
+
+    if (!ambience) return
+    const { opacity, space: { sourceId } } = ambience
+
+    if (ambience?.space.type === "wallpaper") {
+        homeRef.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, ${opacity}), rgba(0, 0, 0, ${opacity})), url(${sourceId})`
+    }
+}
+
+/**
+ * Update a current ambience space.
+ * With mbient setting already set.
+ * 
+ * @param data  New data to be incorporated.
+ */
+export function updateAmbience(data: Partial<AmbientOptions>) {
+    const homeRef  = getElemById("home")!
+    const ambience = get(globalContext).ambience!
+    const newData  = { ...ambience, ...data }
+
+    newData.opacity = Math.min(newData.opacity, MAX_AMBIENT_OPACITY)
+    const { space, opacity } = newData
+
+    if (data.opacity && newData.space.type === "wallpaper") {
+        homeRef.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, ${opacity}), rgba(0, 0, 0, ${opacity})), url(${space.sourceId})`
+    }
+    else if (data?.space?.type === "wallpaper") {
+        homeRef.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, ${opacity}), rgba(0, 0, 0, ${opacity})), url(${space.sourceId})`
+    }
+    else if (newData.space.type === "video") {
+        homeRef.style.backgroundImage = "none"
+    }
+
+    updateGlobalContext({ ambience: newData })
+}
+
+/**
+ * Initializes a random ambient space
+ */
+export function setAmbience() {
+    const liveSpace = randomArrayElem(POPULAR_SPACES.videos)
+    updateGlobalContext({ 
+        ambience: {
+            opacity: 0.5,
+            styling: "blur",
+            space: liveSpace
+        }
+     })
+     handleChooseVideo(liveSpace.sourceId)
+}
+
+export async function closeAmbience() {
+    const homeRef = getElemById("home")!
+    const youtube = get(ytPlayerStore)
+
+    if (youtube) {
+        // if user didn't have a youtube player active.
+        if (await youtube.backToPlaylist()) {
+            youtube.quit()
+        }
+        updateGlobalContext({ mediaPlayer: {
+            youtube: false, music: false
+        }})
+    }
+
+    homeRef.style.backgroundImage = "none"
+    updateGlobalContext({ ambience: undefined })
 }

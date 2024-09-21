@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { getElemById, initFloatElemPos, isInRange, isTargetTextEditor } from "$lib/utils-general"
+	import { getElemById, initFloatElemPos, isTargetTextEditor } from "$lib/utils-general"
 	import { onMount } from "svelte"
-	import { ytPlayerStore } from "$lib/store"
+	import { globalContext, mediaEmbedStore, ytPlayerStore } from "$lib/store"
 
     export let type: "youtube" | "spotify"
     import { page } from '$app/stores'
@@ -18,36 +18,42 @@
     const BORDER_WIDTH = 8
     const SAFE_MARGIN = 8
 
-    $: ytPlayer = $ytPlayerStore
-
     let mediaPlayerRef: HTMLElement
     let displayObserver: ResizeObserver | null = null
     let displayContainerRef: HTMLElement
-    let cursor = { pos: "middle", type: "default" }
-    
     let isHidden = false
     let windowWidth = 0
     let windowHeight = 0
-
-    $: marginRight  = windowWidth - SAFE_MARGIN
-    $: marginBottom = windowHeight - SAFE_MARGIN
-
-    let ogBoxProps = { width: 0, height: 0, top: 0, left: 0 }
-    let boxProps   = { 
-        width: INIT_PLAYER_WIDTH, 
-        height: (9/ 16) * INIT_PLAYER_WIDTH,
-        top: SAFE_MARGIN, 
-        left: SAFE_MARGIN 
-    }
-
     let isPointerDown = false
     let shouldMove    = false
     let isResizing    = false
     let pointerDownBoxOffset = { left: -1, top: -1 }
     let onDownPos            = { left: -1, top: -1 }
 
+    let cursor = { 
+        pos: "middle", type: "default" 
+    }
+    let ogBoxProps = { 
+        width: 0, height: 0, top: 0, left: 0 
+    }
+    let boxProps = { 
+        width: INIT_PLAYER_WIDTH, 
+        height: (9/ 16) * INIT_PLAYER_WIDTH,
+        top: SAFE_MARGIN, 
+        left: SAFE_MARGIN 
+    }
+
+    $: ambience = $globalContext.ambience
+    $: liveAmbience = ambience?.space.type === "video"
+    $: ytPlayer = $ytPlayerStore
+    $: playlist = ytPlayer?.playlist
+
+    $: mediaEmbed = $mediaEmbedStore
+    $: marginRight  = windowWidth - SAFE_MARGIN
+    $: marginBottom = windowHeight - SAFE_MARGIN
+
     $: observePlayerDisplayHandler(isFloating)
-    $: onPathChange($page.url.pathname)
+    $: onPathChange($page.url.pathname, !!ambience)
 
     /* youtube display handler */
     function observePlayerDisplayHandler(isFloating: boolean) {
@@ -82,7 +88,7 @@
         if (!ytPlayer) return
         const savedLayout = ytPlayer.floatLayout
 
-        if (savedLayout && savedLayout.left >= 0) {
+        if (savedLayout && savedLayout.width > 0) {
             boxProps = { ...savedLayout }
         }
         else {
@@ -331,8 +337,14 @@
         setCursor(pe.clientX, pe.clientY)
     }
     /* general */
-    function onPathChange(path: string) {
-        if (type === "youtube" && !isFloating && path != "/home") {
+    function onPathChange(path: string, ambience: boolean) {
+        if (ambience) {
+            isHidden = false
+        }
+        else if (ambience && path === "/home/session") {
+            isHidden = true
+        }
+        else if (type === "youtube" && !isFloating && path != "/home") {
             isHidden = true
         }
         else if (type === "youtube") {
@@ -421,12 +433,13 @@
     on:resize={onWindowResize}
 />
 
-<div 
+<div
     class="media-player"
     class:media-player--resize={isResizing}
+    class:media-player--live-ambience={liveAmbience}
     class:media-player--grab={shouldMove && !isPointerDown}
     class:media-player--grabbing={shouldMove && isPointerDown}
-    class:media-player--hidden={isHidden}
+    class:media-player--hidden={!liveAmbience && (!playlist || mediaEmbed?.hidden || isHidden)}
     class:media-player--iframe-hidden={!$ytPlayerStore}
     style:--BORDER_WIDTH={`${BORDER_WIDTH}px`}
     style:--SAFE_MARGIN={`${SAFE_MARGIN}px`}
@@ -450,10 +463,7 @@
         </div>
         <div class="media-player__grab-handle media-player__grab-handle--bottom">
         </div>
-        <div 
-            class="iframe-vid-player" 
-            id={YoutubePlayer.IFRAME_ID}
-        >
+        <div class="iframe-vid-player" id={YoutubePlayer.IFRAME_ID}>
         </div>
     </div>
 </div>
@@ -466,6 +476,36 @@
         @include center;
         cursor: var(--cursor-type);
         
+        &--live-ambience {
+            z-index: 2;
+            opacity: 1 !important;
+            visibility: visible !important;
+            aspect-ratio: calc(16 / 9);
+
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+
+            pointer-events: none;
+
+
+            @media (max-aspect-ratio: 16 / 9) {
+                width: 177.78vh !important;
+                height: 120% !important;
+            }
+            @media (min-aspect-ratio: 16 / 9) {
+                height: 86.25vw !important;
+                width: 100% !important;
+            }
+        }
+        &--live-ambience &__content::after {
+            content: " ";
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            @include abs-top-left;
+            background-image: linear-gradient(rgba(0, 0, 0, var(--ambient-opacity)), rgba(0, 0, 0, var(--ambient-opacity)));
+        }
         &--hidden {
             opacity: 0;
             visibility: hidden;

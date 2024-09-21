@@ -3,13 +3,12 @@
 	import { themeState } from "$lib/store"
 	import { MAX_TASK_GROUP_TITLE_LENGTH } from "$lib/utils-right-bar"
 
+	import Logo from "../../components/Logo.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
 	import TasksList from "../../components/TasksList.svelte"
+	import { TasksViewManager } from "$lib/tasks-view-manager"
 	import DropdownList from "../../components/DropdownList.svelte"
-	import Logo from "../../components/Logo.svelte";
-	import { TasksViewManager } from "$lib/tasks-view-manager";
 	import ConfirmationModal from "../../components/ConfirmationModal.svelte"
-	import { toast } from "$lib/utils-toast";
     
     export let manager: TasksViewManager
 
@@ -35,7 +34,6 @@
     let curTaskGroup: TaskGroup = manager.currTaskGroup
     let tasks: Task[] = curTaskGroup.tasks
     let confirmModalOpen = false
-    let pickedGroupIdx = -1
     
     $: isDarkTheme = $themeState.isDarkTheme
     $: store = manager.store

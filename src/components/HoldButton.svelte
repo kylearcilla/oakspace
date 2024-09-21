@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { inlineStyling } from "$lib/utils-general";
+	import { globalContext } from "$lib/store"
+	import { inlineStyling } from "$lib/utils-general"
 
     export let text: string
     export let disabled = false
@@ -10,10 +11,11 @@
         colorCover?: string
     } | undefined = undefined
 
+    $: ambience = $globalContext.ambience
+
     const lengthMs = options?.lengthMs ?? 1500
     const coverColor = options?.colorCover ?? "#FFFFFF"
     const coverTextColor = options?.colorCover ?? "rgb(var(--textColor2))"
-
     let isHolding = false
 
     function onConfirmPointerDown(pe: PointerEvent) {
@@ -44,6 +46,8 @@
     {disabled}
     class="hold-btn"
     class:hold-btn--holding={isHolding}
+    class:ambient-blur={ambience?.styling === "blur"}
+    class:ambient-clear={ambience?.styling === "clear"}
     style={inlineStyling(styling)}
     style:--cover-color={coverColor}
     style:--cover-txt-color={coverTextColor}

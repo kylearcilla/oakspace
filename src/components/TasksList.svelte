@@ -342,8 +342,8 @@
                             {#each subtasks as subtask, subtaskIdx (`${taskIdx}--${subtaskIdx}`)}
                                 {@const focusedSubtaskIdx   =  $manager.focusedSubtaskIdx}
                                 {@const focused             = $manager.rightClickedSubtask?.idx === subtaskIdx || focusedSubtaskIdx === subtaskIdx}
-                                {@const subtaskAnimDuration = subtasks.length < 8 ? 200 : 95}
-                                {@const subtaskDelayFactor  = subtasks.length < 8 ? 30  : 18}
+                                {@const subtaskAnimDuration = subtasks.length < 8 ? 150 : 90}
+                                {@const subtaskDelayFactor  = subtasks.length < 8 ? 30  : 12}
                                 {@const subtaskDelay        = subtask.title ? (subtaskDelayFactor * subtaskIdx) : 0}
                                 {@const hideDivider         = false}
 
@@ -953,7 +953,7 @@
         position: relative;
         visibility: hidden;
         width: 100%;
-        animation: fade-in var(--subtask-animation-duration) cubic-bezier(.5,.84,.42,.9) var(--subtask-idx-delay) forwards;
+        animation: appear-in var(--subtask-animation-duration) cubic-bezier(.5,.84,.42,.9) var(--subtask-idx-delay) forwards;
         padding-left: var(--left-section-width) !important;
         
         &:focus, &--focused {
@@ -961,7 +961,8 @@
             outline: none;
         }
         &:hover {
-            background-color: rgba(var(--textColor1), 0.024);
+            background: none !important;
+            border-color: transparent;
         }
         &:hover &__drag-handle {
             @include visible;
@@ -1035,6 +1036,7 @@
             position: relative;
         }
         &__right {
+            width: 100%;
             max-width: calc(100% - 55px);
         }
         &__drag-handle {
@@ -1061,6 +1063,8 @@
             white-space: pre-wrap;
             word-break: break-word;
             max-width: 100%;
+            width: 100%;
+            display: block;
             cursor: text;
             transition: 0.1s ease-in-out;
             @include text-style(var(--subtask-opacity), var(--subtask-font-weight), var(--subtask-font-size));
@@ -1082,5 +1086,16 @@
         border-width: 0px !important;
         opacity: 0 !important;
         visibility: none !important;
+    }
+
+    @keyframes appear-in {
+        0% {
+            visibility: hidden;
+            opacity: 0;
+        }
+        100% {
+            visibility: visible;
+            opacity: 1;
+        }
     }
 </style>

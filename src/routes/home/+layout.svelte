@@ -235,7 +235,6 @@
 
   <FloatMediaPlayer 
       type="youtube" 
-      isFloating={$globalContext.mediaPlayer?.youtube}
   />
 
   <!-- Music Player -->
@@ -376,7 +375,7 @@
         // padding: 0px 25px;
       }
       &__left-bar {
-        transition: ease-in-out 0.2s;
+        transition: ease-in-out 0.1s;
         height: 100%;
         margin-left: 0px;
         background-color: var(--navMenuBgColor);

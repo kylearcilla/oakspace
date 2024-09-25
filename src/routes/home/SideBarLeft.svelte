@@ -526,8 +526,7 @@
             padding: 11px 0px 0px 0px;
         }
         &__temp-logo {
-            font-family: "Apercu";
-            @include text-style(_, 500, 1.8rem);
+            @include text-style(_, 500, 1.8rem, "Apercu");
             color: var(--navIconColor);
             position: relative;
 

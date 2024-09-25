@@ -149,9 +149,9 @@
             class:ambient-solid={ambience?.styling === "solid"}
             class:ambient-clear={ambience?.styling === "clear"}
             disabled={!$weekRoutine}
-            style:--block-color-1={ambience?.styling != "solid" ? "255, 255, 255" : colorTrio[0]}
-            style:--block-color-2={ambience?.styling != "solid" ? "255, 255, 255" : colorTrio[1]}
-            style:--block-color-3={ambience?.styling != "solid" ? "255, 255, 255" : colorTrio[2]}
+            style:--block-color-1={ambience && ambience.styling != "solid" ? "255, 255, 255" : colorTrio[0]}
+            style:--block-color-2={ambience && ambience.styling != "solid" ? "255, 255, 255" : colorTrio[1]}
+            style:--block-color-3={ambience && ambience.styling != "solid" ? "255, 255, 255" : colorTrio[2]}
             title={nowBlockTitle}
             id="active-routine--dropdown-btn"
             on:click={toggleActiveRoutine}
@@ -219,8 +219,8 @@
 
     .header {
         width: 100%;
-        height: 20px;
-        padding: 8px 25px 0px 25px;
+        height: 21px;
+        padding: 10px 20px 0px 20px;
         position: relative;
         @include flex(center, space-between);
         
@@ -231,9 +231,6 @@
         }
         &--sm &__session {
             display: none;
-        }
-        &--ambient &__section {
-            height: 31px;
         }
         &--ambient &__now-block {
             margin-left: 4px;
@@ -270,7 +267,9 @@
 
         &__section {
             @include flex(center);
-            height: 31px;
+            height: 24px;
+            z-index: 100;
+            border-radius: 15px;
         }
         &__main {
             @include flex(center, space-between);
@@ -280,12 +279,12 @@
         /* Now Block */
         &__now-block {
             margin: 0px 0px 0px -5px;
-            // background-color: rgba(var(--block-color-1), 0.08);
+            background-color: rgba(var(--block-color-1), 0.085);
             border: 1px solid transparent;
-            padding: 0px 14px 0px 0px;
+            padding: 0px 15px 0px 12px;
             white-space: nowrap;
-            background: none !important;
             z-index: 100;
+            @include text-style(_, 400, 1.14rem, "DM Mono");
             
             &:disabled {
                 opacity: 0.5;
@@ -302,13 +301,11 @@
             &--empty {
                 background-color: rgba(var(--textColor1), 0.055);
             }
-            &--empty &-circle, 
-            &--no-routine &-circle  {
-                background-color: rgba(var(--textColor1), 0.4);
+            &--empty &-circle, &--no-routine &-circle  {
+                background-color: rgba(var(--textColor1), 0.2);
             }
-            &--empty &-title,
-            &--no-routine &-title {
-                color: rgba(var(--textColor1), 1);
+            &--empty &-title, &--no-routine &-title {
+                color: rgba(var(--textColor1), 0.8);
             }
             &--empty &-time {
                 color: rgba(var(--textColor1), 0.3);
@@ -338,33 +335,30 @@
                 transform: scale(0.99);
             }
             &-circle {
-                // @include circle(3.5px);
                 background-color: rgba(var(--block-color-1));
-                height: 10.5px;
-                width: 2px;
-                border-radius: 4px;
+                height: 8.5px;
+                width: 1.5px;
+                border-radius: 1px;
             }
             &-title {
                 color: rgba(var(--block-color-1));
-                @include text-style(_, 500, 1.32rem, "DM Sans");
                 @include elipses-overflow;
-                margin: 0px 0px 0px 8px;
+                margin: 0px 0px 0px 10px;
                 max-width: 150px;
             }
             &-time {
-                @include text-style(_, 500, 1.245rem, "DM Sans");
                 color: rgba(var(--block-color-3), 0.5);
-                margin-left: 10px;
+                margin-left: 11px;
             }
         }
 
         /* New Session Button */
         &__session {
             @include flex(center);
-            padding: 0px 0px 0px 10px;
+            padding: 0px 12px 0px 7px;
             margin: 0px 0px 0px -10px;
-            height: 33px;
-            // @include txt-color(0.055, "bg");
+            height: 26px;
+            @include txt-color(0.055, "bg");
         }
         &__new-session-btn {
             @include center;

@@ -66,7 +66,7 @@ type TimePickerOptions = {
     start?: number
 }
 
-type TimeString = `${number}h` | `${number}m` | `${number}s`
+type TimeString = `${number}h` | `${number}m` | `${number}s` | `${number}d`
 
 type DropdownBtnOptions = {
     pickedOptionName: string | null

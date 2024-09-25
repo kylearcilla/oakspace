@@ -6,7 +6,7 @@
     export let type: "youtube" | "spotify"
     import { page } from '$app/stores'
 	import { YoutubePlayer } from "$lib/youtube-player";
-    export let isFloating = false
+    export let isFloating = true
 
     const MAX_PLAYER_WIDTH = 600
     const MIN_PLAYER_WIDTH = 100

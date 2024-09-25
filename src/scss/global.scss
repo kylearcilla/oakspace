@@ -396,6 +396,10 @@ $screen-xl: 112.5em;   // extra large (1800 px)
                 rgba(#0C8CE9, 0.1) 0px 0px 0px 2.5px;
 }
 
+@mixin shadow-border($color, $width: 1.5px) {
+    box-shadow: inset $color 0px 0px 0px $width;
+}
+
 [role="button"]:focus-visible {
     @include border-focus;
 }
@@ -1078,4 +1082,16 @@ $loading-dots-width: 4px;
 .ambient-dark-clear {
     border: 2px solid rgba(white, 0.035) !important;
     background: rgba(black, 0.5) !important;
+}
+
+.bg-img {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+@mixin flex-col($val: space-between) {
+    display: flex;
+    flex-direction: column;
+    justify-content: $val;
 }

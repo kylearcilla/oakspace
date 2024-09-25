@@ -233,7 +233,7 @@
                         subtask: { 
                             fontSize: "1.2rem",
                             fontWeight: "500",
-                            padding: "6px 0px 9px 0px",
+                            padding: "5px 0px 8px 0px",
                             opacity: 0.65
                         },
                         description: { 
@@ -244,7 +244,7 @@
                         },
                         checkbox: {
                             width: "11px",
-                            borderRadius: "4px",    
+                            borderRadius: "2px",    
                             height: "11px",
                             margin: "1px 12px 0px 17px"
                         }

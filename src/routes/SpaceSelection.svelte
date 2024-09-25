@@ -126,8 +126,8 @@
                 <div 
                     bind:this={carouselRef}
                     on:scroll={() => handleCarouselScroll(carouselRef)}
-                    style={carouselGradient}
                     class="spaces__content-carousel scroll-bar-hidden"
+                    style={carouselGradient}
                 >
                     {#each chosenGroup.wallpapers as item}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->

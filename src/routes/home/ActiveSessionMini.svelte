@@ -112,13 +112,14 @@
 
 <style lang="scss">
     .active-session {
-        background-color: rgba(var(--textColor1), 0.065);
         @include flex(center);
-        height: 100%;
-        padding: 0px 5px 0px 9px;
+        height: 26px;
+        padding: 0px 5px 0px 7px;
         border-radius: 15px;
         margin: 0px 0px 0px 0px;
         z-index: 5;
+        transition: 0.04s ease-in-out;
+        background-color: rgba(var(--textColor1), 0.055);
 
         --fg-color: rgba(196, 234, 47);
 
@@ -126,7 +127,6 @@
             @include divider(0.12, 9px, 1px);
             margin: 0px 8px 0px 9px;
         }
-
         &--ambience {
             height: 32px;
             padding: 0px 8px 0px 9px;
@@ -155,7 +155,7 @@
         }
         &__ring-container {
             @include center;
-            transform: scale(0.94);
+            transform: scale(0.875);
             height: 24px;
             width: 24px;
         }
@@ -178,15 +178,15 @@
             animation: glow-anim 4s ease-in-out infinite;
         }
         &__time {
-            @include text-style(1, 400, 1.12rem, "DM Mono");
+            @include text-style(1, 400, 1.05rem, "DM Mono");
             color: var(--fg-color);
         }
         &__emoji {
             margin-right: 6px;
         }
         &__message {
-            @include text-style(0.95, 500, 1.175rem, "Manrope");
-            margin: -1.5px 8px 0px 0px;
+            @include text-style(0.95, 500, 1.18rem, "Manrope");
+            margin: -1.5px 9px 0px 0px;
             max-width: 80px;
             @include elipses-overflow;
         }
@@ -200,8 +200,8 @@
             background-repeat: no-repeat;
         }
         &__progress {
-            @include text-style(0.25, 400, 1.12rem, "DM Mono");
-            margin: -1px 15px 0px 0px;
+            @include text-style(0.25, 400, 1.18rem, "DM Mono");
+            margin: 0px 15px 0px 0px;
         }
         &__btns {
             @include flex(center);

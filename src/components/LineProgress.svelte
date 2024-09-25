@@ -20,7 +20,7 @@
         const count = Math.ceil(lineNumber * progress)
 
         for (let i = 0; i < count; i++) {
-            lines[i]!.style.backgroundColor = 'rgba(var(--textColor1), 0.1)'
+            lines[i]!.style.backgroundColor = 'rgba(var(--textColor1), 0.125)'
         }
     }
 
@@ -46,11 +46,11 @@
         display: flex;
 
         &__line {
-            height: px;
+            height: 8px;
             border-radius: 10px;
             width: 2px;
             margin-right: 2px;
-            background-color: rgba(var(--textColor1), 0.05);
+            background-color: rgba(var(--textColor1), 0.03);
         }
     }
 </style>

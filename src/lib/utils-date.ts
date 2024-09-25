@@ -354,6 +354,12 @@ export function getNextMonth(fromDate: Date): Date {
     return nextMonth
 }
 
+export function getMonthStr(date: Date, format: "long" | "med" | "min" = "med") {
+    const substrNum = format === "long" ? undefined : format === "med" ? 3 : 1
+
+    return months[date.getMonth()].substring(0, substrNum)
+}
+
 /**
  * 
  * @param fromDate  
@@ -361,6 +367,14 @@ export function getNextMonth(fromDate: Date): Date {
  */
 export function getPrevMonth(fromDate: Date): Date {
     return new Date(fromDate.setDate(0))
+}
+
+export function getPrevMonthFirstDay(fromDate: Date): Date {
+    return new Date(fromDate.getFullYear(), fromDate.getMonth() - 1, 1)
+}
+
+export function getFirstDayOfMonth(date: Date) {
+    return new Date(date.getFullYear(), date.getMonth(), 1)
 }
 
 /**
@@ -731,6 +745,9 @@ export function addToDate(arg: { date: Date, time: TimeString | number }): Date 
             break;
         case 's':
             newDate.setSeconds(newDate.getSeconds() + value)
+            break;
+        case 'd':
+            newDate.setDate(newDate.getDate() + value)
             break;
         default:
             throw new Error('Invalid time unit')

@@ -1,11 +1,10 @@
 import { get, writable, type Writable } from "svelte/store"
 
 import { APIError } from "./errors"
-import { APIErrorCode, LogoIcon, RightSideTab } from "./enums"
+import { APIErrorCode, LogoIcon } from "./enums"
 
 import { toast } from "./utils-toast"
-import { TEST_INBOX_TASKS } from "./utils-right-bar"
-import { getCheerEmoji, getElemById, removeItemFromArray, toastApiErrorHandler } from "./utils-general"
+import { getCheerEmoji, removeItemFromArray, toastApiErrorHandler } from "./utils-general"
 import { 
         addTodoistTask, authTodoistAPI, deleteTodoistTask, didTodoistAPIRedirect, 
         initTodoistAPI, syncTodoistUserItems, updateTodoistTask, 
@@ -19,14 +18,9 @@ import {
  */
 export class TasksViewManager {
     /* Groups */
-    taskGroups: TaskGroup[] = []
-    todoistTasks: TaskGroup | null = null
-    currTaskGroup: TaskGroup = TEST_INBOX_TASKS
-
-    currTaskGroupIdx = -1     // used to idx user task group (not including todoist + inbox)
-    currTaskGroupAbsIdx = -1  // used in dropdown list
-    isMakingNewGroup = false
-    isEditingGroup = false
+    todoistTasks: Task[] | null = null
+    currTasks!: Task[]
+    inboxTasks!: Task[]
 
     /* Todoist */
     onTodoist = false
@@ -34,21 +28,10 @@ export class TasksViewManager {
     todoistLinked = false
     todoistAccessToken = ""
     todoistSyncToken = ""
-
-    /* Input Values */
-    newText = ""
     
-    /* UI */
-    selectedTab: RightSideTab = RightSideTab.TASKS
-    hasUsedEditShortcut = false
-
-    textAreaHasSpellCheck = false
-    hasInputBlurred = false
     store!: Writable<TasksViewManager>
 
     LOADING_TOAST_DURATION = 15_000
-
-    static TASK_GROUP_INPUT_ID = "task-group-input"
 
     SYNC_TODOIST_OPTION: DropdownListItem = {
         name: "Sync Todoist",
@@ -83,24 +66,15 @@ export class TasksViewManager {
         ]
     }
 
-    constructor(taskGroups: TaskGroup[]) {
+    constructor(inboxTasks: Task[]) {
         this.store = writable(this)
-        this.taskGroups = taskGroups
+        this.inboxTasks = inboxTasks
         
         if (this.hasSession()) {
             this.loadAndSetPlayerData()
         }
         else {
-            this.currTaskGroupIdx = taskGroups.length === 0 ? -1 : 0
-            this.currTaskGroupAbsIdx = this.todoistLinked ? 1 : 0
-            this.currTaskGroup = TEST_INBOX_TASKS
-            
-            this.update({
-                taskGroups,
-                currTaskGroup: this.currTaskGroup,
-                currTaskGroupAbsIdx: this.currTaskGroupAbsIdx,
-                currTaskGroupIdx: this.currTaskGroupIdx
-            })
+            this.currTasks = this.inboxTasks
         }
         if (didTodoistAPIRedirect()) {
             toast("promise",
@@ -126,190 +100,8 @@ export class TasksViewManager {
         this.saveStateData(state)
     }
 
-    /* Edits  */
-
-    initNewGroupEdit() {
-        this.isMakingNewGroup = true
-
-        this.update({
-            isMakingNewGroup: this.isMakingNewGroup,
-        })
-
-        requestAnimationFrame(() => {
-            getElemById(TasksViewManager.TASK_GROUP_INPUT_ID)!.focus()
-        })
-    }
-    
-    initEditGroupEdit() {
-        this.isEditingGroup = true
-        
-        this.update({
-            isEditingGroup: this.isEditingGroup,
-        })
-
-        requestAnimationFrame(() => {
-            getElemById(TasksViewManager.TASK_GROUP_INPUT_ID)!.focus()
-        })
-    }
-
-    /**
-     * 
-     * @param event    Input event.
-     * 
-     * On input handler for editing task groups.
-     */
-    inputTextHandler(event: Event) {
-        const inputElem = event.target as HTMLInputElement
-        this.newText = inputElem.value
-    }
-
-    /**
-     * On blur handler for edit task group.
-     * @param event    Focus event.
-     */
-    onInputBlurHandler() {
-        return
-        this.finishGroupEdit()
-    }
-
-    /* Groups */
-
-    /**
-     * Get tasks from ta task group.
-     * 
-     * @param   taskGroupIdx  Task group idx whose tasks are desired.
-     * @returns tasks of a given group
-     */
-    getTaskGroupTasks(taskGroupIdx: number) {
-        return this.taskGroups[taskGroupIdx]
-    }
-
-    /**
-     * Update current, in-view task group.
-     * 
-     * @param taskGroup Task group to be viewed. 
-     */
-    updateTaskGroup(options: {
-        taskGroup: TaskGroup, 
-        idx: number, 
-        onTodoist?: boolean
-    }) {
-        const { taskGroup, idx, onTodoist = false } = options
-        this.currTaskGroup = taskGroup
-        this.currTaskGroupIdx = idx
-        this.onTodoist = onTodoist
-
-        this.update({
-            currTaskGroup: this.currTaskGroup,
-            currTaskGroupIdx: this.currTaskGroupIdx,
-            onTodoist: this.onTodoist
-        })
-    }
-
-    /**
-     * 
-     * Saves edit changes. Used for making new groups or editing roups.
-     */
-    finishGroupEdit() {
-        this.newText = this.newText ? this.newText : "Untitled"
-
-        if (this.isEditingGroup && this.currTaskGroupIdx >= 0) {
-            this.taskGroups[this.currTaskGroupIdx].title = this.newText
-        }
-        else if (this.isMakingNewGroup) {
-            this.taskGroups.push({ title: this.newText, tasks: [] })
-        }
-        
-        // update current
-        if (this.isEditingGroup) {
-            this.currTaskGroup = this.taskGroups[this.currTaskGroupIdx]
-        }
-        else {
-            this.currTaskGroup = this.taskGroups[this.taskGroups.length - 1]
-        }
-
-        const title = this.newText
-        const wasMakingNewGroup = this.isMakingNewGroup
-
-        this.newText = ""
-        this.isEditingGroup = false
-        this.isMakingNewGroup = false
-
-        this.update({ 
-            newText: "",
-            isEditingGroup: false,
-            isMakingNewGroup: false,
-            currTaskGroup: this.currTaskGroup,
-            taskGroups: this.taskGroups
-        })
-
-        if (wasMakingNewGroup) {
-            this.initToast({ message: `New group "${title}" created.` })
-        }
-    }
-
-    /**
-     * Deletes current task group.
-     */
-    deleteTaskGroup() {
-        const title = this.currTaskGroup.title
-        this.taskGroups = this.taskGroups.filter((group: TaskGroup) => {
-            return group.title != this.currTaskGroup.title
-        })
-
-        if (this.taskGroups.length === 0) {
-            this.updateTaskGroup({ 
-                taskGroup: TEST_INBOX_TASKS, 
-                idx: -1
-            })
-        }
-        else {
-            const newIdx = Math.max(this.currTaskGroupIdx - 1, 0)
-            this.updateTaskGroup({ 
-                taskGroup: this.taskGroups[newIdx],
-                idx: newIdx
-            })
-        }
-
-        this.update({ taskGroups: this.taskGroups })
-        this.initToast({ message: `"${title}" successfully deleted.` })
-    }
-
     /* Dropdown Handlers */
 
-    /**
-     * Task group dropdown list handler
-     * @param orderIdx   Task group drpodown order idx.
-     */
-    taskGroupDropdownHandler(orderIdx: number) {
-        const todoistLinked = this.todoistLinked
-
-        if (orderIdx === 0 && todoistLinked) {
-            this.updateTaskGroup({ 
-                taskGroup: this.todoistTasks!, 
-                idx: -1,
-                onTodoist: true
-            })
-        }
-        else if ((orderIdx === 1 && todoistLinked) || orderIdx === 0) {
-            this.updateTaskGroup({ 
-                taskGroup: TEST_INBOX_TASKS, 
-                idx: -1,
-                onTodoist: false
-            })
-        }
-        else {
-            const idx = orderIdx - (todoistLinked ? 2 : 1)
-            this.updateTaskGroup({ 
-                taskGroup: this.taskGroups[idx], 
-                idx,
-                onTodoist: false
-            })
-        }
-        this.update({
-            currTaskGroupAbsIdx: orderIdx
-        })
-    }
 
     loginTodoist() {
         this.initTodoist()
@@ -331,10 +123,9 @@ export class TasksViewManager {
         this.todoistAccessToken = ""
         this.todoistSyncToken = ""
 
-        this.updateTaskGroup({ 
-            taskGroup: TEST_INBOX_TASKS,
-            idx: -1
-        })
+        this.todoistTasks = []
+        this.currTasks = this.inboxTasks
+
         this.initToast({
             icon: LogoIcon.Todoist,
             message: "Account disconnected."
@@ -352,16 +143,14 @@ export class TasksViewManager {
         try {
             const authRes = await authTodoistAPI()
             this.todoistAccessToken = authRes.access_token
-            await this.getTodistUserItems()
+            await this.initTodistUserItems()
 
             this.todoistLinked = true
+            this.currTasks = this.todoistTasks!
+            
             this.update({ 
-                todoistLinked: true  
-            })
-            this.updateTaskGroup({ 
-                taskGroup: this.todoistTasks!,
-                idx: -1,
-                onTodoist: true
+                todoistLinked: true,
+                currTasks: this.currTasks
             })
         }
         catch(error: any) {
@@ -369,7 +158,7 @@ export class TasksViewManager {
         }
     }
 
-    async getTodistUserItems() {
+    async initTodistUserItems() {
         try {
             const { tasks, syncToken, projectId } = await syncTodoistUserItems({ 
                 accessToken: this.todoistAccessToken,
@@ -377,7 +166,7 @@ export class TasksViewManager {
                 syncToken: "*"
             })
 
-            this.todoistTasks = { title: "Inbox", tasks }
+            this.todoistTasks = tasks
             this.todoistSyncToken = syncToken
             
             if (projectId) {
@@ -440,7 +229,7 @@ export class TasksViewManager {
                 inboxProjectId: this.todoistInboxProjectId
             })
 
-            const todoistTasks = this.todoistTasks!.tasks
+            const todoistTasks = this.todoistTasks!
             const updatedTasks: Task[] = []
             const newSubtasks: Subtask[] = []
             
@@ -511,11 +300,9 @@ export class TasksViewManager {
             }
     
             this.todoistSyncToken = syncToken
-            this.todoistTasks = { 
-                title: "Inbox", tasks: TasksViewManager.sortTasks(updatedTasks)
-            }
+            this.todoistTasks = TasksViewManager.sortTasks(updatedTasks)
 
-            this.update({ currTaskGroup: this.todoistTasks })
+            this.update({ currTasks: this.todoistTasks })
         }
         catch(e) {
             this.onError(new APIError(APIErrorCode.GENERAL, "There was an error syncing your Todoist data."))
@@ -552,7 +339,7 @@ export class TasksViewManager {
                 // if (couldOccurSameDay) {
                 //     this.initPartialSync()
                 // }
-                this.todoistTasks = { ...this.todoistTasks!, tasks }
+                this.todoistTasks = tasks
             }
             else if (this.todoistLinked) {
                 await updateTodoistTask({
@@ -564,7 +351,7 @@ export class TasksViewManager {
                 })
             }
 
-            this.currTaskGroup = { ...this.currTaskGroup, tasks }
+            this.currTasks = tasks
 
             if (action != "complete") return
 
@@ -592,10 +379,10 @@ export class TasksViewManager {
                     name
                 })).taskId
 
-                this.todoistTasks = { ...this.todoistTasks!, tasks }
+                this.todoistTasks = tasks
             }
+            this.currTasks = tasks
 
-            this.currTaskGroup = { ...this.currTaskGroup, tasks }
             this.initUndoHandler({
                 name, 
                 action: "add", 
@@ -620,7 +407,7 @@ export class TasksViewManager {
                 })
             }
 
-            this.currTaskGroup = { ...this.currTaskGroup, tasks }
+            this.currTasks = tasks
             this.initUndoHandler({
                 name, 
                 action: "delete", 
@@ -645,18 +432,17 @@ export class TasksViewManager {
     }) {
         const { action, name, func } = context
         const todoist = this.todoistLinked
-        const group = this.currTaskGroup
 
         if (action === "add" && todoist) {
             this.initToast({
                 icon: LogoIcon.Todoist,
-                message: `"${name}" added to ${!todoist ? `"${group.title}"` : "your Inbox"}.`
+                message: `"${name}" added to from your ${todoist ? "Todoist" : ""} Inbox`
             })
         } 
         else if (action === "delete") {
             this.initUndoToast({
                 icon: !todoist ? undefined : LogoIcon.Todoist,
-                description: `"${name}" deleted from ${!todoist ? `${group.title}` : "your Inbox"}.`,
+                description: `"${name}" deleted from your ${todoist ? "Todoist" : ""} Inbox`,
                 func
             })
         }
@@ -711,17 +497,22 @@ export class TasksViewManager {
     }
 
     getTaskSettingsDropdown(): DropdownListItem[] {
-        const nativeTaskOptions = {
-            options: [
-                { name: "New Group" },
-                ...(this.currTaskGroup.title === "Inbox" || this.onTodoist ? [] : [{ name: "Rename Group" }]),
-                ...(this.currTaskGroup.title === "Inbox" || this.onTodoist ? [] : [{ name: "Delete Group" }])
+        const hasTodoist = this.todoistLinked
+
+        if (hasTodoist) {
+            return [
+                {
+                    options: [
+                        { name: "Inbox" },
+                        { name: "Todoist" },
+                    ]
+                },
+                this.SYNCED_TODOIST_OPTIONS,
             ]
         }
-        return [
-            nativeTaskOptions, 
-            this.todoistLinked ? this.SYNCED_TODOIST_OPTIONS : this.SYNC_TODOIST_OPTION as DropdownListItem
-        ]
+        else {
+            return [this.SYNC_TODOIST_OPTION]
+        }
     }
 
     /**
@@ -755,9 +546,6 @@ export class TasksViewManager {
 
     saveStateData(state: TasksViewManager) {
         localStorage.setItem("tasks", JSON.stringify({
-            currTaskGroup: state.currTaskGroup!,
-            currTaskGroupIdx: state.currTaskGroupIdx!,
-            currTaskGroupAbsIdx: state.currTaskGroupAbsIdx!,
             onTodoist: state.onTodoist!,
             todoistInboxProjectId: state.todoistInboxProjectId!,
             todoistLinked: state.todoistLinked!,
@@ -771,9 +559,6 @@ export class TasksViewManager {
         if (!this.hasSession()) return
         const savedData = JSON.parse(localStorage.getItem("tasks")!) as Partial<TasksViewManager>
 
-        this.currTaskGroup = savedData.currTaskGroup!
-        this.currTaskGroupIdx = savedData.currTaskGroupIdx!
-        this.currTaskGroupAbsIdx = savedData.currTaskGroupAbsIdx!
         this.onTodoist = savedData.onTodoist!
         this.todoistInboxProjectId = savedData.todoistInboxProjectId!
         this.todoistLinked = savedData.todoistLinked!
@@ -795,15 +580,8 @@ export class TasksViewManager {
      * @returns         New state with the latest incorporated changes.
      */
     getNewStateObj(oldState: TasksViewManager, newState: Partial<TasksViewManager>): TasksViewManager {
-        if (newState.newText != undefined)               oldState.newText = newState.newText
-        if (newState.currTaskGroupIdx != undefined)      oldState.currTaskGroupIdx = newState.currTaskGroupIdx
-        if (newState.currTaskGroupAbsIdx != undefined) oldState.currTaskGroupAbsIdx = newState.currTaskGroupAbsIdx
         if (newState.todoistLinked != undefined)         oldState.todoistLinked = newState.todoistLinked
         if (newState.onTodoist != undefined)             oldState.onTodoist = newState.onTodoist
-        if (newState.taskGroups != undefined)            oldState.taskGroups = newState.taskGroups
-        if (newState.isEditingGroup != undefined)        oldState.isEditingGroup = newState.isEditingGroup
-        if (newState.currTaskGroup != undefined)         oldState.currTaskGroup = newState.currTaskGroup
-        if (newState.isMakingNewGroup != undefined)      oldState.isMakingNewGroup = newState.isMakingNewGroup
 
         return oldState
     }

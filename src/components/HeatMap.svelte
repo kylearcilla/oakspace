@@ -158,8 +158,8 @@
         margin-right: 2px;
     }
     &__cell {
-        width: 14.5px;
-        height: 14.5px;
+        width: 13px;
+        height: 13px;
         border-radius: 5px;
         background-color: rgba(var(--fgColor1), 0.0285);
         position: relative;

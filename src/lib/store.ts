@@ -11,7 +11,6 @@ import type { DatePickerManager } from './date-picker-manager'
 import type { MusicSettingsManager } from './music-settings-manager'
 import { WEEKLY_ROUTINES } from '../tests/routines/routines.data'
 import type { YoutubeMusicUserData } from './youtube-music-user-data'
-import { TEST_AMBIENT } from './mock-data'
 
 /* App UI State */
 export const globalContext = writable<GlobalContext>({
@@ -19,6 +18,7 @@ export const globalContext = writable<GlobalContext>({
     rightBarOpen: true,
     isVideoViewOpen: false,
     freeFloatYt: false,
+    leftBar: "wide-float",
     isMusicPlayerOpen: false,
     hasToaster: false,
     minModeSrc: null,

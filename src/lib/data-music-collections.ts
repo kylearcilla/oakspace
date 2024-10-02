@@ -1,67 +1,12 @@
-import { MusicMediaType, MusicMoodCategory } from "./enums"
+import { MusicMediaType } from "./enums"
 
-import sereneImg   from '$lib/images/collection-serene.png'
-import sereneImgBg from '$lib/images/collection-serene-bg.png'
-
-import upbeatImg   from '$lib/images/collection-upbeat.png'
-import upbeatImgBg from '$lib/images/collection-upbeat-bg.png'
-
-import soundtracksImg   from '$lib/images/collection-soundtracks.png'
-import soundtracksImgBg from '$lib/images/collection-soundtracks-bg.png'
-
-import acousticImg   from '$lib/images/collection-acoustic.png'
-import acousticImgBg from '$lib/images/collection-acoustic-bg.png'
-
-import zenImg   from '$lib/images/collection-zen.png'
-import zenImgBg from '$lib/images/collection-zen-bg.png'
-
-import podcastsImg  from '$lib/images/collection-pod.png'
-import podcastsImgBg from '$lib/images/collection-pod-bg.png'
-
-
-export const musicCategories: MusicCollectionCategory[] = [
-    {
-        moodType: MusicMoodCategory.Serene,
-        artworkSrc: sereneImg,
-        artworkBlurredSrc: sereneImgBg,
-        artistCredit: "Art by KangHee Kim",
-        description: "Music for maximum chill & serenity."
-    },
-    {
-        moodType: MusicMoodCategory.Upbeat,
-        artworkSrc: upbeatImg,
-        artworkBlurredSrc: upbeatImgBg,
-        artistCredit: "Art by David Stenbeck",
-        description: "Music to spark your energy and uplift the soul.",
-    },
-    {
-        moodType: MusicMoodCategory.Soundtracks,
-        artworkSrc: soundtracksImg,
-        artworkBlurredSrc: soundtracksImgBg,
-        artistCredit: "Art by Studio Ghibli",
-        description: "Iconic sountracks for cinematic experiences.",
-    },
-    {
-        moodType: MusicMoodCategory.Acoustic,
-        artworkSrc: acousticImg,
-        artworkBlurredSrc: acousticImgBg,
-        artistCredit: "",
-        description: "Intimate, soft, and stripped-down arrangements for the soul.",
-    },
-    {
-        moodType: MusicMoodCategory.Zen,
-        artworkSrc: zenImg,
-        artworkBlurredSrc: zenImgBg,
-        artistCredit: "",
-        description: "Soothing & ambient sounds for tranquility and inner piece.",
-    },
-    {
-        moodType: MusicMoodCategory.Podcasts,
-        artworkSrc: podcastsImg,
-        artworkBlurredSrc: podcastsImgBg,
-        artistCredit: "Art by Ana Montiel",
-        description: "Engaging stores and thought-provoking conversations.",
-    },
+export const musicCategories: MusicCollectionGroup[] = [
+    "serene",
+    "upbeat",
+    "soundtracks",
+    "acoustic",
+    "zen",
+    "podcasts"
 ]
 
 export const sereneCollections: DiscoverCollection = {
@@ -74,7 +19,7 @@ export const sereneCollections: DiscoverCollection = {
             genre: "Lofi",
             length: 65,
             id: "PLTlW3nrfe71TabdQItclMVN0x2H8Rq6Z1",
-            url: "https://music.apple.com/ca/playlist/piano-chill/PLTlW3nrfe71TabdQItclMVN0x2H8Rq6Z1",
+            url: "",
             type: MusicMediaType.Playlist,
             description: "Hazy, easy sounds for lean-back listening."
         },
@@ -86,7 +31,7 @@ export const sereneCollections: DiscoverCollection = {
             genre: "Ambient",
             length: 59,
             id: "PLTlW3nrfe71QpwBh8TyZHVzuvad68XYg4",
-            url: "https://music.apple.com/ca/playlist/piano-chill/PLTlW3nrfe71QpwBh8TyZHVzuvad68XYg4",
+            url: "",
             type: MusicMediaType.Playlist,
             description: "Relaxing journeys in ambient music."
         },
@@ -98,7 +43,7 @@ export const sereneCollections: DiscoverCollection = {
             genre: "Lofi",
             length: 70,
             id: "PLTlW3nrfe71Q1zHvXoeNJYTQQYmce466t",
-            url: "https://music.apple.com/ca/playlist/piano-chill/PLTlW3nrfe71Q1zHvXoeNJYTQQYmce466t",
+            url: "",
             type: MusicMediaType.Playlist,
             description: "Chillest instrumental beats from around the world."
         },
@@ -113,7 +58,7 @@ export const sereneCollections: DiscoverCollection = {
             genre: "Classical",
             length: 70,
             id: "PLTlW3nrfe71Q88-91GFFmHxyJnNC5boub",
-            url: "https://music.apple.com/ca/playlist/piano-chill/PLTlW3nrfe71Q88-91GFFmHxyJnNC5boub",
+            url: "",
             type: MusicMediaType.Playlist,
             description: "Wall-to-wall favorites, from glorious piano music to symphonic and operatic greats."
         },
@@ -125,7 +70,7 @@ export const sereneCollections: DiscoverCollection = {
             genre: "Multi-Genre",
             length: 40,
             id: "PLTlW3nrfe71R79NHsTg5krL0xgmq4jYZo",
-            url: "https://music.apple.com/ca/playlist/piano-chill/PLTlW3nrfe71R79NHsTg5krL0xgmq4jYZo",
+            url: "",
             type: MusicMediaType.Playlist,
             description: "Blissed-out beats to leave you floating on air."
         },
@@ -137,7 +82,7 @@ export const sereneCollections: DiscoverCollection = {
             genre: "Alternative / Indie",
             length: 90,
             id: "PLTlW3nrfe71TntFrm1qK_VH-jx58Gbuam",
-            url: "https://music.apple.com/ca/playlist/piano-chill/PLTlW3nrfe71TntFrm1qK_VH-jx58Gbuam",
+            url: "",
             type: MusicMediaType.Playlist,
             description: "The best of the from the  altenative & indie genres."
         },
@@ -152,7 +97,7 @@ export const sereneCollections: DiscoverCollection = {
             genre: "Lofi",
             length: 20,
             id: "PLTlW3nrfe71R4__x5h3omOh8FXf1nf8Up",
-            url: "https://music.apple.com/ca/playlist/piano-chill/PLTlW3nrfe71R4__x5h3omOh8FXf1nf8Up",
+            url: "",
             type: MusicMediaType.Playlist,
             description: "Relaxed vibes for the gamers out there."
         },
@@ -164,7 +109,7 @@ export const sereneCollections: DiscoverCollection = {
             genre: "Soul / Neo-Soul",
             length: 59,
             id: "PLTlW3nrfe71RZQR90Gv67YoZiH5pGpsU0",
-            url: "https://music.apple.com/ca/playlist/piano-chill/PLTlW3nrfe71RZQR90Gv67YoZiH5pGpsU0",
+            url: "",
             type: MusicMediaType.Playlist,
             description: "Erykah Badu. D'Angelo. Marvin Gaye. And More."
         },
@@ -335,7 +280,7 @@ export const soundtrackCollections: DiscoverCollection = {
             id: "PLTlW3nrfe71TcoCmzexpQIfOChGRVf2kQ",
             url: "https://www.youtube.com/playlist?list=PLTlW3nrfe71TcoCmzexpQIfOChGRVf2kQ",
             type: MusicMediaType.Playlist,
-            description: '"Better a pig than a fascist."'
+            description: '"Once you do something, you never forget. Even if you can\'t remember."'
         },
         {
             name: "Animation",

@@ -1,16 +1,15 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte"
     
+	import { TEST_TASKS } from "$lib/utils-right-bar"
     import { globalContext, themeState } from "$lib/store"    
 	import { clamp, clickOutside } from "$lib/utils-general"
-	import { TEST_TASK_GROUPS } from "$lib/utils-right-bar"
 	import { TasksViewManager } from "$lib/tasks-view-manager"
 	import { ProductivityCalendar } from "$lib/productivity-calendar"
 	import { closeModal, openModal, setShortcutsFocus } from "$lib/utils-home"
 	import { RightSideTab, ShortcutSectionInFocus, Icon, ModalType } from "$lib/enums"
 	import { formatDatetoStr, formatTimeToHHMM, isNightTime, prefer12HourFormat } from "$lib/utils-date"
 
-	import Tasks from "./Tasks.svelte"
 	import Overview from "./Overview.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
 	import ImgUpload from "../../components/ImgUpload.svelte"
@@ -21,11 +20,10 @@
     $: isLightTheme = !$themeState.isDarkTheme
     $: ambient = $globalContext.ambience
 
-    let selectedTab: RightSideTab = RightSideTab.OVERVIEW
     let headerRef: HTMLElement
 
     /* tasks + overview */
-    let tasks = new TasksViewManager(TEST_TASK_GROUPS)
+    let tasks = new TasksViewManager(TEST_TASKS)
     let calendar = new ProductivityCalendar(null)
     
     /* time */
@@ -37,8 +35,8 @@
     /* header image */
     let opacity = 0.5
     let settingsOpen = false
-    // let bgImgSrc = "https://i.pinimg.com/originals/9b/a2/8f/9ba28fe01fc1a24b757bf972a40a7339.gif"
-    let bgImgSrc = ""
+    let bgImgSrc = "https://i.pinimg.com/originals/7d/04/0e/7d040e94931427709008aaeda14db9c8.gif"
+    // let bgImgSrc = ""
     let showHeaderImg = true
     let showSettingsBtn = false
 
@@ -79,7 +77,7 @@
             isDragging = true
         }
         if (isDragging) {
-            topOffset = clamp(-MAX, (ogTopOffset + -offset), 0)
+            topOffset = clamp(-(MAX + 30), (ogTopOffset + -offset), 0)
         }
     }
     function onPointerUp(pe: PointerEvent) {
@@ -97,12 +95,6 @@
     }
 
     /* General UI Handlers */
-    function handleTabClicked(newTab: RightSideTab) {
-        if (newTab === RightSideTab.TASKS) {
-            
-        }
-        selectedTab = newTab
-    }
     function imgSettingsHandler(context: DropdownItemClickedContext) {
         const target   = context.event.target as HTMLElement
         const optnText = target.innerText.trim()
@@ -181,19 +173,27 @@
                 >
             </div>
         </div>
-        <div class="bar__header-overlay" style:background={`rgba(0, 0, 0, ${opacity}`}>
+        <div 
+            class="bar__header-overlay" 
+            style:background={`rgba(0, 0, 0, ${opacity}`}
+        >
         </div>
         <!-- Header -->
         <div class="bar__header-time-date">
+            <!-- Header Date -->
             <div class="bar__header-date">
-                {`${formatDatetoStr(new Date(), { weekday: "short", day: "2-digit", month: "short" })}`}
-                {#if !bgImgSrc}
+                {#if !bgImgSrc || !showHeaderImg}
+                    {`${formatDatetoStr(new Date(), { weekday: "long" })}`}
                     <button 
                         class="bar__header-date-time"
                         on:click={toggleTimeFormatting}
                     >
                         {currentTimeStr}
                     </button>
+                {:else}
+                    {`${formatDatetoStr(new Date(), { weekday: "short", day: "2-digit", month: "short" })}`}
+                {/if}
+                {#if !bgImgSrc}
                     <div class="bar__header-day-icon bar__header-day-icon--top">
                         {#if isDayTime}
                             <SvgIcon icon={Icon.ColorSun} options={{ scale: 0.65 }} />
@@ -203,6 +203,7 @@
                     </div>
                 {/if}
             </div>
+            <!-- Time -->
             <button 
                 class="bar__header-time-container"
                 on:click={toggleTimeFormatting}
@@ -219,9 +220,7 @@
                 </div>
             </button>
         </div>
-        <div 
-            class="bar__header-blur-layer"
-        >
+        <div class="bar__header-blur-layer">
             <div 
                 class="blur-bg blur-bg--blurred-bg"
                 style:background={`rgba(0, 0, 0, ${0.1})`}
@@ -229,28 +228,8 @@
             </div>
         </div>
     </div>
-    <div class="bar__tab-btns">
-        <button 
-            on:click={() => handleTabClicked(RightSideTab.OVERVIEW)}
-            class="bar__tab-btn"
-            class:bar__tab-btn--active={selectedTab === RightSideTab.OVERVIEW}
-        >
-            Overview
-        </button>
-        <button 
-            on:click={() => handleTabClicked(RightSideTab.TASKS)}
-            class="bar__tab-btn"
-            class:bar__tab-btn--active={selectedTab === RightSideTab.TASKS}
-        >
-            Tasks            
-        </button>
-    </div>
     <div class="bar__main-content">
-        {#if selectedTab === RightSideTab.TASKS}
-            <Tasks manager={tasks} />
-        {:else if selectedTab === RightSideTab.OVERVIEW}
-            <Overview {calendar} />
-        {/if}
+        <Overview {calendar} {tasks} />
     </div>
 
     <!-- Header Img Stuff -->
@@ -356,23 +335,6 @@
                 display: none;
             }
         }
-        &--light-theme .tab-btn {
-            background-color: var(--sidePanelTabBgColor);
-            font-size: 1.3rem;
-            @include tab-btn-light;
-            margin-bottom: 7px;
-
-            &--selected {
-                background-color: var(--sidePanelTabHighlightColor);
-            }
-        }
-        &--light-theme &__tab-btns {
-            position: relative;
-            margin-bottom: 9px;
-            top: 0px;
-            left: 0px;
-            margin-left: calc($side-padding / 2);
-        }
         &--light-theme &__main-content {
             height: calc(100% - 130.5px);
         }
@@ -396,24 +358,18 @@
         }
         &--empty &__header-time-date {
             opacity: 0.8;
-            display: none;
-        }
-        &--empty &__tab-btns {
-            top: 10px;
-        }
-        &--empty &__tab-btn {
-            margin-right: 10px;
         }
         &--empty &__main-content {
-            height: calc(100% - 58px);   
+            margin-top: 34px;
+            height: calc(100% - 45px);
         }
         
         /* Top Header */
         &__header {
             width: 100%;
             margin: 0px 0px 13px 0px;
-            height: 75px;
-            position: relative;
+            height: 85px;
+            @include abs-top-left;
 
             &-img-wrapper {
                 height: 100%;
@@ -498,19 +454,19 @@
             -webkit-mask-image: linear-gradient(
                     180deg, 
                     transparent 0%, 
-                    rgba(0, 0, 0, 0.45) 9px, 
-                    rgba(0, 0, 0, 0.64) 25px, 
-                    rgba(0, 0, 0, 1) 75px, 
-                    rgba(0, 0, 0, 1) 85%, 
+                    rgba(0, 0, 0, 0.45) 10px, 
+                    rgba(0, 0, 0, 0.64) 35px, 
+                    rgba(0, 0, 0, 1) 70px, 
+                    rgba(0, 0, 0, 1) 95%, 
                     transparent 100%
             );
             mask-image: linear-gradient(
                     180deg, 
                     transparent 0%, 
-                    rgba(0, 0, 0, 0.45) 9px, 
-                    rgba(0, 0, 0, 0.64) 25px, 
-                    rgba(0, 0, 0, 1) 75px, 
-                    rgba(0, 0, 0, 1) 85%, 
+                    rgba(0, 0, 0, 0.45) 10px, 
+                    rgba(0, 0, 0, 0.64) 35px, 
+                    rgba(0, 0, 0, 1) 70px, 
+                    rgba(0, 0, 0, 1) 95%, 
                     transparent 100%
             );
         }
@@ -529,30 +485,11 @@
                 @include visible(1);
             }
         }
-        &__tab-btns {
-            @include flex(center);
-            @include abs-top-left(55px, $side-padding - 3px);
-            z-index: 2;
-        }
-        &__tab-btn {
-            @include text-style(1, 500, 1.365rem);
-            opacity: 0.3;
-            background: transparent;
-            border-radius: 14px;
-            border: 1px solid transparent;
-            margin-right: 10px;
-
-            &:hover {
-                opacity: 0.6;
-            }
-            &--active {
-                opacity: 1 !important;
-            }
-        }
 
         /* Calendar */
         &__main-content {
-            height: calc(100% - 75px);
+            margin-top: 60px;
+            height: calc(100% - 45px);
         }
     }
 </style>

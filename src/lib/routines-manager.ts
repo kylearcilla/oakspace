@@ -117,7 +117,7 @@ export class RoutinesManager {
         // process each block
         for (let i = 0; i < blocks.length; i++) {
             const block        = blocks[i]
-            const blockElem    = this.createRoutineBlockElem(block)
+            const blockElem    = RoutinesManager.createRoutineBlockElem(block, this.containerElemHt)
             const headOffsetPx = this.getTopOffsetFromTime(block.startTime)
 
             earliestBlock = Math.min(earliestBlock, headOffsetPx)
@@ -146,8 +146,8 @@ export class RoutinesManager {
      * @param block Raw block data.
      * @returns     New day block elem from raw block data.
      */
-    createRoutineBlockElem(block: RoutineBlock): RoutineBlockElem {
-        const containerHt = this.containerElemHt
+    static createRoutineBlockElem(block: RoutineBlock, containerElemHt: number): RoutineBlockElem {
+        const containerHt = containerElemHt
         const elapsedTimeMins = block.endTime - block.startTime
 
         const headOffsetPerc = block.startTime / TOTAL_DAY_MINS

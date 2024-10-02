@@ -27,8 +27,6 @@ export class YoutubePlayer {
     doShowPlayer     = true
     hasActiveSession = false
     isFetchingVid    = false
-    justLoaded       = false
-    isReady          = false
     volume: number = 50
     
     // is playing isolated video (not being played)
@@ -129,7 +127,6 @@ export class YoutubePlayer {
      * Sets playlist / video where user left off.
      */
     onYtPlayerReadyHandler = async () => {
-        this.justLoaded = true
         if (!this.playlist) return
 
         try {
@@ -179,9 +176,7 @@ export class YoutubePlayer {
         this.state = state
         // this.updatePlayerState(state)
 
-        if (this.justLoaded && [3, 1].includes(state)) {
-            this.justLoaded = false
-        }
+
         if (this.isPlaying && state === 2) {
             this.isPlaying = false
             this.update({ isPlaying: false })
@@ -259,7 +254,7 @@ export class YoutubePlayer {
         const { data, target } = error
         const errorCode = data
 
-        if (errorCode === null || errorCode === undefined || !this.isReady) return
+        if (errorCode === null || errorCode === undefined) return
         this.onError(getYtIframeAPIError(errorCode, target))
     }
 

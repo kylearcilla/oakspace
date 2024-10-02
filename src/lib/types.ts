@@ -198,6 +198,7 @@ type RoutineBlock = {
     tag: Tag | null
     activity: RoutineActvity | null
     tasks: Task[]
+    done?: boolean
 }
 
 type RoutineBlockElem = {
@@ -341,6 +342,7 @@ type LogoContainerOptions = {
     iconWidth?: string
     borderRadius?: string
     colored?: boolean
+    scale?: number
 }
 
 /* Authentication */
@@ -361,6 +363,7 @@ type KeyContext = {
 /* Home */
 type GlobalContext = {
     leftBarOpen: boolean
+    leftBar?: "min" | "wide-full" | "wide-float"
     rightBarOpen: boolean
     isVideoViewOpen: boolean
     isMusicPlayerOpen: boolean
@@ -893,8 +896,10 @@ type MusicContext = {
     platformName: string | null
 }
 
+type MusicCollectionGroup = "library" | "serene" | "upbeat" | "soundtracks" | "acoustic" | "zen" | "podcasts"
+
 type MusicCollectionCategory = {
-    moodType: MusicMoodCategory
+    moodType: MusicCollectionGroup
     artworkSrc: string
     artworkBlurredSrc: string
     artistCredit: string

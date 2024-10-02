@@ -27,21 +27,6 @@
         
         onDayUpdate(day)
     }
-    function initDayClasses(day: any) {
-        if (type === CalendarType.Basic) return
-        
-        const classes = []
-        const prodDay = day as ProductivityDay
-
-        if (prodDay.hadGoal) {
-            classes.push("calendar__month-day--had-goal")
-        }
-        if (prodDay.hadSession) {
-            classes.push("calendar__month-day--had-session")
-        }
-
-        return classes.join(" ")
-    }
     function initDayTitle(day: any) {
         if (type === CalendarType.Basic) return
 
@@ -73,7 +58,7 @@
         <div class="calendar__focus-header">
             <div class="calendar__month-title">
                 <strong>
-                    {months[$store.currMonth.monthIdx].substring(0, 3)}
+                    {months[$store.currMonth.monthIdx]}
                 </strong> 
                 {$store.currMonth.year}
             </div>
@@ -126,7 +111,6 @@
                                     ${day.isInCurrMonth ? "" : "calendar__month-day--not-curr-month"}
                                     ${isSameDay(day.date, new Date) ? "calendar__month-day--today" : ""}
                                     ${isSameDay(day.date, $store.pickedDate) ? "calendar__month-day--picked" : ""}
-                                    ${initDayClasses(day)}
                         `}
                         on:keydown={(e) => {
                             if (e.key === 'Enter' || e.code === 'Space') {
@@ -172,10 +156,8 @@
                 @include text-style(0.9, 500);
             }
         }
-        &--light &__month-day--had-goal::after {
-            color: rgba(var(--textColor1), 0.3) !important;
-        }
-        &--light &__days-of-week *, &--light#{&}--productivity &__days-of-week * {
+        &--light &__days-of-week *,
+         &--light#{&}--productivity &__days-of-week * {
             @include text-style(0.5, 500);
         }
         &--light &__month-day {
@@ -233,14 +215,6 @@
                 color: rgba(var(--textColor2), 1) !important;
                 border-color: transparent;
             }
-            &--had-session:active {
-                transition: 0.1s ease-in-out;
-                transform: scale(0.93);
-            }
-            &--had-session {
-                cursor: pointer;
-                @include text-style(0.9, 500);
-            }
             &--not-curr-month {
                 opacity: 0.4 !important;
             }
@@ -249,9 +223,6 @@
         /* Calendar Type Specific Styling */
         &--basic &__month-day-container {
             aspect-ratio: 1 / 1;
-        }
-        &--productivity &__days-of-week {
-            padding-bottom: 4px; 
         }
         &--productivity &__month-day {
             @include text-style(0.6, 500, 1.08rem, "DM Sans");
@@ -267,13 +238,6 @@
             &-container {
                 height: 28px;
             }
-        }
-        &--productivity &__month-day--had-goal::after {
-            content: "•";
-            @include text-style(0.23, 300, 1rem);
-            @include abs-bottom-left(-4px, 50%);
-            transform: translateX(-50%);
-            opacity: 0.5;
         }
         
         &__focus-header {
@@ -320,7 +284,7 @@
         }
         &__month-title {
             font-family: "DM Sans";
-            @include text-style(0.4, 300, 1.27rem);
+            @include text-style(0.4, 300, 1.35rem);
 
             strong {
                 @include text-style(1, 400);
@@ -331,7 +295,7 @@
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             font-family: "DM Sans";
-            padding: 12px 1px 6px 1px;
+            padding: 12px 1px 0px 1px;
             width: 100%;
 
             * {

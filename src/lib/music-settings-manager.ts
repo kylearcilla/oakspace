@@ -1,19 +1,21 @@
 import { get } from "svelte/store"
-import { MusicMoodCategory, LibError, MusicPlatform, UserLibraryMedia, APIErrorCode } from "./enums"
 import { musicDataStore, musicSettingsManager } from "./store"
-import { getElemById, getHozScrollStatus, getVertScrollStatus } from "./utils-general"
-import { getPlatfromPropName, handlePlaylistItemClicked, musicAPIErrorHandler } from "./utils-music"
-import { getDiscoverCollectionList } from "./utils-music-settings"
+
 import { APIError } from "./errors"
 import { YoutubeMusicUserData } from "./youtube-music-user-data"
+import { getDiscoverCollectionList } from "./utils-music-settings"
+import { getElemById, getMaskedGradientStyle } from "./utils-general"
+import { LibError, MusicPlatform, UserLibraryMedia, APIErrorCode } from "./enums"
+import { getPlatfromPropName, handlePlaylistItemClicked, musicAPIErrorHandler } from "./utils-music"
+
 
 export class MusicSettingsManager {
     // discover
-    chosenMood = MusicMoodCategory.Serene
-    chosenMusicCollection: (MediaCollection)[] = []
+    chosenMood: MusicCollectionGroup = "serene"
+    chosenMusicCollection: (MediaCollection)[] = [] 
 
     isScrollableLeft  = false
-    isScrollableRight = true
+    isScrollableRight = false
     hasCollectionItemsLoaded = true
     
     // user library
@@ -46,7 +48,7 @@ export class MusicSettingsManager {
         this.platform = MusicPlatform.YoutubeMusic
         musicSettingsManager.set(this)
 
-        this.handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
+        this.discoverTabBtnClicked("serene")
     }
 
     /* Signing In & Out */
@@ -105,14 +107,14 @@ export class MusicSettingsManager {
 
     emptyCurrentLibrary() {
         this.userLibrary = null
-        this.updateState({ userLibrary: null })
+        this.update({ userLibrary: null })
     }
 
     setLibraryLoading(doEmptyLibrary: boolean = false) {
         this.isUserLibraryLoading = true
         this.userLibrary = doEmptyLibrary ? null : this.userLibrary
 
-        this.updateState({ 
+        this.update({ 
             userLibrary: this.userLibrary, isUserLibraryLoading: this.isUserLibraryLoading
         })
     }
@@ -120,11 +122,11 @@ export class MusicSettingsManager {
     setLibraryLoaded(context?: { error: any }) {
         if (context?.error != undefined) {
             this.libError = context.error
-            this.updateState({ libError: this.libError })
+            this.update({ libError: this.libError })
         }
 
         this.isUserLibraryLoading = false
-        this.updateState({ 
+        this.update({ 
             isUserLibraryLoading: this.isUserLibraryLoading, 
         })
     }
@@ -138,7 +140,7 @@ export class MusicSettingsManager {
 
         this.userLibrary = musicStore.getLibrary()
 
-        this.updateState({ 
+        this.update({ 
             userLibrary: this.userLibrary, 
             currLibraryCollection: this.currLibraryCollection 
         })
@@ -201,13 +203,21 @@ export class MusicSettingsManager {
     }
 
     /* Categories */
-    handleDiscoverCollectionCardClicked(moodType: MusicMoodCategory) {
-        const platformProp = getPlatfromPropName(this.platform)
-
+    discoverTabBtnClicked(moodType: MusicCollectionGroup) {
         this.chosenMood = moodType
-        this.chosenMusicCollection = getDiscoverCollectionList(moodType, platformProp) as (MediaCollection)[]
 
-        this.updateState({ chosenMood: this.chosenMood, chosenMusicCollection: this.chosenMusicCollection })
+        if (moodType === "library") {
+            this.update({ chosenMood: this.chosenMood })
+        }
+        else {
+            const platformProp = getPlatfromPropName(this.platform)
+            this.chosenMusicCollection = getDiscoverCollectionList(moodType, platformProp) as (MediaCollection)[]
+
+            this.update({ 
+                chosenMood: this.chosenMood, 
+                chosenMusicCollection: this.chosenMusicCollection 
+            })
+        }
     }
 
     /* List Scroll Handlers + Styling */
@@ -216,34 +226,11 @@ export class MusicSettingsManager {
      * Scroll handler for the libray list section.
      */
     handleLibListScroll() {
-        const scrollStatus = getVertScrollStatus(this.libraryList!)
-        this.handleLibListStyling(scrollStatus)
+        const data = getMaskedGradientStyle(this.collectionList!) as VertScrollMaskedGradient
+        const { hasReachedBottom } = data.scrollStatus
 
-        if (this.hasReachedEndOfList()) {
-            this.getMoreLibItems()
-        }
-    }
-
-    hasReachedEndOfList() {
-        return getVertScrollStatus(this.libraryList!).hasReachedBottom
-    }
-
-    handleLibListStyling(status: VertScrollStatus) {
-        const { hasReachedBottom, hasReachedTop } = status
-        let gradient = ""
-
-        if (!hasReachedBottom && !hasReachedTop) {
-            gradient = "linear-gradient(180deg, transparent 0.2%, black 10%, black 80%, transparent 99%)"
-        }
-        else if (!hasReachedTop) {
-            gradient = "linear-gradient(180deg, transparent 0.2%, black 10%)"
-        }
-        else if (!hasReachedBottom) {
-            gradient = "linear-gradient(180deg, black 80%, transparent 99%)"
-        }
-
-        this.libListGradient = "mask-image: " + gradient + "; "
-        this.libListGradient += "-webkit-mask-image: " + gradient + "; "
+        let gradient = data.styling
+        this.libListGradient = gradient
 
         if (hasReachedBottom) {
             this.getMoreLibItems()
@@ -254,34 +241,22 @@ export class MusicSettingsManager {
      * Scroll handler for horizontal mood categories in the discover section.
      */
     handleCategoriesScroll() {
-        const scrollStatus = getHozScrollStatus(this.collectionList!)
-        this.handleCategoriesListStyling(scrollStatus)
-    }
+        const data = getMaskedGradientStyle(this.collectionList!, { 
+            isVertical: false,
+            head: {
+                end: "30%"
+            },
+            tail: {
+                start: "70%"
+            }
+        }) as HozScrollMaskedGradient
+        const { hasReachedEnd, hasReachedStart } = data.scrollStatus
 
-    handleCategoriesListStyling(status: HozScrollStatus) {
-        const { hasReachedEnd, hasReachedStart } = status
-        let gradientStyle = ""
+        this.isScrollableRight = !hasReachedEnd
+        this.isScrollableLeft = !hasReachedStart
+        this.categoriesListGradient = data.styling
 
-        if (!hasReachedEnd && !hasReachedStart) {
-            gradientStyle = "linear-gradient(90deg, rgba(0, 0, 0, 0.00) 0%, #000 9.84%, #000 85%, rgba(0, 0, 0, 0.00) 100%)"
-            this.isScrollableRight = true
-            this.isScrollableLeft = true
-        }
-        else if (!hasReachedStart) {
-            gradientStyle = "linear-gradient(90deg, rgba(0, 0, 0, 0.00) 0%, #000 10.55%)"
-            this.isScrollableLeft = true
-            this.isScrollableRight = false
-        }
-        else if (!hasReachedEnd) {
-            gradientStyle = "linear-gradient(90deg, #000 85%, rgba(0, 0, 0, 0.00) 100%)"
-            this.isScrollableRight = true
-            this.isScrollableLeft = false
-        }
-
-        this.categoriesListGradient = "mask-image: " + gradientStyle + "; "
-        this.categoriesListGradient += "-webkit-mask-image: " + gradientStyle + "; "
-
-        this.updateState({
+        this.update({
             isScrollableLeft: this.isScrollableLeft, isScrollableRight: this.isScrollableRight
         })
     }
@@ -300,7 +275,7 @@ export class MusicSettingsManager {
 
     /** State  */
 
-    updateState(newState: Partial<MusicSettingsManager>, doSave: boolean = true) {
+    update(newState: Partial<MusicSettingsManager>, doSave: boolean = true) {
         musicSettingsManager.update((data: MusicSettingsManager | null) => this.getNewStateObj(newState, data! as MusicSettingsManager))
     }
 

@@ -14,7 +14,7 @@ export enum TextTab {
     Workspace, Productivity, Goals, Habits, Mindhub, Routines
 }
 export enum LogoIcon {
-    AppleMusic, Spotify, YoutubeMusic, Soundcloud, Youtube, Session, Google, Luciole, Todoist
+    YoutubeMusic, Youtube, Session, Google, Somara, Todoist
 }
 export enum Icon {
     Settings, Dropdown, Add, Close, ChevronLeft, ChevronRight, DragDots, Archive, Tune, Sun, Moon, Pin, Sublink,
@@ -29,7 +29,7 @@ export enum ToasterPosition {
     TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, TOP_CENTER, BOTTOM_CENTER
 }
 export enum MediaEmbedType {
-    Spotify, Youtube
+    Youtube
 }
 export enum MediaEmbedFixed {
     BottomLeft, BottomRight, Bottom
@@ -114,10 +114,6 @@ export enum YTMediaLinkType {
 /* Music */
 export enum PlaybackGesture {
     SHUFFLE, PLAY_PAUSE, SKIP_NEXT, SKIP_PREV, SEEK, LOOP
-}
-export enum MusicMoodCategory { 
-    Serene = "Serene", Lofi = "Lo-Fi", Upbeat = "Upbeat", Soundtracks = "Soundtracks", 
-    Acoustic = "Acoustic", Classical = "Classical", Zen = "Zen", Summer = "Summer", Podcasts = "Podcasts"
 }
 export enum LibError {
     REFRESH, NEW_COLLECTION, MORE_ITEMS

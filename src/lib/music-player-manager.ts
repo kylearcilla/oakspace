@@ -60,8 +60,7 @@ export class MusicPlayerManager {
         YoutubeMusic: { iconWidth: "60%" },
         Soundcloud: { iconWidth: "60%" },
         Youtube: { iconWidth: "60%" },
-        Google: { iconWidth: "60%" },
-        Luciole: { iconWidth: "60%" }
+        Google: { iconWidth: "60%" }
     }
 
     constructor(musicPlatform: MusicPlatform) {

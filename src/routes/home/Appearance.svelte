@@ -361,13 +361,12 @@
             }
         } 
         &__item-img-container {
-            @include txt-color(0.02, "bg");
+            @include txt-color(0.025, "bg");
             position: relative;
             margin: 0px 5px 10px 0px;
             width: 140px;
             aspect-ratio: calc(3 / 2);
-            border-radius: 14px;
-            border: 1.5px solid rgba(var(--textColor1), 0.035);
+            border-radius: 6px;
             overflow: hidden;
         }
         &__item img {

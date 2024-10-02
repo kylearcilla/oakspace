@@ -9,7 +9,6 @@
   import SideBarRight from "./SideBarRight.svelte"
 
   // main modals
-	import Stats from "./Stats.svelte"
 	import Settings from "./Settings.svelte"
 	import Appearance from "./Appearance.svelte"
 	import MusicSettings from "./MusicSettings.svelte"
@@ -25,25 +24,22 @@
   import FloatMediaPlayer from "./FloatMediaPlayer.svelte"
   
   // utils
-  import { SPOTIFY_IFRAME_ID } from "$lib/utils-music"
 	import { ModalType, MusicPlatform } from "$lib/enums"
   import { YoutubeMusicPlayer } from "$lib/youtube-music-player"
-	import { globalContext, musicDataStore, musicPlayerStore, reviewSession, sessionManager } from "$lib/store"
+	import { globalContext, musicPlayerStore, reviewSession, sessionManager } from "$lib/store"
 	import { 
     initAppState, keyboardShortCutHandlerKeyDown, keyboardShortCutHandlerKeyUp, 
-    onMouseMoveHandler, LEFT_BAR_WIDTH, updateRoute, onQuitApp,
+    onMouseMoveHandler, LEFT_BAR_MIN_WIDTH, updateRoute, onQuitApp,
 	  middleViewExpandHandler,
 	  AMBIENT,
-
-	  toggleYoutubePlayerFloat
-
+	  toggleYoutubePlayerFloat,
+	  getLeftBarWidth
   } from "$lib/utils-home"
 
 	import { afterNavigate, beforeNavigate, goto } from "$app/navigation"
 	import SessionSummaryModal from "./SessionSummaryModal.svelte"
 	import Modal from "../../components/Modal.svelte";
 	import SpaceSelection from "../SpaceSelection.svelte";
-	import Base from "./Base.svelte";
 
   
   export let data
@@ -71,8 +67,10 @@
   $: context = $globalContext
   $: ambience = $globalContext.ambience
   $: route = $globalContext.route
-  $: inAmbience   = $globalContext?.ambience
-  $: isFloating   = $globalContext.mediaPlayer?.youtube
+  $: inAmbience = $globalContext?.ambience
+  $: isFloating = $globalContext.mediaPlayer?.youtube
+  $: modalsOpen = $globalContext.modalsOpen
+  $: leftBar = $globalContext.leftBar
 
   $: if (inAmbience && !isFloating) {
       toggleYoutubePlayerFloat(true)
@@ -85,12 +83,9 @@
     leftBarOpen = state.leftBarOpen
     rightBarOpen = state.rightBarOpen
 
-    if (leftBarOpen) {
-      leftSideBarWidth = 58
-    }
-    else {
-      leftSideBarWidth = 0
-    }
+    const leftBar = state.leftBar
+    leftSideBarWidth = getLeftBarWidth(leftBar!)
+
     rightSideBarWidth = rightBarOpen ? RIGHT_BAR_WIDTH : 0
 
     updateMiddleView()
@@ -100,9 +95,10 @@
     leftBarOpen = $globalContext.leftBarOpen
     rightBarOpen = $globalContext.rightBarOpen
 
+    const leftBar = $globalContext.leftBar
     const full = rightBarOpen && leftBarOpen
     const ambient = !!ambience
-    const leftOffset = ambient ? 0 : LEFT_BAR_WIDTH - 25
+    const leftOffset = ambient || leftBar === "wide-float" ? 0 : leftSideBarWidth
 
     stretchMiddleView = middleViewExpandHandler({ 
       width: totalWidth,
@@ -170,11 +166,12 @@
   on:mousemove={_onMouseMoveHandler}
   id="home"
   class={`home ${homeViewClasses}`}
+  class:home--left-float={leftBar === "wide-float"}
   class:home--stretched={stretchMiddleView}
   class:home--ambient={ambience}
   class:home--ambient-vid={ambience?.space.type === "video"}
   class:home--ambient-img={ambience && ambience?.space.type != "wallpaper"}
-  style:--left-bar-width={`${LEFT_BAR_WIDTH}px`}
+  style:--left-bar-width={`${leftSideBarWidth}px`}
   style:--ambient-opacity={ambience?.opacity}
   style:--ambient-blur={AMBIENT.BG_BLUR}
   style:--ambient-bg-color={AMBIENT.BG_COLOR}
@@ -184,18 +181,18 @@
   <div class="home__main">
     <!-- left -->
     <nav 
-      class="home__left-bar smooth-bounce" 
+      class="home__left-bar" 
       class:ambient-dark-blur={ambience?.styling === "blur"}
       class:ambient-solid={ambience?.styling === "solid"}
       class:ambient-dark-clear={ambience?.styling === "clear"}
       style:width={`${leftSideBarWidth}px`}
-      style:margin-left={`${leftSideBarWidth === 0 ? `-${LEFT_BAR_WIDTH}px` : ""}`}
+      style:left={`${!leftBarOpen ? `-${leftSideBarWidth}px` : ""}`}
     >
       <SideBarLeft />
     </nav>
     <!-- middle -->
     <div
-      class="home__middle-view smooth-bounce" 
+      class="home__middle-view" 
       style:width={middleViewWidth}
       style:margin-left={middleViewMarginLeft}
     >
@@ -218,11 +215,10 @@
                 </Modal>
             {/if}
         {/if}
-        <Base />
     </div>
     <!-- right -->
     <nav 
-      class="home__right-bar smooth-bounce" 
+      class="home__right-bar" 
       class:ambient-dark-blur={ambience?.styling === "blur"}
       class:ambient-solid={ambience?.styling === "solid"}
       class:ambient-dark-clear={ambience?.styling === "clear"}
@@ -233,45 +229,33 @@
   </nav>
 </div>
 
-  <FloatMediaPlayer 
-      type="youtube" 
-  />
+  <FloatMediaPlayer type="youtube" />
 
   <!-- Music Player -->
   {#if $musicPlayerStore}
       <MusicPlayer />
   {/if}
-  {#if $musicDataStore?.musicPlatform === MusicPlatform.Spotify}
-      <div class="spotify-iframe-container">
-          <div id={SPOTIFY_IFRAME_ID}></div>
-      </div>
-  {/if}
 
-  <!-- Main Modals -->
-  {#if $globalContext.modalsOpen.includes(ModalType.Stats)} 
-      <Stats/> 
-  {/if}
-  {#if $globalContext.modalsOpen.includes(ModalType.Settings)} 
+  <!-- util modals -->
+  {#if modalsOpen.includes(ModalType.Settings)} 
       <Settings/> 
   {/if}
-  {#if $globalContext.modalsOpen.includes(ModalType.Youtube)} 
-      <YoutubeSettings  
-        ytPlaylists={data.ytPlaylists} 
-      /> 
+  {#if modalsOpen.includes(ModalType.Appearance)} 
+      <Appearance />
   {/if}
-  {#if $globalContext.modalsOpen.includes(ModalType.Appearance)} 
-      <Appearance /> 
+  {#if modalsOpen.includes(ModalType.Youtube)} 
+      <YoutubeSettings ytPlaylists={data.ytPlaylists} /> 
   {/if}
-  {#if $globalContext.modalsOpen.includes(ModalType.Music)} 
+  {#if modalsOpen.includes(ModalType.Music)} 
       <MusicSettings /> 
   {/if}
-
-  {#if $globalContext.modalsOpen.includes(ModalType.Spaces)} 
+  
+  {#if modalsOpen.includes(ModalType.Spaces)} 
       <SpaceSelection /> 
   {/if}
 
-  <!-- Session Modals -->
-  {#if $globalContext.modalsOpen.includes(ModalType.NewSession)} 
+  <!-- session modals -->
+  {#if modalsOpen.includes(ModalType.NewSession)} 
     <SessionNewModal /> 
   {/if}
   {#if $reviewSession && !($sessionManager?.state === "done")} 
@@ -291,8 +275,8 @@
   {/if}
 
   <!-- Other Modals Modals -->
-  {#if $globalContext.modalsOpen.includes(ModalType.Quote)} <ModalQuote /> {/if}
-  {#if $globalContext.modalsOpen.includes(ModalType.Shortcuts)} <ShortcutsModal /> {/if}
+  {#if modalsOpen.includes(ModalType.Quote)} <ModalQuote /> {/if}
+  {#if modalsOpen.includes(ModalType.Shortcuts)} <ShortcutsModal /> {/if}
 
   <!-- Toasts -->
   {#if $globalContext.hasToaster}
@@ -329,7 +313,21 @@
       background-position: center;
       background-repeat: no-repeat;
 
-      /* ambient stuff */
+      /* left bar */
+      &--left-float &__middle-view {
+        margin-left: 0px !important;
+
+      }
+      &--left-float &__left-bar {
+        height: 650px;
+        top: 50px;
+        left: 5px;
+        border: 1.5px solid rgba((var(--textColor1)), 0.022);
+        border-radius: 12px;
+        transition: 0.185s cubic-bezier(.4, 0, .2, 1);
+      }
+
+      /* ambient */
       &--ambient &__middle-view {
         margin-left: 0px !important;
       }
@@ -375,14 +373,14 @@
         // padding: 0px 25px;
       }
       &__left-bar {
-        transition: ease-in-out 0.1s;
         height: 100%;
-        margin-left: 0px;
+        left: 0px;
         background-color: var(--navMenuBgColor);
         border-right: 1.5px solid rgba((var(--textColor1)), 0.022);
         width: var(--left-bar-width);
-        z-index: 1000;
+        z-index: 400;
         position: fixed;
+        transition: 0.2s cubic-bezier(.4, 0, .2, 1);
       }
 
       &__middle-view {
@@ -390,10 +388,11 @@
         width: 100%;
         height: 100%;
         position: relative;
+        transition: 0.2s cubic-bezier(.4, 0, .2, 1);
 
         &-slot-container {
           padding: inherit;
-          @include abs-top-left(38px);
+          @include abs-top-left(20px);
           width: 100%;
           height: 100%;
           z-index: 300;
@@ -406,7 +405,8 @@
         right: 0px;
         background-color: var(--rightBarBgColor);
         box-shadow: var(--rightBarBgBoxShadow);
-        z-index: 20000;
+        z-index: 400;
+        transition: 0.2s cubic-bezier(.4, 0, .2, 1);
 
         &::before {
           content: " ";

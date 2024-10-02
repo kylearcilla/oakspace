@@ -116,6 +116,7 @@
 </script>
 
 {#if manager && session}
+    {@const prevPage = getPrevPage(manager.prevPage)}
 <div 
     bind:clientWidth={width}
     class="session"
@@ -133,7 +134,7 @@
             }}
         />
         <span>
-            Back to {getPrevPage(manager.prevPage)}
+            Back to {prevPage === "Base" ? "Home" : prevPage}
         </span>
     </button>
 
@@ -354,7 +355,7 @@
         &__back-btn {
             @include text-style(1, 700, 1.2rem, "DM Mono");
             @include flex(center);
-            @include abs-top-left(10px);
+            @include abs-top-left(25px, 16px);
             opacity: 0.12;
 
             &:hover {

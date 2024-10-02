@@ -354,14 +354,14 @@
     function handleKeyDown(ke: KeyboardEvent) {
         if (shouldMove) return
         
-        shouldMove = ke.code === "Space"
+        shouldMove = ke.shiftKey
     }
     function handleKeyUp(ke: KeyboardEvent) {
-        const { code, key, shiftKey, target } = ke
+        const { code, shiftKey, target } = ke
         if (isTargetTextEditor(target as HTMLElement)) return
         if (!ytPlayer) return
 
-        shouldMove = code === "Space" ? false : shouldMove
+        shouldMove = shiftKey ? false : shouldMove
 
         if (["Digit1", "Digit2", "Digit3", "Digit4"].includes(code) && isFloating) {
 

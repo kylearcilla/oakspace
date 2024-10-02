@@ -326,7 +326,7 @@
     &__block-content {
         background-color: rgba(var(--block-color-2), 1);
         border-top: 0.5px solid var(--bg-1);
-        padding: 5px 8px 5px 11px;
+        padding: 5px 8px 5px 12px;
         overflow: hidden;
         white-space: nowrap;
         position: relative;
@@ -349,9 +349,8 @@
     &__block-spine {
         @include abs-top-left;
         height: calc(100%);
-        width: 2.5px;
+        width: 3px;
         background-color: rgb(var(--block-color-1));
-        border-radius: 20px;
     }
     &__block-handler:last-child {
         @include abs-bottom-left();

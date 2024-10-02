@@ -190,7 +190,7 @@
         class="yt-settings"
         class:yt-settings--light={!$themeState.isDarkTheme}
         class:yt-settings--dark={$themeState.isDarkTheme}
-        class:yt-settings--min={!hasSignedIn}
+        class:yt-settings--min={!$ytPlayerStore?.playlist}
     >
         <!-- Header -->
         <div class="yt-settings__header">
@@ -502,14 +502,17 @@
 
     .yt-settings {
         width: 86vw;
-        height: 86vh;
-        max-width: 1200px;
-        padding: 15px 25px 17px 25px;
+        max-width: 900px;
+        height: 720px;
+        padding: 15px 25px 25px 25px;
 
         .skeleton-bg {
             @include skeleton-bg(dark);   
         }
 
+        &--min {
+            max-width: 700px;
+        }
         &--dark .dropdown-menu {
             @include dropdown-menu-dark;
         }
@@ -585,6 +588,7 @@
         &--light .recs__playlist-item img {
             border-radius: 5px;
         }
+
         &__header {
             @include flex(flex-start, space-between);
             height: $header-height;
@@ -946,8 +950,8 @@
             }
         }
         &__playlist-item-img-container {
-            min-width: 150px;
-            width: 150px;
+            min-width: 130px;
+            width: 130px;
             aspect-ratio: calc(16 / 9);
             margin: 0px 3% 0px 25px;
 
@@ -983,7 +987,7 @@
             max-height: 33px;
             overflow: hidden;
             @include text-style(0.45, 400, 1.2rem);
-            @include multi-line-elipses-overflow(2);
+            @include multi-line-elipses-overflow(1);
 
             // for skeleton only
             &-second-line { 
@@ -998,13 +1002,14 @@
                 
             }
         }
-        &__playlist-item-vid-count, &__playlist-item-channel-details {
+        &__playlist-item-vid-count, 
+        &__playlist-item-channel-details {
             margin-top: 12px;
             @include abs-bottom-left(0px, 0px);
-            @include text-style(0.4, 400, 1.1rem);
+            @include text-style(0.3, 500, 1.1rem);
             
             a, span {
-                @include text-style(0.4, 400);
+                @include text-style(0.25, 500);
             }
 
             &--skeleton {

@@ -1,4 +1,5 @@
 import { CoreStatus } from "./enums"
+import { weekRoutine } from "./store"
 import { DAYS_OF_WEEK, getNowMins, minsToHHMM } from "./utils-date"
 import { getElemById, getElemNumStyle } from "./utils-general"
 
@@ -128,6 +129,47 @@ export function getMextTimeCheckPointInfo(dailyRoutine: RoutineBlock[] | DailyRo
     
     const nextBlock = getUpcomingBlock(nowMins, dailyRoutine)
     return nextBlock ? `in ${minsToHHMM(nextBlock.block.startTime - nowMins)}` : ""
+}
+
+export function toggleRoutineBlockComplete(blockIdx: number, currTime: { dayIdx: number, minutes: number }) {
+    weekRoutine.update((week) => {
+        if (!week) return week
+
+        const currDayKey = DAYS_OF_WEEK[currTime.dayIdx] as keyof WeeklyRoutineBlocks
+        const dayRoutine = week.blocks[currDayKey]!
+
+        if ("id" in dayRoutine) {
+            dayRoutine.blocks[blockIdx].done = !dayRoutine.blocks[blockIdx].done
+        }
+        else {
+            dayRoutine[blockIdx].done = !dayRoutine[blockIdx].done
+        }
+
+        return week
+    })
+}
+
+export function resetDayRoutine() {
+    weekRoutine.update((week) => {
+        if (!week) return week
+
+        for (const day of DAYS_OF_WEEK) {
+            let key = day as keyof WeeklyRoutineBlocks
+            let dayRoutine = week.blocks[key]!
+            let blocks = "id" in dayRoutine ? dayRoutine.blocks : dayRoutine
+
+            for (const block of blocks) {
+                block.done = false
+            }
+            if ("id" in dayRoutine) {
+                (week.blocks[key] as DailyRoutine).blocks = blocks
+            }
+            else {
+                week.blocks[key] = blocks
+            }
+        }
+        return week
+    })
 }
 
 export function setDayBreakdownXOffset(dayBreakdownColIdx: number, numViewDays: number) {

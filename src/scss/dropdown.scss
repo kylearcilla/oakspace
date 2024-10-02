@@ -172,7 +172,6 @@
     border-radius: 10px;
     background-color: var(--bg-2);
     box-shadow: 0px 1px 16.4px 4px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(0, 0, 0, 0.08);
     width: auto;
     min-width: 25px;
     font-family: var(--font-family);
@@ -310,10 +309,10 @@
         }
     }
     &__option-btn {
-        @include flex(center, _);
+        @include flex(center);
         padding: 6px $side-padding 7px $side-padding;
-        opacity: 0.65;
         width: 100%;
+        opacity: 0.65;
         transition: 0s ease-in-out;
 
         &--unclickable:active {

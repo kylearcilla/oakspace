@@ -1,16 +1,13 @@
-import { createEventDispatcher } from "svelte"
 import { get, writable, type Writable } from "svelte/store"
 
 import { toast } from "./utils-toast"
 import { 
-        addItemToArray, extractNum, extractQuadCSSValue, findAncestor, 
-        getAttrValue, 
+        addItemToArray, extractNum, 
+        extractQuadCSSValue, findAncestor, getAttrValue, 
         getDistBetweenTwoPoints, getElemById, getElemTrueHeight, 
         getHozDistanceBetweenTwoElems, getVertDistanceBetweenTwoElems, initFloatElemPos, 
-        isEditTextElem, isKeyAlphaNumeric, isNearBorderAndShouldScroll, moveElementInArr, 
-        randomArrayElem
+        isEditTextElem, isKeyAlphaNumeric, isNearBorderAndShouldScroll, moveElementInArr,
 } from "./utils-general"
-import { LogoIcon } from "./enums"
 
 /**
  * Reusable task list manager component.

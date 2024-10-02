@@ -31,20 +31,24 @@
     })
 </script>
 
-<Modal options={{ borderRadius: "0px" }} onClickOutSide={() => closeModal(ModalType.Quote)}>
-    <div class="quote-modal" style={`background-image: url(${quote?.bgImgSrc})`}>
-        <div class={`quote-modal__content
-                        ${quote?.artCredit === "" ? "quote-modal__content--no-art-credit" : ""}
-                        ${quote?.quoteCredit === "" ? "quote-modal__content--no-quote-credit" : ""}
-                   `}
-        >
+<Modal 
+    options={{ borderRadius: "0px" }} 
+    onClickOutSide={() => closeModal(ModalType.Quote)}
+>
+    <div 
+        class="quote-modal" 
+        style={`background-image: url(${quote?.bgImgSrc})`}
+    >
+        <div class="quote-modal__content">
             <div></div>
             <div class="quote-modal__content-container">
                 <div class="quote-modal__content-top">
-                    <h1 class="quote-modal__title">Weekly Wisdom</h1>
+                    <!-- <h1 class="quote-modal__title">Weekly Wisdom</h1> -->
                     <div class="flx">
                         <span class="quote-modal__quote quote-modal__quote--left-quotation">"</span>
-                        <p class="quote-modal__quote">{@html quote?.text}"</p>
+                        <p class="quote-modal__quote">
+                            {@html quote?.text}"
+                        </p>
                     </div>
                 </div>
                 <div class="quote-modal__content-bottom">
@@ -57,17 +61,12 @@
                                 1473
                             </span>
                         </div>
-                        {#if quote?.artCredit != ""}
-                            <div class="divider divider--vertical"></div>
-                            <div 
-                                class="quote-modal__artist-credit" 
-                                title={quote?.artCredit.replace(/<i>(.*?)<\/i>/g, '$1')}
-                            >
-                                {@html quote?.artCredit}
-                            </div>
-                        {/if}
+                        <div class="divider divider--vertical"></div>
+                        <div class="quote-modal__artist-credit" >
+                            {@html (quote?.artCredit || quote?.quoteCredit)}
+                        </div>
                     </div>
-                    {#if quote?.quoteCredit !== ""}
+                    {#if quote?.artCredit}
                         <span class="quote-modal__quote-credit">
                             - {@html quote?.quoteCredit}
                         </span>
@@ -101,7 +100,7 @@
             padding: 18px 19px;
 
             &-top {
-                margin-bottom: 20px;
+                margin-bottom: 15px;
             }
             &-bottom {
                 @include flex(center, _);
@@ -148,15 +147,15 @@
                 font-size: 1.14rem;
             }
             span {
-                font-size: 1.2rem;
+                font-size: 1.3rem;
                 font-weight: 500;
                 color: rgba(179, 179, 179, 0.5);
             }
         }
         &__artist-credit {
-            font-size: 1.24rem;
-            color: rgba(179, 179, 179, 0.5) !important;
+            font-size: 1.3rem;
             font-weight: 500;
+            color: rgba(179, 179, 179, 0.5);
             @include elipses-overflow;
             
             i {
@@ -168,10 +167,10 @@
             }
         }
         &__quote-credit {
-            font-size: 1.25rem;
-            min-width: 0;
+            font-size: 1.3rem;
             font-weight: 500;
-            color: rgba(244, 244, 244, 0.4);
+            color: rgba(179, 179, 179, 0.5);
+            min-width: 0;
             float: right;
             white-space: nowrap;
             margin-left: 12px;

@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { acousticCollections, podcastCollections, sereneCollections, soundtrackCollections, upbeatCollections, zenCollections } from "./data-music-collections"
-import { MusicMediaType, MusicMoodCategory, MusicPlatform, UserLibraryMedia } from "./enums"
+import { MusicMediaType, MusicPlatform, UserLibraryMedia } from "./enums"
 import { MusicSettingsManager } from "./music-settings-manager"
 import { musicSettingsManager } from "./store"
 
@@ -11,7 +11,7 @@ export function initMusicSettings(platform = MusicPlatform.YoutubeMusic) {
     const store = get(musicSettingsManager)
 
     store!.updateLibrary()
-    store!.handleDiscoverCollectionCardClicked(MusicMoodCategory.Serene)
+    store!.discoverTabBtnClicked("serene")
 
     return manager
 }
@@ -43,17 +43,17 @@ export async function discoverPlsPaginationScrollHandler(event: Event) {
  * @param   platformProp       MusicPlatform in object property, used to index for that platform's collection
  * @returns                    Music media items under given mood category for a specific platform.
  */
-export function getDiscoverCollectionList(discoverCategory: MusicMoodCategory, platformProp: MusicPlatformPropNames): MediaCollection[] {
+export function getDiscoverCollectionList(discoverCategory: MusicCollectionGroup, platformProp: MusicPlatformPropNames): MediaCollection[] {
     switch (discoverCategory) {
-        case MusicMoodCategory.Serene:
+        case "serene":
             return sereneCollections[platformProp]
-        case MusicMoodCategory.Upbeat:
+        case "upbeat":
             return upbeatCollections[platformProp]
-        case MusicMoodCategory.Soundtracks:
+        case "soundtracks":
             return soundtrackCollections[platformProp]
-        case MusicMoodCategory.Acoustic:
+        case "acoustic":
             return acousticCollections[platformProp]
-        case MusicMoodCategory.Zen:
+        case "zen":
             return zenCollections[platformProp]
         default:
             return podcastCollections[platformProp]

@@ -149,9 +149,9 @@
             class:ambient-solid={ambience?.styling === "solid"}
             class:ambient-clear={ambience?.styling === "clear"}
             disabled={!$weekRoutine}
-            style:--block-color-1={ambience && ambience.styling != "solid" ? "255, 255, 255" : colorTrio[0]}
-            style:--block-color-2={ambience && ambience.styling != "solid" ? "255, 255, 255" : colorTrio[1]}
-            style:--block-color-3={ambience && ambience.styling != "solid" ? "255, 255, 255" : colorTrio[2]}
+            style:--block-color-1={ambience?.styling != "solid" ? "255, 255, 255" : colorTrio[0]}
+            style:--block-color-2={ambience?.styling != "solid" ? "255, 255, 255" : colorTrio[1]}
+            style:--block-color-3={ambience?.styling != "solid" ? "255, 255, 255" : colorTrio[2]}
             title={nowBlockTitle}
             id="active-routine--dropdown-btn"
             on:click={toggleActiveRoutine}
@@ -220,7 +220,7 @@
     .header {
         width: 100%;
         height: 21px;
-        padding: 10px 20px 0px 20px;
+        padding: 10px 15px 0px 15px;
         position: relative;
         @include flex(center, space-between);
         
@@ -281,10 +281,11 @@
             margin: 0px 0px 0px -5px;
             background-color: rgba(var(--block-color-1), 0.085);
             border: 1px solid transparent;
-            padding: 0px 15px 0px 12px;
+            // padding: 0px 15px 0px 12px;
+            padding: 0px 15px 0px 5px;
             white-space: nowrap;
+            background-color: transparent !important;
             z-index: 100;
-            @include text-style(_, 400, 1.14rem, "DM Mono");
             
             &:disabled {
                 opacity: 0.5;
@@ -335,18 +336,20 @@
                 transform: scale(0.99);
             }
             &-circle {
-                background-color: rgba(var(--block-color-1));
-                height: 8.5px;
-                width: 1.5px;
+                background-color: rgba(var(--block-color-1), 0.8);
+                height: 10px;
+                width: 2px;
                 border-radius: 1px;
             }
             &-title {
-                color: rgba(var(--block-color-1));
+                @include text-style(_, 500, 1.35rem, "DM Sans");
+                color: rgba(var(--block-color-1), 1);
                 @include elipses-overflow;
                 margin: 0px 0px 0px 10px;
                 max-width: 150px;
             }
             &-time {
+                @include text-style(_, 400, 1.25rem, "DM Mono");
                 color: rgba(var(--block-color-3), 0.5);
                 margin-left: 11px;
             }

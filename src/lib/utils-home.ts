@@ -12,7 +12,9 @@ import { POPULAR_SPACES } from "./data-spaces"
 
 /* constants */
 
-export const LEFT_BAR_WIDTH = 80
+export const LEFT_BAR_MIN_WIDTH = 60
+export const LEFT_BAR_FLOAT_WIDTH = 160
+export const LEFT_BAR_FULL_WIDTH = 185
 const LEFT_BAR_LEFT_BOUND = 20
 const SESSION_MIN_WIDTH = 750
 const MAX_AMBIENT_OPACITY = 0.85
@@ -92,6 +94,9 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
     }
 
     const doNotOpenRightBar = false
+    const leftBar = context.leftBar
+    const ambience = context.ambience
+    const wideLeftBarCtrl = !ambience && ctrlKey && (leftBar === "wide-float" || leftBar === "wide-full")
 
     // if (key === "Escape" && context.modalsOpen.length != 0) {
     //     const modals = get(globalContext).modalsOpen
@@ -100,10 +105,10 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
     //     closeModal(modals[modals.length - 1])
     // }
     if (event.ctrlKey && key === "]" && !doNotOpenRightBar) {
-        updateGlobalContext({ ...context, rightBarOpen: !context.rightBarOpen })
+        updateGlobalContext({ rightBarOpen: !context.rightBarOpen })
     }
     else if (ctrlKey && key === "[") {
-        updateGlobalContext({ ...context, leftBarOpen: !context.leftBarOpen })
+        updateGlobalContext({ leftBarOpen: !context.leftBarOpen })
         return true
     }
     else if (key === "?" && (context.modalsOpen.length === 0 || isModalOpen(ModalType.Shortcuts))) {
@@ -112,11 +117,22 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
     else if (key === "q" && (context.modalsOpen.length === 0 || isModalOpen(ModalType.Quote))) {
         isModalOpen(ModalType.Quote) ? closeModal(ModalType.Quote) : openModal(ModalType.Quote)
     }
+    else if (key === "/" && wideLeftBarCtrl) {
+        updateLeftBar(leftBar === "wide-float" ? "wide-full" : "wide-float")
+    }
+    else if (key === "m" && wideLeftBarCtrl) {
+        updateLeftBar("min")
+    }
+    else if (key === "m" && ctrlKey && !ambience && leftBar === "min") {
+        updateLeftBar("wide-full")
+    }
 
     return toggledLeftBarWithKey
 }
 
-
+function updateLeftBar(type: "wide-float" | "wide-full" | "min") {
+    updateGlobalContext({ leftBar: type, leftBarOpen: true })
+}
 
 export function middleViewExpandHandler(args: { 
     width: number, route: string, rightBarOpen: boolean
@@ -155,9 +171,9 @@ export function updateRoute(route: string) {
 /**
  * On mouse move handler for home page.
  * Toggles left side bar based on the positioning of the mouse.
- * @param event                         Mouse Event
+ * @param event                     Mouse Event
  * @param toggledLeftBarWithKey     If user opened the left side bar with a short cut, then must be hidden again from using the same short cut. Cannot be closed from mouse event.
- * @returns                             If user still has toggled left side bar.
+ * @returns                         If user still has toggled left side bar.
  */
 export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boolean): boolean => {
     const mouseX = event.clientX
@@ -168,19 +184,33 @@ export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boo
         return toggledLeftBarWithKey
     }
 
-    let isInArea = mouseX < LEFT_BAR_LEFT_BOUND
-    let isActiveRoutineOpen = context.doOpenActiveRoutine
-    let leftBarOpen = context.leftBarOpen
+    const isInArea = mouseX < LEFT_BAR_LEFT_BOUND
+    const isActiveRoutineOpen = context.doOpenActiveRoutine
+    const leftBarOpen = context.leftBarOpen
+    const leftBar = context.leftBar
+    const autoCloseRightThreshold = getLeftBarWidth(leftBar!)
 
     if (!leftBarOpen && !isActiveRoutineOpen && isInArea) {
         updateGlobalContext({ ...get(globalContext), leftBarOpen: true  })
         return false
     }
-    else if (!toggledLeftBarWithKey && context.leftBarOpen && mouseX > LEFT_BAR_WIDTH) { 
+    else if (!toggledLeftBarWithKey && context.leftBarOpen && mouseX > autoCloseRightThreshold) { 
         updateGlobalContext({ ...get(globalContext), leftBarOpen: false  })
     }
 
     return toggledLeftBarWithKey
+}
+
+
+export function getLeftBarWidth(leftBar: "min" | "wide-float" | "wide-full"): number {
+    switch (leftBar) {
+        case "min":
+            return LEFT_BAR_MIN_WIDTH
+        case "wide-float":
+            return LEFT_BAR_FLOAT_WIDTH
+        default:
+            return LEFT_BAR_FULL_WIDTH
+    }
 }
 
 /**
@@ -345,4 +375,9 @@ export async function closeAmbience() {
 
     homeRef.style.backgroundImage = "none"
     updateGlobalContext({ ambience: undefined })
+}
+
+export function getHomeUrlPath(path = window.location.pathname) {
+    const name = path.split("/")[2]
+    return name === "base" ? "home" : name
 }

@@ -59,7 +59,7 @@
 
     .routines-page {
         height: 100%;
-        padding-top: 6px;
+        padding: 18px 0px 0px 25px;
 
         &--light &__title {
             @include text-style(1, 600);
@@ -75,7 +75,7 @@
         &__tabs {
             @include flex(center);
             margin-left: -10px;
-            font-family: "DM Sans";
+            font-family: "DM Mono";
         }
         &__tab-btn {
             border-radius: 20px;
@@ -86,7 +86,7 @@
             @include text-style(1, 300, 1.45rem);
             
             &:first-child {
-                padding: 4.5px 12px 4.5px 12px;
+                padding: 4.5px 14px;
             }
             &:active {
                 transform: scale(0.985);
@@ -104,7 +104,7 @@
         }
         &__title {
             margin-bottom: 14px;
-            @include text-style(1, 400, 1.74rem);
+            @include text-style(1, 400, 1.74rem, "DM Mono");
         }
         &__divider {
             margin: 10px 0px 0px 0px;

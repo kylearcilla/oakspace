@@ -45,7 +45,6 @@
 		Soundcloud:   { iconWidth: "60%" },
 		Youtube:      { iconWidth: "60%" },
 		Google:       { iconWidth: "60%" },
-		Luciole:      { iconWidth: "60%" },
 		Todoist:      { iconWidth: "100%", containerWidth: "14px" }
 	}
 

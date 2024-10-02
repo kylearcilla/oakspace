@@ -253,7 +253,7 @@ export const getFirstHighlighterBtn = (containerId: string) => {
  * @returns          The matching enum value from LopoIcon
  */
 export function getLogoIconFromEnum(enumVal: any, fromEnum: any): LogoIcon {
-  return findEnumIdxFromDiffEnum(enumVal, fromEnum, LogoIcon) ?? LogoIcon.Luciole
+  return findEnumIdxFromDiffEnum(enumVal, fromEnum, LogoIcon) ?? LogoIcon.Somara
 }
 
 /**

@@ -56,7 +56,7 @@ const quotes: Quote[] = [
     {
         text: "Rest is not idleness, and to lie sometimes on the grass under trees on a summer's day, listening to the murmur of the water, or watching the clouds float across the sky, is by no means a waste of time.",
         bgImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Joaqu%C3%ADn_Sorolla_y_Bastida_-_La_Siesta_-_Google_Art_Project.jpg/777px-Joaqu%C3%ADn_Sorolla_y_Bastida_-_La_Siesta_-_Google_Art_Project.jpg",
-        artCredit: "<i>La Siesta</i> by Joaqin Sorolla",
+        artCredit: "<i>La Siesta</i> by Joaqin Sorolla",
         quoteCredit: "John Lubbock"
     },
     {
@@ -68,8 +68,8 @@ const quotes: Quote[] = [
     {
         text: "The past is just a story we tell ourselves.",
         bgImgSrc: "https://m.media-amazon.com/images/M/MV5BMTc1MDY0MjI4NV5BMl5BanBnXkFtZTgwMzAxNjM3MDE@._V1_.jpg",
-        artCredit: "From <i>Her</i> (2013)",
-        quoteCredit: "Samantha"
+        artCredit: "",
+        quoteCredit: "Samantha to Theodore from <i>Her</i>"
     },
     {
         text: "The simple things are also the most extraordinary things, and only the wise can see them.",

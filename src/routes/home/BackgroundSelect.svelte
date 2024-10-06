@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { lightColorThemes, darkColorThemes, imageThemes, ambientVideos, defaultThemes } from "$lib/data-themes"
+    import { imageThemes } from "$lib/data-themes"
 
 </script>
 

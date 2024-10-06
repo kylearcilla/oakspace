@@ -21,7 +21,7 @@ const YT_PLAYLIST_GROUPS: YoutubePlaylistGroup[] = [
                 vidCount: 14,
                 channelId: "",
                 channelTitle: "Multiple Authors",
-                thumbnailURL: "https://i.ytimg.com/vi/Sx4xVyXHl60/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLAyg77XoyF7_I9aONds6qEiFhDD4g",
+                thumbnailURL: "https://i.ytimg.com/vi/238769dQLnc/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBzTNA3KyzEWein7sbZE28ySBnJ7w",
                 channelImgSrc: "",
                 channelURL: "",
                 firstVidId: null

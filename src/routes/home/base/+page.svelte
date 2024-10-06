@@ -1,8 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     
-	import { Icon } from "$lib/enums"
-	import { getMaskedGradientStyle } from "$lib/utils-general"
+	import { getMaskedGradientStyle } from "../../../lib/utils-general"
 
 	import HeatMap from "../../../components/HeatMap.svelte"
 	import LineProgress from "../../../components/LineProgress.svelte"
@@ -92,7 +91,7 @@
             </div>
         </div>
 
-        <!-- <div class="divider divider--fw divider--1"></div> -->
+        <div class="divider divider--fw divider--1"></div>
 
         <!-- Overview -->
          <div class="base__overview">
@@ -220,6 +219,7 @@
                 margin: 20px 0px 18px 25px;
             }
             &--1 {
+                display: none;
                 margin-bottom: 15px;
             }
             &--2 {

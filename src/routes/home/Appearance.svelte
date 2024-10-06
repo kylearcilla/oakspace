@@ -98,6 +98,8 @@
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div 
                         class="default-themes__item"
+                        class:default-themes__item--dark={theme.title === "Dark"}
+                        class:default-themes__item--light={theme.title === "Light"}
                         class:default-themes__item--selected={selected}
                         class:default-themes__item--clicked={clicked}
                         on:click={() => onThemeItemFocus(theme)}
@@ -119,6 +121,7 @@
                     role="button"
                     tabindex="0"
                     class="default-themes__item"
+                    class:default-themes__item--ambient={true}
                     class:default-themes__item--selected={ambience}
                     class:default-themes__item--clicked={isAmbienceClicked}
                     on:click={() => onAmbienceClicked()}
@@ -136,14 +139,13 @@
         </div>
         <!-- Color Themes -->
         <div class="color-themes bento-box">
-            <h3 class="bento-box__title">
-                Color Themes
+            <h3 class="bento-box__title bento-box__title--color">
+                Color
             </h3>
             <!-- Light Themes -->
             <div class="color-themes__light-themes">
-                <div class="bento-box__subheading">Light Themes</div>
                 <ul class="color-themes__themes-list">
-                    {#each lightColorThemes as theme, idx}
+                    {#each lightColorThemes as theme}
                         {@const clicked  = clickedTheme?.title  === theme?.title}
                         {@const selected = selectedTheme?.title  === theme?.title}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -180,9 +182,8 @@
             </div>
             <!-- Dark Themes -->
             <div class="color-themes__dark-themes">
-                <div class="bento-box__subheading">Dark Themes</div>
                 <ul class="color-themes__themes-list">
-                    {#each darkColorThemes as theme, idx}
+                    {#each darkColorThemes as theme}
                         {@const clicked  = clickedTheme?.title === theme?.title}
                         {@const selected = selectedTheme?.title === theme?.title}                    
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -317,12 +318,11 @@
         overflow: hidden;
 
         &__title { 
-            @include text-style(0.7, 500, 1.2rem);
+            @include text-style(1, 500, 1.25rem, "DM Sans");
+            margin-bottom: 14px;
         }
-        &__subheading {
-            @include text-style(0.55, 500, 1.18rem);
-            margin-bottom: 17px;
-            display: none;
+        &__title--color { 
+            margin-bottom: 20px;
         }
     }
     /* Sections */
@@ -330,7 +330,6 @@
         padding-bottom: 20px;
 
         &__selection {
-            margin-top: 20px;
             display: flex;
             padding-bottom: 10px;
         }
@@ -352,29 +351,38 @@
             }
             &--clicked span {
                 color: rgba(#0C8CE9, 0.8) !important;
+                font-weight: 600 !important;
             }
             &--selected &-img-container {
-                box-shadow: rgba(var(--textColor1), 0.4) 0px 0px 0px 2.5px; 
             }
             &--selected span {
                 color: rgba(var(--textColor1), 0.4);
             }
+            &--dark &-img-container {
+                @include txt-color(0.00, "bg");
+                box-shadow: rgba(var(--textColor1), 0.05) 0px 0px 0px 1px; 
+            }
+            &--light &-img-container {
+                @include txt-color(0.055, "bg");
+            }
+            &--ambient &-img-container {
+                @include txt-color(0.05, "bg");
+            }
         } 
         &__item-img-container {
-            @include txt-color(0.025, "bg");
             position: relative;
             margin: 0px 5px 10px 0px;
             width: 140px;
             aspect-ratio: calc(3 / 2);
-            border-radius: 6px;
+            border-radius: 12px;
             overflow: hidden;
         }
         &__item img {
             width: 160px;
-            @include abs-bottom-right(-30px, -45px);
+            @include abs-bottom-right(-35px, -40px);
         }
         span {
-            @include text-style(0.8, 500, 1.2rem);
+            @include text-style(1, 500, 1.1rem);
             margin: 4px 0px 0px 4px;
         }
     }
@@ -409,7 +417,7 @@
         &__item-text {
             margin-top: 5px;
             @include elipses-overflow;
-            @include text-style(0.78, 500, 1.15rem);
+            @include text-style(1, 500, 1.1rem);
         }
         &__swatch-list {
             transition: 0.15s ease-in-out;

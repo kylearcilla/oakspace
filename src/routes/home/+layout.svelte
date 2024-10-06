@@ -5,7 +5,6 @@
 	import Header from "./Header.svelte"
   import SideBarLeft from "./SideBarLeft.svelte"
   import MusicPlayer from "./MusicPlayer.svelte"
-  import YoutubeView from "./YoutubeView.svelte"
   import SideBarRight from "./SideBarRight.svelte"
 
   // main modals
@@ -24,15 +23,15 @@
   import FloatMediaPlayer from "./FloatMediaPlayer.svelte"
   
   // utils
-	import { ModalType, MusicPlatform } from "$lib/enums"
+	import { ModalType } from "$lib/enums"
   import { YoutubeMusicPlayer } from "$lib/youtube-music-player"
 	import { globalContext, musicPlayerStore, reviewSession, sessionManager } from "$lib/store"
 	import { 
     initAppState, keyboardShortCutHandlerKeyDown, keyboardShortCutHandlerKeyUp, 
-    onMouseMoveHandler, LEFT_BAR_MIN_WIDTH, updateRoute, onQuitApp,
+    onMouseMoveHandler, updateRoute, onQuitApp,
 	  middleViewExpandHandler,
 	  AMBIENT,
-	  toggleYoutubePlayerFloat,
+    toggleYoutubePlayerFloat,
 	  getLeftBarWidth
   } from "$lib/utils-home"
 

@@ -1,4 +1,3 @@
-import { HrsMinsFormatOption } from "./enums"
 import { getBrowserLanguagePreference } from "./utils-general"
 
 export const months = [

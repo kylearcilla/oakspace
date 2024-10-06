@@ -490,7 +490,7 @@
 
     .music {
         width: 90vw;
-        height: 75vh;
+        height: 80vh;
         min-width: 390px;
         max-width: 800px;
         padding: 14px 25px 17px 25px;
@@ -498,11 +498,14 @@
         .skeleton-bg {
             @include skeleton-bg(dark);   
         }
+        .tab-btn {
+            padding: 4px 12px 5px 12px;
+        }
 
         /* states */
         &--empty {
             max-width: 600px;
-            height: 70vh;
+            max-height: 650px;
         }
         /* light / dark adjustments */
         &--light .modal-bg {

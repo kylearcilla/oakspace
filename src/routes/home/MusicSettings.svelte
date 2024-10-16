@@ -87,17 +87,26 @@
 
 <Modal
     onClickOutSide={() => closeModal(ModalType.Music)}
-    options={{ borderRadius: "20px" }}
+    options={{ borderRadius: "22px" }}
 >
     <div 
         class="music"
         class:music--empty={!mediaCollection}
+        class:music--signed-in={isSignedIn}
         class:music--light={isLight}
         class:music--dark={!isLight}
     >
         <!-- Top Header -->
-        <div class="music__header">
-            <h1 class="modal-bg__content-title">Music</h1>
+        {#if isSignedIn}
+            {@const ytUser  = $ytUserDataStore?.username}
+            {@const isExpired = $musicDataStore?.hasTokenExpired}
+            {@const listItems = ytUser && !isSignedIn ? [
+                { name: `As ${ytUser}` },
+                { name: "As different user" }
+            ] : [
+                ...(isExpired ? [{ name: "Refresh Token"}] : []),
+                { name: "Log out" }
+            ]}
             <button 
                 id="music-user--dropdown-btn"
                 class="music__user-tab"
@@ -110,50 +119,29 @@
                     <span class="music__user-tab-text">
                         {$musicDataStore.username}
                     </span>
-                {:else}
-                    <div class="music__user-tab-img">
-                        <Logo 
-                            logo={LogoIcon.Youtube}
-                            options={{ 
-                                hasBgColor: true, containerWidth: "15px", iconWidth: "72%"
-                            }}
-                        />
-                    </div>
-                    <span class="music__user-tab-text">Log In</span>
                 {/if}
             </button>
-            {#if $ytUserDataStore || isSignedIn}
-                {@const username  = $ytUserDataStore?.username}
-                {@const isExpired = $musicDataStore?.hasTokenExpired}
+            <DropdownList 
+                id="music-user"
+                isHidden={!isLogInDropdownOpen}
+                options={{
+                    listItems,
+                    onListItemClicked: (context) => onLogInDropdownItemClicked(context.event),
+                    onClickOutside: () => {
+                        isLogInDropdownOpen = false
+                    },
+                    position: {
+                        top: "52px",
+                        left: "24px"
+                    },
+                    styling: {
+                        width: "130px",
+                        zIndex: 200
+                    }
+                }}
+            />
+        {/if}
 
-                {@const listItems = username && !isSignedIn ? [
-                    { name: `As ${username}` },
-                    { name: "As different user" }
-                ] : [
-                    ...(isExpired ? [{ name: "Refresh Token"}] : []),
-                    { name: "Log out" }
-                ]}
-                <DropdownList 
-                    id="music-user"
-                    isHidden={!isLogInDropdownOpen}
-                    options={{
-                        listItems,
-                        onListItemClicked: (context) => onLogInDropdownItemClicked(context.event),
-                        onClickOutside: () => {
-                            isLogInDropdownOpen = false
-                        },
-                        position: {
-                            top: "45px",
-                            right: "30px"
-                        },
-                        styling: {
-                            width: "130px",
-                            zIndex: 200
-                        }
-                    }}
-                />
-            {/if}
-        </div>
         <!-- Music Settings Content -->
         <div class="music__content">
             {#if mediaCollection}
@@ -195,15 +183,13 @@
                                     </div>
                                     <div class="now-playing__details">
                                         {#if mediaCollection.url}
-                                            <a href={mediaCollection.url} target="_blank" rel="noreferrer">
-                                                <h4 class="now-playing__title">
-                                                    {mediaCollection.name}
-                                                </h4>
+                                            <a class="now-playing__title" href={mediaCollection.url} target="_blank" rel="noreferrer">
+                                                {mediaCollection.name}
                                             </a>
                                         {:else}
-                                            <h4 class="now-playing__title">
+                                            <div class="now-playing__title">
                                                 {mediaCollection.name}
-                                            </h4>
+                                            </div>
                                         {/if}
 
                                         <div class="now-playing__details-header">
@@ -276,7 +262,7 @@
                 <!-- Discover Section -->
                 <div class="discover bento-box bento-box--no-padding">
                     <h3 class="bento-box__title">
-                        Discover
+                        Discover Music
                     </h3>
                     <p class="discover__copy bento-box__copy">
                         Get in the zone and discover music that matches your vibe.
@@ -301,6 +287,8 @@
                                     id="collection-list" 
                                     on:scroll={() => manager?.handleCategoriesScroll()}
                                 >
+
+                                    <!-- User Data -->
                                     {#if isSignedIn}
                                         <li class="discover__collection-tab-btn">
                                             <button 
@@ -312,7 +300,28 @@
                                             </button>
                                         </li>
                                         <div class="discover__collection-tab-divider"></div>
+                                    {:else}
+                                        <li class="discover__collection-tab-btn discover__collection-tab-btn--login">
+                                            <button 
+                                                class="tab-btn"
+                                                class:tab-btn--selected={chosenMood === "library"}
+                                                on:click={onLogInClicked}
+                                            >
+                                                <div class="music__user-tab-img">
+                                                    <Logo 
+                                                        logo={LogoIcon.Youtube}
+                                                        options={{ 
+                                                            hasBgColor: true, containerWidth: "15px", iconWidth: "72%"
+                                                        }}
+                                                    />
+                                                </div>
+                                                <span class="music__user-tab-text">Log In</span>
+                                            </button>
+                                        </li>
+                                        <div class="discover__collection-tab-divider"></div>
                                     {/if}
+
+                                    <!-- Categories -->
                                     {#each musicCategories as group}
                                         <li class="discover__collection-tab-btn">
                                             <button 
@@ -420,7 +429,7 @@
                         <!-- My Playlists -->
                         {#if chosenMood === "library"}
                             <ul class="lib" id="library-list">
-                                {#if userLibrary && (userLibrary?.items || (userLibrary?.items && libError != LibError.NEW_COLLECTION))}
+                                {#if userLibrary && userLibrary?.items}
                                     <!-- Media Item -->
                                     {#each userLibrary?.items as item, idx}
                                         {@const itemInfo = getMediaItemInfo(item, currLibraryCollection)}
@@ -468,6 +477,11 @@
                                     </li>
                                 {/each}
                             {/if} 
+                            {#if !isUserLibraryLoading && userLibrary?.items.length === 0}
+                                <div class="discover__empty-msg">
+                                    This Collection is Empty
+                                </div>
+                            {/if}
                         {/if}
                     </div>
                 </div>
@@ -490,19 +504,25 @@
 
     .music {
         width: 90vw;
-        height: 80vh;
+        height: 75vh;
         min-width: 390px;
         max-width: 800px;
-        padding: 14px 25px 17px 25px;
+        padding: 12px 25px 12px 25px;
 
         .skeleton-bg {
             @include skeleton-bg(dark);   
         }
         .tab-btn {
-            padding: 4px 12px 5px 12px;
+            padding: 3px 12px 4px 12px;
         }
 
         /* states */
+        &--signed-in {
+            padding-top: 18px;
+        }
+        &--signed-in &__content {
+            height: calc(100% - (14px + 28px));
+        }
         &--empty {
             max-width: 600px;
             max-height: 650px;
@@ -556,10 +576,6 @@
             left: 0px;
             transform: none;
         }
-
-        &__header {
-            @include flex(center, space-between);
-        }
         &__user-tab {
             @include flex(center);
             background-color: var(--bg-2);
@@ -588,7 +604,7 @@
         &__content {
             margin-top: 13px;
             display: flex;
-            height: calc(100% - (28px + 14px));
+            height: calc(100% - 14px);
             padding-bottom: 10px;
             min-height: 400px;
         }
@@ -626,7 +642,7 @@
             color: rgba(var(--textColor1), 0.4) !important;
         }
         a {
-            width: 90%;
+            display: inline-block;
             @include elipses-overflow;
         }
         &__settings-btn {
@@ -716,8 +732,8 @@
         &__title {
             color: rgba(249, 249, 249, 1);
             margin-bottom: 5px;
-            width: 100%;
-            max-width: 95%;
+            max-width: 90%;
+            width: min-content;
             @include text-style(_, 500, 1.3rem);
             @include elipses-overflow;
         }
@@ -728,12 +744,6 @@
         }
         &__text--author {
             margin-top: -1px;
-        }
-        a {
-            width: 100%;
-            color: rgba(229, 229, 229, 0.5);
-            font-size: 1.2rem;
-            display: inline-block;
         }
         &__collection-details {
             font-size: 1.2rem;
@@ -814,6 +824,9 @@
                 width: 100%;
             }
         }
+        &__collection-tab-btn--login .tab-btn {
+            padding: 3px 13px 4px 5px;
+        }
         &__collection-arrow-btn {
             @include not-visible;
             @include circle(20px);
@@ -858,6 +871,7 @@
         &__collection-container {
             height: calc(100% - 120px);
             overflow-y: scroll;
+            position: relative;
         }
         &__collection-item {
             @include flex(center, _);
@@ -924,13 +938,17 @@
         &__collection-item-details-right {
             width: 100%;
             overflow: hidden;  
+
+            a {
+                display: block;
+                width: min-content;
+            }
         }
         &__collection-item-title {
             margin-bottom: 4px;
             @include text-style(1, 500, 1.2rem);
             @include elipses-overflow;
             max-width: 95%;
-            display: block;
         }
         &__collection-item-author {
             @include text-style(0.4, 400, 1.185rem);
@@ -945,6 +963,12 @@
             width: 30%;
             text-align: center;
             @include text-style(0.4, 400, 1.2rem);
+        }
+
+        &__empty-msg {
+            @include text-style(0.125, 500, 1.45rem);
+            @include abs-center;
+            top: calc(50% - 50px);
         }
     }
 
@@ -1019,10 +1043,10 @@
                 width: min-content;
                 margin-bottom: 4px;
                 max-width: 95%;
-                display: inline-block;
                 opacity: 0.9;
                 @include text-style(_, 500, 1.13rem);
                 @include elipses-overflow;
+                display: inline-block;
             }
         }
         &__playlist-media-details {
@@ -1078,16 +1102,23 @@
             }
         }
         .now-playing {
+            margin: 0px;
             height: 200px;
             width: 100%;
 
-            &__description-text {
-                -webkit-box-orient: vertical !important;
-                @include multi-line-elipses-overflow(2);
+            &__details-header {
+                margin-bottom: 11px;
+            }
+            &__title {
+                margin-bottom: 2px;
             }
             &__artwork {
                 width: 83px;
                 height: 83px;
+                margin: 15px auto 15px auto;
+            }
+            &__text {
+                @include multi-line-elipses-overflow(1);
             }
         }
         .discover {

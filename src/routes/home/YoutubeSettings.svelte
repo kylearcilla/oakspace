@@ -191,47 +191,27 @@
         class:yt-settings--light={!$themeState.isDarkTheme}
         class:yt-settings--dark={$themeState.isDarkTheme}
         class:yt-settings--min={!$ytPlayerStore?.playlist}
+        class:yt-settings--signed-in={hasSignedIn}
     >
         <!-- Header -->
         <div class="yt-settings__header">
-            <div class="yt-settings__header-title-container">
-                <h1 class="yt-settings__header-title modal-bg__content-title">
-                    Youtube
-                </h1>
-                <div class="yt-settings__header-yt-logo">
-                    <Logo 
-                        logo={LogoIcon.Youtube}
-                        options={{ 
-                            hasBgColor: true, containerWidth: "16px", iconWidth: "72%"
-                        }}
-                    />
-                </div>
-            </div>
             <!-- Account -->
             <div class="yt-settings__user-profile-container">
-                <button 
-                    id="yt-settings--dropdown-btn"
-                    class="yt-settings__user-capsule" 
-                    on:click={profileBtnClickedHandler}
-                >
-                    {#if hasSignedIn && userData}
+                {#if hasSignedIn && userData}
+                    <button 
+                        id="yt-settings--dropdown-btn"
+                        class="yt-settings__user-capsule" 
+                        on:click={profileBtnClickedHandler}
+                    >
                         <img src={userData.profileImgSrc ?? DEFAULT_PROFILE_PIC} alt="yt-profile" />
-                    {:else}
-                        <div class="yt-settings__user-capsule-google-logo">
-                            <Logo 
-                                logo={LogoIcon.Google} 
-                                options={{ hasBgColor: false, containerWidth: "11.5px", iconWidth: "100%" }} 
-                            />
-                        </div>
-                    {/if}
-                    <span>
-                        {hasSignedIn ? userData?.username : "Log In"}
-                    </span>
-                </button>
+                        <span>{userData?.username}</span>
+                    </button>
+                {/if}
                 <!-- Dropdown -->
                 <BounceFade
                     id="yt-settings--dropdown-menu"
                     isHidden={!isUserProfileDropdownOpen || !hasSignedIn || !userData}
+                    zIndex={4}
                     onClickOutside={() => {
                         isUserProfileDropdownOpen = false
                     }}
@@ -352,7 +332,7 @@
                     <h3 class="bento-box__title">Recommendations</h3>
                 </div>
                 <p class="recs__copy bento-box__copy">
-                    Discover new playlists with our staff recommended playlist picks!
+                    Discover new Youtube playlists with our staff recommended playlist picks!
                 </p>
                 <!-- Horizontal Tabs Carousel -->
                 <div class="recs__groups-list-container">
@@ -376,7 +356,7 @@
                             <li><div class="recs__tab-group-padding recs__tab-group-padding--left"></div></li>
                             <!-- Tab Item -->
                             {#if hasSignedIn}
-                                <li class="recs__groups-list-user-pl-tab">
+                                <li class="recs__groups-tab recs__groups-tab--lib">
                                     <button 
                                         on:click={() => handleRecTabBtnClicked(-1)}
                                         class="tab-btn"
@@ -385,11 +365,31 @@
                                     >
                                         My Playlists
                                     </button>
-                                    <div class="divider divider--vertical"></div>
                                 </li>
+                                <div class="divider"></div>
+                            {/if}
+                            {#if !hasSignedIn}
+                                <li class="recs__groups-tab recs__groups-tab--login">
+                                    <button 
+                                        id="yt-settings--dropdown-btn"
+                                        class="yt-settings__user-capsule tab-btn" 
+                                        on:click={profileBtnClickedHandler}
+                                    >
+                                        <div class="yt-settings__user-capsule-google-logo">
+                                            <Logo 
+                                                logo={LogoIcon.Google} 
+                                                options={{ hasBgColor: false, containerWidth: "11.5px", iconWidth: "100%" }} 
+                                            />
+                                        </div>
+                                        <span>
+                                            Log In
+                                        </span>
+                                    </button>
+                                </li>
+                                <div class="divider"></div>
                             {/if}
                             {#each YT_PLAYLIST_GROUPS as group, idx}
-                                <li class="recs__groups-list-rec-tab">
+                                <li class="recs__groups-tab">
                                     <button 
                                         on:click={() => handleRecTabBtnClicked(idx)}
                                         class="tab-btn"
@@ -497,14 +497,13 @@
     $section-spacing: 8px;
     $recs-section-padding-left: 25px;
     $video-img-ratio: calc(16 / 9);
-    $header-height: 38px;
     $min-layout-cut-off: 35em; // 560px
 
     .yt-settings {
         width: 86vw;
         max-width: 900px;
         height: 720px;
-        padding: 15px 25px 25px 25px;
+        padding: 14px 25px 25px 25px;
 
         .skeleton-bg {
             @include skeleton-bg(dark);   
@@ -512,6 +511,13 @@
 
         &--min {
             max-width: 700px;
+            height: 70vh;
+        }
+        &--signed-in {
+            padding-top: 20px;
+        }
+        &--signed-in &__content-container {
+            height: calc(100% - 35px);
         }
         &--dark .dropdown-menu {
             @include dropdown-menu-dark;
@@ -591,8 +597,6 @@
 
         &__header {
             @include flex(flex-start, space-between);
-            height: $header-height;
-
             &-title-container {
                 @include center;
             }
@@ -603,9 +607,10 @@
         /* User Profile Tab */
         &__user-profile-container {
             position: relative;
+            margin-bottom: 10px;
         }
         &__user-capsule {
-            @include flex(center, _);
+            @include flex(center);
             background-color: var(--bg-2);
             padding: 5px 13px 5px 7px;
             border-radius: 15px;
@@ -626,11 +631,10 @@
             }
         }
         &__user-profile {
-            @include abs-top-right(5px, -2px);
+            @include abs-top-left(6px, 0px);
             border-radius: 13px;
             padding: 15px 14px 15px 14px;
             min-width: 170px;
-            z-index: 100;
         }
         &__user-profile-img-container {
             @include flex(center, center);
@@ -672,7 +676,7 @@
         /* Content */
         &__content-container {
             display: flex;
-            height: calc(100% - $header-height);
+            height: calc(100% - 10px);
         }
         &__left {
             margin-right: $section-spacing;
@@ -849,18 +853,7 @@
                 transform: scale(0.9);
             }
         }
-        &__groups-list-user-pl-tab {
-            padding-right: 5px;
-            margin-right: 8px;
-            position: relative;
-        }
-        &__groups-list-user-pl-tab .divider {
-            @include abs-top-right(50%);
-            height: 12px;
-            width: 1px;
-            background-color: rgba(var(--textColor1), 0.1);
 
-        }
         /* Horizontal Carousel Tab Container */
         &__groups-list-container {
             padding-bottom: 10px;
@@ -884,6 +877,12 @@
             &::-webkit-scrollbar {
                 display: none;
             }
+
+            .divider {
+                @include divider(0.1, 13px, 0.5px);
+                margin: 0px 9px 0px 2px;
+                min-width: 1px;
+            }
         }
         &__tab-group-padding {
             width: $recs-section-padding-left;;
@@ -893,8 +892,16 @@
                 width: 50px;
             }
         }
-        &__group-tab {
+        &__groups-tab {
             margin-right: 4px;
+
+            &--lib {
+                margin-right: 4px;
+                position: relative;
+            }
+            &--login button {
+                padding: 4px 12px 5px 8px !important;
+            }
         }
         /* Playlist List */
         &__playlists-list {
@@ -944,9 +951,6 @@
             }
             &:last-child {
                 margin-bottom: 70px;
-            }
-            .divider {
-                @include abs-bottom-left(0px, 0px);
             }
         }
         &__playlist-item-img-container {

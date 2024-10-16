@@ -739,7 +739,7 @@ button.settings-btn {
     @include abs-center();
 }
 
-$bento-box-border-radius: 12px;
+$bento-box-border-radius: 14px;
 $bento-box-padding: 8px;
 
 @mixin bento-box-light {

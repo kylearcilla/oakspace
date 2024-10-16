@@ -839,7 +839,7 @@ export function preventScroll(e: Event) {
 }
 
 /**
- * Formats a string to its plural form based on the given count.
+ * Simple formats a string to its plural form based on the given count.
  * i.e.  "3 Videos"
  * 
  * @param str 

@@ -300,7 +300,7 @@
         .blur-bg {
             width: 100%;
             height: 100%;
-            background: rgba(30, 30, 30, 0.4);
+            background: rgba(30, 30, 30, 0.85);
             backdrop-filter: blur(100px);
             -webkit-backdrop-filter: blur(100px);
             border-radius: 5px;
@@ -354,7 +354,12 @@
         }
         &__img-container {
             height: 37px;
+            width: 37px;
             margin: 0px 4px 0px 5px;
+
+            img {
+                object-fit: cover;
+            }
         }
         &__art {
             border-radius: 7px;
@@ -433,7 +438,7 @@
 
     /* Playback Bar */
     .mp-progress {
-        @include abs-top-left(-0.5px, 9px);
+        @include abs-top-left(0px, 11px);
         width: calc(100% - 20px);
         flex: 1;
 
@@ -446,7 +451,7 @@
         }
         &__playback-bar input {    
             transition: ease-in-out 0.15s;
-            height: 2px;
+            height: 1.5px;
             background-color: var(--INPUT_RANGE_BG_COLOR);
             opacity: 0.1;
             

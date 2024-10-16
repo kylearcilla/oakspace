@@ -11,7 +11,7 @@ export abstract class Calendar<T extends MonthData = MonthData> {
     pickedDate: Date | null = null
     pickedDateStr: string = ""
 
-    currMonth: T
+    currMonth: MonthData
     isPrevMonthAvailable: boolean
     isNextMonthAvailable: boolean
     isForwards: boolean | null = null
@@ -26,7 +26,7 @@ export abstract class Calendar<T extends MonthData = MonthData> {
 
         this.currMonth = this.genMonthCalendar(new Date())
 
-        this.isPrevMonthAvailable = !this.isForwards ?? true
+        this.isPrevMonthAvailable = !this.isForwards
         this.isNextMonthAvailable = this.isForwards ?? true
     }
 
@@ -76,7 +76,7 @@ export abstract class Calendar<T extends MonthData = MonthData> {
      */
     getThisMonth() {
         this.currMonth = this.genMonthCalendar(new Date())
-        this.isPrevMonthAvailable = !this.isForwards ?? true
+        this.isPrevMonthAvailable = !this.isForwards
         this.isNextMonthAvailable = this.isForwards ?? true
         this.pickedDate = new Date()
     }
@@ -101,11 +101,26 @@ export abstract class Calendar<T extends MonthData = MonthData> {
         return DateBoundState.InBounds
     }
 
-    /**
-     * Generates a month calendar given a date from the month.
-     * @param d   Date from the month.
-     */
-    abstract genMonthCalendar(inputDate: Date): T
+    genMonthCalendar(inputDate: Date): MonthData {
+        const firstDayOfMonth = new Date(inputDate.setDate(1))
+        const monthFirstDayOfWeek = firstDayOfMonth.getDay()
+        const currMonth: MonthData = { 
+            monthIdx: inputDate.getMonth(), days: [],
+            year: inputDate.getFullYear(), firstDay: firstDayOfMonth
+        }
+
+        // go to the first date in grid using negative offset from first day
+        let day = (monthFirstDayOfWeek - 1) * -1  
+
+        for (let w = 0; w < 6; w++) {
+            for (let d = 0; d < 7; d++) {
+                const currDate = new Date(new Date(inputDate).setDate(day++))
+                const isInCurrMonth = isSameMonth(currDate, firstDayOfMonth)
+                currMonth.days.push({ date: currDate, isInCurrMonth })
+            }
+        }
+        return currMonth
+    }
 }
 
 /**

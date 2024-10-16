@@ -45,8 +45,6 @@
 
   let toggledLeftBarWithKey = false
   let totalWidth = 0
-
-  let homeRef: HTMLElement
   let routeId: string
 
   let stretchMiddleView = false
@@ -56,8 +54,6 @@
   let rightSideBarWidth = 0
   let middleViewMarginLeft = ""
   let middleViewWidth = ""
-
-  let isAciveRoutineOpen = false
   let homeViewClasses = ""
 
   const RIGHT_BAR_WIDTH = 240
@@ -160,7 +156,6 @@
 <svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp}/>
 
 <div
-  bind:this={homeRef}
   bind:clientWidth={totalWidth}
   on:mousemove={_onMouseMoveHandler}
   id="home"
@@ -391,7 +386,7 @@
 
         &-slot-container {
           padding: inherit;
-          @include abs-top-left(20px);
+          @include abs-top-left(35px);
           width: 100%;
           height: 100%;
           z-index: 300;

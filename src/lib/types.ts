@@ -528,7 +528,7 @@ type SessionResult = {
 
 type Tag = {
     id: string
-    orderIdx: number
+    orderIdx: number∂
     name: string,
     symbol: {
         color: Color,
@@ -1088,46 +1088,23 @@ type GoogleCalendarEvent = {
 }
 
 /* Goals */
+
+type DueType = "day" | "month" | "quarter" | "year" | "someday"
+type GoalStatus = "on-hold" | "in-progress" | "done"
+
 type Goal = {
-    id: string
-    tag: Tag
-    title: string
-    description: string
-    dueDate: Date | null
-    creationDate: Date
-    accomplishedDate: Date | null
-    status: GoalStatus
-    milestonesDone: number,
-    milestones: Milestone[]
-    idx: number
-    globalIdx: number
-    sectionId: number
-    sectionIdx: number
-    imgSrc: string
-    isImgHidden: boolean
-    isArchived: boolean
-    isPinned: boolean
-}
-type GoalSection = {
-    name: string
-    orderIdx: number
-    length: number
-    isExpanded: boolean
-    tagRef: ""
-}
-interface Milestone implements Task { 
-    id: string,
-    idx: number,
-    isChecked: boolean,
-    title: string,
-    description: string
-    date: Date | null 
+  name: string
+  due?: Date
+  dueType?: DueType
+  description?: string
+  tag?: Tag
+  creationDate: Date
+  status: GoalStatus
+  milestones?: Milestone[]
+  imgSrc?: string
+  isPinned?: boolean
 }
 
-type GoalSectionItemId = {
-    sectionId: number,
-    sectionItemIdx: number
-}
 type YrAccomplishmentsOverview = {
     newGoals: number,
     milestonesReached: number,

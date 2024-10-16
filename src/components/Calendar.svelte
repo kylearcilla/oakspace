@@ -27,21 +27,6 @@
         
         onDayUpdate(day)
     }
-    function initDayTitle(day: any) {
-        if (type === CalendarType.Basic) return
-
-        const prodDay = day as ProductivityDay
-
-        if (prodDay.hadGoal && prodDay.hadSession) {
-            return "Accomplished a goal and completed a session."
-        }
-        if (prodDay.hadGoal) {
-            return "Accomplished a goal."
-        }
-        if (prodDay.hadSession) {
-            return "Completed a Session."
-        }
-    }
     onMount(() => {
         if (calendar instanceof ProductivityCalendar) {
             type = CalendarType.Productivity
@@ -53,7 +38,10 @@
 </script>
 
 {#if type != null}
-<div class={`calendar ${$themeState.isDarkTheme ? "" : "calendar--light"} calendar--${CalendarType[type].toLowerCase()}`}>
+<div 
+    class={`calendar calendar--${CalendarType[type].toLowerCase()}`}
+    class:calendar--light={!$themeState.isDarkTheme}
+>
     <div class="calendar__focus">
         <div class="calendar__focus-header">
             <div class="calendar__month-title">
@@ -101,17 +89,18 @@
     <div class="calendar__month">
         <ul>
             {#each $store.currMonth.days as day}
-                <li class={`calendar__month-day-container ${day ? "" : "calendar__month-day-container--empty"}`}>
+                <li 
+                    class="calendar__month-day-container"
+                    class:calendar__month-day-container--empty={!day}
+                >
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div 
                         role="button" 
                         tabindex="0" 
-                        title={initDayTitle(day)}
-                        class={`calendar__month-day 
-                                    ${day.isInCurrMonth ? "" : "calendar__month-day--not-curr-month"}
-                                    ${isSameDay(day.date, new Date) ? "calendar__month-day--today" : ""}
-                                    ${isSameDay(day.date, $store.pickedDate) ? "calendar__month-day--picked" : ""}
-                        `}
+                        class="calendar__month-day"
+                        class:calendar__month-day--not-curr-month={!day.isInCurrMonth}
+                        class:calendar__month-day--today={isSameDay(day.date, new Date())}
+                        class:calendar__month-day--picked={isSameDay(day.date, $store.pickedDate)}
                         on:keydown={(e) => {
                             if (e.key === 'Enter' || e.code === 'Space') {
                                 e.preventDefault()

@@ -1,4 +1,4 @@
-import { getBrowserLanguagePreference } from "./utils-general"
+import { formatPlural, getBrowserLanguagePreference } from "./utils-general"
 
 export const months = [
     "January", "February", "March", "April", "May", "June",
@@ -763,3 +763,31 @@ export function getNextHour(date: Date) {
 
     return nearestHour
 }
+
+export function getTimeDistanceStr(targetDate: Date) {
+    const now = new Date()
+    const diffInMs = targetDate.getTime() - now.getTime()
+    const diffInDays = Math.abs(Math.floor(diffInMs / (1000 * 60 * 60 * 24)))
+    const diffInWeeks = Math.floor(diffInDays / 7)
+    const diffInMonths = Math.floor(diffInDays / 30) 
+    const diffInYears = Math.floor(diffInMonths / 12) 
+    
+    const passed = diffInMs < 0
+  
+    if (diffInDays === 0) {
+      return "today";
+    } 
+    else if (diffInYears > 0) {
+      return `${formatPlural("year", diffInYears)} ${passed ? "ago" : ""}`
+    } 
+    else if (diffInMonths > 0) {
+      return `${formatPlural("month", diffInMonths)} ${passed ? "ago" : ""}`
+    } 
+    else if (diffInWeeks > 0) {
+      return `${formatPlural("week", diffInWeeks)} ${passed ? "ago" : ""}`
+    } 
+    else if (diffInDays > 0) {
+      return `${formatPlural("day", diffInDays)} ${passed ? "ago" : ""}`
+    }
+  }
+  

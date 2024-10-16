@@ -220,7 +220,7 @@
     .header {
         width: 100%;
         height: 21px;
-        padding: 10px 15px 0px 15px;
+        padding: 9px 15px 0px 15px;
         position: relative;
         @include flex(center, space-between);
         
@@ -278,11 +278,11 @@
 
         /* Now Block */
         &__now-block {
-            margin: 0px 0px 0px -5px;
+            margin: -2px 0px 0px -5px;
             background-color: rgba(var(--block-color-1), 0.085);
             border: 1px solid transparent;
             // padding: 0px 15px 0px 12px;
-            padding: 0px 15px 0px 5px;
+            padding: 0px 15px 0px 6px;
             white-space: nowrap;
             background-color: transparent !important;
             z-index: 100;
@@ -306,7 +306,7 @@
                 background-color: rgba(var(--textColor1), 0.2);
             }
             &--empty &-title, &--no-routine &-title {
-                color: rgba(var(--textColor1), 0.8);
+                color: rgba(var(--textColor1), 1);
             }
             &--empty &-time {
                 color: rgba(var(--textColor1), 0.3);
@@ -336,20 +336,22 @@
                 transform: scale(0.99);
             }
             &-circle {
-                background-color: rgba(var(--block-color-1), 0.8);
+                background-color: rgba(var(--block-color-1), 1);
                 height: 10px;
                 width: 2px;
                 border-radius: 1px;
+                margin-right: 10px;
+                display: none;
             }
             &-title {
-                @include text-style(_, 500, 1.35rem, "DM Sans");
+                @include text-style(_, 400, 1.225rem, "DM Mono");
                 color: rgba(var(--block-color-1), 1);
                 @include elipses-overflow;
-                margin: 0px 0px 0px 10px;
+                margin: 0px 0px 0px 0px;
                 max-width: 150px;
             }
             &-time {
-                @include text-style(_, 400, 1.25rem, "DM Mono");
+                @include text-style(_, 400, 1.225rem, "DM Mono");
                 color: rgba(var(--block-color-3), 0.5);
                 margin-left: 11px;
             }

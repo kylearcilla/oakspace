@@ -215,7 +215,7 @@ export const upbeatCollections: DiscoverCollection = {
             id: "PLTlW3nrfe71SsxEK04guGdsuM6cN1abGM",
             url: "https://www.youtube.com/playlist?list=PLTlW3nrfe71SsxEK04guGdsuM6cN1abGM",
             type: MusicMediaType.Playlist,
-            description: "Frank Ocean. Kendrick Lamar. Taylor Swift. And More."
+            description: "Frank Ocean, Kendrick Lamar, Taylor Swift—plus other chart-toppers."
         },
         {
             name: "Best of 2000s",
@@ -227,7 +227,7 @@ export const upbeatCollections: DiscoverCollection = {
             id: "PLTlW3nrfe71TBFmyLxNW68nsD0bNh2jSA",
             url: "https://www.youtube.com/playlist?list=PLTlW3nrfe71TBFmyLxNW68nsD0bNh2jSA",
             type: MusicMediaType.Playlist,
-            description: "Nelly Furtado. The Strokes. Outkast. And More."
+            description: "Nelly Furtado, The Strokes, Outkast, and other 2000s icons."
         },
         {
             name: "Best of KPop",
@@ -292,7 +292,7 @@ export const soundtrackCollections: DiscoverCollection = {
             id: "PLTlW3nrfe71RRyVnI1QokJR_bexg_r92-",
             url: "https://www.youtube.com/playlist?list=PLTlW3nrfe71RRyVnI1QokJR_bexg_r92-",
             type: MusicMediaType.Playlist,
-            description: "The very best Disney, Pixar, Dreamworks, and more!"
+            description: "The very best of Disney, Pixar, Dreamworks, and more!"
         },
         {
             name: "Pokémon Collection",

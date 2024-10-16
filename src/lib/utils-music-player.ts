@@ -6,7 +6,7 @@ const ANIMATION_DELAY = 3000
 const TEXT_CONTAINER_OFFSET_MIN_CUTOFF = 11  // diff betwen text width and container
 
 export const INPUT_RANGE_FG_COLOR = "rgba(255, 255, 255, 0.9)"
-export const INPUT_RANGE_BG_COLOR = "rgba(255, 255, 255, 0.1)"
+export const INPUT_RANGE_BG_COLOR = "rgb(50, 50, 50)"
 
 /**
  * Updates the progrress bar based on current value.

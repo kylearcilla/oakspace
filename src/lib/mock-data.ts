@@ -164,3 +164,87 @@ export const TEST_GOALS: Goal[] = [
     status: "on-hold"
   },
 ]
+
+/* Week Habits */
+export const TEST_WK_HABITS = [
+  {
+    name: "☀️ Wake Up",
+    target: "8:30 AM",
+    streak: 3,
+    frequency: 3, 
+    lastCheck: new Date("2024-10-12"),
+    last7Days: 0b0101101, 
+    timeOfDay: "morning"
+  },
+  {
+    name: "💪 Exercise",
+    target: "45m",
+    streak: 3,
+    frequency: "MTWT", 
+    lastCheck: new Date("2024-10-13"),
+    last7Days: 0b0101101, 
+    timeOfDay: "afternoon"
+  },
+  {
+    name: "📖 Reading",
+    target: "30 pages",
+    streak: 5,
+    frequency: "MTWFS", 
+    lastCheck: new Date("2024-10-14"),
+    last7Days: 0b1110100, 
+    timeOfDay: "evening"
+  },
+  {
+    name: "🧘🏼‍♂️ Meditation",
+    target: "15m",
+    streak: 2,
+    frequency: 1, 
+    lastCheck: new Date("2024-10-14"),
+    last7Days: 0b1010101, 
+    timeOfDay: "morning"
+  },
+  {
+    name: "🇫🇷 Study French",
+    target: "1 hour",
+    streak: 4,
+    frequency: "MWS", 
+    lastCheck: new Date("2024-10-11"),
+    last7Days: 0b1010001, 
+    timeOfDay: "afternoon"
+  },
+  {
+    name: "🏃‍♂️ Run",
+    target: "5 km",
+    streak: 6,
+    frequency: "MWF", 
+    lastCheck: new Date("2024-10-13"),
+    last7Days: 0b1011010, 
+    timeOfDay: "morning"
+  },
+  {
+    name: "👨‍💻 Deep Work",
+    target: "2 hours",
+    streak: 7,
+    frequency: "MTWTFS",
+    lastCheck: new Date("2024-10-14"),
+    last7Days: 0b1111110,
+    timeOfDay: "morning"
+  },
+  {
+    name: "🌊 Water",
+    target: "8 glasses",
+    streak: 7,
+    frequency: 1, 
+    lastCheck: new Date("2024-10-14"),
+    last7Days: 0b1111111, 
+    timeOfDay: "afternoon"
+  },
+  {
+    name: "🧹 Clean House",
+    streak: 7,
+    frequency: 1, 
+    lastCheck: new Date("2024-10-14"),
+    last7Days: 0b1111111, 
+    timeOfDay: "afternoon"
+  },
+]

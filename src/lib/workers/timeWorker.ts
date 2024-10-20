@@ -5,5 +5,3 @@ self.onmessage = function(event) {
         self.postMessage('tick')
     }, interval)
 }
-
-export {}

@@ -9,6 +9,7 @@
 	import { getElemById, getHozDistanceBetweenTwoElems, getMaskedGradientStyle } from "$lib/utils-general"
 	import { TEST_GOALS } from "$lib/mock-data"
 	import GoalCard from "../../../components/GoalCard.svelte"
+	import WeeklyHabits from "./WeeklyHabits.svelte";
 
     const SMALLER_WIDTH = 630
     const SMALL_WIDTH = 860
@@ -38,6 +39,7 @@
         "Life begins at the end of your comfort.",
         "Everything in life starts with your mindset first and your actions second. <br><br>Your actions follow your thoughts, your beliefs and ideas.",
         "Be yourself so the people looking for you can find you.",
+        "You gotta learn how to move from things that don't serve you well.",
         "Decide what kind of life you actually want. And then say no to everything that isn't that.",
         "Self love is the highest frequency that attracts everything you desire.",
         "Do not rely on transient feelings, rely on who you desire to be on this day, in this lifetime. <br><br>What would they do. Don't ask yourself if you want to do it. <br><br>Ask your future self if they want you to do it. <br><br>You do it for that person.",
@@ -199,7 +201,7 @@
                                 class:base__month-header-btn--chosen={currView === "cal"}
                                 on:click={() => onViewBtnClicked("cal")}
                             >
-                                <span>Calendar</span>
+                                <span>Overview</span>
                             </button>
                             <button 
                                 id="month-view--habits"
@@ -248,7 +250,11 @@
                     </div>
                     <div class="divider"></div>
                     <div class="base__month-details-view">
-                        <ActivityCalendar />
+                        {#if currView === "cal"}
+                            <ActivityCalendar />
+                        {:else}
+                            <WeeklyHabits/>
+                        {/if}
                     </div>
                 </div>
             </div>
@@ -419,8 +425,7 @@
         &__header-callout {
             position: relative;
             margin: 3px 0px 12px -2px;
-            // padding: 7px 5px 8px 25px;
-            padding: 8px 15px 9px 12px;
+            padding: 8px 17px 9px 12px;
             border-radius: 8px;
             background-color: rgba(var(--textColor1), 0.03);
             @include multi-line-elipses-overflow(2);
@@ -437,12 +442,12 @@
                 border-radius: 2px;
             }
             p {
-                @include text-style(0.5, 500, 1.3rem);
+                @include text-style(0.5, 500, 1.385rem);
             }
         }
         &__header-callout-icon {
             margin: 1px 10px 0px 0px;
-            font-size: 1.3rem;
+            font-size: 1.385rem;
         }
 
         /* overview */

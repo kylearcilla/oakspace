@@ -504,9 +504,10 @@
 
     .music {
         width: 90vw;
-        height: 75vh;
+        height: 84vh;
         min-width: 390px;
         max-width: 800px;
+        max-height: 720px;
         padding: 12px 25px 12px 25px;
 
         .skeleton-bg {

@@ -84,7 +84,7 @@ export const sereneCollections: DiscoverCollection = {
             id: "PLTlW3nrfe71TntFrm1qK_VH-jx58Gbuam",
             url: "",
             type: MusicMediaType.Playlist,
-            description: "The best of the from the  altenative & indie genres."
+            description: "The best from the altenative & indie genres."
         },
         {
             name: "Gaming Chill",
@@ -403,7 +403,7 @@ export const soundtrackCollections: DiscoverCollection = {
             id: "PLs58dkVLAZbh4OXbElIXrZLTyV7PDzD9s",
             url: "https://www.youtube.com/playlist?list=PLs58dkVLAZbh4OXbElIXrZLTyV7PDzD9s",
             type: MusicMediaType.Playlist,
-            description: '"You can’t make a Tomelette without breaking some Gregs"'
+            description: '"You can\"t make a Tomelette without breaking some Gregs."'
         },
         {
             name: "The Last of Us",

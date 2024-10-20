@@ -95,10 +95,14 @@
     }
 
     function updateSelectTab(path: string) {
+        
         selectedTabName = getHomeUrlPath(path)
-
         selectedTabName = capitalize(selectedTabName)
-        selectColor = tabs.find((tab) => tab.name === selectedTabName)!.rgb
+
+        const tab = tabs.find((tab) => tab.name === selectedTabName)
+        if (!tab) return
+
+        selectColor = tab.rgb
     }
 
     onMount(() => {

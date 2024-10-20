@@ -501,8 +501,9 @@
 
     .yt-settings {
         width: 86vw;
+        height: 85vh;
+        max-height: 720px;
         max-width: 900px;
-        height: 720px;
         padding: 14px 25px 25px 25px;
 
         .skeleton-bg {
@@ -511,7 +512,6 @@
 
         &--min {
             max-width: 700px;
-            height: 70vh;
         }
         &--signed-in {
             padding-top: 20px;

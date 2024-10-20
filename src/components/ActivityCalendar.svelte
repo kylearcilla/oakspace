@@ -224,13 +224,11 @@
             <div 
                 class="acal__day"
                 class:acal__day--has-img={img}
-                class:bg-img={img}
                 class:acal__day--first-col={dow === 0}
                 class:acal__day--last-col={dow === 6}
                 class:acal__day--bottom-row={idx >= 35}
                 class:acal__day--not-curr-month={!sameMonth}
                 class:acal__day--today={isSameDay(day.date, new Date())}
-                style={`${img ? `background-image: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), url(${img})` : ""}`}
             >
                 <div class="acal__day-num">
                     {d}

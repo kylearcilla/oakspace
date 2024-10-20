@@ -103,11 +103,11 @@
             color: rgba(#ec846d, 0.5);
         }
         &__due {
-            @include text-style(0.2, 400, 1.3rem, "DM Sans");
+            @include text-style(0.2, 400, 1.2rem, "DM Sans");
             margin-bottom: 6px;
         }
         &__title {
-            @include text-style(0.75, 500, 1.255rem);
+            @include text-style(0.75, 500, 1.285rem);
             cursor: text;
         }
         &__description {

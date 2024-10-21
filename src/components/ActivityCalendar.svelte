@@ -224,11 +224,13 @@
             <div 
                 class="acal__day"
                 class:acal__day--has-img={img}
+                class:bg-img={img}
                 class:acal__day--first-col={dow === 0}
                 class:acal__day--last-col={dow === 6}
                 class:acal__day--bottom-row={idx >= 35}
                 class:acal__day--not-curr-month={!sameMonth}
                 class:acal__day--today={isSameDay(day.date, new Date())}
+                style={`${img ? `background-image: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0)), url(${""})` : ""}`}
             >
                 <div class="acal__day-num">
                     {d}
@@ -269,7 +271,7 @@
 <style lang="scss">
     .acal {
         width: 100%;
-        height: 100%;
+        height: 600px;
 
         --border-color: rgba(var(--textColor1), 0.035);
 
@@ -289,7 +291,7 @@
         }
         &__day {
             padding: 4px 5px 2.5px 4px;
-            background-color: rgba(white, 0.0025);
+            background-color: rgba(white, 0);
             border-top: 0.5px solid var(--border-color);
             border-left: 0.5px solid var(--border-color);
             height: calc(var(--GRID_HEIGHT) / 6);
@@ -312,7 +314,7 @@
                 width: 1px;
             }
             &--has-img {
-                border: none !important;
+                // border: none !important;
             }
             &--first-col {
                 background-color: rgba(white, 0.01);
@@ -332,23 +334,23 @@
                 color: white;
             }
         }
-        &__day--has-img::before,
-        &__day--has-img::after {
-            display: block;
-        }
-        &__day--has-img &__day-star i {
-            color: rgba(var(--textColor1), 0.4); 
-        }
-        &__day--has-img &__activity {
-            background: rgba(40, 40, 40, 0.55);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            transition: 0.01s ease-in-out;
+        // &__day--has-img::before,
+        // &__day--has-img::after {
+        //     display: block;
+        // }
+        // &__day--has-img &__day-star i {
+        //     color: rgba(var(--textColor1), 0.4); 
+        // }
+        // &__day--has-img &__activity {
+        //     background: rgba(40, 40, 40, 0.55);
+        //     backdrop-filter: blur(4px);
+        //     -webkit-backdrop-filter: blur(4px);
+        //     transition: 0.01s ease-in-out;
 
-            &:hover {
-                background: rgba(40, 40, 40, 0.85) !important;
-            }
-        }
+        //     &:hover {
+        //         background: rgba(40, 40, 40, 0.85) !important;
+        //     }
+        // }
         &__day-num {
             @include text-style(0.45, 400, 1.1rem, "DM Sans");
             @include circle(17px);
@@ -373,7 +375,7 @@
             width: 100%;
             padding: 3.5px 2px 4px 5px;
             border-radius: 5px;
-            background-color: rgba(var(--textColor1), 0.03);
+            background-color: rgba(var(--textColor1), 0.04);
             @include flex(center);
             cursor: pointer;
             white-space: nowrap;

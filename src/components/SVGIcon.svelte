@@ -3,6 +3,7 @@
   import { Icon } from "$lib/enums"
 	import { themeState } from "$lib/store"
 	import { getThemeStyling } from "$lib/utils-appearance"
+	import DropdownBtn from "./DropdownBtn.svelte";
 
   const DEFAULT_STYLING: IconOptions = {
       opacity: 1, 
@@ -84,22 +85,6 @@
               stroke-width={strokeWidth}
               stroke-linecap="round"
             >
-      </svg>
-  {:else if icon === Icon.ChevronLeft}
-      <svg xmlns="http://www.w3.org/2000/svg" width="7" height="11" viewBox="0 0 7 11" fill="none">
-          <path 
-              d="M1.12345 5.92581C0.854683 5.65704 0.854683 5.22057 1.12345 4.9518L5.25172 0.823523C5.52049 0.554755 5.95697 0.554755 6.22574 0.823523C6.49451 1.09229 6.49451 1.52877 6.22574 1.79754L2.5834 5.43988L6.22359 9.08222C6.49236 9.35099 6.49236 9.78747 6.22359 10.0562C5.95482 10.325 5.51834 10.325 5.24957 10.0562L1.1213 5.92796L1.12345 5.92581Z" 
-              fill={color}
-              stroke-width={strokeWidth}
-          />
-      </svg>
-  {:else if icon === Icon.ChevronRight}
-      <svg xmlns="http://www.w3.org/2000/svg" width="7" height="11" viewBox="0 0 7 11" fill="none">
-          <path 
-              d="M6.22616 4.95505C6.49493 5.22381 6.49493 5.66029 6.22616 5.92906L2.09788 10.0573C1.82912 10.3261 1.39264 10.3261 1.12387 10.0573C0.855102 9.78857 0.855102 9.35209 1.12387 9.08332L4.76621 5.44098L1.12602 1.79864C0.857252 1.52987 0.857252 1.09339 1.12602 0.824623C1.39479 0.555855 1.83127 0.555855 2.10004 0.824623L6.22831 4.9529L6.22616 4.95505Z" 
-              fill={color}
-              stroke-width={strokeWidth}
-          />
       </svg>
   {:else if icon === Icon.DragDots}
       <svg width={width ?? 20} height={height ?? 20} style={`transform: scale(${scale});`}>
@@ -220,9 +205,13 @@
               fill={color} 
               stroke-width={strokeWidth}
         />
-    </svg>      
-  {:else}
-      <svg xmlns="http://www.w3.org/2000/svg" width={width} height={height} fill="none">
+    </svg>
+  {:else if [Icon.ChevronLeft, Icon.ChevronRight, Icon.Dropdown].includes(icon)}
+      <svg 
+        class:chev-left={icon === Icon.ChevronLeft}
+        class:chev-right={icon === Icon.ChevronRight}
+        xmlns="http://www.w3.org/2000/svg" width={width} height={height} fill="none"
+      >
         <path 
             stroke-linecap="round" stroke-linejoin="round" stroke={color}
             stroke-width={strokeWidth} 
@@ -251,5 +240,11 @@
   }
   .day-icon {
     @include abs-center;
+  }
+  .chev-left {
+    transform: rotate(90deg);
+  }
+  .chev-right {
+    transform: rotate(-90deg);
   }
 </style>

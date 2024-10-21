@@ -56,7 +56,12 @@
                     on:click={() => $store.getPrevMonthCalendar()}
                     disabled={!$store.isPrevMonthAvailable}
                 >
-                    <SVGIcon icon={Icon.ChevronLeft}/>
+                <SVGIcon 
+                    icon={Icon.ChevronLeft}
+                    options={{
+                        scale: 1.5, height: 12, width: 12, strokeWidth: 1.4
+                    }}
+                />
                 </button>
                 <button
                     disabled={isDisabled}
@@ -71,7 +76,12 @@
                     on:click={() => $store.getNextMonthCalendar()}
                     disabled={!$store.isNextMonthAvailable}
                 >
-                <SVGIcon icon={Icon.ChevronRight}/>
+                <SVGIcon 
+                    icon={Icon.ChevronRight}
+                    options={{
+                        scale: 1.5, height: 12, width: 12, strokeWidth: 1.4
+                    }}
+                />
             </button>
             </div>
         </div>

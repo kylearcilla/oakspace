@@ -168,7 +168,8 @@ export const TEST_GOALS: Goal[] = [
 /* Week Habits */
 export const TEST_WK_HABITS = [
   {
-    name: "☀️ Wake Up",
+    name: "Wake Up",
+    symbol: "☀️",
     target: "8:30 AM",
     streak: 3,
     frequency: 3, 
@@ -177,7 +178,8 @@ export const TEST_WK_HABITS = [
     timeOfDay: "morning"
   },
   {
-    name: "💪 Exercise",
+    name: "Exercise",
+    symbol: "💪",
     target: "45m",
     streak: 3,
     frequency: "MTWT", 
@@ -186,7 +188,8 @@ export const TEST_WK_HABITS = [
     timeOfDay: "afternoon"
   },
   {
-    name: "📖 Reading",
+    name: "Reading",
+    symbol: "📖",
     target: "30 pages",
     streak: 5,
     frequency: "MTWFS", 
@@ -195,7 +198,8 @@ export const TEST_WK_HABITS = [
     timeOfDay: "evening"
   },
   {
-    name: "🧘🏼‍♂️ Meditation",
+    name: "Meditation",
+    symbol: "🧘🏼‍♂️",
     target: "15m",
     streak: 2,
     frequency: 1, 
@@ -204,16 +208,18 @@ export const TEST_WK_HABITS = [
     timeOfDay: "morning"
   },
   {
-    name: "🇫🇷 Study French",
+    name: "Study French",
+    symbol: "🇫🇷",
     target: "1 hour",
     streak: 4,
     frequency: "MWS", 
     lastCheck: new Date("2024-10-11"),
     last7Days: 0b1010001, 
-    timeOfDay: "afternoon"
+    timeOfDay: "evening"
   },
   {
-    name: "🏃‍♂️ Run",
+    name: "Run",
+    symbol: "🏃‍♂️",
     target: "5 km",
     streak: 6,
     frequency: "MWF", 
@@ -222,7 +228,8 @@ export const TEST_WK_HABITS = [
     timeOfDay: "morning"
   },
   {
-    name: "👨‍💻 Deep Work",
+    name: "Deep Work",
+    symbol: "👨‍💻",
     target: "2 hours",
     streak: 7,
     frequency: "MTWTFS",
@@ -231,16 +238,18 @@ export const TEST_WK_HABITS = [
     timeOfDay: "morning"
   },
   {
-    name: "🌊 Water",
+    name: "Water",
+    symbol: "🌊",
     target: "8 glasses",
     streak: 7,
     frequency: 1, 
     lastCheck: new Date("2024-10-14"),
     last7Days: 0b1111111, 
-    timeOfDay: "afternoon"
+    timeOfDay: "all-day"
   },
   {
-    name: "🧹 Clean House",
+    name: "Clean House",
+    symbol: "🧹",
     streak: 7,
     frequency: 1, 
     lastCheck: new Date("2024-10-14"),

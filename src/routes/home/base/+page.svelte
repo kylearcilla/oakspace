@@ -1,36 +1,25 @@
 <script lang="ts">
-    import { onMount } from "svelte"
-    
-	import HeatMap from "../../../components/HeatMap.svelte"
-	import SvgIcon from "../../../components/SVGIcon.svelte"
-	import ActivityCalendar from "../../../components/ActivityCalendar.svelte"
-
-	import { Icon } from "$lib/enums";
-	import { getElemById, getHozDistanceBetweenTwoElems, getMaskedGradientStyle } from "$lib/utils-general"
+    import { getMaskedGradientStyle } from "$lib/utils-general"
 	import { TEST_GOALS } from "$lib/mock-data"
+    
+	import MonthView from "./MonthView.svelte";
+	import HeatMap from "../../../components/HeatMap.svelte"
 	import GoalCard from "../../../components/GoalCard.svelte"
-	import WeeklyHabits from "./WeeklyHabits.svelte";
 
     const SMALLER_WIDTH = 630
     const SMALL_WIDTH = 860
 
-    type MonthDetailsView = "cal" | "goals" | "habits"
-
     let heatMapContainer: HTMLElement
     let heatMapGradient = ""
-    let currView: MonthDetailsView = "cal"
-    let btnHighlighter = {
-        width: 0, left: 0
-    }
     let noteIdx = 0
     let heatMapLeftArrow = false
     let heatMapRightArrow = false
     let width = 0
 
-    $: console.log({ width })
-
+    
     let monthBulletinHt = 0
     let leftHt = 0
+    $: console.log({ leftHt })
 
     const notes = [
         "Inner peace over everything else.",
@@ -78,28 +67,6 @@
         heatMapRightArrow = !scrollStatus.hasReachedEnd
         heatMapLeftArrow  = !scrollStatus.hasReachedStart
     }
-    function onViewBtnClicked(view: MonthDetailsView) {
-        currView = view
-        const btnElem = getElemById(`month-view--${view}`)!
-        const width = btnElem.clientWidth
-        const left = getHozDistanceBetweenTwoElems({ 
-            left:  { 
-                elem: btnElem.parentElement!,
-                edge: "left"
-            },
-            right: { 
-                elem: btnElem,
-                edge: "left"
-            },
-        })
-
-        btnHighlighter.width = width + 0
-        btnHighlighter.left  = Math.max(left - 2, 0)
-    }
-
-    onMount(() => {
-        onViewBtnClicked(currView)
-    })
 </script>
 
 <div 
@@ -183,81 +150,9 @@
                 <div class="divider divider--1"></div>
     
             <!-- month insights -->
-            <div class="base__month">
-                <div class="base__month-heading">
-                    September
-                </div>
-                <div class="base__month-insights">
-                    <div class="base__insight-sentence">
-                        You have completed <strong>60%</strong> of your habits this month with <strong>2</strong> of your <strong>8</strong> monthly goals achived.
-                    </div>
-                </div>
-                <div class="base__month-details">
-                    <div class="base__month-details-header">
-                        <div class="base__month-btns">
-                            <button 
-                                id="month-view--cal"
-                                class="base__month-header-btn"
-                                class:base__month-header-btn--chosen={currView === "cal"}
-                                on:click={() => onViewBtnClicked("cal")}
-                            >
-                                <span>Overview</span>
-                            </button>
-                            <button 
-                                id="month-view--habits"
-                                class="base__month-header-btn"
-                                class:base__month-header-btn--chosen={currView === "habits"}
-                                class:base__month-header-btn--indicator={true}
-                                title="You have some incomplete habits!"
-                                on:click={() => onViewBtnClicked("habits")}
-                            >
-                                <span>Habits</span>
-                                <div class="base__month-header-btn-subtxt">
-                                    60%
-                                </div>
-                            </button>
-                            <button 
-                                id="month-view--goals"
-                                class="base__month-header-btn"
-                                class:base__month-header-btn--chosen={currView === "goals"}
-                                class:base__month-header-btn--indicator={true}
-                                title="You have some goals due today!"
-                                on:click={() => onViewBtnClicked("goals")}
-                            >
-                                <span>Goals</span>
-                                <div class="base__month-header-btn-subtxt">
-                                    12%
-                                </div>
-                            </button>
-                        </div>
-                        <div class="flx">
-                            <button class="base__month-arrow">
-                                <SvgIcon icon={Icon.ChevronLeft} />
-                            </button>
-                            <button class="base__month-arrow">
-                                <SvgIcon icon={Icon.ChevronRight}/>
-                            </button>
-                            <button class="base__month-settings-btn">
-                                <SvgIcon icon={Icon.Settings} options={{ scale: 1.1 }}/>
-                            </button>
-                        </div>
-                        <div 
-                            class="base__month-details-header-highlight smooth-bounce"
-                            style:left={`${btnHighlighter.left}px`}
-                            style:width={`${btnHighlighter.width}px`}
-                        >
-                        </div>
-                    </div>
-                    <div class="divider"></div>
-                    <div class="base__month-details-view">
-                        {#if currView === "cal"}
-                            <ActivityCalendar />
-                        {:else}
-                            <WeeklyHabits/>
-                        {/if}
-                    </div>
-                </div>
-            </div>
+             <div class="base__month-insight">
+                 <MonthView/>
+             </div>
         </div>
         <div class="base__right">
             <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -298,6 +193,9 @@
         overflow: scroll;
         height: calc(100% - 20px);
 
+        &--small &__month-insight {
+            min-height: 0px;
+        }
         &--small &__content {
             display: block;
         }
@@ -338,21 +236,14 @@
         }
 
         .divider {
-            background-color: rgba(var(--textColor1), 0.025);
+            background-color: rgba(var(--textColor1), 0.035);
             width: 100%;
             height: 1px;
-            margin: 24px 0px 12px 0px;
-
-            &--1 {
-                margin: 6px 0px 13px 0px;
-            }
-            &--2 {
-                margin: 16px 0px 14px 0px;
-            }
+            margin: 6px 0px 15px 0px;
         }
 
         &__content {
-            max-width: 1080px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 0px 30px 20px 30px;
             display: flex;
@@ -426,8 +317,9 @@
             position: relative;
             margin: 3px 0px 12px -2px;
             padding: 8px 17px 9px 12px;
-            border-radius: 8px;
+            border-radius: 10px;
             background-color: rgba(var(--textColor1), 0.03);
+            border: 1px solid rgba(var(--textColor1), 0.045);
             @include multi-line-elipses-overflow(2);
             display: flex;
             width: fit-content;
@@ -472,114 +364,9 @@
             overflow-x: scroll;
         }
 
-        /* insights */
-        &__insight-sentence {
-            @include text-style(0.255, 400, 1.45rem);
-            
-            strong {
-                @include text-style(0.65, 400, 1.4rem, "DM Mono");
-                margin: 0px 2px 2px 2px;
-            }
-        } 
-
         /* month insights */
-        &__month {
-            height: auto;
-        
-            .divider {
-                margin: 4px 0px 12px 0px;
-            }
-        }
-
-        /* view options */
-        &__month-details {
-            padding: 0px 0px 4px 0px;
-            margin: 24px 0px 0px 0px;
-        }
-        &__month-details-view {
-            height: 600px;
-        }
-        &__month-details-header {
-            @include flex(center, space-between);
-            position: relative;
-        }
-        &__month-btns {
-            display: flex;
-            margin-bottom: 2px;
-            position: relative;
-        }
-        &__month-heading {
-            @include text-style(1, 500, 2rem);
-            margin: -2.5px 0px 12px 0px;
-        }
-        &__month-header-btn {
-            @include text-style(1, 500, 1.325rem);
-            margin-right: 20px;
-            display: flex;
-            position: relative;
-
-            &--indicator {
-                margin-left: 18px;
-            }
-            &--indicator::before {
-                display: block !important;
-            }
-            &:active {
-                transform: scale(0.99);
-            }
-            &:hover * {
-                opacity: 0.55;
-            }
-            &::before {
-                content: " ";
-                display: none;
-                background-color: #FDD97D;
-                @include abs-top-left(7px, -13px);
-                @include circle(4px);
-            }
-            &--chosen * {
-                opacity: 0.7 !important; 
-            }
-            span {
-                opacity: 0.3;
-            }
-        }
-        &__month-header-btn-subtxt {
-            @include text-style(0.5, 400, 1.35rem, "DM Mono");
-            background-color: rgba(var(--textColor1), 0);
-            margin: 0px -8px 0px 5px;
-            padding: 0px 9px 4px 6px;
-            border-radius: 6px;
-            opacity: 0.3;
-        }
-        &__month-details-header-highlight {
-            position: absolute;
-            bottom: -4px;
-            height: 1px;
-            background-color: rgba(var(--textColor1), 0.65);
-        }
-        &__month-arrow {
-            opacity: 0.2;
-            margin-left: 30px;
-            padding: 1px 8px 1px 7px;
-            height: 20px;
-            border-radius: 5px;
-            
-            &:hover {
-                background-color: rgba(var(--textColor1), 0.1);
-                opacity: 0.45;
-            }
-        }
-        &__month-settings-btn {
-            @include center;
-            @include circle(25px);
-            opacity: 0.2;
-            margin-left: 14px;
-            
-            &:hover {
-                background-color: rgba(var(--textColor1), 0.1);
-                opacity: 0.35;
-            }
+        &__month-insight {
+            min-height: 600px;
         }
 
         /* img */

@@ -285,7 +285,7 @@
             }}
         >
             <div 
-                class="day-settings dropdown-menu"
+                class="dropdown-menu dropdown-menu"
                 id="overview--dropdown-menu"
                 use:clickOutside on:click_outside={() => {
                     settings = false
@@ -358,7 +358,7 @@
                         {routine?.name ?? "Routine"}
                     </div>
                     {#if routine}
-                        <div class="day-settings__toggle-optn">
+                        <div class="dropdown-menu__toggle-optn">
                             <span class="dropdown-menu__option-text">
                                 Checkbox
                             </span>
@@ -367,7 +367,7 @@
                                 onToggle={() => checkbox = !checkbox}
                             />
                         </div>
-                        <div class="day-settings__toggle-optn">
+                        <div class="dropdown-menu__toggle-optn">
                             <span class="dropdown-menu__option-text">
                                 Rich Colors
                             </span>
@@ -377,7 +377,7 @@
                             />
                         </div>
                     {:else}
-                        <div class="day-settings__toggle-optn">
+                        <div class="dropdown-menu__toggle-optn">
                             <span class="dropdown-menu__option-text">
                                 No Set Routine
                             </span>
@@ -586,7 +586,13 @@
         }
     }
 
-    .day-settings {
+    .dropdown-menu {
+        width: 150px;
+        border: 1px solid rgba(white, 0.02);
+
+        span {
+            @include text-style(0.78, 500, 1.2rem);
+        }
         &__toggle-optn {
             padding: 6px 7px 7px 7px;
             width: 100%;
@@ -595,15 +601,6 @@
             span {
                 opacity: 0.65;
             }
-        }
-    }
-
-    .dropdown-menu {
-        width: 150px;
-        border: 1px solid rgba(white, 0.02);
-
-        span {
-            @include text-style(0.78, 500, 1.2rem);
         }
         &__section-name {
             margin-bottom: 2px;

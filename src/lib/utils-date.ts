@@ -141,16 +141,17 @@ type WeekMonthFormat = "long" | "short" | "narrow" | undefined
 type YearFormat = "numeric" | "2-digit" | undefined
 type DayFormat = "numeric" | "2-digit" | undefined
 
+type DateFormat = {
+    weekday?: WeekMonthFormat, year?: YearFormat, month?: WeekMonthFormat, day?: DayFormat 
+}
+
 /**
  * Formats date to string representation. Format depends on the options passed in and geo-location.
  * @param date 
  * @returns Formatted Time (i.e. Apr 14, 2020 / Apr 14)
  */
-export function formatDatetoStr(date: Date, options?: {
-    weekday?: WeekMonthFormat, year?: YearFormat, month?: WeekMonthFormat, day?: DayFormat 
-}): string {
-
-    return  new Intl.DateTimeFormat(getBrowserLanguagePreference(), options).format(date)
+export function formatDatetoStr(date: Date, options?: DateFormat): string {
+    return new Intl.DateTimeFormat(getBrowserLanguagePreference(), options).format(date)
 }
 
 /**
@@ -389,18 +390,6 @@ export function isYrValid(yr: number) {
     const min = new Date().getFullYear() - 100
 
     return min <= yr && yr <= max
-}
-
-/**
- * 
- * @returns String and ending dates of current week (Apr 1 - Apr 7)
- */
-const getCurrentWeek = () => {
-    const currentDate = new Date();
-    const firstDayOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 1));
-    const lastDayOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 7));
-  
-    return `${firstDayOfWeek.getMonth() + 1}/${firstDayOfWeek.getDate()} - ${lastDayOfWeek.getMonth() + 1}/${lastDayOfWeek.getDate()}`;
 }
 
 /**
@@ -762,6 +751,28 @@ export function getNextHour(date: Date) {
     nearestHour.setMinutes(0, 0, 0)
 
     return nearestHour
+}
+
+export function getWeekPeriod(date: Date) {
+    const inputDate = new Date(date)
+    const dayOfWeek = inputDate.getDay()
+    const diffToMonday = (dayOfWeek + 6) % 7 
+    
+    const startOfWeek = new Date(inputDate)
+    startOfWeek.setDate(inputDate.getDate() - diffToMonday)
+    
+    const endOfWeek = new Date(startOfWeek)
+    endOfWeek.setDate(startOfWeek.getDate() + 6)
+
+    const formatOptins: DateFormat = {
+        month: "short",
+        day: "numeric"
+    }
+    
+    return {
+        start: formatDatetoStr(startOfWeek, formatOptins),
+        end: formatDatetoStr(endOfWeek, formatOptins)
+    }
 }
 
 export function getTimeDistanceStr(targetDate: Date) {

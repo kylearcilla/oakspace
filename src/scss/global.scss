@@ -1095,3 +1095,13 @@ $loading-dots-width: 4px;
     flex-direction: column;
     justify-content: $val;
 }
+
+.fraction {
+    @include text-style(0.7, 300, 1.12rem, "DM Mono");
+    @include flex(center);
+    
+    &__slash {
+        font-size: 0.98rem !important;
+        margin: -1px 1.5px 0px 1.5px;
+    }
+}

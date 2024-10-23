@@ -103,8 +103,8 @@ export const TEST_SESSIONS: Session[] = [
           focusCount: 3,
           breakCount: 2,
           pauseCount: 1,
-          elapsedSecs: 5400,    // 1.5 hours in seconds
-          totalFocusTime: 4500, // 1.25 hours in seconds
+          elapsedSecs: 5400,    // 1.5h in seconds
+          totalFocusTime: 4500, // 1.25h in seconds
           totalBreakTime: 900,  // 15 minutes in seconds
           periods: 3
       }
@@ -172,88 +172,133 @@ export const TEST_WK_HABITS = [
     symbol: "☀️",
     target: "8:30 AM",
     streak: 3,
-    frequency: 3, 
+    freqType: "daily",
+    frequency: 1, 
     lastCheck: new Date("2024-10-12"),
     last7Days: 0b0101101, 
-    timeOfDay: "morning"
+    timeOfDay: "morning",
+    order: {
+      default: 0,
+      tod: 0
+    }
   },
   {
     name: "Exercise",
     symbol: "💪",
     target: "45m",
     streak: 3,
-    frequency: "MTWT", 
-    lastCheck: new Date("2024-10-13"),
-    last7Days: 0b0101101, 
-    timeOfDay: "afternoon"
+    freqType: "day-of-week",
+    frequency: 0b0111100, 
+    lastCheck: new Date("2024-10-21"),
+    last7Days: 0b0100100, 
+    timeOfDay: "afternoon",
+    order: {
+      default: 1,
+      tod: 0
+    }
   },
   {
     name: "Reading",
     symbol: "📖",
     target: "30 pages",
     streak: 5,
-    frequency: "MTWFS", 
+    freqType: "day-of-week",
+    frequency: 0b0111111, 
     lastCheck: new Date("2024-10-14"),
-    last7Days: 0b1110100, 
-    timeOfDay: "evening"
+    last7Days: 0b0010100, 
+    timeOfDay: "evening",
+    order: {
+      default: 2,
+      tod: 0
+    }
   },
   {
     name: "Meditation",
     symbol: "🧘🏼‍♂️",
     target: "15m",
     streak: 2,
+    freqType: "daily",
     frequency: 1, 
     lastCheck: new Date("2024-10-14"),
-    last7Days: 0b1010101, 
-    timeOfDay: "morning"
+    last7Days: 0b1000101, 
+    timeOfDay: "morning",
+    order: {
+      default: 3,
+      tod: 1
+    }
   },
   {
     name: "Study French",
     symbol: "🇫🇷",
-    target: "1 hour",
+    target: "1h",
     streak: 4,
-    frequency: "MWS", 
+    freqType: "day-of-week",
+    frequency: 0b0010100, 
     lastCheck: new Date("2024-10-11"),
-    last7Days: 0b1010001, 
-    timeOfDay: "evening"
+    last7Days: 0b1010000, 
+    timeOfDay: "evening",
+    order: {
+      default: 4,
+      tod: 1
+    }
   },
   {
     name: "Run",
     symbol: "🏃‍♂️",
     target: "5 km",
     streak: 6,
-    frequency: "MWF", 
+    freqType: "day-of-week",
+    frequency: 0b0101010, 
     lastCheck: new Date("2024-10-13"),
     last7Days: 0b1011010, 
-    timeOfDay: "morning"
+    timeOfDay: "morning",
+    order: {
+      default: 5,
+      tod: 2
+    }
   },
   {
     name: "Deep Work",
     symbol: "👨‍💻",
-    target: "2 hours",
+    target: "2h",
     streak: 7,
-    frequency: "MTWTFS",
+    freqType: "day-of-week",
+    frequency: 0b0111100,
     lastCheck: new Date("2024-10-14"),
-    last7Days: 0b1111110,
-    timeOfDay: "morning"
+    last7Days: 0b0000010,
+    timeOfDay: "morning",
+    order: {
+      default: 6,
+      tod: 3
+    }
   },
   {
     name: "Water",
     symbol: "🌊",
     target: "8 glasses",
     streak: 7,
+    freqType: "daily",
     frequency: 1, 
     lastCheck: new Date("2024-10-14"),
-    last7Days: 0b1111111, 
-    timeOfDay: "all-day"
+    last7Days: 0b0001010, 
+    timeOfDay: "all-day",
+    order: {
+      default: 7,
+      tod: 0
+    }
   },
   {
     name: "Clean House",
     symbol: "🧹",
     streak: 7,
-    frequency: 1, 
-    lastCheck: new Date("2024-10-14"),
-    last7Days: 0b1111111, 
-    timeOfDay: "afternoon"
+    freqType: "per-week",
+    frequency: 3, 
+    lastCheck: new Date("2024-10-21"),
+    last7Days: 0b0100101, 
+    timeOfDay: "afternoon",
+    order: {
+      default: 8,
+      tod: 1
+    }
   },
 ]

@@ -16,7 +16,6 @@
     let heatMapRightArrow = false
     let width = 0
 
-    
     let monthBulletinHt = 0
     let leftHt = 0
     $: console.log({ leftHt })
@@ -49,7 +48,7 @@
     ]
     const bannerImg = {
         src: "https://preview.redd.it/ancient-tree-from-mononoke-3840-x-2160-v0-qrghesb0z65c1.png?width=1080&crop=smart&auto=webp&s=c42a4dfc07a2734d3489faaccd1febb56b6859b3",
-        opacity: 0.55
+        opacity: 0.35
     }
 
     function heatMapScroll(scrollRef: HTMLElement) {
@@ -319,7 +318,7 @@
             padding: 8px 17px 9px 12px;
             border-radius: 10px;
             background-color: rgba(var(--textColor1), 0.03);
-            border: 1px solid rgba(var(--textColor1), 0.045);
+            // border: 1px solid rgba(var(--textColor1), 0.045);
             @include multi-line-elipses-overflow(2);
             display: flex;
             width: fit-content;
@@ -366,6 +365,7 @@
 
         /* month insights */
         &__month-insight {
+            margin-top: 20px;
             min-height: 600px;
         }
 

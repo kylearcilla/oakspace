@@ -1,21 +1,51 @@
 <script lang="ts">
     import { TEST_WK_HABITS } from "$lib/mock-data";
+	import ProgressRing from "../../../components/ProgressRing.svelte";
+	import SvgIcon from "../../../components/SVGIcon.svelte";
+	import { Icon } from "../../../lib/enums";
 	import { DAYS_OF_WEEK } from "../../../lib/utils-date";
 	import { capitalize, formatPlural } from "../../../lib/utils-general"
 
     type HabitTableView = "default" | "time-of-day"
 
+    type HabitOptions = {
+        view: HabitTableView
+        progress: {
+            detailed: boolean
+            percentage: boolean
+        }        
+    }
+
+    export let options: any
+
+    $: view = options.view
+    $: wkProgress = options.progress
+
     const MIN_SIZE = 620
     let habits = TEST_WK_HABITS
-    let view: HabitTableView = "time-of-day"
     let dayProgress = [0, 0, 0, 0, 0, 0, 0]
+    let isDragging = false
 
     let sortedHabits: any = {}
     let width = 0
+    let dragHabitSrc: any
+    let dragHabitTarget: any
 
     updateDayProgress(habits)
     setViewOptn(view)
 
+    function setViewOptn(newView: HabitTableView) {
+        view = newView
+
+        if (view === "default") {
+            setSortedHabitsToDefault()
+        }
+        else {
+            groupHabitsByTimeOfDay(habits)
+        }
+    }
+
+    /* completeness */
     function toggleCompleteHabit(habit: any, dayIdx: number) {
         const targetHabitIdx  = habits.findIndex((_habit: any) => habit.name === _habit.name)
         const targetHabit     = habits[targetHabitIdx]
@@ -41,27 +71,62 @@
         updateDayProgress(habits)
     }
     function updateDayProgress(habits: any[]) {
-        dayProgress = [0, 0, 0, 0, 0, 0, 0]
+        const n = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
 
         for (const habit of habits) {
+            const { freqType, frequency } = habit
+
             for (let i = 0; i < 7; i++) {
+                const mandatory = freqType != "day-of-week" || Boolean((frequency >> (6 - i)) & 1)
                 const completed = (habit.last7Days >> (6 - i)) & 1
-                dayProgress[i] += completed
+
+                n[i][0] += completed
+                n[i][1] += mandatory ? 1 : 0
             }
         }
-
-        return dayProgress
+        dayProgress = n.map((q) => Math.min(Math.floor((q[0] / q[1]) * 100), 100))
     }
-    function setViewOptn(newView: HabitTableView) {
-        view = newView
+    function isBoxCheckable(habit: any, dayIdx: number) {
+        const { freqType, frequency } = habit
 
-        if (view === "default") {
-            setSortedHabitsToDefault()
+        if (freqType === "day-of-week") {
+            return Boolean((frequency >> (6 - dayIdx)) & 1)
         }
         else {
-            groupHabitsByTimeOfDay(habits)
+            return true
         }
     }
+    function getProgress(habit: any) {
+        const { last7Days, frequency, freqType } = habit
+        const last7DaysBinary = last7Days.toString(2).padStart(7, '0').split('')
+        let checked = 0
+        let total = 0
+
+        if (freqType === 'daily') {
+            checked = last7DaysBinary.filter(bit => bit === '1').length
+            total = 7
+        }
+        else if (freqType === 'day-of-week') {
+            const frequencyBinary = frequency.toString(2).padStart(7, '0').split('')
+            
+            for (let i = 0; i < 7; i++) {
+                if (frequencyBinary[i] === '1') {
+                    total++
+                }
+                if (last7DaysBinary[i] === '1') {
+                    checked++
+                }
+            }
+        }
+        else if (freqType === 'per-week') {
+            checked = last7DaysBinary.filter(bit => bit === '1').length
+            total = Math.min(frequency, 7)
+        }
+
+        return { checked, total }
+    }
+
+    /* sorting / grouping habits */
     function groupHabitsByTimeOfDay(habits: any[]) {
         sortedHabits = { 
             "morning": { habits: [], progress: 0 },
@@ -71,19 +136,22 @@
         }
 
         habits.forEach(habit => {
-            sortedHabits[habit.timeOfDay].habits.push(habit);
+            sortedHabits[habit.timeOfDay].habits.push(habit)
 
-            const checkedDays = habit.last7Days.toString(2).split('').filter(bit => bit === '1').length;
-            const totalDays = 7;
-            const progress = checkedDays / totalDays;
+            const checkedDays = habit.last7Days.toString(2).split('').filter(bit => bit === '1').length
+            const totalDays = 7
+            const progress = checkedDays / totalDays
             
-            sortedHabits[habit.timeOfDay].progress += progress;
+            sortedHabits[habit.timeOfDay].progress += progress
         })
         
         Object.keys(sortedHabits).forEach(timeOfDay => {
-            const habitsArray = sortedHabits[timeOfDay].habits;
-            if (habitsArray.length > 0) {
-                sortedHabits[timeOfDay].progress = (sortedHabits[timeOfDay].progress / habitsArray.length) * 100;
+            const timeOfDayGroup = sortedHabits[timeOfDay]
+
+            timeOfDayGroup.habits.sort((a: any, b: any) => a.order.tod - b.order.tod)
+
+            if (timeOfDayGroup.habits.length > 0) {
+                timeOfDayGroup.progress = (timeOfDayGroup.progress / timeOfDayGroup.habits.length) * 100
             }
         })
     }
@@ -96,8 +164,102 @@
         }
 
         habits.forEach(habit => sortedHabits.morning.habits.push(habit))
+        sortedHabits.morning.habits.sort((a: any, b: any) => a.order.default - b.order.default);
     }
 
+    /* habit drag */
+    function onHabitDrag(e: DragEvent, habit: any) {
+        if (!isDragging) {
+            e.preventDefault()
+            return
+        }
+
+        dragHabitSrc = habit
+    }
+    function onHabitDragOver(e: DragEvent, target: any) {
+        e.preventDefault()
+
+        if (typeof target == "string") {
+            dragHabitTarget = target
+        }
+        if (target?.name != dragHabitSrc.name) {
+            dragHabitTarget = target
+        }
+    }
+    function onDragLeave() {
+        dragHabitTarget = null
+    }
+    function onHabitDragEnd() {
+        if (dragHabitTarget) {
+            onHabitReorder()
+        }
+        isDragging = false
+        dragHabitSrc = null
+        dragHabitTarget = null
+    }
+    function onHabitReorder() {
+        if (view === "default") {
+            reorderInDefaultView(dragHabitSrc, dragHabitTarget)
+        } else {
+            reorderInTimeOfDayView(dragHabitSrc, dragHabitTarget)
+        }
+    }
+    function reorderInDefaultView(srcHabit: any, targetHabit: any) {
+        const srcOrder    = srcHabit.order.default
+        const lastOrder   = Math.max(...habits.map((habit: any) => habit.order.default))
+        const toIdx = targetHabit === "all-day" ? lastOrder : targetHabit.order.default
+        const direction   = srcOrder < toIdx ? 1 : -1
+        const targetOrder = toIdx + (direction === 1 ? -1 : 0)
+
+        habits.forEach((habit: any) => {
+            if (direction === 1 && habit.order.default > srcOrder && habit.order.default <= targetOrder) {
+                habit.order.default--
+            } 
+            else if (direction === -1 && habit.order.default >= targetOrder && habit.order.default < srcOrder) {
+                habit.order.default++
+            }
+        })
+        srcHabit.order.default = targetOrder
+        setSortedHabitsToDefault()
+    }
+    function reorderInTimeOfDayView(srcHabit: any, targetHabit: any) {
+        const toLast = typeof targetHabit === "string"
+        const srcTod    = srcHabit.timeOfDay
+        const srcOrder  = srcHabit.order.tod
+        
+        const targetTod   = toLast ? targetHabit : targetHabit.timeOfDay
+        const lastOrder   = habits.filter((habit: any) => habit.timeOfDay === targetTod).length
+
+        const toIdx       = toLast ? lastOrder : targetHabit.order.tod
+        const direction   = srcOrder < toIdx ? 1 : -1
+        const targetOrder = toIdx + (direction === 1 ? -1 : 0)
+
+        habits
+            .filter((habit: any) => habit.timeOfDay === srcTod)
+            .forEach((habit: any) => {
+                if (direction === 1 && habit.order.tod > srcOrder) {
+                    habit.order.tod--
+                } 
+                else if (direction === -1 && habit.order.tod < srcOrder) {
+                    habit.order.tod++
+                }
+            })
+        habits
+            .filter((habit: any) => habit.timeOfDay === targetTod)
+            .forEach((habit: any) => {
+                if (direction === 1 && habit.order.tod >= targetOrder) {
+                    habit.order.tod++
+                } 
+                else if (direction === -1 && habit.order.tod <= targetOrder) {
+                    habit.order.tod--
+                }
+            })
+
+        srcHabit.order.tod = targetOrder
+        srcHabit.timeOfDay = targetTod 
+        
+        groupHabitsByTimeOfDay(habits)
+    }
 </script>
 
 <div 
@@ -109,17 +271,12 @@
     <div class="wk-habits__header">
         <div class="wk-habits__col one-col header-col">
             <span>
-                Name
+                Habit
             </span>
         </div>
         <div class="wk-habits__col two-col header-col">
             <span>
                 Target
-            </span>
-        </div>
-        <div class="wk-habits__col three-col header-col">
-            <span>
-                Streak
             </span>
         </div>
         <div class="days-col">
@@ -129,6 +286,14 @@
                 </div>
             {/each}
         </div>
+        <div 
+            class="wk-habits__col three-col header-col"
+            class:three-col--min={!wkProgress.detailed}
+        >
+            <span>
+                Progress
+            </span>
+        </div>
     </div>
     {#if view === "time-of-day"}
         <div class="divider"></div>
@@ -136,88 +301,148 @@
     {#each ["morning", "afternoon", "evening", "all-day"] as timeOfDay}
         {@const { habits, progress } = sortedHabits[timeOfDay]}
         {@const tod = timeOfDay === "all-day" ? "All Day" : timeOfDay}
+        {@const empty = habits.length === 0}
+        {@const isTodView = view === "time-of-day"}
             <div 
-                class="wk-habits__tod-header"
-                class:wk-habits__tod-header--morning={timeOfDay === "morning"}
-                class:hidden={view === "default"}
+                class="wk-habits__tod-container"
+                style:margin-bottom={empty && isTodView ? "30px" : ""}
+                style:min-height={isTodView ? "30px" : ""}
             >
-                <span>
-                    {capitalize(tod)}
-                </span>
-                <span class="wk-habits__tod-progress">
-                    {Math.floor(progress)}%
-                </span>
-            </div>
-
-        {#each habits as habit, habitIdx}
-            <div class="wk-habit">
                 <div 
-                    class="wk-habit__name one-col cell"
-                    class:cell--first={habitIdx === 0}
-                >
-                    <span class="wk-habit__symbol">
-                        {habit.symbol}
-                    </span>
-                    <span>
-                        {habit.name}
-                    </span>
-                </div>
-                <div 
-                    class="wk-habit__target two-col cell"
-                    class:cell--first={habitIdx === 0}
+                    class="wk-habits__tod-header"
+                    class:wk-habits__tod-header--morning={timeOfDay === "morning"}
+                    class:hidden={view === "default"}
                 >
                     <span>
-                        {habit.target ?? "--"}
+                        {capitalize(tod)}
+                    </span>
+                    <span class="wk-habits__tod-progress">
+                        {Math.floor(progress)}%
                     </span>
                 </div>
-                <div 
-                    class="wk-habit__streak three-col cell"
-                    class:cell--first={habitIdx === 0}
-                >
-                    <span>
-                        {habit.streak}
-                    </span>
-                </div>
-                <div class="days-col">
-                    {#each DAYS_OF_WEEK as _, dayIdx}
-                        {@const num = habit.last7Days}
-                        {@const checked = ((num >> (6 - dayIdx)) & 1) === 1}
+    
+                {#each habits as habit, habitIdx}
+                    {@const { checked, total } = getProgress(habit)}
+                    {@const isDragOver = dragHabitTarget?.name === habit.name}
+                    <div    
+                        class="wk-habit" 
+                        class:wk-habit--drag-over={isDragOver}
+                        draggable="true"
+                        on:dragstart={(e) => onHabitDrag(e, habit)}
+                        on:dragover={(e) => onHabitDragOver(e, habit)}
+                        on:dragleave={onDragLeave}
+                        on:dragend={onHabitDragEnd}
+                    >
                         <div 
-                            class="day-col day-col cell"
-                            class:cell--first={habitIdx === 0}
+                            class="wk-habit__name one-col cell"
+                            class:cell--first-row={habitIdx === 0}
                         >
-                            <button 
-                                on:click={() => toggleCompleteHabit(habit, dayIdx)}
-                                class="wk-habit__box"
-                                class:wk-habit__box--checked={checked}
-                            >
-                                {#if checked}
-                                    <i class="fa-solid fa-check"></i>
-                                {/if}
-                            </button>
+                            <div class="flx">
+                                <span class="wk-habit__symbol">
+                                    {habit.symbol}
+                                </span>
+                                <span>
+                                    {habit.name}
+                                </span>
+                            </div>
+                            <div class="wk-habit__streak">
+                                {habit.streak}
+                            </div>
                         </div>
-                    {/each}
+                        <div 
+                            class="wk-habit__target two-col cell capsule"
+                            class:cell--first-row={habitIdx === 0}
+                        >
+                            <span>
+                                {habit.target ?? "--"}
+                            </span>
+                        </div>
+                        <div class="days-col">
+                            {#each DAYS_OF_WEEK as _, dayIdx}
+                                {@const num = habit.last7Days}
+                                {@const checkable = isBoxCheckable(habit, dayIdx)}
+                                {@const checked = ((num >> (6 - dayIdx)) & 1) === 1}
+                                <div
+                                    title={checkable ? "" : "Check in not required for this day."}
+                                    class="day-col day-col cell"
+                                    class:cell--first-row={habitIdx === 0}
+                                >
+                                    <button 
+                                        on:click={() => toggleCompleteHabit(habit, dayIdx)}
+                                        class="wk-habit__box"
+                                        class:wk-habit__box--not-checkable={!checkable}
+                                        class:wk-habit__box--checked={checked}
+                                    >
+                                        {#if checked}
+                                            <i class="fa-solid fa-check"></i>
+                                        {/if}
+                                    </button>
+                                </div>
+                            {/each}
+                        </div>
+                        <div 
+                            class="wk-habit__progress three-col cell cell--last-col"
+                            class:cell--first-row={habitIdx === 0}
+                            class:three-col--min={!wkProgress.detailed}
+                        >
+                            {#if wkProgress.detailed}
+                                {#if wkProgress.percentage}
+                                    <div class="fraction">
+                                        {Math.min(Math.floor((checked / total) * 100), 100)}%
+                                    </div>
+                                {:else}
+                                    <div class="fraction">
+                                        {checked}<span class="fraction__slash">/</span>{total}
+                                    </div>
+                                {/if}
+                            {/if}
+                            <div class="wk-habit__progress-ring">
+                                <ProgressRing progress={checked / total} />
+                            </div>
+                        </div>
+                        <div 
+                            class="grip"
+                            on:pointerdown={() => isDragging = true}
+                            on:pointerup={() => isDragging = false}
+                        >
+                            <div class="grip__icon">
+                                <SvgIcon icon={Icon.DragDots} options={{ scale: 1.15 }} />
+                            </div>
+                        </div>
+                    </div>
+                {/each}
+
+                <div    
+                    class="wk-habit wk-habit--ghost"
+                    class:wk-habit--drag-over={dragHabitTarget === timeOfDay}
+                    class:hidden={timeOfDay != "all-day" && view === "default"}
+                    style:bottom={empty ? "-20px" : "-28px"}
+                    on:dragover={(e) => onHabitDragOver(e, timeOfDay)}
+                    on:dragleave={onDragLeave}
+                    on:dragend={onHabitDragEnd}
+                >
+                    {#if isTodView && habits.length === 0}
+                        <span class="wk-habits__empty">
+                            Empty
+                        </span>
+                    {/if}
                 </div>
+
             </div>
-        {/each}
     {/each}
     <div class="wk-habits__count-cells">
         <div class="wk-habits__count-cell one-col">
             {formatPlural("habit", habits.length)}
         </div>
-        <div class="wk-habits__count-cell two-col">
-
-        </div>
-        <div class="wk-habits__count-cell three-col">
-            4 days
-        </div>
+        <div class="wk-habits__count-cell two-col"></div>
         <div class="wk-habits__count-cell days-col">
             {#each dayProgress as progress}
                 <div class="wk-habits__count-cell day-col">
-                    {`${Math.floor((progress / habits.length) * 100)}%`}
+                    {`${progress}%`}
                 </div>
             {/each}
         </div>
+        <div class="wk-habits__count-cell three-col"></div>
     </div>
 </div>
 
@@ -231,7 +456,7 @@
             width: 40px;
             @include elipses-overflow;
         }
-        &--min .three-col { 
+        &--min .two-col { 
             @include elipses-overflow;
         }
         &--min .wk-habit__name span:last-child { 
@@ -245,20 +470,21 @@
             // display: none;
 
         }
-        &__col {
-
-        }
         &__tod-header {
             @include text-style(0.35, 500, 1.245rem);
             @include flex(center, space-between);
-            margin: 13px 0px 11px 8px;
+            margin: 13px 0px 9px 8px;
             
             &--morning {
-                margin: 5px 0px 11px 8px;
+                margin: 5px 0px 9px 8px;
             }
+        }
+        &__tod-container {
+            position: relative;
         }
         &__tod-progress {
             @include text-style(0.2, 400, 1.25rem, "DM Mono");
+            display: none;
         }
         &__count-cells {
             display: flex;
@@ -267,7 +493,12 @@
         }
         &__count-cell {
             margin-left: 1px;
-            @include text-style(0.145, 400, 1.325rem, "DM Mono");
+            @include text-style(0.145, 400, 1.2rem, "DM Mono");
+        }
+
+        &__empty {
+            @include text-style(0.145, 400, 1.2rem);
+            margin: -5px 0px 0px 6.5px;
         }
 
         .divider {
@@ -279,45 +510,57 @@
     }
     .wk-habit { 
         display: flex;
-        // background-color: rgba(var(--textColor1), 0.0155);
-        // border-radius: 8px;
-        // border: 1px solid rgba(var(--textColor1), 0.0185);
-        // margin-bottom: 5px;
         padding: 0px 0px 0px 1px;
         @include text-style(1, 400, 1.35rem);
         white-space: nowrap;
+        position: relative;
+
+        &--drag-over::before {
+            opacity: 0.2 !important;
+        }
+        &--ghost {
+            height: 28px;
+            width: 100%;
+            @include abs-bottom-left(-28px);
+            opacity: 1;
+            z-index: 100;
+            align-items: center;
+        }
+        &--empty {
+
+        }
+
+        &::before {
+            content: " ";
+            width: 100%;
+            height: 1.5px;
+            @include abs-top-left;
+            opacity: 0;
+            background-color: #71B8FF;
+        }
         
         &__symbol {
-            font-size: 1.55rem;
-            margin-right: 14px;
+            font-size: 1.4rem;
+            margin-right: 11px;
         }
         &__name {
-            @include text-style(1, 500, 1.325rem);
+            @include text-style(1, 500, 1.3rem);
             @include elipses-overflow;
+            @include flex(center, space-between);
         }
-        &__target {
-            @include text-style(0.7, 300, 1.12rem, "DM Mono");
-            
-            span {
-                background-color: rgb(var(--textColor1), 0.065);
-                padding: 3px 8px 2px 8px;
-                border-radius: 5px;
-            }
+        &__target span {
+            padding: 3px 8px 2px 8px;
         }
         &__streak {
-            @include text-style(0.7, _, 1.125rem, "DM Mono");
-
-            span {
-                background-color: rgb(var(--textColor1), 0.065);
-                padding: 2px 14px 2px 14px;
-                border-radius: 5px;
-            }
+            @include text-style(0.14, 400, 1.3rem, "DM Mono");
+            padding: 2px 15px 2px 14px;
         }
         &__box {
             background-color: rgb(var(--textColor1), 0.045);
-            height: 18px;
-            width: 18px;
+            height: 15px;
+            width: 15px;
             border-radius: 0px;
+            position: relative;
             @include center;
             
             &:hover {
@@ -325,24 +568,52 @@
             }
         }
         &__box--checked {
-            // height: 17px;
-            // width: 17px;
-            // background-color: rgb(var(--textColor1), 0.065);
             background-color: #6bb0f4 !important;
+
+            &:before {
+                display: none;
+            }
+        }
+        &__box--not-checkable {
+            background-color: rgb(var(--textColor1), 0.045);
+
+            &:hover {
+                background-color: rgb(var(--textColor1), 0.045);
+            }
+            &:before {
+                content: " ";
+                @include circle(3px);
+                background-color: rgba(var(--textColor1), 0.45);
+                @include abs-center;
+            }
+        }
+        &__progress {
+            @include flex(center, space-between);
+
+            &-ring {
+                margin-right: 38px;
+            }
+        }
+        &__progress .fraction {
+            margin: 0px 10px 0px 2px;
         }
     }
+    
+    .capsule span {
+        @include text-style(0.7, 300, 1.08rem, "DM Mono");
+        background-color: rgb(var(--textColor1), 0.065);
+        border-radius: 5px;
+    }
     .header-col {
-        padding: 0px 0px 9px 8px;
+        padding: 0px 0px 9px 7px;
         // border-bottom: 0.5px solid rgb(var(--textColor1), 0.065);
     }
     .one-col {
         width: 180px;
+        min-width: 150px;
     }
     .two-col {
-        width: 120px;
-    }
-    .three-col {
-        width: 80px;
+        width: 100px;
     }
     .days-col {
         flex: 1;
@@ -353,17 +624,47 @@
         width: calc(100% / 7);
         min-width: 50px;
     }
+    .three-col {
+        width: 100px;
+        
+        &--min {
+            width: 50px;
+        }
+        &--min span {
+            display: none;
+        }
+    }
     .cell {
         padding: 7px 0px 7px 8px;
         @include flex(center);
         border-bottom: 0.5px solid rgb(var(--textColor1), 0.065);
+        border-right: 0.5px solid rgb(var(--textColor1), 0.065);
         
-        &--first {
+        &--first-row {
             border-top: 0.5px solid rgb(var(--textColor1), 0.065);
         }
+        &--last-col {
+            border-right: none;
+        }
+    }
+    .grip {
+        @include abs-top-left(0px, -18px);
+        cursor: grab;
+        height: 34px;
+        @include center;
         
-        &:not(:last-child) {
-            border-right: 0.5px solid rgb(var(--textColor1), 0.065);
+        &__icon {
+            transition: 0.1s ease-in-out;
+            @include not-visible;
+            padding: 5px 3px;
+        }
+        &:hover &__icon {
+            background: rgba(var(--textColor1), 0.15);
+            border-radius: 3px;
+            @include visible(0.6);
+        }
+        &:active {
+            cursor: grabbing;
         }
     }
 </style>

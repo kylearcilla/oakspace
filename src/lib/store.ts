@@ -16,6 +16,7 @@ import type { YoutubeMusicUserData } from './youtube-music-user-data'
 export const globalContext = writable<GlobalContext>({
     leftBarOpen: true,
     rightBarOpen: true,
+    rightBarFixed: false,
     isVideoViewOpen: false,
     freeFloatYt: false,
     leftBar: "wide-float",
@@ -26,7 +27,6 @@ export const globalContext = writable<GlobalContext>({
     doOpenActiveRoutine: false,
     focusTime: 0,
     shortcutsFocus: ShortcutSectionInFocus.MAIN,
-    mediaPlayer: null,
     modalsOpen: [],
     lastKeysPressed: {
         shiftKey: false,

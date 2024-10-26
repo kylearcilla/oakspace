@@ -30,8 +30,8 @@
 .dropdown-btn {
     color: rgba(var(--textColor1), 0.75);
     transition: 0.1s cubic-bezier(.4,0,.2,1);
-    border-radius: 18px;
-    padding: 6px 12px;
+    border-radius: 8px;
+    padding: 4px 5px 6px 11px;
     width: fit-content;
     cursor: pointer;
     @include flex(center);
@@ -254,8 +254,14 @@
             background-color: rgba(var(--textColor1), 0.04);
             opacity: 1;
         }
+        &:hover &-text {
+            @include text-style(1);
+        }
         &:focus-visible {
             @include border-focus;
+        }
+        &--static {
+            padding: 0px 2px 0px $side-padding;
         }
         &--selected {
             opacity: 1;
@@ -271,16 +277,12 @@
             @include visible;
         }
     }
-    &__option-text {
+    &__option-heading, &__option-text {
         flex: 1;
         min-width: 0px;
         text-align: left;
         @include elipses-overflow;
         @include text-style(0.78, 500, var(--font-size));
-        
-        &:hover {
-            @include text-style(1);
-        }
     }
     &__option-right-icon-container {
         @include flex(center);

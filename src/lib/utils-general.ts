@@ -511,6 +511,10 @@ export function randomArrayElem(arr: any[]) {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
+export function randInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
 export function addItemToArray(idx: number, array: any[], item: any) {
   array.splice(idx, 0, item)
 
@@ -572,6 +576,13 @@ export function extractNumStr(str: string) {
  */
 export function camelToKebab(camelCaseString: string) {
   return camelCaseString.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+}
+
+export function kebabToNormal(str: string): string {
+  return str
+      .split('-')                   
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')                   
 }
 
 export function inlineStyling(styling?: StylingOptions) {

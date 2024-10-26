@@ -17,6 +17,7 @@ export const TEST_TAGS: Tag[] = [
       orderIdx: 1,
       name: "SWE",
       symbol: {
+
         color: COLOR_SWATCHES.d[1],
         emoji: "👨‍💻"
       }
@@ -114,13 +115,38 @@ export const TEST_SESSIONS: Session[] = [
 /* Goals */
 export const TEST_GOALS: Goal[] = [
   {
-    name: "Complete French Level 2",
+    name: "Finish French Level 2",
     due: new Date("2024-11-10"),
     dueType: "month",
     description: "Finish all lessons and exercises in the Level 2 French course.",
     tag: TEST_TAGS[0],
     creationDate: new Date("2024-01-15"),
-    status: "in-progress"
+    status: "in-progress",
+    order: {
+     progress: 0
+    },
+    milestones: [
+      {
+        name: "Complete Module 1",
+        done: true,
+        idx: 0
+      },
+      {
+        name: "Memorize all vocab",
+        done: false,
+        idx: 1
+      },
+      {
+        name: "Master listening exercises",
+        done: false,
+        idx: 2
+      },
+      {
+        name: "Listen and master one episode of Dix Pour Cent",
+        done: false,
+        idx: 4
+      },
+    ]
   },
   {
     name: "Run a Half Marathon",
@@ -129,7 +155,43 @@ export const TEST_GOALS: Goal[] = [
     description: "Train and complete a half marathon race.",
     tag: TEST_TAGS[1],
     creationDate: new Date("2024-02-10"),
-    status: "in-progress"
+    status: "in-progress",
+    imgSrc: "https://i.pinimg.com/564x/85/3a/9d/853a9dff815bfa3c458d2f60c2dd929f.jpg",
+    order: {
+     progress: 1
+    },
+    milestones: [
+      {
+        name: "Run 5K without stoppping",
+        done: true,
+        idx: 0
+      },
+      {
+        name: "Complete a 10k practice run",
+        done: true,
+        idx: 1
+      },
+      {
+        name: "Do 10 hill runs",
+        done: true,
+        idx: 2
+      },
+      {
+        name: "Reach 15l distance",
+        done: false,
+        idx: 3
+      },
+      {
+        name: "Run 18k in under 2  hoursw",
+        done: false,
+        idx: 4
+      },
+      {
+        name: "Final practice: 20k",
+        done: false,
+        idx: 5
+      },
+    ]
   },
   {
     name: "Read 12 Books This Year",
@@ -138,7 +200,73 @@ export const TEST_GOALS: Goal[] = [
     description: "Read one book every month and complete all 12 by the end of the year.",
     tag: TEST_TAGS[2],
     creationDate: new Date("2024-01-01"),
-    status: "on-hold"
+    status: "not-started",
+    imgSrc: "https://i.pinimg.com/enabled/564x/34/84/0a/34840a5cb9734c02dc1aa919c99afe31.jpg",
+    order: {
+     progress: 0
+    },
+    milestones: [
+      {
+        name: "The Hobbit",
+        done: false,
+        idx: 1
+      },
+      {
+        name: "Eleanor Oliphant Is Completely Fine",
+        done: false,
+        idx: 2
+      },
+      {
+        name: "Where the Crawdads Sing",
+        done: false,
+        idx: 3
+      },
+      {
+        name: "Pride and Prejudice",
+        done: false,
+        idx: 4
+      },
+      {
+        name: "The Night Circus",
+        done: false,
+        idx: 5
+      },
+      {
+        name: "A Man Called Ove",
+        done: false,
+        idx: 6
+      },
+      {
+        name: "Little Fires Everywhere",
+        done: false,
+        idx: 7
+      },
+      {
+        name: "The Great Gatsby",
+        done: false,
+        idx: 8
+      },
+      {
+        name: "Normal People",
+        done: false,
+        idx: 9
+      },
+      {
+        name: "Big Little Lies",
+        done: false,
+        idx: 10
+      },
+      {
+        name: "The Fellowship of the Ring",
+        done: false,
+        idx: 11
+      },
+      {
+        name: "The Rosie Project",
+        done: false,
+        idx: 12
+      }
+    ]
   },
   {
     name: "Launch Personal Blog",
@@ -147,23 +275,24 @@ export const TEST_GOALS: Goal[] = [
     description: "Create and launch a personal blog by the end of Q3 with 5 initial articles.",
     tag: TEST_TAGS[3],
     creationDate: new Date("2024-03-01"),
-    status: "done"
-  },
-  {
-    name: "Get that dream house",
-    dueType: "someday",
-    description: "Design and build my own dream home.",
-    tag: TEST_TAGS[4],
-    creationDate: new Date("2024-01-01"),
-    status: "on-hold"
+    status: "accomplished",
+    order: {
+     progress: 0
+    }
   },
   {
     name: "Get that dream house",
     description: "",
     creationDate: new Date("2024-01-01"),
-    status: "on-hold"
+    status: "not-started",
+    tag: TEST_TAGS[8],
+    order: {
+     progress: 1
+    }
   },
 ]
+
+
 
 /* Week Habits */
 export const TEST_WK_HABITS = [

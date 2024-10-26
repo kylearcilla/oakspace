@@ -7,7 +7,7 @@ export const defaultThemes: DefaultTheme[] = [
         styling: {
             isDark: true,
             hasTwin: true,
-            backgroundOne: "#0C0B0C",
+            backgroundOne: "#0E0D0E",
             backgroundTwo: "#141314",
             backgroundThree: "#1b1b1b",
             fgColor1: "163, 182, 255",

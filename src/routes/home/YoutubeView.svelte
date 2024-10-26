@@ -1,8 +1,9 @@
 <script lang="ts">
     import { ytPlayerStore, themeState, globalContext } from "$lib/store"
 	import { APIErrorCode, Icon } from '$lib/enums'
-	import { toggleYoutubePlayerFloat } from "$lib/utils-home"
 	import SvgIcon from "../../components/SVGIcon.svelte"
+	import { onDestroy, onMount } from "svelte";
+	import { mediaEmbedStore } from "../../lib/store";
 
     export let type: "float" | "base" = "base"
 
@@ -14,7 +15,6 @@
     $: isDarkTheme  = $themeState.isDarkTheme
     $: doShowPlayer = $ytPlayerStore?.doShowPlayer ?? true
     $: isFloating   = $globalContext.mediaPlayer?.youtube
-    $: rightBarOpen = $globalContext.rightBarOpen
     $: hideDetails      = type === "float"
     $: showFloatScreen  = type === "base" && isFloating
 
@@ -30,26 +30,35 @@
             doShowInvalidUI = false
         }
     }
+
+    onMount(() => {
+        mediaEmbedStore.update((store) => ({
+            ...store, flag: true
+        }))
+    })
+    onDestroy(() => {
+        mediaEmbedStore.update((store) => ({
+            ...store, flag: false
+        }))
+    })
 </script>
 
 <div 
     class="vid-view" 
     class:vid-view--hidden={!doShowPlayer}
     class:vid-view--iframe-only={hideDetails}
-    class:vid-view--right-bar-open={rightBarOpen}
 >
     <div class="vid-view__content">
-        <!-- Video Player -->
         <div class="vid-view__container">
             <div 
                 class="vid-view__iframe-container"
                 id="yt-iframe-container"
             >
             </div>
-            {#if !doShowInvalidUI && playlist === null}
+            {#if !doShowInvalidUI || !playlist}
                 <div class="vid-view__empty-vid-view">
                     <p class="vid-view__empty-msg">
-                        No Playlist Selected
+                        Click on a playlist to start playing.
                     </p>
                 </div>
             {:else if doShowInvalidUI}
@@ -106,7 +115,7 @@
             </div>
         {/if}
         <!-- Playlist Panel -->
-         {#if playlist}
+         {#if false}
             <div 
                 class="playlist-panel"
                 class:playlist-panel--small={doMinimizeYtPanel}
@@ -127,7 +136,9 @@
                                 <img src={playlist?.thumbnailURL} alt="pl-thumbnial"/>
                                 <button 
                                     class="playlist-panel__miniplayer-btn"
-                                    on:click={() => toggleYoutubePlayerFloat()}
+                                    on:click={() => {
+                                        $ytPlayerStore?.toggleView("float")
+                                    }}
                                 >   
                                     <SvgIcon
                                         icon={Icon.MiniPlayer}
@@ -171,6 +182,8 @@
         height: 100%;
         padding: 0px 0px 20px 0px;
         z-index: 1;
+        margin: 0px auto;
+        // padding: 0px 20px 20px 20px;
 
         &--hidden {
             display: none;
@@ -189,7 +202,7 @@
             max-height: none;
             height: 100%;
             width: 100%;
-            aspect-ratio: auto;
+            aspect-ratio: 16 / 9;
         }
         &--iframe-only .vid-details {
             display: none;
@@ -210,6 +223,8 @@
         &__iframe-container {
             width: 100%;
             height: 100%;
+            background-color: rgba(var(--textColor1), 0.01);
+            border-radius: 10px;
         }
         &__container {
             background-color: none;
@@ -224,9 +239,7 @@
             }
         }
         &__empty-msg {
-            font-weight: 600;
-            font-size: 1.4rem;
-            color: rgb(var(--textColor1), 0.5);
+            @include text-style(0.2, 500, 1.4rem);
             margin-bottom: 15px;
             z-index: 1000;
         }
@@ -440,16 +453,6 @@
             max-width: 92%;
             @include text-style(0.58, 400, 1.2rem);
             @include elipses-overflow;
-        }
-    }
-
-    @media (max-width: 540px) {
-        .vid-view--right-bar-open .vid-details__channel {
-            // display: none;
-        }
-        .vid-view--right-bar-open .playlist-panel {
-            display: none;
-            margin-top: 12px;
         }
     }
 </style>

@@ -365,6 +365,7 @@ type GlobalContext = {
     leftBarOpen: boolean
     leftBar?: "min" | "wide-full" | "wide-float"
     rightBarOpen: boolean
+    rightBarFixed: boolean
     isVideoViewOpen: boolean
     isMusicPlayerOpen: boolean
     freeFloatYt: boolean
@@ -377,10 +378,6 @@ type GlobalContext = {
     modalsOpen: ModalType[]
     lastKeysPressed: KeyContext
     ambience?: AmbientOptions
-    mediaPlayer: {
-        youtube: boolean,
-        music: boolean
-    } | null
 }
 
 type AmbientOptions = {
@@ -528,7 +525,7 @@ type SessionResult = {
 
 type Tag = {
     id: string
-    orderIdx: number∂
+    orderIdx: number
     name: string,
     symbol: {
         color: Color,
@@ -547,6 +544,7 @@ type FloatingMediaEmbed = {
     hidden: boolean
     leftTransform?: string
     topTransform?: string
+    flag: boolean
 }
 
 type ProgressVisualPart = {
@@ -983,9 +981,10 @@ type YoutubePlayerData = {
     vid: YoutubeVideo
     floatLayout: BoxLayout
     playlistVidIdx: number
-    doShowPlayer: boolean
+    show: boolean
     isoVideo: boolean
     volume: number
+    view: "float" | "embed"
 }
 
 type BoxLayout = { 
@@ -1090,7 +1089,7 @@ type GoogleCalendarEvent = {
 /* Goals */
 
 type DueType = "day" | "month" | "quarter" | "year" | "someday"
-type GoalStatus = "on-hold" | "in-progress" | "done"
+type GoalStatus = "not-started" | "in-progress" | "accomplished"
 
 type Goal = {
   name: string
@@ -1103,6 +1102,15 @@ type Goal = {
   milestones?: Milestone[]
   imgSrc?: string
   isPinned?: boolean
+  order: { 
+    progress: number
+  }
+}
+
+type Milestone = {
+    name: string
+    idx: number
+    done: boolean
 }
 
 type YrAccomplishmentsOverview = {

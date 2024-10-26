@@ -1,23 +1,39 @@
 <script lang="ts">
     export let progress: number = 0
-    export let size: number = 13
-    export let strokeWidth: number = 2.5
-  
-    const halfSize = size / 2;
-    const radius = (size - strokeWidth) / 2;
-    const circumference = radius * Math.PI * 2;
+    export let options: {
+        size?: number
+        strokeWidth?: number
+        style?: "rich-colored" | "default" | "simple"
+    } | undefined = undefined
 
-    console.log({ progress })
+    const size = options?.size ?? 14
+    const strokeWidth = options?.strokeWidth ?? 2.5
+    const style = options?.style ?? "default"
 
-    $: progress = progress * 100
-    $: rval = Math.max(243 - ((243 - 125) * (progress / 100)), 125)
+    const halfSize = size / 2
+    const radius = (size - strokeWidth) / 2
+    const circumference = radius * Math.PI * 2
+
+    let fgColor = "rgba(var(--textColor1), 0.4)"
+    let bgColor = "rgba(var(--textColor1), 0.05)"
+
+    $: progress = Math.min(progress * 100, 100)
+    $: if (style === "rich-colored") {
+        const rval = Math.max(243 - ((243 - 125) * (progress / 100)), 125)
+        fgColor    = `rgb(${rval}, 245, 125)`
+    }
+    else if (style === "simple") {
+        fgColor = "rgba(var(--textColor1), 0.09)"
+        bgColor = "none"
+    }
   
     const dash = (progress: number) => (progress * circumference) / 100
   </script>
   
   <svg
     class="circular-progress"
-    style:--fg-color={`${rval}, 245, 125`}
+    style:--fg-color={fgColor}
+    style:--bg-color={bgColor}
     style:--size={size}
     style:--stroke-width={strokeWidth}
     width={size}
@@ -55,13 +71,13 @@
         }
 
         circle.bg {
-            stroke: rgba(var(--textColor1), 0.05);
+            stroke: var(--bg-color);
         }
 
         circle.fg {
             transform: rotate(-90deg);
             transform-origin: var(--half-size) var(--half-size);
-            stroke: rgb(var(--fg-color));
+            stroke: var(--fg-color);
             transition: 0.3s cubic-bezier(.4, 0, .2, 1);
 
             &__hide {

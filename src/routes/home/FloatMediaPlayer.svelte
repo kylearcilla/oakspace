@@ -6,7 +6,6 @@
     export let type: "youtube" | "spotify"
     import { page } from '$app/stores'
 	import { YoutubePlayer } from "$lib/youtube-player";
-    export let isFloating = true
 
     const MAX_PLAYER_WIDTH = 600
     const MIN_PLAYER_WIDTH = 100
@@ -43,20 +42,23 @@
         left: SAFE_MARGIN 
     }
 
-    $: ambience = $globalContext.ambience
+    $: isFloating   = $ytPlayerStore?.view === "float" || false
+    $: ambience     = $globalContext.ambience
     $: liveAmbience = ambience?.space.type === "video"
-    $: ytPlayer = $ytPlayerStore
-    $: playlist = ytPlayer?.playlist
+    $: ytPlayer     = $ytPlayerStore
+    $: playlist     = ytPlayer?.playlist
 
-    $: mediaEmbed = $mediaEmbedStore
+    $: mediaEmbed   = $mediaEmbedStore
     $: marginRight  = windowWidth - SAFE_MARGIN
     $: marginBottom = windowHeight - SAFE_MARGIN
 
-    $: observePlayerDisplayHandler(isFloating)
+    $: if ($mediaEmbedStore?.flag != undefined) {
+        observePlayerDisplayHandler(isFloating, $mediaEmbedStore.flag)
+    }
     $: onPathChange($page.url.pathname, !!ambience)
 
     /* youtube display handler */
-    function observePlayerDisplayHandler(isFloating: boolean) {
+    function observePlayerDisplayHandler(isFloating: boolean, flag: boolean) {
         if (isFloating && displayObserver) {
             displayObserver.disconnect()
             displayObserver = null
@@ -66,14 +68,15 @@
             return
         }
 
-        if (!displayContainerRef) {
+        if (flag) {
             displayContainerRef = getElemById('yt-iframe-container')!
         }
-        if (!displayObserver && displayContainerRef) {
-
+        if (flag && displayContainerRef) {
             displayObserver  = new ResizeObserver(onDisplayResize)
             displayObserver.observe(displayContainerRef)
         }
+
+        console.log(displayContainerRef)
     }
     function onDisplayResize(data: any) {
         const target = data[0].target as HTMLElement
@@ -83,6 +86,8 @@
         boxProps.left = left
         boxProps.height = height
         boxProps.width = width
+
+        console.log({ boxProps })
     }
     function initLayout() {
         if (!ytPlayer) return
@@ -344,12 +349,6 @@
         else if (ambience && path === "/home/session") {
             isHidden = true
         }
-        else if (type === "youtube" && !isFloating && path != "/home") {
-            isHidden = true
-        }
-        else if (type === "youtube") {
-            isHidden = false
-        }
     }
     function handleKeyDown(ke: KeyboardEvent) {
         if (shouldMove) return
@@ -439,7 +438,7 @@
     class:media-player--live-ambience={liveAmbience}
     class:media-player--grab={shouldMove && !isPointerDown}
     class:media-player--grabbing={shouldMove && isPointerDown}
-    class:media-player--hidden={!liveAmbience && (!playlist || mediaEmbed?.hidden || isHidden)}
+    class:media-player--hidden={!liveAmbience && (!playlist || !$ytPlayerStore?.show || isHidden)}
     class:media-player--iframe-hidden={!$ytPlayerStore}
     style:--BORDER_WIDTH={`${BORDER_WIDTH}px`}
     style:--SAFE_MARGIN={`${SAFE_MARGIN}px`}
@@ -556,7 +555,7 @@
         }
         
         #yt-player {
-            border-radius: 0px;
+            border-radius: 7px;
             z-index: 2;
             @include abs-top-left;
         }

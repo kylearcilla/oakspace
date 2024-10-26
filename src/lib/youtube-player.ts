@@ -22,13 +22,16 @@ export class YoutubePlayer {
     iFramePlaylistId = ""
     iFrameVidId      = ""
     
-    floatLayout      = { width: -1, height: -1, left: -1, top: -1 }
-    isPlaying = false
-    doShowPlayer     = true
+    isPlaying        = false
+    show     = true
     hasActiveSession = false
     isFetchingVid    = false
-    volume: number = 50
-    
+    volume: number   = 50
+
+    // container
+    floatLayout = { width: -1, height: -1, left: -1, top: -1 }
+    view: "float" | "embed" = "embed"
+
     // is playing isolated video (not being played)
     isoVideo  = false
     error: any = null
@@ -67,7 +70,7 @@ export class YoutubePlayer {
     async initYtPlayer() {
         try {
             await this.initIframePlayerAPI()
-            this.update({ doShowPlayer: true }) 
+            this.update({ show: true }) 
             
             this.hasActiveSession = true
         }
@@ -473,9 +476,14 @@ export class YoutubePlayer {
      * Will not inmount player off the dom.
      */
     toggledShowPlayer() {
-        this.doShowPlayer = !this.doShowPlayer
+        this.show = !this.show
         this.player.stopVideo()
-        this.update({ doShowPlayer: this.doShowPlayer })
+        this.update({ show: this.show })
+    }
+
+    toggleView(_view?: "embed" | "float") {
+        this.view = !_view ? this.view === "embed" ? "float" : "embed" : _view
+        this.update({ view: this.view })
     }
 
     /**
@@ -491,7 +499,7 @@ export class YoutubePlayer {
         if (newState.vid != undefined)             newStateObj.vid = newState.vid
         if (newState.playlist != undefined)        newStateObj.playlist = newState.playlist
         if (newState.playlistVidIdx != undefined)  newStateObj.playlistVidIdx = newState.playlistVidIdx
-        if (newState.doShowPlayer != undefined)    newStateObj.doShowPlayer = newState.doShowPlayer
+        if (newState.show != undefined)    newStateObj.show = newState.show
         if (newState.floatLayout != undefined)     newStateObj.floatLayout = newState.floatLayout
         if (newState.isPlaying != undefined)       newStateObj.isPlaying = newState.isPlaying
 
@@ -518,10 +526,11 @@ export class YoutubePlayer {
             vid:            this.vid!,
             playlist:       this.playlist!,
             playlistVidIdx: this.playlistVidIdx!,
-            floatLayout:     this.floatLayout!,
-            doShowPlayer:    this.doShowPlayer,
-            volume:   this.volume,
-            isoVideo: this.isoVideo
+            floatLayout:    this.floatLayout!,
+            show:           this.show,
+            view:           this.view,
+            volume:         this.volume,
+            isoVideo:       this.isoVideo
         })
     }
 

@@ -2,31 +2,60 @@
 	import { onMount } from "svelte";
 	import SvgIcon from "../../../components/SVGIcon.svelte";
 	import { Icon } from "../../../lib/enums";
-	import { clickOutside, getElemById, getHozDistanceBetweenTwoElems } from "../../../lib/utils-general"
+	import { capitalize, clickOutside, getElemById, getHozDistanceBetweenTwoElems } from "../../../lib/utils-general"
 	import ActivityCalendar from "../../../components/ActivityCalendar.svelte"
 	import WeeklyHabits from "./WeeklyHabits.svelte";
 	import BounceFade from "../../../components/BounceFade.svelte";
 	import ToggleBtn from "../../../components/ToggleBtn.svelte";
     import { getWeekPeriod } from "../../../lib/utils-date"
+	import YoutubeView from "../YoutubeView.svelte";
+	import GoalsBoard from "./GoalsBoard.svelte";
+	import GoalsList from "./GoalsList.svelte";
+	import DropdownBtn from "../../../components/DropdownBtn.svelte";
+	import DropdownList from "../../../components/DropdownList.svelte";
 
-    type MonthDetailsView = "cal" | "goals" | "habits"
+    type MonthDetailsView = "cal" | "goals" | "habits" | "video"
 
-    let currView: MonthDetailsView = "habits"
+    let currView: MonthDetailsView = "goals"
     let optionsOpen = false
 
     let weekPeriodIdx = 0
     let weekPeriod = getWeekPeriod(new Date())
 
+    let subMenu: "g-view" | "g-group" | null = null
+
     /* view options */
     let habitView = {
-        view: "default",
+        view: "time-of-day",
         progress: {
             detailed: true,
             percentage: false
         }
     }
+    let goalsView = {
+        view: "list",
+        grouping: "status"
+    }
+
     let btnHighlighter = {
         width: 0, left: 0
+    }
+    function onGoalSubListClicked(context: DropdownItemClickedContext) {
+        const { name } = context
+        const optn     = name.toLowerCase()
+
+        if (subMenu === "g-view") {
+            goalsView.view = optn
+        }
+        else if (subMenu === "g-group") {
+            goalsView.grouping = optn
+        }
+        if (subMenu.startsWith("g-")) {
+            goalsView = goalsView
+        }
+
+        subMenu = null
+        optionsOpen = false
     }
     function onViewBtnClicked(view: MonthDetailsView) {
         currView = view
@@ -43,7 +72,7 @@
             },
         })
 
-        btnHighlighter.width = width + 0
+        btnHighlighter.width = width + (view === "cal" ? 2 : 5)
         btnHighlighter.left  = Math.max(left - 2, 0)
     }
 
@@ -59,7 +88,7 @@
     </div>
     <div class="month-view__insights">
         <div class="insight-sentence">
-            You have completed <strong>60%</strong> of your habits this month with <strong>2</strong> of your <strong>8</strong> monthly goals achived.
+            You have completed <strong>60%</strong> of your habits this month with <strong>2</strong> of your <strong>8</strong> monthly goals achieved.
         </div>
     </div>
     <div class="month-view__details">
@@ -71,7 +100,7 @@
                     class:month-view__header-btn--chosen={currView === "cal"}
                     on:click={() => onViewBtnClicked("cal")}
                 >
-                    <span>Calendar</span>
+                    <span>Overview</span>
                 </button>
                 <button 
                     id="month-view--habits"
@@ -82,9 +111,9 @@
                     on:click={() => onViewBtnClicked("habits")}
                 >
                     <span>Habits</span>
-                    <div class="month-view__header-btn-subtxt">
+                    <!-- <div class="month-view__header-btn-subtxt">
                         60%
-                    </div>
+                    </div> -->
                 </button>
                 <button 
                     id="month-view--goals"
@@ -95,10 +124,19 @@
                     on:click={() => onViewBtnClicked("goals")}
                 >
                     <span>Goals</span>
-                    <div class="month-view__header-btn-subtxt">
+                    <!-- <div class="month-view__header-btn-subtxt">
                         12%
-                    </div>
+                    </div> -->
                 </button>
+                <!-- <button 
+                    id="month-view--video"
+                    class="month-view__header-btn"
+                    class:month-view__header-btn--chosen={currView === "video"}
+                    title="Play embed Youtube videos."
+                    on:click={() => onViewBtnClicked("video")}
+                >
+                    <span>Youtube</span>
+                </button> -->
             </div>
             <div class="month-view__settings">
                 {#if currView === "habits"}
@@ -132,7 +170,7 @@
                     />
                 </button>
                 <button 
-                    id="habits--dropdown-btn"
+                    id="month-view--dropdown-btn"
                     class="month-view__settings-btn"
                     on:click={() => optionsOpen = !optionsOpen}
                 >
@@ -150,112 +188,195 @@
         <div class="month-view__details-view">
             {#if currView === "cal"}
                 <ActivityCalendar />
-            {:else}
+            {:else if currView === "habits"}
                 <WeeklyHabits options={habitView} />
+            {:else if currView === "goals"}
+                {#if goalsView.view === "list"}
+                    <GoalsList options={{ grouping: goalsView.grouping }} />
+                {:else}
+                    <GoalsBoard />
+                {/if}
+            {:else}
+                <YoutubeView />
             {/if}
         </div>
 
         <!-- habit view settings -->
         <BounceFade 
-            isHidden={!optionsOpen || currView != "habits"}
+            isHidden={!optionsOpen}
             zIndex={200}
             position={{ 
                 top: "25px", right: "0px"
             }}
         >
             <div 
-                class="day-settings dropdown-menu" id="habits--dropdown-menu"
-                use:clickOutside on:click_outside={() => {
-                    optionsOpen = false
-                }} 
+                id="month-view--dropdown-menu"
+                class="day-settings dropdown-menu" 
+                use:clickOutside on:click_outside={() => optionsOpen = false} 
             >
-                <li class="dropdown-menu__section">
-                    <div class="dropdown-menu__section-name">
-                        Grouping
-                    </div>
-                    <div 
-                        class="dropdown-menu__option"
-                        class:dropdown-menu__option--selected={habitView.view === "default"}
-                    >
-                        <button 
-                            class="dropdown-menu__option-btn"
-                            on:click={() => {
-                                habitView.view = "default"
-                                habitView = habitView
-                                optionsOpen = false
-                            }}
+                {#if currView === "goals"}
+                    <li class="dropdown-menu__section">
+                        <div class="dropdown-menu__section-name">
+                            Goals View
+                        </div>
+                        <div class="dropdown-menu__option dropdown-menu__option--static">
+                            <span class="dropdown-menu__option-heading">View</span>
+                            <DropdownBtn 
+                                id={"goals-view"}
+                                options={{
+                                    pickedOptionName: capitalize(goalsView.view),
+                                    onClick: () => { 
+                                        subMenu = subMenu === "g-view" ? null : "g-view"
+                                    },
+                                }}
+                            />
+                        </div>
+                        <div 
+                            class="dropdown-menu__option dropdown-menu__option--static"
+                            class:hidden={goalsView.view != "list"}
                         >
-                            <span class="dropdown-menu__option-text">
-                                Default
-                            </span>
-                            <div class="dropdown-menu__option-right-icon-container">
-                                <div 
-                                    class="dropdown-menu__option-icon"
-                                    class:dropdown-menu__option-icon--check={true}
-                                >
-                                    <i class="fa-solid fa-check"></i> 
-                                </div>
-                            </div>
-                        </button>
-                    </div>
-                    <div 
-                        class="dropdown-menu__option"
-                        class:dropdown-menu__option--selected={habitView.view === "time-of-day"}
-                    >
-                        <button 
-                            class="dropdown-menu__option-btn"
-                            on:click={() => {
-                                habitView.view = "time-of-day"
-                                habitView = habitView
-                                optionsOpen = false
-                            }}
-                        >
-                            <span class="dropdown-menu__option-text">
-                                Time of Day
-                            </span>
-                            <div class="dropdown-menu__option-right-icon-container">
-                                <div 
-                                    class="dropdown-menu__option-icon"
-                                    class:dropdown-menu__option-icon--check={true}
-                                >
-                                    <i class="fa-solid fa-check"></i> 
-                                </div>
-                            </div>
-                        </button>
-                    </div>
-                </li>
-                <li class="dropdown-menu__section-divider"></li>
-                <li class="dropdown-menu__section">
-                    <div class="dropdown-menu__section-name">
-                        Progress
-                    </div>
-                    <div class="dropdown-menu__toggle-optn">
-                        <span class="dropdown-menu__option-text">
-                            Detailed
-                        </span>
-                        <ToggleBtn 
-                            active={habitView.progress.detailed}
-                            onToggle={() => {
-                                habitView.progress.detailed = !habitView.progress.detailed
-                                habitView = habitView
+                            <span class="dropdown-menu__option-heading">Group By</span>
+                            <DropdownBtn 
+                                id={"goals-group"}
+                                options={{
+                                    pickedOptionName: capitalize(goalsView.grouping),
+                                    onClick: () => {
+                                        subMenu = subMenu === "g-group" ? null : "g-group"
+                                    },
+                                }}
+                            />
+                        </div>
+                        <DropdownList 
+                            id="goals-view"
+                            isHidden={subMenu != "g-view"} 
+                            options={{
+                                pickedItem: capitalize(goalsView.view),
+                                listItems: [
+                                    { name: "List" }, { name: "Board" }
+                                ],
+                                position: { 
+                                    top: "52px", right: "0px" 
+                                },
+                                styling: { 
+                                    width: "100px" 
+                                },
+                                onClickOutside: () => { 
+                                    subMenu = null 
+                                },
+                                onListItemClicked: onGoalSubListClicked
                             }}
                         />
-                    </div>
-                    {#if habitView.progress.detailed}
-                         <div class="dropdown-menu__toggle-optn">
+                        <DropdownList 
+                            id="goals-group"
+                            isHidden={subMenu != "g-group"} 
+                            options={{
+                                pickedItem: capitalize(goalsView.grouping),
+                                listItems: [
+                                    { name: "Status" }, { name: "Tag" }
+                                ],
+                                position: { 
+                                    top: "80px", right: "0px" 
+                                },
+                                styling: { 
+                                    width: "100px" 
+                                },
+                                onClickOutside: () => { 
+                                    subMenu = null 
+                                },
+                                onListItemClicked: onGoalSubListClicked
+                            }}
+                        />
+                    </li>
+                {/if}
+                {#if currView === "habits"}
+                    <li class="dropdown-menu__section">
+                        <div class="dropdown-menu__section-name">
+                            Grouping
+                        </div>
+                        <div 
+                            class="dropdown-menu__option"
+                            class:dropdown-menu__option--selected={habitView.view === "default"}
+                        >
+                            <button 
+                                class="dropdown-menu__option-btn"
+                                on:click={() => {
+                                    habitView.view = "default"
+                                    habitView = habitView
+                                    optionsOpen = false
+                                }}
+                            >
+                                <span class="dropdown-menu__option-text">
+                                    Default
+                                </span>
+                                <div class="dropdown-menu__option-right-icon-container">
+                                    <div 
+                                        class="dropdown-menu__option-icon"
+                                        class:dropdown-menu__option-icon--check={true}
+                                    >
+                                        <i class="fa-solid fa-check"></i> 
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
+                        <div 
+                            class="dropdown-menu__option"
+                            class:dropdown-menu__option--selected={habitView.view === "time-of-day"}
+                        >
+                            <button 
+                                class="dropdown-menu__option-btn"
+                                on:click={() => {
+                                    habitView.view = "time-of-day"
+                                    habitView = habitView
+                                    optionsOpen = false
+                                }}
+                            >
+                                <span class="dropdown-menu__option-text">
+                                    Time of Day
+                                </span>
+                                <div class="dropdown-menu__option-right-icon-container">
+                                    <div 
+                                        class="dropdown-menu__option-icon"
+                                        class:dropdown-menu__option-icon--check={true}
+                                    >
+                                        <i class="fa-solid fa-check"></i> 
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
+                    </li>
+                    <li class="dropdown-menu__section-divider"></li>
+                    <li class="dropdown-menu__section">
+                        <div class="dropdown-menu__section-name">
+                            Progress
+                        </div>
+                        <div class="dropdown-menu__toggle-optn">
                             <span class="dropdown-menu__option-text">
-                                Percentage
+                                Detailed
                             </span>
                             <ToggleBtn 
-                                active={habitView.progress.percentage}
+                                active={habitView.progress.detailed}
                                 onToggle={() => {
-                                    habitView.progress.percentage = !habitView.progress.percentage
+                                    habitView.progress.detailed = !habitView.progress.detailed
                                     habitView = habitView
                                 }}
                             />
                         </div>
-                    {/if}
-                </li>
+                        {#if habitView.progress.detailed}
+                            <div class="dropdown-menu__toggle-optn">
+                                <span class="dropdown-menu__option-text">
+                                    Percentage
+                                </span>
+                                <ToggleBtn 
+                                    active={habitView.progress.percentage}
+                                    onToggle={() => {
+                                        habitView.progress.percentage = !habitView.progress.percentage
+                                        habitView = habitView
+                                    }}
+                                />
+                            </div>
+                        {/if}
+                    </li>
+                {/if}
             </div>
         </BounceFade>
     </div>
@@ -269,7 +390,7 @@
             background-color: rgba(var(--textColor1), 0.035);
             height: 1px;
             width: 100%;
-            margin: 4px 0px 14px 0px;
+            margin: 1px 0px 0px 0px;
         }
 
         /* view options */
@@ -280,12 +401,14 @@
         }
         &__details-view {
             overflow-x: scroll;
-            margin-left: -20px;
-            padding-left: 20px;
+            overflow-y: hidden;
+            margin-left: -30px;
+            padding-left: 30px;
         }
         &__details-header {
             @include flex(center, space-between);
             position: relative;
+            margin-bottom: 6px;
         }
         &__btns {
             display: flex;
@@ -296,7 +419,7 @@
             @include flex(center);
         }
         &__heading {
-            @include text-style(1, 400, 1.9rem, "DM Mono");
+            @include text-style(1, 500, 2.125rem);
             margin: -2.5px 0px 8px 0px;
         }
         &__week {
@@ -307,8 +430,8 @@
             }
         }
         &__header-btn {
-            @include text-style(1, 500, 1.4rem);
-            margin-right: 25px;
+            @include text-style(1, 500, 1.44rem);
+            margin: 0px 24px 0px 0px;
             display: flex;
             position: relative;
 
@@ -348,7 +471,7 @@
         }
         &__details-header-highlight {
             position: absolute;
-            bottom: -4px;
+            bottom: -7px;
             height: 1.5px;
             background-color: rgba(var(--textColor1), 0.95);
         }
@@ -381,11 +504,18 @@
     }
 
     .dropdown-menu {
-        width: 150px;
+        width: 160px;
         border: 1px solid rgba(white, 0.02);
+        overflow: visible;
 
-        span {
+        &__option {
+            overflow: visible;
+        }
+        &__option-text {
             @include text-style(0.78, 500, 1.2rem);
+        }
+        &__option-heading {
+            @include text-style(0.6, 500, 1.2rem);
         }
         &__toggle-optn {
             padding: 6px 7px 7px 7px;

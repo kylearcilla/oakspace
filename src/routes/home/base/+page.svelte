@@ -18,7 +18,6 @@
 
     let monthBulletinHt = 0
     let leftHt = 0
-    $: console.log({ leftHt })
 
     const notes = [
         "Inner peace over everything else.",
@@ -48,7 +47,7 @@
     ]
     const bannerImg = {
         src: "https://preview.redd.it/ancient-tree-from-mononoke-3840-x-2160-v0-qrghesb0z65c1.png?width=1080&crop=smart&auto=webp&s=c42a4dfc07a2734d3489faaccd1febb56b6859b3",
-        opacity: 0.35
+        opacity: 0.2
     }
 
     function heatMapScroll(scrollRef: HTMLElement) {
@@ -156,7 +155,7 @@
         <div class="base__right">
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <div 
-                style:background-image={`linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(https://i.pinimg.com/originals/8f/5d/24/8f5d24447dc5bb0630323f8db9aaf5e2.gif)`}
+                style:background-image={`linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)), url(https://i.pinimg.com/originals/8f/5d/24/8f5d24447dc5bb0630323f8db9aaf5e2.gif)`}
                 class="base__month-img bg-img"
                 bind:clientHeight={monthBulletinHt}
                 on:click|self={() => noteIdx = (noteIdx + 1) % notes.length}
@@ -316,8 +315,8 @@
             position: relative;
             margin: 3px 0px 12px -2px;
             padding: 8px 17px 9px 12px;
-            border-radius: 10px;
             background-color: rgba(var(--textColor1), 0.03);
+            border-radius: 10px;
             // border: 1px solid rgba(var(--textColor1), 0.045);
             @include multi-line-elipses-overflow(2);
             display: flex;
@@ -366,7 +365,7 @@
         /* month insights */
         &__month-insight {
             margin-top: 20px;
-            min-height: 600px;
+            min-height: 700px;
         }
 
         /* img */

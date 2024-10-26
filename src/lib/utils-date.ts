@@ -802,3 +802,22 @@ export function getTimeDistanceStr(targetDate: Date) {
     }
   }
   
+  export function getDueString(due: Date, dueType: string) {
+    if (!due) {
+        return dueType === "someday" ? "Some Day 🤞" : "No Due Date"
+    }
+    else if (dueType === "quarter") {
+        const month = due.getMonth() + 1
+        const quarter = Math.ceil(month / 3)
+        return `Quarter ${quarter}`
+    } 
+    else if (dueType === "year") {
+        return `${due.getFullYear()}`
+    } 
+    else if (dueType === "month") {
+        return formatDatetoStr(due, { month: "long"})
+    } 
+    else {
+        return formatDateLong(due)
+    }
+}

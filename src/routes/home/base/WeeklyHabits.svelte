@@ -6,6 +6,14 @@
 	import { DAYS_OF_WEEK } from "../../../lib/utils-date";
 	import { capitalize, formatPlural } from "../../../lib/utils-general"
 
+    const MIN_SIZE = 620
+    const TIMES_OF_DAY_MAP: { [key: string]: number } = {
+        "morning": 0,
+        "afternoon": 1,
+        "evening": 2,
+        "all-day": 3
+    }
+
     type HabitTableView = "default" | "time-of-day"
 
     type HabitOptions = {
@@ -18,10 +26,9 @@
 
     export let options: any
 
-    $: view = options.view
-    $: wkProgress = options.progress
+    let view = options?.view
+    let wkProgress = options?.progress
 
-    const MIN_SIZE = 620
     let habits = TEST_WK_HABITS
     let dayProgress = [0, 0, 0, 0, 0, 0, 0]
     let isDragging = false
@@ -31,13 +38,18 @@
     let dragHabitSrc: any
     let dragHabitTarget: any
 
+    $: {
+        view = options?.view
+        wkProgress = options?.progress
+
+        setViewOptn(view)
+    }
+
     updateDayProgress(habits)
-    setViewOptn(view)
 
     function setViewOptn(newView: HabitTableView) {
-        view = newView
-
-        if (view === "default") {
+        console.log({ newView })
+        if (newView === "default") {
             setSortedHabitsToDefault()
         }
         else {
@@ -53,8 +65,8 @@
         targetHabit.last7Days = num ^ (1 << (6 - dayIdx))
 
         // change in sorted
-        const timeOfDay   = habit.timeOfDay
-        const habitsArray = sortedHabits[timeOfDay].habits
+        const todIdx = TIMES_OF_DAY_MAP[habit.timeOfDay]
+        const habitsArray = sortedHabits[todIdx]
         const habitIdx = habitsArray.findIndex((h: any) => h.name === habit.name)
         habitsArray[habitIdx] = targetHabit
 
@@ -65,7 +77,7 @@
             totalProgress += checked / 7
         })
 
-        sortedHabits[timeOfDay].progress = (totalProgress / habitsArray.length) * 100
+        sortedHabits[todIdx].progress = (totalProgress / habitsArray.length) * 100
 
         // update regular habits
         updateDayProgress(habits)
@@ -128,47 +140,35 @@
 
     /* sorting / grouping habits */
     function groupHabitsByTimeOfDay(habits: any[]) {
-        sortedHabits = { 
-            "morning": { habits: [], progress: 0 },
-            "afternoon": { habits: [], progress: 0 },
-            "evening": { habits: [], progress: 0 },
-            "all-day": { habits: [], progress: 0 }
-        }
+        sortedHabits = [[], [], [], []]
 
         habits.forEach(habit => {
-            sortedHabits[habit.timeOfDay].habits.push(habit)
-
-            const checkedDays = habit.last7Days.toString(2).split('').filter(bit => bit === '1').length
-            const totalDays = 7
-            const progress = checkedDays / totalDays
-            
-            sortedHabits[habit.timeOfDay].progress += progress
-        })
-        
-        Object.keys(sortedHabits).forEach(timeOfDay => {
-            const timeOfDayGroup = sortedHabits[timeOfDay]
-
-            timeOfDayGroup.habits.sort((a: any, b: any) => a.order.tod - b.order.tod)
-
-            if (timeOfDayGroup.habits.length > 0) {
-                timeOfDayGroup.progress = (timeOfDayGroup.progress / timeOfDayGroup.habits.length) * 100
+            const timeOfDayIndex = TIMES_OF_DAY_MAP[habit.timeOfDay]
+            if (timeOfDayIndex !== undefined) {
+                sortedHabits[timeOfDayIndex].push(habit)
             }
         })
-    }
-    function setSortedHabitsToDefault() {
-        sortedHabits = { 
-            "morning": { habits: [], progress: 0 },
-            "afternoon": { habits: [], progress: 0 },
-            "evening": { habits: [], progress: 0 },
-            "all-day": { habits: [], progress: 0 }
-        }
 
-        habits.forEach(habit => sortedHabits.morning.habits.push(habit))
-        sortedHabits.morning.habits.sort((a: any, b: any) => a.order.default - b.order.default);
+        // Sort the habits for each time of day
+        sortedHabits.forEach(habitGroup => {
+            habitGroup.sort((a: any, b: any) => a.order.tod - b.order.tod)
+        });
+    }
+
+    function setSortedHabitsToDefault() {
+        sortedHabits = [[], [], [], []]
+
+        habits.forEach(habit => {
+            sortedHabits[0].push(habit)
+        })
+
+        sortedHabits[0].sort((a: any, b: any) => a.order.default - b.order.default)
     }
 
     /* habit drag */
     function onHabitDrag(e: DragEvent, habit: any) {
+        e.dataTransfer.effectAllowed = "move"
+
         if (!isDragging) {
             e.preventDefault()
             return
@@ -206,51 +206,66 @@
     }
     function reorderInDefaultView(srcHabit: any, targetHabit: any) {
         const srcOrder    = srcHabit.order.default
-        const lastOrder   = Math.max(...habits.map((habit: any) => habit.order.default))
-        const toIdx = targetHabit === "all-day" ? lastOrder : targetHabit.order.default
-        const direction   = srcOrder < toIdx ? 1 : -1
-        const targetOrder = toIdx + (direction === 1 ? -1 : 0)
+        const lastOrder   = Math.max(...habits.map((habit: any) => habit.order.default)) + 1
+        const toIdx       = targetHabit === "all-day" ? lastOrder : targetHabit.order.default
+        const direction   = srcOrder < toIdx ? "up" : "down"
+        const targetOrder = toIdx + (direction === "up" ? -1 : 0)
 
         habits.forEach((habit: any) => {
-            if (direction === 1 && habit.order.default > srcOrder && habit.order.default <= targetOrder) {
+            if (direction === "up" && habit.order.default > srcOrder && habit.order.default <= targetOrder) {
                 habit.order.default--
             } 
-            else if (direction === -1 && habit.order.default >= targetOrder && habit.order.default < srcOrder) {
+            else if (direction === "down" && habit.order.default >= targetOrder && habit.order.default < srcOrder) {
                 habit.order.default++
             }
         })
+
         srcHabit.order.default = targetOrder
         setSortedHabitsToDefault()
     }
-    function reorderInTimeOfDayView(srcHabit: any, targetHabit: any) {
-        const toLast = typeof targetHabit === "string"
-        const srcTod    = srcHabit.timeOfDay
-        const srcOrder  = srcHabit.order.tod
-        
-        const targetTod   = toLast ? targetHabit : targetHabit.timeOfDay
-        const lastOrder   = habits.filter((habit: any) => habit.timeOfDay === targetTod).length
 
+    function reorderInTimeOfDayView(srcHabit: any, targetHabit: any) {
+        const toLast  = typeof targetHabit === "string"
+
+        const srcTod = srcHabit.timeOfDay
+        const targetTod  = toLast ? targetHabit : targetHabit.timeOfDay
+
+        const srcSecIdx = TIMES_OF_DAY_MAP[srcTod]
+        const toSecIdx = TIMES_OF_DAY_MAP[targetTod]
+        const sameSec = srcSecIdx === toSecIdx
+
+        const srcOrder = srcHabit.order.tod
+        const lastOrder = habits.filter((habit: any) => habit.timeOfDay === targetTod).length 
+    
         const toIdx       = toLast ? lastOrder : targetHabit.order.tod
-        const direction   = srcOrder < toIdx ? 1 : -1
-        const targetOrder = toIdx + (direction === 1 ? -1 : 0)
+        const betweenSec  = srcTod != targetTod
+        const direction   = (betweenSec ? srcSecIdx < toSecIdx : srcOrder < toIdx) ? "up" : "down"
+
+        const targetOrder = Math.max(toIdx + (direction === "up" && sameSec ? -1 : 0), 0)
 
         habits
             .filter((habit: any) => habit.timeOfDay === srcTod)
             .forEach((habit: any) => {
-                if (direction === 1 && habit.order.tod > srcOrder) {
+                if (direction === "up" && habit.order.tod > srcOrder) {
                     habit.order.tod--
                 } 
-                else if (direction === -1 && habit.order.tod < srcOrder) {
+                else if (!sameSec && direction === "down" && habit.order.tod > srcOrder) {
+                    habit.order.tod--
+                }
+                else if (sameSec && direction === "down" && habit.order.tod < srcOrder) {
                     habit.order.tod++
                 }
             })
         habits
             .filter((habit: any) => habit.timeOfDay === targetTod)
             .forEach((habit: any) => {
-                if (direction === 1 && habit.order.tod >= targetOrder) {
+                if (direction === "up" && habit.order.tod >= targetOrder) {
                     habit.order.tod++
                 } 
-                else if (direction === -1 && habit.order.tod <= targetOrder) {
+                else if (!sameSec && direction === "down" && habit.order.tod >= targetOrder) {
+                    habit.order.tod++
+                }
+                else if (sameSec && direction === "down" && habit.order.tod <= targetOrder) {
                     habit.order.tod--
                 }
             })
@@ -298,8 +313,9 @@
     {#if view === "time-of-day"}
         <div class="divider"></div>
     {/if}
-    {#each ["morning", "afternoon", "evening", "all-day"] as timeOfDay}
-        {@const { habits, progress } = sortedHabits[timeOfDay]}
+    {#each Object.keys(TIMES_OF_DAY_MAP) as timeOfDay}
+        {@const idx = TIMES_OF_DAY_MAP[timeOfDay]}
+        {@const habits = sortedHabits[idx]}
         {@const tod = timeOfDay === "all-day" ? "All Day" : timeOfDay}
         {@const empty = habits.length === 0}
         {@const isTodView = view === "time-of-day"}
@@ -315,9 +331,6 @@
                 >
                     <span>
                         {capitalize(tod)}
-                    </span>
-                    <span class="wk-habits__tod-progress">
-                        {Math.floor(progress)}%
                     </span>
                 </div>
     
@@ -345,7 +358,7 @@
                                     {habit.name}
                                 </span>
                             </div>
-                            <div class="wk-habit__streak">
+                            <div class="wk-habit__streak" title="Habit streak.">
                                 {habit.streak}
                             </div>
                         </div>
@@ -397,7 +410,10 @@
                                 {/if}
                             {/if}
                             <div class="wk-habit__progress-ring">
-                                <ProgressRing progress={checked / total} />
+                                <ProgressRing 
+                                    progress={checked / total} 
+                                    options={{ style: "rich-colored" }}    
+                                />
                             </div>
                         </div>
                         <div 
@@ -450,6 +466,7 @@
     .wk-habits { 
         width: 100%;
         min-width: 560px;
+        margin-top: 14px;
 
         &--min .one-col { 
             min-width: 40px;
@@ -471,7 +488,7 @@
 
         }
         &__tod-header {
-            @include text-style(0.35, 500, 1.245rem);
+            @include text-style(0.35, 500, 1.2rem);
             @include flex(center, space-between);
             margin: 13px 0px 9px 8px;
             
@@ -481,10 +498,6 @@
         }
         &__tod-container {
             position: relative;
-        }
-        &__tod-progress {
-            @include text-style(0.2, 400, 1.25rem, "DM Mono");
-            display: none;
         }
         &__count-cells {
             display: flex;
@@ -591,7 +604,7 @@
             @include flex(center, space-between);
 
             &-ring {
-                margin-right: 38px;
+                margin: 1px 38px 0px 0px;
             }
         }
         &__progress .fraction {
@@ -605,7 +618,8 @@
         border-radius: 5px;
     }
     .header-col {
-        padding: 0px 0px 9px 7px;
+        font-size: 1.15rem;
+        padding: 0px 0px 9px 7.5px;
         // border-bottom: 0.5px solid rgb(var(--textColor1), 0.065);
     }
     .one-col {

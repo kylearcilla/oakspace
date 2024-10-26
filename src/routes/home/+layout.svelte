@@ -31,7 +31,6 @@
     onMouseMoveHandler, updateRoute, onQuitApp,
 	  middleViewExpandHandler,
 	  AMBIENT,
-    toggleYoutubePlayerFloat,
 	  getLeftBarWidth
   } from "$lib/utils-home"
 
@@ -39,6 +38,7 @@
 	import SessionSummaryModal from "./SessionSummaryModal.svelte"
 	import Modal from "../../components/Modal.svelte";
 	import SpaceSelection from "../SpaceSelection.svelte";
+	import { ytPlayerStore } from "../../lib/store";
 
   
   export let data
@@ -47,14 +47,17 @@
   let totalWidth = 0
   let routeId: string
 
-  let stretchMiddleView = false
   let leftBarOpen = true
-  let rightBarOpen = true
   let leftSideBarWidth = 0
-  let rightSideBarWidth = 0
+  
+  let stretchMiddleView = false
   let middleViewMarginLeft = ""
   let middleViewWidth = ""
   let homeViewClasses = ""
+
+  let rightBarFixed = false
+  let rightBarOpen = true
+  let rightSideBarWidth = 0
 
   const RIGHT_BAR_WIDTH = 240
   const SMALL_WIDTH = 740
@@ -68,7 +71,7 @@
   $: leftBar = $globalContext.leftBar
 
   $: if (inAmbience && !isFloating) {
-      toggleYoutubePlayerFloat(true)
+      $ytPlayerStore?.toggleView("float")
   }
   $: if (totalWidth > 0 && route) {
       updateMiddleView()
@@ -77,11 +80,11 @@
   globalContext.subscribe((state: GlobalContext) => {
     leftBarOpen = state.leftBarOpen
     rightBarOpen = state.rightBarOpen
+    rightBarFixed = state.rightBarFixed
 
     const leftBar = state.leftBar
     leftSideBarWidth = getLeftBarWidth(leftBar!)
-
-    rightSideBarWidth = rightBarOpen ? RIGHT_BAR_WIDTH : 0
+    rightSideBarWidth = RIGHT_BAR_WIDTH
 
     updateMiddleView()
   })
@@ -89,11 +92,13 @@
   function updateMiddleView() {
     leftBarOpen = $globalContext.leftBarOpen
     rightBarOpen = $globalContext.rightBarOpen
+    rightBarOpen = $globalContext.rightBarOpen
 
     const leftBar = $globalContext.leftBar
     const full = rightBarOpen && leftBarOpen
     const ambient = !!ambience
     const leftOffset = ambient || leftBar === "wide-float" ? 0 : leftSideBarWidth
+    const rightOffset = rightBarFixed ? 0 : rightSideBarWidth
 
     stretchMiddleView = middleViewExpandHandler({ 
       width: totalWidth,
@@ -102,7 +107,7 @@
     })
 
     if (rightBarOpen && !leftBarOpen) {
-      middleViewWidth = `calc(100% - ${rightSideBarWidth}px)`
+      middleViewWidth = `calc(100% - ${rightOffset}px)`
       middleViewMarginLeft = "0px"
     }
     else if (leftBarOpen && !rightBarOpen) {
@@ -114,11 +119,11 @@
       middleViewMarginLeft = "0px"
     }
     else if (totalWidth <= SMALL_WIDTH && full) {
-      middleViewWidth      = `calc(100% - ${rightSideBarWidth}px)`
+      middleViewWidth      = `calc(100% - ${rightOffset}px)`
       middleViewMarginLeft = "0px"
     }
     else {
-      middleViewWidth      = `calc(100% - ${leftOffset + rightSideBarWidth}px)`
+      middleViewWidth      = `calc(100% - ${leftOffset + rightOffset}px)`
       middleViewMarginLeft = `${leftOffset}px`
     }
   }
@@ -160,6 +165,7 @@
   on:mousemove={_onMouseMoveHandler}
   id="home"
   class={`home ${homeViewClasses}`}
+  class:home--right-fixed={rightBarFixed}
   class:home--left-float={leftBar === "wide-float"}
   class:home--stretched={stretchMiddleView}
   class:home--ambient={ambience}
@@ -213,11 +219,13 @@
     <!-- right -->
     <nav 
       class="home__right-bar" 
+      class:home__right-bar--fixed={rightBarFixed}
       class:ambient-dark-blur={ambience?.styling === "blur"}
       class:ambient-solid={ambience?.styling === "solid"}
       class:ambient-dark-clear={ambience?.styling === "clear"}
       style:width={`${rightSideBarWidth}px`}
       style:margin-right={`${rightSideBarWidth === 0 ? `-${RIGHT_BAR_WIDTH}px` : ""}`}
+      style:right={`${!rightBarOpen && rightBarFixed ? `-${rightSideBarWidth}px` : ""}`}
     >
       <SideBarRight /> 
   </nav>
@@ -307,7 +315,7 @@
       background-position: center;
       background-repeat: no-repeat;
 
-      /* left bar */
+      /* bars */
       &--left-float &__middle-view {
         margin-left: 0px !important;
 
@@ -319,6 +327,9 @@
         border: 1.5px solid rgba((var(--textColor1)), 0.022);
         border-radius: 12px;
         transition: 0.185s cubic-bezier(.4, 0, .2, 1);
+      }
+      &--right-fixed &__middle-view {
+        
       }
 
       /* ambient */
@@ -401,7 +412,8 @@
         box-shadow: var(--rightBarBgBoxShadow);
         z-index: 400;
         transition: 0.2s cubic-bezier(.4, 0, .2, 1);
-
+        overflow: hidden;
+        
         &::before {
           content: " ";
           width: 2px;
@@ -415,9 +427,16 @@
         // background: rgba(32, 31, 31, 0.1);
         // backdrop-filter: blur(10px);
         // border-left: 1px solid rgba(138, 138, 138, 0.3);
-
+        
+        &--fixed {
+          transition: 0.245s cubic-bezier(.4, 0, .2, 1);
+          top: 20px;
+          right: 5px;
+          height: calc(100% - 40px);
+          border-radius: 14px;
+        }
         &--closed {
-          margin-right: -300px; 
+          // margin-right: -300px; 
         }
       }
 

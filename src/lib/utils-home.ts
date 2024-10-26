@@ -16,6 +16,8 @@ export const LEFT_BAR_MIN_WIDTH = 60
 export const LEFT_BAR_FLOAT_WIDTH = 160
 export const LEFT_BAR_FULL_WIDTH = 185
 const LEFT_BAR_LEFT_BOUND = 20
+const RIGHT_BAR_RIGHT_BOUND = 20
+
 const SESSION_MIN_WIDTH = 750
 const MAX_AMBIENT_OPACITY = 0.85
 
@@ -105,7 +107,10 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
     //     closeModal(modals[modals.length - 1])
     // }
     if (event.ctrlKey && key === "]" && !doNotOpenRightBar) {
-        updateGlobalContext({ rightBarOpen: !context.rightBarOpen })
+        updateGlobalContext({ 
+            rightBarOpen: !context.rightBarOpen,
+            rightBarFixed: !context.rightBarOpen === false
+        })
     }
     else if (ctrlKey && key === "[") {
         updateGlobalContext({ leftBarOpen: !context.leftBarOpen })
@@ -176,26 +181,38 @@ export function updateRoute(route: string) {
  * @returns                         If user still has toggled left side bar.
  */
 export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boolean): boolean => {
-    const mouseX = event.clientX
     const context = get(globalContext)
     const target = event.target as HTMLElement
+    const mouseLeftPos = event.clientX
+    const mouseRightPos = window.innerWidth - mouseLeftPos
 
     if (target.classList.value.includes("media-player")) {
         return toggledLeftBarWithKey
     }
 
-    const isInArea = mouseX < LEFT_BAR_LEFT_BOUND
+    const leftInArea = mouseLeftPos < LEFT_BAR_LEFT_BOUND
     const isActiveRoutineOpen = context.doOpenActiveRoutine
     const leftBarOpen = context.leftBarOpen
     const leftBar = context.leftBar
-    const autoCloseRightThreshold = getLeftBarWidth(leftBar!)
+    const lbAutoCloseThreshold = getLeftBarWidth(leftBar!)
+    
+    const rightInArea = mouseRightPos < RIGHT_BAR_RIGHT_BOUND
+    const rightBarOpen = context.rightBarOpen
+    const isRightFixed = context.rightBarFixed
+    const rbAutoCloseThreshold = 300
 
-    if (!leftBarOpen && !isActiveRoutineOpen && isInArea) {
+    if (!leftBarOpen && !isActiveRoutineOpen && leftInArea) {
         updateGlobalContext({ ...get(globalContext), leftBarOpen: true  })
         return false
     }
-    else if (!toggledLeftBarWithKey && context.leftBarOpen && mouseX > autoCloseRightThreshold) { 
+    else if (!toggledLeftBarWithKey && context.leftBarOpen && mouseLeftPos > lbAutoCloseThreshold) { 
         updateGlobalContext({ ...get(globalContext), leftBarOpen: false  })
+    }
+    else if (isRightFixed && !rightBarOpen && rightInArea) { 
+        updateGlobalContext({ ...get(globalContext), rightBarOpen: true  })
+    }
+    else if (isRightFixed && rightBarOpen && mouseRightPos > rbAutoCloseThreshold) { 
+        updateGlobalContext({ ...get(globalContext), rightBarOpen: false  })
     }
 
     return toggledLeftBarWithKey
@@ -293,17 +310,6 @@ export function toggleActiveRoutine() {
     })
 }
 
-export function toggleYoutubePlayerFloat(doShow?: boolean) {
-    const oldState    = get(globalContext)
-    const mediaPlayer = oldState.mediaPlayer ?? { 
-        music: false, youtube: false 
-    }
-
-    updateGlobalContext({ 
-        mediaPlayer: { ...mediaPlayer, youtube: doShow != undefined ? doShow : !mediaPlayer.youtube } 
-    })   
-}
-
 function loadAmbience() {
     const homeRef = getElemById("home")!
     const context = get(globalContext)
@@ -368,9 +374,7 @@ export async function closeAmbience() {
         if (await youtube.backToPlaylist()) {
             youtube.quit()
         }
-        updateGlobalContext({ mediaPlayer: {
-            youtube: false, music: false
-        }})
+        youtube.toggleView("float")
     }
 
     homeRef.style.backgroundImage = "none"

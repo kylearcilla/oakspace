@@ -14,7 +14,7 @@
     let listItems = options.listItems
     let pickedItem = options.pickedItem
 
-    $: isDarkTheme = $themeState.isDarkTheme
+    $: isDark = $themeState.isDarkTheme
 
     $: if (isHidden != undefined) { 
         resetCount(!isHidden)
@@ -75,13 +75,13 @@
 
         const rTarget = e.relatedTarget as HTMLElement
         const optnBtn = findAncestor({
-            child: rTarget, queryStr: "dropdown-menu__option-btn", queryBy: "class", strict: true
+            child: rTarget, queryStr: "dmenu__option-btn", queryBy: "class", strict: true
         })
         const menuElem = findAncestor({
-            child: rTarget, queryStr: "dropdown-menu", queryBy: "id"
+            child: rTarget, queryStr: "dmenu", queryBy: "id"
         })
         const optionElem = findAncestor({
-            child: rTarget, queryStr: "dropdown-menu__option", queryBy: "class", strict: true
+            child: rTarget, queryStr: "dmenu__option", queryBy: "class", strict: true
         })
         
         // leaves outside of menu and not parent
@@ -93,7 +93,7 @@
         const optionsElemIdx = +optionElem!.getAttribute("data-optn-idx")!
         
         // leaves into a dropdown menu but not the parent and not the parent option
-        if (menuElem.id != `${options.parent.id}--dropdown-menu` || optionsElemIdx != options.parent.optnIdx) {
+        if (menuElem.id != `${options.parent.id}--dmenu` || optionsElemIdx != options.parent.optnIdx) {
             options.onPointerLeave()
         }
     }
@@ -106,7 +106,7 @@
             return
         }
 
-        const childId   = `${options.childId}--dropdown-menu`
+        const childId   = `${options.childId}--dmenu`
         const rTarget   = e.relatedTarget as HTMLElement
         const rTargetId = rTarget?.children[0]?.id
 
@@ -127,35 +127,34 @@
     zIndex={options?.styling?.zIndex ?? 1}
 >
     <div 
-        class="dropdown-menu-container"
-        class:dropdown-menu-container--child={options.parent}
+        class="dmenu-container"
+        class:dmenu-container--child={options.parent}
         on:pointerleave={onPointerLeave}
     >
         <ul 
             use:clickOutside on:click_outside={onClickOutside} 
             bind:this={dropdownMenuRef}
-            id={`${id}--dropdown-menu`}
-            class="dropdown-menu"
-            class:dropdown-menu--dark={isDarkTheme}
-            class:dropdown-menu--has-scroll-bar={options.scroll?.bar ?? false}
+            id={`${id}--dmenu`}
+            class="dmenu"
+            class:dmenu--light={!isDark}
+            class:dmenu--has-scroll-bar={options.scroll?.bar ?? false}
             style:width={options?.styling?.width ?? "auto"}
             style:min-width={options?.styling?.minWidth ?? "auto"}
             style:max-width={options?.styling?.maxWidth ?? "auto"}
             style:height={options?.styling?.height ?? "auto"}
             style:max-height={options?.styling?.maxHeight ?? "auto"}
             style:--font-family={options.styling?.fontFamily ?? "Manrope"}
-            style:--font-size={options.styling?.fontSize ?? "1.24rem"}
         >
             {#each listItems as item, idx}
                 <!-- Section Item -->
                 {#if "options" in item}
                     {@const section = item}
                     <li 
-                        class="dropdown-menu__section"
-                        class:dropdown-menu__section--last={idx === listItems.length - 1}
+                        class="dmenu__section"
+                        class:dmenu__section--last={idx === listItems.length - 1}
                     >
                         {#if item.sectionName}
-                            <div class="dropdown-menu__section-name">
+                            <div class="dmenu__section-name">
                                 {item.sectionName}
                             </div>
                         {/if}
@@ -168,7 +167,7 @@
                             />
                         {/each}
                     </li>
-                    <li class="dropdown-menu__section-divider"></li>
+                    <li class="dmenu__section-divider"></li>
                 <!-- Option Item -->
                 {:else}
                     {@const option = item}
@@ -187,4 +186,8 @@
 
 <style lang="scss">
     @import "../scss/dropdown.scss";
+
+    .dmenu--light {
+        @include dmenu--light;
+    }
 </style>

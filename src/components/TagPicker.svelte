@@ -54,11 +54,11 @@
     class:tag-picker--light={!isDarkTheme}
 >
     <button 
-        id="tag-picker--dropdown-btn"
-        class="tag-picker__dropdown-btn dropdown-btn tag"
+        id="tag-picker--dbtn"
+        class="tag-picker__dbtn dbtn tag"
         class:tag--is-light={tag?.symbol.color.isLight && !isDarkTheme}
-        class:tag-picker__dropdown-btn--active={_isActive}
-        class:tag-picker__dropdown-btn--empty={!tag}
+        class:tag-picker__dbtn--active={_isActive}
+        class:tag-picker__dbtn--empty={!tag}
         style:--tag-color-primary={tag?.symbol.color.primary}
         style:--tag-color-1={tagColor ? tagColor[0] : ""}
         style:--tag-color-2={tagColor ? tagColor[1] : ""}
@@ -71,7 +71,7 @@
             <span class="tag__symbol">
                 {tag.symbol.emoji}
             </span>
-            <div class="tag__title dropdown-btn__title">
+            <div class="tag__title dbtn__title">
                 {tag.name}
             </div>
         {:else}
@@ -81,7 +81,7 @@
         {/if}
         <!-- Tag Dropdown Arrow -->
         {#if isEmpty || (!isEmpty && !isActive)}
-            <div class="tag-picker__dropdown-btn-arrow">
+            <div class="tag-picker__dbtn-arrow">
                 <SvgIcon 
                     icon={Icon.Dropdown}
                     options={{
@@ -91,7 +91,7 @@
             </div>
         {:else}
             <button 
-                class="tag-picker__dropdown-btn-close"
+                class="tag-picker__dbtn-close"
                 on:click|stopPropagation={() => onTagOptionClicked(null)}
             >
                 <SvgIcon 
@@ -109,13 +109,13 @@
         position={{ top: "0px", left: "0px" }}
     >
         <div 
-            id="tag-picker--dropdown-menu"
-            class="tag-picker__dropdown-menu-container"
-            class:tag-picker__dropdown-menu-container--shown={_isActive}
+            id="tag-picker--dmenu"
+            class="tag-picker__dmenu-container"
+            class:tag-picker__dmenu-container--shown={_isActive}
             style:--trans-duration={`${TRANSITION_DURATIONS_MS}ms`}
             use:clickOutside on:click_outside={() => onClickOutside()}
         >
-            <ul class="tag-picker__dropdown-menu">
+            <ul class="tag-picker__dmenu">
                 {#each TAGS as tagOption}
                     {@const tagOptColor = getColorTrio(tagOption.symbol.color, !isDarkTheme)}
                     <li 
@@ -146,21 +146,21 @@
                             </div>
                         </button>
                         <!-- <button 
-                            class="tag-picker__dropdown-option-settings-btn dropdown-btn dropdown-btn--settings"
+                            class="tag-picker__dropdown-option-settings-btn dbtn dbtn--settings"
                         >
                             <SvgIcon icon={Icon.Settings} />
                         </button> -->
                     </li>
                 {/each}
             </ul>
-            <div class="tag-picker__dropdown-menu-add">
+            <div class="tag-picker__dmenu-add">
                 <div class="divider"></div>
                 <button 
-                    class="tag-picker__dropdown-menu-add-btn"
+                    class="tag-picker__dmenu-addbtn"
                     on:click={onClickNewTagBtn}
                 >
                     <span>Add New</span>
-                    <div class="tag-picker__dropdown-menu-add-icon">
+                    <div class="tag-picker__dmenu-add-icon">
                         <SvgIcon icon={Icon.Add} options={{ scale: 0.92, strokeWidth: 1.7 }} />
                     </div>
                 </button>
@@ -191,19 +191,19 @@
         position: relative;
         transition: 0.12s ease-in-out;
 
-        &--light &__dropdown-menu-container {
+        &--light &__dmenu-container {
             border: 1px solid rgba(var(--textColor1), 0.075);
         }
-        &--light &__dropdown-menu-container h3 {
+        &--light &__dmenu-container h3 {
             @include text-style(1, 600);
         }
-        &--light &__dropdown-menu-add {
+        &--light &__dmenu-add {
             border-top: 1px solid rgba(var(--textColor1), 0.1);
         }
         &--light &__dropdown-option:hover {
             @include txt-color(0.05, "bg");
         }
-        &--light &__dropdown-menu-add-btn {
+        &--light &__dmenu-addbtn {
             opacity: 0.8;
             &:hover {
                 opacity: 1 !important;
@@ -219,11 +219,11 @@
             filter: brightness(1);
         }
         
-        &__dropdown-btn.tag {
+        &__dbtn.tag {
             background-color: rgba(var(--tag-color-2), 1);
             padding: 4px 12px 4px 11px;
         }
-        &__dropdown-btn--empty {
+        &__dbtn--empty {
             .tag__title {
                 opacity: 0.6;
             }
@@ -231,14 +231,14 @@
                 @include txt-color(0.04, "bg");
             }
         }
-        &__dropdown-btn--active &__dropdown-btn-arrow {
+        &__dbtn--active &__dbtn-arrow {
             transform: rotate(-180deg);
         }
-        &__dropdown-btn-arrow, &__dropdown-btn-close {
+        &__dbtn-arrow, &__dbtn-close {
             opacity: 0.2;
             transition: 0.1s ease-in-out;
         }
-        &__dropdown-btn-arrow {
+        &__dbtn-arrow {
             transition: 0.1s ease-in-out;
             transform: rotate(0deg);
             transform-origin: center;
@@ -247,10 +247,10 @@
                 transform: rotate(-180deg);
             }
         }
-        &__dropdown-btn-close:hover {
+        &__dbtn-close:hover {
             opacity: 0.5;
         }
-        &__dropdown-menu-container {
+        &__dmenu-container {
             @include abs-top-left(28px);
             background-color: var(--bg-2);
             padding: 2px 0px 8px 0px;
@@ -269,24 +269,24 @@
                 @include visible;
             }
         }
-        &__dropdown-menu .tag {
+        &__dmenu .tag {
             border-radius: 6px !important;
             transition: 0.1s ease-in-out;
             margin-right: 7px;
             min-width: 0px;
         }
-        &__dropdown-menu .tag__symbol {
+        &__dmenu .tag__symbol {
             font-size: 0.85rem;
         }
-        &__dropdown-menu .tag__title {
+        &__dmenu .tag__title {
             font-size: 1.05rem;
         }
-        &__dropdown-menu {
+        &__dmenu {
             max-height: 200px;
             overflow-y: scroll;
             padding: 4px 0px 8px 0px;
         }
-        &__dropdown-menu-title {
+        &__dmenu-title {
             h3 {
                 padding: 0px 0px 0px 7px;
                 @include text-style(1, 500, 1.3rem);
@@ -345,7 +345,7 @@
                 font-weight: 600;
             }
         }
-        &__dropdown-menu-add {
+        &__dmenu-add {
             width: 100%;
             border-top: 1px solid rgba(var(--textColor1), 0.05);
 
@@ -359,10 +359,10 @@
                 opacity: 0.8;
             }
         }
-        &__dropdown-menu-add .divider {
+        &__dmenu-add .divider {
             margin: 2px 0px 5px 0px;
         }
-        &__dropdown-menu-add-btn {
+        &__dmenu-addbtn {
             @include flex(center, space-between);
             width: calc(100% - 22px);
             padding: 2px 0px 0px 10px;

@@ -156,11 +156,11 @@
         z-index: 1;
         &--top {
             top: 20px;
-            background: linear-gradient(180deg, var(--hoverColor) 15%, transparent);
+            background: linear-gradient(180deg, var(--lightColor) 15%, transparent);
             height: 60px;
         }
         &--bottom {
-            background: linear-gradient(0deg, var(--hoverColor) 20%, transparent);
+            background: linear-gradient(0deg, var(--lightColor) 20%, transparent);
             height: 30px;
             bottom: 4px;
         }

@@ -16,14 +16,17 @@
 	import DropdownList from "../../components/DropdownList.svelte"
 
     const SETTINGS_BTN_CUT_OFF_Y = 30
+    const MAX_DIST_BOTTOM_IMG_CONTAINER = 70
 
-    $: isLightTheme = !$themeState.isDarkTheme
+    $: isLight = !$themeState.isDarkTheme
     $: ambient = $globalContext.ambience
+    $: fixed = $globalContext.rightBarFixed
 
     let headerRef: HTMLElement
+    let headerImgContainerHt = 0
 
     /* tasks + overview */
-    let tasks = new TasksViewManager(TEST_TASKS)
+    // let tasks = new TasksViewManager(TEST_TASKS)
     let calendar = new ProductivityCalendar(null)
     
     /* time */
@@ -33,7 +36,7 @@
     let doUse12HourFormat = prefer12HourFormat()
     
     /* header image */
-    let opacity = 0.5
+    let opacity = 0
     let settingsOpen = false
     let bgImgSrc = "https://i.pinimg.com/originals/7d/04/0e/7d040e94931427709008aaeda14db9c8.gif"
     // let bgImgSrc = ""
@@ -47,10 +50,13 @@
     let bgImgRef: HTMLImageElement
     let DRAG_OFFSET_THRESHOLD = 5
 
-    $: if (bgImgSrc && bgImgRef && headerRef) {
+    $: {
+        bgImgSrc = $themeState.isDarkTheme ? "https://i.pinimg.com/originals/7d/04/0e/7d040e94931427709008aaeda14db9c8.gif" : ""
+    }
+    $: if (bgImgSrc && bgImgRef && $themeState != undefined) {
         requestAnimationFrame(() => {
             const MAX = getMaxHeaderImgOffset()
-            topOffset = -(MAX / 2)
+            topOffset = 0
         })
     }
 
@@ -77,7 +83,7 @@
             isDragging = true
         }
         if (isDragging) {
-            topOffset = clamp(-(MAX + 30), (ogTopOffset + -offset), 0)
+            topOffset = clamp(-(MAX), (ogTopOffset + -offset), 0)
         }
     }
     function onPointerUp(pe: PointerEvent) {
@@ -91,7 +97,7 @@
         target.removeEventListener("pointerup", onPointerUp)
     }
     function getMaxHeaderImgOffset() {
-        return (bgImgRef.clientHeight - headerRef.clientHeight) - 20
+        return (bgImgRef.clientHeight - MAX_DIST_BOTTOM_IMG_CONTAINER)
     }
 
     /* General UI Handlers */
@@ -147,10 +153,11 @@
 </script>
 <div 
     class="bar"
-    class:bar--dark-theme={!isLightTheme}
-    class:bar--light-theme={isLightTheme}
+    class:bar--dark-theme={!isLight}
+    class:bar--light-theme={isLight}
     class:bar--empty={ambient?.styling === "clear" || ambient?.styling === "blur" || !bgImgSrc || !showHeaderImg}
     class:bar--ambient={ambient?.styling === "clear" || ambient?.styling === "blur"}
+    style:--mc-ht-offset={`${fixed ? "55px" : "0px"}`}
     on:pointermove={onPointerMove}
     on:mousedown={() => setShortcutsFocus(ShortcutSectionInFocus.TASK_BAR)}
     use:clickOutside on:click_outside={() => setShortcutsFocus(ShortcutSectionInFocus.MAIN)}
@@ -162,7 +169,10 @@
         on:pointerdown={onPointerDown}
     > 
         <div class="bar__header-img-wrapper">
-            <div class="bar__header-img-container">
+            <div 
+                class="bar__header-img-container"
+                bind:clientHeight={headerImgContainerHt}
+            >
                 <img
                     bind:this={bgImgRef}
                     class="bar__header-img"
@@ -182,8 +192,8 @@
         <div class="bar__header-time-date">
             <!-- Header Date -->
             <div class="bar__header-date">
-                {#if !bgImgSrc || !showHeaderImg}
-                    {`${formatDatetoStr(new Date(), { weekday: "long" })}`}
+                {#if !bgImgSrc || !showHeaderImg || isLight}
+                    {`${formatDatetoStr(new Date(), { weekday: "short" })}`}
                     <button 
                         class="bar__header-date-time"
                         on:click={toggleTimeFormatting}
@@ -204,21 +214,23 @@
                 {/if}
             </div>
             <!-- Time -->
-            <button 
-                class="bar__header-time-container"
-                on:click={toggleTimeFormatting}
-            >
-                <div class="bar__header-time">
-                    <h1>{currentTimeStr}</h1>
-                </div>
-                <div class="bar__header-day-icon">
-                    {#if isDayTime}
-                        <SvgIcon icon={Icon.ColorSun} />
-                    {:else}
-                        <SvgIcon icon={Icon.ColorMoon} />
-                    {/if}
-                </div>
-            </button>
+             {#if !isLight}
+                <button 
+                    class="bar__header-time-container"
+                    on:click={toggleTimeFormatting}
+                >
+                    <div class="bar__header-time">
+                        <h1>{currentTimeStr}</h1>
+                    </div>
+                    <div class="bar__header-day-icon">
+                        {#if isDayTime}
+                            <SvgIcon icon={Icon.ColorSun} />
+                        {:else}
+                            <SvgIcon icon={Icon.ColorMoon} />
+                        {/if}
+                    </div>
+                </button>
+            {/if}
         </div>
         <div class="bar__header-blur-layer">
             <div 
@@ -229,13 +241,13 @@
         </div>
     </div>
     <div class="bar__main-content">
-        <Overview {calendar} {tasks} />
+        <Overview {calendar} />
     </div>
 
     <!-- Header Img Stuff -->
     <button 
         class="bar__settings-btn" 
-        id="right-bar--dropdown-btn"
+        id="right-bar--dbtn"
         class:bar__settings-btn--show={showSettingsBtn}
         on:click={() => {
             settingsOpen = !settingsOpen
@@ -306,37 +318,42 @@
             display: none !important;
         }
         &--light-theme &__header {
-            background-image: none !important;
-            background-color: transparent ;
             margin-bottom: 14px;
             height: auto;
 
-            &-img {
-                display: block;
-            }
-            &-time-date {
-                display: block;   
-                position: relative;
-            }
             &-time h1 {
                 font-weight: 500;
                 margin-bottom: 2px;
             }
-            &-date {
-                font-weight: 500;
-                margin-bottom: 1.5px;
-                @include txt-color(0.4);
-            }
             &-text {
                 font-weight: 500;
                 @include txt-color(0.5);
+            }
+            &-time-date {
+                top: 68px;
+                display: block;   
+                position: relative;
+            }
+            &-date {
+                font-weight: 500;
+                margin-bottom: 1.5px;
+                @include text-style(0.5, 600);
+            }
+            &-date-time {
+                top: 68px;
+                @include text-style(0.6, 600);
+            }
+            &-img-wrapper {
+                height: 60px;
+                overflow: hidden;
             }
             &-blur-layer {
                 display: none;
             }
         }
         &--light-theme &__main-content {
-            height: calc(100% - 130.5px);
+            margin-top: 90px;
+            height: calc(100% - 80px);
         }
 
         /* no bg image */
@@ -350,8 +367,11 @@
         &--empty &__header-day-icon--top {
             display: none;
         }
+        &--empty &__header-time-date {
+            top: 9px;
+        }
         &--empty &__header {
-            height: 30px;
+            height: 10px;
         }
         &--empty &__header-date {
             @include flex(center);
@@ -360,8 +380,8 @@
             opacity: 0.8;
         }
         &--empty &__main-content {
-            margin-top: 34px;
-            height: calc(100% - 45px);
+            margin-top: 32px;
+            height: calc(100% - 45px - var(--mc-ht-offset));
         }
         
         /* Top Header */
@@ -372,23 +392,22 @@
             @include abs-top-left;
 
             &-img-wrapper {
-                height: 100%;
                 width: 100%;
-                background-size: cover; 
-                background-position: center; 
-                background-repeat: no-repeat;
                 position: absolute;
+                height: 80px;
+                overflow: hidden;
                 @include abs-top-left;
             }
             &-img-container {
                 height: 100%;
                 width: 100%;
                 position: relative;
-                overflow: hidden;
             }
             &-img {
                 width: 100%;
                 position: absolute;
+                object-fit: cover;
+                min-height: 100px;
             }
             &-overlay {
                 height: 100%;
@@ -396,8 +415,9 @@
                 @include abs-top-left;
             }
             &-time-date {
-                @include abs-top-left(11px, 14px);
+                @include abs-top-left(9px, 14px);
                 z-index: 1;
+                width: fit-content;
             }
             &-date {
                 @include text-style(0.5, 400, 1.1rem, "DM Sans");
@@ -405,7 +425,7 @@
             }
             &-date-time {
                 @include text-style(0.6, 400, 1.1rem, "DM Sans");
-                margin-left: 10px;
+                margin-left: 4px;
                 opacity: 0.4;
             }
             &-time h1 {
@@ -443,7 +463,7 @@
             @include abs-top-left(0px, -2px);
             z-index: 0;
             width: calc(100% + 2px);
-            height: 130px;
+            height: 160px;
         }
         &__header-blur-layer .blur-bg {
             position: relative;
@@ -456,17 +476,17 @@
                     transparent 0%, 
                     rgba(0, 0, 0, 0.45) 10px, 
                     rgba(0, 0, 0, 0.64) 35px, 
-                    rgba(0, 0, 0, 1) 70px, 
-                    rgba(0, 0, 0, 1) 95%, 
+                    rgba(0, 0, 0, 1) 80%, 
+                    rgba(0, 0, 0, 1) 60%, 
                     transparent 100%
             );
             mask-image: linear-gradient(
                     180deg, 
                     transparent 0%, 
-                    rgba(0, 0, 0, 0.45) 10px, 
-                    rgba(0, 0, 0, 0.64) 35px, 
-                    rgba(0, 0, 0, 1) 70px, 
-                    rgba(0, 0, 0, 1) 95%, 
+                    rgba(0, 0, 0, 0.45) 0px, 
+                    rgba(0, 0, 0, 0.64) 30px, 
+                    rgba(0, 0, 0, 1) 40%, 
+                    rgba(0, 0, 0, 1) 60%, 
                     transparent 100%
             );
         }
@@ -488,8 +508,8 @@
 
         /* Calendar */
         &__main-content {
-            margin-top: 60px;
-            height: calc(100% - 45px);
+            margin-top: 57px;
+            height: calc(100% - 45px - var(--mc-ht-offset));
         }
     }
 </style>

@@ -263,18 +263,18 @@
                     </div>
                     <div class="edit-goal__tag-dropdown-container">
                         <button 
-                            class={`edit-goal__tag-btn dropdown-btn ${isTagDropdownListOpen ? "dropdown-btn--active" : ""}`}
+                            class={`edit-goal__tag-btn dbtn ${isTagDropdownListOpen ? "dbtn--active" : ""}`}
                             on:click={(e) => onDropdownClicked(e, Dropdown.Tag)}
                         >
-                            <div class="dropdown-btn__icon">
+                            <div class="dbtn__icon">
                                 <div class="edit-goal__tag-btn-symbol">
                                     {$editGoalManger.tag?.symbol}
                                 </div>
                             </div>
-                            <span class="edit-goal__tag-btn-name dropdown-btn__title">
+                            <span class="edit-goal__tag-btn-name dbtn__title">
                                 {$editGoalManger.tag?.name ?? "Empty"}
                             </span>
-                            <div class={`dropdown-btn__icon ${$editGoalManger.tag ? "dropdown-btn__icon--arrow" : ""}`}>
+                            <div class={`dbtn__icon ${$editGoalManger.tag ? "dbtn__icon--arrow" : ""}`}>
                                 {#if $editGoalManger.tag}
                                     <SVGIcon icon={Icon.Dropdown}/>
                                 {:else}
@@ -284,21 +284,21 @@
                         </button>
                         {#if isTagDropdownListOpen}
                             <ul 
-                                class="edit-goal__status-dropdown dropdown-menu"
+                                class="edit-goal__status-dropdown dmenu"
                                 use:clickOutside on:click_outside={() => isTagDropdownListOpen = false }
                             >
                                 {#each tags as tag}
-                                    <li class={`dropdown-menu__option ${$editGoalManger?.tag?.name === tag.name ? "dropdown-menu__option--selected" : ""}`}>
+                                    <li class={`dmenu__option ${$editGoalManger?.tag?.name === tag.name ? "dmenu__option--selected" : ""}`}>
                                         <!-- <button on:click={() => tagListDropdownOptClicked(tag)}>
-                                            <div class="dropdown-menu__option-icon">
+                                            <div class="dmenu__option-icon">
                                                 <div class="edit-goal__status-dropdown-tag-symbol">
                                                     {tag.symbol}
                                                 </div>
                                             </div>
-                                            <span class="dropdown-menu__option-text">
+                                            <span class="dmenu__option-text">
                                                 {tag.name}
                                             </span>
-                                            <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
+                                            <div class="dmenu__option-icon dmenu__option-icon--check">
                                                 <i class="fa-solid fa-check"></i>
                                             </div>
                                         </button> -->
@@ -315,28 +315,28 @@
                     </div>
                     <div class="edit-goal__status-dropdown-container">
                         <button 
-                            class={`edit-goal__status-btn dropdown-btn ${isTagSectionListOpen ? "dropdown-btn--active" : ""}`}
+                            class={`edit-goal__status-btn dbtn ${isTagSectionListOpen ? "dbtn--active" : ""}`}
                             on:click={(e) => onDropdownClicked(e, Dropdown.TagSection)}
                         >
-                            <span class="edit-goal__status-btn-name dropdown-btn__title">
+                            <span class="edit-goal__status-btn-name dbtn__title">
                                 {$goalsManager?.goalSections[$editGoalManger.sectionId].name}
                             </span>
-                            <div class="dropdown-btn__icon dropdown-btn__icon--arrow">
+                            <div class="dbtn__icon dbtn__icon--arrow">
                                 <SVGIcon icon={Icon.Dropdown}/>
                             </div>
                         </button>
                         {#if isTagSectionListOpen && $goalsManager}
                             <ul 
-                                class="edit-goal__status-dropdown dropdown-menu" 
+                                class="edit-goal__status-dropdown dmenu" 
                                 use:clickOutside on:click_outside={() => isTagSectionListOpen = false}
                             >
                                 {#each $goalsManager.goalSections as section}
-                                    <li class="dropdown-menu__option">
+                                    <li class="dmenu__option">
                                         <button on:click={() => tagSectionOptionClicked(section.orderIdx)}>
-                                            <span class="dropdown-menu__option-text">
+                                            <span class="dmenu__option-text">
                                                 {section.name}
                                             </span>
-                                            <div class="dropdown-menu__option-icon dropdown-menu__option-icon--check">
+                                            <div class="dmenu__option-icon dmenu__option-icon--check">
                                                 <i class="fa-solid fa-check"></i>
                                             </div>
                                         </button>
@@ -373,7 +373,7 @@
         display: flex;
         position: relative;
 
-        .dropdown-btn {
+        .dbtn {
             background-color: transparent;
             padding: 5px 8px;
             border-radius: 6px;
@@ -394,16 +394,16 @@
             }
         }
 
-        &--dark .dropdown-menu {
-            @include dropdown-menu-dark;
+        &--dark .dmenu {
+            @include dmenu--light;
         }
-        &--dark .dropdown-btn { 
-            @include dropdown-btn-dark;
+        &--dark .dbtn { 
+            @include dmenu--light;;
         }
         &--light .input-box { 
             @include input-box--light;
         }
-        &--light .dropdown-btn {
+        &--light .dbtn {
 
         }
         &--light &__title {
@@ -411,7 +411,7 @@
                 @include text-style(1, 600);
             }
         }
-        &--light .dropdown-btn {
+        &--light .dbtn {
             &__title {
                 @include text-style(0.91, 500);
             }
@@ -465,7 +465,7 @@
                 background-color: rgba(var(--textColor1), 0.07);
             }
         }
-        &--light &__due-date .dropdown-btn__title {
+        &--light &__due-date .dbtn__title {
             @include text-style(0.8, 500);
         }
         &--light &__due-date-close-btn {
@@ -645,7 +645,7 @@
                 margin: 10px 0px 14px 0px;
             }
         }
-        &__tag .dropdown-btn, &__status .dropdown-btn {
+        &__tag .dbtn, &__status .dbtn {
             margin-left: -5px;
             
             &:hover &__icon:last-child {
@@ -661,7 +661,7 @@
                 }
             }
         }
-        &__tag--empty .dropdown-btn {
+        &__tag--empty .dbtn {
             &__title {
                 @include text-style(0.2, 300, 1.2rem);
             }
@@ -677,7 +677,7 @@
             margin-right: 2px;
             font-size: 1.2rem;
         }
-        &__status .dropdown-btn {
+        &__status .dbtn {
 
         }
         &__status-btn {
@@ -718,7 +718,7 @@
         &__creation-date {
 
         }
-        &__due-date .dropdown-btn {
+        &__due-date .dbtn {
             margin-left: -9px;
             &__icon {
                 margin-left: 2px;
@@ -727,7 +727,7 @@
         &__due-date {
             position: relative;
 
-            &--no-date .dropdown-btn {
+            &--no-date .dbtn {
                 margin-left: -8px;
                 opacity: 0.6;
                 
@@ -735,15 +735,15 @@
                     opacity: 0.85;
                 }
             }
-            &--no-date .dropdown-btn__title {
+            &--no-date .dbtn__title {
                 font-family: "Manrope";
                 @include text-style(0.2, 300, 1.3rem);
             }
-            &--no-date .dropdown-btn__icon path {
+            &--no-date .dbtn__icon path {
                 stroke: rgba(var(--textColor1), 0.15);
             }
         }
-        &__due-date .dropdown-btn__title {
+        &__due-date .dbtn__title {
             @include text-style(0.4, 300, 1.1rem);
             font-family: "DM Mono";
         }

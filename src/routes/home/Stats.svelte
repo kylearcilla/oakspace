@@ -697,27 +697,27 @@
                             </button>
                         </div>
                         <div class="prod-overview__time-frame-dropdown-container dropdown-container">
-                            <button class="prod-overview__time-frame-dropdown-btn dropdown-btn trans-btn" on:click={() => { isTimeFrameListOpen = !isTimeFrameListOpen }}>
-                                <div class="dropdown-btn__title">
+                            <button class="prod-overview__time-frame-dbtn dbtn trans-btn" on:click={() => { isTimeFrameListOpen = !isTimeFrameListOpen }}>
+                                <div class="dbtn__title">
                                     {timeFrameOptions[timeFrame]}
                                 </div>
-                                <div class="dropdown-btn__arrows">
-                                    <div class="dropdown-btn__arrows-triangle-up">
+                                <div class="dbtn__arrows">
+                                    <div class="dbtn__arrows-triangle-up">
                                         <i class="fa-solid fa-chevron-up"></i>
                                     </div>
-                                    <div class="dropdown-btn__arrows-triangle-down">
+                                    <div class="dbtn__arrows-triangle-down">
                                         <i class="fa-solid fa-chevron-down"></i>
                                     </div>
                                 </div>
                             </button>
                             {#if isTimeFrameListOpen}
-                                <ul use:clickOutside on:click_outside={() => isTimeFrameListOpen = false} class="dropdown-menu">
+                                <ul use:clickOutside on:click_outside={() => isTimeFrameListOpen = false} class="dmenu">
                                     {#each timeFrameOptions as tf, idx} 
-                                        <li class={`dropdown-menu__option ${idx === timeFrame ? "dropdown-menu__option--selected" : ""}`}>
+                                        <li class={`dmenu__option ${idx === timeFrame ? "dmenu__option--selected" : ""}`}>
                                             <button class="dropdown-element" on:click={() => handleTimeFrameSwitcherClicked(idx)}>
                                                 <p>{tf}</p>
                                                 {#if idx === timeFrame}
-                                                    <div class="dropdown-menu__option-icon dropdown-menu__option-icon--right">
+                                                    <div class="dmenu__option-icon dmenu__option-icon--right">
                                                         <i class="fa-solid fa-check"></i>
                                                     </div>
                                                 {/if }
@@ -879,30 +879,30 @@
                 <div class="tag-overview">
                     <div class="tag-overview__header">
                         <h4>Tag Overview</h4>
-                        <div class="tag-overview__dropdown-btn-container dropdown-container">
-                            <button class="tag-overview__dropdown-btn dropdown-btn dropdown-btn--small trans-btn" on:click={() => { isTagListOpen = !isTagListOpen }}>
-                                <div class="dropdown-btn__icon" style={`background-color: ${selectedTag.color}`}></div>
-                                <div class="dropdown-btn__title">
+                        <div class="tag-overview__dbtn-container dropdown-container">
+                            <button class="tag-overview__dbtn dbtn dbtn--small trans-btn" on:click={() => { isTagListOpen = !isTagListOpen }}>
+                                <div class="dbtn__icon" style={`background-color: ${selectedTag.color}`}></div>
+                                <div class="dbtn__title">
                                     {selectedTag.name}
                                 </div>
-                                <div class="dropdown-btn__arrows">
-                                    <div class="dropdown-btn__arrows-triangle-up">
+                                <div class="dbtn__arrows">
+                                    <div class="dbtn__arrows-triangle-up">
                                         <i class="fa-solid fa-chevron-up"></i>
                                     </div>
-                                    <div class="dropdown-btn__arrows-triangle-down">
+                                    <div class="dbtn__arrows-triangle-down">
                                         <i class="fa-solid fa-chevron-down"></i>
                                     </div>
                                 </div>
                             </button>
                             {#if isTagListOpen}
-                                <ul use:clickOutside on:click_outside={() => isTagListOpen = false} class="dropdown-menu">
+                                <ul use:clickOutside on:click_outside={() => isTagListOpen = false} class="dmenu">
                                     {#each tags as tag, idx} 
-                                        <li class={`dropdown-menu__option ${tag.name === selectedTag.name ? "dropdown-menu__option--selected" : ""}`}>
+                                        <li class={`dmenu__option ${tag.name === selectedTag.name ? "dmenu__option--selected" : ""}`}>
                                             <button class="dropdown-element" on:click={() => handleNewTagClicked(idx)}>
-                                                <div class="dropdown-menu__option-icon" style={`background-color: ${tag.color}`}></div>
+                                                <div class="dmenu__option-icon" style={`background-color: ${tag.color}`}></div>
                                                 <p>{tag.name}</p>
                                                 {#if tag.name === selectedTag.name}
-                                                    <div class="dropdown-menu__option-icon dropdown-menu__option-icon--right">
+                                                    <div class="dmenu__option-icon dmenu__option-icon--right">
                                                         <i class="fa-solid fa-check"></i>
                                                     </div>
                                                 {/if}
@@ -962,20 +962,20 @@
         .dropdown-container {
             position: relative;
         }
-        .dropdown-btn {
+        .dbtn {
             background-color: var(--modalBgAccentColor);
         }
-        .dropdown-menu {
+        .dmenu {
             top: 35px;
             width: 100%;
         }
 
         /* Dark Theme */
-        &--dark .dropdown-btn {
-            @include dropdown-btn-dark;
+        &--dark .dbtn {
+            @include dmenu--light;;
         }
-        &--dark .dropdown-menu {
-            @include dropdown-menu-dark;
+        &--dark .dmenu {
+            @include dmenu--light;
         }
     }
     /**** Left Side ****/
@@ -1245,7 +1245,7 @@
         }
 
         &__bento-box {
-            background-color: var(--hoverColor);
+            background-color: var(--lightColor);
             border-radius: 14px;
             padding: 11px 14px;
             h5 {
@@ -1265,12 +1265,12 @@
             margin-bottom: 12px;
         }
 
-        .dropdown-btn {
+        .dbtn {
             &__icon {
                 @include circle(5px);
             }
         }
-        .dropdown-menu {
+        .dmenu {
             &__option-icon {
                 @include circle(5px);
             }

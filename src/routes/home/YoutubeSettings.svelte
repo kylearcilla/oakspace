@@ -199,7 +199,7 @@
             <div class="yt-settings__user-profile-container">
                 {#if hasSignedIn && userData}
                     <button 
-                        id="yt-settings--dropdown-btn"
+                        id="yt-settings--dbtn"
                         class="yt-settings__user-capsule" 
                         on:click={profileBtnClickedHandler}
                     >
@@ -209,14 +209,14 @@
                 {/if}
                 <!-- Dropdown -->
                 <BounceFade
-                    id="yt-settings--dropdown-menu"
+                    id="yt-settings--dmenu"
                     isHidden={!isUserProfileDropdownOpen || !hasSignedIn || !userData}
                     zIndex={4}
                     onClickOutside={() => {
                         isUserProfileDropdownOpen = false
                     }}
                 >
-                    <div class="yt-settings__user-profile dropdown-menu" >
+                    <div class="yt-settings__user-profile dmenu" >
                         <div class="yt-settings__user-profile-img-container">
                             <img src={userData?.profileImgSrc} alt="yt-profile" />
                         </div>
@@ -287,7 +287,7 @@
 
                                     <!-- Settings -->
                                     <button
-                                        id="chosen-playlist--dropdown-btn"
+                                        id="chosen-playlist--dbtn"
                                         class="chosen-playlist__settings-btn"
                                         class:hidden={$ytPlayerStore?.isoVideo}
                                         on:click={() => settingsOpen = !settingsOpen}
@@ -371,7 +371,7 @@
                             {#if !hasSignedIn}
                                 <li class="recs__groups-tab recs__groups-tab--login">
                                     <button 
-                                        id="yt-settings--dropdown-btn"
+                                        id="yt-settings--dbtn"
                                         class="yt-settings__user-capsule tab-btn" 
                                         on:click={profileBtnClickedHandler}
                                     >
@@ -519,8 +519,8 @@
         &--signed-in &__content-container {
             height: calc(100% - 35px);
         }
-        &--dark .dropdown-menu {
-            @include dropdown-menu-dark;
+        &--dark .dmenu {
+            @include dmenu--light;
         }
                 
         /* Light Theme Styling */
@@ -627,7 +627,7 @@
                 @include text-style(1, 600, 1.15rem);
             }
             &:hover {
-                background-color: var(--hoverColor2);
+                background-color: var(--lightColor2);
             }
         }
         &__user-profile {
@@ -771,7 +771,7 @@
             }
         }
         &__playlist-title {
-            margin-top: 15px;
+            margin: 15px 30px 0px 0px;
             max-height: 40px;
             max-width: 90%;
             overflow: hidden;
@@ -944,7 +944,7 @@
                 width: 80px;
             }
             &:hover, &--chosen {
-                background-color: var(--hoverColor);
+                background-color: var(--lightColor);
             }
             &:first-child {
                 margin-top: 3px;

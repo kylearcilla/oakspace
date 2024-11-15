@@ -188,11 +188,11 @@
             />
             <div class="session__dropdown-container">
                 <button
-                    class="session__dropdown-btn"
+                    class="session__dbtn"
                     class:ambient-blur={ambience?.styling === "blur"}
                     class:ambient-clear={ambience?.styling === "clear"}
                     on:click={() => dropdown = !dropdown}
-                    id="session--dropdown-btn"
+                    id="session--dbtn"
                 >
                     <SvgIcon 
                         icon={Icon.Settings} 
@@ -433,7 +433,7 @@
             position: relative;
             margin-left: 7px;
         }
-        &__dropdown-btn {
+        &__dbtn {
             width: 32px !important;
             @include circle(32px);
         }

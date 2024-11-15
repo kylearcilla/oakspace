@@ -885,8 +885,8 @@
                 opacity: 0.85;
             }
         }
-        &--dark .dropdown-menu {
-            @include dropdown-menu-dark;
+        &--dark .dmenu {
+            @include dmenu--light;
         }
         &--empty .routine {
             display: none;

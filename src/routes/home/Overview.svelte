@@ -1,6 +1,6 @@
+
 <script lang="ts">
-    import { onMount } from "svelte";
-	import { themeState, weekRoutine } from "$lib/store"
+    import { themeState, weekRoutine } from "$lib/store"
 
 	import { Icon } from "$lib/enums"
 	import { clickOutside } from "$lib/utils-general"
@@ -23,12 +23,10 @@
 
     type GoogleCalOptn = "refresh" | "disconnect" | "my calendars"
 
-    export let tasks: TasksViewManager
     export let calendar: ProductivityCalendar
 
     let focusDate  = new Date()
     let calendarHt = 0
-    let viewing: "day" | "tasks" = "day"
 
     /* day overview */
     let dayOptn: "routine" | "calendar" | null = "routine"
@@ -37,6 +35,7 @@
     let checkbox = false
     let richColors = false
     $: routine = $weekRoutine
+    $: isLight = !$themeState.isDarkTheme
 
     /* google calendar */
     let googleCal         = initGoogleCalSession()
@@ -52,16 +51,7 @@
     /* tasks */
     let tasksSettingsHandler: (option: string) => void
     let tasksSettings = false
-    let taskSettingsOptions = tasks.getTaskSettingsDropdown()
 
-    $: store = tasks.store
-    $: todoistLinked = $store.todoistLinked
-    $: onTodoist = $store.onTodoist
-    $: isLightTheme = !$themeState.isDarkTheme
-
-    $: if (todoistLinked || onTodoist) {
-        taskSettingsOptions = $store.getTaskSettingsDropdown()
-    }
     $: calendar?._store.subscribe((newCalendar: ProductivityCalendar) => {
         calendar = newCalendar
     }) 
@@ -77,24 +67,12 @@
         }
     })
 
-    function onDropdownBtnClicked() {
-        if (viewing === "day") {
-            settings = !settings
-        }
-        else {
-            tasksSettings = !tasksSettings
-        }
-    }
-
     /* google calendar*/
     function onDayUpdate(date: Date) {
         const tokenExpired = $googleCalState?.tokenExpired
 
-        if (["sessions", "goals"].includes(viewing) || !isGoogleCalLinked || !tokenExpired) {
+        if (!isGoogleCalLinked || !tokenExpired) {
             focusDate = date
-        }
-        if (viewing === "day" && isGoogleCalLinked) {
-            getNewEvents(date)
         }
     }
     async function getNewEvents(newDay: Date) {
@@ -149,14 +127,11 @@
             calendarsMenu = true
         }
     }
-    onMount(() => {
-
-    })
 </script>
 
 <div 
     class="overview" 
-    class:overview--light={isLightTheme}
+    class:overview--light={isLight}
     style:--OVERVIEW_SIDE_MARGINS={`${OVERVIEW_SIDE_MARGINS}px`}
     style:--DAY_VIEW_SIDE_MARGINS={`${DAY_VIEW_SIDE_MARGINS}px`}
 >
@@ -166,69 +141,42 @@
         bind:clientHeight={calendarHt}
     >
         <Calendar 
-            focusDate={viewing === "day" && isGoogleCalLinked ? googleCalDate : focusDate}
+            focusDate={isGoogleCalLinked ? googleCalDate : focusDate}
             isDisabled={$googleCalState?.isLoading}
             onDayUpdate={onDayUpdate}
             calendar={calendar} 
         />
     </div>
-    <!-- Day View Header -->
-    <div 
-        class="overview__day-view"
-        style:height={`calc(100% - ${calendarHt}px)`}
-    >
+        <!-- Day View Header -->
+        <div 
+            class="overview__day-view"
+            style:height={`calc(100% - ${calendarHt}px)`}
+        >
         <div class="overview__day-view-btns">
-            <button
-                on:click={() => {
-                    viewing = "day"
-                    tasksSettings = false
-                }}
-                class="overview__day-view-btn"
-                class:overview__day-view-btn--active={viewing === "day"}
-            >
-                Day
-            </button>
-            <button
-                on:click={() => {
-                    viewing = "tasks"
-                    tasksSettings = false
-                }}
-                class="overview__day-view-btn"
-                class:overview__day-view-btn--active={viewing === "tasks"}
-            >
-                Tasks
-            </button>
-
             <button 
                 class="overview__day-view-settings-btn" 
-                id="overview--dropdown-btn"
-                on:click={onDropdownBtnClicked}
+                id="overview--dbtn"
+                on:click={() => settings = !settings}
             >
                 <SvgIcon icon={Icon.Settings} options={{ opacity: 1, scale: 0.9 }} />
             </button>
         </div>
         <div class="overview__day-view-header">
             <span>
-                {formatDatetoStr(focusDate, { month: "short", day: "numeric" })}
+                {formatDatetoStr(focusDate, { month: "long", day: "numeric" })}
             </span>
-        </div>
+    </div>
 
         <!-- Content -->
-        {#if viewing === "day"}
-            <OverviewDayView
-                {dayOptn}
-                {richColors}
-                {checkbox}
-                day={focusDate}
-                googleCals={googleCalendars}
-                googleEvents={googleEvents}
-            />
-        {:else}
-            <Tasks
-                manager={tasks} 
-                bind:tasksSettingsHandler={tasksSettingsHandler}
-            />
-        {/if}
+
+        <OverviewDayView
+            {dayOptn}
+            {richColors}
+            {checkbox}
+            day={focusDate}
+            googleCals={googleCalendars}
+            googleEvents={googleEvents}
+        />
 
         <!-- User's Google Calendars -->
         <BounceFade 
@@ -238,7 +186,7 @@
         >
             <div 
                 class="google-cals"
-                id="overview--dropdown-menu"
+                id="overview--dmenu"
                 use:clickOutside on:click_outside={() => {
                     calendarsMenu = false
                 }} 
@@ -285,36 +233,36 @@
             }}
         >
             <div 
-                class="dropdown-menu dropdown-menu"
-                id="overview--dropdown-menu"
+                class="dmenu dmenu"
+                id="overview--dmenu"
                 use:clickOutside on:click_outside={() => {
                     settings = false
                 }} 
             >
                 {#if routine && isGoogleCalLinked}
                     <!-- Content -->
-                    <li class="dropdown-menu__section">
-                        <div class="dropdown-menu__section-name">
+                    <li class="dmenu__section">
+                        <div class="dmenu__section-name">
                             Content
                         </div>
                         <div 
-                            class="dropdown-menu__option"
-                            class:dropdown-menu__option--selected={dayOptn === "routine"}
+                            class="dmenu__option"
+                            class:dmenu__option--selected={dayOptn === "routine"}
                         >
                             <button 
-                                class="dropdown-menu__option-btn"
+                                class="dmenu__option-btn"
                                 on:click={() => {
                                     dayOptn = "routine"
                                     settings = false
                                 }}
                             >
-                                <span class="dropdown-menu__option-text">
+                                <span class="dmenu__option-text">
                                     Routine
                                 </span>
-                                <div class="dropdown-menu__option-right-icon-container">
+                                <div class="dmenu__option-right-icon-container">
                                     <div 
-                                        class="dropdown-menu__option-icon"
-                                        class:dropdown-menu__option-icon--check={true}
+                                        class="dmenu__option-icon"
+                                        class:dmenu__option-icon--check={true}
                                     >
                                         <i class="fa-solid fa-check"></i> 
                                     </div>
@@ -322,23 +270,23 @@
                             </button>
                         </div>
                         <div 
-                            class="dropdown-menu__option"
-                            class:dropdown-menu__option--selected={dayOptn === "calendar"}
+                            class="dmenu__option"
+                            class:dmenu__option--selected={dayOptn === "calendar"}
                         >
                             <button 
-                                class="dropdown-menu__option-btn"
+                                class="dmenu__option-btn"
                                 on:click={() => {
                                     dayOptn = "calendar"
                                     settings = false
                                 }}
                             >
-                                <span class="dropdown-menu__option-text">
+                                <span class="dmenu__option-text">
                                     Calendar
                                 </span>
-                                <div class="dropdown-menu__option-right-icon-container">
+                                <div class="dmenu__option-right-icon-container">
                                     <div 
-                                        class="dropdown-menu__option-icon"
-                                        class:dropdown-menu__option-icon--check={true}
+                                        class="dmenu__option-icon"
+                                        class:dmenu__option-icon--check={true}
                                     >
                                         <i class="fa-solid fa-check"></i> 
                                     </div>
@@ -346,20 +294,20 @@
                             </button>
                         </div>
                     </li>
-                    <li class="dropdown-menu__section-divider"></li>
+                    <li class="dmenu__section-divider"></li>
                 {/if}
                 
                 <!-- Routine -->
-                <li class="dropdown-menu__section">
+                <li class="dmenu__section">
                     <div 
                         title="Current set routine"
-                        class="dropdown-menu__section-name"
+                        class="dmenu__section-name"
                     >
                         {routine?.name ?? "Routine"}
                     </div>
                     {#if routine}
-                        <div class="dropdown-menu__toggle-optn">
-                            <span class="dropdown-menu__option-text">
+                        <div class="dmenu__toggle-optn">
+                            <span class="dmenu__option-text">
                                 Checkbox
                             </span>
                             <ToggleBtn 
@@ -367,8 +315,8 @@
                                 onToggle={() => checkbox = !checkbox}
                             />
                         </div>
-                        <div class="dropdown-menu__toggle-optn">
-                            <span class="dropdown-menu__option-text">
+                        <div class="dmenu__toggle-optn">
+                            <span class="dmenu__option-text">
                                 Rich Colors
                             </span>
                             <ToggleBtn 
@@ -377,70 +325,70 @@
                             />
                         </div>
                     {:else}
-                        <div class="dropdown-menu__toggle-optn">
-                            <span class="dropdown-menu__option-text">
+                        <div class="dmenu__toggle-optn">
+                            <span class="dmenu__option-text">
                                 No Set Routine
                             </span>
                         </div>
                     {/if}
                 </li>
-                <li class="dropdown-menu__section-divider"></li>
+                <li class="dmenu__section-divider"></li>
 
                 <!-- Routine -->
-                <li class="dropdown-menu__section">
-                    <div class="dropdown-menu__section-name">
+                <li class="dmenu__section">
+                    <div class="dmenu__section-name">
                         Google Calendar
                     </div>
                     {#if isGoogleCalLinked}
-                        <div class="dropdown-menu__option">
+                        <div class="dmenu__option">
                             <button 
                                 on:click={() => onCalSettingsHandler("my calendars")}
-                                class="dropdown-menu__option-btn"
+                                class="dmenu__option-btn"
                             >
-                                <span class="dropdown-menu__option-text">
+                                <span class="dmenu__option-text">
                                     My Calendars
                                 </span>
                             </button>
                         </div>
-                        <div class="dropdown-menu__option">
+                        <div class="dmenu__option">
                             <button 
                                 on:click={() => onCalSettingsHandler("refresh")}
-                                class="dropdown-menu__option-btn"
+                                class="dmenu__option-btn"
                             >
-                                <span class="dropdown-menu__option-text">
+                                <span class="dmenu__option-text">
                                     {$googleCalState?.tokenExpired ? "Refresh Token" : "Refresh"}
                                 </span>
                             </button>
                         </div>
-                        <div class="dropdown-menu__option">
+                        <div class="dmenu__option">
                             <button 
                                 on:click={() => onCalSettingsHandler("disconnect")}
-                                class="dropdown-menu__option-btn"
+                                class="dmenu__option-btn"
                             >
-                                <span class="dropdown-menu__option-text">
+                                <span class="dmenu__option-text">
                                     Disconnect
                                 </span>
                             </button>
                         </div>
                     {:else}
-                        <div class="dropdown-menu__option">
+                        <div class="dmenu__option">
                             <button 
                                 on:click={() => connectGoogleCal()}
-                                class="dropdown-menu__option-btn"
+                                class="dmenu__option-btn"
                             >
-                                <span class="dropdown-menu__option-text">
+                                <span class="dmenu__option-text">
                                     Connect
                                 </span>
                             </button>
                         </div>
                     {/if}
                 </li>
-                <li class="dropdown-menu__section-divider"></li>
+                <li class="dmenu__section-divider"></li>
             </div>
         </BounceFade>
 
         <!-- Tasks Settings -->
-        <DropdownList 
+        <!-- <DropdownList 
             id={"overview"}
             isHidden={!tasksSettings} 
             options={{
@@ -459,7 +407,7 @@
                     tasksSettings = false
                 }
             }}
-        />
+        /> -->
     </div>
 </div>
 
@@ -474,11 +422,15 @@
         margin-top: -5px;
         height: 100%;
 
-        &--light &__day-view-header {
-            margin-bottom: 5px;
+        &--light &__day-view-header span {
+            @include text-style(0.7, 600);
+        }
+        &--light &__day-view-settings-btn {
+            background-color: rgba(var(--textColor1), 0.1);
+            opacity: 0.4;
 
-            span {
-                @include text-style(0.7, 500);
+            &:hover {
+                opacity: 0.9;
             }
         }
         &--light &__hour-block {
@@ -509,11 +461,14 @@
                 @include text-style(0.4, 500);
             }
         }
+        &--light &__day-view-btns button {
+            font-weight: 500;
+        }
 
         &__calendar-container {
-            margin: 0px 0px 7px 0px;
+            margin: 0px 0px 0px 0px;
             padding: 0px var(--OVERVIEW_SIDE_MARGINS);
-            height: 225px;
+            height: 223px;
         }
         &__day-view {
             width: 100%;
@@ -525,23 +480,18 @@
             position: relative;
             height: 18px;
             padding: 0px var(--DAY_VIEW_SIDE_MARGINS);
-            display: none;
+            margin: 0px 0px 6px 1px;
 
             span {
-                @include text-style(0.3, 400, 1.185rem, "DM Mono");
+                @include text-style(0.35, 400, 1.2rem, "DM Mono");
             }
         }
-        &__day-view-btns {
-            position: relative;
-            @include flex(center);
-            padding: 0px var(--DAY_VIEW_SIDE_MARGINS);
-            margin-bottom: 6px;
-        }
         &__day-view-settings-btn {
-            @include circle(20px);
             background-color: rgba(var(--textColor1), 0.05);
             opacity: 0.3;
+            @include circle(20px);
             @include abs-top-right(-3px, 10px);
+            z-index: 1;
 
             &:hover {
                 opacity: 0.5;
@@ -549,9 +499,9 @@
         }
         &__day-view-btn {
             border-radius: 12px;
-            margin-right: 15px;
+            margin-right: 9px;
             opacity: 0.15;
-            @include text-style(1, 400, 1.145rem, "DM Mono");
+            @include text-style(1, 400, 1.2rem, "DM Mono");
 
             &:hover {
                 opacity: 0.4;
@@ -586,9 +536,8 @@
         }
     }
 
-    .dropdown-menu {
+    .dmenu {
         width: 150px;
-        border: 1px solid rgba(white, 0.02);
 
         span {
             @include text-style(0.78, 500, 1.2rem);

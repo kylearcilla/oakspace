@@ -15,8 +15,8 @@ $todo-padding-left: 8px;
         @include input-box--light;
     }
 
-    &--dark .dropdown-menu {
-        @include dropdown-menu-dark;
+    &--dark .dmenu {
+        @include dmenu--light;
     }
     &--dark &__header-session-name {
         font-weight: 400;
@@ -70,7 +70,7 @@ $todo-padding-left: 8px;
         }
     }
 
-    .dropdown-menu {
+    .dmenu {
         width: 150px;
     }
 
@@ -267,7 +267,7 @@ $todo-padding-left: 8px;
             opacity: 0.6;
         }
     }
-    &__tasks-add-btn {
+    &__tasks-addbtn {
         &:disabled {
             opacity: 0.5;
         }

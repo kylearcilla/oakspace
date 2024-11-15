@@ -77,10 +77,10 @@ export const timeExpectEditModal = async (options: {
     await expectEditModal(true, page)
 
     if (start) {
-        await expect(page.locator('#start--dropdown-btn')).toContainText(start)
+        await expect(page.locator('#start--dbtn')).toContainText(start)
     }
     if (end) {
-        await expect(page.locator('#end--dropdown-btn')).toContainText(end)
+        await expect(page.locator('#end--dbtn')).toContainText(end)
     }
 
     if (close) {
@@ -97,7 +97,7 @@ export async function dayBreakdownSettingsOptn(options: {
     const { page, day, option } = options
 
     await page.getByRole('button', { name: day }).click()
-    await page.locator('#day-breakdown-settings--dropdown-btn').click()
+    await page.locator('#day-breakdown-settings--dbtn').click()
 
     await page.getByRole('button', { name: option }).click()
     let confirm 
@@ -122,7 +122,7 @@ export async function makeRoutine(options: {
     const { page, title, description, forWeek = true, doSave = true, doCancel = false } = options
 
     if (forWeek) {
-        await page.locator('.routine__wk-routines-add-btn').dispatchEvent("click")
+        await page.locator('.routine__wk-routines-addbtn').dispatchEvent("click")
     }
     else {
         await page.locator('.routines__add-new-routine').dispatchEvent("click")
@@ -175,10 +175,10 @@ export async function expectRoutinePage(options: {
         }
     }
     if (expectEmptyBreakdown) {
-        await page.locator("#breakdown-option--dropdown-btn").click()
+        await page.locator("#breakdown-option--dbtn").click()
 
         // check cores empty
-        await page.locator('.dropdown-menu__option >> text=Cores').click()
+        await page.locator('.dmenu__option >> text=Cores').click()
         await page.getByRole('button', { name: 'Sum' }).click()
         await assertCoreBreakdownEmpty(page)
 
@@ -186,8 +186,8 @@ export async function expectRoutinePage(options: {
         await assertCoreBreakdownEmpty(page)
         
         // check tags empty
-        await page.locator("#breakdown-option--dropdown-btn").click()
-        await page.locator('.dropdown-menu__option >> text=Tags').click()
+        await page.locator("#breakdown-option--dbtn").click()
+        await page.locator('.dmenu__option >> text=Tags').click()
 
         await page.getByRole('button', { name: 'Sum' }).click()
         await expect(page.getByText('No Tags')).toBeVisible()
@@ -777,7 +777,7 @@ export async function expectDayCoreBreakDown(options: {
     const { dayCoreData, day, page } = options
     await page.getByRole('button', { name: day }).click()
         
-    const container = page.locator('#day-breakdown--dropdown-menu')
+    const container = page.locator('#day-breakdown--dmenu')
     await expectCoreBreakdown({
         container, expectData: dayCoreData
     })
@@ -879,7 +879,7 @@ export async function expectDayTagBreakDown(options: {
     const { dayTagData, day, page } = options
     await page.getByRole('button', { name: day }).click()
         
-    const container = page.locator('#day-breakdown--dropdown-menu').first()
+    const container = page.locator('#day-breakdown--dmenu').first()
 
     await expectTagBreakdown({
         container, expectData: dayTagData
@@ -929,8 +929,8 @@ export async function expectTagBreakdown(options: {
     }
 
     if (!daily) {
-        await container.locator(".dropdown-btn").click()
-        await container.locator('.dropdown-menu__option >> text=Tags').click()
+        await container.locator(".dbtn").click()
+        await container.locator('.dmenu__option >> text=Tags').click()
     }
 
     await container.getByRole('button', { name: 'Sum' }).click()
@@ -1181,12 +1181,12 @@ export async function fillEditModal(options: {
     }
     if (startTime != undefined) {
         await typeTextOnFocusInput({ 
-            page, text: startTime, selector: "#start--dropdown-btn", enter: true, highlightDel: true
+            page, text: startTime, selector: "#start--dbtn", enter: true, highlightDel: true
         })
     }
     if (endTime != undefined) {
         await typeTextOnFocusInput({ 
-            page, text: endTime, selector: "#end--dropdown-btn", enter: true, highlightDel: true
+            page, text: endTime, selector: "#end--dbtn", enter: true, highlightDel: true
         })
     }
     if (settingsOptn != undefined) {
@@ -1197,19 +1197,19 @@ export async function fillEditModal(options: {
         })
     }
     if (core) {
-        await page.locator('#core-dropdown--dropdown-btn').click()
+        await page.locator('#core-dropdown--dbtn').click()
         await page.getByRole('button', { name: core }).click()
     }
     if (tag) {
-        await page.locator('#tag-picker--dropdown-btn').click()
+        await page.locator('#tag-picker--dbtn').click()
         await page.getByRole('button', { name: tag }).click()
     }
     if (colorIdx != undefined) {
-        await page.locator('#color-picker--dropdown-btn').click()
+        await page.locator('#color-picker--dbtn').click()
         await page.locator(`.color-picker__grid > div:nth-child(${colorIdx + 1})`).first().click()
 
-        await page.locator('#color-picker--dropdown-btn').click();
-        await page.locator('#color-picker--dropdown-btn').press('ControlOrMeta+b')
+        await page.locator('#color-picker--dbtn').click();
+        await page.locator('#color-picker--dbtn').press('ControlOrMeta+b')
     }    
 
 
@@ -1260,16 +1260,16 @@ export async function expectEditModalToBe(options: {
         await epectTextEditor({ query: ".edit-routine__description-text-editor", page, text: description })
     }
     if (startTime != undefined) {
-        await expect(page.locator('#start--dropdown-btn')).toContainText(startTime)
+        await expect(page.locator('#start--dbtn')).toContainText(startTime)
     }
     if (endTime != undefined) {
-        await expect(page.locator('#end--dropdown-btn')).toContainText(endTime)
+        await expect(page.locator('#end--dbtn')).toContainText(endTime)
     }
     if (tag != undefined) {
-        await expect(page.locator('#tag-picker--dropdown-btn')).toContainText(tag)
+        await expect(page.locator('#tag-picker--dbtn')).toContainText(tag)
     }
     if (core != undefined) {
-        await expect(page.locator('#core-dropdown--dropdown-btn')).toContainText(core)
+        await expect(page.locator('#core-dropdown--dbtn')).toContainText(core)
     }
     if (icon != undefined) {
         await expectAttribute({
@@ -1297,9 +1297,9 @@ export const switchWeekView = async (page: any, option: "Today" | "Weekly" | "M 
         await page.keyboard.press(num + '')
     }
     else {
-        await page.locator('#view-option--dropdown-btn').click();
+        await page.locator('#view-option--dbtn').click();
     
-        const dropdownMenu = await page.locator('#view-option--dropdown-menu')
+        const dropdownMenu = await page.locator('#view-option--dmenu')
         await dropdownMenu.locator('button').filter({ hasText: option }).click()
     }
 }

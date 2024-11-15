@@ -39,7 +39,7 @@
     let mousePos = { left: 0, top: 0 }
     let contextMenuPos: OffsetPoint | null = null
     
-    $: isLightTheme = !$themeState.isDarkTheme
+    $: isLight = !$themeState.isDarkTheme
     $: routine = $weekRoutine
     $: {
         if (dayIdx != currTime.dayIdx) {
@@ -131,6 +131,7 @@
 
 <div 
     class="day-view" 
+    class:day-view--light={isLight}
     style:--EVENTS_COUNT={googleEvents.length}
     style:--HOUR_BLOCK_HEIGHT={`${GoogleCalendarManager.HOUR_BLOCK_HEIGHT}px`}
 >
@@ -151,7 +152,7 @@
                 }) as event}
 
                     {@const colorSwatch  = findClosestColorSwatch(event.color.bgColor)}
-                    {@const colorTrio    = getColorTrio(colorSwatch, isLightTheme)}
+                    {@const colorTrio    = getColorTrio(colorSwatch, isLight)}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div 
                         role="button" 
@@ -198,13 +199,14 @@
             >
                 <div 
                     class="day-view__col-blocks routine-blocks"    
+                    class:routine-blocks--light={isLight}
                     class:routine-blocks--no-rich-colors={!richColors}
                 >
                     {#if dayOptn === "calendar"}
                         <!-- Events -->
                         {#each googleEvents as event}
                             {@const colorSwatch  = findClosestColorSwatch(event.color.bgColor)}
-                            {@const colorTrio    = getColorTrio(colorSwatch, isLightTheme)}
+                            {@const colorTrio    = getColorTrio(colorSwatch, isLight)}
                             {@const startTimeStr = minsFromStartToHHMM(event.timeStart)}
                             {@const endTimeStr   = minsFromStartToHHMM(event.timeEnd)}
                             {@const heightNum    = parseInt(event.height)}
@@ -215,6 +217,7 @@
                                 role="button" 
                                 tabindex="0" 
                                 class={`event-block ${overlapIdx >= 0 ? `box-${overlapIdx}` : ""}`}
+                                class:event-block--light={isLight}
                                 class:event-block--small={heightNum <= 40 && !isFocused}
                                 class:event-block--focused={isFocused}
                                 class:box-ontop={overlapIdx === 0}
@@ -258,7 +261,7 @@
                         {/each}
                     {:else}
                         {#each routineBlocks as block, blockIdx}
-                            {@const colorTrio    = getColorTrio(block.color, isLightTheme)}
+                            {@const colorTrio    = getColorTrio(block.color, isLight)}
                             {@const startTimeStr = minsFromStartToHHMM(block.startTime)}
                             {@const endTimeStr   = minsFromStartToHHMM(block.endTime)}
                             {@const done  = block.done}
@@ -333,7 +336,7 @@
             <div class="hour-blocks-container scroll-bar-hidden">
                 <div 
                     class="hour-blocks"
-                    class:hour-blocks--light={isLightTheme}
+                    class:hour-blocks--light={isLight}
                 >
                     {#each Array.from({ length: 24 }, (_, i) => i) as timeIdx}
                         {@const headOffsetPerc = ((timeIdx * 60) / 1440) * 100}
@@ -358,7 +361,10 @@
             </div>
 
             <!-- Grid -->
-            <div class="wk-grid">
+            <div 
+                class="wk-grid"
+                class:wk-grid--light={isLight}
+            >
                 <div class="wk-grid__hoz-lines">
                     {#if dayViewElem}
                         {@const leftOffset = 40}
@@ -424,19 +430,29 @@
         width: 100%;
         height: calc(100% - 38px);
 
+        &--light &__header {
+            border-bottom: 1.5px solid rgba(var(--textColor1), 0.075);
+            span {
+                @include text-style(0.3, 600);
+            }
+        }
+        &--light .now-line {
+            height: 2px;
+        }
+
         /* header */
         &__header {
             padding: 3px 0px 0px 0px;
             margin-left: var(--DAY_VIEW_SIDE_MARGINS);
             width: calc(100% - (var(--DAY_VIEW_SIDE_MARGINS) * 2));
             display: flex;
-            border-bottom: 0.5px solid rgba(white, 0.055);
+            border-bottom: 0.5px solid rgba(var(--textColor1), 0.055);
             padding: 5.5px 0px 7px 0px;
             
             span {
                 white-space: nowrap;
                 margin-left: 1px;
-                @include text-style(0.14, 500, 0.95rem);
+                @include text-style(0.14, 500, 1.1rem);
             }
         }
         &__header-events {
@@ -489,6 +505,9 @@
     }
 
     .routine-blocks {
+        &--light#{&}--no-rich-colors &__block-time-period {
+            @include text-style(0.4);
+        }
         &--no-rich-colors &__block {
             i {
                 color: rgba(var(--textColor1), 1) !important;
@@ -496,16 +515,15 @@
             .block-title-strike::after {
                 background-color: rgba(var(--textColor1), 0.65) !important;
             }
-
             &-content {
-                background-color: var(--bg-3) !important;
-                // border: 1.5px solid rgba(var(--textColor1), 0.03);
+                // border: 1.5px solid rgba(var(--textColor1), 0.025);
+                background-color: var(--sessionBlockColor) !important;
                 padding-left: 9px;
                 border-radius: 9px;
             }
 
             &-title {
-                @include text-style(1, 500);
+                @include text-style(1);
             }
             &-time-period {
                 @include text-style(0.3);
@@ -524,6 +542,7 @@
         &__block {
             left: 70px;
             width: 135px;
+
             &::after, &::before {
                 cursor: pointer !important;
             }
@@ -599,6 +618,9 @@
         cursor: pointer;
         border-top: 1px solid var(--rightBarBgColor);
 
+        &--light &__title {
+            font-weight: 600 !important;
+        }
         &:active {
             transform: scale(0.99);
         }
@@ -629,7 +651,7 @@
             border: 1px solid rgba(var(--textColor1), 0.03);
         }
         &--session &__title {
-            @include text-style(1, 500);
+            @include text-style(1);
         }
         &--session &__time-period {
             @include text-style(0.3);
@@ -696,14 +718,14 @@
     .now-line {
         z-index: calc(var(--EVENTS_COUNT));
         width: calc(100% + 5px);
+
     }
     .hour-blocks {
         height: calc((var(--HOUR_BLOCK_HEIGHT) * 24));
         
         span {
-            @include text-style(0.2, 300);
+            margin-left: 3px;
         }
-        
         &-container {
             padding: 0px var(--DAY_VIEW_SIDE_MARGINS);
             height: calc((var(--HOUR_BLOCK_HEIGHT) * 24));

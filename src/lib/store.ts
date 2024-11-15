@@ -37,9 +37,7 @@ export const globalContext = writable<GlobalContext>({
 })
 export const themeState = writable<ThemeState>({
     title: "Dark Mode",
-    isDarkTheme: true,
-    themeToggleBtnIconColor: "#3F3F3F",
-    twinTheme: { sectionName: "default", index: 1 }
+    isDarkTheme: true
 })
 
 /* General Authentication Stuff */

@@ -303,8 +303,8 @@
             <!-- Title + Color -->
             <div class="edit-routine__header-left">
                 <button 
-                    class="edit-routine__color-dropdown-btn dropdown-btn"
-                    id="color-picker--dropdown-btn"
+                    class="edit-routine__color-dbtn dbtn"
+                    id="color-picker--dbtn"
                     on:click={() => colorsOpen = !colorsOpen}
                 >
                     <div 
@@ -357,8 +357,8 @@
             </div>
             <button 
                 on:click={() => settingsOpen = !settingsOpen}
-                class="edit-routine__settings-btn dropdown-btn dropdown-btn--settings"
-                id={"edit-routine-settings--dropdown-btn"}
+                class="edit-routine__settings-btn dbtn dbtn--settings"
+                id={"edit-routine-settings--dbtn"}
             >
                 <SvgIcon icon={Icon.Settings} options={{ opacity: 0.6}} />
             </button>
@@ -653,7 +653,7 @@
             @include circle(9px);
             cursor: pointer;
         }
-        &__color-dropdown-btn {
+        &__color-dbtn {
             @include center;
             padding: 8px;
             margin-right: 6px;

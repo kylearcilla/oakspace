@@ -32,7 +32,7 @@
 >
     <div 
         use:clickOutside on:click_outside={() => onClickOutside()}
-        id="color-picker--dropdown-menu"
+        id="color-picker--dmenu"
         class="color-picker" 
         class:color-picker--light={!isDark}
         class:color-picker--shown={_isActive}

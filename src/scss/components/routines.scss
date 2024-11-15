@@ -196,7 +196,7 @@
     height: 100%;
 
     &--light &__block-title {
-        font-weight: 500;
+        font-weight: 600;
     }
     &--grabbing * {
         cursor: text !important;
@@ -335,13 +335,13 @@
         border-radius: 8px;
     }
     &__block-title {
-        @include text-style(_,  500, 1.14rem);
+        @include text-style(_,  500, 1.25rem);
         margin-bottom: 3px;
         cursor: text;
         color: rgb(var(--block-color-1));
     }
     &__block-time-period {
-        @include text-style(_, 500, 1.05rem, "DM Sans");
+        @include text-style(_, 500, 1.16rem, "DM Sans");
         cursor: text;
         display: inline-block;
         color: rgba(var(--block-color-3), 1);

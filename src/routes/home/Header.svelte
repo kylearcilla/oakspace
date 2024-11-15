@@ -12,6 +12,7 @@
 	import SvgIcon from "../../components/SVGIcon.svelte"
 	import AmbientSettings from "../AmbientSettings.svelte"
 	import ActiveSessionMini from "./ActiveSessionMini.svelte"
+	import ProgressRing from "../../components/ProgressRing.svelte";
 
     const NO_SESS_MD_MAX_WIDTH = 270
 
@@ -125,7 +126,7 @@
                     Ambient Space: <span>{capitalize(ambience?.space.group ?? "")}</span>
                     <div class="divider"></div>
                     <button 
-                        id="ambient-header--dropdown-btn"
+                        id="ambient-header--dbtn"
                         class="header__ambient-settings-btn"
                         on:click={() => ambientSettings = !ambientSettings}
                     >
@@ -149,11 +150,8 @@
             class:ambient-solid={ambience?.styling === "solid"}
             class:ambient-clear={ambience?.styling === "clear"}
             disabled={!$weekRoutine}
-            style:--block-color-1={ambience?.styling != "solid" ? "255, 255, 255" : colorTrio[0]}
-            style:--block-color-2={ambience?.styling != "solid" ? "255, 255, 255" : colorTrio[1]}
-            style:--block-color-3={ambience?.styling != "solid" ? "255, 255, 255" : colorTrio[2]}
             title={nowBlockTitle}
-            id="active-routine--dropdown-btn"
+            id="active-routine--dbtn"
             on:click={toggleActiveRoutine}
         >
             <div class="header__now-block-circle"></div>
@@ -173,35 +171,37 @@
             </div>
         </button>
         <!-- Session Component -->
-        {#if !session || $sessionManager?.state === "done"}
-            <div 
-                class="header__session header__section"
-                class:ambient-blur={ambience?.styling === "blur"}
-                class:ambient-solid={ambience?.styling === "solid"}
-                class:ambient-clear={ambience?.styling === "clear"}
-            >
-                <button 
-                    title="Create new session"
-                    class="header__new-session-btn"
-                    on:click={() => openModal(ModalType.NewSession)}
-                >
-                    <SvgIcon 
-                        icon={Icon.Add}
-                        options={{ scale: 0.9, strokeWidth: 1.75 }}
-                    />
-                </button>
-                <div class="header__new-session-btn-divider">
-                </div>
-                <!-- Total Session Time -->
-                <div class="header__session-time" title="Today's total focus time.">
-                    <span>
-                        {secsToHHMM($globalContext.focusTime)}
-                    </span>
-                </div>
-            </div>
-        {:else}
-            <ActiveSessionMini {headerWidth} />
-        {/if}
+        <div class="flx">
+             {#if !session || $sessionManager?.state === "done"}
+                 <div 
+                     class="header__session header__section"
+                     class:ambient-blur={ambience?.styling === "blur"}
+                     class:ambient-solid={ambience?.styling === "solid"}
+                     class:ambient-clear={ambience?.styling === "clear"}
+                 >
+                     <button 
+                         title="Create new session"
+                         class="header__new-session-btn"
+                         on:click={() => openModal(ModalType.NewSession)}
+                     >
+                         <SvgIcon 
+                             icon={Icon.Add}
+                             options={{ scale: 0.9, strokeWidth: 1.75 }}
+                         />
+                     </button>
+                     <div class="header__new-session-btn-divider">
+                     </div>
+                     <!-- Total Session Time -->
+                     <div class="header__session-time" title="Today's total focus time.">
+                         <span>
+                             {secsToHHMM($globalContext.focusTime)}
+                         </span>
+                     </div>
+                 </div>
+             {:else}
+                 <ActiveSessionMini {headerWidth} />
+             {/if}
+         </div>
     </div>
 
     <!-- Active Routine Pop Up -->
@@ -224,10 +224,14 @@
         position: relative;
         @include flex(center, space-between);
         
+        /* light */
         &--light &__session-time span {
-            @include text-style(_, 400, 1.18rem);
-            font-weight: 400;
+            font-weight: 500;
             opacity: 1;
+        }
+        &--light &__now-block-title,
+        &--light &__now-block-time {
+            font-weight: 500;
         }
         &--sm &__session {
             display: none;
@@ -246,7 +250,7 @@
             opacity: 0.7;
         }
         &--ambient-styling &__now-block-title {
-            color: rgba(var(--block-color-1), 1);
+            color: rgba(var(--textColor1), 1);
             @include text-style(_, 500, 1.175rem);
         }
         &--ambient-styling &__now-block-time {
@@ -279,7 +283,7 @@
         /* Now Block */
         &__now-block {
             margin: -2px 0px 0px -5px;
-            background-color: rgba(var(--block-color-1), 0.085);
+            background-color: rgba(var(--textColor1), 0.085);
             border: 1px solid transparent;
             // padding: 0px 15px 0px 12px;
             padding: 0px 15px 0px 6px;
@@ -336,7 +340,7 @@
                 transform: scale(0.99);
             }
             &-circle {
-                background-color: rgba(var(--block-color-1), 1);
+                background-color: rgba(var(--textColor1), 1);
                 height: 10px;
                 width: 2px;
                 border-radius: 1px;
@@ -345,14 +349,14 @@
             }
             &-title {
                 @include text-style(_, 400, 1.225rem, "DM Mono");
-                color: rgba(var(--block-color-1), 1);
+                color: rgba(var(--textColor1), 1);
                 @include elipses-overflow;
                 margin: 0px 0px 0px 0px;
                 max-width: 150px;
             }
             &-time {
                 @include text-style(_, 400, 1.225rem, "DM Mono");
-                color: rgba(var(--block-color-3), 0.5);
+                color: rgba(var(--textColor1), 0.5);
                 margin-left: 11px;
             }
         }
@@ -363,12 +367,12 @@
             padding: 0px 12px 0px 7px;
             margin: 0px 0px 0px -10px;
             height: 26px;
-            @include txt-color(0.055, "bg");
+            @include txt-color(0.07, "bg");
         }
         &__new-session-btn {
             @include center;
             @include circle(16px);
-            @include txt-color(0.13, "bg");
+            @include txt-color(0.14, "bg");
             opacity: 0.6;
 
             &:hover {
@@ -383,6 +387,32 @@
             @include divider(0.14, 9px, 1px);
             margin: 0px 9px 0px 10px;
         }
+
+        &__habit-progress {
+            margin: 0px 4px 0px 0px;
+            padding: 4px 7px 3px 12px;
+            border-radius: 20px;
+            @include txt-color(0.06, "bg");
+            @include flex(center);
+            
+            &:hover {
+                @include txt-color(0.1, "bg");
+            }
+            span {
+                @include text-style(0.65, 600, 1.185rem, "Manrope");
+                margin-right: 10px;
+                margin-bottom: 2px;
+            }
+            i {
+                margin-right: 10px;
+                @include text-style(0.3, _, 1.15rem);
+                margin-bottom: 2px;
+            }
+        }
+        &__habit-ring {
+
+        }
+
         /* Session Time */
         &__session-time {
             @include flex(center);

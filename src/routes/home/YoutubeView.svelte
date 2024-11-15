@@ -316,8 +316,8 @@
         &--dark .divider {
             background-color: rgba(var(--textColor1), 0.05) !important;
         }
-        &--dark .dropdown-menu {
-            @include dropdown-menu-dark;
+        &--light .dmenu {
+            @include dmenu--light;
         }
         /* Light Theme */
         &--light {

@@ -1,9 +1,12 @@
 <script lang="ts">
+	import { themeState } from "../lib/store";
+    import { DARK_COLOR_PROGRESS, LIGHT_COLOR_PROGRESS } from "../lib/utils-colors"
+
     export let progress: number = 0
     export let options: {
         size?: number
         strokeWidth?: number
-        style?: "rich-colored" | "default" | "simple"
+        style?: "rich-colored" | "default" | "simple" | "light"
     } | undefined = undefined
 
     const size = options?.size ?? 14
@@ -14,17 +17,32 @@
     const radius = (size - strokeWidth) / 2
     const circumference = radius * Math.PI * 2
 
-    let fgColor = "rgba(var(--textColor1), 0.4)"
-    let bgColor = "rgba(var(--textColor1), 0.05)"
+    let fgColor = "", bgColor = ""
 
+    $: isLight = !$themeState.isDarkTheme
     $: progress = Math.min(progress * 100, 100)
-    $: if (style === "rich-colored") {
-        const rval = Math.max(243 - ((243 - 125) * (progress / 100)), 125)
-        fgColor    = `rgb(${rval}, 245, 125)`
+
+    $: {
+        updateColor(isLight, progress)
     }
-    else if (style === "simple") {
-        fgColor = "rgba(var(--textColor1), 0.09)"
-        bgColor = "none"
+
+    function updateColor(light: boolean, progress: number) {
+        const settings = light ? LIGHT_COLOR_PROGRESS : DARK_COLOR_PROGRESS
+        const { max, min, gVal, bVal } = settings
+
+        if (style === "rich-colored") {
+            const rval = Math.max(max - ((max - min) * (progress / 100)), min)
+            fgColor    = `rgb(${rval}, ${gVal}, ${bVal})`
+            bgColor    = `rgba(var(--textColor1), ${light ? 0.1 : 0.05})`
+        }
+        else if (style === "simple") {
+            fgColor = "rgba(var(--textColor1), 0.15)"
+            bgColor = "none"
+        }
+        else if (style === "light") {
+            fgColor = "rgba(var(--textColor1), 0.3)"
+            bgColor = "rgba(var(--textColor1), 0.04)"
+        }
     }
   
     const dash = (progress: number) => (progress * circumference) / 100

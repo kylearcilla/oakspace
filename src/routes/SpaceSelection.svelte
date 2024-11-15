@@ -336,7 +336,7 @@
         &__choose-btn {
             @include abs-bottom-right(18px, 18px);
             @include text-style(1, 500, 1.3rem, "DM Mono");
-            background: var(--hoverColor2);
+            background: var(--lightColor2);
             padding: 6px 20px 7px 20px;
             border-radius: 15px;
         }

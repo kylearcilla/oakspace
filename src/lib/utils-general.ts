@@ -1,5 +1,6 @@
 import { APIErrorCode, LogoIcon } from "./enums"
 import type { APIError } from "./errors"
+import { TEST_TAGS } from "./mock-data"
 import { toast } from "./utils-toast"
 
 /**
@@ -14,14 +15,14 @@ export const clickOutside = (node: any) => {
     const nodeId = node.id as string
     const hasClickedInsideNode = node?.contains(target)
 
-    // if dropdown-menu and clicked on its own dropdown btn, let its dropdown-btn close
-    const isSrcDropdownMenu = nodeId.includes("dropdown-menu")
+    // if dmenu and clicked on its own dropdown btn, let its dbtn close
+    const isSrcDropdownMenu = nodeId.includes("dmenu")
     let dropdownBtnClicked = null 
     let isOwnDropdownBtn = false
 
     if (isSrcDropdownMenu) {
       dropdownBtnClicked = findAncestor({
-        child: target, queryStr: "dropdown-btn", queryBy: "id",
+        child: target, queryStr: "dbtn", queryBy: "id",
         max: 5, strict: false
       })
     }
@@ -578,11 +579,20 @@ export function camelToKebab(camelCaseString: string) {
   return camelCaseString.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
-export function kebabToNormal(str: string): string {
+export function kebabToNormal(str: string, excludeSpec = true): string {
+  const specialWords = new Set(["is", "or", "and", "of"]);
+  
   return str
-      .split('-')                   
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ')                   
+    .split('-')
+    .map((w, i) => i === 0 || !excludeSpec || !specialWords.has(w) ? w.charAt(0).toUpperCase() + w.slice(1) : w)
+    .join(' ');
+}
+
+export function normalToKebab(str: string): string {
+    return str
+        .split(' ')
+        .map(word => word.toLowerCase())
+        .join('-');  
 }
 
 export function inlineStyling(styling?: StylingOptions) {
@@ -982,4 +992,8 @@ export function floatCompare(args: { x: number, y: number, digits?: number, op: 
       default:
           throw new Error(`Invalid comparison operator: ${op}`)
   }
+}
+
+export function getTagFromName(name: string) {
+  return TEST_TAGS.find(tag => tag.name === name)
 }

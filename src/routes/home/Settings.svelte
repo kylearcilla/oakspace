@@ -318,7 +318,7 @@
                         </p>
                     </div>
                 </div>
-                <button on:click={handleEditPaymentMethod} class="payment-method__edit-payment-method-btn unfill unfill--padded unfill--oval">
+                <button on:click={handleEditPaymentMethod} class="payment-method__edit-payment-methodbtn unfill unfill--padded unfill--oval">
                     Change Card
                 </button>
             </div>
@@ -328,30 +328,30 @@
                 <h3>Language & Region</h3>
                 <div class="flx flx--space-between flx--algn-center">
                     <h4>Chosen Language</h4>
-                    <div class="lang__dropdown-btn-container dropdown-container">
+                    <div class="lang__dbtn-container dropdown-container">
                         <button 
                             on:click={() => isLangDropdownListOpen = true}
-                            class="lang__dropdown-btn dropdown-btn dropdown-btn--icon-text"
+                            class="lang__dbtn dbtn dbtn--icon-text"
                         >
-                            <div class="lang__dropdown-btn-icon">{currentLang.flag}</div>
-                            <div class="dropdown-btn__title">
+                            <div class="lang__dbtn-icon">{currentLang.flag}</div>
+                            <div class="dbtn__title">
                                 {currentLang.name}
                             </div>
-                            <div class="dropdown-btn__arrows">
-                                <div class="dropdown-btn__arrows-triangle-up">
+                            <div class="dbtn__arrows">
+                                <div class="dbtn__arrows-triangle-up">
                                     <i class="fa-solid fa-chevron-up"></i>
                                 </div>
-                                <div class="dropdown-btn__arrows-triangle-down">
+                                <div class="dbtn__arrows-triangle-down">
                                     <i class="fa-solid fa-chevron-down"></i>
                                 </div>
                             </div>
                         </button>
                         {#if isLangDropdownListOpen}
-                            <ul use:clickOutside on:click_outside={() => isLangDropdownListOpen = false} class="dropdown-menu">
+                            <ul use:clickOutside on:click_outside={() => isLangDropdownListOpen = false} class="dmenu">
                                 {#each langs as lang, idx} 
-                                    <li class={`dropdown-menu__option ${lang.name === currentLang.name ? "dropdown-menu__option--selected" : ""}`}>
+                                    <li class={`dmenu__option ${lang.name === currentLang.name ? "dmenu__option--selected" : ""}`}>
                                         <button class="dropdown-element" on:click={() => handleNewFlagClicked(idx)}>
-                                            <div class="dropdown-menu__option-icon">{lang.flag}</div>
+                                            <div class="dmenu__option-icon">{lang.flag}</div>
                                             <p>{lang.name}</p>
                                             <i class="fa-solid fa-check"></i>
                                         </button>
@@ -589,7 +589,7 @@
                 font-weight: 300;
             }
             input {
-                background-color: var(--hoverColor);
+                background-color: var(--lightColor);
                 transition: 0.12s ease-in-out;
                 padding: 22px 8px 11px 12px;
                 font-size: 1.3rem;
@@ -700,7 +700,7 @@
             margin: -5px 0px 10px 0px;
             color: rgba(var(--textColor1), 0.8);
         }
-        &__edit-payment-method-btn {
+        &__edit-payment-methodbtn {
             @include abs-bottom-right(25px, 25px);
         }
         .payment-card {
@@ -723,14 +723,14 @@
 
     /* Language */
     .lang {
-        &__dropdown-btn {
-            background-color: var(--hoverColor2);
+        &__dbtn {
+            background-color: var(--lightColor2);
         }
-        &__dropdown-btn-icon {
+        &__dbtn-icon {
             font-size: 1.3rem;
             margin-right: 7px;
         }
-        .dropdown-menu {
+        .dmenu {
             width: 95px;
             left: 2px;
         }

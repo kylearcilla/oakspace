@@ -1,13 +1,10 @@
 import { themeState } from "./store"
-import { lightColorThemes, darkColorThemes, imageThemes, ambientVideos, defaultThemes } from "$lib/data-themes"
-import { ResError } from "./errors"
+import { lightColorThemes, darkColorThemes, defaultThemes } from "$lib/data-themes"
 
 const sectionToThemeMap: AppearanceSectionToThemeMap = {
   default: defaultThemes,
   light: lightColorThemes,
-  dark: darkColorThemes,
-  image: imageThemes,
-  video: ambientVideos
+  dark: darkColorThemes
 }
 
 /**
@@ -25,40 +22,28 @@ export function loadTheme() {
 
     themeState.set({
       title: themeItem!.title,
-      isDarkTheme: themeItem!.styling.isDark,
-      themeToggleBtnIconColor: themeItem!.styling.iconToggleBtnBgColor,
-      twinTheme: themeItem!.twinTheme,
+      isDarkTheme: themeItem!.styling.isDark
     })
     setRootColors(themeItem!.styling)
 }
 
 /**
  * Initializes a new them state object and updates root theme colors.
- * @param newTheme  New Theme
+ * @param newTheme  New theme selected by user
  */
-export function setNewTheme(newTheme: Theme) {
-  let _newTheme: any = newTheme
-  let newThemeState: ThemeState
-  
-  // if theme is a color / default theme
-  if ("twinTheme" in newTheme) {
-    newThemeState = {
-      title: _newTheme.title,
-      isDarkTheme: _newTheme.styling.isDark,
-      textColor: _newTheme.styling.textColor1,
-      themeToggleBtnIconColor: _newTheme.styling.iconToggleBtnBgColor,
-      twinTheme: _newTheme.twinTheme
-    }
-
-    setRootColors(_newTheme.styling)
+export function setNewTheme(newTheme: ColorTheme) {
+  let newThemeState: ThemeState = {
+    title: newTheme!.title,
+    isDarkTheme: newTheme!.styling.isDark
   }
-  
+
   themeState.set(newThemeState!)
-  localStorage.setItem("theme", JSON.stringify(_newTheme))
+  setRootColors(newTheme!.styling)
+  localStorage.setItem("theme", JSON.stringify(newTheme))
 }
 
 /**
- * Uses object prop / string indexing to get theme from selected theme item's title and index. 
+ * Get theme object from title and index.
  * @param title  Section title, must be a property name of Apperance Themes
  * @param idx    Section idex
  * @returns      Theme selected
@@ -80,39 +65,17 @@ export function setRootColors(theme: ColorThemeProps) {
   
     styleTag.innerHTML = `
       :root {
-          --bg-1: ${theme.backgroundOne};
-          --bg-2: ${theme.backgroundTwo};
-          --bg-3: ${theme.backgroundThree};
+          --bg-1: ${theme.bg1};
+          --bg-2: ${theme.bg2};
+          --bg-3: ${theme.bg3};
           --fgColor1: ${theme.fgColor1};
           --fgColor2: ${theme.fgColor2};
-          --sessionBgColor: ${theme.sessionBgColor};
-          --sessionBorderVal: ${theme.sessionBorderVal};
-          --sessionShadowVal: ${theme.sessionShadowVal};
           --textColor1: ${theme.textColor1};
           --textColor2: ${theme.textColor2};
-          --hoverColor: ${theme.hoverColor};
-          --hoverColor2: ${theme.hoverColor2};
-          --hoverColor3: ${theme.hoverColor3};
-          --tabColor: ${theme.tabColor};
-          --tabHighlightColor: ${theme.tabHighlightColor};
-          --tabHighlightBoxShadow: ${theme.tabHighlightBoxShadow};
-          --headerTextColor: ${theme.headerTextColor};
-          --headerIconColor: ${theme.headerIconColor};
-          --headerBorder: ${theme.headerBorder};
-          --headerBoxShadow: ${theme.headerBoxShadow};
-          --headerProgressColor1: ${theme.headerProgressColor1};
-          --headerProgressColor2: ${theme.headerProgressColor2};
-          --headerTrackColor1: ${theme.headerTrackColor1};
-          --headerTrackColor2: ${theme.headerTrackColor2};
-          --baseProgressColor1: ${theme.baseProgressColor1};
-          --baseProgressColor2: ${theme.baseProgressColor2};
-          --navMenuBoxShadow: ${theme.navMenuBoxShadow};
+          --lightColor: ${theme.lightColor};
+          --lightColor2: ${theme.lightColor2};
+          --lightColor3: ${theme.lightColor3};
           --navMenuBorder: ${theme.navMenuBorder};
-          --baseTrackColor1: ${theme.baseTrackColor1};
-          --baseTrackColor2: ${theme.baseTrackColor2};
-          --progressBallGlow: ${theme.progressBallGlow};
-          --pomToolTipBgColor: ${theme.pomToolTipBgColor};
-          --pomToolTipTextColor: ${theme.pomToolTipTextColor};
           --modalBgColor: ${theme.modalBgColor};
           --modalBgAccentColor: ${theme.modalBgAccentColor};
           --bentoBoxBgColor: ${theme.bentoBoxBgColor};
@@ -120,40 +83,18 @@ export function setRootColors(theme: ColorThemeProps) {
           --bentoBoxShadow: ${theme.bentoBoxShadow};
           --muiscPlayerBgColor: ${theme.muiscPlayerBgColor};
           --musicProgressFgColor: ${theme.musicProgressFgColor};
-          --headerBgColor: ${theme.headerBgColor};
-          --wideLeftBarColor: ${theme.wideLeftBarColor};
-          --wideLeftBarBorder: ${theme.wideLeftBarBorder};
-          --wideLeftBarBoxShadow: ${theme.wideLeftBarBoxShadow};
-          --wideLeftBarTabColor: ${theme.wideLeftBarTabColor};
-          --wideLeftBarTabIconColor: ${theme.wideLeftBarTabIconColor};
           --sessionBlockColor: ${theme.sessionBlockColor};
-          --rightBarMindNoteBgColor: ${theme.rightBarMindNoteBgColor};
           --navMenuBgColor: ${theme.navMenuBgColor};
-          --navIconColor: ${theme.navIconColor};
-          --navIconBgColor: ${theme.navIconBgColor};
-          --themeToggleBtnBgColor: ${theme.themeToggleBtnBgColor};
-          --iconToggleBtnBgColor: ${theme.iconToggleBtnBgColor};
-          --highlighterToggleBtnBgColor: ${theme.highlighterToggleBtnBgColor};
-          --midPanelBorder: ${theme.midPanelBorder};
-          --midPanelShadow: ${theme.midPanelShadow};
-          --midPanelBaseColor: ${theme.midPanelBaseColor};
-          --midPanelAccentColor1: ${theme.midPanelAccentColor1};
-          --midPanelAccentColor2: ${theme.midPanelAccentColor2};
-          --midPanelAccentColor3: ${theme.midPanelAccentColor3};
-          --midPanelAccentTextColor: ${theme.midPanelAccentTextColor};
-          --sidePanelBorder: ${theme.sidePanelBorder};
-          --sidePanelShadow: ${theme.sidePanelShadow};
-          --sidePanelTabBgColor: ${theme.sidePanelTabBgColor};
-          --sidePanelTabHighlightColor: ${theme.sidePanelTabHighlightColor};
+          --navBtnColor: ${theme.navBtnColor};
+          --navBtnBgColor: ${theme.navBtnBgColor};
+          --minNavBtnColor: ${theme.minNavBtnColor};
+          --minNavBtnBgColor: ${theme.minNavBtnBgColor};
           --rightBarBgColor: ${theme.rightBarBgColor};
-          --rightBarBgBoxShadow: ${theme.rightBarBgBoxShadow};
-          --tasksCheckBoxColorDefault: ${theme.tasksCheckBoxColorDefault};
-          --sidePanelLightAccentColor: ${theme.sidePanelLightAccentColor};
-          --tasksCheckColor: ${theme.tasksCheckColor};
-          --tasksCheckBoxColorDefault: ${theme.tasksCheckBoxColorDefault};
-          --tasksCheckBoxColorComplete: ${theme.tasksCheckBoxColorComplete};
-          --tasksSubtaskFocusColor: ${theme.tasksSubtaskFocusColor};
-          --tasksLightTextColor: ${theme.tasksLightTextColor};
+          --elemColor1: ${theme.elemColor1};
+          --elemColor2: ${theme.elemColor2};
+          --elemTextColor: ${theme.elemTextColor};
+          --cardBgColor: ${theme.cardBgColor};
+          --cardFgColor: ${theme.cardHovColor};
       }
     `
     headTag.appendChild(styleTag)

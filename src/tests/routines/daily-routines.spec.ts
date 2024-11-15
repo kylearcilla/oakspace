@@ -2028,10 +2028,10 @@ test.describe("modal edits", () => {
     
         /* changes are saved */
         await blockElem.click()
-        await page.locator('#color-picker--dropdown-btn').click()
+        await page.locator('#color-picker--dbtn').click()
         await page.locator(`.color-picker__grid > div:nth-child(${colorIdx + 1})`).first().click()
 
-        await page.locator('#color-picker--dropdown-btn').click();
+        await page.locator('#color-picker--dbtn').click();
 
         await expectComputedStyle({ 
             prop: "background-color",
@@ -2267,26 +2267,26 @@ test.describe("modal edits", () => {
         await blockElem.click()
         
         /* items are saved properly */
-        await page.locator("#tag-picker--dropdown-btn").click()
-        await page.locator('#tag-picker--dropdown-menu').getByRole('button', { name: '🍖 Cooking' }).click()
+        await page.locator("#tag-picker--dbtn").click()
+        await page.locator('#tag-picker--dmenu').getByRole('button', { name: '🍖 Cooking' }).click()
 
         await closeEditBlockModal({ page, doSave: true })
 
         await blockElem.click()
-        await expect(page.locator('#tag-picker--dropdown-btn')).toContainText('Cooking')
+        await expect(page.locator('#tag-picker--dbtn')).toContainText('Cooking')
     })
     test("core changes", async ({ page }) => {
         let blockElem = getBlockElem("rblock--1", page)
         await blockElem.click()
         
         /* items are saved properly */
-        await page.locator("#core-dropdown--dropdown-btn").click()
+        await page.locator("#core-dropdown--dbtn").click()
         await page.getByRole('button', { name: 'Mind' }).click()
 
         await closeEditBlockModal({ page, doSave: true })
 
         await blockElem.click()
-        await expect(page.locator('#core-dropdown--dropdown-btn')).toContainText('Mind');
+        await expect(page.locator('#core-dropdown--dbtn')).toContainText('Mind');
     })
     test("time changes - valid", async ({ page }) => {
         await page.locator('li').filter({ hasText: 'HS Saturday Routine' }).click()

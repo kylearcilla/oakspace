@@ -5,9 +5,12 @@
 	import { minsToHHMM } from "../lib/utils-date";
 	import { formatPlural, getColorTrio } from "../lib/utils-general";
 	import ProgressRing from "./ProgressRing.svelte";
+	import { themeState } from "../lib/store";
 
     let gridWidth = 0
     let gridHeight = 0
+
+    $: isLight = !$themeState.isDarkTheme
 
     type ACalOptions = {
         time: boolean
@@ -33,7 +36,7 @@
 
     const activityData = [
         {
-            date: new Date(2024, 9, 2),
+            date: new Date(2024, 10, 2),
             focusMins: 12 * 60 + 10,
             habits: 0.7,
             goals: [
@@ -48,71 +51,71 @@
         {
 
             habits: 1,
-            date: new Date(2024, 9, 3),
+            date: new Date(2024, 10, 3),
             focusMins: 5 * 60 + 11
         },
         {
-            date: new Date(2024, 9, 18),
+            date: new Date(2024, 10, 18),
             focusMins: 5 * 60 + 11
         },
         {
-            date: new Date(2024, 9, 13),
+            date: new Date(2024, 10, 13),
             focusMins: 1 * 60 + 41
         },
         {
             habits: 1,
-            date: new Date(2024, 9, 28),
+            date: new Date(2024, 10, 28),
             focusMins: 2 * 60 + 34
         },
         {
             habits: 1,
-            date: new Date(2024, 9, 5),
+            date: new Date(2024, 10, 5),
             focusMins: 134
         },
         {
             habits: 0.4,
-            date: new Date(2024, 9, 6),
+            date: new Date(2024, 10, 6),
             focusMins: 563
         },
         {
             habits: 1,
-            date: new Date(2024, 9, 9),
+            date: new Date(2024, 10, 9),
             focusMins: 662
         },
         {
-            date: new Date(2024, 9, 10),
+            date: new Date(2024, 10, 10),
             focusMins: 52
         },
         {
             habits: 0.4,
-            date: new Date(2024, 9, 3),
+            date: new Date(2024, 10, 3),
             focusMins: 34
         },
         {
             habits: 0.9,
-            date: new Date(2024, 9, 16),
+            date: new Date(2024, 10, 16),
             focusMins: 271
         },
         {
-            date: new Date(2024, 9, 24),
+            date: new Date(2024, 10, 24),
             focusMins: 398
         },
         {
             habits: 0.4,
-            date: new Date(2024, 9, 26),
+            date: new Date(2024, 10, 26),
             focusMins: 281
         },
         {
-            date: new Date(2024, 9, 27),
+            date: new Date(2024, 10, 27),
             focusMins: 84
         },
         {
             habits: 0.6,
-            date: new Date(2024, 9, 31),
+            date: new Date(2024, 10, 31),
             focusMins: 441
         },
         {
-            date: new Date(2024, 9, 20),
+            date: new Date(2024, 10, 20),
             habits: 0.2,
             goals: [
                 {
@@ -124,7 +127,7 @@
             ]
         },
         {
-            date: new Date(2024, 9, 15),
+            date: new Date(2024, 10, 15),
             habits: 0.7,
             goals: [
                 {
@@ -136,7 +139,7 @@
             ]
         },
         {
-            date: new Date(2024, 9, 14),
+            date: new Date(2024, 10, 14),
             focusMins: 192,
             habits: 0.2,
             goals: [
@@ -153,7 +156,7 @@
             ]
         },
         {
-            date: new Date(2024, 9, 25),
+            date: new Date(2024, 10, 25),
             habits: 0.7,
             goals: [
                 {
@@ -174,7 +177,7 @@
             ]
         },
         {
-            date: new Date(2024, 9, 29),
+            date: new Date(2024, 10, 29),
             habits: 0.7,
             goals: [
                 {
@@ -215,6 +218,7 @@
 
 <div 
     class="acal"
+    class:acal--light={isLight}
     style:--GRID_WIDTH={`${gridWidth}px`}
     style:--GRID_HEIGHT={`${gridHeight}px`}
 >
@@ -243,8 +247,6 @@
 
             <div 
                 class="acal__day"
-                class:acal__day--has-img={img}
-                class:bg-img={img}
                 class:acal__day--first-col={dow === 0}
                 class:acal__day--last-col={dow === 6}
                 class:acal__day--bottom-row={idx >= 35}
@@ -284,7 +286,7 @@
                             {#if goals && goalsView === "list"}
                                 {#each goals.slice(0, show) as goal}
                                     {@const symbol = goal.tag.symbol}
-                                    {@const colors = getColorTrio(symbol.color, true)}
+                                    {@const colors = getColorTrio(symbol.color, isLight)}
                                     <div 
                                         class="acal__activity acal__goal"
                                         style:--tag-color-primary={symbol.color.primary}
@@ -311,7 +313,7 @@
                         class="acal__day-focus-time acal__activity"
                         title="focus time"
                     >
-                        <i class="fa-solid fa-stopwatch" style:opacity={0.15} ></i>
+                        <i class="fa-solid fa-stopwatch"></i>
                         <!-- <i>📌</i> -->
                         <span>
                             {minsToHHMM(activity.focusMins)}
@@ -325,18 +327,54 @@
 
 <style lang="scss">
     .acal {
-        margin-top: 14px;
+        margin-top: 0px;
         width: 100%;
-        height: 600px;
+        height: 630px;
+        max-width: 1050px;
 
-        --border-color: rgba(var(--textColor1), 0.035);
+        --border: 0.5px solid rgba(var(--textColor1), 0.05);
+        --dark-cell-col: rgba(var(--textColor1), 0.01);
+        --obscure-cell-opac: 0.1;
+        --txt-weight: 500;
+        
+        &--light {
+            --border: 1px solid rgba(var(--textColor1), 0.08);
+            --dark-cell-col: rgba(var(--textColor1), 0.04);
+            --obscure-cell-opac: 0.3;
+            --txt-weight: 600;
+        }
+        &--light &__days {
+            @include text-style(1, 600);
+        }
+        &--light &__day-num {
+            @include text-style(0.94, 500);
+        }
+        &--light &__day-ring {
+            @include text-style(0.94, 500);
+        }
+        &--light &__activity {
+            background-color: rgba(var(--textColor1), 0.05);
 
+            span {
+                font-weight: 500;
+            }
+        }
+        &--light &__goal-cutoff {
+            @include text-style(0.7);
+        }
+        &--light &__day-focus-time i {
+            opacity: 0.25;
+        }
+
+        &__dow {
+            text-align: center;
+        }
         &__days {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             font-weight: bold;
             height: 30px;
-            @include text-style(0.65, 500, 1.15rem);
+            @include text-style(0.65, 500, 1.25rem);
         }
         &__grid {
             display: grid;
@@ -346,10 +384,10 @@
             width: 100%;
         }
         &__day {
-            padding: 4px 5px 2.5px 4px;
-            background-color: rgba(white, 0.005);
-            border-top: 0.5px solid var(--border-color);
-            border-left: 0.5px solid var(--border-color);
+            padding: 5px 5px 3px 5px;
+            // background-color: rgba(white, 0.009);
+            border-top: var(--border);
+            border-left: var(--border);
             height: calc(var(--GRID_HEIGHT) / 6);
             width: calc(var(--GRID_WIDTH) / 7);
             @include flex-col;
@@ -370,21 +408,18 @@
                 height: 100%;
                 width: 1px;
             }
-            &--has-img {
-                // border: none !important;
-            }
             &--first-col {
-                background-color: rgba(white, 0.012);
+                background-color: var(--dark-cell-col);
             }
             &--last-col {
-                border-right: 0.5px solid var(--border-color);
-                background-color: rgba(white, 0.012);
+                border-right: var(--border);
+                background-color: var(--dark-cell-col);
             }
             &--bottom-row {
-                border-bottom: 0.5px solid var(--border-color);
+                border-bottom: var(--border);
             }
             &--not-curr-month &-num {
-                opacity: 0.1;
+                opacity: var(--obscure-cell-opac);
             }
             &--today &-num {
                 background-color: #FF5151;
@@ -392,90 +427,76 @@
                 @include circle(20px);
             }
         }
-        // &__day--has-img::before,
-        // &__day--has-img::after {
-        //     display: block;
-        // }
-        // &__day--has-img &__day-ring i {
-        //     color: rgba(var(--textColor1), 0.4); 
-        // }
-        // &__day--has-img &__activity {
-        //     background: rgba(40, 40, 40, 0.55);
-        //     backdrop-filter: blur(4px);
-        //     -webkit-backdrop-filter: blur(4px);
-        //     transition: 0.01s ease-in-out;
-
-        //     &:hover {
-        //         background: rgba(40, 40, 40, 0.85) !important;
-        //     }
-        // }
-        &__day-num {
-            @include text-style(1, 300, 1.1rem, "DM Sans");
-            @include circle(16px);
-            @include center;
-            margin: 0px 0px 6px 0px;
-        }
         &__day-ring {
-            @include abs-top-right(7px, 7px);
+            @include abs-top-right(8px, 7px);
 
             i {
                 color: rgba(var(--textColor1), 0.1); 
                 font-size: 0.9rem;
             }
         }
+        &__day-num {
+            @include text-style(1, 200, 1.25rem, "DM Mono");
+            @include circle(16px);
+            @include center;
+            margin: 0px 0px 6px 0px;
+        }
         &__activity {
             width: calc(100% - 3px);
             padding: 3.5px 2px 4px 5px;
-            border-radius: 5px;
-            background-color: rgba(var(--textColor1), 0.07);
+            border-radius: 7px;
+            background-color: rgba(var(--textColor1), 0.05);
             white-space: nowrap;
             margin: 0px 0px 2px 2px;
             margin-top: 2px;
             @include flex(center);
             cursor: pointer;
 
-            &:hover {
-                background-color: rgba(var(--textColor1), 0.05);
-            }
             i {
                 font-style: normal;
-                font-size: 0.8rem;
-                margin-right: 6px;
+                font-size: 1rem;
+                margin-right: 7px;
             }
             span {
-                @include text-style(1, 400, 1rem, "DM Mono");
+                @include text-style(0.96, 400, 1.15rem, "DM Sans");
                 @include elipses-overflow;
-                opacity: 0.95;
             }
         }
+        /* goal activcity */
         &__goal {
-            background-color: rgba(var(--tag-color-2), 0.125) !important;
             overflow: hidden;
             position: relative;
             padding: 1.5px 6px 2px 12px;
+            background-color: rgba(var(--tag-color-2), 1) !important;
 
             &:before {
                 content: " ";
                 height: 10px;
                 width: 2.5px;
                 border-radius: 10px;
-                background-color: rgba(var(--tag-color-primary), 1);
+                background-color: rgba(var(--tag-color-1), 1);
                 @include abs-top-left(4px, 4px);
             }
             span {
-                @include text-style(_, 400, 1.1rem, "DM Sans");
-                color: rgba(var(--tag-color-primary), 1);
+                @include text-style(_, _, 1.18rem, "Manrope");
+                font-weight: var(--txt-weight) !important;
+                color: rgba(var(--tag-color-1), 1);
             }
         }
         &__goal-cutoff {
-            @include text-style(0.2, 500, 1.1rem, "Manrope");
+            @include text-style(0.2, var(--txt-weight), 1.1rem, "Manrope");
             margin: 5px 0px 0px 4px;
         }
+        /* focus activity */
         &__day-focus-time {
-            @include text-style(1, 400, 1rem, "DM Mono");
+            @include text-style(1, 500, 1.1rem, "DM Mono");
             width: min-content;
             padding-right: 10px;
             background-color: none !important;
+
+            i {
+                opacity: 0.14;
+            }
         }
         &__day-activity {
             margin-top: 7px;

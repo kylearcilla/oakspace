@@ -6,6 +6,7 @@
 	import TasksList from "../../components/TasksList.svelte"
     
     export let manager: TasksViewManager
+    export let newTaskFlag: boolean
     
     let todoListContainer: HTMLElement
     let tasks = manager.currTasks
@@ -13,7 +14,6 @@
     $: store = manager.store
     $: todoistLinked = $store.todoistLinked
     $: onTodoist = $store.onTodoist
-    $: console.log({ tasks })
 
     export function tasksSettingsHandler(option: string) {
         if (option === "Refresh Sync") {
@@ -35,67 +35,48 @@
         class="tasks__todo-list-container"
         bind:this={todoListContainer}
     >
-        {#key tasks}
-            <TasksList
-                options={{
-                    id: "todos",
-                    handlers: {
-                        onTaskUpdate: manager.onTaskUpdate,
-                        onAddTask: manager.onAddTask,
-                        onDeleteTask: manager.onDeleteTask
+        <TasksList
+            {newTaskFlag}
+            options={{
+                id: "todos",
+                tasks,
+                handlers: {
+                    onTaskUpdate: manager.onTaskUpdate,
+                    onAddTask: manager.onAddTask,
+                    onDeleteTask: manager.onDeleteTask
+                },
+                settings: {
+                    reorder: !todoistLinked,
+                    allowDuplicate: !onTodoist,
+                    removeOnComplete: todoistLinked,
+                    progress: !todoistLinked ? "perc" : "count",
+                    addBtn: { 
+                        doShow: false
                     },
-                    settings: {
-                        reorder: !todoistLinked,
-                        allowDuplicate: !onTodoist,
-                        removeOnComplete: todoistLinked,
-                        progress: !todoistLinked ? "perc" : "count"
+                },
+                styling: {
+                    task: {
+                        padding: "8px 0px 13px 0px"
                     },
-                    tasks,
-                    containerRef: todoListContainer,
-                    styling: {
-                        task: { 
-                            fontSize: "1.21rem",
-                            fontWeight: "500",
-                            opacity: 0.74,
-                            padding: "8px 0px 13px 0px"
-                        },
-                        subtask: { 
-                            fontSize: "1.2rem",
-                            fontWeight: "500",
-                            padding: "5px 0px 8px 0px",
-                            opacity: 0.65
-                        },
-                        description: { 
-                            margin: "6px 0px 7px 0px", 
-                            fontSize: "1.2rem",
-                            fontWeight: "500",
-                            opacity: 0.54
-                        },
-                        checkbox: {
-                            width: "11px",
-                            borderRadius: "2px",    
-                            height: "11px",
-                            margin: "1px 12px 0px 17px"
-                        }
+                    subtask: {
+                        padding: "5px 0px 8px 0px",
                     },
-                    addBtn: {
-                        style: { 
-                            fontSize: "1.25rem"
-                        },
-                        pos: "top"
+                    description: { 
+                        margin: "6px 0px 12px 0px"
                     },
-                    contextMenuOptions: { 
-                        width: "170px" 
-                    },
-                    ui: { 
-                        sidePadding: "17px", 
-                        showDragHandle: false,
-                        hasTaskDivider: false,   
-                        listHeight: "100%"
+                    checkbox: {
+                        borderRadius: "0px",
+                        margin: "1px 12px 0px 10px"
                     }
-                }}
-            />
-        {/key}
+                },
+                ui: { 
+                    maxHeight: "550px",
+                    sidePadding: "12px",
+                    hasTaskDivider: true
+                },
+                containerRef: todoListContainer,
+            }}
+        />
     </div>
 
     <div class="tasks__todoist">
@@ -119,10 +100,8 @@
     @import "../../scss/tasks.scss";
 
     .tasks {
-        height: calc(100% - 40px);
         width: 100%;
         border-radius: 10px;
-        margin: 12px 0px 0px 0px;
         position: relative;
 
         &--on-todoist &__todo-list-container {

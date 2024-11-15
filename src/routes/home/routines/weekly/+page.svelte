@@ -416,7 +416,7 @@
     }
 
     function onOpenDailyRoutinesList() {
-        const settingsRef = getElemById("day-breakdown-settings--dropdown-menu")
+        const settingsRef = getElemById("day-breakdown-settings--dmenu")
         if (!settingsRef) return
         
         dailyRoutinesOpen = true
@@ -770,7 +770,7 @@
                         />
                     {/key}
                     <button 
-                        class="routine__wk-routines-add-btn"
+                        class="routine__wk-routines-addbtn"
                         on:click={() => openNewRoutineModal = true}
                     >
                         <SvgIcon icon={Icon.Add} options={{ scale: 1, strokeWidth: 1.7 }} />
@@ -782,7 +782,7 @@
             </div>
             <!-- Week Routines List  -->
             <BounceFade
-                id="wk-routines-list--dropdown-menu"
+                id="wk-routines-list--dmenu"
                 isHidden={!isWkRoutinesOpen}
                 styling={{ height: "100%" }}
                 isAnim={isMin}
@@ -794,7 +794,7 @@
             >
                 <ul 
                     class="routine__wk-routines-list"
-                    class:dropdown-menu={isMin}
+                    class:dmenu={isMin}
                     style:--routines-dropdown-max-height={`${isMin ? "auto" : "calc(100% - 80px)"}`}
                 >
                     {#each WEEK_ROUTINES as weekRoutine, idx}
@@ -878,8 +878,8 @@
                     class:week-view__view-options--open={viewOptionOpen}
                 >
                     <button 
-                        id="view-option--dropdown-btn"
-                        class="week-view__view-options-dropdown-btn"
+                        id="view-option--dbtn"
+                        class="week-view__view-options-dbtn"
                         disabled={editContext === "duplicate" || editContext === "lift"}
                         on:click={() => viewOptionOpen = !viewOptionOpen}
                     >
@@ -936,8 +936,8 @@
                                     }
                                 >
                                     <button 
-                                        id={`day-breakdown--${idx}--dropdown-btn`}
-                                        class="week-view__days-dropdown-btn" 
+                                        id={`day-breakdown--${idx}--dbtn`}
+                                        class="week-view__days-dbtn" 
                                         disabled={!weekRoutine}
                                         on:click={() => setBreakdownForDay(idx)}
                                     >
@@ -1341,7 +1341,7 @@
                 </div>
                 <!-- Day Breakdown Dropdown  -->
                 <BounceFade
-                    id="day-breakdown--dropdown-menu"
+                    id="day-breakdown--dmenu"
                     isHidden={!isDayBreakdownOpen}
                     onDismount={closeDayBreakdown}
                     position={{ 
@@ -1355,14 +1355,14 @@
                 >
                     {@const isLinked = dayBreakdown?.linkedRoutine != null}
                     <div 
-                        class="week-view__day-breakdown dropdown-menu"
+                        class="week-view__day-breakdown dmenu"
                         class:week-view__day-breakdown--unlinked={!isLinked}
                         style:width={`${DAY_DROPDOWN_WIDTH}px`}
                     >
                         <!-- Header -->
                         <button 
                             class="week-view__day-breakdown-settings-btn"
-                            id={"day-breakdown-settings--dropdown-btn"}
+                            id={"day-breakdown-settings--dbtn"}
                             on:click={() => onDayBreakdownSettingsClicked(isLinked)}
                         >
                             <SvgIcon icon={Icon.Settings} options={{ scale: 0.88 }} />
@@ -1610,8 +1610,8 @@
         height: 100%;
         display: flex;
 
-        &--dark .dropdown-menu {
-            @include dropdown-menu-dark;
+        &--dark .dmenu {
+            @include dmenu--light;
         }
         /* Light Mode */
         &--light &__details-chosen-routine {
@@ -1801,7 +1801,7 @@
                 opacity: 0.3;
             }
         }
-        &__wk-routines-add-btn {
+        &__wk-routines-addbtn {
             opacity: 0;
             transition: 0.1s ease-in-out;
             padding: 3px;
@@ -1900,16 +1900,16 @@
         height: 100%;
         @include abs-top-left;
 
-        &--light &__view-options-dropdown-btn {
+        &--light &__view-options-dbtn {
             @include text-style(0.4, 500);
         }
-        &--light &__view-options-dropdown-btn:hover {
+        &--light &__view-options-dbtn:hover {
             @include text-style(0.7);
         }
         &--light &__header {
             border-bottom: 1px solid rgba(var(--textColor1), 0.08);
         }
-        &--light &__days-dropdown-btn {
+        &--light &__days-dbtn {
             @include text-style(1, 500);
         }
         &--light &__day-breakdown-unlinked {
@@ -1944,7 +1944,7 @@
                 opacity: 0.5 !important;
             }
         }
-        &__view-options-dropdown-btn {
+        &__view-options-dbtn {
             @include text-style(0.2, 400, 1.04rem, "DM Sans");
             position: relative;
             transition: 0.01s ease-in-out;
@@ -2017,7 +2017,7 @@
                 transform: rotate(-180deg);
             }
         }
-        &__days-dropdown-btn {
+        &__days-dbtn {
             position: relative;
             padding: 4px 4px;
             @include text-style(0.8, 400, 1.2rem, "DM Sans");

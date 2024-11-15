@@ -124,7 +124,7 @@ test.describe("making a single routine", () => {
         })
     })
     test('no name enter visible', async ({ page }) => {
-        await page.locator('.routine__wk-routines-add-btn').dispatchEvent("click")
+        await page.locator('.routine__wk-routines-addbtn').dispatchEvent("click")
 
         await makeRoutine({ page, })
         await expect(page.locator('form')).toContainText('Title is empty')
@@ -199,7 +199,7 @@ test.describe("making a single routine", () => {
     test('title + description update', async ({ page }) => {
         if (!await emptyTestData(page)) return
 
-        await page.locator('.routine__wk-routines-add-btn').dispatchEvent("click")
+        await page.locator('.routine__wk-routines-addbtn').dispatchEvent("click")
         await makeRoutine({ page, title: "Old Title", description: "Old Description" })
 
         await fillInput({ 
@@ -2458,7 +2458,7 @@ test.describe("duplicate edits", () => {
         await expect(page.locator('.routine-blocks__dup-cancel')).toBeAttached()
 
         /* ensure cannot switch views  */
-        await page.locator('#view-option--dropdown-btn').isDisabled()
+        await page.locator('#view-option--dbtn').isDisabled()
 
         await page.keyboard.press('Digit1')
         let days = page.locator('.week-view__days-day')
@@ -3113,10 +3113,10 @@ test.describe("modal Edits", () => {
     
         /* changes are saved */
         await blockElem.click()
-        await page.locator('#color-picker--dropdown-btn').click()
+        await page.locator('#color-picker--dbtn').click()
         await page.locator(`.color-picker__grid > div:nth-child(${colorIdx + 1})`).first().click()
 
-        await page.locator('#color-picker--dropdown-btn').click();
+        await page.locator('#color-picker--dbtn').click();
 
         await expectComputedStyle({ 
             prop: "background-color",
@@ -3350,12 +3350,12 @@ test.describe("modal Edits", () => {
         
         /* items are saved properly */
         await page.getByRole('button', { name: '🎒 School' }).click()
-        await page.locator('#tag-picker--dropdown-menu').getByRole('button', { name: '🍖 Cooking' }).click()
+        await page.locator('#tag-picker--dmenu').getByRole('button', { name: '🍖 Cooking' }).click()
 
         await closeEditBlockModal({ page, doSave: true })
 
         await blockElem.click()
-        await expect(page.locator('#tag-picker--dropdown-btn')).toContainText('Cooking')
+        await expect(page.locator('#tag-picker--dbtn')).toContainText('Cooking')
     })
     test("core changes", async ({ page }) => {
         let blockElem = getBlockElem("0--1", page)
@@ -3368,7 +3368,7 @@ test.describe("modal Edits", () => {
         await closeEditBlockModal({ page, doSave: true })
 
         await blockElem.click()
-        await expect(page.locator('#core-dropdown--dropdown-btn')).toContainText('Mind');
+        await expect(page.locator('#core-dropdown--dbtn')).toContainText('Mind');
     })
     test("time changes - valid", async ({ page }) => {
         const { container } = await getContainerData(page)
@@ -3596,7 +3596,7 @@ test.describe("core updates", () => {
 
         /* daily */
         await page.getByRole('button', { name: 'Mondays' }).click()
-        container = page.locator('#day-breakdown--dropdown-menu')
+        container = page.locator('#day-breakdown--dmenu')
 
         // monday
         await expectCoreBreakdown({
@@ -3606,7 +3606,7 @@ test.describe("core updates", () => {
 
         // tuesday
         await page.getByRole('button', { name: 'Tuesdays' }).click()
-        container = page.locator('#day-breakdown--dropdown-menu')
+        container = page.locator('#day-breakdown--dmenu')
 
         await expectCoreBreakdown({
             container,
@@ -3615,7 +3615,7 @@ test.describe("core updates", () => {
 
         // saturday
         await page.getByRole('button', { name: 'Saturday' }).click()
-        container = page.locator('#day-breakdown--dropdown-menu')
+        container = page.locator('#day-breakdown--dmenu')
 
         await expectCoreBreakdown({
             container,
@@ -3625,7 +3625,7 @@ test.describe("core updates", () => {
         // saturday in FSS view
         await switchWeekView(page, "F S S")
         await page.getByRole('button', { name: 'Sat' }).click()
-        container = page.locator('#day-breakdown--dropdown-menu')
+        container = page.locator('#day-breakdown--dmenu')
 
         await expectCoreBreakdown({
             container,
@@ -3644,7 +3644,7 @@ test.describe("core updates", () => {
 
         /* daily */
         await page.getByRole('button', { name: 'Mondays' }).click()
-        container = page.locator('#day-breakdown--dropdown-menu')
+        container = page.locator('#day-breakdown--dmenu')
 
         // monday
         await expectCoreBreakdown({

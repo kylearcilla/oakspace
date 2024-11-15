@@ -102,7 +102,7 @@ export const sereneCollections: DiscoverCollection = {
             description: "Relaxed vibes for the gamers out there."
         },
         {
-            name: "The Best of Soul",
+            name: "The Best of Neo Soul",
             author: "Somara",
             authorUrl: "",
             artworkImgSrc: "https://i.pinimg.com/564x/06/cf/8b/06cf8b45fdf9375b67c31f64b69a9e50.jpg",

@@ -34,7 +34,6 @@
     $: categoriesListGradient = $musicSettingsManager?.categoriesListGradient
 
     let hasCollectionItemsLoaded = true
-    let isHoverOverArt = false
     let isLogInDropdownOpen = false
     let isSettingsOpen = false
 
@@ -108,7 +107,7 @@
                 { name: "Log out" }
             ]}
             <button 
-                id="music-user--dropdown-btn"
+                id="music-user--dbtn"
                 class="music__user-tab"
                 on:click={onLogInClicked}
             >
@@ -172,8 +171,6 @@
                                     <div 
                                         class="now-playing__artwork"
                                         class:now-playing__artwork--empty={!artwork}
-                                        on:pointerenter={() => isHoverOverArt = artist && true}
-                                        on:pointerleave={() => isHoverOverArt = false}
                                     >
                                         <img 
                                             src={getMediaImgSrc(artwork)}
@@ -182,40 +179,27 @@
                                         <i class="fa-solid fa-music abs-center"></i>
                                     </div>
                                     <div class="now-playing__details">
-                                        {#if mediaCollection.url}
-                                            <a class="now-playing__title" href={mediaCollection.url} target="_blank" rel="noreferrer">
-                                                {mediaCollection.name}
-                                            </a>
-                                        {:else}
-                                            <div class="now-playing__title">
-                                                {mediaCollection.name}
-                                            </div>
-                                        {/if}
-
                                         <div class="now-playing__details-header">
+                                            {#if mediaCollection.url}
+                                                <a class="now-playing__title" href={mediaCollection.url} target="_blank" rel="noreferrer">
+                                                    {mediaCollection.name}
+                                                </a>
+                                            {:else}
+                                                <div class="now-playing__title">
+                                                    {mediaCollection.name}
+                                                </div>
+                                            {/if}
                                             <button
-                                                id="now-playing--dropdown-btn"
+                                                id="now-playing--dbtn"
                                                 class="now-playing__settings-btn"
                                                 on:click={() => isSettingsOpen = !isSettingsOpen}
                                             >
                                                 <SvgIcon icon={Icon.Settings} />                                            
                                             </button>
-                                            {#if description || fullColumn}
-                                                <span 
-                                                    class="now-playing__author"
-                                                    class:not-visible={isHoverOverArt}
-                                                    class:visible={!isHoverOverArt}
-                                                >
+                                            {#if mediaCollection.author != "Somara" && (description || fullColumn)}
+                                                <div class="now-playing__author">
                                                     {mediaCollection.author}
-                                                </span>
-                                            {/if}
-                                            {#if artist}
-                                                <span 
-                                                    class="now-playing__artist-credit"
-                                                    class:now-playing__artist-credit--active={isHoverOverArt}
-                                                >
-                                                    Art by {artist}
-                                                </span>
+                                                </div>
                                             {/if}
                                         </div>
                                         
@@ -226,7 +210,11 @@
                                         >
                                             {@html description ? description : fullColumn ? "" : mediaCollection.author}
                                         </p>
-
+                                        {#if artist}
+                                            <span class="now-playing__artist-credit">
+                                                Art by {artist}
+                                            </span>
+                                        {/if}
                                     <DropdownList 
                                         id={"now-playing"}
                                         isHidden={!isSettingsOpen} 
@@ -500,7 +488,7 @@
     $top-row-height: 170px;
     $bottom-row-height: 470px;
     $lib-section-padding-left: 25px;
-    $lib-dropdown-menu-width: 155px;
+    $lib-dmenu-width: 155px;
 
     .music {
         width: 90vw;
@@ -568,8 +556,8 @@
                 font-weight: 500;
             }
         }
-        &--dark .dropdown-menu {
-            @include dropdown-menu-dark;
+        &--dark .dmenu {
+            @include dmenu--light;
 
         }
         &--dark .img-bg {
@@ -643,7 +631,7 @@
             color: rgba(var(--textColor1), 0.4) !important;
         }
         a {
-            display: inline-block;
+            display: block;
             @include elipses-overflow;
         }
         &__settings-btn {
@@ -665,21 +653,19 @@
             padding-bottom: 3px;
         }
         &__details-header {
-            @include flex(center, space-between);
-            height: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 3px;
         }
         &__artwork {
             z-index: 1;
             margin-right: 15px;
             position: relative;
-            background-color: var(--hoverColor2);
+            background-color: var(--lightColor2);
             @include flex(center, center);
             width: 120px;
             height: 120px;
             object-fit: cover;
             aspect-ratio: 1 / 1;
-            border-radius: 7px;
+            border-radius: 0px;
             overflow: hidden;
             margin: 25px auto 20px auto;
             
@@ -703,23 +689,16 @@
             }
         }
         &__artist-credit {
+            margin-top: 13px;
             transition: opacity 0.2s ease-in-out;
-            color: rgba(white, 0.5);
+            color: rgba(white, 0.2);
             @include text-style(_, 500, 1.1rem);
-            @include not-visible;
-            @include abs-top-left;
-            width: 0px;
-            
-            &--active {
-                @include visible;
-                transition-delay: 0.2s;
-                width: auto;
-            }
         }
         &__author {
             color: rgba(white, 0.55);
             text-transform: capitalize;
             transition: opacity 0.2s ease-in-out;
+            margin-bottom: 10px;
             @include text-style(_, 500, 1.2rem);
             @include elipses-overflow;
         }
@@ -881,7 +860,7 @@
             width: 100%;
 
             &--chosen {
-                background-color: var(--hoverColor2) !important;
+                background-color: var(--lightColor2) !important;
             }
             &--skeleton &-details {
                 width: 60%;
@@ -907,10 +886,10 @@
             }
 
             &:focus {
-                background-color: var(--hoverColor);
+                background-color: var(--lightColor);
             }
             &:hover {
-                background-color: var(--hoverColor);
+                background-color: var(--lightColor);
             }
             .divider {
                 @include abs-bottom-left(0px, 25px);
@@ -986,14 +965,14 @@
             }
 
             &:focus {
-                background-color: var(--hoverColor);
+                background-color: var(--lightColor);
             }
             &:hover {
-                background-color: var(--hoverColor);
+                background-color: var(--lightColor);
             }
 
             &--chosen {
-                background-color: var(--hoverColor);
+                background-color: var(--lightColor);
             }
             &--skeleton &-idx {
                 opacity: 0.03;
@@ -1021,7 +1000,7 @@
             width: 40px;
             height: 40px;
             margin: 0px 15px 0px 2px;
-            background-color: var(--hoverColor2);
+            background-color: var(--lightColor2);
             box-shadow: var(--shadowVal);
             position: relative;
             
@@ -1067,18 +1046,18 @@
             @include abs-top-right(42px, 10px);
         }
         &__library-dropdown {
-            width: $lib-dropdown-menu-width;
+            width: $lib-dmenu-width;
             @include abs-top-right(0px, -5px);
 
             &:last-child {
-                width: $lib-dropdown-menu-width - 10px;
+                width: $lib-dmenu-width - 10px;
                 @include abs-top-right(0px, -18px);
             }
         }
         &__library-options-dropdown-container {
-            @include abs-top-right(0px, calc(($lib-dropdown-menu-width - 20px) * -1));
+            @include abs-top-right(0px, calc(($lib-dmenu-width - 20px) * -1));
             position: relative;
-            width: calc($lib-dropdown-menu-width - 10px);
+            width: calc($lib-dmenu-width - 10px);
             height: 170px;
             z-index: 10000;
             // background-color: red;

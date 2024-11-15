@@ -30,7 +30,7 @@ export class GoogleCalendarManager {
     ACTIVE_TOKEN_THRESHOLD_SECS = 60
 
     constructor() {
-        this.localCalenderDataFromPrevSession()
+        this.localCalendarDataFromPrevSession()
     }
 
     async init() {
@@ -365,7 +365,7 @@ export class GoogleCalendarManager {
         }))
     }
 
-    localCalenderDataFromPrevSession() {
+    localCalendarDataFromPrevSession() {
         const data = localStorage.getItem("google-calendar")
         if (!data) return
 

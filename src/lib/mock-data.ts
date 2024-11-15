@@ -122,8 +122,9 @@ export const TEST_GOALS: Goal[] = [
     tag: TEST_TAGS[0],
     creationDate: new Date("2024-01-15"),
     status: "in-progress",
-    order: {
-     progress: 0
+    bOrder: {
+     status: 0,
+     tag: 0
     },
     milestones: [
       {
@@ -157,8 +158,9 @@ export const TEST_GOALS: Goal[] = [
     creationDate: new Date("2024-02-10"),
     status: "in-progress",
     imgSrc: "https://i.pinimg.com/564x/85/3a/9d/853a9dff815bfa3c458d2f60c2dd929f.jpg",
-    order: {
-     progress: 1
+    bOrder: {
+     status: 1,
+     tag: 0
     },
     milestones: [
       {
@@ -202,69 +204,70 @@ export const TEST_GOALS: Goal[] = [
     creationDate: new Date("2024-01-01"),
     status: "not-started",
     imgSrc: "https://i.pinimg.com/enabled/564x/34/84/0a/34840a5cb9734c02dc1aa919c99afe31.jpg",
-    order: {
-     progress: 0
+    bOrder: {
+     status: 0,
+     tag: 0
     },
     milestones: [
       {
         name: "The Hobbit",
         done: false,
-        idx: 1
+        idx: 0
       },
       {
         name: "Eleanor Oliphant Is Completely Fine",
         done: false,
-        idx: 2
+        idx: 1
       },
       {
         name: "Where the Crawdads Sing",
         done: false,
-        idx: 3
+        idx: 2
       },
       {
         name: "Pride and Prejudice",
         done: false,
-        idx: 4
+        idx: 3
       },
       {
         name: "The Night Circus",
         done: false,
-        idx: 5
+        idx: 4
       },
       {
         name: "A Man Called Ove",
         done: false,
-        idx: 6
+        idx: 5
       },
       {
         name: "Little Fires Everywhere",
         done: false,
-        idx: 7
+        idx: 6
       },
       {
         name: "The Great Gatsby",
         done: false,
-        idx: 8
+        idx: 7
       },
       {
         name: "Normal People",
         done: false,
-        idx: 9
+        idx: 8
       },
       {
         name: "Big Little Lies",
         done: false,
-        idx: 10
+        idx: 9
       },
       {
         name: "The Fellowship of the Ring",
         done: false,
-        idx: 11
+        idx: 10
       },
       {
         name: "The Rosie Project",
         done: false,
-        idx: 12
+        idx: 11
       }
     ]
   },
@@ -276,8 +279,9 @@ export const TEST_GOALS: Goal[] = [
     tag: TEST_TAGS[3],
     creationDate: new Date("2024-03-01"),
     status: "accomplished",
-    order: {
-     progress: 0
+    bOrder: {
+     status: 0,
+     tag: 0
     }
   },
   {
@@ -286,8 +290,9 @@ export const TEST_GOALS: Goal[] = [
     creationDate: new Date("2024-01-01"),
     status: "not-started",
     tag: TEST_TAGS[8],
-    order: {
-     progress: 1
+    bOrder: {
+     status: 1,
+     tag: 0
     }
   },
 ]

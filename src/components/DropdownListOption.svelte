@@ -11,8 +11,8 @@
 </script>
 
 <li 
-    class="dropdown-menu__option"
-    class:dropdown-menu__option--selected={pickedItem === name || pickedItem === idx}
+    class="dmenu__option"
+    class:dmenu__option--selected={pickedItem === name || pickedItem === idx}
     data-optn-idx={idx}
     on:pointerenter={option.onPointerOver}
     on:pointerleave={(e) => {
@@ -22,7 +22,7 @@
     }}
 >
     <button 
-        class="dropdown-menu__option-btn" 
+        class="dmenu__option-btn" 
         on:click={(e) => onOptionClicked(e, idx, name)}
     >
         {#if leftIcon}
@@ -31,7 +31,7 @@
                 icon={leftIcon}
             />
         {/if}
-        <span class="dropdown-menu__option-text">
+        <span class="dmenu__option-text">
             {name}
         </span>
         {#if rightIcon || pickedItem}

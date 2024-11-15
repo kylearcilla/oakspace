@@ -12,7 +12,7 @@ $hour-block-height: 50px;
     overflow: scroll;
 
     &--light &__block span {
-        @include text-style(0.45, 500);
+        @include text-style(0.75, 500);
     }
 
     &-container {
@@ -36,7 +36,7 @@ $hour-block-height: 50px;
         left: -5px;
     }
     &__block span {
-        @include text-style(0.3, 300, 1rem, "DM Sans");
+        @include text-style(0.2, 300, 1.15rem, "DM Sans");
         white-space: nowrap;
         display: block;
         height: 11px;
@@ -103,7 +103,7 @@ $hour-block-height: 50px;
 
 .now-line {
     position: absolute;
-    background-color: #D04149;
+    background-color: #FF5151;
     height: 1.5px;
     border-radius: 4px;
     width: 100%;
@@ -115,7 +115,7 @@ $hour-block-height: 50px;
     }
     &__content::before {
         content: " ";
-        background-color: #D04149;
+        background-color: #FF5151;
         @include abs-top-left(50%, 0px);
         height: 7px;
         width: 2.5px;

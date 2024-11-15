@@ -21,10 +21,10 @@
     }
 </script>
 
-<div class:dropdown-menu__option-right-icon-container={!left}>
+<div class:dmenu__option-right-icon-container={!left}>
     <div 
-        class={`dropdown-menu__option-icon dropdown-menu__option-icon--${type}`}
-        class:dropdown-menu__option-icon--left={left}
+        class={`dmenu__option-icon dmenu__option-icon--${type}`}
+        class:dmenu__option-icon--left={left}
         style={`${inlineStyling(icon?.styling)}`}
     >
         <!-- Check -->

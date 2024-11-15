@@ -331,9 +331,7 @@ type AsyncFunc = ((...args: any[]) => Promise<any>)
 type AppearanceSectionToThemeMap = { 
     default: DefaultTheme[], 
     light: ColorTheme[],
-    dark: ColorTheme[],
-    image: ImageTheme[],
-    video: VideoTheme[]
+    dark: ColorTheme[]
 }
 
 type LogoContainerOptions = {
@@ -648,7 +646,6 @@ type TaskListHandlers = {
 type TasksListOptions = {
     id: string
     tasks: Task[]
-    isCreatingNewTask?: boolean
     containerRef: HTMLElement
     handlers?: TaskListHandlers
     settings?: {
@@ -659,6 +656,19 @@ type TasksListOptions = {
         reorder?: boolean
         removeOnComplete?: boolean
         progress?: "perc" | "count"
+        maxTitleLines?: number
+        maxDescrLines?: number
+        max?: number,
+        subtaskMax?: number,
+        maxToastMsg?: string
+        subtaskMaxToastMsg?: string
+        addBtn?: {
+            iconScale?: number,
+            doShow?: boolean,
+            style?: StylingOptions,
+            text?: string,
+            pos?: "top" | "bottom",
+        }
     }
     styling?: {
         list?: StylingOptions
@@ -670,34 +680,14 @@ type TasksListOptions = {
         descriptionInput?: { fontSize: CSSREMVal }
     }
     ui?: {
+        maxHeight?: string
         showDragHandle?: boolean
         sidePadding?: CSSUnitVal
         hasTaskDivider?: boolean
         listHeight?: CSSUnitVal
+        contextMenuWidth?: CSSUnitVal
+        checkboxDim?: string
     }
-    cssVariables?: {
-        checkBoxFill?: string
-        checkBoxEmpty?: string
-        checkIcon?: string
-        taskBgColor?: string
-        taskHoverBgColor?: string
-        floatingItemBgColor?: string
-        maxTitleLines?: number
-        maxDescrLines?: number
-    },
-    addBtn?: {
-        iconScale?: number,
-        doShow?: boolean,
-        style?: StylingOptions,
-        text?: string,
-        pos?: "top" | "bottom",
-    }
-    dragAndDrop?: DragAndDropHandler
-    contextMenuOptions: ContextMenuOptions
-    max?: number,
-    subtaskMax?: number,
-    maxToastMsg?: string
-    subtaskMaxToastMsg?: string
 }
 
 type TaskListType = "numbered" | "tasks-linked" | "subtasks-linked" | "subtasks"
@@ -1102,8 +1092,9 @@ type Goal = {
   milestones?: Milestone[]
   imgSrc?: string
   isPinned?: boolean
-  order: { 
-    progress: number
+  bOrder: { 
+    status: number
+    tag: number
   }
 }
 
@@ -1213,8 +1204,6 @@ type TagMonthlyActivity = {
 type ThemeState = {
     title: string
     isDarkTheme: boolean
-    themeToggleBtnIconColor: string
-    twinTheme: { sectionName: keyof AppearanceSectionToThemeMap, index: number } | null
 }
 
 interface Theme {
@@ -1225,49 +1214,24 @@ interface Theme {
 interface ColorTheme extends Theme {
     colorPalette: string[]
     styling: ColorThemeProps
-    twinTheme: { sectionName: keyof AppearanceSectionToThemeMap, index: number } | null
 }
 
 interface DefaultTheme extends ColorTheme {
     thumbnailImgSrc: string
 }
 
-interface ImageTheme extends Theme {
-    fullImgSrc: string
-    thumbnailImgSrc: string
-    artist: string
-}
-
-interface VideoTheme extends Theme {
-    vidSrc: string
-    thumbnailSrc: string
-    channelName: string
-}
-
 type ColorThemeProps = {
     isDark: boolean
-    hasTwin: boolean
-    backgroundOne: string
-    backgroundTwo: string
-    backgroundThree: string
+    bg1: string
+    bg2: string
+    bg3: string
     fgColor1: string
     fgColor2: string
-    sessionBgColor: string
-    sessionBorderVal: string
-    sessionShadowVal: string
     textColor1: string
     textColor2: string
-    hoverColor: string
-    hoverColor2: string
-    hoverColor3: string
-    tabColor: string
-    tabHighlightColor: string
-    tabHighlightBoxShadow: string
-    headerBgColor: string
-    headerBorder: string
-    headerBoxShadow: string
-    headerTextColor: string
-    headerIconColor: string
+    lightColor: string
+    lightColor2: string
+    lightColor3: string
     modalBgAccentColor: string
     modalBgColor: string
     bentoBoxBgColor: string
@@ -1276,23 +1240,16 @@ type ColorThemeProps = {
     muiscPlayerBgColor: string
     musicProgressFgColor: string
     navMenuBgColor: string
-    navIconColor: string
-    navIconBgColor: string
+    navBtnColor: string
+    navBtnBgColor: string
     navMenuBorder: string
-    navMenuBoxShadow: string
+    minNavBtnColor: string
+    minNavBtnBgColor: string
     sessionBlockColor: string
-    themeToggleBtnBgColor: string
-    iconToggleBtnBgColor: string
-    highlighterToggleBtnBgColor: string
-    sidePanelBorder: string
-    sidePanelShadow: string
-    sidePanelTabBgColor: string
-    sidePanelTabHighlightColor: string
-    sidePanelLightAccentColor: string
     rightBarBgColor: string
-    rightBarBgBoxShadow: string
-    tasksCheckBoxColorDefault: string
-    tasksCheckBoxColorComplete: string
-    tasksCheckColor: string
-    tasksLightTextColor: string
+    elemColor1: string
+    elemColor2: string
+    elemTextColor: string
+    cardBgColor: string
+    cardHovColor: string
 }

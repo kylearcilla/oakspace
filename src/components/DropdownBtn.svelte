@@ -8,7 +8,7 @@
     export let options: DropdownBtnOptions
     export let isActive = false
     
-    $: isDarkTheme = $themeState.isDarkTheme
+    $: isLight = !$themeState.isDarkTheme
     $: title = options.pickedOptionName
     $: isEmpty = !title
 
@@ -29,21 +29,21 @@
 </script>
 
 <button
-    id={`${id}--dropdown-btn`}
-    class="dropdown-btn"
-    class:dropdown-btn--empty={isEmpty}
-    class:dropdown-btn--no-bg={noBg}
-    class:dropdown-btn--bg-on-active={bgOnactive}
-    class:dropdown-btn--active={isActive}
-    class:dropdown-btn--dark={isDarkTheme}
-    class:dropdown-btn--arrow-on-hover={options.arrowOnHover}
-    class:dropdown-btn--arrow-left={arrowLeft}
+    id={`${id}--dbtn`}
+    class="dbtn"
+    class:dbtn--empty={isEmpty}
+    class:dbtn--no-bg={noBg}
+    class:dbtn--bg-on-active={bgOnactive}
+    class:dbtn--active={isActive}
+    class:dbtn--light={isLight}
+    class:dbtn--arrow-on-hover={options.arrowOnHover}
+    class:dbtn--arrow-left={arrowLeft}
     style={inlineStyling(options.styles)}
     on:click={options.onClick}
 >
     {#if doShowArrow && arrowLeft}
         <div 
-            class="dropdown-btn__icon dropdown-btn__icon--arrow"
+            class="dbtn__icon dbtn__icon--arrow"
             style={inlineStyling(options.arrowStyles)}
         >
             <SvgIcon 
@@ -55,7 +55,7 @@
         </div>
     {/if}
     <span 
-        class="dropdown-btn__title"
+        class="dbtn__title"
         style:font-size={options?.styles?.fontSize}
         style:font-family={options?.styles?.fontFamily ?? "Manrope"}
     >
@@ -63,7 +63,7 @@
     </span>
     {#if doShowArrow && !arrowLeft}
         <div 
-            class="dropdown-btn__icon dropdown-btn__icon--arrow"
+            class="dbtn__icon dbtn__icon--arrow"
             style={inlineStyling(options.arrowStyles)}
         >
             <SvgIcon 
@@ -76,7 +76,7 @@
     {/if}
     {#if allowEmpty && isActive && !isEmpty}
         <button 
-            class="dropdown-btn__icon dropdown-btn__icon--close-btn"
+            class="dbtn__icon dbtn__icon--close-btn"
             on:click={onRemoveBtnClicked}
         >
             <SvgIcon icon={Icon.Close} options={{ scale: 0.9, strokeWidth: 1.6, height: 12, width: 12, }} />
@@ -87,13 +87,10 @@
 <style lang="scss">
     @import "../scss/dropdown.scss";
 
-    .dropdown-btn {
+    .dbtn {
         &--no-bg {
             background-color: transparent !important;
             background: transparent !important;
-        }
-        &--dark {
-            @include dropdown-btn-dark;
         }
         &__icon--close-btn {
             transition: 0.05s ease-in-out;

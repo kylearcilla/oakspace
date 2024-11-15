@@ -15,7 +15,7 @@ async function clickOnLogin(page: any) {
 }
 async function refreshToken(options: { page: any, btn: "playlists" | "token" }) {
     const { page, btn } = options
-    await page.locator("#yt-settings--dropdown-btn").click()
+    await page.locator("#yt-settings--dbtn").click()
 
     if (btn === "playlists") {
         await page.click('button:has-text("Refresh Playlists")')
@@ -25,7 +25,7 @@ async function refreshToken(options: { page: any, btn: "playlists" | "token" }) 
     }
 }
 async function logoutUser(page: any) {
-    await page.locator("#yt-settings--dropdown-btn").click()
+    await page.locator("#yt-settings--dbtn").click()
     await page.locator(".yt-settings__user-profile-btns-container button").nth(1).click()
 }
 async function _expectToastMsg(options: {
@@ -116,7 +116,7 @@ async function expectUserLoggedIn(options: { username: string, email: string, pa
 
     await expect(page.locator(".yt-settings__user-profile-container")).toHaveText(username)
 
-    await page.locator("#yt-settings--dropdown-btn").click()
+    await page.locator("#yt-settings--dbtn").click()
     const dropdown = page.locator(".yt-settings__user-profile")
 
     await expect(dropdown).toContainText(email)

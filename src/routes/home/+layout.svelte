@@ -38,7 +38,7 @@
 	import SessionSummaryModal from "./SessionSummaryModal.svelte"
 	import Modal from "../../components/Modal.svelte";
 	import SpaceSelection from "../SpaceSelection.svelte";
-	import { ytPlayerStore } from "../../lib/store";
+	import { themeState, ytPlayerStore } from "../../lib/store";
 
   
   export let data
@@ -69,6 +69,7 @@
   $: isFloating = $globalContext.mediaPlayer?.youtube
   $: modalsOpen = $globalContext.modalsOpen
   $: leftBar = $globalContext.leftBar
+  $: isLight = !$themeState.isDarkTheme
 
   $: if (inAmbience && !isFloating) {
       $ytPlayerStore?.toggleView("float")
@@ -165,6 +166,7 @@
   on:mousemove={_onMouseMoveHandler}
   id="home"
   class={`home ${homeViewClasses}`}
+  class:home--light={isLight}
   class:home--right-fixed={rightBarFixed}
   class:home--left-float={leftBar === "wide-float"}
   class:home--stretched={stretchMiddleView}
@@ -315,16 +317,21 @@
       background-position: center;
       background-repeat: no-repeat;
 
+      /* light */
+
+      &--light &__right-bar::before {
+        width: 1.5px;
+        background: rgba((var(--textColor1)), 0.04);
+      }
       /* bars */
       &--left-float &__middle-view {
         margin-left: 0px !important;
-
       }
       &--left-float &__left-bar {
         height: 650px;
         top: 50px;
         left: 5px;
-        border: 1.5px solid rgba((var(--textColor1)), 0.022);
+        border: var(--navMenuBorder);
         border-radius: 12px;
         transition: 0.185s cubic-bezier(.4, 0, .2, 1);
       }
@@ -381,7 +388,7 @@
         height: 100%;
         left: 0px;
         background-color: var(--navMenuBgColor);
-        border-right: 1.5px solid rgba((var(--textColor1)), 0.022);
+        border: var(--navMenuBorder);
         width: var(--left-bar-width);
         z-index: 400;
         position: fixed;
@@ -409,7 +416,6 @@
         top: 0px;
         right: 0px;
         background-color: var(--rightBarBgColor);
-        box-shadow: var(--rightBarBgBoxShadow);
         z-index: 400;
         transition: 0.2s cubic-bezier(.4, 0, .2, 1);
         overflow: hidden;
@@ -417,10 +423,10 @@
         &::before {
           content: " ";
           width: 2px;
+          background: rgba((var(--textColor1)), 0.022);
           height: 100%;
           z-index: 10000;
-          background: rgba((var(--textColor1)), 0.022);
-          @include abs-top-left(0px, 0px);
+          @include abs-top-left;
         }
         
         // border-left: 1.5px solid rgba((var(--textColor1)), 0.022);
@@ -430,7 +436,7 @@
         
         &--fixed {
           transition: 0.245s cubic-bezier(.4, 0, .2, 1);
-          top: 20px;
+          top: 12px;
           right: 5px;
           height: calc(100% - 40px);
           border-radius: 14px;

@@ -3,6 +3,7 @@
 	import ProgressRing from "../../../components/ProgressRing.svelte";
 	import SvgIcon from "../../../components/SVGIcon.svelte";
 	import { Icon } from "../../../lib/enums";
+	import { themeState } from "../../../lib/store";
 	import { DAYS_OF_WEEK } from "../../../lib/utils-date";
 	import { capitalize, formatPlural } from "../../../lib/utils-general"
 
@@ -15,14 +16,6 @@
     }
 
     type HabitTableView = "default" | "time-of-day"
-
-    type HabitOptions = {
-        view: HabitTableView
-        progress: {
-            detailed: boolean
-            percentage: boolean
-        }        
-    }
 
     export let options: any
 
@@ -38,6 +31,7 @@
     let dragHabitSrc: any
     let dragHabitTarget: any
 
+    $: isLight = !$themeState.isDarkTheme
     $: {
         view = options?.view
         wkProgress = options?.progress
@@ -48,7 +42,6 @@
     updateDayProgress(habits)
 
     function setViewOptn(newView: HabitTableView) {
-        console.log({ newView })
         if (newView === "default") {
             setSortedHabitsToDefault()
         }
@@ -280,9 +273,10 @@
 <div 
     class="wk-habits"
     class:wk-habits--min={width < MIN_SIZE}
+    class:wk-habits--light={isLight}
+    class:wk-habits--default={view === "default"}
     bind:clientWidth={width}
 >
-
     <div class="wk-habits__header">
         <div class="wk-habits__col one-col header-col">
             <span>
@@ -291,7 +285,7 @@
         </div>
         <div class="wk-habits__col two-col header-col">
             <span>
-                Target
+                Streak
             </span>
         </div>
         <div class="days-col">
@@ -301,22 +295,16 @@
                 </div>
             {/each}
         </div>
-        <div 
-            class="wk-habits__col three-col header-col"
-            class:three-col--min={!wkProgress.detailed}
-        >
+        <div class="wk-habits__col three-col header-col">
             <span>
                 Progress
             </span>
         </div>
     </div>
-    {#if view === "time-of-day"}
-        <div class="divider"></div>
-    {/if}
     {#each Object.keys(TIMES_OF_DAY_MAP) as timeOfDay}
         {@const idx = TIMES_OF_DAY_MAP[timeOfDay]}
         {@const habits = sortedHabits[idx]}
-        {@const tod = timeOfDay === "all-day" ? "All Day" : timeOfDay}
+        {@const tod = timeOfDay === "all-day" ? "all day" : timeOfDay}
         {@const empty = habits.length === 0}
         {@const isTodView = view === "time-of-day"}
             <div 
@@ -330,7 +318,7 @@
                     class:hidden={view === "default"}
                 >
                     <span>
-                        {capitalize(tod)}
+                        {tod}
                     </span>
                 </div>
     
@@ -338,8 +326,8 @@
                     {@const { checked, total } = getProgress(habit)}
                     {@const isDragOver = dragHabitTarget?.name === habit.name}
                     <div    
-                        class="wk-habit" 
-                        class:wk-habit--drag-over={isDragOver}
+                        class="wk-habit dg-over-el" 
+                        class:dg-over-el--over={isDragOver}
                         draggable="true"
                         on:dragstart={(e) => onHabitDrag(e, habit)}
                         on:dragover={(e) => onHabitDragOver(e, habit)}
@@ -358,16 +346,16 @@
                                     {habit.name}
                                 </span>
                             </div>
-                            <div class="wk-habit__streak" title="Habit streak.">
-                                {habit.streak}
+                            <div class="wk-habit__target">
+                                {habit.target ?? ""}
                             </div>
                         </div>
                         <div 
-                            class="wk-habit__target two-col cell capsule"
+                            class="wk-habit__streak two-col cell"
                             class:cell--first-row={habitIdx === 0}
                         >
                             <span>
-                                {habit.target ?? "--"}
+                                {habit.streak}
                             </span>
                         </div>
                         <div class="days-col">
@@ -396,7 +384,7 @@
                         <div 
                             class="wk-habit__progress three-col cell cell--last-col"
                             class:cell--first-row={habitIdx === 0}
-                            class:three-col--min={!wkProgress.detailed}
+                            class:four-col--min={!wkProgress.detailed}
                         >
                             {#if wkProgress.detailed}
                                 {#if wkProgress.percentage}
@@ -412,7 +400,11 @@
                             <div class="wk-habit__progress-ring">
                                 <ProgressRing 
                                     progress={checked / total} 
-                                    options={{ style: "rich-colored" }}    
+                                    options={{ 
+                                        style: "rich-colored",
+                                        size: 15,
+                                        strokeWidth: 3
+                                    }}
                                 />
                             </div>
                         </div>
@@ -422,15 +414,18 @@
                             on:pointerup={() => isDragging = false}
                         >
                             <div class="grip__icon">
-                                <SvgIcon icon={Icon.DragDots} options={{ scale: 1.15 }} />
+                                <SvgIcon 
+                                    icon={Icon.DragDots} 
+                                    options={{ scale: 1.15 }} 
+                                />
                             </div>
                         </div>
                     </div>
                 {/each}
 
                 <div    
-                    class="wk-habit wk-habit--ghost"
-                    class:wk-habit--drag-over={dragHabitTarget === timeOfDay}
+                    class="wk-habit wk-habit--ghost dg-over-el"
+                    class:dg-over-el--over={dragHabitTarget === timeOfDay}
                     class:hidden={timeOfDay != "all-day" && view === "default"}
                     style:bottom={empty ? "-20px" : "-28px"}
                     on:dragover={(e) => onHabitDragOver(e, timeOfDay)}
@@ -447,9 +442,7 @@
             </div>
     {/each}
     <div class="wk-habits__count-cells">
-        <div class="wk-habits__count-cell one-col">
-            {formatPlural("habit", habits.length)}
-        </div>
+        <div class="wk-habits__count-cell one-col"></div>
         <div class="wk-habits__count-cell two-col"></div>
         <div class="wk-habits__count-cell days-col">
             {#each dayProgress as progress}
@@ -466,8 +459,37 @@
     .wk-habits { 
         width: 100%;
         min-width: 560px;
-        margin-top: 14px;
 
+        --border: 0.5px solid rgb(var(--textColor1), 0.065);
+
+        /* light adjustments */
+        &--light {
+            --border: 1px solid rgb(var(--textColor1), 0.08);
+        }
+        &--light &__header {
+            @include text-style(0.7, 600);
+        }
+        &--light &__tod-header {
+            @include text-style(0.3, 500);
+        }
+        &--light &__count-cell {
+            @include text-style(0.5, 500);
+        }
+        &--light .wk-habit__name,
+        &--light .wk-habit__streak {
+            @include text-style(0.88, 600);
+        }
+        &--light .wk-habit__target {
+            @include text-style(0.3, 600);
+        }
+        &--light .fraction {
+            font-weight: 600;
+        }
+        &--default &__header {
+            border: none
+        }
+
+        /* narrow view */
         &--min .one-col { 
             min-width: 40px;
             width: 40px;
@@ -482,18 +504,19 @@
 
         &__header {
             display: flex;
-            @include text-style(0.35, 500, 1.285rem);
+            @include text-style(0.35, 500);
             position: relative;
+            border-bottom: var(--border);
             // display: none;
 
         }
         &__tod-header {
-            @include text-style(0.35, 500, 1.2rem);
+            @include text-style(0.35, 400, 1.35rem, "DM Sans");
             @include flex(center, space-between);
-            margin: 13px 0px 9px 8px;
+            margin: 13px 0px 9px 2px;
             
             &--morning {
-                margin: 5px 0px 9px 8px;
+                margin: 5px 0px 9px 2px;
             }
         }
         &__tod-container {
@@ -506,19 +529,12 @@
         }
         &__count-cell {
             margin-left: 1px;
-            @include text-style(0.145, 400, 1.2rem, "DM Mono");
+            @include text-style(0.145, 400, 1.3rem, "DM Sans");
         }
 
         &__empty {
             @include text-style(0.145, 400, 1.2rem);
             margin: -5px 0px 0px 6.5px;
-        }
-
-        .divider {
-            background-color: rgba(var(--textColor1), 0.065);
-            width: 100%;
-            height: 0.5px;
-            margin: 0px 0px 8px 0px;
         }
     }
     .wk-habit { 
@@ -528,9 +544,6 @@
         white-space: nowrap;
         position: relative;
 
-        &--drag-over::before {
-            opacity: 0.2 !important;
-        }
         &--ghost {
             height: 28px;
             width: 100%;
@@ -539,64 +552,66 @@
             z-index: 100;
             align-items: center;
         }
-        &--empty {
-
-        }
 
         &::before {
-            content: " ";
+            left: 0px;
             width: 100%;
-            height: 1.5px;
-            @include abs-top-left;
-            opacity: 0;
-            background-color: #71B8FF;
         }
-        
+
         &__symbol {
-            font-size: 1.4rem;
-            margin-right: 11px;
+            font-size: 1.45rem;
+            margin-right: 12px;
+            display: none
         }
         &__name {
-            @include text-style(1, 500, 1.3rem);
+            @include text-style(1, 500, 1.4rem);
             @include elipses-overflow;
             @include flex(center, space-between);
         }
-        &__target span {
-            padding: 3px 8px 2px 8px;
+        &__target {
+            padding: 4px 16px 3px 7px;
+            @include text-style(0.16, 500, 1.4rem, "Manrope");
+            text-align: right;
         }
         &__streak {
-            @include text-style(0.14, 400, 1.3rem, "DM Mono");
+            @include text-style(0.6, 400, 1.4rem, "DM Sans");
             padding: 2px 15px 2px 14px;
         }
         &__box {
-            background-color: rgb(var(--textColor1), 0.045);
-            height: 15px;
-            width: 15px;
+            background-color: var(--lightColor3);
+            color: var(--elemTextColor);
+            height: 18px;
+            width: 18px;
             border-radius: 0px;
             position: relative;
+            font-size: 1.1rem;
             @include center;
             
             &:hover {
-                background-color: rgb(var(--textColor1), 0.085);
+                opacity: 0.55;
             }
         }
         &__box--checked {
-            background-color: #6bb0f4 !important;
+            background-color: var(--elemColor1) !important;
 
+            &:hover {
+                opacity: 1 !important;
+            }
             &:before {
                 display: none;
             }
         }
         &__box--not-checkable {
-            background-color: rgb(var(--textColor1), 0.045);
+            background-color: var(--lightColor3);
 
             &:hover {
                 background-color: rgb(var(--textColor1), 0.045);
             }
             &:before {
                 content: " ";
-                @include circle(3px);
-                background-color: rgba(var(--textColor1), 0.45);
+                height: 1.5px;
+                width: 5px;
+                background-color: rgba(var(--textColor1), 0.5);
                 @include abs-center;
             }
         }
@@ -611,23 +626,21 @@
             margin: 0px 10px 0px 2px;
         }
     }
-    
-    .capsule span {
-        @include text-style(0.7, 300, 1.08rem, "DM Mono");
-        background-color: rgb(var(--textColor1), 0.065);
-        border-radius: 5px;
-    }
     .header-col {
-        font-size: 1.15rem;
-        padding: 0px 0px 9px 7.5px;
-        // border-bottom: 0.5px solid rgb(var(--textColor1), 0.065);
+        font-size: 1.34rem;
+        padding: 0px 0px 9px 5px;
+        // border-bottom: var(--border);
     }
     .one-col {
-        width: 180px;
+        width: 230px;
         min-width: 150px;
+        padding: 0px 0px 0px 2px;
+    }
+    .one-col.cell {
+        padding-left: 0px !important;
     }
     .two-col {
-        width: 100px;
+        width: 70px;
     }
     .days-col {
         flex: 1;
@@ -639,7 +652,7 @@
         min-width: 50px;
     }
     .three-col {
-        width: 100px;
+        width: 120px;
         
         &--min {
             width: 50px;
@@ -651,11 +664,11 @@
     .cell {
         padding: 7px 0px 7px 8px;
         @include flex(center);
-        border-bottom: 0.5px solid rgb(var(--textColor1), 0.065);
-        border-right: 0.5px solid rgb(var(--textColor1), 0.065);
+        border-bottom: var(--border);
+        border-right: var(--border);
         
         &--first-row {
-            border-top: 0.5px solid rgb(var(--textColor1), 0.065);
+            border-top: var(--border);
         }
         &--last-col {
             border-right: none;

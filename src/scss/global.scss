@@ -61,6 +61,11 @@ img {
     background-color: rgba(black, $opacity);
 }
 
+@mixin l-div {
+    background-color: rgba(var(--textColor1), 0.055) !important;
+    height: 1px !important;
+}
+
 @mixin divider($opacity: 0.06, $height: 0.5px, $width: 100%) {
     width: $width;
     height: $height;
@@ -887,7 +892,7 @@ $settings-modal-padding: 20px 25px 25px 25px;
 
 .strike {
     position: relative; 
-    opacity: 0.6;
+    opacity: 0.3;
 
     &--lt {
         text-decoration: line-through;
@@ -961,18 +966,15 @@ $settings-modal-padding: 20px 25px 25px 25px;
 .tag {
     @include flex(center);
     background-color: rgba(var(--tag-color-2), 1);
-    padding: 3px 9px 3px 9px;
+    padding: 4px 9px 3px 9px;
     border-radius: 12px;
     width: fit-content;
 
-    &--is-light {
-        box-shadow: rgba(var(--tag-color-1), 0.07) 0px 0px 0px 1.1px inset;
-    }
     &--light {
-        background-color: rgba(var(--tag-color-1), 0.8);
+        background-color: rgba(var(--tag-color-2), 1);
     }
     &--light &__title {
-        @include text-style(_, 500);
+        font-weight: 600;
     }
     &__symbol {
         font-size: 0.85rem;
@@ -984,7 +986,7 @@ $settings-modal-padding: 20px 25px 25px 25px;
     }
     &__title {
         @include text-style(_, 500, 1.18rem);
-        color: rgba(var(--tag-color-1), 0.8);
+        color: rgba(var(--tag-color-1), 1);
         cursor: text;
         max-width: 120px;
         @include elipses-overflow;
@@ -1103,11 +1105,47 @@ $loading-dots-width: 4px;
 }
 
 .fraction {
-    @include text-style(0.7, 300, 1.12rem, "DM Mono");
+    @include text-style(0.7, 500, 1.35rem, "DM Sans");
     @include flex(center);
     
     &__slash {
-        font-size: 0.98rem !important;
-        margin: -1px 1.5px 0px 1.5px;
+        font-size: 1.15rem !important;
+        margin: -1px 3px 0px 3px;
+    }
+}
+
+.dg-over-el {
+    &--over::before {
+        opacity: 0.4 !important;
+    }
+    &::before { 
+        opacity: 0;
+        content: " ";
+        width: calc(100% - 20px);
+        height: 2px;
+        transition: 0.08s ease-in-out;
+        @include abs-top-left(-2px, 10px);
+        background-color: #71B8FF;
+    }
+}
+
+.grip {
+    @include abs-top-left(0px, -18px);
+    cursor: grab;
+    height: 34px;
+    @include center;
+    
+    &__icon {
+        transition: 0.1s ease-in-out;
+        @include not-visible;
+        padding: 5px 3px;
+    }
+    &:hover &__icon {
+        background: rgba(var(--textColor1), 0.15);
+        border-radius: 3px;
+        @include visible(0.6);
+    }
+    &:active {
+        cursor: grabbing;
     }
 }

@@ -44,8 +44,8 @@
 
 <button
     {disabled}
-    class="hold-btn"
-    class:hold-btn--holding={isHolding}
+    class="holdbtn"
+    class:holdbtn--holding={isHolding}
     class:ambient-blur={ambience?.styling === "blur"}
     class:ambient-clear={ambience?.styling === "clear"}
     style={inlineStyling(styling)}
@@ -58,14 +58,14 @@
     on:pointerup={onConfirmPointerUp}
     on:animationend={onHoldEnd}
 >
-    <div class="hold-btn__cover">
+    <div class="holdbtn__cover">
         {text}
     </div>
     {text}
 </button>
 
 <style lang="scss">
-    .hold-btn {
+    .holdbtn {
         @include center;
         @include text-style(0.75, 500, 1rem);
         position: relative;

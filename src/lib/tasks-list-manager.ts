@@ -26,6 +26,19 @@ export class TasksListManager {
         allowDuplicate: boolean
         removeOnComplete: boolean
         progress: "perc" | "count"
+        maxTitleLines: number
+        maxDescrLines: number
+        max: number
+        subtaskMax: number
+        maxToastMsg: string | null
+        subtaskMaxToastMsg: string | null
+        addBtn: {
+            iconScale: number
+            doShow: boolean
+            style?: StylingOptions
+            text: string
+            pos: "top" | "bottom"
+        }
     }
     styling?: {
         list?: StylingOptions
@@ -37,27 +50,12 @@ export class TasksListManager {
         descriptionInput?: { fontSize: CSSREMVal }
     }
     ui: {
+        maxHeight: string
         showDragHandle: boolean
         sidePadding: CSSUnitVal
         hasTaskDivider: boolean
         listHeight: string
-    }
-    cssVariables: {
-        checkBoxFill: string
-        checkBoxEmpty: string
-        checkIcon: string
-        taskBgColor: string
-        taskHoverBgColor: string
-        floatingItemBgColor: string
-        maxTitleLines: number
-        maxDescrLines: number
-    }
-    addBtn: {
-        iconScale: number
-        doShow: boolean
-        style?: StylingOptions
-        text: string
-        pos: "top" | "bottom"
+        checkboxDim: string
     }
 
     /* UI Data */
@@ -102,49 +100,26 @@ export class TasksListManager {
     focusedSubtaskIdx = -1
 
     /* Dragging Functionality */
-    dragStartPoint: OffsetPoint | null = null
-    dragDistance = 0
-    draggingSourceIdx = -1
-    allowDrag = false
-    
-    isDraggingTask = false
-    isDraggingSubtask = false
-    wasDraggingTask = false
-    floatingItem: Task | Subtask | null = null
-    
-    floatingItemElem: HTMLElement | null = null
-    dragOverItemElem: HTMLElement | null = null
-    
-    dragOverItemElemIdx = -1
-    dragStartOffset: OffsetPoint | null = null
-    
-    floatingItemOffset: OffsetPoint | null = null
-    floatingElemStyling: {
-        height: string,
-        padding: string,
-        borderWidth: string
-    } | null = null
+    isDragging = false
+    dragSrc: Task | Subtask | null = null
+    dragTarget: Task | Subtask | null = null
+    isTargetEnd = false
     
     /* Task Context Menu */
     hasJustClosedContextMenu = false
     isContextMenuOpen = false
     contextMenuX = -1000
     contextMenuY = -1000
-    contextMenuWidth = 0
 
     rightClickedTask: null | { task: Task, idx: number }  = null
     rightClickedSubtask: null | { subtask: Subtask, idx: number } = null
-
-    max: number
-    subtaskMax: number
-    maxToastMsg: string | null
-    subtaskMaxToastMsg: string | null
 
     /* Misc */
     newText = ""
     cursorPos: OffsetPoint = { left: 0, top: 0 }
     scrollWindowCursorPos: OffsetPoint = { left: 0, top: 0 }
     scrollInterval: NodeJS.Timer | null = null
+    FLOATING_WIDTH_PERCENT = 0.8
 
     hasUsedEditShortcut = false
     doMinimizeAfterEdit = false
@@ -153,11 +128,21 @@ export class TasksListManager {
     hasInputBlurred = false
     
     /* Constants */
-    STRETCH_DRAG_DISTANCE_THRESHOLD = 5
-    FLOATING_WIDTH_PERCENT = 0.75
-    FLOATING_MAX_SIDE_OFFSET = 10
-    FLOATING_CLIENT_Y_TOP_OFFSET = 150
-    FLOATING_SUBTASK_HEIGHT = 40
+   DEFAULT_STYLES = {
+        TASK_FONT_SIZE: "1.45rem",
+        TASK_OPACITY: "1",
+        DESCR_FONT_SIZE: "1.38rem",
+        DESCR_OPACITY: "0.7",
+        SUB_TASK_FONT_SIZE: "1.45rem",
+        SUB_TASK_OPACITY: "0.7",
+        CHECK_BOX_DIM: "16px",
+        SIDE_PADDING: "18px",
+        MAX_TITLE_LINES: 1,
+        MAX_DESC_LINES: 1
+    }
+
+    CONTEXT_MENU_WIDTH = 170
+    TRANS_IMG = "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs="
 
     TASK_DESCR_LINE_HT = 14
     TASK_BOTTOM_PADDING = 20
@@ -166,8 +151,6 @@ export class TasksListManager {
     DESCRIPTION_BOTTOM_PADDING = 6
     DESCRIPTION_TOP_PADDING = 4
     DESCRIPTON_MIN_HEIGHT = 20
-
-    HOOK_HEIGHT_OFFSET = 3
     
     TASK_HEIGHT_MIN_NO_DESCR: number
     TASK_HEIGHT_MIN_HAS_DESCR: number
@@ -183,62 +166,54 @@ export class TasksListManager {
         this.options = options
         this.tasks = writable(options.tasks)
 
-        this.contextMenuWidth = extractNum(options.contextMenuOptions.width)[0]
+        const { settings, ui, styling } = options
 
         // wrapper around the whole component
         this.containerRef = options.containerRef
 
         // settings type
         this.settings = {
-            numbered: options.settings?.numbered ?? false,
-            subtasks: options.settings?.subtasks ?? true,
-            reorder: options.settings?.reorder ?? true,
-            allowDuplicate: options.settings?.allowDuplicate ?? true,
-            removeOnComplete: options.settings?.removeOnComplete ?? false,
-            progress: options.settings?.progress ?? "perc"
+            numbered: settings?.numbered ?? false,
+            subtasks: settings?.subtasks ?? true,
+            reorder: settings?.reorder ?? true,
+            allowDuplicate: settings?.allowDuplicate ?? true,
+            removeOnComplete: settings?.removeOnComplete ?? false,
+            progress: settings?.progress ?? "perc",
+            maxTitleLines: settings?.maxTitleLines ??  this.DEFAULT_STYLES.MAX_TITLE_LINES,
+            maxDescrLines: settings?.maxDescrLines ??  this.DEFAULT_STYLES.MAX_DESC_LINES,
+            max: settings?.max ?? 25,
+            subtaskMax: settings?.subtaskMax ?? 25,
+            maxToastMsg: settings?.maxToastMsg ?? `Task number exceeded.`,
+            subtaskMaxToastMsg: settings?.subtaskMaxToastMsg ?? `Subtasks number exceeded.`,
+            addBtn: {
+                doShow: settings?.addBtn?.doShow ?? true,
+                style: settings?.addBtn?.style,
+                text: settings?.addBtn?.text ?? "Add an Item",
+                pos: settings?.addBtn?.pos ?? "bottom",
+                iconScale: settings?.addBtn?.iconScale ?? 0.96
+            }
         }
 
         // ui options
         this.ui = {
-            showDragHandle: options.ui?.showDragHandle ?? true,
-            sidePadding:    options.ui?.sidePadding ?? "18px",
-            hasTaskDivider: options.ui?.hasTaskDivider ?? true,
-            listHeight:     options.ui?.listHeight ?? "auto"
-        }
-
-        // add btn
-        this.addBtn = {
-            doShow: options.addBtn?.doShow ?? true,
-            style: options.addBtn?.style,
-            text: options.addBtn?.text ?? "Add an Item",
-            pos: options.addBtn?.pos ?? "bottom",
-            iconScale: options.addBtn?.iconScale ?? 0.96
+            maxHeight: ui?.maxHeight ?? "auto",
+            showDragHandle: ui?.showDragHandle ?? true,
+            sidePadding:    ui?.sidePadding    ?? this.DEFAULT_STYLES.SIDE_PADDING as CSSUnitVal,
+            hasTaskDivider: ui?.hasTaskDivider ?? true,
+            listHeight:     ui?.listHeight     ?? "auto",
+            checkboxDim:   ui?.checkboxDim   ??  this.DEFAULT_STYLES.CHECK_BOX_DIM,
         }
 
         // styling 
         this.styling = {
-            checkbox: { width: "10px", margin: "0px 0px 0px 0px" },
-            num: { width: "10px", margin: "0px 0px 0px 0px" },
-            ...options.styling,
+            checkbox: { 
+                width: "10px", margin: "0px 0px 0px 0px" 
+            },
+            num: { 
+                width: "10px", margin: "0px 0px 0px 0px" 
+            },
+            ...styling,
         }
-
-        // css variables
-        this.cssVariables = {
-            checkBoxFill:        options.cssVariables?.checkBoxFill  ?? "rgba(var(--textColor1), 1)",
-            checkBoxEmpty:       options.cssVariables?.checkBoxEmpty ?? "rgba(var(--textColor1), 0.2)",
-            checkIcon:           options.cssVariables?.checkIcon     ?? "rgba(var(--textColor2), 1)",
-            taskBgColor:         options.cssVariables?.taskBgColor   ?? "rgba(var(--textColor1), 1)",
-            taskHoverBgColor:    options.cssVariables?.taskHoverBgColor    ?? "rgba(var(--textColor1), 0.01)",
-            floatingItemBgColor: options.cssVariables?.floatingItemBgColor ?? "#141414",
-            maxTitleLines:       options.cssVariables?.maxTitleLines ?? 1,
-            maxDescrLines:       options.cssVariables?.maxDescrLines ?? 1,
-        }
-
-        // caps
-        this.max = options.max ?? 25
-        this.subtaskMax = options.subtaskMax ?? 25
-        this.maxToastMsg = options.maxToastMsg ?? `Task number exceeded.`
-        this.subtaskMaxToastMsg = options.subtaskMaxToastMsg ?? `Subtasks number exceeded.`
         
         // set collapsed task height
         const { top: padTop, bottom: padBottom } = extractQuadCSSValue(this.styling?.task?.padding)
@@ -262,9 +237,10 @@ export class TasksListManager {
         const bottomPadding = taskPadding.bottom ?? 5
 
         // left section width
-        const leftSectionObj   = this.settings.numbered ? this.styling?.num : this.styling?.checkbox
-        const { left, right }  = extractQuadCSSValue(leftSectionObj!.margin)
-        const leftSectionWidth = extractNum(leftSectionObj!.width!)[0] + left + right + 3
+        const leftSectionObj    = this.settings.numbered ? this.styling?.num : this.styling?.checkbox
+        const { left, right }   = extractQuadCSSValue(leftSectionObj!.margin)
+        const _leftSectionWidth = leftSectionObj?.width ?? this.DEFAULT_STYLES.CHECK_BOX_DIM        
+        const leftSectionWidth  = extractNum(_leftSectionWidth)[0] + left + right + 3
         
         this.taskLayout = {
             topPadding: topPadding,
@@ -278,6 +254,29 @@ export class TasksListManager {
     update(newState: Partial<Omit<TasksListManager, "tasks">>) {
         this.state.update((data: Omit<TasksListManager, "tasks"> | null) => this.getNewStateObj(data!, newState))
     }
+
+    /* event handlers  */
+
+    onTaskListPointerMove = (event: PointerEvent) => {
+        if (!this.tasksList) return
+
+        this.updatePointers(event.clientX, event.clientY)
+    }
+
+    updatePointers(clientX: number, clientY: number) {
+        const windowRect = this.tasksListContainer!.getBoundingClientRect()
+        const tasksList = this.tasksList!.getBoundingClientRect()
+        
+        const blocksLeft = clientX - tasksList.left
+        const blocksTop = clientY - tasksList.top
+
+        const windowLeft = clientX - windowRect.left
+        const windowTop = clientY - windowRect.top
+        
+        this.cursorPos = { left: blocksLeft, top: blocksTop }
+        this.scrollWindowCursorPos = { left: windowLeft, top: windowTop }
+    }
+
 
     /* Tasks Stuff */
 
@@ -321,8 +320,9 @@ export class TasksListManager {
      * @param newTask        - Add task with non-default empty properties. 
      */
     addingNewTask(atIdx: number, doToggleInput = true, newTask?: Task) {
-        if (get(this.tasks).length === this.max && this.maxToastMsg) {
-            toast("warning", { message: this.maxToastMsg })
+        const { max, maxToastMsg } = this.settings
+        if (get(this.tasks).length === max && maxToastMsg) {
+            toast("warning", { message: maxToastMsg })
             return
         }
 
@@ -397,7 +397,7 @@ export class TasksListManager {
         tasks = moveElementInArr(tasks, fromIdx, toIndex)
         tasks = this.updateTaskIndices(tasks)
         const task = tasks[toIndex]
-        
+
         this.tasks.set(tasks)
 
         await this.clientHandler({
@@ -407,28 +407,6 @@ export class TasksListManager {
                 item: task
             }
         })
-    }
-
-    /**
-     * Called after user has dropped the task to a new location.
-     * @param draggedItem   Item dragged
-     */
-    updateAfterDragMove = (draggedItem: "task" | "subtask") => {
-        let fromIdx = this.floatingItem!.idx
-        let toIdx = this.dragOverItemElemIdx
-
-        // floating going up will take dest idx place
-        // floating going down will take drag over's top nbr
-        if (fromIdx < toIdx) {
-            toIdx = Math.max(0, toIdx - 1)
-        }
-
-        if (draggedItem === "task") {
-            this.moveTask(fromIdx, toIdx)
-        }
-        else {
-            this.moveSubtask(fromIdx, toIdx)
-        }
     }
 
     getEditingSubtask() {
@@ -510,12 +488,13 @@ export class TasksListManager {
             doToggleInput = true, 
             newSubtask 
         } = options
+        const { subtaskMax, subtaskMaxToastMsg } = this.settings
 
         const task         = get(this.tasks)[taskIdx]
         const taskSubtasks = task.subtasks!
 
-        if (taskSubtasks.length === this.subtaskMax && this.subtaskMaxToastMsg) {
-            toast("warning", { message: this.subtaskMaxToastMsg })
+        if (taskSubtasks.length === subtaskMax && subtaskMaxToastMsg) {
+            toast("warning", { message: subtaskMaxToastMsg })
             return
         }
 
@@ -727,7 +706,7 @@ export class TasksListManager {
 
 
             height += subtasksHeight
-            height -= this.isDraggingSubtask ? 0 : 10
+            // height -= this.isDraggingSubtask ? 0 : 10
         }
 
         this.update({ pickedTaskHT: height + 7 })
@@ -874,10 +853,6 @@ export class TasksListManager {
         const target = event.target as HTMLElement
         const isEditElem = isEditTextElem(target)
 
-        if (this.allowDrag) {
-            this.allowDrag = false
-            return
-        }
         if (this.isEditingTitle && !isEditElem) {
             this.toggleFocusTaskTitle(false)
         }
@@ -908,10 +883,6 @@ export class TasksListManager {
     }
 
     onSubtaskClicked(taskIdx: number, subtaskIdx: number) {
-        if (this.allowDrag) {
-            this.allowDrag = false
-            return
-        }
         this.updateSubtaskFocusIdx(subtaskIdx)
     }
 
@@ -1079,192 +1050,129 @@ export class TasksListManager {
         }
     }
 
-    /**
-     * Drag and drop handler for tasks and subtasks
-     * Initializes floating task
-     * 
-     * Updates the currently drag over task.
-     * Updates the positioning of floating task element.
-     * 
-     */
-    taskSubtaskDragHandler(pe: PointerEvent) {
-        if (!this.isDraggingTask && !this.isDraggingSubtask) return
-        pe.preventDefault()
+    /* drag functionanlity  */
+    toggleDragging(flag: boolean) {
+        this.isDragging = flag
+    }
+    onDragStart(e: DragEvent, task: Task) {
+        if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = "move"
+            const img = new Image
+            img.src = this.TRANS_IMG
 
-        const isTask = this.isDraggingTask
-        const pointerId = pe.pointerId
+            e.dataTransfer.setDragImage(img, 0, 0)
 
-        const { overItemIdx, overItemElem } = this.findDragOverItem()
-        const isDraggingOpenTask = isTask && this.pickedTaskIdx >= 0
-
-        if (!overItemElem) {
-            return
-        }
-        if (isDraggingOpenTask) {
+        } 
+        if (this.pickedTaskIdx === task.idx) {
             this.minimizeExpandedTask()
         }
-
-        // init the dragging element, first over elem will always be the dragging source
-        const isInitDrag = !this.floatingItem && overItemElem
-        
-        if (isInitDrag) {
-            const sourceItemIdx = overItemIdx
-            const sourceItemElem = overItemElem as HTMLElement
-
-            this.initDragOffsets(sourceItemElem)
-            this.floatingItemElem = sourceItemElem
-            this.floatingItemElem.setPointerCapture(pointerId)
-            this.floatingItem = isTask ? this.getTask(sourceItemIdx)! : this.getCurrentSubtask(sourceItemIdx)
-
-            this.update({ floatingItem: this.floatingItem })
-
-            this.updateOpenTaskHeightOnChange()
-        }
-        else if (overItemIdx != this.floatingItem!.idx) {
-            this.initDragOverElem(overItemIdx, overItemElem as HTMLElement)
+        if (!this.isDragging) {
+            e.preventDefault()
+            return
         }
 
-        this.updateFloatingTaskPos()
+        this.dragSrc = task
+        this.update({ dragSrc: task })
     }
 
-    /**
-     * Find the element that user is dragging over
-     * 
-     * @returns The idx positon of item. The HTML element of that item.=
-     */
-    findDragOverItem() {
-        const { top } = this.cursorPos
-        const isTask = this.isDraggingTask
-
-        const listElem     = isTask ? this.tasksList! : this.getElemById(`task-subtasks-id--${this.pickedTaskIdx}`)!
-        const listChildren = [...listElem.childNodes].filter((elem) => elem.nodeName === 'LI')
-
-        // dragging over task / subtask
-        let overItemIdx = -1
-        let overItemElem: HTMLElement | null = null
-
-        listChildren.forEach((item) => {
-            const _item          = item as HTMLElement
-            const isElemSubtask  = _item.getAttribute("data-task-type") === "subtask"
-            const isFloating     = _item.classList?.value.includes("--floating")
-            const isOtherItem    = (isTask && isElemSubtask) ? true : ((!isTask && !isElemSubtask) ? true : false)
-
-            const topEdgePosition    = this.getTaskItemOffsetFromTop(_item)
-            const bottomEdgePosition = topEdgePosition + _item.clientHeight
-            const _top               = this.floatingItemElem ? top : this.dragStartPoint!.top
-            
-            if (!isOtherItem && !isFloating && _top >= topEdgePosition && _top <= bottomEdgePosition && _item.id) {
-                overItemIdx = +_item.id.split("id--")[1]
-                overItemElem = item as HTMLElement
-                return
-            }
-        })
-
-        return { overItemIdx, overItemElem }
+    onDrag(e: DragEvent) {
+        e.preventDefault()
+        console.log("onDrag")
+        this.updateFloatingTaskPos(e)
     }
 
-    onTaskListPointerMove = (event: PointerEvent) => {
-        if (!this.tasksList) return
+    onDragOver(e: DragEvent, target: Task | "end") {
+        e.preventDefault()
+        if (typeof target === "string") {
+            this.isTargetEnd = true
+        }
+        else {
+            this.isTargetEnd = false
+            const isNewTarget = target?.idx != this.dragTarget?.idx && target?.idx != this.dragSrc!.idx
 
-        // update cursor positions
-        const windowRect = this.tasksListContainer!.getBoundingClientRect()
-        const tasksList = this.tasksList!.getBoundingClientRect()
-        
-        const blocksLeft = event.clientX - tasksList.left
-        const blocksTop = event.clientY - tasksList.top
-
-        const windowLeft = event.clientX - windowRect.left
-        const windowTop = event.clientY - windowRect.top
-        
-        this.cursorPos = { left: blocksLeft, top: blocksTop }
-        this.scrollWindowCursorPos = { left: windowLeft, top: windowTop }
-
-        // see if drag and drop state should be initialized
-        if (this.dragStartPoint && !this.allowDrag) {
-            this.dragDistance = getDistBetweenTwoPoints(this.dragStartPoint!, this.cursorPos!)
-
-            if (this.dragDistance > this.STRETCH_DRAG_DISTANCE_THRESHOLD) {
-                this.allowDrag = true
+            if (isNewTarget) {
+                this.dragTarget = target
+                this.update({ dragTarget: target })
             }
         }
-        if (this.allowDrag) {
-            this.taskSubtaskDragHandler(event)
+
+        console.log(target)
+
+        this.isTargetEnd = typeof target === "string" 
+        this.update({ isTargetEnd: this.isTargetEnd})
+    }
+
+    onDragLeave() {
+        this.dragTarget = null
+        this.update({ dragTarget: null })
+    }
+
+    onDragEnd() {
+        if (this.dragSrc && (this.dragTarget || this.isTargetEnd)) {
+            this.completeDragAction()
         }
+        
+        this.dragSrc = null
+        this.dragTarget = null
+        this.isDragging = false        
+        this.hideFloatTask()
+
+        this.update({ dragSrc: null, dragTarget: null })
     }
 
-    /**
-     * Set the task element being dragged over.
-     * @param dragOverIdx        Idx position of element being dragged over
-     * @param dragOverItemElem   HTML element of task
-     */
-    initDragOverElem(dragOverIdx: number, dragOverItemElem: HTMLElement) {
-        if (this.dragOverItemElemIdx === dragOverIdx) return
+    completeDragAction() {
+        let fromIdx = this.dragSrc!.idx
+        let toIdx   = this.isTargetEnd ? get(this.tasks).length : this.dragTarget!.idx
 
-        this.dragOverItemElemIdx  = dragOverIdx
-        this.dragOverItemElem = dragOverItemElem
+        if (fromIdx < toIdx) {
+            toIdx = Math.max(0, toIdx - 1)
+        }
+        this.moveTask(fromIdx, toIdx)
+        // this.moveSubtask(fromIdx, toIdx)
 
-        this.update({ dragOverItemElemIdx: this.dragOverItemElemIdx })
-    }
+        // do not allow a transition animation on new DOM location
+        const taskElem = this.getTaskElem(fromIdx)
+        taskElem.style.transition = "0s"
 
-    getTaskItemOffsetFromTop(item: HTMLElement) {
-        const container = this.tasksListContainer!
+        // the tasks reorder DOM update occurs first 
+        // then this update will trigger a recalculation of the updated collapsed task heights from the reorder
+        requestAnimationFrame(() => {
+            this.updateOpenTaskHeight()
+            this.updateTaskFocusIdx(toIdx)
 
-        return getVertDistanceBetweenTwoElems(container, item, false) + this.tasksListContainer!.scrollTop
-    }
-
-    /**
-     * Initialize the left offset position based on the initial x position of cursor when user first drags after a touch down.
-     * This will be used to ensure that the drag point will be on the position the user has clicked and not always int he top right corner.
-     * @param left   Initial left position.
-     */
-    initDragOffsets(sourceElem: HTMLElement) {
-        const container = this.tasksListContainer!
-        const { top: cTop, left: cLeft } = this.cursorPos
-
-        const floatItemTopOffset  = this.getTaskItemOffsetFromTop(sourceElem)
-        const floatItemLeftOffset = getHozDistanceBetweenTwoElems({
-            left: { elem: container, edge: "left" },
-            right: { elem: sourceElem, edge: "left" }
+            // if (draggedItem === "subtask") {
+            //     this.updateSubtaskFocusIdx(toIdx)
+            // }
         })
+    }
 
+    updateFloatingTaskPos(e: DragEvent) {
         const listWidth         = this.tasksList!.clientWidth
         const floatingItemWidth = listWidth * this.FLOATING_WIDTH_PERCENT
 
-        const offset = { left: 0, top: 0 }
-
-        offset.top  = cTop - floatItemTopOffset 
-        offset.left = cLeft - floatItemLeftOffset 
-
-        offset.left -= cLeft >= floatingItemWidth ? cLeft - floatingItemWidth : 0
-
-        this.dragStartOffset = offset
-    }
-
-    /**
-     * Update the floating position of the flaoting task element.
-     * @param left  Left offset from list 
-     * @param top   Top offset from list 
-     */
-    updateFloatingTaskPos() {
-        const listWidth         = this.tasksList!.clientWidth
-        const floatingItemWidth = listWidth * this.FLOATING_WIDTH_PERCENT
-        const floatItemHeight   = this.getElemById(`floating-item-id--${this.floatingItem!.idx}`)?.clientHeight ?? 0
-
+        // pointer events do not fire during a drag
+        const floatItem         = this.getElemById("float-task-elem")!
+        const floatItemHeight   = floatItem.clientHeight
+        this.updatePointers(e.clientX, e.clientY)
+        
         const { left, top } = initFloatElemPos({
             dims: { 
                 height: floatItemHeight, 
                 width: floatingItemWidth 
             }, 
             containerDims: { 
-                height: this.tasksList!.clientHeight, 
+                height: this.tasksList!.clientHeight + 50, 
                 width: listWidth 
             },
             cursorPos: this.cursorPos,
-            clientOffset: this.dragStartOffset!
+            clientOffset: { left: 0, top: 0 }
         })
 
-        this.floatingItemOffset = { top, left }
-        this.update({ floatingItemOffset: this.floatingItemOffset  })
+        floatItem.style.visibility = "visible"
+        floatItem.style.opacity = "1"
+
+        floatItem.style.top = `${top}px`
+        floatItem.style.left = `${left}px`
 
         this.scrollWhenNearContainerBounds()
     }
@@ -1298,117 +1206,14 @@ export class TasksListManager {
         }, 25)
     }
 
-    /**
-     * Used solely for initializing drag states when
-     * user clicks on a task.
-     * 
-     * @param event  
-     * @param taskIdx   Idx of the task pointerdowned
-     */
-    onTaskPointerDown = (event: PointerEvent, taskIdx: number) => {
-        if (event.button != 0 || !this.settings.reorder) return
+    hideFloatTask() {
+        const elem = this.getElemById("float-task-elem")!
 
-        const target = event.target as HTMLElement
-        this.dragStartPoint =  this.cursorPos
+        elem.style.visibility = "hidden"
+        elem.style.opacity = "0"
 
-        const taskElem = this.getTaskElem(taskIdx)
-        const fromTop = event.clientY - taskElem.getBoundingClientRect().top
-        const classStr = target.classList.value
-        const tag = target.tagName
-        const containsSubtaskClass = classStr.includes("subtask")
-        const dragHandleClass = findAncestor({
-            child: target, queryStr: "drag-handle",
-            max: 4
-        })?.classList.value ?? ""
-
-        this.isDraggingSubtask = (dragHandleClass.includes("subtask__drag-handle") ?? false) ||
-                                 (containsSubtaskClass && tag === "LI") ||
-                                 (classStr.includes("subtask__title")) ||
-                                 (classStr.includes("subtask__right")) ||
-                                 (classStr.includes("subtask__content"))
-
-        this.isDraggingTask = (!this.isDraggingSubtask) &&
-                              ((tag === "LI" && fromTop < 40) || 
-                              (classStr.includes("task__right")) || 
-                              (classStr.includes("task__top")) || 
-                              (classStr.includes("task__left")) ||
-                              (classStr.includes("task__title")) ||
-                              (!!dragHandleClass))
-
-        if (!this.isDraggingSubtask && !this.isDraggingTask) {
-            return
-        }
-        this.update({ 
-            isDraggingSubtask: this.isDraggingSubtask, 
-            isDraggingTask: this.isDraggingTask 
-        })
-
-        if (this.floatingItem) {
-            event.preventDefault()
-        }
-    }
-    
-    /**
-     * On task list mouse up. Complete drag action if there was one.
-     */
-    onTaskListPointerUp = () => {
-        // dragging state is toggled on after click
-        // so dragging state cannot be toggled off immediately after a mouse up
-        // since floating elem will not be initialized until after a mouse move
-  
-        const draggedItem   = this.allowDrag ? (this.isDraggingTask ? "task" : "subtask") : null
-
-        this.isDraggingTask    = false
-        this.isDraggingSubtask = false
-        this.dragStartOffset   = null
-        this.dragDistance   = 0
-        this.dragStartPoint = null
-
-        this.update({ isDraggingSubtask: false, isDraggingTask: false })
-
-        // allow on click to take over
-        if (!this.floatingItem) return
-
-        let fromIdx = this.floatingItem!.idx
-        let toIdx = this.dragOverItemElemIdx
-
-        if (fromIdx < toIdx) {
-            toIdx = Math.max(0, toIdx - 1)
-        }
-
-        // reset drag over elem ui
-        if (this.dragOverItemElem) {
-            this.updateAfterDragMove(draggedItem!)
-
-            this.dragOverItemElemIdx = -1
-            this.dragOverItemElem?.classList.remove(`${draggedItem}--drag-over`)
-            this.dragOverItemElem = null
-        }
-
-        // do not allow a transition animation on new DOM location
-        const taskElem = this.getTaskElem(this.floatingItem.idx)
-        taskElem.style.transition = "0s"
-        
-        // the tasks reorder DOM updatre occurs first 
-        // then this update will trigger a recalculation of the updated collapsed task heights from the reorder
-        requestAnimationFrame(() => {
-            // do this to redo the subtask links set up
-            this.updateOpenTaskHeight()
-            
-            this.floatingItemOffset  =  null
-            this.floatingItem = null
-            this.floatingItemElem = null
-            this.update({ floatingItem: null, floatingItemOffset: null  })
-
-            // if dragging subtask, keep open
-            if (draggedItem === "task") {
-                this.pickedTaskIdx = -1
-                this.updateTaskFocusIdx(toIdx)
-            }
-            if (draggedItem === "subtask") {
-                this.updateSubtaskFocusIdx(toIdx)
-            }
-        })
+        elem.style.top = "-100px"
+        elem.style.left = "-100px"
     }
 
     /* Inputs / Editing Functionality */
@@ -1920,7 +1725,7 @@ export class TasksListManager {
             this.addingNewSubtask({ taskIdx, subtaskIdx: subtaskIdx + 1})
             this.updateSubTaskFocusIdxFromStroke("", subtaskIdx + 1)
         }
-        else if ("Duplicate Subtask") {
+        else {
             this.duplicateSubtask(taskIdx, subtaskIdx)
         }
 
@@ -1934,7 +1739,7 @@ export class TasksListManager {
         this.isContextMenuOpen = false
         this.update({ isContextMenuOpen: false })
         
-        // allow for dropdown-menu fade out animation to finish
+        // allow for dmenu fade out animation to finish
         setTimeout(() => {
             this.contextMenuX = -1000
             this.contextMenuY = -1000
@@ -1985,7 +1790,7 @@ export class TasksListManager {
         }
 
         const { left, top } = initFloatElemPos({
-            dims: { height: 220, width: this.contextMenuWidth + 10 }, cursorPos,
+            dims: { height: 220, width: this.CONTEXT_MENU_WIDTH + 10 }, cursorPos,
             containerDims: { height: containerElem.clientHeight, width: containerElem.clientWidth }
         })
         
@@ -2018,7 +1823,7 @@ export class TasksListManager {
             top: this.cursorPos.top - scrollTop
         }
         const { left, top } = initFloatElemPos({
-            dims: { height: 220, width: this.contextMenuWidth + 10 }, 
+            dims: { height: 220, width: this.CONTEXT_MENU_WIDTH + 10 }, 
             cursorPos,
             containerDims: { height: containerElem.clientHeight, width: containerElem.clientWidth },
         })
@@ -2395,7 +2200,7 @@ export class TasksListManager {
         if (newState.isEditingDescription != undefined)      newStateObj.isEditingDescription = newState.isEditingDescription
         if (newState.isEditingTitle != undefined)            newStateObj.isEditingTitle = newState.isEditingTitle
         if (newState.newText != undefined)                    newStateObj.newText = newState.newText
-        if (newState.editSubtaskIdx != undefined)          newStateObj.editSubtaskIdx = newState.editSubtaskIdx
+        if (newState.editSubtaskIdx != undefined)             newStateObj.editSubtaskIdx = newState.editSubtaskIdx
         if (newState.taskCheckBoxJustChecked != undefined)    newStateObj.taskCheckBoxJustChecked = newState.taskCheckBoxJustChecked
         if (newState.subtaskCheckBoxJustChecked != undefined) newStateObj.subtaskCheckBoxJustChecked = newState.subtaskCheckBoxJustChecked
         if (newState.textAreaHasSpellCheck != undefined)      newStateObj.textAreaHasSpellCheck = newState.textAreaHasSpellCheck
@@ -2406,15 +2211,14 @@ export class TasksListManager {
         if (newState.focusedSubtaskIdx != undefined)          newStateObj.focusedSubtaskIdx = newState.focusedSubtaskIdx
         if (newState.justExpandedTask != undefined)           newStateObj.justExpandedTask = newState.justExpandedTask
 
-        if (newState.draggingSourceIdx != undefined)          newStateObj.draggingSourceIdx = newState.draggingSourceIdx
-        if (newState.dragOverItemElemIdx != undefined)        newStateObj.dragOverItemElemIdx = newState.dragOverItemElemIdx
-
-        if (newState.floatingItemOffset != undefined)         newStateObj.floatingItemOffset = newState.floatingItemOffset
-        if (newState.floatingItem != undefined)               newStateObj.floatingItem = newState.floatingItem
+        /* drag */
         if (newState.taskLayout != undefined)                 newStateObj.taskLayout = newState.taskLayout
-        if (newState.isDraggingTask != undefined)             newStateObj.isDraggingTask = newState.isDraggingTask
-        if (newState.isDraggingSubtask != undefined)          newStateObj.isDraggingSubtask = newState.isDraggingSubtask
+        
+        if (newState.isTargetEnd != undefined)                    newStateObj.isTargetEnd = newState.isTargetEnd
+        if (newState.dragSrc != undefined)                    newStateObj.dragSrc = newState.dragSrc
+        if (newState.dragTarget != undefined)                 newStateObj.dragTarget = newState.dragTarget
 
+        /* context menu */
         if (newState.contextMenuX != undefined)               newStateObj.contextMenuX = newState.contextMenuX
         if (newState.contextMenuY != undefined)               newStateObj.contextMenuY = newState.contextMenuY
         if (newState.rightClickedSubtask != undefined)        newStateObj.rightClickedSubtask = newState.rightClickedSubtask

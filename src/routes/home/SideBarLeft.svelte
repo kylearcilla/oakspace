@@ -6,6 +6,7 @@
 	import { capitalize, randomArrayElem } from "$lib/utils-general"
     import { LogoIcon, ModalType } from "$lib/enums"
 	import { globalContext, themeState } from "$lib/store"
+    import { getThemeStyling } from "$lib/utils-appearance"
     
 	import Logo from "../../components/Logo.svelte"
 	import BounceFade from "../../components/BounceFade.svelte"
@@ -25,15 +26,18 @@
         { name: "Help", icon: "fa-solid fa-circle-question", rgb: "190, 190, 190" }, 
         { name: "Upgrade", icon: "fa-solid fa-bolt", rgb: "255, 226, 153" }
     ]
-
     const QUOTE_EMOJI_ICONS = [
         "🌿", "🌙", "🌷", "🌱", "⛰️", "🪴", "🌊", "🍉", "🌳", "🐛"
     ]
 
     let settingsOpen = false
-    let hoverColor = ""
+    let lightColor = ""
     let selectColor = tabs[0].rgb
     let selectedTabName = tabs[0].name
+    
+    let defFgColor = ""
+    let defBgColor = ""
+    let useDef = false
     
     $: ambience = $globalContext.ambience
     $: isDarkTheme = $themeState.isDarkTheme
@@ -42,10 +46,18 @@
     $: {
         updateSelectTab($page.url.pathname)
     }
+    $: if ($themeState) {
+
+        defFgColor = getThemeStyling("navBtnColor")
+        defBgColor = getThemeStyling("navBtnBgColor")
+
+        useDef = $themeState.title != "Dark" 
+  }
+
 
     /* Event Listeners */
     function onTabBtnMouseOver(tabIdx: number) {
-        hoverColor = tabs[tabIdx].rgb
+        lightColor = tabs[tabIdx].rgb
     }
     function handleTabBtnClicked(tabStr: string, tabIdx: number) {
         selectColor = tabIdx >= 4 ? selectColor : tabs[tabIdx].rgb
@@ -113,13 +125,15 @@
 <div 
     class="bar"
     class:bar--dark-theme={isDarkTheme}
-    class:bar--light-theme={!isDarkTheme}
+    class:bar--light={!isDarkTheme}
     class:bar--ambience={ambience?.styling === "blur" || ambience?.styling === "clear"}
     class:bar--ambience-solid={ambience?.styling === "solid"}
     class:bar--ambience-clear={ambience?.styling === "clear"}
     class:bar--min={min}
-    style:--hover-color={hoverColor}
-    style:--select-color={selectColor}
+    style:--hover-fg-color={`${useDef ? defFgColor : `rgba(${lightColor}, 1)`}`}
+    style:--hover-bg-color={`${useDef ? defBgColor : `rgba(${lightColor}, 0.045)`}`}
+    style:--select-fg-color={`${useDef ? defFgColor : `rgba(${selectColor}, 1)`}`}
+    style:--select-bg-color={`${useDef ? defBgColor : `rgba(${selectColor}, 0.045)`}`}
 >
 
     <div>
@@ -130,17 +144,8 @@
                 <span class="bar__profile-name">
                     Kyle Arcilla
                 </span>
-                <div class="bar__profile-stats">
-                    kylearcilla09@gmail.com
-                </div>
             </div>
         </div>
-    
-        <!-- <div class="bar__dotted-divider">
-            <svg width="175" height="2" viewBox="0 0 175 2" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0.304688 0.689453L175 0.689473" stroke-dasharray="2 4"/>
-            </svg>                
-        </div> -->
     
         <!-- Tabs -->
         <div class="bar__tabs">
@@ -201,7 +206,7 @@
                         class:bar__tab-btn--selected={name === selectedTabName}
                         on:click={(e) => selectTabBtn(name.toLowerCase())}
                         on:mouseenter={() => {
-                            hoverColor = bottomTabs[tabIdx].rgb
+                            lightColor = bottomTabs[tabIdx].rgb
                         }}
                     >
                         <i class={`${icon} bar__tab-btn-icon`}></i>
@@ -221,7 +226,7 @@
                         {#key min}
                             <Logo 
                                 logo={LogoIcon.Somara}
-                                options={{ scale: min ? 1.3 : 1 }}
+                                options={{ scale: min ? 1.6 : 1.1 }}
                             />
                         {/key}
                     </div>
@@ -247,39 +252,39 @@
     <!-- Settings Dropdown -->
     <div class="bar__settings-dropdown-container">
         <BounceFade
-            id="left-bar--dropdown-menu"
+            id="left-bar--dmenu"
             styling={{ }}
             isHidden={!settingsOpen}
             onClickOutside={() => settingsOpen = false}
         >
             <ul 
-                class="bar__settings-dropdown dropdown-menu"
-                class:dropdown-menu--dark={isDarkTheme}
+                class="bar__settings-dropdown dmenu"
+                class:dmenu--dark={isDarkTheme}
             >
-                <li class="dropdown-menu__option">
-                    <button class="dropdown-menu__option-btn" on:click={() => openModal(ModalType.Shortcuts)}>
-                        <span class="dropdown-menu__option-text">
+                <li class="dmenu__option">
+                    <button class="dmenu__option-btn" on:click={() => openModal(ModalType.Shortcuts)}>
+                        <span class="dmenu__option-text">
                             Settings
                         </span>
                     </button>
                 </li>
-                <li class="dropdown-menu__option">
-                    <button class="dropdown-menu__option-btn" >
-                        <span class="dropdown-menu__option-text">
+                <li class="dmenu__option">
+                    <button class="dmenu__option-btn" >
+                        <span class="dmenu__option-text">
                             Daily Wisdom
                         </span>
                     </button>
                 </li>
-                <li class="dropdown-menu__option">
-                    <button class="dropdown-menu__option-btn" on:click={() => openModal(ModalType.Shortcuts)}>
-                        <span class="dropdown-menu__option-text">
+                <li class="dmenu__option">
+                    <button class="dmenu__option-btn" on:click={() => openModal(ModalType.Shortcuts)}>
+                        <span class="dmenu__option-text">
                             Shortcuts
                         </span>
                     </button>
                 </li>
-                <li class="dropdown-menu__section-divider"></li>
-                <li class="dropdown-menu__item">
-                    <span class="dropdown-menu__item-text">
+                <li class="dmenu__section-divider"></li>
+                <li class="dmenu__item">
+                    <span class="dmenu__item-text">
                         Sidebar
                     </span>
                     <div class="bar__bar-options">
@@ -320,6 +325,31 @@
         width: 100%;
         @include flex-col();
 
+        /* light */
+        &--light &__tab-btn {
+            &-icon {
+                opacity: 0.3;
+            }
+            span {
+                opacity: 0.7;
+                font-weight: 600;
+            }
+        }
+        &--light &__profile-name {
+            @include text-style(0.8, 500);
+        }
+        &--light &__tab-section {
+            @include text-style(0.4, 700);
+        }
+        &--light &__app-name {
+            font-weight: 500;
+        }
+        &--light &__quote-btn {
+            background-color: rgba(var(--textColor1), 0.04);
+            opacity: 1;
+        }
+
+        /* appearance */
         &--ambience &__narrow-bar,
         &--ambient-solid &__narrow-bar {
             justify-content: center;
@@ -336,7 +366,6 @@
             border-radius: 25px;
             background-color: rgba(white, 0.025);
             margin-bottom: 6.5px;
-
             // background-color: rgba(white, 0);
             // margin-bottom: 4px;
         }
@@ -360,11 +389,6 @@
         &--ambience-solid &__temp-logo,
         &--ambience-solid .narrow-theme-toggle {
             display: none
-        }
-        &--light-theme &__icon-tab-tool-tip {
-            border: 1.5px solid rgba(var(--textColor1), 0.1);
-            @include abs-top-left(4px, 44px);
-            @include text-style(0.9, 500);
         }
 
         /* left bar width */
@@ -418,25 +442,30 @@
             font-size: 1rem;
             margin-bottom: 11px;
             padding: 0px;
-            opacity: 0.5;
-            background-color: var(--navIconBgColor);
+            background-color: var(--minNavBtnBgColor);
             @include center;
 
             span {
                 display: none;
+                opacity: 1;
             }
             i {
+                opacity: 0.9;
                 font-size: 1.3rem;
                 @include text-style(0.45);
             }
         }
+        &--min &__tab-btn--selected {
+            border: 2px solid rgba(var(--textColor1), 0.05);
+        }        
 
         &__divider {
             @include divider(0.1, 1px, 25px);
+            border-top: var(--navMenuBorder);
             margin: 15px auto;
 
             &--tabs {
-                margin: 15px auto 15px auto !important;
+                margin: 15px auto 15px auto;
             }
         }
 
@@ -447,7 +476,7 @@
             @include flex(center);
 
             img {
-                @include circle(18px);
+                @include circle(20px);
                 object-fit: cover;
             }
         }
@@ -455,12 +484,7 @@
             margin-left: 10.5px;
         }
         &__profile-name {
-            @include text-style(0.9, 400, 1.2rem, "Apercu");
-        }
-        &__profile-stats {
-            margin-top: 5px;
-            @include text-style(0.2, 400, 1.1em, "Apercu");
-            display: none;
+            @include text-style(0.9, 400, 1.3rem, "Apercu");
         }
 
         /* Settings */
@@ -497,22 +521,23 @@
             border-radius: 6px;
             margin-bottom: 2px;
             border: 0.5px solid transparent;
-            opacity: 0.3;
             transition: 0s;
+            border: 2px solid transparent;
         
             &:hover {
-                background-color: rgba(var(--hover-color), 0.045) !important;
-                opacity: 0.85 !important;
+                background-color: var(--hover-bg-color) !important;
             }
             &:hover &-icon, &:hover span {
-                color: rgb(var(--hover-color));
+                color: var(--hover-fg-color) !important;
+                opacity: 0.7 !important;
             }
             &--selected {
-                background-color: rgba(var(--select-color), 0.045) !important;
-                opacity: 0.85 !important;
+                background-color: var(--select-bg-color) !important;
             }
-            &--selected &-icon, &--selected span {
-                color: rgb(var(--select-color)) !important;
+            &--selected &-icon, 
+            &--selected span {
+                color: var(--select-fg-color) !important;
+                opacity: 0.7 !important;
             }
             &:active {
                 transform: scale(0.99);
@@ -521,12 +546,14 @@
             &-icon {
                 width: 10px;
                 height: 10px;
+                opacity: 0.2;
                 @include center;
-                @include text-style(1, _, 1.15rem);
+                @include text-style(1, _, 1.2rem);
             }
             span {
-                margin-left: 15px;
-                @include text-style(1, 500, 1.25rem);
+                opacity: 0.45;
+                margin-left: 17px;
+                @include text-style(0.8, 500, 1.3rem);
             }
         }
         &__section-title {
@@ -551,15 +578,12 @@
         }
         &__app-name {
             @include flex(center);
-            @include text-style(1, 400, 1.25rem, "DM Mono");
+            @include text-style(1, 400, 1.35rem, "DM Mono");
             margin-top: -2px;
 
             span {
-                margin-left: 4px;
+                margin-left: 6px;
             }
-        }
-        &__app-version {
-            @include text-style(0.2, 400, 1.15rem, "DM Mono");
         }
         &__quote-btn {
             background-color: rgba(var(--textColor1), 0.05);
@@ -574,7 +598,7 @@
             }
         }
 
-        .dropdown-menu {
+        .dmenu {
             padding-bottom: 5px;
             &__item {
                 padding-bottom: 2px;

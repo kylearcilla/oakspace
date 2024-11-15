@@ -183,7 +183,7 @@
         bind:this={timePickerRef}
         role="button"
         tabindex="0"
-        id={`${id}--dropdown-btn`}
+        id={`${id}--dbtn`}
         class="time-picker" 
         class:time-picker--light={isLight}
         class:time-picker--default-width={isDragging || isInputActive}

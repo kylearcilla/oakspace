@@ -1,36 +1,53 @@
 <script lang="ts">
 	import { TEST_GOALS } from "$lib/mock-data"
 	import GoalCard from "../../../components/GoalCard.svelte";
+	import ProgressRing from "../../../components/ProgressRing.svelte";
+	import { themeState } from "../../../lib/store";
+	import { getColorTrio, getTagFromName, kebabToNormal } from "../../../lib/utils-general";
+	import { getSectionProgress, reorderGoals, sectionGoals } from "../../../lib/utils-goals"
 
-    const COL_IDS = ["not-started", "in-progress", "accomplished"] 
-    
-    const COL_ID_MAP: { [key: string]: number } = {
-        "not-started": 0,
-        "in-progress": 1,
-        "accomplished": 2,
-    }
-    
-    const _goals = TEST_GOALS
-    
-    let goals: Goal[][] = []
+    export let options: {
+        grouping?: "tag" | "status"
+    } | undefined = undefined
+
+    let goals = TEST_GOALS
+    let sortedGoals: Goal[][] = []
+    let grouping = options?.grouping ?? "status"
+
+    const tags: Tag[] = Array.from(new Set(TEST_GOALS.map(goal => goal.tag)))
+    const tagsStr     = tags.map((tag) => tag.name)
+    const statuses    = ["not-started", "in-progress", "accomplished"]
 
     let isDragging = false
     let dragGoalSrc: Goal | null = null
     let dragGoalTarget: Goal | null = null
 
-    sortGoals(_goals)
+    let sections = statuses    
+    let sectionMap: { [key: string]: number } 
 
-    function sortGoals(n: Goal[]) {
-        goals = [
-            n.filter(goal => goal.status === "not-started")
-                .sort((a, b) => a.order.progress - b.order.progress),
-            
-            n.filter(goal => goal.status === "in-progress")
-                .sort((a, b) => a.order.progress - b.order.progress),
+    $: isLight = !$themeState.isDarkTheme
+    $: if (options?.grouping) {
+        initSections()
+    }
 
-            n.filter(goal => goal.status === "accomplished")
-                .sort((a, b) => a.order.progress - b.order.progress)
-        ]
+    function initSections() {
+        grouping = options.grouping
+        if (grouping === "status") {
+            sections = statuses
+        }
+        else {
+            sections = tagsStr
+        }
+        initSecMap()
+        sortGoals()
+    }
+    function initSecMap() {
+        sectionMap = {}
+        sections.forEach((name, idx) => sectionMap[name] = idx)
+    }
+    function sortGoals() {
+        sortedGoals = []
+        sortedGoals = sectionGoals({ sections, goals, grouping })
     }
 
     /* drag */
@@ -39,7 +56,6 @@
 
         if (!isDragging) {
             e.preventDefault()
-            console.log("A")
             return
         }
 
@@ -66,120 +82,138 @@
         dragGoalSrc = null
         dragGoalTarget = null
     }
-    function reorderBoard(srcGoal: Goal | string, targetGoal: Goal | string) {
-        const toLast  = typeof targetGoal === "string"
-        const srcStatus = srcGoal.status
-        const targetStatus  = toLast ? targetGoal : targetGoal.status
-
-        const srcSecIdx = COL_ID_MAP[srcStatus]
-        const toSecIdx  = COL_ID_MAP[targetStatus]
-        const sameSec   = srcSecIdx === toSecIdx
-
-        const srcOrder  = srcGoal.order.progress
-        const lastOrder = _goals.filter((goal: any) => goal.status === targetStatus).length 
-
-        const toIdx       = toLast ? lastOrder : targetGoal.order.progress
-        const betweenSec  = srcStatus != targetStatus
-        const direction   = (betweenSec ? srcSecIdx < toSecIdx : srcOrder < toIdx) ? "up" : "down"
-
-        const targetOrder = Math.max(toIdx + (direction === "up" && sameSec ? -1 : 0), 0)
-
-        _goals
-            .filter((goal: Goal) => goal.status === srcStatus)
-            .forEach((goal: Goal) => {
-                if (direction === "up" && goal.order.progress > srcOrder) {
-                    goal.order.progress--
-                } 
-                else if (!sameSec && direction === "down" && goal.order.progress > srcOrder) {
-                    goal.order.progress--
-                }
-                else if (sameSec && direction === "down" && goal.order.progress < srcOrder) {
-                    goal.order.progress++
-                }
-            })
-        _goals
-            .filter((goal: Goal) => goal.status === targetStatus)
-            .forEach((goal: Goal) => {
-                if (direction === "up" && goal.order.progress >= targetOrder) {
-                    goal.order.progress++
-                } 
-                else if (!sameSec && direction === "down" && goal.order.progress >= targetOrder) {
-                    goal.order.progress++
-                }
-                else if (sameSec && direction === "down" && goal.order.progress <= targetOrder) {
-                    goal.order.progress--
-                }
-            })
-
-        srcGoal.order.progress = targetOrder
-        srcGoal.status = targetStatus 
-
-        sortGoals(_goals)
+    function reorderBoard(srcGoal: Goal | string, target: Goal | string) {
+        reorderGoals({ srcGoal, target, goals, grouping, sectionMap })
+        sortGoals()
     }
     
 </script>
 
-<div class="goals">
-        {#each ["Not Started", "In Progress", "Accomplished"] as col, idx}
-            {@const colId = COL_IDS[idx]}
-            <div class="goals__col">
-                <div class="goals__col-header">
-                    <div class={`goals__col-title goals__col-title--${colId}`}>
-                        <div class="goals__col-icon">
-                            {idx === 0 ? "📌" : idx === 1 ? "✍️" : "🎉"}
-                        </div>
-                        {col}
+<div 
+    class="goals"
+    class:goals--light={isLight}
+    class:goals--tag-view={grouping === "tag"}
+>
+    {#each sections as section, secIdx (secIdx)}
+        {@const sec = kebabToNormal(section)}
+        {@const goals = sortedGoals[secIdx]}
+        {@const isTag    = grouping === "tag"}
+        {@const tag      = isTag ? getTagFromName(sec) : undefined}
+        {@const tagColor = isTag ? getColorTrio(tag.symbol.color, isLight) : ["", "", ""]}
+        {@const { done, total } = getSectionProgress({ sortedGoals, secIdx })}
+
+        <div class="goals__col">
+            <div class="goals__col-header">
+                <div 
+                    class={`goals__col-name-container goals__col-name-container--${section}`}
+                    class:tag={isTag}
+                    class:tag--light={isTag && isLight}
+                    style:--tag-color-primary={tag?.symbol.color.primary}
+                    style:--tag-color-1={tagColor[0]}
+                    style:--tag-color-2={tagColor[1]}
+                    style:--tag-color-3={tagColor[2]}
+                >
+                    <div 
+                        class="goals__col-icon"
+                        class:tag__symbol={isTag}
+                    >
+                        {#if isTag}
+                            {tag.symbol.emoji}
+                        {:else}
+                            {secIdx === 0 ? "📌" : secIdx === 1 ? "✍️" : "🎉"}
+                        {/if}
                     </div>
-                    <div class="goals__col-count">
-                        {goals[idx].length}
+                    <div class="goals__col-name" class:tag__title={isTag}>
+                        {sec}
                     </div>
                 </div>
-                <div class="goals__list">
-                    {#each goals[idx] as goal (goal.name + `${idx}`)}
-                        <div 
-                            draggable="true"
-                            on:dragstart={(e) => onGoalDrag(e, goal)}
-                            on:dragover={(e) => onGoalDragOver(e, goal)}
-                            on:dragleave={onDragLeave}
-                            on:dragend={onGoalDragEnd}
-                            class="goals__goal"
-                            class:goals__goal--drag-over={dragGoalTarget?.name === goal.name}
-                        >
-                            <div 
-                                class="goals__goal-handle"
-                                on:pointerdown={() => isDragging = true}
-                                on:pointerup={() => isDragging = false}    
-                            >
-                            </div>
-                            <GoalCard 
-                                {goal} 
-                                onClick={() => {}}
-                                options={{ 
-                                    img: true, due: false, completed: col === "Accomplished" }}
+                <div class="goals__col-count flx">
+                    {#if !isTag}
+                        {sortedGoals[secIdx].length}
+                    {:else if total > 0}
+                        <div class="fraction">
+                            {Math.floor(done / total * 100)}%
+                        </div>
+                        <div class="goals__progress-ring">
+                            <ProgressRing 
+                                progress={done / total} 
+                                options={{ style: "rich-colored" }}    
                             />
                         </div>
-                    {/each}
-                    <div 
-                        on:dragover={(e) => onGoalDragOver(e, colId)}
-                        on:dragleave={onDragLeave}
-                        on:dragend={onGoalDragEnd}
-                        class="goals__goal goals__goal--ghost"
-                        class:goals__goal--drag-over={dragGoalTarget === colId}
-                    >
-                    </div>
+                    {/if}
                 </div>
             </div>
-        {/each}
+            <div class="goals__list">
+                {#each goals as goal (goal.name + `${secIdx}`)}
+                    <div 
+                        draggable="true"
+                        on:dragstart={(e) => onGoalDrag(e, goal)}
+                        on:dragover={(e) => onGoalDragOver(e, goal)}
+                        on:dragleave={onDragLeave}
+                        on:dragend={onGoalDragEnd}
+                        class="goals__goal dg-over-el"
+                        class:dg-over-el--over={dragGoalTarget?.name === goal.name}
+                    >
+                        <div 
+                            class="goals__goal-handle"
+                            on:pointerdown={() => isDragging = true}
+                            on:pointerup={() => isDragging = false}    
+                        >
+                        </div>
+                        <GoalCard 
+                            {goal} 
+                            onClick={() => {}}
+                            options={{ 
+                                img: true, 
+                                due: false,
+                                tag: grouping === "status",
+                                completed: sec === "Accomplished", 
+                                progress: "default"
+                        }}
+                        />
+                    </div>
+                {/each}
+                <div 
+                    on:dragover={(e) => onGoalDragOver(e, section)}
+                    on:dragleave={onDragLeave}
+                    on:dragend={onGoalDragEnd}
+                    class="goals__goal goals__goal--ghost dg-over-el"
+                    class:dg-over-el--over={dragGoalTarget === section}
+                >
+                </div>
+            </div>
+        </div>
+    {/each}
 </div>
 
 <style lang="scss">
     .goals {
-        margin-top: 12px;
         display: flex;
-        max-width: 620px;
+        
+        &--light &__col-name-container {
+            font-weight: 600;
+        }
+        &--light &__col-count {
+            @include text-style(0.35, 500);
+        }
+        &--light &__col-name-container--not-started {
+            color: rgba(var(--textColor1), 0.8);
+            background-color: rgba(var(--textColor1), 0.05);
+        }
+        &--light &__col-name-container--in-progress {
+            color: #846e41;
+            background-color: #FEF4BF;
+        }
+        &--light &__col-name-container--accomplished {
+            color: #537151;
+            background-color: #e5f2c9;
+        }
+        &--light &__col-count .fraction {
+            font-weight: 500;
+        }
 
         &__col {
-            width: calc(100% / 3);
+            min-width: 190px;
             margin-right: 25px;
         }
         &__col-header {
@@ -194,10 +228,10 @@
             margin: 1px 10px 0px 0px;
             color: white !important;
         }
-        &__col-title {
-            @include text-style(_, 500, 1.2rem);
+        &__col-name-container {
+            @include text-style(_, 500, 1.28rem);
             display: flex;
-            padding: 4px 15px 7px 10px;
+            padding: 4px 15px 5px 10px !important;
             border-radius: 8px;
             margin-right: 10px;
 
@@ -215,11 +249,11 @@
             }
         }
         &__col-count {
-            @include text-style(0.2, 400, 1.25rem, "DM Mono");
+            @include text-style(0.35, 400, 1.25rem, "DM Sans");
         }
         &__list {
             position: relative;
-            max-width: 200px;
+            max-width: 205px;
         }
         &__goal {
             position: relative;
@@ -228,18 +262,10 @@
                 height: 60px;
                 width: 100%;
             }
-            &--drag-over::before {
-                opacity: 0.4!important;
-            }
-            &::before {
-                opacity: 0;
-                content: " ";
-                width: calc(100% - 20px);
-                height: 2px;
-                transition: 0.08s ease-in-out;
-                @include abs-top-left(-4px, 10px);
-                background-color: #71B8FF;
-            }
+        }
+        .fraction {
+            margin: -3px 7px 0px 0px;
+            opacity: 0.7;
         }
         &__goal-handle {
             width: 100%;
@@ -250,6 +276,11 @@
             
             &:active {
                 cursor: grabbing !important;
+            }
+        }
+        .tag {
+            &__title {
+                font-size: 1.25rem;
             }
         }
     }

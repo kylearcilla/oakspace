@@ -134,7 +134,7 @@
     .calendar {
         /* light / dark themes adjustments */
         &--light &__today-btn {
-            @include text-style(0.5, 600);
+            @include text-style(0.3, 600);
         }
         &--light &__next-prev-btn {
             opacity: 0.4;
@@ -152,33 +152,21 @@
         &--light &__month-title {
             @include text-style(0.28, 500);
             strong {
-                @include text-style(0.9, 500);
+                @include text-style(1, 500);
             }
         }
-        &--light &__days-of-week *,
-         &--light#{&}--productivity &__days-of-week * {
-            @include text-style(0.5, 500);
+        &--light &__days-of-week * {
+            @include text-style(0.9, 600);
         }
         &--light &__month-day {
-            @include text-style(0.85, 500);
+            @include text-style(0.95);
+            font-weight: 600 !important;
 
             &:hover {
-                background: rgba(var(--textColor1), 0.1);
-            }
-            &--today {
-                @include text-style(0.89);
-                background: rgba(var(--textColor1), 0.1);
-            }
-            &--picked {
-                background: rgba(var(--fgColor2), 1) !important;
-                color: rgba(var(--textColor2), 1) !important;
-                border-color: transparent;
+                background: rgba(var(--textColor1), 0.09);
             }
             &--not-curr-month {
-                opacity: 0.35;
-            }
-            &--disabled {
-                opacity: 0.9;
+                opacity: 0.2 !important;
             }
         }
         &--light#{&}--productivity &__today-btn {
@@ -197,38 +185,14 @@
                 opacity: 0.1;
             }
         }
-        &--light#{&}--productivity &__month-day {
-            @include text-style(0.5);
-            font-weight: 600 !important;
-
-            &:hover {
-                background: rgba(var(--textColor1), 0.04);
-            }
-            &--today {
-                @include text-style(0.89);
-                background: rgba(var(--fgColor1), 1);
-                color: rgba(var(--textColor2), 1) !important;
-            }
-            &--picked {
-                background: rgba(var(--fgColor2), 1) !important;
-                color: rgba(var(--textColor2), 1) !important;
-                border-color: transparent;
-            }
-            &--not-curr-month {
-                opacity: 0.4 !important;
-            }
-        }
 
         /* Calendar Type Specific Styling */
         &--basic &__month-day-container {
             aspect-ratio: 1 / 1;
         }
         &--productivity &__month-day {
-            @include text-style(0.6, 500, 1.08rem, "DM Sans");
-            width: 80%; 
-            height: 100%;
+            @include text-style(0.8, 500, 1.2rem, "DM Sans");
             background: none;
-            border-radius: 11px;
             cursor: pointer;
             
             &:hover {
@@ -283,7 +247,8 @@
         }
         &__month-title {
             font-family: "DM Sans";
-            @include text-style(0.4, 300, 1.35rem);
+            @include text-style(0.4, 300, 1.4rem);
+            margin-left: 2px;
 
             strong {
                 @include text-style(1, 400);
@@ -294,17 +259,18 @@
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             font-family: "DM Sans";
-            padding: 12px 1px 0px 1px;
+            padding: 8px 1px 0px 1px;
             width: 100%;
 
             * {
-                @include text-style(0.4, 500, 0.97rem);
+                @include text-style(0.4, 500, 1.2rem);
                 @include center;
             }
         }
         &__month {
             width: 100%;
-            padding: 0px 1px 25px 1px;
+            padding: 0px 1px 0px 1px;
+            margin-top: 3px;
 
             ul {
                 display: grid;
@@ -312,7 +278,6 @@
                 grid-gap: 0px;
                 row-gap: 0px;
                 width: 100%;
-                margin-top: 7px;
             }
 
             &--focus ul {
@@ -326,15 +291,19 @@
             font-family: "DM Mono";
             @include center;
             @include text-style(0.7, 300, 1.1rem);
-            @include circle(90%);
             user-select: none;
             position: relative;
+            height: 28px;
+            width: 28px;
+            border-radius: 20px;
+            opacity: 0.9;
             background: rgba(var(--textColor1), 0.02);
             cursor: pointer;
 
             &:hover {
-                @include text-style(0.89);
+                @include text-style(1);
                 background: rgba(var(--textColor1), 0.08);
+                opacity: 1;
             }
             &:active {
                 transition: 0.1s ease-in-out;
@@ -349,16 +318,21 @@
                     width: 0px;
                 }
             }
-        
             &--today {
-                color:rgba(var(--textColor1), 0.7);
-                background: rgba(var(--textColor1), 0.04) !important;
+                background: #FF5151 !important;
+                color: white !important;
+                height: 19px;
+                width: 19px;
+                border-radius: 20px;
+                opacity: 1;
             }
             &--picked {
                 font-weight: 500;
-                background-color: rgba(var(--textColor1), 0.04) !important;
-                color: rgba(var(--textColor1), 1) !important;
-                border: 1px solid rgba(var(--textColor1), 0.05);
+                height: 25px;
+                width: 25px;
+                background-color: var(--elemColor2) !important;
+                color: var(--elemTextColor) !important;
+                opacity: 1;
             }
             &--not-curr-month {
                 opacity: 0.25 !important;

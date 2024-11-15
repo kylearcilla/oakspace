@@ -181,14 +181,14 @@ export async function toggleDropdown(options: {
 }) {
     const { page, pickOptionText, textOptions, identifier } = options
 
-    const dropdownBtn = page.locator(`#${identifier}--dropdown-btn`)    
+    const dropdownBtn = page.locator(`#${identifier}--dbtn`)    
     await dropdownBtn.click()
 
-    const dropdownMenu = page.locator(`#${identifier}--dropdown-menu`)    
+    const dropdownMenu = page.locator(`#${identifier}--dmenu`)    
     await expect(dropdownMenu).toBeAttached()
 
     if (textOptions) {
-        const options = dropdownMenu.locator(".dropdown-menu__option-text")
+        const options = dropdownMenu.locator(".dmenu__option-text")
         await expectList({ optionElems: options, texts: textOptions })
     }
 

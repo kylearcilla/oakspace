@@ -15,8 +15,8 @@
 <style lang="scss">
     .toggle {
         background-color: rgba(var(--textColor1), 0.06);
-        height: 17px;
-        width: 28px;
+        height: 18px;
+        width: 30px;
         border-radius: 20px;
         position: relative;
 
@@ -31,8 +31,8 @@
             transition: 0.1s ease-in-out;
             @include circle(12px);
             position: absolute;
-            top: 2.5px;
-            left: 3px;
+            top: 3.5px;
+            left: 4px;
             background-color: white;
         }
     }

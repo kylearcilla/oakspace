@@ -1,26 +1,35 @@
 <script lang="ts">
+	import { themeState } from "../lib/store";
+	import { DARK_COLOR_PROGRESS, LIGHT_COLOR_PROGRESS } from "../lib/utils-colors"
+
     export let progress: number
     
-    let   fgColor = "rgba(255, 255, 255, 0.9)"
-    const bgColor = "rgba(255, 255, 255, 0.1)"
+    $: isLight = !$themeState.isDarkTheme
+    let fgColor = "rgba(255, 255, 255, 0.9)"
+    
+    $: {
+        updateColor(isLight, progress)
+    }
 
-    let slider: HTMLElement
+    function updateColor(light: boolean, progress: number) {
+        const settings = light ? LIGHT_COLOR_PROGRESS : DARK_COLOR_PROGRESS
+        const { max, min, gVal, bVal } = settings
 
-    $: if (slider) {
-        const rval = Math.max(200 - ((200 - 125) * (progress / 100)), 125)
-        fgColor = `rgb(${rval}, 245, 125)`
-        const bg = `linear-gradient(to right, ${fgColor} 0%, ${fgColor} ${progress * 100}%, ${bgColor} ${progress * 100}%, ${bgColor} 100%)`
-
-        slider.style.background  = bg
+        const rval = Math.max(max - ((max - min) * (progress)), min)
+        fgColor    = `rgb(${rval}, ${gVal}, ${bVal})`
     }
 </script>
 
-<div class="progress">
+<div 
+    class="progress"
+    class:progress--light={isLight}
+>
     <div class="progress__num">
         {Math.floor(progress * 100)}%
     </div>
     <div 
-        bind:this={slider}
+        style:--fg-width={`${progress * 100}%`}
+        style:--fg-color={fgColor}
         class="progress__slider"
     >
     </div>
@@ -29,15 +38,33 @@
 <style lang="scss">
     .progress {
         @include flex(center);
+
+        &--light &__num {
+            @include text-style(0.4, 500);
+        }
+        &--light &__slider {
+            background-color: rgba(var(--textColor1), 0.07);
+        }
         &__num {
-            @include text-style(0.2, 400, 1.12rem, "DM Sans");
+            @include text-style(0.5, 300, 1.35rem, "DM Mono");
             margin-right: 12px;
-            display: none;
         }
         &__slider {
             width: 50px;
-            height: 3px;
+            height: 4px;
             border-radius: 2px;
+            background-color: rgba(var(--textColor1), 0.1);
+            position: relative;
+
+            &::before {
+                content: " ";
+                @include abs-top-left;
+                width: var(--fg-width);
+                background: var(--fg-color);
+                transition: 0.1s cubic-bezier(.4,0,.2,1);
+                border-radius: 10px;
+                height: 100%;
+            }
         }
     }
 </style>

@@ -233,58 +233,58 @@ export class TasksViewManager {
             const updatedTasks: Task[] = []
             const newSubtasks: Subtask[] = []
             
-            // process the sync tasks to update current tasks
-            for (let i = 0; i < todoistTasks.length; i++) {
-                const task = todoistTasks[i]
-                const subtasks = task.subtasks!
-                const taskSubtasks = []
+            // // process the sync tasks to update current tasks
+            // for (let i = 0; i < todoistTasks.length; i++) {
+            //     const task = todoistTasks[i]
+            //     const subtasks = task.subtasks!
+            //     const taskSubtasks = []
     
-                // process subtasks first
-                for (let j = 0; j < subtasks.length; j++) {
-                    const subtask = subtasks[j]
-                    const { action, syncTask, idx } = this.getTaskSyncAction(syncTasks, subtask)
+            //     // process subtasks first
+            //     for (let j = 0; j < subtasks.length; j++) {
+            //         const subtask = subtasks[j]
+            //         const { action, syncTask, idx } = this.getTaskSyncAction(syncTasks, subtask)
     
-                    if (syncTask) {
-                        removeItemFromArray(idx, syncTasks)
-                    }
-                    if (action === "deleted") {
-                        continue
-                    }
-                    else if (action === "parent_changed" && syncTask!.parentId) {
-                        // moved
-                        newSubtasks.push(syncTask!)
-                    }
-                    else if (action === "parent_changed") {
-                        // became a task
-                        updatedTasks.push(syncTask!)
-                    }
-                    else if (action === "updated" && !syncTask!.isChecked) {
-                        taskSubtasks!.push(syncTask!)
-                    }
-                    else if (action === "none") {
-                        taskSubtasks!.push(subtask)
-                    }
-                }
+            //         if (syncTask) {
+            //             removeItemFromArray(idx, syncTasks)
+            //         }
+            //         if (action === "deleted") {
+            //             continue
+            //         }
+            //         else if (action === "parent_changed" && syncTask!.parentId) {
+            //             // moved
+            //             newSubtasks.push(syncTask!)
+            //         }
+            //         else if (action === "parent_changed") {
+            //             // became a task
+            //             updatedTasks.push(syncTask!)
+            //         }
+            //         else if (action === "updated" && !syncTask!.isChecked) {
+            //             taskSubtasks!.push(syncTask!)
+            //         }
+            //         else if (action === "none") {
+            //             taskSubtasks!.push(subtask)
+            //         }
+            //     }
 
-                const { action, syncTask, idx } = this.getTaskSyncAction(syncTasks, task)
+            //     const { action, syncTask, idx } = this.getTaskSyncAction(syncTasks, task)
 
-                if (syncTask) {
-                    removeItemFromArray(idx, syncTasks)
-                }
-                if (action === "deleted") {
-                    continue
-                }
-                else if (action === "parent_changed" && syncTask!.parentId) {
-                    // became a subtask
-                    newSubtasks.push({ ...syncTask! })
-                }
-                else if (action === "updated" && !syncTask!.isChecked) {
-                    updatedTasks.push({ ...syncTask!, subtasks: taskSubtasks })
-                }
-                else if (action === "none") {
-                    updatedTasks.push({ ...task!, subtasks: taskSubtasks })
-                }
-            }
+            //     if (syncTask) {
+            //         removeItemFromArray(idx, syncTasks)
+            //     }
+            //     if (action === "deleted") {
+            //         continue
+            //     }
+            //     else if (action === "parent_changed" && syncTask!.parentId) {
+            //         // became a subtask
+            //         newSubtasks.push({ ...syncTask! })
+            //     }
+            //     else if (action === "updated" && !syncTask!.isChecked) {
+            //         // updatedTasks.push({ ...syncTask!, subtasks: taskSubtasks })
+            //     }
+            //     else if (action === "none") {
+            //         // updatedTasks.push({ ...task!, subtasks: taskSubtasks })
+            //     }
+            // }
             
             // incorporate any new tasks from the sync
             syncTasks
@@ -296,7 +296,7 @@ export class TasksViewManager {
                 const parentIdx = updatedTasks.findIndex(p => p.id === subtask.parentId)
                 if (parentIdx < 0) continue
     
-                updatedTasks[parentIdx].subtasks!.push(subtask)
+                // updatedTasks[parentIdx].subtasks!.push(subtask)
             }
     
             this.todoistSyncToken = syncToken
@@ -527,12 +527,12 @@ export class TasksViewManager {
         tasks.forEach(task => {
             task.idx = orderIdx++
 
-            if (task.subtasks!.length === 0) return
+            // if (task.subtasks!.length === 0) return
 
-            let subtaskOrderIdx = 0
+            // let subtaskOrderIdx = 0
 
-            task.subtasks!.sort((a, b) => a.title.localeCompare(b.title))
-            task.subtasks!.forEach(subtask => subtask.idx = subtaskOrderIdx++)
+            // task.subtasks!.sort((a, b) => a.title.localeCompare(b.title))
+            // task.subtasks!.forEach(subtask => subtask.idx = subtaskOrderIdx++)
         })
 
         return tasks

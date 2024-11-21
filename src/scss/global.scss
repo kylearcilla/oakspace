@@ -1,5 +1,4 @@
 * {
-
     margin: 0; 
     padding: 0; 
     box-sizing: border-box; 
@@ -1147,5 +1146,21 @@ $loading-dots-width: 4px;
     }
     &:active {
         cursor: grabbing;
+    }
+}
+
+.toggle-arrow {
+    transform: rotate(0deg);
+    opacity: 0;
+    padding: 4px;
+    transition: 0.18s cubic-bezier(.4, 0, .2, 1);
+
+
+    &:hover {
+        opacity: 0.9 !important;
+    }
+
+    &--closed {
+        transform: rotate(-90deg);
     }
 }

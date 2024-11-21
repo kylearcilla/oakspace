@@ -17,9 +17,8 @@
     $: isDark = $themeState.isDarkTheme
 
     $: if (isHidden != undefined) { 
-        resetCount(!isHidden)
+        resetCount()
     }
-    
     $: if (!isHidden && dropdownMenuRef && options.scroll?.goToIdx) {
         goToStartingIdxLocation(options.scroll.goToIdx)
     }
@@ -32,7 +31,7 @@
         pickedItem = options.pickedItem
     }
 
-    function resetCount(isActive: boolean) {
+    function resetCount() {
         idxCount = 0
     }
     function onItemClicked(e: Event, idx: number, name: string) {

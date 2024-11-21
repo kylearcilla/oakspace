@@ -112,6 +112,137 @@ export const TEST_SESSIONS: Session[] = [
   }
 ]
 
+export const TEST_TASKS: Task[] = [
+  {
+      id: "f82be9cd-8f42-477e-b833-e74feed75a78",
+      idx: 0,
+      title: "Morning Routine",
+      description: "Start the day with a set of activities.",
+      isChecked: false,
+      parentId: null
+  },
+  {
+      id: "9e2d813a-b7c2-48a5-9e47-87654aebbe7a",
+      idx: 0,
+      title: "Wake Up",
+      description: "Get out of bed and stretch.",
+      isChecked: false,
+      parentId: "f82be9cd-8f42-477e-b833-e74feed75a78"  // Nested under "Morning Routine"
+  },
+  {
+      id: "2d92e4a5-01ab-4d12-9a3f-4f6f2f0c6f7f",
+      idx: 1,
+      title: "Make Breakfast",
+      description: "Prepare a healthy breakfast.",
+      isChecked: false,
+      parentId: "f82be9cd-8f42-477e-b833-e74feed75a78"  // Nested under "Morning Routine"
+  },
+  {
+      id: "bf3e3c33-7d8e-4293-937e-67b78d4516b1",
+      idx: 1,
+      title: "Check Emails",
+      description: "Review important emails and respond.",
+      isChecked: false,
+      parentId: null
+  },
+  {
+      id: "bb746a50-b674-4285-8504-4fada3283243",
+      idx: 2,
+      title: "Work Tasks",
+      description: "",
+      isChecked: false,
+      parentId: null
+  },
+  {
+      id: "6b5686c0-1676-4e5d-9b33-eeb29de83b3a",
+      idx: 0,
+      title: "Write Report",
+      description: "Write the end-of-day project report.",
+      isChecked: false,
+      parentId: "bb746a50-b674-4285-8504-4fada3283243"  // Nested under "Work Tasks"
+  },
+  {
+      id: "ca9f636b-2457-47a5-b48a-13c9ed7e4686",
+      idx: 0,
+      title: "Gather Data",
+      description: "Collect and analyze data for the report.",
+      isChecked: false,
+      parentId: "6b5686c0-1676-4e5d-9b33-eeb29de83b3a"  // Nested under "Write Report"
+  },
+  {
+      id: "397f5f0a-d234-4c61-a17a-d8d9238c2299",
+      idx: 3,
+      title: "Plan Weekend Trip",
+      description: "Research and book a trip for the weekend.",
+      isChecked: false,
+      parentId: null
+  },
+  {
+      id: "781a5fe3-b855-4ec9-8bc6-49249c82adf7",
+      idx: 0,
+      title: "Choose Destination",
+      description: "Decide on the location for the trip.",
+      isChecked: false,
+      parentId: "397f5f0a-d234-4c61-a17a-d8d9238c2299"  // Nested under "Plan Weekend Trip"
+  },
+  {
+      id: "c3488a1e-2581-467e-b285-17797a5e0000",
+      idx: 0,
+      title: "Book Flights",
+      description: "Find and book flights to the chosen destination.",
+      isChecked: false,
+      parentId: "781a5fe3-b855-4ec9-8bc6-49249c82adf7"  // Nested under "Choose Destination"
+  },
+  {
+      id: "1b0a5d31-5059-43f7-b94a-8b7f3b0b6e1f",
+      idx: 0,
+      title: "Buy Luggage",
+      description: "Purchase new luggage for the trip.",
+      isChecked: false,
+      parentId: "c3488a1e-2581-467e-b285-17797a5e0000"  // Nested under "Book Flights"
+  },
+  {
+      id: "aff3d66d-4d45-4a3d-a02a-df125d4314a9",
+      idx: 4,
+      title: "Exercise Routine",
+      description: "Workout to stay fit and active.",
+      isChecked: false,
+      parentId: null
+  },
+  {
+      id: "4a6c7296-d313-4879-b5be-55b3e7b404b1",
+      idx: 0,
+      title: "Warm Up",
+      description: "Do a quick warm-up before the workout.",
+      isChecked: false,
+      parentId: "aff3d66d-4d45-4a3d-a02a-df125d4314a9"  // Nested under "Exercise Routine"
+  },
+  {
+      id: "1f37b056-7329-45a1-9a6a-6b62b7880d58",
+      idx: 1,
+      title: "Cardio",
+      description: "30 minutes of running.",
+      isChecked: false,
+      parentId: "4a6c7296-d313-4879-b5be-55b3e7b404b1"  // Nested under "Warm Up"
+  },
+  {
+      id: "46e51f5f-1bdb-438f-a378-5d2f20b5126b",
+      idx: 2,
+      title: "Strength Training",
+      description: "Lift weights for muscle building.",
+      isChecked: false,
+      parentId: "4a6c7296-d313-4879-b5be-55b3e7b404b1"  // Nested under "Warm Up"
+  },
+  {
+      id: "5be6a831-6e0f-4f35-b48b-dc56782057fe",
+      idx: 0,
+      title: "Cool Down",
+      description: "Stretch and cool down after the workout.",
+      isChecked: false,
+      parentId: "aff3d66d-4d45-4a3d-a02a-df125d4314a9"  // Nested under "Exercise Routine"
+  },
+]
+
 /* Goals */
 export const TEST_GOALS: Goal[] = [
   {
@@ -296,8 +427,6 @@ export const TEST_GOALS: Goal[] = [
     }
   },
 ]
-
-
 
 /* Week Habits */
 export const TEST_WK_HABITS = [

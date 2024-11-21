@@ -4,7 +4,7 @@
 	import { globalContext, themeState, weekRoutine } from "$lib/store"
 
 	import { Icon } from "$lib/enums"
-	import { TEST_TASKS } from "$lib/utils-right-bar"
+	import { TEST_TASKS } from "$lib/mock-data"
 	import { toggleActiveRoutine } from "$lib/utils-home"
     import { RoutinesManager } from "$lib/routines-manager"
 	import { TextEditorManager, type InputManager } from "$lib/inputs"

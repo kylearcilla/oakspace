@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte"
     
-	import { TEST_TASKS } from "$lib/utils-right-bar"
+	import { TEST_TASKS } from "$lib/mock-data"
     import { globalContext, themeState } from "$lib/store"    
 	import { clamp, clickOutside } from "$lib/utils-general"
 	import { TasksViewManager } from "$lib/tasks-view-manager"

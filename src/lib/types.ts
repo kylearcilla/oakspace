@@ -36,7 +36,7 @@ type RoutineActvity = keyof RoutineCores
 
 type InputOptions = {
     id?: string
-    placeholder: string
+    placeholder?: string
     initValue: string
     maxLength?: number
     doAllowEmpty?: boolean
@@ -554,7 +554,7 @@ type ProgressVisualPart = {
 }
 
 /* Music Stuff */
-// music player plays media
+
 type UserLibraryCollection = {
     items: Album[] | Playlist[] | Track[] | AudioBook[] | PodcastEpisode[] | Artist[]
     hasFetchedAll: boolean
@@ -562,33 +562,57 @@ type UserLibraryCollection = {
     totalItems: number
 }
 
-/* Task List */
+/* tasks */
+
 interface Task {
     id: string,
     idx: number,
     isChecked: boolean,
     title: string,
     description: string
-    subtasks?: Subtask[]
+    parentId: string | null
 }
 
-interface Subtask extends Omit<Task, "description" | "subtasks"> { 
-    parentId: string
+/* task list */
+
+type TasksListOptions = {
+    id: string
+    tasks: Tasks
+    containerRef: HTMLElement
+    handlers?: TaskListHandlers
+    settings?: {
+        numbered?: boolean,
+        allowDuplicate?: boolean,
+        tasksLinked?: boolean
+        subtasks?: boolean
+        reorder?: boolean
+        removeOnComplete?: boolean
+        progress?: "perc" | "count"
+        maxTitleLines?: number
+        maxDescrLines?: number
+        max?: number,
+        subtaskMax?: number,
+        maxToastMsg?: string
+        subtaskMaxToastMsg?: string
+        addBtn?: {
+            iconScale?: number,
+            doShow?: boolean,
+            style?: StylingOptions,
+            text?: string,
+            pos?: "top" | "bottom",
+        }
+    }
+    ui?: {
+        maxHeight?: string
+        showDragHandle?: boolean
+        sidePadding?: CSSUnitVal
+        hasTaskDivider?: boolean
+        listHeight?: CSSUnitVal
+        checkboxDim?: string
+    }
 }
 
-interface TodoistTask extends Omit<Task, "subtasks"> {
-    parentId: string
-    isRecurring: boolean
-    due: Date | null
-    isDeleted: boolean
-    subtasks: TodoistTask[]
-}
-
-type TodoistItemPartialSyncOntext = {
-    action: "none" | "deleted" | "parent_changed" | "updated"
-    syncTask?: TodoistTask | null
-    idx: number
-}
+/* todoist api  */
 
 type TaskUpdateActions = "description" | "name" | "complete" | "incomplete" | "reorder"
 
@@ -643,70 +667,18 @@ type TaskListHandlers = {
     onDeleteTask: (context: TaskDeleteContext) => Promise<void>
 }
 
-type TasksListOptions = {
-    id: string
-    tasks: Task[]
-    containerRef: HTMLElement
-    handlers?: TaskListHandlers
-    settings?: {
-        numbered?: boolean,
-        allowDuplicate?: boolean,
-        tasksLinked?: boolean
-        subtasks?: boolean
-        reorder?: boolean
-        removeOnComplete?: boolean
-        progress?: "perc" | "count"
-        maxTitleLines?: number
-        maxDescrLines?: number
-        max?: number,
-        subtaskMax?: number,
-        maxToastMsg?: string
-        subtaskMaxToastMsg?: string
-        addBtn?: {
-            iconScale?: number,
-            doShow?: boolean,
-            style?: StylingOptions,
-            text?: string,
-            pos?: "top" | "bottom",
-        }
-    }
-    styling?: {
-        list?: StylingOptions
-        task?: StylingOptions
-        subtask?: StylingOptions
-        checkbox?: StylingOptions
-        description?: StylingOptions
-        num?: StylingOptions
-        descriptionInput?: { fontSize: CSSREMVal }
-    }
-    ui?: {
-        maxHeight?: string
-        showDragHandle?: boolean
-        sidePadding?: CSSUnitVal
-        hasTaskDivider?: boolean
-        listHeight?: CSSUnitVal
-        contextMenuWidth?: CSSUnitVal
-        checkboxDim?: string
-    }
+/* task client handlers */
+
+interface TodoistTask extends Omit<Task, "subtasks"> {
+    isRecurring: boolean
+    due: Date | null
+    isDeleted: boolean
 }
 
-type TaskListType = "numbered" | "tasks-linked" | "subtasks-linked" | "subtasks"
-
-type TaskListTypeCombos = `${TaskListType} ${TaskListType} ${TaskListType} ${TaskListType}` | 
-                          `${TaskListType} ${TaskListType} ${TaskListType}` | 
-                          `${TaskListType} ${TaskListType}` |
-                          `${TaskListType}`
-
-type TaskListReorder = {
-    taskId: string
-    newIdx: number
-    oldIdx: number
-}
-
-type TaskHeightChangeContext = {
-    isUserTyping?: boolean
-    hasWidthChanged?: boolean
-    doAnimate?: boolean
+type TodoistItemPartialSyncOntext = {
+    action: "none" | "deleted" | "parent_changed" | "updated"
+    syncTask?: TodoistTask | null
+    idx: number
 }
 
 /* APIs */

@@ -295,8 +295,10 @@
                                         style:--tag-color-3={colors[2]}
                                         title={`Achived ${formatPlural("task", count)}`}
                                     >
+                                        <i class="acal__goal-flag fa-brands fa-font-awesome"></i>
                                         <i>{symbol.emoji}</i>
                                         <span>{goal.name}</span>
+                                        <i>
                                     </div>
                                 {/each}
                             {/if}
@@ -330,7 +332,7 @@
         margin-top: 0px;
         width: 100%;
         height: 630px;
-        max-width: 1050px;
+        max-width: 1200px;
 
         --border: 0.5px solid rgba(var(--textColor1), 0.05);
         --dark-cell-col: rgba(var(--textColor1), 0.01);
@@ -356,7 +358,7 @@
             background-color: rgba(var(--textColor1), 0.05);
 
             span {
-                font-weight: 500;
+                font-weight: 600;
             }
         }
         &--light &__goal-cutoff {
@@ -466,22 +468,19 @@
         &__goal {
             overflow: hidden;
             position: relative;
-            padding: 1.5px 6px 2px 12px;
+            padding: 1.5px 6px 2px 6.5px;
             background-color: rgba(var(--tag-color-2), 1) !important;
 
-            &:before {
-                content: " ";
-                height: 10px;
-                width: 2.5px;
-                border-radius: 10px;
-                background-color: rgba(var(--tag-color-1), 1);
-                @include abs-top-left(4px, 4px);
-            }
             span {
                 @include text-style(_, _, 1.18rem, "Manrope");
                 font-weight: var(--txt-weight) !important;
                 color: rgba(var(--tag-color-1), 1);
             }
+        }
+        &__goal-flag {
+            color: rgba(var(--tag-color-1), 1);
+            font-size: 0.82rem !important;
+            margin-right: 6px !important;
         }
         &__goal-cutoff {
             @include text-style(0.2, var(--txt-weight), 1.1rem, "Manrope");

@@ -1,18 +1,13 @@
 <script lang="ts">
     import { getMaskedGradientStyle } from "$lib/utils-general"
-	import { TEST_GOALS } from "$lib/mock-data"
     
 	import MonthView from "./MonthView.svelte";
 	import HeatMap from "../../../components/HeatMap.svelte"
-	import GoalCard from "../../../components/GoalCard.svelte"
-	import WeeklyHabits from "./WeeklyHabits.svelte";
 	import DailyHabits from "./DailyHabits.svelte";
 	import { themeState } from "../../../lib/store";
 	import Bulletin from "./Bulletin.svelte";
-	import Tasks from "../Tasks.svelte";
-	import { TEST_TASKS } from "$lib/utils-right-bar"
+	import { TEST_TASKS } from "$lib/mock-data"
 	import { TasksViewManager } from "$lib/tasks-view-manager"
-	import TasksList from "../../../components/TasksList.svelte";
 
     const SMALLER_WIDTH = 630
     const SMALL_WIDTH = 860

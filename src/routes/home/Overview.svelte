@@ -10,7 +10,6 @@
 	import { ProductivityCalendar } from "$lib/productivity-calendar"
 	import { GoogleCalendarManager, initGoogleCalSession } from "$lib/google-calendar-manager"
     
-	import Tasks from "./Tasks.svelte"
 	import OverviewDayView from "./OverviewDayView.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
 	import Calendar from "../../components/Calendar.svelte"

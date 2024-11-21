@@ -1,0 +1,276 @@
+.task {
+    cursor: pointer;
+    outline: none;
+    width: 100%;
+    position: relative;
+    opacity: 1 ;
+    margin-bottom: 0px;
+    border-radius: 5px;
+    height: auto;
+
+    &:focus-visible {
+        box-shadow: none !important;
+    }
+    &:hover {
+        user-select: auto;
+    }
+    &--not-animated {
+        transition: 0s;
+    }
+    &--min:hover &__drag-handle {
+        @include visible;
+    }
+
+    /* light adhustments */
+    &--light:hover,  
+    &--light:focus,
+    &--light#{&}--focused {
+        @include txt-color(0.03, "bg");
+    }
+    &--light &__title-input, 
+    &--light &__title {
+        @include text-style(1, 600)
+    }
+    &--light &__description,
+    &--light &__description-input {
+        @include text-style(0.7, 600)
+    }
+    &--light &__number {
+        @include text-style(0.7);
+    }
+    &--light &__drag-handle-dots {
+        opacity: 0.5;
+    }
+    &--light &__subtask-progress span {
+        @include text-style(0.3);
+    }
+    &--light#{&}--floating {
+        box-shadow: 0px 1px 14px 4px rgba(0, 0, 0, 0.02);
+        border: 1px solid rgba(var(--textColor1), 0.09) !important;
+    }
+    &--light &__divider {
+        @include divider(0.07, 1px);
+    }
+
+    /* task types */
+    &--dummy {
+        height: 30px;
+        background: none !important;
+    }
+    &--floating {
+        position: absolute;
+        background-color: var(--bg-2) !important;
+        border-radius: 12px;
+        z-index: 100;
+        box-shadow: 0px 1px 16.4px 4px rgba(0, 0, 0, 0.14);
+        border: 1.5px solid rgba(var(--textColor1), 0.04) !important;
+        padding: 8px 0px 11px 0px !important;
+        height: 66px;
+        width: 80%;
+        @include not-visible;
+        @include abs-bottom-left(-100px, -100px);
+    }
+    &--floating &__number, 
+    &--floating &__checkbox {
+        margin-left: 18px !important;
+    }
+    &--floating &__title-container {
+        width: calc(100% - 10px) !important;  
+        margin-bottom: 2.5px;
+    }
+    &--hide-drag-handle &__drag-handle {
+        display: none;
+    }
+
+    /* subtask */
+    &--subtask {
+        background: none;
+        padding: 0px 0px 0px 0px !important;
+    }
+    &--subtask &__subtasks {
+        margin-bottom: 0px;
+    }
+    &--subtask:hover {
+        background: none;
+    }
+
+    /* Checked UI */
+    &__content--checked:first-child &__checkbox {
+        background-color: var(--elemColor1) !important;
+
+        i {
+            display: block;
+        }
+    }
+    &__content--checked  &__title-container h3 {
+        color: rgba(var(--textColor1), 0.5);
+    }
+    &__content--checked &__title.strike::after {
+        background-color: rgba(var(--textColor1), 0.4);
+    }
+    &__content--checked &__description, &__description-input {
+        opacity: 0.4;
+    }
+
+    &__top-content {
+        padding: 12px 0px 5px 0px;
+        border-radius: 4px;
+        position: relative;
+        @include flex(flex-start);
+
+        &--focused,
+        &:focus,
+        &:hover {
+            @include txt-color(0.01, "bg");
+        }
+        &--focused .toggle-arrow,
+        &:hover .toggle-arrow {
+            opacity: 0.2;
+        }
+    }
+    &__left {
+        width: auto;
+        position: relative;
+    }
+    &__drag-handle {
+        cursor: grab;
+        transition: 0.1s ease-in-out;
+        @include abs-top-left(-3px, -3px);
+        @include not-visible;
+    }
+    &__drag-handle-dots {
+        opacity: 0.1;
+        @include center;
+
+        &:hover {
+            opacity: 0.25;
+        }
+    }
+    &__right {
+        width: calc(100% - var(--left-section-width));
+        height: 100%;
+        position: relative;
+    }
+    &__left-corner {
+        margin: 1px 19px 0px var(--side-padding);
+        @include center;
+    }
+    &__number {
+        @include text-style(0.4, 500);
+        font-size: calc(var(--title-font-size) - 1px);
+    }
+    &__checkbox {
+        @include center;
+        height: var(--checkbox-dim);
+        width: var(--checkbox-dim);
+        transition: 0.1s ease-in-out;
+        background-color: var(--lightColor3);
+        border-radius: 0px;
+        position: relative;
+        margin: 1px 12px 0px 13px;
+        cursor: pointer;
+        z-index: 1;
+        
+        i {
+            margin-top: 1px;
+            font-size: 1rem;
+            display: none;
+            color: var(--elemTextColor);
+        }
+        &:hover {
+            background-color: rgba(var(--textColor1), 0.1);
+        }
+        &:active {
+            transform: scale(0.92);
+        }
+    }
+    &__title-container {
+        width: fit-content;
+        @include flex(flex-start, space-between);
+        margin-top: -1.5px;
+    }
+    &__title {
+        @include multi-line-elipses-overflow(var(--max-title-lines));
+        max-width: 100%;
+        cursor: text;
+        width: fit-content;
+        white-space: pre-wrap;
+        word-break: break-word;
+        user-select: none;
+        margin-bottom: 6px;
+        @include text-style(1, 500, 1.45rem);
+    }
+    &__description-container {
+        width: 100%;
+    }
+    &__description {
+        @include text-style(0.4, 500, 1.4rem);
+        opacity: 0.65;
+        user-select: none;
+        margin: 0px 0px 8px 0px;
+        padding: 0px 8px 1.5px 0px;
+        cursor: text;
+
+        &--hide {
+            height: 0px;
+            margin: 0px;
+            padding: 0px;
+        }
+    }
+    &__description {
+        width: 100%;
+        @include multi-line-elipses-overflow(var(--max-descr-lines));
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+    &__divider {
+        @include divider(0.05, 0.5px, calc(100% - calc(2 * var(--side-padding))));
+        @include abs-top-left(0px, var(--side-padding));
+    }
+    &__subtasks {
+        margin: 0px 0px 5px 0px;
+    }
+}
+
+.fraction {
+    @include abs-top-right(10px, 10px);
+    font-family: "DM Mono";
+    font-weight: 400;
+    opacity: 0.2;
+}
+.divider {
+    background-color: rgba(var(--textColor1), 0.035);
+    height: 0.5px;
+    width: 100%;
+    @include divider(0.05, 0.5px, calc(100% - calc(2 * var(--side-padding))));
+    @include abs-top-left(0px, var(--side-padding));
+
+    &:first-child {
+        display: none;
+    }
+}
+
+.drag-src {
+    // no display none as it will trigger an animation
+    opacity: 0.5;
+}
+
+.toggle-arrow {
+    @include abs-top-left(-1px, -22px);
+}
+
+.grip {
+    top: -8px;
+    left: -18px;
+}
+
+@keyframes appear-in {
+    0% {
+        visibility: hidden;
+        opacity: 0;
+    }
+    100% {
+        visibility: visible;
+        opacity: 1;
+    }
+}

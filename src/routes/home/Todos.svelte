@@ -1,35 +1,36 @@
 <script lang="ts">
+    import { Tasks } from "$lib/tasks"
 	import { Icon, LogoIcon } from "$lib/enums"
+	import { TEST_TASKS } from "../../lib/mock-data"
 	import { TasksViewManager } from "$lib/tasks-view-manager"
 
 	import Logo from "../../components/Logo.svelte"
 	import TasksList from "../../components/TasksList.svelte"
     
-    export let manager: TasksViewManager
     export let newTaskFlag: boolean
     
     let todoListContainer: HTMLElement
-    let tasks = manager.currTasks
+    let tasks = new Tasks({ tasks: TEST_TASKS })
     
-    $: store = manager.store
-    $: todoistLinked = $store.todoistLinked
-    $: onTodoist = $store.onTodoist
+    // $: store = manager.store
+    // $: todoistLinked = $store.todoistLinked
+    // $: onTodoist = $store.onTodoist
 
     export function tasksSettingsHandler(option: string) {
-        if (option === "Refresh Sync") {
-            manager.refreshTodoist()
-        }
-        else if (option === "Log Out") {
-            manager.logoutTodoist()
-        }
-        else {
-            manager.loginTodoist()
-        }
+        // if (option === "Refresh Sync") {
+        //     manager.refreshTodoist()
+        // }
+        // else if (option === "Log Out") {
+        //     manager.logoutTodoist()
+        // }
+        // else {
+        //     manager.loginTodoist()
+        // }
     }
 
 </script>
 
-<div class="tasks" class:tasks--on-todoist={onTodoist}>
+<div class="tasks" class:tasks--on-todoist={false}>
     <!-- Tasks List -->
     <div 
         class="tasks__todo-list-container"
@@ -40,41 +41,16 @@
             options={{
                 id: "todos",
                 tasks,
-                handlers: {
-                    onTaskUpdate: manager.onTaskUpdate,
-                    onAddTask: manager.onAddTask,
-                    onDeleteTask: manager.onDeleteTask
-                },
                 settings: {
-                    reorder: !todoistLinked,
-                    allowDuplicate: !onTodoist,
-                    removeOnComplete: todoistLinked,
-                    progress: !todoistLinked ? "perc" : "count",
                     addBtn: { 
                         doShow: false
-                    },
-                },
-                styling: {
-                    task: {
-                        padding: "8px 0px 13px 0px"
-                    },
-                    subtask: {
-                        padding: "5px 0px 8px 0px",
-                    },
-                    description: { 
-                        margin: "6px 0px 12px 0px"
-                    },
-                    checkbox: {
-                        borderRadius: "0px",
-                        margin: "1px 12px 0px 10px"
                     }
                 },
                 ui: { 
                     maxHeight: "550px",
-                    sidePadding: "12px",
                     hasTaskDivider: true
                 },
-                containerRef: todoListContainer,
+                containerRef: todoListContainer
             }}
         />
     </div>
@@ -113,7 +89,6 @@
         &__todo-list-container {
             height: 100%;
             position: relative;
-            margin-top: 6px;
         }
         &__todoist {
             @include flex(center);

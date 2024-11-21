@@ -15,8 +15,8 @@
 	import DropdownList from "../../../components/DropdownList.svelte";
 	import RingCalendar from "../../../components/RingCalendar.svelte";
 	import { themeState } from "../../../lib/store";
-	import { TEST_TASKS } from "$lib/utils-right-bar"
-	import Tasks from "../Tasks.svelte";
+	import { TEST_TASKS } from "$lib/mock-data"
+	import Todos from "../Todos.svelte";
     import { TasksViewManager } from "$lib/tasks-view-manager"
 
     type MonthDetailsView = "cal" | "goals" | "habits" | "tasks"
@@ -27,17 +27,20 @@
         progressUi?: "bar" | "circle"
     }
 
-    $: isLight = !$themeState.isDarkTheme
-
     let currView: MonthDetailsView = "tasks"
     let optionsOpen = false
     let weekPeriodIdx = 0
     let weekPeriod = getWeekPeriod(new Date())
     let newTaskFlag = false
-
+    
     let subMenu: "g-view" | "g-group" | "g-progress" | "h-view" | null = null
     let tasks = new TasksViewManager(TEST_TASKS)
+    
+    $: isLight = !$themeState.isDarkTheme
 
+    $: if (currView) {
+        newTaskFlag = false
+    }
     /* view options */
     let habitView = {
         view: "time-of-day",
@@ -52,7 +55,6 @@
         showMilestones: false,
         progressUi: "bar"
     }
-
     let btnHighlighter = {
         width: 0, left: 0
     }
@@ -189,7 +191,7 @@
                     class:month-view__header-btn--chosen={currView === "tasks"}
                     on:click={() => onViewBtnClicked("tasks")}
                 >
-                    <span>Tasks</span> 
+                    <span>To Do</span> 
                 </button>
             </div>
             <div class="month-view__details-header-right">
@@ -201,8 +203,6 @@
                             {:else}
                                 {weekPeriod.start} <span>-</span> {weekPeriod.end}
                             {/if}
-                        {:else if currView != "tasks"}
-                            September
                         {/if}
                     </div>
                     <div class="flx" style:margin-right="6px">
@@ -491,7 +491,7 @@
                 {/if}
             {:else}
                 <div class="month-view__tasks">
-                    <Tasks 
+                    <Todos 
                         manager={tasks} 
                         {newTaskFlag}
                     />
@@ -726,7 +726,7 @@
             }
         }
         &__period {
-            @include text-style(0.4, 500, 1.55em);
+            @include text-style(0.4, 400, 1.4em, "DM Mono");
             // display: none;
             margin-right: 0px;
 

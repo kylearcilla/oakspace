@@ -13,8 +13,7 @@ export class InputManager {
     maxLength: number
     state: Writable<InputManager>
     inputElem?: HTMLElement
-    placeholder: string
-    prevVal: string
+    placeholder?: string
     isValidValue = true
     doAllowEmpty: boolean
     handlers?: {
@@ -34,7 +33,6 @@ export class InputManager {
         this.placeholder = options.placeholder
         this.handlers = options.handlers
         this.doAllowEmpty = options.doAllowEmpty ?? true
-        this.prevVal = options.initValue
 
         this.state = writable(this)
 
@@ -231,21 +229,15 @@ export class TextEditorManager extends InputManager {
         const event = e as InputEvent
         const target = event.target as HTMLElement
 
-        // this.getCaretPos()
-        
         // allow paste handler to handle
         if (event.inputType === "insertFromPaste") { 
-            target.innerHTML = this.prevVal
             return
         }
+        if (target.innerText.length > this.maxLength) {
+            target.innerHTML = this.value
 
-        if (target.innerText.length - 1 === this.maxLength) {
-            target.innerHTML = this.prevVal
-
-            this.value = this.prevVal    // on blur, value won't contain preVal
-            this.undoHandler(this.prevVal)
-
-            setCursorPos(target, this.prevVal.length)
+            this.undoHandler(this.value)
+            setCursorPos(target, this.value.length)
 
             return
         }
@@ -267,7 +259,7 @@ export class TextEditorManager extends InputManager {
 
     onBlurHandler(event: FocusEvent): void {
         const value = this.value || (this.doAllowEmpty ? "" : "Untitled")
-
+        
         // this.updateCaretStyle({ doShow: false })
 
         this.updateState({ oldTitle: value })
@@ -292,9 +284,16 @@ export class TextEditorManager extends InputManager {
     }
 
     updateTextEditorVal(event: Event, newVal: string, doUpdatecaretPos = false) {
-        this.prevVal = this.value
+        // if empty, <br> will appear which will not show the place holder
+        if (newVal === "<br>") {
+            newVal = ""
+            this.inputElem!.innerHTML = ""
+            this.inputElem!.innerText = ""
+        }
+
         this.value = newVal
         this.updateState({ value: newVal })
+        
 
         if (doUpdatecaretPos) {
             this.inputElem!.innerHTML = newVal
@@ -339,70 +338,16 @@ export class TextEditorManager extends InputManager {
         this.inputElem.addEventListener("keydown", (ke) => this.keydownHandler(ke))
         // this.inputElem.addEventListener("keyup", (ke) => this.keydownHandler(ke))
         // this.inputElem.addEventListener("pointerdown", () => this.getCaretPos())
-        // this.inputElem.addEventListener("pointerup", () => this.getCaretPos())
-        this.inputElem.style.setProperty('--placeholder-val', this.placeholder)
+        // this.inputElem.addEventListener("pointerup", () => this.getCaretPos( )
+
+        if (this.placeholder) {
+            this.inputElem.setAttribute("data-placeholder", this.placeholder)
+        }
 
         // initialize text
-        this.prevVal = this.value
         this.value = this.value
         this.updateState({ value: this.value })
     }
-
-    // getCaretPos() {
-    //     if (!this.inputElem || !this.caretElem) return
-
-    //     const selection = window.getSelection()!
-    //     const range = selection.getRangeAt(0)
-    //     const caretRect = range.getBoundingClientRect()
-    //     const inputRect = this.inputElem!.getBoundingClientRect()
-        
-    //     const isAnchorText = selection.anchorNode!.nodeType === Node.TEXT_NODE
-
-    //     this.caretPos = {
-    //         x: isAnchorText ? caretRect.x - inputRect.x + 0.5 : 0.5, 
-    //         y: isAnchorText ? caretRect.y - inputRect.y + 1 : 5
-    //     }
-
-    //     this.caretElem.style.left = `${this.caretPos.x}px`
-    //     this.caretElem.style.top  = `${this.caretPos.y}px`
-
-    //     // idle styling for caret
-    //     if (this.activeTimer) {
-    //         clearTimeout(this.activeTimer as any)
-    //     }
-    //     this.updateCaretStyle({ isIdle: false })
-
-    //     this.activeTimer = setTimeout(() => {
-    //         this.updateCaretStyle({ isIdle: true })
-            
-    //     }, this.CARET_IDLE_DELAY)
-    // }
-
-    // updateCaretStyle(options: { doShow?: boolean, isIdle?: boolean }) {
-    //     if (!this.caretElem) return
-        
-    //     const caret = this.caretElem
-    //     const { doShow = true, isIdle = true } = options
-
-    //     /* update show */
-    //     if (doShow != undefined) {
-    //         caret.style.visibility = doShow ? "visible" : "hidden"
-    //     }
-    
-    //     /* update blinking */
-    //     const isBlinking = this.caretAnimation != null
-
-    //     if (isIdle && !isBlinking) {
-    //         this.caretAnimation = caret.animate(
-    //             this.CARET_ANIMATION.keyframes,
-    //             this.CARET_ANIMATION.options,
-    //         )
-    //     }
-    //     else if (!isIdle && isBlinking && this.caretAnimation){
-    //         this.caretAnimation.cancel()
-    //         this.caretAnimation = null
-    //     }
-    // }
 
     quit() {
         this.inputElem!.removeEventListener("keydown", this.keydownHandler)

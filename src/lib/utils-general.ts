@@ -632,7 +632,11 @@ export function isAlphaNumeric(char: string) {
 }
 
 export function isEditTextElem(elem: HTMLElement) {
-  return elem.tagName === "INPUT" || elem.tagName === "TEXTAREA" || elem.contentEditable === "true"
+  const className = elem.classList[0]
+
+  return elem.tagName === "INPUT" || 
+         elem.tagName === "TEXTAREA" || 
+         elem.contentEditable === "true"
 }
 
 export function getContentEditableSelectionRange(element: HTMLElement) {

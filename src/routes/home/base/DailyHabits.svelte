@@ -385,7 +385,7 @@
         margin-top: 0px;
 
         &--light &__habit-name {
-            @include text-style(1, 500);
+            @include text-style(1, 600);
         }
         &--light &__tod-header {
             @include text-style(0.7, 600);

@@ -197,8 +197,8 @@
                         {goals.length}
                     </div>
                     <button 
-                        class="goals__arrow goals__arrow--section smooth-bounce"
-                        class:goals__arrow--closed={closed}
+                        class="toggle-arrow toggle-arrow--section"
+                        class:toggle-arrow--closed={closed}
                         class:hidden={goals.length === 0}
                         style:margin-left={"18px"}
                         on:click={() => toggleSectionOpen(secIdx)}
@@ -342,8 +342,8 @@
 
                         <button 
                             on:click={() => toggleGoalOpen(secIdx, goalIdx)}
-                            class="goals__arrow smooth-bounce"
-                            class:goals__arrow--closed={!open}
+                            class="toggle-arrow"
+                            class:toggle-arrow--closed={!open}
                             class:hidden={!goal.milestones || goal.milestones?.length === 0 || showMilestones}
                             style:margin-left={"18px"}
                         >
@@ -470,7 +470,7 @@
             position: relative;
             @include text-style(0.4, 500, 1.3rem);
             
-            &:hover .goals__arrow--section {
+            &:hover .toggle-arrow--section {
                 opacity: 0.2;
             }
         }
@@ -489,20 +489,6 @@
             margin: 0px 0px 6px 12px;
             width: calc(100% + 30px) !important;
         }
-        &__arrow {
-            @include abs-top-left(-1px, -30px);
-            transform: rotate(0deg);
-            opacity: 0;
-            padding: 4px;
-
-            &:hover {
-                opacity: 0.9 !important;
-            }
-
-            &--closed {
-                transform: rotate(-90deg);
-            }
-        }
         &__section-progress {
             margin: -6px 7px 0px 0px;
             @include flex(Center);
@@ -519,14 +505,14 @@
             &:hover {
                 background-color: rgba(var(--textColor1), 0.0225);
             }
-            &:hover .goals__arrow {
+            &:hover .toggle-arrow {
                 opacity: 0.2;
             }
             &:hover .divider {
                 display: none;
             }
         }
-        &__goal .goals__arrow {
+        &__goal .toggle-arrow {
             @include abs-top-left(8px, -22px);
         }
         &__goal--checked {
@@ -665,6 +651,9 @@
         }
     }
 
+    .toggle-arrow {
+        @include abs-top-left(-1px, -30px);
+    }
     .strike {
         text-decoration: line-through;
         opacity: 0.2;

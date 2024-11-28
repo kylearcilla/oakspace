@@ -241,6 +241,14 @@ export const TEST_TASKS: Task[] = [
       isChecked: false,
       parentId: "aff3d66d-4d45-4a3d-a02a-df125d4314a9"  // Nested under "Exercise Routine"
   },
+  {
+      id: "98e64631-1e0f-4f35-b43b-dc56782057fe",
+      idx: 0,
+      title: "Finish East of Eden",
+      description: "Finish the damn book already",
+      isChecked: false,
+      parentId: "5be6a831-6e0f-4f35-b48b-dc56782057fe"  // Cool Down
+  },
 ]
 
 /* Goals */
@@ -429,7 +437,7 @@ export const TEST_GOALS: Goal[] = [
 ]
 
 /* Week Habits */
-export const TEST_WK_HABITS = [
+export const TEST_HABITS = [
   {
     name: "Wake Up",
     symbol: "☀️",

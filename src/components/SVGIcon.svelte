@@ -53,7 +53,7 @@
   style:--scale={scale}
 >
   {#if icon === Icon.Settings}
-      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="18" id={id}>
+      <svg class="settings" xmlns="http://www.w3.org/2000/svg" width="15" height="18" id={id}>
         <g fill={color} stroke={color} stroke-linecap="round" transform="translate(0 8.5)">
             <circle cx="2" cy="0.8" r="0.8"></circle>
             <circle cx="7" cy="0.8" r="0.8"></circle>
@@ -247,5 +247,8 @@
   }
   .chev-right {
     transform: rotate(-90deg);
+  }
+  .settings {
+    margin: -0.5px -0.5px 0px 0px;
   }
 </style>

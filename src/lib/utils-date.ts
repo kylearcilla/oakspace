@@ -821,3 +821,20 @@ export function getTimeDistanceStr(targetDate: Date) {
         return formatDateLong(due)
     }
 }
+
+export function getAllMonthDays(date: Date) {
+    const year = date.getFullYear()
+    const month = date.getMonth()
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+
+    const allDays: Date[] = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+        allDays.push(new Date(year, month, day))
+    }
+
+    return allDays
+}
+
+export function getQuarter(date: Date) {
+    return Math.floor(date.getMonth() / 3) + 1
+  }

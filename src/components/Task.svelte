@@ -15,7 +15,7 @@
     export let onContextMenu: (e: Event, taskIdx: string, isChild: boolean) => void
     export let onSubtaskCheck:    ((wasChecked: boolean) => void) | undefined = undefined
 
-    const { settings, options, ui, styling } = $manager
+    const { settings, options, ui, styling, MAX_DEPTH } = $manager
     const idPrefix = options.id
     const isChild = level > 0
 
@@ -24,6 +24,7 @@
     let isOpen = false
     let subtasks = []
     let checkedSubtasks = 0
+    let doCheck = false
 
     $: isDark = $themeState.isDarkTheme
     $: pickedTask = $manager.pickedTask
@@ -38,6 +39,9 @@
         isOpen = $tasks.isTaskOpen(task.id) || task.id === pickedTask?.id
     }
     $: {
+        doCheck = task.isChecked && $manager.editTask?.id != task.id
+    }
+    $: {
         subtasks = $manager.tasks.getSubtasks(task.id)
         checkedSubtasks = subtasks.reduce((c, task) => task.isChecked ? c + 1 : c, 0)
     }
@@ -47,47 +51,42 @@
     }
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
  <div
     id={`${idPrefix}--task-id--${task.id}`}
+    data-idx={task.idx}
     class="task dg-over-el"
     class:task--subtask={isChild}
-    role="button" 
-    draggable="true"
-    tabindex="0" 
-
     class:task--light={!isDark}
+    class:task--dragging-state={$manager.dragSrc}
     class:drag-src={task.id === dragSrc?.id}
-
-    class:task--hide-drag-handle={!ui.showDragHandle}
-    class:dg-over-el--over={task.title === $manager.dragTarget?.title}
-
+    style:--left-side-width={`${leftSideWidth - 8}px`}
     style={`${inlineStyling(styling?.task)}`}
  >
     <div 
         class="task__content"
-        class:task__content--checked={task.isChecked}
+        class:task__content--checked={doCheck}
     >
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div 
+            tabindex="0"
+            role="button" 
+            draggable="true"
             class="task__top-content"
             class:task__top-content--focused={isFocused}
             on:dragstart={(e) => { 
                 $manager.onDragStart(e, task)
             }}
-            on:dragstart={(e) => { 
-                $manager.onDragStart(e, task)
+            on:dragenter|self={(e) => { 
+                $manager.onDragEnter(e, task.parentId, task.id)
+            }}
+            on:dragleave|self={(e) => { 
+                $manager.onDragLeave(e)
             }}
             on:dragover={(e) => { 
-                $manager.onDragOver(e, task)
+                $manager.onDrag(e, task.id)
             }}
-            on:dragleave={() => { 
-                $manager.onDragLeave()
-            }}
-            on:drag={(e) => { 
-                $manager.onDrag(e)
-            }}
-            on:dragend={() => { 
-                $manager.onDragEnd()
+            on:dragend={(e) => { 
+                $manager.onDragEnd(e)
             }}
             on:click={(event) => {
                 if (isContextMenuOpen) return
@@ -153,6 +152,7 @@
                     <div 
                         id={`${idPrefix}--task-title-id--${task.id}`}
                         class="task__title"
+                        class:strike={doCheck}
                         spellcheck="false"
                         data-placeholder="Title goes here..."
                         contenteditable
@@ -197,10 +197,9 @@
             {/if}
         </div>
     </div>
-    {#if isOpen && subtasks.length > 0 && level <= 3}
+    {#if isOpen && subtasks.length > 0 && level <= MAX_DEPTH}
         <ul 
             class="task__subtasks"
-            style:margin-left={`${leftSideWidth - 8}px`}
             id={`${idPrefix}--task-children-id--${task.id}`}
         >
             {#each subtasks.sort((a, b) => a.idx - b.idx) as subtask (subtask.id)}
@@ -215,6 +214,23 @@
                     />
                 </li>
             {/each}
+            <!-- Dummy Task -->
+            <li 
+                data-task-type="task"
+                class="task task--dummy dg-over-el" 
+                style:pointer-events={`${$manager.dragSrc ? "all" : "none"}`}
+            >
+                <div class="task__content">
+                    <div 
+                        class="task__top-content task__top-content--dummy"
+                        on:dragenter={(e) => $manager.onDragEnter(e, task.id, null)}
+                        on:dragleave={(e) => $manager.onDragLeave(e)}
+                        on:dragend={(e) => $manager.onDragEnd(e)}
+                        on:dragover={(e) => e.preventDefault()}
+                    >
+                    </div>
+                </div>
+            </li>
         </ul>
     {/if}
  </div>

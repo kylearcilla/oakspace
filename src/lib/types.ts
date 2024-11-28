@@ -604,7 +604,6 @@ type TasksListOptions = {
     }
     ui?: {
         maxHeight?: string
-        showDragHandle?: boolean
         sidePadding?: CSSUnitVal
         hasTaskDivider?: boolean
         listHeight?: CSSUnitVal
@@ -614,46 +613,36 @@ type TasksListOptions = {
 
 /* todoist api  */
 
-type TaskUpdateActions = "description" | "name" | "complete" | "incomplete" | "reorder"
+type TaskUpdateActions = "description" | "name" | "completion" | "reorder"
+type TaskAddActions = "add" | "duplicate"
+type TaskActionPayload = {
+    task: Task
+    tasks: Task[]
+}
 
 type TaskListClientHandlerContext = {
-    context: TaskUpdateActions | "add" | "delete",
-    payload: { 
-        taskId?: string,
-        subTaskId?: string, 
-        item: Task | Subtask
-    },
+    context: TaskUpdateActions | TaskAddActions | "delete"
+    payload: TaskActionPayload
     undoFunction?: FunctionParam
 }
 
 type TaskUpdateContext = {
     action: TaskUpdateActions
-    payload: {
-        taskId: string
-        tasks: Tasks[]
-        subTaskId?: string
-        item: Task | Subtask
-    },
+    payload: TaskActionPayload
     undoFunction?: FunctionParam
 }
 
 type TaskAddContext = {
-    payload: {
-        taskId?: string
-        tasks: Tasks[]
-        subTaskId?: string
-        name: string
-    },
-    undoFunction?: FunctionParam
+    action: TaskAddActions
+    payload: TaskActionPayload & {
+        added: Task[]
+    }
 }
 
 type TaskDeleteContext = {
-    payload: {
-        taskId: string
-        tasks: Tasks[]
-        name: string
-        subTaskId?: string
-    },
+    payload: TaskActionPayload & {
+        removed: Task[]
+    }
     undoFunction?: FunctionParam
 }
 

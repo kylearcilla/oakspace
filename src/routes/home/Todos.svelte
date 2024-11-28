@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Tasks } from "$lib/tasks"
-	import { Icon, LogoIcon } from "$lib/enums"
+	import { LogoIcon } from "$lib/enums"
 	import { TEST_TASKS } from "../../lib/mock-data"
 	import { TasksViewManager } from "$lib/tasks-view-manager"
 
@@ -10,7 +10,10 @@
     export let newTaskFlag: boolean
     
     let todoListContainer: HTMLElement
-    let tasks = new Tasks({ tasks: TEST_TASKS })
+    let manager = new TasksViewManager(TEST_TASKS)
+    let tasks = new Tasks({ tasks: manager.currTasks })
+
+    const { onAddTask, onDeleteTask, onTaskUpdate} = manager
     
     // $: store = manager.store
     // $: todoistLinked = $store.todoistLinked
@@ -41,6 +44,9 @@
             options={{
                 id: "todos",
                 tasks,
+                handlers: {
+                    onTaskUpdate, onAddTask, onDeleteTask
+                },
                 settings: {
                     addBtn: { 
                         doShow: false

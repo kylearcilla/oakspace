@@ -12,23 +12,6 @@
 
     $: isLight = !$themeState.isDarkTheme
 
-    type ACalOptions = {
-        time: boolean
-        goals: "summary" | "list"
-    }
-
-    type ActivityData = {
-        date: Date
-        focusMins: number
-        habits?: number
-        goals?: {
-            type: "big",
-            name: string,
-            img?: string
-            tag?: any
-        }[]
-    }
-
     const options: any = {}
 
     const timeView  = options?.time ?? true

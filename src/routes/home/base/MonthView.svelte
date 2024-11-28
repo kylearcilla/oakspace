@@ -8,16 +8,13 @@
 	import BounceFade from "../../../components/BounceFade.svelte";
 	import ToggleBtn from "../../../components/ToggleBtn.svelte";
     import { getWeekPeriod } from "../../../lib/utils-date"
-	import YoutubeView from "../YoutubeView.svelte";
 	import GoalsBoard from "./GoalsBoard.svelte";
 	import GoalsList from "./GoalsList.svelte";
 	import DropdownBtn from "../../../components/DropdownBtn.svelte";
 	import DropdownList from "../../../components/DropdownList.svelte";
-	import RingCalendar from "../../../components/RingCalendar.svelte";
 	import { themeState } from "../../../lib/store";
-	import { TEST_TASKS } from "$lib/mock-data"
 	import Todos from "../Todos.svelte";
-    import { TasksViewManager } from "$lib/tasks-view-manager"
+	import SettingsBtn from "../../../components/SettingsBtn.svelte";
 
     type MonthDetailsView = "cal" | "goals" | "habits" | "tasks"
     type GoalsView = {
@@ -27,14 +24,14 @@
         progressUi?: "bar" | "circle"
     }
 
-    let currView: MonthDetailsView = "tasks"
+    let currView: MonthDetailsView = "cal"
     let optionsOpen = false
     let weekPeriodIdx = 0
     let weekPeriod = getWeekPeriod(new Date())
     let newTaskFlag = false
+    let showHeaderBtnStats = false
     
     let subMenu: "g-view" | "g-group" | "g-progress" | "h-view" | null = null
-    let tasks = new TasksViewManager(TEST_TASKS)
     
     $: isLight = !$themeState.isDarkTheme
 
@@ -43,7 +40,7 @@
     }
     /* view options */
     let habitView = {
-        view: "time-of-day",
+        view: "default",
         progress: {
             detailed: true,
             percentage: false
@@ -117,45 +114,6 @@
     class={`month-view month-view--${currView}`}
     class:month-view--light={isLight}
 >
-    <div style:overflow={"hidden"}>
-        <div class="month-view__header">
-            <div>
-                <div class="month-view__heading">
-                    September
-                </div>
-                <div>
-                    <div 
-                        class="month-view__wom"
-                        class:month-view__wom--default={false}
-                        class:month-view__wom--img={true}
-                    >
-                                    <div class="month-view__wom-img">
-                            <img 
-                                src="https://i.pinimg.com/564x/11/b7/12/11b712e5eb6a081dbcec3a7b439825dd.jpg" 
-                                alt="month-img"
-                            />
-                        </div>
-                        <div class="flx flx--algn-center">
-                            <div class="month-view__word">Unwind</div>
-                            <div class="month-view__word-type">noun</div>
-                        </div>
-                        <div class="month-view__word-def">
-                            <p>
-                                A mindful pause to recharge, reconnect, and rediscover balance amidst life's demands. 
-                            </p>
-                            <p>
-                                Unwinding is more than a break; it's an intentional step back from the hustle, restore inner calm, and regain clarity.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="month-view__ring-cal">
-                <RingCalendar />
-            </div>
-        </div>
-    </div>
-
     <!-- <div class="month-view__insights"></div> -->
     <!-- <div class="insight-sentence">
         You have completed <strong>60%</strong> of your habits this month with <strong>2</strong> of your <strong>8</strong> monthly goals achieved.
@@ -176,7 +134,11 @@
                     on:click={() => onViewBtnClicked("habits")}
                 >
                     <span>Habits</span> 
-                    <!-- 38% -->
+                    {#if showHeaderBtnStats}
+                        <div class="month-view__header-btn-stat">
+                            75%
+                        </div>
+                    {/if}
                 </button>
                 <button 
                     class="month-view__header-btn"
@@ -184,14 +146,23 @@
                     on:click={() => onViewBtnClicked("goals")}
                 >
                     <span>Goals</span> 
-                    <!-- 2/8 -->
+                    {#if showHeaderBtnStats}
+                        <div class="month-view__header-btn-stat fraction">
+                            1<div class="fraction__slash">/</div>8
+                        </div>
+                    {/if}
                 </button>
                 <button 
                     class="month-view__header-btn"
                     class:month-view__header-btn--chosen={currView === "tasks"}
                     on:click={() => onViewBtnClicked("tasks")}
                 >
-                    <span>To Do</span> 
+                    <span>Inbox</span> 
+                    {#if showHeaderBtnStats}
+                        <div class="month-view__header-btn-stat fraction">
+                            7<div class="fraction__slash">/</div>12
+                        </div>
+                    {/if}
                 </button>
             </div>
             <div class="month-view__details-header-right">
@@ -236,7 +207,7 @@
                         <button 
                             title="Create new task"
                             id="month-view--dbtn"
-                            class="month-view__settings-btn"
+                            class="month-view__todo-settings-btn"
                             on:click={() => newTaskFlag = !newTaskFlag}
                         >
                             <SvgIcon 
@@ -250,22 +221,22 @@
                         <button
                             title="Clear completed tasks"
                             id="month-view--dbtn"
-                            class="month-view__settings-btn"
+                            class="month-view__todo-settings-btn"
                             disabled={true}
                             on:click={() => optionsOpen = !optionsOpen}
                         >
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     {/if}
-                    <button 
-                        id="month-view--dbtn"
-                        class="month-view__settings-btn"
-                        on:click={() => optionsOpen = !optionsOpen}
-                    >
-                        <SvgIcon icon={Icon.Settings} options={{ scale: 1.2 }}/>
-                    </button>
+                    <div class="month-view__settings-btn" style:margin-left="9px">
+                        <SettingsBtn 
+                            id={"month-view--dbtn"}
+                            onClick={() => optionsOpen = !optionsOpen}
+                        />
+                    </div>
                 </div>
             </div>
+            <!-- settings menu -->
             <BounceFade 
                 isHidden={!optionsOpen}
                 zIndex={200}
@@ -280,6 +251,21 @@
                     style:width={currView === "goals" ? "190px" : "200px"}
                     use:clickOutside on:click_outside={() => optionsOpen = false} 
                 >
+                    <li class="dmenu__section">
+                        <div class="dmenu__section-name">
+                            General
+                        </div>
+                        <div class="dmenu__toggle-optn  dmenu__option--static">
+                            <span class="dmenu__option-heading">Show Header Stats</span>
+                            <ToggleBtn 
+                                active={showHeaderBtnStats}
+                                onToggle={() => {
+                                    showHeaderBtnStats = !showHeaderBtnStats
+                                }}
+                            />
+                        </div>
+                    </li>
+                    <li class="dmenu__section-divider"></li>
                     {#if currView === "goals"}
                         {@const board = goalsView.view === "board"}
                         <li class="dmenu__section">
@@ -473,6 +459,7 @@
                 <ActivityCalendar />
             {:else if currView === "habits"}
                 <WeeklyHabits options={habitView} />
+                <!-- <MonthlyHabits /> -->
             {:else if currView === "goals"}
                 {#if goalsView.view === "list"}
                     <GoalsList 
@@ -491,10 +478,7 @@
                 {/if}
             {:else}
                 <div class="month-view__tasks">
-                    <Todos 
-                        manager={tasks} 
-                        {newTaskFlag}
-                    />
+                    <Todos {newTaskFlag}/>
                 </div>
             {/if}
         </div>
@@ -519,11 +503,11 @@
                 background-color: rgba(var(--textColor1), 0.0355);
             }
         }
-        &--light &__settings-btn {
+        &--light &__todo-settings-btn {
             opacity: 0.6;
             background-color: rgba(var(--textColor1), 0.1);
         }
-        &--light &__settings-btn:hover {
+        &--light &__todo-settings-btn:hover {
             background-color: rgba(var(--textColor1), 0.2) !important;
         }
         &--light &__wom:before {
@@ -566,94 +550,6 @@
             margin-bottom: 10px;
         }
 
-        /* month header */
-        &__header {
-            @include flex(flex-start, space-between);
-            margin-bottom: 0px;
-            position: relative;
-            min-width: 680px;
-        }
-        &__heading {
-            @include text-style(1, 300, 2.145rem, "DM Mono");
-            margin: -2px 0px 0px 0px;
-            @include flex(flex-start, space-between);
-        }
-
-        /* month entry */
-        &__month-txt {
-        }
-
-        /* word of the month */
-        &__month-journal {
-            
-        }
-        /* word of the month */
-        &__wom {
-            padding: 0px 0px 0px 16px;
-            position: relative;
-            margin: 2px 30px 0px 0px;
-            min-width: 430px;
-            max-width: 680px;
-            
-            &--default {
-                padding: 0px 30px 0px 13px;
-            }
-            &--default:before {
-                // display: block !important;
-            }
-            &--img {
-                padding: 10px 0px 16px 72px;
-                // border: 0.5px solid rgba(var(--textColor1), 0.04);
-                margin-left: -10px;
-                // background-color: rgba(var(--textColor1), 0.0145);
-                border-radius: 15px;
-            }
-            &--img &-img {
-                display: block;
-            }
-            &:before {
-                // display: none;
-                content: " ";
-                width: 2px;
-                height: calc(100% - 25px);
-                @include abs-top-left(13px, 13px);
-                background-color: rgba(var(--textColor1), 0.09);
-            }
-            p:not(:first-of-type) {
-                margin-top: 7px;
-            }
-        }
-        &__word {
-            @include text-style(1, 500, 1.5rem);
-            margin-right: 10px;
-        }
-        &__word-type {
-            @include text-style(0.4, 500, 1.5rem);
-        }
-        &__word-def {
-            @include text-style(0.315, 400, 1.5rem);
-            margin-top: 6px;
-        }
-        &__wom-img {
-            @include abs-top-left(13px, 28px);
-            height: 28px;
-            width: 28px;
-            display: none;
-
-            img {
-                border-radius: 3px;
-                height: 100%;
-                width: 100%;
-                object-fit: cover;
-            }
-        }
-
-        /* ring cal */
-        &__ring-cal {
-            margin-top: -5px;
-            display: none;
-        }
-
         /* DETAILS */
         &__details {
             margin: 6px 0px 0px 0px;
@@ -686,11 +582,12 @@
             @include flex(center);
         }
         &__header-btn {
-            padding: 4px 16px 7px 18px;
+            padding: 5px 15px 7px 15px;
             border-radius: 29px;
             margin-right: 6px;
             background-color: var(--lightColor2);
             white-space: nowrap;
+            @include flex(center);
             transition: 0.1s ease-in-out;
 
             &:active {
@@ -709,6 +606,10 @@
                 @include text-style(0.9, 500, 1.48rem);
                 margin-right: 3px;
             }
+        }
+        &__header-btn-stat {
+            @include text-style(0.3, 400, 1.4rem, "DM Sans");
+            margin-left: 8px;
         }
         &__arrow {
             opacity: 0.2;
@@ -734,7 +635,7 @@
                 margin: 0px 8px;
             }
         }
-        &__settings-btn {
+        &__todo-settings-btn {
             @include center;
             @include circle(28px);
             opacity: 0.45;

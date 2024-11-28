@@ -7,7 +7,7 @@ const DEFAULT_MAX_DEPTH = 5
  */
 export class Tasks {
     private taskMap: Map<string, Task>
-    private adjacencyList: Map<string | null, string[]>
+    private parents: Map<string | null, string[]>
     private readonly maxDepth: number;
     private openSubtasks: Set<string>
 
@@ -18,32 +18,33 @@ export class Tasks {
         this._store = writable(this)
 
         this.taskMap = new Map()
-        this.adjacencyList = new Map()
+        this.parents = new Map()
         this.maxDepth = maxDepth
         this.openSubtasks = new Set
-        
+
         tasks.forEach((task) => this.addTask({ task }))
     }
 
-    getTask(id: string): Task | undefined  {
-        return this.taskMap.get(id)
-    }
-
-    getLength() {
-        return this.taskMap.size
-    }
-
+    /**
+     * 
+     * @param args 
+     * @param args.type  "init" Task to be inserted as part of a batch of siblings (so no neighbor shifting)
+     *                   "new"  New task to be inserted into siblings
+     * 
+     * @param args.doUpdate  Do update store
+     * @param args.task      Task to be added
+     */
     addTask(args: { task: Task, type?: "init" | "new", doUpdate?: boolean }) {
         const { task, type = "init", doUpdate = true } = args
 
         // create parent if there isn't one
-        if (!this.adjacencyList.has(task.parentId)) {
-            this.adjacencyList.set(task.parentId!, [])
+        if (!this.parents.has(task.parentId)) {
+            this.parents.set(task.parentId!, [])
         }
 
         // add as child to parent
         // root tasks will have "null" as a parent
-        this.adjacencyList.get(task.parentId)!.push(task.id)
+        this.parents.get(task.parentId)!.push(task.id)
 
         // when adding a new task, shift the indices accordingly
         if (type === "new") {
@@ -61,6 +62,41 @@ export class Tasks {
         }
     }
 
+    removeTask(taskId: string): Task[] {
+        const task = this.taskMap.get(taskId)!
+        const parentId = task.parentId
+    
+        // Remove children and collect all removed tasks
+        const removedChildren = this.removeChildren(task.id)
+    
+        // Remove task from taskMap and parent references
+        this.taskMap.delete(taskId)
+        this.parents.delete(taskId)
+    
+        this.shiftNeighbors({
+            parentId,
+            idx: task.idx + 1,
+            shiftDirection: -1,
+        })
+        this.removeChild(parentId, taskId)
+        this._store.set(this)
+    
+        // Return all removed tasks (including the current task)
+        return [task, ...removedChildren]
+    }
+    
+    private removeChildren(id: string): Task[] {
+        const children = this.parents.get(id) || []
+        const removed: Task[] = []
+    
+        children.forEach((childId) => {
+            removed.push(...this.removeTask(childId))
+        });
+    
+        this.parents.delete(id)
+        return removed
+    }
+
     private shiftNeighbors(args: {
         parentId: string | null
         idx: number
@@ -69,45 +105,31 @@ export class Tasks {
         const { parentId, idx, shiftDirection } = args
         const siblings = this.getSiblings(parentId)
 
-        if (siblings.length === idx) return
-        
         for (let i = 0; i < siblings.length; i++) {
             const sibling = siblings[i]
             if (sibling && sibling.idx >= idx) {
+                console.log(sibling.idx, "to", sibling.idx + shiftDirection)
                 sibling.idx += shiftDirection
             }
         }
     }
 
-    removeTask(taskId: string) {
-        const task = this.taskMap.get(taskId)!
-        const parentId = task.parentId
-
-        // remove children
-        const children = this.adjacencyList.get(taskId) || []
-        children.forEach((childId) => this.removeTask(childId))
-
-        // remove references
-        this.taskMap.delete(taskId)
-        this.adjacencyList.delete(taskId)
-
-        // shift sibling indices
-        this.shiftNeighbors({
-            parentId: task.parentId,
-            idx: task.idx + 1,
-            shiftDirection: -1,
-        })
-
-        // remove self from parent's children
-        const siblings = this.getSiblings(parentId)
-                            .map((s) => s?.id)
-                            .filter((id) => id !== taskId)
-
-        this.adjacencyList.set(parentId, siblings)
-        this._store.set(this)
+    addChild(parentId: string | null, taskId: string) {
+        if (!this.parents.has(parentId)) {
+            this.parents.set(parentId, [])
+        }
+        this.parents.get(parentId)!.push(taskId)
     }
 
-    duplicateTask(dupId: string) {
+    removeChild(parentId: string | null, taskId: string) {
+        const siblings = this.getSiblings(parentId)
+                                .map((s) => s?.id)
+                                .filter((id) => id !== taskId)
+
+        this.parents.set(parentId, siblings)
+    }
+
+    duplicateTask(dupId: string): Task[] {
         const ogTask = this.taskMap.get(dupId)!
         const newTask = structuredClone(ogTask)
         newTask.id = crypto.randomUUID()
@@ -128,28 +150,43 @@ export class Tasks {
         }))
 
         this._store.set(this)
+        return [newTask, ...newChildren]
     }
 
-    moveTask(taskId: string, newParentId: string | null, newIndex: number) {
-        const task = this.taskMap.get(taskId)
-        if (!task) return
+    reorderTask(args: { src: Task, target: Task | null, targetParentId: string | null }) {
+        const { src, target, targetParentId } = args
+        const toSiblings = this.getSubtasks(targetParentId)
 
-        // Remove task from current parent's adjacency list
-        if (task.parentId !== null) {
-            const siblings = this.adjacencyList.get(task.parentId) || []
-            this.adjacencyList.set(
-                task.parentId,
-                siblings.filter((id) => id !== taskId)
-            )
-        }
+        const fromPIdx   = !src.parentId ? -1 : this.getTask(src.parentId)!.idx
+        const toPIdx     = !targetParentId ? -1 : this.getTask(targetParentId)!.idx
+        const sameParent = src.parentId === targetParentId
 
-        // Update task's parentId
-        task.parentId = newParentId
+        const srcIdx  = src.idx
+        const toLast  = !target 
+        let targetIdx = target ? target.idx : toSiblings.length - (sameParent ? 1 : 0)
 
-        // Add task to new parent's adjacency list at the specified index
-        const newSiblings = this.adjacencyList.get(newParentId) || []
-        newSiblings.splice(newIndex, 0, taskId)
-        this.adjacencyList.set(newParentId, newSiblings)
+        const direction = (!sameParent ? fromPIdx < toPIdx : srcIdx < targetIdx) ? "down" : "up"
+        targetIdx += (direction === "down" && !toLast ? -1 : 0)
+
+        // shift from neighbors
+        this.shiftNeighbors({
+            parentId: src.parentId,
+            idx: src.idx + 1,
+            shiftDirection: -1,
+        })
+
+        // make room for new neighbor
+        this.shiftNeighbors({
+            parentId: targetParentId,
+            idx: targetIdx,
+            shiftDirection: 1
+        })
+
+        this.removeChild(src.parentId, src.id)
+        this.addChild(targetParentId, src.id)
+        
+        src.parentId = targetParentId
+        src.idx = targetIdx
 
         this._store.set(this)
     }
@@ -167,9 +204,42 @@ export class Tasks {
         const task = this.taskMap.get(id)
         if (!task) return
         
-        console.log(structuredClone(task))
         task[type] = text
-        console.log(task)
+        this._store.set(this)
+    }
+
+    updateNewTaskId(oldId: string, newId: string) {
+        const task = this.taskMap.get(oldId)!
+
+        this.taskMap.delete(oldId)
+        task.id = newId
+        this.taskMap.set(newId, task)
+
+        
+        if (task.parentId !== null) {
+            const siblings = this.parents.get(task.parentId);
+            if (siblings) {
+                const index = siblings.indexOf(oldId);
+                if (index !== -1) siblings[index] = newId;
+            }
+        }    
+    }
+
+    /**
+     * Put back all the removed tasks
+     * @param task 
+     * @param removed 
+     */
+    onRemoveUndo(task: Task, removed: Task[]) {
+        const children = removed.filter(t => t.id != task.id)
+
+        this.addTask({ 
+            task: task, type: "new", doUpdate: false 
+        })
+        children.map((task) => this.addTask({ 
+            task, type: "init", doUpdate: false 
+        }))
+
         this._store.set(this)
     }
 
@@ -196,26 +266,25 @@ export class Tasks {
         if (isChecked) {
             task!.isChecked = true
         }
-        const subtasks = this.adjacencyList.get(id) || []
+        const subtasks = this.parents.get(id) || []
 
         subtasks.forEach((subtaskId) => {
             this._toggleComplete(subtaskId, isChecked)
         })
     }
 
-    getHierarchy(parentId: string | null = null): Task[] {
-        return (this.adjacencyList.get(parentId) || []).map((childId) => {
-            const task = this.taskMap.get(childId)!;
-            return {
-                ...task,
-                subtasks: this.getHierarchy(task.id),
-            }
-        })
+    /* queries */
+
+    getAllTasks() {
+        return Array.from(this.taskMap.values())
     }
 
-    isRootTask(id: string) {
-        const rootTaskIds = this.adjacencyList.get(null) ?? []
-        return rootTaskIds.includes(id)
+    getTask(id: string): Task | undefined  {
+        return this.taskMap.get(id)
+    }
+
+    getLength() {
+        return this.taskMap.size
     }
 
     getRootTasks() {
@@ -233,7 +302,7 @@ export class Tasks {
      */
     getSubtasks(taskId: string | null): Task[] {
         const subtasks: Task[] = []
-        const childrenIds = this.adjacencyList.get(taskId) || []
+        const childrenIds = this.parents.get(taskId) || []
 
         for (const childId of childrenIds) {
             const childTask = this.taskMap.get(childId)!
@@ -242,6 +311,13 @@ export class Tasks {
         }
         return subtasks
     }
+
+    isRootTask(id: string) {
+        const rootTaskIds = this.parents.get(null) ?? []
+        return rootTaskIds.includes(id)
+    }
+
+    /* utils  */
 
     toggleSubtaskOpen(id: string) {
         if (this.openSubtasks.has(id)) {

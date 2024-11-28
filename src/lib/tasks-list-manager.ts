@@ -1,15 +1,11 @@
 import { writable, type Writable } from "svelte/store"
 
-import { toast } from "./utils-toast"
-import { 
-        addItemToArray, extractNum, 
-        extractQuadCSSValue, findAncestor, getAttrValue, 
-        getDistBetweenTwoPoints, getElemById, getElemTrueHeight, 
-        getHozDistanceBetweenTwoElems, getVertDistanceBetweenTwoElems, initFloatElemPos, 
-        isEditTextElem, isKeyAlphaNumeric, isNearBorderAndShouldScroll, moveElementInArr,
-} from "./utils-general"
 import { Tasks } from "./Tasks"
 import { TextEditorManager } from "./inputs"
+import { 
+        elemHasClasses, findAncestor, getElemById, initFloatElemPos, 
+        isEditTextElem, isNearBorderAndShouldScroll
+} from "./utils-general"
 
 /**
  * Reusable task list manager component.
@@ -45,7 +41,6 @@ export class TasksListManager {
     }
     ui: {
         maxHeight: string
-        showDragHandle: boolean
         sidePadding: CSSUnitVal
         hasTaskDivider: boolean
         listHeight: string
@@ -64,14 +59,18 @@ export class TasksListManager {
 
     /* edits  */
     editMode: "title" | "description" | "task" | null = null
+    newText = ""
     justEdited = false
 
     /* drag and drop */
-    newText = ""
     isDragging = false
     dragSrc: Task | null = null
     dragTarget: Task | null = null
+    targetElem: HTMLElement | null = null
+
+    targetParentId: string | null = null
     isTargetEnd = false
+    dragAsChild = false
     
     /* context menu */
     hasJustClosedContextMenu = false
@@ -96,8 +95,10 @@ export class TasksListManager {
     CONTEXT_MENU_WIDTH = 180
     TRANS_IMG = "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs="
 
+    DROP_AS_CHILD_X_THRESHOLD = 100
     DEFAULT_MAX_TASKS = 25
     DEFAULT_MAX_SUBTASKS = 25
+    MAX_DEPTH = 3
 
     MAX_TITLE_LENGTH = 200
     MAX_DESCRIPTION_LENGTH = 350
@@ -137,7 +138,6 @@ export class TasksListManager {
 
         this.ui = {
             maxHeight: ui?.maxHeight ?? "auto",
-            showDragHandle: ui?.showDragHandle ?? true,
             sidePadding:    ui?.sidePadding    ?? SIDE_PADDING as CSSUnitVal,
             hasTaskDivider: ui?.hasTaskDivider ?? true,
             listHeight:     ui?.listHeight     ?? "auto",
@@ -164,9 +164,10 @@ export class TasksListManager {
      */
     onTaskClicked(args: { event: Event, id: string, isChild: boolean }) { 
         const { event, id, isChild } = args
-        const isEditElem = isEditTextElem(event.target as HTMLElement)
+        const target = event.target as HTMLElement
+        const isEditElem = isEditTextElem(target)
 
-        if (this.justEdited || isEditElem) {
+        if (this.justEdited || isEditElem || target.tagName === "BUTTON" || target.tagName === "I") {
             this.justEdited = false
             return
         }
@@ -217,6 +218,12 @@ export class TasksListManager {
         this.updatePointers(event.clientX, event.clientY)
     }
 
+    /**
+     * Track the positiopning of cursor positions relative to scroll window / scroll container.
+     * 
+     * @param clientX 
+     * @param clientY 
+     */
     updatePointers(clientX: number, clientY: number) {
         const windowRect = this.tasksListContainer!.getBoundingClientRect()
         const tasksList = this.tasksList!.getBoundingClientRect()
@@ -288,21 +295,23 @@ export class TasksListManager {
         this.focusTask = { ...task!, isChild }
         this.focusElemIdx = taskElems.findIndex((taskElem) => taskElem.id === taskElemId)
 
-        console.log(this.focusTask)
-
         this.update({ focusTask: this.focusTask })
 
     }
 
+    /**
+     * After a task has just been added, focus on the text editor and open the task accordingly.
+     * @param args 
+     */
     onTaskJustAdded(args: {
         expandId?: string, isExpandChild?: boolean, 
         focusId: string, isFocusChild: boolean
     }) {
         const { expandId, isExpandChild, focusId, isFocusChild } = args
-
+        
         requestAnimationFrame(() => {
-            if (expandId != undefined && isExpandChild != undefined) {
-                this.toggleExpandTask(expandId, isExpandChild)
+            if (expandId != undefined && !this.isTaskOpen(expandId, isExpandChild!)) {
+                this.toggleExpandTask(expandId, isExpandChild!)
             }
 
             requestAnimationFrame(() => {
@@ -397,6 +406,8 @@ export class TasksListManager {
             id: this.editTask!.id, 
             text: this.newText 
         })
+
+        this.finalizeEditTask(this.tasks.getTask(this.editTask!.id)!, "name")
     }
     
     saveNewDescription = async () => {
@@ -407,42 +418,8 @@ export class TasksListManager {
             id: this.editTask!.id, 
             text: this.newText 
         })
-    }
 
-    async finalizeNewTitle(task: Task, newTask: boolean) {
-        if (!this.options.handlers?.onAddTask) return
-
-        const clientHandlerParam: TaskListClientHandlerContext = {
-            context: "add",
-            payload: {
-                taskId: task.id,
-                item: task
-            }
-        }
-
-        if (newTask) {
-            const res = await this.clientHandler(clientHandlerParam)
-            if (!res) return
-
-            // this.tasks.update((tasks) => tasks.map((task) => (
-            //     task.id === task.id ? { ...task, id: res.id } : task)
-            // ))
-        }
-        else {
-            await this.clientHandler({ ...clientHandlerParam, context: "name" })
-        }
-    }
-
-    async finalizeNewDescription(task: Task, description: string) {
-        if (!this.options.handlers?.onTaskUpdate) return
-
-        this.clientHandler({
-            context: "description",
-            payload: { 
-                taskId: task.id,
-                item: task
-            }
-        })
+        this.finalizeEditTask(this.tasks.getTask(this.editTask!.id)!, "description")
     }
 
     /* drag functionality */
@@ -450,17 +427,16 @@ export class TasksListManager {
     toggleDragging(flag: boolean) {
         this.isDragging = flag
     }
+
     onDragStart(e: DragEvent, task: Task) {
         if (e.dataTransfer) {
             e.dataTransfer.effectAllowed = "move"
-            const img = new Image
-            img.src = this.TRANS_IMG
-
-            e.dataTransfer.setDragImage(img, 0, 0)
-
         } 
         if (this.pickedTask?.id === task.id) {
-            this.minimizeExpandedTask()
+            this.toggleExpandTask(task.id, false)
+        }
+        if (task.parentId) {
+            this.toggleExpandTask(task.id, true)
         }
         if (!this.isDragging) {
             e.preventDefault()
@@ -471,91 +447,159 @@ export class TasksListManager {
         this.update({ dragSrc: task })
     }
 
-    onDrag(e: DragEvent) {
+    onDrag(e: DragEvent, id: string) {
         e.preventDefault()
-        console.log("onDrag")
-        this.updateFloatingTaskPos(e)
+
+        if (id != this.dragSrc?.id) {
+            this.shouldDropAsChildHandler(e)
+        }
+        
+        this.scrollWhenNearContainerBounds()
     }
 
-    onDragOver(e: DragEvent, target: Task | "end") {
-        e.preventDefault()
-        if (typeof target === "string") {
+    onDragEnter(e: DragEvent, parentId: string | null, targetId: string | null) {
+        this.targetParentId = parentId
+
+        if (!targetId && !this.isTargetEnd) {
             this.isTargetEnd = true
+            this.toggleDragClass({ type: "nbr-add", de: e })
         }
         else {
             this.isTargetEnd = false
-            const isNewTarget = target?.idx != this.dragTarget?.idx && target?.idx != this.dragSrc!.idx
+            const target = this.tasks.getTask(targetId!)
+            const isNewTarget = target?.id != this.dragTarget?.id && target?.id != this.dragSrc!.id
 
-            if (isNewTarget) {
+            if (isNewTarget && target) {
                 this.dragTarget = target
-                this.update({ dragTarget: target })
+                this.toggleDragClass({ type: "nbr-add", de: e })
             }
         }
-
-        console.log(target)
-
-        this.isTargetEnd = typeof target === "string" 
-        this.update({ isTargetEnd: this.isTargetEnd})
     }
 
-    onDragLeave() {
+    onDragLeave(e: DragEvent) {
+        const relatedTarget = e.relatedTarget as HTMLElement
+        if (!relatedTarget) return
+            
+        // on drag leave triggers on child elements
+        // only leave when moving on to parent elems
+        const shouldLeave    = elemHasClasses(relatedTarget, ["task__top-content", "task"])
+        if (!shouldLeave) return
+
+        this.toggleDragClass({ type: "remove", de: e })
         this.dragTarget = null
-        this.update({ dragTarget: null })
+        
     }
 
-    onDragEnd() {
+    onDragEnd(e: DragEvent) {
+        // sometimes the dragTarget is null even there is a visible target
+        if (this.dragSrc && this.targetElem && !this.dragTarget) {
+            const id        = this.getTaskIdFromElem(this.targetElem)!
+            this.dragTarget = this.tasks.getTask(id)!
+        }
         if (this.dragSrc && (this.dragTarget || this.isTargetEnd)) {
             this.completeDragAction()
         }
+
+        this.toggleDragClass({ type: "drag-end", de: e })
         
         this.dragSrc = null
         this.dragTarget = null
         this.isDragging = false        
-        this.hideFloatTask()
+        this.dragAsChild = false
 
-        this.update({ dragSrc: null, dragTarget: null })
+        this.update({ dragSrc: null })
     }
 
     completeDragAction() {
-        let { idx: fromIdx, id } = this.dragSrc!
-        let toIdx   = this.isTargetEnd ? 2 : this.dragTarget!.idx
-
-        if (fromIdx < toIdx) {
-            toIdx = Math.max(0, toIdx - 1)
+        if (this.dragAsChild && this.dragTarget!.id === this.dragSrc?.parentId) {
+            return
         }
-        this.moveTask(fromIdx, toIdx)
-        // this.updateTaskFocusIdx(this.dragTarget!.id)
-    }
 
-    updateFloatingTaskPos(e: DragEvent) {
-        const listWidth         = this.tasksList!.clientWidth
-        const floatingItemWidth = listWidth * this.FLOATING_WIDTH_PERCENT
-
-        // pointer events do not fire during a drag
-        const floatItem         = this.getElemById("float-task-elem")!
-        const floatItemHeight   = floatItem.clientHeight
-        this.updatePointers(e.clientX, e.clientY)
-        
-        const { left, top } = initFloatElemPos({
-            dims: { 
-                height: floatItemHeight, 
-                width: floatingItemWidth 
-            }, 
-            containerDims: { 
-                height: this.tasksList!.clientHeight + 50, 
-                width: listWidth 
-            },
-            cursorPos: this.cursorPos,
-            clientOffset: { left: 0, top: 0 }
+        this.tasks.reorderTask({ 
+            src: this.dragSrc!,
+            target: this.dragTarget,
+            targetParentId: this.dragAsChild ? this.dragTarget!.id : this.targetParentId
         })
 
-        floatItem.style.visibility = "visible"
-        floatItem.style.opacity = "1"
+        this.finalizeEditTask(this.dragSrc!, "reorder")
+    }
 
-        floatItem.style.top = `${top}px`
-        floatItem.style.left = `${left}px`
+    /**
+     * Should dragging task be dropped as a target's sibling or child.
+     */
+    shouldDropAsChildHandler(e: DragEvent) {
+        if (!e.clientX || !e.clientY) return
 
-        this.scrollWhenNearContainerBounds()
+        const target = e.target as HTMLElement
+        const targetRect = target.getBoundingClientRect()
+        const relativeX = e.clientX - targetRect.left
+
+        this.dragAsChild = relativeX >= this.DROP_AS_CHILD_X_THRESHOLD
+
+        this.toggleDragClass({ 
+            type: this.dragAsChild ? "child-add" : "remove-child", 
+            de: e 
+        })
+    }
+
+    toggleDragClass(args: { 
+        type: "nbr-add" | "child-add" | "remove" | "remove-child" | "drag-end", 
+        de: DragEvent 
+    }) {
+        const { type, de } = args
+        const target = de.target as HTMLElement
+        const taskElem = target.parentElement!.parentElement as HTMLElement
+        const isDummy = elemHasClasses(target, ["task__top-content--dummy"])
+        
+        if (type === "drag-end" && this.targetElem) {
+            this.closeDragElemOnEnd()
+
+            return
+        }
+        if (elemHasClasses(target, ["task__checkbox", "task__left"])) {
+            return
+        }
+
+        if (type === "nbr-add") {
+            taskElem.classList.add("dg-over-el--over")
+
+            if (isDummy) {
+                taskElem.style.height = "25px"
+            }
+        }
+        else if (type === "child-add") {
+            target.style.background = "rgba(var(--textColor1), 0.025)"
+            taskElem.classList.remove("dg-over-el--over")
+        }
+        else if (type === "remove-child") {
+            target.style.background = "none"
+            taskElem.classList.add("dg-over-el--over")
+
+            if (isDummy) {
+                taskElem.style.height = "0px"
+            }
+        }
+        else {
+            target.style.background = "none"
+            taskElem.classList.remove("dg-over-el--over")
+
+            if (isDummy) {
+                taskElem.style.height = "0px"
+            }
+        }
+
+        this.targetElem = target
+    }
+
+    closeDragElemOnEnd() {
+        const task = this.targetElem!.parentElement!.parentElement!
+        this.targetElem!.style.background = "none"
+        task!.classList.remove("dg-over-el--over")
+
+        const isDummy = elemHasClasses(this.targetElem!, ["task__top-content--dummy"])
+        if (isDummy)  {
+            task!.style.height = "0px"
+        }
     }
 
     /**
@@ -587,16 +631,6 @@ export class TasksListManager {
         }, 25)
     }
 
-    hideFloatTask() {
-        const elem = this.getElemById("float-task-elem")!
-
-        elem.style.visibility = "hidden"
-        elem.style.opacity = "0"
-
-        elem.style.top = "-100px"
-        elem.style.left = "-100px"
-    }
-
     /* tasks stuff */
    
    /**
@@ -617,55 +651,45 @@ export class TasksListManager {
         const newIdx  = idx ?? this.tasks.getSubtasks(parentId).length
         const isChild = type === "child"
 
-        this.tasks.addTask({
-            task: {
-                id: newId,
-                idx: newIdx,
-                isChecked: false,
-                title: "",
-                description: "",
-                parentId: parentId ?? null
-            },
-            type: "new"
-        })
+        const task = {
+            id: newId,
+            idx: newIdx,
+            isChecked: false,
+            title: "",
+            description: "",
+            parentId: parentId ?? null
+        }
 
+        this.tasks.addTask({ task, type: "new" })
+        
         this.onTaskJustAdded({
             expandId:      isChild ? parentId! : undefined,
             isExpandChild: isChild ? !this.tasks.isRootTask(parentId!) : undefined,
             focusId:       newId,
             isFocusChild:  !this.tasks.isRootTask(newId!)
         })
+
+        this.finalizeAddTask(task, "add", [task])
     }
 
     duplicateTask(dupId: string) {
-        this.tasks.duplicateTask(dupId)
+        const added = this.tasks.duplicateTask(dupId)
+        this.finalizeAddTask(this.tasks.getTask(dupId)!, "duplicate", added)
     }
 
     async removeTask(id: string) {
-        this.tasks.removeTask(id)
+        const task = this.tasks.getTask(id)!
+        const removed = this.tasks.removeTask(id)
+        this.finalizeRemoveTask(task, removed!)
+
+        // move focus up
         this.handleArrowkeyPressed("ArrowUp")
-    }
-
-    moveTask = async (fromIdx: number, toIndex: number) => {
-        // let tasks = get(this.tasks)
-
-        // tasks = moveElementInArr(tasks, fromIdx, toIndex)
-        // tasks = this.updateTaskIndices(tasks)
-        // const task = tasks[toIndex]
-
-        // this.tasks.set(tasks)
-
-        // await this.clientHandler({
-        //     context: "reorder",
-        //     payload: { 
-        //         taskId: tasks[fromIdx].id,
-        //         item: task
-        //     }
-        // })
     }
 
     async toggleTaskComplete(taskId: string) {
         this.tasks.toggleTaskComplete(taskId)
+
+        this.finalizeEditTask(this.tasks.getTask(taskId)!, "completion")
     }
 
     addNewTaskFromOutside() {
@@ -676,19 +700,54 @@ export class TasksListManager {
         })
     }
 
-    async finalizeRemoveTask(task: Task) {
-        // const undoFunction = () => {
-        //     this.addNewTask(task.idx, { ...task, isChecked: false })
-        // }
+    isTaskOpen(id: string, isChild: boolean) {
+        if (isChild) {
+            return this.tasks.isTaskOpen(id)
+        }
+        else {
+            return this.pickedTask?.id === id
+        }
+    }
 
-        // this.clientHandler({
-        //     context: "delete",
-        //     payload: {
-        //         taskId: task.id,
-        //         item: task
-        //     },
-        //     undoFunction
-        // })
+    async finalizeAddTask(task: Task, action: "add" | "duplicate", added: Task[]) {
+        if (!this.options.handlers?.onAddTask) return
+        const tasks = this.tasks.getAllTasks()
+
+        const res = await this.options.handlers.onAddTask({
+            action: action,
+            payload: { task, tasks, added }
+        })
+
+        // if api returns its own id for the new task
+        // if (action === "add" && res && "id" in res) {
+        //     this.tasks.updateNewTaskId(task.id, res.id)
+        // }
+    }
+
+    async finalizeRemoveTask(task: Task, removed: Task[]) {
+        if (!this.options.handlers?.onDeleteTask) return
+
+        const tasks = this.tasks.getAllTasks()
+        const undoFunction = () => this.tasks.onRemoveUndo(task, removed)
+
+        this.options.handlers.onDeleteTask({
+            payload: { 
+                task, 
+                removed,
+                tasks 
+            },
+            undoFunction
+        })
+    }
+
+    async finalizeEditTask(task: Task, action: TaskUpdateActions) {
+        if (!this.options?.handlers?.onTaskUpdate) return
+        const tasks = this.tasks.getAllTasks()
+
+        this.options.handlers.onTaskUpdate({
+            action,
+            payload: { task, tasks },
+        })
     }
 
     /* context menu */
@@ -774,7 +833,7 @@ export class TasksListManager {
             this.removeTask(id)
         }
 
-        // this.closeContextMenu()
+        this.closeContextMenu()
     }
 
     /**
@@ -790,7 +849,8 @@ export class TasksListManager {
             this.hasJustClosedContextMenu = true
 
             this.update({
-                contextMenu: this.contextMenu
+                contextMenu: this.contextMenu,
+                isContextMenuOpen: false
             })
         }, 100)
     }
@@ -885,6 +945,18 @@ export class TasksListManager {
 
     /* helpers */
 
+    getTaskIdFromElem(elem: HTMLElement) {
+        const taskElem = findAncestor({
+            child: elem, 
+            queryStr: "task",
+            strict: true,  max: 5
+        })
+
+        if (!taskElem) return ""
+
+        return taskElem.id.split("task-id--")[1]
+    }
+
     getTaskElem(id: string) {
         return this.getElemById(`task-id--${id}`)
     }
@@ -902,61 +974,12 @@ export class TasksListManager {
     getElemById(queryId: string) {
         const idPrefix = this.options.id
         return getElemById(`${idPrefix}--${queryId}`)
-    }
-
-    /* misc. */
-
-    async clientHandler(options: TaskListClientHandlerContext): Promise<any> {
-        const { context, payload, undoFunction } = options
-
-        // if (!this.options.handlers) return
-        // const tasks = get(this.tasks)
-
-        // try {
-        //     if (["description", "name", "complete", "incomplete", "reorder"].includes(context)) {
-        //         await this.options.handlers.onTaskUpdate({
-        //             action: context as TaskUpdateActions,
-        //             payload: {
-        //                 tasks,
-        //                 taskId: payload.taskId!,
-        //                 subTaskId: payload.subTaskId,
-        //                 item: payload.item
-        //             },
-        //             undoFunction
-        //         })
-        //     }
-        //     else if (context === "add") {
-        //         return await this.options.handlers.onAddTask({
-        //             payload: {
-        //                 tasks,
-        //                 taskId: payload.taskId,
-        //                 subTaskId: payload.subTaskId,
-        //                 name: payload.item.title!
-        //             },
-        //             undoFunction
-        //         })
-        //     }
-        //     else {
-        //         await this.options.handlers.onDeleteTask({
-        //             payload: {
-        //                 tasks,
-        //                 taskId: payload.taskId!,
-        //                 name: payload.item.title!,
-        //                 subTaskId: payload.subTaskId
-        //             },
-        //             undoFunction
-        //         })
-        //     }
-        // }
-        // catch(error: any) {
-        //     this.onError(error)
-        // }
-    }
+    }    
 
     onClickedOutside(event: CustomEvent) {
-        // if (!this.focusTask || this.isContextMenuOpen || !event.detail?.target) {
-        //     return
-        // }
+        if (!this.focusTask || this.isContextMenuOpen || !event.detail?.target) {
+            return
+        }
         // const target = event.detail.target as HTMLElement
         // const toast = findAncestor({
         //     child: target, queryStr: "toast",
@@ -967,7 +990,13 @@ export class TasksListManager {
         //     return
         // }
 
-        // this.minimizeExpandedTask()
+        this.focusTask = null
+        this.focusElemIdx = -1
+        this.update({ focusTask: null })
+
+        if (this.pickedTask) {
+            this.minimizeExpandedTask()
+        }
     }
 
     onError(error: any) {
@@ -1049,9 +1078,7 @@ export class TasksListManager {
         if (newState.editTask != undefined)   newStateObj.editTask = newState.editTask
 
         /* drag */
-        if (newState.isTargetEnd != undefined) newStateObj.isTargetEnd = newState.isTargetEnd
         if (newState.dragSrc != undefined)     newStateObj.dragSrc = newState.dragSrc
-        if (newState.dragTarget != undefined)  newStateObj.dragTarget = newState.dragTarget
 
         /* context menu */
         if (newState.contextMenu != undefined)       newStateObj.contextMenu = newState.contextMenu
@@ -1060,4 +1087,3 @@ export class TasksListManager {
         return newStateObj
     }
 }
-

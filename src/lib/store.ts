@@ -48,10 +48,6 @@ export const mediaEmbedStore = writable<FloatingMediaEmbed | null>(null)
 export const weekRoutine = writable<WeeklyRoutine | null>(WEEKLY_ROUTINES[0])
 export const wkRoutine   = derived(weekRoutine, ($weekRoutine) => $weekRoutine, WEEKLY_ROUTINES[0])
 
-/* Goals Stuff */
-export const goalsManager = writable<GoalsManager | null>(null)
-export const editGoalManger = writable<EditGoalManager | null>(null)
-
 /* YT Stuff */
 export const ytUserDataStore = writable<YoutubeUserData| null>(null)
 export const ytPlayerStore = writable<YoutubePlayer| null>(null)

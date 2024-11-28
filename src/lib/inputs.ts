@@ -225,6 +225,7 @@ export class TextEditorManager extends InputManager {
         this.updateTextEditorVal(event, newValue)
     }
 
+    
     onInputHandler(e: Event) {
         const event = e as InputEvent
         const target = event.target as HTMLElement
@@ -233,6 +234,7 @@ export class TextEditorManager extends InputManager {
         if (event.inputType === "insertFromPaste") { 
             return
         }
+        // keep under max length
         if (target.innerText.length > this.maxLength) {
             target.innerHTML = this.value
 
@@ -283,6 +285,13 @@ export class TextEditorManager extends InputManager {
         })
     }
 
+    updateText(text: string) {
+        this.value = text
+        this.updateState({ value: text })
+
+        this.inputElem!.innerHTML = text
+    }
+
     updateTextEditorVal(event: Event, newVal: string, doUpdatecaretPos = false) {
         // if empty, <br> will appear which will not show the place holder
         if (newVal === "<br>") {
@@ -296,11 +305,11 @@ export class TextEditorManager extends InputManager {
         
 
         if (doUpdatecaretPos) {
-            this.inputElem!.innerHTML = newVal
-            setCursorPos(this.inputElem!, newVal.length)
+            // this.inputElem!.innerHTML = newVal
+            // setCursorPos(this.inputElem!, newVal.length)
         }
         if (this.handlers?.onInputHandler) {
-            this.handlers?.onInputHandler(event, newVal, this.valLength)
+            this.handlers.onInputHandler(event, newVal, this.valLength)
         }
     }
 

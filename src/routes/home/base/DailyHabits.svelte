@@ -2,7 +2,7 @@
 	import ProgressRing from "../../../components/ProgressRing.svelte";
 	import SvgIcon from "../../../components/SVGIcon.svelte"
 	import { Icon } from "../../../lib/enums";
-	import { TEST_WK_HABITS } from "../../../lib/mock-data"
+	import { TEST_HABITS } from "../../../lib/mock-data"
 	import { themeState } from "../../../lib/store";
 	import { kebabToNormal } from "../../../lib/utils-general";
 
@@ -21,7 +21,7 @@
     let wkProgress = options?.progress
     let dayIdx = 0
 
-    let habits = TEST_WK_HABITS
+    let habits = TEST_HABITS
     let dayProgress = [0, 0, 0, 0, 0, 0, 0]
     let isDragging = false
 
@@ -382,7 +382,7 @@
 
 <style lang="scss">
     .dh {
-        margin-top: 0px;
+        margin-top: 6px;
 
         &--light &__habit-name {
             @include text-style(1, 600);

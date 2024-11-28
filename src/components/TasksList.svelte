@@ -15,7 +15,7 @@
     const _manager   = new TasksListManager(options)
     const manager    = _manager.state
     const settings   = $manager.settings
-    const { TASK_DESCR_LINE_HT, DEFAULT_STYLES, CONTEXT_MENU_WIDTH } = $manager
+    const { DEFAULT_STYLES, CONTEXT_MENU_WIDTH } = $manager
     const { CHECK_BOX_DIM } = DEFAULT_STYLES
 
     const dropdownOptions = _manager.getContextMenuOptions()
@@ -112,61 +112,16 @@
             <li 
                 data-task-type="task"
                 class="task task--dummy dg-over-el" 
-                class:dg-over-el--over={$manager.isTargetEnd}
-                class:hidden={!$manager.dragSrc}
-                id={`${idPrefix}--task-id--${rootTasks.length}`}
-                on:dragover={(e) => $manager.onDragOver(e, "end")}
-                on:dragleave={() => $manager.onDragLeave()}
-                on:dragend={() => $manager.onDragEnd()}
+                style:pointer-events={`${$manager.dragSrc ? "all" : "none"}`}
             >
-            </li>
-
-            <!-- Floating Task -->
-            <li 
-                id={`${idPrefix}--float-task-elem`}
-                class="task task--floating"
-            >
-                <div class="task__top">
-                    <!-- checkbox or number  -->
-                    <div class="task__left">
-                        {#if settings.numbered}
-                            <div class="task__number" style={inlineStyling($manager.styling?.num)}>
-                                {($manager.dragSrc?.idx ?? 0) + 1}
-                            </div>
-                        {:else}
-                            <button 
-                                class="task__checkbox"
-                                style={inlineStyling($manager.styling?.checkbox)}
-                            >
-                                <i class="fa-solid fa-check checkbox-check"></i>
-                            </button>
-                        {/if}
-                        <!-- Drag Handle -->
-                        <div class="task__drag-handle">
-                            <div class="task__drag-handle-dots">
-                                <SvgIcon 
-                                    icon={Icon.DragDots} 
-                                    options={{ scale: 0.85, width: 25, height: 24 }}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="task__right">
-                        <!-- Title -->
-                        <div class="task__title-container">
-                            <h3 class="task__title">
-                                {@html $manager.dragSrc?.title}
-                            </h3>
-                        </div>
-                        <!-- Description -->
-                        <div 
-                            class="task__description-container"
-                            style:line-height={`${TASK_DESCR_LINE_HT}px`}
-                        >
-                            <p class="task__description">
-                                {@html $manager.dragSrc?.description}
-                            </p>
-                        </div>
+                <div class="task__content">
+                    <div 
+                        class="task__top-content task__top-content--dummy"
+                        on:dragenter={(e) => $manager.onDragEnter(e, null, null)}
+                        on:dragleave={(e) => $manager.onDragLeave(e)}
+                        on:dragend={(e) => $manager.onDragEnd(e)}
+                        on:dragover={(e) => e.preventDefault()}
+                    >
                     </div>
                 </div>
             </li>
@@ -270,6 +225,7 @@
         height: 100%;
         max-height: 100%;
         padding-top: 2px;
+        padding-bottom: 10px;
 
         &--dragging-state * {
             cursor: grabbing;

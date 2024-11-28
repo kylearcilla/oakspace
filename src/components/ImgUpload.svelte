@@ -10,6 +10,7 @@
     export let title: string
     export let inputPlaceHolder: string = ""
     export let onSubmit: (imgSrc: string) => void
+    export let onClickOutside: () => void
 
     let isImgUrlOptClicked = true
     let isInputLoading = false
@@ -68,8 +69,8 @@
 </script>
 
 <Modal 
-    onClickOutSide={() => closeModal(ModalType.ImgUpload)}
-    options={{ borderRadius: "13px" }}
+    onClickOutSide={onClickOutside}
+    options={{ borderRadius: "18px" }}
 >
     <div 
         class="img-upload"
@@ -210,14 +211,14 @@
 
     .img-upload {
         position: relative;
-        width: 420px;
-        padding: 20px 28px 28px 28px;
+        width: 470px;
+        padding:  18px 28px 24px 28px;
 
         &--light .modal-bg {
             @include modal-bg-light;
         }
         &--light .text-input-container {
-            // @include input-text-field-light;
+            // @include input-text-field-light;b
         }
         &--light .highlighter-tabs {
             @include highlighter-tabs-light-mode;
@@ -232,26 +233,29 @@
         }
 
         &__title {
-            @include text-style(1, 500, 1.55rem);
+            @include text-style(1, 500, 1.7rem);
         }
         &__copy {
-            @include text-style(0.35, 400, 1.35rem);
-            margin: 15px 0px 30px 0px;
+            @include text-style(0.35, 400, 1.5rem);
+            margin: 13px 0px 0px 0px;
         }
         /* Url Input */
         &__url-img-content {
             @include flex(center);
+            margin-top: 20px;
             height: 47px;
 
             button {
                 margin-left: 7px;
+                font-size: 1.4rem;
+                font-weight: 600;
                 width: calc(30% - 7px);
             }
         }
         /* File Input */
         &__file-input-content {
             @include flex(center);
-            margin-top: 27px;
+            margin-top: 20px;
             height: 47px;
             width: 100%;
         }
@@ -313,24 +317,22 @@
         }
     }
     .highlighter-tabs {
-        margin-top: 14px;
-        &--url {
-            width: 85px;
-            left: 0px;
-        }
-        &--upload {
-            width: 94px;
-            left: 98px;
-        }
+        margin-top: 13px;
 
+        &__container {
+            margin-bottom: 9px;
+        }
+        &__tab-btn {
+            font-size: 1.45rem;
+        }
         &__highlighter {
             &--url {
-                width: 55px;
+                width: 65px;
                 left: 0px;
             }
             &--upload {
-                left: 72px;
-                width: 60px;
+                left: 80px;
+                width: 63px;
             }
         }
     }

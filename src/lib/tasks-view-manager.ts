@@ -196,7 +196,7 @@ export class TasksViewManager {
      * @param task       The updated item's correspond local item.
      * @returns          Update context from the patial sync.
      */
-    getTaskSyncAction(syncTasks: TodoistTask[], task: Task | Subtask): TodoistItemPartialSyncOntext {
+    getTaskSyncAction(syncTasks: TodoistTask[], task: Task): TodoistItemPartialSyncOntext {
         const isSubtask = "parentId" in task
         const idx = syncTasks.findIndex((s) => s.id === task.id)
 
@@ -231,7 +231,6 @@ export class TasksViewManager {
 
             const todoistTasks = this.todoistTasks!
             const updatedTasks: Task[] = []
-            const newSubtasks: Subtask[] = []
             
             // // process the sync tasks to update current tasks
             // for (let i = 0; i < todoistTasks.length; i++) {
@@ -287,17 +286,17 @@ export class TasksViewManager {
             // }
             
             // incorporate any new tasks from the sync
-            syncTasks
-                .forEach((t) => t.parentId ? newSubtasks.push(t) : updatedTasks.push(t))
+            // syncTasks
+            //     .forEach((t) => t.parentId ? newSubtasks.push(t) : updatedTasks.push(t))
 
-            // incorporate any new subtasks
-            for (let subtask of newSubtasks) {
-                // subtasks that have children are excluded
-                const parentIdx = updatedTasks.findIndex(p => p.id === subtask.parentId)
-                if (parentIdx < 0) continue
+            // // incorporate any new subtasks
+            // for (let subtask of newSubtasks) {
+            //     // subtasks that have children are excluded
+            //     const parentIdx = updatedTasks.findIndex(p => p.id === subtask.parentId)
+            //     if (parentIdx < 0) continue
     
-                // updatedTasks[parentIdx].subtasks!.push(subtask)
-            }
+            //     // updatedTasks[parentIdx].subtasks!.push(subtask)
+            // }
     
             this.todoistSyncToken = syncToken
             this.todoistTasks = TasksViewManager.sortTasks(updatedTasks)
@@ -312,16 +311,12 @@ export class TasksViewManager {
     /* API Handlers */
 
     onTaskUpdate = async (context: TaskUpdateContext) => {
-        const { 
-            action,
-            payload: { taskId, subTaskId, item, tasks },
-            undoFunction
-        } = context
+        const { action, payload: { task, tasks }, undoFunction } = context
 
-        const { title: name, id: orderIdx, isChecked: complete } = item
-        const description = "description" in item ? item.description : ""
-        const isRecurring = "isRecurring" in item ? item.isRecurring as boolean : undefined
-        const dueDate    = "due" in item ? item.due as string : undefined
+        const { title: name, isChecked: complete } = task
+        const description = "description" in task ? task.description : ""
+        const isRecurring = "isRecurring" in task ? task.isRecurring as boolean : undefined
+        const dueDate     = "due" in task ? task.due as string : undefined
 
         try {
             if (this.todoistLinked && ["complete", "incomplete"].includes(action)) {
@@ -330,7 +325,7 @@ export class TasksViewManager {
                 await updateTodoistTaskCompletion({
                     accessToken: this.todoistAccessToken,
                     syncToken: this.todoistSyncToken,
-                    taskId: subTaskId ? subTaskId : taskId,
+                    taskId: task.id,
                     isRecurring,
                     dueDate,
                     complete: complete!
@@ -345,21 +340,20 @@ export class TasksViewManager {
                 await updateTodoistTask({
                     accessToken: this.todoistAccessToken,
                     syncToken: this.todoistSyncToken,
-                    taskId: subTaskId ? subTaskId : taskId,
+                    taskId: task.id,
                     name,
                     description
                 })
             }
+            else if (action === "completion") {
+                this.initActionToast({ 
+                    action: "completion", 
+                    name, 
+                    func: undoFunction 
+                })
+            }
 
             this.currTasks = tasks
-
-            if (action != "complete") return
-
-            this.initUndoHandler({ 
-                action: "complete", 
-                name, 
-                func: undoFunction 
-            })
         }
         catch(error: any) {
             this.onError(error)
@@ -367,7 +361,7 @@ export class TasksViewManager {
     }
     
     onAddTask = async (context: TaskAddContext) => {
-        const { payload: { tasks, taskId, name }, undoFunction } = context
+        const { payload: { task, tasks, added }  } = context
         let id = ""
 
         try {
@@ -375,19 +369,13 @@ export class TasksViewManager {
                  id = (await addTodoistTask({
                     accessToken: this.todoistAccessToken,
                     projectId: this.todoistInboxProjectId,
-                    parentId: taskId,
-                    name
+                    parentId: task.parentId ?? "",
+                    name: task.title
                 })).taskId
 
                 this.todoistTasks = tasks
             }
             this.currTasks = tasks
-
-            this.initUndoHandler({
-                name, 
-                action: "add", 
-                func: undoFunction
-            })
         }
         catch(error: any) {
             this.onError(error)
@@ -398,18 +386,19 @@ export class TasksViewManager {
     }
 
     onDeleteTask = async (context: TaskDeleteContext) => {
-        const { payload: { taskId, tasks, subTaskId, name }, undoFunction } = context
+        const { payload: { tasks, task, removed }, undoFunction } = context
+
         try {
             if (this.todoistLinked) {
                 await deleteTodoistTask({
                     accessToken: this.todoistAccessToken,
-                    taskId: subTaskId ? subTaskId : taskId
+                    taskId: task.id
                 })
             }
 
             this.currTasks = tasks
-            this.initUndoHandler({
-                name, 
+            this.initActionToast({
+                name: task.title,
                 action: "delete", 
                 func: undoFunction
             })
@@ -425,7 +414,7 @@ export class TasksViewManager {
      * Initializes a toast element with an undo function.
      * @param context 
      */
-    initUndoHandler(context: {
+    initActionToast(context: {
         action: TaskUpdateActions | "add" | "delete",
         name?: string,
         func?: FunctionParam
@@ -446,7 +435,7 @@ export class TasksViewManager {
                 func
             })
         }
-        else if (action === "complete") {
+        else if (action === "completion") {
             this.initUndoToast({
                 icon: getCheerEmoji(),
                 description: `"${name}" completed!`,
@@ -489,6 +478,7 @@ export class TasksViewManager {
     /* handlers */
 
     onError(error: any) {
+        console.error(error)
         toastApiErrorHandler({ 
             error, 
             logoIcon: LogoIcon.Todoist,

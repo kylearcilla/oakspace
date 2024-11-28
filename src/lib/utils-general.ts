@@ -163,12 +163,23 @@ export const getElemsByClass = (className: string): Element[] | null => {
 }
 
 /**
+ * Checks if any class from the given array is present in the target's classList.
+ * @param target - The HTMLElement to check against.
+ * @param classes - An array of class strings to check for.
+ * @returns True if any class is found in the target's classList, false otherwise.
+ */
+export function elemHasClasses(target: HTMLElement, classes: string[]) {
+  return classes.some((cls) => target.classList.contains(cls))
+}
+
+/**
  * Get HTML elements that share the same className
  * @param className  Elements' class name
  */
 export const getElemByClass = (className: string): Element | null => {
     return document.querySelector("." + className)
 }
+
 
 /**
  * Get an elem css style that is a number value
@@ -288,47 +299,6 @@ export function findEnumIdxFromDiffEnum(enumMember: any, enumA: any, enumB: any)
 export const addSpacesToCamelCaseStr = (camelCaseStr: string) => {
   const words = camelCaseStr.replace(/([a-z])([A-Z])/g, '$1 $2');
   return words.charAt(0).toUpperCase() + words.slice(1);
-}
-
-/**
- *  According to the PKCE standard, a code verifier is a high-entropy cryptographic random string with a length between 43 and 128 characters (the longer the better). 
- *  It can contain letters, digits, underscores, periods, hyphens, or tildes.
- * 
- *  @param length 
- *  @returns 
- */
-export function generateCodeVerifier(length: number): string {
-  if (length < 43 || length > 128) { 
-    throw new Error("Must be between 43 and 128 inclusive.")
-  }
-
-  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  const values = crypto.getRandomValues(new Uint8Array(length))
-
-  return values.reduce((acc, x) => acc + possible[x % possible.length], "")
-}
-
-/**
- * Hashes a string using that SHA 256 Algorithm
- * @param plain  String to be hashed 
- * @returns      SHA 256-Hashed String
- */
-export function hashSHA256(plain: string): Promise<ArrayBuffer> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(plain)
-  return window.crypto.subtle.digest('SHA-256', data)
-}
-
-/**
- * Returns the base64 representation of a string
- * @param input   
- * @returns 
- */
-export function base64encode(input: any): string {
-  return window.btoa(String.fromCharCode(...new Uint8Array(input)))
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
 }
 
 export function getAdditionTopPadding(element: HTMLElement) {
@@ -513,7 +483,7 @@ export function randomArrayElem(arr: any[]) {
 }
 
 export function randInt(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min)) + min;
+  return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 export function addItemToArray(idx: number, array: any[], item: any) {

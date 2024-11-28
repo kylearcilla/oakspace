@@ -1,13 +1,11 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte"
     
-	import { TEST_TASKS } from "$lib/mock-data"
     import { globalContext, themeState } from "$lib/store"    
 	import { clamp, clickOutside } from "$lib/utils-general"
-	import { TasksViewManager } from "$lib/tasks-view-manager"
 	import { ProductivityCalendar } from "$lib/productivity-calendar"
-	import { closeModal, openModal, setShortcutsFocus } from "$lib/utils-home"
-	import { RightSideTab, ShortcutSectionInFocus, Icon, ModalType } from "$lib/enums"
+	import { setShortcutsFocus } from "$lib/utils-home"
+	import { ShortcutSectionInFocus, Icon } from "$lib/enums"
 	import { formatDatetoStr, formatTimeToHHMM, isNightTime, prefer12HourFormat } from "$lib/utils-date"
 
 	import Overview from "./Overview.svelte"
@@ -24,10 +22,8 @@
 
     let headerRef: HTMLElement
     let headerImgContainerHt = 0
-
-    /* tasks + overview */
-    // let tasks = new TasksViewManager(TEST_TASKS)
     let calendar = new ProductivityCalendar(null)
+    let isImgModalOpen = false
     
     /* time */
     let isDayTime = true
@@ -106,10 +102,10 @@
         const optnText = target.innerText.trim()
 
         if (optnText === "Replace Background") {
-            openModal(ModalType.ImgUpload)
+            isImgModalOpen = true
         }
         else if (optnText === "Add Header Background") {
-            openModal(ModalType.ImgUpload)
+            isImgModalOpen = true
         }
         else {
             bgImgSrc = ""
@@ -282,7 +278,7 @@
         }}
     />
 
-    {#if $globalContext.modalsOpen.includes(ModalType.ImgUpload)} 
+    {#if isImgModalOpen} 
         <ImgUpload
             title="Header Background"
             constraints={{ 
@@ -291,8 +287,11 @@
             onSubmit={(img) => {
                 if (bgImgSrc != img) {
                     bgImgSrc = img
-                    closeModal(ModalType.ImgUpload)
+                    isImgModalOpen = false
                 }
+            }}
+            onClickOutside={() => {
+                isImgModalOpen = false
             }}
         />
     {/if}

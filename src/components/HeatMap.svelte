@@ -2,7 +2,10 @@
     import { onMount } from "svelte"
     import { getElemById, getHozDistanceBetweenTwoElems, randomArrayElem } from "$lib/utils-general"
     import { addToDate, formatDateToSimpleIso, getMonthStr, getPrevMonth, isDateEarlier, isSameDay, months } from "$lib/utils-date"
+	import { randInt } from "../lib/utils-general";
 
+    export let id: string
+    export let type: "goals" | "habits"
 
     const data: {
         idx: number, activity: number, text?: string
@@ -26,6 +29,7 @@
     ]
     const lastTwelveMonths: Date[] = getMonths()
     const firstDay = nextClosestSaturday()
+    const emojis = ["💪", "🏃‍♂️", "🇫🇷", "📖", "🌷", "🧘🏼‍♂️"]
 
     let container: HTMLElement
     let firstMonthLeftOffset = -1
@@ -47,11 +51,11 @@
     }
     function getRenderData(idx: number) {
         const currDay  = addToDate({ date: firstDay, time: `${idx === 0 ? idx : -idx}d` })
-        
         const isAhead = isDateEarlier(new Date(), currDay)
         const dayData = randomArrayElem(data)
-        const opacity  = getOpacity(dayData.activity)
-        
+        const opacity = getOpacity(dayData.activity)
+        const text    = type === "habits" ? dayData.text : randInt(0, 8) === 1 ? randomArrayElem(emojis) : ""
+
         if (isAhead) {
             return { 
                 show: false, opacity: 0, day: currDay
@@ -60,7 +64,7 @@
         return {
             opacity,
             show: true,
-            text: dayData.text,
+            text,
             day: currDay
         }
     }
@@ -74,12 +78,12 @@
         return nextSaturday;
     }
     function initMonthNames() {
-        const monthNames = document.getElementsByClassName("heat-map__month") as unknown as HTMLElement[]
+        const monthNames = container.getElementsByClassName("heat-map__month") as unknown as HTMLElement[]
         
         for (let i = 0; i < lastTwelveMonths.length; i++) {
             const firstDay = lastTwelveMonths[i]
             const monthNameRef = monthNames[i]
-            const matchingCell = getElemById(`cell--${formatDateToSimpleIso(firstDay)}`)
+            const matchingCell = getElemById(`cell--${id}--${formatDateToSimpleIso(firstDay)}`)
             const distFromLeft = getHozDistanceBetweenTwoElems({
                 left: {
                     elem: container,
@@ -90,7 +94,8 @@
                     edge: "left"
                 },
             })
-            monthNameRef.style.left = `${distFromLeft}px`
+
+            monthNameRef.style.left = `${distFromLeft + (type === "goals" ? 5 : 0)}px`
             if (i === 0) {
                 firstMonthLeftOffset = distFromLeft
             }
@@ -98,11 +103,14 @@
     }
 
     onMount(() => {
-        initMonthNames();
+        initMonthNames()
     })
 </script>
 
-<div bind:this={container} class="heat-map">
+<div 
+    bind:this={container} 
+    class={`heat-map heat-map--${type}`}
+>
     <div class="heat-map__months">
         {#if firstMonthLeftOffset > 30}
             <div class="heat-map__month">
@@ -121,16 +129,27 @@
                 {#each Array(7) as _, cellIdx}
                     {@const dayIdx = (colIdx * 7) + cellIdx}
                     {@const { show, opacity, day, text } = getRenderData(dayIdx)}
+                    {@const sameDay = isSameDay(new Date, day)}
+                    {@const color = type === "habits" ? `rgba(var(--fgColor1), ${opacity})` : ""}
+
                     <div
-                        id={`cell--${formatDateToSimpleIso(day)}`}
+                        id={`cell--${id}--${formatDateToSimpleIso(day)}`}
                         class="heat-map__cell"
+                        class:heat-map__cell--goal={type === "goals"}
                         class:heat-map__cell--ahead={!show}
-                        class:heat-map__cell--today={isSameDay(new Date, day)}
-                        style:--color={`rgba(var(--fgColor1), ${opacity})`}
+                        class:heat-map__cell--today={sameDay}
+                        style:--color={color}
                     >
-                        {#if text}
-                            {text}
-                        {/if}
+                        <div 
+                            class="heat-map__cell-content"
+                            class:heat-map__cell-content--highlight={text}
+                        >
+                            {#if text}
+                                <!-- <i class="fa-solid fa-star"></i> -->
+                                <!-- {text} -->
+                                <!-- {text} -->
+                            {/if}
+                        </div>
                     </div>
                 {/each}
             </div>
@@ -142,32 +161,47 @@
   .heat-map {
       position: relative;
 
+      &--habits &__months {
+        margin-bottom: 3px;
+      }
+
     &__months {
         display: flex;
         height: 27px;
     }
     &__month {
-        @include text-style(0.25, 400, 1.1rem, "DM Mono");
-        margin-bottom: 12px;
+        @include text-style(0.25, 400, 1.2rem, "DM Mono");
+        margin-bottom: 13px;
         position: absolute;
         top: 0px;
     }
     &__week-col {
         display: flex;
         flex-direction: column-reverse;
-        margin-right: 2px;
+        margin-right: 2.5px;
     }
     &__cell {
-        width: 13px;
-        height: 13px;
-        border-radius: 5px;
-        background-color: rgba(var(--fgColor1), 0.0285);
+        width: 16px;
+        height: 16px;
         position: relative;
-        margin-bottom: 2px;
+        margin-bottom: 2.5px;
         font-size: 0.6rem;
+        border-radius: 7px;
         @include center;
 
-        &--ahead {
+        &--goal:hover {
+            background-color: rgba(var(--textColor1), 0.05);
+        }
+        &--goal &-content {
+            background-color: rgba(var(--textColor1), 0.04);
+            height: 4.5px;
+            width: 4.5px;
+            font-size: 1.2rem;
+        }
+        &--goal#{&}--today {
+            box-shadow: none;
+        }
+        &--ahead &-content {
             opacity: 1;
             background-color: rgba(var(--fgColor1), 0.01);
         }
@@ -182,9 +216,21 @@
             width: 100%;
             height: 100%;
             @include abs-top-left;
-            border-radius: 5px;
+            border-radius: 7px;
             background-color: var(--color);
             z-index: -1;
+        }
+    }
+    &__cell-content {
+        @include center;
+        height: 100%;
+        width: 100%;
+        border-radius: 7px;
+        background-color: rgba(var(--fgColor1), 0.0285);
+
+        &--highlight {
+            background-color: rgba(var(--textColor1), 0.85) !important;   
+            // box-shadow: 0 0 20px 3px rgba(255, 255, 255, 0.03)
         }
     }
   }

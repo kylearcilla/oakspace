@@ -1,11 +1,10 @@
 <script lang="ts">
-    import { TEST_WK_HABITS } from "$lib/mock-data";
+    import { TEST_HABITS } from "$lib/mock-data";
 	import ProgressRing from "../../../components/ProgressRing.svelte";
 	import SvgIcon from "../../../components/SVGIcon.svelte";
 	import { Icon } from "../../../lib/enums";
 	import { themeState } from "../../../lib/store";
 	import { DAYS_OF_WEEK } from "../../../lib/utils-date";
-	import { capitalize, formatPlural } from "../../../lib/utils-general"
 
     const MIN_SIZE = 620
     const TIMES_OF_DAY_MAP: { [key: string]: number } = {
@@ -22,7 +21,7 @@
     let view = options?.view
     let wkProgress = options?.progress
 
-    let habits = TEST_WK_HABITS
+    let habits = TEST_HABITS
     let dayProgress = [0, 0, 0, 0, 0, 0, 0]
     let isDragging = false
 

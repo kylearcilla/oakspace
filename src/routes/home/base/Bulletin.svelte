@@ -1,5 +1,12 @@
 <script lang="ts">
-	import { themeState } from "../../../lib/store";
+	import BounceFade from "../../../components/BounceFade.svelte";
+	import DropdownList from "../../../components/DropdownList.svelte";
+	import ToggleBtn from "../../../components/ToggleBtn.svelte";
+	import { globalContext, themeState } from "../../../lib/store";
+	import { clickOutside } from "../../../lib/utils-general";
+	import { TextEditorManager } from "$lib/inputs"
+	import ImgUpload from "../../../components/ImgUpload.svelte"
+	import { ModalType } from "../../../lib/enums";
 
     export let options: {
         contentsOnHover?: boolean
@@ -7,13 +14,26 @@
 
     // const contentsOnHover = options?.contentsOnHover ?? true
     $: isLight = !$themeState.isDarkTheme
-    $: contentsOnHover = isLight
 
-    let noteIdx = 0
+    const MAX_NOTE_LENGTH = 300
+    const INPUT_ID = "bulletin-input"
+    
+    let contentsOnHover = isLight
     let isPointerOver = false
-    let fontSize = 1.1
-
-    const notes = [
+    let fontSize = 1.2
+    let contextPos: OffsetPoint = {
+        left: -1000, top: -1000
+    }
+    let hasNotes = true
+    let hasContextMenu = false
+    let titleEditor: TextEditorManager
+    let blurred = false
+    let newNoteTxt = ""
+    // let bulletinImg = "https://i.pinimg.com/564x/81/2d/7b/812d7be9f97ac8a753e6a73997c71fea.jpg"
+    let bulletinImg = "https://i.pinimg.com/736x/2e/ec/f9/2eecf97b4032e2c96df00e137a789708.jpg"
+    let isImgModalOpen = false
+    
+    let notes = [
         "real growth starts when you're tired of your own shit",
         "Inner peace over everything else.",
         "Can't approach new energy and new life with the same attitude u was using to maintain ya old shit!",
@@ -38,38 +58,222 @@
         "Wheresoever you go, go with all your heart.",
         "Someone could be more successful than you and still envy you because your character carries more weight than their status.",
         "You have to get so confident in who you are that no one's opinion, rejection, or behavior can fucking rock you.",
-        "new friendships are coming. <br>new lovers are coming. <br>new job opportunities are coming. <br>new living spaces are coming. <br>new vacations are coming. <br>new routines are coming. <br>new habits are coming. <br>new mindsets are coming. <br>a new you is coming.",
     ]
+    let noteIdx = 0
+
+    titleEditor = new TextEditorManager({ 
+        initValue: notes[noteIdx],
+        placeholder: "type note here...",
+        maxLength: MAX_NOTE_LENGTH,
+        id: INPUT_ID,
+        handlers: {
+            onInputHandler: (_, val) => {
+                newNoteTxt = val
+                console.log({ newNoteTxt })
+            },
+            onBlurHandler: () => onEditComplete()
+        }
+    })
+
+    function onEditComplete() {
+        if (!newNoteTxt) {
+            removeNote(noteIdx)
+        }
+        else if (newNoteTxt != notes[noteIdx]) {
+            notes[noteIdx] = newNoteTxt
+        }
+
+        notes = notes
+        blurred = true
+    }
+    function removeNote(idx: number) {
+        notes.splice(idx, 1)
+
+        // undefined if removing from the end
+        if (notes[idx]) {
+            titleEditor.updateText(notes[idx])
+        }
+        else {
+            titleEditor.updateText(notes[idx - 1])
+            noteIdx--
+        }
+    }
+    function onPointerUp(e: PointerEvent) {
+        const target = e.target as HTMLElement
+        const width = target.clientWidth
+        const x = e.offsetX
+
+        if (e.button != 0 || target.id === INPUT_ID) {
+            return
+        }
+        if (blurred) {
+            blurred = false
+            return
+        }
+
+        if (x <= width / 2) {
+            noteIdx = ((noteIdx - 1) + notes.length) % notes.length
+        }
+        else {
+            noteIdx = (noteIdx + 1) % notes.length
+        }
+
+        titleEditor.updateText(notes[noteIdx])
+    }
+    function onContextMenu(_e: Event) {
+        const e = _e as PointerEvent
+        e.preventDefault()
+
+        hasContextMenu = true
+        contextPos = {
+            left: e.offsetX, top: e.offsetY
+        }
+    }
+    function onAddNewNote() {
+        notes.push("")
+        noteIdx = notes.length - 1
+        newNoteTxt = ""
+        titleEditor.focus()
+        hasContextMenu = false
+    }
 </script>
 
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
-<div 
-    class="bulletin"
-    class:bulletin--light={isLight}
-    class:bulletin--show-on-hover={contentsOnHover}
-    class:bulletin--is-over={isPointerOver}
-    style:font-size={`${fontSize}rem`}
-    on:click={() => noteIdx = (noteIdx + 1) % notes.length}
-    on:pointerover={() => isPointerOver = true}
-    on:pointerleave={() => isPointerOver = false}
->
-    <img src="https://i.pinimg.com/564x/81/2d/7b/812d7be9f97ac8a753e6a73997c71fea.jpg" alt="">
-    <div class="bulletin__content">
-        <p>
-            {@html notes[noteIdx]}
-        </p>
+<div style:position="relative" style:height="100%">
+    <div 
+        class="bulletin"
+        class:bulletin--light={isLight}
+        class:bulletin--show-on-hover={contentsOnHover}
+        class:bulletin--is-over={isPointerOver}
+        class:bulletin--no-notes={!hasNotes}
+        style:font-size={`${fontSize}rem`}
+        on:contextmenu={onContextMenu}
+        on:pointerup={onPointerUp}
+        on:pointerover={() => isPointerOver = true}
+        on:pointerleave={() => isPointerOver = false}
+    >
+        <img src={bulletinImg} alt="">
+        <div class="bulletin__content" class:hidden={!hasNotes}>
+            <div 
+                id={INPUT_ID}
+                class="text-editor"
+                data-placeholder={titleEditor.placeholder}
+                contenteditable
+                spellcheck="false"
+                on:input={(e) => titleEditor.onInputHandler(e)}
+                on:focus={(e) => titleEditor.onFocusHandler(e)}
+                on:blur={(e) => titleEditor.onBlurHandler(e)}
+                on:paste={(e) => titleEditor.onPaste(e)}
+            >
+                {@html notes[noteIdx]}
+            </div>
+        </div>
     </div>
+    <BounceFade 
+        isHidden={!hasContextMenu}
+        zIndex={200}
+        position={{ 
+            top: contextPos.top + "px",
+            left: contextPos.left + "px"
+        }}
+    >
+        <div 
+            id="base--dmenu"
+            class="base__dmenu dmenu" 
+            class:dmenu--light={isLight}
+            style:width={"180px"}
+            use:clickOutside on:click_outside={() => hasContextMenu = false}
+        >
+            <li class="dmenu__option">
+                <button 
+                    class="dmenu__option-btn"
+                    on:click={() => {
+                        isImgModalOpen = true
+                        hasContextMenu = false
+                    }}
+                >
+                    <span class="dmenu__option-text">
+                        Change Background
+                    </span>
+                </button>
+            </li>
+            <li class="dmenu__section-divider"></li>
+            <li class="dmenu__section">
+                <div class="dmenu__section-name">
+                    Notes
+                </div>
+                <div class="dmenu__toggle-optn  dmenu__option--static">
+                    <span class="dmenu__option-heading">Include Notes</span>
+                    <ToggleBtn 
+                        active={hasNotes}
+                        onToggle={() => {
+                            hasNotes = !hasNotes
+                        }}
+                    />
+                </div>
+                {#if hasNotes}
+                    <div class="dmenu__toggle-optn  dmenu__option--static">
+                        <span class="dmenu__option-heading">Auto Display</span>
+                        <ToggleBtn 
+                            active={contentsOnHover}
+                            onToggle={() => {
+                                contentsOnHover = !contentsOnHover
+                            }}
+                        />
+                    </div>
+                    <li class="dmenu__section-divider"></li>
+                    <div class="dmenu__option">
+                        <button class="dmenu__option-btn" on:click={() => onAddNewNote()}>
+                            <span class="dmenu__option-text">
+                                Add New Note
+                            </span>
+                        </button>
+                    </div>
+                    <div class="dmenu__option" class:hidden={notes.length === 0}>
+                        <button class="dmenu__option-btn" on:click={() => {
+                            removeNote(noteIdx)
+                            hasContextMenu = false
+                        }}>
+                            <span class="dmenu__option-text">
+                                Remove Note
+                            </span>
+                        </button>
+                    </div>
+                {/if}
+            </li>
+        </div>
+    </BounceFade>
 </div>
 
+{#if isImgModalOpen} 
+    <ImgUpload
+        title="Bulletin Background"
+        constraints={{ 
+            maxMbSize: 5
+        }}
+        onSubmit={(img) => {
+            if (bulletinImg != img) {
+                bulletinImg = img
+                isImgModalOpen = false
+            }
+        }}
+        onClickOutside={() => isImgModalOpen = false}
+    />
+{/if}
+
 <style lang="scss">
+    @import "../../../scss/dropdown.scss";
+    @import "../../../scss/inputs.scss";
+
     .bulletin {
         width: 100%;
-        overflow: scroll;
+        height: 100%;
+        overflow: visible;
         position: relative;
         user-select: none;
+        overflow: visible;
         cursor: pointer;
-        overflow: hidden;
 
         &--light p {
             font-weight: 500;
@@ -81,16 +285,19 @@
         &--is-over &__content {
             @include visible;
         }
+        &--no-notes p {
+            display: none !important;
+        }
+        &--no-notes &__content {
+            background: transparent;
+        }
 
         img {
+            height: 100%;
             width: 100%;
+            object-fit: cover;
         }
-        span {
-            @include text-style(0.5, 400, 1.125rem, "DM Mono");
-            display: inline-block;
-            margin: 0px 0px 12px 0px;
-        }
-        p {
+        p, .text-editor  {
             cursor: text;
             width: 80%;
             @include text-style(0.8, 400, _, "DM Mono");
@@ -98,7 +305,7 @@
         }
         &__content {
             width: 100%;
-            height: calc(100% - 3px);
+            height: 100%;
             text-align: center;
             z-index: 2;
             background-color: rgba(black, 0.5);
@@ -106,5 +313,21 @@
             @include abs-top-left;
             @include center;
         }   
+    }
+
+    div[contenteditable]:empty:before {
+        content: attr(data-placeholder);
+        opacity: 0.4 !important;
+    }
+
+    .dmenu {
+        overflow: visible;
+        padding-bottom: 5px;
+
+        &__toggle-optn {
+            padding: 4px 7px 5px 7px;
+            width: 100%;
+            @include flex(center, space-between);
+        }
     }
 </style>

@@ -31,7 +31,7 @@
             {@const d   = day.date.getDate()}
             {@const sameMonth = day.isInCurrMonth}
 
-            <button
+            <div
                 title={formatDatetoStr(day.date)}
                 class="rcal__day"
                 class:rcal__day--not-curr-month={!sameMonth}
@@ -40,7 +40,7 @@
                     <ProgressRing 
                         progress={n[idx]} 
                         options={{
-                            size: 12, strokeWidth: 2.82, style: "light"
+                            size: 14, strokeWidth: 3.2, style: "light"
                         }}
                     />
                 {:else}
@@ -48,26 +48,22 @@
                         {d}
                     </div>
                 {/if}
-            </button>
+            </div>
         {/each}
     </div>
 </div>
 
 <style lang="scss">
     .rcal {
-        width: 210px;
-
         &__days {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            @include text-style(0.65, 400, 1.05rem, "DM Mono");
-            margin-bottom: 0px;
+            @include flex(center, space-between);
+            @include text-style(0.65, 400, 1.3rem, "DM Mono");
+            margin: 0px 4px 10px 0px;
         }
         &__dow {
             height: 25px;
-            width: 25px;
-            @include center;
             margin-left: 2px;
+            @include center;
         }
         &__grid {
             display: grid;
@@ -75,22 +71,15 @@
             grid-template-rows: repeat(6, 1fr);
         }
         &__day {
-            @include center;
             height: 28px;
-            margin-bottom: 0.5px;
-
-            &:hover {
-                opacity: 0.5;
-            }
-            &:active {
-                transform: scale(1);
-            }
+            margin: 0px 17px 6px 0px;
         }
         &__day--not-curr-month {
             opacity: 0.095 !important;
         }
         &__day-num {
-            @include text-style(1, 300, 1rem, "DM Mono");
+            @include text-style(1, 300, 1.25rem, "DM Mono");
+            margin-left: 3px;
         }
     }
 </style>

@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { InputManager } from "$lib/inputs";
-	import { onMount } from "svelte";
-	import AsyncButton from "../../components/AsyncButton.svelte";
+	import { onMount } from "svelte"
 	import Modal from "../../components/Modal.svelte"
+    import AsyncButton from "../../components/AsyncButton.svelte"
 
     export let onCancel: FunctionParam
     export let onOk: (text: string) => (Promise<void> | void)
@@ -22,33 +21,17 @@
     const allowEmpty = options?.allowEmpty ?? false
     const id = options?.id ?? ""
 
-    let textInputRef: HTMLElement
-    let text = ""
+    let textInputRef: HTMInputLElement
+    let text = initText
     let isFocused = false
     let emptyTitleError = false
     let currLength = initText.length
     let loading = false
 
-    const textInput = (new InputManager({ 
-        initValue: initText,
-        placeholder,
-        maxLength,
-        id,
-        handlers: {
-            onBlurHandler: () => {
-                isFocused = false
-            },
-            onInputHandler: (_, val, length) => {
-                text = val
-                currLength = length
-            },
-            onFocusHandler: () => {
-                emptyTitleError = false
-                isFocused = true
-            }
-        }
-    })).state
-
+    function onInputHandler() {
+        text = textInputRef.value
+        currLength = text.length
+    }
     async function okBtnClicked() {
         const isOver = text.length > maxLength
 
@@ -61,9 +44,7 @@
         }
     }
 
-    onMount(() => {
-        textInputRef.focus()
-    })
+    onMount(() => textInputRef.focus())
 </script>
 
 <Modal 
@@ -81,17 +62,24 @@
             <input
                 bind:this={textInputRef}
                 {id}
+                {placeholder}
                 name={id}
                 type="text"
                 aria-label="Title"
                 spellcheck="false"
                 autocomplete="off"
-                value={$textInput.value}
-                placeholder={$textInput.placeholder}
-                maxlength={$textInput.maxLength}
-                on:blur={(e) => $textInput.onBlurHandler(e)}
-                on:input={(e) => $textInput.onInputHandler(e)}
-                on:focus={(e) => $textInput.onFocusHandler(e)}
+                maxlength={maxLength}
+                bind:value={text}
+                on:blur={() => {
+                    isFocused = false
+                }}
+                on:input={() => {
+                    onInputHandler()
+                }}
+                on:focus={() => {
+                    emptyTitleError = false
+                    isFocused = true
+                }}
             >
                 <div 
                     class="input-box__count"

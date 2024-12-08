@@ -4,13 +4,12 @@
     import { globalContext, themeState } from "$lib/store"    
 	import { clamp, clickOutside } from "$lib/utils-general"
 	import { ProductivityCalendar } from "$lib/productivity-calendar"
-	import { setShortcutsFocus } from "$lib/utils-home"
+	import { setShortcutsFocus, imageUpload } from "$lib/utils-home"
 	import { ShortcutSectionInFocus, Icon } from "$lib/enums"
 	import { formatDatetoStr, formatTimeToHHMM, isNightTime, prefer12HourFormat } from "$lib/utils-date"
 
 	import Overview from "./Overview.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
-	import ImgUpload from "../../components/ImgUpload.svelte"
 	import DropdownList from "../../components/DropdownList.svelte"
 
     const SETTINGS_BTN_CUT_OFF_Y = 30
@@ -23,8 +22,7 @@
     let headerRef: HTMLElement
     let headerImgContainerHt = 0
     let calendar = new ProductivityCalendar(null)
-    let isImgModalOpen = false
-    
+
     /* time */
     let isDayTime = true
     let currentTimeStr = ""
@@ -101,11 +99,15 @@
         const target   = context.event.target as HTMLElement
         const optnText = target.innerText.trim()
 
-        if (optnText === "Replace Background") {
-            isImgModalOpen = true
-        }
-        else if (optnText === "Add Header Background") {
-            isImgModalOpen = true
+        if (["Replace Background", "Add Header Background"].includes(optnText)) {
+            imageUpload.init({
+                title: "Header Backround",
+                onSubmit: (imgSrc: string) => {
+                    if (bgImgSrc != imgSrc) {
+                        bgImgSrc = imgSrc
+                    }
+                }
+            })
         }
         else {
             bgImgSrc = ""
@@ -277,24 +279,6 @@
             }
         }}
     />
-
-    {#if isImgModalOpen} 
-        <ImgUpload
-            title="Header Background"
-            constraints={{ 
-                maxMbSize: 5
-            }}
-            onSubmit={(img) => {
-                if (bgImgSrc != img) {
-                    bgImgSrc = img
-                    isImgModalOpen = false
-                }
-            }}
-            onClickOutside={() => {
-                isImgModalOpen = false
-            }}
-        />
-    {/if}
 </div>
 
 <style lang="scss">

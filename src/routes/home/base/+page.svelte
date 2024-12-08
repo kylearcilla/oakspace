@@ -1,6 +1,7 @@
 <script lang="ts">    
 	import { themeState } from "../../../lib/store"
 	import { capitalize, clamp, clickOutside } from "../../../lib/utils-general"
+	import { imageUpload } from "../../../lib/utils-home"
 
 	import Bulletin from "./Bulletin.svelte"
 	import YearView from "./YearView.svelte"
@@ -9,11 +10,11 @@
 	import SettingsBtn from "../../../components/SettingsBtn.svelte"
 	import BounceFade from "../../../components/BounceFade.svelte"
 	import ToggleBtn from "../../../components/ToggleBtn.svelte"
-	import GoalCard from "../../../components/GoalCard.svelte";
 	import { TEST_GOALS } from "../../../lib/mock-data";
 	import DropdownList from "../../../components/DropdownList.svelte";
 	import { months, getQuarter } from "../../../lib/utils-date";
 	import RingCalendar from "../../../components/RingCalendar.svelte";
+	import TextEntry from "./TextEntry.svelte";
 
     const SMALLER_WIDTH = 630
     const SMALL_WIDTH = 860
@@ -29,9 +30,9 @@
     let marginOptn: "habits" | "goals" = "habits"
     let marginView: "today" | "month" | "year" | "quarter" = "today"
 
-    let isDragging = false
+    let dragContext: "banner" | "bulletin" | null = null
     let initDragY = 0
-    let ogBulletingHt = 0
+    let ogDragVal = 0
     let bulletinHt = 300
 
     const monthHeader = {
@@ -58,9 +59,10 @@
             `
         }
     }
-    const bannerImg = {
-        src: "https://preview.redd.it/ancient-tree-from-mononoke-3840-x-2160-v0-qrghesb0z65c1.png?width=1080&crop=smart&auto=webp&s=c42a4dfc07a2734d3489faaccd1febb56b6859b3",
-        opacity: 0.15
+    let bannerImg = {
+        src: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Cole_Thomas_The_Course_of_Empire_Destruction_1836.jpg/2560px-Cole_Thomas_The_Course_of_Empire_Destruction_1836.jpg",
+        // src: "https://images.unsplash.com/photo-1732468085904-03c57452bc76?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        center: 50
     }
     let options = {
         view: "year",
@@ -72,27 +74,59 @@
     $: detailsHeader = options.view === "month" ? monthHeader : yrHeader
     $: isLight = !$themeState.isDarkTheme
 
-    $: if (isLight) {
-        bannerImg.opacity = 0
-    }
-
-    /* bulleting height */
-    function onPointerDown(pe: PointerEvent) {
+    /* drag */
+    function dragDown(pe: PointerEvent) {
+        if (pe.button != 0) return
+        const target = pe.target as HTMLElement
         initDragY = pe.clientY
-        isDragging = true
-        ogBulletingHt = bulletinHt
+
+        target.setPointerCapture(pe.pointerId)
+
+        if (target.tagName === "IMG") {
+            dragContext = "banner"
+            ogDragVal = bannerImg.center
+        }
+        else {
+            dragContext = "bulletin"
+            ogDragVal = bulletinHt
+        }
     }
     function onDrag(pe: PointerEvent) {
-        if (!isDragging) return
+        if (!dragContext) return
         const offset = initDragY - pe.clientY
-        bulletinHt = clamp(200, ogBulletingHt + -offset, 350)
-    }
-    function onPointerUp(pe: PointerEvent) {
-        if (!isDragging) return
+        
+        if (dragContext === "banner") {
+            const target = pe.target as HTMLImageElement
+            const naturalHeight = target.naturalHeight 
+            const percOffset = ((offset / naturalHeight) * 100) * 2.5
 
-        ogBulletingHt = 0
+            bannerImg.center = clamp(0, ogDragVal + percOffset, 100)
+            bannerImg = bannerImg
+        }
+        else {
+            bulletinHt = clamp(200, ogDragVal + -offset, 350)
+        }
+    }
+    function onDragEnd() {
+        if (!dragContext) return
+        
+        ogDragVal = 0
         initDragY = -1
-        isDragging = false
+        dragContext = null
+    }
+    function openImgModal() {
+        imageUpload.init({
+            title: "Home Banner",
+            onSubmit: (imgSrc: string) => {
+                if (bannerImg.src != imgSrc) {
+                    bannerImg.src = imgSrc
+                    bannerImg.center = 50
+                    bannerImg = bannerImg
+                    isImgModal = false
+                }
+            }
+        })
+        settingsOpen = false
     }
 </script>
 
@@ -107,13 +141,20 @@
     class:base--smaller={width <= SMALLER_WIDTH}
     style:--month-img-ht={"261px"}
     style:--left-ht={`${leftHt}px`}
-    style:cursor={isDragging ? "ns-resize" : "default"}
+    style:cursor={dragContext ? "ns-resize" : "default"}
 >   
     {#if options.banner}
         <div 
-            class="base__header-img bg-img"
-            style:background-image={`linear-gradient(rgba(0, 0, 0, ${bannerImg.opacity}), rgba(0, 0, 0, ${bannerImg.opacity})), url(${bannerImg.src})`}
+            class="base__header-img-container"
+            on:pointerdown={dragDown}
+            on:pointermove={onDrag}
+            on:pointerup={onDragEnd}
         >
+            <img 
+                style:object-position={`center ${bannerImg.center}%`}
+                src={bannerImg.src} 
+                alt="banner"
+            >
         </div>
     {/if}
     <div class="base__content">
@@ -122,7 +163,7 @@
             <div class="base__header">
                 <div 
                     class="base__header-icon bg-img"
-                    style:background-image={`linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url(https://i.pinimg.com/564x/a7/27/df/a727dfcc29381d933b295b036c9239d5.jpg)`}
+                    style:background-image={`linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url(https://i.pinimg.com/originals/42/f3/e6/42f3e6dd32467736bdc85dc8a6038e35.gif)`}
                 >
                 </div>
                 <div class="base__header-details">
@@ -130,10 +171,9 @@
                     <div class="base__header-callout insight-sentence">
                         <div class="base__header-callout-icon">🌙</div>
                         <div>
-                            <!-- <p>Good <strong>evening</strong> Kyle.</p> -->
                             <p>
-                                <!-- You have completed <strong>2</strong> of <strong>3</strong> of your habits today with <strong>1</strong> of <strong>2</strong> goals achieved. -->
-                                "How we spend our days is, of course, how we spend our lives." – Annie Dillard
+                                You have completed <strong>2</strong> of <strong>3</strong> of your habits today with <strong>1</strong> of <strong>2</strong> goals achieved.
+                                <!-- "How we spend our days is, of course, how we spend our lives." – Annie Dillard -->
                             </p>
                         </div>
                     </div>
@@ -154,16 +194,15 @@
                     class="base__left"
                     bind:clientHeight={leftHt}
                     on:pointermove={onDrag}
-                    on:pointerup={onPointerUp}
+                    on:pointerup={onDragEnd}
                 >
                     <div class="base__bulletin" style:height={`${bulletinHt}px`}>
                         <Bulletin />
                     </div>
                     <div class="base__context">
                         <div 
-                            on:pointerdown={onPointerDown}
+                            on:pointerdown={dragDown}
                             class="divider divider--handle" 
-                            style:cursor="ns-resize"
                         >
                         </div>
                         <div class="base__context-header">
@@ -315,7 +354,11 @@
                             {detailsHeader.title}
                         </div>
                         <div style:width="100%">
-                            <div 
+                            <TextEntry 
+                                entry="year" 
+                                date={new Date()} 
+                            />
+                            <!-- <div 
                                 class="base__wom"
                                 class:base__wom--default={false}
                                 class:base__wom--img={true}
@@ -337,7 +380,7 @@
                                 <div class="base__word-def">
                                     {@html detailsHeader.entry.def}
                                 </div>
-                            </div>
+                            </div> -->
                         </div>
                     </div>
                 </div>
@@ -441,6 +484,21 @@
                                 />
                             </div>
                         </li>
+                        {#if options.banner}
+                            <li class="dmenu__section-divider"></li>
+                            <li class="dmenu__section">
+                                <div class="dmenu__section-name">
+                                    Image Banner
+                                </div>
+                                <div class="dmenu__option">
+                                    <button class="dmenu__option-btn" on:click={() => openImgModal()}>
+                                        <span class="dmenu__option-text">
+                                            Change Background
+                                        </span>
+                                    </button>
+                                </div>
+                            </li>
+                        {/if}
                     </div>
                 </BounceFade>
             </div>
@@ -584,16 +642,23 @@
         }
 
         /* header */
-        &__header-img {
-            height: 180px;
+        &__header-img-container {
+            height: 210px;
             width: 100%;
+            position: relative;
+            overflow: hidden;
+            img {
+                height: 210px;
+                object-fit: cover;
+                width: 100%;
+            }
         }
         &__header {
             padding: 15px 0px 0px 0px;
             // padding: 20px 0px 0px 0px;
             width: 100%;
             position: relative;
-            margin-top: -90px;
+            margin-top: -70px;
 
             .divider {
                 height: 100%;
@@ -602,15 +667,14 @@
             }
         }
         &__header-icon {
-            height: 90px;
-            width: 90px;
+            height: 95px;
+            width: 95px;
             margin-bottom: 17px;
+            border-radius: 3px;
 
             img {
                 width: 100%;
-                height: 100%;
                 object-fit: cover;
-                border-radius: 0px;
             }
         }
         &__header-details {
@@ -629,18 +693,11 @@
         }
         &__header-callout {
             position: relative;
-            padding: 8px 25px 13px 13px;
-            background-color: var(--lightColor);
+            // padding: 8px 25px 13px 13px;
+            // background-color: var(--lightColor);
             border-radius: 10px;
             display: flex;
             width: fit-content;
-
-            p:first-of-type {
-                margin-top: 2px;
-            }
-            p:not(:first-of-type) {
-                margin-top: 3px;
-            }
         }
         &__header-callout-icon {
             margin: 1px 12px 0px 0px;
@@ -734,86 +791,20 @@
             margin: -2px 0px 0px 0px;
             @include flex(flex-start, space-between);
         }
-
-        /* month entry */
-        &__month-txt {
-        }
-
-        /* word of the month */
-        &__month-journal {
-            
-        }
-        /* word of the month */
-        &__wom {
-            padding: 0px 0px 0px 16px;
-            position: relative;
-            margin: 2px 30px 0px 0px;
-            width: 100%;
-            
-            &--default {
-                padding: 0px 30px 0px 13px;
-            }
-            &--default:before {
-                // display: block !important;
-            }
-            &--img {
-                padding: 10px 0px 16px 72px;
-                // border: 0.5px solid rgba(var(--textColor1), 0.04);
-                margin-left: -10px;
-                // background-color: rgba(var(--textColor1), 0.0145);
-                border-radius: 15px;
-            }
-            &--img &-img {
-                display: block;
-            }
-            &:before {
-                // display: none;
-                content: " ";
-                width: 2px;
-                height: calc(100% - 25px);
-                @include abs-top-left(13px, 13px);
-                background-color: rgba(var(--textColor1), 0.09);
-            }
-            p:not(:first-of-type) {
-                margin-top: 7px;
-            }
-        }
-        &__word {
-            @include text-style(1, 500, 1.5rem);
-            margin-right: 10px;
-        }
-        &__word-type {
-            @include text-style(0.4, 500, 1.5rem);
-        }
-        &__word-def {
-            @include text-style(0.315, 400, 1.5rem);
-            margin-top: 6px;
-            width: calc(100% - 160px);
-            max-width: 720px;
-        }
-        &__wom-img {
-            @include abs-top-left(13px, 28px);
-            height: 28px;
-            width: 28px;
-            display: none;
-
-            img {
-                border-radius: 3px;
-                height: 100%;
-                width: 100%;
-                object-fit: cover;
-            }
-        }
     }
 
     .dmenu {
         overflow: visible;
-        padding-bottom: 10px;
+        padding-bottom: 5px;
         &__section-name {
             margin-bottom: 1px;
         }
         &__option {
             overflow: visible;
+
+            button {
+                border-radius: 7px;
+            }
         }
         &__toggle-optn {
             padding: 6px 7px 5px 7px;
@@ -925,11 +916,11 @@
     }
 
     .insight-sentence {
-        @include text-style(0.6, 500, 1.45rem);
+        @include text-style(0.35, 400, 1.6rem);
         margin: 2px 0px 8px 0px;
         
         strong {
-            @include text-style(0.75, 400, 1.4rem, "DM Sans");
+            @include text-style(0.75, 400, 1.55rem, "DM Mono");
             margin: 0px 2px 2px 2px;
         }
     }

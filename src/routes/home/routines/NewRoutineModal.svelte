@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { onMount } from "svelte"
-
-	import { InputManager, TextEditorManager } from "$lib/inputs"
-	import { toast } from "$lib/utils-toast"
 	import { themeState } from "$lib/store"
+	import { toast } from "$lib/utils-toast"
+	import { TextEditorManager } from "$lib/inputs"
     
 	import Modal from "../../../components/Modal.svelte"
 	import AsyncButton from "../../../components/AsyncButton.svelte"
@@ -44,27 +43,10 @@
     }
 
     let newRoutine = isForWeek ? newWkRoutine : newDailyRoutine
+    let title = newRoutine.title
+    let descriptionn = newRoutine.descriptionn
 
-    const titleInput = (new InputManager({ 
-        initValue: "",
-        placeholder: "Type name here...",
-        maxLength: bounds.titleMax,
-        id: "new-routine-title-input",
-        handlers: {
-            onBlurHandler: (e, val) => {
-                newRoutine.name = val
-                isTitleFocused = false
-            },
-            onInputHandler: (e, val, length) => {
-                emptyTitleError = false
-                editHasBeenMade = true
-                currTitleLength = length
-            },
-            onFocusHandler: () => isTitleFocused = true
-        }
-    })).state
-
-    const descriptionEditor = (new TextEditorManager({ 
+    (new TextEditorManager({ 
         initValue: "",
         placeholder: "Type description here...",
         doAllowEmpty: true,
@@ -72,7 +54,7 @@
         id: "new-routine-description",
         handlers: {
             onBlurHandler: (_, val) => {
-                newRoutine.description = val
+                descriptionn = val
                 isDescrFocused = false
             },
             onInputHandler: (_, __, length) => {
@@ -80,7 +62,7 @@
             },
             onFocusHandler: () => isDescrFocused = true
         }
-    })).state
+    }))
 
     /* Conclude Changes */
     function asyncCall() {
@@ -174,12 +156,15 @@
                         aria-label="Title"
                         spellcheck="false"
                         autocomplete="off"
-                        value={$titleInput.value}
-                        placeholder={$titleInput.placeholder}
-                        maxlength={$titleInput.maxLength}
-                        on:blur={(e) => $titleInput.onBlurHandler(e)}
-                        on:input={(e) => $titleInput.onInputHandler(e)}
-                        on:focus={(e) => $titleInput.onFocusHandler(e)}
+                        placeholder={"Type name here..."}
+                        maxlength={bounds.titleMax}
+                        bind:value={title}
+                        on:blur={() => {
+                            isTitleFocused = false
+                        }}
+                        on:focus={() => {
+                            isTitleFocused = true
+                        }}
                     >
                     <div 
                         class="input-box__count"
@@ -205,13 +190,7 @@
                     <div 
                         id="new-routine-description"
                         class="edit-routine__description-text-editor text-editor"
-                        data-placeholder={$descriptionEditor.placeholder}
                         contenteditable
-                        bind:textContent={$descriptionEditor.value}
-                        on:paste={(e) => $descriptionEditor.onPaste(e)}
-                        on:input={(e) => $descriptionEditor.onInputHandler(e)}
-                        on:focus={(e) => $descriptionEditor.onFocusHandler(e)}
-                        on:blur={(e)  => $descriptionEditor.onBlurHandler(e)}
                     >
                     </div>
                     <div 

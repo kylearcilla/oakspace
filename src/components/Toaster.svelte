@@ -4,6 +4,8 @@
 	import { getDocumentDirection, getInitialTheme, toasterManager } from '$lib/utils-toast'
 	import type { ToasterProps, ToastOptions, Position } from '$lib/types-toast'
 
+	/* subset of: https://github.com/wobsoriano/svelte-sonner */
+
 	type $$Props = ToasterProps
 
 	type OListFocusEvent = FocusEvent & {

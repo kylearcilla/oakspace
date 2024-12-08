@@ -1,11 +1,13 @@
 <script lang="ts">
-	import { InputManager, TimeInputManager } from "$lib/inputs"
-	import { themeState } from "$lib/store"
-    import { minsFromStartToHHMM, prefer12HourFormat } from "$lib/utils-date"
-	import { clamp, clickOutside, getElemStyle } from "$lib/utils-general"
 	import { onMount } from "svelte/internal"
-	import DropdownList from "./DropdownList.svelte"
 	import type { Writable } from "svelte/store"
+    
+	import { themeState } from "$lib/store"
+	import { TimeInputManager } from "$lib/inputs"
+    import { minsFromStartToHHMM } from "$lib/utils-date"
+	import { clamp, clickOutside, getElemStyle } from "$lib/utils-general"
+    
+	import DropdownList from "./DropdownList.svelte"
     
     export let id: string | undefined = undefined
     export let options: TimePickerOptions | undefined = {}
@@ -13,7 +15,6 @@
     export let onSet: (time: number) => void
 
     let dropdownOptions: DropdownOption[] = []
-
     let timePickerRef: HTMLElement
     
     $: currentTime = options?.start ?? 720
@@ -27,7 +28,7 @@
     /* Input Stuff */
     let inputElem: HTMLElement
     let isInputActive = false
-    let titleInput: Writable<InputManager>
+    let titleInput: Writable<TimeInputManager>
     let closestIdxOption = -1
     
     /* Drag Stuff */

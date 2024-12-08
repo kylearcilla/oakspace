@@ -19,7 +19,17 @@ div[contenteditable] {
     word-wrap: break-word;
     white-space: pre-wrap;
     max-width: 100%;
-    // caret-color: transparent;
+
+    code, em {
+        @include text-style(0.5, 400, 1.35rem, "DM Mono");
+        background-color: rgba(150, 150, 150, 0.1);
+        padding: 0px 3px 0px 3px;
+        border-radius: 3px;
+    }
+    strong, b {
+        @include text-style(1, 600);
+        line-height: 1.5;
+    }
 }
 div[contenteditable]:empty:before {
     content: attr(data-placeholder);

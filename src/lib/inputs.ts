@@ -1,6 +1,7 @@
 import { writable, type Writable } from "svelte/store"
-import { clamp, extractNumStr, getContentEditableSelectionRange, getElemById, isInRange, setCursorPos } from "./utils-general"
+
 import { minsFromStartToHHMM } from "./utils-date"
+import { clamp, extractNumStr, getElemById, isInRange, setCursorPos } from "./utils-general"
 
 /**
  * General purpose input manager.
@@ -97,138 +98,170 @@ export class InputManager {
 }
 
 /**
- * Manager for text area inputs.
- */
-export class TextAreaManager extends InputManager { 
-    constructor(options: InputOptions) {
-        super(options)
-    }
-}
-
-/**
  * Manager for editor components with contenteditable attribute.
  * Has a set max height and will disallow additions if it goes over.op[ro]
  * Custom functionality for redo / undo and copy paste/
  */
 export class TextEditorManager extends InputManager {
-    allowFormatting = false
-    state: Writable<TextEditorManager>
+    allowFormatting: boolean
+    elemInit = false
 
-    /* undo / redo stuff */
-    undoStack: string[] = []
-    redoStack: string[] = []
-    currentIntervalLength = 0
-    
-    /* caret stuff */
-    // caretPos = { x: 0, y: 0 }
-    // caretElem?: HTMLElement | null
-    // activeTimer: NodeJS.Timer | null = null
-    // caretAnimation: Animation | null = null
+    currFormat: "bold" | "code" | null = null
+    prevFormat: "bold" | "code" | null = null
 
-    // CARET_IDLE_DELAY = 1000
-    // CARET_ANIMATION = {
-    //     keyframes: [
-    //         { opacity: 0, offset: 0 },
-    //         { opacity: 0, offset: 0.2 },
-    //         { opacity: 1, offset: 0.5 },
-    //         { opacity: 1, offset: 0.8 },
-    //         { opacity: 0, offset: 1 }
-    //     ],
-    //     options: {
-    //         duration: 1000,
-    //         iterations: Infinity
-    //     }
-    // }
+    undoStack: { length: number, content: string }[] = []
+    redoStack: { length: number, content: string }[] = []
 
-    UNDO_INTERVAL_LENGTH_THRSHOLD = 30
+    UNDO_EDIT_MIN_DIST_FROM_PREV = 15
+    MAX_UNDO_STACK_SIZE = 20
 
-    constructor(options: InputOptions) {
+    constructor(options: InputOptions & { allowFormatting?: boolean }) {
         super(options)
-        this.state = writable(this)
+        this.allowFormatting = options.allowFormatting ?? false
 
         requestAnimationFrame(() => this.initElem())
     }
 
     /* undo / redo */
-
-    /**
-     * When user redos, get the most recent state from redo stack.
-     * The current state will be put in the undo stack.
-     * 
-     * @param event 
-     */
-    redoEdit(event: KeyboardEvent) {
-        if (this.redoStack.length === 0) return
-
-        if (this.value) {
-            this.undoStack.push(this.value)
-        }
-
-        const recentUndo = this.redoStack.pop()!
-        this.updateTextEditorVal(event, recentUndo, true)
-    }
-    
-    /**
-     * When user undos, get the most recent state from undo stack.
-     * The current state will be put in the redo stack.
-     * 
-     * @param event 
-     */
-    undoEdit(event: KeyboardEvent) {
-        this.redoStack.push(this.value)
-
-        const recentEdit = this.undoStack.pop() ?? ""
-        this.updateTextEditorVal(event, recentEdit, true)
-    }
-
-    /**
-     * After every insertion of new text, check to see if the text added from prev undo state
-     * is big enough for the curent text to be put in the undo stack.
-     */
-    undoHandler(newValue: string) {
-        const recentEditLength = this.undoStack[this.undoStack.length - 1]?.length ?? 0
-        this.currentIntervalLength = Math.abs(recentEditLength - newValue.length)
-
-        if (this.currentIntervalLength < this.UNDO_INTERVAL_LENGTH_THRSHOLD) {
+    redoEdit() {
+        if (this.redoStack.length === 0) {
             return
         }
+        const recentUndo = this.redoStack.pop()!
 
-        this.undoStack.push(newValue)
-        this.currentIntervalLength = 0
+        this.undoStack.push({
+            length: this.inputElem!.innerText.length,
+            content: this.inputElem!.innerHTML
+        })
+        this.setInputElem(recentUndo.content)
+    }
+    undoEdit() {
+        if (this.undoStack.length === 0) {
+            return
+        }
+        let recentEdit = this.undoStack.pop()!
+        this.redoStack.push({
+            length: this.inputElem!.innerText.length,
+            content: this.inputElem!.innerHTML
+        })
+        while (recentEdit.content === this.inputElem!.innerHTML && this.undoStack.length > 0) {
+            recentEdit = this.undoStack.pop()!
+        }
+        this.setInputElem(recentEdit.content)
+    }
+
+    /**
+     * Runs after any change. 
+     * Saves current version when far enough from last edit (length).
+     */
+    undoHandler() {
+        const currText = this.inputElem!.innerText
+        if (this.undoStack.length === 0) {
+            this.undoStack.push({
+                length: currText.length,
+                content: this.inputElem!.innerHTML
+            })
+            return
+        }
+        const recentEdit   = this.undoStack[this.undoStack.length - 1]
+        const prevEditDist = Math.abs(recentEdit.length - currText.length)
+
+        if (prevEditDist < this.UNDO_EDIT_MIN_DIST_FROM_PREV) {
+            return
+        }
+        this.undoStack.push({
+            length: currText.length,
+            content: this.inputElem!.innerHTML
+        })
+
+        if (this.undoStack.length > this.MAX_UNDO_STACK_SIZE) {
+            this.undoStack.shift()
+        }
+        this.redoStack = []
     }
 
     /* event handlers */
-
     onPaste(event: ClipboardEvent) {
-        // don't allow formatted pasted content
-        const pastedText = event.clipboardData!.getData('text/plain')
         const target = event.target as HTMLElement
+        const plainText = event.clipboardData!.getData('text/plain')
         event.preventDefault()
 
-        if (!pastedText) return
-
-        // place the pasted text in the appropriate cursor position of prev value
-        let preVal = target.innerText
-        let { start, end } = getContentEditableSelectionRange(target)
-        let newValue       = preVal.slice(0, start) + pastedText + preVal.slice(end)
-        newValue           = newValue.substring(0, this.maxLength)
-
-        target.innerHTML = newValue
-        this.valLength = target.innerText.length
-
-        // move the cursor ups
-        const newcaretPos = start + pastedText.length
-        // setCursorPos(target, newcaretPos)
-        this.undoHandler(newValue)
+        if (!plainText || (plainText.length + this.valLength) > this.maxLength) {
+            return
+        }
         
-        // save
-        this.updateTextEditorVal(event, newValue)
+        let node: HTMLElement | Node
+        if (this.allowFormatting) {
+            node = this.parsePastedHTML(event.clipboardData!.getData('text/html'))
+        }
+        else {
+            node = document.createTextNode(plainText)
+        }
+
+        const selection = window.getSelection()
+        if (selection && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0)
+            range.deleteContents()
+            
+            if (this.allowFormatting) {
+                [...(node as HTMLElement).childNodes].forEach((child) => {
+                    range.insertNode(child)
+                    range.setStartAfter(child) 
+                    range.setEndAfter(child)
+                })
+            } 
+            else {
+                range.insertNode(node)
+                const newRange = document.createRange()
+                newRange.setStartAfter(node)  
+                newRange.setEndAfter(node)
+                selection.removeAllRanges()
+                selection.addRange(newRange)
+            }
+        }
+        
+        this.valLength = target.innerText.length
+        this.inputElem!.normalize()
+        this.undoHandler()
+        this.updateTextEditorVal(event, target.innerHTML)
     }
 
+    /**
+     * Parses the provided HTML string and processes the nodes within it.
+     * This function cleans up any inline styles or attributes.
+     * 
+     * @param {string} data The HTML string to parse.
+     * @returns The container element with the processed content.
+     */
+    parsePastedHTML(data: string) {
+        const doc = new DOMParser().parseFromString(data, 'text/html')
+        const container = doc.body
+    
+        const processNode = (node: Node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                const elem = node as HTMLElement
+
+                if (['strong', 'b', 'i', 'em', 'code'].includes(elem.tagName.toLowerCase())) {
+                    elem.removeAttribute("inline")
+                    elem.removeAttribute("style")
+                } 
+                else {
+                    const textNode = document.createTextNode(elem.textContent || '')
+                    elem.replaceWith(textNode)
+                }
+            }
+            for (let child of node.childNodes) {
+                processNode(child)
+            }
+        }
+        processNode(container)
+        return container
+    }
     
     onInputHandler(e: Event) {
         const event = e as InputEvent
         const target = event.target as HTMLElement
+        e.preventDefault()
 
         // allow paste handler to handle
         if (event.inputType === "insertFromPaste") { 
@@ -238,7 +271,7 @@ export class TextEditorManager extends InputManager {
         if (target.innerText.length > this.maxLength) {
             target.innerHTML = this.value
 
-            this.undoHandler(this.value)
+            this.undoHandler()
             setCursorPos(target, this.value.length)
 
             return
@@ -247,8 +280,11 @@ export class TextEditorManager extends InputManager {
         const newValue = target.innerHTML
         this.valLength = target.innerText.length
 
-        this.undoHandler(newValue)
+        this.undoHandler()
         this.updateTextEditorVal(event, newValue)
+
+        this.inputElem!.normalize()
+        this.removeFontWrapper()
     }
     
     onFocusHandler(event: Event) {
@@ -272,17 +308,301 @@ export class TextEditorManager extends InputManager {
         }
     }
 
-    /* helpers */
-    updateState(newState: Partial<TextEditorManager>) {
-        this.state.update((state: TextEditorManager) => {
-            state.oldTitle = newState.oldTitle ?? state.oldTitle
-            state.value   = newState.value ?? state.value
+    /* formatting  */
+    formattingHandler(ke: KeyboardEvent) {
+        const selection = window.getSelection()
+        if (!selection || selection.rangeCount === 0) return
+        const { key, metaKey } = ke
 
-            this.oldTitle = state.oldTitle
-            this.value = state.value
+        if (key === "e") {
+            this.currFormat = "code"
+        }
+        else if (key === "b") {
+            this.currFormat = "bold"
+        }
+        if (selection.isCollapsed) {
+            return
+        } 
+        else {
+            this.formatText()
+        }
+        this.currFormat = null
+    }
 
-            return state
+    formatText() {
+        const selection = window.getSelection()!
+        const range = selection.getRangeAt(0)
+
+        if (range!.toString().trim() === "") return
+
+        if (this.isSelectionFullyInWrapper(range)) {
+            // text if fully wrapped already
+            this.removeFormat(range)
+        } 
+        else if (this.isSelectionWithinWrapper(range)) {
+            // text partially wrapped
+            this.extendFormatWrapper(range)
+        } 
+        else {
+            // free text, wrap it
+            this.formatFreeText(range)
+        }
+
+        selection?.removeAllRanges()
+    }
+
+    wrapCaretWithFormat(typedCharacter: string | null) {
+        const selection = window.getSelection()
+        const range = selection?.getRangeAt(0)
+    
+        if (!range || !typedCharacter) return
+    
+        const wrapper = this.createFormatWrapper(typedCharacter)         
+        range.deleteContents()    
+        range.insertNode(wrapper)
+    
+        const newRange = document.createRange()
+        newRange.setStart(wrapper, typedCharacter.length) 
+        newRange.setEnd(wrapper, typedCharacter.length)
+        selection?.removeAllRanges()
+        selection?.addRange(newRange)
+    }
+
+    /* wrapper validation */
+    isSelectionWithinWrapper(range: Range): boolean {
+        const startNode = range.startContainer
+        const endNode = range.endContainer
+        return this.isNodeWithinWrapper(startNode) || this.isNodeWithinWrapper(endNode)
+    }
+    
+    isSelectionFullyInWrapper(range: Range): boolean {
+        const startNode = range.startContainer
+        const endNode = range.endContainer
+        return this.isNodeWithinWrapper(startNode) && this.isNodeWithinWrapper(endNode)
+    }
+    
+    isNodeWithinWrapper(node: Node): boolean {
+        if (!node || !node.parentElement) return false
+
+        const tag = node.parentElement.tagName.toLowerCase()
+
+        if (this.currFormat === 'code') {
+            return ['code', 'em'].includes(tag)
+        } 
+        else if (this.currFormat === 'bold') {
+            return ['strong', 'b'].includes(tag)
+        } 
+        else {
+            return false
+        }
+    }
+
+    /* format actions */
+    /**
+     * Wrap free text in format wrapper element.
+     * @param range 
+     */
+    formatFreeText(range: Range) {
+        const selectedText = range.toString()
+        const wrapper = this.createFormatWrapper(selectedText)
+        
+        range.deleteContents()
+        range.insertNode(wrapper)
+        
+        requestAnimationFrame(() => {
+            this.manuallySelectText(wrapper, 0, selectedText.length)
         })
+    }
+
+    /**
+     * Wrap text whose head or tail segemnts is part of anoter wrapped element.
+     * @param range 
+     */
+    extendFormatWrapper(range: Range) {
+        const startNode = range.startContainer
+        const endNode = range.endContainer
+
+        let existingWrapper: HTMLElement | null = null
+        let nbrDirection: "head" | "tail" 
+        let headNbrLastIdx = -1
+    
+        // find which side has already part of the wrapper
+        if (this.isNodeWithinWrapper(startNode)) {
+            existingWrapper = startNode.parentElement as HTMLElement
+            nbrDirection = "head"
+
+            const childNodes = Array.from(existingWrapper.childNodes)
+            for (let i = 0; i < childNodes.length; i++) {
+                const currentNode = childNodes[i]
+                if (currentNode.nodeType != Node.TEXT_NODE) continue
+
+                const currentText = (currentNode as Text).textContent || ""
+                const startOffset = range.startOffset
+                if (range.startContainer === currentNode) {
+                    headNbrLastIdx = startOffset
+                } 
+                else {
+                    headNbrLastIdx = currentText.length
+                }
+            }
+        } 
+        else if (this.isNodeWithinWrapper(endNode)) {
+            existingWrapper = endNode.parentElement as HTMLElement
+            nbrDirection = "tail"
+        }
+
+        // Get the head or tail segment and include it in the wrapper element
+        const selectedText = range.toString()
+        let headText = "", tailText = ""
+        
+        if (nbrDirection! === "head") {
+            headText = existingWrapper!.textContent?.substring(0, range.startOffset) || ""
+        }
+        else {
+            tailText = existingWrapper!.textContent?.substring(range.endOffset) || ""
+        }
+
+        existingWrapper!.parentElement?.removeChild(existingWrapper!)
+        const wrapper = this.createFormatWrapper(headText + selectedText + tailText)!
+
+        // Insert the new wrapper at the correct position
+        range.deleteContents()
+        range.insertNode(wrapper)
+
+        requestAnimationFrame(() => {
+            let sOffset = nbrDirection! === "tail" ? 0 : headNbrLastIdx
+            let length  = nbrDirection! === "tail" ? selectedText.length : selectedText.length + headNbrLastIdx
+            this.manuallySelectText(wrapper, sOffset, length)
+        })
+    }
+
+    /**
+     * Unwrap an element that has already been wrapped.
+     * Close wraps of neighbos if they exist.
+     * @param range 
+     */
+    removeFormat(range: Range) {
+        const startNode = range.startContainer
+        const parentSpan = startNode.parentElement as HTMLElement
+    
+       // Get the start and end of the selection relative to the wrapper
+        const selectedText = range.toString()
+        const leftText = parentSpan.textContent?.substring(0, range.startOffset) || ""
+        const rightText = parentSpan.textContent?.substring(range.endOffset) || ""
+
+        parentSpan.remove()
+        range.deleteContents()
+
+        if (rightText) {
+            const rightWrapper = this.createFormatWrapper(rightText)
+            range.insertNode(rightWrapper)
+        }
+
+        const selectedTextNode = document.createTextNode(selectedText)
+        range.insertNode(selectedTextNode)
+
+        if (leftText) {
+            const leftWrapper = this.createFormatWrapper(leftText)
+            range.insertNode(leftWrapper)
+        }
+
+        requestAnimationFrame(() => {
+            this.manuallySelectText(selectedTextNode!, 0, selectedText.length)
+        })
+    }
+
+    /**
+     * Inserts a text after user has formatted with no text selected.
+     * Succeededing text should be formatted unless user has closed an existing wrapper.
+     * 
+     * @param ke
+     * @param insert - Determines whether the text should be inserted inside or outside of a format wrapper
+     * 
+     */
+    emptyFormatInsert(ke: KeyboardEvent, insert: "inside" | "outside") {
+        const selection = window.getSelection()
+        const range = selection?.getRangeAt(0)
+        const text = this.getPrintableCharacter(ke)
+        
+        let node: Node | HTMLElement
+        if (!text || !range) return
+
+        if (insert === "inside") {
+            node = this.createFormatWrapper(text)
+            range.deleteContents()
+            range.insertNode(node)
+
+            this.prevFormat = this.currFormat
+            this.currFormat = null
+        }
+        else {
+            const currentNode = range.startContainer.parentElement!
+            if (!["CODE", "STRONG"].includes(currentNode.tagName)) return
+
+            node = document.createTextNode(text)
+            currentNode.after(node)
+            range.deleteContents()
+        }
+
+        const newRange = document.createRange()
+        newRange.setStart(node, 1) 
+        newRange.setEnd(node, 1)   
+    
+        selection?.removeAllRanges()
+        selection?.addRange(newRange)
+    }
+
+    /**
+     * Create a format wrapper element to format a segment of text.
+     * @param text   Text content of the element.
+     * @returns      Wrapper element.
+     */
+    createFormatWrapper(text: string) {
+        let wrapper: HTMLElement;
+
+        if (this.currFormat === 'code') {
+            wrapper = document.createElement("code")
+        } 
+        else if (this.currFormat === 'bold') {
+            wrapper = document.createElement("strong")
+        } 
+        else {
+            wrapper = document.createElement("span")
+        }
+    
+        wrapper.textContent = text
+        return wrapper;
+    }
+
+    /**
+     * remove font element that is added after a formatted text node is removed
+     */
+    removeFontWrapper() {
+        const fonts = this.inputElem!.querySelectorAll('font')
+        const selection = window.getSelection()
+        const range = selection?.getRangeAt(0)
+        const caretPosition = range ? range.startOffset : null
+
+        // span element exists under font
+        fonts.forEach(font => {
+            const span = font.querySelector('span')
+            if (span) {
+                font.replaceWith(...span.childNodes)
+            } 
+            else {
+                font.replaceWith(...font.childNodes)
+            }
+        })
+
+        // after removal caret will be behind
+        if (selection && caretPosition !== null && range) {
+            const newRange = document.createRange()
+            newRange.setStart(range.startContainer, caretPosition)
+            newRange.setEnd(range.endContainer, caretPosition)
+
+            selection.removeAllRanges()
+            selection.addRange(newRange)
+        }
     }
 
     updateText(text: string) {
@@ -292,7 +612,7 @@ export class TextEditorManager extends InputManager {
         this.inputElem!.innerHTML = text
     }
 
-    updateTextEditorVal(event: Event, newVal: string, doUpdatecaretPos = false) {
+    updateTextEditorVal(event: Event, newVal: string) {
         // if empty, <br> will appear which will not show the place holder
         if (newVal === "<br>") {
             newVal = ""
@@ -303,59 +623,150 @@ export class TextEditorManager extends InputManager {
         this.value = newVal
         this.updateState({ value: newVal })
         
-
-        if (doUpdatecaretPos) {
-            // this.inputElem!.innerHTML = newVal
-            // setCursorPos(this.inputElem!, newVal.length)
-        }
         if (this.handlers?.onInputHandler) {
             this.handlers.onInputHandler(event, newVal, this.valLength)
         }
     }
 
-    keydownHandler = (event: KeyboardEvent) => {
-        const { ctrlKey, metaKey, key, shiftKey } = event
-        const formatted = metaKey && ['b', 'i', 'u'].includes(key)
-        const undoRedo  = (ctrlKey || metaKey) && key === "z"
-        const arrows = ["ArrowRight", "ArrowLeft"].includes(key)
+    /* helpers */
+    keydownHandler = (ke: KeyboardEvent) => {
+        const { ctrlKey, metaKey, key, shiftKey } = ke
+        const customFormatting = metaKey && ['b', 'e'].includes(key)
+        const undoRedo  = metaKey && key === "z"
+        const target = ke.target as HTMLElement
+        const cmd = ctrlKey || metaKey
 
-        if (arrows && !shiftKey) {
-            // this.getCaretPos()
+        let emptyFormat = !!this.currFormat
+
+        if (this.id != target.id) {
+            return
         }
-        if (arrows && shiftKey) {
-            // this.updateCaretStyle({ doShow: false })
-        }
-        if (!this.allowFormatting && formatted) {
-            event.preventDefault()
+        if (this.allowFormatting && customFormatting) {
+            ke.preventDefault()
         }
         if (undoRedo) {
-            event.preventDefault()
-            shiftKey ? this.redoEdit(event) : this.undoEdit(event)
+            ke.preventDefault()
+            shiftKey ? this.redoEdit() : this.undoEdit()
         }
+
+        // empty formatted, typed and formatted (same) again
+        if (emptyFormat && this.prevFormat === this.currFormat) {
+            this.currFormat = null
+            this.prevFormat = null
+
+            ke.preventDefault()
+            this.emptyFormatInsert(ke, "outside")
+            return
+        }
+        // empty formatted twice without typing anything
+        if (emptyFormat && (customFormatting || cmd)) {
+            this.currFormat = null
+            return
+        }
+        // empty formatted and typing
+        if (emptyFormat) {
+            ke.preventDefault()
+            this.emptyFormatInsert(ke, "inside")
+            return
+        }
+        /* formatting */
+        if (this.allowFormatting && customFormatting) {
+            this.formattingHandler(ke)
+        }
+    }
+
+    /**
+    * Extracts the actual printable character from a KeyboardEvent.
+    * Uses a temporary input to simulate and capture the character.
+    * @param event
+    */
+    getPrintableCharacter(event: KeyboardEvent) {
+        const { metaKey, ctrlKey } = event
+        if (metaKey || ctrlKey) {
+            return null
+        }
+        if (event.key.length === 1) {
+            return event.key
+        }
+       
+       // HUses a temporary input to simulate and capture the character.
+        try {
+            const tempInput = document.createElement('input')
+            tempInput.type = 'text'
+            
+            const keyboardEvent = new KeyboardEvent('keypress', {
+                key: event.key,
+                bubbles: true,
+                cancelable: true,
+                shiftKey: event.shiftKey,
+                metaKey: event.metaKey,
+                ctrlKey: event.ctrlKey,
+                altKey: event.altKey
+            })
+            
+            tempInput.dispatchEvent(keyboardEvent)
+            tempInput.remove()
+
+            return tempInput.value || null
+        } 
+        catch {
+            return null
+        }
+    }
+
+    manuallySelectText(element: HTMLElement | Text, startOffset: number, endOffset: number) {
+        const range = document.createRange()
+        const selection = window.getSelection()
+
+        if (element.nodeType === Node.TEXT_NODE) {
+            range.setStart(element, startOffset)
+            range.setEnd(element, endOffset)
+        } 
+        else if (element.nodeType === Node.ELEMENT_NODE && element.firstChild?.nodeType === Node.TEXT_NODE) {
+            range.setStart(element.firstChild, startOffset)
+            range.setEnd(element.firstChild, endOffset)
+        } 
+    
+        selection?.removeAllRanges()
+        selection?.addRange(range)
+    }
+
+    setInputElem(content: string) {
+        this.inputElem!.innerHTML = content
+
+        // put cursor in the end
+        const selection = window.getSelection()
+        if (!selection) return
+    
+        const range = document.createRange()
+        range.selectNodeContents(this.inputElem!)
+        range.collapse(false)
+    
+        selection.removeAllRanges()
+        selection.addRange(range)
     }
 
     initElem() {
         const elem = getElemById(this.id)!
-        if (!elem) return
+        if (!elem || this.elemInit) return
 
         this.inputElem = elem
-    
-        // const parentElem = elem.parentElement as HTMLElement
-        // this.caretElem = parentElem.querySelector(".text-editor-caret")
-        // this.updateCaretStyle({ doShow: true })
-
         this.inputElem.addEventListener("keydown", (ke) => this.keydownHandler(ke))
-        // this.inputElem.addEventListener("keyup", (ke) => this.keydownHandler(ke))
-        // this.inputElem.addEventListener("pointerdown", () => this.getCaretPos())
-        // this.inputElem.addEventListener("pointerup", () => this.getCaretPos( )
+        this.inputElem.addEventListener("input", (e) => this.onInputHandler(e))
+        this.inputElem.addEventListener("blur", (e) => this.onBlurHandler(e))
+        this.inputElem.addEventListener("focus", (e) => this.onFocusHandler(e))
+        this.inputElem.addEventListener("paste", (e) => this.onPaste(e))
 
         if (this.placeholder) {
             this.inputElem.setAttribute("data-placeholder", this.placeholder)
         }
-
+        this.inputElem.setAttribute("data-formatting", this.allowFormatting + "")
+        
         // initialize text
         this.value = this.value
         this.updateState({ value: this.value })
+
+        this.elemInit = true
     }
 
     quit() {

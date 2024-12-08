@@ -105,7 +105,7 @@
     .yr-view {
         margin-top: 5px;
         h4 {
-            @include text-style(1, 500, 1.8rem);
+            @include text-style(1, 500, 1.65rem);
         }
         &__goals {
             margin-bottom: 20px;
@@ -140,7 +140,7 @@
         background-color: rgba(var(--textColor1), 0.035);
         width: 100%;
         height: 1px;
-        margin: 10px 0px 10px 0px;
+        margin: 6.5px 0px 10px 0px;
         // display: none;
     }
 </style>

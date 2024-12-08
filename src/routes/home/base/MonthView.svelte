@@ -29,7 +29,7 @@
     let weekPeriodIdx = 0
     let weekPeriod = getWeekPeriod(new Date())
     let newTaskFlag = false
-    let showHeaderBtnStats = false
+    let showHeaderBtnStats = true
     
     let subMenu: "g-view" | "g-group" | "g-progress" | "h-view" | null = null
     

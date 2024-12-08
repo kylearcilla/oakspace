@@ -114,12 +114,6 @@ const quotes: Quote[] = [
         quoteCredit: "Socrates"
     },
     {
-        text: "When you consider things like the stars, our affairs don't matter very much do they?",
-        bgImgSrc: "https://images.unsplash.com/photo-1548983965-416c1920352e?auto=format&fit=crop&q=80&w=1000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        artCredit: "Photo by Ameer Basheer",
-        quoteCredit: "Virginia Woolf"
-    },
-    {
         text: "If you have a problem that can be fixed, there is no use in worrying. If you have a problem that cannot be fixed, there is no use in worrying.",
         bgImgSrc: "https://images.unsplash.com/photo-1600776824232-7ab0c936d6a8?auto=format&fit=crop&q=80&w=1000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         artCredit: "Michael Held from Unsplash",
@@ -226,18 +220,6 @@ const quotes: Quote[] = [
         bgImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Ulm_capitulation.jpg/1280px-Ulm_capitulation.jpg",
         artCredit: "<i>The Capitulation of Ulm</i> by Charles Thévenin",
         quoteCredit: "Napoleon Bonaparte"
-    },
-    {
-        text: "So many things I still don't know<br />So many times I've changed my mind<br />Guess I was born to make mistakes<br />But I ain't scared to take the weight<br />So when I stumble off the path<br />I know my heart will guide me back",
-        bgImgSrc: "https://i.pinimg.com/564x/b2/90/d4/b290d43e6a9f94e2c8347baaa5abcc9c.jpg",
-        artCredit: "",
-        quoteCredit: "Erykah Badu"
-    },
-    {
-        text: "There, peeping among the cloud-wrack above a dark tor high up in the mountains, Sam saw a white star twinkle for a while. The beauty of it smote his heart, as he looked up out of the forsaken land, and hope returned to him. </br></br> For like a shaft, clear and cold, the thought pierced him that in the end the Shadow was only a small and passing thing: there was light and high beauty for ever beyond its reach.",
-        bgImgSrc: "https://images.unsplash.com/photo-1696489149180-bb53f8c38bdb?q=80&w=1800&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        artCredit: "Photo by Tianhao Wang on Unsplash",
-        quoteCredit: "J.R.R. Tolkien from <i>LOTR: The Return of the King</i>"
     },
     {
         text: "Mastering others is strength. Mastering yourself is true power.",

@@ -48,6 +48,14 @@ type InputOptions = {
     }
 }
 
+type ImageUpload = {
+    title: string
+    constraints?: ImgUploadConstraints
+    inputPlaceHolder?: string
+    isOpen: boolean
+    onSubmit: ((imgSrc: string) => void) | null
+}
+
 /* Time */
 
 type TimeInputOptions = {

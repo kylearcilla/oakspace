@@ -1,8 +1,9 @@
 import { get } from "svelte/store"
-import { clientWritable } from "./utils-toast-context"
 import type { ComponentType } from "svelte"
-import type { ToastT, HeightT, ExternalToast, ToastTypes, PromiseT, PromiseData, ToasterProps, ToastAPI } from "./types-toast"
+
 import { globalContext } from "./store"
+import { clientWritable } from "./utils-toast-context"
+import type { ToastT, HeightT, ExternalToast, ToastTypes, PromiseT, PromiseData, ToasterProps, ToastAPI } from "./types-toast"
 
 export const EXPANDED_TOAST_GAP = 8
 export const TOAST_GAP = 14
@@ -52,22 +53,6 @@ export function toast<ToastData>(
 
 export let toasterManager = ToasterManager()
 
-/**
- *  Creates a function that creates a default toast (params: msg with options)
- *  Also acts as an object whose functions create various types of toasts. 
- * 
- *  Default component: 
- * ```ts 
- *   toast("Toast Title", { componentProps: { eventName: 'Louvre Museum' } }) 
- * ```
- * 
- *  Custom component: 
- * ```ts 
- *  toast.custom(<Component />, { componentProps: { eventName: 'Louvre Museum' } }) 
- * ```
- *
- *  This is necessary to maintain type information, which would otherwise be lost.
- */
 export const toastAPI = {
 	// toast types
 	default: makeDefaultToast,

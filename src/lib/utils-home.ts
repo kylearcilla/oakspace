@@ -1,4 +1,4 @@
-import { get } from "svelte/store"
+import { get, writable, type Writable } from "svelte/store"
 import { globalContext, ytPlayerStore } from "./store"
 import { ModalType, MusicPlatform, ShortcutSectionInFocus } from "./enums"
 
@@ -9,6 +9,7 @@ import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer, handle
 import { getElemById, isTargetTextEditor, randomArrayElem } from "./utils-general"
 import { initMusicSettings } from "./utils-music-settings"
 import { POPULAR_SPACES } from "./data-spaces"
+import { initEmojis } from "./emojis"
 
 /* constants */
 
@@ -34,6 +35,7 @@ export const AMBIENT = {
  * Load data from previously saved state (if there is any).
  */
 export const initAppState = async () => {
+    initEmojis()    
     loadTheme()
     loadGlobalContext()
     loadAmbience()
@@ -84,8 +86,10 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
     })
     
     if (isTargetTextEditor(target)) { 
+        const allowCustomFormatting = false
+
         // Enter for save, Shift + Enter for break.
-        if (isTargetContentEditable && ((key === "Enter" && !shiftKey) || key == "Escape")) {
+        if (isTargetContentEditable && ((key === "Enter" && !shiftKey && !allowCustomFormatting) || key == "Escape")) {
             target.blur()
         }
         else if (!isTargetContentEditable && (key === "Escape" || (key === "Enter"))) {
@@ -384,4 +388,36 @@ export async function closeAmbience() {
 export function getHomeUrlPath(path = window.location.pathname) {
     const name = path.split("/")[2]
     return name === "base" ? "home" : name
+}
+
+export let imageUpload = ImageUpload()
+
+function ImageUpload() {
+    const state: Writable<ImageUpload & { isOpen: boolean }> = writable({ 
+        isOpen: false,
+        title: "",
+        onSubmit: null
+    })
+
+    function init(args: ImageUpload) {
+        state.set({ ...args, isOpen: true })
+    }
+    function onSubmit(imgSrc: any) {
+        const { onSubmit }  = get(state)
+        if (onSubmit) {
+            onSubmit(imgSrc)
+        }
+        close()
+    }
+    function close() {
+        state.update((data) => ({
+            ...data,
+            isOpen: false, 
+            onEmojiSelect: onSubmit
+        }))
+    }
+
+    return {
+        state, init, onSubmit, close
+    }
 }

@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { ModalType } from "$lib/enums"
 	import { themeState } from "$lib/store"
-	import { closeModal } from "$lib/utils-home"
+	import { imageUpload } from "$lib/utils-home"
 	import { getImgUploadErrorMsg, validateUserImgFileInput, validateUserImgURLInput } from "$lib/utils-media-upload"
     
 	import Modal from "./Modal.svelte"
-
-    export let constraints: ImgUploadConstraints | undefined
-    export let title: string
-    export let inputPlaceHolder: string = ""
-    export let onSubmit: (imgSrc: string) => void
-    export let onClickOutside: () => void
+    
+    const { onSubmit, close, state } = imageUpload
+    
+    $: isOpen =  $state.isOpen
+    $: constraints =  $state.constraints
+    $: title =  $state.title
+    $: inputPlaceHolder =  $state.inputPlaceHolder
 
     let isImgUrlOptClicked = true
     let isInputLoading = false
@@ -34,7 +34,7 @@
             })
 
             onSubmit(imgUrl)
-            closeModal(ModalType.ImgUpload)
+            close()
         }
         catch(e: any) {
             console.log(errorMsg)
@@ -68,10 +68,8 @@
     } 
 </script>
 
-<Modal 
-    onClickOutSide={onClickOutside}
-    options={{ borderRadius: "18px" }}
->
+{#if isOpen}
+<Modal options={{ borderRadius: "18px" }} onClickOutSide={close}>
     <div 
         class="img-upload"
         class:img-upload--light={!$themeState.isDarkTheme}
@@ -204,6 +202,7 @@
         <p class="img-upload__bottom-msg">Max image size is capped to 5 MB.</p>
     </div>
 </Modal>
+{/if}
 
 <style lang="scss">
     @import "../scss/highlighter-tabs.scss";

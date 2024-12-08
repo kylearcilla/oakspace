@@ -401,6 +401,22 @@ $screen-xl: 112.5em;   // extra large (1800 px)
                 rgba(#0C8CE9, 0.1) 0px 0px 0px 2.5px;
 }
 
+@mixin square($size, $b-radius: 0) {
+    height: $size;
+    width: $size;
+    min-height: $size;
+    min-width: $size;
+    border-radius: $b-radius;
+}
+
+@mixin box($height, $width, $b-radius: 0) {
+    height: $height;
+    width: $width;
+    min-height: $height;
+    min-width: $width;
+    border-radius: $b-radius;
+}
+
 @mixin shadow-border($color, $width: 1.5px) {
     box-shadow: inset $color 0px 0px 0px $width;
 }

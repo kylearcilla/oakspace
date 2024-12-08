@@ -1,13 +1,10 @@
  <script lang="ts">
-	import type { Writable } from "svelte/store"
-
     import { Icon } from "$lib/enums"
 	import { themeState } from "$lib/store"
 	import { toast } from "$lib/utils-toast"
-	import { getColorTrio, isTargetTextEditor } from "$lib/utils-general"
 	import { minsFromStartToHHMM } from "$lib/utils-date"
     import { RoutinesManager } from "$lib/routines-manager"
-	import { InputManager, TextEditorManager } from "$lib/inputs"
+	import { getColorTrio, isTargetTextEditor } from "$lib/utils-general"
 	import { CORE_OPTIONS, getCoreActivityIdx, getCoreStr } from "$lib/utils-routines"
 
 	import Modal from "../../../components/Modal.svelte"
@@ -53,8 +50,6 @@
     let lastBlockExists = false
     
     let routineListRef: HTMLElement
-    let titleInput: Writable<InputManager>
-    let descriptionEditor: Writable<InputManager>
     let isDescrFocused = false 
     let descrLength = description.length
 
@@ -107,55 +102,6 @@
 
         lastBlockExists = blocks.find((block) => 
             block.order === "last" && block.startTime != startTime) != null
-    }
-
-    /* Text Stuff */
-    function initTitleEditor(_title: string) {
-        titleInput = (new InputManager({ 
-            initValue: _title,
-            placeholder: "Block Title...",
-            maxLength: RoutinesManager.MAX_BLOCK_TITLE,
-            id: "routine-block-title-input",
-            doAllowEmpty: false,
-            handlers: {
-                onBlurHandler: (e, val) => onTitleChange(val),
-                onInputHandler: () => editHasBeenMade = true
-            }
-        })).state
-    }
-    function initDescriptionEditor(_description: string) {
-        descriptionEditor = (new TextEditorManager({ 
-            initValue: _description,
-            placeholder: "Type description here...",
-            doAllowEmpty: true,
-            maxLength: RoutinesManager.MAX_BLOCK_DESCRIPTION,
-            id: "routine-block-description",
-            handlers: {
-                onBlurHandler: (e, val, length) => { 
-                    isDescrFocused = false
-                    onDescriptionChange(val)
-                },
-                onInputHandler: (e, val, length) => {
-                    descrLength = length
-                    description = val
-                    console.log({ val })
-                    editHasBeenMade = true
-                },
-                onFocusHandler: (e, val, length) => {
-                    isDescrFocused = true
-                    descrLength = length
-                    console.log({ length })
-                }
-            }
-        })).state
-    }
-    function onTitleChange(newTitle: string) {
-        title = newTitle
-        toggleEditMade()
-    }
-    function onDescriptionChange(newDescription: string) {
-        description = newDescription
-        toggleEditMade()
     }
 
     /* Info */
@@ -338,22 +284,17 @@
                             />
                         </div>
                     {/if}
-                    {#if titleInput}
-                        <input 
-                            type="text"
-                            name="routine-block-title-input" 
-                            id="routine-block-title-input"
-                            aria-label="Title"
-                            spellcheck="false"
-                            value={$titleInput.value}
-                            placeholder={$titleInput.placeholder}
-                            maxlength={$titleInput.maxLength}
-                            autocomplete="off"
-                            on:blur={(e) => $titleInput.onBlurHandler(e)}
-                            on:input={(e) => $titleInput.onInputHandler(e)}
-                        >
-                    {/if}
-                </div>
+                    <input 
+                        type="text"
+                        id="routine-block-title-input"
+                        aria-label="Title"
+                        spellcheck="false"
+                        placeholder={"Block Title..."}
+                        autocomplete="off"
+                        maxlength={RoutinesManager.MAX_BLOCK_TITLE}
+                        bind:value={title}
+                    >
+            </div>
             </div>
             <button 
                 on:click={() => settingsOpen = !settingsOpen}
@@ -484,19 +425,13 @@
                     {RoutinesManager.MAX_BLOCK_DESCRIPTION - descrLength}
                 </div>
             </div>
-            {#if descriptionEditor}
-                <div 
-                    class="edit-routine__description-text-editor text-editor"
-                    data-placeholder={$descriptionEditor.placeholder}
-                    contenteditable
-                    bind:innerHTML={$descriptionEditor.value}
-                    on:paste={(e) => $descriptionEditor.onPaste(e)}
-                    on:input={(e) => $descriptionEditor.onInputHandler(e)}
-                    on:focus={(e) => $descriptionEditor.onFocusHandler(e)}
-                    on:blur={(e)  => $descriptionEditor.onBlurHandler(e)}
-                >
-                </div>
-            {/if}
+            <div 
+                id="routine-block-description"
+                class="text-editor"
+                aria-label="Description"
+                contenteditable
+                spellcheck="false"
+            />
         </div>
         <!-- List -->
         <div class="edit-routine__list">

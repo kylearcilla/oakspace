@@ -235,7 +235,7 @@ export const TEST_TASKS: Task[] = [
   },
   {
       id: "5be6a831-6e0f-4f35-b48b-dc56782057fe",
-      idx: 0,
+      idx: 1,
       title: "Cool Down",
       description: "Stretch and cool down after the workout.",
       isChecked: false,

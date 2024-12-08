@@ -112,8 +112,8 @@
     let _currViewOption = manager.currViewOption
     let _dayBreakdown   = manager.dayBreakdown
 
-    let titleInput:  Writable<InputManager>
-    let description: Writable<InputManager>
+    let titleInput:  InputManager
+    let description: InputManager
     
     $: weekRoutine       = $_weekRoutine
     $: weekRoutineElems  = $_weekRoutineElems as WeekBlockElems ?? []
@@ -569,10 +569,6 @@
                             spellcheck="false"
                             data-placeholder={$titleInput.placeholder}
                             bind:textContent={$titleInput.value}
-                            on:paste={(e) => $titleInput.onPaste(e)}
-                            on:input={(e) => $titleInput.onInputHandler(e)}
-                            on:focus={(e) => $titleInput.onFocusHandler(e)}
-                            on:blur={(e)  => $titleInput.onBlurHandler(e)}
                         >
                         </div>
                     </div>
@@ -585,10 +581,6 @@
                         spellcheck="false"
                         data-placeholder={$description.placeholder}
                         bind:textContent={$description.value}
-                        on:paste={(e) => $description.onPaste(e)}
-                        on:input={(e) => $description.onInputHandler(e)}
-                        on:focus={(e) => $description.onFocusHandler(e)}
-                        on:blur={(e)  => $description.onBlurHandler(e)}
                     >
                     </div>
                 {/if}

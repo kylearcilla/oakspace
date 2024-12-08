@@ -1,12 +1,11 @@
 <script lang="ts">
-	import BounceFade from "../../../components/BounceFade.svelte";
-	import DropdownList from "../../../components/DropdownList.svelte";
-	import ToggleBtn from "../../../components/ToggleBtn.svelte";
-	import { globalContext, themeState } from "../../../lib/store";
-	import { clickOutside } from "../../../lib/utils-general";
-	import { TextEditorManager } from "$lib/inputs"
-	import ImgUpload from "../../../components/ImgUpload.svelte"
-	import { ModalType } from "../../../lib/enums";
+    import { imageUpload } from "$lib/utils-home"
+    import { themeState } from "../../../lib/store"
+    import { TextEditorManager } from "$lib/inputs"
+    import { clickOutside } from "../../../lib/utils-general"
+
+	import ToggleBtn from "../../../components/ToggleBtn.svelte"
+	import BounceFade from "../../../components/BounceFade.svelte"
 
     export let options: {
         contentsOnHover?: boolean
@@ -26,12 +25,11 @@
     }
     let hasNotes = true
     let hasContextMenu = false
-    let titleEditor: TextEditorManager
     let blurred = false
     let newNoteTxt = ""
     // let bulletinImg = "https://i.pinimg.com/564x/81/2d/7b/812d7be9f97ac8a753e6a73997c71fea.jpg"
     let bulletinImg = "https://i.pinimg.com/736x/2e/ec/f9/2eecf97b4032e2c96df00e137a789708.jpg"
-    let isImgModalOpen = false
+    // let bulletinImg = "https://i.pinimg.com/originals/12/e6/87/12e68735b9177299a871e1dc0d1b354f.gif"
     
     let notes = [
         "real growth starts when you're tired of your own shit",
@@ -60,8 +58,7 @@
         "You have to get so confident in who you are that no one's opinion, rejection, or behavior can fucking rock you.",
     ]
     let noteIdx = 0
-
-    titleEditor = new TextEditorManager({ 
+    let editor = new TextEditorManager({ 
         initValue: notes[noteIdx],
         placeholder: "type note here...",
         maxLength: MAX_NOTE_LENGTH,
@@ -91,10 +88,10 @@
 
         // undefined if removing from the end
         if (notes[idx]) {
-            titleEditor.updateText(notes[idx])
+            editor.updateText(notes[idx])
         }
         else {
-            titleEditor.updateText(notes[idx - 1])
+            editor.updateText(notes[idx - 1])
             noteIdx--
         }
     }
@@ -103,7 +100,7 @@
         const width = target.clientWidth
         const x = e.offsetX
 
-        if (e.button != 0 || target.id === INPUT_ID) {
+        if (e.button != 0 || target.id === INPUT_ID || !hasNotes) {
             return
         }
         if (blurred) {
@@ -118,7 +115,7 @@
             noteIdx = (noteIdx + 1) % notes.length
         }
 
-        titleEditor.updateText(notes[noteIdx])
+        editor.updateText(notes[noteIdx])
     }
     function onContextMenu(_e: Event) {
         const e = _e as PointerEvent
@@ -133,8 +130,20 @@
         notes.push("")
         noteIdx = notes.length - 1
         newNoteTxt = ""
-        titleEditor.focus()
+        editor.focus()
         hasContextMenu = false
+    }
+    function openImgModal() {
+        hasContextMenu = false
+
+        imageUpload.init({
+            title: "Bulletin Image",
+            onSubmit: (imgSrc: string) => {
+                if (bulletinImg != imgSrc) {
+                    bulletinImg = imgSrc
+                }
+            }
+        })
     }
 </script>
 
@@ -158,13 +167,9 @@
             <div 
                 id={INPUT_ID}
                 class="text-editor"
-                data-placeholder={titleEditor.placeholder}
+                data-placeholder={editor.placeholder}
                 contenteditable
                 spellcheck="false"
-                on:input={(e) => titleEditor.onInputHandler(e)}
-                on:focus={(e) => titleEditor.onFocusHandler(e)}
-                on:blur={(e) => titleEditor.onBlurHandler(e)}
-                on:paste={(e) => titleEditor.onPaste(e)}
             >
                 {@html notes[noteIdx]}
             </div>
@@ -188,10 +193,7 @@
             <li class="dmenu__option">
                 <button 
                     class="dmenu__option-btn"
-                    on:click={() => {
-                        isImgModalOpen = true
-                        hasContextMenu = false
-                    }}
+                    on:click={() => openImgModal()}
                 >
                     <span class="dmenu__option-text">
                         Change Background
@@ -245,22 +247,6 @@
         </div>
     </BounceFade>
 </div>
-
-{#if isImgModalOpen} 
-    <ImgUpload
-        title="Bulletin Background"
-        constraints={{ 
-            maxMbSize: 5
-        }}
-        onSubmit={(img) => {
-            if (bulletinImg != img) {
-                bulletinImg = img
-                isImgModalOpen = false
-            }
-        }}
-        onClickOutside={() => isImgModalOpen = false}
-    />
-{/if}
 
 <style lang="scss">
     @import "../../../scss/dropdown.scss";

@@ -37,7 +37,9 @@
                 isMounted = false
                 removeTimeout = null
 
-                if (onDismount) onDismount()
+                if (onDismount != undefined) {
+                    onDismount()
+                }
             }, TRANSITION_DURATIONS_MS)
         }
     }

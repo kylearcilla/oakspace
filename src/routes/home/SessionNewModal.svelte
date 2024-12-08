@@ -86,9 +86,6 @@
                     contenteditable
                     spellcheck="false"
                     bind:innerHTML={$titleEditor.value}
-                    on:input={(e) => $titleEditor.onInputHandler(e)}
-                    on:focus={(e) => $titleEditor.onFocusHandler(e)}
-                    on:paste={(e) => $titleEditor.onPaste(e)}
                 >
                 </div>
                 <!-- <div class="text-editor-caret"></div> -->

@@ -321,10 +321,6 @@
                             contenteditable
                             data-placeholder={$titleInput.placeholder}
                             bind:innerHTML={$titleInput.value}
-                            on:paste={(e) => $titleInput.onPaste(e)}
-                            on:input={(e) => $titleInput.onInputHandler(e)}
-                            on:focus={(e) => $titleInput.onFocusHandler(e)}
-                            on:blur={(e)  => $titleInput.onBlurHandler(e)}
                         >
                         </div>
                     </div>
@@ -334,10 +330,6 @@
                         data-placeholder={$description.placeholder}
                         contenteditable
                         bind:innerHTML={$description.value}
-                        on:paste={(e) => $description.onPaste(e)}
-                        on:input={(e) => $description.onInputHandler(e)}
-                        on:focus={(e) => $description.onFocusHandler(e)}
-                        on:blur={(e)  => $description.onBlurHandler(e)}
                     >
                     </div>
                 {/if}

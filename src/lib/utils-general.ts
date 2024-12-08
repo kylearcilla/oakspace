@@ -649,27 +649,31 @@ export function clamp(min: number, value: number, max: number): number {
   return Math.min(Math.max(value, min), max)
 }
 
-export function getVertDistanceBetweenTwoElems(top: HTMLElement, bottom: HTMLElement, useTopElemBottom = true) {
-  const topRect = top.getBoundingClientRect()
-  const bottomRect = bottom.getBoundingClientRect()
+export function getVertDistanceBetweenTwoElems(options: { top: { elem: HTMLElement, edge?: "top" | "bottom"}, bottom: { elem: HTMLElement, edge?: "top" | "bottom"} }) {
+  const { top, bottom } = options
 
-  if (useTopElemBottom) {
-    return bottomRect.top - topRect.bottom
-  }
-  else {
-    return bottomRect.top - topRect.top
-  }
+  const topRect  = top.elem.getBoundingClientRect()
+  const bottomRect = bottom.elem.getBoundingClientRect()
+
+  top.edge  = top.edge ?? "bottom"
+  bottom.edge = bottom.edge ?? "top"
+
+  const topEdge  = top.edge === "bottom" ? topRect.y + topRect.height : topRect.y
+  const bottomEdge = bottom.edge === "bottom" ? bottomRect.y + bottomRect.height : bottomRect.y
+
+  return bottomEdge - topEdge
 }
-
 export function getHozDistanceBetweenTwoElems(options: { left: { elem: HTMLElement, edge?: "left" | "right"}, right: { elem: HTMLElement, edge?: "left" | "right"} }) {
-  const leftRect  = options.left.elem.getBoundingClientRect()
-  const rightRect = options.right.elem.getBoundingClientRect()
+  const { left, right } = options
 
-  options.left.edge  = options.left.edge ?? "right"
-  options.right.edge = options.right.edge ?? "left"
+  const leftRect  = left.elem.getBoundingClientRect()
+  const rightRect = right.elem.getBoundingClientRect()
 
-  const leftEdge  = options.left.edge === "right" ? leftRect.right : leftRect.left
-  const rightEdge = options.right.edge === "right" ? rightRect.right : rightRect.left
+  left.edge  = left.edge ?? "right"
+  right.edge = right.edge ?? "left"
+
+  const leftEdge  = left.edge === "right" ? leftRect.right : leftRect.left
+  const rightEdge = right.edge === "right" ? rightRect.right : rightRect.left
 
   return rightEdge - leftEdge
 }
@@ -970,4 +974,14 @@ export function floatCompare(args: { x: number, y: number, digits?: number, op: 
 
 export function getTagFromName(name: string) {
   return TEST_TAGS.find(tag => tag.name === name)
+}
+
+export function isValidUrl(string: string) {
+  try {
+    new URL(string)
+    return true
+  } 
+  catch (e) {
+      return false
+  }
 }

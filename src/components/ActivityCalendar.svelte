@@ -19,7 +19,7 @@
 
     const activityData = [
         {
-            date: new Date(2024, 10, 2),
+            date: new Date(2024, 11, 2),
             focusMins: 12 * 60 + 10,
             habits: 0.7,
             goals: [
@@ -34,71 +34,71 @@
         {
 
             habits: 1,
-            date: new Date(2024, 10, 3),
+            date: new Date(2024, 11, 3),
             focusMins: 5 * 60 + 11
         },
         {
-            date: new Date(2024, 10, 18),
+            date: new Date(2024, 11, 18),
             focusMins: 5 * 60 + 11
         },
         {
-            date: new Date(2024, 10, 13),
+            date: new Date(2024, 11, 13),
             focusMins: 1 * 60 + 41
         },
         {
             habits: 1,
-            date: new Date(2024, 10, 28),
+            date: new Date(2024, 11, 28),
             focusMins: 2 * 60 + 34
         },
         {
             habits: 1,
-            date: new Date(2024, 10, 5),
+            date: new Date(2024, 11, 5),
             focusMins: 134
         },
         {
             habits: 0.4,
-            date: new Date(2024, 10, 6),
+            date: new Date(2024, 11, 6),
             focusMins: 563
         },
         {
             habits: 1,
-            date: new Date(2024, 10, 9),
+            date: new Date(2024, 11, 9),
             focusMins: 662
         },
         {
-            date: new Date(2024, 10, 10),
+            date: new Date(2024, 11, 10),
             focusMins: 52
         },
         {
             habits: 0.4,
-            date: new Date(2024, 10, 3),
+            date: new Date(2024, 11, 3),
             focusMins: 34
         },
         {
             habits: 0.9,
-            date: new Date(2024, 10, 16),
+            date: new Date(2024, 11, 16),
             focusMins: 271
         },
         {
-            date: new Date(2024, 10, 24),
+            date: new Date(2024, 11, 24),
             focusMins: 398
         },
         {
             habits: 0.4,
-            date: new Date(2024, 10, 26),
+            date: new Date(2024, 11, 26),
             focusMins: 281
         },
         {
-            date: new Date(2024, 10, 27),
+            date: new Date(2024, 11, 27),
             focusMins: 84
         },
         {
             habits: 0.6,
-            date: new Date(2024, 10, 31),
+            date: new Date(2024, 11, 31),
             focusMins: 441
         },
         {
-            date: new Date(2024, 10, 20),
+            date: new Date(2024, 11, 20),
             habits: 0.2,
             goals: [
                 {
@@ -110,7 +110,7 @@
             ]
         },
         {
-            date: new Date(2024, 10, 15),
+            date: new Date(2024, 11, 15),
             habits: 0.7,
             goals: [
                 {
@@ -122,7 +122,7 @@
             ]
         },
         {
-            date: new Date(2024, 10, 14),
+            date: new Date(2024, 11, 14),
             focusMins: 192,
             habits: 0.2,
             goals: [
@@ -139,7 +139,7 @@
             ]
         },
         {
-            date: new Date(2024, 10, 25),
+            date: new Date(2024, 11, 25),
             habits: 0.7,
             goals: [
                 {
@@ -160,7 +160,7 @@
             ]
         },
         {
-            date: new Date(2024, 10, 29),
+            date: new Date(2024, 11, 29),
             habits: 0.7,
             goals: [
                 {

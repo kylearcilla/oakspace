@@ -39,6 +39,8 @@
 	import Modal from "../../components/Modal.svelte";
 	import SpaceSelection from "../SpaceSelection.svelte";
 	import { themeState, ytPlayerStore } from "../../lib/store";
+	import EmojiPicker from "../../components/EmojiPicker.svelte";
+	import ImgUpload from "../../components/ImgUpload.svelte";
 
   
   export let data
@@ -288,9 +290,11 @@
       expand={true} richColors={true} closeButton={true} position="bottom-right" 
     />
   {/if}
-
   <div class="yt-music-player" id={YoutubeMusicPlayer.IFRAME_ID}></div>
 </div>
+
+<EmojiPicker/>
+<ImgUpload/>
 
 
 <style lang="scss">

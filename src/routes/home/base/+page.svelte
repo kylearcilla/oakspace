@@ -1,7 +1,9 @@
 <script lang="ts">    
 	import { themeState } from "../../../lib/store"
-	import { capitalize, clamp, clickOutside } from "../../../lib/utils-general"
 	import { imageUpload } from "../../../lib/utils-home"
+	import { months, getQuarter } from "../../../lib/utils-date";
+	import { capitalize, clamp, clickOutside } from "../../../lib/utils-general"
+	import { MONTH_THOUGHT_ENTRY, TEST_GOALS, YEAR_THOUGHT_ENTRY } from "../../../lib/mock-data";
 
 	import Bulletin from "./Bulletin.svelte"
 	import YearView from "./YearView.svelte"
@@ -10,10 +12,8 @@
 	import SettingsBtn from "../../../components/SettingsBtn.svelte"
 	import BounceFade from "../../../components/BounceFade.svelte"
 	import ToggleBtn from "../../../components/ToggleBtn.svelte"
-	import { TEST_GOALS } from "../../../lib/mock-data";
-	import DropdownList from "../../../components/DropdownList.svelte";
-	import { months, getQuarter } from "../../../lib/utils-date";
-	import RingCalendar from "../../../components/RingCalendar.svelte";
+	import DropdownList from "../../../components/DropdownList.svelte"
+	import RingCalendar from "../../../components/RingCalendar.svelte"
 	import TextEntry from "./TextEntry.svelte";
 
     const SMALLER_WIDTH = 630
@@ -35,43 +35,19 @@
     let ogDragVal = 0
     let bulletinHt = 300
 
-    const monthHeader = {
-        title: "September",
-        entry: {
-            word: "Unwind",
-            type: "noun",
-            img: "https://i.pinimg.com/564x/11/b7/12/11b712e5eb6a081dbcec3a7b439825dd.jpg",
-            def: `
-                <p>A mindful pause to recharge, reconnect, and rediscover balance amidst life's demands. </p>
-                <br>
-                <p>Unwinding is more than a break; it's an intentional step back from the hustle, restore inner calm, and regain clarity.</p>
-            `
-        }
-    }
-    const yrHeader = {
-        title: "2024",
-        entry: {
-            word: "Balance",
-            type: "noun",
-            img: "https://i.pinimg.com/736x/98/6c/eb/986ceb87af5f7442463be09d5e49c2ae.jpg",
-            def: `
-                <p>2024 is all about balance. My focus this year is on intentional growth, embracing routines that ground me, and prioritizing rest alongside ambition.</p>
-            `
-        }
-    }
     let bannerImg = {
         src: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Cole_Thomas_The_Course_of_Empire_Destruction_1836.jpg/2560px-Cole_Thomas_The_Course_of_Empire_Destruction_1836.jpg",
-        // src: "https://images.unsplash.com/photo-1732468085904-03c57452bc76?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         center: 50
     }
+    let highlightImg = "https://i.pinimg.com/originals/29/c6/21/29c62126c883a48d0bb1622648f00330.gif"
     let options = {
-        view: "year",
+        view: "month",
         header: false,
         banner: true,
         margin: true
     }
 
-    $: detailsHeader = options.view === "month" ? monthHeader : yrHeader
+    $: thoughtEntry = options.view === "month" ? MONTH_THOUGHT_ENTRY : YEAR_THOUGHT_ENTRY
     $: isLight = !$themeState.isDarkTheme
 
     /* drag */
@@ -116,13 +92,11 @@
     }
     function openImgModal() {
         imageUpload.init({
-            title: "Home Banner",
             onSubmit: (imgSrc: string) => {
                 if (bannerImg.src != imgSrc) {
                     bannerImg.src = imgSrc
                     bannerImg.center = 50
                     bannerImg = bannerImg
-                    isImgModal = false
                 }
             }
         })
@@ -161,10 +135,8 @@
         {#if options.header}
             <!-- header -->
             <div class="base__header">
-                <div 
-                    class="base__header-icon bg-img"
-                    style:background-image={`linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url(https://i.pinimg.com/originals/42/f3/e6/42f3e6dd32467736bdc85dc8a6038e35.gif)`}
-                >
+                <div class="base__header-icon">
+                    <img src={highlightImg} alt="Home Icon">
                 </div>
                 <div class="base__header-details">
                     <h1>Home</h1>
@@ -351,36 +323,10 @@
                 <div class="base__overview-header">
                     <div style:width="100%">
                         <div class="base__overview-heading">
-                            {detailsHeader.title}
+                            {options.view === "month" ? months[thoughtEntry.date.getMonth()] : thoughtEntry.date.getFullYear()}
                         </div>
                         <div style:width="100%">
-                            <TextEntry 
-                                entry="year" 
-                                date={new Date()} 
-                            />
-                            <!-- <div 
-                                class="base__wom"
-                                class:base__wom--default={false}
-                                class:base__wom--img={true}
-                            >
-                                <div class="base__wom-img">
-                                    <img 
-                                        src={detailsHeader.entry.img}
-                                        alt="month-img"
-                                    />
-                                </div>
-                                <div class="flx flx--algn-center">
-                                    <div class="base__word">
-                                        {detailsHeader.entry.word}
-                                    </div>
-                                    <div class="base__word-type">
-                                        {detailsHeader.entry.type}
-                                    </div>
-                                </div>
-                                <div class="base__word-def">
-                                    {@html detailsHeader.entry.def}
-                                </div>
-                            </div> -->
+                            <TextEntry entry={thoughtEntry}/>
                         </div>
                     </div>
                 </div>
@@ -422,7 +368,8 @@
                                     class:dmenu__box--selected={options.view === "month"}
                                     on:click={() => {
                                         options.view = "month"
-                                        options = options                                        
+                                        options = options
+                                        settingsOpen = false
                                     }}
                                 >
                                     <div class="dmenu__box-title">
@@ -437,7 +384,8 @@
                                     class:dmenu__box--selected={options.view === "year"}
                                     on:click={() => {
                                         options.view = "year"
-                                        options = options                                        
+                                        options = options
+                                        settingsOpen = false                          
                                     }}
                                 >
                                     <div class="dmenu__box-title">
@@ -670,10 +618,10 @@
             height: 95px;
             width: 95px;
             margin-bottom: 17px;
-            border-radius: 3px;
-
+            
             img {
-                width: 100%;
+                @include box;
+                // border-radius: 3px;
                 object-fit: cover;
             }
         }
@@ -705,36 +653,7 @@
             color: white !important;
         }
 
-        /* overview */
-        &__overview {
-            padding: 0px 30px 0px 0px;
-            margin-bottom: 10px;
-            @include flex(flex-end);
-            display: none;
-
-            .base__text {
-                margin-bottom: 20px;
-            }
-        }
-        &__overview-details {
-            width: clamp(250px, 35%, 350px);
-            margin: 0px 30px 0px 0px;
-            height: 100%;
-        }
-        &__heat-map {
-            flex: 1;
-            padding: 2px 80px 0px 40px;
-            overflow-x: scroll;
-        }
-
-        /* month insights */
-        &__month-insight {
-            margin: 7px 0px 0px 0px;
-        }
-        &__bulletin {
-        }
-
-        /* goals */
+        /* side maargin */
         &__context {
             margin-bottom: 30px;
             position: relative;
@@ -782,6 +701,7 @@
         /* month header */
         &__overview-header {
             @include flex(flex-start, space-between);
+            position: relative;
             margin-bottom: 0px;
             position: relative;
             min-width: 680px;
@@ -790,6 +710,9 @@
             @include text-style(1, 400, 2.2rem, "DM Mono");
             margin: -2px 0px 0px 0px;
             @include flex(flex-start, space-between);
+        }
+        &__month-insight {
+            margin-top: 0px;
         }
     }
 
@@ -805,11 +728,6 @@
             button {
                 border-radius: 7px;
             }
-        }
-        &__toggle-optn {
-            padding: 6px 7px 5px 7px;
-            width: 100%;
-            @include flex(center, space-between);
         }
         &__section-divider:last-child {
             display: none;

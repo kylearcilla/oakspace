@@ -712,11 +712,11 @@ export function extractQuadCSSValue(val: CSSMultiDimPxVal | undefined) {
  * @returns Left and top offset where the menu should end postioned.
  */
 export function initFloatElemPos(context: {
-  dims: BoxSize, 
-  cursorPos: OffsetPoint, 
-  containerDims: BoxSize, 
-  clientOffset?: OffsetPoint,
-  margins?: { ns: number, ew: number },
+  dims: BoxSize 
+  cursorPos: OffsetPoint 
+  containerDims: BoxSize 
+  clientOffset?: OffsetPoint
+  margins?: { ns: number, ew: number }
 }) {
   
   const { 
@@ -984,4 +984,19 @@ export function isValidUrl(string: string) {
   catch (e) {
       return false
   }
+}
+
+export function findElemVertSpace(target: HTMLElement) {
+  const styles = window.getComputedStyle(target)
+  const parsePixelValue = (value: string) => parseFloat(value) || 0
+
+  const marginTop = parsePixelValue(styles.marginTop)
+  const marginBottom = parsePixelValue(styles.marginBottom)
+  const paddingTop = parsePixelValue(styles.paddingTop)
+  const paddingBottom = parsePixelValue(styles.paddingBottom)
+  const borderTopWidth = parsePixelValue(styles.borderTopWidth)
+  const borderBottomWidth = parsePixelValue(styles.borderBottomWidth)
+  const height = target.clientHeight
+
+  return height + marginTop + marginBottom + paddingTop + paddingBottom + borderTopWidth + borderBottomWidth
 }

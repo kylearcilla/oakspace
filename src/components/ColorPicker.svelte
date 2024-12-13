@@ -38,7 +38,7 @@
         class:color-picker--shown={_isActive}
     >
         <ul class="color-picker__grid">
-            {#each COLOR_SWATCHES.d as color}
+            {#each COLOR_SWATCHES.d as color, idx}
                 {@const borderColor = isDark ? color.primary : color.light3}
                 <div 
                     on:pointerup={() => onSwatchClicked(color)}
@@ -46,6 +46,7 @@
                     style:--border-color={borderColor}
                     role="button"
                     tabindex="0"
+                    data-idx={idx}
                     class="color-picker__swatch"
                     class:color-picker__swatch--picked={color.id === chosenColor?.id}
                     class:color-picker__swatch--light-color={color.isLight}

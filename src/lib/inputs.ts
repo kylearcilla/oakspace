@@ -85,11 +85,11 @@ export class InputManager {
             this.handlers?.onFocusHandler(event, this.value, this.valLength)
         }
     }
-    onBlurHandler(event: Event) {
+    onBlurHandler(event: Event | null) {
         const value = !this.value ? (this.doAllowEmpty ? "" : "Untitled") : this.value
         
         this.updateState({ oldTitle: value })
-        this.updateVal(event, value)
+        this.updateVal(event!, value)
 
         if (this.handlers?.onBlurHandler) {
             this.handlers?.onBlurHandler(event, value)
@@ -103,8 +103,9 @@ export class InputManager {
  * Custom functionality for redo / undo and copy paste/
  */
 export class TextEditorManager extends InputManager {
-    allowFormatting: boolean
     elemInit = false
+    allowFormatting: boolean
+    allowBlurOnClickAway: boolean
 
     currFormat: "bold" | "code" | null = null
     prevFormat: "bold" | "code" | null = null
@@ -115,9 +116,10 @@ export class TextEditorManager extends InputManager {
     UNDO_EDIT_MIN_DIST_FROM_PREV = 15
     MAX_UNDO_STACK_SIZE = 20
 
-    constructor(options: InputOptions & { allowFormatting?: boolean }) {
+    constructor(options: InputOptions & { allowFormatting?: boolean, allowBlurOnClickAway?: boolean }) {
         super(options)
         this.allowFormatting = options.allowFormatting ?? false
+        this.allowBlurOnClickAway = options.allowBlurOnClickAway ?? true
 
         requestAnimationFrame(() => this.initElem())
     }
@@ -155,7 +157,9 @@ export class TextEditorManager extends InputManager {
      * Saves current version when far enough from last edit (length).
      */
     undoHandler() {
+        this.redoStack = []
         const currText = this.inputElem!.innerText
+
         if (this.undoStack.length === 0) {
             this.undoStack.push({
                 length: currText.length,
@@ -177,7 +181,6 @@ export class TextEditorManager extends InputManager {
         if (this.undoStack.length > this.MAX_UNDO_STACK_SIZE) {
             this.undoStack.shift()
         }
-        this.redoStack = []
     }
 
     /* event handlers */
@@ -295,11 +298,14 @@ export class TextEditorManager extends InputManager {
         super.onFocusHandler(event)
     }
 
-    onBlurHandler(event: FocusEvent): void {
+    onBlurHandler(event: FocusEvent | null, force?: boolean) {
+        if (!this.allowBlurOnClickAway && !force && event) {
+            event.preventDefault()
+            return
+        }
+
         const value = this.value || (this.doAllowEmpty ? "" : "Untitled")
         
-        // this.updateCaretStyle({ doShow: false })
-
         this.updateState({ oldTitle: value })
         this.updateTextEditorVal(event, value)
 
@@ -606,13 +612,15 @@ export class TextEditorManager extends InputManager {
     }
 
     updateText(text: string) {
+        if (!this.inputElem) return
+        
         this.value = text
-        this.updateState({ value: text })
-
-        this.inputElem!.innerHTML = text
+        this.inputElem.innerHTML = text
+        this.undoStack = []
+        this.redoStack = []
     }
 
-    updateTextEditorVal(event: Event, newVal: string) {
+    updateTextEditorVal(event: Event | null, newVal: string) {
         // if empty, <br> will appear which will not show the place holder
         if (newVal === "<br>") {
             newVal = ""
@@ -639,6 +647,10 @@ export class TextEditorManager extends InputManager {
         let emptyFormat = !!this.currFormat
 
         if (this.id != target.id) {
+            return
+        }
+        if (!shiftKey && key === "Enter" && !this.allowBlurOnClickAway) {
+            this.onBlurHandler(null, true)
             return
         }
         if (this.allowFormatting && customFormatting) {

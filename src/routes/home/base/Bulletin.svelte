@@ -137,7 +137,6 @@
         hasContextMenu = false
 
         imageUpload.init({
-            title: "Bulletin Image",
             onSubmit: (imgSrc: string) => {
                 if (bulletinImg != imgSrc) {
                     bulletinImg = imgSrc

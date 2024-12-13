@@ -380,6 +380,9 @@
     function onDismount() {
       observers.forEach(observer => observer.disconnect())
       observers = []
+      
+      focusedEmojiId = null
+      focusPos = null
     }
     
     onMount(() => {

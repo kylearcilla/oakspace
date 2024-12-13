@@ -6,13 +6,12 @@ import { loadTheme } from "./utils-appearance"
 import { conintueWorkSession, didInitSession } from "./utils-session"
 import { didInitMusicPlayer, didInitMusicUser, initMusicPlayer, musicLogin } from "./utils-music"
 import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer, handleChooseVideo } from "./utils-youtube"
-import { getElemById, isTargetTextEditor, randomArrayElem } from "./utils-general"
+import { getElemById, initFloatElemPos, isTargetTextEditor, randomArrayElem } from "./utils-general"
 import { initMusicSettings } from "./utils-music-settings"
 import { POPULAR_SPACES } from "./data-spaces"
 import { initEmojis } from "./emojis"
 
 /* constants */
-
 export const LEFT_BAR_MIN_WIDTH = 60
 export const LEFT_BAR_FLOAT_WIDTH = 160
 export const LEFT_BAR_FULL_WIDTH = 185
@@ -21,6 +20,14 @@ const RIGHT_BAR_RIGHT_BOUND = 20
 
 const SESSION_MIN_WIDTH = 750
 const MAX_AMBIENT_OPACITY = 0.85
+
+export let cursorPos = {
+    left: 0, top: 0
+}
+
+export function updateCursor(_cursorPos: OffsetPoint) {
+    cursorPos = _cursorPos
+}
 
 /* blur */
 export const AMBIENT = {
@@ -393,16 +400,41 @@ export function getHomeUrlPath(path = window.location.pathname) {
 export let imageUpload = ImageUpload()
 
 function ImageUpload() {
-    const state: Writable<ImageUpload & { isOpen: boolean }> = writable({ 
+    const state: Writable<ImageUpload> = writable({ 
         isOpen: false,
-        title: "",
+        position: { top: -1000, left: -1000 },
         onSubmit: null
     })
 
-    function init(args: ImageUpload) {
-        state.set({ ...args, isOpen: true })
+    function init(args: { 
+        onSubmit: (imgSrc: string | null) => void
+        constraits?: ImgUploadConstraints 
+    }) {
+        const { constraits, onSubmit } = args
+        const fromPos = {
+            top: cursorPos.top - 45,
+            left: cursorPos.left - 65
+        }
+        const position = initFloatElemPos({
+            dims: { 
+                height: 290,
+                width: 460
+            }, 
+            containerDims: { 
+                height: window.innerHeight, 
+                width: window.innerWidth
+            },
+            cursorPos: fromPos
+        })
+
+        state.update((data) => ({ 
+            ...data, 
+            onSubmit,
+            position, 
+            constraits, isOpen: true 
+        }))
     }
-    function onSubmit(imgSrc: any) {
+    function onSubmit(imgSrc: string | null) {
         const { onSubmit }  = get(state)
         if (onSubmit) {
             onSubmit(imgSrc)

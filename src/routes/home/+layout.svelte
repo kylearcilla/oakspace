@@ -31,7 +31,8 @@
     onMouseMoveHandler, updateRoute, onQuitApp,
 	  middleViewExpandHandler,
 	  AMBIENT,
-	  getLeftBarWidth
+	  getLeftBarWidth,
+    updateCursor
   } from "$lib/utils-home"
 
 	import { afterNavigate, beforeNavigate, goto } from "$app/navigation"
@@ -143,6 +144,11 @@
   function closeModal() {
     goto("/home")
   }
+  function _updateCursor(pe: PointerEvent) {
+    updateCursor({ 
+      left: pe.clientX, top: pe.clientY
+    })
+  }
 
   afterNavigate(({ to }) => {
     if (!to?.route?.id) return
@@ -161,7 +167,11 @@
   onDestroy(onQuitApp)
 </script>
 
-<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp}/>
+<svelte:window 
+  on:keydown={handleKeyDown} 
+  on:keyup={handleKeyUp}
+  on:pointermove={_updateCursor}
+/>
 
 <div
   bind:clientWidth={totalWidth}

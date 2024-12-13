@@ -49,11 +49,51 @@ type InputOptions = {
 }
 
 type ImageUpload = {
-    title: string
     constraints?: ImgUploadConstraints
-    inputPlaceHolder?: string
     isOpen: boolean
-    onSubmit: ((imgSrc: string) => void) | null
+    position: OffsetPoint
+    onSubmit: ((imgSrc: string |  null) => void) | null
+}
+
+/* Base. */
+
+type ThoughtEntry = {
+    icon: {
+        type: string,
+        src: string
+    } | null,
+    styling: "styled" | "default" | "block"
+    date: Date
+}
+
+type ModalOptions = {
+    borderRadius?: string
+    overflowX?: string
+    overflowY?: string
+    overflow?: string
+    zIndex?: string
+    closeOnEsc?: boolean
+    hingeDown?: boolean
+    scaleUp?: boolean
+}
+
+
+/* Activity Calendar */
+type DayEntry = {
+    img: {
+        src: string
+        caption: string
+    }
+    date: Date
+    text: string
+}
+
+type DayEntryUpdatePayload = {
+    img?: {
+        src?: string
+        caption?: string
+    }
+    text?: string
 }
 
 /* Time */

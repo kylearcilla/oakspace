@@ -101,7 +101,6 @@
 
         if (["Replace Background", "Add Header Background"].includes(optnText)) {
             imageUpload.init({
-                title: "Header Backround",
                 onSubmit: (imgSrc: string) => {
                     if (bgImgSrc != imgSrc) {
                         bgImgSrc = imgSrc
@@ -243,9 +242,9 @@
     </div>
 
     <!-- Header Img Stuff -->
-    <button 
-        class="bar__settings-btn" 
+    <button     
         id="right-bar--dbtn"
+        class="bar__settings-btn" 
         class:bar__settings-btn--show={showSettingsBtn}
         on:click={() => {
             settingsOpen = !settingsOpen

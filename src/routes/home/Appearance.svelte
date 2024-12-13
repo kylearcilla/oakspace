@@ -232,7 +232,6 @@
 </Modal>
 
 <style lang="scss">
-    @import "../../scss/highlighter-tabs.scss";
 
     $section-spacing: 8px;
     $desktop-aspect-ratio: calc(16 / 10);

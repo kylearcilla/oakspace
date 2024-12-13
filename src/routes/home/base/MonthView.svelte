@@ -1,20 +1,21 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import SvgIcon from "../../../components/SVGIcon.svelte";
 	import { Icon } from "../../../lib/enums";
 	import { capitalize, clickOutside, getElemById, getHozDistanceBetweenTwoElems, kebabToNormal, normalToKebab } from "../../../lib/utils-general"
-	import ActivityCalendar from "../../../components/ActivityCalendar.svelte"
-	import WeeklyHabits from "./WeeklyHabits.svelte";
-	import BounceFade from "../../../components/BounceFade.svelte";
-	import ToggleBtn from "../../../components/ToggleBtn.svelte";
+    
+	import Todos from "../Todos.svelte"
+	import GoalsList from "./GoalsList.svelte"
+	import GoalsBoard from "./GoalsBoard.svelte"
+	import { themeState } from "../../../lib/store"
+	import WeeklyHabits from "./WeeklyHabits.svelte"
     import { getWeekPeriod } from "../../../lib/utils-date"
-	import GoalsBoard from "./GoalsBoard.svelte";
-	import GoalsList from "./GoalsList.svelte";
-	import DropdownBtn from "../../../components/DropdownBtn.svelte";
-	import DropdownList from "../../../components/DropdownList.svelte";
-	import { themeState } from "../../../lib/store";
-	import Todos from "../Todos.svelte";
-	import SettingsBtn from "../../../components/SettingsBtn.svelte";
+	import SvgIcon from "../../../components/SVGIcon.svelte"
+	import ToggleBtn from "../../../components/ToggleBtn.svelte"
+	import BounceFade from "../../../components/BounceFade.svelte"
+	import SettingsBtn from "../../../components/SettingsBtn.svelte"
+	import DropdownBtn from "../../../components/DropdownBtn.svelte"
+	import DropdownList from "../../../components/DropdownList.svelte"
+	import ActivityCalendar from "../../../components/ActivityCalendar.svelte"
 
     type MonthDetailsView = "cal" | "goals" | "habits" | "tasks"
     type GoalsView = {
@@ -122,16 +123,18 @@
         <div class="month-view__details-header">
             <div class="month-view__header-btns">
                 <button 
+                    id={"month-view--cal"}
                     class="month-view__header-btn"
                     class:month-view__header-btn--chosen={currView === "cal"}
-                    on:click={() => onViewBtnClicked("cal")}
+                    on:click={(e) => onViewBtnClicked("cal")}
                 >
                     <span>Overview</span>
                 </button>
                 <button 
+                    id={"month-view--habits"}
                     class="month-view__header-btn"
                     class:month-view__header-btn--chosen={currView === "habits"}
-                    on:click={() => onViewBtnClicked("habits")}
+                    on:click={(e) => onViewBtnClicked("habits")}
                 >
                     <span>Habits</span> 
                     {#if showHeaderBtnStats}
@@ -141,9 +144,10 @@
                     {/if}
                 </button>
                 <button 
+                    id={"month-view--goals"}
                     class="month-view__header-btn"
                     class:month-view__header-btn--chosen={currView === "goals"}
-                    on:click={() => onViewBtnClicked("goals")}
+                    on:click={(e) => onViewBtnClicked("goals")}
                 >
                     <span>Goals</span> 
                     {#if showHeaderBtnStats}
@@ -153,9 +157,10 @@
                     {/if}
                 </button>
                 <button 
+                    id={"month-view--tasks"}
                     class="month-view__header-btn"
                     class:month-view__header-btn--chosen={currView === "tasks"}
-                    on:click={() => onViewBtnClicked("tasks")}
+                    on:click={(e) => onViewBtnClicked("tasks")}
                 >
                     <span>Inbox</span> 
                     {#if showHeaderBtnStats}
@@ -164,6 +169,12 @@
                         </div>
                     {/if}
                 </button>
+                <div 
+                    style:left={`${btnHighlighter.left}px`}
+                    style:width={`${btnHighlighter.width}px`}
+                    class="month-view__btn-highlight"
+                >
+                </div>
             </div>
             <div class="month-view__details-header-right">
                 <div class="month-view__settings">
@@ -552,7 +563,7 @@
 
         /* DETAILS */
         &__details {
-            margin: 6px 0px 0px 0px;
+            margin: 0px 0px 0px 0px;
             padding: 0px 0px 4px 0px;
             position: relative;
 
@@ -578,38 +589,41 @@
             @include flex(center);
         }
         &__header-btns {
-            margin: 0px 10px 0px 0px;
+            margin: 0px 10px -8px 0px;
+            position: relative;
             @include flex(center);
         }
         &__header-btn {
-            padding: 5px 15px 7px 15px;
+            padding: 5px 0px 0px 0px;
             border-radius: 29px;
-            margin-right: 6px;
-            background-color: var(--lightColor2);
+            margin: 0px 18px 0px 2px;
             white-space: nowrap;
-            @include flex(center);
+            opacity: 0.2;
             transition: 0.1s ease-in-out;
+            @include flex(center);
 
-            &:active {
-                transition: 0.2s cubic-bezier(.4, 0, .2, 1) !important;
-            }
             &:hover {
-                // transition: 0s;
-                background-color: rgba(var(--textColor1), 0.05);
+                opacity: 0.4;
             }
             &--chosen {
-                background-color: rgba(var(--textColor1), 0.05);
-                box-shadow: rgba(var(--textColor1), 0.09) 0px 0px 0px 1.5px inset, 
-                            rgba(var(--textColor1), 0.06) 0px 0px 0px 3px;
+                opacity: 1 !important;
             }
             span {
-                @include text-style(0.9, 500, 1.48rem);
+                @include text-style(0.85, 500, 1.625rem);
                 margin-right: 3px;
             }
         }
         &__header-btn-stat {
             @include text-style(0.3, 400, 1.4rem, "DM Sans");
             margin-left: 8px;
+            display: none;
+        }
+        &__btn-highlight {
+            @include abs-bottom-left(-10px);
+            height: 1.5px;
+            background-color: rgba(var(--textColor1), 0.9);
+            transition: 0.18s cubic-bezier(.4, 0, .2, 1);
+            border-radius: 2px;
         }
         &__arrow {
             opacity: 0.2;

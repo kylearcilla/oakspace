@@ -139,7 +139,7 @@ export function isNightTime() {
 
 type WeekMonthFormat = "long" | "short" | "narrow" | undefined
 type YearFormat = "numeric" | "2-digit" | undefined
-type DayFormat = "numeric" | "2-digit" | undefined
+type DayFormat = "numeric" | "2-digit" | "ordinal" | undefined
 
 type DateFormat = {
     weekday?: WeekMonthFormat, year?: YearFormat, month?: WeekMonthFormat, day?: DayFormat 
@@ -150,8 +150,32 @@ type DateFormat = {
  * @param date 
  * @returns Formatted Time (i.e. Apr 14, 2020 / Apr 14)
  */
-export function formatDatetoStr(date: Date, options?: DateFormat): string {
-    return new Intl.DateTimeFormat(getBrowserLanguagePreference(), options).format(date)
+export function formatDatetoStr(date: Date, options?: DateFormat) {
+    const addOrdinal = options?.day === "ordinal"
+
+    if (options && options.day) {
+        options.day = addOrdinal ? "numeric" : options.day
+    }
+
+    // @ts-ignore
+    const formattedDate = new Intl.DateTimeFormat(getBrowserLanguagePreference(), options).format(date)
+    
+    if (!addOrdinal) {
+        return formattedDate
+    }
+    else {
+        return formattedDate.replace(/\d+/, match => addOrdinalSuffix(parseInt(match)))
+    }
+}
+
+function addOrdinalSuffix(day: number): string {
+    if (day > 3 && day < 21) return `${day}th`;
+    switch (day % 10) {
+        case 1: return `${day}st`;
+        case 2: return `${day}nd`;
+        case 3: return `${day}rd`;
+        default: return `${day}th`;
+    }
 }
 
 /**

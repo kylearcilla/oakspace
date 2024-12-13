@@ -409,7 +409,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     border-radius: $b-radius;
 }
 
-@mixin box($height, $width, $b-radius: 0) {
+@mixin box($height: 100%, $width: 100%, $b-radius: 0) {
     height: $height;
     width: $width;
     min-height: $height;
@@ -1042,6 +1042,10 @@ $loading-dots-width: 4px;
 }
 
 .smooth-bounce {
+    transition: 0.18s cubic-bezier(.4, 0, .2, 1);
+}
+
+@mixin smooth-bounce {
     transition: 0.18s cubic-bezier(.4, 0, .2, 1);
 }
 

@@ -140,7 +140,7 @@
         background-color: rgba(var(--textColor1), 0.035);
         width: 100%;
         height: 1px;
-        margin: 6.5px 0px 10px 0px;
+        margin: 6px 0px 4px 0px;
         // display: none;
     }
 </style>

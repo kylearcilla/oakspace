@@ -435,7 +435,6 @@
 </Modal>
 
 <style lang="scss">
-    @import "../../scss/highlighter-tabs.scss";
     $section-spacing: 8px;
 
     .settings {
@@ -446,7 +445,6 @@
         min-width: 450px;
 
         &--light .highlighter-tabs {
-            @include highlighter-tabs-light-mode;
         }
 
         &__description {

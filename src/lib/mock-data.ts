@@ -45,7 +45,7 @@ export const TEST_TAGS: Tag[] = [
       orderIdx: 4,
       name: "SWE",
       symbol: {
-        color: COLOR_SWATCHES.d[4],
+        color: COLOR_SWATCHES.d[8],
         emoji: "👨‍💻"
       }
     },
@@ -63,7 +63,7 @@ export const TEST_TAGS: Tag[] = [
       orderIdx: 6,
       name: "Running",
       symbol: {
-        color: COLOR_SWATCHES.d[2],
+        color: COLOR_SWATCHES.d[12],
         emoji: "🏃‍♂️"
       }
     },
@@ -572,4 +572,233 @@ export const TEST_HABITS = [
       tod: 1
     }
   },
+]
+
+export const YEAR_THOUGHT_ENTRY = {
+  icon: {
+        type: "img",
+        src: "https://i.pinimg.com/736x/98/6c/eb/986ceb87af5f7442463be09d5e49c2ae.jpg"
+  },
+  date: new Date(2025, 0),
+  styling: "default",
+  text: `<strong>Chill</strong>  <code>noun</code>
+Chill is the <u>calm in a storm</u> 🌊, the pause that lets us <i>breathe deeply</i>. 
+It's the <u>crisp air</u> of a morning walk, the <i>stillness of twilight</i> settling over the world 🌌. 
+To chill is to <u>embrace the quiet moments</u>, to let the rush fall away, and to find yourself in <i>peace</i> 🕊️. 
+It's the art of <i>being present</i>, savoring simplicity, and knowing that stillness has its own magic ✨.
+`
+}
+
+export const MONTH_THOUGHT_ENTRY = {
+  icon: {
+        type: "img",
+        src: "https://i.pinimg.com/originals/42/f3/e6/42f3e6dd32467736bdc85dc8a6038e35.gif"
+  },
+  date: new Date(2025, 5),
+  styling: "default",
+  text: `<strong>Wonder</strong>  <code>noun</code>
+Wonder is the spark of curiosity ✨, the moment that makes us <i>pause in awe</i>. 
+It's the glow of <i>starlight</i> in a vast night sky, the <u>whisper of possibility</u> in the unknown 🌌. 
+To wonder is to embrace the questions, to see magic in the mundane, and to feel alive in discovery, 🌟. 
+It's the art of <i>dreaming boldly</i>, seeking the extraordinary, and finding beauty in every moment 💫.
+`
+}
+
+export const ACTIVITY_DATA = [
+  {
+      date: new Date(2024, 11, 2),
+      focusMins: 12 * 60 + 10,
+      habits: 0.7,
+      goals: [
+          {
+              type: "big",
+              name: "6 mile run",
+              tag: TEST_TAGS[6]
+          },
+      ],
+      thoughtEntry: "",
+      highlightImg: {
+          src: "https://i.pinimg.com/736x/22/b5/cc/22b5cc185b5942ae772ec5e231f60b39.jpg",
+          caption: "",
+      }
+  },
+  {
+
+      habits: 1,
+      date: new Date(2024, 11, 3),
+      focusMins: 5 * 60 + 11,
+  },
+  {
+      date: new Date(2024, 11, 4),
+      thoughtEntry: "",
+  },
+  {
+      habits: 1,
+      date: new Date(2024, 11, 5),
+      focusMins: 134,
+      thoughtEntry: "Today, I climbed Mount Tamalpais and stood above the clouds. The hike was tough, but the view from the summit was breathtaking—a sea of white clouds stretched endlessly, with the golden hues of the setting sun breaking through.",
+      highlightImg: {
+          src: "https://i.pinimg.com/736x/5e/e0/be/5ee0bedc21c8d2d37ff39dacbda0ef1d.jpg",
+          caption: "a little painting",
+      }
+  },
+  {
+      habits: 0.4,
+      date: new Date(2024, 11, 6),
+      focusMins: 563
+  },
+  {
+      habits: 1,
+      date: new Date(2024, 11, 9),
+      focusMins: 662
+  },
+  {
+      date: new Date(2024, 11, 10),
+      focusMins: 52
+  },
+  {
+      date: new Date(2024, 11, 10),
+      thoughtEntry: "",
+  },
+  {
+      date: new Date(2024, 11, 13),
+      thoughtEntry: "",
+      focusMins: 1 * 60 + 41
+  },
+  {
+      habits: 0.9,
+      date: new Date(2024, 11, 16),
+      focusMins: 271,
+      thoughtEntry: "",
+  },
+  {
+      date: new Date(2024, 11, 18),
+      focusMins: 5 * 60 + 11,
+      thoughtEntry: "",
+      highlightImg: {
+          src: "https://i.pinimg.com/736x/6f/0b/28/6f0b2851d0f7c5141eb58e6cc7271fc6.jpg",
+          caption: "drawing of Maya",
+      }
+  },
+  {
+      date: new Date(2024, 11, 20),
+      habits: 0.2,
+      goals: [
+          {
+              type: "big",
+              name: "learn how to make pizza",
+              tag: TEST_TAGS[3]
+          },
+      ]
+  },
+  {
+      date: new Date(2024, 11, 23),
+      focusMins: 5 * 60 + 11,
+      thoughtEntry: "",
+  },
+  {
+      date: new Date(2024, 11, 24),
+      focusMins: 398,
+      highlightImg: {
+          src: "https://i.pinimg.com/736x/9b/91/cc/9b91cc7b70d04399c09d33d7ed8d063c.jpg",
+          caption: "italian paradise",
+      }
+  },
+  {
+      habits: 0.4,
+      date: new Date(2024, 11, 26),
+      focusMins: 281
+  },
+  {
+      date: new Date(2024, 11, 27),
+      focusMins: 84,
+      highlightImg: {
+          src: "https://i.pinimg.com/736x/d5/ff/09/d5ff09b5043f74591b4ffeb96fc94456.jpg",
+          caption: "at the museum 🌷",
+      }
+  },
+  {
+      habits: 1,
+      date: new Date(2024, 11, 28),
+      focusMins: 2 * 60 + 34
+  },
+  {
+      date: new Date(2024, 11, 30),
+      focusMins: 5 * 60 + 11,
+      thoughtEntry: "",
+      highlightImg: {
+          src: "https://i.pinimg.com/736x/ef/fb/f3/effbf31760c27673d5add67fa439522d.jpg",
+          caption: "atop the mountains 🌤️",
+      }
+  },
+  {
+      habits: 0.6,
+      date: new Date(2024, 11, 31),
+      focusMins: 441
+  },
+  {
+      date: new Date(2024, 11, 14),
+      focusMins: 192,
+      habits: 0.2,
+      goals: [
+          {
+              type: "big",
+              name: "50 pushups",
+              tag: TEST_TAGS[1]
+          },
+          {
+              type: "big",
+              name: "20 pullups",
+              tag: TEST_TAGS[7]
+          },
+      ]
+  },
+  {
+      date: new Date(2024, 11, 15),
+      habits: 0.7,
+      goals: [
+          {
+              type: "big",
+              name: "js fundamentals",
+              tag: TEST_TAGS[1]
+          },
+      ]
+  },
+  {
+      date: new Date(2024, 11, 25),
+      habits: 0.7,
+      thoughtEntry: "wefwefew",
+      highlightImg: {
+          src: "https://i.pinimg.com/736x/5c/37/a0/5c37a01f26fff8bae726e0a6e527bcae.jpg",
+          caption: "getting used to pastels"
+      },
+      goals: [
+          {
+              type: "big",
+              name: "master sketching the head",
+              tag: TEST_TAGS[8]
+          },
+          {
+              type: "big",
+              name: "french pronouns",
+              tag: TEST_TAGS[2]
+          },
+          {
+              type: "big",
+              name: "finish designing portfolio",
+              tag: TEST_TAGS[1]
+          },
+      ]
+  },
+  {
+      date: new Date(2024, 11, 29),
+      habits: 0.7,
+      goals: [
+          {
+              type: "big",
+              name: "master sketching the head",
+              tag: TEST_TAGS[8]
+          },
+      ]
+  }
 ]

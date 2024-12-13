@@ -55,7 +55,6 @@
 </div>
 
 <style global lang="scss">
-    @import "../../../scss/highlighter-tabs.scss";
 
     .routines-page {
         height: 100%;

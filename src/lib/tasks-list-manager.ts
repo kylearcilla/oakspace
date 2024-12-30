@@ -1,4 +1,4 @@
-import { writable, type Writable } from "svelte/store"
+import { get, writable, type Writable } from "svelte/store"
 
 import { Tasks } from "./Tasks"
 import { TextEditorManager } from "./inputs"
@@ -6,6 +6,7 @@ import {
         elemHasClasses, findAncestor, getElemById, initFloatElemPos, 
         isEditTextElem, isNearBorderAndShouldScroll
 } from "./utils-general"
+import { toast } from "./utils-toast"
 
 /**
  * Reusable task list manager component.
@@ -22,15 +23,14 @@ export class TasksListManager {
         numbered: boolean
         reorder: boolean
         subtasks: boolean
+        type: "side-menu" | "default"
         allowDuplicate: boolean
         removeOnComplete: boolean
         progress: "perc" | "count"
         maxTitleLines: number
         maxDescrLines: number
+        maxDepth: number
         max: number
-        subtaskMax: number
-        maxToastMsg: string | null
-        subtaskMaxToastMsg: string | null
         addBtn: {
             iconScale: number
             doShow: boolean
@@ -61,6 +61,7 @@ export class TasksListManager {
     editMode: "title" | "description" | "task" | null = null
     newText = ""
     justEdited = false
+    newTaskAdded: Task | null = null
 
     /* drag and drop */
     isDragging = false
@@ -94,40 +95,44 @@ export class TasksListManager {
     FLOATING_WIDTH_PERCENT = 0.8
     CONTEXT_MENU_WIDTH = 180
 
-    DROP_AS_CHILD_X_THRESHOLD = 100
+    DROP_AS_CHILD_X_THRESHOLD = 140
     DEFAULT_MAX_TASKS = 25
-    DEFAULT_MAX_SUBTASKS = 25
     MAX_DEPTH = 3
 
     MAX_TITLE_LENGTH = 200
     MAX_DESCRIPTION_LENGTH = 350
     MAX_X_CONTEXT_MENU_POS = 70
 
-    constructor(options: TasksListOptions) {
+    constructor(args: { options: TasksListOptions, tasks: Task[] }) {
+        const { options, tasks } = args
         this.options = options
-        this.tasks = options.tasks
 
         const { settings, ui } = options
-        const { DEFAULT_MAX_TASKS, DEFAULT_MAX_SUBTASKS } = this
+        const { DEFAULT_MAX_TASKS } = this
         const { MAX_TITLE_LINES, MAX_DESC_LINES, SIDE_PADDING, CHECK_BOX_DIM } = this.DEFAULT_STYLES
+        const maxDepth = settings?.maxDepth ?? 3
+        const removeOnComplete = settings?.removeOnComplete ?? false
+
+        this.tasks = new Tasks({ 
+            tasks: removeOnComplete ? tasks.filter(t => !t.isChecked) : tasks, 
+            maxDepth 
+        })
 
         this.containerRef = options.containerRef
-
         this.settings = {
             numbered: settings?.numbered ?? false,
             subtasks: settings?.subtasks ?? true,
+            type:     options?.type ?? "default",
             reorder:          settings?.reorder ?? true,
             allowDuplicate:   settings?.allowDuplicate ?? true,
-            removeOnComplete: settings?.removeOnComplete ?? false,
             progress:         settings?.progress ?? "perc",
-            maxTitleLines: settings?.maxTitleLines ??  MAX_TITLE_LINES,
-            maxDescrLines: settings?.maxDescrLines ??  MAX_DESC_LINES,
+            maxTitleLines: MAX_TITLE_LINES,
+            maxDescrLines: MAX_DESC_LINES,
+            maxDepth,
+            removeOnComplete,
             max:           settings?.max ?? DEFAULT_MAX_TASKS,
-            subtaskMax:    settings?.subtaskMax ?? DEFAULT_MAX_SUBTASKS,
-            maxToastMsg:   settings?.maxToastMsg ?? `Task number exceeded.`,
-            subtaskMaxToastMsg: settings?.subtaskMaxToastMsg ?? `Subtasks number exceeded.`,
             addBtn: {
-                doShow: settings?.addBtn?.doShow ?? true,
+                doShow: settings?.addBtn?.doShow ?? false,
                 style:  settings?.addBtn?.style,
                 text:   settings?.addBtn?.text ?? "Add an Item",
                 pos:    settings?.addBtn?.pos ?? "bottom",
@@ -135,12 +140,17 @@ export class TasksListManager {
             }
         }
 
+        if (options?.type === "side-menu") {
+            this.settings.maxTitleLines = 2
+            this.settings.maxDescrLines = 2
+        }
+
         this.ui = {
-            maxHeight: ui?.maxHeight ?? "auto",
+            maxHeight:      ui?.maxHeight ?? "100%",
             sidePadding:    ui?.sidePadding    ?? SIDE_PADDING as CSSUnitVal,
             hasTaskDivider: ui?.hasTaskDivider ?? true,
             listHeight:     ui?.listHeight     ?? "auto",
-            checkboxDim:   ui?.checkboxDim     ?? CHECK_BOX_DIM,
+            checkboxDim:    ui?.checkboxDim     ?? CHECK_BOX_DIM,
         }
 
         this.state = writable(this)
@@ -161,8 +171,8 @@ export class TasksListManager {
      * Toggle expand a task that has been clicked.
      * Does not run while on edit mode.
      */
-    onTaskClicked(args: { event: Event, id: string, isChild: boolean }) { 
-        const { event, id, isChild } = args
+    onTaskClicked(args: { event: Event, id: string, isChild: boolean, atMaxDepth: boolean }) { 
+        const { event, id, isChild, atMaxDepth } = args
         const target = event.target as HTMLElement
         const isEditElem = isEditTextElem(target)
 
@@ -172,7 +182,10 @@ export class TasksListManager {
         }
 
         this.initFocusTask(id, isChild)
-        this.toggleExpandTask(id, isChild)
+
+        if (!atMaxDepth) {
+            this.toggleExpandTask(id, isChild)
+        }
     }
 
     /**
@@ -204,9 +217,9 @@ export class TasksListManager {
 
         this.editMode = "description"
         this.editTask = this.tasks.getTask(id)!
-        this.update({ editTask: this.editTask, editMode: "description" })
 
-        this.initTaskEdit("description")
+        this.update({ editTask: this.editTask, editMode: "description" })
+        requestAnimationFrame(() => this.initTaskEdit("description"))
     }
 
     /* pointer stuff  */
@@ -351,7 +364,17 @@ export class TasksListManager {
     onInputBlurHandler = (event: FocusEvent) => {
         if (!this.editMode) return
 
-        // if (this.pickedTaskIdx < 0) return
+        // If switching between title/description of same task, don't clear edit state
+        const target = event.target as HTMLElement
+        const relatedTarget = event.relatedTarget as HTMLElement
+
+        if (relatedTarget) {
+            const currentId = target.id.split('--task-')[1].split('-id--')[1]
+            const relatedId = relatedTarget.id.split('--task-')[1]?.split('-id--')[1]
+
+            if (currentId === relatedId) return
+        }
+
         if (this.editMode === "title") {
             this.saveNewTitle()
         }
@@ -372,23 +395,33 @@ export class TasksListManager {
      * @param field  Title or description
      */
     initTaskEdit(field: "title" | "description") {
-        const { [field]: value, id } = this.editTask!
-        const elem = this.getElemById(`task-${field}-id--${id}`) as HTMLElement
+        if (!this.editTask) return
+
+        const { id } = this.editTask
+        const tId = `task-${field}-id--${id}`
+        const elem = this.getElemById(tId) as HTMLElement
+        elem.focus()
     
         const handlers = {
             onInputHandler: (_: InputEvent, value: string) => this.inputTextHandler(value),
             onBlurHandler:  this.onInputBlurHandler,
             onFocusHandler: this.onInputFocusHandler
         }
+        const initValue = field === "title" ? this.editTask.title : this.editTask.description
     
         const editor = new TextEditorManager({
-            initValue: value,
+            initValue,
             placeholder:  field === "title" ? "Title goes here..." : "No description",
             doAllowEmpty: field === "title" ? false : true,
             maxLength:    field === "title" ? this.MAX_TITLE_LENGTH : this.MAX_DESCRIPTION_LENGTH,
-            id: `${this.options.id}--task-${field}-id--${id}`,
+            id: `${this.options.id}--${tId}`,
             handlers
         })
+
+        // making new task (sometimes contenteditable will take on previous text on add task above)
+        if (!this.editTask.title) {
+            requestAnimationFrame(() => editor.updateText(initValue))
+        }
     
         elem.onpaste = (e) => editor.onPaste(e)
         elem.oninput = (e) => editor.onInputHandler(e)
@@ -406,7 +439,14 @@ export class TasksListManager {
             text: this.newText 
         })
 
-        this.finalizeEditTask(this.tasks.getTask(this.editTask!.id)!, "name")
+        if (this.newTaskAdded) {
+            this.finalizeAddTask(this.newTaskAdded, "add", [this.newTaskAdded])
+        }
+        else {
+            this.finalizeEditTask(this.tasks.getTask(this.editTask!.id)!, "name")
+        }
+
+        this.newTaskAdded = null
     }
     
     saveNewDescription = async () => {
@@ -437,7 +477,7 @@ export class TasksListManager {
         if (task.parentId) {
             this.toggleExpandTask(task.id, true)
         }
-        if (!this.isDragging) {
+        if (!this.isDragging && this.settings.type != "side-menu") {
             e.preventDefault()
             return
         }
@@ -510,17 +550,20 @@ export class TasksListManager {
     }
 
     completeDragAction() {
-        if (this.dragAsChild && this.dragTarget!.id === this.dragSrc?.parentId) {
+        // drag target is null if dropping to the last position of the same parent
+        if (this.dragAsChild && this.dragTarget?.id === this.dragSrc?.parentId) {
             return
         }
+        const targetParentId = this.dragAsChild ? this.dragTarget?.id ?? null : this.targetParentId
+        const action = this.dragSrc?.parentId !== targetParentId ? "new-parent" : "reorder"
 
-        this.tasks.reorderTask({ 
+        const task = this.tasks.reorderTask({ 
             src: this.dragSrc!,
             target: this.dragTarget,
-            targetParentId: this.dragAsChild ? this.dragTarget!.id : this.targetParentId
+            targetParentId
         })
 
-        this.finalizeEditTask(this.dragSrc!, "reorder")
+        this.finalizeEditTask(task, action)
     }
 
     /**
@@ -646,12 +689,17 @@ export class TasksListManager {
         type:  "sibling" | "child"
     }) {
         const { idx, parentId, type } = args
-        const newId   = crypto.randomUUID()
+        const tempId   = "123"
         const newIdx  = idx ?? this.tasks.getSubtasks(parentId).length
         const isChild = type === "child"
 
+        if (isChild && this.tasks.isAtMaxDepth(parentId!)) {
+            this.initMaxDepthToast()
+            return
+        }
+
         const task = {
-            id: newId,
+            id: tempId,
             idx: newIdx,
             isChecked: false,
             title: "",
@@ -660,18 +708,28 @@ export class TasksListManager {
         }
 
         this.tasks.addTask({ task, type: "new" })
+        this.newTaskAdded = task
         
         this.onTaskJustAdded({
             expandId:      isChild ? parentId! : undefined,
             isExpandChild: isChild ? !this.tasks.isRootTask(parentId!) : undefined,
-            focusId:       newId,
-            isFocusChild:  !this.tasks.isRootTask(newId!)
+            focusId:       tempId,
+            isFocusChild:  !this.tasks.isRootTask(tempId!)
         })
 
-        this.finalizeAddTask(task, "add", [task])
+        // finalized once user finishs making the task title
     }
 
     duplicateTask(dupId: string) {
+        const task = this.tasks.getTask(dupId)!
+        const parentId = task.parentId
+        const isChild = parentId !== null
+
+        if (isChild && this.tasks.isAtMaxDepth(parentId!)) {
+            this.initMaxDepthToast()
+            return
+        }
+
         const added = this.tasks.duplicateTask(dupId)
         this.finalizeAddTask(this.tasks.getTask(dupId)!, "duplicate", added)
     }
@@ -682,13 +740,40 @@ export class TasksListManager {
         this.finalizeRemoveTask(task, removed!)
 
         // move focus up
-        this.handleArrowkeyPressed("ArrowUp")
+        // this.handleArrowkeyPressed(this.focusElemIdx > 0 ? "ArrowUp" : "ArrowDown")
+    }
+
+    removeCompletedTasks() {
+        const removed = this.tasks.removeCompletedTasks()
+        const tasks = this.tasks.getAllTasks()
+
+        if (!this.options.handlers?.onDeleteTask) return
+
+        this.options.handlers.onDeleteTask({
+            payload: { 
+                task: null, 
+                removed,
+                tasks
+            },
+            undoFunction: () => {
+                this.tasks.onRemoveUndo({ removed })
+            }
+        })
     }
 
     async toggleTaskComplete(taskId: string) {
         this.tasks.toggleTaskComplete(taskId)
 
-        this.finalizeEditTask(this.tasks.getTask(taskId)!, "completion")
+        const task = this.tasks.getTask(taskId)!
+        const complete = task.isChecked
+        const removeOnComplete = this.options.settings?.removeOnComplete
+        const removed: Task[] = []
+
+        if (complete && removeOnComplete) {
+            removed.push(...this.tasks.removeTask(taskId))
+        }
+
+        this.finalizeCompleteTask(task, removed)
     }
 
     addNewTaskFromOutside() {
@@ -714,20 +799,22 @@ export class TasksListManager {
 
         const res = await this.options.handlers.onAddTask({
             action: action,
-            payload: { task, tasks, added }
+            payload: { 
+                task, tasks, 
+                added 
+            }
         })
 
         // if api returns its own id for the new task
-        // if (action === "add" && res && "id" in res) {
-        //     this.tasks.updateNewTaskId(task.id, res.id)
-        // }
+        if (res && res.id) {
+            this.tasks.removeTask(task.id)
+            this.tasks.addTask({ task: { ...task, id: res.id }, type: "new" })
+        }
     }
 
     async finalizeRemoveTask(task: Task, removed: Task[]) {
         if (!this.options.handlers?.onDeleteTask) return
-
         const tasks = this.tasks.getAllTasks()
-        const undoFunction = () => this.tasks.onRemoveUndo(task, removed)
 
         this.options.handlers.onDeleteTask({
             payload: { 
@@ -735,7 +822,41 @@ export class TasksListManager {
                 removed,
                 tasks 
             },
-            undoFunction
+            undoFunction: () => {
+                this.tasks.onRemoveUndo({ parentTask: task, removed })
+            }
+        })
+    }
+
+    async finalizeCompleteTask(task: Task, removed: Task[]) {
+        if (!this.options.handlers?.onDeleteTask) return
+
+        const isChecked = task.isChecked
+        const tasks = this.tasks.getAllTasks()
+
+        const undoFunction = () => {
+            task.isChecked = false
+
+            this.tasks.onRemoveUndo({ 
+                parentTask: task, 
+                removed 
+            })
+            this.options.handlers!.onTaskUpdate({
+                action: "completion",
+                payload: { 
+                    task, 
+                    tasks 
+                }
+            })
+        }
+
+        this.options.handlers.onTaskUpdate({
+            action: "completion",
+            payload: { 
+                task, 
+                tasks 
+            },
+            ...(isChecked ? { undoFunction } : {})
         })
     }
 
@@ -745,7 +866,10 @@ export class TasksListManager {
 
         this.options.handlers.onTaskUpdate({
             action,
-            payload: { task, tasks },
+            payload: { 
+                task, 
+                tasks 
+            }
         })
     }
 
@@ -1002,24 +1126,21 @@ export class TasksListManager {
         console.error(error)
     }
 
+    initMaxDepthToast() {
+        toast("default", {
+            message: "Max depth reached of " + this.tasks.maxDepth + " reached.",
+            groupExclusive: true
+        })
+    }
+
     /**
      * Get the context menu options for both tasks and subtasks.
      * @returns 
      */
     getContextMenuOptions() {
-        const { subtasks, allowDuplicate } = this.settings
-        const addSubtaskOptn = subtasks ? [{
-            name: "Add Subtask",
-            rightIcon: {
-                type: "hotkey",
-                icon: ["shift", "plus"]
-            }
-        } as DropdownOption] : []
+        const { allowDuplicate } = this.settings
 
        return [
-            {
-                options: [...addSubtaskOptn]
-            },
             {
                 options: [
                     { 

@@ -6,7 +6,7 @@
 	import { getDayIdxMinutes, secsToHHMM } from "$lib/utils-date"
 	import { openModal, toggleActiveRoutine } from "$lib/utils-home"
 	import { themeState, ytPlayerStore, weekRoutine, sessionManager, globalContext } from "$lib/store"
-	import { initTodayRoutine, initCurrentBlock, getMextTimeCheckPointInfo, getUpcomingBlock } from "$lib/utils-routines"
+	import { getDayRoutineFromWeek, getCurrentBlock, getNextBlockInfo, getUpcomingBlock } from "$lib/utils-routines"
     
 	import ActiveRoutine from "./ActiveRoutine.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
@@ -39,7 +39,7 @@
     let nowBlockTitle = ""
     let colorTrio = ["", "", ""]
     
-    $: todayRoutine = initTodayRoutine(routine, currTime)
+    $: todayRoutine = getDayRoutineFromWeek(routine, currTime.dayIdx)
 
     $: if (!dayRoutine) {
         nowBlockTitle = "You current don't have a routine set."
@@ -58,7 +58,7 @@
     function initNowBlock(todayRoutine: RoutineBlock[] | DailyRoutine | null) {
         if (!todayRoutine) return
 
-        const currBlock = initCurrentBlock(todayRoutine, currTime.minutes)
+        const currBlock = getCurrentBlock(todayRoutine, currTime.minutes)
         upcomingBlock   = getUpcomingBlock(currTime.minutes, todayRoutine)?.block ?? null
 
         if (currBlock) {
@@ -167,7 +167,7 @@
                 {/if}
             </div>
             <div class="header__now-block-time">
-                {getMextTimeCheckPointInfo(todayRoutine) ?? ""}
+                {getNextBlockInfo(todayRoutine) ?? ""}
             </div>
         </button>
         <!-- Session Component -->
@@ -205,7 +205,7 @@
     </div>
 
     <!-- Active Routine Pop Up -->
-    <ActiveRoutine pos={!!ambience ? "right" : "left"} />
+    <ActiveRoutine />
 
     <AmbientSettings
         onClickOutside={() => ambientSettings = false}
@@ -408,9 +408,6 @@
                 @include text-style(0.3, _, 1.15rem);
                 margin-bottom: 2px;
             }
-        }
-        &__habit-ring {
-
         }
 
         /* Session Time */

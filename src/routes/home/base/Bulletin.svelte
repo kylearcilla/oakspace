@@ -29,9 +29,12 @@
     let newNoteTxt = ""
     // let bulletinImg = "https://i.pinimg.com/564x/81/2d/7b/812d7be9f97ac8a753e6a73997c71fea.jpg"
     let bulletinImg = "https://i.pinimg.com/736x/2e/ec/f9/2eecf97b4032e2c96df00e137a789708.jpg"
-    // let bulletinImg = "https://i.pinimg.com/originals/12/e6/87/12e68735b9177299a871e1dc0d1b354f.gif"
+    // let bulletinImg = "https://i.pinimg.com/originals/9b/a2/8f/9ba28fe01fc1a24b757bf972a40a7339.gif"
+    // let bulletinImg = "https://i.pinimg.com/originals/1e/b4/9d/1eb49dd34d176a4350e47776ee2b20aa.gif"
     
     let notes = [
+        "you can literally have a whole new life in a year",
+        "outgrowing my own bullshit. love to see it.",
         "real growth starts when you're tired of your own shit",
         "Inner peace over everything else.",
         "Can't approach new energy and new life with the same attitude u was using to maintain ya old shit!",

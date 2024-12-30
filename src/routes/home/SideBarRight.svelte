@@ -3,9 +3,9 @@
     
     import { globalContext, themeState } from "$lib/store"    
 	import { clamp, clickOutside } from "$lib/utils-general"
-	import { ProductivityCalendar } from "$lib/productivity-calendar"
-	import { setShortcutsFocus, imageUpload } from "$lib/utils-home"
 	import { ShortcutSectionInFocus, Icon } from "$lib/enums"
+	import { setShortcutsFocus, imageUpload } from "$lib/utils-home"
+	import { SideCalendar } from "$lib/side-calendar"
 	import { formatDatetoStr, formatTimeToHHMM, isNightTime, prefer12HourFormat } from "$lib/utils-date"
 
 	import Overview from "./Overview.svelte"
@@ -21,7 +21,7 @@
 
     let headerRef: HTMLElement
     let headerImgContainerHt = 0
-    let calendar = new ProductivityCalendar(null)
+    let calendar = new SideCalendar(null)
 
     /* time */
     let isDayTime = true
@@ -33,7 +33,6 @@
     let opacity = 0
     let settingsOpen = false
     let bgImgSrc = "https://i.pinimg.com/originals/7d/04/0e/7d040e94931427709008aaeda14db9c8.gif"
-    // let bgImgSrc = ""
     let showHeaderImg = true
     let showSettingsBtn = false
 
@@ -48,10 +47,7 @@
         bgImgSrc = $themeState.isDarkTheme ? "https://i.pinimg.com/originals/7d/04/0e/7d040e94931427709008aaeda14db9c8.gif" : ""
     }
     $: if (bgImgSrc && bgImgRef && $themeState != undefined) {
-        requestAnimationFrame(() => {
-            const MAX = getMaxHeaderImgOffset()
-            topOffset = 0
-        })
+        requestAnimationFrame(() => topOffset = 0)
     }
 
     /* Header Image */

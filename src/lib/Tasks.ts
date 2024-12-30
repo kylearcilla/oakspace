@@ -8,8 +8,8 @@ const DEFAULT_MAX_DEPTH = 5
 export class Tasks {
     private taskMap: Map<string, Task>
     private parents: Map<string | null, string[]>
-    private readonly maxDepth: number;
     private openSubtasks: Set<string>
+    maxDepth: number
 
     _store: Writable<Tasks>
 
@@ -22,7 +22,8 @@ export class Tasks {
         this.maxDepth = maxDepth
         this.openSubtasks = new Set
 
-        tasks.forEach((task) => this.addTask({ task }))
+        tasks.forEach((task) => this.addTask({ task, doUpdate: false }))
+        this._store.set(this)
     }
 
     /**
@@ -63,7 +64,9 @@ export class Tasks {
     }
 
     removeTask(taskId: string): Task[] {
-        const task = this.taskMap.get(taskId)!
+        const task = this.taskMap.get(taskId)
+        if (!task) return []
+        
         const parentId = task.parentId
     
         // Remove children and collect all removed tasks
@@ -83,6 +86,13 @@ export class Tasks {
     
         // Return all removed tasks (including the current task)
         return [task, ...removedChildren]
+    }
+
+    removeCompletedTasks() {
+        const completedTasks = this.getAllTasks().filter(task => task?.isChecked)
+        completedTasks.forEach(task => this.removeTask(task.id))
+
+        return completedTasks
     }
     
     private removeChildren(id: string): Task[] {
@@ -108,7 +118,6 @@ export class Tasks {
         for (let i = 0; i < siblings.length; i++) {
             const sibling = siblings[i]
             if (sibling && sibling.idx >= idx) {
-                console.log(sibling.idx, "to", sibling.idx + shiftDirection)
                 sibling.idx += shiftDirection
             }
         }
@@ -189,6 +198,8 @@ export class Tasks {
         src.idx = targetIdx
 
         this._store.set(this)
+
+        return src
     }
 
     renameTask(taskId: string, newTitle: string) {
@@ -208,37 +219,37 @@ export class Tasks {
         this._store.set(this)
     }
 
-    updateNewTaskId(oldId: string, newId: string) {
-        const task = this.taskMap.get(oldId)!
-
-        this.taskMap.delete(oldId)
-        task.id = newId
-        this.taskMap.set(newId, task)
-
-        
-        if (task.parentId !== null) {
-            const siblings = this.parents.get(task.parentId);
-            if (siblings) {
-                const index = siblings.indexOf(oldId);
-                if (index !== -1) siblings[index] = newId;
-            }
-        }    
-    }
-
     /**
-     * Put back all the removed tasks
-     * @param task 
-     * @param removed 
+     * Put removed tasks back into the task list.
+     * Can handle both single task + children removal and multiple task removal.
+     * 
+     * @param args.parentTask Optional parent task that was removed with its children
+     * @param args.removed    Array of tasks that were removed
      */
-    onRemoveUndo(task: Task, removed: Task[]) {
-        const children = removed.filter(t => t.id != task.id)
+    onRemoveUndo(args: { parentTask?: Task, removed: Task[] }) {
+        const { parentTask, removed } = args
 
-        this.addTask({ 
-            task: task, type: "new", doUpdate: false 
-        })
-        children.map((task) => this.addTask({ 
-            task, type: "init", doUpdate: false 
-        }))
+        if (parentTask) {
+            const children = removed.filter(t => t.id !== parentTask.id)
+
+            this.addTask({ 
+                task: parentTask, 
+                type: "new", 
+                doUpdate: false 
+            })
+            children.forEach(task => this.addTask({ 
+                task, 
+                type: "init", 
+                doUpdate: false 
+            }))
+        } 
+        else {
+            removed.forEach(task => this.addTask({
+                task,
+                type: "new",
+                doUpdate: false
+            }))
+        }
 
         this._store.set(this)
     }
@@ -292,8 +303,43 @@ export class Tasks {
         return tasks.sort((a: Task, b: Task) => a.idx - b.idx)
     }
 
+    getRootTask(id: string): Task | null {
+        const task = this.getTask(id)
+        if (!task) return null
+
+        const parentId = task.parentId
+        if (!parentId) return task
+
+        return this.getRootTask(parentId)
+    }
+
     getSiblings(parentId: string | null) {
         return this.getSubtasks(parentId)
+    }
+
+    getTaskLineageCount(id: string): number {
+        const task = this.getTask(id)
+        if (!task) return 0
+
+        let count = 1
+        let parentId = task.parentId
+
+        while (parentId) {
+            count++
+            const parent = this.getTask(parentId)
+            if (!parent) break
+            parentId = parent.parentId
+        }
+
+        return count
+    }
+    
+    isAtMaxDepth(id: string): boolean {
+        const task = this.getTask(id)
+        if (!task) return false
+
+        const lineageCount = this.getTaskLineageCount(id)
+        return lineageCount >= this.maxDepth
     }
 
     /**
@@ -305,9 +351,11 @@ export class Tasks {
         const childrenIds = this.parents.get(taskId) || []
 
         for (const childId of childrenIds) {
-            const childTask = this.taskMap.get(childId)!
+            const childTask = this.taskMap.get(childId)
 
-            subtasks.push(childTask)
+            if (childTask) {
+                subtasks.push(childTask)
+            }
         }
         return subtasks
     }
@@ -337,26 +385,5 @@ export class Tasks {
 
     isTaskOpen(id: string): boolean {
         return this.openSubtasks.has(id)
-    }
-
-    private enforceMaxDepth(parentId: string | null) {
-        const currentDepth = this.getDepth(parentId);
-        if (currentDepth >= this.maxDepth) {
-            throw new Error(`Cannot add or move task: Maximum nested depth of ${this.maxDepth} exceeded.`);
-        }   
-    }
-
-    private getDepth(parentId: string | null): number {
-        let depth = 0;
-        let currentParentId = parentId;
-    
-        while (currentParentId !== null) {
-            depth++;
-            const parentTask = this.taskMap.get(currentParentId);
-            if (!parentTask) break;
-            currentParentId = parentTask.parentId;
-        }
-    
-        return depth;
     }
 }

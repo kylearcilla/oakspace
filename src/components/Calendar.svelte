@@ -2,87 +2,103 @@
     import SVGIcon from "./SVGIcon.svelte"
 
 	import { onMount } from "svelte"
-	import { themeState } from "$lib/store"
 	import { Icon } from "$lib/enums"
+	import { themeState } from "$lib/store"
+	import { SideCalendar } from "$lib/side-calendar"
 	import { isSameDay, months } from "$lib/utils-date"
-	import { ProductivityCalendar } from "$lib/productivity-calendar"
 
-    enum CalendarType {
-        Basic, Productivity
-    }
     export let isDisabled = false
-    export let calendar: ProductivityCalendar
+    export let calendar: SideCalendar
     export let focusDate: Date | null = new Date()
     export let onDayUpdate: (date: Date) => void
 
-    let type: CalendarType | null = null
-    $: store = calendar._store
-
-    $: if ($store.pickedDate != focusDate && focusDate && !isDisabled) {
-        $store.setNewPickedDate(focusDate)
-    }
+    let type: "default" | "side" = "default"
+    let currMonth = calendar.currMonth
+    let pickedDate = new Date()
+    let isNextMonthAvailable = calendar.isNextMonthAvailable
+    let isPrevMonthAvailable = calendar.isPrevMonthAvailable
 
     function _onDayUpdate(day: Date) {
         if (isDisabled) return
         
-        onDayUpdate(day)
+        pickedDate = calendar.setNewPickedDate(day)
+        currMonth = calendar.currMonth
+        onDayUpdate(pickedDate)
     }
-    onMount(() => {
-        if (calendar instanceof ProductivityCalendar) {
-            type = CalendarType.Productivity
+    function updateMonth(direction: "prev" | "next") {
+        if (direction === "prev") {
+            currMonth = calendar.getPrevMonthCalendar()
         }
         else {
-            type = CalendarType.Basic
+            currMonth = calendar.getNextMonthCalendar()
+        }
+        isNextMonthAvailable = calendar.isNextMonthAvailable
+        isPrevMonthAvailable = calendar.isPrevMonthAvailable 
+    }
+    onMount(() => {
+        if (calendar instanceof SideCalendar) {
+            type = "side"
+        }
+        else {
+            type = "default"
         }
     })
 </script>
 
 {#if type != null}
 <div 
-    class={`calendar calendar--${CalendarType[type].toLowerCase()}`}
+    class={`calendar calendar--${type}`}
     class:calendar--light={!$themeState.isDarkTheme}
 >
     <div class="calendar__focus">
         <div class="calendar__focus-header">
             <div class="calendar__month-title">
                 <strong>
-                    {months[$store.currMonth.monthIdx]}
+                    {months[currMonth.monthIdx]}
                 </strong> 
-                {$store.currMonth.year}
+                {currMonth.year}
             </div>
             <div class="calendar__btns-container">
                 <button 
                     class="calendar__next-prev-btn"
-                    on:click={() => $store.getPrevMonthCalendar()}
-                    disabled={!$store.isPrevMonthAvailable}
-                >
-                <SVGIcon 
-                    icon={Icon.ChevronLeft}
-                    options={{
-                        scale: 1.5, height: 12, width: 12, strokeWidth: 1.4
+                    on:click={() => {
+                        updateMonth("prev")
                     }}
-                />
+                    disabled={!isPrevMonthAvailable}
+                >
+                    <SVGIcon 
+                        icon={Icon.ChevronLeft}
+                        options={{
+                            scale: 1.5, height: 12, width: 12, strokeWidth: 1.4
+                        }}
+                    />
                 </button>
                 <button
                     disabled={isDisabled}
                     title="Go to current month."
                     class="calendar__today-btn"
-                    on:click={() => $store.getThisMonth()}
+                    on:click={() => {
+                        currMonth = calendar.getThisMonth()
+                        pickedDate = new Date()
+                        onDayUpdate(pickedDate)
+                    }}
                 >
                     •
                 </button>
                 <button 
                     class="calendar__next-prev-btn"
-                    on:click={() => $store.getNextMonthCalendar()}
-                    disabled={!$store.isNextMonthAvailable}
-                >
-                <SVGIcon 
-                    icon={Icon.ChevronRight}
-                    options={{
-                        scale: 1.5, height: 12, width: 12, strokeWidth: 1.4
+                    on:click={() => {
+                        updateMonth("next")
                     }}
-                />
-            </button>
+                    disabled={!isNextMonthAvailable}
+                >
+                    <SVGIcon 
+                        icon={Icon.ChevronRight}
+                        options={{
+                            scale: 1.5, height: 12, width: 12, strokeWidth: 1.4
+                        }}
+                    />
+                </button>
             </div>
         </div>
         <div class="calendar__days-of-week">
@@ -98,7 +114,7 @@
     <!-- Month Calendar -->
     <div class="calendar__month">
         <ul>
-            {#each $store.currMonth.days as day}
+            {#each currMonth.days as day}
                 <li 
                     class="calendar__month-day-container"
                     class:calendar__month-day-container--empty={!day}
@@ -110,7 +126,7 @@
                         class="calendar__month-day"
                         class:calendar__month-day--not-curr-month={!day.isInCurrMonth}
                         class:calendar__month-day--today={isSameDay(day.date, new Date())}
-                        class:calendar__month-day--picked={isSameDay(day.date, $store.pickedDate)}
+                        class:calendar__month-day--picked={isSameDay(day.date, pickedDate)}
                         on:keydown={(e) => {
                             if (e.key === 'Enter' || e.code === 'Space') {
                                 e.preventDefault()
@@ -118,6 +134,7 @@
                             }
                         }}
                         on:click={() => {
+                            console.log(structuredClone(day))
                             _onDayUpdate(day.date)
                         }}
                     >
@@ -169,13 +186,13 @@
                 opacity: 0.2 !important;
             }
         }
-        &--light#{&}--productivity &__today-btn {
+        &--light#{&}--side &__today-btn {
             opacity: 0.4;
             &:hover {
                 opacity: 0.8;
             }
         }
-        &--light#{&}--productivity &__next-prev-btn {
+        &--light#{&}--side &__next-prev-btn {
             opacity: 0.26;
             
             &:hover {
@@ -190,7 +207,7 @@
         &--basic &__month-day-container {
             aspect-ratio: 1 / 1;
         }
-        &--productivity &__month-day {
+        &--side &__month-day {
             @include text-style(0.8, 500, 1.2rem, "DM Sans");
             background: none;
             cursor: pointer;
@@ -319,18 +336,18 @@
                 }
             }
             &--today {
-                background: #FF5151 !important;
-                color: white !important;
-                height: 19px;
-                width: 19px;
+                color: rgba(var(--textColor1), 1) !important;
+                background-color: var(--elemColor2) !important;
+                height: 25px;
+                width: 25px;
                 border-radius: 20px;
                 opacity: 1;
             }
             &--picked {
+                background: #FF5151 !important;
                 font-weight: 500;
-                height: 25px;
-                width: 25px;
-                background-color: var(--elemColor2) !important;
+                height: 22px;
+                width: 22px;
                 color: var(--elemTextColor) !important;
                 opacity: 1;
             }

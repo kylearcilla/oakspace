@@ -2,6 +2,7 @@ import NativeSupport from "$lib/emojis-native-support"
 import FrequentlyUsed from "$lib/emojis-freq-used"
 import SearchIndex from "$lib/emojis-search-idx"
 import { get, type Writable, writable } from "svelte/store"
+import { getPopFloatElemPos } from "./utils-home"
 export let Data: any = null
 
 const EMOJI_VERSION = 15
@@ -11,12 +12,6 @@ export const EMOJI_BUTTON_SIZE  = 32
 
 const MAX_FREQ_ROWS  = 20
 const FREQ_ROW_PER_LINE = 10
-
-type EmojiPicker = {
-    position: CSSAbsPos | null,
-    isOpen: boolean,
-    onEmojiSelect: ((emoji: any) => void) | null
-}
 
 const SAFE_FLAGS = [
     'checkered_flag',
@@ -238,13 +233,19 @@ export let emojiPicker = EmojiPicker()
 
 function EmojiPicker() {
     const state: Writable<EmojiPicker> = writable({ 
-        position: null,
+        position: { top: -1000, left: -1000 },
         isOpen: false,
         onEmojiSelect: null
     })
 
-    function init(args: Omit<EmojiPicker, "isOpen">) {
-        const { position, onEmojiSelect } = args
+    function init(args: { onEmojiSelect: (emoji: any) => void}) {
+        const { onEmojiSelect } = args
+        const position = getPopFloatElemPos({ height: 305, width: 380 })
+
+        if (get(state).isOpen) {
+            close()
+            return
+        }
 
         state.set({
             isOpen: true, 
@@ -267,7 +268,6 @@ function EmojiPicker() {
             onEmojiSelect: null
         }))
     }
-
     return {
         state, init, onEmojiSelect, close
     }

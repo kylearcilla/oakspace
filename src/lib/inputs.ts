@@ -17,6 +17,7 @@ export class InputManager {
     placeholder?: string
     isValidValue = true
     doAllowEmpty: boolean
+    defaultText?: string
     handlers?: {
         onInputHandler?: FunctionParam
         onBlurHandler?: FunctionParam
@@ -30,6 +31,7 @@ export class InputManager {
         this.oldTitle  = options.initValue
         this.maxLength = options.maxLength ?? this.DEFAULT_MAX_LENGTH
         this.value = options.initValue
+        this.defaultText = options.defaultText ?? "Untitled"
         this.id = options.id ?? ""
         this.placeholder = options.placeholder
         this.handlers = options.handlers
@@ -233,7 +235,7 @@ export class TextEditorManager extends InputManager {
      * Parses the provided HTML string and processes the nodes within it.
      * This function cleans up any inline styles or attributes.
      * 
-     * @param {string} data The HTML string to parse.
+     * @param   data The HTML string to parse.
      * @returns The container element with the processed content.
      */
     parsePastedHTML(data: string) {
@@ -304,9 +306,13 @@ export class TextEditorManager extends InputManager {
             return
         }
 
-        const value = this.value || (this.doAllowEmpty ? "" : "Untitled")
-        
-        this.updateState({ oldTitle: value })
+        let value = this.value
+
+        if (!this.value && !this.doAllowEmpty && this.defaultText) {
+            value = this.defaultText
+            this.inputElem!.innerText = this.defaultText
+        }
+
         this.updateTextEditorVal(event, value)
 
         if (this.handlers?.onBlurHandler) {
@@ -318,7 +324,7 @@ export class TextEditorManager extends InputManager {
     formattingHandler(ke: KeyboardEvent) {
         const selection = window.getSelection()
         if (!selection || selection.rangeCount === 0) return
-        const { key, metaKey } = ke
+        const { key } = ke
 
         if (key === "e") {
             this.currFormat = "code"
@@ -776,8 +782,6 @@ export class TextEditorManager extends InputManager {
         
         // initialize text
         this.value = this.value
-        this.updateState({ value: this.value })
-
         this.elemInit = true
     }
 

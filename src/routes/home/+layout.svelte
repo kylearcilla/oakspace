@@ -42,6 +42,7 @@
 	import { themeState, ytPlayerStore } from "../../lib/store";
 	import EmojiPicker from "../../components/EmojiPicker.svelte";
 	import ImgUpload from "../../components/ImgUpload.svelte";
+	import IconPicker from "../../components/IconPicker.svelte";
 
   
   export let data
@@ -305,6 +306,7 @@
 
 <EmojiPicker/>
 <ImgUpload/>
+<IconPicker/>
 
 
 <style lang="scss">

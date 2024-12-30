@@ -1,33 +1,34 @@
-
 <script lang="ts">
     import { themeState, weekRoutine } from "$lib/store"
 
 	import { Icon } from "$lib/enums"
-	import { clickOutside } from "$lib/utils-general"
 	import { formatDatetoStr } from "$lib/utils-date"
+	import { clickOutside } from "$lib/utils-general"
+	import { didTodoistAPIRedirect } from "$lib/api-todoist"
+    import { TasksViewManager } from "$lib/tasks-view-manager"
 	import { findClosestColorSwatch } from "$lib/utils-colors"
-	import { TasksViewManager } from "$lib/tasks-view-manager"
-	import { ProductivityCalendar } from "$lib/productivity-calendar"
+	import { SideCalendar } from "$lib/side-calendar"
 	import { GoogleCalendarManager, initGoogleCalSession } from "$lib/google-calendar-manager"
     
+	import Todos from "./Todos.svelte";
 	import OverviewDayView from "./OverviewDayView.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
 	import Calendar from "../../components/Calendar.svelte"
 	import ToggleBtn from "../../components/ToggleBtn.svelte"
 	import BounceFade from "../../components/BounceFade.svelte"
-	import DropdownList from "../../components/DropdownList.svelte"
 
     const OVERVIEW_SIDE_MARGINS = 6
     const DAY_VIEW_SIDE_MARGINS = 17
 
     type GoogleCalOptn = "refresh" | "disconnect" | "my calendars"
 
-    export let calendar: ProductivityCalendar
+    export let calendar = new SideCalendar()
 
     let focusDate  = new Date()
     let calendarHt = 0
 
     /* day overview */
+    let view: "calendar" | "tasks" = didTodoistAPIRedirect() ? "tasks" : "calendar"
     let dayOptn: "routine" | "calendar" | null = "routine"
 
     /* routines */
@@ -48,12 +49,14 @@
     let googleEvents: GoogleCalendarEvent[] = googleCal?.events ?? []
 
     /* tasks */
-    let tasksSettingsHandler: (option: string) => void
-    let tasksSettings = false
+    let tasksManager = new TasksViewManager()
+    let removeCompleteFlag = false
+    let hasCompletedTasks = false
 
-    $: calendar?._store.subscribe((newCalendar: ProductivityCalendar) => {
-        calendar = newCalendar
-    }) 
+    $: tm = tasksManager.store
+    $: onTodoist = $tm.onTodoist
+    $: todoistLinked = $tm.todoistLinked
+
     weekRoutine.subscribe((state) => {
         if (!state && isGoogleCalLinked)  {
             dayOptn = "calendar"
@@ -72,6 +75,9 @@
 
         if (!isGoogleCalLinked || !tokenExpired) {
             focusDate = date
+        }
+        if (view === "tasks") {
+            view = "calendar"
         }
     }
     async function getNewEvents(newDay: Date) {
@@ -146,11 +152,11 @@
             calendar={calendar} 
         />
     </div>
-        <!-- Day View Header -->
-        <div 
-            class="overview__day-view"
-            style:height={`calc(100% - ${calendarHt}px)`}
-        >
+    <!-- Day View Header -->
+    <div 
+        class="overview__day-view"
+        style:height={`calc(100% - ${calendarHt}px)`}
+    >
         <div class="overview__day-view-btns">
             <button 
                 class="overview__day-view-settings-btn" 
@@ -162,20 +168,31 @@
         </div>
         <div class="overview__day-view-header">
             <span>
-                {formatDatetoStr(focusDate, { month: "long", day: "numeric" })}
+                {#if view === "calendar"}
+                    {formatDatetoStr(focusDate, { month: "long", day: "numeric" })}
+                {:else}
+                    Tasks
+                {/if}
             </span>
     </div>
 
         <!-- Content -->
-
-        <OverviewDayView
-            {dayOptn}
-            {richColors}
-            {checkbox}
-            day={focusDate}
-            googleCals={googleCalendars}
-            googleEvents={googleEvents}
-        />
+        {#if view === "calendar"}
+            <OverviewDayView
+                {dayOptn}
+                {richColors}
+                {checkbox}
+                day={focusDate}
+                googleCals={googleCalendars}
+                googleEvents={googleEvents}
+            />
+        {:else}
+            <Todos
+                {removeCompleteFlag}
+                manager={tasksManager}
+                onTaskComplete={(completed) => hasCompletedTasks = completed > 0} 
+            />        
+        {/if}
 
         <!-- User's Google Calendars -->
         <BounceFade 
@@ -238,175 +255,271 @@
                     settings = false
                 }} 
             >
-                {#if routine && isGoogleCalLinked}
-                    <!-- Content -->
+                <!-- view -->
+                <li class="dmenu__section">
+                    <div style:display="flex" style:margin="5px 0px 10px 7px">
+                        <!-- <span class="dmenu__option-heading">View</span> -->
+                        <button 
+                            class="dmenu__box" 
+                            class:dmenu__box--selected={view === "calendar"}
+                            on:click={() => {
+                                view = "calendar"
+                                settings = false
+                            }}
+                        >
+                            <div class="dmenu__box-icon">
+                                <i class="fa-regular fa-calendar-days"></i>
+                            </div>
+                            <span>Calendar</span>
+                        </button>
+                        <button 
+                            class="dmenu__box" 
+                            class:dmenu__box--selected={view === "tasks"}
+                            on:click={() => {
+                                view = "tasks"
+                                settings = false
+                            }}
+                        >
+                            <div class="dmenu__box-icon">
+                                <i class="fa-solid fa-list-check"></i>
+                            </div>
+                            <span>Tasks</span>
+                        </button>
+                    </div>
+                </li>
+                
+                <!-- tasks -->
+                {#if view === "tasks"}
+                    {@const hideTasks = !hasCompletedTasks && !todoistLinked}
+                    <li class="dmenu__section-divider"></li>
+                    <!-- completed -->
+                    <li 
+                        class="dmenu__section" 
+                        class:hidden={!hasCompletedTasks && !todoistLinked}
+                    >
+                        {#if hasCompletedTasks}
+                            <div class="dmenu__option">
+                                <button 
+                                    class="dmenu__option-btn"
+                                    on:click={() => {
+                                        removeCompleteFlag = !removeCompleteFlag
+                                        settings = false
+                                    }}
+                                >
+                                    <span class="dmenu__option-text">
+                                        Remove Completed
+                                    </span>
+                                </button>
+                            </div>
+                        {/if}
+                        {#if todoistLinked}
+                            <div class="dmenu__option">
+                                <button 
+                                    class="dmenu__option-btn"
+                                    on:click={() => {
+                                        tasksManager.toggleView()
+                                        settings = false
+                                    }}
+                                >
+                                    <span class="dmenu__option-text">
+                                        {onTodoist ? "Switch to Inbox" : "Switch to Todoist"}
+                                    </span>
+                                </button>
+                            </div>
+                        {/if}
+                    </li>
+                    <div class="dmenu__section-divider" class:hidden={hideTasks}>
+                    </div>
+                    <!-- todoist -->
                     <li class="dmenu__section">
                         <div class="dmenu__section-name">
-                            Content
+                            Todoist
                         </div>
-                        <div 
-                            class="dmenu__option"
-                            class:dmenu__option--selected={dayOptn === "routine"}
-                        >
-                            <button 
-                                class="dmenu__option-btn"
-                                on:click={() => {
-                                    dayOptn = "routine"
-                                    settings = false
-                                }}
+
+                        {#if todoistLinked}
+                            <div class="dmenu__option">
+                                <button 
+                                    class="dmenu__option-btn"
+                                    on:click={() => {
+                                        tasksManager.logoutTodoist()
+                                        settings = false
+                                    }}
+                                >
+                                    <span class="dmenu__option-text">
+                                        Log Out
+                                    </span>
+                                </button>
+                            </div>
+                        {:else}
+                            <div class="dmenu__option">
+                                <button 
+                                    class="dmenu__option-btn"
+                                    on:click={() => {
+                                        tasksManager.loginTodoist()
+                                        settings = false
+                                    }}
+                                >
+                                    <span class="dmenu__option-text">
+                                        Link Account
+                                    </span>
+                                </button>
+                            </div>
+                        {/if}
+                    </li>
+                {/if}
+
+                <!-- calendar -->
+                {#if view === "calendar"}
+                    <li class="dmenu__section-divider"></li>
+                    {#if routine && isGoogleCalLinked}
+                        <!-- Content -->
+                        <li class="dmenu__section">
+                            <div class="dmenu__section-name">
+                                Content
+                            </div>
+                            <div 
+                                class="dmenu__option"
+                                class:dmenu__option--selected={dayOptn === "routine"}
                             >
-                                <span class="dmenu__option-text">
-                                    Routine
-                                </span>
-                                <div class="dmenu__option-right-icon-container">
-                                    <div 
-                                        class="dmenu__option-icon"
-                                        class:dmenu__option-icon--check={true}
-                                    >
-                                        <i class="fa-solid fa-check"></i> 
+                                <button 
+                                    class="dmenu__option-btn"
+                                    on:click={() => {
+                                        dayOptn = "routine"
+                                        settings = false
+                                    }}
+                                >
+                                    <span class="dmenu__option-text">
+                                        Routine
+                                    </span>
+                                    <div class="dmenu__option-right-icon-container">
+                                        <div 
+                                            class="dmenu__option-icon"
+                                            class:dmenu__option-icon--check={true}
+                                        >
+                                            <i class="fa-solid fa-check"></i> 
+                                        </div>
                                     </div>
-                                </div>
-                            </button>
-                        </div>
-                        <div 
-                            class="dmenu__option"
-                            class:dmenu__option--selected={dayOptn === "calendar"}
-                        >
-                            <button 
-                                class="dmenu__option-btn"
-                                on:click={() => {
-                                    dayOptn = "calendar"
-                                    settings = false
-                                }}
+                                </button>
+                            </div>
+                            <div 
+                                class="dmenu__option"
+                                class:dmenu__option--selected={dayOptn === "calendar"}
                             >
-                                <span class="dmenu__option-text">
-                                    Calendar
-                                </span>
-                                <div class="dmenu__option-right-icon-container">
-                                    <div 
-                                        class="dmenu__option-icon"
-                                        class:dmenu__option-icon--check={true}
-                                    >
-                                        <i class="fa-solid fa-check"></i> 
+                                <button 
+                                    class="dmenu__option-btn"
+                                    on:click={() => {
+                                        dayOptn = "calendar"
+                                        settings = false
+                                    }}
+                                >
+                                    <span class="dmenu__option-text">
+                                        Calendar
+                                    </span>
+                                    <div class="dmenu__option-right-icon-container">
+                                        <div 
+                                            class="dmenu__option-icon"
+                                            class:dmenu__option-icon--check={true}
+                                        >
+                                            <i class="fa-solid fa-check"></i> 
+                                        </div>
                                     </div>
-                                </div>
-                            </button>
+                                </button>
+                            </div>
+                        </li>
+                        <li class="dmenu__section-divider"></li>
+                    {/if}
+
+                    <!-- routine -->
+                    <li class="dmenu__section">
+                        <div 
+                            title="Current set routine"
+                            class="dmenu__section-name"
+                        >
+                            {routine?.name ?? "Routine"}
                         </div>
+                        {#if routine}
+                            <div class="dmenu__toggle-optn">
+                                <span class="dmenu__option-text">
+                                    Checkbox
+                                </span>
+                                <ToggleBtn 
+                                    active={checkbox}
+                                    onToggle={() => checkbox = !checkbox}
+                                />
+                            </div>
+                            <div class="dmenu__toggle-optn">
+                                <span class="dmenu__option-text">
+                                    Rich Colors
+                                </span>
+                                <ToggleBtn 
+                                    active={richColors}
+                                    onToggle={() => richColors = !richColors}
+                                />
+                            </div>
+                        {:else}
+                            <div class="dmenu__toggle-optn">
+                                <span class="dmenu__option-text">
+                                    No Set Routine
+                                </span>
+                            </div>
+                        {/if}
+                    </li>
+                    <li class="dmenu__section-divider"></li>
+    
+                    <!-- google calendar -->
+                    <li class="dmenu__section">
+                        <div class="dmenu__section-name">
+                            Google Calendar
+                        </div>
+                        {#if isGoogleCalLinked}
+                            <div class="dmenu__option">
+                                <button 
+                                    on:click={() => onCalSettingsHandler("my calendars")}
+                                    class="dmenu__option-btn"
+                                >
+                                    <span class="dmenu__option-text">
+                                        My Calendars
+                                    </span>
+                                </button>
+                            </div>
+                            <div class="dmenu__option">
+                                <button 
+                                    on:click={() => onCalSettingsHandler("refresh")}
+                                    class="dmenu__option-btn"
+                                >
+                                    <span class="dmenu__option-text">
+                                        {$googleCalState?.tokenExpired ? "Refresh Token" : "Refresh"}
+                                    </span>
+                                </button>
+                            </div>
+                            <div class="dmenu__option">
+                                <button 
+                                    on:click={() => onCalSettingsHandler("disconnect")}
+                                    class="dmenu__option-btn"
+                                >
+                                    <span class="dmenu__option-text">
+                                        Disconnect
+                                    </span>
+                                </button>
+                            </div>
+                        {:else}
+                            <div class="dmenu__option">
+                                <button 
+                                    on:click={() => connectGoogleCal()}
+                                    class="dmenu__option-btn"
+                                >
+                                    <span class="dmenu__option-text">
+                                        Connect
+                                    </span>
+                                </button>
+                            </div>
+                        {/if}
                     </li>
                     <li class="dmenu__section-divider"></li>
                 {/if}
                 
-                <!-- Routine -->
-                <li class="dmenu__section">
-                    <div 
-                        title="Current set routine"
-                        class="dmenu__section-name"
-                    >
-                        {routine?.name ?? "Routine"}
-                    </div>
-                    {#if routine}
-                        <div class="dmenu__toggle-optn">
-                            <span class="dmenu__option-text">
-                                Checkbox
-                            </span>
-                            <ToggleBtn 
-                                active={checkbox}
-                                onToggle={() => checkbox = !checkbox}
-                            />
-                        </div>
-                        <div class="dmenu__toggle-optn">
-                            <span class="dmenu__option-text">
-                                Rich Colors
-                            </span>
-                            <ToggleBtn 
-                                active={richColors}
-                                onToggle={() => richColors = !richColors}
-                            />
-                        </div>
-                    {:else}
-                        <div class="dmenu__toggle-optn">
-                            <span class="dmenu__option-text">
-                                No Set Routine
-                            </span>
-                        </div>
-                    {/if}
-                </li>
-                <li class="dmenu__section-divider"></li>
-
-                <!-- Routine -->
-                <li class="dmenu__section">
-                    <div class="dmenu__section-name">
-                        Google Calendar
-                    </div>
-                    {#if isGoogleCalLinked}
-                        <div class="dmenu__option">
-                            <button 
-                                on:click={() => onCalSettingsHandler("my calendars")}
-                                class="dmenu__option-btn"
-                            >
-                                <span class="dmenu__option-text">
-                                    My Calendars
-                                </span>
-                            </button>
-                        </div>
-                        <div class="dmenu__option">
-                            <button 
-                                on:click={() => onCalSettingsHandler("refresh")}
-                                class="dmenu__option-btn"
-                            >
-                                <span class="dmenu__option-text">
-                                    {$googleCalState?.tokenExpired ? "Refresh Token" : "Refresh"}
-                                </span>
-                            </button>
-                        </div>
-                        <div class="dmenu__option">
-                            <button 
-                                on:click={() => onCalSettingsHandler("disconnect")}
-                                class="dmenu__option-btn"
-                            >
-                                <span class="dmenu__option-text">
-                                    Disconnect
-                                </span>
-                            </button>
-                        </div>
-                    {:else}
-                        <div class="dmenu__option">
-                            <button 
-                                on:click={() => connectGoogleCal()}
-                                class="dmenu__option-btn"
-                            >
-                                <span class="dmenu__option-text">
-                                    Connect
-                                </span>
-                            </button>
-                        </div>
-                    {/if}
-                </li>
-                <li class="dmenu__section-divider"></li>
             </div>
         </BounceFade>
-
-        <!-- Tasks Settings -->
-        <!-- <DropdownList 
-            id={"overview"}
-            isHidden={!tasksSettings} 
-            options={{
-                listItems: taskSettingsOptions,
-                position: { 
-                    top: "20px", right: "12px"
-                },
-                styling:  { 
-                    width: "160px",
-                    fontSize: "1.2rem"
-                },
-                onListItemClicked: (context) => {
-                    tasksSettingsHandler(context.name)
-                },
-                onClickOutside: () => {
-                    tasksSettings = false
-                }
-            }}
-        /> -->
     </div>
 </div>
 
@@ -536,10 +649,42 @@
     }
 
     .dmenu {
-        width: 150px;
-
+        width: 168px;
         span {
             @include text-style(0.78, 500, 1.2rem);
+        }
+        &__box {
+            height: 62px;
+            margin-right: 7px;
+            border-radius: 8px;
+            text-align: center;
+            width: 50%;
+            background-color: rgba(var(--textColor1), 0.02);
+
+            &:hover {
+                box-shadow: rgba(#FFFFFF, 0.05) 0px 0px 0px 2px inset, 
+                            rgba(#FFFFFF, 0.02) 0px 0px 0px 2.5px;
+                background-color: rgba(var(--textColor1), 0.03);
+            }
+            &--selected {
+                box-shadow: rgba(#0C8CE9, 0.35) 0px 0px 0px 2px inset, 
+                            rgba(#0C8CE9, 0.1) 0px 0px 0px 2.5px !important;
+                background-color: rgba(var(--textColor1), 0.02) !important;
+            }
+            &--selected i,
+            &--selected span {
+                opacity: 1 !important;
+                color: #0C8CE9 !important;
+            }
+            i {
+                font-size: 1.5rem;
+                margin-bottom: 6px;
+                opacity: 0.2;
+            }
+            span {
+                @include text-style(_, 400, 1.1rem, "DM Mono");
+                opacity: 0.65;
+            }
         }
         &__toggle-optn {
             padding: 6px 7px 7px 7px;

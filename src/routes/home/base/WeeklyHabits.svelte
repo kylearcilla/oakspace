@@ -1,10 +1,11 @@
 <script lang="ts">
-    import { TEST_HABITS } from "$lib/mock-data";
-	import ProgressRing from "../../../components/ProgressRing.svelte";
-	import SvgIcon from "../../../components/SVGIcon.svelte";
-	import { Icon } from "../../../lib/enums";
-	import { themeState } from "../../../lib/store";
-	import { DAYS_OF_WEEK } from "../../../lib/utils-date";
+    import { Icon } from "../../../lib/enums"
+    import { TEST_HABITS } from "$lib/mock-data"
+	import { themeState } from "../../../lib/store"
+	import { DAYS_OF_WEEK, getDayIdxMinutes } from "../../../lib/utils-date"
+
+	import SvgIcon from "../../../components/SVGIcon.svelte"
+	import ProgressRing from "../../../components/ProgressRing.svelte"
 
     const MIN_SIZE = 620
     const TIMES_OF_DAY_MAP: { [key: string]: number } = {
@@ -29,6 +30,8 @@
     let width = 0
     let dragHabitSrc: any
     let dragHabitTarget: any
+
+    let currTime = getDayIdxMinutes()
 
     $: isLight = !$themeState.isDarkTheme
     $: {
@@ -146,7 +149,6 @@
             habitGroup.sort((a: any, b: any) => a.order.tod - b.order.tod)
         });
     }
-
     function setSortedHabitsToDefault() {
         sortedHabits = [[], [], [], []]
 
@@ -215,7 +217,6 @@
         srcHabit.order.default = targetOrder
         setSortedHabitsToDefault()
     }
-
     function reorderInTimeOfDayView(srcHabit: any, targetHabit: any) {
         const toLast  = typeof targetHabit === "string"
 
@@ -288,9 +289,16 @@
             </span>
         </div>
         <div class="days-col">
-            {#each DAYS_OF_WEEK as day}
+            {#each DAYS_OF_WEEK as day, idx}
                 <div class="wk-habits__col day-col header-col">
-                    {day.substring(0, 1)}
+                    <div
+                        class="dow"
+                        class:dow--today={currTime.dayIdx === idx}
+                    >
+                        <span>
+                            {day.substring(0, 1)}
+                        </span>
+                    </div>
                 </div>
             {/each}
         </div>
@@ -338,9 +346,11 @@
                             class:cell--first-row={habitIdx === 0}
                         >
                             <div class="flx">
-                                <span class="wk-habit__symbol">
-                                    {habit.symbol}
-                                </span>
+                                {#if options.emojis}
+                                    <span class="wk-habit__symbol">
+                                        {habit.symbol}
+                                    </span>
+                                {/if}
                                 <span>
                                     {habit.name}
                                 </span>
@@ -368,7 +378,8 @@
                                     class:cell--first-row={habitIdx === 0}
                                 >
                                     <button 
-                                        on:click={() => toggleCompleteHabit(habit, dayIdx)}
+                                    on:click={() => toggleCompleteHabit(habit, dayIdx)}
+                                        disabled={dayIdx > currTime.dayIdx}
                                         class="wk-habit__box"
                                         class:wk-habit__box--not-checkable={!checkable}
                                         class:wk-habit__box--checked={checked}
@@ -383,9 +394,9 @@
                         <div 
                             class="wk-habit__progress three-col cell cell--last-col"
                             class:cell--first-row={habitIdx === 0}
-                            class:four-col--min={!wkProgress.detailed}
+                            class:four-col--min={!wkProgress.numbers}
                         >
-                            {#if wkProgress.detailed}
+                            {#if wkProgress.numbers}
                                 {#if wkProgress.percentage}
                                     <div class="fraction">
                                         {Math.min(Math.floor((checked / total) * 100), 100)}%
@@ -440,18 +451,20 @@
 
             </div>
     {/each}
-    <div class="wk-habits__count-cells">
-        <div class="wk-habits__count-cell one-col"></div>
-        <div class="wk-habits__count-cell two-col"></div>
-        <div class="wk-habits__count-cell days-col">
-            {#each dayProgress as progress}
-                <div class="wk-habits__count-cell day-col">
-                    {`${progress}%`}
-                </div>
-            {/each}
+    {#if options.progress.daily}
+        <div class="wk-habits__count-cells">
+            <div class="wk-habits__count-cell one-col"></div>
+            <div class="wk-habits__count-cell two-col"></div>
+            <div class="wk-habits__count-cell days-col">
+                {#each dayProgress as progress}
+                    <div class="wk-habits__count-cell day-col">
+                        {`${progress}%`}
+                    </div>
+                {/each}
+            </div>
+            <div class="wk-habits__count-cell three-col"></div>
         </div>
-        <div class="wk-habits__count-cell three-col"></div>
-    </div>
+    {/if}
 </div>
 
 <style lang="scss">
@@ -558,9 +571,8 @@
         }
 
         &__symbol {
-            font-size: 1.45rem;
+            font-size: 1.5rem;
             margin-right: 12px;
-            display: none
         }
         &__name {
             @include text-style(1, 500, 1.4rem);
@@ -586,6 +598,9 @@
             font-size: 1.1rem;
             @include center;
             
+            &:disabled {
+                opacity: 0.4 !important;
+            }
             &:hover {
                 opacity: 0.55;
             }
@@ -649,6 +664,20 @@
     .day-col {
         width: calc(100% / 7);
         min-width: 50px;
+    }
+    .dow {
+        display: block;
+        @include circle(20px);
+        @include center;
+        border-radius: 10px;
+    }
+    .dow--today {
+        background-color: #FF5151;
+        color: white;
+
+        span {
+            margin-top: -1.4px;
+        }
     }
     .three-col {
         width: 120px;

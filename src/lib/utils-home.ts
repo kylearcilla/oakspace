@@ -9,7 +9,7 @@ import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer, handle
 import { getElemById, initFloatElemPos, isTargetTextEditor, randomArrayElem } from "./utils-general"
 import { initMusicSettings } from "./utils-music-settings"
 import { POPULAR_SPACES } from "./data-spaces"
-import { initEmojis } from "./emojis"
+import { emojiPicker, initEmojis } from "./emojis"
 
 /* constants */
 export const LEFT_BAR_MIN_WIDTH = 60
@@ -397,7 +397,28 @@ export function getHomeUrlPath(path = window.location.pathname) {
     return name === "base" ? "home" : name
 }
 
+export function getPopFloatElemPos(box: { height: number, width: number }) {
+    const { height, width } = box
+
+    const fromPos = {
+        top: cursorPos.top - 25,
+        left: cursorPos.left - 35
+    }
+    return initFloatElemPos({
+        dims: { 
+            height,
+            width
+        }, 
+        containerDims: { 
+            height: window.innerHeight, 
+            width: window.innerWidth
+        },
+        cursorPos: fromPos
+    })
+}
+
 export let imageUpload = ImageUpload()
+export let iconPicker = IconPicker()
 
 function ImageUpload() {
     const state: Writable<ImageUpload> = writable({ 
@@ -411,21 +432,12 @@ function ImageUpload() {
         constraits?: ImgUploadConstraints 
     }) {
         const { constraits, onSubmit } = args
-        const fromPos = {
-            top: cursorPos.top - 45,
-            left: cursorPos.left - 65
+        const position = getPopFloatElemPos({ height: 290, width: 460 })
+
+        if (get(state).isOpen) {
+            close()
+            return
         }
-        const position = initFloatElemPos({
-            dims: { 
-                height: 290,
-                width: 460
-            }, 
-            containerDims: { 
-                height: window.innerHeight, 
-                width: window.innerWidth
-            },
-            cursorPos: fromPos
-        })
 
         state.update((data) => ({ 
             ...data, 
@@ -451,5 +463,75 @@ function ImageUpload() {
 
     return {
         state, init, onSubmit, close
+    }
+}
+
+function IconPicker() {
+    const state: Writable<IconPicker> = writable({ 
+        id: "",
+        isOpen: false,
+        position: { top: -1000, left: -1000 },
+        onSubmitIcon: (icon: Icon | null) => {}
+    })
+
+    function init(args: { 
+        id: string,
+        onSubmitIcon: (icon: Icon | null) => void
+    }) {
+        const position = getPopFloatElemPos({ height: 90, width: 175 })
+
+        if (get(state).isOpen) {
+            close()
+            return
+        }
+
+        state.update((data) => ({ 
+            ...data, 
+            ...args,
+            position, 
+            isOpen: true 
+        }))
+    }
+    function onChooseType(type: IconType | null) {
+        const { onSubmitIcon }  = get(state)
+
+        if (type === "emoji") {
+            emojiPicker.init({
+                onEmojiSelect: (emoji: any) => {
+                    if (emoji) {
+                        onSubmitIcon({ type: "emoji", src: emoji.native })
+                    }
+                    else {
+                        onSubmitIcon(null)
+                    }
+                }
+            })
+        }
+        else if (type === "img") {
+            imageUpload.init({
+                onSubmit: (src: string | null) => {
+                    if (src) {
+                        onSubmitIcon({ type: "img", src })
+                    }
+                    else {
+                        onSubmitIcon(null)
+                    }
+                }
+            })
+        }
+        else {
+            onSubmitIcon(null)
+        }
+        close()
+    }
+    function close() {
+        state.update((data) => ({
+            ...data,
+            isOpen: false
+        }))
+    }
+
+    return {
+        state, init, onChooseType, close
     }
 }

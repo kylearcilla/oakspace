@@ -4,19 +4,19 @@ import { APIError } from "./errors"
 import { v4 as uuidv4 } from 'uuid'
 import { TasksViewManager } from "./tasks-view-manager"
 
-const REDIRECT_URI = "http://localhost:5173/home"
+const REDIRECT_URI = "http://localhost:5173/home/base"
 const TODOIST_SYNC_API_URL = "https://api.todoist.com/sync/v9/sync"
+const STATE_ID = "0783d180-ab4e-4a76-9047-431e4cf919ce"
 
 export async function initTodoistAPI() {
     const url = new URL("https://todoist.com/oauth/authorize")
     
     url.searchParams.append('client_id', PUBLIC_TODOIST_CLIENT_ID)
     url.searchParams.append('scope', "data:read_write,data:delete")
-    url.searchParams.append('state', "d4c1a4d4-ac4b-45ea-898a-7b8fa6a189f5")
+    url.searchParams.append('state', STATE_ID)
 
     window.location.href = url.toString()
-
-    localStorage.setItem("tapi-state", "d4c1a4d4-ac4b-45ea-898a-7b8fa6a189f5")
+    localStorage.setItem("tapi-state", STATE_ID)
 }
 
 /**
@@ -34,8 +34,8 @@ export async function authTodoistAPI(): Promise<{ access_token: string, token_ty
         const body = {
             client_id: PUBLIC_TODOIST_CLIENT_ID,
             client_secret: PUBLIC_TODOIST_CLIENT_SECRET,
-            code,
-            redirect_uri: REDIRECT_URI
+            redirect_uri: REDIRECT_URI,
+            code
         }
 
         const res = await fetch(oAuthURL.toString(), {
@@ -49,7 +49,6 @@ export async function authTodoistAPI(): Promise<{ access_token: string, token_ty
             console.error(`There was an error finishing OAuth 2.0 Flow. Status: ${res.status}. Error: ${data.error}.`)
             throwTodoistAPIError({ status: res.status, error: data.error })
         }
-
         return data
     }
     catch(e: any) {
@@ -76,6 +75,7 @@ function verifyRedirect() {
         throw new Error
     }
     else if (state != initState) {
+        // if state returned from redirect does not match the state param in the init request
         console.error("Request to start Todoist API OAuth 2.0 flow has been compromised by other parties.")
         throw new Error
     }
@@ -88,6 +88,14 @@ export function didTodoistAPIRedirect() {
     return Boolean(localStorage.getItem("tapi-state"))
 }
 
+/**
+ * Returns users' tasks or changed tasks from a partial sync.
+ * First request is a full sync, subsequent requests are partial syncs.
+ * Only inbox tasks are extracted.
+ * 
+ * @param options 
+ * @returns  Tasks with sync token.
+ */
 export async function syncTodoistUserItems(options: {
      accessToken: string 
      syncToken: string
@@ -97,8 +105,8 @@ export async function syncTodoistUserItems(options: {
     try {
         // will get inbox project id if no project id is passed
         const { accessToken, syncToken, inboxProjectId } = options
-        const partialSync = syncToken != "*"
         const url = new URL(TODOIST_SYNC_API_URL)
+        const partialSync = syncToken != "*"
 
         const headers = new Headers()
         headers.append("Content-Type", "application/json")
@@ -108,71 +116,52 @@ export async function syncTodoistUserItems(options: {
             sync_token: syncToken,
             resource_types: inboxProjectId ? ["items"] : ["user", "items"]
         }
-
         const res = await fetch(url.toString(), {
             method: 'POST',
             headers,
             body: JSON.stringify(body)
         })
         const data = await res.json()
+
         if (!res.ok) {
             console.error(`There was an error fetching user items. Status: ${res.status}. Error: ${data.error}.`)
             throwTodoistAPIError({ status: res.status, error: data.error })
         }
 
-        // only inbox tasks are extracted
+        // need the project id on the first full sync
         const resId = data.user?.inbox_project_id
         const projectId = inboxProjectId ? inboxProjectId : resId ? resId : ""
         const tasks: TodoistTask[] = []
-        const childTasks: TodoistTask[] = []
 
-        // filter the parent and child tasks
+
+        // on partial syncs, get the updated tasks
         for (let i = 0; i < data.items.length; i++) {
             const item = data.items[i]
 
-            // if inbox or an updated task returned from a partial sync request
-            const shouldInclude = (!partialSync && projectId === item.project_id) || (partialSync && !item.checked)
-
+            // completed tasks are not shown
+            // on partial syncs, completed tasks needed to incorporate updates
+            const shouldInclude = projectId === item.project_id && ((!partialSync && !item.checked) || partialSync)
             if (!shouldInclude) continue
 
             const task = {
                 id: item.id,
-                parentId: item.parent_id ?? "",
+                parentId: item.parent_id ?? null,
                 idx: -1,
                 isChecked: item.checked,
                 title: item.content,
                 description: item.description,
                 isDeleted: item.is_deleted,
-                subtasks: [],
                 isRecurring: item.due?.is_recurring ?? false,
                 due: item.due?.date ?? ""
             }
-
-            if (item.parent_id) {
-                childTasks.push(task)
-            }
-            else {
-                tasks.push(task)
-            }
+            tasks.push(task)
         }
 
         if (partialSync) {
-            console.log([...tasks, ...childTasks])
             return {
-                tasks: [...tasks, ...childTasks],
+                tasks,
                 syncToken: data.sync_token
             }
-        }
-
-
-        // do not include children of children
-        for (let child of childTasks) {
-            const parentIdx = tasks.findIndex((task) => task.id === child.parentId)
-
-            // will be a subtask
-            if (!tasks[parentIdx]?.subtasks) continue
-
-            tasks[parentIdx].subtasks!.push(child)
         }
 
         return {
@@ -187,31 +176,42 @@ export async function syncTodoistUserItems(options: {
     }
 }
 
+/**
+ * Updates a Todoist task.
+ * Used to update a task's name, description, or due date (checking off a recurring task).
+ * 
+ * @param options 
+ */
 export async function updateTodoistTask(options: {
     accessToken: string 
     syncToken: string
     taskId: string
     name?: string
+    parentId?: string | null
     description?: string
     command?: any,
 }): Promise<void> {
    try {
-       const { accessToken, taskId, name, description, command } = options
+       const { accessToken, taskId, name, description, command, parentId } = options
        const url = new URL(TODOIST_SYNC_API_URL)
 
        const headers = new Headers()
        headers.append("Content-Type", "application/json")
        headers.append("Authorization", `Bearer ${accessToken}`)
 
+       console.log({
+            name, taskId, parentId
+        })
+
        const body = {
             commands: [command ? command : {
-                type: "item_update",
+                type: parentId ? "item_move" : "item_update",
                 uuid: uuidv4(), 
                 args: {
                     id: taskId,
                     ...(name && { content: name }),
-                    ...(description && { description }),
-                    ...(description && { description }),
+                    ...(description !== undefined && { description }),
+                    ...(parentId !== undefined && { parent_id: parentId })
                 }
             }]
        }
@@ -233,6 +233,13 @@ export async function updateTodoistTask(options: {
    }
 }
 
+/**
+ * Updates a Todoist task's completion status.
+ * Used to check off a task or uncheck a task.
+ * If a recurring task is checked off, it will be updated to the next due date.
+ * 
+ * @param options 
+ */
 export async function updateTodoistTaskCompletion(options: {
     accessToken: string 
     syncToken: string
@@ -243,8 +250,8 @@ export async function updateTodoistTaskCompletion(options: {
 }): Promise<void> {
    try {
        const { accessToken, taskId, syncToken, complete, isRecurring, dueDate } = options
-
-
+       
+       // recurring task
        if (isRecurring && !complete) {
             return await updateTodoistTask({
                 accessToken,
@@ -262,7 +269,6 @@ export async function updateTodoistTaskCompletion(options: {
        }
 
        const url = new URL(TODOIST_SYNC_API_URL)
-
        const headers = new Headers()
        headers.append("Content-Type", "application/json")
        headers.append("Authorization", `Bearer ${accessToken}`)
@@ -298,7 +304,7 @@ export async function addTodoistTask(options: {
     accessToken: string
     projectId: string
     name: string
-    parentId?: string
+    parentId?: string | null
 }): Promise<{ taskId: string }> {
     try {
         const { accessToken, projectId, name, parentId } = options
@@ -315,8 +321,8 @@ export async function addTodoistTask(options: {
                 temp_id: TEMP_ID,
                 uuid: uuidv4(),
                 args: {
-                    ...(parentId && { parent_id: parentId }),
-                   content: name
+                   content: name,
+                   parent_id: parentId
                 }
             }]
         }
@@ -386,7 +392,7 @@ const throwTodoistAPIError = (context: {
   }) => {
       const { error, status } = context
 
-        if (status === 404) {
+    if (status === 404) {
           throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND)
       }
       else if (status == 429) {

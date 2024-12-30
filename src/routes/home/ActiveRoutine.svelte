@@ -1,28 +1,29 @@
 <script lang="ts">
     import { onMount } from "svelte"
-	import type { Writable } from "svelte/store"
 	import { globalContext, themeState, weekRoutine } from "$lib/store"
 
 	import { Icon } from "$lib/enums"
-	import { TEST_TASKS } from "$lib/mock-data"
+	import { TextEditorManager } from "$lib/inputs"
 	import { toggleActiveRoutine } from "$lib/utils-home"
     import { RoutinesManager } from "$lib/routines-manager"
-	import { TextEditorManager, type InputManager } from "$lib/inputs"
-	import { getColorTrio, getMaskedGradientStyle } from "$lib/utils-general"
-	import { DAYS_OF_WEEK, getDayIdxMinutes, minsFromStartToHHMM } from "$lib/utils-date"
+	import { getMaskedGradientStyle } from "$lib/utils-general"
+	import { getDayIdxMinutes, minsFromStartToHHMM } from "$lib/utils-date"
 	import { 
-            getBlockFromOrderIdx, getCoreStr, getMextTimeCheckPointInfo, getMostRecentBlock, 
-            getUpcomingBlock, initCurrentBlock, initTodayRoutine } from "$lib/utils-routines"
+            getBlockFromOrderIdx, getNextBlockInfo, getMostRecentBlock, 
+            getUpcomingBlock, getCurrentBlock, getDayRoutineFromWeek, updateActiveRoutine
+    } from "$lib/utils-routines"
     
 	import SvgIcon from "../../components/SVGIcon.svelte"
-	import TasksList from "../../components/TasksList.svelte"
+    import { findElemVertSpace, getElemById } from "../../lib/utils-general"
+	import TasksList from "../../components/TasksList.svelte";
 	import BounceFade from "../../components/BounceFade.svelte"
-
-    export let pos: "left" | "right"
 
     $: isOpen      = $globalContext.doOpenActiveRoutine
     $: routine     = $weekRoutine
     $: isDarkTheme = $themeState.isDarkTheme
+
+    let INPUT_ID = "active-routine-description"
+    let blockIdxRef = -1
     
     const DESCR_MAX = RoutinesManager.MAX_DESCRIPTION
 
@@ -31,80 +32,74 @@
     let noneActive = false
     let nowBlockIdx = 0
     let isCreatingNewTask = false
-    let descriptionInputRef: HTMLElement
 
     let nowBlock:      { block: RoutineBlock, idx: number } | null = null
     let nextViewBlock: { block: RoutineBlock, idx: number } | null = null
     let prevViewBlock: { block: RoutineBlock, idx: number } | null = null
     
-    let hasInitDescr = false
-    let isDescrExpanded = false
-    let newDescription = ""
-    let maskListGradient = ""
-    let currDescriptionLength = 0
-
     // time
     let minuteInterval: NodeJS.Timeout | null = null
     let currTime = getDayIdxMinutes()
     
+    // description 
     let descriptionRef: HTMLElement
     let routineItemsRef: HTMLElement
-    let descriptionEditor: Writable<InputManager>
+    let textEditorElem: HTMLElement
+    let textGradient = ""
+    
+    let text = ""
+    let renderFlag = false
+    let editor: TextEditorManager
 
-    $: colorTrio    = nowBlock?.block.tag ? getColorTrio((nowBlock as any).block.tag.symbol.color, !isDarkTheme) : ["", "", ""]
-    $: todayRoutine = initTodayRoutine(routine, currTime)
+    $: todayRoutine = getDayRoutineFromWeek(routine, currTime.dayIdx)
     $: initNowBlock(todayRoutine)
-    $: initDescriptionEditor(nowBlock?.block?.description ?? "")
 
     $: {
-        doInitNow = !isOpen ? true : doInitNow
-        isDescrExpanded = false
-
-        initDescriptionGradient()
+        doInitNow = isOpen ? doInitNow :true
+    }
+    $: if (isOpen != undefined) {
+        onBlockUpdate()
     }
     
-    /* Blocks */
-    function initNowBlock(todayRoutine: RoutineBlock[] | DailyRoutine | null) {
+    /* blocks */
+    function initNowBlock(todayRoutine: RoutineBlock[] | DailyRoutine | null, force = false) {
         if (!todayRoutine || !doInitNow) return
-
-        const now  = initCurrentBlock(todayRoutine, currTime.minutes)
+        
+        const now  = getCurrentBlock(todayRoutine, currTime.minutes)
         const prev = getMostRecentBlock(currTime.minutes, todayRoutine)
         const next = getUpcomingBlock(currTime.minutes, todayRoutine)
+        
+        if (now && blockIdxRef === now.idx && !force) {
+            return
+        }
 
         nextViewBlock = next
         prevViewBlock = prev
+        blockIdxRef = now?.idx ?? -1
 
         if (now) {
             nowBlockIdx = now.idx
             nowBlock = now
             noneActive = false
-            colorTrio = nowBlock.block.tag ? getColorTrio(nowBlock.block.tag.symbol.color, !isDarkTheme) : colorTrio
         }
         else {
             noneActive = true
             nowBlock = null
         }
-
-        requestAnimationFrame(initDescriptionGradient)
+        requestAnimationFrame(() => onBlockUpdate())
     }
-    function onNowBlock() {
-        doInitNow = true
-        hasInitDescr = false
-
-        initNowBlock(todayRoutine)
-    }
-    function onPrevBlock() {
+    function getBlock(dir: "next" | "prev") {
         if (!todayRoutine) return
-        hasInitDescr = false
 
         if (doInitNow && noneActive) {
-            if (!prevViewBlock) return
+            const viewBlock = dir === "next" ? nextViewBlock : prevViewBlock
+            if (!viewBlock) return
 
-            nowBlock    = prevViewBlock
-            nowBlockIdx = prevViewBlock.idx
+            nowBlock = viewBlock
+            nowBlockIdx = viewBlock.idx
         }
         else {
-            nowBlockIdx--
+            nowBlockIdx = dir === "next" ? nowBlockIdx + 1 : nowBlockIdx - 1
             nowBlock = getBlockFromOrderIdx(nowBlockIdx, todayRoutine)
         }
         doInitNow = false
@@ -112,122 +107,85 @@
         prevViewBlock = getBlockFromOrderIdx(nowBlockIdx - 1, todayRoutine)
         nextViewBlock = getBlockFromOrderIdx(nowBlockIdx + 1, todayRoutine)
 
-        requestAnimationFrame(initDescriptionGradient)
+        requestAnimationFrame(() => onBlockUpdate())
     }
-    function onNextBlock() {
-        if (!todayRoutine) return
-        hasInitDescr = false
+    function onBlockUpdate() {
+        handleGradient(textEditorElem)
+        const editorElem = getElemById(INPUT_ID)
 
-        if (doInitNow && noneActive) {
-            if (!nextViewBlock) return
-
-            nowBlock    = nextViewBlock
-            nowBlockIdx = nextViewBlock.idx
+        if (!editorElem) {
+            editor = null
         }
-        else {
-            nowBlockIdx++
-            nowBlock = getBlockFromOrderIdx(nowBlockIdx, todayRoutine)
+        else if (!editor && editorElem) {
+            editor = initDescriptionEditor()
         }
-        doInitNow = false
-    
-        prevViewBlock = getBlockFromOrderIdx(nowBlockIdx - 1, todayRoutine)
-        nextViewBlock = getBlockFromOrderIdx(nowBlockIdx + 1, todayRoutine)
+        if (editor) {
+            const description = nowBlock?.block.description ?? ""
+            editor.updateText(description)
+            text = description
+        }
 
-        requestAnimationFrame(initDescriptionGradient)
+        renderFlag = !renderFlag
     }
 
-    /* Description */
-    function initDescriptionGradient() {
-        if (!descriptionRef || !isDarkTheme) return
-
-        maskListGradient = getMaskedGradientStyle(descriptionRef, {
-            head: { end: "0%" }, tail: { start: "50%" }
-        }).styling
-    }
-    function initDescriptionEditor(_description: string) {
-        if (hasInitDescr) return
-        hasInitDescr = true
-
-        descriptionEditor = (new TextEditorManager({ 
-            initValue: _description,
-            placeholder: "Type description here...",
-            doAllowEmpty: true,
+    /* description */
+    function initDescriptionEditor() {
+        return new TextEditorManager({ 
+            placeholder: "no description...",
+            allowFormatting: false,
             maxLength: DESCR_MAX,
-            id: "active-routine-description",
+            id: INPUT_ID,
             handlers: {
-                onBlurHandler: () => onDescriptionSave(),
-                onInputHandler: (e, text, length) => {
-                    newDescription = text
-                    currDescriptionLength = length
+                onInputHandler: (_, val) => {
+                    text = val
+                },
+                onBlurHandler: () => {
+                    onDescriptionSave()
                 }
             }
-        })).state
+        })
     }
+    function handleGradient(elem: HTMLElement) {
+        if (!isDarkTheme || !elem) return
+
+        textGradient = getMaskedGradientStyle(elem, {
+            head: {
+                end: "50px"
+            },
+            tail: {
+                start: "10%",
+                end: "100%"
+            }
+        }).styling
+    }
+
+    /* updates */
     function onDescriptionSave() {
-        hasInitDescr = false
-        isDescrExpanded = false
+        descrFocused = false
 
-        // update the source routine
-        weekRoutine.update((routine) => {
-            if (!routine) return null
-
-            const { dayIdx } = currTime
-            const currDayKey = DAYS_OF_WEEK[dayIdx] as keyof WeeklyRoutineBlocks
-            let newDayRoutine = todayRoutine!
-
-            let blocks = "id" in newDayRoutine ? newDayRoutine.blocks : newDayRoutine
-            blocks     = blocks.map((block) => block.startTime === nowBlock!.block.startTime ? { ...block, description: newDescription } : block)
-
-            if ("id" in newDayRoutine) {
-                newDayRoutine.blocks = blocks
-            }
-            else {
-                newDayRoutine = blocks
-            }
-
-            return { ...routine!, blocks: { ...routine.blocks, [currDayKey]: newDayRoutine }}
+        updateActiveRoutine({
+            updates: { 
+                description: text 
+            },
+            startTime: nowBlock!.block.startTime,
+            dayIdx: currTime.dayIdx
         })
 
-
-        nowBlock!.block.description = newDescription        
-        newDescription = ""
-
-        requestAnimationFrame(initDescriptionGradient)
     }
-
-    /* Tasks */
-    function onTasksUpdated(event: CustomEvent) {
-        if (!nowBlock) return
-        const updatedTasks = event.detail
-
-        // update the source routine
-        weekRoutine.update((routine) => {
-            if (!routine) return null
-
-            const { dayIdx } = currTime
-            const currDayKey = DAYS_OF_WEEK[dayIdx] as keyof WeeklyRoutineBlocks
-            let newDayRoutine = todayRoutine!
-
-            let blocks = "id" in newDayRoutine ? newDayRoutine.blocks : newDayRoutine
-            blocks     = blocks.map((block) => block.startTime === nowBlock!.block.startTime ? { ...block, tasks: updatedTasks } : block)
-
-            if ("id" in newDayRoutine) {
-                newDayRoutine.blocks = blocks
-            }
-            else {
-                newDayRoutine = blocks
-            }
-
-            return { ...routine!, blocks: { ...routine.blocks, [currDayKey]: newDayRoutine }}
+    function onTasksUpdated(tasks: Task[]) {
+        updateActiveRoutine({
+            updates: { 
+                tasks
+            },
+            dayIdx: currTime.dayIdx,
+            startTime: nowBlock!.block.startTime,
         })
-
-        isCreatingNewTask = false
-        nowBlock!.block.tasks = updatedTasks
     }
 
     onMount(() => {
         clearInterval(minuteInterval!)
-        initDescriptionGradient()
+        handleGradient(textEditorElem)
+        editor = initDescriptionEditor()
 
         minuteInterval = setInterval(() => currTime = getDayIdxMinutes(), 1000)
     })
@@ -237,8 +195,7 @@
     isHidden={!isOpen}
     position={{ 
         top: "38px", 
-        left: pos === "left" ? "0px" : "unset",
-        right: pos === "left" ? "unset" : "0px",
+        left: "10px",
     }}
     zIndex={99999}
     onClickOutside={toggleActiveRoutine}
@@ -250,146 +207,85 @@
         class:active-routine--light={!isDarkTheme}
     >
         {#if nowBlock}
-            {@const description = nowBlock.block.description}
+            {@const { description, title, startTime, endTime, tasks } = nowBlock.block}
             <div class="active-routine__header">
-                <!-- Title -->
-                <div 
-                    class="active-routine__title"
-                    title={nowBlock.block.title}
-                >
-                    {`${nowBlock.block.title}`}
+                <!-- title -->
+                <div class="active-routine__title" {title}>
+                    {title}
                 </div>
-                <!-- Buttons -->
+                <!-- buttons -->
                 <div class="active-routine__btns">
                     <button 
-                        on:click={onPrevBlock}
+                        on:click={() => getBlock("prev")}
                         disabled={prevViewBlock === null}
                         title="Go to prev block"
                     >
-                        <div class="active-routine__block-icon">
-                            <SvgIcon icon={Icon.ChevronLeft} options={{ scale: 0.85 }}/>
-                        </div>
-                    </button>
-                    <button on:click={onNowBlock} title="Go to current block">
-                        <div class="active-routine__now-icon">
-                        </div>
+                        <SvgIcon 
+                            icon={Icon.ChevronLeft}
+                            options={{
+                                scale: 1.5, height: 12, width: 12, strokeWidth: 1.4
+                            }}
+                        />
                     </button>
                     <button 
-                        on:click={onNextBlock}
-                        disabled={nextViewBlock === null}
-                        title="Go to mext block"
+                        title="Go to current block"
+                        on:click={() => {
+                            doInitNow = true
+                            initNowBlock(todayRoutine, true)
+                        }} 
                     >
-                        <div 
-                            class="active-routine__block-icon"
-                            class:active-routine__block-icon--second={true}
-                        >
-                            <SvgIcon icon={Icon.ChevronRight} options={{ scale: 0.85 }}/>
-                        </div>
+                    </button>
+                    <button 
+                        on:click={() => getBlock("next")}
+                        disabled={nextViewBlock === null}
+                        title="Go to next block"
+                    >
+                        <SvgIcon 
+                            icon={Icon.ChevronRight}
+                            options={{
+                                scale: 1.5, height: 12, width: 12, strokeWidth: 1.4
+                            }}
+                        />
                     </button>
                 </div>
             </div>
-            <!-- Subheader -->
-            {#if nowBlock}
-                {@const tag = nowBlock.block.tag}
-                {@const activity = nowBlock.block.activity}
-                <div class="active-routine__subheader">
-                    {#if tag}
-                        <div 
-                            class="tag"
-                            style:--tag-color-primary={tag?.symbol.color.primary}
-                            style:--tag-color-1={colorTrio[0]}
-                            style:--tag-color-2={colorTrio[1]}
-                            style:--tag-color-3={colorTrio[2]}
-                            title={tag.name}
-                        >
-                            <span class="tag__symbol">
-                                {tag?.symbol.emoji}
-                            </span>
-                            <div class="tag__title">
-                                {tag?.name}
-                            </div>
-                        </div>
-                    {/if}
-                    <div 
-                        class="active-routine__core" 
-                        class:hidden={!activity}
-                        title={activity}
-                    >
-                        <span>
-                            {getCoreStr(activity)}
-                        </span>
-                    </div>
-                    <!-- Time -->
-                    <div class="active-routine__time">
-                        {#if nowBlock}
-                            <span>
-                                {minsFromStartToHHMM(nowBlock.block.startTime)}
-                            </span>
-                            <span>-</span>
-                            <span>
-                                {minsFromStartToHHMM(nowBlock.block.endTime)}
-                            </span>
-                        {/if}
-                    </div>
-                </div>
-            {/if}
-            <!-- Description -->
-            <div class="active-routine__description-container">
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div 
-                    tabindex="0"
-                    role="button"
-                    class="active-routine__description"
-                    class:active-routine__description--no-description={description.length === 0}
-                    style={maskListGradient}
-                    bind:this={descriptionRef}
-                    on:click={() => {
-                        isDescrExpanded = true
-                        setTimeout(() => descriptionInputRef.focus(), 50)
-                    }}
-                    on:scroll={initDescriptionGradient}
-                >
-                    {description.length === 0 ? "No Description" : description}
-                </div>
-                <BounceFade 
-                    isHidden={!isDescrExpanded}
-                    position={{ top: "0px", left: "13px" }}
-                    styling={{ width: "100%" }}
-                    zIndex={100}
-                    onClickOutside={() => isDescrExpanded = false}
-                >
-                    <div class="active-routine__description-floating input-box input-box--border">
-                        {#if descriptionEditor}
-                            <div 
-                                class="active-routine__description-editor text-editor"
-                                data-placeholder={$descriptionEditor.placeholder}
-                                contenteditable
-                                bind:this={descriptionInputRef}
-                                bind:innerHTML={$descriptionEditor.value}
-                                on:paste={(e) => $descriptionEditor.onPaste(e)}
-                                on:input={(e) => $descriptionEditor.onInputHandler(e)}
-                                on:focus={(e) => $descriptionEditor.onFocusHandler(e)}
-                                on:blur={(e)  => $descriptionEditor.onBlurHandler(e)}
-                            >
-                            </div>
-                        {/if}
-                        <div 
-                            class="input-box__count"
-                            class:input-box__count--over={currDescriptionLength > DESCR_MAX}
-                        >
-                            {DESCR_MAX - currDescriptionLength}
-                        </div>
-                    </div>
-                </BounceFade>
+            <!-- time -->
+            <div 
+                class="active-routine__time" 
+                class:hidden={!nowBlock}
+                style="margin-right: 10px"
+            >
+                <span>
+                    {minsFromStartToHHMM(startTime)}
+                </span>
+                <span>-</span>
+                <span>
+                    {minsFromStartToHHMM(endTime)}
+                </span>
             </div>
-            <!-- Tasks List -->
-            {#if nowBlock.block.tasks.length >= 0}
+            <!-- description -->
+            <div 
+                id={INPUT_ID}
+                class="active-routine__description"
+                class:active-routine__description--no-tasks={tasks.length === 0}
+                class:hidden={!description}
+                contenteditable
+                spellcheck="false"
+                style={textGradient}
+                bind:this={textEditorElem}
+                on:scroll={() => handleGradient(textEditorElem)}
+            >
+                {description}
+            </div>
+             <!-- tasks -->
+             {#if tasks.length > 0}
+                <!-- <div class="active-routine__divider"></div> -->
                 <div class="active-routine__action-items-header">
                     <div class="flx flx--algn-center">
                         <div class="active-routine__action-items-icon">
                         </div>
                         <div class="active-routine__action-items-title">
-                            Action Items
+                            Items
                         </div>
                         <button 
                             class="active-routine__new-item-btn"
@@ -401,59 +297,34 @@
                             />
                         </button>
                     </div>
-                    <div class="flx flx--algn-center">
-                        <div class="active-routine__progress">
-                            <span>12</span>
-                        </div>
-                    </div>
                 </div>
-                <div class="active-routine__action-items" bind:this={routineItemsRef}>
-                    <TasksList 
-                        on:tasksUpdated={onTasksUpdated}
-                        options={{
-                            id:   "active-routine",
-                            containerRef: routineItemsRef,
-                            tasks: TEST_TASKS,
-                            isCreatingNewTask,
-                            settings: {
-                                subtasks: true
-                            },
-                            styling: {
-                                task: { 
-                                    fontSize: "1.12rem", height: "30px", padding: "5px 0px 5px 0px" 
+                <div 
+                    class="active-routine__action-items" 
+                    style:margin-top={text ? "-12px" : "-10px"}
+                    bind:this={routineItemsRef}
+                >
+                    {#key renderFlag}
+                        <TasksList
+                            onTaskChange={onTasksUpdated}
+                            {tasks}
+                            options={{
+                                id: "active-routine-block",
+                                type: "side-menu",
+                                settings: {
+                                    maxDepth: 3
                                 },
-                                subtask: {
-                                    fontSize: "1.12rem", padding: "8px 0px 9px 0px" 
+                                ui: { 
+                                    hasTaskDivider: true,
+                                    maxHeight: "280px"
                                 },
-                                checkbox: { 
-                                    width: "9.5px", height: "9.5px", margin: "1px 10px 0px 18px" 
-                                },
-                                description: { 
-                                    padding: "4px 0px 2px 0px", fontSize: "1rem"
-                                },
-                                descriptionInput: { 
-                                    fontSize: "1.23rem"
-                                }
-                            },
-                            addBtn: {
-                                doShow: false
-                            },
-                            cssVariables: { 
-                                maxDescrLines: 2 
-                            },
-                            contextMenuOptions: { 
-                                width: "170px" 
-                            },
-                            ui: { 
-                                hasTaskDivider: false,
-                                sidePadding: "18px", 
-                                listHeight: "100%"
-                            }
-                        }}
-                    />
+                                containerRef: routineItemsRef
+                            }}
+                        />
+                    {/key}
                 </div>
             {/if}
         {:else}
+            <!-- empty ui -->
             <div class="text-aln-center">
                 <div class="active-routine__no-routine">
                     No Active Routine
@@ -462,7 +333,7 @@
                     {#if nextViewBlock}
                         {nextViewBlock.block.title}
                         <strong>
-                            {getMextTimeCheckPointInfo(todayRoutine) ?? ""}
+                            {getNextBlockInfo(todayRoutine) ?? ""}
                         </strong>
                     {:else}
                         Done for the Day!
@@ -471,31 +342,37 @@
             </div>
             <div 
                 class="active-routine__bottom-container active-routine__btns"
-                style="margin-bottom: -5px"
             >
                 <button 
-                    on:click={onPrevBlock}
+                    on:click={() => getBlock("prev")}
                     disabled={prevViewBlock === null}
                     title="Go to prev block"
                 >
-                    <div class="active-routine__block-icon">
-                        <SvgIcon icon={Icon.ChevronLeft} options={{ scale: 0.85 }}/>
-                    </div>
-                    <span style="margin-left: 12px">Prev</span>
+                    <SvgIcon 
+                        icon={Icon.ChevronLeft}
+                            options={{
+                                scale: 1.5, height: 12, width: 12, strokeWidth: 1.4
+                            }}
+                    />
+                    <span style:margin-left="10px">
+                        Prev
+                    </span>
                 </button>
                 <button 
-                    on:click={onNextBlock}
+                    on:click={() => getBlock("next")}
                     disabled={nextViewBlock === null}
-                    title="Go to mext block"
+                    title="Go to next block"
                 >
-                    <span style="margin-right: 12px">Next</span>
-                    <div 
-                        class="active-routine__block-icon"
-                        class:active-routine__block-icon--second={true}
-                    >
-                        <SvgIcon icon={Icon.ChevronRight} options={{ scale: 0.85 }}/>
-                    </div>
-            </button>
+                    <span style:margin-right="10px">
+                        Next
+                    </span>
+                    <SvgIcon 
+                        icon={Icon.ChevronRight}
+                        options={{
+                            scale: 1.5, height: 12, width: 12, strokeWidth: 1.4
+                        }}
+                    />
+                </button>
             </div>
         {/if}
     </div>
@@ -508,9 +385,10 @@
     .active-routine {
         background-color: var(--bg-2);
         border: 1px solid rgba(var(--textColor1), 0.04);
-        border-radius: 16px;
+        border: 1.5px solid rgba(var(--textColor1), 0.03);
+        border-radius: 9px;
         padding: 0px 0px 5px 0px;
-        width: 290px;
+        width: 340px;
         position: relative;
 
         &--light {
@@ -551,18 +429,19 @@
         &__header {
             @include flex(center, space-between);
             padding: 9px 18px 0px 18px;
+            margin: 2px 0px 3px 0px;
         }
         &__title {
-            @include text-style(0.8, 500, 1.18rem);
+            @include text-style(1, 500, 1.4rem);
             @include elipses-overflow;
-            margin: 0px 12px 5px 0px;
+            margin: 0px 12px 2px 0px;
             min-width: 0px;
             max-height: 60px;
             cursor: default;
         }
         &__btns {
             @include flex(center);
-            margin: -5px -5px 0px 0px;
+            margin: 0px -10px 0px 0px;
         }
         &__btns button {
             @include text-style(1, 600, 1.14rem);
@@ -570,8 +449,15 @@
             opacity: 0.4;
             padding: 4px 6px;
             
-            &:nth-last-child(2) {
+            &[title="Go to current block"] {
                 padding: 8px 8px;
+                position: relative;
+                @include circle(6px);
+
+                &::before {
+                    content: "•";
+                    @include abs-center;
+                }
             }
             &:last-child {
                 padding-right: 5px;
@@ -588,77 +474,30 @@
             &:active {
                 transform: scale(0.9);
             }
-        }
-        &__now-icon {
-            @include circle(2.5px);
-            margin: 0px 4px;
-            background-color: rgba(var(--textColor1), 0.85);
-        }
-        &__subheader {
-            @include flex(center);
-            margin: 2px 0px 7px -2px;
-            padding: 0px 18px 0px 18px;
 
-            .tag {
-                margin: 0px 5px 0px 0px;
-                padding: 2.5px 11.5px 2.5px 8px;
-                max-width: 105px;
-            }
-            .tag__title {
-                font-size: 1rem;
-                font-weight: 600;
-            }
-            .tag__symbol {
-                font-size: 0.7rem !important;
-                margin-right: 5px;
+            span {
+                @include text-style(1, 400, 1.2rem, "DM Mono");
             }
         }
         &__time {
-            @include text-style(0.2, 400, 1.1rem, "DM Sans");
+            @include text-style(0.3, 400, 1.3rem, "DM Sans");
             white-space: nowrap;
-        }
-        &__core {
-            background-color: rgba(var(--textColor1), 0.07);
-            @include text-style(0.7, 600, 1rem);
-            padding: 2.5px 11px;
-            border-radius: 10px;
-            margin-right: 8px;
-        }
-        &__description-container {
-            position: relative;
-            margin: 0px 0px 8px 0px;
-            @include text-style(0.8, 500, 1.1rem);
+            margin: 0px 0px 10px 18px;
         }
         &__description {
-            @include text-style(0.4);
-            max-height: 48px;
+            padding: 0px 17px 10px 17px;
+            @include text-style(0.65, 400, 1.45rem);
             overflow: scroll;
-            padding: 0px 18px 0px 18px;
-            max-width: calc(100% - 0px);
-            word-wrap: break-word;
-
-            &--no-description {
-                opacity: 0.3;
+            max-height: 100px;
+            
+            &--no-tasks {
+                max-height: 200px;
             }
         }
-        &__description-floating {
-            background-color: var(--bg-3);
-            border-radius: 12px;
-            padding: 8px 15px 5px 15px;
-            max-width: calc(100% - 30px);
-        }
-        &__description-editor {
-            @include text-style(0.75, 600, 1.1rem);
-            margin-bottom: 5px;
-            padding: 0px;
-        }
-        .input-box {
-            padding-bottom: 25px;
-            display: block;
-
-            &__count {
-                font-size: 1.1rem;
-            }
+        &__divider {
+            height: 2px;
+            margin: 0px 18px 0px 18px;
+            border-top: 1.5px dashed rgba(var(--textColor1), 0.07);
         }
         &__action-items-header {
             margin: 0px 0px 6px 0px;
@@ -681,31 +520,30 @@
                 transform: scale(0.85);
             }
         }
-        &__progress {
-            @include text-style(0.18, 400, 1rem, "DM Mono");
-        }
         &__action-items {
-            max-height: 280px;
-            height: 280px;
-            margin-bottom: 0px;
             position: relative;
         }
         &__no-routine {
-            @include text-style(0.55, 500, 1.14rem);
-            padding: 11px 0px 8px 0px;
+            @include text-style(0.3, 500, 1.4rem);
+            padding: 15px 0px 8px 0px;
         }
         &__no-routine-subtitle {
-            @include text-style(0.3, 400, 1.14rem, "DM Sans");
-            margin-bottom: 12px;
+            @include text-style(0.8, 400, 1.4rem, "DM Sans");
+            margin-bottom: 20px;
 
             strong {
-                @include text-style(0.18, 400);
+                @include text-style(0.2, 400);
                 margin-left: 1.5px;
             }
         }
         &__bottom-container {
             @include flex(center, space-between);
-            padding: 6px 18px 0px 18px;
+            padding: 6px 12px 0px 12px;
+            margin: 0px 0px 4px 0px;
+
+            button:active {
+                transform: scale(0.99);
+            }
         }
     }
 </style>

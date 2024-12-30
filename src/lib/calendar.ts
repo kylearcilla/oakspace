@@ -39,8 +39,9 @@ export abstract class Calendar<T extends MonthData = MonthData> {
         this.pickedDateStr = newDate != null ? formatDateLong(newDate) : ""
         
         if (!isSameMonth(newDate!, this.currMonth.firstDay)) {
-            this.currMonth = this.genMonthCalendar(newDate!)
+            this.currMonth = this.genMonthCalendar(structuredClone(newDate!))
         }
+        return this.pickedDate
     }
 
     /*
@@ -55,6 +56,8 @@ export abstract class Calendar<T extends MonthData = MonthData> {
         else if (this.isForwards) {
             this.isPrevMonthAvailable = true
         }
+
+        return this.currMonth
     }
 
     /**
@@ -69,6 +72,8 @@ export abstract class Calendar<T extends MonthData = MonthData> {
         else if (!this.isForwards) {
             this.isNextMonthAvailable = true
         }
+
+        return this.currMonth
     }
 
     /**
@@ -79,6 +84,8 @@ export abstract class Calendar<T extends MonthData = MonthData> {
         this.isPrevMonthAvailable = !this.isForwards
         this.isNextMonthAvailable = this.isForwards ?? true
         this.pickedDate = new Date()
+
+        return this.currMonth
     }
 
     /**
@@ -121,15 +128,4 @@ export abstract class Calendar<T extends MonthData = MonthData> {
         }
         return currMonth
     }
-}
-
-/**
- * @interface
- * Interface that allows Calendar Object to be reactive
- */
-export interface CalendarStore<T> {
-    _store: Writable<T>
-
-    updateDatePickerState(newState: Partial<T>): void
-    getNewStateObj(oldState: T, newState: Partial<T>): T 
 }

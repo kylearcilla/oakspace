@@ -1,14 +1,16 @@
 <script lang="ts">
-	import { onMount } from "svelte";
-	import { Icon } from "../../../lib/enums";
+	import { onMount } from "svelte"
+
+	import { Icon } from "../../../lib/enums"
+	import { themeState } from "../../../lib/store"
+    import { getWeekPeriod } from "../../../lib/utils-date"
+	import { YEAR_THOUGHT_ENTRY } from "../../../lib/mock-data"
 	import { capitalize, clickOutside, getElemById, getHozDistanceBetweenTwoElems, kebabToNormal, normalToKebab } from "../../../lib/utils-general"
-    
-	import Todos from "../Todos.svelte"
+
+	import YearView from "./YearView.svelte"
 	import GoalsList from "./GoalsList.svelte"
 	import GoalsBoard from "./GoalsBoard.svelte"
-	import { themeState } from "../../../lib/store"
 	import WeeklyHabits from "./WeeklyHabits.svelte"
-    import { getWeekPeriod } from "../../../lib/utils-date"
 	import SvgIcon from "../../../components/SVGIcon.svelte"
 	import ToggleBtn from "../../../components/ToggleBtn.svelte"
 	import BounceFade from "../../../components/BounceFade.svelte"
@@ -17,7 +19,7 @@
 	import DropdownList from "../../../components/DropdownList.svelte"
 	import ActivityCalendar from "../../../components/ActivityCalendar.svelte"
 
-    type MonthDetailsView = "cal" | "goals" | "habits" | "tasks"
+    type MonthDetailsView = "cal" | "goals" | "habits" | "yr-view"
     type GoalsView = {
         view: "list" | "board"
         grouping: "status" | "tag"
@@ -29,21 +31,21 @@
     let optionsOpen = false
     let weekPeriodIdx = 0
     let weekPeriod = getWeekPeriod(new Date())
-    let newTaskFlag = false
-    let showHeaderBtnStats = true
     
     let subMenu: "g-view" | "g-group" | "g-progress" | "h-view" | null = null
     
     $: isLight = !$themeState.isDarkTheme
 
-    $: if (currView) {
-        newTaskFlag = false
-    }
     /* view options */
+    let overview = {
+        animPhotos: true
+    }
     let habitView = {
         view: "default",
+        emojis: false,
         progress: {
-            detailed: true,
+            numbers: true,
+            daily: true,
             percentage: false
         }
     }
@@ -115,10 +117,6 @@
     class={`month-view month-view--${currView}`}
     class:month-view--light={isLight}
 >
-    <!-- <div class="month-view__insights"></div> -->
-    <!-- <div class="insight-sentence">
-        You have completed <strong>60%</strong> of your habits this month with <strong>2</strong> of your <strong>8</strong> monthly goals achieved.
-    </div> -->
     <div class="month-view__details">
         <div class="month-view__details-header">
             <div class="month-view__header-btns">
@@ -137,11 +135,6 @@
                     on:click={(e) => onViewBtnClicked("habits")}
                 >
                     <span>Habits</span> 
-                    {#if showHeaderBtnStats}
-                        <div class="month-view__header-btn-stat">
-                            75%
-                        </div>
-                    {/if}
                 </button>
                 <button 
                     id={"month-view--goals"}
@@ -150,24 +143,14 @@
                     on:click={(e) => onViewBtnClicked("goals")}
                 >
                     <span>Goals</span> 
-                    {#if showHeaderBtnStats}
-                        <div class="month-view__header-btn-stat fraction">
-                            1<div class="fraction__slash">/</div>8
-                        </div>
-                    {/if}
                 </button>
                 <button 
-                    id={"month-view--tasks"}
+                    id={"month-view--yr-view"}
                     class="month-view__header-btn"
-                    class:month-view__header-btn--chosen={currView === "tasks"}
-                    on:click={(e) => onViewBtnClicked("tasks")}
+                    class:month-view__header-btn--chosen={currView === "yr-view"}
+                    on:click={(e) => onViewBtnClicked("yr-view")}
                 >
-                    <span>Inbox</span> 
-                    {#if showHeaderBtnStats}
-                        <div class="month-view__header-btn-stat fraction">
-                            7<div class="fraction__slash">/</div>12
-                        </div>
-                    {/if}
+                    <span>Year</span> 
                 </button>
                 <div 
                     style:left={`${btnHighlighter.left}px`}
@@ -185,12 +168,16 @@
                             {:else}
                                 {weekPeriod.start} <span>-</span> {weekPeriod.end}
                             {/if}
+                        {:else if currView === "yr-view"}
+                            <div style:font-size="1.6rem">
+                                {YEAR_THOUGHT_ENTRY.date.getFullYear()}
+                            </div>
                         {/if}
                     </div>
                     <div class="flx" style:margin-right="6px">
                         <button 
                             class="month-view__arrow"
-                            style:margin-left={"18px"}
+                            style:margin-left="10px"
                         >
                             <div style:margin-left={"-2px"}>
                                 <SvgIcon
@@ -214,31 +201,6 @@
                             </div>
                         </button>
                     </div>
-                    {#if currView === "tasks"}
-                        <button 
-                            title="Create new task"
-                            id="month-view--dbtn"
-                            class="month-view__todo-settings-btn"
-                            on:click={() => newTaskFlag = !newTaskFlag}
-                        >
-                            <SvgIcon 
-                                icon={Icon.Add} 
-                                options={{ 
-                                    strokeWidth: 1.9,
-                                    scale: 1.09
-                                }} 
-                            />
-                        </button>
-                        <button
-                            title="Clear completed tasks"
-                            id="month-view--dbtn"
-                            class="month-view__todo-settings-btn"
-                            disabled={true}
-                            on:click={() => optionsOpen = !optionsOpen}
-                        >
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    {/if}
                     <div class="month-view__settings-btn" style:margin-left="9px">
                         <SettingsBtn 
                             id={"month-view--dbtn"}
@@ -262,21 +224,23 @@
                     style:width={currView === "goals" ? "190px" : "200px"}
                     use:clickOutside on:click_outside={() => optionsOpen = false} 
                 >
-                    <li class="dmenu__section">
-                        <div class="dmenu__section-name">
-                            General
-                        </div>
-                        <div class="dmenu__toggle-optn  dmenu__option--static">
-                            <span class="dmenu__option-heading">Show Header Stats</span>
-                            <ToggleBtn 
-                                active={showHeaderBtnStats}
-                                onToggle={() => {
-                                    showHeaderBtnStats = !showHeaderBtnStats
-                                }}
-                            />
-                        </div>
-                    </li>
-                    <li class="dmenu__section-divider"></li>
+                    {#if currView === "cal"}
+                        <li class="dmenu__section">
+                            <div class="dmenu__section-name">
+                                Overview
+                            </div>
+                            <div class="dmenu__toggle-optn">
+                                <span class="dmenu__option-heading">Animate Photo Wall</span>
+                                <ToggleBtn 
+                                    active={overview.animPhotos}
+                                    onToggle={() => {
+                                        overview.animPhotos = !overview.animPhotos
+                                        overview = overview
+                                    }}
+                                />
+                            </div>
+                        </li>
+                    {/if}
                     {#if currView === "goals"}
                         {@const board = goalsView.view === "board"}
                         <li class="dmenu__section">
@@ -431,23 +395,43 @@
                                     onListItemClicked: onGoalSubListClicked
                                 }}
                             />
+                            <div class="dmenu__toggle-optn  dmenu__option--static">
+                                <span class="dmenu__option-heading">Emojis</span>
+                                <ToggleBtn 
+                                    active={habitView.emojis}
+                                    onToggle={() => {
+                                        habitView.emojis = !habitView.emojis
+                                        habitView = habitView
+                                    }}
+                                />
+                            </div>
                         </li>
                         <li class="dmenu__section-divider"></li>
                         <li class="dmenu__section">
                             <div class="dmenu__section-name">
                                 Progress
                             </div>
-                            <div class="dmenu__toggle-optn  dmenu__option--static">
-                                <span class="dmenu__option-heading">Group By</span>
+                            <div class="dmenu__toggle-optn dmenu__option--static">
+                                <span class="dmenu__option-heading">Daily Progress</span>
                                 <ToggleBtn 
-                                    active={habitView.progress.detailed}
+                                    active={habitView.progress.daily}
                                     onToggle={() => {
-                                        habitView.progress.detailed = !habitView.progress.detailed
+                                        habitView.progress.daily = !habitView.progress.daily
                                         habitView = habitView
                                     }}
                                 />
                             </div>
-                            {#if habitView.progress.detailed}
+                            <div class="dmenu__toggle-optn  dmenu__option--static">
+                                <span class="dmenu__option-heading">Numbers</span>
+                                <ToggleBtn 
+                                    active={habitView.progress.numbers}
+                                    onToggle={() => {
+                                        habitView.progress.numbers = !habitView.progress.numbers
+                                        habitView = habitView
+                                    }}
+                                />
+                            </div>
+                            {#if habitView.progress.numbers}
                                 <div class="dmenu__toggle-optn dmenu__option--static">
                                     <span class="dmenu__option-heading">Percentage</span>
                                     <ToggleBtn 
@@ -467,7 +451,7 @@
         <div class="divider"></div>
         <div class="month-view__details-view">
             {#if currView === "cal"}
-                <ActivityCalendar />
+                <ActivityCalendar options={overview}/>
             {:else if currView === "habits"}
                 <WeeklyHabits options={habitView} />
                 <!-- <MonthlyHabits /> -->
@@ -488,8 +472,8 @@
                     />
                 {/if}
             {:else}
-                <div class="month-view__tasks">
-                    <Todos {newTaskFlag}/>
+                <div class="month-view__yr-view">
+                    <YearView/>
                 </div>
             {/if}
         </div>
@@ -505,7 +489,6 @@
         }
         &--light &__header-btn {
             @include text-style(0.5, 500);
-            background-color: var(--lightColor2);
             
             span {
                 @include text-style(1, 600);
@@ -539,7 +522,7 @@
         &--light .divider {
             @include l-div
         }
-        &--tasks &__details .divider {
+        &--yr-view &__details .divider {
             margin-bottom: 0px;
         }
 
@@ -574,8 +557,9 @@
 
         /* month view header */
         &__details-view {
-            overflow-x: scroll;
-            overflow-y: hidden;
+            // overflow-x: scroll;
+            // overflow-y: hidden;
+            overflow: visible;
             margin: 0px 0px 0px -35px;
             padding-left: 35px;
         }
@@ -585,18 +569,18 @@
             @include flex(center, space-between);
         }
         &__details-header-right {
-            margin-top: 14px;
+            margin-top: 0px;
             @include flex(center);
         }
         &__header-btns {
-            margin: 0px 10px -8px 0px;
+            margin: -8px 10px 0px 0px;
             position: relative;
             @include flex(center);
         }
         &__header-btn {
             padding: 5px 0px 0px 0px;
             border-radius: 29px;
-            margin: 0px 18px 0px 2px;
+            margin: 0px 14px 0px 2px;
             white-space: nowrap;
             opacity: 0.2;
             transition: 0.1s ease-in-out;
@@ -641,9 +625,8 @@
             }
         }
         &__period {
-            @include text-style(0.4, 400, 1.4em, "DM Mono");
-            // display: none;
-            margin-right: 0px;
+            @include text-style(0.4, 400, 1.35rem, "DM Mono");
+            margin: 3px 0px 0px 0px;
 
             span {
                 margin: 0px 8px;
@@ -670,7 +653,7 @@
             }
         }
 
-        /* tasks */
+        /* yr-view */
         &__add-task-btn {
             padding: 3px 18px 5px 18px;
             background-color: var(--lightColor2);
@@ -683,8 +666,8 @@
                 background-color: rgba(var(--textColor1), 0.05);
             }
         }
-        &__tasks {
-            margin: -5px 0px 0px -12px;
+        &__yr-view {
+            margin: 10px 0px 0px 0px;
         }
     }
 
@@ -700,16 +683,6 @@
         }
         &__section-divider:last-child {
             display: none;
-        }
-    }
-
-    .insight-sentence {
-        margin: 15px 0px 22px 0px;
-        @include text-style(0.3, 400, 1.4rem);
-        
-        strong {
-            @include text-style(0.65, 400, 1.4rem, "DM Sans");
-            margin: 0px 2px 2px 2px;
         }
     }
 </style>

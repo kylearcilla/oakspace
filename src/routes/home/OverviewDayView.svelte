@@ -2,12 +2,12 @@
 	import { onDestroy, onMount } from "svelte"
     
 	import { themeState, weekRoutine } from "$lib/store"
-	import { initTodayRoutine, resetDayRoutine, toggleRoutineBlockComplete } from "$lib/utils-routines"
 	import { RoutinesManager } from "$lib/routines-manager"
 	import { findClosestColorSwatch } from "$lib/utils-colors"
 	import { GoogleCalendarManager } from "$lib/google-calendar-manager"
     import { getColorTrio, getMaskedGradientStyle, initFloatElemPos } from "$lib/utils-general"
 	import { getDayIdxMinutes, getTimeFromIdx, isSameDay, minsFromStartToHHMM } from "$lib/utils-date"
+	import { getDayRoutineFromWeek, resetDayRoutine, toggleRoutineBlockComplete } from "$lib/utils-routines"
     
 	import DropdownList from "../../components/DropdownList.svelte"
 
@@ -32,7 +32,7 @@
     let currTime = getDayIdxMinutes()
     let dayIdx = -1
 
-    let todayRoutine: RoutineBlock[] | DailyRoutine | null = null
+    let dRoutine: RoutineBlock[] | DailyRoutine | null = null
     let routineBlocks: RoutineBlockElem[] = []
 
     let contextRoutineBlock: RoutineBlockElem & { idx: number } | null = null
@@ -42,14 +42,20 @@
     $: isLight = !$themeState.isDarkTheme
     $: routine = $weekRoutine
     $: {
-        if (dayIdx != currTime.dayIdx) {
+        // update routine when day changes
+        const idx = day.getDay()
+
+        if (dayIdx != idx) {
             resetDayRoutine()
-            todayRoutine = initTodayRoutine(routine, currTime)
-            dayIdx = currTime.dayIdx
+            dRoutine = getDayRoutineFromWeek(routine, idx)
+            dayIdx = idx
         }
-        if (todayRoutine) {
-            const blocks = "id" in todayRoutine ? todayRoutine.blocks : todayRoutine
-            routineBlocks = blocks.map((block) => RoutinesManager.createRoutineBlockElem(block, scrollContainerHeight))
+        if (dRoutine) {
+            const blocks = "id" in dRoutine ? dRoutine.blocks : dRoutine
+
+            routineBlocks = blocks.map((block) => {
+                return RoutinesManager.createRoutineBlockElem(block, scrollContainerHeight)
+            })
         }
     }
     $: if (headerHeight >= 0 && allDayRef) {
@@ -392,7 +398,6 @@
             </div>
         </div>
     </div>
-
 
     <!-- Routine Block Context Menu -->
     <DropdownList 

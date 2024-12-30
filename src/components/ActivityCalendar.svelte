@@ -1,30 +1,43 @@
 <script lang="ts">
     import { themeState } from "../lib/store"
-    import { ACTIVITY_DATA } from "$lib/mock-data"
     import { isSameDay } from "$lib/utils-date"
-    import { Calendar } from "$lib/calendar.ts"
-	import { formatDateLong, minsToHHMM } from "../lib/utils-date"
-	import { formatPlural, getColorTrio, initFloatElemPos } from "../lib/utils-general"
+    import { ACTIVITY_DATA } from "$lib/mock-data"
+	import { imageUpload } from "../lib/utils-home"
+	import { formatDateLong, genMonthCalendar, getMonthWeeks, minsToHHMM } from "../lib/utils-date"
+	import { formatPlural, getColorTrio, initFloatElemPos, randomArrayElem } from "../lib/utils-general"
 
 	import DropdownList from "./DropdownList.svelte"
 	import DayEntry from "../routes/home/base/DayEntry.svelte"
 	import ImgStampModal from "../routes/home/base/HighlightImgModal.svelte"
-	import { imageUpload } from "../lib/utils-home";
 
+    export let options
     $: isLight = !$themeState.isDarkTheme
+
+    const GOALS_LIST_MAX = 5
+    const PHOTO_OFFSETS = [
+        { x: -8, y: 0, tilt: 4  },
+        { x: -5, y: -10, tilt: 4  },
+        { x: -10, y: -5, tilt: -5  },
+        { x: -6, y: -8, tilt: 3  },
+        { x: -7, y: -3, tilt: -2  },
+        { x: -9, y: -7, tilt: 5  },
+        { x: -5, y: -5, tilt: -3  },
+        { x: -12, y: -2, tilt: -6  }
+    ]
+
 
     let gridWidth = 0
     let gridHeight = 0
     let gridElem: HTMLElement
-
     let imgModal = false
     let entryModal = false
 
-    const options: any = {}
     const timeView  = options?.time ?? true
     const goalsView = options?.goals ?? "list"
-    const cal = new Calendar()
-    let month = cal.currMonth
+    $: animPhotos = options?.animPhotos ?? true
+
+    let month = genMonthCalendar(new Date())
+    let weeks = getMonthWeeks(month.days)
 
     let editDay = null
     let hasContextMenu = false
@@ -71,12 +84,13 @@
     }
     function onSettingsOptnClicked(optn: string) {
         const day = ACTIVITY_DATA[editDay.idx]
+        console.log(day)
 
         if (optn === "Remove Text Entry") {
             day.thoughtEntry = undefined
 
             editDay = null
-            month = month
+            weeks = weeks
         }
         else if (optn === "Add Text Entry") {
             editDay.thoughtEntry = ""
@@ -86,7 +100,7 @@
             day.highlightImg = undefined
 
             editDay = null
-            month = month
+            weeks = weeks
         }
         else if (optn === "Add Highlight Image") {
             imageUpload.init({
@@ -97,7 +111,6 @@
                             caption: ""
                         }
                     }
-
                     editDay = null
                 }
             })
@@ -116,8 +129,8 @@
             day.highlightImg = undefined
         }
 
-        day.thoughtEntry = updatedData.thoughtEntry ?? undefined
-        month = month
+        day.thoughtEntry = updatedData.thoughtEntry ?? ""
+        weeks = weeks
 
         entryModal = false
         editDay = null
@@ -140,133 +153,136 @@
         <div class="acal__dow">Sat</div>
     </div>
     <div 
-        class="acal__grid"
+        class="acal__month"
         bind:this={gridElem}
         bind:clientWidth={gridWidth}
         bind:clientHeight={gridHeight}
     >
-        {#each month.days as day, idx}
-            {@const d   = day.date.getDate()}
-            {@const dow = day.date.getDay()}
-            {@const sameMonth = day.isInCurrMonth}
-            {@const { activity, idx: aIdx}  = findDayActivity(day.date)}
-            {@const focused        = activity?.focusMins}
-            {@const habitProg      = activity?.habits ?? 0}
-            {@const highlightImg        = activity?.highlightImg}
-            {@const thoughtEntry   = activity?.thoughtEntry}
-            {@const { count } = getGoalsDisplayData(activity?.goals ?? [])}
-            {@const _editDay = { ...day, idx: aIdx, highlightImg, thoughtEntry }}
-
-            <div 
-                class="acal__day"
-                class:acal__day--edit={isSameDay(day.date, editDay?.date)}
-                class:acal__day--first-col={dow === 0}
-                class:acal__day--last-col={dow === 6}
-                class:acal__day--bottom-row={idx >= 35}
-                class:acal__day--not-curr-month={!sameMonth}
-                class:acal__day--today={isSameDay(day.date, new Date())}
-                on:contextmenu={(e) => onContextMenu(e, _editDay)}
-            >
-                <div>
-                    <div class="acal__day-num">
-                        {d}
-                    </div>
-                    <!-- thought icon -->
-                     {#if activity?.thoughtEntry != undefined}
-                        <button 
-                            on:click={() => {
-                                entryModal = true
-                                editDay = _editDay
-                            }}
-                            class="acal__thought-icon"
-                        >
-                            <svg width="15" height="17" viewBox="0 0 15 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M6.87905 4.91406C3.80281 6.96489 2.26469 9.01572 1.23927 13.1174L0.726562 15.6809L1.75198 14.1428" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M1.23952 4.91122C0.726814 6.24426 1.13698 10.0383 1.64969 11.5764C1.64969 11.5764 3.59798 9.52559 5.85389 8.50017C7.69964 7.67984 9.75047 7.88492 10.4683 6.44934C11.0835 5.21884 10.2632 4.70614 8.93013 5.42393C10.1606 4.70614 13.0318 3.3731 12.0064 1.83498C10.981 0.399394 8.41743 1.73243 7.39201 2.65531C7.39201 2.24514 7.39201 1.21973 6.3666 1.32227C5.34118 1.42481 4.31577 2.86039 4.00814 4.19343C4.00814 4.19343 4.00814 3.47564 3.29035 3.3731C2.57256 3.27056 1.64969 3.88581 1.23952 4.91122Z" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M5.54495 11.8838C6.57036 12.294 7.39069 11.8838 7.9034 10.8584C8.21102 11.4737 8.41611 12.0889 9.95423 12.0889C11.4924 12.0889 11.6974 11.4736 12.0051 10.7559C12.4152 11.8838 13.133 12.294 14.3635 11.7813M4.51953 15.2677C5.33986 15.6779 6.57036 15.2677 7.08307 14.1397C7.39069 14.8575 7.9034 15.4728 8.92882 15.4728C9.95423 15.4728 10.4669 15.0626 10.9796 14.1397C11.4924 15.0626 12.5178 15.6779 13.5432 15.1651" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>                                                                                                                            
-                        </button>
-                    {/if}
-
-                    <!-- habit progress -->
-                    <!-- <div class="acal__day-ring" title="Habit progress.">
-                        {#if sameMonth}
-                            <ProgressRing 
-                                progress={habitProg} 
-                                options={{
-                                    size: 10, strokeWidth: 2, style: "simple"
-                                }}
-                            />
-                        {/if}
-                    </div> -->
-                    {#if activity?.goals}
-                        {@const goals = activity.goals}
-                        {@const show  = (highlightImg ? 1 : 2) + (timeView ? 0 : 1)}
-                        {@const cutoff = goals.length - show}
-
-                        <div style:margin-top="0px">
-                            {#if goals && goalsView === "summary"}
-                                <div 
-                                    class="acal__activity"
-                                    title={`Achived ${formatPlural("task", count)}`}
+        {#each weeks as week, weekIdx}
+            <div class="acal__week">
+                {#each week as day, dayIdx}
+                    {@const d   = day.date.getDate()}
+                    {@const dow = day.date.getDay()}
+                    {@const sameMonth = day.isInCurrMonth}
+                    {@const { activity, idx: aIdx}  = findDayActivity(day.date)}
+                    {@const focused        = activity?.focusMins}
+                    {@const habitProg      = activity?.habits ?? 0}
+                    {@const highlightImg   = activity?.highlightImg}
+                    {@const thoughtEntry   = activity?.thoughtEntry}
+                    {@const { count } = getGoalsDisplayData(activity?.goals ?? [])}
+                    {@const _editDay = { ...day, idx: aIdx, highlightImg, thoughtEntry }}
+        
+                    <div 
+                        class="acal__day"
+                        class:acal__day--edit={isSameDay(day.date, editDay?.date)}
+                        class:acal__day--first-col={dow === 0}
+                        class:acal__day--last-col={dow === 6}
+                        class:acal__day--bottom-row={dayIdx >= 35}
+                        class:acal__day--not-curr-month={!sameMonth}
+                        class:acal__day--anim-photos={animPhotos}
+                        class:acal__day--today={isSameDay(day.date, new Date())}
+                        on:contextmenu={(e) => onContextMenu(e, _editDay)}
+                    >
+                        <!-- top area -->
+                        <div>
+                            <div class="acal__day-num">{d}</div>
+                            <!-- thought icon -->
+                            {#if activity?.thoughtEntry != undefined}
+                                <button 
+                                    on:click={() => {
+                                        entryModal = true
+                                        editDay = _editDay
+                                    }}
+                                    class="acal__thought-icon"
                                 >
-                                    <i>📌</i>
-                                    <span>{count}</span>
-                                </div>
+                                    <svg width="15" height="17" viewBox="0 0 15 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M6.87905 4.91406C3.80281 6.96489 2.26469 9.01572 1.23927 13.1174L0.726562 15.6809L1.75198 14.1428" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M1.23952 4.91122C0.726814 6.24426 1.13698 10.0383 1.64969 11.5764C1.64969 11.5764 3.59798 9.52559 5.85389 8.50017C7.69964 7.67984 9.75047 7.88492 10.4683 6.44934C11.0835 5.21884 10.2632 4.70614 8.93013 5.42393C10.1606 4.70614 13.0318 3.3731 12.0064 1.83498C10.981 0.399394 8.41743 1.73243 7.39201 2.65531C7.39201 2.24514 7.39201 1.21973 6.3666 1.32227C5.34118 1.42481 4.31577 2.86039 4.00814 4.19343C4.00814 4.19343 4.00814 3.47564 3.29035 3.3731C2.57256 3.27056 1.64969 3.88581 1.23952 4.91122Z" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M5.54495 11.8838C6.57036 12.294 7.39069 11.8838 7.9034 10.8584C8.21102 11.4737 8.41611 12.0889 9.95423 12.0889C11.4924 12.0889 11.6974 11.4736 12.0051 10.7559C12.4152 11.8838 13.133 12.294 14.3635 11.7813M4.51953 15.2677C5.33986 15.6779 6.57036 15.2677 7.08307 14.1397C7.39069 14.8575 7.9034 15.4728 8.92882 15.4728C9.95423 15.4728 10.4669 15.0626 10.9796 14.1397C11.4924 15.0626 12.5178 15.6779 13.5432 15.1651" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>                                                                                                                            
+                                </button>
                             {/if}
-                            {#if goals && goalsView === "list"}
-                                {#each goals.slice(0, show) as goal}
-                                    {@const symbol = goal.tag.symbol}
-                                    {@const colors = getColorTrio(symbol.color, isLight)}
-                                    <div 
-                                        class="acal__activity acal__goal"
-                                        style:--tag-color-primary={symbol.color.primary}
-                                        style:--tag-color-1={colors[0]}
-                                        style:--tag-color-2={colors[1]}
-                                        style:--tag-color-3={colors[2]}
-                                        title={`Achived ${formatPlural("task", count)}`}
-                                    >
-                                        <i>{symbol.emoji}</i>
-                                        <span>{goal.name}</span>
-                                        <i>
+
+                            <!-- goals -->
+                            {#if activity?.goals}
+                                {@const goals = activity.goals}
+                                {@const showAmount  = GOALS_LIST_MAX}
+                                {@const cutoff = goals.length - showAmount}
+        
+                                <div style:margin-top="0px">
+                                    {#if goals && goalsView === "summary"}
+                                        <div 
+                                            class="acal__activity"
+                                            title={`Achived ${formatPlural("task", count)}`}
+                                        >
+                                            <i>📌</i>
+                                            <span>{count}</span>
+                                        </div>
+                                    {/if}
+                                    {#if goals && goalsView === "list"}
+                                        {#each goals.slice(0, showAmount) as goal}
+                                            {@const symbol = goal.tag.symbol}
+                                            {@const colors = getColorTrio(symbol.color, isLight)}
+                                            <div 
+                                                class="acal__activity acal__goal"
+                                                style:--tag-color-primary={symbol.color.primary}
+                                                style:--tag-color-1={colors[0]}
+                                                style:--tag-color-2={colors[1]}
+                                                style:--tag-color-3={colors[2]}
+                                                title={`Achived ${formatPlural("task", count)}`}
+                                            >
+                                                <i>{symbol.emoji}</i>
+                                                <span>{goal.name}</span>
+                                                <i>
+                                            </div>
+                                        {/each}
+                                    {/if}
+                                </div>
+                                {#if cutoff > 0}
+                                    <div class="acal__goal-cutoff">
+                                        {cutoff} more
                                     </div>
-                                {/each}
+                                {/if}
                             {/if}
                         </div>
-                        {#if cutoff > 0}
-                            <div class="acal__goal-cutoff">
-                                {cutoff} more
+        
+                        <!-- bottom area -->
+                        <!-- icon -->
+                        {#if highlightImg}
+                            {@const offset = randomArrayElem(PHOTO_OFFSETS)}
+
+                            <div class="acal__img-container">
+                                <button 
+                                    class="acal__img-icon"
+                                    class:acal__img-icon--photo-anim={animPhotos}
+                                    style:--photo-x={`${offset.x}px`}
+                                    style:--photo-y={`${offset.y}px`}
+                                    style:--photo-tilt={`${offset.tilt}deg`}
+                                    on:click={() => {
+                                        imgModal = true
+                                        editDay = _editDay
+                                    }}
+                                >
+                                    <img src={highlightImg.src} alt="Day Icon">
+                                </button>
                             </div>
                         {/if}
-                    {/if}
-                </div>
-
-                <!-- icon -->
-                {#if highlightImg}
-                    <button 
-                        class="acal__img-icon"
-                        on:click={() => {
-                            imgModal = true
-                            editDay = _editDay
-                        }}
-                    >
-                        <img src={highlightImg.src} alt="Day Icon">
-                    </button>
-                {/if}
-
-                <!-- focus -->
-                {#if focused}
-                    <div 
-                        class="acal__day-focus-time acal__activity"
-                        title="focus time"
-                    >
-                        <i class="fa-solid fa-stopwatch"></i>
-                        <!-- <i>📌</i> -->
-                        <span>
-                            {minsToHHMM(activity.focusMins)}
-                        </span>
+        
+                        <!-- focus -->
+                        {#if focused}
+                            <div 
+                                class="acal__day-focus-time acal__activity"
+                                title="focus time"
+                            >
+                                <i class="fa-solid fa-stopwatch"></i>
+                                <!-- <i>📌</i> -->
+                                <span>
+                                    {minsToHHMM(activity.focusMins)}
+                                </span>
+                            </div>
+                        {/if}
                     </div>
-                {/if}
+                {/each}
             </div>
         {/each}
     </div>
@@ -280,7 +296,7 @@
                     sectionName: formatDateLong(editDay?.date),
                     options: [
                         { name: editDay?.thoughtEntry != undefined ? "Remove Text Entry" : "Add Text Entry" }, 
-                        { name: editDay?.highlightImg ? "Remove Highlight Image" : "Add Highlight Image" }
+                        { name: editDay?.highlightImg ? "Remove Highlight Photo" : "Add Highlight Photo" }
                     ]
                 }
             ],
@@ -323,7 +339,6 @@
     .acal {
         margin-top: 0px;
         width: 100%;
-        height: 650px;
         max-width: 1200px;
         position: relative;
 
@@ -367,16 +382,17 @@
         &__days {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            font-weight: bold;
             height: 30px;
+            font-weight: bold;
             @include text-style(0.65, 500, 1.25rem);
         }
-        &__grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            grid-template-rows: repeat(6, 1fr);
+        &__month {
             height: calc(100% - 30px);
             width: 100%;
+        }
+        &__week {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
         }
         &__day {
             padding: 5px 5px 3px 5px;
@@ -384,11 +400,11 @@
             transition: 0.1s background-color ease-in-out;
             border-top: var(--border);
             border-left: var(--border);
-            height: calc(var(--GRID_HEIGHT) / 6);
+            height: auto;
+            min-height: 100px;
             width: calc(var(--GRID_WIDTH) / 7);
             @include flex-col;
             position: relative;
-            overflow: hidden;
             cursor: pointer;
 
             &--first-col {
@@ -419,6 +435,13 @@
         &__day--edit &__img-icon,
         &__day:hover &__img-icon {
             opacity: 1;
+        }
+
+        &__day:hover &__img-icon--photo-anim img {
+            @include square(50px, 6px);
+        }
+        &__day:hover &__img-icon--photo-anim {
+            transform: rotate(calc(-1 * var(--photo-tilt)))
         }
 
         &__day-ring {
@@ -460,7 +483,7 @@
         &__goal {
             overflow: hidden;
             position: relative;
-            padding: 2.5px 6px 3.5px 13px;
+            padding: 2.5px 6px 3.5px 18px;
             background-color: rgba(var(--tag-color-2), 1) !important;
 
             span {
@@ -470,10 +493,8 @@
             }
             &::before {
                 content: " ";
-                @include abs-top-left(4.5px, 5px);
-                height: 55%;
-                width: 3px;
-                border-radius: 10px;
+                @include abs-top-left(50%, 8px);
+                @include square(4px, 2px);
                 background: rgba(var(--tag-color-1), 1);
             }
         }
@@ -497,18 +518,28 @@
         }
 
         /* img icon */
+        &__img-container {
+            @include square(34px);
+            margin-top: 10px;
+        }
         &__img-icon {
             @include abs-bottom-left(4px, 6px);
-            // opacity: 0.65;
-            transition: 0.14s ease-in-out;
-            opacity: 1;
+            @include smooth-bounce;
             
             img {
-                // border: white 2px solid;
+                border: white 2px solid;
+                transition: 0.1s cubic-bezier(.4, 0, .2, 1);
                 @include square(34px, 6px);
-                // @include square(36px, 5px);
                 object-fit: cover
             }
+        }
+        &__img-icon--photo-anim img {
+            @include square(45px, 6px);
+            border: white 2.5px solid;
+        }
+        &__img-icon--photo-anim {
+            @include abs-bottom-left(var(--photo-y), var(--photo-x));
+            transform: rotate(var(--photo-tilt))
         }
 
         /* focus activity */

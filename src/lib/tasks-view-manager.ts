@@ -1,6 +1,7 @@
 import { get, writable, type Writable } from "svelte/store"
 
 import { APIError } from "./errors"
+import { TEST_TASKS } from "$lib/mock-data"
 import { APIErrorCode, LogoIcon } from "./enums"
 
 import { toast } from "./utils-toast"
@@ -17,12 +18,16 @@ import {
  * Is itself a svelte store that Tasks component listens to for changes.
  */
 export class TasksViewManager {
-    /* Groups */
+    /* groups */
     todoistTasks: Task[] | null = null
-    currTasks!: Task[]
-    inboxTasks!: Task[]
+    currTasks: Task[] = []
+    inboxTasks: Task[] = []
+    renderFlag = false
 
-    /* Todoist */
+    // tasks to be init when undo
+    tasksBeforeRemove: Task[] = []
+
+    /* todoists */
     onTodoist = false
     todoistInboxProjectId = ""
     todoistLinked = false
@@ -33,59 +38,20 @@ export class TasksViewManager {
 
     LOADING_TOAST_DURATION = 15_000
 
-    SYNC_TODOIST_OPTION: DropdownListItem = {
-        name: "Sync Todoist",
-        leftIcon: {
-            type: "logo",
-            icon: LogoIcon.Todoist,
-            logoColored: false,
-            styling: {
-                height: "13px",
-                width: "13px",
-                margin: "0px 10px 0px 0px"
-            }
-        }
-    }
-    SYNCED_TODOIST_OPTIONS: DropdownListItem = {
-        sectionName: "Todoist",
-        options: [
-            { 
-                name: "Refresh Sync", 
-                rightIcon: {
-                    type: "fa",
-                    icon: "fa-solid fa-arrows-rotate",
-                }
-            },
-            { 
-                name: "Log Out",
-                rightIcon: {
-                    type: "fa",
-                    icon: "fa-solid fa-right-from-bracket",
-                }
-            }
-        ]
-    }
-
-    constructor(inboxTasks: Task[]) {
+    constructor() {
+        this.inboxTasks = TEST_TASKS
         this.store = writable(this)
-        this.inboxTasks = inboxTasks
-        
-        if (this.hasSession()) {
-            this.loadAndSetPlayerData()
+
+        const todoistRedirect = didTodoistAPIRedirect()
+
+        if (this.hasTodoistSession()) {
+            this.loadTodoistData()
         }
-        else {
+        else if (!todoistRedirect) {
             this.currTasks = this.inboxTasks
         }
-        if (didTodoistAPIRedirect()) {
-            toast("promise",
-                {
-                    icon: LogoIcon.Todoist,
-                    loading: 'Logging in...',
-                    success: "Todoist sync successful!",
-                    error: 'Error occured. Please try again.'
-                },
-                this.continueTodoistAPIOAuthFlow()
-            )
+        if (todoistRedirect) {
+            this.continueTodoistAPIOAuthFlow()
         }
     }
 
@@ -97,19 +63,29 @@ export class TasksViewManager {
             return state
         })
 
-        this.saveStateData(state)
+        this.saveTodoistData(state)
+    }
+    
+    /* todoist */
+    toggleView() {
+        if (!this.todoistLinked) return
+
+        if (this.onTodoist) {
+            this.currTasks = this.inboxTasks
+        }
+        else {
+            this.currTasks = this.todoistTasks!
+        }
+
+        this.onTodoist = !this.onTodoist
+        this.update({ onTodoist: this.onTodoist })
     }
 
-    /* Dropdown Handlers */
-
-
     loginTodoist() {
-        this.initTodoist()
         toast("promise", { loading: 'Logging in...' }, this.initTodoist())
     }
 
-    /* Todoist Functionality */
-    async initTodoist() {
+    private async initTodoist() {
         await initTodoistAPI()
         
         // navigation to consent screen takes time
@@ -117,18 +93,17 @@ export class TasksViewManager {
     }
 
     logoutTodoist() {
-        this.onTodoist = false
         this.todoistInboxProjectId = ""
+        this.onTodoist = false
         this.todoistLinked = false
         this.todoistAccessToken = ""
         this.todoistSyncToken = ""
-
         this.todoistTasks = []
         this.currTasks = this.inboxTasks
 
         this.initToast({
             icon: LogoIcon.Todoist,
-            message: "Account disconnected."
+            message: "Account disconnected"
         })
         this.update({
             onTodoist: false,
@@ -137,20 +112,31 @@ export class TasksViewManager {
             todoistAccessToken: "",
             todoistSyncToken: ""
         })
+        localStorage.removeItem("todoist")
     }
 
+    /**
+     * Continues the Todoist API OAuth 2.0 flow after a successful redirect.
+     */
     async continueTodoistAPIOAuthFlow() {
         try {
             const authRes = await authTodoistAPI()
             this.todoistAccessToken = authRes.access_token
             await this.initTodistUserItems()
 
+            this.onTodoist = true
             this.todoistLinked = true
             this.currTasks = this.todoistTasks!
             
             this.update({ 
-                todoistLinked: true,
-                currTasks: this.currTasks
+                onTodoist: true,
+                todoistLinked: true
+            })
+            
+            this.initToast({
+                icon: LogoIcon.Todoist,
+                message: "Todoist",
+                description: "Todoist sync successful!"
             })
         }
         catch(error: any) {
@@ -158,7 +144,10 @@ export class TasksViewManager {
         }
     }
 
-    async initTodistUserItems() {
+    /**
+     * Gets Todoist user tasks and data through a full sync.
+     */
+    async initTodistUserItems(continueSession?: boolean) {
         try {
             const { tasks, syncToken, projectId } = await syncTodoistUserItems({ 
                 accessToken: this.todoistAccessToken,
@@ -166,11 +155,17 @@ export class TasksViewManager {
                 syncToken: "*"
             })
 
-            this.todoistTasks = tasks
+            // sort tasks alphabetically
+            this.todoistTasks = TasksViewManager.sortTasks(tasks)
             this.todoistSyncToken = syncToken
             
             if (projectId) {
                 this.todoistInboxProjectId = projectId
+            }
+            if (continueSession) {
+                this.currTasks = this.onTodoist ? this.todoistTasks! : this.currTasks
+
+                this.update({ renderFlag: !this.renderFlag })
             }
         }
         catch(error: any) {
@@ -178,16 +173,8 @@ export class TasksViewManager {
         }
     }
 
-    refreshTodoist() {
-        toast("promise",
-            {
-                icon: "fa-solid fa-circle-check",
-                loading: 'Refreshing...',
-                success: "Refreshed!",
-                error: 'Error occured. Please try again.'
-            },
-            this.initPartialSync(),
-        )
+    async refreshTodoist() {
+        await this.initPartialSync()
     }
 
     /**
@@ -197,7 +184,6 @@ export class TasksViewManager {
      * @returns          Update context from the patial sync.
      */
     getTaskSyncAction(syncTasks: TodoistTask[], task: Task): TodoistItemPartialSyncOntext {
-        const isSubtask = "parentId" in task
         const idx = syncTasks.findIndex((s) => s.id === task.id)
 
         if (idx < 0) {
@@ -209,9 +195,6 @@ export class TasksViewManager {
         if (syncTask.isDeleted) {
             return { action: "deleted", syncTask, idx }
         }
-        else if (isSubtask && syncTask.parentId != task.parentId) {
-            return { action: "parent_changed", syncTask, idx }
-        }
         else {
             return { action: "updated", syncTask, idx }
         }
@@ -221,7 +204,7 @@ export class TasksViewManager {
      * Initalize a partial sync. 
      * Incorporates changes last made after a full or last partial sync.
      */
-    async initPartialSync() {
+    private async initPartialSync() {
         try {
             const { tasks: syncTasks, syncToken } = await syncTodoistUserItems({ 
                 accessToken: this.todoistAccessToken,
@@ -230,85 +213,46 @@ export class TasksViewManager {
             })
 
             const todoistTasks = this.todoistTasks!
-            const updatedTasks: Task[] = []
+            const newTasks: Task[] = []
             
-            // // process the sync tasks to update current tasks
-            // for (let i = 0; i < todoistTasks.length; i++) {
-            //     const task = todoistTasks[i]
-            //     const subtasks = task.subtasks!
-            //     const taskSubtasks = []
-    
-            //     // process subtasks first
-            //     for (let j = 0; j < subtasks.length; j++) {
-            //         const subtask = subtasks[j]
-            //         const { action, syncTask, idx } = this.getTaskSyncAction(syncTasks, subtask)
-    
-            //         if (syncTask) {
-            //             removeItemFromArray(idx, syncTasks)
-            //         }
-            //         if (action === "deleted") {
-            //             continue
-            //         }
-            //         else if (action === "parent_changed" && syncTask!.parentId) {
-            //             // moved
-            //             newSubtasks.push(syncTask!)
-            //         }
-            //         else if (action === "parent_changed") {
-            //             // became a task
-            //             updatedTasks.push(syncTask!)
-            //         }
-            //         else if (action === "updated" && !syncTask!.isChecked) {
-            //             taskSubtasks!.push(syncTask!)
-            //         }
-            //         else if (action === "none") {
-            //             taskSubtasks!.push(subtask)
-            //         }
-            //     }
+            // process the sync tasks to update current tasks
+            for (let i = 0; i < todoistTasks.length; i++) {
+                // check to see if this task was updated (if one of the sync tasks)
+                const task = todoistTasks[i]
+                const { action, syncTask, idx } = this.getTaskSyncAction(syncTasks, task)
 
-            //     const { action, syncTask, idx } = this.getTaskSyncAction(syncTasks, task)
+                if (syncTask) {
+                    removeItemFromArray(idx, syncTasks)
+                }
 
-            //     if (syncTask) {
-            //         removeItemFromArray(idx, syncTasks)
-            //     }
-            //     if (action === "deleted") {
-            //         continue
-            //     }
-            //     else if (action === "parent_changed" && syncTask!.parentId) {
-            //         // became a subtask
-            //         newSubtasks.push({ ...syncTask! })
-            //     }
-            //     else if (action === "updated" && !syncTask!.isChecked) {
-            //         // updatedTasks.push({ ...syncTask!, subtasks: taskSubtasks })
-            //     }
-            //     else if (action === "none") {
-            //         // updatedTasks.push({ ...task!, subtasks: taskSubtasks })
-            //     }
-            // }
+                if (action === "deleted") {
+                    continue
+                }
+                else if (action === "updated" && !syncTask!.isChecked) {
+                    newTasks.push({ ...syncTask! })
+                }
+                else if (action === "none") {
+                    newTasks.push({ ...task })
+                }
+            }
             
             // incorporate any new tasks from the sync
-            // syncTasks
-            //     .forEach((t) => t.parentId ? newSubtasks.push(t) : updatedTasks.push(t))
-
-            // // incorporate any new subtasks
-            // for (let subtask of newSubtasks) {
-            //     // subtasks that have children are excluded
-            //     const parentIdx = updatedTasks.findIndex(p => p.id === subtask.parentId)
-            //     if (parentIdx < 0) continue
-    
-            //     // updatedTasks[parentIdx].subtasks!.push(subtask)
-            // }
+            syncTasks.forEach(t => newTasks.push(t))
     
             this.todoistSyncToken = syncToken
-            this.todoistTasks = TasksViewManager.sortTasks(updatedTasks)
+            this.todoistTasks = TasksViewManager.sortTasks(newTasks)
 
-            this.update({ currTasks: this.todoistTasks })
+            if (this.onTodoist) {
+                this.currTasks = this.todoistTasks!
+                this.update({ renderFlag: !this.renderFlag })
+            }
         }
         catch(e) {
             this.onError(new APIError(APIErrorCode.GENERAL, "There was an error syncing your Todoist data."))
         }
     }
     
-    /* API Handlers */
+    /* client handlers */
 
     onTaskUpdate = async (context: TaskUpdateContext) => {
         const { action, payload: { task, tasks }, undoFunction } = context
@@ -317,10 +261,11 @@ export class TasksViewManager {
         const description = "description" in task ? task.description : ""
         const isRecurring = "isRecurring" in task ? task.isRecurring as boolean : undefined
         const dueDate     = "due" in task ? task.due as string : undefined
+        const todoist     = this.todoistLinked
 
         try {
-            if (this.todoistLinked && ["complete", "incomplete"].includes(action)) {
-                const couldOccurSameDay = isRecurring && dueDate?.includes("T")
+            if (todoist && action === "completion") {
+                // const couldOccurSameDay = isRecurring && dueDate?.includes("T")
 
                 await updateTodoistTaskCompletion({
                     accessToken: this.todoistAccessToken,
@@ -331,25 +276,30 @@ export class TasksViewManager {
                     complete: complete!
                 })
 
+                // unwritten understanding that todos are for today
+                // so completed recurring tasks can be shown again if due shortly after on the same day
+                // for now recurring tasks are treated as normal tasks
+
                 // if (couldOccurSameDay) {
                 //     this.initPartialSync()
                 // }
                 this.todoistTasks = tasks
-            }
-            else if (this.todoistLinked) {
-                await updateTodoistTask({
-                    accessToken: this.todoistAccessToken,
-                    syncToken: this.todoistSyncToken,
-                    taskId: task.id,
-                    name,
-                    description
-                })
-            }
-            else if (action === "completion") {
+
                 this.initActionToast({ 
                     action: "completion", 
                     name, 
                     func: undoFunction 
+                })
+            }
+            else if (todoist && action != "reorder") {
+                // reorders are local and not synced to Todoist
+                await updateTodoistTask({
+                    accessToken: this.todoistAccessToken,
+                    syncToken: this.todoistSyncToken,
+                    taskId: task.id,
+                    ...(action === "new-parent" && { parentId: task.parentId }),
+                    ...(action === "name" && { name }),
+                    ...(action === "description" && { description })
                 })
             }
 
@@ -361,20 +311,24 @@ export class TasksViewManager {
     }
     
     onAddTask = async (context: TaskAddContext) => {
-        const { payload: { task, tasks, added }  } = context
-        let id = ""
+        const { payload: { task, tasks }  } = context
+        let id = undefined
 
         try {
             if (this.todoistLinked) {
                  id = (await addTodoistTask({
                     accessToken: this.todoistAccessToken,
                     projectId: this.todoistInboxProjectId,
-                    parentId: task.parentId ?? "",
+                    parentId: task.parentId,
                     name: task.title
                 })).taskId
 
                 this.todoistTasks = tasks
             }
+            else {
+                id = crypto.randomUUID()
+            }
+
             this.currTasks = tasks
         }
         catch(error: any) {
@@ -386,40 +340,47 @@ export class TasksViewManager {
     }
 
     onDeleteTask = async (context: TaskDeleteContext) => {
+        // "task" (singular parent task) is null if completed tasks were removed
         const { payload: { tasks, task, removed }, undoFunction } = context
+        const todoist = this.todoistLinked
 
         try {
-            if (this.todoistLinked) {
+            // undo action not available for Todoist
+            if (todoist) {
                 await deleteTodoistTask({
                     accessToken: this.todoistAccessToken,
-                    taskId: task.id
+                    taskId: task!.id
                 })
             }
 
-            this.currTasks = tasks
             this.initActionToast({
-                name: task.title,
-                action: "delete", 
-                func: undoFunction
+                name:         task?.title,
+                action:       task ? "delete" : "removed-completed", 
+                removedCount: task ? undefined : removed.length,
+                func:         todoist ? undefined : undoFunction
             })
+
+            this.tasksBeforeRemove = this.currTasks
+            this.currTasks = tasks
         }
         catch(error: any) {
             this.onError(error)
         }
     }
 
-    /* Toasts */
+    /* toasts */
 
     /**
      * Initializes a toast element with an undo function.
      * @param context 
      */
     initActionToast(context: {
-        action: TaskUpdateActions | "add" | "delete",
+        action: TaskUpdateActions | "add" | "delete" | "removed-completed",
         name?: string,
+        removedCount?: number,
         func?: FunctionParam
     }) {
-        const { action, name, func } = context
+        const { action, name, func, removedCount } = context
         const todoist = this.todoistLinked
 
         if (action === "add" && todoist) {
@@ -428,18 +389,40 @@ export class TasksViewManager {
                 message: `"${name}" added to from your ${todoist ? "Todoist" : ""} Inbox`
             })
         } 
-        else if (action === "delete") {
-            this.initUndoToast({
-                icon: !todoist ? undefined : LogoIcon.Todoist,
-                description: `"${name}" deleted from your ${todoist ? "Todoist" : ""} Inbox`,
-                func
-            })
-        }
         else if (action === "completion") {
             this.initUndoToast({
                 icon: getCheerEmoji(),
                 description: `"${name}" completed!`,
                 func
+            })
+        }
+
+        // removals
+        const _func = () => {
+            func!()
+            this.currTasks = this.tasksBeforeRemove
+            this.tasksBeforeRemove = []
+        }
+
+        if (action === "delete" && todoist) {
+            this.initToast({
+                icon: LogoIcon.Todoist,
+                message: "Todoist",
+                description: `"${name}" deleted from your Todoist Inbox`
+            })
+        }
+        else if (action === "delete") {
+            this.initUndoToast({
+                description: `"${name}" deleted from your Inbox`,
+                func: _func
+            })
+        }
+        else if (action === "removed-completed") {
+            const removed = removedCount!
+            this.initUndoToast({
+                icon: todoist ? LogoIcon.Todoist : undefined,
+                description: `Completed tasks removed ${removed ? `(${removed})` : ""}.`,
+                func: _func
             })
         }
     }
@@ -476,7 +459,6 @@ export class TasksViewManager {
     }
 
     /* handlers */
-
     onError(error: any) {
         console.error(error)
         toastApiErrorHandler({ 
@@ -484,25 +466,6 @@ export class TasksViewManager {
             logoIcon: LogoIcon.Todoist,
             title: "Todoist"
         })
-    }
-
-    getTaskSettingsDropdown(): DropdownListItem[] {
-        const hasTodoist = this.todoistLinked
-
-        if (hasTodoist) {
-            return [
-                {
-                    options: [
-                        { name: "Inbox" },
-                        { name: "Todoist" },
-                    ]
-                },
-                this.SYNCED_TODOIST_OPTIONS,
-            ]
-        }
-        else {
-            return [this.SYNC_TODOIST_OPTION]
-        }
     }
 
     /**
@@ -514,64 +477,45 @@ export class TasksViewManager {
     static sortTasks(tasks: Task[]) {
         let orderIdx = 0
         tasks.sort((a, b) => a.title.localeCompare(b.title));
-        tasks.forEach(task => {
-            task.idx = orderIdx++
-
-            // if (task.subtasks!.length === 0) return
-
-            // let subtaskOrderIdx = 0
-
-            // task.subtasks!.sort((a, b) => a.title.localeCompare(b.title))
-            // task.subtasks!.forEach(subtask => subtask.idx = subtaskOrderIdx++)
-        })
-
+        tasks.forEach(task => task.idx = orderIdx++)
         return tasks
     }
 
     /* state */
     
-    hasSession() {
-        return localStorage.getItem("tasks") != null
+    hasTodoistSession() {
+        return localStorage.getItem("todoist") != null
     }
 
-    saveStateData(state: TasksViewManager) {
-        localStorage.setItem("tasks", JSON.stringify({
+    saveTodoistData(state: TasksViewManager) {
+        localStorage.setItem("todoist", JSON.stringify({
             onTodoist: state.onTodoist!,
-            todoistInboxProjectId: state.todoistInboxProjectId!,
             todoistLinked: state.todoistLinked!,
-            todoistAccessToken: state.todoistAccessToken!,
-            todoistTasks: state.todoistTasks!,
-            todoistSyncToken: state.todoistSyncToken!
+            todoistAccessToken: state.todoistAccessToken!
         }))
     }
 
-    loadAndSetPlayerData() {
-        if (!this.hasSession()) return
-        const savedData = JSON.parse(localStorage.getItem("tasks")!) as Partial<TasksViewManager>
-
+    loadTodoistData() {
+        const savedData = JSON.parse(localStorage.getItem("todoist")!)! as Partial<TasksViewManager>
+        
         this.onTodoist = savedData.onTodoist!
-        this.todoistInboxProjectId = savedData.todoistInboxProjectId!
         this.todoistLinked = savedData.todoistLinked!
-        this.todoistAccessToken = savedData.todoistAccessToken!
-        this.todoistTasks = savedData.todoistTasks!
-        this.todoistSyncToken = savedData.todoistSyncToken!
 
-        this.update({ ...savedData })
+        if (this.todoistLinked) {
+            this.todoistAccessToken = savedData.todoistAccessToken!
+            this.initTodistUserItems(true)
+        }
+
+        this.update({ 
+            onTodoist: this.onTodoist,
+            todoistLinked: this.todoistLinked
+        })
     }
 
-    /**
-     * 
-     * Get the updated version of the old state. 
-     * This is done to avoid destructuring as methods will not be preserved.
-     * Will only update the UI-relevant data that needs to be listned in the UI.
-     * 
-     * @param newState  New state changes to be incorporated
-     * @param oldState  Current state
-     * @returns         New state with the latest incorporated changes.
-     */
     getNewStateObj(oldState: TasksViewManager, newState: Partial<TasksViewManager>): TasksViewManager {
-        if (newState.todoistLinked != undefined)         oldState.todoistLinked = newState.todoistLinked
-        if (newState.onTodoist != undefined)             oldState.onTodoist = newState.onTodoist
+        if (newState.todoistLinked != undefined) oldState.todoistLinked = newState.todoistLinked
+        if (newState.onTodoist != undefined)     oldState.onTodoist = newState.onTodoist
+        if (newState.renderFlag != undefined)     oldState.renderFlag = newState.renderFlag
 
         return oldState
     }

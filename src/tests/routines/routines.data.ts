@@ -171,7 +171,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 endTime: 900,    // 3:00 PM
                 activity: "working",
                 tag: TAGS[12],
-                description: "Attend classes, study breaks, lunch",
+                description: "",
                 tasks: [],
                 order: "middle",
             },
@@ -193,8 +193,25 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 endTime: 1065,    // 5:45 PM
                 activity: "working",
                 tag: TAGS[12],
-                description: "Tennis grind shit.",
-                tasks: [],
+                description: "",
+                tasks: [
+                    {
+                        id: "f82be9cd-8f42-477e-b833-e74feed75a78",
+                        idx: 0,
+                        title: "AP Exam Review",
+                        description: "Prep for AP Chem and Bio Exams.",
+                        isChecked: false,
+                        parentId: null
+                    },
+                    {
+                        id: "9e2d813a-b7c2-48a5-9e47-87654aebbe7a",
+                        idx: 1,
+                        title: "History Homework",
+                        description: "Finish everyday history homework.",
+                        isChecked: false,
+                        parentId: null
+                    },
+                ],
                 order: "middle",
             },
             {
@@ -205,7 +222,24 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 activity: "selfCare",
                 tag: null,
                 description: "After-school relax. Nap time. Snack. Walk outisde.",
-                tasks: [],
+                tasks: [
+                    {
+                        id: "bf3e3c33-7d8e-4293-937e-67b78d4516b1",
+                        idx: 0,
+                        title: "Watch Movie / TV",
+                        description: "Something fun to watch.",
+                        isChecked: false,
+                        parentId: null
+                    },
+                    {
+                        id: "ca9f636b-2457-47a5-b48a-13c9ed7e4686",
+                        idx: 1,
+                        title: "Playh videogames",
+                        description: "Switch games.",
+                        isChecked: false,
+                        parentId: null
+                    },
+                ],
                 order: "middle",
             },
             {

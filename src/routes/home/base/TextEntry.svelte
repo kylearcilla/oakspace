@@ -1,23 +1,21 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 
-    import { emojiPicker } from "$lib/emojis"
-    import { imageUpload } from "$lib/utils-home"
+	import { iconPicker } from "$lib/utils-home"
 	import { TextEditorManager } from "$lib/inputs"
 	import { themeState } from "../../../lib/store"
 	import { clickOutside, findElemVertSpace, getMaskedGradientStyle } from "$lib/utils-general"
     
 	import ToggleBtn from "../../../components/ToggleBtn.svelte"
-	import IconPicker from "../../../components/IconPicker.svelte"
 	import BounceFade from "../../../components/BounceFade.svelte"
-	import { getElemById } from "../../../lib/utils-general";
+	import { formatPlural, getElemById } from "../../../lib/utils-general";
 
+    export let id: string
     export let entry: ThoughtEntry
 
     let toStyle: "styled" | "default" | "block" = entry.styling
     let focused = false
     let hasIcon = true
-    let iconPicker = false
     let length = 0
 
     let containerHeight = 0
@@ -31,7 +29,7 @@
 
     let styling = "", text = "", icon = null
 
-    const INPUT_ID = "thought-entry"
+    const INPUT_ID = `${id}--thought-entry`
 
     // upon focusing, its height before will still be present
     $: isLight = !$themeState.isDarkTheme
@@ -56,8 +54,7 @@
         id: INPUT_ID,
         allowBlurOnClickAway: false,
         handlers: {
-            onInputHandler: (_, __, _length) => {
-                text
+            onInputHandler: (_, val, _length) => {
                 length = _length
             },
             onBlurHandler: () => {
@@ -92,34 +89,6 @@
     }
     function getTextEditorHeight() {
         return findElemVertSpace(textEntryElem) - 15
-    }
-    function onIconChoose(type: "img" | "emoji", src: string) {
-        icon = { type, src }
-    }
-    function onEmojiSelect(emoji: any) {
-        if (emoji) {
-            onIconChoose("emoji", emoji.native)
-        }
-    }
-    function initEmojiPicker() {
-        const { top, left } = textEntryElem.getBoundingClientRect()
-
-        emojiPicker.init({ 
-            position: {
-                top: `${top + (icon.type === "img" ? 55 : 40)}px`, 
-                left: `${left - 20}px`, 
-            },
-            onEmojiSelect
-        })
-    }
-    function initImgModal() {
-        imageUpload.init({
-            onSubmit: (imgSrc: string) => {
-                if (imgSrc && icon?.src != imgSrc) {
-                    onIconChoose("img", imgSrc)
-                }
-            }
-        })
     }
     function onEditComplete() {
         focused = false
@@ -158,16 +127,26 @@
         class:thought-entry--icon-emoji={hasIcon && icon.type === "emoji"}
         class:thought-entry--default={styling === "default"}
         class:thought-entry--block={styling === "block"}
+        style:z-index={id === "month" ? 2 : 1}
         bind:this={textEntryElem}
         bind:clientHeight={height}
     >
         <div class="flx" style:width="100%">
             {#if hasIcon}
                 <button 
-                    id={"icon-picker--dbtn"}
+                    id={`${id}--dbtn`}
                     class="thought-entry__icon" 
                     class:thought-entry__icon--img={icon.type === "img"}
-                    on:click={() => iconPicker = !iconPicker}
+                    on:click={() => {
+                        iconPicker.init({
+                            id: id,
+                            onSubmitIcon: (_icon) => {
+                                if (_icon) {
+                                    icon = _icon
+                                }
+                            }
+                        })
+                    }}
                 >
                     {#if icon.type === "img"}
                         <img src={icon.src} alt="icon">
@@ -193,31 +172,15 @@
                 {hasIcon ? "Remove Icon" : "Add Icon"}
             </button>
             <div class="thought-entry__count">
-                {length} characters
+                {formatPlural("character", length)}
             </div>
             <button     
-                id="thought-entry--dbtn" 
+                id={`${id}--dbtn`}
                 on:click={() => stylingOpen = !stylingOpen}
             >
                 {styling === "styled" ? "Styled" : "Default"}
             </button>
         </div>
-        <IconPicker 
-            position={{ 
-                top: `${icon.type === "img" ? 66 : 40}px`, 
-                left: "-20px"
-            }}
-            isOpen={iconPicker}
-            optnClicked={type => {
-                if (type === "img") {
-                    initImgModal()
-                }
-                else if (type === "emoji") {
-                    initEmojiPicker()
-                }
-                iconPicker = false
-            }}
-        />
         <BounceFade 
             isHidden={!stylingOpen}
             zIndex={200}
@@ -227,7 +190,7 @@
         >
             {@const isDefault = toStyle === "default" || toStyle === "block"}
             <div 
-                id="thought-entry--dmenu"
+                id={`${id}--dmenu`}
                 class="dmenu" 
                 class:dmenu--light={isLight}
                 style:width={"140px"}
@@ -287,13 +250,12 @@
     .thought-entry {
         border-radius: 10px;
         width: 100%;
-        z-index: 1;
         margin: 9px 0px 18px -3px;
         transition: transform 0.22s cubic-bezier(.4, 0, .2, 1);
         transform: scale(1);
         position: absolute;
         height: auto;
-        margin-bottom: 15px !important;
+        margin-bottom: 25px !important;
         @include styled;
 
         &::before {
@@ -338,18 +300,18 @@
         /* icon */
         &--icon-emoji {
             padding: 3px 14px 0px 11px !important;
-
+            width: calc(100% - 20px) !important;
+            
             .text-editor {
                 padding-top: 6px;
-                width: calc(100% - 20px) !important;    
             }
         }
         &--icon-img {
             padding: 0px 14px 0px 11px !important;
+            width: calc(100% - 20px) !important;
 
             .text-editor {
                 padding-top: 10px;
-                width: calc(100% - 20px) !important; 
             }
         }
         &--no-icon {
@@ -404,5 +366,6 @@
         line-height: 1.25;
         max-height: 90px;
         padding-bottom: 25px;
+        width: 100%;
     }
 </style>

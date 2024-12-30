@@ -37,6 +37,7 @@ type RoutineActvity = keyof RoutineCores
 type InputOptions = {
     id?: string
     placeholder?: string
+    defaultText?: string
     initValue: string
     maxLength?: number
     doAllowEmpty?: boolean
@@ -57,6 +58,11 @@ type ImageUpload = {
 
 /* Base. */
 
+type WeeklHabits = {
+    emojis: boolean
+    dayProgress: boolean
+    
+}
 type ThoughtEntry = {
     icon: {
         type: string,
@@ -64,6 +70,36 @@ type ThoughtEntry = {
     } | null,
     styling: "styled" | "default" | "block"
     date: Date
+}
+
+type BaseHeader = {
+    icon: Icon & { show: boolean }
+    title: string
+    text: {
+        note?: string
+        type: "summary" | "note"
+        show: boolean
+    }
+}
+
+type Icon = {
+    src: string
+    type: IconType
+}
+
+type IconType = "emoji" | "img"
+
+type IconPicker = {
+    id: string
+    isOpen: boolean
+    position: OffsetPoint
+    onSubmitIcon: (icon: Icon | null) => void
+}
+
+type EmojiPicker = {
+    position: OffsetPoint,
+    isOpen: boolean,
+    onEmojiSelect: ((emoji: any) => void) | null
 }
 
 type ModalOptions = {
@@ -622,10 +658,10 @@ interface Task {
 }
 
 /* task list */
-
 type TasksListOptions = {
     id: string
     tasks: Tasks
+    type?: "side-menu" | "default"
     containerRef: HTMLElement
     handlers?: TaskListHandlers
     settings?: {
@@ -636,12 +672,8 @@ type TasksListOptions = {
         reorder?: boolean
         removeOnComplete?: boolean
         progress?: "perc" | "count"
-        maxTitleLines?: number
-        maxDescrLines?: number
         max?: number,
-        subtaskMax?: number,
-        maxToastMsg?: string
-        subtaskMaxToastMsg?: string
+        maxDepth?: number,
         addBtn?: {
             iconScale?: number,
             doShow?: boolean,
@@ -661,7 +693,7 @@ type TasksListOptions = {
 
 /* todoist api  */
 
-type TaskUpdateActions = "description" | "name" | "completion" | "reorder"
+type TaskUpdateActions = "description" | "name" | "completion" | "reorder" | "new-parent"
 type TaskAddActions = "add" | "duplicate"
 type TaskActionPayload = {
     task: Task
@@ -688,7 +720,9 @@ type TaskAddContext = {
 }
 
 type TaskDeleteContext = {
-    payload: TaskActionPayload & {
+    payload: {
+        task: Task | null
+        tasks: Task[]
         removed: Task[]
     }
     undoFunction?: FunctionParam
@@ -713,7 +747,7 @@ interface TodoistTask extends Omit<Task, "subtasks"> {
 }
 
 type TodoistItemPartialSyncOntext = {
-    action: "none" | "deleted" | "parent_changed" | "updated"
+    action: "none" | "deleted" | "updated"
     syncTask?: TodoistTask | null
     idx: number
 }

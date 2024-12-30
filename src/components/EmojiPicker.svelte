@@ -398,7 +398,10 @@
     id={"emoji-picker--dmenu"}
     zIndex={300}
     isHidden={!isOpen}
-    position={position}
+    position={{
+      top: `${position.top}px`,
+      left: `${position.left}px`
+    }}
     onClickOutside={() => onEmojiSelect(null)}
     {onDismount}
 >

@@ -62,7 +62,7 @@
     class:active-session--min={min}
     class:ambient-blur={ambience?.styling === "blur"}
     class:ambient-clear={ambience?.styling === "clear"}
-    style:--text-width={`${textWidth}px`}
+    style:--shimmer-text-width={`${textWidth}px`}
     on:pointerdown|self={onPointerDown}
     on:pointerover={pointerOver}
     on:pointerleave={() => isOver = false}
@@ -85,7 +85,7 @@
     <div 
         bind:clientWidth={textWidth}
         class="active-session__message"
-        class:active-session__message--shimmer={transition}
+        class:shimmer-anim={transition}
     >
         {#if state === "to-focus"}
             Now focusing...
@@ -190,15 +190,6 @@
             max-width: 80px;
             @include elipses-overflow;
         }
-        &__message--shimmer {
-            @include text-style(0.3);
-            color: rgba(255, 255, 255, 0.1);
-            background-image: linear-gradient(to right, transparent 0%, #fff 50%, transparent 100%);
-            background-size: calc(var(--text-width) * 4.5) 100%;
-            background-clip: text;
-            animation: shimmer 2.5s infinite ease-in-out;
-            background-repeat: no-repeat;
-        }
         &__progress {
             @include text-style(0.25, 400, 1.18rem, "DM Mono");
             margin: 0px 15px 0px 0px;
@@ -223,14 +214,6 @@
             &:active {
                 transform: scale(0.94);
             }
-        }
-    }
-    @keyframes shimmer {
-        0% {
-            background-position: calc(var(--text-width) * 4.5 * -1) 0;
-        }
-        100% {
-            background-position: var(--text-width) 0;
         }
     }
     @keyframes glow-anim {

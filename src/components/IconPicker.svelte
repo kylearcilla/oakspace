@@ -1,24 +1,31 @@
 <script lang="ts">
-	import { randomArrayElem } from "../lib/utils-general";
-	import BounceFade from "./BounceFade.svelte";
+    import { iconPicker } from "../lib/utils-home"
+	import { randomArrayElem } from "../lib/utils-general"
 
-    export let position: CSSAbsPos
-    export let isOpen: boolean
-    export let optnClicked: (type: "img" | "emoji" | null) => void
+    import BounceFade from "./BounceFade.svelte"
+
+    const { onChooseType, state: picker } = iconPicker
+
+    $: position = $picker.position
+    $: isOpen   = $picker.isOpen
+    $: id   = $picker.id
 
 </script>
 
 <BounceFade 
-    id={"icon-picker--dmenu"}
-    zIndex={200}
+    id={`${id}--dmenu`}
+    zIndex={300}
     isHidden={!isOpen}
-    position={position}
-    onClickOutside={() => optnClicked(null)}
+    position={{
+        top: `${position.top}px`,
+        left: `${position.left}px`
+    }}
+    onClickOutside={() => onChooseType(null)}
 >
     <div class="icon-picker">
         <button 
             class="icon-picker__emoji"
-            on:click={() => optnClicked("emoji")}
+            on:click={() => onChooseType("emoji")}
         >
             <div class="icon-picker__icon" style="opacity: 0.2; filter: saturate(0);">
                 {randomArrayElem(["👏", "🌞", "🎈", "🙌", "🌙", "🤙"])}
@@ -27,7 +34,7 @@
         </button>
         <button 
             class="icon-picker__img"
-            on:click={() => optnClicked("img")}
+            on:click={() => onChooseType("img")}
         >
             <div class="icon-picker__icon">
                 <svg 

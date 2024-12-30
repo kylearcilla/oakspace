@@ -577,7 +577,7 @@ export const TEST_HABITS = [
 export const YEAR_THOUGHT_ENTRY = {
   icon: {
         type: "img",
-        src: "https://i.pinimg.com/736x/98/6c/eb/986ceb87af5f7442463be09d5e49c2ae.jpg"
+        src: "https://i.pinimg.com/originals/41/bc/b5/41bcb5fba60bb3e1112550c0a7841c70.gif"
   },
   date: new Date(2025, 0),
   styling: "default",
@@ -592,7 +592,7 @@ It's the art of <i>being present</i>, savoring simplicity, and knowing that stil
 export const MONTH_THOUGHT_ENTRY = {
   icon: {
         type: "img",
-        src: "https://i.pinimg.com/originals/42/f3/e6/42f3e6dd32467736bdc85dc8a6038e35.gif"
+        src: "https://i.pinimg.com/736x/72/44/08/724408c450ce38a7be258ed489d8c64d.jpg"
   },
   date: new Date(2025, 5),
   styling: "default",

@@ -54,16 +54,15 @@ export function formatCoreData(mins: number) {
     return minsToHHMM(Math.floor(mins))
 }
 
-export function initTodayRoutine(wkRoutine: WeeklyRoutine | null, currTime: { dayIdx: number, minutes: number }) {
+export function getDayRoutineFromWeek(wkRoutine: WeeklyRoutine | null, dayIdx: number) {
     if (!wkRoutine) return null
 
-    const { dayIdx } = currTime
     const currDayKey = DAYS_OF_WEEK[dayIdx] as keyof WeeklyRoutineBlocks
 
     return wkRoutine.blocks[currDayKey]!
 }
 
-export function initCurrentBlock(dailyRoutine: RoutineBlock[] | DailyRoutine | null,  currMin: number) {
+export function getCurrentBlock(dailyRoutine: RoutineBlock[] | DailyRoutine | null, currMin: number) {
     if (!dailyRoutine) return null
 
     const blocks: RoutineBlock[] = "id" in dailyRoutine ? dailyRoutine.blocks : dailyRoutine
@@ -86,7 +85,7 @@ export function getBlockFromOrderIdx(orderIdx: number, dailyRoutine: RoutineBloc
 
 }
 
-export function getNowBlock(mins: number, dailyRoutine: RoutineBlock[] | DailyRoutine) {
+export function getBlockFromMins(mins: number, dailyRoutine: RoutineBlock[] | DailyRoutine) {
     const blocks: RoutineBlock[] = "id" in dailyRoutine ? dailyRoutine.blocks : dailyRoutine
 
     return blocks.find((block) =>  block.startTime <= mins && mins <= block.endTime)
@@ -111,24 +110,69 @@ export function getMostRecentBlock(mins: number, dailyRoutine: RoutineBlock[] | 
     return blocks.reduce((mostRecent: { block: RoutineBlock, idx: number } | null, block: RoutineBlock, idx: number ) => {
         if (mins > block.endTime && (!mostRecent || block.endTime > mostRecent.block.endTime)) {
             return { block, idx }
-        } else {
+        } 
+        else {
             return mostRecent
         }
     }, null)
 }
 
-export function getMextTimeCheckPointInfo(dailyRoutine: RoutineBlock[] | DailyRoutine | null) {
+export function getNextBlockInfo(dailyRoutine: RoutineBlock[] | DailyRoutine | null) {
     if (!dailyRoutine) return
 
     const nowMins = getNowMins()
-
-    const nowBlock = getNowBlock(nowMins, dailyRoutine)
+    const nowBlock = getBlockFromMins(nowMins, dailyRoutine)
+    
     if (nowBlock != null) {
         return nowBlock.endTime === nowMins ? "Now" : `${minsToHHMM(nowBlock.endTime - nowMins)}`
     }
     
     const nextBlock = getUpcomingBlock(nowMins, dailyRoutine)
     return nextBlock ? `in ${minsToHHMM(nextBlock.block.startTime - nowMins)}` : ""
+}
+
+/**
+ * Updates the active weekly routine.
+ * 
+ * @param args.updates   - updates to be incorporated to block to be updated.
+ * @param args.startTime - start time of block to be updated.
+ * @param args.dayIdx    - index of day of week to be updated.
+ */
+export function updateActiveRoutine(args: {
+    updates:   Partial<RoutineBlock>,
+    startTime: number,
+    dayIdx:    number
+}) {
+    const { updates, startTime, dayIdx } = args
+
+    weekRoutine.update((routine) => {
+        if (!routine) return routine
+
+        const currDayKey = DAYS_OF_WEEK[dayIdx] as keyof WeeklyRoutineBlocks
+        let blocks: RoutineBlock[]
+    
+        // get blocks
+        if ("id" in routine.blocks[currDayKey]) {
+            blocks = routine.blocks[currDayKey].blocks
+        }
+        else {
+            blocks = routine.blocks[currDayKey]
+        }
+    
+        blocks = blocks.map((block) => 
+            block.startTime === startTime ? { ...block, ...updates } : block
+        )
+    
+        // update blocks in day routine
+        if ("id" in routine.blocks[currDayKey]) {
+            routine.blocks[currDayKey].blocks = blocks
+        }
+        else {
+            routine.blocks[currDayKey] = blocks
+        }
+
+        return routine
+    })
 }
 
 export function toggleRoutineBlockComplete(blockIdx: number, currTime: { dayIdx: number, minutes: number }) {

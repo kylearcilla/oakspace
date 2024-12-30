@@ -1,30 +1,33 @@
 <script lang="ts">
+	import { onMount } from "svelte"
+
 	import { Icon } from "$lib/enums"
-	import Task from "../components/Task.svelte"
 	import { themeState } from "$lib/store"
 	import { TasksListManager } from "$lib/tasks-list-manager"
 	import { clickOutside, inlineStyling } from "$lib/utils-general"
-    
+
 	import SvgIcon from "./SVGIcon.svelte"
+	import Task from "../components/Task.svelte"
 	import DropdownList from "./DropdownList.svelte"
-	import { onMount } from "svelte";
 
-    export let newTaskFlag: boolean
+    export let removeCompleteFlag: boolean | undefined = undefined
+    export let newTaskFlag: boolean | undefined = undefined
+    export let tasks: Task[]
     export let options: TasksListOptions
+    export let onTaskChange: ((tasks: Task[]) => void) | undefined = undefined
 
-    const _manager   = new TasksListManager(options)
-    const manager    = _manager.state
-    const settings   = $manager.settings
-    const { DEFAULT_STYLES, CONTEXT_MENU_WIDTH } = $manager
-    const { CHECK_BOX_DIM } = DEFAULT_STYLES
+    let _manager   = new TasksListManager({ options, tasks })
+    let manager    = _manager.state
+    let settings   = $manager.settings
+    let { DEFAULT_STYLES, CONTEXT_MENU_WIDTH } = $manager
+    let { CHECK_BOX_DIM } = DEFAULT_STYLES
 
-    const dropdownOptions = _manager.getContextMenuOptions()
+    let dropdownOptions = _manager.getContextMenuOptions()
 
     let listContainer: HTMLElement
     let tasksList: HTMLElement
     let idPrefix = options.id
     let isContextMenuOpen = false
-    let tasks = $manager.tasks._store
     let rootTasks: Task[] = []
     let justInit = false
 
@@ -32,29 +35,40 @@
     $: focusTask   = $manager.focusTask
     $: contextMenu = $manager.contextMenu
     $: isContextMenuOpen = $manager.isContextMenuOpen 
-
+    
     $: if (newTaskFlag != undefined) {
         createNewTask()
     }
-    $: if (isContextMenuOpen && listContainer) {
-        listContainer.style.overflowY = "hidden"
-    }
-    else if (listContainer) {
-        listContainer.style.overflowY = "scroll"
+    $: if (removeCompleteFlag != undefined) {
+        removeCompletedTasks()
     }
 
-    tasks?.subscribe((state) => rootTasks = state.getRootTasks())
+    $manager.tasks._store?.subscribe((state) => {
+        rootTasks = state.getRootTasks()
 
+        if (onTaskChange) {
+            onTaskChange(state.getAllTasks())
+        }
+    })
     function createNewTask() {
         if (!justInit) {
-            justInit = true
             return
         }
         $manager.addNewTaskFromOutside(0)
     }
+    function removeCompletedTasks() {
+        if (!justInit) {
+            justInit = true
+            return
+        }
+        $manager.removeCompletedTasks()
+    }
     function onContextMenu(e: Event, taskId: string, isChild: boolean) {
         $manager.openContextMenu(e, taskId, isChild)
         isContextMenuOpen = true
+    }
+    function isAtMaxDepth(taskId: string) {
+        return $manager.tasks.isAtMaxDepth(taskId)
     }
     onMount(() => {
         $manager.initAfterLoaded(listContainer, tasksList)
@@ -74,14 +88,15 @@
 
     style:--max-title-lines={$manager.settings.maxTitleLines}
     style:--max-descr-lines={$manager.settings.maxDescrLines}
-    style:--left-section-width={`${$manager?.taskLayout?.leftSectionWidth}px`}
+
+    style:max-height={$manager.ui.maxHeight}
 >
     <div 
         bind:this={listContainer}
         id={`${idPrefix}--tasks-list-container`}
         class="tasks-container no-scroll-bar"
+        style:overflow-y={isContextMenuOpen ? "hidden" : "scroll"}
         class:tasks-container--empty={rootTasks.length === 0}
-        style:height={$manager.ui.listHeight}
         use:clickOutside on:click_outside={(e) => $manager.onClickedOutside(e)} 
     >
         <ul 
@@ -89,23 +104,22 @@
             class="tasks"
             class:tasks--dragging-state={$manager.dragSrc}
             class:tasks--numbered={settings.numbered}
+            class:tasks--side-menu={settings.type === "side-menu"}
             style={inlineStyling($manager.styling?.list)}
             bind:this={tasksList}
             on:pointermove={$manager.onTaskListPointerMove}
         >   
             <!-- Task Item s-->
-            {#each rootTasks as task, idx}
-                {#if task}
-                    <li>
-                        <Task
-                            {idx}
-                            level={0}
-                            {task} 
-                            {manager} 
-                            {onContextMenu}
-                        />
-                    </li>
-                {/if}
+            {#each rootTasks as task, idx (task.id)}
+                <li>
+                    <Task
+                        {idx}
+                        level={0}
+                        {task} 
+                        {manager} 
+                        {onContextMenu}
+                    />
+                </li>
             {/each}
 
             <!-- Dummy Task -->
@@ -155,6 +169,13 @@
         options={{
             listItems: [
                 ...(focusTask?.description ? [] :  [{ name: "Add Description" }]),
+                ...(!settings.subtasks || isAtMaxDepth(focusTask?.id) ? [] :  [{ 
+                        name: "Add Subtask",
+                        rightIcon: {
+                            type: "hotkey",
+                            icon: ["shift", "plus"]
+                        }
+                    }]),
                 ...dropdownOptions
             ],
             onListItemClicked: (context) => {
@@ -222,11 +243,10 @@
 
     .tasks {
         position: relative;
-        height: 100%;
-        max-height: 100%;
-        padding-top: 2px;
-        padding-bottom: 10px;
 
+        &--side-menu {
+            padding: 0px 0px 0px 2px;
+        }
         &--dragging-state * {
             cursor: grabbing;
         }
@@ -238,10 +258,9 @@
             margin: 7px 0px 1px var(--side-padding);
         }
         &-container {
-            overflow-y: scroll;
-            max-height: var(--tasks-max-height);
+            max-height: 100%;
             margin: 5px 0px 0px -20px;
-            padding-left: 20px;
+            padding: 2px 0px 10px 20px;
         }
         &-container--empty {
             margin-bottom: 5px !important;

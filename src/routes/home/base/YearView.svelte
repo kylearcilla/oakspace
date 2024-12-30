@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { getMaskedGradientStyle } from "../../../lib/utils-general";
 	import HeatMap from "../../../components/HeatMap.svelte"
+	import TextEntry from "./TextEntry.svelte";
+	import { YEAR_THOUGHT_ENTRY } from "../../../lib/mock-data";
 
     let heatMapContainer: HTMLElement
     let heatMapGradient = ""
@@ -25,6 +27,13 @@
 </script>
 
 <div class="yr-view">
+    <!-- <h1>
+        {YEAR_THOUGHT_ENTRY.date.getFullYear()}
+    </h1> -->
+    <TextEntry 
+        id="yr"
+        entry={YEAR_THOUGHT_ENTRY}
+    />
     <div class="yr-view__goals">
         <h4>Goals</h4>
         <div class="divider"></div>
@@ -103,21 +112,22 @@
 
 <style lang="scss">
     .yr-view {
-        margin-top: 5px;
+        overflow: none;
+        h1 {
+            @include text-style(1, 400, 2.5rem, "DM Mono");
+            margin-bottom: 5px;
+        }
         h4 {
             @include text-style(1, 500, 1.65rem);
         }
         &__goals {
-            margin-bottom: 20px;
-            overflow: hidden;
+            margin: 5px 0px 20px 0px;
         }
         &__habits {
-            overflow: hidden;
-            margin-top: 28px;
+            margin-top: 15px;
         }
         &__heat-map {
             width: 100%;
-            overflow: scroll;
         }
         &__stats {
             margin: 8px 0px 22px 0px;

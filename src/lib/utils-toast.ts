@@ -175,50 +175,48 @@ function ToasterManager() {
 
 		let id: string | number | undefined = undefined
 
+		// first loading the toast as a loading type
 		if (data.loading !== undefined) {
 			id = create({
-				...data, promise,
-				type: 'loading', message: data.loading
+				...data, 
+				promise, 
+				message: data.loading,
+				type: 'loading'
 			})
 		}
 
 		const p = promise instanceof Promise ? promise : promise()
 		let shouldDismiss = id !== undefined
 
-		// TODO: Clean up TS here, response has incorrect type
-		p.then((response: any) => {
+		// then update the toast to a success or error type
+		p
+		.then((response: any) => {
 			if (response && typeof response.ok === 'boolean' && !response.ok) {
 				shouldDismiss = false
 
-                // @ts-ignore
-				const message = typeof data.error === 'function' ? data.error(`HTTP error! status: ${response.status}`) : data.error
-				create({ ...data, id, type: 'error', message })
+				create({ ...data, id, type: 'error', message: data.error as string })
 			} 
 			else if (data.success !== undefined) {
 				shouldDismiss = false
 
-                // @ts-ignore
-				const message =	typeof data.success === 'function' ? data.success(response) : data.success
-				create({ ...data, id, type: 'default', message })
+				create({ ...data, id, type: 'default', message: data.success as string })
 			}
 		})
-			.catch((error: any) => {
-				if (data.error !== undefined) {
-					shouldDismiss = false
+		.catch(() => {
+			if (data.error !== undefined) {
+				shouldDismiss = false
 
-                    // @ts-ignore
-					const message = typeof data.error === 'function' ? data.error(error) : data.error
-					create({ ...data, id, type: 'error', message })
-				}
-			})
-			.finally(() => {
-				// Toast is still in load state (and will be indefinitely — dismiss it)
-				if (shouldDismiss) {
-					dismiss(id)
-					id = undefined
-				}
-				data.finally?.()
-			})
+				create({ ...data, id, type: 'error', message: data.error as string })
+			}
+		})
+		.finally(() => {
+			// toast is still in load state (and will be indefinitely — dismiss it)
+			if (shouldDismiss) {
+				dismiss(id)
+				id = undefined
+			}
+			data.finally?.()
+		})
 
 		return id
 	}

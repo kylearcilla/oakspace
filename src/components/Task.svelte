@@ -25,6 +25,8 @@
     let subtasks = []
     let checkedSubtasks = 0
     let doCheck = false
+    let type = settings.type
+    let atMaxDepth = level + 1 === $manager.tasks.maxDepth
 
     $: isDark = $themeState.isDarkTheme
     $: pickedTask = $manager.pickedTask
@@ -43,9 +45,9 @@
     }
     $: {
         subtasks = $manager.tasks.getSubtasks(task.id)
-        checkedSubtasks = subtasks.reduce((c, task) => task.isChecked ? c + 1 : c, 0)
+        checkedSubtasks = subtasks.reduce((c, task) => task?.isChecked ? c + 1 : c, 0)
     }
-    
+
     function _onSubtaskCheck(wasChecked: boolean) {
         checkedSubtasks += wasChecked ? 1 : -1
     }
@@ -58,13 +60,16 @@
     class:task--subtask={isChild}
     class:task--light={!isDark}
     class:task--dragging-state={$manager.dragSrc}
+    class:task--side-menu={type === "side-menu"}
     class:drag-src={task.id === dragSrc?.id}
-    style:--left-side-width={`${leftSideWidth - 8}px`}
+    style:--max-title-lines={isEdit ? 0 : $manager.settings.maxTitleLines}
+    style:--max-descr-lines={isEdit ? 0 : $manager.settings.maxDescrLines}
+    style:--left-side-width={`${leftSideWidth - 14}px`}
     style={`${inlineStyling(styling?.task)}`}
  >
     <div 
         class="task__content"
-        class:task__content--checked={doCheck}
+        class:task__content--checked={task.isChecked}
     >
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div 
@@ -91,7 +96,7 @@
             on:click={(event) => {
                 if (isContextMenuOpen) return
         
-                $manager.onTaskClicked({ event, id: task.id, isChild })
+                $manager.onTaskClicked({ event, id: task.id, isChild, atMaxDepth })
             }}
             on:contextmenu|preventDefault={(e) => {
                 onContextMenu(e, task.id, isChild)
@@ -102,25 +107,27 @@
                 bind:clientWidth={leftSideWidth}
                 class="task__left"
             >
-                {#if settings.numbered}
-                    <div class="task__number" style={inlineStyling($manager.styling?.num)}>
-                        {task.idx + 1}.
-                    </div>
-                {:else}
-                    <button 
-                        class="task__checkbox"
-                        id={`${idPrefix}--task-checkbox-id--${task.id}`}
-                        style={inlineStyling($manager.styling?.checkbox)}
-                        on:click={() => { 
-                            if (isChild && onSubtaskCheck) {
-                                onSubtaskCheck(!task.isChecked)
-                            }
-                            $manager.toggleTaskComplete(task.id)
-                        }}
-                    >
-                        <i class="fa-solid fa-check checkbox-check"></i>
-                    </button>
-                {/if}
+                <div style:margin={level === 0 && type === "side-menu" ? "0px 0px 0px 2px" : ""}>
+                    {#if settings.numbered}
+                        <div class="task__number" style={inlineStyling($manager.styling?.num)}>
+                            {task.idx + 1}.
+                        </div>
+                    {:else}
+                        <button 
+                            class="task__checkbox"
+                            id={`${idPrefix}--task-checkbox-id--${task.id}`}
+                            style={inlineStyling($manager.styling?.checkbox)}
+                            on:click={() => { 
+                                if (isChild && onSubtaskCheck) {
+                                    onSubtaskCheck(!task.isChecked)
+                                }
+                                $manager.toggleTaskComplete(task.id)
+                            }}
+                        >
+                            <i class="fa-solid fa-check checkbox-check"></i>
+                        </button>
+                    {/if}
+                </div>
                 <!-- Drag Handle -->
                 <div 
                     class="grip"
@@ -135,7 +142,7 @@
                 <button
                     class="toggle-arrow toggle-arrow--section"
                     class:toggle-arrow--closed={!isOpen}
-                    class:hidden={subtasks.length === 0}
+                    class:hidden={subtasks.length === 0 || atMaxDepth}
                     style:margin-left={"18px"}
                 >
                     <SvgIcon 
@@ -168,11 +175,13 @@
                     </div>
                 </div>
                 <!-- Description -->
-                <div class="task__description-container">
+                <div 
+                    class="task__description-container"
+                    class:hidden={!task.description && !(isEdit && editMode === "description")}
+                >
                     <div 
                         id={`${idPrefix}--task-description-id--${task.id}`}
                         class="task__description"
-                        class:task__description--hide={!task.description && !isEdit && editMode != "description"}
                         data-placeholder="No description"
                         spellcheck="false"
                         contenteditable
@@ -187,17 +196,25 @@
     
             <!-- Divider -->
             {#if task.idx != 0 && ui.hasTaskDivider}
-                <div class="task__divider divider"></div>
+                <div 
+                    class="task__divider divider"
+                    style:cursor={type === "side-menu" ? "grab" : "pointer"}
+                >
+                </div>
             {/if}
     
-            {#if subtasks.length > 0}
+            {#if type === "side-menu"}
+                <div class="fraction">
+                    {subtasks.length}
+                </div>
+            {:else if subtasks.length > 0}
                 <div class="fraction">
                     {checkedSubtasks}<span class="fraction__slash">/</span>{subtasks.length}
                 </div>
             {/if}
         </div>
     </div>
-    {#if isOpen && subtasks.length > 0 && level <= MAX_DEPTH}
+    {#if isOpen && subtasks.length > 0 && !atMaxDepth}
         <ul 
             class="task__subtasks"
             id={`${idPrefix}--task-children-id--${task.id}`}

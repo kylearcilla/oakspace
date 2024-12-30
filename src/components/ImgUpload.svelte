@@ -32,7 +32,7 @@
     $: if (isOpen && linkInput) {
         linkInput.focus()
     }
-    $: if (isOpen && !linkInput) {
+    $: if (isOpen && !linkInput && inputType === "link") {
         setTimeout(() => linkInput.focus(), 100)
     }
 
@@ -80,10 +80,16 @@
     }
     function highlightTabBtnClicked(type: "link" | "file") {
         inputType = type
-
         imgUrl = ""
     } 
+    function onKeyDown(e: KeyboardEvent) {
+        if (e.key === "Enter") {
+            onImgUrlSubmit()
+        }
+    }
 </script>
+
+<svelte:window on:keydown={onKeyDown} />
 
 <BounceFade 
     id={"img-upload--dmenu"}

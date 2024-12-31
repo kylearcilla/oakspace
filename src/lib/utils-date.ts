@@ -16,13 +16,13 @@ export const months = [
 ]
 
 export const DAYS_OF_WEEK = [
+	'Sunday',
 	'Monday',
 	'Tuesday',
 	'Wednesday',
 	'Thursday',
 	'Friday',
-	'Saturday',
-	'Sunday'
+	'Saturday'
 ]
 
 export const TOTAL_DAY_MINS = 1440
@@ -678,7 +678,7 @@ export function getDayIdxMinutes() {
 	const dayIdx = new Date().getDay()
 
 	return {
-		dayIdx: (dayIdx + 6) % 7,
+		dayIdx,
 		minutes: getNowMins()
 	}
 }

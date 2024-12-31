@@ -4,6 +4,7 @@
 	import { toast } from "$lib/utils-toast"
 	import { minsFromStartToHHMM } from "$lib/utils-date"
     import { RoutinesManager } from "$lib/routines-manager"
+    import { TextEditorManager } from "$lib/inputs"
 	import { getColorTrio, isTargetTextEditor } from "$lib/utils-general"
 	import { CORE_OPTIONS, getCoreActivityIdx, getCoreStr } from "$lib/utils-routines"
 
@@ -18,10 +19,14 @@
 	import DropdownList from "../../../components/DropdownList.svelte"
 	import ConfirmationModal from "../../../components/ConfirmationModal.svelte"
 
+    const { MAX_BLOCK_DESCRIPTION, MIN_BLOCK_DURATION_MINS } = RoutinesManager
+
     export let routineManager: RoutinesManager
     export let block: RoutineBlockElem
 
     class EditError extends Error { }
+
+    const DESCRIPTION_ID = "routine-block-description"
 
     let settingsOpen = false, coresOpen = false
     let colorsOpen = false, tagsOpen = false
@@ -35,13 +40,12 @@
     let isNew   = routineManager.isMakingNewBlock
     
     let updatedTasks: Task[] = tasks
-    let doCreateNewTask = false
+    let newTaskFlag = false
     let pickedCoreItemIdx = getCoreActivityIdx(activity)
 
     let newStartTime = startTime
     let newEndTime = endTime
     let newOrderContext = order
-    let hasInitTasks = false
     
     let editHasBeenMade = false
     let isSaving = false
@@ -57,9 +61,20 @@
     $: blocks = $_blocks
     $: colors = getColorTrio(block.color, !isDarkTheme)
 
-    $: initTitleEditor(title)
-    $: initDescriptionEditor(description)
     $: initOrderIdx(blocks) 
+
+    new TextEditorManager({ 
+        initValue: description,
+        placeholder: "no description...",
+        allowFormatting: false,
+        maxLength: MAX_BLOCK_DESCRIPTION,
+        id: DESCRIPTION_ID,
+        handlers: {
+            onInputHandler: (_, val) => {
+                description = val
+            }
+        }
+    })
 
     function toggleEditMade() {
         editHasBeenMade = true
@@ -135,18 +150,11 @@
         if (coresOpen) coresOpen = false
         if (tagsOpen) tagsOpen = false
     }
-    function onTaskChange(event: CustomEvent) {
-        if (!hasInitTasks) {
-            hasInitTasks = true
-            return
-        }
-
+    function onTaskChange(tasks: Task[]) {
         toggleEditMade()
-        const _updatedTasks = event.detail
-        updatedTasks = _updatedTasks
+        updatedTasks = tasks
     }
 
-    /* Action Items */
     function verifyChanges() {
         if (newEndTime >= 1440 || newEndTime === 0) {
             throw new EditError("Invalid end time")
@@ -154,8 +162,8 @@
         if (newEndTime - newStartTime < 0) {
             throw new EditError("Invalid time")
         }
-        if (newEndTime - newStartTime < RoutinesManager.MIN_BLOCK_DURATION_MINS) {
-            throw new EditError(`Blocks must be at least ${RoutinesManager.MIN_BLOCK_DURATION_MINS} minutes long`)
+        if (newEndTime - newStartTime < MIN_BLOCK_DURATION_MINS) {
+            throw new EditError(`Blocks must be at least ${MIN_BLOCK_DURATION_MINS} minutes long`)
         }
 
         // looks for the earliest overlapping block
@@ -172,7 +180,7 @@
         }
     }
 
-    /* Conclude Changes */
+    /* conclude changes */
     function asyncCall() {
         return new Promise((resolve, reject) => {
             setTimeout(() => resolve("Mock data"), 200)
@@ -188,8 +196,12 @@
             
             onMadeChanges({
                 ...block, 
-                startTime: newStartTime, endTime: newEndTime,
-                title, description, tasks: updatedTasks, order: newOrderContext
+                title, 
+                description,
+                startTime: newStartTime, 
+                endTime: newEndTime,
+                tasks: updatedTasks, 
+                order: newOrderContext
             })
 
             toast("success", { message: "Changes saved!" })
@@ -426,7 +438,7 @@
                 </div>
             </div>
             <div 
-                id="routine-block-description"
+                id={DESCRIPTION_ID}
                 class="text-editor"
                 aria-label="Description"
                 contenteditable
@@ -444,49 +456,21 @@
                 </span>
             </div>
             <div class="edit-routine__list-container" bind:this={routineListRef}>
-                <TasksList 
-                    on:tasksUpdated={onTaskChange}
+                <TasksList
+                    {tasks}
+                    {newTaskFlag}
+                    {onTaskChange}
                     options={{
-                        id:   "edit-routine",
+                        id: "edit-routine",
+                        type: "side-menu",
                         settings: {
-                            numbered: true
-                        },
-                        isCreatingNewTask: doCreateNewTask,
-                        containerRef: routineListRef,
-                        tasks,
-                        styling: {
-                            task: { 
-                                fontSize: "1.3rem", height: "30px", padding: "5px 0px 5px 0px" 
-                            },
-                            subtask: { 
-                                fontSize: "1.23rem", padding: "8px 0px 9px 0px" 
-                            },
-                            num: { 
-                                width: "24px", margin: "1px 0px 0px 20px" 
-                            },
-                            description: { 
-                                padding: "5px 0px 2px 0px"
-                            },
-                            descriptionInput: { 
-                                fontSize: "1.23rem"
-                            }
-                        },
-                        addBtn: {
-                            style: { 
-                                fontSize: "1.25rem", fontWeight: "500", 
-                            }
-                        },
-                        cssVariables: { 
-                            maxDescrLines: 2 
-                        },
-                        contextMenuOptions: { 
-                            width: "170px" 
+                            maxDepth: 3
                         },
                         ui: { 
-                            hasTaskDivider: false,
-                            sidePadding: "20px", 
-                            listHeight: "100%"
-                        }
+                            hasTaskDivider: true,
+                            maxHeight: "280px"
+                        },
+                        containerRef: routineListRef
                     }}
                 />
             </div>
@@ -511,7 +495,7 @@
 
 {#if confirmModalOpen} 
     <ConfirmationModal 
-        text={`${isNew ? "Undo block creation?" :  "Discard unsaved changes?"}`}
+        text={isNew ? "Undo block creation?" :  "Discard unsaved changes?"}
         onCancel={cancelCloseAttempt}
         onOk={confirmUnsavedClose}
         options={{ 

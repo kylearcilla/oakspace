@@ -12,6 +12,7 @@
 	import SvgIcon from "../../components/SVGIcon.svelte"
 	import AmbientSettings from "../AmbientSettings.svelte"
 	import ActiveSessionMini from "./ActiveSessionMini.svelte"
+	import BounceFade from "../../components/BounceFade.svelte";
 	import ProgressRing from "../../components/ProgressRing.svelte";
 
     const NO_SESS_MD_MAX_WIDTH = 270
@@ -30,14 +31,15 @@
     $: isColorThemeDefault = ["Dark Mode", "Light Mode"].includes($themeState.title)
     $: session = $sessionManager
     $: routine      = $weekRoutine
+
     $: initNowBlock(todayRoutine)
     
     // active routine
     let todayRoutine: RoutineBlock[] | DailyRoutine | null = null 
     let nowBlock: RoutineBlock | null = null
-    let upcomingBlock: RoutineBlock | null = null
     let nowBlockTitle = ""
-    let colorTrio = ["", "", ""]
+    let isRoutineOpen = false
+    let blockInfo: { title: string, info: string } 
     
     $: todayRoutine = getDayRoutineFromWeek(routine, currTime.dayIdx)
 
@@ -56,14 +58,15 @@
 
     /* Week Routines */
     function initNowBlock(todayRoutine: RoutineBlock[] | DailyRoutine | null) {
+        blockInfo = getNextBlockInfo(todayRoutine)
+
         if (!todayRoutine) return
 
         const currBlock = getCurrentBlock(todayRoutine, currTime.minutes)
-        upcomingBlock   = getUpcomingBlock(currTime.minutes, todayRoutine)?.block ?? null
 
         if (currBlock) {
             nowBlock = currBlock.block
-            colorTrio = nowBlock ? getColorTrio((nowBlock as RoutineBlock).color, !isDarkTheme) : ["", "", ""]
+            // colorTrio = nowBlock ? getColorTrio((nowBlock as RoutineBlock).color, !isDarkTheme) : ["", "", ""]
         }
         else {
             nowBlock = null
@@ -152,22 +155,16 @@
             disabled={!$weekRoutine}
             title={nowBlockTitle}
             id="active-routine--dbtn"
-            on:click={toggleActiveRoutine}
+            on:click={() => {
+                isRoutineOpen = !isRoutineOpen
+            }}
         >
             <div class="header__now-block-circle"></div>
             <div class="header__now-block-title">
-                {#if !dayRoutine}
-                    No Routine
-                {:else if !nowBlock && upcomingBlock}
-                    {upcomingBlock.title}
-                {:else if nowBlock}
-                    {nowBlock.title}
-                {:else}
-                    Free
-                {/if}
+                {blockInfo.title}
             </div>
             <div class="header__now-block-time">
-                {getNextBlockInfo(todayRoutine) ?? ""}
+                {blockInfo.info}
             </div>
         </button>
         <!-- Session Component -->
@@ -204,8 +201,22 @@
          </div>
     </div>
 
-    <!-- Active Routine Pop Up -->
-    <ActiveRoutine />
+    <BounceFade 
+        position={{ 
+            top: "38px", 
+            left: "10px" 
+        }}
+        isHidden={!isRoutineOpen}
+        zIndex={99999}
+        onClickOutside={() => {
+            isRoutineOpen = false
+        }}
+        id={"active-routine--dmenu"}
+    >
+        <ActiveRoutine 
+            isOpen={isRoutineOpen} 
+        />
+    </BounceFade>
 
     <AmbientSettings
         onClickOutside={() => ambientSettings = false}

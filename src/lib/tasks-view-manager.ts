@@ -215,16 +215,14 @@ export class TasksViewManager {
             const todoistTasks = this.todoistTasks!
             const newTasks: Task[] = []
             
-            // process the sync tasks to update current tasks
+            // check to see tasks were updated (if one of the sync tasks)
             for (let i = 0; i < todoistTasks.length; i++) {
-                // check to see if this task was updated (if one of the sync tasks)
                 const task = todoistTasks[i]
                 const { action, syncTask, idx } = this.getTaskSyncAction(syncTasks, task)
 
                 if (syncTask) {
                     removeItemFromArray(idx, syncTasks)
                 }
-
                 if (action === "deleted") {
                     continue
                 }

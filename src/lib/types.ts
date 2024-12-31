@@ -789,6 +789,7 @@ type StylingOptions = {
     margin?: CSSMultiDimPxVal
     fontSize?: CSSREMVal
     fontWeight?: string
+    position?: "static" | "absolute" | "relative"
     color?: string
     borderRadius?: CSSPxVal
     backgroundColor?: string

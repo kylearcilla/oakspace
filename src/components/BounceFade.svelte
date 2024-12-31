@@ -5,9 +5,9 @@
     export let isHidden: boolean
     export let isAnim = true
     export let position: CSSAbsPos | undefined = undefined
+    export let staticPos = false
     export let zIndex: number = 1
     export let onClickOutside: FunctionParam | undefined = undefined
-    export let styling: StylingOptions | undefined = undefined
     export let onDismount: (() => void) | undefined = undefined
 
     let isMounted = false
@@ -51,9 +51,8 @@
         class="bounce-fade"
         class:bounce-fade--shown={doShow}
         class:bounce-fade--animated={isAnim}
-        style={inlineStyling(styling)}
+        style:position={staticPos ? "fixed" : "absolute"}
         style:z-index={zIndex}
-        style:position={position != undefined ? "absolute" : "relative"}
         style:top={position?.top}
         style:left={position?.left}
         style:right={position?.right}

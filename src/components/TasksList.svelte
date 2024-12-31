@@ -13,6 +13,7 @@
     export let removeCompleteFlag: boolean | undefined = undefined
     export let newTaskFlag: boolean | undefined = undefined
     export let tasks: Task[]
+    export let allowInitTasksCall = true
     export let options: TasksListOptions
     export let onTaskChange: ((tasks: Task[]) => void) | undefined = undefined
 
@@ -29,7 +30,7 @@
     let idPrefix = options.id
     let isContextMenuOpen = false
     let rootTasks: Task[] = []
-    let justInit = false
+    let justInit = true
 
     $: isDark      = $themeState.isDarkTheme
     $: focusTask   = $manager.focusTask
@@ -46,19 +47,19 @@
     $manager.tasks._store?.subscribe((state) => {
         rootTasks = state.getRootTasks()
 
-        if (onTaskChange) {
+        if (onTaskChange && (!justInit) || (justInit && allowInitTasksCall)) {
             onTaskChange(state.getAllTasks())
         }
     })
     function createNewTask() {
-        if (!justInit) {
+        if (justInit) {
             return
         }
         $manager.addNewTaskFromOutside(0)
     }
     function removeCompletedTasks() {
-        if (!justInit) {
-            justInit = true
+        if (justInit) {
+            justInit = false
             return
         }
         $manager.removeCompletedTasks()
@@ -260,7 +261,7 @@
         &-container {
             max-height: 100%;
             margin: 5px 0px 0px -20px;
-            padding: 2px 0px 10px 20px;
+            padding: 2px 0px 5px 20px;
         }
         &-container--empty {
             margin-bottom: 5px !important;

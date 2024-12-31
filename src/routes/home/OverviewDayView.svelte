@@ -5,11 +5,12 @@
 	import { RoutinesManager } from "$lib/routines-manager"
 	import { findClosestColorSwatch } from "$lib/utils-colors"
 	import { GoogleCalendarManager } from "$lib/google-calendar-manager"
-    import { getColorTrio, getMaskedGradientStyle, initFloatElemPos } from "$lib/utils-general"
+    import { getColorTrio, getMaskedGradientStyle } from "$lib/utils-general"
 	import { getDayIdxMinutes, getTimeFromIdx, isSameDay, minsFromStartToHHMM } from "$lib/utils-date"
 	import { getDayRoutineFromWeek, resetDayRoutine, toggleRoutineBlockComplete } from "$lib/utils-routines"
     
-	import DropdownList from "../../components/DropdownList.svelte"
+	import Modal from "../../components/Modal.svelte"
+	import ActiveRoutine from "./ActiveRoutine.svelte"
 
     export let checkbox: boolean
     export let richColors: boolean
@@ -34,28 +35,26 @@
 
     let dRoutine: RoutineBlock[] | DailyRoutine | null = null
     let routineBlocks: RoutineBlockElem[] = []
+    let isRoutineOpen = false
 
-    let contextRoutineBlock: RoutineBlockElem & { idx: number } | null = null
-    let mousePos = { left: 0, top: 0 }
-    let contextMenuPos: OffsetPoint | null = null
+    let routineBlockView: RoutineBlockElem & { idx: number } | null = null
     
     $: isLight = !$themeState.isDarkTheme
     $: routine = $weekRoutine
+    $: isToday = isSameDay(new Date(), day)
+
     $: {
         // update routine when day changes
         const idx = day.getDay()
 
         if (dayIdx != idx) {
             resetDayRoutine()
-            dRoutine = getDayRoutineFromWeek(routine, idx)
-            dayIdx = idx
         }
-        if (dRoutine) {
-            const blocks = "id" in dRoutine ? dRoutine.blocks : dRoutine
+        dRoutine = getDayRoutineFromWeek(routine, idx)
+        dayIdx = idx
 
-            routineBlocks = blocks.map((block) => {
-                return RoutinesManager.createRoutineBlockElem(block, scrollContainerHeight)
-            })
+        if (scrollContainerHeight != undefined) {
+            updateRoutineBlocks()
         }
     }
     $: if (headerHeight >= 0 && allDayRef) {
@@ -97,37 +96,33 @@
     }
 
     /* routines */
-    function onPointerMove(pe: PointerEvent) {
-        const { clientX, clientY }  = pe
-        mousePos = {
-            left: clientX - dayViewElem.getBoundingClientRect().left - 10,
-            top: clientY - dayViewElem.getBoundingClientRect().top - scrollTop
-        }
-    }
     function onDayScroll(event: Event) {
         const target = event.target as HTMLElement
         scrollTop = target.scrollTop
     }
-    function closeContextMenu() {
-        contextMenuPos = null
-        contextRoutineBlock = null
-    }
-    function onRoutineBlockContext(block: RoutineBlockElem & { idx: number }) {
-        contextRoutineBlock = block
-        contextMenuPos = initFloatElemPos({
-            dims: { 
-                height: 40, 
-                width: 145
-            }, 
-            containerDims: { 
-                height: dayViewElem.clientHeight + 25,  
-                width: dayViewElem.clientWidth
-            },
-            cursorPos: {
-                left: mousePos.left,
-                top: mousePos.top + 48
-            }
+    function updateRoutineBlocks() {
+        if (!dRoutine) return
+
+        const blocks = "id" in dRoutine ? dRoutine.blocks : dRoutine
+
+        routineBlocks = blocks.map((block) => {
+            return RoutinesManager.createRoutineBlockElem(block, scrollContainerHeight)
         })
+    }
+    function onRoutineClick(e: Event, block: RoutineBlockElem & { idx: number }) {
+        const target = e.target as HTMLElement
+        const classes = target.classList.value
+        const isCheckbox = classes.includes("routine-blocks__block-checkbox") || target.tagName === "I"
+
+        if (isRoutineOpen || isCheckbox) {
+            return
+        }
+
+        isRoutineOpen = true
+        routineBlockView = {
+            block,
+            idx: block.idx
+        }
     }
     onMount(() => {
         minuteInterval = setInterval(() => currTime = getDayIdxMinutes(), 1000)
@@ -196,7 +191,6 @@
     >
         <div 
             bind:this={dayViewElem}
-            on:pointermove={onPointerMove}
             class="day-view__col"
         >
             <!-- Blocks -->
@@ -266,27 +260,25 @@
                             </div>
                         {/each}
                     {:else}
-                        {#each routineBlocks as block, blockIdx}
+                        {#each routineBlocks as block, blockIdx (blockIdx)}
                             {@const colorTrio    = getColorTrio(block.color, isLight)}
                             {@const startTimeStr = minsFromStartToHHMM(block.startTime)}
                             {@const endTimeStr   = minsFromStartToHHMM(block.endTime)}
                             {@const done  = block.done}
                             <div 
-                                id={block.id}
                                 role="button"
                                 tabIndex={0}
                                 class="routine-blocks__block"
                                 class:routine-blocks__block--checkbox={checkbox}
                                 class:routine-blocks__block--checked={done}
-                                class:routine-blocks__block--context={contextRoutineBlock?.idx === blockIdx}
                                 style:top={`${block.yOffset}px`}
                                 style:--block-height={`${block.height}px`}
                                 style:--block-color-1={colorTrio[0]}
                                 style:--block-color-2={colorTrio[1]}
                                 style:--block-color-3={colorTrio[2]}
                                 title={`${block.title} \n${startTimeStr} - ${endTimeStr}`}
-                                on:contextmenu|preventDefault={() => { 
-                                    onRoutineBlockContext({
+                                on:click={(e) => {
+                                    onRoutineClick(e, {
                                         ...block, idx: blockIdx
                                     })
                                 }}
@@ -297,13 +289,16 @@
                                 }}
                             >
                                 <div class="routine-blocks__block-content">
-                                    <button 
-                                        on:click={() => toggleRoutineBlockComplete(blockIdx, currTime)}
-                                        title="Toggle routine completion"
-                                        class="routine-blocks__block-checkbox"
-                                    >
-                                        <i class="fa-solid fa-check"></i> 
-                                    </button>
+                                    {#if isToday}
+                                        <button 
+                                            on:click={() => toggleRoutineBlockComplete(blockIdx, currTime)}
+                                            title="Toggle routine completion"
+                                            class="routine-blocks__block-checkbox"
+                                            class:routine-blocks__block-checkbox--checked={done}
+                                        >
+                                            <i class="fa-solid fa-check"></i> 
+                                        </button>
+                                    {/if}
                                     <div>
                                         <div class="flx flx--algn-center">
                                             <span 
@@ -399,31 +394,22 @@
         </div>
     </div>
 
-    <!-- Routine Block Context Menu -->
-    <DropdownList 
-        id={"overview"}
-        isHidden={!contextMenuPos}
-        options={{
-            listItems: [{ 
-                name: contextRoutineBlock?.done ? "Unmark as done" : "Mark as done"
-            }],
-            position: { 
-                top: `${contextMenuPos?.top}px`,
-                left: `${contextMenuPos?.left}px`
-            },
-            styling:  { 
-                width: "140px",
-                fontSize: "1.2rem"
-            },
-            onListItemClicked: () => {
-                toggleRoutineBlockComplete(contextRoutineBlock?.idx ?? 0, currTime)
-                closeContextMenu()
-            },
-            onClickOutside: () => {
-                closeContextMenu()
-            }
-        }}
-    />
+    {#if isRoutineOpen}
+        <Modal 
+            options={{ 
+                borderRadius: "8px",
+                scaleUp: true
+            }} 
+            onClickOutSide={() => isRoutineOpen = false}
+    >
+            <ActiveRoutine
+                type="side-menu"
+                isOpen={isRoutineOpen} 
+                currDayIdx={day.getDay()}
+                currBlock={routineBlockView }
+            />
+        </Modal>
+    {/if}
 </div>
 
 <style lang="scss">
@@ -526,7 +512,6 @@
                 padding-left: 9px;
                 border-radius: 9px;
             }
-
             &-title {
                 @include text-style(1);
             }
@@ -538,8 +523,10 @@
             }
             &-checkbox {
                 background-color: rgba(var(--textColor1), 0.05);
+
+                &--checked, 
                 &:hover {
-                    background-color: rgba(var(--textColor1), 0.2); 
+                    background-color: rgba(var(--textColor1), 0.25); 
                 }
             }
         }
@@ -551,16 +538,17 @@
             &::after, &::before {
                 cursor: pointer !important;
             }
+            &:active {
+                transform: scale(1);
+            }
         }
         &__block i {
             display: none;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             color: rgba(var(--block-color-1), 1);
         }
         &__block-title {
             margin-top: -2px;
-        }
-        &__block--context {
         }
         &__block--checkbox &__block-content {
             padding: 6px 5px 5px 8px;
@@ -580,17 +568,14 @@
             padding-top: 5px;
         }
         &__block-checkbox {
-            min-width: 13px;
-            min-height: 13px;
-            margin-right: 5px;
-            border-radius: 5px;
+            @include square(16px, 6px);
             @include center;
-            background-color: rgba(var(--block-color-1), 0.1);
+            margin-right: 5px;
+            background-color: rgba(var(--block-color-1), 0.05);
             display: none;
             
             &:hover {
-                transition: 0s ease-in-out;
-                background-color: rgba(var(--block-color-1), 0.2); 
+                background-color: rgba(var(--block-color-1), 0.2);
             }
         }
     }

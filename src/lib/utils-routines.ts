@@ -27,6 +27,10 @@ export function getCoreActivityIdx(activity: RoutineActvity | null) {
     return coreOptions.findIndex((key) => key[0] === activity)
 }
 
+export function getRoutineBlocks(dailyRoutine: RoutineBlock[] | DailyRoutine) {
+    return "id" in dailyRoutine ? dailyRoutine.blocks : dailyRoutine
+}
+
 export function getBlockStyling(height: number) {
     const classes: string[] = []
 
@@ -43,14 +47,18 @@ export function getBlockStyling(height: number) {
 }
 
 export function isDayRoutinedLinked(weekRoutine: WeeklyRoutine | null, dayKey: keyof WeeklyRoutineBlocks) {
-    if (!weekRoutine) return false
+    if (!weekRoutine) {
+        return false
+    }
     const dayRoutine = weekRoutine!.blocks[dayKey]
 
     return "id" in dayRoutine
 }
 
 export function formatCoreData(mins: number) {
-    if (mins < 0) return "--"
+    if (mins < 0) {
+        return "--"
+    }
     return minsToHHMM(Math.floor(mins))
 }
 
@@ -65,34 +73,43 @@ export function getDayRoutineFromWeek(wkRoutine: WeeklyRoutine | null, dayIdx: n
 export function getCurrentBlock(dailyRoutine: RoutineBlock[] | DailyRoutine | null, currMin: number) {
     if (!dailyRoutine) return null
 
-    const blocks: RoutineBlock[] = "id" in dailyRoutine ? dailyRoutine.blocks : dailyRoutine
-    const blockIdx = blocks.findIndex((block) =>  block.startTime <= currMin && currMin <= block.endTime)
+    const blocks = getRoutineBlocks(dailyRoutine)
+    blocks.sort((a, b) => a.startTime - b.startTime)
+
+    const blockIdx = blocks.findIndex((block) =>
+         block.startTime <= currMin && currMin <= block.endTime)
 
     if (blockIdx < 0) return null
 
-    return { idx: blockIdx, block: blocks[blockIdx] }
+    return { 
+        idx: blockIdx, 
+        block: blocks[blockIdx] 
+    }
 }
 
 export function getBlockFromOrderIdx(orderIdx: number, dailyRoutine: RoutineBlock[] | DailyRoutine) {
-    const blocks: RoutineBlock[] = "id" in dailyRoutine ? dailyRoutine.blocks : dailyRoutine
+    const blocks = getRoutineBlocks(dailyRoutine)
     blocks.sort((a , b) => a.startTime - b.startTime)
 
     if (orderIdx < 0 || orderIdx >= blocks.length) {
         return null
     }
 
-    return { block: blocks[orderIdx], idx: orderIdx }
+    return { 
+        block: blocks[orderIdx], 
+        idx: orderIdx 
+    }
 
 }
 
 export function getBlockFromMins(mins: number, dailyRoutine: RoutineBlock[] | DailyRoutine) {
-    const blocks: RoutineBlock[] = "id" in dailyRoutine ? dailyRoutine.blocks : dailyRoutine
+    const blocks = getRoutineBlocks(dailyRoutine)
 
     return blocks.find((block) =>  block.startTime <= mins && mins <= block.endTime)
 }
 
 export function getUpcomingBlock(mins: number, dailyRoutine: RoutineBlock[] | DailyRoutine) {
-    const blocks: RoutineBlock[] = "id" in dailyRoutine ? dailyRoutine.blocks : dailyRoutine
+    const blocks = getRoutineBlocks(dailyRoutine)
 
     return blocks.reduce((next: { block: RoutineBlock, idx: number } | null, block: RoutineBlock, idx: number) => {
         if (mins < block.startTime && (!next || block.startTime < next.block.startTime)) {
@@ -105,7 +122,7 @@ export function getUpcomingBlock(mins: number, dailyRoutine: RoutineBlock[] | Da
 }
 
 export function getMostRecentBlock(mins: number, dailyRoutine: RoutineBlock[] | DailyRoutine) {
-    const blocks: RoutineBlock[] = "id" in dailyRoutine ? dailyRoutine.blocks : dailyRoutine;
+    const blocks = getRoutineBlocks(dailyRoutine)
 
     return blocks.reduce((mostRecent: { block: RoutineBlock, idx: number } | null, block: RoutineBlock, idx: number ) => {
         if (mins > block.endTime && (!mostRecent || block.endTime > mostRecent.block.endTime)) {
@@ -118,17 +135,36 @@ export function getMostRecentBlock(mins: number, dailyRoutine: RoutineBlock[] | 
 }
 
 export function getNextBlockInfo(dailyRoutine: RoutineBlock[] | DailyRoutine | null) {
-    if (!dailyRoutine) return
+    if (!dailyRoutine) {
+        return {
+            title: "",
+            info: "No Routine"
+        }
+    }
 
     const nowMins = getNowMins()
     const nowBlock = getBlockFromMins(nowMins, dailyRoutine)
-    
-    if (nowBlock != null) {
-        return nowBlock.endTime === nowMins ? "Now" : `${minsToHHMM(nowBlock.endTime - nowMins)}`
-    }
-    
     const nextBlock = getUpcomingBlock(nowMins, dailyRoutine)
-    return nextBlock ? `in ${minsToHHMM(nextBlock.block.startTime - nowMins)}` : ""
+    
+    if (nowBlock) {
+        const ending = nowBlock.endTime === nowMins
+        return {
+            title: ending && nextBlock ? nextBlock.block.title : nowBlock.title ?? "",
+            info: ending && nextBlock ? "Now" : `${minsToHHMM(Math.max(1, nowBlock.endTime - nowMins))}`
+        }
+    }
+    else if (nextBlock) {
+        return {
+            title: nextBlock.block.title,
+            info: `in ${minsToHHMM(Math.max(1, nextBlock.block.startTime - nowMins))}`
+        }
+    }
+    else {
+        return {
+            title: "",
+            info: "Free"
+        }
+    }
 }
 
 /**

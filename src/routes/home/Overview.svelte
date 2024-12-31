@@ -2,12 +2,13 @@
     import { themeState, weekRoutine } from "$lib/store"
 
 	import { Icon } from "$lib/enums"
+	import { isSameDay } from "../../lib/utils-date";
 	import { formatDatetoStr } from "$lib/utils-date"
 	import { clickOutside } from "$lib/utils-general"
+	import { SideCalendar } from "$lib/side-calendar"
 	import { didTodoistAPIRedirect } from "$lib/api-todoist"
     import { TasksViewManager } from "$lib/tasks-view-manager"
 	import { findClosestColorSwatch } from "$lib/utils-colors"
-	import { SideCalendar } from "$lib/side-calendar"
 	import { GoogleCalendarManager, initGoogleCalSession } from "$lib/google-calendar-manager"
     
 	import Todos from "./Todos.svelte";
@@ -34,8 +35,10 @@
     /* routines */
     let checkbox = false
     let richColors = false
+
     $: routine = $weekRoutine
     $: isLight = !$themeState.isDarkTheme
+    $: isToday = isSameDay(new Date(), focusDate)
 
     /* google calendar */
     let googleCal         = initGoogleCalSession()
@@ -56,6 +59,7 @@
     $: tm = tasksManager.store
     $: onTodoist = $tm.onTodoist
     $: todoistLinked = $tm.todoistLinked
+
 
     weekRoutine.subscribe((state) => {
         if (!state && isGoogleCalLinked)  {
@@ -438,7 +442,7 @@
                             {routine?.name ?? "Routine"}
                         </div>
                         {#if routine}
-                            <div class="dmenu__toggle-optn">
+                            <div class="dmenu__toggle-optn" class:hidden={!isToday}>
                                 <span class="dmenu__option-text">
                                     Checkbox
                                 </span>
@@ -522,7 +526,6 @@
         </BounceFade>
     </div>
 </div>
-
 
 <style lang="scss">
     @import "../../scss/day-box.scss";

@@ -134,7 +134,6 @@
                             }
                         }}
                         on:click={() => {
-                            console.log(structuredClone(day))
                             _onDayUpdate(day.date)
                         }}
                     >

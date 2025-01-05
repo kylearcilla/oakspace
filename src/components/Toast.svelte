@@ -29,7 +29,7 @@
 	export let unstyled: $$Props['unstyled'] = false
 
 	const EXPANDED_GAP = 8
-	const TOAST_LIFETIME = 4000
+	const TOAST_LIFETIME = 100000
 	const TOAST_NBR_DISAPPEAR_DELAY = 3000
 	const TIME_BEFORE_UNMOUNT = 200
 	const SWIPE_TRESHOLD = 130
@@ -75,15 +75,11 @@
 		loading: ''
 	}
 	const { toasts, heights, removeHeight, addHeight, dismiss } = toasterManager!
-
-	$: console.log({ toastType })
 	
 	$: classes = { ...defaultClasses, ...classes }
 	$: isFront = index === 0
 	$: isVisible = index + 1 <= visibleToasts
 	$: toastType = toast.type ?? 'default'
-	$: toastClass = toast.class || ''
-	$: toastDescriptionClass = toast.descriptionClass || ''
 	$: coords = position.split('-')
 	$: invert = toast.invert || invert
 	$: $effect
@@ -94,9 +90,9 @@
 	$: isLight = !$themeState.isDarkTheme
 
 	// Height index is used to calculate the offset as it gets updated before the toast array, which means we can calculate the new layout faster.
-	$: heightIdx = $heights.findIndex((height: any) => height.toastId === toast.id) || 0
+	$: heightIdx		  = $heights.findIndex((height: any) => height.toastId === toast.id) || 0
 	$: toastsHeightBefore = $heights.reduce((prev: any, curr: any, idx: any) => idx >= heightIdx ? prev : prev + curr.height, 0)
-	$: isDarkTheme = $themeState.isDarkTheme
+	$: isDarkTheme		  = $themeState.isDarkTheme
 
 	$: if (toast.delete) {
 		deleteToast()
@@ -124,8 +120,8 @@
 		removed = true
 		offsetBeforeRemove = offset   // Save the offset for the exit swipe animation
 
-		removeHeight(toast.id)
-		setTimeout(() => dismiss(toast.id), TIME_BEFORE_UNMOUNT)
+		// removeHeight(toast.id)
+		// setTimeout(() => dismiss(toast.id), TIME_BEFORE_UNMOUNT)
 	}
 
 	/**

@@ -244,7 +244,7 @@ $header-icon-size: 17px;
         @include text-style(0.9, 500, 1.4rem);
         margin: -2px 0px 0px 0px;
         @include flex(center);
-        @include multi-line-elipses-overflow(2);
+        @include truncate-lines(2);
     }
     &__description {
         margin: 0px 0px 8px 0px;

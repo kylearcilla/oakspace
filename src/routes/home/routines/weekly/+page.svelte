@@ -1655,10 +1655,10 @@
         &--narrow &__title {
             max-height: 30px;
             max-width: calc(100% - 60px);
-            @include multi-line-elipses-overflow(1);
+            @include truncate-lines(1);
         }
         &--narrow &__description {
-            @include multi-line-elipses-overflow(2);
+            @include truncate-lines(2);
             max-height: 40px;
             margin: 5px 0px 0px 0px;
             overflow: hidden;
@@ -1851,7 +1851,7 @@
             }
             span {
                 @include text-style(0.2, 400, 1.25rem);
-                @include multi-line-elipses-overflow(1);
+                @include truncate-lines(1);
                 word-wrap: break-word;
             }
             i {
@@ -2075,14 +2075,14 @@
         &__day-breakdown .routine__title {
             max-width: calc(100% - 20px);
             font-size: 1.5rem;
-            @include multi-line-elipses-overflow(2);
+            @include truncate-lines(2);
         }
         &__day-breakdown .routine__description {
             width: 100%;
             font-size: 1.3rem;
             margin-top: 0px;
             padding-top: 4px;
-            @include multi-line-elipses-overflow(2);
+            @include truncate-lines(2);
         }
         &__day-breakdown {
             overflow: visible;

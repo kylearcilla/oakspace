@@ -1,19 +1,19 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte"
 
+	import { openModal } from "$lib/utils-home"
     import { Icon, ModalType } from "$lib/enums"
-	import { capitalize, getColorTrio } from "$lib/utils-general"
+	import { capitalize } from "$lib/utils-general"
 	import { getDayIdxMinutes, secsToHHMM } from "$lib/utils-date"
-	import { openModal, toggleActiveRoutine } from "$lib/utils-home"
+	import { getDayRoutineFromWeek, getCurrentBlock, getNextBlockInfo } from "$lib/utils-routines"
 	import { themeState, ytPlayerStore, weekRoutine, sessionManager, globalContext } from "$lib/store"
-	import { getDayRoutineFromWeek, getCurrentBlock, getNextBlockInfo, getUpcomingBlock } from "$lib/utils-routines"
     
 	import ActiveRoutine from "./ActiveRoutine.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
 	import AmbientSettings from "../AmbientSettings.svelte"
 	import ActiveSessionMini from "./ActiveSessionMini.svelte"
-	import BounceFade from "../../components/BounceFade.svelte";
-	import ProgressRing from "../../components/ProgressRing.svelte";
+	import BounceFade from "../../components/BounceFade.svelte"
+	import { toast } from "../../lib/utils-toast";
 
     const NO_SESS_MD_MAX_WIDTH = 270
 
@@ -25,12 +25,13 @@
 
     $: context = $globalContext
     $: ambience = context.ambience
+    $: hasAmbience = ambience?.active ?? false
 
     $: dayRoutine = $weekRoutine?.blocks.Friday
     $: isDarkTheme = $themeState!.isDarkTheme
     $: isColorThemeDefault = ["Dark Mode", "Light Mode"].includes($themeState.title)
     $: session = $sessionManager
-    $: routine      = $weekRoutine
+    $: routine = $weekRoutine
 
     $: initNowBlock(todayRoutine)
     
@@ -74,8 +75,9 @@
     }
 
     /* Ambients */
-    function pointerDown() {
+    function pointerUp() {
         if (!overAmbient) return
+
         openModal(ModalType.Spaces)
     }
     function pointerOver(pe: PointerEvent) {
@@ -109,25 +111,25 @@
     class:header--dark={isDarkTheme}
     class:header--light={!isDarkTheme}
     class:header--non-default={isColorThemeDefault}
-    class:header--ambient={!!ambience}
-    class:header--ambient-styling={ambience && ambience?.styling != "solid"}
-    class:header--ambient-solid={ambience?.styling === "solid"}
+    class:header--ambient={hasAmbience}
+    class:header--ambient-styling={hasAmbience && ambience?.styling != "solid"}
+    class:header--ambient-solid={hasAmbience && ambience?.styling === "solid"}
 >
     <!-- Ambient Island -->
-    {#if ambience}
+    {#if hasAmbience}
+        {@const groupName = capitalize(ambience?.space.group ?? "")}
         <div class="flx-algn-center">
             <div 
                 class="header__ambient-controls header__section"
                 class:header__ambient-controls--over={overAmbient}
-                class:ambient-blur={ambience?.styling === "blur"}
-                class:ambient-solid={ambience?.styling === "solid"}
-                class:ambient-clear={ambience?.styling === "clear"}
+                class:ambient-blur={hasAmbience && ambience?.styling === "blur"}
+                class:ambient-solid={hasAmbience && ambience?.styling === "solid"}
+                class:ambient-clear={hasAmbience && ambience?.styling === "clear"}
                 on:pointerover={pointerOver}
-                on:pointerdown={pointerDown}
+                on:pointerup={pointerUp}
             >
                 <div class="header__ambient-main">
-                    Ambient Space: <span>{capitalize(ambience?.space.group ?? "")}</span>
-                    <div class="divider"></div>
+                    Space: <span>{groupName === "User" ? "Library" : groupName}</span>
                     <button 
                         id="ambient-header--dbtn"
                         class="header__ambient-settings-btn"
@@ -149,9 +151,9 @@
             class:header__now-block--no-routine={!$weekRoutine}
             class:header__now-block--empty={!nowBlock}
             class:header__now-block--md={headerWidth < NO_SESS_MD_MAX_WIDTH}
-            class:ambient-blur={ambience?.styling === "blur"}
-            class:ambient-solid={ambience?.styling === "solid"}
-            class:ambient-clear={ambience?.styling === "clear"}
+            class:ambient-blur={hasAmbience && ambience?.styling === "blur"}
+            class:ambient-solid={hasAmbience && ambience?.styling === "solid"}
+            class:ambient-clear={hasAmbience && ambience?.styling === "clear"}
             disabled={!$weekRoutine}
             title={nowBlockTitle}
             id="active-routine--dbtn"
@@ -160,9 +162,11 @@
             }}
         >
             <div class="header__now-block-circle"></div>
-            <div class="header__now-block-title">
-                {blockInfo.title}
-            </div>
+            {#if nowBlock?.title || blockInfo.title}
+                <div class="header__now-block-title">
+                    {nowBlock?.title ?? blockInfo.title}
+                </div>
+            {/if}
             <div class="header__now-block-time">
                 {blockInfo.info}
             </div>
@@ -172,9 +176,9 @@
              {#if !session || $sessionManager?.state === "done"}
                  <div 
                      class="header__session header__section"
-                     class:ambient-blur={ambience?.styling === "blur"}
-                     class:ambient-solid={ambience?.styling === "solid"}
-                     class:ambient-clear={ambience?.styling === "clear"}
+                     class:ambient-blur={hasAmbience && ambience?.styling === "blur"}
+                     class:ambient-solid={hasAmbience && ambience?.styling === "solid"}
+                     class:ambient-clear={hasAmbience && ambience?.styling === "clear"}
                  >
                      <button 
                          title="Create new session"
@@ -203,8 +207,9 @@
 
     <BounceFade 
         position={{ 
-            top: "38px", 
-            left: "10px" 
+            top:  "38px", 
+            left:  hasAmbience ? "unset" : "10px",
+            right: hasAmbience ? "15px" : "unset",
         }}
         isHidden={!isRoutineOpen}
         zIndex={99999}
@@ -249,13 +254,14 @@
         }
         &--ambient &__now-block {
             margin-left: 4px;
+            padding: 0px 15px 0px 15px;
         }
         &--ambient &__now-block-time {
             @include text-style(_, 400, 1.15rem, "DM Mono");
         }
         &--ambient &__now-block-title {
-            font-weight: 500;
-            margin-right: 2px;
+            font-weight: 400 !important;
+            margin-right: 15px;
         }
         &--ambient-styling &__now-block-circle {
             opacity: 0.7;
@@ -265,7 +271,7 @@
             @include text-style(_, 500, 1.175rem);
         }
         &--ambient-styling &__now-block-time {
-            color: rgba(var(--block-color-3), 0.4);
+            color: rgba(white, 0.4);
         }
         &--ambient &__session-time {
             @include text-style(0.685);
@@ -273,6 +279,9 @@
         &--ambient &__main {
             flex-direction: row-reverse;
             width: auto;
+        }
+        &--ambient &__section {
+            height: 31px;
         }
         &--ambient-solid &__session,
         &--ambient-solid &__now-block,
@@ -296,7 +305,6 @@
             margin: -2px 0px 0px -5px;
             background-color: rgba(var(--textColor1), 0.085);
             border: 1px solid transparent;
-            // padding: 0px 15px 0px 12px;
             padding: 0px 15px 0px 6px;
             white-space: nowrap;
             background-color: transparent !important;
@@ -362,14 +370,16 @@
                 @include text-style(_, 400, 1.225rem, "DM Mono");
                 color: rgba(var(--textColor1), 1);
                 @include elipses-overflow;
-                margin: 0px 0px 0px 0px;
+                margin: 0px 11px 0px 0px;
                 max-width: 150px;
             }
             &-time {
                 @include text-style(_, 400, 1.225rem, "DM Mono");
                 color: rgba(var(--textColor1), 0.5);
-                margin-left: 11px;
             }
+        }
+        &__now-block.ambient-solid {
+            background-color: var(--navMenuBgColor) !important;
         }
 
         /* New Session Button */
@@ -434,7 +444,7 @@
             @include text-style(1, 400, 1.225rem, "DM Mono");
             margin: 0px 10px 0px -10px;
             transition: 0.1s ease-in-out;
-            padding: 0px 4px 0px 15px;
+            padding: 0px 4px 0px 13px;
 
             &--over {
                 cursor: pointer;
@@ -456,6 +466,7 @@
             @include circle(17px);
             @include center;
             background-color: rgba(var(--textColor1), 0.045);
+            margin-left: 11px;
             
             &:hover {
                 @include visible(1);

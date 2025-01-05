@@ -16,6 +16,8 @@
   
   export let icon: Icon
   export let options: IconOptions = {}
+
+  const arrow = [Icon.ChevronLeft, Icon.ChevronRight, Icon.Dropdown].includes(icon)
   
   let {
     opacity, 
@@ -33,7 +35,7 @@
     width = options.width
     height = options.height
     strokeWidth = options.strokeWidth
-    scale = options.scale 
+    scale = arrow ? 1.5 : options.scale
     id = options.id 
     color = options.color 
     fullOnHover = options.fullOnHover 
@@ -207,15 +209,15 @@
               stroke-width={strokeWidth}
         />
     </svg>
-  {:else if [Icon.ChevronLeft, Icon.ChevronRight, Icon.Dropdown].includes(icon)}
+  {:else if arrow}
       <svg 
         class:chev-left={icon === Icon.ChevronLeft}
         class:chev-right={icon === Icon.ChevronRight}
-        xmlns="http://www.w3.org/2000/svg" width={width} height={height} fill="none"
+        xmlns="http://www.w3.org/2000/svg" width={"12px"} height={"12px"} fill="none"
       >
         <path 
             stroke-linecap="round" stroke-linejoin="round" stroke={color}
-            stroke-width={strokeWidth} 
+            stroke-width={1.4} 
             d="M9 4.6 6.341 7.08a.5.5 0 0 1-.682 0L3 4.6"
         >
         </path>
@@ -228,15 +230,9 @@
   .svg-icon {
     @include center;
     transform: scale(var(--scale));
-    // height: 100%;
-    // width: 100%;
 
     &--full-on-hover:hover {
       opacity: 1 !important;
-    }
-
-    path {
-      // stroke-width: var(--stroke-width);
     }
   }
   .day-icon {

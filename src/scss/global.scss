@@ -191,7 +191,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     min-width: 0px;
 }
 
-@mixin multi-line-elipses-overflow($line_number: 1) {
+@mixin truncate-lines($line_number: 1) {
     display: -webkit-box;
     -webkit-line-clamp: $line_number;
     -webkit-box-orient: vertical;
@@ -302,12 +302,11 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     align-items: center;
     justify-content: space-between;
 }
-.flx-sb-center {
+.c-flx-sb {
     display: flex;
-    align-items: center;
+    flex-direction: column;;
     justify-content: space-between;
 }
-
 .abs-bottom-right {
     position: absolute;
     bottom: 0px;
@@ -472,22 +471,19 @@ button.icon {
 }
 
 button.tab-btn {
-    background-color: (var(--tabColor));
+    background-color: rgba(var(--textColor1), 0.03);
     @include text-style(0.6);
     border-radius: 15px;
-    padding: 3px 12px 4px 12px;
+    padding: 4px 12px 5px 12px;
     transition: 0.1s ease-in-out;
     white-space: nowrap;
     margin-right: 4px;
-    font-size: 1.25rem;
+    font-size: 1.3rem;
     font-weight: 500;
     @include center;
 
-    &:focus {
-        filter: brightness(1.4);
-    }
     &:hover {
-        filter: brightness(1.4);
+        background-color: rgba(var(--textColor1), 0.06);
     }
     &:active {
         transform: scale(0.985);
@@ -512,17 +508,9 @@ button.tab-btn {
         @include text-style(0.9);
     }
     &--selected {
-        background-color: var(--tabHighlightColor);
-        box-shadow: var(--tabHighlightBoxShadow);
-        color: var(--bentoBoxBgColor);
+        background-color: rgba(var(--textColor1), 1) !important;
+        color: rgba(var(--textColor2), 1) !important;
         font-weight: 500;
-
-        &:hover {
-            filter: brightness(1);
-        }
-        &:focus {
-            filter: brightness(1);
-        }
     }
 }
  button.unfill {

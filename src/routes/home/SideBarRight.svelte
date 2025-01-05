@@ -11,17 +11,21 @@
 	import Overview from "./Overview.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
 	import DropdownList from "../../components/DropdownList.svelte"
+	import { getVertDistanceBetweenTwoElems } from "../../lib/utils-general";
 
     const SETTINGS_BTN_CUT_OFF_Y = 30
     const MAX_DIST_BOTTOM_IMG_CONTAINER = 70
 
     $: isLight = !$themeState.isDarkTheme
-    $: ambient = $globalContext.ambience
-    $: fixed = $globalContext.rightBarFixed
+    $: ambience = $globalContext.ambience
+    $: hasAmbience = ambience?.active ?? false
 
+    let barRef: HTMLElement
+    let mainContentRef: HTMLElement
     let headerRef: HTMLElement
-    let headerImgContainerHt = 0
+    let headerHeight = 0
     let calendar = new SideCalendar(null)
+    let headerOffset = 0
 
     /* time */
     let isDayTime = true
@@ -48,6 +52,18 @@
     }
     $: if (bgImgSrc && bgImgRef && $themeState != undefined) {
         requestAnimationFrame(() => topOffset = 0)
+    }
+    $: if (headerHeight) {
+        headerOffset = getVertDistanceBetweenTwoElems({
+            top:   { 
+                elem: barRef,
+                edge: "top"
+            },
+            bottom: { 
+                elem: mainContentRef,
+                edge: "top"
+            }
+        }) + 12
     }
 
     /* Header Image */
@@ -111,7 +127,9 @@
         settingsOpen = false
     }
     function onPointerMove(pe: PointerEvent) {
-        if (!headerRef || isDragging) return
+        if (!headerRef || isDragging) {
+            return
+        }
         const { clientY, clientX } = pe
         const SETTINGS_BTN_CUT_OFF_X = headerRef.getBoundingClientRect().left
 
@@ -145,12 +163,13 @@
     })
 </script>
 <div 
+    bind:this={barRef}
     class="bar"
     class:bar--dark-theme={!isLight}
     class:bar--light-theme={isLight}
-    class:bar--empty={ambient?.styling === "clear" || ambient?.styling === "blur" || !bgImgSrc || !showHeaderImg}
-    class:bar--ambient={ambient?.styling === "clear" || ambient?.styling === "blur"}
-    style:--mc-ht-offset={`${fixed ? "55px" : "0px"}`}
+    class:bar--empty={hasAmbience && ambience?.styling != "solid" || !bgImgSrc || !showHeaderImg}
+    class:bar--ambient={hasAmbience && ambience?.styling != "solid"}
+    style:--header-offset={`${headerOffset}px`}
     on:pointermove={onPointerMove}
     on:mousedown={() => setShortcutsFocus(ShortcutSectionInFocus.TASK_BAR)}
     use:clickOutside on:click_outside={() => setShortcutsFocus(ShortcutSectionInFocus.MAIN)}
@@ -159,13 +178,11 @@
         class="bar__header"
         style:cursor={isDragging ? "ns-resize" : "default"}
         bind:this={headerRef}
+        bind:clientHeight={headerHeight}
         on:pointerdown={onPointerDown}
     > 
         <div class="bar__header-img-wrapper">
-            <div 
-                class="bar__header-img-container"
-                bind:clientHeight={headerImgContainerHt}
-            >
+            <div class="bar__header-img-container">
                 <img
                     bind:this={bgImgRef}
                     class="bar__header-img"
@@ -233,7 +250,10 @@
             </div>
         </div>
     </div>
-    <div class="bar__main-content">
+    <div 
+        bind:this={mainContentRef}
+        class="bar__main-content"
+    >
         <Overview {calendar} />
     </div>
 
@@ -359,7 +379,6 @@
         }
         &--empty &__main-content {
             margin-top: 32px;
-            height: calc(100% - 45px - var(--mc-ht-offset));
         }
         
         /* Top Header */
@@ -487,7 +506,7 @@
         /* Calendar */
         &__main-content {
             margin-top: 57px;
-            height: calc(100% - 45px - var(--mc-ht-offset));
+            height: calc(100% - var(--header-offset));
         }
     }
 </style>

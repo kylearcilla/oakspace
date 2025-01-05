@@ -109,6 +109,7 @@ type ModalOptions = {
     overflow?: string
     zIndex?: string
     closeOnEsc?: boolean
+    height?: string
     hingeDown?: boolean
     scaleUp?: boolean
 }
@@ -445,7 +446,7 @@ type KeyContext = {
 /* Home */
 type GlobalContext = {
     leftBarOpen: boolean
-    leftBar?: "min" | "wide-full" | "wide-float"
+    leftBar?: "wide-full" | "wide-float"
     rightBarOpen: boolean
     rightBarFixed: boolean
     isVideoViewOpen: boolean
@@ -455,36 +456,44 @@ type GlobalContext = {
     focusTime: number
     hasToaster: boolean
     minModeSrc: string | null
-    doOpenActiveRoutine: boolean
     shortcutsFocus: ShortcutSectionInFocus
     modalsOpen: ModalType[]
     lastKeysPressed: KeyContext
     ambience?: AmbientOptions
+    routineView?: {
+        dayIdx: number
+        block: RoutineBlockElem & { idx: number } 
+    } | null
 }
 
 type AmbientOptions = {
-    opacity: number,
+    active: boolean
+    opacity: number
     styling: "solid" | "blur" | "clear"
     space: AmbientSpace
+    showTime: boolean
+    clockFont: "DM Sans" | "Zodiak-Bold" | "Melodrama-Bold" | "Bagel Fat One"
 }
 
 type AmbientSpace = {
     title: string
     subtitle: string
+    description?: string
     thumbnail: string
     sourceId: string
-    type: "wallpaper" | "video"
+    type: "wallpaper" | "video" | "playlist"
     group: AmbientSpaceGroupKey
 }
 
-type AmbientSpaceGroupKey = "nature" | "space" | "weather" | "city" | "worlds" |  "lofi"
+type AmbientSpaceGroupKey = "nature" | "space" | "weather" | "city" | "worlds" |  "lofi" | "architecture"
 
 type AmbientSpaceGroup = {
     [key in AmbientSpaceGroupKey]: {
       wallpapers: AmbientSpace[]
       videos: AmbientSpace[]
+      playlists?: AmbientSpace[]
     }
-  };
+}
   
 
 
@@ -613,20 +622,6 @@ type Tag = {
         color: Color,
         emoji: string
     }
-}
-
-
-type FloatingMediaEmbed = {
-    mediaEmbedType: MediaEmbedType
-    topPos: string
-    leftPos: string
-    fixed: MediaEmbedFixed
-    width: string
-    height: string
-    hidden: boolean
-    leftTransform?: string
-    topTransform?: string
-    flag: boolean
 }
 
 type ProgressVisualPart = {
@@ -1013,9 +1008,10 @@ type YoutubePlaylistResponse = {
 type YoutubePlayerData = {
     playlist: YoutubePlaylist
     vid: YoutubeVideo
-    floatLayout: BoxLayout
     playlistVidIdx: number
     show: boolean
+    isRepeating: boolean
+    isShuffled: boolean
     isoVideo: boolean
     volume: number
     view: "float" | "embed"

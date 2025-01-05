@@ -22,7 +22,6 @@ export const globalContext = writable<GlobalContext>({
     hasToaster: false,
     minModeSrc: null,
     route: "workspace",
-    doOpenActiveRoutine: false,
     focusTime: 0,
     shortcutsFocus: ShortcutSectionInFocus.MAIN,
     modalsOpen: [],
@@ -40,9 +39,6 @@ export const themeState = writable<ThemeState>({
 
 /* General Authentication Stuff */
 export const googleData = writable<GoogleUserData | null>(null)
-
-/* Home View Stuff */
-export const mediaEmbedStore = writable<FloatingMediaEmbed | null>(null)
 
 /* Active Routine */
 export const weekRoutine = writable<WeeklyRoutine | null>(WEEKLY_ROUTINES[0])

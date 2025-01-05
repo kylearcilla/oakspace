@@ -21,18 +21,12 @@ export enum Icon {
     ColorSun, ColorMoon, MiniPlayer
 }
 export enum ModalType { 
-    Settings, Youtube, Music, Stats, Journal, Appearance, Quote, NewSession, ActiveSession,
+    Settings, Music, Themes, Quote, NewSession, ActiveSession,
     EditSession, SesssionFinished, SessionCanceled, Shortcuts, ImgUpload, CustomVidBg,
     EditGoal, EditRoutine, Confirmation, SessionSummary, Text, Spaces
 }
 export enum ToasterPosition {
     TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, TOP_CENTER, BOTTOM_CENTER
-}
-export enum MediaEmbedType {
-    Youtube
-}
-export enum MediaEmbedFixed {
-    BottomLeft, BottomRight, Bottom
 }
 export enum HrsMinsFormatOption {
     LETTERS, MIN_LETTERS, NO_LETTERS
@@ -120,9 +114,6 @@ export enum LibError {
 }
 export enum MusicPlatform { 
     AppleMusic, Spotify, YoutubeMusic, Soundcloud 
-}
-export enum MusicShufflerState {
-    CAN_CONTINUE_CHUNK, HAS_ENDED_AND_MORE_CHUNKS, HAS_ENDED_NO_CHUNKS,
 }
 export enum MusicMediaType {
     Playlist, Track, Album, PodcastEpisode, AudioBook, RadioStation, SavedTracks, SavedAudioBooks, SavedEpisodes, Podcast

@@ -823,6 +823,7 @@ export class TasksListManager {
                 tasks 
             },
             undoFunction: () => {
+                // TODO: no request to add deleted
                 this.tasks.onRemoveUndo({ parentTask: task, removed })
             }
         })
@@ -845,7 +846,7 @@ export class TasksListManager {
                 action: "completion",
                 payload: { 
                     task, 
-                    tasks 
+                    tasks: this.tasks.getAllTasks() 
                 }
             })
         }

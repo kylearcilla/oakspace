@@ -2,24 +2,23 @@
 	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
 
-	import { getHomeUrlPath, openModal } from "$lib/utils-home"
-	import { capitalize, randomArrayElem } from "$lib/utils-general"
     import { LogoIcon, ModalType } from "$lib/enums"
 	import { globalContext, themeState } from "$lib/store"
     import { getThemeStyling } from "$lib/utils-appearance"
+	import { getHomeUrlPath, openModal } from "$lib/utils-home"
+	import { capitalize, randomArrayElem } from "$lib/utils-general"
     
+	import { page } from "$app/stores";
 	import Logo from "../../components/Logo.svelte"
 	import BounceFade from "../../components/BounceFade.svelte"
-	import { page } from "$app/stores";
 
     const tabs = [
         { name: "Home", icon: "fa-solid fa-house", rgb: "178, 204, 255" }, 
         { name: "Goals", icon: "fa-solid fa-bullseye", rgb: "255, 185, 185" },     
         { name: "Habits", icon: "fa-solid fa-cubes-stacked", rgb: "226, 190, 255" }, 
         { name: "Routines", icon: "fa-solid fa-spa", rgb: "241, 251, 180" },       
-        { name: "Appearance", icon: "fa-solid fa-brush", rgb: "255, 210, 184" },
-        { name: "Music", icon: "fa-solid fa-record-vinyl", rgb: "148, 159, 255" }, 
-        { name: "Youtube", icon: "fa-brands fa-youtube", rgb: "251, 180, 180" }
+        { name: "Workspace", icon: "fa-solid fa-ruler-combined", rgb: "251, 180, 180" },
+        { name: "Themes", icon: "fa-solid fa-swatchbook", rgb: "255, 210, 184" },
     ]
     const bottomTabs = [
         { name: "Settings", icon: "fa-solid fa-gear", rgb: "190, 190, 190" },
@@ -39,9 +38,7 @@
     let defBgColor = ""
     let useDef = false
     
-    $: ambience = $globalContext.ambience
     $: isDarkTheme = $themeState.isDarkTheme
-    $: min = $globalContext.leftBar === "min"
 
     $: {
         updateSelectTab($page.url.pathname)
@@ -90,14 +87,11 @@
         else if (option === "routines") {
             goto("/home/routines")
         }
+        else if (option === "workspace") {
+            goto("/home/space")
+        }
         else if (option === "appearance") {
-            openModal(ModalType.Appearance)
-        }
-        else if (option === "music") {
-            openModal(ModalType.Music)   
-        }
-        else if (option === "youtube") {
-            openModal(ModalType.Youtube)   
+            openModal(ModalType.Themes)
         }
     }
 
@@ -126,10 +120,6 @@
     class="bar"
     class:bar--dark-theme={isDarkTheme}
     class:bar--light={!isDarkTheme}
-    class:bar--ambience={ambience?.styling === "blur" || ambience?.styling === "clear"}
-    class:bar--ambience-solid={ambience?.styling === "solid"}
-    class:bar--ambience-clear={ambience?.styling === "clear"}
-    class:bar--min={min}
     style:--hover-fg-color={`${useDef ? defFgColor : `rgba(${lightColor}, 1)`}`}
     style:--hover-bg-color={`${useDef ? defBgColor : `rgba(${lightColor}, 0.045)`}`}
     style:--select-fg-color={`${useDef ? defFgColor : `rgba(${selectColor}, 1)`}`}
@@ -147,27 +137,24 @@
             </div>
         </div>
     
-        <!-- Tabs -->
+        <!-- top -->
         <div class="bar__tabs">
             {#each tabs as tab, tabIdx}
-                {@const name = tab.name}
-                {@const icon = tab.icon}
+                {@const  { name, icon } = tab}
                 
                 {#if name === "Home"}
                     <div class="bar__tab-section">
                         Menu
                     </div>
                 {/if}
-                {#if name === "Appearance"}
-                    {#if min}
-                        <div class="bar__divider bar__divider--tabs">
-                        </div>
-                    {/if}
-                    <div class="bar__tab-section bar__tab-section--utils">
-                        Utility
+                {#if name === "Workspace"}
+                    <div 
+                        class="bar__tab-section"
+                        style:margin={"10px 0px 6px 7px"}
+                    >
+                        Appearance
                     </div>
                 {/if}
-    
                 <div class="bar__icon-tab-container">
                     <button 
                         class="bar__tab-btn"
@@ -176,41 +163,34 @@
                         on:mouseenter={() => onTabBtnMouseOver(tabIdx)}
                     >
                         <i class={`${icon} bar__tab-btn-icon`}></i>
-                        <span>{name}</span>
+                        <span>
+                            {name}
+                        </span>
                     </button>
                 </div>
             {/each}
         </div>
     </div>
 
+    <!-- bottom -->
     <div>
         <div class="bar__tabs">
             {#each bottomTabs as tab, tabIdx}
-                {@const name = tab.name}
-                {@const icon = tab.icon}
-                
-                {#if name === "Home"}
-                    <div class="bar__tab-section">
-                        Menu
-                    </div>
-                {/if}
-                {#if name === "Appearance"}
-                    <div class="bar__tab-section bar__tab-section--utils">
-                        Utility
-                    </div>
-                {/if}
+                {@const { name, icon } = tab}
     
                 <div class="bar__icon-tab-container">
                     <button 
                         class="bar__tab-btn"
                         class:bar__tab-btn--selected={name === selectedTabName}
-                        on:click={(e) => selectTabBtn(name.toLowerCase())}
+                        on:click={() => selectTabBtn(name.toLowerCase())}
                         on:mouseenter={() => {
                             lightColor = bottomTabs[tabIdx].rgb
                         }}
                     >
                         <i class={`${icon} bar__tab-btn-icon`}></i>
-                        <span>{name}</span>
+                        <span>
+                            {name}
+                        </span>
                     </button>
                 </div>
             {/each}
@@ -223,12 +203,10 @@
             <div class="bar__app-container">
                 <div class="bar__app-name">
                     <div class="bar__app-name-icon">
-                        {#key min}
-                            <Logo 
-                                logo={LogoIcon.Somara}
-                                options={{ scale: min ? 1.6 : 1.1 }}
-                            />
-                        {/key}
+                        <Logo 
+                            logo={LogoIcon.Somara}
+                            options={{ scale: 1.1 }}
+                        />
                     </div>
                     <span>
                         Somara
@@ -253,7 +231,6 @@
     <div class="bar__settings-dropdown-container">
         <BounceFade
             id="left-bar--dmenu"
-            styling={{ }}
             isHidden={!settingsOpen}
             onClickOutside={() => settingsOpen = false}
         >
@@ -347,126 +324,12 @@
         &--light &__quote-btn {
             background-color: rgba(var(--textColor1), 0.04);
             opacity: 1;
-        }
-
-        /* appearance */
-        &--ambience &__narrow-bar,
-        &--ambient-solid &__narrow-bar {
-            justify-content: center;
-            padding: 0px 0px 0px 0px;
-        }
-        &--ambience &__divider {
-            margin: 10px auto;
-        }
-        &--ambience &__icon-tabs {
-            padding: 9px 0px 3px 0.5px;
-            margin: 0px;
-        }
-        &--ambience &__icon-tab {
-            border-radius: 25px;
-            background-color: rgba(white, 0.025);
-            margin-bottom: 6.5px;
-            // background-color: rgba(white, 0);
-            // margin-bottom: 4px;
-        }
-        &--ambience-clear &__icon-tabs {
-            padding-bottom: 8px;
-        }
-        &--ambience-clear &__icon-tab {
-            background-color: rgba(white, 0.04);
-        }
-        &--ambience-solid &__narrow-bar {
-            padding: 0px 0px 2px 0px;
-        }
-        &--ambience-solid &__icon-tab {
-            margin-bottom: 10px;
-        }
-        &--ambience &__icon-tab i {
-            font-size: 1.4rem;
-        }
-        &--ambience &__temp-logo,
-        &--ambience .narrow-theme-toggle,
-        &--ambience-solid &__temp-logo,
-        &--ambience-solid .narrow-theme-toggle {
-            display: none
-        }
-
-        /* left bar width */
-        &--min {
-            align-items: center;
-        }
-        &--min &__tabs {
-            padding: 0px;
-        }
-        &--min &__divider {
-            width: 28px !important;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        &--min &__profile {
-            margin: 10px 0px 14px 0px;
-            @include center;
-
-            img {
-                @include circle(23px);
-            }
-        }
-        &--min &__profile-details,
-        &--min &__tab-section {
-            display: none;
-        }
-        &--min &__app-container {
-            flex-direction: column-reverse;
-            margin: 0px;
-        }
-        &--min &__app-name {
-            &-icon {
-                margin-bottom: 5px;
-            }
-            span {
-                display: none;
-            }
-        }
-        &--min &__quote-btn {
-            margin: 6px 0px 13px 0px;
-            @include circle(34px);
-            font-size: 1.4rem;
-
-            &:hover {
-                background-color: rgba(var(--textColor1), 0.0185);
-            }
-        }
-        &--min &__tab-btn {
-            @include circle(38px);
-            position: relative;
-            font-size: 1rem;
-            margin-bottom: 11px;
-            padding: 0px;
-            background-color: var(--minNavBtnBgColor);
-            @include center;
-
-            span {
-                display: none;
-                opacity: 1;
-            }
-            i {
-                opacity: 0.9;
-                font-size: 1.3rem;
-                @include text-style(0.45);
-            }
-        }
-        &--min &__tab-btn--selected {
-            border: 2px solid rgba(var(--textColor1), 0.05);
-        }        
+        }      
 
         &__divider {
             @include divider(0.1, 1px, 25px);
             border-top: var(--navMenuBorder);
             margin: 15px auto;
-
-            &--tabs {
-                margin: 15px auto 15px auto;
-            }
         }
 
         /* User Info */
@@ -503,12 +366,8 @@
 
         /* Tabs */
         &__tab-section {
-            @include text-style(0.2, 500, 1rem);
-            margin: 0px 0px 7px 7px;
-
-            &--utils {
-                margin: 15px 0px 6px 7px;
-            }
+            @include text-style(0.15, 500, 1.1rem);
+            margin: 0px 0px 2px 7px;
         }
         &__tabs {
             margin: 5px 0px 0px 0px;

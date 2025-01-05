@@ -3,7 +3,7 @@ import type { ComponentType } from "svelte"
 
 import { globalContext } from "./store"
 import { clientWritable } from "./utils-toast-context"
-import type { ToastT, HeightT, ExternalToast, ToastTypes, PromiseT, PromiseData, ToasterProps, ToastAPI } from "./types-toast"
+import type { ToastT, HeightT, ExternalToast, ToastTypes, PromiseT, PromiseData, ToasterProps } from "./types-toast"
 
 export const EXPANDED_TOAST_GAP = 8
 export const TOAST_GAP = 14
@@ -30,6 +30,8 @@ export function toast<ToastData>(
 	const toastFunc = (toastAPI[type] as any)
 	const message = (data && "message" in data) ? data.message : ""
 	const noToaster = !get(globalContext).hasToaster
+
+	console.log("toast")
 
 	if (noToaster) {
 		globalContext.update((data) => ({ ...data, hasToaster: true }))
@@ -71,6 +73,7 @@ export const toastAPI = {
 
 
 function makeDefaultToast(message: string, data?: ExternalToast){
+	console.log("makeDefaultToast")
 	return toasterManager!.create({ message, ...data })
 }
 
@@ -90,11 +93,15 @@ function ToasterManager() {
 	 * @param newToast   New toast to be added 
 	 */
 	function addToast(newToast: ToastT) {
+		console.log("addToast")
+
 		toasts.update(prev => {
 			if (newToast.groupExclusive) {
 				prev = prev.filter(toast => toast.contextId !== newToast.contextId)
 			}
 			const updatedToasts = prev.map(toast => ({ ...toast, updated: true }))
+			console.log([newToast, ...updatedToasts])
+
 			return [newToast, ...updatedToasts]
 		})
 	}
@@ -105,6 +112,8 @@ function ToasterManager() {
 	 * @returns 
 	 */
 	function create(data: ExternalToast & { message?: string; type?: ToastTypes; promise?: PromiseT; }) {
+		console.log("create")
+		
 		const { message, ...rest } = data 
 
 		// if a valid id then use that, otherwise use its new idx
@@ -119,13 +128,14 @@ function ToasterManager() {
 			addToast({ ...rest, id, title: message, dismissable, type })
 		}
 		else {
-			toasts.update((_toasts) => (
-				_toasts.map((toast) => 
+			toasts.update((_toasts) => {
+				const x =_toasts.map((toast) => 
 					toast.id === id
 						? { ...toast, ...data, id, title: message, dismissable, type, updated: true }    // update existing toast
 						: { ...toast, updated: false }
 				)
-			))
+				return x
+			})
 		}
 		return id
 	}

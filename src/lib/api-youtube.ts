@@ -171,7 +171,6 @@ export const getPlayListItemsDetails = async (options: {
   playlistId: string, 
   channel?: false,
   maxResults?: 1
-
 }): Promise<YoutubePlaylistResponse> => {
 
   const { playlistId, channel = false, maxResults = 1 } = options

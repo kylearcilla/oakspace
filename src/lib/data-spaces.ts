@@ -172,6 +172,53 @@ export const SPACES: AmbientSpaceGroup = {
                 group: "nature"
             }
         ],
+        playlists: [
+            {
+                sourceId: "PLpEqmyo6EfvJseQSBPD78gFiwgI6t9p1K",
+                title: "Nature Docs",
+                subtitle: "Multiple Authors",
+                description: "Find serenity in Earth's natural treasures.",
+                thumbnail: "https://i.ytimg.com/vi/JkaxUblCGz0/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCHAgPno9ZlrIdpdJ1IjPcT0CsrcQ",
+                group: "nature",
+                type: "playlist",
+            },
+            {
+                sourceId: "PLTlW3nrfe71TklS6p1JBCTgkL1RqI7nBV",
+                title: "Nature Relaxation",
+                subtitle: "Multiple Authors",
+                description: "The serenity of nature in a soothing, 4k ambient experience.",
+                thumbnail: "https://i.ytimg.com/vi/B_8bbKn3amE/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCtRXwToQ_BcNfIwtDYg9D-N2OMdg",
+                group: "nature",
+                type: "playlist"
+            },
+            {
+                sourceId: "PLTlW3nrfe71SMAnbHgRrm-G7eCiMO9qLx",
+                title: "Weather Ambience",
+                subtitle: "Multiple Authors",
+                description: "Relax to the calming sounds of rain, thunder, snow, and more.",
+                thumbnail: "https://i.ytimg.com/vi/SnUBb-FAlCY/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLAAUNSRxvRChtlMqz36pS4mypK_6g",
+                group: "nature",
+                type: "playlist"
+            },
+            {
+                sourceId: "PLTlW3nrfe71T-vgJnLv2eFiv-TpIzfOVK",
+                title: "Hiking & Backpacking Videos",
+                subtitle: "The Outdoor Boys",
+                description: "All the best hiking and backpacking videos from Outdoor Boys YT channel's adventures across the world.",
+                thumbnail: "https://i.ytimg.com/vi/XRDfETqZvJM/hqdefault.jpg?sqp=-oaymwEnCNACELwBSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLBa7kXu4AO1JXi7BhimZDdOdVp5Ug",
+                group: "nature",
+                type: "playlist"
+            },
+            {
+                sourceId: "PLpEqmyo6EfvKJaI7Rl1Y0zvxkPVjqfPwX",
+                title: "Kraig Adams Hiking Videos",
+                subtitle: "Kraig Adams",
+                description: "Experience some of the world's pretties natural wonders with Kraid Adams' theraputic hiking videos.",
+                thumbnail: "https://i.ytimg.com/vi/WKcnvPDgifA/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAQhlIq7mkeUHGT6-QFER1u4-qcUw",
+                group: "nature",
+                type: "playlist"
+            },
+        ]
     },
     space: {
         wallpapers: [
@@ -282,6 +329,7 @@ export const SPACES: AmbientSpaceGroup = {
                 group: "space"
             },
         ],
+        playlists: []
     },
     weather: {
         wallpapers: [
@@ -392,6 +440,7 @@ export const SPACES: AmbientSpaceGroup = {
                 group: "weather"
             },
         ],
+        playlists: []
     },
     city: {
         wallpapers: [
@@ -422,14 +471,6 @@ export const SPACES: AmbientSpaceGroup = {
         ],
         videos: [
             {
-                title: '3-HOUR STUDY WITH ME 🏙 / calm lofi / Tokyo at Sunset / with countdown+alarm',
-                subtitle: "Abao in Tokyo",
-                thumbnail: "https://i.ytimg.com/vi/x0qcqPcEfoc/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAYIjyFbu34c_QCWU-LSOyWI7vNyg",
-                sourceId: "x0qcqPcEfoc",
-                type: "video",
-                group: "city"
-            },
-            {
                 title: "RAINING IN O S A K A 🌧️ Rain Lofi Songs To Make You Escape From Reality 🌧️ Night Lofi Playlist",
                 subtitle: "Lofi Everyday",
                 thumbnail: "https://i.ytimg.com/vi/MZhivjxcF-M/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLByTu8d4ihIruUpHbSUmg4s_-ettg",
@@ -454,6 +495,14 @@ export const SPACES: AmbientSpaceGroup = {
                 group: "city"
             },
             {
+                title: "3-HOUR STUDY WITH ME Pomodoro 25/5 [with Rain Sounds] No Music | At Nightfall with City View 🌧️",
+                subtitle: "Celine",
+                thumbnail: "https://i.ytimg.com/vi/Ud5nv8CIZiM/hqdefault.jpg?sqp=-oaymwEnCNACELwBSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLBqTm6IfWQixJa9D3P8IcwQRBGKRw",
+                sourceId: "Ud5nv8CIZiM",
+                type: "video",
+                group: "city"
+            },
+            {
                 title: "6-Hour Study with Me / Shanghai · Dreamy Afternoon / Pomodoro 50-10 / Relaxing Lo-Fi / Day 165",
                 subtitle: "Sean Study",
                 thumbnail: "https://i.ytimg.com/vi/L-mLsFt5ZpI/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCho_972LQ0p025Pkp7EJ5em_V5aA",
@@ -470,26 +519,18 @@ export const SPACES: AmbientSpaceGroup = {
                 group: "city"
             },
             {
-                title: "A Rainy Day in 4K Cozy Coffee Shop ❄ Background Instrumental to Relax, Study, Work",
-                subtitle: "Relaxing Jazz Piano",
-                thumbnail: "https://i.ytimg.com/vi/0L38Z9hIi5s/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDwQcJGgAESQ2fn_rBxhgudv4yrBQ",
-                sourceId: "0L38Z9hIi5s",
+                title: "2-HOUR STUDY WITH ME (Pomodoro 25/5) with Nature Ambient Sounds 🍃 No Music [with timer]",
+                subtitle: "Celine",
+                thumbnail: "https://i.ytimg.com/vi/lAMLlsDi5xE/hqdefault.jpg?sqp=-oaymwEnCNACELwBSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLBqi0-ipBXcqmJXhTkG21KkKH-W4g",
+                sourceId: "lAMLlsDi5xE",
                 type: "video",
                 group: "city"
             },
             {
-                title: "3-Hour Study with Me / Shenzhen Sunset / Pomodoro 50-10 / Relaxing Lo-Fi / Day 166",
-                subtitle: "Sean Study",
-                thumbnail: "https://i.ytimg.com/vi/mjcm2diUHRM/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCx0XYYNwdrqwB-oIdtD5jt4QLTLA",
-                sourceId: "mjcm2diUHRM",
-                type: "video",
-                group: "city"
-            },
-            {
-                title: "2-Hour Study with Me / Balcony Moon Rise / Pomodoro 50-10 / Relaxing Lo-Fi / Day 146",
-                subtitle: "Sean Study",
-                thumbnail: "https://i.ytimg.com/vi/WL5XBs_ha3g/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCyrtC3pKBXw6bIMcUc733W5MepAg",
-                sourceId: "WL5XBs_ha3g",
+                title: '3-HOUR STUDY WITH ME 🏙 / calm lofi / Tokyo at Sunset / with countdown+alarm',
+                subtitle: "Abao in Tokyo",
+                thumbnail: "https://i.ytimg.com/vi/x0qcqPcEfoc/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAYIjyFbu34c_QCWU-LSOyWI7vNyg",
+                sourceId: "x0qcqPcEfoc",
                 type: "video",
                 group: "city"
             },
@@ -501,31 +542,54 @@ export const SPACES: AmbientSpaceGroup = {
                 type: "video",
                 group: "city"
             },
-            {
-                title: "Cozy Bedroom With A Night View Of New York In Heavy Rain | Rain Sounds, Rain On Window",
-                subtitle: "Choolutter",
-                thumbnail: "https://i.ytimg.com/vi/xg1gNlxto2M/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBbouLxjScg1L6-Y6xjTjQtuqeYmA",
-                sourceId: "xg1gNlxto2M",
-                type: "video",
-                group: "city"
-            },
-            {
-                title: "A Luxury Tokyo Hotel Room | Rain, Wind and Thunder sounds For Sleeping | 4K | 8Hrs",
-                subtitle: "Ambient Renders",
-                thumbnail: "https://i.ytimg.com/vi/hBGbt2CRDpA/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBmyauWD8JxeTa5OHXP08G3r0Ze-A",
-                sourceId: "hBGbt2CRDpA",
-                type: "video",
-                group: "city"
-            },
-            {
-                title: "Heavy Rain In Victorian London | Rain On Window | Fall Asleep Fast | Sleep Well | 4K | 8 Hours",
-                subtitle: "Ambient Renders",
-                thumbnail: "https://i.ytimg.com/vi/KDJjrRVik5o/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLA3WaULRQ-qIDnYF7z6_JbxPX4r5g",
-                sourceId: "KDJjrRVik5o",
-                type: "video",
-                group: "city"
-            }
         ],
+        playlists: [
+            {
+                title: "Scenic Studies",
+                subtitle: "Sean Study",
+                description: "Cinematic house tours that feature beautiful architecture and interior design.",
+                thumbnail: "https://i.ytimg.com/vi/WL5XBs_ha3g/hqdefault.jpg?sqp=-oaymwEnCNACELwBSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLAwd2vi8LdgsrFvyZeMdRr7qzxcHA",
+                sourceId: "PLTlW3nrfe71Twh60AnrcSsY0IircbXpI3",
+                type: "playlist",
+                group: "architecture"
+            },
+            {
+                sourceId: "PLTlW3nrfe71QlaOtNYjjP6NFayFQY6tq1",
+                title: "Celine Study with Me",
+                description: "Soft and warm ambient vibes perfect for chill productivity.",
+                subtitle: "Celine",
+                thumbnail: "https://i.ytimg.com/vi/Ud5nv8CIZiM/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLA6-A1-g1KYStlu4MT1d2EvFXe52Q",
+                type: "playlist",
+                group: "city"
+            },
+            {
+                sourceId: "PLr5OsF2umnimZ5DUoXnMaKmqa8CwUTb3z",
+                title: "Ambient version - Pomodoro Timer/Study/Work",
+                description: "Study and work with Sound of Rain, firewood, and environment.",
+                subtitle: "Abao in Tokyo",
+                thumbnail: "https://i.ytimg.com/vi/UwQp8vOlD14/hqdefault.jpg?sqp=-oaymwEbCMQBEG5IVfKriqkDDggBFQAAiEIYAXABwAEG&rs=AOn4CLCXtNcd2qtxhU09b3J3nbnyAG13PA",
+                type: "playlist",
+                group: "city"
+            },
+            {
+                sourceId: "PLr5OsF2umninLmW-yux0oONqNaQiIpJhw",
+                title: "🎸Study with Calm Lofi/Quiet Jazz - Pomodoro Timer/Study/Work",
+                description: "Study and work with many calm lofi track and quiet jazz music.",
+                subtitle: "Abao in Tokyo",
+                thumbnail: "https://i.ytimg.com/vi/grBFMP3HDZA/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAAGAboCwXsa6WC-fZvCc9atdetYA",
+                type: "playlist",
+                group: "city"
+            },
+            {
+                sourceId: "PLmWo-cY6xKJbFIhZZZ-dm599XwucdH6gW",
+                title: "Real Time Study With Me",
+                description: "Enjoy these real time study with me videos to boost your productivity with me :)",
+                subtitle: "Kharma Medic",
+                thumbnail: "https://i.ytimg.com/vi/fJP7c8xt1n4/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLADBddEjw38mdfAOgxIzPZjbvLV_w",
+                type: "playlist",
+                group: "city"
+            },
+        ]
     },
     worlds: {
         wallpapers: [
@@ -628,22 +692,6 @@ export const SPACES: AmbientSpaceGroup = {
                 group: "worlds"
             },
             {
-                title: "You're A Kid Again Playing Pokemon And It's Raining Outside (Sinnoh) | Rain Ambience",
-                subtitle: "TSUKi",
-                thumbnail: "https://i.ytimg.com/vi/1cF3N_2lKK8/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCqaOiloHkAkd1HpoxS3MYc0ufa8Q",
-                sourceId: "1cF3N_2lKK8",
-                type: "video",
-                group: "worlds"
-            },
-            {
-                title: "THE LAST OF US Ambient Music 🎵 Post Apocalyptic Rain (LoU OST | Soundtrack | HBO)",
-                subtitle: "z3n Pnk",
-                thumbnail: "https://i.ytimg.com/vi/ZcVmS-YMM4Q/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB9BsBzcIRV1NketUgFBC3qkKjsyw",
-                sourceId: "ZcVmS-YMM4Q",
-                type: "video",
-                group: "worlds"
-            },
-            {
                 title: "Ghibli Coffee Shop ☕️ Music to put you in a better mood 🌿 lofi hip hop - lofi songs | study / relax",
                 subtitle: "Lofi COffee",
                 thumbnail: "https://i.ytimg.com/vi/zhDwjnYZiCo/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCbuLV8oBVqv0oBHxzXNBtrRa-Wmw",
@@ -676,22 +724,6 @@ export const SPACES: AmbientSpaceGroup = {
                 group: "worlds"
             },
             {
-                title: "Hogwarts Classroom | Harry Potter Music & Ambience - 5 Scenes for Studying, Focusing, & Sleep",
-                subtitle: "Ambient Worlds",
-                thumbnail: "https://i.ytimg.com/vi/BQrxsyGTztM/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCT6HQzY0l1E5p86tnfCuiwhQnArg",
-                sourceId: "BQrxsyGTztM",
-                type: "video",
-                group: "worlds"
-            },
-            {
-                title: "Spooky Halloween Ambience | Haunted House | Haunted Village | Rain Sounds For Sleeping | 4K | 8Hours",
-                subtitle: "Ambient Renders",
-                thumbnail: "https://i.ytimg.com/vi/jBfEJZpkEOs/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDnacxvTt81-AKa4H0jWCg1xB7pPg",
-                sourceId: "jBfEJZpkEOs",
-                type: "video",
-                group: "worlds"
-            },
-            {
                 title: "Avatar | Forests of Pandora Music & Ambience in 4K",
                 subtitle: "Ambient Worlds",
                 thumbnail: "https://i.ytimg.com/vi/-c_7OYYoQJY/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCwQtxEVYBKyVKvnudyB4p7rbH7sw",
@@ -699,55 +731,90 @@ export const SPACES: AmbientSpaceGroup = {
                 type: "video",
                 group: "worlds"
             },
-            {
-                title: "Minecraft Forest Ambience",
-                subtitle: "Ambient Crafts",
-                thumbnail: "https://i.ytimg.com/vi/_5jELltfi9U/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAKzazwZdw35jMf38p_ZwLls-LMzg",
-                sourceId: "_5jELltfi9",
-                type: "video",
-                group: "worlds"
-            },
-            {
-                title: "Minecraft Snowy Ambience",
-                subtitle: "Ambient Crafts",
-                thumbnail: "https://i.ytimg.com/vi/FIooLiIrJNU/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhJIGUoZDAP&rs=AOn4CLAz1KrXlvWkUNTYRWC0qpDGfyet4g",
-                sourceId: "FIooLiIrJNU",
-                type: "video",
-                group: "worlds"
-            },
-            {
-                title: "Minecraft Relaxing Music and Rain for 10 Hours | Sleep, Study, & Relax | Rain & Visuals",
-                subtitle: "Sound",
-                thumbnail: "https://i.ytimg.com/vi/qLuc8kZty1A/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARh_IDAoHDAP&rs=AOn4CLA94dR51V7o6tvU5djgTrMOSQIGVw",
-                sourceId: "qLuc8kZty1A",
-                type: "video",
-                group: "worlds"
-            },
-            {
-                title: "Medieval Fantasy Tavern | D&D Fantasy Music and Ambience",
-                subtitle: "Daydreaming of Persephone",
-                thumbnail: "https://i.ytimg.com/vi/vyg5jJrZ42s/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAWNnVzMNCcfZnbi6oeiI-6uJ7mlg",
-                sourceId: "vyg5jJrZ42s",
-                type: "video",
-                group: "worlds"
-            },
-            {
-                title: "Relaxing Medieval Music - Bard/Tavern Ambience, Fantasy Celtic Music, Sleeping Tavern BGM",
-                subtitle: "Tavern in Aincrad",
-                thumbnail: "https://i.ytimg.com/vi/bQBbRWo0j5g/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD1qV2KzTO3R9zAlGRPt0mBUlhF2Q",
-                sourceId: "bQBbRWo0j5g",
-                type: "video",
-                group: "worlds"
-            },
-            {
-                title: "The Elder Scrolls Music & Ambience | Peaceful Forest, 5 Beautiful Scenes with Calm Music Mix, 6 Hrs",
-                subtitle: "Ambient Worlds",
-                thumbnail: "https://i.ytimg.com/vi/zBCI-JVe21Q/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC9r-0mDm17JXdzYE7hNu5i8fT5Mg",
-                sourceId: "zBCI-JVe21Q",
-                type: "video",
-                group: "worlds"
-            },
         ],
+        playlists: [
+            {
+                sourceId: "PLTlW3nrfe71Qzen8aBUryHJgv9dZa8XHv",
+                title: "Studio Ghibli",
+                description: "The magic of Studio Ghibli, mixed into a visual & sonic experience.",
+                subtitle: "Multiple Authors",
+                thumbnail: "https://i.ytimg.com/vi/238769dQLnc/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBzTNA3KyzEWein7sbZE28ySBnJ7w",
+                type: "playlist",
+                group: "worlds"
+            },
+            {
+                sourceId: "PLTlW3nrfe71QicutfuzVOH7jIEc-5HHjF",
+                title: "Minecraft Ambience",
+                description: "Nostalgic ambience, peaceful gameplay, & fan-made mixes of the iconic soundtrack.",
+                subtitle: "Multiple Authors",
+                thumbnail: "https://i.ytimg.com/vi/ANkxRGvl1VY/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLAsueBQ4bMBQPAfcpz3O02TV-briA",
+                type: "playlist",
+                group: "worlds"
+            },
+            {
+                sourceId: "PLTlW3nrfe71QuWLeoSF_EQ3OkwfVua5bP",
+                title: "Pokémon Chill",
+                description: "Music from the beloved video games series.",
+                subtitle: "Multiple Authors",
+                thumbnail: "https://i.ytimg.com/vi/VToyayJ4u2k/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARh_IFooFDAP&rs=AOn4CLCdGv_nCNakJpACY7yO4efzfEeOzg",
+                type: "playlist",
+                group: "worlds"
+            },
+            {
+                sourceId: "PLTlW3nrfe71R4__x5h3omOh8FXf1nf8Up",
+                title: "Gaming Relax & Chill",
+                description: "Calm Melodies from Zelda, Animal Crossing, and other Nintendo favorites.",
+                subtitle: "Mutliple Authors",
+                thumbnail: "https://i.ytimg.com/vi/EdHGrnuCEo4/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhdIGUoUTAP&rs=AOn4CLCRjy5XbgxBm3xltMq0G7SdSXInqQ",
+                type: "playlist",
+                group: "worlds"
+            },
+            {
+                sourceId: "PLTlW3nrfe71RpZbGmZQHm4W4RCxrRSd0M",
+                title: "Star Wars Music & Ambience",
+                description: "Atmospheric soundscapes from a distant galaxy, far, far away.",
+                subtitle: "Multiple Authors",
+                thumbnail: "https://i.ytimg.com/vi/UJ4e4XVQQcY/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARh_IB4oMDAP&rs=AOn4CLCq16EGg2K-Jqfb39hxphVYO-wqbg",
+                type: "playlist",
+                group: "worlds"
+            },
+            {
+                sourceId: "PLTlW3nrfe71T3rauOjTtMi164cECkr4-J",
+                title: "Harry Potter Ambience",
+                description: "Escape into the the Wizarding World of Harry Potter!",
+                subtitle: "Ambient Worlds",
+                thumbnail: "https://i.ytimg.com/vi/pQdTu0IeVho/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLA9CmDigiNZto1X2xjiGUQuAHN4iQ",
+                type: "playlist",
+                group: "worlds"
+            },
+            {
+                sourceId: "PLTlW3nrfe71QjvbI1d6q9lTz5d0tmN3zF",
+                title: "Middle Earth Ambience",
+                description: "Step into Middle-Earth and enjoy the sights and sounds of your favorite iconic locations.",
+                subtitle: "Multiple Authors",
+                thumbnail: "https://i.ytimg.com/vi/UpeYqEeIBO4/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhlIFsoSjAP&rs=AOn4CLBk3FLmYL8Mp2kGeMHgeTBWUNvjtg",
+                type: "playlist",
+                group: "worlds"
+            },
+            {
+                sourceId: "PLTlW3nrfe71Qdt9F30kXuUboW7bJdmtJy",
+                title: "Anime Chill",
+                description: "Unwind to the calming melodies and sounds of anime.",
+                subtitle: "Multiple Authors",
+                thumbnail: "https://i.ytimg.com/vi/TdBSoy9F9NA/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLB6SDroyCAho5lVOce12jF1lndi5A",
+                type: "playlist",
+                group: "worlds"
+            },
+            {
+                sourceId: "PLTlW3nrfe71QSdeLCRIk9iPOodZZMksx2",
+                title: "Disney / Pixar Chill",
+                description: "Unwind in the beloved worlds of Disney & Pixar.",
+                subtitle: "Multiple Authors",
+                thumbnail: "https://i.ytimg.com/vi/UP8OO7g07B4/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAUNjVzaM_omS1oLQGSjbxQ9E6jog",
+                type: "playlist",
+                group: "worlds"
+            },
+        ]
     },
     lofi: {
         wallpapers: [
@@ -819,14 +886,6 @@ export const SPACES: AmbientSpaceGroup = {
                 group: "lofi"
             },
             {
-                title: "Breathe 🍀 Lofi Deep Focus 🌳 Study/Calm/Heal [ Lofi Hip Hop - Lofi Chill ]",
-                subtitle: "LOFI KEEP YOU SAFE",
-                thumbnail: "https://i.ytimg.com/vi/6H-PLF2CR18/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCdBu8Bpzvf5a5Nhty_Uw8ml81ciw",
-                sourceId: "6H-PLF2CR18",
-                type: "video",
-                group: "lofi"
-            },
-            {
                 title: "Chillhop Yearmix 2019 ☕️ jazz beats & lofi hip hop",
                 subtitle: "LOFI KEEP YOU SAFE",
                 thumbnail: "https://i.ytimg.com/vi/s49CT4DTAkw/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBfqRmHO4zUAcRBb7T956ng1eg8uQ",
@@ -842,30 +901,123 @@ export const SPACES: AmbientSpaceGroup = {
                 type: "video",
                 group: "lofi"
             },
+
+        ],
+        playlists: [
             {
-                title: "Just relax and stop overthinking. (nintendo relaxing video game w/ music)",
-                subtitle: "Fancy Fox Gaming",
-                thumbnail: "https://i.ytimg.com/vi/rZjBLC8e2Es/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLA2EVAD4hMQycb4LDSGkF08--BH5w",
-                sourceId: "rZjBLC8e2Es",
-                type: "video",
+                title: "Lofi Girl Study With Me",
+                subtitle: "Lofi Girl",
+                thumbnail: "https://i.ytimg.com/vi/zFhfksjf_mY/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBQgYKl48s3nIAYnxSDbiy65PL42g",
+                sourceId: "PLTlW3nrfe71SiLOgo5nTEwQ5XLDBkCgBw",
+                description: "Connecting people through chill music 🌎.",
+                type: "playlist",
                 group: "lofi"
             },
             {
-                title: "City of Gamers - Chill/Gaming/Studying Lofi Hip Hop Mix - (1 hour)",
-                subtitle: "Deepspot Lofi",
-                thumbnail: "https://i.ytimg.com/vi/FFfdyV8gnWk/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARgTIBUofzAP&rs=AOn4CLCw2lkf7lqs49U7HkwtH792jOh_uw",
-                sourceId: "FFfdyV8gnWk",
-                type: "video",
+                title: "Romantic Chill",
+                subtitle: "Multiple Authors",
+                thumbnail: "https://i.ytimg.com/vi/03IAR5O07h0/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhjIGUoKzAP&rs=AOn4CLCy8NZG0EvdWRN2v6N1cNLFu4Ue2g",
+                sourceId: "PLTlW3nrfe71TBc9e7QcO2_L_VOjs7Fjfy",
+                description: "For the romantics of the classical / dark-academia aesthetics.",
+                type: "playlist",
                 group: "lofi"
             },
             {
-                title: "Make you feel positive and peaceful 🍀 Lofi Coffee ☕ ~ Lofi Hip Hop - Lofi Music [ Study/ Relax ]",
-                subtitle: "Lofi Coffee",
-                thumbnail: "https://i.ytimg.com/vi/OO2kPK5-qno/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBe0Ih8ae3-VncS-p0VfUBzqbfjSw",
-                sourceId: "OO2kPK5-qno",
-                type: "video",
+                title: "Coding Lofi Chill",
+                subtitle: "Multiple Authors",
+                description: "Because debugging is less painful with chill beats :)",
+                thumbnail: "https://i.ytimg.com/vi/_ITiwPMUzho/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCdFE2e_RZb_9O5SPsNeuI9HiSctA",
+                sourceId: "PLTlW3nrfe71QGDL4exacmUwyriixlc2K7",
+                type: "playlist",
                 group: "lofi"
-            }
+            },
+        ]
+    },
+    architecture: {
+        wallpapers: [
+            {
+                title: "White Facade Edge",
+                subtitle: "Julien Moreau (Unsplash)",
+                thumbnail: "https://images.unsplash.com/photo-1460574283810-2aab119d8511?q=80&w=250&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                sourceId: "https://images.unsplash.com/photo-1460574283810-2aab119d8511?q=80&w=2663&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                type: "wallpaper",
+                group: "architecture"
+            },
+            {
+                title: "Foggy Skyscrapers",
+                subtitle: "Matthew Henry (Unsplash)",
+                thumbnail: "https://images.unsplash.com/photo-1449157291145-7efd050a4d0e?q=80&w=250&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                sourceId: "https://images.unsplash.com/photo-1449157291145-7efd050a4d0e?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                type: "wallpaper",
+                group: "architecture"
+            },
+        ],
+        videos: [
+        ],
+        playlists: [
+            {
+                title: "House Tours",
+                subtitle: "Local Project",
+                description: "Cinematic house tours that feature beautiful architecture and interior design.",
+                thumbnail: "https://i.ytimg.com/vi/dZEgImpC1GI/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAVAg1B0o4EhhoStWRdFUhL6jodCg",
+                sourceId: "UULPgxg48_pay4R67s-7WOgWFA",
+                type: "playlist",
+                group: "architecture"
+            },
+            {
+                title: "House Design Tours",
+                subtitle: "Stacked Homes",
+                description: "House tours led by the leading voices in Singapore and Asia's design landscape.",
+                thumbnail: "https://i.ytimg.com/vi/M9jJjCVwPlM/hqdefault.jpg?sqp=-oaymwEnCNACELwBSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLDd9GOU4Rm25dkng3IOcy2rpFVuUA",
+                sourceId: "PLcIrnj5lfOsTfbldkSVKoawDYYJRMD3l-",
+                type: "playlist",
+                group: "architecture"
+            },
+            {
+                title: "Open Door: Inside Celebrity Homes",
+                subtitle: "Local Project",
+                description: "Visit the extravagant homes of your favorite artists, actrs, & more.",
+                thumbnail: "https://i.ytimg.com/vi/D-qQneOnJl0/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLADKxJSiTHX6Vt_69xRORV_DbvHVg",
+                sourceId: "PLpi4YdMCC439sN_5vIza6IfQm0qc-IqPO",
+                type: "playlist",
+                group: "architecture"
+            },
+            {
+                title: "Tiny, Beautiful House Tours",
+                subtitle: "NEVER TOO SMALL",
+                description: "Inventive and unique designs of compact living environments.",
+                thumbnail: "https://i.ytimg.com/vi/bA6C7QvTqZQ/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLCKtmnlvwJBpZbWf1_XBuDYcmJG2w",
+                sourceId: "UULF_zQ777U6YTyatP3P1wi3xw",
+                type: "playlist",
+                group: "architecture"
+            },
+            {
+                title: "Tiny House Tours",
+                subtitle: "Living Big In A Tiny House",
+                description: "Experience unique tiny homes worldwide, celebrating sustainable living and creative design.",
+                thumbnail: "https://i.ytimg.com/vi/wAsXkkLumrk/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCE1YQe2sTpdeZbkAtTMnWtbaSLbw",
+                sourceId: "PL999ZDYL8QbTqnT8PZshZzJa7tat-Vdcj",
+                type: "playlist",
+                group: "architecture"
+            },
+            {
+                title: "Une Fille, Une Style",
+                subtitle: "Vogue France",
+                description: "Influencers, actresses, and stylish women invite Vogue to explore their fashion inspirations and vintage finds.",
+                thumbnail: "https://i.ytimg.com/vi/EwPiQD1w4uU/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCL_IRH-w11yatDduLJsjeq_oIlDw",
+                sourceId: "PLVRtRwc2n-r6ToS9OapZq9OilGU3zqrbi",
+                type: "playlist",
+                group: "architecture"
+            },
+            {
+                title: "Walking Tours",
+                subtitle: "Architectural Digest",
+                description: "Informative tours of iconic architectural sites from all over the world.",
+                thumbnail: "https://i.ytimg.com/vi/EuNguMnSKnA/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLChHTKsXAKbartzBAC7F3XakBbNsQ",
+                sourceId: "PLpi4YdMCC439LJOnJyIgLR98zCazUGNwq",
+                type: "playlist",
+                group: "architecture"
+            },
         ]
     }
 }
@@ -873,6 +1025,7 @@ export const SPACES: AmbientSpaceGroup = {
 export const POPULAR_SPACES: {
     wallpapers: AmbientSpace[]
     videos: AmbientSpace[]
+    playlists: AmbientSpace[]
 } = {
     wallpapers: [
         SPACES.city.wallpapers[0],
@@ -923,4 +1076,5 @@ export const POPULAR_SPACES: {
         SPACES.space.videos[0],
         SPACES.city.videos[2]
     ],
+    playlists: []
 }

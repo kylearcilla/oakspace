@@ -606,7 +606,7 @@ It's the art of <i>dreaming boldly</i>, seeking the extraordinary, and finding b
 
 export const ACTIVITY_DATA = [
   {
-      date: new Date(2024, 11, 2),
+      date: new Date(2025, 0, 2),
       focusMins: 12 * 60 + 10,
       habits: 0.7,
       goals: [
@@ -625,16 +625,16 @@ export const ACTIVITY_DATA = [
   {
 
       habits: 1,
-      date: new Date(2024, 11, 3),
+      date: new Date(2025, 0, 3),
       focusMins: 5 * 60 + 11,
   },
   {
-      date: new Date(2024, 11, 4),
+      date: new Date(2025, 0, 4),
       thoughtEntry: "",
   },
   {
       habits: 1,
-      date: new Date(2024, 11, 5),
+      date: new Date(2025, 0, 5),
       focusMins: 134,
       thoughtEntry: "Today, I climbed Mount Tamalpais and stood above the clouds. The hike was tough, but the view from the summit was breathtaking—a sea of white clouds stretched endlessly, with the golden hues of the setting sun breaking through.",
       highlightImg: {
@@ -644,35 +644,35 @@ export const ACTIVITY_DATA = [
   },
   {
       habits: 0.4,
-      date: new Date(2024, 11, 6),
+      date: new Date(2025, 0, 6),
       focusMins: 563
   },
   {
       habits: 1,
-      date: new Date(2024, 11, 9),
+      date: new Date(2025, 0, 9),
       focusMins: 662
   },
   {
-      date: new Date(2024, 11, 10),
+      date: new Date(2025, 0, 10),
       focusMins: 52
   },
   {
-      date: new Date(2024, 11, 10),
+      date: new Date(2025, 0, 10),
       thoughtEntry: "",
   },
   {
-      date: new Date(2024, 11, 13),
+      date: new Date(2025, 0, 13),
       thoughtEntry: "",
       focusMins: 1 * 60 + 41
   },
   {
       habits: 0.9,
-      date: new Date(2024, 11, 16),
+      date: new Date(2025, 0, 16),
       focusMins: 271,
       thoughtEntry: "",
   },
   {
-      date: new Date(2024, 11, 18),
+      date: new Date(2025, 0, 18),
       focusMins: 5 * 60 + 11,
       thoughtEntry: "",
       highlightImg: {
@@ -681,7 +681,7 @@ export const ACTIVITY_DATA = [
       }
   },
   {
-      date: new Date(2024, 11, 20),
+      date: new Date(2025, 0, 20),
       habits: 0.2,
       goals: [
           {
@@ -692,12 +692,12 @@ export const ACTIVITY_DATA = [
       ]
   },
   {
-      date: new Date(2024, 11, 23),
+      date: new Date(2025, 0, 23),
       focusMins: 5 * 60 + 11,
       thoughtEntry: "",
   },
   {
-      date: new Date(2024, 11, 24),
+      date: new Date(2025, 0, 24),
       focusMins: 398,
       highlightImg: {
           src: "https://i.pinimg.com/736x/9b/91/cc/9b91cc7b70d04399c09d33d7ed8d063c.jpg",
@@ -706,11 +706,11 @@ export const ACTIVITY_DATA = [
   },
   {
       habits: 0.4,
-      date: new Date(2024, 11, 26),
+      date: new Date(2025, 0, 26),
       focusMins: 281
   },
   {
-      date: new Date(2024, 11, 27),
+      date: new Date(2025, 0, 27),
       focusMins: 84,
       highlightImg: {
           src: "https://i.pinimg.com/736x/d5/ff/09/d5ff09b5043f74591b4ffeb96fc94456.jpg",
@@ -719,11 +719,11 @@ export const ACTIVITY_DATA = [
   },
   {
       habits: 1,
-      date: new Date(2024, 11, 28),
+      date: new Date(2025, 0, 28),
       focusMins: 2 * 60 + 34
   },
   {
-      date: new Date(2024, 11, 30),
+      date: new Date(2025, 0, 30),
       focusMins: 5 * 60 + 11,
       thoughtEntry: "",
       highlightImg: {
@@ -733,11 +733,11 @@ export const ACTIVITY_DATA = [
   },
   {
       habits: 0.6,
-      date: new Date(2024, 11, 31),
+      date: new Date(2025, 0, 31),
       focusMins: 441
   },
   {
-      date: new Date(2024, 11, 14),
+      date: new Date(2025, 0, 14),
       focusMins: 192,
       habits: 0.2,
       goals: [
@@ -754,7 +754,7 @@ export const ACTIVITY_DATA = [
       ]
   },
   {
-      date: new Date(2024, 11, 15),
+      date: new Date(2025, 0, 15),
       habits: 0.7,
       goals: [
           {
@@ -765,7 +765,7 @@ export const ACTIVITY_DATA = [
       ]
   },
   {
-      date: new Date(2024, 11, 25),
+      date: new Date(2025, 0, 25),
       habits: 0.7,
       thoughtEntry: "wefwefew",
       highlightImg: {
@@ -791,7 +791,7 @@ export const ACTIVITY_DATA = [
       ]
   },
   {
-      date: new Date(2024, 11, 29),
+      date: new Date(2025, 0, 29),
       habits: 0.7,
       goals: [
           {

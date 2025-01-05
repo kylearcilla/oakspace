@@ -181,7 +181,7 @@
         }
         &--simple &__description {
             margin-bottom: 13px;
-            @include multi-line-elipses-overflow(2);
+            @include truncate-lines(2);
         }
         &--simple &__due-date-dist {
             margin: 4px 0px 8px 0px;
@@ -236,7 +236,7 @@
         }
         &__description {
             @include text-style(0.285, 500, 1.35rem);
-            @include multi-line-elipses-overflow(3);
+            @include truncate-lines(3);
             margin: 6px 0px 12px 0px;
             cursor: text;
         }

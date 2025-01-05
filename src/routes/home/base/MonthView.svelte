@@ -180,24 +180,14 @@
                             style:margin-left="10px"
                         >
                             <div style:margin-left={"-2px"}>
-                                <SvgIcon
-                                    icon={Icon.ChevronLeft}
-                                    options={{
-                                        scale: 1.8, height: 12, width: 12, strokeWidth: 1.4
-                                    }}
-                                />
+                                <SvgIcon icon={Icon.ChevronLeft}/>
                             </div>
                         </button>
                         <button 
                             class="month-view__arrow"
                         >
                             <div style:margin-right={"-2px"}>
-                                <SvgIcon 
-                                    icon={Icon.ChevronRight}
-                                    options={{
-                                        scale: 1.8, height: 12, width: 12, strokeWidth: 1.4
-                                    }}
-                                />
+                                <SvgIcon icon={Icon.ChevronRight}/>
                             </div>
                         </button>
                     </div>

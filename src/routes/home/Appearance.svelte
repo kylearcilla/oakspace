@@ -2,8 +2,8 @@
 	import { onMount } from "svelte"
 	import { ModalType } from "$lib/enums"
 	import { globalContext, themeState } from "$lib/store"
+	import { closeAmbience, closeModal } from "$lib/utils-home"
 	import { getThemeFromSection, setNewTheme } from "$lib/utils-appearance"
-	import { closeAmbience, closeModal, setAmbience } from "$lib/utils-home"
     import { lightColorThemes, darkColorThemes, defaultThemes } from "$lib/data-themes"
 
     import dfImage1 from '$lib/images/df-theme-1.png'
@@ -16,27 +16,20 @@
 
     let clickedTheme: Theme | null = null
     let selectedTheme: Theme | null = null
-    let isAmbienceClicked = false
 
     const themeImgs = [dfImage1, dfImage2, dfImage3]
 
     /* Theme item Stuff */
     function handleThemeSelected() {
-        if (isAmbienceClicked) {
-            setAmbience()
-            setNewTheme(defaultThemes[0])
-        }
-        else {
-            const title = clickedTheme!.sectionDetails.title as keyof AppearanceSectionToThemeMap
-            const idx   = clickedTheme!.sectionDetails.index
-            selectedTheme = getThemeFromSection(title, idx)
-            clickedTheme = null
-            setNewTheme(selectedTheme)
+        const title = clickedTheme!.sectionDetails.title as keyof AppearanceSectionToThemeMap
+        const idx   = clickedTheme!.sectionDetails.index
+        selectedTheme = getThemeFromSection(title, idx)
+        clickedTheme = null
+        setNewTheme(selectedTheme)
 
 
-            if (ambience) {
-                closeAmbience()
-            }
+        if (ambience) {
+            closeAmbience()
         }
     }
     function onThemeItemFocus(theme: Theme) {
@@ -48,16 +41,10 @@
         else {
             clickedTheme = theme
         }
-
-        isAmbienceClicked = false
     }
     function onThemeItemBlur(event: FocusEvent) {
         const target = event.relatedTarget as HTMLElement
         if (target?.classList.value.includes("apply-btn")) return
-        clickedTheme = null
-    }
-    function onAmbienceClicked() {
-        isAmbienceClicked = !isAmbienceClicked
         clickedTheme = null
     }
 
@@ -71,8 +58,6 @@
         const saved = JSON.parse(localStorage.getItem("theme")!)
         selectedTheme = ambience ? null : saved
         clickedTheme  = ambience ? null : selectedTheme
-
-        isAmbienceClicked = !!ambience
     })
 </script>
 
@@ -80,7 +65,7 @@
 
 <Modal 
     options={{ borderRadius: "17px", overflow: "hidden" }}
-    onClickOutSide={() => closeModal(ModalType.Appearance)}
+    onClickOutSide={() => closeModal(ModalType.Themes)}
 >
     <div class="appearance" class:appearance--light={!$themeState.isDarkTheme}>
         <h1 class="appearance__title modal-bg__content-title">
@@ -116,25 +101,6 @@
                         </span>
                     </div>
                 {/each}
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div 
-                    role="button"
-                    tabindex="0"
-                    class="default-themes__item"
-                    class:default-themes__item--ambient={true}
-                    class:default-themes__item--selected={ambience}
-                    class:default-themes__item--clicked={isAmbienceClicked}
-                    on:click={() => onAmbienceClicked()}
-                >
-                    <div 
-                        class="default-themes__item-img-container"
-                    >
-                        <img src={dfImage3} alt="theme-img">
-                    </div>
-                    <span>
-                        Ambient
-                    </span>
-                </div>
             </div>
         </div>
         <!-- Color Themes -->
@@ -219,13 +185,13 @@
         </div>
         <div 
             class="appearance-apply-btn-container"
-            class:visible={(clickedTheme && clickedTheme.title != selectedTheme?.title) || isAmbienceClicked && !ambience}
+            class:visible={(clickedTheme && clickedTheme.title != selectedTheme?.title)}
         >
             <button 
                 on:click={handleThemeSelected} 
                 class="appearance__apply-btn"
             >
-                {`Choose "${clickedTheme?.title ?? "Ambient Mode"}"`}
+                {`Choose "${clickedTheme?.title}"`}
             </button>
         </div>
     </div>

@@ -64,7 +64,6 @@
                         maxDepth: 3
                     },
                     ui: { 
-                        maxHeight: "550px",
                         hasTaskDivider: true
                     },
                     containerRef: todoListContainer

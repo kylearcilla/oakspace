@@ -186,7 +186,7 @@
     class:active-routine--light={!isDarkTheme}
     class:active-routine--side-menu={type === "side-menu"}
     style:padding-bottom={tasks.length > 0 ? "2px" : "8px"}
-    style:width={type === "side-menu" ? tasks.length > 0 ? "500px" : description ? "440px" : "400px" : "340px"}
+    style:width={type === "side-menu" ? tasks.length > 0 ? "500px" : "380px" : "340px"}
 >
     {#if nowBlock}
         {@const { description, title, startTime, endTime } = nowBlock.block}

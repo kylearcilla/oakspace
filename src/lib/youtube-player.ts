@@ -19,25 +19,24 @@ export class YoutubePlayer {
     playlistClicked: YoutubePlaylist | null = null
     playlistVidIdx: number | null = null
     
-    iFramePlaylistId = ""
     iFrameVidId      = ""
     
     isPlaying        = false
-    show     = true
+    isRepeating      = false
+    isShuffled       = false
+    show             = true
     hasActiveSession = false
     isFetchingVid    = false
     volume: number   = 50
 
-    // container
-    floatLayout = { width: -1, height: -1, left: -1, top: -1 }
-    view: "float" | "embed" = "embed"
-
-    // is playing isolated video (not being played)
+    // is playing isolated video
     isoVideo  = false
     error: any = null
     state      = -1
         
     static IFRAME_ID    = "yt-player"
+
+    LOAD_PREV_PLAYER_STATE_DELAY = 1000
     AUTO_PLAY_DELAY = 1200
     READY_DELAY     = 2000
 
@@ -70,9 +69,6 @@ export class YoutubePlayer {
     async initYtPlayer() {
         try {
             await this.initIframePlayerAPI()
-            this.update({ show: true }) 
-            
-            this.hasActiveSession = true
         }
         catch(error: any) {
             this.onError(new APIError(APIErrorCode.PLAYER, "There was a problem initializing the Youtube Player. Please try again later."))
@@ -130,18 +126,21 @@ export class YoutubePlayer {
      * Sets playlist / video where user left off.
      */
     onYtPlayerReadyHandler = async () => {
-        if (!this.playlist) return
+
+        // save the state from previous session
+        if (this.hasActiveSession) {
+            setTimeout(() => {
+                this.toggleRepeat(this.isRepeating)
+                this.toggleShuffle(this.isShuffled)
+
+            }, this.LOAD_PREV_PLAYER_STATE_DELAY)
+        }
 
         try {
-
             if (this.isoVideo) {
                 this.player.cueVideoById({ 
                     videoId: this.vid!.id
                 })
-
-                setTimeout(() => {
-                    this.player.playVideo()
-                }, this.AUTO_PLAY_DELAY)
             }
             else {
                 this.player.cuePlaylist({ 
@@ -155,6 +154,8 @@ export class YoutubePlayer {
         catch {
             this.onError(APIErrorCode.PLAYER)
         }
+
+        this.hasActiveSession = true
     }
 
     /**
@@ -197,7 +198,6 @@ export class YoutubePlayer {
         if (!vidDetails) return
         
         this.removeError()
-        this.iFramePlaylistId = event.target.getPlaylistId()
 
         // update media data
         const doNotUpdateItem = state === 3 || state === 5 || vidDetails.id === this.vid?.id
@@ -285,6 +285,70 @@ export class YoutubePlayer {
         }
     }
 
+    async skipToNextTrack() {
+        try {
+            this.player.nextVideo()
+        }
+        catch(error: any) {
+            this.onError(error)
+        }
+    }
+
+    async skipToPrevTrack() {
+        try {
+            this.player.previousVideo()
+        }
+        catch(error: any) {
+            this.onError(error)
+        }
+    }
+
+    toggleRepeat(doRepeat?: boolean): void {
+        try {
+            this.isRepeating = doRepeat != undefined ? doRepeat : !this.isRepeating 
+
+            this.player.setLoop(this.isRepeating)
+            this.update({ isRepeating: this.isRepeating })
+        }
+        catch(e) {
+            this.onError(e)
+        }
+    }
+
+    toggleShuffle(doShuffle?: boolean): void {
+        try {
+            this.isShuffled = doShuffle != undefined ? doShuffle : !this.isShuffled 
+            this.player.setShuffle(this.isShuffled)
+            this.update({ isShuffled: this.isShuffled })
+        }
+        catch (error: any) {
+            this.onError(error)
+        }
+    }
+
+    setVolume(volume: number) {
+        try {
+            this.volume = volume
+            this.player.setVolume(volume)
+            this.update({ volume })
+        }
+        catch(error: any) {
+            this.onError(error)
+        }
+    }
+
+    toggleShow(doShow?: boolean) {
+        this.show = doShow === undefined ? !this.show : doShow
+        this.update({ show: this.show })
+
+        if (this.show) {
+            this.player.playVideo()
+        }
+        else {
+            this.player.pauseVideo()
+        }
+    }
+
     /**
      * Plays an video
      */
@@ -324,15 +388,13 @@ export class YoutubePlayer {
         this.update({ isoVideo: false })
 
         try {
-            this.playlistClicked = playlist
-            this.update({ playlist })
-
             if (!this.player.stopVideo) {
                 window.location.reload()
                 return
             }
 
             this.player.stopVideo()
+            this.updateCurrentPlaylist(playlist)
             this.player!.loadPlaylist({ 
                 list: playlist.id, 
                 listType: "playlist", 
@@ -345,43 +407,15 @@ export class YoutubePlayer {
     }
 
     /**
-     * When playing an isolated video (not associated with current playlist), switch back to playing the playlist.
-     * If there is no playlist just stop the player.
-     * @returns  Returns true if there was a playlist and switched back to it.
-     */
-    async backToPlaylist() { 
-        try {
-            this.isoVideo = false
-            this.update({ isoVideo: false })
-            
-            if (this.playlist) {
-                this.player.cuePlaylist({ 
-                    listType: "playlist",
-                    list: this.playlist!.id,  
-                    index: this.playlistVidIdx,  
-                    startSeconds: 0 
-                })
-
-                return false
-            }
-            else {
-                this.player.stopVideo()
-                return true
-            }
-        }
-        catch (e: any) {
-            this.onError(e)
-            return false
-        }
-    }
-
-    /**
      * Update the video being shown in the video details under the player.
      * @param vid   Video currentply playing
      */
     updateVideo(vid: YoutubeVideo, playlistVidIdx: number) {
         this.vid = vid
-        this.playlistVidIdx = playlistVidIdx
+
+        if (!this.isoVideo) {
+            this.playlistVidIdx = playlistVidIdx
+        }
         this.update({ vid, playlistVidIdx })
     }
 
@@ -389,12 +423,12 @@ export class YoutubePlayer {
      * Update the playlist being played.
      * @param playlist       Playlist user wants to play
      */
-    updateCurrentPlaylist(playlist: YoutubePlaylist) {
+    updateCurrentPlaylist(playlist: YoutubePlaylist | null) {
         this.playlist = playlist
 
         this.update({ 
             playlist,
-            playlistVidIdx: 0
+            playlistVidIdx: playlist ? 0 : null
         })
         return playlist
     }
@@ -454,38 +488,6 @@ export class YoutubePlayer {
         this.update({ error: null })
     }
 
-    updateFloatPosition(floatLayout: BoxLayout) {
-        this.floatLayout = structuredClone(floatLayout)
-        this.update({ floatLayout: this.floatLayout })
-    }
-
-    setVolume(volume: number) {
-        try {
-            this.volume = volume
-            this.player.setVolume(volume)
-            this.update({ volume })
-        }
-        catch(error: any) {
-            this.onError(error)
-        }
-    }
-
-    /**
-     * Hide / show Youtube Player. 
-     * Stops current video from playing.
-     * Will not inmount player off the dom.
-     */
-    toggledShowPlayer() {
-        this.show = !this.show
-        this.player.stopVideo()
-        this.update({ show: this.show })
-    }
-
-    toggleView(_view?: "embed" | "float") {
-        this.view = !_view ? this.view === "embed" ? "float" : "embed" : _view
-        this.update({ view: this.view })
-    }
-
     /**
      * Get the updated version of the old state. 
      * This is done to avoid destructuring as methods will not be incorporated.
@@ -499,9 +501,12 @@ export class YoutubePlayer {
         if (newState.vid != undefined)             newStateObj.vid = newState.vid
         if (newState.playlist != undefined)        newStateObj.playlist = newState.playlist
         if (newState.playlistVidIdx != undefined)  newStateObj.playlistVidIdx = newState.playlistVidIdx
-        if (newState.show != undefined)    newStateObj.show = newState.show
-        if (newState.floatLayout != undefined)     newStateObj.floatLayout = newState.floatLayout
+        if (newState.volume != undefined)            newStateObj.volume = newState.volume
         if (newState.isPlaying != undefined)       newStateObj.isPlaying = newState.isPlaying
+        if (newState.isRepeating != undefined)     newStateObj.isRepeating = newState.isRepeating
+        if (newState.isShuffled != undefined)      newStateObj.isShuffled = newState.isShuffled
+        if (newState.isoVideo != undefined)      newStateObj.isoVideo = newState.isoVideo
+        if (newState.show != undefined)      newStateObj.show = newState.show
 
         return newStateObj
     }
@@ -516,7 +521,6 @@ export class YoutubePlayer {
         if (!savedData) return
 
         this.hasActiveSession = true
-        this.isoVideo  = savedData.isoVideo
         this.volume  = savedData.volume
         this.update({ ...savedData })
     }
@@ -526,10 +530,10 @@ export class YoutubePlayer {
             vid:            this.vid!,
             playlist:       this.playlist!,
             playlistVidIdx: this.playlistVidIdx!,
-            floatLayout:    this.floatLayout!,
-            show:           this.show,
-            view:           this.view,
+            isRepeating:    this.isRepeating,
+            isShuffled:     this.isShuffled,
             volume:         this.volume,
+            show:           this.show,
             isoVideo:       this.isoVideo
         })
     }

@@ -66,12 +66,7 @@
                     }}
                     disabled={!isPrevMonthAvailable}
                 >
-                    <SVGIcon 
-                        icon={Icon.ChevronLeft}
-                        options={{
-                            scale: 1.5, height: 12, width: 12, strokeWidth: 1.4
-                        }}
-                    />
+                    <SVGIcon icon={Icon.ChevronLeft}/>
                 </button>
                 <button
                     disabled={isDisabled}
@@ -92,12 +87,7 @@
                     }}
                     disabled={!isNextMonthAvailable}
                 >
-                    <SVGIcon 
-                        icon={Icon.ChevronRight}
-                        options={{
-                            scale: 1.5, height: 12, width: 12, strokeWidth: 1.4
-                        }}
-                    />
+                    <SVGIcon icon={Icon.ChevronRight}/>
                 </button>
             </div>
         </div>

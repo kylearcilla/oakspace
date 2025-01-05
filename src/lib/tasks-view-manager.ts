@@ -69,15 +69,16 @@ export class TasksViewManager {
     /* todoist */
     toggleView() {
         if (!this.todoistLinked) return
+        this.onTodoist = !this.onTodoist
 
         if (this.onTodoist) {
-            this.currTasks = this.inboxTasks
-        }
-        else {
             this.currTasks = this.todoistTasks!
         }
+        else {
+            this.currTasks = this.inboxTasks
+        }
 
-        this.onTodoist = !this.onTodoist
+
         this.update({ onTodoist: this.onTodoist })
     }
 
@@ -283,11 +284,14 @@ export class TasksViewManager {
                 // }
                 this.todoistTasks = tasks
 
-                this.initActionToast({ 
-                    action: "completion", 
-                    name, 
-                    func: undoFunction 
-                })
+                if (complete) {
+                    this.initActionToast({ 
+                        action: "completion", 
+                        name, 
+                        func: undoFunction 
+                    })
+                }
+
             }
             else if (todoist && action != "reorder") {
                 // reorders are local and not synced to Todoist
@@ -300,8 +304,6 @@ export class TasksViewManager {
                     ...(action === "description" && { description })
                 })
             }
-
-            this.currTasks = tasks
         }
         catch(error: any) {
             this.onError(error)
@@ -341,7 +343,7 @@ export class TasksViewManager {
         // "task" (singular parent task) is null if completed tasks were removed
         const { payload: { tasks, task, removed }, undoFunction } = context
         const todoist = this.todoistLinked
-
+        
         try {
             // undo action not available for Todoist
             if (todoist) {
@@ -350,7 +352,8 @@ export class TasksViewManager {
                     taskId: task!.id
                 })
             }
-
+            
+            this.tasksBeforeRemove = this.currTasks
             this.initActionToast({
                 name:         task?.title,
                 action:       task ? "delete" : "removed-completed", 
@@ -358,7 +361,6 @@ export class TasksViewManager {
                 func:         todoist ? undefined : undoFunction
             })
 
-            this.tasksBeforeRemove = this.currTasks
             this.currTasks = tasks
         }
         catch(error: any) {
@@ -380,6 +382,14 @@ export class TasksViewManager {
     }) {
         const { action, name, func, removedCount } = context
         const todoist = this.todoistLinked
+        const resetTasks = () => {
+            if (this.todoistLinked) {
+                this.todoistTasks = this.tasksBeforeRemove
+            }
+            
+            this.currTasks = this.tasksBeforeRemove
+            this.tasksBeforeRemove = []
+        }
 
         if (action === "add" && todoist) {
             this.initToast({
@@ -391,15 +401,14 @@ export class TasksViewManager {
             this.initUndoToast({
                 icon: getCheerEmoji(),
                 description: `"${name}" completed!`,
-                func
+                func: func
             })
         }
 
         // removals
         const _func = () => {
             func!()
-            this.currTasks = this.tasksBeforeRemove
-            this.tasksBeforeRemove = []
+            resetTasks()
         }
 
         if (action === "delete" && todoist) {
@@ -474,7 +483,7 @@ export class TasksViewManager {
      */
     static sortTasks(tasks: Task[]) {
         let orderIdx = 0
-        tasks.sort((a, b) => a.title.localeCompare(b.title));
+        tasks.sort((a, b) => a.title.localeCompare(b.title))
         tasks.forEach(task => task.idx = orderIdx++)
         return tasks
     }

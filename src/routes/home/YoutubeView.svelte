@@ -269,7 +269,7 @@
         }
         &__title {
             margin-top: 12px;
-            @include multi-line-elipses-overflow(1);
+            @include truncate-lines(1);
             @include text-style(1, 500, 1.28rem);
         }
         &__channel {

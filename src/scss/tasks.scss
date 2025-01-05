@@ -102,7 +102,7 @@
         overflow: hidden;
         white-space: pre-wrap;
         word-break: break-word;
-        @include multi-line-elipses-overflow(1);
+        @include truncate-lines(1);
     }
     &__description-text-area::placeholder {
         opacity: 0.3;

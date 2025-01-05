@@ -8,12 +8,13 @@
     options.zIndex ??= "1000"
     options.overflowX ??= "hidden"
     options.overflowY ??= "scroll"
+    options.height ??= "auto"
     options.closeOnEsc ??= true
     options.hingeDown ??= false
     options.scaleUp ??= false
     options.scale ??= false
 
-    const { borderRadius, zIndex, overflowX, overflowY, hingeDown, scaleUp, closeOnEsc } = options
+    const { borderRadius, zIndex, overflowX, overflowY, hingeDown, scaleUp, closeOnEsc, height } = options
 
     const handleClickOutside = (e: Event) => {
         const target = e.target as HTMLElement
@@ -48,6 +49,9 @@
         style:zIndex={zIndex}
         style:overflow-x={overflowX}
         style:overflow-y={overflowY}
+        style:height={height}
+        style:min-height={height}
+        style:max-height={height}
     >
         <slot></slot>
     </div>

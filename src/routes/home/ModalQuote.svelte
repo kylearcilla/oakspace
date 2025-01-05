@@ -32,7 +32,7 @@
 </script>
 
 <Modal 
-    options={{ borderRadius: "0px" }} 
+    options={{ borderRadius: "0px"  }} 
     onClickOutSide={() => closeModal(ModalType.Quote)}
 >
     <div 

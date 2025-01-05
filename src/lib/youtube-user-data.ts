@@ -1,4 +1,4 @@
-import { APIError, type CustomError } from "./errors"
+import { APIError } from "./errors"
 import { musicDataStore, ytUserDataStore } from "./store"
 import { authYoutubeClient,  getFreshToken,  getUserYtPlaylists, logOutUser } from "./api-youtube"
 import { 

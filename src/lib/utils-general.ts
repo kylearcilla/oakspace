@@ -301,74 +301,6 @@ export const addSpacesToCamelCaseStr = (camelCaseStr: string) => {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-export function getAdditionTopPadding(element: HTMLElement) {
-  const styles = getComputedStyle(element)
-  const marginTop = parseInt(styles.marginTop)
-  const borderTopWidth = parseInt(styles.borderTopWidth)
-
-  return marginTop + borderTopWidth
-}
-
-export function getAdditionBottomPadding(element: HTMLElement) {
-  const styles = getComputedStyle(element)
-  const marginBottom = parseInt(styles.marginBottom)
-  const borderBottomWidth = parseInt(styles.borderBottomWidth)
-
-  return marginBottom + borderBottomWidth
-}
-
-/**
- * Calculates the additional heights of an element, including margin and border width.
- * 
- * @param element - The HTMLElement to calculate additional heights for.
- * @returns The sum of margin and border width of the element.
- */
-export function getAdditionalHeights(element: HTMLElement): number {
-  return getAdditionTopPadding(element) + getAdditionBottomPadding(element)
-}
-
-/**
- * Calculates the total height of an element, including its client height and additional heights (margin border).
- * 
- * @param element - The HTMLElement to calculate the total height for.
- * @returns The total height of the element, including client height and additional heights.
- */
-export function getElemTrueHeight(element: HTMLElement): number {
-  const additionalHeights = getAdditionalHeights(element)
-  return element.clientHeight + additionalHeights
-}
-
-/**
- * Calculates the additional widths of an element, including margin and border widths.
- * 
- * @param element - The HTMLElement to calculate additional widths for.
- * @returns The sum of margin and border widths of the element.
- */
-export function getAdditionalWidths(element: HTMLElement): number {
-  const styles = getComputedStyle(element)
-
-  // Extract margin, padding, and border widths
-  const marginLeft = parseInt(styles.marginLeft)
-  const marginRight = parseInt(styles.marginRight)
-  const borderLeftWidth = parseInt(styles.borderLeftWidth)
-  const borderRightWidth = parseInt(styles.borderRightWidth)
-
-  // Calculate the sum of additional widths
-  return marginLeft + marginRight + borderLeftWidth + borderRightWidth
-}
-
-/**
- * Calculates the total height of an element, including its client height and additional widths (margin, padding, border).
- * 
- * @param element - The HTMLElement to calculate the total height for.
- * @returns The total height of the element, including client height and additional widths.
- */
-export function getElemTrueWidth(element: HTMLElement): number {
-  const additionalWidths = getAdditionalWidths(element)
-  return element.clientWidth + additionalWidths
-}
-
-
 type GradientStyleOptions = {
   isVertical?: boolean
   head?: {
@@ -661,7 +593,7 @@ export function getVertDistanceBetweenTwoElems(options: { top: { elem: HTMLEleme
   const topEdge  = top.edge === "bottom" ? topRect.y + topRect.height : topRect.y
   const bottomEdge = bottom.edge === "bottom" ? bottomRect.y + bottomRect.height : bottomRect.y
 
-  return bottomEdge - topEdge
+  return Math.abs(bottomEdge - topEdge)
 }
 export function getHozDistanceBetweenTwoElems(options: { left: { elem: HTMLElement, edge?: "left" | "right"}, right: { elem: HTMLElement, edge?: "left" | "right"} }) {
   const { left, right } = options
@@ -675,7 +607,7 @@ export function getHozDistanceBetweenTwoElems(options: { left: { elem: HTMLEleme
   const leftEdge  = left.edge === "right" ? leftRect.right : leftRect.left
   const rightEdge = right.edge === "right" ? rightRect.right : rightRect.left
 
-  return rightEdge - leftEdge
+  return Math.abs(rightEdge - leftEdge)
 }
 
 /**
@@ -874,6 +806,8 @@ export function toastApiErrorHandler(options: {
 }) {
   let { error, title, logoIcon, action } = options
   let toastOptions: ToastInitOptions
+
+  console.error("AAA")
 
   const isNotAPIError = error.code === undefined
   const errorMessage  = isNotAPIError ? "" : error.message

@@ -9,8 +9,8 @@
 	import { getDayIdxMinutes, getTimeFromIdx, isSameDay, minsFromStartToHHMM } from "$lib/utils-date"
 	import { getDayRoutineFromWeek, resetDayRoutine, toggleRoutineBlockComplete } from "$lib/utils-routines"
     
-	import Modal from "../../components/Modal.svelte"
-	import ActiveRoutine from "./ActiveRoutine.svelte"
+	import { globalContext } from "../../lib/store"
+	import { updateGlobalContext } from "../../lib/utils-home"
 
     export let checkbox: boolean
     export let richColors: boolean
@@ -35,11 +35,9 @@
 
     let dRoutine: RoutineBlock[] | DailyRoutine | null = null
     let routineBlocks: RoutineBlockElem[] = []
-    let isRoutineOpen = false
-
-    let routineBlockView: RoutineBlockElem & { idx: number } | null = null
     
     $: isLight = !$themeState.isDarkTheme
+    $: ambience = $globalContext.ambience
     $: routine = $weekRoutine
     $: isToday = isSameDay(new Date(), day)
 
@@ -114,15 +112,19 @@
         const classes = target.classList.value
         const isCheckbox = classes.includes("routine-blocks__block-checkbox") || target.tagName === "I"
 
-        if (isRoutineOpen || isCheckbox) {
+        if (isCheckbox) {
             return
         }
 
-        isRoutineOpen = true
-        routineBlockView = {
-            block,
-            idx: block.idx
-        }
+        updateGlobalContext({ 
+            routineView: { 
+                dayIdx, 
+                block: {
+                    block,
+                    idx: block.idx
+                }
+            } 
+        })
     }
     onMount(() => {
         minuteInterval = setInterval(() => currTime = getDayIdxMinutes(), 1000)
@@ -271,6 +273,7 @@
                                 class="routine-blocks__block"
                                 class:routine-blocks__block--checkbox={checkbox}
                                 class:routine-blocks__block--checked={done}
+                                class:routine-blocks__block--bordered={ambience && ambience.styling !== "solid"}
                                 style:top={`${block.yOffset}px`}
                                 style:--block-height={`${block.height}px`}
                                 style:--block-color-1={colorTrio[0]}
@@ -393,23 +396,6 @@
             </div>
         </div>
     </div>
-
-    {#if isRoutineOpen}
-        <Modal 
-            options={{ 
-                borderRadius: "8px",
-                scaleUp: true
-            }} 
-            onClickOutSide={() => isRoutineOpen = false}
-    >
-            <ActiveRoutine
-                type="side-menu"
-                isOpen={isRoutineOpen} 
-                currDayIdx={day.getDay()}
-                currBlock={routineBlockView }
-            />
-        </Modal>
-    {/if}
 </div>
 
 <style lang="scss">
@@ -507,7 +493,6 @@
                 background-color: rgba(var(--textColor1), 0.65) !important;
             }
             &-content {
-                // border: 1.5px solid rgba(var(--textColor1), 0.025);
                 background-color: var(--sessionBlockColor) !important;
                 padding-left: 9px;
                 border-radius: 9px;
@@ -562,10 +547,13 @@
         &__block--checked i {
             display: block;
         }
+        &__block--bordered &__block-content {
+            border: 1.5px solid rgba(var(--textColor1), 0.05);
+        }
         &__block-content {
             display: flex;
             align-items: flex-start;
-            padding-top: 5px;
+            border-radius: 12px !important;
         }
         &__block-checkbox {
             @include square(16px, 6px);

@@ -26,7 +26,7 @@ export const defaultThemes: DefaultTheme[] = [
             minNavBtnColor: "#292221",
             minNavBtnBgColor: "#1d1c1f",
             sessionBlockColor: "#1e1e1e",
-            bentoBoxBgColor: "#0e0e0f",
+            bentoBoxBgColor: "#121213",
             bentoBoxBorder: "none",
             bentoBoxShadow: "none",
             rightBarBgColor: "#171617",

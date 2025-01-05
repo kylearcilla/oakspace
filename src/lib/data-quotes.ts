@@ -144,12 +144,6 @@ const quotes: Quote[] = [
         quoteCredit: "Najwa Zebian"
     },
     {
-        text: "You cannot find peace by avoiding life.",
-        bgImgSrc: "https://i.pinimg.com/564x/98/fc/cb/98fccb06cc2d328b12fc08d78d143cc2.jpg",
-        artCredit: "",
-        quoteCredit: "Virginia Woolf"
-    },
-    {
         text: "Read a thousand books and your words will flow like river.",
         bgImgSrc: "https://upload.wikimedia.org/wikipedia/commons/7/70/John_Singer_Sargent_-_Man_Reading_%28Nicola_d%E2%80%99Inverno%29_-_1948.35.1_-_Reading_Public_Museum.jpg",
         artCredit: "<i>Man Reading</i> by John Singer Sargent",
@@ -244,6 +238,24 @@ const quotes: Quote[] = [
         bgImgSrc: "https://i.pinimg.com/736x/7b/2a/d6/7b2ad6820c4f97bf5ab40f97ceb2b8dd.jpg",
         artCredit: "Art by Kyutae Lee",
         quoteCredit: "The Fox to the Little Prince from <i>The Little Prince</i>"
+    },
+    {
+        text: "The more I pay attention to what's going on inside, the more I realize how I feel, and how I react to what I feel, really creates my reality",
+        bgImgSrc: "https://i.pinimg.com/736x/ef/fb/f3/effbf31760c27673d5add67fa439522d.jpg",
+        artCredit: "",
+        quoteCredit: "<i>Football Player</i>, Ricky Williams"
+    },
+    {
+        text: "Your task is not to seek for love, but merely to seek and find all the barriers within yourself that you have built against it.",
+        bgImgSrc: "https://www.meisterdrucke.us/kunstwerke/1260px/Joseph_Rebell_-_Ideale_Landschaft_mit_Tempelgebaeuden_-_%28MeisterDrucke-1345672%29.jpg",
+        artCredit: "<i>Ideal Landscape with Temples</i> by Joseph Rebell",
+        quoteCredit: "<i>Poet</i>, Rumi"
+    },
+    {
+        text: "The greatest discovery of my generation is that a human being can alter his life by altering his attitudes of mind.",
+        bgImgSrc: "https://i.pinimg.com/736x/87/7a/f8/877af84ee302075f969be04f809a0e5f.jpg",
+        artCredit: "",
+        quoteCredit: "<i>Philosopher</i>, William James"
     },
 ]
 

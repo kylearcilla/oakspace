@@ -241,66 +241,6 @@
                 <span>{tasks.length}</span>
             </div>
             <div class="new-session__tasks-container" bind:this={tasksContainer}>
-                <TasksList
-                    options={{
-                        id: "session",
-                        tasks,
-                        containerRef: tasksContainer,
-                        isCreatingNewTask: false,
-                        handlers: {
-                            onAddTask: onTaskUpdate,
-                            onDeleteTask: onTaskUpdate,
-                            onTaskUpdate: onTaskUpdate
-                        },
-                        settings: {
-                            progress: "count",
-                            numbered: false
-                        },
-                        styling: {
-                            task: { 
-                                fontSize: "1.21rem",
-                                fontWeight: "500",
-                                opacity: 0.74,
-                                padding: "7px 2px 12px 0px",
-                                borderRadius: "10px"
-                            },
-                            subtask: { 
-                                fontSize: "1.2rem",
-                                fontWeight: "500",
-                                padding: "6px 0px 9px 0px",
-                                opacity: 0.65
-                            },
-                            description: { 
-                                margin: "6px 0px 7px 0px", 
-                                fontSize: "1.2rem",
-                                fontWeight: "500",
-                                opacity: 0.54
-                            },
-                            checkbox: {
-                                width: "11px",
-                                borderRadius: "4px",    
-                                height: "11px",
-                                margin: "1px 12px 0px 8px"
-                            }
-                        },
-                        addBtn: {
-                            text: "Add Task",
-                            style: { 
-                                fontSize: "1.2rem"
-                            },
-                            pos: "top"
-                        },
-                        contextMenuOptions: { 
-                            width: "170px" 
-                        },
-                        ui: { 
-                            sidePadding: "7.5px",
-                            showDragHandle: false,
-                            hasTaskDivider: true,
-                            listHeight: "100%"
-                        }
-                    }}
-                />
             </div>
         </div>
 

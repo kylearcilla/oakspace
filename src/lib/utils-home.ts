@@ -1,15 +1,14 @@
 import { get, writable, type Writable } from "svelte/store"
 import { globalContext, ytPlayerStore } from "./store"
-import { ModalType, MusicPlatform, ShortcutSectionInFocus } from "./enums"
+import { ModalType, ShortcutSectionInFocus } from "./enums"
 
-import { loadTheme } from "./utils-appearance"
+import { loadTheme, setNewTheme } from "./utils-appearance"
 import { conintueWorkSession, didInitSession } from "./utils-session"
-import { didInitMusicPlayer, didInitMusicUser, initMusicPlayer, musicLogin } from "./utils-music"
-import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer, handleChooseVideo } from "./utils-youtube"
+import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer, handleChooseItem } from "./utils-youtube"
 import { getElemById, initFloatElemPos, isTargetTextEditor, randomArrayElem } from "./utils-general"
-import { initMusicSettings } from "./utils-music-settings"
 import { POPULAR_SPACES } from "./data-spaces"
 import { emojiPicker, initEmojis } from "./emojis"
+import { defaultThemes } from "./data-themes"
 
 /* constants */
 export const LEFT_BAR_MIN_WIDTH = 60
@@ -32,8 +31,8 @@ export function updateCursor(_cursorPos: OffsetPoint) {
 /* blur */
 export const AMBIENT = {
     BG_BLUR: "blur(50px)",
-    BG_COLOR: "rgba(10, 10, 10, 0.2)",
-    DARK_BG_COLOR: "rgba(10, 10, 10, 0.5)",
+    BG_COLOR: "rgba(25, 25, 25, 0.2)",
+    DARK_BG_COLOR: "rgba(25, 25, 25, 0.5)",
     BORDER: "1px solid rgba(255, 255, 255, 0.055)"
 }
 
@@ -56,14 +55,6 @@ export const initAppState = async () => {
     if (didInitYtPlayer()) {
         await initYoutubePlayer()
     }
-    if (didInitMusicPlayer()) {
-        await initMusicPlayer(MusicPlatform.YoutubeMusic, !didInitYtPlayer())
-    }
-    if (didInitMusicUser()) {
-        await musicLogin()
-    }
-
-    initMusicSettings()
 }
 
 export function onQuitApp() {
@@ -108,8 +99,8 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
 
     const doNotOpenRightBar = false
     const leftBar = context.leftBar
-    const ambience = context.ambience
-    const wideLeftBarCtrl = !ambience && ctrlKey && (leftBar === "wide-float" || leftBar === "wide-full")
+    const hasAmbience = context.ambience?.active
+    const wideLeftBarCtrl = !hasAmbience && ctrlKey && (leftBar === "wide-float" || leftBar === "wide-full")
 
     // if (key === "Escape" && context.modalsOpen.length != 0) {
     //     const modals = get(globalContext).modalsOpen
@@ -136,17 +127,11 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
     else if (key === "/" && wideLeftBarCtrl) {
         updateLeftBar(leftBar === "wide-float" ? "wide-full" : "wide-float")
     }
-    else if (key === "m" && wideLeftBarCtrl) {
-        updateLeftBar("min")
-    }
-    else if (key === "m" && ctrlKey && !ambience && leftBar === "min") {
-        updateLeftBar("wide-full")
-    }
 
     return toggledLeftBarWithKey
 }
 
-function updateLeftBar(type: "wide-float" | "wide-full" | "min") {
+function updateLeftBar(type: "wide-float" | "wide-full") {
     updateGlobalContext({ leftBar: type, leftBarOpen: true })
 }
 
@@ -193,36 +178,34 @@ export function updateRoute(route: string) {
  */
 export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boolean): boolean => {
     const context = get(globalContext)
-    const target = event.target as HTMLElement
     const mouseLeftPos = event.clientX
     const mouseRightPos = window.innerWidth - mouseLeftPos
 
-    if (target.classList.value.includes("media-player")) {
-        return toggledLeftBarWithKey
-    }
+    const { 
+        leftBarOpen, 
+        rightBarOpen, 
+        rightBarFixed, 
+        leftBar, 
+    } = context
 
     const leftInArea = mouseLeftPos < LEFT_BAR_LEFT_BOUND
-    const isActiveRoutineOpen = context.doOpenActiveRoutine
-    const leftBarOpen = context.leftBarOpen
-    const leftBar = context.leftBar
+    const activeRoutineOpen = !!getElemById("active-routine--dmenu")
     const lbAutoCloseThreshold = getLeftBarWidth(leftBar!)
     
     const rightInArea = mouseRightPos < RIGHT_BAR_RIGHT_BOUND
-    const rightBarOpen = context.rightBarOpen
-    const isRightFixed = context.rightBarFixed
     const rbAutoCloseThreshold = 300
 
-    if (!leftBarOpen && !isActiveRoutineOpen && leftInArea) {
+    if (!leftBarOpen && !activeRoutineOpen && leftInArea) {
         updateGlobalContext({ ...get(globalContext), leftBarOpen: true  })
         return false
     }
     else if (!toggledLeftBarWithKey && context.leftBarOpen && mouseLeftPos > lbAutoCloseThreshold) { 
         updateGlobalContext({ ...get(globalContext), leftBarOpen: false  })
     }
-    else if (isRightFixed && !rightBarOpen && rightInArea) { 
+    else if (rightBarFixed && !rightBarOpen && rightInArea) { 
         updateGlobalContext({ ...get(globalContext), rightBarOpen: true  })
     }
-    else if (isRightFixed && rightBarOpen && mouseRightPos > rbAutoCloseThreshold) { 
+    else if (rightBarFixed && rightBarOpen && mouseRightPos > rbAutoCloseThreshold) { 
         updateGlobalContext({ ...get(globalContext), rightBarOpen: false  })
     }
 
@@ -263,9 +246,9 @@ const loadGlobalContext = () => {
     if (!storedData) return
     const data: GlobalContext = JSON.parse(storedData)
 
-
     updateGlobalContext({ 
-        ...data, modalsOpen: [] 
+        ...data, 
+        modalsOpen: [] 
     })
 }
 
@@ -315,12 +298,6 @@ export const setShortcutsFocus = (section: ShortcutSectionInFocus) => {
     })
 }
 
-export function toggleActiveRoutine() {
-    globalContext.update((state: GlobalContext) => {
-        return { ...state, doOpenActiveRoutine: !state.doOpenActiveRoutine }
-    })
-}
-
 function loadAmbience() {
     const homeRef = getElemById("home")!
     const context = get(globalContext)
@@ -344,6 +321,7 @@ export function updateAmbience(data: Partial<AmbientOptions>) {
     const homeRef  = getElemById("home")!
     const ambience = get(globalContext).ambience!
     const newData  = { ...ambience, ...data }
+    const player = get(ytPlayerStore)
 
     newData.opacity = Math.min(newData.opacity, MAX_AMBIENT_OPACITY)
     const { space, opacity } = newData
@@ -358,6 +336,15 @@ export function updateAmbience(data: Partial<AmbientOptions>) {
         homeRef.style.backgroundImage = "none"
     }
 
+    if (data.active !== undefined && !data.active && player) {
+        player.toggleShow(false)
+        player.togglePlayback(false)
+    }
+    else if (data.active !== undefined && data.active && player) {
+        player.toggleShow(true)
+        player.togglePlayback(true)
+    }
+
     updateGlobalContext({ ambience: newData })
 }
 
@@ -365,15 +352,20 @@ export function updateAmbience(data: Partial<AmbientOptions>) {
  * Initializes a random ambient space
  */
 export function setAmbience() {
+    setNewTheme(defaultThemes[0])
     const liveSpace = randomArrayElem(POPULAR_SPACES.videos)
+
     updateGlobalContext({ 
         ambience: {
             opacity: 0.5,
             styling: "blur",
+            active: true,
+            showTime: true,
+            clockFont: "DM Sans",
             space: liveSpace
         }
      })
-     handleChooseVideo(liveSpace.sourceId)
+     handleChooseItem(liveSpace.sourceId, liveSpace.type)
 }
 
 export async function closeAmbience() {
@@ -381,11 +373,7 @@ export async function closeAmbience() {
     const youtube = get(ytPlayerStore)
 
     if (youtube) {
-        // if user didn't have a youtube player active.
-        if (await youtube.backToPlaylist()) {
-            youtube.quit()
-        }
-        youtube.toggleView("float")
+        youtube.quit()
     }
 
     homeRef.style.backgroundImage = "none"

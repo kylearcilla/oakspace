@@ -140,6 +140,7 @@
         const { type, sourceId } = clickedItem!
         const { space: { type: currType } } = ambience!
         const fromVidToWallpaper = (currType === "video" || currType === "playlist") && type === "wallpaper"
+        const fromWallpaperToVideo = type === "video" && (currType === "wallpaper" || currType === "playlist")
 
         if (type === "wallpaper") {
             updateAmbience({ space: clickedItem! })
@@ -151,6 +152,9 @@
 
         if (fromVidToWallpaper)  {
             player.toggleShow(false)
+        }
+        else if (fromWallpaperToVideo) {
+            player.toggleShow(true)
         }
 
         clickedItem = null

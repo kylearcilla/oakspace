@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { iconPicker } from "../lib/utils-home"
+    import { iconPicker } from "../lib/pop-ups"
 	import { randomArrayElem } from "../lib/utils-general"
 
     import BounceFade from "./BounceFade.svelte"

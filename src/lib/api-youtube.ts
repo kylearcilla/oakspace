@@ -315,7 +315,9 @@ const throwYoutubeDataAPIError = (context: {
   location?: string,
   message?: string
 }) => {
-    const { status, location, message } = context
+    const { status, location } = context
+
+    console.error("throwYoutubeDataAPIError")
 
     if (status === 404 && location === "channelId") {
         throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Your Google account is not associated with any YouTube account.")

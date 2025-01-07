@@ -660,7 +660,7 @@ export class RoutinesManager {
         return {
             id: blocks.length + "",
             title: "Untitled Block",
-            color: randomArrayElem(COLOR_SWATCHES.d),
+            color: randomArrayElem(COLOR_SWATCHES),
             startTime, 
             endTime,
             height: 0, xOffset: 0, yOffset: this.getTopOffsetFromTime(startTime),

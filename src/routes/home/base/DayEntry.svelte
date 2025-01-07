@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte"
 
-    import { imageUpload } from "$lib/utils-home"
+    import { imageUpload } from "$lib/pop-ups"
     import { TextEditorManager } from "$lib/inputs"
 	import { formatDatetoStr } from "../../../lib/utils-date"
 

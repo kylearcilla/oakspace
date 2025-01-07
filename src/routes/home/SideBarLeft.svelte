@@ -90,7 +90,7 @@
         else if (option === "workspace") {
             goto("/home/space")
         }
-        else if (option === "appearance") {
+        else if (option === "themes") {
             openModal(ModalType.Themes)
         }
     }

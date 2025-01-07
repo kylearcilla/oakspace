@@ -1,73 +1,52 @@
 <script lang="ts">
-	import { themeState } from "$lib/store"
+    import { themeState } from "$lib/store"
+    import { colorPicker } from "../lib/pop-ups"
 	import { clickOutside } from "$lib/utils-general"
 	import { COLOR_SWATCHES } from "$lib/utils-colors"
-	import { onMount } from "svelte"
+    
 	import BounceFade from "./BounceFade.svelte"
-
-    export let isActive: boolean
-    export let chosenColor: Color | undefined = undefined
-    export let onClickOutside: FunctionParam
-    export let onChoose: FunctionParam
-    export let onDismount: FunctionParam | undefined = undefined
-    export let zIndex = 1
-    export let position: CSSAbsPos | undefined = undefined
-
-    let _isActive = true
+    
+    const { state, onSubmit } = colorPicker
 
     $: isDark = $themeState.isDarkTheme
+    $: isOpen =  $state.isOpen
+    $: position =  $state.position
+    $: picked = $state.picked
 
     function onSwatchClicked(color: Color) {
-        onChoose(color)
+        onSubmit(color)
     }
-
-    onMount(() => { })
 </script>
 
 <BounceFade 
-    {zIndex}
-    isHidden={!isActive}
-    onDismount={onDismount}
-    position={position}
+    isHidden={!isOpen}
+    zIndex={2000}
+    position={{
+        top: `${position.y}px`,
+        left: `${position.x}px`
+    }}
 >
     <div 
-        use:clickOutside on:click_outside={() => onClickOutside()}
+        use:clickOutside on:click_outside={() => onSubmit(null)}
         id="color-picker--dmenu"
         class="color-picker" 
         class:color-picker--light={!isDark}
-        class:color-picker--shown={_isActive}
     >
+        <h2>Colors</h2>
         <ul class="color-picker__grid">
-            {#each COLOR_SWATCHES.d as color, idx}
-                {@const borderColor = isDark ? color.primary : color.light3}
-                <div 
-                    on:pointerup={() => onSwatchClicked(color)}
-                    style:--color={color.primary}
-                    style:--border-color={borderColor}
-                    role="button"
-                    tabindex="0"
-                    data-idx={idx}
-                    class="color-picker__swatch"
-                    class:color-picker__swatch--picked={color.id === chosenColor?.id}
-                    class:color-picker__swatch--light-color={color.isLight}
+            {#each COLOR_SWATCHES as color, idx}
+                {@const { primary, name } = color }
+                <button 
+                    on:click={() => onSwatchClicked(color)}
+                    style:--color={primary}
+                    class="color-picker__color"
+                    class:color-picker__color--picked={idx === 0}
                 >
-                </div>
-            {/each}
-        </ul>
-        <ul class="color-picker__grid color-picker__grid--pastel">
-            {#each COLOR_SWATCHES.p as color}
-                {@const borderColor = isDark ? color.primary : color.light3}
-                <div 
-                    on:pointerup={() => onSwatchClicked(color)}
-                    style:--color={color.primary}
-                    style:--border-color={borderColor}
-                    role="button"
-                    tabindex="0"
-                    class="color-picker__swatch"
-                    class:color-picker__swatch--picked={color.id === chosenColor?.id}
-                    class:color-picker__swatch--light-color={color.isLight}
-                >
-                </div>
+                    <div class="color-picker__color-swatch"></div>
+                    <div class="color-picker__color-name">
+                        {name}
+                    </div>
+                </button>
             {/each}
         </ul>
     </div>
@@ -76,53 +55,53 @@
 
 <style lang="scss">
     .color-picker {
-        padding: 11px 12px 11px 12px;
+        padding: 14px 4px 17px 17px;
         border-radius: 18px;
-        background-color: var(--bg-2);
+        background-color: #1d1d1d;
         border: 1px solid rgba(var(--textColor1), 0.03);
-        
-        &--light {
-            background-color: var(--bg-2);
-            box-shadow: 0px 1px 16.4px 4px rgba(0, 0, 0, 0.05);
-            border-color: rgba(0, 0, 0, 0.08);
-        }
-        &--light &__swatch--picked {
-            border-color: #88A6F3 !important;
-            border-width: 2px !important;
-        }
-        &--light &__swatch {
-            border: 1.5px solid rgb(var(--border-color), 0.11);
-        }
 
         h2 {
-            @include text-style(1, 500, 1.32rem);
-            margin-bottom: 11px;
+            @include text-style(1, 400, 1.3rem, "DM Mono");
+            margin: 0px 0 13px -3px;
+            display: none;
         }
         &__grid {
             display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            grid-gap: 3px;
-            row-gap: 3px;
-
-            &--pastel {
-                margin-top: 10px;
-            }
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+            grid-auto-flow: column;
+            grid-gap: 24px;
+            row-gap: 12px;
         }
-        &__swatch {
-            width: 19px;
-            height: 19px;
-            border: 2px solid transparent;
-            border-radius: 8px;
-            background-color: rgb(var(--color));
-            transition: 0.12s ease-in-out;
+        &__color {
+            display: flex;
+            width: 110px;
             cursor: pointer;
 
-            &--picked {
-                border-color: white;
+            &:hover &-name {
+                opacity: 1;
             }
-            &:active {
-                transform: scale(0.97);
+            &:hover &-swatch {
+                box-shadow: rgba(#0C8CE9, 0.5) 0px 0px 0px 3.5px;
             }
+        }
+        &__color--picked &__color-swatch {
+            box-shadow: rgba(#0C8CE9, 0.7) 0px 0px 0px 3px inset, 
+                        rgba(#0C8CE9, 0.4) 0px 0px 0px 3.5px;
+        }
+        &__color--picked &__color-name {
+            color: #0C8CE9 !important;
+            opacity: 1;
+        }
+        &__color-swatch {
+            @include square(21px, 20px);
+            background-color: var(--color);
+            margin-right: 10px;
+        }
+        &__color-name {
+            @include text-style(1, 400, 1.25rem, "DM Mono");
+            margin-top: 1px;
+            opacity: 0.7;
         }
     }
 </style>

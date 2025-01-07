@@ -1,24 +1,22 @@
 <script lang="ts">
-	import { onDestroy, onMount } from "svelte"
+	import { onMount } from "svelte"
 
 	import { openModal } from "$lib/utils-home"
     import { Icon, ModalType } from "$lib/enums"
 	import { capitalize } from "$lib/utils-general"
 	import { getDayIdxMinutes, secsToHHMM } from "$lib/utils-date"
 	import { getDayRoutineFromWeek, getCurrentBlock, getNextBlockInfo } from "$lib/utils-routines"
-	import { themeState, ytPlayerStore, weekRoutine, sessionManager, globalContext } from "$lib/store"
+	import { themeState, ytPlayerStore, weekRoutine, sessionManager, globalContext, timer } from "$lib/store"
     
 	import ActiveRoutine from "./ActiveRoutine.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
 	import AmbientSettings from "../AmbientSettings.svelte"
 	import ActiveSessionMini from "./ActiveSessionMini.svelte"
 	import BounceFade from "../../components/BounceFade.svelte"
-	import { toast } from "../../lib/utils-toast";
 
     const NO_SESS_MD_MAX_WIDTH = 270
 
     let headerWidth = 0
-    let minuteInterval: NodeJS.Timeout | null = null
     let currTime = getDayIdxMinutes()
     let ambientSettings = false
     let overAmbient = false
@@ -34,7 +32,8 @@
     $: routine = $weekRoutine
 
     $: initNowBlock(todayRoutine)
-    
+    timer.subscribe(({ date }) => currTime = getDayIdxMinutes(date))
+
     // active routine
     let todayRoutine: RoutineBlock[] | DailyRoutine | null = null 
     let nowBlock: RoutineBlock | null = null
@@ -97,11 +96,6 @@
 
     onMount(() => {
         window.addEventListener("resize", handleResize)
-        minuteInterval = setInterval(() => currTime = getDayIdxMinutes(), 1000)
-    })
-    onDestroy(() => {
-        clearInterval(minuteInterval!)
-        window.removeEventListener("resize", handleResize)
     })
 </script>
 
@@ -163,7 +157,9 @@
         >
             <div class="header__now-block-circle"></div>
             {#if nowBlock?.title || blockInfo.title}
-                <div class="header__now-block-title">
+                <div 
+                    class="header__now-block-title"
+                >
                     {nowBlock?.title ?? blockInfo.title}
                 </div>
             {/if}
@@ -254,7 +250,7 @@
         }
         &--ambient &__now-block {
             margin-left: 4px;
-            padding: 0px 15px 0px 15px;
+            padding: 0px 15px 0px 13px;
         }
         &--ambient &__now-block-time {
             @include text-style(_, 400, 1.15rem, "DM Mono");

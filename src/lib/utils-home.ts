@@ -1,13 +1,13 @@
-import { get, writable, type Writable } from "svelte/store"
-import { globalContext, ytPlayerStore } from "./store"
+import { get } from "svelte/store"
+import { globalContext, timer, ytPlayerStore } from "./store"
 import { ModalType, ShortcutSectionInFocus } from "./enums"
 
 import { loadTheme, setNewTheme } from "./utils-appearance"
 import { conintueWorkSession, didInitSession } from "./utils-session"
 import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer, handleChooseItem } from "./utils-youtube"
-import { getElemById, initFloatElemPos, isTargetTextEditor, randomArrayElem } from "./utils-general"
+import { getElemById, isTargetTextEditor, randomArrayElem } from "./utils-general"
 import { POPULAR_SPACES } from "./data-spaces"
-import { emojiPicker, initEmojis } from "./emojis"
+import { initEmojis } from "./emojis"
 import { defaultThemes } from "./data-themes"
 
 /* constants */
@@ -41,7 +41,8 @@ export const AMBIENT = {
  * Load data from previously saved state (if there is any).
  */
 export const initAppState = async () => {
-    initEmojis()    
+    initEmojis()  
+    initTimer()
     loadTheme()
     loadGlobalContext()
     loadAmbience()
@@ -62,6 +63,17 @@ export function onQuitApp() {
     // if (session) {
     //     session.stopTimer()
     // }
+}
+
+export function initTimer() {
+    const worker = new Worker(new URL('./workers/timeWorker.ts', import.meta.url))
+
+    worker.onmessage = (event) => {
+        if (event.data === 'tick') { 
+            timer.update((data: { date: Date }) => ({ ...data, date: new Date() }))
+        }
+    }
+    worker.postMessage({ interval: 1000 })
 }
 
 /**
@@ -253,7 +265,7 @@ const loadGlobalContext = () => {
 }
 
 export function hideRightBar() {
-    updateGlobalContext({ rightBarOpen: false  })
+    updateGlobalContext({ rightBarOpen: false })
 }
 
 export function showRightBar() {
@@ -321,12 +333,10 @@ export function updateAmbience(data: Partial<AmbientOptions>) {
     const homeRef  = getElemById("home")!
     const ambience = get(globalContext).ambience!
     const newData  = { ...ambience, ...data }
-    const player = get(ytPlayerStore)
-
     newData.opacity = Math.min(newData.opacity, MAX_AMBIENT_OPACITY)
     const { space, opacity } = newData
 
-    if (data.opacity && newData.space.type === "wallpaper") {
+    if ((data.opacity || data.active === true) && newData.space.type === "wallpaper") {
         homeRef.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, ${opacity}), rgba(0, 0, 0, ${opacity})), url(${space.sourceId})`
     }
     else if (data?.space?.type === "wallpaper") {
@@ -334,15 +344,6 @@ export function updateAmbience(data: Partial<AmbientOptions>) {
     }
     else if (newData.space.type === "video") {
         homeRef.style.backgroundImage = "none"
-    }
-
-    if (data.active !== undefined && !data.active && player) {
-        player.toggleShow(false)
-        player.togglePlayback(false)
-    }
-    else if (data.active !== undefined && data.active && player) {
-        player.toggleShow(true)
-        player.togglePlayback(true)
     }
 
     updateGlobalContext({ ambience: newData })
@@ -368,6 +369,16 @@ export function setAmbience() {
      handleChooseItem(liveSpace.sourceId, liveSpace.type)
 }
 
+export function hasAmbienceSpace() {
+    const global = localStorage.getItem("home-ui")
+    if (!global) {
+        return false
+    }
+    const { ambience } = JSON.parse(global)
+
+    return !!ambience
+}
+
 export async function closeAmbience() {
     const homeRef = getElemById("home")!
     const youtube = get(ytPlayerStore)
@@ -383,143 +394,4 @@ export async function closeAmbience() {
 export function getHomeUrlPath(path = window.location.pathname) {
     const name = path.split("/")[2]
     return name === "base" ? "home" : name
-}
-
-export function getPopFloatElemPos(box: { height: number, width: number }) {
-    const { height, width } = box
-
-    const fromPos = {
-        top: cursorPos.top - 25,
-        left: cursorPos.left - 35
-    }
-    return initFloatElemPos({
-        dims: { 
-            height,
-            width
-        }, 
-        containerDims: { 
-            height: window.innerHeight, 
-            width: window.innerWidth
-        },
-        cursorPos: fromPos
-    })
-}
-
-export let imageUpload = ImageUpload()
-export let iconPicker = IconPicker()
-
-function ImageUpload() {
-    const state: Writable<ImageUpload> = writable({ 
-        isOpen: false,
-        position: { top: -1000, left: -1000 },
-        onSubmit: null
-    })
-
-    function init(args: { 
-        onSubmit: (imgSrc: string | null) => void
-        constraits?: ImgUploadConstraints 
-    }) {
-        const { constraits, onSubmit } = args
-        const position = getPopFloatElemPos({ height: 290, width: 460 })
-
-        if (get(state).isOpen) {
-            close()
-            return
-        }
-
-        state.update((data) => ({ 
-            ...data, 
-            onSubmit,
-            position, 
-            constraits, isOpen: true 
-        }))
-    }
-    function onSubmit(imgSrc: string | null) {
-        const { onSubmit }  = get(state)
-        if (onSubmit) {
-            onSubmit(imgSrc)
-        }
-        close()
-    }
-    function close() {
-        state.update((data) => ({
-            ...data,
-            isOpen: false, 
-            onEmojiSelect: onSubmit
-        }))
-    }
-
-    return {
-        state, init, onSubmit, close
-    }
-}
-
-function IconPicker() {
-    const state: Writable<IconPicker> = writable({ 
-        id: "",
-        isOpen: false,
-        position: { top: -1000, left: -1000 },
-        onSubmitIcon: (icon: Icon | null) => {}
-    })
-
-    function init(args: { 
-        id: string,
-        onSubmitIcon: (icon: Icon | null) => void
-    }) {
-        const position = getPopFloatElemPos({ height: 90, width: 175 })
-
-        if (get(state).isOpen) {
-            close()
-            return
-        }
-
-        state.update((data) => ({ 
-            ...data, 
-            ...args,
-            position, 
-            isOpen: true 
-        }))
-    }
-    function onChooseType(type: IconType | null) {
-        const { onSubmitIcon }  = get(state)
-
-        if (type === "emoji") {
-            emojiPicker.init({
-                onEmojiSelect: (emoji: any) => {
-                    if (emoji) {
-                        onSubmitIcon({ type: "emoji", src: emoji.native })
-                    }
-                    else {
-                        onSubmitIcon(null)
-                    }
-                }
-            })
-        }
-        else if (type === "img") {
-            imageUpload.init({
-                onSubmit: (src: string | null) => {
-                    if (src) {
-                        onSubmitIcon({ type: "img", src })
-                    }
-                    else {
-                        onSubmitIcon(null)
-                    }
-                }
-            })
-        }
-        else {
-            onSubmitIcon(null)
-        }
-        close()
-    }
-    function close() {
-        state.update((data) => ({
-            ...data,
-            isOpen: false
-        }))
-    }
-
-    return {
-        state, init, onChooseType, close
-    }
 }

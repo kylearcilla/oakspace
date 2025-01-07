@@ -434,19 +434,6 @@ export function capitalizeString(str: string) {
   return str.split('').map((ch) => ch.toUpperCase()).join('')
 }
 
-/**
- * Get the trio of color properties based on the theme
- * @param    color      - The color object containing light and dark properties.
- * @param    doGetLight - Boolean value indicating whether the theme is light or dark.
- * 
- * @returns  An tuple containing a color's light or dark color trio.
- */
-export function getColorTrio(color: Color, doGetLight: boolean): [string, string, string] {
-  const colorTrio = doGetLight ? [color.light1, color.light2, color.light3] : [color.dark1, color.dark2, color.dark3]
-
-  return colorTrio as [string, string, string]
-}
-
 export function extractNum(str: string) {
   // Use a regular expression to find all numbers in the string
   const numbers = str.match(/\d+(\.\d+)?/g);
@@ -807,7 +794,7 @@ export function toastApiErrorHandler(options: {
   let { error, title, logoIcon, action } = options
   let toastOptions: ToastInitOptions
 
-  console.error("AAA")
+  console.error("toastApiErrorHandler")
 
   const isNotAPIError = error.code === undefined
   const errorMessage  = isNotAPIError ? "" : error.message

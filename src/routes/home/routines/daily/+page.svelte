@@ -5,14 +5,13 @@
 	import { Icon } from '$lib/enums';
 	import { themeState } from '$lib/store'
 	import { toast } from '$lib/utils-toast'
-	import { getColorTrio } from '$lib/utils-general'
+	import { getColorTrio } from '$lib/utils-colors'
 	import { EDIT_BLOCK_OPTIONS, ROUTINE_BLOCKS_CONTAINER_ID, formatCoreData, getBlockStyling } from '$lib/utils-routines'
 	import { InputManager, TextEditorManager } from '$lib/inputs'
 	import { getTimeFromIdx, minsFromStartToHHMM, minsToHHMM } from '$lib/utils-date'
 
 	import EditBlockModal from '../EditBlockModal.svelte'
 	import NewRoutineModal from "../NewRoutineModal.svelte"
-	import ColorPicker from '../../../../components/ColorPicker.svelte'
 	import DropdownList from '../../../../components/DropdownList.svelte'
 	import ConfirmationModal from '../../../../components/ConfirmationModal.svelte'
 	import SvgIcon from '../../../../components/SVGIcon.svelte'
@@ -768,24 +767,6 @@
                     top: contextMenuPos.top + "px", 
                     left: contextMenuPos.left + "px" 
                 }
-            }}
-        />
-        <!-- Color Picker -->
-        <ColorPicker 
-            isActive={colorsOpen}
-            position={{ 
-                top: `${colorsPos?.top}px`, left: `${colorsPos?.left}px` 
-            }}
-            chosenColor={editingBlock?.color}
-            onChoose={(color) => {
-                colorsOpen = false
-                manager.setEditBlockColor(color)
-                manager.resetEditState()
-            }}
-            onClickOutside={() => {
-                manager.setEditBlockColor(null)
-                manager.resetEditState()
-                colorsOpen = false
             }}
         />
     </div>

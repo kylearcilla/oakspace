@@ -2,7 +2,7 @@
 	import { getDueString, getTimeDistanceStr } from "$lib/utils-date"
 	import { themeState } from "../lib/store";
 	import { COLOR_SWATCHES } from "../lib/utils-colors";
-	import { getColorTrio } from "../lib/utils-general";
+    import { getColorTrio } from "$lib/utils-colors"
 	import ProgressBar from "./ProgressBar.svelte";
 	import ProgressRing from "./ProgressRing.svelte";
 

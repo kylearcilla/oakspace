@@ -495,14 +495,6 @@ export const SPACES: AmbientSpaceGroup = {
                 group: "city"
             },
             {
-                title: "3-HOUR STUDY WITH ME Pomodoro 25/5 [with Rain Sounds] No Music | At Nightfall with City View 🌧️",
-                subtitle: "Celine",
-                thumbnail: "https://i.ytimg.com/vi/Ud5nv8CIZiM/hqdefault.jpg?sqp=-oaymwEnCNACELwBSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLBqTm6IfWQixJa9D3P8IcwQRBGKRw",
-                sourceId: "Ud5nv8CIZiM",
-                type: "video",
-                group: "city"
-            },
-            {
                 title: "6-Hour Study with Me / Shanghai · Dreamy Afternoon / Pomodoro 50-10 / Relaxing Lo-Fi / Day 165",
                 subtitle: "Sean Study",
                 thumbnail: "https://i.ytimg.com/vi/L-mLsFt5ZpI/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCho_972LQ0p025Pkp7EJ5em_V5aA",
@@ -558,7 +550,7 @@ export const SPACES: AmbientSpaceGroup = {
                 title: "Celine Study with Me",
                 description: "Soft and warm ambient vibes perfect for chill productivity.",
                 subtitle: "Celine",
-                thumbnail: "https://i.ytimg.com/vi/Ud5nv8CIZiM/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLA6-A1-g1KYStlu4MT1d2EvFXe52Q",
+                thumbnail: "https://i.ytimg.com/vi/Ud5nv8CIZiM/hqdefault.jpg?sqp=-oaymwEnCNACELwBSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLBqTm6IfWQixJa9D3P8IcwQRBGKRw",
                 type: "playlist",
                 group: "city"
             },
@@ -1057,8 +1049,8 @@ export const POPULAR_SPACES: {
             group: "lofi"
         },
         SPACES.lofi.videos[0],
+        SPACES.city.videos[5],
         SPACES.city.videos[3],
-        SPACES.city.videos[4],
         SPACES.worlds.videos[1],
         SPACES.city.videos[1],
         SPACES.nature.videos[0],
@@ -1072,9 +1064,8 @@ export const POPULAR_SPACES: {
             group: "lofi"
         },
         SPACES.weather.videos[0],
-        SPACES.lofi.videos[3],
-        SPACES.space.videos[0],
-        SPACES.city.videos[2]
+        SPACES.city.videos[2],
+        SPACES.space.videos[0]
     ],
     playlists: []
 }

@@ -1,8 +1,6 @@
 import NativeSupport from "$lib/emojis-native-support"
 import FrequentlyUsed from "$lib/emojis-freq-used"
 import SearchIndex from "$lib/emojis-search-idx"
-import { get, type Writable, writable } from "svelte/store"
-import { getPopFloatElemPos } from "./utils-home"
 export let Data: any = null
 
 const EMOJI_VERSION = 15
@@ -23,6 +21,7 @@ const SAFE_FLAGS = [
     'waving_black_flag',
     'waving_white_flag'
 ]
+
 export const CATEGORY_ID_TO_NAME = {
     "search": "Search Results",
     "frequent": "Frequently used",
@@ -227,48 +226,4 @@ export function getEmojiData(emoji: any, { skinIndex = 0 } = {}) {
     }
   
     return emojiData
-}
-
-export let emojiPicker = EmojiPicker()
-
-function EmojiPicker() {
-    const state: Writable<EmojiPicker> = writable({ 
-        position: { top: -1000, left: -1000 },
-        isOpen: false,
-        onEmojiSelect: null
-    })
-
-    function init(args: { onEmojiSelect: (emoji: any) => void}) {
-        const { onEmojiSelect } = args
-        const position = getPopFloatElemPos({ height: 305, width: 380 })
-
-        if (get(state).isOpen) {
-            close()
-            return
-        }
-
-        state.set({
-            isOpen: true, 
-            position,
-            onEmojiSelect
-        })
-    }
-    function onEmojiSelect(emoji: any) {
-        const { onEmojiSelect }  = get(state)
-        if (onEmojiSelect) {
-            onEmojiSelect(emoji)
-        }
-        close()
-    }
-    function close() {
-        // do not change positioning when closing as it will change before the bounce fade animation finished
-        state.update((data) => ({
-            ...data,
-            isOpen: false, 
-            onEmojiSelect: null
-        }))
-    }
-    return {
-        state, init, onEmojiSelect, close
-    }
 }

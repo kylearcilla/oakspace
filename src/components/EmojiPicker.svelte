@@ -5,10 +5,11 @@
 	  import BounceFade from "./BounceFade.svelte"
 
 	  import { Icon } from "../lib/enums"
-    import SearchIndex from "$lib/emojis-search-idx"
-    import FrequentlyUsed from "$lib/emojis-freq-used"
+    import { emojiPicker } from "../lib/pop-ups"
+    import SearchIndex from "../lib/emojis-search-idx"
+    import FrequentlyUsed from "../lib/emojis-freq-used"
 	  import { getElemById, getVertDistanceBetweenTwoElems } from "../lib/utils-general"
-    import { Data, getEmojiData, EMOJI_BUTTON_SIZE, CATEGORY_ID_TO_NAME, CATEGORY_TO_ICONS, emojiPicker, setCache, getCache } from "$lib/emojis"
+    import { Data, getEmojiData, EMOJI_BUTTON_SIZE, CATEGORY_ID_TO_NAME, CATEGORY_TO_ICONS, setCache, getCache } from "../lib/emojis"
 
     /* subset of : https://github.com/missive/emoji-mart */
 

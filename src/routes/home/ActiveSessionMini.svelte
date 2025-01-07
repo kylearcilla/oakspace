@@ -2,7 +2,7 @@
 	import { goto } from "$app/navigation"
 	import { page } from "$app/stores";
 
-	import { globalContext, sessionManager } from "$lib/store"
+	import { globalContext, sessionManager, timer } from "$lib/store"
 	import { updateRoute } from "$lib/utils-home"
 	import { secsToHhMmSs } from "$lib/utils-date"
 	import { SessionManager } from "$lib/session-manager"
@@ -30,6 +30,8 @@
     $: todosChecked = manager!.todosChecked
     $: min = headerWidth < MIN_NORMAL_WIDTH
     $: secs = transition ? TRANSITION_DUR_SECS - progressSecs : progressSecs
+
+    timer.subscribe(() => manager.updateProgress()) 
 
     function onPointerDown() {
         if (!isOver) return

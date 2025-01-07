@@ -35,13 +35,10 @@ export class SessionManager {
     // segments include break and paused periods
     currSegmentIdx = -1
     segments: SessionProgressSegment[] = []
-    intervalWorker: Worker | null = null
 
     isPlaying = false
     state: SessionState = "focus"
-    
     prevPage = ""
-    timer: NodeJS.Timer | null = null
 
     static TRANSITION_DUR_SECS = 10
     static MIN_SESSION_TIME_MINS = 10
@@ -83,9 +80,6 @@ export class SessionManager {
         }
         if (session && this.session.mode === "pom") {
             this.initNextBreak()
-        }
-        if (this.state != "done") {
-            this.initTimer()
         }
     }
 
@@ -161,25 +155,6 @@ export class SessionManager {
     toggleMinimal() {
         this.minimal = !this.minimal
         this.update({ minimal: this.minimal })
-    }
-
-    /* timer */
-    initTimer() {
-        // offload to background worker to avoid throttling
-        this.intervalWorker = new Worker(new URL('./workers/timeWorker.ts', import.meta.url))
-        this.intervalWorker.onmessage = (event) => {
-            if (event.data === 'tick') { 
-                this.updateProgress()
-            }
-        }
-        this.intervalWorker.postMessage({ interval: 1000 })
-    }
-
-    stopTimer() {
-        if (!this.intervalWorker) return
-
-        this.intervalWorker.terminate()
-        this.intervalWorker = null
     }
 
     updateProgress() {
@@ -436,11 +411,9 @@ export class SessionManager {
         }
 
         this.session.result = result
-        this.stopTimer()
 
         this.update({
-            session: this.session,
-            state: "done"
+            session: this.session, state: "done"
         })
 
         setDocumentTitle("Somara")
@@ -461,7 +434,6 @@ export class SessionManager {
     }
 
     quit() {
-        this.stopTimer()
         localStorage.removeItem("session")
         sessionManager.set(null)
         setDocumentTitle("Somara")

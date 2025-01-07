@@ -5,7 +5,8 @@
 
 	import { Icon } from "$lib/enums"
 	import { toast } from "$lib/utils-toast"
-	import { getColorTrio, getElemById, getHozDistanceBetweenTwoElems, preventScroll } from "$lib/utils-general"
+    import { getColorTrio } from "$lib/utils-colors"
+	import { getElemById, getHozDistanceBetweenTwoElems, preventScroll } from "$lib/utils-general"
 	import { InputManager, TextEditorManager } from "$lib/inputs"
 	import { getDayIdxMinutes, getTimeFromIdx, minsFromStartToHHMM, minsToHHMM } from "$lib/utils-date"
 	import { WeeklyRoutinesManager } from "$lib/routines-weekly-manager"
@@ -20,7 +21,6 @@
 	import NewRoutineModal from "../NewRoutineModal.svelte"
 	import SvgIcon from "../../../../components/SVGIcon.svelte"
 	import BounceFade from "../../../../components/BounceFade.svelte"
-	import ColorPicker from "../../../../components/ColorPicker.svelte"
 	import DropdownBtn from "../../../../components/DropdownBtn.svelte"
 	import DropdownList from "../../../../components/DropdownList.svelte"
 	import ConfirmationModal from "../../../../components/ConfirmationModal.svelte"
@@ -1280,24 +1280,6 @@
                                     top: contextMenuPos.top + "px", 
                                     left: contextMenuPos.left + "px" 
                                 }
-                            }}
-                        />
-                        <!-- Color Picker -->
-                        <ColorPicker 
-                            isActive={colorsOpen}
-                            position={{ 
-                                top: `${colorsPos?.top}px`, left: `${colorsPos?.left}px` 
-                            }}
-                            chosenColor={editingBlock?.color}
-                            onChoose={(color) => {
-                                colorsOpen = false
-                                manager.setEditBlockColor(color)
-                                manager.resetEditState()
-                            }}
-                            onClickOutside={() => {
-                                manager.setEditBlockColor(null)
-                                manager.resetEditState()
-                                colorsOpen = false
                             }}
                         />
                     </div>

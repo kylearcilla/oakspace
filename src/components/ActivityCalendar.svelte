@@ -1,10 +1,11 @@
 <script lang="ts">
     import { themeState } from "../lib/store"
     import { isSameDay } from "$lib/utils-date"
-    import { ACTIVITY_DATA } from "$lib/mock-data"
-	import { imageUpload } from "../lib/utils-home"
+    import { getColorTrio } from "$lib/utils-colors"
+    import { ACTIVITY_DATA } from "../lib/mock-data"
+	import { imageUpload } from "../lib/pop-ups"
 	import { formatDateLong, genMonthCalendar, getMonthWeeks, minsToHHMM } from "../lib/utils-date"
-	import { formatPlural, getColorTrio, initFloatElemPos, randomArrayElem } from "../lib/utils-general"
+	import { formatPlural, initFloatElemPos, randomArrayElem } from "../lib/utils-general"
 
 	import DropdownList from "./DropdownList.svelte"
 	import DayEntry from "../routes/home/base/DayEntry.svelte"

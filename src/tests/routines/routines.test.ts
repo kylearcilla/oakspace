@@ -24,7 +24,7 @@ blocksContainer.style.display = "block"
 function rawDataToBlocks(data: any) {
     return data.map((data: any) => ({ 
         ...data, 
-        color: COLOR_SWATCHES.d[0], 
+        color: COLOR_SWATCHES[0], 
         description: "", tasks: [],
         tag: null,
         activity: data.activity as keyof RoutineCores

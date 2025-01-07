@@ -2,10 +2,11 @@
     import { Icon } from "$lib/enums"
 	import { themeState } from "$lib/store"
 	import { toast } from "$lib/utils-toast"
+    import { TextEditorManager } from "$lib/inputs"
+    import { getColorTrio } from "$lib/utils-colors"
 	import { minsFromStartToHHMM } from "$lib/utils-date"
     import { RoutinesManager } from "$lib/routines-manager"
-    import { TextEditorManager } from "$lib/inputs"
-	import { getColorTrio, isTargetTextEditor } from "$lib/utils-general"
+	import { isTargetTextEditor } from "$lib/utils-general"
 	import { CORE_OPTIONS, getCoreActivityIdx, getCoreStr } from "$lib/utils-routines"
 
 	import Modal from "../../../components/Modal.svelte"
@@ -14,7 +15,6 @@
 	import AsyncButton from "../../../components/AsyncButton.svelte"
 	import TasksList from "../../../components/TasksList.svelte"
 	import TimePicker from "../../../components/TimePicker.svelte"
-	import ColorPicker from "../../../components/ColorPicker.svelte"
 	import DropdownBtn from "../../../components/DropdownBtn.svelte"
 	import DropdownList from "../../../components/DropdownList.svelte"
 	import ConfirmationModal from "../../../components/ConfirmationModal.svelte"
@@ -273,14 +273,6 @@
                     >
                     </div>
                 </button>
-                <div class="edit-routine__color-picker-container">
-                    <ColorPicker 
-                        chosenColor={block.color}
-                        onChoose={onColorOptionsChosen}
-                        isActive={colorsOpen}
-                        onClickOutside={() => colorsOpen = false}
-                    />
-                </div>
                 <div class="edit-routine__title-container">
                     {#if newOrderContext === "first" || newOrderContext === "last"}
                         {@const isFirst = newOrderContext === "first"}
@@ -585,10 +577,6 @@
                 @include txt-color(0.1, "bg");
                 transform: scale(0.97);
             }
-        }
-        &__color-picker-container {
-            @include abs-top-left(30px, 0px);
-            z-index: 100;
         }
         /* Title */
         &__title-container {

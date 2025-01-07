@@ -1,8 +1,7 @@
 <script lang="ts">
     import { TextEditorManager } from "$lib/inputs"
-	import { emojiPicker } from "../../../lib/emojis";
-	import { iconPicker } from "../../../lib/utils-home"
-	import { randomArrayElem } from "../../../lib/utils-general";
+	import { iconPicker, emojiPicker } from "$lib/pop-ups"
+	import { randomArrayElem } from "$lib/utils-general";
 
     export let options: BaseHeader
     export let showBanner: boolean

@@ -3,6 +3,7 @@
 	import { themeState, weekRoutine } from "$lib/store"
 
 	import { Icon } from "$lib/enums"
+    import { timer } from "$lib/store"
 	import { TextEditorManager } from "$lib/inputs"
     import { getElemById } from "../../lib/utils-general"
     import { RoutinesManager } from "$lib/routines-manager"
@@ -62,6 +63,7 @@
     $: {
         doInitNow = isOpen ? doInitNow : true
     }
+    timer.subscribe(() => currTime = getDayIdxMinutes())
 
     /* blocks */
     function initNowBlock(todayRoutine: RoutineBlock[] | DailyRoutine | null) {
@@ -168,16 +170,7 @@
     onMount(() => {
         handleGradient(textEditorElem)
         editor = initDescriptionEditor()
-
-        if (type != "active") return
-
-        clearInterval(minuteInterval!)
-        minuteInterval = setInterval(() => {
-            currTime = getDayIdxMinutes()
-            dayIdx = currTime.dayIdx
-        }, 1000)
     })
-    onDestroy(() => clearInterval(minuteInterval!))
 </script>
 
 <div 

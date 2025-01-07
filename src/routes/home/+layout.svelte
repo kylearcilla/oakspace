@@ -39,8 +39,9 @@
 	import ImgUpload from "../../components/ImgUpload.svelte";
 	import IconPicker from "../../components/IconPicker.svelte";
 	import ActiveRoutine from "./ActiveRoutine.svelte";
-	import { updateGlobalContext } from "../../lib/utils-home";
+	import { updateAmbience, updateGlobalContext, hasAmbienceSpace } from "../../lib/utils-home";
 	import { YoutubePlayer } from "../../lib/youtube-player";
+	import ColorPicker from "../../components/ColorPicker.svelte";
 
   
   export let data
@@ -149,12 +150,22 @@
     if (!to?.route?.id) return
 
     const { id } = to.route
+    const ambience = hasAmbienceSpace()
     routeId = id
+
     updateRoute(id)
+
+    if (ambience && routeId === "/home/space") {
+      updateAmbience({ active: true })
+    }
+    else if (ambience) {
+      updateAmbience({ active: false })
+    }
   })
 
   beforeNavigate(({ to }) => {
     if (!to?.route?.id) return
+
     routeId = to.route.id
   })
   
@@ -180,6 +191,7 @@
   class:home--ambient={hasAmbience}
   class:home--ambient-vid={hasAmbience && ambience?.space.type === "video"}
   class:home--ambient-img={hasAmbience && ambience?.space.type != "wallpaper"}
+  class:home--no-ambience={!hasAmbience}
   style:--ambient-opacity={hasAmbience ? ambience?.opacity : 0}
   style:--left-bar-width={`${leftSideBarWidth}px`}
   style:--ambient-blur={AMBIENT.BG_BLUR}
@@ -301,17 +313,18 @@
   <!-- yt player -->
 
   <div 
-    class="ambient-player"
-    class:ambient-player--hidden={!$ytPlayerStore?.show}
-  >
+      class="ambient-player" 
+      class:ambient-player--hidden={!hasAmbience || !$ytPlayerStore?.show}
+   >
     <div class="ambient-player__iframe" id={YoutubePlayer.IFRAME_ID}></div>
-</div>
+  </div>
 </div>
 
+<!-- pop-ups -->
 <EmojiPicker/>
 <ImgUpload/>
 <IconPicker/>
-
+<ColorPicker/>
 
 <style lang="scss">
     @import "../../scss/toasts.scss";
@@ -334,7 +347,6 @@
       background-repeat: no-repeat;
 
       /* light */
-
       &--light &__right-bar::before {
         width: 1.5px;
         background: rgba((var(--textColor1)), 0.04);
@@ -350,6 +362,10 @@
         border: var(--navMenuBorder);
         border-radius: 12px;
         transition: 0.185s cubic-bezier(.4, 0, .2, 1);
+      }
+      &--stretched &__middle-view {
+        width: 100% !important;
+        margin: 0px !important;
       }
 
       /* ambient */
@@ -380,9 +396,8 @@
         left: 8px;
         border-radius: 20px;
       }
-      &--stretched &__middle-view {
-        width: 100% !important;
-        margin: 0px !important;
+      &--no-ambience {
+        background-image: none !important;
       }
 
       &__left-bar.ambient-solid {

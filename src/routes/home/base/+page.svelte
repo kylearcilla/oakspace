@@ -1,7 +1,7 @@
 <script lang="ts">    
 	import { themeState } from "../../../lib/store"
 	import { months } from "../../../lib/utils-date"
-	import { imageUpload } from "../../../lib/utils-home"
+	import { imageUpload } from "../../../lib/pop-ups"
 	import { MONTH_THOUGHT_ENTRY } from "../../../lib/mock-data"
 	import { clamp, clickOutside } from "../../../lib/utils-general"
 

@@ -3,7 +3,8 @@
 	import GoalCard from "../../../components/GoalCard.svelte";
 	import ProgressRing from "../../../components/ProgressRing.svelte";
 	import { themeState } from "../../../lib/store";
-	import { getColorTrio, getTagFromName, kebabToNormal } from "../../../lib/utils-general";
+	import { getTagFromName, kebabToNormal } from "../../../lib/utils-general";
+    import { getColorTrio } from "$lib/utils-colors"
 	import { getSectionProgress, reorderGoals, sectionGoals } from "../../../lib/utils-goals"
 
     export let options: {

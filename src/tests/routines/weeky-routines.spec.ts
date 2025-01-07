@@ -3109,7 +3109,7 @@ test.describe("modal Edits", () => {
     test("color change", async ({ page }) => {
         let blockElem = getBlockElem("0--0", page)
         const colorIdx = 13
-        const color = COLOR_SWATCHES.d[colorIdx]
+        const color = COLOR_SWATCHES[colorIdx]
     
         /* changes are saved */
         await blockElem.click()
@@ -4846,7 +4846,7 @@ test.describe("linked routines", () => {
             title: "Hello World",
             startTime: { h: 2, m: 4, ampm: "am" }, 
             endTime:  { h: 3, m: 59, ampm: "am" }, 
-            color: COLOR_SWATCHES.d[13],
+            color: COLOR_SWATCHES[2],
             colIdx: 2, 
             page 
         })

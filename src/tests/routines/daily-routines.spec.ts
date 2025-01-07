@@ -2024,7 +2024,7 @@ test.describe("modal edits", () => {
     test("color change", async ({ page }) => {
         let blockElem = getBlockElem("rblock--0", page)
         const colorIdx = 13
-        const color = COLOR_SWATCHES.d[colorIdx]
+        const color = COLOR_SWATCHES[colorIdx]
     
         /* changes are saved */
         await blockElem.click()

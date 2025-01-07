@@ -7,7 +7,8 @@
 	import { Icon } from "../../../lib/enums";
 	import { getDueString } from "../../../lib/utils-date"
 	import { getSectionProgress, reorderGoals, sectionGoals } from "../../../lib/utils-goals"
-	import { getColorTrio, kebabToNormal } from "../../../lib/utils-general"
+	import { kebabToNormal } from "../../../lib/utils-general"
+	import { getColorTrio } from '$lib/utils-colors'
 	import { themeState } from "../../../lib/store";
 
     export let options: {

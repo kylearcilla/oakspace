@@ -259,16 +259,21 @@ type DropdownListOptions = {
 }
 
 type Color = {
-    id: string
     primary: string
+    name: string
     light1: string
     light2: string
     light3: string
     dark1: string
     dark2: string
     dark3: string
-    isLight: boolean
-    isDark: boolean
+}
+
+type ColorPicker = {
+    isOpen: boolean
+    position: OffsetPoint
+    onSubmit: ((color: Color | null) => void) | null
+    picked: Color | null
 }
 
 /* Routines */

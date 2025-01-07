@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte"
-	import { globalContext } from "../../../lib/store"
+	import { globalContext, ytPlayerStore, timer } from "../../../lib/store"
+	import { hasAmbienceSpace, setAmbience } from "../../../lib/utils-home"
 	import { formatTimeToHHMM, prefer12HourFormat } from "../../../lib/utils-date"
-	import { setAmbience, updateAmbience } from "../../../lib/utils-home"
 
     $: ambience = $globalContext.ambience
     $: rightBarOpen = $globalContext.rightBarOpen
@@ -16,10 +16,9 @@
         "DM Sans":        { size: "19rem", topOffset: "-50px" },
         "Zodiak-Bold":    { size: "19rem", topOffset: "-55px" },
         "Melodrama-Bold": { size: "25rem", topOffset: "-75px" },
-        "Bagel Fat One":  { size: "20rem", topOffset: "-75px" },
+        "Bagel Fat One":  { size: "22rem", topOffset: "-85px" },
     }
 
-    let interval: NodeJS.Timer | null = null
     let doUse12HourFormat = prefer12HourFormat()
     let currentTimeStr = ""
     let currentTimePeriod = ""
@@ -29,8 +28,14 @@
     let digits: string[] = ["0", "0", ":", "0", "0"]
     let digitRefs: HTMLElement[] = []
 
-    function updateTimeStr() {
-        const timeStr = formatTimeToHHMM(new Date(), doUse12HourFormat)
+    timer.subscribe(({ date }) => {
+        if (init) {
+            updateTimeStr(date)
+        }
+    }) 
+
+    function updateTimeStr(date: Date) {
+        const timeStr = formatTimeToHHMM(date, doUse12HourFormat)
 
         if (doUse12HourFormat) {
             const [time, period] = timeStr.split(" ")
@@ -103,38 +108,17 @@
                 innerHTML: `<span>${newDigit}</span>`
         })
     }
-    function initDateTimer() {
-        interval = setInterval(updateTimeStr, 1000)
-    }
-    function hasAmbience() {
-        const global = localStorage.getItem("home-ui")
-        if (!global) {
-            return false
-        }
-        const { ambience } = JSON.parse(global)
-
-        return !!ambience
-    }
-
     onMount(() => {
-        if (!hasAmbience()) {
+        if (!hasAmbienceSpace()) {
             setAmbience()
         }
-        else {
-            requestAnimationFrame(() => {
-                updateAmbience({ active: true })
-            })
-        }
 
-        requestAnimationFrame(() => updateTimeStr())
-        initDateTimer()
+        requestAnimationFrame(() => updateTimeStr(new Date()))
+        $ytPlayerStore?.togglePlayback(true)
     })
 
     onDestroy(() => {
-        if (hasAmbience()) {
-            updateAmbience({ active: false })
-        }
-        clearInterval(interval! as any)
+        $ytPlayerStore?.togglePlayback(false)
     })
 </script>
 <div 
@@ -212,7 +196,7 @@
         height: 100vh;
         width: 100vw;
         @include flex(flex-start, center);
-        transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
         &--right-bar-open {
             width: calc(100vw - 160px);

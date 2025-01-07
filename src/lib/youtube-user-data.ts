@@ -1,5 +1,5 @@
 import { APIError } from "./errors"
-import { musicDataStore, ytUserDataStore } from "./store"
+import { ytUserDataStore } from "./store"
 import { authYoutubeClient,  getFreshToken,  getUserYtPlaylists, logOutUser } from "./api-youtube"
 import { 
         deleteYtUserData, 
@@ -27,7 +27,6 @@ export class YoutubeUserData {
     profileImgSrc = ""
     email         = ""
     error: any = null
-    forMusic = false
     
     userPlaylists: YoutubePlaylist[] = []
     userPlsNextPageToken = ""
@@ -269,19 +268,10 @@ export class YoutubeUserData {
     }
 
     updateOtherYtStoreToken(creds: { token: string, creationDate: Date }) {
-        if (this.forMusic) {
-            const store = get(ytUserDataStore)
+        const store = get(ytUserDataStore)
 
-            if (store?.username === this.username) {
-                store.updateTokenAfterRefresh(creds)
-            }
-        }
-        else {
-            const store = get(musicDataStore)
-
-            if (store?.username === this.username) {
-                store.updateTokenAfterRefresh(creds)
-            }
+        if (store?.username === this.username) {
+            store.updateTokenAfterRefresh(creds)
         }
     }
 

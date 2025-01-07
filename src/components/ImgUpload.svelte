@@ -1,10 +1,8 @@
 <script lang="ts">
-	import { themeState } from "$lib/store"
+	import { themeState } from "../lib/store"
 	import BounceFade from "./BounceFade.svelte"
-	import { imageUpload } from "$lib/utils-home"
-	import { getImgUploadErrorMsg, validateUserImgFileInput, validateUserImgURLInput } from "$lib/utils-media-upload"
-	import { drag } from "d3";
-	import { onMount } from "svelte";
+	import { imageUpload } from "../lib/pop-ups"
+	import { getImgUploadErrorMsg, validateUserImgFileInput, validateUserImgURLInput } from "../lib/utils-media-upload"
     
     const { onSubmit, close, state } = imageUpload
     

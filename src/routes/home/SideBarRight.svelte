@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte"
     
-    import { globalContext, themeState } from "$lib/store"    
+    import { globalContext, themeState, timer } from "$lib/store"    
 	import { clamp, clickOutside } from "$lib/utils-general"
 	import { ShortcutSectionInFocus, Icon } from "$lib/enums"
-	import { setShortcutsFocus, imageUpload } from "$lib/utils-home"
+	import { setShortcutsFocus } from "$lib/utils-home"
+    import { imageUpload } from "$lib/pop-ups"
 	import { SideCalendar } from "$lib/side-calendar"
 	import { formatDatetoStr, formatTimeToHHMM, isNightTime, prefer12HourFormat } from "$lib/utils-date"
 
@@ -46,6 +47,8 @@
     let isDragging = false
     let bgImgRef: HTMLImageElement
     let DRAG_OFFSET_THRESHOLD = 5
+
+    timer.subscribe(({ date }) => updateTimeStr(date))
 
     $: {
         bgImgSrc = $themeState.isDarkTheme ? "https://i.pinimg.com/originals/7d/04/0e/7d040e94931427709008aaeda14db9c8.gif" : ""
@@ -142,25 +145,13 @@
     }
 
     /* Time Stuff*/
-    function updateTimeStr() {
-        currentTimeStr = formatTimeToHHMM(new Date(), doUse12HourFormat)
+    function updateTimeStr(date: Date) {
+        currentTimeStr = formatTimeToHHMM(date, doUse12HourFormat)
         isDayTime = !isNightTime()
     }
     function toggleTimeFormatting() {
         doUse12HourFormat = !doUse12HourFormat 
-        updateTimeStr()
     }
-    function initDateTimer() {
-        interval = setInterval(updateTimeStr, 1000)
-    }
-
-    onMount(() => {
-        updateTimeStr()
-        initDateTimer()
-    })
-    onDestroy(() => {
-        clearInterval(interval! as any)
-    })
 </script>
 <div 
     bind:this={barRef}

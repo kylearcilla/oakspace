@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { onDestroy, onMount } from "svelte"
-    
-	import { themeState, weekRoutine } from "$lib/store"
+	import { themeState, weekRoutine, timer } from "$lib/store"
 	import { RoutinesManager } from "$lib/routines-manager"
 	import { findClosestColorSwatch } from "$lib/utils-colors"
 	import { GoogleCalendarManager } from "$lib/google-calendar-manager"
-    import { getColorTrio, getMaskedGradientStyle } from "$lib/utils-general"
+    import { getMaskedGradientStyle } from "$lib/utils-general"
+    import { getColorTrio } from "$lib/utils-colors"
 	import { getDayIdxMinutes, getTimeFromIdx, isSameDay, minsFromStartToHHMM } from "$lib/utils-date"
 	import { getDayRoutineFromWeek, resetDayRoutine, toggleRoutineBlockComplete } from "$lib/utils-routines"
     
@@ -25,7 +24,6 @@
     let dayViewElem: HTMLElement
     let allDayRef: HTMLElement
     let maskListGradient = ""
-    let minuteInterval: NodeJS.Timeout | null = null
     let focusEventId = ""
     let scrollContainerHeight = 0
     let scrollTop = 0
@@ -38,8 +36,11 @@
     
     $: isLight = !$themeState.isDarkTheme
     $: ambience = $globalContext.ambience
+    $: hasAmbience = ambience?.active
     $: routine = $weekRoutine
     $: isToday = isSameDay(new Date(), day)
+
+    timer.subscribe(({ date }) => currTime = getDayIdxMinutes(date))
 
     $: {
         // update routine when day changes
@@ -126,10 +127,6 @@
             } 
         })
     }
-    onMount(() => {
-        minuteInterval = setInterval(() => currTime = getDayIdxMinutes(), 1000)
-    })
-    onDestroy(() => clearInterval(minuteInterval!))
 </script>
 
 <div 
@@ -273,7 +270,7 @@
                                 class="routine-blocks__block"
                                 class:routine-blocks__block--checkbox={checkbox}
                                 class:routine-blocks__block--checked={done}
-                                class:routine-blocks__block--bordered={ambience && ambience.styling !== "solid"}
+                                class:routine-blocks__block--bordered={hasAmbience && ambience.styling !== "solid"}
                                 style:top={`${block.yOffset}px`}
                                 style:--block-height={`${block.height}px`}
                                 style:--block-color-1={colorTrio[0]}

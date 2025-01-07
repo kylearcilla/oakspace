@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { imageUpload } from "$lib/utils-home"
+    import { imageUpload } from "$lib/pop-ups"
     import { themeState } from "../../../lib/store"
     import { TextEditorManager } from "$lib/inputs"
     import { clickOutside } from "../../../lib/utils-general"

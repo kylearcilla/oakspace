@@ -40,7 +40,7 @@
         timeStyle = "Fancy"
     }
     else if (clockFont === "Bagel Fat One") {
-        timeStyle = "Silly"
+        timeStyle = "Cute"
     }
 
     function onElemStylingOptnClicked(optn: string) {
@@ -58,7 +58,7 @@
         else if (style === "Fancy") {
             clockFont = "Melodrama-Bold"
         }
-        else if (style === "Silly") {
+        else if (style === "Cute") {
             clockFont = "Bagel Fat One"
         }
 
@@ -77,7 +77,7 @@
     id={"ambient-header--dmenu"}
     isHidden={!open}
     zIndex={9999}
-    position={{ left: "10px", top: "37px" }}
+    position={{ left: "10px", top: "34px" }}
     {onClickOutside}
 >
     <div class="ambient">
@@ -181,7 +181,7 @@
                     isHidden={!timeStyleOpen} 
                     options={{
                         listItems: [
-                            { name: "Basic" }, { name: "Stylish" }, { name: "Fancy" }, { name: "Silly" }
+                            { name: "Basic" }, { name: "Cute" }, { name: "Stylish" }, { name: "Fancy" }
                         ],
                         position: { 
                             top: "96px", right: "10px"

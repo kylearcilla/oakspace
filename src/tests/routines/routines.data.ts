@@ -12,7 +12,7 @@ export const TAGS: Tag[] = [
     orderIdx: 0,
     name: "Body",
     symbol: {
-      color: COLOR_SWATCHES.d[9],
+      color: COLOR_SWATCHES[9],
       emoji: "💪"
     }
   },
@@ -21,7 +21,7 @@ export const TAGS: Tag[] = [
     orderIdx: 1,
     name: "JS",
     symbol: {
-      color: COLOR_SWATCHES.d[1],
+      color: COLOR_SWATCHES[1],
       emoji: "👨‍💻"
     }
   },
@@ -30,7 +30,7 @@ export const TAGS: Tag[] = [
     orderIdx: 2,
     name: "French",
     symbol: {
-      color: COLOR_SWATCHES.d[4],
+      color: COLOR_SWATCHES[4],
       emoji: "🇫🇷"
     }
   },
@@ -39,7 +39,7 @@ export const TAGS: Tag[] = [
     orderIdx: 3,
     name: "Cooking",
     symbol: {
-      color: COLOR_SWATCHES.d[2],
+      color: COLOR_SWATCHES[2],
       emoji: "🍖"
     }
   },
@@ -48,7 +48,7 @@ export const TAGS: Tag[] = [
     orderIdx: 4,
     name: "SWE",
     symbol: {
-      color: COLOR_SWATCHES.d[4],
+      color: COLOR_SWATCHES[4],
       emoji: "👨‍💻"
     }
   },
@@ -57,7 +57,7 @@ export const TAGS: Tag[] = [
     orderIdx: 5,
     name: "BBall",
     symbol: {
-      color: COLOR_SWATCHES.d[2],
+      color: COLOR_SWATCHES[2],
       emoji: "🏀"
     }
   },
@@ -66,7 +66,7 @@ export const TAGS: Tag[] = [
     orderIdx: 6,
     name: "Running",
     symbol: {
-      color: COLOR_SWATCHES.d[2],
+      color: COLOR_SWATCHES[2],
       emoji: "🏃‍♂️"
     }
   },
@@ -75,7 +75,7 @@ export const TAGS: Tag[] = [
     orderIdx: 7,
     name: "Meditation",
     symbol: {
-      color: COLOR_SWATCHES.d[3],
+      color: COLOR_SWATCHES[3],
       emoji: "🌿"
     }
   },
@@ -84,7 +84,7 @@ export const TAGS: Tag[] = [
     orderIdx: 8,
     name: "Art",
     symbol: {
-      color: COLOR_SWATCHES.d[13],
+      color: COLOR_SWATCHES[11],
       emoji: "🌁"
     }
   },
@@ -93,7 +93,7 @@ export const TAGS: Tag[] = [
     orderIdx: 9,
     name: "Sport",
     symbol: {
-      color: COLOR_SWATCHES.d[1],
+      color: COLOR_SWATCHES[1],
       emoji: "⚾️"
     }
   },
@@ -102,7 +102,7 @@ export const TAGS: Tag[] = [
     orderIdx: 10,
     name: "Learning",
     symbol: {
-      color: COLOR_SWATCHES.d[7],
+      color: COLOR_SWATCHES[7],
       emoji: "📖"
     }
   },
@@ -111,7 +111,7 @@ export const TAGS: Tag[] = [
     orderIdx: 11,
     name: "Hustle",
     symbol: {
-      color: COLOR_SWATCHES.d[3],
+      color: COLOR_SWATCHES[3],
       emoji: "💵"
     }
   },
@@ -120,7 +120,7 @@ export const TAGS: Tag[] = [
     orderIdx: 12,
     name: "School",
     symbol: {
-      color: COLOR_SWATCHES.d[1],
+      color: COLOR_SWATCHES[1],
       emoji: "🎒"
     }
   },
@@ -129,7 +129,7 @@ export const TAGS: Tag[] = [
     orderIdx: 13,
     name: "Extracurriculars",
     symbol: {
-      color: COLOR_SWATCHES.d[15],
+      color: COLOR_SWATCHES[2],
       emoji: "🎯"
     }
   },
@@ -138,7 +138,7 @@ export const TAGS: Tag[] = [
 export const ROUTINE_BLOCKS: RoutineBlock[] = [
     {
         title: "",
-        color: COLOR_SWATCHES.d[2],
+        color: COLOR_SWATCHES[2],
         startTime: 0,
         endTime: 0,
         activity: null,
@@ -155,7 +155,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
         [
             {
                 title: "🌤️ Morning Routine",
-                color: COLOR_SWATCHES.d[2],
+                color: COLOR_SWATCHES[2],
                 startTime: 360,  // 6:00 AM
                 endTime: 405,    // 6:45 AM
                 activity: null,
@@ -166,7 +166,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
             },
             {
                 title: "🎒 School",
-                color: COLOR_SWATCHES.d[1],
+                color: COLOR_SWATCHES[1],
                 startTime: 420,  // 7:00 AM
                 endTime: 900,    // 3:00 PM
                 activity: "working",
@@ -177,7 +177,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
             },
             {
                 title: "🎾 Tennis Practice",
-                color: COLOR_SWATCHES.d[3],
+                color: COLOR_SWATCHES[3],
                 startTime: 915,  // 3:15 PM
                 endTime: 990,   // 4:30 PM
                 activity: "body",
@@ -188,7 +188,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
             },
             {
                 title: "👨‍💻 HW and Study",
-                color: COLOR_SWATCHES.d[0],
+                color: COLOR_SWATCHES[0],
                 startTime: 1000,  // 4:40 PM
                 endTime: 1065,    // 5:45 PM
                 activity: "working",
@@ -216,7 +216,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
             },
             {
                 title: "🌿 Relaxation Time",
-                color: COLOR_SWATCHES.d[17],
+                color: COLOR_SWATCHES[3],
                 startTime: 1080,  // 6:00 PM
                 endTime: 1140,    // 7:00 PM
                 activity: "selfCare",
@@ -244,7 +244,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
             },
             {
                 title: "Dinner",
-                color: COLOR_SWATCHES.d[4],
+                color: COLOR_SWATCHES[4],
                 startTime: 1170,  // 7:30 AM
                 endTime: 1200,    // 8:00 AM
                 activity: null,
@@ -255,7 +255,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
             },
             {
                 title: "👨‍💻 HW and Study",
-                color: COLOR_SWATCHES.d[0],
+                color: COLOR_SWATCHES[0],
                 startTime: 1220,   // 8:20 PM
                 endTime: 1320,     // 9:00 PM
                 activity: "working",
@@ -266,7 +266,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
             },
             {
                 title: "🌿 Chill",
-                color: COLOR_SWATCHES.d[13],
+                color: COLOR_SWATCHES[3],
                 startTime: 1325,   // 9:05 PM
                 endTime: 1360,     // 10:40 PM
                 activity: "selfCare",
@@ -277,7 +277,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
             },
             {
                 title: "🌙 Evening Routine",
-                color: COLOR_SWATCHES.d[19],
+                color: COLOR_SWATCHES[11],
                 startTime: 1365,   // 10:45 PM
                 endTime: 1395,     // 11:30 PM
                 activity: "selfCare",
@@ -290,7 +290,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
         [
             {
                 title: "🌤️ Morning Routine",
-                color: COLOR_SWATCHES.d[2],
+                color: COLOR_SWATCHES[2],
                 startTime: 480, // 8:00 AM
                 endTime: 540,    // 9:00 AM
                 activity: null,
@@ -301,7 +301,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
             },
             {
                 title: "🏃‍♂️ Morning Run",
-                color: COLOR_SWATCHES.d[9],
+                color: COLOR_SWATCHES[9],
                 startTime: 555,  // 9:15 AM
                 endTime: 630,    // 10:30 PM
                 activity: "body",
@@ -312,7 +312,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
             },
             {
                 title: "Lunch",
-                color: COLOR_SWATCHES.d[14],
+                color: COLOR_SWATCHES[6],
                 startTime: 720, // 12:00 AM
                 endTime: 750,   // 12:30 PM
                 activity: null,
@@ -323,7 +323,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
             },
             {
                 title: "💵 Work",
-                color: COLOR_SWATCHES.d[21],
+                color: COLOR_SWATCHES[7],
                 startTime: 810,  // 1:30 PM
                 endTime: 1110,    // 6:30 PM
                 activity: "working",
@@ -334,7 +334,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
             },
             {
                 title: "Dinner",
-                color: COLOR_SWATCHES.d[4],
+                color: COLOR_SWATCHES[4],
                 startTime: 1170,  // 7:30 AM
                 endTime: 1200,    // 8:00 AM
                 activity: null,
@@ -345,7 +345,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
             },
             {
                 title: "🌿 Chill",
-                color: COLOR_SWATCHES.d[13],
+                color: COLOR_SWATCHES[8],
                 startTime: 1215,   // 8:15 PM
                 endTime: 1360,     // 10:40 PM
                 activity: "selfCare",
@@ -356,7 +356,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
             },
             {
                 title: "🌙 Evening Routine",
-                color: COLOR_SWATCHES.d[19],
+                color: COLOR_SWATCHES[9],
                 startTime: 1365,   // 10:45 PM
                 endTime: 1395,     // 11:30 PM
                 activity: "selfCare",
@@ -371,7 +371,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
             [
                 {
                     title: "🌤️ Morning Routine",
-                    color: COLOR_SWATCHES.d[2],
+                    color: COLOR_SWATCHES[2],
                     startTime: 420, // 7:00 AM
                     endTime: 450,   // 7:30 AM
                     activity: null,
@@ -382,7 +382,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "📝 Day Planning",
-                    color: COLOR_SWATCHES.d[12],
+                    color: COLOR_SWATCHES[1],
                     startTime: 450,  // 7:30 AM
                     endTime: 470,    // 7:50 AM
                     activity: null,
@@ -393,7 +393,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "💪 Gym (Push)",
-                    color: COLOR_SWATCHES.d[8],
+                    color: COLOR_SWATCHES[8],
                     startTime: 480, // 8:00 AM
                     endTime: 540,   // 9:00 PM
                     activity: "body",
@@ -404,7 +404,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "📖 Morning Lecture",
-                    color: COLOR_SWATCHES.d[5],
+                    color: COLOR_SWATCHES[5],
                     startTime: 570,  // 9:30 PM
                     endTime: 690,    // 11:30 PM
                     activity: "working",
@@ -415,7 +415,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "Lunch",
-                    color: COLOR_SWATCHES.d[0],
+                    color: COLOR_SWATCHES[0],
                     startTime: 705, // 11:45 AM
                     endTime: 765,   // 12:45 PM
                     activity: null,
@@ -426,7 +426,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "👨‍💻 Deep Work Session",
-                    color: COLOR_SWATCHES.d[26],
+                    color: COLOR_SWATCHES[0],
                     startTime: 840, // 2:00 PM
                     endTime: 960,   // 4:00 PM
                     activity: "working",
@@ -437,7 +437,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "🌿 Relaxation",
-                    color: COLOR_SWATCHES.d[17],
+                    color: COLOR_SWATCHES[1],
                     startTime: 960, // 4:00 PM
                     endTime: 990,   // 4:30 PM
                     activity: "selfCare",
@@ -448,7 +448,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "👨‍💻 Deep Work Session",
-                    color: COLOR_SWATCHES.d[26],
+                    color: COLOR_SWATCHES[1],
                     startTime: 990,  // 4:30 PM
                     endTime: 1110,   // 6:30 PM
                     activity: "working",
@@ -459,7 +459,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "🌿 Relaxation",
-                    color: COLOR_SWATCHES.d[17],
+                    color: COLOR_SWATCHES[2],
                     startTime: 1110,   // 6:30 PM
                     endTime: 1140,     // 7:30 PM
                     activity: "selfCare",
@@ -470,7 +470,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "Dinner",
-                    color: COLOR_SWATCHES.d[11],
+                    color: COLOR_SWATCHES[11],
                     startTime: 1200,   // 8:00 PM
                     endTime: 1245,     // 8:45 PM
                     activity: null,
@@ -481,7 +481,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "Internship / Research Grind",
-                    color: COLOR_SWATCHES.d[20],
+                    color: COLOR_SWATCHES[1],
                     startTime: 1260,   // 9:00 PM
                     endTime: 1335,     // 10:15 PM
                     activity: "working",
@@ -492,7 +492,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "🌿 Relaxation",
-                    color: COLOR_SWATCHES.d[17],
+                    color: COLOR_SWATCHES[2],
                     startTime: 1335,   // 10:15 PM
                     endTime: 1380,     // 11:00 PM
                     activity: "selfCare",
@@ -503,7 +503,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "🌙 Evening Routine",
-                    color: COLOR_SWATCHES.d[19],
+                    color: COLOR_SWATCHES[3],
                     startTime: 1380,   // 11:05 PM
                     endTime: 1410,     // 11:30 PM
                     activity: "selfCare",
@@ -516,7 +516,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
             [
                 {
                     title: "🌤️ Morning Routine",
-                    color: COLOR_SWATCHES.d[2],
+                    color: COLOR_SWATCHES[2],
                     startTime: 480, // 8:00 AM
                     endTime: 510,   // 8:30 AM
                     activity: null,
@@ -527,7 +527,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "📝 Day Planning",
-                    color: COLOR_SWATCHES.d[12],
+                    color: COLOR_SWATCHES[1],
                     startTime: 510,  // 8:30 AM
                     endTime: 530,    // 8:50 AM
                     activity: null,
@@ -538,7 +538,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "🏃‍♂️ Morning Run",
-                    color: COLOR_SWATCHES.d[8],
+                    color: COLOR_SWATCHES[8],
                     startTime: 540, // 9:30 AM
                     endTime: 630,   // 11:00 AM
                     activity: "body",
@@ -549,7 +549,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "👨‍💻 Deep Work Session",
-                    color: COLOR_SWATCHES.d[26],
+                    color: COLOR_SWATCHES[3],
                     startTime: 645, // 10:45 PM
                     endTime: 750,   // 12:30 PM
                     activity: "working",
@@ -560,7 +560,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "Lunch",
-                    color: COLOR_SWATCHES.d[0],
+                    color: COLOR_SWATCHES[0],
                     startTime: 760, endTime: 790,
                     activity: null,
                     tag: null,
@@ -570,7 +570,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "Tutoring",
-                    color: COLOR_SWATCHES.d[3],
+                    color: COLOR_SWATCHES[3],
                     startTime: 900,  // 3 PM
                     endTime: 1140,   // 7 PM
                     activity: "working",
@@ -581,7 +581,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "Dinner",
-                    color: COLOR_SWATCHES.d[11],
+                    color: COLOR_SWATCHES[11],
                     startTime: 1200,   // 8:00 PM
                     endTime: 1245,     // 8:45 PM
                     activity: null,
@@ -592,7 +592,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "🍊 Life Stuff",
-                    color: COLOR_SWATCHES.d[8],
+                    color: COLOR_SWATCHES[8],
                     startTime: 1260,   // 9:00 PM
                     endTime: 1320,     // 10:00 PM
                     activity: null,
@@ -603,7 +603,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "🌿 Relaxation",
-                    color: COLOR_SWATCHES.d[17],
+                    color: COLOR_SWATCHES[3],
                     startTime: 1320,   // 10:00 PM
                     endTime: 1380,     // 11:00 PM
                     activity: "selfCare",
@@ -614,7 +614,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "🌙 Evening Routine",
-                    color: COLOR_SWATCHES.d[19],
+                    color: COLOR_SWATCHES[4],
                     startTime: 1380,   // 11:05 PM
                     endTime: 1410,     // 11:30 PM
                     activity: "selfCare",
@@ -627,7 +627,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
             [
                 {
                     title: "🌤️ Morning Routine",
-                    color: COLOR_SWATCHES.d[2],
+                    color: COLOR_SWATCHES[2],
                     startTime: 420, // 7:00 AM
                     endTime: 450,   // 7:30 AM
                     activity: null,
@@ -638,7 +638,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "📝 Day Planning",
-                    color: COLOR_SWATCHES.d[12],
+                    color: COLOR_SWATCHES[5],
                     startTime: 450,  // 7:30 AM
                     endTime: 470,    // 7:50 AM
                     activity: null,
@@ -649,7 +649,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "👨‍💻 Deep Work Session",
-                    color: COLOR_SWATCHES.d[26], tag: TAGS[12],
+                    color: COLOR_SWATCHES[6], tag: TAGS[12],
                     startTime: 480, endTime: 600,
                     activity: "working", description: "", tasks: [],
                     order: "middle",
@@ -659,25 +659,25 @@ export const PRESET_ROUTINES: PresetRoutines = {
                     startTime: 600, endTime: 630,
                     activity: "selfCare", description: "", tasks: [],
                     order: "middle",
-                    color: COLOR_SWATCHES.d[17], tag: null,
+                    color: COLOR_SWATCHES[3], tag: null,
                 },
                 {
                     title: "👨‍💻 Deep Work Session",
                     startTime: 630, endTime: 750,
                     activity: "working", description: "", tasks: [],
                     order: "middle",
-                    color: COLOR_SWATCHES.d[26], tag: TAGS[12],
+                    color: COLOR_SWATCHES[5], tag: TAGS[12],
                 },
                 {
                     title: "Lunch",
                     startTime: 760, endTime: 790,
                     activity: null, description: "", tasks: [],
                     order: "middle",
-                    color: COLOR_SWATCHES.d[0], tag: null,
+                    color: COLOR_SWATCHES[0], tag: null,
                 },
                 {
                     title: "Afternoon Lecture",
-                    color: COLOR_SWATCHES.d[5],
+                    color: COLOR_SWATCHES[5],
                     startTime: 800, // 1:20 PM
                     endTime: 950,   // 3:50 PM
                     activity: "working",
@@ -688,7 +688,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "🌿 Relaxation",
-                    color: COLOR_SWATCHES.d[17],
+                    color: COLOR_SWATCHES[3],
                     startTime: 950, // 3:50 PM
                     endTime: 1000,   // 4:50 PM
                     activity: "selfCare",
@@ -699,7 +699,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "Afternoon Lecture",
-                    color: COLOR_SWATCHES.d[5],
+                    color: COLOR_SWATCHES[5],
                     startTime: 1000,  // 4:50 PM
                     endTime: 1150,    // 7:20 PM
                     activity: "working",
@@ -710,7 +710,7 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 },
                 {
                     title: "Dinner",
-                    color: COLOR_SWATCHES.d[11],
+                    color: COLOR_SWATCHES[11],
                     startTime: 1200,   // 8:00 PM
                     endTime: 1245,     // 8:45 PM
                     activity: null,
@@ -724,11 +724,11 @@ export const PRESET_ROUTINES: PresetRoutines = {
                     startTime: 1260, endTime: 1380,
                     activity: "working", description: "", tasks: [],
                     order: "middle",
-                    color: COLOR_SWATCHES.d[26], tag: TAGS[12],
+                    color: COLOR_SWATCHES[5], tag: TAGS[3],
                 },
                 {
                     title: "🌙 Evening Routine",
-                    color: COLOR_SWATCHES.d[19],
+                    color: COLOR_SWATCHES[3],
                     startTime: 1380,   // 11:05 PM
                     endTime: 1410,     // 11:30 PM
                     activity: "selfCare",
@@ -752,7 +752,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
         blocks: [
             {
                 title: "Fruit 🍑",
-                color: COLOR_SWATCHES.d[1],
+                color: COLOR_SWATCHES[1],
                 startTime: 360,  // 6:00 AM
                 endTime: 420,    // 7:00 AM
                 activity: "mind",
@@ -763,7 +763,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
             },
             {
                 title: "👨‍💻 SWE Deep Work",
-                color: COLOR_SWATCHES.d[1],
+                color: COLOR_SWATCHES[1],
                 startTime: 525,  // 8:45 AM
                 endTime: 720,    // 12:00 PM
                 activity: "working",
@@ -774,7 +774,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
             },
             {
                 title: "🍖 Lunch",
-                color: COLOR_SWATCHES.d[2],
+                color: COLOR_SWATCHES[2],
                 startTime: 730,  // 12:10 PM
                 endTime: 800,    // 1:20 PM
                 activity: null,
@@ -785,7 +785,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
             },
             {
                 title: "👨‍💻 SWE Deep Work",
-                color: COLOR_SWATCHES.d[1],
+                color: COLOR_SWATCHES[1],
                 startTime: 885,  // 2:45 PM
                 endTime: 1080,   // 6:00  PM
                 activity: "working",
@@ -796,7 +796,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
             },
             {
                 title: "💪 Gym (Pull)",
-                color: COLOR_SWATCHES.d[3],
+                color: COLOR_SWATCHES[3],
                 startTime: 1080,  // 6:00 PM
                 endTime: 1140,    // 7:00 PM
                 activity: "body",
@@ -807,7 +807,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
             },
             {
                 title: "🍖 Dinner",
-                color: COLOR_SWATCHES.d[4],
+                color: COLOR_SWATCHES[4],
                 startTime: 1140,  // 7:00 PM
                 endTime: 1170,    // 7:30 PM
                 activity: null,
@@ -818,7 +818,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
             },
             {
                 title: "🌙 Evening Routine",
-                color: COLOR_SWATCHES.d[19],
+                color: COLOR_SWATCHES[4],
                 startTime: 1380,   // 11:00 PM
                 endTime: 1415,     // 11:45 PM
                 activity: "selfCare",
@@ -829,7 +829,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
             },
             {
                 title: "Last",
-                color: COLOR_SWATCHES.d[1],
+                color: COLOR_SWATCHES[1],
                 startTime: 1425,   // 11:45 PM
                 endTime: 1439,     // 11:59 PM
                 activity: "selfCare",
@@ -850,7 +850,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
     [
         {
             title: "🍒 STEM Club Meeting",
-            color: COLOR_SWATCHES.d[15],
+            color: COLOR_SWATCHES[5],
             startTime: 915,  // 3:15 PM
             endTime: 990,   // 4:30 PM
             activity: "working",
@@ -861,7 +861,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
         },
         {
             title: "💵 Work",
-            color: COLOR_SWATCHES.d[21],
+            color: COLOR_SWATCHES[6],
             startTime: 1000,  // 4:40 PM
             endTime: 1155,    // 7:15 PM
             activity: "working",
@@ -875,7 +875,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
     [
         {
             title: "🍕 Italian Culture Club",
-            color: COLOR_SWATCHES.d[9],
+            color: COLOR_SWATCHES[9],
             startTime: 915,  // 3:15 PM
             endTime: 975,    // 4:15 PM
             activity: null,
@@ -886,7 +886,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
         },
         {
             title: "💵 Work",
-            color: COLOR_SWATCHES.d[21],
+            color: COLOR_SWATCHES[7],
             startTime: 1000,  // 4:40 PM
             endTime: 1155,    // 7:15 PM
             activity: "working",
@@ -900,7 +900,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
     [
         {
             title: "💵 Work",
-            color: COLOR_SWATCHES.d[21],
+            color: COLOR_SWATCHES[8],
             startTime: 1000,  // 4:40 PM
             endTime: 1155,    // 7:15 PM
             activity: "working",
@@ -911,7 +911,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
         },
         {
             title: "🌿 Chill",
-            color: COLOR_SWATCHES.d[13],
+            color: COLOR_SWATCHES[2],
             startTime: 1215,   // 8:15 PM
             endTime: 1360,     // 10:40 PM
             activity: "selfCare",
@@ -926,7 +926,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
     [
         {
             title: "💪 Gym",
-            color: COLOR_SWATCHES.d[12],
+            color: COLOR_SWATCHES[4],
             startTime: 810,  // 1:30 PM
             endTime: 900,    // 3:00 PM
             activity: "body",
@@ -937,7 +937,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
         },
         {
             title: "📌 College Prep",
-            color: COLOR_SWATCHES.d[1],
+            color: COLOR_SWATCHES[1],
             startTime: 910,  // 3:10 PM
             endTime: 1080,   // 6:00 PM
             activity: null,
@@ -985,7 +985,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
         },
         {
             title: "💵 Side Hustle",
-            color: COLOR_SWATCHES.d[15],
+            color: COLOR_SWATCHES[2],
             startTime: 800, endTime: 900,
             activity: "working",
             tag: TAGS[11],
@@ -1003,7 +1003,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
     [
         {
             title: "0-0",
-            color: COLOR_SWATCHES.d[15],
+            color: COLOR_SWATCHES[3],
             startTime: 0,
             endTime: 1439,
             activity: "working",
@@ -1018,7 +1018,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
             ...ROUTINE_BLOCKS[0],
             title: `1-${i}`,
             id: `1-${i}`,
-            color: COLOR_SWATCHES.d[i % COLOR_SWATCHES.d.length],
+            color: COLOR_SWATCHES[i % COLOR_SWATCHES.length],
             startTime: i * 60,
             endTime: Math.min((i + 1) * 60, 1439),
         }))
@@ -1026,7 +1026,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
     [
         {
             title: "2-0",
-            color: COLOR_SWATCHES.d[0],
+            color: COLOR_SWATCHES[0],
             startTime: 0,
             endTime: 15,
             activity: "mind",
@@ -1037,7 +1037,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
         },
         {
             title: "2-1",
-            color: COLOR_SWATCHES.d[1],
+            color: COLOR_SWATCHES[1],
             startTime: 15,
             endTime: 1424,
             activity: "working",
@@ -1048,7 +1048,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
         },
         {
             title: "2-2",
-            color: COLOR_SWATCHES.d[2],
+            color: COLOR_SWATCHES[2],
             startTime: 1424,
             endTime: 1439,
             activity: "body",
@@ -1063,7 +1063,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
             ...ROUTINE_BLOCKS[0],
             title: `3-${i}`,
             id: `3-${i}`,
-            color: COLOR_SWATCHES.d[i % COLOR_SWATCHES.d.length],
+            color: COLOR_SWATCHES[i % COLOR_SWATCHES.length],
             startTime: i * 15,
             endTime: Math.min((i + 1) * 15, 1439),
         }))
@@ -1081,7 +1081,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
                 ...ROUTINE_BLOCKS[0],
                 id: `4-${i}`,
                 title: `4-${i}`,
-                color: COLOR_SWATCHES.d[i % COLOR_SWATCHES.d.length],
+                color: COLOR_SWATCHES[i % COLOR_SWATCHES.length],
                 startTime,
                 endTime: Math.min(endTime, 1439),
             }
@@ -1091,7 +1091,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
     [
         {
             title: "5-0",
-            color: COLOR_SWATCHES.d[0],
+            color: COLOR_SWATCHES[0],
             startTime: 0,
             endTime: 720,
             activity: "mind",
@@ -1102,7 +1102,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
         },
         {
             title: "5-1",
-            color: COLOR_SWATCHES.d[1],
+            color: COLOR_SWATCHES[1],
             startTime: 719,
             endTime: 1439,
             activity: "working",
@@ -1197,7 +1197,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
     Monday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[0],
+            color: COLOR_SWATCHES[0],
             startTime: 360,
             endTime: 420,
             activity: null,
@@ -1208,7 +1208,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Orange",
-            color: COLOR_SWATCHES.d[1],
+            color: COLOR_SWATCHES[1],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -1219,7 +1219,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[2],
+            color: COLOR_SWATCHES[2],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -1230,7 +1230,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[3],
+            color: COLOR_SWATCHES[3],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -1241,7 +1241,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[4],
+            color: COLOR_SWATCHES[4],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -1252,7 +1252,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[5],
+            color: COLOR_SWATCHES[5],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -1263,7 +1263,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[6],
+            color: COLOR_SWATCHES[6],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -1278,7 +1278,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
     Tuesday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[7],
+            color: COLOR_SWATCHES[7],
             startTime: 360,
             endTime: 420,
             activity: null,
@@ -1289,7 +1289,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Orange",
-            color: COLOR_SWATCHES.d[8],
+            color: COLOR_SWATCHES[8],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -1300,7 +1300,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[9],
+            color: COLOR_SWATCHES[9],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -1311,7 +1311,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[10],
+            color: COLOR_SWATCHES[4],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -1322,7 +1322,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[11],
+            color: COLOR_SWATCHES[3],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -1333,7 +1333,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[12],
+            color: COLOR_SWATCHES[2],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -1344,7 +1344,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[13],
+            color: COLOR_SWATCHES[3],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -1357,7 +1357,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
     Wednesday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[14],
+            color: COLOR_SWATCHES[1],
             startTime: 370,
             endTime: 420,
             activity: null,
@@ -1368,7 +1368,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Orange",
-            color: COLOR_SWATCHES.d[15],
+            color: COLOR_SWATCHES[3],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -1379,7 +1379,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[16],
+            color: COLOR_SWATCHES[5],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -1390,7 +1390,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[17],
+            color: COLOR_SWATCHES[2],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -1401,7 +1401,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[18],
+            color: COLOR_SWATCHES[4],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -1412,7 +1412,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[19],
+            color: COLOR_SWATCHES[2],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -1423,7 +1423,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[20],
+            color: COLOR_SWATCHES[4],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -1436,7 +1436,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
     Thursday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[21],
+            color: COLOR_SWATCHES[3],
             startTime: 370,
             endTime: 420,
             activity: null,
@@ -1447,7 +1447,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Orange",
-            color: COLOR_SWATCHES.d[22],
+            color: COLOR_SWATCHES[4],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -1458,7 +1458,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[23],
+            color: COLOR_SWATCHES[3],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -1469,7 +1469,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[24],
+            color: COLOR_SWATCHES[4],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -1480,7 +1480,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[25],
+            color: COLOR_SWATCHES[2],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -1491,7 +1491,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[26],
+            color: COLOR_SWATCHES[3],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -1502,7 +1502,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[27],
+            color: COLOR_SWATCHES[4],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -1516,7 +1516,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
     Friday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[1],
+            color: COLOR_SWATCHES[1],
             startTime: 370,
             endTime: 420,
             activity: null,
@@ -1527,7 +1527,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[5],
+            color: COLOR_SWATCHES[5],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -1538,7 +1538,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[2],
+            color: COLOR_SWATCHES[2],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -1549,7 +1549,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[5],
+            color: COLOR_SWATCHES[5],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -1560,7 +1560,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[3],
+            color: COLOR_SWATCHES[3],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -1571,7 +1571,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[4],
+            color: COLOR_SWATCHES[4],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -1582,7 +1582,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[1],
+            color: COLOR_SWATCHES[1],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -1595,7 +1595,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
     Saturday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.p[0],
+            color: COLOR_SWATCHES[0],
             startTime: 480,
             endTime: 520,
             activity: null,
@@ -1606,7 +1606,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "🏃‍♂️ Running",
-            color: COLOR_SWATCHES.p[1],
+            color: COLOR_SWATCHES[1],
             startTime: 600,
             endTime: 690,
             activity: "working",
@@ -1617,7 +1617,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.p[2],
+            color: COLOR_SWATCHES[2],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -1628,7 +1628,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "🌁 Art",
-            color: COLOR_SWATCHES.p[3],
+            color: COLOR_SWATCHES[3],
             startTime: 885,
             endTime: 920,
             activity: "selfCare",
@@ -1639,7 +1639,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "💪 Gym (Push)",
-            color: COLOR_SWATCHES.p[4],
+            color: COLOR_SWATCHES[4],
             startTime: 1000,
             endTime: 1100,
             activity: "body",
@@ -1650,7 +1650,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.p[5],
+            color: COLOR_SWATCHES[5],
             startTime: 1130,
             endTime: 1200,
             activity: null,
@@ -1661,7 +1661,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.p[6],
+            color: COLOR_SWATCHES[6],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -1674,7 +1674,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
     Sunday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.p[7],
+            color: COLOR_SWATCHES[7],
             startTime: 480,
             endTime: 520,
             activity: null,
@@ -1685,7 +1685,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "🏃‍♂️ Running",
-            color: COLOR_SWATCHES.p[8],
+            color: COLOR_SWATCHES[8],
             startTime: 600,
             endTime: 690,
             activity: "working",
@@ -1696,7 +1696,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.p[9],
+            color: COLOR_SWATCHES[9],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -1707,7 +1707,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "🌁 Art",
-            color: COLOR_SWATCHES.p[10],
+            color: COLOR_SWATCHES[10],
             startTime: 885,
             endTime: 920,
             activity: "selfCare",
@@ -1718,7 +1718,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "💪 Gym (Push)",
-            color: COLOR_SWATCHES.p[11],
+            color: COLOR_SWATCHES[4],
             startTime: 1000,
             endTime: 1100,
             activity: "body",
@@ -1729,7 +1729,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.p[12],
+            color: COLOR_SWATCHES[3],
             startTime: 1130,
             endTime: 1200,
             activity: null,
@@ -1740,7 +1740,7 @@ export const WEEKLY_FULL_COLORS: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.p[13],
+            color: COLOR_SWATCHES[2],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -1773,7 +1773,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
     Monday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[0],
+            color: COLOR_SWATCHES[0],
             startTime: 360,
             endTime: 420,
             activity: null,
@@ -1784,7 +1784,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Orange",
-            color: COLOR_SWATCHES.d[1],
+            color: COLOR_SWATCHES[1],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -1795,7 +1795,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[2],
+            color: COLOR_SWATCHES[2],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -1806,7 +1806,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[3],
+            color: COLOR_SWATCHES[3],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -1817,7 +1817,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[4],
+            color: COLOR_SWATCHES[4],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -1828,7 +1828,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[5],
+            color: COLOR_SWATCHES[5],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -1839,7 +1839,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[6],
+            color: COLOR_SWATCHES[6],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -1854,7 +1854,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
     Tuesday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[7],
+            color: COLOR_SWATCHES[7],
             startTime: 360,
             endTime: 420,
             activity: null,
@@ -1865,7 +1865,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Orange",
-            color: COLOR_SWATCHES.d[8],
+            color: COLOR_SWATCHES[8],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -1876,7 +1876,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[9],
+            color: COLOR_SWATCHES[9],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -1887,7 +1887,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[10],
+            color: COLOR_SWATCHES[3],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -1898,7 +1898,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[11],
+            color: COLOR_SWATCHES[6],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -1909,7 +1909,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[12],
+            color: COLOR_SWATCHES[7],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -1920,7 +1920,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[13],
+            color: COLOR_SWATCHES[5],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -1933,7 +1933,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
     Wednesday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[14],
+            color: COLOR_SWATCHES[5],
             startTime: 370,
             endTime: 420,
             activity: null,
@@ -1944,7 +1944,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Orange",
-            color: COLOR_SWATCHES.d[15],
+            color: COLOR_SWATCHES[6],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -1955,7 +1955,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[16],
+            color: COLOR_SWATCHES[4],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -1966,7 +1966,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[17],
+            color: COLOR_SWATCHES[3],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -1977,7 +1977,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[18],
+            color: COLOR_SWATCHES[4],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -1988,7 +1988,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[19],
+            color: COLOR_SWATCHES[3],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -1999,7 +1999,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[20],
+            color: COLOR_SWATCHES[6],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -2012,7 +2012,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
     Thursday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[21],
+            color: COLOR_SWATCHES[7],
             startTime: 370,
             endTime: 420,
             activity: null,
@@ -2023,7 +2023,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Orange",
-            color: COLOR_SWATCHES.d[22],
+            color: COLOR_SWATCHES[4],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -2034,7 +2034,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[23],
+            color: COLOR_SWATCHES[5],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -2045,7 +2045,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[24],
+            color: COLOR_SWATCHES[6],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -2056,7 +2056,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[25],
+            color: COLOR_SWATCHES[5],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -2067,7 +2067,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[26],
+            color: COLOR_SWATCHES[3],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -2078,7 +2078,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[27],
+            color: COLOR_SWATCHES[4],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -2092,7 +2092,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
     Friday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[1],
+            color: COLOR_SWATCHES[1],
             startTime: 370,
             endTime: 420,
             activity: null,
@@ -2103,7 +2103,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[5],
+            color: COLOR_SWATCHES[5],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -2114,7 +2114,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[2],
+            color: COLOR_SWATCHES[2],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -2125,7 +2125,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[5],
+            color: COLOR_SWATCHES[5],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -2136,7 +2136,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[3],
+            color: COLOR_SWATCHES[3],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -2147,7 +2147,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[4],
+            color: COLOR_SWATCHES[4],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -2158,7 +2158,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[1],
+            color: COLOR_SWATCHES[1],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -2171,7 +2171,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
     Saturday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.p[0],
+            color: COLOR_SWATCHES[0],
             startTime: 480,
             endTime: 520,
             activity: null,
@@ -2182,7 +2182,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "🏃‍♂️ Running",
-            color: COLOR_SWATCHES.p[1],
+            color: COLOR_SWATCHES[1],
             startTime: 600,
             endTime: 690,
             activity: "working",
@@ -2193,7 +2193,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.p[2],
+            color: COLOR_SWATCHES[2],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -2204,7 +2204,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "🌁 Art",
-            color: COLOR_SWATCHES.p[3],
+            color: COLOR_SWATCHES[3],
             startTime: 885,
             endTime: 920,
             activity: "selfCare",
@@ -2215,7 +2215,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "💪 Gym (Push)",
-            color: COLOR_SWATCHES.p[4],
+            color: COLOR_SWATCHES[4],
             startTime: 1000,
             endTime: 1100,
             activity: "body",
@@ -2226,7 +2226,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.p[5],
+            color: COLOR_SWATCHES[5],
             startTime: 1130,
             endTime: 1200,
             activity: null,
@@ -2237,7 +2237,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.p[6],
+            color: COLOR_SWATCHES[6],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -2250,7 +2250,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
     Sunday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.p[7],
+            color: COLOR_SWATCHES[7],
             startTime: 480,
             endTime: 520,
             activity: null,
@@ -2261,7 +2261,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "🏃‍♂️ Running",
-            color: COLOR_SWATCHES.p[8],
+            color: COLOR_SWATCHES[8],
             startTime: 600,
             endTime: 690,
             activity: "working",
@@ -2272,7 +2272,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.p[9],
+            color: COLOR_SWATCHES[9],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -2283,7 +2283,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "🌁 Art",
-            color: COLOR_SWATCHES.p[10],
+            color: COLOR_SWATCHES[10],
             startTime: 885,
             endTime: 920,
             activity: "selfCare",
@@ -2294,7 +2294,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "💪 Gym (Push)",
-            color: COLOR_SWATCHES.p[11],
+            color: COLOR_SWATCHES[11],
             startTime: 1000,
             endTime: 1100,
             activity: "body",
@@ -2305,7 +2305,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.p[12],
+            color: COLOR_SWATCHES[3],
             startTime: 1130,
             endTime: 1200,
             activity: null,
@@ -2316,7 +2316,7 @@ export const WEEKLY_FULL_TIME: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.p[13],
+            color: COLOR_SWATCHES[3],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -2331,7 +2331,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
     Monday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[0],
+            color: COLOR_SWATCHES[0],
             startTime: 360,
             endTime: 420,
             activity: null,
@@ -2342,7 +2342,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Orange",
-            color: COLOR_SWATCHES.d[1],
+            color: COLOR_SWATCHES[1],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -2353,7 +2353,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[2],
+            color: COLOR_SWATCHES[2],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -2364,7 +2364,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[3],
+            color: COLOR_SWATCHES[3],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -2375,7 +2375,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[4],
+            color: COLOR_SWATCHES[4],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -2386,7 +2386,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[5],
+            color: COLOR_SWATCHES[5],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -2397,7 +2397,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[6],
+            color: COLOR_SWATCHES[6],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -2412,7 +2412,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
     Tuesday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[7],
+            color: COLOR_SWATCHES[7],
             startTime: 360,
             endTime: 420,
             activity: null,
@@ -2423,7 +2423,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Orange",
-            color: COLOR_SWATCHES.d[8],
+            color: COLOR_SWATCHES[8],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -2434,7 +2434,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[9],
+            color: COLOR_SWATCHES[9],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -2445,7 +2445,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[10],
+            color: COLOR_SWATCHES[6],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -2456,7 +2456,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[11],
+            color: COLOR_SWATCHES[4],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -2467,7 +2467,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[12],
+            color: COLOR_SWATCHES[3],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -2478,7 +2478,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[13],
+            color: COLOR_SWATCHES[3],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -2491,7 +2491,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
     Wednesday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[14],
+            color: COLOR_SWATCHES[4],
             startTime: 370,
             endTime: 420,
             activity: null,
@@ -2502,7 +2502,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Orange",
-            color: COLOR_SWATCHES.d[15],
+            color: COLOR_SWATCHES[2],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -2513,7 +2513,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[16],
+            color: COLOR_SWATCHES[8],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -2524,7 +2524,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[17],
+            color: COLOR_SWATCHES[7],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -2535,7 +2535,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[18],
+            color: COLOR_SWATCHES[5],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -2546,7 +2546,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[19],
+            color: COLOR_SWATCHES[6],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -2557,7 +2557,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[20],
+            color: COLOR_SWATCHES[3],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -2570,7 +2570,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
     Thursday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[21],
+            color: COLOR_SWATCHES[4],
             startTime: 370,
             endTime: 420,
             activity: null,
@@ -2581,7 +2581,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Orange",
-            color: COLOR_SWATCHES.d[22],
+            color: COLOR_SWATCHES[7],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -2592,7 +2592,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[23],
+            color: COLOR_SWATCHES[8],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -2603,7 +2603,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[24],
+            color: COLOR_SWATCHES[6],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -2614,7 +2614,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[25],
+            color: COLOR_SWATCHES[5],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -2625,7 +2625,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[26],
+            color: COLOR_SWATCHES[4],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -2636,7 +2636,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[27],
+            color: COLOR_SWATCHES[5],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -2650,7 +2650,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
     Friday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[1],
+            color: COLOR_SWATCHES[1],
             startTime: 370,
             endTime: 420,
             activity: null,
@@ -2661,7 +2661,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[5],
+            color: COLOR_SWATCHES[5],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -2672,7 +2672,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[2],
+            color: COLOR_SWATCHES[2],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -2683,7 +2683,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[5],
+            color: COLOR_SWATCHES[5],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -2694,7 +2694,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[3],
+            color: COLOR_SWATCHES[3],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -2705,7 +2705,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[4],
+            color: COLOR_SWATCHES[4],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -2716,7 +2716,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[1],
+            color: COLOR_SWATCHES[1],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -2729,7 +2729,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
     Saturday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.p[0],
+            color: COLOR_SWATCHES[0],
             startTime: 480,
             endTime: 520,
             activity: null,
@@ -2740,7 +2740,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "🏃‍♂️ Running",
-            color: COLOR_SWATCHES.p[1],
+            color: COLOR_SWATCHES[1],
             startTime: 600,
             endTime: 690,
             activity: "working",
@@ -2751,7 +2751,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.p[2],
+            color: COLOR_SWATCHES[2],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -2762,7 +2762,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "🌁 Art",
-            color: COLOR_SWATCHES.p[3],
+            color: COLOR_SWATCHES[3],
             startTime: 885,
             endTime: 920,
             activity: "selfCare",
@@ -2773,7 +2773,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "💪 Gym (Push)",
-            color: COLOR_SWATCHES.p[4],
+            color: COLOR_SWATCHES[4],
             startTime: 1000,
             endTime: 1100,
             activity: "body",
@@ -2784,7 +2784,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.p[5],
+            color: COLOR_SWATCHES[5],
             startTime: 1130,
             endTime: 1200,
             activity: null,
@@ -2795,7 +2795,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.p[6],
+            color: COLOR_SWATCHES[6],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -2808,7 +2808,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
     Sunday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.p[7],
+            color: COLOR_SWATCHES[7],
             startTime: 480,
             endTime: 520,
             activity: null,
@@ -2819,7 +2819,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "🏃‍♂️ Running",
-            color: COLOR_SWATCHES.p[8],
+            color: COLOR_SWATCHES[8],
             startTime: 600,
             endTime: 690,
             activity: "working",
@@ -2830,7 +2830,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.p[9],
+            color: COLOR_SWATCHES[9],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -2841,7 +2841,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "🌁 Art",
-            color: COLOR_SWATCHES.p[10],
+            color: COLOR_SWATCHES[10],
             startTime: 885,
             endTime: 920,
             activity: "selfCare",
@@ -2852,7 +2852,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "💪 Gym (Push)",
-            color: COLOR_SWATCHES.p[11],
+            color: COLOR_SWATCHES[11],
             startTime: 1000,
             endTime: 1100,
             activity: "body",
@@ -2863,7 +2863,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.p[12],
+            color: COLOR_SWATCHES[6],
             startTime: 1130,
             endTime: 1200,
             activity: null,
@@ -2874,7 +2874,7 @@ export const WEEKLY_ALL_AROUND: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.p[13],
+            color: COLOR_SWATCHES[5],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -2889,7 +2889,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     // Monday: [
     //     {
     //         title: "Red",
-    //         color: COLOR_SWATCHES.d[0],
+    //         color: COLOR_SWATCHES[0],
     //         startTime: 360,
     //         endTime: 420,
     //         activity: null,
@@ -2900,7 +2900,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     //     },
     //     {
     //         title: "Orange",
-    //         color: COLOR_SWATCHES.d[1],
+    //         color: COLOR_SWATCHES[1],
     //         startTime: 525,
     //         endTime: 720,
     //         activity: "working",
@@ -2911,7 +2911,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     //     },
     //     {
     //         title: "Yellow",
-    //         color: COLOR_SWATCHES.d[2],
+    //         color: COLOR_SWATCHES[2],
     //         startTime: 730,
     //         endTime: 800,
     //         activity: null,
@@ -2922,7 +2922,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     //     },
     //     {
     //         title: "Green",
-    //         color: COLOR_SWATCHES.d[3],
+    //         color: COLOR_SWATCHES[3],
     //         startTime: 885,
     //         endTime: 1080,
     //         activity: "working",
@@ -2933,7 +2933,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     //     },
     //     {
     //         title: "Teal",
-    //         color: COLOR_SWATCHES.d[4],
+    //         color: COLOR_SWATCHES[4],
     //         startTime: 1080,
     //         endTime: 1140,
     //         activity: "body",
@@ -2944,7 +2944,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     //     },
     //     {
     //         title: "Blue",
-    //         color: COLOR_SWATCHES.d[5],
+    //         color: COLOR_SWATCHES[5],
     //         startTime: 1140,
     //         endTime: 1200,
     //         activity: null,
@@ -2955,7 +2955,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     //     },
     //     {
     //         title: "Purple",
-    //         color: COLOR_SWATCHES.d[6],
+    //         color: COLOR_SWATCHES[6],
     //         startTime: 1310,
     //         endTime: 1395,
     //         activity: "selfCare",
@@ -2970,7 +2970,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     Tuesday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[7],
+            color: COLOR_SWATCHES[7],
             startTime: 360,
             endTime: 420,
             activity: null,
@@ -2981,7 +2981,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Orange",
-            color: COLOR_SWATCHES.d[8],
+            color: COLOR_SWATCHES[8],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -2992,7 +2992,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[9],
+            color: COLOR_SWATCHES[9],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -3003,7 +3003,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[10],
+            color: COLOR_SWATCHES[10],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -3014,7 +3014,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[11],
+            color: COLOR_SWATCHES[4],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -3025,7 +3025,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[12],
+            color: COLOR_SWATCHES[5],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -3036,7 +3036,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[13],
+            color: COLOR_SWATCHES[8],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -3049,7 +3049,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     Wednesday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[14],
+            color: COLOR_SWATCHES[6],
             startTime: 370,
             endTime: 420,
             activity: null,
@@ -3060,7 +3060,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Orange",
-            color: COLOR_SWATCHES.d[15],
+            color: COLOR_SWATCHES[5],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -3071,7 +3071,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[16],
+            color: COLOR_SWATCHES[7],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -3082,7 +3082,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[17],
+            color: COLOR_SWATCHES[3],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -3093,7 +3093,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[18],
+            color: COLOR_SWATCHES[6],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -3104,7 +3104,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[19],
+            color: COLOR_SWATCHES[5],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -3115,7 +3115,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[20],
+            color: COLOR_SWATCHES[4],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -3128,7 +3128,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     Thursday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[21],
+            color: COLOR_SWATCHES[1],
             startTime: 370,
             endTime: 420,
             activity: null,
@@ -3139,7 +3139,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Orange",
-            color: COLOR_SWATCHES.d[22],
+            color: COLOR_SWATCHES[3],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -3150,7 +3150,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[23],
+            color: COLOR_SWATCHES[4],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -3161,7 +3161,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[24],
+            color: COLOR_SWATCHES[5],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -3172,7 +3172,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[25],
+            color: COLOR_SWATCHES[4],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -3183,7 +3183,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[26],
+            color: COLOR_SWATCHES[3],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -3194,7 +3194,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[27],
+            color: COLOR_SWATCHES[4],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -3208,7 +3208,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     Friday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.d[1],
+            color: COLOR_SWATCHES[1],
             startTime: 370,
             endTime: 420,
             activity: null,
@@ -3219,7 +3219,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[5],
+            color: COLOR_SWATCHES[5],
             startTime: 525,
             endTime: 720,
             activity: "working",
@@ -3230,7 +3230,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.d[2],
+            color: COLOR_SWATCHES[2],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -3241,7 +3241,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Green",
-            color: COLOR_SWATCHES.d[5],
+            color: COLOR_SWATCHES[5],
             startTime: 885,
             endTime: 1080,
             activity: "working",
@@ -3252,7 +3252,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Teal",
-            color: COLOR_SWATCHES.d[3],
+            color: COLOR_SWATCHES[3],
             startTime: 1080,
             endTime: 1140,
             activity: "body",
@@ -3263,7 +3263,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.d[4],
+            color: COLOR_SWATCHES[4],
             startTime: 1140,
             endTime: 1200,
             activity: null,
@@ -3274,7 +3274,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.d[1],
+            color: COLOR_SWATCHES[1],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -3287,7 +3287,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     Saturday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.p[0],
+            color: COLOR_SWATCHES[0],
             startTime: 480,
             endTime: 520,
             activity: null,
@@ -3298,7 +3298,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "🏃‍♂️ Running",
-            color: COLOR_SWATCHES.p[1],
+            color: COLOR_SWATCHES[1],
             startTime: 600,
             endTime: 690,
             activity: "working",
@@ -3309,7 +3309,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.p[2],
+            color: COLOR_SWATCHES[2],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -3320,7 +3320,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "🌁 Art",
-            color: COLOR_SWATCHES.p[3],
+            color: COLOR_SWATCHES[3],
             startTime: 885,
             endTime: 920,
             activity: "selfCare",
@@ -3331,7 +3331,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "💪 Gym (Push)",
-            color: COLOR_SWATCHES.p[4],
+            color: COLOR_SWATCHES[4],
             startTime: 1000,
             endTime: 1100,
             activity: "body",
@@ -3342,7 +3342,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.p[5],
+            color: COLOR_SWATCHES[5],
             startTime: 1130,
             endTime: 1200,
             activity: null,
@@ -3353,7 +3353,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.p[6],
+            color: COLOR_SWATCHES[6],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -3366,7 +3366,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
     Sunday: [
         {
             title: "Red",
-            color: COLOR_SWATCHES.p[7],
+            color: COLOR_SWATCHES[7],
             startTime: 480,
             endTime: 520,
             activity: null,
@@ -3377,7 +3377,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "🏃‍♂️ Running",
-            color: COLOR_SWATCHES.p[8],
+            color: COLOR_SWATCHES[8],
             startTime: 600,
             endTime: 690,
             activity: "working",
@@ -3388,7 +3388,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Yellow",
-            color: COLOR_SWATCHES.p[9],
+            color: COLOR_SWATCHES[9],
             startTime: 730,
             endTime: 800,
             activity: null,
@@ -3399,7 +3399,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "🌁 Art",
-            color: COLOR_SWATCHES.p[10],
+            color: COLOR_SWATCHES[10],
             startTime: 885,
             endTime: 920,
             activity: "selfCare",
@@ -3410,7 +3410,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "💪 Gym (Push)",
-            color: COLOR_SWATCHES.p[11],
+            color: COLOR_SWATCHES[11],
             startTime: 1000,
             endTime: 1100,
             activity: "body",
@@ -3421,7 +3421,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Blue",
-            color: COLOR_SWATCHES.p[12],
+            color: COLOR_SWATCHES[4],
             startTime: 1130,
             endTime: 1200,
             activity: null,
@@ -3432,7 +3432,7 @@ export const WEEKLY_ROUTINES_BLOCKS: WeeklyRoutineBlocks = {
         },
         {
             title: "Purple",
-            color: COLOR_SWATCHES.p[13],
+            color: COLOR_SWATCHES[2],
             startTime: 1310,
             endTime: 1395,
             activity: "selfCare",
@@ -3660,7 +3660,7 @@ export const TEST_DAILY_BREAKDOWN = [
     {
         blocks: BREAKDOWN_TEST_DAILY_BLOCKS[0].map((data) => ({ 
             ...data, 
-            color: COLOR_SWATCHES.d[0], 
+            color: COLOR_SWATCHES[0], 
             description: "", tasks: [],
             tag: TAGS[data.tagIdx],
             activity: data.activity as keyof RoutineCores
@@ -3696,49 +3696,49 @@ export const TEST_DAILY_BREAKDOWN = [
 const BREAKDOWN_TEST_WEEKLY_DAYS = {
     Monday: BREAKDOWN_TEST_DAILY_BLOCKS[0].map((data) => ({ 
         ...data, 
-        color: COLOR_SWATCHES.d[0], 
+        color: COLOR_SWATCHES[0], 
         description: "", tasks: [],
         tag: TAGS[data.tagIdx],
         activity: data.activity as keyof RoutineCores
     })),
     Tuesday: BREAKDOWN_TEST_DAILY_BLOCKS[1].map((data) => ({ 
         ...data, 
-        color: COLOR_SWATCHES.d[0], 
+        color: COLOR_SWATCHES[0], 
         description: "", tasks: [],
         tag: TAGS[data.tagIdx],
         activity: data.activity as keyof RoutineCores
     })),
     Wednesday: BREAKDOWN_TEST_DAILY_BLOCKS[0].map((data) => ({ 
         ...data, 
-        color: COLOR_SWATCHES.d[0], 
+        color: COLOR_SWATCHES[0], 
         description: "", tasks: [],
         tag: TAGS[data.tagIdx],
         activity: data.activity as keyof RoutineCores
     })),
     Thursday: BREAKDOWN_TEST_DAILY_BLOCKS[1].map((data) => ({ 
         ...data, 
-        color: COLOR_SWATCHES.d[0], 
+        color: COLOR_SWATCHES[0], 
         description: "", tasks: [],
         tag: TAGS[data.tagIdx],
         activity: data.activity as keyof RoutineCores
     })),
     Friday: BREAKDOWN_TEST_DAILY_BLOCKS[1].map((data) => ({ 
         ...data, 
-        color: COLOR_SWATCHES.d[0], 
+        color: COLOR_SWATCHES[0], 
         description: "", tasks: [],
         tag: TAGS[data.tagIdx],
         activity: data.activity as keyof RoutineCores
     })),
     Saturday: BREAKDOWN_TEST_DAILY_BLOCKS[2].map((data) => ({ 
         ...data, 
-        color: COLOR_SWATCHES.d[0], 
+        color: COLOR_SWATCHES[0], 
         description: "", tasks: [],
         tag: TAGS[data.tagIdx],
         activity: data.activity as keyof RoutineCores
     })),
     Sunday: BREAKDOWN_TEST_DAILY_BLOCKS[2].map((data) => ({ 
         ...data, 
-        color: COLOR_SWATCHES.d[0], 
+        color: COLOR_SWATCHES[0], 
         description: "", tasks: [],
         tag: TAGS[data.tagIdx],
         activity: data.activity as keyof RoutineCores
@@ -3822,7 +3822,7 @@ export const TEST_BLOCK_MOVE_TO_NEW_COL = [
         blocks: WEEKLY_HS_STUDENT.Sunday,
         editBlock: {
             title: "",
-            color: COLOR_SWATCHES.d[2],
+            color: COLOR_SWATCHES[2],
             startTime: 0,  endTime: 0,   
             activity: null,
             tag: null,
@@ -3838,7 +3838,7 @@ export const TEST_BLOCK_MOVE_TO_NEW_COL = [
         blocks: WEEKLY_HS_STUDENT.Sunday,
         editBlock: {
             title: "",
-            color: COLOR_SWATCHES.d[2],
+            color: COLOR_SWATCHES[2],
             startTime: 0,  endTime: 0,   
             activity: null,
             tag: null,
@@ -3854,7 +3854,7 @@ export const TEST_BLOCK_MOVE_TO_NEW_COL = [
         blocks: WEEKLY_HS_STUDENT.Sunday,
         editBlock: {
             title: "",
-            color: COLOR_SWATCHES.d[2],
+            color: COLOR_SWATCHES[2],
             startTime: 0,  endTime: 0,   
             activity: null,
             tag: null,
@@ -3870,7 +3870,7 @@ export const TEST_BLOCK_MOVE_TO_NEW_COL = [
         blocks: WEEKLY_HS_STUDENT.Friday,
         editBlock: {
             title: "",
-            color: COLOR_SWATCHES.d[2],
+            color: COLOR_SWATCHES[2],
             startTime: 0,  endTime: 0,   
             activity: null,
             tag: null,
@@ -3886,7 +3886,7 @@ export const TEST_BLOCK_MOVE_TO_NEW_COL = [
         blocks: [
             {
                 title: "A",
-                color: COLOR_SWATCHES.d[0],
+                color: COLOR_SWATCHES[0],
                 startTime: 0,
                 endTime: 600,
                 activity: null,
@@ -3897,7 +3897,7 @@ export const TEST_BLOCK_MOVE_TO_NEW_COL = [
             },
             {
                 title: "B",
-                color: COLOR_SWATCHES.d[0],
+                color: COLOR_SWATCHES[0],
                 startTime: 700,
                 endTime: 800,
                 activity: null,
@@ -3908,7 +3908,7 @@ export const TEST_BLOCK_MOVE_TO_NEW_COL = [
             },
             {
                 title: "C",
-                color: COLOR_SWATCHES.d[0],
+                color: COLOR_SWATCHES[0],
                 startTime: 901,
                 endTime: 980,
                 activity: null,
@@ -3920,7 +3920,7 @@ export const TEST_BLOCK_MOVE_TO_NEW_COL = [
         ],
         editBlock: {
             title: "",
-            color: COLOR_SWATCHES.d[2],
+            color: COLOR_SWATCHES[2],
             startTime: 0,  endTime: 0,   
             activity: null,
             tag: null,
@@ -3936,7 +3936,7 @@ export const TEST_BLOCK_MOVE_TO_NEW_COL = [
         blocks: WEEKLY_HS_STUDENT.Friday,
         editBlock: {
             title: "",
-            color: COLOR_SWATCHES.d[2],
+            color: COLOR_SWATCHES[2],
             startTime: 0,  endTime: 0,   
             activity: null,
             tag: null,
@@ -3952,7 +3952,7 @@ export const TEST_BLOCK_MOVE_TO_NEW_COL = [
         blocks: WEEKLY_HS_STUDENT.Friday,
         editBlock: {
             title: "",
-            color: COLOR_SWATCHES.d[2],
+            color: COLOR_SWATCHES[2],
             startTime: 0,  endTime: 0,   
             activity: null,
             tag: null,
@@ -3968,7 +3968,7 @@ export const TEST_BLOCK_MOVE_TO_NEW_COL = [
         blocks: WEEKLY_HS_STUDENT.Friday,
         editBlock: {
             title: "",
-            color: COLOR_SWATCHES.d[2],
+            color: COLOR_SWATCHES[2],
             startTime: 0,  endTime: 0,   
             activity: null,
             tag: null,
@@ -3984,7 +3984,7 @@ export const TEST_BLOCK_MOVE_TO_NEW_COL = [
         blocks: WEEKLY_HS_STUDENT.Friday,
         editBlock: {
             title: "",
-            color: COLOR_SWATCHES.d[2],
+            color: COLOR_SWATCHES[2],
             startTime: 0,  endTime: 0,   
             activity: null,
             tag: null,

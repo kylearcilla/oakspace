@@ -8,7 +8,7 @@ export const TEST_TAGS: Tag[] = [
       orderIdx: 0,
       name: "Body",
       symbol: {
-        color: COLOR_SWATCHES.d[0],
+        color: COLOR_SWATCHES[0],
         emoji: "💪"
       }
     },
@@ -18,7 +18,7 @@ export const TEST_TAGS: Tag[] = [
       name: "SWE",
       symbol: {
 
-        color: COLOR_SWATCHES.d[1],
+        color: COLOR_SWATCHES[1],
         emoji: "👨‍💻"
       }
     },
@@ -27,7 +27,7 @@ export const TEST_TAGS: Tag[] = [
       orderIdx: 2,
       name: "French",
       symbol: {
-        color: COLOR_SWATCHES.d[4],
+        color: COLOR_SWATCHES[4],
         emoji: "🇫🇷"
       }
     },
@@ -36,7 +36,7 @@ export const TEST_TAGS: Tag[] = [
       orderIdx: 3,
       name: "Cooking",
       symbol: {
-        color: COLOR_SWATCHES.d[2],
+        color: COLOR_SWATCHES[2],
         emoji: "🍖"
       }
     },
@@ -45,7 +45,7 @@ export const TEST_TAGS: Tag[] = [
       orderIdx: 4,
       name: "SWE",
       symbol: {
-        color: COLOR_SWATCHES.d[8],
+        color: COLOR_SWATCHES[8],
         emoji: "👨‍💻"
       }
     },
@@ -54,7 +54,7 @@ export const TEST_TAGS: Tag[] = [
       orderIdx: 5,
       name: "BBall",
       symbol: {
-        color: COLOR_SWATCHES.d[2],
+        color: COLOR_SWATCHES[2],
         emoji: "🏀"
       }
     },
@@ -63,7 +63,7 @@ export const TEST_TAGS: Tag[] = [
       orderIdx: 6,
       name: "Running",
       symbol: {
-        color: COLOR_SWATCHES.d[12],
+        color: COLOR_SWATCHES[11],
         emoji: "🏃‍♂️"
       }
     },
@@ -72,7 +72,7 @@ export const TEST_TAGS: Tag[] = [
       orderIdx: 7,
       name: "Meditation",
       symbol: {
-        color: COLOR_SWATCHES.d[3],
+        color: COLOR_SWATCHES[3],
         emoji: "🌿"
       }
     },
@@ -81,7 +81,7 @@ export const TEST_TAGS: Tag[] = [
       orderIdx: 8,
       name: "Art",
       symbol: {
-        color: COLOR_SWATCHES.d[0],
+        color: COLOR_SWATCHES[0],
         emoji: "🌁"
       }
     },

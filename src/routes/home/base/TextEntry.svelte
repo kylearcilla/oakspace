@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 
-	import { iconPicker } from "$lib/utils-home"
+	import { iconPicker } from "$lib/pop-ups"
 	import { TextEditorManager } from "$lib/inputs"
-	import { themeState } from "../../../lib/store"
+	import { themeState } from "$lib/store"
 	import { clickOutside, findElemVertSpace, getMaskedGradientStyle } from "$lib/utils-general"
     
 	import ToggleBtn from "../../../components/ToggleBtn.svelte"
 	import BounceFade from "../../../components/BounceFade.svelte"
-	import { formatPlural, getElemById } from "../../../lib/utils-general";
+	import { formatPlural } from "$lib/utils-general";
 
     export let id: string
     export let entry: ThoughtEntry

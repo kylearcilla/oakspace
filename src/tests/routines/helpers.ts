@@ -959,7 +959,7 @@ export function updateTagData(options: {
                     orderIdx: tagIdx,
                     name,
                     symbol: {
-                        color: COLOR_SWATCHES.d[9],
+                        color: COLOR_SWATCHES[9],
                         emoji: "😭",
                     }
                 },

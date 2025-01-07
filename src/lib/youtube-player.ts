@@ -30,15 +30,15 @@ export class YoutubePlayer {
     volume: number   = 50
 
     // is playing isolated video
-    isoVideo  = false
+    isoVideo = false
     error: any = null
-    state      = -1
+    state = -1
         
     static IFRAME_ID    = "yt-player"
 
     LOAD_PREV_PLAYER_STATE_DELAY = 1000
     AUTO_PLAY_DELAY = 1200
-    READY_DELAY     = 2000
+    READY_DELAY = 2000
 
     PLAYER_OPTIONS: any = {
         height: "100%", 
@@ -117,7 +117,17 @@ export class YoutubePlayer {
      */
     update(newData: Partial<YoutubePlayer>) {
         ytPlayerStore.update((data) => (this.getNewStateObj(newData, data!)))
-        this.saveStateData()
+        
+        saveYtPlayerData({
+            vid:            this.vid!,
+            playlist:       this.playlist!,
+            playlistVidIdx: this.playlistVidIdx!,
+            isRepeating:    this.isRepeating,
+            isShuffled:     this.isShuffled,
+            volume:         this.volume,
+            show:           this.show,
+            isoVideo:       this.isoVideo
+        })
     }
 
     /**
@@ -142,16 +152,16 @@ export class YoutubePlayer {
                     videoId: this.vid!.id
                 })
             }
-            else {
+            else if (this.playlist) {
                 this.player.cuePlaylist({ 
                     listType: "playlist",
-                    list: this.playlist!.id,  
+                    list:  this.playlist.id,  
                     index: this.playlistVidIdx,  
                     startSeconds: 0 
                 })
             }
         }
-        catch {
+        catch(e: any) {
             this.onError(APIErrorCode.PLAYER)
         }
 
@@ -456,9 +466,9 @@ export class YoutubePlayer {
      */
     onError(error: any) {
         if (this.error) return
-        console.error(error)
 
         const isAPINotLoadedYetMsg = /^this\.player\.\w+\s*is not a function$/.test(error.message)
+        const errorCode = typeof error === "number" ? error : -1
 
         if (isAPINotLoadedYetMsg) {
             this.error = new APIError(APIErrorCode.PLAYER, "Player hasn't loaded yet. Try again later.")
@@ -521,21 +531,10 @@ export class YoutubePlayer {
         if (!savedData) return
 
         this.hasActiveSession = true
-        this.volume  = savedData.volume
-        this.update({ ...savedData })
-    }
+        this.volume = savedData.volume
+        this.show = savedData.show
 
-    saveStateData() {
-        saveYtPlayerData({
-            vid:            this.vid!,
-            playlist:       this.playlist!,
-            playlistVidIdx: this.playlistVidIdx!,
-            isRepeating:    this.isRepeating,
-            isShuffled:     this.isShuffled,
-            volume:         this.volume,
-            show:           this.show,
-            isoVideo:       this.isoVideo
-        })
+        this.update({ ...savedData })
     }
 
     /**

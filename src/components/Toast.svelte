@@ -6,8 +6,8 @@
 	import Logo from './Logo.svelte'
 	import SvgIcon from './SVGIcon.svelte'
 	import { globalContext, themeState } from '$lib/store';
-	import { extractNum, getColorTrio } from '$lib/utils-general'
-	import { COLOR_SWATCHES } from "$lib/utils-colors"
+	import { extractNum } from '$lib/utils-general'
+	import { COLOR_SWATCHES, getColorTrio } from "$lib/utils-colors"
 	import Loader from './Loader.svelte';
 
 	type $$Props = Expand<ToastProps>
@@ -260,16 +260,16 @@
 		let color
 
 		if (toastType === 'success') {
-			color = COLOR_SWATCHES.d[17]
+			color = COLOR_SWATCHES[3]
 		}
 		else if (toastType === 'warning') {
-			color = COLOR_SWATCHES.d[2]
+			color = COLOR_SWATCHES[2]
 		}
 		else if (toastType === 'info') {
-			color = COLOR_SWATCHES.d[5]
+			color = COLOR_SWATCHES[5]
 		}
 		else {
-			color = COLOR_SWATCHES.d[14]
+			color = COLOR_SWATCHES[11]
 		}
 
 		return getColorTrio(color, !isDarkTheme)

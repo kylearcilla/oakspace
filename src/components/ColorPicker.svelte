@@ -1,7 +1,7 @@
 <script lang="ts">
     import { themeState } from "$lib/store"
     import { colorPicker } from "../lib/pop-ups"
-	import { clickOutside } from "$lib/utils-general"
+	import { clickOutside, capitalize } from "$lib/utils-general"
 	import { COLOR_SWATCHES } from "$lib/utils-colors"
     
 	import BounceFade from "./BounceFade.svelte"
@@ -44,7 +44,7 @@
                 >
                     <div class="color-picker__color-swatch"></div>
                     <div class="color-picker__color-name">
-                        {name}
+                        {capitalize(name)}
                     </div>
                 </button>
             {/each}

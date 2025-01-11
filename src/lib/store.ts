@@ -30,8 +30,9 @@ export const globalContext = writable<GlobalContext>({
     }
 })
 export const themeState = writable<ThemeState>({
-    title: "Dark Mode",
-    isDarkTheme: true
+    isDarkTheme: true,
+    lightTheme: "light",
+    darkTheme: "dark"
 })
 
 export const timer = writable<{ date: Date }>({ date: new Date() })

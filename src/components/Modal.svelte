@@ -41,7 +41,7 @@
     class:modal-bg--hinge-down={hingeDown}
     class:modal-bg--scale-up={scaleUp}
     on:pointerup={handleClickOutside}
-    style:perspective="800px"
+    style:perspective="700px"
 >
     <div 
         class="modal-bg__content"
@@ -79,13 +79,13 @@
     @keyframes hinge-down {
         0% {
             opacity: 0;
-            -webkit-transform: rotateX(-30deg);
-            transform: rotateX(-30deg);
+            -webkit-transform: rotateX(-20deg);
+            transform: rotateX(-20deg);
         }
         100% {
-            opacity: 1;
             -webkit-transform: rotateX(0);
             transform: rotateX(0);
+            opacity: 1;
         }
     }
 </style>

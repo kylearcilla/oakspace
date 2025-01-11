@@ -1,8 +1,6 @@
-export const defaultThemes: DefaultTheme[] = [
+export const themes: Theme[] = [
     {
-        title: "Dark",
-        thumbnailImgSrc: "/images/df-theme-1.png",
-        sectionDetails: { title: "default", index: 0 },
+        name: "dark",
         styling: {
             isDark: true,
             bg1: "#121112",
@@ -36,11 +34,9 @@ export const defaultThemes: DefaultTheme[] = [
             cardBgColor: "#171617",
             cardHovColor: "#1a191a"
         }
-    } as DefaultTheme,
+    },
     {
-        title: "Light",
-        thumbnailImgSrc: "dfImage2",
-        sectionDetails: { title: "default", index: 1 },
+        name: "light",
         styling: {
             isDark: false,
             bg1: "#FFFDFA",
@@ -74,16 +70,9 @@ export const defaultThemes: DefaultTheme[] = [
             cardBgColor: "#fffefc",
             cardHovColor: "#ffffff"
         }
-    } as DefaultTheme
-]
-
-export const lightColorThemes: ColorTheme[] = [
+    },
     {
-        title: "Sand",
-        sectionDetails: { title: "light", index: 0 },
-        colorPalette: [
-            "#2E2B26", "#838368", "#B0AC92", "#EFE3C9", "#FEF6E7"
-        ],
+        name: "sand",
         styling: {
             isDark: false,
             bg1: "#fef7eb",
@@ -119,11 +108,7 @@ export const lightColorThemes: ColorTheme[] = [
         }
     },
     {
-        title: "Terracotta",
-        sectionDetails: { title: "light", index: 1 },
-        colorPalette: [
-            "#2E2C29", "#7E766B", "#9B9280", "#DDD7CA", "#F1EBE1"
-        ],
+        name: "terracotta",
         styling: {
             isDark: false,
             bg1: "#e2ddd6",
@@ -158,13 +143,8 @@ export const lightColorThemes: ColorTheme[] = [
             cardHovColor: "#edeae6"
         }
     },
-]
-
-export const darkColorThemes: ColorTheme[] = [
     {
-        title: "Adobe",
-        sectionDetails: { title: "dark", index: 0 },
-        colorPalette: ["#231C1C", "#312928", "#D5A4A4", "#F1CDB8", "#FFF5EC"],
+        name: "adobe",
         styling: {
             isDark: true,
             bg1: "#161313",
@@ -200,9 +180,7 @@ export const darkColorThemes: ColorTheme[] = [
         }
     },
     {
-        title: "Gotham",
-        sectionDetails: { title: "dark", index: 1 },
-        colorPalette: ["#1A1A22", "#312E3C", "#B6ABC7", "#F8CEB6", "#FFF5EC"],
+        name: "gotham",
         styling: {
             isDark: true,
             bg1: "#141418",
@@ -237,4 +215,85 @@ export const darkColorThemes: ColorTheme[] = [
             cardHovColor: "#1d1d22"
         }
     }
+]
+
+export const themePreviews = [
+    {
+        name: "dark",
+        isDark: true,
+        borderColor: "",
+        signaturecolor: "#3a3939",
+        bg1: "#161616",
+        bg2: "#1F1F1F",
+        bg3: "#171717",
+        fg1: "#313131",
+        fg2: "#424242",
+        fg3: "#212121",
+        fg4: "#2E2E2E",
+    },
+    {
+        name: "light",
+        isDark: false,
+        borderColor: "#3D3D3D",
+        signaturecolor: "#efefef",
+        bg1: "#BEBEBE",
+        bg2: "#E2E2E2",
+        bg3: "#FFFFFF",
+        fg1: "#D2D2D2",
+        fg2: "#CDCDCD",
+        fg3: "#F0F0F0",
+        fg4: "#F6F6F6",
+    },
+    {
+        name: "gotham",
+        isDark: true,
+        borderColor: "#1E1C23",
+        signaturecolor: "#a79ec4",
+        bg1: "#141317",
+        bg2: "#17161B",
+        bg3: "#111114",
+        fg1: "#212026",
+        fg2: "#212026",
+        fg3: "#1D1B22",
+        fg4: "#232227",
+    },
+    {
+        name: "adobe",
+        isDark: true,
+        borderColor: "#2B2828",
+        signaturecolor: "#d9aaaa",
+        bg1: "#1B1818",
+        bg2: "#1D1B1B",
+        bg3: "#181616",
+        fg1: "#282626",
+        fg2: "#282626",
+        fg3: "#201C1C",
+        fg4: "#201C1C",
+    },
+    {
+        name: "sand",
+        iisDark: false,
+        borderColor: "#9C9995",
+        signaturecolor: "#fff0d4",
+        bg1: "#D5CDBF",
+        bg2: "#F3ECDF",
+        bg3: "#FDF7EB",
+        fg1: "#DFD8C6",
+        fg2: "#DFD8C6",
+        fg3: "#ECE5D9",
+        fg4: "#F3EDE1",
+    },
+    {
+        name: "terracotta",
+        iisDark: false,
+        borderColor: "#7B7874",
+        signaturecolor: "#63605b",
+        bg1: "#9F978C",
+        bg2: "#C9C2B7",
+        bg3: "#E3DDD5",
+        fg1: "#BAB4AA",
+        fg2: "#BAB4AA",
+        fg3: "#D8D1C8",
+        fg4: "#D8D0C7",
+    },
 ]

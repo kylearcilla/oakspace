@@ -1,12 +1,10 @@
 <script lang="ts">
 	import { onMount } from "svelte"
 
-	import { Icon } from "$lib/enums"
 	import { themeState } from "$lib/store"
 	import { TasksListManager } from "$lib/tasks-list-manager"
 	import { clickOutside, inlineStyling } from "$lib/utils-general"
 
-	import SvgIcon from "./SVGIcon.svelte"
 	import Task from "../components/Task.svelte"
 	import DropdownList from "./DropdownList.svelte"
 
@@ -31,6 +29,7 @@
     let isContextMenuOpen = false
     let rootTasks: Task[] = []
     let justInit = true
+    let type = settings.type
 
     $: isDark      = $themeState.isDarkTheme
     $: focusTask   = $manager.focusTask
@@ -42,6 +41,12 @@
     }
     $: if (removeCompleteFlag != undefined) {
         removeCompletedTasks()
+    }
+
+    let styles = {
+        fontSize: "1.325rem",
+        padding: "10px 0px 5px 0px",
+        borderRadius: "0px",
     }
 
     $manager.tasks._store?.subscribe((state) => {
@@ -71,6 +76,16 @@
     function isAtMaxDepth(taskId: string) {
         return $manager.tasks.isAtMaxDepth(taskId)
     }
+    function updateStyling() {
+        if (type === "day-view") {
+            styles.padding = "12px 0px 10px 0px"
+            styles.borderRadius = "6px"
+            styles.fontSize = "1.5rem"
+        }
+    }
+
+    updateStyling()
+
     onMount(() => {
         $manager.initAfterLoaded(listContainer, tasksList)
     })
@@ -83,6 +98,11 @@
     class:tasks-wrapper--light={!isDark}
     class:tasks-wrapper--top-btn={$manager.addBtn?.pos === "top"}
     class:tasks-wrapper--empty-list={rootTasks.length === 0}
+    style:overflow-y={isContextMenuOpen ? "hidden" : "scroll"}
+
+    style:--padding={styles.padding}
+    style:--border-radius={styles.borderRadius}
+    style:--font-size={styles.fontSize}
 
     style:--side-padding={$manager.ui.sidePadding}
     style:--checkbox-dim={$manager.ui.checkboxDim ?? CHECK_BOX_DIM}
@@ -90,13 +110,12 @@
     style:--max-title-lines={$manager.settings.maxTitleLines}
     style:--max-descr-lines={$manager.settings.maxDescrLines}
 
-    style:max-height={$manager.ui.maxHeight}
+    style:max-height={$manager.settings.maxHeight}
 >
     <div 
         bind:this={listContainer}
         id={`${idPrefix}--tasks-list-container`}
         class="tasks-container no-scroll-bar"
-        style:overflow-y={isContextMenuOpen ? "hidden" : "scroll"}
         class:tasks-container--empty={rootTasks.length === 0}
         use:clickOutside on:click_outside={(e) => $manager.onClickedOutside(e)} 
     >
@@ -143,23 +162,16 @@
         </ul>
     </div>
     {#if $manager.settings?.addBtn?.doShow}
-        {@const iconScale = $manager.settings.addBtn.iconScale}
         {@const { style, text } = $manager.settings.addBtn}
         <button 
             class="tasks-wrapper__addbtn"
             style={inlineStyling(style)}
             on:click={() => $manager.addingNewTask(0)}
         >
+            <span>+</span>
             <span>
                 {text ?? "Add an Item"}
             </span>
-            <SvgIcon 
-                icon={Icon.Add} 
-                options={{ 
-                    strokeWidth: 1.8,
-                    scale: iconScale
-                }} 
-            />
         </button>
     {/if}
 
@@ -225,16 +237,22 @@
         }
 
         &__addbtn {
-            margin: 0px 0px 5px var(--side-padding);
+            margin: 4px 0px 5px calc(var(--side-padding) - 6px);
             font-weight: 400;
             width: 100%;
             opacity: 0.2;
             max-width: 100px;
-            @include text-style(1, 500, 1.2rem);
+            @include text-style(1, 400, _, "DM Mono");
             @include flex(center);
 
             span {
-                margin-right: 7px;
+                white-space: nowrap;
+                font-size: var(--font-size);
+            }
+            span:first-child {
+                font-weight: 100;
+                font-size: calc(var(--font-size) + 0.85rem);
+                margin: 0px 10px -1.5px 0px;
             }
             &:hover {
                 opacity: 0.6;

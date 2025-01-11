@@ -61,6 +61,7 @@
     class:task--light={!isDark}
     class:task--dragging-state={$manager.dragSrc}
     class:task--side-menu={type === "side-menu"}
+    class:task--day-view={type === "day-view"}
     class:drag-src={task.id === dragSrc?.id}
     style:--max-title-lines={isEdit ? 0 : $manager.settings.maxTitleLines}
     style:--max-descr-lines={isEdit ? 0 : $manager.settings.maxDescrLines}
@@ -203,15 +204,15 @@
                 </div>
             {/if}
     
-            {#if type === "side-menu"}
-                <div class="fraction">
-                    {subtasks.length}
-                </div>
-            {:else if subtasks.length > 0}
-                <div class="fraction">
-                    {checkedSubtasks}<span class="fraction__slash">/</span>{subtasks.length}
-                </div>
-            {/if}
+            <div 
+                class="fraction"
+                class:hidden={subtasks.length === 0}
+            >
+                {subtasks.length}
+            </div>
+            <!-- <div class="fraction">
+                {checkedSubtasks}<span class="fraction__slash">/</span>{subtasks.length}
+            </div> -->
         </div>
     </div>
     {#if isOpen && subtasks.length > 0 && !atMaxDepth}

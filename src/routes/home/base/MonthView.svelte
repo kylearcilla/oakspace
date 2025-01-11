@@ -3,8 +3,8 @@
 
 	import { Icon } from "../../../lib/enums"
 	import { themeState } from "../../../lib/store"
+	import { ACTIVITY_DATA } from "../../../lib/mock-data"
     import { getWeekPeriod } from "../../../lib/utils-date"
-	import { YEAR_THOUGHT_ENTRY } from "../../../lib/mock-data"
 	import { capitalize, clickOutside, getElemById, getHozDistanceBetweenTwoElems, kebabToNormal, normalToKebab } from "../../../lib/utils-general"
 
 	import YearView from "./YearView.svelte"
@@ -17,9 +17,12 @@
 	import SettingsBtn from "../../../components/SettingsBtn.svelte"
 	import DropdownBtn from "../../../components/DropdownBtn.svelte"
 	import DropdownList from "../../../components/DropdownList.svelte"
+	import DayView from "./DayView.svelte"
 	import ActivityCalendar from "../../../components/ActivityCalendar.svelte"
+	import { imageUpload } from "../../../lib/pop-ups";
+	import DayEntry from "./DayEntry.svelte";
 
-    type MonthDetailsView = "cal" | "goals" | "habits" | "yr-view"
+    type MonthDetailsView = "overview" | "goals" | "habits" | "yr-view"
     type GoalsView = {
         view: "list" | "board"
         grouping: "status" | "tag"
@@ -27,18 +30,25 @@
         progressUi?: "bar" | "circle"
     }
 
-    let currView: MonthDetailsView = "cal"
+    let currView: MonthDetailsView = "overview"
     let optionsOpen = false
     let weekPeriodIdx = 0
     let weekPeriod = getWeekPeriod(new Date())
+    let overviewType: "monthly" | "daily" = "daily"
+
+    let activityIdx = 2
+    let activity = ACTIVITY_DATA[activityIdx]
+    let entryModal = false
     
-    let subMenu: "g-view" | "g-group" | "g-progress" | "h-view" | null = null
+    let subMenu: "g-view" | "g-group" | "g-progress" | "h-view" | "d-view" | null = null
     
     $: isLight = !$themeState.isDarkTheme
 
     /* view options */
     let overview = {
-        animPhotos: true
+        animPhotos: true,
+        showHighlight: true,
+        fontStyle: "basic"
     }
     let habitView = {
         view: "default",
@@ -57,6 +67,48 @@
     }
     let btnHighlighter = {
         width: 0, left: 0
+    }
+
+    function highlightHandler(context: "image" | "entry") {
+        const { highlightImg, thoughtEntry } = activity
+
+        if (context === "image" && highlightImg) {
+            activity.highlightImg = null
+        }
+        else if (context === "image") {
+            imageUpload.init({
+                onSubmit: (src: string | null) => {
+                    if (src) {
+                        activity.highlightImg = {
+                            src, caption: "no caption"
+                        }
+                        activity = activity
+                    }
+                }
+            })
+        }
+        if (context === "entry" && thoughtEntry) {
+            activity.thoughtEntry = null
+        }
+        else if (context === "entry") {
+            entryModal = true
+        }
+
+        subMenu = null
+    }
+    function onDayEntryUpdate(updatedData: DayEntryUpdatePayload) {
+        if (updatedData.img) {
+            activity.highlightImg.src     = updatedData.img.src ?? activity.highlightImg.src
+            activity.highlightImg.caption = updatedData.img.caption ?? activity.highlightImg.caption
+        }
+        else {
+            activity.highlightImg = undefined
+        }
+
+        activity.thoughtEntry = updatedData.thoughtEntry ?? ""
+        activity = activity
+
+        entryModal = false
     }
     function onGoalSubListClicked(context: DropdownItemClickedContext) {
         const { name } = context
@@ -85,6 +137,17 @@
         subMenu = null
         optionsOpen = false
     }
+    function onArrowBtnClicked(direction: "left" | "right") {
+        if (currView === "overview") {
+            if (direction === "left") {
+                activityIdx = Math.max(0, activityIdx - 1)
+            }
+            else if (direction === "right") {
+                activityIdx = Math.min(ACTIVITY_DATA.length - 1, activityIdx + 1)
+            }
+            activity = ACTIVITY_DATA[activityIdx]
+        }   
+    }
     function onViewBtnClicked(view: MonthDetailsView) {
         currView = view
         const btnElem = getElemById(`month-view--${view}`)
@@ -103,7 +166,7 @@
             },
         })
 
-        btnHighlighter.width = width + (view === "cal" ? 2 : 5)
+        btnHighlighter.width = width + (view === "overview" ? 2 : 5)
         btnHighlighter.left  = Math.max(left - 2, 0)
     }
 
@@ -121,10 +184,10 @@
         <div class="month-view__details-header">
             <div class="month-view__header-btns">
                 <button 
-                    id={"month-view--cal"}
+                    id={"month-view--overview"}
                     class="month-view__header-btn"
-                    class:month-view__header-btn--chosen={currView === "cal"}
-                    on:click={(e) => onViewBtnClicked("cal")}
+                    class:month-view__header-btn--chosen={currView === "overview"}
+                    on:click={(e) => onViewBtnClicked("overview")}
                 >
                     <span>Overview</span>
                 </button>
@@ -161,6 +224,27 @@
             </div>
             <div class="month-view__details-header-right">
                 <div class="month-view__settings">
+                    {#if currView === "overview"}
+                        <div 
+                            class="month-view__overview-options"
+                            style:margin="0px 2px -5.5px 0px"
+                        >
+                            <button
+                                class="month-view__overview-btn"
+                                class:month-view__overview-btn--clicked={overviewType === "monthly"}
+                                on:click={() => overviewType = "monthly"}
+                            >
+                                Monthly
+                            </button>
+                            <button
+                                class="month-view__overview-btn"
+                                class:month-view__overview-btn--clicked={overviewType === "daily"}
+                                on:click={() => overviewType = "daily"}
+                            >
+                                Daily
+                            </button>
+                        </div>
+                    {/if}
                     <div class="month-view__period">
                         {#if currView === "habits"}
                             {#if weekPeriodIdx === 0}
@@ -169,13 +253,14 @@
                                 {weekPeriod.start} <span>-</span> {weekPeriod.end}
                             {/if}
                         {:else if currView === "yr-view"}
-                            <div style:font-size="1.6rem">
+                            <!-- <div style:font-size="1.6rem">
                                 {YEAR_THOUGHT_ENTRY.date.getFullYear()}
-                            </div>
+                            </div> -->
                         {/if}
                     </div>
-                    <div class="flx" style:margin-right="6px">
+                    <div class="flx" style:margin="0px 0px -2px 0px">
                         <button 
+                            on:click={() => onArrowBtnClicked("left")}
                             class="month-view__arrow"
                             style:margin-left="10px"
                         >
@@ -184,6 +269,7 @@
                             </div>
                         </button>
                         <button 
+                            on:click={() => onArrowBtnClicked("right")}
                             class="month-view__arrow"
                         >
                             <div style:margin-right={"-2px"}>
@@ -191,7 +277,10 @@
                             </div>
                         </button>
                     </div>
-                    <div class="month-view__settings-btn" style:margin-left="9px">
+                    <div 
+                        class="month-view__settings-btn" 
+                        style:margin="0px 0px -2px 9px"
+                    >
                         <SettingsBtn 
                             id={"month-view--dbtn"}
                             onClick={() => optionsOpen = !optionsOpen}
@@ -214,10 +303,11 @@
                     style:width={currView === "goals" ? "190px" : "200px"}
                     use:clickOutside on:click_outside={() => optionsOpen = false} 
                 >
-                    {#if currView === "cal"}
+                    <!-- month view -->
+                    {#if currView === "overview" && overviewType === "monthly"}
                         <li class="dmenu__section">
                             <div class="dmenu__section-name">
-                                Overview
+                                Monthly View
                             </div>
                             <div class="dmenu__toggle-optn">
                                 <span class="dmenu__option-heading">Animate Photo Wall</span>
@@ -228,6 +318,86 @@
                                         overview = overview
                                     }}
                                 />
+                            </div>
+                        </li>
+                    {/if}
+                    <!-- day view -->
+                    {#if currView === "overview" && overviewType === "daily"}
+                        <li class="dmenu__section">
+                            <div class="dmenu__section-name">
+                                Day View
+                            </div>
+                            <div class="dmenu__toggle-optn">
+                                <span class="dmenu__option-heading">Show Highlights</span>
+                                <ToggleBtn 
+                                    active={overview.showHighlight}
+                                    onToggle={() => {
+                                        overview.showHighlight = !overview.showHighlight
+                                        overview = overview
+                                    }}
+                                />
+                            </div>
+                            <div class="dmenu__option dmenu__option--static">
+                                <span class="dmenu__option-heading">Heading Style</span>
+                                <DropdownBtn 
+                                    id={"d-view"}
+                                    isActive={subMenu === "d-view"}
+                                    options={{
+                                        pickedOptionName: capitalize(overview.fontStyle),
+                                        onClick: () => { 
+                                            subMenu = subMenu === "d-view" ? null : "d-view"
+                                        },
+                                    }}
+                                />
+                            </div>
+                            <DropdownList 
+                                id="d-view"
+                                isHidden={subMenu != "d-view"} 
+                                options={{
+                                    pickedItem: capitalize(overview.fontStyle),
+                                    listItems: [
+                                        { name: "Basic" }, { name: "Stylish" }, { name: "Fancy" }, { name: "Cute" }
+                                    ],
+                                    position: { 
+                                        top: "120px", right: "2px" 
+                                    },
+                                    styling: { 
+                                        width: "100px" 
+                                    },
+                                    onClickOutside: () => { 
+                                        subMenu = null 
+                                    },
+                                    onListItemClicked: ({ name }) => {
+                                        overview.fontStyle = name.toLowerCase()
+                                        overview = overview
+                                    }
+                                }}
+                            />
+                        </li>
+                        <li class="dmenu__section-divider"></li>
+                        <li class="dmenu__section">
+                            <div class="dmenu__section-name">
+                                Day Highlight
+                            </div>
+                            <div class="dmenu__option">
+                                <button
+                                    class="dmenu__option-btn"
+                                    on:click={() => highlightHandler("entry")}
+                                >
+                                    <span class="dmenu__option-text">
+                                        {activity.thoughtEntry ? "Remove Entry" : "Add Entry"}
+                                    </span>
+                                </button>
+                            </div>
+                            <div class="dmenu__option">
+                                <button
+                                    class="dmenu__option-btn"
+                                    on:click={() => highlightHandler("image")}
+                                >
+                                    <span class="dmenu__option-text">
+                                        {activity.highlightImg ? "Remove Photo" : "Add Photo"}
+                                    </span>
+                                </button>
                             </div>
                         </li>
                     {/if}
@@ -439,9 +609,27 @@
             </BounceFade>
         </div>
         <div class="divider"></div>
-        <div class="month-view__details-view">
-            {#if currView === "cal"}
-                <ActivityCalendar options={overview}/>
+        <div 
+            class="month-view__details-view"
+            style:min-height={"730px"}
+        >
+            {#if currView === "overview"}
+                {#if overviewType === "monthly"}    
+                    <ActivityCalendar 
+                        options={overview}
+                        onDayClicked={(dayIdx) => {
+                            overviewType = "daily"
+
+                            activityIdx  = dayIdx
+                            activity = ACTIVITY_DATA[activityIdx]
+                        }} 
+                    />
+                {:else}
+                    <DayView 
+                        options={overview} 
+                        activity={activity} 
+                    />
+                {/if}
             {:else if currView === "habits"}
                 <WeeklyHabits options={habitView} />
                 <!-- <MonthlyHabits /> -->
@@ -469,6 +657,18 @@
         </div>
     </div>
 </div>
+
+{#if entryModal} 
+    {@const { highlightImg, thoughtEntry, date } = activity }
+    <DayEntry 
+        data={{
+            img: highlightImg,
+            date,
+            thoughtEntry
+        }}
+        onUpdate={onDayEntryUpdate}
+    />
+{/if}
 
 <style lang="scss">
     @import "../../../scss/dropdown.scss";
@@ -587,10 +787,20 @@
                 margin-right: 3px;
             }
         }
-        &__header-btn-stat {
-            @include text-style(0.3, 400, 1.4rem, "DM Sans");
-            margin-left: 8px;
-            display: none;
+        &__overview-options {
+            display: flex;
+        }
+        &__overview-btn {
+            @include text-style(1, 400, 1.3rem, "DM Mono");
+            margin-left: 20px;
+            opacity: 0.2;
+
+            &:hover {
+                opacity: 0.8 !important;
+            }
+        }
+        &__overview-btn--clicked {
+            opacity: 1 !important;
         }
         &__btn-highlight {
             @include abs-bottom-left(-10px);
@@ -673,6 +883,9 @@
         }
         &__section-divider:last-child {
             display: none;
+        }
+        &__option-btn {
+            border-radius: 7px;
         }
     }
 </style>

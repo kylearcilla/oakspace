@@ -16,43 +16,54 @@
     }} 
     onClickOutSide={() => onClickOutside()}
 >
-    <div class="highlight-img">
+    <div 
+        class="highlight-img">
         <img src={img.src} alt="icon">
-        <div class="highlight-img__content"></div>
-        <input 
-            maxlength={MAX_CAPTION_LENGTH}
-            placeholder="no caption"
-            type="text" 
-            bind:value={img.caption}
-        >
+        <div class="highlight-img__caption">
+            <input 
+                maxlength={MAX_CAPTION_LENGTH}
+                placeholder="no caption"
+                type="text" 
+                bind:value={img.caption}
+            >
+        </div>
     </div>
 </Modal>
 
 <style lang="scss">
     .highlight-img {
+        position: relative;
+
+        &:hover &__caption {
+            @include visible;
+        }
         img {
             max-width: 400px;
             max-height: 450px;
             min-width: 350px;
             object-fit: cover;
         }
-        &__content {
-            height: 100%;
-            width: 100%;
-            z-index: 2;
+        &__caption {
             @include abs-top-left;
-            background-color: rgba(black, 0);
+            width: 100%;
+            height: 100%;
+            background-color: rgba(black, 0.55);
+            text-align: center;
+            @include center;
+            @include not-visible;
+            transition: 0.2s ease-in-out 0.1s;
         }
         input {
-            @include abs-bottom-left(-25px, 0px);
-            @include text-style(0.8, 400, 1.3rem, "DM Mono");
-            z-index: 5;
-            width: 100%;
+            @include text-style(_, 400, 1.3rem, "DM Mono");
+            color: white;
+            width: 80%;
             height: max-content;
             cursor: text;
+            opacity: 1;
 
             &::placeholder {
-                opacity: 0.4;
+                color: white;
+                opacity: 0.35;
             }
         }
     }

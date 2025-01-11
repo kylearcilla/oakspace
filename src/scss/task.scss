@@ -77,8 +77,6 @@
         background: none;
     }
 
-
-
     /* Checked UI */
     &__content--checked:first-child &__checkbox {
         background-color: var(--elemColor1) !important;
@@ -98,8 +96,8 @@
     }
 
     &__top-content {
-        padding: 10px 0px 5px 0px;
-        border-radius: 4px;
+        padding: var(--padding);
+        border-radius: var(--border-radius);
         position: relative;
         @include flex(flex-start);
 
@@ -181,16 +179,16 @@
         word-break: break-word;
         user-select: none;
         margin: 0px 0px 5px 0px;
-        @include text-style(1, 500, 1.325rem);
+        @include text-style(1, 500, var(--font-size));
     }
     &__description-container {
         width: calc(100% - 20px);
     }
     &__description {
-        @include text-style(0.4, 500, 1.325rem);
+        @include text-style(0.4, 500, var(--font-size));
         opacity: 0.65;
         user-select: none;
-        margin: 0px 0px 8px 0px;
+        margin: 0px 0px 2px 0px;
         padding: 0px 8px 1.5px 0px;
         cursor: text;
 
@@ -218,9 +216,7 @@
 
 .fraction {
     @include abs-top-right(10px, 20px);
-    font-family: "DM Mono";
-    font-weight: 400;
-    opacity: 0.2;
+    @include text-style(0.2, 400, var(--font-size), "DM Mono");
 }
 
 .divider {

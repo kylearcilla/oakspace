@@ -2,8 +2,8 @@
 	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
 
+	import { themeState } from "$lib/store"
     import { LogoIcon, ModalType } from "$lib/enums"
-	import { globalContext, themeState } from "$lib/store"
     import { getThemeStyling } from "$lib/utils-appearance"
 	import { getHomeUrlPath, openModal } from "$lib/utils-home"
 	import { capitalize, randomArrayElem } from "$lib/utils-general"
@@ -11,6 +11,7 @@
 	import { page } from "$app/stores";
 	import Logo from "../../components/Logo.svelte"
 	import BounceFade from "../../components/BounceFade.svelte"
+	import { getActiveTheme } from "../../lib/utils-appearance";
 
     const tabs = [
         { name: "Home", icon: "fa-solid fa-house", rgb: "178, 204, 255" }, 
@@ -36,20 +37,26 @@
     
     let defFgColor = ""
     let defBgColor = ""
-    let useDef = false
+    let flavoredColors = false
+    let activeTheme = getActiveTheme()
     
     $: isDarkTheme = $themeState.isDarkTheme
 
     $: {
         updateSelectTab($page.url.pathname)
     }
-    $: if ($themeState) {
+    $: if (activeTheme != "light" && activeTheme != "dark") {
 
         defFgColor = getThemeStyling("navBtnColor")
         defBgColor = getThemeStyling("navBtnBgColor")
 
-        useDef = $themeState.title != "Dark" 
-  }
+        flavoredColors = true
+    }
+    else {
+        flavoredColors = false
+    }
+
+    themeState.subscribe(_ => activeTheme = getActiveTheme())
 
 
     /* Event Listeners */
@@ -120,10 +127,10 @@
     class="bar"
     class:bar--dark-theme={isDarkTheme}
     class:bar--light={!isDarkTheme}
-    style:--hover-fg-color={`${useDef ? defFgColor : `rgba(${lightColor}, 1)`}`}
-    style:--hover-bg-color={`${useDef ? defBgColor : `rgba(${lightColor}, 0.045)`}`}
-    style:--select-fg-color={`${useDef ? defFgColor : `rgba(${selectColor}, 1)`}`}
-    style:--select-bg-color={`${useDef ? defBgColor : `rgba(${selectColor}, 0.045)`}`}
+    style:--hover-fg-color={`${flavoredColors ? defFgColor : `rgba(${lightColor}, 1)`}`}
+    style:--hover-bg-color={`${flavoredColors ? defBgColor : `rgba(${lightColor}, 0.045)`}`}
+    style:--select-fg-color={`${flavoredColors ? defFgColor : `rgba(${selectColor}, 1)`}`}
+    style:--select-bg-color={`${flavoredColors ? defBgColor : `rgba(${selectColor}, 0.045)`}`}
 >
 
     <div>

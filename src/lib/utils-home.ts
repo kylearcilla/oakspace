@@ -8,7 +8,7 @@ import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer, handle
 import { getElemById, isTargetTextEditor, randomArrayElem } from "./utils-general"
 import { POPULAR_SPACES } from "./data-spaces"
 import { initEmojis } from "./emojis"
-import { defaultThemes } from "./data-themes"
+import { themes } from "./data-themes"
 
 /* constants */
 export const LEFT_BAR_MIN_WIDTH = 60
@@ -353,7 +353,7 @@ export function updateAmbience(data: Partial<AmbientOptions>) {
  * Initializes a random ambient space
  */
 export function setAmbience() {
-    setNewTheme(defaultThemes[0])
+    setNewTheme(themes[0])
     const liveSpace = randomArrayElem(POPULAR_SPACES.videos)
 
     updateGlobalContext({ 

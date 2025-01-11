@@ -27,46 +27,13 @@
 </script>
 
 <div class="yr-view">
-    <!-- <h1>
+    <h1>
         {YEAR_THOUGHT_ENTRY.date.getFullYear()}
-    </h1> -->
+    </h1>
     <TextEntry 
         id="yr"
         entry={YEAR_THOUGHT_ENTRY}
     />
-    <div class="yr-view__goals">
-        <h4>Goals</h4>
-        <div class="divider"></div>
-        <div class="yr-view__stats">
-            <div class="yr-view__stat">
-                <div class="yr-view__stat-title">
-                    Progress
-                </div>
-                <div class="yr-view__stat-num">
-                    28%
-                </div>
-            </div>
-            <div class="yr-view__stat">
-                <div class="yr-view__stat-title">
-                    Accomplished
-                </div>
-                <div class="yr-view__stat-num">
-                    5 Done
-                </div>
-            </div>
-            <div class="yr-view__stat">
-                <div class="yr-view__stat-title">
-                    Remaining
-                </div>
-                <div class="yr-view__stat-num">
-                    15 Left
-                </div>
-            </div>
-        </div>
-        <div class="yr-view__heat-map">
-            <HeatMap id={"0"} type="goals" />
-        </div>
-    </div>
     <div class="yr-view__habits">
         <h4>Habits</h4>
         <div class="divider"></div>
@@ -108,6 +75,39 @@
             <HeatMap id={"0"} type="habits" />
         </div>
     </div>
+    <div class="yr-view__goals">
+        <h4>Goals</h4>
+        <div class="divider"></div>
+        <div class="yr-view__stats">
+            <div class="yr-view__stat">
+                <div class="yr-view__stat-title">
+                    Progress
+                </div>
+                <div class="yr-view__stat-num">
+                    28%
+                </div>
+            </div>
+            <div class="yr-view__stat">
+                <div class="yr-view__stat-title">
+                    Accomplished
+                </div>
+                <div class="yr-view__stat-num">
+                    5 Done
+                </div>
+            </div>
+            <div class="yr-view__stat">
+                <div class="yr-view__stat-title">
+                    Remaining
+                </div>
+                <div class="yr-view__stat-num">
+                    15 Left
+                </div>
+            </div>
+        </div>
+        <div class="yr-view__heat-map">
+            <HeatMap id={"0"} type="goals" />
+        </div>
+    </div>
 </div>
 
 <style lang="scss">
@@ -121,10 +121,10 @@
             @include text-style(1, 500, 1.65rem);
         }
         &__goals {
-            margin: 5px 0px 20px 0px;
+            margin: 20px 0px 20px 0px;
         }
         &__habits {
-            margin-top: 15px;
+            margin-top: 5px;
         }
         &__heat-map {
             width: 100%;

@@ -7,7 +7,7 @@ export const COLOR_SWATCHES = [
     dark1: "252, 145, 145",
     dark2: "41, 26, 26",
     dark3: "96, 66, 66",
-    name: "Red"
+    name: "red"
   },
   {
     primary: "#FBA490",
@@ -17,7 +17,7 @@ export const COLOR_SWATCHES = [
     dark1: "251, 163, 144",
     dark2: "39, 27, 25",
     dark3: "102, 80, 75",
-    name: "Terracotta"
+    name: "terracotta"
   },
   {
     primary: "#FFC898",
@@ -27,7 +27,7 @@ export const COLOR_SWATCHES = [
     dark1: "255, 193, 152",
     dark2: "35, 26, 21",
     dark3: "107, 76, 55",
-    name: "Orange"
+    name: "orange"
   },
   {
     primary: "#FCDE93",
@@ -37,7 +37,7 @@ export const COLOR_SWATCHES = [
     dark1: "252, 222, 147",
     dark2: "43, 36, 27",
     dark3: "100, 86, 51",
-    name: "Yellow"
+    name: "yellow"
   },
   {
     primary: "#E6FD8A",
@@ -47,7 +47,7 @@ export const COLOR_SWATCHES = [
     dark1: "245, 255, 205",
     dark2: "39, 39, 28",
     dark3: "81, 85, 66",
-    name: "Pear"
+    name: "pear"
   },
   {
     primary: "#DCFFBB",
@@ -57,7 +57,7 @@ export const COLOR_SWATCHES = [
     dark1: "220, 255, 187",
     dark2: "28, 36, 25",
     dark3: "69, 88, 52",
-    name: "Green"
+    name: "green"
   },
   {
     primary: "#D4FFFA",
@@ -67,7 +67,7 @@ export const COLOR_SWATCHES = [
     dark1: "200, 249, 243",
     dark2: "24, 35, 30",
     dark3: "58, 109, 102",
-    name: "Teal"
+      name: "teal"
   },
   {
     primary: "#B2E4FF",
@@ -77,7 +77,7 @@ export const COLOR_SWATCHES = [
     dark1: "192, 233, 251",
     dark2: "21, 30, 35",
     dark3: "53, 80, 92",
-    name: "Azure"
+      name: "azure"
   },
   {
     primary: "#A5BDFE",
@@ -87,7 +87,7 @@ export const COLOR_SWATCHES = [
     dark1: "191, 215, 255",
     dark2: "27, 31, 42",
     dark3: "54, 70, 99",
-    name: "Blue"
+      name: "blue"
   },
   {
     primary: "#B1A0F7",
@@ -97,7 +97,7 @@ export const COLOR_SWATCHES = [
     dark1: "177, 180, 255",
     dark2: "33, 33, 33",
     dark3: "61, 63, 118",
-    name: "Purple"
+    name: "purple"
   },
   {
     primary: "#E8D0FF",
@@ -107,7 +107,7 @@ export const COLOR_SWATCHES = [
     dark1: "232, 208, 255",
     dark2: "45, 35, 42",
     dark3: "93, 79, 107",
-    name: "Magenta"
+    name: "magenta"
   },
   {
     primary: "#f4a3c4",
@@ -117,7 +117,7 @@ export const COLOR_SWATCHES = [
     dark1: "255, 164, 176",
     dark2: "41, 27, 33",
     dark3: "87, 55, 59",
-    name: "Pink"
+    name: "pink"
   },
 ]
 

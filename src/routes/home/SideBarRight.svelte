@@ -1,18 +1,16 @@
 <script lang="ts">
-	import { onDestroy, onMount } from "svelte"
-    
-    import { globalContext, themeState, timer } from "$lib/store"    
-	import { clamp, clickOutside } from "$lib/utils-general"
-	import { ShortcutSectionInFocus, Icon } from "$lib/enums"
-	import { setShortcutsFocus } from "$lib/utils-home"
     import { imageUpload } from "$lib/pop-ups"
 	import { SideCalendar } from "$lib/side-calendar"
+    import { setShortcutsFocus } from "$lib/utils-home"
+    import { clamp, clickOutside } from "$lib/utils-general"
+	import { ShortcutSectionInFocus, Icon } from "$lib/enums"
+    import { globalContext, themeState, timer } from "$lib/store"    
+	import { getVertDistanceBetweenTwoElems } from "../../lib/utils-general";
 	import { formatDatetoStr, formatTimeToHHMM, isNightTime, prefer12HourFormat } from "$lib/utils-date"
 
 	import Overview from "./Overview.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
 	import DropdownList from "../../components/DropdownList.svelte"
-	import { getVertDistanceBetweenTwoElems } from "../../lib/utils-general";
 
     const SETTINGS_BTN_CUT_OFF_Y = 30
     const MAX_DIST_BOTTOM_IMG_CONTAINER = 70
@@ -29,9 +27,9 @@
     let headerOffset = 0
 
     /* time */
+    let now = new Date()
     let isDayTime = true
     let currentTimeStr = ""
-    let interval: NodeJS.Timer | null = null
     let doUse12HourFormat = prefer12HourFormat()
     
     /* header image */
@@ -148,6 +146,7 @@
     function updateTimeStr(date: Date) {
         currentTimeStr = formatTimeToHHMM(date, doUse12HourFormat)
         isDayTime = !isNightTime()
+        now = date
     }
     function toggleTimeFormatting() {
         doUse12HourFormat = !doUse12HourFormat 
@@ -194,7 +193,7 @@
             <!-- Header Date -->
             <div class="bar__header-date">
                 {#if !bgImgSrc || !showHeaderImg || isLight}
-                    {`${formatDatetoStr(new Date(), { weekday: "short" })}`}
+                    {`${formatDatetoStr(now, { weekday: "short" })}`}
                     <button 
                         class="bar__header-date-time"
                         on:click={toggleTimeFormatting}
@@ -202,7 +201,7 @@
                         {currentTimeStr}
                     </button>
                 {:else}
-                    {`${formatDatetoStr(new Date(), { weekday: "short", day: "2-digit", month: "short" })}`}
+                    {`${formatDatetoStr(now, { weekday: "short", day: "numeric", month: "short" })}`}
                 {/if}
                 {#if !bgImgSrc}
                     <div class="bar__header-day-icon bar__header-day-icon--top">

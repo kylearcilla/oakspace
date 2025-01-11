@@ -1,5 +1,5 @@
 import { writable, type Writable } from "svelte/store"
-
+import { v4 as uuidv4 } from 'uuid'
 const DEFAULT_MAX_DEPTH = 5
 
 /**
@@ -141,14 +141,14 @@ export class Tasks {
     duplicateTask(dupId: string): Task[] {
         const ogTask = this.taskMap.get(dupId)!
         const newTask = structuredClone(ogTask)
-        newTask.id = crypto.randomUUID()
+        newTask.id = uuidv4()
         newTask.idx = ogTask.idx + 1
 
         const children = this.getSubtasks(dupId)
         const newChildren = children.map((c) => ({
             ...structuredClone(c),
             parentId: newTask.id,
-            id: crypto.randomUUID()
+            id: uuidv4()
         }))
 
         this.addTask({ 

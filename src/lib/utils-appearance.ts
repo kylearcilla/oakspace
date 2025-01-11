@@ -1,57 +1,64 @@
+import { get } from "svelte/store"
 import { themeState } from "./store"
-import { lightColorThemes, darkColorThemes, defaultThemes } from "$lib/data-themes"
-
-const sectionToThemeMap: AppearanceSectionToThemeMap = {
-  default: defaultThemes,
-  light: lightColorThemes,
-  dark: darkColorThemes
-}
+import { themes } from "$lib/data-themes"
 
 /**
  * Load theme from local storage to init current color theme.
  */
 export function loadTheme() {
-    let storedColorThemStyling = localStorage.getItem("theme")
+    let storedTheme = localStorage.getItem("theme")
     
-    if (!storedColorThemStyling) {
-      localStorage.setItem("theme", JSON.stringify(defaultThemes[0]))
-      storedColorThemStyling = localStorage.getItem("theme")
+    if (!storedTheme) {
+      localStorage.setItem("theme", JSON.stringify(themes[0]))
+      storedTheme = localStorage.getItem("theme")
     } 
   
-    const themeItem = JSON.parse(storedColorThemStyling!)
+    const { name, styling } = JSON.parse(storedTheme!)
+    const isDark = styling.isDark
 
-    themeState.set({
-      title: themeItem!.title,
-      isDarkTheme: themeItem!.styling.isDark
-    })
-    setRootColors(themeItem!.styling)
+    themeState.update(state => ({
+      ...state,
+      isDarkTheme: isDark,
+      lightTheme: !isDark ? name : state.lightTheme,
+      darkTheme:   isDark ? name : state.darkTheme
+  }))
+
+  setRootColors(styling)
 }
 
-/**
- * Initializes a new them state object and updates root theme colors.
- * @param newTheme  New theme selected by user
- */
-export function setNewTheme(newTheme: ColorTheme) {
-  let newThemeState: ThemeState = {
-    title: newTheme!.title,
-    isDarkTheme: newTheme!.styling.isDark
-  }
+export function setPrevTheme(prevTheme: string) {
+  localStorage.setItem("prevTheme", prevTheme)
+}
 
-  themeState.set(newThemeState!)
-  setRootColors(newTheme!.styling)
+export function getPrevTheme() {
+  return localStorage.getItem("prevTheme")
+}
+
+export function setNewTheme(newTheme: Theme) {
+  const { name, styling } = newTheme
+  const isDark = styling.isDark
+
+  themeState.update(state => ({
+      ...state,
+      isDarkTheme: isDark,
+      lightTheme: !isDark ? name : state.lightTheme,
+      darkTheme:   isDark ? name : state.darkTheme
+  }))
+  
+  setRootColors(newTheme.styling)
   localStorage.setItem("theme", JSON.stringify(newTheme))
 }
 
-/**
- * Get theme object from title and index.
- * @param title  Section title, must be a property name of Apperance Themes
- * @param idx    Section idex
- * @returns      Theme selected
- */
-export function getThemeFromSection(title: keyof AppearanceSectionToThemeMap, idx: number): Theme {
-  return sectionToThemeMap[title][idx]
+export function findThemeFromName(name: string) {
+  return themes.find(theme => theme.name === name)
 }
 
+export function getActiveTheme() {
+  const theme = get(themeState)
+  const { isDarkTheme, lightTheme, darkTheme } = theme
+
+  return isDarkTheme ? darkTheme : lightTheme
+}
 
 /**
  * Updates the root color variables to new theme's color scheme.
@@ -59,7 +66,7 @@ export function getThemeFromSection(title: keyof AppearanceSectionToThemeMap, id
  * 
  * @param theme theme object to be currently used
  */
-export function setRootColors(theme: ColorThemeProps) {
+export function setRootColors(theme: ThemeStyling) {
     const headTag = document.getElementsByTagName('head')[0];
     const styleTag = document.createElement("style");
   
@@ -105,6 +112,6 @@ export function setRootColors(theme: ColorThemeProps) {
    * @param name   Name of the theme property.
    * @returns      Returns the value of this property.
    */
-  export function getThemeStyling (name: keyof ColorThemeProps) {
+  export function getThemeStyling (name: keyof ThemeStyling) {
     return getComputedStyle(document.documentElement).getPropertyValue(`--${name}`)
   }

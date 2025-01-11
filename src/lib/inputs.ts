@@ -627,6 +627,8 @@ export class TextEditorManager extends InputManager {
     }
 
     updateTextEditorVal(event: Event | null, newVal: string) {
+        if (newVal === undefined) return
+        
         // if empty, <br> will appear which will not show the place holder
         if (newVal === "<br>") {
             newVal = ""

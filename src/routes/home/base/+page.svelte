@@ -436,8 +436,11 @@
             min-width: 680px;
         }
         &__overview-heading {
-            @include text-style(1, 400, 2.2rem, "DM Mono");
-            margin: -2px 0px 0px 0px;
+            // @include text-style(1, 400, 5rem, "Bagel Fat One");
+            @include text-style(1, 400, 2.5rem, "DM Mono");
+            // @include text-style(1, 400, 4rem, "Gambarino-Regular");
+            margin: -4px 0px 0px 0px;
+            // margin: -5px 0px 0px 0px;
             @include flex(flex-start, space-between);
         }
         &__month-insight {

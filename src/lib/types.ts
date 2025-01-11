@@ -671,6 +671,7 @@ type TasksListOptions = {
         subtasks?: boolean
         reorder?: boolean
         removeOnComplete?: boolean
+        maxHeight?: string
         progress?: "perc" | "count"
         max?: number,
         maxDepth?: number,
@@ -1245,27 +1246,19 @@ type TagMonthlyActivity = {
     focusHrs: number
 }
   
-/* Theme Stuff */
+/* theme stuff */
 type ThemeState = {
-    title: string
     isDarkTheme: boolean
+    lightTheme: string
+    darkTheme: string
 }
 
-interface Theme {
-    title: string
-    sectionDetails: { title: keyof AppearanceSectionToThemeMap, index: number }
+type Theme = {
+    name: string,
+    styling: ThemeStyling
 }
 
-interface ColorTheme extends Theme {
-    colorPalette: string[]
-    styling: ColorThemeProps
-}
-
-interface DefaultTheme extends ColorTheme {
-    thumbnailImgSrc: string
-}
-
-type ColorThemeProps = {
+type ThemeStyling = {
     isDark: boolean
     bg1: string
     bg2: string

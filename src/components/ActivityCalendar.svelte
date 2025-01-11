@@ -11,7 +11,9 @@
 	import DayEntry from "../routes/home/base/DayEntry.svelte"
 	import ImgStampModal from "../routes/home/base/HighlightImgModal.svelte"
 
+    export let onDayClicked: (dayIdx: number) => void
     export let options
+
     $: isLight = !$themeState.isDarkTheme
 
     const GOALS_LIST_MAX = 5
@@ -46,6 +48,20 @@
         left: -1000, top: -1000
     }
 
+    function getFontFamily(style: string) {
+        if (style === "basic") {
+            return { fam: "Manrope", size: "1.25rem" }
+        }
+        else if (style === "stylish") {
+            return { fam: "Gambarino-Regular" , size: "1.35rem" }
+        }
+        else if (style === "fancy") {
+            return { fam: "Melodrama-Bold", size: "1.25rem" }
+        }
+        else if (style === "cute") {
+            return { fam: "Bagel Fat One", size: "1.4rem" }
+        }
+    }
     function getGoalsDisplayData(goals: { type: string, name?: string, tag: any }[]) {
         return {
             firstGoal: goals[0] ?? undefined,
@@ -85,7 +101,6 @@
     }
     function onSettingsOptnClicked(optn: string) {
         const day = ACTIVITY_DATA[editDay.idx]
-        console.log(day)
 
         if (optn === "Remove Text Entry") {
             day.thoughtEntry = undefined
@@ -159,20 +174,19 @@
         bind:clientWidth={gridWidth}
         bind:clientHeight={gridHeight}
     >
-        {#each weeks as week, weekIdx}
+        {#each weeks as week}
             <div class="acal__week">
                 {#each week as day, dayIdx}
                     {@const d   = day.date.getDate()}
                     {@const dow = day.date.getDay()}
                     {@const sameMonth = day.isInCurrMonth}
                     {@const { activity, idx: aIdx}  = findDayActivity(day.date)}
-                    {@const focused        = activity?.focusMins}
-                    {@const habitProg      = activity?.habits ?? 0}
                     {@const highlightImg   = activity?.highlightImg}
                     {@const thoughtEntry   = activity?.thoughtEntry}
                     {@const { count } = getGoalsDisplayData(activity?.goals ?? [])}
                     {@const _editDay = { ...day, idx: aIdx, highlightImg, thoughtEntry }}
         
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div 
                         class="acal__day"
                         class:acal__day--edit={isSameDay(day.date, editDay?.date)}
@@ -183,24 +197,40 @@
                         class:acal__day--anim-photos={animPhotos}
                         class:acal__day--today={isSameDay(day.date, new Date())}
                         on:contextmenu={(e) => onContextMenu(e, _editDay)}
+                        on:click|self={() => {
+                            if (aIdx >= 0) {
+                                onDayClicked(aIdx)
+                            }
+                        }}
                     >
                         <!-- top area -->
                         <div>
                             <div class="acal__day-num">{d}</div>
-                            <!-- thought icon -->
-                            {#if activity?.thoughtEntry != undefined}
+                            <!-- journal entry -->
+                            {#if thoughtEntry != undefined}
+                                {@const { fam, size } = getFontFamily(thoughtEntry.fontStyle)}
+
                                 <button 
+                                    class="acal__activity acal__journal"
+                                    style:--font-family={fam}
+                                    style:--font-size={size}
                                     on:click={() => {
                                         entryModal = true
                                         editDay = _editDay
                                     }}
-                                    class="acal__thought-icon"
                                 >
-                                    <svg width="15" height="17" viewBox="0 0 15 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M6.87905 4.91406C3.80281 6.96489 2.26469 9.01572 1.23927 13.1174L0.726562 15.6809L1.75198 14.1428" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        <path d="M1.23952 4.91122C0.726814 6.24426 1.13698 10.0383 1.64969 11.5764C1.64969 11.5764 3.59798 9.52559 5.85389 8.50017C7.69964 7.67984 9.75047 7.88492 10.4683 6.44934C11.0835 5.21884 10.2632 4.70614 8.93013 5.42393C10.1606 4.70614 13.0318 3.3731 12.0064 1.83498C10.981 0.399394 8.41743 1.73243 7.39201 2.65531C7.39201 2.24514 7.39201 1.21973 6.3666 1.32227C5.34118 1.42481 4.31577 2.86039 4.00814 4.19343C4.00814 4.19343 4.00814 3.47564 3.29035 3.3731C2.57256 3.27056 1.64969 3.88581 1.23952 4.91122Z" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        <path d="M5.54495 11.8838C6.57036 12.294 7.39069 11.8838 7.9034 10.8584C8.21102 11.4737 8.41611 12.0889 9.95423 12.0889C11.4924 12.0889 11.6974 11.4736 12.0051 10.7559C12.4152 11.8838 13.133 12.294 14.3635 11.7813M4.51953 15.2677C5.33986 15.6779 6.57036 15.2677 7.08307 14.1397C7.39069 14.8575 7.9034 15.4728 8.92882 15.4728C9.95423 15.4728 10.4669 15.0626 10.9796 14.1397C11.4924 15.0626 12.5178 15.6779 13.5432 15.1651" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>                                                                                                                            
+                                    <div class="acal__thought-icon">
+                                        <svg 
+                                            width="15" height="17" viewBox="0 0 15 17" fill="none" xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                            <path d="M6.87905 4.91406C3.80281 6.96489 2.26469 9.01572 1.23927 13.1174L0.726562 15.6809L1.75198 14.1428" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M1.23952 4.91122C0.726814 6.24426 1.13698 10.0383 1.64969 11.5764C1.64969 11.5764 3.59798 9.52559 5.85389 8.50017C7.69964 7.67984 9.75047 7.88492 10.4683 6.44934C11.0835 5.21884 10.2632 4.70614 8.93013 5.42393C10.1606 4.70614 13.0318 3.3731 12.0064 1.83498C10.981 0.399394 8.41743 1.73243 7.39201 2.65531C7.39201 2.24514 7.39201 1.21973 6.3666 1.32227C5.34118 1.42481 4.31577 2.86039 4.00814 4.19343C4.00814 4.19343 4.00814 3.47564 3.29035 3.3731C2.57256 3.27056 1.64969 3.88581 1.23952 4.91122Z" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M5.54495 11.8838C6.57036 12.294 7.39069 11.8838 7.9034 10.8584C8.21102 11.4737 8.41611 12.0889 9.95423 12.0889C11.4924 12.0889 11.6974 11.4736 12.0051 10.7559C12.4152 11.8838 13.133 12.294 14.3635 11.7813M4.51953 15.2677C5.33986 15.6779 6.57036 15.2677 7.08307 14.1397C7.39069 14.8575 7.9034 15.4728 8.92882 15.4728C9.95423 15.4728 10.4669 15.0626 10.9796 14.1397C11.4924 15.0626 12.5178 15.6779 13.5432 15.1651" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>                                                                                                                            
+                                    </div>
+                                    <span>
+                                        {thoughtEntry.title.toLowerCase()}
+                                    </span>
                                 </button>
                             {/if}
 
@@ -266,20 +296,6 @@
                                 >
                                     <img src={highlightImg.src} alt="Day Icon">
                                 </button>
-                            </div>
-                        {/if}
-        
-                        <!-- focus -->
-                        {#if focused}
-                            <div 
-                                class="acal__day-focus-time acal__activity"
-                                title="focus time"
-                            >
-                                <i class="fa-solid fa-stopwatch"></i>
-                                <!-- <i>📌</i> -->
-                                <span>
-                                    {minsToHHMM(activity.focusMins)}
-                                </span>
                             </div>
                         {/if}
                     </div>
@@ -454,7 +470,7 @@
             }
         }
         &__day-num {
-            @include text-style(1, 500, 1.25rem, "Manrope");
+            @include text-style(1, 300, 1.25rem, "DM Mono");
             @include circle(16px);
             @include center;
             margin: 2px 0px 6px 2px;
@@ -468,6 +484,7 @@
             margin: 0px 0px 2px 2px;
             margin-top: 2px;
             @include flex(center);
+            @include smooth-bounce;
             cursor: pointer;
 
             i {
@@ -476,8 +493,7 @@
                 margin-right: 7px;
             }
             span {
-                @include text-style(0.96, 500, 1.15rem, "DM Sans");
-                @include elipses-overflow;
+                @include text-style(0.96, 500, 1.25rem);
             }
         }
         /* goal activity */
@@ -488,9 +504,10 @@
             background-color: rgba(var(--tag-color-2), 1) !important;
 
             span {
-                @include text-style(_, _, 1.25rem, "DM Sans");
+                @include text-style(_, _, 1.25rem);
                 font-weight: var(--txt-weight) !important;
                 color: rgba(var(--tag-color-1), 1);
+                @include elipses-overflow;
             }
             &::before {
                 content: " ";
@@ -505,14 +522,26 @@
             float: right;
         }
 
-        /* thought entry */
-        &__thought-icon {
-            @include abs-top-right(7px, 7px);
-            opacity: 0.1;
-            
-            &:hover {
-                opacity: 0.5;
+        /* journal */
+        &__journal {
+            width: calc(100% - 10px);
+            border-radius: 5px;
+            background-color: rgba(var(--textColor1), 0.04);
+
+            span {
+                margin-top: -2px;
+                @include text-style(0.8, 600, var(--font-size), var(--font-family));
+                overflow: hidden;
             }
+            &:hover {
+                background-color: rgba(var(--textColor1), 0.1);
+            }
+        }
+        &__thought-icon {
+            scale: 0.85;
+            opacity: 0.3;
+            margin: 0px 5px 0px 0px;
+            
             path {
                 stroke: rgba(var(--textColor1), 1);
             }

@@ -921,3 +921,21 @@ export function findElemVertSpace(target: HTMLElement) {
 
   return height + marginTop + marginBottom + paddingTop + paddingBottom + borderTopWidth + borderBottomWidth
 }
+
+export function getFontFamilyFromStyle(style: string) {
+  if (style === "basic") {
+      return "Manrope"
+  }
+  else if (style === "stylish") {
+      return "Gambarino-Regular" 
+  }
+  else if (style === "fancy") {
+      return "Melodrama-Bold"
+  }
+  else if (style === "cute") {
+      return "Bagel Fat One"
+  }
+  else {
+    return "Manrope"
+  }
+}

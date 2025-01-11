@@ -66,8 +66,8 @@
             const digit = digits[index]
             const newDigit = newDigits[index]
             const diff = newDigit !== digit
-
-            if (!diff && init) return
+            
+            if ((!diff && init) || !element)  return
             
             const digitNumElem = element as HTMLElement
             const digitElem = digitNumElem.parentElement

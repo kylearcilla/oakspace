@@ -29,21 +29,22 @@
 	  getLeftBarWidth,
     updateCursor
   } from "$lib/utils-home"
-
+  
 	import { afterNavigate, beforeNavigate, goto } from "$app/navigation"
 	import SessionSummaryModal from "./SessionSummaryModal.svelte"
 	import Modal from "../../components/Modal.svelte";
 	import SpaceSelection from "../SpaceSelection.svelte";
 	import { themeState, ytPlayerStore } from "../../lib/store";
+  import { updateAmbience, updateGlobalContext, hasAmbienceSpace } from "../../lib/utils-home";
+  import { findThemeFromName, getActiveTheme, getPrevTheme, setNewTheme, setPrevTheme } from "../../lib/utils-appearance";
 	import EmojiPicker from "../../components/EmojiPicker.svelte";
 	import ImgUpload from "../../components/ImgUpload.svelte";
 	import IconPicker from "../../components/IconPicker.svelte";
 	import ActiveRoutine from "./ActiveRoutine.svelte";
-	import { updateAmbience, updateGlobalContext, hasAmbienceSpace } from "../../lib/utils-home";
 	import { YoutubePlayer } from "../../lib/youtube-player";
 	import ColorPicker from "../../components/ColorPicker.svelte";
+	import { themes } from "../../lib/data-themes"
 
-  
   export let data
 
   let toggledLeftBarWithKey = false
@@ -61,6 +62,7 @@
   let rightBarFixed = false
   let rightBarOpen = true
   let rightSideBarWidth = 0
+  let prevSetTheme = ""
 
   const RIGHT_BAR_WIDTH = 240
   const SMALL_WIDTH = 740
@@ -137,17 +139,14 @@
   function _onMouseMoveHandler(event: MouseEvent) {
     toggledLeftBarWithKey = onMouseMoveHandler(event, toggledLeftBarWithKey)
   }
-  function closeModal() {
-    goto("/home")
-  }
   function _updateCursor(pe: PointerEvent) {
     updateCursor({ 
       left: pe.clientX, top: pe.clientY
     })
   }
 
-  afterNavigate(({ to }) => {
-    if (!to?.route?.id) return
+  afterNavigate(({ to, from, type }) => {
+    if (!to?.route?.id || type === "enter") return
 
     const { id } = to.route
     const ambience = hasAmbienceSpace()
@@ -156,9 +155,19 @@
     updateRoute(id)
 
     if (ambience && routeId === "/home/space") {
+      // will be always dark when refrseshing on workspace
+
+      if (from.route.id) {
+        prevSetTheme = getActiveTheme()
+        setPrevTheme(prevSetTheme)
+      }
+
+      setNewTheme(themes[0])
       updateAmbience({ active: true })
     }
     else if (ambience) {
+
+      setNewTheme(findThemeFromName(getPrevTheme()))
       updateAmbience({ active: false })
     }
   })
@@ -169,7 +178,11 @@
     routeId = to.route.id
   })
   
-  onMount(initAppState)
+  onMount(() => {
+    initAppState()
+
+    prevSetTheme = getPrevTheme()
+  })
   onDestroy(onQuitApp)
 </script>
 

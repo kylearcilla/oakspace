@@ -961,7 +961,7 @@ export const SPACES: AmbientSpaceGroup = {
                 subtitle: "Stacked Homes",
                 description: "House tours led by the leading voices in Singapore and Asia's design landscape.",
                 thumbnail: "https://i.ytimg.com/vi/M9jJjCVwPlM/hqdefault.jpg?sqp=-oaymwEnCNACELwBSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLDd9GOU4Rm25dkng3IOcy2rpFVuUA",
-                sourceId: "PLcIrnj5lfOsTfbldkSVKoawDYYJRMD3l-",
+                sourceId: "PLTlW3nrfe71RkHlwhYyFpmV28KcPIY4U0",
                 type: "playlist",
                 group: "architecture"
             },

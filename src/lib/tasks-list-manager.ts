@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'
 import { get, writable, type Writable } from "svelte/store"
 
 import { Tasks } from "./Tasks"
@@ -29,6 +30,7 @@ export class TasksListManager {
         progress: "perc" | "count"
         maxTitleLines: number
         maxDescrLines: number
+        maxHeight: string
         maxDepth: number
         max: number
         addBtn: {
@@ -110,8 +112,14 @@ export class TasksListManager {
         const { settings, ui } = options
         const { DEFAULT_MAX_TASKS } = this
         const { MAX_TITLE_LINES, MAX_DESC_LINES, SIDE_PADDING, CHECK_BOX_DIM } = this.DEFAULT_STYLES
+
+        /* functionality */
         const maxDepth = settings?.maxDepth ?? 3
         const removeOnComplete = settings?.removeOnComplete ?? false
+        const allowDuplicate = settings?.allowDuplicate ?? true
+        const numbered = settings?.numbered ?? false
+        const subtasks = settings?.subtasks ?? true
+        const reorder = settings?.reorder ?? true
 
         this.tasks = new Tasks({ 
             tasks: removeOnComplete ? tasks.filter(t => !t.isChecked) : tasks, 
@@ -120,23 +128,24 @@ export class TasksListManager {
 
         this.containerRef = options.containerRef
         this.settings = {
-            numbered: settings?.numbered ?? false,
-            subtasks: settings?.subtasks ?? true,
-            type:     options?.type ?? "default",
-            reorder:          settings?.reorder ?? true,
-            allowDuplicate:   settings?.allowDuplicate ?? true,
-            progress:         settings?.progress ?? "perc",
-            maxTitleLines: MAX_TITLE_LINES,
-            maxDescrLines: MAX_DESC_LINES,
+            numbered,
+            subtasks,
+            reorder,
+            allowDuplicate,
             maxDepth,
             removeOnComplete,
+            maxHeight:     settings?.maxHeight ?? "100%",
+            type:          options?.type ?? "default",
+            progress:      settings?.progress ?? "perc",
             max:           settings?.max ?? DEFAULT_MAX_TASKS,
+            maxTitleLines: MAX_TITLE_LINES,
+            maxDescrLines: MAX_DESC_LINES,
             addBtn: {
                 doShow: settings?.addBtn?.doShow ?? false,
                 style:  settings?.addBtn?.style,
                 text:   settings?.addBtn?.text ?? "Add an Item",
                 pos:    settings?.addBtn?.pos ?? "bottom",
-                iconScale: settings?.addBtn?.iconScale ?? 0.96
+                iconScale: settings?.addBtn?.iconScale ?? 1.1
             }
         }
 
@@ -689,9 +698,11 @@ export class TasksListManager {
         type:  "sibling" | "child"
     }) {
         const { idx, parentId, type } = args
-        const tempId   = "123"
-        const newIdx  = idx ?? this.tasks.getSubtasks(parentId).length
-        const isChild = type === "child"
+        const hasClientTaskHandler = !!this.options.handlers?.onAddTask
+
+        const tempId   = hasClientTaskHandler ? "123" : uuidv4()
+        const newIdx  =  idx ?? this.tasks.getSubtasks(parentId).length
+        const isChild =  type === "child"
 
         if (isChild && this.tasks.isAtMaxDepth(parentId!)) {
             this.initMaxDepthToast()

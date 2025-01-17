@@ -1115,7 +1115,7 @@ $loading-dots-width: 4px;
         height: 2px !important;
         transition: opacity 0.08s ease-in-out;
         z-index: 100;
-        @include abs-top-left(-2px, 10px);
+        @include abs-top-left(0px, 10px);
         background-color: #71B8FF;
     }
 }

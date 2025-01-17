@@ -338,6 +338,8 @@ export class TextEditorManager extends InputManager {
         else {
             this.formatText()
         }
+
+        this.updateClientOnFormat()
         this.currFormat = null
     }
 
@@ -562,6 +564,9 @@ export class TextEditorManager extends InputManager {
     
         selection?.removeAllRanges()
         selection?.addRange(newRange)
+
+
+        this.updateClientOnFormat()
     }
 
     /**
@@ -641,6 +646,12 @@ export class TextEditorManager extends InputManager {
         
         if (this.handlers?.onInputHandler) {
             this.handlers.onInputHandler(event, newVal, this.valLength)
+        }
+    }
+
+    updateClientOnFormat() {
+        if (this.handlers?.onInputHandler) {
+            this.handlers.onInputHandler(null, this.inputElem!.innerHTML, this.inputElem!.innerText.length)
         }
     }
 

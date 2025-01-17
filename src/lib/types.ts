@@ -962,28 +962,56 @@ type AppleUserCredentials = {
     musicUserToken: string
 }
 
-/* Spotify Music Stuff */
-type SpotifyInitData = {
-    accessToken: string
-    expiresIn: number
-    refreshToken: string
-    authCode: string
+/* habits. */
+type Habit = {
+    name: string
+    symbol: string
+    target: string | null
+    streak: number
+    freqType: "daily" | "day-of-week" | "per-week"
+    frequency: number
+    data: string
+    timeOfDay: "morning" | "afternoon" | "evening" | "all-day"
+    order: {
+        default: number
+        tod: number
+    }
 }
-type SpotifyAuthTokenResponse = {
-    access_token: string
-    expires_in: number
-    scope: string
-    refresh_token: string
-    tokenType: string
+
+type HabitStore = {
+    habits: Habit[]
+    metrics: HabitMetrics | null
 }
-type MusicUserDetails = {
-    id: string,
-    username: string,
-    url: string,
-    isPremiumUser: boolean
-    profileImgSmall: string
-    profileImgBig: string
+
+type HabitMetrics = {
+    habitsDone: number
+    habitsDue: number
+    perfectDays: number
+    missedDays: number
+    missed: number
+    activeStreak: {
+        base: number
+        streak: number
+        start: Date
+    }
 }
+
+type HabitYearData = {
+    name: string
+    data: HabitMonthChunk
+}
+
+type HabitMonthKey = `${number}-${number}`
+
+type HabitMonthChunk = Record<HabitMonthKey, number>
+
+type HabitHeatMapDay = {
+    date: Date
+    isInCurrMonth: boolean
+    done: number
+    due: number
+}
+
 
 /* Youtube Stuff */
 type GoogleAuthResponse = {

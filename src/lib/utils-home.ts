@@ -9,6 +9,7 @@ import { getElemById, isTargetTextEditor, randomArrayElem } from "./utils-genera
 import { POPULAR_SPACES } from "./data-spaces"
 import { initEmojis } from "./emojis"
 import { themes } from "./data-themes"
+import { initHabits } from "./utils-habits"
 
 /* constants */
 export const LEFT_BAR_MIN_WIDTH = 60
@@ -43,6 +44,7 @@ export const AMBIENT = {
 export const initAppState = async () => {
     initEmojis()  
     initTimer()
+    initHabits()
     loadTheme()
     loadGlobalContext()
     loadAmbience()

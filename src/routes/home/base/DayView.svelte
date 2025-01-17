@@ -11,20 +11,21 @@
     export let activity
     
     $: showHighlight = options?.showHighlight ?? true
-    $: fontStyle = options?.fontStyle ?? "basic"
+    $: headingFontStyle = options?.fontStyle ?? "basic"
     $: todos = activity.tasks ?? []
 
     const DESCRIPTION_ID = "day-view-text"
+    const SMALL_MAX_WIDTH = 540
 
-    let text = "Three meetings, two deadlines, one surprise cake in the break room. Today had its moments."
     let renderFlag = false
-    let newText = ""
     let width = 0
     let marginTextHeight = 0
     let entryModal = false
     let imgModal = false
+    let currDate = activity.date
 
     let todoListContainer: HTMLElement
+    let text = activity.text
 
     let editor = new TextEditorManager({ 
         placeholder: "Write something here...",
@@ -32,28 +33,26 @@
         id: DESCRIPTION_ID,
         handlers: {
             onInputHandler: (_, val) => {
-                newText = val
+                activity.text = val
             }
         }
     })
 
-    $: if (activity != undefined) {
+    $: if (currDate !== activity.date) {
         renderFlag = !renderFlag
-
         editor.updateText(activity.text)
+
+        currDate = activity.date
     }
 
     function onDayEntryUpdate(updatedData: DayEntryUpdatePayload) {
-        if (updatedData.img) {
-            activity.highlightImg.src     = updatedData.img.src ?? activity.highlightImg.src
-            activity.highlightImg.caption = updatedData.img.caption ?? activity.highlightImg.caption
-        }
-        else {
-            activity.highlightImg = undefined
-        }
+        activity.img = updatedData.img 
+        activity.thoughtEntry = updatedData.thoughtEntry
 
-        activity.thoughtEntry = updatedData.thoughtEntry ?? ""
-        activity = activity
+        activity = {
+            ...activity,
+            ...updatedData
+        }
 
         entryModal = false
     }
@@ -62,6 +61,8 @@
 
 <div 
     class="day-view"
+    class:day-view--small={width < SMALL_MAX_WIDTH}
+    style:--heading-font={getFontFamilyFromStyle(headingFontStyle)}
     bind:clientWidth={width}
 >
     <div class="day-view__content">
@@ -69,7 +70,7 @@
             class="day-view__left"
             style:width={`calc(100% - ${showHighlight && activity.thoughtEntry ? 200 - 30 : 0}px)`}
         >
-            <div class="r-flx-top-sb">
+            <div class="day-view__header">
                 <div 
                     style:position="relative"
                     style:flex="1"
@@ -87,7 +88,7 @@
                         spellcheck="false"
                         placeholder="write something here"
                     >
-                        {@html text}
+                        {text}
                     </div>
                     <div 
                         title="Focus Time"
@@ -99,13 +100,8 @@
                 {#if showHighlight && activity.highlightImg && !activity.thoughtEntry}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div 
-                        class="day-view__img"
+                        class="day-view__img day-view__img--float"
                         on:click={() => imgModal = true}
-                        style:width={"100px"}
-                        style:min-width={"100px"}
-                        style:height={"100px"}
-                        style:border-width={"2px"}
-                        style:margin-left={"10px"}
                     >
                         <img src={activity.highlightImg.src} alt="">
                     </div>
@@ -156,21 +152,23 @@
                             <img src={activity.highlightImg.src} alt="">
                         </div>
                     {/if}
-                    <span>Daily Entry</span>
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <div 
-                        class="day-view__journal-title"
-                        style:font-family={getFontFamilyFromStyle(fontStyle)}
-                        on:click={() => entryModal = true}
-                    >
-                        {title}
-                    </div>
-                    <div 
-                        class="day-view__text-snippet"
-                        class:day-view__text-snippet--fade={marginTextHeight > 60}
-                        bind:clientHeight={marginTextHeight}
-                    >
-                        {@html text}
+                    <div class="day-view__highlight-text">
+                        <span>Daily Entry</span>
+                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                        <div 
+                            class="day-view__journal-title"
+                            style:font-family={getFontFamilyFromStyle(fontStyle)}
+                            on:click={() => entryModal = true}
+                        >
+                            {title}
+                        </div>
+                        <div 
+                            class="day-view__text-snippet"
+                            class:day-view__text-snippet--fade={marginTextHeight > 60}
+                            bind:clientHeight={marginTextHeight}
+                        >
+                            {@html text}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -201,6 +199,34 @@
     @import "../../../scss/inputs.scss";
 
     .day-view {
+        &--small &__content {
+            display: block;
+        }
+        &--small &__left {
+            width: 100% !important;
+        }
+        &--small &__right {
+            margin: 34px 0px 0px 0px !important;
+            width: 100%;
+        }
+        &--small &__highlight img {
+            @include square(150px, 10px);
+            margin-right: 30px;
+        }
+        &--small &__highlight {
+            display: flex;
+        }
+        &--small &__header {
+            flex-direction: column-reverse;
+        }
+        &--small &__header > div {
+            width: 100%;
+        }
+        &--small &__header &__img {
+            @include square(120px, 10px);
+            margin: 10px 0px 15px 0px;
+        }
+
         &__content {
             display: flex;
         }
@@ -211,11 +237,14 @@
             margin-left: 30px;
             width: 200px;
         }
+        &__header {
+            @include flex(flex-start, space-between)
+        }
         &__dow {
-            @include text-style(0.3, _, 2rem, "Gambarino-Regular");
+            @include text-style(0.3, _, 2rem, var(--heading-font));
         }   
         &__date {
-            @include text-style(1, _, 3.5rem, "Gambarino-Regular");
+            @include text-style(1, _, 3.5rem, var(--heading-font));
             margin: -2px 0px 4px 0px;
         }
         &__text {
@@ -249,9 +278,10 @@
         }
         &__img {
             cursor: pointer;
+            
             img {
+                transition: 0.18s transform cubic-bezier(.4, 0, .2, 1);
                 @include square(100%, 2px);
-                @include smooth-bounce;
                 aspect-ratio: 1/1;
                 object-fit: cover;
                 border-radius: 10px;
@@ -264,9 +294,17 @@
                 transform: scale(0.99) rotate(2deg) !important;
             }
         }
+        &__img--float {
+            width: 100px;
+            height: 100px;
+            margin-left: 10px;
+            border-width: 2px;
+            min-width: 100px;
+        }
         &__journal-title {
             @include text-style(1, 500, 2.5rem);
             margin: -8.5px 0px 8px 0px;
+            @include truncate-lines(3);
             cursor: pointer;
 
             &:hover {

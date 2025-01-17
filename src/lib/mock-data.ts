@@ -1,7 +1,8 @@
 import { GoalStatus } from "./enums"
 import { COLOR_SWATCHES } from "./utils-colors"
+import { generateHabitData } from "./utils-habits"
 
-/* Tags */
+/* tags */
 export const TEST_TAGS: Tag[] = [
     {
       id: "",
@@ -87,7 +88,7 @@ export const TEST_TAGS: Tag[] = [
     },
 ]
 
-/* Sessions */
+/* sessions */
 export const TEST_SESSIONS: Session[] = [
   {
       id: "session-001",
@@ -251,7 +252,7 @@ export const TEST_TASKS: Task[] = [
   },
 ]
 
-/* Goals */
+/* goals */
 export const TEST_GOALS: Goal[] = [
   {
     name: "Finish French Level 2",
@@ -436,17 +437,16 @@ export const TEST_GOALS: Goal[] = [
   },
 ]
 
-/* Week Habits */
-export const TEST_HABITS = [
+/* habits*/
+export const TEST_HABITS: Habit[] = [
   {
     name: "Wake Up",
     symbol: "☀️",
     target: "8:30 AM",
-    streak: 3,
+    streak: 0,
     freqType: "daily",
-    frequency: 1, 
-    lastCheck: new Date("2024-10-12"),
-    last7Days: 0b0101101, 
+    frequency: 1,
+    data: "", 
     timeOfDay: "morning",
     order: {
       default: 0,
@@ -457,11 +457,10 @@ export const TEST_HABITS = [
     name: "Exercise",
     symbol: "💪",
     target: "45m",
-    streak: 3,
+    streak: 0,
     freqType: "day-of-week",
-    frequency: 0b0111100, 
-    lastCheck: new Date("2024-10-21"),
-    last7Days: 0b0100100, 
+    frequency: 0b0011110,
+    data: "", 
     timeOfDay: "afternoon",
     order: {
       default: 1,
@@ -472,11 +471,10 @@ export const TEST_HABITS = [
     name: "Reading",
     symbol: "📖",
     target: "30 pages",
-    streak: 5,
+    streak: 0,
     freqType: "day-of-week",
-    frequency: 0b0111111, 
-    lastCheck: new Date("2024-10-14"),
-    last7Days: 0b0010100, 
+    frequency: 0b0000001,
+    data: "", 
     timeOfDay: "evening",
     order: {
       default: 2,
@@ -487,11 +485,10 @@ export const TEST_HABITS = [
     name: "Meditation",
     symbol: "🧘🏼‍♂️",
     target: "15m",
-    streak: 2,
+    streak: 0,
     freqType: "daily",
-    frequency: 1, 
-    lastCheck: new Date("2024-10-14"),
-    last7Days: 0b1000101, 
+    frequency: 1,
+    data: "", 
     timeOfDay: "morning",
     order: {
       default: 3,
@@ -502,11 +499,10 @@ export const TEST_HABITS = [
     name: "Study French",
     symbol: "🇫🇷",
     target: "1h",
-    streak: 4,
+    streak: 0,
     freqType: "day-of-week",
-    frequency: 0b0010100, 
-    lastCheck: new Date("2024-10-11"),
-    last7Days: 0b1010000, 
+    frequency: 0b0010100,
+    data: "", 
     timeOfDay: "evening",
     order: {
       default: 4,
@@ -517,11 +513,10 @@ export const TEST_HABITS = [
     name: "Run",
     symbol: "🏃‍♂️",
     target: "5 km",
-    streak: 6,
+    streak: 0,
     freqType: "day-of-week",
-    frequency: 0b0101010, 
-    lastCheck: new Date("2024-10-13"),
-    last7Days: 0b1011010, 
+    frequency: 0b0101010,
+    data: "", 
     timeOfDay: "morning",
     order: {
       default: 5,
@@ -532,11 +527,10 @@ export const TEST_HABITS = [
     name: "Deep Work",
     symbol: "👨‍💻",
     target: "2h",
-    streak: 7,
+    streak: 0,
     freqType: "day-of-week",
-    frequency: 0b0111100,
-    lastCheck: new Date("2024-10-14"),
-    last7Days: 0b0000010,
+    frequency: 0b1111000,
+    data: "",
     timeOfDay: "morning",
     order: {
       default: 6,
@@ -547,11 +541,10 @@ export const TEST_HABITS = [
     name: "Water",
     symbol: "🌊",
     target: "8 glasses",
-    streak: 7,
+    streak: 0,
     freqType: "daily",
-    frequency: 1, 
-    lastCheck: new Date("2024-10-14"),
-    last7Days: 0b0001010, 
+    frequency: 1,
+    data: "", 
     timeOfDay: "all-day",
     order: {
       default: 7,
@@ -561,11 +554,11 @@ export const TEST_HABITS = [
   {
     name: "Clean House",
     symbol: "🧹",
-    streak: 7,
+    streak: 0,
     freqType: "per-week",
-    frequency: 3, 
-    lastCheck: new Date("2024-10-21"),
-    last7Days: 0b0100101, 
+    frequency: 5,
+    data: "", 
+    target: null,
     timeOfDay: "afternoon",
     order: {
       default: 8,
@@ -574,6 +567,46 @@ export const TEST_HABITS = [
   },
 ]
 
+export const YEAR_HABITS_DATA: HabitYearData[] = [
+   {
+      name: "Wake Up",
+      data: generateHabitData()
+   },
+   {
+      name: "Exercise",
+      data: generateHabitData()
+   },
+   {
+      name: "Reading",
+      data: generateHabitData()
+   },
+   {
+      name: "Meditation",
+      data: generateHabitData()
+   },
+   {
+      name: "Study French",
+      data: generateHabitData()
+   },
+   {
+      name: "Run",
+      data: generateHabitData()
+   },
+   {
+      name: "Deep Work",
+      data: generateHabitData()
+   },
+   {
+      name: "Water",
+      data: generateHabitData()
+   },
+   {
+      name: "Clean House",
+      data: generateHabitData()
+   },
+]
+
+/* home base */
 export const YEAR_THOUGHT_ENTRY = {
   icon: {
         type: "img",
@@ -610,6 +643,7 @@ export const ACTIVITY_DATA = [
       text: "",
       focusMins: 12 * 60 + 10,
       habits: 0.7,
+      thoughtEntry: null,
       goals: [
           {
               type: "big",
@@ -638,6 +672,8 @@ export const ACTIVITY_DATA = [
       date: new Date(2025, 0, 3),
       text: "Three meetings, two deadlines, one surprise cake in the break room. Today had its moments.",
       focusMins: 5 * 60 + 11,
+      highlightImg: null,
+      thoughtEntry: null,
       tasks: [
         {
           id: "f82be9cd-8f42-477e-b833-e74feed75a78",
@@ -764,6 +800,8 @@ The studio was quiet except for the sound of chalk on paper. These peaceful mome
       date: new Date(2025, 0, 6),
       text: "",
       focusMins: 563,
+      highlightImg: null,
+      thoughtEntry: null,
       tasks: []
   },
   {
@@ -771,17 +809,22 @@ The studio was quiet except for the sound of chalk on paper. These peaceful mome
       date: new Date(2025, 0, 9),
       text: "",
       focusMins: 662,
+      highlightImg: null,
+      thoughtEntry: null,
       tasks: []
   },
   {
       date: new Date(2025, 0, 10),
       text: "",
       focusMins: 52,
+      highlightImg: null,
+      thoughtEntry: null,
       tasks: []
   },
   {
       date: new Date(2025, 0, 10),
       text: "",
+      highlightImg: null,
       thoughtEntry: {
         width: 580,
         fontStyle: "basic",
@@ -795,6 +838,7 @@ Been reflecting on how to better balance work and personal growth. Maybe it's no
   {
       date: new Date(2025, 0, 13),
       text: "",
+      highlightImg: null,
       thoughtEntry: {
         width: 580,
         fontStyle: "cute",
@@ -811,6 +855,7 @@ It's liberating to create without judgment, to let intuition guide the process. 
       date: new Date(2025, 0, 16),
       text: "",
       focusMins: 271,
+      highlightImg: null,
       thoughtEntry: {
         width: 580,
         fontStyle: "basic",
@@ -843,6 +888,8 @@ It's amazing how coding is teaching me patience and persistence. Every bug is a 
       date: new Date(2025, 0, 20),
       text: "",
       habits: 0.2,
+      thoughtEntry: null,
+      highlightImg: null,
       goals: [
           {
               type: "big",
@@ -856,6 +903,7 @@ It's amazing how coding is teaching me patience and persistence. Every bug is a 
       date: new Date(2025, 0, 23),
       text: "",
       focusMins: 5 * 60 + 11,
+      highlightImg: null,
       thoughtEntry: {
         width: 580,
         fontStyle: "stylish",
@@ -869,6 +917,7 @@ Gardening teaches patience in ways nothing else can. You can't rush growth, can'
       date: new Date(2025, 0, 24),
       text: "",
       focusMins: 398,
+      thoughtEntry: null,
       highlightImg: {
           src: "https://i.pinimg.com/736x/9b/91/cc/9b91cc7b70d04399c09d33d7ed8d063c.jpg",
           caption: "italian paradise",
@@ -879,6 +928,8 @@ Gardening teaches patience in ways nothing else can. You can't rush growth, can'
       habits: 0.4,
       date: new Date(2025, 0, 26),
       text: "",
+      thoughtEntry: null,
+      highlightImg: null,
       focusMins: 281,
       tasks: []
   },
@@ -886,6 +937,7 @@ Gardening teaches patience in ways nothing else can. You can't rush growth, can'
       date: new Date(2025, 0, 27),
       text: "",
       focusMins: 84,
+      thoughtEntry: null,
       highlightImg: {
           src: "https://i.pinimg.com/736x/d5/ff/09/d5ff09b5043f74591b4ffeb96fc94456.jpg",
           caption: "at the museum 🌷",
@@ -896,6 +948,8 @@ Gardening teaches patience in ways nothing else can. You can't rush growth, can'
       habits: 1,
       date: new Date(2025, 0, 28),
       text: "",
+      thoughtEntry: null,
+      highlightImg: null,
       focusMins: 2 * 60 + 34,
       tasks: []
   },
@@ -922,6 +976,8 @@ Met a fellow hiker at the top, shared hot coffee and stories. It's amazing how s
       date: new Date(2025, 0, 31),
       text: "",
       focusMins: 441,
+      thoughtEntry: null,
+      highlightImg: null,
       tasks: []
   },
   {
@@ -929,6 +985,8 @@ Met a fellow hiker at the top, shared hot coffee and stories. It's amazing how s
       text: "",
       focusMins: 192,
       habits: 0.2,
+      thoughtEntry: null,
+      highlightImg: null,
       goals: [
           {
               type: "big",
@@ -947,6 +1005,8 @@ Met a fellow hiker at the top, shared hot coffee and stories. It's amazing how s
       date: new Date(2025, 0, 15),
       text: "",
       habits: 0.7,
+      thoughtEntry: null,
+      highlightImg: null,
       goals: [
           {
               type: "big",
@@ -995,6 +1055,8 @@ The studio was quiet except for the sound of chalk on paper. These peaceful mome
       date: new Date(2025, 0, 29),
       text: "",
       habits: 0.7,
+      thoughtEntry: null,
+      highlightImg: null,
       goals: [
           {
               type: "big",

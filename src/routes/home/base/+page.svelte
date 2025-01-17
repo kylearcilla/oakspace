@@ -15,7 +15,7 @@
 	import SettingsBtn from "../../../components/SettingsBtn.svelte"
 
     const SMALLER_WIDTH = 630
-    const SMALL_WIDTH = 860
+    const SMALL_WIDTH = 1080
 
     $: isLight = !$themeState.isDarkTheme
 
@@ -367,7 +367,7 @@
         }
 
         &__content {
-            max-width: 1560px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 0px 30px 20px 30px;
             position: relative;

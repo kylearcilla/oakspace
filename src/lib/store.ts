@@ -37,7 +37,12 @@ export const themeState = writable<ThemeState>({
 
 export const timer = writable<{ date: Date }>({ date: new Date() })
 
-/* General Authentication Stuff */
+export const habitTracker = writable<HabitStore>({
+    habits: [],
+    metrics: null
+})
+
+/* general authentication stuff */
 export const googleData = writable<GoogleUserData | null>(null)
 
 /* routine */

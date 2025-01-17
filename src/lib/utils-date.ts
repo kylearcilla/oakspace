@@ -805,25 +805,41 @@ export function getNextHour(date: Date) {
 	return nearestHour
 }
 
-export function getWeekPeriod(date: Date) {
-	const inputDate = new Date(date)
-	const dayOfWeek = inputDate.getDay()
-	const diffToMonday = (dayOfWeek + 6) % 7
+export function getStartOfWeek(date: Date) {
+    const startOfWeek = new Date(date)
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay())
+    return startOfWeek
+}
 
-	const startOfWeek = new Date(inputDate)
-	startOfWeek.setDate(inputDate.getDate() - diffToMonday)
+export function getDateFromWkIdx(idx: number, date = new Date()) {
+    const startOfWeek = getStartOfWeek(date)
+    const targetDate = new Date(startOfWeek)
+    targetDate.setDate(startOfWeek.getDate() + idx)
 
-	const endOfWeek = new Date(startOfWeek)
-	endOfWeek.setDate(startOfWeek.getDate() + 6)
+    return targetDate
+}
 
+export function getWeekPeriod(date: Date, weeksBack: number = 0) {
+    const inputDate = new Date(date)
+    const prevDay = new Date(inputDate.getTime())
+    prevDay.setDate(inputDate.getDate() - (7 * weeksBack))
+    const start = getStartOfWeek(prevDay)
+    const end = new Date(start)
+    end.setDate(start.getDate() + 6)
+
+    return { start, end }
+}
+
+export function getWeekPeriodStr(date: Date, weeksBack: number = 0) {
+	const { start, end } = getWeekPeriod(date, weeksBack)
 	const formatOptins: DateFormat = {
 		month: 'short',
 		day: 'numeric'
 	}
 
 	return {
-		start: formatDatetoStr(startOfWeek, formatOptins),
-		end: formatDatetoStr(endOfWeek, formatOptins)
+		start: formatDatetoStr(start, formatOptins),
+		end: formatDatetoStr(end, formatOptins)
 	}
 }
 

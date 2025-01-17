@@ -1,7 +1,8 @@
 <script lang="ts">
+	import { habitTracker } from "../../../lib/store"
     import { TEST_GOALS } from "../../../lib/mock-data"
 	import { getQuarter, months } from "../../../lib/utils-date"
-	import { capitalize, clamp } from "../../../lib/utils-general"
+	import { capitalize, clamp, formatPlural } from "../../../lib/utils-general"
 
 	import Bulletin from "./Bulletin.svelte"
 	import DailyHabits from "./DailyHabits.svelte"
@@ -10,10 +11,12 @@
 
     export let fullWidth = false
 
+    $: metrics = $habitTracker.metrics
+
     let marginDropdown = false
     let marginViewDropdown = false
     let marginOptn: "habits" | "goals" = "habits"
-    let marginView: "today" | "month" | "year" | "quarter" = "today"
+    let marginView: "today" | "month" | "year" | "quarter" = "month"
 
     let initDragY = -1
     let ogDragVal = 0
@@ -86,18 +89,23 @@
 
         <!-- today's habits -->
         {#if marginView === "today"}
-            <DailyHabits options={{ view: "default" }} />
+            <DailyHabits />
         <!-- month habit trends -->
-        {:else if marginOptn === "habits" && marginView === "month"}
+        {:else if marginOptn === "habits" && marginView === "month" && metrics}
+            {@const { habitsDone, habitsDue, activeStreak: { streak } } = metrics}
             <div class="habits">
                 <div class="habits__details">
                     <div class="habits__stat">
-                        <span>Perfect Days</span>
-                        <span>16</span>
+                        <span>Completion</span>
+                        <span>
+                            {Math.floor(habitsDone / habitsDue * 100)}%
+                        </span>
                     </div>
                     <div class="habits__stat">
-                        <span>Missed Days</span>
-                        <span>2</span>
+                        <span>Streak</span>
+                        <span>
+                            {formatPlural("day", streak)}
+                        </span>
                     </div>
                 </div>
                 <RingCalendar />
@@ -185,7 +193,7 @@
     .margin {
         width: 100%;
         &__context {
-            margin: 6px 0px 10px 0px;
+            margin: 6px 0px 0px 0px;
             position: relative;
             background-color: transparent;
             padding: 3px 0px 4px 0px;
@@ -218,7 +226,7 @@
         }
         &__context-header {
             @include flex(center, space-between);
-            margin: 0px 0px 4px 2px;
+            margin: -8px 0px 4px 2px;
         }
         &__context-count {
             opacity: 0.2;

@@ -4,7 +4,7 @@
 	import { Icon } from "../../../lib/enums"
 	import { themeState } from "../../../lib/store"
 	import { ACTIVITY_DATA } from "../../../lib/mock-data"
-    import { getWeekPeriod } from "../../../lib/utils-date"
+    import { getWeekPeriod, getWeekPeriodStr } from "../../../lib/utils-date"
 	import { capitalize, clickOutside, getElemById, getHozDistanceBetweenTwoElems, kebabToNormal, normalToKebab } from "../../../lib/utils-general"
 
 	import YearView from "./YearView.svelte"
@@ -30,11 +30,12 @@
         progressUi?: "bar" | "circle"
     }
 
-    let currView: MonthDetailsView = "overview"
+    let currView: MonthDetailsView = "habits"
     let optionsOpen = false
-    let weekPeriodIdx = 0
-    let weekPeriod = getWeekPeriod(new Date())
-    let overviewType: "monthly" | "daily" = "daily"
+    let weeksAgoIdx = 0
+    let overviewType: "monthly" | "daily" = "monthly"
+    let leftArrow: HTMLButtonElement | null = null
+    let rightArrow: HTMLButtonElement | null = null
 
     let activityIdx = 2
     let activity = ACTIVITY_DATA[activityIdx]
@@ -48,11 +49,12 @@
     let overview = {
         animPhotos: true,
         showHighlight: true,
-        fontStyle: "basic"
+        fontStyle: "stylish"
     }
     let habitView = {
         view: "default",
-        emojis: false,
+        emojis: true,
+        target: true,
         progress: {
             numbers: true,
             daily: true,
@@ -67,6 +69,10 @@
     }
     let btnHighlighter = {
         width: 0, left: 0
+    }
+
+    $: if (currView != undefined) {
+        onArrowBtnClicked()
     }
 
     function highlightHandler(context: "image" | "entry") {
@@ -137,7 +143,11 @@
         subMenu = null
         optionsOpen = false
     }
-    function onArrowBtnClicked(direction: "left" | "right") {
+    function onArrowBtnClicked(direction?: "left" | "right") {
+        if (leftArrow == null || rightArrow == null) return
+        let leftArrowDisabled = false
+        let rightArrowDisabled = false
+
         if (currView === "overview") {
             if (direction === "left") {
                 activityIdx = Math.max(0, activityIdx - 1)
@@ -146,7 +156,21 @@
                 activityIdx = Math.min(ACTIVITY_DATA.length - 1, activityIdx + 1)
             }
             activity = ACTIVITY_DATA[activityIdx]
-        }   
+        }
+        else if (currView === "habits") {
+            if (direction === "left") {
+                weeksAgoIdx = Math.min(5, weeksAgoIdx + 1)
+            }
+            else if (direction === "right") {
+                weeksAgoIdx = Math.max(0, weeksAgoIdx - 1)
+            }
+
+            leftArrowDisabled = weeksAgoIdx === 5
+            rightArrowDisabled = weeksAgoIdx === 0
+        }
+
+        leftArrow!.disabled = leftArrowDisabled
+        rightArrow!.disabled = rightArrowDisabled
     }
     function onViewBtnClicked(view: MonthDetailsView) {
         currView = view
@@ -247,10 +271,11 @@
                     {/if}
                     <div class="month-view__period">
                         {#if currView === "habits"}
-                            {#if weekPeriodIdx === 0}
+                            {#if weeksAgoIdx === 0} 
                                 This Week
                             {:else}
-                                {weekPeriod.start} <span>-</span> {weekPeriod.end}
+                                {@const { start, end } = getWeekPeriodStr(new Date(), weeksAgoIdx)}
+                                <span>{start}</span> - <span>{end}</span>
                             {/if}
                         {:else if currView === "yr-view"}
                             <!-- <div style:font-size="1.6rem">
@@ -258,8 +283,9 @@
                             </div> -->
                         {/if}
                     </div>
-                    <div class="flx" style:margin="0px 0px -2px 0px">
+                    <div class="flx" style:margin="0px 0px -4px 0px">
                         <button 
+                            bind:this={leftArrow}
                             on:click={() => onArrowBtnClicked("left")}
                             class="month-view__arrow"
                             style:margin-left="10px"
@@ -269,6 +295,7 @@
                             </div>
                         </button>
                         <button 
+                            bind:this={rightArrow}
                             on:click={() => onArrowBtnClicked("right")}
                             class="month-view__arrow"
                         >
@@ -356,7 +383,7 @@
                                 options={{
                                     pickedItem: capitalize(overview.fontStyle),
                                     listItems: [
-                                        { name: "Basic" }, { name: "Stylish" }, { name: "Fancy" }, { name: "Cute" }
+                                        { name: "Basic" }, { name: "Stylish" }, { name: "Fancy" }
                                     ],
                                     position: { 
                                         top: "120px", right: "2px" 
@@ -370,6 +397,8 @@
                                     onListItemClicked: ({ name }) => {
                                         overview.fontStyle = name.toLowerCase()
                                         overview = overview
+
+                                        subMenu = null
                                     }
                                 }}
                             />
@@ -565,6 +594,16 @@
                                     }}
                                 />
                             </div>
+                            <div class="dmenu__toggle-optn  dmenu__option--static">
+                                <span class="dmenu__option-heading">Target</span>
+                                <ToggleBtn 
+                                    active={habitView.target}
+                                    onToggle={() => {
+                                        habitView.target = !habitView.target
+                                        habitView = habitView
+                                    }}
+                                />
+                            </div>
                         </li>
                         <li class="dmenu__section-divider"></li>
                         <li class="dmenu__section">
@@ -582,7 +621,7 @@
                                 />
                             </div>
                             <div class="dmenu__toggle-optn  dmenu__option--static">
-                                <span class="dmenu__option-heading">Numbers</span>
+                                <span class="dmenu__option-heading">Detailed</span>
                                 <ToggleBtn 
                                     active={habitView.progress.numbers}
                                     onToggle={() => {
@@ -609,10 +648,7 @@
             </BounceFade>
         </div>
         <div class="divider"></div>
-        <div 
-            class="month-view__details-view"
-            style:min-height={"730px"}
-        >
+        <div class="month-view__details-view">
             {#if currView === "overview"}
                 {#if overviewType === "monthly"}    
                     <ActivityCalendar 
@@ -631,7 +667,10 @@
                     />
                 {/if}
             {:else if currView === "habits"}
-                <WeeklyHabits options={habitView} />
+                <WeeklyHabits 
+                    weeksAgoIdx={weeksAgoIdx}
+                    options={habitView} 
+                />
                 <!-- <MonthlyHabits /> -->
             {:else if currView === "goals"}
                 {#if goalsView.view === "list"}
@@ -738,6 +777,7 @@
         &__details {
             margin: 0px 0px 0px 0px;
             padding: 0px 0px 4px 0px;
+            min-height: 500px;
             position: relative;
 
             .divider {
@@ -810,23 +850,27 @@
             border-radius: 2px;
         }
         &__arrow {
-            opacity: 0.2;
+            opacity: 0.45;
             margin-left: 20px;
             height: 29px;
             width: 29px;
             border-radius: 20px;
             
+            &:disabled {
+                opacity: 0.1 !important;
+                background: none !important;
+            }
             &:first-child {
                 margin-left: 20px;
             }
             &:hover {
-                background-color: rgba(var(--textColor1), 0.06);
-                opacity: 0.45;
+                background-color: rgba(var(--textColor1), 0.03);
+                opacity: 0.8;
             }
         }
         &__period {
-            @include text-style(0.4, 400, 1.35rem, "DM Mono");
-            margin: 3px 0px 0px 0px;
+            @include text-style(0.4, 400, 1.3rem, "DM Mono");
+            margin: 7px 0px 0px 0px;
 
             span {
                 margin: 0px 8px;

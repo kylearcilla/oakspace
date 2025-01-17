@@ -56,6 +56,7 @@
     new TextEditorManager({ 
         placeholder: "notes about this day...",
         maxLength: 1000,
+        allowFormatting: true,
         id: DESCRIPTION_ID,
         handlers: {
             onInputHandler: (_, val) => {
@@ -383,6 +384,7 @@
         &__img {
             float: right;
             margin: 0px 0px 20px 30px;
+            z-index: 100;
         }
         &__img:hover &__img-overlay {
             @include visible;
@@ -465,6 +467,7 @@
         @include text-style(0.45, 500, 1.5rem, "Manrope");
         padding: 30px 0px 15px 0px;
         overflow: unset;
+        z-index: 0;
     }
 
     @keyframes hinge-down {

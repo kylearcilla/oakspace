@@ -1,51 +1,48 @@
 <script lang="ts">
-    import { Calendar } from "$lib/calendar.ts"
-	import { formatDatetoStr } from "../lib/utils-date";
-	import ProgressRing from "./ProgressRing.svelte";
+	import { habitTracker } from "../lib/store";
+	import ProgressRing from "./ProgressRing.svelte"
+	import { formatDatetoStr } from "../lib/utils-date"
+	import { getMonthHeatMap } from "../lib/utils-habits"
 
-    const n = [
-        0.4, 0.6, 0.2, 0.4, 0.4, 0.9, 0.4,
-        0.2, 0.6, 0.2, 0.6, 0.7, 0.3, 0.7,
-        0.6, 0.8, 0.5, 0.9, 0.4, 0.7, 0.5,
-        0.4, 0.6, 0.4, 0.5, 0.2, 0.4, 0.6,
-        0.3, 0.6, 0.2, 0.7, 0.2, 0.5, 0.4
-    ]
+    let heatMap: HabitHeatMapDay[] = []
 
-    const cal = new Calendar()
-    const month = cal.currMonth
-
+    habitTracker.subscribe(() => {
+        heatMap = getMonthHeatMap({ monthIdx: 0, year: 2025 })
+    })
 </script>
 
-<div class="rcal">
-    <div class="rcal__days">
-        <div class="rcal__dow">S</div>
-        <div class="rcal__dow">M</div>
-        <div class="rcal__dow">T</div>
-        <div class="rcal__dow">W</div>
-        <div class="rcal__dow">T</div>
-        <div class="rcal__dow">F</div>
-        <div class="rcal__dow">S</div>
+<div class="cal">
+    <div class="cal__days">
+        <div class="cal__dow">S</div>
+        <div class="cal__dow">M</div>
+        <div class="cal__dow">T</div>
+        <div class="cal__dow">W</div>
+        <div class="cal__dow">T</div>
+        <div class="cal__dow">F</div>
+        <div class="cal__dow">S</div>
     </div>
-    <div class="rcal__grid">
-        {#each month.days as day, idx}
-            {@const d   = day.date.getDate()}
+    <div class="cal__grid">
+        {#each heatMap as day}
+            {@const date   = day.date.getDate()}
             {@const sameMonth = day.isInCurrMonth}
-
             <div
                 title={formatDatetoStr(day.date)}
-                class="rcal__day"
-                class:rcal__day--not-curr-month={!sameMonth}
+                class="cal__day"
+                class:cal__day--beyond={!sameMonth}
             >
                 {#if sameMonth}
-                    <ProgressRing 
-                        progress={n[idx]} 
-                        options={{
-                            size: 14, strokeWidth: 3.2, style: "light"
-                        }}
-                    />
+                    {@const { done, due } = day}
+                    <div style:margin="0px 0px 0px 3px">
+                        <ProgressRing
+                            progress={done / due} 
+                            options={{
+                                size: 14, strokeWidth: 3.2, style: "light"
+                            }}
+                        />
+                    </div>
                 {:else}
-                    <div class="rcal__day-num">
-                        {d}
+                    <div class="cal__day-num">
+                        {date}
                     </div>
                 {/if}
             </div>
@@ -54,11 +51,13 @@
 </div>
 
 <style lang="scss">
-    .rcal {
+    .cal {
+        width: 100%;
+
         &__days {
             @include flex(center, space-between);
             @include text-style(0.65, 400, 1.3rem, "DM Mono");
-            margin: 0px 4px 10px 0px;
+            margin: 0px 2px 10px 0px;
         }
         &__dow {
             height: 25px;
@@ -71,15 +70,16 @@
             grid-template-rows: repeat(6, 1fr);
         }
         &__day {
-            height: 28px;
-            margin: 0px 17px 6px 0px;
+            height: 35px;
+            width: 34px;
+            margin: 0px 0px 0px 0px;
         }
-        &__day--not-curr-month {
+        &__day--beyond {
             opacity: 0.095 !important;
         }
         &__day-num {
-            @include text-style(1, 300, 1.25rem, "DM Mono");
-            margin-left: 3px;
+            @include text-style(1, 400, 1.3rem, "DM Sans");
+            margin-left: 4px;
         }
     }
 </style>

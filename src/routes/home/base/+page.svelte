@@ -1,11 +1,9 @@
 <script lang="ts">    
 	import { themeState } from "../../../lib/store"
-	import { months } from "../../../lib/utils-date"
 	import { imageUpload } from "../../../lib/pop-ups"
 	import { MONTH_THOUGHT_ENTRY } from "../../../lib/mock-data"
 	import { clamp, clickOutside } from "../../../lib/utils-general"
 
-	import Header from "./Header.svelte"
 	import YearView from "./YearView.svelte"
 	import TextEntry from "./TextEntry.svelte"
 	import MonthView from "./MonthView.svelte"
@@ -15,7 +13,7 @@
 	import SettingsBtn from "../../../components/SettingsBtn.svelte"
 
     const SMALLER_WIDTH = 630
-    const SMALL_WIDTH = 1080
+    const SMALL_WIDTH = 1000
 
     $: isLight = !$themeState.isDarkTheme
 
@@ -43,7 +41,6 @@
     }
     let options = {
         view: "month",
-        header: false,
         banner: true,
         margin: true
     }
@@ -116,17 +113,6 @@
         </div>
     {/if}
     <div class="base__content">
-        <!-- header -->
-        {#if options.header}
-            <Header options={header} showBanner={options.banner} />
-        {/if}
-        <div 
-            class="divider" 
-            class:no-bg={!options.header}
-            style:margin={!options.header ? "15px 0px 0px 0px" : "12px 0px 12px 0px"}
-        >
-        </div>
-
         <div class="base__content-flx">
             <!-- left margin -->
             {#if options.margin}
@@ -139,7 +125,7 @@
                 <div class="base__overview-header">
                     <div style:width="100%">
                         <div class="base__overview-heading">
-                            {months[MONTH_THOUGHT_ENTRY.date.getMonth()]}
+                            Home
                         </div>
                         <div style:width="100%">
                             <TextEntry 
@@ -165,10 +151,7 @@
         </div>
 
         <!-- settings -->
-        <div 
-            class="base__settings-btn"
-            style:top={`${options.header ? header.icon.show ? "80px" : "10px" : "-5px"}`}
-        >
+        <div class="base__settings-btn">
             <SettingsBtn 
                 id={"base--dbtn"}
                 options={{ 
@@ -190,7 +173,7 @@
             isHidden={!settingsOpen}
             zIndex={200}
             position={{ 
-                top: `${options.header ? header.icon.show ? "105px" : "35px" : "20px"}`, 
+                top: `${header.icon.show ? "35px" : "20px"}`, 
                 right: "25px"
             }}
         >
@@ -222,45 +205,6 @@
                                     Change Wallpaper
                                 </span>
                             </button>
-                        </div>
-                    {/if}
-                </li>
-                <li class="dmenu__section-divider"></li>
-                <li class="dmenu__section">
-                    <div class="dmenu__section-name">
-                        Header
-                    </div>
-                    <div class="dmenu__toggle-optn  dmenu__option--static">
-                        <span class="dmenu__option-heading">Show Header</span>
-                        <ToggleBtn 
-                            active={options.header}
-                            onToggle={() => {
-                                options.header = !options.header
-                                options = options
-                            }}
-                        />
-                    </div>
-                    {#if options.header}
-                        <div class="dmenu__toggle-optn  dmenu__option--static">
-                            <span class="dmenu__option-heading">Header Icon</span>
-                            <ToggleBtn 
-                                active={header.icon.show}
-                                onToggle={() => {
-                                    header.icon.show = !header.icon.show
-                                    header = header
-                                }}
-                            />
-                        </div>
-                        <div class="dmenu__toggle-optn  dmenu__option--static">
-                            <span class="dmenu__option-heading">Day Summary</span>
-                            <ToggleBtn 
-                                active={header.text.show}
-                                onToggle={() => {
-                                    header.text.show = !header.text.show
-                                    header.text.icon = null
-                                    header = header
-                                }}
-                            />
                         </div>
                     {/if}
                 </li>
@@ -320,7 +264,7 @@
             width: 220px;
         }
         &--small &__context .divider {
-            display: none;
+            disxplay: none;
         }
         &--small &__context {
             width: calc(100% - 220px - 25px);
@@ -374,7 +318,7 @@
         }
         &__content-flx {
             display: flex;
-            margin-top: 4px;
+            margin-top: 22px;
         }
         &__left {
             width: 260px;
@@ -437,7 +381,7 @@
         }
         &__overview-heading {
             // @include text-style(1, 400, 5rem, "Bagel Fat One");
-            @include text-style(1, 400, 2.5rem, "DM Mono");
+            @include text-style(1, 400, 2.5rem, "Geist Mono");
             // @include text-style(1, 400, 4rem, "Gambarino-Regular");
             margin: -4px 0px 0px 0px;
             // margin: -5px 0px 0px 0px;

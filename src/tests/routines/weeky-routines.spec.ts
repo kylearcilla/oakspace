@@ -9,8 +9,8 @@ import {
     elemTopOffset, 
     elemLeftOffset, 
     elemLeftOffsetByBox, 
-    getVertDistanceBetweenTwoElems, 
-    getHozDistanceBetweenTwoElems,
+    getVertSpace, 
+    getHozSpace,
     dragFromTo,
     vertScrollElem,
     isScrolledToEdges,
@@ -747,13 +747,13 @@ test.describe("week view display", () => {
         const nineBlock = hourBlocks.nth(8)
         await expect(nineBlock).toContainText("9 am")
 
-        const nineBlockTopOffset = await getVertDistanceBetweenTwoElems({
+        const nineBlockTopOffset = await getVertSpace({
             top: { elem: container, edge: "top" },
             bottom: { elem: nineBlock, edge: "top" }
         })
 
         await blocksContainer.evaluate((elem: HTMLElement) => elem.scrollTop = elem.scrollHeight)
-        const newDistFromTop = await getVertDistanceBetweenTwoElems({
+        const newDistFromTop = await getVertSpace({
             top: { elem: container, edge: "top" },
             bottom: { elem: nineBlock, edge: "top" },
         })
@@ -772,13 +772,13 @@ test.describe("week view display", () => {
         const wedElem = days.nth(2)
         await expect(wedElem).toContainText("Wed")
 
-        const wedElemLeftOffset = await getHozDistanceBetweenTwoElems({
+        const wedElemLeftOffset = await getHozSpace({
             left: { elem: container, edge: "left" },
             right: { elem: wedElem, edge: "left" }
         })
         await blocksContainer.evaluate((elem: HTMLElement) => elem.scrollLeft = elem.scrollWidth)
 
-        const newDistFromLeft = await getHozDistanceBetweenTwoElems({
+        const newDistFromLeft = await getHozSpace({
             left: { elem: container, edge: "left" },
             right: { elem: wedElem, edge: "left" }
         })

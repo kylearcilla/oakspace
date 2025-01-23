@@ -5,7 +5,8 @@
     export let idx: number
     export let pickedItem: string | number | undefined
     export let onOptionClicked: (e: Event, optnIdx: number, name: string) => void
-    export let onOptionPointerLeave: ((e: PointerEvent, option: DropdownOption) => void) | undefined = undefined
+    export let onItemPointerOver: ((e: PointerEvent, option: DropdownOption) => void)
+    export let onItemPointerLeave: ((e: PointerEvent, option: DropdownOption) => void)
 
     const { rightIcon, leftIcon, name } = option
 </script>
@@ -14,11 +15,11 @@
     class="dmenu__option"
     class:dmenu__option--selected={pickedItem === name || pickedItem === idx}
     data-optn-idx={idx}
-    on:pointerenter={option.onPointerOver}
-    on:pointerleave={(e) => {
-        if (onOptionPointerLeave) {
-            onOptionPointerLeave(e, option)
-        }
+    on:pointerenter={(e) => {
+        onItemPointerOver(e, option)
+    }}
+    on:pointerleave|self={(e) => {
+        onItemPointerLeave(e, option)
     }}
 >
     <button 

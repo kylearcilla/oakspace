@@ -172,25 +172,26 @@ type OffsetPoint = {
 }
 
 type HotKeyCombo = string[]
-type DropDownOptionIconType = "default" | "fa" | "logo" | "unit" | "hotkey" | "right-arrow" | "check"
+type DropDownOptionIconType = "default" | "fa" | "logo" | "unit" | "hotkey" | "right-arrow" | "check" | "svg"
 type DropdownOptnIcon = {
     type: DropDownOptionIconType
-    icon?: string | HotKeyCombo | LogoIcon
+    icon?: string | HotKeyCombo | LogoIcon | Icon
     logoColored?: boolean
     styling?: StylingOptions   
+    transform?: string
 }
 
 type DropdownOption = {
     name: string,
     leftIcon?: DropdownOptnIcon
     rightIcon?: DropdownOptnIcon
-    onPointerOver?: FunctionParam
-    onPointerLeave?: FunctionParam
+    onPointerOver?: ({ e: PointerEvent, item: DropdownOption, childLeft: number }) => void
+    onPointerLeave?: ({ e: PointerEvent, item: DropdownOption }) => void
+    divider?: boolean
 }
 
 type DropdownOptionSection = {
     sectionName?: string
-    options: DropdownOption[]
 }
 
 type DOMQueryOption = "id" | "class" | "tag"
@@ -226,7 +227,10 @@ type DropdownItemClickedContext = {
 
 type DropdownListOptions = {
     listItems: DropdownListItem[]
-    childId?: string
+    parentContext?: {
+        container: HTMLElement
+        childId: string
+    }
     parent?: {
         id: string,
         optnIdx: number
@@ -1156,6 +1160,7 @@ type DueType = "day" | "month" | "quarter" | "year" | "someday"
 type GoalStatus = "not-started" | "in-progress" | "accomplished"
 
 type Goal = {
+  id: string
   name: string
   due?: Date
   dueType?: DueType
@@ -1167,12 +1172,14 @@ type Goal = {
   imgSrc?: string
   isPinned?: boolean
   bOrder: { 
+    default: number
     status: number
     tag: number
   }
 }
 
 type Milestone = {
+    id: string
     name: string
     idx: number
     done: boolean

@@ -1,6 +1,8 @@
 import { GoalStatus } from "./enums"
 import { COLOR_SWATCHES } from "./utils-colors"
 import { generateHabitData } from "./utils-habits"
+import { v4 as uuidv4 } from 'uuid'
+
 
 /* tags */
 export const TEST_TAGS: Tag[] = [
@@ -86,6 +88,24 @@ export const TEST_TAGS: Tag[] = [
         emoji: "🌁"
       }
     },
+    {
+      id: "",
+      orderIdx: 9,
+      name: "Travel",
+      symbol: {
+        color: COLOR_SWATCHES[4],
+        emoji: "🏔️"
+      }
+    },
+    {
+      id: "",
+      orderIdx: 10,
+      name: "Reading",
+      symbol: {
+        color: COLOR_SWATCHES[7],
+        emoji: "📖"
+      }
+    }
 ]
 
 /* sessions */
@@ -96,7 +116,7 @@ export const TEST_SESSIONS: Session[] = [
       mode: "pom",
       focusTime: 1500, // 25 minutes
       breakTime: 300,  // 5 minutes
-      startTime: new Date(2024, 8, 5, 9, 0), // September 5, 2024, 9:00 AM
+      startTime: new Date(2025, 8, 5, 9, 0), // September 5, 2024, 9:00 AM
       todos: [],
       allowChime: true,
       allowSfx: true,
@@ -255,80 +275,94 @@ export const TEST_TASKS: Task[] = [
 /* goals */
 export const TEST_GOALS: Goal[] = [
   {
-    name: "Finish French Level 2",
-    due: new Date("2024-11-10"),
+    id: uuidv4(),
+    name: "Reach conversational fluency in French",
+    due: new Date("2025-1-31"),
     dueType: "month",
-    description: "Finish all lessons and exercises in the Level 2 French course.",
+    description: "Reach conversational fluency in French by the end of the year.",
     tag: TEST_TAGS[0],
-    creationDate: new Date("2024-01-15"),
+    creationDate: new Date("2025-01-15"),
     status: "in-progress",
     bOrder: {
+     default: 0,
      status: 0,
      tag: 0
     },
     milestones: [
       {
+        id: uuidv4(),
         name: "Complete Module 1",
         done: true,
         idx: 0
       },
       {
+        id: uuidv4(),
         name: "Memorize all vocab",
         done: false,
         idx: 1
       },
       {
+        id: uuidv4(),
         name: "Master listening exercises",
         done: false,
         idx: 2
       },
       {
+        id: uuidv4(),
         name: "Listen and master one episode of Dix Pour Cent",
         done: false,
-        idx: 4
+        idx: 3
       },
     ]
   },
   {
-    name: "Run a Half Marathon",
-    due: new Date("2024-11-10"),
+    id: uuidv4(),
+    name: "Run a 6 minute mile",
+    due: new Date("2025-1-10"),
     dueType: "day",
-    description: "Train and complete a half marathon race.",
-    tag: TEST_TAGS[1],
-    creationDate: new Date("2024-02-10"),
-    status: "in-progress",
-    imgSrc: "https://i.pinimg.com/564x/85/3a/9d/853a9dff815bfa3c458d2f60c2dd929f.jpg",
+    description: "Run a 6 minute mile by the end of the year.",
+    tag: TEST_TAGS[6],
+    creationDate: new Date("2025-02-10"),
+    status: "not-started",
+    imgSrc: "",
     bOrder: {
-     status: 1,
+     default: 1,
+     status: 0,
      tag: 0
     },
     milestones: [
       {
+        id: uuidv4(),
         name: "Run 5K without stoppping",
         done: true,
         idx: 0
       },
       {
+        id: uuidv4(),
         name: "Complete a 10k practice run",
         done: true,
         idx: 1
       },
       {
+        id: uuidv4(),
         name: "Do 10 hill runs",
         done: true,
         idx: 2
       },
       {
+        id: uuidv4(),
         name: "Reach 15l distance",
         done: false,
         idx: 3
       },
       {
+        id: uuidv4(),
         name: "Run 18k in under 2  hoursw",
         done: false,
         idx: 4
       },
       {
+        id: uuidv4(),
         name: "Final practice: 20k",
         done: false,
         idx: 5
@@ -336,75 +370,162 @@ export const TEST_GOALS: Goal[] = [
     ]
   },
   {
+    id: uuidv4(),
+    name: "Go hiking in Iceland",
+    description: "Trek through Iceland's epic landscapes with glaciers, volcanoes, and hidden hot springs.",
+    creationDate: new Date("2025-01-01"),
+    due: new Date("2025-1-31"),
+    status: "not-started",
+    imgSrc: "https://i.pinimg.com/736x/e7/cb/8a/e7cb8a6fd5c308575b3261262e85965d.jpg",
+    tag: TEST_TAGS[9],
+    bOrder: {
+     default: 2,
+     status: 1,
+     tag: 0
+    }
+  },
+  {
+    id: uuidv4(),
+    name: "Master 7 recipes",
+    description: "Time to up my cooking game ! Want to nail both Asian stir-fries and Italian pasta - gonna master 7 go-to dishes I can actually be proud of. Thinking everything from homemade noodles to the perfect risotto.",
+    creationDate: new Date("2025-01-31"),
+    status: "accomplished",
+    imgSrc: "https://i.pinimg.com/736x/47/b5/9a/47b59ab91d55bff20784f30b12183476.jpg",
+    tag: TEST_TAGS[3],
+    milestones: [
+      {
+        id: uuidv4(),
+        name: "Ramen",
+        done: true,
+        idx: 0
+      },
+      {
+        id: uuidv4(),
+        name: "Spaghetti",
+        done: true,
+        idx: 1
+      },
+      {
+        id: uuidv4(),
+        name: "Sushi Rolls",
+        done: false,
+        idx: 2
+      },
+      {
+        id: uuidv4(),
+        name: "Risotto",
+        done: true,
+        idx: 3
+      },
+      {
+        id: uuidv4(),
+        name: "Beef Pho",
+        done: false,
+        idx: 4
+      },
+      {
+        id: uuidv4(),
+        name: "Butter Chicken",
+        done: true,
+        idx: 5
+      },
+      {
+        id: uuidv4(),
+        name: "Dim Sum",
+        done: true,
+        idx: 6
+      }
+    ],
+    bOrder: {
+     default: 3,
+     status: 1,
+     tag: 0
+    }
+  },
+  {
+    id: uuidv4(),
     name: "Read 12 Books This Year",
-    due: new Date("2024-12-31"),
+    due: new Date("2025-12-31"),
     dueType: "year",
     description: "Read one book every month and complete all 12 by the end of the year.",
-    tag: TEST_TAGS[2],
-    creationDate: new Date("2024-01-01"),
-    status: "not-started",
-    imgSrc: "https://i.pinimg.com/enabled/564x/34/84/0a/34840a5cb9734c02dc1aa919c99afe31.jpg",
+    tag: TEST_TAGS[10],
+    creationDate: new Date("2025-01-01"),
+    status: "in-progress",
+    imgSrc: "https://i.pinimg.com/736x/49/b5/9d/49b59d5866a63a2fe0bb03ea05ce649d.jpg",
     bOrder: {
-     status: 0,
+     default: 4,
+     status: 1,
      tag: 0
     },
     milestones: [
       {
+        id: uuidv4(),
         name: "The Hobbit",
         done: false,
         idx: 0
       },
       {
+        id: uuidv4(),
         name: "Eleanor Oliphant Is Completely Fine",
-        done: false,
+        done: true,
         idx: 1
       },
       {
+        id: uuidv4(),
         name: "Where the Crawdads Sing",
-        done: false,
+        done: true,
         idx: 2
       },
       {
+        id: uuidv4(),
         name: "Pride and Prejudice",
-        done: false,
+        done: true,
         idx: 3
       },
       {
+        id: uuidv4(),
         name: "The Night Circus",
-        done: false,
+        done: true,
         idx: 4
       },
       {
+        id: uuidv4(),
         name: "A Man Called Ove",
         done: false,
         idx: 5
       },
       {
+        id: uuidv4(),
         name: "Little Fires Everywhere",
         done: false,
         idx: 6
       },
       {
+        id: uuidv4(),
         name: "The Great Gatsby",
         done: false,
         idx: 7
       },
       {
+        id: uuidv4(),
         name: "Normal People",
         done: false,
         idx: 8
       },
       {
+        id: uuidv4(),
         name: "Big Little Lies",
         done: false,
         idx: 9
       },
       {
+        id: uuidv4(),
         name: "The Fellowship of the Ring",
         done: false,
         idx: 10
       },
       {
+        id: uuidv4(),
         name: "The Rosie Project",
         done: false,
         idx: 11
@@ -412,29 +533,20 @@ export const TEST_GOALS: Goal[] = [
     ]
   },
   {
-    name: "Launch Personal Blog",
-    due: new Date("2024-11-10"),
+    id: uuidv4(),
+    name: "Finish porfolio website",
+    due: new Date("2025-1-10"),
     dueType: "quarter",
-    description: "Create and launch a personal blog by the end of Q3 with 5 initial articles.",
-    tag: TEST_TAGS[3],
-    creationDate: new Date("2024-03-01"),
+    description: "Create the best most beautiful most gorgeous portfolio website oat.",
+    tag: TEST_TAGS[1],
+    creationDate: new Date("2025-03-01"),
     status: "accomplished",
     bOrder: {
+     default: 5,
      status: 0,
      tag: 0
     }
-  },
-  {
-    name: "Get that dream house",
-    description: "",
-    creationDate: new Date("2024-01-01"),
-    status: "not-started",
-    tag: TEST_TAGS[8],
-    bOrder: {
-     status: 1,
-     tag: 0
-    }
-  },
+  }
 ]
 
 /* habits*/

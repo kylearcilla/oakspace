@@ -1,0 +1,45 @@
+.goal-m {
+    @include flex(flex-start);
+    margin-bottom: 13px;
+    transition: 0.18s cubic-bezier(.4, 0, .2, 1);
+    position: relative;
+
+    &:active {
+        transform: scale(0.995);
+    }
+    &:hover &__title {
+        opacity: 0.75;
+    }
+    &:hover &__title.strike {
+        opacity: 0.35 !important;
+    }
+
+    &__title {
+        @include text-style(1, 400, 1.3rem, "Geist Mono");
+        cursor: pointer;
+        opacity: 0.55;
+        position: relative;
+        padding-bottom: 1px;
+        @include truncate-lines(3);
+    }
+    &__title.strike {
+        opacity: 0.25 !important;
+    }
+    &__date {
+        margin: 4px 0px 0px 0px;
+        @include text-style(0.2, 400, 1.3rem, "Geist Mono");
+    }
+    &__left {
+        @include square(14px);
+        @include center;
+        margin: 3px 10px 0px -5px;
+    }
+    &__bullet {
+        @include square(6px, 10px);
+        background-color: rgba(var(--textColor1), 0.15);
+    }
+    i {
+        font-size: 1.2rem;
+        opacity: 0.4;
+    }
+}

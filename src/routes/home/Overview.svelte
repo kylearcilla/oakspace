@@ -656,39 +656,6 @@
         span {
             @include text-style(0.78, 500, 1.2rem);
         }
-        &__box {
-            height: 62px;
-            margin-right: 7px;
-            border-radius: 8px;
-            text-align: center;
-            width: 50%;
-            background-color: rgba(var(--textColor1), 0.02);
-
-            &:hover {
-                box-shadow: rgba(#FFFFFF, 0.05) 0px 0px 0px 2px inset, 
-                            rgba(#FFFFFF, 0.02) 0px 0px 0px 2.5px;
-                background-color: rgba(var(--textColor1), 0.03);
-            }
-            &--selected {
-                box-shadow: rgba(#0C8CE9, 0.35) 0px 0px 0px 2px inset, 
-                            rgba(#0C8CE9, 0.1) 0px 0px 0px 2.5px !important;
-                background-color: rgba(var(--textColor1), 0.02) !important;
-            }
-            &--selected i,
-            &--selected span {
-                opacity: 1 !important;
-                color: #0C8CE9 !important;
-            }
-            i {
-                font-size: 1.5rem;
-                margin-bottom: 6px;
-                opacity: 0.2;
-            }
-            span {
-                @include text-style(_, 400, 1.1rem, "DM Mono");
-                opacity: 0.65;
-            }
-        }
         &__toggle-optn {
             padding: 6px 7px 7px 7px;
             width: 100%;

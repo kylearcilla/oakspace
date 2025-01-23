@@ -1,190 +1,129 @@
 <script lang="ts">
-	import { TEST_GOALS } from "$lib/mock-data"
-	import GoalCard from "../../../components/GoalCard.svelte";
-	import ProgressRing from "../../../components/ProgressRing.svelte";
-	import { themeState } from "../../../lib/store";
-	import { getTagFromName, kebabToNormal } from "../../../lib/utils-general";
+	import { onMount } from "svelte";
     import { getColorTrio } from "$lib/utils-colors"
-	import { getSectionProgress, reorderGoals, sectionGoals } from "../../../lib/utils-goals"
+	import GoalCard from "../../../components/GoalCard.svelte";
+	import { getTagFromName, kebabToNormal } from "../../../lib/utils-general";
+	import { themeState } from "../../../lib/store";
 
-    export let options: {
-        grouping?: "tag" | "status"
-    } | undefined = undefined
+    export let manager: GoalsManager
+    export let grouping: "tag" | "status" | "default"
+    export let pinnedGoal: Goal
 
-    let goals = TEST_GOALS
-    let sortedGoals: Goal[][] = []
-    let grouping = options?.grouping ?? "status"
-
-    const tags: Tag[] = Array.from(new Set(TEST_GOALS.map(goal => goal.tag)))
-    const tagsStr     = tags.map((tag) => tag.name)
-    const statuses    = ["not-started", "in-progress", "accomplished"]
-
-    let isDragging = false
-    let dragGoalSrc: Goal | null = null
-    let dragGoalTarget: Goal | null = null
-
-    let sections = statuses    
-    let sectionMap: { [key: string]: number } 
+    let store: GoalsViewState | null = null
+    let containerRef: HTMLElement
+    let width = 0
 
     $: isLight = !$themeState.isDarkTheme
-    $: if (options?.grouping) {
-        initSections()
-    }
 
-    function initSections() {
-        grouping = options.grouping
-        if (grouping === "status") {
-            sections = statuses
-        }
-        else {
-            sections = tagsStr
-        }
-        initSecMap()
-        sortGoals()
+    $: if (grouping) {
+        manager.initSections(grouping)
     }
-    function initSecMap() {
-        sectionMap = {}
-        sections.forEach((name, idx) => sectionMap[name] = idx)
+    $: if (manager.state) {
+        manager.state.subscribe((data) => {
+            store = data
+        })
     }
-    function sortGoals() {
-        sortedGoals = []
-        sortedGoals = sectionGoals({ sections, goals, grouping })
-    }
-
-    /* drag */
-    function onGoalDrag(e: DragEvent, goal: any) {
-        e.dataTransfer.effectAllowed = "move"
-
-        if (!isDragging) {
-            e.preventDefault()
-            return
-        }
-
-        dragGoalSrc = goal
-    }
-    function onGoalDragOver(e: DragEvent, target: any) {
-        e.preventDefault()
-
-        if (typeof target == "string") {
-            dragGoalTarget = target
-        }
-        if (target?.name != dragGoalSrc?.name) {
-            dragGoalTarget = target
-        }
-    }
-    function onDragLeave() {
-        dragGoalTarget = null
-    }
-    function onGoalDragEnd() {
-        if (dragGoalTarget) {
-            reorderBoard(dragGoalSrc, dragGoalTarget)
-        }
-        isDragging = false
-        dragGoalSrc = null
-        dragGoalTarget = null
-    }
-    function reorderBoard(srcGoal: Goal | string, target: Goal | string) {
-        reorderGoals({ srcGoal, target, goals, grouping, sectionMap })
-        sortGoals()
-    }
-    
+    onMount(() => manager.initContainerRef(containerRef))
 </script>
 
 <div 
+    bind:this={containerRef}
+    bind:clientWidth={width}
     class="goals"
     class:goals--light={isLight}
     class:goals--tag-view={grouping === "tag"}
 >
-    {#each sections as section, secIdx (secIdx)}
-        {@const sec = kebabToNormal(section)}
-        {@const goals = sortedGoals[secIdx]}
-        {@const isTag    = grouping === "tag"}
-        {@const tag      = isTag ? getTagFromName(sec) : undefined}
-        {@const tagColor = isTag ? getColorTrio(tag.symbol.color, isLight) : ["", "", ""]}
-        {@const { done, total } = getSectionProgress({ sortedGoals, secIdx })}
+    {#if store}
+        {@const { sortedGoals, sections, dragTarget, editGoal, pinnedGoal } = store }
 
-        <div class="goals__col">
-            <div class="goals__col-header">
-                <div 
-                    class={`goals__col-name-container goals__col-name-container--${section}`}
-                    class:tag={isTag}
-                    class:tag--light={isTag && isLight}
-                    style:--tag-color-primary={tag?.symbol.color.primary}
-                    style:--tag-color-1={tagColor[0]}
-                    style:--tag-color-2={tagColor[1]}
-                    style:--tag-color-3={tagColor[2]}
-                >
+        {#each sections as section, secIdx (secIdx)}
+            {@const sec = kebabToNormal(section)}
+            {@const goals = sortedGoals[secIdx]}
+            {@const isTag    = grouping === "tag"}
+            {@const tag      = isTag ? getTagFromName(sec) : undefined}
+            {@const tagColor = isTag ? getColorTrio(tag.symbol.color, isLight) : ["", "", ""]}
+            {@const { done, total } = manager.getSectionProgress(secIdx)}
+
+            <div class="goals__col">
+                <div class="goals__col-header">
                     <div 
-                        class="goals__col-icon"
-                        class:tag__symbol={isTag}
-                    >
-                        {#if isTag}
-                            {tag.symbol.emoji}
-                        {:else}
-                            {secIdx === 0 ? "📌" : secIdx === 1 ? "✍️" : "🎉"}
-                        {/if}
-                    </div>
-                    <div class="goals__col-name" class:tag__title={isTag}>
-                        {sec}
-                    </div>
-                </div>
-                <div class="goals__col-count flx">
-                    {#if !isTag}
-                        {sortedGoals[secIdx].length}
-                    {:else if total > 0}
-                        <div class="fraction">
-                            {Math.floor(done / total * 100)}%
-                        </div>
-                        <div class="goals__progress-ring">
-                            <ProgressRing 
-                                progress={done / total} 
-                                options={{ style: "rich-colored" }}    
-                            />
-                        </div>
-                    {/if}
-                </div>
-            </div>
-            <div class="goals__list">
-                {#each goals as goal (goal.name + `${secIdx}`)}
-                    <div 
-                        draggable="true"
-                        on:dragstart={(e) => onGoalDrag(e, goal)}
-                        on:dragover={(e) => onGoalDragOver(e, goal)}
-                        on:dragleave={onDragLeave}
-                        on:dragend={onGoalDragEnd}
-                        class="goals__goal dg-over-el"
-                        class:dg-over-el--over={dragGoalTarget?.name === goal.name}
+                        class={`goals__col-name-container goals__col-name-container--${section}`}
+                        class:tag={isTag}
+                        class:tag--light={isTag && isLight}
+                        style:--tag-color-primary={tag?.symbol.color.primary}
+                        style:--tag-color-1={tagColor[0]}
+                        style:--tag-color-2={tagColor[1]}
+                        style:--tag-color-3={tagColor[2]}
                     >
                         <div 
-                            class="goals__goal-handle"
-                            on:pointerdown={() => isDragging = true}
-                            on:pointerup={() => isDragging = false}    
+                            class="goals__col-icon"
+                            class:tag__symbol={isTag}
                         >
+                            {#if isTag}
+                                {tag.symbol.emoji}
+                            {:else}
+                                {secIdx === 0 ? "📌" : secIdx === 1 ? "✍️" : "🎉"}
+                            {/if}
                         </div>
-                        <GoalCard 
-                            {goal} 
-                            onClick={() => {}}
-                            options={{ 
-                                img: true, 
-                                due: false,
-                                tag: grouping === "status",
-                                completed: sec === "Accomplished", 
-                                progress: "default"
-                        }}
-                        />
+                        <div class="goals__col-name" class:tag__title={isTag}>
+                            {sec}
+                        </div>
                     </div>
-                {/each}
-                <div 
-                    on:dragover={(e) => onGoalDragOver(e, section)}
-                    on:dragleave={onDragLeave}
-                    on:dragend={onGoalDragEnd}
-                    class="goals__goal goals__goal--ghost dg-over-el"
-                    class:dg-over-el--over={dragGoalTarget === section}
-                >
+                    <div class="goals__col-count flx">
+                        {#if !isTag}
+                            {sortedGoals[secIdx].length}
+                        {:else if total > 0}
+                            <div class="fraction">
+                                {Math.floor(done / total * 100)}%
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+                <div class="goals__list">
+                    {#each goals as goal (goal.id)}
+                        <div 
+                            draggable="true"
+                            data-idx={goal.bOrder.status}
+                            class="goals__goal dg-over-el"
+                            class:dg-over-el--over={dragTarget?.name === goal.name}
+                            class:hidden={pinnedGoal?.id === goal.id}
+                            on:dragstart={(e) => manager.onDrag(e, goal)}
+                            on:dragover={(e) => manager.onDragOver(e, goal)}
+                            on:dragleave={(e) => manager.onDragLeave(e)}
+                            on:dragend={(e) => manager.onDragEnd(e)}
+                            on:contextmenu={(e) => manager.onContextMenu(e, goal)}
+                        >
+                            <div 
+                                class="goals__goal-handle"
+                                on:pointerdown={() => manager.setDragState("goal")}
+                                on:pointerup={() => manager.setDragState(null)}    
+                            >
+                            </div>
+                            <GoalCard 
+                                {goal} 
+                                highlighted={editGoal?.id === goal.id}
+                                options={{ 
+                                    img: true, 
+                                    due: false,
+                                    tag: grouping === "status",
+                                    completed: sec === "Accomplished", 
+                                    progress: "default",
+                                }}
+                            />
+                        </div>
+                    {/each}
+                    <div 
+                        class="goals__goal goals__goal--ghost dg-over-el"
+                        class:dg-over-el--over={dragTarget === section}
+                        on:dragover={(e) => manager.onDragOver(e, section)}
+                        on:dragleave={(e) => manager.onDragLeave(e)}
+                        on:dragend={(e) => manager.onDragEnd(e)}
+                    >
+                    </div>
                 </div>
             </div>
-        </div>
-    {/each}
+        {/each}
+    {/if}
 </div>
 
 <style lang="scss">
@@ -214,8 +153,9 @@
         }
 
         &__col {
-            min-width: 190px;
-            margin-right: 25px;
+            min-width: 205px;
+            max-width: 205px;
+            margin-right: 15px;
         }
         &__col-header {
             @include flex(center, space-between);
@@ -230,7 +170,7 @@
             color: white !important;
         }
         &__col-name-container {
-            @include text-style(_, 500, 1.28rem);
+            @include text-style(_, 400, 1.2rem, "Geist Mono");
             display: flex;
             padding: 4px 15px 5px 10px !important;
             border-radius: 8px;
@@ -250,11 +190,11 @@
             }
         }
         &__col-count {
-            @include text-style(0.35, 400, 1.25rem, "DM Sans");
+            @include text-style(0.35, 400, 1.25rem, "Geist Mono");
         }
         &__list {
             position: relative;
-            max-width: 205px;
+            width: 210px;
         }
         &__goal {
             position: relative;
@@ -265,8 +205,8 @@
             }
         }
         .fraction {
-            margin: -3px 7px 0px 0px;
-            opacity: 0.7;
+            margin: -3px 0px 0px 0px;
+            opacity: 0.4;
         }
         &__goal-handle {
             width: 100%;

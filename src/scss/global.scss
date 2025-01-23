@@ -195,6 +195,7 @@ $screen-xl: 112.5em;   // extra large (1800 px)
     display: -webkit-box;
     -webkit-line-clamp: $line_number;
     -webkit-box-orient: vertical;
+    word-break: break-word;
     overflow: hidden;
 }
 @mixin trans-text($color, $opacity) {
@@ -963,15 +964,12 @@ $settings-modal-padding: 20px 25px 25px 25px;
         font-weight: 600;
     }
     &__symbol {
-        font-size: 0.85rem;
+        color: white !important;
         margin-right: 7px;
-        height: 10px;
-        width: 10px;
         cursor: text;
         @include center;
     }
     &__title {
-        @include text-style(_, 500, 1.18rem);
         color: rgba(var(--tag-color-1), 1);
         cursor: text;
         max-width: 120px;
@@ -985,12 +983,16 @@ $settings-modal-padding: 20px 25px 25px 25px;
     user-select: none; 
 }
 
-.no-pointer-events {
+.no-pointer-events-all {
     pointer-events: none !important;
     
     * {
         pointer-events: none !important;
     }
+}
+
+.no-pointer-events {
+    pointer-events: none !important;
 }
 
 $loading-dots-width: 4px;
@@ -1031,7 +1033,7 @@ $loading-dots-width: 4px;
     }
 }
 
-.no-pointer-events {
+.no-pointer-events-all {
     pointer-events: none !important;
 }
 
@@ -1095,7 +1097,7 @@ $loading-dots-width: 4px;
 }
 
 .fraction {
-    @include text-style(0.7, 500, 1.35rem, "DM Sans");
+    @include text-style(0.7, 400, 1.35rem, "Geist Mono");
     @include flex(center);
     
     &__slash {

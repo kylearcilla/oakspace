@@ -306,17 +306,21 @@
             &:nth-child(5) {
                 margin-bottom: 14px;
             }
+        }
+        &__seeting-open-space-btn {
+            @include center;
+            background-color: rgba(white, 0.025);
+            @include text-style(1, 500, 1.24rem);
+            width: 100%;
+            padding: 4px 4px 6px 4px;
+            height: 16.5px;
+            border-radius: 10px;
+            margin-left: -7px;
 
-            &-open-space-btn {
-                @include center;
-                background-color: rgba(white, 0.025);
-                @include text-style(1, 500, 1.24rem);
-                width: 100%;
-                padding: 4px 4px 6px 4px;
-                height: 16.5px;
-                border-radius: 10px;
-                margin-left: -7px;
+            &:hover{
+                display: none;
             }
+
         }
         &__setting-toggle {
             @include flex(center, space-between);

@@ -5,7 +5,7 @@
     import { clamp, clickOutside } from "$lib/utils-general"
 	import { ShortcutSectionInFocus, Icon } from "$lib/enums"
     import { globalContext, themeState, timer } from "$lib/store"    
-	import { getVertDistanceBetweenTwoElems } from "../../lib/utils-general";
+	import { getVertSpace } from "../../lib/utils-general";
 	import { formatDatetoStr, formatTimeToHHMM, isNightTime, prefer12HourFormat } from "$lib/utils-date"
 
 	import Overview from "./Overview.svelte"
@@ -55,7 +55,7 @@
         requestAnimationFrame(() => topOffset = 0)
     }
     $: if (headerHeight) {
-        headerOffset = getVertDistanceBetweenTwoElems({
+        headerOffset = getVertSpace({
             top:   { 
                 elem: barRef,
                 edge: "top"

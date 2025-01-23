@@ -82,7 +82,7 @@
                 {:else if marginView === "quarter"}
                     Q{getQuarter(today)}
                 {:else if marginView === "year"}
-                    This Year
+                    {today.getFullYear()}
                 {/if}
             </button>
         </div>
@@ -104,7 +104,7 @@
                     <div class="habits__stat">
                         <span>Streak</span>
                         <span>
-                            {formatPlural("day", streak)}
+                            {streak}d
                         </span>
                     </div>
                 </div>
@@ -112,25 +112,26 @@
             </div>
         <!-- goals view -->
         {:else}
-            <div class="goals-list">
+            <div style:margin="1px 0px 0px 2px">
                 {#each TEST_GOALS as goal}
                     {@const done = goal.status === "accomplished"}
-                    <div class="goal-item">
-                        <div 
-                            class="goal-item__symbol"
-                            style:opacity={done ? 0.35 : 1}
-                        >
-                            {goal.tag.symbol.emoji}
+                    <div class="goal-m">
+                        <div class="goal-m__left">
+                            {#if done}
+                                <div class="goal-m__check">
+                                    <i class="fa-solid fa-check"></i>
+                                </div>
+                            {:else}
+                                <div class="goal-m__bullet"></div>
+                            {/if}
                         </div>
-                        <!-- svelte-ignore a11y-missing-attribute -->
                         <div 
-                            class="goal-item__title"
+                            class="goal-m__title"
                             class:strike={done}
+                            title={goal.name}
                         >
                             {goal.name}
                         </div>
-                        <i class="fa-solid fa-check" class:hidden={!done}>
-                        </i>
                     </div>
                 {/each}
             </div>
@@ -190,6 +191,8 @@
 </div>
 
 <style lang="scss">
+    @import "../../../scss/goals.scss";
+
     .margin {
         width: 100%;
         &__context {
@@ -206,7 +209,7 @@
             margin: 5px 0px 5px 4px;
         }
         &__context-btn {
-            @include text-style(1, 400, 1.55rem, "DM Mono");
+            @include text-style(1, 400, 1.55rem, "Geist Mono");
             padding: 5px 12px 6px 11px;
             margin-left: -11px;
             border-radius: 12px;
@@ -230,7 +233,7 @@
         }
         &__context-count {
             opacity: 0.2;
-            font-family: "DM MOno";
+            font-family: "Geist Mono";
             font-weight: 400;
         }
         &__context-list {
@@ -259,8 +262,9 @@
         }
     }
     .habits {
+        margin-top: -4px;
         &__details {
-            margin: 0px 0px 10px 0px;
+            margin: 6px 0px 10px 0px;
             padding: 0px 0px 10px 0px;
             border-bottom: 0.5px solid rgba(var(--textColor1), 0.06);
         }
@@ -273,49 +277,11 @@
             }
         }
         span {
-            @include text-style(0.3, 500, 1.4rem);
+            @include text-style(0.3, 400, 1.4rem, "Geist Mono");
             
             &:last-child {
-                @include text-style(0.5, 400, 1.4rem, "DM Mono");
+                @include text-style(0.5);
             }
-        }
-    }
-
-    .goals-list {
-        margin-top: 10px;
-    }
-    .goal-item {
-        @include flex(center);
-        margin-bottom: 13px;
-        transition: 0.18s cubic-bezier(.4, 0, .2, 1);
-        position: relative;
-
-        &:active {
-            transform: scale(0.995);
-        }
-        &:hover &__title {
-            opacity: 0.7 !important;
-        }
-        &__symbol {
-            margin-right: 15px;
-            font-size: 1.4rem;
-            overflow: hidden;
-        }
-        &__title {
-            @include text-style(1, 500, 1.4rem);
-            cursor: pointer;
-            opacity: 0.55;
-            position: relative;
-            padding-bottom: 1px;
-            border-bottom: 0.5px solid rgba(var(--textColor1), 0.18);
-        }
-        &__title.strike {
-            opacity: 0.25 !important;
-        }
-        i {
-            font-size: 1.4rem;
-            opacity: 0.4;
-            @include abs-top-right(0px, 0px)
         }
     }
 </style>

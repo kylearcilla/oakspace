@@ -70,7 +70,7 @@ export function generateHabitData(date = new Date()) {
             if (checkDate > today) {
                 continue
             }
-            if (false) {
+            if (habitCompleted) {
                 yearData[monthKey] |= (1 << day)
             }
         }
@@ -183,17 +183,22 @@ export function getHabitWeekProgress(habit: Habit, weeksAgoIdx: number) {
     const bitsStr  = getHabitWeekBits(habit, weeksAgoIdx)
     let checked = 0, total = 0
 
+    console.log(habit.name, "=======")
+
     if (freqType === 'daily') {
         checked = countBitsStr(bitsStr)
         total = 7
     }
     else if (freqType === 'day-of-week') {
         for (let i = 0; i < 7; i++) {
-            if (toBitString(frequency)[i] === '1') {
-                total++
-            }
-            if (bitsStr[i] === '1') {
+            const required = isDowIdxRequired(frequency, i)
+            const done = bitsStr[i] === '1'
+
+            if (required && done) {
                 checked++
+            }
+            if (required) {
+                total++
             }
         }
     }
@@ -218,7 +223,7 @@ export function getDaysProgress(habits: any[], weeksAgoIdx: number) {
             const required = requiredDays[i] === 1
             const completed = weekBits[i] === '1'
 
-            n[i][0] += completed ? 1 : 0
+            n[i][0] += completed && required ? 1 : 0
             n[i][1] += required ? 1 : 0
         }
     }
@@ -250,12 +255,13 @@ export function getHabitStreak(habit: Habit) {
         const weekBits = data.slice(idx, idx + 7)
         const checkedDays = countBitsStr(weekBits)
 
-        /* today: ++ streak only if its unbroken from today */
+        /* daily: ++ streak only if its unbroken from before today */
         if (freqType === "daily") {
             for (let i = lastIdx; i >= 0; i--) {
                 const completed = weekBits[i] === '1'
                 const today = i === lastIdx && currWeek
                 
+                // add today's if its complete
                 if (completed) {
                     streak++
                 }
@@ -754,10 +760,6 @@ export function getMonthHeatMap({ monthIdx, year }: { monthIdx: number, year: nu
 
 /* utils */
 
-export function toBitString(bits: number, padEnd = 7) {
-    return bits.toString(2).padEnd(padEnd, '0')
-}
-
 function countBitsStr(bitsStr: string) {
     return bitsStr.split('').filter(bit => bit === '1').length
 }
@@ -1010,8 +1012,4 @@ export function printChunk(chunkKey: string, bits: number) {
     const monthName = new Date(parseInt(year), parseInt(month) - 1)
         .toLocaleString('default', { month: 'short' })
     console.log(`\n${monthName} ${year}: ${bitsStr}`)
-}
-
-export function printBits(bits: number) {
-    console.log(toBitString(bits))
 }

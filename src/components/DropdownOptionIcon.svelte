@@ -4,6 +4,7 @@
 
 	import Logo from "./Logo.svelte"
 	import Hotkeys from "./Hotkeys.svelte"
+	import SvgIcon from "./SVGIcon.svelte";
 
     export let left: boolean = true
     export let icon: DropdownOptnIcon
@@ -19,6 +20,9 @@
     function getLogo() {
         return icon.icon as LogoIcon
     }
+    function getSvgIcon() {
+        return icon.icon as Icon
+    }
 </script>
 
 <div class:dmenu__option-right-icon-container={!left}>
@@ -26,11 +30,10 @@
         class={`dmenu__option-icon dmenu__option-icon--${type}`}
         class:dmenu__option-icon--left={left}
         style={`${inlineStyling(icon?.styling)}`}
+        style:transform={icon.transform}
     >
-        <!-- Check -->
         {#if type === "fa"}
-            <i class={getDefaultIcon()}>
-            </i>
+            <i class={getDefaultIcon()}></i>
         {:else if type === "logo"}
             <Logo 
                 logo={getLogo()}
@@ -40,6 +43,12 @@
                     colored: icon.logoColored
                 }}
             />
+        {:else if type === "svg"}
+            <div style:opacity={0.25}>
+                <SvgIcon 
+                    icon={getSvgIcon()} 
+                />
+            </div>
         {:else if type === "hotkey"}
             <Hotkeys hotkeys={getHotkeys()} />
         {:else if type === "check"}

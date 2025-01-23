@@ -1,273 +1,230 @@
 <script lang="ts">
+	import { onMount } from "svelte";
+	import { themeState } from "../../../lib/store"
 
-	import { TEST_GOALS } from "$lib/mock-data"
-	import ProgressBar from "../../../components/ProgressBar.svelte";
-	import ProgressRing from "../../../components/ProgressRing.svelte"
-	import SvgIcon from "../../../components/SVGIcon.svelte";
-	import { Icon } from "../../../lib/enums";
-	import { getDueString } from "../../../lib/utils-date"
-	import { getSectionProgress, reorderGoals, sectionGoals } from "../../../lib/utils-goals"
-	import { kebabToNormal } from "../../../lib/utils-general"
+    import { Icon } from "../../../lib/enums";
 	import { getColorTrio } from '$lib/utils-colors'
-	import { themeState } from "../../../lib/store";
+	import { kebabToNormal } from "../../../lib/utils-general"
 
-    export let options: {
-        grouping?: "tag" | "status" 
-        showMilestones?: boolean
-        progressUi?: "bar" | "circle" 
-    } | undefined = undefined
+	import SvgIcon from "../../../components/SVGIcon.svelte";
+	import ProgressBar from "../../../components/ProgressBar.svelte"
 
-    let goals = TEST_GOALS
-    let sortedGoals: Goal[][] = []
+    export let manager: GoalsManager
+    export let grouping: "tag" | "status" | "default"
+    export let pinnedGoal: Goal
 
     $: isLight = !$themeState.isDarkTheme
-
-    const tags: Tag[] = Array.from(new Set(TEST_GOALS.map(goal => goal.tag)))
-    const tagsStr     = tags.map((tag) => tag.name)
-    const statuses    = ["not-started", "in-progress", "accomplished"]
-
-    let grouping =  "status"
-    let showMilestones = false
-    let progressUi = "circle"
-
-    let sections = statuses
-    let sectionMap: { [key: string]: number } 
-    let closedSections: boolean[] = []
-    let openGoals: boolean[][] = []
-
-    let isDragging = false
-
-    let ms_ReorderGoalSrc: Goal | null = null
-    let dragSrc:    Goal | Milestone | null = null
-    let dragTarget: Goal | Milestone | null = null
-
-
-    $: if (options) {
-        initSections()
-
-        grouping = options?.grouping ?? "status"
-        showMilestones = options?.showMilestones ?? false
-        progressUi = options?.progressUi ?? "circle"
+    
+    let store: GoalsViewState | null = null
+    let dragState: "goal" | "milestone" | null = null
+    let width = 0
+    let containerRef: HTMLElement
+    $: if (grouping) {
+        manager.initSections(grouping)
     }
-
-    function initSections() {
-        grouping = options.grouping
-        if (grouping === "status") {
-            sections = statuses
-        }
-        else {
-            sections = tagsStr
-        }
-        initSecMap()
-        sortGoals()
-    }
-
-    function initSecMap() {
-        sectionMap = {}
-        sections.forEach((name, idx) => sectionMap[name] = idx)
-    }
-    function sortGoals() {
-        sortedGoals = sectionGoals({ sections, goals, grouping })
-        closedSections = Array.from<boolean>({ length: sections.length }).fill(false)
-        sortedGoals.forEach(section => openGoals.push(Array.from<boolean>({ length: section.length }).fill(false))) 
-    }
-
-    function toggleSectionOpen(secIdx: number) {
-        closedSections[secIdx] = !closedSections[secIdx]
-        closedSections = closedSections
-    }
-    function toggleGoalOpen(secIdx: number, goalIdx: number) {
-        openGoals[secIdx][goalIdx] = !openGoals[secIdx][goalIdx]
-        openGoals = openGoals
-    }
-
-    /* completion */
-    function toggleGoalComplete(secIdx: number, gIdx: number) {
-        const section = sortedGoals[secIdx]
-        const goal = section[gIdx]
-
-        goal.status = goal.status === "accomplished" ? "in-progress" : "accomplished"
-
-        if (grouping === "status") {
-            section.splice(gIdx, 1)
-            const newIndex = goal.status === "accomplished" ? 2 : 1
-            sortedGoals[newIndex].push(goal)
-        }
-        if (goal.status === "accomplished") {
-            goal.milestones?.forEach(milestone => milestone.done = true)
-        }
-
-        sortedGoals = sortedGoals
-        sections = sections
-    }
-    function toggleMilestoneComplete(secIdx: number, goalIdx: number, msIdx: number) {
-        const goal = sortedGoals[secIdx][goalIdx]
-        const milestones = goal.milestones
-        milestones[msIdx].done = !milestones[msIdx].done
-
-        sortedGoals = sortedGoals
-    }
-
-    function getGoalProgress(goal: Goal) {
-        const checkCount = goal.milestones?.filter((m) => m.done).length ?? 0
-        const total = goal.milestones?.length ?? 0
-
-        return { checkCount, total }
-    }
-
-    /* drag */
-    function onDrag(e: DragEvent, goal: any, milestone?: any) {
-        e.dataTransfer.effectAllowed = "move"
-
-        if (!isDragging) {
-            e.preventDefault()
-            return
-        }
-
-        ms_ReorderGoalSrc = milestone ? goal : null
-        dragSrc = milestone ? milestone : goal
-    }
-    function onDragOver(e: DragEvent, target: any) {
-        e.preventDefault()
-        if (typeof target == "string") {
-            dragTarget = target
-        }
-        if (target?.name != dragSrc?.name) {
-            dragTarget = target
-        }
-    }
-    function onDragLeave() {
-        dragTarget = null
-    }
-    function onDragEnd() {
-        if (dragTarget && ms_ReorderGoalSrc) {
-            reorderMilestones(ms_ReorderGoalSrc, dragSrc, dragTarget)
-        }
-        else if (dragTarget) {
-            _reorderGoals(dragSrc, dragTarget)
-        }
-        isDragging = false
-        dragSrc = null
-        dragTarget = null
-    }
-
-    function reorderMilestones(goal: Goal, src: Milestone, target: Milestone) {
-        const milestones = goal.milestones
-        const srcOrder = src.idx
-        const lastOrder = Math.max(...milestones.map((ms) => ms.idx)) + 1
-        const toIdx = target === "end" ? lastOrder : target.idx
-        const direction = srcOrder < toIdx ? "up" : "down"
-        const targetOrder = toIdx + (direction === "up" ? -1 : 0)
-
-        milestones.forEach((ms) => {
-            if (direction === "up" && ms.idx > srcOrder && ms.idx <= targetOrder) {
-                ms.idx--
-            } 
-            else if (direction === "down" && ms.idx >= targetOrder && ms.idx < srcOrder) {
-                ms.idx++
-            }
+    $: if (manager.state) {
+        manager.state.subscribe((data) => {
+            store = data
+            dragState = store.dragState
         })
-
-        src.idx = targetOrder
-        sortedGoals = sortedGoals
     }
 
-    function _reorderGoals(srcGoal: Goal, target: Goal | string) {
-        reorderGoals({ srcGoal, target, goals, grouping, sectionMap })
-        sortGoals()
-    }
-
+    onMount(() => manager.initContainerRef(containerRef))
 </script>
 
-<div 
-    class="goals"
+<svelte:window on:keydown={(ke) => manager.handleKeydown(ke)} />
+
+
+<div
+    bind:this={containerRef}
+    bind:clientWidth={width}
+    id={`base-goals`}
+    class={`goals goals--${grouping}`}
+    class:goals--sm={width < 600}
     class:goals--light={isLight}
 >
-    {#each sections as section, secIdx (secIdx)}
-        {@const closed   = closedSections[secIdx]}
-        {@const goals    = sortedGoals[secIdx]}
-        {@const { done: secDone, total: secTotal } = getSectionProgress({ sortedGoals, secIdx })}
+    {#if store}
+        {@const { sortedGoals, sections, closedSections, openGoalId, dragTarget } = store }
 
-        <div class="goals__section">
-            <div class="goals__section-header">
-                <div class="flx">
-                    <div class="goals__section-name">
-                        {kebabToNormal(section)}
-                    </div>
-                    <div class="goals__section-count">
-                        {goals.length}
-                    </div>
-                    <button 
-                        class="toggle-arrow toggle-arrow--section"
-                        class:toggle-arrow--closed={closed}
-                        class:hidden={goals.length === 0}
-                        style:margin-left={"18px"}
-                        on:click={() => toggleSectionOpen(secIdx)}
-                    >
-                        <SvgIcon 
-                            icon={Icon.Dropdown}
-                            options={{
-                                scale: 1.2, height: 12, width: 12, strokeWidth: 1.4
-                            }}
-                        />
-                    </button>
-                </div>
-                {#if goals.length > 0}
-                    <div class="goals__section-progress" class:hidden={grouping === "status"}>
-                        <ProgressBar progress={secDone / secTotal}/>
-                    </div>
-                {/if}
-            </div>
-            <div class="goals__section-divider divider"></div>
-            {#if !closed}
-                {#each goals as goal, goalIdx (`${goal.name}--${goalIdx}`)}
-                    {@const tagColor = goal.tag ? getColorTrio(goal.tag.symbol.color, isLight) : ["", "", ""]}
-                    {@const { checkCount, total } = getGoalProgress(goal)}
-                    {@const open = openGoals[secIdx][goalIdx]}
-                    {@const milestones = goal.milestones}
-                    {@const checked = goal.status === "accomplished"}
-        
-                    <div 
-                        draggable="true"
-                        class="goals__goal dg-over-el"
-                        class:goals__goal--checked={checked}
-                        class:dg-over-el--over={goal.name === dragTarget?.name}
-                        on:dragstart={(e) => onDrag(e, goal)}
-                        on:dragover={(e) => onDragOver(e, goal)}
-                        on:dragleave={onDragLeave}
-                        on:dragend={onDragEnd}
-                    >
-                        <div class="one-col">
-                            <button 
-                                on:click={() => toggleGoalComplete(secIdx, goalIdx)}
-                                class="goals__goal-checkbox"
-                            >
-                                <i class="fa-solid fa-check"></i>
-                            </button>
+        {#each sections as section, secIdx (secIdx)}
+            {@const closed   = closedSections[secIdx]}
+            {@const goals    = sortedGoals[secIdx]}
+            {@const { done: secDone, total: secTotal } = manager.getSectionProgress(secIdx)}
+
+            <div class="goals__section">
+                <div 
+                    role="button"
+                    tabindex="0"
+                    class="goals__section-header"
+                    id={`section--${secIdx}`}
+                    data-type="section"
+                    data-idx={secIdx}
+                >
+                    <div class="flx">
+                        <div class="goals__section-name">
+                            {kebabToNormal(section)}
                         </div>
-                        <div 
-                            class="goals__goal-name two-col"
-                            class:strike={checked}
+                        <div class="goals__section-count">
+                            {goals.length}
+                        </div>
+                        <button 
+                            class="toggle-arrow toggle-arrow--section"
+                            class:toggle-arrow--closed={closed}
+                            class:hidden={goals.length === 0}
+                            style:margin-left={"18px"}
+                            on:click={() => manager.toggleSectionOpen(secIdx)}
                         >
-                            {goal.name}
+                            <SvgIcon 
+                                icon={Icon.Dropdown}
+                                options={{
+                                    scale: 1.2, height: 12, width: 12, strokeWidth: 1.4
+                                }}
+                            />
+                        </button>
+                    </div>
+                    {#if goals.length > 0 && grouping === "tag"}
+                        <div class="goals__section-progress">
+                            <ProgressBar progress={secDone / secTotal}/>
                         </div>
-                        {#if showMilestones && milestones?.length > 0}
-                            <div class="goals__milestones goals__milestones--in-row three-col">
-                                {#each milestones.sort((a, b) => a.idx - b.idx) as ms, mIdx}
+                    {/if}
+                </div>
+                <div class="goals__section-divider divider"></div>
+                {#if !closed}
+                    {#each goals as goal, goalIdx (goal.id)}
+                        {@const { name, tag, description, status, milestones } = goal}
+                        {@const { checkCount, total } = manager.getGoalProgress(goal)}
+                        {@const tagColor = tag ? getColorTrio(tag.symbol.color, isLight) : ["", "", ""]}
+                        {@const open = openGoalId === goal.id}
+                        {@const pinned = pinnedGoal?.id === goal.id}
+                        {@const checked = status === "accomplished"}
+            
+                        <div
+                            role="button"
+                            tabindex="0"
+                            id={`goal--${secIdx}-${goalIdx}`}
+                            data-id={goal.bOrder.status}
+                            draggable="true"
+                            class="goals__goal dg-over-el"
+                            class:goals__goal--checked={checked}
+                            class:goals__goal--open={open}
+                            class:dg-over-el--over={goal.name === dragTarget?.name}
+                            class:no-pointer-events={dragState === "milestone"}
+                            on:contextmenu={(e) => { 
+                                manager.onContextMenu(e, goal)
+                            }}
+                            on:dragstart={(e) => manager.onDrag(e, goal)}
+                            on:dragover={(e) => manager.onDragOver(e, goal)}
+                            on:dragleave={(e) => manager.onDragLeave(e)}
+                            on:dragend={(e) => manager.onDragEnd(e)}
+                        >
+                            <div class="goals__goal-top">
+                                <div class="flx flx--algn-start">
+                                    <button 
+                                        class="goals__goal-checkbox"
+                                        class:goals__goal-checkbox--checked={checked}
+                                        on:click={() => {
+                                            manager.setGoalStatus(goal, checked ? "in-progress" : "accomplished")
+                                        }}
+                                    >
+                                        <i class="fa-solid fa-check"></i>
+                                    </button>
                                     <div 
+                                        class="goals__goal-name"
+                                        class:strike={checked}
+                                    >
+                                        {name}
+                                    </div>
+                                    {#if total > 0}
+                                        <div class="goals__goal-progress">
+                                            <ProgressBar progress={checkCount / total} />
+                                        </div>
+                                    {/if}
+                                </div>
+                                <div class="flx">
+                                    {#if pinned}
+                                        <div style:margin={"5px 0px 0px 10px"}>
+                                            <SvgIcon icon={Icon.Pin} options={{ scale: 1.15, opacity: 0.2 }} />
+                                        </div>
+                                    {/if}
+                                    {#if goal.tag}
+                                        <div class="goals__goal-tag">
+                                            <div 
+                                                class="tag"
+                                                class:tag--light={isLight}
+                                                style:--tag-color-primary={tag.symbol.color.primary}
+                                                style:--tag-color-1={tagColor[0]}
+                                                style:--tag-color-2={tagColor[1]}
+                                                style:--tag-color-3={tagColor[2]}
+                                            >
+                                                <div class="tag__symbol" style:font-size={"1.1rem"}>
+                                                    {tag.symbol.emoji}
+                                                </div>
+                                                <div class="tag__title">
+                                                    {tag.name}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {/if}
+                                </div>
+        
+                                {#if goalIdx != goals.length - 1 || milestones?.length >= 0 && open}
+                                    <div class="goals__goal-divider divider"></div>
+                                {/if}
+        
+                                <!-- interactive elements -->
+                                <button 
+                                    on:click={() => manager.toggleGoalOpen(goal.id)}
+                                    class="toggle-arrow"
+                                    class:toggle-arrow--closed={!open}
+                                    class:hidden={!goal.milestones || goal.milestones?.length === 0}
+                                    style:margin-left={"18px"}
+                                >
+                                    <SvgIcon 
+                                        icon={Icon.Dropdown}
+                                        options={{
+                                            scale: 1.2, height: 12, width: 12, strokeWidth: 1.4
+                                        }}
+                                    />
+                                </button>
+        
+                                <div 
+                                    class="grip"
+                                    on:pointerdown={() => manager.setDragState("goal")}
+                                    on:pointerup={() => manager.setDragState(null)}
+                                >
+                                    <div class="grip__icon">
+                                        <SvgIcon icon={Icon.DragDots} options={{ scale: 1.15 }} />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="goals__goal-bottom">
+                                <div class="goals__goal-description">
+                                    {description}
+                                </div>
+                            </div>
+                        </div>
+
+                        {#if milestones?.length > 0 && open}
+                            <div class="goals__milestones">
+                                {#each milestones.sort((a, b) => a.idx - b.idx) as ms, mIdx (ms.id)}
+                                    <div 
+                                        id={`milestone--${goalIdx}-${ms.idx}`}
                                         draggable="true"
+                                        role="button"
+                                        tabindex="0"
                                         class="goals__milestone dg-over-el" 
                                         class:goals__milestone--checked={ms.done}
                                         class:dg-over-el--over={ms.name === dragTarget?.name}
-                                        on:dragstart={(e) => onDrag(e, goal, ms)}
-                                        on:dragover={(e) => onDragOver(e, ms)}
-                                        on:dragleave={onDragLeave}
-                                        on:dragend={onDragEnd}
+                                        class:no-pointer-events={dragState === "goal"}
+                                        on:dragstart={(e) => manager.onDrag(e, goal, ms)}
+                                        on:dragover={(e) => manager.onDragOver(e, ms)}
+                                        on:dragleave={(e) => manager.onDragLeave(e)}
+                                        on:dragend={(e) => manager.onDragEnd(e)}
                                     >
                                         <button 
                                             class="goals__goal-checkbox" 
                                             class:goals__goal-checkbox--checked={ms.done}
-                                            on:click={() => toggleMilestoneComplete(secIdx, goalIdx, mIdx)}
+                                            on:click={() => manager.toggleMilestoneComplete(secIdx, goalIdx, mIdx)}
                                         >
                                             {#if ms.done}
                                                 <i class="fa-solid fa-check"></i>
@@ -279,156 +236,41 @@
                                         >
                                             {ms.name}
                                         </div>
+                                        <div class="divider" class:hidden={goal.milestones.length === mIdx + 1}></div>
+                                        <div 
+                                            class="grip"
+                                            on:pointerdown={() => manager.setDragState("milestone")}
+                                            on:pointerup={() => manager.setDragState(null)}
+                                        >
+                                            <div class="grip__icon">
+                                                <SvgIcon icon={Icon.DragDots} options={{ scale: 1.15 }} />
+                                            </div>
+                                        </div>
                                     </div>
                                 {/each}
-                            </div>
-                        {:else}
-                            <div class="goals__goal-description three-col">
-                                {goal.description}
-                            </div>
-                        {/if}
-                        <div class="goals__goal-tag four-col">
-                            {#if goal.tag}
                                 <div 
-                                    class="tag"
-                                    class:tag--light={isLight}
-                                    style:--tag-color-primary={goal.tag.symbol.color.primary}
-                                    style:--tag-color-1={tagColor[0]}
-                                    style:--tag-color-2={tagColor[1]}
-                                    style:--tag-color-3={tagColor[2]}
+                                    class="goals__ghost-item goals__ghost-item--ms dg-over-el"
+                                    class:dg-over-el--over={"end" === dragTarget}
+                                    on:dragover={(e) => manager.onDragOver(e, "end")}
+                                    on:dragleave={(e) => manager.onDragLeave(e)}
+                                    on:dragend={(e) => manager.onDragEnd(e)}
                                 >
-                                    <!-- <span class="tag__symbol">
-                                        {goal.tag.symbol.emoji}
-                                    </span> -->
-                                    <div class="tag__title">
-                                        {goal.tag.name}
-                                    </div>
                                 </div>
-                            {/if}
-                        </div>
-                        <div class="five-col">
-                            <div class="goals__goal-due">
-                                {getDueString(goal.due, goal.dueType) || "--"}
                             </div>
-                        </div>
-                        <div class="six-col">
-                            <div class="goals__goal-progress" class:hidden={total === 0}>
-                                {#if progressUi === "bar"}
-                                    <ProgressBar progress={checkCount / total} />
-                                {:else}
-                                    {#if total === 0}
-                                        <div class="fraction">{total}</div>
-                                    {:else}
-                                        <div class="fraction">
-                                            {checkCount}<span class="fraction__slash">/</span>{total}
-                                        </div>
-                                    {/if}
-                                    <div class="goals__progress-ring">
-                                        <ProgressRing 
-                                            progress={checkCount / total} 
-                                            options={{ 
-                                                style: "rich-colored",
-                                                size: 15,
-                                                strokeWidth: 3
-                                            }}
-                                        />
-                                    </div>
-                                {/if}
-                            </div>
-                        </div>
-
-                        {#if goalIdx != goals.length - 1 || milestones?.length >= 0 && open}
-                            <div class="goals__goal-divider divider"></div>
                         {/if}
-
-                        <button 
-                            on:click={() => toggleGoalOpen(secIdx, goalIdx)}
-                            class="toggle-arrow"
-                            class:toggle-arrow--closed={!open}
-                            class:hidden={!goal.milestones || goal.milestones?.length === 0 || showMilestones}
-                            style:margin-left={"18px"}
-                        >
-                            <SvgIcon 
-                                icon={Icon.Dropdown}
-                                options={{
-                                    scale: 1.2, height: 12, width: 12, strokeWidth: 1.4
-                                }}
-                            />
-                        </button>
-
-                        <div 
-                            class="grip"
-                            on:pointerdown={() => isDragging = true}
-                            on:pointerup={() => isDragging = false}
-                        >
-                            <div class="grip__icon">
-                                <SvgIcon icon={Icon.DragDots} options={{ scale: 1.15 }} />
-                            </div>
-                        </div>
+                    {/each}
+                    <div 
+                        class="goals__ghost-item dg-over-el"
+                        class:dg-over-el--over={dragTarget === section}
+                        on:dragover={(e) => manager.onDragOver(e, section)}
+                        on:dragleave={(e) => manager.onDragLeave(e)}
+                        on:dragend={(e) => manager.onDragEnd(e)}
+                    >
                     </div>
-
-                    {#if milestones?.length > 0 && open && !showMilestones}
-                        <div class="goals__milestones">
-                            {#each milestones.sort((a, b) => a.idx - b.idx) as ms, mIdx}
-                                <div 
-                                    draggable="true"
-                                    class="goals__milestone dg-over-el" 
-                                    class:goals__milestone--checked={ms.done}
-                                    class:dg-over-el--over={ms.name === dragTarget?.name}
-                                    on:dragstart={(e) => onDrag(e, goal, ms)}
-                                    on:dragover={(e) => onDragOver(e, ms)}
-                                    on:dragleave={onDragLeave}
-                                    on:dragend={onDragEnd}
-                                >
-                                    <button 
-                                        class="goals__goal-checkbox" 
-                                        class:goals__goal-checkbox--checked={ms.done}
-                                        on:click={() => toggleMilestoneComplete(secIdx, goalIdx, mIdx)}
-                                    >
-                                        {#if ms.done}
-                                            <i class="fa-solid fa-check"></i>
-                                        {/if}
-                                    </button>
-                                    <div 
-                                        class="goals__goal-name goals__milestone-name"
-                                        class:strike={ms.done}
-                                    >
-                                        {ms.name}
-                                    </div>
-                                    <div class="divider" class:hidden={goal.milestones.length === mIdx + 1}></div>
-                                    <div 
-                                        class="grip"
-                                        on:pointerdown={() => isDragging = true}
-                                        on:pointerup={() => isDragging = false}
-                                    >
-                                        <div class="grip__icon">
-                                            <SvgIcon icon={Icon.DragDots} options={{ scale: 1.15 }} />
-                                        </div>
-                                    </div>
-                                </div>
-                            {/each}
-                            <div 
-                                class="goals__ghost-item goals__ghost-item--ms dg-over-el"
-                                class:dg-over-el--over={"end" === dragTarget}
-                                on:dragover={(e) => onDragOver(e, "end")}
-                                on:dragleave={onDragLeave}
-                                on:dragend={onDragEnd}
-                            >
-                            </div>
-                        </div>
-                    {/if}
-                {/each}
-                <div 
-                    class="goals__ghost-item dg-over-el"
-                    class:dg-over-el--over={dragTarget === section}
-                    on:dragover={(e) => onDragOver(e, section)}
-                    on:dragleave={onDragLeave}
-                    on:dragend={onDragEnd}
-                >
-                </div>
-            {/if}
-        </div>
-    {/each}
+                {/if}
+            </div>
+        {/each}
+    {/if}
 </div>
 
 <style lang="scss">
@@ -436,6 +278,8 @@
         margin: 0px 0px 0px -12px;
         min-height: 350px;
         padding-bottom: 30px;
+        position: relative;
+        z-index: 0;
 
         &--light &__section {
             @include text-style(0.55, 600);
@@ -465,10 +309,26 @@
         &--light .divider {
             @include  l-div;
         }
+
+        &--default {
+            margin-top: 0px !important;
+        }
+        &--default &__section-header,
+        &--default &__section-divider {
+            display: none !important;
+        }
+
+        &__flx {
+            @include flex(flex-start, space-between);
+            // flex-direction: row-reverse;
+            width: calc(100%);
+            gap: 20px;
+        }
         
         &__section {
-            margin: 0px 0px 12px 1px;
+            margin: -2px 0px 12px 1px;
             position: relative;
+            width: 100%;
             @include text-style(0.4, 500, 1.3rem);
             
             &:hover .toggle-arrow--section {
@@ -477,6 +337,16 @@
         }
         &__section-header {
             @include flex(center, space-between);
+            box-shadow: none !important;
+            padding: 5px 0px 2px 0px;
+            border-radius: 4px;
+
+            &:focus {
+                background: rgba(var(--textColor1), 0.0125);
+            }
+            &:focus .toggle-arrow--section {
+                opacity: 0.2;
+            }
         }
         &__section-name {
             margin: 0px 0px 6px 12px;
@@ -487,40 +357,48 @@
         }
         &__section-divider {
             @include text-style(0.4, 500, 1.3rem);
-            margin: 0px 0px 6px 12px;
-            width: calc(100% + 30px) !important;
+            margin: 0px 0px 4px 12px;
+            width: calc(100% - 13px) !important;
+            // display: none !important;
         }
         &__section-progress {
             margin: -6px 7px 0px 0px;
             @include flex(Center);
         }
         &__goal {
-            @include flex(flex-start);
             width: calc(100%);
             padding: 8px 9px 8.5px 13px;
-            border-radius: 7px;
+            border-radius: 4px;
             margin: 0px 0px 1px 1px;
-            cursor: pointer;
             position: relative;
 
-            &:hover {
-                background-color: rgba(var(--textColor1), 0.0225);
+            &:hover, &:focus {
+                background-color: rgba(var(--textColor1), 0.0125);
+                box-shadow: none !important;
             }
-            &:hover .toggle-arrow {
+            &:hover .toggle-arrow,
+            &:focus .toggle-arrow {
                 opacity: 0.2;
             }
-            &:hover .divider {
+            &:hover .divider,
+            &:focus .divider {
                 display: none;
             }
+        }
+        &__goal:focus &__goal-checkbox {
+            background: rgba(var(--textColor1), 0.1);
+        }
+        &__goal-top {
+            @include flex(flex-start, space-between);
+        }
+        &__goal-bottom {
+            padding: 0px 0px 0px 32px;
         }
         &__goal .toggle-arrow {
             @include abs-top-left(8px, -22px);
         }
-        &__goal--checked {
-            // opacity: 0.5;
-        }
-        &__goal--checked + .goals__milestones {
-            // opacity: 0.9;
+        &__goal--open &__goal-description {
+            @include truncate-lines(8);
         }
         &__goal--checked &__goal-checkbox {
             background-color: var(--elemColor1) !important;
@@ -530,10 +408,8 @@
             }
         }
         &__goal-checkbox {
-            background-color: var(--lightColor3);
-            height: 17.5px;
-            width: 17.5px;
-            min-width: 17.5px;
+            background-color: rgba(var(--textColor1), 0.065);
+            @include square(17.5px);
             color: var(--elemTextColor);
             border-radius: 0px;
             transition: 0.1s ease-in-out;
@@ -551,10 +427,15 @@
             }
         }
         &__goal-name {
-            @include text-style(1, 500, 1.4rem);
+            @include text-style(1, 500, 1.425rem);
+            @include truncate-lines(2);
+            user-select: text;
+            cursor: text;
         }
         &__goal-description {
-            @include text-style(0.475, 500, 1.38rem);
+            @include text-style(0.35, 500, 1.38rem);
+            @include truncate-lines;
+            width: 80%;
         }
         &__goal-due {
             @include text-style(0.4, 500, 1.35rem);
@@ -562,25 +443,18 @@
         &__goal-progress {
             @include flex(center, flex-end);
             display: flex;
-            margin-top: 1px;
+            margin: 8px 0px 0px 12px;
         }
         &__goal-divider {
-            @include abs-bottom-left(-1px, 48px);
+            @include abs-bottom-left(0px, 45px);
         }
         &__goal .tag {
-            border-radius: 5px;
-            padding: 3px 9px 4px 9px;
+            border-radius: 20px;
+            padding: 3px 12px 5px 10px;
+            margin-left: 10px
         }
         &__goal .tag__title {
-            font-size: 1.25rem !important;
-        }
-        &__goal .fraction {
-            font-weight: 500;
-            margin: -2px 12px 0px 0px;
-            
-            &__slash {
-                margin: -1px 2.5px 0px 2.5px;
-            }
+            @include text-style(_, 400, 1.12rem, "Geist Mono"); 
         }
         &__milestones {
             padding: 4px 0px 0px 48px;
@@ -602,29 +476,30 @@
                 padding-bottom: 3px;
             }
         }
-        &__milestones-divider {
-            @include abs-top-left(0px, -30px);
-            width: calc(100% + 20px) !important;
-        }
         &__milestone {
             display: flex;
-            margin-bottom: 0px;
+            margin: 0px 0px 0px -15px;
             position: relative;
-            padding: 11px 0px;
+            padding: 11px 0px 14px 15px;
+            border-radius: 4px;
 
-            &--checked {
-                // opacity: 0.55;
-            }
             &--checked i {
                 display: block;
             }
             .divider {
                 margin-left: 0px;
-                @include abs-bottom-left(0px, 30px);
+                @include abs-bottom-left(0px, 48px);
             }
             .grip {
-                @include abs-top-left(2px, -25px);
+                @include abs-top-left(2px, -10px);
             }
+        }
+        &__milestone:focus {
+            box-shadow: none !important;
+            background-color: rgba(var(--textColor1), 0.0125);
+        }
+        &__milestone:focus button {
+            background: rgba(var(--textColor1), 0.1);
         }
         &__milestone::before {
             left: 0px;
@@ -653,7 +528,7 @@
     }
 
     .toggle-arrow {
-        @include abs-top-left(-1px, -30px);
+        @include abs-top-left(5px, -30px);
     }
     .strike {
         text-decoration: line-through;
@@ -664,31 +539,8 @@
         }
     }
     .divider {
-        width: calc(100% - 40px);
+        width: calc(100% - 50px);
         height: 0.5px;
         background-color:rgba(var(--textColor1), 0.05);
-    }
-
-    .one-col {
-        width: 30px;
-    }
-    .two-col {
-        // width: 180px;
-        min-width: 160px;
-        width: 22%;
-    }
-    .three-col {
-        flex: 1;
-        text-align: left;
-        margin: 0px 40px 0px 20px;
-    }
-    .four-col {
-        width: 105px;
-    }
-    .five-col {
-        width: 135px;
-    }
-    .six-col {
-        width: 80px;
     }
 </style>

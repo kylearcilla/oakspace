@@ -26,7 +26,7 @@
     let listContainer: HTMLElement
     let tasksList: HTMLElement
     let idPrefix = options.id
-    let isContextMenuOpen = false
+    let contextMenuOpen = false
     let rootTasks: Task[] = []
     let justInit = true
     let type = settings.type
@@ -34,7 +34,7 @@
     $: isDark      = $themeState.isDarkTheme
     $: focusTask   = $manager.focusTask
     $: contextMenu = $manager.contextMenu
-    $: isContextMenuOpen = $manager.isContextMenuOpen 
+    $: contextMenuOpen = $manager.contextMenuOpen 
     
     $: if (newTaskFlag != undefined) {
         createNewTask()
@@ -71,7 +71,7 @@
     }
     function onContextMenu(e: Event, taskId: string, isChild: boolean) {
         $manager.openContextMenu(e, taskId, isChild)
-        isContextMenuOpen = true
+        contextMenuOpen = true
     }
     function isAtMaxDepth(taskId: string) {
         return $manager.tasks.isAtMaxDepth(taskId)
@@ -98,7 +98,7 @@
     class:tasks-wrapper--light={!isDark}
     class:tasks-wrapper--top-btn={$manager.addBtn?.pos === "top"}
     class:tasks-wrapper--empty-list={rootTasks.length === 0}
-    style:overflow-y={isContextMenuOpen ? "hidden" : "scroll"}
+    style:overflow-y={contextMenuOpen ? "hidden" : "scroll"}
 
     style:--padding={styles.padding}
     style:--border-radius={styles.borderRadius}
@@ -178,7 +178,7 @@
     <!-- Context Menu -->
     <DropdownList
         id={`${idPrefix}--tasks`}
-        isHidden={!isContextMenuOpen}
+        isHidden={!contextMenuOpen}
         options={{
             listItems: [
                 ...(focusTask?.description ? [] :  [{ name: "Add Description" }]),
@@ -192,14 +192,14 @@
                 ...dropdownOptions
             ],
             onListItemClicked: (context) => {
-                isContextMenuOpen = false
+                contextMenuOpen = false
                 $manager.contextMenuHandler(context)
             },
             onClickOutside: () => {
-                isContextMenuOpen = false
+                contextMenuOpen = false
             },
             onDismount: () => {
-                isContextMenuOpen = false
+                contextMenuOpen = false
                 $manager.onContextMenuClickedOutside()
             },
             styling: { 

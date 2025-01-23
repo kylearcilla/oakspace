@@ -843,51 +843,99 @@ export function getWeekPeriodStr(date: Date, weeksBack: number = 0) {
 	}
 }
 
-export function getTimeDistanceStr(targetDate: Date) {
-	const now = new Date()
-	const diffInMs = targetDate.getTime() - now.getTime();
-	const diffInDays = Math.abs(Math.floor(diffInMs / (1000 * 60 * 60 * 24)))
-	const diffInWeeks = Math.floor(diffInDays / 7)
-	const diffInMonths = Math.floor(diffInDays / 30)
-	const diffInYears = Math.floor(diffInMonths / 12)
+export function getTimeDistanceStr({ date, format = "default", enforce }: {
+	date: Date
+    format?: "default" | "short",
+	enforce?: "y" | "m" | "w" | "d" | null
+}) {
+    const now = new Date()
+    const diffInMs = date.getTime() - now.getTime()
+    const diffInDays = Math.abs(Math.floor(diffInMs / (1000 * 60 * 60 * 24)))
+    const diffInWeeks = Math.floor(diffInDays / 7)
+    const diffInMonths = Math.floor(diffInDays / 30)
+    const diffInYears = Math.floor(diffInMonths / 12)
 
-	const passed = diffInMs < 0
+    const passed = diffInMs < 0
+    const sign = passed ? "-" : ""
 
-	if (diffInDays === 0) {
-		return 'today'
-	} 
-    else if (diffInYears > 0) {
-		return `${formatPlural('year', diffInYears)} ${passed ? 'ago' : ''}`
-	} 
-    else if (diffInMonths > 0) {
-		return `${formatPlural('month', diffInMonths)} ${passed ? 'ago' : ''}`
-	} 
-    else if (diffInWeeks > 0) {
-		return `${formatPlural('week', diffInWeeks)} ${passed ? 'ago' : ''}`
-	} 
-    else if (diffInDays > 0) {
-		return `${formatPlural('day', diffInDays)} ${passed ? 'ago' : ''}`
-	}
+    if (diffInDays === 0 && !enforce) {
+        return 'today'
+    }
+
+    // enforce
+    if (enforce) {
+        const value = enforce === "y" ? diffInYears :
+                      enforce === "m" ? diffInMonths :
+                      enforce === "w" ? diffInWeeks :
+                      diffInDays
+
+        if (format === "short") {
+            return `${sign}${value}${enforce}`
+        }
+        const unit = enforce === "y" ? "year" :
+                     enforce === "m" ? "month" :
+                     enforce === "w" ? "week" : "day"
+        return `${formatPlural(unit, value)} ${passed ? 'ago' : ''}`
+    }
+
+    // default behavior without enforcement
+    if (format === "short") {
+        if (diffInYears > 0) {
+            return `${sign}${diffInYears}y`
+        } 
+        if (diffInMonths > 0) {
+            return `${sign}${diffInMonths}m`
+        }
+        if (diffInWeeks > 0) {
+            return `${sign}${diffInWeeks}w`
+        }
+        return `${sign}${diffInDays}d`
+    }
+
+    // default format
+    if (diffInYears > 0) {
+        return `${formatPlural('year', diffInYears)} ${passed ? 'ago' : ''}`
+    } 
+    if (diffInMonths > 0) {
+        return `${formatPlural('month', diffInMonths)} ${passed ? 'ago' : ''}`
+    }
+    if (diffInWeeks > 0) {
+        return `${formatPlural('week', diffInWeeks)} ${passed ? 'ago' : ''}`
+    }
+
+    return `${formatPlural('day', diffInDays)} ${passed ? 'ago' : ''}`
 }
 
-export function getDueString(due: Date, dueType: string) {
-	if (!due) {
-		return dueType === 'someday' ? 'Some Day 🤞' : 'No Due Date'
-	} 
+export function getDueString({ 
+    due, 
+    dueType, 
+    format = 'default' 
+}: { 
+    due: Date, 
+    dueType: string, 
+    format?: 'default' | 'short' 
+}) {
+    if (!due) {
+        return format === "short" ? "" : dueType === 'someday' ? 'Some Day 🤞' : 'No Due Date'
+    } 
     else if (dueType === 'quarter') {
-		const month = due.getMonth() + 1
-		const quarter = Math.ceil(month / 3)
-		return `Quarter ${quarter}`
-	} 
+        const month = due.getMonth() + 1
+        const quarter = Math.ceil(month / 3)
+        return format === 'short' ? `Q${quarter}` : `Quarter ${quarter}`
+    } 
     else if (dueType === 'year') {
-		return `${due.getFullYear()}`
-	} 
+        return `${due.getFullYear()}`
+    } 
     else if (dueType === 'month') {
-		return formatDatetoStr(due, { month: 'long' })
-	} 
+        return formatDatetoStr(due, { 
+            month: format === 'short' ? 'short' : 'long' 
+        })
+    } 
     else {
-		return formatDateLong(due)
-	}
+        return format === 'short' 
+            ? formatDatetoStr(due, { month: 'short' })
+            : formatDateLong(due)
+    }
 }
 
 export function getAllMonthDays(date: Date) {

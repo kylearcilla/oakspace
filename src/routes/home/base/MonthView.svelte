@@ -5,11 +5,11 @@
 	import { themeState } from "../../../lib/store"
 	import { ACTIVITY_DATA } from "../../../lib/mock-data"
     import { getWeekPeriod, getWeekPeriodStr } from "../../../lib/utils-date"
-	import { capitalize, clickOutside, getElemById, getHozDistanceBetweenTwoElems, kebabToNormal, normalToKebab } from "../../../lib/utils-general"
+	import { capitalize, clickOutside, getElemById, getHozSpace, kebabToNormal, normalToKebab } from "../../../lib/utils-general"
 
 	import YearView from "./YearView.svelte"
 	import GoalsList from "./GoalsList.svelte"
-	import GoalsBoard from "./GoalsBoard.svelte"
+	import GoalsView from "./GoalsView.svelte"
 	import WeeklyHabits from "./WeeklyHabits.svelte"
 	import SvgIcon from "../../../components/SVGIcon.svelte"
 	import ToggleBtn from "../../../components/ToggleBtn.svelte"
@@ -21,27 +21,36 @@
 	import ActivityCalendar from "../../../components/ActivityCalendar.svelte"
 	import { imageUpload } from "../../../lib/pop-ups";
 	import DayEntry from "./DayEntry.svelte";
+	import ProgressBar from "../../../components/ProgressBar.svelte";
 
     type MonthDetailsView = "overview" | "goals" | "habits" | "yr-view"
     type GoalsView = {
         view: "list" | "board"
-        grouping: "status" | "tag"
-        showMilestones?: boolean
-        progressUi?: "bar" | "circle"
+        listGrouping: "status" | "tag" | "default"
+        boardGrouping: "status" | "tag"
+        progress: number
     }
 
-    let currView: MonthDetailsView = "habits"
+    let currView: MonthDetailsView = "yr-view"
     let optionsOpen = false
-    let weeksAgoIdx = 0
     let overviewType: "monthly" | "daily" = "monthly"
     let leftArrow: HTMLButtonElement | null = null
     let rightArrow: HTMLButtonElement | null = null
 
+    let weeksAgoIdx = 0
+    let monthsAgoIdx = 0
+    
     let activityIdx = 2
     let activity = ACTIVITY_DATA[activityIdx]
     let entryModal = false
     
-    let subMenu: "g-view" | "g-group" | "g-progress" | "h-view" | "d-view" | null = null
+    let subMenu: "g-group" | "g-progress" | "h-view" | "d-view" | null = null
+    let goalsView: GoalsView = {
+        view: "list",
+        listGrouping: "default",
+        boardGrouping: "status",
+        progress: 0
+    }
     
     $: isLight = !$themeState.isDarkTheme
 
@@ -60,12 +69,6 @@
             daily: true,
             percentage: false
         }
-    }
-    let goalsView: GoalsView = {
-        view: "list",
-        grouping: "status",
-        showMilestones: false,
-        progressUi: "bar"
     }
     let btnHighlighter = {
         width: 0, left: 0
@@ -116,18 +119,18 @@
 
         entryModal = false
     }
-    function onGoalSubListClicked(context: DropdownItemClickedContext) {
-        const { name } = context
+    function onGoalSubListClicked({ name }) {
         const optn     = normalToKebab(name)
 
-        if (subMenu === "g-view") {
-            goalsView.view = optn as "list" | "board"
-        }
-        else if (subMenu === "g-group") {
-            goalsView.grouping = optn as  "status" | "tag"
-        }
-        else if (subMenu === "g-progress") {
-            goalsView.progressUi = optn as  "bar" | "circle"
+        if (subMenu === "g-group") {
+            const grouping = optn as "status" | "tag" | "none"
+
+            if (goalsView.view === "list") {
+                goalsView.listGrouping = grouping === "none" ? "default" : grouping
+            } 
+            else {
+                goalsView.boardGrouping = grouping as "status" | "tag"
+            }
         }
         else if (subMenu === "h-view") {
             habitView.view = optn
@@ -179,7 +182,7 @@
         if (!btnElem) return
 
         const width = btnElem.clientWidth
-        const left = getHozDistanceBetweenTwoElems({ 
+        const left = getHozSpace({ 
             left:  { 
                 elem: btnElem.parentElement!,
                 edge: "left"
@@ -253,7 +256,7 @@
                             class="month-view__overview-options"
                             style:margin="0px 2px -5.5px 0px"
                         >
-                            <button
+                            <!-- <button
                                 class="month-view__overview-btn"
                                 class:month-view__overview-btn--clicked={overviewType === "monthly"}
                                 on:click={() => overviewType = "monthly"}
@@ -266,7 +269,7 @@
                                 on:click={() => overviewType = "daily"}
                             >
                                 Daily
-                            </button>
+                            </button> -->
                         </div>
                     {/if}
                     <div class="month-view__period">
@@ -277,10 +280,19 @@
                                 {@const { start, end } = getWeekPeriodStr(new Date(), weeksAgoIdx)}
                                 <span>{start}</span> - <span>{end}</span>
                             {/if}
+                        {:else if currView === "goals"}
+                            <div class="flx-algn-center">
+                                <ProgressBar 
+                                    progress={goalsView.progress}
+                                />
+                                <span style:margin="0px -1px 0px 12px">
+                                    June
+                                </span>
+                            </div>
                         {:else if currView === "yr-view"}
-                            <!-- <div style:font-size="1.6rem">
-                                {YEAR_THOUGHT_ENTRY.date.getFullYear()}
-                            </div> -->
+                            <div style:font-size="1.6rem">
+                                {2025}
+                            </div>
                         {/if}
                     </div>
                     <div class="flx" style:margin="0px 0px -4px 0px">
@@ -327,7 +339,7 @@
                     id="month-view--dmenu"
                     class="day-settings dmenu" 
                     class:dmenu--light={isLight}
-                    style:width={currView === "goals" ? "190px" : "200px"}
+                    style:width={currView === "goals" ? "175px" : "200px"}
                     use:clickOutside on:click_outside={() => optionsOpen = false} 
                 >
                     <!-- month view -->
@@ -431,110 +443,77 @@
                         </li>
                     {/if}
                     {#if currView === "goals"}
-                        {@const board = goalsView.view === "board"}
+                        {@const { listGrouping, boardGrouping, view } = goalsView}
                         <li class="dmenu__section">
                             <div class="dmenu__section-name">
                                 Goals Settings
                             </div>
-                            <div class="dmenu__option dmenu__option--static">
-                                <span class="dmenu__option-heading">View</span>
-                                <DropdownBtn 
-                                    id={"g-view"}
-                                    isActive={subMenu === "g-view"}
-                                    options={{
-                                        pickedOptionName: capitalize(goalsView.view),
-                                        onClick: () => { 
-                                            subMenu = subMenu === "g-view" ? null : "g-view"
-                                        },
+                            <div style:display="flex" style:margin="5px 0px 10px 7px">
+                                <button 
+                                    class="dmenu__box" 
+                                    class:dmenu__box--selected={view === "list"}
+                                    on:click={() => {
+                                        goalsView.view = "list"
+                                        goalsView = goalsView
+
+                                        optionsOpen = false
                                     }}
-                                />
+                                >
+                                    <div class="dmenu__box-icon">
+                                        <i class="fa-solid fa-list-check"></i>
+                                    </div>
+                                    <span>List</span>
+                                </button>
+                                <button 
+                                    class="dmenu__box" 
+                                    class:dmenu__box--selected={view === "board"}
+                                    on:click={() => {
+                                        goalsView.view = "board"
+                                        goalsView = goalsView
+
+                                        optionsOpen = false
+                                    }}
+                                >
+                                    <div class="dmenu__box-icon">
+                                        <i 
+                                            class="fa-solid fa-square-poll-vertical"
+                                            style:font-size="2rem"
+                                            style:transform="scaleY(-1)"
+                                        >
+                                        </i>
+                                    </div>
+                                    <span>Board</span>
+                                </button>
                             </div>
-                            <div class="dmenu__option dmenu__option--static">
+                            <div 
+                                class="dmenu__option dmenu__option--static"
+                                style:pointer-events={view === "board" ? "none" : "auto"}
+                                style:opacity={view === "board" ? "0.35" : "1"}
+                            >
                                 <span class="dmenu__option-heading">Group By</span>
                                 <DropdownBtn 
                                     id={"g-group"}
                                     isActive={subMenu === "g-group"}
                                     options={{
-                                        pickedOptionName: capitalize(goalsView.grouping),
+                                        pickedOptionName: capitalize(view === "list" ? listGrouping : boardGrouping),
                                         onClick: () => {
                                             subMenu = subMenu === "g-group" ? null : "g-group"
                                         },
                                     }}
                                 />
                             </div>
-                            <div class="dmenu__option dmenu__option--static" class:hidden={board}>
-                                <span class="dmenu__option-heading">Progress</span>
-                                <DropdownBtn 
-                                    id={"g-progress"}
-                                    isActive={subMenu === "g-progress"}
-                                    options={{
-                                        pickedOptionName: capitalize(goalsView.progressUi),
-                                        onClick: () => {
-                                            subMenu = subMenu === "g-progress" ? null : "g-progress"
-                                        },
-                                    }}
-                                />
-                            </div>
-                            <div class="dmenu__toggle-optn" class:hidden={board}>
-                                <span class="dmenu__option-heading">Show Milestones</span>
-                                <ToggleBtn 
-                                    active={goalsView.showMilestones}
-                                    onToggle={() => {
-                                        goalsView.showMilestones = !goalsView.showMilestones
-                                        goalsView = goalsView
-                                    }}
-                                />
-                            </div>
-                            <DropdownList 
-                                id="g-view"
-                                isHidden={subMenu != "g-view"} 
-                                options={{
-                                    pickedItem: capitalize(goalsView.view),
-                                    listItems: [
-                                        { name: "List" }, { name: "Board" }
-                                    ],
-                                    position: { 
-                                        top: "56px", right: "2px" 
-                                    },
-                                    styling: { 
-                                        width: "100px" 
-                                    },
-                                    onClickOutside: () => { 
-                                        subMenu = null 
-                                    },
-                                    onListItemClicked: onGoalSubListClicked
-                                }}
-                            />
                             <DropdownList 
                                 id="g-group"
                                 isHidden={subMenu != "g-group"} 
                                 options={{
-                                    pickedItem: capitalize(goalsView.grouping),
+                                    pickedItem: capitalize(view === "list" ? listGrouping : boardGrouping),
                                     listItems: [
-                                        { name: "Status" }, { name: "Tag" }
+                                        ...(view === "list" ? [{ name: "Default" }] : []),
+                                        { name: "Status" }, 
+                                        { name: "Tag" }
                                     ],
                                     position: { 
-                                        top: "85px", right: "2px" 
-                                    },
-                                    styling: { 
-                                        width: "100px" 
-                                    },
-                                    onClickOutside: () => { 
-                                        subMenu = null 
-                                    },
-                                    onListItemClicked: onGoalSubListClicked
-                                }}
-                            />
-                            <DropdownList 
-                                id="g-progress"
-                                isHidden={subMenu != "g-progress"} 
-                                options={{
-                                    pickedItem: capitalize(goalsView.progressUi),
-                                    listItems: [
-                                        { name: "Bar" }, { name: "Circle" }
-                                    ],
-                                    position: { 
-                                        top: "114px", right: "2px" 
+                                        top: "125px", right: "2px" 
                                     },
                                     styling: { 
                                         width: "100px" 
@@ -671,23 +650,14 @@
                     weeksAgoIdx={weeksAgoIdx}
                     options={habitView} 
                 />
-                <!-- <MonthlyHabits /> -->
             {:else if currView === "goals"}
-                {#if goalsView.view === "list"}
-                    <GoalsList 
-                        options={{ 
-                            grouping: goalsView.grouping,
-                            showMilestones: goalsView.showMilestones,
-                            progressUi: goalsView.progressUi
-                        }} 
-                    />
-                {:else}
-                    <GoalsBoard 
-                        options={{ 
-                            grouping: goalsView.grouping 
-                        }} 
-                    />
-                {/if}
+               <GoalsView 
+                    goalsView={goalsView} 
+                    onProgressChange={(progress) => {
+                        goalsView.progress = progress
+                        goalsView = goalsView
+                    }}
+                />
             {:else}
                 <div class="month-view__yr-view">
                     <YearView/>
@@ -795,7 +765,7 @@
         }
         &__details-header {
             position: relative;
-            margin-bottom: -px;
+            margin-bottom: 2px;
             @include flex(center, space-between);
         }
         &__details-header-right {
@@ -823,7 +793,7 @@
                 opacity: 1 !important;
             }
             span {
-                @include text-style(0.85, 500, 1.625rem);
+                @include text-style(0.85, 400, 1.6rem, "Geist Mono");
                 margin-right: 3px;
             }
         }
@@ -831,7 +801,7 @@
             display: flex;
         }
         &__overview-btn {
-            @include text-style(1, 400, 1.3rem, "DM Mono");
+            @include text-style(1, 400, 1.3rem, "Geist Mono");
             margin-left: 20px;
             opacity: 0.2;
 
@@ -869,7 +839,7 @@
             }
         }
         &__period {
-            @include text-style(0.4, 400, 1.3rem, "DM Mono");
+            @include text-style(0.4, 400, 1.3rem, "Geist Mono");
             margin: 7px 0px 0px 0px;
 
             span {

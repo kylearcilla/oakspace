@@ -470,7 +470,7 @@
             }
         }
         &__day-num {
-            @include text-style(1, 300, 1.25rem, "DM Mono");
+            @include text-style(1, 400, 1.25rem, "Geist Mono");
             @include circle(16px);
             @include center;
             margin: 2px 0px 6px 2px;
@@ -574,7 +574,7 @@
 
         /* focus activity */
         &__day-focus-time {
-            @include text-style(1, 500, 1.1rem, "DM Mono");
+            @include text-style(1, 500, 1.1rem, "Geist Mono");
             width: min-content;
             padding-right: 10px;
             display: none;

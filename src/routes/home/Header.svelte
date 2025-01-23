@@ -126,7 +126,7 @@
                     Space: <span>{groupName === "User" ? "Library" : groupName}</span>
                     <button 
                         id="ambient-header--dbtn"
-                        class="header__ambient-settings-btn"
+                        class="header__ambient-settings-btn smooth-bounce"
                         on:click={() => ambientSettings = !ambientSettings}
                     >
                         <SvgIcon 
@@ -253,7 +253,7 @@
             padding: 0px 15px 0px 13px;
         }
         &--ambient &__now-block-time {
-            @include text-style(_, 400, 1.15rem, "DM Mono");
+            @include text-style(_, 400, 1.15rem, "Geist Mono");
         }
         &--ambient &__now-block-title {
             font-weight: 400 !important;
@@ -363,14 +363,14 @@
                 display: none;
             }
             &-title {
-                @include text-style(_, 400, 1.225rem, "DM Mono");
+                @include text-style(_, 400, 1.225rem, "Geist Mono");
                 color: rgba(var(--textColor1), 1);
                 @include elipses-overflow;
                 margin: 0px 11px 0px 0px;
                 max-width: 150px;
             }
             &-time {
-                @include text-style(_, 400, 1.225rem, "DM Mono");
+                @include text-style(_, 400, 1.225rem, "Geist Mono");
                 color: rgba(var(--textColor1), 0.5);
             }
         }
@@ -430,14 +430,14 @@
         /* Session Time */
         &__session-time {
             @include flex(center);
-            @include text-style(0.7, 400, 1.15rem, "DM Mono");
+            @include text-style(0.7, 400, 1.15rem, "Geist Mono");
             white-space: nowrap;
         }
 
         /* Ambient Controls */
         &__ambient-controls {
             @include flex(center);
-            @include text-style(1, 400, 1.225rem, "DM Mono");
+            @include text-style(1, 400, 1.225rem, "Geist Mono");
             margin: 0px 10px 0px -10px;
             transition: 0.1s ease-in-out;
             padding: 0px 4px 0px 13px;
@@ -465,7 +465,7 @@
             margin-left: 11px;
             
             &:hover {
-                @include visible(1);
+                background-color: rgba(var(--textColor1), 0.1);
             }
         }
         &__ambient-main .divider {

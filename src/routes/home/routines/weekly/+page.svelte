@@ -6,7 +6,7 @@
 	import { Icon } from "$lib/enums"
 	import { toast } from "$lib/utils-toast"
     import { getColorTrio } from "$lib/utils-colors"
-	import { getElemById, getHozDistanceBetweenTwoElems, preventScroll } from "$lib/utils-general"
+	import { getElemById, getHozSpace, preventScroll } from "$lib/utils-general"
 	import { InputManager, TextEditorManager } from "$lib/inputs"
 	import { getDayIdxMinutes, getTimeFromIdx, minsFromStartToHHMM, minsToHHMM } from "$lib/utils-date"
 	import { WeeklyRoutinesManager } from "$lib/routines-weekly-manager"
@@ -48,7 +48,7 @@
     let routineDetailsHeight = 0
     let breakdownHeight = 0
     let containerWidth = 0
-    let dailyRoutinestXOffset = -1
+    let dayRoutinestRight = -1
 
     let confirmOptions: {
         text: string,
@@ -73,7 +73,7 @@
     // Focus Routine Breakdown
     let pickedBreakdownView = BreakdownView.Cores
     let isViewingCore = true
-    let dayBreakdownDropdownOptions: DropdownOption[] = []
+    let dayBreakdownOptions: DropdownOption[] = []
     let dailyRoutinesOpen = false
     let wkBreakdownVal: "avg" | "sum" = "avg"
     let dayBreakdownVal: "avg" | "sum" = "sum"
@@ -96,7 +96,7 @@
     let pickedDayBreakdownView = BreakdownView.Cores
     
     let isDayBreakdownViewOptOpen = false
-    let dayBreakdownSettingsOpen = false
+    let dayBreakdownSettings = false
     let breakdownDropdownXOffset = ""
     let isBreakdownDropdownOpen = false
     let hasSetEditPointerCapture = false
@@ -302,12 +302,12 @@
     }
     
     /* Daily Routines */
-    function onDailyRoutinesListOptClicked(e: Event) {
+    function onDayRoutinesClicked(e: Event) {
         const target = e.target as HTMLElement
         const optnText = target.innerText.trim()
 
         const close = () => {
-            dayBreakdownSettingsOpen = false
+            dayBreakdownSettings = false
             confirmOptions = null
             isDayBreakdownOpen = false
             dailyRoutinesOpen = false
@@ -348,7 +348,7 @@
     function onNewDayRoutineClicked(chooseContext: DropdownItemClickedContext) {
         const { parentName, idx } = chooseContext
         const close = () => {
-            dayBreakdownSettingsOpen = false
+            dayBreakdownSettings = false
             confirmOptions = null
             isDayBreakdownOpen = false
             dailyRoutinesOpen = false
@@ -392,7 +392,7 @@
 
     /* Breakdowns */
     function setBreakdownForDay(dayIdx: number | null) {
-        dayBreakdownSettingsOpen = false
+        dayBreakdownSettings = false
 
         if (dayIdx === dayBreakdownColIdx) {
             isDayBreakdownOpen = false
@@ -415,31 +415,17 @@
         isDayBreakdownViewOptOpen = false
     }
 
-    function onOpenDailyRoutinesList() {
-        const settingsRef = getElemById("day-breakdown-settings--dmenu")
-        if (!settingsRef) return
-        
-        dailyRoutinesOpen = true
-        const dist = getHozDistanceBetweenTwoElems({
-            left: { elem: settingsRef, edge: "right" },
-            right: { elem: scrollableContainer, edge: "right" },
-        })
-        
-        if (dist >= 130) {
-            dailyRoutinestXOffset = -120
-        }
-        else {
-            dailyRoutinestXOffset = 145
-        }
-    }
-
     function onDayBreakdownSettingsClicked(isLinked: boolean) {
+        const onPointerOver = ({ childLeft }) => {
+            dayRoutinestRight = childLeft
+        }
+
         if (isLinked) {
-            dayBreakdownDropdownOptions = [
+            dayBreakdownOptions = [
                 { 
                     name: "Replace routine",
                     rightIcon: { type: "fa", icon: "fa-solid fa-chevron-right" },
-                    onPointerOver: onOpenDailyRoutinesList,
+                    onPointerOver,
                     onPointerLeave: () => dailyRoutinesOpen = false
                 },
                 { 
@@ -448,24 +434,24 @@
             ]
         }
         else {
-            dayBreakdownDropdownOptions = [
+            dayBreakdownOptions = [
                 { 
                     name: "Link a routine", 
                     rightIcon: { type: "fa", icon: "fa-solid fa-chevron-right" },
-                    onPointerOver: onOpenDailyRoutinesList,
+                    onPointerOver,
                     onPointerLeave: () => dailyRoutinesOpen = false
                 }
             ]
         }
 
         if (dayBreakdown!.blocksLength > 0)  {
-            dayBreakdownDropdownOptions.push({ name: "Clear routine" })
+            dayBreakdownOptions.push({ name: "Clear routine" })
         }
         else {
-            dayBreakdownDropdownOptions = dayBreakdownDropdownOptions.filter((optn) => optn.name != "Clear routine")
+            dayBreakdownOptions = dayBreakdownOptions.filter((optn) => optn.name != "Clear routine")
         }
 
-        dayBreakdownSettingsOpen = !dayBreakdownSettingsOpen
+        dayBreakdownSettings = !dayBreakdownSettings
     }
 
     /* Edit Blocks */
@@ -776,12 +762,12 @@
             <BounceFade
                 id="wk-routines-list--dmenu"
                 isHidden={!isWkRoutinesOpen}
-                styling={{ height: "100%" }}
                 isAnim={isMin}
                 onClickOutside={() => {
-                    if (!isMin) return
-                    isWkRoutinesOpen = false
-                    isWkRoutineSettingsOpen = false
+                    if (isMin) {
+                        isWkRoutinesOpen = false
+                        isWkRoutineSettingsOpen = false
+                    }
                 }}
             >
                 <ul 
@@ -985,7 +971,7 @@
                             class="routine-blocks"
                             class:routine-blocks--editing={editContext}
                             class:routine-blocks--light={false}
-                            class:no-pointer-events={lockInteraction || !weekRoutine}
+                            class:no-pointer-events-all={lockInteraction || !weekRoutine}
                             style:--block-max-width={`${currViewOption === ViewOption.MTWT ? "190px" : "240px"}`}
                         >
                             <!-- Routine Blocks -->
@@ -1007,7 +993,7 @@
                                         tabIndex={0}
                                         class={`routine-blocks__block ${getBlockStyling(block.height)}`}
                                         class:hidden={isEditBlock}
-                                        class:no-pointer-events={lockInteraction}
+                                        class:no-pointer-events-all={lockInteraction}
                                         style:top={`${block.yOffset}px`}
                                         style:left={xOffset}
                                         style:--block-height={`${block.height}px`}
@@ -1100,7 +1086,7 @@
                                     class={`routine-blocks__block ${getBlockStyling(editingBlock.height)}`}
                                     class:routine-blocks__block--wk-floating={editContext === "lift"}
                                     class:routine-blocks__block--dup-floating={editContext === "duplicate"}
-                                    class:no-pointer-events={lockInteraction}
+                                    class:no-pointer-events-all={lockInteraction}
                                     style:top={`${editingBlock.yOffset}px`}
                                     style:left={xOffset}
                                     style:--block-height={`${editingBlock.height}px`}
@@ -1188,7 +1174,7 @@
                                     class:routine-blocks__block--drop-area={true}
                                     class:routine-blocks__block--wk-drop-area={true}
                                     class:routine-blocks__block--wk-drop-area-light={isLightTheme}
-                                    class:no-pointer-events={lockInteraction}
+                                    class:no-pointer-events-all={lockInteraction}
                                     id="drop-area-block"
                                     style:top={`${top}px`}
                                     style:left={xOffset}
@@ -1313,7 +1299,8 @@
                         </div>
                     </div>
                 </div>
-                <!-- Day Breakdown Dropdown  -->
+
+                <!-- day breakdown  -->
                 <BounceFade
                     id="day-breakdown--dmenu"
                     isHidden={!isDayBreakdownOpen}
@@ -1333,15 +1320,18 @@
                         class:week-view__day-breakdown--unlinked={!isLinked}
                         style:width={`${DAY_DROPDOWN_WIDTH}px`}
                     >
-                        <!-- Header -->
+                        <!-- header -->
                         <button 
                             class="week-view__day-breakdown-settings-btn"
-                            id={"day-breakdown-settings--dbtn"}
+                            id={"day-breakdown--dbtn"}
                             on:click={() => onDayBreakdownSettingsClicked(isLinked)}
                         >
-                            <SvgIcon icon={Icon.Settings} options={{ scale: 0.88 }} />
+                            <SvgIcon 
+                                icon={Icon.Settings} 
+                                options={{ scale: 0.88 }} 
+                            />
                         </button>
-                        <!-- Title + Description -->
+                        <!-- details -->
                         {#if dayBreakdown?.linkedRoutine}
                             {@const { name, description } = dayBreakdown.linkedRoutine}
                             <div class="routine__details">
@@ -1357,7 +1347,7 @@
                                 Unlinked
                             </span>
                         {/if}
-                        <!-- Breakdown -->
+                        <!-- breakdown -->
                         <div class="routine__breakdown-header">
                             <DropdownBtn 
                                 id={"day-breakdown"}
@@ -1410,39 +1400,55 @@
                             />
                         </div>
 
-                        <!-- Settings Dropdown -->
+                        <!-- settings -->
                         <DropdownList 
-                            id={"day-breakdown-settings"}
-                            isHidden={!dayBreakdownSettingsOpen} 
+                            id={"day-breakdown"}
+                            isHidden={!dayBreakdownSettings} 
                             options={{
-                                listItems: dayBreakdownDropdownOptions,
-                                position: { top: "35px", right: "10px"},
-                                styling:  { width: "130px" },
+                                listItems: dayBreakdownOptions,
+                                position: { 
+                                    top: "35px", right: "10px"
+                                },
+                                styling:  { 
+                                    width: "130px" 
+                                },
                                 childId: "daily-routine",
-                                onListItemClicked: (context) => onDailyRoutinesListOptClicked(context.event),
-                                onClickOutside: () => dayBreakdownSettingsOpen = false
+                                onListItemClicked: ({ event }) => {
+                                    onDayRoutinesClicked(event)
+                                },
+                                onClickOutside: () => {
+                                    dayBreakdownSettings = false
+                                }
                             }}
                         />
 
-                        <!-- Daily Routines Dropdown -->
+                        <!-- daily routines -->
                         <DropdownList 
                             id={"daily-routine"}
                             isHidden={!dailyRoutinesOpen}
                             options={{
                                 pickedItem: dayBreakdown?.linkedRoutine?.name,
-                                listItems: DAILY_ROUTINES.map((dr) => ({ name: dr.name })),
-                                styling:  { width: "125px", maxHeight: "300px" },
-                                scroll:   { bar: true },
                                 onListItemClicked: onNewDayRoutineClicked,
+                                listItems: DAILY_ROUTINES.map((dr) => ({ name: dr.name })),
+                                styling:  { 
+                                    width: "125px", 
+                                    maxHeight: "300px" 
+                                },
+                                scroll: { 
+                                    bar: true 
+                                },
                                 position: { 
-                                    top: "35px", right: `${dailyRoutinestXOffset}px` 
+                                    top: "35px", 
+                                    right: `${dayRoutinestRight}px` 
                                 },
                                 parent: {
                                     id: "day-breakdown-settings",
                                     optnIdx: 0,
                                     optnName: isLinked ? "Replace Routine" : "Link a Routine"
                                 },
-                                onPointerLeave: () => dailyRoutinesOpen = false
+                                onPointerLeave: () => {
+                                    dailyRoutinesOpen = false
+                                }
                             }}
                         />
 

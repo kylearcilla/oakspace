@@ -83,10 +83,13 @@
                 if (init) {
                     const newDigitElem = makeNewDigitElem(newDigit)
                     digitElem.appendChild(newDigitElem)
-
                     digitElem.style.transform = `translateY(-${yOffset}px)`
                     digitElem.style.transition = `transform ${NUM_CHANGE_TIME}ms ease-in-out`
                     
+                    if (digit === "X") {
+                        digitNumElem.style.opacity = `0`
+                        digitNumElem.style.visibility = `hidden`
+                    }
                     setTimeout(() => {
                         digitElem.style.transform = `translateY(0px)`
                         digitElem.style.transition = 'transform 0s ease-in-out'
@@ -94,6 +97,11 @@
                         digitRefs[index] = newDigitElem
                         newDigitElem.style.marginBottom = `${NUM_SPACING}px`
                         digitNumElem.remove()
+
+                        if (digit === "X") {
+                            digitNumElem.style.opacity = `1`
+                            digitNumElem.style.visibility = `visible`
+                        }
 
                     }, NUM_CHANGE_TIME)
                 }

@@ -56,7 +56,7 @@
 
         &__days {
             @include flex(center, space-between);
-            @include text-style(0.65, 400, 1.3rem, "DM Mono");
+            @include text-style(0.65, 400, 1.3rem, "Geist Mono");
             margin: 0px 2px 10px 0px;
         }
         &__dow {

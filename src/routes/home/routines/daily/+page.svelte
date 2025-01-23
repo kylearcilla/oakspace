@@ -483,7 +483,7 @@
             bind:this={blocksContainerRef}
             bind:clientWidth={blocksContainerWidth}
             class="routines__blocks-wrapper"
-            class:no-pointer-events={lockInteraction}
+            class:no-pointer-events-all={lockInteraction}
         >
             <div 
                 on:pointerdown={(e) => manager.onScrollContainerPointerDown(e)}

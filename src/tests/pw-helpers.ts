@@ -495,7 +495,7 @@ export const elemLeftOffset = async (elem: any) => {
     return await elem.evaluate((elem: any) => (elem as any).offsetLeft)
 }
 
-export const getHozDistanceBetweenTwoElems = async (options: { left: { elem: any, edge?: "left" | "right"}, right: { elem: any, edge?: "left" | "right"} }) => {
+export const getHozSpace = async (options: { left: { elem: any, edge?: "left" | "right"}, right: { elem: any, edge?: "left" | "right"} }) => {
     const leftRect  = await options.left.elem.boundingBox()
     const rightRect = await options.right.elem.boundingBox()
   
@@ -508,7 +508,7 @@ export const getHozDistanceBetweenTwoElems = async (options: { left: { elem: any
     return rightEdge - leftEdge
 }
 
-export const getVertDistanceBetweenTwoElems = async (options: { top: { elem: any, edge?: "top" | "bottom"}, bottom: { elem: any, edge?: "top" | "bottom"} }) => {
+export const getVertSpace = async (options: { top: { elem: any, edge?: "top" | "bottom"}, bottom: { elem: any, edge?: "top" | "bottom"} }) => {
     const topRect  = await options.top.elem.boundingBox()
     const bottomRect = await options.bottom.elem.boundingBox()
   

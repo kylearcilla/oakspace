@@ -218,13 +218,18 @@
         {@const { habitsDone, habitsDue, perfectDays, missed, activeStreak } = metrics}
         <div class="habits__header">
             <div class="habits__stats">
-                <div class="habits__stat" style:margin-right="10px">
+                <div class="habits__stat" style:margin-right="0px">
                     <span class="habits__stat-label">Completion</span>
-                    <span class="habits__stat-value">
-                        {Math.floor((habitsDone / habitsDue) * 100)} %
-                    </span>
+                    <div class="habits__stat-bottom">
+                        <span class="habits__stat-value">
+                            {Math.floor((habitsDone / habitsDue) * 100)}
+                        </span>
+                        <span class="habits__stat-unit">
+                            %
+                        </span>
+                    </div>
                 </div>
-                <div class="habits__stat" style:margin-right="14px">
+                <div class="habits__stat" style:margin-right="30px">
                     <span class="habits__stat-label">Active Streak</span>
                     <div class="habits__stat-bottom">
                         <span class="habits__stat-value">
@@ -235,7 +240,7 @@
                         </span>
                     </div>
                 </div>
-                <div class="habits__stat" style:margin-right="14px">
+                <div class="habits__stat" style:margin-right="5px">
                     <span class="habits__stat-label">100% Days</span>
                     <div class="habits__stat-bottom">
                         <span class="habits__stat-value">
@@ -259,7 +264,7 @@
                 </div>
             </div>
 
-            <div class="habits__subtext">Metrics for June *</div>
+            <div class="habits__subtext">Metrics for June*</div>
         </div>
     {/if}
 
@@ -363,11 +368,11 @@
                                         {habit.name}
                                     </span>
                                 </div>
-                                <!-- {#if options.target} -->
-                                {#if true}
+                                {#if options.target}
+                                <!-- {#if true} -->
                                     <span class="habit__target">
-                                        <!-- {habit.target ?? ""} -->
-                                        {getFreqDaysStr(habit, true)}
+                                        {habit.target ?? ""}
+                                        <!-- {getFreqDaysStr(habit, true)} -->
                                     </span>
                                 {/if}
                             </div>
@@ -547,19 +552,19 @@
             margin: 0px 0px 0px 0px;
         }
         &__subtext {
-            @include text-style(0.1, 400, 1.2rem, "DM Sans");
+            @include text-style(0.1, 300, 1.2rem, "DM Sans");
             white-space: nowrap;
             margin-bottom: 9px;
         }
         &__stats {
             display: flex;
             flex-wrap: wrap;
-            margin: -2px 0px 4px 0px;
+            margin: -2px 0px 6px 0px;
         }
         &__stat {
-            width: 110px;
-            margin: 0px 8px 12px 0px;
-            @include text-style(0.885, 500, 1.6rem);
+            width: 120px;
+            margin: 0px 8px 9px 0px;
+            @include text-style(0.885, 400, 1.6rem, "Geist Mono");
 
 
             span {
@@ -568,7 +573,7 @@
             i { 
                 font-style: unset;
                 margin-left: -8px;
-                @include text-style(1, 300, 2rem, "DM Mono");
+                @include text-style(1, 300, 2rem, "Geist Mono");
             }
         }
         &__stat-bottom {
@@ -576,35 +581,32 @@
         }
         &__stat-label {
             margin-bottom: 5px;
-            @include text-style(0.285, 500, 1.42rem);
+            @include text-style(0.285, 400, 1.42rem);
         }
         &__stat-unit {
             margin: 0px 0px 0px 6px;
         }
         &__stat-unit--times {
-            @include text-style(1, 400, 1.55rem);
+            @include text-style(1, 300, 1.35rem);
             transform: scale(1.5);
             margin-left: 4px;
         }
 
         /* table */
-        &__table {
-            overflow-x: scroll;
-        }
         &__wk-period {
-            @include text-style(0.25, 400, 1.4rem, "DM Mono");
+            @include text-style(0.25, 400, 1.4rem, "Geist Mono");
             margin-left: 14px;
         }
         &__table-header {
             display: flex;
-            @include text-style(0.35, 400, 1.35rem, "DM Mono");
+            @include text-style(0.35, 400, 1.35rem, "Geist Mono");
             position: relative;
             padding-top: 11px;
             border-bottom: var(--border);
             border-top: var(--border) !important;
         }
         &__tod-header {
-            @include text-style(0.35, 400, 1.35rem, "DM Mono");
+            @include text-style(0.35, 400, 1.35rem, "Geist Mono");
             @include flex(center, space-between);
             margin: 13px 0px 9px 2px;
         }
@@ -618,7 +620,7 @@
         }
         &__count-cell {
             margin-left: 1px;
-            @include text-style(0.145, 400, 1.3rem, "DM Mono");
+            @include text-style(0.145, 400, 1.3rem, "Geist Mono");
         }
 
         &__empty {
@@ -648,22 +650,22 @@
             font-style: normal;
         }
         &__name {
-            @include text-style(1, 500, 1.4rem);
+            @include text-style(1, 500, 1.45rem);
             @include elipses-overflow;
             @include flex(center, space-between);
         }
         &__target {
-            @include text-style(0.16, 500, 1.35rem);
+            @include text-style(0.16, 400, 1.35rem, "Geist Mono");
             text-align: right;
             padding-right: 15px;
         }
         &__streak {
-            @include text-style(0.6, 300, 1.4rem, "DM Mono");
+            @include text-style(0.6, 300, 1.4rem, "Geist Mono");
             padding: 2px 15px 2px 14px;
         }
         &__streak-times {
             font-size: 1.6rem;
-            margin: 0px 0px -3px 2px;
+            margin: 0px 0px 0px 2px;
         }
         &__box {
             background-color: var(--lightColor3);
@@ -708,7 +710,7 @@
             @include flex(center, space-between);
         }
         &__progress .fraction {
-            font-family: "DM Mono";
+            font-family: "Geist Mono";
             font-weight: 300;
             margin: 0px 10px 0px 2px;
         }
@@ -754,7 +756,7 @@
         }
     }
     .three-col {
-        width: 120px;
+        width: 100px;
         
         &--min {
             width: 50px;

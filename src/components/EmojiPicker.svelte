@@ -8,7 +8,7 @@
     import { emojiPicker } from "../lib/pop-ups"
     import SearchIndex from "../lib/emojis-search-idx"
     import FrequentlyUsed from "../lib/emojis-freq-used"
-	  import { getElemById, getVertDistanceBetweenTwoElems } from "../lib/utils-general"
+	  import { getElemById, getVertSpace } from "../lib/utils-general"
     import { Data, getEmojiData, EMOJI_BUTTON_SIZE, CATEGORY_ID_TO_NAME, CATEGORY_TO_ICONS, setCache, getCache } from "../lib/emojis"
 
     /* subset of : https://github.com/missive/emoji-mart */
@@ -79,7 +79,7 @@
       if (name === tooltip?.name) return
 
       const target  = pe.target as HTMLElement
-      const top = getVertDistanceBetweenTwoElems({
+      const top = getVertSpace({
         top: { elem: scrollElem, edge: "top" },
         bottom: { elem: target, edge: "top" }
       })

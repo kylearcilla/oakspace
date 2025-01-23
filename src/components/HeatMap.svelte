@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getElemById, getHozDistanceBetweenTwoElems, randomArrayElem } from '$lib/utils-general';
+	import { getElemById, getHozSpace, randomArrayElem } from '$lib/utils-general';
 	import {
 		addToDate,
 		formatDateToSimpleIso,
@@ -103,7 +103,7 @@
 			const firstDay = lastTwelveMonths[i];
 			const monthNameRef = monthNames[i];
 			const matchingCell = getElemById(`cell--${id}--${formatDateToSimpleIso(firstDay)}`);
-			const distFromLeft = getHozDistanceBetweenTwoElems({
+			const distFromLeft = getHozSpace({
 				left: {
 					elem: container,
 					edge: 'left'

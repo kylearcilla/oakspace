@@ -4,12 +4,13 @@
 	import { onMount } from "svelte"
 	import BounceFade from "./BounceFade.svelte"
 	import DropdownListOption from "./DropdownListOption.svelte"
+	import { getHozSpace } from "../lib/utils-general";
 
     export let id: string = ""
     export let isHidden: boolean
     export let options: DropdownListOptions
 
-    let dropdownMenuRef: HTMLElement
+    let dmenuRef: HTMLElement
     let idxCount = 0
     let listItems = options.listItems
     let pickedItem = options.pickedItem
@@ -19,7 +20,7 @@
     $: if (isHidden != undefined) { 
         resetCount()
     }
-    $: if (!isHidden && dropdownMenuRef && options.scroll?.goToIdx) {
+    $: if (!isHidden && dmenuRef && options.scroll?.goToIdx) {
         goToStartingIdxLocation(options.scroll.goToIdx)
     }
     $: if (!isHidden) {
@@ -45,7 +46,7 @@
     function goToStartingIdxLocation(goToIdx: number) {
         if (goToIdx < 0) return
         
-        const listItems = [...dropdownMenuRef.children]
+        const listItems = [...dmenuRef.children]
         if (!listItems || listItems.length === 0) return
 
         const toIdx = goToIdx
@@ -54,7 +55,7 @@
         for (let i = 0; i < toIdx; i++) {
             distanceToIdx += listItems[i].clientHeight
         }
-        dropdownMenuRef.scrollTop = distanceToIdx
+        dmenuRef.scrollTop = distanceToIdx
     }
     function onClickOutside() {
         if (isHidden || !options.onClickOutside) return
@@ -64,9 +65,9 @@
         return idxCount++
     }
     function onPointerLeave(e: PointerEvent) {
-        if (!options.onPointerLeave) return
-
-        // no parent
+        if (!options.onPointerLeave) {
+            return
+        }
         if (!options.parent) {
             options.onPointerLeave()
             return
@@ -97,20 +98,52 @@
         }
     }
     function onItemPointerLeave(e: PointerEvent, item: DropdownOption) {
-        if (!item.onPointerLeave) return
-
-        // no child menu
-        if (!options.childId) {
-            item.onPointerLeave()
+        const { childId, container } = options.parentContext ?? {}
+        if (!item.onPointerLeave) {
+            return
+        }
+        if (!childId) {
+            item.onPointerLeave({ e, item })
             return
         }
 
-        const childId   = `${options.childId}--dmenu`
+        // do not leave if off to child menu
         const rTarget   = e.relatedTarget as HTMLElement
         const rTargetId = rTarget?.children[0]?.id
 
-        if (childId != rTargetId) {
-            item.onPointerLeave()
+        if (`${childId}--dmenu` != rTargetId) {
+            item.onPointerLeave({ e, item })
+        }
+    }
+    function onItemPointerOver(e: PointerEvent, item: DropdownOption) {
+        const { childId, container } = options.parentContext ?? {}
+        const { onPointerOver } = item
+        if (!childId || !onPointerOver) {
+            return
+        }
+
+        item.onPointerOver({ 
+            e, 
+            item, 
+            childLeft: initChildLeft(container) 
+        })
+    }
+    function initChildLeft(container: HTMLElement) {
+        const { left, width } = dmenuRef.getBoundingClientRect()
+        const { left: cLeft } = container.getBoundingClientRect()
+        const childMenuWidth = 150
+
+        const space = getHozSpace({
+            left:  { elem: dmenuRef, edge: "right" },
+            right: { elem: container, edge: "right" },
+            absolute: false
+        })
+
+        if (childMenuWidth <= space) {
+            return left - cLeft + width + 4
+        }
+        else {
+            return left - cLeft - width + 10
         }
     }
 
@@ -132,7 +165,7 @@
     >
         <ul 
             use:clickOutside on:click_outside={onClickOutside} 
-            bind:this={dropdownMenuRef}
+            bind:this={dmenuRef}
             id={`${id}--dmenu`}
             class="dmenu"
             class:dmenu--light={!isDark}
@@ -144,39 +177,24 @@
             style:max-height={options?.styling?.maxHeight ?? "auto"}
             style:--font-family={options.styling?.fontFamily ?? "Manrope"}
         >
-            {#each listItems as item, idx}
-                <!-- Section Item -->
-                {#if "options" in item}
-                    {@const section = item}
-                    <li 
-                        class="dmenu__section"
-                        class:dmenu__section--last={idx === listItems.length - 1}
-                    >
-                        {#if item.sectionName}
-                            <div class="dmenu__section-name">
-                                {item.sectionName}
-                            </div>
-                        {/if}
-                        {#each section.options as option}
-                            <DropdownListOption 
-                                {option}
-                                {pickedItem}
-                                idx={initOptnIdx()}
-                                onOptionClicked={onItemClicked}
-                            />
-                        {/each}
-                    </li>
-                    <li class="dmenu__section-divider"></li>
-                <!-- Option Item -->
-                {:else}
+            {#each listItems as item}
+                {#if "sectionName" in item}
+                    <div class="dmenu__section-name">
+                        {item.sectionName}
+                    </div>
+                {:else if "name" in item}
                     {@const option = item}
                     <DropdownListOption 
                         {option}
                         {pickedItem}
+                        {onItemPointerLeave}
+                        {onItemPointerOver}
                         idx={initOptnIdx()}
                         onOptionClicked={onItemClicked}
-                        onOptionPointerLeave={onItemPointerLeave}
                     />
+                    {#if item.divider}
+                        <li class="dmenu__section-divider"></li>
+                    {/if}
                 {/if}
             {/each}
         </ul>

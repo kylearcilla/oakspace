@@ -568,9 +568,12 @@ export function clamp(min: number, value: number, max: number): number {
   return Math.min(Math.max(value, min), max)
 }
 
-export function getVertDistanceBetweenTwoElems(options: { top: { elem: HTMLElement, edge?: "top" | "bottom"}, bottom: { elem: HTMLElement, edge?: "top" | "bottom"} }) {
-  const { top, bottom } = options
+type SpaceElem = {
+  elem: HTMLElement
+  edge?: "top" | "bottom" | "left" | "right"
+}
 
+export function getVertSpace({ top, bottom, absolute = true }: { top: SpaceElem, bottom: SpaceElem, absolute?: boolean }) {
   const topRect  = top.elem.getBoundingClientRect()
   const bottomRect = bottom.elem.getBoundingClientRect()
 
@@ -580,11 +583,15 @@ export function getVertDistanceBetweenTwoElems(options: { top: { elem: HTMLEleme
   const topEdge  = top.edge === "bottom" ? topRect.y + topRect.height : topRect.y
   const bottomEdge = bottom.edge === "bottom" ? bottomRect.y + bottomRect.height : bottomRect.y
 
-  return Math.abs(bottomEdge - topEdge)
+  if (absolute) {
+    return Math.abs(bottomEdge - topEdge)
+  }
+  else {
+    return bottomEdge - topEdge
+  }
 }
-export function getHozDistanceBetweenTwoElems(options: { left: { elem: HTMLElement, edge?: "left" | "right"}, right: { elem: HTMLElement, edge?: "left" | "right"} }) {
-  const { left, right } = options
 
+export function getHozSpace({ left, right, absolute = true }: { left: SpaceElem, right: SpaceElem, absolute?: boolean }) {
   const leftRect  = left.elem.getBoundingClientRect()
   const rightRect = right.elem.getBoundingClientRect()
 
@@ -594,7 +601,12 @@ export function getHozDistanceBetweenTwoElems(options: { left: { elem: HTMLEleme
   const leftEdge  = left.edge === "right" ? leftRect.right : leftRect.left
   const rightEdge = right.edge === "right" ? rightRect.right : rightRect.left
 
-  return Math.abs(rightEdge - leftEdge)
+  if (absolute) { 
+    return Math.abs(rightEdge - leftEdge)
+  }
+  else {
+    return rightEdge - leftEdge
+  }
 }
 
 /**

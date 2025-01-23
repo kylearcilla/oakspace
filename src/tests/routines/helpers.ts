@@ -1,7 +1,7 @@
 import { minsFromStartToHHMM, minsToHHMM, timeStrToMins } from "$lib/utils-date"
 import { expect, test } from "@playwright/test"
 import { looseEqualTo } from "../helpers"
-import { getScrollData, getElemOrigin, getHozDistanceBetweenTwoElems, 
+import { getScrollData, getElemOrigin, getHozSpace, 
         vertScrollElem, elemLeftOffset, elemTopOffset,
         dragFromTo, type DragPoint, type DragPosition,
         fillInput,
@@ -1044,7 +1044,7 @@ export const getNextColDistFromBlock = async (options: {
     const lines     = page.locator('.wk-grid__vert-line')
 
     if (view === "Today") {
-        return await getHozDistanceBetweenTwoElems({
+        return await getHozSpace({
             left:  { elem: block, edge: "right" },
             right: { elem: container, edge: "right" }
         })
@@ -1052,7 +1052,7 @@ export const getNextColDistFromBlock = async (options: {
 
     const isLastCol = dayCount === idx + 1
 
-    return await getHozDistanceBetweenTwoElems({
+    return await getHozSpace({
         left: { elem: block, edge: "right" },
         right: {
             elem: isLastCol ? container : lines.nth(idx + 1), 

@@ -697,7 +697,7 @@
             transition: 0.12s ease-in-out;
             padding: 5px 13px 4px 11px;
             background-color: rgba(var(--textColor1), 0.05);
-            @include text-style(1, 400, 1.3rem, "DM Mono");
+            @include text-style(1, 400, 1.3rem, "Geist Mono");
             
             img {
                 @include circle(14px);
@@ -822,7 +822,7 @@
             }
             span {
                 color: rgba(white, 0.4);
-                @include text-style(_, 400, 1.25rem, "DM Mono");
+                @include text-style(_, 400, 1.25rem, "Geist Mono");
                 display: block;
             }
             &-title {
@@ -861,7 +861,7 @@
             }
         }
         &__type-btn {
-            @include text-style(1, 400, 1.24rem, "DM Mono");
+            @include text-style(1, 400, 1.24rem, "Geist Mono");
             margin: 0px 12px 0px 0px;
             opacity: 0.2;
 
@@ -997,7 +997,7 @@
         }
         &__choose-btn {
             @include abs-bottom-right(18px, 18px);
-            @include text-style(1, 500, 1.3rem, "DM Mono");
+            @include text-style(1, 500, 1.3rem, "Geist Mono");
             background: var(--lightColor2);
             padding: 6px 20px 7px 20px;
             border-radius: 15px;

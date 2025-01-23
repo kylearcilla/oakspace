@@ -3,6 +3,7 @@
 	import { DARK_COLOR_PROGRESS, LIGHT_COLOR_PROGRESS } from "../lib/utils-colors"
 
     export let progress: number
+    export let showNum: boolean = false
     
     $: isLight = !$themeState.isDarkTheme
     let fgColor = "rgba(255, 255, 255, 0.9)"
@@ -24,9 +25,11 @@
     class="progress"
     class:progress--light={isLight}
 >
-    <div class="progress__num">
-        {Math.floor(progress * 100)}%
-    </div>
+    {#if showNum}
+        <div class="progress__num">
+            {Math.floor(progress * 100)}%
+        </div>
+    {/if}
     <div 
         style:--fg-width={`${progress * 100}%`}
         style:--fg-color={fgColor}
@@ -50,8 +53,8 @@
             margin-right: 12px;
         }
         &__slider {
-            width: 50px;
-            height: 4px;
+            width: 30px;
+            height: 3px;
             border-radius: 2px;
             background-color: rgba(var(--textColor1), 0.1);
             position: relative;

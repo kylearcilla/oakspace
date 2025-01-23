@@ -7,7 +7,7 @@
 	import ProgressRing from "./ProgressRing.svelte";
 
     export let goal: Goal
-    export let onClick: (goal: Goal) => void
+    export let onClick: ((goal: Goal) => void) | undefined = undefined
     export let options: {
         img?: boolean
         description?: boolean
@@ -18,6 +18,7 @@
         tag?: boolean
         
     } | undefined = undefined
+    export let highlighted: boolean = false
     
     $: isLight = !$themeState.isDarkTheme
     const view = {
@@ -30,24 +31,40 @@
         tag: options?.tag ?? true,
     }
 
-    const { due, dueType, name, description, tag, imgSrc, milestones } = goal
+    const { due, name, description, tag, imgSrc, milestones, status } = goal
     const { progress, img, type, completed, tag: hasTag } = view
 
     $: tagColor = tag ? getColorTrio(tag.symbol.color, isLight) : ["", "", ""]
 
-    const dueStr = getDueString(due, dueType)
-    const dueDateDistStr = due ? getTimeDistanceStr(due) : ""
-    const isLate = dueDateDistStr.includes("ago")
+    let isLate = false
+    let dueStr = ""
+    
+    function getDueDateDistStr() {
+        if (!due || status === "accomplished") {
+            return ""
+        }
+        
+        const str = getTimeDistanceStr({ date: due, enforce: "d" })
+        isLate = str.includes("ago")
 
+        if (isLate) {
+            dueStr = "-" + str.split("ago")[0]
+        } 
+        else {
+            dueStr = str
+        }
+    }
+
+    getDueDateDistStr()
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div 
     class="goal-card"
     class:goal-card--light={isLight}
-    class:goal-card--late={isLate}
     class:goal-card--completed={completed}
     class:goal-card--simple={type === "simple"}
+    class:goal-card--highlighted={highlighted}
     on:click|self={() => onClick(goal)}
 >
     {#if imgSrc && img}
@@ -74,7 +91,7 @@
             {/if}
         </div>
         <!-- {#if type === "simple"}
-            <div class="goal-card__due-date-dist">
+            <div class="goal-card__due">
                 {view.completed ? "Done" : dueDateDistStr}
             </div>
         {/if} -->
@@ -111,8 +128,12 @@
                 </div>
             {/if}
             {#if type === "default"}
-                <div class="goal-card__due-date-dist">
-                    {view.completed ? "Done" : dueDateDistStr}
+                <div 
+                    class="goal-card__due"
+                    class:goal-card__due--late={isLate}
+                    style:margin-bottom={"0px"}
+                >
+                    {view.completed ? "Done" : dueStr}
                 </div>
             {/if}
         </div>
@@ -144,6 +165,9 @@
             @include abs-top-left(0px, 5px);
             display: none;
         }
+        &:focus {
+            outline: 1px solid rgba(var(--textColor1), 0.05);
+        }
 
         &--light {
             border: 1.5px solid rgba(var(--textColor1), 0.05);
@@ -158,7 +182,7 @@
         &--light &__description {
             @include text-style(0.5, 500);
         }
-        &--light &__due-date-dist {
+        &--light &__due {
             @include text-style(0.5, 600);
         }
         &--simple:first-child {
@@ -183,7 +207,7 @@
             margin-bottom: 13px;
             @include truncate-lines(2);
         }
-        &--simple &__due-date-dist {
+        &--simple &__due {
             margin: 4px 0px 8px 0px;
         }
         &--simple &__tag, 
@@ -193,8 +217,10 @@
         &--completed {
             opacity: 0.4;
         }
-        &--late &__due-date-dist {
-            // color: rgba(#ec846d, 0.5);
+        &--highlighted {
+            background-color: rgba(var(--textColor1), 0.035);
+            box-shadow: rgba(#0C8CE9, 0.35) 0px 0px 0px 2px inset, 
+                        rgba(#0C8CE9, 0.1) 0px 0px 0px 2.5px;
         }
         &__details {
             padding: 11px 12px 11px 13px;
@@ -216,6 +242,9 @@
         &__due {
             @include text-style(0.2, 400, 1.3rem, "DM Sans");
             margin-bottom: 6px;
+        }
+        &__due--late {
+            color: rgba(#e0846080, 0.65) !important;
         }
         &__title {
             @include text-style(1, 500, 1.4rem);
@@ -247,19 +276,22 @@
         &__tag {
             border-radius: 6px;
             padding: 2px 9px 3.5px 9px;
-            font-family: "DM MOno"
+            font-family: "Geist Mono"
         }
         .tag {
             margin-right: 15px;
+
             &__symbol {
                 font-size: 0.95rem;
             }
             &__title {
-                font-size: 1.2rem;
+                font-size: 1.15rem;
+                max-width: 90px;
+                
             }
         }
-        &__due-date-dist {
-            @include text-style(0.2, 400, 1.25rem);
+        &__due {
+            @include text-style(0.2, 400, 1.25rem, "Geist Mono");
             white-space: nowrap;
         }
     }

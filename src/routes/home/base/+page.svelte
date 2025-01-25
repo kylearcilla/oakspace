@@ -129,8 +129,10 @@
                         </div>
                         <div style:width="100%">
                             <TextEntry 
-                                id="month"
-                                entry={MONTH_THOUGHT_ENTRY}
+                                options={{
+                                    id: "month",
+                                    ...MONTH_THOUGHT_ENTRY
+                                }}
                             />
                         </div>
                     </div>

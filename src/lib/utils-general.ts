@@ -919,6 +919,18 @@ export function isValidUrl(string: string) {
   }
 }
 
+export function getElemPadding(elem: HTMLElement) {
+  const styles = window.getComputedStyle(elem)
+  const parsePixelValue = (value: string) => parseFloat(value) || 0
+
+  const top = parsePixelValue(styles.paddingTop)
+  const bottom = parsePixelValue(styles.paddingBottom)
+  const left = parsePixelValue(styles.paddingLeft)
+  const right = parsePixelValue(styles.paddingRight)
+
+  return { top, bottom, right, left }
+}
+
 export function findElemVertSpace(target: HTMLElement) {
   const styles = window.getComputedStyle(target)
   const parsePixelValue = (value: string) => parseFloat(value) || 0

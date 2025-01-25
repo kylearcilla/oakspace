@@ -102,10 +102,6 @@
         if (!item.onPointerLeave) {
             return
         }
-        if (!childId) {
-            item.onPointerLeave({ e, item })
-            return
-        }
 
         // do not leave if off to child menu
         const rTarget   = e.relatedTarget as HTMLElement
@@ -118,7 +114,11 @@
     function onItemPointerOver(e: PointerEvent, item: DropdownOption) {
         const { childId, container } = options.parentContext ?? {}
         const { onPointerOver } = item
-        if (!childId || !onPointerOver) {
+        if (!onPointerOver) {
+            return
+        }
+        if (!container) {
+            item.onPointerOver()
             return
         }
 

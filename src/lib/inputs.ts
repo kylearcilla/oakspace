@@ -108,12 +108,13 @@ export class TextEditorManager extends InputManager {
     elemInit = false
     allowFormatting: boolean
     allowBlurOnClickAway: boolean
+    focused = false
 
     currFormat: "bold" | "code" | null = null
     prevFormat: "bold" | "code" | null = null
 
-    undoStack: { length: number, content: string }[] = []
-    redoStack: { length: number, content: string }[] = []
+    undoStack: { length: number, content: string, pos: number }[] = []
+    redoStack: { length: number, content: string, pos: number }[] = []
 
     UNDO_EDIT_MIN_DIST_FROM_PREV = 15
     MAX_UNDO_STACK_SIZE = 20
@@ -132,58 +133,149 @@ export class TextEditorManager extends InputManager {
             return
         }
         const recentUndo = this.redoStack.pop()!
+        const pos = this.getCursorPos()
 
         this.undoStack.push({
             length: this.inputElem!.innerText.length,
-            content: this.inputElem!.innerHTML
+            content: this.inputElem!.innerHTML,
+            pos
         })
-        this.setInputElem(recentUndo.content)
+        this.setInputElem(recentUndo.content, recentUndo.pos)
     }
     undoEdit() {
         if (this.undoStack.length === 0) {
             return
         }
         let recentEdit = this.undoStack.pop()!
+        const pos = this.getCursorPos()
+
         this.redoStack.push({
             length: this.inputElem!.innerText.length,
-            content: this.inputElem!.innerHTML
+            content: this.inputElem!.innerHTML,
+            pos
         })
         while (recentEdit.content === this.inputElem!.innerHTML && this.undoStack.length > 0) {
             recentEdit = this.undoStack.pop()!
         }
-        this.setInputElem(recentEdit.content)
+
+        this.setInputElem(recentEdit.content, recentEdit.pos)
     }
 
     /**
      * Runs after any change. 
-     * Saves current version when far enough from last edit (length).
+     * Saves current version when far enough from last edit (length) and puts in in the undo stack.
      */
     undoHandler() {
         this.redoStack = []
         const currText = this.inputElem!.innerText
+        const content = this.inputElem!.innerHTML
+        const pos = this.getCursorPos()
+        const length = currText.length
 
         if (this.undoStack.length === 0) {
             this.undoStack.push({
-                length: currText.length,
-                content: this.inputElem!.innerHTML
+                length, content, pos
             })
             return
         }
-        const recentEdit   = this.undoStack[this.undoStack.length - 1]
+
+        const recentEdit = this.undoStack[this.undoStack.length - 1]
         const prevEditDist = Math.abs(recentEdit.length - currText.length)
 
         if (prevEditDist < this.UNDO_EDIT_MIN_DIST_FROM_PREV) {
             return
         }
-        this.undoStack.push({
-            length: currText.length,
-            content: this.inputElem!.innerHTML
-        })
 
+        this.undoStack.push({
+            length, content, pos
+        })
         if (this.undoStack.length > this.MAX_UNDO_STACK_SIZE) {
             this.undoStack.shift()
         }
     }
+
+    /**
+     * Get the aboslute cursor position. 
+     * @returns The cursor position.
+     */
+    getCursorPos() {
+        let currentPos = 0
+        const selection = window.getSelection()
+        const range = selection?.getRangeAt(0)
+        const startContainer = range?.startContainer
+  
+        function getCursorPosition(node: Node): number {
+            if (node === startContainer) {
+                return currentPos + (range?.startOffset || 0)
+            }
+            if (node.nodeType === Node.TEXT_NODE) {
+                currentPos += node.textContent?.length || 0
+            }
+
+            // check element to navigate nested text nodes
+            for (const child of Array.from(node.childNodes)) {
+                const pos = getCursorPosition(child)
+                if (pos !== -1) return pos
+            }
+            return -1
+        }
+
+        return getCursorPosition(this.inputElem!) || 0
+    }
+
+    /**
+     * Set the input element's content and cursor position.
+     * @param content The new content.
+     * @param pos    The absolute cursor position.
+     */
+    setInputElem(content: string, pos: number) {
+        this.inputElem!.innerHTML = content
+
+        const selection = window.getSelection()
+        if (!selection) return
+
+        let currentPos = 0, targetOffset = 0
+        let targetNode: Node | null = null
+
+        // find the node and relative cursor position given the absolute positions
+        function walkTextNodes(node: Node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const length = node.textContent?.length || 0
+                const isInNode = isInRange(currentPos, pos, currentPos + length)
+
+                // cursor is in this node
+                if (isInNode) {
+                    targetNode = node
+                    targetOffset = pos - currentPos
+                    return true
+                }
+                currentPos += length
+            } 
+            // check nested text nodes
+            else {
+                for (const child of Array.from(node.childNodes)) {
+                    if (walkTextNodes(child)) return true
+                }
+            }
+            return false
+        }
+        walkTextNodes(this.inputElem!)
+
+        // set the cursor position
+        const range = document.createRange()
+        if (targetNode) {
+            range.setStart(targetNode, targetOffset)
+            range.setEnd(targetNode, targetOffset)
+        }
+        else {
+            range.selectNodeContents(this.inputElem!)
+            range.collapse(false)
+        }
+
+        selection.removeAllRanges()
+        selection.addRange(range)
+    }
+
 
     /* event handlers */
     onPaste(event: ClipboardEvent) {
@@ -295,12 +387,19 @@ export class TextEditorManager extends InputManager {
     onFocusHandler(event: Event) {
         const target = event.target as HTMLElement
         this.valLength = target.innerText.length
+        this.focused = true
+
+        if (this.undoStack.length === 0) {
+            requestAnimationFrame(() => this.undoHandler())
+        }
 
         // this.updateCaretStyle({ doShow: true })
         super.onFocusHandler(event)
     }
 
     onBlurHandler(event: FocusEvent | null, force?: boolean) {
+        this.focused = false
+        
         if (!this.allowBlurOnClickAway && !force && event) {
             event.preventDefault()
             return
@@ -600,6 +699,8 @@ export class TextEditorManager extends InputManager {
         const range = selection?.getRangeAt(0)
         const caretPosition = range ? range.startOffset : null
 
+        if (fonts.length === 0) return
+
         // span element exists under font
         fonts.forEach(font => {
             const span = font.querySelector('span')
@@ -665,7 +766,7 @@ export class TextEditorManager extends InputManager {
 
         let emptyFormat = !!this.currFormat
 
-        if (this.id != target.id) {
+        if (this.id != target.id || !this.focused) {
             return
         }
         if (!shiftKey && key === "Enter" && !this.allowBlurOnClickAway) {
@@ -760,21 +861,6 @@ export class TextEditorManager extends InputManager {
     
         selection?.removeAllRanges()
         selection?.addRange(range)
-    }
-
-    setInputElem(content: string) {
-        this.inputElem!.innerHTML = content
-
-        // put cursor in the end
-        const selection = window.getSelection()
-        if (!selection) return
-    
-        const range = document.createRange()
-        range.selectNodeContents(this.inputElem!)
-        range.collapse(false)
-    
-        selection.removeAllRanges()
-        selection.addRange(range)
     }
 
     initElem() {

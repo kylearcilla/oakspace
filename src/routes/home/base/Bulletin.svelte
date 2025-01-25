@@ -69,11 +69,12 @@
         handlers: {
             onInputHandler: (_, val) => {
                 newNoteTxt = val
-                console.log({ newNoteTxt })
             },
             onBlurHandler: () => onEditComplete()
         }
     })
+
+    $: console.log({ notes })
 
     function onEditComplete() {
         if (!newNoteTxt) {
@@ -94,8 +95,8 @@
             editor.updateText(notes[idx])
         }
         else {
-            editor.updateText(notes[idx - 1])
-            noteIdx--
+            editor.updateText(notes[0])
+            noteIdx = 0
         }
     }
     function onPointerUp(e: PointerEvent) {
@@ -131,17 +132,20 @@
     }
     function onAddNewNote() {
         notes.push("")
-        noteIdx = notes.length - 1
         newNoteTxt = ""
-        editor.focus()
+
+        noteIdx = notes.length - 1
         hasContextMenu = false
+
+        editor.updateText("")
+        editor.focus()
     }
     function openImgModal() {
         hasContextMenu = false
 
         imageUpload.init({
             onSubmit: (imgSrc: string) => {
-                if (bulletinImg != imgSrc) {
+                if (imgSrc && bulletinImg != imgSrc) {
                     bulletinImg = imgSrc
                 }
             }

@@ -39,9 +39,9 @@
             if (!imgUrl) return
     
             isInputLoading = true
-            await validateUserImgURLInput({
-                url: imgUrl, constraints: _constraints
-            })
+            // await validateUserImgURLInput({
+            //     url: imgUrl, constraints: _constraints
+            // })
 
             onSubmit(imgUrl)
             close()

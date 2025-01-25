@@ -183,8 +183,6 @@ export function getHabitWeekProgress(habit: Habit, weeksAgoIdx: number) {
     const bitsStr  = getHabitWeekBits(habit, weeksAgoIdx)
     let checked = 0, total = 0
 
-    console.log(habit.name, "=======")
-
     if (freqType === 'daily') {
         checked = countBitsStr(bitsStr)
         total = 7

@@ -218,8 +218,8 @@
         {@const { habitsDone, habitsDue, perfectDays, missed, activeStreak } = metrics}
         <div class="habits__header">
             <div class="habits__stats">
-                <div class="habits__stat" style:margin-right="0px">
-                    <span class="habits__stat-label">Completion</span>
+                <div class="habits__stat" style:margin-right="10px">
+                    <span class="habits__stat-label">Consistency</span>
                     <div class="habits__stat-bottom">
                         <span class="habits__stat-value">
                             {Math.floor((habitsDone / habitsDue) * 100)}
@@ -552,9 +552,9 @@
             margin: 0px 0px 0px 0px;
         }
         &__subtext {
-            @include text-style(0.1, 300, 1.2rem, "DM Sans");
+            @include text-style(0.1, 400, 1.15rem, "Geist Mono");
             white-space: nowrap;
-            margin-bottom: 9px;
+            margin: 12px 0px 8px 0px;
         }
         &__stats {
             display: flex;

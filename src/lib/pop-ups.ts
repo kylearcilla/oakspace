@@ -7,8 +7,8 @@ function getPopFloatElemPos(box: { height: number, width: number }) {
     const { height, width } = box
 
     const fromPos = {
-        top: cursorPos.top - 25,
-        left: cursorPos.left - 35
+        top: cursorPos.top - 15,
+        left: cursorPos.left - 15
     }
     return initFloatElemPos({
         dims: { 

@@ -719,14 +719,15 @@ export const YEAR_HABITS_DATA: HabitYearData[] = [
 ]
 
 /* home base */
-export const YEAR_THOUGHT_ENTRY = {
+export const YEAR_THOUGHT_ENTRY: TextEntryOptions = {
   icon: {
-        type: "img",
-        src: "https://i.pinimg.com/originals/41/bc/b5/41bcb5fba60bb3e1112550c0a7841c70.gif"
+      type: "img",
+      src: "https://i.pinimg.com/originals/41/bc/b5/41bcb5fba60bb3e1112550c0a7841c70.gif",
+      size: "big"
   },
   date: new Date(2025, 0),
   styling: "default",
-  text: `<strong>Chill</strong>  <code>noun</code>
+  entry: `<strong>Chill</strong>  <code>noun</code>
 Chill is the <u>calm in a storm</u> 🌊, the pause that lets us <i>breathe deeply</i>. 
 It's the <u>crisp air</u> of a morning walk, the <i>stillness of twilight</i> settling over the world 🌌. 
 To chill is to <u>embrace the quiet moments</u>, to let the rush fall away, and to find yourself in <i>peace</i> 🕊️. 
@@ -734,14 +735,15 @@ It's the art of <i>being present</i>, savoring simplicity, and knowing that stil
 `
 }
 
-export const MONTH_THOUGHT_ENTRY = {
+export const MONTH_THOUGHT_ENTRY: TextEntryOptions = {
   icon: {
-        type: "img",
-        src: "https://i.pinimg.com/736x/72/44/08/724408c450ce38a7be258ed489d8c64d.jpg"
+      type: "img",
+      src: "https://i.pinimg.com/736x/72/44/08/724408c450ce38a7be258ed489d8c64d.jpg",
+      size: "small"
   },
   date: new Date(2025, 5),
   styling: "default",
-  text: `<strong>Wonder</strong>  <code>noun</code>
+  entry: `<strong>Wonder</strong>  <code>noun</code>
 Wonder is the spark of curiosity ✨, the moment that makes us <i>pause in awe</i>. 
 It's the glow of <i>starlight</i> in a vast night sky, the <u>whisper of possibility</u> in the unknown 🌌. 
 To wonder is to embrace the questions, to see magic in the mundane, and to feel alive in discovery, 🌟. 

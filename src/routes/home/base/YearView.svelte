@@ -7,8 +7,16 @@
     import HeatMap from "../../../components/HeatMap.svelte"
 	import { TEST_GOALS, YEAR_THOUGHT_ENTRY } from "../../../lib/mock-data"
 
-    const SMALL_WIDTH = 700
+    export let options: {
+        yearsAgoIdx: number
+        showTextEntry: boolean
+        showYear: boolean
+    }
+    $: showTextEntry = options.showTextEntry
+    $: showYear = options.showYear
 
+    const SMALL_WIDTH = 700
+    let date = new Date(2025, 0, 1)
     let width = 0
     let gradient = ""
     let goalsListRef: HTMLElement | null = null
@@ -34,13 +42,20 @@
     class:yr-view--small={width < SMALL_WIDTH}
     bind:clientWidth={width}
 >
-    <h1>
-        {YEAR_THOUGHT_ENTRY.date.getFullYear()}
-    </h1>
-    <TextEntry 
-        id="yr"
-        entry={YEAR_THOUGHT_ENTRY}
-    />
+    {#if showYear}
+        <h1>
+            {YEAR_THOUGHT_ENTRY.date.getFullYear()}
+        </h1>
+    {/if}
+    {#if showTextEntry}
+        <div style:margin="-5px 0px 0px 0px">
+            <TextEntry 
+                options={{
+                    id: "yr", ...YEAR_THOUGHT_ENTRY
+                }}
+            />
+        </div>
+    {/if}
     <div class="yr-view__goals">
         <h4>Goals</h4>
         <div class="divider"></div>
@@ -103,7 +118,14 @@
                     </div>
                 </div>
                 <div class="yr-view__heat-map">
-                    <HeatMap id={"0"} type="goals" />
+                    <HeatMap 
+                        id={"0"} 
+                        type="goals" 
+                        options={{
+                            startDate: date,
+                            from: "next"
+                        }}
+                    />
                 </div>
             </div>
         </div>
@@ -112,7 +134,7 @@
         <h4>Habits</h4>
         <div class="divider"></div>
         <div class="yr-view__stats" style:margin-top="10px">
-            <div class="yr-view__stat">
+            <div class="yr-view__stat" style:margin-right="50px">
                 <div class="yr-view__stat-title">
                     Consistency
                 </div>
@@ -146,7 +168,14 @@
             </div>
         </div>
         <div class="yr-view__heat-map">
-            <HeatMap id={"0"} type="habits" />
+            <HeatMap 
+                id={"0"} 
+                type="habits" 
+                options={{
+                    startDate: date,
+                    from: "next"
+                }}
+            />
         </div>
     </div>
 </div>
@@ -155,6 +184,8 @@
     @import "../../../scss/goals.scss";
 
     .yr-view {
+        margin-top: 8px;
+
         &--small &__goals-flx {
             display: block;
         }
@@ -169,17 +200,18 @@
             max-height: 400px;
             height: auto;
             margin: 0px 0px 16px 0px;
+            width: 100%;
         }
 
         h1 {
-            @include text-style(1, 400, 2.5rem, "DM Mono");
-            margin-bottom: 5px;
-            display: none;
+            @include text-style(1, 400, 2.35rem, "DM Mono");
+            margin-bottom: 2px;
         }
         h4 {
             @include text-style(1, 400, 1.55rem, "Geist Mono");
         }
         &__goals {
+            margin-top: 10px;
             .yr-view__stat {
                 margin-right: min(12%, 55px);
             }
@@ -189,20 +221,20 @@
             margin-top: 11px;
         }
         &__goals-list {
+            width: 410px;
             max-height: 280px;
             overflow-y: scroll;
-            margin: 2px 0px 5px -4px;
+            margin: 4px 0px 5px -4px;
             padding-right: 65px;
         }
         &__goals-right {
-            flex: 1;
-            overflow: hidden;
+            width: calc(100% - 410px);
             margin-top: 2px;
             height: 235px;
             @include flex-col(space-between);
         }
         &__habits {
-            margin-top: 10px;
+            margin-top: 30px;
         }
         &__heat-map {
             width: 100%;

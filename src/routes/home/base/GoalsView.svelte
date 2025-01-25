@@ -182,7 +182,7 @@
                     ],
                     parentContext: {
                         container: rightContainerRef,
-                        childId: "statuses",
+                        childId: "statuses"
                     },
                     onListItemClicked: ({ name }) => {
                         manager.onOptionClicked(name)

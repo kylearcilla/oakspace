@@ -1,15 +1,15 @@
 <script lang="ts">
-    import { themeState } from "../lib/store"
+    import { themeState } from "$lib/store"
     import { isSameDay } from "$lib/utils-date"
     import { getColorTrio } from "$lib/utils-colors"
-    import { ACTIVITY_DATA } from "../lib/mock-data"
-	import { imageUpload } from "../lib/pop-ups"
-	import { formatDateLong, genMonthCalendar, getMonthWeeks, minsToHHMM } from "../lib/utils-date"
-	import { formatPlural, initFloatElemPos, randomArrayElem } from "../lib/utils-general"
+    import { ACTIVITY_DATA } from "$lib/mock-data"
+	import { imageUpload } from "$lib/pop-ups"
+	import { formatDateLong, genMonthCalendar, getMonthWeeks } from "$lib/utils-date"
+	import { formatPlural, initFloatElemPos, randomArrayElem } from "$lib/utils-general"
 
-	import DropdownList from "./DropdownList.svelte"
-	import DayEntry from "../routes/home/base/DayEntry.svelte"
-	import ImgStampModal from "../routes/home/base/HighlightImgModal.svelte"
+	import DropdownList from "../../../components/DropdownList.svelte"
+	import DayEntry from "./DayEntry.svelte"
+	import ImgStampModal from "./HighlightImgModal.svelte"
 
     export let onDayClicked: (dayIdx: number) => void
     export let options
@@ -504,8 +504,8 @@
             background-color: rgba(var(--tag-color-2), 1) !important;
 
             span {
-                @include text-style(_, _, 1.25rem);
-                font-weight: var(--txt-weight) !important;
+                @include text-style(_, _, 1.1rem, "Geist Mono");
+                font-weight: 400 !important;
                 color: rgba(var(--tag-color-1), 1);
                 @include elipses-overflow;
             }

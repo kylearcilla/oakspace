@@ -111,8 +111,10 @@ export class GoalsManager {
 
         this.initSecMap()
         this.sortedGoals = this.sectionGoals()
+        this.closedSections = new Array(this.sections.length).fill(false)
 
         this.update({ 
+            closedSections: this.closedSections,
             sections: this.sections,
             sortedGoals: this.sortedGoals
         })
@@ -556,10 +558,11 @@ export class GoalsManager {
         this.reSortGoals()
     }
 
-    updateSrcGoaOnOrder(args: {
-        srcGoal: Goal, target: Goal | GoalStatus, grouping: "status" | "tag" | "default"
+    updateSrcGoaOnOrder({ srcGoal, target, grouping }: {
+        srcGoal: Goal
+        target: Goal | GoalStatus
+        grouping: "status" | "tag" | "default"
     }) {
-        const { srcGoal, target, grouping } = args
         
         if (grouping === "status") {
             srcGoal.status = typeof target === "string" ? target : target.status

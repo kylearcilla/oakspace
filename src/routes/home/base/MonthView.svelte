@@ -4,11 +4,10 @@
 	import { Icon } from "../../../lib/enums"
 	import { themeState } from "../../../lib/store"
 	import { ACTIVITY_DATA } from "../../../lib/mock-data"
-    import { getWeekPeriod, getWeekPeriodStr } from "../../../lib/utils-date"
-	import { capitalize, clickOutside, getElemById, getHozSpace, kebabToNormal, normalToKebab } from "../../../lib/utils-general"
+    import { formatDatetoStr, getWeekPeriodStr } from "../../../lib/utils-date"
+	import { capitalize, clickOutside, getElemById, getHozSpace, getMaskedGradientStyle, kebabToNormal, normalToKebab } from "../../../lib/utils-general"
 
 	import YearView from "./YearView.svelte"
-	import GoalsList from "./GoalsList.svelte"
 	import GoalsView from "./GoalsView.svelte"
 	import WeeklyHabits from "./WeeklyHabits.svelte"
 	import SvgIcon from "../../../components/SVGIcon.svelte"
@@ -18,7 +17,7 @@
 	import DropdownBtn from "../../../components/DropdownBtn.svelte"
 	import DropdownList from "../../../components/DropdownList.svelte"
 	import DayView from "./DayView.svelte"
-	import ActivityCalendar from "../../../components/ActivityCalendar.svelte"
+	import ActivityCalendar from "./ActivityCalendar.svelte"
 	import { imageUpload } from "../../../lib/pop-ups";
 	import DayEntry from "./DayEntry.svelte";
 	import ProgressBar from "../../../components/ProgressBar.svelte";
@@ -36,21 +35,19 @@
     let overviewType: "monthly" | "daily" = "monthly"
     let leftArrow: HTMLButtonElement | null = null
     let rightArrow: HTMLButtonElement | null = null
+    let headerBtnsRef: HTMLElement | null = null
+    let today = new Date()
 
     let weeksAgoIdx = 0
     let monthsAgoIdx = 0
+    let width = 0
     
     let activityIdx = 2
     let activity = ACTIVITY_DATA[activityIdx]
     let entryModal = false
+    let gradient = ""
     
     let subMenu: "g-group" | "g-progress" | "h-view" | "d-view" | null = null
-    let goalsView: GoalsView = {
-        view: "list",
-        listGrouping: "default",
-        boardGrouping: "status",
-        progress: 0
-    }
     
     $: isLight = !$themeState.isDarkTheme
 
@@ -59,6 +56,12 @@
         animPhotos: true,
         showHighlight: true,
         fontStyle: "stylish"
+    }
+    let goalsView: GoalsView = {
+        view: "list",
+        listGrouping: "default",
+        boardGrouping: "status",
+        progress: 0
     }
     let habitView = {
         view: "default",
@@ -70,12 +73,24 @@
             percentage: false
         }
     }
+    let yearView = {
+        yearsAgoIdx: 0,
+        showTextEntry: true,
+        showYear: false
+    }
+
     let btnHighlighter = {
         width: 0, left: 0
     }
 
     $: if (currView != undefined) {
         onArrowBtnClicked()
+    }
+    $: if (width && headerBtnsRef && width < 500) {
+        requestAnimationFrame(() => handleScroll(headerBtnsRef))
+    }
+    else {
+        gradient = ""
     }
 
     function highlightHandler(context: "image" | "entry") {
@@ -182,6 +197,7 @@
         if (!btnElem) return
 
         const width = btnElem.clientWidth
+        const scrollLeft = headerBtnsRef.scrollLeft
         const left = getHozSpace({ 
             left:  { 
                 elem: btnElem.parentElement!,
@@ -194,11 +210,25 @@
         })
 
         btnHighlighter.width = width + (view === "overview" ? 2 : 5)
-        btnHighlighter.left  = Math.max(left - 2, 0)
+        btnHighlighter.left  = Math.max(left - 2, 0) + scrollLeft
+    }
+    function handleScroll(elem: HTMLElement) {
+        const { styling } = getMaskedGradientStyle(elem, {
+            isVertical: false,
+            head: {
+                end: "20px"
+            },
+            tail: {
+                start: "20%",
+                end: "100%"
+            }
+        })
+        gradient = styling
     }
 
     onMount(() => {
         onViewBtnClicked(currView)
+        handleScroll(headerBtnsRef)
     })
 </script>
 
@@ -206,10 +236,16 @@
 <div 
     class={`month-view month-view--${currView}`}
     class:month-view--light={isLight}
+    bind:clientWidth={width}
 >
     <div class="month-view__details">
         <div class="month-view__details-header">
-            <div class="month-view__header-btns">
+            <div 
+                on:scroll={() => handleScroll(headerBtnsRef)}
+                bind:this={headerBtnsRef}
+                class="month-view__header-btns no-scroll-bar"
+                style={`${gradient}; ${width < 500 ? `max-width: 230px` : "max-width: none"}`}
+            >
                 <button 
                     id={"month-view--overview"}
                     class="month-view__header-btn"
@@ -245,7 +281,7 @@
                 <div 
                     style:left={`${btnHighlighter.left}px`}
                     style:width={`${btnHighlighter.width}px`}
-                    class="month-view__btn-highlight"
+                    class="month-view__highlight"
                 >
                 </div>
             </div>
@@ -274,24 +310,37 @@
                     {/if}
                     <div class="month-view__period">
                         {#if currView === "habits"}
-                            {#if weeksAgoIdx === 0} 
-                                This Week
-                            {:else}
-                                {@const { start, end } = getWeekPeriodStr(new Date(), weeksAgoIdx)}
-                                <span>{start}</span> - <span>{end}</span>
-                            {/if}
+                            <div 
+                                style:font-size="1.28rem" 
+                                style:margin="5px 0px 0px 0px"
+                            >
+                                {#if weeksAgoIdx === 0} 
+                                    This Week
+                                {:else}
+                                    {@const { start, end } = getWeekPeriodStr(new Date(), weeksAgoIdx)}
+                                    <span>{start}</span> - <span>{end}</span>
+                                {/if}
+                            </div>
                         {:else if currView === "goals"}
-                            <div class="flx-algn-center">
-                                <ProgressBar 
-                                    progress={goalsView.progress}
-                                />
-                                <span style:margin="0px -1px 0px 12px">
-                                    June
+                            <div class="flx-algn-center" style:margin="0px 0px -2px 0px">
+                                <div style:margin-top="5px">
+                                    <ProgressBar 
+                                        progress={goalsView.progress}
+                                    />
+                                </div>
+                                <span 
+                                    style:margin="4px -1px 0px 12px"
+                                    style:font-size="1.4rem"
+                                >
+                                    {formatDatetoStr(today, { month: "short" })}
                                 </span>
                             </div>
                         {:else if currView === "yr-view"}
-                            <div style:font-size="1.6rem">
-                                {2025}
+                            <div 
+                                style:font-size="1.5rem"
+                                style:margin="4px 0px 0px 0px"
+                            >
+                                {today.getFullYear()}
                             </div>
                         {/if}
                     </div>
@@ -488,7 +537,7 @@
                             <div 
                                 class="dmenu__option dmenu__option--static"
                                 style:pointer-events={view === "board" ? "none" : "auto"}
-                                style:opacity={view === "board" ? "0.35" : "1"}
+                                style:opacity={view === "board" ? "0.2" : "1"}
                             >
                                 <span class="dmenu__option-heading">Group By</span>
                                 <DropdownBtn 
@@ -623,6 +672,28 @@
                             {/if}
                         </li>
                     {/if}
+                    {#if currView === "yr-view"}
+                        <div class="dmenu__toggle-optn dmenu__option--static">
+                            <span class="dmenu__option-heading">Text Entry</span>
+                            <ToggleBtn 
+                                active={yearView.showTextEntry}
+                                onToggle={() => {
+                                    yearView.showTextEntry = !yearView.showTextEntry
+                                    yearView = yearView
+                                }}
+                            />
+                        </div>
+                        <div class="dmenu__toggle-optn dmenu__option--static">
+                            <span class="dmenu__option-heading">Show Year</span>
+                            <ToggleBtn 
+                                active={yearView.showYear}
+                                onToggle={() => {
+                                    yearView.showYear = !yearView.showYear
+                                    yearView = yearView
+                                }}
+                            />
+                        </div>
+                    {/if}
                 </div>
             </BounceFade>
         </div>
@@ -659,9 +730,7 @@
                     }}
                 />
             {:else}
-                <div class="month-view__yr-view">
-                    <YearView/>
-                </div>
+                <YearView options={yearView}/>
             {/if}
         </div>
     </div>
@@ -740,6 +809,7 @@
         }
         &__settings {
             @include flex(center);
+            float: right;
             margin-bottom: 10px;
         }
 
@@ -757,8 +827,6 @@
 
         /* month view header */
         &__details-view {
-            // overflow-x: scroll;
-            // overflow-y: hidden;
             overflow: visible;
             margin: 0px 0px 0px -35px;
             padding-left: 35px;
@@ -769,12 +837,13 @@
             @include flex(center, space-between);
         }
         &__details-header-right {
-            margin-top: 0px;
-            @include flex(center);
+            flex: 1;
         }
         &__header-btns {
-            margin: -8px 10px 0px 0px;
+            margin: 0px 10px -3px 0px;
+            padding-bottom: 11px;
             position: relative;
+            overflow: scroll;
             @include flex(center);
         }
         &__header-btn {
@@ -793,7 +862,7 @@
                 opacity: 1 !important;
             }
             span {
-                @include text-style(0.85, 400, 1.6rem, "Geist Mono");
+                @include text-style(0.85, 400, 1.55rem, "Geist Mono");
                 margin-right: 3px;
             }
         }
@@ -812,12 +881,11 @@
         &__overview-btn--clicked {
             opacity: 1 !important;
         }
-        &__btn-highlight {
-            @include abs-bottom-left(-10px);
-            height: 1.5px;
+        &__highlight {
+            @include abs-bottom-left(-1px);
+            height: 2px;
             background-color: rgba(var(--textColor1), 0.9);
             transition: 0.18s cubic-bezier(.4, 0, .2, 1);
-            border-radius: 2px;
         }
         &__arrow {
             opacity: 0.45;
@@ -840,7 +908,7 @@
         }
         &__period {
             @include text-style(0.4, 400, 1.3rem, "Geist Mono");
-            margin: 7px 0px 0px 0px;
+            height: 20px;
 
             span {
                 margin: 0px 8px;
@@ -879,9 +947,6 @@
             &:hover {
                 background-color: rgba(var(--textColor1), 0.05);
             }
-        }
-        &__yr-view {
-            margin: 10px 0px 0px 0px;
         }
     }
 

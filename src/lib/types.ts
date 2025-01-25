@@ -56,6 +56,17 @@ type ImageUpload = {
     onSubmit: ((imgSrc: string |  null) => void) | null
 }
 
+type TextEntryOptions = {
+    entry: string
+    styling: "bordered" | "has-marker" | "default"
+    date: Date
+    icon: {
+        type: "img" | "emoji",
+        src: string,
+        size: "small" | "big"
+    } | null
+}
+
 /* Base. */
 
 type WeeklHabits = {
@@ -185,7 +196,7 @@ type DropdownOption = {
     name: string,
     leftIcon?: DropdownOptnIcon
     rightIcon?: DropdownOptnIcon
-    onPointerOver?: ({ e: PointerEvent, item: DropdownOption, childLeft: number }) => void
+    onPointerOver?: ((params?: { e: PointerEvent, item: DropdownOption, childLeft: number }) => void)
     onPointerLeave?: ({ e: PointerEvent, item: DropdownOption }) => void
     divider?: boolean
 }
@@ -228,7 +239,7 @@ type DropdownItemClickedContext = {
 type DropdownListOptions = {
     listItems: DropdownListItem[]
     parentContext?: {
-        container: HTMLElement
+        container?: HTMLElement
         childId: string
     }
     parent?: {

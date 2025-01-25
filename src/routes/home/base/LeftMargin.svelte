@@ -96,7 +96,7 @@
             <div class="habits">
                 <div class="habits__details">
                     <div class="habits__stat">
-                        <span>Completion</span>
+                        <span>Consistency</span>
                         <span>
                             {Math.floor(habitsDone / habitsDue * 100)}%
                         </span>

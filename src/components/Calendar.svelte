@@ -61,12 +61,13 @@
             <div class="calendar__btns-container">
                 <button 
                     class="calendar__next-prev-btn"
-                    on:click={() => {
-                        updateMonth("prev")
-                    }}
                     disabled={!isPrevMonthAvailable}
+                    on:click={() => updateMonth("prev")}
                 >
-                    <SVGIcon icon={Icon.ChevronLeft}/>
+                    <SVGIcon 
+                        icon={Icon.ChevronLeft}
+                        options={{ scale: 1.4 }}
+                    />
                 </button>
                 <button
                     disabled={isDisabled}
@@ -82,12 +83,13 @@
                 </button>
                 <button 
                     class="calendar__next-prev-btn"
-                    on:click={() => {
-                        updateMonth("next")
-                    }}
                     disabled={!isNextMonthAvailable}
+                    on:click={() => updateMonth("next")}
                 >
-                    <SVGIcon icon={Icon.ChevronRight}/>
+                    <SVGIcon 
+                        icon={Icon.ChevronRight}
+                        options={{ scale: 1.4 }}
+                    />
                 </button>
             </div>
         </div>
@@ -138,9 +140,13 @@
 
 <style lang="scss">
     .calendar {
-        /* light / dark themes adjustments */
+        --today-opacity: 0.045;   
+
+        &--light {
+            --today-opacity: 0.065;
+        }
         &--light &__today-btn {
-            @include text-style(0.3, 600);
+            @include text-style(0.3);
         }
         &--light &__next-prev-btn {
             opacity: 0.4;
@@ -156,18 +162,15 @@
             }
         }
         &--light &__month-title {
-            @include text-style(0.28, 500);
-            strong {
-                @include text-style(1, 500);
-            }
+            @include text-style(0.28);
+        }
+        &--light &__month-title strong {
+            @include text-style(1);
         }
         &--light &__days-of-week * {
-            @include text-style(0.9, 600);
+            @include text-style(0.9);
         }
         &--light &__month-day {
-            @include text-style(0.95);
-            font-weight: 600 !important;
-
             &:hover {
                 background: rgba(var(--textColor1), 0.09);
             }
@@ -197,7 +200,6 @@
             aspect-ratio: 1 / 1;
         }
         &--side &__month-day {
-            @include text-style(0.8, 500, 1.2rem, "DM Sans");
             background: none;
             cursor: pointer;
             
@@ -217,11 +219,10 @@
             @include flex(center);
         }
         &__today-btn {
-            @include text-style(0.2, 300, 1.29rem);
+            @include text-style(0.2, 300, 1.75rem);
             @include center;
+            @include circle(12px);
             transition: 0.1s ease-in-out;
-            width: 12px;
-            height: 12px;
             padding: 0px 5px;
             opacity: 1 !important;
             
@@ -252,26 +253,23 @@
             }
         }
         &__month-title {
-            font-family: "DM Sans";
-            @include text-style(0.4, 300, 1.4rem);
-            margin-left: 2px;
+            @include text-style(0.4, var(--fw-300-400), 1.285rem, "Geist Mono");
+            margin-left: 1px;
 
             strong {
-                @include text-style(1, 400);
+                @include text-style(1, var(--fw-400-500));
                 margin-right: 3px;
             }
         }
         &__days-of-week {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            font-family: "DM Sans";
-            padding: 8px 1px 0px 1px;
+            padding: 8px 1px 2px 1px;
             width: 100%;
-
-            * {
-                @include text-style(0.4, 500, 1.2rem);
-                @include center;
-            }
+        }
+        &__days-of-week * {
+            @include text-style(0.4, var(--fw-400-500), 1.2rem, "Geist Mono");
+            @include center;
         }
         &__month {
             width: 100%;
@@ -294,21 +292,18 @@
             }
         }
         &__month-day {
-            font-family: "DM Mono";
             @include center;
-            @include text-style(0.7, 300, 1.1rem);
+            @include text-style(0.85, var(--fw-400-500), 1.19rem);
             user-select: none;
             position: relative;
-            height: 28px;
-            width: 28px;
-            border-radius: 20px;
-            opacity: 0.9;
+            @include circle(25px);
+            opacity: 0.95;
             background: rgba(var(--textColor1), 0.02);
             cursor: pointer;
 
             &:hover {
                 @include text-style(1);
-                background: rgba(var(--textColor1), 0.08);
+                background: rgba(var(--textColor1), 0.15);
                 opacity: 1;
             }
             &:active {
@@ -326,17 +321,14 @@
             }
             &--today {
                 color: rgba(var(--textColor1), 1) !important;
-                background-color: var(--elemColor2) !important;
-                height: 25px;
-                width: 25px;
-                border-radius: 20px;
+                background-color: rgba(var(--textColor1), var(--today-opacity)) !important;
+                @include circle(22px);
                 opacity: 1;
             }
             &--picked {
                 background: #FF5151 !important;
                 font-weight: 500;
-                height: 22px;
-                width: 22px;
+                @include circle(22px);
                 color: var(--elemTextColor) !important;
                 opacity: 1;
             }

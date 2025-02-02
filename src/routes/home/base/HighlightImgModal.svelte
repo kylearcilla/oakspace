@@ -1,10 +1,8 @@
 <script lang="ts">
-	import Modal from "../../../components/Modal.svelte";
+	import Modal from "../../../components/Modal.svelte"
 
     export let onClickOutside: () => void
     export let img: { src: string, caption: string }
-
-    const MAX_CAPTION_LENGTH = 50
 </script>
 
 <Modal 
@@ -20,12 +18,9 @@
         class="highlight-img">
         <img src={img.src} alt="icon">
         <div class="highlight-img__caption">
-            <input 
-                maxlength={MAX_CAPTION_LENGTH}
-                placeholder="no caption"
-                type="text" 
-                bind:value={img.caption}
-            >
+            <span>
+                {img.caption}
+            </span>
         </div>
     </div>
 </Modal>
@@ -53,18 +48,13 @@
             @include not-visible;
             transition: 0.2s ease-in-out 0.1s;
         }
-        input {
+        span {
             @include text-style(_, 400, 1.3rem, "DM Mono");
+            cursor: text;
             color: white;
             width: 80%;
             height: max-content;
-            cursor: text;
             opacity: 1;
-
-            &::placeholder {
-                color: white;
-                opacity: 0.35;
-            }
         }
     }
 </style>

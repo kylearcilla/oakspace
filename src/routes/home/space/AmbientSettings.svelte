@@ -3,11 +3,11 @@
 	import { updateAmbience } from "$lib/utils-home"
 	import { globalContext, ytPlayerStore } from "$lib/store"
 
-	import ToggleBtn from "../components/ToggleBtn.svelte"
-	import RangeInput from "../components/RangeInput.svelte"
-	import BounceFade from "../components/BounceFade.svelte"
-	import DropdownBtn from "../components/DropdownBtn.svelte"
-    import DropdownList from "../components/DropdownList.svelte"
+	import ToggleBtn from "../../../components/ToggleBtn.svelte"
+	import RangeInput from "../../../components/RangeInput.svelte"
+	import BounceFade from "../../../components/BounceFade.svelte"
+	import DropdownBtn from "../../../components/DropdownBtn.svelte"
+    import DropdownList from "../../../components/DropdownList.svelte"
 
     export let onClickOutside: () => void
     export let open: boolean
@@ -50,7 +50,7 @@
         _updateAmbience({ styling: elementStyling })
     }
     function setClockStyle(style: string) {
-        let clockFont = "DM Sans"
+        let clockFont: "DM Sans" | "Zodiak-Bold" | "Melodrama-Bold" | "Bagel Fat One" = "DM Sans"
 
         if (style === "Stylish") {
             clockFont = "Zodiak-Bold"
@@ -283,7 +283,7 @@
 </BounceFade>
 
 <style lang="scss">
-    @import "../scss/dropdown.scss";
+    @import "../../../scss/dropdown.scss";
 
     .ambient {
         background: var(--bg-2);

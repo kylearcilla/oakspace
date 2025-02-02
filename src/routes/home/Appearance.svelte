@@ -10,7 +10,7 @@
 	import ThemeItem from "./ThemeItem.svelte"
 	import Modal from "../../components/Modal.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
-	import BounceFade from "../../components/BounceFade.svelte"
+	import DropdownList from "../../components/DropdownList.svelte"
 
     $: hasAmbience = $globalContext.ambience.active
     $: isDark = $themeState.isDarkTheme
@@ -46,10 +46,7 @@
     }}
     onClickOutSide={() => closeModal(ModalType.Themes)}
 >
-    <div 
-        class="themes" 
-        class:themes--light={!isDark}
-    >
+    <div class="themes" class:themes--light={!isDark}>
         <h1>Themes</h1>
         <p>Style your space according to your taste.</p>
         <div 
@@ -82,78 +79,53 @@
             >
                 {#if clickedFlavor}
                     {@const flavor = flavorOptions.find(flavor => flavor.name === clickedFlavor)}
-                    {@const { name, signaturecolor } = flavor}
+                    {@const name = flavor.name}
                     {@const title = (name === "dark" || name === "light") ? "Basic" : capitalize(name)}
-                    <div 
-                        class="themes__color-circle"
-                        style:margin-right="12px"
-                        style:background-color={signaturecolor}
-                    >
-                    </div>
                     <span>{title}</span>
                     <div class="themes__arrow smooth-bounce">
                         <SvgIcon 
                             icon={Icon.Dropdown}
                             options={{
-                                scale: 1.1, height: 12, width: 12, strokeWidth: 1.2
+                                scale: 1.25, height: 12, width: 12, strokeWidth: 1.2
                             }}
                         />
                     </div>
                 {/if}
             </button>
-            <BounceFade
+            <DropdownList 
                 id="flavors--dmenu"
                 isHidden={!flavorOptionsOpen}
-                position={{
-                    top: "62px",
-                    right: "-10px"
+                options={{
+                    pickedItem: capitalize(clickedFlavor === "dark" || clickedFlavor === "light" ? "basic" : clickedFlavor),
+                    listItems: flavorOptions.map(f => ({ 
+                        name: (f.name === "dark" || f.name === "light") ? "Basic" : capitalize(f.name)
+                    })),
+                    onListItemClicked: ({ idx }) => {
+                        const flavor = flavorOptions[idx].name
+                        onFlavorSelected(flavor)
+                        flavorOptionsOpen = false
+                    },
+                    onClickOutside: () => {
+                        flavorOptionsOpen = false
+                    },
+                    styling: {
+                        width: "120px",
+                        zIndex: 2,
+                        fontFamily: "Geist Mono"
+                    },
+                    position: {
+                        top: "54px",
+                        right: "-10px"
+                    }
                 }}
-                onClickOutside={() => {
-                    flavorOptionsOpen = false
-                }}
-            >
-                <div 
-                    class="dmenu" 
-                    class:dmenu--light={!isDark}
-                >
-                    {#each flavorOptions as flavor}
-                        {@const { name, signaturecolor } = flavor}
-                        {@const title = (name === "dark" || name === "light") ? "Basic" : capitalize(name)}
-                        {@const picked = name === "basic"}
-
-                        <div 
-                            class="dmenu__option"
-                            class:dmenu__option--selected={picked}
-                        >
-                            <button 
-                                class="dmenu__option-btn"
-                                on:click={() => onFlavorSelected(name)}
-                            >
-                                <div class="flx-algn-center">
-                                    <div 
-                                        class="themes__color-circle"
-                                        style:background-color={signaturecolor}
-                                    >
-                                    </div>
-                                    <span class="dmenu__option-text" style:margin-right="12px">
-                                        {title}
-                                    </span>
-                                </div>
-                                <div class="dmenu__option-icon dmenu__option-icon--check">
-                                    <i class="fa-solid fa-check"></i> 
-                                </div>
-                            </button>
-                        </div>
-                    {/each}
-                </div>
-            </BounceFade>
+            />
         </div>
         <div class="themes__btns">
             <button on:click={() => closeModal(ModalType.Themes)}>
                 Close
             </button>
             <button 
-                title={hasAmbience ? "Cannot change when you're in your workspace." : ""}
+                title={hasAmbience ? "Cannot change while inside workspace." : ""}
                 disabled={hasAmbience}
                 on:click={onSubmit}
             >
@@ -168,42 +140,54 @@
 
     .themes {
         width: 510px;
-        padding: 19px 27px 22px 24px;
+        padding: 16px 27px 22px 24px;
         overflow: visible;
+
+        --button-bg-opacity: 0.035;
+        --flavor-btn-opacity: 0.035;
+
+        &--light {
+            --button-bg-opacity: 0.055;
+            --flavor-btn-opacity: 0.055;
+        }
+        &--light p {
+            color: rgba(var(--textColor1), 0.55) !important;
+        }
         h1 {
-            @include text-style(1, 400, 1.8rem, "DM Mono");
+            @include text-style(1, var(--fw-400-500), 1.8rem, "Geist Mono");
         }
         h2 {
-            @include text-style(1, 400, 1.55rem, "DM Mono");
+            @include text-style(1, var(--fw-400-500), 1.55rem, "Geist Mono");
         }
         p {
-            margin: 5px 0px 0px 0px;
+            margin: 4px 0px 0px 0px;
             @include text-style(0.4, 400, 1.5rem);
         }
         &__flavor {
-            border-top: 0.5px solid rgba(var(--textColor1), 0.08);
+            border-top: var(--divider-border);
             margin-top: 27px;
-            padding-top: 15px;
+            padding-top: 13px;
             position: relative;
             @include flex(center, space-between);
         }
         &__flavor-dropdown-btn {
             @include flex(center, space-between);
-            padding: 7px 12px 8px 12px;
+            padding: 6px 12px 7px 15px;
             border-radius: 20px;
-            margin-right: -12px;
+            margin-right: 0px;
+            background-color: rgba(var(--textColor1), var(--flavor-btn-opacity));
 
             &--active .themes__arrow {
                 transform: rotate(-180deg);
             }
             &:hover {
-                background-color: rgba(var(--textColor1), 0.035);
+                background-color: rgba(var(--textColor1), calc(var(--flavor-btn-opacity) + 0.035));
             }
             &:hover .themes__arrow {
                 @include visible(0.4);
             }
             span {
-                @include text-style(1, 400, 1.5rem, "DM Mono");
+                @include text-style(1, 400, 1.4rem, "Geist Mono");
             }
         }
         &__flavor-options {
@@ -213,7 +197,7 @@
             opacity: 0.4;
             margin-left: 10px;
             transform: rotate(0deg);
-            @include not-visible;
+            // @include not-visible;
         }
         &__color-circle {
             @include circle(14px);
@@ -224,15 +208,15 @@
             margin-top: 35px;
 
             button {
-                @include text-style(1, 500, 1.5rem);
-                background-color: rgba(var(--textColor1), 0.035);
+                @include text-style(1, var(--fw-400-500), 1.5rem);
+                background-color: rgba(var(--textColor1), var(--button-bg-opacity));
                 padding: 11px 12px 13px 15px;
                 border-radius: 8px;
                 width: calc(100% - 150px);
                 text-align: center;
             }
             button:hover {
-                background-color: rgba(var(--textColor1), 0.05);
+                background-color: rgba(var(--textColor1), calc(var(--button-bg-opacity) + 0.035));
             }
             button:first-child {
                 margin-right: 10px;
@@ -243,7 +227,7 @@
     .dmenu {
         border-radius: 13px;
         span {
-            @include text-style(1, 400, 1.4rem, "DM Mono");
+            @include text-style(1, 400, 1.4rem, "Geist Mono");
         }
         &__option-btn {
             @include flex(center, space-between);

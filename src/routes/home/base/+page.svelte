@@ -1,48 +1,53 @@
 <script lang="ts">    
 	import { themeState } from "../../../lib/store"
-	import { imageUpload } from "../../../lib/pop-ups"
-	import { MONTH_THOUGHT_ENTRY } from "../../../lib/mock-data"
-	import { clamp, clickOutside } from "../../../lib/utils-general"
+	import { clamp } from "../../../lib/utils-general"
 
 	import YearView from "./YearView.svelte"
-	import TextEntry from "./TextEntry.svelte"
 	import MonthView from "./MonthView.svelte"
 	import LeftMargin from "./LeftMargin.svelte";
-	import ToggleBtn from "../../../components/ToggleBtn.svelte"
-	import BounceFade from "../../../components/BounceFade.svelte"
-	import SettingsBtn from "../../../components/SettingsBtn.svelte"
+	import Header from "./Header.svelte";
 
     const SMALLER_WIDTH = 630
     const SMALL_WIDTH = 1000
 
     $: isLight = !$themeState.isDarkTheme
 
-    let settingsOpen = false
     let width = 0
     let leftHt = 0
     let initDragY = -1
     let ogDragVal = 0
 
-    let bannerImg = {
+    let bannerImg: Banner = {
         src: "https://i.imgur.com/MEjZkXW.png",
         center: 50
     }
-    let header: BaseHeader = {
-        icon: {
-            src: "https://i.pinimg.com/originals/29/c6/21/29c62126c883a48d0bb1622648f00330.gif",
-            type: "img",
-            show: true
-        },
-        title: "Home",
-        text: {
-            icon: null,
-            show: true
-        }
-    }
-    let options = {
+    let options: BaseOptions = {
         view: "month",
         banner: true,
         margin: true
+    }
+    let header: BaseHeader = {
+        icon: {
+            src: "https://i.pinimg.com/736x/b3/90/0d/b3900d7712279767b687231f36fad8a0.jpg",
+            type: "img",
+            show: true
+        },
+        showText: true,
+        pos: "top"
+    }
+
+    /* ui */
+    function onBaseEvent({ detail }: BaseEventDetail) {
+        const { context, payload } = detail
+        if (context === "banner") {
+            bannerImg = payload
+        } 
+        else if (context === "options") {
+            options = payload
+        }
+        else if (context === "header") {
+            header = payload
+        }
     }
 
     /* drag */
@@ -71,18 +76,6 @@
     function onDragEnd() {
         ogDragVal = 0
         initDragY = -1
-    }
-    function openImgModal() {
-        imageUpload.init({
-            onSubmit: (imgSrc: string) => {
-                if (imgSrc && bannerImg.src != imgSrc) {
-                    bannerImg.src = imgSrc
-                    bannerImg.center = 50
-                    bannerImg = bannerImg
-                }
-            }
-        })
-        settingsOpen = false
     }
 </script>
 
@@ -113,121 +106,41 @@
         </div>
     {/if}
     <div class="base__content">
+        {#if header.pos === "top"}
+            <div class="base__top-header">
+                <Header 
+                    {bannerImg} 
+                    {options} 
+                    {header}
+                    on:base={onBaseEvent}
+                />
+            </div>
+        {/if}
         <div class="base__content-flx">
-            <!-- left margin -->
             {#if options.margin}
                 <div class="base__left" bind:clientHeight={leftHt}>
                     <LeftMargin fullWidth={width <= SMALL_WIDTH} />
                 </div>
             {/if}
-            <!-- overview -->
             <div class="base__right">
-                <div class="base__overview-header">
-                    <div style:width="100%">
-                        <div class="base__overview-heading">
-                            Home
-                        </div>
-                        <div style:width="100%">
-                            <TextEntry 
-                                options={{
-                                    id: "month",
-                                    ...MONTH_THOUGHT_ENTRY
-                                }}
-                            />
-                        </div>
+                {#if header.pos === "side"}
+                    <div class="base__overview-header">
+                        <Header 
+                            {bannerImg} 
+                            {options} 
+                            {header}
+                            on:base={onBaseEvent}
+                        />
                     </div>
-                </div>
-    
-                <!-- insights -->
+                {/if}
                 <div class="base__month-insight">
-                    {#if options.view === "month"}
-                        <MonthView/>
-                    {:else}
-                        <YearView/>
-                    {/if}
+                    <MonthView/>
                     {#if width <= SMALL_WIDTH}
-                        <div class="divider" style:margin="25px 0px 20px 0px"></div>
+                        <div class="divider" style:margin="25px 0px 10px 0px"></div>
                     {/if}
                 </div>
             </div>
         </div>
-
-        <!-- settings -->
-        <div class="base__settings-btn">
-            <SettingsBtn 
-                id={"base--dbtn"}
-                options={{ 
-                    opacity: {
-                        fg: 0.25,
-                        bg: 0
-                    },
-                    hOpacity: {
-                        fg: 0.5,
-                        bg: 0.05
-                    },
-                }}
-                onClick={() => settingsOpen = !settingsOpen}
-            />
-        </div>
-
-        <!-- settings menu -->
-        <BounceFade 
-            isHidden={!settingsOpen}
-            zIndex={200}
-            position={{ 
-                top: `${header.icon.show ? "35px" : "20px"}`, 
-                right: "25px"
-            }}
-        >
-            <div 
-                id="base--dmenu"
-                class="base__dmenu dmenu" 
-                class:dmenu--light={isLight}
-                style:width={"170px"}
-                use:clickOutside on:click_outside={() => settingsOpen = false} 
-            >
-                <li class="dmenu__section">
-                    <div class="dmenu__section-name">
-                        Banner
-                    </div>
-                    <div class="dmenu__toggle-optn  dmenu__option--static">
-                        <span class="dmenu__option-heading">Show Banner</span>
-                        <ToggleBtn 
-                            active={options.banner}
-                            onToggle={() => {
-                                options.banner = !options.banner
-                                options = options
-                            }}
-                        />
-                    </div>
-                    {#if options.banner}
-                        <div class="dmenu__option">
-                            <button class="dmenu__option-btn" on:click={() => openImgModal()}>
-                                <span class="dmenu__option-text">
-                                    Change Wallpaper
-                                </span>
-                            </button>
-                        </div>
-                    {/if}
-                </li>
-                <li class="dmenu__section-divider"></li>
-                <li class="dmenu__section">
-                    <div class="dmenu__section-name">
-                        Side Margin
-                    </div>
-                    <div class="dmenu__toggle-optn  dmenu__option--static">
-                        <span class="dmenu__option-heading">Show Margin</span>
-                        <ToggleBtn 
-                            active={options.margin}
-                            onToggle={() => {
-                                options.margin = !options.margin
-                                options = options
-                            }}
-                        />
-                    </div>
-                </li>
-            </div>
-        </BounceFade>
     </div>
 </div>
 
@@ -264,9 +177,6 @@
         }
         &--small &__bulletin {
             width: 220px;
-        }
-        &--small &__context .divider {
-            disxplay: none;
         }
         &--small &__context {
             width: calc(100% - 220px - 25px);
@@ -312,6 +222,9 @@
             margin: 6px 0px 10px 0px;
         }
 
+        &__top-header {
+            margin: 15px 0px -10px 0px;
+        }
         &__content {
             max-width: 1400px;
             margin: 0 auto;
@@ -320,7 +233,7 @@
         }
         &__content-flx {
             display: flex;
-            margin-top: 22px;
+            margin-top: 20px;
         }
         &__left {
             width: 260px;
@@ -329,10 +242,6 @@
         &__right {
             width: calc(100% - 260px);
             position: relative;
-        }
-        &__settings-btn {
-            @include abs-top-right(10px, 25px);
-            z-index: 100;
         }
 
         /* text */
@@ -360,37 +269,12 @@
                 width: 100%;
             }
         }
-        &__header {
-            padding: 15px 0px 0px 0px;
-            // padding: 20px 0px 0px 0px;
-            width: 100%;
-            position: relative;
-            margin-top: -70px;
-
-            .divider {
-                height: 100%;
-                width: 1px;
-                margin: 0px 25px 0px 20px;
-            }
-        }
         /* month header */
         &__overview-header {
             @include flex(flex-start, space-between);
             position: relative;
-            margin-bottom: 0px;
             position: relative;
-            min-width: 680px;
-        }
-        &__overview-heading {
-            // @include text-style(1, 400, 5rem, "Bagel Fat One");
-            @include text-style(1, 400, 2.5rem, "Geist Mono");
-            // @include text-style(1, 400, 4rem, "Gambarino-Regular");
-            margin: -4px 0px 0px 0px;
-            // margin: -5px 0px 0px 0px;
-            @include flex(flex-start, space-between);
-        }
-        &__month-insight {
-            margin-top: 0px;
+            margin-bottom: 4px;
         }
     }
 </style>

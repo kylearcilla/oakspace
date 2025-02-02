@@ -3,13 +3,14 @@
     
     import { Icon } from "$lib/enums"
 	import { themeState } from "$lib/store"
-	import { DAYS_OF_WEEK, getDayIdxMinutes } from "$lib/utils-date"
+	import { DAYS_OF_WEEK, getDayIdxMinutes, months } from "$lib/utils-date"
 	import { getHabitWeekProgress, getHabitStreak } from "$lib/utils-habits"
     
 	import SvgIcon from "../../../components/SVGIcon.svelte"
 	import ProgressRing from "../../../components/ProgressRing.svelte"
-	import { getDaysProgress, getFreqDaysStr, isBoxRequired, isDayComplete, toggleCompleteHabit } from "../../../lib/utils-habits";
+	import { getDaysProgress, isBoxRequired, isDayComplete, toggleCompleteHabit } from "../../../lib/utils-habits";
 	import { habitTracker } from "../../../lib/store";
+	import { capitalize } from "../../../lib/utils-general";
 
     const MIN_SIZE = 620
     const X_MIN_SIZE = 480
@@ -214,11 +215,11 @@
     class:habits--ring-only={!options.progress.numbers}
     bind:clientWidth={width}
 >
-    {#if metrics}
+    {#if metrics && options.stats}
         {@const { habitsDone, habitsDue, perfectDays, missed, activeStreak } = metrics}
         <div class="habits__header">
             <div class="habits__stats">
-                <div class="habits__stat" style:margin-right="10px">
+                <div class="habits__stat">
                     <span class="habits__stat-label">Consistency</span>
                     <div class="habits__stat-bottom">
                         <span class="habits__stat-value">
@@ -229,7 +230,7 @@
                         </span>
                     </div>
                 </div>
-                <div class="habits__stat" style:margin-right="30px">
+                <div class="habits__stat" style:margin-right="25px">
                     <span class="habits__stat-label">Active Streak</span>
                     <div class="habits__stat-bottom">
                         <span class="habits__stat-value">
@@ -240,7 +241,7 @@
                         </span>
                     </div>
                 </div>
-                <div class="habits__stat" style:margin-right="5px">
+                <div class="habits__stat" style:margin-right="0px">
                     <span class="habits__stat-label">100% Days</span>
                     <div class="habits__stat-bottom">
                         <span class="habits__stat-value">
@@ -254,23 +255,28 @@
                 <div class="habits__stat" style:width="auto">
                     <span class="habits__stat-label">Missed</span>
                     <div class="habits__stat-bottom">
-                        <span class="habits__stat-value">
+                        <span 
+                            class="habits__stat-value"
+                            class:habits__stat-value--missed={missed}
+                        >
                             {missed}
-                        </span>
-                        <span class="habits__stat-unit habits__stat-unit--times">
-                            ×
                         </span>
                     </div>
                 </div>
             </div>
 
-            <div class="habits__subtext">Metrics for June*</div>
+            <div class="habits__subtext">
+                From {months[new Date().getMonth()]}* 
+            </div>
         </div>
     {/if}
 
     {#if habits}
         <div class="habits__table">
-            <div class="habits__table-header">
+            <div 
+                class="habits__table-header"
+                class:habits__table-header--border={options.stats}
+            >
                 <div 
                     class="habits__col one-col header-col"
                     style:height="auto"
@@ -305,7 +311,7 @@
                         Progress
                     </span>
                     <div 
-                        style:margin="3px 25px -10px 3px"
+                        style:margin="1px 25px -10px 8px"
                         class:hidden={options.progress.numbers}
                     >
                         <ProgressRing 
@@ -332,11 +338,11 @@
                 >
                     <div 
                         class="habits__tod-header"
-                        style:margin={timeOfDay === "morning" ? "8px 0px 9px 2px" : ""}
+                        style:margin={timeOfDay === "morning" ? "8px 0px 9px 0px" : ""}
                         class:hidden={view === "default"}
                     >
                         <span>
-                            {tod}
+                            {capitalize(tod)}
                         </span>
                     </div>
         
@@ -369,10 +375,8 @@
                                     </span>
                                 </div>
                                 {#if options.target}
-                                <!-- {#if true} -->
                                     <span class="habit__target">
                                         {habit.target ?? ""}
-                                        <!-- {getFreqDaysStr(habit, true)} -->
                                     </span>
                                 {/if}
                             </div>
@@ -382,9 +386,6 @@
                             >
                                 <span>
                                     {streak}
-                                </span>
-                                <span class="habit__streak-times">
-                                    ×
                                 </span>
                             </div>
                             <div class="days-col">
@@ -492,30 +493,44 @@
 <style lang="scss">
     .habits { 
         width: 100%;
-        --border: 0.5px solid rgb(var(--textColor1), 0.055);
+        margin-top: -12px;
 
-        /* light adjustments */
-        &--light {
-            --border: 1px solid rgb(var(--textColor1), 0.08);
-        }
         &--light &__table-header {
-            @include text-style(0.7, 600);
+            @include text-style(0.45);
         }
         &--light &__tod-header {
-            @include text-style(0.3, 500);
-        }
-        &--light &__count-cell {
-            @include text-style(0.5, 500);
-        }
-        &--light .habit__name,
-        &--light .habit__streak {
-            @include text-style(0.88, 600);
-        }
-        &--light .habit__target {
-            @include text-style(0.3, 600);
+            @include text-style(0.45);
         }
         &--light .fraction {
-            font-weight: 600;
+            @include text-style(0.8);
+        }
+        &--light &__count-cell {
+            @include text-style(0.55);
+        }
+        &--light .fraction {
+            @include text-style(0.8);
+        }
+        &--light .habit__name {
+            @include text-style(1);
+        }
+        &--light .habit__streak {
+            @include text-style(0.8);
+        }
+        &--light .habit__target {
+            @include text-style(0.3);
+        }
+        &--light .habit__box:hover {
+            background-color: rgba(var(--textColor1), 0.15);
+            opacity: 1;
+        }
+        &--light &__stat-label {
+            @include text-style(0.3);
+        }
+        &--light &__stat {
+            @include text-style(0.8);
+        }
+        &--light &__subtext {
+            @include text-style(0.225);
         }
         &--default &__table-header {
             border: none
@@ -552,20 +567,19 @@
             margin: 0px 0px 0px 0px;
         }
         &__subtext {
-            @include text-style(0.1, 400, 1.15rem, "Geist Mono");
+            @include text-style(0.1, var(--fw-400-500), 1.25rem, "Geist Mono");
             white-space: nowrap;
-            margin: 12px 0px 8px 0px;
+            margin: 17px 0px 8px 0px;
         }
         &__stats {
             display: flex;
             flex-wrap: wrap;
-            margin: -2px 0px 6px 0px;
+            margin: 25px 0px 6px 0px;
         }
         &__stat {
             width: 120px;
             margin: 0px 8px 9px 0px;
-            @include text-style(0.885, 400, 1.6rem, "Geist Mono");
-
+            @include text-style(0.885, var(--fw-400-500), 1.485rem, "Geist Mono");
 
             span {
                 display: block;
@@ -580,35 +594,40 @@
             @include flex(flex-end);
         }
         &__stat-label {
-            margin-bottom: 5px;
-            @include text-style(0.285, 400, 1.42rem);
+            margin-bottom: 8px;
+            @include text-style(0.285, var(--fw-400-500), 1.465rem);
         }
         &__stat-unit {
             margin: 0px 0px 0px 6px;
         }
-        &__stat-unit--times {
-            @include text-style(1, 300, 1.35rem);
-            transform: scale(1.5);
-            margin-left: 4px;
+        &__stat-value {
+            position: relative;
+        }
+        &__stat-value--missed::before {
+            content: "×";
+            @include abs-bottom-right(-2px, -12px);
+            @include text-style(0.8, var(--fw-300-400), 1.685rem);
         }
 
         /* table */
         &__wk-period {
-            @include text-style(0.25, 400, 1.4rem, "Geist Mono");
+            @include text-style(0.25, var(--fw-400-500), 1.4rem, "Geist Mono");
             margin-left: 14px;
         }
         &__table-header {
             display: flex;
-            @include text-style(0.35, 400, 1.35rem, "Geist Mono");
+            @include text-style(0.35, var(--fw-400-500), 1.4rem);
             position: relative;
-            padding-top: 11px;
-            border-bottom: var(--border);
-            border-top: var(--border) !important;
+            padding-top: 9px;
+            border-bottom: var(--divider-border);
+        }
+        &__table-header--border {
+            border-top: var(--divider-border) !important;
         }
         &__tod-header {
-            @include text-style(0.35, 400, 1.35rem, "Geist Mono");
+            @include text-style(0.35, var(--fw-400-500), 1.35rem);
             @include flex(center, space-between);
-            margin: 13px 0px 9px 2px;
+            margin: 13px 0px 9px 0px;
         }
         &__tod-container {
             position: relative;
@@ -616,15 +635,14 @@
         &__count-cells {
             display: flex;
             margin-top: 12px;
-            // display: none;
         }
         &__count-cell {
             margin-left: 1px;
-            @include text-style(0.145, 400, 1.3rem, "Geist Mono");
+            @include text-style(0.145, var(--fw-400-500), 1.25rem);
         }
 
         &__empty {
-            @include text-style(0.145, 400, 1.2rem);
+            @include text-style(0.145, var(--fw-400-500), 1.2rem);
             margin: -5px 0px 0px 6.5px;
         }
     }
@@ -650,17 +668,18 @@
             font-style: normal;
         }
         &__name {
-            @include text-style(1, 500, 1.45rem);
+            @include text-style(1, var(--fw-400-500), 1.5rem);
             @include elipses-overflow;
             @include flex(center, space-between);
         }
         &__target {
-            @include text-style(0.16, 400, 1.35rem, "Geist Mono");
+            @include text-style(0.16, var(--fw-400-500), 1.35rem);
+            transition: 0.1s ease-in-out;
             text-align: right;
             padding-right: 15px;
         }
         &__streak {
-            @include text-style(0.6, 300, 1.4rem, "Geist Mono");
+            @include text-style(0.6, var(--fw-400-500), 1.4rem);
             padding: 2px 15px 2px 14px;
         }
         &__streak-times {
@@ -685,6 +704,7 @@
         }
         &__box--checked {
             background-color: var(--elemColor1) !important;
+            color: white;
 
             &:hover {
                 opacity: 1 !important;
@@ -710,15 +730,13 @@
             @include flex(center, space-between);
         }
         &__progress .fraction {
-            font-family: "Geist Mono";
-            font-weight: 300;
             margin: 0px 10px 0px 2px;
         }
     }
     .header-col {
         font-size: 1.34rem;
-        padding: 0px 0px 9px 5px;
-        // border-bottom: var(--border);
+        padding: 0px !important;
+        height: 24px !important;
     }
     .one-col {
         padding: 0px 0px 0px 2px;
@@ -746,6 +764,7 @@
         @include circle(20px);
         @include center;
         border-radius: 10px;
+        margin: -2px 0px 0px 1px;
     }
     .dow--today {
         background-color: #FF5151;
@@ -768,11 +787,11 @@
     .cell {
         padding: 7px 0px 7px 8px;
         @include flex(center);
-        border-bottom: var(--border);
-        border-right: var(--border);
+        border-bottom: var(--divider-border);
+        border-right: var(--divider-border);
         
         &--first-row {
-            border-top: var(--border);
+            border-top: var(--divider-border);
         }
         &--last-col {
             border-right: none;

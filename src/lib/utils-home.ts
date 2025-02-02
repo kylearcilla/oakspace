@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { globalContext, timer, ytPlayerStore } from "./store"
-import { ModalType, ShortcutSectionInFocus } from "./enums"
+import { ModalType } from "./enums"
 
 import { loadTheme, setNewTheme } from "./utils-appearance"
 import { conintueWorkSession, didInitSession } from "./utils-session"
@@ -210,6 +210,9 @@ export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boo
     const rbAutoCloseThreshold = 300
 
     if (!leftBarOpen && !activeRoutineOpen && leftInArea) {
+        const hasModal = document.querySelector(".modal-bg")
+        if (hasModal) return false
+
         updateGlobalContext({ ...get(globalContext), leftBarOpen: true  })
         return false
     }
@@ -217,6 +220,9 @@ export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boo
         updateGlobalContext({ ...get(globalContext), leftBarOpen: false  })
     }
     else if (rightBarFixed && !rightBarOpen && rightInArea) { 
+        const hasModal = document.querySelector(".modal-bg")
+        if (hasModal) return false
+        
         updateGlobalContext({ ...get(globalContext), rightBarOpen: true  })
     }
     else if (rightBarFixed && rightBarOpen && mouseRightPos > rbAutoCloseThreshold) { 
@@ -306,9 +312,9 @@ export const isModalOpen = (modal: ModalType) => {
     return modalsOpen.includes(modal)
 }
 
-export const setShortcutsFocus = (section: ShortcutSectionInFocus) => {
+export const setShortcutsFocus = (context: HotkeyContext) => {
     globalContext.update((state: GlobalContext) => {
-        return { ...state, shortcutsFocus: section }
+        return { ...state, shortcutsFocus: context }
     })
 }
 
@@ -365,6 +371,7 @@ export function setAmbience() {
             active: true,
             showTime: true,
             clockFont: "DM Sans",
+            spacesOpen: false,
             space: liveSpace
         }
      })

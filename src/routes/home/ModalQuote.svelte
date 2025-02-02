@@ -78,17 +78,16 @@
 </Modal>
 
 <style global lang="scss">
-    
     .quote-modal {
         padding: 0px;
         width: 75vw;
-        height: 500px;
+        height: 550px;
         position: relative;
         background-repeat: no-repeat;
         background-position: center;
         background-size: cover;
-        max-width: 650px;
-        min-width: 330px;
+        max-width: 700px;
+        min-width: 340px;
 
         &__content {
             height: 100%;
@@ -111,9 +110,9 @@
                 min-width: 0;
             }
             &-bottom-left .divider {
-                height: 8.5px;
-                width: 1px;
-                margin: 0px 9px;
+                height: 11px;
+                width: 1.5px;
+                margin: 0px 9px 0px 10px;
                 background-color: rgba(179, 179, 179, 0.3);
             }
             &-context {
@@ -127,7 +126,7 @@
             color: rgba(255, 255, 255, 0.9)
         }
         &__quote {
-            font-size: 1.4rem;
+            font-size: 1.45rem;
             font-weight: 400;
             opacity: 0.85;
             color: rgba(215, 215, 215, 0.92);
@@ -136,15 +135,13 @@
         &__likes {
             white-space: nowrap;
             font-family: "DM Sans";
-            button {
-                &:active {
-                    transform: scale(0.8);
-                }
+            button:active {
+                transform: scale(0.8);
             }
             button i {
                 color: rgba(241, 241, 241, 0.3);
                 margin-right: 4px;
-                font-size: 1.14rem;
+                font-size: 1.25rem;
             }
             span {
                 font-size: 1.3rem;
@@ -153,7 +150,7 @@
             }
         }
         &__artist-credit {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             font-weight: 500;
             color: rgba(179, 179, 179, 0.5);
             @include elipses-overflow;
@@ -167,7 +164,7 @@
             }
         }
         &__quote-credit {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             font-weight: 500;
             color: rgba(179, 179, 179, 0.5);
             min-width: 0;

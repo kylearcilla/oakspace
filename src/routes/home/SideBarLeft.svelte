@@ -102,13 +102,11 @@
         }
     }
 
-    /* Util Buttons */
     function _toggleFloatSideBar() {
         settingsOpen = false
     }
 
     function updateSelectTab(path: string) {
-        
         selectedTabName = getHomeUrlPath(path)
         selectedTabName = capitalize(selectedTabName)
 
@@ -234,7 +232,7 @@
     </div>
 
 
-    <!-- Settings Dropdown -->
+    <!-- dropdown -->
     <div class="bar__settings-dropdown-container">
         <BounceFade
             id="left-bar--dmenu"
@@ -316,14 +314,13 @@
             }
             span {
                 opacity: 0.7;
-                font-weight: 600;
             }
         }
         &--light &__profile-name {
-            @include text-style(0.8, 500);
+            @include text-style(0.8);
         }
         &--light &__tab-section {
-            @include text-style(0.4, 700);
+            @include text-style(0.4);
         }
         &--light &__app-name {
             font-weight: 500;
@@ -334,12 +331,9 @@
         }      
 
         &__divider {
-            @include divider(0.1, 1px, 25px);
-            border-top: var(--navMenuBorder);
             margin: 15px auto;
         }
 
-        /* User Info */
         &__profile {
             position: relative;
             margin: 10px 0px 12px 14px;
@@ -354,10 +348,9 @@
             margin-left: 10.5px;
         }
         &__profile-name {
-            @include text-style(0.9, 400, 1.3rem, "Apercu");
+            @include text-style(0.9, var(--fw-400-500), 1.3rem);
         }
 
-        /* Settings */
         &__settings-dropdown-container {
             @include abs-top-right(28px, -105px);
             width: 155px;
@@ -370,8 +363,6 @@
             opacity: 0.2;
             font-size: 1rem;
         }
-
-        /* Tabs */
         &__tab-section {
             @include text-style(0.15, 500, 1.1rem);
             margin: 0px 0px 2px 7px;
@@ -419,17 +410,17 @@
             span {
                 opacity: 0.45;
                 margin-left: 17px;
-                @include text-style(0.8, 500, 1.3rem);
+                @include text-style(0.8, var(--fw-400-500), 1.3rem);
             }
         }
         &__section-title {
-            @include text-style(0.18, 500, 1rem);
+            @include text-style(0.18, var(--fw-500-600), 1rem);
             margin: 12px 0px 7px 8px;
             display: block;
         }
         &__divider {
             width: 100%;
-            @include divider(0.05, 1px);
+            border-top: var(--side-border);
             margin: 13px 0px 7px 0px;
         }
         &__settings {
@@ -444,7 +435,7 @@
         }
         &__app-name {
             @include flex(center);
-            @include text-style(1, 400, 1.35rem, "DM Mono");
+            @include text-style(1, var(--fw-400-500), 1.35rem, "Geist Mono");
             margin-top: -2px;
 
             span {
@@ -460,7 +451,6 @@
             
             &:hover {
                 opacity: 1;
-                // transition: 0s ease-in-out;
             }
         }
 

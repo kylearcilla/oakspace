@@ -1,7 +1,6 @@
 import { CoreStatus } from "./enums"
 import { weekRoutine } from "./store"
 import { DAYS_OF_WEEK, getNowMins, minsToHHMM } from "./utils-date"
-import { getElemById, getElemNumStyle } from "./utils-general"
 
 export const ROUTINE_BLOCKS_CONTAINER_ID = "routine-blocks-container"        // container for blocks
 export const ROUTINE_SCROLL_CONTAINER_ID = "routine-blocks-scroll-container" // container of blocks container
@@ -265,13 +264,9 @@ export function setDayBreakdownXOffset(dayBreakdownColIdx: number, numViewDays: 
 }
 
 export const EDIT_BLOCK_OPTIONS: DropdownListItem[] = [
-    {
-        options: [
-            { name: "Edit Block" },
-            { name: "Change Color" },
-            { name: "Duplicate Block" }
-        ]
-    },
+    { name: "Edit Block" },
+    { name: "Change Color" },
+    { name: "Duplicate Block", divider: true },
     { name: "Delete Block" }
 ]
 

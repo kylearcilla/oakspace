@@ -2,6 +2,17 @@ import { get } from "svelte/store"
 import { themeState } from "./store"
 import { themes } from "$lib/data-themes"
 
+const STYLES = {
+  dividerBorder: {
+    light: "1px solid rgba(var(--textColor1), 0.1)",
+    dark: "0.5px solid rgba(var(--textColor1), 0.05)"
+  },
+  dividerBg: {
+    light: "rgba(var(--textColor1), 0.1)",
+    dark: "rgba(var(--textColor1), 0.05)"
+  }
+}
+
 /**
  * Load theme from local storage to init current color theme.
  */
@@ -67,8 +78,16 @@ export function getActiveTheme() {
  * @param theme theme object to be currently used
  */
 export function setRootColors(theme: ThemeStyling) {
-    const headTag = document.getElementsByTagName('head')[0];
-    const styleTag = document.createElement("style");
+    const headTag = document.getElementsByTagName('head')[0]
+    const styleTag = document.createElement("style")
+    const { isDark } = theme
+
+    const dividerBorderStyle = STYLES.dividerBorder[isDark ? "dark" : "light"]
+    const dividerBgStyle = STYLES.dividerBg[isDark ? "dark" : "light"]
+
+    const weight_300_400 = isDark ? "300" : "400"
+    const weight_400_500 = isDark ? "400" : "500"
+    const weight_500_600 = isDark ? "500" : "600"
   
     styleTag.innerHTML = `
       :root {
@@ -102,7 +121,12 @@ export function setRootColors(theme: ThemeStyling) {
           --elemTextColor: ${theme.elemTextColor};
           --cardBgColor: ${theme.cardBgColor};
           --cardFgColor: ${theme.cardHovColor};
-      }
+          --divider-border: ${dividerBorderStyle};
+          --divider-bg: ${dividerBgStyle};
+          --textEntryBgColor: ${theme.textEntryBgColor};
+          --fw-300-400: ${weight_300_400};
+          --fw-400-500: ${weight_400_500};
+          --fw-500-600: ${weight_500_600};
     `
     headTag.appendChild(styleTag)
   }

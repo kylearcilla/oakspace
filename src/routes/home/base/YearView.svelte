@@ -6,6 +6,8 @@
     import TextEntry from "./TextEntry.svelte"
     import HeatMap from "../../../components/HeatMap.svelte"
 	import { TEST_GOALS, YEAR_THOUGHT_ENTRY } from "../../../lib/mock-data"
+	import ProgressBar from "../../../components/ProgressBar.svelte";
+	import { themeState } from "../../../lib/store";
 
     export let options: {
         yearsAgoIdx: number
@@ -14,6 +16,7 @@
     }
     $: showTextEntry = options.showTextEntry
     $: showYear = options.showYear
+    $: isLight = !$themeState.isDarkTheme
 
     const SMALL_WIDTH = 700
     let date = new Date(2025, 0, 1)
@@ -39,6 +42,7 @@
 
 <div 
     class="yr-view"
+    class:yr-view--light={isLight}
     class:yr-view--small={width < SMALL_WIDTH}
     bind:clientWidth={width}
 >
@@ -50,14 +54,20 @@
     {#if showTextEntry}
         <div style:margin="-5px 0px 0px 0px">
             <TextEntry 
-                options={{
-                    id: "yr", ...YEAR_THOUGHT_ENTRY
-                }}
+                id="yr"
+                zIndex={50}
+                entry={YEAR_THOUGHT_ENTRY}
             />
         </div>
     {/if}
     <div class="yr-view__goals">
-        <h4>Goals</h4>
+        <div class="yr-view__header">
+            <h4>Goals</h4>
+            <div class="yr-view__progress">
+                <ProgressBar progress={0.3} />
+                <span>3 of 10</span>
+            </div>
+        </div>
         <div class="divider"></div>
         <div class="yr-view__goals-flx">
             <div 
@@ -68,7 +78,10 @@
             >
                 {#each TEST_GOALS as goal}
                     {@const done = goal.status === "accomplished"}
-                    <div class="goal-m">
+                    <div 
+                        class="goal-m"
+                        class:goal-m--light={isLight}
+                    >
                         <div class="goal-m__left">
                             {#if done}
                                 <div class="goal-m__check">
@@ -91,32 +104,6 @@
                 {/each}
             </div>
             <div class="yr-view__goals-right">
-                <div class="yr-view__stats" style:margin="0px">
-                    <div class="yr-view__stat">
-                        <div class="yr-view__stat-title">
-                            Progress
-                        </div>
-                        <div class="yr-view__stat-num">
-                            28%
-                        </div>
-                    </div>
-                    <div class="yr-view__stat">
-                        <div class="yr-view__stat-title">
-                            Accomplished
-                        </div>
-                        <div class="yr-view__stat-num">
-                            5 Done
-                        </div>
-                    </div>
-                    <div class="yr-view__stat">
-                        <div class="yr-view__stat-title">
-                            Remaining
-                        </div>
-                        <div class="yr-view__stat-num">
-                            15 Left
-                        </div>
-                    </div>
-                </div>
                 <div class="yr-view__heat-map">
                     <HeatMap 
                         id={"0"} 
@@ -134,7 +121,7 @@
         <h4>Habits</h4>
         <div class="divider"></div>
         <div class="yr-view__stats" style:margin-top="10px">
-            <div class="yr-view__stat" style:margin-right="50px">
+            <div class="yr-view__stat" style:margin-right="40px">
                 <div class="yr-view__stat-title">
                     Consistency
                 </div>
@@ -186,15 +173,15 @@
     .yr-view {
         margin-top: 8px;
 
+        &--light &__progress span {
+            @include text-style(0.55);
+        }
         &--small &__goals-flx {
             display: block;
         }
         &--small &__goals-list {
             max-height: 400px;
             margin: 0px 0px 18px 0px;
-        }
-        &--small &__goals &__stats {
-            display: none;
         }
         &--small &__goals-right {
             max-height: 400px;
@@ -204,21 +191,34 @@
         }
 
         h1 {
-            @include text-style(1, 400, 2.35rem, "DM Mono");
-            margin-bottom: 2px;
+            @include text-style(1, 400, 2.65rem, "DM Mono");
+            margin-bottom: 8px;
         }
         h4 {
-            @include text-style(1, 400, 1.55rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 1.65rem, "Geist Mono");
+        }
+        &__header {
+            @include flex(center,space-between);
+            width: 100%;
+        }
+        &__progress {
+            display: flex;
+
+            span {
+                @include text-style(0.35, var(--fw-400-500), 1.25rem, "Geist Mono");
+                margin-left: 15px;
+            }
         }
         &__goals {
             margin-top: 10px;
+            
             .yr-view__stat {
                 margin-right: min(12%, 55px);
             }
         }
         &__goals-flx {
             display: flex;
-            margin-top: 11px;
+            margin-top: 10px;
         }
         &__goals-list {
             width: 410px;
@@ -230,7 +230,6 @@
         &__goals-right {
             width: calc(100% - 410px);
             margin-top: 2px;
-            height: 235px;
             @include flex-col(space-between);
         }
         &__habits {
@@ -244,27 +243,27 @@
             @include flex(center);
         }
         &__stat {
-            margin-right: min(5%, 50px);
+            margin-right: min(5%, 30px);
         }
         &__stat-title {
-            @include text-style(0.3, 400, 1.4rem, "Geist Mono");
+            @include text-style(0.3, var(--fw-400-500), 1.4rem, "Geist Mono");
             margin-bottom: 6.5px;
             white-space: nowrap;            
         }
         &__stat-num {
-            @include text-style(0.8, 400, 1.4rem, "Geist Mono");
+            @include text-style(0.8, var(--fw-400-500), 1.4rem, "Geist Mono");
         }
     }
 
     .divider {
-        background-color: rgba(var(--textColor1), 0.035);
+        background-color: var(--divider-bg);
         width: 100%;
         height: 1px;
-        margin: 10px 0px 4px 0px;
+        margin: 9px 0px 4px 0px;
     }
 
     .goal-m {
-        margin-bottom: 9px;
+        margin-bottom: 7px;
 
         &__title {
             @include truncate-lines(1);

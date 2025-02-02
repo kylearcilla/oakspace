@@ -31,13 +31,9 @@
     &--light#{&}--focused {
         @include txt-color(0.03, "bg");
     }
-    &--light &__title-input, 
-    &--light &__title {
-        @include text-style(1, 600)
-    }
     &--light &__description,
     &--light &__description-input {
-        @include text-style(0.7, 600)
+        @include text-style(0.7)
     }
     &--light &__number {
         @include text-style(0.7);
@@ -139,7 +135,7 @@
         @include center;
     }
     &__number {
-        @include text-style(0.4, 500);
+        @include text-style(0.4, var(--fw-400-500));
         font-size: calc(var(--title-font-size) - 1px);
     }
     &__checkbox {
@@ -179,13 +175,13 @@
         word-break: break-word;
         user-select: none;
         margin: 0px 0px 5px 0px;
-        @include text-style(1, 500, var(--font-size));
+        @include text-style(1, var(--fw-400-500), var(--font-size));
     }
     &__description-container {
         width: calc(100% - 20px);
     }
     &__description {
-        @include text-style(0.4, 500, var(--font-size));
+        @include text-style(0.4, var(--fw-400-500), var(--font-size));
         opacity: 0.65;
         user-select: none;
         margin: 0px 0px 2px 0px;

@@ -10,13 +10,13 @@ div[contenteditable] {
     cursor: text;
 
     code, em {
-        @include text-style(0.5, 400, 1.35rem, "DM Mono");
-        background-color: rgba(150, 150, 150, 0.1);
+        @include text-style(0.85, var(--fw-300-400), 1.35rem, "Geist Mono");
+        background-color: rgba(150, 150, 150, 0.125);
         padding: 0px 3px 0px 3px;
         border-radius: 3px;
     }
     strong, b {
-        @include text-style(1, 500);
+        @include text-style(1, var(--fw-500-600));
     }
 }
 div[contenteditable]:empty:before {

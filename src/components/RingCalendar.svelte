@@ -1,17 +1,26 @@
 <script lang="ts">
-	import { habitTracker } from "../lib/store";
-	import ProgressRing from "./ProgressRing.svelte"
-	import { formatDatetoStr } from "../lib/utils-date"
+    import ProgressRing from "./ProgressRing.svelte"
+
+    import { formatDatetoStr } from "../lib/utils-date"
 	import { getMonthHeatMap } from "../lib/utils-habits"
+	import { habitTracker, themeState } from "../lib/store"
 
     let heatMap: HabitHeatMapDay[] = []
+    let weeklyHeatMap: HabitHeatMapDay[][] = []
+
+    $: isLight = !$themeState.isDarkTheme
 
     habitTracker.subscribe(() => {
         heatMap = getMonthHeatMap({ monthIdx: 0, year: 2025 })
+        
+        weeklyHeatMap = []
+        for (let i = 0; i < heatMap.length; i += 7) {
+            weeklyHeatMap.push(heatMap.slice(i, i + 7))
+        }
     })
 </script>
 
-<div class="cal">
+<div class="cal" class:cal--light={isLight}>
     <div class="cal__days">
         <div class="cal__dow">S</div>
         <div class="cal__dow">M</div>
@@ -22,29 +31,31 @@
         <div class="cal__dow">S</div>
     </div>
     <div class="cal__grid">
-        {#each heatMap as day}
-            {@const date   = day.date.getDate()}
-            {@const sameMonth = day.isInCurrMonth}
-            <div
-                title={formatDatetoStr(day.date)}
-                class="cal__day"
-                class:cal__day--beyond={!sameMonth}
-            >
-                {#if sameMonth}
-                    {@const { done, due } = day}
-                    <div style:margin="0px 0px 0px 3px">
-                        <ProgressRing
-                            progress={done / due} 
-                            options={{
-                                size: 14, strokeWidth: 3.2, style: "light"
-                            }}
-                        />
+        {#each weeklyHeatMap as week}
+            <div class="cal__week">
+                {#each week as day}
+                    {@const date = day.date.getDate()}
+                    {@const sameMonth = day.isInCurrMonth}
+                    <div
+                        title={formatDatetoStr(day.date)}
+                        class="cal__day"
+                        class:cal__day--beyond={!sameMonth}
+                    >
+                        {#if sameMonth}
+                            {@const { done, due } = day}
+                            <ProgressRing
+                                progress={done / due}
+                                options={{
+                                    size: 15, strokeWidth: 3.5, style: "default"
+                                }}
+                            />
+                        {:else}
+                            <div class="cal__day-num">
+                                {date}
+                            </div>
+                        {/if}
                     </div>
-                {:else}
-                    <div class="cal__day-num">
-                        {date}
-                    </div>
-                {/if}
+                {/each}
             </div>
         {/each}
     </div>
@@ -53,33 +64,39 @@
 <style lang="scss">
     .cal {
         width: 100%;
+        --obscure-opacity: 0.095;
+
+        &--light {
+            --obscure-opacity: 0.25;
+        }
+        &--light &__days {
+            @include text-style(0.9);
+        }
 
         &__days {
             @include flex(center, space-between);
-            @include text-style(0.65, 400, 1.3rem, "Geist Mono");
-            margin: 0px 2px 10px 0px;
+            @include text-style(0.65, var(--fw-400-500), 1.3rem);
+            margin: 0px 4px 10px 0px;
         }
         &__dow {
             height: 25px;
             margin-left: 2px;
             @include center;
         }
-        &__grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            grid-template-rows: repeat(6, 1fr);
+        &__week {
+            @include flex(center, space-between);
+            width: 100%;
         }
         &__day {
             height: 35px;
-            width: 34px;
-            margin: 0px 0px 0px 0px;
+            width: 15px;
         }
         &__day--beyond {
-            opacity: 0.095 !important;
+            opacity: var(--obscure-opacity) !important;
         }
         &__day-num {
-            @include text-style(1, 400, 1.3rem, "DM Sans");
-            margin-left: 4px;
+            @include text-style(1, var(--fw-400-500), 1.3rem);
+            text-align: center;
         }
     }
 </style>

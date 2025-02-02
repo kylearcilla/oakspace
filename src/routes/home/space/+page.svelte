@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte"
-	import { globalContext, ytPlayerStore, timer } from "../../../lib/store"
-	import { hasAmbienceSpace, setAmbience } from "../../../lib/utils-home"
-	import { formatTimeToHHMM, prefer12HourFormat } from "../../../lib/utils-date"
+	import { globalContext, ytPlayerStore, timer } from "$lib/store"
+	import { hasAmbienceSpace, setAmbience } from "$lib/utils-home"
+	import { formatTimeToHHMM, prefer12HourFormat } from "$lib/utils-date"
+	import SpaceSelection from "./SpaceSelection.svelte";
 
     $: ambience = $globalContext.ambience
     $: rightBarOpen = $globalContext.rightBarOpen
+    $: rightBarFixed = $globalContext.rightBarFixed
     $: showTime = ambience?.showTime
     $: clockFont = ambience?.clockFont ?? "DM Sans"
 
@@ -131,7 +133,7 @@
 </script>
 <div 
     class="space"
-    class:space--right-bar-open={rightBarOpen}
+    class:space--right-bar-open={rightBarOpen && !rightBarFixed}
     style:--line-height={`${lineHeight}px`}
     style:--top-padding={`${TOP_PADDING}px`}
     style:--num-spacing={`${NUM_SPACING}px`}
@@ -197,6 +199,10 @@
         </div>
     </div>
 </div>
+
+{#if ambience?.spacesOpen}
+    <SpaceSelection /> 
+{/if}
 
 <style global lang="scss">
     .space {

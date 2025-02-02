@@ -12,7 +12,7 @@ $hour-block-height: 50px;
     overflow: scroll;
 
     &--light &__block span {
-        @include text-style(0.75, 500);
+        @include text-style(0.75);
     }
 
     &-container {
@@ -28,7 +28,6 @@ $hour-block-height: 50px;
     }
     &__block {
         position: relative;
-        // @include flex(center, center);
         text-align: center;
         flex-direction: column;
         position: absolute;
@@ -36,11 +35,11 @@ $hour-block-height: 50px;
         left: -5px;
     }
     &__block span {
-        @include text-style(0.2, 300, 1.15rem, "DM Sans");
+        @include text-style(0.2, var(--fw-400-500), 1.15rem);
         white-space: nowrap;
         display: block;
         height: 11px;
-        margin-top: -5.5px;
+        margin-top: -7px;
         width: 40px;
     }
     &__block-vert-divider path {
@@ -65,8 +64,6 @@ $hour-block-height: 50px;
         pointer-events: none;
     }
 
-    &__vert-lines {
-    }
     &__vert-line {
         height: 100%;
         width: 2px;
@@ -74,9 +71,6 @@ $hour-block-height: 50px;
     }
     &__vert-line-content {
         position: relative;
-
-        svg {
-        }
     }
     &__hoz-lines {
         height: 100%;

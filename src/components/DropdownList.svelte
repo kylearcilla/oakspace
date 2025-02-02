@@ -98,7 +98,7 @@
         }
     }
     function onItemPointerLeave(e: PointerEvent, item: DropdownOption) {
-        const { childId, container } = options.parentContext ?? {}
+        const { childId } = options.parentContext ?? {}
         if (!item.onPointerLeave) {
             return
         }
@@ -112,7 +112,7 @@
         }
     }
     function onItemPointerOver(e: PointerEvent, item: DropdownOption) {
-        const { childId, container } = options.parentContext ?? {}
+        const { container } = options.parentContext ?? {}
         const { onPointerOver } = item
         if (!onPointerOver) {
             return
@@ -175,11 +175,14 @@
             style:max-width={options?.styling?.maxWidth ?? "auto"}
             style:height={options?.styling?.height ?? "auto"}
             style:max-height={options?.styling?.maxHeight ?? "auto"}
-            style:--font-family={options.styling?.fontFamily ?? "Manrope"}
+            style:font-family={options?.styling?.fontFamily ?? "inherit"}
         >
             {#each listItems as item}
                 {#if "sectionName" in item}
-                    <div class="dmenu__section-name">
+                    <div 
+                        class="dmenu__section-name"
+                        class:dmenu__section-name--mono={item.font === "mono"}
+                    >
                         {item.sectionName}
                     </div>
                 {:else if "name" in item}

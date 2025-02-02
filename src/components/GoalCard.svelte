@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { getDueString, getTimeDistanceStr } from "$lib/utils-date"
-	import { themeState } from "../lib/store";
-	import { COLOR_SWATCHES } from "../lib/utils-colors";
+    import { themeState } from "../lib/store"
     import { getColorTrio } from "$lib/utils-colors"
+    import { getDueDateDistStr } from "$lib/utils-goals"
+    
 	import ProgressBar from "./ProgressBar.svelte";
-	import ProgressRing from "./ProgressRing.svelte";
 
     export let goal: Goal
     export let onClick: ((goal: Goal) => void) | undefined = undefined
@@ -12,50 +11,44 @@
         img?: boolean
         description?: boolean
         due?: boolean
-        progress?: "simple" | "default"
-        type?: "simple" | "default"
+        dueType?: "date" | "distance"
         completed?: boolean
+        progress?: boolean
         tag?: boolean
         
     } | undefined = undefined
     export let highlighted: boolean = false
     
     $: isLight = !$themeState.isDarkTheme
-    const view = {
+    $: tagColor = tag ? getColorTrio(tag.symbol.color, isLight) : ["", "", ""]
+    $: onOptionsChange(options)
+
+    let view = {
         img: options?.img ?? false,
         description: options?.description ?? true,
         due: options?.due ?? true,
-        progress: options?.progress ?? "default",
-        type: options?.type ?? "default",
+        dueType: options?.dueType ?? "date",
         completed: options?.completed ?? false,
+        progress: options?.progress ?? true,
         tag: options?.tag ?? true,
     }
 
-    const { due, name, description, tag, imgSrc, milestones, status } = goal
-    const { progress, img, type, completed, tag: hasTag } = view
-
-    $: tagColor = tag ? getColorTrio(tag.symbol.color, isLight) : ["", "", ""]
+    const { due, name, description, tag, imgSrc, milestones } = goal
+    const { img, completed, tag: hasTag } = view
 
     let isLate = false
     let dueStr = ""
     
-    function getDueDateDistStr() {
-        if (!due || status === "accomplished") {
-            return ""
-        }
-        
-        const str = getTimeDistanceStr({ date: due, enforce: "d" })
-        isLate = str.includes("ago")
-
-        if (isLate) {
-            dueStr = "-" + str.split("ago")[0]
-        } 
-        else {
-            dueStr = str
-        }
+    function onOptionsChange(options) {
+        view = { ...view, ...options }
+        _getDueDateDistStr(goal, view.dueType)
+    }
+    function _getDueDateDistStr(goal: Goal, type: "date" | "distance") {
+        const res = getDueDateDistStr(goal, type)
+        isLate = res.isLate
+        dueStr = res.dueStr
     }
 
-    getDueDateDistStr()
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -63,8 +56,9 @@
     class="goal-card"
     class:goal-card--light={isLight}
     class:goal-card--completed={completed}
-    class:goal-card--simple={type === "simple"}
     class:goal-card--highlighted={highlighted}
+    role="button"
+    tabindex="0"
     on:click|self={() => onClick(goal)}
 >
     {#if imgSrc && img}
@@ -73,33 +67,15 @@
         </div>
     {/if}
     <div class="goal-card__details">
-        <div class="goal-card__due" class:hidden={!view.due}>
-            {dueStr}
+        <div class="goal-card__title">
+            {name}
         </div>
-        <div class="flx flx--space-between">
-            <div class="goal-card__title">
-                {name}
+        {#if view.description && description}
+            <div class="goal-card__description">
+                {description}
             </div>
-            {#if milestones?.length > 0 && progress === "simple"}
-                {@const checked = milestones.reduce((c, ms) => ms.done ? c + 1 : c, 0)}
-                <div class="goal-card__progress-ring">
-                    <ProgressRing 
-                        progress={checked / milestones.length} 
-                        options={{ style: "rich-colored" }}    
-                    />
-                </div>
-            {/if}
-        </div>
-        <!-- {#if type === "simple"}
-            <div class="goal-card__due">
-                {view.completed ? "Done" : dueDateDistStr}
-            </div>
-        {/if} -->
-        <div class="goal-card__description" class:hidden={!view.description}>
-            {description}
-        </div>
-
-        {#if milestones?.length > 0 && progress === "default"}
+        {/if}
+        {#if milestones?.length > 0 && view.progress}
             {@const checked = milestones.reduce((c, ms) => ms.done ? c + 1 : c, 0)}
             <div class="goal-card__progress">
                 <ProgressBar progress={checked / milestones.length}/>
@@ -119,15 +95,12 @@
                     style:--tag-color-3={tagColor[2]}
                     title={tag.name}
                 >
-                    <!-- <span class="tag__symbol">
-                        {tag?.symbol.emoji}
-                    </span> -->
                     <div class="tag__title">
                         {tag?.name}
                     </div>
                 </div>
             {/if}
-            {#if type === "default"}
+            {#if view.due}
                 <div 
                     class="goal-card__due"
                     class:goal-card__due--late={isLate}
@@ -141,21 +114,28 @@
 </div>
 
 <style lang="scss">
+    @mixin focus {
+        background-color: rgba(var(--textColor1), 0.035);
+        box-shadow: rgba(#0C8CE9, 0.35) 0px 0px 0px 2px inset, 
+                    rgba(#0C8CE9, 0.1) 0px 0px 0px 2.5px;
+    }
     .goal-card {
         cursor: pointer;
-        border-radius: 14px;
-        margin-bottom: 7px;
+        border-radius: 16px;
+        margin-bottom: 4px;
         background-color: var(--cardBgColor);
-        // border: 1px solid rgba(var(--textColor1), 0.015);
+        border: 1px solid rgba(var(--textColor1), 0.015);
         overflow: hidden;
-        transition: 0.18s cubic-bezier(.4, 0, .2, 1);
+        transition: 0.18s transform cubic-bezier(.4, 0, .2, 1), 
+                    0.045s background-color ease-in-out;
         position: relative;
+        user-select: text;
 
         &:hover {
             background-color: var(--cardFgColor);
         }
         &:active {
-            transform: scale(0.99);
+            transform: scale(0.995);
         }
         &::before {
             content: " ";
@@ -165,74 +145,39 @@
             @include abs-top-left(0px, 5px);
             display: none;
         }
-        &:focus {
-            outline: 1px solid rgba(var(--textColor1), 0.05);
+        &:focus-visible {
+            @include focus;
         }
 
         &--light {
-            border: 1.5px solid rgba(var(--textColor1), 0.05);
-            box-shadow: 0px 5px 6px 1px rgba(0, 0, 0, 0.02);
+            border: 1.5px solid rgba(var(--textColor1), 0.0185);
         }
         &--light &__due {
-            @include text-style(0.2, 500);
-        }
-        &--light &__title {
-            @include text-style(0.85, 600);
+            @include text-style(0.2);
         }
         &--light &__description {
-            @include text-style(0.5, 500);
+            @include text-style(0.55);
         }
         &--light &__due {
-            @include text-style(0.5, 600);
-        }
-        &--simple:first-child {
-            border: none;
-            margin-top: -6px;
-        }
-        &--simple {
-            background: none;
-            border: none;
-            border-radius: 0px;
-            margin-bottom: 0px;
-            overflow: visible;
-
-            &::before {
-                display: block;
-            }
-        }
-        &--simple &__details {
-            padding: 11px 5px 0px 8px;
-        }
-        &--simple &__description {
-            margin-bottom: 13px;
-            @include truncate-lines(2);
-        }
-        &--simple &__due {
-            margin: 4px 0px 8px 0px;
-        }
-        &--simple &__tag, 
-        &--simple &__progress-ring {
-            display: none;
+            @include text-style(0.5);
         }
         &--completed {
             opacity: 0.4;
         }
         &--highlighted {
-            background-color: rgba(var(--textColor1), 0.035);
-            box-shadow: rgba(#0C8CE9, 0.35) 0px 0px 0px 2px inset, 
-                        rgba(#0C8CE9, 0.1) 0px 0px 0px 2.5px;
+            @include focus;
         }
         &__details {
             padding: 11px 12px 11px 13px;
         }
         &__img {
-            height: 80px;
+            height: 110px;
             width: calc(100% - 8px);
             margin: 4px 4px 0px 4px;
             
             img {
                 object-fit: cover;
-                border-radius: 9px;
+                border-radius: 12px;
                 border-bottom-left-radius: 1px;
                 border-bottom-right-radius: 1px;
                 width: 100%;
@@ -240,59 +185,38 @@
             }
         }
         &__due {
-            @include text-style(0.2, 400, 1.3rem, "DM Sans");
-            margin-bottom: 6px;
+            @include text-style(0.35, var(--fw-400-500), 1.25rem);
+            white-space: nowrap;
         }
         &__due--late {
-            color: rgba(#e0846080, 0.65) !important;
+            color: rgba(#e06b60a6, 0.85) !important;
         }
         &__title {
-            @include text-style(1, 500, 1.4rem);
+            @include text-style(1, var(--fw-400-500), 1.4rem);
             cursor: text;
             width: fit-content;
             margin-right: 7px;
         }
         &__progress {
             @include flex(center);
-            margin-top: 8px;
-
-            .fraction {
-                margin-right: 9px;
-            }
-        }
-        &__progress-ring {
-            transform: scale(0.9);
+            margin-top: 10px;
         }
         &__description {
-            @include text-style(0.285, 500, 1.35rem);
+            @include text-style(0.285, 400, 1.25rem);
             @include truncate-lines(3);
             margin: 6px 0px 12px 0px;
             cursor: text;
         }
         &__bottom {
-            margin-top: 16px;
+            margin-top: 10px;
             @include flex(center, space-between)
         }
         &__tag {
             border-radius: 6px;
-            padding: 2px 9px 3.5px 9px;
-            font-family: "Geist Mono"
+            padding: 3px 9px 4.5px 9px;
         }
         .tag {
             margin-right: 15px;
-
-            &__symbol {
-                font-size: 0.95rem;
-            }
-            &__title {
-                font-size: 1.15rem;
-                max-width: 90px;
-                
-            }
-        }
-        &__due {
-            @include text-style(0.2, 400, 1.25rem, "Geist Mono");
-            white-space: nowrap;
         }
     }
 </style>

@@ -3,6 +3,7 @@
 
 	import { Icon } from "../../../lib/enums"
 	import { themeState } from "../../../lib/store"
+	import { imageUpload } from "../../../lib/pop-ups"
 	import { ACTIVITY_DATA } from "../../../lib/mock-data"
     import { formatDatetoStr, getWeekPeriodStr } from "../../../lib/utils-date"
 	import { capitalize, clickOutside, getElemById, getHozSpace, getMaskedGradientStyle, kebabToNormal, normalToKebab } from "../../../lib/utils-general"
@@ -10,27 +11,34 @@
 	import YearView from "./YearView.svelte"
 	import GoalsView from "./GoalsView.svelte"
 	import WeeklyHabits from "./WeeklyHabits.svelte"
+	import ActivityCalendar from "./Overview.svelte"
 	import SvgIcon from "../../../components/SVGIcon.svelte"
 	import ToggleBtn from "../../../components/ToggleBtn.svelte"
 	import BounceFade from "../../../components/BounceFade.svelte"
 	import SettingsBtn from "../../../components/SettingsBtn.svelte"
 	import DropdownBtn from "../../../components/DropdownBtn.svelte"
+	import ProgressBar from "../../../components/ProgressBar.svelte"
 	import DropdownList from "../../../components/DropdownList.svelte"
-	import DayView from "./DayView.svelte"
-	import ActivityCalendar from "./ActivityCalendar.svelte"
-	import { imageUpload } from "../../../lib/pop-ups";
-	import DayEntry from "./DayEntry.svelte";
-	import ProgressBar from "../../../components/ProgressBar.svelte";
 
     type MonthDetailsView = "overview" | "goals" | "habits" | "yr-view"
     type GoalsView = {
         view: "list" | "board"
-        listGrouping: "status" | "tag" | "default"
-        boardGrouping: "status" | "tag"
         progress: number
+        list: {
+            grouping: "status" | "tag" | "default"
+            showProgress: boolean
+            due: boolean
+            dueType: "date" | "distance"
+        }
+        board: {
+            grouping: "status" | "tag"
+            showProgress: boolean
+            due: boolean
+            dueType: "date" | "distance"
+        }
     }
 
-    let currView: MonthDetailsView = "yr-view"
+    let currView: MonthDetailsView = "overview"
     let optionsOpen = false
     let overviewType: "monthly" | "daily" = "monthly"
     let leftArrow: HTMLButtonElement | null = null
@@ -47,28 +55,41 @@
     let entryModal = false
     let gradient = ""
     
-    let subMenu: "g-group" | "g-progress" | "h-view" | "d-view" | null = null
+    let subMenu: "g-group" | "g-progress" | "h-view" | "d-view" | "g-due" | null = null
     
     $: isLight = !$themeState.isDarkTheme
 
     /* view options */
     let overview = {
         animPhotos: true,
-        showHighlight: true,
-        fontStyle: "stylish"
+        textBlock: true,
+        habitsMark: true,
+        focusTime: false,
+        heading: false
     }
     let goalsView: GoalsView = {
         view: "list",
-        listGrouping: "default",
-        boardGrouping: "status",
-        progress: 0
+        progress: 0.5,
+        list: {
+            grouping: "status",
+            showProgress: true,
+            due: false,
+            dueType: "date"
+        },
+        board: {
+            grouping: "status",
+            showProgress: true,
+            due: false,
+            dueType: "date"
+        }
     }
     let habitView = {
         view: "default",
+        stats: true,
         emojis: true,
         target: true,
         progress: {
-            numbers: true,
+            numbers: false,
             daily: true,
             percentage: false
         }
@@ -93,71 +114,28 @@
         gradient = ""
     }
 
-    function highlightHandler(context: "image" | "entry") {
-        const { highlightImg, thoughtEntry } = activity
-
-        if (context === "image" && highlightImg) {
-            activity.highlightImg = null
-        }
-        else if (context === "image") {
-            imageUpload.init({
-                onSubmit: (src: string | null) => {
-                    if (src) {
-                        activity.highlightImg = {
-                            src, caption: "no caption"
-                        }
-                        activity = activity
-                    }
-                }
-            })
-        }
-        if (context === "entry" && thoughtEntry) {
-            activity.thoughtEntry = null
-        }
-        else if (context === "entry") {
-            entryModal = true
-        }
-
-        subMenu = null
-    }
-    function onDayEntryUpdate(updatedData: DayEntryUpdatePayload) {
-        if (updatedData.img) {
-            activity.highlightImg.src     = updatedData.img.src ?? activity.highlightImg.src
-            activity.highlightImg.caption = updatedData.img.caption ?? activity.highlightImg.caption
-        }
-        else {
-            activity.highlightImg = undefined
-        }
-
-        activity.thoughtEntry = updatedData.thoughtEntry ?? ""
-        activity = activity
-
-        entryModal = false
-    }
     function onGoalSubListClicked({ name }) {
-        const optn     = normalToKebab(name)
+        const optn = normalToKebab(name)
 
         if (subMenu === "g-group") {
             const grouping = optn as "status" | "tag" | "none"
 
             if (goalsView.view === "list") {
-                goalsView.listGrouping = grouping === "none" ? "default" : grouping
+                goalsView.list.grouping = grouping === "none" ? "default" : grouping
             } 
             else {
-                goalsView.boardGrouping = grouping as "status" | "tag"
+                goalsView.board.grouping = grouping as "status" | "tag"
             }
+        }
+        else if (subMenu === "g-due") {
+            const viewType = goalsView.view
+            goalsView[viewType].dueType = optn as "date" | "distance"
         }
         else if (subMenu === "h-view") {
             habitView.view = optn
         }
 
-        if (subMenu.startsWith("g-")) {
-            goalsView = goalsView
-        }
-        if (subMenu.startsWith("h-")) {
-            goalsView = goalsView
-        }
-
+        goalsView = goalsView
         subMenu = null
         optionsOpen = false
     }
@@ -209,8 +187,8 @@
             },
         })
 
-        btnHighlighter.width = width + (view === "overview" ? 2 : 5)
-        btnHighlighter.left  = Math.max(left - 2, 0) + scrollLeft
+        btnHighlighter.width = width - 2
+        btnHighlighter.left  = Math.max(left - 0, 0) + scrollLeft
     }
     function handleScroll(elem: HTMLElement) {
         const { styling } = getMaskedGradientStyle(elem, {
@@ -227,8 +205,8 @@
     }
 
     onMount(() => {
-        onViewBtnClicked(currView)
         handleScroll(headerBtnsRef)
+        requestAnimationFrame(() => onViewBtnClicked(currView))
     })
 </script>
 
@@ -255,20 +233,20 @@
                     <span>Overview</span>
                 </button>
                 <button 
-                    id={"month-view--habits"}
-                    class="month-view__header-btn"
-                    class:month-view__header-btn--chosen={currView === "habits"}
-                    on:click={(e) => onViewBtnClicked("habits")}
-                >
-                    <span>Habits</span> 
-                </button>
-                <button 
                     id={"month-view--goals"}
                     class="month-view__header-btn"
                     class:month-view__header-btn--chosen={currView === "goals"}
                     on:click={(e) => onViewBtnClicked("goals")}
                 >
                     <span>Goals</span> 
+                </button>
+                <button 
+                    id={"month-view--habits"}
+                    class="month-view__header-btn"
+                    class:month-view__header-btn--chosen={currView === "habits"}
+                    on:click={(e) => onViewBtnClicked("habits")}
+                >
+                    <span>Habits</span> 
                 </button>
                 <button 
                     id={"month-view--yr-view"}
@@ -287,31 +265,17 @@
             </div>
             <div class="month-view__details-header-right">
                 <div class="month-view__settings">
-                    {#if currView === "overview"}
-                        <div 
-                            class="month-view__overview-options"
-                            style:margin="0px 2px -5.5px 0px"
-                        >
-                            <!-- <button
-                                class="month-view__overview-btn"
-                                class:month-view__overview-btn--clicked={overviewType === "monthly"}
-                                on:click={() => overviewType = "monthly"}
-                            >
-                                Monthly
-                            </button>
-                            <button
-                                class="month-view__overview-btn"
-                                class:month-view__overview-btn--clicked={overviewType === "daily"}
-                                on:click={() => overviewType = "daily"}
-                            >
-                                Daily
-                            </button> -->
-                        </div>
-                    {/if}
                     <div class="month-view__period">
-                        {#if currView === "habits"}
+                        {#if currView === "overview"}
                             <div 
-                                style:font-size="1.28rem" 
+                                style:margin="4px -1px 0px 12px"
+                                style:font-size="1.45rem"
+                            >
+                                {formatDatetoStr(today, { month: "long" })}
+                            </div>
+                        {:else if currView === "habits"}
+                            <div 
+                                style:font-size="1.4rem" 
                                 style:margin="5px 0px 0px 0px"
                             >
                                 {#if weeksAgoIdx === 0} 
@@ -322,11 +286,10 @@
                                 {/if}
                             </div>
                         {:else if currView === "goals"}
+                            {@const progress = goalsView.progress}
                             <div class="flx-algn-center" style:margin="0px 0px -2px 0px">
                                 <div style:margin-top="5px">
-                                    <ProgressBar 
-                                        progress={goalsView.progress}
-                                    />
+                                    <ProgressBar {progress}/>
                                 </div>
                                 <span 
                                     style:margin="4px -1px 0px 12px"
@@ -337,8 +300,8 @@
                             </div>
                         {:else if currView === "yr-view"}
                             <div 
-                                style:font-size="1.5rem"
-                                style:margin="4px 0px 0px 0px"
+                                style:font-size="1.4rem"
+                                style:margin="5px 0px 0px 0px"
                             >
                                 {today.getFullYear()}
                             </div>
@@ -359,6 +322,7 @@
                             bind:this={rightArrow}
                             on:click={() => onArrowBtnClicked("right")}
                             class="month-view__arrow"
+                            style:margin-left="10px"
                         >
                             <div style:margin-right={"-2px"}>
                                 <SvgIcon icon={Icon.ChevronRight}/>
@@ -380,23 +344,47 @@
             <BounceFade 
                 isHidden={!optionsOpen}
                 zIndex={200}
-                position={{ 
-                    top: "44px", right: "5px"
-                }}
+                position={{ top: "42px", right: "5px" }}
             >
                 <div 
                     id="month-view--dmenu"
                     class="day-settings dmenu" 
                     class:dmenu--light={isLight}
-                    style:width={currView === "goals" ? "175px" : "200px"}
+                    style:width={currView === "goals" ? "185px" : "200px"}
                     use:clickOutside on:click_outside={() => optionsOpen = false} 
                 >
                     <!-- month view -->
                     {#if currView === "overview" && overviewType === "monthly"}
+                        <li class="dmenu__section-name">
+                            Monthly View
+                        </li>
                         <li class="dmenu__section">
-                            <div class="dmenu__section-name">
-                                Monthly View
+                            <div class="dmenu__toggle-optn">
+                                <span class="dmenu__option-heading">Show Month</span>
+                                <ToggleBtn 
+                                    active={overview.heading}
+                                    onToggle={() => {
+                                        overview.heading = !overview.heading
+                                        overview = overview
+                                    }}
+                                />
                             </div>
+                            <div class="dmenu__toggle-optn">
+                                <span class="dmenu__option-heading">Text Block</span>
+                                <ToggleBtn 
+                                    active={overview.textBlock}
+                                    onToggle={() => {
+                                        overview.textBlock = !overview.textBlock
+                                        overview = overview
+                                    }}
+                                />
+                            </div>
+                        </li>
+                        <div class="dmenu__section-name" style:margin-top="4px">
+                            Calendar
+                        </div>
+                        <li class="dmenu__section-divider"></li>
+                        <li class="dmenu__section">
                             <div class="dmenu__toggle-optn">
                                 <span class="dmenu__option-heading">Animate Photo Wall</span>
                                 <ToggleBtn 
@@ -407,92 +395,31 @@
                                     }}
                                 />
                             </div>
-                        </li>
-                    {/if}
-                    <!-- day view -->
-                    {#if currView === "overview" && overviewType === "daily"}
-                        <li class="dmenu__section">
-                            <div class="dmenu__section-name">
-                                Day View
+                            <div class="dmenu__toggle-optn">
+                                <span class="dmenu__option-heading">Incomplete Habits</span>
+                                <ToggleBtn 
+                                    active={overview.habitsMark}
+                                    onToggle={() => {
+                                        overview.habitsMark = !overview.habitsMark
+                                        overview = overview
+                                    }}
+                                />
                             </div>
                             <div class="dmenu__toggle-optn">
-                                <span class="dmenu__option-heading">Show Highlights</span>
+                                <span class="dmenu__option-heading">Focus Time</span>
                                 <ToggleBtn 
-                                    active={overview.showHighlight}
+                                    active={overview.focusTime}
                                     onToggle={() => {
-                                        overview.showHighlight = !overview.showHighlight
+                                        overview.focusTime = !overview.focusTime
                                         overview = overview
                                     }}
                                 />
-                            </div>
-                            <div class="dmenu__option dmenu__option--static">
-                                <span class="dmenu__option-heading">Heading Style</span>
-                                <DropdownBtn 
-                                    id={"d-view"}
-                                    isActive={subMenu === "d-view"}
-                                    options={{
-                                        pickedOptionName: capitalize(overview.fontStyle),
-                                        onClick: () => { 
-                                            subMenu = subMenu === "d-view" ? null : "d-view"
-                                        },
-                                    }}
-                                />
-                            </div>
-                            <DropdownList 
-                                id="d-view"
-                                isHidden={subMenu != "d-view"} 
-                                options={{
-                                    pickedItem: capitalize(overview.fontStyle),
-                                    listItems: [
-                                        { name: "Basic" }, { name: "Stylish" }, { name: "Fancy" }
-                                    ],
-                                    position: { 
-                                        top: "120px", right: "2px" 
-                                    },
-                                    styling: { 
-                                        width: "100px" 
-                                    },
-                                    onClickOutside: () => { 
-                                        subMenu = null 
-                                    },
-                                    onListItemClicked: ({ name }) => {
-                                        overview.fontStyle = name.toLowerCase()
-                                        overview = overview
-
-                                        subMenu = null
-                                    }
-                                }}
-                            />
-                        </li>
-                        <li class="dmenu__section-divider"></li>
-                        <li class="dmenu__section">
-                            <div class="dmenu__section-name">
-                                Day Highlight
-                            </div>
-                            <div class="dmenu__option">
-                                <button
-                                    class="dmenu__option-btn"
-                                    on:click={() => highlightHandler("entry")}
-                                >
-                                    <span class="dmenu__option-text">
-                                        {activity.thoughtEntry ? "Remove Entry" : "Add Entry"}
-                                    </span>
-                                </button>
-                            </div>
-                            <div class="dmenu__option">
-                                <button
-                                    class="dmenu__option-btn"
-                                    on:click={() => highlightHandler("image")}
-                                >
-                                    <span class="dmenu__option-text">
-                                        {activity.highlightImg ? "Remove Photo" : "Add Photo"}
-                                    </span>
-                                </button>
                             </div>
                         </li>
                     {/if}
                     {#if currView === "goals"}
-                        {@const { listGrouping, boardGrouping, view } = goalsView}
+                        {@const viewType = goalsView.view}
+                        {@const options = goalsView[viewType]}
                         <li class="dmenu__section">
                             <div class="dmenu__section-name">
                                 Goals Settings
@@ -500,11 +427,10 @@
                             <div style:display="flex" style:margin="5px 0px 10px 7px">
                                 <button 
                                     class="dmenu__box" 
-                                    class:dmenu__box--selected={view === "list"}
+                                    class:dmenu__box--selected={viewType === "list"}
                                     on:click={() => {
                                         goalsView.view = "list"
                                         goalsView = goalsView
-
                                         optionsOpen = false
                                     }}
                                 >
@@ -515,11 +441,10 @@
                                 </button>
                                 <button 
                                     class="dmenu__box" 
-                                    class:dmenu__box--selected={view === "board"}
+                                    class:dmenu__box--selected={viewType === "board"}
                                     on:click={() => {
                                         goalsView.view = "board"
                                         goalsView = goalsView
-
                                         optionsOpen = false
                                     }}
                                 >
@@ -534,46 +459,101 @@
                                     <span>Board</span>
                                 </button>
                             </div>
-                            <div 
-                                class="dmenu__option dmenu__option--static"
-                                style:pointer-events={view === "board" ? "none" : "auto"}
-                                style:opacity={view === "board" ? "0.2" : "1"}
-                            >
+                            {#if viewType === "list"}
+                            <div class="dmenu__option dmenu__option--static">
                                 <span class="dmenu__option-heading">Group By</span>
                                 <DropdownBtn 
                                     id={"g-group"}
                                     isActive={subMenu === "g-group"}
                                     options={{
-                                        pickedOptionName: capitalize(view === "list" ? listGrouping : boardGrouping),
+                                        pickedOptionName: capitalize(options.grouping),
                                         onClick: () => {
                                             subMenu = subMenu === "g-group" ? null : "g-group"
                                         },
                                     }}
                                 />
                             </div>
-                            <DropdownList 
-                                id="g-group"
-                                isHidden={subMenu != "g-group"} 
-                                options={{
-                                    pickedItem: capitalize(view === "list" ? listGrouping : boardGrouping),
-                                    listItems: [
-                                        ...(view === "list" ? [{ name: "Default" }] : []),
-                                        { name: "Status" }, 
-                                        { name: "Tag" }
-                                    ],
-                                    position: { 
-                                        top: "125px", right: "2px" 
-                                    },
-                                    styling: { 
-                                        width: "100px" 
-                                    },
-                                    onClickOutside: () => { 
-                                        subMenu = null 
-                                    },
-                                    onListItemClicked: onGoalSubListClicked
-                                }}
-                            />
+                            {/if}
+                            <div class="dmenu__toggle-optn">
+                                <span class="dmenu__option-heading">Progress</span>
+                                <ToggleBtn 
+                                    active={options.showProgress}
+                                    onToggle={() => {
+                                        goalsView[viewType].showProgress = !options.showProgress
+                                        goalsView = goalsView
+                                    }}
+                                />
+                            </div>
+                            <div class="dmenu__toggle-optn">
+                                <span class="dmenu__option-heading">Due Date</span>
+                                <ToggleBtn 
+                                    active={options.due}
+                                    onToggle={() => {
+                                        goalsView[viewType].due = !options.due
+                                        goalsView = goalsView
+                                    }}
+                                />
+                            </div>
+                            {#if options.due}
+                                <div class="dmenu__option dmenu__option--static">
+                                    <span class="dmenu__option-heading">Due Format</span>
+                                    <DropdownBtn 
+                                        id={"g-due"}
+                                        isActive={subMenu === "g-due"}
+                                        options={{
+                                            pickedOptionName: capitalize(options.dueType),
+                                            onClick: () => {
+                                                subMenu = subMenu === "g-due" ? null : "g-due"
+                                            },
+                                        }}
+                                    />
+                                </div>
+                            {/if}
                         </li>
+
+                        <DropdownList 
+                            id="g-group"
+                            isHidden={subMenu != "g-group"} 
+                            options={{
+                                pickedItem: capitalize(options.grouping),
+                                listItems: [
+                                    ...(viewType === "list" ? [{ name: "Default" }] : []),
+                                    { name: "Status" }, 
+                                    { name: "Tag" }
+                                ],
+                                position: { 
+                                    top: "135px", right: "2px" 
+                                },
+                                styling: { 
+                                    width: "100px" 
+                                },
+                                onClickOutside: () => { 
+                                    subMenu = null 
+                                },
+                                onListItemClicked: onGoalSubListClicked
+                            }}
+                        />
+                        <DropdownList 
+                            id="g-due"
+                            isHidden={subMenu != "g-due"} 
+                            options={{
+                                pickedItem: capitalize(options.dueType),
+                                listItems: [
+                                    { name: "Date" }, 
+                                    { name: "Distance" }
+                                ],
+                                position: { 
+                                    top: "220px", right: "2px" 
+                                },
+                                styling: { 
+                                    width: "100px" 
+                                },
+                                onClickOutside: () => { 
+                                    subMenu = null 
+                                },
+                                onListItemClicked: onGoalSubListClicked
+                            }}
+                        />
                     {/if}
                     {#if currView === "habits"}
                         <li class="dmenu__section">
@@ -612,6 +592,16 @@
                                     onListItemClicked: onGoalSubListClicked
                                 }}
                             />
+                            <div class="dmenu__toggle-optn  dmenu__option--static">
+                                <span class="dmenu__option-heading">Month Metrics</span>
+                                <ToggleBtn 
+                                    active={habitView.stats}
+                                    onToggle={() => {
+                                        habitView.stats = !habitView.stats
+                                        habitView = habitView
+                                    }}
+                                />
+                            </div>
                             <div class="dmenu__toggle-optn  dmenu__option--static">
                                 <span class="dmenu__option-heading">Emojis</span>
                                 <ToggleBtn 
@@ -674,21 +664,21 @@
                     {/if}
                     {#if currView === "yr-view"}
                         <div class="dmenu__toggle-optn dmenu__option--static">
-                            <span class="dmenu__option-heading">Text Entry</span>
-                            <ToggleBtn 
-                                active={yearView.showTextEntry}
-                                onToggle={() => {
-                                    yearView.showTextEntry = !yearView.showTextEntry
-                                    yearView = yearView
-                                }}
-                            />
-                        </div>
-                        <div class="dmenu__toggle-optn dmenu__option--static">
                             <span class="dmenu__option-heading">Show Year</span>
                             <ToggleBtn 
                                 active={yearView.showYear}
                                 onToggle={() => {
                                     yearView.showYear = !yearView.showYear
+                                    yearView = yearView
+                                }}
+                            />
+                        </div>
+                        <div class="dmenu__toggle-optn dmenu__option--static">
+                            <span class="dmenu__option-heading">Text Block</span>
+                            <ToggleBtn 
+                                active={yearView.showTextEntry}
+                                onToggle={() => {
+                                    yearView.showTextEntry = !yearView.showTextEntry
                                     yearView = yearView
                                 }}
                             />
@@ -700,22 +690,15 @@
         <div class="divider"></div>
         <div class="month-view__details-view">
             {#if currView === "overview"}
-                {#if overviewType === "monthly"}    
-                    <ActivityCalendar 
-                        options={overview}
-                        onDayClicked={(dayIdx) => {
-                            overviewType = "daily"
+                <ActivityCalendar 
+                    options={overview}
+                    onDayClicked={(dayIdx) => {
+                        overviewType = "daily"
 
-                            activityIdx  = dayIdx
-                            activity = ACTIVITY_DATA[activityIdx]
-                        }} 
-                    />
-                {:else}
-                    <DayView 
-                        options={overview} 
-                        activity={activity} 
-                    />
-                {/if}
+                        activityIdx  = dayIdx
+                        activity = ACTIVITY_DATA[activityIdx]
+                    }} 
+                />
             {:else if currView === "habits"}
                 <WeeklyHabits 
                     weeksAgoIdx={weeksAgoIdx}
@@ -736,69 +719,30 @@
     </div>
 </div>
 
-{#if entryModal} 
-    {@const { highlightImg, thoughtEntry, date } = activity }
-    <DayEntry 
-        data={{
-            img: highlightImg,
-            date,
-            thoughtEntry
-        }}
-        onUpdate={onDayEntryUpdate}
-    />
-{/if}
-
 <style lang="scss">
     @import "../../../scss/dropdown.scss";
 
     .month-view {
-        &--light &__heading {
-            font-weight: 500;
+        --arrow-opacity: 0.45;
+
+        &--light {
+            --arrow-opacity: 0.55;
         }
         &--light &__header-btn {
-            @include text-style(0.5, 500);
-            
-            span {
-                @include text-style(1, 600);
-            }
-            &:hover {
-                background-color: rgba(var(--textColor1), 0.0355);
-            }
+            opacity: 0.3;
         }
-        &--light &__todo-settings-btn {
-            opacity: 0.6;
-            background-color: rgba(var(--textColor1), 0.1);
-        }
-        &--light &__todo-settings-btn:hover {
-            background-color: rgba(var(--textColor1), 0.2) !important;
-        }
-        &--light &__wom:before {
-            background-color: rgba(var(--textColor1), 0.145);
-        }
-        &--light &__word {
-            @include text-style(1, 600);
-        }
-        &--light &__word-type {
-            @include text-style(0.4, 500);
-        }
-        &--light &__word-def {
-            @include text-style(0.8, 500);
-        }
-        &--light &__period {
-            font-weight: 600;
-        }
-        &--light .divider {
-            @include l-div
+        &--light &__header-btn span {
+            @include text-style(1);
         }
         &--yr-view &__details .divider {
             margin-bottom: 0px;
         }
 
         .divider {
-            background-color: rgba(var(--textColor1), 0.035);
+            border-bottom: var(--divider-border);
             height: 0.5px;
             width: 100%;
-            margin: 1px 0px 0px 0px;
+            margin: 0px 0px 0px 0px;
         }
 
         /* view options */
@@ -815,7 +759,7 @@
 
         /* DETAILS */
         &__details {
-            margin: 0px 0px 0px 0px;
+            margin: -9px 0px 0px 0px;
             padding: 0px 0px 4px 0px;
             min-height: 500px;
             position: relative;
@@ -840,16 +784,16 @@
             flex: 1;
         }
         &__header-btns {
-            margin: 0px 10px -3px 0px;
+            margin: 0px 10px -7px -3px;
             padding-bottom: 11px;
             position: relative;
-            overflow: scroll;
-            @include flex(center);
+            overflow-x: scroll;
+            overflow-y: hidden;
+            display: flex;
         }
         &__header-btn {
             padding: 5px 0px 0px 0px;
-            border-radius: 29px;
-            margin: 0px 14px 0px 2px;
+            margin: 0px 10px 0px 2px;
             white-space: nowrap;
             opacity: 0.2;
             transition: 0.1s ease-in-out;
@@ -858,11 +802,15 @@
             &:hover {
                 opacity: 0.4;
             }
+            &:focus-visible {
+                opacity: 0.4;
+                box-shadow: none;
+            }
             &--chosen {
                 opacity: 1 !important;
             }
             span {
-                @include text-style(0.85, 400, 1.55rem, "Geist Mono");
+                @include text-style(0.85, var(--fw-400-500), 1.525rem);
                 margin-right: 3px;
             }
         }
@@ -882,13 +830,13 @@
             opacity: 1 !important;
         }
         &__highlight {
-            @include abs-bottom-left(-1px);
-            height: 2px;
+            @include abs-bottom-left(-2px);
+            height: 3.5px;
             background-color: rgba(var(--textColor1), 0.9);
             transition: 0.18s cubic-bezier(.4, 0, .2, 1);
         }
         &__arrow {
-            opacity: 0.45;
+            opacity: var(--arrow-opacity);
             margin-left: 20px;
             height: 29px;
             width: 29px;
@@ -898,20 +846,20 @@
                 opacity: 0.1 !important;
                 background: none !important;
             }
-            &:first-child {
-                margin-left: 20px;
-            }
             &:hover {
-                background-color: rgba(var(--textColor1), 0.03);
+                background-color: rgba(var(--textColor1), 0.05);
                 opacity: 0.8;
             }
         }
         &__period {
-            @include text-style(0.4, 400, 1.3rem, "Geist Mono");
-            height: 20px;
+            @include text-style(0.45, var(--fw-400-500), 1.4rem);
+            height: 18px;
 
             span {
                 margin: 0px 8px;
+            }
+            * {
+                font-weight: var(--fw-400-500);
             }
         }
         &__todo-settings-btn {

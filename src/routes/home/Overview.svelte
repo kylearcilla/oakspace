@@ -2,6 +2,7 @@
     import { themeState, weekRoutine } from "$lib/store"
 
 	import { Icon } from "$lib/enums"
+	import { globalContext } from "../../lib/store"
 	import { isSameDay } from "../../lib/utils-date";
 	import { formatDatetoStr } from "$lib/utils-date"
 	import { clickOutside } from "$lib/utils-general"
@@ -24,6 +25,11 @@
     type GoogleCalOptn = "refresh" | "disconnect" | "my calendars"
 
     export let calendar = new SideCalendar()
+    export let headerOptions: {
+        img: string
+        show: boolean
+    }
+    export let onUpdateHeaderOptions: (optn: string) => void
 
     let focusDate  = new Date()
     let calendarHt = 0
@@ -39,6 +45,7 @@
     $: routine = $weekRoutine
     $: isLight = !$themeState.isDarkTheme
     $: isToday = isSameDay(new Date(), focusDate)
+    $: ambience = $globalContext.ambience
 
     /* google calendar */
     let googleCal         = initGoogleCalSession()
@@ -156,7 +163,6 @@
             calendar={calendar} 
         />
     </div>
-    <!-- Day View Header -->
     <div 
         class="overview__day-view"
         style:height={`calc(100% - ${calendarHt}px)`}
@@ -253,7 +259,8 @@
             }}
         >
             <div 
-                class="dmenu dmenu"
+                class="dmenu"
+                class:dmenu--light={isLight}
                 id="overview--dmenu"
                 use:clickOutside on:click_outside={() => {
                     settings = false
@@ -376,7 +383,6 @@
                 {#if view === "calendar"}
                     <li class="dmenu__section-divider"></li>
                     {#if routine && isGoogleCalLinked}
-                        <!-- Content -->
                         <li class="dmenu__section">
                             <div class="dmenu__section-name">
                                 Content
@@ -435,26 +441,19 @@
 
                     <!-- routine -->
                     <li class="dmenu__section">
-                        <div 
-                            title="Current set routine"
-                            class="dmenu__section-name"
-                        >
-                            {routine?.name ?? "Routine"}
+                        <div class="dmenu__section-name">
+                            Routine
                         </div>
                         {#if routine}
-                            <div class="dmenu__toggle-optn" class:hidden={!isToday}>
-                                <span class="dmenu__option-text">
-                                    Checkbox
-                                </span>
+                            <div class="dmenu__toggle-optn">
+                                <span class="dmenu__option-heading">Checkbox</span>
                                 <ToggleBtn 
                                     active={checkbox}
                                     onToggle={() => checkbox = !checkbox}
                                 />
                             </div>
                             <div class="dmenu__toggle-optn">
-                                <span class="dmenu__option-text">
-                                    Rich Colors
-                                </span>
+                                <span class="dmenu__option-heading">Colors</span>
                                 <ToggleBtn 
                                     active={richColors}
                                     onToggle={() => richColors = !richColors}
@@ -519,9 +518,41 @@
                             </div>
                         {/if}
                     </li>
-                    <li class="dmenu__section-divider"></li>
                 {/if}
+
+                {#if !isLight && !ambience?.active}
+                    {@const { img, show } = headerOptions}
+                    {@const optnText = img ? "Replace" : "Add"}
                 
+                    <!-- header image -->
+                    <li class="dmenu__section-divider"></li>
+                    <li class="dmenu__section">
+                        <div class="dmenu__section-name">
+                            Header Background
+                        </div>
+
+                        <div class="dmenu__option">
+                            <button 
+                                class="dmenu__option-btn"
+                                on:click={() => {
+                                    onUpdateHeaderOptions(optnText.toLowerCase())
+                                    settings = false
+                                }}
+                            >
+                                <span class="dmenu__option-text">
+                                    {optnText}
+                                </span>
+                            </button>
+                        </div>
+                        <div class="dmenu__toggle-optn  dmenu__option--static">
+                            <span class="dmenu__option-heading">Show</span>
+                            <ToggleBtn 
+                                active={show}
+                                onToggle={() => onUpdateHeaderOptions("show")}
+                            />
+                        </div>
+                    </li>
+                {/if}
             </div>
         </BounceFade>
     </div>
@@ -538,7 +569,7 @@
         height: 100%;
 
         &--light &__day-view-header span {
-            @include text-style(0.7, 600);
+            @include text-style(0.85);
         }
         &--light &__day-view-settings-btn {
             background-color: rgba(var(--textColor1), 0.1);
@@ -550,7 +581,7 @@
         }
         &--light &__hour-block {
             span {
-                @include text-style(0.55, 500);
+                @include text-style(0.55);
             }
 
             &-hoz-divider path {
@@ -583,7 +614,7 @@
         &__calendar-container {
             margin: 0px 0px 0px 0px;
             padding: 0px var(--OVERVIEW_SIDE_MARGINS);
-            height: 223px;
+            height: 230px;
         }
         &__day-view {
             width: 100%;
@@ -593,12 +624,12 @@
         &__day-view-header {
             @include flex(center, space-between);
             position: relative;
-            height: 18px;
             padding: 0px var(--DAY_VIEW_SIDE_MARGINS);
-            margin: 0px 0px 6px 1px;
+            margin: 0px 0px 5px 1px;
 
             span {
-                @include text-style(0.35, 400, 1.2rem, "DM Mono");
+                margin-top: 0px;
+                @include text-style(0.35, var(--fw-400-500), 1.25rem, "Geist Mono");
             }
         }
         &__day-view-settings-btn {
@@ -653,17 +684,10 @@
 
     .dmenu {
         width: 168px;
-        span {
-            @include text-style(0.78, 500, 1.2rem);
-        }
         &__toggle-optn {
             padding: 6px 7px 7px 7px;
             width: 100%;
             @include flex(center, space-between);
-
-            span {
-                opacity: 0.65;
-            }
         }
         &__section-name {
             margin-bottom: 2px;

@@ -1,17 +1,14 @@
 <script lang="ts">
-    import { TEST_HABITS } from "../../../lib/mock-data"
-    import { habitTracker, themeState } from "../../../lib/store"
+    import { habitTracker } from "../../../lib/store"
 	import { isBoxRequired, isDayComplete, toggleCompleteHabit } from "../../../lib/utils-habits"
 
     const store = habitTracker
     const dayIdx = new Date().getDay()
     
     $: habits = $store.habits
-    $: isLight = !$themeState.isDarkThem
-
 </script>
 
-<div class="dh" class:dh--light={isLight}>
+<div class="dh">
     {#each habits as habit, habitIdx}
         {@const required = isBoxRequired(habit, dayIdx)}
         {@const complete = isDayComplete({ habit, dayIdx, weeksAgoIdx: 0 })}
@@ -54,16 +51,6 @@
     .dh {
         margin-top: 6px;
 
-        &--light &__habit-name {
-            @include text-style(1, 600);
-        }
-
-        &__header {
-            display: flex;
-            @include text-style(0.35, 500, 1.285rem);
-            position: relative;
-
-        }
         &__habit {
             @include flex(center);
             padding: 0px 0px 0px 1px;
@@ -72,7 +59,7 @@
             margin-bottom: 13px;
         }
         &__habit-name {
-            @include text-style(1, 500, 1.5rem);
+            @include text-style(1, var(--twt-400-500), 1.5rem);
             @include elipses-overflow;
             @include flex(center, space-between);
         }

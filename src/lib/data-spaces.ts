@@ -676,6 +676,14 @@ export const SPACES: AmbientSpaceGroup = {
                 group: "worlds"
             },
             {
+                title: "🔥 Warm Fireplace ambience but relaxing music is playing upstairs",
+                subtitle: "Dreamhop Music",
+                thumbnail: "https://i.ytimg.com/vi/lGphuanCRDk/hqdefault.jpg?sqp=-oaymwEnCNACELwBSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLA_9w-nPM9Kdvh7cvJOG_hIhT7Wtg",
+                sourceId: "lGphuanCRDk",
+                type: "video",
+                group: "worlds"
+            },
+            {
                 title: "The Beautiful Ancient Roman Baths for Thinkers l Immersive Experience (4K)",
                 subtitle: "T E R A V I B E",
                 thumbnail: "https://i.ytimg.com/vi/p1yDbck93sE/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDL7kSo3uAfqTN4qVqqTsJPlxLRoQ",
@@ -762,33 +770,6 @@ export const SPACES: AmbientSpaceGroup = {
                 group: "worlds"
             },
             {
-                sourceId: "PLTlW3nrfe71RpZbGmZQHm4W4RCxrRSd0M",
-                title: "Star Wars Music & Ambience",
-                description: "Atmospheric soundscapes from a distant galaxy, far, far away.",
-                subtitle: "Multiple Authors",
-                thumbnail: "https://i.ytimg.com/vi/UJ4e4XVQQcY/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARh_IB4oMDAP&rs=AOn4CLCq16EGg2K-Jqfb39hxphVYO-wqbg",
-                type: "playlist",
-                group: "worlds"
-            },
-            {
-                sourceId: "PLTlW3nrfe71T3rauOjTtMi164cECkr4-J",
-                title: "Harry Potter Ambience",
-                description: "Escape into the the Wizarding World of Harry Potter!",
-                subtitle: "Ambient Worlds",
-                thumbnail: "https://i.ytimg.com/vi/pQdTu0IeVho/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLA9CmDigiNZto1X2xjiGUQuAHN4iQ",
-                type: "playlist",
-                group: "worlds"
-            },
-            {
-                sourceId: "PLTlW3nrfe71QjvbI1d6q9lTz5d0tmN3zF",
-                title: "Middle Earth Ambience",
-                description: "Step into Middle-Earth and enjoy the sights and sounds of your favorite iconic locations.",
-                subtitle: "Multiple Authors",
-                thumbnail: "https://i.ytimg.com/vi/UpeYqEeIBO4/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhlIFsoSjAP&rs=AOn4CLBk3FLmYL8Mp2kGeMHgeTBWUNvjtg",
-                type: "playlist",
-                group: "worlds"
-            },
-            {
                 sourceId: "PLTlW3nrfe71Qdt9F30kXuUboW7bJdmtJy",
                 title: "Anime Chill",
                 description: "Unwind to the calming melodies and sounds of anime.",
@@ -803,6 +784,33 @@ export const SPACES: AmbientSpaceGroup = {
                 description: "Unwind in the beloved worlds of Disney & Pixar.",
                 subtitle: "Multiple Authors",
                 thumbnail: "https://i.ytimg.com/vi/UP8OO7g07B4/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAUNjVzaM_omS1oLQGSjbxQ9E6jog",
+                type: "playlist",
+                group: "worlds"
+            },
+            {
+                sourceId: "PLTlW3nrfe71QjvbI1d6q9lTz5d0tmN3zF",
+                title: "Middle Earth Ambience",
+                description: "Step into Middle-Earth and enjoy the sights and sounds of your favorite iconic locations.",
+                subtitle: "Multiple Authors",
+                thumbnail: "https://i.ytimg.com/vi/UpeYqEeIBO4/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhlIFsoSjAP&rs=AOn4CLBk3FLmYL8Mp2kGeMHgeTBWUNvjtg",
+                type: "playlist",
+                group: "worlds"
+            },
+            {
+                sourceId: "PLTlW3nrfe71RpZbGmZQHm4W4RCxrRSd0M",
+                title: "Star Wars Music & Ambience",
+                description: "Atmospheric soundscapes from a distant galaxy, far, far away.",
+                subtitle: "Multiple Authors",
+                thumbnail: "https://i.ytimg.com/vi/UJ4e4XVQQcY/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARh_IB4oMDAP&rs=AOn4CLCq16EGg2K-Jqfb39hxphVYO-wqbg",
+                type: "playlist",
+                group: "worlds"
+            },
+            {
+                sourceId: "PLTlW3nrfe71T3rauOjTtMi164cECkr4-J",
+                title: "Harry Potter Ambience",
+                description: "Escape into the the Wizarding World of Harry Potter!",
+                subtitle: "Ambient Worlds",
+                thumbnail: "https://i.ytimg.com/vi/pQdTu0IeVho/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLA9CmDigiNZto1X2xjiGUQuAHN4iQ",
                 type: "playlist",
                 group: "worlds"
             },
@@ -902,6 +910,15 @@ export const SPACES: AmbientSpaceGroup = {
                 thumbnail: "https://i.ytimg.com/vi/zFhfksjf_mY/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBQgYKl48s3nIAYnxSDbiy65PL42g",
                 sourceId: "PLTlW3nrfe71SiLOgo5nTEwQ5XLDBkCgBw",
                 description: "Connecting people through chill music 🌎.",
+                type: "playlist",
+                group: "lofi"
+            },
+            {
+                title: "Dreamhop Music",
+                subtitle: "Dreamhop",
+                thumbnail: "https://i.ytimg.com/vi/eAXdSkBMQAQ/hqdefault.jpg?sqp=-oaymwEnCNACELwBSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLBv3m4WmHx7bUGGsUEhEXZ9C7wPKg",
+                sourceId: "PLTlW3nrfe71TN8X1J1RuR8DYQdISg46NH",
+                description: "Mellow beats wrapped in dreamy soundscapes.",
                 type: "playlist",
                 group: "lofi"
             },

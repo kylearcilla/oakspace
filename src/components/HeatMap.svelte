@@ -7,6 +7,7 @@
 		addToDate, formatDateToSimpleIso, getMonthStr,
 		getPrevMonth, isDateEarlier, isSameDay
 	} from '$lib/utils-date';
+	import { themeState } from '../lib/store';
 
 	export let id: string;
 	export let type: 'goals' | 'habits'
@@ -15,22 +16,57 @@
 		from: 'next' as 'last' | 'next'
 	}
 
+	const OPACITY_AHEAD = {
+		light: {
+			habits: 0.06,
+			goals: 0.125
+		},
+		dark: {
+			habits: 0.012,
+			goals: 0.035
+		}
+	}
+	const GOALS_OPACITY = {
+		light: {
+			sameDay: 0.25,
+			past: 0.45
+		},
+		dark: {
+			sameDay: 0.25,
+			past: 0.08
+		}
+	}
+	const HEAT_OPACITY_GRADIENT = {
+		light: [1, 0.5, 0.3, 0.15],
+		dark:  [0.85, 0.2, 0.08, 0]
+	}
 	const months: Date[] = getMonths()
 	const firstDay = getFirstDay()
 
 	let container: HTMLElement;
 	let hoverDayIdx = -1
 	let hoverDay: Date
+	let opacityAhead = 0.05
 	let offset = {
-		top: 0,
-		left: 0
+		top: 0, left: 0
 	}
+	let goalsSameDayOpacity = 0
+	let goalPastOpacity = 0
 
-	function getOpacity(val: number) {
-		if (val >= 0.8) return 0.85
-		if (val >= 0.4) return 0.2
-		if (val >= 0.3) return 0.08
-		return 0
+	$: isLight = !$themeState.isDarkTheme
+
+	$: opacityAhead        = isLight ? OPACITY_AHEAD.light[type] : OPACITY_AHEAD.dark[type]
+	$: goalsSameDayOpacity = isLight ? GOALS_OPACITY.light.sameDay : GOALS_OPACITY.dark.sameDay
+	$: goalPastOpacity     = isLight ? GOALS_OPACITY.light.past : GOALS_OPACITY.dark.past
+
+	function getOpacity(val: number, isLight: boolean) {
+		const gradient = HEAT_OPACITY_GRADIENT[isLight ? "light" : "dark"]
+
+		if (val >= 0.8) return gradient[0]
+		if (val >= 0.4) return gradient[1]
+		if (val >= 0.3) return gradient[2]
+
+		return gradient[3]
 	}
 	function getMonths() {
 		const months = []
@@ -55,7 +91,8 @@
 			return !isDateEarlier(date, startDate, true) && isDateEarlier(date, new Date(), true)
 		}
 	}
-	function getRenderData(idx: number) {
+	function getRenderData(idx: number, isLight: boolean) {
+		console.log("qqqq")
 		const getLast = options.from === 'last'
 		const currDay = addToDate({ 
 			date: firstDay, 
@@ -63,7 +100,7 @@
 		})
 		const show = doShow(currDay)
 		const val = Math.random()
-		const opacity = show ? getOpacity(val) : 0
+		const opacity = show ? getOpacity(val, isLight) : 0
 
 		return {
 			opacity,
@@ -92,10 +129,7 @@
 		}
 	}
 	function initMonthNames() {
-		const monthNames = container.getElementsByClassName(
-			'heat-map__month'
-		) as unknown as HTMLElement[]
-
+		const monthNames = container.getElementsByClassName('heat-map__month') as unknown as HTMLElement[]
 		let lastLeft = 0
 
 		for (let i = 0; i < months.length; i++) {
@@ -144,8 +178,10 @@
 <div style:position="relative" style:width="100%">
 	<div style:width="100%" style:overflow="scroll">
 		<div 
-			bind:this={container} 
 			class={`heat-map heat-map--${type}`}
+			class:heat-map--light={isLight}
+			on:pointerleave={() => hoverDayIdx = -1}
+			bind:this={container} 
 		>
 			<div class="heat-map__months">
 				{#each months as date}
@@ -163,30 +199,43 @@
 					>
 						{#each Array(7) as _, cellIdx}
 							{@const dayIdx = colIdx * 7 + cellIdx}
-							{@const { show, opacity, day } = getRenderData(dayIdx)}
+							{@const { show, opacity, day } = getRenderData(dayIdx, isLight)}
 							{@const sameDay = isSameDay(new Date(), day)}
 							{@const color = type === 'habits' ? `rgba(var(--fgColor1), ${opacity})` : ''}
+
+							{@const hasGoal = Math.random() >= 0.9 && show && type === 'goals'}
+							{@const hasGoalOpacity = isLight ? 0 : 1}
+							{@const lightGoals = hasGoal && isLight}
 
 							<button
 								data-color={color}
 								data-show={show}
 								class="heat-map__cell-container"
 								on:pointerover={(e) => onPointerOver(e, day, dayIdx)}
-								on:pointerleave={() => hoverDayIdx = -1}
 							>
-								<div
-									id={`cell--${id}--${formatDateToSimpleIso(day)}`}
-									class="heat-map__cell"
-									class:heat-map__cell--goal={type === 'goals'}
-									class:heat-map__cell--ahead={!show}
-									class:heat-map__cell--today={sameDay}
-									style:--ahead-opacity={type === "habits" ? 0.012 : 0.03}
-									style:--color={color}
-									style:--goal-fill={Math.random() >= 0.9 ? 1 : sameDay ? 0.25 : 0.08}
-								>
-									<div class="heat-map__cell-content">
+								{#if true}
+								
+									<div
+										id={`cell--${id}--${formatDateToSimpleIso(day)}`}
+										class="heat-map__cell"
+										class:heat-map__cell--goal={type === 'goals'}
+										class:heat-map__cell--has-goal={hasGoal}
+										class:heat-map__cell--ahead={!show}
+										class:heat-map__cell--today={sameDay}
+										style:--ahead-opacity={opacityAhead}
+										style:--color={opacity > 0 ? color : 'auto'}
+										style:--goal-fill={hasGoal ? hasGoalOpacity : sameDay ? goalsSameDayOpacity : goalPastOpacity}
+									>
+										<div 
+											class="heat-map__cell-content"
+											style:margin-bottom={lightGoals ? '-12px' : '0px'}
+										>
+											{#if lightGoals}
+												*
+											{/if}
+										</div>
 									</div>
-								</div>
+								{/if}
 							</button>
 						{/each}
 					</div>
@@ -197,6 +246,7 @@
 	{#if hoverDayIdx >= 0}
 		<div
 			class="tool-tip"
+			class:tool-tip--light={isLight}
 			on:pointerover={() => (hoverDayIdx = -1)}
 			style:top={`${offset.top}px`}
 			style:left={`${offset.left}px`}
@@ -215,6 +265,16 @@
 		position: relative;
 		padding-bottom: 12px;
 
+		--goal-fill-color: var(--textColor1);
+		--goal-today-opacity: 0.035;
+
+		&--light {
+			--goal-fill-color: var(--fgColor1);
+			--goal-today-opacity: 0.055;
+		}
+		&--light &__month {
+			@include text-style(0.45);
+		}
 		&--habits &__months {
 			margin-bottom: 3px;
 		}
@@ -227,11 +287,10 @@
 
 		&__months {
 			display: flex;
-			height: 27px;
+			height: 25px;
 		}
 		&__month {
-			@include text-style(0.25, 400, 1.2rem, 'Geist Mono');
-			margin-bottom: 13px;
+			@include text-style(0.25, var(--fw-400-500), 1.2rem);
 			position: absolute;
 			top: 0px;
 		}
@@ -241,34 +300,43 @@
 		}
 		&__cell-container {
 			position: relative;
-			@include square(19px, 7px);
+			@include square(19px, 8px);
 			@include center;
+			transition: 0s ease-in-out;
+
+			&:hover {
+				box-shadow: inset rgba(var(--textColor1), 0.25) 0px 0px 0px 2px;
+			}
 		}
 		&__cell {
 			width: 85%;
 			height: 85%;
 			position: relative;
-			font-size: 0.6rem;
 			border-radius: 7px;
 			pointer-events: none;
+			color: rgba(var(--textColor1), 0.3);
 			@include center;
 
 			&--goal &-content {
-				background-color: rgba(var(--textColor1), var(--goal-fill));
-				height: 4.5px;
-				width: 4.5px;
-				font-size: 1.2rem;
+				background-color: rgba(var(--goal-fill-color), var(--goal-fill));
+				height: 4px;
+				width: 4px;
+				@include text-style(_, 200, 3rem);
+				color: rgba(var(--fgColor1), 1);
+			}
+			&--has-goal &-content {
+				margin-bottom: -9px;
 			}
 			&--goal#{&}--today {
 				box-shadow: none;
-				background-color: rgba(var(--textColor1), 0.035);
+				background-color: rgba(var(--textColor1), var(--goal-today-opacity));
 			}
 			&--ahead &-content {
 				opacity: 1;
 				background-color: rgba(var(--fgColor1), var(--ahead-opacity));
 			}
 			&--today {
-				@include shadow-border(rgba(#0c8ce9, 1), 2px);
+				@include shadow-border(var(--elemColor1), 2px);
 			}
 			&--today::before {
 				border-radius: 7px !important;
@@ -293,10 +361,15 @@
 	}
 	.tool-tip {
 		@include abs-top-left(20px, 20px);
-		@include text-style(0.6, 400, 1.12rem, 'DM Mono');
+		@include text-style(0.8, var(--fw-400-500), 1.12rem, 'Geist Mono');
 		@include center;
 		height: 20px;
 		width: 10px;
+
+		&--light &__content {
+			border: 1.5px solid rgba(var(--textColor1), 0.065);
+        	box-shadow: 0px 4px 10px 1px rgba(0, 0, 0, 0.075);
+		}
 
 		&__content {
 			padding: 5px 10px 6px 10px;
@@ -304,7 +377,7 @@
 			top: 13px;
 			width: max-content;
 			border-radius: 5px;
-			background-color: #1a1a1a;
+			background-color: var(--bg-3);
 		}
 	}
 </style>

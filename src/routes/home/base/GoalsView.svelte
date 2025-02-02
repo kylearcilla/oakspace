@@ -9,17 +9,19 @@
 	import { Icon } from "../../../lib/enums";
 	import { kebabToNormal, normalToKebab } from "../../../lib/utils-general";
 	import { onMount } from "svelte";
+	import { themeState } from "../../../lib/store";
 
     export let goalsView: GoalsView
     export let onProgressChange: (progress: number) => void
 
     const manager = new GoalsManager({ 
         goals: TEST_GOALS, 
-        grouping: goalsView.listGrouping
+        grouping: goalsView.list.grouping
     })
 
     $: state = manager.state
     $: pinnedGoal = $state.pinnedGoal
+    $: light = !$themeState.isDarkTheme
 
     let store: GoalsViewState | null = null
 
@@ -30,6 +32,7 @@
     let width = 0
     let snippetHeight = 0
     let rightContainerRef: HTMLElement
+    let closing = false
     
     manager.state.subscribe((data) => {
         const goals = manager.goals
@@ -62,9 +65,11 @@
 
     function getNextMonth() {
         const date = new Date()
-        date.setMonth(date.getMonth() + 1)
-
-        return date.toLocaleString("en-US", { month: "short" })
+        const year = date.getFullYear()
+        const month = date.getMonth()
+        const nextDate = new Date(year, month + 1, 1)
+        
+        return nextDate.toLocaleString("en-US", { month: "short" })
     }
 
     onMount(() => manager.initContainerRef(rightContainerRef))
@@ -73,28 +78,34 @@
 <div 
     class="goals-view"
     class:goals-view--sm={width < 600}
+    class:goals-view--light={light}
     style:--truncate-lines={pinnedGoal?.imgSrc ? 2 : 5}
     bind:clientWidth={width}
 >
     {#if pinnedGoal}
         {@const { checkCount, total } = getGoalProgress(pinnedGoal)}
+        {@const { status, imgSrc, milestones, description, name } = pinnedGoal}
+        {@const done = status === "accomplished"}
         <div class="goals-view__left">
             <div class="goals-view__pinned">
-                {#if pinnedGoal?.imgSrc}
+                {#if imgSrc}
                     <div class="goals-view__pinned-img">
-                        <img src={pinnedGoal.imgSrc} alt={pinnedGoal.name} />
+                        <img src={imgSrc} alt={name} />
                     </div>
                 {/if}
                 <div class="goals-view__pinned-text">
-                    <span>Pinned</span>
+                    <span>
+                        {done ? "Done!" : "Pinned"}
+                    </span>
                     <!-- svelte-ignore a11y-missing-attribute -->
                     <a 
                         class="goals-view__pinned-title"
-                        title={pinnedGoal?.name}
+                        class:strike={done}
+                        title={name}
                     >
-                        {pinnedGoal?.name}
+                        {name}
                     </a>
-                    {#if pinnedGoal.milestones}
+                    {#if milestones}
                         <div class="goals-view__pinned-progress">
                             <ProgressBar 
                                 progress={checkCount / total}
@@ -106,7 +117,7 @@
                         class:goals-view__pinned-text-snippet--fade={snippetHeight > 100}
                         bind:this={snippetRef}
                     >
-                        {pinnedGoal?.description}
+                        {description}
                     </div>
                 </div>
             </div>
@@ -121,14 +132,16 @@
             <GoalsList 
                 {manager}
                 {pinnedGoal}
-                grouping={goalsView.listGrouping}
+                options={goalsView.list}
             />
         {:else}
-            <GoalsBoard 
-                {manager}
-                {pinnedGoal}
-                grouping={goalsView.boardGrouping}
-            />
+            <div style:padding-left="4px">
+                <GoalsBoard 
+                    {manager}
+                    {pinnedGoal}
+                    options={goalsView.board}
+                />
+            </div>
         {/if}
 
         {#if store}
@@ -146,8 +159,7 @@
                             name: pinnedGoal?.id === editGoal?.id ? "Unpin Goal" : "Pin Goal",
                             rightIcon: { 
                                 type: "svg",
-                                icon: Icon.Pin,
-                                transform: "scale(1.2) translate(1px, 0px)"
+                                icon: Icon.Pin
                             },
                         },
                         { 
@@ -160,8 +172,10 @@
                             onPointerOver: ({ childLeft }) => {
                                 statusMenuPos.top = contextMenuPos.top
                                 statusMenuPos.left = childLeft
-        
-                                statusOpen = true
+
+                                if (!closing) {
+                                    statusOpen = true
+                                }
                             },
                             onPointerLeave: () => {
                                 statusOpen = false
@@ -216,6 +230,7 @@
                     manager.setGoalStatus(editGoal, normalToKebab(status))
                     manager.closeContextMenu()
                     statusOpen = false
+                    closing = true
                 },
                 styling:  { 
                     width: "125px",
@@ -229,6 +244,9 @@
                     id: "goals-menu",
                     optnIdx: 0,
                     optnName: "Change Status"
+                },
+                onDismount: () => {
+                    closing = false
                 },
                 onPointerLeave: () => {
                     statusOpen = false
@@ -244,17 +262,11 @@
 <style lang="scss">
     .goals-view {
         @include flex(flex-start, space-between);
-        gap: 30px;
+        gap: 25px;
 
-        &__left {
-            width: 160px;
-            min-width: 160px;
+        &--light &__pinned span {
+            @include text-style(0.3);
         }
-        &__right {
-            flex: 1;
-            position: relative;
-        }
-
         &--sm {
             display: block;
         }
@@ -288,13 +300,22 @@
             -webkit-mask-image: unset;  
         }
 
+        &__left {
+            width: 160px;
+            min-width: 160px;
+        }
+        &__right {
+            flex: 1;
+            position: relative;
+        }
+
         /* pinned */
         &__pinned-progress {
             margin: 13px 0px 11px 0px;
         }
         &__pinned span {
             display: block;
-            @include text-style(0.2, 400, 1.3rem, "Geist Mono");
+            @include text-style(0.2, var(--fw-400-500), 1.3rem, "Geist Mono");
         }
         &__pinned-img {
             width: 100%;
@@ -316,13 +337,16 @@
             }
         }
         &__pinned-title {
-            @include text-style(1, 400, 1.6rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 1.6rem, "Geist Mono");
             @include truncate-lines(var(--truncate-lines));
             cursor: pointer;
-            margin: 4px 0px 9px 0px;
+            margin: 6px 0px 9px 0px;
+        }
+        &__pinned-title.strike {
+            opacity: 0.4 !important;
         }
         &__pinned-text-snippet {
-            @include text-style(0.4, 500, 1.5rem);
+            @include text-style(0.55, var(--fw-400-500), 1.5rem);
             word-break: break-word;
         }
         &__pinned-text-snippet--fade {

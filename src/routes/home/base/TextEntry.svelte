@@ -12,8 +12,10 @@
 	import BounceFade from "../../../components/BounceFade.svelte"
 	import DropdownList from "../../../components/DropdownList.svelte"
 
-    export let options: TextEntryOptions & { id: string }
-    let { id, styling, icon } = options
+    export let entry: TextEntryOptions
+    export let zIndex: number
+    export let id: string
+    let { styling, icon, truncate } = entry
 
     // when style changes, apple when unfocused
     let toStyle = styling 
@@ -31,17 +33,23 @@
     let imgOpen = false
     let imgSizeOpen = false
     let text = ""
+    let width = 0
+    let padding = "0px 0px 0px 0px"
+    let margin = "0px 0px 0px 0px"
+    let txtBottomPadding = "0px"
 
     let textEntryElem: HTMLElement
     let textEditorElem: HTMLElement
 
     const INPUT_ID = `${id}--thought-entry`
-    $: updateData(options)
 
     // upon focusing, its height before will still be present
     $: isLight = !$themeState.isDarkTheme
     $: minHeight = getMinHeight(focused)
 
+    $: if (isLight !== undefined && textEditorElem) {
+        handleEditorStyle(textEditorElem)
+    }
     $: if (focused && textEntryElem) {
         displayHeight = getTextEditorHeight()
         textGradient = ""
@@ -52,18 +60,23 @@
     $: if (focused != undefined && textEntryElem) {
         requestAnimationFrame(() => handleEditorStyle(textEditorElem))
     }
+    $: if (width && textEditorElem) {
+        handleEditorStyle(textEditorElem)
+    }
+    $: updateStyling(styling, icon)
 
     const editor = new TextEditorManager({ 
         placeholder: "type something here...",
         allowFormatting: true,
         maxLength: 1000,
+        initValue: entry.entry,
         id: INPUT_ID,
-        allowBlurOnClickAway: false,
         handlers: {
             onInputHandler: (_, __, _length) => {
                 length = _length
             },
-            onBlurHandler: () => {
+            onBlurHandler: (_, val) => {
+                entry.entry = val
                 onEditComplete()
             },
             onFocusHandler: (_, __, _length) => {
@@ -73,6 +86,84 @@
         }
     })
 
+    /* updates */
+    function updateData(entry: any) {
+        styling = entry.styling
+        text = entry.entry
+        icon = entry.icon
+        hasIcon = icon != null
+
+        editor.updateText(text)
+    }
+    function onEditComplete() {
+        styling = toStyle
+        entry.styling = toStyle
+    }
+
+    /* ui */
+    function updateStyling(styling: string, icon: any) {
+        const { size, type } = icon || {}
+
+        /* no icon */
+        if (styling === "default" && !icon) {
+            margin = "0px 0px 25px -12px"
+            padding = "4px 14px 0px 13px"    
+        }
+        else if (styling === "background" && !icon) {
+            margin = "5px 0px 5px 0px"
+            padding = "5px 14px 14px 14px"
+            txtBottomPadding = "0px"
+        }
+        else if (styling === "has-marker" && !icon) {
+            margin = "-5px 0px 14px 0px"
+            padding = "5.5px 14px 5px 16px"
+            txtBottomPadding = "0px"
+        }
+        /* emoji */
+        else if (styling === "default" && type === "emoji") {
+            margin = "0px 0px 0px -14px"
+            padding = "5px 14px 14px 14px"
+        }
+        else if (styling === "background" && type === "emoji") {
+            margin = "8px 0px 15px 0px"
+            padding = "4px 14px 4px 13px"
+            txtBottomPadding = "15px"
+        }
+        else if (styling === "has-marker" && type === "emoji") {
+            margin = "-2px 0px 20px 0px"
+            padding = "4px 14px 5px 14px"
+            txtBottomPadding = "0px"
+        }
+        /* big */
+        else if (styling === "default" && size === "big") {
+            margin = "0px 0px 20px -15px"
+            padding = "3px 0px 0px 13px"
+        }
+        else if (styling === "background" && size === "big") {
+            margin = "10px 0px 15px 0px"
+            padding = "3px 14px 7px 13px"
+            txtBottomPadding = "20px"
+        }
+        else if (styling === "has-marker" && size === "big") {
+            margin = "0px 0px 0px 0px"
+            padding = "4px 14px 12px 14px"
+        }
+        /* med */
+        else if (styling === "default") {
+            margin = "-2px 0px 16px -16px"
+            padding = "4px 14px 0px 13px"
+            txtBottomPadding = "9px"
+        }
+        else if (styling === "background") {
+            margin = "8px 0px 9px -2px"
+            padding = "4px 14px 14px 13px"
+            txtBottomPadding = "0px"
+        }
+        else if (styling === "has-marker") {
+            margin = "0px 0px 20px 0px"
+            padding = "4px 14px 0px 13px"
+        }
+    }
     function getMinHeight(focused: boolean) {
         if (focused) {
             return icon?.size === "big" ? 125 : 70
@@ -81,29 +172,21 @@
             return icon?.size === "big" ? 100 : 50
         }
     }
-    function updateData(options: any) {
-        styling = options.styling
-        text = options.entry
-        icon = options.icon
-        hasIcon = icon != null
-
-        editor.updateText(text)
-    }
     function handleEditorStyle(elem: HTMLElement) {
         if (focused) return
 
         const { styling } = getMaskedGradientStyle(elem, {
             head: {
-                start: "20px",
-                end: "20px"
+                start: "15px",
+                end: "15px"
             },
             tail: {
-                start: "10%",
-                end: "92%"
+                start: isLight ? "25%" : "10%",
+                end: isLight ? "100%" : "92%"
             }
         })
-        textGradient = styling
 
+        textGradient = styling
         setMarkerHeight()
     }
     function setMarkerHeight() {
@@ -112,7 +195,7 @@
         markerHeight = 10 + textEditorElem.clientHeight
 
         if (icon && icon.type === "img") {
-            markerHeight = minHeight
+            markerHeight = Math.max(minHeight, markerHeight - 25)
         }
         else {
             markerHeight = 10 + textEditorElem.clientHeight - padding
@@ -121,15 +204,9 @@
     function getTextEditorHeight() {
         return findElemVertSpace(textEntryElem) - 15
     }
-    function onEditComplete() {
-        focused = false
-        textEditorElem?.blur()
-
-        styling = toStyle
-    }
-    function onStylingChange(optn: "bordered" | "has-marker") {
-        if (optn === "bordered") {
-            toStyle = toStyle === "bordered" ? "default" : "bordered"
+    function onStylingChange(optn: "background" | "has-marker") {
+        if (optn === "background") {
+            toStyle = toStyle === "background" ? "default" : "background"
         }
         else {
             toStyle = toStyle === "has-marker" ? "default" : "has-marker"
@@ -142,34 +219,44 @@
                 if (newIcon) {
                     icon = { ...icon, ...newIcon }
                     icon.size = icon.type === "emoji" ? "small" : "big"
-
+                    entry.icon = icon
                     requestAnimationFrame(() => setMarkerHeight())
                 }
             }
         })
     }
 
-    onMount(() => handleEditorStyle(textEditorElem))
+    onMount(() => {
+        handleEditorStyle(textEditorElem)
+        updateData(entry)
+    })
 </script>
 
 <div 
     style:height={`${containerHeight}px`}
     style:position={"relative"}
     style:has-marker-top={"-1.5px"}
+    style:--z-index={zIndex}
     style:--img-size={icon?.size === "big" ? "100px" : "50px"}
     style:--marker-height={`${markerHeight - 0}px`}
-    use:clickOutside on:click_outside={() => onEditComplete()}
+    style:--margin={margin}
+    style:--padding={padding}
+    style:--txt-bottom-padding={txtBottomPadding}
+    bind:clientWidth={width}
+    use:clickOutside on:click_outside={() => {
+        focused = false
+        onEditComplete()
+    }}
 >
     <div 
         class="thought-entry"
+        class:thought-entry--light={isLight}
         class:thought-entry--no-icon={!hasIcon}
         class:thought-entry--focused={focused}
-        class:thought-entry--icon-img={hasIcon && icon?.type === "img"}
-        class:thought-entry--icon-emoji={hasIcon && icon?.type === "emoji"}
+        class:thought-entry--full={!truncate}
         class:thought-entry--default={styling === "default"}
         class:thought-entry--marker={styling === "has-marker"}
-        class:thought-entry--bordered={styling === "bordered"}
-        style:z-index={id === "month" ? 2 : 1}
+        class:thought-entry--background={styling === "background"}
         bind:this={textEntryElem}
         bind:clientHeight={height}
     >
@@ -178,7 +265,7 @@
             style:width="100%"
             style:min-height={`${minHeight}px`}
         >
-            {#if hasIcon}
+            {#if icon}
                 <button 
                     id={`${id}--dbtn`}
                     class="thought-entry__icon" 
@@ -227,8 +314,8 @@
             isHidden={!styleOpen}
             zIndex={200}
             position={{ 
-                bottom: "-60px", 
-                right: "30px"
+                bottom: "-90px", 
+                right: "0px"
             }}
         >
             <div 
@@ -240,14 +327,24 @@
             >
 
                 <div class="dmenu__toggle-optn  dmenu__option--static">
-                    <span class="dmenu__option-heading">Bordered</span>
+                    <span class="dmenu__option-heading">Truncate</span>
                     <ToggleBtn 
-                        active={toStyle === "bordered"}
-                        onToggle={() => onStylingChange("bordered")}
+                        active={truncate}
+                        onToggle={() => {
+                            truncate = !truncate
+                            entry.truncate = truncate
+                        }}
                     />
                 </div>
                 <div class="dmenu__toggle-optn  dmenu__option--static">
-                    <span class="dmenu__option-heading">Marker</span>
+                    <span class="dmenu__option-heading">Background</span>
+                    <ToggleBtn 
+                        active={toStyle === "background"}
+                        onToggle={() => onStylingChange("background")}
+                    />
+                </div>
+                <div class="dmenu__toggle-optn  dmenu__option--static">
+                    <span class="dmenu__option-heading">Divider</span>
                     <ToggleBtn 
                         active={toStyle === "has-marker"}
                         onToggle={() => onStylingChange("has-marker")}
@@ -260,6 +357,17 @@
             id={`${id}--img-dmenu`}
             isHidden={!imgOpen}
             options={{
+                styling: { 
+                    width: "140px",
+                    zIndex: 1,
+                },
+                position: { 
+                    bottom: `-70px`, 
+                    left: `10px`,
+                },
+                parentContext: {
+                    childId: `${id}--img-sizes`
+                },
                 listItems: [
                     { 
                         name: icon ? "Replace Icon" : "Add Icon"
@@ -281,15 +389,8 @@
                             divider: true
                         }
                     ] : []),
-                    ...(icon ? [
-                        { 
-                            name: "Remove"
-                        }
-                    ] : []),
+                    ...(icon ? [{ name: "Remove" }] : []),
                 ],
-                parentContext: {
-                    childId: `${id}--img-sizes`
-                },
                 onListItemClicked: ({ name }) => {
                     if (name === "Replace Icon") {
                         initImagePopUp()
@@ -301,14 +402,6 @@
                 },
                 onClickOutside: () => {
                     imgOpen = false
-                },
-                styling: { 
-                    width: "140px",
-                    zIndex: 1,
-                },
-                position: { 
-                    bottom: `-70px`, 
-                    left: `10px`,
                 }
             }}
         />
@@ -352,106 +445,104 @@
     @import "../../../scss/inputs.scss";
     @import "../../../scss/dropdown.scss";
 
-    @mixin bordered {
-        background-color: #161516;
-        padding: 5.5px 14px 0px 14px;
-        border: 1.5px dashed rgba(var(--textColor1), 0.06);
+    @mixin background {
+        background-color: rgba(var(--textColor1), 0.035);
+        background-color: var(--textEntryBgColor);
     }
 
     .thought-entry {
         border-radius: 10px;
-        width: 100%;
-        margin: 9px 0px 18px -3px;
-        transition: transform 0.22s cubic-bezier(.4, 0, .2, 1);
+        transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
         transform: scale(1);
         position: absolute;
         height: auto;
-        margin-bottom: 10px !important;
-        @include bordered;
+        z-index: var(--z-index);
+        border: 1.5px dashed transparent;
+        width: 100%;
+        margin: var(--margin);
+        padding: var(--padding);
+        @include background;
+
+        --txt-opacity: 0.6;
+        --dashed-opacity: 0.0835;
+
+        &--light {
+            --txt-opacity: 0.85;
+            --dashed-opacity: 0.2;
+        }
+        &--light &__count {
+            @include text-style(0.5);
+        }
+        &--light &__details button {
+            @include text-style(1);
+        }
+
+        /* styling */
+        &--default,
+        &--marker {
+            background: none;
+        }
+        &--marker::before {
+            display: block !important;
+        }
+        &--full .text-editor {
+            max-height: 500px !important;
+            mask-image: unset !important;
+            -webkit-mask-image: unset !important;
+        }
+        /* no icon */
+        &--no-icon {
+            width: 100% !important;
+        }
+        &--no-icon .text-editor{
+            padding-top: 0px;
+        }
+        
+        /* focus */
+        &--focused {
+            transform: scale(1.0085);
+            @include background;
+            border-color: rgba(var(--textColor1), var(--dashed-opacity));
+            box-shadow: 0px 4px 10px 1px rgba(0, 0, 0, 0.075);
+            padding: 4px 14px 5px 13px !important;
+            
+            &::before {
+                display: none !important;
+            }
+            .text-editor {
+                padding-bottom: 25px !important;
+                max-height: 700px !important;
+            }
+        }
 
         &::before {
             @include abs-top-left(12px, 0px);
             height: var(--marker-height);
             width: 3px;
             border-radius: 20px;
-            background-color: rgba(var(--textColor1), 0.08);
+            background-color: rgba(var(--textColor1), 0.10);
             content: " ";
             display: none;
-        }
-        /* styling */
-        &--default,
-        &--marker {
-            background: none;
-            border-color: transparent;
-            margin: 0px 0px 0px -13px;
-        }
-        &--marker {
-            margin: 0px 0px 20px 0px !important;
-            padding-left: 20px !important;
-        }
-        &--marker::before {
-            display: block !important;
-        }
-        &--bordered {
-            margin-bottom: 20px !important;
-        }
-        
-        /* focus */
-        &--focused {
-            transform: scale(1.0085);
-            @include bordered;
-            padding: 5.5px 14px 0px 14px !important;
-
-            &::before {
-                display: none !important;
-            }
-            .text-editor {
-                max-height: 700px !important;
-            }
-        }
-
-        /* icon */
-        &--icon-emoji {
-            padding: 3px 14px 0px 11px !important;
-            width: calc(100% - 20px) !important;
-            
-            .text-editor {
-                padding-top: 6px;
-            }
-        }
-        &--icon-img {
-            padding: 0px 14px 5px 11px !important;
-            width: calc(100% - 20px) !important;
-
-            .text-editor {
-                padding-top: 10px;
-            }
-        }
-        &--no-icon {
-            padding: 0px 14px 0px 14px;
         }
         
         &__details {
             width: 100%;
             height: 34px;
-            padding: 8px 2px 6px 2px;
-            border-top: 1px solid rgba(var(--textColor1), 0.06);
+            padding: 10px 2px 9px 2px;
+            border-top: var(--divider-border);
             @include flex(center, space-between);
-        }
-        &__count {
-            @include text-style(0.1, 400, 1.3rem, "DM Sans");
         }
         &__icon {
             @include square(25px);
             @include center;
-            margin: 5px 12px 4px 0px;
+            margin: 5px 9px 4px 0px;
             font-size: 2rem !important;
             opacity: 1 !important;
             color: white !important;
             transition: background-color 0.18s cubic-bezier(.4, 0, .2, 1);
 
             &--img {
-                margin: 12px 15px 0px 2px;
+                margin: 9px 15px 0px 2px;
                 @include square(var(--img-size));
             }
             &:hover {
@@ -462,10 +553,13 @@
                 object-fit: cover;
             }
         }
-
+        &__count {
+            @include text-style(0.1, var(--fw-400-500), 1.25rem, "Geist Mono");
+        }
         &__details button {
-            @include text-style(0.7, 400, 1.15rem, "Geist Mono");
+            @include text-style(0.7, var(--fw-400-500), 1.35rem);
             opacity: 0.4;
+
             &:hover {
                 opacity: 0.65;
             }
@@ -473,12 +567,13 @@
     }
     .thought-entry .text-editor {
         cursor: text;
-        @include text-style(_, 500, 1.5rem, "Manrope");
-        color: rgb(150, 150, 150);
-        line-height: 1.25;
+        @include text-style(var(--txt-opacity), var(--fw-300-400), 1.5rem);
+        line-height: 1.185;
         max-height: var(--max-height);
         height: fit-content;
-        padding-bottom: 25px;
         width: 100%;
+        word-break: break-word;
+        padding-top: 6px;
+        padding-bottom: var(--txt-bottom-padding);
     }
 </style>

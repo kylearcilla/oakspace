@@ -27,21 +27,19 @@
     }
 
     function updateColor(light: boolean, progress: number) {
-        const settings = light ? LIGHT_COLOR_PROGRESS : DARK_COLOR_PROGRESS
+        const settings = light ? LIGHT_COLOR_PROGRESS : DARK_COLOR_PROGRESS        
         const { max, min, gVal, bVal } = settings
-
+        
         if (style === "rich-colored") {
             const rval = Math.max(max - ((max - min) * (progress / 100)), min)
             fgColor    = `rgb(${rval}, ${gVal}, ${bVal})`
             bgColor    = `rgba(var(--textColor1), ${light ? 0.1 : 0.05})`
         }
-        else if (style === "simple") {
-            fgColor = "rgba(var(--textColor1), 0.15)"
-            bgColor = "none"
-        }
-        else if (style === "light") {
-            fgColor = "rgba(var(--textColor1), 0.3)"
-            bgColor = "rgba(var(--textColor1), 0.04)"
+        else {
+            const bgOpacity = light ? 0.1 : 0.04
+
+            fgColor = light ? "var(--elemColor1)" : "rgba(var(--textColor1), 0.25)"
+            bgColor = `rgba(var(--textColor1), ${bgOpacity})`
         }
     }
   
@@ -58,15 +56,12 @@
     height={size}
     viewBox={`0 0 ${size} ${size}`}
   >
-    <!-- Background Circle -->
     <circle
       class="bg"
       cx={halfSize}
       cy={halfSize}
       r={radius}
     />
-  
-    <!-- Foreground Circle (Progress) -->
     <circle
         class="fg"
         class:fg__hide={progress === 0}

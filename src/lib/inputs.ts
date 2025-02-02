@@ -30,7 +30,7 @@ export class InputManager {
     constructor(options: InputOptions) {
         this.oldTitle  = options.initValue
         this.maxLength = options.maxLength ?? this.DEFAULT_MAX_LENGTH
-        this.value = options.initValue
+        this.value = options.initValue ?? ""
         this.defaultText = options.defaultText ?? "Untitled"
         this.id = options.id ?? ""
         this.placeholder = options.placeholder
@@ -399,9 +399,12 @@ export class TextEditorManager extends InputManager {
 
     onBlurHandler(event: FocusEvent | null, force?: boolean) {
         this.focused = false
-        
+
         if (!this.allowBlurOnClickAway && !force && event) {
             event.preventDefault()
+            return
+        }
+        if (this.value === undefined) {
             return
         }
 
@@ -725,7 +728,7 @@ export class TextEditorManager extends InputManager {
 
     updateText(text: string) {
         if (!this.inputElem) return
-        
+
         this.value = text
         this.inputElem.innerHTML = text
         this.undoStack = []
@@ -751,8 +754,10 @@ export class TextEditorManager extends InputManager {
     }
 
     updateClientOnFormat() {
+        this.value = this.inputElem!.innerHTML
+
         if (this.handlers?.onInputHandler) {
-            this.handlers.onInputHandler(null, this.inputElem!.innerHTML, this.inputElem!.innerText.length)
+            this.handlers.onInputHandler(null, this.value, this.inputElem!.innerText.length)
         }
     }
 
@@ -769,7 +774,7 @@ export class TextEditorManager extends InputManager {
         if (this.id != target.id || !this.focused) {
             return
         }
-        if (!shiftKey && key === "Enter" && !this.allowBlurOnClickAway) {
+        if (!shiftKey && key === "Enter") {
             this.onBlurHandler(null, true)
             return
         }

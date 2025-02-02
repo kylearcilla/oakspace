@@ -3,28 +3,21 @@
 	import { SideCalendar } from "$lib/side-calendar"
     import { setShortcutsFocus } from "$lib/utils-home"
     import { clamp, clickOutside } from "$lib/utils-general"
-	import { ShortcutSectionInFocus, Icon } from "$lib/enums"
+	import { Icon } from "$lib/enums"
     import { globalContext, themeState, timer } from "$lib/store"    
-	import { getVertSpace } from "../../lib/utils-general";
 	import { formatDatetoStr, formatTimeToHHMM, isNightTime, prefer12HourFormat } from "$lib/utils-date"
 
 	import Overview from "./Overview.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
-	import DropdownList from "../../components/DropdownList.svelte"
 
-    const SETTINGS_BTN_CUT_OFF_Y = 30
     const MAX_DIST_BOTTOM_IMG_CONTAINER = 70
+    export let onHeaderImageChange: (img: string) => void
 
     $: isLight = !$themeState.isDarkTheme
     $: ambience = $globalContext.ambience
     $: hasAmbience = ambience?.active ?? false
 
-    let barRef: HTMLElement
-    let mainContentRef: HTMLElement
-    let headerRef: HTMLElement
-    let headerHeight = 0
     let calendar = new SideCalendar(null)
-    let headerOffset = 0
 
     /* time */
     let now = new Date()
@@ -34,10 +27,8 @@
     
     /* header image */
     let opacity = 0
-    let settingsOpen = false
-    let bgImgSrc = "https://i.pinimg.com/originals/7d/04/0e/7d040e94931427709008aaeda14db9c8.gif"
+    export let bgImgSrc = "https://i.pinimg.com/originals/7d/04/0e/7d040e94931427709008aaeda14db9c8.gif"
     let showHeaderImg = true
-    let showSettingsBtn = false
 
     let topOffset = 0
     let ogTopOffset = 0
@@ -48,26 +39,11 @@
 
     timer.subscribe(({ date }) => updateTimeStr(date))
 
-    $: {
-        bgImgSrc = $themeState.isDarkTheme ? "https://i.pinimg.com/originals/7d/04/0e/7d040e94931427709008aaeda14db9c8.gif" : ""
-    }
     $: if (bgImgSrc && bgImgRef && $themeState != undefined) {
         requestAnimationFrame(() => topOffset = 0)
     }
-    $: if (headerHeight) {
-        headerOffset = getVertSpace({
-            top:   { 
-                elem: barRef,
-                edge: "top"
-            },
-            bottom: { 
-                elem: mainContentRef,
-                edge: "top"
-            }
-        }) + 12
-    }
+    $: onHeaderImageChange(showHeaderImg && bgImgSrc)
 
-    /* Header Image */
     function onPointerDown(pe: PointerEvent) {
         if (!bgImgSrc) return
 
@@ -106,42 +82,6 @@
     function getMaxHeaderImgOffset() {
         return (bgImgRef.clientHeight - MAX_DIST_BOTTOM_IMG_CONTAINER)
     }
-
-    /* General UI Handlers */
-    function imgSettingsHandler(context: DropdownItemClickedContext) {
-        const target   = context.event.target as HTMLElement
-        const optnText = target.innerText.trim()
-
-        if (["Replace Background", "Add Header Background"].includes(optnText)) {
-            imageUpload.init({
-                onSubmit: (imgSrc: string) => {
-                    if (bgImgSrc != imgSrc) {
-                        bgImgSrc = imgSrc
-                    }
-                }
-            })
-        }
-        else {
-            bgImgSrc = ""
-        }
-
-        settingsOpen = false
-    }
-    function onPointerMove(pe: PointerEvent) {
-        if (!headerRef || isDragging) {
-            return
-        }
-        const { clientY, clientX } = pe
-        const SETTINGS_BTN_CUT_OFF_X = headerRef.getBoundingClientRect().left
-
-        if (clientX >= SETTINGS_BTN_CUT_OFF_X && clientY <= SETTINGS_BTN_CUT_OFF_Y) {
-            showSettingsBtn = true
-        }
-        else {
-            showSettingsBtn = false
-        }
-    }
-
     /* Time Stuff*/
     function updateTimeStr(date: Date) {
         currentTimeStr = formatTimeToHHMM(date, doUse12HourFormat)
@@ -153,137 +93,107 @@
     }
 </script>
 <div 
-    bind:this={barRef}
     class="bar"
     class:bar--dark-theme={!isLight}
-    class:bar--light-theme={isLight}
     class:bar--empty={hasAmbience && ambience?.styling != "solid" || !bgImgSrc || !showHeaderImg}
     class:bar--ambient={hasAmbience && ambience?.styling != "solid"}
-    style:--header-offset={`${headerOffset}px`}
-    on:pointermove={onPointerMove}
-    on:mousedown={() => setShortcutsFocus(ShortcutSectionInFocus.TASK_BAR)}
-    use:clickOutside on:click_outside={() => setShortcutsFocus(ShortcutSectionInFocus.MAIN)}
+    style:--margin-top={isLight ? "12px" : showHeaderImg && bgImgSrc && !hasAmbience ? "55px" : "12px"}
+    style:--main-top-offset={ambience?.active ? "2px" : "-20px"}
+    on:mousedown={() => {
+        setShortcutsFocus("side-bar")
+    }}
+    use:clickOutside on:click_outside={() => {
+        setShortcutsFocus("default")
+    }}
 >
-    <div 
-        class="bar__header"
-        style:cursor={isDragging ? "ns-resize" : "default"}
-        bind:this={headerRef}
-        bind:clientHeight={headerHeight}
-        on:pointerdown={onPointerDown}
-    > 
-        <div class="bar__header-img-wrapper">
-            <div class="bar__header-img-container">
-                <img
-                    bind:this={bgImgRef}
-                    class="bar__header-img"
-                    style:top={`${topOffset}px`}
-                    style:left={`${0}px`}
-                    src={bgImgSrc} 
-                    alt=""
-                >
-            </div>
-        </div>
+    {#if !isLight && bgImgSrc && showHeaderImg && !hasAmbience}
         <div 
-            class="bar__header-overlay" 
-            style:background={`rgba(0, 0, 0, ${opacity}`}
-        >
-        </div>
-        <!-- Header -->
-        <div class="bar__header-time-date">
-            <!-- Header Date -->
-            <div class="bar__header-date">
-                {#if !bgImgSrc || !showHeaderImg || isLight}
-                    {`${formatDatetoStr(now, { weekday: "short" })}`}
-                    <button 
-                        class="bar__header-date-time"
-                        on:click={toggleTimeFormatting}
+            class="bar__header"
+            style:cursor={isDragging ? "ns-resize" : "default"}
+            on:pointerdown={onPointerDown}
+        > 
+            <div class="bar__header-img-wrapper">
+                <div class="bar__header-img-container">
+                    <img
+                        bind:this={bgImgRef}
+                        class="bar__header-img"
+                        style:top={`${topOffset}px`}
+                        style:left={`${0}px`}
+                        src={bgImgSrc} 
+                        alt=""
                     >
-                        {currentTimeStr}
-                    </button>
-                {:else}
-                    {`${formatDatetoStr(now, { weekday: "short", day: "numeric", month: "short" })}`}
-                {/if}
-                {#if !bgImgSrc}
-                    <div class="bar__header-day-icon bar__header-day-icon--top">
-                        {#if isDayTime}
-                            <SvgIcon icon={Icon.ColorSun} options={{ scale: 0.65 }} />
-                        {:else}
-                            <SvgIcon icon={Icon.ColorMoon} />
-                        {/if}
-                    </div>
-                {/if}
+                </div>
             </div>
-            <!-- Time -->
-             {#if !isLight}
-                <button 
-                    class="bar__header-time-container"
-                    on:click={toggleTimeFormatting}
-                >
-                    <div class="bar__header-time">
-                        <h1>{currentTimeStr}</h1>
-                    </div>
-                    <div class="bar__header-day-icon">
-                        {#if isDayTime}
-                            <SvgIcon icon={Icon.ColorSun} />
-                        {:else}
-                            <SvgIcon icon={Icon.ColorMoon} />
-                        {/if}
-                    </div>
-                </button>
-            {/if}
-        </div>
-        <div class="bar__header-blur-layer">
             <div 
-                class="blur-bg blur-bg--blurred-bg"
-                style:background={`rgba(0, 0, 0, ${0.1})`}
+                class="bar__header-overlay" 
+                style:background={`rgba(0, 0, 0, ${opacity})`}
             >
             </div>
+
+            <div class="bar__header-time-date">
+                <div class="bar__header-date">
+                    {`${formatDatetoStr(now, { weekday: "short", day: "numeric", month: "short" })}`}
+                    {#if !bgImgSrc}
+                        <div class="bar__header-day-icon bar__header-day-icon--top">
+                            {#if isDayTime}
+                                <SvgIcon icon={Icon.ColorSun} options={{ scale: 0.65 }} />
+                            {:else}
+                                <SvgIcon icon={Icon.ColorMoon} />
+                            {/if}
+                        </div>
+                    {/if}
+                </div>
+                {#if !isLight}
+                    <button 
+                        class="bar__header-time-container"
+                        on:click={toggleTimeFormatting}
+                    >
+                        <div class="bar__header-time">
+                            <h1>{currentTimeStr}</h1>
+                        </div>
+                        <div class="bar__header-day-icon">
+                            {#if isDayTime}
+                                <SvgIcon icon={Icon.ColorSun} />
+                            {:else}
+                                <SvgIcon icon={Icon.ColorMoon} />
+                            {/if}
+                        </div>
+                    </button>
+                {/if}
+            </div>
+            <div class="bar__header-blur-layer">
+                <div 
+                    class="blur-bg blur-bg--blurred-bg"
+                    style:background={`rgba(0, 0, 0, ${0.1})`}
+                >
+                </div>
+            </div>
         </div>
-    </div>
-    <div 
-        bind:this={mainContentRef}
-        class="bar__main-content"
-    >
-        <Overview {calendar} />
-    </div>
+    {/if}
 
-    <!-- Header Img Stuff -->
-    <button     
-        id="right-bar--dbtn"
-        class="bar__settings-btn" 
-        class:bar__settings-btn--show={showSettingsBtn}
-        on:click={() => {
-            settingsOpen = !settingsOpen
-        }}
-    >
-        <SvgIcon 
-            icon={Icon.Settings} options={{ opacity: 0.4, scale: 0.9 }} 
+    <div class="bar__main-content">
+        <Overview 
+            {calendar}
+            onUpdateHeaderOptions={optn => {
+                if (optn == "add" || optn == "replace") {
+                    imageUpload.init({
+                        onSubmit: (imgSrc) => {
+                            if (bgImgSrc != imgSrc && imgSrc) {
+                                bgImgSrc = imgSrc
+                            }
+                        }
+                    })
+                }
+                else if (optn == "show") {
+                    showHeaderImg = !showHeaderImg
+                }
+            }}
+            headerOptions={{
+                img: bgImgSrc,
+                show: showHeaderImg
+            }}
         />
-    </button>
-
-    <DropdownList 
-        id={"right-bar"}
-        isHidden={!settingsOpen} 
-        options={{
-            listItems: !bgImgSrc ? 
-                [{ name: "Add Header Background"}] : 
-                [{ name: "Replace Background" }, { name: "Remove" }],
-            position: { 
-                top: "28px", right: "10px"
-            },
-            styling:  {
-                width: bgImgSrc ? "150px" : "170px",
-                fontSize: "1.2rem",
-                zIndex: 500
-            },
-            onListItemClicked: (context) => {
-                imgSettingsHandler(context)
-            },
-            onClickOutside: () => {
-                settingsOpen = false
-            }
-        }}
-    />
+    </div>
 </div>
 
 <style lang="scss">
@@ -301,48 +211,6 @@
         position: relative;
         overflow: hidden;
         @include txt-color;
-
-        &--ambient &__settings-btn {
-            display: none !important;
-        }
-        &--light-theme &__header {
-            margin-bottom: 14px;
-            height: auto;
-
-            &-time h1 {
-                font-weight: 500;
-                margin-bottom: 2px;
-            }
-            &-text {
-                font-weight: 500;
-                @include txt-color(0.5);
-            }
-            &-time-date {
-                top: 68px;
-                display: block;   
-                position: relative;
-            }
-            &-date {
-                font-weight: 500;
-                margin-bottom: 1.5px;
-                @include text-style(0.5, 600);
-            }
-            &-date-time {
-                top: 68px;
-                @include text-style(0.6, 600);
-            }
-            &-img-wrapper {
-                height: 60px;
-                overflow: hidden;
-            }
-            &-blur-layer {
-                display: none;
-            }
-        }
-        &--light-theme &__main-content {
-            margin-top: 90px;
-            height: calc(100% - 80px);
-        }
 
         /* no bg image */
         &--empty &__header-time,
@@ -367,11 +235,7 @@
         &--empty &__header-time-date {
             opacity: 0.8;
         }
-        &--empty &__main-content {
-            margin-top: 32px;
-        }
         
-        /* Top Header */
         &__header {
             width: 100%;
             margin: 0px 0px 13px 0px;
@@ -411,9 +275,8 @@
                 margin-bottom: 3px;
             }
             &-date-time {
-                @include text-style(0.6, 400, 1.1rem, "DM Sans");
+                @include text-style(0.5, 400, 1.1rem, "DM Sans");
                 margin-left: 4px;
-                opacity: 0.4;
             }
             &-time h1 {
                 @include text-style(1, 400, 1.7rem, "DM Sans");
@@ -477,26 +340,11 @@
                     transparent 100%
             );
         }
-        &__settings-btn {
-            @include circle(20px);
-            @include center;
-            @include abs-top-right;
-            @include not-visible;
-            margin: 6px 6px 0px 0px;
-            
-            &--show {
-                @include visible(0.5);
-            }
-            &:hover {
-                background-color: rgba(var(--textColor1), 0.08);
-                @include visible(1);
-            }
-        }
 
-        /* Calendar */
+
         &__main-content {
-            margin-top: 57px;
-            height: calc(100% - var(--header-offset));
+            margin-top: var(--margin-top);
+            height: calc(100% - (var(--margin-top) + var(--main-top-offset)));
         }
     }
 </style>

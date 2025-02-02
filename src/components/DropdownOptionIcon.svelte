@@ -5,6 +5,7 @@
 	import Logo from "./Logo.svelte"
 	import Hotkeys from "./Hotkeys.svelte"
 	import SvgIcon from "./SVGIcon.svelte";
+	import { Icon } from "../lib/enums";
 
     export let left: boolean = true
     export let icon: DropdownOptnIcon
@@ -43,6 +44,13 @@
                     colored: icon.logoColored
                 }}
             />
+        {:else if type === "svg" && icon.icon === Icon.Pin}
+            <div style:opacity={0.25}>
+                <SvgIcon 
+                    icon={getSvgIcon()} 
+                    options={{ scale: 1.1, strokeWidth: 0.4 }} 
+                />
+            </div>
         {:else if type === "svg"}
             <div style:opacity={0.25}>
                 <SvgIcon 

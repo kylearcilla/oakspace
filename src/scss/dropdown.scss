@@ -29,7 +29,7 @@
         }
     }
     &--light &__title {
-        @include text-style(1, 600);
+        @include text-style(1);
     }
 
     &--no-focus:focus-visible {
@@ -57,9 +57,6 @@
     &--icon-text &__icon {
         margin-right: 15px;
         padding-left: 5px;
-    }
-    &--light-mode p {
-        font-weight: 600;
     }
     &--small {
         height: 14px;
@@ -91,15 +88,9 @@
     &--no-bg {
         box-shadow: none !important;
     }
-    &--bg-on-active {
-        
-    }
-    &--bg-on-active:hover {
-        
-    }
 
     &__title {
-        @include text-style(1, 500, 1.32rem);
+        @include text-style(1, var(--fw-500-600), 1.32rem);
         white-space: nowrap;
         margin-right: 9px;
         flex: 1;
@@ -155,22 +146,38 @@
     $side-padding: 7px;
     $divider-side-padding: $side-padding - 2;
 
+    --hover-opacity: 0.02;
+    --inactive-opacity: 0.65;
+    --picked-opacity: 0.02;
+
     &--light {
         border: 1.5px solid rgba(var(--textColor1), 0.065);
         box-shadow: 0px 4px 10px 1px rgba(0, 0, 0, 0.075);
-    }
-    &--light &__option-name {
-        @include text-style(0.35, 600);
+        --hover-opacity: 0.0385;
+        --inactive-opacity: 0.85;
+        --picked-opacity: 0.04;
     }
     &--light &__section-name {
-        @include text-style(0.3, 600);
+        @include text-style(0.45);
     }
     &--light &__option-heading {
-        @include text-style(0.7, 600);
+        @include text-style(0.85);
     }
     &--light &__option-text {
-        @include text-style(0.9, 600);
+        @include text-style(0.9);
     }
+    &--light &__box i {
+        @include text-style(0.25);
+    }
+    &--light &__box {
+        background-color: rgba(var(--textColor1), 0.035);
+    }
+    &--light &__box:hover {
+        box-shadow: rgba(var(--textColor1), 0.085) 0px 0px 0px 2px inset, 
+                    rgba(var(--textColor1), 0.055) 0px 0px 0px 2.5px;
+                    background-color: rgba(var(--textColor1), 0.05);
+    }
+
     &--has-scroll-bar &__option {
         width: calc(100% - 8px);
     }
@@ -193,9 +200,12 @@
         display: none;
     }
     &__section-name {
-        @include text-style(0.25, 500, 1.15rem);
+        @include text-style(0.25, var(--fw-400-500), 1.15rem);
         padding: 3px $side-padding 2px $side-padding;
         margin-bottom: 2px;
+    }
+    &__section-name--mono {
+        @include text-style(_, var(--fw-400-500), 1.15rem, "Geist Mono");
     }
     &__section-divider {
         @include divider(0.06, 0.5px, calc(100% - calc(2 * $divider-side-padding)));
@@ -220,7 +230,7 @@
             padding-bottom: 0px;
         }
         &:hover &-btn {
-            background-color: rgba(var(--textColor1), 0.02);
+            background-color: rgba(var(--textColor1), var(--hover-opacity));
             opacity: 1;
         }
         &:hover {
@@ -238,7 +248,7 @@
         }
         &--selected {
             opacity: 1;
-            background-color: rgba(var(--textColor1), 0.02);
+            background-color: rgba(var(--textColor1), var(--picked-opacity));
         }
         &--selected button {
             opacity: 1;
@@ -258,10 +268,10 @@
         @include elipses-overflow;
     }
     &__option-heading {
-        @include text-style(0.65, 500);
+        @include text-style(0.65, var(--fw-400-500));
     }
     &__option-text {
-        @include text-style(0.9, 500);
+        @include text-style(0.9, var(--fw-400-500));
     }
     &__option-right-icon-container {
         @include flex(center);
@@ -294,7 +304,7 @@
         @include flex(center);
         padding: 6px $side-padding 7px $side-padding;
         width: 100%;
-        opacity: 0.65;
+        opacity: var(--inactive-opacity);
         transition: background-color 0.04s ease-in-out;
 
         &--unclickable:active {
@@ -330,12 +340,12 @@
         background-color: rgba(var(--textColor1), 0.02);
 
         &:hover {
-            box-shadow: rgba(#FFFFFF, 0.05) 0px 0px 0px 2px inset, 
-                        rgba(#FFFFFF, 0.02) 0px 0px 0px 2.5px;
+            box-shadow: rgba(var(--textColor1), 0.05) 0px 0px 0px 2px inset, 
+                        rgba(var(--textColor1), 0.02) 0px 0px 0px 2.5px;
             background-color: rgba(var(--textColor1), 0.03);
         }
         &--selected {
-            box-shadow: rgba(#0C8CE9, 0.35) 0px 0px 0px 2px inset, 
+            box-shadow: rgba(#0C8CE9, 0.4) 0px 0px 0px 2px inset, 
                         rgba(#0C8CE9, 0.1) 0px 0px 0px 2.5px !important;
             background-color: rgba(var(--textColor1), 0.02) !important;
         }
@@ -346,11 +356,11 @@
         }
         i {
             font-size: 1.5rem;
-            margin-bottom: 6px;
-            opacity: 0.2;
+            margin-bottom: 7px;
+            @include text-style(0.15, _, 1.5rem);
         }
         span {
-            @include text-style(_, 500, 1.1rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 1.225rem);
             opacity: 0.65;
         }
     }

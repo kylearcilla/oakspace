@@ -3,37 +3,34 @@
     &--light &__tag-breakdown .tag {
         background-color: rgba(var(--tag-color-2), 1);
     }
-    &--light &__title {
-        @include text-style(_, 600);
-    }
     &--light &__description {
-        @include text-style(0.75, 600);
+        @include text-style(0.75);
     }
     &--light &__breakdown {
         @include txt-color(0.028, "bg");
         border: 1px solid rgba(var(--textColor1), 0.04);
     }
     &--light &__breakdown h3 {
-        @include text-style(1, 600);
+        @include text-style(1);
     }
     &--light &__cores-title {
-        @include text-style(0.96, 500);
+        @include text-style(0.96);
     }
     &--light &__cores-value {
-        @include text-style(0.8, 500);
+        @include text-style(0.8);
     }
     &--light &__cores-col-divider {
         @include divider(0.08, 1px);
     }
     &--light &__breakdown-options-btn {
         opacity: 0.4;
-        @include text-style(0.9, 600);
+        @include text-style(0.9);
     }
     &--light .tag__title {
         color: rgba(var(--tag-color-1), 1);
     }
     &--light &__tag-stat {
-        @include text-style(0.8, 500);
+        @include text-style(0.8);
     }
     &--light &__collection-empty {
         @include text-style(0.3);
@@ -50,12 +47,12 @@
     &__title {
         padding: 0px;
         overflow: scroll;
-        @include text-style(1, 400, _);
+        @include text-style(1);
     }
     &__description {
         overflow: scroll;
         display: inline-block;
-        @include text-style(0.4, 400, 1.4rem);
+        @include text-style(0.4, _, 1.4rem);
     }
 
     /* Breakdown */
@@ -72,7 +69,7 @@
             @include text-style(0.95, 400, 1.64rem);
         }
         &-title {
-            @include text-style(1, 500, 1.24rem, "DM Mono");
+            @include text-style(1, var(--fw-400-500), 1.24rem, "DM Mono");
         }
         &-header {
             @include flex(center, space-between);
@@ -154,7 +151,7 @@
         margin-left: -3px;
     }
     &__tag-breakdown-empty {
-        @include text-style(0.17, 500, 1.28rem);
+        @include text-style(0.17, var(--fw-400-500), 1.28rem);
         position: absolute;
         top: calc(50% - 4px);
         left: 50%;
@@ -163,7 +160,7 @@
     /* Collection */
     &__collection-empty {
         display: block;
-        @include text-style(0.14, 500, 1.3rem);
+        @include text-style(0.14, var(--fw-400-500), 1.3rem);
     }
 }
 
@@ -181,7 +178,7 @@
         box-shadow: 0px 1px 16.4px 4px rgba(black, 0.12);
     }
     &--light .routine-blocks__block-title {
-        @include text-style(_, 600);
+        @include text-style(_, var(--fw-500-600));
     }
     &--light .routine-blocks__block--drop-area .routine-blocks__block-time-period {
         font-weight: 500;
@@ -195,9 +192,6 @@
     position: relative;
     height: 100%;
 
-    &--light &__block-title {
-        font-weight: 600;
-    }
     &--grabbing * {
         cursor: text !important;
     }
@@ -335,13 +329,13 @@
         border-radius: 8px;
     }
     &__block-title {
-        @include text-style(_,  500, 1.25rem);
+        @include text-style(_, var(--fw-400-500), 1.25rem);
         margin-bottom: 3px;
         cursor: text;
         color: rgb(var(--block-color-1));
     }
     &__block-time-period {
-        @include text-style(_, 500, 1.16rem, "DM Sans");
+        @include text-style(_, var(--fw-400-500), 1.16rem);
         cursor: text;
         display: inline-block;
         color: rgba(var(--block-color-3), 1);

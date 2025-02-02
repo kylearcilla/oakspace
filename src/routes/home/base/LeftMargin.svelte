@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { habitTracker } from "../../../lib/store"
     import { TEST_GOALS } from "../../../lib/mock-data"
 	import { getQuarter, months } from "../../../lib/utils-date"
+	import { habitTracker, themeState } from "../../../lib/store"
 	import { capitalize, clamp, formatPlural } from "../../../lib/utils-general"
 
 	import Bulletin from "./Bulletin.svelte"
@@ -11,7 +11,9 @@
 
     export let fullWidth = false
 
+
     $: metrics = $habitTracker.metrics
+    $: isLight = !$themeState.isDarkTheme
 
     let marginDropdown = false
     let marginViewDropdown = false
@@ -46,6 +48,7 @@
 
 <div 
     class="margin"
+    class:margin--light={isLight}
     style:cursor={initDragY >= 0 ? "ns-resize" : "default"}
     on:pointermove={onDrag}
     on:pointerup={onDragEnd}
@@ -54,11 +57,13 @@
         class="margin__bulletin" 
         style:height={`${fullWidth ? "250" : bulletinHt}px`}
     >
-        <Bulletin />
+        <Bulletin {fullWidth}/>
     </div>
     <div class="margin__context">
         <div 
             on:pointerdown={dragDown}
+            class:obscured={fullWidth}
+            style:margin={fullWidth ? "0px" : "5px 0px 6px 0px"}
             class="divider divider--handle" 
         >
         </div>
@@ -115,7 +120,11 @@
             <div style:margin="1px 0px 0px 2px">
                 {#each TEST_GOALS as goal}
                     {@const done = goal.status === "accomplished"}
-                    <div class="goal-m">
+                    <div 
+                        class="goal-m" 
+                        class:goal-m--light={isLight}
+                        style:margin-bottom="11px"
+                    >
                         <div class="goal-m__left">
                             {#if done}
                                 <div class="goal-m__check">
@@ -145,10 +154,10 @@
                     { name: "Habits" }, { name: "Goals" }
                 ],
                 position: { 
-                    top: "40px", left: "-8px" 
+                    top: "45px", left: "-8px" 
                 },
                 styling: { 
-                    width: "100px" 
+                    width: "100px"
                 },
                 onClickOutside: () => { 
                     marginDropdown = false 
@@ -173,10 +182,10 @@
                     [{ name: "Month" }, { name: "Quarter" }, { name: "Year" }, ]
                 ,
                 position: { 
-                    top: "40px", right: "0px" 
+                    top: "45px", right: "0px" 
                 },
                 styling: { 
-                    width: "100px" 
+                    width: "100px",
                 },
                 onClickOutside: () => { 
                     marginViewDropdown = false 
@@ -195,27 +204,38 @@
 
     .margin {
         width: 100%;
+
+        &--light &__context-btn--view {
+            opacity: 0.8;
+        }
+        &--light .habits span {
+            @include text-style(0.685);
+        }
+        &--light .habits span:last-child {
+            @include text-style(0.35);
+        }
+
+        .divider {
+            border-top: var(--divider-border);
+            background: transparent !important;
+            width: 100%;
+            padding: 3px 0px 5px 0px;
+            cursor: ns-resize;
+        }
         &__context {
             margin: 6px 0px 0px 0px;
             position: relative;
             background-color: transparent;
             padding: 3px 0px 4px 0px;
         }
-        .divider {
-            border-top: 1px solid rgba(var(--textColor1), 0.06);
-            background: transparent !important;
-            width: 100%;
-            padding: 3px 0px 5px 0px;
-            margin: 5px 0px 5px 4px;
-        }
         &__context-btn {
-            @include text-style(1, 400, 1.55rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 1.55rem);
             padding: 5px 12px 6px 11px;
-            margin-left: -11px;
+            margin-left: -13px;
             border-radius: 12px;
             
             &--view {
-                @include text-style(1, 400, 1.5rem);
+                @include text-style(1, var(--fw-400-500), 1.4em);
                 margin-right: -10px;
                 padding: 6px 10px 7px 9px;
                 opacity: 0.2;
@@ -230,11 +250,6 @@
         &__context-header {
             @include flex(center, space-between);
             margin: -8px 0px 4px 2px;
-        }
-        &__context-count {
-            opacity: 0.2;
-            font-family: "Geist Mono";
-            font-weight: 400;
         }
         &__context-list {
             padding: 5px 15px 0px 6px;
@@ -263,10 +278,11 @@
     }
     .habits {
         margin-top: -4px;
+
         &__details {
             margin: 6px 0px 10px 0px;
-            padding: 0px 0px 10px 0px;
-            border-bottom: 0.5px solid rgba(var(--textColor1), 0.06);
+            padding: 0px 0px 12px 0px;
+            border-bottom: var(--divider-border);
         }
         &__stat {
             @include flex(center, space-between);
@@ -277,7 +293,7 @@
             }
         }
         span {
-            @include text-style(0.3, 400, 1.4rem, "Geist Mono");
+            @include text-style(0.3, var(--fw-400-500), 1.4rem);
             
             &:last-child {
                 @include text-style(0.5);

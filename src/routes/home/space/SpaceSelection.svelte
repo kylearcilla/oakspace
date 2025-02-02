@@ -2,20 +2,21 @@
 	import { onMount } from "svelte"
 
     import { Icon, ModalType } from "$lib/enums"
-	import { APIErrorCode, LogoIcon } from "../lib/enums"
+	import { APIErrorCode, LogoIcon } from "$lib/enums"
 	import { handleChooseItem } from "$lib/utils-youtube"
 	import { globalContext, ytPlayerStore } from "$lib/store"
 	import { SPACES, POPULAR_SPACES } from "$lib/data-spaces"
-	import { themeState, ytUserDataStore } from "../lib/store"
+	import { ytUserDataStore } from "$lib/store"
 	import { getMaskedGradientStyle } from "$lib/utils-general"
 	import { closeModal, updateAmbience } from "$lib/utils-home"
-	import { capitalize, formatPlural } from "../lib/utils-general"
-	import { youtubeLogin, youtubeLogOut } from "../lib/utils-youtube"
+	import { capitalize, formatPlural } from "$lib/utils-general"
+	import { youtubeLogin, youtubeLogOut } from "$lib/utils-youtube"
+
+	import Logo from "../../../components/Logo.svelte"
+	import Modal from "../../../components/Modal.svelte"
+	import SvgIcon from "../../../components/SVGIcon.svelte"
+	import DropdownList from "../../../components/DropdownList.svelte"
     
-	import Logo from "../components/Logo.svelte"
-	import Modal from "../components/Modal.svelte"
-	import SvgIcon from "../components/SVGIcon.svelte"
-	import DropdownList from "../components/DropdownList.svelte"
 
     const SCROLL_STEP = 350
     const CATEGORIES = [
@@ -273,7 +274,7 @@
         height: "85vh",
         overflow: "hidden"
     }} 
-    onClickOutSide={() => closeModal(ModalType.Spaces)}
+    onClickOutSide={() => updateAmbience({ spacesOpen: false })}
 >
     {@const { gradient, left, right } = tabsCarousel}
     <div 
@@ -654,8 +655,8 @@
 </Modal>
 
 <style lang="scss">
-    @import "../scss/blurred-bg.scss";
-    @import "../scss/skeleton.scss";
+    @import "../../../scss/blurred-bg.scss";
+    @import "../../../scss/skeleton.scss";
 
     .spaces {
         height: 85vh;
@@ -827,11 +828,10 @@
             }
             &-title {
                 margin: 10px 30px 10px 0px;
-                max-height: 40px;
                 max-width: 90%;
-                overflow: hidden;
                 font-size: 1.45rem;
-                font-weight: 500;
+                font-weight: 400;
+                @include truncate-lines(3);
             }
             &-description {
                 margin-top: 6px;
@@ -845,10 +845,9 @@
             &-subtitle {
                 margin-top: 6px;
                 font-size: 1.35rem;
-                font-weight: 500;
+                font-weight: 400;
                 color: rgb(white, 0.3);
-                max-width: 64%;
-                @include elipses-overflow;
+                @include truncate-lines(2);
             }
         }
         &__content-header {
@@ -926,7 +925,7 @@
                 background-color: rgba(var(--textColor1), 0.02);
             }
             &--playlist &-title {
-                @include text-style(1, 500, 1.4rem);
+                @include text-style(1, 400, 1.4rem);
             }
             &--playlist &-subtitle {
                 font-size: 1.3em;
@@ -984,12 +983,12 @@
         }
         &__content-item-title {
             @include elipses-overflow;
-            @include text-style(0.85, 500, 1.2rem);
+            @include text-style(0.85, 400, 1.2rem);
             margin-bottom: 2px;
         }
         &__content-item-subtitle {
             @include elipses-overflow;
-            @include text-style(0.4, 500, 1.2rem);
+            @include text-style(0.4, 400, 1.2rem);
         }
         &__content-item-description {
             @include truncate-lines(2);
@@ -997,7 +996,7 @@
         }
         &__choose-btn {
             @include abs-bottom-right(18px, 18px);
-            @include text-style(1, 500, 1.3rem, "Geist Mono");
+            @include text-style(1, 400, 1.3rem, "Geist Mono");
             background: var(--lightColor2);
             padding: 6px 20px 7px 20px;
             border-radius: 15px;

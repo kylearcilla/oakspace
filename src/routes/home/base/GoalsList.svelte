@@ -4,29 +4,37 @@
 
     import { Icon } from "../../../lib/enums";
 	import { getColorTrio } from '$lib/utils-colors'
+    import { getDueDateDistStr } from "$lib/utils-goals"
 	import { kebabToNormal } from "../../../lib/utils-general"
 
 	import SvgIcon from "../../../components/SVGIcon.svelte";
 	import ProgressBar from "../../../components/ProgressBar.svelte"
-
     export let manager: GoalsManager
-    export let grouping: "tag" | "status" | "default"
+    export let options: GoalsView
     export let pinnedGoal: Goal
 
-    $: isLight = !$themeState.isDarkTheme
-    
     let store: GoalsViewState | null = null
     let dragState: "goal" | "milestone" | null = null
     let width = 0
     let containerRef: HTMLElement
-    $: if (grouping) {
-        manager.initSections(grouping)
-    }
+    
+    $: isLight = !$themeState.isDarkTheme
+    $: grouping = options.grouping
+    $: showProgress = options.showProgress
+    $: showDue = options.due
+    $: dueType = options.dueType
+
+    $: manager.initSections(grouping)
+    
     $: if (manager.state) {
         manager.state.subscribe((data) => {
             store = data
             dragState = store.dragState
         })
+    }
+
+    function _getDueString(goal: Goal, type: "date" | "distance") {
+        return getDueDateDistStr(goal, dueType)
     }
 
     onMount(() => manager.initContainerRef(containerRef))
@@ -134,16 +142,29 @@
                                     >
                                         {name}
                                     </div>
-                                    {#if total > 0}
+                                    {#if pinned}
+                                        <div style:margin={"2px 0px 0px 10px"}>
+                                            <SvgIcon 
+                                                icon={Icon.Pin} 
+                                                options={{ scale: 1, opacity: 0.2, strokeWidth: 0.4 }} 
+                                            />
+                                        </div>
+                                    {/if}
+                                    {#if total > 0 && showProgress}
                                         <div class="goals__goal-progress">
                                             <ProgressBar progress={checkCount / total} />
                                         </div>
                                     {/if}
                                 </div>
                                 <div class="flx">
-                                    {#if pinned}
-                                        <div style:margin={"5px 0px 0px 10px"}>
-                                            <SvgIcon icon={Icon.Pin} options={{ scale: 1.15, opacity: 0.2 }} />
+                                    {#if goal.due && showDue}
+                                        {@const { dueStr, isLate } = _getDueString(goal, dueType)}
+                                        <div 
+                                            class="goals__goal-due"
+                                            class:goals__goal-due--late={isLate}
+                                            class:white={dueStr === "🤞"}
+                                        >
+                                            {dueStr}
                                         </div>
                                     {/if}
                                     {#if goal.tag}
@@ -281,37 +302,28 @@
         position: relative;
         z-index: 0;
 
+        --hover-opacity: 0.0125;
+
+        &--light {
+            --hover-opacity: 0.025;
+        }
         &--light &__section {
-            @include text-style(0.55, 600);
+            @include text-style(0.55);
         }
         &--light &__section-count {
-            @include text-style(0.35, 500);
-        }
-        &--light &__goal:hover {
-            background-color: rgba(var(--textColor1), 0.03);
+            @include text-style(0.35);
         }
         &--light &__goal-name {
-            @include text-style(1, 600);
+            @include text-style(1);
         }
         &--light &__goal-description {
-            @include text-style(0.6);
+            @include text-style(0.45);
         }
         &--light &__goal-due {
-            @include text-style(0.55, 600);
+            @include text-style(0.55);
         }
         &--light &__milestone-name {
-            @include text-style(0.75, 600);
-        }
-        &--light .fraction {
-            font-weight: 600 !important;
-            opacity: 0.85;
-        }
-        &--light .divider {
-            @include  l-div;
-        }
-
-        &--default {
-            margin-top: 0px !important;
+            @include text-style(0.9);
         }
         &--default &__section-header,
         &--default &__section-divider {
@@ -329,7 +341,7 @@
             margin: -2px 0px 12px 1px;
             position: relative;
             width: 100%;
-            @include text-style(0.4, 500, 1.3rem);
+            @include text-style(0.4, 500, 1.25rem);
             
             &:hover .toggle-arrow--section {
                 opacity: 0.2;
@@ -342,7 +354,7 @@
             border-radius: 4px;
 
             &:focus {
-                background: rgba(var(--textColor1), 0.0125);
+                background: rgba(var(--textColor1), var(--hover-opacity));
             }
             &:focus .toggle-arrow--section {
                 opacity: 0.2;
@@ -350,16 +362,16 @@
         }
         &__section-name {
             margin: 0px 0px 6px 12px;
+            @include text-style(0.5, var(--fw-400-500), 1.3rem);
         }
         &__section-count {
-            @include text-style(0.2, 500, _, "DM Sans");
+            @include text-style(0.15, var(--fw-400-500), _);
             margin: 0px 0px 6px 12px;
         }
         &__section-divider {
             @include text-style(0.4, 500, 1.3rem);
             margin: 0px 0px 4px 12px;
             width: calc(100% - 13px) !important;
-            // display: none !important;
         }
         &__section-progress {
             margin: -6px 7px 0px 0px;
@@ -373,7 +385,7 @@
             position: relative;
 
             &:hover, &:focus {
-                background-color: rgba(var(--textColor1), 0.0125);
+                background-color: rgba(var(--textColor1), var(--hover-opacity));
                 box-shadow: none !important;
             }
             &:hover .toggle-arrow,
@@ -386,7 +398,7 @@
             }
         }
         &__goal:focus &__goal-checkbox {
-            background: rgba(var(--textColor1), 0.1);
+            background: rgba(var(--textColor1), 0.125);
         }
         &__goal-top {
             @include flex(flex-start, space-between);
@@ -427,18 +439,15 @@
             }
         }
         &__goal-name {
-            @include text-style(1, 500, 1.425rem);
+            @include text-style(1, var(--fw-400-500), 1.45rem);
             @include truncate-lines(2);
             user-select: text;
             cursor: text;
         }
         &__goal-description {
-            @include text-style(0.35, 500, 1.38rem);
+            @include text-style(0.35, 400, 1.4rem);
             @include truncate-lines;
             width: 80%;
-        }
-        &__goal-due {
-            @include text-style(0.4, 500, 1.35rem);
         }
         &__goal-progress {
             @include flex(center, flex-end);
@@ -453,34 +462,25 @@
             padding: 3px 12px 5px 10px;
             margin-left: 10px
         }
-        &__goal .tag__title {
-            @include text-style(_, 400, 1.12rem, "Geist Mono"); 
+        &__goal-due {
+            @include text-style(0.6, var(--fw-400-500), 1.15rem, "Geist Mono");
+            background-color: rgba(var(--textColor1), 0.035);
+            margin: 2px -2px 0px 11px;
+            padding: 3.5px 7px 0px 7px;
+            border-radius: 6px;
+            white-space: nowrap;
         }
         &__milestones {
-            padding: 4px 0px 0px 48px;
+            padding: 0px 0px 0px 48px;
             position: relative;
             max-height: 300px;
             overflow-y: scroll;
-
-            &--in-row {
-                padding: 0px;
-                max-height: 180px;
-                margin: 0px 8px 0px 0px !important;
-            }
-            &--in-row .goals__milestone {
-                padding: 0px 0px 0px 0px;
-                margin-bottom: 14px;
-            }
-            &--in-row .goals__milestone:last-child {
-                margin-bottom: 0px;
-                padding-bottom: 3px;
-            }
         }
         &__milestone {
             display: flex;
             margin: 0px 0px 0px -15px;
             position: relative;
-            padding: 11px 0px 14px 15px;
+            padding: 11px 0px 8px 15px;
             border-radius: 4px;
 
             &--checked i {
@@ -496,7 +496,7 @@
         }
         &__milestone:focus {
             box-shadow: none !important;
-            background-color: rgba(var(--textColor1), 0.0125);
+            background-color: rgba(var(--textColor1), var(--hover-opacity));
         }
         &__milestone:focus button {
             background: rgba(var(--textColor1), 0.1);
@@ -520,7 +520,6 @@
 
             &--ms {
                 height: 15px;
-                // margin-top: -45px;
                 bottom: 0px;
                 position: relative;
             }
@@ -541,6 +540,6 @@
     .divider {
         width: calc(100% - 50px);
         height: 0.5px;
-        background-color:rgba(var(--textColor1), 0.05);
+        background: var(--divider-bg);
     }
 </style>

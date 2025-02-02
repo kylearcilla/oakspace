@@ -33,7 +33,6 @@
 	import { afterNavigate, beforeNavigate, goto } from "$app/navigation"
 	import SessionSummaryModal from "./SessionSummaryModal.svelte"
 	import Modal from "../../components/Modal.svelte";
-	import SpaceSelection from "../SpaceSelection.svelte";
 	import { themeState, ytPlayerStore } from "../../lib/store";
   import { updateAmbience, updateGlobalContext, hasAmbienceSpace } from "../../lib/utils-home";
   import { findThemeFromName, getActiveTheme, getPrevTheme, setNewTheme, setPrevTheme } from "../../lib/utils-appearance";
@@ -53,6 +52,7 @@
 
   let leftBarOpen = true
   let leftSideBarWidth = 0
+  let showHeaderImg = ""
   
   let stretchMiddleView = false
   let middleViewMarginLeft = ""
@@ -64,7 +64,7 @@
   let rightSideBarWidth = 0
   let prevSetTheme = ""
 
-  const RIGHT_BAR_WIDTH = 240
+  const RIGHT_BAR_WIDTH = 230
   const SMALL_WIDTH = 740
 
   $: context = $globalContext
@@ -234,15 +234,17 @@
         <Header/>
       </div>
         {#if route != "/home"}
-              <div class="home__middle-view-slot-container">
-                <slot />
-              </div>
+            <div class="home__middle-view-slot-container">
+              <slot />
+            </div>
         {/if}
     </div>
     <!-- right -->
     <nav 
       class="home__right-bar" 
       class:home__right-bar--fixed={rightBarFixed}
+      class:home__right-bar--short-fixed={rightBarFixed && hasAmbience}
+      class:home__right-bar--full-border={!showHeaderImg}
       class:ambient-dark-blur={hasAmbience && ambience?.styling === "blur"}
       class:ambient-solid={hasAmbience && ambience?.styling === "solid"}
       class:ambient-dark-clear={hasAmbience && ambience?.styling === "clear"}
@@ -250,10 +252,42 @@
       style:margin-right={`${rightSideBarWidth === 0 ? `-${RIGHT_BAR_WIDTH}px` : ""}`}
       style:right={`${!rightBarOpen && rightBarFixed ? `-${rightSideBarWidth}px` : ""}`}
     >
-      <SideBarRight /> 
+      <SideBarRight 
+        onHeaderImageChange={(showing) => showHeaderImg = showing}
+      /> 
+
+      {#if showHeaderImg && !hasAmbience && !isLight}
+          {#if rightBarFixed}
+            <div class="border border--top">
+                <svg width="231" height="35" viewBox="0 0 231 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path 
+                  d="M1.37305 34.8145V15.9111C1.37305 8.17915 7.64106 1.91113 15.373 1.91113H215.373C223.105 1.91113 229.373 8.17915 229.373 15.9111V28.7632" 
+                  stroke="white" 
+                  stroke-opacity="0.022"
+                  stroke-width="2"
+                />
+              </svg>          
+            </div>
+            <div class="border border--bottom">
+              <svg width="231" height="35" viewBox="0 0 231 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path 
+                  d="M229.373 0.911133L229.373 19.8145C229.373 27.5464 223.105 33.8145 215.373 33.8145L15.2715 33.8145C7.53949 33.8145 1.27148 27.5465 1.27148 19.8145L1.27148 6.96237" 
+                  stroke="white" 
+                  stroke-opacity="0.022"
+                  stroke-width="2"
+                />
+              </svg>
+            </div>
+            <div class="border border--right"></div>
+          {/if}
+          <div 
+            class="border border--left"
+            class:border--left-full={!rightBarFixed}
+          >
+          </div>
+      {/if}
   </nav>
 </div>
-
 
   <!-- util modals -->
   {#if modalsOpen.includes(ModalType.Settings)} 
@@ -261,10 +295,6 @@
   {/if}
   {#if modalsOpen.includes(ModalType.Themes)} 
       <Appearance />
-  {/if}
-  
-  {#if modalsOpen.includes(ModalType.Spaces)} 
-      <SpaceSelection /> 
   {/if}
 
   <!-- modals -->
@@ -359,12 +389,22 @@
       background-position: center;
       background-repeat: no-repeat;
 
+      --light-border: 1.5px solid rgba(var(--textColor1), 0.05);
+      --side-border: 2px solid rgba(var(--textColor1), 0.022);
+
       /* light */
-      &--light &__right-bar::before {
-        width: 1.5px;
-        background: rgba((var(--textColor1)), 0.04);
+      &--light {
+        --side-border: 1.5px solid rgba(var(--textColor1), 0.05);
       }
-      /* bars */
+      &--light &__right-bar::before {
+        display: none;
+      }
+      &--light &__right-bar {
+        border-left: var(--light-border);
+      }
+      &--light &__right-bar--fixed {
+        border: var(--light-border);
+      }
       &--left-float &__middle-view {
         margin-left: 0px !important;
       }
@@ -372,9 +412,11 @@
         height: 650px;
         top: 45px;
         left: 5px;
-        border: var(--navMenuBorder);
         border-radius: 12px;
         transition: 0.185s cubic-bezier(.4, 0, .2, 1);
+      }
+      &--left-float &__left-bar {
+        border: var(--side-border);
       }
       &--stretched &__middle-view {
         width: 100% !important;
@@ -392,7 +434,7 @@
       &--ambient &__right-bar {
         height: calc(100% - (11px * 2));
         top: 5px;
-        right: 10px;
+        right: 13px;
         border-radius: 20px;
         border: 1.5px solid rgba(255, 255, 255, 0.05);
       }
@@ -427,14 +469,13 @@
 
       &__header-container {
         width: calc(100%);
-        // padding: 0px 25px;
       }
       &__left-bar {
         height: 100%;
         left: 0px;
         background-color: var(--navMenuBgColor);
-        border: var(--navMenuBorder);
         width: var(--left-bar-width);
+        border-right: var(--side-border);
         z-index: 400;
         position: fixed;
         transition: 0.2s cubic-bezier(.4, 0, .2, 1);
@@ -465,29 +506,19 @@
         transition: 0.2s cubic-bezier(.4, 0, .2, 1);
         overflow: hidden;
         
-        &::before {
-          content: " ";
-          width: 2px;
-          background: rgba((var(--textColor1)), 0.022);
-          height: 100%;
-          z-index: 10000;
-          @include abs-top-left;
+        &--full-border {
+          border: var(--side-border);
         }
-        
-        // border-left: 1.5px solid rgba((var(--textColor1)), 0.022);
-        // background: rgba(32, 31, 31, 0.1);
-        // backdrop-filter: blur(10px);
-        // border-left: 1px solid rgba(138, 138, 138, 0.3);
-        
         &--fixed {
           transition: 0.245s cubic-bezier(.4, 0, .2, 1);
           top: 12px;
-          right: 5px;
-          height: calc(100% - 40px);
+          right: 7px;
+          height: calc(100% - 40px) !important;
           border-radius: 14px;
         }
-        &--closed {
-          // margin-right: -300px; 
+        &--short-fixed {
+          top: 42px !important;
+          height: calc(100% - 60px) !important;
         }
       }
 
@@ -498,14 +529,39 @@
       }
     }
 
-    .music-player {
-      @include abs-bottom-left(-100px, -100px);
+    .border {
+      &--top {
+        width: 100%;
+        @include abs-top-left(-1px);
+      }
+      &--bottom {
+        width: 100%;  
+        @include abs-bottom-left(-3px, 0px);
+      }
+      &--right {
+        width: 2px;
+        height: calc(100% - 55px);
+        background: rgba((var(--textColor1)), 0.022);
+        @include abs-top-right(28px);
+      }
+      &--left {
+        width: 2px;
+        height: calc(100% - 55px);
+        background: rgba((var(--textColor1)), 0.022);
+        @include abs-top-left(28px);
+      }
+      &--left-full {
+        width: 2px;
+        height: 100%;
+        background: rgba((var(--textColor1)), 0.022);
+        @include abs-top-left(0px);
+      }
     }
 
     .ambient-player {
         z-index: 500;
         user-select: none;
-        position: absolute;
+        position: fixed;
         z-index: 2;
         pointer-events: none;
         overflow: hidden;

@@ -139,7 +139,13 @@
         class="day-view__header"
         bind:clientHeight={headerHeight}
     >
-        <span>All Day</span>
+        <span>
+            {#if dayOptn === "routine"}
+                {routine?.name ?? "Routine"}
+            {:else}
+                All Day
+            {/if}
+        </span>
         <div 
             bind:this={allDayRef}
             on:scroll={onDayHeaderScroll}
@@ -320,7 +326,6 @@
                         {/each}
                     {/if}
 
-                    <!-- Now Line -->
                     <div 
                         class="now-line"
                         class:hidden={!isSameDay(new Date(), day)}
@@ -406,9 +411,9 @@
 
         &--light &__header {
             border-bottom: 1.5px solid rgba(var(--textColor1), 0.075);
-            span {
-                @include text-style(0.3, 600);
-            }
+        }
+        &--light &__header span {
+            @include text-style(0.3);
         }
         &--light .now-line {
             height: 2px;
@@ -421,12 +426,12 @@
             width: calc(100% - (var(--DAY_VIEW_SIDE_MARGINS) * 2));
             display: flex;
             border-bottom: 0.5px solid rgba(var(--textColor1), 0.055);
-            padding: 5.5px 0px 7px 0px;
+            padding: 2px 0px 7px 0px;
             
             span {
                 white-space: nowrap;
                 margin-left: 1px;
-                @include text-style(0.14, 500, 1.1rem);
+                @include text-style(0.14, var(--fw-400-500), 1.1rem);
             }
         }
         &__header-events {
@@ -514,7 +519,7 @@
         }
 
         &__block {
-            left: 70px;
+            left: 65px;
             width: 135px;
 
             &::after, &::before {

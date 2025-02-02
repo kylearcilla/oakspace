@@ -20,7 +20,7 @@ export const globalContext = writable<GlobalContext>({
     minModeSrc: null,
     route: "workspace",
     focusTime: 0,
-    shortcutsFocus: ShortcutSectionInFocus.MAIN,
+    shortcutsFocus: "default",
     modalsOpen: [],
     lastKeysPressed: {
         shiftKey: false,

@@ -1,232 +1,256 @@
 <script lang="ts">
-    import { TextEditorManager } from "$lib/inputs"
-	import { iconPicker, emojiPicker } from "$lib/pop-ups"
-	import { randomArrayElem } from "$lib/utils-general";
+	import { createEventDispatcher } from "svelte";
 
-    export let options: BaseHeader
-    export let showBanner: boolean
+    import { themeState } from "$lib/store"
+	import { clickOutside } from "$lib/utils-general"
+    import { HOME_THOUGHT_ENTRY } from "$lib/mock-data"
+    import { imageUpload, iconPicker } from "$lib/pop-ups"
 
-    const TITLE_INPUT_ID = "base-header-input"
-    const ICON_ID = "base-header-icon"
+	import TextEntry from "./TextEntry.svelte"
+	import ToggleBtn from "../../../components/ToggleBtn.svelte"
+	import BounceFade from "../../../components/BounceFade.svelte"
+	import SettingsBtn from "../../../components/SettingsBtn.svelte"
 
-    $: icon = options.icon
-    $: title = options.title
-    $: text = options.text
-    $: _showBanner = showBanner
+    $: isLight = !$themeState.isDarkTheme
 
-    let complete = false
+    export let bannerImg: Banner
+    export let options: BaseOptions
+    export let header: BaseHeader
 
-    const CELBRATE_EMOJIS = ["👏", "🎉", "💪", "🙌", "💪", "🤧"]
-    const BUSY_EMOJIS = ["📖", "👨‍💻", "✏️", "📝"]
+    const BASE_HEADER_ICON_ID = "base-header--icon"
+    const dispatch: BaseDispatcher = createEventDispatcher()
+    let settingsOpen = false
 
-    new TextEditorManager({
-        initValue: text,
-        placeholder: "title",
-        defaultText: "Home",
-        maxLength: 25,
-        id: TITLE_INPUT_ID,
-        handlers: {
-            onInputHandler: (_, val) => {
-                text = val
-            },
-            onBlurHandler: (_, val) => {
-                text = val || "Home"
+    $: showIcon = header.pos === "top" && header.icon.show
+
+    function openImgModal() {
+        imageUpload.init({
+            onSubmit: (src: string) => {
+                if (src && bannerImg.src != src) {
+                    onBannerUpdate({ src, center: 50 })
+                }
             }
-        }
-    })
-    function formatPlural(name: string, number: number) {
-        const noun = number === 1 ? name : `${name}s`
-
-        return `<strong>${number}</strong> ${noun}`
+        })
+        settingsOpen = false
     }
-    function getReviewText({ habits, goals, tasks, vibe = "casual" }) {
-        const h = formatPlural("habit", habits)
-        const g = formatPlural("goal", goals)
-        const t = formatPlural("task", tasks)
+    function initIconPicker() {
+        iconPicker.init({
+            id: BASE_HEADER_ICON_ID,
+            onSubmitIcon: (icon) => {
+                if (icon) {
+                    onHeaderUpdate({ icon: { ...header.icon, ...icon } })
+                }
+            }
+        })
+    }
+    function onBannerUpdate(updates: Partial<Banner>) {
+        dispatch("base", { 
+            context: "banner",
+            payload: { ...bannerImg, ...updates }
+        })
 
-        if (habits === 0 && goals === 0 && tasks === 0) {
-            complete = true
-            const congratsMessages = [
-                `Congrats! All done for the day!`,
-                `Well done! Everything's checked off.`,
-                `You're done! Time to relax.`,
-                `Woohoo! Nothing left to do today!`,
-                `All clear! Enjoy your day!`,
-            ]
-            const randomIndex = Math.floor(Math.random() * congratsMessages.length)
-            return congratsMessages[randomIndex]
-        }
-
-        const messages = {
-            formal: [
-                `You have ${h}, ${g}, and ${t} remaining for the day.`
-            ],
-            casual: [
-                `Still to do for today: ${h}, ${g}, and ${t}.`,
-                `You got this! ${h}, ${g}, and ${t} remain.`,
-                `Almost there! ${h}, ${g}, and ${t} remain.`,
-                `Keep going! ${h}, ${g}, and ${t} remain.`,
-                `${h}, ${g}, and ${t} remain. Keep at it!`,
-            ]
-        }
-
-        const selectedMessages = messages[vibe] || messages.casual
-        const randomIndex = Math.floor(Math.random() * selectedMessages.length)
-
-        return selectedMessages[randomIndex]
+    }
+    function onOptionsUpdate(updates: Partial<BaseOptions>) {
+        dispatch("base", { 
+            context: "options",
+            payload: { ...options, ...updates }
+        })
+    }
+    function onHeaderUpdate(updates: Partial<BaseHeader>) {
+        dispatch("base", { 
+            context: "header",
+            payload: { ...header, ...updates }
+        })
     }
 </script>
 
 <div 
     class="base-header"
-    class:base-header--unset-offset={!_showBanner}
-    class:base-header--complete={complete}
-    class:base-header--has-icon={icon.show}
-    class:base-header--emoji-icon={icon.show && icon?.type === "emoji"}
+    class:base-header--no-banner={!options.banner}
+    class:base-header--has-icon={showIcon}
+    class:base-header--emoji-icon={showIcon && header.icon?.type === "emoji"}
 >
-    {#if icon.show}
+    {#if showIcon}
+        {@const { type, src } = header.icon}
         <button
-            id={`${ICON_ID}--dbtn`}
+            id={BASE_HEADER_ICON_ID}
             class="base-header__icon"
-            on:click={() => {
-                iconPicker.init({
-                    id: ICON_ID,
-                    onSubmitIcon: (_icon) => {
-                        if (_icon) {
-                            icon = _icon
-                        }
-                    }
-                })
-            }}
+            on:click={() => initIconPicker()}
         >
-            {#if icon.type === "emoji"}
-                <span>{icon.src}</span>
+            {#if type === "emoji"}
+                <span>{src}</span>
             {:else}
-                <img src={icon.src} alt="Home Icon">
+                <img src={src}>
             {/if}
         </button>
     {/if}
-    <div class="base-header__details">
-        <h1
-            id={TITLE_INPUT_ID}
-            contenteditable
-            spellcheck="false"
-        >
-            {title}
-        </h1>
-        {#if text.show}
-            <div class="base-header__callout insight-sentence">
-                <button 
-                    class="base-header__callout-icon"
-                    on:click={() => {
-                        emojiPicker.init({
-                            onEmojiSelect: (emoji) => {
-                                if (emoji) {
-                                    text.icon = emoji.native
-                                }
-                            }
-                        })
+    <div style:width="100%">
+        <div class="base-header__heading">
+            <h1>Home</h1>
+
+            <!-- settings stuff -->
+            <div class="base-header__settings-btn">
+                <SettingsBtn 
+                    id={"base--dbtn"}
+                    options={{ 
+                        opacity: {
+                            fg: 0.25,
+                            bg: 0
+                        },
+                        hOpacity: {
+                            fg: 0.5,
+                            bg: 0.05
+                        },
                     }}
+                    onClick={() => settingsOpen = !settingsOpen}
+                />
+            </div>
+
+            <BounceFade 
+                isHidden={!settingsOpen}
+                zIndex={200}
+                position={{ top: "28px", right: "0px" }}
+            >
+                <div 
+                    id="base--dmenu"
+                    class="base-header__dmenu dmenu" 
+                    class:dmenu--light={isLight}
+                    style:width={"170px"}
+                    use:clickOutside on:click_outside={() => settingsOpen = false} 
                 >
-                    {text.icon ? text.icon : randomArrayElem(complete ? CELBRATE_EMOJIS : BUSY_EMOJIS)}
-                </button>
-                <div>
-                    <p>
-                        {@html getReviewText({ habits: 4, goals: 2, tasks: 8 })}
-                    </p>
+                    <!-- banner -->
+                    <li class="dmenu__section">
+                        <div class="dmenu__section-name">
+                            Banner
+                        </div>
+                        <div class="dmenu__toggle-optn  dmenu__option--static">
+                            <span class="dmenu__option-heading">Show Banner</span>
+                            <ToggleBtn 
+                                active={options.banner}
+                                onToggle={() => {
+                                    onOptionsUpdate({ banner: !options.banner })
+                                }}
+                            />
+                        </div>
+                        {#if options.banner}
+                            <div class="dmenu__option">
+                                <button class="dmenu__option-btn" on:click={() => openImgModal()}>
+                                    <span class="dmenu__option-text">
+                                        Change Wallpaper
+                                    </span>
+                                </button>
+                            </div>
+                        {/if}
+                    </li>
+                    <li class="dmenu__section-divider"></li>
+                    <!-- header -->
+                    <li class="dmenu__section">
+                        <div class="dmenu__section-name">
+                            Header
+                        </div>
+                        <div class="dmenu__toggle-optn  dmenu__option--static">
+                            <span class="dmenu__option-heading">On Top</span>
+                            <ToggleBtn 
+                                active={header.pos === "top"}
+                                onToggle={() => {
+                                    onHeaderUpdate({ pos: header.pos === "top" ? "side" : "top" })
+                                }}
+                            />
+                        </div>
+                        <div class="dmenu__toggle-optn  dmenu__option--static">
+                            <span class="dmenu__option-heading">Text Block</span>
+                            <ToggleBtn 
+                                active={header.showText}
+                                onToggle={() => {
+                                    onHeaderUpdate({ showText: !header.showText })
+                                }}
+                            />
+                        </div>
+                        {#if header.pos === "top"}
+                            <div class="dmenu__toggle-optn  dmenu__option--static">
+                                <span class="dmenu__option-heading">Icon</span>
+                                <ToggleBtn 
+                                    active={header.icon.show}
+                                    onToggle={() => {
+                                        onHeaderUpdate({ icon: { ...header.icon, show: !header.icon.show } })
+                                    }}
+                                />
+                            </div>
+                        {/if}
+                    </li>
+                    <!-- side margin -->
+                    <li class="dmenu__section-divider"></li>
+                    <li class="dmenu__section">
+                        <div class="dmenu__section-name">
+                            Side Margin
+                        </div>
+                        <div class="dmenu__toggle-optn  dmenu__option--static">
+                            <span class="dmenu__option-heading">Show Margin</span>
+                            <ToggleBtn 
+                                active={options.margin}
+                                onToggle={() => {
+                                    onOptionsUpdate({ margin: !options.margin })
+                                }}
+                            />
+                        </div>
+                    </li>
                 </div>
+            </BounceFade>
+        </div>
+        {#if header.showText}
+            <div style:width="100%">
+                <TextEntry 
+                    id="header"
+                    zIndex={100}
+                    entry={HOME_THOUGHT_ENTRY}
+                />
             </div>
         {/if}
     </div>
 </div>
 
+<style lang="scss">
+    @import "../../../scss/dropdown.scss";
 
-<style global lang="scss">
     .base-header {
-        padding: 15px 0px 0px 0px;
         width: 100%;
-        position: relative;
-        margin-top: 0px;
+        margin-bottom: 10px;
 
+        &--no-banner {
+            margin-top: 0 !important;
+        }
         &--has-icon {
-            margin-top: -70px;
+            margin-top: -100px;
         }
         &--emoji-icon &__icon {
-            margin-bottom: -5px;
-        }
-        &--complete .insight-sentence {
-            @include text-style(0.6);
-        }
-        &--unset-offset {
-            margin-top: 0px !important;
+            margin-bottom: 0px;
         }
 
-        .divider {
-            height: 100%;
-            width: 1px;
-            margin: 0px 25px 0px 20px;
-        }
         &__icon {
-            margin-bottom: 14px;
+            margin-bottom: 15px;
             font-size: 6rem;
             height: 95px;
             width: 95px;
             
             img {
-                @include box;
+                @include square(100px);
                 border-radius: 4px;
                 object-fit: cover;
             }
         }
-        &__details {
-            flex: 1;
+        &__heading {
+            margin: 0px 0px 0px 0px;
             position: relative;
-            @include flex-col;
+            width: 100%;
+            @include flex(flex-start, space-between);
 
             h1 {
-                @include text-style(1, 400, 2.75rem, "DM Mono");
-                margin: -3px 0px 0px 0px;
-                cursor: text;
-                width: fit-content;
-            }
-            h4 {
-                @include text-style(0.25, 400, 1.45rem);
-                margin: 0px 0px 10px 0px;
+                @include text-style(1, var(--fw-400-500), 2.75rem, "Geist Mono");
             }
         }
-        &__callout {
-            position: relative;
-            border-radius: 10px;
-            @include flex(center);
-            width: fit-content;
-        }
-        &__callout-icon {
-            margin: 0px 9px 0px 0px;
-            font-size: 1.85rem;
-            color: white !important;
-            @include square(25px, 5px);
-            @include center;
-
-            &:hover {
-                background-color: rgba(var(--textColor1), 0.05);
-            }
-        }
-    }
-
-    h1[contenteditable]:empty:before {
-        content: attr(data-placeholder);
-        opacity: 0.2;
-    }
-
-    .insight-sentence {
-        @include text-style(0.35, 400, 1.6rem);
-        background-color: rgba(var(--textColor1), 0.02);
-        margin: 8px 0px 2px 0px;
-        padding: 8px 22px 10px 10px;
-        
-        strong {
-            @include text-style(0.75, 400, 1.55rem, "DM Sans");
-            margin: 0px 2px 2px 2px;
+        &__settings-btn {
+            @include abs-top-right(0px, 0px);
+            z-index: 100;
         }
     }
 </style>

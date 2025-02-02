@@ -58,8 +58,9 @@ type ImageUpload = {
 
 type TextEntryOptions = {
     entry: string
-    styling: "bordered" | "has-marker" | "default"
+    styling: "background" | "has-marker" | "default"
     date: Date
+    truncate: boolean
     icon: {
         type: "img" | "emoji",
         src: string,
@@ -68,6 +69,33 @@ type TextEntryOptions = {
 }
 
 /* Base. */
+
+type Banner = {
+    src: string
+    center: number
+}
+
+type BaseOptions = {
+    view: "month" | "year"
+    header: "top" | "side"
+    banner: boolean
+    margin: boolean
+}
+
+type BaseHeader = {
+    icon: Icon & { show: boolean }
+    showText: boolean
+    pos: "top" | "side"
+}
+
+type BaseEventContext = "header" | "banner" | "options"
+
+type BaseEventDetail = {
+    context: BaseEventContext
+    payload: BaseHeader | Banner | BaseOptions
+}
+
+type BaseDispatcher = (type: "base", detail: BaseEventDetail, options?: DispatchOptions) => boolean
 
 type WeeklHabits = {
     emojis: boolean
@@ -81,16 +109,6 @@ type ThoughtEntry = {
     } | null,
     styling: "styled" | "default" | "block"
     date: Date
-}
-
-type BaseHeader = {
-    icon: Icon & { show: boolean }
-    title: string
-    text: {
-        note?: string
-        type: "summary" | "note"
-        show: boolean
-    }
 }
 
 type Icon = {
@@ -127,13 +145,13 @@ type ModalOptions = {
 
 
 /* Activity Calendar */
+
 type DayEntry = {
-    img: {
-        src: string
-        caption: string
-    }
     date: Date
-    text: string
+    highlightImg: HighlightImg | null
+    focusMins: number
+    habits: number
+    goals?: any[]
 }
 
 type DayEntryUpdatePayload = {
@@ -142,6 +160,18 @@ type DayEntryUpdatePayload = {
         caption?: string
     }
     text?: string
+}
+
+type HighlightImg = {
+    src: string
+    caption: string
+}
+
+type DayThoughtEntry = {
+    width: number
+    fontStyle: "basic" | "stylish" | "fancy" | "cute"
+    title: string
+    text: string
 }
 
 /* Time */
@@ -183,7 +213,9 @@ type OffsetPoint = {
 }
 
 type HotKeyCombo = string[]
+
 type DropDownOptionIconType = "default" | "fa" | "logo" | "unit" | "hotkey" | "right-arrow" | "check" | "svg"
+
 type DropdownOptnIcon = {
     type: DropDownOptionIconType
     icon?: string | HotKeyCombo | LogoIcon | Icon
@@ -203,6 +235,7 @@ type DropdownOption = {
 
 type DropdownOptionSection = {
     sectionName?: string
+    font?: "default" | "mono"
 }
 
 type DOMQueryOption = "id" | "class" | "tag"
@@ -229,6 +262,7 @@ type ConfirmOptions = {
 }
 
 type DropdownListItem = DropdownOptionSection | DropdownOption
+
 type DropdownItemClickedContext = {
     event: Event, 
     idx: number, 
@@ -464,6 +498,8 @@ type KeyContext = {
 }
   
 /* Home */
+type HotkeyContext = "side-bar" | "default"  
+
 type GlobalContext = {
     leftBarOpen: boolean
     leftBar?: "wide-full" | "wide-float"
@@ -476,7 +512,7 @@ type GlobalContext = {
     focusTime: number
     hasToaster: boolean
     minModeSrc: string | null
-    shortcutsFocus: ShortcutSectionInFocus
+    shortcutsFocus: HotkeyContext
     modalsOpen: ModalType[]
     lastKeysPressed: KeyContext
     ambience?: AmbientOptions
@@ -489,6 +525,7 @@ type GlobalContext = {
 type AmbientOptions = {
     active: boolean
     opacity: number
+    spacesOpen: boolean
     styling: "solid" | "blur" | "clear"
     space: AmbientSpace
     showTime: boolean
@@ -1316,6 +1353,7 @@ type ThemeStyling = {
     lightColor: string
     lightColor2: string
     lightColor3: string
+    textEntryBgColor: string
     modalBgAccentColor: string
     modalBgColor: string
     bentoBoxBgColor: string

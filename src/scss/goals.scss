@@ -1,8 +1,18 @@
 .goal-m {
     @include flex(flex-start);
-    margin-bottom: 13px;
+    margin-bottom: 12px;
     transition: 0.18s cubic-bezier(.4, 0, .2, 1);
     position: relative;
+
+    &--light &__title {
+        opacity: 0.9;
+    }
+    &--light &__bullet {
+        background-color: rgba(var(--textColor1), 0.35);
+    }
+    &--light i {
+        color: rgba(var(--textColor1), 0.4);
+    }
 
     &:active {
         transform: scale(0.995);
@@ -15,11 +25,11 @@
     }
 
     &__title {
-        @include text-style(1, 400, 1.3rem, "Geist Mono");
+        @include text-style(1, var(--fw-400-500), 1.28rem, "Geist Mono");
         cursor: pointer;
         opacity: 0.55;
         position: relative;
-        padding-bottom: 1px;
+        padding-bottom: 2px;
         @include truncate-lines(3);
     }
     &__title.strike {
@@ -27,7 +37,7 @@
     }
     &__date {
         margin: 4px 0px 0px 0px;
-        @include text-style(0.2, 400, 1.3rem, "Geist Mono");
+        @include text-style(0.2, var(--fw-300-400), 1.3rem);
     }
     &__left {
         @include square(14px);
@@ -35,11 +45,11 @@
         margin: 3px 10px 0px -5px;
     }
     &__bullet {
-        @include square(6px, 10px);
+        @include square(4px, 10px);
         background-color: rgba(var(--textColor1), 0.15);
     }
     i {
         font-size: 1.2rem;
-        opacity: 0.4;
+        color: rgba(var(--textColor1), 0.3);
     }
 }

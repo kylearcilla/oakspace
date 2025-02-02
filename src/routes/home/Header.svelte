@@ -1,16 +1,16 @@
 <script lang="ts">
 	import { onMount } from "svelte"
 
-	import { openModal } from "$lib/utils-home"
     import { Icon, ModalType } from "$lib/enums"
 	import { capitalize } from "$lib/utils-general"
+	import { openModal, updateAmbience } from "$lib/utils-home"
 	import { getDayIdxMinutes, secsToHHMM } from "$lib/utils-date"
 	import { getDayRoutineFromWeek, getCurrentBlock, getNextBlockInfo } from "$lib/utils-routines"
 	import { themeState, ytPlayerStore, weekRoutine, sessionManager, globalContext, timer } from "$lib/store"
     
 	import ActiveRoutine from "./ActiveRoutine.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
-	import AmbientSettings from "../AmbientSettings.svelte"
+	import AmbientSettings from "./space/AmbientSettings.svelte"
 	import ActiveSessionMini from "./ActiveSessionMini.svelte"
 	import BounceFade from "../../components/BounceFade.svelte"
 
@@ -77,7 +77,7 @@
     function pointerUp() {
         if (!overAmbient) return
 
-        openModal(ModalType.Spaces)
+        updateAmbience({ spacesOpen: true })
     }
     function pointerOver(pe: PointerEvent) {
         const target = pe.target as HTMLElement

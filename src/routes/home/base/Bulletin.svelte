@@ -7,9 +7,7 @@
 	import ToggleBtn from "../../../components/ToggleBtn.svelte"
 	import BounceFade from "../../../components/BounceFade.svelte"
 
-    export let options: {
-        contentsOnHover?: boolean
-    } | undefined = undefined
+    export let fullWidth: boolean
 
     // const contentsOnHover = options?.contentsOnHover ?? true
     $: isLight = !$themeState.isDarkTheme
@@ -19,7 +17,7 @@
     
     let contentsOnHover = isLight
     let isPointerOver = false
-    let fontSize = 1.2
+    let fontSize = 1.25
     let contextPos: OffsetPoint = {
         left: -1000, top: -1000
     }
@@ -27,8 +25,8 @@
     let hasContextMenu = false
     let blurred = false
     let newNoteTxt = ""
-    // let bulletinImg = "https://i.pinimg.com/564x/81/2d/7b/812d7be9f97ac8a753e6a73997c71fea.jpg"
-    let bulletinImg = "https://i.pinimg.com/736x/2e/ec/f9/2eecf97b4032e2c96df00e137a789708.jpg"
+    let bulletinImg = "https://i.pinimg.com/564x/81/2d/7b/812d7be9f97ac8a753e6a73997c71fea.jpg"
+    // let bulletinImg = "https://i.pinimg.com/736x/2e/ec/f9/2eecf97b4032e2c96df00e137a789708.jpg"
     // let bulletinImg = "https://i.pinimg.com/originals/9b/a2/8f/9ba28fe01fc1a24b757bf972a40a7339.gif"
     // let bulletinImg = "https://i.pinimg.com/originals/1e/b4/9d/1eb49dd34d176a4350e47776ee2b20aa.gif"
     
@@ -162,6 +160,7 @@
         class:bulletin--show-on-hover={contentsOnHover}
         class:bulletin--is-over={isPointerOver}
         class:bulletin--no-notes={!hasNotes}
+        class:bulletin--full-width={fullWidth}
         style:font-size={`${fontSize}rem`}
         on:contextmenu={onContextMenu}
         on:pointerup={onPointerUp}
@@ -266,10 +265,17 @@
         user-select: none;
         overflow: visible;
         cursor: pointer;
+        --opacity: 0.5;
 
+        &--light {
+            --opacity: 0.25;
+        }
         &--light p {
             font-weight: 500;
             color: white !important;
+        }
+        &--full-width .text-editor {
+            font-size: 1.35rem !important;
         }
         &--show-on-hover &__content {
             @include not-visible;
@@ -292,15 +298,16 @@
         p, .text-editor  {
             cursor: text;
             width: 80%;
-            @include text-style(0.8, 400, _, "DM Mono");
+            @include text-style(_, 400, _, "DM Mono");
+            color: rgba(white, 09);
             font-size: var(--font-size);
         }
         &__content {
             width: 100%;
             height: 100%;
             text-align: center;
-            z-index: 2;
-            background-color: rgba(black, 0.5);
+            z-index: 1;
+            background-color: rgba(black, var(--opacity));
             transition: 0.2s ease-in-out 0.1s;
             @include abs-top-left;
             @include center;

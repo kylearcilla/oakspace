@@ -26,7 +26,7 @@ label {
 }
 body {
       background-color: #101012;
-      font-family: "Manrope", sans-serif, Roboto;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       color: white;
 }
 img {
@@ -485,7 +485,7 @@ button.tab-btn {
     white-space: nowrap;
     margin-right: 4px;
     font-size: 1.3rem;
-    font-weight: 500;
+    font-weight: 400;
     @include center;
 
     &:hover {
@@ -588,6 +588,10 @@ button.text-only {
 
 .cursor-pointer {
     cursor: pointer;
+}
+
+.white {
+    color: white !important;
 }
  
  /* Tool Tip */
@@ -880,26 +884,7 @@ $settings-modal-padding: 20px 25px 25px 25px;
 .strike {
     position: relative; 
     opacity: 0.18;
-
-    &--lt {
-        text-decoration: line-through;
-    }
-
-    &::after {
-        content: ' ';
-        position: absolute;
-        top: 50%;
-        left: 0;
-        width: 100%;
-        height: 1.5px;
-        background: rgba(var(--textColor1), 0.8);
-    }
-    
-    &--animated {
-        &::after {
-            animation: 0.22s strike ease-in-out forwards 1;
-        }
-    }
+    text-decoration: line-through;
 }
 
 @mixin not-visible {
@@ -960,9 +945,6 @@ $settings-modal-padding: 20px 25px 25px 25px;
     &--light {
         background-color: rgba(var(--tag-color-2), 1);
     }
-    &--light &__title {
-        font-weight: 600;
-    }
     &__symbol {
         color: white !important;
         margin-right: 7px;
@@ -971,8 +953,9 @@ $settings-modal-padding: 20px 25px 25px 25px;
     }
     &__title {
         color: rgba(var(--tag-color-1), 1);
-        cursor: text;
         max-width: 120px;
+        @include text-style(_, var(--fw-400-500), 1.185rem);
+        cursor: text;
         @include elipses-overflow;
     }
 }
@@ -1097,7 +1080,7 @@ $loading-dots-width: 4px;
 }
 
 .fraction {
-    @include text-style(0.7, 400, 1.35rem, "Geist Mono");
+    @include text-style(0.7, var(--fw-400-500), 1.35rem);
     @include flex(center);
     
     &__slash {
@@ -1185,4 +1168,8 @@ $loading-dots-width: 4px;
     100% {
         background-position: var(--shimmer-text-width) 0;
     }
+}
+
+.full-txt-color {
+    color: rgba(var(--textColor1), 1) !important;
 }

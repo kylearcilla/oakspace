@@ -6,22 +6,28 @@
 	import { themeState } from "../../../lib/store";
 
     export let manager: GoalsManager
-    export let grouping: "tag" | "status" | "default"
+    export let options: GoalsView
     export let pinnedGoal: Goal
 
     let store: GoalsViewState | null = null
     let containerRef: HTMLElement
     let width = 0
 
+    $: grouping = options.grouping
+    $: showProgress = options.showProgress
+    $: showDue = options.due
+    $: dueType = options.dueType
     $: isLight = !$themeState.isDarkTheme
 
-    $: if (grouping) {
-        manager.initSections(grouping)
-    }
+    $: manager.initSections(grouping)
     $: if (manager.state) {
         manager.state.subscribe((data) => {
             store = data
         })
+    }
+
+    function update() {
+        grouping = options.boardGrouping
     }
     onMount(() => manager.initContainerRef(containerRef))
 </script>
@@ -65,7 +71,7 @@
                                 {secIdx === 0 ? "📌" : secIdx === 1 ? "✍️" : "🎉"}
                             {/if}
                         </div>
-                        <div class="goals__col-name" class:tag__title={isTag}>
+                        <div class:tag__title={isTag} style:margin-top={"1px"}>
                             {sec}
                         </div>
                     </div>
@@ -104,10 +110,11 @@
                                 highlighted={editGoal?.id === goal.id}
                                 options={{ 
                                     img: true, 
-                                    due: false,
+                                    due: showDue,
                                     tag: grouping === "status",
                                     completed: sec === "Accomplished", 
-                                    progress: "default",
+                                    progress: showProgress,
+                                    dueType
                                 }}
                             />
                         </div>
@@ -130,11 +137,8 @@
     .goals {
         display: flex;
         
-        &--light &__col-name-container {
-            font-weight: 600;
-        }
         &--light &__col-count {
-            @include text-style(0.35, 500);
+            @include text-style(0.35);
         }
         &--light &__col-name-container--not-started {
             color: rgba(var(--textColor1), 0.8);
@@ -153,8 +157,8 @@
         }
 
         &__col {
-            min-width: 205px;
-            max-width: 205px;
+            min-width: 200px;
+            max-width: 200px;
             margin-right: 15px;
         }
         &__col-header {
@@ -170,9 +174,9 @@
             color: white !important;
         }
         &__col-name-container {
-            @include text-style(_, 400, 1.2rem, "Geist Mono");
+            @include text-style(_, var(--fw-400-500), 1.3rem);
             display: flex;
-            padding: 4px 15px 5px 10px !important;
+            padding: 4px 15px 6px 10px !important;
             border-radius: 8px;
             margin-right: 10px;
 
@@ -190,11 +194,11 @@
             }
         }
         &__col-count {
-            @include text-style(0.35, 400, 1.25rem, "Geist Mono");
+            @include text-style(0.35, 500, 1.25rem, "Geist Mono");
         }
         &__list {
             position: relative;
-            width: 210px;
+            width: 200px;
         }
         &__goal {
             position: relative;

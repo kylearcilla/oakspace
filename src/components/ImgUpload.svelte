@@ -245,7 +245,7 @@
         width: 450px;
         padding: 12px 19px 14px 19px;
         border-radius: 12px;
-        background-color: var(--bg-3);
+        background-color: var(--bg-2);
 
         &--light .modal-bg {
             @include modal-bg-light;

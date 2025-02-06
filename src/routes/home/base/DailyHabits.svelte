@@ -68,7 +68,7 @@
             font-size: 1.5rem;
         }
         &__habit-box {
-            background-color: var(--lightColor3);
+            background-color: var(--lightColor2);
             @include square(18.5px);
             border-radius: 0px;
             position: relative;

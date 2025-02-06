@@ -381,7 +381,7 @@
     &__block-buttons button {
         @include circle(16px);
         @include center;
-        background-color: var(--bg-3);
+        background-color: var(--bg-2);
         border: 1px solid rgba(var(--textColor1), 0.06);
         margin: 0px 5px 5px 0px;
         transition: 0.04s ease-in-out;

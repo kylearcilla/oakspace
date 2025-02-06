@@ -378,7 +378,7 @@
 			top: 13px;
 			width: max-content;
 			border-radius: 5px;
-			background-color: var(--bg-3);
+			background-color: var(--bg-2);
 		}
 	}
 </style>

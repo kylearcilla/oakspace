@@ -627,7 +627,7 @@
             }
         }
         &--session &__content {
-            background-color: var(--bg-3) !important;
+            background-color: var(--bg-2) !important;
             border: 1px solid rgba(var(--textColor1), 0.03);
         }
         &--session &__title {

@@ -154,7 +154,7 @@
             margin-bottom: 4px;
         }
         &__inner {
-            background-color: var(--bg-3);
+            background-color: var(--bg-2);
             @include box(110px, 160px, 15px);
             margin-left: 15px;
             padding: 12px 10px 10px 13px;

@@ -686,7 +686,7 @@
             margin: 0px 0px 0px 2px;
         }
         &__box {
-            background-color: var(--lightColor3);
+            background-color: var(--lightColor2);
             height: 18px;
             width: 18px;
             border-radius: 0px;
@@ -713,7 +713,7 @@
             }
         }
         &__box--not-required {
-            background-color: var(--lightColor3);
+            background-color: var(--lightColor2);
 
             &:hover {
                 background-color: rgb(var(--textColor1), 0.045);

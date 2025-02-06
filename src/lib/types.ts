@@ -1345,14 +1345,12 @@ type ThemeStyling = {
     isDark: boolean
     bg1: string
     bg2: string
-    bg3: string
     fgColor1: string
     fgColor2: string
     textColor1: string
     textColor2: string
-    lightColor: string
+    lightColor1: string
     lightColor2: string
-    lightColor3: string
     heatMapColor: string
     calMarkColor: string
     textEntryBgColor: string

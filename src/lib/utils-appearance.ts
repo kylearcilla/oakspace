@@ -97,14 +97,12 @@ export function setRootColors(name: string, theme: ThemeStyling) {
       :root {
           --bg-1: ${theme.bg1};
           --bg-2: ${theme.bg2};
-          --bg-3: ${theme.bg3};
           --fgColor1: ${theme.fgColor1};
           --fgColor2: ${theme.fgColor2};
           --textColor1: ${theme.textColor1};
           --textColor2: ${theme.textColor2};
-          --lightColor: ${theme.lightColor};
+          --lightColor1: ${theme.lightColor1};
           --lightColor2: ${theme.lightColor2};
-          --lightColor3: ${theme.lightColor3};
           --calMarkColor: ${theme.calMarkColor};
           --modalBgColor: ${theme.modalBgColor};
           --modalBgAccentColor: ${theme.modalBgAccentColor};

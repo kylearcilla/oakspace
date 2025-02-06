@@ -96,7 +96,7 @@
             width: 16.5px;
             height: 16.5px;
             border-radius: 0px;
-            background-color: var(--lightColor3);
+            background-color: var(--lightColor2);
             color: var(--elemTextColor);
             @include center;
             font-size: 1.1rem;

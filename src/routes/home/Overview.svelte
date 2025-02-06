@@ -698,7 +698,7 @@
     }
 
     .google-cals {
-        background-color: var(--bg-3);
+        background-color: var(--bg-2);
         border: 1px solid rgba(var(--textColor1), 0.02);
         border-radius: 15px;
         width: 200px;

@@ -128,11 +128,12 @@
                                 <div class="acal__day-header">
                                     <div class="flx-algn-center">
                                         <span class="acal__day-num">{d}</span>
-                                        {#if showHabits}
-                                            <span class="acal__star">
-                                                {#if Math.random() > 0.7}
-                                                    *
-                                                {/if}
+                                        {#if showHabits && Math.random() > 0.7}
+                                            <span 
+                                                class="acal__star" 
+                                                title="missed some habits"
+                                            >
+                                                *
                                             </span>
                                         {/if}
                                     </div>
@@ -254,7 +255,7 @@
         &--light {
             --dark-cell-opac: 0.04;
             --obscure-cell-opac: 0.2;
-            --hover-opacity: 0.03;
+            --hover-opacity: 0.04;
             --hover-opacity-dark: 0.06;
         }
         &--light &__focus {
@@ -265,6 +266,9 @@
         }
         &--light &__goal-cutoff {
             @include text-style(0.7);
+        }
+        &--light &__dow {
+            @include text-style(0.65);
         }
 
         &__dow {
@@ -319,7 +323,7 @@
                 opacity: var(--obscure-cell-opac);
             }
             &--today &-num {
-                background-color: #FF5151;
+                background-color: var(--calMarkColor);
                 color: white;
                 @include circle(20px);
             }
@@ -328,7 +332,7 @@
             background: rgba(var(--textColor1), 0.035) !important;
         }
         &__day:hover {
-            background: rgba(var(--textColor1), var(--hover-opacity));
+            background-color: rgba(var(--textColor1), var(--dark-cell-opac));
         }
 
         &__day-ring {

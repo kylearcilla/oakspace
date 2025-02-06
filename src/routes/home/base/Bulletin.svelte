@@ -8,57 +8,31 @@
 	import BounceFade from "../../../components/BounceFade.svelte"
 
     export let fullWidth: boolean
+    export let content: {
+        img: string,
+        hasNotes: boolean,
+        contentsOnHover: boolean,
+        notes: string[],
+        noteIdx: number
+    }
 
     // const contentsOnHover = options?.contentsOnHover ?? true
     $: isLight = !$themeState.isDarkTheme
 
     const MAX_NOTE_LENGTH = 300
     const INPUT_ID = "bulletin-input"
+
+    let { img, hasNotes, contentsOnHover, notes, noteIdx } = content
     
-    let contentsOnHover = isLight
     let isPointerOver = false
     let fontSize = 1.25
     let contextPos: OffsetPoint = {
         left: -1000, top: -1000
     }
-    let hasNotes = true
     let hasContextMenu = false
     let blurred = false
     let newNoteTxt = ""
-    let bulletinImg = "https://i.pinimg.com/564x/81/2d/7b/812d7be9f97ac8a753e6a73997c71fea.jpg"
-    // let bulletinImg = "https://i.pinimg.com/736x/2e/ec/f9/2eecf97b4032e2c96df00e137a789708.jpg"
-    // let bulletinImg = "https://i.pinimg.com/originals/9b/a2/8f/9ba28fe01fc1a24b757bf972a40a7339.gif"
-    // let bulletinImg = "https://i.pinimg.com/originals/1e/b4/9d/1eb49dd34d176a4350e47776ee2b20aa.gif"
     
-    let notes = [
-        "you can literally have a whole new life in a year",
-        "outgrowing my own bullshit. love to see it.",
-        "real growth starts when you're tired of your own shit",
-        "Inner peace over everything else.",
-        "Can't approach new energy and new life with the same attitude u was using to maintain ya old shit!",
-        "How would the most relaxed version of you approach it? The most confident version? Your best version?",
-        "Life begins at the end of your comfort.",
-        "Everything in life starts with your mindset first and your actions second. <br><br>Your actions follow your thoughts, your beliefs and ideas.",
-        "Be yourself so the people looking for you can find you.",
-        "You gotta learn how to move from things that don't serve you well.",
-        "Decide what kind of life you actually want. And then say no to everything that isn't that.",
-        "Self love is the highest frequency that attracts everything you desire.",
-        "Do not rely on transient feelings, rely on who you desire to be on this day, in this lifetime. <br><br>What would they do. Don't ask yourself if you want to do it. <br><br>Ask your future self if they want you to do it. <br><br>You do it for that person.",
-        "If you only listen to yourself, all you will do is recreate the same reality that you've always been living in. <br><br>If you keep reframing your everyday from within your future, idealized best-self, you will inch closer and closer to be that person",
-        "What a disgrace it is for a man to grow old without ever seeing the beauty and strength of which his body is capable.",
-        "I'm in love with my future.",
-        "It's the small habits. How you spend your mornings. <br><br> How you talk to yourself. Your first instinct when boredom arises. <br><br>What you choose to spend enery on. Who you share your energy with. That will change your life.",
-        "The past is just a story we tell ourselves.",
-        "You need 3 daily wins: <br><br>A physical win. <br>A mental win. <br>A spiritual win.",
-        "I love ppl with good energy. It makes me so happy.",
-        "If the mind wanders 100 times, simply invite it back 100 times.<br><br> Each time you bring your mind back without judgement, it is like a bicep curl for your brain.",
-        "Spoiler: it absolutely does workout for you, and even better than you anticipated.",
-        "Develop a strong opinion of yourself so you don't end up internalizing the beliefs others have of you.",
-        "Wheresoever you go, go with all your heart.",
-        "Someone could be more successful than you and still envy you because your character carries more weight than their status.",
-        "You have to get so confident in who you are that no one's opinion, rejection, or behavior can fucking rock you.",
-    ]
-    let noteIdx = 0
     let editor = new TextEditorManager({ 
         initValue: notes[noteIdx],
         placeholder: "type note here...",
@@ -72,8 +46,6 @@
         }
     })
 
-    $: console.log({ notes })
-
     function onEditComplete() {
         if (!newNoteTxt) {
             removeNote(noteIdx)
@@ -83,6 +55,7 @@
         }
 
         notes = notes
+        content.notes = notes
         blurred = true
     }
     function removeNote(idx: number) {
@@ -116,7 +89,8 @@
         else {
             noteIdx = (noteIdx + 1) % notes.length
         }
-
+        
+        content.noteIdx = noteIdx
         editor.updateText(notes[noteIdx])
     }
     function onContextMenu(_e: Event) {
@@ -143,8 +117,9 @@
 
         imageUpload.init({
             onSubmit: (imgSrc: string) => {
-                if (imgSrc && bulletinImg != imgSrc) {
-                    bulletinImg = imgSrc
+                if (imgSrc && img != imgSrc) {
+                    img = imgSrc
+                    content.img = imgSrc
                 }
             }
         })
@@ -167,7 +142,7 @@
         on:pointerover={() => isPointerOver = true}
         on:pointerleave={() => isPointerOver = false}
     >
-        <img src={bulletinImg} alt="">
+        <img src={img} alt="">
         <div class="bulletin__content" class:hidden={!hasNotes}>
             <div 
                 id={INPUT_ID}
@@ -216,6 +191,7 @@
                         active={hasNotes}
                         onToggle={() => {
                             hasNotes = !hasNotes
+                            content.hasNotes = hasNotes
                         }}
                     />
                 </div>
@@ -226,6 +202,7 @@
                             active={contentsOnHover}
                             onToggle={() => {
                                 contentsOnHover = !contentsOnHover
+                                content.contentsOnHover = contentsOnHover
                             }}
                         />
                     </div>
@@ -268,7 +245,7 @@
         --opacity: 0.5;
 
         &--light {
-            --opacity: 0.25;
+            --opacity: 0.2;
         }
         &--light p {
             font-weight: 500;
@@ -299,7 +276,7 @@
             cursor: text;
             width: 80%;
             @include text-style(_, 400, _, "DM Mono");
-            color: rgba(white, 09);
+            color: rgba(white, 0.95);
             font-size: var(--font-size);
         }
         &__content {

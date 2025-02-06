@@ -59,7 +59,7 @@
             margin-bottom: 13px;
         }
         &__habit-name {
-            @include text-style(1, var(--twt-400-500), 1.5rem);
+            @include text-style(1, var(--fw-400-500), 1.5rem);
             @include elipses-overflow;
             @include flex(center, space-between);
         }

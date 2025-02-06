@@ -3,6 +3,125 @@ import { COLOR_SWATCHES } from "./utils-colors"
 import { generateHabitData } from "./utils-habits"
 import { v4 as uuidv4 } from 'uuid'
 
+/* aesthetics */
+export const IMG_COLLECTIONS: any = {
+  "dark": {
+      banner: {
+        src: "https://i.imgur.com/MEjZkXW.png",
+        center: 50
+      },
+      headerIcon: "https://i.pinimg.com/736x/b3/90/0d/b3900d7712279767b687231f36fad8a0.jpg",
+      headerTextBlockImg: {
+        type: "img",
+        src: "https://i.pinimg.com/736x/72/44/08/724408c450ce38a7be258ed489d8c64d.jpg",
+        size: "small"
+      },
+      bulletinImg: "https://i.pinimg.com/564x/81/2d/7b/812d7be9f97ac8a753e6a73997c71fea.jpg",
+      overviewTextBlockImg: {
+        src: "https://i.pinimg.com/originals/41/bc/b5/41bcb5fba60bb3e1112550c0a7841c70.gif",
+        type: "img",
+        size: "small"
+      },
+      headerImg: "https://i.pinimg.com/originals/7d/04/0e/7d040e94931427709008aaeda14db9c8.gif"
+  },
+  "light": {
+    banner: {
+      src: "https://pbs.twimg.com/media/EjAg4_zU8AMUZHJ?format=jpg&name=large",
+      center: 67.5588
+    },
+    headerIcon: "https://i.pinimg.com/736x/e2/8c/8d/e28c8d7ec915504ba5f098aa80901972.jpg",
+    headerTextBlockImg: {
+      type: "img",
+      src: "https://i.pinimg.com/originals/74/9b/95/749b9521a2d28907f7b0fc79598cc420.gif",
+      size: "small"
+    },
+    bulletinImg: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/287d3559037917.5a130f45904d5.gif",
+    overviewTextBlockImg: {
+      src: "https://i.pinimg.com/736x/d1/a6/55/d1a655f28705a9257c58e97b30211ea2.jpg",
+      type: "img",
+      size: "big"
+    },
+    headerImg: "",
+  },
+  "dark-academia": {
+      banner: {
+        src: "https://images.unsplash.com/photo-1555440186-7f0a5a6a5537?q=80&w=2436&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        center: 50
+      },
+      headerIcon: "https://i.pinimg.com/736x/60/c0/56/60c056da9584990ab945e946922f5416.jpg",
+      headerTextBlockImg: {
+        type: "img",
+        src: "https://i.pinimg.com/736x/b4/e6/1f/b4e61fd0f678b2164e4ab0c275082367.jpg",
+        size: "small"
+      },
+      bulletinImg: "https://i.pinimg.com/736x/1a/b9/40/1ab940c5b78f82ab8e57d6f263a0bca8.jpg",
+      overviewTextBlockImg: {
+        src: "https://i.pinimg.com/736x/ed/b9/3d/edb93d9be0ab8783333e9918455d4ae3.jpg",
+        type: "img",
+        size: "small"
+      },
+      headerImg: "https://i.pinimg.com/736x/1a/b9/40/1ab940c5b78f82ab8e57d6f263a0bca8.jpg"
+  },
+  "gotham": {
+      banner: {
+        src: "https://i.pinimg.com/originals/40/0f/00/400f007bade76022eb839fdbb5acf646.gif",
+        center: 77.3329
+      },
+      headerIcon: "https://i.pinimg.com/originals/a3/49/42/a349425ae32290a0fb222b3990049389.gif",
+      headerTextBlockImg: {
+        type: "emoji",
+        src: "🌉",
+        size: "small"
+      },
+      bulletinImg: "https://i.pinimg.com/originals/d9/8e/8b/d98e8b09855fcaea6a6d00ddefe09113.gif",
+      overviewTextBlockImg: {
+        src: "https://i.pinimg.com/736x/ae/28/ba/ae28ba3c8dcca80bd2b8b5a632ffa9b6.jpg",
+        type: "img",
+        size: "big"
+      },
+      headerImg: "https://i.pinimg.com/originals/f6/5a/a5/f65aa5411e5d4e54b93aabb1bf1ceca4.gif"
+  },
+  "terracotta": {
+      banner: {
+        src: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Cole_Thomas_The_Course_of_Empire_Desolation_1836.jpg/2560px-Cole_Thomas_The_Course_of_Empire_Desolation_1836.jpg",
+        center: 45.2433
+      },
+      headerIcon: "https://i.pinimg.com/736x/f0/9a/9c/f09a9c36370c62b82906bffa5f9d090e.jpg",
+      headerTextBlockImg: {
+        type: "emoji",
+        src: "🌿",
+        size: "small"
+      },
+      bulletinImg: "https://i.pinimg.com/736x/27/4d/7e/274d7e37c3b311c32d316749ed2d9d4f.jpg",
+      overviewTextBlockImg: {
+        src: "https://i.pinimg.com/736x/89/74/9d/89749de231686a58bfb692d9ea087273.jpg",
+        type: "img",
+        size: "big"
+      },
+      headerImg: "https://i.pinimg.com/originals/f6/5a/a5/f65aa5411e5d4e54b93aabb1bf1ceca4.gif"
+  },
+  "sand": {
+      banner: {
+        src: "https://cdn.mos.cms.futurecdn.net/63JGu3actDe5YUGmzpsycA.jpg",
+        center: 67
+      },
+      headerIcon: "https://i.pinimg.com/736x/7d/94/2b/7d942b031af0bc94e87de7fecc85553e.jpg",
+      headerTextBlockImg: {
+        type: "img",
+        src: "https://i.pinimg.com/736x/73/e7/c0/73e7c077da633396fef3a9acebd84987.jpg",
+        size: "small"
+      },
+      bulletinImg: "https://i.pinimg.com/736x/39/81/57/39815794e8a6f0241cf851a2fe82a166.jpg",
+      overviewTextBlockImg: {
+        src: "https://i.pinimg.com/originals/b9/32/88/b93288ff19c3b3460ab2680b7ffa1666.gif",
+        type: "img",
+        size: "big"
+      },
+      headerImg: ""
+  },
+}
+
+const IMG_COLLECTION_IDX = "sand"
 
 /* tags */
 export const TEST_TAGS: Tag[] = [
@@ -277,7 +396,7 @@ export const TEST_GOALS: Goal[] = [
   {
     id: uuidv4(),
     name: "Reach conversational fluency in French",
-    due: new Date("2025-2-31"),
+    due: new Date("2025-2-22"),
     dueType: "month",
     description: "Reach conversational fluency in French by the end of the year.",
     tag: TEST_TAGS[0],
@@ -374,7 +493,7 @@ export const TEST_GOALS: Goal[] = [
     name: "Go hiking in Iceland",
     description: "Trek through Iceland's epic landscapes with glaciers, volcanoes, and hidden hot springs.",
     creationDate: new Date("2025-01-01"),
-    due: new Date("2025-2-31"),
+    due: new Date("2025-2-22"),
     status: "not-started",
     imgSrc: "https://i.pinimg.com/736x/e7/cb/8a/e7cb8a6fd5c308575b3261262e85965d.jpg",
     tag: TEST_TAGS[9],
@@ -445,7 +564,7 @@ export const TEST_GOALS: Goal[] = [
   {
     id: uuidv4(),
     name: "Read 12 Books This Year",
-    due: new Date("2025-12-31"),
+    due: new Date("2025-12-22"),
     dueType: "year",
     description: "Read one book every month and complete all 12 by the end of the year.",
     tag: TEST_TAGS[10],
@@ -719,6 +838,18 @@ export const YEAR_HABITS_DATA: HabitYearData[] = [
 ]
 
 /* home base */
+export const BASE_BANNER = IMG_COLLECTIONS[IMG_COLLECTION_IDX].banner
+
+export const BASE_HEADER = {
+  icon: {
+    src: IMG_COLLECTIONS[IMG_COLLECTION_IDX].headerIcon,
+    type: "img",
+    show: true
+  },
+  showText: true,
+  pos: "top"
+}
+
 export const YEAR_THOUGHT_ENTRY: TextEntryOptions = {
   icon: {
       type: "img",
@@ -737,11 +868,7 @@ It's finding comfort in solitude, turning down the noise, and letting your mind 
 }
 
 export const HOME_THOUGHT_ENTRY: TextEntryOptions = {
-  icon: {
-      type: "img",
-      src: "https://i.pinimg.com/736x/72/44/08/724408c450ce38a7be258ed489d8c64d.jpg",
-      size: "small"
-  },
+  icon: IMG_COLLECTIONS[IMG_COLLECTION_IDX].headerTextBlockImg,
   date: new Date(2025, 5),
   truncate: true,
   styling: "has-marker",
@@ -754,11 +881,7 @@ It's the art of <i>dreaming boldly</i>, seeking the extraordinary, and finding b
 }
 
 export const MONTH_THOUGHT_ENTRY: TextEntryOptions = {
-  icon: {
-      type: "img", 
-      src: "https://i.pinimg.com/originals/41/bc/b5/41bcb5fba60bb3e1112550c0a7841c70.gif",
-      size: "small"
-  },
+  icon: IMG_COLLECTIONS[IMG_COLLECTION_IDX].overviewTextBlockImg,
   date: new Date(2025, 6),
   truncate: true,
   styling: "has-marker",
@@ -958,3 +1081,40 @@ export const ACTIVITY_DATA: DayEntry[] = [
       ]
   }
 ]
+
+export const BULLETIN_CONTENT = {
+  img: IMG_COLLECTIONS[IMG_COLLECTION_IDX].bulletinImg,
+  hasNotes: true,
+  contentsOnHover: true,
+  notes: [
+    "you can literally have a whole new life in a year",
+    "outgrowing my own bullshit. love to see it.",
+    "real growth starts when you're tired of your own shit",
+    "Inner peace over everything else.",
+    "Can't approach new energy and new life with the same attitude u was using to maintain ya old shit!",
+    "How would the most relaxed version of you approach it? The most confident version? Your best version?",
+    "Life begins at the end of your comfort.",
+    "Everything in life starts with your mindset first and your actions second. <br><br>Your actions follow your thoughts, your beliefs and ideas.",
+    "Be yourself so the people looking for you can find you.",
+    "You gotta learn how to move from things that don't serve you well.",
+    "Decide what kind of life you actually want. And then say no to everything that isn't that.",
+    "Self love is the highest frequency that attracts everything you desire.",
+    "Do not rely on transient feelings, rely on who you desire to be on this day, in this lifetime. <br><br>What would they do. Don't ask yourself if you want to do it. <br><br>Ask your future self if they want you to do it. <br><br>You do it for that person.",
+    "If you only listen to yourself, all you will do is recreate the same reality that you've always been living in. <br><br>If you keep reframing your everyday from within your future, idealized best-self, you will inch closer and closer to be that person",
+    "What a disgrace it is for a man to grow old without ever seeing the beauty and strength of which his body is capable.",
+    "I'm in love with my future.",
+    "It's the small habits. How you spend your mornings. <br><br> How you talk to yourself. Your first instinct when boredom arises. <br><br>What you choose to spend enery on. Who you share your energy with. That will change your life.",
+    "The past is just a story we tell ourselves.",
+    "You need 3 daily wins: <br><br>A physical win. <br>A mental win. <br>A spiritual win.",
+    "I love ppl with good energy. It makes me so happy.",
+    "If the mind wanders 100 times, simply invite it back 100 times.<br><br> Each time you bring your mind back without judgement, it is like a bicep curl for your brain.",
+    "Spoiler: it absolutely does workout for you, and even better than you anticipated.",
+    "Develop a strong opinion of yourself so you don't end up internalizing the beliefs others have of you.",
+    "Wheresoever you go, go with all your heart.",
+    "Someone could be more successful than you and still envy you because your character carries more weight than their status.",
+    "You have to get so confident in who you are that no one's opinion, rejection, or behavior can fucking rock you.",
+  ],
+  noteIdx: 0
+}
+
+export const HEADER_IMG = IMG_COLLECTIONS[IMG_COLLECTION_IDX].headerImg

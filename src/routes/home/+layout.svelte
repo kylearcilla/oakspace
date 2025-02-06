@@ -23,14 +23,14 @@
 	import { globalContext, reviewSession, sessionManager } from "$lib/store"
 	import { 
     initAppState, keyboardShortCutHandlerKeyDown, keyboardShortCutHandlerKeyUp, 
-    onMouseMoveHandler, updateRoute, onQuitApp,
+    onMouseMoveHandler, onQuitApp,
 	  middleViewExpandHandler,
 	  AMBIENT,
 	  getLeftBarWidth,
     updateCursor
   } from "$lib/utils-home"
   
-	import { afterNavigate, beforeNavigate, goto } from "$app/navigation"
+	import { afterNavigate } from "$app/navigation"
 	import SessionSummaryModal from "./SessionSummaryModal.svelte"
 	import Modal from "../../components/Modal.svelte";
 	import { themeState, ytPlayerStore } from "../../lib/store";
@@ -148,34 +148,28 @@
   afterNavigate(({ to, from, type }) => {
     if (!to?.route?.id || type === "enter") return
 
-    const { id } = to.route
-    const ambience = hasAmbienceSpace()
-    routeId = id
+    const { id: fromId } = from.route
+    const { id: toId } = to.route
 
-    updateRoute(id)
+    routeId = toId
 
-    if (ambience && routeId === "/home/space") {
-      // will be always dark when refrseshing on workspace
+    if (!hasAmbienceSpace()) {
+      return
+    }
+    if (toId === "/home/base") {
+      updateAmbience({ active: false })
+    }
 
-      if (from.route.id) {
-        prevSetTheme = getActiveTheme()
-        setPrevTheme(prevSetTheme)
-      }
+    if (fromId === "/home/base" && toId === "/home/space") {
+      prevSetTheme = getActiveTheme()
+      setPrevTheme(prevSetTheme)
 
       setNewTheme(themes[0])
       updateAmbience({ active: true })
     }
-    else if (ambience) {
-
+    else if (fromId === "/home/space" && toId === "/home/base") {
       setNewTheme(findThemeFromName(getPrevTheme()))
-      updateAmbience({ active: false })
     }
-  })
-
-  beforeNavigate(({ to }) => {
-    if (!to?.route?.id) return
-
-    routeId = to.route.id
   })
   
   onMount(() => {
@@ -234,9 +228,9 @@
         <Header/>
       </div>
         {#if route != "/home"}
-            <div class="home__middle-view-slot-container">
-              <slot />
-            </div>
+          <div class="home__slot">
+            <slot />
+          </div>
         {/if}
     </div>
     <!-- right -->
@@ -469,6 +463,7 @@
 
       &__header-container {
         width: calc(100%);
+        height: 28px;
       }
       &__left-bar {
         height: 100%;
@@ -476,25 +471,22 @@
         background-color: var(--navMenuBgColor);
         width: var(--left-bar-width);
         border-right: var(--side-border);
-        z-index: 400;
+        z-index: 200;
         position: fixed;
         transition: 0.2s cubic-bezier(.4, 0, .2, 1);
       }
 
       &__middle-view {
-        padding: 6px 0px 20px 0px;
+        padding: 6px 0px 0px 0px;
+        height: 100%;
+        transition: 0.2s cubic-bezier(.4, 0, .2, 1);
+      }
+      &__slot {
+        padding: inherit;
         width: 100%;
         height: 100%;
-        position: relative;
+        z-index: 200;
         transition: 0.2s cubic-bezier(.4, 0, .2, 1);
-
-        &-slot-container {
-          padding: inherit;
-          @include abs-top-left(35px);
-          width: 100%;
-          height: 100%;
-          z-index: 300;
-        }
       }
       &__right-bar {
         height: 100%;
@@ -502,7 +494,7 @@
         top: 0px;
         right: 0px;
         background-color: var(--rightBarBgColor);
-        z-index: 400;
+        z-index: 200;
         transition: 0.2s cubic-bezier(.4, 0, .2, 1);
         overflow: hidden;
         

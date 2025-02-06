@@ -22,23 +22,28 @@
     $: isLight = !$themeState.isDarkTheme
     $: progress = Math.min(progress * 100, 100)
 
-    $: {
-        updateColor(isLight, progress)
-    }
+    $: updateColor(progress)
 
-    function updateColor(light: boolean, progress: number) {
-        const settings = light ? LIGHT_COLOR_PROGRESS : DARK_COLOR_PROGRESS        
+    themeState.subscribe(() => updateColor(progress))
+
+    function updateColor(progress: number) {
+        const settings = isLight ? LIGHT_COLOR_PROGRESS : DARK_COLOR_PROGRESS
         const { max, min, gVal, bVal } = settings
-        
-        if (style === "rich-colored") {
+        const lightTheme = $themeState.lightTheme
+        const isTerracotta = lightTheme === "terracotta" && isLight
+
+
+        if (style === "rich-colored" && !isTerracotta) {
             const rval = Math.max(max - ((max - min) * (progress / 100)), min)
             fgColor    = `rgb(${rval}, ${gVal}, ${bVal})`
-            bgColor    = `rgba(var(--textColor1), ${light ? 0.1 : 0.05})`
+            bgColor    = `rgba(var(--textColor1), ${isLight ? 0.1 : 0.05})`
         }
         else {
-            const bgOpacity = light ? 0.1 : 0.04
+            const bgOpacity = isLight ? 0.1 : 0.04
+            const usefgColor = isLight && lightTheme != "light"
+            const opacity = isLight ? 0.45 : 0.25
 
-            fgColor = light ? "var(--elemColor1)" : "rgba(var(--textColor1), 0.25)"
+            fgColor = usefgColor ? "var(--elemColor1)" : `rgba(var(--textColor1), ${opacity})`
             bgColor = `rgba(var(--textColor1), ${bgOpacity})`
         }
     }

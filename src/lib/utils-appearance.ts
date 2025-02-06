@@ -34,7 +34,7 @@ export function loadTheme() {
       darkTheme:   isDark ? name : state.darkTheme
   }))
 
-  setRootColors(styling)
+  setRootColors(name, styling)
 }
 
 export function setPrevTheme(prevTheme: string) {
@@ -56,7 +56,7 @@ export function setNewTheme(newTheme: Theme) {
       darkTheme:   isDark ? name : state.darkTheme
   }))
   
-  setRootColors(newTheme.styling)
+  setRootColors(name, newTheme.styling)
   localStorage.setItem("theme", JSON.stringify(newTheme))
 }
 
@@ -77,7 +77,7 @@ export function getActiveTheme() {
  * 
  * @param theme theme object to be currently used
  */
-export function setRootColors(theme: ThemeStyling) {
+export function setRootColors(name: string, theme: ThemeStyling) {
     const headTag = document.getElementsByTagName('head')[0]
     const styleTag = document.createElement("style")
     const { isDark } = theme
@@ -88,6 +88,10 @@ export function setRootColors(theme: ThemeStyling) {
     const weight_300_400 = isDark ? "300" : "400"
     const weight_400_500 = isDark ? "400" : "500"
     const weight_500_600 = isDark ? "500" : "600"
+
+    const superLight = name === "light" || name === "sand"
+    const cardLightBorder = name === "light" ? "1.5px solid rgba(var(--textColor1), 0.065)" : "none"
+    const cardLightShadow = superLight ? "rgba(var(--textColor1), 0.055) 0px 5px 10px 1px" : "none"
   
     styleTag.innerHTML = `
       :root {
@@ -101,25 +105,23 @@ export function setRootColors(theme: ThemeStyling) {
           --lightColor: ${theme.lightColor};
           --lightColor2: ${theme.lightColor2};
           --lightColor3: ${theme.lightColor3};
-          --navMenuBorder: ${theme.navMenuBorder};
+          --calMarkColor: ${theme.calMarkColor};
           --modalBgColor: ${theme.modalBgColor};
           --modalBgAccentColor: ${theme.modalBgAccentColor};
           --bentoBoxBgColor: ${theme.bentoBoxBgColor};
           --bentoBoxBorder: ${theme.bentoBoxBorder};
           --bentoBoxShadow: ${theme.bentoBoxShadow};
-          --muiscPlayerBgColor: ${theme.muiscPlayerBgColor};
-          --musicProgressFgColor: ${theme.musicProgressFgColor};
           --sessionBlockColor: ${theme.sessionBlockColor};
           --navMenuBgColor: ${theme.navMenuBgColor};
           --navBtnColor: ${theme.navBtnColor};
           --navBtnBgColor: ${theme.navBtnBgColor};
-          --minNavBtnColor: ${theme.minNavBtnColor};
-          --minNavBtnBgColor: ${theme.minNavBtnBgColor};
           --rightBarBgColor: ${theme.rightBarBgColor};
           --elemColor1: ${theme.elemColor1};
           --elemColor2: ${theme.elemColor2};
           --elemTextColor: ${theme.elemTextColor};
           --cardBgColor: ${theme.cardBgColor};
+          --starColor: ${theme.starColor};
+          --heatMapColor: ${theme.heatMapColor};
           --cardFgColor: ${theme.cardHovColor};
           --divider-border: ${dividerBorderStyle};
           --divider-bg: ${dividerBgStyle};
@@ -127,6 +129,8 @@ export function setRootColors(theme: ThemeStyling) {
           --fw-300-400: ${weight_300_400};
           --fw-400-500: ${weight_400_500};
           --fw-500-600: ${weight_500_600};
+          --card-light-border: ${cardLightBorder};
+          --card-light-shadow: ${cardLightShadow};
     `
     headTag.appendChild(styleTag)
   }

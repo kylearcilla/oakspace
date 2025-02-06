@@ -18,8 +18,8 @@
 
 	const OPACITY_AHEAD = {
 		light: {
-			habits: 0.06,
-			goals: 0.125
+			habits: 0.035,
+			goals: 0.055
 		},
 		dark: {
 			habits: 0.012,
@@ -92,7 +92,6 @@
 		}
 	}
 	function getRenderData(idx: number, isLight: boolean) {
-		console.log("qqqq")
 		const getLast = options.from === 'last'
 		const currDay = addToDate({ 
 			date: firstDay, 
@@ -201,7 +200,7 @@
 							{@const dayIdx = colIdx * 7 + cellIdx}
 							{@const { show, opacity, day } = getRenderData(dayIdx, isLight)}
 							{@const sameDay = isSameDay(new Date(), day)}
-							{@const color = type === 'habits' ? `rgba(var(--fgColor1), ${opacity})` : ''}
+							{@const color = type === 'habits' ? `rgba(var(--heatMapColor), ${opacity})` : ''}
 
 							{@const hasGoal = Math.random() >= 0.9 && show && type === 'goals'}
 							{@const hasGoalOpacity = isLight ? 0 : 1}
@@ -231,7 +230,7 @@
 											style:margin-bottom={lightGoals ? '-12px' : '0px'}
 										>
 											{#if lightGoals}
-												*
+												🏆
 											{/if}
 										</div>
 									</div>
@@ -266,14 +265,14 @@
 		padding-bottom: 12px;
 
 		--goal-fill-color: var(--textColor1);
-		--goal-today-opacity: 0.035;
+		--goal-today-opacity: 0.055;
 
 		&--light {
 			--goal-fill-color: var(--fgColor1);
-			--goal-today-opacity: 0.055;
+			--goal-today-opacity: 0.085;
 		}
 		&--light &__month {
-			@include text-style(0.45);
+			@include text-style(0.4);
 		}
 		&--habits &__months {
 			margin-bottom: 3px;
@@ -290,7 +289,7 @@
 			height: 25px;
 		}
 		&__month {
-			@include text-style(0.25, var(--fw-400-500), 1.2rem);
+			@include text-style(0.25, var(--fw-400-500), 1.2rem, "Geist Mono");
 			position: absolute;
 			top: 0px;
 		}
@@ -321,11 +320,12 @@
 				background-color: rgba(var(--goal-fill-color), var(--goal-fill));
 				height: 4px;
 				width: 4px;
-				@include text-style(_, 200, 3rem);
-				color: rgba(var(--fgColor1), 1);
+				color: var(--starColor);
+				@include text-style(_, 200, 1.4rem);
 			}
 			&--has-goal &-content {
 				margin-bottom: -9px;
+				box-shadow: 0px 0px 10px 0px rgba(var(--goal-fill-color), 0.05);
 			}
 			&--goal#{&}--today {
 				box-shadow: none;
@@ -333,10 +333,10 @@
 			}
 			&--ahead &-content {
 				opacity: 1;
-				background-color: rgba(var(--fgColor1), var(--ahead-opacity));
+				background-color: rgba(var(--textColor1), var(--ahead-opacity));
 			}
 			&--today {
-				@include shadow-border(var(--elemColor1), 2px);
+				box-shadow: #61aaf3 0px 0px 0px 2.5px;
 			}
 			&--today::before {
 				border-radius: 7px !important;
@@ -347,8 +347,8 @@
 				height: 100%;
 				@include abs-top-left;
 				border-radius: 7px;
-				background-color: var(--color);
-				z-index: -1;
+				background-color: var(--color) ;
+				z-index: 1;
 			}
 		}
 		&__cell-content {
@@ -365,6 +365,7 @@
 		@include center;
 		height: 20px;
 		width: 10px;
+		z-index: 200;
 
 		&--light &__content {
 			border: 1.5px solid rgba(var(--textColor1), 0.065);

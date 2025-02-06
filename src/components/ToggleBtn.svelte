@@ -21,7 +21,7 @@
         position: relative;
 
         &--active {
-            background-color: #53B2E8;
+            background-color: var(--elemColor2);
         }
         &--active &__circle {
             left: calc(100% - (12px + 3px));

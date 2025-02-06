@@ -208,7 +208,8 @@
         @include text-style(_, var(--fw-400-500), 1.15rem, "Geist Mono");
     }
     &__section-divider {
-        @include divider(0.06, 0.5px, calc(100% - calc(2 * $divider-side-padding)));
+        width: calc(100% - calc(2 * $divider-side-padding));
+        border-top: var(--divider-border);
         margin: 4px 0px 4px $divider-side-padding;
     }
     &__option {
@@ -321,9 +322,8 @@
     &__divider {
         margin: 2px 0px 4px 2px;
         width: 90%;
-        height: 0.5px;
         margin-left: 5px;
-        background-color: rgba(var(--textColor1), 0.1);
+        border-top: var(--divider-border);
     }
     &__toggle-optn {
         padding: 6px 7px 5px 7px;
@@ -345,14 +345,14 @@
             background-color: rgba(var(--textColor1), 0.03);
         }
         &--selected {
-            box-shadow: rgba(#0C8CE9, 0.4) 0px 0px 0px 2px inset, 
-                        rgba(#0C8CE9, 0.1) 0px 0px 0px 2.5px !important;
+            box-shadow: rgba(var(--fgColor2), 0.4) 0px 0px 0px 2px inset, 
+                        rgba(var(--fgColor2), 0.1) 0px 0px 0px 2.5px !important;
             background-color: rgba(var(--textColor1), 0.02) !important;
         }
         &--selected i,
         &--selected span {
             opacity: 1 !important;
-            color: #0C8CE9 !important;
+            color: rgb(var(--fgColor2)) !important;
         }
         i {
             font-size: 1.5rem;

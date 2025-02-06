@@ -41,12 +41,9 @@
     let activeTheme = getActiveTheme()
     
     $: isDarkTheme = $themeState.isDarkTheme
+    $: updateSelectTab($page.url.pathname)
 
-    $: {
-        updateSelectTab($page.url.pathname)
-    }
-    $: if (activeTheme != "light" && activeTheme != "dark") {
-
+    $: if (activeTheme != "dark") {
         defFgColor = getThemeStyling("navBtnColor")
         defBgColor = getThemeStyling("navBtnBgColor")
 
@@ -115,10 +112,6 @@
 
         selectColor = tab.rgb
     }
-
-    onMount(() => {
-
-    })
 </script>
 
 <div 
@@ -313,7 +306,7 @@
                 opacity: 0.3;
             }
             span {
-                opacity: 0.7;
+                opacity: 0.85;
             }
         }
         &--light &__profile-name {
@@ -326,7 +319,7 @@
             font-weight: 500;
         }
         &--light &__quote-btn {
-            background-color: rgba(var(--textColor1), 0.04);
+            background-color: rgba(var(--textColor1), 0.1);
             opacity: 1;
         }      
 
@@ -364,7 +357,7 @@
             font-size: 1rem;
         }
         &__tab-section {
-            @include text-style(0.15, 500, 1.1rem);
+            @include text-style(0.15, var(--fw-400-500), 1.1rem);
             margin: 0px 0px 2px 7px;
         }
         &__tabs {
@@ -443,7 +436,7 @@
             }
         }
         &__quote-btn {
-            background-color: rgba(var(--textColor1), 0.05);
+            background-color: rgba(var(--textColor1), 0.1);
             @include circle(25px);
             @include center;
             opacity: 0.5;

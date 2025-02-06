@@ -3,9 +3,8 @@
 
 	import { Icon } from "../../../lib/enums"
 	import { themeState } from "../../../lib/store"
-	import { imageUpload } from "../../../lib/pop-ups"
 	import { ACTIVITY_DATA } from "../../../lib/mock-data"
-    import { formatDatetoStr, getWeekPeriodStr } from "../../../lib/utils-date"
+    import { formatDatetoStr, getWeekPeriodStr, months } from "../../../lib/utils-date"
 	import { capitalize, clickOutside, getElemById, getHozSpace, getMaskedGradientStyle, kebabToNormal, normalToKebab } from "../../../lib/utils-general"
 
 	import YearView from "./YearView.svelte"
@@ -269,7 +268,7 @@
                         {#if currView === "overview"}
                             <div 
                                 style:margin="4px -1px 0px 12px"
-                                style:font-size="1.45rem"
+                                style:font-size="1.4rem"
                             >
                                 {formatDatetoStr(today, { month: "long" })}
                             </div>
@@ -350,7 +349,6 @@
                     id="month-view--dmenu"
                     class="day-settings dmenu" 
                     class:dmenu--light={isLight}
-                    style:width={currView === "goals" ? "185px" : "200px"}
                     use:clickOutside on:click_outside={() => optionsOpen = false} 
                 >
                     <!-- month view -->
@@ -386,7 +384,7 @@
                         <li class="dmenu__section-divider"></li>
                         <li class="dmenu__section">
                             <div class="dmenu__toggle-optn">
-                                <span class="dmenu__option-heading">Animate Photo Wall</span>
+                                <span class="dmenu__option-heading">Animate Photos</span>
                                 <ToggleBtn 
                                     active={overview.animPhotos}
                                     onToggle={() => {
@@ -593,7 +591,9 @@
                                 }}
                             />
                             <div class="dmenu__toggle-optn  dmenu__option--static">
-                                <span class="dmenu__option-heading">Month Metrics</span>
+                                <span class="dmenu__option-heading">
+                                    {months[today.getMonth()].substring(0, 3)} Metrics
+                                </span>
                                 <ToggleBtn 
                                     active={habitView.stats}
                                     onToggle={() => {
@@ -900,8 +900,16 @@
 
     .dmenu {
         overflow: visible;
+        min-width: 170px;
+
         &__option {
             overflow: visible;
+        }
+        &__option-heading {
+            margin-right: 14px;
+        }
+        &__box {
+            width: calc(50% - 7px);
         }
         &__toggle-optn {
             padding: 6px 7px 7px 7px;

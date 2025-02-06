@@ -827,27 +827,27 @@
                 display: block;
             }
             &-title {
-                margin: 10px 30px 10px 0px;
+                margin: 10px 30px 2px 0px;
                 max-width: 90%;
                 font-size: 1.45rem;
                 font-weight: 400;
                 @include truncate-lines(3);
             }
+            &-subtitle {
+                margin-top: 5px;
+                font-size: 1.35rem;
+                font-weight: 300;
+                color: rgb(white, 0.3);
+                @include truncate-lines(2);
+            }
             &-description {
-                margin-top: 6px;
+                margin-top: 14px;
                 width: 95%;
                 overflow: hidden;
                 position: relative;
                 font-size: 1.4rem;
+                font-weight: 300;
                 color: rgb(white, 0.54);
-                @include truncate-lines(2);
-            }
-            &-subtitle {
-                margin-top: 6px;
-                font-size: 1.35rem;
-                font-weight: 400;
-                color: rgb(white, 0.3);
-                @include truncate-lines(2);
             }
         }
         &__content-header {

@@ -305,7 +305,7 @@
         --hover-opacity: 0.0125;
 
         &--light {
-            --hover-opacity: 0.025;
+            --hover-opacity: 0.04;
         }
         &--light &__section {
             @include text-style(0.55);
@@ -539,7 +539,6 @@
     }
     .divider {
         width: calc(100% - 50px);
-        height: 0.5px;
-        background: var(--divider-bg);
+        border-top: var(--divider-border);
     }
 </style>

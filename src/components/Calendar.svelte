@@ -326,7 +326,7 @@
                 opacity: 1;
             }
             &--picked {
-                background: #FF5151 !important;
+                background: var(--calMarkColor) !important;
                 font-weight: 500;
                 @include circle(22px);
                 color: var(--elemTextColor) !important;

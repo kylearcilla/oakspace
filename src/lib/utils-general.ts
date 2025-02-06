@@ -468,13 +468,13 @@ export function camelToKebab(camelCaseString: string) {
   return camelCaseString.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
-export function kebabToNormal(str: string, excludeSpec = true): string {
-  const specialWords = new Set(["is", "or", "and", "of"]);
+export function kebabToNormal(str: string, capitalizeAll = false): string {
+  const specialWords = new Set(["is", "or", "and", "of"])
   
   return str
     .split('-')
-    .map((w, i) => i === 0 || !excludeSpec || !specialWords.has(w) ? w.charAt(0).toUpperCase() + w.slice(1) : w)
-    .join(' ');
+    .map((w, i) => capitalizeAll || i === 0 || !specialWords.has(w) ? w.charAt(0).toUpperCase() + w.slice(1) : w)
+    .join(' ')
 }
 
 export function normalToKebab(str: string): string {

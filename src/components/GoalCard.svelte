@@ -150,7 +150,8 @@
         }
 
         &--light {
-            border: 1.5px solid rgba(var(--textColor1), 0.0185);
+            border: var(--card-light-border);
+            box-shadow: var(--card-light-shadow);
         }
         &--light &__due {
             @include text-style(0.2);

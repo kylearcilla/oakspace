@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { TEST_GOALS } from "../../../lib/mock-data"
+    import { BULLETIN_CONTENT, TEST_GOALS } from "../../../lib/mock-data"
 	import { getQuarter, months } from "../../../lib/utils-date"
 	import { habitTracker, themeState } from "../../../lib/store"
 	import { capitalize, clamp, formatPlural } from "../../../lib/utils-general"
@@ -57,7 +57,7 @@
         class="margin__bulletin" 
         style:height={`${fullWidth ? "250" : bulletinHt}px`}
     >
-        <Bulletin {fullWidth}/>
+    <Bulletin content={BULLETIN_CONTENT} {fullWidth}/>
     </div>
     <div class="margin__context">
         <div 
@@ -259,6 +259,14 @@
             margin: 0px 0px 20px -6px;
         }
     }
+    .goal-m {
+        margin-bottom: 6px !important;
+        
+        &__title {
+            font-size: 1.35rem;
+            @include truncate-lines(1);
+        }
+    }
     .dmenu {
         overflow: visible;
         padding-bottom: 5px;
@@ -293,7 +301,7 @@
             }
         }
         span {
-            @include text-style(0.3, var(--fw-400-500), 1.4rem);
+            @include text-style(0.3, var(--fw-400-500), 1.4rem, "Geist Mono");
             
             &:last-child {
                 @include text-style(0.5);

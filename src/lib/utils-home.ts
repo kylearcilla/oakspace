@@ -14,12 +14,14 @@ import { initHabits } from "./utils-habits"
 /* constants */
 export const LEFT_BAR_MIN_WIDTH = 60
 export const LEFT_BAR_FLOAT_WIDTH = 160
-export const LEFT_BAR_FULL_WIDTH = 185
+export const LEFT_BAR_FULL_WIDTH = 175
 const LEFT_BAR_LEFT_BOUND = 20
 const RIGHT_BAR_RIGHT_BOUND = 20
 
 const SESSION_MIN_WIDTH = 750
 const MAX_AMBIENT_OPACITY = 0.85
+
+export const SYSTEM_FONT = `system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`
 
 export let cursorPos = {
     left: 0, top: 0

@@ -30,16 +30,16 @@
         elementStyling = ambience?.styling ?? "blur"
         bgOpacity = ambience?.opacity ?? 0.5
     }
-    $: if (clockFont === "DM Sans") {
+    $: if (clockFont === "system") {
         timeStyle = "Basic"
     }
-    else if (clockFont === "Zodiak-Bold") {
+    else if (clockFont === "zodiak-bold") {
         timeStyle = "Stylish"
     }
-    else if (clockFont === "Melodrama-Bold") {
+    else if (clockFont === "melodrama-bold") {
         timeStyle = "Fancy"
     }
-    else if (clockFont === "Bagel Fat One") {
+    else if (clockFont === "bagel-fat-one") {
         timeStyle = "Cute"
     }
 
@@ -50,18 +50,18 @@
         _updateAmbience({ styling: elementStyling })
     }
     function setClockStyle(style: string) {
-        let clockFont: "DM Sans" | "Zodiak-Bold" | "Melodrama-Bold" | "Bagel Fat One" = "DM Sans"
+        let clockFont = "system"
 
         if (style === "Stylish") {
-            clockFont = "Zodiak-Bold"
+            clockFont = "zodiak-bold"
         } 
         else if (style === "Fancy") {
-            clockFont = "Melodrama-Bold"
+            clockFont = "melodrama-bold"
         }
         else if (style === "Cute") {
-            clockFont = "Bagel Fat One"
+            clockFont = "bagel-fat-one"
         }
-
+        
         _updateAmbience({ clockFont })
         timeStyleOpen = false
     }

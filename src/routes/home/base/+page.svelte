@@ -6,6 +6,7 @@
 	import MonthView from "./MonthView.svelte"
 	import LeftMargin from "./LeftMargin.svelte";
 	import Header from "./Header.svelte";
+	import { BASE_BANNER, BASE_HEADER } from "../../../lib/mock-data";
 
     const SMALLER_WIDTH = 630
     const SMALL_WIDTH = 1000
@@ -17,30 +18,21 @@
     let initDragY = -1
     let ogDragVal = 0
 
-    let bannerImg: Banner = {
-        src: "https://i.imgur.com/MEjZkXW.png",
-        center: 50
-    }
+    let bannerImg: Banner = BASE_BANNER
+    let header: BaseHeader = BASE_HEADER
+    
     let options: BaseOptions = {
         view: "month",
         banner: true,
         margin: true
     }
-    let header: BaseHeader = {
-        icon: {
-            src: "https://i.pinimg.com/736x/b3/90/0d/b3900d7712279767b687231f36fad8a0.jpg",
-            type: "img",
-            show: true
-        },
-        showText: true,
-        pos: "top"
-    }
-
+    
     /* ui */
     function onBaseEvent({ detail }: BaseEventDetail) {
         const { context, payload } = detail
         if (context === "banner") {
             bannerImg = payload
+            bannerImg.src = payload.src
         } 
         else if (context === "options") {
             options = payload

@@ -3,7 +3,7 @@
 	import { Icon } from "../../lib/enums"
 	import { closeModal } from "$lib/utils-home"
 	import { themePreviews } from "../../lib/data-themes"
-	import { capitalize } from "../../lib/utils-general"
+	import { capitalize, kebabToNormal } from "../../lib/utils-general"
 	import { globalContext, themeState } from "$lib/store"
 	import { findThemeFromName, setNewTheme } from "../../lib/utils-appearance"
 
@@ -18,6 +18,7 @@
 
     $: clickedType   = isDark ? "dark" : "light"
     $: clickedFlavor = clickedType === "dark" ? state.darkTheme : state.lightTheme
+    $: selectedItem  = clickedFlavor === "dark" || clickedFlavor === "light" ? "basic" : clickedFlavor
 
     $: flavorOptions = themePreviews.filter(theme => {
         if (clickedType === "dark") {
@@ -30,13 +31,18 @@
     let flavorOptionsOpen = false
 
     function onSubmit() {
-        setNewTheme(findThemeFromName(clickedFlavor))
+        if (hasAmbience) return
+
+        const theme = findThemeFromName(clickedFlavor)
+        setNewTheme(theme)
     }
     function onFlavorSelected(name: string) {
         clickedFlavor = name
         flavorOptionsOpen = false
     }
 </script>
+
+<svelte:window on:keydown={e => e.key === "Enter" && onSubmit()}/>
 
 <Modal 
     options={{ 
@@ -80,7 +86,7 @@
                 {#if clickedFlavor}
                     {@const flavor = flavorOptions.find(flavor => flavor.name === clickedFlavor)}
                     {@const name = flavor.name}
-                    {@const title = (name === "dark" || name === "light") ? "Basic" : capitalize(name)}
+                    {@const title = (name === "dark" || name === "light") ? "Basic" : kebabToNormal(name, true)}
                     <span>{title}</span>
                     <div class="themes__arrow smooth-bounce">
                         <SvgIcon 
@@ -96,9 +102,9 @@
                 id="flavors--dmenu"
                 isHidden={!flavorOptionsOpen}
                 options={{
-                    pickedItem: capitalize(clickedFlavor === "dark" || clickedFlavor === "light" ? "basic" : clickedFlavor),
+                    pickedItem: kebabToNormal(selectedItem, true),
                     listItems: flavorOptions.map(f => ({ 
-                        name: (f.name === "dark" || f.name === "light") ? "Basic" : capitalize(f.name)
+                        name: (f.name === "dark" || f.name === "light") ? "Basic" : kebabToNormal(f.name, true)
                     })),
                     onListItemClicked: ({ idx }) => {
                         const flavor = flavorOptions[idx].name
@@ -109,13 +115,13 @@
                         flavorOptionsOpen = false
                     },
                     styling: {
-                        width: "120px",
+                        width: "150px",
                         zIndex: 2,
                         fontFamily: "Geist Mono"
                     },
                     position: {
                         top: "54px",
-                        right: "-10px"
+                        right: "0px"
                     }
                 }}
             />
@@ -139,8 +145,8 @@
     @import "../../scss/dropdown.scss";
 
     .themes {
-        width: 510px;
-        padding: 16px 27px 22px 24px;
+        width: 540px;
+        padding: 16px 27px 20px 24px;
         overflow: visible;
 
         --button-bg-opacity: 0.035;
@@ -187,7 +193,7 @@
                 @include visible(0.4);
             }
             span {
-                @include text-style(1, 400, 1.4rem, "Geist Mono");
+                @include text-style(1, var(--fw-400-500), 1.35rem, "Geist Mono");
             }
         }
         &__flavor-options {
@@ -205,7 +211,7 @@
         }
         &__btns {
             @include flex(center, space-between);
-            margin-top: 35px;
+            margin-top: 45px;
 
             button {
                 @include text-style(1, var(--fw-400-500), 1.5rem);

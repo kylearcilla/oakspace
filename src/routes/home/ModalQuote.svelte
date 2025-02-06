@@ -43,7 +43,6 @@
             <div></div>
             <div class="quote-modal__content-container">
                 <div class="quote-modal__content-top">
-                    <!-- <h1 class="quote-modal__title">Weekly Wisdom</h1> -->
                     <div class="flx">
                         <span class="quote-modal__quote quote-modal__quote--left-quotation">"</span>
                         <p class="quote-modal__quote">
@@ -119,12 +118,6 @@
                 @include flex(center, _);
             }
         }
-        &__title {
-            font-size: 1.5rem;
-            margin: 2px 0px 7px 0px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.9)
-        }
         &__quote {
             font-size: 1.45rem;
             font-weight: 400;
@@ -151,7 +144,7 @@
         }
         &__artist-credit {
             font-size: 1.4rem;
-            font-weight: 500;
+            font-weight: 400;
             color: rgba(179, 179, 179, 0.5);
             @include elipses-overflow;
             
@@ -165,7 +158,7 @@
         }
         &__quote-credit {
             font-size: 1.4rem;
-            font-weight: 500;
+            font-weight: 400;
             color: rgba(179, 179, 179, 0.5);
             min-width: 0;
             float: right;

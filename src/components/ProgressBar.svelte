@@ -12,9 +12,16 @@
     function updateColor(light: boolean, progress: number) {
         const settings = light ? LIGHT_COLOR_PROGRESS : DARK_COLOR_PROGRESS
         const { max, min, gVal, bVal } = settings
+        const isTerracotta = $themeState.lightTheme === "terracotta" && isLight
 
         const rval = Math.max(max - ((max - min) * (progress)), min)
-        fgColor    = `rgb(${rval}, ${gVal}, ${bVal})`
+
+        if (isTerracotta) {
+            fgColor = "var(--elemColor1)"
+        }
+        else {
+            fgColor = `rgb(${rval}, ${gVal}, ${bVal})`
+        }
     }
 </script>
 

@@ -9,6 +9,7 @@
 
 	import Overview from "./Overview.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
+	import { HEADER_IMG } from "../../lib/mock-data"
 
     const MAX_DIST_BOTTOM_IMG_CONTAINER = 70
     export let onHeaderImageChange: (img: string) => void
@@ -27,7 +28,7 @@
     
     /* header image */
     let opacity = 0
-    export let bgImgSrc = "https://i.pinimg.com/originals/7d/04/0e/7d040e94931427709008aaeda14db9c8.gif"
+    export let bgImgSrc = HEADER_IMG
     let showHeaderImg = true
 
     let topOffset = 0

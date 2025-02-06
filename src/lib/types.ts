@@ -1353,24 +1353,22 @@ type ThemeStyling = {
     lightColor: string
     lightColor2: string
     lightColor3: string
+    heatMapColor: string
+    calMarkColor: string
     textEntryBgColor: string
     modalBgAccentColor: string
     modalBgColor: string
     bentoBoxBgColor: string
     bentoBoxBorder: string
     bentoBoxShadow: string
-    muiscPlayerBgColor: string
-    musicProgressFgColor: string
     navMenuBgColor: string
     navBtnColor: string
     navBtnBgColor: string
-    navMenuBorder: string
-    minNavBtnColor: string
-    minNavBtnBgColor: string
     sessionBlockColor: string
     rightBarBgColor: string
     elemColor1: string
     elemColor2: string
+    starColor: string
     elemTextColor: string
     cardBgColor: string
     cardHovColor: string

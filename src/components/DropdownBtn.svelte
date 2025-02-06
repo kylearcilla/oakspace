@@ -57,7 +57,7 @@
     <span 
         class="dbtn__title"
         style:font-size={options?.styles?.fontSize}
-        style:font-family={options?.styles?.fontFamily ?? "Manrope"}
+        style:font-family={options?.styles?.fontFamily ?? "inherit"}
     >
         {title ?? "None"}
     </span>

@@ -130,7 +130,7 @@
             txtBottomPadding = "15px"
         }
         else if (styling === "has-marker" && type === "emoji") {
-            margin = "-2px 0px 20px 0px"
+            margin = "4px 0px 10px 0px"
             padding = "4px 14px 5px 14px"
             txtBottomPadding = "0px"
         }
@@ -198,7 +198,7 @@
             markerHeight = Math.max(minHeight, markerHeight - 25)
         }
         else {
-            markerHeight = 10 + textEditorElem.clientHeight - padding
+            markerHeight = textEditorElem.clientHeight - padding - 5
         }
     }
     function getTextEditorHeight() {

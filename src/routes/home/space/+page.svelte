@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte"
 	import { globalContext, ytPlayerStore, timer } from "$lib/store"
-	import { hasAmbienceSpace, setAmbience } from "$lib/utils-home"
+	import { hasAmbienceSpace, setAmbience, SYSTEM_FONT } from "$lib/utils-home"
 	import { formatTimeToHHMM, prefer12HourFormat } from "$lib/utils-date"
 	import SpaceSelection from "./SpaceSelection.svelte";
 
@@ -9,16 +9,16 @@
     $: rightBarOpen = $globalContext.rightBarOpen
     $: rightBarFixed = $globalContext.rightBarFixed
     $: showTime = ambience?.showTime
-    $: clockFont = ambience?.clockFont ?? "DM Sans"
+    $: clockFont = ambience?.clockFont ?? "system"
 
     const TOP_PADDING = 40
     const NUM_SPACING = TOP_PADDING + 10
     const NUM_CHANGE_TIME = 2000
     const FONT_OPTIONS = {
-        "DM Sans":        { size: "19rem", topOffset: "-50px" },
-        "Zodiak-Bold":    { size: "19rem", topOffset: "-55px" },
-        "Melodrama-Bold": { size: "25rem", topOffset: "-75px" },
-        "Bagel Fat One":  { size: "22rem", topOffset: "-85px" },
+        "system":         { name: SYSTEM_FONT, size: "19rem", topOffset: "-50px"  },
+        "zodiak-bold":    { name: "Zodiak-Bold", size: "19rem", topOffset: "-55px" },
+        "melodrama-bold": { name: "Melodrama-Bold", size: "25rem", topOffset: "-75px" },
+        "bagel-fat-one":  { name: "Bagel Fat One", size: "22rem", topOffset: "-85px" },
     }
 
     let doUse12HourFormat = prefer12HourFormat()
@@ -137,7 +137,7 @@
     style:--line-height={`${lineHeight}px`}
     style:--top-padding={`${TOP_PADDING}px`}
     style:--num-spacing={`${NUM_SPACING}px`}
-    style:font-family={clockFont}
+    style:font-family={FONT_OPTIONS[clockFont]?.name}
     style:font-size={FONT_OPTIONS[clockFont]?.size}
 >
     <div 
@@ -211,6 +211,7 @@
         width: 100vw;
         @include flex(flex-start, center);
         transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 100;
 
         &--right-bar-open {
             width: calc(100vw - 160px);

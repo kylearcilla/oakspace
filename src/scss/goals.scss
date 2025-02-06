@@ -25,7 +25,7 @@
     }
 
     &__title {
-        @include text-style(1, var(--fw-400-500), 1.28rem, "Geist Mono");
+        @include text-style(1, var(--fw-400-500), 1.35rem, "Geist Mono");
         cursor: pointer;
         opacity: 0.55;
         position: relative;
@@ -40,9 +40,9 @@
         @include text-style(0.2, var(--fw-300-400), 1.3rem);
     }
     &__left {
-        @include square(14px);
+        @include square(15px);
         @include center;
-        margin: 3px 10px 0px -5px;
+        margin: 0px 8px 0px -5px;
     }
     &__bullet {
         @include square(4px, 10px);

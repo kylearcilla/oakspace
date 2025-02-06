@@ -109,8 +109,7 @@
                         id={"0"} 
                         type="goals" 
                         options={{
-                            startDate: date,
-                            from: "next"
+                            startDate: date, from: "next"
                         }}
                     />
                 </div>
@@ -176,8 +175,12 @@
         &--light &__progress span {
             @include text-style(0.55);
         }
+        &--light &__stat-title {
+            @include text-style(0.45);
+        }
         &--small &__goals-flx {
             display: block;
+            margin-top: 13px;
         }
         &--small &__goals-list {
             max-height: 400px;
@@ -186,16 +189,19 @@
         &--small &__goals-right {
             max-height: 400px;
             height: auto;
-            margin: 0px 0px 16px 0px;
+            margin: 0px 0px 0px 0px;
             width: 100%;
+        }
+        &--small &__habits {
+            margin-top: 20px;
         }
 
         h1 {
-            @include text-style(1, 400, 2.65rem, "DM Mono");
-            margin-bottom: 8px;
+            @include text-style(1, var(--fw-400-500), 2.65rem, "DM Mono");
+            margin: 11px 0px 4px 0px;
         }
         h4 {
-            @include text-style(1, var(--fw-400-500), 1.65rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 1.65rem);
         }
         &__header {
             @include flex(center,space-between);
@@ -221,32 +227,32 @@
             margin-top: 10px;
         }
         &__goals-list {
-            width: 410px;
+            width: 450px;
             max-height: 280px;
             overflow-y: scroll;
-            margin: 4px 0px 5px -4px;
+            margin: 4px 0px 5px 0px;
             padding-right: 65px;
         }
         &__goals-right {
-            width: calc(100% - 410px);
+            width: calc(100% - 450px);
             margin-top: 2px;
             @include flex-col(space-between);
         }
         &__habits {
-            margin-top: 30px;
+            margin-top: 35px;
         }
         &__heat-map {
             width: 100%;
         }
         &__stats {
-            margin: 8px 0px 22px 0px;
+            margin: 8px 0px 25px 0px;
             @include flex(center);
         }
         &__stat {
             margin-right: min(5%, 30px);
         }
         &__stat-title {
-            @include text-style(0.3, var(--fw-400-500), 1.4rem, "Geist Mono");
+            @include text-style(0.35, var(--fw-300-400), 1.4rem, "Geist Mono");
             margin-bottom: 6.5px;
             white-space: nowrap;            
         }
@@ -256,14 +262,13 @@
     }
 
     .divider {
-        background-color: var(--divider-bg);
+        border-top: var(--divider-border);
         width: 100%;
-        height: 1px;
-        margin: 9px 0px 4px 0px;
+        margin: 7px 0px 0px 0px;
     }
 
     .goal-m {
-        margin-bottom: 7px;
+        margin-bottom: 6px;
 
         &__title {
             @include truncate-lines(1);

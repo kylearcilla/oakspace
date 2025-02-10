@@ -47,7 +47,7 @@
     class="logo-wrapper"
     style:--scale={scale}
 >
-    {#if logo === LogoIcon.Youtube || logo === LogoIcon.YoutubeMusic}
+    {#if logo === LogoIcon.Youtube}
         <div 
             class="logo-container youtube-logo-bg" 
             style={bgStyling}

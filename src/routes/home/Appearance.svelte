@@ -3,7 +3,7 @@
 	import { Icon } from "../../lib/enums"
 	import { closeModal } from "$lib/utils-home"
 	import { themePreviews } from "../../lib/data-themes"
-	import { capitalize, kebabToNormal } from "../../lib/utils-general"
+	import { kebabToNormal } from "../../lib/utils-general"
 	import { globalContext, themeState } from "$lib/store"
 	import { findThemeFromName, setNewTheme } from "../../lib/utils-appearance"
 
@@ -35,6 +35,9 @@
 
         const theme = findThemeFromName(clickedFlavor)
         setNewTheme(theme)
+
+        localStorage.setItem("theme-name", theme.name)
+        window.location.reload()
     }
     function onFlavorSelected(name: string) {
         clickedFlavor = name

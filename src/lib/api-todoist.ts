@@ -2,7 +2,7 @@ import { PUBLIC_TODOIST_CLIENT_ID, PUBLIC_TODOIST_CLIENT_SECRET } from "$env/sta
 import { APIErrorCode } from "./enums"
 import { APIError } from "./errors"
 import { v4 as uuidv4 } from 'uuid'
-import { TasksViewManager } from "./tasks-view-manager"
+import { TodosManager } from "./todos-manager"
 
 const REDIRECT_URI = "http://localhost:5173/home/base"
 const TODOIST_SYNC_API_URL = "https://api.todoist.com/sync/v9/sync"
@@ -165,7 +165,7 @@ export async function syncTodoistUserItems(options: {
         }
 
         return {
-            tasks: TasksViewManager.sortTasks(tasks) as TodoistTask[],
+            tasks: TodosManager.sortTasks(tasks) as TodoistTask[],
             syncToken: data.sync_token,
             projectId
         }

@@ -1,7 +1,11 @@
 <script lang="ts">
+    import { onMount } from "svelte"
+    
+    import BounceFade from "./BounceFade.svelte"
+
 	import { themeState } from "../lib/store"
-	import BounceFade from "./BounceFade.svelte"
 	import { imageUpload } from "../lib/pop-ups"
+	import { getElemById, getHozSpace } from "../lib/utils-general"
 	import { getImgUploadErrorMsg, validateUserImgFileInput, validateUserImgURLInput } from "../lib/utils-media-upload"
     
     const { onSubmit, close, state } = imageUpload
@@ -9,6 +13,7 @@
     $: isOpen =  $state.isOpen
     $: constraints =  $state.constraints
     $: position =  $state.position
+    $: isLight = !$themeState.isDarkTheme
 
     let errorTxt = ""
     let imgUrl = ""
@@ -21,12 +26,14 @@
 
     let fileInput: HTMLElement
     let linkInput: HTMLInputElement
+    let btnHighlighter = {
+        width: 0, left: 0
+    }
 
     const _constraints = {
         maxMbSize: constraints?.maxMbSize ?? 5,
         ...constraints
     }
-
     $: if (isOpen && linkInput) {
         linkInput.focus()
     }
@@ -39,9 +46,9 @@
             if (!imgUrl) return
     
             isInputLoading = true
-            // await validateUserImgURLInput({
-            //     url: imgUrl, constraints: _constraints
-            // })
+            await validateUserImgURLInput({
+                url: imgUrl, constraints: _constraints
+            })
 
             onSubmit(imgUrl)
             close()
@@ -74,17 +81,38 @@
         }
     }
     function onDrop(e: DragEvent) {
-        console.log(e)
+
     }
     function highlightTabBtnClicked(type: "link" | "file") {
         inputType = type
         imgUrl = ""
+
+        const btnElem = getElemById(`img-header-btn--${type}`)
+        if (!btnElem) return
+
+
+        const width = btnElem.clientWidth
+        const left = getHozSpace({ 
+            left:  { 
+                elem: btnElem.parentElement!,
+                edge: "left"
+            },
+            right: { 
+                elem: btnElem,
+                edge: "left"
+            },
+        })
+
+        btnHighlighter.width = width
+        btnHighlighter.left  = Math.max(left, 0)
     } 
     function onKeyDown(e: KeyboardEvent) {
         if (e.key === "Enter") {
             onImgUrlSubmit()
         }
     }
+
+    onMount(() => highlightTabBtnClicked("link"))
 </script>
 
 <svelte:window on:keydown={onKeyDown} />
@@ -107,45 +135,47 @@
 >
     <div 
         class="img-upload"
-        class:img-upload--light={!$themeState.isDarkTheme}
+        class:img-upload--light={isLight}
     >
-        <div style:position="relative">
+        <div 
+            style:position="relative"
+            style:--line-width={`${btnHighlighter.width}px`}
+            style:--line-left={`${btnHighlighter.left}px`}
+        >
             <div>
                 <button 
-                    on:click={() => highlightTabBtnClicked("link")}
+                    id="img-header-btn--link"
                     class="img-upload__header-btn"
                     class:img-upload__header-btn--selected={inputType === "link"}
                     disabled={inputType === "file" && isInputLoading}
+                    on:click={() => highlightTabBtnClicked("link")}
                 >
                     Link
                 </button>
                 <button 
-                    on:click={() => highlightTabBtnClicked("file")}
+                    id="img-header-btn--file"
                     class="img-upload__header-btn"
                     class:img-upload__header-btn--selected={inputType === "file"}
                     disabled={inputType === "link" && isInputLoading}
+                    on:click={() => highlightTabBtnClicked("file")}
                 >
                     Upload
                 </button>
             </div>
-            <div 
-                class="divider"
-                style:--h-width={inputType === "link" ? "30px" : "47px"}
-                style:--h-left={inputType === "link" ? "0px" : "41px"}
-            >
-            </div>
+            <div class="divider"></div>
         </div>
         <div class="img-upload__content">
             {#if inputType === "link"}
                 <div class="img-upload__link">
                     <div 
                         class="input-box"
+                        class:input-box--light={isLight}
                         class:input-box--border-focus={isInputFocus}
                         class:input-box--error={errorTxt}
                     >
                         <input 
                             type="text" 
-                            placeholder="image link goes here..."
+                            placeholder="link goes here..."
                             bind:this={linkInput}
                             bind:value={imgUrl}
                             on:input={() => errorTxt = ""}
@@ -222,7 +252,7 @@
                     {errorTxt ?? ""}
                 </div>
             {:else}
-                <p>Max size is 5 MB</p>
+                <span>Max size is 5 MB</span>
             {/if}
             {#if inputType === "link"}
                 <button 
@@ -243,36 +273,51 @@
     .img-upload {
         position: relative;
         width: 450px;
-        padding: 12px 19px 14px 19px;
+        padding: 12px 19px 12px 19px;
         border-radius: 12px;
         background-color: var(--bg-2);
+        border: 1px solid rgba(var(--textColor1), 0.085);
 
-        &--light .modal-bg {
-            @include modal-bg-light;
+        --disabled-opacity: 0.05;
+
+        &--light {
+            @include contrast-bg("bg-1");
         }
-        &--light &__copy {
-            font-weight: 500;
-            color: rgba(var(--textColor1), 0.8);
+        &--light &__bottom span {
+            @include text-style(0.3, 500);
         }
-        &--light &__upload-name {
-            font-weight: 500;
-            opacity: 0.4;
+        &--light &__btn {
+            opacity: 0.35;
+
+            &:hover {
+                opacity: 0.8;
+            }
+            &:disabled {
+                opacity: 0.1;
+            }
+        }
+        &--light .input-box {
+            @include text-style(0.1, 500);
+        }
+        &--light &__drop-area {
+            background-color: rgba(var(--textColor1), 0.025);
+            border: 1.5px dashed rgba(var(--textColor1), 0.15);
+        }
+        &--light &__drop-area-text {
+            @include text-style(0.25);
+        }
+        &--light &__upload svg {
+            opacity: 0.5;
+        }
+        &--light &__upload button {
+            opacity: 0.65;
         }
 
         span {
             display: block;
         }
-
-        &__title {
-            @include text-style(1, 500, 1.7rem);
-        }
-        &__copy {
-            display: none;
-            @include text-style(0.35, 400, 1.5rem);
-            margin: 13px 0px 0px 0px;
-        }
         &__header-btn {
-            @include text-style(1, 400, 1.25rem, "DM Mono");
+            @include text-style(1, var(--fw-400-500), 1.4rem);
             margin-right: 10px;
             opacity: 0.2;
             
@@ -302,21 +347,22 @@
         }
         .divider {
             margin: 6.5px 0px 0px 0px;
-            @include divider(0.08, 1px, 100%);
+            height: 1px;
+            width: 100%;
+            border-top: var(--divider-border);
             position: relative;
         }
         .divider::before {
             content: " ";
             @include smooth-bounce;
             height: 1.5px;
-            width: var(--h-width);
+            width: var(--line-width);
             background-color: rgba(var(--textColor1), 0.9);
-            @include abs-top-left(-0.5px, var(--h-left));
+            @include abs-top-left(-0.5px, var(--line-left));
         }
 
-        /* link */
         &__link {
-            margin-top: 12px;
+            margin-top: 10px;
             @include flex(center);
 
             button {
@@ -326,7 +372,6 @@
                 width: calc(30% - 7px);
             }
         }
-        /* upload */
         &__upload {
             margin-top: 14px;
             width: 100%;
@@ -350,8 +395,8 @@
             &--hover {
                 background-color: rgba(var(--textColor1), 0.03);
                 border: 1.5px dashed rgba(var(--textColor1), 0.2);
-                box-shadow: rgba(#0C8CE9, 0.35) 0px 0px 0px 2px inset, 
-                            rgba(#0C8CE9, 0.1) 0px 0px 0px 2.5px;
+                box-shadow: rgba(var(--fgColor2), 0.4) 0px 0px 0px 2px inset, 
+                            rgba(var(--fgColor2), 0.1) 0px 0px 0px 2.5px;
             }
         }
         &__drop-area-text {
@@ -359,16 +404,15 @@
             text-align: center;
             margin-bottom: 13px;
             @include text-style(0.15, 500, 1.35rem);
+        }
+        &__drop-area-text button {
+            @include text-style(1, 500, 1.35rem);
+            opacity: 0.4;
+            margin-left: 5px;
             
-            button {
-                @include text-style(1, 500, 1.35rem);
-                opacity: 0.4;
-                margin-left: 5px;
-                
-                &:hover {
-                    opacity: 0.8;
-                    text-decoration: underline;
-                }
+            &:hover {
+                opacity: 0.8;
+                text-decoration: underline;
             }
         }
         &__upload-btn {
@@ -406,7 +450,7 @@
             @include text-style(0.4, 500, 1.4rem);
         }
         &__file-size {
-            @include text-style(0.2, 400, 1.3rem, "DM Mono");
+            @include text-style(0.2, 400, 1.3rem, "Geist Mono");
             margin-top: 5px;
         }
         &__file-btns {
@@ -428,11 +472,9 @@
         }
 
         &__bottom {
-            margin-top: 8px;
+            margin-top: 10px;
             @include flex(center, space-between);
-            p {
-                @include text-style(0.15, 500, 1.3rem);
-            }
+            @include text-style(0.15, var(--fw-400-500), 1.3rem);
         }
     }
     .input-box {

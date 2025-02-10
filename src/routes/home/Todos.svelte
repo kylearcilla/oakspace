@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { LogoIcon } from "$lib/enums"
-	import { TasksViewManager } from "$lib/tasks-view-manager"
+	import { TodosManager } from "$lib/todos-manager"
 
 	import Logo from "../../components/Logo.svelte"
 	import TasksList from "../../components/TasksList.svelte"
     
-    export let manager: TasksViewManager
+    export let manager: TodosManager
     export let onTaskComplete: (completed: number) => void
     export let removeCompleteFlag: boolean
 

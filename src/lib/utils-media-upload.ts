@@ -3,18 +3,30 @@ import { ResError } from "./errors"
 
 export class ImgInputError extends ResError<ImgUploadError> { }
 
+const WIHTE_LIST_URLS = [
+
+]
+
 /**
  * Validates image url input from user.
  * Throws an error if there is one.
  * 
  * @param imgUrl   User input string
  */
-export async function validateUserImgURLInput(options: {
-    url: string,
-    constraints: ImgUploadConstraints
+const WHITE_LIST_URLS = [
+    'pinimg.com'
+]
+
+export async function validateUserImgURLInput({ url, constraints }: { 
+    url: string, constraints: ImgUploadConstraints 
 }) {
     try {
-        const { url, constraints } = options
+        const urlObj = new URL(url)
+
+        if (WHITE_LIST_URLS.some(whitelistedDomain => urlObj.hostname.endsWith(whitelistedDomain))) {
+            return
+        }
+
         const res = await fetch(url, { mode: 'cors' })
 
         if (!res.ok) {
@@ -58,11 +70,9 @@ export async function validateUserImgURLInput(options: {
  * 
  * @param imgUrl   User input string
  */
-export async function validateUserImgFileInput(options: {
-    file: File,
-    constraints: ImgUploadConstraints
+export async function validateUserImgFileInput({ file, constraints }: { 
+    file: File, constraints: ImgUploadConstraints 
 }) {
-    const { file, constraints } = options
 
     try {
         if (!file) {

@@ -17,7 +17,7 @@ import {
  * State handler for tasks view in the right side bar.
  * Is itself a svelte store that Tasks component listens to for changes.
  */
-export class TasksViewManager {
+export class TodosManager {
     /* groups */
     todoistTasks: Task[] | null = null
     currTasks: Task[] = []
@@ -34,7 +34,7 @@ export class TasksViewManager {
     todoistAccessToken = ""
     todoistSyncToken = ""
     
-    store!: Writable<TasksViewManager>
+    store!: Writable<TodosManager>
 
     LOADING_TOAST_DURATION = 15_000
 
@@ -55,10 +55,10 @@ export class TasksViewManager {
         }
     }
 
-    update(newState: Partial<TasksViewManager>) {
+    update(newState: Partial<TodosManager>) {
         let state = get(this.store)
         
-        this.store.update((data: TasksViewManager | null) => {
+        this.store.update((data: TodosManager | null) => {
             state = this.getNewStateObj(data!, newState)!
             return state
         })
@@ -157,7 +157,7 @@ export class TasksViewManager {
             })
 
             // sort tasks alphabetically
-            this.todoistTasks = TasksViewManager.sortTasks(tasks)
+            this.todoistTasks = TodosManager.sortTasks(tasks)
             this.todoistSyncToken = syncToken
             
             if (projectId) {
@@ -239,7 +239,7 @@ export class TasksViewManager {
             syncTasks.forEach(t => newTasks.push(t))
     
             this.todoistSyncToken = syncToken
-            this.todoistTasks = TasksViewManager.sortTasks(newTasks)
+            this.todoistTasks = TodosManager.sortTasks(newTasks)
 
             if (this.onTodoist) {
                 this.currTasks = this.todoistTasks!
@@ -494,7 +494,7 @@ export class TasksViewManager {
         return localStorage.getItem("todoist") != null
     }
 
-    saveTodoistData(state: TasksViewManager) {
+    saveTodoistData(state: TodosManager) {
         localStorage.setItem("todoist", JSON.stringify({
             onTodoist: state.onTodoist!,
             todoistLinked: state.todoistLinked!,
@@ -503,7 +503,7 @@ export class TasksViewManager {
     }
 
     loadTodoistData() {
-        const savedData = JSON.parse(localStorage.getItem("todoist")!)! as Partial<TasksViewManager>
+        const savedData = JSON.parse(localStorage.getItem("todoist")!)! as Partial<TodosManager>
         
         this.onTodoist = savedData.onTodoist!
         this.todoistLinked = savedData.todoistLinked!
@@ -519,7 +519,7 @@ export class TasksViewManager {
         })
     }
 
-    getNewStateObj(oldState: TasksViewManager, newState: Partial<TasksViewManager>): TasksViewManager {
+    getNewStateObj(oldState: TodosManager, newState: Partial<TodosManager>): TodosManager {
         if (newState.todoistLinked != undefined) oldState.todoistLinked = newState.todoistLinked
         if (newState.onTodoist != undefined)     oldState.onTodoist = newState.onTodoist
         if (newState.renderFlag != undefined)     oldState.renderFlag = newState.renderFlag

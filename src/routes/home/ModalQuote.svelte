@@ -127,7 +127,6 @@
         }
         &__likes {
             white-space: nowrap;
-            font-family: "DM Sans";
             button:active {
                 transform: scale(0.8);
             }

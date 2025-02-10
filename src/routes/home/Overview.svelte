@@ -8,7 +8,7 @@
 	import { clickOutside } from "$lib/utils-general"
 	import { SideCalendar } from "$lib/side-calendar"
 	import { didTodoistAPIRedirect } from "$lib/api-todoist"
-    import { TasksViewManager } from "$lib/tasks-view-manager"
+    import { TodosManager } from "$lib/todos-manager"
 	import { findClosestColorSwatch } from "$lib/utils-colors"
 	import { GoogleCalendarManager, initGoogleCalSession } from "$lib/google-calendar-manager"
     
@@ -59,7 +59,7 @@
     let googleEvents: GoogleCalendarEvent[] = googleCal?.events ?? []
 
     /* tasks */
-    let tasksManager = new TasksViewManager()
+    let tasksManager = new TodosManager()
     let removeCompleteFlag = false
     let hasCompletedTasks = false
 

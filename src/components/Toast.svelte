@@ -22,13 +22,11 @@
 	export let closeButton: $$Props['closeButton']
 	export let interacting: $$Props['interacting']
 	export let cancelButtonStyle: $$Props['cancelButtonStyle'] = ''
-	export const actionButtonStyle: $$Props['actionButtonStyle'] = ''
 	export let duration: $$Props['duration'] = 4000
-	export const descriptionClass: $$Props['descriptionClass'] = ''
 	export let classes: $$Props['classes'] = {}
 	export let unstyled: $$Props['unstyled'] = false
 
-	const EXPANDED_GAP = 8
+	const EXPANDED_GAP = 5
 	const TOAST_LIFETIME = 100000
 	const TOAST_NBR_DISAPPEAR_DELAY = 3000
 	const TIME_BEFORE_UNMOUNT = 200
@@ -39,13 +37,9 @@
 	const MIN_SWIPE_X_FROM_EDGE_DIFF = 5
 
 	const TOAST_ICON_OPTIONS = {
-		AppleMusic:   { iconWidth: "50%" },
-		Spotify:      { iconWidth: "90%", hasBgColor: false },
-		YoutubeMusic: { iconWidth: "60%" },
-		Soundcloud:   { iconWidth: "60%" },
-		Youtube:      { iconWidth: "60%" },
+		Youtube:      { iconWidth: "60%", scale: "0.98" },
 		Google:       { iconWidth: "60%" },
-		Todoist:      { iconWidth: "100%", containerWidth: "14px" }
+		Todoist:      { iconWidth: "100%", scale: "1.15" }
 	}
 
 	let pointerDownTimeStamp = 0
@@ -86,7 +80,6 @@
 	$: disabled = toastType === 'loading'
 	$: offset = heightIdx * EXPANDED_GAP + toastsHeightBefore
 	$: isPromiseLoadingOrInfiniteDuration = (toast.promise && toastType === 'loading') || toast.duration === Number.POSITIVE_INFINITY
-
 	$: isLight = !$themeState.isDarkTheme
 
 	// Height index is used to calculate the offset as it gets updated before the toast array, which means we can calculate the new layout faster.
@@ -118,10 +111,10 @@
 
 	function deleteToast() {
 		removed = true
-		offsetBeforeRemove = offset   // Save the offset for the exit swipe animation
+		offsetBeforeRemove = offset
 
-		// removeHeight(toast.id)
-		// setTimeout(() => dismiss(toast.id), TIME_BEFORE_UNMOUNT)
+		removeHeight(toast.id)
+		setTimeout(() => dismiss(toast.id), TIME_BEFORE_UNMOUNT)
 	}
 
 	/**
@@ -260,16 +253,16 @@
 		let color
 
 		if (toastType === 'success') {
-			color = COLOR_SWATCHES[3]
-		}
-		else if (toastType === 'warning') {
-			color = COLOR_SWATCHES[2]
-		}
-		else if (toastType === 'info') {
 			color = COLOR_SWATCHES[5]
 		}
+		else if (toastType === 'warning') {
+			color = COLOR_SWATCHES[3]
+		}
+		else if (toastType === 'error') {
+			color = COLOR_SWATCHES[1]
+		}
 		else {
-			color = COLOR_SWATCHES[11]
+			color = COLOR_SWATCHES[7]
 		}
 
 		return getColorTrio(color, !isDarkTheme)
@@ -310,6 +303,7 @@
     class:toast--info={toastType === 'info'}
     class:toast--error={toastType === 'error'}
     class:toast--light={isLight}
+	class:toast--action={toast.action}
 	data-toast-context={toast.contextId}
 	data-sonner-toast=""
 	data-styled={!(toast.component || toast?.unstyled || unstyled)}
@@ -365,7 +359,9 @@
 			{#if toast.icon || ["success", "info", "warning", "error", "loading"].includes(toastType) || toastType === "default"  && toast.icon}
 				<div class="toast__header-icon">
 					{#if toastType === "loading"}
-						<Loader visible={true} />
+						<div style:margin="2px 0px 0px 0px">
+							<Loader visible={true} />
+						</div>
 					{:else if typeof toast.icon === "number"}
 						<Logo 
 							logo={toast.icon} 

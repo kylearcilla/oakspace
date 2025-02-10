@@ -90,7 +90,7 @@
     }
 
     &__title {
-        @include text-style(1, var(--fw-500-600), 1.32rem);
+        @include text-style(1, var(--fw-400-500), 1.32rem);
         white-space: nowrap;
         margin-right: 9px;
         flex: 1;

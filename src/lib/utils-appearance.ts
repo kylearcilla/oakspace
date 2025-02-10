@@ -13,25 +13,24 @@ const STYLES = {
   }
 }
 
-/**
- * Load theme from local storage to init current color theme.
- */
 export function loadTheme() {
-    let storedTheme = localStorage.getItem("theme")
+    let theme = JSON.parse(localStorage.getItem("theme") ?? "{}")
     
-    if (!storedTheme) {
-      localStorage.setItem("theme", JSON.stringify(themes[0]))
-      storedTheme = localStorage.getItem("theme")
-    } 
+    if (!theme || Object.keys(theme).length === 0) {
+      theme = {
+        current: themes[0],
+        isDarkTheme: true,
+        lightTheme: themes[1].name,
+        darkTheme: themes[0].name
+      }
+      localStorage.setItem("theme", JSON.stringify(theme))
+    }
   
-    const { name, styling } = JSON.parse(storedTheme!)
-    const isDark = styling.isDark
+    const current = theme.current
+    const { name, styling } = current
 
     themeState.update(state => ({
-      ...state,
-      isDarkTheme: isDark,
-      lightTheme: !isDark ? name : state.lightTheme,
-      darkTheme:   isDark ? name : state.darkTheme
+      ...state, ...theme, current
   }))
 
   setRootColors(name, styling)
@@ -52,12 +51,13 @@ export function setNewTheme(newTheme: Theme) {
   themeState.update(state => ({
       ...state,
       isDarkTheme: isDark,
+      current: newTheme,
       lightTheme: !isDark ? name : state.lightTheme,
       darkTheme:   isDark ? name : state.darkTheme
   }))
   
   setRootColors(name, newTheme.styling)
-  localStorage.setItem("theme", JSON.stringify(newTheme))
+  localStorage.setItem("theme", JSON.stringify(get(themeState)))
 }
 
 export function findThemeFromName(name: string) {
@@ -97,6 +97,7 @@ export function setRootColors(name: string, theme: ThemeStyling) {
       :root {
           --bg-1: ${theme.bg1};
           --bg-2: ${theme.bg2};
+          --bg-3: ${theme.bg3};
           --fgColor1: ${theme.fgColor1};
           --fgColor2: ${theme.fgColor2};
           --textColor1: ${theme.textColor1};

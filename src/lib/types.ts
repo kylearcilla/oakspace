@@ -1334,10 +1334,11 @@ type ThemeState = {
     isDarkTheme: boolean
     lightTheme: string
     darkTheme: string
+    current: Theme
 }
 
 type Theme = {
-    name: string,
+    name: string
     styling: ThemeStyling
 }
 
@@ -1345,6 +1346,7 @@ type ThemeStyling = {
     isDark: boolean
     bg1: string
     bg2: string
+    bg3: string
     fgColor1: string
     fgColor2: string
     textColor1: string

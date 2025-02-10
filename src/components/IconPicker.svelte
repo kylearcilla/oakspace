@@ -1,5 +1,6 @@
 <script lang="ts">
     import { iconPicker } from "../lib/pop-ups"
+	import { themeState } from "../lib/store";
 	import { randomArrayElem } from "../lib/utils-general"
 
     import BounceFade from "./BounceFade.svelte"
@@ -9,7 +10,8 @@
     $: position = $picker.position
     $: isOpen   = $picker.isOpen
     $: id   = $picker.id
-
+    $: isLight = !$themeState.isDarkTheme
+    
 </script>
 
 <BounceFade 
@@ -22,12 +24,15 @@
     }}
     onClickOutside={() => onChooseType(null)}
 >
-    <div class="icon-picker">
+    <div 
+        class="icon-picker"
+        class:icon-picker--light={isLight}
+    >
         <button 
             class="icon-picker__emoji"
             on:click={() => onChooseType("emoji")}
         >
-            <div class="icon-picker__icon" style="opacity: 0.2; filter: saturate(0);">
+            <div class="icon-picker__icon" >
                 {randomArrayElem(["👏", "🌞", "🎈", "🙌", "🌙", "🤙"])}
             </div>
             <span>Emoji</span>
@@ -54,17 +59,30 @@
 
 <style lang="scss">
     .icon-picker {
-        background-color: var(--navMenuBgColor);
+        background-color: var(--bg-2);
         border: 1px solid rgba(var(--textColor1), 0.05);
         padding: 7px 8px;
         border-radius: 13px;
         @include flex(center, space-between);
 
+        --bg-opacity: 0.025;
+
+        &--light {
+            --bg-opacity: 0.04;
+            @include contrast-bg("bg-1");
+        }
+        &--light &__icon {
+            opacity: 0.4;
+        }
+        &--light &__img svg {
+            opacity: 0.7;
+        }
+
         button {
-            border-radius: 11px;
+        border-radius: 11px;
             width: 80px;
             height: 80px;
-            background: rgba(var(--textColor1), 0.02);
+            background: rgba(var(--textColor1), var(--bg-opacity));
             text-align: center;
 
             &:hover {
@@ -85,14 +103,16 @@
         span {
             margin-top: 8px;
             display: block;
-            opacity: 0.5;
-            @include text-style(0.5, 500, 1.25rem, "Manrope");
+            opacity: 0.7;
+            @include text-style(0.7, 500, 1.25rem);
         }
         &__icon {
             @include center;
             height: 35px;
             font-size: 2.8rem;
             transition: 0.1s ease-in-out;
+            opacity: 0.2;
+            filter: saturate(0);
         }
         &__emoji:hover &__icon {
             opacity: 1 !important;
@@ -102,7 +122,7 @@
             fill: rgba(var(--textColor1), 1);  
             
             svg {
-                opacity: 0.15;
+                opacity: 0.55;
                 transform: scale(1.4);
                 margin: 3px 0px 0px 7px;
             }

@@ -12,6 +12,7 @@
 	import Logo from "../../components/Logo.svelte"
 	import BounceFade from "../../components/BounceFade.svelte"
 	import { getActiveTheme } from "../../lib/utils-appearance";
+	import { toast } from "../../lib/utils-toast";
 
     const tabs = [
         { name: "Home", icon: "fa-solid fa-house", rgb: "178, 204, 255" }, 
@@ -56,7 +57,6 @@
     themeState.subscribe(_ => activeTheme = getActiveTheme())
 
 
-    /* Event Listeners */
     function onTabBtnMouseOver(tabIdx: number) {
         lightColor = tabs[tabIdx].rgb
     }
@@ -73,15 +73,10 @@
             goto("/home")
         }
         else if (option === "goals") {
-            // toast("default", {
-            //     message: "x",
-            //     description: "Hello world",
-            //     logoIcon: getLogoIconFromEnum(MusicPlatform.Spotify, MusicPlatform),
-            //     action: {
-            //         label: 'Undo',
-            //         onClick: () => console.log('Undo')
-            //     }
-            // })
+            toast("default", {
+                message: "Youtube",
+                description: "Hello worldweofiwwef owewef wefoi oiwjefow ifjweofiwej;fowiefjaw;eif jw;foi wow;fijw ;;ofiwejf ",
+            })
 
             // goto("/home/goals")
         }

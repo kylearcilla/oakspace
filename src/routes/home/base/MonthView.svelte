@@ -170,9 +170,6 @@
     function onViewBtnClicked(view: MonthDetailsView) {
         currView = view
         const btnElem = getElemById(`month-view--${view}`)
-
-        if (!btnElem) return
-
         const width = btnElem.clientWidth
         const scrollLeft = headerBtnsRef.scrollLeft
         const left = getHozSpace({ 
@@ -187,7 +184,7 @@
         })
 
         btnHighlighter.width = width - 2
-        btnHighlighter.left  = Math.max(left - 0, 0) + scrollLeft
+        btnHighlighter.left  = Math.max(left, 0) + scrollLeft
     }
     function handleScroll(elem: HTMLElement) {
         const { styling } = getMaskedGradientStyle(elem, {
@@ -227,7 +224,7 @@
                     id={"month-view--overview"}
                     class="month-view__header-btn"
                     class:month-view__header-btn--chosen={currView === "overview"}
-                    on:click={(e) => onViewBtnClicked("overview")}
+                    on:click={() => onViewBtnClicked("overview")}
                 >
                     <span>Overview</span>
                 </button>
@@ -235,7 +232,7 @@
                     id={"month-view--goals"}
                     class="month-view__header-btn"
                     class:month-view__header-btn--chosen={currView === "goals"}
-                    on:click={(e) => onViewBtnClicked("goals")}
+                    on:click={() => onViewBtnClicked("goals")}
                 >
                     <span>Goals</span> 
                 </button>
@@ -243,7 +240,7 @@
                     id={"month-view--habits"}
                     class="month-view__header-btn"
                     class:month-view__header-btn--chosen={currView === "habits"}
-                    on:click={(e) => onViewBtnClicked("habits")}
+                    on:click={() => onViewBtnClicked("habits")}
                 >
                     <span>Habits</span> 
                 </button>
@@ -251,7 +248,7 @@
                     id={"month-view--yr-view"}
                     class="month-view__header-btn"
                     class:month-view__header-btn--chosen={currView === "yr-view"}
-                    on:click={(e) => onViewBtnClicked("yr-view")}
+                    on:click={() => onViewBtnClicked("yr-view")}
                 >
                     <span>Year</span> 
                 </button>

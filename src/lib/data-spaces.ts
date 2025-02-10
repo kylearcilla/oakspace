@@ -700,10 +700,10 @@ export const SPACES: AmbientSpaceGroup = {
                 group: "worlds"
             },
             {
-                title: "Middle Earth | Rivendell - Music & Ambience",
-                subtitle: "Ambient Worlds",
-                thumbnail: "https://i.ytimg.com/vi/62j1xAdYKAQ/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLChGtd3iUJG91Y_fDqPuhgw7eLSWg",
-                sourceId: "62j1xAdYKAQ",
+                title: `Study | Work Aid • "The Office" Ambience 🎧 Keyboard Typing & Pencil Writing sounds`,
+                subtitle: "Lullablocks",
+                thumbnail: "https://i.ytimg.com/vi/eH-_GMhH-kk/hqdefault.jpg?sqp=-oaymwEnCNACELwBSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLAjcf6FQMEE0Oi0-iRp-xkhEYQalA",
+                sourceId: "eH-_GMhH-kk",
                 type: "video",
                 group: "worlds"
             },
@@ -775,6 +775,15 @@ export const SPACES: AmbientSpaceGroup = {
                 description: "Unwind to the calming melodies and sounds of anime.",
                 subtitle: "Multiple Authors",
                 thumbnail: "https://i.ytimg.com/vi/TdBSoy9F9NA/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLB6SDroyCAho5lVOce12jF1lndi5A",
+                type: "playlist",
+                group: "worlds"
+            },
+            {
+                sourceId: "PLTlW3nrfe71SKiu-BNUH9SBtL45zdzafP",
+                title: "Animal Crossing",
+                description: "Ambient vibes, gameplay, and study with me's in Animal Crossing!",
+                subtitle: "Multiple Authors",
+                thumbnail: "https://i.ytimg.com/vi/LSntRj8UTSs/hqdefault.jpg?sqp=-oaymwEnCNACELwBSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLChszR69IKKMhIYoQ_B81w70Vf3nw",
                 type: "playlist",
                 group: "worlds"
             },
@@ -1069,8 +1078,15 @@ export const POPULAR_SPACES: {
         SPACES.city.videos[5],
         SPACES.city.videos[3],
         SPACES.worlds.videos[1],
+        {
+            title: "Cozy Bookstore Café 📚 Café Ambience Chatter + Smooth Jazz Piano Music 1 Hour Loop 🎧 Study Work Aid",
+            subtitle: "Chill Crossing Hour",
+            thumbnail: "https://i.ytimg.com/vi/ssz9IHUEfC4/hqdefault.jpg?sqp=-oaymwEnCNACELwBSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLA2Rdtm9OjuiYf62LHFwRBQCMDYuA",
+            sourceId: "ssz9IHUEfC4",
+            type: "video",
+            group: "worlds"
+        },
         SPACES.city.videos[1],
-        SPACES.nature.videos[0],
         SPACES.lofi.videos[1],
         {
             title: "REAL TIME study with me (no music): 12 HOUR Productive Pomodoro Session | KharmaMedic",
@@ -1081,8 +1097,7 @@ export const POPULAR_SPACES: {
             group: "lofi"
         },
         SPACES.weather.videos[0],
-        SPACES.city.videos[2],
-        SPACES.space.videos[0]
+        SPACES.city.videos[2]
     ],
     playlists: []
 }

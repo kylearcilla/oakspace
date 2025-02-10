@@ -21,17 +21,16 @@
 
     $: isLight = !$themeState.isDarkTheme
     $: progress = Math.min(progress * 100, 100)
-
     $: updateColor(progress)
 
     themeState.subscribe(() => updateColor(progress))
 
     function updateColor(progress: number) {
+        const { isDarkTheme, lightTheme } = $themeState
+        const isLight = !isDarkTheme
         const settings = isLight ? LIGHT_COLOR_PROGRESS : DARK_COLOR_PROGRESS
         const { max, min, gVal, bVal } = settings
-        const lightTheme = $themeState.lightTheme
         const isTerracotta = lightTheme === "terracotta" && isLight
-
 
         if (style === "rich-colored" && !isTerracotta) {
             const rval = Math.max(max - ((max - min) * (progress / 100)), min)

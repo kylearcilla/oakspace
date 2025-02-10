@@ -8,6 +8,7 @@
 		getPrevMonth, isDateEarlier, isSameDay
 	} from '$lib/utils-date';
 	import { themeState } from '../lib/store';
+	import { randomArrayElem } from '../lib/utils-general';
 
 	export let id: string;
 	export let type: 'goals' | 'habits'
@@ -225,12 +226,9 @@
 										style:--color={opacity > 0 ? color : 'auto'}
 										style:--goal-fill={hasGoal ? hasGoalOpacity : sameDay ? goalsSameDayOpacity : goalPastOpacity}
 									>
-										<div 
-											class="heat-map__cell-content"
-											style:margin-bottom={lightGoals ? '-12px' : '0px'}
-										>
+										<div class="heat-map__cell-content">
 											{#if lightGoals}
-												🏆
+												{randomArrayElem(["🌷", "👨‍💻", "🇫🇷", "📖"])}
 											{/if}
 										</div>
 									</div>
@@ -321,7 +319,7 @@
 				height: 4px;
 				width: 4px;
 				color: var(--starColor);
-				@include text-style(_, 200, 1.4rem);
+				@include text-style(_, 200, 1.55rem);
 			}
 			&--has-goal &-content {
 				margin-bottom: -9px;

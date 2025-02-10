@@ -121,7 +121,8 @@ export const IMG_COLLECTIONS: any = {
   },
 }
 
-const IMG_COLLECTION_IDX = "sand"
+const IMG_COLLECTION_IDX = localStorage.getItem("theme-name") ?? "sand"
+// const IMG_COLLECTION_IDX = "sand"
 
 /* tags */
 export const TEST_TAGS: Tag[] = [

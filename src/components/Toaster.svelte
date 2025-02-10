@@ -118,7 +118,7 @@
 </script>
 
 {#if $toasts.length > 0}
-	<section aria-label={`Notifications ${hotkeyLabel}`} tabIndex={-1}>
+	<section tabIndex={-1}>
 		{#each possiblePositions as position, index}
 			<ol
 				bind:this={toastsListElem}

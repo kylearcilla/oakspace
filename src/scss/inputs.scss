@@ -155,7 +155,17 @@ div[contenteditable]:focus {
     position: relative;
     transition: box-shadow 0.2s ease-in-out,
                 background-color 0.1s ease-in-out;
-    @include txt-color(0.015, "bg");
+    background: rgba(var(--textColor1), 0.015);
+
+    --border-focus-opacity: 0.035;
+    --placeholder-opacity: 0.1;
+
+    &--light {
+        background: rgba(var(--textColor1), 0.035);
+
+        --border-focus-opacity: 0.065;
+        --placeholder-opacity: 0.125;
+    }
 
     input {
         padding: 0px 0px 3px 0px;
@@ -163,7 +173,8 @@ div[contenteditable]:focus {
         flex: 1;
     }
     input::placeholder {
-        @include text-style(0.1);
+        @include text-style(var(--placeholder-opacity));
+        font-weight: 400;
     }
 
     &--sp-between {
@@ -176,8 +187,8 @@ div[contenteditable]:focus {
     }
     &--border-focus {
         @include txt-color(0.025, "bg");
-        box-shadow: rgba(var(--textColor1), 0.035) 0px 0px 0px 1px inset, 
-                    rgba(var(--textColor1), 0.024) 0px 0px 0px 3px;
+        box-shadow: rgba(var(--textColor1), var(--border-focus-opacity)) 0px 0px 0px 1.5px inset, 
+                    rgba(var(--textColor1), calc(var(--border-focus-opacity) - 0.01)) 0px 0px 0px 3px;
     }
     &--no-highlight {
         border: 0px solid !important;

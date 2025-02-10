@@ -8,15 +8,22 @@
 
     $: state = $themeState
     $: selectedType = $themeState.isDarkTheme ? "dark" : "light"
+    $: lightTheme = state.lightTheme
+    $: darkTheme = state.darkTheme
 
-    $: preview = themePreviews.find(preview => {
-        if (type === "dark") {
-            return preview.name === state.darkTheme
-        } 
-        else {
-            return preview.name === state.lightTheme
-        }
-    })
+    $: updatePreview(lightTheme, darkTheme)
+    let preview
+
+    function updatePreview(lightTheme: string, darkTheme: string) {
+        preview = themePreviews.find(preview => {
+            if (type === "dark") {
+                return preview.name === darkTheme
+            }
+            else {
+                return preview.name === lightTheme
+            }
+        })
+    }
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -154,7 +161,7 @@
             margin-bottom: 4px;
         }
         &__inner {
-            background-color: var(--bg-2);
+            background-color: var(--bg-3);
             @include box(110px, 160px, 15px);
             margin-left: 15px;
             padding: 12px 10px 10px 13px;

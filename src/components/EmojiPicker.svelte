@@ -10,6 +10,7 @@
     import FrequentlyUsed from "../lib/emojis-freq-used"
 	  import { getElemById, getVertSpace } from "../lib/utils-general"
     import { Data, getEmojiData, EMOJI_BUTTON_SIZE, CATEGORY_ID_TO_NAME, CATEGORY_TO_ICONS, setCache, getCache } from "../lib/emojis"
+	  import { themeState } from "$lib/store";
 
     /* subset of : https://github.com/missive/emoji-mart */
 
@@ -21,6 +22,7 @@
 
     $: position = $picker.position
     $: isOpen   = $picker.isOpen
+    $: isLight  = !$themeState.isDarkTheme
 
     let searchResults: any = []
     let searchQuery = ""
@@ -407,7 +409,10 @@
     {onDismount}
 >
   {#if categories}
-    <div class="emoji-picker">
+    <div 
+      class="emoji-picker"
+      class:emoji-picker--light={isLight}
+    >
       <!-- nav position -->
       <div class="emoji-picker__nav" bind:this={navigationElem}>
         {#each navIcons as navIcon}
@@ -427,6 +432,7 @@
         <div 
           class="emoji-picker__search input-box input-box--border"
           class:input-box--border-focus={inputFocused}
+          class:input-box--light={isLight}
         >
           <i class="fa-solid fa-magnifying-glass"></i>
           <input
@@ -607,10 +613,26 @@
         height: 370px;
         min-height: 230px;
         position: relative;
-        background-color: var(--navMenuBgColor);
+        background-color: var(--bg-2);
         border: 1px solid rgba(var(--textColor1), 0.05);
         padding: 7px 8px 0px 8px;
         border-radius: 13px;
+
+        &--light {
+          @include contrast-bg("bg-1");
+        }
+        &--light &__sticky-heading {
+          background-color: var(--bg-1);
+        }
+        &--light &__nav-icon--picked {
+          color: var(--elemColor1) !important;
+        }
+        &--light &__skins {
+          @include contrast-bg;
+        }
+        &--light &__emoji-tooltip span {
+          @include contrast-bg;
+        }
 
         &__nav {
           @include flex(center, space-between);
@@ -619,6 +641,7 @@
         }
         &__nav-icon {
           font-size: 1.5rem;
+          color: rgba(var(--textColor1), 0.65);
           opacity: 0.2;
           transition: 0s ease-in-out;
           height: 26px;
@@ -629,11 +652,13 @@
           &:hover {
             opacity: 0.35;
             background-color: rgba(var(--textColor1), 0.09);
+            color: rgba(var(--textColor1), 1);
           }
         }
         &__nav-icon--picked {
           opacity: 1 !important;
-          background-color: rgba(var(--textColor1), 0.06);
+          color: rgba(var(--textColor1), 1) !important;
+          background-color: rgba(var(--textColor1), 0.06) !important;
         }
         &__search-container {
           @include flex(center)
@@ -682,8 +707,8 @@
         &__skins {
           @include flex(center);
           padding: 3px 3px 3px 5px;
-          background: #222122;
           border-radius: 9px;
+          background-color: var(--bg-3);
         }
         &__scroll {
           overflow-x: hidden;
@@ -701,7 +726,7 @@
         }
         &__sticky-heading {
             z-index: 1;
-            background-color: #161516;
+            background-color: var(--bg-2);
             font-weight: 500;
             position: sticky;
             padding: 0px 0px 5.5px 5px;
@@ -712,14 +737,14 @@
         &__emoji-tooltip {
             position: absolute;
             pointer-events: none;
-            @include text-style(0.8, 600, 1.1rem);
-            z-index: 1000;
+            @include text-style(0.8, var(--fw-400-500), 1.1rem);
+            z-index: 2000;
             height: 10px;
             width: 10px;
             
             span {
               @include abs-center;
-              background-color: rgb(47, 47, 47);
+              background-color: var(--bg-3);
               padding: 4px 8px;
               border-radius: 5px;
               width: max-content;

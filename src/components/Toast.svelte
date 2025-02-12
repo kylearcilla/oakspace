@@ -1,35 +1,21 @@
 <script lang="ts">
-	import { Icon, LogoIcon } from '$lib/enums'
-	import type { ToastClassnames, ToastProps, ToastTypes } from '$lib/types-toast'
-	import { cn, toasterManager, useEffect } from '$lib/utils-toast'
 	import { onDestroy, onMount } from 'svelte'
+
 	import Logo from './Logo.svelte'
+	import Loader from './Loader.svelte'
 	import SvgIcon from './SVGIcon.svelte'
-	import { globalContext, themeState } from '$lib/store';
+
+	import { themeState } from '$lib/store'
+	import { Icon, LogoIcon } from '$lib/enums'
 	import { extractNum } from '$lib/utils-general'
+	import type { Toast } from '$lib/types-toast'
+	import { toasterManager, useEffect } from '$lib/utils-toast'
 	import { COLOR_SWATCHES, getColorTrio } from "$lib/utils-colors"
-	import Loader from './Loader.svelte';
-
-	type $$Props = Expand<ToastProps>
-
-	export let toast: $$Props['toast']
-	export let index: $$Props['index']
-	export let expanded: $$Props['expanded']
-	export let invert: $$Props['invert']
-	export let position: $$Props['position']
-	export let visibleToasts: $$Props['visibleToasts']
-	export let expandByDefault: $$Props['expandByDefault']
-	export let closeButton: $$Props['closeButton']
-	export let interacting: $$Props['interacting']
-	export let cancelButtonStyle: $$Props['cancelButtonStyle'] = ''
-	export let duration: $$Props['duration'] = 4000
-	export let classes: $$Props['classes'] = {}
-	export let unstyled: $$Props['unstyled'] = false
 
 	const EXPANDED_GAP = 5
-	const TOAST_LIFETIME = 100000
 	const TOAST_NBR_DISAPPEAR_DELAY = 3000
 	const TIME_BEFORE_UNMOUNT = 200
+	
 	const SWIPE_TRESHOLD = 130
 	const MIN_SWIPE_THRESHOLD = 20
 	const MIN_TIME_THRESHOLD = 20
@@ -37,10 +23,20 @@
 	const MIN_SWIPE_X_FROM_EDGE_DIFF = 5
 
 	const TOAST_ICON_OPTIONS = {
-		Youtube:      { iconWidth: "60%", scale: "0.98" },
-		Google:       { iconWidth: "60%" },
-		Todoist:      { iconWidth: "100%", scale: "1.15" }
+		Youtube: { containerWidth: "17px" },
+		Google:  { containerWidth: "14px" },
+		Todoist: { containerWidth: "17px", scale: "1.15" }
 	}
+
+	export let index: number
+	export let toast: Toast
+	export let interacting: boolean
+	export let position: string
+	export let expanded: boolean
+	export let visibleToasts: number
+	export let duration: number
+	export let expandByDefault: boolean
+	export let closeButton: boolean
 
 	let pointerDownTimeStamp = 0
 	let mounted = false
@@ -50,54 +46,39 @@
 	let offsetBeforeRemove = 0
 	let initialHeight = 0
 	let toastRef: HTMLLIElement
-    let iconOptions: any
 
 	let closeTimerStartTimeRef = 0
 	let lastCloseTimerStartTimeRef = 0
 	let pointerStartRef: { x: number, y: number } | null = null
 
 	let timeoutId: ReturnType<typeof setTimeout>
-	let remainingTime = toast.duration || duration || TOAST_LIFETIME
-
+	let remainingTime = duration
 	let effect
 
-	const defaultClasses: ToastClassnames = {
-		toast: '', title: '', description: '',
-		closeButton: '', cancelButton: '', actionButton: '',
-		action: '', warning: '', error: '', success: '',
-		default: '', info: '', loader: '',
-		loading: ''
-	}
 	const { toasts, heights, removeHeight, addHeight, dismiss } = toasterManager!
 	
-	$: classes = { ...defaultClasses, ...classes }
 	$: isFront = index === 0
 	$: isVisible = index + 1 <= visibleToasts
 	$: toastType = toast.type ?? 'default'
 	$: coords = position.split('-')
-	$: invert = toast.invert || invert
 	$: $effect
 	$: disabled = toastType === 'loading'
 	$: offset = heightIdx * EXPANDED_GAP + toastsHeightBefore
-	$: isPromiseLoadingOrInfiniteDuration = (toast.promise && toastType === 'loading') || toast.duration === Number.POSITIVE_INFINITY
+	$: isPromiseLoadingOrInfiniteDuration = (toast.promise && toastType === 'loading') || duration === Number.POSITIVE_INFINITY
 	$: isLight = !$themeState.isDarkTheme
 
 	// Height index is used to calculate the offset as it gets updated before the toast array, which means we can calculate the new layout faster.
-	$: heightIdx		  = $heights.findIndex((height: any) => height.toastId === toast.id) || 0
-	$: toastsHeightBefore = $heights.reduce((prev: any, curr: any, idx: any) => idx >= heightIdx ? prev : prev + curr.height, 0)
+	$: heightIdx = $heights.findIndex((height) => height.toastId === toast.id) ?? 0
+	$: toastsHeightBefore = $heights.slice(0, heightIdx).reduce((prev, curr) => prev + curr.height, 0)
 	$: isDarkTheme		  = $themeState.isDarkTheme
 
 	$: if (toast.delete) {
 		deleteToast()
 	}
-	$: if (typeof toast.icon === "number") {
-		const iconStrIdx = LogoIcon[toast.icon!] as keyof typeof TOAST_ICON_OPTIONS
-		iconOptions = TOAST_ICON_OPTIONS[iconStrIdx]
-	}
 	$: if (toast.updated) {
 		clearTimeout(timeoutId)
 
-        remainingTime = (toast.duration || duration || TOAST_LIFETIME) + (index * TOAST_NBR_DISAPPEAR_DELAY)
+        remainingTime = duration + (index * TOAST_NBR_DISAPPEAR_DELAY)
 		setPointerDownTime()
 	}
 	$: effect = useEffect(() => {
@@ -125,7 +106,6 @@
 	 */
 	function pauseTimer() {
 		if (lastCloseTimerStartTimeRef < closeTimerStartTimeRef) {
-			// Get the elapsed time since the timer started
 			const elapsedTime = new Date().getTime() - closeTimerStartTimeRef
 			remainingTime = remainingTime - elapsedTime
 		}
@@ -143,7 +123,7 @@
 		}, remainingTime)
 	}
 
-	/* Event Handlers */
+	/* even Handlers */
 
 	function actionBtnClickedHandler(event: Event) {
 		toast.action?.onClick(event as MouseEvent)
@@ -152,12 +132,6 @@
 		deleteToast()
 	}
 	function closeBtnClickedHandler() {
-		deleteToast()
-		if (toast.cancel?.onClick) {
-			toast.cancel.onClick()
-		}
-	}
-	function cancelBtnClickedHandler() {
 		if (disabled) return
 		deleteToast()
 		toast.onDismiss?.(toast)
@@ -168,8 +142,6 @@
 
 		const target = event.target as HTMLElement
 		offsetBeforeRemove = offset
-
-		// Ensure we maintain correct pointer capture even when going outside of the toast (e.g. when swiping)
 		target.setPointerCapture(event.pointerId)
 
 		if (target.tagName === 'BUTTON') {
@@ -279,19 +251,15 @@
 
 	onMount(() => {
 		mounted = true
+		initialHeight = toastRef.getBoundingClientRect().height
 
-		// Add toast height total heights array after the toast is mounted
-		const height = toastRef.getBoundingClientRect().height
-		initialHeight = height
-
-	    addHeight({ toastId: toast.id, height })
+	    addHeight({ toastId: toast.id, height: initialHeight })
 	})
 	onDestroy(() => removeHeight(toast.id))
 </script>
 
 <li
 	bind:this={toastRef}
-	aria-live={toast.important ? 'assertive' : 'polite'}
 	aria-atomic="true"
 	role="status"
 	tabIndex={0}
@@ -306,7 +274,6 @@
 	class:toast--action={toast.action}
 	data-toast-context={toast.contextId}
 	data-sonner-toast=""
-	data-styled={!(toast.component || toast?.unstyled || unstyled)}
 	data-mounted={mounted}
 	data-promise={Boolean(toast.promise)}
 	data-removed={removed}
@@ -317,30 +284,27 @@
 	data-front={isFront}
 	data-swiping={swiping}
 	data-type={toastType}
-	data-invert={invert}
 	data-swipe-out={swipeOut}
 	data-expanded={expanded}
-	style={`${$$props.style} ${toast.style} ${isContextMsg ? initContextColorVars() : ""}`}
 	style:--index={index}
 	style:--toasts-before={index}
 	style:--z-index={$toasts.length - index}
 	style:--offset={`${removed ? offsetBeforeRemove : offset}px`}
 	style:--initial-height={expandByDefault ? 'auto' : `${initialHeight}px`}
+	style={`${isContextMsg ? initContextColorVars() : ""}`}
 	on:pointerdown={onPointerDown}
 	on:pointerup={onPointerUp}
 	on:pointermove={onPointerMove}
 >
 	<div class="toast__grab-bar"></div>
 
-    <!-- Close Button -->
+    <!-- close btn -->
 	{#if closeButton && !toast.component && toastType != "loading"}
 		{@const toastIconColor = getToastIconColor()}
 		<button
             class="toast__close-btn" 
 			aria-label="Close toast"
-			data-disabled={disabled}
-            data-close-btn=""
-			on:click={cancelBtnClickedHandler}
+			on:click={closeBtnClickedHandler}
 		>
             <div class="toast__close-btn-icon">
                 <SvgIcon 
@@ -353,8 +317,8 @@
 		</button>
 	{/if}
 
-	<!-- Main Content -->
-	<div class="toast__content" data-content="">
+	<!-- content -->
+	<div class="toast__content">
 		<div class="toast__header">
 			{#if toast.icon || ["success", "info", "warning", "error", "loading"].includes(toastType) || toastType === "default"  && toast.icon}
 				<div class="toast__header-icon">
@@ -363,10 +327,10 @@
 							<Loader visible={true} />
 						</div>
 					{:else if typeof toast.icon === "number"}
-						<Logo 
-							logo={toast.icon} 
-							options={{ containerWidth: `100%`, ...iconOptions}} 
-						/>
+						{@const iconStrIdx = LogoIcon[toast.icon]}
+						{@const options = TOAST_ICON_OPTIONS[iconStrIdx]}
+
+						<Logo {options} logo={toast.icon} />
 					{:else if toast.icon && toast.icon.startsWith("fa")}
 						<i class={toast.icon}></i>
 					{:else if toast.icon}
@@ -397,20 +361,6 @@
 		{/if}
 	</div>
 	<div class="toast__bottom-container">
-		<!-- Cancel -->
-		{#if toast.cancel}
-			<button
-				data-toast-context={toast.contextId}
-				data-button data-cancel
-				style={cancelButtonStyle}
-				class={cn(classes?.cancelButton, toast?.classes?.cancelButton)}
-				on:click={closeBtnClickedHandler}
-			>
-				{toast.cancel.label}
-			</button>
-		{/if}
-
-		<!-- Action -->
 		{#if toast.action}
 			<button 
 				data-toast-context={toast.contextId}
@@ -426,5 +376,4 @@
 
 <style lang="scss">
     @import '../scss/toasts.scss';
-    @import "../scss/brands.scss";
 </style>

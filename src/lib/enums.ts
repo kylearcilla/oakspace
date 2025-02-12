@@ -44,49 +44,6 @@ export enum DateBoundState{
     InvalidYr, BeyondMin, BeyondMax, InBounds
 }
 
-/* Image Upload */
-export enum ImgUploadError {
-    General, Format, InvalidURL, Size, Dims
-}
-
-/* Tasks */
-export enum RightSideTab { 
-    TASKS, OVERVIEW
-}
-export enum ContextMenuOption {
-    ADD_SUBTASK, DELETE_TASK, DELETE_SUBTASK
-}
-
-/* Goals */
-export enum GoalStatus {
-    OnHold , InProgress, Accomplished
-}
-export enum JournalTab {
-    Goals, Summary
-}
-export enum GoalsDropdown { 
-    ViewOption,
-    TuneDropdown
-}
-export enum GoalItemUI {
-    RepoList, BoardList, RepoCard, BoardCard 
-}
-export enum GoalViewOption {
-    Board = "Board", History = "History", AllGoals = "All Goals"
-}
-export enum GoalItemView {
-    List, Board
-}
-export enum EditMilestoneOption {
-    EditTitle, ChangeDate, Delete
-}
-export enum EditGoalOption {
-    ChangeImage, ToggleHideImg, DelteGoal, RemoveImage, TogglePinGoal
-}
-export enum EditGoalContextMenu {
-    Milestone, Date, Img, Goal
-}
-
 /* Sessions */
 export enum SessionState {
     EMPTY, FOCUSING, ON_BREAK, WAITING_TO_PROGRESS_BREAK, 
@@ -103,28 +60,6 @@ export enum YTAPIErrorContext {
 }
 export enum YTMediaLinkType {
     PLAYLIST, VIDEO
-}
-
-/* Music */
-export enum PlaybackGesture {
-    SHUFFLE, PLAY_PAUSE, SKIP_NEXT, SKIP_PREV, SEEK, LOOP
-}
-export enum LibError {
-    REFRESH, NEW_COLLECTION, MORE_ITEMS
-}
-export enum MusicPlatform { 
-    AppleMusic, Spotify, YoutubeMusic, Soundcloud 
-}
-export enum MusicMediaType {
-    Playlist, Track, Album, PodcastEpisode, AudioBook, RadioStation, SavedTracks, SavedAudioBooks, SavedEpisodes, Podcast
-}
-export enum UserLibraryMedia {
-    Playlists = "Playlists", LikedTracks = "Tracks", Albums = "Albums", PodcastEps = "Episodes", Audiobooks = "Audiobooks", Artists = "Artists"
-}
-
-/* Routines */
-export enum RoutineActivityType {
-    Work, Body, Mind, SelfCare, Nap
 }
 
 /* Toasts */

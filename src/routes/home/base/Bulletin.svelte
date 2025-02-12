@@ -112,7 +112,7 @@
         editor.updateText("")
         editor.focus()
     }
-    function openImgModal() {
+    function openImgPicker() {
         hasContextMenu = false
 
         imageUpload.init({
@@ -173,7 +173,7 @@
             <li class="dmenu__option">
                 <button 
                     class="dmenu__option-btn"
-                    on:click={() => openImgModal()}
+                    on:click={() => openImgPicker()}
                 >
                     <span class="dmenu__option-text">
                         Change Background

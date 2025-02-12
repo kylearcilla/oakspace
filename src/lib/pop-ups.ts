@@ -2,26 +2,17 @@ import { get } from "svelte/store"
 import { writable, type Writable } from "svelte/store"
 import { initFloatElemPos } from "./utils-general"
 import { cursorPos } from "./utils-home"
+import { ALLOWED_IMAGE_TYPES } from "./utils-media-upload"
+import { DEFAULT_MAX_SIZE_MB } from "./utils-media-upload"
 
-function getPopFloatElemPos(box: { height: number, width: number }) {
-    const { height, width } = box
+const IMG_DIM_HEIGHT = 290
+const IMG_DIM_WIDTH  = 460
 
-    const fromPos = {
-        top: cursorPos.top - 15,
-        left: cursorPos.left - 15
-    }
-    return initFloatElemPos({
-        dims: { 
-            height,
-            width
-        }, 
-        containerDims: { 
-            height: window.innerHeight, 
-            width: window.innerWidth
-        },
-        cursorPos: fromPos
-    })
-}
+const ICON_PICKER_HEIGHT = 85
+const ICON_PICKER_WIDTH  = 175
+
+const EMOJI_PICKER_HEIGHT = 305
+const EMOJI_PICKER_WIDTH  = 380
 
 export let imageUpload = ImageUpload()
 export let iconPicker = IconPicker()
@@ -32,45 +23,136 @@ function ImageUpload() {
     const state: Writable<ImageUpload> = writable({ 
         isOpen: false,
         position: { top: -1000, left: -1000 },
-        onSubmit: null
+        onSubmitImg: () => {}
     })
 
-    function init(args: { 
-        onSubmit: (imgSrc: string | null) => void
-        constraits?: ImgUploadConstraints 
-    }) {
-        const { constraits, onSubmit } = args
-        const position = getPopFloatElemPos({ height: 290, width: 460 })
+    function init({ onSubmitImg, exclude, maxSizeMb, dims }: ImgUploadOptions)  {
+        const position = getPopFloatElemPos({ 
+            height: IMG_DIM_HEIGHT, width: IMG_DIM_WIDTH 
+        })
+        const maxSize  = maxSizeMb ?? DEFAULT_MAX_SIZE_MB
+        const excludes = exclude ?? []
+
+        const formats = ALLOWED_IMAGE_TYPES.filter(type => {
+            if (excludes.includes('jpg') || excludes.includes('jpeg')) {
+                return !['jpg', 'jpeg'].includes(type)
+            }
+            return !excludes.includes(type)
+        })
+        const constraints = {
+            dims, maxSizeMb: maxSize, formats
+        }
+
+        if (get(state).isOpen) {
+            close()
+            return
+        }
+        state.set({ 
+            onSubmitImg, position, 
+            constraints, isOpen: true 
+        })
+    }
+    function onSubmitImg(src: string) {
+        const { onSubmitImg }  = get(state)
+        if (onSubmitImg) {
+            onSubmitImg(src)
+        }
+        close()
+    }
+    function close() {
+        state.update((data) => ({ ...data, isOpen: false }))
+    }
+
+    return {
+        state, init, onSubmitImg, close
+    }
+}
+
+function EmojiPicker() {
+    const state: Writable<EmojiPicker> = writable({ 
+        position: { top: -1000, left: -1000 },
+        isOpen: false,
+        onSubmitEmoji: () => {}
+    })
+
+    function init({ onSubmitEmoji }: { onSubmitEmoji: (emoji: Emoji) => void}) {
+        const position = getPopFloatElemPos({ 
+            height: EMOJI_PICKER_HEIGHT, width: EMOJI_PICKER_WIDTH 
+        })
 
         if (get(state).isOpen) {
             close()
             return
         }
 
-        state.update((data) => ({ 
-            ...data, 
-            onSubmit,
-            position, 
-            constraits, isOpen: true 
-        }))
+        state.set({ isOpen: true, position, onSubmitEmoji })
     }
-    function onSubmit(imgSrc: string | null) {
-        const { onSubmit }  = get(state)
-        if (onSubmit) {
-            onSubmit(imgSrc)
-        }
+    function onSubmitEmoji(emoji: Emoji) {
+        const { onSubmitEmoji } = get(state)
+        onSubmitEmoji(emoji)
         close()
     }
     function close() {
-        state.update((data) => ({
-            ...data,
-            isOpen: false, 
-            onEmojiSelect: onSubmit
-        }))
+        state.update((data) => ({ ...data, isOpen: false }))
+    }
+
+    return { state, init, onSubmitEmoji, close }
+}
+
+function IconPicker() {
+    const state: Writable<IconPicker> = writable({ 
+        id: "",
+        isOpen: false,
+        position: { top: -1000, left: -1000 },
+        onSubmitIcon: () => {}
+    })
+
+    function init({ id, onSubmitIcon, imgOptions }: { 
+        id: string,
+        onSubmitIcon: (icon: Icon | null) => void,
+        imgOptions?: ImgUploadOptions
+    }) {
+        const position = getPopFloatElemPos({ 
+            height: ICON_PICKER_HEIGHT, width: ICON_PICKER_WIDTH 
+        })
+        if (get(state).isOpen) {
+            close()
+            return
+        }
+        state.set({ 
+            id, imgOptions, onSubmitIcon,
+            position,  isOpen: true 
+        })
+    }
+    
+    function onChooseType(type: IconType) {
+        const { imgOptions }  = get(state)
+
+        if (type === "emoji") {
+            emojiPicker.init({ onSubmitEmoji })
+        }
+        else {
+            imageUpload.init({ ...imgOptions, onSubmitImg })
+        }
+        close()
+    }
+
+    function onSubmitEmoji(emoji: Emoji) {
+        const { onSubmitIcon }  = get(state)
+        onSubmitIcon({ type: "emoji", src: emoji.native })
+    }
+
+    function onSubmitImg(src: string) {
+        const { onSubmitIcon }  = get(state)
+        onSubmitIcon({ type: "img", src })
+    }
+
+    function close() {
+        state.update((data) => ({ ...data, isOpen: false }))
     }
 
     return {
-        state, init, onSubmit, close
+        state, init, onChooseType, close
     }
 }
 
@@ -113,7 +195,7 @@ function ColorPicker() {
         state.update((data) => ({
             ...data,
             isOpen: false, 
-            onEmojiSelect: onSubmit
+            onSubmitEmoji: onSubmit
         }))
     }
 
@@ -122,115 +204,22 @@ function ColorPicker() {
     }
 }
 
-function IconPicker() {
-    const state: Writable<IconPicker> = writable({ 
-        id: "",
-        isOpen: false,
-        position: { top: -1000, left: -1000 },
-        onSubmitIcon: (icon: Icon | null) => {}
+function getPopFloatElemPos(box: { height: number, width: number }) {
+    const { height, width } = box
+
+    const fromPos = {
+        top: cursorPos.top - 15,
+        left: cursorPos.left - 15
+    }
+    return initFloatElemPos({
+        dims: { 
+            height,
+            width
+        }, 
+        containerDims: { 
+            height: window.innerHeight, 
+            width: window.innerWidth
+        },
+        cursorPos: fromPos
     })
-
-    function init(args: { 
-        id: string,
-        onSubmitIcon: (icon: Icon | null) => void
-    }) {
-        const position = getPopFloatElemPos({ height: 90, width: 175 })
-
-        if (get(state).isOpen) {
-            close()
-            return
-        }
-
-        state.update((data) => ({ 
-            ...data, 
-            ...args,
-            position, 
-            isOpen: true 
-        }))
-    }
-    function onChooseType(type: IconType | null) {
-        const { onSubmitIcon }  = get(state)
-
-        if (type === "emoji") {
-            emojiPicker.init({
-                onEmojiSelect: (emoji: any) => {
-                    if (emoji) {
-                        onSubmitIcon({ type: "emoji", src: emoji.native })
-                    }
-                    else {
-                        onSubmitIcon(null)
-                    }
-                }
-            })
-        }
-        else if (type === "img") {
-            imageUpload.init({
-                onSubmit: (src: string | null) => {
-                    if (src) {
-                        onSubmitIcon({ type: "img", src })
-                    }
-                    else {
-                        onSubmitIcon(null)
-                    }
-                }
-            })
-        }
-        else {
-            onSubmitIcon(null)
-        }
-        close()
-    }
-    function close() {
-        state.update((data) => ({
-            ...data,
-            isOpen: false
-        }))
-    }
-
-    return {
-        state, init, onChooseType, close
-    }
 }
-
-function EmojiPicker() {
-    const state: Writable<EmojiPicker> = writable({ 
-        position: { top: -1000, left: -1000 },
-        isOpen: false,
-        onEmojiSelect: null
-    })
-
-    function init(args: { onEmojiSelect: (emoji: any) => void}) {
-        const { onEmojiSelect } = args
-        const position = getPopFloatElemPos({ height: 305, width: 380 })
-
-        if (get(state).isOpen) {
-            close()
-            return
-        }
-
-        state.set({
-            isOpen: true, 
-            position,
-            onEmojiSelect
-        })
-    }
-    function onEmojiSelect(emoji: any) {
-        const { onEmojiSelect }  = get(state)
-        if (onEmojiSelect) {
-            onEmojiSelect(emoji)
-        }
-        close()
-    }
-    function close() {
-        // do not change positioning when closing as it will change before the bounce fade animation finished
-        state.update((data) => ({
-            ...data,
-            isOpen: false, 
-            onEmojiSelect: null
-        }))
-    }
-    return {
-        state, init, onEmojiSelect, close
-    }
-}
-

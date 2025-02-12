@@ -26,8 +26,8 @@ label {
 }
 body {
       background-color: #101012;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    //   font-family: "Geist Mono";
+    //   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: "Geist Mono";
       color: white;
 }
 img {
@@ -250,13 +250,14 @@ $screen-xl: 112.5em;   // extra large (1800 px)
 @mixin contrast-bg($bg: "bg-2") {
     @if $bg == "bg-1" {
         background-color: var(--bg-1);
+        box-shadow: rgba(var(--textColor1), 0.085) 0px 0px 10px 1px; 
+        border: 1.5px solid rgba(var(--textColor1), 0.055);
     }
     @else if $bg == "bg-2" {
         background-color: var(--bg-2);
+        border: 1.5px solid rgba(var(--textColor1), 0.065);
+        box-shadow: 0px 4px 10px 1px rgba(0, 0, 0, 0.075);
     }
-
-    box-shadow: rgba(var(--textColor1), 0.085) 0px 0px 10px 1px; 
-    border: 1.5px solid rgba(var(--textColor1), 0.055);
 }
 
 .text-aln-center {

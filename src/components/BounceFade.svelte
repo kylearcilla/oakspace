@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { clickOutside, inlineStyling } from "$lib/utils-general";
+	import { clickOutside } from "$lib/utils-general"
 
     export let id = ""
     export let isHidden: boolean
@@ -7,16 +7,16 @@
     export let position: CSSAbsPos | undefined = undefined
     export let staticPos = false
     export let zIndex: number = 1
-    export let onClickOutside: FunctionParam | undefined = undefined
+    export let onClickOutside: () => void | undefined = undefined
     export let onDismount: (() => void) | undefined = undefined
+    
+    const TRANSITION_DURATIONS_MS = 200
 
     let isMounted = false
     let doShow = false
     let removeTimeout: NodeJS.Timeout | null = null
 
     $: toggleElem(!isHidden)
-
-    const TRANSITION_DURATIONS_MS = 200
 
     function toggleElem(isActive: boolean) {
         // mount if active, mount on DOM, then toggle aniamtion
@@ -57,6 +57,7 @@
         style:left={position?.left}
         style:right={position?.right}
         style:bottom={position?.bottom}
+        style:--duration={`${TRANSITION_DURATIONS_MS}ms`}
         on:contextmenu={(e) => e.preventDefault()}
         use:clickOutside on:click_outside={onClickOutside}
     >
@@ -71,9 +72,9 @@
         @include not-visible;
 
         &--animated {
-            transition: 0.2s opacity cubic-bezier(.2, .45, 0, 1),
-                        0.2s visibility cubic-bezier(.2, .45, 0, 1),
-                        0.2s transform cubic-bezier(.2, .45, 0, 1);
+            transition: var(--duration) opacity cubic-bezier(.2, .45, 0, 1),
+                        var(--duration) visibility cubic-bezier(.2, .45, 0, 1),
+                        var(--duration) transform cubic-bezier(.2, .45, 0, 1);
         }
         &--shown {
             transform: scale(1);

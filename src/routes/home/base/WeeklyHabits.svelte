@@ -323,11 +323,7 @@
                     >
                         <ProgressRing 
                             progress={weekProgress} 
-                            options={{ 
-                                style: "light",
-                                size: 15,
-                                strokeWidth: 3
-                            }}
+                            options={{  size: 15, strokeWidth: 3 }}
                         />
                     </div>
                 </div>
@@ -439,9 +435,7 @@
                                     <ProgressRing 
                                         progress={checked / total} 
                                         options={{ 
-                                            style: "rich-colored",
-                                            size: 15,
-                                            strokeWidth: 3
+                                            style: "colored", size: 15, strokeWidth: 3
                                         }}
                                     />
                                 </div>

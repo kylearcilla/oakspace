@@ -1,4 +1,3 @@
-import { GoalStatus } from "./enums"
 import { COLOR_SWATCHES } from "./utils-colors"
 import { generateHabitData } from "./utils-habits"
 import { v4 as uuidv4 } from 'uuid'

@@ -2,7 +2,7 @@
 	import { themeState } from "../lib/store";
 	import { DARK_COLOR_PROGRESS, LIGHT_COLOR_PROGRESS } from "../lib/utils-colors"
 
-    export let progress: number
+    export let progress = 0
     
     $: isLight = !$themeState.isDarkTheme
     $: updateColor(isLight, progress)
@@ -13,9 +13,9 @@
         const settings = light ? LIGHT_COLOR_PROGRESS : DARK_COLOR_PROGRESS
         const { max, min, gVal, bVal } = settings
         const isTerracotta = $themeState.lightTheme === "terracotta" && isLight
-
         const rval = Math.max(max - ((max - min) * (progress)), min)
 
+        // colored progress for terracotta creates too low contrast
         if (isTerracotta) {
             fgColor = "var(--elemColor1)"
         }
@@ -25,14 +25,11 @@
     }
 </script>
 
-<div 
-    class="progress"
-    class:progress--light={isLight}
->
+<div class="progress" class:progress--light={isLight}>
     <div 
+        class="slider"
         style:--fg-width={`${progress * 100}%`}
         style:--fg-color={fgColor}
-        class="progress__slider"
     >
     </div>
 </div>
@@ -45,22 +42,22 @@
         &--light {
             --slider-bg-opacity: 0.075;
         }
-        &__slider {
-            width: 30px;
-            height: 3px;
-            border-radius: 2px;
-            background-color: rgba(var(--textColor1), var(--slider-bg-opacity));
-            position: relative;
+    }
+    .slider {
+        width: 30px;
+        height: 3px;
+        border-radius: 2px;
+        background-color: rgba(var(--textColor1), var(--slider-bg-opacity));
+        position: relative;
 
-            &::before {
-                content: " ";
-                @include abs-top-left;
-                width: var(--fg-width);
-                background: var(--fg-color);
-                transition: 0.1s cubic-bezier(.4,0,.2,1);
-                border-radius: 10px;
-                height: 100%;
-            }
+        &::before {
+            content: " ";
+            @include abs-top-left;
+            width: var(--fg-width);
+            background: var(--fg-color);
+            transition: 0.1s cubic-bezier(.4,0,.2,1);
+            border-radius: 10px;
+            height: 100%;
         }
     }
 </style>

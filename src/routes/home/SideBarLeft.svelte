@@ -81,7 +81,9 @@
             // goto("/home/goals")
         }
         else if (option === "habits") {
-            goto("/home/habits")
+            toast("default", {
+                message: "Youtube"
+            })
         }
         else if (option === "routines") {
             goto("/home/routines")

@@ -342,9 +342,7 @@
 
   <!-- toasts -->
   {#if $globalContext.hasToaster}
-      <Toaster 
-        expand={true} richColors={true} closeButton={true} position="bottom-right" 
-      />
+      <Toaster  />
   {/if}
 
   <!-- yt player -->

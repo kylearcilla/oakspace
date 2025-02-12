@@ -49,13 +49,6 @@ type InputOptions = {
     }
 }
 
-type ImageUpload = {
-    constraints?: ImgUploadConstraints
-    isOpen: boolean
-    position: OffsetPoint
-    onSubmit: ((imgSrc: string |  null) => void) | null
-}
-
 type TextEntryOptions = {
     entry: string
     styling: "background" | "has-marker" | "default"
@@ -111,6 +104,17 @@ type ThoughtEntry = {
     date: Date
 }
 
+
+/* icon picker */
+
+type IconPicker = {
+    id: string
+    isOpen: boolean
+    position: OffsetPoint
+    onSubmitIcon: (icon: Icon) => void
+    imgOptions?: ImgUploadOptions
+}
+
 type Icon = {
     src: string
     type: IconType
@@ -118,17 +122,76 @@ type Icon = {
 
 type IconType = "emoji" | "img"
 
-type IconPicker = {
-    id: string
-    isOpen: boolean
-    position: OffsetPoint
-    onSubmitIcon: (icon: Icon | null) => void
-}
+/* emojis */
 
 type EmojiPicker = {
     position: OffsetPoint,
     isOpen: boolean,
-    onEmojiSelect: ((emoji: any) => void) | null
+    onSubmitEmoji: (emoji: Emoji) => void
+}
+
+type EmojiData = {
+    id: string
+    name: string
+    keywords: string[]
+    shortcodes: string
+    version: number
+    src?: string
+    aliases?: string[]
+    emoticons?: string[]
+    skins?: {
+        src?: string
+        native: string
+        unified: string
+        shortcodes?: string
+    }[]
+}
+
+type Emoji = Omit<EmojiData, "skins" | "version"> & {
+    skin: number
+    native: string
+    unified: string
+    shortcodes: string
+}
+
+/* images  */
+
+type ImageUpload = {
+    constraints?: ImgUploadConstraints
+    exclude?: Array<'jpeg' | 'png' | 'gif' | 'webp' | 'svg'>
+    isOpen: boolean
+    position: OffsetPoint
+    onSubmitImg: (src: string) => void
+}
+
+type ImgUploadOptions = {
+    onSubmitImg: (src: string) => void
+    maxSizeMb?: number
+    exclude?: string[]
+    dims?: DimConstraints
+}
+
+type ImgUploadConstraints = {
+    maxSizeMb: number
+    formats: string[]
+    dims?: DimConstraints
+}
+
+type DimConstraints = {
+    height?: {
+        max?: number
+        min?: number
+    },
+    width?: {
+        max?: number
+        min?: number
+    }
+}
+
+type ProgressRingOptions = {
+    size?: number
+    strokeWidth?: number
+    style?: "colored" | "default"
 }
 
 type ModalOptions = {
@@ -250,6 +313,15 @@ type AncestoryQueryOptions = {
 
 type CSSAbsPos = {
     top?: string, left?: string, bottom?: string, right?: string
+}
+
+type RangeInputOptions = {
+    updateOnSeek?: boolean
+    disabled?: boolean
+    bg?: string
+    fg?: string
+    height?: number
+    thumbSize?: number
 }
 
 type ConfirmType = "default" | "delete"
@@ -473,7 +545,7 @@ type AppearanceSectionToThemeMap = {
     dark: ColorTheme[]
 }
 
-type LogoContainerOptions = {
+type LogoOptions = {
     hasBgColor?: boolean
     containerWidth?: string
     iconWidth?: string
@@ -1231,102 +1303,6 @@ type Milestone = {
     name: string
     idx: number
     done: boolean
-}
-
-type YrAccomplishmentsOverview = {
-    newGoals: number,
-    milestonesReached: number,
-    goalsAccomplished: number,
-    accomplishments: Accomplishment[]
-}
-type Accomplishment = {
-    title: string
-    date: Date
-    tagRef: {
-        id: string
-        title: string
-        symbol: string,
-        color: string
-    },
-    goalRef: {
-        id: string
-        title: string
-    }
-    isMilestone: boolean
-}
-
-type ImgUploadConstraints = {
-    maxMbSize?: number,
-    dims?: {
-        height?: {
-            max?: number
-            min?: number
-        },
-        width?: {
-            max?: number
-            min?: number
-        }
-    }
-}
-
-/* Analytics Stuff */
-type SessionInputData = { 
-    tagName: string, 
-    hours: number, 
-    color: string  
-}
-
-type DaySessionData = {
-    date: Date,
-    sessions: SessionInputData[]
-}
-
-type ProdOverviewData = { 
-    chartData: ChartData
-    timeFrameInsightData: PordOverViewInisightData
-}
-
-type PordOverViewInisightData = {
-    tagDistrData: TagDistrDataPoint[],
-    sessionCountData: SessionCountData
-    focusTimeData: FocusTimeData
-}
-
-type ChartData = {
-    dayToBarDataArr: any[]
-    maxHours: number,
-    tags: Tag[]
-}
-
-type TagDistrDataPoint = { 
-    name: string, 
-    color: string, 
-    hours: number,
-    hoursStr: string,
-    fraction: number
-}
-
-type SessionCountData = {
-    isDay: boolean,
-    percChange: number
-    count: number
-}
-
-type FocusTimeData = {
-    isDay: boolean
-    percChange: number
-    hours: number
-}
-
-type TimeFrameActivity = {
-    timeFrame: string
-    allTimeMins: number
-}
-
-type TagMonthlyActivity = {
-    month: string,
-    sessionsDone: number
-    focusHrs: number
 }
   
 /* theme stuff */

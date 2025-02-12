@@ -1,46 +1,62 @@
 <script lang="ts">
+  import { onMount as onMount } from "svelte"
+
 	  import Emoji from "./Emoji.svelte"
 	  import SvgIcon from "./SVGIcon.svelte"
-    import { onMount as onMount } from "svelte"
 	  import BounceFade from "./BounceFade.svelte"
 
-	  import { Icon } from "../lib/enums"
-    import { emojiPicker } from "../lib/pop-ups"
-    import SearchIndex from "../lib/emojis-search-idx"
-    import FrequentlyUsed from "../lib/emojis-freq-used"
-	  import { getElemById, getVertSpace } from "../lib/utils-general"
-    import { Data, getEmojiData, EMOJI_BUTTON_SIZE, CATEGORY_ID_TO_NAME, CATEGORY_TO_ICONS, setCache, getCache } from "../lib/emojis"
-	  import { themeState } from "$lib/store";
+	  import { Icon } from "$lib/enums"
+	  import { themeState } from "$lib/store"
+    import { emojiPicker } from "$lib/pop-ups"
+    import SearchIndex from "$lib/emojis-search-idx"
+    import FrequentlyUsed from "$lib/emojis-freq-used"
+	  import { getElemById, getVertSpace } from "$lib/utils-general"
+    import { Data, getEmojiData, EMOJI_BUTTON_SIZE, CATEGORY_ID_TO_NAME, CATEGORY_TO_ICONS, getFrequentEmojis, setCache, getCache } from "$lib/emojis"
 
     /* subset of : https://github.com/missive/emoji-mart */
+
+    type GridRow = string[] & { categoryId: string, index: number }
+    type Grid = GridRow[] & { setsize: number }
+
+    type SearchResultRow = EmojiData[] & { __categoryId: string, __index: number }
+    type SearchResults   = SearchResultRow[] & { setsize: number }
+
+    type RowItem = {
+      index: number, posinset: number
+    }
 
     const ROWS_PER_RENDER = 10
     const PER_LINE = 8
     const SKINS = ["✋", "✋🏻", "✋🏼", "✋🏽", "✋🏾", "✋🏿"]
 
-    const { onEmojiSelect, state: picker } = emojiPicker
+    const CATEGORY_CLASS = "emoji-picker__category"
+    const CAT_ROW_CLASS = "emoji-picker__category-row"
+
+    const { onSubmitEmoji, state: picker, close } = emojiPicker
 
     $: position = $picker.position
     $: isOpen   = $picker.isOpen
     $: isLight  = !$themeState.isDarkTheme
 
-    let searchResults: any = []
+    let searchResults = [] as SearchResults
     let searchQuery = ""
     let skinsOpen = false
     let skinIdx = getSkinIdx()
     let focusPos: string | null = null
-    let focusedEmojiId: any = null
+    let focusedEmojiId: string | null = null
     let gridInit = false
+    let dismounting = false
 
     let categories = null
     let visibleRows = { 0: true }
     let observers = []
     let navKey = ""
-    let mounted = false
-
-    let categoriesRef: any 
-    let grid: any
+    
+    let categoriesRef: Map<string, { rows: RowItem[] }>
+    let grid: Grid
     let inputFocused = false
+    let mounted = false
+    let enterPressed = false
 
     let navigationElem: HTMLElement
     let scrollElem: HTMLElement
@@ -50,6 +66,12 @@
 
     $: if (mounted && isOpen) {
       onOpen()
+    }
+    $: if (dismounting) {
+      tooltip = null
+    }
+    else {
+      resetState()
     }
 
     let navCategoryId = ""
@@ -78,7 +100,7 @@
       scrollElem.scrollTop = Math.max(categoryElem.offsetTop - 80, 0)
     }
     function onEmojiHover(pe: PointerEvent, name: string) {
-      if (name === tooltip?.name) return
+      if (name === tooltip?.name || dismounting) return
 
       const target  = pe.target as HTMLElement
       const top = getVertSpace({
@@ -92,14 +114,44 @@
         top: top + 74
       }
     }
-    function onEmojiClick(emoji: any) {
-      const emojiData = getEmojiData(emoji, { skinIndex: skinIdx })
-      FrequentlyUsed.add(emojiData)
-      onEmojiSelect(emojiData)
+    function onEmojiClick(emojiData: EmojiData) {
+      const emoji = getEmojiData(emojiData, { skinIdx })
+
+      onSubmitEmoji(emoji)
+      updateFrequent(emoji)
+
+      dismounting = true
+    }
+    function updateFrequent(emoji: EmojiData) {
+      FrequentlyUsed.add(emoji)
+
+      const freqs = getFrequentEmojis()
+      const rows = [], grid = []
+      let row: RowItem[] = []
+      
+      for (let emoji of freqs) {
+        if (row.length === PER_LINE) {
+          grid.push(row)
+          row = []
+        }
+        row.push(emoji)
+      }
+      if (row.length) {
+        grid.push(row)
+      }
+      grid.forEach((_, index) => {
+        rows.push({ index, posinset: index * PER_LINE + 1 })
+      })
+
+      categoriesRef.set('frequent', { rows })
+      categories[0].emojis = freqs
+      categoriesRef = categoriesRef
     }
     function onIconClick(id: string) {
       navCategoryId = id
-      scrollTo(id)
+      resetState()
+
+      requestAnimationFrame(() => scrollTo(id))
     }
 
     /* search */
@@ -107,12 +159,12 @@
       const input = searchInputElem
       const value = input.value
       const _searchResults = await SearchIndex.search(value)
+
+      resetFocus()
       searchQuery = value
-      focusPos = null
-      focusedEmojiId = null
 
       if (!_searchResults) {
-        searchResults = []
+        searchResults = [] as SearchResults
         scrollElem.scrollTop = 0
         return
       }
@@ -136,30 +188,43 @@
       scrollElem.scrollTop = 0
     }
     function clearSearch() {
-      searchInputElem.value = ""
+      if (searchInputElem) {
+        searchInputElem.value = ""
+      }
+
       searchQuery = ""
-      searchResults = []
+      searchResults = [] as SearchResults
+    }
+
+    function getResultsCount() {
+      if (searchQuery) {
+        return searchResults.reduce((count, row: SearchResultRow) => {
+            const rowCount = row.filter(item => item !== null && item !== undefined).length
+            return count + rowCount
+        }, 0)
+      }
+      return 0
     }
 
     /* observers */
     function observeRows() {
-      const rows = document.getElementsByClassName("emoji-picker__category-row")
-      const _visibleRows = visibleRows
+      const rows = document.getElementsByClassName(CAT_ROW_CLASS)
+      const views = visibleRows
 
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           const target = entry.target as HTMLElement
           const index = parseInt(target.dataset.index)
-          const targetIdx = index - (index % ROWS_PER_RENDER)
+          const rowIdx = index - (index % ROWS_PER_RENDER)
 
           if (entry.isIntersecting) {
-            _visibleRows[targetIdx] = true
+            views[rowIdx] = true
           } 
           else {  
-            _visibleRows[targetIdx] = false
+            views[rowIdx] = false
           }
         })
-        visibleRows = _visibleRows
+        visibleRows = views
       },
         {
           root: scrollElem,
@@ -172,7 +237,7 @@
   }
     function observeCategories() {
       if (!navigationElem) return
-      const categories = document.getElementsByClassName("emoji-picker__category")
+      const categories = document.getElementsByClassName(CATEGORY_CLASS)
       const visibleCategories = new Map()
 
       const setFocusedCategory = (categoryId) => {
@@ -209,15 +274,22 @@
 
     /* navigation */
     function navigate(dir: "left" | "up" | "down" | "right") {
-      const [row, col, cIdx] = focusPos ? focusPos.split('-').map(Number) : [0, 0, 0];
-      const emojiCount = categories[cIdx].emojis.length
+      const hasQuery = searchQuery != ""
+      const [row, col, _cIdx] = focusPos ? focusPos.split('-').map(Number) : [0, 0, 0]
+      const cIdx = hasQuery ? 0 : _cIdx
+      const resCount = getResultsCount()
+
+      const emojiCount = hasQuery ? resCount : categories[cIdx].emojis.length
       const rows = Math.ceil(emojiCount / PER_LINE)
       const lastCol = PER_LINE - 1
+      const catLastIdx = categories.length - 1
 
       let newRow = row
       let newCol = col
       let newCIdx = cIdx
       dir = !focusPos ? null : dir
+
+      const catLength = (idx) => categories[idx].emojis.length
 
       if (dir === "left") {
           if (col > 0) {
@@ -244,7 +316,7 @@
             newRow++
             newCol = 0
           } 
-          else if (cIdx < categories.length - 1) {
+          else if (cIdx < catLastIdx) {
             newCIdx++
             newRow = 0
             newCol = 0
@@ -255,7 +327,7 @@
             newRow--
           } 
           else if (cIdx > 0) {
-            newCIdx--
+            newCIdx = hasQuery ? 0 : newCIdx - 1
             const prevCategory = categories[newCIdx]
             const prevEmojiCount = prevCategory.emojis.length
             const prevRows = Math.ceil(prevEmojiCount / PER_LINE)
@@ -266,31 +338,51 @@
       else if (dir === "down") {
           if (row < rows - 1) {
             newRow++
+            const targetIdx = newRow * PER_LINE + newCol
+            if (hasQuery && targetIdx >= resCount) {
+                newCol = (resCount - 1) % PER_LINE
+                newRow = Math.floor((resCount - 1) / PER_LINE)
+            }
           } 
-          else if (cIdx < categories.length - 1) {
-            newCIdx++
+          else if (cIdx < catLastIdx) {
+            newCIdx = hasQuery ? 0 : newCIdx + 1
             newRow = 0
- 
-            const nextCategoryEmojis = categories[newCIdx].emojis.length
+
+            const nextCategoryEmojis = hasQuery ? resCount : catLength(newCIdx)
             const maxColsInNextCategory = Math.min(PER_LINE, nextCategoryEmojis)
             newCol = Math.min(col, maxColsInNextCategory - 1)
           }
-          const currentCategoryEmojis = categories[newCIdx].emojis.length
+          
+          const currentCategoryEmojis = hasQuery ? resCount : catLength(newCIdx)
           const emojiIdx = newRow * PER_LINE + newCol
 
           if (emojiIdx >= currentCategoryEmojis) {            
-            newCol = (currentCategoryEmojis - 1) % PER_LINE
+              newCol = (currentCategoryEmojis - 1) % PER_LINE
           }
       }
+
+      newCIdx = hasQuery ? 0 : newCIdx
       focusEmoji([newRow, newCol, newCIdx])
+    }
+    function getEmojiIdResult(row: number, col: number): string | null {
+      const emojiRow = searchResults[row]
+      if (!emojiRow) {
+        return null
+      }
+      return emojiRow[col]
     }
     function focusEmoji(pos: [number, number, number]) {
       const [row, col, cIdx] =  pos
       const emojiIdx = row * PER_LINE + col
-      focusedEmojiId = categories[cIdx].emojis[emojiIdx]
-      focusPos = `${row}-${col}-${cIdx}`
+      const hasQuery = searchQuery != ""
+      const id = `${row}-${col}-${cIdx}`
+      const elem = getElemById(`emoji--${id}`)
 
-      getElemById(`emoji--${focusPos}`).focus()
+      if (elem) {
+        elem.focus()
+        focusedEmojiId = hasQuery ? getEmojiIdResult(row, col) : categories[cIdx].emojis[emojiIdx]
+        focusPos = id
+      }
     }
     function handleKeyDown(ke: KeyboardEvent) {
       if (!isOpen) return
@@ -312,27 +404,28 @@
         navigate('down')
       }
       else if (key === 'Enter' && focusedEmojiId) {
+        enterPressed = true
         onEmojiClick(SearchIndex.get(focusedEmojiId))
       }
       else if (key === 'Escape') {
-        searchQuery = ""
-        onEmojiSelect(null)
+        dismounting = true
+        close()
       }
     }
 
     /* inits */
     function initGrid() {
       const { categories } = Data
+      const key = Data.categories.map((category) => category.id).join(',')
+      
       categoriesRef = new Map()
-
-      const _navKey = Data.categories.map((category) => category.id).join(',')
-      if (navKey && navKey != _navKey) {
+      if (navKey && navKey != key) {
         scrollElem && (scrollElem.scrollTop = 0)
       }
 
-      navKey = _navKey
+      navKey = key
 
-      grid = []
+      grid = [] as Grid
       grid.setsize = 0
 
       const addRow = (rows, category) => {
@@ -362,14 +455,11 @@
         }
         categoriesRef.set(category.id, { rows })
       }
-
       gridInit = true
     }
     function observe() {
       observeCategories()
-      requestAnimationFrame(() => {
-        observeRows()
-      })
+      requestAnimationFrame(() => observeRows())
     }
     function onOpen() {
       if (Data && !categories) {
@@ -383,14 +473,27 @@
     function onDismount() {
       observers.forEach(observer => observer.disconnect())
       observers = []
-      
-      focusedEmojiId = null
+      dismounting = false
+    }
+    function resetState() {
+      resetFocus()
+      clearSearch()
+    }
+    function resetFocus() {
       focusPos = null
+      focusedEmojiId = null
+    }
+    function onEmojiBlur(e: FocusEvent) {
+      const target = e.relatedTarget as HTMLElement | null
+      
+      if (target && target.id.includes("emoji--")) {
+        return
+      }
+      resetFocus()
     }
     
     onMount(() => {
       mounted = true
-
       if (Data) initGrid()
     })
 </script>
@@ -405,7 +508,10 @@
       top: `${position.top}px`,
       left: `${position.left}px`
     }}
-    onClickOutside={() => onEmojiSelect(null)}
+    onClickOutside={() => {
+        dismounting = true
+        close()
+    }}
     {onDismount}
 >
   {#if categories}
@@ -416,14 +522,14 @@
       <!-- nav position -->
       <div class="emoji-picker__nav" bind:this={navigationElem}>
         {#each navIcons as navIcon}
-          {@const { id, icon } = navIcon}
-          <button 
-              on:click={() => onIconClick(id)}
-              class="emoji-picker__nav-icon"
-              class:emoji-picker__nav-icon--picked={id === navCategoryId}
-          >
-              <i class={icon}></i>
-          </button>
+            {@const { id, icon } = navIcon}
+            <button 
+                on:click={() => onIconClick(id)}
+                class="emoji-picker__nav-icon"
+                class:emoji-picker__nav-icon--picked={id === navCategoryId}
+            >
+                <i class={icon}></i>
+            </button>
         {/each}
       </div>
 
@@ -436,46 +542,46 @@
         >
           <i class="fa-solid fa-magnifying-glass"></i>
           <input
-            bind:this={searchInputElem}
-            on:focus={() => inputFocused = true}
-            on:blur={() => inputFocused = false}
-            on:input={handleSearchInput}
-            type="search" 
-            placeholder="Search" 
-            autocomplete="off"
+              bind:this={searchInputElem}
+              on:focus={() => inputFocused = true}
+              on:blur={() => inputFocused = false}
+              on:input={handleSearchInput}
+              type="search" 
+              placeholder="Search" 
+              autocomplete="off"
           >
           <button on:click={clearSearch}>
             <SvgIcon 
-              icon={Icon.Close} 
-              options={{
-                  scale: 1.1, height: 12, width: 12, strokeWidth: 1.6
-              }}
+                icon={Icon.Close} 
+                options={{
+                    scale: 1.1, height: 12, width: 12, strokeWidth: 1.6
+                }}
             />
           </button>
         </div>
         <button 
-          id="ej-skins--dbtn"
-          on:click={() => skinsOpen = !skinsOpen}
-          class="emoji-picker__skin-btn"
+            id="ej-skins--dbtn"
+            on:click={() => skinsOpen = !skinsOpen}
+            class="emoji-picker__skin-btn"
         >
-          {SKINS[skinIdx]}
+            {SKINS[skinIdx]}
         </button>
       </div>
       
-      <!-- categories + frequent + search results -->
+      <!-- content -->
       <div bind:this={scrollElem} class="emoji-picker__scroll">
         <div style:width="300px" style:height="100%">
 
         <!-- search results -->
         <div style:height="100%" class:hidden={searchQuery === ""}>
-          <div class="emoji-picker__category">
+          <div class={CATEGORY_CLASS}>
             <div class="emoji-picker__sticky-heading">
               Search Results
             </div>
             {#each searchResults as row, i (`c--${i}`)}
               {@const rowWithPlaceholders = row.length ? [...row, ...Array(PER_LINE - row.length).fill(null)] : []}
               <div
-                class="emoji-picker__category-row"
+                class={CAT_ROW_CLASS}
                 data-index={i}
                 style:top={`${i * EMOJI_BUTTON_SIZE}px`}
               >
@@ -483,12 +589,19 @@
                   {@const posId = `${i}-${ii}-0`}
                   {#if emojiId}
                     <Emoji
+                      skin={skinIdx}
                       id={`emoji--${posId}`}
                       focused={posId === focusPos}
                       emoji={SearchIndex.get(emojiId)}
-                      onClick={onEmojiClick}
                       onPointerOver={onEmojiHover}
                       onPointerLeave={() => tooltip = null}
+                      onBlur={onEmojiBlur}
+                      onClick={(emoji) => {
+                          if (!enterPressed) {
+                            onEmojiClick(emoji)
+                          }
+                          enterPressed = false
+                      }}
                     />
                   {:else}
                     <div
@@ -511,7 +624,7 @@
               <div
                 id={`ej--${category.id}`}
                 data-id={category.id}
-                class="emoji-picker__category"
+                class={CATEGORY_CLASS}
               >
                 <div class="emoji-picker__sticky-heading">
                   {CATEGORY_ID_TO_NAME[category.id]}
@@ -530,7 +643,7 @@
                         {@const items = [...rEmojis, ...Array(PER_LINE - rEmojis.length).fill(null)]}
                         
                         <div
-                            class="emoji-picker__category-row"
+                            class={CAT_ROW_CLASS}
                             data-index={rowRef.index}
                             data-target-row={targetRow}
                         >
@@ -543,9 +656,15 @@
                                     id={`emoji--${posId}`}
                                     focused={posId === focusPos}
                                     emoji={SearchIndex.get(emojiId)}
-                                    onClick={onEmojiClick}
                                     onPointerOver={onEmojiHover}
                                     onPointerLeave={() => tooltip = null}
+                                    onBlur={onEmojiBlur}
+                                    onClick={(emoji) => {
+                                      if (!enterPressed) {
+                                        onEmojiClick(emoji)
+                                      }
+                                      enterPressed = false
+                                    }}
                                   />
                                 {:else}
                                   <div
@@ -619,7 +738,7 @@
         border-radius: 13px;
 
         &--light {
-          @include contrast-bg("bg-1");
+          @include contrast-bg("bg-2");
         }
         &--light &__sticky-heading {
           background-color: var(--bg-1);

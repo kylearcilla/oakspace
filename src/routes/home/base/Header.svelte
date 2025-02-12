@@ -23,12 +23,10 @@
 
     $: showIcon = header.pos === "top" && header.icon.show
 
-    function openImgModal() {
+    function openBannerImg() {
         imageUpload.init({
             onSubmit: (src: string) => {
-                if (src && bannerImg.src != src) {
-                    onBannerUpdate({ src, center: 50 })
-                }
+                onBannerUpdate({ src, center: 50 })
             }
         })
         settingsOpen = false
@@ -37,9 +35,7 @@
         iconPicker.init({
             id: BASE_HEADER_ICON_ID,
             onSubmitIcon: (icon) => {
-                if (icon) {
-                    onHeaderUpdate({ icon: { ...header.icon, ...icon } })
-                }
+                onHeaderUpdate({ icon: { ...header.icon, ...icon } })
             }
         })
     }
@@ -134,7 +130,7 @@
                         </div>
                         {#if options.banner}
                             <div class="dmenu__option">
-                                <button class="dmenu__option-btn" on:click={() => openImgModal()}>
+                                <button class="dmenu__option-btn" on:click={() => openBannerImg()}>
                                     <span class="dmenu__option-text">
                                         Change Wallpaper
                                     </span>

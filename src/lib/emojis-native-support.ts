@@ -1,7 +1,7 @@
 // @ts-nocheck
 const CACHE = new Map()
 const VERSIONS = [
-  { v: 15, emoji: '🫨' },
+  { v: 15, emoji: '🫨' },  // emojis introduced in listed version
   { v: 14, emoji: '🫠' },
   { v: 13.1, emoji: '😶‍🌫️' },
   { v: 13, emoji: '🥸' },

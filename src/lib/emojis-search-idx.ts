@@ -20,8 +20,7 @@ function reset() {
   Pool = null
 }
 
-async function search(value, { maxResults, caller } = {}) {
-  if (!value || !value.trim().length) return null
+async function search(value, { maxResults, caller } = {}): Emoji | null {
   maxResults || (maxResults = 90)
 
   const values = value

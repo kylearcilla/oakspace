@@ -179,7 +179,7 @@
                 if (optn == "add" || optn == "replace") {
                     imageUpload.init({
                         onSubmit: (imgSrc) => {
-                            if (bgImgSrc != imgSrc && imgSrc) {
+                            if (bgImgSrc != imgSrc) {
                                 bgImgSrc = imgSrc
                             }
                         }
@@ -272,15 +272,15 @@
                 width: fit-content;
             }
             &-date {
-                @include text-style(0.5, 400, 1.1rem, "DM Sans");
+                @include text-style(0.5, 400, 1.1rem);
                 margin-bottom: 3px;
             }
             &-date-time {
-                @include text-style(0.5, 400, 1.1rem, "DM Sans");
+                @include text-style(0.5, 400, 1.1rem);
                 margin-left: 4px;
             }
             &-time h1 {
-                @include text-style(1, 400, 1.7rem, "DM Sans");
+                @include text-style(1, 400, 1.7rem);
                 margin-right: 7px;
                 white-space: nowrap;
             }

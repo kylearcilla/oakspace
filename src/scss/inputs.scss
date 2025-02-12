@@ -169,8 +169,11 @@ div[contenteditable]:focus {
 
     input {
         padding: 0px 0px 3px 0px;
-        @include text-style(0.7, 500, 1.4rem);
+        @include text-style(0.7, var(--fw-400-500), 1.4rem);
         flex: 1;
+    }
+    input:disabled {
+        @include text-style(0.35);
     }
     input::placeholder {
         @include text-style(var(--placeholder-opacity));
@@ -200,7 +203,7 @@ div[contenteditable]:focus {
     &-error-text {
         display: block;
         margin: 8px 0px 0px 5px;
-        font-weight: 500;
+        font-weight: var(--fw-400-500);
         font-size: 1.14rem;
         color: #CB7272;
     }
@@ -331,7 +334,7 @@ $loading-dots-width: 4px;
 }
 
 .error-text {
-    font-weight: 500;
+    font-weight: var(--fw-400-500);
     font-size: 1.25rem;
     color: #CB7272;   
 }

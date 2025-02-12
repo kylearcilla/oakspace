@@ -3,23 +3,15 @@
     import { DARK_COLOR_PROGRESS, LIGHT_COLOR_PROGRESS } from "../lib/utils-colors"
 
     export let progress: number = 0
-    export let options: {
-        size?: number
-        strokeWidth?: number
-        style?: "rich-colored" | "default" | "simple" | "light"
-    } | undefined = undefined
+    export let options: ProgressRingOptions | undefined = undefined
 
-    const size = options?.size ?? 14
-    const strokeWidth = options?.strokeWidth ?? 2.5
-    const style = options?.style ?? "default"
-
+    const { size = 14, strokeWidth = 2.5, style = "default" } = options
     const halfSize = size / 2
     const radius = (size - strokeWidth) / 2
     const circumference = radius * Math.PI * 2
 
     let fgColor = "", bgColor = ""
 
-    $: isLight = !$themeState.isDarkTheme
     $: progress = Math.min(progress * 100, 100)
     $: updateColor(progress)
 
@@ -28,11 +20,12 @@
     function updateColor(progress: number) {
         const { isDarkTheme, lightTheme } = $themeState
         const isLight = !isDarkTheme
-        const settings = isLight ? LIGHT_COLOR_PROGRESS : DARK_COLOR_PROGRESS
-        const { max, min, gVal, bVal } = settings
+        const progressColor = isLight ? LIGHT_COLOR_PROGRESS : DARK_COLOR_PROGRESS
         const isTerracotta = lightTheme === "terracotta" && isLight
+        const { max, min, gVal, bVal } = progressColor
 
-        if (style === "rich-colored" && !isTerracotta) {
+        // colored progress for terracotta creates too low contrast
+        if (style === "colored" && !isTerracotta) {
             const rval = Math.max(max - ((max - min) * (progress / 100)), min)
             fgColor    = `rgb(${rval}, ${gVal}, ${bVal})`
             bgColor    = `rgba(var(--textColor1), ${isLight ? 0.1 : 0.05})`
@@ -52,13 +45,13 @@
   
   <svg
     class="circular-progress"
+    width={size}
+    height={size}
+    viewBox={`0 0 ${size} ${size}`}
     style:--fg-color={fgColor}
     style:--bg-color={bgColor}
     style:--size={size}
     style:--stroke-width={strokeWidth}
-    width={size}
-    height={size}
-    viewBox={`0 0 ${size} ${size}`}
   >
     <circle
       class="bg"
@@ -68,7 +61,7 @@
     />
     <circle
         class="fg"
-        class:fg__hide={progress === 0}
+        style:opacity={progress === 0 ? 0 : 1}
         cx={halfSize}
         cy={halfSize}
         r={radius}
@@ -80,7 +73,6 @@
     .circular-progress {
         --half-size: calc(var(--size) / 2);
 
-        // SVG Circle Styling
         circle {
             stroke-width: var(--stroke-width);
             fill: none;
@@ -90,16 +82,11 @@
         circle.bg {
             stroke: var(--bg-color);
         }
-
         circle.fg {
             transform: rotate(-90deg);
             transform-origin: var(--half-size) var(--half-size);
             stroke: var(--fg-color);
             transition: 0.3s cubic-bezier(.4, 0, .2, 1);
-
-            &__hide {
-                opacity: 0;
-            }
         }
     }
 </style>

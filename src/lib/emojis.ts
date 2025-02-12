@@ -1,6 +1,5 @@
 import NativeSupport from "$lib/emojis-native-support"
 import FrequentlyUsed from "$lib/emojis-freq-used"
-import SearchIndex from "$lib/emojis-search-idx"
 export let Data: any = null
 
 const EMOJI_VERSION = 15
@@ -24,7 +23,7 @@ const SAFE_FLAGS = [
 
 export const CATEGORY_ID_TO_NAME = {
     "search": "Search Results",
-    "frequent": "Frequently used",
+    "frequent": "Frequently Used",
     "people": "Smileys & People",
     "nature": "Animals & Nature",
     "foods": "Food & Drink",
@@ -91,6 +90,7 @@ export async function initEmojis() {
     const { categories } = Data
 
     if (set == 'native') {
+      // find the latest emojis version supported by the browser
       latestVersionSupport = NativeSupport.latestVersion()
       noCountryFlags       = NativeSupport.noCountryFlags()
     }
@@ -152,10 +152,10 @@ export async function initEmojis() {
 
 
             /* create skin idex */
-            let skinIndex = 0
+            let skinIdx = 0
             for (const skin of emoji.skins) {
                 if (!skin) continue
-                skinIndex++
+                skinIdx++
 
                 const { native } = skin
                 if (native) {
@@ -163,67 +163,68 @@ export async function initEmojis() {
                     emoji.search += `,${native}`
                 }
 
-                const skinShortcodes = skinIndex == 1 ? '' : `:skin-tone-${skinIndex}:`
+                const skinShortcodes = skinIdx == 1 ? '' : `:skin-tone-${skinIdx}:`
                 skin.shortcodes = `:${emoji.id}:${skinShortcodes}`
             }
         }
 
         if (resetSearchIndex) {
-            SearchIndex.reset()
+            // SearchIndex.reset()
         }
     }
+}
+
+export function getFrequentEmojis() {
+    return FrequentlyUsed.get({ 
+        maxFrequentRows: MAX_FREQ_ROWS, perLine: FREQ_ROW_PER_LINE 
+    })
 }
 
 export function setCache(key: string, value: string) {
     try {
       window.localStorage[`emoji-mart.${key}`] = JSON.stringify(value)
     } 
-    catch (error) {}
+    catch (error) {
+        console.error(error)
+    }
+    finally {
+        return null
+    }
   }
   
-export function getCache(key: string): any {
+export function getCache(key: string): string | number | null {
     try {
         const value = window.localStorage[`emoji-mart.${key}`]
-
-        if (value) {
-        return JSON.parse(value)
-        }
+        return value ? JSON.parse(value) : null
     } 
-    catch (error) {}
+    catch (error) {
+        console.error(error)
+        return null
+    }
 }
   
-export function getEmojiData(emoji: any, { skinIndex = 0 } = {}) {
-    const skin =
-      emoji.skins[skinIndex] ||
-      (() => {
-        skinIndex = 0
-        return emoji.skins[skinIndex]
-      })()
-  
-    const emojiData: any = {
-      id: emoji.id,
-      name: emoji.name,
+export function getEmojiData(data: EmojiData, { skinIdx = 0 } = {}) {
+    const skin = data.skins![skinIdx] || data.skins![0]
+    
+    const emoji: Emoji = {
+      id: data.id,
+      name: data.name,
+      keywords: data.keywords,
+      shortcodes: data.shortcodes,
       native: skin.native,
       unified: skin.unified,
-      keywords: emoji.keywords,
-      shortcodes: skin.shortcodes || emoji.shortcodes,
+      skin: skinIdx + 1
     }
-  
-    if (emoji.skins.length > 1) {
-      emojiData.skin = skinIndex + 1
+
+    if (skin?.src) {
+      emoji.src = skin.src
     }
-  
-    if (skin.src) {
-      emojiData.src = skin.src
+    if (data.aliases && data.aliases.length) {
+      emoji.aliases = data.aliases
     }
-  
-    if (emoji.aliases && emoji.aliases.length) {
-      emojiData.aliases = emoji.aliases
+    if (data.emoticons && data.emoticons.length) {
+      emoji.emoticons = data.emoticons
     }
-  
-    if (emoji.emoticons && emoji.emoticons.length) {
-      emojiData.emoticons = emoji.emoticons
-    }
-  
-    return emojiData
+
+    return emoji
 }

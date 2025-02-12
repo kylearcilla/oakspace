@@ -216,12 +216,10 @@
         iconPicker.init({
             id,
             onSubmitIcon: (newIcon) => {
-                if (newIcon) {
-                    icon = { ...icon, ...newIcon }
-                    icon.size = icon.type === "emoji" ? "small" : "big"
-                    entry.icon = icon
-                    requestAnimationFrame(() => setMarkerHeight())
-                }
+                icon = { ...icon, ...newIcon }
+                icon.size = icon.type === "emoji" ? "small" : "big"
+                entry.icon = icon
+                requestAnimationFrame(() => setMarkerHeight())
             }
         })
     }

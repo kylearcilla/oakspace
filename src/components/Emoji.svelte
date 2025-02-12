@@ -8,9 +8,10 @@
     export let focused: boolean
     
     export let onPointerOver : (pe: PointerEvent, name: string) => void
-    export let onClick : (emoji: any) => void
+    export let onClick : (data: EmojiData) => void
     export let onPointerLeave: () => void
-    
+    export let onBlur: (e: FocusEvent) => void
+
     $: emoji = emoji || SearchIndex.get(emoji.id)
     $: emojiSkin = emoji?.skins[skin] || emoji?.skins[0]
     $: _focused = focused
@@ -26,6 +27,7 @@
     on:pointerover={(pe) => onPointerOver(pe, emoji.name)}
     on:pointerleave={onPointerLeave}
     on:click={() => onClick(emoji)}
+    on:blur={onBlur}
 >
     <div class="emoji__bg">
         <span>

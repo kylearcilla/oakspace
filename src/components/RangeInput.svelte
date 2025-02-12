@@ -3,62 +3,49 @@
 
     export let value: number
     export let onUpdate: (value: number) => void
-    export let options: {
-        updateOnSeek?: boolean,
-        disabled?: boolean,
-        bg?: string,
-        fg?: string,
-        height?: number,
-        thumbSize?: number
-    } | undefined = undefined
+    export let options: RangeInputOptions | undefined = undefined
 
-    const updateOnSeek = options?.updateOnSeek ?? true
-    const disabled = options?.disabled ?? false
-    const fg = options?.bg ?? "rgba(255, 255, 255, 0.9)"
-    const bg = options?.bg ?? "rgba(255, 255, 255, 0.1)"
-    const height = options?.height ?? 2.5
-    const thumbSize = options?.thumbSize ?? 9.5
+    const {
+        updateOnSeek = true,
+        disabled = false,
+        bg = "rgba(255, 255, 255, 0.1)",
+        fg = "rgba(255, 255, 255, 0.9)",
+        height = 2.5,
+        thumbSize = 9.5
+    } = options ?? {}
 
     let rangeInput: HTMLInputElement
     let _val = value
 
-
-    $: console.log("xx", value)
-
-    function onInput(newVal: number) {
-        _val = newVal
-
+    function onInput() {
         if (updateOnSeek) {
-            onChange()
+            update()
         }
 
-        rangeInput!.style.background = `linear-gradient(to right, ${fg} 0%, ${fg} ${_val * 100}%, ${bg} ${_val * 100}%, ${bg} 100%)`
-        rangeInput!.value = `${_val}`
+        rangeInput!.style.background = `linear-gradient(to right, ${fg} 0%, ${fg} ${value * 100}%, ${bg} ${value * 100}%, ${bg} 100%)`
+        rangeInput!.value = `${value}`
     }
-    function onChange() {
-        onUpdate(_val)
+    function update() {
+        onUpdate(value)
     }
 
-    onMount(() => {
-        onInput(value)
-    })
+    onMount(() => onInput())
 </script>
 
-<div class="range-input">
-    <input
-        bind:this={rangeInput}
-        class="input-range input-range--show-thumb"
-        style:--height={`${height}px`}
-        style:--thumb-size={`${thumbSize}px`}
-        on:input={() => onInput(+rangeInput.value)}
-        on:change={() => onChange()}
-        min="0" 
-        max="1"
-        step="0.01"
-        {disabled}
-        type="range"
-    />
-</div>
+<input
+    class="input-range input-range--show-thumb"
+    style:--height={`${height}px`}
+    style:--thumb-size={`${thumbSize}px`}
+    min="0" 
+    max="1"
+    step="0.01"
+    type="range"
+    {disabled}
+    bind:this={rangeInput}
+    bind:value={value}
+    on:input={() => onInput()}
+    on:change={() => update()}
+/>
 
 <style lang="scss">
     input {

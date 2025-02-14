@@ -91,13 +91,8 @@ export function initTimer() {
 export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeftBarWithKey: boolean, totalWidth: number) => {    
     const target = event.target as HTMLElement
     const context = get(globalContext)
-    const { altKey, metaKey, shiftKey, code, key, ctrlKey } = event
+    const { shiftKey, key, ctrlKey } = event
     const isTargetContentEditable = target.contentEditable === "true"
-
-    updateGlobalContext({ 
-        ...context, 
-        lastKeysPressed: { keyCode: code, altKey, metaKey, shiftKey }
-    })
     
     if (isTargetTextEditor(target)) { 
         const allowCustomFormatting = false
@@ -116,7 +111,7 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
     const doNotOpenRightBar = false
     const leftBar = context.leftBar
     const hasAmbience = context.ambience?.active
-    const wideLeftBarCtrl = !hasAmbience && ctrlKey && (leftBar === "wide-float" || leftBar === "wide-full")
+    const wideLeftBarCtrl = !hasAmbience && ctrlKey && (leftBar === "float" || leftBar === "full")
 
     // if (key === "Escape" && context.modalsOpen.length != 0) {
     //     const modals = get(globalContext).modalsOpen
@@ -141,13 +136,13 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
         isModalOpen(ModalType.Quote) ? closeModal(ModalType.Quote) : openModal(ModalType.Quote)
     }
     else if (key === "/" && wideLeftBarCtrl) {
-        updateLeftBar(leftBar === "wide-float" ? "wide-full" : "wide-float")
+        updateLeftBar(leftBar === "float" ? "full" : "float")
     }
 
     return toggledLeftBarWithKey
 }
 
-function updateLeftBar(type: "wide-float" | "wide-full") {
+function updateLeftBar(type: "float" | "full") {
     updateGlobalContext({ leftBar: type, leftBarOpen: true })
 }
 
@@ -235,11 +230,9 @@ export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boo
 }
 
 
-export function getLeftBarWidth(leftBar: "min" | "wide-float" | "wide-full"): number {
+export function getLeftBarWidth(leftBar: "float" | "full"): number {
     switch (leftBar) {
-        case "min":
-            return LEFT_BAR_MIN_WIDTH
-        case "wide-float":
+        case "float":
             return LEFT_BAR_FLOAT_WIDTH
         default:
             return LEFT_BAR_FULL_WIDTH
@@ -314,9 +307,9 @@ export const isModalOpen = (modal: ModalType) => {
     return modalsOpen.includes(modal)
 }
 
-export const setShortcutsFocus = (context: HotkeyContext) => {
+export const setHotkeyFocus = (context: HotkeyContext) => {
     globalContext.update((state: GlobalContext) => {
-        return { ...state, shortcutsFocus: context }
+        return { ...state, hotkeyFocus: context }
     })
 }
 

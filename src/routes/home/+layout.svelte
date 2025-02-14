@@ -99,7 +99,7 @@
 
     const leftBar = context.leftBar
     const full = rightBarOpen && leftBarOpen
-    const leftOffset = hasAmbience || leftBar === "wide-float" ? 0 : leftSideBarWidth
+    const leftOffset = hasAmbience || leftBar === "float" ? 0 : leftSideBarWidth
     const rightOffset = rightBarFixed ? 0 : rightSideBarWidth
 
     stretchMiddleView = middleViewExpandHandler({ 
@@ -193,7 +193,7 @@
   class={`home ${homeViewClasses} ${hasAmbience ? `home--ambient-${ambience.styling}` : ""}`}
   class:home--light={isLight}
   class:home--right-fixed={rightBarFixed}
-  class:home--left-float={leftBar === "wide-float"}
+  class:home--left-float={leftBar ==="float"}
   class:home--stretched={stretchMiddleView}
   class:home--ambient={hasAmbience}
   class:home--ambient-vid={hasAmbience && ambience?.space.type === "video"}

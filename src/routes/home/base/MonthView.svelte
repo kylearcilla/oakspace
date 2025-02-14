@@ -736,9 +736,6 @@
         }
 
         .divider {
-            border-bottom: var(--divider-border);
-            height: 0.5px;
-            width: 100%;
             margin: 0px 0px 0px 0px;
         }
 

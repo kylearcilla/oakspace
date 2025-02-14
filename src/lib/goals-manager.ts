@@ -1,8 +1,9 @@
-import { writable, type Writable } from "svelte/store"
+import { get, writable, type Writable } from "svelte/store"
 
 import { toast } from "./utils-toast"
 import { TEST_GOALS } from "./mock-data"
 import { initFloatElemPos, isEditTextElem, getElemById, getTagFromName } from "./utils-general"
+import { globalContext } from "./store"
 
 export type _Goal = Goal & { secIdx: number, idx: number }
 export type _Milestone = Milestone & { secIdx: number, goalIdx: number }
@@ -302,10 +303,7 @@ export class GoalsManager {
         this.update({ sortedGoals: this.sortedGoals })
     }
 
-    onStatusChange({ 
-        goal, 
-        newStatus
-    }: {
+    onStatusChange({ goal,  newStatus }: {
         goal: Goal
         newStatus: "accomplished" | "in-progress" | "not-started"
     }) {
@@ -679,6 +677,11 @@ export class GoalsManager {
 
     handleKeydown(ke: KeyboardEvent) {
         if (isEditTextElem(ke.target as HTMLElement)) return
+        
+        const hotkeyFocus = get(globalContext).hotkeyFocus
+        if (hotkeyFocus !== "default") {
+            return
+        }
         
         const { key } = ke
         let input: "arrow-up" | "arrow-down" | "enter" | "space" | "delete" = "enter"

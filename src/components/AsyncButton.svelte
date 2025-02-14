@@ -47,7 +47,7 @@
         border-radius: 15px;
         background-color: rgba(var(--fgColor1));
         @include center;
-        @include text-style(1, 500, 1.28rem);
+        @include text-style(1, var(--fw-400-500), 1.5rem);
         
         &--light {
             color: var(--modalBgColor) !important;

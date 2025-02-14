@@ -56,7 +56,6 @@
 
     themeState.subscribe(_ => activeTheme = getActiveTheme())
 
-
     function onTabBtnMouseOver(tabIdx: number) {
         lightColor = tabs[tabIdx].rgb
     }
@@ -74,16 +73,16 @@
         }
         else if (option === "goals") {
             toast("default", {
-                message: "Youtube",
-                description: "Hello worldweofiwwef owewef wefoi oiwjefow ifjweofiwej;fowiefjaw;eif jw;foi wow;fijw ;;ofiwejf ",
+                message: "some people want it all but i dont want nothing at all if it aint you baby if i aint got you baby some people want",
+                action: {
+                    label: "Undo",
+                    onClick: () => console.log("xx")
+                }
             })
-
             // goto("/home/goals")
         }
         else if (option === "habits") {
-            toast("default", {
-                message: "Youtube"
-            })
+
         }
         else if (option === "routines") {
             goto("/home/routines")

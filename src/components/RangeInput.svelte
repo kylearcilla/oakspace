@@ -15,18 +15,12 @@
     } = options ?? {}
 
     let rangeInput: HTMLInputElement
-    let _val = value
 
     function onInput() {
-        if (updateOnSeek) {
-            update()
-        }
+        if (updateOnSeek) onUpdate(value)
 
         rangeInput!.style.background = `linear-gradient(to right, ${fg} 0%, ${fg} ${value * 100}%, ${bg} ${value * 100}%, ${bg} 100%)`
         rangeInput!.value = `${value}`
-    }
-    function update() {
-        onUpdate(value)
     }
 
     onMount(() => onInput())
@@ -44,7 +38,7 @@
     bind:this={rangeInput}
     bind:value={value}
     on:input={() => onInput()}
-    on:change={() => update()}
+    on:change={() => onUpdate(value)}
 />
 
 <style lang="scss">

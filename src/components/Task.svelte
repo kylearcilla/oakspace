@@ -5,17 +5,16 @@
 
 	import { Icon } from "../lib/enums"
 	import { themeState } from "../lib/store"
-	import { inlineStyling } from "../lib/utils-general"
 	import { TasksListManager } from "$lib/tasks-list-manager"
 
     export let idx: number
     export let level: number
     export let manager: Writable<Omit<TasksListManager, "tasks">>
-    export let task:    Task
+    export let task: Task
     export let onContextMenu: (e: Event, taskIdx: string, isChild: boolean) => void
-    export let onSubtaskCheck:    ((wasChecked: boolean) => void) | undefined = undefined
+    export let onSubtaskCheck: ((wasChecked: boolean) => void) | undefined = undefined
 
-    const { settings, options, ui, styling, MAX_DEPTH } = $manager
+    const { settings, options, ui } = $manager
     const idPrefix = options.id
     const isChild = level > 0
 
@@ -38,7 +37,7 @@
     $: editMode  = $manager.editMode
 
     $: {
-        isOpen = $tasks.isTaskOpen(task.id) || task.id === pickedTask?.id
+        isOpen = $manager.isTaskOpen(task.id, isChild) || task.id === pickedTask?.id
     }
     $: {
         doCheck = task.isChecked && $manager.editTask?.id != task.id
@@ -54,23 +53,23 @@
 </script>
 
  <div
+    tabindex="0"
+    role="button"
     id={`${idPrefix}--task-id--${task.id}`}
     data-idx={task.idx}
-    class="task dg-over-el"
-    class:task--subtask={isChild}
+    class="task"
     class:task--light={!isDark}
     class:task--dragging-state={$manager.dragSrc}
     class:task--side-menu={type === "side-menu"}
-    class:task--day-view={type === "day-view"}
     class:drag-src={task.id === dragSrc?.id}
-    style:--max-title-lines={isEdit ? 0 : $manager.settings.maxTitleLines}
-    style:--max-descr-lines={isEdit ? 0 : $manager.settings.maxDescrLines}
+    style:--max-title-lines={isOpen ? 0 : settings.maxTitleLines}
+    style:--max-descr-lines={isOpen ? 0 : settings.maxDescrLines}
     style:--left-side-width={`${leftSideWidth - 14}px`}
-    style={`${inlineStyling(styling?.task)}`}
  >
     <div 
         class="task__content"
         class:task__content--checked={task.isChecked}
+        class:task__content--open={isOpen}
     >
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div 
@@ -79,7 +78,7 @@
             draggable="true"
             class="task__top-content"
             class:task__top-content--focused={isFocused}
-            on:dragstart={(e) => { 
+            on:dragstart|self={(e) => { 
                 $manager.onDragStart(e, task)
             }}
             on:dragenter|self={(e) => { 
@@ -88,10 +87,10 @@
             on:dragleave|self={(e) => { 
                 $manager.onDragLeave(e)
             }}
-            on:dragover={(e) => { 
+            on:dragover|self={(e) => { 
                 $manager.onDrag(e, task.id)
             }}
-            on:dragend={(e) => { 
+            on:dragend|self={(e) => { 
                 $manager.onDragEnd(e)
             }}
             on:click={(event) => {
@@ -103,21 +102,20 @@
                 onContextMenu(e, task.id, isChild)
             }}
         >
-            <!-- checkbox or number  -->
+            <!-- checkbox or number -->
             <div 
                 bind:clientWidth={leftSideWidth}
                 class="task__left"
             >
                 <div style:margin={level === 0 && type === "side-menu" ? "0px 0px 0px 2px" : ""}>
                     {#if settings.numbered}
-                        <div class="task__number" style={inlineStyling($manager.styling?.num)}>
+                        <div class="task__number">
                             {task.idx + 1}.
                         </div>
                     {:else}
                         <button 
                             class="task__checkbox"
                             id={`${idPrefix}--task-checkbox-id--${task.id}`}
-                            style={inlineStyling($manager.styling?.checkbox)}
                             on:click={() => { 
                                 if (isChild && onSubtaskCheck) {
                                     onSubtaskCheck(!task.isChecked)
@@ -163,6 +161,7 @@
                         class:strike={doCheck}
                         spellcheck="false"
                         data-placeholder="Title goes here..."
+                        draggable="false"
                         contenteditable
                         on:click={() => { 
                             $manager.onTaskTitleClick({
@@ -174,6 +173,9 @@
                     >
                         {task.title}
                     </div>
+                    <div class="task__count" class:hidden={subtasks.length === 0}>
+                        {subtasks.length}
+                    </div>
                 </div>
                 <!-- Description -->
                 <div 
@@ -184,6 +186,7 @@
                         id={`${idPrefix}--task-description-id--${task.id}`}
                         class="task__description"
                         data-placeholder="No description"
+                        draggable="false"
                         spellcheck="false"
                         contenteditable
                         on:click={() => { 
@@ -194,25 +197,10 @@
                     </div>
                 </div>
             </div>
-    
             <!-- Divider -->
             {#if task.idx != 0 && ui.hasTaskDivider}
-                <div 
-                    class="task__divider divider"
-                    style:cursor={type === "side-menu" ? "grab" : "pointer"}
-                >
-                </div>
+                <div class="divider"></div>
             {/if}
-    
-            <div 
-                class="fraction"
-                class:hidden={subtasks.length === 0}
-            >
-                {subtasks.length}
-            </div>
-            <!-- <div class="fraction">
-                {checkedSubtasks}<span class="fraction__slash">/</span>{subtasks.length}
-            </div> -->
         </div>
     </div>
     {#if isOpen && subtasks.length > 0 && !atMaxDepth}
@@ -220,6 +208,7 @@
             class="task__subtasks"
             id={`${idPrefix}--task-children-id--${task.id}`}
         >
+            <div class="divider"></div>
             {#each subtasks.sort((a, b) => a.idx - b.idx) as subtask (subtask.id)}
                 <li>
                     <svelte:self
@@ -232,23 +221,6 @@
                     />
                 </li>
             {/each}
-            <!-- Dummy Task -->
-            <li 
-                data-task-type="task"
-                class="task task--dummy dg-over-el" 
-                style:pointer-events={`${$manager.dragSrc ? "all" : "none"}`}
-            >
-                <div class="task__content">
-                    <div 
-                        class="task__top-content task__top-content--dummy"
-                        on:dragenter={(e) => $manager.onDragEnter(e, task.id, null)}
-                        on:dragleave={(e) => $manager.onDragLeave(e)}
-                        on:dragend={(e) => $manager.onDragEnd(e)}
-                        on:dragover={(e) => e.preventDefault()}
-                    >
-                    </div>
-                </div>
-            </li>
         </ul>
     {/if}
  </div>

@@ -112,10 +112,10 @@
                             id={`goal--${secIdx}-${goalIdx}`}
                             data-id={goal.bOrder.status}
                             draggable="true"
-                            class="goals__goal dg-over-el"
+                            class="goals__goal drop-top-border"
                             class:goals__goal--checked={checked}
                             class:goals__goal--open={open}
-                            class:dg-over-el--over={goal.name === dragTarget?.name}
+                            class:drop-top-border--over={goal.name === dragTarget?.name}
                             class:no-pointer-events={dragState === "milestone"}
                             on:contextmenu={(e) => { 
                                 manager.onContextMenu(e, goal)
@@ -233,9 +233,9 @@
                                         draggable="true"
                                         role="button"
                                         tabindex="0"
-                                        class="goals__milestone dg-over-el" 
+                                        class="goals__milestone drop-top-border" 
                                         class:goals__milestone--checked={ms.done}
-                                        class:dg-over-el--over={ms.name === dragTarget?.name}
+                                        class:drop-top-border--over={ms.name === dragTarget?.name}
                                         class:no-pointer-events={dragState === "goal"}
                                         on:dragstart={(e) => manager.onDrag(e, goal, ms)}
                                         on:dragover={(e) => manager.onDragOver(e, ms)}
@@ -270,8 +270,8 @@
                                     </div>
                                 {/each}
                                 <div 
-                                    class="goals__ghost-item goals__ghost-item--ms dg-over-el"
-                                    class:dg-over-el--over={"end" === dragTarget}
+                                    class="goals__ghost-item goals__ghost-item--ms drop-top-border"
+                                    class:drop-top-border--over={"end" === dragTarget}
                                     on:dragover={(e) => manager.onDragOver(e, "end")}
                                     on:dragleave={(e) => manager.onDragLeave(e)}
                                     on:dragend={(e) => manager.onDragEnd(e)}
@@ -281,8 +281,8 @@
                         {/if}
                     {/each}
                     <div 
-                        class="goals__ghost-item dg-over-el"
-                        class:dg-over-el--over={dragTarget === section}
+                        class="goals__ghost-item drop-top-border"
+                        class:drop-top-border--over={dragTarget === section}
                         on:dragover={(e) => manager.onDragOver(e, section)}
                         on:dragleave={(e) => manager.onDragLeave(e)}
                         on:dragend={(e) => manager.onDragEnd(e)}

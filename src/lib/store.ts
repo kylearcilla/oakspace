@@ -3,35 +3,26 @@ import type { YoutubePlayer } from './youtube-player'
 import type { YoutubeUserData } from './youtube-user-data'
 import type { SessionManager } from './session-manager'
 
-import { ShortcutSectionInFocus } from './enums'
 import type { DatePickerManager } from './date-picker-manager'
 import { WEEKLY_ROUTINES } from '../tests/routines/routines.data'
+import { themes } from './data-themes'
 
 /* global ui */
 export const globalContext = writable<GlobalContext>({
     leftBarOpen: true,
     rightBarOpen: true,
     rightBarFixed: false,
-    isVideoViewOpen: false,
-    freeFloatYt: false,
-    leftBar: "wide-float",
-    isMusicPlayerOpen: false,
+    leftBar: "float",
     hasToaster: false,
-    minModeSrc: null,
     route: "workspace",
     focusTime: 0,
-    shortcutsFocus: "default",
-    modalsOpen: [],
-    lastKeysPressed: {
-        shiftKey: false,
-        metaKey: false,
-        altKey: false,
-        keyCode: ""
-    }
+    hotkeyFocus: "default",
+    modalsOpen: []
 })
 export const themeState = writable<ThemeState>({
     isDarkTheme: true,
     lightTheme: "light",
+    current: themes[0],
     darkTheme: "dark"
 })
 

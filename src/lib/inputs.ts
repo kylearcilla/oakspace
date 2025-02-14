@@ -359,6 +359,7 @@ export class TextEditorManager extends InputManager {
         const event = e as InputEvent
         const target = event.target as HTMLElement
         e.preventDefault()
+        
 
         // allow paste handler to handle
         if (event.inputType === "insertFromPaste") { 
@@ -383,6 +384,11 @@ export class TextEditorManager extends InputManager {
         this.inputElem!.normalize()
         this.removeFontWrapper()
     }
+
+    focus() {
+        this.inputElem!.focus()
+        this.focused = true
+    }
     
     onFocusHandler(event: Event) {
         const target = event.target as HTMLElement
@@ -393,7 +399,6 @@ export class TextEditorManager extends InputManager {
             requestAnimationFrame(() => this.undoHandler())
         }
 
-        // this.updateCaretStyle({ doShow: true })
         super.onFocusHandler(event)
     }
 
@@ -878,6 +883,7 @@ export class TextEditorManager extends InputManager {
         this.inputElem.addEventListener("blur", (e) => this.onBlurHandler(e))
         this.inputElem.addEventListener("focus", (e) => this.onFocusHandler(e))
         this.inputElem.addEventListener("paste", (e) => this.onPaste(e))
+        this.inputElem.addEventListener("dragstart", (e) => e.preventDefault())
 
         if (this.placeholder) {
             this.inputElem.setAttribute("data-placeholder", this.placeholder)
@@ -915,7 +921,7 @@ export class TimeInputManager extends InputManager {
     onBlurHandler(event: Event) {
         const inputElem = event.target as HTMLInputElement
         const value = inputElem.value
-
+        
         try {
             const timeInput = clamp(this.min, TimeInputManager.validateTimeInput(value), this.max)
             this.updateVal(event, minsFromStartToHHMM(timeInput, false))

@@ -355,8 +355,8 @@
                         {@const streak = getHabitStreak(habit)}
 
                         <div    
-                            class="habit dg-over-el" 
-                            class:dg-over-el--over={isDragOver}
+                            class="habit drop-top-border" 
+                            class:drop-top-border--over={isDragOver}
                             draggable="true"
                             on:dragstart={(e) => onHabitDrag(e, habit)}
                             on:dragover={(e) => onHabitDragOver(e, habit)}
@@ -456,8 +456,8 @@
                     {/each}
 
                     <div    
-                        class="habit habit--ghost dg-over-el"
-                        class:dg-over-el--over={dragHabitTarget === timeOfDay}
+                        class="habit habit--ghost drop-top-border"
+                        class:drop-top-border--over={dragHabitTarget === timeOfDay}
                         class:hidden={timeOfDay != "all-day" && view === "default"}
                         style:bottom={empty ? "-20px" : "-28px"}
                         on:dragover={(e) => onHabitDragOver(e, timeOfDay)}
@@ -812,7 +812,7 @@
             cursor: grabbing;
         }
     }
-    .dg-over-el::before {
+    .drop-top-border::before {
         width: calc(100% - 0px);
         @include abs-top-left(0px, 0px);
     }

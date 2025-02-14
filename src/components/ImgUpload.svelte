@@ -421,8 +421,6 @@
         }
         .divider {
             margin: 6.5px 0px 0px 0px;
-            height: 1px;
-            width: 100%;
             border-top: var(--divider-border);
             position: relative;
         }
@@ -432,7 +430,7 @@
             height: 1.5px;
             width: var(--line-width);
             background-color: rgba(var(--textColor1), 0.9);
-            @include abs-top-left(-0.5px, var(--line-left));
+            @include abs-top-left(-1px, var(--line-left));
         }
 
         &__link {

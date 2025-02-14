@@ -121,8 +121,7 @@
             routineView: { 
                 dayIdx, 
                 block: {
-                    block,
-                    idx: block.idx
+                    block, idx: block.idx
                 }
             } 
         })
@@ -194,10 +193,7 @@
         style:height={`calc(100% - ${headerHeight}px)`}
         on:scroll={onDayScroll}
     >
-        <div 
-            bind:this={dayViewElem}
-            class="day-view__col"
-        >
+        <div bind:this={dayViewElem} class="day-view__col">
             <!-- Blocks -->
             <div 
                 class="day-view__col-container" bind:clientHeight={scrollContainerHeight}

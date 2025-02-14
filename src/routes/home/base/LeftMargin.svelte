@@ -217,8 +217,6 @@
 
         .divider {
             border-top: var(--divider-border);
-            background: transparent !important;
-            width: 100%;
             padding: 3px 0px 5px 0px;
             cursor: ns-resize;
         }

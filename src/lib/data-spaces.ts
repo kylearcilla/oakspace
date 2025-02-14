@@ -424,6 +424,14 @@ export const SPACES: AmbientSpaceGroup = {
                 group: "weather"
             },
             {
+                title: 'Relaxing Snowfall 2 Hours - Sound of Light Wind Breeze and Falling Snow in Forest',
+                subtitle: "Relaxing Sounds of Nature",
+                thumbnail: "https://i.ytimg.com/vi/QbJ0siXX66M/hqdefault.jpg?sqp=-oaymwFBCNACELwBSFryq4qpAzMIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB8AEB-AH-DoACuAiKAgwIABABGGUgZShlMA8=&rs=AOn4CLCJ2UvuQCwQy3BSy-FJIlTjhYLIRA",
+                sourceId: "QbJ0siXX66M",
+                type: "video",
+                group: "weather"
+            },
+            {
                 title: 'RAINY DAY COFFEE SHOP AMBIENCE: Piano Music and Rain Sounds With Distant Thunder',
                 subtitle: "Autumn Cozy",
                 thumbnail: "https://i.ytimg.com/vi/mkgylOJSdhE/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBooYMMUgtNgXpQubWsiQKvFsC0Uw",

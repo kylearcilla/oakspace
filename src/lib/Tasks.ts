@@ -8,7 +8,7 @@ const DEFAULT_MAX_DEPTH = 5
 export class Tasks {
     private taskMap: Map<string, Task>
     private parents: Map<string | null, string[]>
-    private openSubtasks: Set<string>
+    private openTasks: Set<string>
     maxDepth: number
 
     _store: Writable<Tasks>
@@ -20,7 +20,7 @@ export class Tasks {
         this.taskMap = new Map()
         this.parents = new Map()
         this.maxDepth = maxDepth
-        this.openSubtasks = new Set
+        this.openTasks = new Set
 
         tasks.forEach((task) => this.addTask({ task, doUpdate: false }))
         this._store.set(this)
@@ -122,7 +122,6 @@ export class Tasks {
             }
         }
     }
-
     addChild(parentId: string | null, taskId: string) {
         if (!this.parents.has(parentId)) {
             this.parents.set(parentId, [])
@@ -162,43 +161,52 @@ export class Tasks {
         return [newTask, ...newChildren]
     }
 
-    reorderTask(args: { src: Task, target: Task | null, targetParentId: string | null }) {
-        const { src, target, targetParentId } = args
-        const toSiblings = this.getSubtasks(targetParentId)
-
-        const fromPIdx   = !src.parentId ? -1 : this.getTask(src.parentId)!.idx
-        const toPIdx     = !targetParentId ? -1 : this.getTask(targetParentId)!.idx
+    reorderTask({ src, target, action, targetParentId }: { 
+        src: Task, 
+        target: Task, 
+        action: "nbr-top" | "nbr-bottom" | "child",
+        targetParentId: string | null 
+    }) {
+        const srcIdx = src.idx
+        const targetIdx = target.idx
         const sameParent = src.parentId === targetParentId
+        let toIdx
+        
+        if (action === "child") {
+            const targetChildren = this.getSubtasks(target.id)
+            toIdx = targetChildren.length
+            targetParentId = target.id
+        } 
+        else {
+            toIdx = action === "nbr-bottom" ? targetIdx + 1 : targetIdx
+            
+            if (sameParent && srcIdx < toIdx) {
+                toIdx--
+            }
+        }
 
-        const srcIdx  = src.idx
-        const toLast  = !target 
-        let targetIdx = target ? target.idx : toSiblings.length - (sameParent ? 1 : 0)
-
-        const direction = (!sameParent ? fromPIdx < toPIdx : srcIdx < targetIdx) ? "down" : "up"
-        targetIdx += (direction === "down" && !toLast ? -1 : 0)
-
-        // shift from neighbors
+        // Remove from old position
         this.shiftNeighbors({
             parentId: src.parentId,
-            idx: src.idx + 1,
+            idx: srcIdx + 1,
             shiftDirection: -1,
         })
 
-        // make room for new neighbor
+        // Make space at new position
         this.shiftNeighbors({
             parentId: targetParentId,
-            idx: targetIdx,
+            idx: toIdx,
             shiftDirection: 1
         })
 
+        // Update parent relationships
         this.removeChild(src.parentId, src.id)
         this.addChild(targetParentId, src.id)
         
         src.parentId = targetParentId
-        src.idx = targetIdx
+        src.idx = toIdx
 
         this._store.set(this)
-
         return src
     }
 
@@ -263,28 +271,23 @@ export class Tasks {
         if (!task) return
 
         task.isChecked = !task.isChecked
-        this._toggleComplete(id, task.isChecked)
-
         this._store.set(this)
     }
 
-    /**
-     * Recursive helper function for checking a task and all of its tasks.
-     * @param id 
-     */
-    private _toggleComplete(id: string, isChecked: boolean) {
-        const task = this.taskMap.get(id)
-        if (isChecked) {
-            task!.isChecked = true
-        }
-        const subtasks = this.parents.get(id) || []
+    /* queries */
 
-        subtasks.forEach((subtaskId) => {
-            this._toggleComplete(subtaskId, isChecked)
-        })
+    getTaskCount({ rootOnly }: { rootOnly?: boolean }): number {
+        if (rootOnly) {
+            return this.getRootTasks().length
+        } 
+        else {
+            return this.getAllTasks().length
+        }
     }
 
-    /* queries */
+    getSubtaskCount(parentId: string | null): number {
+        return this.getSubtasks(parentId).length
+    }
 
     getAllTasks() {
         return Array.from(this.taskMap.values())
@@ -311,6 +314,41 @@ export class Tasks {
         if (!parentId) return task
 
         return this.getRootTask(parentId)
+    }
+
+    updateTaskId(id: string, newId: string) {
+        const task = this.taskMap.get(id)
+        if (!task) return
+
+        // Update taskMap
+        this.taskMap.delete(id)
+        task.id = newId
+        this.taskMap.set(newId, task)
+
+        // Update task as a parent
+        if (this.parents.has(id)) {
+            const children = this.parents.get(id)
+            this.parents.delete(id)
+            this.parents.set(newId, children!)
+        }
+
+        // Update task as a child in its parent's children list
+        const parentId = task.parentId  // could be null for root tasks
+        const siblings = this.parents.get(parentId)
+        if (siblings) {
+            const index = siblings.indexOf(id)
+            if (index !== -1) {
+                siblings[index] = newId
+            }
+        }
+
+        // Update openTasks set
+        if (this.openTasks.has(id)) {
+            this.openTasks.delete(id)
+            this.openTasks.add(newId)
+        }
+
+        this._store.set(this)
     }
 
     getSiblings(parentId: string | null) {
@@ -367,23 +405,23 @@ export class Tasks {
 
     /* utils  */
 
-    toggleSubtaskOpen(id: string) {
-        if (this.openSubtasks.has(id)) {
-            this.openSubtasks.delete(id)
+    toggleTaskOpen(id: string) {
+        if (this.isTaskOpen(id)) {
+            this.openTasks.delete(id)
         } 
         else {
-            this.openSubtasks.add(id)
+            this.openTasks.add(id)
         }
 
         this._store.set(this)
     }
 
-    closeAllSubtasks() {
-        this.openSubtasks.clear()
+    closeAllTasks() {
+        this.openTasks.clear()
         this._store.set(this)
     }
 
     isTaskOpen(id: string): boolean {
-        return this.openSubtasks.has(id)
+        return this.openTasks.has(id)
     }
 }

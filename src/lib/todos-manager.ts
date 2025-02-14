@@ -254,7 +254,7 @@ export class TodosManager {
     /* client handlers */
 
     onTaskUpdate = async (context: TaskUpdateContext) => {
-        const { action, payload: { task, tasks }, undoFunction } = context
+        const { action, payload: { task, tasks }, undoFunction, removeOnComplete } = context
 
         const { title: name, isChecked: complete } = task
         const description = "description" in task ? task.description : ""
@@ -263,28 +263,32 @@ export class TodosManager {
         const todoist     = this.todoistLinked
 
         try {
-            if (todoist && action === "completion") {
+            if (action === "completion") {
                 // const couldOccurSameDay = isRecurring && dueDate?.includes("T")
 
-                await updateTodoistTaskCompletion({
-                    accessToken: this.todoistAccessToken,
-                    syncToken: this.todoistSyncToken,
-                    taskId: task.id,
-                    isRecurring,
-                    dueDate,
-                    complete: complete!
-                })
+                if (todoist) {
+                    await updateTodoistTaskCompletion({
+                        accessToken: this.todoistAccessToken,
+                        syncToken: this.todoistSyncToken,
+                        taskId: task.id,
+                        isRecurring,
+                        dueDate,
+                        complete: complete!
+                    })
 
-                // unwritten understanding that todos are for today
-                // so completed recurring tasks can be shown again if due shortly after on the same day
-                // for now recurring tasks are treated as normal tasks
+                    // unwritten understanding that todos are for today
+                    // so completed recurring tasks can be shown again if due shortly after on the same day
+                    // for now recurring tasks are treated as normal tasks
+    
+                    // if (couldOccurSameDay) {
+                    //     this.initPartialSync()
+                    // }
 
-                // if (couldOccurSameDay) {
-                //     this.initPartialSync()
-                // }
-                this.todoistTasks = tasks
+                    this.todoistTasks = tasks
+                }
 
-                if (complete) {
+
+                if (complete && removeOnComplete) {
                     this.initActionToast({ 
                         action: "completion", 
                         name, 
@@ -340,12 +344,13 @@ export class TodosManager {
     }
 
     onDeleteTask = async (context: TaskDeleteContext) => {
-        // "task" (singular parent task) is null if completed tasks were removed
+        // "task" is null if completed tasks are being removed
+        // undo action not available for Todoist
+
         const { payload: { tasks, task, removed }, undoFunction } = context
         const todoist = this.todoistLinked
         
         try {
-            // undo action not available for Todoist
             if (todoist) {
                 await deleteTodoistTask({
                     accessToken: this.todoistAccessToken,

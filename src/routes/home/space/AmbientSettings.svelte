@@ -340,6 +340,7 @@
             margin: 0px 0px 6px -2px;
             width: calc(100% + 2px);
             @include flex(center, space-between);
+            color: white;
 
             button {
                 position: relative;

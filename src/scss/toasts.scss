@@ -54,6 +54,7 @@ $header-icon-size: 17px;
 
     --rich-border-opacity: 0.1;
     --logo-size: 18px;
+    --title-lines: 2;
 
     &--light {
         @include contrast-bg("bg-2");
@@ -65,8 +66,9 @@ $header-icon-size: 17px;
         @include text-style(0.65);
     }
     &--flat {
-        padding: 14px 19px 16px 19px;
-        @include flex(flex-end, space-between);
+        padding: 13px 19px 16px 19px !important;
+        @include flex(center, space-between);
+        --title-lines: 3;
     }
     &--flat &__content {
         flex: 1;
@@ -76,7 +78,7 @@ $header-icon-size: 17px;
         min-width: 0px;
     }
     &--flat &__action-btn {
-        margin-bottom: 0px;
+        margin: 0px 0px 0px 10px;
     }
     &--action {
         padding: 14px 14px 5px 18px;
@@ -155,7 +157,7 @@ $header-icon-size: 17px;
         @include text-style(0.95, var(--fw-400-500), 1.6rem);
         margin: -2px 0px 1px 0px;
         @include flex(center);
-        @include truncate-lines(2);
+        @include truncate-lines(var(--title-lines));
     }
     &__description {
         margin: 0px 0px 7px 0px;

@@ -90,8 +90,8 @@
                         <div 
                             draggable="true"
                             data-idx={goal.bOrder.status}
-                            class="goals__goal dg-over-el"
-                            class:dg-over-el--over={dragTarget?.name === goal.name}
+                            class="goals__goal drop-top-border"
+                            class:drop-top-border--over={dragTarget?.name === goal.name}
                             class:hidden={pinnedGoal?.id === goal.id}
                             on:dragstart={(e) => manager.onDrag(e, goal)}
                             on:dragover={(e) => manager.onDragOver(e, goal)}
@@ -120,8 +120,8 @@
                         </div>
                     {/each}
                     <div 
-                        class="goals__goal goals__goal--ghost dg-over-el"
-                        class:dg-over-el--over={dragTarget === section}
+                        class="goals__goal goals__goal--ghost drop-top-border"
+                        class:drop-top-border--over={dragTarget === section}
                         on:dragover={(e) => manager.onDragOver(e, section)}
                         on:dragleave={(e) => manager.onDragLeave(e)}
                         on:dragend={(e) => manager.onDragEnd(e)}

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { imageUpload } from "$lib/pop-ups"
 	import { SideCalendar } from "$lib/side-calendar"
-    import { setShortcutsFocus } from "$lib/utils-home"
+    import { setHotkeyFocus } from "$lib/utils-home"
     import { clamp, clickOutside } from "$lib/utils-general"
 	import { Icon } from "$lib/enums"
     import { globalContext, themeState, timer } from "$lib/store"    
@@ -91,20 +91,21 @@
     }
     function toggleTimeFormatting() {
         doUse12HourFormat = !doUse12HourFormat 
+        updateTimeStr(new Date())
     }
 </script>
 <div 
     class="bar"
     class:bar--dark-theme={!isLight}
-    class:bar--empty={hasAmbience && ambience?.styling != "solid" || !bgImgSrc || !showHeaderImg}
+    class:bar--empty={(hasAmbience && ambience?.styling != "solid") || !bgImgSrc || !showHeaderImg || isLight}
     class:bar--ambient={hasAmbience && ambience?.styling != "solid"}
     style:--margin-top={isLight ? "12px" : showHeaderImg && bgImgSrc && !hasAmbience ? "55px" : "12px"}
     style:--main-top-offset={ambience?.active ? "2px" : "-20px"}
     on:mousedown={() => {
-        setShortcutsFocus("side-bar")
+        setHotkeyFocus("side-bar")
     }}
     use:clickOutside on:click_outside={() => {
-        setShortcutsFocus("default")
+        setHotkeyFocus("default")
     }}
 >
     {#if !isLight && bgImgSrc && showHeaderImg && !hasAmbience}
@@ -172,7 +173,7 @@
         </div>
     {/if}
 
-    <div class="bar__main-content">
+    <div class="bar__overview">
         <Overview 
             {calendar}
             onUpdateHeaderOptions={optn => {
@@ -235,6 +236,9 @@
         }
         &--empty &__header-time-date {
             opacity: 0.8;
+        }
+        &--empty &__overview {
+            margin-left: 0px;
         }
         
         &__header {
@@ -341,10 +345,10 @@
                     transparent 100%
             );
         }
-
-
-        &__main-content {
+        &__overview {
             margin-top: var(--margin-top);
+            margin-left: 2px;
+            overflow: hidden;
             height: calc(100% - (var(--margin-top) + var(--main-top-offset)));
         }
     }

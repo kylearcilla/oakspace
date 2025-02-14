@@ -1,18 +1,13 @@
 <script lang="ts">
 	import { onMount } from "svelte"
-	import { type Writable } from "svelte/store"
 
 	import { ModalType } from "$lib/enums"
 	import { closeModal } from "$lib/utils-home"
-	import { TextEditorManager } from "$lib/inputs"
 	import { SessionManager } from "$lib/session-manager"
-	import { MAX_SESSION_NAME_LENGTH } from "$lib/utils-session"
     
 	import Modal from "../../components/Modal.svelte"
-	import TasksList from "../../components/TasksList.svelte"
 	import AsyncButton from "../../components/AsyncButton.svelte"
 
-    const TITLE_INPUT_ID = "session-title-input"
     let isSaving = false
     let titleInput: HTMLElement
 
@@ -23,24 +18,6 @@
     let breakTime = 5
     let allowSfx = true
     let allowChime = true
-
-    let titleEditor: Writable<TextEditorManager>
-    let tasksContainer: HTMLElement
-
-    $: initTitleEditor()
-
-    function initTitleEditor() {
-        titleEditor = new TextEditorManager({ 
-            initValue: "",
-            placeholder: "new session title",
-            maxLength: MAX_SESSION_NAME_LENGTH,
-            id: TITLE_INPUT_ID,
-            doAllowEmpty: false,
-            handlers: {
-                onInputHandler: (_, val) => title = val
-            }
-        }).state
-    }
 
     async function initSession() {
         const startTime = new Date()
@@ -55,13 +32,10 @@
             startTime,
             allowChime,
             allowSfx,
-            todos: tasks
+            todos: []
         })
 
         onAttemptClose()
-    }
-    async function onTaskUpdate(context: TaskUpdateContext | TaskAddContext | TaskDeleteContext)  {
-        tasks = context.payload.tasks
     }
     function onAttemptClose() {
         closeModal(ModalType.NewSession)
@@ -77,19 +51,12 @@
     <div class="new-session">
         <!-- Title -->
         <div class="new-session__title">
-            {#if titleEditor}
-                <div 
-                    bind:this={titleInput}
-                    id={TITLE_INPUT_ID}
-                    class="new-session__text-editor text-editor"
-                    data-placeholder={$titleEditor.placeholder}
-                    contenteditable
-                    spellcheck="false"
-                    bind:innerHTML={$titleEditor.value}
-                >
-                </div>
-                <!-- <div class="text-editor-caret"></div> -->
-            {/if}
+            <input 
+                bind:this={titleInput}
+                bind:value={title} 
+                placeholder="new session title"
+                type="text" 
+            />
         </div>
         
         <!-- Options -->
@@ -106,7 +73,7 @@
                     Pomodoro
                 </div>
                 <div class="new-session__mode-description">
-                    Fixed focus sessions with timed breaks in between.
+                    Fixed sessions with timed breaks in between.
                 </div>
             </div>
             <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -234,17 +201,6 @@
             </div>
          </div>
 
-        <!-- Tasks -->
-         <div class="new-session__tasks">
-            <div class="new-session__tasks-header">
-                <h4>Tasks</h4>
-                <span>{tasks.length}</span>
-            </div>
-            <div class="new-session__tasks-container" bind:this={tasksContainer}>
-            </div>
-        </div>
-
-        <!-- Confirm Buttons -->
         <div class="new-session__btns">
             <button 
                 class="new-session__cancel-btn"
@@ -272,22 +228,27 @@
     @import "../../scss/inputs.scss";
 
     .new-session {
-        width: 450px;
-        padding: 13px 23px 21px 23px;
+        width: 470px;
+        padding: 14px 23px 21px 23px;
 
         &__title {
             position: relative;
         }
-        &__text-editor {
-            @include text-style(_, _, 1.55rem);
-            margin-bottom: 10px;
+        input {
+            @include text-style(_, var(--fw-400-500), 1.6rem);
+            margin-bottom: 14px;
+            width: 100%;
+
+            &::placeholder {
+                @include text-style(0.1, var(--fw-400-500));
+            }
         }
         &__modes {
             @include flex(center);
         }
         &__mode {
             background-color: rgba(var(--textColor1), 0.02);
-            padding: 10px 16px 17px 16px;
+            padding: 10px 20px 19px 17px;
             width: calc(50% - 3.5px);
             border-radius: 16px;
             border: 1.5px solid rgba(var(--textColor1), 0.02);
@@ -304,7 +265,6 @@
                 margin-right: 7px;
             }
             &--selected {
-                // border: 1.5px solid rgba(var(--fgColor1));
                 box-shadow: rgba(var(--fgColor1), 0.8) 0px 0px 0px 2px inset, 
                             rgba(var(--fgColor1), 0.1) 0px 0px 0px 2px;
             }
@@ -313,11 +273,11 @@
             }
         }
         &__mode-title {
-            @include text-style(0.7, 600, 1.28rem);
+            @include text-style(0.7, var(--fw-500-600), 1.5rem);
         }
         &__mode-description {
-            @include text-style(0.34, 500, 1.2rem);
-            margin-top: 6px;
+            @include text-style(0.34, var(--fw-400-500), 1.42rem);
+            margin-top: 8px;
         }
         &__options {
             @include flex(center);
@@ -332,18 +292,18 @@
         }
         &__time {
             width: calc(50% - 3.5px);
-            margin: 0px 7px 17px 0px;
+            margin: 4px 7px 22px 0px;
         }
         &__time span {
-            @include text-style(0.5, 500, 1.25rem);
+            @include text-style(0.65, var(--fw-400-500), 1.425rem);
             padding-left: 7px;
         }
         &__time-input {
-            margin: 8px 0px 0px 0px;
+            margin: 11px 0px 0px 0px;
             padding: 7px 8px;
             border-radius: 12px;
             background-color: rgba(var(--textColor1), 0.025);
-            @include text-style(0.65, 400, 1.2rem, "DM Mono");
+            @include text-style(0.65, var(--fw-400-500), 1.3rem, "Geist Mono");
             @include flex(center, space-between);
         }
         &__time-input button {
@@ -352,7 +312,7 @@
             width: 25px;
             border-radius: 5px;
             @include center;
-            @include text-style(0.32, 600, 1.4rem, "Manrope");
+            @include text-style(0.45, var(--fw-500-600), 1.5rem);
 
             &:disabled {
                 opacity: 1;
@@ -368,15 +328,15 @@
         /* sound effects */
         &__sfx {
             @include flex(center, space-between);
-            margin-bottom: 15px;
+            margin-bottom: 17px;
             padding: 0px 5px;
 
             span {
-                @include text-style(0.14, 500, 1.2rem);
+                @include text-style(0.14, var(--fw-400-500), 1.4rem);
             }
         }
         &__sfx-name {
-            @include text-style(0.5, 500, 1.25rem);
+            @include text-style(0.65, var(--fw-400-500), 1.5rem);
             margin-bottom: 3px;
         }
         &__sfx-btns {
@@ -387,61 +347,42 @@
             margin-left: 15px;
             
             span {
-                @include text-style(0.3, 500, 1.28rem, "DM Sans");
+                @include text-style(0.3, var(--fw-400-500), 1.5rem);
             }
             &--picked span {
                 @include text-style(0.8);
             }
             &--picked &-check-box {
-                border: 1.5px solid rgb(var(--fgColor1));
+                border: 2px solid rgb(var(--fgColor1));
             }
             &--picked &-check-box:before {
                 display: block;
             }
         }
         &__sfx-btn-check-box {
-            @include circle(12px);
+            @include circle(14px);
             position: relative;
-            border: 1.5px solid rgba(var(--textColor1), 0.2);
+            border: 2px solid rgba(var(--textColor1), 0.2);
             margin-right: 8px;
             
             &:before {
                 content: " ";
                 background-color: rgba(var(--fgColor1));
                 display: none;
-                @include circle(5px);
+                @include circle(6px);
                 @include abs-center;
             }
         }
 
-        /* tasks */
-        &__tasks {
-            margin: 17px 0px 0px -1px;
-
-            h4 {
-                @include text-style(0.5, 500, 1.25rem);
-                margin: 0px 10px 0px 7px;
-            }
-            span {
-                @include text-style(0.11, 400, 1.25rem, "DM Mono");
-            }
-        }
-        &__tasks-header {
-            @include flex(center, space-between);
-            margin-bottom: 7px;
-        }
-        &__tasks-container {
-            min-height: 35px;
-            max-height: 200px;
-        }
         &__btns {
-            margin-top: 10px;
+            margin-top: 40px;
             @include flex(center);
+
             button {
                 padding: 12px 25px;
                 border-radius: 9px;
                 @include center;
-                @include text-style(0.55, 500, 1.28rem);
+                @include text-style(0.55, var(--fw-400-500), 1.5rem);
             }
         }
         &__cancel-btn {

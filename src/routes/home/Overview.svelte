@@ -19,8 +19,8 @@
 	import ToggleBtn from "../../components/ToggleBtn.svelte"
 	import BounceFade from "../../components/BounceFade.svelte"
 
-    const OVERVIEW_SIDE_MARGINS = 6
-    const DAY_VIEW_SIDE_MARGINS = 17
+    const OVERVIEW_SIDE_MARGINS = 4
+    const DAY_VIEW_SIDE_MARGINS = 14
 
     type GoogleCalOptn = "refresh" | "disconnect" | "my calendars"
 
@@ -567,6 +567,7 @@
     .overview {
         margin-top: -5px;
         height: 100%;
+        overflow: hidden;
 
         &--light &__day-view-header span {
             @include text-style(0.85);
@@ -672,8 +673,6 @@
         &__event-list-container {
             width: 100%;
             position: relative;
-            overflow-y: scroll;
-            height: calc(100% - 40px);
             display: flex;
 
             &::-webkit-scrollbar {

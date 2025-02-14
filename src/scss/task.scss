@@ -8,15 +8,15 @@
     border-radius: 5px;
     height: auto;
 
+    --focus-opacity: 0.01;
+    --checkbox-bg-opacity: 0.06;
+    --checkbox-hov-opacity: 0.1;
+
     &:focus-visible {
-        box-shadow: none !important;
+        outline: none;
+        box-shadow: none;
     }
-    &:hover {
-        user-select: auto;
-    }
-    &--not-animated {
-        transition: 0s;
-    }
+
     &--min:hover &__drag-handle {
         @include visible;
     }
@@ -26,10 +26,10 @@
     }
 
     /* light adhustments */
-    &--light:hover,  
-    &--light:focus,
-    &--light#{&}--focused {
-        @include txt-color(0.03, "bg");
+    &--light {
+        --focus-opacity: 0.028;
+        --checkbox-bg-opacity: 0.08;
+        --checkbox-hov-opacity: 0.05;
     }
     &--light &__description,
     &--light &__description-input {
@@ -37,6 +37,9 @@
     }
     &--light &__number {
         @include text-style(0.7);
+    }
+    &--light &__count {
+        @include text-style(0.3);
     }
     &--light &__drag-handle-dots {
         opacity: 0.5;
@@ -47,30 +50,16 @@
     &--light#{&}--floating {
         box-shadow: 0px 1px 14px 4px rgba(0, 0, 0, 0.02);
         border: 1px solid rgba(var(--textColor1), 0.09) !important;
+        @include contrast-bg("bg-2")
     }
-    &--light &__divider {
-        @include divider(0.07, 1px);
+    &__content--open &__title,
+    &__content--open &__description {
+        overflow-y: scroll !important;
     }
 
     /* task types */
-    &--dummy {
-        height: 0px;
-        width: 100%;
-    }
     &--side-menu &__top-content {
         border-radius: 0px;
-    }
-
-    /* subtask */
-    &--subtask {
-        background: none;
-        padding: 0px 0px 0px 0px !important;
-    }
-    &--subtask &__subtasks {
-        margin-bottom: 0px;
-    }
-    &--subtask:hover {
-        background: none;
     }
 
     /* Checked UI */
@@ -97,13 +86,13 @@
         position: relative;
         @include flex(flex-start);
 
-        &--focused,
-        &:focus,
-        &:hover {
-            background-color: rgba(var(--textColor1), 0.01) !important;
+        &:focus, &:hover {
+            background-color: rgba(var(--textColor1), var(--focus-opacity)) !important;
         }
-        &--focused .toggle-arrow,
-        &:hover .toggle-arrow {
+        &--focused {
+            background-color: rgba(var(--textColor1), var(--focus-opacity)) !important;
+        }
+        &--focused .toggle-arrow, &:hover .toggle-arrow {
             opacity: 0.2;
         }
     }
@@ -143,10 +132,10 @@
         height: var(--checkbox-dim);
         width: var(--checkbox-dim);
         transition: 0.1s ease-in-out;
-        background-color: rgba(var(--textColor1), 0.07) !important;
+        background-color: rgba(var(--textColor1), var(--checkbox-bg-opacity)) !important;
         border-radius: 0px;
         position: relative;
-        margin: 1px 12px 0px 13px;
+        margin: 1px 12px 0px var(--side-padding);
         cursor: pointer;
         z-index: 1;
         
@@ -157,7 +146,7 @@
             color: var(--elemTextColor);
         }
         &:hover {
-            background-color: rgba(var(--textColor1), 0.1);
+            background-color: rgba(var(--textColor1), var(--checkbox-hov-opacity));
         }
         &:active {
             transform: scale(0.92);
@@ -165,28 +154,34 @@
     }
     &__title-container {
         @include flex(flex-start, space-between);
-        margin-top: -1.5px;
+        margin-top: 0px;
         width: calc(100% - 20px);
+    }
+
+    &__title, &__description {
+        user-select: none;
+        white-space: pre-wrap;
     }
     &__title {
         @include truncate-lines(var(--max-title-lines));
         cursor: text;
-        white-space: pre-wrap;
-        word-break: break-word;
-        user-select: none;
         margin: 0px 0px 5px 0px;
         @include text-style(1, var(--fw-400-500), var(--font-size));
+        max-height: 180px;
     }
     &__description-container {
         width: calc(100% - 20px);
+        padding-bottom: 2px;
     }
     &__description {
-        @include text-style(0.4, var(--fw-400-500), var(--font-size));
+        @include text-style(0.4, 400, var(--font-size));
         opacity: 0.65;
-        user-select: none;
         margin: 0px 0px 2px 0px;
-        padding: 0px 8px 1.5px 0px;
+        padding: 0px 8px 2px 0px;
+        width: 100%;
+        @include truncate-lines(var(--max-descr-lines));
         cursor: text;
+        max-height: 350px;
 
         &--hide {
             height: 0px;
@@ -194,38 +189,20 @@
             padding: 0px;
         }
     }
-    &__description {
-        width: 100%;
-        @include truncate-lines(var(--max-descr-lines));
-        white-space: pre-wrap;
-        word-break: break-word;
-    }
-    &__divider {
-        @include divider(0.05, 0.5px, calc(100% - calc(2 * var(--side-padding))));
-        @include abs-top-left(0px, var(--side-padding));
-    }
     &__subtasks {
         margin: 1.5px 0px 5px var(--left-side-width);
         position: relative;
     }
-}
-
-.fraction {
-    @include abs-top-right(10px, 20px);
-    @include text-style(0.2, 400, var(--font-size), "DM Mono");
+    &__count {
+        margin-left: 5px;
+        @include text-style(0.2, var(--fw-400-500), calc(var(--font-size) - 0.1rem));
+    }
 }
 
 .divider {
-    background-color: rgba(var(--textColor1), 0.035);
-    height: 0.5px;
-    width: 100%;
     pointer-events: none;
-    @include divider(0.05, 0.5px, calc(100% - calc(2 * var(--side-padding))));
+    width: calc(100% - calc(2 * var(--side-padding)));
     @include abs-top-left(0px, var(--side-padding));
-
-    &:first-child {
-        display: none;
-    }
 }
 
 .toggle-arrow {

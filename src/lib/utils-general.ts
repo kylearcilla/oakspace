@@ -715,7 +715,7 @@ export function initFloatElemPos(context: {
  * 
  * @returns  Direction the scroll should be to. Null if a scroll is not needed
  */
-export function isNearBorderAndShouldScroll(containerElem: HTMLElement, cursorPosFromWindow: OffsetPoint) {
+export function shouldScroll(containerElem: HTMLElement, cursorPosFromWindow: OffsetPoint) {
   const { 
       scrollTop, 
       scrollLeft, 
@@ -806,12 +806,9 @@ export function toastApiErrorHandler(options: {
   let { error, title, logoIcon, action } = options
   let toastOptions: ToastInitOptions
 
-  console.error("toastApiErrorHandler")
-
   const isNotAPIError = error.code === undefined
   const errorMessage  = isNotAPIError ? "" : error.message
   const hasMsg        = errorMessage != undefined && errorMessage
-  const logoStr       = addSpacesToCamelCaseStr(LogoIcon[logoIcon])
 
   if (error.code === APIErrorCode.PLAYER) {
       toastOptions = {

@@ -2,6 +2,7 @@
 	import { LogoIcon } from "$lib/enums"
 	import { TodosManager } from "$lib/todos-manager"
 
+	import { themeState } from "../../lib/store"
 	import Logo from "../../components/Logo.svelte"
 	import TasksList from "../../components/TasksList.svelte"
     
@@ -17,6 +18,7 @@
     const { onAddTask, onDeleteTask, onTaskUpdate } = manager
     
     $: store = manager.store
+    $: isLight = !$themeState.isDarkTheme
     $: _renderFlag = $store.renderFlag
     $: onTodoist = $store.onTodoist
 
@@ -39,12 +41,16 @@
     }
 </script>
 
-<div class="tasks" class:tasks--on-todoist={false}>
-    <!-- Tasks List -->
+<div 
+    class="tasks" 
+    class:tasks--light={isLight}
+    class:tasks--on-todoist={false}
+>
     <div 
         class="tasks__todo-list-container"
         bind:this={todoListContainer}
     >
+      {#if todoListContainer}
         <!-- remount only if tasks source changes or updates and list needs to be re-initialized -->
         {#key renderFlag}
             <TasksList
@@ -54,22 +60,24 @@
                 onTaskChange={(_tasks) => tasks = _tasks}
                 options={{
                     id: "todos",
-                    type: "side-menu",
+                    hotkeyFocus: "side-bar",
+                    type: "side-bar",
                     handlers: {
                         onTaskUpdate, onAddTask, onDeleteTask
                     },
                     settings: {
-                        allowDuplicate: !onTodoist,
-                        removeOnComplete: onTodoist,
+                        allowDuplicate: true,
+                        removeOnComplete: false,
                         maxDepth: 3
                     },
                     ui: { 
                         hasTaskDivider: true
                     },
-                    containerRef: todoListContainer
+                    rootRef: todoListContainer
                 }}
             />
         {/key}
+      {/if}
     </div>
 
     {#if tasks.length === 0}
@@ -77,11 +85,7 @@
             <span>
                 You have 0 tasks.
             </span>
-            <button 
-                on:click={() => {
-                    newTaskFlag = !newTaskFlag
-                }}
-            >
+            <button on:click={() => newTaskFlag = !newTaskFlag}>
                 Add a task
             </button>
         </div>
@@ -127,7 +131,6 @@
 
 <style lang="scss">
     @import "../../scss/inputs.scss";
-    @import "../../scss/tasks.scss";
 
     .tasks {
         width: 100%;
@@ -135,19 +138,37 @@
         margin-top: -10px;
         height: 100%;
 
+        --empty-btn-bg-opacity: 0.04;
+        --empty-btn-inactive-opacity: 0.7;
+
         &--on-todoist &__todo-list-container {
             height: calc(100% - 35px);
         }
         &--on-todoist &__todoist {
             display: flex;
         }
+        &--light {
+            --empty-btn-bg-opacity: 0.08;
+            --empty-btn-inactive-opacity: 0.8;
+        }
+        &--light &__empty span {
+            @include text-style(0.9);
+        }
+        &--light &__empty button {
+            @include text-style(1);
+        }
+        &--light button {
+            opacity: 0.8;
+        }
+
         &__todo-list-container {
-            height: 100%;
+            height: calc(100% - 28px);
+            max-height: calc(100% - 28px);
             position: relative;
         }
         &__todoist {
             @include flex(center, space-between);
-            @include text-style(0.35, 400, 1.3rem, "DM Mono");
+            @include text-style(0.35, 400, 1.3rem, "Geist Mono");
             @include abs-bottom-left(0px, 4px);
             width: 100%;
             padding: 5px 0px 25px 4px;
@@ -177,19 +198,19 @@
             width: 100%;
 
             span {
-                @include text-style(0.35, 400, 1.2rem, "DM Mono");
+                @include text-style(0.35, var(--fw-400-500), 1.2rem, "Geist Mono");
                 display: block;
             }
             button {
-                @include text-style(_, 400, 1.2rem, "DM Mono");
-                opacity: 0.7;
-                margin-top: 15px;
-                background-color: rgba(var(--textColor1), 0.04);
-                padding: 9px 17px;
+                @include text-style(1, var(--fw-400-500), 1.2rem, "Geist Mono");
+                opacity: var(--empty-btn-inactive-opacity);
+                margin-top: 20px;
+                background-color: rgba(var(--textColor1), var(--empty-btn-bg-opacity));
+                padding: 8px 17px 9px 17px;
                 border-radius: 4px;
                 
                 &:hover {
-                    opacity: 0.95;
+                    opacity: 1;
                 }
             }
         }

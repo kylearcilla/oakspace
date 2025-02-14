@@ -5,9 +5,14 @@ import { Tasks } from "./Tasks"
 import { TextEditorManager } from "./inputs"
 import { 
         elemHasClasses, findAncestor, getElemById, initFloatElemPos, 
-        isEditTextElem, isNearBorderAndShouldScroll
+        isEditTextElem, shouldScroll
 } from "./utils-general"
 import { toast } from "./utils-toast"
+import { globalContext } from './store'
+
+type StateType = Omit<TasksListManager, "tasks">
+
+type DragAction = "nbr-add-top" | "nbr-add-bottom" | "child-add" | "remove" | "remove-child" | "drag-end"
 
 /**
  * Reusable task list manager component.
@@ -17,22 +22,23 @@ import { toast } from "./utils-toast"
 export class TasksListManager {
     tasks: Tasks
     options: TasksListOptions
-    state: Writable<Omit<TasksListManager, "tasks">>
+    state: Writable<StateType>
 
     /* options */
     settings: {
         numbered: boolean
         reorder: boolean
         subtasks: boolean
-        type: "side-menu" | "default"
+        type: "side-bar" | "default"
         allowDuplicate: boolean
         removeOnComplete: boolean
-        progress: "perc" | "count"
-        maxTitleLines: number
-        maxDescrLines: number
-        maxHeight: string
         maxDepth: number
         max: number
+        maxSubtasks: number
+        maxTitleLines: number
+        maxDescrLines: number
+        maxTitleLength: number
+        maxDescrLength: number
         addBtn: {
             iconScale: number
             doShow: boolean
@@ -42,15 +48,19 @@ export class TasksListManager {
         }
     }
     ui: {
-        maxHeight: string
+        fontSize: CSSTextSize
+        menuWidth: CSSUnitVal
+        maxHeight: CSSUnitVal
         sidePadding: CSSUnitVal
+        padding: CSSUnitVal
+        borderRadius: CSSUnitVal
         hasTaskDivider: boolean
-        listHeight: string
-        checkboxDim: string
+        listHeight: CSSUnitVal
+        checkboxDim: CSSUnitVal
     }
 
-    containerRef : HTMLElement | null = null
-    tasksListContainer: HTMLElement | null = null
+    rootRef : HTMLElement | null = null
+    tasksContainer: HTMLElement | null = null
     tasksList: HTMLElement | null = null
 
     /* interaction */
@@ -73,11 +83,11 @@ export class TasksListManager {
 
     targetParentId: string | null = null
     isTargetEnd = false
-    dragAsChild = false
+    dragAction: DragAction | null = null
     
     /* context menu */
-    hasJustClosedContextMenu = false
-    isContextMenuOpen = false
+    justClosedContextMenu = false
+    contextMenuOpen = false
     contextMenu: OffsetPoint = { left: -1000, top: -1000 }
 
     /* ui */
@@ -87,46 +97,55 @@ export class TasksListManager {
     debounceTimer: NodeJS.Timer | null = null
     
     /* constants */
-    DEFAULT_STYLES = {
-        CHECK_BOX_DIM: "16px",
-        SIDE_PADDING: "18px",
-        MAX_TITLE_LINES: 1,
-        MAX_DESC_LINES: 1
-    }
-    
-    FLOATING_WIDTH_PERCENT = 0.8
-    CONTEXT_MENU_WIDTH = 180
+    DROP_TOP_BORDER_CLASSES = "drop-top-border drop-top-border--over"
+    DROP_BOTTOM_BORDER_CLASSES = "drop-bottom-border drop-bottom-border--over"
+    DRAG_OVER_BG = "rgba(var(--textColor1), 0.025)"
 
+    FLOATING_WIDTH_PERCENT = 0.8
     DROP_AS_CHILD_X_THRESHOLD = 140
-    DEFAULT_MAX_TASKS = 25
     MAX_DEPTH = 3
 
-    MAX_TITLE_LENGTH = 200
-    MAX_DESCRIPTION_LENGTH = 350
     MAX_X_CONTEXT_MENU_POS = 70
 
-    constructor(args: { options: TasksListOptions, tasks: Task[] }) {
-        const { options, tasks } = args
+    constructor({ options, tasks }: { options: TasksListOptions, tasks: Task[] }) {
         this.options = options
-
+        this.rootRef = options.rootRef
+        
         const { settings, ui } = options
-        const { DEFAULT_MAX_TASKS } = this
-        const { MAX_TITLE_LINES, MAX_DESC_LINES, SIDE_PADDING, CHECK_BOX_DIM } = this.DEFAULT_STYLES
+        const { type = "default" } = options ?? {}
+        
+        const { 
+            maxDepth = 3, 
+            removeOnComplete = false, 
+            allowDuplicate = true, 
+            numbered = false, 
+            subtasks = true, 
+            reorder = true,
+            maxTitleLines = type === "side-bar" ? 1 : 2,
+            maxDescrLines = type === "side-bar" ? 2 : 2,
+            maxTitleLength = 200,
+            maxDescrLength = 500,
+            max = 30,
+            maxSubtasks = 20,
+            addBtn = {
+                doShow: false, iconScale: 1.1,
+                text: "Add an Item", pos: "bottom",
+                style: {}
+            }
+        } = settings ?? {}
 
-        /* functionality */
-        const maxDepth = settings?.maxDepth ?? 3
-        const removeOnComplete = settings?.removeOnComplete ?? false
-        const allowDuplicate = settings?.allowDuplicate ?? true
-        const numbered = settings?.numbered ?? false
-        const subtasks = settings?.subtasks ?? true
-        const reorder = settings?.reorder ?? true
+        const {
+            menuWidth = "150px" as CSSUnitVal,
+            fontSize = "1.4rem" as CSSTextSize,
+            maxHeight = "100%",
+            sidePadding = "15px" as CSSUnitVal,
+            hasTaskDivider = true,
+            padding = "10px 0px 9px 0px" as CSSUnitVal,
+            borderRadius = "0px" as CSSUnitVal,
+            listHeight = "auto",
+            checkboxDim = "16px" as CSSUnitVal
+        } = ui ?? {}
 
-        this.tasks = new Tasks({ 
-            tasks: removeOnComplete ? tasks.filter(t => !t.isChecked) : tasks, 
-            maxDepth 
-        })
-
-        this.containerRef = options.containerRef
         this.settings = {
             numbered,
             subtasks,
@@ -134,43 +153,41 @@ export class TasksListManager {
             allowDuplicate,
             maxDepth,
             removeOnComplete,
-            maxHeight:     settings?.maxHeight ?? "100%",
-            type:          options?.type ?? "default",
-            progress:      settings?.progress ?? "perc",
-            max:           settings?.max ?? DEFAULT_MAX_TASKS,
-            maxTitleLines: MAX_TITLE_LINES,
-            maxDescrLines: MAX_DESC_LINES,
-            addBtn: {
-                doShow: settings?.addBtn?.doShow ?? false,
-                style:  settings?.addBtn?.style,
-                text:   settings?.addBtn?.text ?? "Add an Item",
-                pos:    settings?.addBtn?.pos ?? "bottom",
-                iconScale: settings?.addBtn?.iconScale ?? 1.1
-            }
+            type,
+            max,
+            maxSubtasks,
+            maxTitleLines,
+            maxDescrLines,
+            maxTitleLength,
+            maxDescrLength,
+            // @ts-ignore
+            addBtn
         }
-
-        if (options?.type === "side-menu") {
-            this.settings.maxTitleLines = 2
-            this.settings.maxDescrLines = 2
-        }
-
         this.ui = {
-            maxHeight:      ui?.maxHeight ?? "100%",
-            sidePadding:    ui?.sidePadding    ?? SIDE_PADDING as CSSUnitVal,
-            hasTaskDivider: ui?.hasTaskDivider ?? true,
-            listHeight:     ui?.listHeight     ?? "auto",
-            checkboxDim:    ui?.checkboxDim     ?? CHECK_BOX_DIM,
+            padding,
+            fontSize,
+            maxHeight,
+            sidePadding,
+            borderRadius,
+            hasTaskDivider,
+            listHeight,
+            checkboxDim,
+            menuWidth
         }
+        this.tasks = new Tasks({ 
+            tasks: removeOnComplete ? tasks.filter(t => !t.isChecked) : tasks, 
+            maxDepth 
+        })
 
         this.state = writable(this)
     }
 
-    update(newState: Partial<Omit<TasksListManager, "tasks">>) {
-        this.state.update((data: Omit<TasksListManager, "tasks"> | null) => this.getNewStateObj(data!, newState))
+    update(newState: Partial<StateType>) {
+        this.state.update((data: StateType | null) => this.getNewStateObj(data!, newState))
     }
 
     initAfterLoaded(taskListContainerRef: HTMLElement, taskListRef: HTMLElement) {
-        this.tasksListContainer = taskListContainerRef
+        this.tasksContainer = taskListContainerRef
         this.tasksList = taskListRef
     }
 
@@ -183,16 +200,17 @@ export class TasksListManager {
     onTaskClicked(args: { event: Event, id: string, isChild: boolean, atMaxDepth: boolean }) { 
         const { event, id, isChild, atMaxDepth } = args
         const target = event.target as HTMLElement
+        const tagName = target.tagName
         const isEditElem = isEditTextElem(target)
+        const isCheckbox = target.classList.contains("task__checkbox")
 
-        if (this.justEdited || isEditElem || target.tagName === "BUTTON" || target.tagName === "I") {
+        if (this.justEdited || isEditElem || tagName === "BUTTON" || tagName === "I" || isCheckbox) {
             this.justEdited = false
             return
         }
-
-        this.initFocusTask(id, isChild)
-
+        
         if (!atMaxDepth) {
+            this.initFocusTask(id, isChild)
             this.toggleExpandTask(id, isChild)
         }
     }
@@ -224,6 +242,7 @@ export class TasksListManager {
             this.expandRootTask(id)
         }
 
+        this.initFocusTask(id!, isChild)
         this.editMode = "description"
         this.editTask = this.tasks.getTask(id)!
 
@@ -246,7 +265,7 @@ export class TasksListManager {
      * @param clientY 
      */
     updatePointers(clientX: number, clientY: number) {
-        const windowRect = this.tasksListContainer!.getBoundingClientRect()
+        const windowRect = this.tasksContainer!.getBoundingClientRect()
         const tasksList = this.tasksList!.getBoundingClientRect()
         
         const blocksLeft = clientX - tasksList.left
@@ -271,10 +290,14 @@ export class TasksListManager {
      */
     toggleExpandTask(id: string, isChild: boolean) {
         if (isChild) {
-            this.tasks.toggleSubtaskOpen(id)
-            return
+            const open = this.tasks.isTaskOpen(id)
+
+            if (open) {
+                this.resetTextContainers(id)
+            }
+            this.tasks.toggleTaskOpen(id)
         }
-        if (id === this.pickedTask?.id) {
+        else if (id === this.pickedTask?.id) {
             this.minimizeExpandedTask()
         }
         else if (this.pickedTask) {
@@ -302,8 +325,27 @@ export class TasksListManager {
      * Close an expanded task.
      */
     minimizeExpandedTask() {
+        this.resetTextContainers(this.pickedTask!.id)
         this.pickedTask = null
         this.update({ pickedTask: null })
+
+        this.tasks.closeAllTasks()
+    }
+
+    resetTextContainers(id: string) {
+        const taskElem = this.getTaskElem(id)
+
+        if (taskElem) {
+            const titleContainer = taskElem.querySelector(".task__title")
+            const descriptionContainer = taskElem.querySelector(".task__description")
+
+            if (titleContainer) {
+                titleContainer.scrollTop = 0
+            }
+            if (descriptionContainer) {
+                descriptionContainer.scrollTop = 0
+            }
+        }
     }
 
     /* focusing on task elem */
@@ -315,9 +357,7 @@ export class TasksListManager {
 
         this.focusTask = { ...task!, isChild }
         this.focusElemIdx = taskElems.findIndex((taskElem) => taskElem.id === taskElemId)
-
         this.update({ focusTask: this.focusTask })
-
     }
 
     /**
@@ -384,6 +424,10 @@ export class TasksListManager {
             if (currentId === relatedId) return
         }
 
+        this.closeTextEditState()
+    }
+
+    closeTextEditState() {
         if (this.editMode === "title") {
             this.saveNewTitle()
         }
@@ -409,12 +453,13 @@ export class TasksListManager {
         const { id } = this.editTask
         const tId = `task-${field}-id--${id}`
         const elem = this.getElemById(tId) as HTMLElement
+        const { maxTitleLength, maxDescrLength } = this.settings
         elem.focus()
     
         const handlers = {
             onInputHandler: (_: InputEvent, value: string) => this.inputTextHandler(value),
-            onBlurHandler:  this.onInputBlurHandler,
-            onFocusHandler: this.onInputFocusHandler
+            onBlurHandler:  () => this.closeTextEditState(),
+            onFocusHandler: (e: FocusEvent) => this.onInputFocusHandler(e)
         }
         const initValue = field === "title" ? this.editTask.title : this.editTask.description
     
@@ -422,7 +467,7 @@ export class TasksListManager {
             initValue,
             placeholder:  field === "title" ? "Title goes here..." : "No description",
             doAllowEmpty: field === "title" ? false : true,
-            maxLength:    field === "title" ? this.MAX_TITLE_LENGTH : this.MAX_DESCRIPTION_LENGTH,
+            maxLength:    field === "title" ? maxTitleLength : maxDescrLength,
             id: `${this.options.id}--${tId}`,
             handlers
         })
@@ -436,7 +481,8 @@ export class TasksListManager {
         elem.oninput = (e) => editor.onInputHandler(e)
         elem.onfocus = (e) => editor.onFocusHandler(e)
         elem.onblur = (e) => editor.onBlurHandler(e)
-        elem.focus()
+
+        requestAnimationFrame(() => editor.focus())
     }
 
     saveNewTitle = async () => {
@@ -486,7 +532,7 @@ export class TasksListManager {
         if (task.parentId) {
             this.toggleExpandTask(task.id, true)
         }
-        if (!this.isDragging && this.settings.type != "side-menu") {
+        if (!this.isDragging && this.settings.type != "side-bar") {
             e.preventDefault()
             return
         }
@@ -495,56 +541,58 @@ export class TasksListManager {
         this.update({ dragSrc: task })
     }
 
-    onDrag(e: DragEvent, id: string) {
+    onDrag(e: DragEvent, targetId: string) {
         e.preventDefault()
-
-        if (id != this.dragSrc?.id) {
-            this.shouldDropAsChildHandler(e)
-        }
-        
         this.scrollWhenNearContainerBounds()
+
+        const asChild = this.shouldDropAsChildHandler(e, targetId)
+
+        if (asChild) {
+            this.toggleDragClass({ type: "child-add",  de: e  })
+        }
+        else {
+            const type = this.nbrDropPosition(e)
+            this.toggleDragClass({ type, de: e })
+        }
     }
 
     onDragEnter(e: DragEvent, parentId: string | null, targetId: string | null) {
+        e.preventDefault()
         this.targetParentId = parentId
 
-        if (!targetId && !this.isTargetEnd) {
-            this.isTargetEnd = true
-            this.toggleDragClass({ type: "nbr-add", de: e })
-        }
-        else {
-            this.isTargetEnd = false
-            const target = this.tasks.getTask(targetId!)
-            const isNewTarget = target?.id != this.dragTarget?.id && target?.id != this.dragSrc!.id
-
-            if (isNewTarget && target) {
-                this.dragTarget = target
-                this.toggleDragClass({ type: "nbr-add", de: e })
-            }
+        const target = this.tasks.getTask(targetId!)
+        const isNewTarget = target?.id != this.dragTarget?.id
+        
+        if (isNewTarget && target) {
+            const type = this.nbrDropPosition(e)
+            this.dragTarget = target
+            this.toggleDragClass({ type, de: e })
         }
     }
 
     onDragLeave(e: DragEvent) {
+        const target = e.target as HTMLElement
         const relatedTarget = e.relatedTarget as HTMLElement
-        if (!relatedTarget) return
-            
-        // on drag leave triggers on child elements
-        // only leave when moving on to parent elems
-        const shouldLeave    = elemHasClasses(relatedTarget, ["task__top-content", "task"])
-        if (!shouldLeave) return
+
+        if (!relatedTarget) {
+            return
+        }
 
         this.toggleDragClass({ type: "remove", de: e })
         this.dragTarget = null
-        
     }
 
     onDragEnd(e: DragEvent) {
-        // sometimes the dragTarget is null even there is a visible target
+        // drag target is sometimes null even if there is a target elemnt
         if (this.dragSrc && this.targetElem && !this.dragTarget) {
             const id        = this.getTaskIdFromElem(this.targetElem)!
             this.dragTarget = this.tasks.getTask(id)!
         }
-        if (this.dragSrc && (this.dragTarget || this.isTargetEnd)) {
+
+        const isSelf = this.dragSrc?.id === this.dragTarget?.id
+        const hasTarget = this.dragTarget || this.isTargetEnd
+
+        if (!isSelf && this.dragSrc && hasTarget) {
             this.completeDragAction()
         }
 
@@ -553,23 +601,25 @@ export class TasksListManager {
         this.dragSrc = null
         this.dragTarget = null
         this.isDragging = false        
-        this.dragAsChild = false
+        this.dragAction = null
 
         this.update({ dragSrc: null })
     }
 
     completeDragAction() {
-        // drag target is null if dropping to the last position of the same parent
-        if (this.dragAsChild && this.dragTarget?.id === this.dragSrc?.parentId) {
+        const asChild = this.dragAction === "child-add"
+        if (asChild && this.dragTarget?.id === this.dragSrc?.parentId) {
             return
         }
-        const targetParentId = this.dragAsChild ? this.dragTarget?.id ?? null : this.targetParentId
+        const targetParentId = asChild ? this.dragTarget?.id ?? null : this.targetParentId
         const action = this.dragSrc?.parentId !== targetParentId ? "new-parent" : "reorder"
+        const _action = asChild ? "child" : this.dragAction === "nbr-add-bottom" ? "nbr-bottom" : "nbr-top"
 
         const task = this.tasks.reorderTask({ 
             src: this.dragSrc!,
-            target: this.dragTarget,
-            targetParentId
+            target: this.dragTarget!,
+            targetParentId,
+            action: _action
         })
 
         this.finalizeEditTask(task, action)
@@ -578,79 +628,100 @@ export class TasksListManager {
     /**
      * Should dragging task be dropped as a target's sibling or child.
      */
-    shouldDropAsChildHandler(e: DragEvent) {
-        if (!e.clientX || !e.clientY) return
+    shouldDropAsChildHandler(e: DragEvent, targetId: string) {
+        if (!e.clientX || !e.clientY) return false
 
         const target = e.target as HTMLElement
         const targetRect = target.getBoundingClientRect()
         const relativeX = e.clientX - targetRect.left
+        const onRightSide = relativeX >= this.DROP_AS_CHILD_X_THRESHOLD
+        const isTargetAtMaxDepth = targetId ? this.tasks.isAtMaxDepth(targetId) : false
 
-        this.dragAsChild = relativeX >= this.DROP_AS_CHILD_X_THRESHOLD
+        if (isTargetAtMaxDepth && onRightSide) {
+            return false
+        }
 
-        this.toggleDragClass({ 
-            type: this.dragAsChild ? "child-add" : "remove-child", 
-            de: e 
-        })
+        return targetId ? onRightSide : false
     }
 
-    toggleDragClass(args: { 
-        type: "nbr-add" | "child-add" | "remove" | "remove-child" | "drag-end", 
-        de: DragEvent 
-    }) {
-        const { type, de } = args
-        const target = de.target as HTMLElement
+    nbrDropPosition(e: DragEvent) {
+        const targetRect = (e.target as HTMLElement).getBoundingClientRect()
+        const relativeY = e.clientY - targetRect.top
+        const isTopHalf = relativeY < targetRect.height / 2
+
+        return isTopHalf ? "nbr-add-top" : "nbr-add-bottom"
+    }
+
+    toggleDragClass({ type, de }: { type: DragAction, de: DragEvent }) {
+        const target = de.target as HTMLElement // content
         const taskElem = target.parentElement!.parentElement as HTMLElement
-        const isDummy = elemHasClasses(target, ["task__top-content--dummy"])
+
+        if (type === this.dragAction) return
+        // console.log(this.dragAction, type)
+        console.log(taskElem.id)
+
+        this.dragAction = type
         
         if (type === "drag-end" && this.targetElem) {
             this.closeDragElemOnEnd()
-
             return
         }
         if (elemHasClasses(target, ["task__checkbox", "task__left"])) {
             return
         }
 
-        if (type === "nbr-add") {
-            taskElem.classList.add("dg-over-el--over")
-
-            if (isDummy) {
-                taskElem.style.height = "25px"
-            }
+        if (type === "nbr-add-top") {
+            this.addDropBorderClasses(taskElem, "top")
+            this.removeDropBorderClasses(taskElem, "bottom")
+        }
+        else if (type === "nbr-add-bottom") {
+            this.addDropBorderClasses(taskElem, "bottom")
+            this.removeDropBorderClasses(taskElem, "top")
         }
         else if (type === "child-add") {
-            target.style.background = "rgba(var(--textColor1), 0.025)"
-            taskElem.classList.remove("dg-over-el--over")
+            target.style.background = this.DRAG_OVER_BG
+            this.removeDropBorderClasses(taskElem)
         }
         else if (type === "remove-child") {
             target.style.background = "none"
-            taskElem.classList.add("dg-over-el--over")
-
-            if (isDummy) {
-                taskElem.style.height = "0px"
-            }
+            this.addDropBorderClasses(taskElem, "top")
         }
-        else {
+        else if (type === "remove") {
             target.style.background = "none"
-            taskElem.classList.remove("dg-over-el--over")
-
-            if (isDummy) {
-                taskElem.style.height = "0px"
-            }
+            this.removeDropBorderClasses(taskElem)
         }
 
         this.targetElem = target
     }
 
+    addDropBorderClasses(elem: HTMLElement, type: "top" | "bottom") {
+        if (type === "top") {
+            elem.classList.add(...this.DROP_TOP_BORDER_CLASSES.split(" "))
+        }
+        else if (type === "bottom") {
+            elem.classList.add(...this.DROP_BOTTOM_BORDER_CLASSES.split(" "))
+        }
+    }
+
+    removeDropBorderClasses(elem: HTMLElement, type?: "top" | "bottom") {
+        if (type === "top") {
+            elem.classList.remove(...this.DROP_TOP_BORDER_CLASSES.split(" "))
+        }
+        else if (type === "bottom") {
+            elem.classList.remove(...this.DROP_BOTTOM_BORDER_CLASSES.split(" "))
+        }
+        else {
+            elem.classList.remove(...this.DROP_TOP_BORDER_CLASSES.split(" "))
+            elem.classList.remove(...this.DROP_BOTTOM_BORDER_CLASSES.split(" "))
+        }
+    }
+
     closeDragElemOnEnd() {
         const task = this.targetElem!.parentElement!.parentElement!
         this.targetElem!.style.background = "none"
-        task!.classList.remove("dg-over-el--over")
+        this.removeDropBorderClasses(task)
 
-        const isDummy = elemHasClasses(this.targetElem!, ["task__top-content--dummy"])
-        if (isDummy)  {
-            task!.style.height = "0px"
-        }
+        this.dragAction = null
     }
 
     /**
@@ -661,19 +732,19 @@ export class TasksListManager {
         if (this.scrollInterval) return
         
         this.scrollInterval = setInterval(() => {
-            let moveDirection = isNearBorderAndShouldScroll(this.tasksListContainer!, this.scrollWindowCursorPos)
+            const moveDirection = shouldScroll(this.tasksContainer!, this.scrollWindowCursorPos)
             
             if (moveDirection === "up") {
-                this.tasksListContainer!.scrollTop -= 10
+                this.tasksContainer!.scrollTop -= 10
             }
             else if (moveDirection === "down") {
-                this.tasksListContainer!.scrollTop += 10
+                this.tasksContainer!.scrollTop += 10
             }
             else if (moveDirection === "right") {
-                this.tasksListContainer!.scrollLeft += 10
+                this.tasksContainer!.scrollLeft += 10
             }
             else if (moveDirection === "left") {
-                this.tasksListContainer!.scrollLeft -= 10
+                this.tasksContainer!.scrollLeft -= 10
             }
             else if (!moveDirection) {
                 clearInterval(this.scrollInterval! as any)
@@ -692,22 +763,34 @@ export class TasksListManager {
      * @param args.parentId Task's parent Id. If null, it will be a root task.
      * @param args.type     Whether new task will be a sibling or child. 
      */
-    async addNewTask(args: { 
+    async addNewTask({ idx, parentId, type }: {
         idx?: number, 
         parentId: string | null,
         type:  "sibling" | "child"
     }) {
-        const { idx, parentId, type } = args
         const hasClientTaskHandler = !!this.options.handlers?.onAddTask
+        const count = this.tasks.getTaskCount({ rootOnly: true })
+        const { max, maxSubtasks } = this.settings
 
-        const tempId   = hasClientTaskHandler ? "123" : uuidv4()
+        // new root task
+        if (!parentId && count === max) {
+            toast("warning", { message: "Max depth reached" })
+            return
+        }
+
+        const tempId   = hasClientTaskHandler ? "69" : uuidv4()
         const newIdx  =  idx ?? this.tasks.getSubtasks(parentId).length
         const isChild =  type === "child"
 
+        // new child
         if (isChild && this.tasks.isAtMaxDepth(parentId!)) {
-            this.initMaxDepthToast()
+            toast("warning", { message: "Max depth reached" })
             return
         }
+        if (isChild && this.tasks.getSubtaskCount(parentId!) === maxSubtasks) {
+            toast("warning", { message: "Max subtasks reached" })
+            return
+        }   
 
         const task = {
             id: tempId,
@@ -736,13 +819,14 @@ export class TasksListManager {
         const parentId = task.parentId
         const isChild = parentId !== null
 
+        // see if parent children are at max depth
         if (isChild && this.tasks.isAtMaxDepth(parentId!)) {
             this.initMaxDepthToast()
             return
         }
 
-        const added = this.tasks.duplicateTask(dupId)
-        this.finalizeAddTask(this.tasks.getTask(dupId)!, "duplicate", added)
+        const [newTask, ...newChildren] = this.tasks.duplicateTask(dupId)
+        this.finalizeAddTask(newTask, "duplicate", [newTask, ...newChildren])
     }
 
     async removeTask(id: string) {
@@ -783,7 +867,6 @@ export class TasksListManager {
         if (complete && removeOnComplete) {
             removed.push(...this.tasks.removeTask(taskId))
         }
-
         this.finalizeCompleteTask(task, removed)
     }
 
@@ -804,22 +887,20 @@ export class TasksListManager {
         }
     }
 
-    async finalizeAddTask(task: Task, action: "add" | "duplicate", added: Task[]) {
+    async finalizeAddTask(newTask: Task, action: "add" | "duplicate", added: Task[]) {
         if (!this.options.handlers?.onAddTask) return
         const tasks = this.tasks.getAllTasks()
 
         const res = await this.options.handlers.onAddTask({
-            action: action,
+            action,
             payload: { 
-                task, tasks, 
-                added 
+                task: newTask, tasks, added 
             }
         })
 
-        // if api returns its own id for the new task
+        // // if api returns its own id for the new task
         if (res && res.id) {
-            this.tasks.removeTask(task.id)
-            this.tasks.addTask({ task: { ...task, id: res.id }, type: "new" })
+            this.tasks.updateTaskId(newTask.id, res.id)
         }
     }
 
@@ -841,7 +922,7 @@ export class TasksListManager {
     }
 
     async finalizeCompleteTask(task: Task, removed: Task[]) {
-        if (!this.options.handlers?.onDeleteTask) return
+        if (!this.options.handlers?.onTaskUpdate) return
 
         const isChecked = task.isChecked
         const tasks = this.tasks.getAllTasks()
@@ -861,12 +942,11 @@ export class TasksListManager {
                 }
             })
         }
-
         this.options.handlers.onTaskUpdate({
             action: "completion",
+            removeOnComplete: this.settings?.removeOnComplete,
             payload: { 
-                task, 
-                tasks 
+                task, tasks 
             },
             ...(isChecked ? { undoFunction } : {})
         })
@@ -878,14 +958,24 @@ export class TasksListManager {
 
         this.options.handlers.onTaskUpdate({
             action,
-            payload: { 
-                task, 
-                tasks 
-            }
+            payload: { task, tasks }
         })
     }
 
     /* context menu */
+    getContextMenuHeight() {
+        const { description, id } = this.focusTask!
+        const atMaxDepth = this.tasks.isAtMaxDepth(id)
+        const allowDuplicate = this.settings.allowDuplicate
+
+        let height = 32 * 3 // delete, add task above / below
+
+        height += description ? 0 : 32  // add description
+        height += atMaxDepth ? 0 : 32   // add subtask
+        height += allowDuplicate ? 32 : 0  // add duplicate
+
+        return height + 20
+    }
 
     openContextMenu = (e: Event, taskId: string, isChild: boolean) => {
         const pe = e as PointerEvent
@@ -893,49 +983,39 @@ export class TasksListManager {
 
         if (isEditTextElem(target) || target.tagName === "BUTTON") {  
             this.contextMenu = { left: -1000, top: -1000 }
-            return
+            return false
         }
         
-        const containerElem = this.tasksListContainer!
-        const scrollTop     = this.tasksListContainer!.scrollTop
+        this.initFocusTask(taskId, isChild)
+
+        const containerElem = this.tasksContainer!
+        const width = parseInt(this.ui.menuWidth) + 5
+        const scrollTop = containerElem.scrollTop
         
         const cursorPos = {
-            left: this.cursorPos.left,
+            left: this.cursorPos.left - 20,
             top: this.cursorPos.top - scrollTop
         }
-        const { left, top } = initFloatElemPos({
+        const contextMenu = initFloatElemPos({
             dims: { 
-                height: 220,
-                width: this.CONTEXT_MENU_WIDTH + 25
+                height: this.getContextMenuHeight(), 
+                width
             }, 
             containerDims: { 
-                height: containerElem.clientHeight, width: containerElem.clientWidth 
+                height: this.rootRef!.clientHeight, 
+                width: this.rootRef!.clientWidth 
             },
             cursorPos
         })
         
-        this.initFocusTask(taskId, isChild)
-        this.update({
-            contextMenu: { left, top },
-            isContextMenuOpen: true
-        })
+        this.contextMenuOpen = true
+        this.update({ contextMenu })
+
+        return true
     }
 
-    onContextMenuClickedOutside() {
-        if (this.isContextMenuOpen) {
-            this.closeContextMenu()
-        }
-    }
-
-    /**
-     * Called when user clicks an option from Task or Subtask dropdown menu
-     * 
-     * @param optionIdx   Click Event
-     */
-    contextMenuHandler (context: DropdownItemClickedContext) {
+    contextMenuHandler (option: string) {
         if (!this.focusTask) return
-
-        const option = context.name
         const { id, idx, isChild, parentId } = this.focusTask!
 
         if (option === "Add Description") {
@@ -975,23 +1055,18 @@ export class TasksListManager {
      * Close (hide) context menu and reset all data set from invoking the context menu.
      */
     closeContextMenu = () => {
-        this.isContextMenuOpen = false
-        this.update({ isContextMenuOpen: false })
+        this.contextMenuOpen = false
         
         // allow for dmenu fade out animation to finish
         setTimeout(() => {
             this.contextMenu = { left: -1000, top: -1000 }
-            this.hasJustClosedContextMenu = true
+            this.justClosedContextMenu = true
 
-            this.update({
-                contextMenu: this.contextMenu,
-                isContextMenuOpen: false
-            })
+            this.update({ contextMenu: this.contextMenu })
         }, 100)
     }
 
     /* hotkeys */
-
     handleArrowkeyPressed(key: "ArrowUp" | "ArrowDown") {
         const taskElems = this.getAllTaskElems()
         const length = taskElems.length
@@ -1008,18 +1083,18 @@ export class TasksListManager {
             this.focusElemIdx = (this.focusElemIdx + 1) % length
         }
 
-        const taskElem = taskElems[this.focusElemIdx]
+        const taskElem = taskElems[this.focusElemIdx] as HTMLButtonElement
         const isChild = taskElem.classList.contains("task--subtask")
         const id = taskElem.id.split("task-id--")[1]
         const task = this.tasks.getTask(id)
 
         if (task) {
-            this.focusTask = { ...task!, isChild }
+            taskElem.focus()
+            this.focusTask = { ...task!, isChild };
+            this.update({ focusTask: this.focusTask })
         }
-
-        this.update({ focusTask: this.focusTask })
     }
-
+    
     /**
      * Shortcut handler for tasks view component.
      * @param event   Keyboard event
@@ -1028,7 +1103,12 @@ export class TasksListManager {
         const target = event.target as HTMLElement
         const isEditing = isEditTextElem(target)
         const { key, metaKey, shiftKey, ctrlKey, code } = event
+        const hotkey = this.options.hotkeyFocus
+        const currHotKeyContext = get(globalContext).hotkeyFocus
 
+        if (hotkey != currHotKeyContext) {
+            return
+        }
         // prevent scroll when editing
         if (event.code === "Space" && !isEditing) {
             event.preventDefault()
@@ -1049,9 +1129,11 @@ export class TasksListManager {
         }
 
         if (isEditing || !this.focusTask) return
-        const { id, isChild, idx, parentId } = this.focusTask
+        const { id,idx, parentId } = this.focusTask
+        const isChild = parentId !== null
         
         if (event.code === "Space") {
+            this.initFocusTask(id, isChild)
             this.toggleExpandTask(id, isChild)   
         }
         else if (event.code === "Enter") {
@@ -1097,7 +1179,7 @@ export class TasksListManager {
     }
 
     getAllTaskElems() {
-        const taskContainer = this.getElemById("tasks-list-container")!
+        const taskContainer = this.getElemById("tasks-list")!
         return [...taskContainer.querySelectorAll(".task:not(.task--dummy):not(.task--floating)")]
     }
 
@@ -1112,7 +1194,7 @@ export class TasksListManager {
     }    
 
     onClickedOutside(event: CustomEvent) {
-        if (!this.focusTask || this.isContextMenuOpen || !event.detail?.target) {
+        if (this.contextMenuOpen || !event.detail?.target) {
             return
         }
         // const target = event.detail.target as HTMLElement
@@ -1125,11 +1207,12 @@ export class TasksListManager {
         //     return
         // }
 
+        const task = this.focusTask
         this.focusTask = null
         this.focusElemIdx = -1
         this.update({ focusTask: null })
 
-        if (this.pickedTask) {
+        if (this.pickedTask && (task && !task.parentId || !task)) {
             this.minimizeExpandedTask()
         }
     }
@@ -1152,40 +1235,38 @@ export class TasksListManager {
     getContextMenuOptions() {
         const { allowDuplicate } = this.settings
 
-       return [
-            {
-                options: [
-                    { 
-                        name: "Add Task Above",
-                        rightIcon: {
-                            type: "hotkey",
-                            icon: ["shift", "up"]
-                        }
-                    },
-                    { 
-                        name: "Add Task Below",
-                        rightIcon: {
-                            type: "hotkey",
-                            icon: ["shift", "down"]
-                        }
-                    },
-                    ...(allowDuplicate ? [{ 
-                        name: "Duplicate Task",
-                        rightIcon: {
-                            type: "hotkey",
-                            icon: ["ctrl", "d"]
-                        }
-                    }] : [])
-                ]
+        return [
+            { 
+                name: "Add Task Above",
+                rightIcon: {
+                    type: "hotkey",
+                    icon: ["shift", "up"]
+                },
             },
+            { 
+                name: "Add Task Below",
+                rightIcon: {
+                    type: "hotkey",
+                    icon: ["shift", "down"]
+                },
+                divider: !allowDuplicate
+            },
+            ...(allowDuplicate ? [{ 
+                name: "Duplicate Task",
+                rightIcon: {
+                    type: "hotkey",
+                    icon: ["ctrl", "d"]
+                },
+                divider: true
+            }] : []),
             { 
                 name: "Delete Task",
                 rightIcon: {
                     type: "hotkey",
-                    icon: ["ctrl", "delete"]
+                    icon: ["delete"]
                 }
             }
-        ] as  DropdownListItem[]
+            ] as  DropdownListItem[]
     }
 
     /**
@@ -1214,7 +1295,6 @@ export class TasksListManager {
 
         /* context menu */
         if (newState.contextMenu != undefined)       newStateObj.contextMenu = newState.contextMenu
-        if (newState.isContextMenuOpen != undefined) newStateObj.isContextMenuOpen = newState.isContextMenuOpen
 
         return newStateObj
     }

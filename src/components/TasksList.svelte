@@ -17,24 +17,19 @@
 
     let _manager   = new TasksListManager({ options, tasks })
     let manager    = _manager.state
-    let settings   = $manager.settings
-    let { DEFAULT_STYLES, CONTEXT_MENU_WIDTH } = $manager
-    let { CHECK_BOX_DIM } = DEFAULT_STYLES
-
-    let dropdownOptions = _manager.getContextMenuOptions()
+    let dropdownOptions = $manager.getContextMenuOptions()
+    let { settings, ui } = $manager
 
     let listContainer: HTMLElement
     let tasksList: HTMLElement
     let idPrefix = options.id
     let contextMenuOpen = false
-    let rootTasks: Task[] = []
     let justInit = true
-    let type = settings.type
+    let rootTasks: Task[] = []
 
     $: isDark      = $themeState.isDarkTheme
     $: focusTask   = $manager.focusTask
     $: contextMenu = $manager.contextMenu
-    $: contextMenuOpen = $manager.contextMenuOpen 
     
     $: if (newTaskFlag != undefined) {
         createNewTask()
@@ -42,13 +37,6 @@
     $: if (removeCompleteFlag != undefined) {
         removeCompletedTasks()
     }
-
-    let styles = {
-        fontSize: "1.325rem",
-        padding: "10px 0px 5px 0px",
-        borderRadius: "0px",
-    }
-
     $manager.tasks._store?.subscribe((state) => {
         rootTasks = state.getRootTasks()
 
@@ -70,21 +58,11 @@
         $manager.removeCompletedTasks()
     }
     function onContextMenu(e: Event, taskId: string, isChild: boolean) {
-        $manager.openContextMenu(e, taskId, isChild)
-        contextMenuOpen = true
+        contextMenuOpen = $manager.openContextMenu(e, taskId, isChild)
     }
     function isAtMaxDepth(taskId: string) {
         return $manager.tasks.isAtMaxDepth(taskId)
     }
-    function updateStyling() {
-        if (type === "day-view") {
-            styles.padding = "12px 0px 10px 0px"
-            styles.borderRadius = "6px"
-            styles.fontSize = "1.5rem"
-        }
-    }
-
-    updateStyling()
 
     onMount(() => {
         $manager.initAfterLoaded(listContainer, tasksList)
@@ -93,74 +71,47 @@
 
 <svelte:window on:keydown={(ke) => $manager.keyboardShortcutHandler(ke)} />
 
+
 <div 
+    bind:this={listContainer}
     class="tasks-wrapper"
     class:tasks-wrapper--light={!isDark}
-    class:tasks-wrapper--top-btn={$manager.addBtn?.pos === "top"}
+    class:tasks-wrapper--top-btn={settings.addBtn?.pos === "top"}
     class:tasks-wrapper--empty-list={rootTasks.length === 0}
     style:overflow-y={contextMenuOpen ? "hidden" : "scroll"}
 
-    style:--padding={styles.padding}
-    style:--border-radius={styles.borderRadius}
-    style:--font-size={styles.fontSize}
-
-    style:--side-padding={$manager.ui.sidePadding}
-    style:--checkbox-dim={$manager.ui.checkboxDim ?? CHECK_BOX_DIM}
-
-    style:--max-title-lines={$manager.settings.maxTitleLines}
-    style:--max-descr-lines={$manager.settings.maxDescrLines}
-
-    style:max-height={$manager.settings.maxHeight}
+    style:--padding={ui.padding}
+    style:--border-radius={ui.borderRadius}
+    style:--font-size={ui.fontSize}
+    style:--side-padding={ui.sidePadding}
+    style:--checkbox-dim={ui.checkboxDim}
+    style:--max-title-lines={settings.maxTitleLines}
+    style:--max-descr-lines={settings.maxDescrLines}
+    style:max-height={settings.maxHeight}
 >
-    <div 
-        bind:this={listContainer}
-        id={`${idPrefix}--tasks-list-container`}
-        class="tasks-container no-scroll-bar"
-        class:tasks-container--empty={rootTasks.length === 0}
+    <ul 
+        id={`${idPrefix}--tasks-list`}
+        class="tasks"
+        class:tasks--dragging-state={$manager.dragSrc}
+        class:tasks--numbered={settings.numbered}
+        class:tasks--side-menu={settings.type === "side-menu"}
+        style={inlineStyling($manager.styling?.list)}
+        bind:this={tasksList}
+        on:pointermove={$manager.onTaskListPointerMove}
         use:clickOutside on:click_outside={(e) => $manager.onClickedOutside(e)} 
-    >
-        <ul 
-            id={`${idPrefix}--tasks-list`}
-            class="tasks"
-            class:tasks--dragging-state={$manager.dragSrc}
-            class:tasks--numbered={settings.numbered}
-            class:tasks--side-menu={settings.type === "side-menu"}
-            style={inlineStyling($manager.styling?.list)}
-            bind:this={tasksList}
-            on:pointermove={$manager.onTaskListPointerMove}
-        >   
-            <!-- Task Item s-->
-            {#each rootTasks as task, idx (task.id)}
-                <li>
-                    <Task
-                        {idx}
-                        level={0}
-                        {task} 
-                        {manager} 
-                        {onContextMenu}
-                    />
-                </li>
-            {/each}
-
-            <!-- Dummy Task -->
-            <li 
-                data-task-type="task"
-                class="task task--dummy dg-over-el" 
-                style:pointer-events={`${$manager.dragSrc ? "all" : "none"}`}
-            >
-                <div class="task__content">
-                    <div 
-                        class="task__top-content task__top-content--dummy"
-                        on:dragenter={(e) => $manager.onDragEnter(e, null, null)}
-                        on:dragleave={(e) => $manager.onDragLeave(e)}
-                        on:dragend={(e) => $manager.onDragEnd(e)}
-                        on:dragover={(e) => e.preventDefault()}
-                    >
-                    </div>
-                </div>
+    >   
+        {#each rootTasks as task, idx (task.id)}
+            <li>
+                <Task
+                    level={0}
+                    {idx}
+                    {task} 
+                    {manager} 
+                    {onContextMenu}
+                />
             </li>
-        </ul>
-    </div>
+        {/each}
+    </ul>
     {#if $manager.settings?.addBtn?.doShow}
         {@const { style, text } = $manager.settings.addBtn}
         <button 
@@ -174,8 +125,6 @@
             </span>
         </button>
     {/if}
-
-    <!-- Context Menu -->
     <DropdownList
         id={`${idPrefix}--tasks`}
         isHidden={!contextMenuOpen}
@@ -187,23 +136,24 @@
                         rightIcon: {
                             type: "hotkey",
                             icon: ["shift", "plus"]
-                        }
+                        },
+                        divider: true,
                     }]),
                 ...dropdownOptions
             ],
-            onListItemClicked: (context) => {
+            onListItemClicked: ({ name }) => {
                 contextMenuOpen = false
-                $manager.contextMenuHandler(context)
+                $manager.contextMenuHandler(name)
             },
             onClickOutside: () => {
                 contextMenuOpen = false
             },
             onDismount: () => {
                 contextMenuOpen = false
-                $manager.onContextMenuClickedOutside()
+                $manager.closeContextMenu()
             },
             styling: { 
-                width: `${CONTEXT_MENU_WIDTH}px`,
+                width: ui.menuWidth,
             },
             position: { 
                 top: `${contextMenu.top}px`, 
@@ -220,14 +170,13 @@
 
     .tasks-wrapper {
         height: 100%;
-        max-height: 100%;
         display: flex;
         flex-direction: column;
-        position: relative;
         overflow: visible;
 
         &--light &__addbtn {
             opacity: 0.6;
+            
             &:hover {
                 opacity: 1;
             }
@@ -242,7 +191,7 @@
             width: 100%;
             opacity: 0.2;
             max-width: 100px;
-            @include text-style(1, 400, _, "DM Mono");
+            @include text-style(1, 400);
             @include flex(center);
 
             span {
@@ -262,6 +211,9 @@
 
     .tasks {
         position: relative;
+        margin: 5px 0px 0px -20px;
+        padding: 2px 0px 5px 20px;
+        
 
         &--side-menu {
             padding: 0px 0px 0px 2px;
@@ -276,11 +228,7 @@
         &-wrapper--empty-list .tasks-addbtn {
             margin: 7px 0px 1px var(--side-padding);
         }
-        &-container {
-            max-height: 100%;
-            margin: 5px 0px 0px -20px;
-            padding: 2px 0px 5px 20px;
-        }
+
         &-container--empty {
             margin-bottom: 5px !important;
         }

@@ -561,7 +561,6 @@ type GoogleUserData = {
     profileImgSrc: string
 }
 
-
 type KeyContext = {
     shiftKey: boolean
     metaKey: boolean
@@ -574,19 +573,14 @@ type HotkeyContext = "side-bar" | "default"
 
 type GlobalContext = {
     leftBarOpen: boolean
-    leftBar?: "wide-full" | "wide-float"
+    leftBar?: "full" | "float"
     rightBarOpen: boolean
     rightBarFixed: boolean
-    isVideoViewOpen: boolean
-    isMusicPlayerOpen: boolean
-    freeFloatYt: boolean
     route: string
     focusTime: number
     hasToaster: boolean
-    minModeSrc: string | null
-    shortcutsFocus: HotkeyContext
+    hotkeyFocus: HotkeyContext
     modalsOpen: ModalType[]
-    lastKeysPressed: KeyContext
     ambience?: AmbientOptions
     routineView?: {
         dayIdx: number
@@ -761,15 +755,6 @@ type ProgressVisualPart = {
     segmentIdx: number
 }
 
-/* Music Stuff */
-
-type UserLibraryCollection = {
-    items: Album[] | Playlist[] | Track[] | AudioBook[] | PodcastEpisode[] | Artist[]
-    hasFetchedAll: boolean
-    offset: number
-    totalItems: number
-}
-
 /* tasks */
 
 interface Task {
@@ -785,20 +770,24 @@ interface Task {
 type TasksListOptions = {
     id: string
     tasks: Tasks
-    type?: "side-menu" | "default"
-    containerRef: HTMLElement
+    hotkeyFocus: HotkeyContext
+    type?: "side-bar" | "default"
+    rootRef: HTMLElement
     handlers?: TaskListHandlers
     settings?: {
+        maxDepth?: number,
         numbered?: boolean,
         allowDuplicate?: boolean,
         tasksLinked?: boolean
+        maxTitleLines?: number
+        maxDescrLines?: number
+        maxTitleLength?: number
+        maxDescrLength?: number
         subtasks?: boolean
         reorder?: boolean
         removeOnComplete?: boolean
-        maxHeight?: string
-        progress?: "perc" | "count"
         max?: number,
-        maxDepth?: number,
+        maxSubtasks?: number,
         addBtn?: {
             iconScale?: number,
             doShow?: boolean,
@@ -808,11 +797,15 @@ type TasksListOptions = {
         }
     }
     ui?: {
-        maxHeight?: string
+        fontSize?: CSSTextSize
+        menuWidth?: CSSUnitVal
+        maxHeight?: CSSUnitVal
+        padding?: CSSPxVal
+        borderRadius?: CSSPxVal
         sidePadding?: CSSUnitVal
         hasTaskDivider?: boolean
         listHeight?: CSSUnitVal
-        checkboxDim?: string
+        checkboxDim?: CSSUnitVal
     }
 }
 
@@ -835,6 +828,7 @@ type TaskUpdateContext = {
     action: TaskUpdateActions
     payload: TaskActionPayload
     undoFunction?: FunctionParam
+    removeOnComplete?: boolean
 }
 
 type TaskAddContext = {
@@ -881,6 +875,7 @@ type TodoistItemPartialSyncOntext = {
 
 type CSSPxVal   = `${number}px`
 type CSSREMVal   = `${number}rem`
+type CSSTextSize = `${number}px` | `${number}rem`
 type CSSUnitVal = CSSPxVal | `${number}%` | `calc(${string})` | "auto"
 type CSSMultiDimPxVal = `${number}px` | 
                         `${number}px ${number}px` | 
@@ -921,169 +916,6 @@ type StylingOptions = {
     fontFamily?: string
     opacity?: number
     zIndex?: number
-}
-
-// interface TaskListOptionsInterface extends TasksListOptions<TaskListTypeCombos> { }
-
-type MediaCollection = Playlist | Album | LibTracks | LibAlbums | LibEpisodes | LibAudiobooks
-
-interface Media {
-    id: string
-    name: string
-    author: string
-    authorUrl: string
-    artworkImgSrc: string | { url: string, artist: string }
-    genre: string
-    url: string
-    type: MusicMediaType
-    fromLib?: boolean
-    description?: string
-}
-
-interface ArtistTopSongs extends Media {
-    length: number
-    description: string
-}
-interface Playlist extends Media {
-    length: number
-    description: string
-}
-interface Album extends Media {
-    length: number
-    description: string
-}
-interface Track extends Media {
-    duration: number
-    album: string
-    albumId: string
-    playlistId: string
-}
-interface PodcastEpisode extends Media {
-    description: string
-    duration: number
-}
-interface RadioStation extends Media {
-    description: string
-    isLive: boolean
-}
-interface AudioBook extends Media {
-    description: string
-}
-
-// Library
-interface LibTracks extends Media {
-    length: number
-    description: string
-}
-interface LibAlbums extends Media {
-    length: number
-    description: string
-}
-interface LibEpisodes extends Media {
-    length: number
-    description: string
-}
-interface LibAudiobooks extends Media {
-    length: number
-    description: string
-}
-
-type MediaClickedContext = {
-    collection: MediaCollection
-    idx: number
-}
-
-type MusicCollection = {
-    id: string,
-    name: string,
-    author: string,
-    artworkImgSrc: string,
-    songCount: number,
-    genre: string,
-    description: string,
-    type: string,
-    url: string | null,
-}
-
-type MusicPlayerManagerState = {
-    progressMs: number
-    durationMs: number
-    trackTitleElAnimationObj: Animation | null
-    trackArtistElAnimationObj: Animation | null
-    isSeeking: boolean
-    isMouseDownOnInput: boolean
-    isPausePlayBtnActive: boolean
-    isPrevBtnActive: boolean
-    isNextBtnActive: boolean
-    onCooldown: boolean
-    isMuted: boolean
-    volume: number
-    isDisabled: boolean
-}
-
-type MusicPlayerState = {
-    doShowPlayer: boolean,
-    isPlaying: boolean,
-    error: any,
-    isDisabled: boolean,
-    isRepeating: boolean,
-    isShuffled: boolean,
-    hasJustEnded: boolean
-}
-
-type MusicShufflerData = {
-    startTrackIndex: number,
-    trackIndex: number
-    indexPointer: number,
-    shuffledIndexes: number[],
-    songCount: number
-    totalPlayed: number
-    hasCompleted: boolean
-    state: MusicShufflerState
-}
-
-type MusicPlatformPropNames = "youtube"
-
-type DiscoverCollection = {
-    [platform in MusicPlatformPropNames]: MediaCollection[]
-}
-
-type MusicContext = {
-    platform: MusicPlatform | null,
-    platformName: string | null
-}
-
-type MusicCollectionGroup = "library" | "serene" | "upbeat" | "soundtracks" | "acoustic" | "zen" | "podcasts"
-
-type MusicCollectionCategory = {
-    moodType: MusicCollectionGroup
-    artworkSrc: string
-    artworkBlurredSrc: string
-    artistCredit: string
-    description: string
-}
-
-type MusicCollectionCategoryCollections = {
-    appleMusic: MusicCollection[],
-    spotify: MusicCollection[],
-    soundcloud: MusicCollection[]
-}
-
-type MusicUserDataChildren = AppleMusicUserData | SpotifyMusicUserData
-
-/* Apple Music Stuff */
-type AppleMusicUserCollection = {
-    artworkSrc: string
-    description: string
-    globalId: string
-    id: string
-    isOwn: true
-    name: string
-}
-
-type AppleUserCredentials = {
-    devToken: string,
-    musicUserToken: string
 }
 
 /* habits. */
@@ -1232,7 +1064,7 @@ type YoutubeVideo = {
     channelSubs: string
     channelUrl: string
     embeddable?: boolean
-};
+}
 
 type YoutubeMediaId = { 
     type: YTMediaLinkType

@@ -263,7 +263,6 @@
 
     .divider {
         border-top: var(--divider-border);
-        width: 100%;
         margin: 7px 0px 0px 0px;
     }
 

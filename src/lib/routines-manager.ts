@@ -5,7 +5,7 @@ import { TOTAL_DAY_MINS } from "./utils-date"
 import { 
     findAncestor, getDistBetweenTwoPoints, getElemById, 
     getElemNumStyle, initFloatElemPos, 
-    isNearBorderAndShouldScroll, 
+    shouldScroll, 
     randomArrayElem, roundUpFive 
 } from "./utils-general"
 
@@ -1263,7 +1263,7 @@ export class RoutinesManager {
         if (this.scrollInterval) return
         
         this.scrollInterval = setInterval(() => {
-            let moveDirection = isNearBorderAndShouldScroll(this.containerElem!, this.cursorPosFromWindow)
+            let moveDirection = shouldScroll(this.containerElem!, this.cursorPosFromWindow)
             
             if (moveDirection === "up") {
                 this.containerElem!.scrollTop -= 10

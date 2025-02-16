@@ -777,6 +777,7 @@ type TasksListOptions = {
     settings?: {
         maxDepth?: number,
         numbered?: boolean,
+        checkSubtasks?: boolean,
         allowDuplicate?: boolean,
         tasksLinked?: boolean
         maxTitleLines?: number

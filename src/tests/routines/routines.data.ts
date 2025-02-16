@@ -1,5 +1,107 @@
-import { TEST_TAGS } from "$lib/mock-data"
 import { COLOR_SWATCHES } from "$lib/utils-colors"
+
+export const TEST_TAGS: Tag[] = [
+    {
+      id: "",
+      orderIdx: 0,
+      name: "Body",
+      symbol: {
+        color: COLOR_SWATCHES[0],
+        emoji: "💪"
+      }
+    },
+    {
+      id: "",
+      orderIdx: 1,
+      name: "SWE",
+      symbol: {
+
+        color: COLOR_SWATCHES[8],
+        emoji: "👨‍💻"
+      }
+    },
+    {
+      id: "",
+      orderIdx: 2,
+      name: "French",
+      symbol: {
+        color: COLOR_SWATCHES[7],
+        emoji: "🇫🇷"
+      }
+    },
+    {
+      id: "",
+      orderIdx: 3,
+      name: "Cooking",
+      symbol: {
+        color: COLOR_SWATCHES[1],
+        emoji: "🍖"
+      }
+    },
+    {
+      id: "",
+      orderIdx: 4,
+      name: "SWE",
+      symbol: {
+        color: COLOR_SWATCHES[8],
+        emoji: "👨‍💻"
+      }
+    },
+    {
+      id: "",
+      orderIdx: 5,
+      name: "BBall",
+      symbol: {
+        color: COLOR_SWATCHES[2],
+        emoji: "🏀"
+      }
+    },
+    {
+      id: "",
+      orderIdx: 6,
+      name: "Running",
+      symbol: {
+        color: COLOR_SWATCHES[2],
+        emoji: "🏃‍♂️"
+      }
+    },
+    {
+      id: "",
+      orderIdx: 7,
+      name: "Meditation",
+      symbol: {
+        color: COLOR_SWATCHES[5],
+        emoji: "🌿"
+      }
+    },
+    {
+      id: "",
+      orderIdx: 8,
+      name: "Art",
+      symbol: {
+        color: COLOR_SWATCHES[1],
+        emoji: "🌁"
+      }
+    },
+    {
+      id: "",
+      orderIdx: 9,
+      name: "Travel",
+      symbol: {
+        color: COLOR_SWATCHES[4],
+        emoji: "🏔️"
+      }
+    },
+    {
+      id: "",
+      orderIdx: 10,
+      name: "Reading",
+      symbol: {
+        color: COLOR_SWATCHES[7],
+        emoji: "📖"
+      }
+    }
+]
 
 type PresetRoutines = {
     hs: RoutineBlock[][],

@@ -235,6 +235,7 @@
     </div>
     <!-- right -->
     <nav 
+      id="home--right-bar"
       class="home__right-bar" 
       class:home__right-bar--fixed={rightBarFixed}
       class:home__right-bar--short-fixed={rightBarFixed && hasAmbience}
@@ -247,6 +248,7 @@
       style:right={`${!rightBarOpen && rightBarFixed ? `-${rightSideBarWidth}px` : ""}`}
     >
       <SideBarRight 
+        fixed={rightBarFixed}
         onHeaderImageChange={(showing) => showHeaderImg = showing}
       /> 
 
@@ -496,6 +498,9 @@
         transition: 0.2s cubic-bezier(.4, 0, .2, 1);
         overflow: hidden;
         
+        &.ambient-dark-blur {
+          overflow: visible;
+        }
         &--full-border {
           border: var(--side-border);
         }

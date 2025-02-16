@@ -11,7 +11,10 @@
     $: isLight = !$themeState.isDarkTheme
 
     habitTracker.subscribe(() => {
-        heatMap = getMonthHeatMap({ monthIdx: 0, year: 2025 })
+        const date = new Date()
+        heatMap = getMonthHeatMap({ 
+            monthIdx: date.getMonth(), year: date.getFullYear() 
+        })
         
         weeklyHeatMap = []
         for (let i = 0; i < heatMap.length; i += 7) {

@@ -329,7 +329,6 @@
 					{:else if typeof toast.icon === "number"}
 						{@const iconStrIdx = LogoIcon[toast.icon]}
 						{@const options = TOAST_ICON_OPTIONS[iconStrIdx]}
-
 						<Logo {options} logo={toast.icon} />
 					{:else if toast.icon && toast.icon.startsWith("fa")}
 						<i class={toast.icon}></i>

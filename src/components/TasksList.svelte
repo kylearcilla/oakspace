@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { onMount } from "svelte"
+	import { onDestroy, onMount } from "svelte"
+	import { themeState, globalContext } from "$lib/store"
 
-	import { themeState } from "$lib/store"
+	import { hexToRgb } from "$lib/utils-general"
+	import { getThemeStyling } from "$lib/utils-appearance"
 	import { TasksListManager } from "$lib/tasks-list-manager"
 	import { clickOutside, inlineStyling } from "$lib/utils-general"
 
@@ -22,14 +24,19 @@
 
     let listContainer: HTMLElement
     let tasksList: HTMLElement
+    let listContainerWidth = 0
     let idPrefix = options.id
     let contextMenuOpen = false
     let justInit = true
     let rootTasks: Task[] = []
+    let floatBgRgb = ""
 
     $: isDark      = $themeState.isDarkTheme
     $: focusTask   = $manager.focusTask
     $: contextMenu = $manager.contextMenu
+    $: ambience = $globalContext.ambience
+    $: dragPos = $manager.dragPos
+    $: dragSrc = $manager.dragSrc
     
     $: if (newTaskFlag != undefined) {
         createNewTask()
@@ -37,6 +44,15 @@
     $: if (removeCompleteFlag != undefined) {
         removeCompletedTasks()
     }
+    $: {
+        if (ambience?.active) {
+            floatBgRgb = "40, 40, 40"
+        }
+        else {
+            floatBgRgb = hexToRgb(getThemeStyling("sessionBlockColor"))
+        }
+    }
+
     $manager.tasks._store?.subscribe((state) => {
         rootTasks = state.getRootTasks()
 
@@ -67,19 +83,23 @@
     onMount(() => {
         $manager.initAfterLoaded(listContainer, tasksList)
     })
+    onDestroy(() => {
+        $manager.removePointerMoveHandler()
+    })
 </script>
 
 <svelte:window on:keydown={(ke) => $manager.keyboardShortcutHandler(ke)} />
 
-
 <div 
     bind:this={listContainer}
+    bind:clientWidth={listContainerWidth}
     class="tasks-wrapper"
     class:tasks-wrapper--light={!isDark}
     class:tasks-wrapper--top-btn={settings.addBtn?.pos === "top"}
     class:tasks-wrapper--empty-list={rootTasks.length === 0}
     style:overflow-y={contextMenuOpen ? "hidden" : "scroll"}
 
+    style:--float-bg={floatBgRgb}
     style:--padding={ui.padding}
     style:--border-radius={ui.borderRadius}
     style:--font-size={ui.fontSize}
@@ -87,18 +107,19 @@
     style:--checkbox-dim={ui.checkboxDim}
     style:--max-title-lines={settings.maxTitleLines}
     style:--max-descr-lines={settings.maxDescrLines}
+    style:--container-width={`${listContainerWidth}px`}
     style:max-height={settings.maxHeight}
+
+    on:pointermove={(e) => $manager.onTaskListPointerMove(e)}
+    on:pointerup={(e) => $manager.onPointerUp(e)}
 >
     <ul 
         id={`${idPrefix}--tasks-list`}
         class="tasks"
-        class:tasks--dragging-state={$manager.dragSrc}
         class:tasks--numbered={settings.numbered}
         class:tasks--side-menu={settings.type === "side-menu"}
         style={inlineStyling($manager.styling?.list)}
         bind:this={tasksList}
-        on:pointermove={$manager.onTaskListPointerMove}
-        use:clickOutside on:click_outside={(e) => $manager.onClickedOutside(e)} 
     >   
         {#each rootTasks as task, idx (task.id)}
             <li>
@@ -112,6 +133,69 @@
             </li>
         {/each}
     </ul>
+
+    {#if dragSrc && dragPos}
+        {@const { isChecked, id, title, description, isChild, onSubtaskCheck, type } = dragSrc}
+        {@const subtasks = $manager.tasks.getSubtasks(id)}
+
+        <div
+            id={`${idPrefix}--dummy-task`}
+            class="task task--dummy"
+            class:task--light={!isDark}
+            class:task--side-menu={type === "side-menu"}
+            style:top={`${dragPos.top}px`}
+            style:left={`${dragPos.left}px`}
+        >
+            <div 
+                class="task__content"
+                class:task__content--checked={isChecked}
+            >
+                <div class="task__top-content">
+                    <div class="task__left">
+                        <div style:margin={"0px 0px 0px 2px"}>
+                            {#if settings.numbered}
+                                <div class="task__number">
+                                    1.
+                                </div>
+                            {:else}
+                                <button 
+                                    class="task__checkbox"
+                                    id={`${idPrefix}--task-checkbox-id--${id}`}
+                                    on:click={() => { 
+                                        if (isChild && onSubtaskCheck) {
+                                            onSubtaskCheck(!isChecked)
+                                        }
+                                        $manager.toggleTaskComplete(id)
+                                    }}
+                                >
+                                    <i class="fa-solid fa-check checkbox-check"></i>
+                                </button>
+                            {/if}
+                        </div>
+                    </div>
+                    <div class="task__right">
+                        <!-- Title -->
+                        <div class="task__title-container">
+                            <div class="task__title" style:user-select="none">
+                                {title}
+                            </div>
+                            <div class="task__count" class:hidden={subtasks.length === 0}>
+                                {subtasks.length}
+                            </div>
+                        </div>
+                        <!-- Description -->
+                        <div class="task__description-container">
+                            <div class="task__description" style:user-select="none">
+                                {description}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {/if}
+
+
     {#if $manager.settings?.addBtn?.doShow}
         {@const { style, text } = $manager.settings.addBtn}
         <button 
@@ -213,24 +297,15 @@
         position: relative;
         margin: 5px 0px 0px -20px;
         padding: 2px 0px 5px 20px;
-        
 
         &--side-menu {
             padding: 0px 0px 0px 2px;
         }
-        &--dragging-state * {
-            cursor: grabbing;
-        }
-
         &-wrapper--top-btn {
             flex-direction: column-reverse;
         }
         &-wrapper--empty-list .tasks-addbtn {
             margin: 7px 0px 1px var(--side-padding);
-        }
-
-        &-container--empty {
-            margin-bottom: 5px !important;
         }
     }
 </style>

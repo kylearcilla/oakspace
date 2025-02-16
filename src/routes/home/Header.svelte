@@ -142,17 +142,17 @@
         <!-- Active Routine Block -->
         <button 
             class="header__now-block header__section"
-            class:header__now-block--no-routine={!$weekRoutine}
-            class:header__now-block--empty={!nowBlock}
+            class:header__now-block--empty={!nowBlock || !$weekRoutine}
             class:header__now-block--md={headerWidth < NO_SESS_MD_MAX_WIDTH}
             class:ambient-blur={hasAmbience && ambience?.styling === "blur"}
             class:ambient-solid={hasAmbience && ambience?.styling === "solid"}
             class:ambient-clear={hasAmbience && ambience?.styling === "clear"}
-            disabled={!$weekRoutine}
             title={nowBlockTitle}
             id="active-routine--dbtn"
             on:click={() => {
-                isRoutineOpen = !isRoutineOpen
+                if ($weekRoutine) {
+                    isRoutineOpen = !isRoutineOpen
+                }
             }}
         >
             <div class="header__now-block-circle"></div>
@@ -298,7 +298,7 @@
 
         /* Now Block */
         &__now-block {
-            margin: -2px 0px 0px -5px;
+            margin: 0px 0px 0px -5px;
             background-color: rgba(var(--textColor1), 0.085);
             border: 1px solid transparent;
             padding: 0px 15px 0px 6px;
@@ -309,22 +309,13 @@
             &:disabled {
                 opacity: 0.5;
             }
-            &--no-routine {
-                padding: 0px 0px 0px 13px;
-                margin-top: -5px;
-                background: none !important;
-            }
-            &--no-routine &-title {
-                opacity: 0.7;
-                margin-left: 10px;
-            }
             &--empty {
                 background-color: rgba(var(--textColor1), 0.055);
             }
-            &--empty &-circle, &--no-routine &-circle  {
+            &--empty &-circle {
                 background-color: rgba(var(--textColor1), 0.2);
             }
-            &--empty &-title, &--no-routine &-title {
+            &--empty &-title {
                 color: rgba(var(--textColor1), 1);
             }
             &--empty &-time {

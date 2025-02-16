@@ -139,6 +139,6 @@ export function setRootColors(name: string, theme: ThemeStyling) {
    * @param name   Name of the theme property.
    * @returns      Returns the value of this property.
    */
-  export function getThemeStyling (name: keyof ThemeStyling) {
+  export function getThemeStyling (name: string) {
     return getComputedStyle(document.documentElement).getPropertyValue(`--${name}`)
   }

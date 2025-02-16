@@ -247,43 +247,27 @@ export function formatTimeToHHMM(date: Date, doUsehour12: boolean | null = null)
 	return date.toLocaleTimeString(undefined, options)
 }
 
-/**
- * Get the elapsed time for the finish pom period in HH:MM format.
- * The start / end times in HH:MM format will determine difference in minutes.
- * So 12:34:49 PM and 12:34:00 PM will be 1 min.
- *
- * @param start   From start time.
- * @param end     to end time.
- */
-export const getElapsedTime = (start: Date, end: Date) => {
-	const timePeriodString = getTimePeriodString(start, end)
-	const diffSecs = getDifferenceInSecs(start, end)
-	const diffStr = secsToHHMM(diffSecs)
+export const getElapsedTime = ({ start, end, min = false }: {
+    start: Date
+    end: Date
+    min?: boolean
+}) => {
+    const diffSecs = getDifferenceInSecs(start, end)
+    const hours = Math.floor(diffSecs / 3600)
+    const mins = Math.floor((diffSecs % 3600) / 60)
+    const secs = diffSecs % 60
 
-	if (!diffStr.includes('m')) return diffStr
+    if (hours === 0) {
+        if (mins === 0) {
+            if (secs === 0) return '0s'
+            return `${secs}s`
+        }
+        return `${mins}m`
+    }
 
-	// do no include h portion if less than 1h
-	const hrStr = diffStr.includes('h') ? diffStr.split(' ')[0] + ' ' : ''
-	const strArr = timePeriodString.split(' - ')
-
-	const startMins = Number(strArr[0].split(':')[1].slice(0, 2))
-	const endMins = Number(strArr[1].split(':')[1].slice(0, 2))
-
-	let diffMins = 0
-
-	if (startMins <= endMins) {
-		diffMins = endMins - startMins
-	} 
-    else {
-		diffMins = 60 - startMins + endMins
-	}
-
-	if (hrStr === '' && diffMins === 0) {
-		return '<1m'
-	} 
-    else {
-		return `${hrStr}${diffMins}m`
-	}
+    if (min) return `${hours}h`
+    
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
 }
 
 /**

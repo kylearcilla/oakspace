@@ -1068,6 +1068,8 @@ $loading-dots-width: 4px;
     border: var(--ambient-border) !important;
     backdrop-filter: var(--ambient-blur) !important;
     -webkit-backdrop-filter: var(--ambient-blur) !important;
+
+    will-change: filter; 
 }
 
 .ambient-dark-blur {
@@ -1075,6 +1077,8 @@ $loading-dots-width: 4px;
     border: var(--ambient-border) !important;
     backdrop-filter: var(--ambient-blur) !important;
     -webkit-backdrop-filter: var(--ambient-blur) !important;
+
+    will-change: filter; 
 }
 
 .ambient-clear {
@@ -1121,21 +1125,6 @@ $loading-dots-width: 4px;
         transition: opacity 0.08s ease-in-out;
         width: calc(100% - 20px);
         @include abs-top-left(0px, 10px);
-        background-color: #71B8FF;
-    }
-}
-.drop-bottom-border {
-    &--over::before {
-        opacity: 0.55 !important;
-    }
-    &::before { 
-        opacity: 0;
-        content: " ";
-        z-index: 100;
-        height: 2.5px !important;
-        width: calc(100% - 20px);
-        transition: opacity 0.08s ease-in-out;
-        @include abs-bottom-left(0px, 10px);
         background-color: #71B8FF;
     }
 }
@@ -1194,8 +1183,8 @@ $loading-dots-width: 4px;
 
 .shimmer-anim {
     @include text-style(0.3);
-    color: rgba(255, 255, 255, 0.1);
-    background-image: linear-gradient(to right, transparent 0%, #fff 50%, transparent 100%);
+    color: rgba(var(--textColor1), 0.1);
+    background-image: linear-gradient(to right, transparent 0%, rgba(var(--textColor1), 1) 50%, transparent 100%);
     background-size: calc(var(--shimmer-text-width) * 4.5) 100%;
     background-clip: text;
     animation: shimmer 2.5s infinite ease-in-out;

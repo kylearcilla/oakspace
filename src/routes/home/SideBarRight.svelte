@@ -13,6 +13,7 @@
 
     const MAX_DIST_BOTTOM_IMG_CONTAINER = 70
     export let onHeaderImageChange: (img: string) => void
+    export let fixed: boolean
 
     $: isLight = !$themeState.isDarkTheme
     $: ambience = $globalContext.ambience
@@ -101,6 +102,7 @@
     class:bar--ambient={hasAmbience && ambience?.styling != "solid"}
     style:--margin-top={isLight ? "12px" : showHeaderImg && bgImgSrc && !hasAmbience ? "55px" : "12px"}
     style:--main-top-offset={ambience?.active ? "2px" : "-20px"}
+    style:--fixed-offset={fixed ? "42px" : "0px"}
     on:mousedown={() => {
         setHotkeyFocus("side-bar")
     }}
@@ -346,10 +348,11 @@
             );
         }
         &__overview {
+            transition: 0.2s cubic-bezier(.4, 0, .2, 1);
             margin-top: var(--margin-top);
             margin-left: 2px;
             overflow: hidden;
-            height: calc(100% - (var(--margin-top) + var(--main-top-offset)));
+            height: calc(100% - (var(--margin-top) + var(--main-top-offset) + var(--fixed-offset)));
         }
     }
 </style>

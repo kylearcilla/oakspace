@@ -1,12 +1,33 @@
-import { PUBLIC_TODOIST_CLIENT_ID, PUBLIC_TODOIST_CLIENT_SECRET } from "$env/static/public"
-import { APIErrorCode } from "./enums"
 import { APIError } from "./errors"
 import { v4 as uuidv4 } from 'uuid'
+import { APIErrorCode } from "./enums"
 import { TodosManager } from "./todos-manager"
+import { PUBLIC_TODOIST_CLIENT_ID, PUBLIC_TODOIST_CLIENT_SECRET } from "$env/static/public"
 
-const REDIRECT_URI = "http://localhost:5173/home/base"
+const REDIRECT_URI = "http://localhost:5173/home/oauth-callback"
 const TODOIST_SYNC_API_URL = "https://api.todoist.com/sync/v9/sync"
 const STATE_ID = "0783d180-ab4e-4a76-9047-431e4cf919ce"
+
+type UpdateTodoistTaskOptions = {
+    accessToken: string
+    taskId: string
+    action: TaskUpdateActions
+    name?: string
+    parentId?: string | null
+    description?: string
+    idx?: number
+    completeCommand?: any
+}
+
+type UpdateTodoistTaskCompletionOptions = {
+    accessToken: string
+    taskId: string
+    complete: boolean
+    isRecurring?: boolean
+    dueDate?: string
+}
+
+/* auth */
 
 export async function initTodoistAPI() {
     const url = new URL("https://todoist.com/oauth/authorize")
@@ -25,7 +46,7 @@ export async function initTodoistAPI() {
  */
 export async function authTodoistAPI(): Promise<{ access_token: string, token_type: string }> {
     try {
-        const { code, state } = verifyRedirect()
+        const { code } = verifyRedirect()
         const oAuthURL = new URL("https://todoist.com/oauth/access_token")
 
         const headers = new Headers()
@@ -52,19 +73,24 @@ export async function authTodoistAPI(): Promise<{ access_token: string, token_ty
         return data
     }
     catch(e: any) {
+        console.error(e)
         throw e
     }
     finally {
         localStorage.removeItem("tapi-state")
+        localStorage.removeItem("tapi-code")
+        localStorage.removeItem("tapi-error")
+        localStorage.removeItem("tapi-ostate")
     }
 }
 
+/* redirect */
+
 function verifyRedirect() {
-    const url =  new URL(window.location.href)
-    const code = url.searchParams.get('code')
-    const state = url.searchParams.get('state')
-    const error = url.searchParams.get('error')
     const initState = localStorage.getItem("tapi-state")
+    const code = localStorage.getItem("tapi-code")
+    const error = localStorage.getItem("tapi-error")
+    const state = localStorage.getItem("tapi-ostate")
 
     if (error === "access_denied") {
         console.error("Access Denied.")
@@ -88,6 +114,8 @@ export function didTodoistAPIRedirect() {
     return Boolean(localStorage.getItem("tapi-state"))
 }
 
+/* updates  */
+
 /**
  * Returns users' tasks or changed tasks from a partial sync.
  * First request is a full sync, subsequent requests are partial syncs.
@@ -96,18 +124,15 @@ export function didTodoistAPIRedirect() {
  * @param options 
  * @returns  Tasks with sync token.
  */
-export async function syncTodoistUserItems(options: {
+export async function syncTodoistUserItems({ accessToken, syncToken, inboxProjectId }: {
      accessToken: string 
      syncToken: string
      inboxProjectId: string
 }): Promise<{ tasks: TodoistTask[], syncToken: string, projectId?: string }> {
-
     try {
         // will get inbox project id if no project id is passed
-        const { accessToken, syncToken, inboxProjectId } = options
         const url = new URL(TODOIST_SYNC_API_URL)
         const partialSync = syncToken != "*"
-
         const headers = new Headers()
         headers.append("Content-Type", "application/json")
         headers.append("Authorization", `Bearer ${accessToken}`)
@@ -138,15 +163,15 @@ export async function syncTodoistUserItems(options: {
         for (let i = 0; i < data.items.length; i++) {
             const item = data.items[i]
 
-            // completed tasks are not shown
-            // on partial syncs, completed tasks needed to incorporate updates
-            const shouldInclude = projectId === item.project_id && ((!partialSync && !item.checked) || partialSync)
+            // do not include completed tasks on initial syncs
+            // project is "0" on partial syncs
+            const shouldInclude = (projectId === item.project_id && !partialSync && !item.checked) || partialSync
             if (!shouldInclude) continue
 
             const task = {
                 id: item.id,
                 parentId: item.parent_id ?? null,
-                idx: -1,
+                idx: item.child_order,
                 isChecked: item.checked,
                 title: item.content,
                 description: item.description,
@@ -163,9 +188,8 @@ export async function syncTodoistUserItems(options: {
                 syncToken: data.sync_token
             }
         }
-
         return {
-            tasks: TodosManager.sortTasks(tasks) as TodoistTask[],
+            tasks,
             syncToken: data.sync_token,
             projectId
         }
@@ -182,44 +206,63 @@ export async function syncTodoistUserItems(options: {
  * 
  * @param options 
  */
-export async function updateTodoistTask(options: {
-    accessToken: string 
-    syncToken: string
-    taskId: string
-    name?: string
-    parentId?: string | null
-    description?: string
-    command?: any,
-}): Promise<void> {
+export async function updateTodoistTask({
+    accessToken,
+    taskId,
+    name,
+    parentId,
+    description,
+    idx,
+    completeCommand,
+    action,
+}: UpdateTodoistTaskOptions): Promise<void> {
    try {
-       const { accessToken, taskId, name, description, command, parentId } = options
        const url = new URL(TODOIST_SYNC_API_URL)
-
        const headers = new Headers()
        headers.append("Content-Type", "application/json")
        headers.append("Authorization", `Bearer ${accessToken}`)
 
-       console.log({
-            name, taskId, parentId
-        })
+       const commands = []
 
-       const body = {
-            commands: [command ? command : {
-                type: parentId ? "item_move" : "item_update",
-                uuid: uuidv4(), 
+       // completion updates
+       if (action === "completion") {
+           commands.push(completeCommand)
+        }
+        // reorder updates
+       if (action === "reorder") {
+            // commands.push({
+            //     type: "item_reorder",
+            //     uuid: uuidv4(),
+            //     args: {
+            //         id: taskId,
+            //         items: [{ id: taskId, child_order: idx }]
+            //     }
+            // })
+            commands.push({
+                type: "item_move",
+                uuid: uuidv4(),
+                args: {
+                    id: taskId, parent_id: parentId
+                }
+            })
+       }
+       // text updates
+       else {
+            commands.push({
+                type: "item_update",
+                uuid: uuidv4(),
                 args: {
                     id: taskId,
                     ...(name && { content: name }),
                     ...(description !== undefined && { description }),
-                    ...(parentId !== undefined && { parent_id: parentId })
                 }
-            }]
+            })
        }
 
        const res = await fetch(url.toString(), {
            method: 'POST',
            headers,
-           body: JSON.stringify(body)
+           body: JSON.stringify({ commands })
        })
        const data = await res.json()
        if (!res.ok) {
@@ -240,24 +283,21 @@ export async function updateTodoistTask(options: {
  * 
  * @param options 
  */
-export async function updateTodoistTaskCompletion(options: {
-    accessToken: string 
-    syncToken: string
-    taskId: string
-    complete: boolean
-    isRecurring?: boolean
-    dueDate?: string
-}): Promise<void> {
-   try {
-       const { accessToken, taskId, syncToken, complete, isRecurring, dueDate } = options
-       
+export async function updateTodoistTaskCompletion({
+    accessToken, 
+    taskId, 
+    complete, 
+    isRecurring, 
+    dueDate
+}: UpdateTodoistTaskCompletionOptions): Promise<void> {
+   try {       
        // recurring task
        if (isRecurring && !complete) {
             return await updateTodoistTask({
                 accessToken,
-                syncToken,
                 taskId,
-                command: {
+                action: "completion",
+                completeCommand: {
                     type: "item_update",
                     uuid: uuidv4(), 
                     args: {
@@ -300,16 +340,13 @@ export async function updateTodoistTaskCompletion(options: {
    }
 }
 
-export async function addTodoistTask(options: {
-    accessToken: string
-    projectId: string
-    name: string
+export async function addTodoistTask({ accessToken, name, parentId }: {
+    accessToken: string 
+    name: string 
     parentId?: string | null
 }): Promise<{ taskId: string }> {
     try {
-        const { accessToken, projectId, name, parentId } = options
         const url = new URL(TODOIST_SYNC_API_URL)
- 
         const headers = new Headers()
         headers.append("Content-Type", "application/json")
         headers.append("Authorization", `Bearer ${accessToken}`)
@@ -346,13 +383,10 @@ export async function addTodoistTask(options: {
     }
 }
 
-export async function deleteTodoistTask(options: {
-    accessToken: string
-    taskId: string
-
-}): Promise<void> {
+export async function deleteTodoistTask({ accessToken, taskId}: {
+    accessToken: string, taskId: string
+}) {
     try {
-        const { accessToken, taskId } = options
         const url = new URL(TODOIST_SYNC_API_URL)
  
         const headers = new Headers()
@@ -386,22 +420,20 @@ export async function deleteTodoistTask(options: {
     }
 }
 
-const throwTodoistAPIError = (context: {
+const throwTodoistAPIError = ({ status, error }: {
     status: number,
     error?: string
-  }) => {
-      const { error, status } = context
-
+}) => {
     if (status === 404) {
-          throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND)
-      }
-      else if (status == 429) {
-          throw new APIError(APIErrorCode.RATE_LIMIT_HIT)
-      }
-      else if (status === 500 || status === 503) {
+        throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND)
+    }
+    else if (status == 429) {
+        throw new APIError(APIErrorCode.RATE_LIMIT_HIT)
+    }
+    else if (status === 500 || status === 503) {
         throw new APIError(APIErrorCode.API_SERVER)
-      }
-      else {
-          throw new APIError(APIErrorCode.GENERAL, "There was an error with Todoist. Please try again later.")
-      }
+    }
+    else {
+        throw new APIError(APIErrorCode.GENERAL, "There was an error with Todoist. Please try again later.")
+    }
 }

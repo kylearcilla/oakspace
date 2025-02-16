@@ -36,8 +36,8 @@
         const theme = findThemeFromName(clickedFlavor)
         setNewTheme(theme)
 
-        // localStorage.setItem("theme-name", theme.name)
-        // window.location.reload()
+        localStorage.setItem("theme-name", theme.name)
+        window.location.reload()
     }
     function onFlavorSelected(name: string) {
         clickedFlavor = name

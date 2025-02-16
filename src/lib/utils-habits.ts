@@ -52,7 +52,7 @@ export function generateHabitData(date = new Date()) {
     const currentYear = today.getFullYear()
     const nextYear = currentYear + 1
     
-    // Generate random data for each month
+    // fill out chunks up to today
     Object.keys(yearData).forEach((monthKeyStr) => {
         const monthKey = monthKeyStr as HabitMonthKey
         const [year, month] = monthKey.split('-').map(Number)
@@ -61,7 +61,6 @@ export function generateHabitData(date = new Date()) {
         if (year > nextYear || (year === nextYear && month > 1)) {
             return
         }
-
         
         for (let day = 0; day < daysInMonth; day++) {
             const checkDate = new Date(year, month - 1, day + 1)

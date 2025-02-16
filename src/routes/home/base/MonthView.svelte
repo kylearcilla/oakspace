@@ -804,7 +804,7 @@
                 opacity: 1 !important;
             }
             span {
-                @include text-style(0.85, var(--fw-400-500), 1.525rem);
+                @include text-style(0.85, var(--fw-400-500), 1.65rem);
                 margin-right: 3px;
             }
         }

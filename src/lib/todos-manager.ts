@@ -12,6 +12,10 @@ import {
         updateTodoistTaskCompletion 
 } from "./api-todoist"
 
+type TaskRemoveContext = {
+    tasks: Task[]
+    context: "inbox" | "todoist"
+}
 
 /**
  * State handler for tasks view in the right side bar.
@@ -25,7 +29,7 @@ export class TodosManager {
     renderFlag = false
 
     // tasks to be init when undo
-    tasksBeforeRemove: Task[] = []
+    tasksBeforeRemove: TaskRemoveContext = { tasks: [], context: "inbox" }
 
     /* todoists */
     onTodoist = false
@@ -34,9 +38,26 @@ export class TodosManager {
     todoistAccessToken = ""
     todoistSyncToken = ""
     
-    store!: Writable<TodosManager>
+    fullSyncCount = 0
+    partialSyncCount = 0
+    refreshDebounceTimeout: NodeJS.Timeout | null = null
+    lastFullSyncTime: number | null = null    
 
-    LOADING_TOAST_DURATION = 15_000
+    autoSyncTimeStamp = new Date()
+    lastSyncTimeStamp = new Date()
+    lastSyncWindowStart = Date.now()
+
+    loading: "init" | "sync" | "none" = "none"
+    store!: Writable<TodosManager>
+    
+    private readonly DEBOUNCE_MS = 500
+    private readonly FULL_SYNC_COOLDOWN_MS = 5000
+    
+    private readonly MAX_FULL_SYNCS = 90     
+    private readonly MAX_PARTIAL_SYNCS = 900 
+    private readonly SYNC_WINDOW_MS = 15 * 60 * 1000
+    private LOADING_TOAST_DURATION = 15_000
+    private AUTO_REFRESH_INTERVAL_MINS = 5
 
     constructor() {
         this.inboxTasks = TEST_TASKS
@@ -47,7 +68,7 @@ export class TodosManager {
         if (this.hasTodoistSession()) {
             this.loadTodoistData()
         }
-        else if (!todoistRedirect) {
+        if (!todoistRedirect) {
             this.currTasks = this.inboxTasks
         }
         if (todoistRedirect) {
@@ -63,10 +84,9 @@ export class TodosManager {
             return state
         })
 
-        this.saveTodoistData(state)
+        this.saveTodoistData()
     }
-    
-    /* todoist */
+
     toggleView() {
         if (!this.todoistLinked) return
         this.onTodoist = !this.onTodoist
@@ -77,20 +97,14 @@ export class TodosManager {
         else {
             this.currTasks = this.inboxTasks
         }
-
-
         this.update({ onTodoist: this.onTodoist })
     }
 
-    loginTodoist() {
-        toast("promise", { loading: 'Logging in...' }, this.initTodoist())
-    }
+    /* todoist */
 
-    private async initTodoist() {
-        await initTodoistAPI()
-        
-        // navigation to consent screen takes time
-        return new Promise<void>((resolve) => setTimeout(() => resolve(), this.LOADING_TOAST_DURATION))
+    loginTodoist(redirectBackUrl: string) {
+        localStorage.setItem("redirect-back-url", redirectBackUrl)
+        toast("promise", { loading: 'Logging in...' }, this.initTodoist())
     }
 
     logoutTodoist() {
@@ -116,39 +130,55 @@ export class TodosManager {
         localStorage.removeItem("todoist")
     }
 
-    /**
+    private async initTodoist() {
+        await initTodoistAPI()
+        
+        // navigation to consent screen takes time
+        return new Promise<void>((resolve) => setTimeout(() => resolve(), this.LOADING_TOAST_DURATION))
+    }
+
+    /** 
      * Continues the Todoist API OAuth 2.0 flow after a successful redirect.
      */
     async continueTodoistAPIOAuthFlow() {
         try {
+            this.update({ loading: "init" })
             const authRes = await authTodoistAPI()
             this.todoistAccessToken = authRes.access_token
-            await this.initTodistUserItems()
+            await this.initTodoistUserItems()
 
             this.onTodoist = true
             this.todoistLinked = true
             this.currTasks = this.todoistTasks!
             
             this.update({ 
+                loading: "none",
                 onTodoist: true,
                 todoistLinked: true
             })
-            
             this.initToast({
                 icon: LogoIcon.Todoist,
                 message: "Todoist",
                 description: "Todoist sync successful!"
             })
+            this.autoSyncTimeStamp = new Date()
         }
         catch(error: any) {
-            this.onError(error)
+            this.currTasks = this.inboxTasks
+            this.update({ 
+                currTasks: this.currTasks, 
+                loading: "none",
+                renderFlag: !this.renderFlag
+            })
+
+            this.onTodistError(error)
         }
     }
 
     /**
      * Gets Todoist user tasks and data through a full sync.
      */
-    async initTodistUserItems(continueSession?: boolean) {
+    async initTodoistUserItems(continueSession?: boolean) {
         try {
             const { tasks, syncToken, projectId } = await syncTodoistUserItems({ 
                 accessToken: this.todoistAccessToken,
@@ -159,45 +189,21 @@ export class TodosManager {
             // sort tasks alphabetically
             this.todoistTasks = TodosManager.sortTasks(tasks)
             this.todoistSyncToken = syncToken
+            this.lastSyncTimeStamp = new Date()
             
             if (projectId) {
                 this.todoistInboxProjectId = projectId
             }
             if (continueSession) {
                 this.currTasks = this.onTodoist ? this.todoistTasks! : this.currTasks
-
                 this.update({ renderFlag: !this.renderFlag })
             }
+
+            this.autoSyncTimeStamp = new Date()
+
         }
         catch(error: any) {
-            this.onError(error)
-        }
-    }
-
-    async refreshTodoist() {
-        await this.initPartialSync()
-    }
-
-    /**
-     * Find the corresponding updated item from the returned sync tasks from partial sync.
-     * @param syncTasks  Updated items from last sync.
-     * @param task       The updated item's correspond local item.
-     * @returns          Update context from the patial sync.
-     */
-    getTaskSyncAction(syncTasks: TodoistTask[], task: Task): TodoistItemPartialSyncOntext {
-        const idx = syncTasks.findIndex((s) => s.id === task.id)
-
-        if (idx < 0) {
-            return { action: "none", syncTask: null, idx: -1 }
-        }
-
-        const syncTask = structuredClone(syncTasks[idx])
-
-        if (syncTask.isDeleted) {
-            return { action: "deleted", syncTask, idx }
-        }
-        else {
-            return { action: "updated", syncTask, idx }
+            this.onTodistError(error)
         }
     }
 
@@ -212,7 +218,6 @@ export class TodosManager {
                 syncToken: this.todoistSyncToken,
                 inboxProjectId: this.todoistInboxProjectId
             })
-
             const todoistTasks = this.todoistTasks!
             const newTasks: Task[] = []
             
@@ -240,6 +245,7 @@ export class TodosManager {
     
             this.todoistSyncToken = syncToken
             this.todoistTasks = TodosManager.sortTasks(newTasks)
+            this.lastSyncTimeStamp = new Date()
 
             if (this.onTodoist) {
                 this.currTasks = this.todoistTasks!
@@ -247,7 +253,124 @@ export class TodosManager {
             }
         }
         catch(e) {
-            this.onError(new APIError(APIErrorCode.GENERAL, "There was an error syncing your Todoist data."))
+            this.onTodistError(new APIError(APIErrorCode.GENERAL, "There was an error syncing your Todoist data."))
+        }
+    }
+
+    /* refreshes */
+
+    async refreshTodoist() {
+        if (this.refreshDebounceTimeout || !this.todoistLinked) {
+            return
+        }
+
+        this.refreshDebounceTimeout = setTimeout(async () => {
+            this.update({ loading: "sync" })
+            this.resetSyncCountsIfNeeded()
+
+            try {
+                const canPartialSync = this.canDoPartialSync()
+                const canFullSync = this.canDoFullSync()
+
+                if (!canPartialSync && !canFullSync) {
+                    this.onTodistError(new APIError(APIErrorCode.RATE_LIMIT_HIT))
+                    return
+                }
+                
+                this.autoSyncTimeStamp = new Date()
+                await this.performSync(canFullSync)
+            } 
+            finally {
+                this.saveTodoistData()
+                this.update({ loading: "none" })
+                this.refreshDebounceTimeout = null
+            }
+        }, this.DEBOUNCE_MS)
+    }
+
+    async autoRefreshHandler(date: Date) {
+        if (!this.autoSyncTimeStamp || !this.todoistLinked) {
+            this.autoSyncTimeStamp = new Date()
+        }
+        const diff = date.getTime() - this.autoSyncTimeStamp.getTime()
+
+        if (diff >= this.AUTO_REFRESH_INTERVAL_MINS * 60 * 1000) {
+            this.update({ loading: "sync" })
+            await this.initTodoistUserItems(true)
+            console.log("auto refresh")
+
+            this.saveTodoistData()
+            this.update({ loading: "none" })
+
+            this.autoSyncTimeStamp = new Date()
+        }
+    }
+
+    private async performSync(isFullSync: boolean) {
+        if (isFullSync) {
+            await this.initTodoistUserItems(true)
+            this.lastFullSyncTime = Date.now()
+            this.fullSyncCount++
+
+            console.log("full sync")
+        } 
+        else {
+            await this.initPartialSync()
+            this.partialSyncCount++
+
+            console.log("partial sync")
+        }
+    }
+
+    private canDoFullSync(): boolean {
+        const now = Date.now()
+        const isPastCooldown = !this.lastFullSyncTime || 
+                              (now - this.lastFullSyncTime) >= this.FULL_SYNC_COOLDOWN_MS
+        
+        return isPastCooldown && this.fullSyncCount < this.MAX_FULL_SYNCS
+    }
+
+    private canDoPartialSync(): boolean {
+        return this.partialSyncCount < this.MAX_PARTIAL_SYNCS
+    }
+
+    /**
+     * Checks if the 15-minute rate limit window has expired and resets sync counters if needed.
+     * Todoist API limits:
+     * - 100 full syncs per 15 minutes
+     * - 1000 partial syncs per 15 minutes
+     */
+    private resetSyncCountsIfNeeded(): boolean {
+        const now = Date.now()
+        if (now - this.lastSyncWindowStart >= this.SYNC_WINDOW_MS) {
+            this.fullSyncCount = 0
+            this.partialSyncCount = 0
+            this.lastSyncWindowStart = now
+            return true
+        }
+        return false
+    }
+
+    /**
+     * Find the corresponding updated item from the returned sync tasks from partial sync.
+     * @param syncTasks  Updated items from last sync.
+     * @param task       The updated item's correspond local item.
+     * @returns          Update context from the patial sync.
+     */
+    getTaskSyncAction(syncTasks: TodoistTask[], task: Task): TodoistItemPartialSyncOntext {
+        const idx = syncTasks.findIndex((s) => s.id === task.id)
+
+        if (idx < 0) {
+            return { action: "none", syncTask: null, idx: -1 }
+        }
+
+        const syncTask = structuredClone(syncTasks[idx])
+
+        if (syncTask.isDeleted) {
+            return { action: "deleted", syncTask, idx }
+        }
+        else {
+            return { action: "updated", syncTask, idx }
         }
     }
     
@@ -255,39 +378,36 @@ export class TodosManager {
 
     onTaskUpdate = async (context: TaskUpdateContext) => {
         const { action, payload: { task, tasks }, undoFunction, removeOnComplete } = context
+        const { title: name, isChecked: complete, idx } = task
 
-        const { title: name, isChecked: complete } = task
         const description = "description" in task ? task.description : ""
         const isRecurring = "isRecurring" in task ? task.isRecurring as boolean : undefined
         const dueDate     = "due" in task ? task.due as string : undefined
-        const todoist     = this.todoistLinked
+        const todoist     = this.onTodoist
+
+        this.autoSyncTimeStamp = new Date()
 
         try {
             if (action === "completion") {
                 // const couldOccurSameDay = isRecurring && dueDate?.includes("T")
-
                 if (todoist) {
                     await updateTodoistTaskCompletion({
                         accessToken: this.todoistAccessToken,
-                        syncToken: this.todoistSyncToken,
                         taskId: task.id,
                         isRecurring,
                         dueDate,
                         complete: complete!
                     })
 
-                    // unwritten understanding that todos are for today
-                    // so completed recurring tasks can be shown again if due shortly after on the same day
+                    // completed recurring tasks can be shown again if due shortly after on the same day
+                    // todos shown are for "today"
                     // for now recurring tasks are treated as normal tasks
     
                     // if (couldOccurSameDay) {
                     //     this.initPartialSync()
                     // }
-
                     this.todoistTasks = tasks
                 }
-
-
                 if (complete && removeOnComplete) {
                     this.initActionToast({ 
                         action: "completion", 
@@ -297,32 +417,38 @@ export class TodosManager {
                 }
 
             }
-            else if (todoist && action != "reorder") {
-                // reorders are local and not synced to Todoist
+            else if (todoist) {
                 await updateTodoistTask({
                     accessToken: this.todoistAccessToken,
-                    syncToken: this.todoistSyncToken,
                     taskId: task.id,
-                    ...(action === "new-parent" && { parentId: task.parentId }),
+                    action,
                     ...(action === "name" && { name }),
-                    ...(action === "description" && { description })
+                    ...(action === "description" && { description }),
+                    ...(action === "reorder" && { idx, parentId: task.parentId })
                 })
+            }
+
+            if (!todoist) {
+                this.inboxTasks = tasks
             }
         }
         catch(error: any) {
-            this.onError(error)
+            this.onTodistError(error)
+        }
+        finally {
+            this.autoSyncTimeStamp = new Date()
         }
     }
     
     onAddTask = async (context: TaskAddContext) => {
         const { payload: { task, tasks }  } = context
-        let id = undefined
+        let id: string = crypto.randomUUID()
+        this.autoSyncTimeStamp = new Date()
 
         try {
-            if (this.todoistLinked) {
+            if (this.onTodoist) {
                  id = (await addTodoistTask({
                     accessToken: this.todoistAccessToken,
-                    projectId: this.todoistInboxProjectId,
                     parentId: task.parentId,
                     name: task.title
                 })).taskId
@@ -330,46 +456,52 @@ export class TodosManager {
                 this.todoistTasks = tasks
             }
             else {
-                id = crypto.randomUUID()
+                this.inboxTasks = tasks
             }
 
             this.currTasks = tasks
         }
         catch(error: any) {
-            this.onError(error)
+            this.onTodistError(error)
         }
         finally {
             return { id }
         }
     }
 
-    onDeleteTask = async (context: TaskDeleteContext) => {
-        // "task" is null if completed tasks are being removed
-        // undo action not available for Todoist
-
-        const { payload: { tasks, task, removed }, undoFunction } = context
-        const todoist = this.todoistLinked
+    onDeleteTask = async ({ payload: { tasks, task, removed }, undoFunction }: TaskDeleteContext) => {
+        const action = task ? "delete" : "removed-completed"
+        if (this.onTodoist && action === "removed-completed") {
+            return
+        }
+        this.autoSyncTimeStamp = new Date()
         
         try {
-            if (todoist) {
+            this.tasksBeforeRemove = {
+                tasks: this.currTasks,
+                context: this.onTodoist ? "todoist" : "inbox"
+            }
+            if (this.onTodoist && action === "delete") {
                 await deleteTodoistTask({
                     accessToken: this.todoistAccessToken,
                     taskId: task!.id
                 })
+                this.todoistTasks = tasks
+            } 
+            else {
+                this.inboxTasks = tasks
             }
-            
-            this.tasksBeforeRemove = this.currTasks
             this.initActionToast({
-                name:         task?.title,
-                action:       task ? "delete" : "removed-completed", 
+                action, 
+                name: task?.title,
                 removedCount: task ? undefined : removed.length,
-                func:         todoist ? undefined : undoFunction
+                func: this.onTodoist ? undefined : undoFunction
             })
-
             this.currTasks = tasks
+            this.update({ renderFlag: !this.renderFlag })
         }
         catch(error: any) {
-            this.onError(error)
+            this.onTodistError(error)
         }
     }
 
@@ -379,27 +511,39 @@ export class TodosManager {
      * Initializes a toast element with an undo function.
      * @param context 
      */
-    initActionToast(context: {
+    initActionToast({
+        action,
+        name,
+        removedCount,
+        func
+    }: {
         action: TaskUpdateActions | "add" | "delete" | "removed-completed",
         name?: string,
         removedCount?: number,
         func?: FunctionParam
     }) {
-        const { action, name, func, removedCount } = context
-        const todoist = this.todoistLinked
         const resetTasks = () => {
-            if (this.todoistLinked) {
-                this.todoistTasks = this.tasksBeforeRemove
-            }
+            const { tasks: tasksToRestore, context } = this.tasksBeforeRemove
+            const onTodoist = this.onTodoist
             
-            this.currTasks = this.tasksBeforeRemove
-            this.tasksBeforeRemove = []
+            if (context === "todoist") {
+                this.todoistTasks = tasksToRestore
+
+                if (onTodoist) this.currTasks = this.todoistTasks!
+            } 
+            else {
+                this.inboxTasks = tasksToRestore
+
+                if (!onTodoist) this.currTasks = this.inboxTasks
+            }
+            this.update({ renderFlag: !this.renderFlag })
+            this.tasksBeforeRemove = { tasks: [], context: "inbox" }
         }
 
-        if (action === "add" && todoist) {
+        if (action === "add" && this.onTodoist) {
             this.initToast({
                 icon: LogoIcon.Todoist,
-                message: `"${name}" added to from your ${todoist ? "Todoist" : ""} Inbox`
+                message: `"${name}" added to from your ${this.onTodoist ? "Todoist" : ""} Inbox`
             })
         } 
         else if (action === "completion") {
@@ -411,12 +555,12 @@ export class TodosManager {
         }
 
         // removals
-        const _func = () => {
+        const undoFunc = () => {
             func!()
             resetTasks()
         }
 
-        if (action === "delete" && todoist) {
+        if (action === "delete" && this.onTodoist) {
             this.initToast({
                 icon: LogoIcon.Todoist,
                 message: "Todoist",
@@ -426,15 +570,15 @@ export class TodosManager {
         else if (action === "delete") {
             this.initUndoToast({
                 description: `"${name}" deleted from your Inbox`,
-                func: _func
+                func: undoFunc
             })
         }
         else if (action === "removed-completed") {
             const removed = removedCount!
             this.initUndoToast({
-                icon: todoist ? LogoIcon.Todoist : undefined,
+                icon: this.onTodoist ? LogoIcon.Todoist : undefined,
                 description: `Completed tasks removed ${removed ? `(${removed})` : ""}.`,
-                func: _func
+                func: undoFunc
             })
         }
     }
@@ -443,10 +587,9 @@ export class TodosManager {
      * Creates a toast with an undo function.
      * @param options  Toast details (description + function).
      */
-    initUndoToast(options: { icon?: string | LogoIcon, description: string, func?: FunctionParam }) {
-        const { description, func, icon } = options
-        if (!func) return
-
+    initUndoToast({ icon, description, func = () => {} }: { 
+        icon?: string | LogoIcon, description: string, func?: FunctionParam 
+    }) {
         toast("default", {
             icon,
             message: description,
@@ -459,19 +602,59 @@ export class TodosManager {
         })
     }
 
-    initToast(options: { icon?: string | LogoIcon, message: string, description?: string }) {
-        const { description, message, icon } = options
-
+    initToast({ icon, message, description }: { 
+        icon?: string | LogoIcon, message: string, description?: string 
+    }) {
         toast("default", {
             icon,
             message,
             description,
-            contextId: "todos"
+            contextId: "todos",
+            groupExclusive: true
         })
     }
 
     /* handlers */
-    onError(error: any) {
+
+    static sortTasks(tasks: Task[]) {
+        const taskGroups = new Map<string | null, Task[]>()
+        
+        tasks.forEach(task => {
+            const parentId = task.parentId
+            if (!taskGroups.has(parentId)) {
+                taskGroups.set(parentId, [])
+            }
+            taskGroups.get(parentId)!.push(task)
+        })
+
+        // Recursive function to sort a group of tasks and their children
+        const sortGroup = (parentId: string | null, orderIdx: number): [Task[], number] => {
+            const group = taskGroups.get(parentId) || []
+            const result: Task[] = []
+            
+            // Sort current level
+            group.sort((a, b) => a.title.localeCompare(b.title))
+            
+            // Process each task and its children recursively
+            for (const task of group) {
+                task.idx = orderIdx++
+                result.push(task)
+                
+                // Recursively sort and add all descendants
+                if (taskGroups.has(task.id)) {
+                    const [childTasks, newIdx] = sortGroup(task.id, orderIdx)
+                    result.push(...childTasks)
+                }
+            }
+            
+            return [result, orderIdx]
+        }
+
+        const [sortedTasks] = sortGroup(null, 0)
+        return sortedTasks
+    }
+
+    onTodistError(error: any) {
         console.error(error)
         toastApiErrorHandler({ 
             error, 
@@ -480,30 +663,21 @@ export class TodosManager {
         })
     }
 
-    /**
-     * Sort by alphabetical order
-     * 
-     * @param tasks 
-     * @returns     Sorted tasks
-     */
-    static sortTasks(tasks: Task[]) {
-        let orderIdx = 0
-        tasks.sort((a, b) => a.title.localeCompare(b.title))
-        tasks.forEach(task => task.idx = orderIdx++)
-        return tasks
-    }
-
     /* state */
     
     hasTodoistSession() {
         return localStorage.getItem("todoist") != null
     }
 
-    saveTodoistData(state: TodosManager) {
+    saveTodoistData() {
         localStorage.setItem("todoist", JSON.stringify({
-            onTodoist: state.onTodoist!,
-            todoistLinked: state.todoistLinked!,
-            todoistAccessToken: state.todoistAccessToken!
+            onTodoist: this.onTodoist!,
+            todoistLinked: this.todoistLinked!,
+            fullSyncCount: this.fullSyncCount,
+            partialSyncCount: this.partialSyncCount,
+            todoistAccessToken: this.todoistAccessToken!,
+            lastFullSyncTime: this.lastFullSyncTime,
+            lastSyncWindowStart: this.lastSyncWindowStart
         }))
     }
 
@@ -513,12 +687,24 @@ export class TodosManager {
         this.onTodoist = savedData.onTodoist!
         this.todoistLinked = savedData.todoistLinked!
 
-        if (this.todoistLinked) {
-            this.todoistAccessToken = savedData.todoistAccessToken!
-            this.initTodistUserItems(true)
+        this.fullSyncCount = savedData.fullSyncCount!
+        this.partialSyncCount = savedData.partialSyncCount!
+        
+        this.lastFullSyncTime = savedData.lastFullSyncTime!
+        this.lastSyncWindowStart = savedData.lastSyncWindowStart!
+        this.todoistAccessToken = savedData.todoistAccessToken!
+
+        this.initTodoistUserItems(true)
+
+        if (this.onTodoist) {
+            this.currTasks = this.todoistTasks!
+        }
+        else {
+            this.currTasks = this.inboxTasks
         }
 
         this.update({ 
+            currTasks: this.currTasks,
             onTodoist: this.onTodoist,
             todoistLinked: this.todoistLinked
         })
@@ -527,7 +713,8 @@ export class TodosManager {
     getNewStateObj(oldState: TodosManager, newState: Partial<TodosManager>): TodosManager {
         if (newState.todoistLinked != undefined) oldState.todoistLinked = newState.todoistLinked
         if (newState.onTodoist != undefined)     oldState.onTodoist = newState.onTodoist
-        if (newState.renderFlag != undefined)     oldState.renderFlag = newState.renderFlag
+        if (newState.renderFlag != undefined)    oldState.renderFlag = newState.renderFlag
+        if (newState.loading != undefined)       oldState.loading = newState.loading
 
         return oldState
     }

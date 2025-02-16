@@ -386,7 +386,7 @@ export class TextEditorManager extends InputManager {
     }
 
     focus() {
-        this.inputElem!.focus()
+        this.inputElem?.focus()
         this.focused = true
     }
     
@@ -415,9 +415,9 @@ export class TextEditorManager extends InputManager {
 
         let value = this.value
 
-        if (!this.value && !this.doAllowEmpty && this.defaultText) {
+        if (!this.value && !this.doAllowEmpty && this.defaultText && this.inputElem) {
             value = this.defaultText
-            this.inputElem!.innerText = this.defaultText
+            this.inputElem.innerText = this.defaultText
         }
 
         this.updateTextEditorVal(event, value)

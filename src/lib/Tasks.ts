@@ -13,31 +13,21 @@ export class Tasks {
 
     _store: Writable<Tasks>
 
-    constructor(options: { tasks: Task[], maxDepth?: number }) {
-        const { tasks, maxDepth = DEFAULT_MAX_DEPTH } = options
-        this._store = writable(this)
-
+    constructor({ tasks, maxDepth = DEFAULT_MAX_DEPTH }: { 
+        tasks: Task[], maxDepth?: number 
+    }) {
         this.taskMap = new Map()
         this.parents = new Map()
         this.maxDepth = maxDepth
         this.openTasks = new Set
 
         tasks.forEach((task) => this.addTask({ task, doUpdate: false }))
-        this._store.set(this)
+        this._store = writable(this)
     }
 
-    /**
-     * 
-     * @param args 
-     * @param args.type  "init" Task to be inserted as part of a batch of siblings (so no neighbor shifting)
-     *                   "new"  New task to be inserted into siblings
-     * 
-     * @param args.doUpdate  Do update store
-     * @param args.task      Task to be added
-     */
-    addTask(args: { task: Task, type?: "init" | "new", doUpdate?: boolean }) {
-        const { task, type = "init", doUpdate = true } = args
-
+    addTask({ task, type = "init", doUpdate = true }: { 
+        task: Task, type?: "init" | "new", doUpdate?: boolean 
+    }) {
         // create parent if there isn't one
         if (!this.parents.has(task.parentId)) {
             this.parents.set(task.parentId!, [])
@@ -61,6 +51,37 @@ export class Tasks {
         if (doUpdate) {
             this._store.set(this)
         }
+    }
+
+    duplicateTask(dupId: string): Task[] {
+        const ogTask = this.taskMap.get(dupId)!
+        const newTask = structuredClone(ogTask)
+        newTask.id = uuidv4()
+        newTask.idx = ogTask.idx + 1
+
+        const children = this.getSubtasks(dupId)
+        const newChildren = children.map((c) => ({
+            ...structuredClone(c),
+            parentId: newTask.id,
+            id: uuidv4()
+        }))
+
+        this.addTask({ 
+            task: newTask, type: "new", doUpdate: false 
+        })
+        newChildren.map((task) => this.addTask({ 
+            task, type: "init", doUpdate: false 
+        }))
+
+        this._store.set(this)
+        return [newTask, ...newChildren]
+    }
+
+    addChild(parentId: string | null, taskId: string) {
+        if (!this.parents.has(parentId)) {
+            this.parents.set(parentId, [])
+        }
+        this.parents.get(parentId)!.push(taskId)
     }
 
     removeTask(taskId: string): Task[] {
@@ -94,7 +115,15 @@ export class Tasks {
 
         return completedTasks
     }
-    
+
+    removeChild(parentId: string | null, taskId: string) {
+        const siblings = this.getSiblings(parentId)
+                                .map((s) => s?.id)
+                                .filter((id) => id !== taskId)
+
+        this.parents.set(parentId, siblings)
+    }
+
     private removeChildren(id: string): Task[] {
         const children = this.parents.get(id) || []
         const removed: Task[] = []
@@ -107,99 +136,39 @@ export class Tasks {
         return removed
     }
 
-    private shiftNeighbors(args: {
-        parentId: string | null
-        idx: number
-        shiftDirection: 1 | -1
-    }) {
-        const { parentId, idx, shiftDirection } = args
-        const siblings = this.getSiblings(parentId)
+    /* reordering */
 
-        for (let i = 0; i < siblings.length; i++) {
-            const sibling = siblings[i]
-            if (sibling && sibling.idx >= idx) {
-                sibling.idx += shiftDirection
-            }
-        }
-    }
-    addChild(parentId: string | null, taskId: string) {
-        if (!this.parents.has(parentId)) {
-            this.parents.set(parentId, [])
-        }
-        this.parents.get(parentId)!.push(taskId)
-    }
-
-    removeChild(parentId: string | null, taskId: string) {
-        const siblings = this.getSiblings(parentId)
-                                .map((s) => s?.id)
-                                .filter((id) => id !== taskId)
-
-        this.parents.set(parentId, siblings)
-    }
-
-    duplicateTask(dupId: string): Task[] {
-        const ogTask = this.taskMap.get(dupId)!
-        const newTask = structuredClone(ogTask)
-        newTask.id = uuidv4()
-        newTask.idx = ogTask.idx + 1
-
-        const children = this.getSubtasks(dupId)
-        const newChildren = children.map((c) => ({
-            ...structuredClone(c),
-            parentId: newTask.id,
-            id: uuidv4()
-        }))
-
-        this.addTask({ 
-            task: newTask, type: "new", doUpdate: false 
-        })
-        newChildren.map((task) => this.addTask({ 
-            task, type: "init", doUpdate: false 
-        }))
-
-        this._store.set(this)
-        return [newTask, ...newChildren]
-    }
-
-    reorderTask({ src, target, action, targetParentId }: { 
+    reorderTask({ src, target, action }: { 
         src: Task, 
         target: Task, 
-        action: "nbr-top" | "nbr-bottom" | "child",
-        targetParentId: string | null 
+        action: "nbr-top" | "nbr-bottom" | "child"
     }) {
         const srcIdx = src.idx
-        const targetIdx = target.idx
-        const sameParent = src.parentId === targetParentId
+        let targetParentId = target.parentId
         let toIdx
-        
+
         if (action === "child") {
             const targetChildren = this.getSubtasks(target.id)
             toIdx = targetChildren.length
             targetParentId = target.id
         } 
         else {
-            toIdx = action === "nbr-bottom" ? targetIdx + 1 : targetIdx
-            
-            if (sameParent && srcIdx < toIdx) {
+            toIdx = action === "nbr-bottom" ? target.idx + 1 : target.idx
+            if (src.parentId === targetParentId && srcIdx < toIdx) {
                 toIdx--
             }
         }
 
-        // Remove from old position
         this.shiftNeighbors({
             parentId: src.parentId,
             idx: srcIdx + 1,
             shiftDirection: -1,
         })
-
-        // Make space at new position
         this.shiftNeighbors({
             parentId: targetParentId,
             idx: toIdx,
             shiftDirection: 1
         })
-
-        // Update parent relationships
         this.removeChild(src.parentId, src.id)
         this.addChild(targetParentId, src.id)
         
@@ -210,6 +179,23 @@ export class Tasks {
         return src
     }
 
+    private shiftNeighbors({ parentId, idx, shiftDirection }: {
+        parentId: string | null
+        idx: number
+        shiftDirection: 1 | -1
+    }) {
+        const siblings = this.getSiblings(parentId)
+
+        for (let i = 0; i < siblings.length; i++) {
+            const sibling = siblings[i]
+            if (sibling && sibling.idx >= idx) {
+                sibling.idx += shiftDirection
+            }
+        }
+    }
+
+    /* edits */
+
     renameTask(taskId: string, newTitle: string) {
         const task = this.taskMap.get(taskId)
         if (!task) return
@@ -218,8 +204,7 @@ export class Tasks {
         this._store.set(this)
     }
 
-    editTaskText(args: { type: "title" | "description", text: string, id: string }) {
-        const { type, text, id } = args
+    editTaskText({ type, text, id }: { type: "title" | "description", text: string, id: string }) {
         const task = this.taskMap.get(id)
         if (!task) return
         
@@ -234,9 +219,7 @@ export class Tasks {
      * @param args.parentTask Optional parent task that was removed with its children
      * @param args.removed    Array of tasks that were removed
      */
-    onRemoveUndo(args: { parentTask?: Task, removed: Task[] }) {
-        const { parentTask, removed } = args
-
+    onRemoveUndo({ parentTask, removed }: { parentTask?: Task, removed: Task[] }) {
         if (parentTask) {
             const children = removed.filter(t => t.id !== parentTask.id)
 
@@ -262,16 +245,39 @@ export class Tasks {
         this._store.set(this)
     }
 
-    /**
-     * Toggle a task's checkbox true or false.
-     * @param id Task id
-     */
-    toggleTaskComplete(id: string) {
+    toggleTaskComplete(id: string, checkSubtasks: boolean) {
         const task = this.taskMap.get(id)
         if (!task) return
 
-        task.isChecked = !task.isChecked
+        const isChecked = !task.isChecked
+        task.isChecked = isChecked
+
+        if (checkSubtasks && isChecked) {
+            for (const subtask of this.getSubtasks(id)) {
+                this._toggleComplete(subtask.id, isChecked)
+            }
+        }
+        if (checkSubtasks && !isChecked && task.parentId) {
+            const parent = this.taskMap.get(task.parentId)
+            if (parent) {
+                parent.isChecked = false
+            }
+        }
+
         this._store.set(this)
+    }
+
+    private _toggleComplete(id: string, isChecked: boolean) {
+        const task = this.taskMap.get(id)
+        if (!task) return
+        
+        task.isChecked = isChecked
+        
+        // Recursively toggle all subtasks
+        const subtasks = this.getSubtasks(id)
+        for (const subtask of subtasks) {
+            this._toggleComplete(subtask.id, isChecked)
+        }
     }
 
     /* queries */
@@ -297,23 +303,9 @@ export class Tasks {
         return this.taskMap.get(id)
     }
 
-    getLength() {
-        return this.taskMap.size
-    }
-
     getRootTasks() {
         const tasks = this.getSubtasks(null)
         return tasks.sort((a: Task, b: Task) => a.idx - b.idx)
-    }
-
-    getRootTask(id: string): Task | null {
-        const task = this.getTask(id)
-        if (!task) return null
-
-        const parentId = task.parentId
-        if (!parentId) return task
-
-        return this.getRootTask(parentId)
     }
 
     updateTaskId(id: string, newId: string) {
@@ -371,14 +363,6 @@ export class Tasks {
 
         return count
     }
-    
-    isAtMaxDepth(id: string): boolean {
-        const task = this.getTask(id)
-        if (!task) return false
-
-        const lineageCount = this.getTaskLineageCount(id)
-        return lineageCount >= this.maxDepth
-    }
 
     /**
      * Get a task's immediate subtasks
@@ -398,12 +382,20 @@ export class Tasks {
         return subtasks
     }
 
+    isAtMaxDepth(id: string): boolean {
+        const task = this.getTask(id)
+        if (!task) return false
+
+        const lineageCount = this.getTaskLineageCount(id)
+        return lineageCount >= this.maxDepth
+    }
+
     isRootTask(id: string) {
         const rootTaskIds = this.parents.get(null) ?? []
         return rootTaskIds.includes(id)
     }
 
-    /* utils  */
+    /*  */
 
     toggleTaskOpen(id: string) {
         if (this.isTaskOpen(id)) {

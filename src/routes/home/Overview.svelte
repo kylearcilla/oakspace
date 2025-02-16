@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from "$app/stores"
     import { themeState, weekRoutine } from "$lib/store"
 
 	import { Icon } from "$lib/enums"
@@ -62,6 +63,7 @@
     let tasksManager = new TodosManager()
     let removeCompleteFlag = false
     let hasCompletedTasks = false
+    let syncLoading = false
 
     $: tm = tasksManager.store
     $: onTodoist = $tm.onTodoist
@@ -79,6 +81,12 @@
             dayOptn = null
         }
     })
+
+    function handleTodoistLogin() {
+        const redirectBackUrl = $page.url.pathname
+        tasksManager.loginTodoist(redirectBackUrl)
+        settings = false
+    }
 
     /* google calendar*/
     function onDayUpdate(date: Date) {
@@ -308,21 +316,9 @@
                         class="dmenu__section" 
                         class:hidden={!hasCompletedTasks && !todoistLinked}
                     >
-                        {#if hasCompletedTasks}
-                            <div class="dmenu__option">
-                                <button 
-                                    class="dmenu__option-btn"
-                                    on:click={() => {
-                                        removeCompleteFlag = !removeCompleteFlag
-                                        settings = false
-                                    }}
-                                >
-                                    <span class="dmenu__option-text">
-                                        Remove Completed
-                                    </span>
-                                </button>
-                            </div>
-                        {/if}
+                        <div class="dmenu__section-name">
+                            Tasks
+                        </div>
                         {#if todoistLinked}
                             <div class="dmenu__option">
                                 <button 
@@ -338,16 +334,42 @@
                                 </button>
                             </div>
                         {/if}
+                        {#if hasCompletedTasks && !onTodoist}
+                            <div class="dmenu__option">
+                                <button 
+                                    class="dmenu__option-btn"
+                                    on:click={() => {
+                                        removeCompleteFlag = !removeCompleteFlag
+                                        settings = false
+                                    }}
+                                >
+                                    <span class="dmenu__option-text">
+                                        Remove Completed
+                                    </span>
+                                </button>
+                            </div>
+                        {/if}
                     </li>
-                    <div class="dmenu__section-divider" class:hidden={hideTasks}>
-                    </div>
+                    <div class="dmenu__section-divider" class:hidden={hideTasks}></div>
                     <!-- todoist -->
                     <li class="dmenu__section">
                         <div class="dmenu__section-name">
                             Todoist
                         </div>
-
                         {#if todoistLinked}
+                            <div class="dmenu__option">
+                                <button 
+                                    class="dmenu__option-btn"
+                                    on:click={() => {
+                                        tasksManager.refreshTodoist()
+                                        settings = false
+                                    }}
+                                >
+                                    <span class="dmenu__option-text">
+                                        Refresh
+                                    </span>
+                                </button>
+                            </div>
                             <div class="dmenu__option">
                                 <button 
                                     class="dmenu__option-btn"
@@ -365,10 +387,7 @@
                             <div class="dmenu__option">
                                 <button 
                                     class="dmenu__option-btn"
-                                    on:click={() => {
-                                        tasksManager.loginTodoist()
-                                        settings = false
-                                    }}
+                                    on:click={() => handleTodoistLogin()}
                                 >
                                     <span class="dmenu__option-text">
                                         Link Account

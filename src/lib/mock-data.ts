@@ -1118,3 +1118,5 @@ export const BULLETIN_CONTENT = {
 }
 
 export const HEADER_IMG = IMG_COLLECTIONS[IMG_COLLECTION_IDX].headerImg
+
+/* routines */

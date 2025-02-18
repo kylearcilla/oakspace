@@ -1,12 +1,11 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte"
-	import type { Writable } from "svelte/store"
 	import { themeState, weekRoutine as setWeekRoutine } from "$lib/store"
 
 	import { Icon } from "$lib/enums"
 	import { toast } from "$lib/utils-toast"
     import { getColorTrio } from "$lib/utils-colors"
-	import { getElemById, getHozSpace, preventScroll } from "$lib/utils-general"
+	import { preventScroll } from "$lib/utils-general"
 	import { InputManager, TextEditorManager } from "$lib/inputs"
 	import { getDayIdxMinutes, getTimeFromIdx, minsFromStartToHHMM, minsToHHMM } from "$lib/utils-date"
 	import { WeeklyRoutinesManager } from "$lib/routines-weekly-manager"
@@ -483,20 +482,6 @@
         viewOptionOpen = false
         manager.hotkeyHandler(e)
     }
-    function initTestConfig() {
-        const TEST_CONFIG = (window as any).LUCIOLE
-        
-        TEST_CONFIG.initTestData = (data: any[]) => {
-            WEEK_ROUTINES = data
-            setWeekRoutineIdx = data.length === 0 ? -1 : 0
-            viewWkRoutineIdx  = data.length === 0 ? -1 : 0
-            manager.updateCurrentWeekRoutine(WEEK_ROUTINES[0])
-        }
-
-        TEST_CONFIG.allowScroll = (allow: any) => {
-            manager.toggleAutoScroll(allow)
-        }
-    }
     
     onMount(() => {
         scrollableContainer.scrollTop += INIT_SCROLL_TOP
@@ -507,8 +492,6 @@
         })
 
         minuteInterval = setInterval(() => currTime = getDayIdxMinutes(), 1000)
-
-        if (import.meta.env.MODE === "development") initTestConfig()
     })
 
     onDestroy(() => clearInterval(minuteInterval!))
@@ -582,11 +565,11 @@
                         pickedOptionName: selectedTimeFrame,
                         styles: { 
                             fontSize: "1.2rem", 
-                            padding: "4px 12px 4px 11px", 
+                            padding: "4px 12px 4px 11px",
                             margin: "0px 0px 0px -10px",
                             borderRadius: "4px",
                             opacity: 1, 
-                            fontFamily: "DM Mono"
+                            fontFamily: "Geist Mono"
                         },
                         onClick: () => { 
                             isBreakdownDropdownOpen = !isBreakdownDropdownOpen
@@ -736,8 +719,7 @@
                                     isWkRoutineSettingsOpen = false
                                 },
                                 styles: { 
-                                    fontSize: "1.34rem", 
-                                    fontFamily: "DM Sans",
+                                    fontSize: "1.34rem",
                                     padding: "4px 2px 4px 11px", 
                                     margin: "0px 0px 0px -10px"
                                 },
@@ -1360,7 +1342,7 @@
                                     },
                                     styles: { 
                                         fontSize: "1.2rem", 
-                                        fontFamily: "DM Mono", 
+                                        fontFamily: "Geist Mono", 
                                         padding: "4px 12px 4px 11px", 
                                         margin: "0px 0px 0px -10px",
                                         borderRadius: "4px",
@@ -1744,7 +1726,7 @@
             width: 90%;
         }
         &__details-chosen-routine {
-            @include text-style(0.2, 400, 1.2rem, "DM Sans");
+            @include text-style(0.2, 400, 1.2rem);
             margin-bottom: 5px;
         }
         .routine__breakdown {
@@ -1766,7 +1748,6 @@
         &__wk-routines {
             margin: 0px 0px 0px -7px;
             width: 95%;
-            font-family: "DM Sans";
             position: relative;
             height: var(--routines-height);
         }
@@ -1925,7 +1906,7 @@
             }
         }
         &__view-options-dbtn {
-            @include text-style(0.2, 400, 1.04rem, "DM Sans");
+            @include text-style(0.2, 400, 1.04rem);
             position: relative;
             transition: 0.01s ease-in-out;
             @include flex(center);
@@ -2000,7 +1981,7 @@
         &__days-dbtn {
             position: relative;
             padding: 4px 4px;
-            @include text-style(0.8, 400, 1.2rem, "DM Sans");
+            @include text-style(0.8, 400, 1.2rem);
 
             &:disabled {
                 opacity: 1;
@@ -2101,7 +2082,7 @@
     }
     .routine-blocks {
         @include abs-top-left;
-        z-index: 0;
+        z-index: 1;
 
         &__block {
             max-width: var(--block-max-width);
@@ -2109,7 +2090,7 @@
     }
     .wk-grid {
         margin-top: 0px;  // top hoz line is hidden, hide the space where it's at
-        z-index: -1;
+        z-index: 0;
     }
     .hour-blocks {
         height: calc($hr-col-height * 24);

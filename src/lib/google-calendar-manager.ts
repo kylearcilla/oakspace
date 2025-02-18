@@ -1,9 +1,11 @@
 import { writable, type Writable } from "svelte/store"
-import { authGoogleCalendar, fetchDayEvents, fetchUserCalendars } from "./api-google-calendar"
+
+import { APIError } from "./errors"
 import { toast } from "./utils-toast"
 import { APIErrorCode, LogoIcon } from "./enums"
-import { APIError } from "./errors"
-import { getElemById, toastApiErrorHandler } from "./utils-general"
+import { getMinsFromStartOfDay } from "./utils-date"
+import { toastApiErrorHandler } from "./utils-general"
+import { authGoogleCalendar, fetchDayEvents, fetchUserCalendars } from "./api-google-calendar"
 
 export class GoogleCalendarManager {
     accessToken = ""
@@ -15,14 +17,15 @@ export class GoogleCalendarManager {
     tokenExpiresInSecs = 3600
     accessTokenCreationDate: Date | null = null
     tokenExpired = false
-    isLoading = false
+    loading: "sync" | "refresh" | null = null
+    lastSyncTimeStamp: Date | null = null
     
     calendars: GoogleCalendar[] = []
     events: GoogleCalendarEvent[] = []
     
-    state: Writable<{ tokenExpired: boolean, isLoading: boolean }> = writable({
+    state: Writable<{ tokenExpired: boolean, loading: "sync" | "refresh" | null }> = writable({
         tokenExpired: false,
-        isLoading: false
+        loading: null
     })
     static HOUR_BLOCK_HEIGHT = 45
 
@@ -30,12 +33,16 @@ export class GoogleCalendarManager {
     ACTIVE_TOKEN_THRESHOLD_SECS = 60
 
     constructor() {
-        this.localCalendarDataFromPrevSession()
+        if (this.hasPrevSession()) {
+            this.continueSession()
+        }
     }
+
+    /* auth */
 
     async init() {
         try {
-            this.setLoading(true)
+            this.setLoading()
             const res = await authGoogleCalendar()
     
             this.email = res.email
@@ -43,25 +50,54 @@ export class GoogleCalendarManager {
             this.username = res.username
             this.profileImg = res.profileImgSrc
             this.accessTokenCreationDate = new Date()
+
+            await this.setUserData()
+            this.saveCalendarData()
+            this.initToast("Logged In!")
         }
         catch(e: any) {
+            localStorage.removeItem("google-calendar")
+
             if (e.code !== APIErrorCode.AUTH_DENIED) {
-                this.onError(new APIError(APIErrorCode.AUTHORIZATION_ERROR))
+                this.onError({ error: new APIError(APIErrorCode.AUTHORIZATION_ERROR) })
             }
             throw e
         }
-        
-        await this.setUserCalendars()
-        await this.setDateEvents(new Date)
+        finally {
+            this.setLoading(null)
+        }
+    }
 
-        this.setLoading(false)
-        this.saveCalendarData()
-        this.initToast("Calendar synced!")
+    private async setUserData(date = new Date()) {
+        await this.setUserCalendars()
+        await this.setDateEvents(date)
+
+        this.lastSyncTimeStamp = new Date()
+    }
+
+    async continueSession() {
+        try {
+            this.localCalendarDataFromPrevSession()
+            this.setLoading()
+            await this.setUserData()
+        }
+        catch(e: any) {
+            this.onError({ 
+                error: e, 
+                refreshFunc: async () => {
+                    await this.refreshAccessToken()
+                    await this.setUserData()
+                }
+            })
+        }
+        finally {
+            this.setLoading(null)
+        }
     }
 
     async refreshAccessToken() {
         try {
-            this.setLoading(true)
+            this.setLoading("refresh")
             const res = await authGoogleCalendar()
             this.accessToken = res.accessToken
             this.accessTokenCreationDate = new Date()
@@ -72,13 +108,28 @@ export class GoogleCalendarManager {
         }
         catch(e: any) {
             if (e.code !== APIErrorCode.AUTH_DENIED) {
-                this.onError(new APIError(APIErrorCode.AUTHORIZATION_ERROR))
+                this.onError({ error: new APIError(APIErrorCode.AUTHORIZATION_ERROR) })
             }
+            throw e
         }
         finally {
-            this.setLoading(false)
+            this.setLoading(null)
         }
-        
+    }
+
+    async refreshData(date = new Date) {
+        try {
+            this.setLoading("sync")
+            await this.setUserData(date)
+            this.setEventStyles()
+        }
+        catch(e: any) {
+            this.onError({ error: new APIError(APIErrorCode.GENERAL) })
+            throw e
+        }
+        finally {
+            this.setLoading(null)
+        }
     }
 
     hasAccessTokenExpired() {
@@ -93,74 +144,70 @@ export class GoogleCalendarManager {
 
     verifyAccessToken() {
         if (this.hasAccessTokenExpired()) {
-            this.setLoading(false)
+            this.setLoading(null)
             this.setTokenExpired(true)
 
             throw new APIError(APIErrorCode.EXPIRED_TOKEN)
         }
     }
 
-    async setUserCalendars() {
-        try {
-            this.verifyAccessToken()
-            this.calendars = await fetchUserCalendars(this.accessToken)
-            this.saveCalendarData()
+    /* cal data */
 
-            return this.calendars
-        }
-        catch(e: any) {
-            if (e.code === undefined) {
-                this.onError(new APIError(APIErrorCode.GENERAL))
-            }
-            else {
-                this.onError(e)
-            }
-            throw e
-        }
+    async setUserCalendars() {
+        this.lastSyncTimeStamp = new Date()
+        this.verifyAccessToken()
+        this.calendars = await fetchUserCalendars(this.accessToken)
+        this.saveCalendarData()
+
+        return this.calendars
     }
 
     async setDateEvents(day: Date) {
-        try {
-            this.verifyAccessToken()
-            this.events = await fetchDayEvents({
-                day,
-                token: this.accessToken,
-                calendars: this.calendars,
-            })
-            this.saveCalendarData()
-
-            return this.events
-        }
-        catch(e: any) {
-            if (e.code === undefined) {
-                this.onError(new APIError(APIErrorCode.GENERAL))
-            }
-            else {
-                this.onError(e)
-            }
-            throw e
-        }
-    }
-
-    async setEventElements(day: Date) {
-        this.setLoading(true)
-
-        await this.setDateEvents(day)
-        this.renderEvents()
-
-        this.setLoading(false)
+        this.verifyAccessToken()
+        this.events = await fetchDayEvents({
+            day,
+            token: this.accessToken,
+            calendars: this.calendars
+        })
+        this.saveCalendarData()
 
         return this.events
     }
 
-    async refreshData() {
-        this.setLoading(true)
+    async updateDayEvents(day: Date) {
+        try {
+            if (this.loading) return []
+            this.setLoading("sync")
+            this.lastSyncTimeStamp = new Date()
+    
+            await this.setDateEvents(day)
 
-        await this.setUserCalendars()
-        await this.setDateEvents(new Date)
-        this.renderEvents()
+            this.setEventStyles()
+            this.setLoading(null)
+            return this.events
+        }
+        catch(e: any) {
+            this.onError({ error: e })
+        }
+    }
 
-        this.setLoading(false)
+    /* ui */
+    
+    setEventStyles() {
+        const containerHeight = this.getContainerHeight()
+
+        this.events = this.events.map((e) => ({
+            ...e,
+            top:    e.allDay ? "0px" : `${Math.floor((e.timeStart / 1440) * containerHeight)}px`,
+            height: e.allDay ? "0px" : `${Math.floor(((Math.max(e.timeEnd - e.timeStart, this.MAX_BLOCK_TIME_HEIGHT)) / 1440) * containerHeight)}px`,
+            left:   "0px",
+            width:  "90%"
+        }))
+
+
+        this.handleCollisions()
+        this.saveCalendarData()
+        return this.events
     }
 
     toggleViewCalendar(calendarId: string) {
@@ -177,22 +224,6 @@ export class GoogleCalendarManager {
         return GoogleCalendarManager.HOUR_BLOCK_HEIGHT * 24
     }
 
-    renderEvents() {
-        const containerHeight = this.getContainerHeight()
-
-        this.events = this.events.map((e) => ({
-            ...e,
-            top:    e.allDay ? "0px" : `${Math.floor((e.timeStart / 1440) * containerHeight)}px`,
-            height: e.allDay ? "0px" : `${Math.floor(((Math.max(e.timeEnd - e.timeStart, this.MAX_BLOCK_TIME_HEIGHT)) / 1440) * containerHeight)}px`,
-            left:   "0px",
-            width:  "90%"
-        }))
-
-
-        this.handleCollisions()
-        this.saveCalendarData()
-        return this.events
-    }
 
     handleCollisions() {
         const collisions = this.getCollisions()
@@ -275,7 +306,6 @@ export class GoogleCalendarManager {
 
     getCollisions() {
         const overlaps: GoogleCalendarEvent[] = []
-
         const events = this.events.sort((a, b) => parseInt(a.top) - parseInt(b.top))
         
         for (let i = 0; i < events.length; i++) {
@@ -311,24 +341,25 @@ export class GoogleCalendarManager {
         return overlaps.sort((a, b) => parseInt(a.top) - parseInt(b.top))
     }
 
-    onError(error: any) {
-        toastApiErrorHandler({
-            error,
-            title: "Google Calendar",
-            logoIcon: LogoIcon.Google,
+    /* utils */
 
-            ...(error.code === APIErrorCode.EXPIRED_TOKEN && {
-                action: {
-                    label: "Continue session",
-                    onClick: () => this.refreshAccessToken()
-                }
-            })
+    watchUpcomingEvents() {
+        if (!this.events) return
+        const nowMins = getMinsFromStartOfDay(new Date())
+        
+        this.events.forEach(event => {
+            if (event.allDay) return
+            
+            const timeUntilStart = event.timeStart - nowMins
+            if (timeUntilStart === 5) {
+                this.initToast(`${event.title} starting in 5 minutes`)
+            }
         })
     }
 
-    setLoading(isLoading: boolean) {
-        this.isLoading = isLoading
-        this.state.update((state) => ({ ...state, isLoading }))
+    setLoading(loading: "sync" | "refresh" | null = "sync") {
+        this.loading = loading
+        this.state.update((state) => ({ ...state, loading }))
     }
 
     setTokenExpired(isTokenExpired: boolean) {
@@ -336,21 +367,44 @@ export class GoogleCalendarManager {
         this.state.update((state) => ({ ...state, tokenExpired: isTokenExpired }))
     }
 
+    onError({ error, refreshFunc = () => this.refreshAccessToken() }: { 
+        error: any
+        refreshFunc?: () => void 
+    }) {
+        console.error(error)
+        error = error.code === undefined ? new APIError(APIErrorCode.GENERAL) : error
+
+        toastApiErrorHandler({
+            error,
+            title: "Google Calendar",
+            logoIcon: LogoIcon.GoogleCal,
+            contextId: "google-calendar",
+            ...(error.code === APIErrorCode.EXPIRED_TOKEN && {
+                action: {
+                    label: "Continue session",
+                    onClick: () => refreshFunc()
+                }
+            })
+        })
+    }
+
+    initToast(msg: string) {
+        toast("default", {
+            icon:    LogoIcon.GoogleCal,
+            message:    "Google Calendar",
+            description: msg,
+        })
+    }
+
+    /* state */
+
     quit() {
         this.signedIn = false
         this.calendars = []
         this.events = []
 
         localStorage.removeItem("google-calendar")
-        this.initToast("Successfully logged out of calendar.")
-    }
-
-    initToast(msg: string) {
-        toast("default", {
-            icon:    LogoIcon.Google,
-            message:    "Google Calendar",
-            description: msg,
-        })
+        this.initToast("Logged Out!")
     }
 
     saveCalendarData() {
@@ -359,10 +413,13 @@ export class GoogleCalendarManager {
             accessTokenCreationDate: this.accessTokenCreationDate,
             profileImg: this.profileImg,
             email:      this.email,
-            username:   this.username,
-            calendars: this.calendars,
-            events: this.events,
+            username:   this.username
         }))
+    }
+
+    hasPrevSession() {
+        const data = localStorage.getItem("google-calendar")
+        return data !== null
     }
 
     localCalendarDataFromPrevSession() {

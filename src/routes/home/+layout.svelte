@@ -156,26 +156,23 @@
     if (!hasAmbienceSpace()) {
       return
     }
-    if (toId === "/home/base") {
+    if (toId != "/home/space") {
       updateAmbience({ active: false })
+
+      if (getPrevTheme()) {
+        setNewTheme(findThemeFromName(getPrevTheme()))
+      }
     }
 
-    if (fromId === "/home/base" && toId === "/home/space") {
-      prevSetTheme = getActiveTheme()
-      setPrevTheme(prevSetTheme)
-
-      setNewTheme(themes[0])
+    if (fromId != "/home/space" && toId === "/home/space") {
+      setPrevTheme(getActiveTheme())
+      setNewTheme(themes[0], true)
       updateAmbience({ active: true })
-    }
-    else if (fromId === "/home/space" && toId === "/home/base") {
-      setNewTheme(findThemeFromName(getPrevTheme()))
     }
   })
   
   onMount(() => {
     initAppState()
-
-    prevSetTheme = getPrevTheme()
   })
   onDestroy(onQuitApp)
 </script>

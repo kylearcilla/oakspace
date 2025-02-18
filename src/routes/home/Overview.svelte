@@ -1,29 +1,31 @@
 <script lang="ts">
 	import { page } from "$app/stores"
     import { themeState, weekRoutine } from "$lib/store"
-
-	import { Icon } from "$lib/enums"
-	import { globalContext } from "../../lib/store"
-	import { isSameDay } from "../../lib/utils-date";
+    
+	import { Icon, LogoIcon } from "$lib/enums"
+	import { getElapsedTime } from "$lib/utils-date"
+	import { globalContext, timer } from "$lib/store"
 	import { formatDatetoStr } from "$lib/utils-date"
 	import { clickOutside } from "$lib/utils-general"
 	import { SideCalendar } from "$lib/side-calendar"
-	import { didTodoistAPIRedirect } from "$lib/api-todoist"
+	import { hexToRgb } from "$lib/utils-colors"
     import { TodosManager } from "$lib/todos-manager"
 	import { findClosestColorSwatch } from "$lib/utils-colors"
+	import { loadSideBarView, saveSideBarView } from "$lib/utils-home"
 	import { GoogleCalendarManager, initGoogleCalSession } from "$lib/google-calendar-manager"
     
 	import Todos from "./Todos.svelte";
+	import Logo from "../../components/Logo.svelte"
 	import OverviewDayView from "./OverviewDayView.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
 	import Calendar from "../../components/Calendar.svelte"
 	import ToggleBtn from "../../components/ToggleBtn.svelte"
 	import BounceFade from "../../components/BounceFade.svelte"
+	import { isSameDay } from "../../lib/utils-date";
 
     const OVERVIEW_SIDE_MARGINS = 4
     const DAY_VIEW_SIDE_MARGINS = 14
-
-    type GoogleCalOptn = "refresh" | "disconnect" | "my calendars"
+    const NOW_TIME_THRESHOLD_SECS = 10
 
     export let calendar = new SideCalendar()
     export let headerOptions: {
@@ -32,12 +34,11 @@
     }
     export let onUpdateHeaderOptions: (optn: string) => void
 
+    let { view, calView } = loadSideBarView()
     let focusDate  = new Date()
+    let now = new Date()
     let calendarHt = 0
-
-    /* day overview */
-    let view: "calendar" | "tasks" = didTodoistAPIRedirect() ? "tasks" : "calendar"
-    let dayOptn: "routine" | "calendar" | null = "routine"
+    let settings = false
 
     /* routines */
     let checkbox = false
@@ -45,111 +46,159 @@
 
     $: routine = $weekRoutine
     $: isLight = !$themeState.isDarkTheme
-    $: isToday = isSameDay(new Date(), focusDate)
     $: ambience = $globalContext.ambience
-
+    
     /* google calendar */
-    let googleCal         = initGoogleCalSession()
-    let googleCalDate     = new Date()
-    let isGoogleCalLinked = googleCal?.signedIn
-    let settings = false
-    let calendarsMenu  = false
-    let googleCalState = googleCal?.state ?? null
+    let googleCal: GoogleCalendarManager | null = initGoogleCalSession()
+    let googleCalLinked = googleCal?.signedIn
+    let calsMenu  = false
+    let g_Day = new Date()
+    let g_lastSyncTime = null
+    
+    let googleCalendars: GoogleCalendar[] = []
+    let googleEvents: GoogleCalendarEvent[] = []
 
-    let googleCalendars: GoogleCalendar[]   = googleCal?.calendars ?? []
-    let googleEvents: GoogleCalendarEvent[] = googleCal?.events ?? []
+    $: googleCalState = googleCal?.state
 
     /* tasks */
-    let tasksManager = new TodosManager()
+    let todosManager = new TodosManager()
     let removeCompleteFlag = false
     let hasCompletedTasks = false
-    let syncLoading = false
-
-    $: tm = tasksManager.store
+    let t_lastSyncTime = null
+    
+    $: tm = todosManager.store
     $: onTodoist = $tm.onTodoist
     $: todoistLinked = $tm.todoistLinked
+    
+    $: t_loading = $tm.loading
+    $: t_syncLoading = t_loading === "sync"
 
+    $: g_loading = $googleCalState?.loading
+    $: g_syncLoading = g_loading === "sync"
+    let g_tokenExpired = $googleCalState?.tokenExpired
 
-    weekRoutine.subscribe((state) => {
-        if (!state && isGoogleCalLinked)  {
-            dayOptn = "calendar"
+    $: onAPI = (view === "tasks" && onTodoist) || (view === "cal" && calView === "g-cal")
+    
+    $: if (googleCal) {
+        googleCal?.state.subscribe(({ tokenExpired }) => onGoogleCalUpdate(tokenExpired))
+    }
+    $: saveSideBarView({ view, calView })
+    
+    timer.subscribe(async ({ date }) => {
+        now = date
+        if ($tm?.todoistLinked) {
+            t_lastSyncTime = await todosManager.autoRefreshHandler(date)
         }
-        else if (state) {
-            dayOptn = "routine"
+        if (googleCalLinked) {
+            googleCal!.watchUpcomingEvents()
         }
-        else {
-            dayOptn = null
-        }
+
     })
-
+    todosManager.store.subscribe(() => {
+        t_lastSyncTime = todosManager?.lastSyncTimeStamp
+    })
     function handleTodoistLogin() {
         const redirectBackUrl = $page.url.pathname
-        tasksManager.loginTodoist(redirectBackUrl)
+        todosManager.loginTodoist(redirectBackUrl)
         settings = false
     }
-
-    /* google calendar*/
+    async function refreshSync(api: "todoist" | "google-cal") {
+        if (api === "todoist") {
+            todosManager.refreshTodoist()
+        }
+        else if (api === "google-cal") {
+            getCalEvents(focusDate)
+        }
+    }
     function onDayUpdate(date: Date) {
-        const tokenExpired = $googleCalState?.tokenExpired
-
-        if (!isGoogleCalLinked || !tokenExpired) {
+        const tokenExpired = g_tokenExpired
+        if (!googleCalLinked || !tokenExpired) {
             focusDate = date
         }
         if (view === "tasks") {
-            view = "calendar"
+            view = "cal"
+        }
+        if (calView === "g-cal") {
+            getCalEvents(date)
         }
     }
-    async function getNewEvents(newDay: Date) {
-        const tokenExpired = $googleCalState?.tokenExpired
-        if (!tokenExpired) {
-            googleCalDate = newDay
+    /* google calendar*/
+    function onGoogleCalUpdate(hasExpired: boolean) {
+        g_lastSyncTime = googleCal.lastSyncTimeStamp
+        let expired = hasExpired
+
+        if (g_tokenExpired && !expired) {
+            focusDate = new Date()
+            googleCal!.updateDayEvents(new Date())
         }
-
-        // only get new events if google cal is synced AND in view
-        googleEvents = await googleCal!.setEventElements(googleCalDate)
+        if (googleCal.calendars) {
+            googleCalendars = googleCal.calendars
+            googleEvents = googleCal.setEventStyles()
+        }
     }
-    async function connectGoogleCal() {
-        settings = false
-        googleCal = new GoogleCalendarManager()
-        await googleCal.init()
-
-        googleCalendars = googleCal.calendars
-        googleEvents = googleCal.renderEvents()
-        isGoogleCalLinked = true
+    async function getCalEvents(newDay: Date) {
+        if (g_tokenExpired) {
+            googleCal!.refreshAccessToken()
+            return
+        }
+        try {
+            googleCal!.updateDayEvents(newDay)
+        }
+        catch (e) {
+            googleCal.onError(e)
+        }
     }
     function onGoogleCalendarClicked(id: string) {
-        if ($googleCalState?.isLoading) return
+        if (g_loading) return
 
         googleCalendars = googleCal!.toggleViewCalendar(id) ?? []
         googleEvents    = googleCal!.events
     }
-    async function onCalSettingsHandler(optnText: GoogleCalOptn) {
-        const isLoading = $googleCalState?.isLoading
-        const isExpired = $googleCalState?.tokenExpired
-        calendarsMenu = false
+    async function connectGoogleCal() {
+        settings = false
+        googleCal = new GoogleCalendarManager()
+        
+        await googleCal.init()
+        focusDate = new Date()
+        googleCalLinked = true
+        calView = "g-cal"
+    }
+
+    async function onCalSettingsHandler(optnText: "refresh" | "disconnect" | "my calendars") {
+        const isLoading = g_loading
+        calsMenu = false
         settings = false
 
-        if (optnText === "refresh" && !isExpired && !isLoading) {
-            await googleCal!.refreshData()
-            googleCalendars = googleCal!.calendars
-            googleEvents = googleCal!.events
-        }
-        else if (optnText === "refresh" && !isLoading) {
+        if (optnText === "refresh" && !isLoading) {
             googleCal!.refreshAccessToken()
         }
         else if (optnText === "disconnect") {
             googleCal!.quit()
-            isGoogleCalLinked = false
-
+            googleCalLinked = false
             googleCal = null
             googleCalendars = []
             googleEvents = []
-
-            dayOptn = $weekRoutine ? "routine" : null
+            calView = $weekRoutine ? "routine" : null
         }
         else if (optnText === "my calendars" && $googleCalState) {
-            calendarsMenu = true
+            calsMenu = true
         }
+    }
+
+    /* utils */
+    function getLastSyncTime(lastSync: Date) {
+        const str = getElapsedTime({ 
+            start: lastSync, end: new Date(), min: true 
+        })
+        if (str.includes("s")) {
+            return parseInt(str) < NOW_TIME_THRESHOLD_SECS ? "Now" : "1m"
+        }
+        else {
+            return str
+        }
+    }
+    function _hexToRgb(hex: string) {
+        return hexToRgb({ hex, format: "str" }) as string
     }
 </script>
 
@@ -158,48 +207,43 @@
     class:overview--light={isLight}
     style:--OVERVIEW_SIDE_MARGINS={`${OVERVIEW_SIDE_MARGINS}px`}
     style:--DAY_VIEW_SIDE_MARGINS={`${DAY_VIEW_SIDE_MARGINS}px`}
+    style:--api-offset-top={onAPI ? "38px" : "0px"}
 >
-    <!-- Calendar -->
     <div
         class="overview__calendar-container"
         bind:clientHeight={calendarHt}
     >
         <Calendar 
-            focusDate={isGoogleCalLinked ? googleCalDate : focusDate}
-            isDisabled={$googleCalState?.isLoading}
+            {calendar} 
+            {focusDate}
+            isDisabled={!!g_loading}
             onDayUpdate={onDayUpdate}
-            calendar={calendar} 
         />
     </div>
-    <div 
-        class="overview__day-view"
-        style:height={`calc(100% - ${calendarHt}px)`}
-    >
-        <div class="overview__day-view-btns">
-            <button 
-                class="overview__day-view-settings-btn" 
-                id="overview--dbtn"
-                on:click={() => settings = !settings}
-            >
-                <SvgIcon icon={Icon.Settings} options={{ opacity: 1, scale: 0.9 }} />
-            </button>
-        </div>
-        <div class="overview__day-view-header">
+    <div class="overview__day" style:height={`calc(100% - ${calendarHt}px)`}>
+        <button 
+            class="overview__day-settings-btn" 
+            id="overview--dbtn"
+            on:click={() => settings = !settings}
+        >
+            <SvgIcon icon={Icon.Settings} options={{ opacity: 1, scale: 0.9 }} />
+        </button>
+        <div class="overview__day-header">
             <span>
-                {#if view === "calendar"}
+                {#if view === "cal"}
                     {formatDatetoStr(focusDate, { month: "long", day: "numeric" })}
                 {:else}
                     Tasks
                 {/if}
             </span>
-    </div>
+        </div>
 
-        <!-- Content -->
-        {#if view === "calendar"}
+    <div class="overview__main-content">
+        {#if view === "cal"}
             <OverviewDayView
-                {dayOptn}
                 {richColors}
                 {checkbox}
+                view={calView}
                 day={focusDate}
                 googleCals={googleCalendars}
                 googleEvents={googleEvents}
@@ -207,373 +251,396 @@
         {:else}
             <Todos
                 {removeCompleteFlag}
-                manager={tasksManager}
+                manager={todosManager}
                 onTaskComplete={(completed) => hasCompletedTasks = completed > 0} 
-            />        
+            />
         {/if}
+    </div>
 
-        <!-- User's Google Calendars -->
-        <BounceFade 
-            isHidden={!calendarsMenu}
-            position={{ top: "20px", right: "12px" }}
-            zIndex={200}
-        >
-            <div 
-                class="google-cals"
-                id="overview--dmenu"
-                use:clickOutside on:click_outside={() => {
-                    calendarsMenu = false
-                }} 
-            >
-                <div class="google-cals__header">
-                    <span>
-                        {googleCal?.email}
+    {#if onAPI}
+        {@const api = view === "cal" ? "google-cal" : "todoist"}
+        {@const logo = api === "google-cal" ? LogoIcon.GoogleCal : LogoIcon.Todoist}
+        {@const scale = api === "google-cal" ? 0.785 : 1.065}
+        {@const title = api === "google-cal" ? "Calendar" : "Inbox"}
+        {@const isLoading = api === "google-cal" ? g_syncLoading : t_syncLoading}
+        {@const lastSync = api === "google-cal" ? g_lastSyncTime : t_lastSyncTime}
+        {@const tokenExpired = api === "google-cal" && g_tokenExpired}
+
+        <div class="overview__api" data-api={api}>
+            <div class="flx-algn-center">
+                <Logo 
+                    logo={logo}
+                    options={{
+                        containerWidth: "20px", iconWidth: "100%",
+                        scale
+                    }}
+                />
+                <span
+                    style:--shimmer-text-width="50px"
+                    class:shimmer-anim={isLoading}
+                >
+                    {isLoading ? "Syncing..." : title}
+                </span>
+            </div>
+            <div class="overview__api-sync">
+                {#key now}
+                    <span title={tokenExpired ? "Token Expired" : "Last Sync"}>
+                        {tokenExpired ? "!" : getLastSyncTime(lastSync)}
                     </span>
+                {/key}
+                <button 
+                    title="Sync"
+                    disabled={isLoading}
+                    on:click={() => refreshSync(api)}
+                >
+                    <i 
+                        class="fa-solid fa-arrows-rotate"
+                        class:sync-loading={isLoading}
+                    >
+                    </i>
+                </button>
+            </div>
+        </div>
+    {/if}
+
+    <!-- google cals -->
+    <BounceFade 
+        isHidden={!calsMenu}
+        position={{ top: "20px", right: "12px" }}
+        zIndex={200}
+    >
+        {@const { isLoading, tokenExpired } = $googleCalState}
+        <div 
+            class="google-cals"
+            id="overview--dmenu"
+            use:clickOutside on:click_outside={() => calsMenu = false} 
+        >
+            <div class="google-cals__header">
+                <span>
+                    {googleCal?.email}
+                </span>
+            </div>
+            <ul class="google-cals__list">
+                {#each googleCalendars as cal}
+                    {@const colorSwatch = findClosestColorSwatch(cal.color.bgColor)}
+                    {@const isDisabled = isLoading || tokenExpired}
+                    {@const color = _hexToRgb(colorSwatch.primary)}
+
+                    <li title={cal.title}>
+                        <button 
+                            class="google-cals__cal"
+                            class:google-cals__cal--unchecked={!cal.isChecked}
+                            on:click={() => {
+                                onGoogleCalendarClicked(cal.id)
+                            }}
+                            disabled={isDisabled}
+                        >
+                            <div 
+                                class="google-cals__cal-color"
+                                style:--cal-color={color }
+                            >
+                            </div>
+                            <div class="google-cals__cal-name">
+                                {cal.title}
+                            </div>
+                        </button>
+                    </li>
+                {/each}                        
+            </ul>
+        </div>
+    </BounceFade>
+
+    <!-- settings -->
+    <BounceFade 
+        isHidden={!settings}
+        zIndex={200}
+        position={{ top: "20px", right: "12px" }}
+    >
+        <div 
+            class="dmenu"
+            class:dmenu--light={isLight}
+            id="overview--dmenu"
+            use:clickOutside on:click_outside={() => settings = false} 
+        >
+            <!-- view -->
+            <li class="dmenu__section">
+                <div style:display="flex" style:margin="5px 0px 10px 7px">
+                    <!-- <span class="dmenu__option-heading">View</span> -->
+                    <button 
+                        class="dmenu__box" 
+                        class:dmenu__box--selected={view === "cal"}
+                        on:click={() => {
+                            view = "cal"
+                            settings = false
+                        }}
+                    >
+                        <div class="dmenu__box-icon">
+                            <i class="fa-regular fa-calendar-days"></i>
+                        </div>
+                        <span>Calendar</span>
+                    </button>
+                    <button 
+                        class="dmenu__box" 
+                        class:dmenu__box--selected={view === "tasks"}
+                        on:click={() => {
+                            view = "tasks"
+                            settings = false
+                        }}
+                    >
+                        <div class="dmenu__box-icon">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                        <span>Tasks</span>
+                    </button>
                 </div>
-                <ul class="google-cals__list">
-                    {#each googleCalendars as cal}
-                        {@const colorSwatch = findClosestColorSwatch(cal.color.bgColor)}
-                        {@const isDisabled = $googleCalState?.isLoading || $googleCalState?.tokenExpired}
-                        <li>
+            </li>
+            
+            <!-- tasks -->
+            {#if view === "tasks"}
+                {@const hideTasks = !hasCompletedTasks && !todoistLinked}
+                <li class="dmenu__section-divider"></li>
+                <!-- completed -->
+                <li 
+                    class="dmenu__section" 
+                    class:hidden={!hasCompletedTasks && !todoistLinked}
+                >
+                    <div class="dmenu__section-name">
+                        Tasks
+                    </div>
+                    {#if todoistLinked}
+                        <div class="dmenu__option">
                             <button 
-                                class="google-cals__cal"
-                                class:google-cals__cal--unchecked={!cal.isChecked}
-                                disabled={isDisabled}
+                                class="dmenu__option-btn"
                                 on:click={() => {
-                                    onGoogleCalendarClicked(cal.id)
+                                    todosManager.toggleView()
+                                    settings = false
                                 }}
                             >
-                                <div 
-                                    class="google-cals__cal-color"
-                                    style:--cal-color={colorSwatch.primary}
-                                >
-                                </div>
-                                <div class="google-cals__cal-name">
-                                    {cal.title}
-                                </div>
-                            </button>
-                        </li>
-                    {/each}                        
-                </ul>
-            </div>
-        </BounceFade>
-
-        <!-- Day View Settings -->
-        <BounceFade 
-            isHidden={!settings}
-            zIndex={200}
-            position={{ 
-                top: "20px", right: "12px"
-            }}
-        >
-            <div 
-                class="dmenu"
-                class:dmenu--light={isLight}
-                id="overview--dmenu"
-                use:clickOutside on:click_outside={() => {
-                    settings = false
-                }} 
-            >
-                <!-- view -->
-                <li class="dmenu__section">
-                    <div style:display="flex" style:margin="5px 0px 10px 7px">
-                        <!-- <span class="dmenu__option-heading">View</span> -->
-                        <button 
-                            class="dmenu__box" 
-                            class:dmenu__box--selected={view === "calendar"}
-                            on:click={() => {
-                                view = "calendar"
-                                settings = false
-                            }}
-                        >
-                            <div class="dmenu__box-icon">
-                                <i class="fa-regular fa-calendar-days"></i>
-                            </div>
-                            <span>Calendar</span>
-                        </button>
-                        <button 
-                            class="dmenu__box" 
-                            class:dmenu__box--selected={view === "tasks"}
-                            on:click={() => {
-                                view = "tasks"
-                                settings = false
-                            }}
-                        >
-                            <div class="dmenu__box-icon">
-                                <i class="fa-solid fa-list-check"></i>
-                            </div>
-                            <span>Tasks</span>
-                        </button>
-                    </div>
-                </li>
-                
-                <!-- tasks -->
-                {#if view === "tasks"}
-                    {@const hideTasks = !hasCompletedTasks && !todoistLinked}
-                    <li class="dmenu__section-divider"></li>
-                    <!-- completed -->
-                    <li 
-                        class="dmenu__section" 
-                        class:hidden={!hasCompletedTasks && !todoistLinked}
-                    >
-                        <div class="dmenu__section-name">
-                            Tasks
-                        </div>
-                        {#if todoistLinked}
-                            <div class="dmenu__option">
-                                <button 
-                                    class="dmenu__option-btn"
-                                    on:click={() => {
-                                        tasksManager.toggleView()
-                                        settings = false
-                                    }}
-                                >
-                                    <span class="dmenu__option-text">
-                                        {onTodoist ? "Switch to Inbox" : "Switch to Todoist"}
-                                    </span>
-                                </button>
-                            </div>
-                        {/if}
-                        {#if hasCompletedTasks && !onTodoist}
-                            <div class="dmenu__option">
-                                <button 
-                                    class="dmenu__option-btn"
-                                    on:click={() => {
-                                        removeCompleteFlag = !removeCompleteFlag
-                                        settings = false
-                                    }}
-                                >
-                                    <span class="dmenu__option-text">
-                                        Remove Completed
-                                    </span>
-                                </button>
-                            </div>
-                        {/if}
-                    </li>
-                    <div class="dmenu__section-divider" class:hidden={hideTasks}></div>
-                    <!-- todoist -->
-                    <li class="dmenu__section">
-                        <div class="dmenu__section-name">
-                            Todoist
-                        </div>
-                        {#if todoistLinked}
-                            <div class="dmenu__option">
-                                <button 
-                                    class="dmenu__option-btn"
-                                    on:click={() => {
-                                        tasksManager.refreshTodoist()
-                                        settings = false
-                                    }}
-                                >
-                                    <span class="dmenu__option-text">
-                                        Refresh
-                                    </span>
-                                </button>
-                            </div>
-                            <div class="dmenu__option">
-                                <button 
-                                    class="dmenu__option-btn"
-                                    on:click={() => {
-                                        tasksManager.logoutTodoist()
-                                        settings = false
-                                    }}
-                                >
-                                    <span class="dmenu__option-text">
-                                        Log Out
-                                    </span>
-                                </button>
-                            </div>
-                        {:else}
-                            <div class="dmenu__option">
-                                <button 
-                                    class="dmenu__option-btn"
-                                    on:click={() => handleTodoistLogin()}
-                                >
-                                    <span class="dmenu__option-text">
-                                        Link Account
-                                    </span>
-                                </button>
-                            </div>
-                        {/if}
-                    </li>
-                {/if}
-
-                <!-- calendar -->
-                {#if view === "calendar"}
-                    <li class="dmenu__section-divider"></li>
-                    {#if routine && isGoogleCalLinked}
-                        <li class="dmenu__section">
-                            <div class="dmenu__section-name">
-                                Content
-                            </div>
-                            <div 
-                                class="dmenu__option"
-                                class:dmenu__option--selected={dayOptn === "routine"}
-                            >
-                                <button 
-                                    class="dmenu__option-btn"
-                                    on:click={() => {
-                                        dayOptn = "routine"
-                                        settings = false
-                                    }}
-                                >
-                                    <span class="dmenu__option-text">
-                                        Routine
-                                    </span>
-                                    <div class="dmenu__option-right-icon-container">
-                                        <div 
-                                            class="dmenu__option-icon"
-                                            class:dmenu__option-icon--check={true}
-                                        >
-                                            <i class="fa-solid fa-check"></i> 
-                                        </div>
-                                    </div>
-                                </button>
-                            </div>
-                            <div 
-                                class="dmenu__option"
-                                class:dmenu__option--selected={dayOptn === "calendar"}
-                            >
-                                <button 
-                                    class="dmenu__option-btn"
-                                    on:click={() => {
-                                        dayOptn = "calendar"
-                                        settings = false
-                                    }}
-                                >
-                                    <span class="dmenu__option-text">
-                                        Calendar
-                                    </span>
-                                    <div class="dmenu__option-right-icon-container">
-                                        <div 
-                                            class="dmenu__option-icon"
-                                            class:dmenu__option-icon--check={true}
-                                        >
-                                            <i class="fa-solid fa-check"></i> 
-                                        </div>
-                                    </div>
-                                </button>
-                            </div>
-                        </li>
-                        <li class="dmenu__section-divider"></li>
-                    {/if}
-
-                    <!-- routine -->
-                    <li class="dmenu__section">
-                        <div class="dmenu__section-name">
-                            Routine
-                        </div>
-                        {#if routine}
-                            <div class="dmenu__toggle-optn">
-                                <span class="dmenu__option-heading">Checkbox</span>
-                                <ToggleBtn 
-                                    active={checkbox}
-                                    onToggle={() => checkbox = !checkbox}
-                                />
-                            </div>
-                            <div class="dmenu__toggle-optn">
-                                <span class="dmenu__option-heading">Colors</span>
-                                <ToggleBtn 
-                                    active={richColors}
-                                    onToggle={() => richColors = !richColors}
-                                />
-                            </div>
-                        {:else}
-                            <div class="dmenu__toggle-optn">
                                 <span class="dmenu__option-text">
-                                    No Set Routine
+                                    {onTodoist ? "Switch to Inbox" : "Switch to Todoist"}
                                 </span>
-                            </div>
-                        {/if}
-                    </li>
-                    <li class="dmenu__section-divider"></li>
-    
-                    <!-- google calendar -->
-                    <li class="dmenu__section">
-                        <div class="dmenu__section-name">
-                            Google Calendar
+                            </button>
                         </div>
-                        {#if isGoogleCalLinked}
-                            <div class="dmenu__option">
-                                <button 
-                                    on:click={() => onCalSettingsHandler("my calendars")}
-                                    class="dmenu__option-btn"
-                                >
-                                    <span class="dmenu__option-text">
-                                        My Calendars
-                                    </span>
-                                </button>
-                            </div>
+                    {/if}
+                    {#if hasCompletedTasks}
+                        <div class="dmenu__option">
+                            <button 
+                                class="dmenu__option-btn"
+                                on:click={() => {
+                                    removeCompleteFlag = !removeCompleteFlag
+                                    settings = false
+                                }}
+                            >
+                                <span class="dmenu__option-text">
+                                    Remove Completed
+                                </span>
+                            </button>
+                        </div>
+                    {/if}
+                </li>
+                <div class="dmenu__section-divider" class:hidden={hideTasks}></div>
+                <!-- todoist -->
+                <li class="dmenu__section">
+                    <div class="dmenu__section-name">
+                        Todoist
+                    </div>
+                    {#if todoistLinked}
+                        <div class="dmenu__option">
+                            <button 
+                                class="dmenu__option-btn"
+                                on:click={() => {
+                                    todosManager.refreshTodoist()
+                                    settings = false
+                                }}
+                            >
+                                <span class="dmenu__option-text">
+                                    Refresh
+                                </span>
+                            </button>
+                        </div>
+                        <div class="dmenu__option">
+                            <button 
+                                class="dmenu__option-btn"
+                                on:click={() => {
+                                    todosManager.logoutTodoist()
+                                    settings = false
+                                }}
+                            >
+                                <span class="dmenu__option-text">
+                                    Log Out
+                                </span>
+                            </button>
+                        </div>
+                    {:else}
+                        <div class="dmenu__option">
+                            <button 
+                                class="dmenu__option-btn"
+                                on:click={() => handleTodoistLogin()}
+                            >
+                                <span class="dmenu__option-text">
+                                    Link Account
+                                </span>
+                            </button>
+                        </div>
+                    {/if}
+                </li>
+            {/if}
+
+            <!-- calendar -->
+            {#if view === "cal"}
+                <li class="dmenu__section-divider"></li>
+                <!-- routine -->
+                <li class="dmenu__section">
+                    <div class="dmenu__section-name">
+                        Routine
+                    </div>
+                    {#if calView === "g-cal" && routine}
+                        <div class="dmenu__option">
+                            <button 
+                                class="dmenu__option-btn"
+                                on:click={() => {
+                                    calView = "routine"
+                                    settings = false
+                                    g_Day = focusDate
+                                }}
+                            >
+                                <span class="dmenu__option-text">
+                                    Open
+                                </span>
+                            </button>
+                        </div>
+                    {:else if routine}
+                        <div class="dmenu__toggle-optn">
+                            <span class="dmenu__option-heading">Checkbox</span>
+                            <ToggleBtn 
+                                active={checkbox}
+                                onToggle={() => checkbox = !checkbox}
+                            />
+                        </div>
+                        <div class="dmenu__toggle-optn">
+                            <span class="dmenu__option-heading">Colors</span>
+                            <ToggleBtn 
+                                active={richColors}
+                                onToggle={() => richColors = !richColors}
+                            />
+                        </div>
+                    {:else}
+                        <div class="dmenu__toggle-optn">
+                            <span class="dmenu__option-text">
+                                No Set Routine
+                            </span>
+                        </div>
+                    {/if}
+                </li>
+                <li class="dmenu__section-divider"></li>
+
+                <!-- google calendar -->
+                <li class="dmenu__section">
+                    <div class="dmenu__section-name">
+                        Google Calendar
+                    </div>
+                    {#if calView === "routine" && googleCalLinked}
+                        <div class="dmenu__option">
+                            <button 
+                                class="dmenu__option-btn"
+                                on:click={() => {
+                                    calView = "g-cal"
+                                    settings = false
+
+                                    if (!isSameDay(focusDate, g_Day)) {
+                                        g_Day = focusDate
+                                        getCalEvents(focusDate)
+                                    }
+                                }}
+                            >
+                                <span class="dmenu__option-text">
+                                    Open
+                                </span>
+                            </button>
+                        </div>
+                    {:else if googleCalLinked}
+                        {#if g_tokenExpired}
                             <div class="dmenu__option">
                                 <button 
                                     on:click={() => onCalSettingsHandler("refresh")}
                                     class="dmenu__option-btn"
                                 >
                                     <span class="dmenu__option-text">
-                                        {$googleCalState?.tokenExpired ? "Refresh Token" : "Refresh"}
-                                    </span>
-                                </button>
-                            </div>
-                            <div class="dmenu__option">
-                                <button 
-                                    on:click={() => onCalSettingsHandler("disconnect")}
-                                    class="dmenu__option-btn"
-                                >
-                                    <span class="dmenu__option-text">
-                                        Disconnect
-                                    </span>
-                                </button>
-                            </div>
-                        {:else}
-                            <div class="dmenu__option">
-                                <button 
-                                    on:click={() => connectGoogleCal()}
-                                    class="dmenu__option-btn"
-                                >
-                                    <span class="dmenu__option-text">
-                                        Connect
+                                        Refresh Token
                                     </span>
                                 </button>
                             </div>
                         {/if}
-                    </li>
-                {/if}
-
-                {#if !isLight && !ambience?.active}
-                    {@const { img, show } = headerOptions}
-                    {@const optnText = img ? "Replace" : "Add"}
-                
-                    <!-- header image -->
-                    <li class="dmenu__section-divider"></li>
-                    <li class="dmenu__section">
-                        <div class="dmenu__section-name">
-                            Header Background
-                        </div>
-
                         <div class="dmenu__option">
                             <button 
+                                on:click={() => onCalSettingsHandler("my calendars")}
                                 class="dmenu__option-btn"
-                                on:click={() => {
-                                    onUpdateHeaderOptions(optnText.toLowerCase())
-                                    settings = false
-                                }}
                             >
                                 <span class="dmenu__option-text">
-                                    {optnText}
+                                    Calendars
                                 </span>
                             </button>
                         </div>
-                        <div class="dmenu__toggle-optn  dmenu__option--static">
-                            <span class="dmenu__option-heading">Show</span>
-                            <ToggleBtn 
-                                active={show}
-                                onToggle={() => onUpdateHeaderOptions("show")}
-                            />
+                        <div class="dmenu__option">
+                            <button 
+                                on:click={() => onCalSettingsHandler("disconnect")}
+                                class="dmenu__option-btn"
+                            >
+                                <span class="dmenu__option-text">
+                                    Disconnect
+                                </span>
+                            </button>
                         </div>
-                    </li>
-                {/if}
-            </div>
-        </BounceFade>
+                    {:else}
+                        <div class="dmenu__option">
+                            <button 
+                                on:click={() => connectGoogleCal()}
+                                class="dmenu__option-btn"
+                            >
+                                <span class="dmenu__option-text">
+                                    Connect
+                                </span>
+                            </button>
+                        </div>
+                    {/if}
+                </li>
+            {/if}
+
+            {#if !isLight && !ambience?.active}
+                {@const { img, show } = headerOptions}
+                {@const optnText = img ? "Replace" : "Add"}
+            
+                <!-- header image -->
+                <li class="dmenu__section-divider"></li>
+                <li class="dmenu__section">
+                    <div class="dmenu__section-name">
+                        Header Background
+                    </div>
+
+                    <div class="dmenu__option">
+                        <button 
+                            class="dmenu__option-btn"
+                            on:click={() => {
+                                onUpdateHeaderOptions(optnText.toLowerCase())
+                                settings = false
+                            }}
+                        >
+                            <span class="dmenu__option-text">
+                                {optnText}
+                            </span>
+                        </button>
+                    </div>
+                    <div class="dmenu__toggle-optn  dmenu__option--static">
+                        <span class="dmenu__option-heading">Show</span>
+                        <ToggleBtn 
+                            active={show}
+                            onToggle={() => onUpdateHeaderOptions("show")}
+                        />
+                    </div>
+                </li>
+            {/if}
+        </div>
+    </BounceFade>
     </div>
 </div>
 
@@ -588,10 +655,10 @@
         height: 100%;
         overflow: hidden;
 
-        &--light &__day-view-header span {
+        &--light &__day-header span {
             @include text-style(0.85);
         }
-        &--light &__day-view-settings-btn {
+        &--light &__day-settings-btn {
             background-color: rgba(var(--textColor1), 0.1);
             opacity: 0.4;
 
@@ -599,49 +666,17 @@
                 opacity: 0.9;
             }
         }
-        &--light &__hour-block {
-            span {
-                @include text-style(0.55);
-            }
-
-            &-hoz-divider path {
-                @include txt-color(0.2, "stroke");
-                stroke-width: 0.85px;
-            }
-            &-vert-divider path {
-                @include txt-color(0.2, "stroke");
-                stroke-width: 1px;
-            }
-        }
-        &--light &__session {
-            border-color: transparent;
-
-            &--magnify {
-                box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.1);
-            }
-
-            &-title {
-                @include text-style(0.72, 500);
-            }
-            &-time-period span {
-                @include text-style(0.4, 500);
-            }
-        }
-        &--light &__day-view-btns button {
-            font-weight: 500;
-        }
-
         &__calendar-container {
             margin: 0px 0px 0px 0px;
             padding: 0px var(--OVERVIEW_SIDE_MARGINS);
             height: 230px;
         }
-        &__day-view {
+        &__day {
             width: 100%;
             height: 100%;
             position: relative;
         }
-        &__day-view-header {
+        &__day-header {
             @include flex(center, space-between);
             position: relative;
             padding: 0px var(--DAY_VIEW_SIDE_MARGINS);
@@ -652,7 +687,7 @@
                 @include text-style(0.35, var(--fw-400-500), 1.25rem, "Geist Mono");
             }
         }
-        &__day-view-settings-btn {
+        &__day-settings-btn {
             background-color: rgba(var(--textColor1), 0.05);
             opacity: 0.3;
             @include circle(20px);
@@ -663,39 +698,55 @@
                 opacity: 0.5;
             }
         }
-        &__day-view-btn {
-            border-radius: 12px;
-            margin-right: 9px;
-            opacity: 0.15;
-            @include text-style(1, 400, 1.2rem, "DM Mono");
+        &__main-content {
+            overflow: scroll;
+            height: calc(100% - var(--api-offset-top));
+        }
+        &__api {
+            @include flex(center, space-between);
+            @include text-style(0.35, var(--fw-400-500), 1.32rem);
+            @include abs-bottom-left(7px, 1px);
+            width: 100%;
+            padding: 5px 0px 12px 7px;
+            z-index: 100;
+            border-top: 1.5px dashed rgba(var(--textColor1), 0.06);
+            height: 45px;
 
-            &:hover {
-                opacity: 0.4;
-            }
-            &--active {
-                opacity: 0.8 !important;
-            }
-            &--active i {
-                opacity: 0.9 !important;
-            }
-            &--dropdown-active &-arrow {
-                transform: rotate(180deg);
-            }
-            i {
-                opacity: 0.4;
-                font-size: 1.05rem;
-            }
-            &:last-child {
-                margin-right: 0px;
+            span {
+                margin-left: 6px;
             }
         }
-        &__event-list-container {
-            width: 100%;
-            position: relative;
-            display: flex;
+        &__api-sync {
+            @include flex(center);
+            span {
+                margin-right: 12px;
+                @include text-style(0.125, var(--fw-400-500), 1.3rem, "system");
+            }
+        }
+        &__api-sync button {
+            @include circle(25px);
+            @include flex(center);
+            font-size: 1.35rem;
+            margin-right: 5px;
+            color: rgba(var(--textColor1), 0.85);
+            opacity: 0.2;
+            
+            &:hover {
+                opacity: 0.9;
+            }
+        }
+    }
 
-            &::-webkit-scrollbar {
-                display: none;
+    .sync-loading {
+        animation: spin 1s linear infinite;
+        transform-origin: center;
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg); 
             }
         }
     }
@@ -716,18 +767,16 @@
     }
 
     .google-cals {
-        background-color: var(--bg-2);
-        border: 1px solid rgba(var(--textColor1), 0.02);
+        @include contrast-bg("bg-2");
         border-radius: 15px;
         width: 200px;
 
         span {
-            @include text-style(0.3, 400, 1.2rem);
+            @include text-style(0.3, 300, 1.2rem);
             display: block;
-            padding: 8px 16px 0px 14px;
+            padding: 9px 16px 0px 14px;
             margin-right: 4px;
         }
-
         &__header {
             @include flex(center, space-between);
         }
@@ -745,7 +794,7 @@
         }
         &__cal {
             @include flex(center);
-            padding: 5px 16px 5px 10px;
+            padding: 6px 16px 6px 10px;
             border-radius: 8px;
             margin-left: 5px;
             width: calc(100% - 37px);
@@ -754,12 +803,13 @@
 
             &:active {
                 transition: 0.1s cubic-bezier(.4,0,.2,1);
+                transform: scale(0.998);
             }
             &:hover {
                 background-color: rgba(var(--textColor1), 0.027);
             }
             &--unchecked:hover &-color {
-                background-color: rgba(var(--cal-color), 0.3);
+                background-color: rgba(var(--cal-color), 0.5) !important;
             }
             &--unchecked &-name {
                 opacity: 0.4;
@@ -767,22 +817,21 @@
             &--unchecked &-color {
                 opacity: 0.2;
                 background-color: transparent;
+                box-shadow: none;
             }
         }
         &__cal-color {
-            height: 10px;
-            width: 10px;
-            border-radius: 4px;
+            @include square(12px, 4.5px);
             margin-right: 12px;
             background-color: rgba(var(--cal-color));
-            border: 1px solid rgba(var(--cal-color));
+            border: 1.5px solid rgba(var(--cal-color));
+
+            box-shadow: var(--bg-2) 0px 0px 0px 1.5px, 
+                        rgba(var(--cal-color), 0.2) 0px 0px 0px 3px;
         }
         &__cal-name {
-            @include text-style(0.9, 500, 1.13rem);
-        }
-        &__cal-eye {
-            float: right;
-            opacity: 0;
+            @include text-style(0.9, var(--fw-400-500), 1.35rem);
+            @include elipses-overflow;
         }
     }
 </style>

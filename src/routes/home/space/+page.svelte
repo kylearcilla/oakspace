@@ -81,13 +81,15 @@
             else if (newDigit != ":") {
                 span.style.display = 'block'
                 span.textContent = init ? digit : newDigit
-
+                
+                // transition animation
                 if (init) {
                     const newDigitElem = makeNewDigitElem(newDigit)
                     digitElem.appendChild(newDigitElem)
                     digitElem.style.transform = `translateY(-${yOffset}px)`
                     digitElem.style.transition = `transform ${NUM_CHANGE_TIME}ms ease-in-out`
                     
+                    // do not show x, in the transition
                     if (digit === "X") {
                         digitNumElem.style.opacity = `0`
                         digitNumElem.style.visibility = `hidden`

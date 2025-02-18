@@ -1,7 +1,6 @@
 import { APIError } from "./errors"
 import { v4 as uuidv4 } from 'uuid'
 import { APIErrorCode } from "./enums"
-import { TodosManager } from "./todos-manager"
 import { PUBLIC_TODOIST_CLIENT_ID, PUBLIC_TODOIST_CLIENT_SECRET } from "$env/static/public"
 
 const REDIRECT_URI = "http://localhost:5173/home/oauth-callback"
@@ -420,6 +419,9 @@ export async function deleteTodoistTask({ accessToken, taskId}: {
     }
 }
 
+/**
+ * https://developer.todoist.com/rest/v2
+ */
 const throwTodoistAPIError = ({ status, error }: {
     status: number,
     error?: string

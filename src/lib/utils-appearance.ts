@@ -36,15 +36,20 @@ export function loadTheme() {
   setRootColors(name, styling)
 }
 
-export function setPrevTheme(prevTheme: string) {
-  localStorage.setItem("prevTheme", prevTheme)
+export function setPrevTheme(prevTheme: string | null) {
+  if (prevTheme) {
+    localStorage.setItem("prevTheme", prevTheme)
+  }
+  else {
+    localStorage.removeItem("prevTheme")
+  }
 }
 
 export function getPrevTheme() {
   return localStorage.getItem("prevTheme")
 }
 
-export function setNewTheme(newTheme: Theme) {
+export function setNewTheme(newTheme: Theme, forAmbience = false) {
   const { name, styling } = newTheme
   const isDark = styling.isDark
 
@@ -58,6 +63,10 @@ export function setNewTheme(newTheme: Theme) {
   
   setRootColors(name, newTheme.styling)
   localStorage.setItem("theme", JSON.stringify(get(themeState)))
+
+  if (!forAmbience) {
+    setPrevTheme(null)
+  }
 }
 
 export function findThemeFromName(name: string) {

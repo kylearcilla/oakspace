@@ -5,6 +5,7 @@ import { TEST_TASKS } from "$lib/mock-data"
 import { APIErrorCode, LogoIcon } from "./enums"
 
 import { toast } from "./utils-toast"
+import { setOatuhRedirectContext } from "./utils-home"
 import { getCheerEmoji, removeItemFromArray, toastApiErrorHandler } from "./utils-general"
 import { 
         addTodoistTask, authTodoistAPI, deleteTodoistTask, didTodoistAPIRedirect, 
@@ -102,8 +103,8 @@ export class TodosManager {
 
     /* todoist */
 
-    loginTodoist(redirectBackUrl: string) {
-        localStorage.setItem("redirect-back-url", redirectBackUrl)
+    loginTodoist() {
+        setOatuhRedirectContext("tapi")
         toast("promise", { loading: 'Logging in...' }, this.initTodoist())
     }
 
@@ -161,7 +162,6 @@ export class TodosManager {
                 message: "Todoist",
                 description: "Todoist sync successful!"
             })
-            this.autoSyncTimeStamp = new Date()
         }
         catch(error: any) {
             this.currTasks = this.inboxTasks
@@ -198,9 +198,7 @@ export class TodosManager {
                 this.currTasks = this.onTodoist ? this.todoistTasks! : this.currTasks
                 this.update({ renderFlag: !this.renderFlag })
             }
-
             this.autoSyncTimeStamp = new Date()
-
         }
         catch(error: any) {
             this.onTodistError(error)
@@ -263,9 +261,9 @@ export class TodosManager {
         if (this.refreshDebounceTimeout || !this.todoistLinked) {
             return
         }
-
+        
+        this.update({ loading: "sync" })
         this.refreshDebounceTimeout = setTimeout(async () => {
-            this.update({ loading: "sync" })
             this.resetSyncCountsIfNeeded()
 
             try {
@@ -276,8 +274,6 @@ export class TodosManager {
                     this.onTodistError(new APIError(APIErrorCode.RATE_LIMIT_HIT))
                     return
                 }
-                
-                this.autoSyncTimeStamp = new Date()
                 await this.performSync(canFullSync)
             } 
             finally {
@@ -289,7 +285,10 @@ export class TodosManager {
     }
 
     async autoRefreshHandler(date: Date) {
-        if (!this.autoSyncTimeStamp || !this.todoistLinked) {
+        if (!this.todoistLinked) {
+            return
+        }
+        if (!this.autoSyncTimeStamp) {
             this.autoSyncTimeStamp = new Date()
         }
         const diff = date.getTime() - this.autoSyncTimeStamp.getTime()
@@ -297,16 +296,18 @@ export class TodosManager {
         if (diff >= this.AUTO_REFRESH_INTERVAL_MINS * 60 * 1000) {
             this.update({ loading: "sync" })
             await this.initTodoistUserItems(true)
-            console.log("auto refresh")
+            console.log("auto refresh", diff / (60 * 1000))
 
             this.saveTodoistData()
             this.update({ loading: "none" })
-
-            this.autoSyncTimeStamp = new Date()
         }
+
+        return this.lastSyncTimeStamp
     }
 
     private async performSync(isFullSync: boolean) {
+        this.autoSyncTimeStamp = new Date()
+
         if (isFullSync) {
             await this.initTodoistUserItems(true)
             this.lastFullSyncTime = Date.now()
@@ -435,9 +436,6 @@ export class TodosManager {
         catch(error: any) {
             this.onTodistError(error)
         }
-        finally {
-            this.autoSyncTimeStamp = new Date()
-        }
     }
     
     onAddTask = async (context: TaskAddContext) => {
@@ -469,11 +467,10 @@ export class TodosManager {
         }
     }
 
-    onDeleteTask = async ({ payload: { tasks, task, removed }, undoFunction }: TaskDeleteContext) => {
+    onDeleteTask = async ({ payload: { tasks: _tasks, task, removed }, undoFunction }: TaskDeleteContext) => {
+        // find the deleted task and set it to be checked
+        const tasks = _tasks!.map(t => ({ ...t, isChecked: t.id === task?.id ? true : false }))
         const action = task ? "delete" : "removed-completed"
-        if (this.onTodoist && action === "removed-completed") {
-            return
-        }
         this.autoSyncTimeStamp = new Date()
         
         try {
@@ -486,8 +483,10 @@ export class TodosManager {
                     accessToken: this.todoistAccessToken,
                     taskId: task!.id
                 })
-                this.todoistTasks = tasks
             } 
+            if (this.onTodoist) {
+                this.todoistTasks = tasks
+            }
             else {
                 this.inboxTasks = tasks
             }
@@ -495,7 +494,7 @@ export class TodosManager {
                 action, 
                 name: task?.title,
                 removedCount: task ? undefined : removed.length,
-                func: this.onTodoist ? undefined : undoFunction
+                func: this.onTodoist && action === "delete" ? undefined : undoFunction
             })
             this.currTasks = tasks
             this.update({ renderFlag: !this.renderFlag })
@@ -543,7 +542,7 @@ export class TodosManager {
         if (action === "add" && this.onTodoist) {
             this.initToast({
                 icon: LogoIcon.Todoist,
-                message: `"${name}" added to from your ${this.onTodoist ? "Todoist" : ""} Inbox`
+                message: `"${name}" added to your Inbox`
             })
         } 
         else if (action === "completion") {
@@ -564,7 +563,7 @@ export class TodosManager {
             this.initToast({
                 icon: LogoIcon.Todoist,
                 message: "Todoist",
-                description: `"${name}" deleted from your Todoist Inbox`
+                description: `"${name}" deleted from your Inbox`
             })
         }
         else if (action === "delete") {
@@ -642,7 +641,7 @@ export class TodosManager {
                 
                 // Recursively sort and add all descendants
                 if (taskGroups.has(task.id)) {
-                    const [childTasks, newIdx] = sortGroup(task.id, orderIdx)
+                    const [childTasks, _] = sortGroup(task.id, orderIdx)
                     result.push(...childTasks)
                 }
             }

@@ -73,6 +73,7 @@
         }
         else if (option === "goals") {
             toast("default", {
+                icon: LogoIcon.GoogleCal,
                 message: "some people want it all but i dont want nothing at all if it aint you baby if i aint got you baby some people want",
                 action: {
                     label: "Undo",

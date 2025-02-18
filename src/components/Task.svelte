@@ -51,6 +51,11 @@
     function _onSubtaskCheck(wasChecked: boolean) {
         checkedSubtasks += wasChecked ? 1 : -1
     }
+    function onSelectStart(e: Event) {
+        if ($manager.dragSrc) {
+            e.preventDefault()
+        }
+    }
 </script>
 
  <div
@@ -66,15 +71,15 @@
     class:drop-bottom-border={dragTarget?.id === task.id && dragAction === "nbr-add-bottom"}
     class:task--hover={dragTarget?.id === task.id && dragAction === "child-add"}
 
-    style:--max-title-lines={isOpen ? 0 : settings.maxTitleLines}
-    style:--max-descr-lines={isOpen ? 0 : settings.maxDescrLines}
+    style:--max-title-lines={isOpen || (isEdit && editMode === "title") ? 0 : settings.maxTitleLines}
+    style:--max-descr-lines={isOpen || (isEdit && editMode === "description") ? 0 : settings.maxDescrLines}
     style:--left-side-width={`${leftSideWidth - 14}px`}
  >
     <div 
         class="task__content"
         class:task__content--checked={task.isChecked}
         class:task__content--open={isOpen}
-        on:selectstart|preventDefault
+        on:selectstart={onSelectStart}
     >
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div 

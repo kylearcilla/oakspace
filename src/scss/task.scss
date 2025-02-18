@@ -92,7 +92,7 @@
         }
     }
     &__top-content--highlight {
-        &:focus, &:hover {
+        &:hover {
             background-color: rgba(var(--textColor1), var(--focus-opacity)) !important;
         }
         &:hover .toggle-arrow {

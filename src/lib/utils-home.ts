@@ -10,6 +10,7 @@ import { POPULAR_SPACES } from "./data-spaces"
 import { initEmojis } from "./emojis"
 import { themes } from "./data-themes"
 import { initHabits } from "./utils-habits"
+import { didTodoistAPIRedirect } from "./api-todoist"
 
 /* constants */
 export const LEFT_BAR_MIN_WIDTH = 60
@@ -398,4 +399,43 @@ export async function closeAmbience() {
 export function getHomeUrlPath(path = window.location.pathname) {
     const name = path.split("/")[2]
     return name === "base" ? "home" : name
+}
+
+export function loadSideBarView(): SideBarViews {
+    const data = localStorage.getItem("side-bar")
+    const redirect = didTodoistAPIRedirect() 
+
+    if (!data) {
+        return {
+            view: redirect ? "tasks" : "cal", calView: "routine"
+        }
+    }
+
+    const options = JSON.parse(data)
+    redirect && (options.view = "tasks")
+
+    return options
+}
+export function saveSideBarView(options: SideBarViews) {
+    const data = JSON.stringify(options)
+
+    localStorage.setItem("side-bar", data)
+}
+
+export function setOatuhRedirectContext(api: "gcal" | "tapi") {
+    localStorage.setItem("oauth-redirect-context", JSON.stringify({ 
+        redirectBackUrl: window.location.pathname, api
+    }))
+}
+
+export function getOauthRedirectContext(): { 
+    api: "gcal" | "tapi" | null, redirectBackUrl: string | null 
+} {
+    const context = localStorage.getItem("oauth-redirect-context")
+    localStorage.removeItem("oauth-redirect-context")
+    
+    if (!context) {
+        return { api: null, redirectBackUrl: null }
+    }
+    return JSON.parse(context)
 }

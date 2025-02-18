@@ -14,16 +14,18 @@
 
     let type: "default" | "side" = "default"
     let currMonth = calendar.currMonth
-    let pickedDate = new Date()
     let isNextMonthAvailable = calendar.isNextMonthAvailable
     let isPrevMonthAvailable = calendar.isPrevMonthAvailable
 
-    function _onDayUpdate(day: Date) {
-        if (isDisabled) return
-        
-        pickedDate = calendar.setNewPickedDate(day)
+    $: {
+        calendar.setNewPickedDate(focusDate)
         currMonth = calendar.currMonth
-        onDayUpdate(pickedDate)
+    }
+
+    function _onDayUpdate(day: Date) {
+        if (!isDisabled) {
+            onDayUpdate(day)
+        }
     }
     function updateMonth(direction: "prev" | "next") {
         if (direction === "prev") {
@@ -75,8 +77,8 @@
                     class="calendar__today-btn"
                     on:click={() => {
                         currMonth = calendar.getThisMonth()
-                        pickedDate = new Date()
-                        onDayUpdate(pickedDate)
+                        focusDate = new Date()
+                        onDayUpdate(focusDate)
                     }}
                 >
                     •
@@ -118,7 +120,7 @@
                         class="calendar__month-day"
                         class:calendar__month-day--not-curr-month={!day.isInCurrMonth}
                         class:calendar__month-day--today={isSameDay(day.date, new Date())}
-                        class:calendar__month-day--picked={isSameDay(day.date, pickedDate)}
+                        class:calendar__month-day--picked={isSameDay(day.date, focusDate)}
                         on:keydown={(e) => {
                             if (e.key === 'Enter' || e.code === 'Space') {
                                 e.preventDefault()

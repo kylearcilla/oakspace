@@ -14,7 +14,7 @@ export enum TextTab {
     Workspace, Productivity, Goals, Habits, Mindhub, Routines
 }
 export enum LogoIcon {
-    YoutubeMusic, Youtube, Session, Google, Somara, Todoist
+    YoutubeMusic, Youtube, Session, Google, Somara, Todoist, GoogleCal
 }
 export enum Icon {
     Settings, Dropdown, Add, Close, ChevronLeft, ChevronRight, DragDots, Archive, Tune, Sun, Moon, Pin, Sublink,

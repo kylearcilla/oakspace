@@ -2,13 +2,14 @@
 	import { onDestroy, onMount } from "svelte"
 	import { themeState, globalContext } from "$lib/store"
 
-	import { hexToRgb } from "$lib/utils-general"
+	import { hexToRgb } from "$lib/utils-colors"
+	import { inlineStyling } from "$lib/utils-general"
 	import { getThemeStyling } from "$lib/utils-appearance"
 	import { TasksListManager } from "$lib/tasks-list-manager"
-	import { clickOutside, inlineStyling } from "$lib/utils-general"
 
 	import Task from "../components/Task.svelte"
 	import DropdownList from "./DropdownList.svelte"
+	import { clickOutside } from "../lib/utils-general"
 
     export let removeCompleteFlag: boolean | undefined = undefined
     export let newTaskFlag: boolean | undefined = undefined
@@ -49,7 +50,10 @@
             floatBgRgb = "40, 40, 40"
         }
         else {
-            floatBgRgb = hexToRgb(getThemeStyling("sessionBlockColor"))
+            floatBgRgb = hexToRgb({ 
+                hex: getThemeStyling("sessionBlockColor"),
+                format: "str"
+            })
         }
     }
 
@@ -120,6 +124,7 @@
         class:tasks--side-menu={settings.type === "side-menu"}
         style={inlineStyling($manager.styling?.list)}
         bind:this={tasksList}
+        use:clickOutside on:click_outside={() => $manager.onClickOutside()}
     >   
         {#each rootTasks as task, idx (task.id)}
             <li>

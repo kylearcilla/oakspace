@@ -247,14 +247,14 @@
             text-align: center;
 
             span {
-                @include text-style(0.35, 500, 1.45rem, "DM Sans");
+                @include text-style(0.35, 500, 1.45rem);
             }
         }
         &__name {
-            @include text-style(0.65, 500, 1.45rem, "DM Sans");
+            @include text-style(0.65, 500, 1.45rem);
         }
         &__total-time {
-            @include text-style(1, 400, 4.5rem, "DM Sans");
+            @include text-style(1, 400, 4.5rem);
             margin: 4px 0px 7px 0px;
         }
         &__stats {

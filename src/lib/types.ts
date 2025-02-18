@@ -1182,3 +1182,9 @@ type ThemeStyling = {
     cardBgColor: string
     cardHovColor: string
 }
+
+
+type SideBarViews = {
+    view: "tasks" | "cal"
+    calView: "routine" | "g-cal"
+}

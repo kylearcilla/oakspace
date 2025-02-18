@@ -25,6 +25,7 @@
 	const TOAST_ICON_OPTIONS = {
 		Youtube: { containerWidth: "17px" },
 		Google:  { containerWidth: "14px" },
+		GoogleCal:  { containerWidth: "18px", scale: "0.9" },
 		Todoist: { containerWidth: "17px", scale: "1.15" }
 	}
 

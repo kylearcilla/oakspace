@@ -1,12 +1,12 @@
 export const COLOR_SWATCHES = [
   {
-    primary: "#FF9292",
+    primary: "#F09999",
     light1: "157, 100, 100",
     light2: "255, 214, 214",
     light3: "221, 168, 168",
-    dark1: "252, 145, 145",
-    dark2: "41, 26, 26",
-    dark3: "96, 66, 66",
+    dark1: "255, 180, 180",
+    dark2: "54, 34, 34",
+    dark3: "156, 115, 115",
     name: "red"
   },
   {
@@ -14,9 +14,9 @@ export const COLOR_SWATCHES = [
     light1: "149, 106, 100",
     light2: "247, 215, 202",
     light3: "217, 173, 167",
-    dark1: "251, 163, 144",
-    dark2: "39, 27, 25",
-    dark3: "102, 80, 75",
+    dark1: "254, 176, 161",
+    dark2: "49, 36, 33",
+    dark3: "172, 122, 112",
     name: "terracotta"
   },
   {
@@ -24,9 +24,9 @@ export const COLOR_SWATCHES = [
     light1: "154, 112, 75",
     light2: "248, 227, 191", 
     light3: "217, 184, 155",
-    dark1: "255, 193, 152",
-    dark2: "35, 26, 21",
-    dark3: "107, 76, 55",
+    dark1: "255, 209, 180",
+    dark2: "53, 43, 37",
+    dark3: "180, 144, 121",
     name: "orange"
   },
   {
@@ -34,9 +34,9 @@ export const COLOR_SWATCHES = [
     light1: "139, 114, 66",
     light2: "255, 246, 200",
     light3: "228, 203, 155",
-    dark1: "252, 222, 147",
-    dark2: "43, 36, 27",
-    dark3: "100, 86, 51",
+    dark1: "252, 231, 180",
+    dark2: "52, 51, 39",
+    dark3: "151, 131, 85",
     name: "yellow"
   },
   {
@@ -67,17 +67,17 @@ export const COLOR_SWATCHES = [
     dark1: "200, 249, 243",
     dark2: "24, 35, 30",
     dark3: "58, 109, 102",
-      name: "teal"
+    name: "teal"
   },
   {
     primary: "#B2E4FF",
     light1: "74, 87, 101",
     light2: "218, 229, 241",
     light3: "142, 163, 185",
-    dark1: "192, 233, 251",
-    dark2: "21, 30, 35",
-    dark3: "53, 80, 92",
-      name: "azure"
+    dark1: "192, 219, 252",
+    dark2: "36, 42, 54",
+    dark3: "91, 119, 141",
+    name: "azure"
   },
   {
     primary: "#A5BDFE",
@@ -90,7 +90,7 @@ export const COLOR_SWATCHES = [
       name: "blue"
   },
   {
-    primary: "#B1A0F7",
+    primary: "#CEC1FF",
     light1: "78, 79, 102",
     light2: "224, 218, 253",
     light3: "151, 154, 204",
@@ -100,7 +100,7 @@ export const COLOR_SWATCHES = [
     name: "purple"
   },
   {
-    primary: "#E8D0FF",
+    primary: "#DDBAFF",
     light1: "99, 91, 108",
     light2: "239, 212, 249",
     light3: "187, 168, 209",
@@ -110,13 +110,13 @@ export const COLOR_SWATCHES = [
     name: "magenta"
   },
   {
-    primary: "#f4a3c4",
+    primary: "#FD8AB9",
     light1: "154, 97, 124",
     light2: "249, 218, 224",
     light3: "220, 179, 198",
-    dark1: "255, 164, 176",
-    dark2: "41, 27, 33",
-    dark3: "87, 55, 59",
+    dark1: "245, 172, 217",
+    dark2: "49, 39, 45",
+    dark3: "148, 114, 139",
     name: "pink"
   },
 ]
@@ -155,45 +155,88 @@ export function getColorTrio(color: Color, doGetLight: boolean): [string, string
  * @returns  The color swatch object that is closest to the given color, or null if no swatch is found.
  */
 export function findClosestColorSwatch(hexColor: string): Color {
-  const rgbColor = hexToRgb(hexColor)
+  const rgbColor = hexToRgb({ hex: hexColor })
+  const labColor = rgbToLab(rgbColor as number[])
+  
   let closestColor = null
   let minDistance = Infinity
 
   for (const color of COLOR_SWATCHES) {
-    const primaryRgb = color.primary.split(", ").map(Number)
-    const distance = getEuclideanDistance(rgbColor, primaryRgb)
+    const primaryRgb = hexToRgb({ hex: color.primary, format: "arr" })
+    const primaryLab = rgbToLab(primaryRgb as number[])
+    const distance = getDeltaE(labColor, primaryLab)
 
     if (distance < minDistance) {
       minDistance = distance
       closestColor = color
     }
   }
-
   return closestColor!
 }
 
-function hexToRgb(hex: string) {
+export function hexToRgb({ hex, format = "arr" }: { 
+  hex: string, format?: "str" | "arr" 
+}) {
   hex = hex.replace(/^#/, '')
   const bigint = parseInt(hex, 16)
   const r = (bigint >> 16) & 255
   const g = (bigint >> 8) & 255
   const b = bigint & 255
 
-  return [r, g, b]
+  return format === "str" ? `${r}, ${g}, ${b}` : [r, g, b]
 }
 
 /**
- * Calculates the Euclidean distance between two RGB colors.
- * 
- * @param rgb1 The first RGB color as an array [r, g, b].
- * @param rgb2 The second RGB color as an array [r, g, b].
- * @returns    The Euclidean distance between the two colors.
- * 
+ * Convert RGB to LAB color space
  */
-function getEuclideanDistance(rgb1: number[], rgb2: number[]) {
-  const rDiff = rgb1[0] - rgb2[0]
-  const gDiff = rgb1[1] - rgb2[1]
-  const bDiff = rgb1[2] - rgb2[2]
+function rgbToLab(rgb: number[]): number[] {
+  // Convert RGB to XYZ
+  let r = rgb[0] / 255
+  let g = rgb[1] / 255
+  let b = rgb[2] / 255
 
-  return Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff)
+  r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92
+  g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92
+  b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92
+
+  r *= 100
+  g *= 100
+  b *= 100
+
+  const x = r * 0.4124 + g * 0.3576 + b * 0.1805
+  const y = r * 0.2126 + g * 0.7152 + b * 0.0722
+  const z = r * 0.0193 + g * 0.1192 + b * 0.9505
+
+  // Convert XYZ to LAB
+  const xn = 95.047
+  const yn = 100.0
+  const zn = 108.883
+
+  const xx = x / xn
+  const yy = y / yn
+  const zz = z / zn
+
+  const fx = xx > 0.008856 ? Math.pow(xx, 1/3) : (7.787 * xx) + 16/116
+  const fy = yy > 0.008856 ? Math.pow(yy, 1/3) : (7.787 * yy) + 16/116
+  const fz = zz > 0.008856 ? Math.pow(zz, 1/3) : (7.787 * zz) + 16/116
+
+  const l = (116 * fy) - 16
+  const a = 500 * (fx - fy)
+  const bb = 200 * (fy - fz)
+
+  return [l, a, bb]
+}
+
+/**
+ * Calculate color difference in LAB space
+ */
+function getDeltaE(labA: number[], labB: number[]): number {
+  const [l1, a1, b1] = labA
+  const [l2, a2, b2] = labB
+  
+  const deltaL = l2 - l1
+  const deltaA = a2 - a1
+  const deltaB = b2 - b1
+
+  return Math.sqrt(deltaL * deltaL + deltaA * deltaA + deltaB * deltaB)
 }

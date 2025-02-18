@@ -10,6 +10,7 @@ const REDIRECT_URI = "http://localhost:5173/home"
 
 declare const google: any
 
+
 /**
  *  Initialies two client object: google client app (for signing in with google)
  *  Render a google sign in button. 

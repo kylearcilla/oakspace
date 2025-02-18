@@ -128,7 +128,7 @@ const quotes: Quote[] = [
     {
         text: "What a disgrace it is for a man to grow old without ever seeing the beauty and strength of which his body is capable.",
         bgImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Heracles_and_the_Nemea_Lion_Pieter_Paul_Rubens.jpg/1024px-Heracles_and_the_Nemea_Lion_Pieter_Paul_Rubens.jpg",
-        artCredit: "<i>Heracles and the Nemea Lion</i> by Pieter Paul Rubens",
+        artCredit: "<i>Heracles and the Nemean Lion</i> by Pieter Paul Rubens",
         quoteCredit: "Socrates"
     }, 
     {

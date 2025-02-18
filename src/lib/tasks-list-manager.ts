@@ -5,7 +5,7 @@ import { Tasks } from "./Tasks"
 import { toast } from "./utils-toast"
 import { globalContext } from './store'
 import { TextEditorManager } from "./inputs"
-import { findAncestor, getElemById, initFloatElemPos, isEditTextElem, shouldScroll } from "./utils-general"
+import { findAncestor, getElemById, initFloatElemPos, shouldScroll } from "./utils-general"
 
 type StateType = Omit<TasksListManager, "tasks">
 type DragAction = "nbr-add-top" | "nbr-add-bottom" | "child-add" | "remove" | "remove-child" | "drag-end"
@@ -71,7 +71,7 @@ export class TasksListManager {
     /* edits  */
     editMode: "title" | "description" | "task" | null = null
     newText = ""
-    justEdited = false
+    justEdited: "edited" | "clicked-outside" | null = null
     newTaskAdded: Task | null = null
 
     /* drag and drop */
@@ -116,8 +116,8 @@ export class TasksListManager {
             numbered = false, 
             subtasks = true, 
             reorder = true,
-            maxTitleLines = type === "side-bar" ? 1 : 2,
-            maxDescrLines = type === "side-bar" ? 2 : 2,
+            maxTitleLines = 3,
+            maxDescrLines = 2,
             maxTitleLength = 200,
             maxDescrLength = 500,
             max = 30,
@@ -132,7 +132,7 @@ export class TasksListManager {
 
         const {
             menuWidth = "170px" as CSSUnitVal,
-            fontSize = "1.4rem" as CSSTextSize,
+            fontSize = "1.35rem" as CSSTextSize,
             maxHeight = "100%",
             sidePadding = "15px" as CSSUnitVal,
             hasTaskDivider = true,
@@ -208,10 +208,10 @@ export class TasksListManager {
             this.tasks.toggleTaskOpen(id)
         }
         else if (id === this.pickedTask?.id) {
-            this.minimizeExpandedTask()
+            this.closeRootTask()
         }
         else if (this.pickedTask) {
-            this.minimizeExpandedTask()
+            this.closeRootTask()
             this.expandRootTask(id)
         }
         else {
@@ -234,7 +234,7 @@ export class TasksListManager {
     /**
      * Close an expanded task.
      */
-    minimizeExpandedTask() {
+    closeRootTask() {
         this.resetTextContainers(this.pickedTask!.id)
         this.pickedTask = null
         this.update({ pickedTask: null })
@@ -290,12 +290,7 @@ export class TasksListManager {
         event: Event, id: string, isChild: boolean, atMaxDepth: boolean 
     }) {
         const target = event.target as HTMLElement
-        const tagName = target.tagName
-        const isEditElem = isEditTextElem(target)
-        const isCheckbox = target.classList.contains("task__checkbox")
-
-        if (this.justEdited || isEditElem || tagName === "BUTTON" || tagName === "I" || isCheckbox) {
-            this.justEdited = false
+        if (this.isTargetEditElem(target)) {
             return
         }
         
@@ -393,7 +388,7 @@ export class TasksListManager {
         this.editTask = null
         this.newText = ""
         this.editMode = null
-        this.justEdited = true
+        this.justEdited = "edited"
 
         this.update({ editTask: null, editMode: null })
     }
@@ -505,9 +500,12 @@ export class TasksListManager {
     }
 
     onPointerDown(e: PointerEvent, task: Task) {
-        if (e.button !== 0) {
+        const target = e.target as HTMLElement
+
+        if (e.button !== 0 || this.isTargetEditElem(target)) {
             return
         }
+
         const taskElem = this.getTaskElem(task.id)
         if (!taskElem) return
         
@@ -559,7 +557,7 @@ export class TasksListManager {
 
         this.update({ dragPos: this.dragPos })
     }
-        
+
     /* drag functionality */
 
     toggleDragging(isDragging: boolean) {
@@ -963,7 +961,7 @@ export class TasksListManager {
         const pe = e as PointerEvent
         const target = pe.target as HTMLElement
 
-        if (isEditTextElem(target) || target.tagName === "BUTTON") {  
+        if (this.isTargetEditElem(target)) {  
             this.contextMenu = { left: -1000, top: -1000 }
             return false
         }
@@ -1135,7 +1133,7 @@ export class TasksListManager {
             const isTask = rTarget?.closest(".task")
             
             if (!isTask) {
-                this.onClickedOutside(e)
+                this.onTaskBlur()
             }
 
             target.removeEventListener("blur", this.blurHandler!)
@@ -1154,7 +1152,7 @@ export class TasksListManager {
      */
     keyboardShortcutHandler(event: KeyboardEvent) {
         const target = event.target as HTMLElement
-        const isEditing = isEditTextElem(target)
+        const isEditing = this.isTargetEditElem(target)
         const { key, metaKey, shiftKey, ctrlKey, code } = event
         const hotkey = this.options.hotkeyFocus
         const currHotKeyContext = get(globalContext).hotkeyFocus
@@ -1178,7 +1176,7 @@ export class TasksListManager {
         }
         else if (!isEditing && key === "Escape") {
             event.preventDefault()
-            this.minimizeExpandedTask()
+            this.closeRootTask()
         }
 
         if (isEditing || !this.focusTask) return
@@ -1248,27 +1246,40 @@ export class TasksListManager {
 
     /* helpers */
 
-    onClickedOutside(e: FocusEvent) {
+    isTargetEditElem(target: HTMLElement) {
+        const isCheckbox = target.classList.contains("task__checkbox")
+        const isContentEditable = target.hasAttribute("contenteditable")
+        const tagName = target.tagName
+
+        return isContentEditable || isCheckbox || tagName === "BUTTON" || tagName === "I"
+    }
+
+
+    onTaskBlur() {
         if (this.contextMenuOpen) {
             return
         }
-        // const target = event.detail.target as HTMLElement
-        // const toast = findAncestor({
-        //     child: target, queryStr: "toast",
-        //     strict: true,  max: 5
-        // })
-        
-        // if (toast && getAttrValue(toast, "data-toast-context") === this.options.id) {
-        //     return
-        // }
-
-        const task = this.focusTask
         this.focusTask = null
         this.focusElemIdx = -1
         this.update({ focusTask: null })
 
-        if (this.pickedTask && (task && !task.parentId || !task)) {
-            this.minimizeExpandedTask()
+        if (this.pickedTask) {
+            this.closeRootTask()
+        }
+    }
+
+    onClickOutside() {
+        // when editing text, the first click outside should only blur the input
+        // the second click outside will fully close the task
+        if (this.justEdited === "edited") {
+            this.justEdited = "clicked-outside"
+        }
+        else if (this.justEdited === "clicked-outside") {
+            this.justEdited = null
+            this.onTaskBlur()
+        }
+        else {
+            this.justEdited = null
         }
     }
 

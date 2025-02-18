@@ -799,11 +799,12 @@ export function toastApiErrorHandler(options: {
   error: APIError, 
   title: string,
   logoIcon: LogoIcon,
+  contextId?: string
   action?: { 
     label: string, onClick: (event: MouseEvent) => void 
   }
 }) {
-  let { error, title, logoIcon, action } = options
+  let { error, title, logoIcon, action, contextId } = options
   let toastOptions: ToastInitOptions
 
   const isNotAPIError = error.code === undefined
@@ -856,7 +857,9 @@ export function toastApiErrorHandler(options: {
       message: title,
       description: toastOptions.message,
       icon: logoIcon,
-      action: toastOptions.action
+      action: toastOptions.action,
+      contextId: "google-calendar",
+      ...(contextId && { groupExclusive: true })
   })
 }
 
@@ -959,19 +962,4 @@ export function getFontFamilyFromStyle(style: string) {
   else {
     return "Manrope"
   }
-}
-
-export function hexToRgb(hex: string): string {
-  hex = hex.replace(/^#/, '')
-
-  if (hex.length === 3) {
-    hex = hex.split('').map(char => char + char).join('')
-  }
-
-  const num = parseInt(hex, 16)
-  const r = (num >> 16) & 255
-  const g = (num >> 8) & 255
-  const b = num & 255
-
-  return `${r}, ${g}, ${b}`
 }

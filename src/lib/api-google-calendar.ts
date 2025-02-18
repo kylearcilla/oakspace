@@ -76,14 +76,12 @@ export async function fetchUserCalendars(token: string): Promise<GoogleCalendar[
     return calendars
 }
 
-export async function fetchCalendarEventsOnDay(options: { 
+export async function fetchCalendarEventsOnDay({ calendar, minTime, maxTime, token }: { 
     calendar: GoogleCalendar, 
     minTime: string, 
     maxTime: string, 
     token: string 
 }): Promise<GoogleCalendarEvent[]> {
-    const { calendar, minTime, maxTime, token } = options
-
     const url = new URL(`${GOOGLE_CALENDAR_API_URL}calendars/${calendar.id}/events`)
 
     url.searchParams.append('key', PUBLIC_YT_DATA_V3_API_KEY)
@@ -113,14 +111,26 @@ export async function fetchCalendarEventsOnDay(options: {
         }
 
         const events = []
-
         for (const event of data.items) {
-            const isAllDay = event.start.dateTime === undefined
+            if (!event.htmlLink || event.status === "cancelled") {
+                continue
+            }
+            let isAllDay = !event.start?.dateTime
+            
+            // multi day events, are included in the header
+            if (!isAllDay) {
+                const startDate = new Date(event.start.dateTime)
+                const endDate = new Date(event.end.dateTime)
+
+                if (startDate.getDate() !== endDate.getDate()) {
+                    isAllDay = true
+                }
+            }
 
             events.push({
                 id: event.id,
                 calendarId: calendar.id,
-                title: event.summary ?? "Untitled",
+                title: event.summary ?? "(No Title)",
                 color: calendar.color,
                 allDay: isAllDay,
                 timeStart: isAllDay ? -1 : getIsoDateMinutesFromStartOfDay(event.start.dateTime),
@@ -141,14 +151,11 @@ export async function fetchCalendarEventsOnDay(options: {
     }
 }
 
-export async function fetchDayEvents(options: { 
+export async function fetchDayEvents({ calendars, day, token }: { 
     calendars: GoogleCalendar[], 
     day: Date, 
     token: string 
-
 }): Promise<GoogleCalendarEvent[]> {
-
-    const { calendars, day, token } = options
     const timeMin = formatDateToISO({ date: day, type: "start" })
     const timeMax = formatDateToISO({ date: day, type: "end" })
 
@@ -160,7 +167,6 @@ export async function fetchDayEvents(options: {
             token 
         })
     )
-
     try {
         return (await Promise.all(eventsPromises)).flat()
     } 
@@ -200,4 +206,3 @@ const throwGoogleCalendarAPIError = (context: {
           throw new APIError(APIErrorCode.GENERAL, "There was an error with Google Calendar API. Please try again later.")
       }
 }
-  

@@ -74,12 +74,12 @@
             height: 23px;
         }
         &__day-num {
-            @include text-style(0.6, 500, 1.3rem, "DM Sans");
+            @include text-style(0.6, 500, 1.3rem);
             // @include center;
             width: 23px;
         }
         &__dow {
-            @include text-style(0.3, 500, 1.3rem, "DM Sans");
+            @include text-style(0.3, 500, 1.3rem);
             @include center;
             align-items: flex-start;
             width: 25px;

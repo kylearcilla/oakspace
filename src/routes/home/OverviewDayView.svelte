@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { themeState, weekRoutine, timer } from "$lib/store"
-	import { RoutinesManager } from "$lib/routines-manager"
+    import { getColorTrio } from "$lib/utils-colors"
+    import { RoutinesManager } from "$lib/routines-manager"
 	import { findClosestColorSwatch } from "$lib/utils-colors"
+	import { themeState, weekRoutine, timer } from "$lib/store"
 	import { GoogleCalendarManager } from "$lib/google-calendar-manager"
     import { getMaskedGradientStyle } from "$lib/utils-general"
-    import { getColorTrio } from "$lib/utils-colors"
 	import { getDayIdxMinutes, getTimeFromIdx, isSameDay, minsFromStartToHHMM } from "$lib/utils-date"
 	import { getDayRoutineFromWeek, resetDayRoutine, toggleRoutineBlockComplete } from "$lib/utils-routines"
     
@@ -13,23 +13,24 @@
 
     export let checkbox: boolean
     export let richColors: boolean
-    export let dayOptn: "routine" | "calendar" | null
+    export let view: "routine" | "g-cal"
     export let googleCals: GoogleCalendar[]
     export let googleEvents: GoogleCalendarEvent[]
     export let day: Date
 
     const EVENT_BLOCK_LEFT_OFFSET = 50
 
-    let headerHeight = 0
-    let dayViewElem: HTMLElement
-    let allDayRef: HTMLElement
-    let maskListGradient = ""
-    let focusEventId = ""
-    let scrollContainerHeight = 0
-    let scrollTop = 0
-
     let currTime = getDayIdxMinutes()
     let dayIdx = -1
+
+    let headerHeight = 0
+    let focusEventId = ""
+    let maskListGradient = ""
+    let scrollContainerHeight = 0
+    let metaDown = false
+    
+    let dayViewElem: HTMLElement
+    let allDayRef: HTMLElement
 
     let dRoutine: RoutineBlock[] | DailyRoutine | null = null
     let routineBlocks: RoutineBlockElem[] = []
@@ -42,19 +43,9 @@
 
     timer.subscribe(({ date }) => currTime = getDayIdxMinutes(date))
 
-    $: {
-        // update routine when day changes
-        const idx = day.getDay()
-
-        if (dayIdx != idx) {
-            resetDayRoutine()
-        }
-        dRoutine = getDayRoutineFromWeek(routine, idx)
-        dayIdx = idx
-
-        if (scrollContainerHeight != undefined) {
-            updateRoutineBlocks()
-        }
+    // update routine when day changes
+    $: if (dayViewElem && day != undefined) {
+        updateDayRoutine(day.getDay())
     }
     $: if (headerHeight >= 0 && allDayRef) {
         onDayHeaderScroll()
@@ -62,8 +53,6 @@
 
     /* google calendar */
     function onDayHeaderScroll() {
-        if (!$themeState.isDarkTheme) return
-
         maskListGradient = getMaskedGradientStyle(allDayRef, {
             head: {
                 start: "0px",
@@ -79,7 +68,12 @@
         const { allowAllDay } = options
         const eventCal = googleCals.find((cal) => cal.id === e.calendarId)
 
-        return (eventCal!.isChecked) && (allowAllDay ? e.allDay : !e.allDay)
+        if (eventCal?.isChecked) {
+            return eventCal.isChecked && (allowAllDay ? e.allDay : !e.allDay)
+        }
+        else {
+            return false
+        }
     }
     function onEventClick(e: Event, url: string) {
         const target  = e.target as HTMLElement
@@ -90,48 +84,53 @@
             !classes.includes("time-period") && 
             target.tagName != "SPAN"
         ) {
-            window.open(url, '_blank')
+            const newTab = window.open(url, '_blank')
+            newTab?.focus()
         }
     }
 
     /* routines */
-    function onDayScroll(event: Event) {
-        const target = event.target as HTMLElement
-        scrollTop = target.scrollTop
+    function updateDayRoutine(idx: number) {
+        if (dayIdx != idx) {
+            resetDayRoutine()
+        }
+        dRoutine = getDayRoutineFromWeek(routine, idx)
+        dayIdx = idx
+
+        if (scrollContainerHeight != undefined) {
+            updateRoutineBlocks()
+        }
     }
     function updateRoutineBlocks() {
         if (!dRoutine) return
 
         const blocks = "id" in dRoutine ? dRoutine.blocks : dRoutine
-
-        routineBlocks = blocks.map((block) => {
-            return RoutinesManager.createRoutineBlockElem(block, scrollContainerHeight)
-        })
+        routineBlocks = blocks.map((block) => RoutinesManager.createRoutineBlockElem(block, scrollContainerHeight))
     }
     function onRoutineClick(e: Event, block: RoutineBlockElem & { idx: number }) {
         const target = e.target as HTMLElement
         const classes = target.classList.value
-        const isCheckbox = classes.includes("routine-blocks__block-checkbox") || target.tagName === "I"
+        const isCheckbox = classes.includes("routine-block-checkbox") || target.tagName === "I"
 
-        if (isCheckbox) {
-            return
-        }
+        if (isCheckbox) return
 
         updateGlobalContext({ 
             routineView: { 
-                dayIdx, 
-                block: {
-                    block, idx: block.idx
-                }
+                block: { block, idx: block.idx }, dayIdx
             } 
         })
     }
 </script>
 
+<svelte:window 
+    on:keydown={(e) => e.key === 'Meta' && (metaDown = true)}
+    on:keyup={(e) => e.key === 'Meta' && (metaDown = false)}
+/>
+
 <div 
     class="day-view" 
     class:day-view--light={isLight}
-    style:--EVENTS_COUNT={googleEvents.length}
+    style:--EVENTS_COUNT={googleEvents?.length ?? 0}
     style:--HOUR_BLOCK_HEIGHT={`${GoogleCalendarManager.HOUR_BLOCK_HEIGHT}px`}
 >
     <div 
@@ -139,7 +138,7 @@
         bind:clientHeight={headerHeight}
     >
         <span>
-            {#if dayOptn === "routine"}
+            {#if view === "routine"}
                 {routine?.name ?? "Routine"}
             {:else}
                 All Day
@@ -151,22 +150,24 @@
             class="day-view__header-events no-scroll-bar"
             style={maskListGradient}
         >
-            {#if dayOptn === "calendar"}
-                {#each googleEvents.filter((e) => {
+            {#if view === "g-cal"}
+                {#each (googleEvents ?? []).filter((e) => {
                     return doRenderEvent(e, { allowAllDay: true })
                 }) as event}
-
                     {@const colorSwatch  = findClosestColorSwatch(event.color.bgColor)}
                     {@const colorTrio    = getColorTrio(colorSwatch, isLight)}
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div 
                         role="button" 
                         tabindex="0" 
-                        class="event-block event-block--all-day"
-                        style:--event-color-primary={colorSwatch.primary}
-                        style:--event-color-1={colorTrio[0]}
-                        style:--event-color-2={colorTrio[1]}
-                        style:--event-color-3={colorTrio[2]}
+                        class="routine-block routine-block--all-day"
+                        style:--block-color-1={colorTrio[0]}
+                        style:--block-color-2={colorTrio[1]}
+                        style:--block-color-3={colorTrio[2]}
+                        on:click={(e) => {
+                            if (metaDown) {
+                                onEventClick(e, event.url)
+                            }
+                        }}
                         on:dblclick={(e) => { 
                             onEventClick(e, event.url)
                         }}
@@ -177,11 +178,11 @@
                             }
                         }}
                     >
-                        <div class="event-block__content">
-                            <div class="event-block__title">
+                        <div class="routine-block__content" style:padding-top={"4px"}>
+                            <div class="routine-block__title">
                                 {event.title}
                             </div>
-                            <div class="event-block__spine"></div>
+                            <div class="routine-block__spine"></div>
                         </div>
                     </div>
                 {/each}
@@ -191,7 +192,6 @@
     <div 
         class="day-view__scroll-container no-scroll-bar"
         style:height={`calc(100% - ${headerHeight}px)`}
-        on:scroll={onDayScroll}
     >
         <div bind:this={dayViewElem} class="day-view__col">
             <!-- Blocks -->
@@ -203,9 +203,9 @@
                     class:routine-blocks--light={isLight}
                     class:routine-blocks--no-rich-colors={!richColors}
                 >
-                    {#if dayOptn === "calendar"}
+                    {#if view === "g-cal"}
                         <!-- Events -->
-                        {#each googleEvents as event}
+                        {#each googleEvents ?? [] as event}
                             {@const colorSwatch  = findClosestColorSwatch(event.color.bgColor)}
                             {@const colorTrio    = getColorTrio(colorSwatch, isLight)}
                             {@const startTimeStr = minsFromStartToHHMM(event.timeStart)}
@@ -215,27 +215,33 @@
                             {@const overlapIdx   = event.idx}
                             <!-- svelte-ignore a11y-click-events-have-key-events -->
                             <div 
-                                role="button" 
-                                tabindex="0" 
-                                class={`event-block ${overlapIdx >= 0 ? `box-${overlapIdx}` : ""}`}
-                                class:event-block--light={isLight}
-                                class:event-block--small={heightNum <= 40 && !isFocused}
-                                class:event-block--focused={isFocused}
+                                role="button"
+                                tabindex="0"
+                                data-color={event.color.bgColor}
+                                class="routine-block"
+                                class:routine-block--bordered={hasAmbience && ambience.styling !== "solid"}
+                                class:routine-block--focused={isFocused}
+                                class:routine-block--light={isLight}
+                                class:routine-block--small={heightNum <= 40 && !isFocused}
                                 class:box-ontop={overlapIdx === 0}
                                 class:hidden={!doRenderEvent(event, { allowAllDay: false })}
                                 style:top={`calc(${event.top} + 1px)`}
                                 style:left={`calc(${event.left} + ${EVENT_BLOCK_LEFT_OFFSET + 14}px)`}
                                 style:width={`calc(${event.width} - 12px)`}
-                                style:height={isFocused ? heightNum <= 40 ? "80px" : event.height : event.height}
-                                style:--event-color-primary={colorSwatch.primary}
-                                style:--event-color-1={colorTrio[0]}
-                                style:--event-color-2={colorTrio[1]}
-                                style:--event-color-3={colorTrio[2]}
+                                style:--block-height={isFocused ? heightNum <= 40 ? "80px" : event.height : event.height}
+                                style:--block-color-1={colorTrio[0]}
+                                style:--block-color-2={colorTrio[1]}
+                                style:--block-color-3={colorTrio[2]}
                                 on:focus={() => { 
                                     focusEventId = event.id
                                 }}
                                 on:blur={() => { 
                                     focusEventId = ""
+                                }}
+                                on:click={(e) => {
+                                    if (metaDown) {
+                                        onEventClick(e, event.url)
+                                    }
                                 }}
                                 on:dblclick={(e) => { 
                                     onEventClick(e, event.url)
@@ -247,16 +253,20 @@
                                     }
                                 }}
                             >
-                                <div class="event-block__content">
-                                    <div class="event-block__title">
-                                        {event.title}
+                                <div class="routine-block__content">
+                                    <div>
+                                        <div class="flx flx--algn-center">
+                                            <span class="routine-block__title">
+                                                {event.title}
+                                            </span>
+                                        </div>
+                                        <div class="routine-block__time-period">
+                                            <span>{startTimeStr}</span>
+                                            <span>-</span>
+                                            <span>{endTimeStr}</span>
+                                        </div>
+                                        <div class="routine-block__spine"></div>
                                     </div>
-                                    <div class="event-block__time-period">
-                                        <span>{startTimeStr}</span>
-                                        <span>-</span>
-                                        <span>{endTimeStr}</span>
-                                    </div>
-                                    <div class="event-block__spine"></div>
                                 </div>
                             </div>
                         {/each}
@@ -269,10 +279,10 @@
                             <div 
                                 role="button"
                                 tabIndex={0}
-                                class="routine-blocks__block"
-                                class:routine-blocks__block--checkbox={checkbox}
-                                class:routine-blocks__block--checked={done}
-                                class:routine-blocks__block--bordered={hasAmbience && ambience.styling !== "solid"}
+                                class="routine-block"
+                                class:routine-block--checkbox={checkbox}
+                                class:routine-block--checked={done}
+                                class:routine-block--bordered={hasAmbience && ambience.styling !== "solid"}
                                 style:top={`${block.yOffset}px`}
                                 style:--block-height={`${block.height}px`}
                                 style:--block-color-1={colorTrio[0]}
@@ -290,13 +300,16 @@
                                     }
                                 }}
                             >
-                                <div class="routine-blocks__block-content">
+                                <div 
+                                    class="routine-block__content"
+                                    style:border-bottom={`0.5px solid var(--bg-1)`}
+                                >
                                     {#if isToday}
                                         <button 
                                             on:click={() => toggleRoutineBlockComplete(blockIdx, currTime)}
                                             title="Toggle routine completion"
-                                            class="routine-blocks__block-checkbox"
-                                            class:routine-blocks__block-checkbox--checked={done}
+                                            class="routine-block__checkbox"
+                                            class:routine-block__checkbox--checked={done}
                                         >
                                             <i class="fa-solid fa-check"></i> 
                                         </button>
@@ -304,18 +317,18 @@
                                     <div>
                                         <div class="flx flx--algn-center">
                                             <span 
-                                                class="routine-blocks__block-title"
+                                                class="routine-block__title"
                                                 class:block-title-strike={done}
                                             >
                                                 {block.title}
                                             </span>
                                         </div>
-                                        <div class="routine-blocks__block-time-period">
+                                        <div class="routine-block__time-period">
                                             <span>{startTimeStr}</span>
                                             <span>-</span>
                                             <span>{endTimeStr}</span>
                                         </div>
-                                        <div class="routine-blocks__block-spine"></div>
+                                        <div class="routine-block__spine"></div>
                                     </div>
                                 </div>
                             </div>
@@ -490,21 +503,21 @@
             .block-title-strike::after {
                 background-color: rgba(var(--textColor1), 0.65) !important;
             }
-            &-content {
+            &__content {
                 background-color: var(--sessionBlockColor) !important;
                 padding-left: 9px;
                 border-radius: 9px;
             }
-            &-title {
+            &__title {
                 @include text-style(1);
             }
-            &-time-period {
+            &__time-period {
                 @include text-style(0.3);
             }
-            &-spine {
+            &__spine {
                 display: none;
             }
-            &-checkbox {
+            &__checkbox {
                 background-color: rgba(var(--textColor1), 0.05);
 
                 &--checked, 
@@ -513,47 +526,72 @@
                 }
             }
         }
+    }
 
-        &__block {
-            left: 65px;
-            width: 135px;
+    .routine-block {
+        left: 65px;
+        width: 135px;
 
-            &::after, &::before {
-                cursor: pointer !important;
-            }
-            &:active {
-                transform: scale(1);
-            }
+        &::after, &::before {
+            cursor: pointer !important;
         }
-        &__block i {
+        &:active {
+            transform: scale(1);
+        }
+
+        i {
             display: none;
             font-size: 0.9rem;
             color: rgba(var(--block-color-1), 1);
         }
-        &__block-title {
-            margin-top: -2px;
+        &--all-day {
+            position: relative;
+            height: 20px;
+            left: 0;
+            width: auto;
         }
-        &__block--checkbox &__block-content {
-            padding: 6px 5px 5px 8px;
+        &--focused {
+            z-index: calc(var(--EVENTS_COUNT) + 1) !important;
+            transform: scale(1.04);
+            box-shadow: 0px 0px 10px rgba(black, 0.1);
+
+            &:active {
+                transform: scale(1.03) !important;
+            }
         }
-        &__block--checkbox &__block-checkbox {
+        &--small &__content > div {
             display: flex;
         }
-        &__block--checked {
+        &--small &__title {
+            margin-right: 10px;
+            min-width: 60px !important;
+            @include elipses-overflow;
+        }
+        &--checkbox &__content {
+            padding: 6px 5px 5px 8px;
+        }
+        &--checkbox &__checkbox {
+            display: flex;
+        }
+        &--checked {
             opacity: 0.6;
         }
-        &__block--checked i {
+        &--checked i {
             display: block;
         }
-        &__block--bordered &__block-content {
+        &--bordered &-content {
             border: 1.5px solid rgba(var(--textColor1), 0.05);
         }
-        &__block-content {
+
+        &__title {
+            margin-top: -2px;
+        }
+        &__content {
             display: flex;
             align-items: flex-start;
             border-radius: 12px !important;
         }
-        &__block-checkbox {
+        &__checkbox {
             @include square(16px, 6px);
             @include center;
             margin-right: 5px;
@@ -565,7 +603,6 @@
             }
         }
     }
-
     .block-title-strike {
         opacity: 0.6;
         position: relative; 
@@ -586,104 +623,6 @@
             }
         }
     }
-
-
-    .event-block {
-        position: absolute;
-        transition: transform 0.1s cubic-bezier(.4,0,.2,1);
-        cursor: pointer;
-        border-top: 1px solid var(--rightBarBgColor);
-
-        &--light &__title {
-            font-weight: 600 !important;
-        }
-        &:active {
-            transform: scale(0.99);
-        }
-        &:focus-visible {
-            transform: scale(1.01);
-        }
-        &:focus-visible &-content {
-            @include border-focus;
-        }
-        
-        &--all-day {
-            position: relative;
-            height: 20px;
-        }
-        &--all-day &__content {
-            padding-top: 1.5px;
-        }
-        &--focused {
-            z-index: calc(var(--EVENTS_COUNT) + 1) !important;
-            transform: scale(1.04);
-
-            &:active {
-                transform: scale(1.03) !important;
-            }
-        }
-        &--session &__content {
-            background-color: var(--bg-2) !important;
-            border: 1px solid rgba(var(--textColor1), 0.03);
-        }
-        &--session &__title {
-            @include text-style(1);
-        }
-        &--session &__time-period {
-            @include text-style(0.3);
-        }
-        &--small &__content {
-            @include flex(center)
-        }
-        &--small &__title {
-            margin-right: 10px;
-            min-width: 60px !important;
-            @include elipses-overflow;
-        }
-        &--header {
-            position: relative;
-            height: 20px;
-        }
-        &--header &__content {
-            padding-top: 1px;
-            font-size: 1.1rem;
-        }
-        &__content {
-            background-color: rgba(var(--event-color-2), 1);
-            padding: 5px 8px 5px 11px;
-            overflow: hidden;
-            white-space: nowrap;
-            position: relative;
-            height: 100%;
-            border-left: none;
-            border-radius: 6px;
-        }
-        &__title {
-            @include text-style(_,  500, 1.05rem);
-            cursor: text;
-            margin-bottom: 3px;
-            width: min-content;
-            color: rgb(var(--event-color-1));
-        }
-        &__time-period {
-            @include text-style(_, 500, 1rem, "DM Sans");
-            color: rgba(var(--event-color-3), 1);
-            width: min-content;
-            
-            span {
-                cursor: text;
-                display: inline-block;
-                width: min-content;
-            }
-        }
-        &__spine {
-            @include abs-top-left(0px, 0px);
-            height: calc(100%);
-            width: 4px;
-            background-color: rgba(var(--event-color-1), 0.9);
-        }
-    }
-
     .wk-grid {
         @include abs-top-left;
         height: calc((var(--HOUR_BLOCK_HEIGHT) * 24));

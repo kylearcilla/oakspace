@@ -69,7 +69,7 @@
             @include text-style(0.95, 400, 1.64rem);
         }
         &-title {
-            @include text-style(1, var(--fw-400-500), 1.24rem, "DM Mono");
+            @include text-style(1, var(--fw-400-500), 1.24rem, "Geist Mono");
         }
         &-header {
             @include flex(center, space-between);
@@ -87,7 +87,7 @@
             opacity: 0.4;
             transition: 0s;
             padding: 2px 6px;
-            @include text-style(1, 300, 1.14rem, "DM Mono");
+            @include text-style(1, 300, 1.14rem, "Geist Mono");
 
             &:hover {
                 opacity: 1;
@@ -106,7 +106,7 @@
         width: 100%;
 
         &-value {
-            @include text-style(0.25, 300, _, "DM Sans");
+            @include text-style(0.25, 300);
         }
     }
     &__cores-col {
@@ -134,7 +134,7 @@
         margin-bottom: 6px;
     }
     &__tag-stat {
-        @include text-style(0.34, 300, 1.32rem, "DM Sans");
+        @include text-style(0.34, 300, 1.32rem);
     }
     &__tag-breakdown {
         position: relative;
@@ -187,7 +187,7 @@
 
 .routine-blocks {
     @include abs-top-left;
-    z-index: 1;
+    z-index: 2;
     width: 100%;
     position: relative;
     height: 100%;
@@ -205,119 +205,120 @@
     #edit-block {
         transition: 0s !important;
     }
+}
 
-    &__block {
-        position: absolute;
-        height: var(--block-height);
-        max-height: var(--block-height);
-        transition: 0.1s transform ease-in-out;
+.routine-block {
+    position: absolute;
+    height: var(--block-height);
+    max-height: var(--block-height);
+    transition: 0.1s transform ease-in-out;
 
-        &:focus-visible {
-            transform: scale(1.01);
-        }
-        &:focus-visible &-content {
-            @include border-focus;
-        }
-    
-        cursor: pointer;
+    &:focus-visible {
+        transform: scale(1.01);
+    }
+    &:focus-visible &-content {
+        @include border-focus;
+    }
 
-        &--md &-content {
-            @include flex(center);
-        }
-        &--md &-title {
-            margin: 0px 7px 0px 0px;
-        }
+    cursor: pointer;
 
-        // drop area
-        &--drop-area &-content {
-            border: 1px dashed rgba(var(--block-color-1), 0.4);
-            background-color: rgba(var(--block-color-2), 0.6);
-            border-radius: 10px;
-        }
-        &--drop-area &-title {
-            display: none;
-        }
-        &--drop-area &-time-period {
-            color: rgba(var(--block-color-1), 0.77);
-            font-weight: 300;
-        }
-        &--drop-area &-spine {
-            display: none;
-        }
+    &--md &-content {
+        @include flex(center);
+    }
+    &--md &-title {
+        margin: 0px 7px 0px 0px;
+    }
 
-        // week view drop area
-        &--wk-drop-area &-content {
-            border: 1px dashed rgba(var(--block-color-1), 0.4);
-            background-color: rgba(var(--block-color-2), 0.5);
-            border-radius: 8px;
-        }
-        &--wk-drop-area-light &-content {
-            border-color: rgba(var(--block-color-1), 0.65);
-        }
-        &--old-stretch, &--wk-old-stretch {
-            transition: 0s !important;
-            * {
-                pointer-events: all !important;
-            }
-        }
+    // drop area
+    &--drop-area &-content {
+        border: 1.5px dashed rgba(var(--block-color-1), 0.4);
+        background-color: rgba(var(--block-color-2), 0.6);
+        border-radius: 10px;
+    }
+    &--drop-area &-title {
+        display: none;
+    }
+    &--drop-area &-time-period {
+        color: rgba(var(--block-color-1), 0.77);
+        font-weight: 300;
+    }
+    &--drop-area &-spine {
+        display: none;
+    }
 
-        &--use-x-offset {
-            left: var(--left-x-offset) !important;
-        }
-        &--day-floating, &--wk-floating {
-            transition: 0s !important;
-        }
-        &--day-floating &-content, &--wk-floating &-content {
-            border-top: 1.5px solid rgba(var(--block-color-3), 0.04);
-            border-right: 1.5px solid rgba(var(--block-color-3), 0.04);
-            border-bottom: 1.5px solid rgba(var(--block-color-3), 0.04);
-
-            box-shadow: 0px 1px 16.4px 4px rgba(black, 0.08);
-        }
-        &--day-floating, &--wk-floating {
-            cursor: grabbing !important;
-        }
-        &--dup-floating {
-            animation: wobble 1s ease-in-out;
-        }
-        &--dup-floating &-content {
-            box-shadow: 0px 1px 16.4px 4px rgba(black, 0.4);
-            border: 1px dashed rgba(var(--block-color-1, 0.5)) !important;
-        }
-        &--dup-floating * {
-            pointer-events: all;
-        }
-        &--dup-floating:hover * {
-            cursor: grab;
-        }
-        &--dup-floating &-buttons {
-            @include visible;
-        }
-        &--dup-floating &-spine {
-            display: none;
-        }
-
-        &:hover {
-            transition: 0.04s ease-in-out;
-        }
-        &:active {
-            transform: scale(0.998);
-        }
-        &::after, &::before {
-            z-index: 1000;
-            content: " ";
-            cursor: ns-resize !important;
-            height: 4px;
-            width: 100%;
-        }
-        &::before {
-            @include abs-top-left();
-        }
-        &::after {
-            @include abs-bottom-left();
+    // week view drop area
+    &--wk-drop-area &-content {
+        border: 1.5px dashed rgba(var(--block-color-1), 0.4);
+        background-color: rgba(var(--block-color-2), 0.5);
+        border-radius: 8px;
+    }
+    &--wk-drop-area-light &-content {
+        border-color: rgba(var(--block-color-1), 0.65);
+    }
+    &--old-stretch, &--wk-old-stretch {
+        transition: 0s !important;
+        * {
+            pointer-events: all !important;
         }
     }
-    &__block-content {
+
+    &--use-x-offset {
+        left: var(--left-x-offset) !important;
+    }
+    &--day-floating, &--wk-floating {
+        transition: 0s !important;
+    }
+    &--day-floating &-content, &--wk-floating &-content {
+        border-top: 1.5px solid rgba(var(--block-color-3), 0.04);
+        border-right: 1.5px solid rgba(var(--block-color-3), 0.04);
+        border-bottom: 1.5px solid rgba(var(--block-color-3), 0.04);
+
+        box-shadow: 0px 1px 16.4px 4px rgba(black, 0.08);
+    }
+    &--day-floating, &--wk-floating {
+        cursor: grabbing !important;
+    }
+    &--dup-floating {
+        animation: wobble 1s ease-in-out;
+    }
+    &--dup-floating &-content {
+        box-shadow: 0px 1px 16.4px 4px rgba(black, 0.4);
+        border: 1px dashed rgba(var(--block-color-1, 0.5)) !important;
+    }
+    &--dup-floating * {
+        pointer-events: all;
+    }
+    &--dup-floating:hover * {
+        cursor: grab;
+    }
+    &--dup-floating &-buttons {
+        @include visible;
+    }
+    &--dup-floating &-spine {
+        display: none;
+    }
+
+    &:hover {
+        transition: 0.04s ease-in-out;
+    }
+    &:active {
+        transform: scale(0.998);
+    }
+    &::after, &::before {
+        z-index: 1000;
+        content: " ";
+        cursor: ns-resize !important;
+        height: 4px;
+        width: 100%;
+    }
+    &::before {
+        @include abs-top-left();
+    }
+    &::after {
+        @include abs-bottom-left();
+    }
+
+    &__content {
         background-color: rgba(var(--block-color-2), 1);
         border-top: 0.5px solid var(--bg-1);
         padding: 5px 8px 5px 12px;
@@ -328,28 +329,28 @@
         border-left: none;
         border-radius: 8px;
     }
-    &__block-title {
+    &__title {
         @include text-style(_, var(--fw-400-500), 1.25rem);
         margin-bottom: 3px;
         cursor: text;
         color: rgb(var(--block-color-1));
     }
-    &__block-time-period {
+    &__time-period {
         @include text-style(_, var(--fw-400-500), 1.16rem);
         cursor: text;
         display: inline-block;
         color: rgba(var(--block-color-3), 1);
     }
-    &__block-spine {
+    &__spine {
         @include abs-top-left;
         height: calc(100%);
         width: 3px;
         background-color: rgb(var(--block-color-1));
     }
-    &__block-handler:last-child {
+    &__handler:last-child {
         @include abs-bottom-left();
     }
-    &__block-buttons {
+    &__buttons {
         display: block;
         @include not-visible;
         @include flex(center);
@@ -359,26 +360,26 @@
             cursor: pointer !important;
         }
     }
-    &__block-order-icon {
+    &__order-icon {
         margin: -2px -1px 0px -5px;
     }
-    &__block-buttons--left {
+    &__buttons--left {
         display: block;
         @include abs-top-left(4px, -24px);
     }   
-    &__block-buttons--right {
+    &__buttons--right {
         display: block;
         @include abs-top-right(-1px, -27px);
     }
-    &__block-buttons--top {
+    &__buttons--top {
         display: flex;
         @include abs-top-left(-22px, 1px);
     }
-    &__block-buttons--bottom {
+    &__buttons--bottom {
         display: flex;
         @include abs-bottom-left(-28px, 1px);
     }
-    &__block-buttons button {
+    &__buttons button {
         @include circle(16px);
         @include center;
         background-color: var(--bg-2);
@@ -394,8 +395,7 @@
             scale: 0.95;
         }
     }
-    &__block-buttons button i {
+    &__buttons button i {
         font-size: 0.9rem;
-
     }
 }

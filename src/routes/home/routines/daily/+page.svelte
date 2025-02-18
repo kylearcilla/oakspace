@@ -199,22 +199,6 @@
         const isEditModalOpen = editContext === "details"
         manager.closeContextMenu(isEditModalOpen || colorsOpen)
     }
-
-    /* testing */
-    function initTestConfig() {
-        const TEST_CONFIG = (window as any).LUCIOLE
-        
-        TEST_CONFIG.initTestData = (data: any[]) => {
-            DAILY_ROUTINES = data
-            editDailyRoutineIdx = data.length === 0 ? -1 : 0
-
-            manager.updateDailyRoutines(DAILY_ROUTINES)
-            manager.initEditRoutine(DAILY_ROUTINES[0])
-        }
-        TEST_CONFIG.allowScroll = (allow: any) => {
-            manager.toggleAutoScroll(allow)
-        }
-    }
     
     onMount(() =>{
         requestAnimationFrame(() => {
@@ -222,8 +206,6 @@
 
             manager.initContainer(timeBoxElem, blocksContainerRef)
             manager.initEditRoutine(dailyRoutines[editDailyRoutineIdx])
-
-            if (import.meta.env.MODE === "development") initTestConfig()
         })
     })
 </script>
@@ -879,7 +861,7 @@
             width: clamp(170px, 20%, 195px);
             position: relative;
             height: calc(100% - 100px);
-            @include text-style(1, 300, 1.28rem, "DM Sans");
+            @include text-style(1, 300, 1.28rem);
 
             h3 {
                 @include text-style(1, 500, 1.34rem);

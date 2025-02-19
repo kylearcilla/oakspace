@@ -1,15 +1,15 @@
-import { throwFireBaseAPIError } from "./api-youtube"
-import auth from  "./firebase"
-import firebase from "firebase/compat/app"
+import { getOAuthRedirectData, removeOAuthRedirectData } from "./utils-home"
 
 // Scopes for YouTube Data API
 const SCOPES = "https://www.googleapis.com/auth/youtube.readonly"
 const CLIENT_ID = "554073039798-fg87ji0n2iki91g6m16129nkbaocmtl6.apps.googleusercontent.com"
 const CLIENT_SECRET = "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"
-const REDIRECT_URI = "http://localhost:5173/home"
+const REDIRECT_URI = "http://localhost:5173/home/oauth-callback"
+
+const OAUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth"
+const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
 
 declare const google: any
-
 
 /**
  *  Initialies two client object: google client app (for signing in with google)
@@ -30,21 +30,70 @@ export const initClientApp = (googleSignInCallback: any) => {
     )
 }
 
-/**
- * Initiailze 0Auth 2.0 Flow using Firebase to get access token to utilize Google APIs. 
- * Generates a user consent screen pop-up to grant client app permission.
- * Returns the result after pop flow has completed
- * 
- * @returns  Flow result
- * 
- */
-export async function authGoogleUser(scopes: string[]): Promise<any> {
-    const provider = new firebase.auth.GoogleAuthProvider()
-    scopes.forEach((scope) => {
-        provider.addScope(`https://www.googleapis.com/auth/${scope}`)
+
+export function authGoogleUser(scopes: string[]) {
+    const scopeString = scopes.map(scope => `https://www.googleapis.com/auth/${scope}`).join(" ")
+    const params = new URLSearchParams({
+        client_id: CLIENT_ID,
+        redirect_uri: REDIRECT_URI,
+        response_type: 'code',
+        scope: scopeString,
+        access_type: 'offline',
+        prompt: 'consent'
+    })
+    const authUrl = `${OAUTH_ENDPOINT}?${params}`
+
+    window.location.href = authUrl
+}
+
+export async function handleGoogleRedirect(): Promise<any> {
+    const oauthData = getOAuthRedirectData("gcal")
+    if (!oauthData || !oauthData.code) {
+        throw new Error("Authorization code not found")
+    }
+    const { code, error, state } = oauthData
+
+    if (error) {
+        throw new Error(error)
+    }
+
+    const response = await fetch(TOKEN_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+            code,
+            client_id: CLIENT_ID,
+            client_secret: CLIENT_SECRET,
+            redirect_uri: REDIRECT_URI,
+            grant_type: "authorization_code",
+        }),
     })
 
-    const popUpResponse = await auth.signInWithPopup(provider) as any
+    const { access_token, refresh_token, expires_in } = await response.json()
 
-    return popUpResponse
+    return {
+        accessToken: access_token, 
+        expiresIn: expires_in,
+        refreshToken: refresh_token
+    }
+}
+
+export async function refreshGoogleToken(refreshToken: string): Promise<{ accessToken: string, expiresIn: number }> {
+    const response = await fetch(TOKEN_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+            client_id: CLIENT_ID,
+            client_secret: CLIENT_SECRET,
+            refresh_token: refreshToken,
+            grant_type: "refresh_token",
+        })
+    })
+
+    const { access_token, expires_in } = await response.json()
+
+    return {
+        accessToken: access_token,
+        expiresIn: expires_in
+    }
 }

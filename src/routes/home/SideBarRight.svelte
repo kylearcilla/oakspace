@@ -7,7 +7,7 @@
     import { globalContext, themeState, timer } from "$lib/store"    
 	import { formatDatetoStr, formatTimeToHHMM, isNightTime, prefer12HourFormat } from "$lib/utils-date"
 
-	import Overview from "./Overview.svelte"
+	import DayView from "./DayView.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
 	import { HEADER_IMG } from "../../lib/mock-data"
 
@@ -176,7 +176,7 @@
     {/if}
 
     <div class="bar__overview">
-        <Overview 
+        <DayView 
             {calendar}
             onUpdateHeaderOptions={optn => {
                 if (optn == "add" || optn == "replace") {

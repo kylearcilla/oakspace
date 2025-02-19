@@ -828,7 +828,7 @@ export function toastApiErrorHandler(options: {
   }
   else if (error.code === APIErrorCode.EXPIRED_TOKEN) {
       toastOptions = {
-          message: hasMsg ? errorMessage : `Token has expired. Log in again to continue.`,
+          message: hasMsg ? errorMessage : `Token has expired. Refresh token or login in again to continue.`,
       }
   }
   else if (error.code === APIErrorCode.RATE_LIMIT_HIT) {

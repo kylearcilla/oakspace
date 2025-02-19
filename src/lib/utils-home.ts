@@ -418,7 +418,6 @@ export function loadSideBarView(): SideBarViews {
 }
 export function saveSideBarView(options: SideBarViews) {
     const data = JSON.stringify(options)
-
     localStorage.setItem("side-bar", data)
 }
 
@@ -428,14 +427,22 @@ export function setOatuhRedirectContext(api: "gcal" | "tapi") {
     }))
 }
 
-export function getOauthRedirectContext(): { 
-    api: "gcal" | "tapi" | null, redirectBackUrl: string | null 
-} {
-    const context = localStorage.getItem("oauth-redirect-context")
-    localStorage.removeItem("oauth-redirect-context")
+export function getOAuthRedirectData(api: "gcal" | "tapi") {
+    const code = localStorage.getItem(`${api}-code`)
+    const error = localStorage.getItem(`${api}-error`) 
+    const state = localStorage.getItem(`${api}-state`)
+
+    if (!code) return null
     
-    if (!context) {
-        return { api: null, redirectBackUrl: null }
+    return {
+        code,
+        error,
+        state
     }
-    return JSON.parse(context)
+}
+
+export function removeOAuthRedirectData(api: "gcal" | "tapi") {
+    localStorage.removeItem(`${api}-code`)
+    localStorage.removeItem(`${api}-error`)
+    localStorage.removeItem(`${api}-state`)
 }

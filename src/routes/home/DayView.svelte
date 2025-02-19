@@ -1,27 +1,29 @@
 <script lang="ts">
-	import { page } from "$app/stores"
     import { themeState, weekRoutine } from "$lib/store"
     
 	import { Icon, LogoIcon } from "$lib/enums"
+	import { hexToRgb } from "$lib/utils-colors"
+	import { isSameDay } from "$lib/utils-date"
+    import { TodosManager } from "$lib/todos-manager"
 	import { getElapsedTime } from "$lib/utils-date"
 	import { globalContext, timer } from "$lib/store"
 	import { formatDatetoStr } from "$lib/utils-date"
 	import { clickOutside } from "$lib/utils-general"
 	import { SideCalendar } from "$lib/side-calendar"
-	import { hexToRgb } from "$lib/utils-colors"
-    import { TodosManager } from "$lib/todos-manager"
+	import { initGoogleCal } from "$lib/api-google-calendar"
 	import { findClosestColorSwatch } from "$lib/utils-colors"
+	import { authGoogleCalendar } from "$lib/api-google-calendar"
 	import { loadSideBarView, saveSideBarView } from "$lib/utils-home"
-	import { GoogleCalendarManager, initGoogleCalSession } from "$lib/google-calendar-manager"
+	import { GoogleCalendarManager } from "$lib/google-calendar-manager"
+	import { getOAuthRedirectData, removeOAuthRedirectData } from "$lib/utils-home"
     
 	import Todos from "./Todos.svelte";
+	import DayView from "./DayViewContent.svelte"
 	import Logo from "../../components/Logo.svelte"
-	import OverviewDayView from "./OverviewDayView.svelte"
 	import SvgIcon from "../../components/SVGIcon.svelte"
 	import Calendar from "../../components/Calendar.svelte"
 	import ToggleBtn from "../../components/ToggleBtn.svelte"
 	import BounceFade from "../../components/BounceFade.svelte"
-	import { isSameDay } from "../../lib/utils-date";
 
     const OVERVIEW_SIDE_MARGINS = 4
     const DAY_VIEW_SIDE_MARGINS = 14
@@ -40,26 +42,6 @@
     let calendarHt = 0
     let settings = false
 
-    /* routines */
-    let checkbox = false
-    let richColors = false
-
-    $: routine = $weekRoutine
-    $: isLight = !$themeState.isDarkTheme
-    $: ambience = $globalContext.ambience
-    
-    /* google calendar */
-    let googleCal: GoogleCalendarManager | null = initGoogleCalSession()
-    let googleCalLinked = googleCal?.signedIn
-    let calsMenu  = false
-    let g_Day = new Date()
-    let g_lastSyncTime = null
-    
-    let googleCalendars: GoogleCalendar[] = []
-    let googleEvents: GoogleCalendarEvent[] = []
-
-    $: googleCalState = googleCal?.state
-
     /* tasks */
     let todosManager = new TodosManager()
     let removeCompleteFlag = false
@@ -69,50 +51,66 @@
     $: tm = todosManager.store
     $: onTodoist = $tm.onTodoist
     $: todoistLinked = $tm.todoistLinked
+
+    /* routines */
+    let checkbox = false
+    let richColors = false
+
+    $: routine = $weekRoutine
+    $: isLight = !$themeState.isDarkTheme
+    $: ambience = $globalContext.ambience
     
+    /* google calendar */
+    let googleCal: GoogleCalendarManager | null = initGoogleCal()
+    let g_Day = new Date()
+    let g_lastSyncTime = null
+    
+    let googleCalendars: GoogleCalendar[] = []
+    let googleEvents: GoogleCalendarEvent[] = []
+    let calsMenu  = false
+
+    $: gCalState = googleCal?.state
+    
+    /* apis */
     $: t_loading = $tm.loading
     $: t_syncLoading = t_loading === "sync"
-
-    $: g_loading = $googleCalState?.loading
-    $: g_syncLoading = g_loading === "sync"
-    let g_tokenExpired = $googleCalState?.tokenExpired
-
-    $: onAPI = (view === "tasks" && onTodoist) || (view === "cal" && calView === "g-cal")
     
-    $: if (googleCal) {
-        googleCal?.state.subscribe(({ tokenExpired }) => onGoogleCalUpdate(tokenExpired))
-    }
+    $: g_loading = $gCalState?.loading
+    $: g_syncLoading = g_loading === "sync"
+    $: g_tokenExpired = $gCalState?.tokenExpired
+    $: gCalSignedIn = $gCalState?.signedIn
+
+    $: onAPI = (view === "tasks" && onTodoist) || (view === "cal" && calView === "g-cal" && gCalSignedIn)
     $: saveSideBarView({ view, calView })
     
-    timer.subscribe(async ({ date }) => {
-        now = date
-        if ($tm?.todoistLinked) {
-            t_lastSyncTime = await todosManager.autoRefreshHandler(date)
-        }
-        if (googleCalLinked) {
-            googleCal!.watchUpcomingEvents()
-        }
-
-    })
+    $: if (googleCal) {
+        googleCal.state.subscribe((state) => onGoogleCalUpdate(state))
+    }
+    
     todosManager.store.subscribe(() => {
         t_lastSyncTime = todosManager?.lastSyncTimeStamp
     })
-    function handleTodoistLogin() {
-        const redirectBackUrl = $page.url.pathname
-        todosManager.loginTodoist(redirectBackUrl)
-        settings = false
-    }
-    async function refreshSync(api: "todoist" | "google-cal") {
-        if (api === "todoist") {
-            todosManager.refreshTodoist()
+    timer.subscribe(async ({ date }) => {
+        now = date
+        // if ($tm?.onTodoist) {
+        //     todosManager.autoRefreshHandler(date)
+        // }
+        // if (gCalSignedIn) {
+        //     googleCal!.watchUpcomingEvents()
+        //     calView === "g-cal" && googleCal!.autoRefreshHandler(focusDate)
+        // }
+
+        if ($tm?.todoistLinked) {
+            todosManager.autoRefreshHandler(date)
         }
-        else if (api === "google-cal") {
-            getCalEvents(focusDate)
+        if (gCalSignedIn) {
+            googleCal!.watchUpcomingEvents()
+            googleCal!.autoRefreshHandler(focusDate)
         }
-    }
+    })
     function onDayUpdate(date: Date) {
         const tokenExpired = g_tokenExpired
-        if (!googleCalLinked || !tokenExpired) {
+        if (!gCalSignedIn || !tokenExpired) {
             focusDate = date
         }
         if (view === "tasks") {
@@ -122,12 +120,29 @@
             getCalEvents(date)
         }
     }
-    /* google calendar*/
-    function onGoogleCalUpdate(hasExpired: boolean) {
+    /* api */
+    function handleTodoistLogin() {
+        todosManager.loginTodoist()
+        settings = false
+    }
+    async function refreshSync(api: "todoist" | "google-cal") {
+        if (api === "todoist") {
+            todosManager.refreshTodoist()
+        }
+        else if (api === "google-cal") {
+            googleCal!.refreshDayEvents(focusDate)
+        }
+    }
+    /* google calendar */
+    function onGoogleCalUpdate(state: GoogleCalendarState) {
+        const { tokenExpired, signedIn } = state
         g_lastSyncTime = googleCal.lastSyncTimeStamp
-        let expired = hasExpired
 
-        if (g_tokenExpired && !expired) {
+        if (signedIn && getOAuthRedirectData("gcal")) {
+            calView = "g-cal"
+            removeOAuthRedirectData("gcal")
+        }
+        if (g_tokenExpired && !tokenExpired && signedIn && !g_loading) {
             focusDate = new Date()
             googleCal!.updateDayEvents(new Date())
         }
@@ -137,8 +152,8 @@
         }
     }
     async function getCalEvents(newDay: Date) {
-        if (g_tokenExpired) {
-            googleCal!.refreshAccessToken()
+        if (g_tokenExpired || g_loading) {
+            g_tokenExpired && googleCal!.refreshAccessToken()
             return
         }
         try {
@@ -154,16 +169,6 @@
         googleCalendars = googleCal!.toggleViewCalendar(id) ?? []
         googleEvents    = googleCal!.events
     }
-    async function connectGoogleCal() {
-        settings = false
-        googleCal = new GoogleCalendarManager()
-        
-        await googleCal.init()
-        focusDate = new Date()
-        googleCalLinked = true
-        calView = "g-cal"
-    }
-
     async function onCalSettingsHandler(optnText: "refresh" | "disconnect" | "my calendars") {
         const isLoading = g_loading
         calsMenu = false
@@ -174,19 +179,21 @@
         }
         else if (optnText === "disconnect") {
             googleCal!.quit()
-            googleCalLinked = false
+            gCalSignedIn = false
             googleCal = null
             googleCalendars = []
             googleEvents = []
-            calView = $weekRoutine ? "routine" : null
+            calView = "routine"
         }
-        else if (optnText === "my calendars" && $googleCalState) {
+        else if (optnText === "my calendars" && $gCalState) {
             calsMenu = true
         }
     }
 
     /* utils */
     function getLastSyncTime(lastSync: Date) {
+        if (!lastSync) return ""
+        
         const str = getElapsedTime({ 
             start: lastSync, end: new Date(), min: true 
         })
@@ -203,14 +210,14 @@
 </script>
 
 <div 
-    class="overview" 
-    class:overview--light={isLight}
+    class="day-view" 
+    class:day-view--light={isLight}
     style:--OVERVIEW_SIDE_MARGINS={`${OVERVIEW_SIDE_MARGINS}px`}
     style:--DAY_VIEW_SIDE_MARGINS={`${DAY_VIEW_SIDE_MARGINS}px`}
     style:--api-offset-top={onAPI ? "38px" : "0px"}
 >
     <div
-        class="overview__calendar-container"
+        class="day-view__calendar-container"
         bind:clientHeight={calendarHt}
     >
         <Calendar 
@@ -220,15 +227,15 @@
             onDayUpdate={onDayUpdate}
         />
     </div>
-    <div class="overview__day" style:height={`calc(100% - ${calendarHt}px)`}>
+    <div class="day-view__day" style:height={`calc(100% - ${calendarHt}px)`}>
         <button 
-            class="overview__day-settings-btn" 
-            id="overview--dbtn"
+            class="day-view__day-settings-btn" 
+            id="day-view--dbtn"
             on:click={() => settings = !settings}
         >
             <SvgIcon icon={Icon.Settings} options={{ opacity: 1, scale: 0.9 }} />
         </button>
-        <div class="overview__day-header">
+        <div class="day-view__day-header">
             <span>
                 {#if view === "cal"}
                     {formatDatetoStr(focusDate, { month: "long", day: "numeric" })}
@@ -238,9 +245,9 @@
             </span>
         </div>
 
-    <div class="overview__main-content">
+    <div class="day-view__main-content">
         {#if view === "cal"}
-            <OverviewDayView
+            <DayView
                 {richColors}
                 {checkbox}
                 view={calView}
@@ -266,7 +273,7 @@
         {@const lastSync = api === "google-cal" ? g_lastSyncTime : t_lastSyncTime}
         {@const tokenExpired = api === "google-cal" && g_tokenExpired}
 
-        <div class="overview__api" data-api={api}>
+        <div class="day-view__api" data-api={api}>
             <div class="flx-algn-center">
                 <Logo 
                     logo={logo}
@@ -282,7 +289,7 @@
                     {isLoading ? "Syncing..." : title}
                 </span>
             </div>
-            <div class="overview__api-sync">
+            <div class="day-view__api-sync">
                 {#key now}
                     <span title={tokenExpired ? "Token Expired" : "Last Sync"}>
                         {tokenExpired ? "!" : getLastSyncTime(lastSync)}
@@ -309,15 +316,15 @@
         position={{ top: "20px", right: "12px" }}
         zIndex={200}
     >
-        {@const { isLoading, tokenExpired } = $googleCalState}
+        {@const { isLoading, tokenExpired } = $gCalState}
         <div 
             class="google-cals"
-            id="overview--dmenu"
+            id="day-view--dmenu"
             use:clickOutside on:click_outside={() => calsMenu = false} 
         >
             <div class="google-cals__header">
                 <span>
-                    {googleCal?.email}
+                    Your Calendars
                 </span>
             </div>
             <ul class="google-cals__list">
@@ -359,7 +366,7 @@
         <div 
             class="dmenu"
             class:dmenu--light={isLight}
-            id="overview--dmenu"
+            id="day-view--dmenu"
             use:clickOutside on:click_outside={() => settings = false} 
         >
             <!-- view -->
@@ -539,7 +546,7 @@
                     <div class="dmenu__section-name">
                         Google Calendar
                     </div>
-                    {#if calView === "routine" && googleCalLinked}
+                    {#if calView === "routine" && gCalSignedIn}
                         <div class="dmenu__option">
                             <button 
                                 class="dmenu__option-btn"
@@ -558,7 +565,7 @@
                                 </span>
                             </button>
                         </div>
-                    {:else if googleCalLinked}
+                    {:else if gCalSignedIn}
                         {#if g_tokenExpired}
                             <div class="dmenu__option">
                                 <button 
@@ -594,7 +601,10 @@
                     {:else}
                         <div class="dmenu__option">
                             <button 
-                                on:click={() => connectGoogleCal()}
+                                on:click={() => {
+                                    settings = false
+                                    authGoogleCalendar()
+                                }}
                                 class="dmenu__option-btn"
                             >
                                 <span class="dmenu__option-text">
@@ -650,7 +660,7 @@
 
     $hour-block-height: 45px;
 
-    .overview {
+    .day-view {
         margin-top: -5px;
         height: 100%;
         overflow: hidden;
@@ -718,10 +728,10 @@
         }
         &__api-sync {
             @include flex(center);
-            span {
-                margin-right: 12px;
-                @include text-style(0.125, var(--fw-400-500), 1.3rem, "system");
-            }
+        }
+        &__api-sync span {
+            margin-right: 12px;
+            @include text-style(0.125, var(--fw-400-500), 1.3rem, "system");
         }
         &__api-sync button {
             @include circle(25px);
@@ -772,7 +782,7 @@
         width: 200px;
 
         span {
-            @include text-style(0.3, 300, 1.2rem);
+            @include text-style(0.3, var(--fw-400-500), 1.25rem);
             display: block;
             padding: 9px 16px 0px 14px;
             margin-right: 4px;
@@ -783,7 +793,6 @@
         &__list {
             margin: 5.5px 0px 0px 0px;
             width: 100%;
-            // max-height: 100px;
             overflow-y: scroll;
             padding-bottom: 7px;
             margin-bottom: 6px;

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { themeState } from "$lib/store"
-
 	import { TodosManager } from "$lib/todos-manager"
 
 	import Loader from "../../components/Loader.svelte"
@@ -10,7 +9,6 @@
     export let removeCompleteFlag: boolean
     export let onTaskComplete: (completed: number) => void
     
-    const NOW_TIME_THRESHOLD_SECS = 10
     const { onAddTask, onDeleteTask, onTaskUpdate } = manager
 
     let todoListContainer: HTMLElement

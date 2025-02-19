@@ -1,6 +1,7 @@
 import { APIError } from "./errors"
 import { v4 as uuidv4 } from 'uuid'
 import { APIErrorCode } from "./enums"
+import { getOAuthRedirectData, removeOAuthRedirectData } from "./utils-home"
 import { PUBLIC_TODOIST_CLIENT_ID, PUBLIC_TODOIST_CLIENT_SECRET } from "$env/static/public"
 
 const REDIRECT_URI = "http://localhost:5173/home/oauth-callback"
@@ -36,7 +37,7 @@ export async function initTodoistAPI() {
     url.searchParams.append('state', STATE_ID)
 
     window.location.href = url.toString()
-    localStorage.setItem("tapi-state", STATE_ID)
+    localStorage.setItem("tapi-o-state", STATE_ID)
 }
 
 /**
@@ -72,40 +73,36 @@ export async function authTodoistAPI(): Promise<{ access_token: string, token_ty
         return data
     }
     catch(e: any) {
-        console.error(e)
         throw e
     }
     finally {
-        localStorage.removeItem("tapi-state")
-        localStorage.removeItem("tapi-code")
-        localStorage.removeItem("tapi-error")
-        localStorage.removeItem("tapi-ostate")
+        removeOAuthRedirectData("tapi")
+        localStorage.removeItem("tapi-o-state")
     }
 }
 
 /* redirect */
 
 function verifyRedirect() {
-    const initState = localStorage.getItem("tapi-state")
-    const code = localStorage.getItem("tapi-code")
-    const error = localStorage.getItem("tapi-error")
-    const state = localStorage.getItem("tapi-ostate")
+    const ogState = localStorage.getItem("tapi-o-state")
+    const data = getOAuthRedirectData("tapi")
+    if (!data) {
+        throw new Error("No data found in redirect")
+    }
+    const { code, error, state: redirectState } = data
 
     if (error === "access_denied") {
-        console.error("Access Denied.")
         throw new APIError(APIErrorCode.AUTH_DENIED)
     }
     else if (error) {
-        console.error("There was an error initializing Todoist API OAuth 2.0 Flow.")
-        throw new Error
+        throw new Error("There was an error initializing Todoist API OAuth 2.0 Flow.")
     }
-    else if (state != initState) {
+    else if (ogState != redirectState) {
         // if state returned from redirect does not match the state param in the init request
-        console.error("Request to start Todoist API OAuth 2.0 flow has been compromised by other parties.")
-        throw new Error
+        throw new Error("Request to start Todoist API OAuth 2.0 flow has been compromised by other parties.")
     }
     else {
-        return { code, state }
+        return { code, state: redirectState }
     }
 }
 

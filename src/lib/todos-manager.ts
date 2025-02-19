@@ -69,11 +69,11 @@ export class TodosManager {
         if (this.hasTodoistSession()) {
             this.loadTodoistData()
         }
-        if (!todoistRedirect) {
-            this.currTasks = this.inboxTasks
-        }
         if (todoistRedirect) {
             this.continueTodoistAPIOAuthFlow()
+        }
+        else {
+            this.currTasks = this.inboxTasks
         }
     }
 
@@ -143,6 +143,8 @@ export class TodosManager {
      */
     async continueTodoistAPIOAuthFlow() {
         try {
+            console.log("todoist - continue session")
+
             this.update({ loading: "init" })
             const authRes = await authTodoistAPI()
             this.todoistAccessToken = authRes.access_token
@@ -164,13 +166,16 @@ export class TodosManager {
             })
         }
         catch(error: any) {
+            // sometimes on login, the fetch error is thrown
+            // even thought the fetch request will be successful
+            console.error(error)
+
             this.currTasks = this.inboxTasks
             this.update({ 
                 currTasks: this.currTasks, 
                 loading: "none",
                 renderFlag: !this.renderFlag
             })
-
             this.onTodistError(error)
         }
     }
@@ -201,6 +206,7 @@ export class TodosManager {
             this.autoSyncTimeStamp = new Date()
         }
         catch(error: any) {
+            console.error(error)
             this.onTodistError(error)
         }
     }
@@ -250,7 +256,8 @@ export class TodosManager {
                 this.update({ renderFlag: !this.renderFlag })
             }
         }
-        catch(e) {
+        catch(error: any) {
+            console.error(error)
             this.onTodistError(new APIError(APIErrorCode.GENERAL, "There was an error syncing your Todoist data."))
         }
     }
@@ -276,6 +283,10 @@ export class TodosManager {
                 }
                 await this.performSync(canFullSync)
             } 
+            catch(error: any) {
+                console.error(error)
+                this.onTodistError(error)
+            }
             finally {
                 this.saveTodoistData()
                 this.update({ loading: "none" })
@@ -296,7 +307,7 @@ export class TodosManager {
         if (diff >= this.AUTO_REFRESH_INTERVAL_MINS * 60 * 1000) {
             this.update({ loading: "sync" })
             await this.initTodoistUserItems(true)
-            console.log("auto refresh", diff / (60 * 1000))
+            console.log("todoist - auto refresh", diff / (60 * 1000))
 
             this.saveTodoistData()
             this.update({ loading: "none" })
@@ -313,7 +324,7 @@ export class TodosManager {
             this.lastFullSyncTime = Date.now()
             this.fullSyncCount++
 
-            console.log("full sync")
+            console.log("todoist - full sync")
         } 
         else {
             await this.initPartialSync()
@@ -654,7 +665,9 @@ export class TodosManager {
     }
 
     onTodistError(error: any) {
-        console.error(error)
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+            return
+        }
         toastApiErrorHandler({ 
             error, 
             logoIcon: LogoIcon.Todoist,
@@ -680,7 +693,7 @@ export class TodosManager {
         }))
     }
 
-    loadTodoistData() {
+    async loadTodoistData() {
         const savedData = JSON.parse(localStorage.getItem("todoist")!)! as Partial<TodosManager>
         
         this.onTodoist = savedData.onTodoist!
@@ -693,7 +706,9 @@ export class TodosManager {
         this.lastSyncWindowStart = savedData.lastSyncWindowStart!
         this.todoistAccessToken = savedData.todoistAccessToken!
 
-        this.initTodoistUserItems(true)
+        this.onTodoist && this.update({ loading: "init" })
+        await this.initTodoistUserItems(true)
+        this.onTodoist && this.update({ loading: "none" })
 
         if (this.onTodoist) {
             this.currTasks = this.todoistTasks!

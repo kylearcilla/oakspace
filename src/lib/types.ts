@@ -1085,6 +1085,7 @@ type GoogleCalendar = {
     user: string
     email: string
     isChecked: boolean
+    syncToken: string
 }
 
 type GoogleCalendarEvent = {
@@ -1105,6 +1106,19 @@ type GoogleCalendarEvent = {
     top: string
     left: string
     width: string
+}
+
+type FetchCalendarsResponse = { 
+    cals: (GoogleCalendar | { id: string, deleted: true })[]
+    syncToken: string 
+}
+
+type FetchEventResponse = GoogleCalendarEvent | { id: string, status: "cancelled" }
+
+type FetchCalDayEventsResponse = {
+    events: FetchEventResponse[]
+    syncToken: string
+    id: string
 }
 
 /* Goals */

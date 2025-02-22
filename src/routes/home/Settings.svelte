@@ -347,7 +347,7 @@
                             </div>
                         </button>
                         {#if isLangDropdownListOpen}
-                            <ul use:clickOutside on:click_outside={() => isLangDropdownListOpen = false} class="dmenu">
+                            <ul use:clickOutside on:outClick={() => isLangDropdownListOpen = false} class="dmenu">
                                 {#each langs as lang, idx} 
                                     <li class={`dmenu__option ${lang.name === currentLang.name ? "dmenu__option--selected" : ""}`}>
                                         <button class="dropdown-element" on:click={() => handleNewFlagClicked(idx)}>

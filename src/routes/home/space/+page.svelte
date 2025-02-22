@@ -5,21 +5,31 @@
 	import { formatTimeToHHMM, prefer12HourFormat } from "$lib/utils-date"
 	import SpaceSelection from "./SpaceSelection.svelte";
 
-    $: ambience = $globalContext.ambience
-    $: rightBarOpen = $globalContext.rightBarOpen
-    $: rightBarFixed = $globalContext.rightBarFixed
-    $: showTime = ambience?.showTime
-    $: clockFont = ambience?.clockFont ?? "system"
+    type FontOption = {
+        name: string
+        size: string
+        topOffset: string
+    }
+    type FontOptions = {
+        [key: string]: FontOption
+    }
 
-    const TOP_PADDING = 40
-    const NUM_SPACING = TOP_PADDING + 10
-    const NUM_CHANGE_TIME = 2000
-    const FONT_OPTIONS = {
+    const FONT_OPTIONS: FontOptions = {
         "system":         { name: SYSTEM_FONT, size: "19rem", topOffset: "-50px"  },
         "zodiak-bold":    { name: "Zodiak-Bold", size: "19rem", topOffset: "-55px" },
         "melodrama-bold": { name: "Melodrama-Bold", size: "25rem", topOffset: "-75px" },
         "bagel-fat-one":  { name: "Bagel Fat One", size: "22rem", topOffset: "-85px" },
     }
+
+    $: ambience = $globalContext.ambience
+    $: rightBarOpen = $globalContext.rightBarOpen
+    $: rightBarFixed = $globalContext.rightBarFixed
+    $: showTime = ambience?.showTime
+    $: clockFont = (ambience?.clockFont ?? "system") as keyof typeof FONT_OPTIONS
+    
+    const TOP_PADDING = 40
+    const NUM_SPACING = TOP_PADDING + 10
+    const NUM_CHANGE_TIME = 2000
 
     let doUse12HourFormat = prefer12HourFormat()
     let currentTimeStr = ""
@@ -30,7 +40,7 @@
     let digits: string[] = ["0", "0", ":", "0", "0"]
     let digitRefs: HTMLElement[] = []
 
-    timer.subscribe(({ date }) => {
+    const unsubscribe = timer.subscribe(({ date }) => {
         if (init) {
             updateTimeStr(date)
         }
@@ -65,15 +75,16 @@
         const yOffset = NUM_SPACING + lineHeight
 
         digitRefs.forEach((element, index) => {
+            if (!element) return
             const digit = digits[index]
             const newDigit = newDigits[index]
             const diff = newDigit !== digit
             
-            if ((!diff && init) || !element)  return
+            if (!diff && init) return
             
-            const digitNumElem = element as HTMLElement
-            const digitElem = digitNumElem.parentElement
-            const span      = digitNumElem.querySelector('span') as HTMLSpanElement
+            const digitNumElem = element
+            const digitElem = digitNumElem.parentElement as HTMLElement
+            const span = digitNumElem.querySelector('span') as HTMLSpanElement
 
             if (newDigit === "X") {
                 span.style.display = 'none'
@@ -131,6 +142,7 @@
 
     onDestroy(() => {
         $ytPlayerStore?.togglePlayback(false)
+        unsubscribe()
     })
 </script>
 <div 

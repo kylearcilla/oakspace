@@ -83,7 +83,7 @@
             // goto("/home/goals")
         }
         else if (option === "habits") {
-
+            goto("/home/habits")
         }
         else if (option === "routines") {
             goto("/home/routines")

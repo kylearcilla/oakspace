@@ -1,18 +1,21 @@
 import { get } from "svelte/store"
 import { globalContext, timer, ytPlayerStore } from "./store"
-import { ModalType } from "./enums"
 
-import { loadTheme, setNewTheme } from "./utils-appearance"
-import { conintueWorkSession, didInitSession } from "./utils-session"
-import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer, handleChooseItem } from "./utils-youtube"
-import { getElemById, isTargetTextEditor, randomArrayElem } from "./utils-general"
-import { POPULAR_SPACES } from "./data-spaces"
+import { ModalType } from "./enums"
 import { initEmojis } from "./emojis"
 import { themes } from "./data-themes"
 import { initHabits } from "./utils-habits"
+import { POPULAR_SPACES } from "./data-spaces"
 import { didTodoistAPIRedirect } from "./api-todoist"
+import { loadTheme, setNewTheme } from "./utils-appearance"
+import { conintueWorkSession, didInitSession } from "./utils-session"
+import { getElemById, isTargetTextEditor, randomArrayElem } from "./utils-general"
+import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer, handleChooseItem } from "./utils-youtube"
 
 /* constants */
+export const SMALL_WIDTH = 740
+export const X_SMALL_WIDTH = 650
+
 export const LEFT_BAR_MIN_WIDTH = 60
 export const LEFT_BAR_FLOAT_WIDTH = 160
 export const LEFT_BAR_FULL_WIDTH = 175
@@ -39,6 +42,8 @@ export const AMBIENT = {
     DARK_BG_COLOR: "rgba(25, 25, 25, 0.5)",
     BORDER: "1px solid rgba(255, 255, 255, 0.055)"
 }
+
+let worker: Worker | null = null
 
 /**
  * Initialize app state.
@@ -71,7 +76,7 @@ export function onQuitApp() {
 }
 
 export function initTimer() {
-    const worker = new Worker(new URL('./workers/timeWorker.ts', import.meta.url))
+    worker = new Worker(new URL('./workers/timeWorker.ts', import.meta.url))
 
     worker.onmessage = (event) => {
         if (event.data === 'tick') { 
@@ -94,6 +99,7 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
     const context = get(globalContext)
     const { shiftKey, key, ctrlKey } = event
     const isTargetContentEditable = target.contentEditable === "true"
+    const width = window.innerWidth
     
     if (isTargetTextEditor(target)) { 
         const allowCustomFormatting = false
@@ -109,10 +115,10 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
         return toggledLeftBarWithKey
     }
 
-    const doNotOpenRightBar = false
-    const leftBar = context.leftBar
+    const doNotFixBars = width <= X_SMALL_WIDTH
+    const leftBarFixed = context.leftBarFixed
     const hasAmbience = context.ambience?.active
-    const wideLeftBarCtrl = !hasAmbience && ctrlKey && (leftBar === "float" || leftBar === "full")
+    const wideLeftBarCtrl = !hasAmbience && ctrlKey && (leftBarFixed === false || leftBarFixed === true)
 
     // if (key === "Escape" && context.modalsOpen.length != 0) {
     //     const modals = get(globalContext).modalsOpen
@@ -120,7 +126,11 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
 
     //     closeModal(modals[modals.length - 1])
     // }
-    if (event.ctrlKey && key === "]" && !doNotOpenRightBar) {
+
+    if (event.ctrlKey && key === "]" && doNotFixBars) {
+        updateGlobalContext({ rightBarOpen: !context.rightBarOpen })
+    }
+    else if (event.ctrlKey && key === "]") {
         updateGlobalContext({ 
             rightBarOpen: !context.rightBarOpen,
             rightBarFixed: !context.rightBarOpen === false
@@ -130,21 +140,17 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
         updateGlobalContext({ leftBarOpen: !context.leftBarOpen })
         return true
     }
+    else if (key === "/" && wideLeftBarCtrl && !doNotFixBars) {
+        updateGlobalContext({ leftBarFixed: !leftBarFixed })
+    }
     else if (key === "?" && (context.modalsOpen.length === 0 || isModalOpen(ModalType.Shortcuts))) {
         isModalOpen(ModalType.Shortcuts) ? closeModal(ModalType.Shortcuts) : openModal(ModalType.Shortcuts)
     }
     else if (key === "q" && (context.modalsOpen.length === 0 || isModalOpen(ModalType.Quote))) {
         isModalOpen(ModalType.Quote) ? closeModal(ModalType.Quote) : openModal(ModalType.Quote)
     }
-    else if (key === "/" && wideLeftBarCtrl) {
-        updateLeftBar(leftBar === "float" ? "full" : "float")
-    }
 
     return toggledLeftBarWithKey
-}
-
-function updateLeftBar(type: "float" | "full") {
-    updateGlobalContext({ leftBar: type, leftBarOpen: true })
 }
 
 export function middleViewExpandHandler(args: { 
@@ -197,12 +203,12 @@ export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boo
         leftBarOpen, 
         rightBarOpen, 
         rightBarFixed, 
-        leftBar, 
+        leftBarFixed, 
     } = context
 
     const leftInArea = mouseLeftPos < LEFT_BAR_LEFT_BOUND
     const activeRoutineOpen = !!getElemById("active-routine--dmenu")
-    const lbAutoCloseThreshold = getLeftBarWidth(leftBar!)
+    const lbAutoCloseThreshold = getLeftBarWidth(leftBarFixed)
     
     const rightInArea = mouseRightPos < RIGHT_BAR_RIGHT_BOUND
     const rbAutoCloseThreshold = 300
@@ -211,33 +217,28 @@ export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boo
         const hasModal = document.querySelector(".modal-bg")
         if (hasModal) return false
 
-        updateGlobalContext({ ...get(globalContext), leftBarOpen: true  })
+        updateGlobalContext({ leftBarOpen: true  })
         return false
     }
     else if (!toggledLeftBarWithKey && context.leftBarOpen && mouseLeftPos > lbAutoCloseThreshold) { 
-        updateGlobalContext({ ...get(globalContext), leftBarOpen: false  })
+        updateGlobalContext({ leftBarOpen: false  })
     }
     else if (rightBarFixed && !rightBarOpen && rightInArea) { 
         const hasModal = document.querySelector(".modal-bg")
         if (hasModal) return false
         
-        updateGlobalContext({ ...get(globalContext), rightBarOpen: true  })
+        updateGlobalContext({ rightBarOpen: true  })
     }
     else if (rightBarFixed && rightBarOpen && mouseRightPos > rbAutoCloseThreshold) { 
-        updateGlobalContext({ ...get(globalContext), rightBarOpen: false  })
+        updateGlobalContext({ rightBarOpen: false  })
     }
 
     return toggledLeftBarWithKey
 }
 
 
-export function getLeftBarWidth(leftBar: "float" | "full"): number {
-    switch (leftBar) {
-        case "float":
-            return LEFT_BAR_FLOAT_WIDTH
-        default:
-            return LEFT_BAR_FULL_WIDTH
-    }
+export function getLeftBarWidth(leftBarFixed: boolean): number {
+    return leftBarFixed ? LEFT_BAR_FULL_WIDTH : LEFT_BAR_FLOAT_WIDTH
 }
 
 /**
@@ -263,8 +264,7 @@ const loadGlobalContext = () => {
     const data: GlobalContext = JSON.parse(storedData)
 
     updateGlobalContext({ 
-        ...data, 
-        modalsOpen: [] 
+        ...data, modalsOpen: [] 
     })
 }
 
@@ -366,7 +366,7 @@ export function setAmbience() {
             styling: "blur",
             active: true,
             showTime: true,
-            clockFont: "DM Sans",
+            clockFont: "system",
             spacesOpen: false,
             space: liveSpace
         }

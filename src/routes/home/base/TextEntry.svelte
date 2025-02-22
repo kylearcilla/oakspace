@@ -17,6 +17,22 @@
     export let id: string
     let { styling, icon, truncate } = entry
 
+    const ICON_SIZE_OPTN =  { 
+        name: "Icon Size",
+        rightIcon: { 
+            type: "svg" as const,
+            icon: Icon.ChevronRight,
+            transform: "scale(0.98) translate(2px, 0px)"
+        },
+        onPointerOver: () => {
+            imgSizeOpen = true
+        },
+        onPointerLeave: () => {
+            imgSizeOpen = false
+        },
+        divider: true
+    }
+
     // when style changes, apple when unfocused
     let toStyle = styling 
     let focused = false
@@ -173,7 +189,7 @@
         }
     }
     function handleEditorStyle(elem: HTMLElement) {
-        if (focused) return
+        if (focused || !elem) return
 
         const { styling } = getMaskedGradientStyle(elem, {
             head: {
@@ -200,6 +216,7 @@
         else {
             markerHeight = textEditorElem.clientHeight - padding - 5
         }
+
     }
     function getTextEditorHeight() {
         return findElemVertSpace(textEntryElem) - 15
@@ -216,17 +233,22 @@
         iconPicker.init({
             id,
             onSubmitIcon: (newIcon) => {
-                icon = { ...icon, ...newIcon }
+                icon = { ...icon, ...newIcon } as TextEntryIcon
                 icon.size = icon.type === "emoji" ? "small" : "big"
                 entry.icon = icon
                 requestAnimationFrame(() => setMarkerHeight())
             }
         })
     }
+    function onIconSizeChange(size: string) {
+        icon!.size = size.toLowerCase() as "small" | "big"
+        imgSizeOpen = false
+    }
 
     onMount(() => {
         handleEditorStyle(textEditorElem)
         updateData(entry)
+        containerHeight = getTextEditorHeight()
     })
 </script>
 
@@ -241,7 +263,7 @@
     style:--padding={padding}
     style:--txt-bottom-padding={txtBottomPadding}
     bind:clientWidth={width}
-    use:clickOutside on:click_outside={() => {
+    use:clickOutside on:outClick={() => {
         focused = false
         onEditComplete()
     }}
@@ -286,7 +308,6 @@
                 bind:this={textEditorElem}
                 on:scroll={() => handleEditorStyle(textEditorElem)}
             >
-                {@html text}
             </div>
         </div>
         <div class="thought-entry__details" class:hidden={!focused}>
@@ -321,7 +342,7 @@
                 class="dmenu" 
                 class:dmenu--light={isLight}
                 style:width={"140px"}
-                use:clickOutside on:click_outside={() => styleOpen = false} 
+                use:clickOutside on:outClick={() => styleOpen = false} 
             >
 
                 <div class="dmenu__toggle-optn  dmenu__option--static">
@@ -370,23 +391,7 @@
                     { 
                         name: icon ? "Replace Icon" : "Add Icon"
                     },
-                    ...(icon && icon.type === "img" ? [
-                        { 
-                            name: "Icon Size",
-                            rightIcon: { 
-                                type: "svg",
-                                icon: Icon.ChevronRight,
-                                transform: "scale(0.98) translate(2px, 0px)"
-                            },
-                            onPointerOver: () => {
-                                imgSizeOpen = true
-                            },
-                            onPointerLeave: () => {
-                                imgSizeOpen = false
-                            },
-                            divider: true
-                        }
-                    ] : []),
+                    ...(icon && icon.type === "img" ? [ICON_SIZE_OPTN] : []),
                     ...(icon ? [{ name: "Remove" }] : []),
                 ],
                 onListItemClicked: ({ name }) => {
@@ -413,10 +418,6 @@
                     { name: "Small" },
                     { name: "Big" },
                 ],
-                onListItemClicked: ({ name: size }) => {
-                    icon.size = size.toLowerCase()
-                    imgSizeOpen = false
-                },
                 styling:  { 
                     width: "100px",
                     zIndex: 2,
@@ -429,6 +430,9 @@
                     id: `${id}--img-dmenu`,
                     optnIdx: 1,
                     optnName: "Image Size"
+                },
+                onListItemClicked: ({ name: size }) => {
+                    onIconSizeChange(size)
                 },
                 onPointerLeave: () => {
                     imgSizeOpen = false

@@ -1,14 +1,26 @@
 .goal-m {
     @include flex(flex-start);
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     transition: 0.18s cubic-bezier(.4, 0, .2, 1);
     position: relative;
 
+    --bullet-opacity: 0.15;
+    --div-opacity: 0.095;
+    --hover-opacity: 0.9;
+    
+    &--full {
+        margin-bottom: 4px;
+    }
+    &--full &__title {
+        padding-bottom: 10px;
+    }
+    &--light {
+        --bullet-opacity: 0.35;
+        --div-opacity: 0.25;
+        --hover-opacity: 0.3;
+    }
     &--light &__title {
         opacity: 0.9;
-    }
-    &--light &__bullet {
-        background-color: rgba(var(--textColor1), 0.35);
     }
     &--light i {
         color: rgba(var(--textColor1), 0.4);
@@ -18,35 +30,40 @@
         transform: scale(0.995);
     }
     &:hover &__title {
-        opacity: 0.75;
+        opacity: var(--hover-opacity);
     }
     &:hover &__title.strike {
         opacity: 0.35 !important;
     }
 
     &__title {
-        @include text-style(1, var(--fw-400-500), 1.35rem, "Geist Mono");
+        @include text-style(1, var(--fw-400-500), 1.25rem, "Geist Mono");
         cursor: pointer;
-        opacity: 0.55;
+        opacity: 0.65;
         position: relative;
-        padding-bottom: 2px;
-        @include truncate-lines(3);
+        padding-bottom: 14px;
+        @include truncate-lines(2);
     }
     &__title.strike {
         opacity: 0.25 !important;
     }
-    &__date {
-        margin: 4px 0px 0px 0px;
-        @include text-style(0.2, var(--fw-300-400), 1.3rem);
-    }
     &__left {
         @include square(15px);
         @include center;
-        margin: 0px 8px 0px -5px;
+        margin: 0px 9px 0px -5px;
+        // display: none;
     }
     &__bullet {
-        @include square(4px, 10px);
-        background-color: rgba(var(--textColor1), 0.15);
+        @include circle(7px);
+        border: 2px solid rgba(var(--textColor1), var(--bullet-opacity));
+        margin-top: 2px;
+    }
+    svg {
+        @include abs-bottom-left;
+        width: 100%;
+    }
+    path {
+        stroke: rgba(var(--textColor1), var(--div-opacity));
     }
     i {
         font-size: 1.2rem;

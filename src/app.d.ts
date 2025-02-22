@@ -1,7 +1,8 @@
+/// <reference types="svelte" />
+
 declare global {
 	declare interface Window {
 		google: any;
-		MusicKit: MusicKitType;
 	}
 	namespace App {
 		// interface Error {}
@@ -9,12 +10,12 @@ declare global {
 		// interface PageData {}
 		// interface Platform {}
 	}
-	namespace svelte.JSX {
-		interface HTMLAttributes<T> {
-			onclick_outside?: (e: CustomEvent) => void
-		}
+}
+
+declare namespace svelte.JSX {
+	interface DOMAttributes<T> {
+		'on:outClick'?: (event: CustomEvent<any>) => void
 	}
 }
 
-export {};
-
+export {}

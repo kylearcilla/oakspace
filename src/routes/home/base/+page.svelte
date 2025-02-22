@@ -1,12 +1,11 @@
 <script lang="ts">    
-	import { themeState } from "../../../lib/store"
-	import { clamp } from "../../../lib/utils-general"
+	import { themeState } from "$lib/store"
+	import { clamp } from "$lib/utils-general"
+	import { BASE_BANNER, BASE_HEADER } from "$lib/mock-data"
 
-	import YearView from "./YearView.svelte"
+	import Header from "./Header.svelte"
 	import MonthView from "./MonthView.svelte"
-	import LeftMargin from "./LeftMargin.svelte";
-	import Header from "./Header.svelte";
-	import { BASE_BANNER, BASE_HEADER } from "../../../lib/mock-data";
+	import LeftMargin from "./LeftMargin.svelte"
 
     const SMALLER_WIDTH = 630
     const SMALL_WIDTH = 1000
@@ -28,8 +27,8 @@
     }
     
     /* ui */
-    function onBaseEvent({ detail }: BaseEventDetail) {
-        const { context, payload } = detail
+    function onBaseEvent(e: CustomEvent) {
+        const { context, payload } = e.detail
         if (context === "banner") {
             bannerImg = payload
             bannerImg.src = payload.src

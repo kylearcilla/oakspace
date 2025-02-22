@@ -67,6 +67,7 @@ export async function authTodoistAPI(): Promise<{ access_token: string, token_ty
         const data = await res.json()
 
         if (!res.ok) {
+            console.error(data)
             console.error(`There was an error finishing OAuth 2.0 Flow. Status: ${res.status}. Error: ${data.error}.`)
             throwTodoistAPIError({ status: res.status, error: data.error })
         }
@@ -145,6 +146,7 @@ export async function syncTodoistUserItems({ accessToken, syncToken, inboxProjec
         const data = await res.json()
 
         if (!res.ok) {
+            console.error(data)
             console.error(`There was an error fetching user items. Status: ${res.status}. Error: ${data.error}.`)
             throwTodoistAPIError({ status: res.status, error: data.error })
         }
@@ -262,6 +264,7 @@ export async function updateTodoistTask({
        })
        const data = await res.json()
        if (!res.ok) {
+           console.error(data)
            console.error(`There was an error updating the item. Status: ${res.status}. Error: ${data.error}.`)
            throwTodoistAPIError({ status: res.status, error: data.error })
        }
@@ -326,6 +329,7 @@ export async function updateTodoistTaskCompletion({
 
        const data = await res.json()
        if (!res.ok) {
+            console.error(data)
            console.error(`There was an error updating the task completion. Status: ${res.status}. Error: ${data.error}.`)
            throwTodoistAPIError({ status: res.status, error: data.error })
        }
@@ -367,6 +371,7 @@ export async function addTodoistTask({ accessToken, name, parentId }: {
  
         const data = await res.json()
         if (!res.ok) {
+            console.error(data)
             console.error(`There was an error adding task. Status: ${res.status}. Error: ${data.error}.`)
             throwTodoistAPIError({ status: res.status, error: data.error })
         }
@@ -406,6 +411,7 @@ export async function deleteTodoistTask({ accessToken, taskId}: {
  
         const data = await res.json()
         if (!res.ok) {
+            console.error(data)
             console.error(`There was an error deleting the task. Status: ${res.status}. Error: ${data.error}.`)
             throwTodoistAPIError({ status: res.status, error: data.error })
         }

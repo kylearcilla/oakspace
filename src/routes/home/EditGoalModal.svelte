@@ -285,7 +285,7 @@
                         {#if isTagDropdownListOpen}
                             <ul 
                                 class="edit-goal__status-dropdown dmenu"
-                                use:clickOutside on:click_outside={() => isTagDropdownListOpen = false }
+                                use:clickOutside on:outClick={() => isTagDropdownListOpen = false }
                             >
                                 {#each tags as tag}
                                     <li class={`dmenu__option ${$editGoalManger?.tag?.name === tag.name ? "dmenu__option--selected" : ""}`}>
@@ -328,7 +328,7 @@
                         {#if isTagSectionListOpen && $goalsManager}
                             <ul 
                                 class="edit-goal__status-dropdown dmenu" 
-                                use:clickOutside on:click_outside={() => isTagSectionListOpen = false}
+                                use:clickOutside on:outClick={() => isTagSectionListOpen = false}
                             >
                                 {#each $goalsManager.goalSections as section}
                                     <li class="dmenu__option">

@@ -27,7 +27,13 @@
 	  middleViewExpandHandler,
 	  AMBIENT,
 	  getLeftBarWidth,
-    updateCursor
+    updateCursor,
+
+	SMALL_WIDTH,
+
+	X_SMALL_WIDTH
+
+
   } from "$lib/utils-home"
   
 	import { afterNavigate } from "$app/navigation"
@@ -63,28 +69,38 @@
   let rightBarOpen = true
   let rightSideBarWidth = 0
   let prevSetTheme = ""
+  let windowSmall = false
+
+  let prevBarStates = {
+    rightBarFixed: false,
+    leftBarFixed: false,
+    leftBarOpen: false,
+    rightBarOpen: false
+  }
 
   const RIGHT_BAR_WIDTH = 230
-  const SMALL_WIDTH = 740
 
   $: context = $globalContext
   $: ambience = context.ambience
   $: hasAmbience = ambience?.active ?? false
   $: route = context.route
   $: modalsOpen = context.modalsOpen
-  $: leftBar = context.leftBar
+  $: leftBarFixed = context.leftBarFixed
   $: isLight = !$themeState.isDarkTheme
 
   $: if (totalWidth > 0 && route && context) {
       updateMiddleView()
   }
-
+  $: if (windowSmall) {
+    updateGlobalContext({ rightBarFixed: true })
+  }
+  
   globalContext.subscribe((state: GlobalContext) => {
     leftBarOpen = state.leftBarOpen
     rightBarOpen = state.rightBarOpen
     rightBarFixed = state.rightBarFixed
 
-    const leftBar = state.leftBar
+    const leftBar = state.leftBarFixed
     leftSideBarWidth = getLeftBarWidth(leftBar!)
     rightSideBarWidth = RIGHT_BAR_WIDTH
 
@@ -93,13 +109,14 @@
 
   function updateMiddleView() {
     if (!context) return
+
     leftBarOpen = context.leftBarOpen
     rightBarOpen = context.rightBarOpen
-    rightBarOpen = context.rightBarOpen
+    rightBarFixed = context.rightBarFixed
 
-    const leftBar = context.leftBar
+    const leftBarFixed = context.leftBarFixed
     const full = rightBarOpen && leftBarOpen
-    const leftOffset = hasAmbience || leftBar === "float" ? 0 : leftSideBarWidth
+    const leftOffset = hasAmbience || !leftBarFixed ? 0 : leftSideBarWidth
     const rightOffset = rightBarFixed ? 0 : rightSideBarWidth
 
     stretchMiddleView = middleViewExpandHandler({ 
@@ -113,19 +130,19 @@
       middleViewMarginLeft = "0px"
     }
     else if (leftBarOpen && !rightBarOpen) {
-      middleViewWidth      = `calc(100% - ${leftOffset}px)`
+      middleViewWidth = `calc(100% - ${leftOffset}px)`
       middleViewMarginLeft = `${leftOffset}px`
     }
     else if (!leftBarOpen && !rightBarOpen) {
-      middleViewWidth      = `100%`
+      middleViewWidth = `100%`
       middleViewMarginLeft = "0px"
     }
     else if (totalWidth <= SMALL_WIDTH && full) {
-      middleViewWidth      = `calc(100% - ${rightOffset}px)`
+      middleViewWidth = `calc(100% - ${rightOffset}px)`
       middleViewMarginLeft = "0px"
     }
     else {
-      middleViewWidth      = `calc(100% - ${leftOffset + rightOffset}px)`
+      middleViewWidth = `calc(100% - ${leftOffset + rightOffset}px)`
       middleViewMarginLeft = `${leftOffset}px`
     }
   }
@@ -145,10 +162,36 @@
     })
   }
 
+  function onResize() {
+    const _windowSmall = window.innerWidth <= X_SMALL_WIDTH
+    if (_windowSmall === windowSmall) {
+      return
+    }
+
+    windowSmall = _windowSmall
+
+    if (windowSmall) {
+      prevBarStates = {
+        rightBarFixed: context.rightBarFixed,
+        leftBarFixed: context.leftBarFixed,
+        leftBarOpen: context.leftBarOpen,
+        rightBarOpen: context.rightBarOpen
+      }
+
+      updateGlobalContext({ 
+        rightBarFixed: true, leftBarFixed: false,
+        leftBarOpen: false, rightBarOpen: false
+      })
+    }
+    else {
+      updateGlobalContext(prevBarStates)
+    }
+  }
+
   afterNavigate(({ to, from, type }) => {
     if (!to?.route?.id || type === "enter") return
 
-    const { id: fromId } = from.route
+    const { id: fromId } = from?.route ?? { id: null }
     const { id: toId } = to.route
 
     routeId = toId
@@ -160,42 +203,45 @@
       updateAmbience({ active: false })
 
       if (getPrevTheme()) {
-        setNewTheme(findThemeFromName(getPrevTheme()))
+        setNewTheme(findThemeFromName(getPrevTheme()!)!)
       }
     }
 
     if (fromId != "/home/space" && toId === "/home/space") {
+      updateAmbience({ active: true })
+
       setPrevTheme(getActiveTheme())
       setNewTheme(themes[0], true)
-      updateAmbience({ active: true })
     }
   })
   
-  onMount(() => {
-    initAppState()
-  })
+  onMount(() => initAppState())
   onDestroy(onQuitApp)
 </script>
 
 <svelte:window 
+  on:resize={onResize}
   on:keydown={handleKeyDown} 
   on:keyup={handleKeyUp}
   on:pointermove={_updateCursor}
 />
 
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
   bind:clientWidth={totalWidth}
   on:mousemove={_onMouseMoveHandler}
   id="home"
-  class={`home ${homeViewClasses} ${hasAmbience ? `home--ambient-${ambience.styling}` : ""}`}
+  class={`home ${homeViewClasses} ${hasAmbience ? `home--ambient-${ambience?.styling}` : ""}`}
   class:home--light={isLight}
-  class:home--right-fixed={rightBarFixed}
-  class:home--left-float={leftBar ==="float"}
+  class:home--right-fixed={!windowSmall && rightBarFixed}
+  class:home--left-float={!leftBarFixed}
   class:home--stretched={stretchMiddleView}
   class:home--ambient={hasAmbience}
   class:home--ambient-vid={hasAmbience && ambience?.space.type === "video"}
   class:home--ambient-img={hasAmbience && ambience?.space.type != "wallpaper"}
   class:home--no-ambience={!hasAmbience}
+  style:--ambient-float-offset={"32px"}
+  style:--fixed-top-offset={hasAmbience ? "5px" : "17px"}
   style:--ambient-opacity={hasAmbience ? ambience?.opacity : 0}
   style:--left-bar-width={`${leftSideBarWidth}px`}
   style:--ambient-blur={AMBIENT.BG_BLUR}
@@ -256,7 +302,7 @@
                   <path 
                   d="M1.37305 34.8145V15.9111C1.37305 8.17915 7.64106 1.91113 15.373 1.91113H215.373C223.105 1.91113 229.373 8.17915 229.373 15.9111V28.7632" 
                   stroke="white" 
-                  stroke-opacity="0.022"
+                  stroke-opacity="0.04"
                   stroke-width="2"
                 />
               </svg>          
@@ -266,7 +312,7 @@
                 <path 
                   d="M229.373 0.911133L229.373 19.8145C229.373 27.5464 223.105 33.8145 215.373 33.8145L15.2715 33.8145C7.53949 33.8145 1.27148 27.5465 1.27148 19.8145L1.27148 6.96237" 
                   stroke="white" 
-                  stroke-opacity="0.022"
+                  stroke-opacity="0.04"
                   stroke-width="2"
                 />
               </svg>
@@ -319,7 +365,7 @@
       <ShortcutsModal /> 
   {/if}
 
-  {#if $globalContext.routineView}
+  {#if false}
       {@const { dayIdx, block } = $globalContext.routineView}
       <Modal 
           options={{ 
@@ -423,12 +469,17 @@
         background: none;
       }
       &--ambient &__right-bar {
-        height: calc(100% - (11px * 2));
-        top: 5px;
-        right: 13px;
+        right: 10px;
         border-radius: 20px;
         border: 1.5px solid rgba(255, 255, 255, 0.05);
+        top: var(--fixed-top-offset);
+        height: calc(100% - var(--fixed-top-offset) * 2) !important;
       }
+      &--ambient &__right-bar--fixed {
+        top: var(--ambient-float-offset);
+        height: calc(100% - var(--ambient-float-offset) * 2) !important;
+      }
+
       &--ambient-solid &__right-bar {
         border-width: 0px !important;
       }
@@ -500,12 +551,13 @@
         }
         &--full-border {
           border: var(--side-border);
+          border-top: none;
         }
         &--fixed {
           transition: 0.245s cubic-bezier(.4, 0, .2, 1);
-          top: 12px;
+          top: var(--fixed-top-offset);
           right: 7px;
-          height: calc(100% - 40px) !important;
+          height: calc(100% - var(--fixed-top-offset) * 2) !important;
           border-radius: 14px;
         }
         &--short-fixed {

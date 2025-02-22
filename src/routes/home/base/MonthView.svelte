@@ -95,6 +95,7 @@
     }
     let yearView = {
         yearsAgoIdx: 0,
+        emojis: true,
         showTextEntry: true,
         showYear: false
     }
@@ -346,7 +347,7 @@
                     id="month-view--dmenu"
                     class="day-settings dmenu" 
                     class:dmenu--light={isLight}
-                    use:clickOutside on:click_outside={() => optionsOpen = false} 
+                    use:clickOutside on:outClick={() => optionsOpen = false} 
                 >
                     <!-- month view -->
                     {#if currView === "overview" && overviewType === "monthly"}
@@ -676,6 +677,16 @@
                                 active={yearView.showTextEntry}
                                 onToggle={() => {
                                     yearView.showTextEntry = !yearView.showTextEntry
+                                    yearView = yearView
+                                }}
+                            />
+                        </div>
+                        <div class="dmenu__toggle-optn dmenu__option--static">
+                            <span class="dmenu__option-heading">Emojis as Goals</span>
+                            <ToggleBtn 
+                                active={yearView.emojis}
+                                onToggle={() => {
+                                    yearView.emojis = !yearView.emojis
                                     yearView = yearView
                                 }}
                             />

@@ -50,7 +50,7 @@
     let editor: TextEditorManager
     
     $: dayIdx = currDayIdx ?? currTime.dayIdx
-    $: tasks = nowBlock?.block.tasks ?? []
+    $: tasks = nowBlock?.block?.tasks ?? []
     $: description = nowBlock?.block.description ?? ""
 
     $: {

@@ -320,7 +320,7 @@ export class TextEditorManager extends InputManager {
         this.valLength = target.innerText.length
         this.inputElem!.normalize()
         this.undoHandler()
-        this.updateTextEditorVal(event, target.innerHTML)
+        this.updateTextEditor(event, target.innerHTML)
     }
 
     /**
@@ -379,7 +379,7 @@ export class TextEditorManager extends InputManager {
         this.valLength = target.innerText.length
 
         this.undoHandler()
-        this.updateTextEditorVal(event, newValue)
+        this.updateTextEditor(event, newValue)
 
         this.inputElem!.normalize()
         this.removeFontWrapper()
@@ -420,7 +420,7 @@ export class TextEditorManager extends InputManager {
             this.inputElem.innerText = this.defaultText
         }
 
-        this.updateTextEditorVal(event, value)
+        this.updateTextEditor(event, value)
 
         if (this.handlers?.onBlurHandler) {
             this.handlers?.onBlurHandler(event, value, this.valLength)
@@ -732,15 +732,16 @@ export class TextEditorManager extends InputManager {
     }
 
     updateText(text: string) {
-        if (!this.inputElem) return
-
+        if (!this.inputElem && !this.initElem()) {
+            return
+        }
         this.value = text
-        this.inputElem.innerHTML = text
+        this.inputElem!.innerHTML = text
         this.undoStack = []
         this.redoStack = []
     }
 
-    updateTextEditorVal(event: Event | null, newVal: string) {
+    private updateTextEditor(event: Event | null, newVal: string) {
         if (newVal === undefined) return
         
         // if empty, <br> will appear which will not show the place holder
@@ -769,7 +770,8 @@ export class TextEditorManager extends InputManager {
     /* helpers */
     keydownHandler = (ke: KeyboardEvent) => {
         const { ctrlKey, metaKey, key, shiftKey } = ke
-        const customFormatting = metaKey && ['b', 'e'].includes(key)
+        const formatting = metaKey && ['b', 'e', 'i', 'u'].includes(key)
+        const customFormatting = formatting && (key === "b" || key === "e")
         const undoRedo  = metaKey && key === "z"
         const target = ke.target as HTMLElement
         const cmd = ctrlKey || metaKey
@@ -782,6 +784,9 @@ export class TextEditorManager extends InputManager {
         if (!shiftKey && key === "Enter") {
             this.onBlurHandler(null, true)
             return
+        }
+        if (!this.allowFormatting && formatting) {
+            ke.preventDefault()
         }
         if (this.allowFormatting && customFormatting) {
             ke.preventDefault()
@@ -874,8 +879,8 @@ export class TextEditorManager extends InputManager {
     }
 
     initElem() {
-        const elem = getElemById(this.id)!
-        if (!elem || this.elemInit) return
+        const elem = getElemById(this.id)
+        if (!elem) return null
 
         this.inputElem = elem
         this.inputElem.addEventListener("keydown", (ke) => this.keydownHandler(ke))
@@ -893,6 +898,8 @@ export class TextEditorManager extends InputManager {
         // initialize text
         this.value = this.value
         this.elemInit = true
+
+        return this.inputElem
     }
 
     quit() {

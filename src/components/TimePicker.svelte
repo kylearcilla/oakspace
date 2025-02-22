@@ -197,7 +197,7 @@
                 requestAnimationFrame(() => inputElem.focus())
             }
         }}
-        use:clickOutside on:click_outside={() => isInputActive = false}
+        use:clickOutside on:outClick={() => isInputActive = false}
     >
         {#if isInputActive}
             <input 

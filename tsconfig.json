@@ -9,8 +9,14 @@
 		"skipLibCheck": true,
 		"sourceMap": true,
 		"strict": true,
+		"paths": {
+			"$lib": ["./src/lib"],
+			"$lib/*": ["./src/lib/*"],
+			"$components": ["./src/components"],
+			"$components/*": ["./src/components/*"]
+		}
 	},
-	"include": ["src/**/*.ts", "src/**/*.d.ts", "tests/**/*.ts", ".svelte-kit/ambient.d.ts"]
+	"include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.svelte", "tests/**/*.ts", ".svelte-kit/ambient.d.ts", "src/app.d.ts"]
 	// Path aliases are handled by https://kit.svelte.dev/docs/configuration#alias
 	//
 	// If you want to overwrite includes/excludes, make sure to copy over the relevant includes/excludes

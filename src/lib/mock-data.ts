@@ -858,7 +858,7 @@ export const YEAR_THOUGHT_ENTRY: TextEntryOptions = {
   },
   date: new Date(2025, 1),
   truncate: true,
-  styling: "background",
+  styling: "has-marker",
   entry: `<strong>Chill</strong>  <code>noun</code>
 Chill is the <u>calm in a storm</u> 🌊, the pause that lets us <i>breathe deeply</i>. 
 It's the <u>crisp air</u> of a morning walk, the <i>stillness of twilight</i> settling over the world 🌌. 
@@ -1085,7 +1085,7 @@ export const ACTIVITY_DATA: DayEntry[] = [
 export const BULLETIN_CONTENT = {
   img: IMG_COLLECTIONS[IMG_COLLECTION_IDX].bulletinImg,
   hasNotes: true,
-  contentsOnHover: true,
+  contentsOnHover: false,
   notes: [
     "you can literally have a whole new life in a year",
     "outgrowing my own bullshit. love to see it.",

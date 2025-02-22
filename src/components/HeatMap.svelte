@@ -1,19 +1,26 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	import { formatDateLong, getNextMonth } from '../lib/utils-date'
+	import { formatDateLong, getNextMonth } from '$lib/utils-date'
 	import { getElemById, getHozSpace } from '$lib/utils-general'
 	import {
 		addToDate, formatDateToSimpleIso, getMonthStr,
 		getPrevMonth, isDateEarlier, isSameDay
 	} from '$lib/utils-date';
-	import { themeState } from '../lib/store';
-	import { randomArrayElem } from '../lib/utils-general';
+	import { themeState } from '$lib/store';
+	import { randomArrayElem } from '$lib/utils-general'
+
+	type HeatMapOptions = {
+		startDate: Date,
+		emojis?: boolean,
+		from: 'last' | 'next'
+	}
 
 	export let id: string;
 	export let type: 'goals' | 'habits'
-	export let options = {
+	export let options: HeatMapOptions = {
 		startDate: new Date(),
+		emojis: false,
 		from: 'next' as 'last' | 'next'
 	}
 
@@ -24,17 +31,17 @@
 		},
 		dark: {
 			habits: 0.012,
-			goals: 0.035
+			goals: 0.0195
 		}
 	}
 	const GOALS_OPACITY = {
 		light: {
 			sameDay: 0.25,
-			past: 0.45
+			past: 0.175
 		},
 		dark: {
 			sameDay: 0.25,
-			past: 0.08
+			past: 0.07
 		}
 	}
 	const HEAT_OPACITY_GRADIENT = {
@@ -44,17 +51,18 @@
 	const months: Date[] = getMonths()
 	const firstDay = getFirstDay()
 
-	let container: HTMLElement;
+	let container: HTMLElement
 	let hoverDayIdx = -1
 	let hoverDay: Date
 	let opacityAhead = 0.05
+	let goalsSameDayOpacity = 0
+	let goalPastOpacity = 0
 	let offset = {
 		top: 0, left: 0
 	}
-	let goalsSameDayOpacity = 0
-	let goalPastOpacity = 0
 
 	$: isLight = !$themeState.isDarkTheme
+	$: emojis = options.emojis
 
 	$: opacityAhead        = isLight ? OPACITY_AHEAD.light[type] : OPACITY_AHEAD.dark[type]
 	$: goalsSameDayOpacity = isLight ? GOALS_OPACITY.light.sameDay : GOALS_OPACITY.dark.sameDay
@@ -164,7 +172,7 @@
 		const targetBox = target.getBoundingClientRect()
 
 		offset = {
-			left: targetBox.left - containerBox.left - container.parentElement.scrollLeft,
+			left: targetBox.left - containerBox.left - container!.parentElement!.scrollLeft,
 			top: targetBox.top - containerBox.top - 30
 		}
 		if (dayIdx != hoverDayIdx) {
@@ -176,7 +184,11 @@
 </script>
 
 <div style:position="relative" style:width="100%">
-	<div style:width="100%" style:overflow="scroll">
+	<div 
+		style:width="100%" 
+		style:overflow-x="scroll" 
+		style:overflow-y="hidden"
+    >
 		<div 
 			class={`heat-map heat-map--${type}`}
 			class:heat-map--light={isLight}
@@ -203,36 +215,40 @@
 							{@const sameDay = isSameDay(new Date(), day)}
 							{@const color = type === 'habits' ? `rgba(var(--heatMapColor), ${opacity})` : ''}
 
-							{@const hasGoal = Math.random() >= 0.9 && show && type === 'goals'}
+							{@const hasGoal = emojis != undefined && Math.random() >= 0.9 && show && type === 'goals'}
 							{@const hasGoalOpacity = isLight ? 0 : 1}
-							{@const lightGoals = hasGoal && isLight}
 
 							<button
-								data-color={color}
-								data-show={show}
 								class="heat-map__cell-container"
+								class:no-box-shadow={type === 'goals'}
 								on:pointerover={(e) => onPointerOver(e, day, dayIdx)}
 							>
-								{#if true}
-								
-									<div
-										id={`cell--${id}--${formatDateToSimpleIso(day)}`}
-										class="heat-map__cell"
-										class:heat-map__cell--goal={type === 'goals'}
-										class:heat-map__cell--has-goal={hasGoal}
-										class:heat-map__cell--ahead={!show}
-										class:heat-map__cell--today={sameDay}
-										style:--ahead-opacity={opacityAhead}
-										style:--color={opacity > 0 ? color : 'auto'}
-										style:--goal-fill={hasGoal ? hasGoalOpacity : sameDay ? goalsSameDayOpacity : goalPastOpacity}
-									>
-										<div class="heat-map__cell-content">
-											{#if lightGoals}
-												{randomArrayElem(["🌷", "👨‍💻", "🇫🇷", "📖"])}
+								<div
+									id={`cell--${id}--${formatDateToSimpleIso(day)}`}
+									class="heat-map__cell"
+									class:heat-map__cell--goal={type === 'goals'}
+									class:heat-map__cell--has-goal={hasGoal}
+									class:heat-map__cell--emoji={emojis}
+									class:heat-map__cell--ahead={!show}
+									class:heat-map__cell--today={sameDay}
+									style:--ahead-opacity={opacityAhead}
+									style:--color={opacity > 0 ? color : 'auto'}
+									style:--goal-fill={hasGoal ? hasGoalOpacity : sameDay ? goalsSameDayOpacity : goalPastOpacity}
+								>
+									<div class="heat-map__cell-content" class:no-bg={hasGoal && (emojis || isLight)}>
+										{#if hasGoal}
+											{#if emojis}
+												<div class="heat-map__cell-emoji">	
+													{randomArrayElem(["🌷", "👨‍💻", "🇫🇷", "🔖", "💪", "🏃‍♂️", "🍖"])}
+												</div>
+											{:else if isLight}
+												<span>
+													*
+												</span>
 											{/if}
-										</div>
+										{/if}
 									</div>
-								{/if}
+								</div>
 							</button>
 						{/each}
 					</div>
@@ -263,10 +279,9 @@
 		padding-bottom: 12px;
 
 		--goal-fill-color: var(--textColor1);
-		--goal-today-opacity: 0.055;
+		--goal-today-opacity: 0.05;
 
 		&--light {
-			--goal-fill-color: var(--fgColor1);
 			--goal-today-opacity: 0.085;
 		}
 		&--light &__month {
@@ -279,7 +294,7 @@
 			@include square(19px, 7px);
 		}
 		&--goals &__cell-container:hover {
-			background-color: rgba(var(--textColor1), 0.06);
+			background-color: rgba(var(--textColor1), var(--goal-today-opacity));
 		}
 
 		&__months {
@@ -316,18 +331,20 @@
 
 			&--goal &-content {
 				background-color: rgba(var(--goal-fill-color), var(--goal-fill));
-				height: 4px;
-				width: 4px;
 				color: var(--starColor);
-				@include text-style(_, 200, 1.55rem);
-			}
-			&--has-goal &-content {
-				margin-bottom: -9px;
-				box-shadow: 0px 0px 10px 0px rgba(var(--goal-fill-color), 0.05);
+				@include circle(4px);
+				@include text-style(_, 200, 3.5rem);
 			}
 			&--goal#{&}--today {
 				box-shadow: none;
 				background-color: rgba(var(--textColor1), var(--goal-today-opacity));
+			}
+			&--emoji &-content {
+				font-size: 1.4rem;
+				color: white;
+			}
+			&--has-goal &-content {
+				box-shadow: 0px 0px 10px 0px rgba(var(--goal-fill-color), 0.05);
 			}
 			&--ahead &-content {
 				opacity: 1;
@@ -345,7 +362,7 @@
 				height: 100%;
 				@include abs-top-left;
 				border-radius: 7px;
-				background-color: var(--color) ;
+				background-color: var(--color);
 				z-index: 1;
 			}
 		}
@@ -355,6 +372,15 @@
 			width: 100%;
 			border-radius: 10px;
 			background-color: rgba(var(--fgColor1), 0.0285);
+			position: relative;
+
+			span {
+				@include abs-center;
+			}
+		}
+		&__cell-emoji {
+			@include abs-center;
+			top: 0px;
 		}
 	}
 	.tool-tip {
@@ -369,7 +395,6 @@
 			border: 1.5px solid rgba(var(--textColor1), 0.065);
         	box-shadow: 0px 4px 10px 1px rgba(0, 0, 0, 0.075);
 		}
-
 		&__content {
 			padding: 5px 10px 6px 10px;
 			@include abs-center;

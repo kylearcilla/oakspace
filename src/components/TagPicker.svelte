@@ -113,7 +113,7 @@
             class="tag-picker__dmenu-container"
             class:tag-picker__dmenu-container--shown={_isActive}
             style:--trans-duration={`${TRANSITION_DURATIONS_MS}ms`}
-            use:clickOutside on:click_outside={() => onClickOutside()}
+            use:clickOutside on:outClick={() => onClickOutside()}
         >
             <ul class="tag-picker__dmenu">
                 {#each TAGS as tagOption}

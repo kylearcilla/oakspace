@@ -1,9 +1,9 @@
 <script lang="ts">
     import ProgressRing from "./ProgressRing.svelte"
 
-    import { formatDatetoStr } from "../lib/utils-date"
-	import { getMonthHeatMap } from "../lib/utils-habits"
-	import { habitTracker, themeState } from "../lib/store"
+    import { formatDatetoStr } from "$lib/utils-date"
+	import { getMonthHeatMap } from "$lib/utils-habits"
+	import { habitTracker, themeState } from "$lib/store"
 
     let heatMap: HabitHeatMapDay[] = []
     let weeklyHeatMap: HabitHeatMapDay[][] = []
@@ -15,7 +15,6 @@
         heatMap = getMonthHeatMap({ 
             monthIdx: date.getMonth(), year: date.getFullYear() 
         })
-        
         weeklyHeatMap = []
         for (let i = 0; i < heatMap.length; i += 7) {
             weeklyHeatMap.push(heatMap.slice(i, i + 7))
@@ -67,10 +66,10 @@
 <style lang="scss">
     .cal {
         width: 100%;
-        --obscure-opacity: 0.095;
+        --obscure-opacity: 0.135;
 
         &--light {
-            --obscure-opacity: 0.25;
+            --obscure-opacity: 0.45;
         }
         &--light &__days {
             @include text-style(0.9);

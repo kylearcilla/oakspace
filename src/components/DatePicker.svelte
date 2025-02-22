@@ -80,7 +80,7 @@
 {#if $datePickerManager}
 <div 
     class={`date-picker ${$themeState.isDarkTheme ? "" : "date-picker--light"}`}
-    use:clickOutside on:click_outside={() => onCancel()}
+    use:clickOutside on:outClick={() => onCancel()}
 >
     <!-- Date Picker Header -->
     <div class="date-picker__header">

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from "svelte"
+	import { onDestroy, onMount } from "svelte"
 
     import { Icon, ModalType } from "$lib/enums"
 	import { capitalize } from "$lib/utils-general"
@@ -9,11 +9,11 @@
 	import { themeState, ytPlayerStore, weekRoutine, sessionManager, globalContext, timer } from "$lib/store"
     
 	import ActiveRoutine from "./ActiveRoutine.svelte"
-	import SvgIcon from "../../components/SVGIcon.svelte"
-	import AmbientSettings from "./space/AmbientSettings.svelte"
+	import SvgIcon from "$components/SVGIcon.svelte"
+	import BounceFade from "$components/BounceFade.svelte"
 	import ActiveSessionMini from "./ActiveSessionMini.svelte"
-	import BounceFade from "../../components/BounceFade.svelte"
-
+	import AmbientSettings from "./space/AmbientSettings.svelte"
+    
     const NO_SESS_MD_MAX_WIDTH = 270
 
     let headerWidth = 0
@@ -32,8 +32,7 @@
     $: routine = $weekRoutine
 
     $: initNowBlock(todayRoutine)
-    timer.subscribe(({ date }) => currTime = getDayIdxMinutes(date))
-
+    
     // active routine
     let todayRoutine: RoutineBlock[] | DailyRoutine | null = null 
     let nowBlock: RoutineBlock | null = null
@@ -42,7 +41,7 @@
     let blockInfo: { title: string, info: string } 
     
     $: todayRoutine = getDayRoutineFromWeek(routine, currTime.dayIdx)
-
+    
     $: if (!dayRoutine) {
         nowBlockTitle = "You current don't have a routine set."
     }
@@ -56,6 +55,8 @@
         nowBlockTitle = `"${nowBlock.title}". From "${$weekRoutine!.name}".`
     }
 
+    const unsubscribe = timer.subscribe(() => currTime = getDayIdxMinutes())
+    
     /* Week Routines */
     function initNowBlock(todayRoutine: RoutineBlock[] | DailyRoutine | null) {
         blockInfo = getNextBlockInfo(todayRoutine)
@@ -94,9 +95,8 @@
         if (!$ytPlayerStore?.doShowPlayer) return
     }
 
-    onMount(() => {
-        window.addEventListener("resize", handleResize)
-    })
+    onMount(() => window.addEventListener("resize", handleResize))
+    onDestroy(() => unsubscribe())
 </script>
 
 <header 

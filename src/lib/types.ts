@@ -49,16 +49,18 @@ type InputOptions = {
     }
 }
 
+type TextEntryIcon = {
+    type: "img" | "emoji",
+    src: string,
+    size: "small" | "big"
+}
+
 type TextEntryOptions = {
     entry: string
     styling: "background" | "has-marker" | "default"
     date: Date
     truncate: boolean
-    icon: {
-        type: "img" | "emoji",
-        src: string,
-        size: "small" | "big"
-    } | null
+    icon: TextEntryIcon | null
 }
 
 /* Base. */
@@ -93,8 +95,9 @@ type BaseDispatcher = (type: "base", detail: BaseEventDetail, options?: Dispatch
 type WeeklHabits = {
     emojis: boolean
     dayProgress: boolean
-    
+
 }
+
 type ThoughtEntry = {
     icon: {
         type: string,
@@ -102,6 +105,14 @@ type ThoughtEntry = {
     } | null,
     styling: "styled" | "default" | "block"
     date: Date
+}
+
+type Bulletin = {
+    img: string
+    hasNotes: boolean
+    contentsOnHover: boolean
+    notes: string[]
+    noteIdx: number
 }
 
 
@@ -573,7 +584,7 @@ type HotkeyContext = "side-bar" | "default"
 
 type GlobalContext = {
     leftBarOpen: boolean
-    leftBar?: "full" | "float"
+    leftBarFixed: boolean
     rightBarOpen: boolean
     rightBarFixed: boolean
     route: string
@@ -595,7 +606,7 @@ type AmbientOptions = {
     styling: "solid" | "blur" | "clear"
     space: AmbientSpace
     showTime: boolean
-    clockFont: "DM Sans" | "Zodiak-Bold" | "Melodrama-Bold" | "Bagel Fat One"
+    clockFont: "system" | "Zodiak-Bold" | "Melodrama-Bold" | "Bagel Fat One"
 }
 
 type AmbientSpace = {
@@ -1098,6 +1109,8 @@ type GoogleCalendarEvent = {
         bgColor: string
     }
     allDay: boolean
+    startDay: string
+    endDay: string
     timeStart: number
     timeEnd: number
     idx: number
@@ -1106,6 +1119,12 @@ type GoogleCalendarEvent = {
     top: string
     left: string
     width: string
+}
+
+type GoogleCalendarState = {
+    tokenExpired: boolean
+    signedIn: boolean
+    loading: "sync" | "refresh" | null
 }
 
 type FetchCalendarsResponse = { 

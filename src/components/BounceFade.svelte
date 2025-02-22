@@ -7,7 +7,7 @@
     export let position: CSSAbsPos | undefined = undefined
     export let staticPos = false
     export let zIndex: number = 1
-    export let onClickOutside: () => void | undefined = undefined
+    export let onClickOutside: ((e: CustomEvent) => any) | undefined = undefined
     export let onDismount: (() => void) | undefined = undefined
     
     const TRANSITION_DURATIONS_MS = 200
@@ -46,6 +46,7 @@
 </script>
 
 {#if isMounted}
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div 
         {id}
         class="bounce-fade"
@@ -58,8 +59,8 @@
         style:right={position?.right}
         style:bottom={position?.bottom}
         style:--duration={`${TRANSITION_DURATIONS_MS}ms`}
-        on:contextmenu={(e) => e.preventDefault()}
-        use:clickOutside on:click_outside={onClickOutside}
+        on:contextmenu|preventDefault
+        use:clickOutside on:outClick={onClickOutside}
     >
         <slot></slot>
     </div>

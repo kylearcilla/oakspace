@@ -27,7 +27,7 @@
     }}
 >
     <div 
-        use:clickOutside on:click_outside={() => onSubmit(null)}
+        use:clickOutside on:outClick={() => onSubmit(null)}
         id="color-picker--dmenu"
         class="color-picker" 
         class:color-picker--light={!isDark}

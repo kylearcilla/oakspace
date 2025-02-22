@@ -1,15 +1,17 @@
 <script lang="ts">
+	import { onDestroy } from "svelte"
+
+    import { globalContext } from "$lib/store"
     import { getColorTrio } from "$lib/utils-colors"
-    import { RoutinesManager } from "$lib/routines-manager"
+	import { updateGlobalContext } from "$lib/utils-home"
 	import { findClosestColorSwatch } from "$lib/utils-colors"
 	import { themeState, weekRoutine, timer } from "$lib/store"
-	import { GoogleCalendarManager } from "$lib/google-calendar-manager"
+    
+    import { RoutinesManager } from "$lib/routines-manager"
     import { getMaskedGradientStyle } from "$lib/utils-general"
+	import { GoogleCalendarManager } from "$lib/google-calendar-manager"
 	import { getDayIdxMinutes, getTimeFromIdx, isSameDay, minsFromStartToHHMM } from "$lib/utils-date"
 	import { getDayRoutineFromWeek, resetDayRoutine, toggleRoutineBlockComplete } from "$lib/utils-routines"
-    
-	import { globalContext } from "../../lib/store"
-	import { updateGlobalContext } from "../../lib/utils-home"
 
     export let checkbox: boolean
     export let richColors: boolean
@@ -41,8 +43,6 @@
     $: routine = $weekRoutine
     $: isToday = isSameDay(new Date(), day)
 
-    timer.subscribe(({ date }) => currTime = getDayIdxMinutes(date))
-
     // update routine when day changes
     $: if (dayViewElem && day != undefined) {
         updateDayRoutine(day.getDay())
@@ -50,6 +50,8 @@
     $: if (headerHeight >= 0 && allDayRef) {
         onDayHeaderScroll()
     }
+
+    const unsubscribe = timer.subscribe(() => currTime = getDayIdxMinutes())
 
     /* google calendar */
     function onDayHeaderScroll() {
@@ -116,10 +118,12 @@
 
         updateGlobalContext({ 
             routineView: { 
-                block: { block, idx: block.idx }, dayIdx
+                block: { ...block, idx: block.idx }, dayIdx
             } 
         })
     }
+
+    onDestroy(() => unsubscribe())
 </script>
 
 <svelte:window 
@@ -130,30 +134,29 @@
 <div 
     class="day-view" 
     class:day-view--light={isLight}
+    class:day-view--no-color={!richColors}
     style:--EVENTS_COUNT={googleEvents?.length ?? 0}
     style:--HOUR_BLOCK_HEIGHT={`${GoogleCalendarManager.HOUR_BLOCK_HEIGHT}px`}
 >
-    <div 
-        class="day-view__header"
-        bind:clientHeight={headerHeight}
-    >
-        <span>
-            {#if view === "routine"}
+    <div class="day-view__header" bind:clientHeight={headerHeight}>
+        {#if view === "routine"}
+            <span class="day-view__routine-name">
                 {routine?.name ?? "Routine"}
-            {:else}
+            </span>
+        {:else}
+            <span class="day-view__all-day">
                 All Day
-            {/if}
-        </span>
-        <div 
-            bind:this={allDayRef}
-            on:scroll={onDayHeaderScroll}
-            class="day-view__header-events no-scroll-bar"
-            style={maskListGradient}
-        >
-            {#if view === "g-cal"}
-                {#each (googleEvents ?? []).filter((e) => {
-                    return doRenderEvent(e, { allowAllDay: true })
-                }) as event}
+            </span>
+        {/if}
+        {#if view === "g-cal"}
+            {@const events = googleEvents ?? []}
+            <div 
+                bind:this={allDayRef}
+                on:scroll={onDayHeaderScroll}
+                class="day-view__header-events no-scroll-bar"
+                style={maskListGradient}
+            >
+                {#each events.filter((e) => doRenderEvent(e, { allowAllDay: true })) as event}
                     {@const colorSwatch  = findClosestColorSwatch(event.color.bgColor)}
                     {@const colorTrio    = getColorTrio(colorSwatch, isLight)}
                     <div 
@@ -186,8 +189,8 @@
                         </div>
                     </div>
                 {/each}
-            {/if}
-        </div>
+            </div>
+        {/if}
     </div>
     <div 
         class="day-view__scroll-container no-scroll-bar"
@@ -201,7 +204,6 @@
                 <div 
                     class="day-view__col-blocks routine-blocks"    
                     class:routine-blocks--light={isLight}
-                    class:routine-blocks--no-rich-colors={!richColors}
                 >
                     {#if view === "g-cal"}
                         <!-- Events -->
@@ -219,7 +221,7 @@
                                 tabindex="0"
                                 data-color={event.color.bgColor}
                                 class="routine-block"
-                                class:routine-block--bordered={hasAmbience && ambience.styling !== "solid"}
+                                class:routine-block--bordered={hasAmbience && ambience?.styling !== "solid"}
                                 class:routine-block--focused={isFocused}
                                 class:routine-block--light={isLight}
                                 class:routine-block--small={heightNum <= 40 && !isFocused}
@@ -276,13 +278,14 @@
                             {@const startTimeStr = minsFromStartToHHMM(block.startTime)}
                             {@const endTimeStr   = minsFromStartToHHMM(block.endTime)}
                             {@const done  = block.done}
+                            <!-- svelte-ignore a11y-interactive-supports-focus -->
                             <div 
                                 role="button"
                                 tabIndex={0}
                                 class="routine-block"
                                 class:routine-block--checkbox={checkbox}
                                 class:routine-block--checked={done}
-                                class:routine-block--bordered={hasAmbience && ambience.styling !== "solid"}
+                                class:routine-block--bordered={hasAmbience && ambience?.styling !== "solid"}
                                 style:top={`${block.yOffset}px`}
                                 style:--block-height={`${block.height}px`}
                                 style:--block-color-1={colorTrio[0]}
@@ -412,8 +415,6 @@
 <style lang="scss">
     @import "../../scss/day-box.scss";
     @import "../../scss/components/routines.scss";
-    $header-left-offset: 16px;
-
     .day-view {
         width: 100%;
         height: calc(100% - 38px);
@@ -438,16 +439,25 @@
             padding: 2px 0px 7px 0px;
             
             span {
+                @include text-style(0.14, var(--fw-400-500), 1.265rem);
                 white-space: nowrap;
-                margin-left: 1px;
-                @include text-style(0.14, var(--fw-400-500), 1.1rem);
             }
+        }
+        &__routine-name {
+            max-width: 90%;
+            margin-left: 1px;
+        }
+        &__all-day {
+            max-width: 100%;
+            font-size: 1.15rem !important;
+            margin-top: 2px;
+            @include text-style(_, _, _, "system");
         }
         &__header-events {
             max-height: 80px;
             overflow-y: scroll;
-            width: calc(100% - $header-left-offset) !important;
-            margin-left: $header-left-offset !important;
+            width: calc(100% - 13px) !important;
+            margin-left: 13px !important;
             position: relative;
         }
         &__header-btn {
@@ -492,38 +502,32 @@
         }
     }
 
-    .routine-blocks {
-        &--light#{&}--no-rich-colors &__block-time-period {
-            @include text-style(0.4);
+    .day-view--no-color .routine-block {
+        i {
+            color: rgba(var(--textColor1), 1) !important;
         }
-        &--no-rich-colors &__block {
-            i {
-                color: rgba(var(--textColor1), 1) !important;
-            }
-            .block-title-strike::after {
-                background-color: rgba(var(--textColor1), 0.65) !important;
-            }
-            &__content {
-                background-color: var(--sessionBlockColor) !important;
-                padding-left: 9px;
-                border-radius: 9px;
-            }
-            &__title {
-                @include text-style(1);
-            }
-            &__time-period {
-                @include text-style(0.3);
-            }
-            &__spine {
-                display: none;
-            }
-            &__checkbox {
-                background-color: rgba(var(--textColor1), 0.05);
+        .block-title-strike::after {
+            background-color: rgba(var(--textColor1), 0.65) !important;
+        }
+        &__content {
+            background-color: var(--sessionBlockColor) !important;
+            padding-left: 9px;
+            border-radius: 9px;
+        }
+        &__title {
+            @include text-style(1);
+        }
+        &__time-period {
+            @include text-style(0.35);
+        }
+        &__spine {
+            display: none;
+        }
+        &__checkbox {
+            background-color: rgba(var(--textColor1), 0.05);
 
-                &--checked, 
-                &:hover {
-                    background-color: rgba(var(--textColor1), 0.25); 
-                }
+            &--checked, &:hover {
+                background-color: rgba(var(--textColor1), 0.25); 
             }
         }
     }
@@ -538,7 +542,6 @@
         &:active {
             transform: scale(1);
         }
-
         i {
             display: none;
             font-size: 0.9rem;
@@ -595,7 +598,7 @@
             @include square(16px, 6px);
             @include center;
             margin-right: 5px;
-            background-color: rgba(var(--block-color-1), 0.05);
+            background-color: rgba(var(--block-color-1), 0.1);
             display: none;
             
             &:hover {

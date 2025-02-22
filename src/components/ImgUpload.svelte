@@ -5,14 +5,19 @@
 	import { themeState } from "$lib/store"
 	import { imageUpload } from "$lib/pop-ups"
 	import { getElemById, getHozSpace } from "$lib/utils-general"
-	import { getImgUploadErrorMsg, validateImgFile, validateImgURL, formatFileSize, saveImgFile, isAllowedFileType } from "$lib/utils-media-upload"
+	import { getImgUploadErrorMsg, validateImgFile, validateImgURL, formatFileSize, saveImgFile, isAllowedFileType, ALLOWED_IMAGE_TYPES, DEFAULT_MAX_SIZE_MB } from "$lib/utils-media-upload"
     
     const { onSubmitImg, close, state } = imageUpload
+
+    const DEFAULT_CONSTRAINTS = {
+        maxSizeMb: DEFAULT_MAX_SIZE_MB, 
+        formats: ALLOWED_IMAGE_TYPES
+    }
 
     $: isOpen =  $state.isOpen
     $: position =  $state.position
     $: isLight = !$themeState.isDarkTheme
-    $: constraints =  $state.constraints
+    $: constraints =  $state.constraints ?? DEFAULT_CONSTRAINTS
 
     let url = ""
     let file: File | null = null
@@ -64,11 +69,14 @@
         handleImgFileInput(file)
     }
     async function handleImgFileInput(_file?: File) {
-        try {
-            errorTxt = ""
-            file = null
-            loading = true
+        file = null
+        errorTxt = ""
 
+        if (!_file) {
+            return
+        }
+        try {
+            loading = true
             await validateImgFile({ file: _file, constraints })
             file = _file
         }
@@ -251,6 +259,7 @@
                 </div>
             {:else}
                 <div class="img-upload__upload">
+                    <!-- svelte-ignore a11y-no-static-element-interactions -->
                     <div 
                         class="img-upload__drop-area"
                         class:img-upload__drop-area--hover={dragOver}

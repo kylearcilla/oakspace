@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { habitTracker } from "../../../lib/store"
-	import { isBoxRequired, isDayComplete, toggleCompleteHabit } from "../../../lib/utils-habits"
+    import { habitTracker } from "$lib/store"
+	import { isBoxRequired, isDayComplete, toggleCompleteHabit } from "$lib/utils-habits"
 
     const store = habitTracker
     const dayIdx = new Date().getDay()
@@ -13,7 +13,7 @@
         {@const required = isBoxRequired(habit, dayIdx)}
         {@const complete = isDayComplete({ habit, dayIdx, weeksAgoIdx: 0 })}
         <div class="dh__habit">
-            <div >
+            <div>
                 <div
                     title={required ? "" : "Check in not required for this day."}
                     class="day-col day-col cell"
@@ -73,6 +73,7 @@
             border-radius: 0px;
             position: relative;
             margin: 0px 13px 0px 1px;
+            font-size: 1rem;
             @include center;
             
             &:hover {

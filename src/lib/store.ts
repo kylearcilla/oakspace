@@ -12,7 +12,7 @@ export const globalContext = writable<GlobalContext>({
     leftBarOpen: true,
     rightBarOpen: true,
     rightBarFixed: false,
-    leftBar: "float",
+    leftBarFixed: false,
     hasToaster: false,
     route: "workspace",
     focusTime: 0,

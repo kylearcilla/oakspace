@@ -44,33 +44,33 @@ export abstract class Calendar<T extends MonthData = MonthData> {
         return this.pickedDate
     }
 
-    /*
-     * Get prev month after current
+    /**
+     * Get next month after current
      */
     getNextMonthCalendar() { 
         this.currMonth = this.genMonthCalendar(getNextMonth(this.currMonth.firstDay))
 
         if (!this.isForwards) {
-            this.isNextMonthAvailable = !isSameMonth(this.currMonth.firstDay, new Date())
+            this.isNextMonthAvailable = true
         }
         else if (this.isForwards) {
-            this.isPrevMonthAvailable = true
+            this.isPrevMonthAvailable = !isSameMonth(this.currMonth.firstDay, new Date())
         }
 
         return this.currMonth
     }
 
     /**
-     * Get next month after current
+     * Get prev month after current
      */
     getPrevMonthCalendar() {
         this.currMonth = this.genMonthCalendar(getPrevMonth(this.currMonth.firstDay))
 
         if (this.isForwards) {
-            this.isPrevMonthAvailable = !isSameMonth(this.currMonth.firstDay, new Date())
+            this.isPrevMonthAvailable = true
         }
         else if (!this.isForwards) {
-            this.isNextMonthAvailable = true
+            this.isNextMonthAvailable = !isSameMonth(this.currMonth.firstDay, new Date())
         }
 
         return this.currMonth

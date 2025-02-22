@@ -4,10 +4,8 @@ import { TEST_TAGS } from "./mock-data"
 import { toast } from "./utils-toast"
 
 /**
- * Custom click outside use directive.
- * 
- * @param node    Node that the deritive has been binded / attached to.
- * @returns       Object that contains a function that removes click outside event listener when attachee node is unmounted from DOM.
+ * Custom click outside action function.
+ * @param node    Node that the action function has been binded / attached to.
  */
 export const clickOutside = (node: any) => {
   const handleClick = (event: any) => {
@@ -15,20 +13,14 @@ export const clickOutside = (node: any) => {
     const nodeId = node.id as string
     const hasClickedInsideNode = node?.contains(target)
 
-    // if dmenu and clicked on its own dropdown btn, let its dbtn close
-    const isSrcDropdownMenu = nodeId.includes("dmenu")
-    let dropdownBtnClicked = null 
+    // do not emit click outside event if clicking in the same dropdown context
+    const srcdmenu = nodeId.includes("dmenu")
+    const dbtnClicked = srcdmenu && target.closest('[id*="dbtn"]')
     let isOwnDropdownBtn = false
 
-    if (isSrcDropdownMenu) {
-      dropdownBtnClicked = findAncestor({
-        child: target, queryStr: "dbtn", queryBy: "id",
-        max: 5, strict: false
-      })
-    }
-    if (isSrcDropdownMenu && dropdownBtnClicked) {
+    if (srcdmenu && dbtnClicked) {
         const srcId    = nodeId.split("--")
-        const targetId = dropdownBtnClicked.id.split("--")
+        const targetId = dbtnClicked.id.split("--")
 
         const srcOrigin    = srcId[0]
         const targetOrigin = targetId[0]
@@ -41,9 +33,8 @@ export const clickOutside = (node: any) => {
 
     // has clicked outside
     if (hasClickedOutside) {
-        const event = new CustomEvent('click_outside', {
-          ...node,
-          detail: { target, src: node }
+        const event = new CustomEvent('outClick', {
+          ...node, detail: { target, src: node }
         })
 
         node.dispatchEvent(event)
@@ -919,7 +910,9 @@ export function isValidUrl(string: string) {
   }
 }
 
-export function getElemPadding(elem: HTMLElement) {
+export function getElemPadding(elem: HTMLElement | null) {
+  if (!elem) return { top: 0, bottom: 0, left: 0, right: 0 }
+
   const styles = window.getComputedStyle(elem)
   const parsePixelValue = (value: string) => parseFloat(value) || 0
 
@@ -931,7 +924,9 @@ export function getElemPadding(elem: HTMLElement) {
   return { top, bottom, right, left }
 }
 
-export function findElemVertSpace(target: HTMLElement) {
+export function findElemVertSpace(target: HTMLElement | null) {
+  if (!target) return 0
+
   const styles = window.getComputedStyle(target)
   const parsePixelValue = (value: string) => parseFloat(value) || 0
 

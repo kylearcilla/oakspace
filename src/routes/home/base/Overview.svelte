@@ -112,7 +112,7 @@
                         {@const showHabits = options.habitsMark && sameMonth}
                         {@const showFocus = options.focusTime && Math.random() > 0.7 && sameMonth}
             
-                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                        <!-- svelte-ignore a11y-no-static-element-interactions -->
                         <div 
                             class="acal__day"
                             class:acal__day--edit={isSameDay(day.date, editDay?.date)}

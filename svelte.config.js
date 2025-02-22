@@ -13,12 +13,15 @@ const config = {
 	},
 	preprocess: preprocess({
 		scss: {
-			prependData: "@import './src/scss/global.scss';"
+			prependData: "@use './src/scss/global.scss' as *;"
 		}
 	}),
 	kit: {
-		adapter: adapter()
-	},
+		adapter: adapter(),
+		alias: {
+			$components: 'src/components',
+		}
+	}
 };
 
 export default config;

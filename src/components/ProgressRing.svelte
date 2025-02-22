@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { themeState } from "../lib/store";
-    import { DARK_COLOR_PROGRESS, LIGHT_COLOR_PROGRESS } from "../lib/utils-colors"
+	import { themeState } from "$lib/store";
+    import { DARK_COLOR_PROGRESS, LIGHT_COLOR_PROGRESS } from "$lib/utils-colors"
 
     export let progress: number = 0
     export let options: ProgressRingOptions | undefined = undefined
 
-    const { size = 14, strokeWidth = 2.5, style = "default" } = options
+    const { size = 14, strokeWidth = 2.5, style = "default" } = options || {}
     const halfSize = size / 2
     const radius = (size - strokeWidth) / 2
     const circumference = radius * Math.PI * 2
@@ -31,9 +31,9 @@
             bgColor    = `rgba(var(--textColor1), ${isLight ? 0.1 : 0.05})`
         }
         else {
-            const bgOpacity = isLight ? 0.1 : 0.04
+            const bgOpacity = isLight ? 0.1 : 0.045
             const usefgColor = isLight && lightTheme != "light"
-            const opacity = isLight ? 0.45 : 0.25
+            const opacity = isLight ? 0.45 : 0.35
 
             fgColor = usefgColor ? "var(--elemColor1)" : `rgba(var(--textColor1), ${opacity})`
             bgColor = `rgba(var(--textColor1), ${bgOpacity})`

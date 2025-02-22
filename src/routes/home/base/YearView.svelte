@@ -13,6 +13,7 @@
         yearsAgoIdx: number
         showTextEntry: boolean
         showYear: boolean
+        emojis: boolean
     }
     $: showTextEntry = options.showTextEntry
     $: showYear = options.showYear
@@ -24,7 +25,9 @@
     let gradient = ""
     let goalsListRef: HTMLElement | null = null
 
-    function handleScroll(elem: HTMLElement) {
+    function handleScroll(elem: HTMLElement | null) {
+        if (!elem) return
+
         const { styling } = getMaskedGradientStyle(elem, {
             head: {
                 end: "50px"
@@ -52,7 +55,7 @@
         </h1>
     {/if}
     {#if showTextEntry}
-        <div style:margin="-5px 0px 0px 0px">
+        <div style:margin="0px 0px 0px 0px">
             <TextEntry 
                 id="yr"
                 zIndex={50}
@@ -69,51 +72,14 @@
             </div>
         </div>
         <div class="divider"></div>
-        <div class="yr-view__goals-flx">
-            <div 
-                style={gradient}
-                class="yr-view__goals-list"
-                bind:this={goalsListRef}
-                on:scroll={() => handleScroll(goalsListRef)}
-            >
-                {#each TEST_GOALS as goal}
-                    {@const done = goal.status === "accomplished"}
-                    <div 
-                        class="goal-m"
-                        class:goal-m--light={isLight}
-                    >
-                        <div class="goal-m__left">
-                            {#if done}
-                                <div class="goal-m__check">
-                                    <i class="fa-solid fa-check"></i>
-                                </div>
-                            {:else}
-                                <div class="goal-m__bullet"></div>
-                            {/if}
-                        </div>
-                        <div class="goal-m__right">
-                            <div 
-                                class="goal-m__title"
-                                class:strike={done}
-                                title={goal.name}
-                            >
-                                {goal.name}
-                            </div>
-                        </div>
-                    </div>
-                {/each}
-            </div>
-            <div class="yr-view__goals-right">
-                <div class="yr-view__heat-map">
-                    <HeatMap 
-                        id={"0"} 
-                        type="goals" 
-                        options={{
-                            startDate: date, from: "next"
-                        }}
-                    />
-                </div>
-            </div>
+        <div class="yr-view__heat-map" style:margin-top="15px">
+            <HeatMap 
+                id={"0"} 
+                type="goals" 
+                options={{
+                    startDate: date, from: "next", emojis: options.emojis
+                }}
+            />
         </div>
     </div>
     <div class="yr-view__habits">
@@ -157,10 +123,7 @@
             <HeatMap 
                 id={"0"} 
                 type="habits" 
-                options={{
-                    startDate: date,
-                    from: "next"
-                }}
+                options={{ startDate: date, from: "next" }}
             />
         </div>
     </div>
@@ -197,11 +160,11 @@
         }
 
         h1 {
-            @include text-style(1, var(--fw-400-500), 2.65rem, "DM Mono");
+            @include text-style(1, var(--fw-400-500), 2.25rem, "Geist Mono");
             margin: 11px 0px 4px 0px;
         }
         h4 {
-            @include text-style(1, var(--fw-400-500), 1.65rem);
+            @include text-style(1, var(--fw-400-500), 1.65rem, "Geist Mono");
         }
         &__header {
             @include flex(center,space-between);
@@ -211,35 +174,15 @@
             display: flex;
 
             span {
-                @include text-style(0.35, var(--fw-400-500), 1.25rem, "Geist Mono");
-                margin-left: 15px;
+                @include text-style(0.35, var(--fw-400-500), 1.25rem);
+                margin: -2px 0px 0px 15px;
             }
         }
         &__goals {
             margin-top: 10px;
-            
-            .yr-view__stat {
-                margin-right: min(12%, 55px);
-            }
-        }
-        &__goals-flx {
-            display: flex;
-            margin-top: 10px;
-        }
-        &__goals-list {
-            width: 450px;
-            max-height: 280px;
-            overflow-y: scroll;
-            margin: 4px 0px 5px 0px;
-            padding-right: 65px;
-        }
-        &__goals-right {
-            width: calc(100% - 450px);
-            margin-top: 2px;
-            @include flex-col(space-between);
         }
         &__habits {
-            margin-top: 35px;
+            margin-top: 30px;
         }
         &__heat-map {
             width: 100%;
@@ -263,7 +206,7 @@
 
     .divider {
         border-top: var(--divider-border);
-        margin: 7px 0px 0px 0px;
+        margin: 12px 0px 0px 0px;
     }
 
     .goal-m {

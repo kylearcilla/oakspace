@@ -7,9 +7,9 @@
     import { imageUpload, iconPicker } from "$lib/pop-ups"
 
 	import TextEntry from "./TextEntry.svelte"
-	import ToggleBtn from "../../../components/ToggleBtn.svelte"
-	import BounceFade from "../../../components/BounceFade.svelte"
-	import SettingsBtn from "../../../components/SettingsBtn.svelte"
+	import ToggleBtn from "$components/ToggleBtn.svelte"
+	import BounceFade from "$components/BounceFade.svelte"
+	import SettingsBtn from "$components/SettingsBtn.svelte"
 
     $: isLight = !$themeState.isDarkTheme
 
@@ -112,7 +112,7 @@
                     class="base-header__dmenu dmenu" 
                     class:dmenu--light={isLight}
                     style:width={"170px"}
-                    use:clickOutside on:click_outside={() => settingsOpen = false} 
+                    use:clickOutside on:outClick={() => settingsOpen = false} 
                 >
                     <!-- banner -->
                     <li class="dmenu__section">

@@ -164,7 +164,7 @@
         on:pointerleave={onPointerLeave}
     >
         <ul 
-            use:clickOutside on:click_outside={onClickOutside} 
+            use:clickOutside on:outClick={onClickOutside} 
             bind:this={dmenuRef}
             id={`${id}--dmenu`}
             class="dmenu"

@@ -6,6 +6,7 @@
 	import { themeState } from "$lib/store"
 	import { SideCalendar } from "$lib/side-calendar"
 	import { isSameDay, months } from "$lib/utils-date"
+	import { Data } from "$lib/emojis";
 
     export let isDisabled = false
     export let calendar: SideCalendar
@@ -24,7 +25,9 @@
 
     function _onDayUpdate(day: Date) {
         if (!isDisabled) {
-            onDayUpdate(day)
+            const _day = new Date(day)
+            _day.setHours(0, 0, 0, 0)
+            onDayUpdate(_day)
         }
     }
     function updateMonth(direction: "prev" | "next") {
@@ -127,9 +130,7 @@
                                 _onDayUpdate(day.date)
                             }
                         }}
-                        on:click={() => {
-                            _onDayUpdate(day.date)
-                        }}
+                        on:click={() => _onDayUpdate(day.date)}
                     >
                         {`${day.date.getDate()}`}
                     </div>

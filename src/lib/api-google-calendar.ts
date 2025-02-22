@@ -36,6 +36,7 @@ export async function fetchUserCalendars({ token, syncToken }: { token: string, 
     const data = await res.json()
 
     if (!res.ok) {
+        console.error(data)
         googleCalApiErrorHandler({ error: data.error, context: "cals" })
     }
 
@@ -67,8 +68,6 @@ export async function fetchUserCalendars({ token, syncToken }: { token: string, 
     return { cals: calendars, syncToken: data.nextSyncToken }
 }
 
-
-
 /* events  */
 
 function handleCalEventsRes({ calendar, data }: { calendar: GoogleCalendar, data: any }): FetchCalDayEventsResponse {
@@ -82,6 +81,9 @@ function handleCalEventsRes({ calendar, data }: { calendar: GoogleCalendar, data
         }
         else {
             let isAllDay = !event.start?.dateTime
+            let start = event.start?.date ?? event.start?.dateTime
+            let end = event.end?.date ?? event.end?.dateTime
+
             if (!isAllDay) {
                 const startDate = new Date(event.start.dateTime)
                 const endDate = new Date(event.end.dateTime)
@@ -90,12 +92,15 @@ function handleCalEventsRes({ calendar, data }: { calendar: GoogleCalendar, data
                     isAllDay = true
                 }
             }
+
             events.push({
                 id: event.id,
                 calendarId: calendar.id,
                 title: event.summary ?? "(No Title)",
                 color: calendar.color,
                 allDay: isAllDay,
+                startDay: start ? start.split('T')[0] : "",
+                endDay: end ? end.split('T')[0] : "",
                 timeStart: isAllDay ? -1 : getIsoDateMinutesFromStartOfDay(event.start.dateTime),
                 timeEnd: isAllDay ? -1 : getIsoDateMinutesFromStartOfDay(event.end.dateTime),
                 url: event.htmlLink,
@@ -148,6 +153,7 @@ async function fetchCalDayEvents({
         const data = await res.json()
 
         if (!res.ok) {
+            console.error(data)
             googleCalApiErrorHandler({ error: data.error, context: "events" })
         }
         return handleCalEventsRes({ calendar, data })
@@ -167,14 +173,31 @@ export async function fetchDayEventsPartial({ day, calendars, token }: {
     const timeMin = formatDateToISO({ date: day, type: "start" })
     const timeMax = formatDateToISO({ date: day, type: "end" })
 
-    const eventsPromises = calendars.map(calendar => fetchCalDayEvents({ 
-        calendar, 
-        token, 
-        partial: true,
-        minTime: timeMin,
-        maxTime: timeMax
-    }))
-    return await Promise.all(eventsPromises)
+    const results = await Promise.all(
+        calendars.map(async (calendar) => {
+            try {
+                return await fetchCalDayEvents({
+                    calendar,
+                    token,
+                    partial: true
+                })
+            } 
+            catch (error) {
+                if (error instanceof APIError && error.code === APIErrorCode.FULL_SYNC_REQUIRED) {
+                    console.log("partial sync required, doing full sync")
+                    return await fetchCalDayEvents({
+                        calendar,
+                        token,
+                        partial: false,
+                        minTime: timeMin,
+                        maxTime: timeMax
+                    })
+                }
+                throw error
+            }
+        })
+    )
+    return results
 }
 
 export async function fetchDayEvents({ calendars, day, token }: { 
@@ -198,16 +221,13 @@ export async function fetchDayEvents({ calendars, day, token }: {
 }
 
 export function googleCalApiErrorHandler({ error, context }: { error: any, context: "cals" | "events" }) {
-    const code = error.code
+    const status = error.code
     const reason = error.errors[0].reason
     const message = error.errors[0].message
     const errorContext = `Error fetching ${context === "cals" ? "user calendars" : "calendar events"}.`
 
-    console.error(`${errorContext} Code: ${code}. Reason: ${reason}. Message: ${message}.`)
-    throw throwGoogleCalendarAPIError({
-        message,
-        status: code
-    })
+    console.error(`${errorContext} Code: ${status}. Reason: ${reason}. Message: ${message}.`)
+    throw throwGoogleCalendarAPIError({ reason, status })
 }
 
 
@@ -221,20 +241,18 @@ export function googleCalApiErrorHandler({ error, context }: { error: any, conte
  * @param   context  In what API context is the error originating from
  * @returns          Error type and context will be relevant in how the error will be displayed to the user.
  */
-const throwGoogleCalendarAPIError = (context: {
-    status?: number,
-    message?: string
-  }) => {
-      const { status, message } = context
-  
+const throwGoogleCalendarAPIError = ({ status, reason }: { status: number, reason?: string }) => {
       if (status === 401) {
           throw new APIError(APIErrorCode.EXPIRED_TOKEN)
       }
       else if (status === 404) {
-          throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Requested data unavailable.")
+          throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND)
       }
-      else if (status === 403 && message === "insufficientPermissions") {
-          throw new APIError(APIErrorCode.AUTH_DENIED, "Authorization failed. Required permissions not granted.")
+      else if ((status === 403 && (reason === "rateLimitExceeded" || reason === "quotaExceeded")) || status === 429) {
+        throw new APIError(APIErrorCode.RATE_LIMIT_HIT)
+      }
+      else if (status === 410 && reason === "fullSyncRequired") {
+          throw new APIError(APIErrorCode.FULL_SYNC_REQUIRED)
       }
       else {
           throw new APIError(APIErrorCode.GENERAL, "There was an error. Please try again later.")

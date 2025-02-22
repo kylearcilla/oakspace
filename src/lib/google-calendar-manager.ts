@@ -24,16 +24,21 @@ export class GoogleCalendarManager {
     calendars: GoogleCalendar[] = []
     events: GoogleCalendarEvent[] = []
     
-    state: Writable<{ tokenExpired: boolean, loading: "sync" | "refresh" | null }> = writable({
-        signedIn: false,
-        tokenExpired: false,
-        loading: null
+    state: Writable<GoogleCalendarState> = writable({
+        signedIn: false, tokenExpired: false, loading: null
     })
+    
+    private calendarCache: Map<string, {
+        events: GoogleCalendarEvent[]
+        lastSyncTime: number
+    }> = new Map()
+
+    private CACHE_HIT_SYNC_THRESHOLD_SECS = 20
+    private AUTO_REFRESH_INTERVAL_SECS = 5 * 60
 
     static HOUR_BLOCK_HEIGHT = 45
     MAX_BLOCK_TIME_HEIGHT = 15
     ACTIVE_TOKEN_THRESHOLD_SECS = 60
-    AUTO_REFRESH_INTERVAL_SECS = 1 * 60
 
     constructor({ context }: { context: "continue" | "init" }) {
         if (context === "init") {
@@ -144,6 +149,8 @@ export class GoogleCalendarManager {
         try {
             this.autoSyncTimeStamp = now
             this.setLoading("sync")
+            console.log("googlecal - auto refresh")
+            console.log(diff)
             await this.refreshDayEvents(focusDate)
         } 
         catch (e) {
@@ -156,17 +163,19 @@ export class GoogleCalendarManager {
     }
 
     async refreshDayEvents(day: Date) {
+        console.log("refresh day events")
         try {
             this.setLoading("sync")
             this.lastSyncTimeStamp = new Date()
     
-            await this.initCals({ type: "partial" })
-            await this.initDayEvents({ day, type: "partial" })
+            await this._initDayCalsEvents({ day, type: "partial" })
 
+            this.setCacheForDate(day)
             this.setEventStyles()
             return this.events
         }
         catch(e: any) {
+            console.error(e)
             this.onError({ error: e })
         }
         finally {
@@ -195,14 +204,41 @@ export class GoogleCalendarManager {
         }
     }
 
+    /* data */
+
+    /**
+     * For refreshes, new date focus.
+     * @param date  Date currently in view.
+     */
     private async initDayCalsEvents(date = new Date()) {
-        await this.initCals()
-        await this.initDayEvents({ day: date })
-        
-        this.lastSyncTimeStamp = new Date()
+        const cache = this.getCacheForDate(date)
+        if (cache) {
+            console.log("google cal - found cache for", this.getDateKey(date))
+            
+            if (this.doSyncOnCacheFetch(cache.lastSyncTime)) {
+                console.log("google cal - cache stale, doing partial sync")
+
+                await this._initDayCalsEvents({ day: date, type: "partial" })
+                this.setCacheForDate(date)
+                this.lastSyncTimeStamp = new Date()
+            }
+            else {
+                this.events = cache.events
+                this.lastSyncTimeStamp = new Date(cache.lastSyncTime)
+            }
+        }
+        else {
+            console.log("google cal - no cache, doing full sync")
+            await this._initDayCalsEvents({ day: date, type: "full" })
+            this.setCacheForDate(date)
+            this.lastSyncTimeStamp = new Date()
+        }
     }
-    
-    /* calendars */
+
+    private async _initDayCalsEvents({ day, type }: { day: Date, type: "partial" | "full" }) {
+        await this.initCals({ type })
+        await this.initDayEvents({ day, type })
+    }
 
     async initCals({ type = "full" }: { type?: "partial" | "full" } = {}) {
         await this.verifyAccessToken()
@@ -217,11 +253,43 @@ export class GoogleCalendarManager {
         return this.calendars
     }
 
+    async initDayEvents({ day, type = "full" }: { 
+        day: Date, type?: "partial" | "full" 
+    }) {
+        await this.verifyAccessToken()
+        
+        if (type === "full") {
+            await this.fullEventsFetch(day)
+        }
+        else if (type === "partial") {
+            await this.partialEventsFetch(day)
+        }
+
+        return this.events
+    }
+
     async fullCalendarsFetch() {
         const { syncToken, cals } = await fetchUserCalendars({ token: this.accessToken })
         this.calSyncToken = syncToken
         this.calendars = cals as GoogleCalendar[]
     }
+
+    async fullEventsFetch(day: Date) {
+        const eventsData = await fetchDayEvents({
+            day, token: this.accessToken, calendars: this.calendars
+        })
+        this.events = []
+
+        eventsData.forEach(({ events, syncToken, id }) => {
+            const _events = events as GoogleCalendarEvent[]
+            const cal = this.calendars.find(cal => cal.id === id)!
+
+            this.events.push(..._events)
+            cal.syncToken = syncToken
+        })
+    }
+
+    /* partial syncs */
 
     async partialCalendarsFetch() {
         const updates =  await fetchUserCalendars({
@@ -251,67 +319,76 @@ export class GoogleCalendarManager {
             }
         })
     }
-    
-    /* events */
-
-    async initDayEvents({ day, type = "full" }: { 
-        day: Date, type?: "partial" | "full" 
-    }) {
-        await this.verifyAccessToken()
-        
-        if (type === "full") {
-            await this.fullEventsFetch(day)
-        }
-        else if (type === "partial") {
-            await this.partialEventsFetch(day)
-        }
-
-        return this.events
-    }
-
-    async fullEventsFetch(day: Date) {
-        const eventsData = await fetchDayEvents({
-            day, token: this.accessToken, calendars: this.calendars
-        })
-        this.events = []
-
-        eventsData.forEach(({ events, syncToken, id }) => {
-            const _events = events as GoogleCalendarEvent[]
-            this.events.push(..._events)
-            this.calendars.find(cal => cal.id === id)!.syncToken = syncToken
-        })
-    }
 
     async partialEventsFetch(day: Date) {
         const updates = await fetchDayEventsPartial({
             token: this.accessToken, calendars: this.calendars, day
         })
         this.handlePartialEventsResponse(updates)
+
+        this.events = this.getCacheForDate(day)!.events
+        this.setEventStyles()
     }
 
     handlePartialEventsResponse(updates: FetchCalDayEventsResponse[]) {
-        console.log("google cal - handle partial events response")
-        updates.forEach(({ events, syncToken, id }) => {
+        updates.forEach(({ events: updatedEvents, syncToken, id }) => {
             const calendar = this.calendars.find(cal => cal.id === id)
             calendar!.syncToken = syncToken
             
-            events.forEach((event: FetchEventResponse) => {
-                const idx = this.events.findIndex(e => e.id === event.id)
+            updatedEvents.forEach((event: FetchEventResponse) => {
                 const cancelled = "status" in event
                 
                 if (cancelled) {
-                    idx >= 0 && (this.events.splice(idx, 1))
+                    this.calendarCache.forEach((cache, dateKey) => {
+                        cache.events = cache.events.filter(e => e.id !== event.id)
+                        this.calendarCache.set(dateKey, cache)
+                    })
                 } 
-                else if (idx >= 0) {
-                    this.events[idx] = event
-                } 
-                else {
-                    this.events.push(event)
+                else if (event.startDay) {
+                    const dayKey = event.startDay
+                    const cache = this.calendarCache.get(dayKey)
+                    if (cache) {
+                        const idx = cache.events.findIndex(e => e.id === event.id)
+
+                        if (idx >= 0) {
+                            cache.events[idx] = event
+                        }
+                        else {
+                            cache.events.push(event)
+                        }
+                        this.calendarCache.set(dayKey, cache)
+                    }
                 }
             })
         })
+    }
 
-        this.setEventStyles()
+
+    /* cache */
+
+    private getDateKey(date: Date): string {
+        const d = new Date(date)
+        d.setHours(0, 0, 0, 0)
+        return d.toISOString().split('T')[0]
+    }
+
+    private getCacheForDate(date: Date) {
+        return this.calendarCache.get(this.getDateKey(date))
+    }
+
+    private setCacheForDate(date: Date) {
+        this.calendarCache.set(this.getDateKey(date), {
+            events: this.events,
+            lastSyncTime: Date.now()
+        })
+    }
+
+    private doSyncOnCacheFetch(lastSyncTime: number): boolean {
+        if (!lastSyncTime) return true
+        
+        const now = Date.now()
+        const secsSinceLastSync = (now - lastSyncTime) / 1000
+        return secsSinceLastSync >= this.CACHE_HIT_SYNC_THRESHOLD_SECS
     }
 
     /* ui */
@@ -485,7 +562,7 @@ export class GoogleCalendarManager {
         
         this.events.forEach(event => {
             if (!event.allDay && event.timeStart - nowMins === 5) {
-                this.initToast(`${event.title} starting in 5 minutes`)
+                this.initToast(`"${event.title}" starting in 5 minutes`)
             }
         })
     }

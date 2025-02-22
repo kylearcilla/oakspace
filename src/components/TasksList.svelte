@@ -124,7 +124,7 @@
         class:tasks--side-menu={settings.type === "side-menu"}
         style={inlineStyling($manager.styling?.list)}
         bind:this={tasksList}
-        use:clickOutside on:click_outside={() => $manager.onClickOutside()}
+        use:clickOutside on:outClick={() => $manager.onClickOutside()}
     >   
         {#each rootTasks as task, idx (task.id)}
             <li>

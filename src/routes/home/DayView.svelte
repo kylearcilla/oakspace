@@ -1,41 +1,42 @@
 <script lang="ts">
+	import { onDestroy } from "svelte"
     import { themeState, weekRoutine } from "$lib/store"
     
 	import { Icon, LogoIcon } from "$lib/enums"
 	import { hexToRgb } from "$lib/utils-colors"
 	import { isSameDay } from "$lib/utils-date"
-    import { TodosManager } from "$lib/todos-manager"
 	import { getElapsedTime } from "$lib/utils-date"
 	import { globalContext, timer } from "$lib/store"
 	import { formatDatetoStr } from "$lib/utils-date"
-	import { clickOutside } from "$lib/utils-general"
+	import { findClosestColorSwatch } from "$lib/utils-colors"
+	import { loadSideBarView, saveSideBarView } from "$lib/utils-home"
+    
+    import { TodosManager } from "$lib/todos-manager"
 	import { SideCalendar } from "$lib/side-calendar"
 	import { initGoogleCal } from "$lib/api-google-calendar"
-	import { findClosestColorSwatch } from "$lib/utils-colors"
 	import { authGoogleCalendar } from "$lib/api-google-calendar"
-	import { loadSideBarView, saveSideBarView } from "$lib/utils-home"
 	import { GoogleCalendarManager } from "$lib/google-calendar-manager"
 	import { getOAuthRedirectData, removeOAuthRedirectData } from "$lib/utils-home"
     
 	import Todos from "./Todos.svelte";
 	import DayView from "./DayViewContent.svelte"
-	import Logo from "../../components/Logo.svelte"
-	import SvgIcon from "../../components/SVGIcon.svelte"
-	import Calendar from "../../components/Calendar.svelte"
-	import ToggleBtn from "../../components/ToggleBtn.svelte"
-	import BounceFade from "../../components/BounceFade.svelte"
+	import Logo from "$components/Logo.svelte"
+	import SvgIcon from "$components/SVGIcon.svelte"
+	import Calendar from "$components/Calendar.svelte"
+	import ToggleBtn from "$components/ToggleBtn.svelte"
+	import BounceFade from "$components/BounceFade.svelte"
 
     const OVERVIEW_SIDE_MARGINS = 4
     const DAY_VIEW_SIDE_MARGINS = 14
-    const NOW_TIME_THRESHOLD_SECS = 10
+    const NOW_TIME_THRESHOLD_SECS = 5
 
-    export let calendar = new SideCalendar()
     export let headerOptions: {
         img: string
         show: boolean
     }
-    export let onUpdateHeaderOptions: (optn: string) => void
+    export let onHeaderOptions: (optn: string) => void
 
+    let calendar = new SideCalendar()
     let { view, calView } = loadSideBarView()
     let focusDate  = new Date()
     let now = new Date()
@@ -46,7 +47,7 @@
     let todosManager = new TodosManager()
     let removeCompleteFlag = false
     let hasCompletedTasks = false
-    let t_lastSyncTime = null
+    let t_lastSyncTime: Date | null = null
     
     $: tm = todosManager.store
     $: onTodoist = $tm.onTodoist
@@ -63,7 +64,7 @@
     /* google calendar */
     let googleCal: GoogleCalendarManager | null = initGoogleCal()
     let g_Day = new Date()
-    let g_lastSyncTime = null
+    let g_lastSyncTime: Date | null = null
     
     let googleCalendars: GoogleCalendar[] = []
     let googleEvents: GoogleCalendarEvent[] = []
@@ -86,11 +87,11 @@
     $: if (googleCal) {
         googleCal.state.subscribe((state) => onGoogleCalUpdate(state))
     }
-    
     todosManager.store.subscribe(() => {
         t_lastSyncTime = todosManager?.lastSyncTimeStamp
     })
-    timer.subscribe(async ({ date }) => {
+
+    const unsubscribe = timer.subscribe(({ date }) => {
         now = date
         // if ($tm?.onTodoist) {
         //     todosManager.autoRefreshHandler(date)
@@ -108,6 +109,7 @@
             googleCal!.autoRefreshHandler(focusDate)
         }
     })
+
     function onDayUpdate(date: Date) {
         const tokenExpired = g_tokenExpired
         if (!gCalSignedIn || !tokenExpired) {
@@ -136,7 +138,7 @@
     /* google calendar */
     function onGoogleCalUpdate(state: GoogleCalendarState) {
         const { tokenExpired, signedIn } = state
-        g_lastSyncTime = googleCal.lastSyncTimeStamp
+        g_lastSyncTime = googleCal!.lastSyncTimeStamp
 
         if (signedIn && getOAuthRedirectData("gcal")) {
             calView = "g-cal"
@@ -146,9 +148,9 @@
             focusDate = new Date()
             googleCal!.updateDayEvents(new Date())
         }
-        if (googleCal.calendars) {
-            googleCalendars = googleCal.calendars
-            googleEvents = googleCal.setEventStyles()
+        if (googleCal!.calendars) {
+            googleCalendars = googleCal!.calendars
+            googleEvents = googleCal!.setEventStyles()
         }
     }
     async function getCalEvents(newDay: Date) {
@@ -160,7 +162,7 @@
             googleCal!.updateDayEvents(newDay)
         }
         catch (e) {
-            googleCal.onError(e)
+            googleCal!.onError({ error: e })
         }
     }
     function onGoogleCalendarClicked(id: string) {
@@ -191,14 +193,14 @@
     }
 
     /* utils */
-    function getLastSyncTime(lastSync: Date) {
+    function getLastSyncTime(lastSync: Date | null) {
         if (!lastSync) return ""
         
         const str = getElapsedTime({ 
             start: lastSync, end: new Date(), min: true 
         })
         if (str.includes("s")) {
-            return parseInt(str) < NOW_TIME_THRESHOLD_SECS ? "Now" : "1m"
+            return parseInt(str) < NOW_TIME_THRESHOLD_SECS ? "Now" : "<1m"
         }
         else {
             return str
@@ -207,6 +209,8 @@
     function _hexToRgb(hex: string) {
         return hexToRgb({ hex, format: "str" }) as string
     }
+
+    onDestroy(() => unsubscribe())
 </script>
 
 <div 
@@ -214,12 +218,9 @@
     class:day-view--light={isLight}
     style:--OVERVIEW_SIDE_MARGINS={`${OVERVIEW_SIDE_MARGINS}px`}
     style:--DAY_VIEW_SIDE_MARGINS={`${DAY_VIEW_SIDE_MARGINS}px`}
-    style:--api-offset-top={onAPI ? "38px" : "0px"}
+    style:--api-offset-top={onAPI ? "42px" : "0px"}
 >
-    <div
-        class="day-view__calendar-container"
-        bind:clientHeight={calendarHt}
-    >
+    <div class="day-view__calendar-container" bind:clientHeight={calendarHt}>
         <Calendar 
             {calendar} 
             {focusDate}
@@ -278,8 +279,7 @@
                 <Logo 
                     logo={logo}
                     options={{
-                        containerWidth: "20px", iconWidth: "100%",
-                        scale
+                        containerWidth: "20px", iconWidth: "100%", scale
                     }}
                 />
                 <span
@@ -315,46 +315,40 @@
         isHidden={!calsMenu}
         position={{ top: "20px", right: "12px" }}
         zIndex={200}
+        onClickOutside={() => calsMenu = false}
     >
-        {@const { isLoading, tokenExpired } = $gCalState}
-        <div 
-            class="google-cals"
-            id="day-view--dmenu"
-            use:clickOutside on:click_outside={() => calsMenu = false} 
-        >
-            <div class="google-cals__header">
-                <span>
-                    Your Calendars
-                </span>
-            </div>
-            <ul class="google-cals__list">
-                {#each googleCalendars as cal}
-                    {@const colorSwatch = findClosestColorSwatch(cal.color.bgColor)}
-                    {@const isDisabled = isLoading || tokenExpired}
-                    {@const color = _hexToRgb(colorSwatch.primary)}
+        {#if $gCalState}
+            {@const { loading, tokenExpired } = $gCalState}
+            <div class="google-cals" id="day-view--dmenu">
+                <div class="google-cals__header">
+                    <span>
+                        Your Calendars
+                    </span>
+                </div>
+                <ul class="google-cals__list">
+                    {#each googleCalendars as cal}
+                        {@const colorSwatch = findClosestColorSwatch(cal.color.bgColor)}
+                        {@const isDisabled = !!loading || tokenExpired}
+                        {@const color = _hexToRgb(colorSwatch.primary)}
 
-                    <li title={cal.title}>
-                        <button 
-                            class="google-cals__cal"
-                            class:google-cals__cal--unchecked={!cal.isChecked}
-                            on:click={() => {
-                                onGoogleCalendarClicked(cal.id)
-                            }}
-                            disabled={isDisabled}
-                        >
-                            <div 
-                                class="google-cals__cal-color"
-                                style:--cal-color={color }
+                        <li title={cal.title}>
+                            <button 
+                                disabled={isDisabled}
+                                class="google-cals__cal"
+                                class:google-cals__cal--unchecked={!cal.isChecked}
+                                on:click={() => onGoogleCalendarClicked(cal.id)}
                             >
-                            </div>
-                            <div class="google-cals__cal-name">
-                                {cal.title}
-                            </div>
-                        </button>
-                    </li>
-                {/each}                        
-            </ul>
-        </div>
+                                <div class="google-cals__cal-color" style:--cal-color={color}>
+                                </div>
+                                <div class="google-cals__cal-name">
+                                    {cal.title}
+                                </div>
+                            </button>
+                        </li>
+                    {/each}                        
+                </ul>
+            </div>
+        {/if}
     </BounceFade>
 
     <!-- settings -->
@@ -362,12 +356,12 @@
         isHidden={!settings}
         zIndex={200}
         position={{ top: "20px", right: "12px" }}
+        onClickOutside={() => settings = false}
     >
         <div 
             class="dmenu"
             class:dmenu--light={isLight}
             id="day-view--dmenu"
-            use:clickOutside on:click_outside={() => settings = false} 
         >
             <!-- view -->
             <li class="dmenu__section">
@@ -524,7 +518,7 @@
                                 onToggle={() => checkbox = !checkbox}
                             />
                         </div>
-                        <div class="dmenu__toggle-optn">
+                        <div class="dmenu__toggle-optn" class:hidden={calView === "g-cal"}>
                             <span class="dmenu__option-heading">Colors</span>
                             <ToggleBtn 
                                 active={richColors}
@@ -578,6 +572,13 @@
                                 </button>
                             </div>
                         {/if}
+                        <div class="dmenu__toggle-optn" class:hidden={calView === "routine"}>
+                            <span class="dmenu__option-heading">Colors</span>
+                            <ToggleBtn 
+                                active={richColors}
+                                onToggle={() => richColors = !richColors}
+                            />
+                        </div>
                         <div class="dmenu__option">
                             <button 
                                 on:click={() => onCalSettingsHandler("my calendars")}
@@ -626,12 +627,11 @@
                     <div class="dmenu__section-name">
                         Header Background
                     </div>
-
                     <div class="dmenu__option">
                         <button 
                             class="dmenu__option-btn"
                             on:click={() => {
-                                onUpdateHeaderOptions(optnText.toLowerCase())
+                                onHeaderOptions(optnText.toLowerCase())
                                 settings = false
                             }}
                         >
@@ -644,7 +644,7 @@
                         <span class="dmenu__option-heading">Show</span>
                         <ToggleBtn 
                             active={show}
-                            onToggle={() => onUpdateHeaderOptions("show")}
+                            onToggle={() => onHeaderOptions("show")}
                         />
                     </div>
                 </li>
@@ -717,10 +717,10 @@
             @include text-style(0.35, var(--fw-400-500), 1.32rem);
             @include abs-bottom-left(7px, 1px);
             width: 100%;
-            padding: 5px 0px 12px 7px;
+            padding: 0px 0px 13px 7px;
             z-index: 100;
             border-top: 1.5px dashed rgba(var(--textColor1), 0.06);
-            height: 45px;
+            height: 50px;
 
             span {
                 margin-left: 6px;

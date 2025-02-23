@@ -1,85 +1,99 @@
 <script lang="ts">
-	import { onMount } from "svelte"
     import quotes from "$lib/data-quotes"
 	import { ModalType } from "$lib/enums"
 	import { closeModal } from "$lib/utils-home"
-	import { getWeekNumber } from "$lib/utils-date"
-	import Modal from "../../components/Modal.svelte"
 
-    let quote: Quote | null = null
+	import Modal from "$components/Modal.svelte"
 
-    const isQuoteOutDated = (quoteCreatedDate: Date, currDate: Date) => {
-        return quoteCreatedDate.getFullYear() === currDate.getFullYear() && (getWeekNumber(quoteCreatedDate) === getWeekNumber(currDate));
-    }
+    let quote = initQuote()
+    let liked = Math.random() > 0.5
+    let likedCount = Math.floor(Math.random() * (3500 - 500 + 1)) + 500
 
-    onMount(() => {
-        // const quoteData = localStorage.getItem("quoteData")
-        // const isQuoteOutdated = !quoteData || isQuoteOutDated(new Date(JSON.parse(quoteData!).createdAt), new Date())
+    $: likedCount += liked ? 1 : -1
 
-        // if (!isQuoteOutdated) {
-        //     quote = quotes[JSON.parse(quoteData).quoteId]
-        //     return
+    function initQuote() {
+        const quoteData = localStorage.getItem("quoteData")
+        const today = new Date()
+
+        // new quote if monday or no quote is stored
+
+        // if (quoteData && today.getDay() !== 1) {
+        //     const storedData = JSON.parse(quoteData)
+        //     return quotes[storedData.quoteId]
         // }
-        
-        // const randomQuoteId = Math.floor(Math.random() * quotes.length)
-        // localStorage.setItem("quoteData", JSON.stringify({
-        //     quoteId: randomQuoteId,
-        //     createdAt: new Date()
-        // }))
-        quote = quotes[Math.floor(Math.random() * quotes.length)]
-        // quote = quotes[quotes.length - 1]
-    })
+        // else {
+        //     const randomQuoteId = Math.floor(Math.random() * quotes.length)
+        //     localStorage.setItem("quoteData", JSON.stringify({
+        //         quoteId: randomQuoteId,
+        //         createdAt: today
+        //     }))
+        //     return quotes[randomQuoteId]
+        // }
+
+        // return quotes[quotes.length - 1)]
+        return quotes[Math.floor(Math.random() * quotes.length)]
+    }
 </script>
 
 <Modal 
-    options={{ borderRadius: "0px"  }} 
+    options={{ borderRadius: "0px", scaleUp: true }} 
     onClickOutSide={() => closeModal(ModalType.Quote)}
 >
+    {@const { artCredit, quoteCredit, text, portrait, bgImgSrc, dark } = quote}
     <div 
         class="quote-modal" 
-        style={`background-image: url(${quote?.bgImgSrc})`}
+        class:quote-modal--portrait={portrait}
+        class:quote-modal--liked={liked}
+        style={`background-image: url(${bgImgSrc})`}
+        style:--opacity={dark ? 0.7 : 0.825}
     >
         <div class="quote-modal__content">
-            <div></div>
             <div class="quote-modal__content-container">
                 <div class="quote-modal__content-top">
                     <div class="flx">
-                        <span class="quote-modal__quote quote-modal__quote--left-quotation">"</span>
+                        <span class="quote-modal__quote">"</span>
                         <p class="quote-modal__quote">
-                            {@html quote?.text}"
+                            {@html text}"
                         </p>
                     </div>
                 </div>
                 <div class="quote-modal__content-bottom">
                     <div class="quote-modal__content-bottom-left">
                         <div class="quote-modal__likes">
-                            <button>
-                                <i class="fa-regular fa-heart"></i>
+                            <button 
+                                title="Hell yeah"
+                                on:click={() => liked = !liked}
+                            >
+                                {#if liked}
+                                    <i class="fa-solid fa-heart"></i>
+                                {:else}
+                                    <i class="fa-regular fa-heart"></i>
+                                {/if}
                             </button>
                             <span>
-                                1473
+                                {likedCount}
                             </span>
                         </div>
                         <div class="divider divider--vertical"></div>
-                        <div class="quote-modal__artist-credit" >
-                            {@html (quote?.artCredit || quote?.quoteCredit)}
+                        <div class="quote-modal__artist-credit">
+                            {@html (artCredit || quoteCredit)}
                         </div>
                     </div>
-                    {#if quote?.artCredit}
+                    {#if quote?.quoteCredit && quote?.artCredit}
                         <span class="quote-modal__quote-credit">
-                            - {@html quote?.quoteCredit}
+                            - {@html quoteCredit}
                         </span>
                     {/if}
                 </div>
             </div>
         </div>
-    </div>            
+    </div>
 </Modal>
 
 <style global lang="scss">
     .quote-modal {
         padding: 0px;
-        width: 75vw;
+        width: 79vw;
         height: 550px;
         position: relative;
         background-repeat: no-repeat;
@@ -88,10 +102,17 @@
         max-width: 700px;
         min-width: 340px;
 
+        --heart-fill: #c85959;
+
+        &--portrait {
+            height: 650px;
+            width: 550px;
+        }
+
         &__content {
             height: 100%;
             width: 100%;
-            background-color: rgba(0, 0, 0, 0.84); 
+            background-color: rgba(0, 0, 0, var(--opacity)); 
             color: white;
             @include flex(_, flex-end);
             flex-direction: column;
@@ -101,21 +122,19 @@
                 margin-bottom: 15px;
             }
             &-bottom {
-                @include flex(center, _);
+                @include flex(center);
             }
             &-bottom-left {
-                @include flex(center, _);
+                @include flex(center);
                 flex: 1;
                 min-width: 0;
+                margin-right: 10px;
             }
             &-bottom-left .divider {
                 height: 11px;
                 width: 1.5px;
                 margin: 0px 9px 0px 10px;
                 background-color: rgba(179, 179, 179, 0.3);
-            }
-            &-context {
-                @include flex(center, _);
             }
         }
         &__quote {
@@ -128,17 +147,20 @@
         &__likes {
             white-space: nowrap;
             button:active {
-                transform: scale(0.8);
+                transform: scale(0.9);
             }
             button i {
                 color: rgba(241, 241, 241, 0.3);
                 margin-right: 4px;
-                font-size: 1.25rem;
+                font-size: 1.3rem;
             }
             span {
                 font-size: 1.3rem;
                 font-weight: 500;
                 color: rgba(179, 179, 179, 0.5);
+            }
+            .fa-solid.fa-heart {
+                color: var(--heart-fill);
             }
         }
         &__artist-credit {
@@ -146,13 +168,14 @@
             font-weight: 400;
             color: rgba(179, 179, 179, 0.5);
             @include elipses-overflow;
-            
+
+            a, span {
+                color: rgba(179, 179, 179, 0.5);
+                text-decoration: none;
+            }
             i {
                 color: rgba(179, 179, 179, 0.6);
                 margin-right: 3px;
-            }
-            span {
-                @include elipses-overflow;
             }
         }
         &__quote-credit {

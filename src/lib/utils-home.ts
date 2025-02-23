@@ -198,6 +198,7 @@ export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boo
     const context = get(globalContext)
     const mouseLeftPos = event.clientX
     const mouseRightPos = window.innerWidth - mouseLeftPos
+    const elem = event.target as HTMLElement
 
     const { 
         leftBarOpen, 
@@ -205,6 +206,8 @@ export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boo
         rightBarFixed, 
         leftBarFixed, 
     } = context
+
+    console.log(elem)
 
     const leftInArea = mouseLeftPos < LEFT_BAR_LEFT_BOUND
     const activeRoutineOpen = !!getElemById("active-routine--dmenu")
@@ -220,7 +223,7 @@ export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boo
         updateGlobalContext({ leftBarOpen: true  })
         return false
     }
-    else if (!toggledLeftBarWithKey && context.leftBarOpen && mouseLeftPos > lbAutoCloseThreshold) { 
+    else if (!toggledLeftBarWithKey && context.leftBarOpen && mouseLeftPos > lbAutoCloseThreshold && !getElemById("left-bar--dmenu")) { 
         updateGlobalContext({ leftBarOpen: false  })
     }
     else if (rightBarFixed && !rightBarOpen && rightInArea) { 

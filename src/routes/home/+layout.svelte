@@ -328,7 +328,7 @@
   </nav>
 </div>
 
-  <!-- util modals -->
+  <!-- modals -->
   {#if modalsOpen.includes(ModalType.Settings)} 
       <Settings/> 
   {/if}

@@ -274,7 +274,7 @@
     &__option-text {
         @include text-style(0.9, var(--fw-400-500));
     }
-    &__option-right-icon-container {
+    &__right-icon-container {
         @include flex(center);
     }
     &__option-icon {

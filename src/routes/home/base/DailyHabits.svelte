@@ -59,13 +59,13 @@
             margin-bottom: 13px;
         }
         &__habit-name {
-            @include text-style(1, var(--fw-400-500), 1.5rem);
+            @include text-style(1, var(--fw-400-500), 1.4rem);
             @include elipses-overflow;
             @include flex(center, space-between);
         }
         &__habit-symbol {
             margin-right: 10px;
-            font-size: 1.5rem;
+            font-size: 1.45rem;
         }
         &__habit-box {
             background-color: var(--lightColor2);

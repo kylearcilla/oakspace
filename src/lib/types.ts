@@ -660,6 +660,8 @@ type Quote = {
     bgImgSrc: string,
     artCredit: string,
     quoteCredit: string
+    dark?: boolean
+    portrait?: boolean
 }
 
 

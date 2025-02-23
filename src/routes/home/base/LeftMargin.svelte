@@ -18,7 +18,7 @@
 
     let marginDropdown = false
     let marginViewDropdown = false
-    let marginOptn = "goals"
+    let marginOptn = "habits"
     let marginView = "month"
     let width = 0
 
@@ -38,9 +38,8 @@
         ogDragVal = bulletinHt
     }
     function onDrag(pe: PointerEvent) {
-        if (initDragY < 0) {
-            return
-        }
+        if (initDragY < 0) return
+
         const offset = initDragY - pe.clientY
         bulletinHt = clamp(200, ogDragVal + -offset, 400)
     }

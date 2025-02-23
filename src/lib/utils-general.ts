@@ -13,7 +13,7 @@ export const clickOutside = (node: any) => {
     const nodeId = node.id as string
     const hasClickedInsideNode = node?.contains(target)
 
-    // do not emit click outside event if clicking in the same dropdown context
+    // do not emit event if clicking in the same dropdown context
     const srcdmenu = nodeId.includes("dmenu")
     const dbtnClicked = srcdmenu && target.closest('[id*="dbtn"]')
     let isOwnDropdownBtn = false

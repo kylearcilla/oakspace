@@ -26,7 +26,7 @@
     }
 </script>
 
-<div class:dmenu__option-right-icon-container={!left}>
+<div class:dmenu__right-icon-container={!left}>
     <div 
         class={`dmenu__option-icon dmenu__option-icon--${type}`}
         class:dmenu__option-icon--left={left}

@@ -7,7 +7,7 @@ const quotes: Quote[] = [
     },
     {
         text: "Sometimes you never realize the value of a moment until it becomes a memory.",
-        bgImgSrc: "https://www.wga.hu/art/r/regnault/1dibutad.jpg",
+        bgImgSrc: "https://i.pinimg.com/736x/4f/bc/ce/4fbcce75b80d0a27cb121a63620a2430.jpg",
         artCredit: "<i>The Origin of Painting: Dibutades Tracing the Portrait of a Shepherd</i> by Jean-Baptiste Regnault",
         quoteCredit: "Dr. Seus"
     },
@@ -31,7 +31,7 @@ const quotes: Quote[] = [
     },
     {
         text: "I felt my lungs inflate with the onrush of scenery—air, mountains, trees, people. I thought, \'This is what it is to be happy.\'",
-        bgImgSrc: "https://reynoldahouse.emuseum.com/internal/media/dispatcher/175/preview",
+        bgImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Home_in_the_Woods_1847_Thomas_Cole.jpeg/1024px-Home_in_the_Woods_1847_Thomas_Cole.jpeg",
         artCredit: "<i>Home in the Woods</i> by Thomas Cole",
         quoteCredit: "Sylvia Plath, <i>The Bell Jar</i>"
     },
@@ -51,6 +51,7 @@ const quotes: Quote[] = [
         text: "Somewhere, something incredible is waiting to be known.",
         bgImgSrc: "https://images.unsplash.com/photo-1436891620584-47fd0e565afb?auto=format&fit=crop&q=100&w=1000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         artCredit: "Photo by kazuend from Unsplash",
+        dark: true,
         quoteCredit: "Carl Sagan"
     },
     {
@@ -69,6 +70,7 @@ const quotes: Quote[] = [
         text: "The past is just a story we tell ourselves.",
         bgImgSrc: "https://m.media-amazon.com/images/M/MV5BMTc1MDY0MjI4NV5BMl5BanBnXkFtZTgwMzAxNjM3MDE@._V1_.jpg",
         artCredit: "",
+        dark: true,
         quoteCredit: "Samantha to Theodore from <i>Her</i>"
     },
     {
@@ -110,13 +112,13 @@ const quotes: Quote[] = [
     {
         text: "Be as you wish to seem.",
         bgImgSrc: "https://images.unsplash.com/photo-1682695796497-31a44224d6d6?auto=format&fit=crop&q=80&w=1000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        artCredit: "NEOM from Unsplash",
+        artCredit: "Photo from <a href='https://unsplash.com/photos/an-underwater-view-of-person-diving-in-the-ocean-FuusC7lfg6Q' target='_blank'>Unsplash</a>",
         quoteCredit: "Socrates"
     },
     {
         text: "If you have a problem that can be fixed, there is no use in worrying. If you have a problem that cannot be fixed, there is no use in worrying.",
         bgImgSrc: "https://images.unsplash.com/photo-1600776824232-7ab0c936d6a8?auto=format&fit=crop&q=80&w=1000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        artCredit: "Michael Held from Unsplash",
+        artCredit: "Photo from <a href='https://unsplash.com/photos/green-trees-under-white-clouds-jPhXEmOxt0w' target='_blank'>Unsplash</a>",
         quoteCredit: "Buddhist proverb"
     },
     {
@@ -129,12 +131,14 @@ const quotes: Quote[] = [
         text: "What a disgrace it is for a man to grow old without ever seeing the beauty and strength of which his body is capable.",
         bgImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Heracles_and_the_Nemea_Lion_Pieter_Paul_Rubens.jpg/1024px-Heracles_and_the_Nemea_Lion_Pieter_Paul_Rubens.jpg",
         artCredit: "<i>Heracles and the Nemean Lion</i> by Pieter Paul Rubens",
+        dark: true,
         quoteCredit: "Socrates"
     }, 
     {
         text: "These mountains that you carry, you were only supposed to climb.",
-        bgImgSrc: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=1000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        artCredit: "Samuel Ferrara from Unsplash",
+        bgImgSrc: "https://images.unsplash.com/photo-1738691035045-3fb009e8aa26?q=80&w=2265&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        artCredit: "Photo from <a href='https://unsplash.com/photos/a-person-standing-on-top-of-a-snow-covered-mountain-Msegahfawv8 target='_blank'>Unsplash</a>",
+        portrait: true,
         quoteCredit: "Najwa Zebian"
     },
     {
@@ -147,6 +151,7 @@ const quotes: Quote[] = [
         text: "Read a thousand books and your words will flow like river.",
         bgImgSrc: "https://upload.wikimedia.org/wikipedia/commons/7/70/John_Singer_Sargent_-_Man_Reading_%28Nicola_d%E2%80%99Inverno%29_-_1948.35.1_-_Reading_Public_Museum.jpg",
         artCredit: "<i>Man Reading</i> by John Singer Sargent",
+        dark: true,
         quoteCredit: "Virginia Woolf"
     },
     {
@@ -177,6 +182,7 @@ const quotes: Quote[] = [
         text: "There are some things you learn best in calm, and some in storm.",
         bgImgSrc: "https://images.unsplash.com/photo-1576058194458-986dde325e3e?auto=format&fit=crop&q=80&w=1000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         artCredit: "ammar sabaa from Unslash",
+        dark: true,
         quoteCredit: "Willa Cather"
     },
     {
@@ -193,14 +199,17 @@ const quotes: Quote[] = [
     },
     {
         text: "It is the mark of an educated mind to be able to entertain a thought without accepting it.",
-        bgImgSrc: "https://images.unsplash.com/photo-1644322749926-66ac55e2913e?auto=format&fit=crop&q=80&w=1000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        artCredit: "",
+        bgImgSrc: "https://images.unsplash.com/photo-1738682081595-7bac257f60cd?q=80&w=2487&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        artCredit: "Photo from <a href='https://unsplash.com/photos/a-view-of-the-clouds-from-an-airplane-window-QsPG0AG_SIU' target='_blank'>Unsplash</a>",
+        dark: true,
+        portrait: true,
         quoteCredit: "Aristotle"
     },
     {
         text: "How we spend our days is, of course, how we spend our lives.",
         bgImgSrc: "https://images.unsplash.com/photo-1532032659282-dc3fe9336831?auto=format&fit=crop&q=80&w=1000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         artCredit: "Clint McKoy from Unsplash",
+        dark: true,
         quoteCredit: "Annie Dillard"
     },
     {
@@ -229,8 +238,8 @@ const quotes: Quote[] = [
     },
     {
         text: "I would recognize you in total darkness, were you mute and I deaf. I would recognize you in another lifetime entirely, in different bodies, in different times. And I would love you in all of this, until the very last star in the sky burnt out into oblivion.",
-        bgImgSrc: "https://i.pinimg.com/564x/e2/dd/6d/e2dd6db778312ea84a2bb47b84dddfc4.jpg",
-        artCredit: "",
+        bgImgSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Cole_Thomas_The_Course_of_Empire_Desolation_1836.jpg/2560px-Cole_Thomas_The_Course_of_Empire_Desolation_1836.jpg",
+        artCredit: "<i>The Course of Empire: Desolation</i> by Thomas Cole",
         quoteCredit: "Patroclus to Achilles from <i>The Song of Achilles</i>"
     },
     {
@@ -257,6 +266,87 @@ const quotes: Quote[] = [
         artCredit: "",
         quoteCredit: "<i>Philosopher</i>, William James"
     },
+    {
+        text: "If you only do what you can do, you will never be more than you are now.",
+        bgImgSrc: "https://m.media-amazon.com/images/M/MV5BMjM0MDQwMDY3OV5BMl5BanBnXkFtZTcwMzMzMzA3NA@@._V1_.jpg",
+        artCredit: "",
+        quoteCredit: "<i>Kung Fu Panda</i>, Master Shifu to Po"
+    },
+    {
+        text: "Worrying does not take away tomorrow's troubles, it takes away today's peace.",
+        bgImgSrc: "https://images.unsplash.com/photo-1738584672976-3518c132482d?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        artCredit: "Ingmar H from <a href='https://unsplash.com/photos/a-field-of-tall-dry-grass-under-a-blue-sky-As7yc37SJqE' target='_blank'>Unsplash</a>",
+        quoteCredit: ""
+    },
+    {
+        text: "To love and be loved is to feel the sun from both sides.",
+        bgImgSrc: "https://images.unsplash.com/photo-1738584672973-f33b662c05d4?q=80&w=2487&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        artCredit: "Ingmar H from <a href='https://unsplash.com/photos/a-bunch-of-dry-grass-blowing-in-the-wind-G1roUq7npuE' target='_blank'>Unsplash</a>",
+        quoteCredit: "David Viscott"
+    },
+    {
+        text: "A reader lives a thousand lives before he dies. The man who never reads lives only one.",
+        bgImgSrc: "https://images.unsplash.com/photo-1569937301527-9336e27c357c?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        artCredit: "Photo from <a href='https://unsplash.com/photos/open-book-lot-IKzmglo7JLk' target='_blank'>Unsplash</a>",
+        quoteCredit: "<i>A Dance with Dragons</i>, George R.R. Martin"
+    },
+    {
+        text: "The journey not the arrival matters.",
+        bgImgSrc: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=2694&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        artCredit: "Johannes Plenio from <a href='https://unsplash.com/photos/black-sailing-boat-digital-wallpaper-DKix6Un55mw' target='_blank'>Unsplash</a>",
+        dark: true,
+        quoteCredit: "T.S. Eliot"
+    },
+    {
+        text: "Not everyone can become a great artist, but a great artist can come from anywhere.",
+        bgImgSrc: "https://i.pinimg.com/736x/af/2c/da/af2cdad0a762296e20ce3240af600711.jpg",
+        artCredit: "Ratatouille",
+        portrait: true,
+        dark: true,
+        quoteCredit: "Anton Ego from <i>Ratatouille</i>"
+    },
+    {
+        text: "Develop a strong opinion of yourself so you don't end up internalizing the beliefs others have of you.",
+        bgImgSrc: "https://www.hrc.utexas.edu/frida-kahlo-self-portrait/images/frida-kahlo-self-portrait-640-full.jpg",
+        artCredit: "Frida Kahlo",
+        portrait: true,
+        quoteCredit: ""
+    },
+    {
+        text: "Be yourself so the people looking for you can find you.",
+        bgImgSrc: "https://images.unsplash.com/photo-1738193026612-4a953a4f4e96?q=80&w=2480&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        artCredit: "Tilak Baloni from <a href='https://unsplash.com/photos/a-field-with-mountains-in-the-background-under-a-cloudy-sky-D9VxG14sOBw' target='_blank'>Unsplash</a>",
+        dark: true,
+        quoteCredit: "Arlan Hamilton"
+    },
+    {
+        text: "Day by day what you choose, what you think, and what you do is who you become.",
+        bgImgSrc: "https://images.unsplash.com/photo-1484452330304-377cdeb05340?q=80&w=2371&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        artCredit: "Dave Contreras from <a href='https://unsplash.com/photos/silhouette-of-person-in-yoga-post-on-top-of-cliff-during-sunset-R1PUDOAhb5Q' target='_blank'>Unsplash</a>",
+        dark: true,
+        quoteCredit: "Haraclitus"
+    },
+    {
+        text: "It won't happen overnight, but if you quit, it won't happen at all.",
+        bgImgSrc: "https://images.unsplash.com/photo-1579454566790-f9e5697ddf36?q=80&w=2242&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        artCredit: "Jade Stephens from <a href='https://unsplash.com/photos/a-woman-in-a-brown-bikini-doing-a-handstand-N21356amsyw' target='_blank'>Unsplash</a>",
+        portrait: true,
+        quoteCredit: ""
+    },
+    {
+        text: "The greatest treasures are found in the simples moments, like watching the sunrise.",
+        bgImgSrc: "https://images.unsplash.com/photo-1514241516423-6c0a5e031aa2?q=80&w=2304&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        artCredit: "Ravi Sharma from <a href='https://unsplash.com/photos/sun-peeping-on-ice-mountain-hNv5s6NEYig' target='_blank'>Unsplash</a>",
+        quoteCredit: "Herman Melville",
+        portrait: true,
+        dark: true
+    },
+    {
+        text: "Stay close to anything that makes you glad you are alive.",
+        bgImgSrc: "https://images.unsplash.com/photo-1731017487629-10a7f2d43d61?q=80&w=2427&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        artCredit: "Kayvan Mazhar from <a href='https://unsplash.com/photos/a-person-holding-a-surfboard-walking-on-the-beach-oJKlYqt3PJs' target='_blank'>Unsplash</a>",
+        quoteCredit: "Herman Melville"
+    }
 ]
 
 export default quotes

@@ -23,7 +23,7 @@ export enum Icon {
 export enum ModalType { 
     Settings, Music, Themes, Quote, NewSession, ActiveSession,
     EditSession, SesssionFinished, SessionCanceled, Shortcuts, ImgUpload, CustomVidBg,
-    EditGoal, EditRoutine, Confirmation, SessionSummary, Text, Spaces
+    EditGoal, EditRoutine, Confirmation, SessionSummary, Text, Spaces, Upgrade
 }
 export enum ToasterPosition {
     TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, TOP_CENTER, BOTTOM_CENTER

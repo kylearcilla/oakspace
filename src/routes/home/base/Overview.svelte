@@ -409,7 +409,7 @@
 
             img {
                 border: white 3px solid;
-                transition: 0.1s cubic-bezier(.4, 0, .2, 1);
+                transition: 0.25s cubic-bezier(.4, 0, .2, 1);
                 @include square(50px, 6px);
                 object-fit: cover
             }

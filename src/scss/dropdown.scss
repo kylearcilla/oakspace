@@ -7,26 +7,8 @@
     cursor: pointer;
     @include flex(center);
 
-    &:hover {
-        @include txt-color(0.054, "bg");
-        transition: 0s ease-in-out;
-    }
     &:active {
         transform: scale(0.978);
-    }
-    &--light {
-        color: rgba(var(--textColor1), 0.65);
-        font-weight: 400;
-    
-        &:hover {
-            background-color: rgba(var(--textColor1), 0.04);
-        }
-        &:focus {
-            background-color: rgba(var(--textColor1), 0.04);
-        }
-        i {
-            color: rgba(var(--textColor1), 0.65);
-        }
     }
     &--light &__title {
         @include text-style(1);
@@ -67,12 +49,6 @@
     &--active &__icon--arrow {
         transform: rotate(-180deg);
     }
-    &--arrow-left#{&}--active &__icon--arrow {
-        transform: rotate(0deg) !important;
-    }
-    &--arrow-left &__icon--arrow {
-        transform: rotate(-90deg) !important;
-    }
     &--arrow-on-hover &__icon--arrow {
         @include not-visible;
     }
@@ -85,19 +61,17 @@
     &--empty &__title {
         opacity: 0.45;
     }
-    &--no-bg {
-        box-shadow: none !important;
-    }
 
     &__title {
         @include text-style(1, var(--fw-400-500), 1.32rem);
         white-space: nowrap;
-        margin-right: 9px;
+        margin-right: 8px;
         flex: 1;
     }
     &__icon {
         @include center;
         position: relative;
+        color: rgba(var(--textColor1), 0.5);
         
         &--arrow {
             transition: 0.15s cubic-bezier(.4,0,.2,1);
@@ -105,18 +79,9 @@
             transform: rotate(0deg);
             opacity: 0.2;
         }
-        // first child of children
-        &:first-child:not(:only-child) {
-            margin-right: 7px;
-        }
-        i {
-            color: rgba(var(--textColor1), 0.5);
-        }
     }
-
-    /* Double Arrows */
     &__arrows i {
-        margin-left: 7px;
+        margin-left: 5px;
         font-size: 0.9rem;
     }
     &__arrows-triangle-up {

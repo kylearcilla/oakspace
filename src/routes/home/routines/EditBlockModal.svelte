@@ -363,7 +363,7 @@
                                 allowEmpty: true,
                                 onClick: () => coresOpen = !coresOpen,
                                 onRemove:() => onRemoveCore(),
-                                pickedOptionName: getCoreStr(block.activity),
+                                title: getCoreStr(block.activity),
                                 styles: { fontSize: "1.24rem", padding: "4px 12px 4px 11px" }
                             }} 
                         />

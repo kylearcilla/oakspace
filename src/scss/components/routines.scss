@@ -1,30 +1,13 @@
-/* Reusable styling for routine views (daily / weekly) */
 .routine {
-    &--light &__tag-breakdown .tag {
-        background-color: rgba(var(--tag-color-2), 1);
-    }
-    &--light &__description {
-        @include text-style(0.75);
-    }
     &--light &__breakdown {
-        @include txt-color(0.028, "bg");
-        border: 1px solid rgba(var(--textColor1), 0.04);
+        background: rgba(var(--textColor1), 0.025);
+        border: 1.5px dashed rgba(var(--textColor1), 0.12);
     }
-    &--light &__breakdown h3 {
+    &--light &__stat-title {
         @include text-style(1);
     }
-    &--light &__cores-title {
-        @include text-style(0.96);
-    }
-    &--light &__cores-value {
-        @include text-style(0.8);
-    }
-    &--light &__cores-col-divider {
-        @include divider(0.08, 1px);
-    }
-    &--light &__breakdown-options-btn {
-        opacity: 0.4;
-        @include text-style(0.9);
+    &--light &__stat-num {
+        @include text-style(0.75);
     }
     &--light .tag__title {
         color: rgba(var(--tag-color-1), 1);
@@ -38,129 +21,198 @@
 
     &__details {
         max-width: 100%;
-        margin-bottom: 17px;
+        margin-bottom: 10px;
+        position: relative;
     }
     &__details-header {
         @include flex(center, space-between);
         position: relative;
     }
     &__title {
-        padding: 0px;
+        padding: 0px 12px 0px 0px;
         overflow: scroll;
-        @include text-style(1);
+        @include text-style(1, var(--fw-400-500), 1.6rem);
+        max-height: 120px;
     }
     &__description {
         overflow: scroll;
         display: inline-block;
-        @include text-style(0.4, _, 1.4rem);
+        margin-top: 4px;
+        padding: 4px 4px 8px 0px;
+        max-height: 120px;
+        @include text-style(0.4, var(--fw-400-500), 1.425rem);
     }
-
-    /* Breakdown */
     &__breakdown {
-        width: 90%;
-        margin-left: -6px;
-        padding: 7px 20px 10px 15px;
-        border-radius: 14px;
-        border: 1px solid rgba(var(--textColor1), 0.02);
-        @include txt-color(0.019, "bg");
+        width: 250px;
+        padding: 4px 20px 14px 14px;
+        border-radius: 11px;
+        background: rgba(var(--textColor1), 0.01);
+        border: 1.5px dashed rgba(var(--textColor1), 0.06);
+        position: relative;
+        margin: -4px 0px 14px -4px;
 
-        h3 {
-            margin-bottom: 12px;
-            @include text-style(0.95, 400, 1.64rem);
-        }
-        &-title {
-            @include text-style(1, var(--fw-400-500), 1.24rem, "Geist Mono");
-        }
-        &-header {
-            @include flex(center, space-between);
-            // margin-bottom: 8px;
-            position: relative;
-        }
-        &-options {
-            @include flex(center);
-            margin-right: -6px;
-        }
-        &-options-menu {
-            @include abs-top-left(28px, -10px);
-        }
-        &-options-btn {
-            opacity: 0.4;
-            transition: 0s;
-            padding: 2px 6px;
-            @include text-style(1, 300, 1.14rem, "Geist Mono");
+        // border-top: var(--divider-border);
+        // border-bottom: var(--divider-border);
+        // padding: 10px 0px 12px 0px;
+    }
+    &__breakdown-title {
+        @include text-style(1, var(--fw-400-500), 1.3rem, "Geist Mono");
+    }
+    &__breakdown-header {
+        @include flex(center, space-between);
+    }
+    &__breakdown-btns {
+        @include flex(center);
+        margin-right: -6px;
+    }
+    &__breakdown-btn {
+        opacity: 0.2;
+        padding: 2px 6px;
+        @include text-style(1, var(--fw-400-500), 1.245rem, "Geist Mono");
 
-            &:hover {
-                opacity: 1;
-            }
-            &:focus {
-                opacity: 0.8;
-            }
+        &:hover {
+            opacity: 1;
+        }
+        &:focus {
+            opacity: 0.8;
         }
     }
-    /* Core Breakdown */
-    &__core-breakdown {
-        padding-top: 8px;
+    &__stat-title-container {
+        min-width: 0px;
+        margin-right: 10px;
+        @include flex(center);
+        gap: 9px;
     }
-    &__cores {
-        @include text-style(0.4, 400, 1.3rem);
-        width: 100%;
-
-        &-value {
-            @include text-style(0.25, 300);
-        }
+    &__stat-title {
+        @include text-style(0.65, var(--fw-400-500), 1.4rem);
+        @include elipses-overflow;
     }
-    &__cores-col {
+    &__stat-breakdown {
+        padding-top: 5px;
+    }
+    &__stat-num {
+        @include text-style(0.3, var(--fw-300-400), 1.35rem, "Geist Mono");
+        white-space: nowrap;
+        float: right;
+    }
+    &__stats-col {
         position: relative;
     }
-    &__cores-col-divider {
-        @include divider(0.06, 0.5px, 100%);
+    &__stats-divider {
         width: 100%;
         margin: 11px 0px;
+        border-top: var(--divider-border);
     }
-    &__cores-core {
+    &__stat {
         @include flex(center, space-between);
-        margin-bottom: 6px;
 
-        &:last-child {
-            margin-bottom: 5px;
+        &:not(:last-child) {
+            margin-bottom: 6px;
         }
     }
-    /* Tag Breakdown */
-    &__tag-breakdown h3 {
-        margin-bottom: 17px;
+    &__stat--tag:not(:last-child) {
+        margin-bottom: 7px;
     }
-    &__tag-row {
-        @include flex(center, space-between);
-        margin-bottom: 6px;
-    }
-    &__tag-stat {
-        @include text-style(0.34, 300, 1.32rem);
-    }
-    &__tag-breakdown {
-        position: relative;
-        min-height: 180px;
-        max-height: 240px;
-        overflow: scroll;
-        padding: 13px 15px 0px 3px;
-        width: calc(100% + 15px);
-        margin-left: -3px;
-    }
-    &__tag-breakdown .tag {
-        padding: 3px 12px 3.5px 10px;
-        background-color: rgba(var(--tag-color-2), 1);
-        margin-left: -3px;
-    }
-    &__tag-breakdown-empty {
-        @include text-style(0.17, var(--fw-400-500), 1.28rem);
-        position: absolute;
-        top: calc(50% - 4px);
-        left: 50%;
-        transform: translate(-50%, -50%);
-    }
-    /* Collection */
-    &__collection-empty {
+    &__breakdown-empty {
         display: block;
-        @include text-style(0.14, var(--fw-400-500), 1.3rem);
+        @include text-style(0.2, var(--fw-400-500), 1.3rem, "Geist Mono");
+        margin: 5px 0px 10px 0px;
+        text-align: center;
+    }
+    &__routines {
+        margin: 10px 0px 0px 0px;
+        width: 90%;
+        position: relative;
+        height: var(--routines-height);
+    }
+    &__routines-count {
+        @include text-style(0.2, var(--fw-400-500), 1.325rem, "Geist Mono");
+    }
+    &__routines-left {
+        @include flex(center);
+
+        &:hover button {
+            visibility: visible;
+            opacity: 0.3;
+        }
+    }
+    &__routines-addbtn {
+        opacity: 0;
+        transition: 0.1s ease-in-out;
+        padding: 3px 3px 3px 4px;
+        border-radius: 10px;
+
+        &:hover {
+            opacity: 0.88 !important;
+        }
+        &:focus {
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        &:active {
+            transform: scale(0.94);
+        }
+    }
+    &__routines-header {
+        @include flex(center, space-between);
+        margin-bottom: 4px;
+        padding-right: 14px;
+    }
+    &__routines-list {
+        z-index: 2000;
+        overflow-y: scroll;
+        padding-right: 11px;
+        max-height: var(--routines-dropdown-max-height);
+    }
+    &__collection-empty {
+        margin-left: 23px;
+    }
+}
+
+.routine-item {
+    padding: 4px 12px 4px 1px;
+    border-radius: 10px;
+    margin: 0px 0px 3px 0px;
+    position: relative;
+    outline: none;
+    @include flex(center, space-between);
+    opacity: 0.3;
+    
+    &:hover {
+        cursor: pointer;
+        opacity: 0.6;
+    }
+    &:focus-visible {
+        @include border-focus;
+    }
+    &:focus-visible span {
+        @include text-style(0.5);
+    }
+    &:active {
+        transition: 0.15s cubic-bezier(.4,0,.2,1);
+        transform: scale(0.98);
+    }
+    &--clicked {
+        opacity: 0.9 !important;
+    }
+    &--active {
+        opacity: 0.7;
+    }
+    &--chosen::after {
+        @include abs-bottom-right(-3px, -5px);
+        @include text-style(0.45, 100, 2rem);
+        height: min-content;
+        content: "*";
+    }
+    span {
+        @include text-style(1, var(--fw-400-500), 1.35rem);
+        @include truncate-lines(1);
+    }
+    i {
+        display: none;
+        font-size: 1rem;
+        opacity: 0.8;
+        color: rgba(var(--textColor1), 1);
     }
 }
 

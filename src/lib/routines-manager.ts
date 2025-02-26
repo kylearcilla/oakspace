@@ -96,11 +96,10 @@ export class RoutinesManager {
     }
 
     /**
-     * Process an array of raw routine blocks extracts block elems, earliest block, and breakdown data (core and tag).
-     * This will usually be used to preocess a day's daily routine.
+     * Process an array of raw routine blocks and extract contextual data.
      * 
-     * @param blocks        Daily routiune blocks. Could be a linked Daily Routine object or just an array of routine blocks.
-     * @returns             Given a routine's blocks, get the core and tag breakdowns, block elems, and earliest block.
+     * @param routine   Routine blocks.
+     * @returns         Core and tag breakdowns, block elems, and earliest block.
      */
     processRoutineBlocks(routine: RoutineBlock[] | DailyRoutine) {
         let coreBreakdown = structuredClone(EMPTY_CORES)

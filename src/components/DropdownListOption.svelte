@@ -9,11 +9,13 @@
     export let onItemPointerLeave: ((e: PointerEvent, option: DropdownOption) => void)
 
     const { rightIcon, leftIcon, name } = option
+
+    
 </script>
 
 <li 
     class="dmenu__option"
-    class:dmenu__option--selected={pickedItem === name || pickedItem === idx}
+    class:dmenu__option--selected={typeof pickedItem === 'string' ? pickedItem.toLowerCase() === name.toLowerCase() : pickedItem === idx}
     data-optn-idx={idx}
     on:pointerenter={(e) => {
         onItemPointerOver(e, option)

@@ -3,7 +3,7 @@ export const themes: Theme[] = [
         name: "dark",
         styling: {
             isDark: true,
-            bg1: "#151515",
+            bg1: "#141414",
             bg2: "#1d1d1d",
             bg3: "#2d2d2e",
             fgColor1: "163, 182, 255",

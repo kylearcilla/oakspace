@@ -10,9 +10,6 @@ import { findAncestor, getElemById, getElemNumStyle, initFloatElemPos } from "./
 export class DailyRoutinesManager extends RoutinesManager {
     dailyRoutines:  Writable<DailyRoutine[] | null> = writable(null)
 
-    /**
-     * @param data   Daily Routines - All the daily routines that user has made              
-     */
     constructor(dailyRoutines?: (DailyRoutine[] | null)) {
         super()
         this.updateDailyRoutines(dailyRoutines)

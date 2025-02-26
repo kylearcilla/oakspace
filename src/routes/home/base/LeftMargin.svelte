@@ -144,11 +144,6 @@
                         <div class="goal-m__title"class:strike={done} title={goal.name}>
                             {goal.name}
                         </div>
-                        {#if !fullWidth && idx < TEST_GOALS.length - 1}
-                            <svg width={width} height="4" viewBox={`0 0 ${width} 4`} fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d={`M0 2.5 H${width}`} stroke-dasharray="3 4.5"/>
-                            </svg>     
-                        {/if}
                     </div>
                 {/each}
             </div>

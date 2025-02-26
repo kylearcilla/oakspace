@@ -207,8 +207,6 @@ export const onMouseMoveHandler = (event: MouseEvent, toggledLeftBarWithKey: boo
         leftBarFixed, 
     } = context
 
-    console.log(elem)
-
     const leftInArea = mouseLeftPos < LEFT_BAR_LEFT_BOUND
     const activeRoutineOpen = !!getElemById("active-routine--dmenu")
     const lbAutoCloseThreshold = getLeftBarWidth(leftBarFixed)

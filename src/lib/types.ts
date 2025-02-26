@@ -269,15 +269,13 @@ type TimePickerOptions = {
 type TimeString = `${number}h` | `${number}m` | `${number}s` | `${number}d`
 
 type DropdownBtnOptions = {
-    pickedOptionName: string | null
+    title: string | null
     allowEmpty?: boolean
     hasArrow?: boolean
-    bgOnactive?: boolean
     noBg?: boolean
     arrowLeft?: boolean
     arrowOnHover?: boolean
     styles?: StylingOptions
-    arrowStyles?: StylingsOptions
     onClick: FunctionParam
     onRemove?: FunctionParam
 }
@@ -399,6 +397,7 @@ type Color = {
     dark1: string
     dark2: string
     dark3: string
+    dark4: string
 }
 
 type ColorPicker = {

@@ -1,6 +1,5 @@
 .goal-m {
     @include flex(flex-start);
-    margin-bottom: 10px;
     transition: 0.18s cubic-bezier(.4, 0, .2, 1);
     position: relative;
 

@@ -113,15 +113,13 @@
     }
     function onItemPointerOver(e: PointerEvent, item: DropdownOption) {
         const { container } = options.parentContext ?? {}
-        const { onPointerOver } = item
-        if (!onPointerOver) {
+        if (!item.onPointerOver) {
             return
         }
         if (!container) {
             item.onPointerOver()
             return
         }
-
         item.onPointerOver({ 
             e, 
             item, 

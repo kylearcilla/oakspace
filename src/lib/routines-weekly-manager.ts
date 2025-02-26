@@ -24,7 +24,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
     dayColXOffset = 0
     weekCores = structuredClone(EMPTY_CORES)
 
-    DAYS_WEEK = [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" ]
+    DAYS_WEEK = [ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ]
     daysInView = this.DAYS_WEEK
 
     /**

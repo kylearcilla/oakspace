@@ -38,7 +38,7 @@ export const IMG_COLLECTIONS: any = {
     overviewTextBlockImg: {
       src: "https://i.pinimg.com/736x/d1/a6/55/d1a655f28705a9257c58e97b30211ea2.jpg",
       type: "img",
-      size: "big"
+      size: "small"
     },
     headerImg: "",
   },
@@ -72,11 +72,11 @@ export const IMG_COLLECTIONS: any = {
         src: "🌉",
         size: "small"
       },
-      bulletinImg: "https://i.pinimg.com/originals/d9/8e/8b/d98e8b09855fcaea6a6d00ddefe09113.gif",
+      bulletinImg: "https://i.pinimg.com/originals/b9/3c/aa/b93caa57b98ed62c10eaab665d3f41b9.gif",
       overviewTextBlockImg: {
         src: "https://i.pinimg.com/736x/ae/28/ba/ae28ba3c8dcca80bd2b8b5a632ffa9b6.jpg",
         type: "img",
-        size: "big"
+        size: "small"
       },
       headerImg: "https://i.pinimg.com/originals/f6/5a/a5/f65aa5411e5d4e54b93aabb1bf1ceca4.gif"
   },
@@ -85,17 +85,17 @@ export const IMG_COLLECTIONS: any = {
         src: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Cole_Thomas_The_Course_of_Empire_Desolation_1836.jpg/2560px-Cole_Thomas_The_Course_of_Empire_Desolation_1836.jpg",
         center: 45.2433
       },
-      headerIcon: "https://i.pinimg.com/736x/f0/9a/9c/f09a9c36370c62b82906bffa5f9d090e.jpg",
+      headerIcon: "https://i.pinimg.com/736x/70/a9/54/70a954ddddb49bbe9b882e18188d96b6.jpg",
       headerTextBlockImg: {
-        type: "emoji",
-        src: "🌿",
+        type: "img",
+        src: "https://i.pinimg.com/736x/f0/9a/9c/f09a9c36370c62b82906bffa5f9d090e.jpg",
         size: "small"
       },
       bulletinImg: "https://i.pinimg.com/736x/27/4d/7e/274d7e37c3b311c32d316749ed2d9d4f.jpg",
       overviewTextBlockImg: {
         src: "https://i.pinimg.com/736x/89/74/9d/89749de231686a58bfb692d9ea087273.jpg",
         type: "img",
-        size: "big"
+        size: "small"
       },
       headerImg: "https://i.pinimg.com/originals/f6/5a/a5/f65aa5411e5d4e54b93aabb1bf1ceca4.gif"
   },

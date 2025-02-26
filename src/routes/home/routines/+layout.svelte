@@ -1,27 +1,29 @@
 <script lang="ts">
+    import { page } from '$app/stores'
 	import { goto } from '$app/navigation'
 	import { themeState } from '$lib/store'
 
-    enum RoutinesTab { Weekly, Daily }
+    let currTab: "weekly" | "daily" = "weekly"
+    let highlighter = { width: 0, left: 0 }
 
-    let currTab = RoutinesTab.Weekly
+    $: currTab = $page.url.pathname.includes('/home/routines/daily') ? 'daily' : 'weekly'
+    $: requestAnimationFrame(() => onBtnClicked(currTab))
 
-    $: if (window.location.href.includes("/home/routines/daily") ) {   
-        currTab = RoutinesTab.Daily
-    }
-    else {
-        currTab = RoutinesTab.Weekly
-    }
+    function onBtnClicked(view: "weekly" | "daily") {
+        currTab = view
+        const btnElem = document.getElementById(`routines-page--${view}`)
+        if (!btnElem) return
 
-    function onTabClicked(tab: RoutinesTab) {
-        if (tab === currTab) return
-        currTab = tab
+        const width = btnElem.clientWidth
 
-        if (tab === RoutinesTab.Weekly) {
-            goto("/home/routines/weekly")
-        }
-        else {
+        highlighter.width = width
+        highlighter.left =  btnElem.offsetLeft
+
+        if (view === "daily") {
             goto("/home/routines/daily")
+        } 
+        else {
+            goto("/home/routines/weekly")
         }
     }
 </script>
@@ -36,19 +38,26 @@
     </h1>
     <div class="routines-page__tabs">
         <button 
-            on:click={() => onTabClicked(RoutinesTab.Weekly)}
+            id="routines-page--weekly"
+            on:click={() => onBtnClicked("weekly")}
             class="routines-page__tab-btn" 
-            class:routines-page__tab-btn--selected={currTab === RoutinesTab.Weekly}
+            class:routines-page__tab-btn--selected={currTab === "weekly"}
         >
             Weekly
         </button>
         <button 
-            on:click={() => onTabClicked(RoutinesTab.Daily)}
+            id="routines-page--daily"
+            on:click={() => onBtnClicked("daily")}
             class="routines-page__tab-btn" 
-            class:routines-page__tab-btn--selected={currTab === RoutinesTab.Daily}
+            class:routines-page__tab-btn--selected={currTab === "daily"}
         >
             Daily
         </button>
+        <div 
+            style:left={`${highlighter.left}px`}
+            style:width={`${highlighter.width}px`}
+            class="routines-page__highlight"
+        ></div>
     </div>
     <div class="routines-page__divider"></div>
     <slot />
@@ -61,49 +70,47 @@
         padding: 18px 0px 0px 25px;
 
         &--light &__title {
-            @include text-style(1, 600);
+            @include text-style(1);
         }
         &--light &__tab-btn {
             opacity: 0.34;
-            @include text-style(1, 500);
+            @include text-style(1);
         }
         &--light &__divider {
             @include divider(0.064, 1px);
         }
         
+        &__title {
+            margin-bottom: 13px;
+            @include text-style(1, var(--fw-400-500), 1.74rem, "Geist Mono");
+        }
         &__tabs {
             @include flex(center);
-            margin-left: -10px;
-            font-family: "DM Mono";
+            position: relative;
         }
         &__tab-btn {
-            border-radius: 20px;
-            margin-right: 4px;
-            padding: 4.5px 14px;
+            margin-right: 17px;
             opacity: 0.24;
             transition-duration: 0.04s;
-            @include text-style(1, 300, 1.45rem);
+            @include text-style(1, var(--fw-300-400), 1.45rem, "Geist Mono");
             
-            &:first-child {
-                padding: 4.5px 14px;
-            }
             &:active {
                 transform: scale(0.985);
                 transition: 0.14s ease-in-out;
             }
             &:hover, &:focus {
-                transition: 0.04s ease-in-out;
-                background: rgba(var(--textColor1), 0.02);
-                opacity: 0.85;
+                opacity: 0.5;
             }
             &--selected {
                 opacity: 1 !important;
-                background: rgba(var(--textColor1), 0.05) !important;
             }
         }
-        &__title {
-            margin-bottom: 14px;
-            @include text-style(1, 400, 1.74rem, "DM Mono");
+        &__highlight {
+            position: absolute;
+            bottom: -11px;
+            height: 1.5px;
+            background-color: rgba(var(--textColor1), 0.9);
+            transition: 0.18s cubic-bezier(.4, 0, .2, 1);
         }
         &__divider {
             margin: 10px 0px 0px 0px;

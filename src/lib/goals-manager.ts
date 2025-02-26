@@ -286,7 +286,7 @@ export class GoalsManager {
 
     /* status management */
 
-    setGoalStatus(goal: Goal, newStatus: "accomplished" | "in-progress" | "not-started") {
+    setGoalStatus(goal: Goal, newStatus: string) {
         this.goals = this.onStatusChange({ 
             goal,
             newStatus: newStatus as "accomplished" | "in-progress" | "not-started" 

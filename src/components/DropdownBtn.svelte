@@ -1,31 +1,31 @@
 <script lang="ts">
-	import { Icon } from "$lib/enums"
+    import { Icon } from "$lib/enums"
 	import { themeState } from "$lib/store"
-	import { inlineStyling } from "$lib/utils-general";
+	import { inlineStyling } from "$lib/utils-general"
+
 	import SvgIcon from "./SVGIcon.svelte"
 
     export let id: string = ""
     export let options: DropdownBtnOptions
     export let isActive = false
     
-    $: isLight = !$themeState.isDarkTheme
-    $: title = options.pickedOptionName
-    $: isEmpty = !title
+    const { 
+        allowEmpty = false,
+        hasArrow = true,
+        arrowOnHover = false,
+        noBg = false,
+    } = options
 
+    $: isLight = !$themeState.isDarkTheme
+    $: title = options.title
+    $: isEmpty = !title
     $: doShowArrow = hasArrow && (!allowEmpty || ((allowEmpty && !isActive) || (allowEmpty && isEmpty)))
     
-    const allowEmpty = options.allowEmpty ?? false
-    const arrowLeft  = options.arrowLeft ?? false
-    const hasArrow   = options.hasArrow != undefined ? options.hasArrow : true
-    const noBg       = options.noBg != undefined ? options.noBg : false
-    const bgOnactive = options.bgOnactive != undefined ? options.bgOnactive : false
-
     function onRemoveBtnClicked() {
         if (options.onRemove) {
             options.onRemove()
         }
     }
-
 </script>
 
 <button
@@ -33,27 +33,12 @@
     class="dbtn"
     class:dbtn--empty={isEmpty}
     class:dbtn--no-bg={noBg}
-    class:dbtn--bg-on-active={bgOnactive}
     class:dbtn--active={isActive}
     class:dbtn--light={isLight}
-    class:dbtn--arrow-on-hover={options.arrowOnHover}
-    class:dbtn--arrow-left={arrowLeft}
+    class:dbtn--arrow-on-hover={arrowOnHover}
     style={inlineStyling(options.styles)}
     on:click={options.onClick}
 >
-    {#if doShowArrow && arrowLeft}
-        <div 
-            class="dbtn__icon dbtn__icon--arrow"
-            style={inlineStyling(options.arrowStyles)}
-        >
-            <SvgIcon 
-                icon={Icon.Dropdown}
-                options={{
-                    scale: 1.1, height: 12, width: 12, strokeWidth: 1.2
-                }}
-            />
-        </div>
-    {/if}
     <span 
         class="dbtn__title"
         style:font-size={options?.styles?.fontSize}
@@ -61,16 +46,11 @@
     >
         {title ?? "None"}
     </span>
-    {#if doShowArrow && !arrowLeft}
-        <div 
-            class="dbtn__icon dbtn__icon--arrow"
-            style={inlineStyling(options.arrowStyles)}
-        >
+    {#if doShowArrow}
+        <div class="dbtn__icon dbtn__icon--arrow">
             <SvgIcon 
                 icon={Icon.Dropdown}
-                options={{
-                    scale: 1.1, height: 12, width: 12, strokeWidth: 1.4
-                }}
+                options={{ scale: 1.3 }}
             />
         </div>
     {/if}
@@ -79,7 +59,12 @@
             class="dbtn__icon dbtn__icon--close-btn"
             on:click={onRemoveBtnClicked}
         >
-            <SvgIcon icon={Icon.Close} options={{ scale: 0.9, strokeWidth: 1.6, height: 12, width: 12, }} />
+            <SvgIcon 
+                icon={Icon.Close} 
+                options={{ 
+                    scale: 0.9, strokeWidth: 1.6, height: 12, width: 12
+                }}
+            />
         </button>
     {/if}
 </button>

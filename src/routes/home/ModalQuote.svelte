@@ -79,7 +79,7 @@
                             {@html (artCredit || quoteCredit)}
                         </div>
                     </div>
-                    {#if quote?.quoteCredit && quote?.artCredit}
+                    {#if quoteCredit && artCredit}
                         <span class="quote-modal__quote-credit">
                             - {@html quoteCredit}
                         </span>
@@ -116,7 +116,7 @@
             color: white;
             @include flex(_, flex-end);
             flex-direction: column;
-            padding: 18px 19px;
+            padding: 18px 19px 17px 19px;
 
             &-top {
                 margin-bottom: 15px;

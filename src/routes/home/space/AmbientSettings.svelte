@@ -91,7 +91,7 @@
                     id={"ambient"}
                     isActive={stylingOpen}
                     options={{
-                        pickedOptionName: capitalize(elementStyling),
+                        title: capitalize(elementStyling),
                         styles: { 
                             fontSize: "1.24rem",
                             backgroundColor: "rgba(255, 255, 255, 0.025)",
@@ -161,7 +161,7 @@
                     id={"ambient-clock-style"}
                     isActive={timeStyleOpen}
                     options={{
-                        pickedOptionName: timeStyle,
+                        title: timeStyle,
                         styles: { 
                             fontSize: "1.24rem",
                             backgroundColor: "rgba(255, 255, 255, 0.025)",

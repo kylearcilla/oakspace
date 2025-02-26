@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte"
 	import { globalContext, ytPlayerStore, timer } from "$lib/store"
+    
 	import { hasAmbienceSpace, setAmbience, SYSTEM_FONT } from "$lib/utils-home"
 	import { formatTimeToHHMM, prefer12HourFormat } from "$lib/utils-date"
-	import SpaceSelection from "./SpaceSelection.svelte";
+
+	import SpaceSelection from "./SpaceSelection.svelte"
 
     type FontOption = {
         name: string

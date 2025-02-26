@@ -10,7 +10,7 @@
 	import YearView from "./YearView.svelte"
 	import GoalsView from "./GoalsView.svelte"
 	import WeeklyHabits from "./WeeklyHabits.svelte"
-	import ActivityCalendar from "./Overview.svelte"
+	import Overview from "./Overview.svelte"
 	import SvgIcon from "$components/SVGIcon.svelte"
 	import ToggleBtn from "$components/ToggleBtn.svelte"
 	import BounceFade from "$components/BounceFade.svelte"
@@ -331,7 +331,7 @@
                         style:margin="0px 0px -2px 9px"
                     >
                         <SettingsBtn 
-                            id={"month-view--dbtn"}
+                            id={"month-view"}
                             onClick={() => optionsOpen = !optionsOpen}
                         />
                     </div>
@@ -392,7 +392,7 @@
                                 />
                             </div>
                             <div class="dmenu__toggle-optn">
-                                <span class="dmenu__option-heading">Incomplete Habits</span>
+                                <span class="dmenu__option-heading">Perfect Habits</span>
                                 <ToggleBtn 
                                     active={overview.habitsMark}
                                     onToggle={() => {
@@ -462,7 +462,7 @@
                                     id={"g-group"}
                                     isActive={subMenu === "g-group"}
                                     options={{
-                                        pickedOptionName: capitalize(options.grouping),
+                                        title: capitalize(options.grouping),
                                         onClick: () => {
                                             subMenu = subMenu === "g-group" ? null : "g-group"
                                         },
@@ -497,7 +497,7 @@
                                         id={"g-due"}
                                         isActive={subMenu === "g-due"}
                                         options={{
-                                            pickedOptionName: capitalize(options.dueType),
+                                            title: capitalize(options.dueType),
                                             onClick: () => {
                                                 subMenu = subMenu === "g-due" ? null : "g-due"
                                             },
@@ -561,7 +561,7 @@
                                 <DropdownBtn 
                                     id={"habits-view"}
                                     options={{
-                                        pickedOptionName: kebabToNormal(habitView.view),
+                                        title: kebabToNormal(habitView.view),
                                         onClick: () => {
                                             subMenu = subMenu === "h-view" ? null : "h-view"
                                         },
@@ -698,7 +698,7 @@
         <div class="divider"></div>
         <div class="month-view__details-view">
             {#if currView === "overview"}
-                <ActivityCalendar 
+                <Overview 
                     options={overview}
                     onDayClicked={(dayIdx) => {
                         overviewType = "daily"

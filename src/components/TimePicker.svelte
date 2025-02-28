@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { onMount } from "svelte/internal"
-	import type { Writable } from "svelte/store"
-    
+	import { onMount } from "svelte"
+
 	import { themeState } from "$lib/store"
 	import { TimeInputManager } from "$lib/inputs"
-    import { minsFromStartToHHMM } from "$lib/utils-date"
 	import { clamp, clickOutside, getElemStyle } from "$lib/utils-general"
+    import { minsFromStartToHHMM, minsFromStartFromHHMM } from "$lib/utils-date"
     
 	import DropdownList from "./DropdownList.svelte"
     
@@ -14,154 +13,149 @@
     export let onClick: FunctionParam | undefined = undefined
     export let onSet: (time: number) => void
 
+    const MINS_CHANGE = 5
+    const DROPDOWN_OPTION_INTERVAL = 15
+    const TIME_PICKER_ID = `${id}--time-picker-input`
+
     let dropdownOptions: DropdownOption[] = []
     let timePickerRef: HTMLElement
-    
-    $: currentTime = options?.start ?? 720
+    let currentMins = options?.start ?? 720
+    let currentMinsStr = minsFromStartToHHMM(currentMins, false)
+
     $: maxTime = options?.max ?? 1439
     $: minTime = options?.min ?? 0
-    
     $: isLight = !$themeState.isDarkTheme
-    $: timeStr = minsFromStartToHHMM(currentTime, false)
-    $: initTitleInput(timeStr)
 
-    /* Input Stuff */
+    $: if (titleInput) {
+        titleInput.updateBounds({ 
+            min: minTime, max: maxTime 
+        })
+    }
+
+    /* inputs */
     let inputElem: HTMLElement
-    let isInputActive = false
-    let titleInput: Writable<TimeInputManager>
+    let active = false
     let closestIdxOption = -1
+    let overElems: { target: HTMLElement, cursor: string } [] = []
     
-    /* Drag Stuff */
-    let draggedOverElems: { target: HTMLElement, cursor: string } [] = []
+    /* drag stuff */
     let initTouchPointLeft = -1
     let isDragging = false
 
     let prevOffset = -1
+    let preDiff = -1
     let isNegative = false
-    let prevVal = -1
+    
+    let titleInput = new TimeInputManager({ 
+        id: TIME_PICKER_ID,
+        min: minTime,
+        max: maxTime,
+        initValue: minsFromStartToHHMM(currentMins, false),
+        maxLength: 10,
+        placeholder: "1:30 PM",
+        handlers: { 
+            onBlurHandler: (_, timeStr) => onBlurHandler(timeStr)
+        }
+    })
 
-    const VALID_DRAG_TRHESHOLD = 2
-    const MINS_CHANGE = 5
-    const DROPDOWN_OPTION_INTERVAL = 15
+    /* input stuff */
+    function onBlurHandler(timeStr: string) {
+        currentMins = minsFromStartFromHHMM(timeStr)
+        currentMinsStr = timeStr
 
-    /* Input Stuff */
+        onInputBlurHandler(currentMins)
+        setTimeout(() => titleInput!.blur(), 100)
+    }
     function toggleInput(doOpen: boolean) {
         if (doOpen) {
             closestIdxOption = options?.start ? Math.ceil(options.start / DROPDOWN_OPTION_INTERVAL) : -1
-            isInputActive = true
+            active = true
         }
         else {
-            isInputActive = false
+            active = false
         }
     }
-    function initTitleInput(timeStr: string) {
-        titleInput = (new TimeInputManager({ 
-            min: minTime,
-            max: maxTime,
-            initValue: timeStr,
-            placeholder: "",
-            maxLength: 10,
-            id: "routine-time-input",
-            handlers: { 
-                onBlurHandler: (e, timeMins) => onInputBlurHandler(e, timeMins),
-                onError: () => onError()
-            }
-        })).state
+    function onInputBlurHandler(timeMins: number) {
+        toggleInput(false)
+        setTime(timeMins)
     }
-    function onInputBlurHandler(e: FocusEvent, timeMins: number) {
-        const target = e.relatedTarget as HTMLElement
-        const className = target?.classList.value ?? ""
-
-        if (!target || !className.includes("option-btn")) {
-            toggleInput(false)
-            _onSet(timeMins)
-        }
-    }
-    function _onSet(timeMins: number) {
-        const _timeMins = clamp(minTime, timeMins, maxTime)
-        onSet(_timeMins)
-    }
-    function onError() {
-
+    function setTime(timeMins: number) {
+        onSet(clamp(minTime, timeMins, maxTime))
     }
 
-    /* Dragging Stuff */
+    /* dragging stuff */
     function updateCurrentTime(diff: number) {
-        if (diff % 2 != 0 || prevVal === diff) return
-
-        prevVal = diff
+        if (diff % 2 != 0 || preDiff === diff) {
+            return
+        }
+        preDiff = diff
         const multiplier = isNegative ? -1 : 1
 
-        currentTime = clamp(minTime, currentTime + (multiplier * MINS_CHANGE), maxTime);
-    }
-    function onPickerMouseDown(e: MouseEvent) {
-        initTouchPointLeft = e.clientX
-        prevOffset = e.clientX
-
-        window.addEventListener("mousemove", onPickerDrag)
-        window.addEventListener("mouseup", onPickerMouseUp)
+        currentMins = clamp(
+            minTime, 
+            Math.round((currentMins + (multiplier * MINS_CHANGE)) / 5) * 5, 
+            maxTime
+        )
+        
+        currentMinsStr = minsFromStartToHHMM(currentMins, false)
+        titleInput.updateText(currentMinsStr)
     }
     function onPickerDrag(e: MouseEvent) {
         const diff = e.clientX - initTouchPointLeft
         const target = e.target as HTMLElement
-
-        if (isInputActive || Math.abs(diff) < VALID_DRAG_TRHESHOLD) {
-            return
-        }
-        if (!isDragging) {
-            isDragging = true
-            document.body.style.setProperty('cursor', 'ew-resize', 'important');
-            timePickerRef.style.cursor = "ew-resize"
-            document.body.style.userSelect = "none"
-        }
-        
         const cursor = getElemStyle(target, "cursor")
-        const isNonResize = target != timePickerRef && cursor != "ew-resize"
+        const avoid = target != timePickerRef && cursor != "ew-resize"
 
-        // ensure that ew-resize is respected throughout
-        if (isNonResize && !draggedOverElems.find((item) => item.target === target)) {
-            target.style.setProperty('cursor', 'ew-resize', 'important');
-            draggedOverElems.push({ target, cursor })
+        if (avoid && !overElems.find((item) => item.target === target)) {
+            target.style.setProperty('cursor', 'ew-resize', 'important')
+            overElems.push({ target, cursor })
         }
 
         isNegative = e.clientX < prevOffset
         prevOffset = e.clientX
         updateCurrentTime(diff)
     }
-    function onDropdownOptionClicked(context: DropdownItemClickedContext) {
-        isInputActive = false
-        toggleInput(false)
+    function onPickerMouseDown(e: MouseEvent) {
+        const target = e.target as HTMLElement
+        if (target.isContentEditable) {
+            active = true
+            return
+        }
 
-        const newVal = clamp(minTime, context.idx * DROPDOWN_OPTION_INTERVAL, maxTime)
-        
-        _onSet(newVal)
+        isDragging = true
+        initTouchPointLeft = e.clientX
+        prevOffset = e.clientX
+
+        window.addEventListener("mousemove", onPickerDrag)
+        window.addEventListener("mouseup", onPickerMouseUp)
     }
     function onPickerMouseUp() {
         window.removeEventListener("mousemove", onPickerDrag)
         window.removeEventListener("mouseup", onPickerMouseUp)
 
-        if (!isDragging) {
-            toggleInput(true)
-            requestAnimationFrame(() => inputElem!.focus())
-            return
-        }
-
         isDragging = false
-        _onSet(currentTime)
-        
-        document.body.style.cursor = "auto"
-        timePickerRef.style.cursor = "pointer"
+        setTime(currentMins)
 
-        for (let elem of draggedOverElems) {
+        for (let elem of overElems) {
             elem.target.style.cursor = elem.cursor
         }
-        draggedOverElems = []
+        overElems = []
     }
 
-    /* General */
+    /* misc */
     function onClicked() {
         if (!onClick) return
         onClick()
+    }
+    function onDropdownOptionClicked(idx: number) {
+        active = false
+        toggleInput(false)
+        
+        currentMins = clamp(minTime, idx * DROPDOWN_OPTION_INTERVAL, maxTime)
+        currentMinsStr = minsFromStartToHHMM(currentMins, false)
+        titleInput.updateText(currentMinsStr)
+
+        setTime(clamp(minTime, idx * DROPDOWN_OPTION_INTERVAL, maxTime))
     }
     function generateDropdownOptions(min = 0, max = 1425) {
         const options: DropdownOption[] = []
@@ -176,104 +170,112 @@
         return options
     }
 
-    onMount(() => dropdownOptions = generateDropdownOptions())
+    onMount(() => {
+        dropdownOptions = generateDropdownOptions()
+        titleInput.initElem()
+    })
 </script>
 
-<div class="time-picker-container" on:mousedown={() => onClicked()}>
+<!-- svelte-ignore a11y-no-static-element-interactions -->
+<div 
+    style:position="relative"
+    on:mousedown={() => onClicked()}
+>
     <div
         bind:this={timePickerRef}
         role="button"
         tabindex="0"
         id={`${id}--dbtn`}
-        class="time-picker" 
+        class="time-picker"  
+        class:time-picker--dragging={isDragging}
         class:time-picker--light={isLight}
-        class:time-picker--default-width={isDragging || isInputActive}
-        class:time-picker--active-input={isInputActive}
-        class:select-none={isDragging}
-        on:mousedown={onPickerMouseDown}
+        class:time-picker--active={active || isDragging}
+        on:mousedown={(e) => {
+            onPickerMouseDown(e)
+        }}
         on:keydown={(e) => {
             if (e.code === 'Enter' || e.code === 'Space') {
-                isInputActive = true
+                active = true
                 requestAnimationFrame(() => inputElem.focus())
             }
         }}
-        use:clickOutside on:outClick={() => isInputActive = false}
+        use:clickOutside on:outClick={() => active = false}
     >
-        {#if isInputActive}
-            <input 
-                type="text"
-                name="time-picker-input" 
-                id="time-picker"
-                aria-label="Time"
-                spellcheck="false"
-                placeholder={$titleInput.placeholder}
-                maxlength={$titleInput.maxLength}
-                bind:value={$titleInput.value}
-                bind:this={inputElem}
-                on:blur={(e) => $titleInput.onBlurHandler(e)}
-                on:input={(e) => $titleInput.onInputHandler(e)}
-            >
-        {:else}
-            <span>
-                {timeStr}
+        <div 
+            id={TIME_PICKER_ID}
+            spellcheck="false"
+            contenteditable
+            data-placeholder={titleInput.placeholder}
+            class="time-picker__input"
+            class:pointer-events-none={isDragging}
+            class:no-scroll-bar={true}
+            class:hidden={isDragging}
+            bind:this={inputElem}
+        >
+            {currentMinsStr}
+        </div>
+        {#if isDragging}
+            <span class="time-picker__input">
+                {currentMinsStr}
             </span>
         {/if}
     </div>
-    <div class="time-picker__dropdown">
-        <DropdownList 
-            id={`${id}--time-picker-dropdown`}
-            isHidden={!isInputActive} 
-            options={{
-                listItems: dropdownOptions,
-                position: { top: "-6px", right: "0px" },
-                scroll:   { bar: true, goToIdx: closestIdxOption },
-                onListItemClicked: onDropdownOptionClicked,
-                styling: { 
-                    zIndex: 100,
-                    width: "85px", height: "180px",
-                    optionWidth: "55px", fontFamily: "DM Sans"
-                }
-            }}
-        />
-    </div>
+    <DropdownList 
+        id={`${id}--time-picker-dropdown`}
+        isHidden={!active} 
+        options={{
+            listItems: dropdownOptions,
+            position: { 
+                top: "32px", left: "0px" 
+            },
+            scroll: { 
+                bar: true, goToIdx: closestIdxOption 
+            },
+            onListItemClicked: ({ idx }) => {
+                onDropdownOptionClicked(idx)
+            },
+            styling: { 
+                zIndex: 100,
+                width: "95px", 
+                height: "180px",
+                optionWidth: "55px", 
+                fontSize: "1.2rem"
+            }
+        }}
+    />
 </div>
 
 <style lang="scss">
-    $width: 70px;
-    $dropdown-width: 85px;
-
     .time-picker {
-        @include txt-color(0.04, "bg");
-        @include text-style(0.65, 300, 1.18rem, "DM Sans");
-        padding: 4px 11px 4px 11px;
-        border-radius: 10px;
-        cursor: pointer;
-        width: $width;
-        white-space: nowrap;
-        transition: 0.12s ease-in-out;
-        position: relative;
+        --bg-opacity: 0.04;
+        --hov-opacity: 0.065;
 
+        padding: 6px 12px 6.5px 11px;
+        border-radius: 8px;
+        white-space: nowrap;
+        transition: 0.25s cubic-bezier(.4,0,.2,1);
+        position: relative;
+        background-color: rgba(var(--textColor1), var(--bg-opacity));
+        
         &--light {
-            @include txt-color(0.055, "bg");
-            @include text-style(0.75, 500);
+            --hov-opacity: 0.085;
+            --bg-opacity: 0.04;
         }
-        &--default-width {
-            width: $width !important;
+        &--light &__input {
+            @include text-style(0.9);
         }
-        &--active-input {
-            @include txt-color(0.08, "bg");
+        &--active {
+            @include txt-color(0.065, "bg");
+            box-shadow: rgba(var(--textColor1), 0.1) 0px 0px 0px 2px, 
+                        rgba(var(--textColor1), 0.05) 0px 0px 0px 4px;
         }
-        &:focus-visible {
-            @include border-focus;
+
+        &--dragging div[contenteditable] {
+            pointer-events: none;
+            user-select: none;
         }
-        &:active {
-            transform: scale(0.994);
-        }
-        &::before, &::after {
-            content: "";
-            height: 100%;
-            width: 5px;
-            cursor: ew-resize;
+        &:hover {
+            @include txt-color(var(--hov-opacity), "bg");
         }
         &::before {
             @include abs-top-left;
@@ -281,22 +283,21 @@
         &::after {
             @include abs-top-right;
         }
-
-        &-container {
-            width: $width;
-            position: relative;
+        &::before, &::after {
+            content: "";
+            height: 100%;
+            width: 5px;
+            cursor: ew-resize;
         }
-        &__dropdown {
-            @include abs-top-left(32px, 0px);
-            width: $dropdown-width !important;
-        }
-        input {
-            width: 100%;
+        &__input {
+            @include text-style(0.95, var(--fw-400-500), 1.285rem);
+            cursor: text;
             overflow-x: scroll;
-            cursor: text !important;
+            max-width: 80px;
         }
         span {
-            opacity: 1;
+            pointer-events: none;
+            user-select: none;
         }
     }
 </style>

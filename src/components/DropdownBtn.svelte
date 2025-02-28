@@ -13,15 +13,21 @@
         allowEmpty = false,
         hasArrow = true,
         arrowOnHover = false,
-        noBg = false,
+        styles,
+        noBg = true
     } = options
+
+    const {
+        fontSize = "1.32rem",
+        fontFamily = "inherit"
+    } = styles ?? {}
 
     $: isLight = !$themeState.isDarkTheme
     $: title = options.title
     $: isEmpty = !title
     $: doShowArrow = hasArrow && (!allowEmpty || ((allowEmpty && !isActive) || (allowEmpty && isEmpty)))
     
-    function onRemoveBtnClicked() {
+    function onRemove() {
         if (options.onRemove) {
             options.onRemove()
         }
@@ -41,8 +47,8 @@
 >
     <span 
         class="dbtn__title"
-        style:font-size={options?.styles?.fontSize}
-        style:font-family={options?.styles?.fontFamily ?? "inherit"}
+        style:--font-size={fontSize}
+        style:--font-family={fontFamily}
     >
         {title ?? "None"}
     </span>
@@ -56,13 +62,13 @@
     {/if}
     {#if allowEmpty && isActive && !isEmpty}
         <button 
-            class="dbtn__icon dbtn__icon--close-btn"
-            on:click={onRemoveBtnClicked}
+            class="dbtn__icon dbtn__icon--close"
+            on:click={onRemove}
         >
             <SvgIcon 
                 icon={Icon.Close} 
                 options={{ 
-                    scale: 0.9, strokeWidth: 1.6, height: 12, width: 12
+                    scale: 0.96, strokeWidth: 2, height: 11, width: 11
                 }}
             />
         </button>
@@ -71,24 +77,4 @@
 
 <style lang="scss">
     @import "../scss/dropdown.scss";
-
-    .dbtn {
-        &--no-bg {
-            background-color: transparent !important;
-            background: transparent !important;
-        }
-        &__icon--close-btn {
-            transition: 0.05s ease-in-out;
-            opacity: 0.4;
-            margin-bottom: -2px;
-            @include center;
-
-            &:hover {
-                opacity: 1;
-            }
-            &:active {
-                transform: scale(0.9);
-            }
-        }
-    }
 </style>

@@ -3,10 +3,7 @@ import { EMPTY_CORES } from "./utils-routines"
 import { TOTAL_DAY_MINS } from "./utils-date"
 
 import { 
-    findAncestor, getDistBetweenTwoPoints, getElemById, 
-    getElemNumStyle, initFloatElemPos, 
-    shouldScroll, 
-    randomArrayElem, roundUpFive 
+    getDistBetweenTwoPoints, getElemById, getElemNumStyle, initFloatElemPos, shouldScroll, randomArrayElem, roundUpFive 
 } from "./utils-general"
 
 import { COLOR_SWATCHES } from "$lib/utils-colors"
@@ -41,7 +38,6 @@ export class RoutinesManager {
     editingBlockTotalTime     = -1
     editingBlockInitStartTime = -1
     
-    // isDragging: Writable<boolean> = writable(false)
     initDragLiftOffsets: OffsetPoint = { left: -1, top: -1 }
     dragStartPoint:      OffsetPoint = { left: -1, top: -1 }
     allowLiftEdit     = false
@@ -97,11 +93,8 @@ export class RoutinesManager {
 
     /**
      * Process an array of raw routine blocks and extract contextual data.
-     * 
-     * @param routine   Routine blocks.
-     * @returns         Core and tag breakdowns, block elems, and earliest block.
      */
-    processRoutineBlocks(routine: RoutineBlock[] | DailyRoutine) {
+    processBlocks(routine: RoutineBlock[] | DailyRoutine) {
         let coreBreakdown = structuredClone(EMPTY_CORES)
         let tagBreakdown: RoutineTags[] = []
         let blockElems = []
@@ -139,13 +132,8 @@ export class RoutinesManager {
 
     /**
      * Given a raw routine block, create an object that represents how it would get displayed in the DOM.
-     * Add offset values, height, elem idex.
-     * All the blocks seen on the calendar / time box are of this type.
-     * 
-     * @param block Raw block data.
-     * @returns     New day block elem from raw block data.
      */
-    static createRoutineBlockElem(block: RoutineBlock, containerElemHt: number): RoutineBlockElem {
+    static createRoutineBlockElem(block: RoutineBlock, containerElemHt: number) {
         const containerHt = containerElemHt
         const elapsedTimeMins = block.endTime - block.startTime
 
@@ -160,8 +148,7 @@ export class RoutinesManager {
         }
     }
 
-
-    /* Breakdown Data */
+    /* breakdown */
 
     /**
      * Given a block, update the running tag data of a routine.
@@ -271,11 +258,10 @@ export class RoutinesManager {
             cores.awake.avgTime   = -1
             cores.awake.total     = -1
         }
-
         return cores
     }
 
-    /* Updates */
+    /* updates */
 
     /**
      * Update breakdown data after a routine has changed.
@@ -332,7 +318,7 @@ export class RoutinesManager {
         this.editDayRoutineElems.update((blocks) =>blocks!.filter((block) => block.id !== id))
     }
 
-    /* Routine Edits */
+    /* routine edits */
 
     openEditBlockModal() {
         this.editContext.set("details")
@@ -382,11 +368,9 @@ export class RoutinesManager {
         })
 
         this.editDayRoutineElems.set(blocks)
-
-        console.log(get(this.editDayRoutineElems))
     }
 
-    /* Block Edits */
+    /* block edits */
 
     /**
      * Change the color of the current edit block.
@@ -408,14 +392,14 @@ export class RoutinesManager {
         this.updateBreakdownData()
     }
 
-    /* Blocks Container | Block Event Handlers  */
+    /* blocks container | block event handlers */
 
     /**
      * Pointer event handler for when cursor moves in container that holds all the blocks.
      * 
      * @param  event Pointer Event
      */
-    onBlocksContainerPointerMove = (event: PointerEvent) => {
+    onPointerMove = (event: PointerEvent) => {
         if (!this.blocksContainerRef) return
 
         const blocksRect = this.blocksContainerRef.getBoundingClientRect()
@@ -439,10 +423,7 @@ export class RoutinesManager {
      */
     isBlockPointerDownOnEdge(event: PointerEvent) {
         const target = event.target as HTMLElement
-        const block = findAncestor({ 
-            queryStr: "routine-blocks__block", queryBy: "class",
-            child: target, strict: true
-        })
+        const block = target.closest(".routine-block")
 
         const { top, bottom } = block!.getBoundingClientRect()
         const edgeThreshold = RoutinesManager.BLOCK_EDGE_THRESHOLD
@@ -453,7 +434,7 @@ export class RoutinesManager {
         return { isOnTopEdge, isOnBottomEdge }
     }
     
-    /* Lift Block Edit */
+    /* lift block edit */
 
     /**
      * Initialize editing state for a lift edit.
@@ -529,19 +510,15 @@ export class RoutinesManager {
     /**
      * Get the startime, endtime, height, and yOffset for a block in column of blocks such that they do not overlap with other blocks after lifting block.
      * Null if there is no space for the block.
-     * 
-     * @param times  Start time, end time, and total block time of the move location.
-     * @param id     The id of the block lift, if none is provided, will use the edit block by default. 
-     * 
-     * @returns      Start time, yOffset, end time, height of block after lift edit.
-     *               Returns null if there are no possible safe positions.
      */
-    getPropsAfterLift(times: { startTime: number, endTime: number, blockTotalTime: number }) {
-        const blockElems = get(this.editDayRoutineElems)!
+    getPropsAfterLift(times: { 
+        startTime: number, endTime: number, blockTotalTime: number 
+    }) {
+        const blocks = get(this.editDayRoutineElems)!
         const isDupEdit = get(this.editContext) === "duplicate"
 
-        let startTime = this.getStartTimeFromDragLiftEdit({ 
-            blocks: get(this.editDayRoutineElems)!,
+        let startTime = this.getStartTimeFroLift({ 
+            blocks,
             editId: isDupEdit ? "" : get(this.editingBlock)!.id,
             newStartTime: times.startTime,
             newEndTime: times.endTime,
@@ -552,9 +529,16 @@ export class RoutinesManager {
         // if no availalbe space, startTime will be @ 1440
         if (startTime === 1440) return null
 
-        // find closest nbrs
-        this.editBlockBottomNbr = this.findBlockClosestBottomNbr(blockElems, startTime, _endTime)
-        this.editBlockTopNbr    = this.findBlockClosestTopNbr(blockElems, startTime, _endTime)
+        this.editBlockBottomNbr = this.findBlockClosestBottomNbr({
+            blocks,
+            blockStartTime: startTime,
+            blockEndTime: _endTime
+        })
+        this.editBlockTopNbr = this.findBlockClosestTopNbr({
+            blocks,
+            blockStartTime: startTime,
+            blockEndTime: _endTime
+        })
         
         // they have to be touching
         this.editBlockBottomNbr = this.editBlockBottomNbr?.startTime === _endTime ? this.editBlockBottomNbr : null
@@ -574,7 +558,7 @@ export class RoutinesManager {
      * 
      * @returns          New start time, following life edit.
      */
-    getStartTimeFromDragLiftEdit(context: {
+    getStartTimeFroLift(context: {
         blocks: RoutineBlockElem[],
         editId: string
         newStartTime: number,
@@ -597,7 +581,7 @@ export class RoutinesManager {
         return this.findNearestClosestTimeOpening(context)
     }
 
-    /* Stretch Edit Functionality  */
+    /* stretch edit functionality */
 
     /**
      * Initialize a strech edit state
@@ -609,31 +593,34 @@ export class RoutinesManager {
 
         if (isEditingExisting) {
             this.editContext.set("old-stretch")
-
-            // set by block pointer down handler
             isDraggingByTail = !this.isDragLiftFromHead
         }
         else {
             this.editContext.set("new-stretch")
-
-            // calculated from where user first touched the board to where user is now as a strech state is initialized
             isDraggingByTail = this.cursorPos.top > this.dragStartPoint.top
         }
 
         const pivotTime = isDraggingByTail ? block.startTime : block.endTime
+        const blocks = get(this.editDayRoutineElems)!
 
         this.stretchPivotPointTopOffset = this.getTopOffsetFromTime(pivotTime)
         this.stretchPivotTime = pivotTime
 
         // find closest nbrs
-        this.editBlockTopNbr = this.findBlockClosestTopNbr(get(this.editDayRoutineElems)!, block.startTime, block.endTime)
-        this.editBlockBottomNbr = this.findBlockClosestBottomNbr(get(this.editDayRoutineElems)!, block.startTime, block.endTime)
+        this.editBlockTopNbr = this.findBlockClosestTopNbr({
+            blocks,
+            blockStartTime: block.startTime,
+            blockEndTime: block.endTime
+        })
+        this.editBlockBottomNbr = this.findBlockClosestBottomNbr({
+            blocks,
+            blockStartTime: block.startTime,
+            blockEndTime: block.endTime
+        })
     }
 
     /**
      * When a drag has been initiated, attempt to make a block if the right conditions are met.
-     * 
-     * @returns  Edit block from the edit. Will be null if too small or overlapping.
      */
     createBlockFromStretchEdit(): RoutineEditBlock | null {
         const stretchPivotTime     = this.getTimeAndOffsetFromTopPos(this.stretchPivotPointTopOffset, false).time
@@ -648,17 +635,18 @@ export class RoutinesManager {
 
         const elapsedTime = endTime - startTime
         const blocks      = get(this.editDayRoutineElems)!
-
-        if (elapsedTime < RoutinesManager.MIN_BLOCK_DURATION_MINS || this.getOverlappingBlock({
+        const overlapping = this.getOverlappingBlock({
             blocks, startTime, endTime
-        })) {
+        })
+
+        if (elapsedTime < RoutinesManager.MIN_BLOCK_DURATION_MINS || overlapping) {
             return null
         }
 
         // create valid block
         return {
             id: blocks.length + "",
-            title: "Untitled Block",
+            title: "Untitled",
             color: randomArrayElem(COLOR_SWATCHES),
             startTime, 
             endTime,
@@ -672,23 +660,23 @@ export class RoutinesManager {
     }
 
     /**
-     * When stretch editing a block, get the start and end times from the positioning of the gesture.
+     * Calculates the start and end times for a block being stretched based on the user's drag gesture.
      * 
-     * @param gestureContext  Contextual data pertaining to user drag gesture.
-     *                 - pivotPointOffset:  Top offset position where if user crosses with a drag, start and end time will switch.
-     *                 - topOffset:         Current cursor top offset position.
-     *                 - stretchPivotTime:  Calculated time from pivotPointOffset
-     *                 - isDraggingByTail:  Is user dragging block by the bottom part.
+     * @param gestureContext - Object containing:
+     *   pivotPointOffset - Y position where start/end times switch if cursor crosses it
+     *   topOffset - Current Y position of cursor 
+     *   stretchPivotTime - Time value calculated from pivot point position
+     *   isDraggingByTail - Whether dragging from bottom (true) or top (false) of block
      * 
-     * @returns  Calculated start and end times from gesture context.
      */
-    getTimesFromStretch(gestureContext: {
+    getTimesFromStretch({
+        pivotPointOffset, 
+        topOffset, 
+        stretchPivotTime, 
+        isDraggingByTail
+    }: {
         pivotPointOffset: number, topOffset: number, stretchPivotTime: number, isDraggingByTail: boolean
     }) {
-
-        const {
-            pivotPointOffset, topOffset, stretchPivotTime, isDraggingByTail
-        } = gestureContext
 
         const containerHt    = this.containerElemHt
         const yOffsetMins    = Math.floor((topOffset / containerHt) * TOTAL_DAY_MINS)
@@ -713,10 +701,7 @@ export class RoutinesManager {
     }
 
     /**
-     * Handler for when user changes the start / end time when streching an element.
-     * Used when editing existing or making new blocks.
-     * 
-     * @param e   Pointer Event
+     * Handler for when stretching a block.
      */
     onBlockStretchMove = (e: Event) => {
         e.preventDefault()
@@ -725,7 +710,7 @@ export class RoutinesManager {
         if (!this.allowStrechEdit) { 
             const threshold = RoutinesManager.STRETCH_DRAG_DISTANCE_THRESHOLD
 
-            if (this.isHozDragWithinStretchThreshold(threshold)) {
+            if (this.isHozDragValid(threshold)) {
                 this.initDragStretchEdit(this.blockOnPointerDown! , true)
                 this.allowStrechEdit = true
             }
@@ -733,7 +718,6 @@ export class RoutinesManager {
         if (!this.allowStrechEdit) {
             return
         }
-
         if (!this.editTargetElem) {
             this.editTargetElem = e.target as HTMLElement
             this.editTargetElem.style.cursor = "ns-resize"
@@ -749,18 +733,15 @@ export class RoutinesManager {
         startTime = Math.max(roundUpFive(startTime), 0)
         endTime   = Math.max(roundUpFive(endTime), 0)
         
-        const { height, yOffset, endTime: _endTime, startTime: _startTime }  = this.getEditBlockSafeProps(startTime, endTime)
-        endTime = _endTime
-        startTime = _startTime
+        const safeProps = this.getEditBlockSafeProps(startTime, endTime)
+        endTime = safeProps.endTime
+        startTime = safeProps.startTime
 
-        if (endTime - startTime < RoutinesManager.MIN_BLOCK_DURATION_MINS) return null
-
-        const updatedProps = {
-            startTime, endTime,
-            height, yOffset
+        if (endTime - startTime < RoutinesManager.MIN_BLOCK_DURATION_MINS) {
+            return null
         }
 
-        this.editingBlock.update((block) => ({ ...block!, ...updatedProps }))
+        this.editingBlock.update((block) => ({ ...block!, ...safeProps }))
     }
 
     /**
@@ -797,7 +778,7 @@ export class RoutinesManager {
         this.stretchPivotTime = -1
     }
 
-    /* Context Menu Stuff */
+    /* context menu */
 
     openContextMenu() {
         const containerWidth = this.containerElem!.clientWidth
@@ -808,7 +789,6 @@ export class RoutinesManager {
             top: this.cursorPos.top - scrollTop - 5,
             left: this.cursorPos.left - 20
         }
-
         const { top, left } = initFloatElemPos({
             dims: { height: 160, width: 150 }, 
             cursorPos, 
@@ -849,7 +829,7 @@ export class RoutinesManager {
         }
     }
 
-    /* Edit Helpers */
+    /* edit helpers*/
 
     getTopOffsetFromTime(time: number) {
         return ((time / TOTAL_DAY_MINS) * this.containerElemHt)
@@ -911,7 +891,7 @@ export class RoutinesManager {
         return { height, yOffset, endTime, startTime }
     }
 
-    /* Block Helpers  */
+    /* block helpers  */
 
     /**
      * @param blocks          Collection of routine elements in question.
@@ -920,7 +900,12 @@ export class RoutinesManager {
      * 
      * @returns               Block's closest bottom nbr
      */
-    findBlockClosestBottomNbr(blocks: RoutineBlock[] | RoutineBlockElem[], blockStartTime: number, blockEndTime: number): RoutineBlockElem | null {
+    findBlockClosestBottomNbr({ blocks, blockStartTime, blockEndTime }: {
+        blocks: RoutineBlock[] | RoutineBlockElem[],
+        blockStartTime: number,
+        blockEndTime: number
+    }): RoutineBlockElem | null {
+
         let closestStartTime = 1441
         let closestBottomNbr = null
 
@@ -941,7 +926,11 @@ export class RoutinesManager {
      * 
      * @returns               Block's closest bottom nbr
      */
-    findBlockClosestTopNbr(blocks: RoutineBlock[] | RoutineBlockElem[], blockStartTime: number, blockEndTime: number): RoutineBlockElem | null {
+    findBlockClosestTopNbr({ blocks, blockStartTime, blockEndTime }: { 
+        blocks: RoutineBlock[] | RoutineBlockElem[], 
+        blockStartTime: number, 
+        blockEndTime: number 
+    }): RoutineBlockElem | null {
         let closestEndTime = -1
         let closestTopNbr = null
 
@@ -953,29 +942,6 @@ export class RoutinesManager {
         })
 
         return closestTopNbr
-    }
-
-    /**
-     * Find the order of the block within a list of routine blocks given its start time
-     * @param startTime   - Block start time to be searched or inserted.
-     * @param blocks      - List of routine blocks to be searched through.
-     * @param doesExist   - If the block already exists in the list
-     * 
-     * @returns             The order index of the block if found, -1 otherwise
-     */
-    getBlockOrderFromStartTime(startTime: number, blocks: RoutineBlock[] | RoutineBlockElem[], doesExist = true) {
-        let orderIdx = 0
-
-        for (let i = 0; i < blocks.length; i++) {
-            const blockStartTime = blocks[i].startTime
-            const foundOrder = doesExist ? blockStartTime === startTime : startTime < blockStartTime 
-
-            if (foundOrder) return orderIdx
-
-            orderIdx++
-        }
-
-        return -1
     }
 
    /**
@@ -990,15 +956,19 @@ export class RoutinesManager {
      * 
      * @returns          The overlapping block, null otherwise
      */
-    getOverlappingBlock(options: {
+    getOverlappingBlock({
+        blocks,
+        startTime,
+        endTime,
+        excludeId,
+        excludeDayCompare = false
+    }: {
         blocks: RoutineBlockElem[], 
         startTime: number, 
         endTime: number, 
         excludeId?: string,
         excludeDayCompare?: boolean
-    }) { 
-        const { blocks, startTime, endTime, excludeId, excludeDayCompare  = false }= options
-
+    }) {
         const overlappingInterval = blocks.find((block) => {
             // if lifting to a day col to another day col with both cols sharing the same linked routine, the block can overlap itself
             if (excludeDayCompare && excludeId && this.samePosSameRoutine(block.id, excludeId!)) {
@@ -1029,7 +999,7 @@ export class RoutinesManager {
         return get(this.editDayRoutineElems)!.find((block) => block.id === id)
     }
 
-    /* Routine Helpers  */
+    /* routine helpers  */
 
     doesRoutineHaveSetFirstDay(routine: RoutineBlock[] | RoutineBlockElem[]) {
         return routine.findIndex((routine) => routine.order === "first")
@@ -1187,7 +1157,7 @@ export class RoutinesManager {
         }
     }
 
-    /* DOM Helpers */
+    /* dom helpers */
 
     findDupBtnPlacement() {
         const editBlockRef = getElemById("edit-block")
@@ -1236,7 +1206,7 @@ export class RoutinesManager {
     * 
     * @returns  True if the drag distance is within the stretch edit threshold, otherwise false.
     */
-    isHozDragWithinStretchThreshold(threshold: number) {
+    isHozDragValid(threshold: number) {
         const dragDistance = Math.abs(this.cursorPos.top - this.dragStartPoint.top)
 
         return dragDistance >= threshold
@@ -1247,7 +1217,7 @@ export class RoutinesManager {
     * 
     * @returns  True if the drag distance is within the stretch edit threshold, otherwise false.
     */
-    isAbsDragWithinStretchThreshold(threshold: number) {
+    isDragStretchValid(threshold: number) {
         const dragDistance = getDistBetweenTwoPoints(this.cursorPos, this.dragStartPoint)
 
         return dragDistance >= threshold
@@ -1288,12 +1258,11 @@ export class RoutinesManager {
      * 
      * @param editBlock         Block being edited
      * @param isDraggingByTail  Is user stretching from the bottom edge of the block
-     * 
-     * @returns                 The pivot point y-offset location. 
      */
     getDragPivotPointTopOffset(height: number, cursorTop: number,  isDraggingByTail: boolean) {
         return isDraggingByTail ? cursorTop - height : cursorTop + height
     }
+
 
     toggleAutoScroll(allow: boolean) {
         this.allowAutoScroll = allow

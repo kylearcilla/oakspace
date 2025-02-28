@@ -333,7 +333,7 @@ type RangeInputOptions = {
     thumbSize?: number
 }
 
-type ConfirmType = "default" | "delete"
+type ConfirmType = "default" | "dele  ]te"
 
 type ConfirmOptions = {
     type?: ConfirmType
@@ -342,7 +342,14 @@ type ConfirmOptions = {
     caption?: string
 }
 
-type DropdownListItem = DropdownOptionSection | DropdownOption
+type DropdownToggleOption = {
+    name: string
+    active: boolean
+    divider?: boolean
+    onToggle: () => void
+}
+
+type DropdownListItem = DropdownOptionSection | DropdownOption | DropdownToggleOption
 
 type DropdownItemClickedContext = {
     event: Event, 
@@ -403,7 +410,7 @@ type Color = {
 type ColorPicker = {
     isOpen: boolean
     position: OffsetPoint
-    onSubmit: ((color: Color | null) => void) | null
+    onSubmitColor: (color: Color | null) => void
     picked: Color | null
 }
 
@@ -420,6 +427,8 @@ type RoutineBlock = {
     activity: RoutineActvity | null
     tasks: Task[]
     done?: boolean
+    allowDescription?: boolean 
+    allowTasks?: boolean
 }
 
 type RoutineBlockElem = {
@@ -781,7 +790,6 @@ interface Task {
 /* task list */
 type TasksListOptions = {
     id: string
-    tasks: Tasks
     hotkeyFocus: HotkeyContext
     type?: "side-bar" | "default"
     rootRef: HTMLElement
@@ -813,7 +821,7 @@ type TasksListOptions = {
         fontSize?: CSSTextSize
         menuWidth?: CSSUnitVal
         maxHeight?: CSSUnitVal
-        padding?: CSSPxVal
+        padding?: CSSMultiDimPxVal
         borderRadius?: CSSPxVal
         sidePadding?: CSSUnitVal
         hasTaskDivider?: boolean

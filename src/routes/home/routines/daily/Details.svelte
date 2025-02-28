@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte'
-
 	import { Icon } from '$lib/enums';
 	import { themeState } from '$lib/store'
 	import { toast } from '$lib/utils-toast'
@@ -156,13 +154,6 @@
         deleteConfirm = false
         editRoutineIdx = -1
     }
-
-    function initRoutine() {
-        editRoutineIdx = 2
-        manager.initEditRoutine(dailyRoutines[editRoutineIdx])
-    }
-    
-    onMount(() => requestAnimationFrame(() => initRoutine()))
 </script>
 
 <div class="details">
@@ -327,6 +318,8 @@
                             isActive={routinesOpen}
                             options={{
                                 title: "Routines",
+                                arrowOnHover: true,
+                                noBg: true,
                                 onClick: () => { 
                                     routinesOpen = !routinesOpen
                                 },
@@ -413,7 +406,6 @@
             </div>
         </div>
     {/if}
-
     <div class="details__divider"></div>
 </div>
 

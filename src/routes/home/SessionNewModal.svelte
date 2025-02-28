@@ -375,7 +375,7 @@
         }
 
         &__btns {
-            margin-top: 40px;
+            margin-top: 70px;
             @include flex(center);
 
             button {

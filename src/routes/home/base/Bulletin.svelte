@@ -155,6 +155,7 @@
             id="base--dmenu"
             class="base__dmenu dmenu" 
             class:dmenu--light={isLight}
+            style:--font-size="1.32rem"
             style:width={"180px"}
             use:clickOutside on:outClick={() => hasContextMenu = false}
         >

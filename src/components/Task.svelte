@@ -20,7 +20,7 @@
 
     let leftSideWidth = 0
     let isOpen = false
-    let subtasks = []
+    let subtasks: Task[] = []
     let checkedSubtasks = 0
     let doCheck = false
     let type = settings.type
@@ -65,11 +65,10 @@
     data-idx={task.idx}
     class="task"
     class:task--light={!isDark}
-    class:task--side-menu={type === "side-menu"}
+    class:task--hover={dragTarget?.id === task.id && dragAction === "child-add"}
 
     class:drop-top-border={dragTarget?.id === task.id && dragAction === "nbr-add-top"}
     class:drop-bottom-border={dragTarget?.id === task.id && dragAction === "nbr-add-bottom"}
-    class:task--hover={dragTarget?.id === task.id && dragAction === "child-add"}
 
     style:--max-title-lines={isOpen || (isEdit && editMode === "title") ? 0 : settings.maxTitleLines}
     style:--max-descr-lines={isOpen || (isEdit && editMode === "description") ? 0 : settings.maxDescrLines}
@@ -103,7 +102,7 @@
                 bind:clientWidth={leftSideWidth}
                 class="task__left"
             >
-                <div style:margin={level === 0 && type === "side-menu" ? "0px 0px 0px 2px" : ""}>
+                <div>
                     {#if settings.numbered}
                         <div class="task__number">
                             {task.idx + 1}.
@@ -149,8 +148,8 @@
                 </button>
             </div>
             <div class="task__right">
-                <!-- Title -->
                 <div class="task__title-container">
+                    <!-- svelte-ignore a11y-no-static-element-interactions -->
                     <div 
                         id={`${idPrefix}--task-title-id--${task.id}`}
                         class="task__title"
@@ -172,11 +171,11 @@
                         {subtasks.length}
                     </div>
                 </div>
-                <!-- Description -->
                 <div 
                     class="task__description-container"
                     class:hidden={!task.description && !(isEdit && editMode === "description")}
                 >
+                    <!-- svelte-ignore a11y-no-static-element-interactions -->
                     <div 
                         id={`${idPrefix}--task-description-id--${task.id}`}
                         class="task__description"
@@ -191,7 +190,6 @@
                     </div>
                 </div>
             </div>
-            <!-- Divider -->
             {#if task.idx != 0 && ui.hasTaskDivider}
                 <div class="divider"></div>
             {/if}

@@ -77,7 +77,7 @@
         viewOptionOpen = !viewOptionOpen
     }
     function closeDayBreakdown() {
-        manager.initDayRoutineBreakdown(null)
+        manager.setDayBreakdown(null)
         breakdownColIdx = -1
     }
     function setBreakdownForDay(dayIdx: number | null) {
@@ -89,7 +89,7 @@
         else if (dayIdx != null) {
             breakdownColIdx = dayIdx
             breakdownOpen = true
-            manager.initDayRoutineBreakdown(dayIdx)
+            manager.setDayBreakdown(dayIdx)
         }
     }
     function setBreakdownView(view: string) {
@@ -157,7 +157,7 @@
             confirmOptions = null
             breakdownOpen = false
             dailyRoutinesOpen = false
-            manager.initDayRoutineBreakdown(null)
+            manager.setDayBreakdown(null)
         }
 
         const isEmpty = dayBreakdown!.blocksLength
@@ -205,7 +205,7 @@
             confirmOptions = null
             breakdownOpen = false
             dailyRoutinesOpen = false
-            manager.initDayRoutineBreakdown(null)
+            manager.setDayBreakdown(null)
         }
 
         if (optnText === "Unlink routine") {
@@ -538,7 +538,7 @@
     {@const linked = !!linkedRoutine}
     <DropdownList 
         id={"daily-routines"}
-        isHidden={!dailyRoutinesOpen}
+        isHidden={!dailyRoutinesOpen || !breakdownSettings}
         options={{
             pickedItem: linkedRoutine?.name,
             onListItemClicked: onNewDayRoutine,
@@ -718,7 +718,6 @@
             @include flex(center, space-between);
             position: relative;
             width: calc(100% + 2px);
-            margin: 1px 0px 2px 0px;
         }
     }
 </style>

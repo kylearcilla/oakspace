@@ -55,12 +55,6 @@
         margin-left: 12px;
     }
 
-    /* task types */
-    &--side-menu &__top-content {
-        border-radius: 0px;
-    }
-
-    /* Checked UI */
     &__content--checked:first-child &__checkbox {
         background-color: var(--elemColor1) !important;
 
@@ -122,13 +116,11 @@
         height: 100%;
         position: relative;
     }
-    &__left-corner {
-        margin: 1px 19px 0px var(--side-padding);
-        @include center;
-    }
     &__number {
-        @include text-style(0.4, var(--fw-400-500));
-        font-size: calc(var(--title-font-size) - 1px);
+        display: inline-block;
+        margin: 1px 0px 0px var(--side-padding);
+        width: 21px;
+        @include text-style(0.4, var(--fw-400-500), calc(var(--font-size) - 0.2rem));
     }
     &__checkbox {
         @include center;

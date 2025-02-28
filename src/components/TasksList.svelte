@@ -7,7 +7,7 @@
 	import { getThemeStyling } from "$lib/utils-appearance"
 	import { TasksListManager } from "$lib/tasks-list-manager"
 
-	import Task from "../components/Task.svelte"
+	import TaskElem from "../components/Task.svelte"
 	import DropdownList from "./DropdownList.svelte"
 	import { clickOutside } from "../lib/utils-general"
 
@@ -66,6 +66,7 @@
     })
     function createNewTask() {
         if (justInit) {
+            removeCompleteFlag === undefined && (justInit = false)
             return
         }
         $manager.addNewTaskFromOutside(0)
@@ -80,8 +81,8 @@
     function onContextMenu(e: Event, taskId: string, isChild: boolean) {
         contextMenuOpen = $manager.openContextMenu(e, taskId, isChild)
     }
-    function isAtMaxDepth(taskId: string) {
-        return $manager.tasks.isAtMaxDepth(taskId)
+    function isAtMaxDepth(task: Task & { id: string } | null) {
+        return task ? $manager.tasks.isAtMaxDepth(task.id) : false
     }
 
     onMount(() => {
@@ -128,7 +129,7 @@
     >   
         {#each rootTasks as task, idx (task.id)}
             <li>
-                <Task
+                <TaskElem
                     level={0}
                     {idx}
                     {task} 
@@ -206,9 +207,8 @@
         <button 
             class="tasks-wrapper__addbtn"
             style={inlineStyling(style)}
-            on:click={() => $manager.addingNewTask(0)}
+            on:click={() => $manager.addNewTaskFromOutside()}
         >
-            <span>+</span>
             <span>
                 {text ?? "Add an Item"}
             </span>
@@ -220,7 +220,7 @@
         options={{
             listItems: [
                 ...(focusTask?.description ? [] :  [{ name: "Add Description" }]),
-                ...(!settings.subtasks || isAtMaxDepth(focusTask?.id) ? [] :  [{ 
+                ...(!settings.subtasks || isAtMaxDepth(focusTask) ? [] :  [{ 
                         name: "Add Subtask",
                         rightIcon: {
                             type: "hotkey",
@@ -275,33 +275,26 @@
         }
 
         &__addbtn {
-            margin: 4px 0px 5px calc(var(--side-padding) - 6px);
+            margin: 4px 0px 5px calc(var(--side-padding) - 2px);
             font-weight: 400;
             width: 100%;
             opacity: 0.2;
-            max-width: 100px;
-            @include text-style(1, 400);
+            @include text-style(1, var(--fw-400-500), var(--font-size));
             @include flex(center);
 
-            span {
-                white-space: nowrap;
-                font-size: var(--font-size);
-            }
-            span:first-child {
-                font-weight: 100;
-                font-size: calc(var(--font-size) + 0.85rem);
-                margin: 0px 10px -1.5px 0px;
-            }
             &:hover {
                 opacity: 0.6;
             }
+        }
+        &__plus-icon {
+            margin: 0px 5px 0px 10px;
         }
     }
 
     .tasks {
         position: relative;
-        margin: 5px 0px 0px -20px;
-        padding: 2px 0px 5px 20px;
+        margin: 0px 0px 0px -20px;
+        padding: 0px 0px 5px 20px;
 
         &--side-menu {
             padding: 0px 0px 0px 2px;

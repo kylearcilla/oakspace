@@ -2,6 +2,7 @@
     import { Icon } from "$lib/enums"
 	import { themeState } from "$lib/store"
 	import { toast } from "$lib/utils-toast"
+    import { colorPicker } from "$lib/pop-ups"
     import { TextEditorManager } from "$lib/inputs"
     import { getColorTrio } from "$lib/utils-colors"
 	import { minsFromStartToHHMM } from "$lib/utils-date"
@@ -9,17 +10,20 @@
 	import { isTargetTextEditor } from "$lib/utils-general"
 	import { CORE_OPTIONS, getCoreActivityIdx, getCoreStr } from "$lib/utils-routines"
 
-	import Modal from "../../../components/Modal.svelte"
-	import SvgIcon from "../../../components/SVGIcon.svelte"
-	import TagPicker from "../../../components/TagPicker.svelte"
-	import AsyncButton from "../../../components/AsyncButton.svelte"
-	import TasksList from "../../../components/TasksList.svelte"
-	import TimePicker from "../../../components/TimePicker.svelte"
-	import DropdownBtn from "../../../components/DropdownBtn.svelte"
-	import DropdownList from "../../../components/DropdownList.svelte"
-	import ConfirmationModal from "../../../components/ConfirmationModal.svelte"
+	import Modal from "$components/Modal.svelte"
+	import SvgIcon from "$components/SVGIcon.svelte"
+	import TagPicker from "$components/TagPicker.svelte"
+	import AsyncButton from "$components/AsyncButton.svelte"
+	import TasksList from "$components/TasksList.svelte"
+	import TimePicker from "$components/TimePicker.svelte"
+	import DropdownBtn from "$components/DropdownBtn.svelte"
+	import DropdownList from "$components/DropdownList.svelte"
+	import ConfirmationModal from "$components/ConfirmationModal.svelte"
+	import SettingsBtn from "$components/SettingsBtn.svelte";
+	import { TEST_TASKS } from "$lib/mock-data"
 
-    const { MAX_BLOCK_DESCRIPTION, MIN_BLOCK_DURATION_MINS } = RoutinesManager
+    const { MAX_BLOCK_DESCRIPTION, MIN_BLOCK_DURATION_MINS, MAX_BLOCK_TITLE } = RoutinesManager
+    const MAX_ACTION_ITEMS = 12
 
     export let routineManager: RoutinesManager
     export let block: RoutineBlockElem
@@ -27,13 +31,14 @@
     class EditError extends Error { }
 
     const DESCRIPTION_ID = "routine-block-description"
+    const TITLE_ID = "routine-block-title-input"
 
-    let settingsOpen = false, coresOpen = false
-    let colorsOpen = false, tagsOpen = false
+    let settingsOpen = false, coresOpen = false, tagsOpen = false
     
     let { 
         id, startTime, endTime, title, 
-        description, tasks, order, activity, tag
+        description, tasks, order, activity, 
+        allowDescription = true, allowTasks = true
     } = block
 
     let _blocks = routineManager.editDayRoutineElems
@@ -59,19 +64,33 @@
 
     $: isDarkTheme = $themeState.isDarkTheme
     $: blocks = $_blocks
-    $: colors = getColorTrio(block.color, !isDarkTheme)
+    $: colors = getColorTrio(block.color, true)
+    $: colorPopUp = colorPicker.state
 
     $: initOrderIdx(blocks) 
 
     new TextEditorManager({ 
         initValue: description,
-        placeholder: "no description...",
+        placeholder: "description here...",
         allowFormatting: false,
         maxLength: MAX_BLOCK_DESCRIPTION,
         id: DESCRIPTION_ID,
         handlers: {
             onInputHandler: (_, val) => {
                 description = val
+            }
+        }
+    })
+    new TextEditorManager({ 
+        initValue: title,
+        placeholder: "block title...",
+        allowFormatting: false,
+        singleLine: true,
+        maxLength: MAX_BLOCK_TITLE,
+        id: TITLE_ID,
+        handlers: {
+            onInputHandler: (_, val) => {
+                title = val
             }
         }
     })
@@ -82,27 +101,23 @@
     function onMadeChanges(updatedBlock: RoutineBlockElem | null) {
         routineManager.onConcludeModalEdit(updatedBlock)
     }
-    function onSettingsOptionsClicked(event: Event) {
-        const target = event.target as HTMLElement
-        const optionName = target.innerText
-
-        if (optionName.toLowerCase().includes("set")) {
+    function optnClicked(name: string) {
+        if (name.toLowerCase().includes("set")) {
             toggleEditMade()
         }
-        
-        if (optionName === "Unset as first block") {
+        if (name === "Unset as first block") {
             newOrderContext = null
         }
-        else if (optionName === "Unset as last block") {
+        else if (name === "Unset as last block") {
             newOrderContext = null
         }
-        else if (optionName === "Set as first block" || optionName === "Set as new first block") {
+        else if (name === "Set as first block" || name === "Set as new first block") {
             newOrderContext = "first"
         }
-        else if (optionName === "Set as last block" || optionName === "Set as new last block") {
+        else if (name === "Set as last block" || name === "Set as new last block") {
             newOrderContext = "last"
         }
-        else if (optionName === "Delete Block") {
+        else if (name === "Delete Block") {
 
         }
         settingsOpen = false
@@ -139,9 +154,10 @@
 
         toggleEditMade()
     }
-    function onColorOptionsChosen(color: Color) {
+    function onChooseColorr(color: Color | null) {
+        if (!color) return
+
         block = { ...block, color }
-        colorsOpen = false
 
         toggleEditMade()
     }
@@ -154,7 +170,6 @@
         toggleEditMade()
         updatedTasks = tasks
     }
-
     function verifyChanges() {
         if (newEndTime >= 1440 || newEndTime === 0) {
             throw new EditError("Invalid end time")
@@ -199,6 +214,8 @@
                 title, 
                 description,
                 startTime: newStartTime, 
+                allowDescription,
+                allowTasks,
                 endTime: newEndTime,
                 tasks: updatedTasks, 
                 order: newOrderContext
@@ -250,149 +267,147 @@
 
 <svelte:window on:keydown={onKeyPress} />
 
-<Modal options={{ borderRadius: "14px", overflowY: "hidden" }} onClickOutSide={onAttemptClose}>
+<Modal 
+    options={{ 
+        borderRadius: "14px", 
+        overflowY: "visible", 
+        overflowX: "visible", 
+        scaleUp: true 
+    }}
+    onClickOutSide={onAttemptClose}
+>
+    {@const order = newOrderContext}
     <div 
         class="edit-routine"
-        class:edit-routine--dark={isDarkTheme}
         class:edit-routine--light={!isDarkTheme}
     >
-        <!-- Header -->
+        <!-- header -->
         <div class="edit-routine__header">
-            <!-- Title + Color -->
-            <div class="edit-routine__header-left">
+            <div 
+                class="edit-routine__title text-editor"
+                id={TITLE_ID}
+                aria-label="Title"
+                spellcheck="false"
+                contenteditable="true"
+            >
+                {title}
+            </div>
+            <div class="flx-algn-center">
+                {#if order === "first" || order === "last"}
+                    {@const isFirst = order === "first"}
+                    <div 
+                        class="edit-routine__order-context"
+                        title={`${isFirst ? "First routine of the day." : "Last routine of the day."}`}
+                    >
+                        <SvgIcon 
+                            icon={isFirst ? Icon.Sun : Icon.Moon} 
+                            options={{
+                                height: 18, width: 18, opacity: 0.2, scale: 0.95
+                            }}
+                        />
+                    </div>
+                {/if}
                 <button 
-                    class="edit-routine__color-dbtn dbtn"
                     id="color-picker--dbtn"
-                    on:click={() => colorsOpen = !colorsOpen}
+                    class="edit-routine__color-dbtn"
+                    style:--routine-bg-color-1={colors[0]}
+                    style:--routine-bg-color-2={colors[1]}
+                    on:click={() => {
+                        colorPicker.init({
+                            onSubmitColor: (color) => onChooseColorr(color),
+                            picked: block.color
+                        })
+                    }}
                 >
                     <div 
-                        class="edit-routine__color"
-                        class:edit-routine__color--light={tag?.symbol.color.isLight}
-                        style:--routine-bg-color={colors[1]}
-                        style:--routine-border-color={colors[0]}
+                        class="edit-routine__color-arrow arrow-down"
+                        class:arrow-down--active={$colorPopUp.isOpen}
                     >
+                        <i class="fa-solid fa-sort-down"></i>
                     </div>
                 </button>
-                <div class="edit-routine__title-container">
-                    {#if newOrderContext === "first" || newOrderContext === "last"}
-                        {@const isFirst = newOrderContext === "first"}
-                        <div 
-                            class="edit-routine__order-context-icon"
-                            title={`${isFirst ? "First routine of the day." : "Last routine of the day."}`}
-                        >
-                            <SvgIcon 
-                                icon={isFirst ? Icon.Sun : Icon.Moon} 
-                                options={{
-                                    height: 16, width: 16, opacity: 0.2, scale: 0.7
-                                }}
-                            />
-                        </div>
-                    {/if}
-                    <input 
-                        type="text"
-                        id="routine-block-title-input"
-                        aria-label="Title"
-                        spellcheck="false"
-                        placeholder={"Block Title..."}
-                        autocomplete="off"
-                        maxlength={RoutinesManager.MAX_BLOCK_TITLE}
-                        bind:value={title}
-                    >
+                <SettingsBtn 
+                    id={"block-settings"}
+                    onClick={() => settingsOpen = !settingsOpen}
+                />
             </div>
-            </div>
-            <button 
-                on:click={() => settingsOpen = !settingsOpen}
-                class="edit-routine__settings-btn dbtn dbtn--settings"
-                id={"edit-routine-settings--dbtn"}
-            >
-                <SvgIcon icon={Icon.Settings} options={{ opacity: 0.6}} />
-            </button>
-            <!-- Settings Dropdown -->
             <DropdownList 
-                id={"edit-routine-settings"}
+                id={"block-settings"}
                 isHidden={!settingsOpen} 
                 options={{
                     listItems: [
-                        { 
-                            options: [
-                                ...(newOrderContext !== "last" ? [{ name: newOrderContext === "first" ? "Unset as first block" : firstBlockExists ? "Set as new first block" : "Set as first block" }] : []),
-                                ...(newOrderContext !== "first" ? [{ name: newOrderContext === "last" ? "Unset as last block" : lastBlockExists ? "Set as new last block" : "Set as last block" }] : []),
-                                // { name: "Duplicate Block" }
-                            ]
+                        ...(order !== "last" ? [{ name: order === "first" ? "Unset as First" : "Set as First" }] : []),
+                        ...(order !== "first" ? [{ name: order === "last" ? "Unset as Last" : "Set as Last", divider: true }] : []),
+                        {
+                            name: "Description",
+                            active: allowDescription,
+                            onToggle: () => {
+                                allowDescription = !allowDescription
+                                settingsOpen = false
+                            }
+                        },
+                        {
+                            name: "Action Items",
+                            active: allowTasks,
+                            divider: true,
+                            onToggle: () => {
+                                allowTasks = !allowTasks
+                                settingsOpen = false
+                            }
                         },
                         { name: "Delete Block" }
                     ],
-                    position: { top: "45px", right: "0px" },
-                    styling: { width: "160px" },
-                    onListItemClicked: (context) => onSettingsOptionsClicked(context.event),
-                    onClickOutside: () => settingsOpen = false
+                    position: { 
+                        top: "40px", right: "0px" 
+                    },
+                    styling: { 
+                        width: "150px" 
+                    },
+                    onListItemClicked: ({ name }) => {
+                        optnClicked(name)
+                    },
+                    onClickOutside: () => {
+                        settingsOpen = false
+                    }
                 }}
             />
         </div>
-        <!-- Routine Info -->
-        <div class="edit-routine__info">
-            <!-- Tag -->
+        <!-- info -->
+        <div 
+            class="edit-routine__info"
+            style:margin-bottom={allowTasks || allowDescription ? "15px" : "60px"}
+        >
             <div class="edit-routine__info-row">
                 <div class="edit-routine__info-title">
                     Tag
                 </div>
-                <div class="edit-routine__info-value">
-                    <div class="edit-routine__tag">
+                <div class="edit-routine__info-val">
+                    <div>
                         <TagPicker 
                             tag={block.tag}
-                            isActive={tagsOpen}
-                            onTagOptionClicked={(newTag) => onTagChange(newTag)}
-                            onClick={() => tagsOpen = !tagsOpen}
-                            onClickOutside={() => tagsOpen = false}
-                            styling={{ borderRadius: "12px" }}
-                        />
-                    </div>
-                </div>
-            </div>
-            <!-- Core -->
-            <div class="edit-routine__info-row">
-                <div class="edit-routine__info-title">
-                    Core
-                </div>
-                <div class="edit-routine__info-value">
-                    <div class="edit-routine__core">
-                        <DropdownBtn 
-                            id={"core-dropdown"}
-                            isActive={coresOpen}
-                            options={{
-                                allowEmpty: true,
-                                onClick: () => coresOpen = !coresOpen,
-                                onRemove:() => onRemoveCore(),
-                                title: getCoreStr(block.activity),
-                                styles: { fontSize: "1.24rem", padding: "4px 12px 4px 11px" }
-                            }} 
-                        />
-                        <DropdownList 
-                            id={"core-dropdown"}
-                            isHidden={!coresOpen} 
-                            options={{
-                                listItems: CORE_OPTIONS.map((coreKey) => ({ name: coreKey[1] })),
-                                pickedItem: pickedCoreItemIdx,
-                                position: { top: "28px", left: "0px" },
-                                styling: { width: "88px" },
-                                onListItemClicked: (context) => onCoresOptionListClicked(context.idx),
-                                onClickOutside: () => coresOpen = false
+                            onTagClicked={(newTag) => {
+                                onTagChange(newTag)
+                            }}
+                            styling={{ 
+                                borderRadius: "12px" 
                             }}
                         />
                     </div>
                 </div>
             </div>
-            <!-- Time Frame -->
             <div class="edit-routine__info-row">
                 <div class="edit-routine__info-title">
-                    Time Frame
+                    Time
                 </div>
-                <div class="edit-routine__info-value">
+                <div class="edit-routine__info-val">
                     <div class="edit-routine__time">
                         <div class="edit-routine__time-input-container">
                             <TimePicker
                                 id="start"
-                                options={{ start: newStartTime }}
+                                options={{ 
+                                    start: newStartTime,
+                                    max: newEndTime
+                                }}
                                 onSet={(time) => { 
                                     newStartTime = time
                                     toggleEditMade()
@@ -404,7 +419,10 @@
                         <div class="edit-routine__time-input-container">
                             <TimePicker 
                                 id="end"
-                                options={{ start: newEndTime }}
+                                options={{ 
+                                    start: newEndTime,
+                                    min: newStartTime
+                                }}
                                 onSet={(time) => { 
                                     newEndTime = time
                                     toggleEditMade()
@@ -415,71 +433,159 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <!-- Description -->
-        <div class="edit-routine__description">
-            <div class="edit-routine__description-header">
-                <div class="edit-routine__info-title">Description</div>
-                <div 
-                    class="input-box__count"
-                    class:input-box__count--over={descrLength > RoutinesManager.MAX_BLOCK_DESCRIPTION}
-                    class:hidden={!isDescrFocused && descrLength <= RoutinesManager.MAX_BLOCK_DESCRIPTION}
-                >
-                    <!-- This can show negative when count include decoded HTML entities -->
-                    {RoutinesManager.MAX_BLOCK_DESCRIPTION - descrLength}
+            <div class="edit-routine__info-row">
+                <div class="edit-routine__info-title">
+                    Core
                 </div>
+                <div style:position="relative">
+                    <div class="edit-routine__core">
+                        <DropdownBtn 
+                            id={"core-dropdown"}
+                            isActive={coresOpen}
+                            options={{
+                                allowEmpty: true,
+                                noBg: false,
+                                title: getCoreStr(block.activity),
+                                onClick: () => {
+                                    coresOpen = !coresOpen
+                                },
+                                onRemove:() => {
+                                    onRemoveCore()
+                                },
+                                styles: { 
+                                    fontSize: "1.285rem", 
+                                    padding: "6px 10px 6.5px 10px" 
+                                }
+                            }} 
+                        />
+                        <DropdownList 
+                            id={"core-dropdown"}
+                            isHidden={!coresOpen} 
+                            options={{
+                                listItems: CORE_OPTIONS.map((coreKey) => ({ name: coreKey[1] })),
+                                pickedItem: pickedCoreItemIdx,
+                                position: { 
+                                    top: "28px", left: "0px" 
+                                },
+                                styling: { 
+                                    width: "88px" 
+                                },
+                                onListItemClicked: ({ idx }) => {
+                                    onCoresOptionListClicked(idx)
+                                },
+                                onClickOutside: () => {
+                                    coresOpen = false
+                                }
+                            }}
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- description -->
+        <div 
+            class:hidden={!allowDescription}
+            style:padding="5px 20px 0px 20px" 
+        >
+            <div 
+                class="edit-routine__info-title"
+                style:margin-bottom="2px"
+            >
+                    Description
             </div>
             <div 
                 id={DESCRIPTION_ID}
-                class="text-editor"
+                class="edit-routine__description text-editor"
+                class:edit-routine__description--no-tasks={!allowTasks}
                 aria-label="Description"
                 contenteditable
                 spellcheck="false"
             />
         </div>
-        <!-- List -->
-        <div class="edit-routine__list">
+
+        <!-- action items -->
+        <div class:hidden={!allowTasks}>
             <div class="edit-routine__list-header">
-                <div class="edit-routine__info-title-container">
-                    <div class="edit-routine__info-title">Action Items</div>
+                <div 
+                    class="edit-routine__info-title" 
+                    style:width="auto"
+                    style:margin-bottom="-4px"
+                >
+                    Action Items
                 </div>
-                <span class="edit-routine__list-count">
-                    {updatedTasks.length}
-                </span>
+                <div class="flx-algn-center">
+                    <span class="edit-routine__list-count">
+                        {tasks.filter((task) => task.parentId === null).length}
+                    </span>
+                    <button 
+                        class="edit-routine__add-btn"
+                        on:click={() => newTaskFlag = !newTaskFlag}
+                    >
+                        <SvgIcon 
+                            icon={Icon.Add} 
+                            options={{ scale: 1, strokeWidth: 1.8, opacity: 0.7 }}
+                        />
+                    </button>
+                </div>
             </div>
-            <div class="edit-routine__list-container" bind:this={routineListRef}>
-                <TasksList
-                    {tasks}
-                    {newTaskFlag}
-                    {onTaskChange}
-                    options={{
-                        id: "edit-routine",
-                        type: "side-menu",
-                        settings: {
-                            maxDepth: 3
-                        },
-                        ui: { 
-                            hasTaskDivider: true,
-                            maxHeight: "280px"
-                        },
-                        containerRef: routineListRef
-                    }}
-                />
+            <div 
+                class="edit-routine__list" 
+                class:edit-routine__list--empty={tasks.length === 0}
+                bind:this={routineListRef}
+            >
+                {#if routineListRef}
+                    <TasksList
+                        {newTaskFlag}
+                        tasks={TEST_TASKS}
+                        onTaskChange={(_tasks) => tasks = _tasks}
+                        options={{
+                            id: "action-items",
+                            hotkeyFocus: "default",
+                            settings: {
+                                checkSubtasks: false,
+                                allowDuplicate: false,
+                                removeOnComplete: false,
+                                numbered: true,
+                                max: MAX_ACTION_ITEMS,
+                                maxDepth: 2
+                            },
+                            ui: { 
+                                sidePadding: "20px",
+                                fontSize: "1.4rem",
+                                padding: "9px 0px 7px 0px",
+                                hasTaskDivider: true
+                            },
+                            rootRef: routineListRef
+                        }}
+                    />
+                {/if}
+                {#if tasks.length === 0}
+                    <div class="edit-routine__list-empty">
+                        0 action items
+                    </div>
+                {/if}
             </div>
         </div>
-        <!-- Buttons -->
+
         <div class="edit-routine__btns">
             <button 
+                class="edit-routine__cancel-btn"
+                disabled={isSaving}
                 on:click={onAttemptClose}
-                class="edit-routine__cancel-btn" disabled={isSaving}
             >
                 Cancel
             </button>
-            <AsyncButton 
-                styling={{ height: "35px", borderRadius: "13px" }}
-                disabled={RoutinesManager.MAX_BLOCK_DESCRIPTION - descrLength < 0}
-                isLoading={isSaving}
+            <AsyncButton
+                disabled={title === ""}
+                isLoading={isSaving} 
                 actionFunc={saveChanges} 
+                styling={{
+                    width: "calc(100% - (35% + 8px))",
+                    borderRadius: "9px",
+                    fontSize: "1.4rem",
+                    padding: "11px 25px",
+                    height: "18.5px"
+                }}
             />
         </div>
     </div>
@@ -502,135 +608,76 @@
 
     .edit-routine {
         height: auto;
-        width: clamp(420px, 60vw, 450px);
+        width: 480px;
         padding: 0px;
         position: relative;
 
+        --color-border-opacity: 0.65;
+        --cancel-btn-opacity: 0.025;
+        
+        &--light {
+            --color-border-opacity: 0.1;
+            --cancel-btn-opacity: 0.065;
+        }
         &--light &__info-title {
-            @include text-style(0.9, 600);
+            @include text-style(0.5);
         }
-        &--light &__title-container input {
-            @include text-style(1, 500);
-        }
-        &--light &__description-text-editor {
-            @include text-style(0.72, 500);
-        }
-        &--light &__info-icon {
-            @include text-style(0.38, 400);
-        }
-        &--light &__cancel-btn {
-            @include txt-color(0.08, "bg");
-            @include text-style(1, 500);
-        }
-        &--light &__list-count {
-            @include text-style(0.44, 600);
-        }
-        &--light &__time span {
-            opacity: 0.4;
-            @include text-style(1, 600);
-        }
-        &--light div[contenteditable]:empty:before {
-            opacity: 0.4;
-        }
-        &--light .input-box {
-            @include input-box--light;
-        }
-         
-        .input-box {
-            &__count {
-                font-size: 1.14rem;
-            }
-        }
-
-        /* Header */
+        
         &__header {
             @include flex(center, space-between);
-            margin: 0px 0px 1px -7px;
+            margin: 0px 0px 0px -6px;
             position: relative;
             width: 100%;
             padding: 6px 14px 0px 20px;
             height: 40px;
-
-            &-left {
-                @include flex(center);
-            width: 100%;
-                position: relative;
-            }
-        }
-        /* Color */
-        &__color {
-            background-color: rgba(var(--routine-bg-color));
-            border: 1.5px solid rgba(var(--routine-border-color), 0.2);
-            @include circle(9px);
-            cursor: pointer;
         }
         &__color-dbtn {
+            background-color: rgba(var(--routine-bg-color-2));
+            border: 2.5px solid rgba(var(--routine-bg-color-1), var(--color-border-opacity));
+            @include square(16px, 9px);
             @include center;
-            padding: 8px;
-            margin-right: 6px;
-            
-            &:hover {
-                @include txt-color(0.1, "bg");
-                transition: 0.01s ease-in-out;
-            }
-            &:active {
-                @include txt-color(0.1, "bg");
-                transform: scale(0.97);
+            cursor: pointer;
+            margin-right: 8px;
+
+            &:focus {
+                @include border-focus;
             }
         }
-        /* Title */
-        &__title-container {
-            width: 100%;
+        &__color-arrow {
+            @include center;
+
+            i {
+                margin-top: -3px;
+                color: rgb(var(--routine-bg-color-1));
+            }
+        }
+        &__title {
+            width: fit-content;
+            margin-left: 7px;
             @include flex(center);
+            @include text-style(1, _, 1.55rem);
         }
-        &__title-container input {
-            @include text-style(1, 400, 1.55rem);
-            width: calc(100% - 20px);
-            position: relative;
-            
-            &::placeholder {
-                @include text-style(0.2);
-            }
-            &:active {
-                transition: 0.4s ease-in-out;
-                transform: scale(0.99);
-            }
+        &__order-context {
+            margin: 0px 8px 0px -5px;
         }
-        &__order-context-icon {
-            margin: 0px 5px 0px -5px;
-        }
-        /* Dropdowns */
         &__settings-dropdown {
             @include abs-top-right(28px);
         }
         &__color-dropdown {
             @include abs-top-left(28px);
         }
-
-        /* Info */
         &__info {
-            height: 98px;
-            padding: 0px 20px 0px 20px;
+            margin: 5.5px 20px 15px 20px;
         }
         &__info-row {
-            margin-bottom: 9px;
-            height: 20px;
+            margin-bottom: 12px;
+            height: 22px;
             @include flex(center);
-
-            &:last-child {
-                margin-top: 1px;
-            }
         }
         &__info-title {
-            @include text-style(0.35, 400, 1.24rem);
-            width: 110px;
-
-            &-container {
-                @include flex(center);
-            }
-            &:last-child {
-                width: auto;
-            }
+            @include text-style(0.35, var(--fw-400-500), 1.4rem);
+            width: 55px;
+            margin-bottom: 3px;
         }
         &__info-icon {
             @include text-style(0.3, 400, 1.24rem);
@@ -639,76 +686,78 @@
         &__info-value {
             position: relative;
         }
-        &__tag {
-        }
-        &__core {
-            @include text-style(0.65, 400, 1.33rem);
-            position: relative;
-        }
         &__time {
             @include flex(center);
+
             span {
-                margin: 0px 10px;
-                opacity: 0.4;
+                margin: 0px 8px;
+                @include text-style(0.35, var(--fw-400-500), 1.15rem, "Geist Mono");
             }
         }
-        &__time-input-container {
-        }
-        &__time-from {
-        }
-        &__time-to {
-
-        }
         &__description {
-            padding: 5px 20px 0px 20px;
-            margin-bottom: 28px;
-        }
-        &__description-header {
-            @include flex(center, space-between);
-            margin-bottom: 3px;
-            width: 100%;
-        }
-        &__description-text-editor {
-            max-width: 100%;
-            max-height: 74px;
-            @include text-style(0.8, 500, 1.28rem);
+            max-height: 100px;
+            margin-bottom: 20px;
+
+            &--no-tasks {
+                margin-bottom: 60px;
+            }
         }
         &__list-header {
             width: 100%;
-            padding: 2px 20px 4px 20px;
+            padding: 2px 20px 1px 20px;
             @include flex(center, space-between);
         }
-        &__list {
-            height: 300px;
-            width: 100%;
-        }
         &__list-count {
-            @include text-style(0.2, 300, 1.1rem, "DM Mono");
-            margin-right: 5px;
+            @include text-style(0.2, var(--fw-400-500), 1.3rem, "Geist Mono");
+            margin-right: 11px;
         }
-        &__list-container {
-            position: relative;
-            height: calc(100% - 35px);
-            max-width: 100%;
+        &__list-empty {
+            @include text-style(0.2, var(--fw-400-500), 1.3rem, "Geist Mono");
+            margin: 1px 0px 0px 20px;
         }
-        &__btns {
-            @include flex(center, flex-end);
-            @include abs-bottom-right(20px, 24px);
-        }
-        &__cancel-btn {
-            margin-right: 7px;
-            height: 35px;
-            width: 94px;
-            border-radius: 13px;
+        &__add-btn {
             @include center;
-            @include txt-color(0.03, "bg");
-            @include text-style(1, 400, 1.26rem);
-            
+            @include circle(20px);
+            background-color: rgba(var(--textColor1), 0.065);
+            margin-right: -4px;
+
             &:hover {
-                @include txt-color(0.06, "bg");
+                background-color: rgba(var(--textColor1), 0.15);
             }
         }
-        &__submit-btn {
+        &__list {
+            position: relative;
+            height: calc(100% - 35px);
+            overflow-y: scroll;
+            min-height: 100px;
+            max-height: 280px;
+            margin: 5px 0px 10px 0px;
+
+            &--empty {
+                min-height: 40px;
+            }
+        }
+        &__btns {
+            padding: 0px 16px 16px 16px;
+            @include flex(center);
+
+            button {
+                padding: 12.5px 25px;
+                border-radius: 9px;
+                @include center;
+                @include text-style(0.55, var(--fw-400-500), 1.4rem);
+            }
+        }
+        &__cancel-btn {
+            width: 35%;
+            margin-right: 8px;
+            font-weight: 400;
+            background: rgba(var(--textColor1), var(--cancel-btn-opacity));
+
+            &:hover {
+                transition-duration: 0s;
+                background: rgba(var(--textColor1), calc(var(--cancel-btn-opacity) + 0.035));
+            }
         }
     }
 </style>

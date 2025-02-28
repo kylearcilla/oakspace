@@ -111,6 +111,7 @@
                     id="base--dmenu"
                     class="base-header__dmenu dmenu" 
                     class:dmenu--light={isLight}
+                    style:--font-size="1.32rem"
                     style:width={"170px"}
                     use:clickOutside on:outClick={() => settingsOpen = false} 
                 >

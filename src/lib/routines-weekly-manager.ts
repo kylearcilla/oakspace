@@ -4,9 +4,7 @@ import { RoutinesManager } from "./routines-manager"
 import { ViewOption, EMPTY_CORES, ROUTINE_BLOCKS_CONTAINER_ID } from "./utils-routines"
 import { getElemById, initFloatElemPos, isTargetTextEditor, getElemNumStyle, findAncestor, clamp } from "./utils-general"
 
-/**
- * Object for managing for the funcitonality and state of weely routines page.
- */
+
 export class WeeklyRoutinesManager extends RoutinesManager {
     currViewOption = writable(ViewOption.Weekly)
     chosenRoutine: WeeklyRoutine | null = null
@@ -71,8 +69,6 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         if (this.isViewEmpty()) return
 
         const routineElems = get(this.weekRoutineElems)!
-
-        // analytics
         const weekCores = structuredClone(EMPTY_CORES)
         const weekTagData: RoutineTags[] = []
         
@@ -84,7 +80,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
             const dayRoutine = get(this.weekRoutine)!.blocks[dayKey]
             const rawBlocks  = "id" in dayRoutine ? dayRoutine.blocks : dayRoutine
 
-            const { coreBreakdown, earliestBlock, blockElems, tagBreakdown } = this.processRoutineBlocks(rawBlocks)
+            const { coreBreakdown, earliestBlock, blockElems, tagBreakdown } = this.processBlocks(rawBlocks)
             doGetSleepAwake &&= this.doGetSleepAwakeData(rawBlocks)
 
             // create block elements array + set up ids
@@ -96,7 +92,11 @@ export class WeeklyRoutinesManager extends RoutinesManager {
             this.earliestBlockHeadPos = Math.min(earliestBlock, this.earliestBlockHeadPos)
 
             // tally up the breakdown data
-            this.tallyWeeklyCores(coreBreakdown, weekCores, !doGetSleepAwake)
+            this.tallyWeeklyCores({ 
+                cores: coreBreakdown, 
+                weekCores, 
+                doIgnoreSleepAwake: !doGetSleepAwake 
+            })
             this.tallyWeekTagData(tagBreakdown, weekTagData)
             i++
         }
@@ -108,7 +108,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         this.weekRoutineElems.set(routineElems)
     }
 
-    /* Week Routine Detail Edits */
+    /* detail edits */
 
     /**
      * Updates a selected daily routine's title
@@ -122,7 +122,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         this.weekRoutine.update((routine) => ({ ...routine!, description }))
     }
 
-    /* Breakdown Data */
+    /* breakdown data*/
 
     /**
      * Update weekly tag data given new daily tag data that was just procesed.
@@ -158,15 +158,19 @@ export class WeeklyRoutinesManager extends RoutinesManager {
      * @param doIgnoreSleepAwake  - If sleep or awake core data should be ignored. 
      *                              All days must have, awake and sleeping core data
      */
-    tallyWeeklyCores(dayCores: RoutineCores, weekCores: RoutineCores, doIgnoreSleepAwake: boolean) {
+    tallyWeeklyCores({ cores, weekCores, doIgnoreSleepAwake }: { 
+        cores: RoutineCores,
+        weekCores: RoutineCores,
+        doIgnoreSleepAwake: boolean
+    }) {
         for (const key in weekCores) {
             const _key = key as keyof typeof weekCores
             const sleepAwake = key === "sleeping" || key === "awake"
 
-            weekCores[_key].totalTime += dayCores[_key].totalTime
+            weekCores[_key].totalTime += cores[_key].totalTime
 
             if (!sleepAwake) {
-                weekCores[_key].total += dayCores[_key].total
+                weekCores[_key].total += cores[_key].total
             }
             // is sleep or awake core
             if (sleepAwake && doIgnoreSleepAwake) {
@@ -199,7 +203,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
      * 
      * @param dayIdx   Idx of day (0 -> Monday)
      */
-    initDayRoutineBreakdown(dayIdx: number | null) {
+    setDayBreakdown(dayIdx: number | null) {
         const viewOpt = get(this.currViewOption)
 
         if (dayIdx === null) {
@@ -255,7 +259,9 @@ export class WeeklyRoutinesManager extends RoutinesManager {
             doGetSleepAwake &&= this.doGetSleepAwakeData(rawBlocks)
 
             // tally up the stats
-            this.tallyWeeklyCores(cores, weekCores, !doGetSleepAwake)
+            this.tallyWeeklyCores({ 
+                cores, weekCores, doIgnoreSleepAwake: !doGetSleepAwake 
+            })
             this.tallyWeekTagData(tagBreakdown, weekTagData)
         }
 
@@ -264,7 +270,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         this.tagBreakdown.set(weekTagData.sort((a, b) => b.data.totalTime - a.data.totalTime))
     }
 
-    /* Week Routine Updates */
+    /* week routine updates*/
 
     /**
      * Applies updates to the processed routine block elements for the specified day. 
@@ -276,13 +282,17 @@ export class WeeklyRoutinesManager extends RoutinesManager {
      * @param data.updateLinked    - Optional flag to indicate whether to update other daily routines that share the same routine
      * @param data.updateIdices    - Do update 
      */
-    applyRoutineElemsUpdates(data: {
+    applyRoutineElemsUpdates({
+        newRoutineElems,
+        editDayKey,
+        updateIdices = true,
+        editContext = "edited"
+    }: {
         newRoutineElems: RoutineBlockElem[], 
         editDayKey: keyof WeekBlockElems, 
         updateIdices?: boolean,
         editContext?: "unlinked" | "cleared" | "linked" | "edited"
     }) {
-        const { newRoutineElems, editDayKey, updateIdices = true, editContext = "edited" } = data
 
         const weekRoutine      = get(this.weekRoutine)!
         const weekRoutineElems = get(this.weekRoutineElems)!
@@ -483,7 +493,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         this.updateBreakdownData()
     }
 
-    /* Edit Handlers */
+    /* edit handlers */
 
     /**
      * 
@@ -546,7 +556,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         this.editDayRoutineElems.set(editDayRoutineElems)
     }
 
-    /* Block / Blocks Container Event Handlers */
+    /* block / blocks container event handlers */
 
     onBlockPointerDown(e: PointerEvent, id: string) {
         if (e.button === 2) return
@@ -629,7 +639,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         if (!this.allowLiftEdit) { 
             const threshold = RoutinesManager.LIFT_DRAG_DIST_THRESHOLD
 
-            if (this.isAbsDragWithinStretchThreshold(threshold)) {
+            if (this.isDragStretchValid(threshold)) {
                 this.intDragLiftMoveEdit(this.blockOnPointerDown!)
                 this.allowLiftEdit = true
             }
@@ -710,7 +720,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         this.removeLiftEventListeners()
     }
 
-    /* Scroll Container Event Handlers */
+    /* scroll container event handlers */
 
     onScrollContainerPointerDown = (e: PointerEvent) => {
         const target    = e.target as HTMLElement
@@ -733,7 +743,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
     onScrollContainerPointerMove = (e: PointerEvent) => {
         if (!this.allowStrechEdit) {
             const threshold = RoutinesManager.NEW_STRETCH_DRAG_DIST_THRESHOLD
-            if (!this.isHozDragWithinStretchThreshold(threshold)) return
+            if (!this.isHozDragValid(threshold)) return
             
             // attempt to make a valid block
             const editBlock = this.createBlockFromStretchEdit()
@@ -757,7 +767,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         }
     }
 
-    /* Stretch Edit */
+    /* stretch edit */
 
     onBlockStretchEditEnd = () => {
         this.removeStretchEventListeners()
@@ -784,14 +794,14 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         this.containerElem!.removeEventListener("pointerup", this.onBlockStretchEditEnd)
     }
 
-    /* Lift Edits */
+    /* lift edits */
 
     removeLiftEventListeners() {
         this.containerElem!.removeEventListener("pointermove", this.onLiftBlockPointerMove)
         this.containerElem!.removeEventListener("pointerup", this.onLiftBlockPointerUp)
     }
 
-    /* Context Menu */
+    /* context menu */
 
     onBlockContextMenu(id: string) {
         this.initEditDayContextFromLeftOffset(this.cursorPos.left)
@@ -841,7 +851,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         return { left, top: top + scrollTop }
     }
 
-    /* Duplicate Edit */
+    /* duplicate edit */
 
     onDupBlockPointerUp = () => {
         this.editingBlock.update((block) => { 
@@ -954,7 +964,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         this.resetEditState()
     }
 
-    /* Edits */
+    /* edits */
 
     setEditBlockColor(color: Color | null) {
         if (!color) return 
@@ -1017,7 +1027,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
 
     }
 
-    /* Week Routine Handlers */
+    /* week routine handlers */
 
     /**
      * Checks if two given daily routines of a weekly routine have the same linked daily routine.
@@ -1073,11 +1083,12 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         return +get(this.editingBlock)!.id.split("--")[0]
     }
 
-    /* Day Specific Edits */
+    /* day specific edits */
+
     useTemplateOnDayRoutine(dailyRoutine: RoutineBlockElem[] | DailyRoutine) {
         const rawBlocks = "id" in dailyRoutine ? dailyRoutine.blocks : dailyRoutine
 
-        this.editDayRoutineElems.set(this.processRoutineBlocks(rawBlocks).blockElems)
+        this.editDayRoutineElems.set(this.processBlocks(rawBlocks).blockElems)
         this.editDayRoutine.set(rawBlocks)
 
         this.updateSingleDayEdit()
@@ -1091,7 +1102,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
     }
 
     linkDayRoutine(dailyRoutine: DailyRoutine) {
-        const blocks = this.processRoutineBlocks(dailyRoutine).blockElems
+        const blocks = this.processBlocks(dailyRoutine).blockElems
 
         this.editDayRoutineElems.set(blocks.map((block, idx) => ({ ...block!, id: `${this.editDayIdx}--${idx}` })))
         this.editDayRoutine.set(dailyRoutine)
@@ -1104,7 +1115,8 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         this.updateSingleDayEdit("unlinked")
     }
 
-    /* Misc Handlers */
+    /* misc */
+
     isViewEmpty() {
         const routineElems = get(this.weekRoutineElems)!
         const rawRoutine   = get(this.weekRoutine)!

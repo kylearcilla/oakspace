@@ -50,7 +50,7 @@ export class TasksListManager {
         menuWidth: CSSUnitVal
         maxHeight: CSSUnitVal
         sidePadding: CSSUnitVal
-        padding: CSSUnitVal
+        padding: CSSMultiDimPxVal
         borderRadius: CSSUnitVal
         hasTaskDivider: boolean
         listHeight: CSSUnitVal
@@ -136,7 +136,7 @@ export class TasksListManager {
             maxHeight = "100%",
             sidePadding = "15px" as CSSUnitVal,
             hasTaskDivider = true,
-            padding = "10px 0px 9px 0px" as CSSUnitVal,
+            padding = "10px 0px 9px 0px" as CSSMultiDimPxVal,
             borderRadius = "0px" as CSSUnitVal,
             listHeight = "auto",
             checkboxDim = "16px" as CSSUnitVal
@@ -737,7 +737,7 @@ export class TasksListManager {
 
         // new root task
         if (!parentId && count === max) {
-            toast("warning", { message: "Max depth reached" })
+            this.toast("warning", { message: "Max depth reached" })
             return
         }
 
@@ -747,11 +747,11 @@ export class TasksListManager {
 
         // new child
         if (isChild && this.tasks.isAtMaxDepth(parentId!)) {
-            toast("warning", { message: "Max depth reached" })
+            this.toast("warning", { message: "Max depth reached" })
             return
         }
         if (isChild && this.tasks.getSubtaskCount(parentId!) === maxSubtasks) {
-            toast("warning", { message: "Max subtasks reached" })
+            this.toast("warning", { message: "Max subtasks reached" })
             return
         }   
 
@@ -784,7 +784,7 @@ export class TasksListManager {
 
         // see if parent children are at max depth
         if (isChild && this.tasks.isAtMaxDepth(parentId!)) {
-            toast("warning", { message: "Max depth reached" })
+            this.toast("warning", { message: "Max depth reached" })
             return
         }
 
@@ -1180,6 +1180,7 @@ export class TasksListManager {
         }
 
         if (isEditing || !this.focusTask) return
+
         const { id,idx, parentId } = this.focusTask
         const isChild = parentId !== null
         
@@ -1187,7 +1188,7 @@ export class TasksListManager {
             this.initFocusTask(id, isChild)
             this.toggleExpandTask(id, isChild)   
         }
-        else if (event.code === "Enter") {
+        else if (event.code === "Enter" && !this.settings.numbered) {
             this.toggleTaskComplete(id)
         }
         else if (key === "Backspace") {
@@ -1234,17 +1235,21 @@ export class TasksListManager {
         return [...taskContainer.querySelectorAll(".task:not(.task--dummy)")]
     }
 
-    /**
-     * Get an element unique to this instance of current task list.
-     * @param queryId  Id of query element
-     * @returns        Element queried for
-     */
+
     getElemById(queryId: string) {
         const idPrefix = this.options.id
         return getElemById(`${idPrefix}--${queryId}`)
     }    
 
     /* helpers */
+
+    toast(type: "warning" | "error", { message }: { message: string }) {
+        toast(type, { 
+            contextId: this.options.id,
+            groupExclusive: true,
+            message 
+        })
+    }
 
     isTargetEditElem(target: HTMLElement) {
         const isCheckbox = target.classList.contains("task__checkbox")

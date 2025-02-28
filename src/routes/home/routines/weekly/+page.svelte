@@ -191,23 +191,25 @@
                 on:scroll={onBoardScroll}
                 bind:this={scrollableContainer}
                 class="routine-blocks-container" 
-                class:routine-blocks-container--light={isLight}
                 class:routine-blocks-container--no-scroll={locked}
                 class:routine-blocks-container--ns-resize={editContext?.includes("stretch")}
             >
                 <div 
+                    bind:clientWidth={weekViewWidth}
+                    bind:this={scrollableContent}
                     class="week-view__blocks-wrapper"
                     on:pointermove={(e) => { 
                         if (!locked) {
-                            manager.onBlocksContainerPointerMove(e)
+                            manager.onPointerMove(e)
                         }
                     }}
-                    bind:clientWidth={weekViewWidth}
-                    bind:this={scrollableContent}
                 >
                     <!-- svelte-ignore a11y-no-static-element-interactions -->
                     <div 
                         id={ROUTINE_BLOCKS_CONTAINER_ID}    
+                        class="routine-blocks"
+                        class:routine-blocks--editing={editContext}
+                        class:no-pointer-events-all={locked || !weekRoutine}
                         on:pointerdown={(e) => {
                             manager.onScrollContainerPointerDown(e)
                         }}
@@ -216,10 +218,6 @@
                                 e.preventDefault()
                             }
                         }}
-                        class="routine-blocks"
-                        class:routine-blocks--editing={editContext}
-                        class:routine-blocks--light={false}
-                        class:no-pointer-events-all={locked || !weekRoutine}
                     >
                         {#each daysInView as day, dayIdx}
                             {@const dayKey = manager.getDayKey(day)}
@@ -263,7 +261,7 @@
                                     }}
                                 >
                                     <div class="routine-block__content">
-                                        <div class="flx flx--algn-center">
+                                        <div class="flx-algn-center">
                                             {#if isFirstLast}
                                                 {@const opacity = isLight ? 0.8 : 0.5}
                                                 <div 
@@ -335,7 +333,7 @@
                                 on:contextmenu|preventDefault={() => {}}
                             >
                                 <div class="routine-block__content">
-                                    <div class="flx flx--algn-center">
+                                    <div class="flx-algn-center">
                                         {#if isFirstLast}
                                             {@const opacity = isLight ? 0.8 : 0.5}
                                             <div 
@@ -362,10 +360,9 @@
                                     <div class="routine-block__spine"></div>
                                 </div>
 
-                                <!-- Confirm Buttons for Duplicate Edit -->
+                                <!-- confirm buttons for duplicate edit -->
                                 {#if editContext === "duplicate" && !isDragging}
                                     {@const placement = manager.findDupBtnPlacement()}
-
                                     <div 
                                         class="routine-block__buttons"
                                         class:routine-block__buttons--left={placement === "left"}
@@ -420,7 +417,7 @@
                                 style:--block-color-3={colorTrio[2]}
                             >
                                 <div class="routine-block__content">
-                                    <div class="flx flx--algn-center">
+                                    <div class="flx-algn-center">
                                         <span class="routine-block__title">
                                             {editingBlock.title}
                                         </span>
@@ -441,7 +438,7 @@
                                 {@const width = weekViewWidth}
                                 {#each Array.from({ length: 24 }, (_, i) => i) as timeIdx}
                                     {@const headOffsetPerc = ((timeIdx * 60) / 1440) * 100}
-                                    {@const height         = (60 / 1440) * 100}
+                                    {@const height  = (60 / 1440) * 100}
                                     <div 
                                         class="wk-grid__hoz-line"
                                         class:hidden={timeIdx === 0}
@@ -484,8 +481,11 @@
                         id={"daily-routines"}
                         isHidden={!isContextMenuOpen}
                         options={{
-                            styling: { width: "140px" },
                             listItems: EDIT_BLOCK_OPTIONS,
+                            styling: { 
+                                width: "140px",
+                                zIndex: 100
+                            },
                             onClickOutside:() => { 
                                 isContextMenuOpen = false
                             },
@@ -507,8 +507,8 @@
             <div class="hour-blocks-container" >
                 <div class="hour-blocks-wrapper">
                     <div 
-                        class="hour-blocks"
                         bind:this={hourBlocksElem} 
+                        class="hour-blocks"
                         class:hour-blocks--light={isLight}
                     >
                         {#if containerWidth > 0}
@@ -673,7 +673,7 @@
     }
     .routine-blocks {
         @include abs-top-left;
-        z-index: 1;
+        // z-index: 1;
     }
     .routine-block {
         max-width: var(--block-max-width);

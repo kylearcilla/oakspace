@@ -4,26 +4,35 @@
     export let options: ModalOptions = {}
     export let onClickOutSide: FunctionParam | undefined = undefined
 
-    options.borderRadius ??= "12px"
-    options.zIndex ??= "1000"
-    options.overflowX ??= "hidden"
-    options.overflowY ??= "scroll"
-    options.height ??= "auto"
-    options.closeOnEsc ??= true
-    options.hingeDown ??= false
-    options.scaleUp ??= false
-    options.scale ??= false
+    const { 
+        borderRadius = "12px",
+        zIndex = "1000",
+        overflowX = "hidden", 
+        overflowY = "scroll",
+        height = "auto",
+        closeOnEsc = true,
+        hingeDown = false,
+        scaleUp = false
+    } = options
 
-    const { borderRadius, zIndex, overflowX, overflowY, hingeDown, scaleUp, closeOnEsc, height } = options
+    let downElem: HTMLElement | null = null
 
-    const handleClickOutside = (e: Event) => {
+    const pointerUp = (e: PointerEvent) => {
         const target = e.target as HTMLElement
+        const relatedTarget = downElem
+        downElem = null
+
+        if (target !== relatedTarget) return
+        
         const className = target.classList.value
         const regex = /\bmodal-bg\b/
 
-        if (!regex.test(className) ||!onClickOutSide) return
+        if (!regex.test(className) || !onClickOutSide) return
         
-        onClickOutSide(e)!
+        onClickOutSide(e)
+    }
+    function pointerDown(e: PointerEvent) {
+        downElem = e.target as HTMLElement
     }
     function onKeyPress(e: KeyboardEvent) {
         const { key } = e
@@ -40,7 +49,8 @@
     class:modal-bg--light={!$themeState?.isDarkTheme}
     class:modal-bg--hinge-down={hingeDown}
     class:modal-bg--scale-up={scaleUp}
-    on:pointerup={handleClickOutside}
+    on:pointerdown={pointerDown}
+    on:pointerup={pointerUp}
     style:perspective="700px"
 >
     <div 

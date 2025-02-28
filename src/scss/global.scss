@@ -1215,3 +1215,12 @@ $loading-dots-width: 4px;
 .no-bg {
     background-color: transparent !important;
 }
+
+.arrow-down {
+    transform: rotate(0deg);
+    transition: 0.15s cubic-bezier(.4,0,.2,1);
+    
+    &--active {
+        transform: rotate(-180deg);
+    }
+}

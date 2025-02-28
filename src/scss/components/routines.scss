@@ -50,10 +50,6 @@
         border: 1.5px dashed rgba(var(--textColor1), 0.06);
         position: relative;
         margin: -4px 0px 14px -4px;
-
-        // border-top: var(--divider-border);
-        // border-bottom: var(--divider-border);
-        // padding: 10px 0px 12px 0px;
     }
     &__breakdown-title {
         @include text-style(1, var(--fw-400-500), 1.3rem, "Geist Mono");
@@ -223,18 +219,6 @@
     &--ns-resize * {
         cursor: ns-resize !important;
     }
-    &--grabbing * {
-        cursor: grabbing !important;
-    }
-    &--light .routine-blocks__block--dup-floating .routine-blocks__block-content {
-        box-shadow: 0px 1px 16.4px 4px rgba(black, 0.12);
-    }
-    &--light .routine-blocks__block-title {
-        @include text-style(_, var(--fw-500-600));
-    }
-    &--light .routine-blocks__block--drop-area .routine-blocks__block-time-period {
-        font-weight: 500;
-    }
 }
 
 .routine-blocks {
@@ -244,16 +228,12 @@
     position: relative;
     height: 100%;
 
-    &--grabbing * {
-        cursor: text !important;
-    }
     &--editing * {
         user-select: none !important;
     }
     &--editing &__block {
         pointer-events: none;
     }
-
     #edit-block {
         transition: 0s !important;
     }
@@ -264,6 +244,7 @@
     height: var(--block-height);
     max-height: var(--block-height);
     transition: 0.1s transform ease-in-out;
+    cursor: pointer;
 
     &:focus-visible {
         transform: scale(1.01);
@@ -272,62 +253,51 @@
         @include border-focus;
     }
 
-    cursor: pointer;
-
-    &--md &-content {
-        @include flex(center);
-    }
-    &--md &-title {
-        margin: 0px 7px 0px 0px;
-    }
-
     // drop area
-    &--drop-area &-content {
+    &--drop-area &__content {
         border: 1.5px dashed rgba(var(--block-color-1), 0.4);
         background-color: rgba(var(--block-color-2), 0.6);
         border-radius: 10px;
     }
-    &--drop-area &-title {
+    &--drop-area &__title {
         display: none;
     }
-    &--drop-area &-time-period {
+    &--drop-area &__time-period {
         color: rgba(var(--block-color-1), 0.77);
         font-weight: 300;
     }
-    &--drop-area &-spine {
+    &--drop-area &__spine {
         display: none;
     }
 
-    // week view drop area
-    &--wk-drop-area &-content {
+    // drop area
+    &--wk-drop-area &__content {
         border: 1.5px dashed rgba(var(--block-color-1), 0.4);
         background-color: rgba(var(--block-color-2), 0.5);
         border-radius: 8px;
     }
-    &--wk-drop-area-light &-content {
+    &--wk-drop-area-light &__content {
         border-color: rgba(var(--block-color-1), 0.65);
     }
-    &--old-stretch, &--wk-old-stretch {
+    &--old-stretch {
         transition: 0s !important;
-        * {
-            pointer-events: all !important;
-        }
+        pointer-events: all !important;
     }
-
     &--use-x-offset {
         left: var(--left-x-offset) !important;
     }
     &--day-floating, &--wk-floating {
         transition: 0s !important;
     }
-    &--day-floating &-content, &--wk-floating &-content {
+    &--day-floating &__content, 
+    &--wk-floating &__content {
         border-top: 1.5px solid rgba(var(--block-color-3), 0.04);
         border-right: 1.5px solid rgba(var(--block-color-3), 0.04);
         border-bottom: 1.5px solid rgba(var(--block-color-3), 0.04);
-
         box-shadow: 0px 1px 16.4px 4px rgba(black, 0.08);
     }
-    &--day-floating, &--wk-floating {
+    &--day-floating, 
+    &--wk-floating {
         cursor: grabbing !important;
     }
     &--dup-floating {
@@ -388,10 +358,13 @@
         color: rgb(var(--block-color-1));
     }
     &__time-period {
-        @include text-style(_, var(--fw-400-500), 1.16rem);
         cursor: text;
         display: inline-block;
         color: rgba(var(--block-color-3), 1);
+
+        span {
+            @include text-style(_, var(--fw-400-500), 1.16rem);
+        }
     }
     &__spine {
         @include abs-top-left;
@@ -418,7 +391,7 @@
     &__buttons--left {
         display: block;
         @include abs-top-left(4px, -24px);
-    }   
+    }
     &__buttons--right {
         display: block;
         @include abs-top-right(-1px, -27px);

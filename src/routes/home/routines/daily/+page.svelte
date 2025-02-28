@@ -8,17 +8,18 @@
 	import { RoutinesManager } from '$lib/routines-manager'
 	import { DailyRoutinesManager } from '$lib/routines-daily-manager'
 	import { getTimeFromIdx, minsFromStartToHHMM } from '$lib/utils-date'
-	import { EDIT_BLOCK_OPTIONS, ROUTINE_BLOCKS_CONTAINER_ID, getBlockStyling } from '$lib/utils-routines'
+	import { EDIT_BLOCK_OPTIONS, ROUTINE_BLOCKS_CONTAINER_ID } from '$lib/utils-routines'
 
 	import SvgIcon from '$components/SVGIcon.svelte'
 	import EditBlockModal from '../EditBlockModal.svelte'
 	import NewRoutineModal from "../NewRoutineModal.svelte"
 	import DropdownList from '$components/DropdownList.svelte'
 	import ConfirmationModal from '$components/ConfirmationModal.svelte'
+	import { onMount } from 'svelte';
 
     export let data: { routines: DailyRoutine[] }
 
-    const BLOCKS_CONTAINER_LEFT_OFFSET = 52
+    const BLOCKS_CONTAINER_LEFT_OFFSET = 51
     const DAILY_ROUTINES: DailyRoutine[] = data.routines
 
     /* DOM */
@@ -114,18 +115,25 @@
         const target = e.target as HTMLElement
         target.setPointerCapture(e.pointerId)
     }
+
+    onMount(() => {
+        editRoutineIdx = 2
+        requestAnimationFrame(() => {
+            manager.initContainer(timeBoxElem, blocksContainerRef)
+            manager.initEditRoutine(dailyRoutines[editRoutineIdx])
+        })
+    })
 </script>
 
 <div class="routines" class:routines--empty={dailyRoutines.length === 0}>
     <Details {manager} routines={DAILY_ROUTINES} />
     <div 
         class="routine-blocks-container" 
-        class:routine-blocks-container--light={isLightTheme}
         class:routine-blocks-container--no-scroll={lockInteraction}
         class:routine-blocks-container--ns-resize={editContext?.includes("stretch")}
         bind:this={timeBoxElem}
         on:pointermove={(e) => {
-            manager.onBlocksContainerPointerMove(e)
+            manager.onPointerMove(e)
         }}
     >
         <div 
@@ -136,6 +144,10 @@
         >
             <!-- svelte-ignore a11y-no-static-element-interactions -->
             <div 
+                id={ROUTINE_BLOCKS_CONTAINER_ID}
+                class="routine-blocks"
+                class:routine-blocks--editing={editContext}
+                style:--left-offset={`${BLOCKS_CONTAINER_LEFT_OFFSET}px`}
                 on:pointerdown={(e) => {
                     manager.onScrollContainerPointerDown(e)
                 }}
@@ -144,10 +156,6 @@
                         e.preventDefault()
                     }
                 }}
-                id={ROUTINE_BLOCKS_CONTAINER_ID}
-                class="routine-blocks"
-                class:routine-blocks--editing={editContext}
-                style:--left-offset={`${BLOCKS_CONTAINER_LEFT_OFFSET}px`}
             >
                 {#each editDayRoutineElems as block (block.id)}
                     {@const colorTrio    = getColorTrio(block.color, isLightTheme)}
@@ -157,12 +165,13 @@
                     {@const endTimeStr   = minsFromStartToHHMM(block.endTime)}
                     {@const isFirstLast  = ["first", "last"].includes(block.order ?? "")}
                     {@const isFirst      = block.order === "first"}
+
                     <!-- svelte-ignore a11y-interactive-supports-focus -->
                     <div 
                         role="button"
                         tabIndex={0}
                         id={`rblock--${block.id}`}
-                        class={`routine-block routine-block--${getBlockStyling(block.height)}`}
+                        class="routine-block"
                         class:hidden={isEditBlock}
                         style:top={`calc(${block.yOffset}px`}
                         style:--block-height={`${block.height}px`}
@@ -184,7 +193,7 @@
                         }}
                     >
                         <div class="routine-block__content">
-                            <div class="flx flx--algn-center">
+                            <div class="flx-algn-center">
                                 {#if isFirstLast}
                                     {@const opacity = isLightTheme ? 0.8 : 0.5}
                                     {@const title = isFirst ? "First routine of the day." : "Last routine of the day."}
@@ -225,7 +234,7 @@
                     {@const isFirst = editingBlock.order === "first"}
 
                     <div 
-                        class={`routine-block__${getBlockStyling(editingBlock.height)}`}
+                        class="routine-block"
                         class:routine-block--day-floating={isLift}
                         class:routine-block--dup-floating={editContext === "duplicate"}
                         class:routine-block--old-stretch={isStretch}
@@ -241,7 +250,7 @@
                         on:pointerdown={onBlockPointerDown}
                     >
                         <div class="routine-block__content">
-                            <div class="flx flx--algn-center">
+                            <div class="flx-algn-center">
                                 {#if isFirstLast}
                                     {@const opacity = isLightTheme ? 0.8 : 0.5}
                                     <div 
@@ -310,8 +319,8 @@
                     {@const { top } = editingBlock.dropArea}
 
                     <div 
-                        class={`routine-block__${getBlockStyling(editingBlock.height)}`}
-                        class:routine-block__-drop-area={true}
+                        class="routine-block"
+                        class:routine-block--drop-area={true}
                         id="drop-area-block"
                         style:top={`${top}px`}
                         style:--block-height={`${editingBlock.height}px`}
@@ -321,7 +330,7 @@
                         title="Untitled Block"
                     >
                         <div class="routine-block__content">
-                            <div class="flx flx--algn-center">
+                            <div class="flx-algn-center">
                                 <span class="routine-block__title">
                                     {editingBlock.title}
                                 </span>
@@ -395,7 +404,7 @@
                             style:height={`${height}px`}
                         >
                             <div class="wk-grid__vert-line-content">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="2" {height} viewBox="0" fill="none">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="2" {height} viewBox={`0 0 2 ${height}`} fill="none">
                                     <path d={`M1 ${height}L1 1`} stroke-width="0.7" stroke-dasharray="3 3"/>
                                 </svg>
                             </div>
@@ -501,10 +510,11 @@
     }
 
     .routine-blocks {
-        @include abs-top-left(0px, var(--left-offset));
+        @include abs-top-left(-1px, var(--left-offset));
         width: calc(100% - var(--left-offset));
         height: calc(($hour-block-height * 24));
     }
+
     .routine-block {
         width: 80%;
         max-width: 240px;

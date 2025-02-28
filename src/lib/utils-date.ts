@@ -559,6 +559,22 @@ export function minsFromStartToHHMM(minsFromStart: number, doShorten = true) {
 	}
 }
 
+export function minsFromStartFromHHMM(hhmm: string) {
+    const [time, period] = hhmm.split(' ')
+    const [hours, mins] = time.split(':').map(Number)
+    let adjustedHours = hours
+
+    if (period.toUpperCase() === 'PM' && hours !== 12) {
+        adjustedHours += 12
+    } 
+	else if (period.toUpperCase() === 'AM' && hours === 12) {
+        adjustedHours = 0
+    }
+
+    const minsFromStart = timeStrToMins(adjustedHours, mins)
+    return minsFromStart
+}
+
 /**
  * Returns a formatted time string based on the provided time index.
  * @param    timeIdx - The numerical index representing the time.

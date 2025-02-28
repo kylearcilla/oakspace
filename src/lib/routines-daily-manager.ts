@@ -2,11 +2,8 @@ import { get, writable, type Writable } from "svelte/store"
 
 import { RoutinesManager } from "./routines-manager"
 import { EMPTY_CORES, ROUTINE_BLOCKS_CONTAINER_ID } from "./utils-routines"
-import { findAncestor, getElemById, getElemNumStyle, initFloatElemPos } from "./utils-general"
+import { getElemById, getElemNumStyle, initFloatElemPos } from "./utils-general"
 
-/**
- * Object for managing for the funcitonality and state of daily routines page.
- */
 export class DailyRoutinesManager extends RoutinesManager {
     dailyRoutines:  Writable<DailyRoutine[] | null> = writable(null)
 
@@ -43,7 +40,7 @@ export class DailyRoutinesManager extends RoutinesManager {
         }
 
         this.editDayRoutine.set(routine)
-        const { coreBreakdown, earliestBlock, blockElems, tagBreakdown } = this.processRoutineBlocks(routine.blocks)
+        const { coreBreakdown, earliestBlock, blockElems, tagBreakdown } = this.processBlocks(routine.blocks)
 
         this.coreBreakdown.set(coreBreakdown)
         this.tagBreakdown.set(tagBreakdown)
@@ -99,7 +96,7 @@ export class DailyRoutinesManager extends RoutinesManager {
         this.updateBreakdownData()
     }
 
-    /* Block / Blocks Container Event Handler */
+    /* event handlers */
 
     /**
      * Block pointer down event handler
@@ -156,7 +153,7 @@ export class DailyRoutinesManager extends RoutinesManager {
         if (!this.allowLiftEdit) { 
             const threshold = RoutinesManager.LIFT_DRAG_DIST_THRESHOLD
 
-            if (this.isAbsDragWithinStretchThreshold(threshold)) {
+            if (this.isDragStretchValid(threshold)) {
                 this.intDragLiftMoveEdit(this.blockOnPointerDown!)
                 this.allowLiftEdit = true
             }
@@ -212,8 +209,6 @@ export class DailyRoutinesManager extends RoutinesManager {
         this.openContextMenu()
     }
 
-    /* Scroll Container Event Handler */
-
     /**
      * Pointer down event hanlder on scroll container (blocks container parent)
      * 
@@ -242,7 +237,7 @@ export class DailyRoutinesManager extends RoutinesManager {
     onScrollContainerPointerMove = (e: PointerEvent) => {
         if (!this.allowStrechEdit) {    
             const threshold = RoutinesManager.NEW_STRETCH_DRAG_DIST_THRESHOLD
-            if (!this.isHozDragWithinStretchThreshold(threshold)) return
+            if (!this.isHozDragValid(threshold)) return
 
             // attempt to make a valid block
             const editBlock = this.createBlockFromStretchEdit()
@@ -262,7 +257,7 @@ export class DailyRoutinesManager extends RoutinesManager {
         }
     }
 
-    /* Lift Edits */
+    /* lift edits */
 
     /**
      * Called when block is moved by the user during lift edit state
@@ -322,7 +317,7 @@ export class DailyRoutinesManager extends RoutinesManager {
         this.initDragLiftOffsets = { top: -1, left: -1 }
     }
 
-    /* Duplicate Edit */
+    /* duplicate edits */
 
     onDupBlockPointerUp = () => {
         this.editingBlock.update((block) => { 
@@ -346,12 +341,9 @@ export class DailyRoutinesManager extends RoutinesManager {
 
         const target = e.target as HTMLElement
         const editBlock  = get(this.editingBlock)!
+        const didClickOnButton = target.closest(".routine-block__buttons")
 
-        const didClickOnButton = findAncestor({
-            child: target, queryBy: "class", strict: false, queryStr: "block-buttons"
-        })
-
-        if (didClickOnButton) return
+        if (!!didClickOnButton) return
 
         this.editingBlockRef!.setPointerCapture(e.pointerId)
         this.editingBlockRef!.style.cursor = "grabbing"
@@ -381,7 +373,6 @@ export class DailyRoutinesManager extends RoutinesManager {
         const dupBlockRef  = this.getDOMBlockElem(editBlock.id)!
         const dupBlockElem = this.getBlockElem(editBlock.id)!
 
-        
         const containerWidth = this.blocksContainerRef!.clientWidth
         const containerHeight = this.blocksContainerRef!.clientHeight
 
@@ -442,7 +433,7 @@ export class DailyRoutinesManager extends RoutinesManager {
         this.initDragLiftOffsets = { top: -1, left: -1 }
     }
 
-    /* Daily Routines  */
+    /* routines */
 
     removeDailyRoutine(routineId: string) {
         this.dailyRoutines.update((routines) => (routines!.filter((r) => r.id != routineId)))

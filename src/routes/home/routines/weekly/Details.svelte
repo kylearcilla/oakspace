@@ -407,6 +407,8 @@
                         isActive={routinesOpen}
                         options={{
                             title: "Routines",
+                            noBg: true,
+                            arrowOnHover: true,
                             onClick: () => { 
                                 routinesOpen = !routinesOpen
                                 routinesMenuOpen = false

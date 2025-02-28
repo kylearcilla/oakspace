@@ -1,7 +1,3 @@
-/*
- * Reusable styling for day views.
- */
- 
 $hour-blocks-top-offset: 55px;
 $hour-block-height: 50px;
 
@@ -14,7 +10,6 @@ $hour-block-height: 50px;
     &--light &__block span {
         @include text-style(0.75);
     }
-
     &-container {
         position: relative;
         width: 50px;
@@ -59,11 +54,9 @@ $hour-block-height: 50px;
     &--light svg path {
         stroke: rgba(var(--textColor1), 0.185) !important;
     }
-
     * {
         pointer-events: none;
     }
-
     &__vert-line {
         height: 100%;
         width: 2px;
@@ -89,7 +82,6 @@ $hour-block-height: 50px;
             @include abs-top-left(0px, 0.5px);
         }
     }
-
     svg path {
         stroke: rgba(var(--textColor1), 0.06);
     }
@@ -119,31 +111,30 @@ $hour-block-height: 50px;
 
 @keyframes wobble {
     0% {
-      transform: none
+        transform: none
     }
-  
     15% {
-      transform: rotate3d(0, 0, 1, -5deg)
+        transform: rotate3d(0, 0, 1, -5deg)
     }
-  
+
     30% {
-      transform: rotate3d(0, 0, 1, 3deg)
+        transform: rotate3d(0, 0, 1, 3deg)
     }
-  
+
     45% {
-      transform: rotate3d(0, 0, 1, -3deg)
+        transform: rotate3d(0, 0, 1, -3deg)
     }
-  
+
     60% {
-      transform: rotate3d(0, 0, 1, 2deg)
+        transform: rotate3d(0, 0, 1, 2deg)
     }
-  
+
     75% {
-      transform: rotate3d(0, 0, 1, -1deg)
+        transform: rotate3d(0, 0, 1, -1deg)
     }
-  
+
     100% {
-      transform: none
+        transform: none
     }
-  }
+}
   

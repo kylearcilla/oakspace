@@ -105,9 +105,11 @@ export class InputManager {
  * Custom functionality for redo / undo and copy paste/
  */
 export class TextEditorManager extends InputManager {
-    elemInit = false
     allowFormatting: boolean
     allowBlurOnClickAway: boolean
+    singleLine: boolean
+
+    elemInit = false
     focused = false
 
     currFormat: "bold" | "code" | null = null
@@ -119,11 +121,16 @@ export class TextEditorManager extends InputManager {
     UNDO_EDIT_MIN_DIST_FROM_PREV = 15
     MAX_UNDO_STACK_SIZE = 20
 
-    constructor(options: InputOptions & { allowFormatting?: boolean, allowBlurOnClickAway?: boolean }) {
+    constructor(options: InputOptions & { 
+        allowFormatting?: boolean, 
+        allowBlurOnClickAway?: boolean,
+        singleLine?: boolean
+    }) {
         super(options)
         this.allowFormatting = options.allowFormatting ?? false
         this.allowBlurOnClickAway = options.allowBlurOnClickAway ?? true
-
+        this.singleLine = options.singleLine ?? false
+        
         requestAnimationFrame(() => this.initElem())
     }
 
@@ -142,6 +149,7 @@ export class TextEditorManager extends InputManager {
         })
         this.setInputElem(recentUndo.content, recentUndo.pos)
     }
+
     undoEdit() {
         if (this.undoStack.length === 0) {
             return
@@ -275,7 +283,6 @@ export class TextEditorManager extends InputManager {
         selection.removeAllRanges()
         selection.addRange(range)
     }
-
 
     /* event handlers */
     onPaste(event: ClipboardEvent) {
@@ -791,6 +798,9 @@ export class TextEditorManager extends InputManager {
         if (this.allowFormatting && customFormatting) {
             ke.preventDefault()
         }
+        if (this.singleLine && key === "Enter" && shiftKey) {
+            ke.preventDefault()
+        }
         if (undoRedo) {
             ke.preventDefault()
             shiftKey ? this.redoEdit() : this.undoEdit()
@@ -914,10 +924,35 @@ export class TimeInputManager extends InputManager {
     constructor(options: TimeInputOptions) {
         super(options)
 
-        this.state = writable(this)
-
         this.min = options.min ?? this.min
         this.max = options.max ?? this.max
+    }
+
+    updateBounds({ min, max }: { min?: number, max?: number }) {
+        this.min = min ?? this.min
+        this.max = max ?? this.max
+    }
+
+    initElem() {
+        this.inputElem = getElemById(this.id) as HTMLInputElement
+
+        if (!this.inputElem) {
+            return null
+        }
+
+        this.inputElem.addEventListener("blur", (e) => this.onBlurHandler(e))
+        this.inputElem.addEventListener("input", (e) => this.onInputHandler(e))
+        this.inputElem.addEventListener("keydown", (e) => this.onKeyDownHandler(e))
+
+        return this.inputElem
+    }
+
+    updateVal(e: Event, newVal: string) {
+        this.value = newVal
+
+        if (this.handlers?.onInputHandler) {
+            this.handlers!.onInputHandler(e, newVal, newVal.length)
+        }
     }
 
     onInputHandler(event: Event) {
@@ -927,20 +962,23 @@ export class TimeInputManager extends InputManager {
 
     onBlurHandler(event: Event) {
         const inputElem = event.target as HTMLInputElement
-        const value = inputElem.value
+        const value = inputElem.textContent ?? ""
         
         try {
-            const timeInput = clamp(this.min, TimeInputManager.validateTimeInput(value), this.max)
-            this.updateVal(event, minsFromStartToHHMM(timeInput, false))
+            const mins = this.validateTimeStr(value)
+            const timeInput = clamp(this.min, mins, this.max)
+            const timeStr = minsFromStartToHHMM(timeInput, false)
 
-            if (this.handlers?.onBlurHandler) { 
-                this.handlers!.onBlurHandler(event, timeInput)
-            }
+            this.updateVal(event, timeStr)
         }
-        catch (error: any) {
-            if (this.handlers?.onError) this.handlers!.onError(error)
-
+        catch(e: any) {
             this.updateVal(event, this.oldTitle)
+        }
+
+        this.inputElem!.textContent = this.value
+
+        if (this.handlers?.onBlurHandler) { 
+            this.handlers!.onBlurHandler(event, this.value)
         }
     }
 
@@ -951,7 +989,7 @@ export class TimeInputManager extends InputManager {
      * @param isAM 
      * @returns 
      */
-    static minsFromHHMM(hhNum: number, mmNum: number, isAM = false) {
+    minsFromHHMM(hhNum: number, mmNum: number, isAM = false) {
         if (hhNum === 24) {
             return mmNum;
         } 
@@ -964,7 +1002,7 @@ export class TimeInputManager extends InputManager {
         }
     }
 
-    static isAM(hh: number, stringInput: string) {
+    isAM(hh: number, stringInput: string) {
         if (hh === 24 || hh === 0) return true
         if (hh >= 13) return false
 
@@ -972,7 +1010,10 @@ export class TimeInputManager extends InputManager {
         return containsAMPM ? /am/i.test(stringInput) : hh <= 11
     }
 
-    static validateTimeInput(val: string) {
+    /**
+     * Validate the time string and return the total minutes from start of day
+     */
+    validateTimeStr(val: string) {
         const value = val.toLowerCase()
         const numbersArr = extractNumStr(val)
         const numStr = numbersArr.join("")
@@ -1005,5 +1046,21 @@ export class TimeInputManager extends InputManager {
         }
 
         throw new Error("Invalid time input.")
+    }
+
+    updateText(text: string) {
+        if (!this.inputElem) return
+
+        this.value = text
+        this.inputElem!.textContent = this.value
+    }
+
+    onKeyDownHandler(event: KeyboardEvent) {
+        const { key, metaKey } = event
+        const formatting = metaKey && ['b', 'e', 'i', 'u'].includes(key)
+
+        if (formatting) {
+            event.preventDefault()
+        }
     }
 }

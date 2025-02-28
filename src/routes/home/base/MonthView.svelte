@@ -347,6 +347,7 @@
                     id="month-view--dmenu"
                     class="day-settings dmenu" 
                     class:dmenu--light={isLight}
+                    style:--font-size="1.32rem"
                     use:clickOutside on:outClick={() => optionsOpen = false} 
                 >
                     <!-- month view -->
@@ -402,7 +403,7 @@
                                 />
                             </div>
                             <div class="dmenu__toggle-optn">
-                                <span class="dmenu__option-heading">Focus Time</span>
+                                  <span class="dmenu__option-heading">Focus Time</span>
                                 <ToggleBtn 
                                     active={overview.focusTime}
                                     onToggle={() => {

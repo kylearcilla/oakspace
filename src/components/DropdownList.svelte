@@ -1,40 +1,49 @@
 <script lang="ts">
 	import { themeState } from "$lib/store"
-	import { clickOutside, findAncestor } from "$lib/utils-general"
 	import { onMount } from "svelte"
+    
+	import { getHozSpace } from "../lib/utils-general"
+	import { clickOutside, findAncestor } from "$lib/utils-general"
+
 	import BounceFade from "./BounceFade.svelte"
 	import DropdownListOption from "./DropdownListOption.svelte"
-	import { getHozSpace } from "../lib/utils-general";
+	import ToggleBtn from "./ToggleBtn.svelte";
 
     export let id: string = ""
     export let isHidden: boolean
     export let options: DropdownListOptions
 
     let dmenuRef: HTMLElement
-    let idxCount = 0
     let listItems = options.listItems
     let pickedItem = options.pickedItem
 
-    $: isDark = $themeState.isDarkTheme
+    const {
+        onDismount,
+        scroll,
+    } = options
+    const {
+        width = "auto",
+        zIndex = 1,
+        minWidth = "auto",
+        maxWidth = "auto",
+        height = "auto",
+        maxHeight = "auto",
+        fontFamily = "inherit",
+        fontSize = "1.3rem"
+    } = options.styling ?? {}
 
-    $: if (isHidden != undefined) { 
-        resetCount()
-    }
+    $: isDark = $themeState.isDarkTheme
     $: if (!isHidden && dmenuRef && options.scroll?.goToIdx) {
         goToStartingIdxLocation(options.scroll.goToIdx)
     }
     $: if (!isHidden) {
-        // allow list items to change only as it opens
-        // avoid list items from changing immediately as the list fades out before unmount
         listItems = options.listItems
     }
     $: if (options.pickedItem != null && options.pickedItem != undefined) {
         pickedItem = options.pickedItem
     }
 
-    function resetCount() {
-        idxCount = 0
-    }
+    /* actions*/
     function onItemClicked(e: Event, idx: number, name: string) {
         options.onListItemClicked({
             event: e, 
@@ -43,27 +52,14 @@
             parentName: options.parent?.optnName
         })
     }
-    function goToStartingIdxLocation(goToIdx: number) {
-        if (goToIdx < 0) return
-        
-        const listItems = [...dmenuRef.children]
-        if (!listItems || listItems.length === 0) return
-
-        const toIdx = goToIdx
-        let distanceToIdx = 0
-
-        for (let i = 0; i < toIdx; i++) {
-            distanceToIdx += listItems[i].clientHeight
-        }
-        dmenuRef.scrollTop = distanceToIdx
-    }
     function onClickOutside() {
-        if (isHidden || !options.onClickOutside) return
+        if (isHidden || !options.onClickOutside) {
+            return
+        }
         options.onClickOutside()
     }
-    function initOptnIdx() {
-        return idxCount++
-    }
+
+    /* child menu hover */
     function onPointerLeave(e: PointerEvent) {
         if (!options.onPointerLeave) {
             return
@@ -145,6 +141,29 @@
         }
     }
 
+    /* indices */
+    function goToStartingIdxLocation(goToIdx: number) {
+        if (goToIdx < 0) return
+        
+        const listItems = [...dmenuRef.children]
+        if (!listItems || listItems.length === 0) return
+        
+        const toIdx = goToIdx
+        let distanceToIdx = 0
+        
+        for (let i = 0; i < toIdx; i++) {
+            distanceToIdx += listItems[i].clientHeight
+        }
+        dmenuRef.scrollTop = distanceToIdx
+    }
+    function onToggle(idx: number) {
+        let item = listItems[idx] as DropdownToggleOption
+        if (!item) return
+
+        item.active = !item.active
+        item.onToggle()
+    }
+
     onMount(() => {
         goToStartingIdxLocation(options.scroll?.goToIdx ?? -1)
     })
@@ -152,9 +171,9 @@
 
 <BounceFade 
     {isHidden} 
-    onDismount={options.onDismount}
-    position={options.position}
-    zIndex={options?.styling?.zIndex ?? 1}
+    onDismount={onDismount}
+    position={options?.position}
+    zIndex={zIndex}
 >
     <div 
         class="dmenu-container"
@@ -162,35 +181,50 @@
         on:pointerleave={onPointerLeave}
     >
         <ul 
-            use:clickOutside on:outClick={onClickOutside} 
-            bind:this={dmenuRef}
             id={`${id}--dmenu`}
             class="dmenu"
             class:dmenu--light={!isDark}
-            class:dmenu--has-scroll-bar={options.scroll?.bar ?? false}
-            style:width={options?.styling?.width ?? "auto"}
-            style:min-width={options?.styling?.minWidth ?? "auto"}
-            style:max-width={options?.styling?.maxWidth ?? "auto"}
-            style:height={options?.styling?.height ?? "auto"}
-            style:max-height={options?.styling?.maxHeight ?? "auto"}
-            style:font-family={options?.styling?.fontFamily ?? "inherit"}
+            class:dmenu--has-scroll-bar={scroll?.bar ?? false}
+            style:width={width}
+            style:min-width={minWidth}
+            style:max-width={maxWidth}
+            style:height={height}
+            style:max-height={maxHeight}
+            style:font-family={fontFamily}
+            style:--font-size={fontSize}
+            use:clickOutside on:outClick={onClickOutside} 
+            bind:this={dmenuRef}
         >
-            {#each listItems as item}
+            {#each listItems as item, idx}
                 {#if "sectionName" in item}
-                    <div 
+                    <li 
                         class="dmenu__section-name"
                         class:dmenu__section-name--mono={item.font === "mono"}
                     >
                         {item.sectionName}
-                    </div>
+                    </li>
+                {:else if "active" in item}
+                    {@const { name, active } = item}
+                    <li class="dmenu__toggle-optn  dmenu__option--static">
+                        <span class="dmenu__option-heading">
+                            {name}
+                        </span>
+                        <ToggleBtn 
+                            active={active} 
+                            onToggle={() => onToggle(idx)}
+                        />
+                    </li>
+                    {#if item.divider}
+                        <li class="dmenu__section-divider"></li>
+                    {/if}
                 {:else if "name" in item}
                     {@const option = item}
                     <DropdownListOption 
+                        {idx}
                         {option}
                         {pickedItem}
                         {onItemPointerLeave}
                         {onItemPointerOver}
-                        idx={initOptnIdx()}
                         onOptionClicked={onItemClicked}
                     />
                     {#if item.divider}

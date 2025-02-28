@@ -160,34 +160,34 @@ function ColorPicker() {
     const state: Writable<ColorPicker> = writable({ 
         isOpen: false,
         position: { top: -1000, left: -1000 },
-        onSubmit: null,
+        onSubmitColor: () => {},
         picked: null
     })
 
-    function init(args: { 
-        onSubmit: (color: Color | null) => void,
+    function init({ onSubmitColor, picked }: { 
+        onSubmitColor: (color: Color | null) => void,
         picked: Color | null
     }) {
-        const { onSubmit, picked } = args
-        const position = getPopFloatElemPos({ height: 290, width: 460 })
+        const position = getPopFloatElemPos({ height: 300, width: 150 })
+        position.top += 25
+        position.left -= 30
 
         if (get(state).isOpen) {
             close()
             return
         }
-
         state.update((data) => ({ 
             ...data, 
-            onSubmit,
+            onSubmitColor,
             position, 
             isOpen: true,
             picked
         }))
     }
-    function onSubmit(color: Color | null) {
-        const { onSubmit }  = get(state)
-        if (onSubmit) {
-            onSubmit(color)
+    function onSubmitColor(color: Color | null) {
+        const { onSubmitColor }  = get(state)
+        if (onSubmitColor) {
+            onSubmitColor(color)
         }
         close()
     }
@@ -195,12 +195,12 @@ function ColorPicker() {
         state.update((data) => ({
             ...data,
             isOpen: false, 
-            onSubmitEmoji: onSubmit
+            onSubmitColor: onSubmitColor
         }))
     }
 
     return {
-        state, init, onSubmit, close
+        state, init, onSubmitColor, close
     }
 }
 

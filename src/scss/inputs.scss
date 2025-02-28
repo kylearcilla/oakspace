@@ -33,9 +33,9 @@ div[contenteditable]:focus {
     padding: 4px 4px 4px 0px;
     transition: 0.2s border ease-in-out;
     max-height: 100%;
-    overflow-y: scroll;
+    overflow: scroll;
     position: relative;
-    @include text-style(0.8, 500, 1.3rem);
+    @include text-style(0.8, var(--fw-400-500), 1.45rem);
 }
 
 @keyframes caret-flash-smooth {

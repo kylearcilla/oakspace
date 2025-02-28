@@ -1,64 +1,42 @@
 <script lang="ts">
+    import { Icon } from "$lib/enums"
 	import { themeState } from "$lib/store"
-	import { clickOutside, inlineStyling } from "$lib/utils-general"
-    import { getColorTrio } from "$lib/utils-colors"
+	import { inlineStyling } from "$lib/utils-general"
+	import { TAGS } from "../tests/routines/routines.data"
+    import { getColorTrio, getSwatchColors } from "$lib/utils-colors"
+    
 	import SvgIcon from "./SVGIcon.svelte"
-	import { Icon } from "$lib/enums"
-	import BounceFade from "./BounceFade.svelte";
-	import { TAGS } from "../tests/routines/routines.data";
-
+	import BounceFade from "./BounceFade.svelte"
 
     export let tag: Tag | null
-    export let isActive: boolean
-    export let onTagOptionClicked: (newTag: Tag | null) => void
-    export let onClickOutside: FunctionParam
-    export let onClick: FunctionParam
+    export let onTagClicked: (newTag: Tag | null) => void
     export let styling: StylingOptions | undefined = undefined
 
-    let isPickerMounted = true
-    let _isActive = true
-    let removeTimeout: NodeJS.Timeout | null = null
+    let menu = false
 
-    const TRANSITION_DURATIONS_MS = 200
-
-    $: isEmpty = !tag
+    $: empty = !tag
     $: isDarkTheme = $themeState.isDarkTheme
-    $: toggleMenu(isActive)
-
     $: tagColor = tag ? getColorTrio(tag.symbol.color, !isDarkTheme) : null
 
-    function toggleMenu(isActive: boolean) {
-        // mount if active, mount on DOM, then toggle aniamtion
-        if (isActive) {
-            isPickerMounted = true
-            requestAnimationFrame(() => _isActive = true)
-        }
-        // if timeout has been set but user quickly toggles active agin, remove the timeout
-        if (isActive && removeTimeout) {
-            clearTimeout(removeTimeout)
-            removeTimeout = null    
-        }
-        // if inactive, allow the animation, then dismount
-        if (!isActive) {
-            _isActive = false
-            removeTimeout = setTimeout(() => isPickerMounted = false, TRANSITION_DURATIONS_MS)
-            removeTimeout = null
-        }
+    function onSettingsClicked() {
+
     }
-    function onClickNewTagBtn() {
+    function onNewTagClicked() {
+
+    }
+    function onClick() {
+        menu = !menu
     }
 </script>
 
-<div 
-    class="tag-picker"
-    class:tag-picker--light={!isDarkTheme}
->
+<div class="tag-picker" class:tag-picker--light={!isDarkTheme}>
     <button 
         id="tag-picker--dbtn"
-        class="tag-picker__dbtn dbtn tag"
-        class:tag--is-light={tag?.symbol.color.isLight && !isDarkTheme}
-        class:tag-picker__dbtn--active={_isActive}
-        class:tag-picker__dbtn--empty={!tag}
+        class="tag-picker__dbtn dbtn"
+        class:tag-picker__dbtn--empty={empty}
+        class:tag-picker__dbtn--colored={!empty}
+        class:dbtn--no-bg={false}
+        class:dbtn--empty={empty}
         style:--tag-color-primary={tag?.symbol.color.primary}
         style:--tag-color-1={tagColor ? tagColor[0] : ""}
         style:--tag-color-2={tagColor ? tagColor[1] : ""}
@@ -66,7 +44,6 @@
         style={inlineStyling(styling)}
         on:click={onClick}
     >
-        <!-- Tag Content -->
         {#if tag}
             <span class="tag__symbol">
                 {tag.symbol.emoji}
@@ -75,64 +52,65 @@
                 {tag.name}
             </div>
         {:else}
-            <div class="tag__title">
+            <div class="dbtn__title">
                 None
             </div>
         {/if}
-        <!-- Tag Dropdown Arrow -->
-        {#if isEmpty || (!isEmpty && !isActive)}
-            <div class="tag-picker__dbtn-arrow">
+        {#if empty || (!empty && !menu)}
+            <div class="dbtn__icon dbtn__icon--arrow">
                 <SvgIcon 
                     icon={Icon.Dropdown}
-                    options={{
-                        scale: 1.1, height: 12, width: 12, strokeWidth: 1.4
+                    options={{ 
+                        scale: 1.3,
+                        color: tagColor ? `rgba(${tagColor[0] ?? ""}, 1)` : undefined
                     }}
                 />
             </div>
         {:else}
-            <button 
-                class="tag-picker__dbtn-close"
-                on:click|stopPropagation={() => onTagOptionClicked(null)}
+            <button
+                class="dbtn__icon dbtn__icon--close"
+                on:click={() => onTagClicked(null)}
             >
                 <SvgIcon 
                     icon={Icon.Close} 
                     options={{ 
-                        scale: 0.9, height: 12, width: 12, strokeWidth: 1.6
-                    }} 
+                        scale: 0.96, 
+                        strokeWidth: 2, 
+                        height: 11, 
+                        width: 11,
+                        color: tagColor ? `rgba(${tagColor[0] ?? ""}, 1)` : undefined
+                    }}
                 />
             </button>
         {/if}
     </button>
-    <!-- Tag Dropdown Menu -->
     <BounceFade 
-        isHidden={!isActive}
-        position={{ top: "0px", left: "0px" }}
+        id="tag-picker--dmenu"
+        isHidden={!menu}
+        onClickOutside={() => menu = false}
+        position={{ 
+            top: "0px", left: "0px" 
+        }}
     >
-        <div 
-            id="tag-picker--dmenu"
-            class="tag-picker__dmenu-container"
-            class:tag-picker__dmenu-container--shown={_isActive}
-            style:--trans-duration={`${TRANSITION_DURATIONS_MS}ms`}
-            use:clickOutside on:outClick={() => onClickOutside()}
-        >
+        <div class="tag-picker__dmenu-container">
             <ul class="tag-picker__dmenu">
                 {#each TAGS as tagOption}
-                    {@const tagOptColor = getColorTrio(tagOption.symbol.color, !isDarkTheme)}
+                    {@const colors = getSwatchColors({ color: tagOption.symbol.color, light: !isDarkTheme })}
+                    {@const picked = tag?.name === tagOption.name}
                     <li 
-                        class="tag-picker__dropdown-option"
-                        class:tag-picker__dropdown-option--picked={tag?.name === tagOption.name}
+                        class="tag-picker__dropdown-opt"
+                        class:tag-picker__dropdown-opt--picked={picked}
                     >
                         <button
-                            class="tag-picker__dropdown-option-btn"
-                            on:click={() => onTagOptionClicked(tagOption)}
+                            class="tag-picker__dropdown-opt-btn"
+                            on:click={() => onTagClicked(tagOption)}
                         >
                             <div 
                                 class="tag"
-                                class:tag--is-light={tagOption.symbol.color.isLight && !isDarkTheme}
                                 style:--tag-color-primary={tagOption.symbol.color.primary}
-                                style:--tag-color-1={tagOptColor[0]}
-                                style:--tag-color-2={tagOptColor[1]}
-                                style:--tag-color-3={tagOptColor[2]}
+                                style:--tag-color-1={colors[0]}
+                                style:--tag-color-2={colors[1]}
+                                style:--tag-color-3={colors[2]}
                             >
                                 <span class="tag__symbol">
                                     {tagOption.symbol.emoji}
@@ -141,27 +119,27 @@
                                     {tagOption.name}
                                 </div>
                             </div>
-                            <div class="tag-picker__dropdown-option-check">
+                            <div class="tag-picker__dropdown-opt-check">
                                 <i class="fa-solid fa-check"></i>
                             </div>
                         </button>
-                        <!-- <button 
-                            class="tag-picker__dropdown-option-settings-btn dbtn dbtn--settings"
+                        <button 
+                            class="tag-picker__settings-btn"
+                            on:click={onSettingsClicked}
                         >
                             <SvgIcon icon={Icon.Settings} />
-                        </button> -->
+                        </button>
                     </li>
                 {/each}
             </ul>
             <div class="tag-picker__dmenu-add">
-                <div class="divider"></div>
-                <button 
-                    class="tag-picker__dmenu-addbtn"
-                    on:click={onClickNewTagBtn}
-                >
-                    <span>Add New</span>
-                    <div class="tag-picker__dmenu-add-icon">
-                        <SvgIcon icon={Icon.Add} options={{ scale: 0.92, strokeWidth: 1.7 }} />
+                <button on:click={onNewTagClicked}>
+                    <span>Create New Tag</span>
+                    <div style:opacity={0.45}>
+                        <SvgIcon 
+                            icon={Icon.Add} 
+                            options={{ scale: 0.98, strokeWidth: 1.7 }} 
+                        />
                     </div>
                 </button>
             </div>
@@ -172,154 +150,81 @@
 <style lang="scss">
     @import "../scss/dropdown.scss";
 
-    .tag {
-        border-radius: 12px !important;
-
-        &__symbol {
-            cursor: pointer;
-        }
-        &__title {
-            font-weight: 500;
-            font-size: 1.25rem;
-            margin-right: 9px;
-            cursor: pointer;
-            color: rgba(var(--tag-color-1), 1);
-        }
-    }
-
     .tag-picker {
         position: relative;
-        transition: 0.12s ease-in-out;
 
-        &--light &__dmenu-container {
-            border: 1px solid rgba(var(--textColor1), 0.075);
-        }
-        &--light &__dmenu-container h3 {
-            @include text-style(1, 600);
-        }
-        &--light &__dmenu-add {
-            border-top: 1px solid rgba(var(--textColor1), 0.1);
-        }
-        &--light &__dropdown-option:hover {
-            @include txt-color(0.05, "bg");
-        }
-        &--light &__dmenu-addbtn {
-            opacity: 0.8;
-            &:hover {
-                opacity: 1 !important;
-            }
-            span {
-                @include text-style(1, 600);   
-            }
-        }
-        &--light h3 {
-            @include text-style(1, 500);
-        }
-        &--light &__dropdown-option:hover {
-            filter: brightness(1);
-        }
+        --tag-hov-brightness: 1.1;
+        --optn-hov-opacity: 0.02;
         
-        &__dbtn.tag {
-            background-color: rgba(var(--tag-color-2), 1);
-            padding: 4px 12px 4px 11px;
+        &--light {
+            --tag-hov-brightness: 1.015;
+            --optn-hov-opacity: 0.03;
         }
-        &__dbtn--empty {
-            .tag__title {
-                opacity: 0.6;
+        &__dbtn {
+            padding: 5px 10px 7px 9px;
+            border-radius: 7px !important;
+            
+            &--colored {
+                background-color: rgba(var(--tag-color-2), 1) !important;
+                color: rgba(var(--tag-color-1), 1);
             }
-            &:hover {
-                @include txt-color(0.04, "bg");
+            &--colored:hover {
+                background-color: rgba(var(--tag-color-2), 1) !important;
+                filter: brightness(var(--tag-hov-brightness));
             }
         }
-        &__dbtn--active &__dbtn-arrow {
-            transform: rotate(-180deg);
-        }
-        &__dbtn-arrow, &__dbtn-close {
-            opacity: 0.2;
-            transition: 0.1s ease-in-out;
-        }
-        &__dbtn-arrow {
-            transition: 0.1s ease-in-out;
-            transform: rotate(0deg);
-            transform-origin: center;
 
-            &--active {
-                transform: rotate(-180deg);
-            }
-        }
-        &__dbtn-close:hover {
-            opacity: 0.5;
-        }
         &__dmenu-container {
             @include abs-top-left(28px);
+            @include contrast-bg("bg-2");
             background-color: var(--bg-2);
-            padding: 2px 0px 8px 0px;
-            border-radius: 10px;
+            padding: 0px 0px 6.5px 0px;
             z-index: 1000;
-            width: 150px;
-            transition: var(--trans-duration) opacity cubic-bezier(.2, .45, 0, 1),
-                        var(--trans-duration) visibility cubic-bezier(.2, .45, 0, 1),
-                        var(--trans-duration) transform cubic-bezier(.2, .45, 0, 1);
-            transform: scale(0.9);
             border: 1px solid rgba(var(--textColor1), 0.04);
-            @include not-visible;
-
-            &--shown {
-                transform: scale(1);
-                @include visible;
-            }
+            border-radius: 7px;
+            border-bottom-left-radius: 11px;
+            border-bottom-right-radius: 11px;
         }
         &__dmenu .tag {
-            border-radius: 6px !important;
+            border-radius: 4px !important;
             transition: 0.1s ease-in-out;
-            margin-right: 7px;
-            min-width: 0px;
+            padding: 4px 5px 4.5px 7px !important;
         }
         &__dmenu .tag__symbol {
-            font-size: 0.85rem;
+            font-size: 0.95rem;
         }
         &__dmenu .tag__title {
-            font-size: 1.05rem;
+            font-weight: 500 !important;
+            font-size: 1.2rem !important;
         }
         &__dmenu {
-            max-height: 200px;
+            max-height: 290px;
             overflow-y: scroll;
             padding: 4px 0px 8px 0px;
         }
-        &__dmenu-title {
-            h3 {
-                padding: 0px 0px 0px 7px;
-                @include text-style(1, 500, 1.3rem);
-            }
-            .divider {
-                margin: 3px 0px 2px 0px;
-            }
-        }
-        &__dropdown-option {
+        &__settings-btn {
+            @include abs-top-right(5px, 8px);
+            @include not-visible;
+            opacity: 0.25;
             transition: 0s ease-in-out;
-            border-radius: 9px;
-            padding: 3px 9px 3px 4px;
+        }
+        &__dropdown-opt {
+            border-radius: 6px;
+            padding: 3.5px 8px 3.5px 4px;
             user-select: text;
             position: relative;
-            width: calc(100% - 9px);
-            margin-left: 4px;
+            width: calc(100% - 18px);
+            margin: 0px 10px 1px 4px;
             cursor: pointer;
             
             &:hover {
-                @include txt-color(0.01, "bg");
-                filter: brightness(1.2);
+                background-color: rgba(var(--textColor1), var(--optn-hov-opacity));
             }
-            // &:hover &-check {
-            //     display: none;
-            // }
-            &:hover &-settings-btn {
-                @include visible(0.2);
-                @include txt-color(0, "bg");
-
-                &:hover {
-                    @include txt-color(0.05, "bg");
-                    opacity: 0.6;
-                }
+            &:hover &-check {
+                @include not-visible;
+            }
+            &--picked {
+                background-color: rgba(var(--textColor1), 0.02);
             }
             &--picked &-check {
                 @include visible(0.5);
@@ -327,55 +232,67 @@
             &-check {
                 @include not-visible;
             }
-            &-settings-btn {
-                @include not-visible;
-                @include abs-top-right(5px, 5px);   
+            i {
+                font-size: 1.25rem;
             }
         }
-        &__dropdown-option-btn {
+        &__dropdown-opt:hover &__settings-btn {
+            @include visible(0.2);
+
+            &:hover {
+                opacity: 0.8 !important;
+            }
+        }
+        &__dropdown-opt-btn {
             @include flex(center, space-between);
             width: 100%;
-        }
-        &__dropdown-option .tag {
-            border-radius: 8px;
-            background-color: rgba(var(--tag-color-2), 1);
-            padding: 2.5px 5px 2.5px 9px;
-            
-            &__title {
-                font-weight: 600;
+            margin-right: 20px;
+
+            &:hover {
+                filter: brightness(var(--tag-hov-brightness));
             }
         }
         &__dmenu-add {
             width: 100%;
-            border-top: 1px solid rgba(var(--textColor1), 0.05);
-
-            &:hover &-btn {
-                opacity: 0.8;
-            }
-            &-btn {
-                opacity: 0.5;
-            }
-            &-icon {
-                opacity: 0.8;
-            }
+            border-top: 1.5px dashed rgba(var(--textColor1), 0.065);
+            padding: 6px 0px 0px 0px;
         }
-        &__dmenu-add .divider {
-            margin: 2px 0px 5px 0px;
-        }
-        &__dmenu-addbtn {
+        &__dmenu-add button {
             @include flex(center, space-between);
-            width: calc(100% - 22px);
-            padding: 2px 0px 0px 10px;
-            border-radius: 12px;
-            margin-left: 0px;
-            transition: 0.02s ease-in-out;
-
+            width: calc(100% - 31px);
+            padding: 7px 8px 9px 10px;
+            border-radius: 8px;
+            margin: 0px 0px 0px 6px;
+            opacity: 0.9;
+            background-color: rgba(var(--textColor1), 0.045);
+            
+            &:hover {
+                opacity: 1;
+                background-color: rgba(var(--textColor1), 0.07);
+            }
             &:active {
                 transition: 0.14s ease-in-out;
             }
             span {
-                @include text-style(1, 400, 1.1rem);
+                @include text-style(1, var(--fw-400-500), 1.25rem);
             }
         }
+    }
+    .tag {
+        border-radius: 12px !important;
+
+        &__symbol {
+            cursor: pointer;
+        }
+        &__title {
+            font-weight: var(--fw-400-500);
+            font-size: 1.285rem;
+            margin-right: 9px;
+            color: rgba(var(--tag-color-1), 1);
+            cursor: pointer;
+        }
+    }
+    .dbtn__title {
+        font-size: 1.285rem;
     }
 </style>

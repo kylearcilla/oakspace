@@ -1,13 +1,13 @@
 export const COLOR_SWATCHES = [
   {
-    primary: "#F09999",
+    primary: "#ff8e8e",
     light1: "157, 100, 100",
     light2: "255, 214, 214",
     light3: "221, 168, 168",
     dark1: "255, 180, 180",
     dark2: "54, 34, 34",
     dark3: "156, 115, 115",
-    dark4: "40, 22, 22",
+    dark4: "39, 27, 27",
     name: "red"
   },
   {
@@ -16,10 +16,10 @@ export const COLOR_SWATCHES = [
     light2: "247, 215, 202",
     light3: "217, 173, 167",
     dark1: "222, 177, 161",
-    dark2: "49, 36, 33",
+    dark2: "58, 40, 34",
     dark3: "172, 122, 112",
     dark4: "40, 28, 21",
-    name: "terracotta"
+    name: "scarlet"
   },
   {
     primary: "#FFC898",
@@ -27,9 +27,9 @@ export const COLOR_SWATCHES = [
     light2: "248, 227, 191", 
     light3: "217, 184, 155",
     dark1: "252, 212, 186",
-    dark2: "53, 43, 37",
+    dark2: "48, 40, 36",
     dark3: "135, 107, 92",
-    dark4: "43, 35, 31",
+    dark4: "36, 29, 25",
     name: "orange"
   },
   {
@@ -37,43 +37,43 @@ export const COLOR_SWATCHES = [
     light1: "139, 114, 66",
     light2: "255, 246, 200",
     light3: "228, 203, 155",
-    dark1: "252, 231, 180",
-    dark2: "52, 51, 39",
+    dark1: "238, 208, 133",
+    dark2: "47, 41, 26",
     dark3: "151, 131, 85",
-    dark4: "39, 38, 17",
+    dark4: "40, 33, 15",
     name: "yellow"
   },
   {
     primary: "#E6FD8A",
     light1: "86, 110, 66",
-    light2: "220, 235, 177",
+    light2: "228, 242, 186",
     light3: "175, 198, 156",
     dark1: "245, 255, 205",
-    dark2: "39, 39, 28",
+    dark2: "40, 44, 25",
     dark3: "81, 85, 66",
-    dark4: "39, 39, 28",
+    dark4: "27, 30, 14",
     name: "pear"
   },
   {
-    primary: "#DCFFBB",
+    primary: "#d7e5aa",
     light1: "72, 111, 70",
-    light2: "201, 236, 185",
+    light2: "220, 247, 206",
     light3: "160, 204, 157",
     dark1: "220, 255, 187",
     dark2: "28, 36, 25",
     dark3: "69, 88, 52",
-    dark4: "28, 36, 25",
+    dark4: "22, 29, 15",
     name: "green"
   },
   {
     primary: "#D4FFFA",
     light1: "72, 99, 93",
-    light2: "208, 232, 230",
+    light2: "219, 238, 236",
     light3: "156, 183, 177",
     dark1: "200, 249, 243",
-    dark2: "24, 35, 30",
+    dark2: "35, 45, 56",
     dark3: "58, 109, 102",
-    dark4: "24, 35, 30",
+    dark4: "23, 30, 29",
     name: "teal"
   },
   {
@@ -84,7 +84,7 @@ export const COLOR_SWATCHES = [
     dark1: "192, 219, 252",
     dark2: "36, 42, 54",
     dark3: "91, 119, 141",
-    dark4: "30, 33, 41",
+    dark4: "29, 31, 38",
     name: "azure"
   },
   {
@@ -95,7 +95,7 @@ export const COLOR_SWATCHES = [
     dark1: "191, 215, 255",
     dark2: "27, 31, 42",
     dark3: "54, 70, 99",
-    dark4: "30, 30, 56",
+    dark4: "27, 27, 44",
     name: "blue"
   },
   {
@@ -106,18 +106,18 @@ export const COLOR_SWATCHES = [
     dark1: "177, 180, 255",
     dark2: "36, 37, 60",
     dark3: "87, 89, 139",
-    dark4: "29, 29, 54",
+    dark4: "31, 25, 44",
     name: "purple"
   },
   {
     primary: "#DDBAFF",
     light1: "99, 91, 108",
-    light2: "239, 212, 249",
+    light2: "236, 222, 244",
     light3: "187, 168, 209",
     dark1: "232, 208, 255",
     dark2: "45, 35, 42",
     dark3: "93, 79, 107",
-    dark4: "45, 35, 42",
+    dark4: "35, 30, 38",
     name: "magenta"
   },
   {
@@ -126,9 +126,9 @@ export const COLOR_SWATCHES = [
     light2: "249, 218, 224",
     light3: "220, 179, 198",
     dark1: "245, 172, 217",
-    dark2: "49, 39, 45",
+    dark2: "55, 35, 47",
     dark3: "148, 114, 139",
-    dark4: "49, 39, 45",
+    dark4: "39, 22, 32",
     name: "pink"
   },
 ]
@@ -161,6 +161,20 @@ export function getColorTrio(color: Color, doGetLight: boolean): [string, string
   }
   else {
     return [color.dark1, color.dark4, color.dark3]
+  }
+}
+
+export function getSwatchColors({ color, light, contrast = true }: { 
+  color: Color
+  light: boolean 
+  contrast?: boolean
+}) {
+
+  if (light) {
+    return [color.light1, color.light2, color.light3]
+  }
+  else {
+    return [color.dark1, contrast ? color.dark2 : color.dark4, color.dark3]
   }
 }
 

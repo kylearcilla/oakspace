@@ -3,44 +3,24 @@
 	import { themeState } from "$lib/store"
 	import { getThemeStyling } from "$lib/utils-appearance"
 
-  const DEFAULT_STYLING: IconOptions = {
-      opacity: 1, 
-      width: 15, 
-      height: 18,
-      strokeWidth: 1, 
-      scale: 1, 
-      fullOnHover: false,
-      id: "",
-      color: getThemeStyling("textColor1")
-  }
-  
   export let icon: Icon
   export let options: IconOptions = {}
 
   const arrow = [Icon.ChevronLeft, Icon.ChevronRight, Icon.Dropdown].includes(icon)
-  
-  let {
-    opacity, 
-    width, 
-    height, 
-    strokeWidth,
-    scale, 
-    id, 
-    fullOnHover,
-    color 
-  } = DEFAULT_STYLING
 
-  $: {
-    opacity = options.opacity 
-    width = options.width
-    height = options.height
-    strokeWidth = options.strokeWidth
-    scale = arrow && !options.scale ? 1.5 : options.scale
-    id = options.id 
-    color = options.color 
-    fullOnHover = options.fullOnHover 
-  }
-  
+  let {
+      opacity = 1, 
+      width = 15, 
+      height = 18,
+      strokeWidth = 1, 
+      scale = 1, 
+      fullOnHover = false,
+      id = "",
+      color
+  } = options
+
+  $: color = options.color || `rgba(${getThemeStyling("textColor1")})`
+
   $: if ($themeState && !options?.color) {
       color = `rgba(${getThemeStyling("textColor1")})`
   }

@@ -1,12 +1,12 @@
 <script lang="ts">
     import { themeState } from "$lib/store"
     import { colorPicker } from "../lib/pop-ups"
-	import { clickOutside, capitalize } from "$lib/utils-general"
+	import { capitalize } from "$lib/utils-general"
 	import { COLOR_SWATCHES } from "$lib/utils-colors"
     
 	import BounceFade from "./BounceFade.svelte"
     
-    const { state, onSubmit } = colorPicker
+    const { state, onSubmitColor, close } = colorPicker
 
     $: isDark = $themeState.isDarkTheme
     $: isOpen =  $state.isOpen
@@ -14,39 +14,42 @@
     $: picked = $state.picked
 
     function onSwatchClicked(color: Color) {
-        onSubmit(color)
+        onSubmitColor(color)
     }
 </script>
 
 <BounceFade 
+    id="color-picker--dmenu"
     isHidden={!isOpen}
-    zIndex={2000}
+    zIndex={10001}
     position={{
-        top: `${position.y}px`,
-        left: `${position.x}px`
+        top: `${position.top}px`,
+        left: `${position.left}px`
     }}
+    onClickOutside={() => close()}
 >
     <div 
-        use:clickOutside on:outClick={() => onSubmit(null)}
-        id="color-picker--dmenu"
         class="color-picker" 
         class:color-picker--light={!isDark}
     >
-        <h2>Colors</h2>
-        <ul class="color-picker__grid">
-            {#each COLOR_SWATCHES as color, idx}
+        <ul>
+            {#each COLOR_SWATCHES as color}
                 {@const { primary, name } = color }
-                <button 
-                    on:click={() => onSwatchClicked(color)}
-                    style:--color={primary}
-                    class="color-picker__color"
-                    class:color-picker__color--picked={idx === 0}
-                >
-                    <div class="color-picker__color-swatch"></div>
-                    <div class="color-picker__color-name">
-                        {capitalize(name)}
-                    </div>
-                </button>
+                <li>
+                    <button 
+                        class="color-picker__color"
+                        class:color-picker__color--picked={picked?.name === name}
+                        style:--color={primary}
+                        on:click={() => {
+                            onSwatchClicked(color)
+                        }}
+                    >
+                        <div class="color-picker__color-swatch"></div>
+                        <div class="color-picker__color-name">
+                            {capitalize(name)}
+                        </div>
+                    </button>
+                </li>
             {/each}
         </ul>
     </div>
@@ -54,54 +57,66 @@
 
 
 <style lang="scss">
-    .color-picker {
-        padding: 14px 4px 17px 17px;
-        border-radius: 18px;
-        background-color: #1d1d1d;
-        border: 1px solid rgba(var(--textColor1), 0.03);
 
-        h2 {
-            @include text-style(1, 400, 1.3rem, "DM Mono");
-            margin: 0px 0 13px -3px;
-            display: none;
+    @mixin picked {
+        background-color: rgba(var(--textColor1), var(--bg-opacity));
+        
+        .color-picker__color-name { 
+            opacity: 1;
         }
-        &__grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(6, 1fr);
-            grid-auto-flow: column;
-            grid-gap: 24px;
-            row-gap: 12px;
+        .color-picker__color-swatch {
+            filter: brightness(var(--hov-brightness));
+        }
+    }
+
+    .color-picker {
+        padding: 4px 7px 6px 5px;
+        border-radius: 7px;
+        border: 1px solid rgba(var(--textColor1), 0.03);
+        @include contrast-bg("bg-2");
+
+        --bg-opacity: 0.025;
+        --hov-brightness: 1.15;
+        
+        &--light {
+            --bg-opacity: 0.06;
+            --hov-brightness: 1.05;
+        }
+
+        li {
+            margin-bottom: 1px;
+            border-radius: 4px;
+
+            &:last-child {
+                margin-bottom: 0px;
+            }
         }
         &__color {
             display: flex;
-            width: 110px;
             cursor: pointer;
+            padding: 6px 4px 6px 5px;
+            border-radius: 6px;
+            width: calc(100% - 6px);
+            transition: 0s;
 
-            &:hover &-name {
-                opacity: 1;
-            }
-            &:hover &-swatch {
-                box-shadow: rgba(#0C8CE9, 0.5) 0px 0px 0px 3.5px;
+            &:hover {
+                @include picked;
             }
         }
-        &__color--picked &__color-swatch {
-            box-shadow: rgba(#0C8CE9, 0.7) 0px 0px 0px 3px inset, 
-                        rgba(#0C8CE9, 0.4) 0px 0px 0px 3.5px;
+        &__color--picked  {
+            @include picked;
         }
         &__color--picked &__color-name {
-            color: #0C8CE9 !important;
             opacity: 1;
         }
         &__color-swatch {
-            @include square(21px, 20px);
+            @include square(14px, 6px);
             background-color: var(--color);
-            margin-right: 10px;
         }
         &__color-name {
-            @include text-style(1, 400, 1.25rem, "DM Mono");
-            margin-top: 1px;
-            opacity: 0.7;
+            @include text-style(1, var(--fw-400-500), 1.225rem, "Geist Mono");
+            margin: -2px 22px 0px 11px;
+            opacity: 0.6;
         }
     }
 </style>

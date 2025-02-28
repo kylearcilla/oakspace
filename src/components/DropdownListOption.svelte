@@ -9,8 +9,6 @@
     export let onItemPointerLeave: ((e: PointerEvent, option: DropdownOption) => void)
 
     const { rightIcon, leftIcon, name } = option
-
-    
 </script>
 
 <li 

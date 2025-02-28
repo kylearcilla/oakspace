@@ -62,5 +62,8 @@
         {:else if type === "check"}
             <i class="fa-solid fa-check"></i> 
         {/if}
+        {#if type === "unit"}
+            {icon.icon}
+        {/if}
     </div>
 </div>

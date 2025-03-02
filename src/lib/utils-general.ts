@@ -958,3 +958,76 @@ export function getFontFamilyFromStyle(style: string) {
     return "Manrope"
   }
 }
+
+export function insertItemArr<T extends { idx: number }>({ 
+    array, 
+    item, 
+    atIdx 
+}: { array: T[], item: T, atIdx?: number }): T[] {
+  atIdx ??= item.idx
+  const newArray = [...array, item]
+  
+  for (let i = 0; i < newArray.length; i++) {
+    if (newArray[i].idx >= atIdx && newArray[i] !== item) {
+      newArray[i].idx += 1
+    }
+  }
+  
+  return newArray
+}
+
+export function removeItemArr<T extends { idx: number }>({
+  array,
+  itemIdx
+}: { array: T[], itemIdx: number }): T[] {
+  const newArray = array.filter(item => item.idx !== itemIdx)
+  
+  for (let i = 0; i < newArray.length; i++) {
+    if (newArray[i].idx > itemIdx) {
+      newArray[i].idx -= 1
+    }
+  }
+  
+  return newArray
+}
+
+export function reorderItemArr<T extends { idx: number }>({ 
+  array, 
+  srcIdx, 
+  targetIdx 
+}: { array: T[], srcIdx: number, targetIdx: number }): T[] {
+  const newArray = [...array]
+  const direction = srcIdx > targetIdx ? "up" : "down"
+
+  if (direction === "up") {
+    for (let i = 0; i < newArray.length; i++) {
+      if (newArray[i].idx >= targetIdx && newArray[i].idx < srcIdx) {
+        newArray[i].idx += 1
+      } 
+      else if (newArray[i].idx === srcIdx) {
+        newArray[i].idx = targetIdx
+      }
+    }
+  } 
+  else {
+    for (let i = 0; i < newArray.length; i++) {
+      if (newArray[i].idx > srcIdx && newArray[i].idx <= targetIdx) {
+        newArray[i].idx -= 1
+      } 
+      else if (newArray[i].idx === srcIdx) {
+        newArray[i].idx = targetIdx
+      }
+    }
+  }
+
+  return newArray
+}
+
+export function decrementIdx(idx: number, length: number) {
+  if (idx === 0 && length > 0) {
+    return idx
+  }
+  else {
+    return Math.max(idx - 1, -1)
+  }
+}

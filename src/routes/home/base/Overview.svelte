@@ -1,12 +1,12 @@
 <script lang="ts">
     import { themeState } from "$lib/store"
     import { isSameDay } from "$lib/utils-date"
-    import { getColorTrio } from "$lib/utils-colors"
     import { ACTIVITY_DATA } from "$lib/mock-data"
+    import { getColorTrio } from "$lib/utils-colors"
+	import { formatDateLong } from "$lib/utils-date"
 	import { minsToHHMM } from "../../../lib/utils-date"
 	import { OverviewManager } from "$lib/overview-manager"
 	import { MONTH_THOUGHT_ENTRY } from "../../../lib/mock-data"
-	import { formatDateLong, genMonthCalendar } from "$lib/utils-date"
 	import { formatPlural, randomArrayElem } from "$lib/utils-general"
     
 	import { onMount } from "svelte"

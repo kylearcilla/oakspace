@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte"
 	import { themeState, timer } from "$lib/store"
-
+    
 	import { Icon } from "$lib/enums"
+	import { hasModalOpen } from "$lib/utils-home"
 	import { isInRange } from "$lib/utils-general"
     import { getColorTrio } from "$lib/utils-colors"
 	import { WeeklyRoutinesManager } from "$lib/routines-weekly-manager"
@@ -14,12 +15,14 @@
 	import SvgIcon from "$components/SVGIcon.svelte"
 	import EditBlockModal from "../EditBlockModal.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
+	import { colorPicker } from "$lib/pop-ups";
 
     export let data: { routines: WeeklyRoutine[] }
 
     const MIN_VIEW_MAX_WIDTH = 640
     const INIT_SCROLL_TOP = 280
-    let WEEK_ROUTINES: WeeklyRoutine[] = data.routines
+
+    let routines: WeeklyRoutine[] = data.routines
 
     /* DOM */
     let hourBlocksElem: HTMLElement
@@ -32,13 +35,12 @@
     let currTime = getDayIdxMinutes()
     
     /* routines */
-    let setWeekRoutineIdx = WEEK_ROUTINES.length > 0 ? 0 : -1
-    let manager = new WeeklyRoutinesManager(WEEK_ROUTINES[setWeekRoutineIdx] ?? null)
+    let setWeekRoutineIdx = routines.length > 0 ? 0 : -1
+    let manager = new WeeklyRoutinesManager(routines[setWeekRoutineIdx] ?? null)
         
     let daysInView = manager.DAYS_WEEK
     let isContextMenuOpen = false
     let colorsOpen = false
-    let colorsPos: OffsetPoint | null = null
     let viewOptn: "all" | "mtwt" | "fss" | "today" = "all"
 
     let breakdownOpen = false
@@ -59,15 +61,14 @@
     $: editContext       = $_editContext
     $: editingBlock      = $_editingBlock
     $: contextMenuPos    = $_contextMenuPos
-    $: locked   = isContextMenuOpen || colorsOpen
+    $: locked = isContextMenuOpen || colorsOpen
     $: dayIdx = currTime.dayIdx
 
-    $: isMin = containerWidth < MIN_VIEW_MAX_WIDTH
+    $: isMin = containerWidth < MIN_VIEW_MAX_WIDTH && routines.length > 0
     $: isLight = !$themeState.isDarkTheme
-    $: blockWidth = `${currViewOption === ViewOption.Today ? "50%" : `calc((100% / ${daysInView.length}) - 15px)`}`   
+    $: blockWidth = `${currViewOption === ViewOption.Today ? "50%" : `calc((100% / ${daysInView.length}) - 8px)`}`
     
     _currViewOption.subscribe((view) => updateBlockMaxWidth(view))
-
     const unsubscribe = timer.subscribe(() => currTime = getDayIdxMinutes())
 
     /* blocks */
@@ -92,15 +93,23 @@
             blockMaxWidth = 240
         }
     }
-    function blockOptnClicked(idx: number) {
-        if (idx === 0) {
+    function blockOptnClicked(name: string) {
+        if (name === "Edit Block") {
             manager.openEditBlockModal()
         }
-        else if (idx === 1) {
-            colorsPos = manager.getColorPickerPos()
+        else if (name === "Change Color") {
             colorsOpen = true
+            colorPicker.init({
+                onSubmitColor: (color) => {
+                    colorsOpen = false
+
+                    manager.setEditBlockColor(color)
+                    manager.resetEditState()
+                },
+                picked: editingBlock!.color
+            })
         }
-        else if (idx === 2) {
+        else if (name === "Duplicate Block") {
             manager.onDuplicateBlock()
         }
         else {
@@ -130,7 +139,7 @@
         hourBlocksElem.style.top = `-${scrollTop}px`
     }
     function onKeyUp(e: KeyboardEvent) {
-        if (!manager) return
+        if (!manager || hasModalOpen() || editingBlock) return
 
         manager.hotkeyHandler(e)
     }
@@ -164,7 +173,7 @@
     class="routine" 
     class:routine--light={isLight}
     class:routine--dark={!isLight} 
-    class:routine--narrow={isMin} 
+    class:routine--min={isMin} 
     class:routine--empty={!weekRoutine} 
     bind:clientWidth={containerWidth}
     style:--days-length={daysInView.length}
@@ -172,13 +181,14 @@
 >
     <div class="routine__details-container">
         <Details 
-            {isMin} {manager} {WEEK_ROUTINES}
+            bind:routines={routines}
+            {isMin} 
+            {manager} 
         />
     </div>
-    <!-- Week View -->
     <div class="routine__week">
         <Header
-            narrow={isMin}
+            {isMin}
             {viewOptn}
             {containerWidth}
             {daysInView}
@@ -227,7 +237,8 @@
                                 {@const startTimeStr = minsFromStartToHHMM(block.startTime)}
                                 {@const endTimeStr   = minsFromStartToHHMM(block.endTime)}
                                 {@const xOffset      = `calc(((100% / ${daysInView.length}) * ${dayIdx}) + 2px)`}
-                                {@const isEditBlock  = editingBlock?.id === block.id && (["old-stretch", "lift"].includes(editContext ?? ""))}
+                                {@const editId       = editingBlock?.id}
+                                {@const isEditBlock  = editId === block.id && (editContext === "old-stretch" || editContext === "lift")}
                                 {@const isFirstLast  = ["first", "last"].includes(block.order ?? "")}
                                 {@const isFirst      = block.order === "first"}
     
@@ -236,9 +247,10 @@
                                     id={block.id}
                                     role="button"
                                     tabIndex={0}
-                                    class={`routine-block ${getBlockStyling(block.height)}`}
-                                    class:hidden={isEditBlock}
+                                    class="routine-block"
+                                    class:routine-block--editing={editId === block.id && !editContext}
                                     class:no-pointer-events-all={locked}
+                                    class:hidden={isEditBlock}
                                     style:top={`${block.yOffset}px`}
                                     style:left={xOffset}
                                     style:--block-height={`${block.height}px`}
@@ -305,7 +317,7 @@
                         {/if}
     
                         <!-- floating or new block-->
-                        {#if editingBlock}
+                        {#if editingBlock && editContext}
                             {@const colorTrio    = getColorTrio(editingBlock.color, isLight)}
                             {@const startTimeStr = minsFromStartToHHMM(editingBlock.startTime)}
                             {@const endTimeStr   = minsFromStartToHHMM(editingBlock.endTime)}
@@ -349,7 +361,7 @@
                                             </div>
                                         {/if}
                                         <span class="routine-block__title">
-                                            {editingBlock.title}
+                                            {editingBlock.title || "Untitled"}
                                         </span>
                                     </div>
                                     <div class="routine-block__time-period">
@@ -489,8 +501,8 @@
                             onClickOutside:() => { 
                                 isContextMenuOpen = false
                             },
-                            onListItemClicked: ({ idx }) => {
-                                blockOptnClicked(idx)
+                            onListItemClicked: ({ name }) => {
+                                blockOptnClicked(name)
                             },
                             onDismount: () => {
                                 manager.closeContextMenu(editContext === "details" || colorsOpen)
@@ -537,7 +549,10 @@
 </div>
 
 {#if editContext === "details" && editingBlock}
-    <EditBlockModal block={editingBlock} routineManager={manager} />
+    <EditBlockModal 
+        block={editingBlock} 
+        routineManager={manager} 
+    />
 {/if}
 
 
@@ -558,36 +573,32 @@
         &--light &__week {
             border-left: 1px solid rgba(var(--textColor1), 0.08);
         }
-        &--narrow {
+        &--min {
             display: block;
         }
-        &--narrow &__week {
+        &--min &__week {
             width: 100%;
             height: calc(100% - 130px);
             border-left: none;
         }
-        &--narrow .hour-blocks {
+        &--min .hour-blocks {
             width: $hr-col-width--min;
 
             &__block {
                 left: -5px;
             }
         }
-        &--narrow .routine-blocks-container {
+        &--min .routine-blocks-container {
             margin-left: $hr-col-width--min;
         }
-
-        /* Week View */
         &__week {
             height: calc(100% - 55px);
-            width: calc(100% - 280px);
+            flex: 1;
             border-left: 1px solid rgba(var(--textColor1), 0.04);
             overflow: hidden;
             position: relative;
         }
     }
-
-    /* Week View */
     .week-view {
         width: 100%;
         position: relative;
@@ -617,8 +628,6 @@
             position: relative;
             @include flex(center);
         }
-
-        /* View Options */
         &__view-options {
             width: $hr-col-width;
             position: relative;

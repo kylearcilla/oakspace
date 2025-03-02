@@ -333,15 +333,6 @@ type RangeInputOptions = {
     thumbSize?: number
 }
 
-type ConfirmType = "default" | "dele  ]te"
-
-type ConfirmOptions = {
-    type?: ConfirmType
-    cancel?: string
-    ok?: string
-    caption?: string
-}
-
 type DropdownToggleOption = {
     name: string
     active: boolean
@@ -410,7 +401,7 @@ type Color = {
 type ColorPicker = {
     isOpen: boolean
     position: OffsetPoint
-    onSubmitColor: (color: Color | null) => void
+    onSubmitColor: (color: Color) => void
     picked: Color | null
 }
 
@@ -449,6 +440,7 @@ type DailyRoutine = {
     id: string
     name: string
     description: string
+    idx: number
     blocks: RoutineBlock[]
 }
 
@@ -456,6 +448,7 @@ type WeeklyRoutine = {
     id: string
     name: string
     description: string
+    idx: number
     blocks: WeeklyRoutineBlocks
 }
 

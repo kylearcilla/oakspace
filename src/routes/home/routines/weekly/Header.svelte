@@ -24,7 +24,7 @@
     export let weekRoutine: WeeklyRoutine | null
     export let manager: WeeklyRoutinesManager
     export let locked: boolean
-    export let narrow: boolean
+    export let isMin: boolean
 
     let _dayBreakdown   = manager.dayBreakdown
     
@@ -244,7 +244,7 @@
 <div 
     class="routine" 
     class:routine--light={light}
-    class:routine--narrow={narrow}
+    class:routine--isMin={isMin}
     bind:this={containerRef}
 >
     <div class="routine__options" class:routine__options--open={viewOptionOpen}>
@@ -273,7 +273,7 @@
                     top: "22px", left: containerWidth < 640 ? "0px" : "10px" 
                 },
                 styling: { 
-                    width: "94px", zIndex: 2000 
+                    zIndex: 2000 
                 },
                 onClickOutside: () => {
                     viewOptionOpen = false
@@ -304,7 +304,9 @@
                             disabled={!weekRoutine}
                             on:click={() => setBreakdownForDay(idx)}
                         >
-                            {#if containerWidth < 1100}
+                            {#if containerWidth < 800}
+                                {day.substring(0, 1)}
+                            {:else if containerWidth < 1100}
                                 {day.substring(0, 3)}
                             {:else}
                                 {day}s
@@ -607,14 +609,14 @@
         &--light &__day-breakdown {
             @include contrast-bg("bg-2");
         }
-        &--narrow {
+        &--isMin {
             padding: 0px;
         }
-        &--narrow &__days-container {
+        &--isMin &__days-container {
             width: 100%;
             margin-left: 0px;
         }
-        &--narrow &__options {
+        &--isMin &__options {
             width: $hr-col-width--min;
             padding-left: 0px;
         }

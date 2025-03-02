@@ -2,8 +2,8 @@
 	import { themeState } from "$lib/store"
 	import { TodosManager } from "$lib/todos-manager"
 
-	import Loader from "../../components/Loader.svelte"
-	import TasksList from "../../components/TasksList.svelte"
+	import TasksList from "$components/TasksList.svelte"
+	import EmptyList from "$components/EmptyList.svelte"
     
     export let manager: TodosManager
     export let removeCompleteFlag: boolean
@@ -18,13 +18,14 @@
     
     // source tasks and tasks list are separate, not bounded as state
     let currTasks = manager.currTasks
-    let tasks = []
+    let tasks: Task[] = []
 
     $: isLight = !$themeState.isDarkTheme
     $: store = manager.store
-    $: _renderFlag = $store.renderFlag
     $: onTodoist = $store.onTodoist
     $: loading = $store.loading
+
+    $: _renderFlag = $store.renderFlag
 
     // for checking for completed tasks
     $: {
@@ -80,25 +81,17 @@
       {/if}
     </div>
 
-    {#if tasks.length === 0 || loading === "init"}
-        <div class="tasks__txt">
-            {#if loading === "init"}
-                <span>
-                    Loading
-                </span>
-                <div class="tasks__loading">
-                    <Loader visible={true} />
-                </div>
-            {:else}
-                <span>
-                    You have 0 tasks.
-                </span>
-                <button on:click={() => newTaskFlag = !newTaskFlag}>
-                    Add a task
-                </button>
-            {/if}
-        </div>
-    {/if}
+    <div class="tasks__empty-list">
+        {#if tasks.length === 0 || loading === "init"}
+            <EmptyList 
+                loading={loading === "init"}
+                loadingText="Loading Tasks"
+                emptyText="You have 0 tasks."
+                buttonText="Add a task"
+                onButtonClick={() => newTaskFlag = !newTaskFlag}
+            />
+        {/if}
+    </div>
 </div>
 
 
@@ -111,13 +104,6 @@
         margin-top: -10px;
         height: 100%;
 
-        --empty-btn-bg-opacity: 0.04;
-        --empty-btn-inactive-opacity: 0.7;
-
-        &--light {
-            --empty-btn-bg-opacity: 0.055;
-            --empty-btn-inactive-opacity: 0.8;
-        }
         &--light &__todoist {
             @include text-style(1);
             border-top: 1.5px dashed rgba(var(--textColor1), 0.12);
@@ -128,51 +114,20 @@
         &--light &__todoist button {
             opacity: 0.4;
         }
-        &--light &__txt span {
-            @include text-style(0.9);
-        }
-        &--light &__txt button {
-            @include text-style(1);
-        }
-        &--light button {
-            opacity: 0.8;
-        }
         &--light .shimmer-anim {
             @include text-style(0.145);
         }
-
         &__todo-list-container {
             height: calc(100% - var(--ht-offset));
             max-height: calc(100% - var(--ht-offset));
             position: relative;
         }
-        &__txt {
-            @include abs-top-left(10%, 50%);
-            text-align: center;
+        &__empty-list {
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
             width: 100%;
-
-            span {
-                @include text-style(0.35, var(--fw-400-500), 1.225rem, "Geist Mono");
-                display: block;
-            }
-            button {
-                @include text-style(1, var(--fw-400-500), 1.2rem, "Geist Mono");
-                opacity: var(--empty-btn-inactive-opacity);
-                margin-top: 20px;
-                background-color: rgba(var(--textColor1), var(--empty-btn-bg-opacity));
-                padding: 8px 17px 9px 17px;
-                border-radius: 4px;
-                
-                &:hover {
-                    opacity: 1;
-                }
-            }
-        }
-        &__loading {
-            position: relative;
-            height: 20px;
-            width: 20px;
-            margin: 12px auto 0px auto;
         }
     }
 </style>

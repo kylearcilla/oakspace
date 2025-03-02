@@ -849,6 +849,7 @@ let currentTime = 0
 export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
     { 
         id: "0",
+        idx: 0,
         name: "Routine 1.0",
         description: "Regular work day",
         blocks: [
@@ -946,6 +947,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
     { 
         id: "1",
         name: "Schoolday 1.0",
+        idx: 1,
         description: "Regular schoolday routine",
         blocks: PRESET_ROUTINES.hs[0]
     },
@@ -972,7 +974,7 @@ export const DAILY_ROUTINES: (DailyRoutine | RoutineBlock[])[] = [
             tasks: [],
             order: "middle",
         },
-        ...PRESET_ROUTINES.hs[0].filter((block, idx) => ![2, 3, 4].includes(idx))
+        ...PRESET_ROUTINES.hs[0].filter((_, idx) => ![2, 3, 4].includes(idx)),
     ],
     [
         {
@@ -1224,71 +1226,83 @@ export const SET_DAILY_ROUTINES: DailyRoutine[] = [
         id: "3",
         name: "HS Regular Weekday",
         description: "Light weekday",
+        idx: 2,
         blocks: DAILY_ROUTINES[1] as RoutineBlock[],
     },
     { 
         id: "4",
         name: "HS EC Weekday",
+        idx: 3,
         description: "Weekday with extracurriculars.",
         blocks: DAILY_ROUTINES[2] as RoutineBlock[],
     },
     { 
         id: "5",
         name: "HS Saturday Routine",
+        idx: 4,
         description: "Chill & productive sunday routine.",
         blocks: DAILY_ROUTINES[5] as RoutineBlock[],
     },
     { 
         id: "20",
         name: "HS Sunday Routine",
+        idx: 5,
         description: "Chill & productive sunday routine.",
         blocks: DAILY_ROUTINES[6] as RoutineBlock[],
     },
     { 
         id: "6",
         name: "Uni Light Weekday",
+        idx: 6,
         description: "Light weekday",
         blocks: DAILY_ROUTINES[7] as RoutineBlock[],
     },
     { 
         id: "7",
         name: "Uni Grind Weekday",
+        idx: 7,
         description: "Busy weekday",
         blocks: DAILY_ROUTINES[10] as RoutineBlock[],
     },
     { 
         id: "8",
         name: "Uni Sunday",
+        idx: 8,
         description: "Deep works + Side Hustle",
         blocks: DAILY_ROUTINES[12] as RoutineBlock[],
     },
     { 
         id: "9",
         name: "Empty",
+        idx: 9,
         description: "",
         blocks: [] as RoutineBlock[],
     },
     { 
         id: "10",
         name: "Test 1",
+        idx: 10,
         description: "",
         blocks: DAILY_ROUTINES[13] as RoutineBlock[],
     },
     { 
         id: "11",
         name: "Test 2",
+        idx: 11,
         description: "",
         blocks: DAILY_ROUTINES[14] as RoutineBlock[],
     },
     { 
         id: "12",
         name: "Test 3",
+        idx: 12,
         description: "",
         blocks: DAILY_ROUTINES[15] as RoutineBlock[],
     },
     { 
         id: "13",
         name: "Test 4",
+        idx: 13,
         description: "",
         blocks: DAILY_ROUTINES[16] as RoutineBlock[],
     }
@@ -3559,18 +3573,21 @@ export const WEEKLY_TEST: WeeklyRoutineBlocks = {
 export const WEEKLY_ROUTINES: WeeklyRoutine[] = [
     {
         id: "0",
+        idx: 0,
         name: "High School Student",
         description: "Rounte for a high school student.",
         blocks: WEEKLY_HS_STUDENT
     },
     {
         id: "1",
+        idx: 1,
         name: "College Student",
         description: "Normal routine 2",
         blocks: WEEKLY_UNI_STUDENT
     },
     {
         id: "2",
+        idx: 2,
         name: "Full Time",
         description: "Grind shit",
         blocks: {
@@ -3581,6 +3598,7 @@ export const WEEKLY_ROUTINES: WeeklyRoutine[] = [
     },
     {
         id: "3",
+        idx: 3,
         name: "All Around",
         description: "Grind shit",
         blocks: {
@@ -3591,18 +3609,21 @@ export const WEEKLY_ROUTINES: WeeklyRoutine[] = [
     },
     {
         id: "4",
+        idx: 4,
         name: "Full Colors",
         description: "All colors for testing.",
         blocks: WEEKLY_FULL_COLORS
     },
     {
         id: "5",
+        idx: 5,
         name: "Test",
         description: "Relax & Unwind",
         blocks: WEEKLY_TEST
     },
     {
         id: "6",
+        idx: 6,
         name: "Empty",
         description: "Relax & Unwind",
         blocks: {

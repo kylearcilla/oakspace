@@ -1,48 +1,35 @@
 <script lang="ts">
-	import { themeState } from "$lib/store";
-	import Modal from "./Modal.svelte";
+	import { themeState } from "$lib/store"
+	import Modal from "./Modal.svelte"
 
     export let text: string
-    export let onCancel: FunctionParam
-    export let onOk: FunctionParam
-    export let options: ConfirmOptions
+    export let onCancel: () => void
+    export let onOk: () => void
+    export let type: "default" | "delete" = "default"
 
-    $: isDarkTheme  = $themeState.isDarkTheme
-    $: deleteColors = {
-        color1: isDarkTheme ? "#ECAAAE" : "#583e40",
-        color2: isDarkTheme ? "#181111" : "#d4ac9e",
-        color3: isDarkTheme ? "#322122" : "#C29B90"
-    }
-
-    const _options = {
-        type:    options?.type ?? "default",
-        cancel:  options?.cancel ?? "Cancel",
-        ok:      options?.ok ?? "OK",
-        caption: options?.caption
-    }
-    const { type, cancel, ok, caption } = _options
+    $: light  = !$themeState.isDarkTheme
 
     let isHolding = false
-    let holdEnd = false
-    let isDelete = options.type === "delete"
-
     const HOLD_DOWN_DELETE_CONFIRM = 1.5
 
-    function onConfirmPointerDown(pe: PointerEvent) {
-        if (pe.button === 2) return
+    function pointerDown(pe: PointerEvent) {
+        if (pe.button === 2 || type === "default") return
         isHolding = true
     }
-    function onConfirmPointerUp(pe: PointerEvent) {
-        if (pe.button === 2) return
-        isHolding = false
-
-        if (type != "delete") {
+    function pointerUp(pe: PointerEvent) {
+        if (type === "default") {
             onOk()
         }
+        else if (pe.button === 2) {
+            return
+        }
+        isHolding = false
     }
     function onHoldEnd() {
-        holdEnd = true
-        onOk()
+        if (isHolding) {
+            isHolding = false
+            onOk()
+        }
     }
     function onPointerUp() {
         if (isHolding) {
@@ -56,46 +43,43 @@
     }
 </script>
 
-<Modal options={{ borderRadius: "18px"}} onClickOutSide={() => onCancel()}>
+<Modal 
+    options={{ borderRadius: "10px"}} 
+    onClickOutSide={() => onCancel()}
+>
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div 
         class="confirm"
-        class:confirm--light={!isDarkTheme}
-        class:confirm--non-delete={type != "delete"}
+        class:confirm--light={light}
+        class:confirm--default={type === "default"}
         style:--hold-down-length={`${HOLD_DOWN_DELETE_CONFIRM}s`}
         on:pointerup={onPointerUp} 
         on:mouseleave={onMouseLeave}
     >
-        {#if caption}
-            <span class="confirm__caption">
-                {caption}
-            </span>
-        {/if}
         <div class="confirm__text">
             {@html text}
         </div>
-        <div class="confirm__btns-container">
+        <div style:width="100%">
+            <button
+                class="confirm__ok-btn"
+                class:confirm__ok-btn--holding={isHolding}
+                on:pointerdown={pointerDown}
+                on:pointerup={pointerUp}
+                on:animationend={onHoldEnd}
+            >
+                <span>
+                    {#if isHolding}
+                        {type === "default" ? "Submitting..." : "Deleting..."}
+                    {:else}
+                        Yes, I'm sure
+                    {/if}
+                </span>
+            </button>
             <button
                 class="confirm__cancel-btn"
                 on:click={onCancel}
             >
-                {cancel}
-            </button>
-            <button
-                class="confirm__ok-btn"
-                class:confirm__ok-btn--holding={type === "delete" && isHolding}
-                style:background-color={`${isDelete ? deleteColors.color2 : "rgba(var(--fgColor1)"}`}
-                style:--hold-fill-color={`${deleteColors.color3}`}
-                on:pointerdown={onConfirmPointerDown}
-                on:pointerup={onConfirmPointerUp}
-                on:animationend={onHoldEnd}
-            >
-                <span style:color={`${isDelete ? deleteColors.color1 : "rgba(var(--textColor1)"}`}>
-                    {#if isHolding && type === "delete"}
-                        Deleting...
-                    {:else}
-                        {ok}
-                    {/if}
-                </span>
+                Cancel
             </button>
         </div>
     </div>
@@ -105,11 +89,14 @@
 <style global lang="scss">
 
     .confirm { 
-        width: 350px;
-        padding: 16px 21px 19px 21px;
+        width: 330px;
+        padding: 14px 20px 22px 20px;
+        font-family: "Geist Mono";
 
-        &--light &__caption {
-            @include text-style(0.7);
+        --brightness-hover: 1.1;
+
+        &--light {
+            --brightness-hover: 1.015;
         }
         &--light &__text {
             @include text-style(1);
@@ -117,37 +104,35 @@
         &--light &__cancel-btn {
             @include txt-color(0.08, "bg");
         }
-        &--light &__ok-btn:hover {
-            filter: brightness(0.94);
+        &--default {
+            --confirm-color-3: rgba(var(--textColor1), 0.035);
         }
-        &--light#{&}--non-delete &__ok-btn span {
-            color: var(--modalBgColor) !important;
+        &--default &__ok-btn {
+            background-color: rgba(var(--textColor1), 0.02);
         }
-
-        &__caption {
-            @include text-style(0.2, 500, 1.25rem);
-            margin-bottom: 7px;
-            display: block;
+        &--default &__ok-btn:hover {
+            background-color: rgba(var(--textColor1), 0.03);
+        }
+        &--default &__ok-btn span {
+            color: rgba(var(--textColor1), 0.8) !important;
         }
         &__text {
-            @include text-style(0.85, 500, 1.44rem);
-            margin-bottom: 32px;
+            @include text-style(0.85, var(--fw-400-500), 1.35rem);
+            margin: 10px 7px 35px 7px;
+            text-align: center;
         }
         button {
             padding: 12px 25px;
             border-radius: 9px;
             @include center;
-            @include text-style(1, 500, 1.34rem);
-            transition: 0.01s ease-in-out;
-        }
+            @include text-style(1, var(--fw-400-500), 1.3rem);
 
-        &__btns-container {
-            width: 100%;
-            @include flex(center);
+            &:active {
+                transform: scale(0.99);
+            }
         }
         &__cancel-btn {
-            width: 35%;
-            margin-right: 8px;
+            width: calc(100% - 53px);
             font-weight: 300;
             @include txt-color(0.03, "bg");
             
@@ -156,17 +141,15 @@
             }
         }
         &__ok-btn {
-            width: calc(100% - (35% + 8px));
+            margin-bottom: 6px;
+            width: calc(100% - 53px);
             position: relative;
             overflow: hidden;
             transition: 0.14s cubic-bezier(.4,0,.2,1) !important;
+            background-color: var(--confirm-color-1);
             
-            &--holding::before {
-                animation: hold-confirm var(--hold-down-length) ease-in-out;
-                visibility: visible !important;
-            }
             &:hover {
-                filter: brightness(1.1);
+                filter: brightness(var(--brightness-hover));
             }
             &::before {
                 @include abs-top-left;
@@ -174,16 +157,19 @@
                 content: " ";
                 width: 100%;
                 height: 100%;
-                background-color: var(--hold-fill-color);
+                background-color: var(--confirm-color-3);
                 z-index: 0;
             }
             span {
-                @include text-style(1, _, 1.34rem, "DM Sans");
+                @include text-style(1, _, 1.3rem);
+                color: var(--confirm-color-2);
                 z-index: 10;
-                margin: 0px;
             }
         }
-
+        &__ok-btn--holding::before {
+            animation: hold-confirm var(--hold-down-length) ease-in-out;
+            visibility: visible !important;
+        }
         @keyframes hold-confirm {
             0% {
                 width: 0px;

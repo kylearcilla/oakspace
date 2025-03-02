@@ -1,33 +1,33 @@
 <script lang="ts">
-	import { onMount } from "svelte"
+    import { onMount } from "svelte"
+    import { v4 as uuidv4 } from 'uuid'
 	import { themeState } from "$lib/store"
 	import { toast } from "$lib/utils-toast"
 	import { TextEditorManager } from "$lib/inputs"
     
-	import Modal from "../../../components/Modal.svelte"
-	import AsyncButton from "../../../components/AsyncButton.svelte"
-	import ConfirmationModal from "../../../components/ConfirmationModal.svelte"
-	import { getElemById } from "$lib/utils-general"
+	import Modal from "$components/Modal.svelte"
+	import ConfirmBtns from "$components/ConfirmBtns.svelte"
+	import ConfirmationModal from "$components/ConfirmationModal.svelte"
 
-    export let onFinishEdit: ((newRoutine: DailyRoutine | null) => void) | ((newRoutine: WeeklyRoutine | null) => void)
-    export let isForWeek: boolean
-    export let bounds: { titleMax: number, descrMax: number }
+    export let onFinishEdit: (newRoutine: DailyRoutine | WeeklyRoutine | null) => void
+    export let type: "daily" | "weekly"
+    
+    const MAX_TITLE_LENGTH = 50
+    const MAX_DESCRIPTION_LENGTH = 400
+    const DESCRIPTION_ID = "new-routine-description"
 
-    let editHasBeenMade = false
+    let titleInput: HTMLElement
     let isSaving = false
     let confirmModalOpen = false
-    let emptyTitleError = false
 
-    let currTitleLength = 0
-    let currDescriptionLength = 0
-    let isDescrFocused = false
-    let isTitleFocused = false
+    let descrLength = 0
+    let descrFocus = false
+    let titleFocus = false
 
-    $: isLight      = !$themeState.isDarkTheme
-    $: closeRightAway = currTitleLength === 0 && currDescriptionLength === 0
+    $: light      = !$themeState.isDarkTheme
 
     const newWkRoutine: WeeklyRoutine = {
-        id: "",
+        id: uuidv4(),
         name: "",
         description: "",
         blocks: {
@@ -36,201 +36,163 @@
         }
     }
     const newDailyRoutine: DailyRoutine = {
-        id: "",
+        id: uuidv4(),
         name: "",
         description: "",
         blocks: []
     }
+    let newRoutine = type === "weekly" ? newWkRoutine : newDailyRoutine
 
-    let newRoutine = isForWeek ? newWkRoutine : newDailyRoutine
-    let title = newRoutine.title
-    let descriptionn = newRoutine.descriptionn
-
-    (new TextEditorManager({ 
+    new TextEditorManager({ 
         initValue: "",
-        placeholder: "Type description here...",
-        doAllowEmpty: true,
-        maxLength: bounds.descrMax,
-        id: "new-routine-description",
+        placeholder: "description here...",
+        singleLine: true,
+        maxLength: MAX_DESCRIPTION_LENGTH,
+        id: DESCRIPTION_ID,
         handlers: {
             onBlurHandler: (_, val) => {
-                descriptionn = val
-                isDescrFocused = false
+                newRoutine.description = val
+                descrFocus = false
             },
             onInputHandler: (_, __, length) => {
-                currDescriptionLength = length
+                descrLength = length
             },
-            onFocusHandler: () => isDescrFocused = true
+            onFocusHandler: () => descrFocus = true
         }
-    }))
+    })
 
-    /* Conclude Changes */
+    /* conclude */
     function asyncCall() {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => resolve("Mock data"), 1400)
-        })
+        return new Promise((resolve) => setTimeout(() => resolve("xxx"), 1400))
     }
-    function validateInput() {
-        if (currTitleLength === 0) {
-            emptyTitleError = true
-            throw new Error("Name is missing")
-        }
-        else {
-            newRoutine.name = newRoutine.name.slice(0, bounds.titleMax)
-            newRoutine.description = newRoutine.description.slice(0, bounds.descrMax)
-        }
-    }
-    async function saveChanges() {
+    async function submit() {
         if (isSaving) return
+
         try {
             isSaving = true
-            validateInput()
-            // await asyncCall()
-            onFinishEdit(newRoutine as any)
+            await asyncCall()
+            onFinishEdit(newRoutine)
 
-            toast("success", { message: "New routine created!" })
+            toast("success", { 
+                message: "New routine created!" 
+            })
         }
         catch(e: any) {
-            const message = e.message ?? "Error saving your changes. Try again later."
-
-            if (message === "Name is missing") return
-
-            toast("error", { message })
+            toast("error", { 
+                message: "Error saving your changes. Try again later."
+            })
         }
         finally {
             isSaving = false
         }
     }
-    function onAttemptClose() {
+    function cancelClicked() {
         if (isSaving) {
             return
         }
-        else if (closeRightAway) {
-            confirmUnsavedClose()
+        else if (isEmpty(true)) {
+            close()
         }
         else {
             confirmModalOpen = true
         }
     }
-    function cancelCloseAttempt() {
-        confirmModalOpen = false
-    }
-    function confirmUnsavedClose() {
+    function close() {
         confirmModalOpen = false
         onFinishEdit(null)
     }
     function onKeyPress(e: KeyboardEvent) {
-        if (e.key === "Enter" && !e.shiftKey) saveChanges()
-        if (e.key === "Escape" && !e.shiftKey) onAttemptClose()
+        if (e.key === "Enter" && !e.shiftKey && !isEmpty()) {
+            submit()
+        }
+        if (e.key === "Escape" && !e.shiftKey) {
+            cancelClicked()
+        }
+    }
+    function isEmpty(all: boolean = false) {
+        const name = newRoutine.name.trim().length
+        const descr = newRoutine.description.trim().length
+
+        return name === 0 && all ? descr === 0 : true
     }
 
-    onMount(() => {
-        requestAnimationFrame(() => getElemById("new-routine-title-input")!.focus())
-    })
+    onMount(() => requestAnimationFrame(() => titleInput.focus()))
 </script>
 
 <svelte:window on:keyup={onKeyPress} /> 
 
-<Modal options={{ borderRadius: "18px", overflowY: "hidden" }} onClickOutSide={onAttemptClose}>
-    <div class="new-routine" class:new-routine--light={isLight} on:keyup={onKeyPress}>
-        <form>
-            <h1 class="new-routine__heading">
-                {#if isForWeek}
-                    New Weekly Routine
-                {:else}
-                    New Daily Routine
-                {/if}
-            </h1>
-            <div class="new-routine__title">
-                <label class="new-routine__subtitle" for="new-routine-title-input">
-                    Name
-                </label>
-                <div 
-                    class="input-box input-box--border"
-                    class:input-box--border-focus={isTitleFocused}
-                >
-                    <input 
-                        type="text"
-                        name="routine-block-title-input" 
-                        id="new-routine-title-input"
-                        aria-label="Title"
-                        spellcheck="false"
-                        autocomplete="off"
-                        placeholder={"Type name here..."}
-                        maxlength={bounds.titleMax}
-                        bind:value={title}
-                        on:blur={() => {
-                            isTitleFocused = false
-                        }}
-                        on:focus={() => {
-                            isTitleFocused = true
-                        }}
-                    >
-                    <div 
-                        class="input-box__count"
-                        class:input-box__count--over={currTitleLength > bounds.titleMax}
-                    >
-                        {bounds.titleMax - currTitleLength}
-                    </div>
-                </div>
-                {#if emptyTitleError}
-                    <span class="input-box-error-text">
-                        Title is empty
-                    </span>
-                {/if}
+<Modal 
+    options={{ 
+        borderRadius: "13px", 
+        overflowY: "hidden",
+        scaleUp: true  
+    }} 
+    onClickOutSide={cancelClicked}
+>
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div 
+        class="new-routine" 
+        class:new-routine--light={light} 
+        on:keyup={onKeyPress}
+    >
+        <div 
+            class="input-box input-box--border"
+            class:input-box--light={light}
+            class:input-box--border-focus={titleFocus}
+        >
+            <input 
+                bind:this={titleInput}
+                class="new-routine__title text-editor"
+                aria-label="Title"
+                spellcheck="false"
+                placeholder="new block title..."
+                maxLength={MAX_TITLE_LENGTH}
+                style:margin-top="1px"
+                on:focus={() => titleFocus = true}
+                on:blur={() => titleFocus = false}
+                bind:value={newRoutine.name}
+            />
+        </div>
+        <div 
+            class="input-box input-box--border"
+            class:input-box--light={light}
+            class:input-box--border-focus={descrFocus}
+        >
+            <div 
+                id={DESCRIPTION_ID}
+                class="new-routine__description text-editor"
+                aria-label="Description"
+                contenteditable
+                spellcheck="false"
+            />
+            <div 
+                class="input-box__count"
+                class:input-box__count--over={descrLength > MAX_DESCRIPTION_LENGTH}
+            >
+                {MAX_DESCRIPTION_LENGTH - descrLength}
             </div>
-            <div class="new-routine__description">
-                <label class="new-routine__subtitle" for="new-routine-description">
-                    Description
-                </label>
-                <div 
-                    class="input-box input-box--border"
-                    class:input-box--border-focus={isDescrFocused}
-                >
-                    <div 
-                        id="new-routine-description"
-                        class="edit-routine__description-text-editor text-editor"
-                        contenteditable
-                    >
-                    </div>
-                    <div 
-                        class="input-box__count"
-                        class:input-box__count--over={currDescriptionLength > bounds.descrMax}
-                    >
-                        {bounds.descrMax - currDescriptionLength}
-                    </div>
-                </div>
-            </div>
-            <div class="new-routine__btns">
-                <button 
-                    class="new-routine__cancel-btn"
-                    disabled={isSaving}
-                    on:click={onAttemptClose}
-                >
-                    Cancel
-                </button>
-                <AsyncButton
-                    disabled={false}
-                    isLoading={isSaving} 
-                    actionFunc={saveChanges} 
-                    styling={{
-                        width: "calc(100% - (35% + 8px))",
-                        borderRadius: "9px",
-                        padding: "12px 25px",
-                        height: "18.5px"
-                    }}
-                />
-            </div>
-        </form>
+        </div>
+        <ConfirmBtns 
+            disabled={newRoutine.name.trim().length === 0}
+            isLoading={isSaving}
+            onCancel={cancelClicked}
+            onOk={submit}
+        />
     </div>
 </Modal>
 
 {#if confirmModalOpen} 
     <ConfirmationModal 
         text="Discard unsaved changes?"
-        onCancel={cancelCloseAttempt}
-        onOk={confirmUnsavedClose}
-        options={{ ok: "Discard", caption: "Heads Up!" }}
+        onCancel={() => {
+            confirmModalOpen = false
+        }}
+        onOk={() => {
+            close()
+        }}
+        options={{ 
+            ok: "Discard", caption: "Heads Up!" 
+        }}
     /> 
 {/if}
 
@@ -238,96 +200,45 @@
     @import "../../../scss/inputs.scss";
 
     .new-routine {
-        width: clamp(420px, 65vw, 500px);
-        padding: 17px 25px 20px 25px;
+        width: 420px;
+        padding: 17px 20px 18px 20px;
+
+        --cancel-btn-opacity: 0.025;
         
-        &--light .input-box {
-            @include input-box--light;
-        }
-        &--light &__heading {
-            @include text-style(1, 600);
-        }
-        &--light &__subtitle {
-            @include text-style(0.97, 600);
-        }
-        &--light input {
-            color: rgba(var(--textColor1), 1) !important;
-        }
-        &--light .text-editor {
-            color: rgba(var(--textColor1), 1) !important;
-        }
-        &--light &__cancel-btn {
-            @include text-style(0.97, 500);
-            @include txt-color(0.09, "bg");
-        }
-        &--light &__cancel-btn:hover {
-            @include txt-color(0.15, "bg");
-        }
-        
-        input, .text-editor {
-            @include text-style(0.85, 500, 1.3rem);
-        }
-        input::placeholder {
-            @include text-style(_, 400, 1.3rem);
-        }
-        &__heading {
-            @include text-style(0.7, 500, 1.2rem);
-            margin-bottom: 15px;
-        }
-        &__subtitle {
-            display: block;
-            @include text-style(0.6, 400, 1.24rem);
-            margin-bottom: 11px;
+        &--light {
+            --cancel-btn-opacity: 0.065;
         }
         &__title {
-            margin-bottom: 18px;
-        }
-        &__title .input-box {
-            border-radius: 14px;
-            padding: 8.5px 12px 8px 16px;
-        }
-        &__title input {
-            padding-right: 12px;
+            margin: 0px 0px 9px 0px;
+            width: 100%;
+
+            &::placeholder {
+                opacity: 0.3;
+            }
         }
         &__description {
-            margin-bottom: 34px;
-        }
-        &__description .input-box {
             display: block;
-            padding: 8px 10px 10px 16px;
             position: relative;
-            height: 140px;
+            max-height: 180px;
+            height: calc(100% - 40px);
         }
-        &__description .text-editor {
-            height: 100px;
-            margin-bottom: 35px;
-        }
-        &__description .input-box__count {
-            margin-top: 5px;
-            @include abs-bottom-right(15px, 12px);
+        .input-box {
+            min-height: 160px;
+            align-items: flex-start;
+            margin-bottom: 14px;
+            cursor: text;
+
+            &:first-child {
+                min-height: 0px !important;
+                height: 40px !important;
+                border-radius: 10px !important;
+                padding: 5px 10px 3px 13px !important;
+                margin-bottom: 10px;
+            }
         }
         .input-box__count {
             margin-right: 5px;
-        }
-        &__btns {
-            @include flex(center);
-        }
-        button {
-            padding: 12px 25px;
-            border-radius: 9px;
-            @include center;
-            @include text-style(1, _, 1.34rem);
-        }
-        &__cancel-btn {
-            width: 35%;
-            margin-right: 8px;
-            font-weight: 400;
-            @include txt-color(0.03, "bg");
-
-            &:hover {
-                transition-duration: 0s;
-                @include txt-color(0.06, "bg");
-            }
+            @include abs-bottom-right(12px, 8px);
         }
     }
 </style>

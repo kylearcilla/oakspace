@@ -1,8 +1,11 @@
  <script lang="ts">
+    import { onMount } from "svelte"
+
     import { Icon } from "$lib/enums"
 	import { themeState } from "$lib/store"
 	import { toast } from "$lib/utils-toast"
     import { colorPicker } from "$lib/pop-ups"
+	import { TEST_TASKS } from "$lib/mock-data"
     import { TextEditorManager } from "$lib/inputs"
     import { getColorTrio } from "$lib/utils-colors"
 	import { minsFromStartToHHMM } from "$lib/utils-date"
@@ -13,14 +16,13 @@
 	import Modal from "$components/Modal.svelte"
 	import SvgIcon from "$components/SVGIcon.svelte"
 	import TagPicker from "$components/TagPicker.svelte"
-	import AsyncButton from "$components/AsyncButton.svelte"
 	import TasksList from "$components/TasksList.svelte"
 	import TimePicker from "$components/TimePicker.svelte"
 	import DropdownBtn from "$components/DropdownBtn.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
 	import ConfirmationModal from "$components/ConfirmationModal.svelte"
 	import SettingsBtn from "$components/SettingsBtn.svelte";
-	import { TEST_TASKS } from "$lib/mock-data"
+	import ConfirmBtns from "$components/ConfirmBtns.svelte";
 
     const { MAX_BLOCK_DESCRIPTION, MIN_BLOCK_DURATION_MINS, MAX_BLOCK_TITLE } = RoutinesManager
     const MAX_ACTION_ITEMS = 12
@@ -32,7 +34,8 @@
 
     const DESCRIPTION_ID = "routine-block-description"
     const TITLE_ID = "routine-block-title-input"
-
+    
+    let titleElem: HTMLElement
     let settingsOpen = false, coresOpen = false, tagsOpen = false
     
     let { 
@@ -55,46 +58,36 @@
     let editHasBeenMade = false
     let isSaving = false
     let confirmModalOpen = false
-    let firstBlockExists = false
-    let lastBlockExists = false
     
     let routineListRef: HTMLElement
-    let isDescrFocused = false 
-    let descrLength = description.length
 
     $: isDarkTheme = $themeState.isDarkTheme
     $: blocks = $_blocks
     $: colors = getColorTrio(block.color, true)
     $: colorPopUp = colorPicker.state
 
-    $: initOrderIdx(blocks) 
-
     new TextEditorManager({ 
-        initValue: description,
-        placeholder: "description here...",
-        allowFormatting: false,
-        maxLength: MAX_BLOCK_DESCRIPTION,
-        id: DESCRIPTION_ID,
-        handlers: {
-            onInputHandler: (_, val) => {
-                description = val
-            }
-        }
-    })
-    new TextEditorManager({ 
-        initValue: title,
+        id: TITLE_ID,
+        initValue: "",
         placeholder: "block title...",
         allowFormatting: false,
         singleLine: true,
         maxLength: MAX_BLOCK_TITLE,
-        id: TITLE_ID,
         handlers: {
-            onInputHandler: (_, val) => {
-                title = val
-            }
+            onInputHandler: () => toggleEditMade()
         }
     })
-
+    new TextEditorManager({ 
+        id: DESCRIPTION_ID,
+        initValue: description,
+        placeholder: "description here...",
+        allowFormatting: false,
+        maxLength: MAX_BLOCK_DESCRIPTION,
+        handlers: {
+            onInputHandler: () => toggleEditMade()
+        }
+    })
+    
     function toggleEditMade() {
         editHasBeenMade = true
     }
@@ -123,16 +116,6 @@
         settingsOpen = false
     }
 
-    /* Order */
-    function initOrderIdx(blocks: RoutineBlockElem[] | null) {
-        if (!blocks) return
-
-        firstBlockExists = blocks.find((block) => 
-            block.order === "first" && block.startTime != startTime) != null
-
-        lastBlockExists = blocks.find((block) => 
-            block.order === "last" && block.startTime != startTime) != null
-    }
 
     /* Info */
     function onTagChange(tag: Tag | null) {
@@ -141,7 +124,7 @@
 
         toggleEditMade()
     }
-    function onCoresOptionListClicked(idx: number) {
+    function onCoreOptnClicked(idx: number) {
         coresOpen = false
         pickedCoreItemIdx = idx
         block = { ...block, activity: CORE_OPTIONS[pickedCoreItemIdx][0] }
@@ -165,10 +148,6 @@
         if (settingsOpen) settingsOpen = false
         if (coresOpen) coresOpen = false
         if (tagsOpen) tagsOpen = false
-    }
-    function onTaskChange(tasks: Task[]) {
-        toggleEditMade()
-        updatedTasks = tasks
     }
     function verifyChanges() {
         if (newEndTime >= 1440 || newEndTime === 0) {
@@ -233,6 +212,7 @@
         }
     }
     function onAttemptClose() {
+        colorPicker.close()
         if (isSaving) {
             return
         }
@@ -263,6 +243,13 @@
             saveChanges()
         }
     }
+
+
+    onMount(() => {
+        if (!title) {
+            titleElem.focus()
+        }
+    })
 </script>
 
 <svelte:window on:keydown={onKeyPress} />
@@ -284,13 +271,14 @@
         <!-- header -->
         <div class="edit-routine__header">
             <div 
+                bind:this={titleElem}
                 class="edit-routine__title text-editor"
                 id={TITLE_ID}
                 aria-label="Title"
                 spellcheck="false"
                 contenteditable="true"
+                bind:textContent={title}
             >
-                {title}
             </div>
             <div class="flx-algn-center">
                 {#if order === "first" || order === "last"}
@@ -471,7 +459,7 @@
                                     width: "88px" 
                                 },
                                 onListItemClicked: ({ idx }) => {
-                                    onCoresOptionListClicked(idx)
+                                    onCoreOptnClicked(idx)
                                 },
                                 onClickOutside: () => {
                                     coresOpen = false
@@ -482,7 +470,6 @@
                 </div>
             </div>
         </div>
-        <!-- description -->
         <div 
             class:hidden={!allowDescription}
             style:padding="5px 20px 0px 20px" 
@@ -500,6 +487,7 @@
                 aria-label="Description"
                 contenteditable
                 spellcheck="false"
+                bind:textContent={description}
             />
         </div>
 
@@ -567,26 +555,13 @@
             </div>
         </div>
 
-        <div class="edit-routine__btns">
-            <button 
-                class="edit-routine__cancel-btn"
-                disabled={isSaving}
-                on:click={onAttemptClose}
-            >
-                Cancel
-            </button>
-            <AsyncButton
-                disabled={title === ""}
-                isLoading={isSaving} 
-                actionFunc={saveChanges} 
-                styling={{
-                    width: "calc(100% - (35% + 8px))",
-                    borderRadius: "9px",
-                    fontSize: "1.4rem",
-                    padding: "11px 25px",
-                    height: "18.5px"
-                }}
-            />
+        <div style:padding="0px 16px 16px 16px">
+            <ConfirmBtns 
+                 disabled={title === ""}
+                 isLoading={isSaving}
+                 onCancel={onAttemptClose}
+                 onOk={saveChanges}
+             />
         </div>
     </div>
 </Modal>
@@ -596,9 +571,6 @@
         text={isNew ? "Undo block creation?" :  "Discard unsaved changes?"}
         onCancel={cancelCloseAttempt}
         onOk={confirmUnsavedClose}
-        options={{ 
-            ok: `${isNew ? "Yes" : "Discard"}`, caption: "Heads Up!" 
-        }}
     /> 
 {/if}
 
@@ -699,7 +671,7 @@
             margin-bottom: 20px;
 
             &--no-tasks {
-                margin-bottom: 60px;
+                margin-bottom: 120px;
             }
         }
         &__list-header {
@@ -735,28 +707,6 @@
 
             &--empty {
                 min-height: 40px;
-            }
-        }
-        &__btns {
-            padding: 0px 16px 16px 16px;
-            @include flex(center);
-
-            button {
-                padding: 12.5px 25px;
-                border-radius: 9px;
-                @include center;
-                @include text-style(0.55, var(--fw-400-500), 1.4rem);
-            }
-        }
-        &__cancel-btn {
-            width: 35%;
-            margin-right: 8px;
-            font-weight: 400;
-            background: rgba(var(--textColor1), var(--cancel-btn-opacity));
-
-            &:hover {
-                transition-duration: 0s;
-                background: rgba(var(--textColor1), calc(var(--cancel-btn-opacity) + 0.035));
             }
         }
     }

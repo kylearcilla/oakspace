@@ -10,6 +10,18 @@ const STYLES = {
   dividerBg: {
     light: "rgba(var(--textColor1), 0.1)",
     dark: "rgba(var(--textColor1), 0.05)"
+  },
+  confirmBtn: {
+    light: {
+      color1: "#f4d5cd",
+      color2: "#824C47",
+      color3: "#F1CAC2"
+    },
+    dark: {
+      color1: "#191212",
+      color2: "#d49396",
+      color3: "#2E2020"
+    }
   }
 }
 
@@ -101,6 +113,10 @@ export function setRootColors(name: string, theme: ThemeStyling) {
     const superLight = name === "light" || name === "sand"
     const cardLightBorder = name === "light" ? "1.5px solid rgba(var(--textColor1), 0.065)" : "none"
     const cardLightShadow = superLight ? "rgba(var(--textColor1), 0.055) 0px 5px 10px 1px" : "none"
+
+    const deleteColor1 = STYLES.confirmBtn[isDark ? "dark" : "light"].color1
+    const deleteColor2 = STYLES.confirmBtn[isDark ? "dark" : "light"].color2
+    const deleteColor3 = STYLES.confirmBtn[isDark ? "dark" : "light"].color3
   
     styleTag.innerHTML = `
       :root {
@@ -139,6 +155,9 @@ export function setRootColors(name: string, theme: ThemeStyling) {
           --fw-500-600: ${weight_500_600};
           --card-light-border: ${cardLightBorder};
           --card-light-shadow: ${cardLightShadow};
+          --confirm-color-1: ${deleteColor1};
+          --confirm-color-2: ${deleteColor2};
+          --confirm-color-3: ${deleteColor3};
     `
     headTag.appendChild(styleTag)
   }

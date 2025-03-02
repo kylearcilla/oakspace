@@ -1,83 +1,49 @@
 <script lang="ts">
+    import { onMount } from 'svelte'
 	import { themeState } from '$lib/store'
 
 	import { Icon } from '$lib/enums'
 	import Details from './Details.svelte'
-	import { toast } from '$lib/utils-toast'
+	import { colorPicker } from '$lib/pop-ups'
 	import { getColorTrio } from '$lib/utils-colors'
-	import { RoutinesManager } from '$lib/routines-manager'
 	import { DailyRoutinesManager } from '$lib/routines-daily-manager'
 	import { getTimeFromIdx, minsFromStartToHHMM } from '$lib/utils-date'
 	import { EDIT_BLOCK_OPTIONS, ROUTINE_BLOCKS_CONTAINER_ID } from '$lib/utils-routines'
 
 	import SvgIcon from '$components/SVGIcon.svelte'
 	import EditBlockModal from '../EditBlockModal.svelte'
-	import NewRoutineModal from "../NewRoutineModal.svelte"
 	import DropdownList from '$components/DropdownList.svelte'
-	import ConfirmationModal from '$components/ConfirmationModal.svelte'
-	import { onMount } from 'svelte';
 
     export let data: { routines: DailyRoutine[] }
 
     const BLOCKS_CONTAINER_LEFT_OFFSET = 51
-    const DAILY_ROUTINES: DailyRoutine[] = data.routines
+    let routines: DailyRoutine[] = data.routines
 
     /* DOM */
     let timeBoxElem: HTMLElement
     let blocksContainerRef: HTMLElement
     let blocksContainerWidth = 0
+    let initIdx = -1
     
-    let manager = new DailyRoutinesManager(DAILY_ROUTINES)
+    let manager = new DailyRoutinesManager()
 
     let contextMenu = false
     let pointCaptureSet = false
     let colorsOpen = false
-    let colorsPos = { left: 0, top: 0 }
 
-    /* rotuines */
-    let deleteConfirmOpen = false
-    let editRoutineIdx = -1
-    let newRoutineModal = false
-
-    let _dailyRoutines  = manager.dailyRoutines!
+    let _editDayRoutine = manager.editDayRoutine
     let _editDayRoutineElems = manager.editDayRoutineElems
     let _editingBlock = manager.editingBlock
     let _editContext = manager.editContext
     let _contextMenuPos = manager.contextMenuPos
 
-    $: dailyRoutines   = $_dailyRoutines as DailyRoutine[]
+    $: editDayRoutine = $_editDayRoutine as DailyRoutine | null
     $: editDayRoutineElems = $_editDayRoutineElems ?? []
     $: editingBlock  = $_editingBlock
     $: editContext   = $_editContext
-    $: isLightTheme  = !$themeState.isDarkTheme
+    $: isLight  = !$themeState.isDarkTheme
     $: lockInteraction = contextMenu || colorsOpen
     $: contextMenuPos = $_contextMenuPos
-
-    /* routines */
-
-    function createNewRoutine(newRoutine: DailyRoutine | null) {
-        newRoutineModal = false
-        if (!newRoutine) return
-
-        manager.newDailyRoutine(newRoutine)
-
-        requestAnimationFrame(() => {
-            if (dailyRoutines.length === 1) {
-                manager.initEditRoutine(dailyRoutines[0])
-            }
-        })
-
-    }
-
-    function removeRoutine(idx: number) {
-        manager.removeDailyRoutine(dailyRoutines[idx].id)
-        toast("success", { message: "Routine deleted." })
-
-        deleteConfirmOpen = false
-        editRoutineIdx = -1
-    }
-
-    /* menu */
 
     function onBlockContextMenu(e: MouseEvent, id: string) {
         e.preventDefault()
@@ -90,8 +56,16 @@
             manager.openEditBlockModal()
         }
         else if (name === "Change Color") {
-            colorsPos = manager.getColorPickerPos()
             colorsOpen = true
+            colorPicker.init({
+                onSubmitColor: (color) => {
+                    colorsOpen = false
+
+                    manager.setEditBlockColor(color)
+                    manager.resetEditState()
+                },
+                picked: editingBlock!.color
+            })
         }
         else if (name === "Duplicate Block") {
             manager.onDuplicateBlock()
@@ -117,16 +91,26 @@
     }
 
     onMount(() => {
-        editRoutineIdx = 2
         requestAnimationFrame(() => {
             manager.initContainer(timeBoxElem, blocksContainerRef)
-            manager.initEditRoutine(dailyRoutines[editRoutineIdx])
+            initIdx = 0
+
+            if (routines.length > 0) {
+                manager.initEditRoutine(routines[initIdx])
+            }
         })
     })
 </script>
 
-<div class="routines" class:routines--empty={dailyRoutines.length === 0}>
-    <Details {manager} routines={DAILY_ROUTINES} />
+<div 
+    class="routine"
+    class:routine--light={isLight}
+>
+    <Details
+        bind:routines={routines}
+        {manager} 
+        {initIdx} 
+    />
     <div 
         class="routine-blocks-container" 
         class:routine-blocks-container--no-scroll={lockInteraction}
@@ -139,15 +123,15 @@
         <div 
             bind:this={blocksContainerRef}
             bind:clientWidth={blocksContainerWidth}
-            class="routines__blocks-wrapper"
-            class:no-pointer-events-all={lockInteraction}
+            class="routine__blocks-wrapper"
+            class:no-pointer-events-all={lockInteraction || !editDayRoutine}
         >
             <!-- svelte-ignore a11y-no-static-element-interactions -->
             <div 
                 id={ROUTINE_BLOCKS_CONTAINER_ID}
+                style:--left-offset={`${BLOCKS_CONTAINER_LEFT_OFFSET}px`}
                 class="routine-blocks"
                 class:routine-blocks--editing={editContext}
-                style:--left-offset={`${BLOCKS_CONTAINER_LEFT_OFFSET}px`}
                 on:pointerdown={(e) => {
                     manager.onScrollContainerPointerDown(e)
                 }}
@@ -158,9 +142,10 @@
                 }}
             >
                 {#each editDayRoutineElems as block (block.id)}
-                    {@const colorTrio    = getColorTrio(block.color, isLightTheme)}
+                    {@const colorTrio    = getColorTrio(block.color, isLight)}
+                    {@const editId       = editingBlock?.id}
                     {@const isEdit       = editContext === "lift" || editContext === "old-stretch"}
-                    {@const isEditBlock  = editingBlock?.id === block.id && isEdit}
+                    {@const isEditBlock  = editId === block.id && isEdit}
                     {@const startTimeStr = minsFromStartToHHMM(block.startTime)}
                     {@const endTimeStr   = minsFromStartToHHMM(block.endTime)}
                     {@const isFirstLast  = ["first", "last"].includes(block.order ?? "")}
@@ -172,6 +157,7 @@
                         tabIndex={0}
                         id={`rblock--${block.id}`}
                         class="routine-block"
+                        class:routine-block--editing={editId === block.id && !editContext}
                         class:hidden={isEditBlock}
                         style:top={`calc(${block.yOffset}px`}
                         style:--block-height={`${block.height}px`}
@@ -195,7 +181,7 @@
                         <div class="routine-block__content">
                             <div class="flx-algn-center">
                                 {#if isFirstLast}
-                                    {@const opacity = isLightTheme ? 0.8 : 0.5}
+                                    {@const opacity = isLight ? 0.8 : 0.5}
                                     {@const title = isFirst ? "First routine of the day." : "Last routine of the day."}
 
                                     <div {title} class="routine-block__order-icon">
@@ -222,8 +208,8 @@
                 {/each}
 
                 <!-- floating or new block -->
-                {#if editingBlock}
-                    {@const colorTrio = getColorTrio(editingBlock.color, isLightTheme)}
+                {#if editingBlock && editContext}
+                    {@const colorTrio = getColorTrio(editingBlock.color, isLight)}
                     {@const startTimeStr = minsFromStartToHHMM(editingBlock.startTime)}
                     {@const endTimeStr = minsFromStartToHHMM(editingBlock.endTime)}
                     {@const isLift = editContext === "lift"}
@@ -252,7 +238,7 @@
                         <div class="routine-block__content">
                             <div class="flx-algn-center">
                                 {#if isFirstLast}
-                                    {@const opacity = isLightTheme ? 0.8 : 0.5}
+                                    {@const opacity = isLight ? 0.8 : 0.5}
                                     <div 
                                         class="routine-block__order-icon"
                                         title={`${isFirst ? "First routine of the day." : "Last routine of the day."}`}
@@ -266,7 +252,7 @@
                                     </div>
                                 {/if}
                                 <span class="routine-block__title">
-                                    {editingBlock.title}
+                                    {editingBlock.title || "Untitled"}
                                 </span>
                             </div>
                             <div class="routine-block__time-period">
@@ -313,7 +299,7 @@
                 <!-- drop area -->
                 {#if editingBlock?.dropArea?.doShow && (editContext === "lift" || editContext === "duplicate")}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    {@const colorTrio = getColorTrio(editingBlock.color, isLightTheme)}
+                    {@const colorTrio = getColorTrio(editingBlock.color, isLight)}
                     {@const startTimeStr = minsFromStartToHHMM(editingBlock.startTime)}
                     {@const endTimeStr = minsFromStartToHHMM(editingBlock.endTime)}
                     {@const { top } = editingBlock.dropArea}
@@ -348,7 +334,7 @@
             <div class="hour-blocks-container" class:scroll-bar-hidden={true}>
                 <div 
                     class="hour-blocks"
-                    class:hour-blocks--light={isLightTheme}
+                    class:hour-blocks--light={isLight}
                 >
                     {#each Array.from({ length: 24 }, (_, i) => i) as timeIdx}
                         {@const headOffsetPerc = ((timeIdx * 60) / 1440) * 100}
@@ -372,7 +358,7 @@
                 </div>
             </div>
 
-            <div class="wk-grid" class:wk-grid--light={isLightTheme}>
+            <div class="wk-grid" class:wk-grid--light={isLight}>
                 <div class="wk-grid__hoz-lines">
                     {#if timeBoxElem}
                         {@const width = blocksContainerWidth}
@@ -414,7 +400,6 @@
             </div>
         </div>
 
-        <!-- context menu -->
         <DropdownList
             id={"daily-routines"}
             isHidden={!contextMenu}
@@ -446,34 +431,6 @@
     />
 {/if}
 
-{#if deleteConfirmOpen} 
-    <ConfirmationModal 
-        text="Are you sure you want to proceed with deleting this weekly routine?"
-        onCancel={() => { 
-            deleteConfirmOpen = false
-            editRoutineIdx = -1
-        }}
-        onOk={() => {
-            removeRoutine(editRoutineIdx)
-        }}
-        options={{ 
-            ok: "Delete", caption: "Heads Up!", type: "delete" 
-        }}
-    /> 
-{/if}
-
-{#if newRoutineModal}
-    <NewRoutineModal 
-        onFinishEdit={createNewRoutine}
-        isForWeek={false}
-        bounds={{ 
-            titleMax: RoutinesManager.MAX_TITLE, 
-            descrMax: RoutinesManager.MAX_DESCRIPTION
-        }}
-    />
-{/if}
-
-
 
 <style lang="scss">
     @import "../../../../scss/day-box.scss";
@@ -485,7 +442,7 @@
     $hour-block-height: 50px;
     $hour-blocks-width: 50px;
 
-    .routines {
+    .routine {
         display: flex;
         width: 100%;
         height: calc(100% - 58px);
@@ -517,6 +474,6 @@
 
     .routine-block {
         width: 80%;
-        max-width: 240px;
+        max-width: 180px;
     }
 </style>

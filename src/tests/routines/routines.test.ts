@@ -80,7 +80,7 @@ describe('weekly - tag', () => {
         weekRoutine = testCase.weekRoutine as WeeklyRoutine
         breakdown = testCase.tagBreakdown
 
-        manager.updateCurrentWeekRoutine(weekRoutine)
+        manager.setViewRoutine(weekRoutine)
         result = get(manager.tagBreakdown)
 
         expect(result).toEqual(breakdown)
@@ -91,7 +91,7 @@ describe('weekly - tag', () => {
         weekRoutine = testCase.weekRoutine as WeeklyRoutine
         breakdown = testCase.tagBreakdown
 
-        manager.updateCurrentWeekRoutine(weekRoutine)
+        manager.setViewRoutine(weekRoutine)
         result = get(manager.tagBreakdown)
 
         expect(result).toEqual(breakdown)
@@ -172,7 +172,7 @@ describe('weekly - core', () => {
         weekRoutine = testCase.weekRoutine as WeeklyRoutine
         breakdown = testCase.coreBreakdown
 
-        manager.updateCurrentWeekRoutine(weekRoutine)
+        manager.setViewRoutine(weekRoutine)
         result = get(manager.coreBreakdown)
 
         expect(result).toEqual(breakdown)
@@ -182,7 +182,7 @@ describe('weekly - core', () => {
         weekRoutine = testCase.weekRoutine as WeeklyRoutine
         breakdown = testCase.coreBreakdown
 
-        manager.updateCurrentWeekRoutine(weekRoutine)
+        manager.setViewRoutine(weekRoutine)
         result = get(manager.coreBreakdown)
 
         expect(result).toEqual(breakdown)

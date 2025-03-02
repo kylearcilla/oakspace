@@ -400,9 +400,6 @@
         &--dark .dbtn { 
             @include dmenu--light;;
         }
-        &--light .input-box { 
-            @include input-box--light;
-        }
         &--light .dbtn {
 
         }

@@ -219,6 +219,7 @@
     }
     &__option-text {
         @include text-style(0.9, var(--fw-400-500), var(--font-size));
+        margin-right: 15px;
     }
     &__right-icon-container {
         @include flex(center);

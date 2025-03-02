@@ -165,7 +165,7 @@ function ColorPicker() {
     })
 
     function init({ onSubmitColor, picked }: { 
-        onSubmitColor: (color: Color | null) => void,
+        onSubmitColor: (color: Color) => void,
         picked: Color | null
     }) {
         const position = getPopFloatElemPos({ height: 300, width: 150 })
@@ -184,7 +184,7 @@ function ColorPicker() {
             picked
         }))
     }
-    function onSubmitColor(color: Color | null) {
+    function onSubmitColor(color: Color) {
         const { onSubmitColor }  = get(state)
         if (onSubmitColor) {
             onSubmitColor(color)

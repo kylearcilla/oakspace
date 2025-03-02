@@ -378,9 +378,6 @@
         &--side-menu &__time {
             margin-bottom: 10px;
         }
-        &--light .input-box {
-            @include input-box--light;        
-        }
         &--light &__title {
             @include text-style(0.9, 600);
         }

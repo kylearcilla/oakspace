@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { themeState } from "$lib/store";
 	import { Icon } from "../lib/enums";
-	import SvgIcon from "./SVGIcon.svelte";
+
+	import SvgIcon from "./SVGIcon.svelte"
 
     export let id: string
     export let options: {
@@ -16,19 +18,23 @@
         }
     } | undefined = undefined
 
-    let { position, opacity, hOpacity } = options ?? {}
+    let { position, opacity, hOpacity, bg = true } = options ?? {}
 
-    export let onClick: () => void
+    $: light = !$themeState.isDarkTheme
+
+    export let onClick: (e: MouseEvent) => void
 </script>
 
 <button 
     id={`${id}--dbtn`}
     class="settings-btn"
+    class:settings-btn--light={light}
     class:settings-btn--abs={!!position}
-    style:--fg-o={opacity?.fg ?? 0.45}
-    style:--bg-o={opacity?.bg ?? 0.065}
-    style:--fg-ho={hOpacity?.fg ?? 0.45}
-    style:--bg-ho={hOpacity?.bg ?? 0.185}
+    class:settings-btn--no-bg={!bg}
+    style:--fg-o={opacity?.fg ?? 0.2}
+    style:--bg-o={opacity?.bg ?? 0}
+    style:--fg-ho={hOpacity?.fg ?? 0.55}
+    style:--bg-ho={hOpacity?.bg ??  0.085}
     style:top={position?.top}
     style:left={position?.left}
     style:right={position?.right}
@@ -45,12 +51,20 @@
     .settings-btn {
         @include center;
         @include circle(24px);
-        opacity: var(--fg-o);
-        background-color: rgba(var(--textColor1), var(--bg-o));
 
         &--abs {
             position: absolute;
         }
+        &--no-bg {
+            background-color: transparent !important;
+        }
+        &--light {
+            --fg-o: calc(var(--fg-o) * 0.4);
+            --bg-o: calc(var(--bg-o) * 0.4);
+        }
+
+        opacity: var(--fg-o);
+        background-color: rgba(var(--textColor1), var(--bg-o));
 
         &:disabled {
             opacity: 0.25 !important;

@@ -1,4 +1,9 @@
 .routine {
+    --brightness-amount: 1.15;
+
+    &--light {
+        --brightness-amount: 1.05;
+    }
     &--light &__breakdown {
         background: rgba(var(--textColor1), 0.025);
         border: 1.5px dashed rgba(var(--textColor1), 0.12);
@@ -29,7 +34,7 @@
         position: relative;
     }
     &__title {
-        padding: 0px 12px 0px 0px;
+        padding: 13px 12px 0px 0px;
         overflow: scroll;
         @include text-style(1, var(--fw-400-500), 1.6rem);
         max-height: 120px;
@@ -151,17 +156,13 @@
     }
     &__routines-header {
         @include flex(center, space-between);
-        margin-bottom: 4px;
-        padding-right: 14px;
+        margin-bottom: 8px;
     }
     &__routines-list {
         z-index: 2000;
         overflow-y: scroll;
         padding-right: 11px;
         max-height: var(--routines-dropdown-max-height);
-    }
-    &__collection-empty {
-        margin-left: 23px;
     }
 }
 
@@ -172,43 +173,41 @@
     position: relative;
     outline: none;
     @include flex(center, space-between);
-    opacity: 0.3;
     
     &:hover {
         cursor: pointer;
-        opacity: 0.6;
+        opacity: 1;
     }
-    &:focus-visible {
-        @include border-focus;
-    }
-    &:focus-visible span {
-        @include text-style(0.5);
-    }
-    &:active {
-        transition: 0.15s cubic-bezier(.4,0,.2,1);
-        transform: scale(0.98);
-    }
-    &--clicked {
-        opacity: 0.9 !important;
-    }
-    &--active {
+    &:hover button {
         opacity: 0.7;
     }
+    &:hover &__settings-btn {
+        display: block;
+    }
+    &:hover::after {
+        display: none;
+    }
+    &--active button {
+        opacity: 0.65 !important; 
+    }
+    &--clicked button {
+        opacity: 0.9 !important;
+    }
     &--chosen::after {
-        @include abs-bottom-right(-3px, -5px);
-        @include text-style(0.45, 100, 2rem);
+        @include abs-bottom-right(-3px, 2px);
+        @include text-style(0.35, 100, 2rem);
         height: min-content;
         content: "*";
     }
-    span {
+    button {
         @include text-style(1, var(--fw-400-500), 1.35rem);
         @include truncate-lines(1);
+        opacity: 0.3;
+        width: calc(100% - 15px);
     }
-    i {
+    &__settings-btn {
+        @include abs-top-right(0px, -5px);
         display: none;
-        font-size: 1rem;
-        opacity: 0.8;
-        color: rgba(var(--textColor1), 1);
     }
 }
 
@@ -249,8 +248,9 @@
     &:focus-visible {
         transform: scale(1.01);
     }
-    &:focus-visible &-content {
-        @include border-focus;
+    &--editing &__content {
+        filter: brightness(var(--brightness-amount));
+        transition: 0.08s ease-in-out !important;
     }
 
     // drop area

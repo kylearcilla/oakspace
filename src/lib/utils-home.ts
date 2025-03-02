@@ -300,6 +300,11 @@ export const closeModal = (modalToRemove: ModalType) => {
     })
 }
 
+export function hasModalOpen() {
+    const modalsOpen = get(globalContext).modalsOpen
+    return modalsOpen.length > 0
+}
+
 /**
  * @param modal  See if this modal is already open.
  * @returns      If modal is open.

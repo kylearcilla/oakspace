@@ -26,10 +26,11 @@ export class RoutinesManager {
     editContext: Writable<RoutineBlockEditContext | null> = writable(null)
     newBlock:    Writable<RoutineBlockElem | null> = writable(null)
     isMakingNewBlock = false
-
-    editingBlockRef:    HTMLElement | null = null
-    floatingBlock:      HTMLElement | null = null
-    blockOnPointerDown: RoutineBlockElem | null = null
+    
+    editingBlockRef:  HTMLElement | null = null
+    floatingBlock:    HTMLElement | null = null
+    blockPointerDown: RoutineBlockElem | null = null
+    blockPointerDownId: string | null = null
     
     editBlockTopNbr:    RoutineBlockElem | null = null
     editBlockBottomNbr: RoutineBlockElem | null = null
@@ -281,7 +282,7 @@ export class RoutinesManager {
      * @param editBlock  The edited block elem.
      * @param edtt       Edit that was made.
      */
-    updateRoutineAfterBlockUpdate(editBlock: RoutineBlockElem, edit: RoutineBlockEditContext | "delete" | "color") {
+    updateRoutineBlock(editBlock: RoutineBlockElem, edit: RoutineBlockEditContext | "delete" | "color") {
         if (edit === "new-stretch" || edit === "duplicate") {
             this.addNewBlockToEditRoutine(editBlock)
         }
@@ -331,7 +332,7 @@ export class RoutinesManager {
         this.isMakingNewBlock = false
 
         if (!updatedBlock) return
-        this.updateRoutineAfterBlockUpdate(updatedBlock, "details")
+        this.updateRoutineBlock(updatedBlock, "details")
     }
 
     /**
@@ -376,11 +377,9 @@ export class RoutinesManager {
      * Change the color of the current edit block.
      * @param color   New color
      */
-    setEditBlockColor(color: Color | null) {
-        if (!color) return
-
+    setEditBlockColor(color: Color) {
         const editBlock = get(this.editingBlock)!
-        this.updateRoutineAfterBlockUpdate({ ...editBlock, color }, "color")
+        this.updateRoutineBlock({ ...editBlock, color }, "color")
     }
 
     /**
@@ -388,7 +387,7 @@ export class RoutinesManager {
      */
     deleteEditBlock() {
         const editBlock = get(this.editingBlock)!
-        this.updateRoutineAfterBlockUpdate(editBlock, "delete")
+        this.updateRoutineBlock(editBlock, "delete")
         this.updateBreakdownData()
     }
 
@@ -442,7 +441,10 @@ export class RoutinesManager {
      * @param block  Block being edited
      */
     intDragLiftMoveEdit(block: RoutineBlockElem) {
-        const editBlock           =  get(this.editingBlock)!
+        this.editingBlockRef = this.getDOMBlockElem(block.id)
+        this.editingBlock.set({ ...block, isDragging: true })
+
+        const editBlock =  get(this.editingBlock)!
         const editBlockLeftOffset =  getElemNumStyle(this.editingBlockRef!, "left")
 
         this.editingBlockTotalTime     = editBlock.endTime - editBlock.startTime
@@ -586,12 +588,15 @@ export class RoutinesManager {
     /**
      * Initialize a strech edit state
      * 
-     * @param isEditingExisting  Is user stretch-editing a new block!
+     * @param exists  Is user stretch-editing a new block!
      */
-    initDragStretchEdit(block: RoutineBlockElem, isEditingExisting = false) {
+    initStretchEdit(block: RoutineBlockElem, exists = false) {
         let isDraggingByTail = false
 
-        if (isEditingExisting) {
+        this.editingBlock.set({ ...block, isDragging: true })
+        this.editingBlockRef = this.getDOMBlockElem(this.blockPointerDownId!)
+
+        if (exists) {
             this.editContext.set("old-stretch")
             isDraggingByTail = !this.isDragLiftFromHead
         }
@@ -622,7 +627,7 @@ export class RoutinesManager {
     /**
      * When a drag has been initiated, attempt to make a block if the right conditions are met.
      */
-    createBlockFromStretchEdit(): RoutineEditBlock | null {
+    createBlockFromStretch(): RoutineEditBlock | null {
         const stretchPivotTime     = this.getTimeAndOffsetFromTopPos(this.stretchPivotPointTopOffset, false).time
         let { startTime, endTime } = this.getTimesFromStretch({
             pivotPointOffset:  this.stretchPivotPointTopOffset, 
@@ -646,7 +651,7 @@ export class RoutinesManager {
         // create valid block
         return {
             id: blocks.length + "",
-            title: "Untitled",
+            title: "",
             color: randomArrayElem(COLOR_SWATCHES),
             startTime, 
             endTime,
@@ -711,7 +716,7 @@ export class RoutinesManager {
             const threshold = RoutinesManager.STRETCH_DRAG_DISTANCE_THRESHOLD
 
             if (this.isHozDragValid(threshold)) {
-                this.initDragStretchEdit(this.blockOnPointerDown! , true)
+                this.initStretchEdit(this.blockPointerDown!, true)
                 this.allowStrechEdit = true
             }
         }
@@ -747,7 +752,7 @@ export class RoutinesManager {
     /**
      * End the stretch and lift edit states.
      */
-    onBlockStretchEditEnd() {
+    onStretchEditEnd() {
         if (this.editTargetElem) {
             this.editTargetElem.style.cursor = "default"
             this.editTargetElem = null
@@ -765,7 +770,7 @@ export class RoutinesManager {
             this.editContext.set("details")
         }
         else if (editContext === "old-stretch" && doUpdate) {
-            this.updateRoutineAfterBlockUpdate(editBlock!, "old-stretch")
+            this.updateRoutineBlock(editBlock!, "old-stretch")
             this.editContext.set(null)
             this.editingBlock.set(null)
         }
@@ -808,28 +813,7 @@ export class RoutinesManager {
         }
     }
 
-    getColorPickerPos() {
-        const containerWidth = this.containerElem!.clientWidth
-        const containerHeight = this.containerElem!.clientHeight + 20
-        const scrollTop = this.containerElem!.scrollTop
-
-        const cursorPos = { 
-            top: this.cursorPos.top - scrollTop - 5,
-            left: this.cursorPos.left - 80
-        }
-
-        const { top, left } = initFloatElemPos({
-            dims: { height: 206, width: 190 }, 
-            cursorPos, 
-            containerDims: { height: containerHeight, width: containerWidth }
-        })
-
-        return {
-            left, top: top + scrollTop
-        }
-    }
-
-    /* edit helpers*/
+    /* edit helpers */
 
     getTopOffsetFromTime(time: number) {
         return ((time / TOTAL_DAY_MINS) * this.containerElemHt)
@@ -1048,20 +1032,14 @@ export class RoutinesManager {
     }
 
     /**
-     * Find the nearest allowable space for a block to an impossible desired start time.
-     * 
-     * @param editBlock  Block currently being edited.
-     * @param id         Id of block on the move. Will be the current edit block by default.
-     * 
-     * @returns          The start time that puts the bock in the nearest allowable space to the desired start time.
+     * Find the nearest allowable space for a block given a desired start time.
      */
-    findNearestClosestTimeOpening(context: {
+    findNearestClosestTimeOpening({ blocks, editId, newStartTime, newEndTime }: {
         blocks: RoutineBlockElem[],
         editId: string
         newStartTime: number,
         newEndTime: number
     }) {
-        const { blocks, editId, newStartTime, newEndTime } = context
         const timeLength = newEndTime - newStartTime
 
         let nearestStartTime = 1440
@@ -1203,8 +1181,6 @@ export class RoutinesManager {
     
     /**
     * Checks if the drag distance is within the threshold for a stretch edit.
-    * 
-    * @returns  True if the drag distance is within the stretch edit threshold, otherwise false.
     */
     isHozDragValid(threshold: number) {
         const dragDistance = Math.abs(this.cursorPos.top - this.dragStartPoint.top)
@@ -1214,8 +1190,6 @@ export class RoutinesManager {
 
     /**
     * Checks if the drag distance is within the threshold for a stretch edit.
-    * 
-    * @returns  True if the drag distance is within the stretch edit threshold, otherwise false.
     */
     isDragStretchValid(threshold: number) {
         const dragDistance = getDistBetweenTwoPoints(this.cursorPos, this.dragStartPoint)
@@ -1223,10 +1197,6 @@ export class RoutinesManager {
         return dragDistance >= threshold
     }
 
-    /**
-     * If cursor is near the borders while a block is being lifted do a scroll to the direction of the border the block is going to.
-     * If far from the borders, avoid scrolling.
-     */
     scrollWhenNearContainerBounds() {
         if (!this.allowAutoScroll) return
         if (this.scrollInterval) return
@@ -1263,8 +1233,11 @@ export class RoutinesManager {
         return isDraggingByTail ? cursorTop - height : cursorTop + height
     }
 
-
     toggleAutoScroll(allow: boolean) {
         this.allowAutoScroll = allow
+    }
+
+    getDOMBlockElem(id: string) {
+        return getElemById(id) as HTMLElement
     }
 }

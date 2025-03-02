@@ -396,7 +396,7 @@ export const TEST_GOALS: Goal[] = [
   {
     id: uuidv4(),
     name: "Reach conversational fluency in French",
-    due: new Date("2025-2-22"),
+    due: new Date("2025-3-22"),
     dueType: "month",
     description: "Reach conversational fluency in French by the end of the year.",
     tag: TEST_TAGS[0],
@@ -437,7 +437,7 @@ export const TEST_GOALS: Goal[] = [
   {
     id: uuidv4(),
     name: "Run a 6 minute mile",
-    due: new Date("2025-2-10"),
+    due: new Date("2025-3-10"),
     dueType: "day",
     description: "Run a 6 minute mile by the end of the year.",
     tag: TEST_TAGS[6],
@@ -493,7 +493,7 @@ export const TEST_GOALS: Goal[] = [
     name: "Go hiking in Iceland",
     description: "Trek through Iceland's epic landscapes with glaciers, volcanoes, and hidden hot springs.",
     creationDate: new Date("2025-01-01"),
-    due: new Date("2025-2-22"),
+    due: new Date("2025-3-22"),
     status: "not-started",
     imgSrc: "https://i.pinimg.com/736x/e7/cb/8a/e7cb8a6fd5c308575b3261262e85965d.jpg",
     tag: TEST_TAGS[9],
@@ -654,7 +654,7 @@ export const TEST_GOALS: Goal[] = [
   {
     id: uuidv4(),
     name: "Finish porfolio website",
-    due: new Date("2025-2-10"),
+    due: new Date("2025-3-10"),
     dueType: "quarter",
     description: "Create the best most beautiful most gorgeous portfolio website oat.",
     tag: TEST_TAGS[1],
@@ -895,7 +895,7 @@ It's the art of <i>letting go</i>, embracing tranquility, and finding clarity in
 
 export const ACTIVITY_DATA: DayEntry[] = [
   {
-      date: new Date(2025, 1, 2),
+      date: new Date(2025, 2, 2),
       focusMins: 145,
       habits: 0,
       goals: [
@@ -907,13 +907,13 @@ export const ACTIVITY_DATA: DayEntry[] = [
       }
   },
   {
-      date: new Date(2025, 1, 3),
+      date: new Date(2025, 2, 3),
       highlightImg: null,
       focusMins: 95,
       habits: 0
   },
   {
-      date: new Date(2025, 1, 4),
+      date: new Date(2025, 2, 4),
       focusMins: 120,
       habits: 0,
       highlightImg: {
@@ -922,7 +922,7 @@ export const ACTIVITY_DATA: DayEntry[] = [
       }
   },
   {
-      date: new Date(2025, 1, 5),
+      date: new Date(2025, 2, 5),
       habits: 3,
       focusMins: 0,
       highlightImg: {
@@ -931,43 +931,43 @@ export const ACTIVITY_DATA: DayEntry[] = [
       }
   },
   {
-      date: new Date(2025, 1, 6),
+      date: new Date(2025, 2, 6),
       habits: 0,
       focusMins: 0,
       highlightImg: null
   },
   {
-      date: new Date(2025, 1, 9),
+      date: new Date(2025, 2, 9),
       habits: 0,
       focusMins: 0,
       highlightImg: null
   },
   {
-      date: new Date(2025, 1, 10),
+      date: new Date(2025, 2, 10),
       habits: 0,
       focusMins: 0,
       highlightImg: null,
   },
   {
-      date: new Date(2025, 1, 10),
+      date: new Date(2025, 2, 10),
       habits: 6,
       focusMins: 0,
       highlightImg: null
   },
   {
-      date: new Date(2025, 1, 13),
+      date: new Date(2025, 2, 13),
       habits: 2,
       focusMins: 0,
       highlightImg: null,
   },
   {
-      date: new Date(2025, 1, 16),
+      date: new Date(2025, 2, 16),
       habits: 0,
       focusMins: 0,
       highlightImg: null,
   },
   {
-      date: new Date(2025, 1, 18),
+      date: new Date(2025, 2, 18),
       habits: 3,
       focusMins: 0,
       highlightImg: {
@@ -976,7 +976,7 @@ export const ACTIVITY_DATA: DayEntry[] = [
       }
   },
   {
-      date: new Date(2025, 1, 20),
+      date: new Date(2025, 2, 20),
       habits: 1,
       focusMins: 0,
       highlightImg: null,
@@ -989,13 +989,13 @@ export const ACTIVITY_DATA: DayEntry[] = [
       ]
   },
   {
-      date: new Date(2025, 1, 23),
+      date: new Date(2025, 2, 23),
       habits: 4,
       focusMins: 40,
       highlightImg: null
   },
   {
-      date: new Date(2025, 1, 24),
+      date: new Date(2025, 2, 24),
       habits: 2,
       focusMins: 0,
       highlightImg: {
@@ -1004,13 +1004,13 @@ export const ACTIVITY_DATA: DayEntry[] = [
       }
   },
   {
-      date: new Date(2025, 1, 26),
+      date: new Date(2025, 2, 26),
       habits: 5,
       focusMins: 120,
       highlightImg: null,
   },
   {
-      date: new Date(2025, 1, 27),
+      date: new Date(2025, 2, 27),
       habits: 4,
       focusMins: 0,
       highlightImg: {
@@ -1019,13 +1019,13 @@ export const ACTIVITY_DATA: DayEntry[] = [
       }
   },
   {
-      date: new Date(2025, 1, 28),
+      date: new Date(2025, 2, 28),
       habits: 1,
       focusMins: 0,
       highlightImg: null,
   },
   {
-      date: new Date(2025, 1, 30),
+      date: new Date(2025, 2, 30),
       habits: 2,
       focusMins: 95,
       highlightImg: {
@@ -1034,13 +1034,13 @@ export const ACTIVITY_DATA: DayEntry[] = [
       }
   },
   {
-      date: new Date(2025, 1, 31),
+      date: new Date(2025, 2, 31),
       habits: 2,
       focusMins: 0,
       highlightImg: null
   },
   {
-      date: new Date(2025, 1, 14),
+      date: new Date(2025, 2, 14),
       habits: 4,
       focusMins: 0,
       highlightImg: null,
@@ -1049,7 +1049,7 @@ export const ACTIVITY_DATA: DayEntry[] = [
       ]
   },
   {
-      date: new Date(2025, 1, 15),
+      date: new Date(2025, 2, 15),
       habits: 5,
       focusMins: 0,
       highlightImg: null,
@@ -1058,7 +1058,7 @@ export const ACTIVITY_DATA: DayEntry[] = [
       ]
   },
   {
-      date: new Date(2025, 1, 25),
+      date: new Date(2025, 2, 25),
       habits: 3,
       focusMins: 120,
       highlightImg: {
@@ -1072,7 +1072,7 @@ export const ACTIVITY_DATA: DayEntry[] = [
       ]
   },
   {
-      date: new Date(2025, 1, 29),
+      date: new Date(2025, 2, 29),
       habits: 1,
       focusMins: 30,
       highlightImg: null,

@@ -6,9 +6,7 @@ export const ROUTINE_BLOCKS_CONTAINER_ID = "routine-blocks-container"        // 
 export const ROUTINE_SCROLL_CONTAINER_ID = "routine-blocks-scroll-container" // container of blocks container
 export const DAY_DROPDOWN_WIDTH = 255
 
-export enum BreakdownView {
-    Cores, Tags
-}
+
 export enum ViewOption {
     Today, Weekly, MTWT, FSS
 }
@@ -30,27 +28,12 @@ export function getRoutineBlocks(dailyRoutine: RoutineBlock[] | DailyRoutine) {
     return "id" in dailyRoutine ? dailyRoutine.blocks : dailyRoutine
 }
 
-export function getBlockStyling(height: number) {
-    const classes: string[] = []
-
-    if (height < 12) {
-        classes.push("routine-blocks__block--xsm")
-    }
-    if (height < 20) {
-        classes.push("routine-blocks__block--sm")
-    }
-    if (height < 34) {
-        classes.push("routine-blocks__block--md")
-    }
-    return classes.join(" ")
-}
 
 export function isDayRoutinedLinked(weekRoutine: WeeklyRoutine | null, dayKey: keyof WeeklyRoutineBlocks) {
     if (!weekRoutine) {
         return false
     }
     const dayRoutine = weekRoutine!.blocks[dayKey]
-
     return "id" in dayRoutine
 }
 

@@ -100,10 +100,10 @@
         dayIdx = idx
 
         if (scrollContainerHeight != undefined) {
-            updateRoutineBlocks()
+            finishEdits()
         }
     }
-    function updateRoutineBlocks() {
+    function finishEdits() {
         if (!dRoutine) return
 
         const blocks = "id" in dRoutine ? dRoutine.blocks : dRoutine
@@ -368,11 +368,6 @@
                             <span>
                                 {getTimeFromIdx(timeIdx).toLowerCase()}
                             </span>
-                            <div class="hour-blocks__block-vert-divider">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="2" height="27" viewBox="0 0 0 0" fill="none">
-                                    <path d="M1.25684 0.614746V 28" stroke-width="1" stroke-dasharray="2 2"/>
-                                </svg>
-                            </div>
                         </div>
                     {/each}
                 </div>

@@ -34,7 +34,6 @@
 
     let breakdownColIdx = -1
     let breakdownView: "cores" | "tags" = "cores"
-    let breakdownVal: "avg" | "sum" = "sum"
     let breakdownSettings = false
     let breakdownXPos = ""
     
@@ -50,9 +49,8 @@
 
     let confirmOptions: {
         text: string,
-        onCancel: FunctionParam,
-        onOk: FunctionParam,
-        options: ConfirmOptions,
+        onCancel: () => void,
+        onOk: () => void
     } | null = null
 
     _dayBreakdown.subscribe((data) => {
@@ -67,18 +65,18 @@
             return `calc(50% - ${(DAY_DROPDOWN_WIDTH / 2) - 30}px)`
         }
         else if (numViewDays === 7) {
-            return `clamp(10px, calc(((100% / ${numViewDays}) * ${breakdownColIdx}) + 0px), calc(100% - ${DAY_DROPDOWN_WIDTH + 10}px))`;
+            return `clamp(10px, calc(((100% / ${numViewDays}) * ${breakdownColIdx}) + 0px), calc(100% - ${DAY_DROPDOWN_WIDTH + 10}px))`
         }
         else {
-            return `clamp(10px, calc(((100% / ${numViewDays}) * ${breakdownColIdx}) + 40px), calc(100% - ${DAY_DROPDOWN_WIDTH}px))`;
+            return `clamp(10px, calc(((100% / ${numViewDays}) * ${breakdownColIdx}) + 40px), calc(100% - ${DAY_DROPDOWN_WIDTH}px))`
         }
     }
     function toggleViewOption() {
         viewOptionOpen = !viewOptionOpen
     }
     function closeDayBreakdown() {
-        manager.setDayBreakdown(null)
         breakdownColIdx = -1
+        breakdownView = "cores"
     }
     function setBreakdownForDay(dayIdx: number | null) {
         breakdownSettings = false
@@ -127,6 +125,8 @@
             icon: Icon.ChevronRight,
             transform: "scale(0.98) translate(2px, 0px)"
         }
+        const empty = dayBreakdown!.blocksLength === 0
+
         options = linked ? [
             {
                 name: "Replace routine",
@@ -136,7 +136,7 @@
             },
             {
                 name: "Unlink routine",
-                divider: true
+                divider: !empty
             }
         ] : [
             {
@@ -144,53 +144,36 @@
                 rightIcon,
                 onPointerOver,
                 onPointerLeave,
-                divider: true
+                divider: !empty
             }
         ]
 
         breakdownSettings = !breakdownSettings
     }
-    function onNewDayRoutine(chooseContext: DropdownItemClickedContext) {
-        const { parentName, idx } = chooseContext
-        const close = () => {
+    function onNewDayRoutine(idx: number) {
+        const onCancel = () => {
             breakdownSettings = false
             confirmOptions = null
             breakdownOpen = false
             dailyRoutinesOpen = false
             manager.setDayBreakdown(null)
         }
-
-        const isEmpty = dayBreakdown!.blocksLength
-        const chosenDayRoutine = DAILY_ROUTINES[idx]
-
-        if (parentName === "Link a Routine" && isEmpty) {
+        const linkRoutine = () => {
             manager.linkDayRoutine(chosenDayRoutine)
-            close()
+            onCancel()
         }
-        else if (parentName === "Link a Routine") {
-            confirmOptions = {
-                text: "Are you sure? Doing this will replace your current routine.",
-                onOk: () => {
-                    manager.linkDayRoutine(chosenDayRoutine)
-                    close()
-                },
-                onCancel: close,
-                options: { 
-                    ok: "Link a Routine", caption: "Heads Up!"  
-                }
-            }
+        
+        const chosenDayRoutine = DAILY_ROUTINES[idx]
+        const isEmpty = dayBreakdown!.blocksLength === 0
+
+        if (isEmpty) { 
+            linkRoutine()
         }
         else {
             confirmOptions = {
-                text: "Are you sure? Doing this will replace your current routine.",
-                onOk: () => {
-                    manager.linkDayRoutine(chosenDayRoutine)
-                    close()
-                },
-                onCancel: close,
-                options: { 
-                    ok: "Replace", caption: "Heads Up!"  
-                }
+                text: "Are you sure you want to replace this routine?",
+                onCancel,
+                onOk: () => linkRoutine()
             }
         }
 
@@ -200,24 +183,20 @@
         const target = e.target as HTMLElement
         const optnText = target.innerText.trim()
 
-        const close = () => {
+        const onCancel = () => {
             breakdownSettings = false
             confirmOptions = null
             breakdownOpen = false
             dailyRoutinesOpen = false
-            manager.setDayBreakdown(null)
         }
 
         if (optnText === "Unlink routine") {
             confirmOptions = {
-                text: "Are you sure?",
-                onCancel: close,
-                options: { 
-                    ok: "Unlink", caption: "Heads Up!"
-                },
+                text: "Are you sure you want to unlink this routine?",
+                onCancel,
                 onOk: () => {
                     manager.unlinkSetDailyRoutine()
-                    close()
+                    onCancel()
                 },
             }
         }
@@ -225,14 +204,11 @@
         }
         else if (optnText === "Clear routine") {
             confirmOptions = {
-                text: "Are you sure?",
-                onCancel: close,
-                options: {  
-                    ok: "Clear", caption: "Heads Up!"
-                },
+                text: "Are you sure you want to clear this routine?",
+                onCancel,
                 onOk: () => {
                     manager.clearDayRoutine()
-                    close()
+                    onCancel()
                 }
             }
         }
@@ -344,13 +320,17 @@
         >
             {@const { linkedRoutine } = dayBreakdown}
             {@const linked = !!linkedRoutine}
-            {@const title = linked ? linkedRoutine.name : "Unlinked"}
+            {@const title = linked ? linkedRoutine.name : "Not Linked"}
             <div 
                 class="routine__day-breakdown dmenu"
-                class:routine__day-breakdown--unlinked={!linked}
                 style:width={`${DAY_DROPDOWN_WIDTH}px`}
+                class:routine__day-breakdown--unlinked={!linked}
             >
-                <div class="routine__day-breakdown-header">
+                <div 
+                    class="routine__day-breakdown-header"
+                    style:height="23px"
+                    class:hidden={!linked}
+                >
                     <div 
                         title={title}
                         class="routine__name"
@@ -358,14 +338,15 @@
                     >
                         {title}
                     </div>
-                    <div class="routine__settings-btn">
-                        <SettingsBtn 
-                            id={"day-breakdown"}
-                            onClick={() => {
-                                toggleBreakdownOptions(linked)
-                            }}
-                        />
-                    </div>
+                </div>
+
+                <div class="routine__settings-btn">
+                    <SettingsBtn 
+                        id={"day-breakdown"}
+                        onClick={() => {
+                            toggleBreakdownOptions(linked)
+                        }}
+                    />
                 </div>
     
                 <div class="routine__breakdown-header">
@@ -373,42 +354,24 @@
                         id={"day-breakdown"}
                         isActive={breakdownViewMenu}
                         options={{
-                            noBg: true,
+                            arrowOnHover: true,
                             title: capitalize(breakdownView),
                             onClick: () => {
                                 breakdownViewMenu = !breakdownViewMenu
                             },
                             styles: { 
                                 fontSize: "1.3rem", 
-                                fontFamily: "Geist Mono", 
                                 padding: "4px 12px 4px 11px", 
-                                margin: "0px 0px 0px -10px", 
-                                opacity: 0.8
+                                margin: "0px 0px 0px -10px"
                             }
                         }} 
                     />
-                    <div class="routine__breakdown-btns">
-                        <button 
-                            class="routine__breakdown-btn" 
-                            class:full-opacity={breakdownVal === "sum"}
-                            on:click={() => breakdownVal = "sum"}
-                        >
-                            Sum
-                        </button>
-                        <button 
-                            class="routine__breakdown-btn" 
-                            class:full-opacity={breakdownVal === "avg"}
-                            on:click={() => breakdownVal = "avg"}
-                        >
-                            Avg
-                        </button>
-                    </div>
                 </div>
     
                 <div class="routine__stat-breakdown">
                     {#if breakdownView === "cores"}
                         {@const cores = dayBreakdown.cores}
-                        {@const prop = breakdownVal === "avg" ? "avgTime" : "totalTime"}
+                        {@const prop = "totalTime"}
     
                         <div class="routine__stats-col">
                             <div class="routine__stat">
@@ -467,7 +430,7 @@
                                     </div>
                                 </div>
                                 <div class="routine__stat-num">
-                                    {minsToHHMM(breakdownVal === "avg" ? data.avgTime : data.totalTime)}
+                                    {minsToHHMM(data.totalTime)}
                                 </div>
                             </div>
                             {#if (idx + 1) % 2 === 0 && idx !== dayBreakdown.tags.length - 1}
@@ -490,7 +453,7 @@
                         ],
                         pickedItem: breakdownView,
                         position: { 
-                            top: "65px", left: "10px"
+                            top: "50px", left: "10px"
                         },
                         styling:  { 
                             width: "80px" 
@@ -543,7 +506,6 @@
         isHidden={!dailyRoutinesOpen || !breakdownSettings}
         options={{
             pickedItem: linkedRoutine?.name,
-            onListItemClicked: onNewDayRoutine,
             listItems: [
                 ...DAILY_ROUTINES.map((dr) => ({ name: dr.name })),
             ],
@@ -566,6 +528,9 @@
             },
             onDismount: () => {
                 closing = false
+            },
+            onListItemClicked: ({ idx}) => {
+                onNewDayRoutine(idx)
             },
             onPointerLeave: () => {
                 dailyRoutinesOpen = false
@@ -597,15 +562,6 @@
             --day-btn-opacity: 1;
             --breakdown-border-opacity: 0.145;
         }
-        &--light &__days-btn {
-            opacity: 0.95;
-        }
-        &--light &__days-btn:hover {
-            opacity: 0.6;
-        }
-        &--light &__options button {
-            opacity: 0.4;
-        }
         &--light &__day-breakdown {
             @include contrast-bg("bg-2");
         }
@@ -629,7 +585,7 @@
             position: relative;
             transition: 0.2s transform cubic-bezier(.4,0,.2,1);
             padding: 2px 4px;
-            opacity: 0.35;
+            opacity: 0.5;
             @include flex(center);
             @include text-style(0.65, var(--fw-400-500), 1.1rem);
 
@@ -667,12 +623,11 @@
         &__days-btn {
             position: relative;
             padding: 4px 4px;
-            opacity: 0.75;
             @include flex(center);
             @include text-style(var(--day-btn-opacity), var(--fw-400-500), 1.2rem, "Geist Mono");
                         
             &:hover {
-                opacity: 1;
+                opacity: 0.75;
             }
             &--linked::before {
                 content: "*";
@@ -696,23 +651,24 @@
             }
         }
         &__name {
-            @include text-style(1, var(--fw-400-500), 1.415rem);
+            @include text-style(0.6, var(--fw-400-500), 1.2rem);
             @include elipses-overflow;
             max-width: calc(100% - 30px);
         }
         &__name--unlinked {
-            @include text-style(0.2, _, 1.35rem);
+            opacity: 0.75;
         }
         &__settings-btn {
             transform: scale(0.85);
+            @include abs-top-right(4px, 12px);
         }
         &__stat-breakdown {
             position: relative;
             padding-top: 5px;
         }
         &__day-breakdown {
-            width: 230px !important;
-            padding: 5px 16px 14px 14px;
+            width: 220px !important;
+            padding: 5px 16px 15px 14px;
             overflow: visible;
             border: 1.5px dashed rgba(var(--textColor1), var(--breakdown-border-opacity)) !important;
         }

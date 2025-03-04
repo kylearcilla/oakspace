@@ -213,7 +213,7 @@ describe('move block into new day column', () => {
             blocks = testCase.blocks as RoutineBlock[]
         }
 
-        resTime = manager.getStartTimeFroLift({
+        resTime = manager.getStartTimeFromLift({
             blocks: processTestBlocks(blocks),
             editId: "x",
             newStartTime: testCase.newStartTime,
@@ -233,7 +233,7 @@ describe('move block into new day column', () => {
             blocks = testCase.blocks as RoutineBlock[]
         }
 
-        resTime = manager.getStartTimeFroLift({
+        resTime = manager.getStartTimeFromLift({
             blocks: processTestBlocks(blocks),
             editId: "x",
             newStartTime: testCase.newStartTime,
@@ -253,7 +253,7 @@ describe('move block into new day column', () => {
             blocks = testCase.blocks as RoutineBlock[]
         }
 
-        resTime = manager.getStartTimeFroLift({
+        resTime = manager.getStartTimeFromLift({
             blocks: processTestBlocks(blocks),
             editId: "x",
             newStartTime: testCase.newStartTime,
@@ -273,7 +273,7 @@ describe('move block into new day column', () => {
             blocks = testCase.blocks as RoutineBlock[]
         }
 
-        resTime = manager.getStartTimeFroLift({
+        resTime = manager.getStartTimeFromLift({
             blocks: processTestBlocks(blocks),
             editId: "x",
             newStartTime: testCase.newStartTime,
@@ -293,7 +293,7 @@ describe('move block into new day column', () => {
             blocks = testCase.blocks as RoutineBlock[]
         }
 
-        resTime = manager.getStartTimeFroLift({
+        resTime = manager.getStartTimeFromLift({
             blocks: processTestBlocks(blocks),
             editId: "x",
             newStartTime: testCase.newStartTime,
@@ -313,7 +313,7 @@ describe('move block into new day column', () => {
             blocks = testCase.blocks as RoutineBlock[]
         }
 
-        resTime = manager.getStartTimeFroLift({
+        resTime = manager.getStartTimeFromLift({
             blocks: processTestBlocks(blocks),
             editId: "x",
             newStartTime: testCase.newStartTime,
@@ -333,7 +333,7 @@ describe('move block into new day column', () => {
             blocks = testCase.blocks as RoutineBlock[]
         }
 
-        resTime = manager.getStartTimeFroLift({
+        resTime = manager.getStartTimeFromLift({
             blocks: processTestBlocks(blocks),
             editId: "x",
             newStartTime: testCase.newStartTime,
@@ -353,7 +353,7 @@ describe('move block into new day column', () => {
             blocks = testCase.blocks as RoutineBlock[]
         }
 
-        resTime = manager.getStartTimeFroLift({
+        resTime = manager.getStartTimeFromLift({
             blocks: processTestBlocks(blocks),
             editId: "x",
             newStartTime: testCase.newStartTime,
@@ -373,7 +373,7 @@ describe('move block into new day column', () => {
             blocks = testCase.blocks as RoutineBlock[]
         }
 
-        resTime = manager.getStartTimeFroLift({
+        resTime = manager.getStartTimeFromLift({
             blocks: processTestBlocks(blocks),
             editId: "x",
             newStartTime: testCase.newStartTime,

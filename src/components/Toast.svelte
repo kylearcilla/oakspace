@@ -134,8 +134,8 @@
 	}
 	function closeBtnClickedHandler() {
 		if (disabled) return
-		deleteToast()
 		toast.onDismiss?.(toast)
+		deleteToast()
 	}
 
 	function onPointerDown(event: PointerEvent) {

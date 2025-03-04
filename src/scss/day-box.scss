@@ -12,17 +12,13 @@ $hour-block-height: 50px;
     }
     &-container {
         position: relative;
-        width: 50px;
         overflow: hidden;
     }
     &__blocks {
         position: relative;
-        width: 50px;
         height: calc(($hour-block-height * 24));
-        width: 50px;
     }
     &__block {
-        position: relative;
         text-align: center;
         flex-direction: column;
         position: absolute;
@@ -30,18 +26,12 @@ $hour-block-height: 50px;
         left: -5px;
     }
     &__block span {
-        @include text-style(0.2, var(--fw-400-500), 1.15rem);
+        @include text-style(0.35, var(--fw-400-500), 1.15rem);
         white-space: nowrap;
         display: block;
         height: 11px;
         margin-top: -7px;
         width: 40px;
-    }
-    &__block-vert-divider path {
-        stroke: rgba(var(--textColor1), 0.17);
-        display: none;
-        height: 28px;
-        opacity: 0.5;
     }
 }
 
@@ -77,13 +67,12 @@ $hour-block-height: 50px;
     }
     &__hoz-line-content {
         position: relative;
-
-        svg {
-            @include abs-top-left(0px, 0.5px);
-        }
+    }
+    svg {
+        @include abs-top-left(0px, 0.5px);
     }
     svg path {
-        stroke: rgba(var(--textColor1), 0.06);
+        stroke: rgba(var(--textColor1), 0.07);
     }
 }
 

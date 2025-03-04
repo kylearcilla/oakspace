@@ -114,7 +114,7 @@ export const IMG_COLLECTIONS: any = {
       overviewTextBlockImg: {
         src: "https://i.pinimg.com/originals/b9/32/88/b93288ff19c3b3460ab2680b7ffa1666.gif",
         type: "img",
-        size: "big"
+        size: "small"
       },
       headerImg: ""
   },

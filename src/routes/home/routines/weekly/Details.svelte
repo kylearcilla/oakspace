@@ -7,9 +7,8 @@
 	import { minsToHHMM } from "$lib/utils-date"
 	import { TextEditorManager } from "$lib/inputs"
 	import { formatCoreData } from "$lib/utils-routines"
-	import { RoutinesManager } from "$lib/routines-manager"
 	import { WeeklyRoutinesManager } from "$lib/routines-weekly-manager"
-	import { capitalize, decrementIdx, insertItemArr, randomArrayElem, removeItemArr } from "$lib/utils-general"
+	import { capitalize, decrementIdx, insertItemArr, randomArrayElem, removeItemArr, reorderItemArr } from "$lib/utils-general"
     
 	import SvgIcon from "$components/SVGIcon.svelte"
 	import EmptyList from "$components/EmptyList.svelte"
@@ -24,6 +23,9 @@
     export let manager: WeeklyRoutinesManager
     export let isMin: boolean
 
+    const { MAX_TITLE, MAX_DESCRIPTION } = WeeklyRoutinesManager
+    const TITLE_ID = "routine-title"
+    const DESCRIPTION_ID = "routine-description"
     const WK_ROUTINES_SETTINGS_DROPDOWN_WIDTH  = 140
     const EMPTY_LIST_SUGGESTIONS = [
         "🌿 Wellness Routine",
@@ -45,10 +47,12 @@
     let titleInput:  TextEditorManager
     let description: TextEditorManager
 
-    let contextIdx = -1
-    let setIdx = routines.length > 0 ? 0 : -1
-    let editIdx = setIdx
-    let setId: string | null = null
+    let contextId: string = ""
+    let editId: string = ""
+    let setId: string = ""
+
+    let srcId: string = ""
+    let targetId: string = ""
     
     /* breakdown */
     let breakdownView = "cores"
@@ -79,6 +83,11 @@
     $: routinesOpen = isMin ? false : true
     $: initTextEditors(weekRoutine)
 
+    $: {
+        setId = $setWeekRoutine?.id || ""
+        editId = weekRoutine?.id || ""
+    }
+
     /* edits */
 
     function initTextEditors(routine: WeeklyRoutine | null) {
@@ -87,15 +96,16 @@
         setId = routine.id
 
         titleInput = new TextEditorManager({ 
+            id: TITLE_ID,
             initValue: routine.name,
             placeholder: "Routine Title",
-            maxLength: RoutinesManager.MAX_TITLE,
-            id: "routine-title",
+            maxLength: MAX_TITLE,
             singleLine: true,
             doAllowEmpty: false,
             handlers: {
                 onBlurHandler: (_, val) => {
-                    const routine = routines[editIdx]
+                    const routine = routines.find(r => r.id === editId)
+                    if (!routine) return
 
                     manager.updateTitle(val)
                     routines = routines.map((r) => r.id === routine.id ? {  ...r, name: val } : r)
@@ -103,14 +113,15 @@
             }
         })
         description = new TextEditorManager({ 
+            id: DESCRIPTION_ID,
             initValue: routine.description,
             placeholder: "Type description here...",
             singleLine: true,
-            maxLength: RoutinesManager.MAX_DESCRIPTION,
-            id: "routine-description",
+            maxLength: MAX_DESCRIPTION,
             handlers: {
                 onBlurHandler: (_, val) => {
-                    const routine = routines[editIdx]
+                    const routine = routines.find(r => r.id === editId)
+                    if (!routine) return
 
                     manager.updateDescription(val)
                     routines = routines.map((r) => r.id === routine.id ? {  ...r, description: val } : r)
@@ -119,7 +130,7 @@
         })
     }
 
-    function openContextMenu(e: Event, routineIdx: number) {
+    function openContextMenu(e: Event, routineId: string) {
         if (editContext === "duplicate") {
             manager.closeDuplicateEdit()
         }
@@ -141,29 +152,30 @@
             }
         }
         
-        contextIdx = routineIdx
+        contextId = routineId
         routinesMenuOpen = true
         routineMenuPos = { top, left }
     }
 
-    function onSettingOptnClicked(itemIdx: number, optn: string) {
-        const isChosen = itemIdx === setIdx
+    function onSettingOptnClicked(routineId: string, optn: string) {
+        const isChosen = routineId === setId
+        const routine = routines.find(r => r.id === routineId)
+        if (!routine) return
 
         if (optn === "Unset" && isChosen) {
-            contextIdx = -1
-            setIdx = -1
+            contextId = ""
+            setId = ""
             setWeekRoutine.set(null)
         }
         else if (optn === "Set as Current") {
-            contextIdx = -1
-            setIdx = itemIdx
-
-            setWeekRoutine.set(routines[itemIdx])
+            contextId = ""
+            setId = routine.id
+            setWeekRoutine.set(routine)
         }
         else if (optn === "Duplicate" && !loading) {
             loading = true
-            contextIdx = -1
-            const newRoutine = structuredClone(routines[contextIdx])
+            contextId = ""
+            const newRoutine = structuredClone(routine)
             
             const promise = () => new Promise<void>((resolve) => setTimeout(() => {
                 loading = false
@@ -193,70 +205,93 @@
         routines.push(newRoutine as WeeklyRoutine)
         routines = routines
 
-
-        if (empty) {
-            requestAnimationFrame(() => onRoutineClicked(0))
+        if (empty && routines.length > 0) {
+            requestAnimationFrame(() => onRoutineClicked(routines[0].id))
         }
     }
+    
     function deleteRoutine() {
-        const routine = routines[contextIdx]
-        const name = routine.name
-        const itemIdx = contextIdx
-        const inView = editIdx === contextIdx
-        const inSet = setIdx === contextIdx
+        const routine = routines.find(r => r.id === contextId)
+        if (!routine) return
+
+        const arrIdx = routines.findIndex(r => r.id === contextId)
+        const inView = editId === contextId
+        const inSet = setId === contextId
 
         confirmOptions = false
-        routines = removeItemArr({ array: routines, itemIdx })
+        routines = removeItemArr({ array: routines, itemIdx: routine.idx })
 
         if (inSet) {
-            setIdx = -1
+            setId = ""
             setWeekRoutine.set(null)
         }
         if (inView) {
-            editIdx = decrementIdx(editIdx, routines.length)
-            manager.setViewRoutine(editIdx >= 0 ? routines[editIdx] : null)
+            const nextIdx = decrementIdx(arrIdx, routines.length)
+            const nextRoutine = nextIdx >= 0 ? routines[nextIdx] : null
+            editId = nextRoutine?.id || ""
+            manager.setViewRoutine(nextRoutine)
         }
-        
-        toast("default", {
-            message: `"${name}" deleted.`,
-            contextId: "routines",
-            groupExclusive: true,
-            action: {
-                label: "Undo",
-                onClick: () => {
-                    routines = insertItemArr({ array: routines, item: routine })
-
-                    if (inSet) {
-                        setIdx = itemIdx
-                        setWeekRoutine.set(routine)
-                    }
-                    if (inView) {
-                        editIdx = itemIdx
-                        manager.setViewRoutine(routine)
-                    }
-                }
-            }
-        })
     }
-    function onRoutineClicked(routineIdx: number) {
+    
+    function onRoutineClicked(routineId: string) {
         if (editContext === "duplicate") {
             manager.closeDuplicateEdit()
         }
-        if (routineIdx === editIdx) {
+        if (routineId === editId) {
             return
         }
         if (isMin) {
             routinesOpen = false
         }
-        editIdx = routineIdx
-        manager.setViewRoutine(routines[routineIdx])
+        
+        const routine = routines.find(r => r.id === routineId)
+        if (!routine) return
+        
+        editId = routineId
+        manager.setViewRoutine(routine)
     }
 
     function setBreakdownView(name: string) {
         breakdownView = name as "cores" | "tags"
         breakdownOptnOpen = false
     }
-    
+
+
+    /* drag and drop */
+    function onDragStart(e: DragEvent) {
+        const target = e.target as HTMLElement
+        srcId = target.dataset.id!
+        
+        listRef.addEventListener("dragover", onDrag)
+        listRef.addEventListener("dragend", onDragEnd)
+
+        e.dataTransfer?.setData("text", "")
+        e.dataTransfer!.effectAllowed = "move"
+    }
+    function onDrag(e: DragEvent) {
+        e.preventDefault()
+
+        const target = e.target as HTMLElement
+        const elem = target.closest(".routine-item") as HTMLElement
+
+        if (elem) {
+            targetId = elem.dataset.id || ""
+        }
+    }
+    function onDragEnd() {
+        if (srcId && targetId) {
+            const srcIdx = routines.findIndex(r => r.id === srcId)
+            const targetIdx = routines.findIndex(r => r.id === targetId)
+
+            routines = reorderItemArr({ array: routines, srcIdx, targetIdx })
+        }
+
+        listRef.removeEventListener("dragover", onDrag)
+        listRef.removeEventListener("dragend", onDragEnd)
+        
+        srcId = ""
+        targetId = ""
+    }   
 </script>
 
 <div 
@@ -269,24 +304,22 @@
         <div class="routine__details" bind:clientHeight={detailsHeight}>
             <div class="routine__details-header">
                 <div 
-                    id={titleInput.id}
+                    id={TITLE_ID}
                     class="routine__title text-editor"
-                    class:starred={setIdx === editIdx}
+                    class:starred={setId === weekRoutine.id}
                     aria-label="Title"
                     contenteditable
                     spellcheck="false"
-                    data-placeholder={titleInput.placeholder}
                     bind:textContent={titleInput.value}
                 >
                 </div>
             </div>
             <div 
-                id={description.id}
+                id={DESCRIPTION_ID}
                 class="routine__description text-editor"
                 aria-label="Description"
                 contenteditable
                 spellcheck="false"
-                data-placeholder={description.placeholder}
                 bind:textContent={description.value}
             >
             </div>
@@ -300,9 +333,9 @@
                     title: capitalize(breakdownView),
                     arrowOnHover: true,
                     styles: { 
-                        fontSize: "1.3rem", 
                         padding: "4px 12px 4px 11px",
                         margin: "0px 0px 0px -10px",
+                        fontSize: "1.375rem",
                         fontFamily: "Geist Mono"
                     },
                     onClick: () => { 
@@ -488,21 +521,25 @@
                 style:width={routines.length === 0 ? "210px" : "260px"}
                 style:--routines-dropdown-max-height={`${isMin ? "auto" : "calc(100% - 80px)"}`}
             >
-                {#each routines.sort((a, b) => a.idx - b.idx) as routine, idx (routine.id)}
+                {#each routines.sort((a, b) => a.idx - b.idx) as routine (routine.id)}
                     <li 
-                        class="routine-item"
-                        class:routine-item--clicked={idx === editIdx}
-                        class:routine-item--active={idx === contextIdx}
-                        class:routine-item--chosen={idx === setIdx}
+                        class="routine-item drop-top-border"
+                        class:drop-top-border--over={targetId === routine.id}
+                        class:routine-item--clicked={routine.id === editId}
+                        class:routine-item--active={routine.id === contextId}
+                        class:starred={routine.id === setId}
+                        draggable="true"
+                        data-id={routine.id}
+                        on:dragstart={onDragStart}
                     >
                         <button
                             on:click={() => {
-                                onRoutineClicked(idx)
+                                onRoutineClicked(routine.id)
                             }}
                             on:keydown={(e) => {
                                 if (e.key === 'Enter' || e.code == "Space") {
                                     e.preventDefault()
-                                    onRoutineClicked(idx);
+                                    onRoutineClicked(routine.id)
                                 }
                             }}
                         >
@@ -513,7 +550,7 @@
                         <div class="routine-item__settings-btn">
                             <SettingsBtn 
                                 id={"routines"}
-                                onClick={(e) => openContextMenu(e, idx)}
+                                onClick={(e) => openContextMenu(e, routine.id)}
                             />
                         </div>
                     </li>
@@ -537,16 +574,16 @@
             isHidden={!routinesMenuOpen}
             options={{
                 listItems: [
-                    {  name: contextIdx === setIdx ? "Unset" : "Set as Current" },
+                    {  name: contextId === setId ? "Unset" : "Set as Current" },
                     {  name: "Duplicate", divider: true },
                     {  name: "Delete"  }
                 ],
                 onListItemClicked: ({ name }) => {
-                    onSettingOptnClicked(contextIdx, name)
+                    onSettingOptnClicked(contextId, name)
                 },
                 onClickOutside: () => {
                     routinesMenuOpen = false
-                    contextIdx = -1
+                    contextId = ""
                 },
                 styling: { 
                     zIndex: 2001 
@@ -567,7 +604,7 @@
         onOk={deleteRoutine}
         onCancel={() => {
             confirmOptions = false
-            contextIdx = -1
+            contextId = ""
         }}
     /> 
 {/if}
@@ -588,6 +625,9 @@
     $hr-col-width--min: 40px;
 
     .routine {
+        width: 280px;
+        position: relative;
+
         &--min {
             width: calc(100% + 10px) !important;
         }
@@ -631,10 +671,6 @@
         &--empty {
             width: 220px;
         }
- 
-        width: 280px;
-        position: relative;
-
         &__details {
             width: 90%;
         }
@@ -648,6 +684,20 @@
             border-left: 1px solid rgba(var(--textColor1), 0.04);
             overflow: hidden;
             position: relative;
+        }
+    }
+    .routine-item.starred:after {
+        top: 4px; 
+        right: 2px;
+    }
+    .starred {
+        position: relative;
+        
+        &::after {
+            @include abs-top-right(15px, -5px);
+            @include text-style(0.45, 300, 2rem);
+            height: min-content;
+            content: "*";
         }
     }
 </style>

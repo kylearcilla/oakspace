@@ -164,11 +164,12 @@ function ColorPicker() {
         picked: null
     })
 
-    function init({ onSubmitColor, picked }: { 
+    function init({ onSubmitColor, picked, onClose }: { 
         onSubmitColor: (color: Color) => void,
-        picked: Color | null
+        picked: Color | null,
+        onClose?: () => void
     }) {
-        const position = getPopFloatElemPos({ height: 300, width: 150 })
+        const position = getPopFloatElemPos({ height: 370, width: 150 })
         position.top += 25
         position.left -= 30
 
@@ -179,6 +180,7 @@ function ColorPicker() {
         state.update((data) => ({ 
             ...data, 
             onSubmitColor,
+            onClose,
             position, 
             isOpen: true,
             picked
@@ -197,6 +199,9 @@ function ColorPicker() {
             isOpen: false, 
             onSubmitColor: onSubmitColor
         }))
+
+        const { onClose } = get(state)
+        if (onClose) onClose()
     }
 
     return {

@@ -12,10 +12,11 @@
     export let options: TimePickerOptions | undefined = {}
     export let onClick: FunctionParam | undefined = undefined
     export let onSet: (time: number) => void
-
+    export let error: Error | null = null
     const MINS_CHANGE = 5
     const DROPDOWN_OPTION_INTERVAL = 15
     const TIME_PICKER_ID = `${id}--time-picker-input`
+    const DRAG_THRESHOLD = 5
 
     let dropdownOptions: DropdownOption[] = []
     let timePickerRef: HTMLElement
@@ -32,15 +33,14 @@
         })
     }
 
-    /* inputs */
     let inputElem: HTMLElement
     let active = false
     let closestIdxOption = -1
     let overElems: { target: HTMLElement, cursor: string } [] = []
     
-    /* drag stuff */
-    let initTouchPointLeft = -1
+    let initLeftOffset = -1
     let isDragging = false
+    let poinerdown = false
 
     let prevOffset = -1
     let preDiff = -1
@@ -84,7 +84,7 @@
     }
 
     /* dragging stuff */
-    function updateCurrentTime(diff: number) {
+    function setTimeOnDrag(diff: number) {
         if (diff % 2 != 0 || preDiff === diff) {
             return
         }
@@ -101,7 +101,14 @@
         titleInput.updateText(currentMinsStr)
     }
     function onPickerDrag(e: MouseEvent) {
-        const diff = e.clientX - initTouchPointLeft
+        const diff = e.clientX - initLeftOffset
+        
+        // Check if drag threshold has been met
+        if (!isDragging && Math.abs(diff) >= DRAG_THRESHOLD) {
+            isDragging = true
+        }
+        if (!isDragging) return
+        
         const target = e.target as HTMLElement
         const cursor = getElemStyle(target, "cursor")
         const avoid = target != timePickerRef && cursor != "ew-resize"
@@ -113,7 +120,7 @@
 
         isNegative = e.clientX < prevOffset
         prevOffset = e.clientX
-        updateCurrentTime(diff)
+        setTimeOnDrag(diff)
     }
     function onPickerMouseDown(e: MouseEvent) {
         const target = e.target as HTMLElement
@@ -121,10 +128,11 @@
             active = true
             return
         }
-
-        isDragging = true
-        initTouchPointLeft = e.clientX
+        
+        isDragging = false
+        initLeftOffset = e.clientX
         prevOffset = e.clientX
+        poinerdown = true
 
         window.addEventListener("mousemove", onPickerDrag)
         window.addEventListener("mouseup", onPickerMouseUp)
@@ -133,13 +141,17 @@
         window.removeEventListener("mousemove", onPickerDrag)
         window.removeEventListener("mouseup", onPickerMouseUp)
 
-        isDragging = false
-        setTime(currentMins)
-
-        for (let elem of overElems) {
-            elem.target.style.cursor = elem.cursor
+        if (isDragging) {
+            setTime(currentMins)
+            
+            for (let elem of overElems) {
+                elem.target.style.cursor = elem.cursor
+            }
+            overElems = []
         }
-        overElems = []
+        
+        isDragging = false
+        poinerdown = false
     }
 
     /* misc */
@@ -189,7 +201,7 @@
         class="time-picker"  
         class:time-picker--dragging={isDragging}
         class:time-picker--light={isLight}
-        class:time-picker--active={active || isDragging}
+        class:time-picker--active={active || isDragging || error}
         on:mousedown={(e) => {
             onPickerMouseDown(e)
         }}
@@ -207,14 +219,13 @@
             contenteditable
             data-placeholder={titleInput.placeholder}
             class="time-picker__input"
-            class:pointer-events-none={isDragging}
             class:no-scroll-bar={true}
-            class:hidden={isDragging}
+            class:hidden={poinerdown}
             bind:this={inputElem}
         >
             {currentMinsStr}
         </div>
-        {#if isDragging}
+        {#if poinerdown}
             <span class="time-picker__input">
                 {currentMinsStr}
             </span>

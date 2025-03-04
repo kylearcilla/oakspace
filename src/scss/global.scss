@@ -1056,10 +1056,6 @@ $loading-dots-width: 4px;
     transition: 0.18s cubic-bezier(.4, 0, .2, 1);
 }
 
-.text-shimmer {
-    
-}
-
 @mixin bg-img($src: "hello", $opacity: 0.5) {
     background-image: linear-gradient(rgba(0, 0, 0, $opacity), rgba(0, 0, 0, $opacity)), url($src);
     background-size: cover;
@@ -1127,6 +1123,7 @@ $loading-dots-width: 4px;
         z-index: 100;
         height: 2.5px !important;
         transition: opacity 0.08s ease-in-out;
+        cursor: grab;
         width: calc(100% - 20px);
         @include abs-top-left(0px, 10px);
         background-color: #71B8FF;

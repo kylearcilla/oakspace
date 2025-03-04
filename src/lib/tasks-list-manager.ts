@@ -1246,7 +1246,6 @@ export class TasksListManager {
     toast(type: "warning" | "error", { message }: { message: string }) {
         toast(type, { 
             contextId: this.options.id,
-            groupExclusive: true,
             message 
         })
     }

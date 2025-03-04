@@ -5,7 +5,6 @@
 	import { themeState } from "$lib/store"
 	import { toast } from "$lib/utils-toast"
     import { colorPicker } from "$lib/pop-ups"
-	import { TEST_TASKS } from "$lib/mock-data"
     import { TextEditorManager } from "$lib/inputs"
     import { getColorTrio } from "$lib/utils-colors"
 	import { minsFromStartToHHMM } from "$lib/utils-date"
@@ -18,25 +17,25 @@
 	import TagPicker from "$components/TagPicker.svelte"
 	import TasksList from "$components/TasksList.svelte"
 	import TimePicker from "$components/TimePicker.svelte"
+	import SettingsBtn from "$components/SettingsBtn.svelte"
+	import ConfirmBtns from "$components/ConfirmBtns.svelte"
 	import DropdownBtn from "$components/DropdownBtn.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
 	import ConfirmationModal from "$components/ConfirmationModal.svelte"
-	import SettingsBtn from "$components/SettingsBtn.svelte";
-	import ConfirmBtns from "$components/ConfirmBtns.svelte";
+	import { TEST_TASKS } from "$lib/mock-data";
 
     const { MAX_BLOCK_DESCRIPTION, MIN_BLOCK_DURATION_MINS, MAX_BLOCK_TITLE } = RoutinesManager
     const MAX_ACTION_ITEMS = 12
 
-    export let routineManager: RoutinesManager
+    export let routines: RoutinesManager
     export let block: RoutineBlockElem
-
-    class EditError extends Error { }
+    export let onDeleteBlock: () => void
 
     const DESCRIPTION_ID = "routine-block-description"
     const TITLE_ID = "routine-block-title-input"
     
     let titleElem: HTMLElement
-    let settingsOpen = false, coresOpen = false, tagsOpen = false
+    let settingsOpen = false, coresOpen = false
     
     let { 
         id, startTime, endTime, title, 
@@ -44,27 +43,23 @@
         allowDescription = true, allowTasks = true
     } = block
 
-    let _blocks = routineManager.editDayRoutineElems
-    let isNew   = routineManager.isMakingNewBlock
-    
-    let updatedTasks: Task[] = tasks
+    let _blocks = routines.editDayRoutineElems
+    let isNew = routines.newBlockEdit
     let newTaskFlag = false
     let pickedCoreItemIdx = getCoreActivityIdx(activity)
-
-    let newStartTime = startTime
-    let newEndTime = endTime
-    let newOrderContext = order
+    let timeError: Error | null = null
+    let initTasks = false
     
+    let saving = false
     let editHasBeenMade = false
-    let isSaving = false
     let confirmModalOpen = false
-    
     let routineListRef: HTMLElement
 
     $: isDarkTheme = $themeState.isDarkTheme
     $: blocks = $_blocks
     $: colors = getColorTrio(block.color, true)
     $: colorPopUp = colorPicker.state
+    $: validateTime(startTime, endTime)
 
     new TextEditorManager({ 
         id: TITLE_ID,
@@ -74,12 +69,12 @@
         singleLine: true,
         maxLength: MAX_BLOCK_TITLE,
         handlers: {
-            onInputHandler: () => toggleEditMade()
+            onInputHandler: () => toggleEditMade(),
         }
     })
     new TextEditorManager({ 
         id: DESCRIPTION_ID,
-        initValue: description,
+        initValue: "",
         placeholder: "description here...",
         allowFormatting: false,
         maxLength: MAX_BLOCK_DESCRIPTION,
@@ -91,37 +86,30 @@
     function toggleEditMade() {
         editHasBeenMade = true
     }
-    function onMadeChanges(updatedBlock: RoutineBlockElem | null) {
-        routineManager.onConcludeModalEdit(updatedBlock)
+    function concludeEdit(updatedBlock: RoutineBlockElem | null) {
+        routines.onConcludeModalEdit(updatedBlock)
     }
     function optnClicked(name: string) {
         if (name.toLowerCase().includes("set")) {
             toggleEditMade()
         }
-        if (name === "Unset as first block") {
-            newOrderContext = null
+        if (name.includes("Unset")) {
+            order = null
         }
-        else if (name === "Unset as last block") {
-            newOrderContext = null
+        else if (name === "Set as First") {
+            order = "first"
         }
-        else if (name === "Set as first block" || name === "Set as new first block") {
-            newOrderContext = "first"
-        }
-        else if (name === "Set as last block" || name === "Set as new last block") {
-            newOrderContext = "last"
+        else if (name === "Set as Last") {
+            order = "last"
         }
         else if (name === "Delete Block") {
-
+            onDeleteBlock()
+            concludeEdit(null)
         }
         settingsOpen = false
     }
-
-
-    /* Info */
     function onTagChange(tag: Tag | null) {
-        tagsOpen = false
         block = { ...block, tag }
-
         toggleEditMade()
     }
     function onCoreOptnClicked(idx: number) {
@@ -137,83 +125,83 @@
 
         toggleEditMade()
     }
-    function onChooseColorr(color: Color | null) {
+    function onChooseColor(color: Color | null) {
         if (!color) return
 
         block = { ...block, color }
-
         toggleEditMade()
     }
-    function onTimePickerClicked() {
-        if (settingsOpen) settingsOpen = false
-        if (coresOpen) coresOpen = false
-        if (tagsOpen) tagsOpen = false
+    function validateTime(startTime: number, endTime: number) {
+        if (!blocks) return
+        try {
+            if (endTime - startTime < MIN_BLOCK_DURATION_MINS) {
+                throw Error(`Blocks must be at least ${MIN_BLOCK_DURATION_MINS} minutes long`)
+            }
+            const overlapBlock = routines.getOverlappingBlock({
+                blocks, startTime, endTime, excludeId: id
+            })
+            if (overlapBlock) {
+                const { title, startTime, endTime } = overlapBlock
+                const startTimeStr = minsFromStartToHHMM(startTime)
+                const endTimeStr = minsFromStartToHHMM(endTime)
+
+                throw Error(`Overlaps with \"${title}\" (${startTimeStr} - ${endTimeStr})`)
+            }
+            timeError = null
+        }
+        catch(e: any) {
+            timeError = e
+            initTimeErrorToast()
+        }
     }
-    function verifyChanges() {
-        if (newEndTime >= 1440 || newEndTime === 0) {
-            throw new EditError("Invalid end time")
-        }
-        if (newEndTime - newStartTime < 0) {
-            throw new EditError("Invalid time")
-        }
-        if (newEndTime - newStartTime < MIN_BLOCK_DURATION_MINS) {
-            throw new EditError(`Blocks must be at least ${MIN_BLOCK_DURATION_MINS} minutes long`)
-        }
+    function initTimeErrorToast() {
+        if (!timeError) return
 
-        // looks for the earliest overlapping block
-        const overlapBlock = routineManager.getOverlappingBlock({
-            blocks: blocks!, startTime: newStartTime, endTime: newEndTime, excludeId: id
+        toast("error", { 
+            contextId: "time-error",
+            groupExclusive: true,
+            message: timeError!.message 
         })
-
-        if (overlapBlock) {
-            const { title, startTime, endTime } = overlapBlock
-            const startTimeStr = minsFromStartToHHMM(startTime)
-            const endTimeStr = minsFromStartToHHMM(endTime)
-
-            throw new EditError(`Changes couldn't be saved. Overlaps with \"${title}\" (${startTimeStr} - ${endTimeStr})`)
-        }
     }
 
     /* conclude changes */
-    function asyncCall() {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => resolve("Mock data"), 200)
-        })
-    }
     async function saveChanges() {
-        if (isSaving) return
-        
+        if (timeError || title === "" || saving) {
+            timeError && initTimeErrorToast()
+            return
+        }
+        if (!editHasBeenMade) {
+            concludeEdit(null)
+            return
+        }
+
         try {
-            isSaving = true
-            await asyncCall()
-            verifyChanges()
+            saving = true
+            await new Promise((res) => setTimeout(() => res(null), 200))
             
-            onMadeChanges({
+            concludeEdit({
                 ...block, 
                 title, 
                 description,
-                startTime: newStartTime, 
+                startTime, 
                 allowDescription,
                 allowTasks,
-                endTime: newEndTime,
-                tasks: updatedTasks, 
-                order: newOrderContext
+                endTime,
+                tasks, 
+                order
             })
-
-            toast("success", { message: "Changes saved!" })
+            toast("default", { message: `"${title}" saved!` })
         }
         catch(e: any) {
-            console.error(e)
-            const message = e instanceof EditError ? e.message : "Error saving your changes."
-            toast("error", { message })
+            toast("error", { message: "Error saving your changes." })
         }
         finally {
-            isSaving = false
+            saving = false
         }
     }
     function onAttemptClose() {
         colorPicker.close()
-        if (isSaving) {
+        if (saving) {
             return
         }
         else if (editHasBeenMade || isNew) {
@@ -223,32 +211,26 @@
             confirmUnsavedClose()
         }
     }
-    function cancelCloseAttempt() {
-        confirmModalOpen = false
-    }
     function confirmUnsavedClose() {
         confirmModalOpen = false
-        onMadeChanges(null)
+        concludeEdit(null)
     }
     function onKeyPress(e: KeyboardEvent) {
         const target = e.target as HTMLElement
-        if (isTargetTextEditor(target)) return
-        
         const { metaKey, key } = e
-        
-        if (key == "Escape") {
+
+        if (isTargetTextEditor(target) || saving) {
+            return
+        }
+        else if (key == "Escape") {
             onAttemptClose()
         }
         else if (metaKey && key === "Enter") {
             saveChanges()
         }
     }
-
-
     onMount(() => {
-        if (!title) {
-            titleElem.focus()
-        }
+        if (!title) titleElem.focus()
     })
 </script>
 
@@ -263,12 +245,12 @@
     }}
     onClickOutSide={onAttemptClose}
 >
-    {@const order = newOrderContext}
     <div 
         class="edit-routine"
         class:edit-routine--light={!isDarkTheme}
+        class:edit-routine--no-tasks={!allowTasks}
+        class:edit-routine--no-desc={!allowDescription}
     >
-        <!-- header -->
         <div class="edit-routine__header">
             <div 
                 bind:this={titleElem}
@@ -302,7 +284,7 @@
                     style:--routine-bg-color-2={colors[1]}
                     on:click={() => {
                         colorPicker.init({
-                            onSubmitColor: (color) => onChooseColorr(color),
+                            onSubmitColor: (color) => onChooseColor(color),
                             picked: block.color
                         })
                     }}
@@ -317,14 +299,14 @@
                 <SettingsBtn 
                     id={"block-settings"}
                     onClick={() => settingsOpen = !settingsOpen}
-                />
+                /> 
             </div>
             <DropdownList 
                 id={"block-settings"}
                 isHidden={!settingsOpen} 
                 options={{
                     listItems: [
-                        ...(order !== "last" ? [{ name: order === "first" ? "Unset as First" : "Set as First" }] : []),
+                        ...(order !== "last" ? [{ name: order === "first" ? "Unset as First" : "Set as First", divider: order === "first"}] : []),
                         ...(order !== "first" ? [{ name: order === "last" ? "Unset as Last" : "Set as Last", divider: true }] : []),
                         {
                             name: "Description",
@@ -332,6 +314,7 @@
                             onToggle: () => {
                                 allowDescription = !allowDescription
                                 settingsOpen = false
+                                toggleEditMade()
                             }
                         },
                         {
@@ -341,6 +324,7 @@
                             onToggle: () => {
                                 allowTasks = !allowTasks
                                 settingsOpen = false
+                                toggleEditMade()
                             }
                         },
                         { name: "Delete Block" }
@@ -392,30 +376,30 @@
                         <div class="edit-routine__time-input-container">
                             <TimePicker
                                 id="start"
+                                error={timeError}
                                 options={{ 
-                                    start: newStartTime,
-                                    max: newEndTime
+                                    start: startTime,
+                                    max: endTime - 15
                                 }}
                                 onSet={(time) => { 
-                                    newStartTime = time
+                                    startTime = time
                                     toggleEditMade()
                                 }}
-                                onClick={() => onTimePickerClicked()}
                             />
                         </div>
                         <span>to</span>
                         <div class="edit-routine__time-input-container">
                             <TimePicker 
                                 id="end"
+                                error={timeError}
                                 options={{ 
-                                    start: newEndTime,
-                                    min: newStartTime
+                                    start: endTime,
+                                    min: startTime + 15
                                 }}
                                 onSet={(time) => { 
-                                    newEndTime = time
+                                    endTime = time
                                     toggleEditMade()
                                 }}
-                                onClick={() => onTimePickerClicked()}
                             />
                         </div>
                     </div>
@@ -453,7 +437,7 @@
                                 listItems: CORE_OPTIONS.map((coreKey) => ({ name: coreKey[1] })),
                                 pickedItem: pickedCoreItemIdx,
                                 position: { 
-                                    top: "28px", left: "0px" 
+                                    top: "29px", left: "0px" 
                                 },
                                 styling: { 
                                     width: "88px" 
@@ -483,7 +467,6 @@
             <div 
                 id={DESCRIPTION_ID}
                 class="edit-routine__description text-editor"
-                class:edit-routine__description--no-tasks={!allowTasks}
                 aria-label="Description"
                 contenteditable
                 spellcheck="false"
@@ -525,7 +508,11 @@
                     <TasksList
                         {newTaskFlag}
                         tasks={TEST_TASKS}
-                        onTaskChange={(_tasks) => tasks = _tasks}
+                        onTaskChange={(_tasks) => {
+                            initTasks && (toggleEditMade())
+                            tasks = _tasks
+                            initTasks = true
+                        }}
                         options={{
                             id: "action-items",
                             hotkeyFocus: "default",
@@ -557,9 +544,10 @@
 
         <div style:padding="0px 16px 16px 16px">
             <ConfirmBtns 
-                 disabled={title === ""}
-                 isLoading={isSaving}
+                 disabled={title === "" || !!timeError}
+                 isLoading={saving}
                  onCancel={onAttemptClose}
+                 weakDisable={!!timeError}
                  onOk={saveChanges}
              />
         </div>
@@ -569,7 +557,7 @@
 {#if confirmModalOpen} 
     <ConfirmationModal 
         text={isNew ? "Undo block creation?" :  "Discard unsaved changes?"}
-        onCancel={cancelCloseAttempt}
+        onCancel={() => confirmModalOpen = false}
         onOk={confirmUnsavedClose}
     /> 
 {/if}
@@ -594,7 +582,16 @@
         &--light &__info-title {
             @include text-style(0.5);
         }
-        
+        &--no-tasks  {
+            width: 400px;
+        }
+        &--no-tasks &__description {
+            min-height: 120px;
+            margin-bottom: 40px
+        }
+        &--no-desc {
+            width: 450px;
+        }
         &__header {
             @include flex(center, space-between);
             margin: 0px 0px 0px -6px;
@@ -669,10 +666,6 @@
         &__description {
             max-height: 100px;
             margin-bottom: 20px;
-
-            &--no-tasks {
-                margin-bottom: 120px;
-            }
         }
         &__list-header {
             width: 100%;
@@ -706,7 +699,7 @@
             margin: 5px 0px 10px 0px;
 
             &--empty {
-                min-height: 40px;
+                min-height: 100px;
             }
         }
     }

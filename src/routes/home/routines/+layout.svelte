@@ -76,13 +76,10 @@
             opacity: 0.34;
             @include text-style(1);
         }
-        &--light &__divider {
-            @include divider(0.064, 1px);
-        }
         
         &__title {
             margin-bottom: 13px;
-            @include text-style(1, var(--fw-400-500), 1.74rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 1.8rem);
         }
         &__tabs {
             @include flex(center);
@@ -92,7 +89,7 @@
             margin-right: 17px;
             opacity: 0.24;
             transition-duration: 0.04s;
-            @include text-style(1, var(--fw-300-400), 1.45rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 1.6rem);
             
             &:active {
                 transform: scale(0.985);
@@ -114,7 +111,7 @@
         }
         &__divider {
             margin: 10px 0px 0px 0px;
-            @include divider();
+            border-top: var(--divider-border);
         }
     }
 </style>

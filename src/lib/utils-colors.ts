@@ -4,32 +4,32 @@ export const COLOR_SWATCHES = [
     light1: "157, 100, 100",
     light2: "255, 214, 214",
     light3: "221, 168, 168",
-    dark1: "255, 180, 180",
+    dark1: "247, 202, 202",
     dark2: "54, 34, 34",
-    dark3: "156, 115, 115",
-    dark4: "39, 27, 27",
+    dark3: "88, 66, 66",
+    dark4: "40, 26, 26",
     name: "red"
   },
   {
     primary: "#FBA490",
     light1: "149, 106, 100",
-    light2: "247, 215, 202",
+    light2: "247, 222, 202",
     light3: "217, 173, 167",
-    dark1: "222, 177, 161",
+    dark1: "245, 209, 197",
     dark2: "58, 40, 34",
-    dark3: "172, 122, 112",
-    dark4: "40, 28, 21",
-    name: "scarlet"
+    dark3: "99, 75, 69",
+    dark4: "42, 30, 28",
+    name: "terracotta"
   },
   {
     primary: "#FFC898",
     light1: "154, 112, 75",
     light2: "248, 227, 191", 
     light3: "217, 184, 155",
-    dark1: "252, 212, 186",
+    dark1: "255, 224, 206",
     dark2: "48, 40, 36",
-    dark3: "135, 107, 92",
-    dark4: "36, 29, 25",
+    dark3: "95, 79, 70",
+    dark4: "47, 37, 31",
     name: "orange"
   },
   {
@@ -37,32 +37,32 @@ export const COLOR_SWATCHES = [
     light1: "139, 114, 66",
     light2: "255, 246, 200",
     light3: "228, 203, 155",
-    dark1: "238, 208, 133",
+    dark1: "251, 240, 214",
     dark2: "47, 41, 26",
-    dark3: "151, 131, 85",
-    dark4: "40, 33, 15",
+    dark3: "91, 83, 62",
+    dark4: "39, 33, 22",
     name: "yellow"
   },
   {
     primary: "#E6FD8A",
     light1: "86, 110, 66",
-    light2: "228, 242, 186",
-    light3: "175, 198, 156",
-    dark1: "245, 255, 205",
+    light2: "239, 238, 201",
+    light3: "174, 186, 157",
+    dark1: "235, 255, 217",
     dark2: "40, 44, 25",
-    dark3: "81, 85, 66",
-    dark4: "27, 30, 14",
+    dark3: "82, 86, 58",
+    dark4: "33, 36, 22",
     name: "pear"
   },
   {
     primary: "#d7e5aa",
     light1: "72, 111, 70",
-    light2: "220, 247, 206",
+    light2: "225, 246, 200",
     light3: "160, 204, 157",
-    dark1: "220, 255, 187",
+    dark1: "210, 229, 206",
     dark2: "28, 36, 25",
-    dark3: "69, 88, 52",
-    dark4: "22, 29, 15",
+    dark3: "78, 97, 74",
+    dark4: "29, 37, 27",
     name: "green"
   },
   {
@@ -72,8 +72,8 @@ export const COLOR_SWATCHES = [
     light3: "156, 183, 177",
     dark1: "200, 249, 243",
     dark2: "35, 45, 56",
-    dark3: "58, 109, 102",
-    dark4: "23, 30, 29",
+    dark3: "49, 77, 73",
+    dark4: "27, 33, 32",
     name: "teal"
   },
   {
@@ -83,9 +83,9 @@ export const COLOR_SWATCHES = [
     light3: "142, 163, 185",
     dark1: "192, 219, 252",
     dark2: "36, 42, 54",
-    dark3: "91, 119, 141",
+    dark3: "68, 83, 95",
     dark4: "29, 31, 38",
-    name: "azure"
+    name: "blue"
   },
   {
     primary: "#A5BDFE",
@@ -94,30 +94,30 @@ export const COLOR_SWATCHES = [
     light3: "141, 158, 189",
     dark1: "191, 215, 255",
     dark2: "27, 31, 42",
-    dark3: "54, 70, 99",
-    dark4: "27, 27, 44",
-    name: "blue"
+    dark3: "65, 80, 108",
+    dark4: "30, 30, 48",
+    name: "indigo"
   },
   {
     primary: "#CEC1FF",
     light1: "78, 79, 102",
-    light2: "224, 218, 253",
-    light3: "151, 154, 204",
-    dark1: "177, 180, 255",
+    light2: "230, 227, 245",
+    light3: "171, 172, 212",
+    dark1: "211, 192, 242",
     dark2: "36, 37, 60",
-    dark3: "87, 89, 139",
-    dark4: "31, 25, 44",
+    dark3: "80, 68, 98",
+    dark4: "37, 29, 41",
     name: "purple"
   },
   {
     primary: "#DDBAFF",
     light1: "99, 91, 108",
-    light2: "236, 222, 244",
-    light3: "187, 168, 209",
+    light2: "238, 227, 243",
+    light3: "194, 178, 213",
     dark1: "232, 208, 255",
     dark2: "45, 35, 42",
     dark3: "93, 79, 107",
-    dark4: "35, 30, 38",
+    dark4: "40, 34, 43",
     name: "magenta"
   },
   {
@@ -125,10 +125,10 @@ export const COLOR_SWATCHES = [
     light1: "154, 97, 124",
     light2: "249, 218, 224",
     light3: "220, 179, 198",
-    dark1: "245, 172, 217",
+    dark1: "255, 198, 233",
     dark2: "55, 35, 47",
-    dark3: "148, 114, 139",
-    dark4: "39, 22, 32",
+    dark3: "95, 72, 89",
+    dark4: "43, 28, 38",
     name: "pink"
   },
 ]

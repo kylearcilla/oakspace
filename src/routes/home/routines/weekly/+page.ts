@@ -1,17 +1,18 @@
 
-import { WEEKLY_ROUTINES } from '../../../../tests/routines/routines.data';
+import { WEEKLY_ROUTINES, SET_DAILY_ROUTINES } from '../../../../tests/routines/routines.data';
 import type { PageLoad } from './$types';
 
 export const ssr = false
 
 export const load = (async () => {
     const isDev = import.meta.env.MODE === "development"
+    
 
     if (isDev) {
-        return { routines: WEEKLY_ROUTINES }
+        return { week: WEEKLY_ROUTINES, day: SET_DAILY_ROUTINES }
     }
     else {
-        return { routines: WEEKLY_ROUTINES }
+        return { week: WEEKLY_ROUTINES, day: SET_DAILY_ROUTINES }
     }
 
 }) satisfies PageLoad

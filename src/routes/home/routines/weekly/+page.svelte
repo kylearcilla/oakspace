@@ -3,26 +3,27 @@
 	import { themeState, timer } from "$lib/store"
     
 	import { Icon } from "$lib/enums"
+	import { toast } from "$lib/utils-toast"
+	import { colorPicker } from "$lib/pop-ups"
 	import { hasModalOpen } from "$lib/utils-home"
 	import { isInRange } from "$lib/utils-general"
     import { getColorTrio } from "$lib/utils-colors"
 	import { WeeklyRoutinesManager } from "$lib/routines-weekly-manager"
     import { getDayIdxMinutes, getTimeFromIdx, minsFromStartToHHMM } from "$lib/utils-date"
-	import { EDIT_BLOCK_OPTIONS, ViewOption, getBlockStyling, ROUTINE_BLOCKS_CONTAINER_ID} from "$lib/utils-routines"
+	import { EDIT_BLOCK_OPTIONS, ViewOption, ROUTINE_BLOCKS_CONTAINER_ID} from "$lib/utils-routines"
     
     import Header from './Header.svelte'
 	import Details from "./Details.svelte";
 	import SvgIcon from "$components/SVGIcon.svelte"
 	import EditBlockModal from "../EditBlockModal.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
-	import { colorPicker } from "$lib/pop-ups";
 
-    export let data: { routines: WeeklyRoutine[] }
+    export let data: { week: WeeklyRoutine[], day: DailyRoutine[] }
 
     const MIN_VIEW_MAX_WIDTH = 640
     const INIT_SCROLL_TOP = 280
 
-    let routines: WeeklyRoutine[] = data.routines
+    let routines: WeeklyRoutine[] = data.week
 
     /* DOM */
     let hourBlocksElem: HTMLElement
@@ -39,7 +40,7 @@
     let manager = new WeeklyRoutinesManager(routines[setWeekRoutineIdx] ?? null)
         
     let daysInView = manager.DAYS_WEEK
-    let isContextMenuOpen = false
+    let contextMenuOpen = false
     let colorsOpen = false
     let viewOptn: "all" | "mtwt" | "fss" | "today" = "all"
 
@@ -50,7 +51,7 @@
     /* stores */
     let _weekRoutine     = manager.weekRoutine
     let _weekRoutineElems = manager.weekRoutineElems
-    let _editingBlock   = manager.editingBlock
+    let _editBlock   = manager.editBlock
     let _editContext    = manager.editContext
     let _contextMenuPos = manager.contextMenuPos
     let _currViewOption = manager.currViewOption
@@ -59,9 +60,9 @@
     $: weekRoutineElems  = $_weekRoutineElems as WeekBlockElems ?? []
     $: currViewOption    = $_currViewOption
     $: editContext       = $_editContext
-    $: editingBlock      = $_editingBlock
+    $: editBlock      = $_editBlock
     $: contextMenuPos    = $_contextMenuPos
-    $: locked = isContextMenuOpen || colorsOpen
+    $: locked = contextMenuOpen || colorsOpen
     $: dayIdx = currTime.dayIdx
 
     $: isMin = containerWidth < MIN_VIEW_MAX_WIDTH && routines.length > 0
@@ -101,25 +102,63 @@
             colorsOpen = true
             colorPicker.init({
                 onSubmitColor: (color) => {
+                    manager.setEditBlockColor(color)    
+                },
+                onClose: () => {
                     colorsOpen = false
-
-                    manager.setEditBlockColor(color)
                     manager.resetEditState()
                 },
-                picked: editingBlock!.color
+                picked: editBlock!.color
             })
         }
         else if (name === "Duplicate Block") {
             manager.onDuplicateBlock()
         }
         else {
-            manager.deleteEditBlock()
-            manager.resetEditState()
+            deleteBlock()
         }
-        isContextMenuOpen = false
+        contextMenuOpen = false
+    }
+    function deleteBlock() {
+        initUndoToast()
+        manager.deleteEditBlock()
+    }
+    function initUndoToast() {
+        const block = editBlock!
+        const routineId = weekRoutine!.id
+        const dayKey = manager.editDayKey as keyof WeeklyRoutineBlocks
+
+        const onClick = () => {
+            if (routineId === weekRoutine!.id) {
+                manager.finishEdit(block, "new-stretch")
+                manager.updateSingleDayEdit()
+            }
+            else {
+                const routineIdx = routines.findIndex(r => r.id === routineId)
+                if (routineIdx >= 0) {
+                    const dayRoutine = routines[routineIdx].blocks[dayKey]
+                    if ("blocks" in dayRoutine) {
+                        dayRoutine.blocks.push(block)
+                    }
+                    else {
+                        dayRoutine.push(block)
+                    }
+                    routines = routines
+                }
+            }
+        }
+
+        toast("default", {
+            message: `"${block.title}" deleted.`,
+            contextId: "routines",
+            groupExclusive: true,
+            action: { 
+                label: "Undo", onClick
+            }
+        })
     }
     function onEditBlockPointerDown(e: PointerEvent) {
-        if (!pointCaptureSet) {
+        if (!pointCaptureSet && editContext !== "duplicate") {
             pointCaptureSet = true
             const target = e.target as HTMLElement
             target.setPointerCapture(e.pointerId)
@@ -128,7 +167,7 @@
     function onBlockContextMenu(e: MouseEvent, id: string) {
         e.preventDefault()
         manager.onBlockContextMenu(id)
-        isContextMenuOpen = true
+        contextMenuOpen = true
     }
 
     /* board */
@@ -139,7 +178,7 @@
         hourBlocksElem.style.top = `-${scrollTop}px`
     }
     function onKeyUp(e: KeyboardEvent) {
-        if (!manager || hasModalOpen() || editingBlock) return
+        if (!manager || hasModalOpen() || editBlock) return
 
         manager.hotkeyHandler(e)
     }
@@ -221,7 +260,7 @@
                         class:routine-blocks--editing={editContext}
                         class:no-pointer-events-all={locked || !weekRoutine}
                         on:pointerdown={(e) => {
-                            manager.onScrollContainerPointerDown(e)
+                            manager.onBoardPointerDown(e)
                         }}
                         on:contextmenu={(e) => {
                             if (editContext === "lift") {
@@ -237,7 +276,7 @@
                                 {@const startTimeStr = minsFromStartToHHMM(block.startTime)}
                                 {@const endTimeStr   = minsFromStartToHHMM(block.endTime)}
                                 {@const xOffset      = `calc(((100% / ${daysInView.length}) * ${dayIdx}) + 2px)`}
-                                {@const editId       = editingBlock?.id}
+                                {@const editId       = editBlock?.id}
                                 {@const isEditBlock  = editId === block.id && (editContext === "old-stretch" || editContext === "lift")}
                                 {@const isFirstLast  = ["first", "last"].includes(block.order ?? "")}
                                 {@const isFirst      = block.order === "first"}
@@ -249,7 +288,7 @@
                                     tabIndex={0}
                                     class="routine-block"
                                     class:routine-block--editing={editId === block.id && !editContext}
-                                    class:no-pointer-events-all={locked}
+                                    class:no-pointer-events-all={locked || editContext === "duplicate"}
                                     class:hidden={isEditBlock}
                                     style:top={`${block.yOffset}px`}
                                     style:left={xOffset}
@@ -259,7 +298,13 @@
                                     style:--block-color-3={colorTrio[2]}
                                     style:width={blockWidth}
                                     title={`${block.title} \n${startTimeStr} - ${endTimeStr}`}
-                                    on:contextmenu={(e) => onBlockContextMenu(e, block.id)}
+                                    on:selectstart|preventDefault
+                                    on:contextmenu={(e) => {
+                                        onBlockContextMenu(e, block.id)
+                                    }}
+                                    on:click={() => {
+                                        manager.onBlockClicked(block.id)
+                                    }}
                                     on:pointerdown={(e) => {
                                         if (!breakdownOpen) {
                                             manager.onBlockPointerDown(e, block.id)
@@ -317,32 +362,34 @@
                         {/if}
     
                         <!-- floating or new block-->
-                        {#if editingBlock && editContext}
-                            {@const colorTrio    = getColorTrio(editingBlock.color, isLight)}
-                            {@const startTimeStr = minsFromStartToHHMM(editingBlock.startTime)}
-                            {@const endTimeStr   = minsFromStartToHHMM(editingBlock.endTime)}
-                            {@const xOffset      = manager.getEditBlockXOffset(editingBlock)}
-                            {@const dropArea     = editingBlock.dropArea}
-                            {@const isDragging   = editingBlock.isDragging}
-                            {@const isFirstLast  = ["first", "last"].includes(editingBlock.order ?? "")}
-                            {@const isFirst = editingBlock.order === "first"}
+                        {#if editBlock && editContext && editContext !== "details"}
+                            {@const colorTrio    = getColorTrio(editBlock.color, isLight)}
+                            {@const startTimeStr = minsFromStartToHHMM(editBlock.startTime)}
+                            {@const endTimeStr   = minsFromStartToHHMM(editBlock.endTime)}
+                            {@const xOffset      = manager.getEditBlockXOffset(editBlock)}
+                            {@const dropArea     = editBlock.dropArea}
+                            {@const isDragging   = editBlock.isDragging}
+                            {@const isFirstLast  = ["first", "last"].includes(editBlock.order ?? "")}
+                            {@const isFirst = editBlock.order === "first"}
             
                             <div 
-                                class={`routine-block ${getBlockStyling(editingBlock.height)}`}
+                                class="routine-block"
                                 class:routine-block--wk-floating={editContext === "lift"}
                                 class:routine-block--dup-floating={editContext === "duplicate"}
                                 class:no-pointer-events-all={locked}
-                                style:top={`${editingBlock.yOffset}px`}
+                                style:top={`${editBlock.yOffset}px`}
                                 style:left={xOffset}
-                                style:--block-height={`${editingBlock.height}px`}
+                                style:--block-height={`${editBlock.height}px`}
                                 style:--block-color-1={colorTrio[0]}
                                 style:--block-color-2={colorTrio[1]}
                                 style:--block-color-3={colorTrio[2]}
                                 style:width={blockWidth}
                                 style:z-index={2000}
                                 id="edit-block"
-                                on:pointerdown={onEditBlockPointerDown}
-                                on:contextmenu|preventDefault={() => {}}
+                                on:pointerdown={(e) => {
+                                    onEditBlockPointerDown(e)
+                                }}
+                                on:contextmenu|preventDefault
                             >
                                 <div class="routine-block__content">
                                     <div class="flx-algn-center">
@@ -361,7 +408,7 @@
                                             </div>
                                         {/if}
                                         <span class="routine-block__title">
-                                            {editingBlock.title || "Untitled"}
+                                            {editBlock.title || "Untitled"}
                                         </span>
                                     </div>
                                     <div class="routine-block__time-period">
@@ -383,20 +430,18 @@
                                         class:routine-block__buttons--bottom={placement === "bottom"}
                                     >
                                         {#if (dropArea?.offsetIdx ?? -1) >= 0}
-                                            <button 
-                                                class="routine-blocks__dup-add"
+                                            <button     
                                                 on:click={() => manager.confirmDuplicate()}
                                             >
                                                 <i class="fa-solid fa-check"></i>
                                             </button>
                                         {/if}
                                         <button
-                                            class="routine-blocks__dup-cancel"
                                             on:click={() => manager.closeDuplicateEdit()}
                                         >
                                             <SvgIcon 
                                                 icon={Icon.Close} 
-                                                options={{ scale: 0.84, strokeWidth: 1.8, width: 10, height: 10 }}
+                                                options={{ scale: 0.95, strokeWidth: 1.8, width: 10, height: 10 }}
                                             />
                                         </button>
                                     </div>
@@ -405,16 +450,16 @@
                         {/if}
             
                         <!-- drop area block -->
-                        {#if editingBlock?.dropArea?.doShow && (editContext === "lift" || editContext === "duplicate")}
-                            {@const colorTrio = getColorTrio(editingBlock.color, isLight)}
-                            {@const startTimeStr = minsFromStartToHHMM(editingBlock.startTime)}
-                            {@const endTimeStr = minsFromStartToHHMM(editingBlock.endTime)}
-                            {@const { top, offsetIdx } = editingBlock.dropArea}
+                        {#if editBlock?.dropArea?.doShow && (editContext === "lift" || editContext === "duplicate")}
+                            {@const colorTrio = getColorTrio(editBlock.color, isLight)}
+                            {@const startTimeStr = minsFromStartToHHMM(editBlock.startTime)}
+                            {@const endTimeStr = minsFromStartToHHMM(editBlock.endTime)}
+                            {@const { top, offsetIdx } = editBlock.dropArea}
                             {@const xOffset = `calc(((100% / ${daysInView.length}) * ${offsetIdx}))`}
                             {@const width = `${currViewOption === ViewOption.Today ? "50%" : `calc((100% / ${daysInView.length}))`}`}
             
                             <div 
-                                class={`routine-block ${getBlockStyling(editingBlock.height)}`}
+                                class="routine-block"
                                 class:routine-block--drop-area={true}
                                 class:routine-block--wk-drop-area={true}
                                 class:routine-block--wk-drop-area-light={isLight}
@@ -423,7 +468,7 @@
                                 style:top={`${top}px`}
                                 style:left={xOffset}
                                 style:width={width}
-                                style:--block-height={`${editingBlock.height}px`}
+                                style:--block-height={`${editBlock.height}px`}
                                 style:--block-color-1={colorTrio[0]}
                                 style:--block-color-2={colorTrio[1]}
                                 style:--block-color-3={colorTrio[2]}
@@ -431,7 +476,7 @@
                                 <div class="routine-block__content">
                                     <div class="flx-algn-center">
                                         <span class="routine-block__title">
-                                            {editingBlock.title}
+                                            {editBlock.title}
                                         </span>
                                     </div>
                                     <div class="routine-block__time-period">
@@ -491,7 +536,7 @@
                     <!-- block context menu -->
                     <DropdownList
                         id={"daily-routines"}
-                        isHidden={!isContextMenuOpen}
+                        isHidden={!contextMenuOpen}
                         options={{
                             listItems: EDIT_BLOCK_OPTIONS,
                             styling: { 
@@ -499,7 +544,7 @@
                                 zIndex: 100
                             },
                             onClickOutside:() => { 
-                                isContextMenuOpen = false
+                                contextMenuOpen = false
                             },
                             onListItemClicked: ({ name }) => {
                                 blockOptnClicked(name)
@@ -533,11 +578,6 @@
                                     style:height={`${height}%`}
                                 >
                                     <span>{getTimeFromIdx(timeIdx, true)}</span>
-                                    <div class="hour-blocks__block-vert-divider">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="2" height=28 viewBox="0 0 2 28" fill="none">
-                                            <path d="M1.25684 0.614746V 32.5" stroke-width="0.9" stroke-dasharray="2 2"/>
-                                        </svg>
-                                    </div>
                                 </div>
                             {/each}
                         {/if}
@@ -548,13 +588,13 @@
     </div>
 </div>
 
-{#if editContext === "details" && editingBlock}
+{#if editContext === "details" && editBlock}
     <EditBlockModal 
-        block={editingBlock} 
-        routineManager={manager} 
+        block={editBlock} 
+        routines={manager} 
+        onDeleteBlock={() => deleteBlock()}
     />
 {/if}
-
 
 <style lang="scss">
     @import "../../../../scss/dropdown.scss";
@@ -570,9 +610,6 @@
         height: 100%;
         display: flex;
 
-        &--light &__week {
-            border-left: 1px solid rgba(var(--textColor1), 0.08);
-        }
         &--min {
             display: block;
         }
@@ -594,7 +631,7 @@
         &__week {
             height: calc(100% - 55px);
             flex: 1;
-            border-left: 1px solid rgba(var(--textColor1), 0.04);
+            border-left: var(--divider-border);
             overflow: hidden;
             position: relative;
         }
@@ -710,16 +747,6 @@
         }
         &__block span {
             width: 40px;
-        }
-    }
-    .starred {
-        position: relative;
-
-        &::after {
-            @include abs-bottom-right(-3px, -5px);
-            @include text-style(0.45, 100, 2rem);
-            height: min-content;
-            content: "*";
         }
     }
 </style>

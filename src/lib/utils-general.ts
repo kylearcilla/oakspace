@@ -997,7 +997,7 @@ export function reorderItemArr<T extends { idx: number }>({
   targetIdx 
 }: { array: T[], srcIdx: number, targetIdx: number }): T[] {
   const newArray = [...array]
-  const direction = srcIdx > targetIdx ? "up" : "down"
+  const direction = srcIdx < targetIdx ? "down" : "up"
 
   if (direction === "up") {
     for (let i = 0; i < newArray.length; i++) {
@@ -1010,12 +1010,14 @@ export function reorderItemArr<T extends { idx: number }>({
     }
   } 
   else {
+    const toIdx = targetIdx - 1
+    
     for (let i = 0; i < newArray.length; i++) {
-      if (newArray[i].idx > srcIdx && newArray[i].idx <= targetIdx) {
+      if (newArray[i].idx > srcIdx && newArray[i].idx < targetIdx) {
         newArray[i].idx -= 1
       } 
       else if (newArray[i].idx === srcIdx) {
-        newArray[i].idx = targetIdx
+        newArray[i].idx = toIdx
       }
     }
   }

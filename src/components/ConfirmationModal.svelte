@@ -94,9 +94,11 @@
         font-family: "Geist Mono";
 
         --brightness-hover: 1.1;
-
+        --default-base-opacity: 0.02;
+        
         &--light {
             --brightness-hover: 1.015;
+            --default-base-opacity: 0.05;
         }
         &--light &__text {
             @include text-style(1);
@@ -108,17 +110,18 @@
             --confirm-color-3: rgba(var(--textColor1), 0.035);
         }
         &--default &__ok-btn {
-            background-color: rgba(var(--textColor1), 0.02);
+            background-color: rgba(var(--textColor1), var(--default-base-opacity));
         }
         &--default &__ok-btn:hover {
-            background-color: rgba(var(--textColor1), 0.03);
+            background-color: rgba(var(--textColor1), calc(var(--default-base-opacity) + 0.02));
+            filter: unset !important;
         }
         &--default &__ok-btn span {
             color: rgba(var(--textColor1), 0.8) !important;
         }
         &__text {
             @include text-style(0.85, var(--fw-400-500), 1.35rem);
-            margin: 10px 7px 35px 7px;
+            margin: 10px 7px 30px 7px;
             text-align: center;
         }
         button {

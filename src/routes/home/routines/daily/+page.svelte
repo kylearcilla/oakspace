@@ -4,20 +4,21 @@
 
 	import { Icon } from '$lib/enums'
 	import Details from './Details.svelte'
+	import { toast } from '$lib/utils-toast'
 	import { colorPicker } from '$lib/pop-ups'
 	import { getColorTrio } from '$lib/utils-colors'
 	import { DailyRoutinesManager } from '$lib/routines-daily-manager'
 	import { getTimeFromIdx, minsFromStartToHHMM } from '$lib/utils-date'
 	import { EDIT_BLOCK_OPTIONS, ROUTINE_BLOCKS_CONTAINER_ID } from '$lib/utils-routines'
-
+    
 	import SvgIcon from '$components/SVGIcon.svelte'
 	import EditBlockModal from '../EditBlockModal.svelte'
 	import DropdownList from '$components/DropdownList.svelte'
 
-    export let data: { routines: DailyRoutine[] }
+    export let data: { week: WeeklyRoutine[], day: DailyRoutine[] }
 
     const BLOCKS_CONTAINER_LEFT_OFFSET = 51
-    let routines: DailyRoutine[] = data.routines
+    let routines: DailyRoutine[] = data.day
 
     /* DOM */
     let timeBoxElem: HTMLElement
@@ -33,15 +34,15 @@
 
     let _editDayRoutine = manager.editDayRoutine
     let _editDayRoutineElems = manager.editDayRoutineElems
-    let _editingBlock = manager.editingBlock
+    let _editBlock = manager.editBlock
     let _editContext = manager.editContext
     let _contextMenuPos = manager.contextMenuPos
 
     $: editDayRoutine = $_editDayRoutine as DailyRoutine | null
     $: editDayRoutineElems = $_editDayRoutineElems ?? []
-    $: editingBlock  = $_editingBlock
-    $: editContext   = $_editContext
-    $: isLight  = !$themeState.isDarkTheme
+    $: editBlock  = $_editBlock
+    $: editContext = $_editContext
+    $: isLight = !$themeState.isDarkTheme
     $: lockInteraction = contextMenu || colorsOpen
     $: contextMenuPos = $_contextMenuPos
 
@@ -59,22 +60,52 @@
             colorsOpen = true
             colorPicker.init({
                 onSubmitColor: (color) => {
-                    colorsOpen = false
-
                     manager.setEditBlockColor(color)
+                },
+                onClose: () => {
+                    colorsOpen = false
                     manager.resetEditState()
                 },
-                picked: editingBlock!.color
+                picked: editBlock!.color
             })
         }
         else if (name === "Duplicate Block") {
             manager.onDuplicateBlock()
         }
         else if (name === "Delete Block") {
-            manager.deleteEditBlock()
-            manager.resetEditState()
+            deleteBlock()
         }
         contextMenu = false
+    }
+    function deleteBlock() {
+        initUndoToast()
+        manager.deleteEditBlock()
+    }
+    function initUndoToast() {
+        const block = editBlock!
+        const routineId = editDayRoutine!.id
+
+        const onClick = () => {
+            if (routineId === editDayRoutine!.id) {
+                manager.finishEdit(block, "new-stretch")
+            }
+            else {
+                const routineIdx = routines.findIndex(r => r.id === routineId)
+                if (routineIdx >= 0) {
+                    routines[routineIdx].blocks.push(block)
+                    routines = routines
+                }
+            }
+        }
+
+        toast("default", {
+            message: `"${block.title}" deleted.`,
+            contextId: "routines",
+            groupExclusive: true,
+            action: {
+                label: "Undo", onClick
+            }
+        })
     }
     
     function onMenuDismount() {
@@ -90,6 +121,21 @@
         target.setPointerCapture(e.pointerId)
     }
 
+    function removeLinkedReferences(id: string) {
+        data.week.forEach(weekRoutine => {
+            const dayKeys = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const
+            
+            dayKeys.forEach((dayKey) => {
+                const dayRoutine = weekRoutine.blocks[dayKey]
+
+                if ("id" in dayRoutine && dayRoutine.id === id) {
+                    console.log(weekRoutine.name)
+                    weekRoutine.blocks[dayKey] = dayRoutine.blocks
+                }
+            })
+        })
+    }
+
     onMount(() => {
         requestAnimationFrame(() => {
             manager.initContainer(timeBoxElem, blocksContainerRef)
@@ -102,14 +148,12 @@
     })
 </script>
 
-<div 
-    class="routine"
-    class:routine--light={isLight}
->
+<div class="routine" class:routine--light={isLight}>
     <Details
         bind:routines={routines}
         {manager} 
         {initIdx} 
+        {removeLinkedReferences}
     />
     <div 
         class="routine-blocks-container" 
@@ -133,7 +177,7 @@
                 class="routine-blocks"
                 class:routine-blocks--editing={editContext}
                 on:pointerdown={(e) => {
-                    manager.onScrollContainerPointerDown(e)
+                    manager.onBoardPointerDown(e)
                 }}
                 on:contextmenu={(e) => {
                     if (editContext === "lift") {
@@ -143,7 +187,7 @@
             >
                 {#each editDayRoutineElems as block (block.id)}
                     {@const colorTrio    = getColorTrio(block.color, isLight)}
-                    {@const editId       = editingBlock?.id}
+                    {@const editId       = editBlock?.id}
                     {@const isEdit       = editContext === "lift" || editContext === "old-stretch"}
                     {@const isEditBlock  = editId === block.id && isEdit}
                     {@const startTimeStr = minsFromStartToHHMM(block.startTime)}
@@ -165,6 +209,9 @@
                         style:--block-color-2={colorTrio[1]}
                         style:--block-color-3={colorTrio[2]}
                         title={`${block.title} \n${startTimeStr} - ${endTimeStr}`}
+                        on:click={() => {
+                            manager.onBlockClicked(block.id)
+                        }}
                         on:pointerdown={(e) => {
                             manager.onBlockPointerDown(e, block.id)
                         }}
@@ -208,16 +255,16 @@
                 {/each}
 
                 <!-- floating or new block -->
-                {#if editingBlock && editContext}
-                    {@const colorTrio = getColorTrio(editingBlock.color, isLight)}
-                    {@const startTimeStr = minsFromStartToHHMM(editingBlock.startTime)}
-                    {@const endTimeStr = minsFromStartToHHMM(editingBlock.endTime)}
+                {#if editBlock && editContext}
+                    {@const colorTrio = getColorTrio(editBlock.color, isLight)}
+                    {@const startTimeStr = minsFromStartToHHMM(editBlock.startTime)}
+                    {@const endTimeStr = minsFromStartToHHMM(editBlock.endTime)}
                     {@const isLift = editContext === "lift"}
                     {@const isStretch = editContext === "old-stretch"}
-                    {@const isDragging = editingBlock.isDragging}
-                    {@const dropArea = editingBlock.dropArea}
-                    {@const isFirstLast = ["first", "last"].includes(editingBlock.order ?? "")}
-                    {@const isFirst = editingBlock.order === "first"}
+                    {@const isDragging = editBlock.isDragging}
+                    {@const dropArea = editBlock.dropArea}
+                    {@const isFirstLast = ["first", "last"].includes(editBlock.order ?? "")}
+                    {@const isFirst = editBlock.order === "first"}
 
                     <div 
                         class="routine-block"
@@ -225,9 +272,9 @@
                         class:routine-block--dup-floating={editContext === "duplicate"}
                         class:routine-block--old-stretch={isStretch}
                         class:routine-block--use-x-offset={isLift || (editContext === "duplicate" && isDragging)}
-                        style:top={`${editingBlock.yOffset}px`}
-                        style:--left-x-offset={`${editingBlock.xOffset}px`}
-                        style:--block-height={`${editingBlock.height}px`}
+                        style:top={`${editBlock.yOffset}px`}
+                        style:--left-x-offset={`${editBlock.xOffset}px`}
+                        style:--block-height={`${editBlock.height}px`}
                         style:--block-color-1={colorTrio[0]}
                         style:--block-color-2={colorTrio[1]}
                         style:--block-color-3={colorTrio[2]}
@@ -252,7 +299,7 @@
                                     </div>
                                 {/if}
                                 <span class="routine-block__title">
-                                    {editingBlock.title || "Untitled"}
+                                    {editBlock.title || "Untitled"}
                                 </span>
                             </div>
                             <div class="routine-block__time-period">
@@ -274,21 +321,19 @@
                                 class:routine-block__buttons--top={placement === "top"}
                                 class:routine-block__buttons--bottom={placement === "bottom"}
                             >
-                                {#if dropArea?.offsetIdx ?? -1 >= 0}
+                                {#if (dropArea?.offsetIdx ?? -1) >= 0}
                                     <button 
-                                        class="routine-blocks__dup-add"
                                         on:click={() => manager.confirmDuplicate()}    
                                     >
                                         <i class="fa-solid fa-check"></i>
                                     </button>
                                 {/if}
                                 <button 
-                                    class="routine-blocks__dup-cancel"
                                     on:click={() => manager.closeDuplicateEdit()}
                                 >
                                     <SvgIcon 
                                         icon={Icon.Close} 
-                                        options={{ scale: 0.84, strokeWidth: 1.8, width: 10, height: 10 }}
+                                        options={{ scale: 0.95, strokeWidth: 1.8, width: 10, height: 10 }}
                                     />
                                 </button>
                             </div>
@@ -297,19 +342,19 @@
                 {/if}
 
                 <!-- drop area -->
-                {#if editingBlock?.dropArea?.doShow && (editContext === "lift" || editContext === "duplicate")}
+                {#if editBlock?.dropArea?.doShow && (editContext === "lift" || editContext === "duplicate")}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    {@const colorTrio = getColorTrio(editingBlock.color, isLight)}
-                    {@const startTimeStr = minsFromStartToHHMM(editingBlock.startTime)}
-                    {@const endTimeStr = minsFromStartToHHMM(editingBlock.endTime)}
-                    {@const { top } = editingBlock.dropArea}
+                    {@const colorTrio = getColorTrio(editBlock.color, isLight)}
+                    {@const startTimeStr = minsFromStartToHHMM(editBlock.startTime)}
+                    {@const endTimeStr = minsFromStartToHHMM(editBlock.endTime)}
+                    {@const { top } = editBlock.dropArea}
 
                     <div 
                         class="routine-block"
                         class:routine-block--drop-area={true}
                         id="drop-area-block"
                         style:top={`${top}px`}
-                        style:--block-height={`${editingBlock.height}px`}
+                        style:--block-height={`${editBlock.height}px`}
                         style:--block-color-1={colorTrio[0]}
                         style:--block-color-2={colorTrio[1]}
                         style:--block-color-3={colorTrio[2]}
@@ -318,7 +363,7 @@
                         <div class="routine-block__content">
                             <div class="flx-algn-center">
                                 <span class="routine-block__title">
-                                    {editingBlock.title}
+                                    {editBlock.title}
                                 </span>
                             </div>
                             <div class="routine-block__time-period">
@@ -331,7 +376,7 @@
                 {/if}
             </div>
             
-            <div class="hour-blocks-container" class:scroll-bar-hidden={true}>
+            <div class="hour-blocks-container" class:scroll-bar-hidden={true} >
                 <div 
                     class="hour-blocks"
                     class:hour-blocks--light={isLight}
@@ -343,22 +388,20 @@
                             class="hour-blocks__block"
                             class:hidden={timeIdx === 0}
                             style:height={`${height}%`}
-                            style:top={`calc(${headOffsetPerc}% - 1.5px)`}
+                            style:top={`${headOffsetPerc}%`}
                         >
                             <span>
                                 {getTimeFromIdx(timeIdx).toLowerCase()}
                             </span>
-                            <div class="hour-blocks__block-vert-divider">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="2" height="27" viewBox="0 0 0 0" fill="none">
-                                    <path d="M1.25684 0.614746V 28" stroke-width="1" stroke-dasharray="2 2"/>
-                                </svg>
-                            </div>
                         </div>
                     {/each}
                 </div>
             </div>
 
-            <div class="wk-grid" class:wk-grid--light={isLight}>
+            <div 
+                class="wk-grid" 
+                class:wk-grid--light={isLight}
+            >
                 <div class="wk-grid__hoz-lines">
                     {#if timeBoxElem}
                         {@const width = blocksContainerWidth}
@@ -368,7 +411,7 @@
                             <div 
                                 class="wk-grid__hoz-line"
                                 class:hidden={timeIdx === 0}
-                                style:top={`calc(${headOffsetPerc}% - 2px)`}
+                                style:top={`calc(${headOffsetPerc}% - 1px)`}
                                 style:height={`${height}%`}
                             >
                                 <div class="wk-grid__hoz-line-content">
@@ -425,9 +468,11 @@
     </div>
 </div>
 
-{#if editContext === "details" && editingBlock}
+{#if editContext === "details" && editBlock}
     <EditBlockModal 
-        block={editingBlock} routineManager={manager} 
+        block={editBlock} 
+        routines={manager} 
+        onDeleteBlock={() => deleteBlock()}
     />
 {/if}
 
@@ -467,7 +512,7 @@
     }
 
     .routine-blocks {
-        @include abs-top-left(-1px, var(--left-offset));
+        @include abs-top-left(0px, var(--left-offset));
         width: calc(100% - var(--left-offset));
         height: calc(($hour-block-height * 24));
     }

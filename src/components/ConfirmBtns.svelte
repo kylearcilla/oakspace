@@ -4,6 +4,7 @@
 
     export let confirmText = "Save"
     export let isLoading = false
+    export let weakDisable = false
     export let disabled = false
     export let onCancel: () => void
     export let onOk: () => Promise<void>
@@ -20,20 +21,24 @@
     class="confirm-btns"
     class:confirm-btns--light={isLight}
 >
-    <button class="confirm-btns__cancel" on:click={onCancel}>
+    <button 
+        class="confirm-btns__cancel" 
+        on:click={onCancel}
+    >
         Cancel
     </button>
     <button 
         type="submit"
         class="confirm-btns__ok" 
         class:confirm-btns__ok--loading={isLoading}
+        class:confirm-btns__ok--weak-disabled={weakDisable && disabled}
         style={inlineStyling({
             borderRadius: "9px",
             fontSize: "1.4rem",
             padding: "11px 25px",
             height: "18.5px"
         })}
-        disabled={isLoading || disabled}
+        disabled={(!weakDisable && disabled) || isLoading}
         on:click={_actionFunc}
     >
         {#if isLoading}
@@ -92,6 +97,9 @@
             }
             &--loading:hover {
                 filter: brightness(1) !important;
+            }
+            &--weak-disabled {
+                opacity: 0.3 !important;
             }
             &:hover {
                 filter: brightness(1.1);

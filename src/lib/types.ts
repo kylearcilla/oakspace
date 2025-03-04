@@ -402,6 +402,7 @@ type ColorPicker = {
     isOpen: boolean
     position: OffsetPoint
     onSubmitColor: (color: Color) => void
+    onClose?: () => void
     picked: Color | null
 }
 
@@ -418,8 +419,8 @@ type RoutineBlock = {
     activity: RoutineActvity | null
     tasks: Task[]
     done?: boolean
-    allowDescription?: boolean 
-    allowTasks?: boolean
+    allowDescription: boolean 
+    allowTasks: boolean
 }
 
 type RoutineBlockElem = {

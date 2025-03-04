@@ -28,7 +28,7 @@
 
     $: isDark = $themeState.isDarkTheme
     $: pickedTask = $manager.pickedTask
-    $: isContextMenuOpen = $manager.isContextMenuOpen
+    $: contextMenuOpen = $manager.contextMenuOpen
 
     $: dragAction = $manager.dragAction
     $: dragTarget = $manager.dragTarget
@@ -92,7 +92,7 @@
                 onContextMenu(e, task.id, isChild)
             }}
             on:click={(event) => {
-                if (!isContextMenuOpen) {
+                if (!contextMenuOpen) {
                     $manager.onTaskClicked({ event, id: task.id, isChild, atMaxDepth })
                 }
             }}

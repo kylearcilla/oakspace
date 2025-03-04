@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from 'svelte'
     import { v4 as uuidv4 } from 'uuid'
     
 	import { Icon } from '$lib/enums'
@@ -9,11 +8,10 @@
 	import { TextEditorManager } from '$lib/inputs'
 	import { formatCoreData } from '$lib/utils-routines'
 	import { DailyRoutinesManager } from '$lib/routines-daily-manager'
-	import { capitalize, decrementIdx, insertItemArr, randomArrayElem, removeItemArr } from '$lib/utils-general'
+	import { capitalize, decrementIdx, insertItemArr, randomArrayElem, removeItemArr, reorderItemArr } from '$lib/utils-general'
 
 	import SvgIcon from '$components/SVGIcon.svelte'
 	import EmptyList from '$components/EmptyList.svelte'
-	import EditBlockModal from '../EditBlockModal.svelte'
 	import NewRoutineModal from "../NewRoutineModal.svelte"
 	import DropdownBtn from '$components/DropdownBtn.svelte'
 	import SettingsBtn from '$components/SettingsBtn.svelte'
@@ -23,6 +21,11 @@
     export let manager: DailyRoutinesManager
     export let routines: DailyRoutine[]
     export let initIdx: number
+    export let removeLinkedReferences: (id: string) => void
+
+    const { MAX_TITLE, MAX_DESCRIPTION } = DailyRoutinesManager
+    const TITLE_ID = "routine-title"
+    const DESCRIPTION_ID = "routine-description"
 
     const EMPTY_LIST_SUGGESTIONS = [
         "💪 Grind Day",
@@ -36,7 +39,7 @@
         "📝 Creative Routine",
     ]
 
-    /* DOM */
+    /* elems */
     let listRef: HTMLElement
     let detailsHeight = 0
     let breakdownHeight = 0
@@ -50,6 +53,9 @@
     let breakdownOptnOpen = false
     let newRoutineModal = false
     let routinesOpen = true
+
+    let srcId: string | null = null
+    let targetId: string | null = null
     
     let settings = false
     let settingsPos = { left: 0, top: 0 }
@@ -57,14 +63,10 @@
     let _editDayRoutine = manager.editDayRoutine
     let _coreBreakdown = manager.coreBreakdown
     let _tagBreakdown = manager.tagBreakdown
-    let _editingBlock = manager.editingBlock
-    let _editContext = manager.editContext
     
     $: editIdx = initIdx
     $: editDayRoutine = $_editDayRoutine as DailyRoutine | null
     $: cores         = $_coreBreakdown
-    $: editingBlock  = $_editingBlock
-    $: editContext   = $_editContext
     $: tagBreakdown  = $_tagBreakdown ?? []
     $: isLightTheme  = !$themeState.isDarkTheme
     $: focusedId     = editDayRoutine?.id ?? "0"
@@ -91,10 +93,10 @@
         if (!editDayRoutine) return 
 
         titleInput = new TextEditorManager({ 
+            id: TITLE_ID,
             initValue: editDayRoutine.name,
             placeholder: "Routine Title",
-            maxLength: 100,
-            id: "routine-title",
+            maxLength: MAX_TITLE,
             doAllowEmpty: false,
             handlers: {
                 onBlurHandler: (_, name) => {
@@ -106,10 +108,10 @@
             }
         })
         description = new TextEditorManager({ 
+            id: DESCRIPTION_ID,
             initValue: editDayRoutine.description,
             placeholder: "Type description here...",
-            maxLength: 500,
-            id: "routine-description",
+            maxLength: MAX_DESCRIPTION,
             handlers: {
                 onBlurHandler: (_, description) => {
                     const routine = routines[editIdx]
@@ -141,35 +143,15 @@
 
     function deleteRoutine() {
         const routine = routines[contextIdx]
-        const name = routine.name
         const inView = editIdx === contextIdx
-        const itemIdx = contextIdx
 
-        routines = removeItemArr({ 
-            array: routines, 
-            itemIdx: routines.findIndex(r => r.id === routine.id)
-        })
+        routines = removeItemArr({ array: routines, itemIdx: routine.idx })
+        removeLinkedReferences(routine.id)
+
         if (inView) {
             editIdx = decrementIdx(editIdx, routines.length)
             manager.initEditRoutine(routines[editIdx])
         }
-        toast("default", {
-            message: `"${name}" deleted.`,
-            contextId: "routines",
-            groupExclusive: true,
-            action: {
-                label: "Undo",
-                onClick: () => {
-                    routines = insertItemArr({ array: routines, item: routine })
-                    console.log(structuredClone(routines))
-                    
-                    if (inView) {
-                        editIdx = itemIdx
-                        requestAnimationFrame(() => manager.initEditRoutine(routines[itemIdx]))
-                    }
-                }
-            }
-        })
         contextIdx = -1
     }
 
@@ -215,6 +197,41 @@
             requestAnimationFrame(() => manager.initEditRoutine(routines[0]))
         }
     }
+
+    /* drag and drop */
+    function onDragStart(e: DragEvent) {
+        const target = e.target as HTMLElement
+        srcId = target.dataset.id!
+        
+        listRef.addEventListener("dragover", onDrag)
+        listRef.addEventListener("dragend", onDragEnd)
+
+        e.dataTransfer?.setData("text", "")
+        e.dataTransfer!.effectAllowed = "move"
+    }
+    function onDrag(e: DragEvent) {
+        e.preventDefault()
+        const target = e.target as HTMLElement
+        const elem = target.closest(".routine-item") as HTMLElement
+
+        if (elem) {
+            targetId = elem.dataset.id || null
+        }
+    }
+    function onDragEnd() {
+        if (srcId && targetId) {
+            const srcIdx = routines.findIndex(r => r.id === srcId)
+            const targetIdx = routines.findIndex(r => r.id === targetId)
+
+            routines = reorderItemArr({ array: routines, srcIdx, targetIdx })
+        }
+
+        listRef.removeEventListener("dragover", onDrag)
+        listRef.removeEventListener("dragend", onDragEnd)
+
+        srcId = null
+        targetId = null
+    }   
 </script>
 
 <div class="details">
@@ -227,7 +244,7 @@
             <div class="routine__details" bind:clientHeight={detailsHeight}>
                 <div class="routine__details-header">
                     <div 
-                        id="routine-title"
+                        id={TITLE_ID}
                         class="routine__title"
                         aria-label="Title"
                         contenteditable
@@ -237,7 +254,7 @@
                     </div>
                 </div>
                 <div 
-                    id="routine-description"
+                    id={DESCRIPTION_ID}
                     class="routine__description"
                     aria-label="Description"
                     contenteditable
@@ -249,46 +266,22 @@
 
             <div class="routine__breakdown" bind:clientHeight={breakdownHeight}>
             <div class="routine__breakdown-header">
-                <DropdownBtn 
-                    id={"breakdown-option"}
-                    isActive={breakdownOptnOpen}
-                    options={{
-                        title: capitalize(breakdownView),
-                        arrowOnHover: true,
-                        styles: { 
-                            fontSize: "1.3rem", 
-                            padding: "4px 12px 4px 11px",
-                            margin: "0px 0px 0px -10px",
-                            fontFamily: "Geist Mono"
-                        },
-                        onClick: () => { 
-                            breakdownOptnOpen = !breakdownOptnOpen
-                        }
-                    }}
-                />
-
-                <DropdownList 
-                    id={"breakdown-option"}
-                    isHidden={!breakdownOptnOpen} 
-                    options={{
-                        listItems: [
-                            { name: "Cores" }, { name: "Tags" }
-                        ],
-                        pickedItem: breakdownView,
-                        position: { 
-                            top: "32px", left: "10px" 
-                        },
-                        styling:  { 
-                            width: "80px" 
-                        },
-                        onClickOutside: () => { 
-                            breakdownOptnOpen = false
-                        },
-                        onListItemClicked: ({ name }) => {
-                            setBreakdownView(name.toLowerCase())
-                        }
-                    }}
-                />
+                <div class="routine__breakdown-btns">
+                    <button 
+                        class="routine__breakdown-btn" 
+                        class:full-opacity={breakdownView === "cores"}
+                        on:click={() => breakdownView = "cores"}
+                    >
+                        Cores
+                    </button>
+                    <button 
+                        class="routine__breakdown-btn" 
+                        class:full-opacity={breakdownView === "tags"}
+                        on:click={() => breakdownView = "tags"}
+                    >
+                        Tags
+                    </button>
+                </div>
             </div>
 
             <div class="routine__stat-breakdown">
@@ -413,14 +406,16 @@
                 <ul style:margin-right="8px">
                     {#each routines.sort((a, b) => a.idx - b.idx) as routine, routineIdx (routine.id)}
                         <li 
-                            class="routine-item"
+                            class="routine-item drop-top-border"
+                            class:drop-top-border--over={targetId === routine.id}
                             class:routine-item--clicked={routine.id === focusedId}
                             class:routine-item--active={routineIdx === contextIdx}
+                            data-id={routine.id}
+                            draggable="true"
+                            on:dragstart={onDragStart}
                         >
                             <button
-                                on:click={() => {
-                                    onRoutineClicked(routineIdx)
-                                }}
+                                on:click={() => onRoutineClicked(routineIdx)}
                                 on:keydown={(e) => {
                                     if (e.code === 'Enter' || e.code === 'Space') {
                                         e.preventDefault()
@@ -481,10 +476,6 @@
     <div class="details__divider"></div>
 </div>
 
-{#if editContext === "details" && editingBlock}
-    <EditBlockModal block={editingBlock} routineManager={manager} />
-{/if}
-
 {#if deleteConfirm} 
     <ConfirmationModal 
         text="Are you sure you want to proceed with deleting this daily routine?"
@@ -537,6 +528,14 @@
 
         &--empty {
             width: 220px;
+        }
+        &__breakdown-btns {
+            margin: 4px 0px 4px 0px;
+
+            button {
+                padding: 0px 10px 0px 0px;
+                font-size: 1.37rem;
+            }
         }
     }
 </style>

@@ -1,5 +1,5 @@
 .routine {
-    --brightness-amount: 1.15;
+    --brightness-amount: 1.5;
 
     &--light {
         --brightness-amount: 1.05;
@@ -35,12 +35,11 @@
     }
     &__title {
         padding: 13px 12px 0px 0px;
-        overflow: scroll;
-        @include text-style(1, var(--fw-400-500), 1.6rem);
+        @include text-style(1, var(--fw-400-500), 1.5rem);
         max-height: 120px;
+        min-height: 32px;
     }
     &__description {
-        overflow: scroll;
         display: inline-block;
         margin-top: 4px;
         padding: 4px 4px 8px 0px;
@@ -49,10 +48,10 @@
     }
     &__breakdown {
         width: 250px;
-        padding: 4px 20px 14px 14px;
+        padding: 6px 20px 14px 14px;
         border-radius: 11px;
-        background: rgba(var(--textColor1), 0.01);
-        border: 1.5px dashed rgba(var(--textColor1), 0.06);
+        background: rgba(var(--textColor1), 0.02);
+        border: 1.5px dashed rgba(var(--textColor1), 0.075);
         position: relative;
         margin: -4px 0px 14px -4px;
     }
@@ -69,7 +68,7 @@
     &__breakdown-btn {
         opacity: 0.2;
         padding: 2px 6px;
-        @include text-style(1, var(--fw-400-500), 1.245rem, "Geist Mono");
+        @include text-style(1, var(--fw-400-500), 1.225rem, "Geist Mono");
 
         &:hover {
             opacity: 1;
@@ -85,7 +84,7 @@
         gap: 9px;
     }
     &__stat-title {
-        @include text-style(0.65, var(--fw-400-500), 1.4rem);
+        @include text-style(0.65, var(--fw-400-500), 1.35rem);
         @include elipses-overflow;
     }
     &__stat-breakdown {
@@ -164,6 +163,13 @@
         padding-right: 11px;
         max-height: var(--routines-dropdown-max-height);
     }
+
+    .drop-top-border::before {
+        width: calc(100%);
+        top: 0px;
+        left: 0px;
+        height: 1.5px !important;
+    }
 }
 
 .routine-item {
@@ -176,7 +182,6 @@
     
     &:hover {
         cursor: pointer;
-        opacity: 1;
     }
     &:hover button {
         opacity: 0.7;
@@ -192,12 +197,6 @@
     }
     &--clicked button {
         opacity: 0.9 !important;
-    }
-    &--chosen::after {
-        @include abs-bottom-right(-3px, 2px);
-        @include text-style(0.35, 100, 2rem);
-        height: min-content;
-        content: "*";
     }
     button {
         @include text-style(1, var(--fw-400-500), 1.35rem);
@@ -241,7 +240,6 @@
 .routine-block {
     position: absolute;
     height: var(--block-height);
-    max-height: var(--block-height);
     transition: 0.1s transform ease-in-out;
     cursor: pointer;
 
@@ -249,7 +247,7 @@
         transform: scale(1.01);
     }
     &--editing &__content {
-        filter: brightness(var(--brightness-amount));
+        @include border-focus;
         transition: 0.08s ease-in-out !important;
     }
 
@@ -303,21 +301,21 @@
     &--dup-floating {
         animation: wobble 1s ease-in-out;
     }
-    &--dup-floating &-content {
+    &--dup-floating &__content {
         box-shadow: 0px 1px 16.4px 4px rgba(black, 0.4);
-        border: 1px dashed rgba(var(--block-color-1, 0.5)) !important;
+        border: 1.5px dashed rgba(var(--block-color-1, 0.5)) !important;
     }
-    &--dup-floating * {
-        pointer-events: all;
+    &--dup-floating &__buttons {
+        @include visible;
+    }
+    &--dup-floating &__spine {
+        display: none;
     }
     &--dup-floating:hover * {
         cursor: grab;
     }
-    &--dup-floating &-buttons {
-        @include visible;
-    }
-    &--dup-floating &-spine {
-        display: none;
+    &--dup-floating * {
+        pointer-events: all;
     }
 
     &:hover {
@@ -343,13 +341,12 @@
     &__content {
         background-color: rgba(var(--block-color-2), 1);
         border-top: 0.5px solid var(--bg-1);
-        padding: 5px 8px 5px 12px;
+        padding: 4px 8px 5px 9px;
         overflow: hidden;
         white-space: nowrap;
         position: relative;
         height: 100%;
-        border-left: none;
-        border-radius: 8px;
+        border-radius: 6px;
     }
     &__title {
         @include text-style(_, var(--fw-400-500), 1.25rem);
@@ -390,37 +387,37 @@
     }
     &__buttons--left {
         display: block;
-        @include abs-top-left(4px, -24px);
+        @include abs-top-left(4px, -28px);
     }
     &__buttons--right {
         display: block;
-        @include abs-top-right(-1px, -27px);
+        @include abs-top-right(2px, -30px);
     }
     &__buttons--top {
         display: flex;
-        @include abs-top-left(-22px, 1px);
+        @include abs-top-left(-28px, 1px);
     }
     &__buttons--bottom {
         display: flex;
         @include abs-bottom-left(-28px, 1px);
     }
     &__buttons button {
-        @include circle(16px);
+        @include circle(20px);
         @include center;
-        background-color: var(--bg-2);
         border: 1px solid rgba(var(--textColor1), 0.06);
+        @include contrast-bg("bg-2");
         margin: 0px 5px 5px 0px;
         transition: 0.04s ease-in-out;
         color: rgb(var(--textColor1));
 
         &:hover {
-            background: rgba(var(--textColor1), 0.2);
+            filter: brightness(var(--brightness-amount));
         }
         &:active {
             scale: 0.95;
         }
     }
     &__buttons button i {
-        font-size: 0.9rem;
+        font-size: 1.1rem;
     }
 }

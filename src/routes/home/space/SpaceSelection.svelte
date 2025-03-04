@@ -1,21 +1,21 @@
 <script lang="ts">
 	import { onMount } from "svelte"
+	import { ytUserDataStore } from "$lib/store"
 
-    import { Icon, ModalType } from "$lib/enums"
+    import { Icon } from "$lib/enums"
+	import { updateAmbience } from "$lib/utils-home"
 	import { APIErrorCode, LogoIcon } from "$lib/enums"
 	import { handleChooseItem } from "$lib/utils-youtube"
 	import { globalContext, ytPlayerStore } from "$lib/store"
 	import { SPACES, POPULAR_SPACES } from "$lib/data-spaces"
-	import { ytUserDataStore } from "$lib/store"
 	import { getMaskedGradientStyle } from "$lib/utils-general"
-	import { closeModal, updateAmbience } from "$lib/utils-home"
 	import { capitalize, formatPlural } from "$lib/utils-general"
 	import { youtubeLogin, youtubeLogOut } from "$lib/utils-youtube"
 
-	import Logo from "../../../components/Logo.svelte"
-	import Modal from "../../../components/Modal.svelte"
-	import SvgIcon from "../../../components/SVGIcon.svelte"
-	import DropdownList from "../../../components/DropdownList.svelte"
+	import Logo from "$components/Logo.svelte"
+	import Modal from "$components/Modal.svelte"
+	import SvgIcon from "$components/SVGIcon.svelte"
+	import DropdownList from "$components/DropdownList.svelte"
     
 
     const SCROLL_STEP = 350
@@ -265,7 +265,6 @@
         handleCarouselScroll(wallpaperCarouselRef)
         handleCarouselScroll(tabsCarouselRef)
     })
-
 </script>
 
 <Modal 

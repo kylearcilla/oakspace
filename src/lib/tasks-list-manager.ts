@@ -1,10 +1,11 @@
 import { v4 as uuidv4 } from 'uuid'
+import { globalContext } from './store'
 import { get, writable, type Writable } from "svelte/store"
 
 import { Tasks } from "./Tasks"
 import { toast } from "./utils-toast"
-import { globalContext } from './store'
 import { TextEditorManager } from "./inputs"
+import { ambienceSideBarOffset } from './utils-home'
 import { findAncestor, getElemById, initFloatElemPos, shouldScroll } from "./utils-general"
 
 type StateType = Omit<TasksListManager, "tasks">
@@ -28,6 +29,7 @@ export class TasksListManager {
         checkSubtasks: boolean
         type: "side-bar" | "default"
         allowDuplicate: boolean
+        allowEdit: boolean
         removeOnComplete: boolean
         maxDepth: number
         max: number
@@ -113,6 +115,7 @@ export class TasksListManager {
             maxDepth = 3, 
             removeOnComplete = false, 
             allowDuplicate = true, 
+            allowEdit = true,
             numbered = false, 
             subtasks = true, 
             reorder = true,
@@ -147,6 +150,7 @@ export class TasksListManager {
             subtasks,
             reorder,
             allowDuplicate,
+            allowEdit,
             maxDepth,
             removeOnComplete,
             type,
@@ -307,6 +311,9 @@ export class TasksListManager {
     onTaskTitleClick({ id, isChild, doExpand }: { 
         id: string, isChild: boolean, doExpand: boolean 
     }) {
+        if (!this.settings.allowEdit) {
+            return
+        }
         if (doExpand) {
             this.expandRootTask(id)
         }
@@ -324,6 +331,9 @@ export class TasksListManager {
      * Expands task only if it's a root task.
      */
     onTaskDescriptionFocus(id: string, isChild: boolean) {
+        if (!this.settings.allowEdit) {
+            return
+        }
         if (!isChild) {
             this.expandRootTask(id)
         }
@@ -502,7 +512,7 @@ export class TasksListManager {
     onPointerDown(e: PointerEvent, task: Task) {
         const target = e.target as HTMLElement
 
-        if (e.button !== 0 || this.isTargetEditElem(target)) {
+        if (e.button !== 0 || this.isTargetEditElem(target) || !this.settings.allowEdit) {
             return
         }
 
@@ -542,13 +552,7 @@ export class TasksListManager {
         
         // when there is side bar has blur bg, the float elem will not be relative to it
         if (type === "side-bar") {
-            const ambience = get(globalContext).ambience
-            const sidebar = getElemById("home--right-bar")!
-            const sidebarRect = sidebar.getBoundingClientRect()
-    
-            if (ambience && ambience.active && ambience.styling === "blur") {
-                left = clientX - this.dragStartRelPos.left - sidebarRect.left
-            }
+            left = ambienceSideBarOffset(left)
         }
 
         this.dragPos = { 
@@ -958,6 +962,7 @@ export class TasksListManager {
     }
 
     openContextMenu = (e: Event, taskId: string, isChild: boolean) => {
+        if (!this.settings.allowEdit) return
         const pe = e as PointerEvent
         const target = pe.target as HTMLElement
 
@@ -1182,14 +1187,18 @@ export class TasksListManager {
         if (isEditing || !this.focusTask) return
 
         const { id,idx, parentId } = this.focusTask
+        const { numbered, allowEdit } = this.settings
         const isChild = parentId !== null
         
         if (event.code === "Space") {
             this.initFocusTask(id, isChild)
             this.toggleExpandTask(id, isChild)   
         }
-        else if (event.code === "Enter" && !this.settings.numbered) {
+        else if (event.code === "Enter" && !numbered) {
             this.toggleTaskComplete(id)
+        }
+        else if (!allowEdit) {
+            return
         }
         else if (key === "Backspace") {
             this.removeTask(id)

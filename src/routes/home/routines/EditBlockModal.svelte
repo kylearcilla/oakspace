@@ -48,7 +48,6 @@
     let newTaskFlag = false
     let pickedCoreItemIdx = getCoreActivityIdx(activity)
     let timeError: Error | null = null
-    let initTasks = false
     
     let saving = false
     let editHasBeenMade = false
@@ -63,7 +62,7 @@
 
     new TextEditorManager({ 
         id: TITLE_ID,
-        initValue: "",
+        initValue: title,
         placeholder: "block title...",
         allowFormatting: false,
         singleLine: true,
@@ -74,7 +73,7 @@
     })
     new TextEditorManager({ 
         id: DESCRIPTION_ID,
-        initValue: "",
+        initValue: description,
         placeholder: "description here...",
         allowFormatting: false,
         maxLength: MAX_BLOCK_DESCRIPTION,
@@ -259,7 +258,7 @@
                 aria-label="Title"
                 spellcheck="false"
                 contenteditable="true"
-                bind:textContent={title}
+                bind:innerHTML={title}
             >
             </div>
             <div class="flx-algn-center">
@@ -507,11 +506,11 @@
                 {#if routineListRef}
                     <TasksList
                         {newTaskFlag}
-                        tasks={TEST_TASKS}
+                        allowInitTasksCall={false}
+                        tasks={tasks}
                         onTaskChange={(_tasks) => {
-                            initTasks && (toggleEditMade())
+                            toggleEditMade()
                             tasks = _tasks
-                            initTasks = true
                         }}
                         options={{
                             id: "action-items",
@@ -665,7 +664,7 @@
         }
         &__description {
             max-height: 100px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
         &__list-header {
             width: 100%;

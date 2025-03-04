@@ -101,7 +101,6 @@
     .tasks {
         width: 100%;
         position: relative;
-        margin-top: -10px;
         height: 100%;
 
         &--light &__todoist {

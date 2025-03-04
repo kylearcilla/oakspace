@@ -156,10 +156,8 @@
             }}
         >
             <div class="header__now-block-circle"></div>
-            {#if nowBlock?.title || blockInfo.title}
-                <div 
-                    class="header__now-block-title"
-                >
+            {#if $weekRoutine && (nowBlock?.title || blockInfo.title)}
+                <div class="header__now-block-title">
                     {nowBlock?.title ?? blockInfo.title}
                 </div>
             {/if}
@@ -167,7 +165,6 @@
                 {blockInfo.info}
             </div>
         </button>
-        <!-- Session Component -->
         <div class="flx">
              {#if !session || $sessionManager?.state === "done"}
                  <div 
@@ -202,21 +199,19 @@
     </div>
 
     <BounceFade 
+        id={"active-routine--dmenu"}
+        zIndex={99999}
         position={{ 
-            top:  "38px", 
+            top:  "35px", 
             left:  hasAmbience ? "unset" : "10px",
             right: hasAmbience ? "15px" : "unset",
         }}
         isHidden={!isRoutineOpen}
-        zIndex={99999}
         onClickOutside={() => {
             isRoutineOpen = false
         }}
-        id={"active-routine--dmenu"}
     >
-        <ActiveRoutine 
-            isOpen={isRoutineOpen} 
-        />
+        <ActiveRoutine isOpen={isRoutineOpen} />
     </BounceFade>
 
     <AmbientSettings

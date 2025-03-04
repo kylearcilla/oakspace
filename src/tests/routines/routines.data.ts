@@ -266,8 +266,41 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 endTime: 405,    // 6:45 AM
                 activity: null,
                 tag: null,
-                description: "Wake up, stretches, brush teeth, shower, get dressed.",
-                tasks: [],
+                description: "A carefully structured and intentional start to the day designed to optimize personal wellness, productivity, and mental clarity. This comprehensive morning routine is a holistic approach to beginning each day with purpose, energy, and strategic preparation. The morning routine serves as a critical foundation for personal development, allowing individuals to proactively shape their daily experience rather than merely reacting to external circumstances. By establishing a consistent and thoughtful sequence of activities, one can cultivate discipline, reduce decision fatigue, enhance physical and mental well-being, and create a sustainable framework for personal and professional success.",
+                tasks: [
+                    {
+                        id: "7a3df82c-1e5f-4b0f-9e3b-2c8f5a1d6b9e",
+                        idx: 0,
+                        title: "Morning Workout",
+                        description: "30-minute exercise routine before breakfast.",
+                        isChecked: false,
+                        parentId: null
+                    },
+                    {
+                        id: "c5b4e9d2-7f3a-4d6c-8h1j-5k9l2m6n3p",
+                        idx: 1,
+                        title: "Meditation",
+                        description: "10-minute mindfulness meditation to start the day.",
+                        isChecked: false,
+                        parentId: null
+                    },
+                    {
+                        id: "e6f7g8h9-2i3j-4k5l-6m7n-8o9p0q1r2s",
+                        idx: 2,
+                        title: "Breakfast Prep",
+                        description: "Make healthy breakfast and pack lunch for work/school.",
+                        isChecked: false,
+                        parentId: null
+                    },
+                    {
+                        id: "d1e2f3g4-5h6i-7j8k-9l0m-1n2o3p4q5r",
+                        idx: 3,
+                        title: "Daily Planning",
+                        description: "Review calendar, set priorities, and plan day's tasks.",
+                        isChecked: false,
+                        parentId: null
+                    }
+                ],
                 order: "first",
             },
             {
@@ -279,8 +312,25 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 endTime: 900,    // 3:00 PM
                 activity: "working",
                 tag: TAGS[12],
-                description: "",
-                tasks: [],
+                description: "School stuff. Homework. Study. AP. SAT. ACT. Clubs. Sports. College. etc.",
+                tasks: [
+                    {
+                        id: "f82be9cd-8f42-477e-b833-e74feed75a78",
+                        idx: 0,
+                        title: "AP Exam Review",
+                        description: "Prep for AP Chem and Bio Exams.",
+                        isChecked: false,
+                        parentId: null
+                    },
+                    {
+                        id: "9e2d813a-b7c2-48a5-9e47-87654aebbe7a",
+                        idx: 1,
+                        title: "History Homework",
+                        description: "Finish everyday history homework.",
+                        isChecked: false,
+                        parentId: null
+                    },
+                ],
                 order: "middle",
             },
             {
@@ -293,7 +343,9 @@ export const PRESET_ROUTINES: PresetRoutines = {
                 activity: "body",
                 tag: TAGS[9],
                 description: "Tennis grind shit.",
-                tasks: [],
+                tasks: [
+
+                ],
                 order: "middle",
             },
             {

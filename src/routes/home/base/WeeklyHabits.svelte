@@ -229,7 +229,7 @@
         {@const { habitsDone, habitsDue, perfectDays, missed, activeStreak } = metrics}
         <div class="habits__header">
             <div class="habits__stats">
-                <div class="habits__stat">
+                <div class="habits__stat" style:margin-right="27px">
                     <span class="habits__stat-label">Consistency</span>
                     <div class="habits__stat-bottom">
                         <span class="habits__stat-value">
@@ -240,7 +240,7 @@
                         </span>
                     </div>
                 </div>
-                <div class="habits__stat" style:margin-right="30px">
+                <div class="habits__stat" style:margin-right="28px">
                     <span class="habits__stat-label">Active Streak</span>
                     <div class="habits__stat-bottom">
                         <span class="habits__stat-value">
@@ -251,7 +251,7 @@
                         </span>
                     </div>
                 </div>
-                <div class="habits__stat" style:margin-right="0px">
+                <div class="habits__stat" style:margin-right="28px">
                     <span class="habits__stat-label">100% Days</span>
                     <div class="habits__stat-bottom">
                         <span class="habits__stat-value">
@@ -354,6 +354,7 @@
                         {@const isDragOver = dragHabitTarget?.name === habit.name}
                         {@const streak = getHabitStreak(habit)}
 
+                        <!-- svelte-ignore a11y-no-static-element-interactions -->
                         <div    
                             class="habit drop-top-border" 
                             class:drop-top-border--over={isDragOver}
@@ -455,6 +456,7 @@
                         </div>
                     {/each}
 
+                    <!-- svelte-ignore a11y-no-static-element-interactions -->
                     <div    
                         class="habit habit--ghost drop-top-border"
                         class:drop-top-border--over={dragHabitTarget === timeOfDay}
@@ -571,9 +573,8 @@
             margin: 23.5px 0px 13px 0px;
         }
         &__stat {
-            width: 115px;
             margin: 0px 8px 9px 0px;
-            @include text-style(0.885, var(--fw-400-500), 1.485rem, "Geist Mono");
+            @include text-style(0.885, var(--fw-400-500), 1.5rem);
 
             span {
                 display: block;
@@ -581,7 +582,7 @@
             i { 
                 font-style: unset;
                 margin-left: -8px;
-                @include text-style(1, 300, 2rem, "Geist Mono");
+                @include text-style(1, 300, 2.2rem);
             }
         }
         &__stat-bottom {
@@ -589,7 +590,8 @@
         }
         &__stat-label {
             margin-bottom: 8px;
-            @include text-style(0.285, var(--fw-300-400), 1.465rem);
+            @include text-style(0.285, var(--fw-400-500), 1.55rem);
+            white-space: nowrap;
         }
         &__stat-unit {
             margin: 0px 0px 0px 4px;
@@ -599,8 +601,8 @@
         }
         &__stat-value--missed::before {
             content: "×";
-            @include abs-bottom-right(-3px, -11px);
-            @include text-style(0.8, var(--fw-300-400), 1.685rem);
+            @include abs-bottom-right(-1px, -12px);
+            @include text-style(0.8, var(--fw-400-500), 1.685rem);
         }
 
         /* table */
@@ -666,13 +668,13 @@
             @include flex(center, space-between);
         }
         &__target {
-            @include text-style(0.16, var(--fw-300-400), 1.3rem, "Geist Mono");
+            @include text-style(0.16, var(--fw-400-500), 1.35rem);
             transition: 0.1s ease-in-out;
             text-align: right;
             padding-right: 15px;
         }
         &__streak {
-            @include text-style(0.6, var(--fw-300-400), 1.4rem, "Geist Mono");
+            @include text-style(0.6, var(--fw-400-500), 1.4rem);
             padding: 2px 15px 2px 14px;
         }
         &__streak-times {

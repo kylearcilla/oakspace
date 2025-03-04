@@ -108,7 +108,7 @@ export class TodosManager {
         toast("promise", { loading: 'Logging in...' }, this.initTodoist())
     }
 
-    logoutTodoist() {
+    logoutTodoist(showToast: boolean = true) {
         this.todoistInboxProjectId = ""
         this.onTodoist = false
         this.todoistLinked = false
@@ -117,10 +117,12 @@ export class TodosManager {
         this.todoistTasks = []
         this.currTasks = this.inboxTasks
 
-        this.initToast({
-            icon: LogoIcon.Todoist,
-            message: "Account disconnected"
-        })
+        if (showToast) {
+            this.initToast({
+                icon: LogoIcon.Todoist,
+                message: "Account disconnected"
+            })
+        }
         this.update({
             onTodoist: false,
             todoistInboxProjectId: "",
@@ -208,6 +210,10 @@ export class TodosManager {
         catch(error: any) {
             console.error(error)
             this.onTodistError(error)
+
+            if (continueSession) {
+                this.logoutTodoist(false)
+            }
         }
     }
 

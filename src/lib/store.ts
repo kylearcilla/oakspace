@@ -38,7 +38,6 @@ export const googleData = writable<GoogleUserData | null>(null)
 
 /* routine */
 export const weekRoutine = writable<WeeklyRoutine | null>(WEEKLY_ROUTINES[0])
-export const wkRoutine   = derived(weekRoutine, ($weekRoutine) => $weekRoutine, WEEKLY_ROUTINES[0])
 
 /* youtube */
 export const ytUserDataStore = writable<YoutubeUserData| null>(null)

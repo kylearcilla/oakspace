@@ -365,26 +365,6 @@
       <ShortcutsModal /> 
   {/if}
 
-  {#if false}
-      {@const { dayIdx, block } = $globalContext.routineView}
-      <Modal 
-          options={{ 
-              borderRadius: "8px",
-              scaleUp: true
-          }} 
-          onClickOutSide={() => {
-              updateGlobalContext({ routineView: null })
-          }}
-      >
-        <ActiveRoutine
-            type="side-menu"
-            isOpen={true} 
-            currDayIdx={dayIdx}
-            currBlock={block}
-        />
-      </Modal>
-  {/if}
-
   <!-- toasts -->
   {#if $globalContext.hasToaster}
       <Toaster  />

@@ -6,7 +6,7 @@ export const ROUTINE_BLOCKS_CONTAINER_ID = "routine-blocks-container"        // 
 export const ROUTINE_SCROLL_CONTAINER_ID = "routine-blocks-scroll-container" // container of blocks container
 export const DAY_DROPDOWN_WIDTH = 255
 
-
+/* board display */
 export enum ViewOption {
     Today, Weekly, MTWT, FSS
 }
@@ -28,7 +28,6 @@ export function getRoutineBlocks(dailyRoutine: RoutineBlock[] | DailyRoutine) {
     return "id" in dailyRoutine ? dailyRoutine.blocks : dailyRoutine
 }
 
-
 export function isDayRoutinedLinked(weekRoutine: WeeklyRoutine | null, dayKey: keyof WeeklyRoutineBlocks) {
     if (!weekRoutine) {
         return false
@@ -43,6 +42,20 @@ export function formatCoreData(mins: number) {
     }
     return minsToHHMM(Math.floor(mins))
 }
+
+export function setDayBreakdownXOffset(dayBreakdownColIdx: number, numViewDays: number) {
+    if (numViewDays === 1) {
+        return `calc(50% - ${(DAY_DROPDOWN_WIDTH / 2) - 30}px)`
+    }
+    else if (numViewDays === 7) {
+        return `clamp(10px, calc(((100% / ${numViewDays}) * ${dayBreakdownColIdx}) + 0px), calc(100% - ${DAY_DROPDOWN_WIDTH + 10}px))`;
+    }
+    else {
+        return `clamp(10px, calc(((100% / ${numViewDays}) * ${dayBreakdownColIdx}) + 40px), calc(100% - ${DAY_DROPDOWN_WIDTH}px))`;
+    }
+}
+
+/* utils */
 
 export function getDayRoutineFromWeek(wkRoutine: WeeklyRoutine | null, dayIdx: number) {
     if (!wkRoutine) return null
@@ -69,7 +82,7 @@ export function getCurrentBlock(dailyRoutine: RoutineBlock[] | DailyRoutine | nu
     }
 }
 
-export function getBlockFromOrderIdx(orderIdx: number, dailyRoutine: RoutineBlock[] | DailyRoutine) {
+export function getBlockFromIdx(orderIdx: number, dailyRoutine: RoutineBlock[] | DailyRoutine) {
     const blocks = getRoutineBlocks(dailyRoutine)
     blocks.sort((a , b) => a.startTime - b.startTime)
 
@@ -89,6 +102,8 @@ export function getBlockFromMins(mins: number, dailyRoutine: RoutineBlock[] | Da
 
     return blocks.find((block) =>  block.startTime <= mins && mins <= block.endTime)
 }
+
+/* active routine */
 
 export function getUpcomingBlock(mins: number, dailyRoutine: RoutineBlock[] | DailyRoutine) {
     const blocks = getRoutineBlocks(dailyRoutine)
@@ -129,10 +144,11 @@ export function getNextBlockInfo(dailyRoutine: RoutineBlock[] | DailyRoutine | n
     const nextBlock = getUpcomingBlock(nowMins, dailyRoutine)
     
     if (nowBlock) {
-        const ending = nowBlock.endTime === nowMins
+        const starting = nowBlock.startTime == nowMins
+
         return {
-            title: ending && nextBlock ? nextBlock.block.title : nowBlock.title ?? "",
-            info: ending && nextBlock ? "Now" : `${minsToHHMM(Math.max(1, nowBlock.endTime - nowMins))}`
+            title: nowBlock.title,
+            info: starting ? "Now" : `${minsToHHMM(Math.max(1, nowBlock.endTime - nowMins))}`
         }
     }
     else if (nextBlock) {
@@ -156,13 +172,11 @@ export function getNextBlockInfo(dailyRoutine: RoutineBlock[] | DailyRoutine | n
  * @param args.startTime - start time of block to be updated.
  * @param args.dayIdx    - index of day of week to be updated.
  */
-export function updateActiveRoutine(args: {
+export function updateActiveRoutine({ updates, startTime, dayIdx }: {
     updates:   Partial<RoutineBlock>,
     startTime: number,
     dayIdx:    number
 }) {
-    const { updates, startTime, dayIdx } = args
-
     weekRoutine.update((routine) => {
         if (!routine) return routine
 
@@ -234,18 +248,6 @@ export function resetDayRoutine() {
     })
 }
 
-export function setDayBreakdownXOffset(dayBreakdownColIdx: number, numViewDays: number) {
-    if (numViewDays === 1) {
-        return `calc(50% - ${(DAY_DROPDOWN_WIDTH / 2) - 30}px)`
-    }
-    else if (numViewDays === 7) {
-        return `clamp(10px, calc(((100% / ${numViewDays}) * ${dayBreakdownColIdx}) + 0px), calc(100% - ${DAY_DROPDOWN_WIDTH + 10}px))`;
-    }
-    else {
-        return `clamp(10px, calc(((100% / ${numViewDays}) * ${dayBreakdownColIdx}) + 40px), calc(100% - ${DAY_DROPDOWN_WIDTH}px))`;
-    }
-}
-
 export const EDIT_BLOCK_OPTIONS: DropdownListItem[] = [
     { name: "Edit Block" },
     { name: "Change Color" },
@@ -261,6 +263,7 @@ export const ROUTINE_CORE_KEYS: [RoutineActvity, string][] = [
     ["body", "Body"],
     ["selfCare", "Self-Care"]
 ]
+
 export const CORE_OPTIONS = ROUTINE_CORE_KEYS.filter((pair) => pair[0] != "awake" && pair[0] != "sleeping")
 
 export const EMPTY_CORES: RoutineCores = {

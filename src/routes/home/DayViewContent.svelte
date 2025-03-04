@@ -3,15 +3,17 @@
 
     import { globalContext } from "$lib/store"
     import { getColorTrio } from "$lib/utils-colors"
-	import { updateGlobalContext } from "$lib/utils-home"
 	import { findClosestColorSwatch } from "$lib/utils-colors"
 	import { themeState, weekRoutine, timer } from "$lib/store"
     
     import { RoutinesManager } from "$lib/routines-manager"
-    import { getMaskedGradientStyle } from "$lib/utils-general"
+    import { getMaskedGradientStyle, initFloatElemPos } from "$lib/utils-general"
 	import { GoogleCalendarManager } from "$lib/google-calendar-manager"
 	import { getDayIdxMinutes, getTimeFromIdx, isSameDay, minsFromStartToHHMM } from "$lib/utils-date"
 	import { getDayRoutineFromWeek, resetDayRoutine, toggleRoutineBlockComplete } from "$lib/utils-routines"
+
+	import ActiveRoutine from "./ActiveRoutine.svelte";
+	import BounceFade from "$components/BounceFade.svelte"
 
     export let checkbox: boolean
     export let richColors: boolean
@@ -36,6 +38,8 @@
 
     let dRoutine: RoutineBlock[] | DailyRoutine | null = null
     let routineBlocks: RoutineBlockElem[] = []
+    let currBlock: { block: RoutineBlock, idx: number } | null = null
+    let currBlockDayIdx: number | null = null
     
     $: isLight = !$themeState.isDarkTheme
     $: ambience = $globalContext.ambience
@@ -44,11 +48,14 @@
     $: isToday = isSameDay(new Date(), day)
 
     // update routine when day changes
-    $: if (dayViewElem && day != undefined) {
+    $: if (dayViewElem && day != undefined && routine != undefined) {
         updateDayRoutine(day.getDay())
     }
     $: if (headerHeight >= 0 && allDayRef) {
         onDayHeaderScroll()
+    }
+    $: if (routine === null) {
+        routineBlocks = []
     }
 
     const unsubscribe = timer.subscribe(() => currTime = getDayIdxMinutes())
@@ -107,7 +114,9 @@
         if (!dRoutine) return
 
         const blocks = "id" in dRoutine ? dRoutine.blocks : dRoutine
-        routineBlocks = blocks.map((block) => RoutinesManager.createRoutineBlockElem(block, scrollContainerHeight))
+        routineBlocks = blocks.map((block) => {
+            return RoutinesManager.createRoutineBlockElem(block, scrollContainerHeight)
+        })
     }
     function onRoutineClick(e: Event, block: RoutineBlockElem & { idx: number }) {
         const target = e.target as HTMLElement
@@ -116,11 +125,8 @@
 
         if (isCheckbox) return
 
-        updateGlobalContext({ 
-            routineView: { 
-                block: { ...block, idx: block.idx }, dayIdx
-            } 
-        })
+        currBlock = { block, idx: block.idx }
+        currBlockDayIdx = dayIdx
     }
 
     onDestroy(() => unsubscribe())
@@ -224,7 +230,6 @@
                                 class:routine-block--bordered={hasAmbience && ambience?.styling !== "solid"}
                                 class:routine-block--focused={isFocused}
                                 class:routine-block--light={isLight}
-                                class:routine-block--small={heightNum <= 40 && !isFocused}
                                 class:box-ontop={overlapIdx === 0}
                                 class:hidden={!doRenderEvent(event, { allowAllDay: false })}
                                 style:top={`calc(${event.top} + 1px)`}
@@ -293,9 +298,7 @@
                                 style:--block-color-3={colorTrio[2]}
                                 title={`${block.title} \n${startTimeStr} - ${endTimeStr}`}
                                 on:click={(e) => {
-                                    onRoutineClick(e, {
-                                        ...block, idx: blockIdx
-                                    })
+                                    onRoutineClick(e, { ...block, idx: blockIdx })
                                 }}
                                 on:keydown={(e) => {
                                     if (e.key === 'Enter' || e.code === 'Space') {
@@ -406,6 +409,28 @@
         </div>
     </div>
 </div>
+
+<BounceFade 
+    isHidden={!currBlock || currBlockDayIdx === null}
+    staticPos={true}
+    zIndex={9000}
+    sidebar={true}
+    onClickOutside={() => {
+        currBlock = null
+        currBlockDayIdx = null
+    }}
+>
+    {#if currBlock && currBlockDayIdx !== null}
+        <div class="active-routine">
+            <ActiveRoutine 
+                isOpen={true}
+                type="side-menu" 
+                block={currBlock} 
+                currDayIdx={currBlockDayIdx} 
+            />
+        </div>
+    {/if}
+</BounceFade>
 
 <style lang="scss">
     @import "../../scss/day-box.scss";
@@ -535,7 +560,7 @@
             cursor: pointer !important;
         }
         &:active {
-            transform: scale(1);
+            transform: scale(0.998);
         }
         i {
             display: none;
@@ -556,14 +581,6 @@
             &:active {
                 transform: scale(1.03) !important;
             }
-        }
-        &--small &__content > div {
-            display: flex;
-        }
-        &--small &__title {
-            margin-right: 10px;
-            min-width: 60px !important;
-            @include elipses-overflow;
         }
         &--checkbox &__content {
             padding: 6px 5px 5px 8px;
@@ -601,6 +618,8 @@
             }
         }
     }
+
+
     .block-title-strike {
         opacity: 0.6;
         position: relative; 

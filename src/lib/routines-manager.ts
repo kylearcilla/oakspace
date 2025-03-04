@@ -73,7 +73,7 @@ export class RoutinesManager {
     static MAX_TITLE = 200
     static MAX_DESCRIPTION = 300
     static MAX_BLOCK_TITLE = 200
-    static MAX_BLOCK_DESCRIPTION = 300
+    static MAX_BLOCK_DESCRIPTION = 800
 
     /**
      * Initialize references to parent containers. Called after mounted.

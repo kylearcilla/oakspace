@@ -17,6 +17,7 @@
     const { settings, options, ui } = $manager
     const idPrefix = options.id
     const isChild = level > 0
+    const numbered = settings.numbered
 
     let leftSideWidth = 0
     let isOpen = false
@@ -25,6 +26,7 @@
     let doCheck = false
     let type = settings.type
     let atMaxDepth = level + 1 === $manager.tasks.maxDepth
+    let allowEdit = settings.allowEdit
 
     $: isDark = $themeState.isDarkTheme
     $: pickedTask = $manager.pickedTask
@@ -76,7 +78,7 @@
  >
     <div 
         class="task__content"
-        class:task__content--checked={task.isChecked}
+        class:task__content--checked={task.isChecked && !numbered}
         class:task__content--open={isOpen}
         on:selectstart={onSelectStart}
     >
@@ -153,16 +155,21 @@
                     <div 
                         id={`${idPrefix}--task-title-id--${task.id}`}
                         class="task__title"
-                        class:strike={doCheck}
+                        class:strike={doCheck && !numbered}
                         spellcheck="false"
                         data-placeholder="Title goes here..."
-                        contenteditable
+                        contenteditable={allowEdit}
                         on:click={() => { 
                             $manager.onTaskTitleClick({
                                 id: task.id,
                                 doExpand: !isChild,
                                 isChild
                             })
+                        }}
+                        on:pointerdown={(e) => {
+                            if (!allowEdit) {
+                                e.preventDefault()
+                            }
                         }}
                     >
                         {task.title}
@@ -179,11 +186,20 @@
                     <div 
                         id={`${idPrefix}--task-description-id--${task.id}`}
                         class="task__description"
+                        class:pointer-events-none={!allowEdit}
+                        class:no-pointer-events={!allowEdit}
                         data-placeholder="No description"
                         spellcheck="false"
-                        contenteditable
+                        contenteditable={allowEdit}
                         on:click={() => { 
-                            $manager.onTaskDescriptionFocus(task.id, isChild)
+                            if (allowEdit) {
+                                $manager.onTaskDescriptionFocus(task.id, isChild)
+                            }
+                        }}
+                        on:pointerdown={(e) => {
+                            if (!allowEdit) {
+                                e.preventDefault()
+                            }
                         }}
                     >
                         {task.description}

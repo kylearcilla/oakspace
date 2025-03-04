@@ -4,78 +4,62 @@
 
 	import { Icon } from "$lib/enums"
     import { timer } from "$lib/store"
-	import { TextEditorManager } from "$lib/inputs"
-    import { getElemById } from "../../lib/utils-general"
-    import { RoutinesManager } from "$lib/routines-manager"
 	import { getMaskedGradientStyle } from "$lib/utils-general"
 	import { getDayIdxMinutes, minsFromStartToHHMM } from "$lib/utils-date"
 	import { 
-            getBlockFromOrderIdx, getNextBlockInfo, getMostRecentBlock, 
+            getBlockFromIdx, getNextBlockInfo, getMostRecentBlock, 
             getUpcomingBlock, getCurrentBlock, getDayRoutineFromWeek, updateActiveRoutine
     } from "$lib/utils-routines"
     
-	import SvgIcon from "../../components/SVGIcon.svelte"
-	import TasksList from "../../components/TasksList.svelte"
+	import SvgIcon from "$components/SVGIcon.svelte"
+	import TasksList from "$components/TasksList.svelte"
 
     export let isOpen: boolean
     export let type: "active" | "side-menu" = "active"
+    export let block: { block: RoutineBlock, idx: number } | undefined = undefined
     export let currDayIdx: number | undefined = undefined
-    export let currBlock: { block: RoutineBlock, idx: number } | undefined = undefined
 
-    $: routine     = $weekRoutine
-    $: isDarkTheme = $themeState.isDarkTheme
-
-    const INPUT_ID = "active-routine-description" 
-    const DESCR_MAX = RoutinesManager.MAX_DESCRIPTION
+    $: routine = $weekRoutine
+    $: light = !$themeState.isDarkTheme
 
     let todayRoutine: RoutineBlock[] | DailyRoutine | null = null 
-    let doInitNow = true
-    let noneActive = false
-    let nowBlockIdx = type === "side-menu" ? currBlock.idx : null
-
-    $: nowBlock = type === "side-menu" ? currBlock : null
-    let nextViewBlock: { block: RoutineBlock, idx: number } | null = null
-    let prevViewBlock: { block: RoutineBlock, idx: number } | null = null
-    
-    // time
-    let minuteInterval: NodeJS.Timeout | null = null
     let currTime = getDayIdxMinutes()
+    let nowBlock  = block ?? null
+    let nowBlockIdx = null
     
-    // description 
+    let nextBlock: { block: RoutineBlock, idx: number } | null = null
+    let prevBlock: { block: RoutineBlock, idx: number } | null = null
+    let tasks: Task[] = []
+    
     let routineItemsRef: HTMLElement
     let textEditorElem: HTMLElement
     let textGradient = ""
-    
     let renderFlag = false
-    let editor: TextEditorManager
+    let doInitNow = true
+    let noneActive = false
     
     $: dayIdx = currDayIdx ?? currTime.dayIdx
-    $: tasks = nowBlock?.block?.tasks ?? []
-    $: description = nowBlock?.block.description ?? ""
+    $: tasks  = nowBlock?.block?.tasks ?? []
 
     $: {
         todayRoutine = getDayRoutineFromWeek(routine, dayIdx)
-    }
-    $: {
         initNowBlock(todayRoutine)
-        onBlockUpdate()
     }
     $: {
         doInitNow = isOpen ? doInitNow : true
     }
-    timer.subscribe(() => currTime = getDayIdxMinutes())
+    const unsubscribe = timer.subscribe(() => currTime = getDayIdxMinutes())
 
-    /* blocks */
     function initNowBlock(todayRoutine: RoutineBlock[] | DailyRoutine | null) {
         if (!todayRoutine) return
 
-        const mins = (type === "side-menu" || !doInitNow) ? nowBlock.block.startTime : currTime.minutes
+        const mins = (type === "side-menu" || !doInitNow) ? nowBlock!.block.startTime : currTime.minutes
         const now  = getCurrentBlock(todayRoutine, mins)
         const prev = getMostRecentBlock(mins, todayRoutine)
         const next = getUpcomingBlock(mins, todayRoutine)
 
-        nextViewBlock = next
-        prevViewBlock = prev
+        nextBlock = next
+        prevBlock = prev
 
         if (now) {
             nowBlockIdx = now.idx
@@ -88,13 +72,11 @@
         }
         requestAnimationFrame(() => onBlockUpdate())
     }
-
-
     function getBlock(dir: "next" | "prev") {
         if (!todayRoutine) return
 
         if (doInitNow && noneActive) {
-            const viewBlock = dir === "next" ? nextViewBlock : prevViewBlock
+            const viewBlock = dir === "next" ? nextBlock : prevBlock
             if (!viewBlock) {
                 return
             }
@@ -103,55 +85,27 @@
             nowBlockIdx = viewBlock.idx
         }
         else {
-            nowBlockIdx = dir === "next" ? nowBlockIdx + 1 : nowBlockIdx - 1
-            nowBlock = getBlockFromOrderIdx(nowBlockIdx, todayRoutine)
+            nowBlockIdx = dir === "next" ? nowBlockIdx! + 1 : nowBlockIdx! - 1
+            nowBlock = getBlockFromIdx(nowBlockIdx, todayRoutine)
         }
         doInitNow = false
 
-        prevViewBlock = getBlockFromOrderIdx(nowBlockIdx - 1, todayRoutine)
-        nextViewBlock = getBlockFromOrderIdx(nowBlockIdx + 1, todayRoutine)
+        prevBlock = getBlockFromIdx(nowBlockIdx - 1, todayRoutine)
+        nextBlock = getBlockFromIdx(nowBlockIdx + 1, todayRoutine)
 
         requestAnimationFrame(() => onBlockUpdate())
     }
     function onBlockUpdate() {
         handleGradient(textEditorElem)
-        const editorElem = getElemById(INPUT_ID)
-
-        if (!editorElem) {
-            editor = null
-        }
-        else if (!editor && editorElem) {
-            editor = initDescriptionEditor()
-        }
-        if (editor) {
-            editor.updateText(description)
-        }
-
         renderFlag = !renderFlag
     }
-    function initDescriptionEditor() {
-        return new TextEditorManager({
-            initValue: description,
-            placeholder: "no description...",
-            allowFormatting: false,
-            maxLength: DESCR_MAX,
-            id: INPUT_ID,
-            handlers: {
-                onBlurHandler: (_, val) => {
-                    description = val
-                    saveBlock({ 
-                        description
-                    })
-                }
-            }
-        })
-    }
     function handleGradient(elem: HTMLElement) {
-        if (!isDarkTheme || !elem) return
+        if (!elem) return
 
         textGradient = getMaskedGradientStyle(elem, {
             head: {
-                end: "50px"
+                start: "2px",
+                end: "2px"
             },
             tail: {
                 start: "10%",
@@ -166,55 +120,49 @@
             dayIdx
         })
     }
-
     onMount(() => {
         handleGradient(textEditorElem)
-        editor = initDescriptionEditor()
+        if (todayRoutine) {
+            initNowBlock(todayRoutine)
+            onBlockUpdate()
+        }
     })
+    onDestroy(() => unsubscribe())
 </script>
 
 <div 
     class="active-routine"
     class:active-routine--empty={!nowBlock}
-    class:active-routine--light={!isDarkTheme}
+    class:active-routine--light={light}
     class:active-routine--side-menu={type === "side-menu"}
-    style:padding-bottom={tasks.length > 0 ? "2px" : "8px"}
-    style:width={type === "side-menu" ? tasks.length > 0 ? "500px" : "380px" : "340px"}
 >
     {#if nowBlock}
-        {@const { description, title, startTime, endTime } = nowBlock.block}
-        <div 
-            class="active-routine__header"
-            class:r-flx-sb={type === "side-menu"}
-        >
+        {@const { description, title, startTime, endTime, done } = nowBlock.block}
+        <div class="active-routine__header">
             <div class="flx">
                 <button 
                     class="active-routine__checkbox"
-                    class:active-routine__checkbox--checked={nowBlock.block.done}
+                    class:active-routine__checkbox--checked={done}
                     class:hidden={dayIdx !== currTime.dayIdx}
                     on:click={() => {
-                        saveBlock({
-                            done: !nowBlock.block.done
-                        })
+                        saveBlock({ done: !done })
                     }}
                 >
                     <i class="fa-solid fa-check"></i>
                 </button>  
-                <!-- title -->
                 <div 
-                    class="active-routine__title" {title}
-                    class:strike={nowBlock.block.done}
+                    {title}
+                    class="active-routine__title" 
+                    class:strike={done}
                 >
                     {title}
                 </div>
             </div>
             <!-- buttons -->
-            <div 
-                class="active-routine__btns" 
-            >
+            <div class="active-routine__btns" class:hidden={type === "side-menu"}>
                 <button 
                     on:click={() => getBlock("prev")}
-                    disabled={prevViewBlock === null}
+                    disabled={prevBlock === null}
                     title="Go to prev block"
                 >
                     <SvgIcon 
@@ -235,7 +183,7 @@
                 </button>
                 <button 
                     on:click={() => getBlock("next")}
-                    disabled={nextViewBlock === null}
+                    disabled={nextBlock === null}
                     title="Go to next block"
                 >
                     <SvgIcon 
@@ -247,10 +195,9 @@
                 </button>
             </div>
         </div>
-        <!-- time -->
         <div 
             class="active-routine__time" 
-            class:hidden={!nowBlock}
+            class:hidden={!nowBlock || type === "side-menu"}
             style="margin-right: 10px"
         >
             <span>
@@ -263,70 +210,68 @@
         </div>
         <!-- description -->
         <div 
-            id={INPUT_ID}
             class="active-routine__description"
             class:active-routine__description--no-tasks={tasks.length === 0}
+            class:active-routine__description--side-menu={type === "side-menu"}
             class:hidden={!description}
-            contenteditable
-            spellcheck="false"
             style={textGradient}
+            contenteditable="true"
             bind:this={textEditorElem}
+            on:pointerdown|preventDefault
             on:scroll={() => handleGradient(textEditorElem)}
         >
-            {description}
+            {@html description}
         </div>
-            <!-- tasks -->
-            {#if tasks.length > 0}
-            <div 
-                class="active-routine__action-items" 
-                style:margin-top={"-3px"}
-                bind:this={routineItemsRef}
-            >
-                {#key renderFlag}
-                    <TasksList
-                        {tasks}
-                        allowInitTasksCall={false}
-                        onTaskChange={(tasks) => {
-                            saveBlock({ tasks })
-                        }}
-                        options={{
-                            id: "active-routine-block",
-                            type: "side-menu",
-                            settings: {
-                                maxDepth: 3
-                            },
-                            ui: { 
-                                hasTaskDivider: true,
-                                maxHeight: "280px"
-                            },
-                            containerRef: routineItemsRef
-                        }}
-                    />
-                {/key}
-            </div>
-        {/if}
+        <!-- tasks -->
+        <div 
+            class="active-routine__action-items" 
+            bind:this={routineItemsRef}
+        >
+            {#key renderFlag}
+                <TasksList
+                    tasks={tasks}
+                    allowInitTasksCall={false}
+                    onTaskChange={(tasks) => saveBlock({ tasks })}
+                    options={{
+                        id: "active-routine",
+                        hotkeyFocus: "default",
+                        settings: {
+                            allowEdit: false,
+                            maxDepth: 2
+                        },
+                        ui: { 
+                            sidePadding: "17px",
+                            fontSize: "1.425rem",
+                            checkboxDim: "15px",
+                            padding: "9px 0px 6px 0px",
+                            hasTaskDivider: true
+                        },
+                        rootRef: routineItemsRef
+                    }}
+                />
+            {/key}
+        </div>
     {:else}
-        <!-- empty ui -->
-        <div class="text-aln-center">
-            <div class="active-routine__no-routine">
+        <div style:text-align="center">
+            <div class="active-routine__empty">
                 No Active Routine
             </div>
-            <div class="active-routine__no-routine-subtitle">
-                {#if nextViewBlock}
-                    {nextViewBlock.block.title}
+            <div class="active-routine__empty-subtitle">
+                {#if nextBlock}
                     <strong>
                         {getNextBlockInfo(todayRoutine).info ?? ""}
                     </strong>
                 {:else}
-                    Done for the Day!
+                    Done for the day! 👏
                 {/if}
             </div>
         </div>
         <div class="active-routine__bottom-container active-routine__btns">
             <button 
-                on:click={() => getBlock("prev")}
-                disabled={prevViewBlock === null}
+                disabled={prevBlock === null}
                 title="Go to prev block"
+                style:margin-left="-2px"
+                on:click={() => getBlock("prev")}
             >
                 <SvgIcon 
                     icon={Icon.ChevronLeft}
@@ -339,9 +284,10 @@
                 </span>
             </button>
             <button 
-                on:click={() => getBlock("next")}
-                disabled={nextViewBlock === null}
+                disabled={nextBlock === null}
                 title="Go to next block"
+                style:margin-right="-10px"
+                on:click={() => getBlock("next")}
             >
                 <span style:margin-right="10px">
                     Next
@@ -357,74 +303,62 @@
     {/if}
 </div>
 
-
 <style lang="scss">
     @import "../../scss/inputs.scss";
 
     .active-routine {
-        background-color: #1e1e1e;
-        border: 1.5px solid rgba(var(--textColor1), 0.03);
-        border-radius: 9px;
-        padding: 0px 0px 5px 0px;
+        border-radius: 13px;
+        padding: 2px 0px 0px 0px;
         position: relative;
+        width: 340px;
+        max-width: 340px;
+        @include contrast-bg("bg-3");
 
-        &--side-menu {
-            border-radius: 8px;
-            border: none;
-            padding: 3px 0px 12px 0px;
-            min-height: 100px;
-            background: var(--modalBgColor)
-        }
-        &--side-menu &__time {
-            margin-bottom: 10px;
-        }
-        &--light &__title {
-            @include text-style(0.9, 600);
-        }
         &--light &__description {
-            @include text-style(0.85, 600);
+            @include text-style(1);
         }
         &--light &__time {
-            @include text-style(0.6, 500);
+            @include text-style(0.6);
         }
-        &--light &__no-routine {
-            @include text-style(0.95, 600);
+        &--light &__empty {
+            @include text-style(0.95);
         }
-        &--light &__no-routine-subtitle {
-            @include text-style(0.7, 500);
+        &--light &__empty-subtitle {
+            @include text-style(0.7);
         }
-        &--light &__no-routine-subtitle strong {
-            @include text-style(0.4, 500);
+        &--light &__empty-subtitle strong {
+            @include text-style(0.4);
         }
         &--empty &__bottom-container {
-            padding: 0px 18px 0px 9px;
-            margin-top: -8px;
+            padding: 0px 18px 6px 9px;
+        }
+        &--side-menu &__title{
+            max-width: 310px;
         }
 
         &__header {
             @include flex(center, space-between);
-            padding: 2px 18px 0px 18px;
-            margin: 2px 0px 2px 0px;
+            padding: 2px 18px 0px 16px;
+            margin: 2px 0px 5px 0px;
             height: 35px;
         }
         &__title {
-            @include text-style(1, 500, 1.54rem);
+            @include text-style(1, var(--fw-400-500), 1.65rem, "Geist Mono");
             @include elipses-overflow;
-            margin: 0px 12px 0px 0px;
+            margin: 1px 20px 0px 0px;
             min-width: 0px;
-            max-height: 60px;
-            cursor: default;
+            max-width: 210px;
+            height: 20px;
         }
         &__title.strike {
             opacity: 0.5;
         }
         &__checkbox {
-            @include square(14px, 5px);
-            background-color: rgba(var(--textColor1), 0.05);
-            border: 1.5px solid rgba(var(--textColor1), 0.05);
-            margin: 2px 10px 0px 0px;
-            @include center;
+            @include square(15px, 0px);
+            background-color: rgba(var(--textColor1), 0.08);
+            margin: 4px 10px 0px 0px;
             font-size: 1rem;
+            @include center;
             
             &:hover {
                 background-color: rgba(var(--textColor1), 0.1);
@@ -454,17 +388,16 @@
                 padding: 8px 8px;
                 position: relative;
                 @include circle(6px);
-
-                &::before {
-                    content: "•";
-                    @include abs-center;
-                }
+            }
+            &[title="Go to current block"]:before {
+                content: "•";
+                @include abs-center;
             }
             &:last-child {
                 padding-right: 5px;
             }
             &:disabled {
-                opacity: 0.15 !important;
+                opacity: 0.1 !important;
             }
             &:hover {
                 opacity: 0.8;
@@ -477,22 +410,27 @@
             }
 
             span {
-                @include text-style(1, 400, 1.2rem, "DM Mono");
+                @include text-style(1, 400, 1.2rem);
             }
         }
         &__time {
-            @include text-style(0.3, 400, 1.48rem, "DM Sans");
+            @include text-style(0.3, var(--fw-400-500), 1.35rem);
             white-space: nowrap;
-            margin: 2px 0px 8px 18px;
+            margin: -2px 0px 0px 15px
         }
         &__description {
-            padding: 0px 17px 10px 17px;
-            @include text-style(0.65, 400, 1.5rem);
+            padding: 9px 17px 4px 15px;
+            @include text-style(0.65, var(--fw-400-500), 1.39rem);
             overflow: scroll;
             max-height: 100px;
             
             &--no-tasks {
                 max-height: 200px;
+                padding-bottom: 10px;
+            }
+            &--side-menu {
+                padding-top: 0px;
+                margin: -2px 0px 5px 0px;
             }
         }
         &__divider {
@@ -502,18 +440,20 @@
         }
         &__action-items {
             position: relative;
+            max-height: 400px;
+            overflow: auto;
+            margin-top: 1px;
         }
-        &__no-routine {
-            @include text-style(0.3, 500, 1.4rem);
-            padding: 15px 0px 8px 0px;
+        &__empty {
+            @include text-style(0.3, var(--fw-400-500), 1.395rem);
+            padding: 16px 0px 7px 0px;
         }
-        &__no-routine-subtitle {
-            @include text-style(0.8, 400, 1.45rem, "DM Sans");
-            margin-bottom: 20px;
+        &__empty-subtitle {
+            @include text-style(0.8, var(--fw-400-500), 1.45rem, "DM Sans");
+            margin-bottom: 12px;
 
             strong {
-                @include text-style(0.2, 400);
-                margin-left: 1.5px;
+                @include text-style(0.2, var(--fw-400-500));
             }
         }
         &__bottom-container {

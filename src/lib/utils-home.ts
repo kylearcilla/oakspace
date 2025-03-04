@@ -452,3 +452,14 @@ export function removeOAuthRedirectData(api: "gcal" | "tapi") {
     localStorage.removeItem(`${api}-error`)
     localStorage.removeItem(`${api}-state`)
 }
+
+export function ambienceSideBarOffset(leftOffset: number) {
+    const ambience = get(globalContext).ambience
+    const sidebar = getElemById("home--right-bar")!
+    const sidebarRect = sidebar.getBoundingClientRect()
+
+    if (ambience && ambience.active && ambience.styling === "blur") {
+        return leftOffset - sidebarRect.left
+    }
+    return leftOffset
+}

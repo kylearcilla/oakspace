@@ -160,7 +160,7 @@
         }
 
         h1 {
-            @include text-style(1, var(--fw-400-500), 2.25rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 2.25rem);
             margin: 11px 0px 4px 0px;
         }
         h4 {
@@ -174,7 +174,7 @@
             display: flex;
 
             span {
-                @include text-style(0.35, var(--fw-400-500), 1.25rem);
+                @include text-style(0.35, var(--fw-400-500), 1.3rem);
                 margin: -2px 0px 0px 15px;
             }
         }
@@ -195,12 +195,12 @@
             margin-right: min(5%, 30px);
         }
         &__stat-title {
-            @include text-style(0.35, var(--fw-300-400), 1.4rem, "Geist Mono");
+            @include text-style(0.35, var(--fw-400-500), 1.5rem);
             margin-bottom: 6.5px;
             white-space: nowrap;            
         }
         &__stat-num {
-            @include text-style(0.8, var(--fw-400-500), 1.4rem, "Geist Mono");
+            @include text-style(0.8, var(--fw-400-500), 1.5rem);
         }
     }
 

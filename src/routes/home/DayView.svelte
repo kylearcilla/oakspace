@@ -528,7 +528,7 @@
                         </div>
                     {:else}
                         <div class="dmenu__toggle-optn">
-                            <span class="dmenu__option-text">
+                            <span class="dmenu__option-text" style:opacity="0.35">
                                 No Set Routine
                             </span>
                         </div>

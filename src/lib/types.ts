@@ -597,7 +597,7 @@ type GlobalContext = {
     ambience?: AmbientOptions
     routineView?: {
         dayIdx: number
-        block: RoutineBlockElem & { idx: number } 
+        block: { block: RoutineBlock, idx: number } 
     } | null
 }
 
@@ -793,6 +793,7 @@ type TasksListOptions = {
         numbered?: boolean,
         checkSubtasks?: boolean,
         allowDuplicate?: boolean,
+        allowEdit?: boolean,
         tasksLinked?: boolean
         maxTitleLines?: number
         maxDescrLines?: number

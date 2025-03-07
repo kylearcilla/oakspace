@@ -1,4 +1,3 @@
-import { goto } from "$app/navigation"
 import { sessionManager } from "./store"
 
 import { toast } from "./utils-toast"
@@ -13,6 +12,7 @@ export class SessionManager {
     session!: Session
     todosChecked = 0
 
+    // session
     periods = 0
     totalFocusTime = 0
     totalBreakTime = 0
@@ -24,36 +24,42 @@ export class SessionManager {
     elapsedSecs = 0
     progressSecs = 0
     nextBreakSecs = 0
-    minimal = false
     
     // visualizer
     visStart!: Date
     visEnd!: Date
     currDate!: Date
     visEndIncrementSecs = 0
-
+    
     // segments include break and paused periods
     currSegmentIdx = -1
     segments: SessionProgressSegment[] = []
-
+    
     isPlaying = false
+    showTasks = false
+    minUi = false
+    visualizer = false
+    show = true
+    fontStyle: FontStyle = "default"
+
     state: SessionState = "focus"
     prevPage = ""
 
-    static TRANSITION_DUR_SECS = 10
-    static MIN_SESSION_TIME_MINS = 10
-
-    FOCUS_SOUND_VOL = 0.055
-    BREAK_SOUND_VOL = 0.125
-    FOCUS_REMINDER_SOUND_VOL = 0.02
-
-    static CHIME_PERIOD_SECS = 60 * 1
-    LENGTHY_BREAK_REMIND_SECS = 60 * 4
-    LENGTHY_BREAK_THRESHOLD_SECS = 60 * 20
+    static readonly TRANSITION_DUR_SECS = 10
+    static readonly MIN_SESSION_TIME_MINS = 10
     
-    MAX_TIME_AWAY_MINS = 1
-    NEXT_HOUR_DIST_MINS = 15
-    MAX_SECS = 12 * 60 * 60
+    static readonly CHIME_PERIOD_SECS = 60 * 1
+    readonly LENGTHY_BREAK_REMIND_SECS = 60 * 4
+    readonly LENGTHY_BREAK_THRESHOLD_SECS = 60 * 20
+    readonly FOCUS_MODE_TIME_EXTEND_SECS = 60 * 60
+    
+    readonly MAX_TIME_AWAY_MINS = 1
+    readonly NEXT_HOUR_DIST_MINS = 15
+    readonly MAX_SECS = 12 * 60 * 60 // 12 hours
+
+    readonly FOCUS_SOUND_VOL = 0.055
+    readonly BREAK_SOUND_VOL = 0.125
+    readonly FOCUS_REMINDER_SOUND_VOL = 0.02        
 
     constructor(session?: Session) {
         if (session) {
@@ -67,15 +73,12 @@ export class SessionManager {
             this.inactiveWindowQuit()
             return
         }
-        this.todosChecked = this.session!.todos.reduce((count, todo) => {
-            return count += (todo.isChecked ? 1 : 0)
-        }, 0)
-
+        this.todosChecked = this.session!.todos.reduce((count, todo) => count += (todo.isChecked ? 1 : 0), 0)
         sessionManager.set(this)
 
         if (session) {
-            this.initNextVisEndTimeIncrement()
-            this.initVisualStartEndTimes()
+            this.setVisualTimeExtend()
+            this.setVisualStartEndTimes()
             this.updateVisEnd()
         }
         if (session && this.session.mode === "pom") {
@@ -99,11 +102,6 @@ export class SessionManager {
         this.update({ session: this.session })
     }
 
-    initVisualStartEndTimes() {
-        this.visStart = this.nearestFiveMinuteTime(this.session.startTime)
-        this.visEnd   = addToDate({ date: this.visStart, time: this.visEndIncrementSecs })
-    }
-
     nearestFiveMinuteTime(date: Date) {
         const roundedDate = new Date(date)
         const minutes = roundedDate.getMinutes()
@@ -113,8 +111,23 @@ export class SessionManager {
 
         return roundedDate
     }
-
-    initNextVisEndTimeIncrement() {
+    /**
+     * Calculates the time increment for extending the visualizer end time.
+     * 
+     * Determines how far ahead to extend the visualizer timeline when the current time 
+     * approaches the visible end.
+     * 
+     * Flow mode: Always uses a 1-hour increment.
+     * 
+     * Pomodoro mode: Based on the length of a complete period (focus + break):
+     * - If a period fits comfortably within an hour, extend by 1 hour
+     * - If a period is close to filling an hour, extend by 2 hours to ensure visibility
+     * 
+     * Examples:
+     * - 25m focus + 5m break = 30m period → extends by 1 hour
+     * - 45m focus + 15m break = 60m period → extends by 2 hours
+     */
+    setVisualTimeExtend() {
         if (this.session.mode === "pom") {
             const firstPeriodMins = (this.session.focusTime + this.session.breakTime) / 60
             const mins = firstPeriodMins % 60
@@ -125,12 +138,21 @@ export class SessionManager {
             this.visEndIncrementSecs = nextHour * 60 * 60
         }
         else {
-            this.visEndIncrementSecs = 3_600
+            this.visEndIncrementSecs = this.FOCUS_MODE_TIME_EXTEND_SECS
         }
-
     }
 
+    /**
+     * Set the start and end times for the visualizer.
+     */
+    setVisualStartEndTimes() {
+        this.visStart = this.nearestFiveMinuteTime(this.session.startTime)
+        this.visEnd   = addToDate({ date: this.visStart, time: this.visEndIncrementSecs })
+    }
+    
+
     /* controls */
+
     togglePlay() {
         if (["to-focus", "to-break", "break"].includes(this.state)) {
             return
@@ -140,7 +162,7 @@ export class SessionManager {
 
         if (!this.isPlaying) {
             this.pauseCount++
-            this.currSegmentIdx = this.newSegment({ type: "paused" })
+            this.currSegmentIdx = this.newPauseSegment()
 
             this.update({ 
                 segments: this.segments,
@@ -152,9 +174,9 @@ export class SessionManager {
         }
     }
 
-    toggleMinimal() {
-        this.minimal = !this.minimal
-        this.update({ minimal: this.minimal })
+    updateFontStyle(style: FontStyle) {
+        this.fontStyle = style
+        this.update({ fontStyle: style })
     }
 
     updateProgress() {
@@ -163,23 +185,20 @@ export class SessionManager {
         const mode = this.session.mode
         const focus = state === "focus"
         const transition = ["to-break", "to-focus"].includes(state)
-        const TRANSITION_DUR_SECS = SessionManager.TRANSITION_DUR_SECS
         const isPom = mode === "pom"
+        const TRANSITION_DUR_SECS = SessionManager.TRANSITION_DUR_SECS
 
         this.elapsedSecs += 1
-        this.update({ elapsedSecs: this.elapsedSecs })
         this.currDate = new Date()
+        this.update({ elapsedSecs: this.elapsedSecs })
 
         if (this.elapsedSecs > this.MAX_SECS) {
             this.reachedMaxElapsedTimeHandler()
             return
         }
-    
-        // counter
-        if (this.elapsedSecs > this.MAX_SECS) {
-            this.finish()
-        }
+        // counters
         if (this.isPlaying) {
+            // time for the current period (focus or break)
             this.progressSecs++
             this.update({ progressSecs: this.progressSecs })
         }
@@ -188,20 +207,20 @@ export class SessionManager {
             this.totalBreakTime += !this.isPlaying || !focus ? 1 : 0
 
             this.update({
-                totalFocusTime: this.totalFocusTime,
-                totalBreakTime: this.totalBreakTime
+                totalFocusTime: this.totalFocusTime, totalBreakTime: this.totalBreakTime
             })
         }
 
-        // state
+        // break once the set next break time is reached
         if (focus && this.elapsedSecs >= this.nextBreakSecs && !transition && isPom) {
             this.stateTransition("break")
         }
+        // focus once current progress is greater than break time
         else if (!focus && this.progressSecs >= breakTime && !transition && isPom) {
             this.stateTransition("focus")
         }
 
-        // other updates
+        // transition handler + visuals
         if (transition) {
             const toFocus = state === "to-focus"
             const timeleft = TRANSITION_DUR_SECS - this.progressSecs
@@ -209,7 +228,7 @@ export class SessionManager {
 
             setDocumentTitle(emoji + secsToHhMmSs(timeleft))
             
-            if (timeleft <= 0 && this.session.mode === "pom") {
+            if (timeleft <= 0) {
                 toFocus ? this.focus() : this.break()
                 this.initNextBreak()
             }
@@ -223,109 +242,12 @@ export class SessionManager {
             setDocumentTitle("⏸️" + secsToHhMmSs(this.progressSecs))
         }
 
-        this.soundHandler()
+        this.autoSoundHandler()
         this.updateVisEnd()
     }
 
-    /**
-     * Sound handler for playing time blindness chime and lengthly break pings.
-     */
-    soundHandler() {
-        const { allowChime, allowSfx, mode } = this.session
-        const flow = mode === "flow"
-        const elapsed = this.elapsedSecs        
-        const progress = this.progressSecs
-
-        if (flow && 
-            allowSfx && 
-            this.state === "break" && 
-            progress > this.LENGTHY_BREAK_THRESHOLD_SECS && 
-            progress % this.LENGTHY_BREAK_REMIND_SECS === 0
-        ) {
-            // plays at regular intervals if break is taking long
-            this.playBreakSound()
-        }
-        if (allowChime && elapsed > 0 && elapsed % SessionManager.CHIME_PERIOD_SECS === 0) {
-            this.playChimeSound()
-        }
-    }
-
-    /**
-     * Initialize a new break segment.
-     * Occurs during the conclusion of a break segment and on to a focus segment.
-     * Break segments start on the start of the transition to the break segment.
-     */
-    initNextBreak() {
-        const { focusTime, breakTime } = this.session
-        const transSecs = SessionManager.TRANSITION_DUR_SECS
-        const firstBreakStart = addToDate({ date: new Date(), time: focusTime })
-        const firstBreakEnd   = addToDate({ date: firstBreakStart, time: breakTime + (2 * transSecs) + 1 })
-        
-        this.periods++
-        this.nextBreakSecs = (this.periods * focusTime) + ((this.periods - 1) * breakTime) + ((this.periods - 1) * (2 * transSecs))
-
-        this.segments.push({
-            start: firstBreakStart,
-            end: firstBreakEnd,
-            type: "break"
-        })
-        this.update({
-            periods: this.periods,
-            nextBreakSecs: this.nextBreakSecs
-        })
-    }
-
-    /**
-     * Update the inactive segments (pause / break) after each tick.
-     */
-    updateSegments() {
-        const idx = this.currSegmentIdx
-        if (idx < 0) return
-
-        const recentSegment = this.segments[idx]
-
-        this.segments[idx] = {
-            ...recentSegment, end: new Date()
-        }
-
-        this.update({ segments: this.segments })
-    }
-
-    /**
-     * Update the end date on the visualizer.
-     * Will increase the end date if the progress gets too close to the end date.
-     * Ensures that there is always space for a full period (focus + break segments).
-     */
-    updateVisEnd() {
-        const incrsFromStart = Math.floor(this.elapsedSecs / this.visEndIncrementSecs)
-        const start = this.visStart
-
-        const recentIncrHr = addToDate({ 
-            date: start,
-            time: incrsFromStart * this.visEndIncrementSecs
-        })
-        const nextIncrHr = addToDate({ 
-            date: recentIncrHr,
-            time: this.visEndIncrementSecs
-        })
-        const distFromNextHrSecs = getDifferenceInSecs(nextIncrHr, addToDate({
-            date: this.session.startTime,
-            time: this.elapsedSecs
-        }))
-        const distFromNextHrMins = distFromNextHrSecs / 60
-
-        if (distFromNextHrMins <= this.NEXT_HOUR_DIST_MINS) {
-            const nextNextIncrHr = addToDate({ 
-                date: nextIncrHr,
-                time: this.visEndIncrementSecs
-            })
-
-            this.visEnd = this.nearestFiveMinuteTime(nextNextIncrHr)
-            this.update({ visEnd: this.visEnd })
-        }
-    }
-
     /* states */
+
     break() {
         this.progressSecs = 0
         this.breakCount++
@@ -379,6 +301,107 @@ export class SessionManager {
         }
     }
 
+    /**
+     * Initialize a new break segment and set the next break time.
+     * Break inlcude both pauses & breaks.
+     * Triggers during the conclusion of a break segment and on to a focus segment.
+     */
+    initNextBreak() {
+        const { focusTime, breakTime } = this.session
+        const transSecs = SessionManager.TRANSITION_DUR_SECS
+        const firstBreakStart = addToDate({ date: new Date(), time: focusTime })
+        const firstBreakEnd   = addToDate({ date: firstBreakStart, time: breakTime + (2 * transSecs) + 1 })
+        
+        this.periods++
+        this.nextBreakSecs = (this.periods * focusTime) + ((this.periods - 1) * breakTime) + ((this.periods - 1) * (2 * transSecs))
+
+        this.segments.push({
+            start: firstBreakStart,
+            end: firstBreakEnd,
+            type: "break"
+        })
+        this.update({
+            periods: this.periods,
+            nextBreakSecs: this.nextBreakSecs
+        })
+    }
+
+    /**
+     * Update the inactive segments (pause / break) after each tick.
+     */
+    updateSegments() {
+        const idx = this.currSegmentIdx
+        if (idx < 0) return
+
+        const recentSegment = this.segments[idx]
+
+        this.segments[idx] = {
+            ...recentSegment, end: new Date()
+        }
+
+        this.update({ segments: this.segments })
+    }
+
+    /**
+     * Extends the end time on the visualizer.
+     * Ensures that there is always space for a full period (focus + break segments).
+     */
+    updateVisEnd() {
+        const incrsFromStart = Math.floor(this.elapsedSecs / this.visEndIncrementSecs)
+        const start = this.visStart
+
+        const recentIncrHr = addToDate({ 
+            date: start,
+            time: incrsFromStart * this.visEndIncrementSecs
+        })
+        const nextIncrHr = addToDate({ 
+            date: recentIncrHr,
+            time: this.visEndIncrementSecs
+        })
+        const distFromNextHrSecs = getDifferenceInSecs(nextIncrHr, addToDate({
+            date: this.session.startTime,
+            time: this.elapsedSecs
+        }))
+        const distFromNextHrMins = distFromNextHrSecs / 60
+
+        // if current place in current segment is close to the next hour then extend
+        if (distFromNextHrMins <= this.NEXT_HOUR_DIST_MINS) {
+            const nextNextIncrHr = addToDate({ 
+                date: nextIncrHr,
+                time: this.visEndIncrementSecs
+            })
+
+            this.visEnd = this.nearestFiveMinuteTime(nextNextIncrHr)
+            this.update({ visEnd: this.visEnd })
+        }
+    }
+
+    newPauseSegment() {
+        this.segments.push({
+            type: "paused", start: new Date(), end: new Date()
+        })
+
+        return this.segments.length - 1
+    }
+
+    /* sound */
+
+    autoSoundHandler() {
+        const { allowChime, allowSfx, mode } = this.session
+        const flow = mode === "flow"
+        const elapsed = this.elapsedSecs        
+        const progress = this.progressSecs
+
+        // flow: if break is taking long
+        if (flow && allowSfx && progress > this.LENGTHY_BREAK_THRESHOLD_SECS && progress % this.LENGTHY_BREAK_REMIND_SECS === 0) {
+            this.playBreakSound()
+        }
+        // time blindness, play on set intervals
+        if (allowChime && elapsed > 0 && elapsed % SessionManager.CHIME_PERIOD_SECS === 0) {
+            this.playChimeSound()
+        }
+    }
+
     playFocusSound() {
         const audio = new Audio(focusSound)
         audio.volume = this.FOCUS_SOUND_VOL
@@ -395,6 +418,28 @@ export class SessionManager {
         const audio = new Audio(focusReminderSound)
         audio.volume = this.FOCUS_REMINDER_SOUND_VOL
         audio.play()
+    }
+
+    /* ui */
+
+    toggleMinUi() {
+        this.minUi = !this.minUi
+        this.update({ minUi: this.minUi })
+    }
+
+    toggleShow() {
+        this.show = !this.show
+        this.update({ show: this.show })
+    }
+
+    toggleVisualizer() {
+        this.visualizer = !this.visualizer
+        this.update({ visualizer: this.visualizer })
+    }
+
+    toggleTasks() {
+        this.showTasks = !this.showTasks
+        this.update({ showTasks: this.showTasks })
     }
 
     /* conclude  */
@@ -417,15 +462,6 @@ export class SessionManager {
         })
 
         setDocumentTitle("Somara")
-        goto(this.prevPage)
-    }
-
-    newSegment(args: { type: SessionState }) {
-        this.segments.push({
-            type: args.type, start: new Date(), end: new Date()
-        })
-
-        return this.segments.length - 1
     }
 
     updatePrevPage(route: string) {
@@ -447,6 +483,7 @@ export class SessionManager {
         }, 1000)
         this.finish()
     }
+    
     inactiveWindowQuit() {
         setTimeout(() => {
             toast("info", {
@@ -456,12 +493,11 @@ export class SessionManager {
         this.quit()
     }
 
-    /* tasks */
+    /* utils */
+
     updateTasks(tasks: Task[]) {
         this.session.todos = tasks
-        this.todosChecked = tasks.reduce((count, todo) => {
-            return count += (todo.isChecked ? 1 : 0)
-        }, 0)
+        this.todosChecked = tasks.reduce((count, todo) => count += (todo.isChecked ? 1 : 0), 0)
 
         this.update({
             session: this.session,
@@ -469,17 +505,16 @@ export class SessionManager {
         })
     }
 
-    /* state */
-
     load() {
         const data = localStorage.getItem("session")
-        if (!data) return
+        if (!data) return false
 
         const session = JSON.parse(data)
         const isDone  = session.state === "done"
         const currDate    = new Date(session.currDate)
         const elapsedTime = isDone ? 0 : getDifferenceInSecs(currDate, new Date())
         const maxTimeAway = this.MAX_TIME_AWAY_MINS * 60
+        const transition = session.state.startsWith("to-")
 
         if (elapsedTime > maxTimeAway && !isDone) {
             return false
@@ -487,26 +522,31 @@ export class SessionManager {
 
         this.session = session.session
         this.session.startTime = new Date(this.session.startTime)
+
         this.periods = session.periods
+        this.focusCount = session.focusCount
+        this.breakCount = session.breakCount
+        this.pauseCount = session.pauseCount
+
         this.totalFocusTime = session.totalFocusTime
         this.totalBreakTime = session.totalBreakTime
         this.elapsedSecs = session.elapsedSecs
         this.progressSecs = session.progressSecs
-        this.focusCount = session.focusCount
-        this.breakCount = session.breakCount
-        this.pauseCount = session.pauseCount
-        this.segments = session.segments
-        this.currSegmentIdx = session.currSegmentIdx
-        this.nextBreakSecs = session.nextBreakSecs
+
         this.state = session.state
-        this.prevPage = session.prevPage
-        this.minimal = session.minimal
+        this.currSegmentIdx = session.currSegmentIdx
+        this.segments = session.segments
+        this.nextBreakSecs = session.nextBreakSecs
+        
         this.visStart = new Date(session.visStart)
         this.visEnd = new Date(session.visEnd)
+        this.visualizer = session.visualizer
         this.visEndIncrementSecs = session.visEndIncrementSecs
-
-        const transition = this.state.startsWith("to-")
-
+        this.showTasks = session.showTasks
+        this.fontStyle = session.fontStyle
+        this.minUi = session.minUi
+        this.prevPage = session.prevPage
+        this.show = session.show
         this.elapsedSecs += transition ? 0 : elapsedTime
         this.progressSecs += this.isPlaying ? 0 : elapsedTime
 
@@ -531,25 +571,33 @@ export class SessionManager {
     save(state: SessionManager) {
         localStorage.setItem("session", JSON.stringify({
             session: state.session,
-            periods: state.periods,
-            totalFocusTime: state.totalFocusTime,
-            totalBreakTime: state.totalBreakTime,
             
+            isPlaying: state.isPlaying,
+            state: state.state,
+
+            periods: state.periods,
             focusCount: state.focusCount,
             breakCount: state.breakCount,
             pauseCount: state.pauseCount,
-            elapsedSecs: state.elapsedSecs,
             segments: state.segments,
+
+            totalFocusTime: state.totalFocusTime,
+            totalBreakTime: state.totalBreakTime,
+            elapsedSecs: state.elapsedSecs,
+            
             currSegmentIdx: state.currSegmentIdx,
             nextBreakSecs: state.nextBreakSecs,
+
             visStart: state.visStart,
             visEnd: state.visEnd,
             visEndIncrementSecs: state.visEndIncrementSecs,
+            
+            minUi: state.minUi,
+            visualizer: state.visualizer,
+            fontStyle: state.fontStyle,
+            show: state.show,
             currDate: this.currDate,
-    
-            isPlaying: state.isPlaying,
-            minimal: state.minimal,
-            state: state.state,
+            showTasks: state.showTasks,
             prevPage: state.prevPage,
             progressSecs: state.progressSecs
         }))
@@ -561,19 +609,26 @@ export class SessionManager {
 
         if (newState.isPlaying)  oldState.isPlaying = newState.isPlaying
         if (newState.state)  oldState.state = newState.state
-        if (newState.todosChecked)  oldState.todosChecked = newState.todosChecked
+        
         if (newState.periods)  oldState.periods = newState.periods
         if (newState.focusCount)  oldState.focusCount = newState.focusCount
         if (newState.breakCount)  oldState.breakCount = newState.breakCount
         if (newState.prevPage)  oldState.prevPage = newState.prevPage
         if (newState.pauseCount)  oldState.pauseCount = newState.pauseCount
+        
         if (newState.totalFocusTime)  oldState.totalFocusTime = newState.totalFocusTime
         if (newState.totalBreakTime)  oldState.totalBreakTime = newState.totalBreakTime
         if (newState.elapsedSecs)  oldState.elapsedSecs = newState.elapsedSecs
+        
         if (newState.visStart)  oldState.visStart = newState.visStart
+        if (newState.fontStyle)  oldState.fontStyle = newState.fontStyle
         if (newState.visEnd)  oldState.visEnd = newState.visEnd
-        if (newState.minimal)  oldState.minimal = newState.minimal
-
+        if (newState.showTasks)  oldState.showTasks = newState.showTasks
+        if (newState.show)  oldState.show = newState.show
+        if (newState.minUi)  oldState.minUi = newState.minUi
+        if (newState.visualizer)  oldState.visualizer = newState.visualizer
+        if (newState.todosChecked)  oldState.todosChecked = newState.todosChecked
+        
         return oldState
     }
 }

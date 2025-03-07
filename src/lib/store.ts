@@ -15,7 +15,6 @@ export const globalContext = writable<GlobalContext>({
     leftBarFixed: false,
     hasToaster: false,
     route: "workspace",
-    focusTime: 0,
     hotkeyFocus: "default",
     modalsOpen: []
 })
@@ -45,7 +44,6 @@ export const ytPlayerStore = writable<YoutubePlayer| null>(null)
 
 /* session */
 export const sessionManager = writable<SessionManager | null>(null)
-export const reviewSession = writable<Session | null>(null)
 
 /* general */
 export const datePickerManager = writable<DatePickerManager | null>(null)

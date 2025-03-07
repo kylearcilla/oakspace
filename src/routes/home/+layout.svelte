@@ -20,7 +20,7 @@
   
   // utils
 	import { ModalType } from "$lib/enums"
-	import { globalContext, reviewSession, sessionManager } from "$lib/store"
+	import { globalContext, sessionManager } from "$lib/store"
 	import { 
     initAppState, keyboardShortCutHandlerKeyDown, keyboardShortCutHandlerKeyUp, 
     onMouseMoveHandler, onQuitApp,
@@ -38,14 +38,12 @@
   
 	import { afterNavigate } from "$app/navigation"
 	import SessionSummaryModal from "./SessionSummaryModal.svelte"
-	import Modal from "../../components/Modal.svelte";
 	import { themeState, ytPlayerStore } from "../../lib/store";
   import { updateAmbience, updateGlobalContext, hasAmbienceSpace } from "../../lib/utils-home";
   import { findThemeFromName, getActiveTheme, getPrevTheme, setNewTheme, setPrevTheme } from "../../lib/utils-appearance";
 	import EmojiPicker from "../../components/EmojiPicker.svelte";
 	import ImgUpload from "../../components/ImgUpload.svelte";
 	import IconPicker from "../../components/IconPicker.svelte";
-	import ActiveRoutine from "./ActiveRoutine.svelte";
 	import { YoutubePlayer } from "../../lib/youtube-player";
 	import ColorPicker from "../../components/ColorPicker.svelte";
 	import { themes } from "../../lib/data-themes"
@@ -340,20 +338,8 @@
   {#if modalsOpen.includes(ModalType.NewSession)} 
       <SessionNewModal /> 
   {/if}
-  {#if $reviewSession && !($sessionManager?.state === "done")} 
-      <SessionSummaryModal
-          isReview={true}
-          session={$reviewSession}
-          onClickOutside={() => {
-            reviewSession.set(null)
-          }}
-      />
-  {/if}
   {#if $sessionManager?.state === "done"} 
-      <SessionSummaryModal 
-          isReview={false}
-          session={$sessionManager.session}
-      />
+      <SessionSummaryModal session={$sessionManager.session}/>
   {/if}
 
   <!-- modals -->

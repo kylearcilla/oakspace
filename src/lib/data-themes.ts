@@ -29,6 +29,7 @@ export const themes: Theme[] = [
             elemTextColor: "#FFFFFF",
             starColor: "",
             heatMapColor: "163, 182, 255",
+            ringColor: "196, 234, 47",
             cardBgColor: "#191919",
             cardHovColor: "#1e1d1e"
         }
@@ -58,11 +59,12 @@ export const themes: Theme[] = [
             navBtnBgColor: "#f0efe9",
             navBtnColor: "#3B3B3B",
             rightBarBgColor: "#faf9f2",
-            elemColor1: "#9ec8f1",
+            elemColor1: "#98c1e8",
             elemColor2: "#53B2E8",
             elemTextColor: "#FFFFFF",
             starColor: "#93927e",
             heatMapColor: "188, 207, 145",
+            ringColor: "142, 182, 220",
             cardBgColor: "#fffdf6",
             cardHovColor: "#faf8f2"
         }
@@ -97,6 +99,7 @@ export const themes: Theme[] = [
             elemTextColor: "#FFFFFF",
             starColor: "#85845c",
             heatMapColor: "171, 170, 124",
+            ringColor: "123, 122, 89",
             cardBgColor: "#fff9ed",
             cardHovColor: "#fffaf0"
         }
@@ -131,6 +134,7 @@ export const themes: Theme[] = [
             elemTextColor: "#fdf9f3",
             starColor: "#858078",
             heatMapColor: "146, 138, 125",
+            ringColor: "107, 96, 81",
             cardBgColor: "#ebe7e0",
             cardHovColor: "#f0ece5"
         }
@@ -142,7 +146,7 @@ export const themes: Theme[] = [
             bg1: "#191714",
             bg2: "#22211d",
             bg3: "#302f2a",
-            fgColor1: "171, 157, 148",
+            fgColor1: "140, 120, 108",
             fgColor2: "182, 146, 120",
             textColor1: "255, 255, 255",
             textColor2: "30, 30, 30",
@@ -150,7 +154,7 @@ export const themes: Theme[] = [
             lightColor2: "#25211e",
             calMarkColor: "#6a5646",
             textEntryBgColor: "#1d1c18",
-            modalBgColor: "#0c0a0c",
+            modalBgColor: "#121110",
             modalBgAccentColor: "#100D0F",
             bentoBoxBgColor: "#110e10",
             bentoBoxBorder: "none",
@@ -160,11 +164,12 @@ export const themes: Theme[] = [
             navBtnColor: "#d3b094",
             navBtnBgColor: "#26231f",
             rightBarBgColor: "#1d1b18",
-            elemColor1: "#6c5a4c",
+            elemColor1: "#715f51",
             elemColor2: "#6b5c51",
             elemTextColor: "#FFFFFF",
             starColor: "",
             heatMapColor: "171, 157, 148",
+            ringColor: "193, 178, 153",
             cardBgColor: "#1e1d19",
             cardHovColor: "#23211d"
         }
@@ -199,6 +204,7 @@ export const themes: Theme[] = [
             elemTextColor: "#FFFFFF",
             starColor: "",
             heatMapColor: "187, 170, 217",
+            ringColor: "203, 186, 234",
             cardBgColor: "#1b1b26",
             cardHovColor: "#20202b"
         }

@@ -127,6 +127,10 @@ export class TextEditorManager extends InputManager {
         singleLine?: boolean
     }) {
         super(options)
+
+
+
+
         this.allowFormatting = options.allowFormatting ?? false
         this.allowBlurOnClickAway = options.allowBlurOnClickAway ?? true
         this.singleLine = options.singleLine ?? false
@@ -424,7 +428,7 @@ export class TextEditorManager extends InputManager {
 
         if (!this.value && !this.doAllowEmpty && this.defaultText && this.inputElem) {
             value = this.defaultText
-            this.inputElem.innerText = this.defaultText
+            this.inputElem.innerHTML = this.defaultText
         }
 
         this.updateTextEditor(event, value)

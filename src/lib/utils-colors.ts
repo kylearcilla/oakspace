@@ -57,7 +57,7 @@ export const COLOR_SWATCHES = [
   {
     primary: "#d7e5aa",
     light1: "72, 111, 70",
-    light2: "225, 246, 200",
+    light2: "231, 248, 200",
     light3: "160, 204, 157",
     dark1: "210, 229, 206",
     dark2: "28, 36, 25",

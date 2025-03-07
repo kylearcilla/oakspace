@@ -3,11 +3,11 @@
 	import { updateAmbience } from "$lib/utils-home"
 	import { globalContext, ytPlayerStore } from "$lib/store"
 
-	import ToggleBtn from "../../../components/ToggleBtn.svelte"
-	import RangeInput from "../../../components/RangeInput.svelte"
-	import BounceFade from "../../../components/BounceFade.svelte"
-	import DropdownBtn from "../../../components/DropdownBtn.svelte"
-    import DropdownList from "../../../components/DropdownList.svelte"
+	import ToggleBtn from "$components/ToggleBtn.svelte"
+	import RangeInput from "$components/RangeInput.svelte"
+	import BounceFade from "$components/BounceFade.svelte"
+	import DropdownBtn from "$components/DropdownBtn.svelte"
+    import DropdownList from "$components/DropdownList.svelte"
 
     export let onClickOutside: () => void
     export let open: boolean
@@ -16,31 +16,18 @@
     let elementStyling: "solid" | "blur" | "clear" = "blur"
     let stylingOpen = false
 
-    let timeStyle = "Basic"
     let timeStyleOpen = false
 
     $: ambience = $globalContext.ambience!
-    $: clockFont = ambience?.clockFont ?? "DM Sans"
     $: player = $ytPlayerStore!
     $: volume = $ytPlayerStore?.volume ?? 0.5
     $: showTime = ambience?.showTime ?? false
     $: isWallpaper = ambience?.space.type === "wallpaper"
+    $: fontStyle = ambience?.fontStyle ?? "default"
 
     $: {
         elementStyling = ambience?.styling ?? "blur"
         bgOpacity = ambience?.opacity ?? 0.5
-    }
-    $: if (clockFont === "system") {
-        timeStyle = "Basic"
-    }
-    else if (clockFont === "zodiak-bold") {
-        timeStyle = "Stylish"
-    }
-    else if (clockFont === "melodrama-bold") {
-        timeStyle = "Fancy"
-    }
-    else if (clockFont === "bagel-fat-one") {
-        timeStyle = "Cute"
     }
 
     function onElemStylingOptnClicked(optn: string) {
@@ -49,20 +36,8 @@
 
         _updateAmbience({ styling: elementStyling })
     }
-    function setClockStyle(style: string) {
-        let clockFont = "system"
-
-        if (style === "Stylish") {
-            clockFont = "zodiak-bold"
-        } 
-        else if (style === "Fancy") {
-            clockFont = "melodrama-bold"
-        }
-        else if (style === "Cute") {
-            clockFont = "bagel-fat-one"
-        }
-        
-        _updateAmbience({ clockFont })
+    function setClockStyle(fontStyle: string) {
+        _updateAmbience({ fontStyle: fontStyle.toLowerCase() as FontStyle })
         timeStyleOpen = false
     }
     function _updateAmbience(data: Partial<AmbientOptions>) {
@@ -81,31 +56,28 @@
     {onClickOutside}
 >
     <div class="ambient">
-        <div class="ambient__setting">
+        <div class="ambient__setting ambient__divider">
             <div class="ambient__setting-name">
                 Element Styling
             </div>
             <div class="ambient__setting-right">
-                <!-- svelte-ignore missing-declaration -->
                 <DropdownBtn 
                     id={"ambient"}
                     isActive={stylingOpen}
                     options={{
                         title: capitalize(elementStyling),
+                        noBg: false,
                         styles: { 
-                            fontSize: "1.24rem",
                             backgroundColor: "rgba(255, 255, 255, 0.025)",
                             margin: "0px 0px 0px -5px",
                             width: "64px",
-                            borderRadius: "10px",
-                            padding: "4px 7px 4px 11px" 
+                            borderRadius: "10px"
                         },
                         onClick: () => {
                             stylingOpen = !stylingOpen
                         }
                     }} 
                 />
-
                 <DropdownList 
                     id={"ambient"}
                     isHidden={!stylingOpen} 
@@ -118,7 +90,6 @@
                         },
                         styling:  {
                             width: "75px",
-                            fontSize: "1.2rem",
                             zIndex: 500
                         },
                         pickedItem: capitalize(elementStyling),
@@ -134,7 +105,7 @@
         </div>
         <div class="ambient__setting" style:margin-bottom="9px">
             <div class="ambient__setting-name">
-                Show Clock
+                Toggle Clock
             </div>
             <div class="ambient__setting-right">
                 <div class="ambient__setting-toggle">
@@ -149,8 +120,10 @@
             </div>
         </div>
         <div 
-            class="ambient__setting"
+            class="ambient__setting ambient__divider"
             class:ambient__setting--hidden={!showTime}
+            style:margin-bottom="9px"
+            style:padding-bottom="11px"
         >
             <div class="ambient__setting-name">
                 Clock Style
@@ -161,14 +134,13 @@
                     id={"ambient-clock-style"}
                     isActive={timeStyleOpen}
                     options={{
-                        title: timeStyle,
+                        title: capitalize(fontStyle),
+                        noBg: false,
                         styles: { 
-                            fontSize: "1.24rem",
                             backgroundColor: "rgba(255, 255, 255, 0.025)",
                             margin: "0px 0px 0px -5px",
                             width: "64px",
                             borderRadius: "10px",
-                            padding: "4px 7px 4px 11px" 
                         },
                         onClick: () => {
                             timeStyleOpen = !timeStyleOpen
@@ -181,17 +153,19 @@
                     isHidden={!timeStyleOpen} 
                     options={{
                         listItems: [
-                            { name: "Basic" }, { name: "Cute" }, { name: "Stylish" }, { name: "Fancy" }
+                            { name: "Default" },
+                            { name: "Stylish" },
+                            { name: "Fancy" },
+                            { name: "Cute" },
                         ],
                         position: { 
-                            top: "96px", right: "10px"
+                            top: "105px", right: "10px"
                         },
                         styling:  {
                             width: "90px",
-                            fontSize: "1.2rem",
                             zIndex: 500
                         },
-                        pickedItem: timeStyle,
+                        pickedItem: capitalize(fontStyle),
                         onListItemClicked: ({ name }) => {
                             setClockStyle(name)
                         },
@@ -202,7 +176,7 @@
                 />        
             </div>
         </div>
-        <div class="ambient__setting" style:margin-bottom="9px">
+        <div class="ambient__setting" style:margin-bottom="12px">
             <div class="ambient__setting-name">
                 Opacity
             </div>
@@ -217,9 +191,8 @@
             </div>
         </div>
         {#if !isWallpaper}
-            {@const isVid = ambience?.space.type === "video"}
-
-            <div class="ambient__setting">
+            {@const vid = ambience?.space.type === "video"}
+            <div class="ambient__setting" style:margin-bottom="10px">
                 <div class="ambient__setting-name">
                     Volume
                 </div>
@@ -235,19 +208,18 @@
                     />
                 </div>
             </div>
-            <div class="divider"></div>
             <div class="ambient__controls">
                 <button 
                     class:active-control={player.isShuffled}
                     style:font-size="1.1rem"
-                    disabled={isVid}
+                    disabled={vid}
                     on:click={() => player.toggleShuffle()}
                 >
                     <i class="fa-solid fa-shuffle"></i>
                 </button>
                 <div class="flx">
                     <button
-                        disabled={isVid}
+                        disabled={vid}
                         on:click={() => player.skipToPrevTrack()}
                     >
                         <i class="fa-solid fa-backward"></i>
@@ -263,7 +235,7 @@
                         {/if}
                     </button>
                     <button
-                        disabled={isVid}
+                        disabled={vid}
                         on:click={() => player.skipToNextTrack()}
                     >
                         <i class="fa-solid fa-forward"></i>
@@ -272,7 +244,7 @@
                 <button 
                     class:active-control={player.isRepeating}
                     style:font-size="1.1rem"
-                    disabled={isVid}
+                    disabled={vid}
                     on:click={() => player.toggleRepeat()}
                 >
                     <i class="fa-solid fa-repeat"></i>
@@ -287,25 +259,18 @@
 
     .ambient {
         background: var(--bg-2);
-        padding: 12px 14px 6px 14px;
+        padding: 10px 14px 6px 14px;
         border-radius: 15px;
         width: 220px;
         position: relative;
 
-        .divider {
-            // @include divider(0.1, 0.5px, 100%);
-            margin: 12px 0px 9px 0px;
-            border-top: 1.5px dashed rgba(var(--textColor1), 0.08);
+        &__divider {
+            padding-bottom: 7px;
+            border-bottom: 1px solid rgba(var(--textColor1), 0.08);
         }
-
         &__setting {
             @include flex(center);
-            height: 20px;
             margin-bottom: 9px;
-
-            &:nth-child(5) {
-                margin-bottom: 14px;
-            }
         }
         &__seeting-open-space-btn {
             @include center;
@@ -317,17 +282,16 @@
             border-radius: 10px;
             margin-left: -7px;
 
-            &:hover{
+            &:hover {
                 display: none;
             }
-
         }
         &__setting-toggle {
             @include flex(center, space-between);
-            @include text-style(0.6, 400, 1.15rem, "DM Mono");
+            @include text-style(0.6, 400, 1.15rem, "Geist Mono");
         }
         &__setting-name {
-            @include text-style(0.45, 500, 1.2rem);
+            @include text-style(0.45, 400, 1.28rem);
             flex: 1;
         }
         &__setting-right {
@@ -345,8 +309,6 @@
             button {
                 position: relative;
                 @include center;
-                // @include square(8px, 4px);
-                // background: rgba(var(--textColor1), 0.04);
                 padding: 4px;
                 opacity: 0.75;
                 font-size: 1.2rem;

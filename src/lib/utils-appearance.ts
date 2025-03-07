@@ -148,6 +148,7 @@ export function setRootColors(name: string, theme: ThemeStyling) {
           --heatMapColor: ${theme.heatMapColor};
           --cardFgColor: ${theme.cardHovColor};
           --divider-border: ${dividerBorderStyle};
+          --ringColor: ${theme.ringColor};
           --divider-bg: ${dividerBgStyle};
           --textEntryBgColor: ${theme.textEntryBgColor};
           --fw-300-400: ${weight_300_400};

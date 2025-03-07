@@ -423,6 +423,7 @@
                                 {#if editContext === "duplicate" && !isDragging}
                                     {@const placement = manager.findDupBtnPlacement()}
                                     <div 
+                                        data-placement={placement}
                                         class="routine-block__buttons"
                                         class:routine-block__buttons--left={placement === "left"}
                                         class:routine-block__buttons--right={placement === "right"}

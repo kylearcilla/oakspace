@@ -61,7 +61,7 @@
                 options={{
                     id: "todos",
                     hotkeyFocus: "side-bar",
-                    type: "side-bar",
+                    context: "side-bar",
                     handlers: {
                         onTaskUpdate, onAddTask, onDeleteTask
                     },

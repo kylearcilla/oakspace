@@ -3,6 +3,7 @@
     import { inlineStyling } from "$lib/utils-general"
 
     export let confirmText = "Save"
+    export let cancelText = "Cancel"
     export let isLoading = false
     export let weakDisable = false
     export let disabled = false
@@ -25,7 +26,7 @@
         class="confirm-btns__cancel" 
         on:click={onCancel}
     >
-        Cancel
+        {cancelText}
     </button>
     <button 
         type="submit"

@@ -166,8 +166,7 @@
                             name: "Change Status",
                             rightIcon: { 
                                 type: "svg",
-                                icon: Icon.ChevronRight,
-                                transform: "scale(0.98) translate(2px, 0px)"
+                                icon: Icon.ChevronRight
                             },
                             onPointerOver: ({ childLeft }) => {
                                 statusMenuPos.top = contextMenuPos.top
@@ -253,7 +252,7 @@
                 }
             }}
         />
-        {/if}
+    {/if}
 
     </div>
 </div>

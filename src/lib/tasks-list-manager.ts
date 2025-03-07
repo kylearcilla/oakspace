@@ -5,8 +5,8 @@ import { get, writable, type Writable } from "svelte/store"
 import { Tasks } from "./Tasks"
 import { toast } from "./utils-toast"
 import { TextEditorManager } from "./inputs"
-import { ambienceSideBarOffset } from './utils-home'
-import { findAncestor, getElemById, initFloatElemPos, shouldScroll } from "./utils-general"
+import { ambienceSideBarOffset, modalSideBarOffset } from './utils-home'
+import { findAncestor, getElemById, shouldScroll } from "./utils-general"
 
 type StateType = Omit<TasksListManager, "tasks">
 type DragAction = "nbr-add-top" | "nbr-add-bottom" | "child-add" | "remove" | "remove-child" | "drag-end"
@@ -27,7 +27,7 @@ export class TasksListManager {
         reorder: boolean
         subtasks: boolean
         checkSubtasks: boolean
-        type: "side-bar" | "default"
+        context: "side-bar" | "modal" | "default"
         allowDuplicate: boolean
         allowEdit: boolean
         removeOnComplete: boolean
@@ -88,7 +88,6 @@ export class TasksListManager {
     
     /* context menu */
     contextMenuOpen = false
-    contextMenu: OffsetPoint = { left: -1000, top: -1000 }
 
     /* ui */
     cursorPos: OffsetPoint = { left: 0, top: 0 }
@@ -107,9 +106,9 @@ export class TasksListManager {
     constructor({ options, tasks }: { options: TasksListOptions, tasks: Task[] }) {
         this.options = options
         this.rootRef = options.rootRef
-        
+
         const { settings, ui } = options
-        const { type = "default" } = options ?? {}
+        const { context = "default" } = options ?? {}
         
         const { 
             maxDepth = 3, 
@@ -153,7 +152,7 @@ export class TasksListManager {
             allowEdit,
             maxDepth,
             removeOnComplete,
-            type,
+            context,
             max,
             maxSubtasks,
             checkSubtasks,
@@ -546,19 +545,23 @@ export class TasksListManager {
     moveDragSrcElement(event: PointerEvent) {
         if (!this.dragStartRelPos) return
 
-        const type = this.options.type
+        const context = this.options.context
         const { clientX, clientY } = event
+
         let left = clientX - this.dragStartRelPos.left
+        let top = clientY - this.dragStartRelPos.top
         
         // when there is side bar has blur bg, the float elem will not be relative to it
-        if (type === "side-bar") {
+        if (context === "side-bar") {
             left = ambienceSideBarOffset(left)
         }
-
-        this.dragPos = { 
-            left, top: clientY - this.dragStartRelPos.top
+        else if (context === "modal") {
+            const pos = modalSideBarOffset({ left,  top })
+            left = pos.left
+            top = pos.top
         }
 
+        this.dragPos = { left, top }
         this.update({ dragPos: this.dragPos })
     }
 
@@ -864,6 +867,10 @@ export class TasksListManager {
         })
     }
 
+    getSubtasks(id: string) {
+        return this.tasks.getSubtasks(id)
+    }
+
     /* client handlers*/
 
     async finalizeAddTask(newTask: Task, action: "add" | "duplicate", added: Task[]) {
@@ -967,37 +974,16 @@ export class TasksListManager {
         const target = pe.target as HTMLElement
 
         if (this.isTargetEditElem(target)) {  
-            this.contextMenu = { left: -1000, top: -1000 }
             return false
         }
         
         this.initFocusTask(taskId, isChild)
-
-        const containerElem = this.tasksContainer!
-        const width = parseInt(this.ui.menuWidth) + 5
-        const scrollTop = containerElem.scrollTop
-        
-        const cursorPos = {
-            left: this.cursorPos.left - 20,
-            top: this.cursorPos.top - scrollTop
-        }
-        const contextMenu = initFloatElemPos({
-            dims: { 
-                height: this.getContextMenuHeight(), 
-                width
-            }, 
-            containerDims: { 
-                height: this.rootRef!.clientHeight, 
-                width: this.rootRef!.clientWidth 
-            },
-            cursorPos
-        })
-        
         this.contextMenuOpen = true
-        this.update({ contextMenu })
 
         return true
     }
+
+    closeContextMenu = () => this.contextMenuOpen = false
 
     contextMenuHandler (option: string) {
         if (!this.focusTask) return
@@ -1032,22 +1018,6 @@ export class TasksListManager {
         else if (option === "Delete Task") {
             this.removeTask(id)
         }
-
-        this.closeContextMenu()
-    }
-
-    /**
-     * Close (hide) context menu and reset all data set from invoking the context menu.
-     */
-    closeContextMenu = () => {
-        this.contextMenuOpen = false
-        
-        // allow for dmenu fade out animation to finish
-        setTimeout(() => {
-            this.contextMenu = { left: -1000, top: -1000 }
-
-            this.update({ contextMenu: this.contextMenu })
-        }, 100)
     }
 
     /**
@@ -1267,7 +1237,6 @@ export class TasksListManager {
         return isContentEditable || isCheckbox || tagName === "BUTTON" || tagName === "I"
     }
 
-
     onTaskBlur() {
         if (this.contextMenuOpen) {
             return
@@ -1322,9 +1291,6 @@ export class TasksListManager {
         if (newState.dragPos != undefined) newStateObj.dragPos = newState.dragPos
         if (newState.dragTarget != undefined) newStateObj.dragTarget = newState.dragTarget
         if (newState.dragAction != undefined) newStateObj.dragAction = newState.dragAction
-
-        /* context menu */
-        if (newState.contextMenu != undefined) newStateObj.contextMenu = newState.contextMenu
 
         return newStateObj
     }

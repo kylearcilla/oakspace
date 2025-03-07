@@ -27,6 +27,7 @@
     $: light      = !$themeState.isDarkTheme
 
     const newWkRoutine: WeeklyRoutine = {
+        idx: -1,
         id: uuidv4(),
         name: "",
         description: "",
@@ -36,6 +37,7 @@
         }
     }
     const newDailyRoutine: DailyRoutine = {
+        idx: -1,
         id: uuidv4(),
         name: "",
         description: "",

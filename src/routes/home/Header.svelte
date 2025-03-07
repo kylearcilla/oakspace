@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte"
-
     import { Icon, ModalType } from "$lib/enums"
+
 	import { capitalize } from "$lib/utils-general"
+	import { getFocusTime } from "$lib/utils-session"
 	import { openModal, updateAmbience } from "$lib/utils-home"
 	import { getDayIdxMinutes, secsToHHMM } from "$lib/utils-date"
 	import { getDayRoutineFromWeek, getCurrentBlock, getNextBlockInfo } from "$lib/utils-routines"
@@ -112,28 +113,26 @@
     <!-- Ambient Island -->
     {#if hasAmbience}
         {@const groupName = capitalize(ambience?.space.group ?? "")}
-        <div class="flx-algn-center">
-            <div 
-                class="header__ambient-controls header__section"
-                class:header__ambient-controls--over={overAmbient}
-                class:ambient-blur={hasAmbience && ambience?.styling === "blur"}
-                class:ambient-solid={hasAmbience && ambience?.styling === "solid"}
-                class:ambient-clear={hasAmbience && ambience?.styling === "clear"}
-                on:pointerover={pointerOver}
-                on:pointerup={pointerUp}
-            >
-                <div class="header__ambient-main">
-                    Space: <span>{groupName === "User" ? "Library" : groupName}</span>
-                    <button 
-                        id="ambient-header--dbtn"
-                        class="header__ambient-settings-btn smooth-bounce"
-                        on:click={() => ambientSettings = !ambientSettings}
-                    >
-                        <SvgIcon 
-                            icon={Icon.Settings} options={{ opacity: 0.4, scale: 0.9 }} 
-                        />
-                    </button>
-                </div>
+        <div 
+            class="header__ambient-controls header__section"
+            class:header__ambient-controls--over={overAmbient}
+            class:ambient-blur={hasAmbience && ambience?.styling === "blur"}
+            class:ambient-solid={hasAmbience && ambience?.styling === "solid"}
+            class:ambient-clear={hasAmbience && ambience?.styling === "clear"}
+            on:pointerover={pointerOver}
+            on:pointerup={pointerUp}
+        >
+            <div class="header__ambient-main">
+                Space: <span>{groupName === "User" ? "Library" : groupName}</span>
+                <button 
+                    id="ambient-header--dbtn"
+                    class="header__ambient-settings-btn smooth-bounce"
+                    on:click={() => ambientSettings = !ambientSettings}
+                >
+                    <SvgIcon 
+                        icon={Icon.Settings} options={{ opacity: 0.4, scale: 0.9 }} 
+                    />
+                </button>
             </div>
         </div>
     {/if}
@@ -165,7 +164,7 @@
                 {blockInfo.info}
             </div>
         </button>
-        <div class="flx">
+        <div class="header__session-container">
              {#if !session || $sessionManager?.state === "done"}
                  <div 
                      class="header__session header__section"
@@ -185,15 +184,16 @@
                      </button>
                      <div class="header__new-session-btn-divider">
                      </div>
-                     <!-- Total Session Time -->
                      <div class="header__session-time" title="Today's total focus time.">
-                         <span>
-                             {secsToHHMM($globalContext.focusTime)}
-                         </span>
+                         {#key session}
+                            <span>
+                                {secsToHHMM(getFocusTime())}
+                            </span>
+                         {/key}
                      </div>
                  </div>
              {:else}
-                 <ActiveSessionMini {headerWidth} />
+                 <ActiveSessionMini />
              {/if}
          </div>
     </div>
@@ -269,7 +269,7 @@
         }
         &--ambient &__main {
             flex-direction: row-reverse;
-            width: auto;
+            width: fit-content;
         }
         &--ambient &__section {
             height: 31px;
@@ -288,6 +288,7 @@
         }
         &__main {
             @include flex(center, space-between);
+            overflow: hidden;
             width: 100%;
         }
 
@@ -364,11 +365,14 @@
             background-color: var(--navMenuBgColor) !important;
         }
 
-        /* New Session Button */
+        /* sessions */
+        &__session-container {
+            display: flex;
+            overflow: hidden;
+        }
         &__session {
             @include flex(center);
             padding: 0px 12px 0px 7px;
-            margin: 0px 0px 0px -10px;
             height: 26px;
             @include txt-color(0.07, "bg");
         }
@@ -390,7 +394,6 @@
             @include divider(0.14, 9px, 1px);
             margin: 0px 9px 0px 10px;
         }
-
         &__habit-progress {
             margin: 0px 4px 0px 0px;
             padding: 4px 7px 3px 12px;
@@ -412,15 +415,11 @@
                 margin-bottom: 2px;
             }
         }
-
-        /* Session Time */
         &__session-time {
             @include flex(center);
             @include text-style(0.7, 400, 1.15rem, "Geist Mono");
             white-space: nowrap;
         }
-
-        /* Ambient Controls */
         &__ambient-controls {
             @include flex(center);
             @include text-style(1, 400, 1.225rem, "Geist Mono");

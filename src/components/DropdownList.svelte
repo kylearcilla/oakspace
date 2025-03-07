@@ -17,9 +17,11 @@
     let listItems = options.listItems
     let pickedItem = options.pickedItem
 
-    const {
+    const {       
+        fixPos = false,
+        context = "default",
         onDismount,
-        scroll,
+        scroll
     } = options
     const {
         width = "auto",
@@ -45,12 +47,14 @@
 
     /* actions*/
     function onItemClicked(e: Event, idx: number, name: string) {
-        options.onListItemClicked({
-            event: e, 
-            name,
-            idx, 
-            parentName: options.parent?.optnName
-        })
+        if (options.onListItemClicked) {
+            options.onListItemClicked({
+                event: e, 
+                name,
+                idx, 
+                parentName: options.parent?.optnName
+            })
+        }
     }
     function onClickOutside() {
         if (isHidden || !options.onClickOutside) {
@@ -170,9 +174,12 @@
 </script>
 
 <BounceFade 
+    id={id}
     {isHidden} 
+    {fixPos}
+    offsetContext={context}
     onDismount={onDismount}
-    position={options?.position}
+    position={fixPos ? undefined :options?.position}
     zIndex={zIndex}
 >
     <div 

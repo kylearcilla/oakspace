@@ -8,8 +8,6 @@
 	import { formatPlural, capitalize, getElemPadding } from "$lib/utils-general";
 	import { clickOutside, findElemVertSpace, getMaskedGradientStyle } from "$lib/utils-general"
     
-	import ToggleBtn from "../../../components/ToggleBtn.svelte"
-	import BounceFade from "../../../components/BounceFade.svelte"
 	import DropdownList from "../../../components/DropdownList.svelte"
 
     export let entry: TextEntryOptions
@@ -21,8 +19,7 @@
         name: "Icon Size",
         rightIcon: { 
             type: "svg" as const,
-            icon: Icon.ChevronRight,
-            transform: "scale(0.98) translate(2px, 0px)"
+            icon: Icon.ChevronRight
         },
         onPointerOver: () => {
             imgSizeOpen = true
@@ -329,48 +326,43 @@
         </div>
 
         <!-- styling options -->
-        <BounceFade 
+        <DropdownList 
+            id={`${id}--style-dmenu`}
             isHidden={!styleOpen}
-            zIndex={200}
-            position={{ 
-                bottom: "-90px", 
-                right: "0px"
-            }}
-        >
-            <div 
-                id={`${id}--style-dmenu`}
-                class="dmenu" 
-                class:dmenu--light={isLight}
-                style:width={"140px"}
-                use:clickOutside on:outClick={() => styleOpen = false} 
-            >
-
-                <div class="dmenu__toggle-optn  dmenu__option--static">
-                    <span class="dmenu__option-heading">Truncate</span>
-                    <ToggleBtn 
-                        active={truncate}
-                        onToggle={() => {
+            options={{
+                listItems: [
+                    {
+                        name: "Truncate",
+                        active: truncate,
+                        onToggle: () => {
                             truncate = !truncate
                             entry.truncate = truncate
-                        }}
-                    />
-                </div>
-                <div class="dmenu__toggle-optn  dmenu__option--static">
-                    <span class="dmenu__option-heading">Background</span>
-                    <ToggleBtn 
-                        active={toStyle === "background"}
-                        onToggle={() => onStylingChange("background")}
-                    />
-                </div>
-                <div class="dmenu__toggle-optn  dmenu__option--static">
-                    <span class="dmenu__option-heading">Divider</span>
-                    <ToggleBtn 
-                        active={toStyle === "has-marker"}
-                        onToggle={() => onStylingChange("has-marker")}
-                    />
-                </div>
-            </div>
-        </BounceFade>
+                        }
+                    },
+                    {
+                        name: "Background",
+                        active: toStyle === "background",
+                        onToggle: () => onStylingChange("background")
+                    },
+                    {
+                        name: "Divider",
+                        active: toStyle === "has-marker",
+                        onToggle: () => onStylingChange("has-marker")
+                    }
+                ],
+                styling: { 
+                    width: "140px",
+                    zIndex: 1
+                },
+                position: { 
+                    bottom: "-90px", 
+                    right: "0px"
+                },
+                onClickOutside: () => {
+                    styleOpen = false
+                }
+            }}
+        />
 
         <DropdownList
             id={`${id}--img-dmenu`}
@@ -445,8 +437,6 @@
 
 <style global lang="scss">
     @import "../../../scss/inputs.scss";
-    @import "../../../scss/dropdown.scss";
-
     @mixin background {
         background-color: rgba(var(--textColor1), 0.035);
         background-color: var(--textEntryBgColor);

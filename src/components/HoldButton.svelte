@@ -61,7 +61,7 @@
     <div class="holdbtn__cover">
         {text}
     </div>
-    {text}
+    Done
 </button>
 
 <style lang="scss">

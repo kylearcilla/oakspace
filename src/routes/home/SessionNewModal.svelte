@@ -1,15 +1,26 @@
 <script lang="ts">
 	import { onMount } from "svelte"
 
-	import { ModalType } from "$lib/enums"
+	import { themeState } from "$lib/store"
+	import { Icon, ModalType } from "$lib/enums"
 	import { closeModal } from "$lib/utils-home"
+	import { TextEditorManager } from "$lib/inputs"
 	import { SessionManager } from "$lib/session-manager"
     
-	import Modal from "../../components/Modal.svelte"
-	import AsyncButton from "../../components/AsyncButton.svelte"
+	import Modal from "$components/Modal.svelte"
+	import SvgIcon from "$components/SVGIcon.svelte"
+	import TasksList from "$components/TasksList.svelte"
+	import ConfirmBtns from "$components/ConfirmBtns.svelte"
+
+    const SIDE_SPACING = 23
+    const TITLE_ID = "session-title"
+    const MAX_SESSION_TITLE = 100
+
+    $: light = !$themeState.isDarkTheme
 
     let isSaving = false
-    let titleInput: HTMLElement
+    let rootRef: HTMLElement
+    let titleElem: HTMLElement
 
     let title = ""
     let tasks: Task[] = []
@@ -18,6 +29,16 @@
     let breakTime = 5
     let allowSfx = true
     let allowChime = true
+    let newTaskFlag = false
+
+    new TextEditorManager({ 
+        id: TITLE_ID,
+        initValue: title,
+        placeholder: "new session title...",
+        allowFormatting: false,
+        singleLine: true,
+        maxLength: MAX_SESSION_TITLE
+    })
 
     async function initSession() {
         const startTime = new Date()
@@ -32,34 +53,42 @@
             startTime,
             allowChime,
             allowSfx,
-            todos: []
+            todos: tasks
         })
-
         onAttemptClose()
     }
+
     function onAttemptClose() {
         closeModal(ModalType.NewSession)
     }
 
-    onMount(() => titleInput.focus())
+    onMount(() => titleElem.focus())
 </script>
 
 <Modal 
-    options={{ borderRadius: "20px", overflow: "visible" }} 
+    options={{ 
+        borderRadius: "19px", 
+        scaleUp: true,
+        overflowY: "visible", 
+        overflowX: "visible"
+    }} 
     onClickOutSide={onAttemptClose}
 >
-    <div class="new-session">
-        <!-- Title -->
-        <div class="new-session__title">
-            <input 
-                bind:this={titleInput}
-                bind:value={title} 
-                placeholder="new session title"
-                type="text" 
-            />
-        </div>
+    <div 
+        class="new-session"
+        class:new-session--light={light}
+        style:--side-spacing={`${SIDE_SPACING}px`}
+    >
+        <div 
+            bind:this={titleElem}
+            class="new-session__title text-editor"
+            id={TITLE_ID}
+            aria-label="Title"
+            spellcheck="false"
+            contenteditable="true"
+            bind:textContent={title}
+        />
         
-        <!-- Options -->
         <div class="new-session__modes">
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <div 
@@ -93,13 +122,14 @@
             </div>
         </div>
 
-        <!-- Time Inputs -->
         <div 
             class="new-session__options"
             class:new-session__options--flow={mode === "flow"}
         >
             <div class="new-session__time">
-                <span>Focus Time</span>
+                <span class="new-session__label">
+                    Focus Time
+                </span>
                 <div class="new-session__time-input">
                     <button
                         disabled={mode === "flow"} 
@@ -117,7 +147,9 @@
                 </div>
             </div>
             <div class="new-session__time">
-                <span>Break Time</span>
+                <span class="new-session__label">
+                    Break Time
+                </span>
                 <div class="new-session__time-input">
                     <button
                         disabled={mode === "flow"} 
@@ -136,10 +168,9 @@
             </div>
         </div>
 
-        <!-- Sound Effects -->
          <div class="new-session__sfx">
             <div>
-                <div class="new-session__sfx-name">
+                <div class="new-session__label">
                     {#if mode === "pom"}
                         Sound Effects
                     {:else}
@@ -176,7 +207,7 @@
 
          <div class="new-session__sfx">
             <div>
-                <div class="new-session__sfx-name">
+                <div class="new-session__label">
                     Time Blindness
                 </div>
                 <span>Gently chimes every {`${SessionManager.CHIME_PERIOD_SECS / 60}`} minutes.</span>
@@ -201,25 +232,72 @@
             </div>
          </div>
 
-        <div class="new-session__btns">
-            <button 
-                class="new-session__cancel-btn"
-                disabled={isSaving}
-                on:click={onAttemptClose}
+        <div class="new-session__list" bind:this={rootRef}>
+            <div class="new-session__list-header">
+                <div class="new-session__label">
+                    Todos
+                    </div>
+                    <div class="flx-algn-center">
+                    <span class="new-session__list-count">
+                        {tasks.filter((task) => task.parentId === null).length}
+                    </span>
+                    <button 
+                        class="new-session__add-btn"
+                        on:click={() => newTaskFlag = !newTaskFlag}
+                    >
+                        <SvgIcon 
+                            icon={Icon.Add} 
+                            options={{ scale: 1, strokeWidth: 1.8, opacity: 0.7 }}
+                        />
+                    </button>
+                </div>
+            </div>
+            <div 
+                class="new-session__list-body"
+                class:new-session__list-body--empty={tasks.length === 0}
             >
-                Cancel
-            </button>
-            <AsyncButton
-                disabled={title === ""}
-                isLoading={isSaving} 
-                actionFunc={initSession} 
-                styling={{
-                    width: "calc(100% - (35% + 8px))",
-                    borderRadius: "9px",
-                    padding: "12px 25px",
-                    height: "18.5px"
-                }}
-            />
+                {#if rootRef}
+                    <TasksList
+                        {newTaskFlag}
+                        {tasks}
+                        allowInitTasksCall={false}
+                        onTaskChange={(_tasks) => tasks = _tasks}
+                        options={{
+                            id: "session-todos",
+                            hotkeyFocus: "default",
+                            context: "modal",
+                            settings: {
+                                checkSubtasks: false,
+                                allowDuplicate: false,
+                                removeOnComplete: false,
+                                max: 20,
+                                maxDepth: 2
+                            },
+                            ui: { 
+                                sidePadding: `${SIDE_SPACING + 2}px`,
+                                fontSize: "1.5rem",
+                                padding: "9px 0px 7px 0px",
+                                hasTaskDivider: true
+                            },
+                            rootRef
+                        }}
+                    />
+                {/if}
+                {#if tasks.length === 0}
+                    <span class="new-session__list-empty">
+                        0 items
+                    </span>
+                {/if}
+            </div>
+         </div>
+
+         <div style:padding="0px {SIDE_SPACING}px 0px {SIDE_SPACING}px">
+            <ConfirmBtns 
+                 disabled={title === ""}
+                 isLoading={isSaving}
+                 onCancel={onAttemptClose}
+                 onOk={initSession}
+             />
         </div>
     </div>
 </Modal>
@@ -229,29 +307,52 @@
 
     .new-session {
         width: 470px;
-        padding: 14px 23px 21px 23px;
+        padding: 9px 0 21px 0;
+
+        --time-btn-bg-opacity: 0.02;
+
+        &--light {
+            --time-btn-bg-opacity: 0.035;
+        }
+        &--light &__mode:hover {
+            background-color: rgba(var(--textColor1), 0.06);
+        }
+        &--light &__mode-description {
+            @include text-style(0.45);
+        }
+        &--light &__label {
+            @include text-style(1);
+        }
+        &--light &__sfx span {
+            @include text-style(0.45);
+        }
+        &--light &__sfx-btn span {
+            @include text-style(1);
+        }
+        &--light &__list span {
+            @include text-style(0.35);
+        }
 
         &__title {
-            position: relative;
-        }
-        input {
             @include text-style(_, var(--fw-400-500), 1.6rem);
-            margin-bottom: 14px;
+            margin: 4px 0px 14px 0px;
             width: 100%;
-
-            &::placeholder {
-                @include text-style(0.1, var(--fw-400-500));
-            }
+            padding: 0 var(--side-spacing);
+        }
+        &__label {
+            @include text-style(0.8, var(--fw-400-500), 1.425rem);
+            margin-bottom: 3px;
         }
         &__modes {
             @include flex(center);
+            padding: 0 calc(var(--side-spacing) - 3px);
         }
         &__mode {
-            background-color: rgba(var(--textColor1), 0.02);
-            padding: 10px 20px 19px 17px;
+            background-color: rgba(var(--textColor1), var(--time-btn-bg-opacity));
+            border: 1.5px solid rgba(var(--textColor1), calc(var(--time-btn-bg-opacity) + 0.004));
+            padding: 10px 20px 22px 17px;
             width: calc(50% - 3.5px);
             border-radius: 16px;
-            border: 1.5px solid rgba(var(--textColor1), 0.02);
             transition: 0.1s cubic-bezier(.4,0,.2,1);
             cursor: pointer;
 
@@ -266,7 +367,7 @@
             }
             &--selected {
                 box-shadow: rgba(var(--fgColor1), 0.8) 0px 0px 0px 2px inset, 
-                            rgba(var(--fgColor1), 0.1) 0px 0px 0px 2px;
+                            rgba(var(--fgColor1), 0.195) 0px 0px 0px 2px;
             }
             &--selected &-title {
                 color: rgba(var(--fgColor1));
@@ -282,6 +383,7 @@
         &__options {
             @include flex(center);
             margin-top: 14px;
+            padding: 0 calc(var(--side-spacing));
         }
         &__options--flow &__time {
             opacity: 0.4;
@@ -292,22 +394,22 @@
         }
         &__time {
             width: calc(50% - 3.5px);
-            margin: 4px 7px 22px 0px;
+            margin: 4px 7px 18px 0px;
         }
         &__time span {
-            @include text-style(0.65, var(--fw-400-500), 1.425rem);
-            padding-left: 7px;
+            padding-left: 3px;
+            font-size: 1.43rem;
         }
         &__time-input {
             margin: 11px 0px 0px 0px;
             padding: 7px 8px;
             border-radius: 12px;
-            background-color: rgba(var(--textColor1), 0.025);
-            @include text-style(0.65, var(--fw-400-500), 1.3rem, "Geist Mono");
+            @include text-style(0.7, var(--fw-400-500), 1.3rem, "Geist Mono");
             @include flex(center, space-between);
+            background-color: rgba(var(--textColor1), var(--time-btn-bg-opacity));
         }
         &__time-input button {
-            background-color: rgba(var(--textColor1), 0.014);
+            background-color: rgba(var(--textColor1), calc(var(--time-btn-bg-opacity) + 0.004));
             height: 25px;
             width: 25px;
             border-radius: 5px;
@@ -328,16 +430,12 @@
         /* sound effects */
         &__sfx {
             @include flex(center, space-between);
-            margin-bottom: 17px;
-            padding: 0px 5px;
+            margin-bottom: 18px;
+            padding: 0 calc(var(--side-spacing) + 3px);
 
             span {
-                @include text-style(0.14, var(--fw-400-500), 1.4rem);
+                @include text-style(0.225, var(--fw-400-500), 1.4rem);
             }
-        }
-        &__sfx-name {
-            @include text-style(0.65, var(--fw-400-500), 1.5rem);
-            margin-bottom: 3px;
         }
         &__sfx-btns {
             @include center;
@@ -347,7 +445,7 @@
             margin-left: 15px;
             
             span {
-                @include text-style(0.3, var(--fw-400-500), 1.5rem);
+                @include text-style(0.3, var(--fw-400-500), 1.4rem);
             }
             &--picked span {
                 @include text-style(0.8);
@@ -374,26 +472,41 @@
             }
         }
 
-        &__btns {
-            margin-top: 70px;
-            @include flex(center);
-
-            button {
-                padding: 12px 25px;
-                border-radius: 9px;
-                @include center;
-                @include text-style(0.55, var(--fw-400-500), 1.5rem);
+        /* tasks */
+        &__list span {
+            @include text-style(0.2, var(--fw-400-500), 1.3rem, "Geist Mono");
+        }
+        &__list-header {
+            margin-top: 20px;
+            padding: 0 calc(var(--side-spacing) + 3px);
+            @include flex(center, space-between);
+        }
+        &__list-body {
+            position: relative;
+            height: calc(100% - 35px);
+            overflow-y: scroll;
+            min-height: 100px;
+            max-height: 280px;
+            margin: 5px 0px 10px 0px;
+            
+            &--empty {
+                min-height: 70px;
             }
         }
-        &__cancel-btn {
-            width: 35%;
-            margin-right: 8px;
-            font-weight: 400;
-            @include txt-color(0.03, "bg");
+        &__list-count {
+            margin-right: 11px;
+        }
+        &__list-empty {
+            padding: 0px 0px 0px calc(var(--side-spacing) + 3px);
+        }
+        &__add-btn {
+            @include center;
+            @include circle(20px);
+            background-color: rgba(var(--textColor1), 0.065);
+            margin-right: -4px;
 
             &:hover {
-                transition-duration: 0s;
-                @include txt-color(0.06, "bg");
+                background-color: rgba(var(--textColor1), 0.15);
             }
         }
     }

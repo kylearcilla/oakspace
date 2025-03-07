@@ -941,21 +941,36 @@ export function findElemVertSpace(target: HTMLElement | null) {
   return height + marginTop + marginBottom + paddingTop + paddingBottom + borderTopWidth + borderBottomWidth
 }
 
-export function getFontFamilyFromStyle(style: string) {
-  if (style === "basic") {
-      return "Manrope"
-  }
-  else if (style === "stylish") {
-      return "Gambarino-Regular" 
+export function getFontFromStyle(style: string) {
+  if (style === "stylish") {
+      return { 
+        scaleFactor: 0.98, 
+        fam: "Zodiak-Bold" 
+      }
   }
   else if (style === "fancy") {
-      return "Melodrama-Bold"
+      return { 
+        scaleFactor: 1.06, 
+        fam: "Melodrama-Bold" 
+      }
   }
   else if (style === "cute") {
-      return "Bagel Fat One"
+      return { 
+        scaleFactor: 1.05, 
+        fam: "Bagel Fat One" 
+      }
+  }
+  else if (style === "mono") {
+      return { 
+        scaleFactor: 1, 
+        fam: "Geist Mono" 
+      }
   }
   else {
-    return "Manrope"
+      return { 
+        scaleFactor: 1, 
+        fam: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" 
+      }
   }
 }
 

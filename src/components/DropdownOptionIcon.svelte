@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { LogoIcon } from "$lib/enums"
+    import { LogoIcon, Icon } from "$lib/enums"
 	import { inlineStyling } from "$lib/utils-general"
 
 	import Logo from "./Logo.svelte"
 	import Hotkeys from "./Hotkeys.svelte"
-	import SvgIcon from "./SVGIcon.svelte";
-	import { Icon } from "../lib/enums";
+	import SvgIcon from "./SVGIcon.svelte"
 
     export let left: boolean = true
     export let icon: DropdownOptnIcon
@@ -49,6 +48,13 @@
                 <SvgIcon 
                     icon={getSvgIcon()} 
                     options={{ scale: 1.1, strokeWidth: 0.4 }} 
+                />
+            </div>
+        {:else if type === "svg" && icon.icon === Icon.ChevronRight}
+            <div style:opacity={0.25}>
+                <SvgIcon 
+                    icon={getSvgIcon()} 
+                    options={{ scale: 1.45, strokeWidth: 0.4 }} 
                 />
             </div>
         {:else if type === "svg"}

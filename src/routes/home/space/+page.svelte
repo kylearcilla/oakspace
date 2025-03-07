@@ -1,33 +1,34 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte"
-	import { globalContext, ytPlayerStore, timer } from "$lib/store"
+	import { globalContext, ytPlayerStore, timer, sessionManager } from "$lib/store"
     
 	import { hasAmbienceSpace, setAmbience, SYSTEM_FONT } from "$lib/utils-home"
 	import { formatTimeToHHMM, prefer12HourFormat } from "$lib/utils-date"
 
+	import ActiveSession from "../ActiveSession.svelte"
 	import SpaceSelection from "./SpaceSelection.svelte"
+	import { getFontFromStyle } from "$lib/utils-general";
 
-    type FontOption = {
-        name: string
-        size: string
-        topOffset: string
-    }
-    type FontOptions = {
-        [key: string]: FontOption
+    type FontOffsetMap = {
+        [key in FontStyle]: { topOffset: string }
     }
 
-    const FONT_OPTIONS: FontOptions = {
-        "system":         { name: SYSTEM_FONT, size: "19rem", topOffset: "-50px"  },
-        "zodiak-bold":    { name: "Zodiak-Bold", size: "19rem", topOffset: "-55px" },
-        "melodrama-bold": { name: "Melodrama-Bold", size: "25rem", topOffset: "-75px" },
-        "bagel-fat-one":  { name: "Bagel Fat One", size: "22rem", topOffset: "-85px" },
+    const FONT_SIZE = 17
+    const FAM_OFFSETS: FontOffsetMap = {
+        "default": { topOffset: "-40px" },
+        "stylish": { topOffset: "-50px" },
+        "fancy":   { topOffset: "-55px" },
+        "cute":    { topOffset: "-70px" },
+        "mono":    { topOffset: "-50px" },
     }
 
     $: ambience = $globalContext.ambience
     $: rightBarOpen = $globalContext.rightBarOpen
     $: rightBarFixed = $globalContext.rightBarFixed
     $: showTime = ambience?.showTime
-    $: clockFont = (ambience?.clockFont ?? "system") as keyof typeof FONT_OPTIONS
+    $: fontStyle = ambience?.fontStyle ?? "default"
+    $: session = $sessionManager?.session
+    $: showSession = $sessionManager?.show
     
     const TOP_PADDING = 40
     const NUM_SPACING = TOP_PADDING + 10
@@ -153,67 +154,76 @@
     style:--line-height={`${lineHeight}px`}
     style:--top-padding={`${TOP_PADDING}px`}
     style:--num-spacing={`${NUM_SPACING}px`}
-    style:font-family={FONT_OPTIONS[clockFont]?.name}
-    style:font-size={FONT_OPTIONS[clockFont]?.size}
 >
-    <div 
-        class="space__time-wrapper"
-        class:hidden={!showTime}
-    >
-        <div class="space__time">
-            <div 
-                class="space__time-numbers"
-                style:margin-top={FONT_OPTIONS[clockFont]?.topOffset}
-            >
-                <div class="space__digit">
-                    <div 
-                        bind:this={digitRefs[0]} 
-                        class="space__digit-num"
-                    >
-                        <span>0</span>
+    {#if ambience}
+        {@const { scaleFactor, fam } = getFontFromStyle(fontStyle || "default")}
+        {@const { topOffset } = FAM_OFFSETS[fontStyle]}
+        <div 
+            class="space__time-wrapper"
+            class:hidden={!showTime || showSession}
+            style:font-family={fam}
+            style:font-size={`${scaleFactor * FONT_SIZE}rem`}
+        >
+            <div class="space__time">
+                <div 
+                    class="space__time-numbers"
+                    style:margin-top={topOffset}
+                >
+                    <div class="space__digit">
+                        <div 
+                            bind:this={digitRefs[0]} 
+                            class="space__digit-num"
+                        >
+                            <span>0</span>
+                        </div>
+                    </div>
+                    <div class="space__digit">
+                        <div 
+                            bind:this={digitRefs[1]} 
+                            class="space__digit-num"
+                        >
+                            <span>0</span>
+                        </div>
+                    </div>
+                    <div class="space__digit">
+                        <div 
+                            bind:this={digitRefs[2]} 
+                            bind:clientHeight={lineHeight}
+                            class="space__digit-num"
+                        >
+                            <span>:</span>
+                        </div>
+                    </div>
+                    <div class="space__digit">
+                        <div 
+                            bind:this={digitRefs[3]} 
+                            class="space__digit-num"
+                        >
+                            <span>0</span>
+                        </div>
+                    </div>
+                    <div class="space__digit">
+                        <div 
+                            bind:this={digitRefs[4]} 
+                            class="space__digit-num"
+                        >
+                            <span>0</span>
+                        </div>
                     </div>
                 </div>
-                <div class="space__digit">
-                    <div 
-                        bind:this={digitRefs[1]} 
-                        class="space__digit-num"
-                    >
-                        <span>0</span>
-                    </div>
-                </div>
-                <div class="space__digit">
-                    <div 
-                        bind:this={digitRefs[2]} 
-                        bind:clientHeight={lineHeight}
-                        class="space__digit-num"
-                    >
-                        <span>:</span>
-                    </div>
-                </div>
-                <div class="space__digit">
-                    <div 
-                        bind:this={digitRefs[3]} 
-                        class="space__digit-num"
-                    >
-                        <span>0</span>
-                    </div>
-                </div>
-                <div class="space__digit">
-                    <div 
-                        bind:this={digitRefs[4]} 
-                        class="space__digit-num"
-                    >
-                        <span>0</span>
-                    </div>
-                </div>
+                {#if currentTimePeriod}
+                    <span class="space__time-period">
+                        {currentTimePeriod}
+                    </span>
+                {/if}
             </div>
-            {#if currentTimePeriod}
-                <span class="space__time-period">
-                    {currentTimePeriod}
-                </span>
-            {/if}
         </div>
-    </div>
+    {/if}
+    {#if session && $globalContext.sessionLocation === "workspace" && showSession}
+        <div class="space__session">
+            <ActiveSession />
+        </div>
+    {/if}
 </div>
 
 {#if ambience?.spacesOpen}
@@ -272,6 +282,9 @@
             span {
                 display: block;
             }
+        }
+        &__session {
+            width: 100%;
         }
     }
 </style>

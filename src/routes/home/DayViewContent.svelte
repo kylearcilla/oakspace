@@ -412,9 +412,9 @@
 
 <BounceFade 
     isHidden={!currBlock || currBlockDayIdx === null}
-    staticPos={true}
+    fixPos={true}
     zIndex={9000}
-    sidebar={true}
+    offsetContext="side-bar"
     onClickOutside={() => {
         currBlock = null
         currBlockDayIdx = null
@@ -604,7 +604,6 @@
         &__content {
             display: flex;
             align-items: flex-start;
-            border-radius: 12px !important;
         }
         &__checkbox {
             @include square(16px, 6px);

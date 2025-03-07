@@ -46,7 +46,7 @@
         doCheck = task.isChecked && $manager.editTask?.id != task.id
     }
     $: {
-        subtasks = $manager.tasks.getSubtasks(task.id)
+        subtasks = $manager.getSubtasks(task.id)
         checkedSubtasks = subtasks.reduce((c, task) => task?.isChecked ? c + 1 : c, 0)
     }
 

@@ -341,12 +341,14 @@
     &__content {
         background-color: rgba(var(--block-color-2), 1);
         border-top: 0.5px solid var(--bg-1);
-        padding: 4px 8px 5px 9px;
+        padding: 4px 8px 5px 12px;
         overflow: hidden;
         white-space: nowrap;
         position: relative;
         height: 100%;
         border-radius: 6px;
+        border-top-left-radius: 4px;
+        border-bottom-left-radius: 4px;
     }
     &__title {
         @include text-style(_, var(--fw-400-500), 1.25rem);
@@ -364,9 +366,12 @@
         }
     }
     &__spine {
-        @include abs-top-left;
-        height: calc(100%);
-        width: 3px;
+        @include abs-top-left(4px, 2.5px);
+        height: calc(100% - 9px);
+        max-width: 2px;
+        width: 2px;
+        min-width: 2px;
+        border-radius: 10px;
         background-color: rgb(var(--block-color-1));
     }
     &__handler:last-child {

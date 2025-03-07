@@ -122,8 +122,7 @@
         }
         const rightIcon = {
             type: "svg" as const,
-            icon: Icon.ChevronRight,
-            transform: "scale(0.98) translate(2px, 0px)"
+            icon: Icon.ChevronRight
         }
         const empty = dayBreakdown!.blocksLength === 0
 

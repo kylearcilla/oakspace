@@ -50,6 +50,7 @@
     let contextId: string = ""
     let editId: string = ""
     let setId: string = ""
+    let idRef: string = ""
 
     let srcId: string = ""
     let targetId: string = ""
@@ -91,9 +92,9 @@
     /* edits */
 
     function initTextEditors(routine: WeeklyRoutine | null) {
-        if (!routine || setId === routine.id) return
+        if (!routine || idRef === routine.id) return
 
-        setId = routine.id
+        idRef = routine.id
 
         titleInput = new TextEditorManager({ 
             id: TITLE_ID,

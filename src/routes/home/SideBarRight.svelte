@@ -100,7 +100,7 @@
     class:bar--dark-theme={!isLight}
     class:bar--empty={empty}
     class:bar--transparent={transparent}
-    style:--margin-top={isLight ? "12px" : showHeaderImg && bgImgSrc && !hasAmbience ? "55px" : "15px"}
+    style:--margin-top={isLight ? "12px" : showHeaderImg && bgImgSrc && !transparent ? "55px" : "15px"}
     style:--main-top-offset={ambience?.active ? "2px" : "-20px"}
     style:--fixed-offset={fixed ? "42px" : "0px"}
     on:mousedown={() => {

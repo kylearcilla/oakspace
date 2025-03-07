@@ -22,7 +22,6 @@
 	import DropdownBtn from "$components/DropdownBtn.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
 	import ConfirmationModal from "$components/ConfirmationModal.svelte"
-	import { TEST_TASKS } from "$lib/mock-data";
 
     const { MAX_BLOCK_DESCRIPTION, MIN_BLOCK_DURATION_MINS, MAX_BLOCK_TITLE } = RoutinesManager
     const MAX_ACTION_ITEMS = 12
@@ -258,7 +257,7 @@
                 aria-label="Title"
                 spellcheck="false"
                 contenteditable="true"
-                bind:innerHTML={title}
+                bind:innerText={title}
             >
             </div>
             <div class="flx-algn-center">
@@ -474,7 +473,7 @@
         </div>
 
         <!-- action items -->
-        <div class:hidden={!allowTasks}>
+        <div class="edit-routine__list">
             <div class="edit-routine__list-header">
                 <div 
                     class="edit-routine__info-title" 
@@ -499,8 +498,8 @@
                 </div>
             </div>
             <div 
-                class="edit-routine__list" 
-                class:edit-routine__list--empty={tasks.length === 0}
+                class="edit-routine__list-body" 
+                class:edit-routine__list-body--empty={tasks.length === 0}
                 bind:this={routineListRef}
             >
                 {#if routineListRef}
@@ -514,6 +513,7 @@
                         }}
                         options={{
                             id: "action-items",
+                            context: "modal",
                             hotkeyFocus: "default",
                             settings: {
                                 checkSubtasks: false,
@@ -525,7 +525,7 @@
                             },
                             ui: { 
                                 sidePadding: "20px",
-                                fontSize: "1.4rem",
+                                fontSize: "1.385rem",
                                 padding: "9px 0px 7px 0px",
                                 hasTaskDivider: true
                             },
@@ -534,9 +534,9 @@
                     />
                 {/if}
                 {#if tasks.length === 0}
-                    <div class="edit-routine__list-empty">
+                    <span class="edit-routine__list-empty">
                         0 action items
-                    </div>
+                    </span>
                 {/if}
             </div>
         </div>
@@ -579,7 +579,13 @@
             --cancel-btn-opacity: 0.065;
         }
         &--light &__info-title {
-            @include text-style(0.5);
+            @include text-style(1);
+        }
+        &--light &__list {
+            @include text-style(0.45);
+        }
+        &--light &__description {
+            @include text-style(0.7);
         }
         &--no-tasks  {
             width: 400px;
@@ -665,18 +671,32 @@
         &__description {
             max-height: 100px;
             margin-bottom: 10px;
+            font-size: 1.45rem;
+        }
+        &__list span {
+            @include text-style(0.2, var(--fw-400-500), 1.3rem, "Geist Mono");
         }
         &__list-header {
             width: 100%;
             padding: 2px 20px 1px 20px;
             @include flex(center, space-between);
         }
+        &__list-body {
+            position: relative;
+            height: calc(100% - 35px);
+            overflow-y: scroll;
+            min-height: 100px;
+            max-height: 280px;
+            margin: 5px 0px 10px 0px;
+
+            &--empty {
+                min-height: 100px;
+            }
+        }
         &__list-count {
-            @include text-style(0.2, var(--fw-400-500), 1.3rem, "Geist Mono");
             margin-right: 11px;
         }
         &__list-empty {
-            @include text-style(0.2, var(--fw-400-500), 1.3rem, "Geist Mono");
             margin: 1px 0px 0px 20px;
         }
         &__add-btn {
@@ -687,18 +707,6 @@
 
             &:hover {
                 background-color: rgba(var(--textColor1), 0.15);
-            }
-        }
-        &__list {
-            position: relative;
-            height: calc(100% - 35px);
-            overflow-y: scroll;
-            min-height: 100px;
-            max-height: 280px;
-            margin: 5px 0px 10px 0px;
-
-            &--empty {
-                min-height: 100px;
             }
         }
     }

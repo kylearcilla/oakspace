@@ -8,7 +8,7 @@ import { initHabits } from "./utils-habits"
 import { POPULAR_SPACES } from "./data-spaces"
 import { didTodoistAPIRedirect } from "./api-todoist"
 import { loadTheme, setNewTheme } from "./utils-appearance"
-import { conintueWorkSession, didInitSession } from "./utils-session"
+import { continueFocusSession, didInitSession } from "./utils-session"
 import { getElemById, isTargetTextEditor, randomArrayElem } from "./utils-general"
 import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer, handleChooseItem } from "./utils-youtube"
 
@@ -58,7 +58,7 @@ export const initAppState = async () => {
     loadAmbience()
 
     if (didInitSession()) {
-        conintueWorkSession()
+        continueFocusSession()
     }
     if (didInitYtUser()) {
         youtubeLogin()
@@ -462,4 +462,20 @@ export function ambienceSideBarOffset(leftOffset: number) {
         return leftOffset - sidebarRect.left
     }
     return leftOffset
+}
+
+export function modalSideBarOffset(pos: { left: number, top: number }) {
+    const modal = document.querySelector(".modal-bg__content")
+    if (modal) {
+        const modalRect = modal.getBoundingClientRect()
+        return {
+            left: pos.left - modalRect.left,
+            top: pos.top - modalRect.top
+        }
+    }
+    return pos
+}
+
+export function setSessionLocation(location: "workspace" | "default") { 
+    updateGlobalContext({ sessionLocation: location })
 }

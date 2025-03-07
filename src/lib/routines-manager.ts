@@ -1168,6 +1168,8 @@ export class RoutinesManager {
             placement = "top"
         }
 
+        console.log(placement)
+
         return placement
     }
 

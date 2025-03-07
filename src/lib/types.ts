@@ -350,7 +350,9 @@ type DropdownItemClickedContext = {
 }
 
 type DropdownListOptions = {
+    context?: "side-bar" | "modal" | "default"
     listItems: DropdownListItem[]
+    fixPos?: boolean
     parentContext?: {
         container?: HTMLElement
         childId: string
@@ -361,7 +363,7 @@ type DropdownListOptions = {
         optnName: string
     }
     pickedItem?: string | number
-    onListItemClicked: (context: DropdownItemClickedContext) => void
+    onListItemClicked?: (context: DropdownItemClickedContext) => void
     onClickOutside?: FunctionParam
     onDismount?: FunctionParam
     onPointerLeave?: FunctionParam
@@ -590,16 +592,18 @@ type GlobalContext = {
     rightBarOpen: boolean
     rightBarFixed: boolean
     route: string
-    focusTime: number
     hasToaster: boolean
     hotkeyFocus: HotkeyContext
     modalsOpen: ModalType[]
     ambience?: AmbientOptions
+    sessionLocation?: "workspace" | "default"
     routineView?: {
         dayIdx: number
         block: { block: RoutineBlock, idx: number } 
     } | null
 }
+
+type FontStyle = "default" | "stylish" | "fancy" | "cute" | "mono"
 
 type AmbientOptions = {
     active: boolean
@@ -608,7 +612,7 @@ type AmbientOptions = {
     styling: "solid" | "blur" | "clear"
     space: AmbientSpace
     showTime: boolean
-    clockFont: "system" | "Zodiak-Bold" | "Melodrama-Bold" | "Bagel Fat One"
+    fontStyle: FontStyle
 }
 
 type AmbientSpace = {
@@ -785,7 +789,7 @@ interface Task {
 type TasksListOptions = {
     id: string
     hotkeyFocus: HotkeyContext
-    type?: "side-bar" | "default"
+    context?: "side-bar" | "modal" | "default"
     rootRef: HTMLElement
     handlers?: TaskListHandlers
     settings?: {
@@ -1199,6 +1203,7 @@ type ThemeStyling = {
     textColor2: string
     lightColor1: string
     lightColor2: string
+    ringColor: string
     heatMapColor: string
     calMarkColor: string
     textEntryBgColor: string

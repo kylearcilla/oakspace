@@ -170,15 +170,6 @@
             stroke-width={strokeWidth}
         />
       </svg>        
-  {:else if icon === Icon.Sublink}
-        <svg 
-            width="14" height="13" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg"
-            style={`transform: scale(${scale});`}
-        >
-            <path d="M3.00586 5.26855V5.26855C3.00586 7.82838 5.081 9.90352 7.64082 9.90352H8.39875" stroke={color} stroke-width={strokeWidth}/>
-            <path d="M12.8556 9.90335C12.8556 11.092 11.898 12.0508 10.7227 12.0508C9.54737 12.0508 8.58984 11.092 8.58984 9.90335C8.58984 8.71471 9.54737 7.75586 10.7227 7.75586C11.898 7.75586 12.8556 8.71471 12.8556 9.90335Z" stroke={color} stroke-width={strokeWidth}/>
-            <path d="M5.13876 2.85941C5.13876 4.04805 4.18124 5.0069 3.0059 5.0069C1.83057 5.0069 0.873047 4.04805 0.873047 2.85941C0.873047 1.67076 1.83057 0.711914 3.0059 0.711914C4.18124 0.711914 5.13876 1.67076 5.13876 2.85941Z" stroke={color} stroke-width={strokeWidth}/>
-        </svg>
   {:else if icon === Icon.MiniPlayer}
       <svg 
         style={`transform: scale(${scale});`}

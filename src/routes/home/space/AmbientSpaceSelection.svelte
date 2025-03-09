@@ -1,23 +1,23 @@
 <script lang="ts">
 	import { onMount } from "svelte"
-	import { ytUserDataStore } from "$lib/store"
+	import { ytUserStore } from "$lib/store"
 
     import { Icon } from "$lib/enums"
+	import { LogoIcon } from "$lib/enums"
 	import { updateAmbience } from "$lib/utils-home"
-	import { APIErrorCode, LogoIcon } from "$lib/enums"
-	import { handleChooseItem } from "$lib/utils-youtube"
 	import { globalContext, ytPlayerStore } from "$lib/store"
 	import { SPACES, POPULAR_SPACES } from "$lib/data-spaces"
 	import { getMaskedGradientStyle } from "$lib/utils-general"
 	import { capitalize, formatPlural } from "$lib/utils-general"
-	import { youtubeLogin, youtubeLogOut } from "$lib/utils-youtube"
+	import { handleChooseItem, logoutYoutubeUser } from "$lib/utils-youtube"
 
 	import Logo from "$components/Logo.svelte"
 	import Modal from "$components/Modal.svelte"
 	import SvgIcon from "$components/SVGIcon.svelte"
+	import { authYoutubeClient } from "$lib/api-youtube"
+	import EmptyList from "$components/EmptyList.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
     
-
     const SCROLL_STEP = 350
     const CATEGORIES = [
         "Lofi",
@@ -26,114 +26,69 @@
         "Weather",
         "City",
         "Architecture",
-        "Space / Sci-Fi"
+        "Sci-Fi"
     ]
     const PLAYLIST_SKELETON_LENGTH = 25
     const TEST_FETCH_PLAYLIST_DELAY = 500
-    const DEFAULT_PROFILE_PIC = "https://media.tenor.com/-OpJG9GeK3EAAAAC/kanye-west-stare.gif"
 
     $: ambience = $globalContext.ambience
     $: space = ambience?.space
     $: wallpapers = chosenGroup.wallpapers
     $: playlists = chosenGroup.playlists
     $: videos = chosenGroup.videos
-
-    $: yt          = $ytUserDataStore
-    $: player      = $ytPlayerStore
-    $: hasSignedIn = yt?.isSignedIn ?? false
-    $: hasTokenExpired      = yt?.hasTokenExpired ?? false
-    $: hasFetchedAllUserPls = yt?.hasFetchedAllUserPls ?? false
+    $: chosenItem = space ?? null
+        
+    $: player = $ytPlayerStore
+    $: userData = $ytUserStore
+    $: hasSignedIn = userData?.signedIn ?? false
+    $: tokenExpired = userData?.tokenExpired ?? false
+    $: fetchedAllItems = userData?.fetchedAllItems ?? false
+    $: loading = userData?.loading ?? false
 
     let chosenGroup = POPULAR_SPACES
-    let chosenGroupStr: AmbientSpaceGroupKey | "popular" | "user" = "popular"
-
+    let chosenGroupStr: AmbientSpaceGroupKey = "popular"
     let clickedItem: AmbientSpace | null = null
-    $: chosenItem = space ?? null
-
     let videoType: any = "videos"
-
-    let tabsCarouselRef: HTMLElement
-    let wallpaperCarouselRef: HTMLElement
-
-    let tabsCarousel = {
-        gradient: "",
-        left: true,
-        right: true,
-    }
-    let wallpaperCarousel = {
-        gradient: "",
-        left: false,
-        right: false,
-    }
     
-    let loading = false
+    let userInfoOpen = false
+    let userPlaylists: AmbientSpace[] = []
+    let refreshLoad = false
+
     let scrollTop = 0
     let scrollHeight = 0
     let scrollWindow = 0
     let playlistTimeout: NodeJS.Timeout | null = null
-    let ytError: any = null
+    let width = 0
 
-    let userInfoOpen = false
-    let userPlaylists: AmbientSpace[] = []
-    let _userPlaylists = $ytUserDataStore?.userPlaylists ?? []
+    let tabsCarouselRef: HTMLElement
+    let wallpaperCarouselRef: HTMLElement
+    let playlistsRef: HTMLElement
+    let tabsCarousel = {
+        left: true, right: true, gradient: ""
+    }
+    let wallpaperCarousel = {
+        left: false, right: false, gradient: ""
+    }
 
-    /* youtube */
-    $: if (playlists.length === 0) {
-        videoType = "videos"
-    }
-    else if (videos.length === 0) {
-        videoType = "playlists"
-    }
     $: if (videoType != undefined) {
         clickedItem = null
     }
-
-    $: if (ytError?.code === APIErrorCode.EXPIRED_TOKEN && !hasTokenExpired) {
-        ytError = null
+    $: if (hasSignedIn && userData) {
+        initUserPlaylists()
     }
-    $: if (hasSignedIn) {
-        userPlaylists = _userPlaylists.map(pl => ({
-            title: pl.title,
-            description: pl.description,
-            subtitle: pl.vidCount,
-            thumbnail: pl.thumbnailURL,
-            sourceId: pl.id,
-            type: "playlist",
-            group: "user"
-        }))
-        chosenGroup.playlists = userPlaylists
-        chosenGroup = chosenGroup
+    $: if (width && tabsCarouselRef) {
+        handleCarouselScroll(tabsCarouselRef)
     }
-
-    function onTabClicked(groupKey: AmbientSpaceGroupKey | "popular" | "user") {
-        if (groupKey === "user") {
-            chosenGroup  = {
-                wallpapers: [],
-                videos: [],
-                playlists: userPlaylists
-            }
+    $: {
+        if (playlists.length === 0 && chosenGroupStr != "user") {
+            videoType = "videos"
+        }
+        else if (videos.length === 0) {
             videoType = "playlists"
         }
-        else {
-            videoType = "videos"
-            chosenGroup = getGroup(groupKey)
-        }
-
-        chosenGroupStr = groupKey
-        clickedItem = null
-
-        requestAnimationFrame(() => handleCarouselScroll(wallpaperCarouselRef))
     }
-    function getGroup(group: AmbientSpaceGroupKey | "popular" | "user") {
-        if (group === "popular") {
-            return POPULAR_SPACES
-        }
-        else {
-            const groupKey = group === "space / sci-fi" ? "space" : group as keyof typeof SPACES
-            return SPACES[groupKey]
-        }
-    }
-
+    
+    /* spaces */
     function onItemClicked(space: AmbientSpace) {
         clickedItem = space
     }
@@ -148,17 +103,46 @@
         }
         else if (await handleChooseItem(sourceId, type)) {
             updateAmbience({ space: clickedItem! })
-            player.toggleShow(true)
+            player!.toggleShow(true)
         }
-
         if (fromVidToWallpaper)  {
-            player.toggleShow(false)
+            player!.toggleShow(false)
         }
         else if (fromWallpaperToVideo) {
-            player.toggleShow(true)
+            player!.toggleShow(true)
         }
 
         clickedItem = null
+    }
+    function getGroup(group: AmbientSpaceGroupKey) {
+        if (group === "popular") {
+            return POPULAR_SPACES
+        }
+        else {
+            return SPACES[group as AmbientSpaceGenres]
+        }
+    }
+
+    /* ui */
+    function onTabClicked(key: string) {
+        const groupKey = key as AmbientSpaceGroupKey
+        if (groupKey === "user") {
+            chosenGroup  = {
+                wallpapers: [],
+                videos: [],
+                playlists: userPlaylists
+            }
+            videoType = "playlists"
+        }
+        else {
+            videoType = "videos"
+            chosenGroup = getGroup(groupKey)!
+        }
+
+        chosenGroupStr = groupKey
+        clickedItem = null
+
+        requestAnimationFrame(() => handleCarouselScroll(wallpaperCarouselRef))
     }
     function handleCarouselScroll(carousel: HTMLElement) {
         const isTabs = carousel === tabsCarouselRef
@@ -169,6 +153,10 @@
 
         const { styling, scrollStatus } = getMaskedGradientStyle(elem, {
            isVertical: false,
+           head: {
+            start: "5px",
+            end: "50%"
+           },
            tail: {
             start: "80%"
            }
@@ -188,25 +176,34 @@
 
     /* youtube */
     async function userBtnClicked() { 
-        if (yt) {
+        if (hasSignedIn) {
             userInfoOpen = !userInfoOpen
         }
         else {
-            await youtubeLogin()
-            _userPlaylists = yt!.userPlaylists
+            authYoutubeClient()
         }
     }
     function refreshBtnClicked() {
-        if (hasTokenExpired) {
-            yt!.refreshAccessToken()
+        if (tokenExpired) {
+            userData!.refreshAccessToken()
         }
         else {
-            refreshUserPlaylsts()
+            refreshUserPlaylists()
         }
         userInfoOpen = false 
     }
+    async function refreshUserPlaylists() {
+        refreshLoad = true
+
+        if (playlistsRef) {
+            playlistsRef.scrollTop = 0
+        }
+
+        await userData!.refreshUserPlaylists()
+        refreshLoad = false
+    }
     function hasReachedEndOfList() {
-        return Math.ceil(scrollTop) >= scrollHeight - scrollWindow
+        return Math.ceil(scrollTop) >= scrollHeight - scrollWindow - 100
     }
     async function userPlsInfiniteScrollHandler(event: Event) {
         if (chosenGroupStr != "user" || loading) {
@@ -221,46 +218,34 @@
         if (!hasReachedEndOfList() || loading) return
         getMorePlaylists()
     }
-    async function refreshUserPlaylsts() {
-        let items = _userPlaylists
-        
-        try {
-            _userPlaylists = []
-            loading = true
-            await yt!.refreshUserPlaylists()
-
-            _userPlaylists = yt!.userPlaylists
-            ytError = null
-        }
-        catch(e) {
-            _userPlaylists = items
-            ytError = e
-        }
-        finally {
-            loading = false
-        }
-    }
     function getMorePlaylists() {
-        const noFetch = loading || hasFetchedAllUserPls || ytError || hasTokenExpired || playlistTimeout
-        if (noFetch) return
-        
-        playlistTimeout = setTimeout(async () => { 
-            try {
-                loading = true
-                await yt!.loadMorePlaylistItems()
-                _userPlaylists = yt!.userPlaylists
-                ytError = null
-            }
-            catch(error: any) {
-                ytError = error
-            }
-            finally {
-                loading = false
-                clearInterval(playlistTimeout!)
-                playlistTimeout = null
-            }
+        const noFetch = !!(loading || fetchedAllItems || tokenExpired || !!playlistTimeout)
+        if (noFetch || !userData) {
+            return
+        }
+        playlistTimeout = setTimeout(() => {
+            userData.getMorePlaylists()
+            playlistTimeout = null
+
         }, TEST_FETCH_PLAYLIST_DELAY)
     }
+    function initUserPlaylists() {
+        userPlaylists = userData!.playlists.map(pl => ({
+            title: pl.title,
+            description: pl.description,
+            subtitle: pl.vidCount + "",
+            thumbnail: pl.thumbnailURL,
+            sourceId: pl.id,
+            type: "playlist",
+            group: "user"
+        }))
+
+        if (chosenGroupStr === "user") {
+            chosenGroup.playlists = userPlaylists
+            chosenGroup = chosenGroup
+        }
+    }
+
     onMount(() => {
         handleCarouselScroll(wallpaperCarouselRef)
         handleCarouselScroll(tabsCarouselRef)
@@ -269,34 +254,23 @@
 
 <Modal 
     options={{ 
-        borderRadius: "15px",
-        height: "85vh",
-        overflow: "hidden"
+        borderRadius: "15px", height: "85vh", overflow: "hidden"
     }} 
     onClickOutSide={() => updateAmbience({ spacesOpen: false })}
 >
     {@const { gradient, left, right } = tabsCarousel}
-    <div 
-        class="spaces"
-    >
+    <div class="spaces" class:spaces--signed-in={hasSignedIn}>
         <div class="spaces__header">
             <h1>Spaces</h1>
-            <!-- yt account -->
              <button 
+                class="spaces__account-btn"
                 id="spaces--dbtn"
                 on:click={userBtnClicked}
-                class="spaces__account-btn"
-                class:spaces__account-btn--signed-in={hasSignedIn}
              >
-                    {#if hasSignedIn}
-                        {@const { profileImgSrc, username } = yt}
-                        <img 
-                            alt=""
-                            src={profileImgSrc ?? DEFAULT_PROFILE_PIC} 
-                        />
-                        <div style:margin="-2px 0px 2px 0px">
-                            {username}
-                        </div>
+                    {#if hasSignedIn && userData}
+                        {@const { profileImgSrc, username } = userData}
+                        <img src={profileImgSrc} alt="" />
+                        <span>{username}</span>
                     {:else}
                         <Logo 
                             logo={LogoIcon.Youtube} 
@@ -306,9 +280,7 @@
                                 iconWidth: "100%" 
                             }} 
                         />
-                        <div style:margin="0px 3px 0px 12px">
-                            Connect
-                        </div>
+                        <span>Connect</span>
                     {/if}
              </button>
              <DropdownList 
@@ -316,15 +288,15 @@
                 isHidden={!userInfoOpen}
                 options={{
                     listItems: [
-                        { name: "Refresh", rightIcon: { icon: "fa-solid fa-arrows-rotate" } },
-                        { name: "Log out", rightIcon: { icon: "fa-solid fa-right-from-bracket" } }
+                        {  name: "Refresh", divider: true },
+                        {  name: "Log out" }
                     ],
                     onListItemClicked: ({ name }) => {
                         if (name === "Refresh") {
                             refreshBtnClicked()
                         }
-                        else if (name === "Log out") {
-                            youtubeLogOut()
+                        else if (name === "Log out" && userData) {
+                            logoutYoutubeUser()
                             onTabClicked("popular")
                         }
                         userInfoOpen = false
@@ -333,11 +305,11 @@
                         userInfoOpen = false
                     },
                     position: {
-                        top: "25px",
+                        top: "27px",
                         right: "0px"
                     },
                     styling: {
-                        width: "115px",
+                        width: "110px",
                         zIndex: 4
                     }
                 }}
@@ -346,12 +318,16 @@
 
         <!-- main content -->
         <div class="spaces__content">
-            {#if space}
+            {#if space && ambience}
+                {@const { thumbnail, title, subtitle, description } = space}
+                {@const group = ambience.space.group}
+                {@const sub = group === "user" ? formatPlural("video", Number(subtitle ?? 0)) : subtitle}
+
                 <div class="spaces__left">
                     <div class="spaces__now-playing bento-box">
                         <img 
                             class="img-bg" 
-                            src={space.thumbnail} 
+                            src={thumbnail} 
                             alt="chosen-chosenItem"
                         />
                         <div class="img-bg-gradient gradient-container gradient-container--bottom"></div>
@@ -360,29 +336,25 @@
                         <div class="content-bg">
                             <div class="spaces__chosen-item">
                                 <div class="spaces__chosen-item-img">
-                                    <img 
-                                        src={space.thumbnail} 
-                                        alt="spaces__chosen-item"
-                                    />
+                                    <img src={thumbnail} alt="spaces__chosen-item"/>
                                 </div>
                                 <div class="spaces__chosen-item-details">
                                     <span>
-                                        {capitalize(ambience?.space.group ?? "")}
+                                        {capitalize(group)}
                                     </span>
                                     <h4 class="spaces__chosen-item-title">
                                         {space.title}
                                     </h4>
                                     <div class="spaces__chosen-item-subtitle">
-                                        {space.subtitle}
+                                        {sub}
                                     </div>
-                                    {#if space.description}
-                                        <p 
-                                            title={space.description}
-                                            class="spaces__chosen-item-description" 
-                                        >
-                                            {space.description ?? "No Description"}
-                                        </p>
-                                    {/if}
+                                    <p 
+                                        title={description}
+                                        class="spaces__chosen-item-description" 
+                                        class:hidden={!description}
+                                    >
+                                        {description}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -391,7 +363,7 @@
             {/if}
             <div class="spaces__right bento-box">
                 <!-- tabs -->
-                <div class="spaces__tabs">
+                <div class="spaces__tabs" bind:clientWidth={width}>
                     {#if left}
                         <button 
                             class="spaces__arrow"
@@ -400,7 +372,9 @@
                                 tabsCarouselRef.scrollLeft -= SCROLL_STEP
                             }}
                         >
-                            <SvgIcon icon={Icon.ChevronLeft}/>
+                            <SvgIcon 
+                                icon={Icon.ChevronLeft} options={{ scale: 1.5 }}
+                            />
                         </button>
                     {/if}
                     {#if hasSignedIn}
@@ -445,7 +419,9 @@
                                 tabsCarouselRef.scrollLeft += SCROLL_STEP
                             }}
                         >
-                            <SvgIcon icon={Icon.ChevronRight}/>
+                            <SvgIcon 
+                                icon={Icon.ChevronRight} options={{ scale: 1.5 }}
+                            />
                         </button>
                     {/if}
                 </div>
@@ -463,7 +439,9 @@
                                     wallpaperCarouselRef.scrollLeft -= SCROLL_STEP
                                 }}
                             >
-                                <SvgIcon icon={Icon.ChevronLeft}/>
+                                <SvgIcon 
+                                    icon={Icon.ChevronLeft} options={{ scale: 1.5 }}
+                                />
                             </button>
                         {/if}
                         <div 
@@ -504,13 +482,15 @@
                                     wallpaperCarouselRef.scrollLeft += SCROLL_STEP
                                 }}
                             >
-                                <SvgIcon icon={Icon.ChevronRight}/>
+                                <SvgIcon 
+                                    icon={Icon.ChevronRight} options={{ scale: 1.5 }}
+                                />
                             </button>
                         {/if}
                     </div>
                 {/if}
         
-                <div class="flx" style:margin-bottom={"12px"} class:hidden={chosenGroupStr === "user"}>
+                <div class="flx" style:margin-bottom={"12px"}>
                     <button 
                         on:click={() => videoType = "videos"}
                         class="spaces__type-btn"
@@ -523,7 +503,7 @@
                         on:click={() => videoType = "playlists"}
                         class="spaces__type-btn"
                         class:spaces__type-btn--selected={videoType === "playlists"}
-                        class:hidden={playlists.length === 0}
+                        class:hidden={chosenGroup.playlists.length === 0}
                     >
                         Playlists
                     </button>
@@ -563,64 +543,69 @@
                 {/if}
         
                 <!-- playlists -->
-                {#if playlists.length > 0 && videoType === "playlists"}
+                {#if videoType === "playlists"}
                     {@const user = chosenGroupStr === "user"}
+                    {@const playlists = chosenGroup.playlists}
                     <div 
+                        bind:this={playlistsRef}
                         class="spaces__content-grid" 
                         class:spaces__content-grid--no-wallpapers={wallpapers.length === 0}
                         style:row-gap="0px"
                         style:margin="-10px 0px 0px -25px"
                         on:scroll={(e) => userPlsInfiniteScrollHandler(e)}
                     >
-                        {#each chosenGroup.playlists as item, idx (idx)}
-                            {@const { sourceId, title, subtitle, thumbnail, description } = item}
-                            <!-- svelte-ignore a11y-click-events-have-key-events -->
-                            <div 
-                                on:click={() => onItemClicked(item)}
-                                role='button'
-                                tabindex="0"
-                                title={`${title} - ${subtitle}`}
-                                class="spaces__content-item smooth-bounce spaces__content-item--playlist"
-                                class:spaces__content-item--user-pl={chosenGroupStr === "user"}
-                                class:spaces__content-item--selected={(!clickedItem && chosenItem?.sourceId === sourceId) || clickedItem?.sourceId === sourceId}
-                            >
-                                <div class="spaces__content-item-img" style:border-radius="4px">
-                                    <img src={thumbnail} alt="space">
-                                </div>
+                        {#if !refreshLoad}
+                            {#each playlists as item, idx (idx)}
+                                {@const { sourceId, title, subtitle, thumbnail, description } = item}
+                                <!-- svelte-ignore a11y-click-events-have-key-events -->
                                 <div 
-                                    class="spaces__content-item-details c-flx-sb" 
-                                    style:margin={"0px 0px 0px 20px"}
-                                    style:height={"100%"}
+                                    role='button'
+                                    tabindex="0"
+                                    title={`${title} - ${subtitle}`}
+                                    class="spaces__content-item smooth-bounce spaces__content-item--playlist"
+                                    class:spaces__content-item--user-pl={chosenGroupStr === "user"}
+                                    class:spaces__content-item--selected={(!clickedItem && chosenItem?.sourceId === sourceId) || clickedItem?.sourceId === sourceId}
+                                    on:click={() => onItemClicked(item)}
                                 >
-                                    <div>
-                                        <div class="spaces__content-item-title" style:margin-bottom="4px">
-                                            {title}
-                                        </div>
-                                        <div 
-                                            class="spaces__content-item-description"
-                                            title={description}
-                                            style:opacity={description ? 0.8 : 0.5}
-                                        >
-                                            {description ?? "No Description"}
-                                        </div>
+                                    <div class="spaces__content-item-img" style:border-radius="4px">
+                                        <img src={thumbnail} alt="space">
                                     </div>
-                                    <div class="spaces__content-item-subtitle">
-                                        {user ? formatPlural("video", Number(subtitle ?? 0)) : subtitle ?? ""}
+                                    <div 
+                                        class="spaces__content-item-details c-flx-sb" 
+                                        style:margin={"0px 0px 0px 20px"}
+                                        style:height={"100%"}
+                                    >
+                                        <div>
+                                            <div class="spaces__content-item-title" style:margin-bottom="4px">
+                                                {title}
+                                            </div>
+                                            <div 
+                                                class="spaces__content-item-description"
+                                                title={description}
+                                                style:opacity={description ? 0.8 : 0.5}
+                                            >
+                                                {description ?? "No Description"}
+                                            </div>
+                                        </div>
+                                        <div class="spaces__content-item-subtitle">
+                                            {user ? formatPlural("video", Number(subtitle ?? 0)) : subtitle ?? ""}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        {/each}
+                            {/each}
+                        {/if}
 
                         {#if user && loading}
                             {#each Array(PLAYLIST_SKELETON_LENGTH) as _}
                                 <div 
                                     class="spaces__content-item spaces__content-item--playlist spaces__content-item--skeleton"
+                                    class:spaces__content-item--user-pl={chosenGroupStr === "user"}
                                 >
                                     <div class="spaces__content-item-img" style:border-radius="4px"></div>
                                     <div 
                                         class="spaces__content-item-details c-flx-sb" 
-                                        style:margin={"0px 0px 0px 20px"}
-                                        style:height={"100%"}
+                                        style:margin="0px 0px 0px 20px"
+                                        style:height="100%"
                                     >
                                         <div>
                                             <div class="spaces__content-item-title" style:margin-bottom="4px">
@@ -634,14 +619,15 @@
                                 </div>
                             {/each}
                         {/if}
-
-                        {#if !loading && playlists.length === 0}
-                            <div class="spaces__content-empty-txt">
-                                <p>This collection is empty!</p>
-                            </div>
-                        {/if}
                     </div>
+
+                    {#if user && playlists.length === 0 && !loading}
+                        <div class="spaces__empty-list">
+                            <EmptyList emptyText="This account has 0 playlists."/>
+                        </div>
+                    {/if}
                 {/if}
+
             </div>
         </div>
 
@@ -661,9 +647,14 @@
         height: 85vh;
         padding: 18px 25px 14px 25px;
         position: relative;
-        max-width: 990px;
-        width: 82vw;
-        overflow: hidden;
+        width: min(82vw, 990px);
+
+        &--signed-in &__account-btn {
+            padding-left: 7px;
+        }
+        &--signed-in &__tabs &__arrow:first-child {
+            left: 110px !important;
+        }
 
         h1 {
             @include text-style(1, 500, 1.7rem);
@@ -688,6 +679,7 @@
             width: calc(100% - 240px - 8px);
             padding-right: 0px;
             height: 100%;
+            position: relative;
         }
         /* user profile */
         &__account-btn {
@@ -695,20 +687,27 @@
             border-radius: 15px;
             margin-top: -5px;
             transition: 0.12s ease-in-out;
-            padding: 5px 13px 4px 11px;
+            padding: 0px 13px 0px 11px;
+            height: 30px;
             background-color: rgba(var(--textColor1), 0.05);
-            @include text-style(1, 400, 1.3rem, "Geist Mono");
-            
+            @include text-style(1, 400, 1.3rem);
+            align-items: center;
+
             img {
-                @include circle(14px);
-                margin-right: 8px;
+                @include circle(19px);
             }
-            &--signed-in {
-                @include text-style(1, 400, 1.3rem, "Manrope");
+            span {
+                margin: 0px 0px 1px 8px;
             }
             &:hover {
                 background-color: rgba(var(--textColor1), 0.08);
             }
+        }
+        &__empty-list {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-40%);
         }
 
         /* groups */
@@ -748,11 +747,12 @@
                 opacity: 0.5;
                 margin-right: 7px
             }
-            .spaces__arrow {
-                @include abs-top-left(2px, 100px);
-            }
-            .spaces__arrow--right {
-                @include abs-top-right(2px, 0px);
+        }
+        &__tabs &__arrow {
+            @include abs-top-left(0px, 100px);
+
+            &--right {
+                @include abs-top-right;
                 left: unset;
             }
         }
@@ -764,7 +764,7 @@
             padding-right: 15px;
         }
 
-        /* now playing*/
+        /* now playing */
         &__now-playing {
             width: 100%;
             position: relative;
@@ -822,7 +822,7 @@
             }
             span {
                 color: rgba(white, 0.4);
-                @include text-style(_, 400, 1.25rem, "Geist Mono");
+                @include text-style(_, 400, 1.4rem);
                 display: block;
             }
             &-title {
@@ -833,7 +833,7 @@
                 @include truncate-lines(3);
             }
             &-subtitle {
-                margin-top: 5px;
+                margin-top: 8px;
                 font-size: 1.35rem;
                 font-weight: 300;
                 color: rgb(white, 0.3);
@@ -859,7 +859,7 @@
             }
         }
         &__type-btn {
-            @include text-style(1, 400, 1.24rem, "Geist Mono");
+            @include text-style(1, 400, 1.4rem);
             margin: 0px 12px 0px 0px;
             opacity: 0.2;
 
@@ -889,7 +889,7 @@
             overflow-y: scroll;
             max-height: calc(100% - 215px);
             padding: 3px 0px 20px 2px;
-
+            
             &--no-wallpapers {
                 max-height: calc(100% - 45px);
             }
@@ -995,7 +995,7 @@
         }
         &__choose-btn {
             @include abs-bottom-right(18px, 18px);
-            @include text-style(1, 400, 1.3rem, "Geist Mono");
+            @include text-style(1, 400, 1.3rem);
             background: var(--lightColor2);
             padding: 6px 20px 7px 20px;
             border-radius: 15px;
@@ -1009,24 +1009,25 @@
             &__content {
                 display: block;
             }
-            &__left {
-                width: 100%;
-                margin-right: 0px;
-                height: 260px;
-                margin-bottom: 10px;
+            &__chosen-item {
+                @include flex-col;
+                height: 100%;
+                padding: 10px 4px 10px 4px;
             }
             &__chosen-item-img {
-                margin: 10px 0px 20px 0px;
                 height: 100px;
-
-                img {
-                    height: 100%;
-                    width: 170px;
-                    object-fit: cover;
-                }
+            }
+            &__chosen-item-img img {
+                width: 170px;
+                border-radius: 6px;
             }
             &__chosen-item-description {
-                display: none;
+                @include truncate-lines(2);
+            }
+            &__left {
+                width: 100%;
+                margin: 0px 0px 10px 0px;
+                height: 260px;
             }
             &__right {
                 width: 100%;

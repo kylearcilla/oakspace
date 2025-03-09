@@ -93,7 +93,7 @@
 
     /* Event Handlers */
     function handleResize() {
-        if (!$ytPlayerStore?.doShowPlayer) return
+        if (!$ytPlayerStore?.show) return
     }
 
     onMount(() => window.addEventListener("resize", handleResize))
@@ -272,7 +272,9 @@
             width: fit-content;
         }
         &--ambient &__section {
-            height: 31px;
+            height: 32px;
+            max-height: 32px;
+            min-height: 32px;
         }
         &--ambient-solid &__session,
         &--ambient-solid &__now-block,

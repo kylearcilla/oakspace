@@ -435,6 +435,8 @@
 
             span {
                 @include text-style(0.225, var(--fw-400-500), 1.4rem);
+                display: inline-block;
+                margin-top: 2px;
             }
         }
         &__sfx-btns {

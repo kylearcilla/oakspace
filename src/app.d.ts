@@ -1,8 +1,16 @@
 /// <reference types="svelte" />
 
 declare global {
+	declare namespace YT {
+		class Player {
+			constructor(id: string, options: any)
+		}
+	}
+
 	declare interface Window {
 		google: any;
+		YT: any;
+		onYouTubeIframeAPIReady: () => void;
 	}
 	namespace App {
 		// interface Error {}

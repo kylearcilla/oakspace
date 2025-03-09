@@ -142,7 +142,6 @@
 
         if (signedIn && getOAuthRedirectData("gcal")) {
             calView = "g-cal"
-            removeOAuthRedirectData("gcal")
         }
         if (g_tokenExpired && !tokenExpired && signedIn && !g_loading) {
             focusDate = new Date()

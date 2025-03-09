@@ -1,4 +1,4 @@
-import { derived, writable } from 'svelte/store'
+import { writable } from 'svelte/store'
 import type { YoutubePlayer } from './youtube-player'
 import type { YoutubeUserData } from './youtube-user-data'
 import type { SessionManager } from './session-manager'
@@ -39,7 +39,7 @@ export const googleData = writable<GoogleUserData | null>(null)
 export const weekRoutine = writable<WeeklyRoutine | null>(WEEKLY_ROUTINES[0])
 
 /* youtube */
-export const ytUserDataStore = writable<YoutubeUserData| null>(null)
+export const ytUserStore = writable<YoutubeUserData| null>(null)
 export const ytPlayerStore = writable<YoutubePlayer| null>(null)
 
 /* session */

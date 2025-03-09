@@ -622,20 +622,20 @@ type AmbientSpace = {
     thumbnail: string
     sourceId: string
     type: "wallpaper" | "video" | "playlist"
-    group: AmbientSpaceGroupKey
+    group: AmbientSpaceGenres | "user"
 }
 
-type AmbientSpaceGroupKey = "nature" | "space" | "weather" | "city" | "worlds" |  "lofi" | "architecture"
+type AmbientSpaceGenres = "nature" | "sci-fi" | "weather" | "city" | "worlds" |  "lofi" | "architecture"
+
+type AmbientSpaceGroupKey = AmbientSpaceGenres | "user" | "popular"
 
 type AmbientSpaceGroup = {
-    [key in AmbientSpaceGroupKey]: {
+    [key in AmbientSpaceGenres]: {
       wallpapers: AmbientSpace[]
       videos: AmbientSpace[]
-      playlists?: AmbientSpace[]
+      playlists: AmbientSpace[]
     }
 }
-  
-
 
 type ToastInitOptions = {
     message: string
@@ -991,10 +991,22 @@ type HabitHeatMapDay = {
 
 /* Youtube Stuff */
 type GoogleAuthResponse = {
-    accessToken: string,
-    email: string,
-    username: string,
-    profileImgSrc: string,
+    accessToken: string
+    refreshToken: string
+    expiresIn: number
+}
+
+type YoutubeUserState = {
+    username: string
+    profileImgSrc: string
+    email: string
+    signedIn: boolean
+    playlists: YoutubePlaylist[]
+    playlistsTotal: number
+    fetchedAllItems: boolean
+    loading: boolean
+    tokenExpired: boolean
+    error: any
 }
 
 type YoutubeUserCreds = {
@@ -1004,9 +1016,9 @@ type YoutubeUserCreds = {
 }
 
 type YoutubeUserPlaylistResponse = {
-    userPlaylists: YoutubePlaylist[]
-    userPlsNextPageToken: string
-    userPlaylistsTotal: number
+    playlists: YoutubePlaylist[]
+    nextPageToken: string
+    playlistsTotal: number
 }
 
 type YoutubePlaylistResponse = {
@@ -1035,15 +1047,12 @@ type BoxLayout = {
 }
 
 type YoutubePlaylist = {
-    id: string,
-    title: string,
-    description: string,
-    vidCount: number,
-    channelId: string,
-    channelTitle: string,
-    thumbnailURL: string,
-    channelImgSrc: string,
-    channelURL: string,
+    id: string
+    title: string
+    description: string
+    vidCount: number
+    channelTitle: string
+    thumbnailURL: string
     firstVidId: string | null
 }
 
@@ -1078,11 +1087,7 @@ type YoutubeVideo = {
     viewCount: string
     publishedAt: string
     thumbnailSrc: string
-    channelId: string
     channelName: string
-    channelImgSrc: string
-    channelSubs: string
-    channelUrl: string
     embeddable?: boolean
 }
 

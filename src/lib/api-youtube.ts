@@ -1,87 +1,59 @@
+import { APIError } from "./errors"
 import { APIErrorCode } from "./enums"
 import { shorterNum } from "./utils-general"
-import { getAuth, signOut } from "firebase/auth"
-import { PUBLIC_YT_DATA_V3_API_KEY } from '$env/static/public'
-import { APIError } from "./errors"
 import { authGoogleUser } from "./api-google"
+import { YoutubeUserData } from "./youtube-user-data"
+import { PUBLIC_YT_DATA_V3_API_KEY } from '$env/static/public'
+import { getOAuthRedirectData, setOatuhRedirectContext } from "./utils-home"
 
 const YT_DATA_API_URL = "https://youtube.googleapis.com/youtube/v3"
 
-/**
- * Initiailze 0Auth 2.0 Flow using Firebase to get access token to utilize Google APIs. 
- * Generates a user consent screen pop-up to grant client app permission.
- * Returns an access token and user account metadata.
- * 
- * @returns  User profile data & credentials (no refresh token provided)
- * 
- */
-export const authYoutubeClient = async (): Promise<GoogleAuthResponse> => {
-  try {
-    const res = await authGoogleUser(["youtube.readonly"])
-    
-      return {
-        accessToken:   res.credential.accessToken,
-        email:         res.additionalUserInfo.profile.email,
-        username:      res.additionalUserInfo.profile.name,
-        profileImgSrc: res.additionalUserInfo.profile.picture,
-      }
-  } 
-  catch (error: any) {
-      console.error(error)
-      throw throwFireBaseAPIError(error)
+export function authYoutubeClient() {
+  authGoogleUser(["youtube.readonly"])
+  setOatuhRedirectContext("yt")
+}
+
+export function initYoutubeUserData() {
+  const oauthData = getOAuthRedirectData("yt")
+  const data = localStorage.getItem("youtube-user-data")
+
+  if (oauthData) {
+      return new YoutubeUserData({ context: "init" })
+  }
+  else if (data) {
+      return new YoutubeUserData({ context: "continue" })
+  }
+  else {
+      return null
   }
 }
 
-/**
- * Logs out user using current authentication instance set up from the sign up.
- * TODO: Must investigate error cases for signOut.
- */
-export const logOutUser = async () => {
-  try {
-    await signOut(getAuth())
-  }
-  catch(e) {
-    throw new APIError(APIErrorCode.LOG_OUT)
-  }
-}
+export async function getUserYtPlaylists({ accessToken, max, nextPageToken = "" }: { 
+  accessToken: string 
+  max: number 
+  nextPageToken?: string 
+}): Promise<YoutubeUserPlaylistResponse> {
 
-/**
- * Requests new fresh token. Calls the same Firebase method when logging in.
- * NOTE: Does not actually get a new token from a refresh token (unavailable with firebase)
- * 
- * @returns Fresh new token from auth response.
- */
-export const getFreshToken = async (): Promise<string> => {
-  try {
-      const res = await authYoutubeClient()
-      return res.accessToken
-  } 
-  catch (error: any) {
-    console.error(error)
+  const url = new URL(`${YT_DATA_API_URL}/playlists`)
+  url.searchParams.append("part", "snippet,contentDetails")
+  url.searchParams.append("maxResults", max.toString())
+  url.searchParams.append("mine", "true")
+  url.searchParams.append("key", PUBLIC_YT_DATA_V3_API_KEY)
 
-    throw throwFireBaseAPIError(error)
+  if (nextPageToken) {
+    url.searchParams.append("pageToken", nextPageToken)
   }
-}
-
-/**
- * Make a GET request to Youtube Data API to get video details.
- * 
- * @param   accessToken 
- * @returns User personal playlist details.
- * @throws  Error status rom fetching user playlists
- */
-export const getUserYtPlaylists = async (accessToken: string, max: number, nextPageToken: string = ""): Promise<YoutubeUserPlaylistResponse> => {
-  const url = `${YT_DATA_API_URL}/playlists?part=snippet%2CcontentDetails&maxResults=${max}&mine=true&key=${PUBLIC_YT_DATA_V3_API_KEY}&pageToken=${nextPageToken}`
   
-  const headers = new Headers()
-  headers.append("Content-Type", "application/json")
-  headers.append("Authorization", `Bearer ${accessToken}`)
-  
-  const res = await fetch(url, { method: "GET", headers: headers, })
+  const headers = new Headers({
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${accessToken}`
+  })
+  const res = await fetch(url.toString(), { method: "GET", headers })
   const data = await res.json()
   
   if (!res.ok) {
-      console.error(`Error fetching user playlists. Location: ${data.error.errors[0].location}. Message: ${data.error.message} Code: ${data.error.code}`)
+      console.error(data)
+      
       throw throwYoutubeDataAPIError({
         location: data.error.errors[0].location,
         message: data.error.message,
@@ -91,42 +63,38 @@ export const getUserYtPlaylists = async (accessToken: string, max: number, nextP
 
   const playlists: YoutubePlaylist[] = []
  
-  data.items.map((playlist: any) => {
+  data.items.forEach((playlist: any) => {
+    const { snippet, contentDetails } = playlist
+
       playlists.push({
           id: playlist.id,
-          title: playlist.snippet.title,
-          description: playlist.snippet.description,
-          vidCount: playlist.contentDetails.itemCount,
-          channelId: playlist.snippet.channelId,
-          channelTitle: playlist.snippet.channelTitle,
-          thumbnailURL: playlist.snippet.thumbnails.medium.url,
-          firstVidId: null,
-          channelImgSrc: "",
-          channelURL: ""
+          title: snippet.title,
+          description: snippet.description,
+          vidCount: contentDetails.itemCount,
+          channelTitle: snippet.channelTitle,
+          thumbnailURL: snippet.thumbnails.medium.url,
+          firstVidId: null
       })
   })
 
   return {
-    userPlaylists: playlists,
-    userPlsNextPageToken: data?.nextPageToken,
-    userPlaylistsTotal: data.pageInfo.totalResults
+    playlists,
+    nextPageToken: data?.nextPageToken,
+    playlistsTotal: data.pageInfo.totalResults
   }
 }
 
-/**
- * Make a GET request to Youtube Data API to get video details and another one to get video channel details.
- * 
- * @param videoId Vid in question.
- * @returns       Youtube Video playlist details.
- */
-export const getVidDetails = async (videoId: string, doGetChannel = true): Promise<YoutubeVideo | null> => {
-    let url = `${YT_DATA_API_URL}/videos?part=snippet,status,statistics,id&id=${videoId}&key=${PUBLIC_YT_DATA_V3_API_KEY}`
-
-    const res = await fetch(url)
+export async function getVidDetails(videoId: string): Promise<YoutubeVideo | null> {
+    const url = new URL(`${YT_DATA_API_URL}/videos`)
+    url.searchParams.append("part", "snippet,status,statistics,id")
+    url.searchParams.append("id", videoId)
+    url.searchParams.append("key", PUBLIC_YT_DATA_V3_API_KEY)
+    
+    const res = await fetch(url.toString())
     const data = await res.json()
 
     if (!res.ok) {
-      console.error(`Error fetching video details: Location: ${data.error.errors[0].location}. Message: ${data.error.message}}. Code: ${data.error.code}`)
+      console.error(data)
 
       throw throwYoutubeDataAPIError({
         location: data.error.errors[0].location,
@@ -137,14 +105,6 @@ export const getVidDetails = async (videoId: string, doGetChannel = true): Promi
 
     if (data.items.length === 0) return null
 
-    const channelDetails = doGetChannel ? await getChannelDetails(data.items[0].snippet.channelId) : {
-      channelName: "",
-      channelImgSrc: "",
-      channelId: "",
-      channelSubs: "",
-      channelUrl: ""
-    }
-
     return {
         id: data.items[0].id,
         title: data.items[0].snippet.title,
@@ -153,38 +113,28 @@ export const getVidDetails = async (videoId: string, doGetChannel = true): Promi
         publishedAt: data.items[0].snippet.publishedAt,
         thumbnailSrc: data.items[0].snippet.thumbnails.medium,
         channelName: data.items[0].snippet.channelTitle,
-        channelImgSrc: channelDetails.channelImgSrc,
-        channelId: channelDetails.channelId,
-        channelSubs: channelDetails.channelSubs,
-        channelUrl: channelDetails.channelUrl,
         embeddable: data.items[0].status.embeddable
     }
 }
 
-/**
- * Get a playlist's video items.
- * 
- * @param   playlistId 
- * @returns Youtube Playlist details.
- */
-export const getPlayListItemsDetails = async (options: { 
-  playlistId: string, 
-  channel?: false,
-  maxResults?: 1
-}): Promise<YoutubePlaylistResponse> => {
+export async function getPlayListItemsDetails ({ playlistId, maxResults = 1 }: { 
+  playlistId: string 
+  maxResults?: number
+}): Promise<YoutubePlaylistResponse> {
 
-  const { playlistId, channel = false, maxResults = 1 } = options
-
-  const url = `${YT_DATA_API_URL}/playlistItems?part=snippet,id&maxResults=${maxResults}&playlistId=${playlistId}&key=${PUBLIC_YT_DATA_V3_API_KEY}`
-
-  const headers = new Headers()
-  headers.append("Content-Type", "application/json")
-
-  const res = await fetch(url, { method: "GET", headers: headers, })
+  const url = new URL(`${YT_DATA_API_URL}/playlistItems`)
+  url.searchParams.append("part", "snippet,id")
+  url.searchParams.append("maxResults", maxResults.toString())
+  url.searchParams.append("playlistId", playlistId)
+  url.searchParams.append("key", PUBLIC_YT_DATA_V3_API_KEY)
+  
+  const headers = new Headers({ "Content-Type": "application/json" })
+  const res = await fetch(url.toString(), { method: "GET", headers })
   const data = await res.json()
 
   if (!res.ok) {
-    console.error(`Error fetching playlist details: Location: ${data.error.errors[0].location}. Message: ${data.error.message}. Code: ${data.error.code}`)
+    console.error(data)
+
     throw throwYoutubeDataAPIError({
       location: data.error.errors[0].location,
       message: data.error.message,
@@ -203,15 +153,6 @@ export const getPlayListItemsDetails = async (options: {
   const playlistItems: YoutubeVideo[] = []
   
   for (const plItem of data.items) {
-    let channelDetails = {
-      channelImgSrc: "",
-      channelSubs: "",
-      channelUrl: ""
-    }
-    if (channel) {
-      channelDetails = await getChannelDetails(plItem.snippet.channelId)
-    }
-
       playlistItems.push({
         id: plItem.snippet.resourceId.videoId,
         title: plItem.snippet.title,
@@ -219,11 +160,7 @@ export const getPlayListItemsDetails = async (options: {
         viewCount: "",
         thumbnailSrc: plItem.snippet.thumbnails?.default?.url ?? "",
         publishedAt: plItem.snippet.publishedAt,
-        channelId: plItem.snippet?.videoOwnerChannelId,
-        channelName: plItem.snippet?.videoOwnerChannelTitle,
-        channelImgSrc: channelDetails.channelImgSrc,
-        channelSubs: channelDetails.channelSubs,
-        channelUrl: channelDetails.channelUrl
+        channelName: plItem.snippet?.videoOwnerChannelTitle
       })
   }
 
@@ -234,69 +171,38 @@ export const getPlayListItemsDetails = async (options: {
   }
 }
 
-
-/**
- * Get playlist details. 
- * Note that vid count (-1) and first vid id (null) values will not be included as the are not contains in the request.
- * @param playlistId   Requested playlist id.
- * @returns            Youtube playlist id data.
- */
-export const getPlaylistDetails = async (playlistId: string): Promise<YoutubePlaylist | null> => {
-  const url = `${YT_DATA_API_URL}/playlists?part=id,snippet&id=${playlistId}&key=${PUBLIC_YT_DATA_V3_API_KEY}`
-
-  const headers = new Headers()
-  headers.append("Content-Type", "application/json")
-
-  const res = await fetch(url, { method: "GET", headers: headers, })
+export async function getPlaylistDetails(playlistId: string): Promise<YoutubePlaylist | null> {
+  const url = new URL(`${YT_DATA_API_URL}/playlists`)
+  url.searchParams.append("part", "id,snippet")
+  url.searchParams.append("id", playlistId)
+  url.searchParams.append("key", PUBLIC_YT_DATA_V3_API_KEY)
+  
+  const headers = new Headers({
+    "Content-Type": "application/json",
+  })
+  const res = await fetch(url.toString(), { method: "GET", headers })
   const data = await res.json()
 
   if (!res.ok) {
-    console.error(`Error fetching playlist details: Location: ${data.error.errors[0].location}. Message: ${data.error.message}.`)
-    throw throwYoutubeDataAPIError(data.error.code)
+    console.error(data)
+
+    throw throwYoutubeDataAPIError({
+      location: data.error.errors[0].location,
+      message: data.error.message,
+      status: data.error.code
+    })
   }
 
   if (data.items.length === 0) return null
-
-  const channelDetails = await getChannelDetails(data.items[0].snippet.channelId)
 
   return {
     id: data.items[0].id,
     title: data.items[0].snippet.title,
     description: data.items[0].snippet.description,
     vidCount: -1,
-    channelId: data.items[0].snippet.channelId,
     channelTitle: data.items[0].snippet.channelTitle,
     thumbnailURL: data.items[0].snippet.thumbnails.medium.url,
-    firstVidId: null,
-    channelImgSrc: channelDetails.channelImgSrc,
-    channelURL: channelDetails.channelUrl
-  }
-}
-
-
-/**
- * Make a GET request to Youtube Data API to get channel details.
- * 
- * @param   channelId 
- * @returns Youtube Channel details
- */
-export const getChannelDetails = async (channelId: string): Promise<YoutubeChannel> => {
-  const url = `${YT_DATA_API_URL}/channels?part=snippet%2Cstatistics&id=${channelId}&key=${PUBLIC_YT_DATA_V3_API_KEY}`
-
-  const res = await fetch(url)
-  const data = await res.json()
-
-  if (!res.ok) {
-    console.error(`Error fetching channel details: Location: ${data.error.errors[0].location}. Message: ${data.error.message}}.`)
-    throw getYtIframeAPIError(data.error.code)
-  }
-
-  return {
-    channelId: data.items[0].id,
-    channelName: data.items[0].snippet.title,
-    channelImgSrc: data.items[0].snippet.thumbnails.default.url,
-    channelSubs: shorterNum(data.items[0].statistics.subscriberCount),
-    channelUrl: data.items[0].snippet.customUrl
+    firstVidId: null
   }
 }
 
@@ -310,20 +216,16 @@ export const getChannelDetails = async (channelId: string): Promise<YoutubeChann
  * @param   context  In what API context is the error originating from
  * @returns          Error type and context will be relevant in how the error will be displayed to the user.
  */
-const throwYoutubeDataAPIError = (context: {
+function throwYoutubeDataAPIError({ status, location, message }: {
   status?: number,
   location?: string,
   message?: string
-}) => {
-    const { status, location } = context
-
-    console.error("throwYoutubeDataAPIError")
-
-    if (status === 404 && location === "channelId") {
-        throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Your Google account is not associated with any YouTube account.")
-    }
-    else if (status === 404) {
+}) {
+    if (status === 404) {
         throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Requested media unavailable.")
+    }
+    else if (status === 400 && message === "Invalid Credentials") {
+        throw new APIError(APIErrorCode.EXPIRED_TOKEN)
     }
     else {
         throw new APIError(APIErrorCode.GENERAL, "There was an error with Youtube. Please try again later.")
@@ -331,26 +233,9 @@ const throwYoutubeDataAPIError = (context: {
 }
 
 /**
- * Finds the right error to throw based on the error returned by Firebase.
- * TODO: need to find documentation
- * 
- * @param error 
- */
-export function throwFireBaseAPIError(error: any) {
-    const errorStr = error.toString()
-    const matches = errorStr.match(/\(([^)]+)\)/)
-    const contextCode = matches[1]
-
-    if (["auth/popup-closed-by-user", "auth/user-canceled", "auth/canceled-popup-request"].includes(contextCode)) {
-      throw new APIError(APIErrorCode.AUTH_DENIED)
-    }
-    else {
-      throw new APIError(APIErrorCode.AUTHORIZATION_ERROR)
-    }
-}
-
-/**
  * Return the appopriate error with the right context based on the error code return from Youtube iFrame API.
+ * https://developers.google.com/youtube/iframe_api_reference
+ * 
  * @param error  Error code returned from Youtube iFrame Player API
  */
 export function getYtIframeAPIError(code: number, target?: any) {

@@ -38,6 +38,7 @@
 
     let focusTimeWidth = 0
     let breakTimeWidth = 0
+    let stateRef = state
     
     let width = 0
     let holding = false
@@ -51,6 +52,12 @@
     let tasksContainer: HTMLElement
     let rightContainerRef: HTMLElement
 
+    $: if (stateRef != state) {
+        focusTimeWidth = 0
+        breakTimeWidth = 0
+        stateRef = state
+    }
+
     function getPrevPage(prevPage: string) {
         if (!prevPage) return "Home"
 
@@ -62,14 +69,6 @@
     }
     function onFontStyleOptnClicked(optn: string) {
         manager!.updateFontStyle(optn as FontStyle)
-    }
-    function toggleState() {
-        if (state === "focus") {
-            manager!.stateTransition("break")
-        }
-        else if (state === "break") {
-            manager!.stateTransition("focus")
-        }
     }
     function onListItemClicked(optn: string) {
         if (optn === "Cancel Session") {
@@ -120,7 +119,7 @@
         holding = false
 
         if (mode === "flow") {
-            toggleState()
+            manager!.flowModeToggleState()
         }
         else if (manager!.elapsedSecs < SessionManager.MIN_SESSION_TIME_MINS * 60) {
             confirmModalOpen = true
@@ -271,7 +270,7 @@
                                     name: "Show Tasks",
                                     active: !showTasks,
                                     onToggle: () => manager.toggleTasks()
-                                }, 
+                                },
                                 { 
                                     name: "Minimize UI",
                                     active: !minUi,
@@ -283,12 +282,8 @@
                                     divider: true,
                                     onToggle: () => manager.toggleVisualizer()
                                 },
-                                {
-                                    name: location === "workspace" ? "Move to Default" : "Move to Workspace",
-                                },
                                 { 
                                     name: "Change Font Style",
-                                    divider: true,
                                     rightIcon: { 
                                         type: "svg",
                                         icon: Icon.ChevronRight
@@ -299,6 +294,10 @@
                                     onPointerLeave: () => {
                                         fontStylesOpen = false
                                     }
+                                },
+                                {
+                                    name: location === "workspace" ? "Move to Default" : "Move to Workspace",
+                                    divider: true,
                                 },
                                 ...(mode === "flow" ? [{ name: "Finish Session" }] : []),
                                 { 
@@ -453,7 +452,7 @@
             }
         }
         &__content {
-            margin-top: 80px;
+            margin-top: 5vh;
             @include center;
             flex-direction: column;
         }

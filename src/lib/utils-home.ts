@@ -10,7 +10,7 @@ import { didTodoistAPIRedirect } from "./api-todoist"
 import { loadTheme, setNewTheme } from "./utils-appearance"
 import { continueFocusSession, didInitSession } from "./utils-session"
 import { getElemById, isTargetTextEditor, randomArrayElem } from "./utils-general"
-import { didInitYtUser, initYoutubePlayer, youtubeLogin, didInitYtPlayer, handleChooseItem } from "./utils-youtube"
+import { initYoutubePlayer, didInitYtPlayer, handleChooseItem, initYtUserData } from "./utils-youtube"
 
 /* constants */
 export const SMALL_WIDTH = 740
@@ -56,15 +56,13 @@ export const initAppState = async () => {
     loadTheme()
     loadGlobalContext()
     loadAmbience()
+    initYtUserData()
 
     if (didInitSession()) {
         continueFocusSession()
     }
-    if (didInitYtUser()) {
-        youtubeLogin()
-    }
     if (didInitYtPlayer()) {
-        await initYoutubePlayer()
+        initYoutubePlayer()
     }
 }
 
@@ -372,7 +370,7 @@ export function setAmbience() {
             styling: "blur",
             active: true,
             showTime: true,
-            clockFont: "system",
+            fontStyle: "default",
             spacesOpen: false,
             space: liveSpace
         }
@@ -427,13 +425,13 @@ export function saveSideBarView(options: SideBarViews) {
     localStorage.setItem("side-bar", data)
 }
 
-export function setOatuhRedirectContext(api: "gcal" | "tapi") {
+export function setOatuhRedirectContext(api: "gcal" | "tapi" | "yt") {
     localStorage.setItem("oauth-redirect-context", JSON.stringify({ 
         redirectBackUrl: window.location.pathname, api
     }))
 }
 
-export function getOAuthRedirectData(api: "gcal" | "tapi") {
+export function getOAuthRedirectData(api: "gcal" | "tapi" | "yt") {
     const code = localStorage.getItem(`${api}-code`)
     const error = localStorage.getItem(`${api}-error`) 
     const state = localStorage.getItem(`${api}-state`)
@@ -447,7 +445,7 @@ export function getOAuthRedirectData(api: "gcal" | "tapi") {
     }
 }
 
-export function removeOAuthRedirectData(api: "gcal" | "tapi") {
+export function removeOAuthRedirectData(api: "gcal" | "tapi" | "yt") {
     localStorage.removeItem(`${api}-code`)
     localStorage.removeItem(`${api}-error`)
     localStorage.removeItem(`${api}-state`)

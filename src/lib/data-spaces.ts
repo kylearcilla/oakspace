@@ -220,7 +220,7 @@ export const SPACES: AmbientSpaceGroup = {
             },
         ]
     },
-    space: {
+    "sci-fi": {
         wallpapers: [
             {
                 title: "Galaxy",
@@ -228,7 +228,7 @@ export const SPACES: AmbientSpaceGroup = {
                 thumbnail: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=250&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                 sourceId: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2422&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                 type: "wallpaper",
-                group: "space"
+                group: "sci-fi"
             },
             {
                 title: "Space",
@@ -236,7 +236,7 @@ export const SPACES: AmbientSpaceGroup = {
                 thumbnail: "https://images.unsplash.com/photo-1447433819943-74a20887a81e?q=80&w=250&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                 sourceId: "https://images.unsplash.com/photo-1447433819943-74a20887a81e?q=80&w=2292&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                 type: "wallpaper",
-                group: "space"
+                group: "sci-fi"
             },
             {
                 title: "Earth",
@@ -244,7 +244,7 @@ export const SPACES: AmbientSpaceGroup = {
                 thumbnail: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=250&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                 sourceId: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2372&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                 type: "wallpaper",
-                group: "space"
+                group: "sci-fi"
             },
             {
                 title: "Aurora Borealis",
@@ -252,7 +252,7 @@ export const SPACES: AmbientSpaceGroup = {
                 thumbnail: "https://images.unsplash.com/photo-1507908708918-778587c9e563?q=80&w=250&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                 sourceId: "https://images.unsplash.com/photo-1507908708918-778587c9e563?q=80&w=2000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                 type: "wallpaper",
-                group: "space"
+                group: "sci-fi"
             },
             {
                 title: "SpaceX Falcon Heavy Launch",
@@ -260,7 +260,7 @@ export const SPACES: AmbientSpaceGroup = {
                 thumbnail: "https://images.unsplash.com/photo-1517976487492-5750f3195933?q=80&w=250&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                 sourceId: "https://images.unsplash.com/photo-1517976487492-5750f3195933?q=80&w=2370&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                 type: "wallpaper",
-                group: "space"
+                group: "sci-fi"
             },
         ],
         videos: [
@@ -270,7 +270,7 @@ export const SPACES: AmbientSpaceGroup = {
                 thumbnail: "https://i.ytimg.com/vi/kBZJhKDhu60/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDjC8JkVfeBzXYnleok1viomoxg5A",
                 sourceId: "kBZJhKDhu60",
                 type: "video",
-                group: "space"
+                group: "sci-fi"
             },
             {
                 title: "Sub Zero: Dark Sci Fi Music For Winter Relaxation (Deep And Relaxing)",
@@ -278,7 +278,7 @@ export const SPACES: AmbientSpaceGroup = {
                 thumbnail: "https://i.ytimg.com/vi/n--SX54AUZU/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCftavojQm2ri5e11A-_EW2El_HQQ",
                 sourceId: "n--SX54AUZU",
                 type: "video",
-                group: "space"
+                group: "sci-fi"
             },
             {
                 title: "🎵 Cozy Balcony Oasis: Rain and Ambient Music | Cyberpunk Bedroom above the City | 4K | 10 hours",
@@ -286,7 +286,7 @@ export const SPACES: AmbientSpaceGroup = {
                 thumbnail: "https://i.ytimg.com/vi/DTKb1uH5W18/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARgoIFEofzAP&rs=AOn4CLCdJmyx2BNaIfuHKKe8OwGPxObPVg",
                 sourceId: "DTKb1uH5W18",
                 type: "video",
-                group: "space"
+                group: "sci-fi"
             },
             {
                 title: "🎵 Lost in the Cosmic Sea | Deep Space Ambient Music with Water Purification Sounds | 4K | 10 hrs",
@@ -294,7 +294,7 @@ export const SPACES: AmbientSpaceGroup = {
                 thumbnail: "https://i.ytimg.com/vi/CGR7PdNut2Q/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhEIGUoRDAP&rs=AOn4CLAxMcZLZKs25Id2Rpfkig9vpfnNug",
                 sourceId: "CGR7PdNut2Q",
                 type: "video",
-                group: "space"
+                group: "sci-fi"
             },
             {
                 title: "Sands of Arrakis - An EPIC Ambient Music Journey - Inspired By The Movie DUNE [Vocals By Syberlilly]",
@@ -302,7 +302,7 @@ export const SPACES: AmbientSpaceGroup = {
                 thumbnail: "https://i.ytimg.com/vi/F0Jk80wDw2w/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAma1NnfHEX8DkAKGGusXElyhIqsQ",
                 sourceId: "F0Jk80wDw2w",
                 type: "video",
-                group: "space"
+                group: "sci-fi"
             },
             {
                 title: "✨ Space Ambient Music • Deep Relaxation Space Journey [ 4K UHD ]",
@@ -310,7 +310,7 @@ export const SPACES: AmbientSpaceGroup = {
                 thumbnail: "https://i.ytimg.com/vi/nq4tT68UoCg/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDuwfmjigoJzQU5sWem_O2K1hrkBg",
                 sourceId: "nq4tT68UoCg",
                 type: "video",
-                group: "space"
+                group: "sci-fi"
             },
             {
                 title: "Blade Runner - Neon Ambience | For Work, Study and Relaxation - 8 Hours",
@@ -318,7 +318,7 @@ export const SPACES: AmbientSpaceGroup = {
                 thumbnail: "https://i.ytimg.com/vi/VM5IVr6k24I/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDJ-ZRuxNTINmByTBz-rP0r7tUgHQ",
                 sourceId: "VM5IVr6k24I",
                 type: "video",
-                group: "space"
+                group: "sci-fi"
             },
             {
                 title: "In Planetary Orbit | Living in Peaceful Space | Soothing Smooth Deep Rumble Space Sounds | 10 hours",
@@ -326,7 +326,7 @@ export const SPACES: AmbientSpaceGroup = {
                 thumbnail: "https://i.ytimg.com/vi/TPWYQ94Ief4/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAvZQrgy8lYFQt4KzJCV0LBs2pkSQ",
                 sourceId: "TPWYQ94Ief4",
                 type: "video",
-                group: "space"
+                group: "sci-fi"
             },
         ],
         playlists: []
@@ -1068,9 +1068,9 @@ export const POPULAR_SPACES: {
             thumbnail: "https://images.unsplash.com/photo-1609709725221-d3c6bdadc166?q=80&w=250&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
             sourceId: "https://images.unsplash.com/photo-1609709725221-d3c6bdadc166?q=80&w=2787&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
             type: "wallpaper",
-            group: "space"
+            group: "sci-fi"
         },
-        SPACES.space.wallpapers[0],
+        SPACES["sci-fi"].wallpapers[0],
         SPACES.weather.wallpapers[2]
     ],
     videos: [        

@@ -2,21 +2,21 @@
 	import { onDestroy, onMount } from "svelte"
 	import { globalContext, ytPlayerStore, timer, sessionManager } from "$lib/store"
     
-	import { hasAmbienceSpace, setAmbience, SYSTEM_FONT } from "$lib/utils-home"
+	import { getFontFromStyle } from "$lib/utils-general"
+	import { hasAmbienceSpace, setAmbience} from "$lib/utils-home"
 	import { formatTimeToHHMM, prefer12HourFormat } from "$lib/utils-date"
 
 	import ActiveSession from "../ActiveSession.svelte"
-	import SpaceSelection from "./SpaceSelection.svelte"
-	import { getFontFromStyle } from "$lib/utils-general";
+	import AmbientSpaceSelection from "./AmbientSpaceSelection.svelte"
 
     type FontOffsetMap = {
         [key in FontStyle]: { topOffset: string }
     }
 
-    const FONT_SIZE = 17
+    const FONT_SIZE = 16
     const FAM_OFFSETS: FontOffsetMap = {
         "default": { topOffset: "-40px" },
-        "stylish": { topOffset: "-50px" },
+        "stylish": { topOffset: "-47px" },
         "fancy":   { topOffset: "-55px" },
         "cute":    { topOffset: "-70px" },
         "mono":    { topOffset: "-50px" },
@@ -28,7 +28,7 @@
     $: showTime = ambience?.showTime
     $: fontStyle = ambience?.fontStyle ?? "default"
     $: session = $sessionManager?.session
-    $: showSession = $sessionManager?.show
+    $: activeSession = $globalContext.sessionLocation === "workspace" && $sessionManager?.show
     
     const TOP_PADDING = 40
     const NUM_SPACING = TOP_PADDING + 10
@@ -160,7 +160,7 @@
         {@const { topOffset } = FAM_OFFSETS[fontStyle]}
         <div 
             class="space__time-wrapper"
-            class:hidden={!showTime || showSession}
+            class:hidden={!showTime || activeSession}
             style:font-family={fam}
             style:font-size={`${scaleFactor * FONT_SIZE}rem`}
         >
@@ -219,7 +219,7 @@
             </div>
         </div>
     {/if}
-    {#if session && $globalContext.sessionLocation === "workspace" && showSession}
+    {#if session && activeSession}
         <div class="space__session">
             <ActiveSession />
         </div>
@@ -227,7 +227,7 @@
 </div>
 
 {#if ambience?.spacesOpen}
-    <SpaceSelection /> 
+    <AmbientSpaceSelection /> 
 {/if}
 
 <style global lang="scss">
@@ -265,9 +265,9 @@
             margin-right: 12px;
         }
         &__time-period {
-            font-size: 3rem;
+            font-size: 2rem;
             font-weight: 300;
-            margin-top: -5px;
+            margin-top: -2px;
             letter-spacing: 2px;
         }
         &__digit {

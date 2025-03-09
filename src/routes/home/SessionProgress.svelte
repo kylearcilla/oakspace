@@ -11,6 +11,7 @@
     const BOOKEND_SVG_WIDTH = BOOK_END_LINE_COUNT * SVG_ITEM_WIDTH
     const NORMAL_LINE_HEIGHT = 9
     const LONG_LINE_HEIGHT = 13
+    const ABMIENT_ACTIVE_OPACITY = 0.6
 
     const DATA_ATTR_INACTIVE_OPACITY = "data-inactive-opacity"
     
@@ -29,6 +30,7 @@
     $: light = !$themeState.isDarkTheme
     $: location = context.sessionLocation
     $: store = $sessionManager
+    $: inWorkspace = location === "workspace"
 
     $: onWidthResize(width)
 
@@ -190,16 +192,18 @@
     }
 
     function paintCurrLineOnFocus(line: SVGRectElement) {
+        const progOpacity = Math.min(currLineProgress, inWorkspace ? ABMIENT_ACTIVE_OPACITY : 1)
+        const opacity = Math.max(progOpacity, 0.35)
+
         if (currLine && currLine != line) {
-            const opacity = Math.min(Math.max(currLineProgress, 0.35), 1)
             currLine.style.fill = `rgba(${activeColorRGB}, ${opacity})`
             toggleTransition(currLine, false)
             
-            line.style.fill = `rgba(${activeColorRGB}, ${Math.max(currLineProgress, 0.35)})`
+            line.style.fill = `rgba(${activeColorRGB}, ${opacity})`
             toggleTransition(line, true)
             currLineProgress = 0
         }
-        line.style.fill = `rgba(${activeColorRGB}, ${Math.max(currLineProgress, 0.35)})`
+        line.style.fill = `rgba(${activeColorRGB}, ${opacity})`
         currLine = line
     }
 
@@ -266,17 +270,17 @@
         idx: number 
         activeOpacity?: number 
     }) {
-        const pastInactiveSegment = activeOpacity != undefined && (type === "paused" || type === "break")
+        const pastInactive = activeOpacity != undefined && (type === "paused" || type === "break")
 
         if (idx >= currLineIdx && type === "break") {
             line.style.fill = breakColor
         }
-        else if (pastInactiveSegment) {
+        else if (pastInactive) {
             line.setAttribute(DATA_ATTR_INACTIVE_OPACITY, `${1 - activeOpacity}`)
             line.style.fill = activeOpacity === 0 ? breakColor : `rgba(${activeColorRGB}, ${Math.max(activeOpacity, 0.15)})`
         }
         else if (type === "progress") {
-            line.style.fill = `rgba(${activeColorRGB}, ${context.sessionLocation === "workspace" ? 0.7 : 1})`
+            line.style.fill = `rgba(${activeColorRGB}, ${inWorkspace ? ABMIENT_ACTIVE_OPACITY : 1})`
         }
         else {
             line.style.fill = breakColor

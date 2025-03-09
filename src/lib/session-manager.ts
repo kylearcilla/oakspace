@@ -38,7 +38,7 @@ export class SessionManager {
     isPlaying = false
     showTasks = false
     minUi = false
-    visualizer = false
+    visualizer = true
     show = true
     fontStyle: FontStyle = "default"
 
@@ -48,7 +48,7 @@ export class SessionManager {
     static readonly TRANSITION_DUR_SECS = 10
     static readonly MIN_SESSION_TIME_MINS = 10
     
-    static readonly CHIME_PERIOD_SECS = 60 * 1
+    static readonly CHIME_PERIOD_SECS = 60 * 4
     readonly LENGTHY_BREAK_REMIND_SECS = 60 * 4
     readonly LENGTHY_BREAK_THRESHOLD_SECS = 60 * 20
     readonly FOCUS_MODE_TIME_EXTEND_SECS = 60 * 60
@@ -82,7 +82,7 @@ export class SessionManager {
             this.updateVisEnd()
         }
         if (session && this.session.mode === "pom") {
-            this.initNextBreak()
+            this.initNextPomBreak()
         }
     }
 
@@ -162,15 +162,12 @@ export class SessionManager {
 
         if (!this.isPlaying) {
             this.pauseCount++
-            this.currSegmentIdx = this.newPauseSegment()
+            this.newBreakSegment("paused")
 
             this.update({ 
                 segments: this.segments,
                 pauseCount: this.pauseCount
             })
-        }
-        else {
-            this.currSegmentIdx = -1
         }
     }
 
@@ -230,16 +227,16 @@ export class SessionManager {
             
             if (timeleft <= 0) {
                 toFocus ? this.focus() : this.break()
-                this.initNextBreak()
+                this.initNextPomBreak()
             }
         }
-        else if (this.isPlaying) {
-            const emoji = focus ? "⏰" : "🌿"
-            setDocumentTitle(emoji + secsToHhMmSs(this.progressSecs))
+        else if (this.isPlaying && focus) {
+            setDocumentTitle("🌿" + secsToHhMmSs(this.progressSecs))
         }
         else {
-            this.updateSegments()
-            setDocumentTitle("⏸️" + secsToHhMmSs(this.progressSecs))
+            this.updateRecentBreakSegment()
+            const emoji = state === "break" ? "🌿" : "⏸️"
+            setDocumentTitle(emoji + secsToHhMmSs(this.progressSecs))
         }
 
         this.autoSoundHandler()
@@ -282,6 +279,7 @@ export class SessionManager {
         if (toState === "break") {
             this.state = "to-break"
             this.playBreakSound()
+            this.newBreakSegment("break")
 
             this.update({ 
                 progressSecs: this.progressSecs,
@@ -306,7 +304,7 @@ export class SessionManager {
      * Break inlcude both pauses & breaks.
      * Triggers during the conclusion of a break segment and on to a focus segment.
      */
-    initNextBreak() {
+    initNextPomBreak() {
         const { focusTime, breakTime } = this.session
         const transSecs = SessionManager.TRANSITION_DUR_SECS
         const firstBreakStart = addToDate({ date: new Date(), time: focusTime })
@@ -315,11 +313,6 @@ export class SessionManager {
         this.periods++
         this.nextBreakSecs = (this.periods * focusTime) + ((this.periods - 1) * breakTime) + ((this.periods - 1) * (2 * transSecs))
 
-        this.segments.push({
-            start: firstBreakStart,
-            end: firstBreakEnd,
-            type: "break"
-        })
         this.update({
             periods: this.periods,
             nextBreakSecs: this.nextBreakSecs
@@ -329,12 +322,11 @@ export class SessionManager {
     /**
      * Update the inactive segments (pause / break) after each tick.
      */
-    updateSegments() {
+    updateRecentBreakSegment() {
         const idx = this.currSegmentIdx
         if (idx < 0) return
 
         const recentSegment = this.segments[idx]
-
         this.segments[idx] = {
             ...recentSegment, end: new Date()
         }
@@ -376,12 +368,24 @@ export class SessionManager {
         }
     }
 
-    newPauseSegment() {
+    newBreakSegment(type: "break" | "paused") {
         this.segments.push({
-            type: "paused", start: new Date(), end: new Date()
+            type, start: new Date(), end: new Date()
         })
 
-        return this.segments.length - 1
+        this.currSegmentIdx = this.segments.length - 1
+
+        return this.currSegmentIdx
+    }
+
+    flowModeToggleState() {
+        if (this.state === "break") {
+            this.stateTransition("focus")
+            this.periods++
+        }
+        else if (this.state === "focus") {
+            this.stateTransition("break")
+        }
     }
 
     /* sound */

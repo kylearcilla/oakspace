@@ -11,7 +11,7 @@ import { fetchDayEvents, fetchDayEventsPartial, fetchUserCalendars } from "./api
 export class GoogleCalendarManager {
     accessToken = ""
     refreshToken = ""
-    tokenExpiresInSecs = 0
+    expiresIn = 0
     accessTokenCreationDate: Date | null = null
     calSyncToken = ""
 
@@ -56,10 +56,10 @@ export class GoogleCalendarManager {
             this.setLoading()
             console.log("googlecal - handle redirect")
 
-            const { accessToken, refreshToken, expiresIn } = await handleGoogleRedirect()
+            const { accessToken, refreshToken, expiresIn } = await handleGoogleRedirect("gcal")
             this.accessToken = accessToken
             this.refreshToken = refreshToken
-            this.tokenExpiresInSecs = expiresIn
+            this.expiresIn = expiresIn
             this.accessTokenCreationDate = new Date()
 
             await this.initDayCalsEvents()
@@ -95,8 +95,13 @@ export class GoogleCalendarManager {
                 this.onError({ 
                     error, 
                     refreshFunc: async () => {
-                        await this.refreshAccessToken()
-                        await this.initDayCalsEvents()
+                        try {
+                            await this.refreshAccessToken()
+                            await this.initDayCalsEvents()
+                        }
+                        catch(error: any) {
+                            this.quit({ error: true })
+                        }
                     }
                 })
             }
@@ -118,7 +123,7 @@ export class GoogleCalendarManager {
             console.log("googlecal - token refreshed")
 
             this.accessToken = accessToken
-            this.tokenExpiresInSecs = expiresIn
+            this.expiresIn = expiresIn
             this.accessTokenCreationDate = new Date()
             
             this.setTokenExpired(false)
@@ -186,7 +191,7 @@ export class GoogleCalendarManager {
     hasAccessTokenExpired() {
         const currentTime = new Date().getTime()
         const timeElapsed = currentTime - this.accessTokenCreationDate!.getTime()
-        const timeRemaining = (this.tokenExpiresInSecs * 1000) - timeElapsed
+        const timeRemaining = (this.expiresIn * 1000) - timeElapsed
         const threshold = this.ACTIVE_TOKEN_THRESHOLD_SECS * 1000 
     
         return timeRemaining <= threshold
@@ -628,7 +633,7 @@ export class GoogleCalendarManager {
         localStorage.setItem('google-calendar', JSON.stringify({
             accessToken: this.accessToken,
             refreshToken: this.refreshToken,
-            tokenExpiresInSecs: this.tokenExpiresInSecs,
+            expiresIn: this.expiresIn,
             accessTokenCreationDate: this.accessTokenCreationDate,
             calSyncToken: this.calSyncToken
         }))
@@ -646,7 +651,7 @@ export class GoogleCalendarManager {
         const calendar = JSON.parse(data)
         this.accessToken = calendar.accessToken
         this.refreshToken = calendar.refreshToken
-        this.tokenExpiresInSecs = calendar.tokenExpiresInSecs
+        this.expiresIn = calendar.expiresIn
         this.accessTokenCreationDate = new Date(calendar.accessTokenCreationDate)
         this.calendars = calendar.calendars
         this.events = calendar.events

@@ -8,7 +8,7 @@
     export let buttonText = "Add a Item"
     export let loadingText = "Loading"
     export let subtitle: string | undefined = undefined
-    export let onButtonClick: () => void
+    export let onButtonClick: (() => void) | undefined = undefined
 
     $: isLight = !$themeState.isDarkTheme
 
@@ -34,9 +34,11 @@
                 "{subtitle}"
             </span>
         {/if}
-        <button on:click={onButtonClick}>
-            {buttonText}
-        </button>
+        {#if onButtonClick}
+            <button on:click={onButtonClick}>
+                {buttonText}
+            </button>
+        {/if}
     {/if}
 </div>
 

@@ -6,11 +6,7 @@ import { youtubeAPIErrorHandler } from "./utils-youtube"
 import { getVidDetails, getYtIframeAPIError } from "./api-youtube"
 import { loadYtPlayerData, saveYtPlayerData, deleteYtPlayerData, setYoutubeScript } from "./utils-youtube"
 
-/**
- * Manager for a youtube player, leveraging the YouTube iFrame API
- * Is itself a store / reactive class (initialized in instantiation).
- * Used to play playlists and videos only for Youtube Player and Live Ambient Spaces (videos).
- */
+
 export class YoutubePlayer {
     player: any
 
@@ -19,28 +15,27 @@ export class YoutubePlayer {
     playlistClicked: YoutubePlaylist | null = null
     playlistVidIdx: number | null = null
     
-    iFrameVidId      = ""
-    
-    isPlaying        = false
-    isRepeating      = false
-    isShuffled       = false
-    show             = true
-    hasActiveSession = false
-    isFetchingVid    = false
-    volume: number   = 50
+    iFrameVidId = ""
+    isPlaying = false
+    isRepeating = false
+    isShuffled = false
+    show = true
+
+    loadedBefore = false
+    isFetchingVid = false
+    volume = 50
 
     // is playing isolated video
     isoVideo = false
     error: any = null
     state = -1
         
-    static IFRAME_ID    = "yt-player"
+    static readonly IFRAME_ID = "yt-player"
+    readonly LOAD_PREV_PLAYER_STATE_DELAY = 1000
+    readonly AUTO_PLAY_DELAY = 1200
+    readonly READY_DELAY = 2000
 
-    LOAD_PREV_PLAYER_STATE_DELAY = 1000
-    AUTO_PLAY_DELAY = 1200
-    READY_DELAY = 2000
-
-    PLAYER_OPTIONS: any = {
+    options: any = {
         height: "100%", 
         width: "100%",
         playerVars: {
@@ -57,15 +52,9 @@ export class YoutubePlayer {
 
     constructor() {
         ytPlayerStore.set(this)
-        this.loadAndSetPlayerData()
+        this.loadData()
     }
 
-    /* iFrame API Set Up */
-
-    /**
-     * Initialize Youtube iFrame Player API.
-     * Must initialize after refreshes.
-     */
     async initYtPlayer() {
         try {
             await this.initIframePlayerAPI()
@@ -73,20 +62,18 @@ export class YoutubePlayer {
         catch(error: any) {
             this.onError(new APIError(APIErrorCode.PLAYER, "There was a problem initializing the Youtube Player. Please try again later."))
             
-            if (!this.hasActiveSession) {
+            if (!this.loadedBefore) {
                 this.quit()
             }
-            throw error
         }
     }
 
-    /**
-     * Initialize iFrame Player API asynchrnously
-     */
+    /* API Initialization */
+
     initIframePlayerAPI = async () => {
         this.initEventHandlers()
 
-        // @ts-ignore
+        // initialize API if not already
         if (!window.YT) {
             setYoutubeScript()
             await this.initPlayerOnAPIReady()
@@ -96,25 +83,31 @@ export class YoutubePlayer {
         }
     }
 
-    /**
-     * Initializes a new YouTube iframe player instance on API ready
-     */
     initPlayerOnAPIReady() {
-        return new Promise<void>((resolve) => (window as any).onYouTubeIframeAPIReady = () => {
+        return new Promise<void>((resolve) => window.onYouTubeIframeAPIReady = () => {
             this.initPlayerInstance()
             resolve()
         })
     }
 
     initPlayerInstance() {
-        // @ts-ignore
-        this.player = new YT.Player(YoutubePlayer.IFRAME_ID, this.PLAYER_OPTIONS)
+        this.player = new YT.Player(YoutubePlayer.IFRAME_ID, this.options)
     }
 
-    /**
-     * Update data store for Youtube Player.
-     * @param newData  Incorporate new data from here.
-     */
+    initEventHandlers() {
+        this.options.events.onReady = this.onYtPlayerReadyHandler
+        this.options.events.onStateChange = this.oniFrameStateChanged
+        this.options.events.onError = this.onIframeError
+    }
+
+    onIframeError = (error: any) => {
+        const { data: errorCode, target } = error
+
+        if (errorCode === null || errorCode === undefined) return
+        this.onError(getYtIframeAPIError(errorCode, target))
+    }
+
+
     update(newData: Partial<YoutubePlayer>) {
         ytPlayerStore.update((data) => (this.getNewStateObj(newData, data!)))
         
@@ -130,6 +123,8 @@ export class YoutubePlayer {
         })
     }
 
+    /* handlers */
+
     /**
      * When player has been successfully initiated. 
      * Called when initiated the first time or after refreshes.
@@ -138,10 +133,11 @@ export class YoutubePlayer {
     onYtPlayerReadyHandler = async () => {
 
         // save the state from previous session
-        if (this.hasActiveSession) {
+        if (this.loadedBefore) {
             setTimeout(() => {
                 this.toggleRepeat(this.isRepeating)
                 this.toggleShuffle(this.isShuffled)
+                this.setVolume(this.volume)
 
             }, this.LOAD_PREV_PLAYER_STATE_DELAY)
         }
@@ -165,7 +161,7 @@ export class YoutubePlayer {
             this.onError(APIErrorCode.PLAYER)
         }
 
-        this.hasActiveSession = true
+        this.loadedBefore = true
     }
 
     /**
@@ -184,11 +180,11 @@ export class YoutubePlayer {
      * @param  event  Event object passed by the iFrame API, stores enum state and player object.          
      */
     oniFrameStateChanged = async (event: any) => {
-        const player    = event.target
-        const state     = event.data
+        const player = event.target
+        const state = event.data
 
         this.state = state
-        // this.updatePlayerState(state)
+        console.log(event)
 
 
         if (this.isPlaying && state === 2) {
@@ -222,8 +218,6 @@ export class YoutubePlayer {
      * 
      * Check to see if Youtube video can be played.
      * If not show an error.
-     * 
-     * Used to catch the following error cases of playing an invalid video in a public playlist (non-first video).
      */
     validateMediaItem = async (player: any) => {
         const playlist  = player.getPlaylist()
@@ -257,29 +251,7 @@ export class YoutubePlayer {
         }
     }
 
-    /**
-     * iFrame API Error Handler based on the iFrame API Docs.
-     * https://developers.google.com/youtube/iframe_api_reference
-     *
-     * @param error   Error returned by Youtube Player API
-     */
-    onIframeError = (error: any) => {
-        const { data, target } = error
-        const errorCode = data
-
-        if (errorCode === null || errorCode === undefined) return
-        this.onError(getYtIframeAPIError(errorCode, target))
-    }
-
-    /**
-     * Initialize event handlers for iFrame Player to be used.
-     * Youtube Player state updates are triggered by events dispatched from Youtube API.
-     */
-    initEventHandlers() {
-        this.PLAYER_OPTIONS.events.onReady = this.onYtPlayerReadyHandler
-        this.PLAYER_OPTIONS.events.onStateChange = this.oniFrameStateChanged
-        this.PLAYER_OPTIONS.events.onError = this.onIframeError
-    }
+    /* controls */
 
     async togglePlayback(doPlay?: boolean) {
         try {
@@ -347,6 +319,19 @@ export class YoutubePlayer {
         }
     }
 
+    /**
+     * Get the current player from the API itself.
+     */
+    calibrateVolume() {
+        try {
+            this.volume = this.player.getVolume()
+            this.update({ volume: this.volume })
+        }
+        catch(error: any) {
+            this.onError(error)
+        }
+    }
+
     toggleShow(doShow?: boolean) {
         this.show = doShow === undefined ? !this.show : doShow
         this.update({ show: this.show })
@@ -359,12 +344,13 @@ export class YoutubePlayer {
         }
     }
 
-    /**
-     * Plays an video
-     */
     async playVideo(video: YoutubeVideo) {    
-        if (this.error)         this.removeError()
-        if (this.state === 3 )  return   // if a prev loaded vid was buffering do not cue a new playlist
+        if (this.error) {
+            this.removeError()
+        }
+        if (this.state === 3 ){
+            return   // if a prev loaded vid was buffering do not cue a new playlist
+        }
 
         this.isoVideo = true
         this.vid = video
@@ -380,19 +366,20 @@ export class YoutubePlayer {
             }
 
             this.player.stopVideo()
-            this.player!.loadVideoById(video.id)
+            this.player.loadVideoById(video.id)
         }
         catch(e: any) {
             this.onError(e)
         }
     }
 
-    /**
-     * Play a new playlist.
-     */
     async playPlaylist(playlist: YoutubePlaylist, startingIdx = 0) {    
-        if (this.error)           this.removeError()
-        if (this.state === 3 )    return   // if a prev loaded vid was buffering do not cue a new playlist
+        if (this.error) {
+            this.removeError()
+        }
+        if (this.state === 3 ) {
+            return   // if a prev loaded vid was buffering do not cue a new playlist
+        }
 
         this.isoVideo = false
         this.update({ isoVideo: false })
@@ -405,7 +392,7 @@ export class YoutubePlayer {
 
             this.player.stopVideo()
             this.updateCurrentPlaylist(playlist)
-            this.player!.loadPlaylist({ 
+            this.player.loadPlaylist({ 
                 list: playlist.id, 
                 listType: "playlist", 
                 index: startingIdx
@@ -416,10 +403,6 @@ export class YoutubePlayer {
         }
     }
 
-    /**
-     * Update the video being shown in the video details under the player.
-     * @param vid   Video currentply playing
-     */
     updateVideo(vid: YoutubeVideo, playlistVidIdx: number) {
         this.vid = vid
 
@@ -429,10 +412,6 @@ export class YoutubePlayer {
         this.update({ vid, playlistVidIdx })
     }
 
-    /**
-     * Update the playlist being played.
-     * @param playlist       Playlist user wants to play
-     */
     updateCurrentPlaylist(playlist: YoutubePlaylist | null) {
         this.playlist = playlist
 
@@ -460,18 +439,13 @@ export class YoutubePlayer {
         })
     }
 
-    /**
-     * Update error. Will show error to user if necessary.
-     * @param error 
-     */
     onError(error: any) {
         if (this.error) return
 
-        const isAPINotLoadedYetMsg = /^this\.player\.\w+\s*is not a function$/.test(error.message)
-        const errorCode = typeof error === "number" ? error : -1
+        const notLoaded = /^this\.player\.\w+\s*is not a function$/.test(error.message)
 
-        if (isAPINotLoadedYetMsg) {
-            this.error = new APIError(APIErrorCode.PLAYER, "Player hasn't loaded yet. Try again later.")
+        if (notLoaded) {
+            this.error = new APIError(APIErrorCode.PLAYER, "Just a moment! The player is still loading.")
         }
         else if (error.code != undefined) {
             this.error = error
@@ -484,13 +458,13 @@ export class YoutubePlayer {
         youtubeAPIErrorHandler(this.error)
     }
 
-    /**
-     * Reset data store, clears local storage, resets Youtube Player API
-     */
     quit() {
         ytPlayerStore.set(null)
         this.clearYoutubePlayerData()
-        this.player.stopVideo()
+
+        if (this.player) {
+            this.player.stopVideo()
+        }
     }
 
     removeError() {
@@ -498,13 +472,6 @@ export class YoutubePlayer {
         this.update({ error: null })
     }
 
-    /**
-     * Get the updated version of the old state. 
-     * This is done to avoid destructuring as methods will not be incorporated.
-     * 
-     * @param newState   New changes to be incorporated
-     * @param oldState   Old version of the data to be updated with the new changes.
-     */
     getNewStateObj(newState: Partial<YoutubePlayer>, oldState: YoutubePlayer) {
         const newStateObj = oldState
 
@@ -521,25 +488,17 @@ export class YoutubePlayer {
         return newStateObj
     }
 
-    /**
-     * Load youtube creds and user data from local storage.
-     * Called everytime user refreshes and Yotube Data has to be re-initialized.
-     * Updates the state.
-     */
-    loadAndSetPlayerData() {
+    loadData() {
         const savedData = loadYtPlayerData()
         if (!savedData) return
 
-        this.hasActiveSession = true
+        this.loadedBefore = true
         this.volume = savedData.volume
         this.show = savedData.show
 
         this.update({ ...savedData })
     }
 
-    /**
-     * Clear youtube user and creds data from local storage. 
-     */
     clearYoutubePlayerData() {
         deleteYtPlayerData()
     }

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from "svelte"
     import { capitalize } from "$lib/utils-general"
 	import { updateAmbience } from "$lib/utils-home"
 	import { globalContext, ytPlayerStore } from "$lib/store"
@@ -34,18 +35,19 @@
         elementStyling = optn as "solid" | "blur" | "clear"
         stylingOpen = false
 
-        _updateAmbience({ styling: elementStyling })
+        updateAmbience({ styling: elementStyling })
     }
     function setClockStyle(fontStyle: string) {
-        _updateAmbience({ fontStyle: fontStyle.toLowerCase() as FontStyle })
+        updateAmbience({ fontStyle: fontStyle.toLowerCase() as FontStyle })
         timeStyleOpen = false
-    }
-    function _updateAmbience(data: Partial<AmbientOptions>) {
-        updateAmbience(data)
     }
     function updateVolume(volume: number) {
         $ytPlayerStore!.setVolume(volume * 100)
     }
+
+    onMount(() => {
+        player!.calibrateVolume()
+    })
 </script>
 
 <BounceFade
@@ -113,7 +115,7 @@
                     <ToggleBtn 
                         active={showTime}
                         onToggle={() => {
-                            _updateAmbience({ showTime: !showTime })
+                            updateAmbience({ showTime: !showTime })
                         }}
                     />
                 </div>
@@ -184,7 +186,7 @@
                 <RangeInput 
                     value={bgOpacity} 
                     onUpdate={(opacity) => {
-                        _updateAmbience({ opacity })
+                        updateAmbience({ opacity })
                         bgOpacity = opacity
                     }}
                 />

@@ -18,7 +18,7 @@ const getWeekNumber = (currentDate: Date) => {
 
 /*
 
-describe("HasTokenExpiredText", () => {
+describe("tokenExpiredText", () => {
     const ACTIVE_TOKEN_THRESHOLD_SECS = 60
     const EXPIRES_IN_SECS = 3600
 

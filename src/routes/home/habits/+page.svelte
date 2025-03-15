@@ -1,9 +1,165 @@
 <script lang="ts">
-    import type { PageData } from './$types';
+    import type { PageData } from './$types'
+    import { TEST_HABITS } from '$lib/mock-data'
+	import { capitalize, kebabToNormal } from '$lib/utils-general';
+	import Details from './Details.svelte';
+	import { themeState } from '$lib/store';
+
+    const TIMES_OF_DAY_MAP: { [key: string]: number } = {
+        "morning": 0,
+        "afternoon": 1,
+        "evening": 2,
+        "all-day": 3
+    }
+
+    $: light = !$themeState.isDarkTheme
     
-    export let data: PageData;
+    let sortedHabits: Habit[][] = []
+    let showHabitsLeft = true
+
+    groupByTimeOfDay(TEST_HABITS)
+
+    function groupByTimeOfDay(habits: Habit[]) {
+        sortedHabits = [[], [], [], []];
+
+        habits.forEach(habit => {
+            const timeOfDayIndex = TIMES_OF_DAY_MAP[habit.timeOfDay];
+            if (timeOfDayIndex !== undefined) {
+                sortedHabits[timeOfDayIndex].push(habit);
+            }
+        });
+        sortedHabits.forEach(habitGroup => {
+            habitGroup.sort((a, b) => a.order.tod - b.order.tod);
+        });
+    }
 </script>
 
-<div class="habits">
-    Habits
+<div 
+    class="habits" 
+    class:habits--light={light}
+    style:--left-width={showHabitsLeft ? "150px" : "0px"}
+>
+    <h1>Habits</h1>
+    <div class="habits__content">
+        {#if showHabitsLeft}
+            <div class="habits__left">
+                <div class="habits__list">
+                    {#each Object.keys(TIMES_OF_DAY_MAP) as timeOfDay}
+                        {@const idx = TIMES_OF_DAY_MAP[timeOfDay]}
+                        {@const habits = sortedHabits[idx]}
+            
+                        <div style:margin-bottom="10px">
+                            <div class="habits__list-group-title">
+                                {kebabToNormal(timeOfDay)}
+                            </div>
+                            <ul>
+                                {#each habits as habit}
+                                    <!-- svelte-ignore a11y-no-noninteractive-element-to-interactive-role -->
+                                    <li 
+                                        role="button"
+                                        tabindex="0"
+                                        class="habits__list-item"
+                                        on:click={() => {}}
+                                        on:keydown={(e) => {
+                                            if (e.key === "Enter") {
+                                                console.log("enter")
+                                            }
+                                        }}
+                                    >
+                                        <div class="habits__list-item-symbol">
+                                            {habit.symbol}
+                                        </div>
+                                        <span class="habits__list-item-name">
+                                            {habit.name}
+                                        </span>
+                                    </li>
+                                {/each}
+                            </ul>
+                        </div>
+                    {/each}
+                </div>
+            </div>
+        {/if}
+        <div class="habits__right">
+            <Details 
+                {showHabitsLeft}
+                setLeftWidth={() => showHabitsLeft = !showHabitsLeft} 
+            />
+        </div>
+    </div>
 </div>
+
+<style lang="scss">
+    .habits {
+        height: 100%;
+        width: calc(100% - 20px);
+        padding: 18px 0px 0px 25px;
+        color: rgba(var(--textColor1), 0.9);
+        @include text-style(1, var(--fw-400-500), 1.3rem);
+
+        &--light h1 {
+            @include text-style(1);
+        }
+        &--light &__list-item:hover {
+            opacity: 0.7;
+        }
+        &--light &__list-item-name {
+            opacity: 1;
+        }
+        &--light &__list-group-title {
+            @include text-style(0.3);
+        }
+        h1 {
+            margin-bottom: 12px;
+            @include text-style(1, var(--fw-400-500), 1.8rem);
+        }
+        
+        &__left {
+            width: var(--left-width);
+            border-right: var(--divider-border);
+            height: 100%;
+        }
+        &__right {
+            width: calc(100% - var(--left-width));
+            height: 100%;
+        }
+        &__content {
+            border-top: var(--divider-border);
+            padding: 0px 0px 0px 0px;
+            height: 100%;
+            display: flex;
+        }
+        &__list-group-title {
+            margin-bottom: 12px;
+            @include text-style(0.24, _, 1.4rem);
+
+            &:first-child {
+                padding-top: 10px;
+            }
+        }
+        &__list-item {
+            @include flex(center);
+            @include text-style(1, _, 1.385rem);
+            cursor: pointer;
+            transition: 0.1s transform cubic-bezier(.4,0,.2,1);
+            margin-bottom: 8px;
+
+            &:active {
+                transform: scale(0.98);
+            }
+            &:hover span {
+                opacity: 1;
+            }
+        }
+        &__list-item-symbol {
+            width: 20px;
+            font-size: 1.46rem;
+        }
+        &__list-item-name {
+            margin-left: 0.5em;
+            opacity: 0.65;
+        }
+        &__content {
+        }
+    }
+</style>

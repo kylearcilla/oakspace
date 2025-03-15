@@ -184,8 +184,6 @@ export class YoutubePlayer {
         const state = event.data
 
         this.state = state
-        console.log(event)
-
 
         if (this.isPlaying && state === 2) {
             this.isPlaying = false
@@ -323,12 +321,9 @@ export class YoutubePlayer {
      * Get the current player from the API itself.
      */
     calibrateVolume() {
-        try {
+        if (this.player) {
             this.volume = this.player.getVolume()
             this.update({ volume: this.volume })
-        }
-        catch(error: any) {
-            this.onError(error)
         }
     }
 

@@ -1,5 +1,5 @@
 import { COLOR_SWATCHES } from "./utils-colors"
-import { generateHabitData } from "./utils-habits"
+import { generateHabitData } from "./utils-habits-data"
 import { v4 as uuidv4 } from 'uuid'
 
 /* aesthetics */
@@ -671,6 +671,7 @@ export const TEST_GOALS: Goal[] = [
 /* habits*/
 export const TEST_HABITS: Habit[] = [
   {
+    id: "0",
     name: "Wake Up",
     symbol: "☀️",
     target: "8:30 AM",
@@ -685,20 +686,37 @@ export const TEST_HABITS: Habit[] = [
     }
   },
   {
+    id: "1",
+    name: "Garden",
+    symbol: "🌱",
+    target: "",
+    streak: 2,
+    freqType: "daily",
+    frequency: 1,
+    data: "", 
+    timeOfDay: "morning",
+    order: {
+      default: 1,
+      tod: 4
+    }
+  },
+  {
+    id: "2",
     name: "Exercise",
     symbol: "💪",
     target: "45m",
     streak: 0,
     freqType: "day-of-week",
-    frequency: 0b0011110,
+    frequency: 0b0001111,
     data: "", 
     timeOfDay: "afternoon",
     order: {
-      default: 1,
+      default: 2,
       tod: 0
     }
   },
   {
+    id: "3",
     name: "Reading",
     symbol: "📖",
     target: "30 pages",
@@ -708,11 +726,12 @@ export const TEST_HABITS: Habit[] = [
     data: "", 
     timeOfDay: "evening",
     order: {
-      default: 2,
+      default: 3,
       tod: 0
     }
   },
   {
+    id: "4",
     name: "Meditation",
     symbol: "🧘🏼‍♂️",
     target: "15m",
@@ -722,12 +741,13 @@ export const TEST_HABITS: Habit[] = [
     data: "", 
     timeOfDay: "morning",
     order: {
-      default: 3,
+      default: 4,
       tod: 1
     }
   },
   {
-    name: "Study French",
+    id: "5",
+    name: "French",
     symbol: "🇫🇷",
     target: "1h",
     streak: 0,
@@ -736,11 +756,12 @@ export const TEST_HABITS: Habit[] = [
     data: "", 
     timeOfDay: "evening",
     order: {
-      default: 4,
+      default: 5,
       tod: 1
     }
   },
   {
+    id: "6",
     name: "Run",
     symbol: "🏃‍♂️",
     target: "5 km",
@@ -750,11 +771,12 @@ export const TEST_HABITS: Habit[] = [
     data: "", 
     timeOfDay: "morning",
     order: {
-      default: 5,
+      default: 6,
       tod: 2
     }
   },
   {
+    id: "7",
     name: "Deep Work",
     symbol: "👨‍💻",
     target: "2h",
@@ -762,13 +784,14 @@ export const TEST_HABITS: Habit[] = [
     freqType: "day-of-week",
     frequency: 0b1111000,
     data: "",
-    timeOfDay: "morning",
+    timeOfDay: "afternoon",
     order: {
-      default: 6,
-      tod: 3
+      default: 7,
+      tod: 2
     }
   },
   {
+    id: "8",
     name: "Water",
     symbol: "🌊",
     target: "8 glasses",
@@ -778,12 +801,13 @@ export const TEST_HABITS: Habit[] = [
     data: "", 
     timeOfDay: "all-day",
     order: {
-      default: 7,
+      default: 8,
       tod: 0
     }
   },
   {
-    name: "Clean House",
+    id: "9",
+    name: "Clean",
     symbol: "🧹",
     streak: 0,
     freqType: "per-week",
@@ -792,7 +816,7 @@ export const TEST_HABITS: Habit[] = [
     target: null,
     timeOfDay: "afternoon",
     order: {
-      default: 8,
+      default: 9,
       tod: 1
     }
   },
@@ -801,6 +825,10 @@ export const TEST_HABITS: Habit[] = [
 export const YEAR_HABITS_DATA: HabitYearData[] = [
    {
       name: "Wake Up",
+      data: generateHabitData()
+   },
+   {
+      name: "Garden",
       data: generateHabitData()
    },
    {
@@ -816,7 +844,7 @@ export const YEAR_HABITS_DATA: HabitYearData[] = [
       data: generateHabitData()
    },
    {
-      name: "Study French",
+      name: "French",
       data: generateHabitData()
    },
    {
@@ -832,7 +860,7 @@ export const YEAR_HABITS_DATA: HabitYearData[] = [
       data: generateHabitData()
    },
    {
-      name: "Clean House",
+      name: "Clean",
       data: generateHabitData()
    },
 ]

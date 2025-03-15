@@ -271,16 +271,18 @@
         activeOpacity?: number 
     }) {
         const pastInactive = activeOpacity != undefined && (type === "paused" || type === "break")
+        const breakOpacity = parseFloat(breakColor.split(",")[1])
+        const aOpacity = Math.min(activeOpacity ?? 1, inWorkspace ? ABMIENT_ACTIVE_OPACITY : 1)
 
         if (idx >= currLineIdx && type === "break") {
             line.style.fill = breakColor
         }
         else if (pastInactive) {
-            line.setAttribute(DATA_ATTR_INACTIVE_OPACITY, `${1 - activeOpacity}`)
-            line.style.fill = activeOpacity === 0 ? breakColor : `rgba(${activeColorRGB}, ${Math.max(activeOpacity, 0.15)})`
+            line.setAttribute(DATA_ATTR_INACTIVE_OPACITY, `${Math.max(1 - aOpacity, 0)}`)
+            line.style.fill = `rgba(${activeColorRGB}, ${Math.max(aOpacity, breakOpacity)})`
         }
         else if (type === "progress") {
-            line.style.fill = `rgba(${activeColorRGB}, ${inWorkspace ? ABMIENT_ACTIVE_OPACITY : 1})`
+            line.style.fill = `rgba(${activeColorRGB}, ${aOpacity})`
         }
         else {
             line.style.fill = breakColor

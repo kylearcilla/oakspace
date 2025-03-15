@@ -465,7 +465,7 @@ export class SessionManager {
             session: this.session, state: "done"
         })
 
-        setDocumentTitle("Somara")
+        setDocumentTitle("Oakspace")
     }
 
     updatePrevPage(route: string) {
@@ -476,7 +476,7 @@ export class SessionManager {
     quit() {
         localStorage.removeItem("session")
         sessionManager.set(null)
-        setDocumentTitle("Somara")
+        setDocumentTitle("Oakspace")
     }
 
     reachedMaxElapsedTimeHandler() {

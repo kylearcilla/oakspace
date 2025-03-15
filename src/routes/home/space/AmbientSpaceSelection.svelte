@@ -146,17 +146,14 @@
     }
     function handleCarouselScroll(carousel: HTMLElement) {
         const isTabs = carousel === tabsCarouselRef
-        const elem = isTabs ? tabsCarouselRef : wallpaperCarouselRef
+        const elem    = isTabs ? tabsCarouselRef : wallpaperCarouselRef
         let carouselObj = isTabs ? tabsCarousel : wallpaperCarousel
 
         if (!elem) return
 
         const { styling, scrollStatus } = getMaskedGradientStyle(elem, {
            isVertical: false,
-           head: {
-            start: "5px",
-            end: "50%"
-           },
+           ...(isTabs && hasSignedIn ? { head: { start: "5px", end: "50%" } } : {}),
            tail: {
             start: "80%"
            }
@@ -885,6 +882,7 @@
         &__content-grid {
             display: flex;
             flex-wrap: wrap;
+            align-content: flex-start;
             row-gap: 18px;
             overflow-y: scroll;
             max-height: calc(100% - 215px);

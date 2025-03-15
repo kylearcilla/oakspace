@@ -78,6 +78,14 @@ export const isDateEarlier = (date1: Date, date2: Date, inclusive = false): bool
 	}
 }
 
+export function uptoToday(date: Date) {
+    return isDateEarlier(date, new Date(), true)
+}
+
+export function afterToday(date: Date) {
+    return !isDateEarlier(date, new Date(), true)
+}
+
 /**
  * @param date1
  * @param date2
@@ -827,6 +835,9 @@ export function getWeekPeriod(date: Date, weeksBack: number = 0) {
     const end = new Date(start)
     end.setDate(start.getDate() + 6)
 
+	start.setHours(0, 0, 0, 0)
+	end.setHours(0, 0, 0, 0)
+
     return { start, end }
 }
 
@@ -989,3 +1000,61 @@ export function getMonthWeeks(days: { date: Date; isInCurrMonth: boolean }[]) {
 	}
 	return weeks
 }
+
+export function getMonthDayNumbers(date: Date) {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+}
+
+export function getMonthFromIdx(idx: number) {
+	const currentDate = new Date()
+	const currentMonth = currentDate.getMonth()
+	const targetMonth = (currentMonth - idx + 12) % 12
+	const yearAdjustment = Math.ceil((idx - currentMonth) / 12)
+	const targetYear = currentDate.getFullYear() - yearAdjustment
+
+	return new Date(targetYear, targetMonth)
+}
+
+export function getDiffBetweenTwoDays(a: Date, b: Date) {
+    const _MS_PER_DAY = 1000 * 60 * 60 * 24;
+    // Discard the time and time-zone information.
+    const utc1 = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
+    const utc2 = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
+  
+    return Math.abs(Math.floor((utc2 - utc1) / _MS_PER_DAY))
+}
+
+export function getCalMonthBounds({ year, monthIdx }: { year: number, monthIdx: number }) {
+    const startDate = new Date(year, monthIdx, 1)
+    const endDate = new Date(year, monthIdx + 1, 0)
+
+    const startDayOfWeek = startDate.getDay()
+    const endDayOfWeek = endDate.getDay()
+	
+    const daysToAddBefore = startDayOfWeek
+    const daysToAddAfter = 6 - endDayOfWeek
+
+    startDate.setDate(startDate.getDate() - daysToAddBefore)
+    endDate.setDate(endDate.getDate() + daysToAddAfter)
+
+    return { startDate, endDate }
+}
+
+export function sameMonth(a: Date, b: Date) {
+    return a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear()
+}
+
+export function isLeapYear(year: number) {
+    return (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0));
+}
+
+export function getDaysInMonth(date: Date) {
+    const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+    return Array.from({ length: daysInMonth }, (_, i) => new Date(date.getFullYear(), date.getMonth(), i + 1))
+}
+
+export function getDaysInWeek(date: Date) {
+    const daysInWeek = 7
+    return Array.from({ length: daysInWeek }, (_, i) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + i))
+}
+

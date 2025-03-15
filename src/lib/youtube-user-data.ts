@@ -175,6 +175,8 @@ export class YoutubeUserData {
         }
     }
 
+
+
     async getUserPlaylists(fresh = false) {
         await this.verifyAccessToken()
         if (fresh) {
@@ -186,24 +188,29 @@ export class YoutubeUserData {
         }
 
         const firstReqAfterReload = this.reqIdx === 0 && this.playlists.length > 0
-        const nextPageToken = this.nextPageToken
 
-        const res = await getUserYtPlaylists({
-            accessToken: this.accessToken, nextPageToken, max: USER_PLS_MAX_PER_REQUEST
-        })
+        const fetchPlaylists = async () => {
+            const res = await getUserYtPlaylists({
+                accessToken: this.accessToken, 
+                nextPageToken: this.nextPageToken, 
+                max: USER_PLS_MAX_PER_REQUEST
+            })
+    
+            this.reqIdx++
+            this.nextPageToken = res.nextPageToken
+            this.playlistsLength = res.playlistsTotal
 
-        this.nextPageToken = res.nextPageToken
-        this.playlistsLength = res.playlistsTotal
+            return res
+        }
+        let res = await fetchPlaylists()
 
         // first req after reload ensure data is fresh
         if (firstReqAfterReload) {
             this.playlists = res.playlists
+            res = await fetchPlaylists()
         }
-        else {
-            this.playlists.push(...res.playlists)
-        }
+        this.playlists.push(...res.playlists)
         this.fetchedAllItems = res.playlists.length < USER_PLS_MAX_PER_REQUEST
-        this.reqIdx++
 
         this.update({ 
             playlists: this.playlists, 

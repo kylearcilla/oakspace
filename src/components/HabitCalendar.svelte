@@ -2,7 +2,7 @@
     import ProgressRing from "./ProgressRing.svelte"
 
     import { formatDatetoStr } from "$lib/utils-date"
-	import { getMonthHeatMap } from "$lib/utils-habits"
+	import { getAllHabitsMonthData } from "$lib/utils-habits"
 	import { habitTracker, themeState } from "$lib/store"
 
     let heatMap: HabitHeatMapDay[] = []
@@ -12,7 +12,7 @@
 
     habitTracker.subscribe(() => {
         const date = new Date()
-        heatMap = getMonthHeatMap({ 
+        heatMap = getAllHabitsMonthData({ 
             monthIdx: date.getMonth(), year: date.getFullYear() 
         })
         weeklyHeatMap = []

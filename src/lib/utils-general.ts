@@ -802,8 +802,6 @@ export function toastApiErrorHandler(options: {
   const errorMessage  = isNotAPIError ? "" : error.message
   const hasMsg        = errorMessage != undefined && errorMessage
 
-
-
   if (error.code === APIErrorCode.PLAYER) {
       toastOptions = {
           message: hasMsg ? errorMessage : "Player error. Try again later.",

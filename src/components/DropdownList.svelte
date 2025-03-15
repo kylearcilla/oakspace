@@ -8,6 +8,7 @@
 	import BounceFade from "./BounceFade.svelte"
 	import DropdownListOption from "./DropdownListOption.svelte"
 	import ToggleBtn from "./ToggleBtn.svelte";
+	import DropdownListMenuOptn from "./DropdownListMenuOptn.svelte";
 
     export let id: string = ""
     export let isHidden: boolean
@@ -30,6 +31,7 @@
         maxWidth = "auto",
         height = "auto",
         maxHeight = "auto",
+        overflow = "visible",
         fontFamily = "inherit",
         fontSize = "1.3rem"
     } = options.styling ?? {}
@@ -198,11 +200,13 @@
             style:height={height}
             style:max-height={maxHeight}
             style:font-family={fontFamily}
+            style:overflow={overflow}
             style:--font-size={fontSize}
             use:clickOutside on:outClick={onClickOutside} 
             bind:this={dmenuRef}
         >
             {#each listItems as item, idx}
+                <!-- section name -->
                 {#if "sectionName" in item}
                     <li 
                         class="dmenu__section-name"
@@ -210,6 +214,22 @@
                     >
                         {item.sectionName}
                     </li>
+                <!-- menu -->
+                {:else if "pickedItem" in item}
+                    <li class="dmenu__option--static">
+                        <span class="dmenu__option-heading">
+                            {item.name}
+                        </span>
+                        <DropdownListMenuOptn {item}/>
+                    </li>
+                    {#if item.divider}
+                        <li 
+                            class="dmenu__section-divider"
+                            style:margin-top="9px"
+                        >
+                        </li>
+                    {/if}
+                <!-- toggle button -->
                 {:else if "active" in item}
                     {@const { name, active } = item}
                     <li class="dmenu__toggle-optn  dmenu__option--static">
@@ -217,13 +237,15 @@
                             {name}
                         </span>
                         <ToggleBtn 
-                            active={active} 
+                            {active} 
                             onToggle={() => onToggle(idx)}
                         />
                     </li>
                     {#if item.divider}
-                        <li class="dmenu__section-divider"></li>
+                        <li class="dmenu__section-divider">
+                        </li>
                     {/if}
+                <!-- regular option-->
                 {:else if "name" in item}
                     {@const option = item}
                     <DropdownListOption 
@@ -245,8 +267,4 @@
 
 <style lang="scss">
     @import "../scss/dropdown.scss";
-
-    .dmenu--light {
-        @include dmenu--light;
-    }
 </style>

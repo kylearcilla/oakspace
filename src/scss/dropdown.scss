@@ -74,14 +74,9 @@
     }
 }
 
-@mixin dmenu--light {
-
-}
-
 .dmenu {
     display: block;
     position: relative;
-    overflow: scroll;
     z-index: 1000;
     padding: 4px 3px 5px 3px;
     border-radius: 10px;
@@ -97,8 +92,9 @@
     --picked-opacity: 0.02;
 
     &--light {
-        border: 1.5px solid rgba(var(--textColor1), 0.065);
-        box-shadow: 0px 4px 10px 1px rgba(0, 0, 0, 0.075);
+        // border: 1.5px solid rgba(var(--textColor1), 0.065);
+        // box-shadow: 0px 4px 10px 1px rgba(0, 0, 0, 0.075);
+        @include contrast-bg("bg-3");
         --hover-opacity: 0.0385;
         --inactive-opacity: 0.85;
         --picked-opacity: 0.04;
@@ -192,6 +188,7 @@
         &--static {
             padding: 0px 2px 0px $side-padding;
             opacity: 1;
+            @include flex(center, space-between);
         }
         &--selected {
             opacity: 1;

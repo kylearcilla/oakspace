@@ -340,7 +340,15 @@ type DropdownToggleOption = {
     onToggle: () => void
 }
 
-type DropdownListItem = DropdownOptionSection | DropdownOption | DropdownToggleOption
+type DropdownMenuOption = {
+    name: string
+    divider?: boolean
+    pickedItem?: string
+    items: { name: string }[]
+    onListItemClicked: (context: DropdownItemClickedContext) => void
+}
+
+type DropdownListItem = DropdownOptionSection | DropdownOption | DropdownToggleOption | DropdownMenuOption
 
 type DropdownItemClickedContext = {
     event: Event, 
@@ -940,6 +948,7 @@ type StylingOptions = {
 
 /* habits. */
 type Habit = {
+    id: string
     name: string
     symbol: string
     target: string | null
@@ -956,18 +965,24 @@ type Habit = {
 
 type HabitStore = {
     habits: Habit[]
-    metrics: HabitMetrics | null
+    monthMetrics: HabitMonthMetrics | null
+    activeStreak: HabitActiveStreak | null
 }
 
-type HabitMetrics = {
+type HabitActiveStreak = {
+    count: number
+    start: Date
+    base: number
+}
+
+type HabitMonthMetrics = {
     habitsDone: number
     habitsDue: number
     perfectDays: number
     missedDays: number
     missed: number
-    activeStreak: {
-        base: number
-        streak: number
+    longestStreak: {
+        count: number
         start: Date
     }
 }
@@ -975,6 +990,14 @@ type HabitMetrics = {
 type HabitYearData = {
     name: string
     data: HabitMonthChunk
+}
+
+type HabitDayData = {
+    required: boolean
+    complete: boolean
+    date: Date
+    noData?: boolean
+    beyondBounds?: boolean
 }
 
 type HabitMonthKey = `${number}-${number}`
@@ -986,6 +1009,22 @@ type HabitHeatMapDay = {
     isInCurrMonth: boolean
     done: number
     due: number
+    // for individual habits
+    noData?: boolean
+    beyondBounds?: boolean
+}
+
+type HabitTableOptions = {
+    view: "default" | "time-of-day"
+    stats: boolean
+    emojis: boolean
+    target: boolean
+    checkboxStyle: "box" | "minimal"
+    bottomDetails: boolean
+    progress: {
+        numbers: boolean
+        percentage: boolean
+    }
 }
 
 

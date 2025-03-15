@@ -142,9 +142,25 @@ export const LIGHT_COLOR_PROGRESS = {
   max: 212, min: 145,
   gVal: 212, bVal: 145
 }
+
   
 export function getColorByName(name: string) {
   return COLOR_SWATCHES.find(color => color.name === name)
+}
+
+export const STATUS_COLORS = {
+  RED: {
+    light: { color1: COLOR_SWATCHES[0].light1, color2: COLOR_SWATCHES[0].light3 },
+    dark: { color1: COLOR_SWATCHES[0].dark1, color2: COLOR_SWATCHES[0].dark3 }
+  },
+  YELLOW: {
+    light: { color1: COLOR_SWATCHES[3].light1, color2: COLOR_SWATCHES[3].light3 },
+    dark: { color1: COLOR_SWATCHES[3].dark1, color2: COLOR_SWATCHES[3].dark3 }
+  },
+  GREEN: {
+    light: { color1: COLOR_SWATCHES[5].light1, color2: COLOR_SWATCHES[5].light3 },
+    dark: { color1: COLOR_SWATCHES[5].dark1, color2: COLOR_SWATCHES[5].dark3 }
+  }
 }
 
 /**

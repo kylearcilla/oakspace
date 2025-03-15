@@ -1,13 +1,13 @@
 <script lang="ts">
     import { onMount } from "svelte"
 
-	import { getMaskedGradientStyle } from "../../../lib/utils-general"
-
+	import { themeState } from "$lib/store"
+	import { YEAR_THOUGHT_ENTRY } from "$lib/mock-data"
+	import { getMaskedGradientStyle } from "$lib/utils-general"
+    
     import TextEntry from "./TextEntry.svelte"
-    import HeatMap from "../../../components/HeatMap.svelte"
-	import { TEST_GOALS, YEAR_THOUGHT_ENTRY } from "../../../lib/mock-data"
-	import ProgressBar from "../../../components/ProgressBar.svelte";
-	import { themeState } from "../../../lib/store";
+    import HeatMap from "$components/HeatMap.svelte"
+	import ProgressBar from "$components/ProgressBar.svelte"
 
     export let options: {
         yearsAgoIdx: number

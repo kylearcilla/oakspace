@@ -46,7 +46,9 @@
     }
 
     onMount(() => {
-        player!.calibrateVolume()
+        if (player) {
+            player.calibrateVolume()
+        }
     })
 </script>
 

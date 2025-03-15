@@ -1,6 +1,6 @@
 <script lang="ts">
     import { habitTracker } from "$lib/store"
-	import { isBoxRequired, isDayComplete, toggleCompleteHabit } from "$lib/utils-habits"
+	import { isDayRequired, isDayComplete, toggleCompleteHabit } from "$lib/utils-habits"
 
     const store = habitTracker
     const dayIdx = new Date().getDay()
@@ -10,7 +10,7 @@
 
 <div class="dh">
     {#each habits as habit, habitIdx}
-        {@const required = isBoxRequired(habit, dayIdx)}
+        {@const required = isDayRequired(habit, dayIdx)}
         {@const complete = isDayComplete({ habit, dayIdx, weeksAgoIdx: 0 })}
         <div class="dh__habit">
             <div>

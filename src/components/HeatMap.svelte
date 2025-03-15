@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	import { formatDateLong, getNextMonth } from '$lib/utils-date'
+	import { themeState } from '$lib/store'
+	import { randomArrayElem } from '$lib/utils-general'
 	import { getElemById, getHozSpace } from '$lib/utils-general'
+	import { formatDateLong, getNextMonth } from '$lib/utils-date'
 	import {
 		addToDate, formatDateToSimpleIso, getMonthStr,
 		getPrevMonth, isDateEarlier, isSameDay
 	} from '$lib/utils-date';
-	import { themeState } from '$lib/store';
-	import { randomArrayElem } from '$lib/utils-general'
 
 	type HeatMapOptions = {
 		startDate: Date,
@@ -167,13 +167,12 @@
 		}
 	}
 	function onPointerOver(pe: PointerEvent, day: Date, dayIdx: number) {
-		const containerBox = container.getBoundingClientRect()
 		const target = pe.target as HTMLElement
 		const targetBox = target.getBoundingClientRect()
 
 		offset = {
-			left: targetBox.left - containerBox.left - container!.parentElement!.scrollLeft,
-			top: targetBox.top - containerBox.top - 30
+			left: targetBox.left + window.scrollX,
+			top: targetBox.top + window.scrollY - 30
 		}
 		if (dayIdx != hoverDayIdx) {
 			hoverDay = day;
@@ -261,6 +260,7 @@
 			class="tool-tip"
 			class:tool-tip--light={isLight}
 			on:pointerover={() => (hoverDayIdx = -1)}
+			style:position="fixed"
 			style:top={`${offset.top}px`}
 			style:left={`${offset.left}px`}
 		>
@@ -285,7 +285,7 @@
 			--goal-today-opacity: 0.085;
 		}
 		&--light &__month {
-			@include text-style(0.4);
+			@include text-style(0.85);
 		}
 		&--habits &__months {
 			margin-bottom: 3px;
@@ -384,6 +384,7 @@
 		}
 	}
 	.tool-tip {
+		position: fixed;
 		@include abs-top-left(20px, 20px);
 		@include text-style(0.8, var(--fw-400-500), 1.12rem, 'Geist Mono');
 		@include center;

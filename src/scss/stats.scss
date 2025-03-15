@@ -1,0 +1,36 @@
+.stats {
+    display: flex;
+
+    &--light .stat__label {
+        @include text-style(0.4);
+    }
+    &--light .stat__bottom {
+        font-weight: 500;
+    }
+}
+
+.stat {
+    margin: 0px 40px 2px 0px;
+    background-color: rgba(var(--textColor1), 0);
+    border-radius: 12px;
+
+    span {
+        display: block;
+    }
+    &__bottom {
+        @include text-style(1, 300, 1.55rem);
+    }
+    &__label {
+        @include text-style(0.3, _, 1.4rem);
+        white-space: nowrap;
+        margin: 6px 0px 0px 0px;
+    }
+    &__unit {
+        margin: 0px 0px 0px 6px;
+        font-family: "Geist Mono";
+    }
+    &__value {
+        position: relative;
+        font-family: "Geist Mono";
+    }
+}

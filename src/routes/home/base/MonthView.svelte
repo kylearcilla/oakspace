@@ -9,7 +9,7 @@
 
 	import YearView from "./YearView.svelte"
 	import GoalsView from "./GoalsView.svelte"
-	import WeeklyHabits from "./WeeklyHabits.svelte"
+	import HabitsTable from "./HabitsTable.svelte"
 	import Overview from "./Overview.svelte"
 	import SvgIcon from "$components/SVGIcon.svelte"
 	import ToggleBtn from "$components/ToggleBtn.svelte"
@@ -84,12 +84,13 @@
     }
     let habitView = {
         view: "default",
-        stats: true,
+        stats: false,
         emojis: true,
         target: true,
+        checkboxStyle: "box",
+        bottomDetails: true,
         progress: {
-            numbers: false,
-            daily: true,
+            numbers: true,
             percentage: false
         }
     }
@@ -312,7 +313,9 @@
                             style:margin-left="10px"
                         >
                             <div style:margin-left={"-2px"}>
-                                <SvgIcon icon={Icon.ChevronLeft}/>
+                                <SvgIcon 
+                                    icon={Icon.ChevronLeft} options={{ scale: 1.4 }}
+                                />
                             </div>
                         </button>
                         <button 
@@ -322,7 +325,7 @@
                             style:margin-left="10px"
                         >
                             <div style:margin-right={"-2px"}>
-                                <SvgIcon icon={Icon.ChevronRight}/>
+                                <SvgIcon icon={Icon.ChevronRight} options={{ scale: 1.4 }}/>
                             </div>
                         </button>
                     </div>
@@ -590,18 +593,6 @@
                                 }}
                             />
                             <div class="dmenu__toggle-optn  dmenu__option--static">
-                                <span class="dmenu__option-heading">
-                                    {months[today.getMonth()].substring(0, 3)} Metrics
-                                </span>
-                                <ToggleBtn 
-                                    active={habitView.stats}
-                                    onToggle={() => {
-                                        habitView.stats = !habitView.stats
-                                        habitView = habitView
-                                    }}
-                                />
-                            </div>
-                            <div class="dmenu__toggle-optn  dmenu__option--static">
                                 <span class="dmenu__option-heading">Emojis</span>
                                 <ToggleBtn 
                                     active={habitView.emojis}
@@ -625,20 +616,32 @@
                         <li class="dmenu__section-divider"></li>
                         <li class="dmenu__section">
                             <div class="dmenu__section-name">
-                                Progress
+                                Data 
+                            </div>
+                            <div class="dmenu__toggle-optn  dmenu__option--static">
+                                <span class="dmenu__option-heading">
+                                    {months[today.getMonth()].substring(0, 3)} Metrics
+                                </span>
+                                <ToggleBtn 
+                                    active={habitView.stats}
+                                    onToggle={() => {
+                                        habitView.stats = !habitView.stats
+                                        habitView = habitView
+                                    }}
+                                />
                             </div>
                             <div class="dmenu__toggle-optn dmenu__option--static">
-                                <span class="dmenu__option-heading">Daily Progress</span>
+                                <span class="dmenu__option-heading">Bottom Details</span>
                                 <ToggleBtn 
-                                    active={habitView.progress.daily}
+                                    active={habitView.bottomDetails}
                                     onToggle={() => {
-                                        habitView.progress.daily = !habitView.progress.daily
+                                        habitView.bottomDetails = !habitView.bottomDetails
                                         habitView = habitView
                                     }}
                                 />
                             </div>
                             <div class="dmenu__toggle-optn  dmenu__option--static">
-                                <span class="dmenu__option-heading">Detailed</span>
+                                <span class="dmenu__option-heading">Fractional</span>
                                 <ToggleBtn 
                                     active={habitView.progress.numbers}
                                     onToggle={() => {
@@ -647,18 +650,6 @@
                                     }}
                                 />
                             </div>
-                            {#if habitView.progress.numbers}
-                                <div class="dmenu__toggle-optn dmenu__option--static">
-                                    <span class="dmenu__option-heading">Percentage</span>
-                                    <ToggleBtn 
-                                        active={habitView.progress.percentage}
-                                        onToggle={() => {
-                                            habitView.progress.percentage = !habitView.progress.percentage
-                                            habitView = habitView
-                                        }}
-                                    />
-                                </div>
-                            {/if}
                         </li>
                     {/if}
                     {#if currView === "yr-view"}
@@ -709,8 +700,9 @@
                     }} 
                 />
             {:else if currView === "habits"}
-                <WeeklyHabits 
-                    weeksAgoIdx={weeksAgoIdx}
+                <HabitsTable 
+                    {weeksAgoIdx}
+                    timeFrame="weekly"
                     options={habitView} 
                 />
             {:else if currView === "goals"}

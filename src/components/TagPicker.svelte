@@ -176,17 +176,13 @@
 
         &__dmenu-container {
             @include abs-top-left(28px);
-            @include contrast-bg("bg-2");
-            background-color: var(--bg-2);
+            @include contrast-bg("bg-3");
             padding: 0px 0px 6.5px 0px;
             z-index: 1000;
-            border: 1px solid rgba(var(--textColor1), 0.04);
-            border-radius: 7px;
-            border-bottom-left-radius: 11px;
-            border-bottom-right-radius: 11px;
+            border-radius: 12px;
         }
         &__dmenu .tag {
-            border-radius: 4px !important;
+            border-radius: 7px !important;
             transition: 0.1s ease-in-out;
             padding: 4px 5px 4.5px 7px !important;
         }

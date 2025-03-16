@@ -4,10 +4,10 @@
 	import { themeState } from '$lib/store'
 	import { randomArrayElem } from '$lib/utils-general'
 	import { getElemById, getHozSpace } from '$lib/utils-general'
-	import { formatDateLong, getNextMonth } from '$lib/utils-date'
+	import { formatDateLong, getDiffBetweenTwoDays, getNextMonth, uptoToday } from '$lib/utils-date'
 	import {
 		addToDate, formatDateToSimpleIso, getMonthStr,
-		getPrevMonth, isDateEarlier, isSameDay
+		isDateEarlier, isSameDay
 	} from '$lib/utils-date';
 
 	type HeatMapOptions = {
@@ -18,6 +18,9 @@
 
 	export let id: string;
 	export let type: 'goals' | 'habits'
+	export let data: HabitHeatMapData[]
+	export let year: number
+
 	export let options: HeatMapOptions = {
 		startDate: new Date(),
 		emojis: false,
@@ -26,40 +29,37 @@
 
 	const OPACITY_AHEAD = {
 		light: {
-			habits: 0.035,
-			goals: 0.055
+			habits: 0.035, goals: 0.055
 		},
 		dark: {
-			habits: 0.012,
-			goals: 0.0195
+			habits: 0.012, goals: 0.0195
 		}
 	}
 	const GOALS_OPACITY = {
 		light: {
-			sameDay: 0.25,
-			past: 0.175
+			sameDay: 0.25, past: 0.175
 		},
 		dark: {
-			sameDay: 0.25,
-			past: 0.07
+			sameDay: 0.25, past: 0.07
 		}
 	}
 	const HEAT_OPACITY_GRADIENT = {
-		light: [1, 0.5, 0.3, 0.15],
-		dark:  [0.85, 0.2, 0.08, 0]
+		light: [1, 0.5, 0.3, 0.15], dark:  [0.85, 0.2, 0.08, 0]
 	}
-	const months: Date[] = getMonths()
-	const firstDay = getFirstDay()
 
-	let container: HTMLElement
+	let firstYearDay: Date
+	let firstDay: Date
+	let idxOffset: number
+	let months: Date[]
+
 	let hoverDayIdx = -1
 	let hoverDay: Date
 	let opacityAhead = 0.05
 	let goalsSameDayOpacity = 0
 	let goalPastOpacity = 0
-	let offset = {
-		top: 0, left: 0
-	}
+
+	let offset = { top: 0, left: 0 }
+	let container: HTMLElement
 
 	$: isLight = !$themeState.isDarkTheme
 	$: emojis = options.emojis
@@ -68,74 +68,72 @@
 	$: goalsSameDayOpacity = isLight ? GOALS_OPACITY.light.sameDay : GOALS_OPACITY.dark.sameDay
 	$: goalPastOpacity     = isLight ? GOALS_OPACITY.light.past : GOALS_OPACITY.dark.past
 
+	$: onYearChange(year)
+
+	function onYearChange(year: number) {
+		firstYearDay = new Date(year, 0, 1)
+		firstDay = getFirstDay()
+		idxOffset = getDiffBetweenTwoDays(firstYearDay, firstDay)
+		months = getMonths()
+	}
+
+	/* data */
+	function getRenderData({ idx, isLight, data }: { 
+		idx: number, isLight: boolean, data: HabitHeatMapData[] 
+	}) {
+		const day = addToDate({ date: firstDay, time: `${idx}d` })
+		const outofBounds = !inBounds(day)
+		const idxData = data[idx - idxOffset]
+
+		if (outofBounds || idxData?.due === 0) {
+			return { opacity: 0, show: false, day }
+		}
+
+		const { due, done, date } = idxData
+		const val = Math.min(done / due, 1)
+		
+		return {
+			day,
+			show: true,
+			opacity: getOpacity(val, isLight),
+		}
+	}
+	function inBounds(date: Date) {
+		return isDateEarlier(firstYearDay, date, true) && uptoToday(date)
+	}
 	function getOpacity(val: number, isLight: boolean) {
 		const gradient = HEAT_OPACITY_GRADIENT[isLight ? "light" : "dark"]
 
-		if (val >= 0.8) return gradient[0]
-		if (val >= 0.4) return gradient[1]
-		if (val >= 0.3) return gradient[2]
+		if (val === 1) return gradient[0]
+		if (val >= 0.8) return gradient[1]
+		if (val >= 0.4) return gradient[2]
 
 		return gradient[3]
 	}
 	function getMonths() {
 		const months = []
-		const getLast = options.from === 'last'
-		let currMonth = new Date(options.startDate)
+		let currMonth = firstYearDay
 
 		months.push(currMonth)
+		
 		for (let i = 0; i < 11; i++) {
-			currMonth = getLast ? getPrevMonth(new Date(currMonth)) : getNextMonth(new Date(currMonth))
+			currMonth = getNextMonth(new Date(currMonth))
 			months.push(currMonth)
 		}
 		return months
 	}
-	function doShow(date: Date) {
-		const startDate = new Date(options.startDate)
-
-		// only show if in the past
-		if (options.from === 'last') {
-			return isDateEarlier(date, startDate, true)
-		}
-		else {
-			return !isDateEarlier(date, startDate, true) && isDateEarlier(date, new Date(), true)
-		}
-	}
-	function getRenderData(idx: number, isLight: boolean) {
-		const getLast = options.from === 'last'
-		const currDay = addToDate({ 
-			date: firstDay, 
-			time: `${getLast ? -idx : idx}d` 
-		})
-		const show = doShow(currDay)
-		const val = Math.random()
-		const opacity = show ? getOpacity(val, isLight) : 0
-
-		return {
-			opacity,
-			show,
-			day: currDay
-		}
-	}
 	function getFirstDay() {
-		const date = new Date(options.startDate)
+		const date = new Date(firstYearDay)
 		const dayOfWeek = date.getDay()
-		const getLast = options.from === 'last'
 
-		// last 12 months, first day is the first week's saturday
-		if (getLast) {
-			const daysToSaturday = (6 - dayOfWeek + 7) % 7
-			const saturday = new Date(date)
-			saturday.setDate(date.getDate() + daysToSaturday)
-			return saturday
-		} 
-		// next 12 months, first day is the first week's sunday
-		else {
-			const daysToSubtract = dayOfWeek
-			const sunday = new Date(date)
-			sunday.setDate(date.getDate() - daysToSubtract)
-			return sunday
-		}
+		const daysToSubtract = dayOfWeek
+		const sunday = new Date(date)
+		sunday.setDate(date.getDate() - daysToSubtract)
+
+		return sunday
 	}
+
+	/* ui */
 	function initMonthNames() {
 		const monthNames = container.getElementsByClassName('heat-map__month') as unknown as HTMLElement[]
 		let lastLeft = 0
@@ -182,6 +180,7 @@
 	onMount(() => initMonthNames())
 </script>
 
+
 <div style:position="relative" style:width="100%">
 	<div 
 		style:width="100%" 
@@ -203,14 +202,13 @@
 			</div>
 			<div class="flx">
 				{#each Array(52) as _, colIdx}
-					{@const getLast = options.from === 'last'}
 					<div 
 						class="heat-map__week-col"
-						style:flex-direction={getLast ? 'column-reverse' : 'column'}
+						style:flex-direction={'column'}
 					>
 						{#each Array(7) as _, cellIdx}
 							{@const dayIdx = colIdx * 7 + cellIdx}
-							{@const { show, opacity, day } = getRenderData(dayIdx, isLight)}
+							{@const { show, opacity, day } = getRenderData({ idx: dayIdx, isLight, data })}
 							{@const sameDay = isSameDay(new Date(), day)}
 							{@const color = type === 'habits' ? `rgba(var(--heatMapColor), ${opacity})` : ''}
 
@@ -326,7 +324,6 @@
 			position: relative;
 			border-radius: 7px;
 			pointer-events: none;
-			color: rgba(var(--textColor1), 0.3);
 			@include center;
 
 			&--goal &-content {
@@ -364,6 +361,7 @@
 				border-radius: 7px;
 				background-color: var(--color);
 				z-index: 1;
+				transition: 0.2s ease-in-out;
 			}
 		}
 		&__cell-content {

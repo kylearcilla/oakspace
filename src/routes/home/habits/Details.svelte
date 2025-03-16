@@ -1,6 +1,6 @@
 <script lang="ts"> 
 	import { Icon } from "$lib/enums"
-	import { getMonthFromIdx, months, sameMonth } from "$lib/utils-date"
+	import { months, sameMonth } from "$lib/utils-date"
 	import { kebabToNormal } from "$lib/utils-general"
 	import { MONTH_THOUGHT_ENTRY, YEAR_HABITS_DATA, YEAR_THOUGHT_ENTRY } from "$lib/mock-data"
     import { habitTracker, themeState } from "$lib/store"
@@ -18,7 +18,10 @@
 
     let store = habitTracker
     let habits: Habit[] = []
-    let metrics: HabitMonthMetrics | null = null
+
+    let monthMetrics: HabitMonthMetrics | null = null
+    let yearMetrics: HabitYearMetrics | null = null
+    let yearHeatMap: HabitHeatMapData[] | null = null
     let activeStreak: HabitActiveStreak | null = null
 
     let monthEntry = true
@@ -34,7 +37,7 @@
 
     let currYear = now.getFullYear()
     let currMonthIdx = now.getMonth()
-    let minYear = 2016
+    let minYear = 2023
 
     let habitView: HabitTableOptions = {
         view: "time-of-day",
@@ -61,7 +64,9 @@
     store.subscribe((data) => {
         habits = data.habits
         activeStreak = data.activeStreak
-        metrics = data.monthMetrics
+        monthMetrics = data.monthMetrics
+        yearMetrics = data.yearMetrics
+        yearHeatMap = data.yearHeatMap
     })
 
     function onOptionsClicked(optn: string) {
@@ -124,237 +129,27 @@
     }
 </script>
 
-<div 
-    class="details" 
-    class:details--light={light}
->
-    <div class="details__header">
-        <h1 class="details__header-title">
-            {currYear}
-        </h1>
-        <div class="flx">
-            <div class="flx" style:margin="0px 0px -4px 0px">
-                <button 
-                    class="details__now"
-                    class:hidden={isYearCurr}
-                    on:click={() => updateYear(now.getFullYear())}                        
-                >
-                    {new Date().getFullYear()}
-                </button>
-                <button 
-                    on:click={() => updateYear(currYear - 1)}
-                    disabled={currYear === minYear}
-                    class="details__arrow"
-                    style:margin-left="10px"
-                >
-                    <div style:margin-left={"-2px"}>
-                        <SvgIcon 
-                            icon={Icon.ChevronLeft} options={{ scale: 1.4 }}
-                        />
-                    </div>
-                </button>
-                <button 
-                    on:click={() => updateYear(currYear + 1)}
-                    class="details__arrow"
-                    style:margin-left="10px" 
-                    disabled={isYearCurr}
-                >
-                    <div style:margin-right={"-2px"}>
-                        <SvgIcon icon={Icon.ChevronRight} options={{ scale: 1.4 }}/>
-                    </div>
-                </button>
-            </div>
-            <div class="details__settings-btn">
-                <SettingsBtn 
-                    id={"habits"}
-                    onClick={() => monthOptions = !monthOptions}
-                />
-            </div>
-        </div>
-        <DropdownList 
-            id={"habits"}
-            isHidden={!monthOptions}
-            options={{
-                listItems: [
-                    { 
-                        name: "Add Year Entry",
-                        active: yearEntry,
-                        onToggle: () => yearEntry = !yearEntry
-                    },
-                    { 
-                        name: "Add Month Entry",
-                        active: monthEntry,
-                        onToggle: () => monthEntry = !monthEntry
-                    },
-                    { 
-                        name: "Left Habits List",
-                        active: showHabitsLeft,
-                        divider: true,
-                        onToggle: () => {
-                            showHabitsLeft = !showHabitsLeft
-                            setLeftWidth(showHabitsLeft)
-                        }
-                    },
-                    {
-                        sectionName: "Habit Style",
-                    },
-                    { 
-                        name: "Styling",
-                        pickedItem: kebabToNormal(habitStyle),
-                        items: [
-                            { name: "Card" },
-                            { name: "Table" }
-                        ],
-                        onListItemClicked: ({ name }) => onHabitStyle(name)
-                    },
-                ],
-                onClickOutside: () => {
-                    monthOptions = false
-                },
-                styling:  { 
-                    zIndex: 100,
-                    width: "190px",
-                },
-                position: { 
-                    top: "25px",
-                    right: "0px",
-                }
-            }}
-        />
-    </div>
-
-    {#if yearEntry}
-        <div class="details__thought">
-            <TextEntry 
-                id="yr"
-                zIndex={50}
-                entry={MONTH_THOUGHT_ENTRY}
-            />
-        </div>
-    {/if}
-
-    <p class:hidden={yearEntry} style:margin-bottom="9px">
-        {#if currYear != new Date().getFullYear()}
-            Overview of your habits for the year of {currYear}.
-        {:else}
-            Overview of your habits this year.
-        {/if}
-    </p>
-
-    {#if metrics && activeStreak}
-        {@const { habitsDone, habitsDue, perfectDays, missed, longestStreak } = metrics}
-        {@const zero = habitsDue === 0}
-
-        <div 
-            class="details__year-stats stats"
-            class:stats--light={light}
-        >
-            <div 
-                class="stat" 
-                class:hidden={!isYearCurr}
-                style:margin-right="32px"
-            >
-                <div class="stat__bottom">
-                    <div class="flx">
-                        <span class="stat__value">
-                            {activeStreak.count}
-                        </span>
-                        <span class="stat__unit">
-                            {activeStreak.count === 1 ? "day" : "days"}
-                        </span>
-                    </div>
-                    <span class="stat__label">Active Streak</span>
-                </div>     
-            </div>
-            <div class="stat" style:margin-right="35px">
-                <div class="stat__bottom">
-                    <div class="flx">
-                        <span class="stat__value">
-                            {zero ? "--" : Math.floor((habitsDone / habitsDue) * 100)}
-                        </span>
-                        <span class="stat__unit" style:margin="0px 0px 0px 5px">
-                            {zero ? "" : "%"}
-                        </span>
-                    </div>
-                    <span class="stat__label">Consistency</span>
-                </div>                    
-            </div>
-            {#if longestStreak}
-                <div class="stat" style:margin-right="35px">
-                    <div class="stat__bottom">
-                        <div class="flx">
-                            <span class="stat__value">
-                                {zero ? "--" : longestStreak.count}
-                            </span>
-                            <span class="stat__unit">
-                                {zero ? "" : longestStreak.count === 1 ? "day" : "days"}
-                        </span>
-                    </div>
-                    <span class="stat__label">Longest Streak</span>
-                    </div>                    
-                </div>
-            {/if}
-            <div class="stat">
-                <div class="stat__bottom">
-                    <div class="flx">
-                        <span class="stat__value">
-                            {zero ? "--" : perfectDays}
-                        </span>
-                        <span class="stat__unit">
-                            {zero ? "" : perfectDays === 1 ? "day" : "days"}
-                        </span>
-                    </div>
-                    <span class="stat__label">100% Days</span>
-                </div>                    
-            </div>
-            <div class="stat">
-                <div class="stat__bottom">
-                    <div class="flx">
-                        <span class="stat__value">
-                            {zero ? "--" : missed}
-                        </span>
-                        <span class="stat__unit">
-                            {zero ? "" : missed === 1 ? "time" : "times"}
-                        </span>
-                    </div>
-                    <span class="stat__label">Missed</span>
-                </div>
-            </div>
-        </div>
-    {/if}
-
-    <div style:margin="20px 0px 13px 0px" style:padding-left="20px">
-        <HeatMap 
-            id="0"
-            type="habits" 
-            options={{ startDate: new Date(currYear, 0, 1), from: "next" }}
-        />
-    </div>
-
-    <div class="details__month">
-        <div class="details__month-header">
-            <div class="flx">
-                {#each monthItems as month, idx}
-                    <button 
-                        class="details__month-item"
-                        class:details__month-item--active={idx === currMonthIdx}
-                        on:click={() => currMonthIdx = idx}
-                    >
-                        {month.slice(0, 3)}
-                    </button>
-                {/each}
-            </div>
+{#if monthMetrics}
+    <div 
+        class="details" 
+        class:details--light={light}
+    >
+        <div class="details__header">
+            <h1 class="details__header-title">
+                {currYear}
+            </h1>
             <div class="flx">
                 <div class="flx" style:margin="0px 0px -4px 0px">
                     <button 
                         class="details__now"
-                        class:hidden={isMonthCurr || !isYearCurr}
+                        class:hidden={isYearCurr}
                         on:click={() => updateYear(now.getFullYear())}                        
                     >
-                        Go Back
+                        {new Date().getFullYear()}
                     </button>
                     <button 
-                        on:click={() => updateMonth(currMonthIdx - 1)}
+                        on:click={() => updateYear(currYear - 1)}
+                        disabled={currYear === minYear}
                         class="details__arrow"
                         style:margin-left="10px"
                     >
@@ -365,151 +160,121 @@
                         </div>
                     </button>
                     <button 
-                        on:click={() => updateMonth(currMonthIdx + 1)}
+                        on:click={() => updateYear(currYear + 1)}
                         class="details__arrow"
-                        class:details__arrow--opaque={isMonthCurr} 
-                        style:margin-left="10px"
+                        style:margin-left="10px" 
+                        disabled={isYearCurr}
                     >
                         <div style:margin-right={"-2px"}>
                             <SvgIcon icon={Icon.ChevronRight} options={{ scale: 1.4 }}/>
                         </div>
                     </button>
                 </div>
-                <div class="details__settings-btn" >
+                <div class="details__settings-btn">
                     <SettingsBtn 
-                        id={"breakdown"}
-                        onClick={() => breakdownOptions = !breakdownOptions}
+                        id={"habits"}
+                        onClick={() => monthOptions = !monthOptions}
                     />
                 </div>
-                <DropdownList 
-                    id={"breakdown"}
-                    isHidden={!breakdownOptions || habitStyle === "table"}
-                    options={{
-                        listItems: [
-                            { 
-                                name: "Card Style",
-                                pickedItem: kebabToNormal(cardStyle),
-                                items: [
-                                    { name: "Tall" },
-                                    { name: "Wide" }
-                                ],
-                                onListItemClicked: ({ name }) => onCardStyle(name)
-                            },
-                            { 
-                                name: `"×" as Checked`,
-                                active: cardDotStyle === "x-mark",
-                                onToggle: () => {
-                                    cardDotStyle = cardDotStyle === "x-mark" ? "default" : "x-mark"
-                                }
-                            }
-                        ],
-                        onListItemClicked: ({ name }) => {
-                            onOptionsClicked(name)
-                        },
-                        onClickOutside: () => {
-                            breakdownOptions = false
-                        },
-                        styling:  { 
-                            zIndex: 100,
-                            width: "170px",
-                        },
-                        position: { 
-                            top: "40px",
-                            right: "0px"
-                        }
-                    }}
-                />     
-                <DropdownList 
-                    id={"breakdown"}
-                    isHidden={!breakdownOptions || habitStyle === "card"}
-                    options={{
-                        listItems: [
-                            { 
-                                name: "Group",
-                                pickedItem: kebabToNormal(habitView.view),
-                                items: [
-                                    { name: "Default" },
-                                    { name: "Time of Day" }
-                                ],
-                                onListItemClicked: ({ name }) => updateHabitView(name)
-                            },
-                            { 
-                                name: "Checkbox",
-                                pickedItem: kebabToNormal(habitView.checkboxStyle),
-                                divider: true,
-                                items: [
-                                    { name: "Box" },
-                                    { name: "Minimal" }
-                                ],
-                                onListItemClicked: ({ name }) => updateHabitView(name)
-                            },
-                            { 
-                                name: "Emojis",
-                                active: habitView.emojis,
-                                onToggle: () => updateHabitView("Emojis")
-                            },
-                            { 
-                                name: "Target",
-                                active: habitView.target,
-                                onToggle: () => updateHabitView("Target")
-                            },
-                            { 
-                                name: "Bottom Details",
-                                active: habitView.bottomDetails,
-                                divider: true,
-                                onToggle: () => updateHabitView("Bottom Details") 
-                            },
-                            {
-                                sectionName: "Progress",
-                            },
-                            { 
-                                name: "Detailed",
-                                active: habitView.progress.numbers,
-                                onToggle: () => updateHabitView("Detailed")
-                            }
-                        ],
-                        onListItemClicked: ({ name }) => {
-                            onOptionsClicked(name)
-                        },
-                        onClickOutside: () => {
-                            breakdownOptions = false
-                        },
-                        styling:  { 
-                            zIndex: 200,
-                            width: "170px",
-                        },
-                        position: { 
-                            top: "40px",
-                            right: "0px"
-                        }
-                    }}
-                />
             </div>
+            <DropdownList 
+                id={"habits"}
+                isHidden={!monthOptions}
+                options={{
+                    listItems: [
+                        { 
+                            name: "Add Year Entry",
+                            active: yearEntry,
+                            onToggle: () => yearEntry = !yearEntry
+                        },
+                        { 
+                            name: "Add Month Entry",
+                            active: monthEntry,
+                            onToggle: () => monthEntry = !monthEntry
+                        },
+                        { 
+                            name: "Left Habits List",
+                            active: showHabitsLeft,
+                            divider: true,
+                            onToggle: () => {
+                                showHabitsLeft = !showHabitsLeft
+                                setLeftWidth(showHabitsLeft)
+                            }
+                        },
+                        {
+                            sectionName: "Habit Style",
+                        },
+                        { 
+                            name: "Styling",
+                            pickedItem: kebabToNormal(habitStyle),
+                            items: [
+                                { name: "Card" },
+                                { name: "Table" }
+                            ],
+                            onListItemClicked: ({ name }) => onHabitStyle(name)
+                        },
+                    ],
+                    onClickOutside: () => {
+                        monthOptions = false
+                    },
+                    styling:  { 
+                        zIndex: 100,
+                        width: "190px",
+                    },
+                    position: { 
+                        top: "25px",
+                        right: "0px",
+                    }
+                }}
+            />
         </div>
-    
-        <p class:hidden={monthEntry}>
-            Your habits for the month of {monthName}{currYear === new Date().getFullYear() ? "" : ` ${currYear}`}.
-        </p>
-        {#if monthEntry}
+
+        {#if yearEntry}
             <div class="details__thought">
                 <TextEntry 
-                    id="month"
+                    id="yr"
                     zIndex={50}
-                    entry={YEAR_THOUGHT_ENTRY}
+                    entry={MONTH_THOUGHT_ENTRY}
                 />
             </div>
         {/if}
 
-        {#if metrics && activeStreak}
-            {@const { habitsDone, habitsDue, perfectDays, missed, longestStreak } = metrics}
+        <p  
+            class:hidden={yearEntry} 
+            style:margin="0px 0px 9px 20px"
+        >
+            {#if currYear != new Date().getFullYear()}
+                Overview of your habits for the year of {currYear}.
+            {:else}
+                Overview of your habits this year.
+            {/if}
+        </p>
+
+        {#if yearMetrics && activeStreak}
+            {@const { habitsDone, habitsDue, perfectDays, missed, longestStreak } = yearMetrics}
             {@const zero = habitsDue === 0}
 
             <div 
-                class="details__month-stats stats"
+                class="details__year-stats stats"
                 class:stats--light={light}
-                class:border-none={!monthEntry}
-                style:padding-top={monthEntry ? "12px" : "0px"}
             >
+                <div 
+                    class="stat" 
+                    class:hidden={!isYearCurr}
+                    style:margin-right="32px"
+                >
+                    <div class="stat__bottom">
+                        <div class="flx">
+                            <span class="stat__value">
+                                {activeStreak.count}
+                            </span>
+                            <span class="stat__unit">
+                                {activeStreak.count === 1 ? "day" : "days"}
+                            </span>
+                        </div>
+                        <span class="stat__label">Active Streak</span>
+                    </div>     
+                </div>
                 <div class="stat" style:margin-right="35px">
                     <div class="stat__bottom">
                         <div class="flx">
@@ -566,37 +331,285 @@
                 </div>
             </div>
         {/if}
-    
-        <div class="details__breakdown">
-            <div class="details__habits">
-                {#if habitStyle === "card"}
-                    <ul style:margin-top="14px">
-                        {#each habits.sort((a, b) => a.order.default - b.order.default) as habit}
-                            <li>
-                                <HabitCard
-                                    style={cardStyle}
-                                    dotStyle={cardDotStyle}
-                                    monthIdx={currMonthIdx}
-                                    year={currYear}
-                                    {habit}
-                                    {light}
+
+        {#if yearHeatMap}
+            <div style:margin="20px 0px 13px 0px" style:padding-left="20px">
+                <HeatMap 
+                    id="0"
+                    type="habits"
+                    data={yearHeatMap}
+                    year={currYear}
+                />
+            </div>
+        {/if}
+
+        <div class="details__month">
+            <div class="details__month-header">
+                <div class="flx">
+                    {#each monthItems as month, idx}
+                        <button 
+                            class="details__month-item"
+                            class:details__month-item--active={idx === currMonthIdx}
+                            on:click={() => currMonthIdx = idx}
+                        >
+                            {month.slice(0, 3)}
+                        </button>
+                    {/each}
+                </div>
+                <div class="flx">
+                    <div class="flx" style:margin="0px 0px -4px 0px">
+                        <button 
+                            class="details__now"
+                            class:hidden={isMonthCurr || !isYearCurr}
+                            on:click={() => updateYear(now.getFullYear())}                        
+                        >
+                            Go Back
+                        </button>
+                        <button 
+                            on:click={() => updateMonth(currMonthIdx - 1)}
+                            class="details__arrow"
+                            style:margin-left="10px"
+                        >
+                            <div style:margin-left={"-2px"}>
+                                <SvgIcon 
+                                    icon={Icon.ChevronLeft} options={{ scale: 1.4 }}
                                 />
-                            </li>
-                        {/each}
-                    </ul>
-                {:else}
-                    <div style:margin="5px 0px 0px 0px" style:width="100%">
-                        <HabitsTable 
-                            month={currMonth}
-                            timeFrame="monthly"
-                            options={habitView} 
+                            </div>
+                        </button>
+                        <button 
+                            on:click={() => updateMonth(currMonthIdx + 1)}
+                            class="details__arrow"
+                            class:details__arrow--opaque={isMonthCurr} 
+                            style:margin-left="10px"
+                        >
+                            <div style:margin-right={"-2px"}>
+                                <SvgIcon icon={Icon.ChevronRight} options={{ scale: 1.4 }}/>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="details__settings-btn" >
+                        <SettingsBtn 
+                            id={"breakdown"}
+                            onClick={() => breakdownOptions = !breakdownOptions}
                         />
                     </div>
-                {/if}
+                    <DropdownList 
+                        id={"breakdown"}
+                        isHidden={!breakdownOptions || habitStyle === "table"}
+                        options={{
+                            listItems: [
+                                { 
+                                    name: "Card Style",
+                                    pickedItem: kebabToNormal(cardStyle),
+                                    items: [
+                                        { name: "Tall" },
+                                        { name: "Wide" }
+                                    ],
+                                    onListItemClicked: ({ name }) => onCardStyle(name)
+                                },
+                                { 
+                                    name: `"×" as Checked`,
+                                    active: cardDotStyle === "x-mark",
+                                    onToggle: () => {
+                                        cardDotStyle = cardDotStyle === "x-mark" ? "default" : "x-mark"
+                                    }
+                                }
+                            ],
+                            onListItemClicked: ({ name }) => {
+                                onOptionsClicked(name)
+                            },
+                            onClickOutside: () => {
+                                breakdownOptions = false
+                            },
+                            styling:  { 
+                                zIndex: 100,
+                                width: "170px",
+                            },
+                            position: { 
+                                top: "40px",
+                                right: "0px"
+                            }
+                        }}
+                    />     
+                    <DropdownList 
+                        id={"breakdown"}
+                        isHidden={!breakdownOptions || habitStyle === "card"}
+                        options={{
+                            listItems: [
+                                { 
+                                    name: "Group",
+                                    pickedItem: kebabToNormal(habitView.view),
+                                    items: [
+                                        { name: "Default" },
+                                        { name: "Time of Day" }
+                                    ],
+                                    onListItemClicked: ({ name }) => updateHabitView(name)
+                                },
+                                { 
+                                    name: "Checkbox",
+                                    pickedItem: kebabToNormal(habitView.checkboxStyle),
+                                    divider: true,
+                                    items: [
+                                        { name: "Box" },
+                                        { name: "Minimal" }
+                                    ],
+                                    onListItemClicked: ({ name }) => updateHabitView(name)
+                                },
+                                { 
+                                    name: "Emojis",
+                                    active: habitView.emojis,
+                                    onToggle: () => updateHabitView("Emojis")
+                                },
+                                { 
+                                    name: "Target",
+                                    active: habitView.target,
+                                    onToggle: () => updateHabitView("Target")
+                                },
+                                { 
+                                    name: "Bottom Details",
+                                    active: habitView.bottomDetails,
+                                    divider: true,
+                                    onToggle: () => updateHabitView("Bottom Details") 
+                                },
+                                {
+                                    sectionName: "Progress",
+                                },
+                                { 
+                                    name: "Detailed",
+                                    active: habitView.progress.numbers,
+                                    onToggle: () => updateHabitView("Detailed")
+                                }
+                            ],
+                            onListItemClicked: ({ name }) => {
+                                onOptionsClicked(name)
+                            },
+                            onClickOutside: () => {
+                                breakdownOptions = false
+                            },
+                            styling:  { 
+                                zIndex: 200,
+                                width: "170px",
+                            },
+                            position: { 
+                                top: "40px",
+                                right: "0px"
+                            }
+                        }}
+                    />
+                </div>
+            </div>
+        
+            <p class:hidden={monthEntry}>
+                Your habits for the month of {monthName}{currYear === new Date().getFullYear() ? "" : ` ${currYear}`}.
+            </p>
+            {#if monthEntry}
+                <div class="details__thought">
+                    <TextEntry 
+                        id="month"
+                        zIndex={50}
+                        entry={YEAR_THOUGHT_ENTRY}
+                    />
+                </div>
+            {/if}
+
+            {#if monthMetrics && activeStreak}
+                {@const { habitsDone, habitsDue, perfectDays, missed, longestStreak } = monthMetrics}
+                {@const zero = habitsDue === 0}
+
+                <div 
+                    class="details__month-stats stats"
+                    class:stats--light={light}
+                    class:border-none={!monthEntry}
+                    style:padding-top={monthEntry ? "12px" : "0px"}
+                >
+                    <div class="stat" style:margin-right="35px">
+                        <div class="stat__bottom">
+                            <div class="flx">
+                                <span class="stat__value">
+                                    {zero ? "--" : Math.floor((habitsDone / habitsDue) * 100)}
+                                </span>
+                                <span class="stat__unit" style:margin="0px 0px 0px 5px">
+                                    {zero ? "" : "%"}
+                                </span>
+                            </div>
+                            <span class="stat__label">Consistency</span>
+                        </div>                    
+                    </div>
+                    {#if longestStreak}
+                        <div class="stat" style:margin-right="35px">
+                            <div class="stat__bottom">
+                                <div class="flx">
+                                    <span class="stat__value">
+                                        {zero ? "--" : longestStreak.count}
+                                    </span>
+                                    <span class="stat__unit">
+                                        {zero ? "" : longestStreak.count === 1 ? "day" : "days"}
+                                </span>
+                            </div>
+                            <span class="stat__label">Longest Streak</span>
+                            </div>                    
+                        </div>
+                    {/if}
+                    <div class="stat">
+                        <div class="stat__bottom">
+                            <div class="flx">
+                                <span class="stat__value">
+                                    {zero ? "--" : perfectDays}
+                                </span>
+                                <span class="stat__unit">
+                                    {zero ? "" : perfectDays === 1 ? "day" : "days"}
+                                </span>
+                            </div>
+                            <span class="stat__label">100% Days</span>
+                        </div>                    
+                    </div>
+                    <div class="stat">
+                        <div class="stat__bottom">
+                            <div class="flx">
+                                <span class="stat__value">
+                                    {zero ? "--" : missed}
+                                </span>
+                                <span class="stat__unit">
+                                    {zero ? "" : missed === 1 ? "time" : "times"}
+                                </span>
+                            </div>
+                            <span class="stat__label">Missed</span>
+                        </div>
+                    </div>
+                </div>
+            {/if}
+        
+            <div class="details__breakdown">
+                <div class="details__habits">
+                    {#if habitStyle === "card"}
+                        <ul style:margin-top="14px">
+                            {#each habits.sort((a, b) => a.order.default - b.order.default) as habit}
+                                <li>
+                                    <HabitCard
+                                        style={cardStyle}
+                                        dotStyle={cardDotStyle}
+                                        monthIdx={currMonthIdx}
+                                        year={currYear}
+                                        {habit}
+                                        {light}
+                                    />
+                                </li>
+                            {/each}
+                        </ul>
+                    {:else}
+                        <div style:margin="5px 0px 0px 0px" style:width="100%">
+                            <HabitsTable 
+                                month={currMonth}
+                                timeFrame="monthly"
+                                options={habitView} 
+                            />
+                        </div>
+                    {/if}
+                </div>
             </div>
         </div>
     </div>
-</div>
+{/if}
 
 <style lang="scss">
     @import "../../../scss/stats.scss";
@@ -618,7 +631,6 @@
         p {
             @include text-style(0.5, var(--fw-400-500), 1.45rem);
             margin: 1px 0px 12px 0px;
-            padding-left: 20px;
         }
         &__header-title {
             @include text-style(1, var(--fw-400-500), 2.55rem, "Geist Mono");

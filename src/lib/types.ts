@@ -926,6 +926,8 @@ type DayBreakdown = {
     } | null
 }
 
+
+
 type StylingOptions = {
     width?: CSSUnitVal
     maxWidth?: CSSUnitVal
@@ -967,6 +969,8 @@ type HabitStore = {
     habits: Habit[]
     monthMetrics: HabitMonthMetrics | null
     activeStreak: HabitActiveStreak | null
+    yearMetrics: HabitYearMetrics | null
+    yearHeatMap: HabitHeatMapData[] | null
 }
 
 type HabitActiveStreak = {
@@ -981,11 +985,14 @@ type HabitMonthMetrics = {
     perfectDays: number
     missedDays: number
     missed: number
-    longestStreak: {
+    longestStreak?: {
         count: number
         start: Date
+        end?: Date
     }
 }
+
+type HabitYearMetrics = HabitMonthMetrics
 
 type HabitYearData = {
     name: string
@@ -998,6 +1005,12 @@ type HabitDayData = {
     date: Date
     noData?: boolean
     beyondBounds?: boolean
+}
+
+type HabitHeatMapData = {
+    date: Date | null
+    done: number
+    due: number
 }
 
 type HabitMonthKey = `${number}-${number}`

@@ -5,9 +5,9 @@
 	import { themeState } from "$lib/store"
 	import { habitTracker } from "$lib/store"
 	import { kebabToNormal } from "$lib/utils-general"
-	import { getHabitTableData, toggleCompleteHabit, updateMonthMetrics } from "$lib/utils-habits"
+	import { getHabitTableData, toggleCompleteHabit, initMonthData } from "$lib/utils-habits"
 	import { getHabitStreak, reorderInTimeOfDayView, reorderInDefaultView } from "$lib/utils-habits"
-	import { DAYS_OF_WEEK, getDayIdxMinutes, getMonthDayNumbers, getMonthFromIdx, isSameMonth } from "$lib/utils-date"
+	import { DAYS_OF_WEEK, getDayIdxMinutes, getMonthDayNumbers, isSameMonth } from "$lib/utils-date"
     
 	import SvgIcon from "$components/SVGIcon.svelte"
 	import ProgressRing from "$components/ProgressRing.svelte"
@@ -113,8 +113,11 @@
     }
     function onTimeFrameChange(month: Date, weeksAgoIdx: number) {
         if (timeFrame === "monthly") {
-            currMonth = new Date(month.getFullYear(), month.getMonth())
-            updateMonthMetrics(currMonth)
+            const monthIdx = month.getMonth()
+            const year = month.getFullYear()
+
+            currMonth = new Date(year, monthIdx)
+            initMonthData(year, monthIdx)
         }
         else {
             currWeekIdx = weeksAgoIdx

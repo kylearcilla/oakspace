@@ -30,7 +30,9 @@ export const timer = writable<{ date: Date }>({ date: new Date() })
 export const habitTracker = writable<HabitStore>({
     habits: [],
     monthMetrics: null,
-    activeStreak: null
+    activeStreak: null,
+    yearMetrics: null,
+    yearHeatMap: []
 })
 
 /* general authentication stuff */

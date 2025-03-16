@@ -1,22 +1,15 @@
-import { habitTracker } from "./store";
+import { initMonthData } from "./utils-habits"
 import { TEST_HABITS, YEAR_HABITS_DATA } from "./mock-data";
-import { getActiveStreak, getMonthMetrics } from "./utils-habits";
 import { genMonthCalendar, getWeekPeriod, isLeapYear, isSameDay } from "./utils-date"
+import { habitTracker } from "./store";
+import { getActiveStreak } from "./utils-habits";
 
 export const MAX_WEEKS_BACK = 6
 export const MAX_WEEKS_BACK_IDX = MAX_WEEKS_BACK - 1
 
-
 export function initHabits() {
-    const habits = initHabitData()
-    const monthMetrics = getMonthMetrics({
-        habits, 
-        monthIdx: new Date().getMonth(),
-        year: new Date().getFullYear()
-    })
-    const activeStreak = getActiveStreak(habits)
-
-    habitTracker.set({ habits, monthMetrics, activeStreak })
+    initHabitData()
+    initMonthData(new Date().getFullYear(), new Date().getMonth())
 }
 
 export function initHabitData() {
@@ -25,6 +18,14 @@ export function initHabitData() {
         const { start, end } = getWeekBounds()
 
         habit.data = getHabitBitsSlice(yearData.data, start, end)
+    })
+
+    habitTracker.set({ 
+        habits: TEST_HABITS, 
+        activeStreak: getActiveStreak(), 
+        yearHeatMap: null,
+        monthMetrics: null, 
+        yearMetrics: null 
     })
 
     return TEST_HABITS

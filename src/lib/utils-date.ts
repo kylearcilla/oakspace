@@ -1058,3 +1058,17 @@ export function getDaysInWeek(date: Date) {
     return Array.from({ length: daysInWeek }, (_, i) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + i))
 }
 
+export function getDaysMonths(year: number) {
+	return [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+}
+
+export function getYrIdxfromDate(date: Date) {
+    const year = date.getFullYear()
+    const month = date.getMonth()
+    const day = date.getDate()
+
+    const daysInMonths = getDaysMonths(year)
+    const daysBeforeThisMonth = daysInMonths.slice(0, month).reduce((acc, days) => acc + days, 0)
+
+    return daysBeforeThisMonth + day
+}

@@ -974,7 +974,7 @@ export function genMonthCalendar(inputDate: Date): MonthData {
 		days: [],
 		year: inputDate.getFullYear(),
 		firstDay: firstDayOfMonth
-	};
+	}
 
 	// go to the first date in grid using negative offset from first day
 	let day = (monthFirstDayOfWeek - 1) * -1
@@ -1071,4 +1071,24 @@ export function getYrIdxfromDate(date: Date) {
     const daysBeforeThisMonth = daysInMonths.slice(0, month).reduce((acc, days) => acc + days, 0)
 
     return daysBeforeThisMonth + day
+}
+
+export function isDateInCurrrentWeek(date: Date) {
+    const today = new Date()
+    const weekStart = new Date(today)
+    weekStart.setDate(today.getDate() - today.getDay())
+    weekStart.setHours(0, 0, 0, 0)
+
+    const weekEnd = new Date(weekStart)
+    weekEnd.setDate(weekStart.getDate() + 6)
+    weekEnd.setHours(23, 59, 59, 999)
+
+    return date >= weekStart && date <= weekEnd
+}
+
+export function betweenDates(date: Date, start: Date, end: Date) {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    const s = new Date(start.getFullYear(), start.getMonth(), start.getDate()) 
+    const e = new Date(end.getFullYear(), end.getMonth(), end.getDate())
+    return d >= s && d <= e
 }

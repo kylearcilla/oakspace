@@ -5,22 +5,16 @@
 	import { themeState } from "$lib/store"
 	import { habitTracker } from "$lib/store"
 	import { kebabToNormal } from "$lib/utils-general"
+	import { DAYS_OF_WEEK, getMonthDayNumbers, isSameMonth } from "$lib/utils-date"
 	import { getHabitTableData, toggleCompleteHabit, initMonthData } from "$lib/utils-habits"
-	import { getHabitStreak, reorderInTimeOfDayView, reorderInDefaultView } from "$lib/utils-habits"
-	import { DAYS_OF_WEEK, getDayIdxMinutes, getMonthDayNumbers, isSameMonth } from "$lib/utils-date"
-    
+	import { getHabitStreak, reorderInTimeOfDayView, reorderInDefaultView, TIMES_OF_DAY_MAP } from "$lib/utils-habits"
+
 	import SvgIcon from "$components/SVGIcon.svelte"
 	import ProgressRing from "$components/ProgressRing.svelte"
 
     const MIN_SIZE = 620
     const X_MIN_SIZE = 480
     const WIDE_SIZE = 1000
-    const TIMES_OF_DAY_MAP: { [key: string]: number } = {
-        "morning": 0,
-        "afternoon": 1,
-        "evening": 2,
-        "all-day": 3
-    }
 
     export let timeFrame: "weekly" | "monthly" = "weekly"
     export let month: Date = new Date()
@@ -38,9 +32,8 @@
     let activeStreak: HabitActiveStreak | null = null
     let sortedHabits: Habit[][] = []
     
-    let currTime = getDayIdxMinutes()
     let currMonth = new Date()
-    let currWeekIdx = 0
+    let weekIdx = 0
     let lastHabitItem: Habit | null = null
     
     let isDragging = false
@@ -48,10 +41,11 @@
     let dragHabitTarget: any
     
     let width = 0
+    let scrollLeft = 0
     let dayElems: HTMLElement[] = []
     
     $: isLight = !$themeState.isDarkTheme
-    $: onOptionUpdate(options)
+    $: resetUI(options)
     $: onTimeFrameChange(month, weeksAgoIdx)
     
     $: {
@@ -65,14 +59,19 @@
         activeStreak = data.activeStreak
         metrics = data.monthMetrics
         
+        resetUI()
         setGrouping()
     })
 
     initCounters()
 
-    function onOptionUpdate(_: HabitTableOptions) {
+    function resetUI(_?: HabitTableOptions) {
         resetCounters()
-        requestAnimationFrame(() => getDaysElems())
+        requestAnimationFrame(() => {
+            getDaysElems()
+
+            dayElems.forEach(elem => elem.scrollLeft = scrollLeft)
+        })
     }
     function resetCounters() {
         initCounters()
@@ -94,7 +93,7 @@
     }
     function getHabitData(habit: Habit): HabitDayData[] {
         const data = getHabitTableData({ 
-            habit, timeFrame, currWeekIdx, currMonth, dayProgress, rowProgress 
+            habit, timeFrame, weekIdx, currMonth, dayProgress, rowProgress 
         })
         if (lastHabitItem?.id === habit.id) {
             rowProgress = rowProgress
@@ -120,7 +119,7 @@
             initMonthData(year, monthIdx)
         }
         else {
-            currWeekIdx = weeksAgoIdx
+            weekIdx = weeksAgoIdx
         }
         resetCounters()
         habits = habits
@@ -200,44 +199,34 @@
     }
     function onHabitDragEnd() {
         if (dragHabitTarget) {
-            onHabitReorder()
+            onReorder()
         }
         isDragging = false
         dragHabitSrc = null
         dragHabitTarget = null
     }
-    function onHabitReorder() {
+    function onReorder() {
         if (view === "default") {
             reorderInDefaultView({ 
                 srcHabit: dragHabitSrc, 
                 targetHabit: dragHabitTarget, 
                 habits 
             })
-            groupByDefault()
         } 
         else {
             reorderInTimeOfDayView({ 
                 srcHabit: dragHabitSrc, 
                 targetHabit: dragHabitTarget, 
-                habits, 
-                secMap: TIMES_OF_DAY_MAP 
+                habits
             })
-            groupByTimeOfDay(habits)
         }
-    }
-    function getDays() {
-        if (timeFrame === "weekly") {
-            return DAYS_OF_WEEK.map(day => day.substring(0, 1))
-        }
-        else {
-            return Array.from({ length: getMonthDayNumbers(new Date()) }, (_, i) => `${i + 1}`)
-        }
+        habitTracker.update((state) => ({ ...state, habits }))
     }
 
     /* month stuff */
     function daysScrollHandler(event: Event) {
         const target = event.target as HTMLElement
-        const scrollLeft = target.scrollLeft
+        scrollLeft = target.scrollLeft
 
         dayElems.forEach(elem => elem.scrollLeft = scrollLeft)
     }
@@ -245,13 +234,16 @@
         const days = document.querySelectorAll(".days-col")
         days.forEach(day => dayElems.push(day as HTMLElement))
     }
-    function dowIdxToday(idx: number, weeksAgoIdx: number, month: Date) {
-        if (timeFrame === "weekly") {
+    function dowIdxToday(idx: number, month: Date, weeksAgoIdx: number) {
+        if (timeFrame === "weekly" && weeksAgoIdx === 0) {
             return idx === new Date().getDay()
         }
         else {
             return isSameMonth(new Date(), month) && idx === new Date().getDate() - 1
         }
+    }
+    function viewHabit(habit: Habit) {
+        habitTracker.update((state) => ({ ...state, viewHabit: habit }))
     }
 
     onMount(() => requestAnimationFrame(() => getDaysElems()))
@@ -269,19 +261,19 @@
     class:habits--monthly={timeFrame === "monthly"}
     class:habits--dotted={options.checkboxStyle === "minimal"}
     style:--day-col-size={timeFrame === "weekly" ? "1.34rem" : "1.15rem"}
+    style:border-top={!options.stats ? "none" : "var(--divider-border)"}
     bind:clientWidth={width}
 >
 
     {#if habits && metrics}
+        {@const todView = view === "time-of-day"}
         {@const days = getDaysHeader()}
-        {@const { emojis, target, progress, checkboxStyle, bottomDetails } = options}
+        {@const { emojis, progress, checkboxStyle, bottomDetails, captions } = options}
         {@const { habitsDone, habitsDue } = metrics}
+        {@const lastSectionEmpty = (todView && sortedHabits[3].length === 0) || habits.length === 0}
 
         <div class="habits__table">
-            <div 
-                class="habits__table-header"
-                class:habits__table-header--border={options.stats}
-            >
+            <div class="habits__table-header">
                 <div 
                     class="habits__col one-col header-col"
                     style:height="auto"
@@ -296,7 +288,7 @@
                     on:scroll={daysScrollHandler}
                 >
                     {#each days as day, idx}
-                        {@const today = dowIdxToday(idx, weeksAgoIdx, month)}
+                        {@const today = dowIdxToday(idx, month, weeksAgoIdx)}
 
                         <div class="habits__col day-col header-col">
                             <div class="dow" class:dow--today={today} >
@@ -306,7 +298,6 @@
                             </div>
                         </div>
                     {/each}
-
                 </div>
                 <div class="habits__col three-col header-col">
                     <span 
@@ -330,11 +321,10 @@
                 {@const idx = TIMES_OF_DAY_MAP[timeOfDay]}
                 {@const habits = sortedHabits[idx]}
                 {@const empty = habits.length === 0}
-                {@const isTodView = view === "time-of-day"}
                 <div 
                     class="habits__tod-container"
-                    style:margin-bottom={empty && isTodView ? "30px" : ""}
-                    style:min-height={isTodView ? "30px" : ""}
+                    style:margin-bottom={empty && todView ? "30px" : ""}
+                    style:min-height={todView ? "30px" : ""}
                 >
                     <div 
                         class="habits__tod-header"
@@ -347,6 +337,7 @@
                     </div>
         
                     {#each habits as habit, habitIdx}
+                        {@const { name, symbol, caption, freqType } = habit}
                         {@const isDragOver = dragHabitTarget?.name === habit.name}
                         {@const streak = getHabitStreak(habit)}
                         {@const completions = getHabitData(habit)}
@@ -354,6 +345,8 @@
 
                         <!-- svelte-ignore a11y-no-static-element-interactions -->
                         <div    
+                            data-default-idx={habit.order.default}
+                            data-tod-idx={habit.order.tod}
                             class="habit drop-top-border" 
                             class:drop-top-border--over={isDragOver}
                             draggable="true"
@@ -369,16 +362,19 @@
                                 <div class="flx">
                                     {#if emojis}
                                         <i class="habit__symbol">
-                                            {habit.symbol}
+                                            {symbol}
                                         </i>
                                     {/if}
-                                    <span style:margin-right="20px">
-                                        {habit.name}
-                                    </span>
+                                    <button 
+                                        style:margin-right="20px"
+                                        on:click={() => viewHabit(habit)}
+                                    >
+                                        {name}
+                                    </button>
                                 </div>
-                                {#if target}
-                                    <span class="habit__target">
-                                        {habit.target ?? ""}
+                                {#if caption && captions}
+                                    <span class="habit__caption">
+                                        {caption}
                                     </span>
                                 {/if}
                             </div>
@@ -403,23 +399,23 @@
                                     {@const disabled = noData || beyondBounds || future}
                                     {@const lofi = noData || future}
                                     {@const dateStr = date?.toLocaleDateString()}
-                                    {@const type = habit.freqType}
-                                    {@const notReqStyle = type === "day-of-week" && !required}
+                                    {@const notReqStyle = freqType === "day-of-week" && !required}
 
                                     <div
+                                        data-required={required}
                                         title={title}
                                         class="habit__box-cell day-col day-col cell"
                                         class:habit__box-cell--lofi={lofi}
                                         class:habit__box-cell--disabled={disabled}
                                         class:cell--first-row={habitIdx === 0}
-                                        class:day-col--div={startOfWeek}
+                                        class:day-col--div={startOfWeek && timeFrame === "monthly"}
                                     >
                                         {#if checkboxStyle === "box"}
                                             <button 
                                                 {disabled}
                                                 title={dateStr}
                                                 class="habit__box"
-                                                class:habit__box--not-required={notReqStyle && !noData}
+                                                class:habit__box--not-required={notReqStyle}
                                                 class:habit__box--checked={complete}
                                                 on:click={() => toggleComplete({ habit, date })}
                                             >
@@ -505,9 +501,9 @@
                             onHabitDragOver(e, timeOfDay)
                         }}
                     >
-                        {#if isTodView && habits.length === 0}
+                        {#if todView && habits.length === 0}
                             <span class="habits__empty">
-                                Empty
+                                --
                             </span>
                         {/if}
                     </div>
@@ -515,10 +511,11 @@
             {/each}
             <div 
                 class="habits__count-cells" 
+                class:habits__count-cells--empty={lastSectionEmpty}
                 class:hidden={!bottomDetails}
             >
                 <div class="habits__count-cell one-col">
-                    8 Total
+                    {habits.length} Total
                 </div>
                 <div class="habits__count-cell two-col">
                     {activeStreak?.count}×
@@ -589,7 +586,7 @@
             @include text-style(0.8);
             font-weight: 500;
         }
-        &--light .habit__target {
+        &--light .habit__caption {
             @include text-style(0.385);
         }
         &--light .habit__box:hover {
@@ -610,7 +607,7 @@
         &--x-min .days-col { 
             width: 60%;
         }
-        &--min .habit__target { 
+        &--min .habit__caption { 
             display: none;
         }
         &--min .two-col { 
@@ -657,7 +654,6 @@
             border-right: none;
         }
 
-
         &__header {
             margin: 0px 0px 0px 0px;
             position: relative;
@@ -686,7 +682,11 @@
         }
         &__count-cells {
             display: flex;
-            margin-top: 12px;
+            padding-top: 10px;
+            
+            &--empty {
+                border-top: var(--divider-border);
+            }
         }
         &__count-cell {
             @include text-style(0.145, var(--fw-400-500), 1.25rem);
@@ -705,8 +705,6 @@
             @include text-style(0.145, var(--fw-400-500), 1.35rem);
             margin: -5px 0px 0px -1px;
         }
-
-
         .fa-xmark {
             color: var(--x-mark-color);
         }
@@ -734,12 +732,19 @@
             font-style: normal;
         }
         &__name {
-            @include text-style(1, var(--fw-400-500), 1.35rem);
             @include elipses-overflow;
             @include flex(center, space-between);
+            
+            button {
+                @include text-style(1, var(--fw-400-500), 1.35rem);
+
+                &:hover {
+                    text-decoration: underline;
+                }
+            }
         }
-        &__target {
-            @include text-style(0.16, var(--fw-400-500), 1.35rem);
+        &__caption {
+            @include text-style(0.16, var(--fw-400-500), 1.25rem);
             transition: 0.1s ease-in-out;
             text-align: right;
             padding-right: 15px;

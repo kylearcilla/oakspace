@@ -20,7 +20,7 @@
   
   // utils
 	import { ModalType } from "$lib/enums"
-	import { globalContext, sessionManager } from "$lib/store"
+	import { globalContext, habitTracker, sessionManager } from "$lib/store"
 	import { 
     initAppState, keyboardShortCutHandlerKeyDown, keyboardShortCutHandlerKeyUp, 
     onMouseMoveHandler, onQuitApp,
@@ -47,6 +47,7 @@
 	import { YoutubePlayer } from "../../lib/youtube-player";
 	import ColorPicker from "../../components/ColorPicker.svelte";
 	import { themes } from "../../lib/data-themes"
+	import HabitViewModal from "$components/HabitViewModal.svelte";
 
   export let data
 
@@ -332,6 +333,10 @@
   {/if}
   {#if modalsOpen.includes(ModalType.Themes)} 
       <Appearance />
+  {/if}
+  {#if $habitTracker.viewHabit}
+    {@const habit = $habitTracker.viewHabit}
+    <HabitViewModal {habit} />
   {/if}
 
   <!-- modals -->

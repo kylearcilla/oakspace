@@ -585,7 +585,7 @@
             @include text-style(0.45);
         }
         &--light &__description {
-            @include text-style(0.7);
+            @include text-style(1);
         }
         &--no-tasks  {
             width: 400px;
@@ -653,10 +653,6 @@
             width: 55px;
             margin-bottom: 3px;
         }
-        &__info-icon {
-            @include text-style(0.3, 400, 1.24rem);
-            margin-right: 13px;;
-        }
         &__info-value {
             position: relative;
         }
@@ -671,7 +667,7 @@
         &__description {
             max-height: 100px;
             margin-bottom: 10px;
-            font-size: 1.45rem;
+            font-size: 1.35rem;
         }
         &__list span {
             @include text-style(0.2, var(--fw-400-500), 1.3rem, "Geist Mono");

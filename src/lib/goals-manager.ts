@@ -241,7 +241,7 @@ export class GoalsManager {
 
         toast("default", {
             message: "Goals",
-            description: `"${goal.name}" deleted from your Goals`,
+            description: `"${goal.name}" deleted`,
             action: {
                 label: "Undo",
                 onClick: () => {
@@ -561,7 +561,6 @@ export class GoalsManager {
         target: Goal | GoalStatus
         grouping: "status" | "tag" | "default"
     }) {
-        
         if (grouping === "status") {
             srcGoal.status = typeof target === "string" ? target : target.status
         }

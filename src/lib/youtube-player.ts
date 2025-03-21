@@ -321,7 +321,7 @@ export class YoutubePlayer {
      * Get the current player from the API itself.
      */
     calibrateVolume() {
-        if (this.player) {
+        if (this.player && typeof this.player.getVolume === "function") {
             this.volume = this.player.getVolume()
             this.update({ volume: this.volume })
         }

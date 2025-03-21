@@ -96,11 +96,15 @@ export class YoutubeUserData {
 
     hasAccessTokenExpired() {
         const currentTime = new Date().getTime()
-        const timeElapsed = currentTime - this.accessTokenCreationDate!.getTime()
+        const creationTime = this.accessTokenCreationDate!.getTime()
+
+        const timeElapsed = currentTime - creationTime
         const timeRemaining = (this.expiresIn * 1000) - timeElapsed
         const threshold = this.ACTIVE_TOKEN_THRESHOLD_SECS * 1000 
+
+        const isMoreThanHourBeforeNow = timeElapsed > (this.expiresIn * 1000)
     
-        return timeRemaining <= threshold
+        return timeRemaining <= threshold || isMoreThanHourBeforeNow
     }
 
     async verifyAccessToken() {
@@ -145,6 +149,9 @@ export class YoutubeUserData {
     /* api */
 
     async refreshUserPlaylists() {
+        if (this.loading) {
+            return
+        }
         try {
             this.setLoading(true)
             await this.getUserPlaylists(true)
@@ -159,10 +166,10 @@ export class YoutubeUserData {
     }
 
     async getMorePlaylists() {
+        if (this.loading || this.fetchedAllItems) {
+            return
+        }
         try {
-            if (this.fetchedAllItems) {
-                return  
-            }
             this.setLoading(true)
             await this.getUserPlaylists()
         }
@@ -238,7 +245,7 @@ export class YoutubeUserData {
         error: any
         refreshFunc?: () => void 
     }) {
-        error = error.code === undefined ? new APIError(APIErrorCode.GENERAL) : error
+        error = error?.code === undefined ? new APIError(APIErrorCode.GENERAL) : error
         this.error = error
         this.update({ error }, false)
 

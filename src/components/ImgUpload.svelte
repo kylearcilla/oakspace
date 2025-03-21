@@ -176,7 +176,7 @@
 
 <BounceFade 
     id={"img-upload--dmenu"}
-    zIndex={300}
+    zIndex={10000}
     isHidden={!isOpen}
     position={{
         top: `${position.top}px`,
@@ -543,9 +543,18 @@
         width: calc(100% + 4px);
         margin-left: -4px;
 
+        input {
+            width: 100%;
+        }
         &--loading input {
             mask-image: linear-gradient(to right, black 74%, transparent 94%);
             -webkit-mask-image: linear-gradient(to right, black 74%, transparent 94%);
         }
+    }
+    .error-text {
+        display: block;
+        font-weight: var(--fw-400-500);
+        font-size: 1.25rem;
+        color: #CB7272;
     }
 </style>

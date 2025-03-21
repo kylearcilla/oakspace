@@ -1,23 +1,21 @@
 <script lang="ts">
+    import { getDayHabistData } from "$lib/utils-habits"
+	import { habitTracker, themeState } from "$lib/store"
+    import { formatDatetoStr, genMonthCalendar, uptoToday } from "$lib/utils-date"
+
     import ProgressRing from "./ProgressRing.svelte"
 
-    import { formatDatetoStr } from "$lib/utils-date"
-	import { getHabitsMonthData } from "$lib/utils-habits"
-	import { habitTracker, themeState } from "$lib/store"
-
-    let heatMap: HabitHeatMapDay[] = []
-    let weeklyHeatMap: HabitHeatMapDay[][] = []
+    let weeklyHeatMap: { date: Date; isInCurrMonth: boolean }[][] = []
 
     $: isLight = !$themeState.isDarkTheme
 
     habitTracker.subscribe(() => {
         const date = new Date()
-        heatMap = getHabitsMonthData({ 
-            monthIdx: date.getMonth(), year: date.getFullYear() 
-        })
+        const calMonth = genMonthCalendar(date).days
+
         weeklyHeatMap = []
-        for (let i = 0; i < heatMap.length; i += 7) {
-            weeklyHeatMap.push(heatMap.slice(i, i + 7))
+        for (let i = 0; i < calMonth.length; i += 7) {
+            weeklyHeatMap.push(calMonth.slice(i, i + 7))
         }
     })
 </script>
@@ -36,17 +34,25 @@
         {#each weeklyHeatMap as week}
             <div class="cal__week">
                 {#each week as day}
+                    {@const data = getDayHabistData(day.date)}
                     {@const date = day.date.getDate()}
-                    {@const sameMonth = day.isInCurrMonth}
+                    {@const inBounds = day.isInCurrMonth && uptoToday(day.date)}
                     <div
                         title={formatDatetoStr(day.date)}
                         class="cal__day"
-                        class:cal__day--beyond={!sameMonth}
+                        class:cal__day--beyond={!inBounds}
                     >
-                        {#if sameMonth}
-                            {@const { done, due } = day}
+                        {#if inBounds && data && data.due > 0}
+                            {@const { due, done } = data}
                             <ProgressRing
                                 progress={done / due}
+                                options={{
+                                    size: 15, strokeWidth: 3.5, style: "default"
+                                }}
+                            />
+                        {:else if inBounds && $habitTracker.habits.length === 0}
+                            <ProgressRing
+                                progress={0}
                                 options={{
                                     size: 15, strokeWidth: 3.5, style: "default"
                                 }}

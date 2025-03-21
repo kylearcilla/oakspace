@@ -1,36 +1,49 @@
 import { habitTracker } from "./store"
 
-import { TEST_HABITS, YEAR_HABITS_DATA } from "./mock-data"
-import { afterToday, genMonthCalendar, getDiffBetweenTwoDays, getYrIdxfromDate, isLeapYear, isSameDay, sameMonth, uptoToday } from "./utils-date"
+import { YEAR_HABITS_DATA } from "./mock-data"
+import { addToDate, afterToday, genMonthCalendar, getDiffBetweenTwoDays, getWeekPeriod, getYrIdxfromDate, isDateInCurrrentWeek, isLeapYear, isSameDay, sameMonth, uptoToday } from "./utils-date"
 
-import { toggleHabitYearBit, compareDateMonth, countBitsStr } from "./utils-habits-data"
+import { dayExists, getHabitData } from "./utils-habits-data"
 import { getHabitBitData, getHabitBitsSlice, getBitFromDate, } from "./utils-habits-data"
 import { isDowIdxRequired, initCalMonth, getWeekBounds, MAX_WEEKS_BACK_IDX } from "./utils-habits-data"
-import { countRequired, countSetBits, dayExists, getHabitData, getFirstIdx, getLastIdx } from "./utils-habits-data"
+import { toggleHabitYearBit, countBitsStr, getBoundsIdx, getWeekRequiredDays } from "./utils-habits-data"
+import { get } from "svelte/store"
+import { toast } from "./utils-toast"
+
+let habits: Habit[] = []
 
 export const YEAR_DATA_CACHE: Record<number, {
     yearHeatMap: HabitHeatMapData[]
     yearMetrics: HabitYearMetrics
 }> = {}
 
-export const HABIT_MONTH_CACHE: Record<string, HabitHeatMapDay[]> = {}
+export const TIMES_OF_DAY_MAP: { [key: string]: number } = {
+    "morning": 0,
+    "afternoon": 1,
+    "evening": 2,
+    "all-day": 3
+}
+
+export const HABIT_MONTH_STATS_CACHE: Record<string, HabitMonthMetrics> = {}
 export const HABITS_MONTH_STATS_CACHE: Record<string, HabitMonthMetrics> = {}
 
-export const HABIT_MONTH_HEATMAP_CACHE: Record<string, HabitHeatMapData[]> = {}
+export const HABIT_MONTH_DATA_CACHE: Record<string, HabitHeatMapDay[]> = {}
 export const HABITS_MONTH_HEATMAP_CACHE: Record<string, HabitHeatMapData[]> = {}
 
 /* inits + caches */
 
 export async function initMonthData(year: number, monthIdx: number) {
     let yearData = YEAR_DATA_CACHE[year]
+    habits = get(habitTracker).habits
 
     if (!yearData) {
         yearData = await cacheYearData(year)
     }
 
-    habitTracker.update(data => ({ 
+    habitTracker.update(data => ({
         ...data,
         ...yearData,
+        activeStreak: getActiveStreak(),
         monthMetrics: HABITS_MONTH_STATS_CACHE[`${year}-${monthIdx}`]
     }))
 }
@@ -66,19 +79,25 @@ function _processYearData(year: number) {
  * 4. Month metrics.
  */
 function processYearData(year: number) {
-    const habits = TEST_HABITS
     const now = new Date() 
     const toMonth = year === now.getFullYear() ? now.getMonth() : 11
 
     for (let i = 0; i <= toMonth; i++) {
-        HABITS_MONTH_STATS_CACHE[`${year}-${i}`] = getMonthMetrics({ habits, monthIdx: i, year })
+        HABITS_MONTH_STATS_CACHE[`${year}-${i}`] = getHabitsMonthMetrics({ habits, monthIdx: i, year })
         const habitsMap = initializeHeatMap(year, i)
 
         for (const habit of habits) {
-            const data = getHabitMonthData({ habit, monthIdx: i, year })
             const habitMap = initializeHeatMap(year, i, habit.id)
+            const key = `${year}-${i}--${habit.id}`
 
-            HABIT_MONTH_CACHE[`${year}-${i}--${habit.id}`] = data
+            const dataCache = HABIT_MONTH_DATA_CACHE
+            const statsCache = HABIT_MONTH_STATS_CACHE
+
+            dataCache[key] = getHabitMonthData({ habit, monthIdx: i, year })
+            statsCache[key] = getHabitMonthMetrics({ habit, monthIdx: i, year })
+
+
+            const data = dataCache[key]
 
             for (const day of data) {
                 const { date, done, due } = day
@@ -109,30 +128,77 @@ function initializeHeatMap(year: number, month: number, habitId?: string) {
     const key = habitId ? `${year}-${month}--${habitId}` : `${year}-${month}`
 
     const getArray = () => Array.from({ length: daysInMonth }, () => ({ date: new Date(), done: 0, due: 0 }))
-    let data = []
+    let data = HABITS_MONTH_HEATMAP_CACHE[key] ||= getArray()
 
-    if (habitId) {
-        data = HABIT_MONTH_HEATMAP_CACHE[key] ||= getArray()
-    } 
-    else {
-        data = HABITS_MONTH_HEATMAP_CACHE[key] ||= getArray()
-    }
     return data
 }
+
+/* year metrics  */
 
 function getYearMetrics(year: number) {
     const now = new Date()
     const toMonth = year === now.getFullYear() ? now.getMonth() : 11
+
+    return calculateYearMetrics({ type: "all", toMonth, year })
+}
+
+export function getHabitYearMetrics({ habit, year }: { habit: Habit, year: number }) {
+    const now = new Date()
+    const toMonth = year === now.getFullYear() ? now.getMonth() : 11
+
+    return calculateYearMetrics({
+        type: "single", toMonth, habit, year
+    })
+}
+
+/**
+ * Calculates the year metrics for either a given habit or the entire habits.
+ * Aggregates the metrics for each month and calculates the longest streak.
+ * 
+ */
+function calculateYearMetrics({ type, toMonth, habit, year }: { 
+    type: "all" | "single" 
+    toMonth: number 
+    year: number
+    habit?: Habit
+}) {
     const metrics = {
+        year,
         habitsDone: 0,
         habitsDue: 0,
         perfectDays: 0, 
         missedDays: 0,
         missed: 0
     }
+    const statsCache = type === "all" ? HABITS_MONTH_STATS_CACHE : HABIT_MONTH_STATS_CACHE
+    const mapCache = type === "all" ? HABITS_MONTH_HEATMAP_CACHE : HABIT_MONTH_DATA_CACHE
+    const days: { due: number, done: number, date: Date }[] = []
+    
+    let longestStreak = { count: 0, start: new Date(), end: new Date() }
+    
+    const getKey = (i: number) => {
+        if (type === "all") {
+            return `${year}-${i}`
+        }
+        else {
+            return `${year}-${i}--${habit!.id}`
+        }
+    }
+
+    const startMonth = type === "single" ? new Date(habit!.createdAt).getMonth() : 0
+    const startYear = type === "single" ? new Date(habit!.createdAt).getFullYear() : year
 
     for (let i = 0; i <= toMonth; i++) {
-        const monthData = HABITS_MONTH_STATS_CACHE[`${year}-${i}`]
+        if (year === startYear && i < startMonth) continue
+
+        let monthData = statsCache[getKey(i)]
+        let mapData = mapCache[getKey(i)]
+
+        if (!monthData && type === "single") {
+            monthData = getHabitMonthMetrics({ habit: habit!, monthIdx: i, year })
+            statsCache[getKey(i)] = monthData
+        }
+        days.push(...mapData)
 
         metrics.habitsDone += monthData.habitsDone
         metrics.habitsDue += monthData.habitsDue
@@ -140,47 +206,90 @@ function getYearMetrics(year: number) {
         metrics.missedDays += monthData.missedDays
         metrics.missed += monthData.missed
     }
-    return metrics
+
+    let currentStreak = 0
+    let currentStart = new Date()
+    let prevDate = null
+    
+    for (let i = 0; i < days.length; i++) {
+        const { due, done, date } = days[i]
+        
+        if (date.getFullYear() !== year || !uptoToday(date) || isSameDay(prevDate, date)) {
+            continue
+        }
+        // console.log(date, due, done, done >= due || due === 0)
+
+        // console.log(date, done, due, done >= due || due === 0)
+        
+        if (done >= due || due === 0) {
+            if (currentStreak === 0) {
+                currentStart = new Date(date)
+            }
+            currentStreak++
+            
+            if (currentStreak > longestStreak.count) {
+                longestStreak = {
+                    count: currentStreak,
+                    start: new Date(currentStart),
+                    end: new Date(date)
+                }
+            }
+        } 
+        else {
+            currentStreak = 0
+        }
+        prevDate = date
+    }
+
+    // console.log(longestStreak)
+
+    return { ...metrics, longestStreak }
 }
 
-function getYearHeatMap(year: number) {
+export function getYearHeatMap(year: number) {
     const now = new Date()
     const toMonth = year === now.getFullYear() ? now.getMonth() : 11
-    const length = isLeapYear(year) ? 366 : 365
-    const map = Array.from({ length }, () => ({ date: null, done: 0, due: 0 })) as HabitHeatMapData[]
+    const map = []
     let idx = 0
 
     for (let i = 0; i <= toMonth; i++) {
         const data = HABITS_MONTH_HEATMAP_CACHE[`${year}-${i}`]
+
         for (let day = 0; day < data.length; day++) {
             map[idx++] = data[day]
         }
     }
-
     return map
 }
 
-/* habit data  */
-
 /**
- * Get the habit's weekly data for a given week (checked, required, etc...).
- * Using the # of weeks from current week.
+ * Get the heat map for a given habit for a year.
  */
-export function getHabitWeekData({ habit, weeksAgoIdx, dayIdx }: { 
-    habit: Habit, weeksAgoIdx: number, dayIdx: number 
-}) {
-    const start = getWeekBounds().start
-    const weekIdx = MAX_WEEKS_BACK_IDX - weeksAgoIdx
+export function getHabitYearHeatMap(year: number, habit: Habit) {
+    const now = new Date()
+    const toMonth = year === now.getFullYear() ? now.getMonth() : 11
+    const map = []
+    let idx = 0
 
+    const cache = HABIT_MONTH_DATA_CACHE
 
-    const date = new Date(start)
-    date.setDate(date.getDate() + weekIdx * 7 + dayIdx)
+    for (let i = 0; i <= toMonth; i++) {
+        const key = `${year}-${i}--${habit.id}`
+        let data = cache[key]
 
-    const required = dayExists(habit, date) && isDayRequired({ habit, dayIdx })
-    const complete = isDayComplete({ habit, date })
-
-    return { complete, required, date }
+        for (let day = 0; day < data.length; day++) {
+            let { date, done, due } = data[day]
+            // due = noData ? -1 : due
+            
+            if (date.getFullYear() === year && date.getMonth() === i) {
+                map[idx++] = { date, done, due }
+            }
+        }
+    }
+    return map
 }
+
+/* month metrics  */
 
 /**
  * Get a single habit's month data (checked, required, etc...).
@@ -199,80 +308,77 @@ export function getHabitMonthData({ habit, monthIdx, year }: { habit: Habit, mon
     return data
 }
 
-/**
- * Combine all habit data for a given month.
- */
-export function getHabitsMonthData({ monthIdx, year }: { monthIdx: number, year: number }) {
-    const { data, firstDate, endDate, length } = initCalMonth({ monthIdx, year })
-
-    YEAR_HABITS_DATA.forEach(h => {
-        getHabitData({ 
-            habit: TEST_HABITS.find(_h => _h.name === h.name)!, 
-            firstDate, endDate, 
-            length, 
-            data
-        })
-    })
-    return data
-}
-
-/**
- * Calculate a month's metrics for all habits.
- */
-export function getMonthMetrics({ habits, monthIdx, year }: {
-    habits: Habit[]
-    monthIdx: number
-    year: number
-}) {
-    const date = new Date(year, monthIdx)
-    const days = genMonthCalendar(date).days
+function getMonthMetrics({ days, habits, date }: {
+    days: any[],
+    habits: Habit[],
+    date: Date
+}): HabitMonthMetrics {
     const today = new Date()
     const idxStart = 35
+    const year = date.getFullYear()
+    const monthIdx = date.getMonth()
 
-    const metrics = {
-        habitsDone: 0,  habitsDue: 0,
+    const metrics: HabitMonthMetrics = {
+        year,
+        monthIdx,
+        habitsDone: 0, habitsDue: 0,
         perfectDays: 0, missedDays: 0, missed: 0,
         longestStreak: {
             count: 0,
-            start: new Date()
+            start: null,
+            end: null
         }
     }
 
-    let longestStreak = 0
-    let longestStreakStart = new Date()
-    let curStreak = 0
-    
+    let longestStreak = null
+    let currentStreak = null
+
     for (let idx = idxStart; idx >= 0; idx -= 7) {
         const start = days[idx].date
         const end = days[idx + 6].date
         const weekDays = days.slice(idx, idx + 7)
-
         const isToday = (i: number) => isSameDay(days[idx + i].date, today)
-        
-        let requiredCounts = new Array(7).fill(0)
-        let missedTracker = new Array(7).fill(1) 
-        
-        if (afterToday(start) || !sameMonth(start, date)) {
+
+        let requiredCounts = new Array(7).fill(-1)  // -1 (out of bounds), x (x to be checked)
+        let missedTracker = new Array(7).fill(-1)   // 0 (non-missed), 1 (at least one missed)
+
+        if (afterToday(start)) {
             continue
         }
+
+        // track: required days, missed days, done and due counts
         for (const habit of habits) {
             const data = getHabitBitData(habit)
             const weekBits = getHabitBitsSlice(data, start, end)
-            const weekData = getBoundWeekReqs({ 
+            const weekData = getBoundWeekReqs({
                 habit,
-                weekBits,  
+                weekBits,
                 weekDays,
                 monthDate: date
             })
-            
-            // count the weekly data for this month
+
             if (weekData) {
                 const { dueCount, checkedCount, reqArr } = weekData
                 const checked = Math.min(checkedCount, dueCount)
-                const counters = updateCounters({ reqArr, requiredCounts, missedTracker })
-                
-                requiredCounts = counters.requiredCounts
-                missedTracker = counters.missedTracker
+
+                requiredCounts = requiredCounts.map((c, i) => {
+                    if (reqArr[i] === 1) {
+                        return c === -1 ? 1 : c + 1
+                    }
+                    else if (reqArr[i] === 0) {
+                        return c === -1 ? 0 : c
+                    }
+                    return c
+                })
+                missedTracker = missedTracker.map((m, i) => {
+                    if (reqArr[i] === 1) {
+                        return m === -1 ? 1 : m
+                    }
+                    else if (reqArr[i] === 0) {
+                        return m === -1 ? 0 : m
+                    }
+                    return m
+                })
 
                 metrics.habitsDone += checked
                 metrics.habitsDue += dueCount
@@ -281,45 +387,61 @@ export function getMonthMetrics({ habits, monthIdx, year }: {
 
         // count longest streak
         for (let i = 6; i >= 0; i--) {
-            const t = isToday(i)
+            const today = isToday(i)
+            const day = days[idx + i]
+            const upToToday = uptoToday(day.date)
 
-            if (requiredCounts[i] === 0) {
-                longestStreak = Math.max(longestStreak, ++curStreak)
-                longestStreakStart = days[idx + i].date
+            if (!sameMonth(day.date, date) || !upToToday) continue
+
+            if (requiredCounts[i] === 0 && !currentStreak) {
+                currentStreak = {
+                    count: 1,
+                    start: new Date(day.date),
+                    end: new Date(day.date)
+                }
+            } 
+            else if (requiredCounts[i] === 0) {
+                currentStreak!.start = new Date(day.date)
+                currentStreak!.count++
             }
-            else if (!t) {
-                curStreak = 0
+            if (currentStreak && (!longestStreak || currentStreak.count > longestStreak!.count)) {
+                longestStreak = structuredClone(currentStreak)
             }
-        } 
-        // missed & perfect days
+            if (!today && requiredCounts[i] === 1) {
+                currentStreak = null
+            }
+        }
+
         for (let i = 0; i <= 6; i++) {
+            const day = days[idx + i]
             const required = requiredCounts[i]
             const missed = missedTracker[i] === 1
+            const upToToday = uptoToday(day.date)
+
+            if (!sameMonth(day.date, date) || !upToToday) continue
 
             if (required === 0) {
                 metrics.perfectDays++
             }
-            // count today if checked, don't if not yet
             if (isToday(i)) {
                 continue
             }
-            // total missed
             if (required > 0) {
                 metrics.missed += required
             }
-            // all habits that day that had to checked were not checked
             if (missed) {
                 metrics.missedDays++
             }
         }
     }
 
-    metrics.longestStreak.count = longestStreak
-    metrics.longestStreak.start = longestStreakStart
-
+    if (longestStreak) {
+        metrics.longestStreak = longestStreak!
+    }
     if (metrics.habitsDue === 0) {
-        metrics.longestStreak.count = 0
-        metrics.longestStreak.start = new Date()
+        metrics.longestStreak!.count = 0
+        metrics.longestStreak!.start = new Date()
+        metrics.longestStreak!.end = new Date()
 
         metrics.habitsDone = 0
         metrics.habitsDue = 0
@@ -329,6 +451,153 @@ export function getMonthMetrics({ habits, monthIdx, year }: {
     }
 
     return metrics
+}
+
+export function getHabitsMonthMetrics({ habits, monthIdx, year }: {
+    habits: Habit[]
+    monthIdx: number
+    year: number
+}) {
+    const date = new Date(year, monthIdx)
+    const days = genMonthCalendar(date).days
+    return getMonthMetrics({ days, habits, date })
+}
+
+export function getHabitMonthMetrics({ habit, monthIdx, year }: {
+    habit: Habit
+    monthIdx: number
+    year: number
+}) {
+    const date = new Date(year, monthIdx)
+    const days = genMonthCalendar(date).days
+    const metrics = getMonthMetrics({ days, habits: [habit], date })
+
+    return metrics
+}
+
+/* weekly */
+
+/**
+ * Get the habit's weekly data for a given week (checked, required, etc...).
+ * Using the # of weeks from current week.
+ */
+export function getHabitWeekDayData({ habit, weeksAgoIdx }: { 
+    habit: Habit, weeksAgoIdx: number
+}) {
+    const start = getWeekBounds().start
+    const weekIdx = MAX_WEEKS_BACK_IDX - weeksAgoIdx
+
+    const startDate = addToDate({ date: new Date(start), time: `${weekIdx * 7 }d` })
+    const year = startDate.getFullYear()
+    const monthIdx = startDate.getMonth()
+
+    const data =  HABIT_MONTH_DATA_CACHE[`${year}-${monthIdx}--${habit.id}`]
+    const startIdx = data.findIndex(d => isSameDay(d.date, startDate))
+
+    return data.slice(startIdx, startIdx + 7)
+}
+
+/**
+ * Given a week's check bits, get the required array.
+ * Only include days of the same month, up to today, and existing data.
+ * 
+ * Req Arr:
+ *  0: not required (cuz checked or not required)
+ *  1: required     (must be checked)
+ * -1: not in month (excluded days)
+ * 
+ * @returns The required days that still need to be checked.
+ */
+function getBoundWeekReqs({ habit, weekBits, monthDate, weekDays }: {
+    habit: Habit
+    weekBits: string
+    monthDate: Date
+    weekDays: { date: Date, isInCurrMonth: boolean }[]
+}) {
+    const { firstIdx, lastIdx } = getBoundsIdx({ habit, days: weekDays, month: monthDate })
+
+    if (firstIdx === -1 || afterToday(weekDays[0].date)) {
+        return {
+            reqArr: new Array(7).fill(-1),
+            checkedCount: 0,
+            dueCount: 0
+        }
+    }
+
+    let checkedCount = 0, dueCount = 0
+    
+    const dueArray   = getWeekRequiredDays({ habit, weekBits, firstIdx, lastIdx })
+    const reqArr     = new Array(7).fill(-1)
+    const checkedArr = []
+
+    for (let i = 0; i <= 6; i++) {
+        const checked = weekBits[i] === "1"
+        checkedArr[i] = checked ? 1 : 0
+    }
+
+    dueCount = dueArray.filter(x =>  x === 1).length
+
+    for (let i = firstIdx; i <= lastIdx; i++) {
+        const checked = checkedArr[i] === 1
+        const required = dueArray[i] === 1
+
+        if (checked && required) {
+            checkedCount++
+        }
+        if (required && !checked) {
+            reqArr[i] = 1
+        }
+        else {
+            reqArr[i] = 0
+        }
+    }
+
+    // console.log(weekDays[0].date, reqArr)
+
+
+    return {
+        reqArr,
+        checkedCount,
+        dueCount
+    }
+}
+
+/**
+ * Given a week's bits, get the required array that needs to be checked.
+ * 
+ * Check Arr:
+ *  0: not required   (cuz checked or not required)
+ *  1: needs checked  (not checked yet and must be checked)
+ * -1: not in month   (future day)
+ * 
+ * @returns The required days that still need to be checked.
+ */
+function getWeekCheckArr({ habit, weekBits, lastIdx }: {
+    habit: Habit
+    weekBits: string
+    lastIdx: number
+}) {
+    const dueArray   = getWeekRequiredDays({ habit, weekBits, lastIdx })
+    const checkArr     = new Array(7).fill(-1)
+    const checkedArr = []
+
+    for (let i = 0; i <= 6; i++) {
+        const checked = weekBits[i] === "1"
+        checkedArr[i] = checked ? 1 : 0
+    }
+    for (let i = 0; i <= lastIdx; i++) {
+        const checked = checkedArr[i] === 1
+        const required = dueArray[i] === 1
+
+        if (required && !checked) {
+            checkArr[i] = 1
+        }
+        else {
+            checkArr[i] = 0
+        }
+    }
+
+    return checkArr
 }
 
 /* habit queries */
@@ -420,7 +689,7 @@ export function getActiveStreak() {
 
     const { start } = getWeekBounds()
     
-    for (let idx = MAX_WEEKS_BACK_IDX; idx >= 0; idx--) {
+    for (let idx = MAX_WEEKS_BACK_IDX; idx >= 0 && !streakBroken; idx--) {
         const startDate = new Date(start)
         startDate.setDate(startDate.getDate() + idx * 7)
 
@@ -432,27 +701,36 @@ export function getActiveStreak() {
         }
 
         const endDate = weekDays[6].date
-        let requiredCounts = new Array(7).fill(0)
+        let requiredCounts = new Array(7).fill(-1)
         
-        for (const habit of TEST_HABITS) {
+        for (const habit of habits) {
             if (streakBroken) continue
             
-            const firstIdx = getFirstIdx({ habit, days: weekDays })
-            const lastIdx = getLastIdx({ habit, days: weekDays })
-            
+            const { firstIdx, lastIdx } = getBoundsIdx({ habit, days: weekDays })
             const data = getHabitBitData(habit)
             const weekBits = getHabitBitsSlice(data, startDate, endDate)
-            const reqArr = getWeekReqs({ habit, weekBits, lastIdx })
+            const checkArr = getWeekCheckArr({ habit, weekBits, lastIdx })
 
-            for (let i = firstIdx; i <= lastIdx; i++) {
-                requiredCounts[i] += reqArr[i]
+            for (let i = firstIdx; i <= lastIdx && i >= 0; i++) {
+                const req = checkArr[i]
+
+                if (requiredCounts[i] === -1) {
+                    requiredCounts[i] = 0
+                }
+                
+                requiredCounts[i] += req
             }
         }
 
         // count active streak from today
         for (let i = 6; i >= 0 && !streakBroken; i--) {
-            const isToday = isSameDay(weekDays[i].date, today)
+            const day = weekDays[i].date
+            const isToday = isSameDay(day, today)
+            const upToToday = uptoToday(day)
 
+            if (!upToToday) {
+                continue
+            }
             if (requiredCounts[i] === 0) {
                 currentStreak++
                 streakStart = weekDays[i].date
@@ -463,245 +741,36 @@ export function getActiveStreak() {
         } 
     }
 
-
     count = streakBroken ? currentStreak : currentStreak + base
 
     return { count, start: streakStart, base }
 }
 
-/**
- * Given a week's bits, get the required array.
- * Avoid spill over months, only include days of the given month.
- * 
- * @returns The required days that still need to be checked.
- */
-function getBoundWeekReqs({ habit, weekBits, monthDate, weekDays }: {
-    habit: Habit
-    weekBits: string
-    monthDate: Date
-    weekDays: { date: Date, isInCurrMonth: boolean }[]
-}) {
-
-    // no possible in bounds exists here
-    if (afterToday(weekDays[0].date)) {
-        return null
-    }
-    
-    const firstIdx = getFirstIdx({ habit, days: weekDays })
-    const lastIdx = getLastIdx({ habit, days: weekDays })
-
-    const overToday = 6 - lastIdx
-    const checkedArr: number[] = new Array(7).fill(0)
-    const allowArr = new Array(7).fill(-1)
-    const { freqType, frequency } = habit 
-
-    let checkedCount = 0, extraDays = 0, reqStartIdx = 0, totalCheck = 0
-    let monthSpillOver: "same" | "before" | "after" = "same"
-
-    const idxMonthPosition = (dayIdx: number) => {
-        const day = weekDays[dayIdx]
-        const position = compareDateMonth(day.date, monthDate)
-
-        return position
-    }
-    const inMonth = (dayIdx: number) => {
-        const day = weekDays[dayIdx]
-        return sameMonth(day.date, monthDate) && uptoToday(day.date)
-    }
-
-
-    // count checked days if they are in the current month and <= today
-    // track the spill over days
-    for (let i = firstIdx; i <= lastIdx; i++) {
-        const position = idxMonthPosition(i)
-        totalCheck += weekBits[i] === "1" ? 1 : 0
-        
-        if (position === "same") {
-            checkedCount += weekBits[i] === "1" ? 1 : 0
-            checkedArr[i] = weekBits[i] === "1" ? 1 : 0
-            continue
-        }
-        extraDays++
-
-        // week spills over to next month || prev month spills over to week
-        if (monthSpillOver === "same") {
-            monthSpillOver = position
-        } 
-        if (monthSpillOver === "before") {
-            reqStartIdx++
-        }
-        else if (monthSpillOver === "after") {
-            reqStartIdx = 0
-        }
-    }
-
-    // fill the req array and due count
-    const required = countRequired(habit) 
-    const reqArr: number[] = new Array(7).fill(0)
- 
-    let reqLeft = required - overToday - totalCheck
-    let dueCount = 0
-    
-    if (monthSpillOver === "after") {
-        reqLeft -= extraDays
-    }
-    reqLeft = Math.max(reqLeft, 0)    
-
-    if (freqType === "day-of-week") {
-        checkedCount = 0
-
-        for (let i = firstIdx; i <= lastIdx; i++) {
-            const inBounds = inMonth(i)
-            const checked = checkedArr[i] === 1
-            const required = inBounds && isDowIdxRequired(frequency, i)
-
-            if (checked && required) {
-                checkedCount++
-            }
-            if (required && !checked) {
-                reqArr[i] = 1
-            }
-            if (required) {
-                dueCount++
-            }
-            if (!inBounds) {
-                reqArr[i] = -1
-            }
-        }
-        return { reqArr, checkedCount, dueCount }
-    }
-
-    // avoid checked and truncated days
-    // 0 = not required, 1 = required, -1 = out of bounds
-    for (let i = firstIdx; i <= lastIdx; i++) {
-        const inBounds = inMonth(i)
-        const checked = checkedArr[i] === 1
-
-        if (!inBounds) {
-            allowArr[i] = -1
-        }
-        else if (!checked) {
-            allowArr[i] = 1
-        }
-        else if (checked) {
-            allowArr[i] = 0
-        }
-    }
-
-    // counting backwards, avoiding the truncated days AND the checked days
-    let reqRemaining = reqLeft
-    for (let i = 6; i >= firstIdx; i--) {
-        const allow = allowArr[i]
-
-        if (allow === 1 && reqRemaining > 0) {
-            reqArr[i] = 1
-            reqRemaining--
-        }
-        else if (allow < 0) {
-            reqArr[i] = -1
-        }
-    }
-
-    // calculate the due count
-    if (monthSpillOver === "before") {
-        const length = 7 - overToday
-        const fromEnd = required - overToday
-        const overlap = findOverlap(extraDays, fromEnd, length)
-
-        dueCount = required - overlap
-    }
-    else if (monthSpillOver === "after") {
-        dueCount = required - overToday - extraDays
-    }
-    else {
-        dueCount = Math.max(required - overToday, 0)
-    }
-
-    return {
-        reqArr,
-        checkedCount,
-        dueCount
-    }
-}
-
-/**
- * Given a week's bits, get the required array.
- * Week bits comes from the past 6 weeeks.
- * Includes spill over months, days outside of the given month.
- * 
- * @returns The required days that still need to be checked.
- */
-function getWeekReqs({ habit, weekBits, lastIdx }: {
-    habit: Habit
-    weekBits: string
-    lastIdx: number
-}) {
-    const { freqType, frequency } = habit
-    const overToday = 6 - lastIdx
-    const checkedArray = new Array(7).fill(0)
-    const reqArr = new Array(7).fill(0)
-
-
-    let checkedCount = 0
-
-    // Count checked days up to lastIdx
-    for (let i = 0; i <= lastIdx; i++) {
-        if (weekBits[i] === "1") {
-            checkedCount++
-            checkedArray[i] = 1
-        }
-    }
-
-    if (freqType === "day-of-week") {
-        for (let i = lastIdx; i >= 0; i--) {
-            const required = (frequency >> (6 - i)) & 1
-            const checked = weekBits[i] === "1"
-
-            if (!checked && required) {
-                reqArr[i] = 1
-            }
-        }
-        return reqArr
-    }
-
-    // fill in required days from right to left
-    let required = countRequired(habit)
-    let reqLeft = Math.max(required - overToday - checkedCount, 0)
-    let i = lastIdx
-
-    while (reqLeft > 0 && i >= 0) {
-        const checked = weekBits[i] === "1"
-        if (!checked) {
-            reqArr[i] = 1
-            reqLeft--
-        }
-        i--
-    }
-
-    return reqArr
-}
-
 /* display clients */
 
-export function getHabitTableData({ habit, timeFrame, currWeekIdx, currMonth, dayProgress, rowProgress }: {
+export function getHabitTableData({ habit, timeFrame, weekIdx, currMonth, dayProgress, rowProgress }: {
     habit: Habit
     timeFrame: "weekly" | "monthly"
-    currWeekIdx: number
+    weekIdx: number
     currMonth: Date
     dayProgress: number[][]
     rowProgress: Map<string, { complete: number, total: number }>
 
 }): HabitDayData[] {
     const data = []
-    const weeksAgoIdx = currWeekIdx
+    const weeksAgoIdx = weekIdx
     const monthIdx = currMonth.getMonth()
     const year = currMonth.getFullYear()
     const id = habit.id
 
     if (timeFrame === "weekly") {
+        const weekData = getHabitWeekDayData({ habit, weeksAgoIdx })
         for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
-            const { date, required, complete } = getHabitWeekData({ habit, dayIdx, weeksAgoIdx })
-            data.push({ required, complete, date })
+            const { due, done, ...rest} = weekData[dayIdx]
+            const required = due === 1
+            const complete = done === 1
+
+            data.push({ ...rest, required, complete })
 
             tallyHabitProgress({ 
                 id, 
@@ -716,7 +785,7 @@ export function getHabitTableData({ habit, timeFrame, currWeekIdx, currMonth, da
         }
     }
     else {
-        const cacheData = HABIT_MONTH_CACHE[`${year}-${monthIdx}--${habit.id}`]
+        const cacheData = HABIT_MONTH_DATA_CACHE[`${year}-${monthIdx}--${habit.id}`]
         const monthData = cacheData || getHabitMonthData({ habit, monthIdx, year })
 
         for (let i = 0; i < monthData.length; i++) {
@@ -725,6 +794,8 @@ export function getHabitTableData({ habit, timeFrame, currWeekIdx, currMonth, da
             const toToday = date <= new Date()
             const required = due === 1
             const dayIdx = date.getDate() - 1
+
+            console.log(date, required)
 
             if (currMonth && toToday) {
                 const complete = done === 1
@@ -748,6 +819,22 @@ export function getHabitTableData({ habit, timeFrame, currWeekIdx, currMonth, da
         }
     }
     return data
+}
+
+export function getDayHabistData(date: Date) {
+    const key = `${date.getFullYear()}-${date.getMonth()}`
+    const month = HABITS_MONTH_HEATMAP_CACHE[key]
+
+    return month ? month[date.getDate() - 1] : null
+}
+
+export function getDayHabitData(habit: Habit, date = new Date()) {
+    const monthIdx = date.getMonth()
+    const year = date.getFullYear()
+
+    const data = HABIT_MONTH_DATA_CACHE[`${year}-${monthIdx}--${habit.id}`]
+
+    return data ? data.find(day => day.date.getDate() === date.getDate())! : null
 }
 
 export function tallyHabitProgress({ id, dayIdx, date, required, complete, timeFrame, rowProgress, dayProgress }: {
@@ -816,6 +903,7 @@ export function toggleCompleteHabit({ habit, date, currMonth }: {
         const { habits, yearHeatMap } = state
         const idx = habits.findIndex((_habit: any) => habit.name === _habit.name)!
         const targetHabit = habits[idx]
+        const { days, bits: bBits } = getWeekBitSlice(date, habit)
         const { data, checked } = toggleDayComplete({ habit, date })
         const heatmap = yearHeatMap!
 
@@ -824,21 +912,26 @@ export function toggleCompleteHabit({ habit, date, currMonth }: {
 
         state.habits = habits
         state.activeStreak = getActiveStreak()
-
-        state.monthMetrics = getMonthMetrics({
+        state.monthMetrics = getHabitsMonthMetrics({
             habits, 
             monthIdx: currMonth.getMonth(),
             year: currMonth.getFullYear()
         })
-
+        
         // update caches
-        state.yearHeatMap = updateHeatMapsFromCheck({ habit, date, checked, heatmap })
+        HABIT_MONTH_DATA_CACHE[`${year}-${monthIdx}--${habit.id}`] = getHabitMonthData({ habit, monthIdx, year })
+        HABIT_MONTH_STATS_CACHE[`${year}-${monthIdx}--${habit.id}`] = getHabitMonthMetrics({ habit, monthIdx, year })
+        HABITS_MONTH_STATS_CACHE[`${year}-${monthIdx}`] = state.monthMetrics!
+
+        const { bits: aBits } = getWeekBitSlice(date, habit)
+        
+        updateHeatMapCache({ habit, date, days, bBits, aBits, checked })
+        state.yearHeatMap = heatmap
         state.yearMetrics = getYearMetrics(year)
 
-        HABIT_MONTH_CACHE[`${year}-${monthIdx}--${habit.id}`] = getHabitMonthData({ habit, monthIdx, year })
-        HABITS_MONTH_STATS_CACHE[`${year}-${monthIdx}`] = state.monthMetrics!
+
         YEAR_DATA_CACHE[year] = {
-            yearHeatMap: state.yearHeatMap,
+            yearHeatMap: state.yearHeatMap!,
             yearMetrics: state.yearMetrics!
         }
 
@@ -846,30 +939,60 @@ export function toggleCompleteHabit({ habit, date, currMonth }: {
     })
 }
 
-export function updateHeatMapsFromCheck({ habit, date, checked, heatmap }: { 
-    habit: Habit, date: Date, checked: boolean, heatmap: HabitHeatMapData[]
+export function getWeekBitSlice(date: Date, habit: Habit) {
+    const yearData = YEAR_HABITS_DATA.find((_habit) => _habit.name === habit.name)!.data
+    const { start, end } = getWeekPeriod(date)
+    const days = Array.from({ length: 7 }, (_, i) => addToDate({ date: start, time: `${i}d` }))
+    const bits = getHabitBitsSlice(yearData, start, end)
+
+    return { days, bits }
+}
+
+/**
+ * Updates the heat map cache after a toggle complete.
+ * Updates it on a weekly basis. 
+ * Requirments for a week changes upon a day toggle (for per-week).
+ * 
+ * @param habit - The habit object
+ * @param date - The date of the toggle complete
+ * @param bBits - The bits of before the toggle complete
+ * @param aBits - The bits of after the toggle complete
+ * @param checked - Whether the day is checked
+ * @param days - The days of the week of toggle
+ */
+export function updateHeatMapCache({
+    habit, date, bBits, aBits, checked, days
+}: {
+    habit: Habit, date: Date, bBits: string, aBits: string, checked: boolean, days: Date[]
 }) {
-    const habitCache = HABIT_MONTH_HEATMAP_CACHE
-    const habitsCache = HABITS_MONTH_HEATMAP_CACHE
-
     const year = date.getFullYear()
-    const month = date.getMonth()
+    const monthIdx = date.getMonth()
+    const cache = HABITS_MONTH_HEATMAP_CACHE[`${year}-${monthIdx}`]
+    
+    const currWeek = isDateInCurrrentWeek(date)
+    const lastIdx = currWeek ? new Date().getDay() : 6
 
-    const habitsData = habitsCache[`${year}-${month}`]
-    const habitData = habitCache[`${year}-${month}--${habit.id}`]
+    const bReqs = getWeekRequiredDays({ habit, weekBits: bBits, lastIdx })
+    const aReqs = getWeekRequiredDays({ habit, weekBits: aBits, lastIdx })
 
-    habitData[date.getDate() - 1].done += checked ? 1 : -1
-    habitsData[date.getDate() - 1].done += checked ? 1 : -1
+    cache[date.getDate() - 1].done += checked ? 1 : -1
 
-    const idx = getYrIdxfromDate(date) - 1
-    heatmap[idx].done += checked ? 1 : -1
+    for (let i = 0; i < days.length; i++) {
+        const day = days[i]
+        const diff = aReqs[i] - bReqs[i]
 
-    return heatmap
+        if (diff > 0) {
+            cache[day.getDate() - 1].due++
+        }
+        else if (diff < 0) {
+            cache[day.getDate() - 1].due--
+        }
+    }
 }
 
 export function updateMonthMetrics(date: Date) {
     habitTracker.update((state) => {
-        state.monthMetrics = getMonthMetrics({
+        state.monthMetrics = getHabitsMonthMetrics({
             habits:   state.habits,
             monthIdx: date.getMonth(),
             year:     date.getFullYear()
@@ -892,6 +1015,142 @@ export function toggleDayComplete({ habit, date }: { habit: Habit, date: Date}) 
     toggleHabitYearBit({ habit, date })
 
     return { data: habit.data, checked: bits[diff - 1] === '1' }
+}
+
+export async function onUpdateHabit(updatedHabit: Habit) {
+    const { freqType, frequency, timeOfDay } = updatedHabit
+    const store = get(habitTracker)
+    let habits = store.habits
+    const idx = habits.findIndex((habit: Habit) => habit.id === updatedHabit.id)!
+    const habit = habits[idx]
+
+    const newFreqType = habit.freqType != freqType
+    const newFreq = habit.frequency != frequency
+    const newTod = habit.timeOfDay != timeOfDay
+    
+    if (newTod) {
+        reorderInTimeOfDayView({
+            srcHabit: habit,
+            targetHabit: updatedHabit.timeOfDay,
+            habits
+        })
+    }
+
+    const newHabit = { ...habit, ...updatedHabit }
+    habits[idx] = newHabit
+
+    if (newFreqType || newFreq) {
+        await recalculateHabits(habits)
+    }
+    else {
+        habitTracker.update((state) => {
+            state.habits = habits
+            return state
+        })
+    }
+}
+
+export async function addHabit(habit: Habit) {
+    const newDefaultOrder = Math.max(...habits.map(habit => habit.order.default)) + 1
+    const newTodOrder = Math.max(...habits.map(habit => habit.order.tod)) + 1
+
+    habit.order.default = newDefaultOrder
+    habit.timeOfDay = habit.timeOfDay || "default" 
+    habit.order.tod = newTodOrder
+
+    habits.push(habit)
+
+    createChunksOnAdd(habit)
+    await recalculateHabits(habits)
+
+    toast("info", {
+        message: `"${habit.name}" added to your habits.`,
+    })
+}
+
+export function createChunksOnAdd(habit: Habit) {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = now.getMonth()
+    
+    const currKey = `${year}-${month}`
+    
+    const prevMonth = month === 0 ? 11 : month - 1
+    const prevYear = month === 0 ? year - 1 : year
+    const prevKey = `${prevYear}-${prevMonth}`
+
+    let data = 0
+
+    YEAR_HABITS_DATA.push({
+        name: habit.name,
+        data: {
+            [currKey]: data,
+            [prevKey]: data
+        }
+    })
+}
+
+export async function deleteHabit(habit: Habit) {
+    const store = get(habitTracker)
+    const defaultIdx = habit.order.default
+    const todIdx = habit.order.tod
+    let habits = store.habits
+    
+    shiftHabits({
+        habits,
+        type: "default",
+        fromIdx: defaultIdx + 1,
+        toIdx: habits.length,
+        shift: -1
+    })
+    shiftHabits({
+        habits: habits.filter(h => h.timeOfDay === habit.timeOfDay),
+        type: "tod",
+        fromIdx: todIdx + 1,
+        toIdx: habits.length,
+        shift: -1
+    })
+
+    habits = habits.filter(h => h.id !== habit.id)
+    await recalculateHabits(habits)
+
+    toast("info", {
+        message: `"${habit.name}" deleted from your habits.`,
+    })
+}
+
+export async function recalculateHabits(_habits: Habit[]) {
+    console.log("--------------")
+    const store = get(habitTracker)
+    const currYear = store.yearMetrics!.year
+    const monthIdx = store.monthMetrics!.monthIdx
+
+    habits = _habits
+
+    for (const year in YEAR_DATA_CACHE) {
+        delete YEAR_DATA_CACHE[year]
+    }
+    for (const key in HABIT_MONTH_STATS_CACHE) {
+        delete HABIT_MONTH_STATS_CACHE[key]
+    }
+    for (const key in HABITS_MONTH_STATS_CACHE) {
+        delete HABITS_MONTH_STATS_CACHE[key]
+    }
+    for (const key in HABIT_MONTH_DATA_CACHE) {
+        delete HABIT_MONTH_DATA_CACHE[key]
+    }
+    for (const key in HABITS_MONTH_HEATMAP_CACHE) {
+        delete HABITS_MONTH_HEATMAP_CACHE[key]
+    }
+    
+    const yearData = await cacheYearData(currYear)
+
+    habitTracker.update(data => ({ 
+        ...data,
+        habits,
+        ...yearData,
+        monthMetrics: HABITS_MONTH_STATS_CACHE[`${currYear}-${monthIdx}`]
+    }))
 }
 
 /* ui utils */
@@ -918,20 +1177,13 @@ export function getFreqDaysStr(habit: Habit, literal = false) {
     const days = "SMTWTFS"
 
     if (freqType === "daily") {
-        return days
-    }
-    else if (freqType === "day-of-week" && literal) {
-        return days
-            .split("")
-            .filter((_, index) => (frequency >> (6 - index)) & 1)
-            .join("");
+        return "1111111"
     }
     else if (freqType === "day-of-week") {
-        const count = countSetBits(frequency)
-        return days.slice(-count)
+        return days.split("").map((_, i) => ((frequency >> (6 - i)) & 1).toString()).join("")
     }
     else {
-        return days.slice(-frequency)
+        return "0".repeat(7-frequency) + "1".repeat(frequency)
     }
 }
 
@@ -944,133 +1196,113 @@ export function reorderInDefaultView({
     targetHabit: any
     habits: any[]
 }) {
-    const srcOrder    = srcHabit.order.default
-    const lastOrder   = Math.max(...habits.map((habit: any) => habit.order.default)) + 1
-    const toIdx       = targetHabit === "all-day" ? lastOrder : targetHabit.order.default
-    const direction   = srcOrder < toIdx ? "up" : "down"
+    const srcOrder = srcHabit.order.default
+    const lastOrder = Math.max(...habits.map((habit: any) => habit.order.default)) + 1
+    const toIdx = targetHabit === "all-day" ? lastOrder : targetHabit.order.default
+    const direction = srcOrder < toIdx ? "up" : "down"
     const targetOrder = toIdx + (direction === "up" ? -1 : 0)
 
-    habits.forEach((habit: any) => {
-        if (direction === "up" && habit.order.default > srcOrder && habit.order.default <= targetOrder) {
-            habit.order.default--
-        } 
-        else if (direction === "down" && habit.order.default >= targetOrder && habit.order.default < srcOrder) {
-            habit.order.default++
-        }
-    })
+    if (direction === "up") {
+        shiftHabits({
+            habits,
+            type: "default",
+            fromIdx: srcOrder + 1,
+            toIdx: targetOrder + 1,
+            shift: -1
+        })
+    } 
+    else {
+        shiftHabits({
+            habits,
+            type: "default",
+            fromIdx: targetOrder,
+            toIdx: srcOrder,
+            shift: 1
+        })
+    }
 
     srcHabit.order.default = targetOrder
 }
 
-export function reorderInTimeOfDayView({
-    srcHabit, targetHabit, habits, secMap
-}: {
+export function reorderInTimeOfDayView({ srcHabit, targetHabit, habits }: {
     srcHabit: any
     targetHabit: any
-    habits: any[]
-    secMap: Record<string, number>
+    habits: Habit[]
 }) {
-    const toLast  = typeof targetHabit === "string"
+    const toLast = typeof targetHabit === "string"
+    const src = {
+        order: srcHabit.order.tod,
+        timeOfDay: srcHabit.timeOfDay,
+        sectionIdx: TIMES_OF_DAY_MAP[srcHabit.timeOfDay]
+    }
+    const tgt = {
+        order: toLast ? -1 : targetHabit.order.tod,
+        timeOfDay: toLast ? targetHabit : targetHabit.timeOfDay,
+        sectionIdx: TIMES_OF_DAY_MAP[toLast ? targetHabit : targetHabit.timeOfDay]
+    }
 
-    const srcTod = srcHabit.timeOfDay
-    const targetTod  = toLast ? targetHabit : targetHabit.timeOfDay
+    const sameSec = src.timeOfDay === tgt.timeOfDay
+    const srcSection = habits.filter(habit => habit.timeOfDay === src.timeOfDay)
+    const tgtSection = habits.filter(habit => habit.timeOfDay === tgt.timeOfDay)
+    const fromIdx = src.order
 
-    const srcSecIdx = secMap[srcTod]
-    const toSecIdx = secMap[targetTod]
-    const sameSec = srcSecIdx === toSecIdx
+    tgt.order = toLast ? tgtSection.length : tgt.order
 
-    const srcOrder = srcHabit.order.tod
-    const lastOrder = habits.filter((habit: any) => habit.timeOfDay === targetTod).length 
+    let toIdx = 0
+    let direction: "up" | "down" = "up"
 
-    const toIdx       = toLast ? lastOrder : targetHabit.order.tod
-    const betweenSec  = srcTod != targetTod
-    const direction   = (betweenSec ? srcSecIdx < toSecIdx : srcOrder < toIdx) ? "up" : "down"
+    if (sameSec) {
+        direction = src.order > tgt.order ? "up" : "down"
+        toIdx = direction === "up" ? tgt.order : tgt.order - 1
 
-    const targetOrder = Math.max(toIdx + (direction === "up" && sameSec ? -1 : 0), 0)
-
-    habits
-        .filter((habit: any) => habit.timeOfDay === srcTod)
-        .forEach((habit: any) => {
-            if (direction === "up" && habit.order.tod > srcOrder) {
-                habit.order.tod--
-            } 
-            else if (!sameSec && direction === "down" && habit.order.tod > srcOrder) {
-                habit.order.tod--
-            }
-            else if (sameSec && direction === "down" && habit.order.tod < srcOrder) {
-                habit.order.tod++
-            }
+        shiftHabits({
+            habits: srcSection,
+            type: "tod",
+            fromIdx: direction === "up" ? toIdx : fromIdx + 1,
+            toIdx: direction === "up" ? fromIdx : toIdx + 1,
+            shift: direction === "up" ? 1 : -1
         })
-    habits
-        .filter((habit: any) => habit.timeOfDay === targetTod)
-        .forEach((habit: any) => {
-            if (direction === "up" && habit.order.tod >= targetOrder) {
-                habit.order.tod++
-            } 
-            else if (!sameSec && direction === "down" && habit.order.tod >= targetOrder) {
-                habit.order.tod++
-            }
-            else if (sameSec && direction === "down" && habit.order.tod <= targetOrder) {
-                habit.order.tod--
-            }
+    } 
+    else {
+        direction = src.sectionIdx > tgt.sectionIdx ? "up" : "down"
+        toIdx = tgt.order
+
+        shiftHabits({
+            habits: srcSection,
+            type: "tod",
+            fromIdx,
+            toIdx: srcSection.length,
+            shift: -1
         })
 
-    srcHabit.order.tod = targetOrder
-    srcHabit.timeOfDay = targetTod 
+        shiftHabits({
+            habits: tgtSection,
+            type: "tod",
+            fromIdx: toIdx,
+            toIdx: tgtSection.length,
+            shift: 1
+        })
+    }
 
+    srcHabit.order.tod = toIdx
+    srcHabit.timeOfDay = tgt.timeOfDay
+
+    return srcHabit
+}
+
+export function shiftHabits({ habits, fromIdx, toIdx, shift, type }: {
+    habits: Habit[],
+    type: "default" | "tod"
+    fromIdx: number
+    toIdx: number
+    shift: 1 | -1
+}) {
+    habits.forEach(habit => {
+        const order = habit.order[type]
+        if (order >= fromIdx && order < toIdx) {
+            habit.order[type] += shift
+        }
+    })
+    
     return habits
-}
-
-/* utils */
-
-/**
- * Hanldler for updating counter data for habits.
- */
-function updateCounters({ reqArr, requiredCounts, missedTracker }: {
-    reqArr: number[]
-    requiredCounts: number[]
-    missedTracker: number[]
-}) {
-    requiredCounts = requiredCounts.map((c, i) => {
-        // marked as out of bounds
-        if (c === -1) {
-            return c
-        }
-        // a required check for this day
-        else if (reqArr[i] === 1) {
-            return c + 1
-        }
-        // mark spot as out of bounds
-        else if (reqArr[i] === -1) {
-            return -1
-        }
-        return c
-    })
-    missedTracker = missedTracker.map((m, i) => {
-        if (m === -1) {
-            return m
-        }
-        else if (reqArr[i] === 0) {
-            return 0
-        }
-        else if (reqArr[i] === -1) {
-            return -1
-        }
-        return m
-    })
-
-    return { requiredCounts, missedTracker }
-}
-
-function findOverlap(fromStart: number, fromEnd: number, length: number): number {
-    const n = new Array(length).fill(0)
-    let count = 0
-  
-    for (let i = 0; i < fromStart; i++) {
-        n[i] = 1
-    }
-    for (let i = length - fromEnd; i < length; i++) {
-        count += n[i]
-    }
-    return count
 }

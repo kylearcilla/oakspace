@@ -670,56 +670,80 @@ export const TEST_GOALS: Goal[] = [
 
 /* habits*/
 export const TEST_HABITS: Habit[] = [
-  {
-    id: "0",
-    name: "Wake Up",
-    symbol: "☀️",
-    target: "8:30 AM",
-    streak: 0,
-    freqType: "daily",
-    frequency: 1,
-    data: "", 
-    timeOfDay: "morning",
-    order: {
-      default: 0,
-      tod: 0
-    }
-  },
-  {
-    id: "1",
-    name: "Garden",
-    symbol: "🌱",
-    target: "",
-    streak: 2,
-    freqType: "daily",
-    frequency: 1,
-    data: "", 
-    timeOfDay: "morning",
-    order: {
-      default: 1,
-      tod: 4
-    }
-  },
-  {
-    id: "2",
-    name: "Exercise",
-    symbol: "💪",
-    target: "45m",
-    streak: 0,
-    freqType: "day-of-week",
-    frequency: 0b0001111,
-    data: "", 
-    timeOfDay: "afternoon",
-    order: {
-      default: 2,
-      tod: 0
-    }
-  },
+  // {
+  //   id: "0",
+  //   name: "Wake Up",
+  //   createdAt: new Date(2024, 10, 1),
+  //   img: {
+  //     src: "https://i.pinimg.com/736x/12/9c/9e/129c9ed67a63f5867c90d5baa16d654e.jpg",
+  //     center: 50
+  //   },
+  //   symbol: "☀️",
+  //   caption: "8:30 AM",
+  //   description: "",
+  //   streak: 0,
+  //   freqType: "daily",
+  //   frequency: 1,
+  //   data: "", 
+  //   timeOfDay: "all-day",
+  //   order: {
+  //     default: 0,
+  //     tod: 0
+  //   }
+  // },
+  // {
+  //   id: "1",
+  //   name: "Garden",
+  //   createdAt: new Date(2024, 10, 1),
+  //   img: {
+  //     src: "https://i.pinimg.com/736x/58/65/b9/5865b9a39071d61b3af31f8f487388b8.jpg",
+  //     center: 50
+  //   },
+  //   symbol: "🌱",
+  //   caption: "Once a day.",
+  //   description: "I garden because nurturing plants connects me to the earth, giving me peace and the satisfaction of watching something grow from my own hands.",
+  //   streak: 2,
+  //   freqType: "daily",
+  //   frequency: 1,
+  //   data: "", 
+  //   timeOfDay: "morning",
+  //   order: {
+  //     default: 1,
+  //     tod: 3
+  //   }
+  // },
+  // {
+  //   id: "2",
+  //   name: "Exercise",
+  //   createdAt: new Date(2024, 10, 1),
+  //   img: {
+  //     src: "https://i.pinimg.com/736x/36/33/ae/3633ae0b503718a926480774672698cc.jpg",
+  //     center: 50
+  //   },
+  //   symbol: "💪",
+  //   caption: "45m",
+  //   description: "",
+  //   streak: 0,
+  //   freqType: "day-of-week",
+  //   frequency: 0b001111,
+  //   data: "", 
+  //   timeOfDay: "afternoon",
+  //   order: {
+  //     default: 2,
+  //     tod: 0
+  //   }
+  // },
   {
     id: "3",
     name: "Reading",
+    createdAt: new Date(2024, 10, 1),
+    img: {
+      src: "https://images.unsplash.com/photo-1569937301527-9336e27c357c?q=80&w=2487&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      center: 50
+    },
     symbol: "📖",
-    target: "30 pages",
+    caption: "30 pages or 30m",
+    description: "",
     streak: 0,
     freqType: "day-of-week",
     frequency: 0b0000001,
@@ -730,96 +754,126 @@ export const TEST_HABITS: Habit[] = [
       tod: 0
     }
   },
-  {
-    id: "4",
-    name: "Meditation",
-    symbol: "🧘🏼‍♂️",
-    target: "15m",
-    streak: 0,
-    freqType: "daily",
-    frequency: 1,
-    data: "", 
-    timeOfDay: "morning",
-    order: {
-      default: 4,
-      tod: 1
-    }
-  },
-  {
-    id: "5",
-    name: "French",
-    symbol: "🇫🇷",
-    target: "1h",
-    streak: 0,
-    freqType: "day-of-week",
-    frequency: 0b0010100,
-    data: "", 
-    timeOfDay: "evening",
-    order: {
-      default: 5,
-      tod: 1
-    }
-  },
-  {
-    id: "6",
-    name: "Run",
-    symbol: "🏃‍♂️",
-    target: "5 km",
-    streak: 0,
-    freqType: "day-of-week",
-    frequency: 0b0101010,
-    data: "", 
-    timeOfDay: "morning",
-    order: {
-      default: 6,
-      tod: 2
-    }
-  },
-  {
-    id: "7",
-    name: "Deep Work",
-    symbol: "👨‍💻",
-    target: "2h",
-    streak: 0,
-    freqType: "day-of-week",
-    frequency: 0b1111000,
-    data: "",
-    timeOfDay: "afternoon",
-    order: {
-      default: 7,
-      tod: 2
-    }
-  },
-  {
-    id: "8",
-    name: "Water",
-    symbol: "🌊",
-    target: "8 glasses",
-    streak: 0,
-    freqType: "daily",
-    frequency: 1,
-    data: "", 
-    timeOfDay: "all-day",
-    order: {
-      default: 8,
-      tod: 0
-    }
-  },
-  {
-    id: "9",
-    name: "Clean",
-    symbol: "🧹",
-    streak: 0,
-    freqType: "per-week",
-    frequency: 5,
-    data: "", 
-    target: null,
-    timeOfDay: "afternoon",
-    order: {
-      default: 9,
-      tod: 1
-    }
-  },
+  // {
+  //   id: "4",
+  //   name: "Meditation",
+  //   createdAt: new Date(2024, 10, 1),
+  //   img: {
+  //     src: "https://images.unsplash.com/photo-1484452330304-377cdeb05340?q=80&w=2342&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  //     center: 50
+  //   },
+  //   symbol: "🧘🏼‍♂️",
+  //   caption: "15m",
+  //   description: "",
+  //   streak: 0,
+  //   freqType: "daily",
+  //   frequency: 1,
+  //   data: "", 
+  //   timeOfDay: "morning",
+  //   order: {
+  //     default: 4,
+  //     tod: 1
+  //   }
+  // },
+  // {
+  //   id: "5",
+  //   name: "French",
+  //   createdAt: new Date(2024, 10, 1),
+  //   img: {
+  //     src: "https://i.pinimg.com/736x/d5/3c/55/d53c55f7d5857f602bde485e8d523bcf.jpg",
+  //     center: 50
+  //   },
+  //   symbol: "🇫🇷",
+  //   caption: "1h",
+  //   description: "",
+  //   streak: 0,
+  //   freqType: "day-of-week",
+  //   frequency: 0b0010100,
+  //   data: "", 
+  //   timeOfDay: "evening",
+  //   order: {
+  //     default: 5,
+  //     tod: 1
+  //   }
+  // },
+  // {
+  //   id: "6",
+  //   name: "Run",
+  //   createdAt: new Date(2024, 10, 1),
+  //   img: {
+  //     src: "https://i.pinimg.com/736x/3f/de/dd/3fdedd1ce820c9f6da939269ba0577c2.jpg",
+  //     center: 50
+  //   },
+  //   symbol: "🏃‍♂️",
+  //   caption: "5 km",
+  //   description: "",
+  //   streak: 0,
+  //   freqType: "day-of-week",
+  //   frequency: 0b0101010,
+  //   data: "", 
+  //   timeOfDay: "morning",
+  //   order: {
+  //     default: 6,
+  //     tod: 2
+  //   }
+  // },
+  // {
+  //   id: "7",
+  //   name: "Deep Work",
+  //   createdAt: new Date(2024, 10, 1),
+  //   img: {
+  //     src: "https://images.unsplash.com/photo-1737279721268-a30ca431135b?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  //     center: 50
+  //   },
+  //   symbol: "👨‍💻",
+  //   caption: "2h",
+  //   description: "",
+  //   streak: 0,
+  //   freqType: "day-of-week",
+  //   frequency: 0b1111000,
+  //   data: "",
+  //   timeOfDay: "afternoon",
+  //   order: {
+  //     default: 7,
+  //     tod: 2
+  //   }
+  // },
+  // {
+  //   id: "8",
+  //   name: "Water",
+  //   createdAt: new Date(2024, 10, 1),
+  //   img: null,
+  //   symbol: "🌊",
+  //   caption: "8 glasses",
+  //   description: "",
+  //   streak: 0,
+  //   freqType: "daily",
+  //   frequency: 1,
+  //   data: "", 
+  //   timeOfDay: "all-day",
+  //   order: {
+  //     default: 8,
+  //     tod: 0
+  //   }
+  // },
+  // {
+  //   id: "9",
+  //   name: "Clean",
+  //   createdAt: new Date(2024, 10, 1),
+  //   img: null,
+  //   symbol: "🧹",
+  //   streak: 0,
+  //   freqType: "per-week",
+  //   frequency: 5,
+  //   data: "", 
+  //   caption: "",
+  //   description: "",
+  //   timeOfDay: "afternoon",
+  //   order: {
+  //     default: 9,
+  //     tod: 1
+  //   }
+  // },
 ]
 
 export const YEAR_HABITS_DATA: HabitYearData[] = [
@@ -1146,5 +1200,3 @@ export const BULLETIN_CONTENT = {
 }
 
 export const HEADER_IMG = IMG_COLLECTIONS[IMG_COLLECTION_IDX].headerImg
-
-/* routines */

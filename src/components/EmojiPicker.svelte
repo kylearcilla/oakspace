@@ -502,7 +502,7 @@
 
 <BounceFade 
     id={"emoji-picker--dmenu"}
-    zIndex={300}
+    zIndex={10000}
     isHidden={!isOpen}
     position={{
       top: `${position.top}px`,

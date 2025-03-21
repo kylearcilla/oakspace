@@ -13,14 +13,16 @@
 
     export let fullWidth = false
 
-    $: metrics = $habitTracker.metrics
+    $: metrics = $habitTracker.monthMetrics
+    $: activeStreak = $habitTracker.activeStreak
+    $: habits = $habitTracker.habits
+
     $: isLight = !$themeState.isDarkTheme
 
-    let marginDropdown = false
-    let marginViewDropdown = false
+    let options = false
+    let timeOptions = false
     let marginOptn = "habits"
     let marginView = "month"
-    let width = 0
 
     let initDragY = -1
     let ogDragVal = 0
@@ -74,7 +76,7 @@
         </div>
         <div class="margin__header">
             <button 
-                on:click={() => marginDropdown = !marginDropdown}
+                on:click={() => options = !options}
                 class="margin__header-btn"
                 id="margin-optn--dbtn"
             >
@@ -84,8 +86,9 @@
                 
             </div>
             <button 
+                disabled={habits.length === 0 && marginOptn === "habits"}
                 class="margin__optn-btn"
-                on:click={() => marginViewDropdown = !marginViewDropdown}
+                on:click={() => timeOptions = !timeOptions}
             >
                 {#if marginView === "today"}
                     Today
@@ -99,33 +102,32 @@
             </button>
         </div>
 
-        <!-- today's habits -->
-        {#if marginView === "today"}
+        {#if marginView === "today" && habits.length > 0}
             <DailyHabits />
-        <!-- month habit trends -->
-        {:else if marginOptn === "habits" && marginView === "month" && metrics}
-            {@const { habitsDone, habitsDue, activeStreak: { streak } } = metrics}
+        {:else if (marginView === "month" || habits.length === 0) && metrics && marginOptn === "habits"}
+            {@const empty = habits.length === 0}
+            {@const { habitsDone, habitsDue } = metrics}
+            {@const streak = activeStreak?.count}
             <div class="habits">
                 <div class="habits__details">
                     <div class="habits__stat">
                         <span>Consistency</span>
                         <span>
-                            {Math.floor(habitsDone / habitsDue * 100)}%
+                            {empty ? "--" : `${Math.floor(habitsDone / habitsDue * 100)}%`}
                         </span>
                     </div>
                     <div class="habits__stat" style:margin-bottom="4px">
                         <span>Streak</span>
                         <span>
-                            {streak}d
+                            {empty ? "--" : `${streak}d`}
                         </span>
                     </div>
                 </div>
                 <HabitCalendar />
             </div>
-        <!-- goals view -->
         {:else}
-            <div style:margin="4px 0px 0px 2px" bind:clientWidth={width}>
-                {#each TEST_GOALS as goal, idx}
+            <div style:margin="4px 0px 0px 2px">
+                {#each TEST_GOALS as goal}
                     {@const done = goal.status === "accomplished"}
                     <div 
                         class="goal-m" 
@@ -150,7 +152,7 @@
         {/if}
         <DropdownList 
             id="margin-optn"
-            isHidden={!marginDropdown} 
+            isHidden={!options} 
             options={{
                 pickedItem: capitalize(marginOptn),
                 listItems: [
@@ -163,21 +165,21 @@
                     width: "100px"
                 },
                 onClickOutside: () => { 
-                    marginDropdown = false 
+                    options = false 
                 },
                 onListItemClicked: ({ name }) => {
                     const newOptn = name.toLowerCase() 
                     if (newOptn != marginOptn) {
                         marginOptn = newOptn
-                        marginView = newOptn === "habits" ? "today" : "month"
+                        marginView = newOptn === "habits" && habits.length > 0 ? "today" : "month"
                     }
-                    marginDropdown = false 
+                    options = false 
                 }
             }}
         />
         <DropdownList
             id="margin-view"
-            isHidden={!marginViewDropdown} 
+            isHidden={!timeOptions} 
             options={{
                 pickedItem: capitalize(marginView),
                 listItems: marginOptn === "habits" ?
@@ -191,11 +193,11 @@
                     width: "100px",
                 },
                 onClickOutside: () => { 
-                    marginViewDropdown = false 
+                    timeOptions = false 
                 },
                 onListItemClicked: ({ name }) => {
                     marginView = name.toLowerCase()
-                    marginViewDropdown = false 
+                    timeOptions = false 
                 }
             }}
         />

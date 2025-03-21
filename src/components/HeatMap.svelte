@@ -1,32 +1,32 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-
 	import { themeState } from '$lib/store'
 	import { randomArrayElem } from '$lib/utils-general'
-	import { getElemById, getHozSpace } from '$lib/utils-general'
+	import {addToDate, getMonthStr, isDateEarlier, isSameDay } from '$lib/utils-date'
 	import { formatDateLong, getDiffBetweenTwoDays, getNextMonth, uptoToday } from '$lib/utils-date'
-	import {
-		addToDate, formatDateToSimpleIso, getMonthStr,
-		isDateEarlier, isSameDay
-	} from '$lib/utils-date';
 
 	type HeatMapOptions = {
-		startDate: Date,
 		emojis?: boolean,
-		from: 'last' | 'next'
+		single?: boolean,
+		cellType?: "small" | "default"
 	}
 
-	export let id: string;
 	export let type: 'goals' | 'habits'
 	export let data: HabitHeatMapData[]
 	export let year: number
+	export let options: HeatMapOptions | undefined = undefined
+	export let modalRef: HTMLElement | undefined = undefined  // modal ref with scale up
 
-	export let options: HeatMapOptions = {
-		startDate: new Date(),
-		emojis: false,
-		from: 'next' as 'last' | 'next'
+	const CELL_DIMS = {
+		"small": {
+			size: 17, borderRadius: 5.5
+		},
+		"default": {
+			size: 18, borderRadius: 6
+		}
 	}
-
+	
+	const { cellType = "default" } = options || {}
+	const cellDim = CELL_DIMS[cellType]
 	const OPACITY_AHEAD = {
 		light: {
 			habits: 0.035, goals: 0.055
@@ -44,13 +44,12 @@
 		}
 	}
 	const HEAT_OPACITY_GRADIENT = {
-		light: [1, 0.5, 0.3, 0.15], dark:  [0.85, 0.2, 0.08, 0]
+		light: [1, 0.5, 0.3, 0.06], dark:  [0.85, 0.2, 0.08, 0]
 	}
 
 	let firstYearDay: Date
 	let firstDay: Date
 	let idxOffset: number
-	let months: Date[]
 
 	let hoverDayIdx = -1
 	let hoverDay: Date
@@ -59,14 +58,14 @@
 	let goalPastOpacity = 0
 
 	let offset = { top: 0, left: 0 }
-	let container: HTMLElement
 
-	$: isLight = !$themeState.isDarkTheme
-	$: emojis = options.emojis
+	$: light = !$themeState.isDarkTheme
+	$: emojis = options?.emojis || false
+	$: single = options?.single || false
 
-	$: opacityAhead        = isLight ? OPACITY_AHEAD.light[type] : OPACITY_AHEAD.dark[type]
-	$: goalsSameDayOpacity = isLight ? GOALS_OPACITY.light.sameDay : GOALS_OPACITY.dark.sameDay
-	$: goalPastOpacity     = isLight ? GOALS_OPACITY.light.past : GOALS_OPACITY.dark.past
+	$: opacityAhead        = light ? OPACITY_AHEAD.light[type] : OPACITY_AHEAD.dark[type]
+	$: goalsSameDayOpacity = light ? GOALS_OPACITY.light.sameDay : GOALS_OPACITY.dark.sameDay
+	$: goalPastOpacity     = light ? GOALS_OPACITY.light.past : GOALS_OPACITY.dark.past
 
 	$: onYearChange(year)
 
@@ -74,53 +73,44 @@
 		firstYearDay = new Date(year, 0, 1)
 		firstDay = getFirstDay()
 		idxOffset = getDiffBetweenTwoDays(firstYearDay, firstDay)
-		months = getMonths()
 	}
 
 	/* data */
-	function getRenderData({ idx, isLight, data }: { 
-		idx: number, isLight: boolean, data: HabitHeatMapData[] 
+	function getRenderData({ idx, light, single, data }: { 
+		idx: number, light: boolean, single: boolean, data: HabitHeatMapData[] 
 	}) {
 		const day = addToDate({ date: firstDay, time: `${idx}d` })
 		const outofBounds = !inBounds(day)
 		const idxData = data[idx - idxOffset]
 
-		if (outofBounds || idxData?.due === 0) {
+		if (outofBounds || !idxData || idxData.due < 1) {
 			return { opacity: 0, show: false, day }
 		}
-
-		const { due, done, date } = idxData
-		const val = Math.min(done / due, 1)
+		const { due, done } = idxData
+		const val = due === 0 ? 0 : Math.min(done / due, 1)
 		
 		return {
 			day,
 			show: true,
-			opacity: getOpacity(val, isLight),
+			opacity: getOpacity(val, light, single),
 		}
 	}
 	function inBounds(date: Date) {
 		return isDateEarlier(firstYearDay, date, true) && uptoToday(date)
 	}
-	function getOpacity(val: number, isLight: boolean) {
-		const gradient = HEAT_OPACITY_GRADIENT[isLight ? "light" : "dark"]
+	function getOpacity(val: number, light: boolean, single: boolean) {
+		const gradient = HEAT_OPACITY_GRADIENT[light ? "light" : "dark"]
 
 		if (val === 1) return gradient[0]
 		if (val >= 0.8) return gradient[1]
 		if (val >= 0.4) return gradient[2]
 
-		return gradient[3]
-	}
-	function getMonths() {
-		const months = []
-		let currMonth = firstYearDay
-
-		months.push(currMonth)
-		
-		for (let i = 0; i < 11; i++) {
-			currMonth = getNextMonth(new Date(currMonth))
-			months.push(currMonth)
+		if (single) {
+			return light ? 0.225 : 0.035
 		}
-		return months
+		else {
+			return gradient[3]
+		}
 	}
 	function getFirstDay() {
 		const date = new Date(firstYearDay)
@@ -132,88 +122,55 @@
 
 		return sunday
 	}
-
-	/* ui */
-	function initMonthNames() {
-		const monthNames = container.getElementsByClassName('heat-map__month') as unknown as HTMLElement[]
-		let lastLeft = 0
-
-		for (let i = 0; i < months.length; i++) {
-			const firstDay = months[i]
-			const monthNameRef = monthNames[i];
-			const matchingCell = getElemById(`cell--${id}--${formatDateToSimpleIso(firstDay)}`)
-			const distFromLeft = getHozSpace({
-				left: {
-					elem: container,
-					edge: 'left'
-				},
-				right: {
-					elem: matchingCell!,
-					edge: 'left'
-				}
-			})
-
-			const left = distFromLeft + (type === 'goals' ? 5 : 0)
-			
-			if (lastLeft != left) {
-				monthNameRef.style.left = `${left}px`
-				lastLeft = left
-			}
-			else {
-				monthNameRef.style.display = "none"
-			}
-		}
-	}
 	function onPointerOver(pe: PointerEvent, day: Date, dayIdx: number) {
 		const target = pe.target as HTMLElement
 		const targetBox = target.getBoundingClientRect()
 
+		let offsetX = 0, offsetY = 0
+
+		if (modalRef) {
+			const containerBox = modalRef.getBoundingClientRect()
+			offsetX = -containerBox.left
+			offsetY = -containerBox.top
+		}
+		
 		offset = {
-			left: targetBox.left + window.scrollX,
-			top: targetBox.top + window.scrollY - 30
+			left: targetBox.left + window.scrollX + offsetX,
+			top: targetBox.top + window.scrollY - 30 + offsetY
 		}
 		if (dayIdx != hoverDayIdx) {
 			hoverDay = day;
 			hoverDayIdx = dayIdx;
 		}
 	}
-	onMount(() => initMonthNames())
 </script>
 
 
 <div style:position="relative" style:width="100%">
 	<div 
-		style:width="100%" 
 		style:overflow-x="scroll" 
-		style:overflow-y="hidden"
+		style:--cell-dim={`${cellDim.size}px`}
+		style:--cell-border-radius={`${cellDim.borderRadius}px`}
     >
 		<div 
 			class={`heat-map heat-map--${type}`}
-			class:heat-map--light={isLight}
+			class:heat-map--light={light}
 			on:pointerleave={() => hoverDayIdx = -1}
-			bind:this={container} 
 		>
-			<div class="heat-map__months">
-				{#each months as date}
-					<div class="heat-map__month">
-						{getMonthStr(date)}
-					</div>
-				{/each}
-			</div>
 			<div class="flx">
-				{#each Array(52) as _, colIdx}
+				{#each Array(53) as _, colIdx}
 					<div 
 						class="heat-map__week-col"
 						style:flex-direction={'column'}
 					>
 						{#each Array(7) as _, cellIdx}
 							{@const dayIdx = colIdx * 7 + cellIdx}
-							{@const { show, opacity, day } = getRenderData({ idx: dayIdx, isLight, data })}
+							{@const { show, opacity, day } = getRenderData({ idx: dayIdx, light, single, data })}
 							{@const sameDay = isSameDay(new Date(), day)}
 							{@const color = type === 'habits' ? `rgba(var(--heatMapColor), ${opacity})` : ''}
 
 							{@const hasGoal = emojis != undefined && Math.random() >= 0.9 && show && type === 'goals'}
-							{@const hasGoalOpacity = isLight ? 0 : 1}
+							{@const hasGoalOpacity = light ? 0 : 1}
 
 							<button
 								class="heat-map__cell-container"
@@ -221,7 +178,6 @@
 								on:pointerover={(e) => onPointerOver(e, day, dayIdx)}
 							>
 								<div
-									id={`cell--${id}--${formatDateToSimpleIso(day)}`}
 									class="heat-map__cell"
 									class:heat-map__cell--goal={type === 'goals'}
 									class:heat-map__cell--has-goal={hasGoal}
@@ -232,13 +188,13 @@
 									style:--color={opacity > 0 ? color : 'auto'}
 									style:--goal-fill={hasGoal ? hasGoalOpacity : sameDay ? goalsSameDayOpacity : goalPastOpacity}
 								>
-									<div class="heat-map__cell-content" class:no-bg={hasGoal && (emojis || isLight)}>
+									<div class="heat-map__cell-content" class:no-bg={hasGoal && (emojis || light)}>
 										{#if hasGoal}
 											{#if emojis}
 												<div class="heat-map__cell-emoji">	
 													{randomArrayElem(["🌷", "👨‍💻", "🇫🇷", "🔖", "💪", "🏃‍♂️", "🍖"])}
 												</div>
-											{:else if isLight}
+											{:else if light}
 												<span>
 													*
 												</span>
@@ -247,6 +203,12 @@
 									</div>
 								</div>
 							</button>
+
+							{#if day.getDate() === 1 && day.getFullYear() === year}
+								<div class="heat-map__month">
+									{getMonthStr(day)}
+								</div>
+							{/if}
 						{/each}
 					</div>
 				{/each}
@@ -256,7 +218,7 @@
 	{#if hoverDayIdx >= 0}
 		<div
 			class="tool-tip"
-			class:tool-tip--light={isLight}
+			class:tool-tip--light={light}
 			on:pointerover={() => (hoverDayIdx = -1)}
 			style:position="fixed"
 			style:top={`${offset.top}px`}
@@ -285,32 +247,29 @@
 		&--light &__month {
 			@include text-style(0.85);
 		}
-		&--habits &__months {
-			margin-bottom: 3px;
-		}
+
 		&--goals &__cell-container {
-			@include square(19px, 7px);
+			@include square(var(--cell-dim), var(--cell-border-radius));
 		}
 		&--goals &__cell-container:hover {
 			background-color: rgba(var(--textColor1), var(--goal-today-opacity));
 		}
 
-		&__months {
-			display: flex;
-			height: 25px;
-		}
 		&__month {
-			@include text-style(0.25, var(--fw-400-500), 1.2rem, "Geist Mono");
+			@include text-style(0.25, var(--fw-400-500), 1.15rem, "Geist Mono");
 			position: absolute;
 			top: 0px;
+			transition: 0.1s ease-in-out;
 		}
 		&__week-col {
+			padding-top: 22px;
 			display: flex;
 			flex-direction: column-reverse;
+			position: relative;
 		}
 		&__cell-container {
 			position: relative;
-			@include square(19px, 8px);
+			@include square(var(--cell-dim), var(--cell-border-radius));
 			@include center;
 			transition: 0s ease-in-out;
 
@@ -351,16 +310,16 @@
 				box-shadow: #61aaf3 0px 0px 0px 2.5px;
 			}
 			&--today::before {
-				border-radius: 7px !important;
+				border-radius: var(--cell-border-radius) !important;
 			}
 			&::before {
 				content: ' ';
 				width: 100%;
 				height: 100%;
 				@include abs-top-left;
-				border-radius: 7px;
+				border-radius: var(--cell-border-radius);
 				background-color: var(--color);
-				z-index: 1;
+				z-index: 0;
 				transition: 0.2s ease-in-out;
 			}
 		}
@@ -368,7 +327,7 @@
 			@include center;
 			height: 100%;
 			width: 100%;
-			border-radius: 10px;
+			border-radius: var(--cell-border-radius);
 			background-color: rgba(var(--fgColor1), 0.0285);
 			position: relative;
 
@@ -388,7 +347,7 @@
 		@include center;
 		height: 20px;
 		width: 10px;
-		z-index: 200;
+		z-index: 2;
 
 		&--light &__content {
 			border: 1.5px solid rgba(var(--textColor1), 0.065);

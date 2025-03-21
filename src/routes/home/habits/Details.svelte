@@ -1,17 +1,22 @@
 <script lang="ts"> 
 	import { Icon } from "$lib/enums"
+    import { v4 as uuidv4 } from 'uuid'
+
 	import { months, sameMonth } from "$lib/utils-date"
-	import { kebabToNormal } from "$lib/utils-general"
-	import { MONTH_THOUGHT_ENTRY, YEAR_HABITS_DATA, YEAR_THOUGHT_ENTRY } from "$lib/mock-data"
     import { habitTracker, themeState } from "$lib/store"
+	import { kebabToNormal, randomArrayElem } from "$lib/utils-general"
+	import { MONTH_THOUGHT_ENTRY, YEAR_THOUGHT_ENTRY } from "$lib/mock-data"
+	import { DEFAULT_SYMBOLS, EXAMPLE_HABITS, MAX_HABITS_COUNT } from "$lib/utils-habits-data"
 
 	import HabitCard from "./HabitCard.svelte"
 	import SvgIcon from "$components/SVGIcon.svelte"
 	import TextEntry from "../base/TextEntry.svelte"
+	import HeatMap from "$components/HeatMap.svelte"
 	import HabitsTable from "../base/HabitsTable.svelte"
+	import EmptyList from "$components/EmptyList.svelte"
     import SettingsBtn from "$components/SettingsBtn.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
-	import HeatMap from "$components/HeatMap.svelte";
+	import HabitViewModal from "$components/HabitViewModal.svelte"
 
     export let showHabitsLeft: boolean
     export let setLeftWidth: (on: boolean) => void
@@ -24,7 +29,10 @@
     let yearHeatMap: HabitHeatMapData[] | null = null
     let activeStreak: HabitActiveStreak | null = null
 
-    let monthEntry = true
+    let newHabitModal = false
+    let heatMap = true
+
+    let monthEntry = false
     let yearEntry = false
 
     let habitStyle: "card" | "table" = "table"
@@ -40,10 +48,10 @@
     let minYear = 2023
 
     let habitView: HabitTableOptions = {
-        view: "time-of-day",
+        view: "default",
         stats: false,
         emojis: true,
-        target: true,
+        captions: true,
         checkboxStyle: "box",
         bottomDetails: true,
         progress: {
@@ -54,6 +62,7 @@
 
     $: light = !$themeState.isDarkTheme
     
+    $: sidePadding = showHabitsLeft ? 20 : 0
     $: currMonth = new Date(currYear, currMonthIdx)
     $: isMonthCurr = sameMonth(currMonth, now)
     $: isYearCurr = currYear === now.getFullYear()
@@ -110,8 +119,8 @@
         else if (prop === "Emojis") {
             habitView.emojis = !habitView.emojis
         }
-        else if (prop === "Target") {
-            habitView.target = !habitView.target
+        else if (prop === "Captions") {
+            habitView.captions = !habitView.captions
         }
         else if (prop === "Bottom Details") {
             habitView.bottomDetails = !habitView.bottomDetails
@@ -133,6 +142,7 @@
     <div 
         class="details" 
         class:details--light={light}
+        style:--side-padding={`${sidePadding}px`}
     >
         <div class="details__header">
             <h1 class="details__header-title">
@@ -183,29 +193,38 @@
                 options={{
                     listItems: [
                         { 
-                            name: "Add Year Entry",
-                            active: yearEntry,
-                            onToggle: () => yearEntry = !yearEntry
-                        },
-                        { 
-                            name: "Add Month Entry",
-                            active: monthEntry,
-                            onToggle: () => monthEntry = !monthEntry
-                        },
-                        { 
                             name: "Left Habits List",
                             active: showHabitsLeft,
-                            divider: true,
                             onToggle: () => {
                                 showHabitsLeft = !showHabitsLeft
                                 setLeftWidth(showHabitsLeft)
                             }
                         },
                         {
-                            sectionName: "Habit Style",
+                            name: "Heat Map",
+                            divider: true,
+                            active: heatMap,
+                            onToggle: () => heatMap = !heatMap  
+                        },
+                        {
+                            sectionName: "Text Entries"
                         },
                         { 
-                            name: "Styling",
+                            name: "Link Year Entries",
+                            active: yearEntry,
+                            onToggle: () => yearEntry = !yearEntry
+                        },
+                        { 
+                            name: "Link Month Entries",
+                            active: monthEntry,
+                            divider: true,
+                            onToggle: () => monthEntry = !monthEntry
+                        },
+                        {
+                            sectionName: "Habits",
+                        },
+                        { 
+                            name: "View Styling",
                             pickedItem: kebabToNormal(habitStyle),
                             items: [
                                 { name: "Card" },
@@ -213,9 +232,18 @@
                             ],
                             onListItemClicked: ({ name }) => onHabitStyle(name)
                         },
+                        { 
+                            name: habits.length < MAX_HABITS_COUNT ? "Add New Habit" : ""
+
+                        },
                     ],
                     onClickOutside: () => {
                         monthOptions = false
+                    },
+                    onListItemClicked: ({ name }) => {
+                        if (name === "Add New Habit") {
+                            newHabitModal = true
+                        }
                     },
                     styling:  { 
                         zIndex: 100,
@@ -230,7 +258,10 @@
         </div>
 
         {#if yearEntry}
-            <div class="details__thought">
+            <div 
+                class="details__thought" 
+                style:padding-left={`${sidePadding}px`}
+            >
                 <TextEntry 
                     id="yr"
                     zIndex={50}
@@ -241,7 +272,7 @@
 
         <p  
             class:hidden={yearEntry} 
-            style:margin="0px 0px 9px 20px"
+            style:margin={`0px 0px 9px ${sidePadding}px`}
         >
             {#if currYear != new Date().getFullYear()}
                 Overview of your habits for the year of {currYear}.
@@ -251,8 +282,10 @@
         </p>
 
         {#if yearMetrics && activeStreak}
-            {@const { habitsDone, habitsDue, perfectDays, missed, longestStreak } = yearMetrics}
+            {@const { habitsDone, habitsDue, perfectDays, missed, longestStreak, year } = yearMetrics}
             {@const zero = habitsDue === 0}
+            {@const now = year === new Date().getFullYear()}
+            {@const streak = now && zero ? "--" : activeStreak.count}
 
             <div 
                 class="details__year-stats stats"
@@ -266,10 +299,10 @@
                     <div class="stat__bottom">
                         <div class="flx">
                             <span class="stat__value">
-                                {activeStreak.count}
+                                {streak}
                             </span>
                             <span class="stat__unit">
-                                {activeStreak.count === 1 ? "day" : "days"}
+                                {streak === "--" ? "" : streak === 1 ? "day" : "days"}
                             </span>
                         </div>
                         <span class="stat__label">Active Streak</span>
@@ -332,13 +365,18 @@
             </div>
         {/if}
 
-        {#if yearHeatMap}
-            <div style:margin="20px 0px 13px 0px" style:padding-left="20px">
+        {#if yearHeatMap && heatMap}
+            <div 
+                style:margin="18px 0px 0px 0px" 
+                style:padding-left={`${sidePadding}px`}
+            >
                 <HeatMap 
-                    id="0"
                     type="habits"
                     data={yearHeatMap}
                     year={currYear}
+                    options={{
+                        single: habits.length === 1
+                    }}
                 />
             </div>
         {/if}
@@ -415,9 +453,6 @@
                                     }
                                 }
                             ],
-                            onListItemClicked: ({ name }) => {
-                                onOptionsClicked(name)
-                            },
                             onClickOutside: () => {
                                 breakdownOptions = false
                             },
@@ -461,9 +496,9 @@
                                     onToggle: () => updateHabitView("Emojis")
                                 },
                                 { 
-                                    name: "Target",
-                                    active: habitView.target,
-                                    onToggle: () => updateHabitView("Target")
+                                    name: "Captions",
+                                    active: habitView.captions,
+                                    onToggle: () => updateHabitView("Captions")
                                 },
                                 { 
                                     name: "Bottom Details",
@@ -480,9 +515,6 @@
                                     onToggle: () => updateHabitView("Detailed")
                                 }
                             ],
-                            onListItemClicked: ({ name }) => {
-                                onOptionsClicked(name)
-                            },
                             onClickOutside: () => {
                                 breakdownOptions = false
                             },
@@ -512,7 +544,7 @@
                 </div>
             {/if}
 
-            {#if monthMetrics && activeStreak}
+            {#if monthMetrics && activeStreak && habits.length > 0}
                 {@const { habitsDone, habitsDue, perfectDays, missed, longestStreak } = monthMetrics}
                 {@const zero = habitsDue === 0}
 
@@ -594,6 +626,17 @@
                                         {light}
                                     />
                                 </li>
+                            {:else}
+                                <li style:margin="30px auto 0px auto">
+                                    <EmptyList 
+                                        emptyText="No habits"
+                                        buttonText="Add a habit"
+                                        subtitle={randomArrayElem(EXAMPLE_HABITS)}
+                                        onButtonClick={() => {
+                                            newHabitModal = true
+                                        }}
+                                    />
+                                </li>
                             {/each}
                         </ul>
                     {:else}
@@ -611,13 +654,38 @@
     </div>
 {/if}
 
+{#if newHabitModal}
+    <HabitViewModal 
+        type="new"
+        habit={{
+            name: "",
+            symbol: randomArrayElem(DEFAULT_SYMBOLS),
+            img: null,
+            freqType: "daily",
+            frequency: 1,
+            timeOfDay: "all-day",
+            description: "",
+            caption: "",
+            createdAt: new Date(),
+            id: uuidv4(),
+            streak: 0,
+            data: "000000000000000000000000000000000000000000",
+            order: {
+                default: 0,
+                tod: 0
+            }
+        }}
+        onNewFinish={() => newHabitModal = false}
+    />
+{/if}
+
 <style lang="scss">
     @import "../../../scss/stats.scss";
 
     .details {
         height: calc(100% - 70px);
         width: 100%;
-        padding: 11px 0px 0px 0px;
+        padding: 11px 20px 0px 0px;
         overflow: auto;
         font-weight: var(--fw-400-500);
         --month-item-opacity: 0.1;
@@ -637,7 +705,7 @@
             margin-bottom: 6px;
             display: flex;
             align-items: flex-start;
-            padding-left: 20px;
+            padding-left: var(--side-padding);
             @include flex(flex-start);
 
             &--past-yr::after {
@@ -655,7 +723,8 @@
         &__month {
             position: relative;
             border-top: var(--divider-border);
-            padding: 10px 0px 0px 20px;
+            padding: 10px 0px 0px var(--side-padding);
+            margin-top: 13px;
         }
         &__month-header {
             @include flex(center, space-between);
@@ -706,17 +775,18 @@
             margin: 0px 0px 0px 9px;
         }
         &__thought {
-            width: calc(100% - 20px);
+            width: calc(100% - var(--side-padding));
             margin: -8px 0px 7px 0px;
         }
         &__year-stats {
             margin: 0px 0px 5px 0px;
-            padding: 0px 0px 4px 20px;
+            padding: 0px 0px 4px var(--side-padding);
         }
         &__month-stats {
             margin: 0px 0px 5px 0px;
             border-top: var(--divider-border);
             padding: 0px 0px 16px 0px;
+            overflow: auto;
         }
         &__breakdown {
             margin-top: 6px;

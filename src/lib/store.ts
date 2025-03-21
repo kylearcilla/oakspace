@@ -31,6 +31,7 @@ export const habitTracker = writable<HabitStore>({
     habits: [],
     monthMetrics: null,
     activeStreak: null,
+    viewHabit: null,
     yearMetrics: null,
     yearHeatMap: []
 })

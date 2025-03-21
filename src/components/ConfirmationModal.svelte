@@ -89,9 +89,8 @@
 <style global lang="scss">
 
     .confirm { 
-        width: 330px;
-        padding: 14px 20px 22px 20px;
-        font-family: "Geist Mono";
+        width: 350px;
+        padding: 12px 20px 21px 20px;
 
         --brightness-hover: 1.1;
         --default-base-opacity: 0.02;
@@ -120,7 +119,7 @@
             color: rgba(var(--textColor1), 0.8) !important;
         }
         &__text {
-            @include text-style(0.85, var(--fw-400-500), 1.35rem);
+            @include text-style(0.85, var(--fw-400-500), 1.585rem);
             margin: 10px 7px 30px 7px;
             text-align: center;
         }
@@ -128,7 +127,7 @@
             padding: 12px 25px;
             border-radius: 9px;
             @include center;
-            @include text-style(1, var(--fw-400-500), 1.3rem);
+            @include text-style(1, var(--fw-400-500), 1.3rem, "Geist Mono");
 
             &:active {
                 transform: scale(0.99);

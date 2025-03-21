@@ -18,19 +18,17 @@
         display: block;
     }
     &__bottom {
-        @include text-style(1, 300, 1.55rem);
+        @include text-style(1, var(--fw-400-500), 1.55rem);
     }
     &__label {
-        @include text-style(0.3, _, 1.4rem);
+        @include text-style(0.3, var(--fw-400-500), 1.4rem);
         white-space: nowrap;
         margin: 6px 0px 0px 0px;
     }
     &__unit {
         margin: 0px 0px 0px 6px;
-        font-family: "Geist Mono";
     }
     &__value {
         position: relative;
-        font-family: "Geist Mono";
     }
 }

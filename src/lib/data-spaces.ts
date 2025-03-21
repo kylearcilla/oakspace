@@ -594,14 +594,6 @@ export const SPACES: AmbientSpaceGroup = {
     worlds: {
         wallpapers: [
             {
-                title: "Spirited Away",
-                subtitle: "Studio Gibhli",
-                thumbnail: "https://img.screencaps.us/200/1-spirited-awaybr/full/spirited-awaybr-disneyscreencaps.com-11923.jpg?ssl=1&w=200",
-                sourceId: "https://img.screencaps.us/200/1-spirited-awaybr/full/spirited-awaybr-disneyscreencaps.com-11923.jpg?ssl=1&w=200",
-                type: "wallpaper",
-                group: "worlds"
-            },
-            {
                 title: "Howl's Moving Castle",
                 subtitle: "Studio Gibhli",
                 thumbnail: "https://getwallpapers.com/wallpaper/full/c/f/c/1476873-amazing-studio-ghibli-wallpaper-hd-1920x1080-for-meizu.jpg",
@@ -1055,7 +1047,6 @@ export const POPULAR_SPACES: {
 } = {
     wallpapers: [
         SPACES.city.wallpapers[0],
-        SPACES.worlds.wallpapers[0],
         SPACES.nature.wallpapers[1],
         SPACES.city.wallpapers[1],
         SPACES.nature.wallpapers[0],

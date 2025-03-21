@@ -9,8 +9,8 @@
 
 	import YearView from "./YearView.svelte"
 	import GoalsView from "./GoalsView.svelte"
-	import HabitsTable from "./HabitsTable.svelte"
 	import Overview from "./Overview.svelte"
+	import WeeklyHabits from "./WeeklyHabits.svelte"
 	import SvgIcon from "$components/SVGIcon.svelte"
 	import ToggleBtn from "$components/ToggleBtn.svelte"
 	import BounceFade from "$components/BounceFade.svelte"
@@ -82,9 +82,9 @@
             dueType: "date"
         }
     }
-    let habitView = {
+    let habitView: HabitTableOptions = {
         view: "default",
-        stats: false,
+        stats: true,
         emojis: true,
         target: true,
         checkboxStyle: "box",
@@ -133,7 +133,7 @@
             goalsView[viewType].dueType = optn as "date" | "distance"
         }
         else if (subMenu === "h-view") {
-            habitView.view = optn
+            habitView.view = optn as "default" | "time-of-day"
         }
 
         goalsView = goalsView
@@ -558,7 +558,7 @@
                     {#if currView === "habits"}
                         <li class="dmenu__section">
                             <div class="dmenu__section-name">
-                                Habits Settings
+                                Habit Settings
                             </div>
                             <div class="dmenu__option dmenu__option--static">
                                 <span class="dmenu__option-heading">Group By</span>
@@ -641,7 +641,7 @@
                                 />
                             </div>
                             <div class="dmenu__toggle-optn  dmenu__option--static">
-                                <span class="dmenu__option-heading">Fractional</span>
+                                <span class="dmenu__option-heading">Fracion</span>
                                 <ToggleBtn 
                                     active={habitView.progress.numbers}
                                     onToggle={() => {
@@ -690,29 +690,32 @@
         <div class="divider"></div>
         <div class="month-view__details-view">
             {#if currView === "overview"}
-                <Overview 
-                    options={overview}
-                    onDayClicked={(dayIdx) => {
-                        overviewType = "daily"
+                <div style:margin-top="10px">
+                    <Overview 
+                        options={overview}
+                        onDayClicked={(dayIdx) => {
+                            overviewType = "daily"
 
-                        activityIdx  = dayIdx
-                        activity = ACTIVITY_DATA[activityIdx]
-                    }} 
-                />
+                            activityIdx  = dayIdx
+                            activity = ACTIVITY_DATA[activityIdx]
+                        }} 
+                    />
+                </div>
             {:else if currView === "habits"}
-                <HabitsTable 
-                    {weeksAgoIdx}
-                    timeFrame="weekly"
+                <WeeklyHabits 
+                    weeksAgoIdx={weeksAgoIdx}
                     options={habitView} 
                 />
             {:else if currView === "goals"}
-               <GoalsView 
-                    goalsView={goalsView} 
-                    onProgressChange={(progress) => {
-                        goalsView.progress = progress
-                        goalsView = goalsView
-                    }}
-                />
+                <div style:margin-top="15px">
+                    <GoalsView 
+                        goalsView={goalsView} 
+                        onProgressChange={(progress) => {
+                            goalsView.progress = progress
+                            goalsView = goalsView
+                        }}
+                    />
+                </div>
             {:else}
                 <YearView options={yearView}/>
             {/if}
@@ -761,10 +764,6 @@
             padding: 0px 0px 4px 0px;
             min-height: 500px;
             position: relative;
-
-            .divider {
-                margin: 0px 0px 12px 0px;
-            }
         }
 
         /* month view header */

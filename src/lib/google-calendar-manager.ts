@@ -190,11 +190,15 @@ export class GoogleCalendarManager {
 
     hasAccessTokenExpired() {
         const currentTime = new Date().getTime()
-        const timeElapsed = currentTime - this.accessTokenCreationDate!.getTime()
+        const creationTime = this.accessTokenCreationDate!.getTime()
+
+        const timeElapsed = currentTime - creationTime
         const timeRemaining = (this.expiresIn * 1000) - timeElapsed
         const threshold = this.ACTIVE_TOKEN_THRESHOLD_SECS * 1000 
+
+        const isMoreThanHourBeforeNow = timeElapsed > (this.expiresIn * 1000)
     
-        return timeRemaining <= threshold
+        return timeRemaining <= threshold || isMoreThanHourBeforeNow
     }
 
     async verifyAccessToken() {

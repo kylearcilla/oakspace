@@ -176,7 +176,7 @@
 </script>
 
 <BounceFade 
-    id={id}
+    {id}
     {isHidden} 
     {fixPos}
     offsetContext={context}
@@ -215,7 +215,7 @@
                         {item.sectionName}
                     </li>
                 <!-- menu -->
-                {:else if "pickedItem" in item}
+                {:else if "pickedItem" in item && item.name}
                     <li class="dmenu__option--static">
                         <span class="dmenu__option-heading">
                             {item.name}
@@ -230,7 +230,7 @@
                         </li>
                     {/if}
                 <!-- toggle button -->
-                {:else if "active" in item}
+                {:else if "active" in item && item.name}
                     {@const { name, active } = item}
                     <li class="dmenu__toggle-optn  dmenu__option--static">
                         <span class="dmenu__option-heading">
@@ -246,7 +246,7 @@
                         </li>
                     {/if}
                 <!-- regular option-->
-                {:else if "name" in item}
+                {:else if "name" in item && item.name}
                     {@const option = item}
                     <DropdownListOption 
                         {idx}

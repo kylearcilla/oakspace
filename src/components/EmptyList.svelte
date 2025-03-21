@@ -78,7 +78,6 @@
             background-color: rgba(var(--textColor1), var(--btn-bg-opacity));
             padding: 8px 17px 9px 17px;
             border-radius: 4px;
-
             @include text-style(1, var(--fw-400-500), 1.2rem, "Geist Mono");
             
             &:hover {
@@ -87,7 +86,7 @@
             }
         }
         &__subtitle {
-            opacity: 0.75 !important;
+            opacity: 1 !important;
             font-size: 1.2rem !important;
             margin: 12px 0px 10px 0px;
         }

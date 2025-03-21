@@ -113,7 +113,7 @@ export const themes: Theme[] = [
             bg3: "#f3eee6",
             fgColor1: "146, 138, 125",
             fgColor2: "119, 110, 95",
-            textColor1: "70, 62, 48",
+            textColor1: "34, 25, 11",
             textColor2: "255, 255, 255",
             lightColor1: "#d9d5ce",
             lightColor2: "#d3cbbd",

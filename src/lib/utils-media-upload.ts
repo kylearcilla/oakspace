@@ -41,6 +41,13 @@ export async function validateImgURL({ url, constraints }: {
     })
 
     try {
+        new URL(url)
+    } 
+    catch {
+        throw new ImgInputError(ImgUploadError.InvalidURL)
+    }
+
+    try {
         const res = await fetch(url, { method: 'HEAD', headers })
         const contentType = res.headers.get('content-type')
 
@@ -51,13 +58,6 @@ export async function validateImgURL({ url, constraints }: {
             throw error
         }
         else if (error instanceof TypeError) {
-            try {
-                new URL(url)
-            } 
-            catch {
-                throw new ImgInputError(ImgUploadError.InvalidURL)
-            }
-
             await handleCorsErrorRequest(url, formats)
         }
         else {
@@ -65,6 +65,8 @@ export async function validateImgURL({ url, constraints }: {
         }
     }
 }
+
+
 
 /**
  * Check to see if an image first and if it's of a correct format.

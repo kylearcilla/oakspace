@@ -95,12 +95,12 @@
                 <span style:font-size="1.3rem">{streak}×</span>
             </div>
         </div>
-        {#if habit.target}
+        {#if habit.caption}
             <div 
                 title="Yearl to date"
-                class="habit-card__target"
+                class="habit-card__caption"
             >
-                {habit.target}
+                {habit.caption}
             </div>
         {/if}
     </div>
@@ -184,7 +184,7 @@
         &--light &__detail span {
             color: rgb(var(--textColor1), 0.7);
         }
-        &--light &__target {
+        &--light &__caption {
             @include text-style(0.4);
         }
         &--light .cal__dow {
@@ -210,7 +210,7 @@
         &--tall &__header {
             margin: 0px 5px 6px 0px;
         }
-        &--tall &__target {
+        &--tall &__caption {
             display: none;
         }
         &--tall &__name {
@@ -258,7 +258,7 @@
             border-radius: 12px;
             padding: 2.5px 11px 3.5px 11px;
         }
-        &__target {
+        &__caption {
             @include abs-bottom-left(13px, 14px);
             @include text-style(0.3, var(--fw-400-500), 1.25rem);
         }

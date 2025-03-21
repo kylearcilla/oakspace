@@ -953,12 +953,15 @@ type Habit = {
     id: string
     name: string
     symbol: string
-    target: string | null
+    caption: string
+    description: string
     streak: number
-    freqType: "daily" | "day-of-week" | "per-week"
     frequency: number
+    createdAt: Date
     data: string
+    freqType: "daily" | "day-of-week" | "per-week"
     timeOfDay: "morning" | "afternoon" | "evening" | "all-day"
+    img: ImgHeader | null
     order: {
         default: number
         tod: number
@@ -971,6 +974,7 @@ type HabitStore = {
     activeStreak: HabitActiveStreak | null
     yearMetrics: HabitYearMetrics | null
     yearHeatMap: HabitHeatMapData[] | null
+    viewHabit: Habit | null
 }
 
 type HabitActiveStreak = {
@@ -980,6 +984,8 @@ type HabitActiveStreak = {
 }
 
 type HabitMonthMetrics = {
+    year: number
+    monthIdx: number
     habitsDone: number
     habitsDue: number
     perfectDays: number
@@ -987,12 +993,12 @@ type HabitMonthMetrics = {
     missed: number
     longestStreak?: {
         count: number
-        start: Date
-        end?: Date
+        start: Date | null
+        end: Date | null
     }
 }
 
-type HabitYearMetrics = HabitMonthMetrics
+type HabitYearMetrics = Omit<HabitMonthMetrics, "monthIdx">
 
 type HabitYearData = {
     name: string
@@ -1008,7 +1014,7 @@ type HabitDayData = {
 }
 
 type HabitHeatMapData = {
-    date: Date | null
+    date: Date
     done: number
     due: number
 }
@@ -1031,7 +1037,7 @@ type HabitTableOptions = {
     view: "default" | "time-of-day"
     stats: boolean
     emojis: boolean
-    target: boolean
+    captions: boolean
     checkboxStyle: "box" | "minimal"
     bottomDetails: boolean
     progress: {
@@ -1286,4 +1292,9 @@ type ThemeStyling = {
 type SideBarViews = {
     view: "tasks" | "cal"
     calView: "routine" | "g-cal"
+}
+
+type ImgHeader = {
+    src: string
+    center: number
 }

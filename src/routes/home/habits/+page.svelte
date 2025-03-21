@@ -1,9 +1,9 @@
 <script lang="ts">
-    import type { PageData } from './$types'
-    import { TEST_HABITS } from '$lib/mock-data'
-	import { capitalize, kebabToNormal } from '$lib/utils-general';
-	import Details from './Details.svelte';
-	import { themeState } from '$lib/store';
+    import { kebabToNormal } from '$lib/utils-general'
+    import { habitTracker, themeState } from "$lib/store"
+	import { reorderInTimeOfDayView } from "$lib/utils-habits"
+
+	import Details from './Details.svelte'
 
     const TIMES_OF_DAY_MAP: { [key: string]: number } = {
         "morning": 0,
@@ -12,26 +12,72 @@
         "all-day": 3
     }
 
-    $: light = !$themeState.isDarkTheme
-    
+    let habits: Habit[] = []
     let sortedHabits: Habit[][] = []
     let showHabitsLeft = true
-
-    groupByTimeOfDay(TEST_HABITS)
+    
+    let srcId: string = ""
+    let targetId: string = ""
+    let listRef: HTMLElement
+    
+    $: light = !$themeState.isDarkTheme
+    $: habits = $habitTracker.habits
+    $: groupByTimeOfDay(habits)
 
     function groupByTimeOfDay(habits: Habit[]) {
         sortedHabits = [[], [], [], []];
 
         habits.forEach(habit => {
-            const timeOfDayIndex = TIMES_OF_DAY_MAP[habit.timeOfDay];
-            if (timeOfDayIndex !== undefined) {
-                sortedHabits[timeOfDayIndex].push(habit);
-            }
-        });
+            const timeOfDayIndex = TIMES_OF_DAY_MAP[habit.timeOfDay]
+            sortedHabits[timeOfDayIndex].push(habit)
+        })
         sortedHabits.forEach(habitGroup => {
             habitGroup.sort((a, b) => a.order.tod - b.order.tod);
-        });
+        })
     }
+    function viewHabit(habit: Habit) {
+        habitTracker.update((state) => ({ ...state, viewHabit: habit }))
+    }
+    function onDragStart(e: DragEvent) {
+        const target = e.target as HTMLElement
+        srcId = target.dataset.id!
+        
+        listRef.addEventListener("dragover", onDrag)
+        listRef.addEventListener("dragend", onDragEnd)
+
+        e.dataTransfer?.setData("text", "")
+        e.dataTransfer!.effectAllowed = "move"
+    }
+    function onDrag(e: DragEvent) {
+        e.preventDefault()
+
+        const target = e.target as HTMLElement
+        const elem = target.closest(".habits__list-item") as HTMLElement
+
+        if (elem) {
+            targetId = elem.dataset.id || ""
+        }
+    }
+    function onDragEnd() {
+        if (srcId && targetId) {
+            const srcHabit = habits.find(h => h.id === srcId)
+            const targetHabit = habits.find(h => h.id === targetId)
+
+            reorderInTimeOfDayView({ 
+                srcHabit, 
+                targetHabit, 
+                habits
+            })
+
+            habitTracker.update((state) => ({ ...state, habits }))
+        }
+
+        listRef.removeEventListener("dragover", onDrag)
+        listRef.removeEventListener("dragend", onDragEnd)
+        
+        srcId = ""
+        targetId = ""
+    }   
 </script>
 
 <div 
@@ -43,7 +89,10 @@
     <div class="habits__content">
         {#if showHabitsLeft}
             <div class="habits__left">
-                <div class="habits__list">
+                <div 
+                    class="habits__list"
+                    bind:this={listRef}
+                >
                     {#each Object.keys(TIMES_OF_DAY_MAP) as timeOfDay}
                         {@const idx = TIMES_OF_DAY_MAP[timeOfDay]}
                         {@const habits = sortedHabits[idx]}
@@ -56,13 +105,19 @@
                                 {#each habits as habit}
                                     <!-- svelte-ignore a11y-no-noninteractive-element-to-interactive-role -->
                                     <li 
+                                        data-id={habit.id}
                                         role="button"
                                         tabindex="0"
-                                        class="habits__list-item"
-                                        on:click={() => {}}
+                                        class="habits__list-item drop-top-border"
+                                        class:drop-top-border--over={targetId === habit.id}
+                                        draggable="true"
+                                        on:dragstart={onDragStart}
+                                        on:click={() => {
+                                            viewHabit(habit)
+                                        }}
                                         on:keydown={(e) => {
                                             if (e.key === "Enter") {
-                                                console.log("enter")
+                                                viewHabit(habit)
                                             }
                                         }}
                                     >
@@ -73,6 +128,8 @@
                                             {habit.name}
                                         </span>
                                     </li>
+                                {:else}
+                                    <div class="habits__empty-list">--</div>
                                 {/each}
                             </ul>
                         </div>
@@ -92,7 +149,7 @@
 <style lang="scss">
     .habits {
         height: 100%;
-        width: calc(100% - 20px);
+        width: 100%;
         padding: 18px 0px 0px 25px;
         color: rgba(var(--textColor1), 0.9);
         @include text-style(1, var(--fw-400-500), 1.3rem);
@@ -110,7 +167,9 @@
             @include text-style(0.3);
         }
         h1 {
-            margin-bottom: 12px;
+            margin: 0px 20px 0px 0px;
+            padding-bottom: 10px;
+            border-bottom: var(--divider-border);
             @include text-style(1, var(--fw-400-500), 1.8rem);
         }
         
@@ -124,8 +183,6 @@
             height: 100%;
         }
         &__content {
-            border-top: var(--divider-border);
-            padding: 0px 0px 0px 0px;
             height: 100%;
             display: flex;
         }
@@ -138,6 +195,7 @@
             }
         }
         &__list-item {
+            position: relative;
             @include flex(center);
             @include text-style(1, _, 1.385rem);
             cursor: pointer;
@@ -147,9 +205,6 @@
             &:active {
                 transform: scale(0.98);
             }
-            &:hover span {
-                opacity: 1;
-            }
         }
         &__list-item-symbol {
             width: 20px;
@@ -158,8 +213,21 @@
         &__list-item-name {
             margin-left: 0.5em;
             opacity: 0.65;
+            width: fit-content;
+
+            &:hover {
+                opacity: 1;
+                text-decoration: underline;
+            }
         }
-        &__content {
+        &__empty-list {
+            display: block;
+            @include text-style(0.24, _, 1.4rem);
+            margin-top: -8px;
         }
+    }
+    .drop-top-border::before {
+        width: calc(100% - 20px);
+        @include abs-top-left(-5px);
     }
 </style>

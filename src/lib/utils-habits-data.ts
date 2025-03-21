@@ -1,11 +1,23 @@
+import { habitTracker } from "./store"
 import { initMonthData } from "./utils-habits"
 import { TEST_HABITS, YEAR_HABITS_DATA } from "./mock-data";
-import { genMonthCalendar, getWeekPeriod, isLeapYear, isSameDay } from "./utils-date"
-import { habitTracker } from "./store";
-import { getActiveStreak } from "./utils-habits";
+import { genMonthCalendar, getStartOfWeek, getWeekPeriod, isLeapYear, isSameDay, sameMonth } from "./utils-date"
 
 export const MAX_WEEKS_BACK = 6
 export const MAX_WEEKS_BACK_IDX = MAX_WEEKS_BACK - 1
+export const MAX_HABITS_COUNT = 15
+
+export const DEFAULT_SYMBOLS = [ "🌱", "🌿", "🧘🏼‍♂️", "📝", "👨‍💻", "🔖", "🏃‍♂️", "📖" ]
+
+export const EXAMPLE_HABITS = [
+    "Reading for 20 minutes 📖 every morning",
+    "Writing for 1000 words 📝 every Sunday morning",
+    "Exercise for 30 minutes 💪 every day on Monday, Wednesday, and Friday",
+    "Meditation for 10 minutes 🧘 every morning",
+    "Sleep for 8 hours 🛌 every day",
+    "Yoga for 30 minutes 🧘 every 4x a week.",
+    "Learn a Language 🇫🇷 3x a week, in the afternoons.",
+]
 
 export function initHabits() {
     initHabitData()
@@ -22,10 +34,11 @@ export function initHabitData() {
 
     habitTracker.set({ 
         habits: TEST_HABITS, 
-        activeStreak: getActiveStreak(), 
+        activeStreak: null, 
         yearHeatMap: null,
-        monthMetrics: null, 
-        yearMetrics: null 
+        monthMetrics: null,
+        yearMetrics: null,
+        viewHabit: null
     })
 
     return TEST_HABITS
@@ -157,7 +170,11 @@ export function getBitFromDate(yearHabits: Record<string, number>, date: Date) {
 }
 
 export function dayExists(habit: Habit, date: Date) {
-    return !!getBitFromDate(getHabitBitData(habit), date)
+    const createdAt = habit.createdAt
+    const startOfWeek = getStartOfWeek(createdAt)
+    const beforeCreation = !isSameDay(date, startOfWeek) && date < startOfWeek
+
+    return !beforeCreation
 }
 
 /**
@@ -171,7 +188,6 @@ export function getHabitData({ habit, firstDate, endDate, length, data }: {
     length: number
 }) {
     const yearData = YEAR_HABITS_DATA.find(h => h.name === habit.name)!.data
-    const habitData = TEST_HABITS.find(h => h.name === habit.name)!
     const bits = getHabitBitsSlice(yearData, firstDate, endDate)
 
     let wkIdx = 0
@@ -184,23 +200,19 @@ export function getHabitData({ habit, firstDate, endDate, length, data }: {
     const beyondBounds = (dayIdx: number) => {
         return isDayBeyondBounds(getDateFromIdx(dayIdx))
     } 
-    const dayExists = (dayIdx: number) => {
-        return getBitFromDate(yearData, getDateFromIdx(dayIdx))
-    }
     for (let week = 0; week < 6; week++) {
         const n = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
         const weekDays = data.slice(week * 7, week * 7 + 7)
-        const firstIdx = getFirstIdx({ habit, days: weekDays })
-        const lastIdx = getLastIdx({ habit, days: weekDays })
+        const { firstIdx, lastIdx } = getBoundsIdx({ habit, days: weekDays, allowFuture: true })
 
         const weekStart = week * 7
         const weekEnd = Math.min(weekStart + 7, length)
         const weekBits = bits.slice(weekStart, weekEnd)
         const requiredDays = getWeekRequiredDays({ 
-            habit: habitData, weekBits, lastIdx, firstIdx 
+            habit, weekBits, lastIdx, firstIdx 
         })
 
-        for (let i = firstIdx; i <= lastIdx; i++) {
+        for (let i = firstIdx; i <= 6 && i >= 0; i++) {
             const required = requiredDays[i] === 1
             const completed = weekBits[i] === '1'
 
@@ -209,14 +221,14 @@ export function getHabitData({ habit, firstDate, endDate, length, data }: {
         }
         for (let i = 0; i <= 6; i++) {
             const idx = wkIdx * 7 + i
-            const offBounds = i < firstIdx || i > lastIdx
+            const offBounds = (i < firstIdx || i > lastIdx) || firstIdx < 0
 
             if (!offBounds) {
-                data[idx].done += n[i][0]
-                data[idx].due += n[i][1]
+                data[idx].done = n[i][0]
+                data[idx].due = n[i][1]
             }
 
-            if (!dayExists(idx)) {
+            if (!dayExists(habit, getDateFromIdx(idx))) {
                 data[idx].noData = true
             }
             if (beyondBounds(idx)) {
@@ -265,6 +277,10 @@ export function isDayBeyondBounds(date: Date) {
 /**
  * Get the required days for a habit given a week's bits.
  * 
+ *  Req Arr:
+ *  0: not required (not required)
+ *  1: required     (is required)
+ * 
  * @param habit   - The habit object
  * @param weekBits - The week bits from the habit's data property
  * @param lastIdx  - The index of the last day in the week (default: 6)
@@ -274,11 +290,13 @@ export function getWeekRequiredDays({ habit, weekBits, lastIdx = 6, firstIdx = 0
     habit: Habit, weekBits: string, lastIdx?: number, firstIdx?: number
 }) {
     const { freqType, frequency } = habit
-    const overToday = 6 - lastIdx
     const days = new Array(7).fill(0)
   
     if (freqType === "daily") {
-        return new Array(7).fill(1, 0, lastIdx + 1)
+        for (let i = firstIdx; i <= lastIdx; i++) {
+            days[i] = 1
+        }
+        return days
     }
     else if (freqType === "day-of-week") {
         for (let i = firstIdx; i <= lastIdx; i++) {
@@ -287,20 +305,28 @@ export function getWeekRequiredDays({ habit, weekBits, lastIdx = 6, firstIdx = 0
         return days
     }
     else {
-        let freqCount = Math.max(countRequired(habit), 0) - overToday
+        // for per week, the last x days are required
+        // if earlier days are checked y, then the last x - y days are required
+        let freqCount = countRequired(habit)
 
-        for (let i = firstIdx; i <= lastIdx && freqCount > 0; i++) {
+        for (let i = 0; i <= 6 && freqCount > 0; i++) {
             if (weekBits[i] === "1") {
                 days[i] = 1
                 freqCount--
             }
         }
-        for (let i = lastIdx; i >= firstIdx && freqCount > 0; i--) {
+        for (let i = 6; i >= 0 && freqCount > 0; i--) {
             if (weekBits[i] === "0") {
                 days[i] = 1
                 freqCount--
             }
         }
+        for (let i = 0; i <= 6; i++) {
+            if (i < firstIdx || i > lastIdx) {
+                days[i] = 0
+            }
+        }
+
         return days
     }
 }
@@ -353,20 +379,48 @@ export function countRequired(habit: Habit) {
     return freqType === "daily" ? 7 : freqType === "day-of-week" ? countSetBits(frequency) : frequency
 }
 
-export function getFirstIdx<T extends { date: Date }>({ habit, days }: { habit: Habit, days: T[] }) {
-    const firstIdx = getNullIdx({ habit, days, order: "last" })
+export function getBoundsIdx<T extends { date: Date }>({ habit, days, month, allowFuture = false }: { 
+    habit: Habit, days: T[], month?: Date, allowFuture?: boolean
+}) {
+    let firstIdx = 0, lastIdx = 6
+    const firstDate = days[0].date
+    const lastDate = days[days.length - 1].date
 
-    return firstIdx === -1 ? 0 : firstIdx + 1
-}
+    const firstNullIdx = getNullIdx({ habit, days, order: "first" })
+    const lastNullIdx = getNullIdx({ habit, days, order: "last" })
+    const todayIdx = getTodayIdx(days)
 
-export function getLastIdx<T extends { date: Date }>({ habit, days }: { habit: Habit, days: T[] }) {
-    let todayIdx = getTodayIdx(days)
-    let nullIdx = getNullIdx({ habit, days })
+    if (lastNullIdx >= 0) {
+        firstIdx = lastNullIdx + 1
+    }
+    if (todayIdx >= 0 && !allowFuture) {
+        lastIdx = todayIdx
+    }
+    if (firstNullIdx >= 0) {
+        lastIdx = firstNullIdx - 1
+    }
+    if (month) {
+        const a = sameMonth(firstDate, month)
+        const b = sameMonth(lastDate, month)
 
-    todayIdx = todayIdx === -1 ? 6 : todayIdx
-    nullIdx = nullIdx === -1 ? 6 : nullIdx - 1
+        if (a && !b) {
+            lastIdx = Math.min(days.findIndex(day => !sameMonth(day.date, month)) - 1, lastIdx)
+        }
+        else if (!a && b) {
+            firstIdx = Math.max(days.findLastIndex(day => !sameMonth(day.date, month)) + 1, firstIdx)
+        }
+        else if (!a && !b) {
+            firstIdx = -1
+            lastIdx = -1
+        }
+     }
 
-    return Math.min(todayIdx, nullIdx)
+    if (firstIdx >= 0 && firstIdx < 7 && lastIdx >= 0 && lastIdx < 7 && firstIdx <= lastIdx) {
+        return { firstIdx, lastIdx }
+    }
+    else {
+        return { firstIdx: -1, lastIdx: -1 }
+    }
 }
 
 /**
@@ -396,35 +450,13 @@ export function getNullIdx<T extends { date: Date }>({ habit, days, order = "fir
 
 
 export function isDowIdxRequired(frequency: number, idx: number) {
-    return frequency >> (6 - idx) & 1
+    const result = (frequency >> (6 - idx)) & 1
+    return result
 }
 
 export function getWeekBitsStr(bitsStr: string) {
     const weeks = bitsStr.match(/.{1,7}/g) || []
     return weeks.join('_')
-}
-
-/**
- * Get a date's order relation to another date.
- * @param date1 
- * @param date2 
- * @returns 
- */
-export function compareDateMonth(date1: Date, date2: Date) {
-    const year1 = date1.getFullYear()
-    const year2 = date2.getFullYear()
-    const month1 = date1.getMonth()
-    const month2 = date2.getMonth()
-
-    if (year1 < year2 || (year1 === year2 && month1 < month2)) {
-        return "before"
-    }
-    else if (year1 === year2 && month1 === month2) {
-        return "same"
-    }
-    else {
-        return "after"
-    }
 }
 
 /* prints  */

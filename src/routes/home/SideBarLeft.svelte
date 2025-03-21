@@ -254,6 +254,7 @@
             id="left-bar--dmenu"
             class="day-settings dmenu" 
             class:dmenu--light={!isDarkTheme}
+            style:--font-size="1.3rem"
             use:clickOutside on:outClick={() => helpOpen = false} 
         >
             <div class="dmenu__option">

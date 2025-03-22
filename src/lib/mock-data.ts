@@ -670,69 +670,69 @@ export const TEST_GOALS: Goal[] = [
 
 /* habits*/
 export const TEST_HABITS: Habit[] = [
-  // {
-  //   id: "0",
-  //   name: "Wake Up",
-  //   createdAt: new Date(2024, 10, 1),
-  //   img: {
-  //     src: "https://i.pinimg.com/736x/12/9c/9e/129c9ed67a63f5867c90d5baa16d654e.jpg",
-  //     center: 50
-  //   },
-  //   symbol: "☀️",
-  //   caption: "8:30 AM",
-  //   description: "",
-  //   streak: 0,
-  //   freqType: "daily",
-  //   frequency: 1,
-  //   data: "", 
-  //   timeOfDay: "all-day",
-  //   order: {
-  //     default: 0,
-  //     tod: 0
-  //   }
-  // },
-  // {
-  //   id: "1",
-  //   name: "Garden",
-  //   createdAt: new Date(2024, 10, 1),
-  //   img: {
-  //     src: "https://i.pinimg.com/736x/58/65/b9/5865b9a39071d61b3af31f8f487388b8.jpg",
-  //     center: 50
-  //   },
-  //   symbol: "🌱",
-  //   caption: "Once a day.",
-  //   description: "I garden because nurturing plants connects me to the earth, giving me peace and the satisfaction of watching something grow from my own hands.",
-  //   streak: 2,
-  //   freqType: "daily",
-  //   frequency: 1,
-  //   data: "", 
-  //   timeOfDay: "morning",
-  //   order: {
-  //     default: 1,
-  //     tod: 3
-  //   }
-  // },
-  // {
-  //   id: "2",
-  //   name: "Exercise",
-  //   createdAt: new Date(2024, 10, 1),
-  //   img: {
-  //     src: "https://i.pinimg.com/736x/36/33/ae/3633ae0b503718a926480774672698cc.jpg",
-  //     center: 50
-  //   },
-  //   symbol: "💪",
-  //   caption: "45m",
-  //   description: "",
-  //   streak: 0,
-  //   freqType: "day-of-week",
-  //   frequency: 0b001111,
-  //   data: "", 
-  //   timeOfDay: "afternoon",
-  //   order: {
-  //     default: 2,
-  //     tod: 0
-  //   }
-  // },
+  {
+    id: "0",
+    name: "Wake Up",
+    createdAt: new Date(2024, 10, 1),
+    img: {
+      src: "https://i.pinimg.com/736x/14/fb/d0/14fbd05904b53010e04b1476e23c11d1.jpg",
+      center: 72
+    },
+    symbol: "☀️",
+    caption: "8:30 AM",
+    description: 'Waking up to the morning sun fills you with warmth, clarity, and a quiet sense of renewal for the day ahead.',
+    streak: 0,
+    freqType: "daily",
+    frequency: 1,
+    data: "", 
+    timeOfDay: "all-day",
+    order: {
+      default: 0,
+      tod: 0
+    }
+  },
+  {
+    id: "1",
+    name: "Garden",
+    createdAt: new Date(2024, 10, 1),
+    img: {
+      src: "https://i.pinimg.com/736x/1f/f2/7f/1ff27fa52fffeec92d3d39244d96d5f0.jpg",
+      center: 67
+    },
+    symbol: "🌱",
+    caption: "Once a day.",
+    description: "I garden because nurturing plants connects me to the earth, giving me peace and the satisfaction of watching something grow from my own hands.",
+    streak: 2,
+    freqType: "daily",
+    frequency: 1,
+    data: "", 
+    timeOfDay: "morning",
+    order: {
+      default: 1,
+      tod: 3
+    }
+  },
+  {
+    id: "2",
+    name: "Exercise",
+    createdAt: new Date(2024, 10, 1),
+    img: {
+      src: "https://i.pinimg.com/736x/36/33/ae/3633ae0b503718a926480774672698cc.jpg",
+      center: 75
+    },
+    symbol: "💪",
+    caption: "45m",
+    description: '"What a disgrace it is for a man to grow old without ever seeing the beauty and strength of which his body is capable."',
+    streak: 0,
+    freqType: "day-of-week",
+    frequency: 0b001111,
+    data: "", 
+    timeOfDay: "afternoon",
+    order: {
+      default: 2,
+      tod: 0
+    }
+  },
   {
     id: "3",
     name: "Reading",
@@ -743,7 +743,7 @@ export const TEST_HABITS: Habit[] = [
     },
     symbol: "📖",
     caption: "30 pages or 30m",
-    description: "",
+    description: '"A reader lives a thousand lives before he dies. The man who never reads lives only one."',
     streak: 0,
     freqType: "day-of-week",
     frequency: 0b0000001,
@@ -754,126 +754,126 @@ export const TEST_HABITS: Habit[] = [
       tod: 0
     }
   },
-  // {
-  //   id: "4",
-  //   name: "Meditation",
-  //   createdAt: new Date(2024, 10, 1),
-  //   img: {
-  //     src: "https://images.unsplash.com/photo-1484452330304-377cdeb05340?q=80&w=2342&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  //     center: 50
-  //   },
-  //   symbol: "🧘🏼‍♂️",
-  //   caption: "15m",
-  //   description: "",
-  //   streak: 0,
-  //   freqType: "daily",
-  //   frequency: 1,
-  //   data: "", 
-  //   timeOfDay: "morning",
-  //   order: {
-  //     default: 4,
-  //     tod: 1
-  //   }
-  // },
-  // {
-  //   id: "5",
-  //   name: "French",
-  //   createdAt: new Date(2024, 10, 1),
-  //   img: {
-  //     src: "https://i.pinimg.com/736x/d5/3c/55/d53c55f7d5857f602bde485e8d523bcf.jpg",
-  //     center: 50
-  //   },
-  //   symbol: "🇫🇷",
-  //   caption: "1h",
-  //   description: "",
-  //   streak: 0,
-  //   freqType: "day-of-week",
-  //   frequency: 0b0010100,
-  //   data: "", 
-  //   timeOfDay: "evening",
-  //   order: {
-  //     default: 5,
-  //     tod: 1
-  //   }
-  // },
-  // {
-  //   id: "6",
-  //   name: "Run",
-  //   createdAt: new Date(2024, 10, 1),
-  //   img: {
-  //     src: "https://i.pinimg.com/736x/3f/de/dd/3fdedd1ce820c9f6da939269ba0577c2.jpg",
-  //     center: 50
-  //   },
-  //   symbol: "🏃‍♂️",
-  //   caption: "5 km",
-  //   description: "",
-  //   streak: 0,
-  //   freqType: "day-of-week",
-  //   frequency: 0b0101010,
-  //   data: "", 
-  //   timeOfDay: "morning",
-  //   order: {
-  //     default: 6,
-  //     tod: 2
-  //   }
-  // },
-  // {
-  //   id: "7",
-  //   name: "Deep Work",
-  //   createdAt: new Date(2024, 10, 1),
-  //   img: {
-  //     src: "https://images.unsplash.com/photo-1737279721268-a30ca431135b?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  //     center: 50
-  //   },
-  //   symbol: "👨‍💻",
-  //   caption: "2h",
-  //   description: "",
-  //   streak: 0,
-  //   freqType: "day-of-week",
-  //   frequency: 0b1111000,
-  //   data: "",
-  //   timeOfDay: "afternoon",
-  //   order: {
-  //     default: 7,
-  //     tod: 2
-  //   }
-  // },
-  // {
-  //   id: "8",
-  //   name: "Water",
-  //   createdAt: new Date(2024, 10, 1),
-  //   img: null,
-  //   symbol: "🌊",
-  //   caption: "8 glasses",
-  //   description: "",
-  //   streak: 0,
-  //   freqType: "daily",
-  //   frequency: 1,
-  //   data: "", 
-  //   timeOfDay: "all-day",
-  //   order: {
-  //     default: 8,
-  //     tod: 0
-  //   }
-  // },
-  // {
-  //   id: "9",
-  //   name: "Clean",
-  //   createdAt: new Date(2024, 10, 1),
-  //   img: null,
-  //   symbol: "🧹",
-  //   streak: 0,
-  //   freqType: "per-week",
-  //   frequency: 5,
-  //   data: "", 
-  //   caption: "",
-  //   description: "",
-  //   timeOfDay: "afternoon",
-  //   order: {
-  //     default: 9,
-  //     tod: 1
-  //   }
-  // },
+  {
+    id: "4",
+    name: "Meditation",
+    createdAt: new Date(2024, 10, 1),
+    img: {
+      src: "https://images.unsplash.com/photo-1484452330304-377cdeb05340?q=80&w=2342&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      center: 50
+    },
+    symbol: "🧘🏼‍♂️",
+    caption: "15m",
+    description: "When meditation is mastered, the mind is unwavering like the flame of a candle in a windless place.",
+    streak: 0,
+    freqType: "daily",
+    frequency: 1,
+    data: "", 
+    timeOfDay: "morning",
+    order: {
+      default: 4,
+      tod: 1
+    }
+  },
+  {
+    id: "5",
+    name: "French",
+    createdAt: new Date(2024, 10, 1),
+    img: {
+      src: "https://i.pinimg.com/736x/d5/3c/55/d53c55f7d5857f602bde485e8d523bcf.jpg",
+      center: 50
+    },
+    symbol: "🇫🇷",
+    caption: "1h",
+    description: `"Let's go to Cannes, watch a couple of indie movies that you never heard of!"`,
+    streak: 0,
+    freqType: "day-of-week",
+    frequency: 0b0010100,
+    data: "", 
+    timeOfDay: "evening",
+    order: {
+      default: 5,
+      tod: 1
+    }
+  },
+  {
+    id: "6",
+    name: "Run",
+    createdAt: new Date(2024, 10, 1),
+    img: {
+      src: "https://i.pinimg.com/736x/3f/de/dd/3fdedd1ce820c9f6da939269ba0577c2.jpg",
+      center: 50
+    },
+    symbol: "🏃‍♂️",
+    caption: "5 km",
+    description: "I run because feeling my heart race connects me to my body's potential, knowing each step boosts my immune system and heart health.",
+    streak: 0,
+    freqType: "day-of-week",
+    frequency: 0b0101010,
+    data: "", 
+    timeOfDay: "morning",
+    order: {
+      default: 6,
+      tod: 2
+    }
+  },
+  {
+    id: "7",
+    name: "Deep Work",
+    createdAt: new Date(2024, 10, 1),
+    img: {
+      src: "https://images.unsplash.com/photo-1737279721268-a30ca431135b?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      center: 50
+    },
+    symbol: "👨‍💻",
+    caption: "2h",
+    description: "I seek deep flow because in that state of complete immersion, time melts away and I connect with the essence of what I'm creating.",
+    streak: 0,
+    freqType: "day-of-week",
+    frequency: 0b1111000,
+    data: "",
+    timeOfDay: "afternoon",
+    order: {
+      default: 7,
+      tod: 2
+    }
+  },
+  {
+    id: "8",
+    name: "Water",
+    createdAt: new Date(2024, 10, 1),
+    img: null,
+    symbol: "🌊",
+    caption: "8 glasses",
+    description: "",
+    streak: 0,
+    freqType: "daily",
+    frequency: 1,
+    data: "", 
+    timeOfDay: "all-day",
+    order: {
+      default: 8,
+      tod: 0
+    }
+  },
+  {
+    id: "9",
+    name: "Clean",
+    createdAt: new Date(2024, 10, 1),
+    img: null,
+    symbol: "🧹",
+    streak: 0,
+    freqType: "per-week",
+    frequency: 5,
+    data: "", 
+    caption: "",
+    description: "",
+    timeOfDay: "afternoon",
+    order: {
+      default: 9,
+      tod: 1
+    }
+  }
 ]
 
 export const YEAR_HABITS_DATA: HabitYearData[] = [

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { themeState } from '$lib/store'
+	import { datePickerManager, themeState } from '$lib/store'
 	import { randomArrayElem } from '$lib/utils-general'
 	import {addToDate, getMonthStr, isDateEarlier, isSameDay } from '$lib/utils-date'
 	import { formatDateLong, getDiffBetweenTwoDays, getNextMonth, uptoToday } from '$lib/utils-date'
@@ -84,9 +84,10 @@
 		const idxData = data[idx - idxOffset]
 
 		if (outofBounds || !idxData || idxData.due < 1) {
-			return { opacity: 0, show: false, day }
+		return { opacity: 0, show: false, day }
 		}
-		const { due, done } = idxData
+
+		const { due, trueDone: done } = idxData
 		const val = due === 0 ? 0 : Math.min(done / due, 1)
 		
 		return {

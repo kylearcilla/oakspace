@@ -1,7 +1,7 @@
 import { habitTracker } from "./store"
-import { initMonthData } from "./utils-habits"
+import { initData } from "./utils-habits"
 import { TEST_HABITS, YEAR_HABITS_DATA } from "./mock-data";
-import { genMonthCalendar, getStartOfWeek, getWeekPeriod, isLeapYear, isSameDay, sameMonth } from "./utils-date"
+import { addToDate, genMonthCalendar, getStartOfWeek, getWeekPeriod, isLeapYear, isSameDay, sameMonth } from "./utils-date"
 
 export const MAX_WEEKS_BACK = 6
 export const MAX_WEEKS_BACK_IDX = MAX_WEEKS_BACK - 1
@@ -21,7 +21,7 @@ export const EXAMPLE_HABITS = [
 
 export function initHabits() {
     initHabitData()
-    initMonthData(new Date().getFullYear(), new Date().getMonth())
+    initData(new Date().getFullYear(), new Date().getMonth())
 }
 
 export function initHabitData() {
@@ -201,7 +201,7 @@ export function getHabitData({ habit, firstDate, endDate, length, data }: {
         return isDayBeyondBounds(getDateFromIdx(dayIdx))
     } 
     for (let week = 0; week < 6; week++) {
-        const n = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+        const n = [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]
         const weekDays = data.slice(week * 7, week * 7 + 7)
         const { firstIdx, lastIdx } = getBoundsIdx({ habit, days: weekDays, allowFuture: true })
 
@@ -218,6 +218,7 @@ export function getHabitData({ habit, firstDate, endDate, length, data }: {
 
             n[i][0] += completed ? 1 : 0
             n[i][1] += required ? 1 : 0
+            n[i][2] += required && completed ? 1 : 0
         }
         for (let i = 0; i <= 6; i++) {
             const idx = wkIdx * 7 + i
@@ -226,6 +227,7 @@ export function getHabitData({ habit, firstDate, endDate, length, data }: {
             if (!offBounds) {
                 data[idx].done = n[i][0]
                 data[idx].due = n[i][1]
+                data[idx].trueDone = n[i][2]
             }
 
             if (!dayExists(habit, getDateFromIdx(idx))) {
@@ -298,12 +300,6 @@ export function getWeekRequiredDays({ habit, weekBits, lastIdx = 6, firstIdx = 0
         }
         return days
     }
-    else if (freqType === "day-of-week") {
-        for (let i = firstIdx; i <= lastIdx; i++) {
-            days[i] = isDowIdxRequired(frequency, i) ? 1 : 0
-        }
-        return days
-    }
     else {
         // for per week, the last x days are required
         // if earlier days are checked y, then the last x - y days are required
@@ -333,7 +329,7 @@ export function getWeekRequiredDays({ habit, weekBits, lastIdx = 6, firstIdx = 0
 
 /* month utils */
 
-export function initCalMonth({ monthIdx, year, strict = false }: { monthIdx: number, year: number, strict?: boolean }) {
+export function initMonthHeatMap({ monthIdx, year}: { monthIdx: number, year: number }) {
     const date = new Date(year, monthIdx)
     const month = genMonthCalendar(date)
     const length = month.days.length
@@ -343,6 +339,7 @@ export function initCalMonth({ monthIdx, year, strict = false }: { monthIdx: num
         return {
             date,
             isInCurrMonth,
+            trueDone: 0,
             due: 0,
             done: 0
         }
@@ -350,11 +347,6 @@ export function initCalMonth({ monthIdx, year, strict = false }: { monthIdx: num
 
     let firstDate = month.days[0].date
     let endDate = month.days[length - 1].date
-
-    if (strict) {
-        firstDate = new Date(year, monthIdx, 1)
-        endDate = new Date(year, monthIdx + 1, 0)
-    }
 
     return { data, firstDate, endDate, length }
 }
@@ -448,6 +440,12 @@ export function getNullIdx<T extends { date: Date }>({ habit, days, order = "fir
     }
 }
 
+export function getWeekDays(date: Date) {
+    const { start } = getWeekPeriod(date)
+    const days = Array.from({ length: 7 }, (_, i) => addToDate({ date: start, time: `${i}d` }))
+
+    return days
+}
 
 export function isDowIdxRequired(frequency: number, idx: number) {
     const result = (frequency >> (6 - idx)) & 1

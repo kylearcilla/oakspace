@@ -1017,6 +1017,8 @@ type HabitHeatMapData = {
     date: Date
     done: number
     due: number
+    trueDone: number
+    noData?: boolean
 }
 
 type HabitMonthKey = `${number}-${number}`
@@ -1028,6 +1030,7 @@ type HabitHeatMapDay = {
     isInCurrMonth: boolean
     done: number
     due: number
+    trueDone: number
     // for individual habits
     noData?: boolean
     beyondBounds?: boolean
@@ -1037,7 +1040,7 @@ type HabitTableOptions = {
     view: "default" | "time-of-day"
     stats: boolean
     emojis: boolean
-    captions: boolean
+    allowCaptions: boolean
     checkboxStyle: "box" | "minimal"
     bottomDetails: boolean
     progress: {

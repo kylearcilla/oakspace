@@ -86,7 +86,7 @@
         view: "default",
         stats: true,
         emojis: true,
-        target: true,
+        allowCaptions: true,
         checkboxStyle: "box",
         bottomDetails: true,
         progress: {
@@ -605,9 +605,9 @@
                             <div class="dmenu__toggle-optn  dmenu__option--static">
                                 <span class="dmenu__option-heading">Target</span>
                                 <ToggleBtn 
-                                    active={habitView.target}
+                                    active={habitView.allowCaptions}
                                     onToggle={() => {
-                                        habitView.target = !habitView.target
+                                        habitView.allowCaptions = !habitView.allowCaptions
                                         habitView = habitView
                                     }}
                                 />

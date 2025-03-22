@@ -49,9 +49,9 @@
 
     let habitView: HabitTableOptions = {
         view: "default",
-        stats: false,
+        stats: true,
         emojis: true,
-        captions: true,
+        allowCaptions: true,
         checkboxStyle: "box",
         bottomDetails: true,
         progress: {
@@ -77,10 +77,6 @@
         yearMetrics = data.yearMetrics
         yearHeatMap = data.yearHeatMap
     })
-
-    function onOptionsClicked(optn: string) {
-        monthOptions = !monthOptions
-    }
     function updateYear(yr: number) {
         const max = now.getFullYear()
         currYear = Math.min(Math.max(yr, minYear), max)
@@ -120,7 +116,7 @@
             habitView.emojis = !habitView.emojis
         }
         else if (prop === "Captions") {
-            habitView.captions = !habitView.captions
+            habitView.allowCaptions = !habitView.allowCaptions
         }
         else if (prop === "Bottom Details") {
             habitView.bottomDetails = !habitView.bottomDetails
@@ -272,7 +268,7 @@
 
         <p  
             class:hidden={yearEntry} 
-            style:margin={`0px 0px 9px ${sidePadding}px`}
+            style:margin={`0px 0px 12px ${sidePadding}px`}
         >
             {#if currYear != new Date().getFullYear()}
                 Overview of your habits for the year of {currYear}.
@@ -698,11 +694,11 @@
         }
         p {
             @include text-style(0.5, var(--fw-400-500), 1.45rem);
-            margin: 1px 0px 12px 0px;
+            margin: -3px 0px 15px 0px;
         }
         &__header-title {
-            @include text-style(1, var(--fw-400-500), 2.55rem, "Geist Mono");
-            margin-bottom: 6px;
+            @include text-style(1, var(--fw-400-500), 2.45rem);
+            margin-bottom: 8px;
             display: flex;
             align-items: flex-start;
             padding-left: var(--side-padding);
@@ -731,7 +727,7 @@
             margin: 0px 0px 11px 0px;
         }
         &__month-item {
-            @include text-style(1, var(--fw-400-500), 1.4rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 1.5rem);
             opacity: var(--month-item-opacity);
             margin-right: 16px;
 
@@ -785,7 +781,7 @@
         &__month-stats {
             margin: 0px 0px 5px 0px;
             border-top: var(--divider-border);
-            padding: 0px 0px 16px 0px;
+            padding: 0px 0px 12px 0px;
             overflow: auto;
         }
         &__breakdown {

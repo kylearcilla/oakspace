@@ -7,7 +7,7 @@
 	import { emojiPicker, imageUpload } from "$lib/pop-ups"
 	import { isDowIdxRequired } from "$lib/utils-habits-data";
 	import { clamp, clickOutside, kebabToNormal, normalToKebab } from "$lib/utils-general"
-	import { getHabitStreak, getHabitYearMetrics, getHabitYearHeatMap, onUpdateHabit, deleteHabit, addHabit } from "$lib/utils-habits"
+	import { getHabitStreak, onUpdateHabit, deleteHabit, addHabit, getHabiViewtData } from "$lib/utils-habits"
 
 	import Modal from "./Modal.svelte"
 	import SvgIcon from "./SVGIcon.svelte"
@@ -27,6 +27,12 @@
     const HABIT_TITLE_ID = "habit-title"
     const DESCRIPTION_ID = "habit-description"
     const CAPTION_ID = "habit-caption"
+    const TOD_MAP = {
+        "morning": "🌤️ Morning",
+        "afternoon": "☀️ Afternoon",
+        "evening": "🌙 Evening",
+        "all-day": "🔖 All Day"
+    }
 
     let { name, symbol, img, freqType, frequency, timeOfDay, description, caption } = habit
 
@@ -66,14 +72,7 @@
         verifyFreq()
     }
 
-    $: console.log(freqType, frequency)
-
-    habitTracker.subscribe(() => {
-        if (type === "new") return
-
-        yearHeatMap = getHabitYearHeatMap(currYear, habit)
-        stats = getHabitYearMetrics({ habit, year: currYear })
-    })
+    habitTracker.subscribe(() => updateYear(currYear))
 
     new TextEditorManager({ 
         id: HABIT_TITLE_ID,
@@ -97,12 +96,18 @@
         maxLength: 1000,
     })
 
-    function updateYear(yr: number) {
+    async function updateYear(yr: number) {
         const max = now.getFullYear()
-        currYear = Math.min(Math.max(yr, minYear), max)
+        if (yr > max || yr < minYear) return
+        
+        currYear = yr
+        loading = true
 
-        yearHeatMap = getHabitYearHeatMap(currYear, habit)
-        stats = getHabitYearMetrics({ habit, year: currYear })
+        const data = await getHabiViewtData(habit, currYear)
+        yearHeatMap = data.yearHeatMap
+        stats = data.stats
+
+        loading = false
     }
     function setFreqStr(freqType: string, frequency: number) {
         if (freqType === "daily") {
@@ -147,7 +152,7 @@
         if (frequency === 127 || frequency === 0) {
             frequency = 1
             freqType = "daily"
-            
+
             setFreqStr(freqType, frequency)
         }
     }
@@ -211,6 +216,7 @@
         target.style.cursor = "default"
     }
     async function onSave() {
+        closing = true
         loading = true
 
         const promise = new Promise(async (res) => {
@@ -359,7 +365,7 @@
                                 isActive={todOpen}
                                 options={{
                                     noBg: false,
-                                    title: timeOfDay === "all-day" ? "All Day" : kebabToNormal(timeOfDay) + "s",
+                                    title: TOD_MAP[timeOfDay],
                                     onClick: () => {
                                         todOpen = !todOpen
                                     },
@@ -787,12 +793,13 @@
             @include abs-top-left;
             width: 100%;
             z-index: 0;
+            border-radius: 10px 10px 0px 0px;
+            overflow: hidden;
 
             img {
                 height: 100%;
                 width: 100%;
                 object-fit: cover;
-                border-radius: 10px 10px 0px 0px;
                 position: relative;
             }
         }

@@ -197,7 +197,7 @@
         &__list-item {
             position: relative;
             @include flex(center);
-            @include text-style(1, _, 1.385rem);
+            @include text-style(1, _, 1.35rem);
             cursor: pointer;
             transition: 0.1s transform cubic-bezier(.4,0,.2,1);
             margin-bottom: 8px;

@@ -6,11 +6,12 @@
 	import { habitTracker } from "$lib/store"
 	import { kebabToNormal } from "$lib/utils-general"
 	import { DAYS_OF_WEEK, getMonthDayNumbers, isSameMonth } from "$lib/utils-date"
-	import { getHabitTableData, toggleCompleteHabit, initMonthData } from "$lib/utils-habits"
+	import { getHabitTableData, toggleCompleteHabit, initData } from "$lib/utils-habits"
 	import { getHabitStreak, reorderInTimeOfDayView, reorderInDefaultView, TIMES_OF_DAY_MAP } from "$lib/utils-habits"
 
 	import SvgIcon from "$components/SVGIcon.svelte"
 	import ProgressRing from "$components/ProgressRing.svelte"
+	import { isDowIdxRequired } from "$lib/utils-habits-data";
 
     const MIN_SIZE = 620
     const X_MIN_SIZE = 480
@@ -65,25 +66,19 @@
 
     initCounters()
 
-    function resetUI(_?: HabitTableOptions) {
-        resetCounters()
-        requestAnimationFrame(() => {
-            getDaysElems()
+    function onTimeFrameChange(month: Date, weeksAgoIdx: number) {
+        if (timeFrame === "monthly") {
+            const monthIdx = month.getMonth()
+            const year = month.getFullYear()
 
-            dayElems.forEach(elem => elem.scrollLeft = scrollLeft)
-        })
-    }
-    function resetCounters() {
-        initCounters()
-        rowProgress = new Map()
-    }
-    function initCounters() {
-        if (timeFrame === "weekly") {
-            dayProgress = new Array(7).fill([0, 0])
+            currMonth = new Date(year, monthIdx)
+            initData(year, monthIdx)
         }
         else {
-            dayProgress = new Array(getMonthDayNumbers(new Date())).fill([0, 0])
+            weekIdx = weeksAgoIdx
         }
+        resetCounters()
+        habits = habits
     }
 
     /* data */
@@ -110,19 +105,17 @@
             return { complete: 0, total: 0 }
         }
     }
-    function onTimeFrameChange(month: Date, weeksAgoIdx: number) {
-        if (timeFrame === "monthly") {
-            const monthIdx = month.getMonth()
-            const year = month.getFullYear()
-
-            currMonth = new Date(year, monthIdx)
-            initMonthData(year, monthIdx)
+    function resetCounters() {
+        initCounters()
+        rowProgress = new Map()
+    }
+    function initCounters() {
+        if (timeFrame === "weekly") {
+            dayProgress = new Array(7).fill([0, 0])
         }
         else {
-            weekIdx = weeksAgoIdx
+            dayProgress = new Array(getMonthDayNumbers(new Date())).fill([0, 0])
         }
-        resetCounters()
-        habits = habits
     }
 
     /* ui */
@@ -171,6 +164,14 @@
     function setLastHabitItem() {
         const lastGroup = sortedHabits.findLast(sec => sec.length > 0)
         lastHabitItem = lastGroup ? lastGroup[lastGroup.length - 1] : null
+    }
+    function resetUI(_?: HabitTableOptions) {
+        resetCounters()
+        requestAnimationFrame(() => {
+            getDaysElems()
+
+            dayElems.forEach(elem => elem.scrollLeft = scrollLeft)
+        })
     }
 
     /* drag */
@@ -268,7 +269,7 @@
     {#if habits && metrics}
         {@const todView = view === "time-of-day"}
         {@const days = getDaysHeader()}
-        {@const { emojis, progress, checkboxStyle, bottomDetails, captions } = options}
+        {@const { emojis, progress, checkboxStyle, bottomDetails, allowCaptions } = options}
         {@const { habitsDone, habitsDue } = metrics}
         {@const lastSectionEmpty = (todView && sortedHabits[3].length === 0) || habits.length === 0}
 
@@ -372,9 +373,9 @@
                                         {name}
                                     </button>
                                 </div>
-                                {#if caption && captions}
+                                {#if caption && allowCaptions}
                                     <span class="habit__caption">
-                                        {caption}
+                                        {habit.caption}
                                     </span>
                                 {/if}
                             </div>
@@ -391,18 +392,18 @@
                                 on:scroll={daysScrollHandler}
                             >
                                 {#each completions as completion}
-                                    {@const { date, required, complete, noData, beyondBounds } = completion}
+                                    {@const { date, complete, noData, beyondBounds, required } = completion}
                                     {@const startOfWeek = date.getDay() === 6}
                                     {@const future = date > new Date()}
-                                    {@const title = noData ? "No data for this day." : required ? "" : "Check in not required for this day."}
+                                    {@const dowRequired = freqType === "day-of-week" ? isDowIdxRequired(habit.frequency, date.getDay()) : true}
+                                    {@const title = noData ? "No data for this day." : dowRequired ? "" : "Check in not required for this day."}
                                     {@const show = !future && !noData}
                                     {@const disabled = noData || beyondBounds || future}
                                     {@const lofi = noData || future}
                                     {@const dateStr = date?.toLocaleDateString()}
-                                    {@const notReqStyle = freqType === "day-of-week" && !required}
+                                    {@const notReqStyle = freqType === "day-of-week" && !dowRequired && !noData}
 
                                     <div
-                                        data-required={required}
                                         title={title}
                                         class="habit__box-cell day-col day-col cell"
                                         class:habit__box-cell--lofi={lofi}
@@ -658,10 +659,6 @@
             margin: 0px 0px 0px 0px;
             position: relative;
         }
-        &__wk-period {
-            @include text-style(0.25, var(--fw-400-500), 1.4rem, "Geist Mono");
-            margin-left: 14px;
-        }
         &__table-header {
             display: flex;
             @include text-style(0.35, var(--fw-400-500), 1.4rem);
@@ -750,7 +747,7 @@
             padding-right: 15px;
         }
         &__streak {
-            @include text-style(0.6, 400, 1.3rem, "Geist Mono");
+            @include text-style(0.6, var(--fw-500-600), 1.3rem);
         }
         &__streak-times {
             font-size: 1.6rem;

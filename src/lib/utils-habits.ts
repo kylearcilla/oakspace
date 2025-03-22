@@ -1,14 +1,14 @@
+import { get } from "svelte/store"
 import { habitTracker } from "./store"
 
 import { YEAR_HABITS_DATA } from "./mock-data"
-import { addToDate, afterToday, genMonthCalendar, getDiffBetweenTwoDays, getWeekPeriod, getYrIdxfromDate, isDateInCurrrentWeek, isLeapYear, isSameDay, sameMonth, uptoToday } from "./utils-date"
+import { addToDate, afterToday, genMonthCalendar, getDiffBetweenTwoDays, getWeekPeriod, isSameDay, sameMonth, uptoToday } from "./utils-date"
 
-import { dayExists, getHabitData } from "./utils-habits-data"
-import { getHabitBitData, getHabitBitsSlice, getBitFromDate, } from "./utils-habits-data"
-import { isDowIdxRequired, initCalMonth, getWeekBounds, MAX_WEEKS_BACK_IDX } from "./utils-habits-data"
-import { toggleHabitYearBit, countBitsStr, getBoundsIdx, getWeekRequiredDays } from "./utils-habits-data"
-import { get } from "svelte/store"
 import { toast } from "./utils-toast"
+import { countRequired, getHabitData, getWeekDays } from "./utils-habits-data"
+import { getHabitBitData, getHabitBitsSlice, getBitFromDate, } from "./utils-habits-data"
+import { toggleHabitYearBit, countBitsStr, getBoundsIdx, getWeekRequiredDays } from "./utils-habits-data"
+import { isDowIdxRequired, initMonthHeatMap, getWeekBounds, MAX_WEEKS_BACK_IDX } from "./utils-habits-data"
 
 let habits: Habit[] = []
 
@@ -32,12 +32,19 @@ export const HABITS_MONTH_HEATMAP_CACHE: Record<string, HabitHeatMapData[]> = {}
 
 /* inits + caches */
 
-export async function initMonthData(year: number, monthIdx: number) {
+/**
+ * Initialize all habit data for the year.
+ * Set the given year and month stats for the store.
+ * 
+ * @param year - The year to initialize data for.
+ * @param monthIdx - The month index to initialize data for.
+ */
+export async function initData(year: number, monthIdx: number) {
     let yearData = YEAR_DATA_CACHE[year]
     habits = get(habitTracker).habits
 
     if (!yearData) {
-        yearData = await cacheYearData(year)
+        yearData = await initYearData(year)
     }
 
     habitTracker.update(data => ({
@@ -49,15 +56,14 @@ export async function initMonthData(year: number, monthIdx: number) {
 }
 
 /**
- * Process habit data for an entire year and cache it.
- * Includes metrics for both month and year and habit data for each month.
+ * Process habit data for a given year and cache it.
  */
-async function cacheYearData(year: number) {
+async function initYearData(year: number) {
     await _processYearData(year)
 
     YEAR_DATA_CACHE[year] = {
-        yearHeatMap: getYearHeatMap(year),
-        yearMetrics: getYearMetrics(year)
+        yearHeatMap: getHabitsYearHeatMap(year),
+        yearMetrics: getHabitsYearMetrics(year)
     }
 
     return YEAR_DATA_CACHE[year]
@@ -72,6 +78,7 @@ function _processYearData(year: number) {
 
 /**
  * Process each habit data for a given year.
+ * Increment year heat map data.
  * 
  * 1. Habit's month data.
  * 2. Habit's year heat map data.
@@ -84,10 +91,9 @@ function processYearData(year: number) {
 
     for (let i = 0; i <= toMonth; i++) {
         HABITS_MONTH_STATS_CACHE[`${year}-${i}`] = getHabitsMonthMetrics({ habits, monthIdx: i, year })
-        const habitsMap = initializeHeatMap(year, i)
+        const habitsMap = initHeatMapMonthCache(year, i)
 
         for (const habit of habits) {
-            const habitMap = initializeHeatMap(year, i, habit.id)
             const key = `${year}-${i}--${habit.id}`
 
             const dataCache = HABIT_MONTH_DATA_CACHE
@@ -96,11 +102,10 @@ function processYearData(year: number) {
             dataCache[key] = getHabitMonthData({ habit, monthIdx: i, year })
             statsCache[key] = getHabitMonthMetrics({ habit, monthIdx: i, year })
 
-
             const data = dataCache[key]
 
             for (const day of data) {
-                const { date, done, due } = day
+                const { date, done, due, trueDone, noData } = day
                 const sameYear = date.getFullYear() === year
                 const sameMonth = date.getMonth() === i
                 const toToday = uptoToday(date)
@@ -108,34 +113,85 @@ function processYearData(year: number) {
                 if (sameYear && sameMonth && toToday) {
                     const idx = date.getDate() - 1
 
-                    // update all habits month heat map
                     habitsMap[idx].date = date
                     habitsMap[idx].done += done
                     habitsMap[idx].due += due
-
-                    // update habit month heat map
-                    habitMap[idx].date = date
-                    habitMap[idx].done += done
-                    habitMap[idx].due += due
+                    habitsMap[idx].trueDone += trueDone
+                    habitsMap[idx].noData = noData === undefined ? false : noData
                 }
             }
         }
     }
 }
 
-function initializeHeatMap(year: number, month: number, habitId?: string) {
+/* heat maps */
+
+export function getHabitsYearHeatMap(year: number) {
+    const now = new Date()
+    const toMonth = year === now.getFullYear() ? now.getMonth() : 11
+    const map = []
+    let idx = 0
+
+    for (let i = 0; i <= toMonth; i++) {
+        const data = HABITS_MONTH_HEATMAP_CACHE[`${year}-${i}`]
+
+        for (let day = 0; day < data.length; day++) {
+            map[idx++] = data[day]
+        }
+    }
+    return map
+}
+
+/**
+ * Get the heat map for a given habit for a year.
+ */
+export function getHabitYearHeatMap(year: number, habit: Habit) {
+    const now = new Date()
+    const toMonth = year === now.getFullYear() ? now.getMonth() : 11
+    const map = []
+    let idx = 0
+
+    const cache = HABIT_MONTH_DATA_CACHE
+
+    for (let i = 0; i <= toMonth && cache; i++) {
+        const key = `${year}-${i}--${habit.id}`
+        cache[key] ||= getHabitMonthData({ habit, monthIdx: i, year })
+
+        const data = cache[key]
+
+        for (let day = 0; day < data.length; day++) {
+            const { date, done, due, trueDone } = data[day]
+            
+            if (date.getFullYear() === year && date.getMonth() === i) {
+                map[idx++] = { date, done, due, trueDone }
+            }
+        }
+    }
+    return map
+}
+
+function initHeatMapMonthCache(year: number, month: number) {
     const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const key = habitId ? `${year}-${month}--${habitId}` : `${year}-${month}`
-
-    const getArray = () => Array.from({ length: daysInMonth }, () => ({ date: new Date(), done: 0, due: 0 }))
-    let data = HABITS_MONTH_HEATMAP_CACHE[key] ||= getArray()
-
+    const key = `${year}-${month}`
+    
+    const getArray = () => {
+        return Array.from({ length: daysInMonth }, () => ({ 
+            date: new Date(), 
+            done: 0,
+            due: 0,
+            trueDone: 0,
+            noData: false
+        }))
+    }
+    const data = getArray()
+    HABITS_MONTH_HEATMAP_CACHE[key] = data
+    
     return data
 }
 
 /* year metrics  */
 
-function getYearMetrics(year: number) {
+function getHabitsYearMetrics(year: number) {
     const now = new Date()
     const toMonth = year === now.getFullYear() ? now.getMonth() : 11
 
@@ -172,7 +228,7 @@ function calculateYearMetrics({ type, toMonth, habit, year }: {
     }
     const statsCache = type === "all" ? HABITS_MONTH_STATS_CACHE : HABIT_MONTH_STATS_CACHE
     const mapCache = type === "all" ? HABITS_MONTH_HEATMAP_CACHE : HABIT_MONTH_DATA_CACHE
-    const days: { due: number, done: number, date: Date }[] = []
+    const days: HabitHeatMapData[] = []
     
     let longestStreak = { count: 0, start: new Date(), end: new Date() }
     
@@ -185,18 +241,22 @@ function calculateYearMetrics({ type, toMonth, habit, year }: {
         }
     }
 
-    const startMonth = type === "single" ? new Date(habit!.createdAt).getMonth() : 0
-    const startYear = type === "single" ? new Date(habit!.createdAt).getFullYear() : year
+    const startDate = habit ? getWeekPeriod(habit!.createdAt).start : new Date()
+    const startMonth = type === "single" ? startDate.getMonth() : 0
+    const startYear = type === "single" ? startDate.getFullYear() : year
 
     for (let i = 0; i <= toMonth; i++) {
         if (year === startYear && i < startMonth) continue
 
-        let monthData = statsCache[getKey(i)]
-        let mapData = mapCache[getKey(i)]
+        const key = getKey(i)
 
-        if (!monthData && type === "single") {
-            monthData = getHabitMonthMetrics({ habit: habit!, monthIdx: i, year })
-            statsCache[getKey(i)] = monthData
+        statsCache[key] 
+
+        const monthData = statsCache[key]
+        const mapData = mapCache[key]
+
+        if (!monthData || !mapData) {
+            continue
         }
         days.push(...mapData)
 
@@ -212,16 +272,12 @@ function calculateYearMetrics({ type, toMonth, habit, year }: {
     let prevDate = null
     
     for (let i = 0; i < days.length; i++) {
-        const { due, done, date } = days[i]
+        const { due, trueDone, date, noData } = days[i]
         
-        if (date.getFullYear() !== year || !uptoToday(date) || isSameDay(prevDate, date)) {
+        if (date.getFullYear() !== year || !uptoToday(date) || isSameDay(prevDate, date) || noData) {
             continue
         }
-        // console.log(date, due, done, done >= due || due === 0)
-
-        // console.log(date, done, due, done >= due || due === 0)
-        
-        if (done >= due || due === 0) {
+        if (trueDone >= due || due === 0) {
             if (currentStreak === 0) {
                 currentStart = new Date(date)
             }
@@ -241,52 +297,7 @@ function calculateYearMetrics({ type, toMonth, habit, year }: {
         prevDate = date
     }
 
-    // console.log(longestStreak)
-
     return { ...metrics, longestStreak }
-}
-
-export function getYearHeatMap(year: number) {
-    const now = new Date()
-    const toMonth = year === now.getFullYear() ? now.getMonth() : 11
-    const map = []
-    let idx = 0
-
-    for (let i = 0; i <= toMonth; i++) {
-        const data = HABITS_MONTH_HEATMAP_CACHE[`${year}-${i}`]
-
-        for (let day = 0; day < data.length; day++) {
-            map[idx++] = data[day]
-        }
-    }
-    return map
-}
-
-/**
- * Get the heat map for a given habit for a year.
- */
-export function getHabitYearHeatMap(year: number, habit: Habit) {
-    const now = new Date()
-    const toMonth = year === now.getFullYear() ? now.getMonth() : 11
-    const map = []
-    let idx = 0
-
-    const cache = HABIT_MONTH_DATA_CACHE
-
-    for (let i = 0; i <= toMonth; i++) {
-        const key = `${year}-${i}--${habit.id}`
-        let data = cache[key]
-
-        for (let day = 0; day < data.length; day++) {
-            let { date, done, due } = data[day]
-            // due = noData ? -1 : due
-            
-            if (date.getFullYear() === year && date.getMonth() === i) {
-                map[idx++] = { date, done, due }
-            }
-        }
-    }
-    return map
 }
 
 /* month metrics  */
@@ -295,7 +306,7 @@ export function getHabitYearHeatMap(year: number, habit: Habit) {
  * Get a single habit's month data (checked, required, etc...).
  */
 export function getHabitMonthData({ habit, monthIdx, year }: { habit: Habit, monthIdx: number, year: number }) {
-    const { data, firstDate, endDate, length } = initCalMonth({ monthIdx, year })
+    const { data, firstDate, endDate, length } = initMonthHeatMap({ monthIdx, year })
 
     getHabitData({ 
         habit, 
@@ -393,21 +404,24 @@ function getMonthMetrics({ days, habits, date }: {
 
             if (!sameMonth(day.date, date) || !upToToday) continue
 
-            if (requiredCounts[i] === 0 && !currentStreak) {
-                currentStreak = {
-                    count: 1,
-                    start: new Date(day.date),
-                    end: new Date(day.date)
+            if (requiredCounts[i] === 0) {
+                if (!currentStreak) {
+                    currentStreak = {
+                        count: 1,
+                        start: new Date(day.date),
+                        end: new Date(day.date)
+                    }
+                } 
+                else {
+                    currentStreak.start = new Date(day.date)
+                    currentStreak.count++
                 }
-            } 
-            else if (requiredCounts[i] === 0) {
-                currentStreak!.start = new Date(day.date)
-                currentStreak!.count++
+
+                if (!longestStreak || currentStreak.count > longestStreak.count) {
+                    longestStreak = structuredClone(currentStreak)
+                }
             }
-            if (currentStreak && (!longestStreak || currentStreak.count > longestStreak!.count)) {
-                longestStreak = structuredClone(currentStreak)
-            }
-            if (!today && requiredCounts[i] === 1) {
+            else if (!today && requiredCounts[i] > 0) {
                 currentStreak = null
             }
         }
@@ -460,7 +474,9 @@ export function getHabitsMonthMetrics({ habits, monthIdx, year }: {
 }) {
     const date = new Date(year, monthIdx)
     const days = genMonthCalendar(date).days
-    return getMonthMetrics({ days, habits, date })
+    const metrics = getMonthMetrics({ days, habits, date })
+
+    return metrics
 }
 
 export function getHabitMonthMetrics({ habit, monthIdx, year }: {
@@ -552,8 +568,6 @@ function getBoundWeekReqs({ habit, weekBits, monthDate, weekDays }: {
         }
     }
 
-    // console.log(weekDays[0].date, reqArr)
-
 
     return {
         reqArr,
@@ -600,7 +614,7 @@ function getWeekCheckArr({ habit, weekBits, lastIdx }: {
     return checkArr
 }
 
-/* habit queries */
+/* streaks */
 
 /**
  * Get the active habit streak for a habit.
@@ -610,7 +624,7 @@ function getWeekCheckArr({ habit, weekBits, lastIdx }: {
  * @returns     - The current streak for the habit
  */
 export function getHabitStreak(habit: Habit) {
-    const { data, freqType, frequency, streak: activeStreak } = habit
+    const { data, freqType, streak: activeStreak } = habit
     let streak = 0
     let broken = false
     
@@ -637,37 +651,14 @@ export function getHabitStreak(habit: Habit) {
                 }
             }
         }
-
-        /* day of week: ++ the streak only if this week is complete */
-        if (freqType === "day-of-week") {
-            let weekCount = 0
-
-            for (let i = 0; i <= lastIdx; i++) {
-                const required = isDowIdxRequired(frequency, i)
-                const completed = weekBits[i] === '1'
-                const today = i === lastIdx && currWeek
-                
-                if (completed && required) {
-                    weekCount++
-                }
-                else if (required && !today) {
-                    broken = true
-                }
-            }
-            if (!broken) {
-                streak += weekCount
-            }
-        }
-        
-        /* per week: ++ the streak only if this week is complete */
-        if (freqType === "per-week") {
-            // for current week, ther's still enough days to meet required days
-            const required = frequency
+        /* per week & dow: ++ all checks are counted */
+        else {
+            const required = countRequired(habit)
             const todayChecked = currWeek && weekBits[lastIdx] === '1'
             const daysLeft = currWeek ? 7 - lastIdx - (todayChecked ? 1 : 0) : 0
     
             if (checkedDays + daysLeft >= required) {
-                streak += Math.min(checkedDays, required)
+                streak += checkedDays
             }
             else {
                 broken = true
@@ -795,8 +786,6 @@ export function getHabitTableData({ habit, timeFrame, weekIdx, currMonth, dayPro
             const required = due === 1
             const dayIdx = date.getDate() - 1
 
-            console.log(date, required)
-
             if (currMonth && toToday) {
                 const complete = done === 1
 
@@ -869,16 +858,27 @@ export function tallyHabitProgress({ id, dayIdx, date, required, complete, timeF
     }
 
     // habit progress
-    if (rowProgress.has(id) && due) {
+    if (rowProgress.has(id)) {
         const { complete: c, total } = rowProgress.get(id)!
 
         rowProgress.set(id, {
-            complete: c + complete, total: total + 1
+            complete: c + complete, total: total + (due ? 1 : 0)
         })
     } 
-    else if (due) {
-        rowProgress.set(id, { complete, total: 1 })
+    else {
+        rowProgress.set(id, { complete, total: due ? 1 : 0 })
     }
+}
+
+export async function getHabiViewtData(habit: Habit, year: number) {
+    if (!YEAR_DATA_CACHE[year]) {
+        await initYearData(year)
+    }
+
+    const yearHeatMap = getHabitYearHeatMap(year, habit)
+    const stats = getHabitYearMetrics({ habit, year })
+
+    return { yearHeatMap, stats }
 }
 
 function getSatIdx(day: number, date: Date): number {
@@ -900,12 +900,11 @@ export function toggleCompleteHabit({ habit, date, currMonth }: {
     const monthIdx = currMonth.getMonth()
 
     habitTracker.update((state) => {
-        const { habits, yearHeatMap } = state
+        const { habits } = state
         const idx = habits.findIndex((_habit: any) => habit.name === _habit.name)!
         const targetHabit = habits[idx]
-        const { days, bits: bBits } = getWeekBitSlice(date, habit)
-        const { data, checked } = toggleDayComplete({ habit, date })
-        const heatmap = yearHeatMap!
+        const days = getWeekDays(date)
+        const { data } = toggleDayComplete({ habit, date })
 
         targetHabit.data = data
         habits[idx] = targetHabit
@@ -923,80 +922,15 @@ export function toggleCompleteHabit({ habit, date, currMonth }: {
         HABIT_MONTH_STATS_CACHE[`${year}-${monthIdx}--${habit.id}`] = getHabitMonthMetrics({ habit, monthIdx, year })
         HABITS_MONTH_STATS_CACHE[`${year}-${monthIdx}`] = state.monthMetrics!
 
-        const { bits: aBits } = getWeekBitSlice(date, habit)
-        
-        updateHeatMapCache({ habit, date, days, bBits, aBits, checked })
-        state.yearHeatMap = heatmap
-        state.yearMetrics = getYearMetrics(year)
-
+        updateHeatMapCache({ date, days })
+        state.yearHeatMap = getHabitsYearHeatMap(year)
+        state.yearMetrics = getHabitsYearMetrics(year)
 
         YEAR_DATA_CACHE[year] = {
             yearHeatMap: state.yearHeatMap!,
             yearMetrics: state.yearMetrics!
         }
 
-        return state
-    })
-}
-
-export function getWeekBitSlice(date: Date, habit: Habit) {
-    const yearData = YEAR_HABITS_DATA.find((_habit) => _habit.name === habit.name)!.data
-    const { start, end } = getWeekPeriod(date)
-    const days = Array.from({ length: 7 }, (_, i) => addToDate({ date: start, time: `${i}d` }))
-    const bits = getHabitBitsSlice(yearData, start, end)
-
-    return { days, bits }
-}
-
-/**
- * Updates the heat map cache after a toggle complete.
- * Updates it on a weekly basis. 
- * Requirments for a week changes upon a day toggle (for per-week).
- * 
- * @param habit - The habit object
- * @param date - The date of the toggle complete
- * @param bBits - The bits of before the toggle complete
- * @param aBits - The bits of after the toggle complete
- * @param checked - Whether the day is checked
- * @param days - The days of the week of toggle
- */
-export function updateHeatMapCache({
-    habit, date, bBits, aBits, checked, days
-}: {
-    habit: Habit, date: Date, bBits: string, aBits: string, checked: boolean, days: Date[]
-}) {
-    const year = date.getFullYear()
-    const monthIdx = date.getMonth()
-    const cache = HABITS_MONTH_HEATMAP_CACHE[`${year}-${monthIdx}`]
-    
-    const currWeek = isDateInCurrrentWeek(date)
-    const lastIdx = currWeek ? new Date().getDay() : 6
-
-    const bReqs = getWeekRequiredDays({ habit, weekBits: bBits, lastIdx })
-    const aReqs = getWeekRequiredDays({ habit, weekBits: aBits, lastIdx })
-
-    cache[date.getDate() - 1].done += checked ? 1 : -1
-
-    for (let i = 0; i < days.length; i++) {
-        const day = days[i]
-        const diff = aReqs[i] - bReqs[i]
-
-        if (diff > 0) {
-            cache[day.getDate() - 1].due++
-        }
-        else if (diff < 0) {
-            cache[day.getDate() - 1].due--
-        }
-    }
-}
-
-export function updateMonthMetrics(date: Date) {
-    habitTracker.update((state) => {
-        state.monthMetrics = getHabitsMonthMetrics({
-            habits:   state.habits,
-            monthIdx: date.getMonth(),
-            year:     date.getFullYear()
-        })
         return state
     })
 }
@@ -1015,39 +949,6 @@ export function toggleDayComplete({ habit, date }: { habit: Habit, date: Date}) 
     toggleHabitYearBit({ habit, date })
 
     return { data: habit.data, checked: bits[diff - 1] === '1' }
-}
-
-export async function onUpdateHabit(updatedHabit: Habit) {
-    const { freqType, frequency, timeOfDay } = updatedHabit
-    const store = get(habitTracker)
-    let habits = store.habits
-    const idx = habits.findIndex((habit: Habit) => habit.id === updatedHabit.id)!
-    const habit = habits[idx]
-
-    const newFreqType = habit.freqType != freqType
-    const newFreq = habit.frequency != frequency
-    const newTod = habit.timeOfDay != timeOfDay
-    
-    if (newTod) {
-        reorderInTimeOfDayView({
-            srcHabit: habit,
-            targetHabit: updatedHabit.timeOfDay,
-            habits
-        })
-    }
-
-    const newHabit = { ...habit, ...updatedHabit }
-    habits[idx] = newHabit
-
-    if (newFreqType || newFreq) {
-        await recalculateHabits(habits)
-    }
-    else {
-        habitTracker.update((state) => {
-            state.habits = habits
-            return state
-        })
-    }
 }
 
 export async function addHabit(habit: Habit) {
@@ -1119,8 +1020,40 @@ export async function deleteHabit(habit: Habit) {
     })
 }
 
+export async function onUpdateHabit(updatedHabit: Habit) {
+    const { freqType, frequency, timeOfDay } = updatedHabit
+    const store = get(habitTracker)
+    let habits = store.habits
+    const idx = habits.findIndex((habit: Habit) => habit.id === updatedHabit.id)!
+    const habit = habits[idx]
+
+    const newFreqType = habit.freqType != freqType
+    const newFreq = habit.frequency != frequency
+    const newTod = habit.timeOfDay != timeOfDay
+    
+    if (newTod) {
+        reorderInTimeOfDayView({
+            srcHabit: habit,
+            targetHabit: updatedHabit.timeOfDay,
+            habits
+        })
+    }
+
+    const newHabit = { ...habit, ...updatedHabit }
+    habits[idx] = newHabit
+
+    if (newFreqType || newFreq) {
+        await recalculateHabits(habits)
+    }
+    else {
+        habitTracker.update((state) => {
+            state.habits = habits
+            return state
+        })
+    }
+}
+
 export async function recalculateHabits(_habits: Habit[]) {
-    console.log("--------------")
     const store = get(habitTracker)
     const currYear = store.yearMetrics!.year
     const monthIdx = store.monthMetrics!.monthIdx
@@ -1143,7 +1076,7 @@ export async function recalculateHabits(_habits: Habit[]) {
         delete HABITS_MONTH_HEATMAP_CACHE[key]
     }
     
-    const yearData = await cacheYearData(currYear)
+    const yearData = await initYearData(currYear)
 
     habitTracker.update(data => ({ 
         ...data,
@@ -1151,6 +1084,52 @@ export async function recalculateHabits(_habits: Habit[]) {
         ...yearData,
         monthMetrics: HABITS_MONTH_STATS_CACHE[`${currYear}-${monthIdx}`]
     }))
+}
+
+/**
+ * Updates the heat map cache after a toggle complete.
+ * Updates it on a weekly basis. 
+ * Requirements for a week changes upon a day toggle (for per-week).
+ * 
+ * @param date - The date of the toggle complete
+ * @param days - The days of the week of toggle
+ */
+export function updateHeatMapCache({ date, days }: { date: Date, days: Date[] }) {
+    const year = date.getFullYear()
+    const monthIdx = date.getMonth()
+    const keys: string[] = []
+
+    for (let i = 0; i < days.length; i++) {
+        const key = `${year}-${monthIdx}`
+
+        if (keys.includes(key)) continue
+        keys.push(key)
+
+        delete HABITS_MONTH_HEATMAP_CACHE[key]
+        const habitsMap = initHeatMapMonthCache(year, monthIdx)
+
+        for (const habit of habits) {
+            const key = `${year}-${monthIdx}--${habit.id}`
+            const data = HABIT_MONTH_DATA_CACHE[key]
+
+            for (const day of data) {
+                const { date, done, due, trueDone, noData } = day
+                const sameYear = date.getFullYear() === year
+                const sameMonth = date.getMonth() === monthIdx
+                const toToday = uptoToday(date)
+            
+                if (sameYear && sameMonth && toToday) {
+                    const idx = date.getDate() - 1
+
+                    habitsMap[idx].date = date
+                    habitsMap[idx].done += done
+                    habitsMap[idx].due += due
+                    habitsMap[idx].trueDone += trueDone
+                    habitsMap[idx].noData = noData === undefined ? false : noData
+                }
+            }
+        }
+    }
 }
 
 /* ui utils */

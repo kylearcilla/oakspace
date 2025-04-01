@@ -11,13 +11,13 @@
     export let level: number
     export let manager: Writable<Omit<TasksListManager, "tasks">>
     export let task: Task
+    export let numbered: boolean
     export let onContextMenu: (e: Event, taskIdx: string, isChild: boolean) => void
     export let onSubtaskCheck: ((wasChecked: boolean) => void) | undefined = undefined
 
     const { settings, options, ui } = $manager
     const idPrefix = options.id
     const isChild = level > 0
-    const numbered = settings.numbered
 
     let leftSideWidth = 0
     let isOpen = false
@@ -105,7 +105,7 @@
                 class="task__left"
             >
                 <div>
-                    {#if settings.numbered}
+                    {#if numbered}
                         <div class="task__number">
                             {task.idx + 1}.
                         </div>

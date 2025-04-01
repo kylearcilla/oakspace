@@ -2,7 +2,7 @@
 	import { onMount } from "svelte"
 	import { ytUserStore } from "$lib/store"
 
-    import { Icon } from "$lib/enums"
+    import { APIErrorCode, Icon } from "$lib/enums"
 	import { LogoIcon } from "$lib/enums"
 	import { updateAmbience } from "$lib/utils-home"
 	import { globalContext, ytPlayerStore } from "$lib/store"
@@ -37,13 +37,14 @@
     $: playlists = chosenGroup.playlists
     $: videos = chosenGroup.videos
     $: chosenItem = space ?? null
-        
+    
     $: player = $ytPlayerStore
     $: userData = $ytUserStore
     $: hasSignedIn = userData?.signedIn ?? false
     $: tokenExpired = userData?.tokenExpired ?? false
     $: fetchedAllItems = userData?.fetchedAllItems ?? false
     $: loading = userData?.loading ?? false
+    $: error = userData?.error ?? null
 
     let chosenGroup = POPULAR_SPACES
     let chosenGroupStr: AmbientSpaceGroupKey = "popular"
@@ -181,7 +182,8 @@
         }
     }
     function refreshBtnClicked() {
-        if (tokenExpired) {
+        const expired = tokenExpired || error?.code === APIErrorCode.EXPIRED_TOKEN
+        if (expired) {
             userData!.refreshAccessToken()
         }
         else {
@@ -216,7 +218,7 @@
         getMorePlaylists()
     }
     function getMorePlaylists() {
-        const noFetch = !!(loading || fetchedAllItems || tokenExpired || !!playlistTimeout)
+        const noFetch = !!(loading || fetchedAllItems || tokenExpired || !!playlistTimeout || error)
         if (noFetch || !userData) {
             return
         }

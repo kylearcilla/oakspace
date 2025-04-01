@@ -103,21 +103,34 @@ export async function handleGoogleRedirect(context: "gcal" | "yt"): Promise<Goog
 }
 
 export async function refreshGoogleToken(refreshToken: string): Promise<{ accessToken: string, expiresIn: number }> {
-    const response = await fetch(TOKEN_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-            client_id: CLIENT_ID,
-            client_secret: CLIENT_SECRET,
-            refresh_token: refreshToken,
-            grant_type: "refresh_token",
+    try {
+        const response = await fetch(TOKEN_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+                client_id: CLIENT_ID,
+                client_secret: CLIENT_SECRET,
+                refresh_token: refreshToken,
+                grant_type: "refresh_token"
+            })
         })
-    })
-
-    const { access_token, expires_in } = await response.json()
-
-    return {
-        accessToken: access_token,
-        expiresIn: expires_in
+        
+        if (!response.ok) {
+            throw new Error()
+        }
+        
+        const data = await response.json()
+        const { access_token, expires_in } = data
+        
+        if (!access_token) {
+            throw new Error()
+        }
+        return {
+            accessToken: access_token,
+            expiresIn: expires_in
+        }
+    }
+    catch(e) {
+        throw new Error()
     }
 }

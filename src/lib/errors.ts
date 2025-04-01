@@ -33,7 +33,7 @@ export class ResourceNotFoundError extends CustomError {
       super(message);
       this.name = 'ResourceNotFoundError'
       this.code = code
-    }
+    } 
 }
 
 /**

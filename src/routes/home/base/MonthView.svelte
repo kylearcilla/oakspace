@@ -20,7 +20,7 @@
 	import DropdownList from "$components/DropdownList.svelte"
 
     type MonthDetailsView = "overview" | "goals" | "habits" | "yr-view"
-    type GoalsView = {
+    type GoalsViewOptions = {
         view: "list" | "board"
         progress: number
         list: {
@@ -66,7 +66,7 @@
         focusTime: false,
         heading: false
     }
-    let goalsView: GoalsView = {
+    let goalsView: GoalsViewOptions = {
         view: "list",
         progress: 0.5,
         list: {

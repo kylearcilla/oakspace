@@ -1,75 +1,60 @@
 <script lang="ts">
-    import { TEST_GOALS } from "$lib/mock-data"
-    import { GoalsManager } from "$lib/goals-manager"
+	import { onMount } from "svelte"
+	import { themeState } from "$lib/store"
+
+    import { Icon } from "$lib/enums"
+    import { GoalsViewManager } from "$lib/goals-view-manager"
+	import { capitalize, kebabToNormal, normalToKebab } from "$lib/utils-general"
+	import { getNextTimeFrame, isGoalPinned, setViewGoal } from "$lib/utils-goals"
     
     import GoalsList from "./GoalsList.svelte"
-    import GoalsBoard from "./GoalsBoard.svelte"
-	import ProgressBar from "../../../components/ProgressBar.svelte";
-	import DropdownList from "../../../components/DropdownList.svelte";
-	import { Icon } from "../../../lib/enums";
-	import { kebabToNormal, normalToKebab } from "../../../lib/utils-general";
-	import { onMount } from "svelte";
-	import { themeState } from "../../../lib/store";
+	import GoalsBoard from "./GoalsBoard.svelte"
+	import DropdownList from "$components/DropdownList.svelte"
 
-    export let goalsView: GoalsView
-    export let onProgressChange: (progress: number) => void
-
-    const manager = new GoalsManager({ 
-        goals: TEST_GOALS, 
-        grouping: goalsView.list.grouping
-    })
+    export let manager: GoalsViewManager
+    export let goals: Goal[]
+    export let options: GoalsView
+    export let timeFrame: { year: number, period: string }
 
     $: state = manager.state
     $: pinnedGoal = $state.pinnedGoal
     $: light = !$themeState.isDarkTheme
+    $: nextTimeFrame = getPushTime(timeFrame)
 
     let store: GoalsViewState | null = null
 
     let statusOpen = false
     let statusMenuPos = { top: 0, left: 0 }
-    let nextMonth = getNextMonth()
     let snippetRef: HTMLElement
     let width = 0
     let snippetHeight = 0
     let rightContainerRef: HTMLElement
     let closing = false
-    
-    manager.state.subscribe((data) => {
-        const goals = manager.goals
-        const done  = goals.filter(goal => goal.status === "accomplished").length
-        const total = goals.length
 
-        onProgressChange(done / total)
+    manager.state.subscribe((data) => {
         store = data
     })
 
     $: if (pinnedGoal && snippetRef) {
         requestAnimationFrame(() => {
             snippetHeight = snippetRef.clientHeight
-
-            // if (pinnedGoal.imgSrc) {
-            //     snippetHeightThreshold = 90
-            // }
-            // else {
-            //     snippetHeightThreshold = 180
-            // }
         })
     }
 
-    function getGoalProgress(goal: Goal) {
-        const checkCount = goal.milestones?.filter((m) => m.done).length ?? 0
-        const total = goal.milestones?.length ?? 0
-
-        return { checkCount, total }
-    }
-
-    function getNextMonth() {
-        const date = new Date()
-        const year = date.getFullYear()
-        const month = date.getMonth()
-        const nextDate = new Date(year, month + 1, 1)
+    function getPushTime(time: { year: number, period: string }) {
+        const nextTimeFrame = getNextTimeFrame(time)
+        const period = time.period
+        const diffYear = nextTimeFrame.year != time.year
         
-        return nextDate.toLocaleString("en-US", { month: "short" })
+        return period === "all" ? nextTimeFrame.year : diffYear ? nextTimeFrame.year : capitalize(nextTimeFrame.period)
+    }
+    function onListItemClicked(goal: Goal, newStatus: string) {
+        const status = normalToKebab(newStatus) as "accomplished" | "in-progress" | "not-started"
+
+        manager.setGoalStatus(goal, status)
+        manager.closeContextMenu()
+        statusOpen = false
+        closing = true
     }
 
     onMount(() => manager.initContainerRef(rightContainerRef))
@@ -79,18 +64,24 @@
     class="goals-view"
     class:goals-view--sm={width < 600}
     class:goals-view--light={light}
-    style:--truncate-lines={pinnedGoal?.imgSrc ? 2 : 5}
+    style:--truncate-lines={pinnedGoal?.img ? 2 : 5}
     bind:clientWidth={width}
 >
     {#if pinnedGoal}
-        {@const { checkCount, total } = getGoalProgress(pinnedGoal)}
-        {@const { status, imgSrc, milestones, description, name } = pinnedGoal}
+        {@const { status, img, description, name } = pinnedGoal}
         {@const done = status === "accomplished"}
         <div class="goals-view__left">
             <div class="goals-view__pinned">
-                {#if imgSrc}
-                    <div class="goals-view__pinned-img">
-                        <img src={imgSrc} alt={name} />
+                {#if img}
+                    <div 
+                        role="button"
+                        tabindex="0"
+                        class="goals-view__pinned-img"
+                        on:click={() => {
+                            setViewGoal(pinnedGoal)
+                        }}
+                    >
+                        <img src={img.src} alt={name} />
                     </div>
                 {/if}
                 <div class="goals-view__pinned-text">
@@ -98,20 +89,17 @@
                         {done ? "Done!" : "Pinned"}
                     </span>
                     <!-- svelte-ignore a11y-missing-attribute -->
-                    <a 
-                        class="goals-view__pinned-title"
+                    <button 
+                        class="goals-view__pinned-title hov-underline"
                         class:strike={done}
                         title={name}
+                        on:click={() => {
+                            setViewGoal(pinnedGoal)
+                        }}
                     >
                         {name}
-                    </a>
-                    {#if milestones}
-                        <div class="goals-view__pinned-progress">
-                            <ProgressBar 
-                                progress={checkCount / total}
-                            />
-                        </div>
-                    {/if}
+                    </button>
+
                     <div 
                         class="goals-view__pinned-text-snippet"
                         class:goals-view__pinned-text-snippet--fade={snippetHeight > 100}
@@ -126,26 +114,31 @@
     <div 
         bind:this={rightContainerRef}
         class="goals-view__right"
-        style:overflow={goalsView.view === "board" ? "scroll" : "unset"}
+        style:overflow={options.view === "board" ? "scroll" : "unset"}
     >
-        {#if goalsView.view === "list"}
+        {#if options.view === "list"}
             <GoalsList 
+                {timeFrame}
                 {manager}
                 {pinnedGoal}
-                options={goalsView.list}
+                options={options.list}
             />
-        {:else}
+        {:else if options.view === "board"}
             <div style:padding-left="4px">
                 <GoalsBoard 
                     {manager}
                     {pinnedGoal}
-                    options={goalsView.board}
+                    options={options.board}
                 />
             </div>
         {/if}
 
         {#if store}
             {@const { contextMenuPos, editGoal, contextMenuOpen } = store }
+            {@const periodPinned = pinnedGoal?.id === editGoal?.id}
+            {@const carouselPinned = isGoalPinned(editGoal)}
+            {@const currPeriod = capitalize(timeFrame.period)}
+
             <DropdownList
                 id={"goals-menu"}
                 isHidden={!contextMenuOpen}
@@ -156,13 +149,17 @@
                             divider: true
                         },
                         { 
-                            name: pinnedGoal?.id === editGoal?.id ? "Unpin Goal" : "Pin Goal",
+                            name: periodPinned ? `Unpin from ${currPeriod}` : `Pin to ${currPeriod}`,
                             rightIcon: { 
                                 type: "svg",
                                 icon: Icon.Pin
                             },
                         },
                         { 
+                            divider: true,
+                            name: carouselPinned ? "Unpin from Top" : "Pin up Top"
+                        },
+                        {
                             name: "Change Status",
                             rightIcon: { 
                                 type: "svg",
@@ -181,7 +178,7 @@
                             }
                         },
                         { 
-                            name: `Push to ${nextMonth}`, 
+                            name: `Push to ${nextTimeFrame}`, 
                             rightIcon: { 
                                 type: "fa", 
                                 icon: "fa-solid fa-arrow-right",
@@ -225,12 +222,6 @@
                     { name: "In Progress" },
                     { name: "Accomplished" },
                 ],
-                onListItemClicked: ({ name: status }) => {
-                    manager.setGoalStatus(editGoal, normalToKebab(status))
-                    manager.closeContextMenu()
-                    statusOpen = false
-                    closing = true
-                },
                 styling:  { 
                     width: "125px",
                     zIndex: 501,
@@ -249,6 +240,9 @@
                 },
                 onPointerLeave: () => {
                     statusOpen = false
+                },
+                onListItemClicked: ({ name }) => {
+                    onListItemClicked(editGoal, name)
                 }
             }}
         />
@@ -262,6 +256,8 @@
     .goals-view {
         @include flex(flex-start, space-between);
         gap: 25px;
+        border-top: var(--divider-border);
+        padding-top: 12px;
 
         &--light &__pinned span {
             @include text-style(0.3);
@@ -314,7 +310,7 @@
         }
         &__pinned span {
             display: block;
-            @include text-style(0.2, var(--fw-400-500), 1.3rem, "Geist Mono");
+            @include text-style(0.2, var(--fw-400-500), 1.4rem);
         }
         &__pinned-img {
             width: 100%;
@@ -336,7 +332,7 @@
             }
         }
         &__pinned-title {
-            @include text-style(1, var(--fw-400-500), 1.6rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 1.75rem);
             @include truncate-lines(var(--truncate-lines));
             cursor: pointer;
             margin: 6px 0px 9px 0px;

@@ -20,7 +20,7 @@
   
   // utils
 	import { ModalType } from "$lib/enums"
-	import { globalContext, habitTracker, sessionManager } from "$lib/store"
+	import { globalContext, goalTracker, habitTracker, sessionManager } from "$lib/store"
 	import { 
     initAppState, keyboardShortCutHandlerKeyDown, keyboardShortCutHandlerKeyUp, 
     onMouseMoveHandler, onQuitApp,
@@ -42,12 +42,14 @@
   import { updateAmbience, updateGlobalContext, hasAmbienceSpace } from "../../lib/utils-home";
   import { findThemeFromName, getActiveTheme, getPrevTheme, setNewTheme, setPrevTheme } from "../../lib/utils-appearance";
 	import EmojiPicker from "../../components/EmojiPicker.svelte";
+	import AbsoluteFloatElem from "../../components/AbsoluteFloatElem.svelte";
 	import ImgUpload from "../../components/ImgUpload.svelte";
 	import IconPicker from "../../components/IconPicker.svelte";
 	import { YoutubePlayer } from "../../lib/youtube-player";
 	import ColorPicker from "../../components/ColorPicker.svelte";
 	import { themes } from "../../lib/data-themes"
 	import HabitViewModal from "$components/HabitViewModal.svelte";
+	import GoalViewModal from "$components/GoalViewModal.svelte";
 
   export let data
 
@@ -338,6 +340,10 @@
     {@const habit = $habitTracker.viewHabit}
     <HabitViewModal {habit} />
   {/if}
+  {#if $goalTracker.viewGoal}
+    {@const goal = $goalTracker.viewGoal}
+    <GoalViewModal {goal} />
+  {/if}
 
   <!-- modals -->
   {#if modalsOpen.includes(ModalType.NewSession)} 
@@ -376,6 +382,7 @@
 <ImgUpload/>
 <IconPicker/>
 <ColorPicker/>
+<AbsoluteFloatElem/>
 
 <style lang="scss">
     @import "../../scss/toasts.scss";

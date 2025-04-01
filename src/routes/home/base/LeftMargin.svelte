@@ -4,9 +4,10 @@
 
     import { getQuarter, months } from "$lib/utils-date"
 	import { capitalize, clamp } from "$lib/utils-general"
-    import { BULLETIN_CONTENT, TEST_GOALS } from "$lib/mock-data"
+    import { BULLETIN_CONTENT } from "$lib/mock-data"
     
 	import Bulletin from "./Bulletin.svelte"
+	import { GOALS } from "$lib/mock-data-goals"
 	import DailyHabits from "./DailyHabits.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
 	import HabitCalendar from "$components/HabitCalendar.svelte"
@@ -127,7 +128,7 @@
             </div>
         {:else}
             <div style:margin="4px 0px 0px 2px">
-                {#each TEST_GOALS as goal}
+                {#each GOALS as goal}
                     {@const done = goal.status === "accomplished"}
                     <div 
                         class="goal-m" 

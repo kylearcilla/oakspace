@@ -32,8 +32,8 @@
     let newHabitModal = false
     let heatMap = true
 
-    let monthEntry = false
-    let yearEntry = false
+    let monthEntry = true
+    let yearEntry = true
 
     let habitStyle: "card" | "table" = "table"
     let cardStyle: "tall" | "wide" = "wide"
@@ -493,7 +493,7 @@
                                 },
                                 { 
                                     name: "Captions",
-                                    active: habitView.captions,
+                                    active: habitView.allowCaptions,
                                     onToggle: () => updateHabitView("Captions")
                                 },
                                 { 

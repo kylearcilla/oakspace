@@ -2,44 +2,42 @@
 	import { onDestroy, onMount } from "svelte"
 	import { themeState, globalContext } from "$lib/store"
 
+	import { Icon } from "$lib/enums"
 	import { hexToRgb } from "$lib/utils-colors"
 	import { inlineStyling } from "$lib/utils-general"
 	import { getThemeStyling } from "$lib/utils-appearance"
 	import { TasksListManager } from "$lib/tasks-list-manager"
 
+	import SvgIcon from "./SVGIcon.svelte"
 	import TaskElem from "../components/Task.svelte"
-	import DropdownList from "./DropdownList.svelte"
 	import { clickOutside } from "../lib/utils-general"
-	import SvgIcon from "./SVGIcon.svelte";
-	import { Icon } from "$lib/enums";
 
-    export let removeCompleteFlag: boolean | undefined = undefined
-    export let newTaskFlag: boolean | undefined = undefined
-    export let tasks: Task[]
-    export let allowInitTasksCall = true
     export let options: TasksListOptions
+    export let tasks: Task[]
     export let onTaskChange: ((tasks: Task[]) => void) | undefined = undefined
+    export let newTaskFlag: boolean | undefined = undefined
+    export let allowInitTasksCall = true
+    export let removeCompleteFlag: boolean | undefined = undefined
 
     let _manager   = new TasksListManager({ options, tasks })
     let manager    = _manager.state
-    let dropdownOptions = $manager.getContextMenuOptions()
     let { settings, ui } = $manager
 
     let listContainer: HTMLElement
     let tasksList: HTMLElement
     let listContainerWidth = 0
     let idPrefix = options.id
-    let contextMenuOpen = false
     let justInit = true
     let rootTasks: Task[] = []
     let floatBgRgb = ""
 
     $: isDark      = $themeState.isDarkTheme
-    $: focusTask   = $manager.focusTask
     $: ambience = $globalContext.ambience
     $: dragPos = $manager.dragPos
     $: dragSrc = $manager.dragSrc
-    
+    $: numbered = options.settings?.numbered ?? false
+    $: contextMenu = $manager.contextMenu
+
     $: if (newTaskFlag != undefined) {
         createNewTask()
     }
@@ -51,10 +49,8 @@
             floatBgRgb = "40, 40, 40"
         }
         else { 
-            floatBgRgb = hexToRgb({ 
-                hex: getThemeStyling("sessionBlockColor"),
-                format: "str"
-            }) as string
+            const hex = getThemeStyling("sessionBlockColor")
+            floatBgRgb = hexToRgb({ hex,format: "str" }) as string
         }
     }
 
@@ -80,10 +76,7 @@
         $manager.removeCompletedTasks()
     }
     function onContextMenu(e: Event, taskId: string, isChild: boolean) {
-        contextMenuOpen = !!$manager.openContextMenu(e, taskId, isChild)
-    }
-    function isAtMaxDepth(task: Task & { id: string } | null) {
-        return task ? _manager.tasks.isAtMaxDepth(task.id) : false
+        $manager.openContextMenu(e, taskId, isChild)
     }
 
     onMount(() => {
@@ -103,7 +96,7 @@
     class:tasks-wrapper--light={!isDark}
     class:tasks-wrapper--top-btn={settings.addBtn?.pos === "top"}
     class:tasks-wrapper--empty-list={rootTasks.length === 0}
-    style:overflow-y={contextMenuOpen ? "auto" : "scroll"}
+    style:overflow-y={contextMenu ? "auto" : "scroll"}
     style:--float-bg={floatBgRgb}
     style:--padding={ui.padding}
     style:--border-radius={ui.borderRadius}
@@ -129,6 +122,7 @@
                 <TaskElem
                     level={0}
                     {manager} 
+                    {numbered}
                     {idx}
                     {task} 
                     {onContextMenu}
@@ -212,41 +206,6 @@
         </button>
     {/if}
 </div>
-
-<DropdownList
-    id={`${idPrefix}--tasks`}
-    isHidden={!contextMenuOpen}
-    options={{
-        context: _manager.settings.context,
-        fixPos: true,
-        listItems: [
-            ...(focusTask?.description ? [] :  [{ name: "Add Description" }]),
-            ...(!settings.subtasks || isAtMaxDepth(focusTask) ? [] :  [{ 
-                    name: "Add Subtask",
-                    rightIcon: {
-                        type: "hotkey",
-                        icon: ["shift", "plus"]
-                    },
-                    divider: true,
-                }]),
-            ...dropdownOptions
-        ],
-        onListItemClicked: ({ name }) => {
-            contextMenuOpen = false
-            $manager.contextMenuHandler(name)
-        },
-        onClickOutside: () => {
-            contextMenuOpen = false
-        },
-        onDismount: () => {
-            contextMenuOpen = false
-            $manager.closeContextMenu()
-        },
-        styling: { 
-            width: ui.menuWidth,
-        }
-    }}
-/>
 
 
 <style lang="scss">

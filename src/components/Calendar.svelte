@@ -1,15 +1,14 @@
 <script lang="ts">
     import SVGIcon from "./SVGIcon.svelte"
 
-	import { onMount } from "svelte"
 	import { Icon } from "$lib/enums"
 	import { themeState } from "$lib/store"
 	import { SideCalendar } from "$lib/side-calendar"
 	import { isSameDay, months } from "$lib/utils-date"
-	import { Data } from "$lib/emojis";
 
     export let isDisabled = false
     export let calendar: SideCalendar
+    export let context: "date-picker" | "side-menu"
     export let focusDate: Date | null = new Date()
     export let onDayUpdate: (date: Date) => void
 
@@ -40,19 +39,12 @@
         isNextMonthAvailable = calendar.isNextMonthAvailable
         isPrevMonthAvailable = calendar.isPrevMonthAvailable 
     }
-    onMount(() => {
-        if (calendar instanceof SideCalendar) {
-            type = "side"
-        }
-        else {
-            type = "default"
-        }
-    })
 </script>
 
 {#if type != null}
 <div 
-    class={`calendar calendar--${type}`}
+    class="calendar"
+    class:calendar--date-picker={context === "date-picker"}
     class:calendar--light={!$themeState.isDarkTheme}
 >
     <div class="calendar__focus">
@@ -80,8 +72,11 @@
                     class="calendar__today-btn"
                     on:click={() => {
                         currMonth = calendar.getThisMonth()
-                        focusDate = new Date()
-                        onDayUpdate(focusDate)
+
+                        if (context === "side-menu") {
+                            focusDate = new Date()
+                            onDayUpdate(focusDate)
+                        }
                     }}
                 >
                     •
@@ -143,7 +138,7 @@
 
 <style lang="scss">
     .calendar {
-        --today-opacity: 0.045;   
+        --today-opacity: 0.08;   
 
         &--light {
             --today-opacity: 0.065;
@@ -181,13 +176,13 @@
                 opacity: 0.2 !important;
             }
         }
-        &--light#{&}--side &__today-btn {
+        &--light &__today-btn {
             opacity: 0.4;
             &:hover {
                 opacity: 0.8;
             }
         }
-        &--light#{&}--side &__next-prev-btn {
+        &--light &__next-prev-btn {
             opacity: 0.26;
             
             &:hover {
@@ -197,21 +192,8 @@
                 opacity: 0.1;
             }
         }
-
-        /* Calendar Type Specific Styling */
-        &--basic &__month-day-container {
-            aspect-ratio: 1 / 1;
-        }
-        &--side &__month-day {
-            background: none;
-            cursor: pointer;
-            
-            &:hover {
-                background: rgba(var(--textColor1), 0.04);
-            }
-            &-container {
-                height: 28px;
-            }
+        &--date-picker &__focus-header {
+            padding: 0px 4px 7px 8px;
         }
         
         &__focus-header {
@@ -256,7 +238,7 @@
             }
         }
         &__month-title {
-            @include text-style(0.4, var(--fw-300-400), 1.285rem, "Geist Mono");
+            @include text-style(0.4, var(--fw-300-400), 1.35rem);
             margin-left: 1px;
 
             strong {
@@ -267,7 +249,7 @@
         &__days-of-week {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            padding: 8px 1px 2px 1px;
+            padding: 5px 1px 2px 1px;
             width: 100%;
         }
         &__days-of-week * {
@@ -299,9 +281,8 @@
             @include text-style(0.85, var(--fw-400-500), 1.19rem);
             user-select: none;
             position: relative;
-            @include circle(25px);
             opacity: 0.95;
-            background: rgba(var(--textColor1), 0.02);
+            @include circle(25px);
             cursor: pointer;
 
             &:hover {
@@ -316,6 +297,7 @@
 
             &-container {
                 @include center;
+                height: 28px;
 
                 &--empty {
                     height: 0px;

@@ -70,6 +70,7 @@
 <style lang="scss">
     .modal-bg {
         z-index: 10000;
+
         &--hinge-down &__content {
             animation: hinge-down 0.22s cubic-bezier(.4, 0, .2, 1) forwards;
         }

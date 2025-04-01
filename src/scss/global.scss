@@ -468,6 +468,11 @@ a:focus-visible {
 button, input {
 	all: unset;
 }
+input {
+    &::placeholder {
+        opacity: 0.3;
+    }
+}
 button {
     font-weight: 600;
     font-size: 0.95rem;
@@ -1114,20 +1119,36 @@ $loading-dots-width: 4px;
     }
 }
 
+@mixin drop-border {
+    opacity: 0;
+    content: " ";
+    z-index: 100;
+    transition: opacity 0.08s ease-in-out;
+    cursor: grab;
+    background-color: #71B8FF;
+}
+
 .drop-top-border {
     &--over::before {
         opacity: 0.55 !important;
     }
     &::before { 
-        opacity: 0;
-        content: " ";
-        z-index: 100;
         height: 2.5px !important;
-        transition: opacity 0.08s ease-in-out;
-        cursor: grab;
         width: calc(100% - 20px);
+        @include drop-border;
         @include abs-top-left(0px, 10px);
-        background-color: #71B8FF;
+    }
+}
+
+.drop-left-border {
+    &--over::before {
+        opacity: 0.55 !important;
+    }
+    &::before { 
+        width: 2.5px !important;
+        height: calc(100% - 20px);
+        @include drop-border;
+        @include abs-top-left(10px);
     }
 }
 
@@ -1229,4 +1250,8 @@ $loading-dots-width: 4px;
 
 .border-none {
     border: none !important;
+}
+
+.hov-underline:hover {
+    text-decoration: underline;
 }

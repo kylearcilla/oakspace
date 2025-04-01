@@ -11,6 +11,7 @@ import { loadTheme, setNewTheme } from "./utils-appearance"
 import { continueFocusSession, didInitSession } from "./utils-session"
 import { getElemById, isTargetTextEditor, randomArrayElem } from "./utils-general"
 import { initYoutubePlayer, didInitYtPlayer, handleChooseItem, initYtUserData } from "./utils-youtube"
+import { initGoals } from "./utils-goals"
 
 /* constants */
 export const SMALL_WIDTH = 740
@@ -53,6 +54,7 @@ export const initAppState = async () => {
     initEmojis()  
     initTimer()
     initHabits()
+    initGoals()
     loadTheme()
     loadGlobalContext()
     loadAmbience()

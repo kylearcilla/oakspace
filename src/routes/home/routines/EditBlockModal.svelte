@@ -473,7 +473,7 @@
         </div>
 
         <!-- action items -->
-        <div class="edit-routine__list">
+        <div class="edit-routine__list" class:hidden={!allowTasks}>
             <div class="edit-routine__list-header">
                 <div 
                     class="edit-routine__info-title" 

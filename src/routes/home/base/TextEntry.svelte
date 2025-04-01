@@ -8,7 +8,7 @@
 	import { formatPlural, capitalize, getElemPadding } from "$lib/utils-general";
 	import { clickOutside, findElemVertSpace, getMaskedGradientStyle } from "$lib/utils-general"
     
-	import DropdownList from "../../../components/DropdownList.svelte"
+	import DropdownList from "$components/DropdownList.svelte"
 
     export let entry: TextEntryOptions
     export let zIndex: number
@@ -128,8 +128,8 @@
             txtBottomPadding = "0px"
         }
         else if (styling === "has-marker" && !icon) {
-            margin = "-5px 0px 14px 0px"
-            padding = "5.5px 14px 5px 16px"
+            margin = "0px 0px 10px 0px"
+            padding = "5px 12px 5px 16px"
             txtBottomPadding = "0px"
         }
         /* emoji */
@@ -182,7 +182,7 @@
             return icon?.size === "big" ? 125 : 70
         }
         else {
-            return icon?.size === "big" ? 100 : 50
+            return icon?.size === "big" ? 100 : 35
         }
     }
     function handleEditorStyle(elem: HTMLElement) {
@@ -211,7 +211,7 @@
             markerHeight = Math.max(minHeight, markerHeight - 25)
         }
         else {
-            markerHeight = textEditorElem.clientHeight - padding - 5
+            markerHeight = textEditorElem.clientHeight - padding + 1
         }
 
     }

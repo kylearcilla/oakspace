@@ -96,7 +96,7 @@ export class YoutubeUserData {
 
     hasAccessTokenExpired() {
         const currentTime = new Date().getTime()
-        const creationTime = this.accessTokenCreationDate!.getTime()
+        const creationTime = new Date("2025-03-27T12:00:00Z").getTime()
 
         const timeElapsed = currentTime - creationTime
         const timeRemaining = (this.expiresIn * 1000) - timeElapsed
@@ -104,11 +104,12 @@ export class YoutubeUserData {
 
         const isMoreThanHourBeforeNow = timeElapsed > (this.expiresIn * 1000)
     
-        return timeRemaining <= threshold || isMoreThanHourBeforeNow
+        return timeRemaining <= threshold || isMoreThanHourBeforeNow || timeElapsed < 0
     }
 
     async verifyAccessToken() {
         if (this.hasAccessTokenExpired()) {
+            console.log("expired! - refresh!", this.accessTokenCreationDate)
             try {
                 await this.refreshAccessToken()
             }
@@ -129,12 +130,19 @@ export class YoutubeUserData {
             this.accessTokenCreationDate = new Date()
             this.expiresIn = expiresIn
 
+            console.log("refreshed! - refresh!")
+            console.log("refresh date", this.accessTokenCreationDate)
+
+            if (this.error?.code === APIErrorCode.EXPIRED_TOKEN) {
+                this.error = null
+                this.update({ error: null }, false)
+            }
+
             this.saveYtUserData()
             this.setTokenHasExpired(false)
         }
         catch(e: any) {
-            console.error(e)
-            this.onError(e)
+            this.onError({ error: new APIError(APIErrorCode.GENERAL, "Error refreshing access token. Try re-logging in.") })
         }
         finally {
             this.setLoading(false)
@@ -157,8 +165,7 @@ export class YoutubeUserData {
             await this.getUserPlaylists(true)
         }
         catch(error: any) {
-            console.error(error)
-            this.onError(error)
+            this.onError({ error })
         }
         finally {
             this.setLoading(false)
@@ -174,15 +181,12 @@ export class YoutubeUserData {
             await this.getUserPlaylists()
         }
         catch(error: any) {
-            console.error(error)
-            this.onError(error)
+            this.onError({ error })
         }
         finally {
             this.setLoading(false)
         }
     }
-
-
 
     async getUserPlaylists(fresh = false) {
         await this.verifyAccessToken()
@@ -241,10 +245,7 @@ export class YoutubeUserData {
         })
     }
 
-    onError({ error, refreshFunc = () => this.refreshAccessToken() }: { 
-        error: any
-        refreshFunc?: () => void 
-    }) {
+    onError({ error }: { error: any }) {
         error = error?.code === undefined ? new APIError(APIErrorCode.GENERAL) : error
         this.error = error
         this.update({ error }, false)
@@ -257,7 +258,7 @@ export class YoutubeUserData {
             ...(error.code === APIErrorCode.EXPIRED_TOKEN && {
                 action: {
                     label: "Continue session",
-                    onClick: () => refreshFunc()
+                    onClick: () => this.refreshAccessToken()
                 }
             })
         })

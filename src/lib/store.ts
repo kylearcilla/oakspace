@@ -6,6 +6,7 @@ import type { SessionManager } from './session-manager'
 import type { DatePickerManager } from './date-picker-manager'
 import { WEEKLY_ROUTINES } from '../tests/routines/routines.data'
 import { themes } from './data-themes'
+import type { GoalsViewManager } from './goals-view-manager'
 
 /* global ui */
 export const globalContext = writable<GlobalContext>({
@@ -34,6 +35,24 @@ export const habitTracker = writable<HabitStore>({
     viewHabit: null,
     yearMetrics: null,
     yearHeatMap: []
+})
+
+export const goalTracker = writable<GoalsStore>({
+    init: false,
+    viewGoal: null,
+    goals: [],
+    yearData: { 
+        year: new Date().getFullYear(),
+        data: null
+    },
+    quarterData: {
+        quarter: 1,
+        data: null
+    },
+    monthData: {
+        month: 1,
+        data: null
+    }
 })
 
 /* general authentication stuff */

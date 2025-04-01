@@ -38,6 +38,12 @@
     &--empty &__title {
         opacity: 0.45;
     }
+    &--auto-opacity {
+        opacity: 0.5;
+    }
+    &--auto-opacity:hover {
+        opacity: 1 !important;
+    }
 
     &:active {
         transform: scale(0.978);

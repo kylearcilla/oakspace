@@ -56,8 +56,9 @@ export async function getUserYtPlaylists({ accessToken, max, nextPageToken = "" 
       
       throw throwYoutubeDataAPIError({
         location: data.error.errors[0].location,
-        message: data.error.message,
-        status: data.error.code
+        message: data.error.errors[0].message,
+        code: data.error.code,
+        status: data.error.status
       })
   }
 
@@ -98,8 +99,9 @@ export async function getVidDetails(videoId: string): Promise<YoutubeVideo | nul
 
       throw throwYoutubeDataAPIError({
         location: data.error.errors[0].location,
-        message: data.error.message,
-        status: data.error.code
+        message: data.error.errors[0].message,
+        code: data.error.code,
+        status: data.error.status
       })
     }
 
@@ -137,8 +139,9 @@ export async function getPlayListItemsDetails ({ playlistId, maxResults = 1 }: {
 
     throw throwYoutubeDataAPIError({
       location: data.error.errors[0].location,
-      message: data.error.message,
-      status: data.error.code
+      message: data.error.errors[0].message,
+      code: data.error.code,
+      status: data.error.status
     })
   }
 
@@ -188,8 +191,9 @@ export async function getPlaylistDetails(playlistId: string): Promise<YoutubePla
 
     throw throwYoutubeDataAPIError({
       location: data.error.errors[0].location,
-      message: data.error.message,
-      status: data.error.code
+      message: data.error.errors[0].message,
+      code: data.error.code,
+      status: data.error.status
     })
   }
 
@@ -216,18 +220,22 @@ export async function getPlaylistDetails(playlistId: string): Promise<YoutubePla
  * @param   context  In what API context is the error originating from
  * @returns          Error type and context will be relevant in how the error will be displayed to the user.
  */
-function throwYoutubeDataAPIError({ status, location, message }: {
+function throwYoutubeDataAPIError({ status, code, location, message }: {
   status?: number,
+  code?: number,
   location?: string,
   message?: string
 }) {
-    if (status === 404) {
-        throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Requested media unavailable.")
+    if (code === 404) {
+      console.log("A")
+      throw new APIError(APIErrorCode.RESOURCE_NOT_FOUND, "Requested media unavailable.")
     }
-    else if (status === 400 && message === "Invalid Credentials") {
-        throw new APIError(APIErrorCode.EXPIRED_TOKEN)
+    else if (message === "Invalid Credentials") {
+      console.log("B")
+      throw new APIError(APIErrorCode.EXPIRED_TOKEN)
     }
     else {
+      console.log("C")
         throw new APIError(APIErrorCode.GENERAL, "There was an error with Youtube. Please try again later.")
     }
 }

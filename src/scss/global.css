@@ -1,7 +1,7 @@
 * {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
+  box-sizing: order-box;
 }
 
 html {
@@ -272,7 +272,7 @@ button.tab-btn--selected:focus {
 }
 
 button.unfill {
-  border: solid 1.15px rgb(var(--fgColor2));
+  order: solid 1.15px rgb(var(--fgColor2));
   color: rgb(var(--fgColor2));
   background-color: transparent;
   transition: 0.1s ease-in-out;
@@ -301,12 +301,12 @@ button.unfill--rectangle {
   border-radius: 4px;
 }
 button.unfill--gray {
-  border: solid 1.15px rgba(150, 150, 150, 0.7);
+  order: solid 1.15px rgba(150, 150, 150, 0.7);
   color: rgba(150, 150, 150, 0.7);
 }
 button.unfill--gray:hover {
   background-color: rgba(150, 150, 150, 0.7) !important;
-  border-color: transparent !important;
+  order-color: transparent !important;
   color: var(--modalBgColor) !important;
 }
 
@@ -498,7 +498,7 @@ button.settings-btn:active {
   border-radius: 12px;
   padding: 15px 25px 17px 25px;
   background-color: var(--bentoBoxBgColor);
-  border: var(--bentoBoxBorder);
+  order: var(--bentoBoxorder);
   box-shadow: var(--bentoBoxShadow);
   color: rgb(var(--textColor1));
 }

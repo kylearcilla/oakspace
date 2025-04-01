@@ -1,17 +1,26 @@
-<script lang="ts">
-	import { datePickerManager, themeState } from '$lib/store'
+\<script lang="ts">
+	import { themeState } from '$lib/store'
 	import { randomArrayElem } from '$lib/utils-general'
-	import {addToDate, getMonthStr, isDateEarlier, isSameDay } from '$lib/utils-date'
-	import { formatDateLong, getDiffBetweenTwoDays, getNextMonth, uptoToday } from '$lib/utils-date'
+	import { addToDate, formatDatetoStr, getMonthStr, isDateEarlier, isSameDay } from '$lib/utils-date'
+	import { formatDateLong, getDiffBetweenTwoDays, uptoToday } from '$lib/utils-date'
+	import { setViewGoal } from '$lib/utils-goals';
 
 	type HeatMapOptions = {
-		emojis?: boolean,
-		single?: boolean,
+		emojis?: boolean
+		single?: boolean
 		cellType?: "small" | "default"
+	}
+	type RenderData = {
+		opacity: number
+		show: boolean
+		day: Date
+		emoji?: string
+		goalCount?: number
+		viewGoal?: Goal
 	}
 
 	export let type: 'goals' | 'habits'
-	export let data: HabitHeatMapData[]
+	export let data: HabitHeatMapData[] | YearHeatMapData[]
 	export let year: number
 	export let options: HeatMapOptions | undefined = undefined
 	export let modalRef: HTMLElement | undefined = undefined  // modal ref with scale up
@@ -26,6 +35,7 @@
 	}
 	
 	const { cellType = "default" } = options || {}
+
 	const cellDim = CELL_DIMS[cellType]
 	const OPACITY_AHEAD = {
 		light: {
@@ -40,7 +50,7 @@
 			sameDay: 0.25, past: 0.175
 		},
 		dark: {
-			sameDay: 0.25, past: 0.07
+			sameDay: 0.25, past: 0.08
 		}
 	}
 	const HEAT_OPACITY_GRADIENT = {
@@ -60,8 +70,8 @@
 	let offset = { top: 0, left: 0 }
 
 	$: light = !$themeState.isDarkTheme
-	$: emojis = options?.emojis || false
-	$: single = options?.single || false
+	$: emojis = options?.emojis ?? true
+	$: single = options?.single ?? false
 
 	$: opacityAhead        = light ? OPACITY_AHEAD.light[type] : OPACITY_AHEAD.dark[type]
 	$: goalsSameDayOpacity = light ? GOALS_OPACITY.light.sameDay : GOALS_OPACITY.dark.sameDay
@@ -76,15 +86,24 @@
 	}
 
 	/* data */
-	function getRenderData({ idx, light, single, data }: { 
-		idx: number, light: boolean, single: boolean, data: HabitHeatMapData[] 
-	}) {
+	function getRenderData({ idx, ..._ }: { 
+		idx: number, light: boolean, single: boolean, data: HabitHeatMapData[] | YearHeatMapData[]
+	}): RenderData {
 		const day = addToDate({ date: firstDay, time: `${idx}d` })
 		const outofBounds = !inBounds(day)
-		const idxData = data[idx - idxOffset]
+
+		if (type === 'habits') {
+			return getHabitRenderData({ idx, outofBounds, day })
+		}
+		else {
+			return getGoalRenderData({ idx, outofBounds, day })
+		}
+	}
+	function getHabitRenderData({ idx, outofBounds, day }: { idx: number, outofBounds: boolean, day: Date }) {
+		const idxData = data[idx - idxOffset] as HabitHeatMapData
 
 		if (outofBounds || !idxData || idxData.due < 1) {
-		return { opacity: 0, show: false, day }
+			return { opacity: 0, show: false, day }
 		}
 
 		const { due, trueDone: done } = idxData
@@ -96,6 +115,56 @@
 			opacity: getOpacity(val, light, single),
 		}
 	}
+	function getGoalRenderData({ idx, outofBounds, day }: { idx: number, outofBounds: boolean, day: Date }) {
+		const idxData = data[idx - idxOffset] as YearHeatMapData
+
+		if (outofBounds || !idxData) {
+			return { opacity: 0, show: false, day }
+		}
+		if (idxData.goals.length === 0) {
+			return { opacity: 1, show: true, day }
+		}
+
+		const { emoji, goalCount, viewGoal } = getGoalData(idxData)
+
+		return {
+			day,
+			emoji,
+			goalCount,
+			viewGoal,
+			show: true,
+			opacity: 1
+		}
+	}
+	function getGoalData(data: YearHeatMapData) {
+		const goals = data.goals
+		let viewGoal = goals[0]
+
+		const bigGoals = goals.filter(g => g.big)
+
+		if (bigGoals.length > 0) {
+			viewGoal = bigGoals.sort((a,b) => a.name.localeCompare(b.name))[0]
+		} 
+		else {
+			viewGoal = goals.sort((a,b) => a.name.localeCompare(b.name))[0]
+		}
+
+		return {
+			emoji: viewGoal.tag?.symbol.emoji ?? "🏆",
+			goalCount: goals.length,
+			viewGoal: goals[0]
+		}
+	}
+	function getHoverGoal(idx: number) {
+		const idxData = data[idx - idxOffset] as YearHeatMapData
+		if (!idxData) {
+			return null
+		}
+
+		return idxData.goals.length > 0 ? getGoalData(idxData) : null
+	}
+
+
 	function inBounds(date: Date) {
 		return isDateEarlier(firstYearDay, date, true) && uptoToday(date)
 	}
@@ -123,6 +192,13 @@
 
 		return sunday
 	}
+	function onCellClick(idx: number) {
+		const hoverGoal = getHoverGoal(idx)
+
+		if (hoverGoal) {
+			setViewGoal(hoverGoal.viewGoal)
+		}
+	}
 	function onPointerOver(pe: PointerEvent, day: Date, dayIdx: number) {
 		const target = pe.target as HTMLElement
 		const targetBox = target.getBoundingClientRect()
@@ -140,8 +216,8 @@
 			top: targetBox.top + window.scrollY - 30 + offsetY
 		}
 		if (dayIdx != hoverDayIdx) {
-			hoverDay = day;
-			hoverDayIdx = dayIdx;
+			hoverDay = day
+			hoverDayIdx = dayIdx
 		}
 	}
 </script>
@@ -166,17 +242,20 @@
 					>
 						{#each Array(7) as _, cellIdx}
 							{@const dayIdx = colIdx * 7 + cellIdx}
-							{@const { show, opacity, day } = getRenderData({ idx: dayIdx, light, single, data })}
+							{@const { show, opacity, day, emoji } = getRenderData({ idx: dayIdx, light, single, data })}
 							{@const sameDay = isSameDay(new Date(), day)}
 							{@const color = type === 'habits' ? `rgba(var(--heatMapColor), ${opacity})` : ''}
 
-							{@const hasGoal = emojis != undefined && Math.random() >= 0.9 && show && type === 'goals'}
+							{@const hasGoal = type === 'goals' && emoji}
 							{@const hasGoalOpacity = light ? 0 : 1}
 
 							<button
 								class="heat-map__cell-container"
 								class:no-box-shadow={type === 'goals'}
 								on:pointerover={(e) => onPointerOver(e, day, dayIdx)}
+								on:click={() => {
+									onCellClick(dayIdx)
+								}}
 							>
 								<div
 									class="heat-map__cell"
@@ -193,7 +272,7 @@
 										{#if hasGoal}
 											{#if emojis}
 												<div class="heat-map__cell-emoji">	
-													{randomArrayElem(["🌷", "👨‍💻", "🇫🇷", "🔖", "💪", "🏃‍♂️", "🍖"])}
+													{emoji}
 												</div>
 											{:else if light}
 												<span>
@@ -217,18 +296,32 @@
 		</div>
 	</div>
 	{#if hoverDayIdx >= 0}
+		{@const hoverGoal = type === 'goals' ? getHoverGoal(hoverDayIdx) : null}
 		<div
 			class="tool-tip"
 			class:tool-tip--light={light}
-			on:pointerover={() => (hoverDayIdx = -1)}
 			style:position="fixed"
 			style:top={`${offset.top}px`}
 			style:left={`${offset.left}px`}
 		>
-			<div class="tool-tip__content">
-				<span>
-					{formatDateLong(hoverDay)}
-				</span>
+			<div style:position="relative">
+				<div class="tool-tip__content">
+					{#if hoverGoal && hoverGoal.viewGoal.img}	
+						<div class="tool-tip__goal-img">
+							<img src={hoverGoal.viewGoal.img.src} alt="">
+						</div>
+					{/if}
+					<div class="tool-tip__bottom">
+						{#if hoverGoal}
+							<span class="tool-tip__goal-title">
+								{hoverGoal.viewGoal.name}
+							</span>
+						{/if}
+						<span class="tool-tip__date">
+							{formatDatetoStr(hoverDay, { day: 'numeric', month: 'short' })}
+						</span>
+					</div>
+				</div>
 			</div>
 		</div>
 	{/if}
@@ -237,7 +330,6 @@
 <style lang="scss">
 	.heat-map {
 		position: relative;
-		padding-bottom: 12px;
 
 		--goal-fill-color: var(--textColor1);
 		--goal-today-opacity: 0.05;
@@ -257,7 +349,7 @@
 		}
 
 		&__month {
-			@include text-style(0.25, var(--fw-400-500), 1.15rem, "Geist Mono");
+			@include text-style(0.3, var(--fw-400-500), 1.15rem);
 			position: absolute;
 			top: 0px;
 			transition: 0.1s ease-in-out;
@@ -297,7 +389,7 @@
 				background-color: rgba(var(--textColor1), var(--goal-today-opacity));
 			}
 			&--emoji &-content {
-				font-size: 1.4rem;
+				font-size: 1.3rem;
 				color: white;
 			}
 			&--has-goal &-content {
@@ -344,7 +436,7 @@
 	.tool-tip {
 		position: fixed;
 		@include abs-top-left(20px, 20px);
-		@include text-style(0.8, var(--fw-400-500), 1.12rem, 'Geist Mono');
+		@include text-style(1, var(--fw-400-500), 1.25rem);
 		@include center;
 		height: 20px;
 		width: 10px;
@@ -353,14 +445,46 @@
 		&--light &__content {
 			border: 1.5px solid rgba(var(--textColor1), 0.065);
         	box-shadow: 0px 4px 10px 1px rgba(0, 0, 0, 0.075);
+			position: relative;
+		}
+		&__goal-img {
+			height: 90px;
+			width: 100%;
+			overflow: hidden;
+			border-radius: 5px;
+			margin: 2px auto 8px auto;
+			max-width: 150px;
+			img {
+				height: 100%;
+				width: 100%;
+				object-fit: cover;
+			}
+		}
+		&__goal-title {
+			margin-right: 15px;
+			@include elipses-overflow;
+			min-width: 0px;
 		}
 		&__content {
-			padding: 5px 10px 6px 10px;
-			@include abs-center;
-			top: 13px;
+			padding: 5px 7px 10px 7px;
 			width: max-content;
-			border-radius: 5px;
+			text-align: center;
+			border-radius: 9px;
 			background-color: var(--bg-2);
+			position: absolute;
+			bottom: -15px;
+			left: 50%;
+			transform: translateX(-50%);
+		}
+		&__bottom {
+			@include flex(center, space-between);
+			padding: 0px 2px;
+			margin-top: 4px;
+			max-width: 180px;
+		}
+		&__date {
+			@include text-style(0.6);
+			white-space: nowrap;
 		}
 	}
 </style>

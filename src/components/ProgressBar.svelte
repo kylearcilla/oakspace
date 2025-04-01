@@ -3,6 +3,11 @@
 	import { DARK_COLOR_PROGRESS, LIGHT_COLOR_PROGRESS } from "../lib/utils-colors"
 
     export let progress = 0
+    export let options = {
+        monotone: false
+    }
+
+    const { monotone } = options
     
     $: isLight = !$themeState.isDarkTheme
     $: updateColor(isLight, progress)
@@ -16,7 +21,10 @@
         const rval = Math.max(max - ((max - min) * (progress)), min)
 
         // colored progress for terracotta creates too low contrast
-        if (isTerracotta) {
+        if (monotone) {
+            fgColor = "rgba(var(--textColor1), 0.45)"
+        }
+        else if (isTerracotta) {
             fgColor = "var(--elemColor1)"
         }
         else {

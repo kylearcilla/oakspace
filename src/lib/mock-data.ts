@@ -212,7 +212,7 @@ export const TEST_TAGS: Tag[] = [
       orderIdx: 9,
       name: "Travel",
       symbol: {
-        color: COLOR_SWATCHES[4],
+        color: COLOR_SWATCHES[3],
         emoji: "🏔️"
       }
     },
@@ -223,6 +223,24 @@ export const TEST_TAGS: Tag[] = [
       symbol: {
         color: COLOR_SWATCHES[7],
         emoji: "📖"
+      }
+    },
+    {
+      id: "",
+      orderIdx: 11,
+      name: "Finance",
+      symbol: {
+        color: COLOR_SWATCHES[5],
+        emoji: "💵"
+      }
+    },
+    {
+      id: "",
+      orderIdx: 12,
+      name: "wefowe;ofiwje F;OIwefjw;eoFIJWef;owieFJWE;O FIJWe;o i",
+      symbol: {
+        color: COLOR_SWATCHES[5],
+        emoji: "💵"
       }
     }
 ]
@@ -402,37 +420,11 @@ export const TEST_GOALS: Goal[] = [
     tag: TEST_TAGS[0],
     creationDate: new Date("2025-01-15"),
     status: "in-progress",
-    bOrder: {
+    order: {
      default: 0,
      status: 0,
      tag: 0
-    },
-    milestones: [
-      {
-        id: uuidv4(),
-        name: "Complete Module 1",
-        done: true,
-        idx: 0
-      },
-      {
-        id: uuidv4(),
-        name: "Memorize all vocab",
-        done: false,
-        idx: 1
-      },
-      {
-        id: uuidv4(),
-        name: "Master listening exercises",
-        done: false,
-        idx: 2
-      },
-      {
-        id: uuidv4(),
-        name: "Listen and master one episode of Dix Pour Cent",
-        done: false,
-        idx: 3
-      },
-    ]
+    }
   },
   {
     id: uuidv4(),
@@ -444,49 +436,11 @@ export const TEST_GOALS: Goal[] = [
     creationDate: new Date("2025-02-10"),
     status: "not-started",
     imgSrc: "",
-    bOrder: {
+    order: {
      default: 1,
      status: 0,
      tag: 0
-    },
-    milestones: [
-      {
-        id: uuidv4(),
-        name: "Run 5K without stoppping",
-        done: true,
-        idx: 0
-      },
-      {
-        id: uuidv4(),
-        name: "Complete a 10k practice run",
-        done: true,
-        idx: 1
-      },
-      {
-        id: uuidv4(),
-        name: "Do 10 hill runs",
-        done: true,
-        idx: 2
-      },
-      {
-        id: uuidv4(),
-        name: "Reach 15l distance",
-        done: false,
-        idx: 3
-      },
-      {
-        id: uuidv4(),
-        name: "Run 18k in under 2  hoursw",
-        done: false,
-        idx: 4
-      },
-      {
-        id: uuidv4(),
-        name: "Final practice: 20k",
-        done: false,
-        idx: 5
-      },
-    ]
+    }
   },
   {
     id: uuidv4(),
@@ -497,7 +451,7 @@ export const TEST_GOALS: Goal[] = [
     status: "not-started",
     imgSrc: "https://i.pinimg.com/736x/e7/cb/8a/e7cb8a6fd5c308575b3261262e85965d.jpg",
     tag: TEST_TAGS[9],
-    bOrder: {
+    order: {
      default: 2,
      status: 1,
      tag: 0
@@ -511,51 +465,7 @@ export const TEST_GOALS: Goal[] = [
     status: "accomplished",
     imgSrc: "https://i.pinimg.com/736x/47/b5/9a/47b59ab91d55bff20784f30b12183476.jpg",
     tag: TEST_TAGS[3],
-    milestones: [
-      {
-        id: uuidv4(),
-        name: "Ramen",
-        done: true,
-        idx: 0
-      },
-      {
-        id: uuidv4(),
-        name: "Spaghetti",
-        done: true,
-        idx: 1
-      },
-      {
-        id: uuidv4(),
-        name: "Sushi Rolls",
-        done: false,
-        idx: 2
-      },
-      {
-        id: uuidv4(),
-        name: "Risotto",
-        done: true,
-        idx: 3
-      },
-      {
-        id: uuidv4(),
-        name: "Beef Pho",
-        done: false,
-        idx: 4
-      },
-      {
-        id: uuidv4(),
-        name: "Butter Chicken",
-        done: true,
-        idx: 5
-      },
-      {
-        id: uuidv4(),
-        name: "Dim Sum",
-        done: true,
-        idx: 6
-      }
-    ],
-    bOrder: {
+    order: {
      default: 3,
      status: 1,
      tag: 0
@@ -571,85 +481,11 @@ export const TEST_GOALS: Goal[] = [
     creationDate: new Date("2025-01-01"),
     status: "in-progress",
     imgSrc: "https://i.pinimg.com/736x/49/b5/9d/49b59d5866a63a2fe0bb03ea05ce649d.jpg",
-    bOrder: {
+    order: {
      default: 4,
      status: 1,
      tag: 0
     },
-    milestones: [
-      {
-        id: uuidv4(),
-        name: "The Hobbit",
-        done: false,
-        idx: 0
-      },
-      {
-        id: uuidv4(),
-        name: "Eleanor Oliphant Is Completely Fine",
-        done: true,
-        idx: 1
-      },
-      {
-        id: uuidv4(),
-        name: "Where the Crawdads Sing",
-        done: true,
-        idx: 2
-      },
-      {
-        id: uuidv4(),
-        name: "Pride and Prejudice",
-        done: true,
-        idx: 3
-      },
-      {
-        id: uuidv4(),
-        name: "The Night Circus",
-        done: true,
-        idx: 4
-      },
-      {
-        id: uuidv4(),
-        name: "A Man Called Ove",
-        done: false,
-        idx: 5
-      },
-      {
-        id: uuidv4(),
-        name: "Little Fires Everywhere",
-        done: false,
-        idx: 6
-      },
-      {
-        id: uuidv4(),
-        name: "The Great Gatsby",
-        done: false,
-        idx: 7
-      },
-      {
-        id: uuidv4(),
-        name: "Normal People",
-        done: false,
-        idx: 8
-      },
-      {
-        id: uuidv4(),
-        name: "Big Little Lies",
-        done: false,
-        idx: 9
-      },
-      {
-        id: uuidv4(),
-        name: "The Fellowship of the Ring",
-        done: false,
-        idx: 10
-      },
-      {
-        id: uuidv4(),
-        name: "The Rosie Project",
-        done: false,
-        idx: 11
-      }
-    ]
   },
   {
     id: uuidv4(),
@@ -660,7 +496,7 @@ export const TEST_GOALS: Goal[] = [
     tag: TEST_TAGS[1],
     creationDate: new Date("2025-03-01"),
     status: "accomplished",
-    bOrder: {
+    order: {
      default: 5,
      status: 0,
      tag: 0
@@ -780,8 +616,8 @@ export const TEST_HABITS: Habit[] = [
     name: "French",
     createdAt: new Date(2024, 10, 1),
     img: {
-      src: "https://i.pinimg.com/736x/d5/3c/55/d53c55f7d5857f602bde485e8d523bcf.jpg",
-      center: 50
+      src: "https://i.pinimg.com/736x/9b/7c/61/9b7c61308139e3ac35e68499dfb3a2bd.jpg",
+      center: 40
     },
     symbol: "🇫🇷",
     caption: "1h",

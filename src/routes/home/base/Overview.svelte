@@ -355,11 +355,11 @@
         }
         &__star {
             margin: 0px 5px 0px 0px;
-            @include text-style(0.25, var(--fw-300-400), 1.35rem, "DM Mono");
+            @include text-style(0.25, var(--fw-300-400), 1.5rem, "Geist Mono");
         }
         &__focus {
             margin: 2px 4px 0px 2px;
-            @include text-style(0.145, var(--fw-400-500), 1.125rem, "Geist Mono");
+            @include text-style(0.145, var(--fw-400-500), 1.25rem);
         }
         /* goal activity */
         &__goal {

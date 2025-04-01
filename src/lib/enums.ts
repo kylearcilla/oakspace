@@ -36,7 +36,7 @@ export enum ShortcutSectionInFocus {
 }
 
 /* Dates */
-export enum DatePickerUserInput {
+export enum DatePickerError {
     InvalidYr, BeyondMin, BeyondMax, InBounds, Invalid
 }
 

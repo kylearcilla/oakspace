@@ -90,24 +90,7 @@ export class GoogleCalendarManager {
         }
         catch(error: any) {
             console.error(error)
-
-            if (error.code === APIErrorCode.EXPIRED_TOKEN) {
-                this.onError({ 
-                    error, 
-                    refreshFunc: async () => {
-                        try {
-                            await this.refreshAccessToken()
-                            await this.initDayCalsEvents()
-                        }
-                        catch(error: any) {
-                            this.quit({ error: true })
-                        }
-                    }
-                })
-            }
-            else {
-                this.onError({ error })
-            }
+            this.onError({ error })
         }
         finally {
             this.setLoading(null)
@@ -130,8 +113,7 @@ export class GoogleCalendarManager {
             this.saveCalendarData()
         }
         catch(e: any) {
-            console.error(e)
-            this.onError(e)
+            this.onError({ error: new APIError(APIErrorCode.GENERAL, "Error refreshing access token. Try re-logging in.") })
         }
         finally {
             this.setLoading(null)
@@ -198,7 +180,7 @@ export class GoogleCalendarManager {
 
         const isMoreThanHourBeforeNow = timeElapsed > (this.expiresIn * 1000)
     
-        return timeRemaining <= threshold || isMoreThanHourBeforeNow
+        return timeRemaining <= threshold || isMoreThanHourBeforeNow || timeElapsed < 0
     }
 
     async verifyAccessToken() {
@@ -591,10 +573,7 @@ export class GoogleCalendarManager {
         this.state.update((state) => ({ ...state, tokenExpired: isTokenExpired }))
     }
 
-    onError({ error, refreshFunc = () => this.refreshAccessToken() }: { 
-        error: any
-        refreshFunc?: () => void 
-    }) {
+    onError({ error }: { error: any }) {
         error = error.code === undefined ? new APIError(APIErrorCode.GENERAL) : error
 
         toastApiErrorHandler({
@@ -605,7 +584,7 @@ export class GoogleCalendarManager {
             ...(error.code === APIErrorCode.EXPIRED_TOKEN && {
                 action: {
                     label: "Continue session",
-                    onClick: () => refreshFunc()
+                    onClick: () => this.refreshAccessToken()
                 }
             })
         })

@@ -371,7 +371,8 @@
                                     },
                                     styles: { 
                                         fontSize: "1.285rem", 
-                                        padding: "6px 10px 6.5px 10px" 
+                                        padding: "6px 10px 6.5px 10px",
+                                        height: "15px"
                                     }
                                 }} 
                             />
@@ -395,7 +396,7 @@
                                     ],
                                     pickedItem: kebabToNormal(timeOfDay),
                                     position: { 
-                                        top: "29px", left: "0px" 
+                                        top: "32px", left: "0px" 
                                     },
                                     onListItemClicked: ({ name }) => {
                                         onTodChoose(name)
@@ -846,8 +847,8 @@
         }
         &__dow-menu {
             width: 70px;
-            border-radius: 4.5px;
-            padding: 1px 2px 1px 1px;
+            border-radius: 8px;
+            padding: 2px 2px 5px 1px;
             span {
                 @include text-style(1, var(--fw-400-500), 1.25rem);
             }
@@ -912,7 +913,7 @@
         }
         &__description {
             @include text-style(1, var(--fw-400-500), 1.45rem);
-            min-height: 20px;
+            min-height: 30px;
             max-height: 140px;
             width: 90%;
         }
@@ -950,7 +951,7 @@
             margin: 1px 0px 26px 0px;
         }
         &__heat-map {
-            padding: 0px 0px 12px 0px;
+            padding: 0px 0px 20px 0px;
         }
     }
     .stat {

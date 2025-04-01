@@ -13,10 +13,10 @@
     
     import { TodosManager } from "$lib/todos-manager"
 	import { SideCalendar } from "$lib/side-calendar"
+	import { getOAuthRedirectData } from "$lib/utils-home"
 	import { initGoogleCal } from "$lib/api-google-calendar"
 	import { authGoogleCalendar } from "$lib/api-google-calendar"
 	import { GoogleCalendarManager } from "$lib/google-calendar-manager"
-	import { getOAuthRedirectData, removeOAuthRedirectData } from "$lib/utils-home"
     
 	import Todos from "./Todos.svelte";
 	import DayView from "./DayViewContent.svelte"

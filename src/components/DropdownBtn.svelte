@@ -13,6 +13,7 @@
         allowEmpty = false,
         hasArrow = true,
         arrowOnHover = false,
+        autoOpacity = false,
         styles,
         noBg = true
     } = options
@@ -42,6 +43,7 @@
     class:dbtn--active={isActive}
     class:dbtn--light={isLight}
     class:dbtn--arrow-on-hover={arrowOnHover}
+    class:dbtn--auto-opacity={autoOpacity}
     style={inlineStyling(options.styles)}
     on:click={options.onClick}
 >
@@ -76,5 +78,5 @@
 </button>
 
 <style lang="scss">
-    @import "../scss/dropdown.scss";
+@import "../scss/dropdown.scss";
 </style>

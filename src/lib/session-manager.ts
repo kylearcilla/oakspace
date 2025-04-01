@@ -65,7 +65,8 @@ export class SessionManager {
         if (session) {
             this.currDate = new Date()
             this.session = session
-
+            this.playFocusSound()
+            
             this.isPlaying = true
             this.state = "focus"
         }

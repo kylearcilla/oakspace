@@ -4,6 +4,7 @@ import { initFloatElemPos } from "./utils-general"
 import { cursorPos } from "./utils-home"
 import { ALLOWED_IMAGE_TYPES } from "./utils-media-upload"
 import { DEFAULT_MAX_SIZE_MB } from "./utils-media-upload"
+import type { ComponentType } from "svelte"
 
 const IMG_DIM_HEIGHT = 290
 const IMG_DIM_WIDTH  = 460
@@ -18,6 +19,7 @@ export let imageUpload = ImageUpload()
 export let iconPicker = IconPicker()
 export let emojiPicker = EmojiPicker()
 export let colorPicker = ColorPicker()
+export let absoluteDropdown = AbsoluteFloatElem()
 
 function ImageUpload() {
     const state: Writable<ImageUpload> = writable({ 
@@ -206,6 +208,56 @@ function ColorPicker() {
 
     return {
         state, init, onSubmitColor, close
+    }
+}
+
+function AbsoluteFloatElem() {
+    const state: Writable<AbsoluteFloatElem> = writable({ 
+        isHidden: false,
+        component: null,
+        offset: { top: 0, left: 0 },
+        dims: { height: 0, width: 0 },
+        position: { top: -1000, left: -1000 },
+        props: null
+    })
+
+    function init({ component, props, offset, dims }: { 
+        component: ComponentType 
+        offset?: { top: number, left: number }
+        dims?: { height: number, width: number }
+        props: any 
+    }) {
+        let position = { top: 0, left: 0 }
+
+        if (dims) {
+            position = getPopFloatElemPos(dims)
+        }
+        else {
+            position = { top: cursorPos.top, left: cursorPos.left }
+        }
+        if (offset)  {
+            position.left += offset.left
+            position.top += offset.top
+        }
+
+        if (!get(state).isHidden) {
+            close()
+            return
+        }
+        state.update((data) => ({ 
+            ...data, 
+            props,
+            position,
+            component,
+            isHidden: false
+        }))
+    }
+    function close() {
+        state.update((data) => ({ ...data, isHidden: true }))
+    }
+
+    return {
+        state, init, close
     }
 }
 

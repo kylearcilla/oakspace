@@ -854,9 +854,10 @@ export function getWeekPeriodStr(date: Date, weeksBack: number = 0) {
 	}
 }
 
-export function getTimeDistanceStr({ date, format = "default", enforce }: {
+export function getTimeDistanceStr({ date, format = "default", sign = false, enforce }: {
 	date: Date
     format?: "default" | "short",
+	sign?: boolean,
 	enforce?: "y" | "m" | "w" | "d" | null
 }) {
     const now = new Date()
@@ -867,7 +868,7 @@ export function getTimeDistanceStr({ date, format = "default", enforce }: {
     const diffInYears = Math.floor(diffInMonths / 12)
 
     const passed = diffInMs < 0
-    const sign = passed ? "-" : ""
+    const dash = passed && sign ? "-" : ""
 
     if (diffInDays === 0 && !enforce) {
         return 'today'
@@ -892,15 +893,15 @@ export function getTimeDistanceStr({ date, format = "default", enforce }: {
     // default behavior without enforcement
     if (format === "short") {
         if (diffInYears > 0) {
-            return `${sign}${diffInYears}y`
+            return `${dash}${diffInYears}y`
         } 
         if (diffInMonths > 0) {
-            return `${sign}${diffInMonths}m`
+            return `${dash}${diffInMonths}mo`
         }
         if (diffInWeeks > 0) {
-            return `${sign}${diffInWeeks}w`
+            return `${dash}${diffInWeeks}w`
         }
-        return `${sign}${diffInDays}d`
+        return `${dash}${diffInDays}d`
     }
 
     // default format

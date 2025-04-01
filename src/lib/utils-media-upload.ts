@@ -185,8 +185,9 @@ function verifyImgFileDims({ height, width, dims}: {
 
 export function getImgUploadErrorMsg(error: ImgInputError) {
     const { code, message } = error
+    const typeError = error instanceof TypeError
 
-    if (message) return message
+    if (message && !typeError) return message
 
     if (code === ImgUploadError.InvalidURL) {
         return "Invalid URL or media source."

@@ -4,9 +4,11 @@ import { get, writable, type Writable } from "svelte/store"
 
 import { Tasks } from "./Tasks"
 import { toast } from "./utils-toast"
+import { absoluteDropdown } from './pop-ups'
 import { TextEditorManager } from "./inputs"
+import DropdownContent from "../components/DropdownContent.svelte"
 import { ambienceSideBarOffset, modalSideBarOffset } from './utils-home'
-import { findAncestor, getElemById, shouldScroll } from "./utils-general"
+import { findAncestor, getElemById, isEditTextElem, shouldScroll } from "./utils-general"
 
 type StateType = Omit<TasksListManager, "tasks">
 type DragAction = "nbr-add-top" | "nbr-add-bottom" | "child-add" | "remove" | "remove-child" | "drag-end"
@@ -87,7 +89,7 @@ export class TasksListManager {
     dragStartRelPos: OffsetPoint | null = null
     
     /* context menu */
-    contextMenuOpen = false
+    contextMenu = false
 
     /* ui */
     cursorPos: OffsetPoint = { left: 0, top: 0 }
@@ -870,7 +872,9 @@ export class TasksListManager {
     getSubtasks(id: string) {
         return this.tasks.getSubtasks(id)
     }
-
+    isAtMaxDepth(task: Task) {
+        return this.tasks.isAtMaxDepth(task.id)
+    }
     /* client handlers*/
 
     async finalizeAddTask(newTask: Task, action: "add" | "duplicate", added: Task[]) {
@@ -974,16 +978,18 @@ export class TasksListManager {
         const target = pe.target as HTMLElement
 
         if (this.isTargetEditElem(target)) {  
-            return false
+            return
         }
         
         this.initFocusTask(taskId, isChild)
-        this.contextMenuOpen = true
-
-        return true
+        this.initContextMenu()
+        this.setContextMenu(true)
     }
 
-    closeContextMenu = () => this.contextMenuOpen = false
+    setContextMenu(contextMenu: boolean) {
+        this.contextMenu = contextMenu
+        this.update({ contextMenu })
+    }
 
     contextMenuHandler (option: string) {
         if (!this.focusTask) return
@@ -1018,47 +1024,6 @@ export class TasksListManager {
         else if (option === "Delete Task") {
             this.removeTask(id)
         }
-    }
-
-    /**
-     * Get the context menu options for both tasks and subtasks.
-     * @returns 
-     */
-    getContextMenuOptions() {
-        const { allowDuplicate } = this.settings
-
-        return [
-            { 
-                name: "Add Task Above",
-                rightIcon: {
-                    type: "hotkey",
-                    icon: ["shift", "up"]
-                },
-            },
-            { 
-                name: "Add Task Below",
-                rightIcon: {
-                    type: "hotkey",
-                    icon: ["shift", "down"]
-                },
-                divider: !allowDuplicate
-            },
-            ...(allowDuplicate ? [{ 
-                name: "Duplicate Task",
-                rightIcon: {
-                    type: "hotkey",
-                    icon: ["ctrl", "d"]
-                },
-                divider: true
-            }] : []),
-            { 
-                name: "Delete Task",
-                rightIcon: {
-                    type: "hotkey",
-                    icon: ["delete"]
-                }
-            }
-            ] as  DropdownListItem[]
     }
 
     /* hotkeys */
@@ -1127,7 +1092,7 @@ export class TasksListManager {
      */
     keyboardShortcutHandler(event: KeyboardEvent) {
         const target = event.target as HTMLElement
-        const isEditing = this.isTargetEditElem(target)
+        const isEditing = this.isTargetEditElem(target) 
         const { key, metaKey, shiftKey, ctrlKey, code } = event
         const hotkey = this.options.hotkeyFocus
         const currHotKeyContext = get(globalContext).hotkeyFocus
@@ -1231,14 +1196,14 @@ export class TasksListManager {
 
     isTargetEditElem(target: HTMLElement) {
         const isCheckbox = target.classList.contains("task__checkbox")
-        const isContentEditable = target.hasAttribute("contenteditable")
         const tagName = target.tagName
+        const isEdit = isEditTextElem(target)
 
-        return isContentEditable || isCheckbox || tagName === "BUTTON" || tagName === "I"
+        return isCheckbox || tagName === "BUTTON" || tagName === "I" || isEdit
     }
 
     onTaskBlur() {
-        if (this.contextMenuOpen) {
+        if (this.contextMenu) {
             return
         }
         this.focusTask = null
@@ -1285,6 +1250,7 @@ export class TasksListManager {
         if (newState.newText != undefined)    newStateObj.newText = newState.newText
         if (newState.editMode != undefined)   newStateObj.editMode = newState.editMode
         if (newState.editTask != undefined)   newStateObj.editTask = newState.editTask
+        if (newState.contextMenu != undefined) newStateObj.contextMenu = newState.contextMenu
 
         /* drag */
         if (newState.dragSrc != undefined)     newStateObj.dragSrc = newState.dragSrc
@@ -1293,5 +1259,89 @@ export class TasksListManager {
         if (newState.dragAction != undefined) newStateObj.dragAction = newState.dragAction
 
         return newStateObj
+    }
+
+    initContextMenu() {
+        const { focusTask, settings } = this
+        const { ui, id } = this.options
+        const { allowDuplicate } = settings
+        const hasSubtasks = settings.subtasks && !this.isAtMaxDepth(focusTask!)
+        const options = {
+            context: "modal",
+            fixPos: true,
+            listItems: [
+                { 
+                    name: focusTask?.description ? "" :  "Add Description"
+                },
+                { 
+                    name: hasSubtasks ? "" : "Add Subtask",
+                    rightIcon: {
+                        type: "hotkey",
+                        icon: ["shift", "plus"]
+                    },
+                    divider: true,
+                },
+                { 
+                    name: "Add Task Above",
+                    rightIcon: {
+                        type: "hotkey",
+                        icon: ["shift", "up"]
+                    },
+                },
+                { 
+                    name: "Add Task Below",
+                    rightIcon: {
+                        type: "hotkey",
+                        icon: ["shift", "down"]
+                    },
+                    divider: !allowDuplicate
+                },
+                {
+                    name: allowDuplicate ? "Duplicate Task" : "",
+                    rightIcon: {
+                        type: "hotkey",
+                        icon: ["ctrl", "d"]
+                    },
+                    divider: true
+                },
+                { 
+                    name: "Delete Task",
+                    rightIcon: {
+                        type: "hotkey",
+                        icon: ["delete"]
+                    }
+                }
+            ],
+            onListItemClicked: ({ name }: { name: string }) => {
+                this.setContextMenu(false)
+                this.contextMenuHandler(name)
+            },
+            onClickOutside: () => {
+                this.setContextMenu(false)
+            },
+            onDismount: () => {
+                this.setContextMenu(false)
+            },
+            styling: { 
+                width: ui!.menuWidth,
+            }
+        }
+
+        absoluteDropdown.init({ 
+            component: DropdownContent,
+            offset: { 
+                top: 15, left: 0
+            },
+            dims: {
+                width: 170,
+                height: options.listItems.length * 30
+            },
+            props: {
+                isHidden: false,
+                id: `${id}--tasks`,
+                options
+            }
+         })
+
     }
 }

@@ -1048,3 +1048,11 @@ export function decrementIdx(idx: number, length: number) {
     return Math.max(idx - 1, -1)
   }
 }
+
+export function findTag(name: string) {
+  return TEST_TAGS.find(tag => tag.name === name) ?? null
+}
+
+export function isVoid(value: any) {
+  return value === null || value === undefined 
+}

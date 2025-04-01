@@ -42,13 +42,13 @@
         const target = e.target as HTMLElement
         srcId = target.dataset.id!
         
-        listRef.addEventListener("dragover", onDrag)
+        listRef.addEventListener("dragover", onDragOver)
         listRef.addEventListener("dragend", onDragEnd)
 
         e.dataTransfer?.setData("text", "")
         e.dataTransfer!.effectAllowed = "move"
     }
-    function onDrag(e: DragEvent) {
+    function onDragOver(e: DragEvent) {
         e.preventDefault()
 
         const target = e.target as HTMLElement
@@ -72,7 +72,7 @@
             habitTracker.update((state) => ({ ...state, habits }))
         }
 
-        listRef.removeEventListener("dragover", onDrag)
+        listRef.removeEventListener("dragover", onDragOver)
         listRef.removeEventListener("dragend", onDragEnd)
         
         srcId = ""

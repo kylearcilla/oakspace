@@ -1,10 +1,9 @@
-import { DatePickerUserInput } from "./enums"
 import { ResError } from "./errors"
 import { datePickerManager } from "./store"
 import { formatDateLong, getLastDayOfMonth, isDateEarlier, isSameMonth, isStrMonth, isYrValid } from "./utils-date"
 import { getElemById } from "./utils-general"
 
-class DatePickerError extends ResError<DatePickerUserInput> { }
+class DatePickerError extends ResError<DatePicker> { }
 
 export class DatePickerManager {
     pickedDate: Date | null = null
@@ -65,7 +64,7 @@ export class DatePickerManager {
      */
     onDateCellPressed(day: Date) {
         try {
-            const isValid = day && this.getDateBoundState(day) === DatePickerUserInput.InBounds
+            const isValid = day && this.getDateBoundState(day) === DatePicker.InBounds
             if (!isValid) return
 
             this.setNewPickedDate(day)
@@ -92,7 +91,7 @@ export class DatePickerManager {
             // see date is within bounds
             const boundState = this.getDateBoundState(date!)
 
-            if (boundState !== DatePickerUserInput.InBounds) {
+            if (boundState !== DatePicker.InBounds) {
                 console.log(boundState)
                 throw new DatePickerError(boundState)
             }
@@ -117,13 +116,13 @@ export class DatePickerManager {
             return
         }
 
-        if (error.code === DatePickerUserInput.Invalid) {
+        if (error.code === DatePicker.Invalid) {
             this.errorMsg = "Input is not a valid date format."
         }
-        else if (error.code === DatePickerUserInput.BeyondMin) {
+        else if (error.code === DatePicker.BeyondMin) {
             this.errorMsg = `Must be later than ${formatDateLong(this.minDate!)}`
         }
-        else if (error.code === DatePickerUserInput.BeyondMax) {
+        else if (error.code === DatePicker.BeyondMax) {
             this.errorMsg = `Must be earlier than ${formatDateLong(this.maxDate!)}`
         }
         else {
@@ -141,17 +140,17 @@ export class DatePickerManager {
      * @param date  Date picked by user.
      * @returns     Returns the bound state of user input.
      */
-    getDateBoundState(date: Date): DatePickerUserInput {
+    getDateBoundState(date: Date): DatePicker {
         if (!isYrValid(date.getFullYear())) {
-            return DatePickerUserInput.InvalidYr
+            return DatePicker.InvalidYr
         }
         else if (this.maxDate && isDateEarlier(this.maxDate, date)) {
-            return DatePickerUserInput.BeyondMax
+            return DatePicker.BeyondMax
         }
         else if (this.minDate && isDateEarlier(date, this.minDate)) {
-            return DatePickerUserInput.BeyondMin
+            return DatePicker.BeyondMin
         }
-        return DatePickerUserInput.InBounds
+        return DatePicker.InBounds
     }
 
     /**
@@ -205,7 +204,7 @@ export class DatePickerManager {
         const currYr = new Date().getFullYear()
         
         if (val === "" || strArr.length === 0 || strArr.length > 3) {
-            throw new DatePickerError(DatePickerUserInput.Invalid)
+            throw new DatePickerError(DatePicker.Invalid)
         }
     
         let yr = -1, day = -1, month = -1
@@ -219,19 +218,19 @@ export class DatePickerManager {
             const isYr = str.length === 4 && !isNotNum
     
             if (monthIdx >= 0 && month >= 0) {
-                throw new DatePickerError(DatePickerUserInput.Invalid)
+                throw new DatePickerError(DatePicker.Invalid)
             }
             if (monthIdx >= 0) {
                 month = monthIdx
             }
             else if (isDay && day >= 0) {
-                throw new DatePickerError(DatePickerUserInput.Invalid)
+                throw new DatePickerError(DatePicker.Invalid)
             }
             else if (isDay) {
                 day = num
             }
             else if (isYr && yr >= 0)  {
-                throw new DatePickerError(DatePickerUserInput.Invalid)
+                throw new DatePickerError(DatePicker.Invalid)
             }
             else if (isYr) {
                 yr = num
@@ -240,7 +239,7 @@ export class DatePickerManager {
     
         // String length of 1
         if (strArr.length === 1 && day >= 1) {
-            throw new DatePickerError(DatePickerUserInput.Invalid)
+            throw new DatePickerError(DatePicker.Invalid)
         }
         else if (strArr.length === 1 && yr >= 0) {
             return new Date(yr, 11, 31)
@@ -252,7 +251,7 @@ export class DatePickerManager {
 
         // String length of 2
         if (strArr.length === 2 && month < 0) {
-            throw new DatePickerError(DatePickerUserInput.Invalid)
+            throw new DatePickerError(DatePicker.Invalid)
         }
         else if (strArr.length === 2 && day >= 0) {
             return new Date(currYr, month, day)
@@ -267,7 +266,7 @@ export class DatePickerManager {
             return new Date(yr, month, day)
         }
         
-        throw new DatePickerError(DatePickerUserInput.Invalid)
+        throw new DatePickerError(DatePicker.Invalid)
     }
     
     /**

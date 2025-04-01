@@ -3,8 +3,7 @@
     import { goto } from "$app/navigation"
 	import { globalContext, themeState } from "$lib/store"
 
-	import { toast } from "$lib/utils-toast"
-    import { LogoIcon, ModalType } from "$lib/enums"
+    import { ModalType } from "$lib/enums"
 	import { getActiveTheme } from "$lib/utils-appearance"
     import { getThemeStyling } from "$lib/utils-appearance"
 	import { getHomeUrlPath, openModal } from "$lib/utils-home"
@@ -73,15 +72,7 @@
             goto("/home")
         }
         else if (option === "goals") {
-            toast("default", {
-                icon: LogoIcon.GoogleCal,
-                message: "some people want it all but i dont want nothing at all if it aint you baby if i aint got you baby some people want",
-                action: {
-                    label: "Undo",
-                    onClick: () => console.log("xx")
-                }
-            })
-            // goto("/home/goals")
+            goto("/home/goals")
         }
         else if (option === "habits") {
             goto("/home/habits")
@@ -393,9 +384,9 @@
             width: calc(100% - 27px);
             border-radius: 6px;
             margin-bottom: 2px;
-            border: 0.5px solid transparent;
+            order: 0.5px solid transparent;
             transition: 0s;
-            border: 2px solid transparent;
+            order: 2px solid transparent;
         
             &:hover {
                 background-color: var(--hover-bg-color) !important;

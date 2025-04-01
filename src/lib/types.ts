@@ -49,6 +49,14 @@ type InputOptions = {
     }
 }
 
+type AbsoluteFloatElem = {
+    isHidden: boolean
+    props: any
+    component: ComponentType
+    position: { top: number, left: number } 
+    offset: { top: number, left: number } 
+}
+
 type TextEntryIcon = {
     type: "img" | "emoji",
     src: string,
@@ -271,6 +279,7 @@ type TimeString = `${number}h` | `${number}m` | `${number}s` | `${number}d`
 type DropdownBtnOptions = {
     title: string | null
     allowEmpty?: boolean
+    autoOpacity?: boolean
     hasArrow?: boolean
     noBg?: boolean
     arrowLeft?: boolean
@@ -555,7 +564,9 @@ type CalendarOptions = {
     maxDate?: Date | null 
 }
 
-type DatePickerOptions = CalendarOptions
+type DatePickerOptions = CalendarOptions & { position?: CSSAbsPos }
+
+type DateType = "day" | "month" | "year" | "quarter"
 
 type FunctionParam = ((...args: any[]) => any) | ((...args: any[]) => Promise<any>)
 
@@ -1216,26 +1227,121 @@ type FetchCalDayEventsResponse = {
 
 /* Goals */
 
+type GoalYearData = {
+    entry: TextEntryOptions
+    smallImg: string
+    goals: Goal[]
+    bannerImg: {
+        src: string,
+        center: number
+    } | null
+}
+
+type GoalsViewState = {
+    sortedGoals: Goal[][],
+    pinnedGoals: Goal[],
+    closedSections: boolean[],
+    sections: string[],
+    openGoalId: string,
+    viewProgress: number,
+    yrProgress: number,
+    dragTarget: GoalDragTarget | null,
+    pinnedGoal: Goal | null,
+    contextMenuPos: { left: number, top: number }
+    contextMenuOpen: boolean
+    statusOpen: boolean
+    statusMenuPos: { left: number, top: number }
+    editGoal: Goal | null
+}
+
+type GoalDragTarget = {
+    type: "pinnedGoal" | "goal" | "month"
+    // list, board goal OR month num OR carousel pinned goal
+    data: string | Goal | number
+}
+
+type GoalMonthData = {
+    entry: TextEntryOptions | null
+    pinnedId: string | null
+    pinnedGoal: Goal | null
+    goals: Goal[]
+}
+type GoalQuarterData = {
+    entry: TextEntryOptions | null
+    goals: Goal[]
+}
+
+type GoalsStore = {
+    init: boolean
+    viewGoal: Goal | null
+    goals: Goal[]
+    yearData: {
+        year: number
+        data: GoalYearData | null
+    }
+    quarterData: {
+        quarter: number
+        data: GoalQuarterData | null
+    }
+    monthData: {
+        month: number
+        data: GoalMonthData | null
+    }
+}
+
 type DueType = "day" | "month" | "quarter" | "year" | "someday"
 type GoalStatus = "not-started" | "in-progress" | "accomplished"
 
 type Goal = {
   id: string
   name: string
-  due?: Date
-  dueType?: DueType
-  description?: string
-  tag?: Tag
+  big?: boolean | null
+  due: Date
+  dueType: DateType
+  description?: string | null
+  tag: Tag | null
   creationDate: Date
   status: GoalStatus
-  milestones?: Milestone[]
-  imgSrc?: string
-  isPinned?: boolean
-  bOrder: { 
+  milestones?: Milestone[] | null
+  img?: {
+    src: string
+    type: "header" | "float-left" | "float-right"
+    center: number
+  } | null
+  completedDate?: Date | null
+  pinIdx?: number | null
+  y_order: { 
     default: number
     status: number
     tag: number
   }
+  q_order: { 
+    default: number
+    status: number
+    tag: number
+  }
+  m_order: { 
+    default: number
+    status: number
+    tag: number
+  }
+}
+
+type GoalsViewOptions = {
+    view: "list" | "board"
+    progress: number
+    list: {
+        grouping: "status" | "tag" | "default"
+        showProgress: boolean
+        due: boolean
+        dueType: "date" | "distance"
+    }
+    board: {
+        grouping: "status" | "tag"
+        showProgress: boolean
+        due: boolean
+        dueType: "date" | "distance"
+    }
 }
 
 type Milestone = {
@@ -1243,6 +1349,11 @@ type Milestone = {
     name: string
     idx: number
     done: boolean
+}
+
+type YearHeatMapData = {
+    date: Date
+    goals: Goal[]
 }
   
 /* theme stuff */
@@ -1276,7 +1387,7 @@ type ThemeStyling = {
     modalBgAccentColor: string
     modalBgColor: string
     bentoBoxBgColor: string
-    bentoBoxBorder: string
+    bentoBoxorder: string
     bentoBoxShadow: string
     navMenuBgColor: string
     navBtnColor: string

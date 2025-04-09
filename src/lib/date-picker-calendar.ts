@@ -1,6 +1,6 @@
 import { Calendar } from "./calendar"
 import { DatePickerError } from "./enums"
-import { formatDateLong, getLastDayOfMonth, isDateEarlier, isStrMonth, isYrValid, months } from "./utils-date"
+import { formatDateLong, getLastDayOfMonth, isStrMonth, isYrValid } from "./utils-date"
 
 /**
  *  Basic calendar for general use-case. 
@@ -11,7 +11,7 @@ export class DatePickerCalendar extends Calendar {
 
     constructor(options: DatePickerOptions) {
         super(options)
-        this.dateType = options.dueType ?? "day"
+        this.dateType = options.dateType ?? "day"
 
     }
 
@@ -22,11 +22,21 @@ export class DatePickerCalendar extends Calendar {
     extractDateFromInput(inputVal: string): { str: string | null, date: Date | null, errorMsg?: string } {
         try {
             const date = this.extractDateFromStr(inputVal)
+            this.ensureBounds(date)
 
             return { str: this.formatDateByType(date), date }
         }
         catch(e: any) {
             return { str: null, date: null, errorMsg: this.getErrorMsg(e) }
+        }
+    }
+
+    ensureBounds(date: Date) {
+        if (this.minDate && date < this.minDate) {
+            throw { code: DatePickerError.BeyondMin }
+        }
+        else if (this.maxDate && date > this.maxDate) {
+            throw { code: DatePickerError.BeyondMax }
         }
     }
  
@@ -129,11 +139,11 @@ export class DatePickerCalendar extends Calendar {
     }
 
     getErrorMsg(error: any | null) {
-		if (error.code === DatePickerError.BeyondMin) {
-			return `Must be later than ${formatDateLong(this.minDate!)}`
-		}
+        if (error.code === DatePickerError.BeyondMin) {
+            return `Must be on or after ${this.minDate!.getFullYear()}`
+        }
 		else if (error.code === DatePickerError.BeyondMax) {
-			return `Must be earlier than ${formatDateLong(this.maxDate!)}`
+            return `Must be on or before ${this.maxDate!.getFullYear()}`
 		}
 		else {
             return "Invalid date format."

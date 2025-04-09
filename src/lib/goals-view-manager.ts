@@ -1,20 +1,20 @@
+import { globalContext, goalTracker } from "./store"
 import { get, writable, type Writable } from "svelte/store"
 
 import { toast } from "./utils-toast"
-import { globalContext, goalTracker } from "./store"
-import { GOALS } from "./mock-data-goals"
-import { initFloatElemPos, isEditTextElem, getElemById, getTagFromName, isVoid } from "./utils-general"
-import { deleteGoal, getDateFromTimeFrame, getGoalIdx, getNextTimeFrame, getPeriodData, getPeriodType, getPinnedGoals, getYearProgress, moveGoal, moveGoalDate, pinGoal, reorderPinned, STATUSES, unpinGoal, updateCacheOnCheckToggle, updateGoalIdx } from "./utils-goals"
+import { TEST_TAGS } from "./mock-data"
+import { initFloatElemPos, isEditTextElem, getElemById, isVoid, getTagFromName } from "./utils-general"
+import { groupSwitchUpdate, handleStoreUpdate, moveGoalDate, moveGoalDueDay, pinGoal, reorderPinned, setPeriodPinned, setViewGoal, STATUSES, unpinGoal, updateGoalIdx } from "./utils-goals"
+import { deleteGoal, getDateFromTimeFrame, getGroupIdx, getNextTimeFrame, getPeriodData, getPeriodType, getPinnedGoals, getYearProgress, moveGoal } from "./utils-goals"
 
 export type _Goal = Goal & { secIdx: number, idx: number }
-export type _Milestone = Milestone & { secIdx: number, goalIdx: number }
 export type _Section = { section: string, idx: number }
 
-type ViewElement = (_Section | _Goal | _Milestone) & { type: "section" | "goal" | "milestone" }
+type ViewElement = (_Section | _Goal) & { type: "section" | "goal" }
 type FocusElement = { elem: HTMLElement, idx: number, viewElement: ViewElement }
 
-const TAGS: Tag[] = Array.from(new Set(GOALS.map(goal => goal.tag).filter(tag => !!tag)))
-const TAG_STR     = TAGS.map((tag) => tag.name)
+const TAGS: Tag[] = TEST_TAGS
+
 
 /**
  * Manages the goals interface uis (GoalsList + GoalsBoard).
@@ -22,6 +22,7 @@ const TAG_STR     = TAGS.map((tag) => tag.name)
 export class GoalsViewManager {
     goals: Goal[]
     state: Writable<GoalsViewState>
+    uiState: Writable<GoalsViewUIState>
 
     timeFrame: { year: number, period: string }
 
@@ -47,6 +48,7 @@ export class GoalsViewManager {
     statusOpen = false
     statusMenuPos = { left: 0, top: 0 }
     editGoal: Goal | null = null
+    deleteGoal: Goal | null = null
 
     focusElement: FocusElement | null = null
 
@@ -59,21 +61,22 @@ export class GoalsViewManager {
         this.timeFrame = timeFrame
         this.state = writable({
             sortedGoals: [],
-            closedSections: [],
-            sections: [],
-            openGoalId: "",
-            dragTarget: null,
-            grouping,
             pinnedGoals: getPinnedGoals(),
-            pinnedGoal: null,
-            dragState: null,
+            sections: [],
             viewProgress: 0,
             yrProgress: 0,
+            pinnedGoal: null
+        })
+        this.uiState = writable({
+            dragTarget: null,
+            closedSections: [],
+            openGoalId: "",
             contextMenuPos: { left: 0, top: 0 },
             contextMenuOpen: false,
             statusOpen: false,
             statusMenuPos: { left: 0, top: 0 },
-            editGoal: null
+            editGoal: null,
+            deleteConfirm: false
         })
         
         this.initSections(grouping)
@@ -88,29 +91,33 @@ export class GoalsViewManager {
         this.state.update((data) => ({ ...data, ...newState }))
     }
 
+    updateUI(newState: Partial<GoalsViewUIState>) {
+        this.uiState.update((data) => ({ ...data, ...newState }))
+    }
+
     /**
-     * Resert period goals?, resort and reupdate progress.
-     * @param resetPeriod - Should refetch period goals.
+     * Reset after any goals update.
      */
-    resetGoals({ resetPeriod = true }: { resetPeriod?: boolean } = {}) {
-        if (resetPeriod) {
-            const data = getPeriodData({      
-                year: this.timeFrame.year, period: this.timeFrame.period 
-            })
+    resetGoals() {
+        const data = getPeriodData({      
+            year: this.timeFrame.year, period: this.timeFrame.period 
+        })
+        this.goals = data.goals
+        this.sortGoals()
 
-            this.goals = data.goals
-            this.monthPinGoal(data.pinnedGoal)
-        }
+        const viewProgress = this.getViewProgress()
+        const yrProgress = getYearProgress(this.timeFrame.year)
+        const pinnedGoal = data.pinnedGoal
+        const sortedGoals = this.sortedGoals
 
-        this.reSortGoals()
-        this.updateProgress()
+        this.update({ viewProgress, yrProgress, pinnedGoal, sortedGoals })
     }
 
     setViewPeriod({ year, period }: { year: number, period: string }) {
         this.timeFrame = { year, period }
         const data = getPeriodData({ year, period })
 
-        this.monthPinGoal(data.pinnedGoal)
+        this.periodPinGoal(data.pinnedGoal)
         this.initGoals(data.goals)
 
         return data
@@ -137,14 +144,16 @@ export class GoalsViewManager {
             this.sections = ["*"]
         }
 
-        this.initSecMap()
-        this.sortedGoals = this.sectionGoals()
+    this.initSecMap()
+    this.sortedGoals = this.sectionGoals()
         this.closedSections = new Array(this.sections.length).fill(false)
 
         this.update({ 
-            closedSections: this.closedSections,
             sections: this.sections,
             sortedGoals: this.sortedGoals
+        })
+        this.updateUI({
+            closedSections: this.closedSections
         })
     }
 
@@ -166,14 +175,14 @@ export class GoalsViewManager {
                     return goal.status === sec
                 } 
                 else if (grouping === "tag") {
-                    return goal.tag?.name === sec
+                    return goal.tag?.name === sec || (sec === "Empty" && !goal.tag)
                 }
                 else {
                     return true
                 }
             })
     
-            filteredGoals.sort((a, b) => this.getGoalIdx(a) - this.getGoalIdx(b))
+            filteredGoals.sort((a, b) => this.getGroupIdx(a) - this.getGroupIdx(b))
             sortedGoals.push(filteredGoals)
         })
     
@@ -182,13 +191,22 @@ export class GoalsViewManager {
 
     toggleSectionOpen(secIdx: number) {
         this.closedSections[secIdx] = !this.closedSections[secIdx]
-        this.update({ closedSections: this.closedSections })
+        this.updateUI({ closedSections: this.closedSections })
+    }
+
+    getTagGoals(tag: Tag) {
+        if (tag.name === "*") {
+            return this.goals.filter(goal => !goal.tag).length
+        }
+        else {
+            return this.goals.filter(goal => goal.tag?.name === tag.name).length
+        }
     }
 
     getTagSections() {
         const tags = TAGS.sort((a: Tag, b: Tag) => {
-            const aCount = this.goals.filter(goal => goal.tag?.name === a.name).length
-            const bCount = this.goals.filter(goal => goal.tag?.name === b.name).length
+            const aCount = this.getTagGoals(a)
+            const bCount = this.getTagGoals(b)
             
             if (aCount > 0 && bCount === 0) return -1
             if (aCount === 0 && bCount > 0) return 1
@@ -213,89 +231,79 @@ export class GoalsViewManager {
         this.closedSections = new Array(this.sections.length).fill(false)
         this.openGoalId = ""
 
-        this.update({ 
-            sortedGoals: this.sortedGoals,
+        this.updateUI({
             closedSections: this.closedSections,
             openGoalId: this.openGoalId
         })
     }
 
-    reSortGoals() {
+    resortGoals() {
         this.sortGoals()
         this.update({ sortedGoals: this.sortedGoals })
     }
 
     toggleGoalOpen(goalId: string) {
         this.openGoalId = this.openGoalId === goalId ? "" : goalId
-        this.update({ openGoalId: this.openGoalId })
+        this.updateUI({ openGoalId: this.openGoalId })
     }
 
     getGoalProgress(goal: Goal) {
-        if (!goal.milestones) {
+        if (!goal.tasks) {
             return { checkCount: 0, total: 0 }
         }
         
-        const checkCount = goal.milestones.filter(ms => ms.done).length
-        const total = goal.milestones.length
+        const checkCount = goal.tasks.filter(task => task.isChecked).length
+        const total = goal.tasks.length
 
         return { checkCount, total }
-    }
-
-    addGoal(newGoal: Goal) {
-        this.reSortGoals()
     }
 
     removeGoal(goal: Goal) {
         const pinnedGoal = get(this.state).pinnedGoal
 
         if (pinnedGoal?.id === goal.id) {
-            this.monthPinGoal(null)
+            this.periodPinGoal(null)
         }
 
         deleteGoal(goal)
-        this.resetGoals()
         this.update({ pinnedGoals: getPinnedGoals() })
-        
-        toast("default", {
-            description: `"${goal.name}" deleted`,
-            action: {
-                label: "Undo",
-                onClick: () => {
-                    this.addGoal(goal)
-                }
-            }
-        })
     }
 
-    monthPinGoal(goal: Goal | null | undefined) {
+    periodPinGoal(goal: Goal | null, updateCache = false ) {
         this.update({ pinnedGoal: goal ?? null })
+
+        if (updateCache) {
+            setPeriodPinned({ goal, timeFrame: this.timeFrame })
+        }
+    }
+
+    moveGoalDueDay(goal: Goal, newDueDate: Date) {
+        moveGoalDueDay(goal, newDueDate)
     }
 
     /* status management */
 
-    setGoalStatus(goal: Goal, newStatus: "accomplished" | "in-progress" | "not-started") {
-        const completedDate = goal.completedDate
-        const toComplete = newStatus === "accomplished"
+    toggleGoalStatus(goal: Goal, newStatus?: "accomplished" | "in-progress" | "not-started") {
+        if (goal.status === newStatus) return
 
-        moveGoal({
-            srcGoal: goal,
-            target: newStatus,
-            timeFrame: this.timeFrame,
-            grouping: "status"
-        })
-        if (completedDate || toComplete) {
-            updateCacheOnCheckToggle(goal, completedDate ? completedDate : new Date())
+        const oldStatus = goal.status
+        goal.status =  newStatus ? newStatus : goal.status === "accomplished" ? "in-progress" : "accomplished"
+
+        if (goal.status === "accomplished") {
+            goal.completedDate = new Date()
         }
-        this.resetGoals({ resetPeriod: false })
-    }
+        else {
+            goal.completedDate = null
+        }
+        
 
-    toggleMilestoneComplete(secIdx: number, goalIdx: number, msIdx: number) {
-        const goal = this.sortedGoals[secIdx][goalIdx]
-        const milestones = goal.milestones
-        if (!milestones) return
-
-        milestones[msIdx].done = !milestones[msIdx].done
-        this.update({ sortedGoals: this.sortedGoals })
+        groupSwitchUpdate({ 
+            goal, 
+            grouping: "status",
+            sSection: oldStatus, 
+            tSection: goal.status
+        })
+        handleStoreUpdate(goal)
     }
 
     /**
@@ -345,7 +353,7 @@ export class GoalsViewManager {
         this.editGoal = goal
         this.contextMenuOpen = true
         
-        this.update({ 
+        this.updateUI({
             contextMenuPos: this.contextMenuPos,
             contextMenuOpen: true,
             editGoal: goal
@@ -360,18 +368,30 @@ export class GoalsViewManager {
             this.update({ pinnedGoals: getPinnedGoals() })
         }
         else if (option.includes("Pin to")) {
-            this.monthPinGoal(goal)
+            this.periodPinGoal(goal, true)
         }
         else if (option.includes("Unpin from")) {
-            this.monthPinGoal(null)
+            this.periodPinGoal(null, true)
         }
         else if (option === "Remove") {
-            this.removeGoal(goal)
+            this.deleteGoal = goal
+            this.updateUI({ deleteConfirm: true })
         }
         else if (option.startsWith("Push to")) {
             this.pushGoalToTimeFrame(goal)
         }
+        else if (option === "View Details") {
+            setViewGoal(goal)
+        }
         this.closeContextMenu()
+    }
+
+    confirmDelete(doDelete: boolean) {
+        if (doDelete) {
+            this.removeGoal(this.deleteGoal!)
+        }
+        this.deleteGoal = null
+        this.updateUI({ deleteConfirm: false })
     }
 
     pushGoalToTimeFrame(goal: Goal) {
@@ -383,7 +403,6 @@ export class GoalsViewManager {
         const date = nextDate.getDate()
 
         moveGoalDate({ goal, moIdx, year, date })
-        this.resetGoals()
     }
     
     closeContextMenu(removeEditGoal = true) {
@@ -392,7 +411,7 @@ export class GoalsViewManager {
         }
         this.contextMenuOpen = false
 
-        this.update({ 
+        this.updateUI({
             contextMenuOpen: false,
             editGoal: this.editGoal
         })
@@ -402,8 +421,6 @@ export class GoalsViewManager {
 
     setDragState(state: "goal" | null) {
         this.dragState = state
-
-        console.log(this.dragState)
     }
 
     onDrag(e: DragEvent, goal: Goal) {
@@ -428,7 +445,6 @@ export class GoalsViewManager {
      */
     onDragEnter(e: DragEvent, target: string | Goal | number) {
         e.preventDefault()
-        console.log(target)
         const tElem = e.target as HTMLElement
         const parentElem = tElem.closest("[data-drag-context]") as HTMLElement
 
@@ -446,7 +462,7 @@ export class GoalsViewManager {
             this.dragTarget = { type: "pinnedGoal", data: target }
         }
 
-        this.update({ dragTarget: this.dragTarget })
+        this.updateUI({ dragTarget: this.dragTarget })
 
         return true
     }
@@ -460,7 +476,6 @@ export class GoalsViewManager {
             // moving within goal list or board
             if (type === "goal") {
                 this.reorderGoals(this.dragSrc as Goal, target!.data as Goal | string)
-                this.resetGoals({ resetPeriod: false })
             }
             // pinning goal to the goal caoursel
             else if (type === "pinnedGoal") {
@@ -485,7 +500,6 @@ export class GoalsViewManager {
                     moIdx, 
                     year: this.timeFrame.year 
                 })
-                this.resetGoals()
             }
         }
         this.closeDrag()
@@ -493,7 +507,7 @@ export class GoalsViewManager {
 
     resetGoalsDragTarget() {
         this.dragTarget = null
-        this.update({ dragTarget: null })
+        this.updateUI({ dragTarget: null })
     }
 
     closeDrag() {
@@ -501,7 +515,7 @@ export class GoalsViewManager {
         this.dragSrc = null
         this.dragTarget = null
 
-        this.update({ dragTarget: null })
+        this.updateUI({ dragTarget: null })
     }
 
     /* reorder */
@@ -523,6 +537,7 @@ export class GoalsViewManager {
 
         this.update({ pinnedGoals: getPinnedGoals() })
     }
+
     /* navigation */
 
     navigateViewElements(input: "arrow-up" | "arrow-down" | "enter" | "space" | "delete") {
@@ -547,23 +562,12 @@ export class GoalsViewManager {
                 }
                 for (let j = 0; j < goals && isOpen; j++) {
                     const goal = sortedGoals[i][j]
-                    const isOpen = openGoalId === goal.id
-    
                     elements.push({
                         ...goal,
                         type: "goal",
                         secIdx: i,
                         idx: j
                     })
-                    if (isOpen && goal.milestones) {
-                        const ms = goal.milestones.map(ms => ({ 
-                            ...ms, 
-                            type: "milestone" as const, 
-                            secIdx: i,
-                            goalIdx: j
-                        }))
-                        elements.push(...ms)
-                    }
                 }
             }
     
@@ -591,10 +595,6 @@ export class GoalsViewManager {
         else if (type === "goal") {
             const { secIdx, idx } = viewElem as _Goal
             elem = getElemById(`goal--${secIdx}-${idx}`)
-        }
-        else if (type === "milestone") {
-            const ms = viewElem as _Milestone
-            elem = getElemById(`milestone--${ms.goalIdx}-${ms.idx}`)
         }
     
         if (this.focusElement) {
@@ -674,33 +674,25 @@ export class GoalsViewManager {
             const goal = viewElem as _Goal
             this.toggleGoalOpen(goal.id)
         }
-        else if (input === "enter" && type === "milestone") {
-            const milestone = viewElem as _Milestone
-            const { secIdx, goalIdx, idx } = milestone
-            
-            this.toggleMilestoneComplete(secIdx, goalIdx, idx)
-        }
         else if (type === "goal") {
             const goal = viewElem as _Goal
             const goalItem = this.sortedGoals[goal.secIdx][goal.idx]
-            const newStatus = goalItem.status === "accomplished" ? "in-progress" : "accomplished"
 
             if (input === "enter") {
-                this.setGoalStatus(goalItem, newStatus)
+                this.toggleGoalStatus(goalItem)
             }
             else if (input === "delete") {
                 this.removeGoal(goalItem)
             }
         }
     }
-
     
     /* utils */
 
-    getGoalIdx(goal: Goal) {
+    getGroupIdx(goal: Goal) {
         const period = getPeriodType(this.timeFrame.period)
 
-        return getGoalIdx({
+        return getGroupIdx({
             goal,
             period,
             grouping: this.grouping
@@ -716,5 +708,22 @@ export class GoalsViewManager {
             grouping: this.grouping,
             idx
         })
+    }
+
+    getSectionContext(name: string): { name: GoalViewSection, valueId: string } {
+        let valueId = name
+        let grouping = this.grouping
+
+        if (grouping === "status") {
+            return { name: "status", valueId }
+        }
+        else if (grouping === "tag") {
+            valueId = getTagFromName(name)!.id
+            
+            return { name: "tag", valueId }
+        }
+        else {
+            return { name: "default", valueId }
+        }
     }
 }

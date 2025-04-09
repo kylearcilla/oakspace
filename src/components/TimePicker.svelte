@@ -197,7 +197,7 @@
         bind:this={timePickerRef}
         role="button"
         tabindex="0"
-        id={`${id}--dbtn`}
+        data-dmenu-id="time-picker"
         class="time-picker"  
         class:time-picker--dragging={isDragging}
         class:time-picker--light={isLight}

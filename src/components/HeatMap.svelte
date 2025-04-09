@@ -1,9 +1,10 @@
-\<script lang="ts">
+<script lang="ts">
 	import { themeState } from '$lib/store'
-	import { randomArrayElem } from '$lib/utils-general'
+	import { setViewGoal } from '$lib/utils-goals'
+	import { getDiffBetweenTwoDays, uptoToday } from '$lib/utils-date'
 	import { addToDate, formatDatetoStr, getMonthStr, isDateEarlier, isSameDay } from '$lib/utils-date'
-	import { formatDateLong, getDiffBetweenTwoDays, uptoToday } from '$lib/utils-date'
-	import { setViewGoal } from '$lib/utils-goals';
+
+	import AccomplishedIcon from './AccomplishedIcon.svelte'
 
 	type HeatMapOptions = {
 		emojis?: boolean
@@ -33,16 +34,12 @@
 			size: 18, borderRadius: 6
 		}
 	}
-	
-	const { cellType = "default" } = options || {}
-
-	const cellDim = CELL_DIMS[cellType]
 	const OPACITY_AHEAD = {
 		light: {
 			habits: 0.035, goals: 0.055
 		},
 		dark: {
-			habits: 0.012, goals: 0.0195
+			habits: 0.012, goals: 0.0285
 		}
 	}
 	const GOALS_OPACITY = {
@@ -56,6 +53,9 @@
 	const HEAT_OPACITY_GRADIENT = {
 		light: [1, 0.5, 0.3, 0.06], dark:  [0.85, 0.2, 0.08, 0]
 	}
+
+	const { cellType = "default" } = options || {}
+	const cellDim = CELL_DIMS[cellType]
 
 	let firstYearDay: Date
 	let firstDay: Date
@@ -274,10 +274,8 @@
 												<div class="heat-map__cell-emoji">	
 													{emoji}
 												</div>
-											{:else if light}
-												<span>
-													*
-												</span>
+											{:else}
+												<AccomplishedIcon scale={0.6} />
 											{/if}
 										{/if}
 									</div>
@@ -330,6 +328,7 @@
 <style lang="scss">
 	.heat-map {
 		position: relative;
+		padding-bottom: 10px;
 
 		--goal-fill-color: var(--textColor1);
 		--goal-today-opacity: 0.05;
@@ -349,7 +348,7 @@
 		}
 
 		&__month {
-			@include text-style(0.3, var(--fw-400-500), 1.15rem);
+			@include text-style(0.3, var(--fw-400-500), 1.25rem, "Geist Mono");
 			position: absolute;
 			top: 0px;
 			transition: 0.1s ease-in-out;
@@ -445,7 +444,6 @@
 		&--light &__content {
 			border: 1.5px solid rgba(var(--textColor1), 0.065);
         	box-shadow: 0px 4px 10px 1px rgba(0, 0, 0, 0.075);
-			position: relative;
 		}
 		&__goal-img {
 			height: 90px;

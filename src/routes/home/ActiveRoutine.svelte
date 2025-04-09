@@ -135,6 +135,8 @@
     class:active-routine--empty={!nowBlock}
     class:active-routine--light={light}
     class:active-routine--side-menu={type === "side-menu"}
+    data-dmenu-id="active-routine"
+    id="active-routine-elem"
 >
     {#if nowBlock}
         {@const { description, title, startTime, endTime, done } = nowBlock.block}

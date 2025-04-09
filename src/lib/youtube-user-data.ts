@@ -3,7 +3,7 @@ import { ytUserStore } from "./store"
 import { APIError } from "./errors"
 import { toast } from "./utils-toast"
 import { APIErrorCode, LogoIcon } from "./enums"
-import { getUserYtPlaylists } from "./api-youtube"
+import { authYoutubeClient, getUserYtPlaylists } from "./api-youtube"
 import { toastApiErrorHandler } from "./utils-general"
 import { handleGoogleRedirect, refreshGoogleToken } from "./api-google"
 import { 
@@ -96,7 +96,7 @@ export class YoutubeUserData {
 
     hasAccessTokenExpired() {
         const currentTime = new Date().getTime()
-        const creationTime = new Date("2025-03-27T12:00:00Z").getTime()
+        const creationTime = this.accessTokenCreationDate!.getTime()
 
         const timeElapsed = currentTime - creationTime
         const timeRemaining = (this.expiresIn * 1000) - timeElapsed
@@ -109,13 +109,15 @@ export class YoutubeUserData {
 
     async verifyAccessToken() {
         if (this.hasAccessTokenExpired()) {
-            console.log("expired! - refresh!", this.accessTokenCreationDate)
+            console.log("expired! - verify!")
+            console.log("A: access token", this.accessToken, "creation date", this.accessTokenCreationDate, "refresh token", this.refreshToken, "token expired", this.tokenExpired)
+
             try {
                 await this.refreshAccessToken()
             }
-            catch {
+            catch(e: any) {
                 this.setTokenHasExpired(true)
-                throw new APIError(APIErrorCode.EXPIRED_TOKEN)
+                throw e
             }
         }
         return true
@@ -131,7 +133,7 @@ export class YoutubeUserData {
             this.expiresIn = expiresIn
 
             console.log("refreshed! - refresh!")
-            console.log("refresh date", this.accessTokenCreationDate)
+            console.log("B: access token", this.accessToken, "creation date", this.accessTokenCreationDate)
 
             if (this.error?.code === APIErrorCode.EXPIRED_TOKEN) {
                 this.error = null
@@ -142,7 +144,9 @@ export class YoutubeUserData {
             this.setTokenHasExpired(false)
         }
         catch(e: any) {
-            this.onError({ error: new APIError(APIErrorCode.GENERAL, "Error refreshing access token. Try re-logging in.") })
+            const error = new APIError(APIErrorCode.REFRESH_TOKEN)
+            this.onError({ error })
+            throw error
         }
         finally {
             this.setLoading(false)
@@ -181,7 +185,9 @@ export class YoutubeUserData {
             await this.getUserPlaylists()
         }
         catch(error: any) {
-            this.onError({ error })
+            if (error.code != APIErrorCode.REFRESH_TOKEN) {
+                this.onError({ error })
+            }
         }
         finally {
             this.setLoading(false)
@@ -246,22 +252,31 @@ export class YoutubeUserData {
     }
 
     onError({ error }: { error: any }) {
-        error = error?.code === undefined ? new APIError(APIErrorCode.GENERAL) : error
+        const code = error?.code
+        error = code === undefined ? new APIError(APIErrorCode.GENERAL) : error
         this.error = error
         this.update({ error }, false)
 
-        toastApiErrorHandler({
-            error,
-            title: "Youtube",
-            logoIcon: LogoIcon.Youtube,
-            contextId: "youtube",
-            ...(error.code === APIErrorCode.EXPIRED_TOKEN && {
+        if (code === APIErrorCode.REFRESH_TOKEN || code === APIErrorCode.EXPIRED_TOKEN) {
+            toastApiErrorHandler({
+                error,
+                title: "Youtube",
+                logoIcon: LogoIcon.Youtube,
+                contextId: "youtube",
                 action: {
-                    label: "Continue session",
-                    onClick: () => this.refreshAccessToken()
+                    label: error.code === APIErrorCode.REFRESH_TOKEN ? "Log In" : "Continue session",
+                    onClick: error.code === APIErrorCode.REFRESH_TOKEN ? () => authYoutubeClient() : () => this.refreshUserPlaylists()
                 }
             })
-        })
+        }
+        else {
+            toastApiErrorHandler({
+                error,
+                title: "Youtube",
+                logoIcon: LogoIcon.Youtube,
+                contextId: "youtube"
+            })
+        }
     }
 
     quit(options: { error?: boolean } = { error: false }) {

@@ -226,7 +226,7 @@
                         }}
                     >
                         <div class="routine-block__content">
-                            <div class="flx-algn-center">
+                            <div class="flx-center">
                                 {#if isFirstLast}
                                     {@const opacity = isLight ? 0.8 : 0.5}
                                     {@const title = isFirst ? "First routine of the day." : "Last routine of the day."}
@@ -283,7 +283,7 @@
                         on:pointerdown={onBlockPointerDown}
                     >
                         <div class="routine-block__content">
-                            <div class="flx-algn-center">
+                            <div class="flx-center">
                                 {#if isFirstLast}
                                     {@const opacity = isLight ? 0.8 : 0.5}
                                     <div 
@@ -361,7 +361,7 @@
                         title="Untitled Block"
                     >
                         <div class="routine-block__content">
-                            <div class="flx-algn-center">
+                            <div class="flx-center">
                                 <span class="routine-block__title">
                                     {editBlock.title}
                                 </span>

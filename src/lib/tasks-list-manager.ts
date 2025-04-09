@@ -4,7 +4,7 @@ import { get, writable, type Writable } from "svelte/store"
 
 import { Tasks } from "./Tasks"
 import { toast } from "./utils-toast"
-import { absoluteDropdown } from './pop-ups'
+import { absoluteElem } from './pop-ups'
 import { TextEditorManager } from "./inputs"
 import DropdownContent from "../components/DropdownContent.svelte"
 import { ambienceSideBarOffset, modalSideBarOffset } from './utils-home'
@@ -746,7 +746,6 @@ export class TasksListManager {
 
         // new root task
         if (!parentId && count === max) {
-            this.toast("warning", { message: "Max depth reached" })
             return
         }
 
@@ -756,7 +755,6 @@ export class TasksListManager {
 
         // new child
         if (isChild && this.tasks.isAtMaxDepth(parentId!)) {
-            this.toast("warning", { message: "Max depth reached" })
             return
         }
         if (isChild && this.tasks.getSubtaskCount(parentId!) === maxSubtasks) {
@@ -1189,6 +1187,7 @@ export class TasksListManager {
 
     toast(type: "warning" | "error", { message }: { message: string }) {
         toast(type, { 
+            groupExclusive: true,
             contextId: this.options.id,
             message 
         })
@@ -1265,7 +1264,7 @@ export class TasksListManager {
         const { focusTask, settings } = this
         const { ui, id } = this.options
         const { allowDuplicate } = settings
-        const hasSubtasks = settings.subtasks && !this.isAtMaxDepth(focusTask!)
+        const hasSubtasks = settings.subtasks && this.isAtMaxDepth(focusTask!)
         const options = {
             context: "modal",
             fixPos: true,
@@ -1313,21 +1312,23 @@ export class TasksListManager {
                 }
             ],
             onListItemClicked: ({ name }: { name: string }) => {
-                this.setContextMenu(false)
                 this.contextMenuHandler(name)
+                this.setContextMenu(false)
+                absoluteElem.close()
             },
             onClickOutside: () => {
                 this.setContextMenu(false)
             },
             onDismount: () => {
                 this.setContextMenu(false)
-            },
-            styling: { 
-                width: ui!.menuWidth,
             }
         }
 
-        absoluteDropdown.init({ 
+        absoluteElem.init({ 
+            id: `${id}--tasks`,
+            onClose: () => {
+                this.setContextMenu(false)
+            },
             component: DropdownContent,
             offset: { 
                 top: 15, left: 0

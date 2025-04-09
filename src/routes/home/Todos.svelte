@@ -6,24 +6,25 @@
 	import EmptyList from "$components/EmptyList.svelte"
     
     export let manager: TodosManager
+    export let addBtnFlag = false
     export let removeCompleteFlag: boolean
     export let onTaskComplete: (completed: number) => void
     
     const { onAddTask, onDeleteTask, onTaskUpdate } = manager
 
     let todoListContainer: HTMLElement
-    let newTaskFlag = false
     let completedTasks = 0
     let renderFlag = false
     
     // source tasks and tasks list are separate, not bounded as state
     let currTasks = manager.currTasks
     let tasks: Task[] = []
-
+    
     $: isLight = !$themeState.isDarkTheme
     $: store = manager.store
     $: onTodoist = $store.onTodoist
     $: loading = $store.loading
+    $: newTaskFlag = addBtnFlag
 
     $: _renderFlag = $store.renderFlag
 

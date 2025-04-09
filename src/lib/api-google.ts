@@ -1,3 +1,4 @@
+
 import { getOAuthRedirectData, removeOAuthRedirectData } from "./utils-home"
 
 
@@ -104,6 +105,7 @@ export async function handleGoogleRedirect(context: "gcal" | "yt"): Promise<Goog
 
 export async function refreshGoogleToken(refreshToken: string): Promise<{ accessToken: string, expiresIn: number }> {
     try {
+        console.log("refresh token", refreshToken)
         const response = await fetch(TOKEN_ENDPOINT, {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -114,13 +116,14 @@ export async function refreshGoogleToken(refreshToken: string): Promise<{ access
                 grant_type: "refresh_token"
             })
         })
-        
+
         if (!response.ok) {
             throw new Error()
         }
         
         const data = await response.json()
         const { access_token, expires_in } = data
+
         
         if (!access_token) {
             throw new Error()

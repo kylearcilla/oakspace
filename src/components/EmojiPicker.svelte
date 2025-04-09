@@ -501,7 +501,7 @@
 <svelte:window on:keydown={handleKeyDown}/>
 
 <BounceFade 
-    id={"emoji-picker--dmenu"}
+    dmenuId="emoji-picker"
     zIndex={10000}
     isHidden={!isOpen}
     position={{
@@ -560,9 +560,9 @@
           </button>
         </div>
         <button 
-            id="ej-skins--dbtn"
-            on:click={() => skinsOpen = !skinsOpen}
+            data-dmenu-id="ej-skins"
             class="emoji-picker__skin-btn"
+            on:click={() => skinsOpen = !skinsOpen}
         >
             {SKINS[skinIdx]}
         </button>
@@ -700,8 +700,8 @@
       </div>
 
       <!-- skins nenu -->
-      <BounceFade 
-        id={"ej-skins--dmenu"}
+      <BounceFade
+        dmenuId="ej-skins"
         zIndex={200}
         isHidden={!skinsOpen}
         position={{ 

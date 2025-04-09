@@ -506,7 +506,7 @@
         </div>
 
         <BounceFade
-            id="routines-list--dmenu"
+            dmenuId="routines-list"
             zIndex={100}
             isHidden={!routinesOpen && routines.length > 0}
             isAnim={isMin}

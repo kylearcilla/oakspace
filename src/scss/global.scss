@@ -292,10 +292,6 @@ $screen-xl: 112.5em;   // extra large (1800 px)
 
 /* Line Divider */
 
-.flx-algn-center {
-    display: flex;
-    align-items: center;
-}
 .flx {
     display: flex;
     &--algn-center {
@@ -320,12 +316,16 @@ $screen-xl: 112.5em;   // extra large (1800 px)
         justify-content: flex-end;
     }
 }
-.r-flx-sb {
+.flx-center {
+    display: flex;
+    align-items: center;
+}
+.flx-sb {
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
-.r-flx-top-sb {
+.flx-top-sb {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -866,7 +866,7 @@ $settings-modal-padding: 20px 25px 25px 25px;
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.7);
 
     &__content {
         position: relative;

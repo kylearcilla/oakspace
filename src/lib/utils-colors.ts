@@ -131,6 +131,17 @@ export const COLOR_SWATCHES = [
     dark4: "43, 28, 38",
     name: "pink"
   },
+  {
+    primary: "#FD8AB9",
+    light1: "154, 97, 124",
+    light2: "249, 218, 224",
+    light3: "220, 179, 198",
+    dark1: "255, 255, 255",
+    dark2: "31, 31, 31",
+    dark3: "72, 72, 72",
+    dark4: "31, 31, 31",
+    name: "grey"
+  },
 ]
 
 export const DARK_COLOR_PROGRESS = {

@@ -87,7 +87,7 @@
             <!-- settings stuff -->
             <div class="base-header__settings-btn">
                 <SettingsBtn 
-                    id={"base--dbtn"}
+                    id="base"
                     options={{ 
                         opacity: {
                             fg: 0.25,
@@ -108,7 +108,7 @@
                 position={{ top: "28px", right: "0px" }}
             >
                 <div 
-                    id="base--dmenu"
+                    data-dmenu-id="base"
                     class="base-header__dmenu dmenu" 
                     class:dmenu--light={isLight}
                     style:--font-size="1.32rem"

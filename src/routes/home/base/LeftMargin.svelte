@@ -79,7 +79,7 @@
             <button 
                 on:click={() => options = !options}
                 class="margin__header-btn"
-                id="margin-optn--dbtn"
+                data-dmenu-id="margin-optn"
             >
                 {capitalize(marginOptn)}
             </button>

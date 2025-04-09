@@ -22,6 +22,7 @@
 	import DropdownBtn from "$components/DropdownBtn.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
 	import ConfirmationModal from "$components/ConfirmationModal.svelte"
+	import TagPickerBtn from "$components/TagPickerBtn.svelte";
 
     const { MAX_BLOCK_DESCRIPTION, MIN_BLOCK_DURATION_MINS, MAX_BLOCK_TITLE } = RoutinesManager
     const MAX_ACTION_ITEMS = 12
@@ -38,7 +39,7 @@
     
     let { 
         id, startTime, endTime, title, 
-        description, tasks, order, activity, 
+        description, tasks, order, activity, tag,
         allowDescription = true, allowTasks = true
     } = block
 
@@ -53,10 +54,11 @@
     let confirmModalOpen = false
     let routineListRef: HTMLElement
 
+    let colorsOpen = false
+
     $: isDarkTheme = $themeState.isDarkTheme
     $: blocks = $_blocks
     $: colors = getColorTrio(block.color, true)
-    $: colorPopUp = colorPicker.state
     $: validateTime(startTime, endTime)
 
     new TextEditorManager({ 
@@ -227,6 +229,23 @@
             saveChanges()
         }
     }
+    /* pop ups */
+
+    function toggleColorPicker() {
+        colorsOpen = !colorsOpen
+
+        if (colorsOpen) {
+            colorPicker.init({
+                picked: block.color,
+                onSubmitColor: (color) => onChooseColor(color),
+                onClose: () => colorsOpen = false
+            })
+        }
+        else {
+            colorPicker.close()
+        }
+    }
+
     onMount(() => {
         if (!title) titleElem.focus()
     })
@@ -260,7 +279,7 @@
                 bind:innerText={title}
             >
             </div>
-            <div class="flx-algn-center">
+            <div class="flx-center">
                 {#if order === "first" || order === "last"}
                     {@const isFirst = order === "first"}
                     <div 
@@ -276,20 +295,15 @@
                     </div>
                 {/if}
                 <button 
-                    id="color-picker--dbtn"
+                    data-dmenu-id="color-picker"
                     class="edit-routine__color-dbtn"
                     style:--routine-bg-color-1={colors[0]}
                     style:--routine-bg-color-2={colors[1]}
-                    on:click={() => {
-                        colorPicker.init({
-                            onSubmitColor: (color) => onChooseColor(color),
-                            picked: block.color
-                        })
-                    }}
+                    on:click={() => toggleColorPicker()}
                 >
                     <div 
                         class="edit-routine__color-arrow arrow-down"
-                        class:arrow-down--active={$colorPopUp.isOpen}
+                        class:arrow-down--active={colorsOpen}
                     >
                         <i class="fa-solid fa-sort-down"></i>
                     </div>
@@ -352,17 +366,15 @@
                     Tag
                 </div>
                 <div class="edit-routine__info-val">
-                    <div>
-                        <TagPicker 
-                            tag={block.tag}
-                            onTagClicked={(newTag) => {
-                                onTagChange(newTag)
-                            }}
-                            styling={{ 
-                                borderRadius: "12px" 
-                            }}
-                        />
-                    </div>
+                    <TagPickerBtn 
+                        {tag}
+                        onChoose={(tag) => { 
+                            onTagChange(tag)
+                        }}
+                        styling={{ 
+                            borderRadius: "12px" 
+                        }}
+                    />
                 </div>
             </div>
             <div class="edit-routine__info-row">
@@ -475,27 +487,26 @@
         <!-- action items -->
         <div class="edit-routine__list" class:hidden={!allowTasks}>
             <div class="edit-routine__list-header">
-                <div 
-                    class="edit-routine__info-title" 
-                    style:width="auto"
-                    style:margin-bottom="-4px"
-                >
-                    Action Items
-                </div>
-                <div class="flx-algn-center">
-                    <span class="edit-routine__list-count">
-                        {tasks.filter((task) => task.parentId === null).length}
-                    </span>
+                <div class="flx-center">
+                    <div 
+                        class="edit-routine__info-title" 
+                        style:width="auto"
+                    >
+                        Action Items
+                    </div>
                     <button 
                         class="edit-routine__add-btn"
                         on:click={() => newTaskFlag = !newTaskFlag}
                     >
                         <SvgIcon 
                             icon={Icon.Add} 
-                            options={{ scale: 1, strokeWidth: 1.8, opacity: 0.7 }}
+                            options={{ scale: 1.15, strokeWidth: 1.2, opacity: 0.8 }}
                         />
                     </button>
                 </div>
+                <span>
+                    {tasks.filter((task) => task.parentId === null).length}
+                </span>
             </div>
             <div 
                 class="edit-routine__list-body" 
@@ -556,6 +567,7 @@
 {#if confirmModalOpen} 
     <ConfirmationModal 
         text={isNew ? "Undo block creation?" :  "Discard unsaved changes?"}
+        confirmText="Yes, Discard"
         onCancel={() => confirmModalOpen = false}
         onOk={confirmUnsavedClose}
     /> 
@@ -689,20 +701,18 @@
                 min-height: 100px;
             }
         }
-        &__list-count {
-            margin-right: 11px;
-        }
         &__list-empty {
             margin: 1px 0px 0px 20px;
         }
         &__add-btn {
             @include center;
-            @include circle(20px);
-            background-color: rgba(var(--textColor1), 0.065);
-            margin-right: -4px;
-
+            @include square(22px, 7px);
+            opacity: 0.25;
+            margin: 0px 0px 2px 7px;
+            
             &:hover {
-                background-color: rgba(var(--textColor1), 0.15);
+                background-color: rgba(var(--textColor1), 0.12);
+                opacity: 0.5;
             }
         }
     }

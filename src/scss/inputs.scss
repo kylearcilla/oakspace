@@ -21,6 +21,7 @@ div[contenteditable] {
 div[contenteditable]:empty:before {
     content: attr(data-placeholder);
     opacity: 0.2;
+    font-weight: var(--fw-400-500);
 }
 div[contenteditable]:focus {
     outline: none;

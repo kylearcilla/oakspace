@@ -21,6 +21,7 @@
             type: "svg" as const,
             icon: Icon.ChevronRight
         },
+        childId: `${id}--img-sizes`,
         onPointerOver: () => {
             imgSizeOpen = true
         },
@@ -79,7 +80,7 @@
     $: updateStyling(styling, icon)
 
     const editor = new TextEditorManager({ 
-        placeholder: "type something here...",
+        placeholder: "Priorities, intentions, thoughts...",
         allowFormatting: true,
         maxLength: 1000,
         initValue: entry.entry,
@@ -128,7 +129,7 @@
             txtBottomPadding = "0px"
         }
         else if (styling === "has-marker" && !icon) {
-            margin = "0px 0px 10px 0px"
+            margin = "0px 0px 20px 0px"
             padding = "5px 12px 5px 16px"
             txtBottomPadding = "0px"
         }
@@ -284,7 +285,7 @@
         >
             {#if icon}
                 <button 
-                    id={`${id}--dbtn`}
+                    data-dmenu-id={id}
                     class="thought-entry__icon" 
                     class:thought-entry__icon--img={icon?.type === "img"}
                     on:click={() => initImagePopUp()}
@@ -308,12 +309,21 @@
             </div>
         </div>
         <div class="thought-entry__details" class:hidden={!focused}>
-            <button 
-                id={`${id}--img-dbtn`}
-                on:click={() => imgOpen = !imgOpen}
-            >
-                Image
-            </button>
+            {#if icon}
+                <button 
+                    id={`${id}--img-dbtn`}
+                    on:click={() => imgOpen = !imgOpen}
+                >
+                    Image
+                </button>
+            {:else}
+                <button 
+                    id={`${id}--img-dbtn`}
+                    on:click={() => initImagePopUp()}
+                >
+                    Add Icon
+                </button>
+            {/if}
             <div class="thought-entry__count">
                 {formatPlural("character", length)}
             </div>
@@ -373,18 +383,17 @@
                     zIndex: 1,
                 },
                 position: { 
-                    bottom: `-70px`, 
+                    bottom: "-70px", 
                     left: `10px`,
-                },
-                parentContext: {
-                    childId: `${id}--img-sizes`
                 },
                 listItems: [
                     { 
                         name: icon ? "Replace Icon" : "Add Icon"
                     },
                     ...(icon && icon.type === "img" ? [ICON_SIZE_OPTN] : []),
-                    ...(icon ? [{ name: "Remove" }] : []),
+                    {
+                        name: icon ? "Remove" : ""
+                    },
                 ],
                 onListItemClicked: ({ name }) => {
                     if (name === "Replace Icon") {
@@ -415,7 +424,7 @@
                     zIndex: 2,
                 },
                 position: { 
-                    bottom: `-70px`, 
+                    bottom: "-70px", 
                     left: `152px`,
                 },
                 parent: {
@@ -567,5 +576,10 @@
         word-break: break-word;
         padding-top: 6px;
         padding-bottom: var(--txt-bottom-padding);
+
+        &:empty:before {
+            opacity: 0.25;
+            font-weight: var(--fw-400-500);
+        }
     }
 </style>

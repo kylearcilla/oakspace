@@ -1,9 +1,9 @@
 import { get, writable, type Writable } from "svelte/store"
 import { initFloatElemPos } from "./utils-general"
 import { genMonthCalendar, getMonthWeeks, isSameDay, isSameMonth } from "./utils-date"
-import { ACTIVITY_DATA } from "./mock-data"
-import { imageUpload } from "./pop-ups"
-
+import { TEST_TAGS } from "./mock-data"
+import { GOALS } from "./mock-data-goals"
+  
 type CalendarDay = {
     date: Date
     isInCurrMonth: boolean
@@ -140,5 +140,4 @@ export class OverviewManager {
             editDay: null
         })
     }
-
 }

@@ -1,58 +1,45 @@
-import { genMonthCalendar, getTimeDistanceStr, isSameDay, months, uptoToday } from "./utils-date"
-import { formatDatetoStr } from "./utils-date"
-
-import { GOALS, YEARS, MONTH_ENTIRES } from "./mock-data-goals"
-import { findTag, insertItemArr, reorderItemArr } from "./utils-general"
+import { get } from 'svelte/store'
+import { v4 as uuidv4 } from 'uuid'
 import { goalTracker } from "./store"
+
+import { formatDatetoStr, isSameDay } from "./utils-date"
+import { findTag, getTagFromId, isVoid, reorderItemArr } from "./utils-general"
+import { GOALS, YEARS, MONTH_ENTIRES, QUARTER_ENTRIES } from "./mock-data-goals"
+import { genMonthCalendar, getTimeDistanceStr, months, uptoToday } from "./utils-date"
 
 export let initPromise: Promise<void>
 
 type PeriodType = "year" | "quarter" | "month"
 
-const PERIOD_TYPES: PeriodType[] = ["year", "quarter", "month"]
-export const STATUSES    = ["not-started", "in-progress", "accomplished"]
+export const STATUSES = ["not-started", "in-progress", "accomplished"]
 export const PERIODS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec", "q1", "q2", "q3", "q4", "all"]
 
-type PeriodData = {
-    entry: TextEntryOptions | null
-    pinnedGoal?: Goal | null
-    goals: Goal[]
-}
+export const YEAR_CREATED = 2025
+export const MIN_YEAR = YEAR_CREATED - 5
+export const MAX_YEAR = new Date().getFullYear() + 5
+// export const MIN_YEAR = 2024
+// export const MAX_YEAR = 2025
 
+const PERIOD_TYPES: PeriodType[] = ["year", "quarter", "month"]
 const ALL_GOALS: Record<string, Goal> = {}
 
-const YEAR_DATA: Record<string, {
-    entry: TextEntryOptions
-    smallImg: string
-    goals: Goal[]
-    bannerImg: {
-        src: string,
-        center: number
-    } | null
-}> = {}
+const GOALS_PAGE_STORAGE_ID = "goals-page-options"
+const GOALS_VIEW_STORAGE_ID = "goals-view-options"
 
-const MONTH_DATA: Record<string, {
-    entry: TextEntryOptions | null
-    pinnedId: string | null
-    pinnedGoal: Goal | null
-    goals: Goal[]
-}> = {}
-
-const QUARTER_DATA: Record<string, {
-    entry: TextEntryOptions | null
-    goals: Goal[]
-}> = {}
+const YEAR_DATA: Record<string, GoalYearData> = {}
+const MONTH_DATA: Record<string, GoalMonthData> = {}
+const QUARTER_DATA: Record<string, GoalQuarterData> = {}
 
 const COMPLETED_GOALS: Record<string, Goal[]> = {}
-
 const PINNED_GOALS: Goal[] = []
-const toUpdate = []
+
+let GOALS_TO_UPDATE: Record<string, GoalIdxUpdate> = {}
 
 export async function initGoals() {
     await _initGoals()
 
     goalTracker.set({
-        init: true, goals: GOALS, viewGoal: null, ...getGoalsData()
+        init: true, goals: GOALS, viewGoal: null, view: null, ...getGoalsData()
     })
 }
 
@@ -61,7 +48,14 @@ export async function initGoals() {
  * @param goal - the goal caused the update
  */
 export function handleStoreUpdate(goal: Goal) {
+    const viewManager = get(goalTracker).view
+    if (viewManager) {
+        viewManager.resetGoals()
+    }
+
     goalTracker.update((store) => ({ ...store, ...getGoalsData() }))
+
+    GOALS_TO_UPDATE = {}
 }
 
 export function getGoalsData() {
@@ -94,26 +88,28 @@ async function _initGoals() {
 }
 
 function initData() {
-    // Initialize year data structures first
     for (const [yearStr, yearEntry] of Object.entries(YEARS)) {
+        const { entry = getEmptyEntry(), smallImg, bannerImg, pinnedId } = yearEntry
+
         YEAR_DATA[yearStr] = {
-            entry: yearEntry.entry,
-            smallImg: yearEntry.smallImg,
-            bannerImg: yearEntry.bannerImg,
-            goals: []
+            entry, smallImg, bannerImg, pinnedId, goals: []
         }
     }
-    
-    // Initialize month data structures
+    for (const [quarterKey, quarterEntry] of Object.entries(QUARTER_ENTRIES)) {
+        const { entry = getEmptyEntry(), pinnedId } = quarterEntry
+
+        QUARTER_DATA[quarterKey] = {
+            entry, pinnedId, goals: []
+        }
+    }
     for (const [monthKey, monthEntry] of Object.entries(MONTH_ENTIRES)) {
+        const { entry = getEmptyEntry(), pinnedId } = monthEntry
+
         MONTH_DATA[monthKey] = {
-            entry: monthEntry.entry,
-            pinnedId: monthEntry.pinnedId,
-            pinnedGoal: null,
-            goals: []
+            entry, pinnedId, goals: []
         }
         
-        // Initialize quarter data structures
+        // Initialize quarter data structures (if missing)
         const [yearStr, monthStr] = monthKey.split('-')
         const month = parseInt(monthStr)
         const quarter = Math.ceil(month / 3)
@@ -121,15 +117,15 @@ function initData() {
         
         if (!QUARTER_DATA[quarterKey]) {
             QUARTER_DATA[quarterKey] = {
-                entry: null,
+                entry: getEmptyEntry(),
+                pinnedId,
                 goals: []
             }
         }
     }
 
-
     for (const goal of GOALS) {
-        if (goal?.pinIdx != undefined && goal.pinIdx >= 0) {
+        if (!isVoid(goal.pinIdx)) {
             PINNED_GOALS.push(goal)
         }
 
@@ -138,121 +134,97 @@ function initData() {
         // Track completed goals by date
         if (goal.status === "accomplished" && goal.completedDate) {
             const completedDate = goal.completedDate
-            const dateKey = `${completedDate.getFullYear()}-${completedDate.getMonth() + 1}-${completedDate.getDate()}`
+            const dateKey = getDataKey(completedDate, "day")
             
-            if (!COMPLETED_GOALS[dateKey]) {
-                COMPLETED_GOALS[dateKey] = []
-            }
-            
+            COMPLETED_GOALS[dateKey] ||= []
             COMPLETED_GOALS[dateKey].push(goal)
         }
-        
-        if (!goal.due) continue
+        const { y, m, q } = getPeriodKeys(goal.due!)
 
-        const goalYear = goal.due.getFullYear()
-        const goalMonth = goal.due.getMonth() + 1
-        const goalQuarter = Math.ceil(goalMonth / 3)
-        const yearStr = goalYear.toString()
-        const monthKey = `${yearStr}-${goalMonth}`
-        const quarterKey = `${yearStr}-Q${goalQuarter}`
-        
         // Add to year data
-        if (YEAR_DATA[yearStr]) {
-            YEAR_DATA[yearStr].goals.push(goal)
+        if (YEAR_DATA[y]) {
+            YEAR_DATA[y].goals.push(goal)
         }
-        
         // Add to month data
-        if (MONTH_DATA[monthKey]) {
-            MONTH_DATA[monthKey].goals.push(goal)
-
-            if (goal.id === MONTH_DATA[monthKey].pinnedId) {
-                MONTH_DATA[monthKey].pinnedGoal = goal
-            }
+        if (MONTH_DATA[m]) {
+            MONTH_DATA[m].goals.push(goal)
         }
-        
         // Add to quarter data - all goals go here
-        if (QUARTER_DATA[quarterKey]) {
-            if (!QUARTER_DATA[quarterKey].goals.some(g => g.id === goal.id)) {
-                QUARTER_DATA[quarterKey].goals.push(goal)
-            }
+        if (QUARTER_DATA[q]) {
+            QUARTER_DATA[q].goals.push(goal)
         }
     }
 }
 
 /* data queries */
 
-export function getMonthData({ year, moIdx}: {
-    year: number, moIdx: number
-}) {
-    const monthKey = `${year}-${moIdx + 1}`
-    const empty = { entry: null, goals: [], pinnedGoal: null, pinnedId: null }
+export function getMonthData({ year, moIdx }: { year: number, moIdx: number }): 
+    GoalMonthData & { pinnedGoal: Goal | null } 
+{
+    const key = `${year}-${moIdx + 1}`
+    
+    vertifyData({ key, data: "month" })
+    const data = MONTH_DATA[key]
+    const pinnedGoal = data.pinnedId ? getGoal(data.pinnedId) : null
 
-    if (!MONTH_DATA[monthKey]) {
-        MONTH_DATA[monthKey] = { ...empty, entry: getEmptyEntry() }
+    if (!pinnedGoal) {
+        data.pinnedId = null
     }
 
-    return MONTH_DATA[monthKey]
+    return { ...data, pinnedGoal }
 }
 
-export function getQuarterData({ year, quarter }: {
-    year: number, quarter: number
-}) {
-    const quarterKey = `${year}-Q${quarter}`
-    const empty = { entry: null, goals: [] }
+export function getQuarterData({ year, quarter }: { year: number, quarter: number }): 
+    GoalQuarterData & { pinnedGoal: Goal | null } 
+{
+    const key = `${year}-Q${quarter}`
+    vertifyData({ key, data: "quarter" })
 
-    if (!QUARTER_DATA[quarterKey]) {
-        QUARTER_DATA[quarterKey] = empty
+    const data = QUARTER_DATA[key]
+    const pinnedGoal = data.pinnedId ? getGoal(data.pinnedId) : null
+
+    if (!pinnedGoal) {
+        data.pinnedId = null
     }
 
-    return QUARTER_DATA[quarterKey]
+    return { ...data, pinnedGoal }
 }
 
-export function getYearData({ year }: {
-    year: number
-}) {
-    const empty = { entry: null, smallImg: "", goals: [], bannerImg: null }
+export function getYearData({ year }: { year: number }): 
+    GoalYearData & { pinnedGoal: Goal | null } 
+{
+    const key = year.toString()
+    vertifyData({ key, data: "year" })
 
-    if (!YEAR_DATA[year.toString()]) {
-        YEAR_DATA[year.toString()] = { ...empty, entry: getEmptyEntry() }
+    const data = YEAR_DATA[key]
+    const pinnedGoal = data.pinnedId ? getGoal(data.pinnedId) : null
+
+    if (!pinnedGoal) {
+        data.pinnedId = null
     }
 
-    return YEAR_DATA[year.toString()]
+    return { ...data, pinnedGoal }
 }
 
-export function getCacheGoals(goal: Goal, period: "year" | "quarter" | "month") {
+export function getCacheGoals(goal: Goal, period: PeriodType) {
     const { y, m, q } = getPeriodKeys(goal.due!) 
 
     if (period === "year") {
-        if (!YEAR_DATA[y]) {
-            YEAR_DATA[y] = { 
-                entry: getEmptyEntry(), 
-                smallImg: "", 
-                goals: [], 
-                bannerImg: null 
-            }
-        }
+        vertifyData({ key: y, data: "year" })
         return YEAR_DATA[y].goals
     }
     else if (period === "quarter") {
-        if (!QUARTER_DATA[q]) {
-            QUARTER_DATA[q] = {
-                entry: null,
-                goals: []
-            }
-        }
+        vertifyData({ key: q, data: "quarter" })
         return QUARTER_DATA[q].goals
     }
     else {
-        if (!MONTH_DATA[m]) {
-            MONTH_DATA[m] = {
-                entry: getEmptyEntry(),
-                pinnedId: null,
-                pinnedGoal: null,
-                goals: []
-            }
-        }
+        vertifyData({ key: m, data: "month" })
         return MONTH_DATA[m].goals
     }
+}
+
+export function getGoal(id: string) {
+    return ALL_GOALS[id]
 }
 
 /* goal queries */
@@ -268,7 +240,7 @@ export function getBigGoals() {
 
 export function getRecentGoals() {
     return Object.values(ALL_GOALS)
-            .filter(goal => goal.status === "accomplished" && goal.completedDate)
+            .filter(goal => goal.status === "accomplished" && goal.completedDate && uptoToday(goal.completedDate))
             .sort((a, b) => b.completedDate!.getTime() - a.completedDate!.getTime())
             .slice(0, 10)
 }
@@ -291,60 +263,48 @@ export function getOverdueGoals() {
 /* updates */
 
 /**
- * Add a goal given a time period / grouping view.
- * Used in goals board / list component. 
- * 
- * @param goal - the goal to add
- * @param idx  - the index of the goal to add
- * @param time - the time period set during add operation
- * @param grouping - the grouping set during add operation
+ * Add a goal.
+ * Put the goal in relevant caches.
+ * Add item to the last group index for all groupings (default, status, tag).
  */
-export function addGoal({ goal, idx, time, grouping }: { 
-    goal: Goal
-    idx: number
-    time: "quarter" | "year" | "month"
-    grouping: "status" | "tag" | "default" 
-}) {         
-    ALL_GOALS[goal.id] = goal
+export function addGoal(goal: Goal) {         
+    return new Promise((resolve) => {
+        ALL_GOALS[goal.id] = goal
 
-    if (goal.due) {
-        setGoalPeriodCaches({ 
-            goal,
-            time: "month", 
-            ...(time === "month" ? { context: { grouping, idx }} : {})
-        })
-        setGoalPeriodCaches({ 
-            goal,
-            time: "year", 
-            ...(time === "year" ? { context: { grouping, idx }} : {})
-        })
-        setGoalPeriodCaches({ 
-            goal,
-            time: "quarter", 
-            ...(time === "quarter" ? { context: { grouping, idx }} : {})
-        })
-    }
+        addGoalPeriodCaches({ goal, time: "month" })
+        addGoalPeriodCaches({ goal, time: "year" })
+        addGoalPeriodCaches({ goal, time: "quarter" })
 
-    handleStoreUpdate(goal)
+        if (goal.status === "accomplished") {
+            addToChecked(goal, goal.completedDate!)
+        }
+        if (!isVoid(goal.pinIdx)) {
+            PINNED_GOALS.push(goal)
+        }
+
+        handleStoreUpdate(goal)
+        resolve(null)
+    })
 }
 
 export function deleteGoal(goal: Goal) {
-    if (!goal.due) return
+    return new Promise((resolve) => {
+        delete ALL_GOALS[goal.id]
 
-    delete ALL_GOALS[goal.id]
+        removeGoalPeriodCaches({ 
+            goal, location: "month"
+        })
+        removeGoalPeriodCaches({ 
+            goal, location: "quarter"
+        })
+        removeGoalPeriodCaches({ 
+            goal, location: "year"
+        })
 
-    unsetGoalPeriodCaches({ 
-        goal, location: "month"
+        removeFromMiscCache(goal)
+        handleStoreUpdate(goal)
+        resolve(null)
     })
-    unsetGoalPeriodCaches({ 
-        goal, location: "quarter"
-    })
-    unsetGoalPeriodCaches({ 
-        goal, location: "year"
-    })
-
-    removeFromMiscCache(goal)
-    handleStoreUpdate(goal)
 }
 
 /**
@@ -374,34 +334,45 @@ export function moveGoalDate({ goal, moIdx, year, date = 1 }: {
     
     // remove from old caches
     if (oldMonthKey !== newMonthKey) {
-        unsetGoalPeriodCaches({ goal, location: "month" })
+        removeGoalPeriodCaches({ goal, location: "month" })
     }
     if (oldQuarterKey !== newQuarterKey) {
-        unsetGoalPeriodCaches({ goal, location: "quarter" })
+        removeGoalPeriodCaches({ goal, location: "quarter" })
     }
     if (oldYearStr !== newYearStr) {
-        unsetGoalPeriodCaches({ goal, location: "year" })
+        removeGoalPeriodCaches({ goal, location: "year" })
     }
 
     goal.due = newDate
 
     // add to new caches
     if (oldMonthKey !== newMonthKey) {
-        setGoalPeriodCaches({ goal, time: "month" })
+        addGoalPeriodCaches({ goal, time: "month" })
     }
     if (oldQuarterKey !== newQuarterKey) {
-        setGoalPeriodCaches({ goal, time: "quarter" })
+        addGoalPeriodCaches({ goal, time: "quarter" })
     }
     if (oldYearStr !== newYearStr) {
-        setGoalPeriodCaches({ goal, time: "year" })
+        addGoalPeriodCaches({ goal, time: "year" })
     }
 
     handleStoreUpdate(goal)
 }
 
+export function moveGoalDueDay(goal: Goal, newDueDate: Date) {
+    goal.due = newDueDate
+
+    if (goal.status === "accomplished") {
+        removeFromChecked(goal, goal.completedDate!)
+        addToChecked(goal, newDueDate)
+    }
+
+    handleStoreUpdate(goal)
+}   
+
 /**
  * Moving a goal within the same time period.
- * Moving between sections (status, tag)
+ * Moving between sections (status, tag).
  * 
  * Update the indices in all time periods.
  * 
@@ -419,26 +390,26 @@ export function moveGoal({
     srcGoal: Goal
     target: Goal | string
     timeFrame: { year: number, period: string }
-    grouping: "status" | "tag" | "default"
+    grouping: GoalViewSection
 }) {
     const period = getPeriodType(timeFrame.period)
     const goals = getCacheGoals(srcGoal, period)
 
     const toEnd = typeof target === "string"
     const s = {
-        order: getGoalIdx({ goal: srcGoal, period, grouping }),
-        section: getGroupVal(srcGoal, grouping),
+        order: getGroupIdx({ goal: srcGoal, period, grouping }),
+        section: getGroupVal(srcGoal, grouping) || "Empty",
         sectionIdx: -1
     }
     const t = {
-        order:   toEnd ? 0 : getGoalIdx({ goal: target as Goal, period, grouping }),
-        section: toEnd ? target : getGroupVal(target as Goal, grouping),
+        order:   toEnd ? 0 : getGroupIdx({ goal: target as Goal, period, grouping }),
+        section: toEnd ? target : getGroupVal(target as Goal, grouping) || "Empty",
         sectionIdx: -1
     }
     
     const sameSec = s.section === t.section
-    const sSection = goals.filter(goal => getGroupVal(goal, grouping) === s.section)
-    const tSection = goals.filter(goal => getGroupVal(goal, grouping) === t.section)
+    const sSection = findGroupMembers({ goals, grouping, groupName: s.section })
+    const tSection = findGroupMembers({ goals, grouping, groupName: t.section })
     const fromIdx = s.order
 
     t.order = toEnd ? tSection.length : t.order
@@ -446,7 +417,8 @@ export function moveGoal({
     let toIdx = 0
     let direction: "up" | "down" = "up"
 
-    // update the indices
+    // is not always added to the end of new section
+    // so we need to update this period for the period in view
     if (sameSec) {
         direction = s.order > t.order ? "up" : "down"
         toIdx = direction === "up" ? t.order : Math.max(0, t.order - 1)
@@ -491,7 +463,9 @@ export function moveGoal({
             context: { location: period, grouping }
         })
     }
-    // need to update references in other time periods if we changed the status or tag
+
+
+    // for the other two periods we add at the end
     // we remove from old section and add the end of new section
     if (!sameSec && grouping != "default") {
         groupSwitchUpdate({ 
@@ -503,78 +477,130 @@ export function moveGoal({
         })
     }
 
+    // update grouping and index
     if (grouping === "status") {
-        const toComplete = t.section === "accomplished"
-        srcGoal.status = t.section as GoalStatus
-        srcGoal.completedDate = toComplete ? new Date() : null
+        updateGoalStatus({ 
+            goal: srcGoal, 
+            status: t.section as GoalStatus 
+        })
     } 
     else if (grouping === "tag") {
-        srcGoal.tag = typeof target === "string" ? findTag(target) : target.tag
+        updateGoalTag({ 
+            goal: srcGoal, 
+            tag: typeof target === "string" ? findTag(target)! : target.tag!
+        })
     }
     updateGoalIdx({
-        goal: srcGoal, idx: toIdx, period, grouping,
+        goal: srcGoal, 
+        idx: toIdx, 
+        period, 
+        grouping,
     })
+
     handleStoreUpdate(srcGoal)
 }
 
-export async function updateGoal({ goal, update }: { goal: Goal, update: Goal }) {
+export async function updateGoal({ goal, update }: { 
+    goal: Goal
+    update: GoalUpdateData
+}) {
+    const checkComplete = (g_date?: Date | null, u_date?: Date | null) => {
+        if (g_date && u_date) {
+            return !isSameDay(g_date, u_date)
+        }
+        return g_date !== u_date
+    }
     return new Promise((resolve) => {
         const tagChanged = goal.tag !== update.tag
         const statusChanged = goal.status !== update.status
         const dueChanged = goal.due !== update.due
+        const updatedComplete = checkComplete(goal.completedDate, update.completedDate)
+
+        const hasPin = !isVoid(goal.pinIdx)
+        const pinnedChanged = update.pinned !== hasPin
 
         if (tagChanged) {
-            const oldTag = goal.tag
-            goal.tag = update.tag
-
             groupSwitchUpdate({ 
                 goal, 
                 grouping: "tag",
-                sSection: oldTag!.name!, 
-                tSection: goal.tag!.name!
+                sSection: goal.tag?.name ?? "Empty", 
+                tSection: update.tag?.name ?? "Empty"
             })
         }
-        if (statusChanged) {
-            const oldStatus = goal.status
-            goal.status = update.status
-
+        if (statusChanged && update.status) {
             groupSwitchUpdate({ 
                 goal, 
                 grouping: "status",
-                sSection: oldStatus, 
-                tSection: goal.status
+                sSection: goal.status, 
+                tSection: update.status
             })
         }
-        if (dueChanged) {
-            goal.due = update.due
-
+        if (dueChanged && update.due) {
             moveGoalDate({ 
                 goal, 
                 moIdx: update.due!.getMonth(), 
                 year: update.due!.getFullYear() 
             })
         }
+        if (pinnedChanged && update.pinned) {
+            pinGoal(goal)
+        }
+        else if (pinnedChanged) {
+            unpinGoal(goal)
+        }
 
-        goal = { ...goal, ...update }
+        goal.name = update.name
+        goal.description = update.description
+        goal.due = update.due
+        goal.tag = update.tag
+        goal.img = update.img
+        goal.status = update.status
+        goal.dueType = update.dueType
+        goal.big = update.big
+        goal.tasks = update.tasks
+
+        // uncheck
+        if (statusChanged && goal.status != "accomplished" && goal.completedDate) {
+            removeFromChecked(goal, goal.completedDate)
+        }
+        // check
+        if (statusChanged && goal.status === "accomplished") {
+            addToChecked(goal, new Date())
+            goal.completedDate = new Date()
+        }
+        // completed date change
+        if (updatedComplete && update.completedDate) {
+            goal.completedDate && (removeFromChecked(goal, goal.completedDate))
+            addToChecked(goal, update.completedDate)
+        }
+        
+        goal.completedDate = update.completedDate
+
+        handleStoreUpdate(goal)
         resolve(goal)
     })
 }
 
+
+
 /* completion */
 
-export function updateCacheOnCheckToggle(goal: Goal, date: Date) {
-    const dateKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
-    const complete = goal.status === "accomplished"
+function removeFromChecked(goal: Goal, date: Date) {
+    const dateKey = getDataKey(date, "day")
+    COMPLETED_GOALS[dateKey] = COMPLETED_GOALS[dateKey].filter(g => g.id !== goal.id)
+}
 
-    // copmleted goals
-    if (complete) {
-        if (!COMPLETED_GOALS[dateKey]) {
-            COMPLETED_GOALS[dateKey] = []
-        }
-        COMPLETED_GOALS[dateKey].push(goal)
-    }
-    else {
-        COMPLETED_GOALS[dateKey] = COMPLETED_GOALS[dateKey].filter(g => g.id !== goal.id)
+/**
+ * Based on a previously completed goal's status, update the completed goals cache.
+ * 
+ * @param goal - the goal to update
+ * @param completed - the completed date
+ */
+export function addToChecked(goal: Goal, date: Date) {
+    const dateKey = getDataKey(date, "day")
+
+    if (!COMPLETED_GOALS[dateKey]) {
+        COMPLETED_GOALS[dateKey] = []
     }
     COMPLETED_GOALS[dateKey].push(goal)
 }
@@ -599,18 +625,7 @@ export function getGoalHeatMap(year: number): YearHeatMapData[] {
                 date, 
                 goals: []
             }
-            
-            // if (monthData && isInCurrMonth) {
-            //     for (const goal of monthData.goals) {
-            //         if (!goal.due) continue
-                    
-            //         if (isSameDay(goal.due, date)) {
-            //             dayData.goals.push(goal)
-            //         }
-            //     }
-            // }
-            
-            const dateKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+            const dateKey = getDataKey(date, "day")
             
             if (COMPLETED_GOALS[dateKey]) {
                 for (const goal of COMPLETED_GOALS[dateKey]) {
@@ -669,6 +684,25 @@ export function unpinGoal(goal: Goal) {
     goal.pinIdx = null
 }
 
+export function setPeriodPinned({ goal, timeFrame }: { 
+    goal: Goal | null
+    timeFrame: { year: number, period: string } 
+}) {
+    const { period, year } = timeFrame
+    const periodType = getPeriodType(period)
+
+    if (periodType === "year") {
+        YEAR_DATA[`${year}`].pinnedId = goal?.id ?? null
+    }
+    else if (periodType === "month") {
+        const monIdx = getIdxFromMo(period)
+        MONTH_DATA[`${year}-${monIdx + 1}`].pinnedId = goal?.id ?? null
+    }
+    else if (periodType === "quarter") {
+        QUARTER_DATA[`${year}-Q${+period[1]}`].pinnedId = goal?.id ?? null
+    }
+}
+
 export function reorderPinned(src: Goal, target: Goal) {
     const targetIdx = target.pinIdx!
     const srcIdx = src.pinIdx!
@@ -690,12 +724,17 @@ export function isGoalPinned(goal: Goal | null) {
 
 /**
  * Add a goal to its data period caches based on its due date.
+ * 
+ * 
+ * @param goal - the goal to add
+ * @param time - the time period to add the goal to
+ * @param idxContext - optional, if provided, add the goal to the specific index for a grouping
  */
-function setGoalPeriodCaches({ goal, time, context }: { 
+function addGoalPeriodCaches({ goal, time, idxContext }: { 
     goal: Goal
-    time: "year" | "month" | "quarter"
-    context?: {
-        grouping: "status" | "tag" | "default"
+    time: PeriodType
+    idxContext?: {
+        grouping: GoalViewSection
         idx: number
     }
 }) {
@@ -703,23 +742,24 @@ function setGoalPeriodCaches({ goal, time, context }: {
 
     const addIdx = {
         default: -1, status: -1, tag: -1,
-        ...(context ? { [context.grouping]: context.idx } : {})
+        ...(idxContext ? { [idxContext.grouping]: idxContext.idx } : {})
     }
     if (time === "year") {
         vertifyData({ key: y, data: "year" })
         shiftAllNeighbors({ goal, period: "year", addIdx })
+
         YEAR_DATA[y].goals.push(goal)
     }
     else if (time === "month") {
         vertifyData({ key: m, data: "month" })
         shiftAllNeighbors({ goal, period: "month", addIdx })
-        MONTH_DATA[m].goals.push(goal)
 
-        console.log(m, MONTH_DATA[m].goals)
+        MONTH_DATA[m].goals.push(goal)
     }
     else if (time === "quarter") {
         vertifyData({ key: q, data: "quarter" })
         shiftAllNeighbors({ goal, period: "quarter", addIdx })
+
         QUARTER_DATA[q].goals.push(goal)
     }
 }
@@ -727,9 +767,9 @@ function setGoalPeriodCaches({ goal, time, context }: {
 /**
  * Remove a goal from its data period caches based on its due date.
  */
-export function unsetGoalPeriodCaches({ goal, location }: {
+export function removeGoalPeriodCaches({ goal, location }: {
     goal: Goal
-    location: "year" | "month" | "quarter"
+    location: PeriodType
 }) {
     const { m, y, q } = getPeriodKeys(goal.due!)
 
@@ -747,10 +787,6 @@ export function unsetGoalPeriodCaches({ goal, location }: {
         })
 
         MONTH_DATA[m].goals = MONTH_DATA[m].goals.filter(g => g.id !== goal.id)
-
-        if (MONTH_DATA[m].pinnedGoal?.id === goal.id) {
-            MONTH_DATA[m].pinnedGoal = null
-        }
     }
     else if (location === "quarter") {
         shiftAllNeighbors({ 
@@ -765,16 +801,11 @@ export function unsetGoalPeriodCaches({ goal, location }: {
  * Remove from misc pinned and completed caches.
  */
 export function removeFromMiscCache(goal: Goal) {
-    const pinnedIndex = PINNED_GOALS.findIndex(g => g.id === goal.id)
-    if (pinnedIndex >= 0) {
+    if (PINNED_GOALS.findIndex(g => g.id === goal.id) >= 0) {
         unpinGoal(goal)
     }
-
     if (goal.completedDate) {
-        const dayKey = getDataKey(goal.completedDate, "day")
-        if (COMPLETED_GOALS[dayKey]) {
-            COMPLETED_GOALS[dayKey] = COMPLETED_GOALS[dayKey].filter(g => g.id !== goal.id)
-        }
+        removeFromChecked(goal, goal.completedDate)
     }
 }
 
@@ -782,16 +813,16 @@ export function removeFromMiscCache(goal: Goal) {
  * Given a goal, shift its neighbors in all groupings under a time period.  
  * A group neighbor is a goal that shares the same groupning val (status or tag).
  * 
- * (default, status, tag).
+ * If shifting to add, goal's group indices will be updated to its new location group index.
  * 
  * @param goal - the goal to update
  * @param time - the time period to update
  * @param shift - the shift direction
  * @param addIdx - the specific non-last group idx where goal will be added 
  */
-export function shiftAllNeighbors({ goal, period, addIdx = { default: -1, status: -1, tag: -1 }, shift = 1 }: {
+export function shiftAllNeighbors({ goal, period, shift = 1, addIdx = { default: -1, status: -1, tag: -1 } }: {
     goal: Goal
-    period: "year" | "month" | "quarter"
+    period: PeriodType
     shift?: 1 | -1
     addIdx?: {
         default?: number
@@ -808,10 +839,10 @@ export function shiftAllNeighbors({ goal, period, addIdx = { default: -1, status
 
     // update indices for each grouping
     for (const [key, i] of Object.entries(addIdx)) {
-        const grouping = key as "status" | "tag" | "default"
-        const data = getPeriodNeighbors({ goal, period, grouping })!
+        const grouping = key as GoalViewSection
+        const data = getPeriodNeighbors({ goal, period, grouping })
 
-        currNbrs = data.nbrs
+        currNbrs = data.nbrs!
 
         // if adding, the i will be the new goal idx, so make space for it from there
         // if removing, the i is where the removed goal is
@@ -854,7 +885,7 @@ function shiftPeriodGroup({ goals, context, fromIdx, toIdx, shift }: {
     shift: 1 | -1
     context: {
         location: "year" | "quarter" | "month"
-        grouping: "status" | "tag" | "default"
+        grouping: GoalViewSection
     }
 }) {
     const { location, grouping } = context
@@ -865,8 +896,12 @@ function shiftPeriodGroup({ goals, context, fromIdx, toIdx, shift }: {
         const order = orderObj[grouping]
 
         if (order >= fromIdx && order < toIdx) {
-            orderObj[grouping] += shift
-            orderObj[grouping] = Math.max(0, orderObj[grouping]) // prevent -1 on 0th indices
+            const idx = Math.max(0, order + shift)
+            
+            if (orderObj[grouping] !== idx) {
+                orderObj[grouping] = idx
+                trackIdxChange({ goalId: goal.id, period: location, grouping, idx })
+            }
         }
     })
     return goals
@@ -874,7 +909,9 @@ function shiftPeriodGroup({ goals, context, fromIdx, toIdx, shift }: {
 
 /**
  * Removes a goal from old grouping and adds it to new grouping.
- * Update the indices in all time periods.
+ * Always added to the last index of the new grouping.
+ * The input goal's grouping should've been already updated.
+ * Update the indices in all time periods by default.
  * 
  * @param goal - the goal to update
  * @param period - the time period to update
@@ -882,10 +919,10 @@ function shiftPeriodGroup({ goals, context, fromIdx, toIdx, shift }: {
  * @param sSection - the old section
  * @param tSection - the new section
  */
-function groupSwitchUpdate({ goal, grouping, sSection, tSection, periods = PERIOD_TYPES }: {
+export function groupSwitchUpdate({ goal, grouping, sSection, tSection, periods = PERIOD_TYPES }: {
     goal: Goal
     periods?: PeriodType[]
-    grouping: "status" | "tag" | "default"
+    grouping: GoalViewSection
     sSection: string
     tSection: string
 }) {
@@ -906,11 +943,11 @@ function groupSwitchUpdate({ goal, grouping, sSection, tSection, periods = PERIO
         const period = p as PeriodType
         const goals = periodNbrs(period)!
 
-        const oldGroupNbrs = goals.filter(g => (getGroupVal(g, grouping) === sSection))
-        const newGroupNbrs = goals.filter(g => (getGroupVal(g, grouping) === tSection))
+        const oldGroupNbrs = findGroupMembers({ goals, grouping, groupName: sSection })
+        const newGroupNbrs = findGroupMembers({ goals, grouping, groupName: tSection })
 
         // idx in old section
-        const currentIdx = getGoalIdx({ 
+        const currentIdx = getGroupIdx({ 
             goal, 
             period,
             grouping 
@@ -923,7 +960,7 @@ function groupSwitchUpdate({ goal, grouping, sSection, tSection, periods = PERIO
             toIdx: oldGroupNbrs.length,
             shift: -1,
             context: { location: period, grouping }
-        })     
+        })
 
         // add to new section
         const orderKey = `${period[0]}_order` as keyof Goal
@@ -932,10 +969,87 @@ function groupSwitchUpdate({ goal, grouping, sSection, tSection, periods = PERIO
     }
 }
 
+function updateGoalTag({ goal, tag }: { goal: Goal, tag: Tag }) {
+    const isEmpty = tag === null || tag.name === "Empty"
+
+    if (isEmpty) {
+        goal.tag = null
+    }
+    else {
+        goal.tag = tag
+    }
+}
+
+function updateGoalStatus({ goal, status }: { goal: Goal, status: GoalStatus }) {
+    const toComplete = status === "accomplished"
+    const fromComplete = goal.status === "accomplished" && !toComplete
+
+    if (toComplete) {
+        addToChecked(goal, new Date())
+    }
+    else if (fromComplete) {
+        removeFromChecked(goal, goal.completedDate!)
+    }
+    
+    goal.status = status
+    goal.completedDate = toComplete ? new Date() : null
+}
+
 /* ui utils */
 
-export function setViewGoal(goal: Goal | null) {
-    goalTracker.update(store => ({ ...store, viewGoal: goal }))
+export function setViewGoal(goal: Goal) {
+    goalTracker.update(store => ({ ...store, viewGoal: { goal, type: "edit" } }))
+}
+
+export function setViewGoalNew({ timeFrame, section, day }: GoalAddContext) {
+    const emptyGoal: Goal = {
+        id: uuidv4(),
+        name: "",
+        due: new Date(),
+        dueType: "day",
+        description: "",
+        tag: null,
+        creationDate: new Date(),
+        tasks: [],
+        status: "not-started",
+        img: null,
+        y_order: {
+         default: -1,
+         status: -1,
+         tag: -1
+        },
+        q_order: {
+         default: -1,
+         status: -1,
+         tag: -1
+        },
+        m_order: {
+         default: -1,
+         status: -1,
+         tag: -1
+        }
+    }
+
+    emptyGoal.due = getDateFromTimeFrame(timeFrame)!
+    emptyGoal.dueType = getPeriodType(timeFrame.period)
+
+    if (section?.name === "status") {
+        emptyGoal.status = section.valueId as GoalStatus
+    }
+    else if (section?.name === "tag") {
+        const tag = getTagFromId(section.valueId)!
+        emptyGoal.tag = tag
+    }
+    else if (day) {
+        emptyGoal.due = day
+        emptyGoal.dueType = "day"
+    }
+
+    goalTracker.update(store => ({ ...store, viewGoal: { goal: emptyGoal, type: "new" } }))
+}
+
+export function closeViewGoal() {
+    goalTracker.update(store => ({ ...store, viewGoal: null }))
 }
 
 export function getYearProgress(year: number) {
@@ -946,21 +1060,27 @@ export function getYearProgress(year: number) {
     return completedGoals / totalGoals
 }
 
-export function getPeriodData({ year, period }: { year: number, period: string }): PeriodData {
+export function getPeriodData({ year, period }: { year: number, period: string }): {
+    goals: Goal[]
+    entry: TextEntryOptions | null
+    pinnedGoal: Goal | null
+} {
     if (period.startsWith("q")) {
         const quarter = parseInt(period.split("q")[1])
-        return getQuarterData({ year, quarter })
+        const { goals, entry, pinnedGoal } = getQuarterData({ year, quarter })
+
+        return { goals, entry, pinnedGoal }
     }
     else if (period === "all") {
-        const data = getYearData({ year })
-        return {
-            goals: data.goals, entry: null,
-        }
+        const { goals, entry, pinnedGoal } = getYearData({ year })
+
+        return { goals, entry, pinnedGoal }
     }
     else {
         const moIdx = months.findIndex(mo => mo.slice(0, 3).toLowerCase() === period)
-        const { pinnedId, ...rest } = getMonthData({ year, moIdx })
-        return rest
+        const { goals, entry, pinnedGoal } = getMonthData({ year, moIdx })
+
+        return { goals, entry, pinnedGoal }
     }
 }
 
@@ -991,12 +1111,11 @@ export function getDueDateDistStr({ due, dueType, type, min = true }: {
         }
     }
 
-    // Distance type (default)
     let str = getTimeDistanceStr({ date: due, enforce: "d" })
     const isLate = str.includes("ago")
 
     if (min) {
-        str = str.split("")[0] + "d"
+        str = str.split(" ")[0] + "d"
     }
     if (isLate) {
         return { dueStr: "-" + str.split("ago")[0], isLate: true }
@@ -1006,7 +1125,57 @@ export function getDueDateDistStr({ due, dueType, type, min = true }: {
     }
 }
 
+export function saveOptions({ page, view }: { page: GoalsPageOptions, view: GoalsViewOptions }) {
+    localStorage.setItem(GOALS_PAGE_STORAGE_ID, JSON.stringify(page))
+    localStorage.setItem(GOALS_VIEW_STORAGE_ID, JSON.stringify(view))
+}
+
+export function getPageOptions() {
+    const page = localStorage.getItem(GOALS_PAGE_STORAGE_ID)
+    const view = localStorage.getItem(GOALS_VIEW_STORAGE_ID)
+
+    return {
+        page: page ? JSON.parse(page) : null,
+        view: view ? JSON.parse(view) : null
+    }
+}
+
+export function saveHeights(heights: { pinnedHeight: number, upcomingHeight: number, overdueHeight: number }) {
+    const page = JSON.parse(localStorage.getItem(GOALS_PAGE_STORAGE_ID)!)
+    page.marginLeftView.heights = heights
+
+    localStorage.setItem(GOALS_PAGE_STORAGE_ID, JSON.stringify(page))
+}
+
 /* utils */
+
+/**
+ * Track an index change for a goal
+ */
+function trackIdxChange({ goalId, period, grouping, idx }: {
+    goalId: string
+    period: PeriodType
+    grouping: GoalViewSection
+    idx: number
+}) {
+    const pKey = period[0] as "y" | "q" | "m"
+
+    // Initialize update object if needed
+    if (!GOALS_TO_UPDATE[goalId]) {
+        GOALS_TO_UPDATE[goalId] = { id: goalId }
+    }
+    
+    const update = GOALS_TO_UPDATE[goalId]
+    
+    if (!update[pKey]) {
+        update[pKey] = {}
+    }
+    const groupKey = grouping === 'default' ? 'd' : 
+                     grouping === 'status' ? 's' : 't'
+    
+    update[pKey]![groupKey] = idx
+}
+
 
 function getPeriodKeys(date: Date) {
     return { 
@@ -1016,57 +1185,92 @@ function getPeriodKeys(date: Date) {
     }
 }
 
-function vertifyData({ key, data }: { key: string, data: "year" | "month" | "quarter" }) {
+function vertifyData({ key, data }: { key: string, data: PeriodType }) {
     if (data === "year") {
-        MONTH_DATA[key] ||= { entry: getEmptyEntry(), pinnedId: null, pinnedGoal: null, goals: [] }
+        YEAR_DATA[key] ||= { entry: getEmptyEntry(), smallImg: "", bannerImg: null, goals: [], pinnedId: null }
     }
     else if (data === "month") {
-        QUARTER_DATA[key] ||= { entry: null, goals: [] }
+        MONTH_DATA[key] ||= { entry: getEmptyEntry(), pinnedId: null, goals: [] }
     }
     else {
-        YEAR_DATA[key] ||= { entry: getEmptyEntry(), smallImg: "", bannerImg: null, goals: [] }
+        QUARTER_DATA[key] ||= { entry: getEmptyEntry(), pinnedId: null, goals: [] }
     }
 }
 
-export function findSectionNbrs({ goal, section, period }: { 
+export function findGroupMembers({ goals, grouping, groupName }: {
+    goals: Goal[]
+    grouping: GoalViewSection
+    groupName: string
+}) {
+    if (groupName === "Empty" && grouping === "tag") {
+        return goals.filter(g => (getGroupVal(g, grouping) === null))
+    }
+    else {
+        return goals.filter(g => (getGroupVal(g, grouping) === groupName))
+    }
+}
+
+export function findGoalGroupNbrs({ goal, section, period }: { 
     goal: Goal 
     section: "default" | "status" | "tag" 
-    period: "year" | "month" | "quarter"
+    period: PeriodType
 }) {
     const goals = getCacheGoals(goal, period)
 
-    return section === "default" ? goals : goals.filter(g => (getGroupVal(g, section) === getGroupVal(goal, section)))
+    if (section === "status" || section === "tag" && goal.tag) {
+        return goals.filter(g => (getGroupVal(g, section) === getGroupVal(goal, section)))
+    }
+    else if (section === "tag" && !goal.tag) {
+        return goals.filter(g => g.tag === null)
+    }
+    else {
+        return goals
+    }
 }
 
 /**
- * Find a goal's section nbrs and idx at that section.
+ * Find a goal's group / section nbrs and idx at that section under a period.
  * 
  * @param param0 
  * @returns 
  */
 export function getPeriodNeighbors({ goal, period, grouping }: {
     goal: Goal,
-    grouping: "status" | "tag" | "default",
-    period: "year" | "month" | "quarter"
+    grouping: GoalViewSection,
+    period: PeriodType
 }) {
-    if (grouping === "default") {
+    if (grouping === "status") {
         return {
-            nbrs: findSectionNbrs({ goal, section: "default", period }),
-            idx: getGoalIdx({ goal, period, grouping: "default" })
-        }
-    }
-    else if (grouping === "status") {
-        return {
-            nbrs: findSectionNbrs({ goal, section: "status", period }),
-            idx: getGoalIdx({ goal, period, grouping: "status" })
+            nbrs: findGoalGroupNbrs({ goal, section: "status", period }),
+            idx: getGroupIdx({ goal, period, grouping: "status" })
         }
     }
     else if (grouping === "tag") {
         return {
-            nbrs: findSectionNbrs({ goal, section: "tag", period }),
-            idx: getGoalIdx({ goal, period, grouping: "tag" })
+            nbrs: findGoalGroupNbrs({ goal, section: "tag", period }),
+            idx: getGroupIdx({ goal, period, grouping: "tag" })
         }
     }
+    else {
+        return {
+            nbrs: findGoalGroupNbrs({ goal, section: "default", period }),
+            idx: getGroupIdx({ goal, period, grouping: "default" })
+        }
+    }
+}
+
+/**
+ * Get a goal's group index at a given period.
+ */
+export function getGroupIdx({ goal, period, grouping }: {
+    goal: Goal
+    period: string
+    grouping: GoalViewSection
+}) {
+    const key = `${period[0]}_order` as keyof Goal
+    const orderObj = goal[key] as Record<string, number>
+
+    return orderObj[grouping]
 }
 
 function getEmptyEntry(): TextEntryOptions {
@@ -1108,30 +1312,23 @@ export function getPeriodType(period: string) {
     return "month"
 }
 
-export function getGoalIdx({ goal, period, grouping }: {
-    goal: Goal
-    period: string
-    grouping: "status" | "tag" | "default"
-}) {
-    const key = `${period[0]}_order` as keyof Goal
-    const orderObj = goal[key] as Record<string, number>
-
-    return orderObj[grouping]
-}
-
 /**
  * Update a goal's indices.
  * @param param0 
  */
 export function updateGoalIdx({ goal, period, grouping, idx }: {
     goal: Goal
-    period: string
-    grouping: "status" | "tag" | "default"
+    period: PeriodType
+    grouping: GoalViewSection
     idx: number
 }) {
     const key = `${period[0]}_order` as keyof Goal
     const orderObj = goal[key] as Record<string, number>
-    orderObj[grouping] = idx
+
+    if (orderObj[grouping] !== idx) {
+        orderObj[grouping] = idx
+        trackIdxChange({ goalId: goal.id, period, grouping, idx })
+    }
 }
 
 /**
@@ -1142,12 +1339,12 @@ export function updateGoalIdx({ goal, period, grouping, idx }: {
  * @param grouping 
  * @returns 
  */
-function getGroupVal(goal: Goal, grouping: "status" | "tag" | "default") {
+function getGroupVal(goal: Goal, grouping: GoalViewSection) {
     if (grouping === "status") {
         return goal.status
     }
     else if (grouping === "tag") {
-        return goal.tag?.name || "*"
+        return goal.tag?.name || null
     }
     else {
         return "*"

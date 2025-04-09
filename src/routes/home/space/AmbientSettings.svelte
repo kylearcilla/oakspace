@@ -53,7 +53,7 @@
 </script>
 
 <BounceFade
-    id={"ambient-header--dmenu"}
+    dmenuId="ambient-header"
     isHidden={!open}
     zIndex={9999}
     position={{ left: "10px", top: "34px" }}

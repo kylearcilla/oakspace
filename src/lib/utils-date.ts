@@ -862,7 +862,7 @@ export function getTimeDistanceStr({ date, format = "default", sign = false, enf
 }) {
     const now = new Date()
     const diffInMs = date.getTime() - now.getTime()
-    const diffInDays = Math.abs(Math.floor(diffInMs / (1000 * 60 * 60 * 24)))
+    const diffInDays = getDiffBetweenTwoDays(date, now)
     const diffInWeeks = Math.floor(diffInDays / 7)
     const diffInMonths = Math.floor(diffInDays / 30)
     const diffInYears = Math.floor(diffInMonths / 12)

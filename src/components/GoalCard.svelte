@@ -3,36 +3,41 @@
     import { getColorTrio } from "$lib/utils-colors"
 	import { kebabToNormal } from "$lib/utils-general"
     import { getDueDateDistStr, setViewGoal } from "$lib/utils-goals"
+	import SvgIcon from "./SVGIcon.svelte";
+	import { Icon } from "$lib/enums";
+	import AccomplishedIcon from "./AccomplishedIcon.svelte";
+	import { formatDateLong } from "$lib/utils-date";
 
     export let goal: Goal
+    export let pinned: boolean = false
     export let options: {
         type?: "hoz" | "vert"
         img?: boolean
         description?: boolean
         due?: boolean
         dueType?: "date" | "distance"
-        completed?: boolean
         progress?: boolean
         tag?: boolean
         
     } | undefined = undefined
     export let highlighted: boolean = false
     
-    $: isLight = !$themeState.isDarkTheme
-    $: tagColor = tag ? getColorTrio(tag.symbol.color, isLight) : ["", "", ""]
-    $: onOptionsChange(options)
-
     let { 
         type = "vert",
         img: showImg = true,
         dueType = "date",
-        completed = false,
         description: showDesc = true,
         due: showDue = true,
         tag: showTag = true
     } = options || {}
 
-    let { name, description, tag, img, status } = goal
+    $: isLight = !$themeState.isDarkTheme
+    $: showImg = options?.img ?? false
+    $: tagColor = tag ? getColorTrio(tag.symbol.color, isLight) : ["", "", ""]
+    $: onOptionsChange(options)
+
+
+    let { name, description, tag, img, status, completedDate } = goal
 
     function onOptionsChange(options: any) {
         dueType = options.dueType
@@ -40,7 +45,8 @@
         showTag = options.tag
     }
     function getDueString(goal: Goal, type: "distance" | "date") {
-        return getDueDateDistStr({ goal, type })
+        const { due, dueType } = goal
+        return getDueDateDistStr({ due, dueType, type })
     }
 </script>
 
@@ -48,7 +54,7 @@
 <div 
     class="goal-card"
     class:goal-card--light={isLight}
-    class:goal-card--completed={completed}
+    class:goal-card--completed={status === "accomplished"}
     class:goal-card--highlighted={highlighted}
     class:goal-card--hoz={type === "hoz"}
 >
@@ -59,12 +65,27 @@
     {/if}
     <div class="goal-card__details">
         <div>
-            <button 
-                class="goal-card__title"
-                on:click={() => setViewGoal(goal)}
-            >
-                {name}
-            </button>
+            <div class="flx-top-sb">
+                <button 
+                    class="goal-card__title"
+                    on:click={() => setViewGoal(goal)}
+                >
+                    {name}
+                </button>
+                {#if status === "accomplished" && completedDate && type === "hoz"}
+                    <div title={`Completed on ${formatDateLong(completedDate)}`}>
+                        <AccomplishedIcon scale={0.65} />
+                    </div>
+                {/if}
+                {#if pinned}
+                    <div class="goal-card__pinned">
+                        <SvgIcon 
+                            icon={Icon.Pin} 
+                            options={{ scale: 1, opacity: 0.2, strokeWidth: 0.4 }} 
+                        />
+                    </div>
+                {/if}
+            </div>
             {#if showDesc && description}
                 <div class="goal-card__description">
                     {description}
@@ -126,6 +147,7 @@
         overflow: hidden;
         position: relative;
         user-select: text;
+        --complete-opacity: 0.4;
 
         &--hoz {
             height: 135px;
@@ -135,6 +157,8 @@
             border-bottom-right-radius: 14px;
             display: flex;
             border: 1.5px solid rgba(var(--textColor1), 0.01);
+            opacity: 1 !important;
+            --complete-opacity: 0.3;
         }
         &--hoz &__img {
             width: 140px;
@@ -162,7 +186,6 @@
         }
         &--light {
             border: var(--card-light-border);
-            box-shadow: var(--card-light-shadow);
         }
         &--light &__due {
             @include text-style(0.2);
@@ -173,8 +196,16 @@
         &--light &__due {
             @include text-style(0.5);
         }
+        &--light#{&}--hoz {
+            background: rgba(var(--textColor1), 0.04);
+            box-shadow: none;
+        }
         &--completed {
             opacity: 0.4;
+        }
+        &--completed &__title {
+            text-decoration: line-through;
+            opacity: var(--complete-opacity);
         }
         &--highlighted {
             @include focus;
@@ -206,17 +237,16 @@
         }
         &__title {
             @include text-style(1, var(--fw-400-500), 1.4rem);
-            cursor: text;
+            @include truncate-lines(8);
             width: fit-content;
             margin-right: 7px;
 
             &:hover {
                 text-decoration: underline;
-                cursor: pointer;
             }
         }
         &__description {
-            @include text-style(0.35, 400, 1.25rem);
+            @include text-style(0.35, 400, 1.325rem);
             @include truncate-lines(3);
             margin: 6px 0px 8px 0px;
             cursor: text;

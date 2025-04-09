@@ -120,7 +120,7 @@
             color: rgba(var(--textColor1), 0.8) !important;
         }
         &__text {
-            @include text-style(0.85, var(--fw-400-500), 1.38rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 1.38rem, "Geist Mono");
             margin: 14px 7px 30px 7px;
             text-align: center;
         }

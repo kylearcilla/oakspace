@@ -1,8 +1,8 @@
 <script lang="ts">
-	import Modal from "../../../components/Modal.svelte"
+	import Modal from "$components/Modal.svelte"
 
     export let onClickOutside: () => void
-    export let img: { src: string, caption: string }
+    export let img: { src: string, caption?: string }
 </script>
 
 <Modal 
@@ -14,28 +14,28 @@
     }} 
     onClickOutSide={() => onClickOutside()}
 >
-    <div 
-        class="highlight-img">
+    <div class="highlight-img">
         <img src={img.src} alt="icon">
-        <div class="highlight-img__caption">
-            <span>
-                {img.caption}
-            </span>
-        </div>
+
+        {#if img.caption !== undefined}
+            <div class="highlight-img__caption">
+                <span>
+                    {img.caption}
+                </span>
+            </div>
+        {/if}
     </div>
 </Modal>
 
 <style lang="scss">
     .highlight-img {
         position: relative;
-
+        
         &:hover &__caption {
             @include visible;
         }
         img {
-            max-width: 400px;
-            max-height: 450px;
-            min-width: 350px;
+            max-height: 60vh;
             object-fit: cover;
         }
         &__caption {

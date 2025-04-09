@@ -186,14 +186,12 @@
 {#if confirmModalOpen} 
     <ConfirmationModal 
         text="Discard unsaved changes?"
+        confirmText="Yes, Discard"
         onCancel={() => {
             confirmModalOpen = false
         }}
         onOk={() => {
             close()
-        }}
-        options={{ 
-            ok: "Discard", caption: "Heads Up!" 
         }}
     /> 
 {/if}

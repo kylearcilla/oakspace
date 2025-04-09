@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
 
-	import { themeState } from "$lib/store"
+	import { habitTracker, themeState } from "$lib/store"
 	import { YEAR_THOUGHT_ENTRY } from "$lib/mock-data"
 	import { getMaskedGradientStyle } from "$lib/utils-general"
     
@@ -9,15 +9,30 @@
     import HeatMap from "$components/HeatMap.svelte"
 	import ProgressBar from "$components/ProgressBar.svelte"
 
+    export let currYear: number
+    export let goalsHeatMap: YearHeatMapData[]
     export let options: {
         yearsAgoIdx: number
         showTextEntry: boolean
         showYear: boolean
         emojis: boolean
     }
+    let habits: Habit[]
+    let habitsHeatMap: HabitHeatMapData[]
+    let habitsMetrics: HabitYearMetrics
+    let habitsActiveStreak: HabitActiveStreak
+
     $: showTextEntry = options.showTextEntry
     $: showYear = options.showYear
     $: isLight = !$themeState.isDarkTheme
+
+
+    habitTracker.subscribe((data) => {
+        habits = data.habits
+        habitsMetrics = data.yearMetrics!
+        habitsHeatMap = data.yearHeatMap!
+        habitsActiveStreak = data.activeStreak!
+    })
 
     const SMALL_WIDTH = 700
     let date = new Date(2025, 0, 1)
@@ -74,56 +89,107 @@
         <div class="divider"></div>
         <div class="yr-view__heat-map" style:margin-top="15px">
             <HeatMap 
-                id={"0"} 
                 type="goals" 
-                options={{
-                    startDate: date, from: "next", emojis: options.emojis
-                }}
+                year={currYear} 
+                data={goalsHeatMap} 
+                options={{ emojis: options.emojis }}
             />
         </div>
     </div>
     <div class="yr-view__habits">
         <h4>Habits</h4>
         <div class="divider"></div>
-        <div class="yr-view__stats" style:margin-top="10px">
-            <div class="yr-view__stat" style:margin-right="40px">
-                <div class="yr-view__stat-title">
-                    Consistency
+
+        {#if habitsMetrics && habitsActiveStreak && habits.length > 0}
+            {@const { habitsDone, habitsDue, perfectDays, missed, longestStreak } = habitsMetrics}
+            {@const zero = habitsDue === 0}
+            {@const now = currYear === new Date().getFullYear()}
+            {@const streak = now && zero ? "--" : habitsActiveStreak.count}
+
+            <div 
+                class="yr-view__stats stats"
+                class:stats--light={isLight}
+            >
+                <div 
+                    class="stat"  style:margin-right="32px"
+                >
+                    <div class="stat__bottom">
+                        <div class="flx">
+                            <span class="stat__value">
+                                {streak}
+                            </span>
+                            <span class="stat__unit">
+                                {streak === "--" ? "" : streak === 1 ? "day" : "days"}
+                            </span>
+                        </div>
+                        <span class="stat__label">Active Streak</span>
+                    </div>     
                 </div>
-                <div class="yr-view__stat-num">
-                    28%
+                <div class="stat" style:margin-right="35px">
+                    <div class="stat__bottom">
+                        <div class="flx">
+                            <span class="stat__value">
+                                {zero ? "--" : Math.floor((habitsDone / habitsDue) * 100)}
+                            </span>
+                            <span class="stat__unit" style:margin="0px 0px 0px 5px">
+                                {zero ? "" : "%"}
+                            </span>
+                        </div>
+                        <span class="stat__label">Consistency</span>
+                    </div>                    
+                </div>
+                {#if longestStreak}
+                    <div class="stat" style:margin-right="35px">
+                        <div class="stat__bottom">
+                            <div class="flx">
+                                <span class="stat__value">
+                                    {zero ? "--" : longestStreak.count}
+                                </span>
+                                <span class="stat__unit">
+                                    {zero ? "" : longestStreak.count === 1 ? "day" : "days"}
+                            </span>
+                        </div>
+                        <span class="stat__label">Longest Streak</span>
+                        </div>                    
+                    </div>
+                {/if}
+                <div class="stat">
+                    <div class="stat__bottom">
+                        <div class="flx">
+                            <span class="stat__value">
+                                {zero ? "--" : perfectDays}
+                            </span>
+                            <span class="stat__unit">
+                                {zero ? "" : perfectDays === 1 ? "day" : "days"}
+                            </span>
+                        </div>
+                        <span class="stat__label">100% Days</span>
+                    </div>                    
+                </div>
+                <div class="stat">
+                    <div class="stat__bottom">
+                        <div class="flx">
+                            <span class="stat__value">
+                                {zero ? "--" : missed}
+                            </span>
+                            <span class="stat__unit">
+                                {zero ? "" : missed === 1 ? "time" : "times"}
+                            </span>
+                        </div>
+                        <span class="stat__label">Missed</span>
+                    </div>
                 </div>
             </div>
-            <div class="yr-view__stat">
-                <div class="yr-view__stat-title">
-                    Perfect Days
-                </div>
-                <div class="yr-view__stat-num">
-                    26
-                </div>
-            </div>
-            <div class="yr-view__stat">
-                <div class="yr-view__stat-title">
-                    Longest Streak
-                </div>
-                <div class="yr-view__stat-num">
-                    11
-                </div>
-            </div>
-            <div class="yr-view__stat">
-                <div class="yr-view__stat-title">
-                    Skipped Days
-                </div>
-                <div class="yr-view__stat-num">
-                    4
-                </div>
-            </div>
-        </div>
+        {/if}
+
         <div class="yr-view__heat-map">
             <HeatMap 
-                id={"0"} 
-                type="habits" 
-                options={{ startDate: date, from: "next" }}
+                type="habits"
+                data={habitsHeatMap}
+                year={currYear}
+                options={{
+                    single: habits.length === 1
+                }}
             />
         </div>
     </div>
@@ -131,6 +197,7 @@
 
 <style lang="scss">
     @import "../../../scss/goals.scss";
+    @import "../../../scss/stats.scss";
 
     .yr-view {
         margin-top: 8px;
@@ -188,7 +255,7 @@
             width: 100%;
         }
         &__stats {
-            margin: 8px 0px 25px 0px;
+            margin: 13px 0px 25px 0px;
             @include flex(center);
         }
         &__stat {

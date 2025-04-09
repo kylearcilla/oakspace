@@ -24,15 +24,15 @@
             background-color: var(--elemColor2);
         }
         &--active &__circle {
-            left: calc(100% - (12px + 3px));
+            left: calc(100% - (12px + 3.5px));
         }
 
         &__circle {
             transition: 0.1s ease-in-out;
-            @include circle(12px);
+            @include circle(13.5px);
             position: absolute;
-            top: 3px;
-            left: 4px;
+            top: 2.5px;
+            left: 2.5px;
             background-color: white;
         }
     }

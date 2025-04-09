@@ -1,59 +1,43 @@
 <script lang="ts">
     import { themeState } from "$lib/store"
-    import { colorPicker } from "../lib/pop-ups"
 	import { capitalize } from "$lib/utils-general"
 	import { COLOR_SWATCHES } from "$lib/utils-colors"
     
-	import BounceFade from "./BounceFade.svelte"
-    
-    const { state, onSubmitColor, close } = colorPicker
+    export let onSubmitColor: (color: Color) => void
+    export let picked: Color | null
 
     $: isDark = $themeState.isDarkTheme
-    $: isOpen =  $state.isOpen
-    $: position =  $state.position
-    $: picked = $state.picked
 
     function onSwatchClicked(color: Color) {
         onSubmitColor(color)
     }
 </script>
 
-<BounceFade 
-    id="color-picker--dmenu"
-    isHidden={!isOpen}
-    zIndex={10001}
-    position={{
-        top: `${position.top}px`,
-        left: `${position.left}px`
-    }}
-    onClickOutside={() => close()}
+<div 
+    class="color-picker" 
+    class:color-picker--light={!isDark}
 >
-    <div 
-        class="color-picker" 
-        class:color-picker--light={!isDark}
-    >
-        <ul>
-            {#each COLOR_SWATCHES as color}
-                {@const { primary, name } = color }
-                <li>
-                    <button 
-                        class="color-picker__color"
-                        class:color-picker__color--picked={picked?.name === name}
-                        style:--color={primary}
-                        on:click={() => {
-                            onSwatchClicked(color)
-                        }}
-                    >
-                        <div class="color-picker__color-swatch"></div>
-                        <div class="color-picker__color-name">
-                            {capitalize(name)}
-                        </div>
-                    </button>
-                </li>
-            {/each}
-        </ul>
-    </div>
-</BounceFade>
+    <ul>
+        {#each COLOR_SWATCHES as color}
+            {@const { primary, name } = color }
+            <li>
+                <button 
+                    class="color-picker__color"
+                    class:color-picker__color--picked={picked?.name === name}
+                    style:--color={primary}
+                    on:click={() => {
+                        onSwatchClicked(color)
+                    }}
+                >
+                    <div class="color-picker__color-swatch"></div>
+                    <div class="color-picker__color-name">
+                        {capitalize(name)}
+                    </div>
+                </button>
+            </li>
+        {/each}
+    </ul>
+</div>
 
 
 <style lang="scss">

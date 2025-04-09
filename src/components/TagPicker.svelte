@@ -5,14 +5,9 @@
     import { getSwatchColors } from "$lib/utils-colors"
     
     import SvgIcon from "./SVGIcon.svelte"
-	import BounceFade from "./BounceFade.svelte"
 
-    export let isOpen: boolean
     export let tag: Tag | null
-    export let position: CSSAbsPos
-    export let onTagClicked: (newTag: Tag | null) => void
-    export let useBounceFade = true
-    
+    export let onTagClicked: (newTag: Tag) => void
 
     $: isDarkTheme = $themeState.isDarkTheme
 
@@ -22,124 +17,62 @@
     }
 </script>
 
-{#if useBounceFade}
-    <BounceFade 
-        id="tag-picker--dmenu"
-        isHidden={!isOpen}
-        onClickOutside={() => onTagClicked(null)}
-        {position}
-    >
-        <div class="tag-picker" class:tag-picker--light={!isDarkTheme}>
-            <div class="tag-picker__dmenu-container">
-                <ul class="tag-picker__dmenu">
-                    {#each TEST_TAGS as tagOption}
-                        {@const colors = getSwatchColors({ color: tagOption.symbol.color, light: !isDarkTheme })}
-                        {@const picked = tag?.name === tagOption.name}
-                        <li 
-                            class="tag-picker__dropdown-opt"
-                            class:tag-picker__dropdown-opt--picked={picked}
+<div class="tag-picker" class:tag-picker--light={!isDarkTheme}>
+    <div class="tag-picker__dmenu-container">
+        <ul class="tag-picker__dmenu">
+            {#each TEST_TAGS.filter(tag => tag.id !== "*") as tagOption}
+                {@const colors = getSwatchColors({ color: tagOption.symbol.color, light: !isDarkTheme })}
+                {@const picked = tag?.name === tagOption.name}
+                <li 
+                    class="tag-picker__dropdown-opt"
+                    class:tag-picker__dropdown-opt--picked={picked}
+                >
+                    <button
+                        class="tag-picker__dropdown-opt-btn"
+                        on:click={() => {
+                            onTagClicked(tagOption)
+                        }}
+                    >
+                        <div 
+                            class="tag"
+                            style:--tag-color-primary={tagOption.symbol.color.primary}
+                            style:--tag-color-1={colors[0]}
+                            style:--tag-color-2={colors[1]}
+                            style:--tag-color-3={colors[2]}
                         >
-                            <button
-                                class="tag-picker__dropdown-opt-btn"
-                                on:click={() => onTagClicked(tagOption)}
-                            >
-                                <div 
-                                    class="tag"
-                                    style:--tag-color-primary={tagOption.symbol.color.primary}
-                                    style:--tag-color-1={colors[0]}
-                                    style:--tag-color-2={colors[1]}
-                                    style:--tag-color-3={colors[2]}
-                                >
-                                    <span class="tag__symbol">
-                                        {tagOption.symbol.emoji}
-                                    </span>
-                                    <div class="tag__title" style:font-size="1.25rem">
-                                        {tagOption.name}
-                                    </div>
-                                </div>
-                                <div class="tag-picker__dropdown-opt-check">
-                                    <i class="fa-solid fa-check"></i>
-                                </div>
-                            </button>
-                            <button 
-                                class="tag-picker__settings-btn"
-                                on:click={onSettingsClicked}
-                            >
-                                <SvgIcon icon={Icon.Settings} />
-                            </button>
-                        </li>
-                    {/each}
-                </ul>
-                <div class="tag-picker__dmenu-add">
-                    <button on:click={onNewTagClicked}>
-                        <span>New Tag</span>
-                        <div style:opacity={0.45}>
-                            <SvgIcon 
-                                icon={Icon.Add} 
-                                options={{ scale: 1.05, strokeWidth: 1.7 }} 
-                            />
+                            <span class="tag__symbol">
+                                {tagOption.symbol.emoji}
+                            </span>
+                            <div class="tag__title" style:font-size="1.25rem">
+                                {tagOption.name}
+                            </div>
+                        </div>
+                        <div class="tag-picker__dropdown-opt-check">
+                            <i class="fa-solid fa-check"></i>
                         </div>
                     </button>
-                </div>
-            </div>
-        </div>
-    </BounceFade>
-{:else}
-    <div class="tag-picker" class:tag-picker--light={!isDarkTheme} class:hidden={!isOpen}>
-        <div class="tag-picker__dmenu-container">
-            <ul class="tag-picker__dmenu">
-                {#each TEST_TAGS as tagOption}
-                    {@const colors = getSwatchColors({ color: tagOption.symbol.color, light: !isDarkTheme })}
-                    {@const picked = tag?.name === tagOption.name}
-                    <li 
-                        class="tag-picker__dropdown-opt"
-                        class:tag-picker__dropdown-opt--picked={picked}
+                    <button 
+                        class="tag-picker__settings-btn"
+                        on:click={onSettingsClicked}
                     >
-                        <button
-                            class="tag-picker__dropdown-opt-btn"
-                            on:click={() => onTagClicked(tagOption)}
-                        >
-                            <div 
-                                class="tag"
-                                style:--tag-color-primary={tagOption.symbol.color.primary}
-                                style:--tag-color-1={colors[0]}
-                                style:--tag-color-2={colors[1]}
-                                style:--tag-color-3={colors[2]}
-                            >
-                                <span class="tag__symbol">
-                                    {tagOption.symbol.emoji}
-                                </span>
-                                <div class="tag__title" style:font-size="1.25rem">
-                                    {tagOption.name}
-                                </div>
-                            </div>
-                            <div class="tag-picker__dropdown-opt-check">
-                                <i class="fa-solid fa-check"></i>
-                            </div>
-                        </button>
-                        <button 
-                            class="tag-picker__settings-btn"
-                            on:click={onSettingsClicked}
-                        >
-                            <SvgIcon icon={Icon.Settings} />
-                        </button>
-                    </li>
-                {/each}
-            </ul>
-            <div class="tag-picker__dmenu-add">
-                <button on:click={onNewTagClicked}>
-                    <span>New Tag</span>
-                    <div style:opacity={0.45}>
-                        <SvgIcon 
-                            icon={Icon.Add} 
-                            options={{ scale: 1.05, strokeWidth: 1.7 }} 
-                        />
-                    </div>
-                </button>
-            </div>
+                        <SvgIcon icon={Icon.Settings} />
+                    </button>
+                </li>
+            {/each}
+        </ul>
+        <div class="tag-picker__dmenu-add">
+            <button on:click={onNewTagClicked}>
+                <span>Add a Tag</span>
+                <div style:opacity={0.45}>
+                    <SvgIcon 
+                        icon={Icon.Add} 
+                        options={{ scale: 1.2, strokeWidth: 1.2, opacity: 0.7 }}
+                    />
+                </div>
+            </button>
         </div>
     </div>
-{/if}
+</div>
 
 <style lang="scss">
     @import "../scss/dropdown.scss";
@@ -152,13 +85,18 @@
             --tag-hov-brightness: 1.015;
             --optn-hov-opacity: 0.03;
         }
+        &--light &__dmenu-container {
+            @include contrast-bg("bg-3");
+        }
         
         &__dmenu-container {
             max-width: 210px;
-            background-color: #151414;
             padding: 0px 0px 6.5px 0px;
             border-radius: 8px;
             width: 100%;
+
+            @include contrast-bg("bg-2");
+            border: none;
         }
         &__dmenu .tag {
             border-radius: 5px !important;
@@ -248,7 +186,7 @@
                 transition: 0.14s ease-in-out;
             }
             span {
-                @include text-style(1, var(--fw-400-500), 1.2rem);
+                @include text-style(1, var(--fw-400-500), 1.22rem, "Geist Mono");
             }
         }
     }

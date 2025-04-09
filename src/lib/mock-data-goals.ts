@@ -1,13 +1,18 @@
-import { TEST_TAGS } from "./mock-data"
+import { TEST_TAGS } from "./mock-data-tags"
 
-type YearEntry = {
-    entry: TextEntryOptions
+type PeriodEntry = {
+    entry: TextEntryOptions | null
+    pinnedId: string | null
+
+  }
+type YearEntry = PeriodEntry & {
     bannerImg: {
         src: string
         center: number
     }
     smallImg: string
 }
+
 
 export const GOALS: Goal[] = [
       {
@@ -18,6 +23,8 @@ export const GOALS: Goal[] = [
         description: "Reach conversational fluency in French by the end of the year.",
         tag: TEST_TAGS[0],
         creationDate: new Date("2025-01-15"),
+        tasks: [],
+        img: null,
         status: "in-progress",
         y_order: {
          default: 0,
@@ -43,15 +50,12 @@ export const GOALS: Goal[] = [
         description: "Run a 6 minute mile by the end of the year.",
         tag: TEST_TAGS[6],
         creationDate: new Date("2025-02-10"),
+        tasks: [],
         status: "not-started",
-        img: { 
-          src: "",
-          type: "header",
-          center: 50
-        },
+        img: null,
         y_order: {
          default: 1,
-         status: 0,
+         status: 1,
          tag: 0
         },
         q_order: {
@@ -74,6 +78,7 @@ export const GOALS: Goal[] = [
         dueType: "day",
         status: "accomplished",
         completedDate: new Date("2025-03-22"),
+        tasks: [],
         img: { 
           src: "https://i.pinimg.com/736x/47/b5/9a/47b59ab91d55bff20784f30b12183476.jpg",
           type: "float-left",
@@ -105,6 +110,7 @@ export const GOALS: Goal[] = [
         big: true,
         due: new Date("2025-03-22"),
         status: "not-started",
+        tasks: [],
         img: { 
           src: "https://i.pinimg.com/736x/e7/cb/8a/e7cb8a6fd5c308575b3261262e85965d.jpg",
           type: "float-left",
@@ -135,10 +141,11 @@ export const GOALS: Goal[] = [
         description: "Read one book every month and complete all 12 by the end of the year.",
         tag: TEST_TAGS[10],
         creationDate: new Date("2025-01-01"),
+        tasks: [],
         status: "in-progress",
         img: { 
           src: "https://i.pinimg.com/736x/49/b5/9d/49b59d5866a63a2fe0bb03ea05ce649d.jpg",
-          type: "header",
+          type: "float-left",
           center: 50
         },
         y_order: {
@@ -165,7 +172,9 @@ export const GOALS: Goal[] = [
         description: "Create the best most beautiful most gorgeous portfolio website oat.",
         tag: TEST_TAGS[1],
         creationDate: new Date("2025-03-01"),
+        tasks: [],
         status: "accomplished",
+        img: null,
         completedDate: new Date("2025-03-7"),
         y_order: {
           default: 3,
@@ -191,6 +200,7 @@ export const GOALS: Goal[] = [
         description: "Complete 30 minutes of exercise 5 days a week. Mix between yoga, home workout videos, walking, or simple bodyweight exercises.",
         tag: TEST_TAGS[1],
         creationDate: new Date("2024-04-10"),
+        tasks: [],
         status: "not-started",
         img: { 
           src: "https://i.pinimg.com/736x/c4/64/54/c46454bf75c6e3501080f5b448d497e4.jpg",
@@ -221,9 +231,10 @@ export const GOALS: Goal[] = [
         description: "Tokyo, Kyoto, Osaka. Food, ramen, sushi, fashion, coffee and nature.",
         pinIdx: 0,
         big: true,
+        tasks: [],
         img: { 
           src: "https://i.pinimg.com/736x/18/86/7c/18867cb31f36820b8908b1f462ab8b70.jpg",
-          type: "header",
+          type: "float-left",
           center: 50
         },
         tag: TEST_TAGS[9],
@@ -252,9 +263,10 @@ export const GOALS: Goal[] = [
         due: new Date("2025-5-20"),
         dueType: "quarter",
         description: "Learn to code. JavaScript, Python, React, etc.",
+        tasks: [],
         img: { 
           src: "https://i.pinimg.com/736x/ea/87/5f/ea875f548c6d1cdabd6335406c55fe28.jpg",
-          type: "header",
+          type: "float-left",
           center: 50
         },
         tag: TEST_TAGS[1],
@@ -286,9 +298,10 @@ export const GOALS: Goal[] = [
         description: "Create the best most beautiful most gorgeous portfolio website oat.",
         tag: TEST_TAGS[11],
         creationDate: new Date("2025-03-01"),
+        tasks: [],
         img: { 
           src: "https://i.pinimg.com/736x/3f/95/7f/3f957fd83772de7c84fd686a9bd447eb.jpg",
-          type: "header",
+          type: "float-left",
           center: 50
         },
         status: "not-started",
@@ -316,6 +329,8 @@ export const GOALS: Goal[] = [
         description: "Chest, arms, legs, back, abs.",
         tag: TEST_TAGS[1],
         creationDate: new Date("2025-03-01"),
+        tasks: [],
+        img: null,
         status: "not-started",
         y_order: {  
           default: 7,
@@ -341,6 +356,7 @@ export const GOALS: Goal[] = [
         description: "Develop a fully functional vegetable garden with at least 10 different types of vegetables. Learn organic gardening techniques and composting.",
         tag: TEST_TAGS[1],
         creationDate: new Date("2024-02-10"),
+        tasks: [],
         status: "not-started",
         img: { 
           src: "https://i.pinimg.com/736x/c4/64/54/c46454bf75c6e3501080f5b448d497e4.jpg",
@@ -370,9 +386,10 @@ export const GOALS: Goal[] = [
         completedDate: new Date("2025-03-22"),
         dueType: "quarter", 
         description: "Social medias for projects. Find Inspiration, create content, publish.",
+        tasks: [],
         img: { 
           src: "https://i.pinimg.com/736x/18/86/7c/18867cb31f36820b8908b1f462ab8b70.jpg",
-          type: "header",
+          type: "float-left",
           center: 50
         },
         tag: TEST_TAGS[1],
@@ -402,12 +419,9 @@ export const GOALS: Goal[] = [
         description: "Achieve B1 level Spanish proficiency. Use language learning apps, take weekly conversation classes, and practice with native speakers.",
         tag: TEST_TAGS[1],
         creationDate: new Date("2024-02-10"),
+        tasks: [],
         status: "not-started",
-        img: { 
-          src: "",
-          type: "header",
-          center: 50
-        },
+        img: null,
         y_order: {
          default: 10,
          status: 4,
@@ -427,11 +441,11 @@ export const GOALS: Goal[] = [
 ]
 
 export const YEARS: Record<string, YearEntry> = {
-    "2024": {
+    "2025": {
         entry: {
             icon: {
                 type: "img",
-                src: "https://i.pinimg.com/736x/84/82/94/848294c79273197fa6525b0306174bb4.jpg",
+                src: "https://i.pinimg.com/originals/42/f3/e6/42f3e6dd32467736bdc85dc8a6038e35.gif",
                 size: "small"
             },
             date: new Date(2024, 11),
@@ -443,13 +457,14 @@ It's embracing <i>challenges</i> that stretch your capabilities, the <u>transfor
 To grow is to step outside comfort zones, to learn from setbacks, and to celebrate small victories, 💪.
 It's about <i>becoming more</i>, investing in potential, and finding strength in the journey of improvement ✨.`
         },
+        pinnedId: null,
         bannerImg: {
             src: "https://i.imgur.com/m2x5URb.png",
-            center: 87
+            center: 82
         },
-        smallImg: "https://i.pinimg.com/736x/cf/b9/6e/cfb96eaf876204493a1bcab7b99a7fda.jpg"
+        smallImg: "https://i.pinimg.com/736x/87/7a/f8/877af84ee302075f969be04f809a0e5f.jpg"
     },
-    "2025": {
+    "2024": {
         entry: {
             icon: {
                 type: "img",
@@ -465,15 +480,23 @@ It's pursuing <i>new paths</i> and unexpected opportunities, the <u>experiences 
 To explore is to ask deeper questions, to try unfamiliar approaches, and to welcome diverse encounters, 🔍.
 It's about <i>venturing beyond</i>, embracing the unknown, and finding excitement in discovering what's possible ✨`
         },
+        pinnedId: "5",
         bannerImg: {
-            src: "https://images.unsplash.com/photo-1732660122434-775d5af17735?q=80&w=2944&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-            center: 20
+            src: "https://i.imgur.com/mmSRFZj.png",
+            center: 47
         },
-        smallImg: "https://i.pinimg.com/736x/41/b2/8d/41b28d0a44869e1ca4128aab10f7c206.jpg"
+        smallImg: "https://i.pinimg.com/originals/a5/cd/69/a5cd69932e2ec8fdec5cfcf063d6b3da.gif"
     },
 }
 
-export const MONTH_ENTIRES: Record<string, { entry: TextEntryOptions, pinnedId: string }> = {
+export const QUARTER_ENTRIES: Record<string, PeriodEntry> = {
+    "2025-Q3": {
+        entry: null,
+        pinnedId: "5"
+    }
+}
+
+export const MONTH_ENTIRES: Record<string, PeriodEntry> = {
     "2024-12": {
         entry: {
             icon: {
@@ -535,7 +558,7 @@ It's about <i>starting again</i>, embracing change, and finding joy in nature's 
         entry: {
             icon: {
                 type: "img",
-                src: "https://i.pinimg.com/736x/72/44/08/724408c450ce38a7be258ed489d8c64d.jpg",
+                src: "https://i.pinimg.com/736x/b7/d1/10/b7d11030947b7bd4d9cb619a50d654da.jpg",
                 size: "small"
             },
             date: new Date(2024, 11),
@@ -554,7 +577,7 @@ It's about <i>being intentional</i>, prioritizing what matters, and finding sati
         entry: {
             icon: {
                 type: "img",
-                src: "https://i.pinimg.com/736x/b7/d1/10/b7d11030947b7bd4d9cb619a50d654da.jpg",
+                src: "https://i.pinimg.com/736x/72/44/08/724408c450ce38a7be258ed489d8c64d.jpg",
                 size: "small"
             },
             date: new Date(2024, 11),
@@ -605,7 +628,7 @@ To adventure is to say yes to opportunities, to step outside comfort zones, and 
 It's about <i>being spontaneous</i>, discovering new passions, and finding excitement in the unexpected ✨.
       `
         },
-        pinnedId: "7"
+        pinnedId: null
     },
     "2025-7": {
         entry: {

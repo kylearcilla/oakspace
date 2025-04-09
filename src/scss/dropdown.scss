@@ -195,6 +195,7 @@
             padding: 0px 2px 0px $side-padding;
             opacity: 1;
             @include flex(center, space-between);
+            gap: 12px;
         }
         &--selected {
             opacity: 1;
@@ -222,7 +223,6 @@
     }
     &__option-text {
         @include text-style(0.9, var(--fw-400-500), var(--font-size));
-        margin-right: 15px;
     }
     &__right-icon-container {
         @include flex(center);
@@ -261,6 +261,7 @@
         width: 100%;
         opacity: var(--inactive-opacity);
         transition: background-color 0.04s ease-in-out;
+        gap: 12px;
 
         &--unclickable:active {
             transition: 0s !important;

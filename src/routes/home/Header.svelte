@@ -125,7 +125,7 @@
             <div class="header__ambient-main">
                 Space: <span>{groupName === "User" ? "Library" : groupName}</span>
                 <button 
-                    id="ambient-header--dbtn"
+                    data-dmenu-id="ambient-header"
                     class="header__ambient-settings-btn smooth-bounce"
                     on:click={() => ambientSettings = !ambientSettings}
                 >
@@ -147,7 +147,7 @@
             class:ambient-solid={hasAmbience && ambience?.styling === "solid"}
             class:ambient-clear={hasAmbience && ambience?.styling === "clear"}
             title={nowBlockTitle}
-            id="active-routine--dbtn"
+            data-dmenu-id="active-routine"
             on:click={() => {
                 if ($weekRoutine) {
                     isRoutineOpen = !isRoutineOpen
@@ -352,14 +352,14 @@
                 display: none;
             }
             &-title {
-                @include text-style(_, 400, 1.225rem, "Geist Mono");
+                @include text-style(_, 400, 1.3rem);
                 color: rgba(var(--textColor1), 1);
                 @include elipses-overflow;
                 margin: 0px 11px 0px 0px;
                 max-width: 150px;
             }
             &-time {
-                @include text-style(_, 400, 1.225rem, "Geist Mono");
+                @include text-style(_, 400, 1.25rem);
                 color: rgba(var(--textColor1), 0.5);
             }
         }

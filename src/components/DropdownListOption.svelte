@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Icon } from "$lib/enums";
 	import DropdownOptionIcon from "./DropdownOptionIcon.svelte"
 
     export let option: DropdownOption
@@ -15,6 +16,7 @@
     class="dmenu__option"
     class:dmenu__option--selected={typeof pickedItem === 'string' ? pickedItem.toLowerCase() === name.toLowerCase() : pickedItem === idx}
     data-optn-idx={idx}
+    data-child-id={option.childId}
     on:pointerenter={(e) => {
         onItemPointerOver(e, option)
     }}
@@ -27,13 +29,15 @@
         on:click={(e) => onOptionClicked(e, idx, name)}
     >
         {#if leftIcon}
-            <DropdownOptionIcon left={true} icon={leftIcon}/>
+            <DropdownOptionIcon dir="l" icon={leftIcon}/>
         {/if}
         <span class="dmenu__option-text">
             {name}
         </span>
-        {#if rightIcon || pickedItem}
-            <DropdownOptionIcon  left={false} icon={rightIcon ?? { type: "check" }}/>
+        {#if option.childId}
+            <DropdownOptionIcon dir="r" icon={{ type: "svg", icon: Icon.ChevronRight }}/>
+        {:else if rightIcon || pickedItem}
+            <DropdownOptionIcon dir="r" icon={rightIcon ?? { type: "check" }}/>
         {/if}
     </button>
 </li>

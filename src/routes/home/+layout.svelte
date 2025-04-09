@@ -41,13 +41,11 @@
 	import { themeState, ytPlayerStore } from "../../lib/store";
   import { updateAmbience, updateGlobalContext, hasAmbienceSpace } from "../../lib/utils-home";
   import { findThemeFromName, getActiveTheme, getPrevTheme, setNewTheme, setPrevTheme } from "../../lib/utils-appearance";
-	import EmojiPicker from "../../components/EmojiPicker.svelte";
-	import AbsoluteFloatElem from "../../components/AbsoluteFloatElem.svelte";
-	import ImgUpload from "../../components/ImgUpload.svelte";
-	import IconPicker from "../../components/IconPicker.svelte";
-	import { YoutubePlayer } from "../../lib/youtube-player";
-	import ColorPicker from "../../components/ColorPicker.svelte";
-	import { themes } from "../../lib/data-themes"
+	import EmojiPicker from "$components/EmojiPicker.svelte";
+	import AbsoluteFloatElem from "$components/AbsoluteFloatElem.svelte";
+	import ImgUpload from "$components/ImgUpload.svelte"
+	import { YoutubePlayer } from "$lib/youtube-player"
+	import { themes } from "$lib/data-themes"
 	import HabitViewModal from "$components/HabitViewModal.svelte";
 	import GoalViewModal from "$components/GoalViewModal.svelte";
 
@@ -333,22 +331,26 @@
   {#if modalsOpen.includes(ModalType.Settings)} 
       <Settings/> 
   {/if}
+  
   {#if modalsOpen.includes(ModalType.Themes)} 
       <Appearance />
   {/if}
+
   {#if $habitTracker.viewHabit}
     {@const habit = $habitTracker.viewHabit}
     <HabitViewModal {habit} />
   {/if}
+
   {#if $goalTracker.viewGoal}
-    {@const goal = $goalTracker.viewGoal}
-    <GoalViewModal {goal} />
+    {@const { goal, type } = $goalTracker.viewGoal}
+    <GoalViewModal {goal} {type} />
   {/if}
 
   <!-- modals -->
   {#if modalsOpen.includes(ModalType.NewSession)} 
       <SessionNewModal /> 
   {/if}
+
   {#if $sessionManager?.state === "done"} 
       <SessionSummaryModal session={$sessionManager.session}/>
   {/if}
@@ -380,8 +382,6 @@
 <!-- pop-ups -->
 <EmojiPicker/>
 <ImgUpload/>
-<IconPicker/>
-<ColorPicker/>
 <AbsoluteFloatElem/>
 
 <style lang="scss">

@@ -5,15 +5,11 @@
 	import { DatePickerCalendar } from "$lib/date-picker-calendar"
 
 	import Calendar from "./Calendar.svelte"
-	import BounceFade from "./BounceFade.svelte";
 	import DropdownList from "./DropdownList.svelte"
-    
-    export let isOpen: boolean
+
 	export let pickedDate: Date
 	export let options: DatePickerOptions
-    export let dateType: DateType
-	export let onClose: () => void
-	export let onUpdate: (val: { date: Date, dateType: DateType } | null) => void
+	export let onUpdate: (val: { date: Date, dateType?: DateType } | null) => void
 
     $: light = !$themeState.isDarkTheme
 
@@ -22,8 +18,7 @@
     let nowYear = new Date().getFullYear()
     let typeOptions = false
     let inputText = ""
-
-    const { position = { top: "0px", left: "0px" } } = options ?? {}
+    let dateType = options.dateType
 
     function onDayUpdate(day: Date) {
         inputText = calendar.formatDateByType(day)
@@ -36,7 +31,7 @@
         if (data.str) {
             inputText = data.str
             pickedDate = data.date!
-
+            onUpdate({ date: data.date!, dateType })
         }
         else {
             errorMsg = data.errorMsg!
@@ -74,26 +69,22 @@
 
 <svelte:window on:keydown={(e) => keyboardShortcutsHandler(e)} />
 
-<BounceFade 
-    {position}
-    id="date-picker--dmenu"
-    isHidden={!isOpen}
-    onClickOutside={() => onClose()}
+<div 
+    class="date-picker"
+    class:date-picker--light={light}
 >
-    <div 
-        class="date-picker"
-        class:date-picker--light={light}
-    >
-        <div class="date-picker__header">
-            <div class="date-picker__input-container">
-                <input 
-                    type="text"
-                    class="date-picker-input"
-                    placeholder="Apr 14, Q3 {nowYear}" 
-                    maxLength={30}
-                    on:input={onDateInputChange}
-                    bind:value={inputText}
-                />
+    <div class="date-picker__header">
+        <div class="date-picker__input-container">
+            <input 
+                type="text"
+                class="date-picker-input"
+                placeholder="Apr 14, Q3 {nowYear}" 
+                maxLength={30}
+                on:input={onDateInputChange}
+                bind:value={inputText}
+            />
+
+            {#if dateType != undefined}
                 <button 
                     class="date-picker__due-type"
                     on:click={() => typeOptions = !typeOptions}
@@ -117,7 +108,7 @@
                             top: "35px", right: "0px" 
                         },
                         styling: {
-                            width: "85px"
+                            width: "100px"
                         },
                         onListItemClicked: ({ name }) => {
                             updateDateType(name.toLowerCase())
@@ -127,34 +118,37 @@
                         }
                     }}
                 />
-            </div>
-            {#if errorMsg}
-                <div class="date-picker__input-error-msg">
-                    {errorMsg}
-                </div>
             {/if}
         </div>
-        <div style:padding="7px 5px 0px 5px">
-            <Calendar 
-                {calendar} 
-                {onDayUpdate} 
-                focusDate={pickedDate} 
-                context="date-picker"
-            />
-        </div>
+        {#if errorMsg}
+            <div class="date-picker__input-error-msg">
+                {errorMsg}
+            </div>
+        {/if}
     </div>
-</BounceFade>
+    <div style:padding="7px 5px 0px 5px">
+        <Calendar 
+            {calendar} 
+            {onDayUpdate} 
+            focusDate={pickedDate} 
+            context="date-picker"
+        />
+    </div>
+</div>
 
 <style lang="scss">
     .date-picker {
         width: 220px;
         border-radius: 10px;
         padding-bottom: 9px;
-        background-color: #181717;
-        border: var(--bentoBoxBorder);
-        box-shadow: var(--bentoBoxShadow);
-
+        @include contrast-bg("bg-2");
+        border: none;
+        
         --cancel-btn-opacity: 0.025;
+
+        &--light {
+            @include contrast-bg("bg-3");
+        }
         &--light {
             --cancel-btn-opacity: 0.065;
         }
@@ -175,7 +169,7 @@
         }
         input {
             flex: 1;
-            @include text-style(0.9, 400, 1.3rem);
+            @include text-style(0.9, var(--fw-400-500), 1.35rem);
             padding: 1px 0px 2px 0px;
             
             &::placeholder {
@@ -188,13 +182,13 @@
             position: relative;
         }
         &__due-type {
-            @include text-style(_, 400, 1.335rem, "Geist Mono");
+            @include text-style(0.3, 400, 1.335rem);
             margin-left: 4px;
         }
         &__input-error-msg {
-            @include text-style(_, 400, 1.3rem);
+            @include text-style(_, 400, 1.25rem);
             color: rgba(212, 115, 115, 0.8);
-            padding: 8px 0px 2px 12px;
+            padding: 4px 0px 1px 12px;
         }
         &__btns-container {
             @include flex(center);

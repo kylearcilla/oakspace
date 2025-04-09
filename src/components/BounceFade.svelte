@@ -3,6 +3,7 @@
     import { ambienceSideBarOffset, cursorPos, modalSideBarOffset } from "$lib/utils-home"
 
     export let id = ""
+    export let dmenuId: string = ""
     export let isHidden: boolean
     export let isAnim = true
     export let position: CSSAbsPos | undefined = undefined
@@ -11,6 +12,7 @@
     export let onClickOutside: ((e: CustomEvent) => any) | undefined = undefined
     export let onDismount: (() => void) | undefined = undefined
     export let offsetContext: "side-bar" | "modal" | "default" = "default"
+
     
     let TRANSITION_DURATIONS_MS = 200
 
@@ -94,8 +96,8 @@
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div 
         {id}
+        data-dmenu-id={dmenuId}
         bind:this={self}
-        data-top={`${position?.left} xxx `}
         class="bounce-fade"
         class:bounce-fade--shown={doShow && showFlag}
         class:bounce-fade--animated={isAnim}

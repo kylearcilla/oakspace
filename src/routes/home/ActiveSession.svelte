@@ -250,7 +250,7 @@
                 </button>
                 <div style:position="relative">
                     <button
-                        id="session--dbtn"
+                        data-dmenu-id="session"
                         class:ambient-blur={styling != "clear"}
                         class:ambient-clear={styling === "clear"}
                         on:click={() => dropdown = !dropdown}
@@ -489,9 +489,6 @@
             }
             button:hover {
                 background: rgba(var(--textColor1), calc(var(--contorl-btn-oapcity) * 2)) !important;
-            }
-            #session--dbtn {
-                @include circle(32px);
             }
         }
         &__control-btn {

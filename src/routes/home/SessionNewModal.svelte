@@ -237,7 +237,7 @@
                 <div class="new-session__label">
                     Todos
                     </div>
-                    <div class="flx-algn-center">
+                    <div class="flx-center">
                     <span class="new-session__list-count">
                         {tasks.filter((task) => task.parentId === null).length}
                     </span>

@@ -1,16 +1,17 @@
 <script lang="ts">
+    import { onMount } from "svelte"
 	import { themeState } from "$lib/store"
-	import { onMount } from "svelte"
     
+	import { clickOutside } from "$lib/utils-general"
 	import { getHozSpace } from "../lib/utils-general"
-	import { clickOutside, findAncestor } from "$lib/utils-general"
 
-	import BounceFade from "./BounceFade.svelte"
+	import ToggleBtn from "./ToggleBtn.svelte"
 	import DropdownListOption from "./DropdownListOption.svelte"
-	import ToggleBtn from "./ToggleBtn.svelte";
-	import DropdownListMenuOptn from "./DropdownListMenuOptn.svelte";
+	import DropdownListMenuOptn from "./DropdownListMenuOptn.svelte"
 
-    export let id: string = ""
+    export let id: string = ""  // dropdown context
+    export let childId: string = ""  // dropdown is a child of another parent
+    export let relDir: "l" | "r" = "l"  // wether dropdown is relative to right or left of container
     export let isHidden: boolean
     export let options: DropdownListOptions
     export let renderFlag: boolean | undefined = undefined
@@ -19,12 +20,7 @@
     let listItems = options.listItems
     let pickedItem = options.pickedItem
 
-    const {       
-        fixPos = false,
-        context = "default",
-        onDismount,
-        scroll
-    } = options
+    const { scroll } = options
     const {
         width = "auto",
         zIndex = 1,
@@ -48,14 +44,14 @@
         pickedItem = options.pickedItem
     }
 
-    /* actions*/
+    /* actions */
     function onItemClicked(e: Event, idx: number, name: string) {
         if (options.onListItemClicked) {
             options.onListItemClicked({
                 event: e, 
                 name,
                 idx, 
-                parentName: options.parent?.optnName
+                parentName: options.parentId
             })
         }
     }
@@ -66,56 +62,39 @@
         options.onClickOutside()
     }
 
-    /* child menu hover */
-    function onPointerLeave(e: PointerEvent) {
-        if (!options.onPointerLeave) {
+    /* event handlers */
+    function onMenuLeave(e: PointerEvent) {
+        const { parentId, onPointerLeave } = options
+        if (!onPointerLeave) {
             return
         }
-        if (!options.parent) {
-            options.onPointerLeave()
+        if (!parentId) {
+            onPointerLeave()
             return
         }
 
         const rTarget = e.relatedTarget as HTMLElement
-        const optnBtn = findAncestor({
-            child: rTarget, queryStr: "dmenu__option-btn", queryBy: "class", strict: true
-        })
-        const menuElem = findAncestor({
-            child: rTarget, queryStr: "dmenu", queryBy: "id"
-        })
-        const optionElem = findAncestor({
-            child: rTarget, queryStr: "dmenu__option", queryBy: "class", strict: true
-        })
+        const menuElem = rTarget.closest('[data-dmenu-id]') as HTMLElement
         
-        // leaves outside of menu and not parent
-        if (!optnBtn || !menuElem || !optionElem) {
-            options.onPointerLeave()
+        // leave if not the parent menu
+        if (!menuElem || getDmenuId(menuElem) != parentId) {
+            onPointerLeave()
             return
-        }
-
-        const optionsElemIdx = +optionElem!.getAttribute("data-optn-idx")!
-        
-        // leaves into a dropdown menu but not the parent and not the parent option
-        if (menuElem.id != `${options.parent.id}--dmenu` || optionsElemIdx != options.parent.optnIdx) {
-            options.onPointerLeave()
         }
     }
+    /* child menu stuff */
     function onItemPointerLeave(e: PointerEvent, item: DropdownOption) {
-        const { childId } = options.parentContext ?? {}
-        if (!item.onPointerLeave) {
-            return
-        }
-
-        // do not leave if off to child menu
+        const { onPointerLeave, childId } = item
         const rTarget   = e.relatedTarget as HTMLElement
-        const rTargetId = rTarget?.children[0]?.id
+        const rDmenu    = rTarget?.children[0]?.closest('.dmenu')
 
-        if (`${childId}--dmenu` != rTargetId) {
-            item.onPointerLeave({ e, item })
+        if (!rDmenu || !rDmenu.classList.contains("dmenu") || getChildId(rDmenu as HTMLElement) != childId) {
+            onPointerLeave?.({ e, item })
         }
     }
     function onItemPointerOver(e: PointerEvent, item: DropdownOption) {
-        const { container } = options.parentContext ?? {}
+        const container = options.rootRef
+
         if (!item.onPointerOver) {
             return
         }
@@ -126,14 +105,21 @@
         item.onPointerOver({ 
             e, 
             item, 
-            childLeft: initChildLeft(container) 
+            childXPos: initChildXPos(container, item.leftOffset) 
         })
     }
-    function initChildLeft(container: HTMLElement) {
+    /* child menu */
+    function initChildXPos(container: HTMLElement, leftOffset = 2) {
         const { left, width } = dmenuRef.getBoundingClientRect()
-        const { left: cLeft } = container.getBoundingClientRect()
-        const childMenuWidth = 150
+        const { left: cLeft, width: cWidth } = container.getBoundingClientRect()
+        const pWidth = width - 4
 
+        const childMenuWidth = 150
+        const leftPosition = left - cLeft
+        const rightPosition = cWidth - leftPosition + pWidth
+        const pos = relDir === "r" ? rightPosition : leftPosition
+
+        // space between the container's right edge and the parent's right edge
         const space = getHozSpace({
             left:  { elem: dmenuRef, edge: "right" },
             right: { elem: container, edge: "right" },
@@ -141,11 +127,17 @@
         })
 
         if (childMenuWidth <= space) {
-            return left - cLeft + width + 4
+            return pos + pWidth + 6
         }
         else {
-            return left - cLeft - width + 10
+            return pos - pWidth - leftOffset
         }
+    }
+    function getDmenuId(elem: HTMLElement) {
+        return elem.dataset.dmenuId
+    }
+    function getChildId(elem: HTMLElement) {
+        return elem.dataset.childId
     }
 
     /* indices */
@@ -179,12 +171,14 @@
 
 <div 
     class="dmenu-container"
-    class:dmenu-container--child={options.parent}
-    on:pointerleave={onPointerLeave}
+    class:dmenu-container--child={options.parentId}
+    on:pointerleave={onMenuLeave}
 >
     <ul 
-        id={`${id}--dmenu`}
+        data-dmenu-id={id}
+        data-child-id={childId}
         class="dmenu"
+
         class:dmenu--light={!isDark}
         class:dmenu--has-scroll-bar={scroll?.bar ?? false}
         style:width={width}
@@ -209,6 +203,30 @@
                     >
                         {item.sectionName}
                     </li>
+                <!-- menu -->
+                {:else if "twinItems" in item}
+                    {@const { twinItems, pickedItem, onListItemClicked } = item}
+                    <div style:display="flex" style:margin="5px 0px 10px 7px">
+                        {#each twinItems as twinItem}
+                            {@const { name, faIcon, size } = twinItem}
+                            <button 
+                                class="dmenu__box" 
+                                class:dmenu__box--selected={pickedItem === name}
+                                on:click={(e) => {
+                                    onListItemClicked({
+                                        event: e,
+                                        name,
+                                        idx
+                                    })
+                                }}
+                            >
+                                <div class="dmenu__box-icon">
+                                    <i class={faIcon} style:font-size={size}></i>
+                                </div>
+                                <span>{name}</span>
+                            </button>
+                        {/each}
+                    </div>
                 <!-- menu -->
                 {:else if "pickedItem" in item && item.name}
                     <li class="dmenu__option--static">

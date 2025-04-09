@@ -1,29 +1,29 @@
 <script lang="ts">
     import { onMount } from "svelte"
+	import { goalTracker, themeState } from "$lib/store"
 
 	import { Icon } from "$lib/enums"
+	import { toast } from "$lib/utils-toast"
 	import { GOALS } from "$lib/mock-data-goals"
-	import { TEST_TASKS } from "$lib/mock-data"
 	import { TextEditorManager } from "$lib/inputs"
+	import { datePicker, imageUpload } from "$lib/pop-ups"
 	import { formatDateLong, isSameDay } from "$lib/utils-date"
-	import { absoluteDropdown, imageUpload } from "$lib/pop-ups"
-	import { getDueDateDistStr, setViewGoal, updateGoal } from "$lib/utils-goals"
-	import { clamp, kebabToNormal, normalToKebab, randomArrayElem } from "$lib/utils-general"
+	import { clamp, isVoid, kebabToNormal, normalToKebab, randomArrayElem } from "$lib/utils-general"
+	import { addGoal, closeViewGoal, getDueDateDistStr, MAX_YEAR, MIN_YEAR, updateGoal } from "$lib/utils-goals"
 
     import Modal from "./Modal.svelte"
+	import Loader from "./Loader.svelte"
 	import SvgIcon from "./SVGIcon.svelte"
 	import TasksList from "./TasksList.svelte"
-	import TagPicker from "./TagPicker.svelte"
-	import DatePicker from "./DatePicker.svelte"
 	import DropdownBtn from "./DropdownBtn.svelte"
 	import SettingsBtn from "./SettingsBtn.svelte"
 	import DropdownList from "./DropdownList.svelte"
 	import TagPickerBtn from "./TagPickerBtn.svelte"
+	import AccomplishedIcon from "./AccomplishedIcon.svelte"
 	import ConfirmationModal from "./ConfirmationModal.svelte"
-	import Loader from "./Loader.svelte";
-	import { toast } from "$lib/utils-toast";
+	import ImgModal from "../routes/home/base/ImgModal.svelte";
 
-    export let goal: Goal = GOALS[3]
+    export let goal: Goal
     export let type: "new" | "edit" = "edit"
 
     const DESCRIPTION_ID = "goal-description"
@@ -32,29 +32,32 @@
     const SMALL_WIDTH = 480
 
     const DESCRIPTION_PLACEHOLDER = [
-        "Outline your vision for this goal.",
-        "Clarify your vision for this goal.",
-        "Write your vision for this goal here...",
+        "Outline your vision for this goal...",
+        "Clarify your vision for this goal...",
+        "Write your vision for this goal...",
     ]
 
+    $: light = !$themeState.isDarkTheme
+
     let width = 0
-    let tasks = TEST_TASKS
-    let imgWidth = 200
-    
-    // let tasks = []
     let numbered = false
     let dateOptnWidth = 55
-    let tagOpen = false
+    
+    let { name, description, due, tag, img, status, dueType, big = false, completedDate, tasks, pinIdx } = goal
 
-    let { name, description, due, tag, img, status, dueType = "day", big = false, completedDate } = goal
-    let options = false
-    let allowTasks = true
     let newTaskFlag = false
-    let editHasBeenMade = false
-    let saving = false
+    let allowTasks = true
+    let pinned = !isVoid(pinIdx) && pinIdx! >= 0
+
+    let options = false
     let dateOpen = false
     let statusOpen = false
+    let imgOpen = false
+    let dateContext: "due-date" | "completed-date" | null = null
     let dueDateStr = getDueDateStr()
+    
+    let saving = false
+    let editHasBeenMade = false
     let confirmContext: "delete" | "unsaved" | null = null
 
     let initDragY = -1
@@ -72,19 +75,51 @@
         singleLine: false,
         allowFormatting: true,
         handlers: {
-            onInputHandler: () => toggleEditMade()
+            onInputHandler: () => goal.description !== description && toggleEditMade()
         }
     })
-    function getDueDateStr() {
-        return getDueDateDistStr({ due, dueType, type: "date", min: false }).dueStr
-    }
-    function updateImgPosition(optn: string) {
-        img!.type = optn as "header" | "float-left" | "float-right"
+    function setImgPosition(optn: string) {
+        if (optn === "Header") {
+            img!.type = "header"
+        }
+        else if (optn === "Left") {
+            img!.type = "float-left"
+        }
+        else {
+            img!.type = "float-right"
+        }
         img = img
+
+        toggleEditMade()
     }
     function setStatus(_status: string) {
-        status = _status as GoalStatus
+        status = normalToKebab(_status) as GoalStatus
         statusOpen = false
+
+        status !== goal.status && toggleEditMade()
+
+        if (status === "accomplished") {
+            completedDate = new Date()
+        }
+        else {
+            completedDate = null
+        }
+    }
+    function updateDueDate(val: { date: Date, dateType?: DateType } | null) {
+        if (!val) return
+
+        due = val.date
+        dueType = val.dateType!
+        dueDateStr = getDueDateStr()
+
+        if (!isSameDay(due, goal.due) || dueType !== goal.dueType) {
+            toggleEditMade()
+        }
+    }
+    function updateCompletedDate(val: { date: Date, dateType?: DateType } | null) {
+        if (!val) return
+
+        completedDate = val.date
         toggleEditMade()
     }
     function toggleEditMade() {
@@ -95,9 +130,9 @@
             img = null
         }
         else if (optn === "Delete Goal") {
-
+            confirmContext = "delete"
         }
-        else if (optn === "Save and Close") {
+        else if (optn === "Save & Close") {
             saveAndClose()
         }
         else {
@@ -108,7 +143,12 @@
                 }
             })
         }
+        toggleEditMade()
         options = false
+    }
+    function onTaskChange(_tasks: Task[]) {
+        toggleEditMade()
+        tasks = _tasks as GoalActionItem[]
     }
 
     /* drag */
@@ -141,38 +181,107 @@
         initDragY = -1
 
         const target = pe.target as HTMLElement
-        target.style.cursor = "default"
+        target.style.cursor = "pointer"
     }
 
-    /* concnlude */
+    /* connclude */
     function onAttemptClose() {
         if (saving) {
             return
         }
-        else if (editHasBeenMade || type === "new") {
+        else if (editHasBeenMade) {
             confirmContext = "unsaved"
         }
         else {
-            confirmUnsavedClose()
+            close()
         }
-    }
-    function confirmUnsavedClose() {
-        confirmContext = null
-        setViewGoal(null)
     }
     async function saveAndClose() {
         try {
             saving = true
-            await updateGoal({ goal, update: goal })
+            await saveData()
+            initToast("info")
         }
-        catch {
-            setViewGoal(null)
-            toast("error", { message: "Error saving your changes." })
+        catch(e: any) {
+            initToast("error")
         }
         finally {
+            close()
             saving = false
         }
     }
+    async function saveData() {
+        const update = {
+            name, description, tag, status,
+            img, dueType, due, big, completedDate, pinned, tasks
+        }
+        if (type === "edit") {
+            await updateGoal({  goal, update })
+        }
+        else {
+            const newGoal = { ...goal, ...update, creationDate: new Date() } 
+    
+            if (newGoal.status === "accomplished" && !newGoal.completedDate) {
+                newGoal.completedDate = new Date()
+            }
+            await addGoal(newGoal)
+        }
+    }
+    function close() {
+        confirmContext = null
+        // wait for abs float elem to close first
+        requestAnimationFrame(() => closeViewGoal())
+    }
+
+    /* utils */
+    function getDueDateStr() {
+        return getDueDateDistStr({ due, dueType, type: "date", min: false }).dueStr
+    }
+    function toggleDatePicker(context: "due-date" | "completed-date") {
+        dateContext = context
+        dateOpen = !dateOpen
+
+        if (dateOpen) {
+            initDatePicker(context)
+        }
+        else {
+            datePicker.close()
+            dateContext = null
+        }
+    }
+    function initDatePicker(context: "due-date" | "completed-date") {
+        const status = context === "completed-date"
+        const onUpdate = status ? updateCompletedDate : updateDueDate
+        const pickedDate = status ? completedDate! : due
+
+        datePicker.init({
+            id: context,
+            onClose: () => {
+                dateOpen = false
+                dateContext = null
+            },
+            props: {
+                pickedDate,
+                onUpdate,
+                options: {
+                    minDate: new Date(MIN_YEAR, 0, 1),
+                    maxDate: new Date(MAX_YEAR, 11, 31),
+                    dateType: status ? undefined : dueType
+                }
+            }
+        })
+    }
+    function initToast(context: "info" | "error") {
+        const editMessage = context === "info" ? "Your changes have been saved." : "Error saving your changes."
+        const newMessage = context === "info" ? "New goal created!." : "Error creating your goal."
+
+        toast(context, { 
+            message: type === "new" ? newMessage : editMessage,
+            contextId: "goal-view-modal",
+            groupExclusive: true
+        })
+    }
+
     onMount(() => {
         if (!name) titleElem.focus()
     })
@@ -194,18 +303,22 @@
         class:goal--no-img={!img}
         class:goal--header-img={img?.type === "header"}
         class:goal--float-img={img && img.type.startsWith("float")}
-        class:goal--no-tasks={!allowTasks || tasks.length === 0}
+        class:goal--no-tasks={!allowTasks}
+        class:goal--light={light}
         class:goal--min={width < SMALL_WIDTH}
         bind:clientWidth={width}
         style:--side-padding={SIDE_PADDING}
     >   
         <div class="goal__top" style:flex-direction={img?.type === "float-right" ? "row-reverse" : "row"}>
             {#if img}
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <!-- svelte-ignore a11y-no-static-element-interactions -->
                 <div 
                     class="goal__img goal__img--side-menu"
                     on:pointerdown={dragDown}
                     on:pointermove={onDrag}
                     on:pointerup={onDragEnd}
+                    on:dblclick={() => imgOpen = !imgOpen}
                 >
                 <img 
                     bind:this={imgRef}
@@ -220,17 +333,26 @@
                     <div class=goal__title>
                         <input 
                             bind:this={titleElem}
+                            bind:value={name} 
                             spellcheck="false"
                             class="goal__title-input" 
-                            bind:value={name} 
-                            placeholder="Untitled"
+                            placeholder="new goal name..."
                             maxlength={200}
-                            on:blur={() => name ||= "Untitled"}
-                            on:input={() => toggleEditMade()}
+                            on:change={() => name !== goal.name && toggleEditMade()}
                         />
                         {#if completedDate}
                             <div class="goal__subtitle">
-                                Accomplished on {formatDateLong(completedDate)}
+                                <AccomplishedIcon /> 
+                                <span>Completed on</span>
+                                <button 
+                                    data-dmenu-id="completed-date"
+                                    class="goal__subtitle-btn"
+                                    on:click={() => {
+                                        toggleDatePicker("completed-date")
+                                    }}
+                                >
+                                    <span>{formatDateLong(completedDate)}</span>
+                                </button>
                             </div>
                         {/if}
                     </div>
@@ -255,39 +377,60 @@
                         options={{
                             listItems: [
                                 {
-                                    name: editHasBeenMade ? "Save and Close" : "",
+                                    name: editHasBeenMade ? "Save & Close" : "",
                                     divider: true,
                                 },
                                 {
                                     name: "Big Goal",
                                     active: big ?? false,
-                                    onToggle: () => big = !big
+                                    onToggle: () => {
+                                        big = !big
+                                        toggleEditMade()
+                                    }
                                 },
                                 {
-                                    name: "Action Items",
+                                    name: "Pinned",
+                                    active: pinned,
+                                    divider: true,
+                                    onToggle: () => {
+                                        pinned = !pinned
+                                        toggleEditMade()
+                                    }
+                                },
+                                {
+                                    sectionName: "Action Items",
+                                },
+                                {
+                                    name: "Show",
                                     active: allowTasks,
                                     divider: !allowTasks,
-                                    onToggle: () => allowTasks = !allowTasks
+                                    onToggle: () => {
+                                        allowTasks = !allowTasks
+                                        toggleEditMade()
+                                    }
                                 },
                                 {
                                     name: allowTasks ? "Numbered" : "",
                                     active: numbered,
                                     divider: allowTasks,
-                                    onToggle: () => numbered = !numbered
+                                    onToggle: () => {
+                                        numbered = !numbered
+                                        toggleEditMade()
+                                    }
                                 },
                                 {
                                     sectionName: "Image",
                                 },
                                 { 
                                     name: img ? "Position" : "",
-                                    pickedItem: kebabToNormal(img?.type || ""),
+                                    pickedItem: img?.type === "header" ? "Header" : img?.type === "float-left" ? "Left" : "Right",
                                     items: [
                                         { name: "Header" },
-                                        { name: "Float Left" },
-                                        { name: "Float Right" }
+                                        { name: "Left" },
+                                        { name: "Right" }
                                     ],
                                     onListItemClicked: ({ name }) => {
-                                        updateImgPosition(normalToKebab(name))
+                                        setImgPosition(name)
                                     }
                                 },
                                 {
@@ -303,7 +446,7 @@
                                 }
                             ],
                             styling: {
-                                width: "170px",
+                                minWidth: "150px",
                             },
                             position: { 
                                 top: "30px", right: "0px" 
@@ -321,44 +464,23 @@
                     <div class="goal__first-row">
                         <div class="goal__info" style:margin-right="25px">
                             <div class="goal__info-title" style:width={`${dateOptnWidth}px`}>
-                                Date
+                                Do By
                             </div>
                             <div class="goal__info-content">
                                 <DropdownBtn 
-                                    id={"date-picker"}
-                                    isActive={dateOpen}
+                                    id={"due-date"}
+                                    isActive={dateOpen && dateContext === "due-date"}
                                     options={{
                                         noBg: false,
                                         title: dueDateStr,
                                         onClick: () => {
-                                            dateOpen = !dateOpen
+                                            toggleDatePicker("due-date")
                                         },
                                         styles: { 
                                             fontSize: "1.285rem", 
                                             padding: "7px 10px 8px 11px" 
                                         }
                                     }} 
-                                />
-                                <DatePicker 
-                                    isOpen={dateOpen}
-                                    pickedDate={due}
-                                    dateType={dueType}
-                                    onClose={() => {
-                                        dateOpen = false
-                                    }}
-                                    onUpdate={(val) => { 
-                                        if (val) {
-                                            due = val.date
-                                            dueType = val.dateType
-                                            dueDateStr = getDueDateStr()
-                                            toggleEditMade()
-                                        }
-                                    }}
-                                    options={{
-                                        position: {
-                                            top: "32px", left: "0px"
-                                        }
-                                    }}
                                 />
                             </div>
                         </div>
@@ -369,33 +491,10 @@
                             <div class="goal__info-content">
                                 <TagPickerBtn 
                                     {tag}
-                                    active={tagOpen}
-                                    onClick={() => {
-                                        tagOpen = !tagOpen
-                                        if (tagOpen) {
-                                            absoluteDropdown.init({ 
-                                                component: TagPicker,
-                                                offset: { 
-                                                    top: -15, left: -35
-                                                },
-                                                props: {
-                                                    tag,
-                                                    isOpen: tagOpen,
-                                                    position: {
-                                                        top: "32px",
-                                                        left: "0px"
-                                                    },
-                                                    onTagClicked: (newTag) => {
-                                                        if (newTag) {
-                                                            tag = newTag
-                                                            toggleEditMade()
-                                                        } 
-                                                        else {
-                                                            tagOpen = false
-                                                        }
-                                                    }
-                                                }
-                                            })
+                                    onChoose={(_tag) => { 
+                                        tag = _tag
+                                        if (tag?.id !== goal.tag?.id) {
+                                            toggleEditMade()
                                         }
                                     }}
                                     styling={{ 
@@ -434,9 +533,12 @@
                                         { name: "In Progress"  },
                                         { name: "Accomplished" }
                                     ],
-                                    pickedItem: kebabToNormal(goal.status),
+                                    pickedItem: kebabToNormal(status),
                                     position: { 
                                         top: "32px", left: "0px" 
+                                    },
+                                    styling: {
+                                        width: "130px"
                                     },
                                     onListItemClicked: ({ name }) => {
                                         setStatus(name)
@@ -467,8 +569,8 @@
         </div>
         <div class="goal__list" class:hidden={!allowTasks}>
             <div class="goal__list-header">
-                <div class="flx">
-                    <div class="goal__info-title" style:margin="1px 10px 0px 0px">
+                <div class="flx-center">
+                    <div class="goal__info-title" style:margin="1px 8px 0px 0px">
                         Action Items
                     </div>
                     <button 
@@ -477,12 +579,13 @@
                     >
                         <SvgIcon 
                             icon={Icon.Add} 
-                            options={{ scale: 1.09, strokeWidth: 1.8, opacity: 0.7 }}
+                            options={{ scale: 1.15, strokeWidth: 1.2, opacity: 0.8 }}
                         />
                     </button>
                 </div>
-                <div class="flx-algn-center">
-                    {#if allowTasks && tasks.length > 0}
+
+                <div class="flx-center" style:margin-top="1px">
+                    {#if allowTasks}
                         {@const rootTasks = tasks.filter((task) => task.parentId === null)}
                         <div class="fraction">
                             {#if tasks.length > 0 && !numbered}
@@ -502,12 +605,9 @@
                 {#if tasksRef}
                     <TasksList
                         {newTaskFlag}
+                        {onTaskChange}
                         allowInitTasksCall={false}
                         tasks={tasks}
-                        onTaskChange={(_tasks) => {
-                            toggleEditMade()
-                            tasks = _tasks
-                        }}
                         options={{
                             id: "goal-tasks",
                             context: "modal",
@@ -521,7 +621,7 @@
                                 maxDepth: 2
                             },
                             ui: { 
-                                sidePadding: "24px",
+                                sidePadding: "20px",
                                 fontSize: "1.45rem",
                                 padding: "9px 0px 7px 0px",
                                 hasTaskDivider: true
@@ -532,7 +632,7 @@
                 {/if}
                 {#if tasks.length === 0}
                     <span class="goal__list-empty">
-                        Empty
+                       No Action Items
                     </span>
                 {/if}
             </div>
@@ -541,15 +641,22 @@
 </Modal>
 
 {#if confirmContext} 
-    {@const text = confirmContext === "delete" ? "Delete" : "Discard Changes"}
-    {@const confirmText = confirmContext === "delete" ? "Yes, Delete" : "Yes, Discard"}
+    {@const text = confirmContext === "delete" ? "Are you sure you want to delete this goal?" : "Discard Unsaved Changes"}
+    {@const confirmText = confirmContext === "delete" ? "Yes, I'm sure" : "Yes, Discard"}
 
     <ConfirmationModal 
         {text}
         {confirmText}
         onCancel={() => confirmContext = null}
-        onOk={confirmUnsavedClose}
+        onOk={close}
     /> 
+{/if}
+
+{#if imgOpen && img}
+    <ImgModal 
+        img={{ src: img.src }} 
+        onClickOutside={() => imgOpen = false}
+    />
 {/if}
 
 
@@ -561,9 +668,19 @@
         max-width: 600px;
         width: 90vw;
         padding-bottom: 12px;
-
+         
         --description-max-height: 240px;
         --task-max-height: 600px;
+
+        &--light &__info-title {
+            @include text-style(1);
+        }
+        &--light &__list-empty {
+            @include text-style(0.15);
+        }
+        &--light &__description {
+            @include text-style(1);
+        }
 
         /* no tasks */
         &--no-tasks {
@@ -583,7 +700,8 @@
         }
         /* header img */
         &--header-img#{&}--no-tasks {
-            max-width: 540px;
+            max-width: 580px;
+            min-height: 570px;
         }
         &--header-img {
             max-width: 650px;
@@ -595,7 +713,7 @@
         /* float img */
         &--float-img#{&}--no-tasks {
             min-height: 570px;
-            max-width: 600px;
+            max-width: 640px;
         }
         &--float-img {
             max-width: 700px;
@@ -610,11 +728,9 @@
             min-width: 200px;
             width: 200px;
             height: auto;
-            min-height: 130px;
             max-height: 350px;
             margin: 14px 0px 15px 0px;
             border-radius: 4px;
-            overflow: hidden;
             position: relative;
         }
         &__top {
@@ -638,11 +754,25 @@
             
             input {
                 width: 100%;
+
+                &::placeholder {
+                    opacity: 0.265;
+                }
             }
         }
         &__subtitle {
             margin-top: 8px;
-            @include text-style(0.2, var(--fw-400-500), 1.25rem);
+            @include flex(center);
+
+            span {
+                @include text-style(0.4, var(--fw-400-500), 1.25rem);
+                margin-left: 6px;
+                opacity: 0.6;
+            }
+            button:hover span {
+                opacity: 0.8;
+                text-decoration: underline;
+            }
         }
         &__save {
             @include text-style(1, var(--fw-400-500), 1.35rem);
@@ -666,14 +796,17 @@
             margin: 0px 0px 4px 0px;
             width: 100%;
             height: 150px;
+            border-radius: 4px;
             overflow: hidden;
             @include abs-top-left(0px);
-
+            
             img {
+                cursor: pointer;
                 float: left;
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
+                min-height: 130px;
             }
         }
         &__info {
@@ -686,6 +819,7 @@
         }
         &__info-title {
             @include text-style(0.25, var(--fw-400-500), 1.45rem);
+            margin-right: 10px;
         }
         &__info-content {
             position: relative;
@@ -714,33 +848,30 @@
             overflow-y: scroll;
             min-height: 300px;
             max-height: var(--task-max-height);
-            margin: 5px 0px 10px 0px;
-
-            &--empty {
-                min-height: 100px;
-            }
+            margin: 2px 0px 10px 0px;
         }
         .fraction {
             @include text-style(0.35, var(--fw-400-500), 1.4rem);
 
             &__slash { 
-                font-size: 1.2rem !important;
-                margin: 0px 7px;
+                font-size: 1.15rem !important;
+                font-weight: 500;
+                margin: 0px 6px;
             }
         }
         &__list-empty {
             margin: 1px 0px 0px 20px;
-            @include text-style(0.15, var(--fw-400-500), 1.5rem);
+            @include text-style(0.085, var(--fw-400-500), 1.4rem);
         }
         &__add-btn {
             @include center;
-            @include circle(20px);
-
-            opacity: 0.2;
+            @include square(22px, 7px);
+            opacity: 0.25;
+            margin-top: 1px;
             
             &:hover {
-                opacity: 0.6;
-                background-color: rgba(var(--textColor1), 0.1);
+                background-color: rgba(var(--textColor1), 0.12);
+                opacity: 0.5;
             }
         }
         &__spinner {

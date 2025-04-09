@@ -10,26 +10,22 @@ import { toast } from "./utils-toast"
 export const clickOutside = (node: any) => {
   const handleClick = (event: any) => {
     const target = event.target as HTMLElement
-    const nodeId = node.id as string
     const hasClickedInsideNode = node?.contains(target)
+    
+    // Check for data attributes instead of IDs
+    const srcDmenuId = node.getAttribute('data-dmenu-id')
+    const targetElem = target.closest('[data-dmenu-id]')
+    
+    let sameDropdownContext = false
 
-    // do not emit event if clicking in the same dropdown context
-    const srcdmenu = nodeId.includes("dmenu")
-    const dbtnClicked = srcdmenu && target.closest('[id*="dbtn"]')
-    let isOwnDropdownBtn = false
-
-    if (srcdmenu && dbtnClicked) {
-        const srcId    = nodeId.split("--")
-        const targetId = dbtnClicked.id.split("--")
-
-        const srcOrigin    = srcId[0]
-        const targetOrigin = targetId[0]
-
-        isOwnDropdownBtn = srcOrigin === targetOrigin
+    // if source is a dropdown menu
+    // do not dispatch outClick event if the target elem is within the same dropdown context
+    if (srcDmenuId && targetElem) {
+        const targetId = targetElem.getAttribute('data-dmenu-id')
+        sameDropdownContext = srcDmenuId === targetId
     }
 
-
-    const hasClickedOutside = !isOwnDropdownBtn && !hasClickedInsideNode && !event.defaultPrevented
+    const hasClickedOutside = !sameDropdownContext && !hasClickedInsideNode && !event.defaultPrevented
 
     // has clicked outside
     if (hasClickedOutside) {
@@ -822,6 +818,11 @@ export function toastApiErrorHandler(options: {
           message: hasMsg ? errorMessage : `Token has expired. Refresh token or login in again to continue.`,
       }
   }
+  else if (error.code === APIErrorCode.REFRESH_TOKEN) {
+      toastOptions = {
+          message: hasMsg ? errorMessage : "Token has expired. Try re-logging in.",
+      }
+  }
   else if (error.code === APIErrorCode.RATE_LIMIT_HIT) {
       toastOptions = {
           message: hasMsg ? errorMessage : "Rate limit exceeded. Try again later.",
@@ -898,6 +899,10 @@ export function floatCompare(args: { x: number, y: number, digits?: number, op: 
 
 export function getTagFromName(name: string) {
   return TEST_TAGS.find(tag => tag.name === name)
+}
+
+export function getTagFromId(id: string) {
+  return TEST_TAGS.find(tag => tag.id === id)
 }
 
 export function isValidUrl(string: string) {
@@ -1006,6 +1011,15 @@ export function removeItemArr<T extends { idx: number }>({
   return newArray
 }
 
+/**
+ * Reorders an item in an array by swapping its position with the target position.
+ * Updates the new index of the the source item.
+ * 
+ * @param array - The array to reorder.
+ * @param srcIdx - The index of the source item.
+ * @param targetIdx - The index of the target item where the source item will be above at.
+ * @returns The new array with the item reordered.
+ */
 export function reorderItemArr<T extends { idx: number }>({ 
   array, 
   srcIdx, 

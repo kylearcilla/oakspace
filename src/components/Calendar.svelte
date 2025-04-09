@@ -14,8 +14,8 @@
 
     let type: "default" | "side" = "default"
     let currMonth = calendar.currMonth
-    let isNextMonthAvailable = calendar.isNextMonthAvailable
-    let isPrevMonthAvailable = calendar.isPrevMonthAvailable
+    let nextMoAvailable = calendar.nextMoAvailable
+    let prevMoAvailable = calendar.prevMoAvailable
 
     $: {
         calendar.setNewPickedDate(focusDate)
@@ -29,6 +29,17 @@
             onDayUpdate(_day)
         }
     }
+    function onNowClicked() {
+        currMonth = calendar.getThisMonth()
+
+        if (context === "side-menu") {
+            focusDate = new Date()
+            onDayUpdate(focusDate)
+        }
+
+        nextMoAvailable = true
+        prevMoAvailable = true
+    }
     function updateMonth(direction: "prev" | "next") {
         if (direction === "prev") {
             currMonth = calendar.getPrevMonthCalendar()
@@ -36,8 +47,8 @@
         else {
             currMonth = calendar.getNextMonthCalendar()
         }
-        isNextMonthAvailable = calendar.isNextMonthAvailable
-        isPrevMonthAvailable = calendar.isPrevMonthAvailable 
+        nextMoAvailable = calendar.nextMoAvailable
+        prevMoAvailable = calendar.prevMoAvailable 
     }
 </script>
 
@@ -58,7 +69,7 @@
             <div class="calendar__btns-container">
                 <button 
                     class="calendar__next-prev-btn"
-                    disabled={!isPrevMonthAvailable}
+                    disabled={!prevMoAvailable}
                     on:click={() => updateMonth("prev")}
                 >
                     <SVGIcon 
@@ -70,20 +81,13 @@
                     disabled={isDisabled}
                     title="Go to current month."
                     class="calendar__today-btn"
-                    on:click={() => {
-                        currMonth = calendar.getThisMonth()
-
-                        if (context === "side-menu") {
-                            focusDate = new Date()
-                            onDayUpdate(focusDate)
-                        }
-                    }}
+                    on:click={() =>  onNowClicked()}
                 >
                     •
                 </button>
                 <button 
                     class="calendar__next-prev-btn"
-                    disabled={!isNextMonthAvailable}
+                    disabled={!nextMoAvailable}
                     on:click={() => updateMonth("next")}
                 >
                     <SVGIcon 
@@ -107,28 +111,22 @@
     <div class="calendar__month">
         <ul>
             {#each currMonth.days as day}
+                {@const inbounds = calendar.dateInBounds(day.date)}
                 <li 
                     class="calendar__month-day-container"
                     class:calendar__month-day-container--empty={!day}
                 >
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <div 
-                        role="button" 
-                        tabindex="0" 
+                    <button 
                         class="calendar__month-day"
                         class:calendar__month-day--not-curr-month={!day.isInCurrMonth}
                         class:calendar__month-day--today={isSameDay(day.date, new Date())}
                         class:calendar__month-day--picked={isSameDay(day.date, focusDate)}
-                        on:keydown={(e) => {
-                            if (e.key === 'Enter' || e.code === 'Space') {
-                                e.preventDefault()
-                                _onDayUpdate(day.date)
-                            }
-                        }}
+                        disabled={!inbounds}
                         on:click={() => _onDayUpdate(day.date)}
                     >
                         {`${day.date.getDate()}`}
-                    </div>
+                    </button>
                 </li>
             {/each}
         </ul>
@@ -238,7 +236,7 @@
             }
         }
         &__month-title {
-            @include text-style(0.4, var(--fw-300-400), 1.35rem);
+            @include text-style(0.4, var(--fw-400-500), 1.35rem);
             margin-left: 1px;
 
             strong {
@@ -287,7 +285,7 @@
 
             &:hover {
                 @include text-style(1);
-                background: rgba(var(--textColor1), 0.15);
+                background: rgba(var(--textColor1), 0.05);
                 opacity: 1;
             }
             &:active {

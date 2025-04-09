@@ -3,7 +3,7 @@ export const themes: Theme[] = [
         name: "dark",
         styling: {
             isDark: true,
-            bg1: "#151515",
+            bg1: "#141414",
             bg2: "#1d1d1d",
             bg3: "#2d2d2e",
             fgColor1: "163, 182, 255",
@@ -84,7 +84,7 @@ export const themes: Theme[] = [
             lightColor2: "#EEE6D4",
             calMarkColor: "#FF5151",
             textEntryBgColor: "#f9f0e1",
-            modalBgColor: "#F5F0DF",
+            modalBgColor: "#FEF6E8",
             modalBgAccentColor: "#EFEBDD",
             bentoBoxBgColor: "#FBF7E9",
             bentoBoxBorder: "none",

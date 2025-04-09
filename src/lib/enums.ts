@@ -4,7 +4,7 @@ export enum ErrorCode {
 export enum APIErrorCode {
     EXPIRED_TOKEN, FAILED_TOKEN_REFRESH, LOGIN_IN, LOG_OUT, RESOURCE_NOT_FOUND, RESOURCE_UNAVAILABLE, 
     AUTHORIZATION_ERROR, UNAUTHORIZED, API_ERROR, GENERAL, RATE_LIMIT_HIT, PLAYER, APP_SERVER, AUTH_DENIED,
-    PLAYER_MEDIA_INVALID, API_SERVER, FULL_SYNC_REQUIRED
+    PLAYER_MEDIA_INVALID, API_SERVER, FULL_SYNC_REQUIRED, REFRESH_TOKEN
 }
 /* General */
 export enum CoreStatus {
@@ -17,8 +17,8 @@ export enum LogoIcon {
     YoutubeMusic, Youtube, Session, Google, Somara, Todoist, GoogleCal
 }
 export enum Icon {
-    Settings, Dropdown, Add, Close, ChevronLeft, ChevronRight, DragDots, Archive, Tune, Sun, Moon, Pin, Sublink,
-    ColorSun, ColorMoon, MiniPlayer
+    Settings, Dropdown, Add, Close, ChevronLeft, ChevronRight, DragDots, Archive, Tune, Sun, Moon, Pin,
+    ColorSun, ColorMoon, Check
 }
 export enum ModalType { 
     Settings, Music, Themes, Quote, NewSession, ActiveSession,

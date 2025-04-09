@@ -185,11 +185,9 @@
         <div class="bar__tabs">
             {#each bottomTabs as tab, tabIdx}
                 {@const { name, icon } = tab}
-                {@const id = name === "Help" ? "left-bar--dbtn" : ""}
-    
                 <div class="bar__icon-tab-container">
                     <button 
-                        {id}
+                        data-dmenu-id={name === "Help" ? "left-bar" : ""}
                         class="bar__tab-btn"
                         class:bar__tab-btn--selected={name === selectedTabName}
                         on:click={() => {
@@ -242,7 +240,8 @@
         }}
     >
         <div 
-            id="left-bar--dmenu"
+            id="left-bar-menu"
+            data-dmenu-id="left-bar"
             class="day-settings dmenu" 
             class:dmenu--light={!isDarkTheme}
             style:--font-size="1.3rem"

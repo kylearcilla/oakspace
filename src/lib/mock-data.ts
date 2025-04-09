@@ -1,3 +1,4 @@
+import { GOALS } from "./mock-data-goals"
 import { COLOR_SWATCHES } from "./utils-colors"
 import { generateHabitData } from "./utils-habits-data"
 import { v4 as uuidv4 } from 'uuid'
@@ -9,7 +10,7 @@ export const IMG_COLLECTIONS: any = {
         src: "https://i.imgur.com/MEjZkXW.png",
         center: 50
       },
-      headerIcon: "https://i.pinimg.com/736x/b3/90/0d/b3900d7712279767b687231f36fad8a0.jpg",
+      headerIcon: "https://i.pinimg.com/originals/09/09/53/09095303ec25e04693b00f0f9d21b962.gif",
       headerTextBlockImg: {
         type: "img",
         src: "https://i.pinimg.com/736x/72/44/08/724408c450ce38a7be258ed489d8c64d.jpg",
@@ -126,8 +127,8 @@ const IMG_COLLECTION_IDX = localStorage.getItem("theme-name") ?? "sand"
 /* tags */
 export const TEST_TAGS: Tag[] = [
     {
-      id: "",
-      orderIdx: 0,
+      id: "0",
+      orderIdx: 13,
       name: "Body",
       symbol: {
         color: COLOR_SWATCHES[0],
@@ -135,7 +136,7 @@ export const TEST_TAGS: Tag[] = [
       }
     },
     {
-      id: "",
+      id: "1",
       orderIdx: 1,
       name: "SWE",
       symbol: {
@@ -145,7 +146,7 @@ export const TEST_TAGS: Tag[] = [
       }
     },
     {
-      id: "",
+      id: "2",
       orderIdx: 2,
       name: "French",
       symbol: {
@@ -154,7 +155,7 @@ export const TEST_TAGS: Tag[] = [
       }
     },
     {
-      id: "",
+      id: "3",
       orderIdx: 3,
       name: "Cooking",
       symbol: {
@@ -163,16 +164,16 @@ export const TEST_TAGS: Tag[] = [
       }
     },
     {
-      id: "",
+      id: "4",
       orderIdx: 4,
-      name: "SWE",
+      name: "English",
       symbol: {
         color: COLOR_SWATCHES[8],
-        emoji: "👨‍💻"
+        emoji: "🇺🇸"
       }
     },
     {
-      id: "",
+      id: "5",
       orderIdx: 5,
       name: "BBall",
       symbol: {
@@ -181,7 +182,7 @@ export const TEST_TAGS: Tag[] = [
       }
     },
     {
-      id: "",
+      id: "6",
       orderIdx: 6,
       name: "Running",
       symbol: {
@@ -190,7 +191,7 @@ export const TEST_TAGS: Tag[] = [
       }
     },
     {
-      id: "",
+      id: "7",
       orderIdx: 7,
       name: "Meditation",
       symbol: {
@@ -199,7 +200,7 @@ export const TEST_TAGS: Tag[] = [
       }
     },
     {
-      id: "",
+      id: "8",
       orderIdx: 8,
       name: "Art",
       symbol: {
@@ -208,7 +209,7 @@ export const TEST_TAGS: Tag[] = [
       }
     },
     {
-      id: "",
+      id: "9",
       orderIdx: 9,
       name: "Travel",
       symbol: {
@@ -217,7 +218,7 @@ export const TEST_TAGS: Tag[] = [
       }
     },
     {
-      id: "",
+      id: "10",
       orderIdx: 10,
       name: "Reading",
       symbol: {
@@ -226,7 +227,7 @@ export const TEST_TAGS: Tag[] = [
       }
     },
     {
-      id: "",
+      id: "11",
       orderIdx: 11,
       name: "Finance",
       symbol: {
@@ -235,15 +236,26 @@ export const TEST_TAGS: Tag[] = [
       }
     },
     {
-      id: "",
+      id: "12",
       orderIdx: 12,
       name: "wefowe;ofiwje F;OIwefjw;eoFIJWef;owieFJWE;O FIJWe;o i",
       symbol: {
         color: COLOR_SWATCHES[5],
         emoji: "💵"
       }
+    },
+    {
+      id: "*",
+      orderIdx: 0,
+      name: "Empty",
+      symbol: {
+        color: COLOR_SWATCHES[12],
+        emoji: ""
+      }
     }
 ]
+
+export const EMPTY_TAG = TEST_TAGS[13]
 
 /* sessions */
 export const TEST_SESSIONS: Session[] = [
@@ -410,99 +422,6 @@ export const TEST_TASKS: Task[] = [
 ]
 
 /* goals */
-export const TEST_GOALS: Goal[] = [
-  {
-    id: uuidv4(),
-    name: "Reach conversational fluency in French",
-    due: new Date("2025-3-22"),
-    dueType: "month",
-    description: "Reach conversational fluency in French by the end of the year.",
-    tag: TEST_TAGS[0],
-    creationDate: new Date("2025-01-15"),
-    status: "in-progress",
-    order: {
-     default: 0,
-     status: 0,
-     tag: 0
-    }
-  },
-  {
-    id: uuidv4(),
-    name: "Run a 6 minute mile",
-    due: new Date("2025-3-10"),
-    dueType: "day",
-    description: "Run a 6 minute mile by the end of the year.",
-    tag: TEST_TAGS[6],
-    creationDate: new Date("2025-02-10"),
-    status: "not-started",
-    imgSrc: "",
-    order: {
-     default: 1,
-     status: 0,
-     tag: 0
-    }
-  },
-  {
-    id: uuidv4(),
-    name: "Go hiking in Iceland",
-    description: "Trek through Iceland's epic landscapes with glaciers, volcanoes, and hidden hot springs.",
-    creationDate: new Date("2025-01-01"),
-    due: new Date("2025-3-22"),
-    status: "not-started",
-    imgSrc: "https://i.pinimg.com/736x/e7/cb/8a/e7cb8a6fd5c308575b3261262e85965d.jpg",
-    tag: TEST_TAGS[9],
-    order: {
-     default: 2,
-     status: 1,
-     tag: 0
-    }
-  },
-  {
-    id: uuidv4(),
-    name: "Master 7 recipes",
-    description: "Time to up my cooking game ! Want to nail both Asian stir-fries and Italian pasta - gonna master 7 go-to dishes I can actually be proud of. Thinking everything from homemade noodles to the perfect risotto.",
-    creationDate: new Date("2025-01-31"),
-    status: "accomplished",
-    imgSrc: "https://i.pinimg.com/736x/47/b5/9a/47b59ab91d55bff20784f30b12183476.jpg",
-    tag: TEST_TAGS[3],
-    order: {
-     default: 3,
-     status: 1,
-     tag: 0
-    }
-  },
-  {
-    id: uuidv4(),
-    name: "Read 12 Books This Year",
-    due: new Date("2025-12-22"),
-    dueType: "year",
-    description: "Read one book every month and complete all 12 by the end of the year.",
-    tag: TEST_TAGS[10],
-    creationDate: new Date("2025-01-01"),
-    status: "in-progress",
-    imgSrc: "https://i.pinimg.com/736x/49/b5/9d/49b59d5866a63a2fe0bb03ea05ce649d.jpg",
-    order: {
-     default: 4,
-     status: 1,
-     tag: 0
-    },
-  },
-  {
-    id: uuidv4(),
-    name: "Finish porfolio website",
-    due: new Date("2025-3-10"),
-    dueType: "quarter",
-    description: "Create the best most beautiful most gorgeous portfolio website oat.",
-    tag: TEST_TAGS[1],
-    creationDate: new Date("2025-03-01"),
-    status: "accomplished",
-    order: {
-     default: 5,
-     status: 0,
-     tag: 0
-    }
-  }
-]
 
 /* habits*/
 export const TEST_HABITS: Habit[] = [
@@ -809,196 +728,7 @@ It's the soft glow of <i>dawn</i> breaking over quiet waters, the <u>peace that 
 To be serene is to find balance in chaos, to breathe deeply, and to rest in the present, 🍃.
 It's the art of <i>letting go</i>, embracing tranquility, and finding clarity in stillness ✨.
 `
- }
-
-export const ACTIVITY_DATA: DayEntry[] = [
-  {
-      date: new Date(2025, 2, 2),
-      focusMins: 145,
-      habits: 0,
-      goals: [
-          TEST_GOALS[3],
-      ],
-      highlightImg: {
-          src: "https://i.pinimg.com/736x/d5/ff/09/d5ff09b5043f74591b4ffeb96fc94456.jpg",
-          caption: "",
-      }
-  },
-  {
-      date: new Date(2025, 2, 3),
-      highlightImg: null,
-      focusMins: 95,
-      habits: 0
-  },
-  {
-      date: new Date(2025, 2, 4),
-      focusMins: 120,
-      habits: 0,
-      highlightImg: {
-        src: "https://i.pinimg.com/736x/e1/39/43/e13943596410e71ea2f14baedb442d1d.jpg",
-        caption: "",
-      }
-  },
-  {
-      date: new Date(2025, 2, 5),
-      habits: 3,
-      focusMins: 0,
-      highlightImg: {
-          src: "https://i.pinimg.com/736x/5e/e0/be/5ee0bedc21c8d2d37ff39dacbda0ef1d.jpg",
-          caption: "a little painting",
-      }
-  },
-  {
-      date: new Date(2025, 2, 6),
-      habits: 0,
-      focusMins: 0,
-      highlightImg: null
-  },
-  {
-      date: new Date(2025, 2, 9),
-      habits: 0,
-      focusMins: 0,
-      highlightImg: null
-  },
-  {
-      date: new Date(2025, 2, 10),
-      habits: 0,
-      focusMins: 0,
-      highlightImg: null,
-  },
-  {
-      date: new Date(2025, 2, 10),
-      habits: 6,
-      focusMins: 0,
-      highlightImg: null
-  },
-  {
-      date: new Date(2025, 2, 13),
-      habits: 2,
-      focusMins: 0,
-      highlightImg: null,
-  },
-  {
-      date: new Date(2025, 2, 16),
-      habits: 0,
-      focusMins: 0,
-      highlightImg: null,
-  },
-  {
-      date: new Date(2025, 2, 18),
-      habits: 3,
-      focusMins: 0,
-      highlightImg: {
-          src: "https://i.pinimg.com/736x/f8/4b/f3/f84bf38f9462d6a70d8c8c1b77a1a64a.jpg",
-          caption: "coding shit",
-      }
-  },
-  {
-      date: new Date(2025, 2, 20),
-      habits: 1,
-      focusMins: 0,
-      highlightImg: null,
-      goals: [
-          {
-              type: "big",
-              name: "learn how to make pizza",
-              tag: TEST_TAGS[3]
-          },
-      ]
-  },
-  {
-      date: new Date(2025, 2, 23),
-      habits: 4,
-      focusMins: 40,
-      highlightImg: null
-  },
-  {
-      date: new Date(2025, 2, 24),
-      habits: 2,
-      focusMins: 0,
-      highlightImg: {
-          src: "https://i.pinimg.com/736x/9b/91/cc/9b91cc7b70d04399c09d33d7ed8d063c.jpg",
-          caption: "italian paradise",
-      }
-  },
-  {
-      date: new Date(2025, 2, 26),
-      habits: 5,
-      focusMins: 120,
-      highlightImg: null,
-  },
-  {
-      date: new Date(2025, 2, 27),
-      habits: 4,
-      focusMins: 0,
-      highlightImg: {
-          src: "https://i.pinimg.com/736x/d5/ff/09/d5ff09b5043f74591b4ffeb96fc94456.jpg",
-          caption: "at the museum 🌷",
-      }
-  },
-  {
-      date: new Date(2025, 2, 28),
-      habits: 1,
-      focusMins: 0,
-      highlightImg: null,
-  },
-  {
-      date: new Date(2025, 2, 30),
-      habits: 2,
-      focusMins: 95,
-      highlightImg: {
-          src: "https://i.pinimg.com/736x/ef/fb/f3/effbf31760c27673d5add67fa439522d.jpg",
-          caption: "atop the mountains 🌤️",
-      }
-  },
-  {
-      date: new Date(2025, 2, 31),
-      habits: 2,
-      focusMins: 0,
-      highlightImg: null
-  },
-  {
-      date: new Date(2025, 2, 14),
-      habits: 4,
-      focusMins: 0,
-      highlightImg: null,
-      goals: [
-        TEST_GOALS[0],
-      ]
-  },
-  {
-      date: new Date(2025, 2, 15),
-      habits: 5,
-      focusMins: 0,
-      highlightImg: null,
-      goals: [
-        TEST_GOALS[2],
-      ]
-  },
-  {
-      date: new Date(2025, 2, 25),
-      habits: 3,
-      focusMins: 120,
-      highlightImg: {
-          src: "https://i.pinimg.com/736x/5c/37/a0/5c37a01f26fff8bae726e0a6e527bcae.jpg",
-          caption: "getting used to pastels"
-      },
-      goals: [
-        TEST_GOALS[1],
-        TEST_GOALS[2],
-        TEST_GOALS[3],
-      ]
-  },
-  {
-      date: new Date(2025, 2, 29),
-      habits: 1,
-      focusMins: 30,
-      highlightImg: null,
-      goals: [
-          TEST_GOALS[1],
-      ]
-  }
-]
+}
 
 export const BULLETIN_CONTENT = {
   img: IMG_COLLECTIONS[IMG_COLLECTION_IDX].bulletinImg,

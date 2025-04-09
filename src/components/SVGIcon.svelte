@@ -169,19 +169,7 @@
             stroke={color}
             stroke-width={strokeWidth}
         />
-      </svg>        
-  {:else if icon === Icon.MiniPlayer}
-      <svg 
-        style={`transform: scale(${scale});`}
-        width={width} height={height}
-        viewBox={`0 0 ${width} ${height}`}
-      >
-        <path 
-              d="M11.8821 5.10933H6.91193V8.83696H11.8821V5.10933ZM14.3672 10.0795V1.36928C14.3672 0.685879 13.808 0.13916 13.1246 0.13916H1.94176C1.25836 0.13916 0.699219 0.685879 0.699219 1.36928V10.0795C0.699219 10.7629 1.25836 11.322 1.94176 11.322H13.1246C13.808 11.322 14.3672 10.7629 14.3672 10.0795ZM13.1246 10.0919H1.94176V1.36306H13.1246V10.0919Z" 
-              fill={color} 
-              stroke-width={strokeWidth}
-        />
-    </svg>
+      </svg>
   {:else if arrow}
       <svg 
         class:chev-left={icon === Icon.ChevronLeft}
@@ -195,6 +183,19 @@
         >
         </path>
       </svg>
+    {:else if icon === Icon.Check}
+      <svg 
+        width="12" height="9" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg"
+        style:transform={`scale(${scale})`}
+      >
+        <path 
+          d="M2 6L6 10L14 2"
+          stroke={color}
+          stroke-width={strokeWidth}
+          stroke-linecap="round"
+          stroke-linejoin="round"
+      />
+    </svg>
   {/if}
 </div>
 

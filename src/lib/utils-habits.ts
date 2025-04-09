@@ -6,9 +6,9 @@ import { addToDate, afterToday, genMonthCalendar, getDiffBetweenTwoDays, getWeek
 
 import { toast } from "./utils-toast"
 import { countRequired, getHabitData, getWeekDays } from "./utils-habits-data"
+import { initMonthHeatMap, getWeekBounds, MAX_WEEKS_BACK_IDX } from "./utils-habits-data"
 import { getHabitBitData, getHabitBitsSlice, getBitFromDate, } from "./utils-habits-data"
 import { toggleHabitYearBit, countBitsStr, getBoundsIdx, getWeekRequiredDays } from "./utils-habits-data"
-import { isDowIdxRequired, initMonthHeatMap, getWeekBounds, MAX_WEEKS_BACK_IDX } from "./utils-habits-data"
 
 let habits: Habit[] = []
 
@@ -969,6 +969,10 @@ export async function addHabit(habit: Habit) {
     })
 }
 
+/**
+ * Creates a chunk for the current and previous month for a newly add habbit.
+ * @param habit 
+ */
 export function createChunksOnAdd(habit: Habit) {
     const now = new Date()
     const year = now.getFullYear()

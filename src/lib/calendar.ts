@@ -1,20 +1,13 @@
-import type { Writable } from "svelte/store"
 import { DateBoundState } from "./enums"
-import { formatDateLong, getNextMonth, getPrevMonth, isDateEarlier, isSameMonth, isYrValid } from "./utils-date"
+import { formatDateLong, genMonthCalendar, getNextMonth, getPrevMonth, isDateEarlier, isSameMonth, isYrValid } from "./utils-date"
 
-/**
- * Abstract class for all calendars.
- * The object structure for each day depends on the client.
- * MonthData is the general type.
- */
-export abstract class Calendar<T extends MonthData = MonthData> {
+export abstract class Calendar {
     pickedDate: Date | null = null
     pickedDateStr: string = ""
 
     currMonth: MonthData
-    isPrevMonthAvailable: boolean
-    isNextMonthAvailable: boolean
-    isForwards: boolean | null = null
+    prevMoAvailable: boolean
+    nextMoAvailable: boolean
 
     minDate: Date | null 
     maxDate: Date | null 
@@ -22,12 +15,11 @@ export abstract class Calendar<T extends MonthData = MonthData> {
     constructor(options: CalendarOptions | null = null) {
         this.minDate = options?.minDate ?? null
         this.maxDate = options?.maxDate ?? null
-        this.isForwards = options?.forwards ?? null
 
-        this.currMonth = this.genMonthCalendar(new Date())
+        this.currMonth = genMonthCalendar(new Date())
 
-        this.isPrevMonthAvailable = !this.isForwards
-        this.isNextMonthAvailable = this.isForwards ?? true
+        this.prevMoAvailable = true
+        this.nextMoAvailable = true
     }
 
     /**
@@ -39,50 +31,66 @@ export abstract class Calendar<T extends MonthData = MonthData> {
         this.pickedDateStr = newDate != null ? formatDateLong(newDate) : ""
         
         if (!isSameMonth(newDate!, this.currMonth.firstDay)) {
-            this.currMonth = this.genMonthCalendar(structuredClone(newDate!))
+            this.currMonth = genMonthCalendar(structuredClone(newDate!))
         }
         return this.pickedDate
     }
 
     /**
-     * Get next month after current
+     * Get next month after current.
+     * Next month won't be available if the max date is in the next (would-be-current) month.
      */
     getNextMonthCalendar() { 
-        this.currMonth = this.genMonthCalendar(getNextMonth(this.currMonth.firstDay))
+        const nextMonth = getNextMonth(this.currMonth.firstDay)
 
-        if (!this.isForwards) {
-            this.isNextMonthAvailable = true
-        }
-        else if (this.isForwards) {
-            this.isPrevMonthAvailable = !isSameMonth(this.currMonth.firstDay, new Date())
-        }
+        this.currMonth = genMonthCalendar(nextMonth)
+        this.nextMoAvailable = this.maxDate ? !this.dayInMonthGrid(this.maxDate, this.currMonth) : true
 
         return this.currMonth
     }
 
     /**
      * Get prev month after current
+     * 
+     * Prev month won't be available if the min date is in the prev (would-be-current) month.
      */
     getPrevMonthCalendar() {
-        this.currMonth = this.genMonthCalendar(getPrevMonth(this.currMonth.firstDay))
+        const prevMonth = getPrevMonth(this.currMonth.firstDay)
 
-        if (this.isForwards) {
-            this.isPrevMonthAvailable = true
-        }
-        else if (!this.isForwards) {
-            this.isNextMonthAvailable = !isSameMonth(this.currMonth.firstDay, new Date())
-        }
+        this.currMonth = genMonthCalendar(prevMonth)
+        this.prevMoAvailable = this.minDate ? !this.dayInMonthGrid(this.minDate, this.currMonth) : true
 
         return this.currMonth
+    }
+
+    dateInBounds(date: Date) {
+        if (this.maxDate && isDateEarlier(this.maxDate, date)) {
+            return false
+        }
+        else if (this.minDate && isDateEarlier(date, this.minDate)) {
+            return false
+        }
+        return true
+    }
+
+    /**
+     * Check if a date is in the month grid.
+     * @param date  Date to check.
+     * @param month  Month to check.
+     * @returns     Returns true if date is in the month grid.
+     */
+    dayInMonthGrid(date: Date, month: MonthData) {
+        const [firstDay, lastDay] = [month.days[0].date, month.days[month.days.length - 1].date]
+        return isDateEarlier(firstDay, date) && isDateEarlier(date, lastDay)
     }
 
     /**
      * Get this month
      */
     getThisMonth() {
-        this.currMonth = this.genMonthCalendar(new Date())
-        this.isPrevMonthAvailable = !this.isForwards
-        this.isNextMonthAvailable = this.isForwards ?? true
+        this.currMonth = genMonthCalendar(new Date())
+        this.prevMoAvailable = true
+        this.nextMoAvailable = true
         this.pickedDate = new Date()
 
         return this.currMonth
@@ -106,26 +114,5 @@ export abstract class Calendar<T extends MonthData = MonthData> {
             return DateBoundState.BeyondMin
         }
         return DateBoundState.InBounds
-    }
-
-    genMonthCalendar(inputDate: Date): MonthData {
-        const firstDayOfMonth = new Date(inputDate.setDate(1))
-        const monthFirstDayOfWeek = firstDayOfMonth.getDay()
-        const currMonth: MonthData = { 
-            monthIdx: inputDate.getMonth(), days: [],
-            year: inputDate.getFullYear(), firstDay: firstDayOfMonth
-        }
-
-        // go to the first date in grid using negative offset from first day
-        let day = (monthFirstDayOfWeek - 1) * -1  
-
-        for (let w = 0; w < 6; w++) {
-            for (let d = 0; d < 7; d++) {
-                const currDate = new Date(new Date(inputDate).setDate(day++))
-                const isInCurrMonth = isSameMonth(currDate, firstDayOfMonth)
-                currMonth.days.push({ date: currDate, isInCurrMonth })
-            }
-        }
-        return currMonth
     }
 }

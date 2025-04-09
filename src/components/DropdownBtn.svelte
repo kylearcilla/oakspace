@@ -36,7 +36,7 @@
 </script>
 
 <button
-    id={`${id}--dbtn`}
+    data-dmenu-id={id}
     class="dbtn"
     class:dbtn--empty={isEmpty}
     class:dbtn--no-bg={noBg}

@@ -60,7 +60,7 @@
     let scrollWindow = 0
     let playlistTimeout: NodeJS.Timeout | null = null
     let width = 0
-
+    let myPlaylistsWidth = 0
     let tabsCarouselRef: HTMLElement
     let wallpaperCarouselRef: HTMLElement
     let playlistsRef: HTMLElement
@@ -182,8 +182,11 @@
         }
     }
     function refreshBtnClicked() {
-        const expired = tokenExpired || error?.code === APIErrorCode.EXPIRED_TOKEN
-        if (expired) {
+        const error = userData!.error
+        if (error?.code === APIErrorCode.REFRESH_TOKEN) {
+            authYoutubeClient()
+        }
+        else if (error?.code === APIErrorCode.EXPIRED_TOKEN) {
             userData!.refreshAccessToken()
         }
         else {
@@ -263,13 +266,12 @@
             <h1>Spaces</h1>
              <button 
                 class="spaces__account-btn"
-                id="spaces--dbtn"
+                data-dmenu-id="spaces"
                 on:click={userBtnClicked}
              >
                     {#if hasSignedIn && userData}
-                        {@const { profileImgSrc, username } = userData}
-                        <img src={profileImgSrc} alt="" />
-                        <span>{username}</span>
+                        <img src={userData.profileImgSrc} alt="" />
+                        <span>{userData.username}</span>
                     {:else}
                         <Logo 
                             logo={LogoIcon.Youtube} 
@@ -363,10 +365,21 @@
             <div class="spaces__right bento-box">
                 <!-- tabs -->
                 <div class="spaces__tabs" bind:clientWidth={width}>
+                    {#if hasSignedIn}
+                        <button 
+                            class="tab-btn"
+                            class:tab-btn--selected={chosenGroupStr === "user"}
+                            bind:clientWidth={myPlaylistsWidth}
+                            on:click={() => onTabClicked("user")}
+                        >
+                            My Playlists
+                        </button>
+                        <div class="divider"></div>
+                    {/if}
                     {#if left}
                         <button 
                             class="spaces__arrow"
-                            style:left={"-18px"}
+                            style:left={`${hasSignedIn ? myPlaylistsWidth + 15 : 0}px`}
                             on:click={() => {
                                 tabsCarouselRef.scrollLeft -= SCROLL_STEP
                             }}
@@ -375,16 +388,6 @@
                                 icon={Icon.ChevronLeft} options={{ scale: 1.5 }}
                             />
                         </button>
-                    {/if}
-                    {#if hasSignedIn}
-                        <button 
-                            class="tab-btn"
-                            class:tab-btn--selected={chosenGroupStr === "user"}
-                            on:click={() => onTabClicked("user")}
-                        >
-                            My Playlists
-                        </button>
-                        <div class="divider"></div>
                     {/if}
                     <div 
                         bind:this={tabsCarouselRef}
@@ -650,9 +653,6 @@
 
         &--signed-in &__account-btn {
             padding-left: 7px;
-        }
-        &--signed-in &__tabs &__arrow:first-child {
-            left: 110px !important;
         }
 
         h1 {

@@ -26,12 +26,12 @@
 </script>
 
 <button 
-    id={`${id}--dbtn`}
+    data-dmenu-id={id}
     class="settings-btn"
     class:settings-btn--light={light}
     class:settings-btn--abs={!!position}
     class:settings-btn--no-bg={!bg}
-    style:--fg-o={opacity?.fg ?? 0.2}
+    style:--fg-o={(opacity?.fg ?? 0.3)}
     style:--bg-o={opacity?.bg ?? 0}
     style:--fg-ho={hOpacity?.fg ?? 0.55}
     style:--bg-ho={hOpacity?.bg ??  0.085}
@@ -57,10 +57,6 @@
         }
         &--no-bg {
             background-color: transparent !important;
-        }
-        &--light {
-            --fg-o: calc(var(--fg-o) * 0.4);
-            --bg-o: calc(var(--bg-o) * 0.4);
         }
 
         opacity: var(--fg-o);

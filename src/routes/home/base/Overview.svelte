@@ -1,24 +1,36 @@
 <script lang="ts">
     import { themeState } from "$lib/store"
-    import { isSameDay } from "$lib/utils-date"
-    import { ACTIVITY_DATA } from "$lib/mock-data"
-    import { getColorTrio } from "$lib/utils-colors"
-	import { formatDateLong } from "$lib/utils-date"
-	import { minsToHHMM } from "../../../lib/utils-date"
-	import { OverviewManager } from "$lib/overview-manager"
-	import { MONTH_THOUGHT_ENTRY } from "../../../lib/mock-data"
-	import { formatPlural, randomArrayElem } from "$lib/utils-general"
-    
-	import { onMount } from "svelte"
-	import TextEntry from "./TextEntry.svelte"
-	import ImgStampModal from "./HighlightImgModal.svelte"
-	import DropdownList from "../../../components/DropdownList.svelte"
 
+	import { minsToHHMM } from "$lib/utils-date"
+    import { getSwatchColors } from "$lib/utils-colors"
+	import { MONTH_THOUGHT_ENTRY } from "$lib/mock-data"
+	import { randomArrayElem } from "$lib/utils-general"
+	import { ACTIVITY_DATA } from "$lib/mock-data-activity"
+	import type { GoalsViewManager } from "$lib/goals-view-manager"
+    import { genMonthCalendar, getMonthWeeks, isSameDay } from "$lib/utils-date"
+    
+	import TextEntry from "./TextEntry.svelte"
+	import type { Unsubscriber } from "svelte/store"
+	import AccomplishedIcon from "$components/AccomplishedIcon.svelte"
+	import { setViewGoal, setViewGoalNew } from "$lib/utils-goals";
+	import ImgModal from "./ImgModal.svelte";
+	import SvgIcon from "$components/SVGIcon.svelte";
+	import { Icon } from "$lib/enums";
+
+    export let timeFrame: GoalViewTimeFrame
+    export let goalsManager: GoalsViewManager
     export let onDayClicked: (dayIdx: number) => void
     export let options
 
+    $: goalsState = goalsManager.state
     $: isLight = !$themeState.isDarkTheme
 
+    type CalendarDay = {
+        date: Date
+        isInCurrMonth: boolean
+    }
+
+    const entries = ACTIVITY_DATA
     const GOALS_LIST_MAX = 3
     const PHOTO_OFFSETS = [
         { x: -8, y: 0, tilt: 4  },
@@ -30,38 +42,117 @@
         { x: -5, y: -9, tilt: -3  },
         { x: -12, y: -6, tilt: -6  }
     ]
-    const manager = new OverviewManager(ACTIVITY_DATA)
 
     let gridWidth = 0
     let gridHeight = 0
-    let gridElem: HTMLElement
-    let store: OverviewState | null = null
+    let weeks: CalendarDay[][] = []
+    let contextMenu = false
+    let editDay: DayEntry | null = null
+    let imgOpenSrc: string | null = null
+    
+    let goalClicked: Goal | null = null
+    let goalsSub: Unsubscriber | null = null
+    
+    let dragOverDate: Date | null = null
 
     $: animPhotos = options?.animPhotos ?? true
-    $: if (manager.state) {
-        manager.state.subscribe((data) => {
-            store = data
+
+    $: if (goalsState && !goalsSub) {
+        goalsSub = goalsState.subscribe((data: GoalsViewState) => {
+
         })
     }
 
-    function getFontFamily(style: string) {
-        if (style === "basic") {
-            return { fam: "Manrope", size: "1.25rem" }
+    function initData() {
+        const month = genMonthCalendar(new Date())
+        weeks = getMonthWeeks(month.days)
+    }
+    function findDayEntry(day: Date) {
+        const idx = entries.findIndex((d) => isSameDay(d.date, day))
+        const entry = idx >= 0 ? entries[idx] : undefined
+
+        return { entry, idx }
+    }
+
+    /* goals */
+    function getGoalsDisplayData({ day, entry }: { day: CalendarDay, entry: DayEntry | undefined }) {
+        if (!entry || !entry.goals || !day.isInCurrMonth) return {
+            goals: [],
+            count: 0
         }
-        else if (style === "stylish") {
-            return { fam: "Gambarino-Regular" , size: "1.35rem" }
+
+        const goals = entry.goals.sort((a, b) => a.name.localeCompare(b.name))
+        const goalsWithImages = goals.filter(g => g.img?.src)
+        const sortedGoals = goalsWithImages.sort((a, b) => a.name.localeCompare(b.name))
+        const imgSrc = sortedGoals[0]?.img?.src
+
+        return {
+            goals, imgSrc, count: entry.goals.length
         }
-        else if (style === "fancy") {
-            return { fam: "Melodrama-Bold", size: "1.25rem" }
+    }
+    function toggleGoalComplete(goal: Goal) {
+        goalsManager.toggleGoalStatus(goal)
+    }
+    function addGoal(date: Date) {
+        setViewGoalNew({ timeFrame, day: date })
+    }
+    function pointerDown(e: PointerEvent, goal: Goal) {
+        const target = e.target as HTMLElement
+        if (e.button !== 0) {
+            return
         }
-        else if (style === "cute") {
-            return { fam: "Bagel Fat One", size: "1.4rem" }
+        if (target.closest(".acal__goal-checkbox") || target.closest(".acal__goal-done-icon")) {
+            e.preventDefault()
+            return
+        }
+        goalClicked = goal
+    }
+    function pointerUp() {
+        if (goalClicked) {
+            setViewGoal(goalClicked)
+            goalClicked = null
         }
     }
 
-    onMount(() => {
-        manager.initContainerRef(gridElem)
-    })
+    /* drag and drop */
+    function onDragStart({ e, goal, date }: { e: DragEvent, goal: Goal, date: Date }) {
+        const target = e.target as HTMLElement
+
+        e.dataTransfer?.setData("text", "")
+        e.dataTransfer!.effectAllowed = "move"
+
+        dragOverDate = date
+        target.addEventListener("dragend", () => onDragEnd(e))
+    }
+    function onDragEnd(e: DragEvent) {
+        const target = e.target as HTMLElement
+
+        dragOverDate = null
+        goalClicked = null
+
+        target.removeEventListener("dragend", onDragEnd)
+    }
+    function onCellDragOver(e: DragEvent, date: Date) {
+        dragOverDate = date
+    }
+
+    /* utils */
+
+    function onContextMenu(e: Event, date: Date) {
+
+    }
+    function closeContextMenu() {
+
+    }
+    function onPhotoClicked(date: Date) {
+
+    }
+    function onSettingsOptnClicked(name: string) {
+
+
+    }
+    initData()
+
 </script>
 
 
@@ -81,7 +172,7 @@
     style:--GRID_WIDTH={`${gridWidth}px`}
     style:--GRID_HEIGHT={`${gridHeight}px`}
 >
-    {#if store}
+    {#if weeks}
         <div class="acal__days">
             <div class="acal__dow">Sun</div>
             <div class="acal__dow">Mon</div>
@@ -91,12 +182,8 @@
             <div class="acal__dow">Fri</div>
             <div class="acal__dow">Sat</div>
         </div>
-
-        {@const { weeks, hasContextMenu, contextPos, editDay, imgModal } = store}
-
         <div 
             class="acal__month"
-            bind:this={gridElem}
             bind:clientWidth={gridWidth}
             bind:clientHeight={gridHeight}
         >
@@ -106,27 +193,34 @@
                         {@const d   = day.date.getDate()}
                         {@const dow = day.date.getDay()}
                         {@const sameMonth = day.isInCurrMonth}
-                        {@const { entry }  = manager.findDayEntry(day.date)}
-                        {@const highlightImg  = entry?.highlightImg}
-                        {@const { count } = manager.getGoalsDisplayData(entry?.goals ?? [])}
+                        {@const { entry }  = findDayEntry(day.date)}
+                        {@const { goals, imgSrc, count } = getGoalsDisplayData({ day, entry })}
                         {@const showHabits = options.habitsMark && sameMonth}
                         {@const showFocus = options.focusTime && Math.random() > 0.7 && sameMonth}
             
                         <!-- svelte-ignore a11y-no-static-element-interactions -->
                         <div 
                             class="acal__day"
-                            class:acal__day--edit={isSameDay(day.date, editDay?.date)}
+                            class:acal__day--drag-over={dragOverDate && isSameDay(day.date, dragOverDate)}
                             class:acal__day--first-col={dow === 0}
                             class:acal__day--last-col={dow === 6}
                             class:acal__day--bottom-row={weekIdx === 5}
                             class:acal__day--not-curr-month={!sameMonth}
                             class:acal__day--anim-photos={animPhotos}
                             class:acal__day--today={isSameDay(day.date, new Date())}
-                            on:contextmenu|preventDefault={(e) => manager.onContextMenu(e, day.date)}
+                            on:contextmenu|preventDefault={(e) => onContextMenu(e, day.date)}
+                            on:dragover={(e) => {
+                                if (sameMonth) {
+                                    onCellDragOver(e, day.date)
+                                }
+                                else {
+                                    dragOverDate = null
+                                }
+                            }}
                         >
                             <div>
                                 <div class="acal__day-header">
-                                    <div class="flx-algn-center">
+                                    <div class="flx-center">
                                         <span class="acal__day-num">{d}</span>
                                         {#if showHabits && Math.random() > 0.7}
                                             <span 
@@ -135,6 +229,14 @@
                                             >
                                                 *
                                             </span>
+                                        {/if}
+                                        {#if sameMonth}
+                                            <button class="acal__day-add-btn" on:click={() => addGoal(day.date)}>
+                                                <SvgIcon 
+                                                    icon={Icon.Add} 
+                                                    options={{ scale: 1.05, strokeWidth: 1.45, opacity: 0.8 }}
+                                                />
+                                            </button>
                                         {/if}
                                     </div>
                                     {#if showFocus}
@@ -145,28 +247,60 @@
                                     {/if}
                                 </div>
 
-
                                 <!-- goals -->
-                                {#if entry?.goals}
-                                    {@const goals = entry.goals}
+                                {#if entry && goals}
                                     {@const showAmount  = GOALS_LIST_MAX}
                                     {@const cutoff = goals.length - showAmount}
-            
+                                    
                                     <div>
                                         {#each goals.slice(0, showAmount) as goal}
-                                            {@const symbol = goal.tag.symbol}
-                                            {@const colors = getColorTrio(symbol.color, isLight)}
+                                            {@const tag = goal.tag}
+                                            {@const symbol = tag.symbol}
+                                            {@const color = symbol.color}
+                                            {@const colors = getSwatchColors({ color, light: isLight, contrast: false})}
+                                            {@const completed = Math.random() > 0.5}
+                                            <!-- svelte-ignore a11y-interactive-supports-focus -->
+                                            <!-- svelte-ignore a11y-click-events-have-key-events -->
                                             <div 
+                                                title={goal.name}
+                                                tabindex={0}
+                                                role="button"
                                                 draggable={true}
                                                 class="acal__goal"
+                                                class:acal__goal--completed={completed}
+                                                class:acal__goal--active={goalClicked === goal}
                                                 style:--tag-color-primary={symbol.color.primary}
                                                 style:--tag-color-1={colors[0]}
                                                 style:--tag-color-2={colors[1]}
                                                 style:--tag-color-3={colors[2]}
-                                                title={`Achived ${formatPlural("task", count)}`}
+                                                on:pointerdown={(e) => pointerDown(e, goal)}
+                                                on:pointerup={() => pointerUp()}
+                                                on:drag={(e) => e.preventDefault()}
+                                                on:dragstart={(e) => {
+                                                    onDragStart({ e, goal, date: day.date })
+                                                }}
                                             >
-                                                <i>{symbol.emoji}</i>
-                                                <span>{goal.name}</span>
+                                                <div class="flx-sb">
+                                                    {#if completed}
+                                                        <button 
+                                                            class="acal__goal-done-icon"
+                                                            on:click={() => toggleGoalComplete(goal)}
+                                                        >
+                                                            <AccomplishedIcon {tag} scale={0.65}/>
+                                                        </button>
+                                                    {:else}
+                                                        <button 
+                                                            class="acal__goal-checkbox" 
+                                                            on:click={() => toggleGoalComplete(goal)}
+                                                        >    
+                                                        </button>
+                                                    {/if}
+
+                                                    <div class="flx-center">
+                                                        <i>{symbol.emoji}</i>
+                                                        <span>{goal.name}</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         {/each}
                                     </div>
@@ -179,7 +313,7 @@
                             </div>
             
                             <!-- icon -->
-                            {#if highlightImg && entry?.goals?.length > 0}
+                            {#if imgSrc && entry && count > 0}
                                 {@const offset = randomArrayElem(PHOTO_OFFSETS)}
 
                                 <div class="acal__img-container">
@@ -189,9 +323,9 @@
                                         style:--photo-x={`${offset.x}px`}
                                         style:--photo-y={`${offset.y}px`}
                                         style:--photo-tilt={`${offset.tilt}deg`}
-                                        on:click={() => manager.onPhotoClicked(day.date)}
+                                        on:click={() => imgOpenSrc = imgSrc}
                                     >
-                                        <img src={highlightImg.src} alt="Day Icon">
+                                        <img src={imgSrc} alt="Day Icon">
                                     </button>
                                 </div>
                             {/if}
@@ -200,44 +334,15 @@
                 </div>
             {/each}
         </div>
-
-        <DropdownList
-            id={"activity-cal"}
-            isHidden={!hasContextMenu}
-            options={{
-                listItems: [
-                    {
-                        sectionName: formatDateLong(editDay?.date),
-                        font: "mono"
-                    },
-                    { 
-                        name: "Add a Goal"
-                    }
-                ],
-                onListItemClicked: ({ name }) => {
-                    manager.onSettingsOptnClicked(name)
-                },
-                onClickOutside: () => {
-                    manager.closeContextMenu()
-                },
-                styling: {
-                    width: "140px",
-                },
-                position: { 
-                    top: `${contextPos.top}px`, 
-                    left: `${contextPos.left}px`
-                }
-            }}
-        />
-
-        {#if imgModal && editDay} 
-            <ImgStampModal 
-                img={editDay.data.highlightImg}
-                onClickOutside={() => manager.closeEdit()}
-            />
-        {/if}
     {/if}
 </div>
+
+{#if imgOpenSrc}
+    <ImgModal 
+        img={{ src: imgOpenSrc }} 
+        onClickOutside={() => imgOpenSrc = null}
+    />
+{/if}
 
 
 <style lang="scss">
@@ -301,6 +406,10 @@
             position: relative;
             cursor: pointer;
 
+            &:hover &-add-btn {
+                opacity: 0.2;
+            }
+
             &--first-col {
                 background-color: rgba(var(--textColor1), var(--dark-cell-opac));
 
@@ -327,6 +436,10 @@
                 color: white;
                 @include circle(20px);
             }
+            &--drag-over {
+                background-color: rgba(var(--textColor1), 0.035);
+                @include border-focus;
+            }
         }
         &__day--edit {
             background: rgba(var(--textColor1), 0.035) !important;
@@ -334,7 +447,13 @@
         &__day:hover {
             background-color: rgba(var(--textColor1), var(--dark-cell-opac));
         }
+        &__day-add-btn {
+            opacity: 0;
 
+            &:hover {
+                opacity: 1 !important;
+            }
+        }
         &__day-ring {
             @include abs-top-right(8px, 7px);
 
@@ -350,11 +469,11 @@
         }
         &__day-num {
             @include center;
-            @include text-style(1, var(--fw-400-500), 1.25rem);
-            margin: 2px 5px 2px 2px;
+            @include text-style(1, var(--fw-400-500), 1.2rem, "Geist Mono");
+            margin: 2px 6px 2px 2px;
         }
         &__star {
-            margin: 0px 5px 0px 0px;
+            margin: 0px 5px 0px -5px;
             @include text-style(0.25, var(--fw-300-400), 1.5rem, "Geist Mono");
         }
         &__focus {
@@ -365,7 +484,7 @@
         &__goal {
             overflow: hidden;
             position: relative;
-            padding: 2.5px 10px 3.5px 4px;
+            padding: 4.5px 10px 5.5px 8px;
             background-color: rgba(var(--tag-color-2), 1) !important;
             border-radius: 7px;
             white-space: nowrap;
@@ -374,21 +493,30 @@
             @include smooth-bounce;
             cursor: pointer;
 
+            &--active {
+                transform: scale(0.95);
+            }
             i {
                 font-style: normal;
-                font-size: 1.1rem;
-                margin: 0px 6px 0px 14px;
+                font-size: 0.85rem;
+                margin: 0px 6px 0px 7px;
             }
             span {
                 @include text-style(0.9, var(--fw-400-500), 1.225rem);
                 @include elipses-overflow;
                 color: rgba(var(--tag-color-1), 1);
             }
-            &::before {
-                content: " ";
-                @include abs-top-left(50%, 8px);
-                @include square(4px, 2px);
-                background: rgba(var(--tag-color-1), 1);
+        }
+        &__goal-done-icon {
+            margin-left: -3px;
+        }
+        &__goal-checkbox {
+            @include square(12px, 3px);
+            background-color: rgba(var(--tag-color-1), 0.1);
+            margin: 0px 2px 0px -2px;
+
+            &:hover {
+                background-color: rgba(var(--tag-color-1), 0.2);
             }
         }
         &__goal-cutoff {
@@ -408,21 +536,27 @@
             z-index: 1;
 
             img {
-                border: white 3px solid;
-                transition: 0.25s cubic-bezier(.4, 0, .2, 1);
-                @include square(50px, 6px);
+                border: white 2.5px solid;
+                transition: 0.15s cubic-bezier(.4, 0, .2, 1);
+                @include square(35px, 6px);
                 object-fit: cover
             }
         }
-        &__img-icon:hover img {
-            @include square(75px, 12px);
-        }
         &__img-icon--photo-anim:hover {
-            transform: rotate(calc(-1 * var(--photo-tilt)))
+            transform: rotate(calc(-1 * var(--photo-tilt)));
+            transform: scale(1.5);
+        }
+        &__img-icon--photo-anim:hover img {
+            border: white 2.5px solid;
         }
         &__img-icon--photo-anim {
             @include abs-bottom-left(var(--photo-y), var(--photo-x));
-            transform: rotate(var(--photo-tilt))
+            transform: rotate(var(--photo-tilt));
+            @include square(55px, 6px);
+        }
+        &__img-icon--photo-anim img {
+            @include square(55px, 6px);
+            border: white 3px solid;
         }
         &__day-activity {
             margin-top: 7px;

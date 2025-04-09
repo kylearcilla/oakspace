@@ -1,41 +1,51 @@
 <script lang="ts">
+    import { Icon } from "$lib/enums"
 	import { themeState } from "$lib/store"
     import { getColorTrio } from "$lib/utils-colors"
+	import type { GoalsViewManager } from "$lib/goals-view-manager"
+	import { getPeriodType, setViewGoalNew } from "$lib/utils-goals"
 	import { getTagFromName, kebabToNormal } from "$lib/utils-general"
 
-	import GoalCard from "$components/GoalCard.svelte"
 	import SvgIcon from "$components/SVGIcon.svelte";
-	import { Icon } from "$lib/enums";
+	import GoalCard from "$components/GoalCard.svelte"
 
     export let manager: GoalsViewManager
-    export let options: GoalsView
+    export let options: GoalsBoardOptions
     export let pinnedGoal: Goal | null
 
-    let store: GoalsViewState | null = null
+    let state: GoalsViewState | null = null
+    let uiState: GoalsViewUIState | null = null
     let srcGoal: Goal | null = null
-    let containerRef: HTMLElement
-    let width = 0
 
     $: isLight = !$themeState.isDarkTheme
     $: grouping = options.grouping
     $: showProgress = options.showProgress
     $: showDue = options.due
     $: dueType = options.dueType
-
+    $: imgs = options.imgs
     $: manager.initSections(grouping)
 
     manager.state.subscribe((data: GoalsViewState) => {
-        store = data
-        srcGoal = manager.dragSrc
+        state = data
     })
+    manager.uiState.subscribe((data: GoalsViewUIState) => {
+        srcGoal = manager.dragSrc
+        uiState = data
+    })
+    function getOrder(goal: Goal) {
+        const period = manager.timeFrame!.period
+        const time = getPeriodType(period)
+        const key = `${time[0]}_order` as keyof Goal
+        const orderObj = goal[key] as Record<string, number>
 
+        return orderObj[grouping]
+    }
     function getDragTargetId() {
-        if (!store!.dragTarget) return null
-        const data = store!.dragTarget!.data
+        if (!uiState!.dragTarget) return null
+        const data = uiState!.dragTarget!.data
 
         // either section name or goal id
         if (typeof data === "string") {
-            console.log(data)
             return data
         }
         else {
@@ -45,14 +55,13 @@
 </script>
 
 <div 
-    bind:this={containerRef}
-    bind:clientWidth={width}
     class="goals"
     class:goals--light={isLight}
     class:goals--tag-view={grouping === "tag"}
 >
-    {#if store}
-        {@const { sortedGoals, sections, dragTarget, editGoal } = store }
+    {#if state && uiState}
+        {@const { sortedGoals, sections } = state }
+        {@const { dragTarget, editGoal } = uiState }
         {@const dtargetId = dragTarget?.type === "goal" ? getDragTargetId() : null}
 
         {#each sections as section, secIdx (secIdx)}
@@ -62,6 +71,8 @@
             {@const tag      = isTag ? getTagFromName(sec) : undefined}
             {@const tagColor = isTag && tag ? getColorTrio(tag.symbol.color, isLight) : ["", "", ""]}
             {@const { done, total } = manager.getSectionProgress(secIdx)}
+            {@const sectionContext = manager.getSectionContext(section)}
+            {@const timeFrame = manager.timeFrame}
 
             <div class="goals__col">
                 <div class="goals__col-header">
@@ -77,6 +88,7 @@
                         <div 
                             class="goals__col-icon"
                             class:tag__symbol={isTag}
+                            class:hidden={isTag && tag?.id === "*"}
                         >
                             {#if isTag && tag}
                                 {tag.symbol.emoji}
@@ -102,12 +114,13 @@
                     {#each goals as goal (goal.id)}
                         <!-- svelte-ignore a11y-no-static-element-interactions -->
                         <div 
+                            data-idx={`${getOrder(goal)}`}
                             draggable="true"
                             data-drag-context={"goal"}
                             class="goals__goal drop-top-border"
                             class:drop-top-border--over={srcGoal && dtargetId === goal.id}
                             on:dragstart={(e) => manager.onDrag(e, goal)}
-                            on:dragend={(e) => manager.onDragEnd(e)}
+                            on:dragend={(e) => manager.onDragEnd()}
                             on:dragover={(e) => e.preventDefault()}
                             on:dragenter={(e) => manager.onDragEnter(e, goal)}
                             on:contextmenu={(e) => manager.onContextMenu(e, goal)}
@@ -120,12 +133,12 @@
                             </div>
                             <GoalCard 
                                 {goal} 
+                                pinned={pinnedGoal?.id === goal.id}
                                 highlighted={editGoal?.id === goal.id}
                                 options={{ 
-                                    img: false, 
+                                    img: imgs, 
                                     due: showDue,
                                     tag: grouping === "status",
-                                    completed: sec === "Accomplished", 
                                     progress: showProgress,
                                     dueType
                                 }}
@@ -135,12 +148,12 @@
                     <div style:position="relative">
                         <button 
                             class="goals__new-btn"
-                            on:click={() => manager.addGoal(section)}
+                            on:click={() => setViewGoalNew({ timeFrame, section: sectionContext })}
                         >
                             <div>
                                 <SvgIcon 
                                     icon={Icon.Add} 
-                                    options={{ scale: 1.05, strokeWidth: 2, opacity: 0.3 }}
+                                    options={{ scale: 1.125, strokeWidth: 1.4, opacity: 0.4 }}
                                 />
                             </div>
                             <span>New Goal</span>
@@ -152,7 +165,7 @@
                             class:hidden={!srcGoal}
                             class:drop-top-border--over={dtargetId === section}
                             on:dragenter={(e) => manager.onDragEnter(e, section)}
-                            on:dragleave={(e) => manager.resetGoalsDragTarget(e)}
+                            on:dragleave={() => manager.resetGoalsDragTarget()}
                             on:dragover={(e) => e.preventDefault()}
                             on:dragend={() => manager.onDragEnd()}
                         >
@@ -169,6 +182,18 @@
         display: flex;
         overflow-x: scroll;
         padding-bottom: 100px;
+        --bg-opacity: 0.006;
+
+        &--light {
+            --bg-opacity: 0.025;
+        }
+        &--light &__new-btn {
+            background-color: rgba(var(--textColor1), 0.055);
+            opacity: 0.6;
+        }
+        &--light &__new-btn:hover {
+            opacity: 1;
+        }
         &--light &__col-count {
             @include text-style(0.35);
         }
@@ -192,7 +217,7 @@
             min-width: 230px;
             max-width: 230px;
             margin-right: 15px;
-            background-color: rgba(var(--textColor1), 0.006);
+            background-color: rgba(var(--textColor1), var(--bg-opacity));
             padding: 8px 10px 10px 9px;
             border-radius: 10px;
             height: min-content;
@@ -212,8 +237,8 @@
         &__col-name-container {
             @include text-style(_, var(--fw-400-500), 1.3rem);
             display: flex;
-            padding: 4px 15px 6px 10px !important;
-            border-radius: 5px;
+            padding: 4px 13px 6px 9px !important;
+            border-radius: 4px;
             margin-right: 10px;
 
             &--not-started {
@@ -259,11 +284,11 @@
         &__new-btn {
             @include flex(center);
             @include text-style(0.35, var(--fw-400-500), 1.4rem);
+            width: calc(100% - 36px);
             background-color: rgba(var(--textColor1), 0.02);
+            opacity: 0.4;
             padding: 9px 14px 10px 14px;
             border-radius: 8px;
-            width: calc(100% - 36px);
-            opacity: 0.4;
             border: 1px solid rgba(var(--textColor1), 0.015);
 
             &:hover {

@@ -697,7 +697,7 @@
             margin: -3px 0px 15px 0px;
         }
         &__header-title {
-            @include text-style(1, var(--fw-400-500), 2.45rem);
+            @include text-style(1, var(--fw-400-500), 2.85rem, "Geist Mono");
             margin-bottom: 8px;
             display: flex;
             align-items: flex-start;
@@ -718,19 +718,23 @@
         }
         &__month {
             position: relative;
-            border-top: var(--divider-border);
-            padding: 10px 0px 0px var(--side-padding);
+            padding: 9px 0px 0px var(--side-padding);
             margin-top: 13px;
+            border-top: var(--divider-border);
         }
         &__month-header {
             @include flex(center, space-between);
             margin: 0px 0px 11px 0px;
         }
         &__month-item {
-            @include text-style(1, var(--fw-400-500), 1.5rem);
+            @include text-style(1, var(--fw-400-500), 1.4rem);
             opacity: var(--month-item-opacity);
-            margin-right: 16px;
-
+            padding: 0px 8px;
+            position: relative;
+            
+            &:first-child {
+                padding-left: 0px;
+            }
             &:hover {
                 opacity: 0.7;
             }

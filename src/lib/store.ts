@@ -1,12 +1,10 @@
 import { writable } from 'svelte/store'
 import type { YoutubePlayer } from './youtube-player'
-import type { YoutubeUserData } from './youtube-user-data'
 import type { SessionManager } from './session-manager'
+import type { YoutubeUserData } from './youtube-user-data'
 
-import type { DatePickerManager } from './date-picker-manager'
-import { WEEKLY_ROUTINES } from '../tests/routines/routines.data'
 import { themes } from './data-themes'
-import type { GoalsViewManager } from './goals-view-manager'
+import { WEEKLY_ROUTINES } from '../tests/routines/routines.data'
 
 /* global ui */
 export const globalContext = writable<GlobalContext>({
@@ -52,7 +50,8 @@ export const goalTracker = writable<GoalsStore>({
     monthData: {
         month: 1,
         data: null
-    }
+    },
+    view: null
 })
 
 /* general authentication stuff */
@@ -67,7 +66,4 @@ export const ytPlayerStore = writable<YoutubePlayer| null>(null)
 
 /* session */
 export const sessionManager = writable<SessionManager | null>(null)
-
-/* general */
-export const datePickerManager = writable<DatePickerManager | null>(null)
 

@@ -1,26 +1,52 @@
 <script lang="ts">
     import { Icon } from "$lib/enums"
     import { themeState } from "$lib/store"
-    import { inlineStyling } from "$lib/utils-general"
+	import { tagPicker } from "$lib/pop-ups"
     import { getColorTrio } from "$lib/utils-colors"
+    import { inlineStyling } from "$lib/utils-general"
     
     import SvgIcon from "./SVGIcon.svelte"
 
     export let tag: Tag | null
-    export let onClick: () => void
-    export let active: boolean
+    export let onChoose: (newTag: Tag | null) => void
     export let styling: StylingOptions | undefined = undefined
 
     let { fontSize = "1.285rem" } = styling || {}
+    let pickerOpen = false
 
     $: empty = !tag
     $: isDarkTheme = $themeState.isDarkTheme
     $: tagColor = tag ? getColorTrio(tag.symbol.color, !isDarkTheme) : null
+
+
+    function onTagClicked(newTag: Tag | null) {
+        if (newTag) {
+            onChoose(newTag)
+        } 
+        tagPicker.close()
+        pickerOpen = false
+    }
+    function toggleTagPicker() {
+        pickerOpen = !pickerOpen
+        pickerOpen ? initTagPicker() : tagPicker.close()
+    }
+
+    function initTagPicker() {
+        tagPicker.init({
+            onClose: () => {
+                pickerOpen = false
+            },
+            props: {
+                tag,
+                onTagClicked
+            }
+        })
+    }
 </script>
 
 <div class="tag-picker-btn" class:tag-picker-btn--light={!isDarkTheme}>
     <button 
-        id="tag-picker--dbtn"
+        data-dmenu-id="tag-picker"
         class="tag-picker-btn__dbtn dbtn"
         class:tag-picker-btn__dbtn--empty={empty}
         class:tag-picker-btn__dbtn--colored={!empty}
@@ -31,10 +57,10 @@
         style:--tag-color-2={tagColor ? tagColor[1] : ""}
         style:--tag-color-3={tagColor ? tagColor[2] : ""}
         style={inlineStyling(styling)}
-        on:click={onClick}
+        on:click={() => toggleTagPicker()}
     >
         {#if tag}
-            <div class="flx-algn-center">
+            <div class="flx-center">
                 <span 
                     class="tag__symbol"
                     style:font-size={fontSize}
@@ -53,7 +79,7 @@
                 None
             </div>
         {/if}
-        {#if empty || (!empty && !active)}
+        {#if empty || (!empty && !pickerOpen)}
             <div class="dbtn__icon dbtn__icon--arrow">
                 <SvgIcon 
                     icon={Icon.Dropdown}
@@ -66,7 +92,11 @@
         {:else}
             <button
                 class="dbtn__icon dbtn__icon--close"
-                on:click|stopPropagation={() => onClick()}
+                on:click|stopPropagation={() => {
+                    onChoose(null)
+                    tagPicker.close()
+                    pickerOpen = false
+                }}
             >
                 <SvgIcon 
                     icon={Icon.Close} 
@@ -96,7 +126,8 @@
             --tag-hov-brightness: 1.015;
         }
         &__dbtn {
-            padding: 4px 10px 6px 9px;
+            padding: 5.5px 10px 7.5px 10px;
+            height: 15px;
             border-radius: 7px !important;
             @include flex(center, space-between);
             

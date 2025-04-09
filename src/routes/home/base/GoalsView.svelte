@@ -3,6 +3,7 @@
 	import { themeState } from "$lib/store"
 
     import { Icon } from "$lib/enums"
+	import { formatDateLong } from "$lib/utils-date"
     import { GoalsViewManager } from "$lib/goals-view-manager"
 	import { capitalize, kebabToNormal, normalToKebab } from "$lib/utils-general"
 	import { getNextTimeFrame, isGoalPinned, setViewGoal } from "$lib/utils-goals"
@@ -10,19 +11,20 @@
     import GoalsList from "./GoalsList.svelte"
 	import GoalsBoard from "./GoalsBoard.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
+	import AccomplishedIcon from "$components/AccomplishedIcon.svelte";
 
     export let manager: GoalsViewManager
-    export let goals: Goal[]
-    export let options: GoalsView
+    export let options: GoalsViewOptions
     export let timeFrame: { year: number, period: string }
+    export let context: "page" | "home" = "page"
 
-    $: state = manager.state
-    $: pinnedGoal = $state.pinnedGoal
     $: light = !$themeState.isDarkTheme
     $: nextTimeFrame = getPushTime(timeFrame)
 
-    let store: GoalsViewState | null = null
+    let state: GoalsViewState | null = null
+    let uiState: GoalsViewUIState | null = null
 
+    let pinnedGoal: Goal | null = null
     let statusOpen = false
     let statusMenuPos = { top: 0, left: 0 }
     let snippetRef: HTMLElement
@@ -32,7 +34,11 @@
     let closing = false
 
     manager.state.subscribe((data) => {
-        store = data
+        state = data
+        pinnedGoal = data.pinnedGoal
+    })
+    manager.uiState.subscribe((data) => {
+        uiState = data
     })
 
     $: if (pinnedGoal && snippetRef) {
@@ -40,7 +46,6 @@
             snippetHeight = snippetRef.clientHeight
         })
     }
-
     function getPushTime(time: { year: number, period: string }) {
         const nextTimeFrame = getNextTimeFrame(time)
         const period = time.period
@@ -48,10 +53,11 @@
         
         return period === "all" ? nextTimeFrame.year : diffYear ? nextTimeFrame.year : capitalize(nextTimeFrame.period)
     }
-    function onListItemClicked(goal: Goal, newStatus: string) {
+    function onListItemClicked(goal: Goal | null, newStatus: string) {
+        if (!goal) return
+        
         const status = normalToKebab(newStatus) as "accomplished" | "in-progress" | "not-started"
-
-        manager.setGoalStatus(goal, status)
+        manager.toggleGoalStatus(goal, status)
         manager.closeContextMenu()
         statusOpen = false
         closing = true
@@ -62,39 +68,49 @@
 
 <div 
     class="goals-view"
+    class:goals-view--page={context === "page"}
     class:goals-view--sm={width < 600}
     class:goals-view--light={light}
     style:--truncate-lines={pinnedGoal?.img ? 2 : 5}
     bind:clientWidth={width}
 >
-    {#if pinnedGoal}
-        {@const { status, img, description, name } = pinnedGoal}
+    {#if pinnedGoal && options.view === "list"}
+        {@const { status, img, description, name, completedDate } = pinnedGoal}
         {@const done = status === "accomplished"}
         <div class="goals-view__left">
             <div class="goals-view__pinned">
                 {#if img}
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div 
                         role="button"
                         tabindex="0"
                         class="goals-view__pinned-img"
                         on:click={() => {
-                            setViewGoal(pinnedGoal)
+                            if (pinnedGoal) setViewGoal(pinnedGoal)
                         }}
                     >
                         <img src={img.src} alt={name} />
                     </div>
                 {/if}
                 <div class="goals-view__pinned-text">
-                    <span>
-                        {done ? "Done!" : "Pinned"}
-                    </span>
+                    <div class="flx">
+                        <span>Pinned</span>
+                        {#if done && completedDate}
+                            <div 
+                                style:margin="1px 0px 0px 7px"
+                                title={`Completed on ${formatDateLong(completedDate)}`}
+                            >
+                                <AccomplishedIcon scale={0.6} />
+                            </div>
+                        {/if}
+                    </div>
                     <!-- svelte-ignore a11y-missing-attribute -->
                     <button 
                         class="goals-view__pinned-title hov-underline"
                         class:strike={done}
                         title={name}
                         on:click={() => {
-                            setViewGoal(pinnedGoal)
+                            if (pinnedGoal) setViewGoal(pinnedGoal)
                         }}
                     >
                         {name}
@@ -133,11 +149,12 @@
             </div>
         {/if}
 
-        {#if store}
-            {@const { contextMenuPos, editGoal, contextMenuOpen } = store }
+        {#if state && uiState}
+            {@const { contextMenuPos, editGoal, contextMenuOpen } = uiState }
             {@const periodPinned = pinnedGoal?.id === editGoal?.id}
             {@const carouselPinned = isGoalPinned(editGoal)}
-            {@const currPeriod = capitalize(timeFrame.period)}
+            {@const period = timeFrame.period}
+            {@const pinPeriod = period === "all" ? "Year" : capitalize(period)}
 
             <DropdownList
                 id={"goals-menu"}
@@ -149,7 +166,7 @@
                             divider: true
                         },
                         { 
-                            name: periodPinned ? `Unpin from ${currPeriod}` : `Pin to ${currPeriod}`,
+                            name: periodPinned ? `Unpin from ${pinPeriod}` : `Pin to ${pinPeriod}`,
                             rightIcon: { 
                                 type: "svg",
                                 icon: Icon.Pin
@@ -161,17 +178,12 @@
                         },
                         {
                             name: "Change Status",
-                            rightIcon: { 
-                                type: "svg",
-                                icon: Icon.ChevronRight
-                            },
-                            onPointerOver: ({ childLeft }) => {
-                                statusMenuPos.top = contextMenuPos.top
-                                statusMenuPos.left = childLeft
-
+                            childId: "statuses",
+                            onPointerOver: ({ childXPos }) => {
                                 if (!closing) {
                                     statusOpen = true
                                 }
+                                statusMenuPos.left = childXPos
                             },
                             onPointerLeave: () => {
                                 statusOpen = false
@@ -188,12 +200,9 @@
                         },
                         { 
                             name: "Remove" 
-                        },
+                        }
                     ],
-                    parentContext: {
-                        container: rightContainerRef,
-                        childId: "statuses"
-                    },
+                    rootRef: rightContainerRef,
                     onListItemClicked: ({ name }) => {
                         manager.onOptionClicked(name)
                     },
@@ -202,8 +211,7 @@
                         statusOpen = false
                     },
                     styling: { 
-                        width: "140px",
-                        zIndex: 500,
+                        zIndex: 500
                     },
                     position: { 
                         top: `${contextMenuPos.top}px`, 
@@ -213,7 +221,8 @@
         />
     
         <DropdownList 
-            id={"statuses"}
+            id={"goals-menu"}
+            childId={"statuses"}
             isHidden={!statusOpen || !contextMenuOpen}
             options={{
                 pickedItem: kebabToNormal(editGoal?.status ?? ""),
@@ -223,18 +232,13 @@
                     { name: "Accomplished" },
                 ],
                 styling:  { 
-                    width: "125px",
-                    zIndex: 501,
+                    zIndex: 501
                 },
                 position: { 
-                    top: `${statusMenuPos.top + 50}px`, 
+                    top: `${contextMenuPos.top + 70}px`, 
                     left: `${statusMenuPos.left}px`,
                 },
-                parent: {
-                    id: "goals-menu",
-                    optnIdx: 0,
-                    optnName: "Change Status"
-                },
+                parentId: "goals-page",
                 onDismount: () => {
                     closing = false
                 },
@@ -256,9 +260,11 @@
     .goals-view {
         @include flex(flex-start, space-between);
         gap: 25px;
-        border-top: var(--divider-border);
-        padding-top: 12px;
-
+        
+        &--page {
+            border-top: var(--divider-border);
+            padding-top: 12px;
+        }
         &--light &__pinned span {
             @include text-style(0.3);
         }
@@ -332,7 +338,7 @@
             }
         }
         &__pinned-title {
-            @include text-style(1, var(--fw-400-500), 1.75rem);
+            @include text-style(1, var(--fw-400-500), 1.65rem);
             @include truncate-lines(var(--truncate-lines));
             cursor: pointer;
             margin: 6px 0px 9px 0px;
@@ -341,7 +347,7 @@
             opacity: 0.4 !important;
         }
         &__pinned-text-snippet {
-            @include text-style(0.55, var(--fw-400-500), 1.5rem);
+            @include text-style(0.55, var(--fw-400-500), 1.4rem);
             word-break: break-word;
         }
         &__pinned-text-snippet--fade {

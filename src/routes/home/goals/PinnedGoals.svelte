@@ -11,8 +11,8 @@
     let listRef: HTMLElement
     let insideDrag = false
 
-    manager.state.subscribe((s: GoalsViewState) => {
-        if (!s.dragTarget) {
+    manager.uiState.subscribe((ui: GoalsViewUIState) => {
+        if (!ui.dragTarget) {
             targetGoal = null
         }
     })
@@ -105,13 +105,13 @@
             >
             </div>
             <div class:no-pointer-events={!!targetGoal}>
-                <GoalCard options={{ type: "hoz", tag: true }} {goal} />
+                <GoalCard options={{ type: "hoz", tag: true, img: true }} {goal} />
             </div>
         </div>
     {:else}
         <div class="empty">
             <EmptyList 
-                emptyText="Pinned goal go here."
+                emptyText="Pinned goals go here."
                 subtitle="What Gets Seen, Gets Done"
             />
         </div>

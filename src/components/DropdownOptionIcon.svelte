@@ -6,7 +6,7 @@
 	import Hotkeys from "./Hotkeys.svelte"
 	import SvgIcon from "./SVGIcon.svelte"
 
-    export let left: boolean = true
+    export let dir: "l" | "r" = "l"
     export let icon: DropdownOptnIcon
 
     const type = icon ? icon.type ?? ("fa") : null
@@ -25,10 +25,10 @@
     }
 </script>
 
-<div class:dmenu__right-icon-container={!left}>
+<div class:dmenu__right-icon-container={dir === "r"}>
     <div 
         class={`dmenu__option-icon dmenu__option-icon--${type}`}
-        class:dmenu__option-icon--left={left}
+        class:dmenu__option-icon--left={dir === "l"}
         style={`${inlineStyling(icon?.styling)}`}
         style:transform={icon.transform}
     >

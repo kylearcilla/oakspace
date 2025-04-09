@@ -81,7 +81,7 @@
                 </p>
             </div>
             <button 
-                id="flavors--dbtn"
+                data-dmenu-id="flavors"
                 class="themes__flavor-dropdown-btn"
                 class:themes__flavor-dropdown-btn--active={flavorOptionsOpen}
                 on:click={() => flavorOptionsOpen = !flavorOptionsOpen}

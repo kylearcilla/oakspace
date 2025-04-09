@@ -50,11 +50,24 @@ type InputOptions = {
 }
 
 type AbsoluteFloatElem = {
+    id: string
+    bounceId: string
     isHidden: boolean
     props: any
     component: ComponentType
     position: { top: number, left: number } 
-    offset: { top: number, left: number } 
+    onClose: () => void
+}
+
+type DatePickerProps = {
+    pickedDate: Date
+    onUpdate: (val: { date: Date, dateType?: DateType } | null) => void
+    options: DatePickerOptions
+}
+
+type TagPickerProps = {
+    tag: Tag | null
+    onTagClicked: (newTag: Tag | null) => void
 }
 
 type TextEntryIcon = {
@@ -309,9 +322,11 @@ type DropdownOption = {
     name: string,
     leftIcon?: DropdownOptnIcon
     rightIcon?: DropdownOptnIcon
-    onPointerOver?: ((params?: { e: PointerEvent, item: DropdownOption, childLeft: number }) => void)
+    onPointerOver?: ((params?: { e: PointerEvent, item: DropdownOption, childXPos: number }) => void)
     onPointerLeave?: ({ e: PointerEvent, item: DropdownOption }) => void
     divider?: boolean
+    childId?: string
+    leftOffset?: number
 }
 
 type DropdownOptionSection = {
@@ -357,7 +372,13 @@ type DropdownMenuOption = {
     onListItemClicked: (context: DropdownItemClickedContext) => void
 }
 
-type DropdownListItem = DropdownOptionSection | DropdownOption | DropdownToggleOption | DropdownMenuOption
+type DropdownTwinOption = {
+    twinItems: { name: string, faIcon: string, size?: string  }[]
+    pickedItem?: string
+    onListItemClicked: (context: DropdownItemClickedContext) => void
+}
+
+type DropdownListItem = DropdownOptionSection | DropdownOption | DropdownToggleOption | DropdownMenuOption | DropdownTwinOption
 
 type DropdownItemClickedContext = {
     event: Event, 
@@ -370,15 +391,8 @@ type DropdownListOptions = {
     context?: "side-bar" | "modal" | "default"
     listItems: DropdownListItem[]
     fixPos?: boolean
-    parentContext?: {
-        container?: HTMLElement
-        childId: string
-    }
-    parent?: {
-        id: string,
-        optnIdx: number
-        optnName: string
-    }
+    parentId?: string
+    rootRef?: HTMLElement
     pickedItem?: string | number
     onListItemClicked?: (context: DropdownItemClickedContext) => void
     onClickOutside?: FunctionParam
@@ -564,7 +578,7 @@ type CalendarOptions = {
     maxDate?: Date | null 
 }
 
-type DatePickerOptions = CalendarOptions & { position?: CSSAbsPos }
+type DatePickerOptions = CalendarOptions & { position?: CSSAbsPos, dateType?: DateType }
 
 type DateType = "day" | "month" | "year" | "quarter"
 
@@ -898,7 +912,7 @@ type TaskListHandlers = {
 
 /* task client handlers */
 
-interface TodoistTask extends Omit<Task, "subtasks"> {
+interface TodoistTask extends Task {
     isRecurring: boolean
     due: Date | null
     isDeleted: boolean
@@ -1227,53 +1241,113 @@ type FetchCalDayEventsResponse = {
 
 /* Goals */
 
-type GoalYearData = {
-    entry: TextEntryOptions
-    smallImg: string
-    goals: Goal[]
+type PeriodEntry = {
+    entry: TextEntryOptions | null
+    pinnedId: string | null
+
+  }
+type YearEntry = PeriodEntry & {
     bannerImg: {
-        src: string,
+        src: string
         center: number
     } | null
+    smallImg: string
+}
+
+type GoalYearData = YearEntry & {
+    goals: Goal[]
+}
+type GoalMonthData = PeriodEntry & {
+    goals: Goal[]
+}
+type GoalQuarterData = PeriodEntry & {
+    goals: Goal[]
 }
 
 type GoalsViewState = {
-    sortedGoals: Goal[][],
-    pinnedGoals: Goal[],
-    closedSections: boolean[],
-    sections: string[],
-    openGoalId: string,
-    viewProgress: number,
-    yrProgress: number,
+    sortedGoals: Goal[][]
+    pinnedGoals: Goal[]
+    sections: string[]
+    viewProgress: number
+    yrProgress: number
+    pinnedGoal: Goal | null
+}
+
+type GoalsViewUIState = {
     dragTarget: GoalDragTarget | null,
-    pinnedGoal: Goal | null,
+    closedSections: boolean[],
+    openGoalId: string,
     contextMenuPos: { left: number, top: number }
     contextMenuOpen: boolean
     statusOpen: boolean
     statusMenuPos: { left: number, top: number }
     editGoal: Goal | null
+    deleteConfirm: boolean
+}
+
+type GoalsPageOptions = {
+    showIcon: boolean
+    pinned: boolean
+    leftCol: boolean
+    showYearEntry: boolean
+    showMonthEntry: boolean
+    progressBars: boolean
+    heatmap: boolean
+    heatmapEmojis: boolean
+    carousel: boolean
+    marginLeftView: {
+        showPinned: boolean
+        showNext: boolean
+        showOverdue: boolean
+        heights: {
+            pinnedHeight: number
+            upcomingHeight: number
+            overdueHeight: number
+        }
+    }
+}
+
+
+type GoalIdxUpdate = {
+    id: string  // goal id
+    y?: {d?: number, s?: number, t?: number}  // year indices (default, status, tag)
+    q?: {d?: number, s?: number, t?: number}  // quarter indices
+    m?: {d?: number, s?: number, t?: number}  // month indices
+  }
+
+type GoalsViewOptions = {
+    view: "list" | "board"
+    progress: number
+    list: GoalsListOptions
+    board: GoalsBoardOptions
+}
+
+type GoalsListOptions = {
+    grouping: "status" | "tag" | "default"
+    showProgress: boolean
+    due: boolean
+    dueType: "date" | "distance"
+}
+
+type GoalsBoardOptions = {
+    grouping: "status" | "tag"
+    showProgress: boolean
+    due: boolean
+    dueType: "date" | "distance"
+    imgs: boolean
 }
 
 type GoalDragTarget = {
     type: "pinnedGoal" | "goal" | "month"
-    // list, board goal OR month num OR carousel pinned goal
-    data: string | Goal | number
-}
-
-type GoalMonthData = {
-    entry: TextEntryOptions | null
-    pinnedId: string | null
-    pinnedGoal: Goal | null
-    goals: Goal[]
-}
-type GoalQuarterData = {
-    entry: TextEntryOptions | null
-    goals: Goal[]
+    data: string | Goal | number  // list, board goal OR month num OR carousel pinned goal
 }
 
 type GoalsStore = {
     init: boolean
-    viewGoal: Goal | null
+    viewGoal: {
+        goal: Goal
+        type: "new" | "edit"
+    } | null
     goals: Goal[]
     yearData: {
         year: number
@@ -1287,23 +1361,43 @@ type GoalsStore = {
         month: number
         data: GoalMonthData | null
     }
+    view: GoalsViewManager | null
 }
 
 type DueType = "day" | "month" | "quarter" | "year" | "someday"
+
+type PeriodType = "year" | "month" | "quarter"
+
 type GoalStatus = "not-started" | "in-progress" | "accomplished"
+
+type GoalViewSection = "status" | "tag" | "default"
+
+type GoalViewTimeFrame = {
+    year: number,
+    period: string
+}
+
+type GoalAddContext = {
+    timeFrame: GoalViewTimeFrame
+    section?: {
+        name: GoalViewSection
+        valueId: string
+    }
+    day?: Date
+}
 
 type Goal = {
   id: string
   name: string
-  big?: boolean | null
+  big?: boolean
   due: Date
   dueType: DateType
-  description?: string | null
+  description: string
   tag: Tag | null
   creationDate: Date
   status: GoalStatus
-  milestones?: Milestone[] | null
-  img?: {
+  tasks: GoalActionItem[]
+  img: {
     src: string
     type: "header" | "float-left" | "float-right"
     center: number
@@ -1327,28 +1421,26 @@ type Goal = {
   }
 }
 
-type GoalsViewOptions = {
-    view: "list" | "board"
-    progress: number
-    list: {
-        grouping: "status" | "tag" | "default"
-        showProgress: boolean
-        due: boolean
-        dueType: "date" | "distance"
-    }
-    board: {
-        grouping: "status" | "tag"
-        showProgress: boolean
-        due: boolean
-        dueType: "date" | "distance"
-    }
+type GoalUpdateData = {
+    name: string
+    description: string
+    due: Date
+    tag: Tag | null
+    img: {
+        src: string
+        type: "header" | "float-left" | "float-right"
+        center: number
+    } | null
+    status: GoalStatus
+    dueType: DateType
+    big: boolean
+    completedDate?: Date | null
+    tasks: GoalActionItem[]
+    pinned: boolean
 }
 
-type Milestone = {
-    id: string
-    name: string
-    idx: number
-    done: boolean
+interface GoalActionItem extends Task {
+    goalId: string
 }
 
 type YearHeatMapData = {

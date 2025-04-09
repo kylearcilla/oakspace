@@ -119,7 +119,7 @@ img {
   bottom: 0px;
 }
 
-.flx-algn-center {
+.flx-center {
   display: flex;
   align-items: center;
 }

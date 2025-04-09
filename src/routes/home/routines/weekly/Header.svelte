@@ -111,10 +111,10 @@
 
     /* options */
     function toggleBreakdownOptions(linked: boolean) {
-        const onPointerOver = (params?: { childLeft: number }) => {
+        const onPointerOver = (params?: { childXPos: number }) => {
             if (params && !closing)  {
                 dailyRoutinesOpen = true
-                routinesMenuOffset = params.childLeft
+                routinesMenuOffset = params.childXPos
             }
         }
         const onPointerLeave = () => {
@@ -224,7 +224,7 @@
 >
     <div class="routine__options" class:routine__options--open={viewOptionOpen}>
         <button 
-            id="view-option--dbtn"
+            data-dmenu-id="view-option"
             class="routine__options-dbtn"
             disabled={locked}
             on:click={toggleViewOption}
@@ -273,7 +273,7 @@
                         title={linked ? "This routine is linked to a presetdaily routine." : ""}
                     >
                         <button 
-                            id={`day-breakdown--${idx}--dbtn`}
+                            data-dmenu-id={`day-breakdown--${idx}`}
                             class="routine__days-btn" 
                             class:routine__days-btn--linked={linked}
                             disabled={!weekRoutine}
@@ -306,7 +306,7 @@
 
     {#if dayBreakdown}
         <BounceFade
-            id="day-breakdown--dmenu"
+            dmenuId="day-breakdown"
             isHidden={!breakdownOpen}
             onDismount={closeDayBreakdown}
             zIndex={100}

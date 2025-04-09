@@ -318,7 +318,7 @@
                                     }}
                                 >
                                     <div class="routine-block__content">
-                                        <div class="flx-algn-center">
+                                        <div class="flx-center">
                                             {#if isFirstLast}
                                                 {@const opacity = isLight ? 0.8 : 0.5}
                                                 <div 
@@ -392,7 +392,7 @@
                                 on:contextmenu|preventDefault
                             >
                                 <div class="routine-block__content">
-                                    <div class="flx-algn-center">
+                                    <div class="flx-center">
                                         {#if isFirstLast}
                                             {@const opacity = isLight ? 0.8 : 0.5}
                                             <div 
@@ -475,7 +475,7 @@
                                 style:--block-color-3={colorTrio[2]}
                             >
                                 <div class="routine-block__content">
-                                    <div class="flx-algn-center">
+                                    <div class="flx-center">
                                         <span class="routine-block__title">
                                             {editBlock.title}
                                         </span>

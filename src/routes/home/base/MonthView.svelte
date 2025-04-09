@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { onMount } from "svelte"
+	import type { Writable } from "svelte/store"
+	import { goalTracker, habitTracker, themeState } from "$lib/store"
 
 	import { Icon } from "$lib/enums"
-	import { themeState } from "$lib/store"
-	import { ACTIVITY_DATA } from "$lib/mock-data"
+    import { initData as initHabitsData } from "$lib/utils-habits"
+	import { getGoalHeatMap, PERIODS } from "$lib/utils-goals"
+	import { GoalsViewManager } from "$lib/goals-view-manager"
     import { formatDatetoStr, getWeekPeriodStr, months } from "$lib/utils-date"
 	import { capitalize, clickOutside, getElemById, getHozSpace, getMaskedGradientStyle, kebabToNormal, normalToKebab } from "$lib/utils-general"
 
@@ -20,48 +23,12 @@
 	import DropdownList from "$components/DropdownList.svelte"
 
     type MonthDetailsView = "overview" | "goals" | "habits" | "yr-view"
-    type GoalsViewOptions = {
-        view: "list" | "board"
-        progress: number
-        list: {
-            grouping: "status" | "tag" | "default"
-            showProgress: boolean
-            due: boolean
-            dueType: "date" | "distance"
-        }
-        board: {
-            grouping: "status" | "tag"
-            showProgress: boolean
-            due: boolean
-            dueType: "date" | "distance"
-        }
-    }
-
-    let currView: MonthDetailsView = "overview"
-    let optionsOpen = false
-    let overviewType: "monthly" | "daily" = "monthly"
-    let leftArrow: HTMLButtonElement | null = null
-    let rightArrow: HTMLButtonElement | null = null
-    let headerBtnsRef: HTMLElement | null = null
-    let today = new Date()
-
-    let weeksAgoIdx = 0
-    let monthsAgoIdx = 0
-    let width = 0
-    
-    let activityIdx = 2
-    let activity = ACTIVITY_DATA[activityIdx]
-    let entryModal = false
-    let gradient = ""
-    
-    let subMenu: "g-group" | "g-progress" | "h-view" | "d-view" | "g-due" | null = null
-    
-    $: isLight = !$themeState.isDarkTheme
 
     /* view options */
     let overview = {
         animPhotos: true,
         textBlock: true,
+        showImgs: true,
         habitsMark: true,
         focusTime: false,
         heading: false
@@ -79,6 +46,7 @@
             grouping: "status",
             showProgress: true,
             due: false,
+            imgs: false,
             dueType: "date"
         }
     }
@@ -98,12 +66,44 @@
         yearsAgoIdx: 0,
         emojis: true,
         showTextEntry: true,
-        showYear: false
+        showYear: false,
+        pinnedGoals: false
     }
 
+    let currView: MonthDetailsView = "overview"
+    let options: MonthDetailsView | null = null
+    let overviewType: "monthly" | "daily" = "monthly"
+    let leftArrow: HTMLButtonElement | null = null
+    let rightArrow: HTMLButtonElement | null = null
+    let headerBtnsRef: HTMLElement | null = null
+    let today = new Date()
+    let timeFrame: { year: number, period: string }
+
+    let goalsInit = false
+    let goalsViewManager: GoalsViewManager | null = null
+    let goalsViewState: Writable<GoalsViewState>
+    let goalsHeatMap: YearHeatMapData[] = []
     let btnHighlighter = {
         width: 0, left: 0
     }
+    let habitsMetrics: HabitYearMetrics
+    let habitsHeatMap: HabitHeatMapData[]
+
+    let moAgoIdx = 0
+    let weeksAgoIdx = 0
+    let width = 0
+    let renderFlag = false
+    
+    let activityIdx = 2
+    let gradient = ""
+    
+    let subMenu: "g-group" | "g-progress" | "h-view" | "d-view" | "g-due" | null = null
+    
+    $: isLight = !$themeState.isDarkTheme
+    $: viewProgress = $goalsViewState?.viewProgress
+    $: yrProgress = $goalsViewState?.yrProgress
+
+    $: if ($goalTracker.init && !goalsInit) initGoalsView()
 
     $: if (currView != undefined) {
         onArrowBtnClicked()
@@ -113,6 +113,73 @@
     }
     else {
         gradient = ""
+    }
+
+    function viewOption(optn: string, val?: string) {
+        const type = goalsView.view
+
+        /* overview */
+        if (optn === "Show Month") {
+            overview.heading = !overview.heading
+        }
+        else if (optn === "Text Block") {
+            overview.textBlock = !overview.textBlock
+        }
+        else if (optn === "Show Images") {
+            overview.showImgs = !overview.showImgs
+        }
+        else if (optn === "Dynamic Img Spacing") {
+            overview.animPhotos = !overview.animPhotos
+        }
+        /* goals */
+        else if (optn === "View Type") {
+            goalsView.view = val as "list" | "board"
+            renderFlag = !renderFlag
+        }
+        else if (optn === "Grouping") {
+            goalsView[type].grouping = val as "default" | "status" | "tag"
+        }
+        else if (optn === "Show Progress") {
+            goalsView[type].showProgress = !goalsView[type].showProgress
+        }
+        else if (optn === "Show Due Date") {
+            goalsView[type].due = !goalsView[type].due
+        }
+        else if (optn === "Due Distance") {
+            goalsView[type].dueType = goalsView[type].dueType === "distance" ? "date" : "distance"
+        }
+        else if (optn === "Show Image") {
+            goalsView.board.imgs = !goalsView.board.imgs
+        }
+        /* habits */
+        else if (optn === "Group") {
+            habitView.view = val as "default" | "time-of-day"
+        }
+        else if (optn === "Checkbox") {
+            habitView.checkboxStyle = val as "box" | "minimal"
+        }
+        else if (optn === "Emojis") {
+            habitView.emojis = !habitView.emojis
+        }
+        else if (optn === "Captions") {
+            habitView.allowCaptions = !habitView.allowCaptions
+        }
+        else if (optn === "Bottom Details") {
+            habitView.bottomDetails = !habitView.bottomDetails
+        }
+        else if (optn === "Detailed") {
+            habitView.progress.numbers = !habitView.progress.numbers
+        }
+        /* year view */
+        else if (optn === "Goal Emojis") {
+            yearView.emojis = !yearView.emojis
+        }
+        else if (optn === "Year Entry") {
+            yearView.showTextEntry = !yearView.showTextEntry
+        }
+        else if (optn === "Show Year") {
+            yearView.showYear = !yearView.showYear
+        }
     }
 
     function onGoalSubListClicked({ name }) {
@@ -147,12 +214,12 @@
 
         if (currView === "overview") {
             if (direction === "left") {
-                activityIdx = Math.max(0, activityIdx - 1)
+                moAgoIdx--
             }
             else if (direction === "right") {
-                activityIdx = Math.min(ACTIVITY_DATA.length - 1, activityIdx + 1)
+                moAgoIdx++
             }
-            activity = ACTIVITY_DATA[activityIdx]
+            updateTimeFrame()
         }
         else if (currView === "habits") {
             if (direction === "left") {
@@ -201,9 +268,53 @@
         })
         gradient = styling
     }
+    function updateTimeFrame() {
+        const currentDate = new Date()
+        const currentYear = currentDate.getFullYear()
+        const currentMonth = currentDate.getMonth()
+        
+        const monthsToGoBack = moAgoIdx
+        const totalMonths = currentYear * 12 + currentMonth - monthsToGoBack
+        
+        const targetYear = Math.floor(totalMonths / 12)
+        const targetMonth = totalMonths % 12
+        
+        timeFrame = { 
+            year: targetYear, 
+            period: months[targetMonth].substring(0, 3).toLowerCase()
+        }
+        
+        // update goals
+        goalsViewManager!.setViewPeriod({ ...timeFrame })
+        goalTracker.update(data => ({ ...data, view: goalsViewManager }))
+
+        // update habit data
+        initHabitsData(currentYear, currentMonth)
+    }
+
+    function initGoalsView() {
+        if (goalsInit) return
+        const currYear = today.getFullYear()
+        const viewPeriod = PERIODS[today.getMonth()]
+
+        goalsViewManager = new GoalsViewManager({ 
+            goals: [], 
+            grouping: goalsView.list.grouping,
+            timeFrame: { year: currYear, period: viewPeriod }
+        })
+
+        goalsViewState = goalsViewManager.state
+        goalsInit = true
+
+        goalsViewState.subscribe(() => {
+            goalsHeatMap = getGoalHeatMap(currYear)
+        })
+
+        updateTimeFrame()
+    }
 
     onMount(() => {
-        handleScroll(headerBtnsRef)
+        handleScroll(headerBtnsRef!)
         requestAnimationFrame(() => onViewBtnClicked(currView))
     })
 </script>
@@ -267,7 +378,8 @@
                         {#if currView === "overview"}
                             <div 
                                 style:margin="4px -1px 0px 12px"
-                                style:font-size="1.4rem"
+                                style:font-size="1.3rem"
+                                style:font-family="Geist Mono"
                             >
                                 {formatDatetoStr(today, { month: "long" })}
                             </div>
@@ -285,7 +397,10 @@
                             </div>
                         {:else if currView === "goals"}
                             {@const progress = goalsView.progress}
-                            <div class="flx-algn-center" style:margin="0px 0px -2px 0px">
+                            <div 
+                                class="flx-center" 
+                                style:margin="0px 0px -2px 0px"
+                            >
                                 <div style:margin-top="5px">
                                     <ProgressBar {progress}/>
                                 </div>
@@ -335,369 +450,265 @@
                     >
                         <SettingsBtn 
                             id={"month-view"}
-                            onClick={() => optionsOpen = !optionsOpen}
+                            onClick={() => options = options ? null : currView}
                         />
                     </div>
                 </div>
             </div>
-            <!-- settings menu -->
-            <BounceFade 
-                isHidden={!optionsOpen}
-                zIndex={200}
-                position={{ top: "42px", right: "5px" }}
-            >
-                <div 
-                    id="month-view--dmenu"
-                    class="day-settings dmenu" 
-                    class:dmenu--light={isLight}
-                    style:--font-size="1.32rem"
-                    use:clickOutside on:outClick={() => optionsOpen = false} 
-                >
-                    <!-- month view -->
-                    {#if currView === "overview" && overviewType === "monthly"}
-                        <li class="dmenu__section-name">
-                            Monthly View
-                        </li>
-                        <li class="dmenu__section">
-                            <div class="dmenu__toggle-optn">
-                                <span class="dmenu__option-heading">Show Month</span>
-                                <ToggleBtn 
-                                    active={overview.heading}
-                                    onToggle={() => {
-                                        overview.heading = !overview.heading
-                                        overview = overview
-                                    }}
-                                />
-                            </div>
-                            <div class="dmenu__toggle-optn">
-                                <span class="dmenu__option-heading">Text Block</span>
-                                <ToggleBtn 
-                                    active={overview.textBlock}
-                                    onToggle={() => {
-                                        overview.textBlock = !overview.textBlock
-                                        overview = overview
-                                    }}
-                                />
-                            </div>
-                        </li>
-                        <div class="dmenu__section-name" style:margin-top="4px">
-                            Calendar
-                        </div>
-                        <li class="dmenu__section-divider"></li>
-                        <li class="dmenu__section">
-                            <div class="dmenu__toggle-optn">
-                                <span class="dmenu__option-heading">Animate Photos</span>
-                                <ToggleBtn 
-                                    active={overview.animPhotos}
-                                    onToggle={() => {
-                                        overview.animPhotos = !overview.animPhotos
-                                        overview = overview
-                                    }}
-                                />
-                            </div>
-                            <div class="dmenu__toggle-optn">
-                                <span class="dmenu__option-heading">Perfect Habits</span>
-                                <ToggleBtn 
-                                    active={overview.habitsMark}
-                                    onToggle={() => {
-                                        overview.habitsMark = !overview.habitsMark
-                                        overview = overview
-                                    }}
-                                />
-                            </div>
-                            <div class="dmenu__toggle-optn">
-                                  <span class="dmenu__option-heading">Focus Time</span>
-                                <ToggleBtn 
-                                    active={overview.focusTime}
-                                    onToggle={() => {
-                                        overview.focusTime = !overview.focusTime
-                                        overview = overview
-                                    }}
-                                />
-                            </div>
-                        </li>
-                    {/if}
-                    {#if currView === "goals"}
-                        {@const viewType = goalsView.view}
-                        {@const options = goalsView[viewType]}
-                        <li class="dmenu__section">
-                            <div class="dmenu__section-name">
-                                Goals Settings
-                            </div>
-                            <div style:display="flex" style:margin="5px 0px 10px 7px">
-                                <button 
-                                    class="dmenu__box" 
-                                    class:dmenu__box--selected={viewType === "list"}
-                                    on:click={() => {
-                                        goalsView.view = "list"
-                                        goalsView = goalsView
-                                        optionsOpen = false
-                                    }}
-                                >
-                                    <div class="dmenu__box-icon">
-                                        <i class="fa-solid fa-list-check"></i>
-                                    </div>
-                                    <span>List</span>
-                                </button>
-                                <button 
-                                    class="dmenu__box" 
-                                    class:dmenu__box--selected={viewType === "board"}
-                                    on:click={() => {
-                                        goalsView.view = "board"
-                                        goalsView = goalsView
-                                        optionsOpen = false
-                                    }}
-                                >
-                                    <div class="dmenu__box-icon">
-                                        <i 
-                                            class="fa-solid fa-square-poll-vertical"
-                                            style:font-size="2rem"
-                                            style:transform="scaleY(-1)"
-                                        >
-                                        </i>
-                                    </div>
-                                    <span>Board</span>
-                                </button>
-                            </div>
-                            {#if viewType === "list"}
-                            <div class="dmenu__option dmenu__option--static">
-                                <span class="dmenu__option-heading">Group By</span>
-                                <DropdownBtn 
-                                    id={"g-group"}
-                                    isActive={subMenu === "g-group"}
-                                    options={{
-                                        title: capitalize(options.grouping),
-                                        onClick: () => {
-                                            subMenu = subMenu === "g-group" ? null : "g-group"
-                                        },
-                                    }}
-                                />
-                            </div>
-                            {/if}
-                            <div class="dmenu__toggle-optn">
-                                <span class="dmenu__option-heading">Progress</span>
-                                <ToggleBtn 
-                                    active={options.showProgress}
-                                    onToggle={() => {
-                                        goalsView[viewType].showProgress = !options.showProgress
-                                        goalsView = goalsView
-                                    }}
-                                />
-                            </div>
-                            <div class="dmenu__toggle-optn">
-                                <span class="dmenu__option-heading">Due Date</span>
-                                <ToggleBtn 
-                                    active={options.due}
-                                    onToggle={() => {
-                                        goalsView[viewType].due = !options.due
-                                        goalsView = goalsView
-                                    }}
-                                />
-                            </div>
-                            {#if options.due}
-                                <div class="dmenu__option dmenu__option--static">
-                                    <span class="dmenu__option-heading">Due Format</span>
-                                    <DropdownBtn 
-                                        id={"g-due"}
-                                        isActive={subMenu === "g-due"}
-                                        options={{
-                                            title: capitalize(options.dueType),
-                                            onClick: () => {
-                                                subMenu = subMenu === "g-due" ? null : "g-due"
-                                            },
-                                        }}
-                                    />
-                                </div>
-                            {/if}
-                        </li>
+            <!-- overview  -->
+            <DropdownList 
+                id={"month-view"}
+                isHidden={options != "overview"}
+                renderFlag={renderFlag}
+                options={{
+                    listItems: [
+                        {
+                            sectionName: "Month View",
+                        },
+                        { 
+                            name: "Show Month",
+                            active: overview.heading,
+                            onToggle: () => viewOption("Show Month")
+                        },
+                        { 
+                            name: "Text Block",
+                            active: overview.textBlock,
+                            divider: true,
+                            onToggle: () => viewOption("Text Block")
+                        },
+                        {
+                            sectionName: "Images",
+                        },
+                        { 
+                            name: "Show Images",
+                            active: overview.showImgs,
+                            divider: !overview.showImgs,
+                            onToggle: () => viewOption("Show Images")
+                        },
+                        { 
+                            name: "Dynamic Spacing",
+                            active: overview.animPhotos,
+                            divider: true,
+                            onToggle: () => viewOption("Dynamic Img Spacing")
+                        },
+                        {
+                            sectionName: "Day View",
+                        },
+                        { 
+                            name: "100% Habits",
+                            active: overview.habitsMark,
+                            onToggle: () => viewOption("Perfect Habits")
+                        },
+                        { 
+                            name: "Focus Time",
+                            active: overview.focusTime,
+                            onToggle: () => viewOption("Focus Time")
+                        }
+                    ],
+                    onClickOutside: () => {
+                        options = null
+                    },
+                    styling: { 
+                        zIndex: 100,
+                        minWidth: "170px",
+                    },
+                    position: { 
+                        top: "25px",
+                        right: "0px",
+                    }
+                }}
+            />
 
-                        <DropdownList 
-                            id="g-group"
-                            isHidden={subMenu != "g-group"} 
-                            options={{
-                                pickedItem: capitalize(options.grouping),
-                                listItems: [
-                                    ...(viewType === "list" ? [{ name: "Default" }] : []),
-                                    { name: "Status" }, 
-                                    { name: "Tag" }
-                                ],
-                                position: { 
-                                    top: "135px", right: "2px" 
-                                },
-                                styling: { 
-                                    width: "100px" 
-                                },
-                                onClickOutside: () => { 
-                                    subMenu = null 
-                                },
-                                onListItemClicked: onGoalSubListClicked
-                            }}
-                        />
-                        <DropdownList 
-                            id="g-due"
-                            isHidden={subMenu != "g-due"} 
-                            options={{
-                                pickedItem: capitalize(options.dueType),
-                                listItems: [
-                                    { name: "Date" }, 
-                                    { name: "Distance" }
-                                ],
-                                position: { 
-                                    top: "220px", right: "2px" 
-                                },
-                                styling: { 
-                                    width: "100px" 
-                                },
-                                onClickOutside: () => { 
-                                    subMenu = null 
-                                },
-                                onListItemClicked: onGoalSubListClicked
-                            }}
-                        />
-                    {/if}
-                    {#if currView === "habits"}
-                        <li class="dmenu__section">
-                            <div class="dmenu__section-name">
-                                Habit Settings
-                            </div>
-                            <div class="dmenu__option dmenu__option--static">
-                                <span class="dmenu__option-heading">Group By</span>
-                                <DropdownBtn 
-                                    id={"habits-view"}
-                                    options={{
-                                        title: kebabToNormal(habitView.view),
-                                        onClick: () => {
-                                            subMenu = subMenu === "h-view" ? null : "h-view"
-                                        },
-                                    }}
-                                />
-                            </div>
-                            <DropdownList 
-                                id="habits-view"
-                                isHidden={subMenu != "h-view"} 
-                                options={{
-                                    pickedItem: kebabToNormal(habitView.view),
-                                    listItems: [
-                                        { name: "Default" }, { name: "Time of Day" }
-                                    ],
-                                    position: { 
-                                        top: "58px", right: "2px" 
-                                    },
-                                    styling: { 
-                                        width: "120px" 
-                                    },
-                                    onClickOutside: () => { 
-                                        subMenu = null 
-                                    },
-                                    onListItemClicked: onGoalSubListClicked
-                                }}
-                            />
-                            <div class="dmenu__toggle-optn  dmenu__option--static">
-                                <span class="dmenu__option-heading">Emojis</span>
-                                <ToggleBtn 
-                                    active={habitView.emojis}
-                                    onToggle={() => {
-                                        habitView.emojis = !habitView.emojis
-                                        habitView = habitView
-                                    }}
-                                />
-                            </div>
-                            <div class="dmenu__toggle-optn  dmenu__option--static">
-                                <span class="dmenu__option-heading">Target</span>
-                                <ToggleBtn 
-                                    active={habitView.allowCaptions}
-                                    onToggle={() => {
-                                        habitView.allowCaptions = !habitView.allowCaptions
-                                        habitView = habitView
-                                    }}
-                                />
-                            </div>
-                        </li>
-                        <li class="dmenu__section-divider"></li>
-                        <li class="dmenu__section">
-                            <div class="dmenu__section-name">
-                                Data 
-                            </div>
-                            <div class="dmenu__toggle-optn  dmenu__option--static">
-                                <span class="dmenu__option-heading">
-                                    {months[today.getMonth()].substring(0, 3)} Metrics
-                                </span>
-                                <ToggleBtn 
-                                    active={habitView.stats}
-                                    onToggle={() => {
-                                        habitView.stats = !habitView.stats
-                                        habitView = habitView
-                                    }}
-                                />
-                            </div>
-                            <div class="dmenu__toggle-optn dmenu__option--static">
-                                <span class="dmenu__option-heading">Bottom Details</span>
-                                <ToggleBtn 
-                                    active={habitView.bottomDetails}
-                                    onToggle={() => {
-                                        habitView.bottomDetails = !habitView.bottomDetails
-                                        habitView = habitView
-                                    }}
-                                />
-                            </div>
-                            <div class="dmenu__toggle-optn  dmenu__option--static">
-                                <span class="dmenu__option-heading">Fracion</span>
-                                <ToggleBtn 
-                                    active={habitView.progress.numbers}
-                                    onToggle={() => {
-                                        habitView.progress.numbers = !habitView.progress.numbers
-                                        habitView = habitView
-                                    }}
-                                />
-                            </div>
-                        </li>
-                    {/if}
-                    {#if currView === "yr-view"}
-                        <div class="dmenu__toggle-optn dmenu__option--static">
-                            <span class="dmenu__option-heading">Show Year</span>
-                            <ToggleBtn 
-                                active={yearView.showYear}
-                                onToggle={() => {
-                                    yearView.showYear = !yearView.showYear
-                                    yearView = yearView
-                                }}
-                            />
-                        </div>
-                        <div class="dmenu__toggle-optn dmenu__option--static">
-                            <span class="dmenu__option-heading">Text Block</span>
-                            <ToggleBtn 
-                                active={yearView.showTextEntry}
-                                onToggle={() => {
-                                    yearView.showTextEntry = !yearView.showTextEntry
-                                    yearView = yearView
-                                }}
-                            />
-                        </div>
-                        <div class="dmenu__toggle-optn dmenu__option--static">
-                            <span class="dmenu__option-heading">Emojis as Goals</span>
-                            <ToggleBtn 
-                                active={yearView.emojis}
-                                onToggle={() => {
-                                    yearView.emojis = !yearView.emojis
-                                    yearView = yearView
-                                }}
-                            />
-                        </div>
-                    {/if}
-                </div>
-            </BounceFade>
+            <!-- goals -->
+            <DropdownList 
+                id={"month-view"}
+                isHidden={options != "goals"}
+                renderFlag={renderFlag}
+                options={{
+                    listItems: [
+                        { 
+                            pickedItem: kebabToNormal(goalsView.view),
+                            twinItems: [
+                                { name: "List", faIcon: "fa-solid fa-list-check" }, 
+                                { name: "Board", faIcon: "fa-solid fa-square-poll-vertical", size: "1.65rem" }
+                            ],
+                            onListItemClicked: ({ name }) => {
+                                viewOption("View Type", normalToKebab(name))
+                            }
+                        },
+                        { 
+                            name: "Grouping",
+                            pickedItem: kebabToNormal(goalsView[goalsView.view].grouping),
+                            items: [
+                                { name: goalsView.view === "list" ? "Default" : "" },
+                                { name: "Status" },
+                                { name: "Tag" }
+                            ],
+                            onListItemClicked: ({ name }) => {
+                                viewOption("Grouping", normalToKebab(name))
+                            }
+                        },
+                        { 
+                            name: goalsView.view === "board" ? "Show Image" : "",
+                            active: goalsView.board.imgs,
+                            divider: true,
+                            onToggle: () => viewOption("Show Image")
+                        },
+                        {
+                            sectionName: "Details",
+                        },
+                        { 
+                            name: "Show Progress",
+                            active: goalsView[goalsView.view].showProgress,
+                            onToggle: () => viewOption("Show Progress")
+                        },
+                        { 
+                            name: "Show Due Date",
+                            active: goalsView[goalsView.view].due,
+                            onToggle: () => viewOption("Show Due Date")
+                        },
+                        { 
+                            name: goalsView[goalsView.view].due ? "Distance" : "",
+                            active: goalsView[goalsView.view].dueType === "distance",
+                            onToggle: () => viewOption("Due Distance")
+                        },
+                    ],
+                    onClickOutside: () => {
+                        options = null
+                    },
+                    styling: { 
+                        zIndex: 100,
+                        minWidth: "170px",
+                    },
+                    position: { 
+                        top: "25px",
+                        right: "0px",
+                    }
+                }}
+            />
+
+            <!-- habits -->
+            <DropdownList 
+                id={"month-view"}
+                isHidden={options != "habits"}
+                options={{
+                    listItems: [
+                        { 
+                            name: "Group",
+                            pickedItem: kebabToNormal(habitView.view),
+                            items: [
+                                { name: "Default" },
+                                { name: "Time of Day" }
+                            ],
+                            onListItemClicked: ({ name }) => viewOption("Group", normalToKebab(name))
+                        },
+                        { 
+                            name: "Checkbox",
+                            pickedItem: kebabToNormal(habitView.checkboxStyle),
+                            divider: true,
+                            items: [
+                                { name: "Box" },
+                                { name: "Minimal" }
+                            ],
+                            onListItemClicked: ({ name }) => viewOption("Checkbox", normalToKebab(name))
+                        },
+                        { 
+                            name: "Emojis",
+                            active: habitView.emojis,
+                            onToggle: () => viewOption("Emojis")
+                        },
+                        { 
+                            name: "Captions",
+                            active: habitView.allowCaptions,
+                            onToggle: () => viewOption("Captions")
+                        },
+                        { 
+                            name: "Bottom Details",
+                            active: habitView.bottomDetails,
+                            divider: true,
+                            onToggle: () => viewOption("Bottom Details") 
+                        },
+                        {
+                            sectionName: "Progress",
+                        },
+                        { 
+                            name: "Detailed",
+                            active: habitView.progress.numbers,
+                            onToggle: () => viewOption("Detailed")
+                        }
+                    ],
+                    onClickOutside: () => {
+                        options = null
+                    },
+                    styling:  { 
+                        zIndex: 200,
+                        width: "170px",
+                    },
+                    position: { 
+                        top: "25px",
+                        right: "0px",
+                    }
+                }}
+            />
+
+            <!-- year view -->
+            <DropdownList 
+                id={"month-view"}
+                isHidden={options != "habits"}
+                options={{
+                    listItems: [
+                        {
+                            sectionName: "Overview",
+                        },
+                        { 
+                            name: "Year Entry",
+                            active: yearView.showTextEntry,
+                            onToggle: () => viewOption("Year Entry")
+                        },
+                        { 
+                            name: "Show Year",
+                            active: yearView.showYear,
+                            onToggle: () => viewOption("Show Year")
+                        },
+                        {
+                            sectionName: "Goals",
+                        },
+                        { 
+                            name: "Pinned Goals",
+                            active: yearView.pinnedGoals,
+                            onToggle: () => viewOption("Pinned Goals")
+                        },
+                        { 
+                            name: "Emojis",
+                            active: yearView.emojis,
+                            onToggle: () => viewOption("Goal Emojis")
+                        }
+                    ],
+                    onClickOutside: () => {
+                        options = null
+                    },
+                    styling:  { 
+                        zIndex: 200,
+                        width: "170px",
+                    },
+                    position: { 
+                        top: "25px",
+                        right: "0px",
+                    }
+                }}
+            />
         </div>
         <div class="divider"></div>
         <div class="month-view__details-view">
-            {#if currView === "overview"}
+            {#if currView === "overview" && goalsViewManager}
                 <div style:margin-top="10px">
                     <Overview 
+                        {timeFrame}
+                        goalsManager={goalsViewManager}
                         options={overview}
                         onDayClicked={(dayIdx) => {
                             overviewType = "daily"
-
                             activityIdx  = dayIdx
-                            activity = ACTIVITY_DATA[activityIdx]
                         }} 
                     />
                 </div>
@@ -706,18 +717,21 @@
                     weeksAgoIdx={weeksAgoIdx}
                     options={habitView} 
                 />
-            {:else if currView === "goals"}
+            {:else if currView === "goals" && goalsViewManager}
                 <div style:margin-top="15px">
                     <GoalsView 
-                        goalsView={goalsView} 
-                        onProgressChange={(progress) => {
-                            goalsView.progress = progress
-                            goalsView = goalsView
-                        }}
+                        {timeFrame}
+                        context="home"
+                        options={goalsView} 
+                        manager={goalsViewManager}
                     />
                 </div>
-            {:else}
-                <YearView options={yearView}/>
+            {:else if timeFrame}
+                <YearView 
+                    currYear={timeFrame.year}
+                    goalsHeatMap={goalsHeatMap}
+                    options={yearView}
+                />
             {/if}
         </div>
     </div>
@@ -892,32 +906,6 @@
             &:hover {
                 background-color: rgba(var(--textColor1), 0.05);
             }
-        }
-    }
-
-    .dmenu {
-        overflow: visible;
-        min-width: 170px;
-
-        &__option {
-            overflow: visible;
-        }
-        &__option-heading {
-            margin-right: 14px;
-        }
-        &__box {
-            width: calc(50% - 7px);
-        }
-        &__toggle-optn {
-            padding: 6px 7px 7px 7px;
-            width: 100%;
-            @include flex(center, space-between);
-        }
-        &__section-divider:last-child {
-            display: none;
-        }
-        &__option-btn {
-            border-radius: 7px;
         }
     }
 </style>

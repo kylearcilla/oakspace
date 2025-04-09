@@ -344,6 +344,9 @@
                         position: { 
                             bottom: "-100px", right: "0px" 
                         },
+                        styling: {
+                            width: "130px"
+                        },
                         onListItemClicked: ({ name }) => {
                             onOptionsClicked(name)
                         },
@@ -354,7 +357,7 @@
                 />
             </div>
             <div style:padding="2px 0px 6px 0px">
-                <div class="flx-algn-center">
+                <div class="flx-center">
                     <div class="habit__info" bind:clientWidth={timeInfoWidth}>
                         <div class="habit__info-title" style:width={`${intervalTitleWidth}px`}>
                             Time
@@ -510,7 +513,7 @@
                                     on:pointerleave={() => numPickerOpen = false}
                                 >
                                     <div 
-                                        id={"dow--dmenu"}
+                                        data-dmenu-id="dow"
                                         class="habit__num-picker"
                                     >
                                         <button on:click={() => onPerWeekBtnClick("down")}>
@@ -536,7 +539,6 @@
                                     on:pointerleave={() => dowOpen = false}
                                 >
                                     <div 
-                                        id={"dow--dmenu"}
                                         class="habit__dow-menu dmenu"
                                         style:--font-size="1.3rem"
                                     >

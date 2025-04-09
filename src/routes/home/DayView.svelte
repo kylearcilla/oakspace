@@ -25,6 +25,7 @@
 	import Calendar from "$components/Calendar.svelte"
 	import ToggleBtn from "$components/ToggleBtn.svelte"
 	import BounceFade from "$components/BounceFade.svelte"
+	import SettingsBtn from "$components/SettingsBtn.svelte";
 
     const OVERVIEW_SIDE_MARGINS = 4
     const DAY_VIEW_SIDE_MARGINS = 14
@@ -42,6 +43,7 @@
     let now = new Date()
     let calendarHt = 0
     let settings = false
+    let addBtnFlag = false
 
     /* tasks */
     let todosManager = new TodosManager()
@@ -223,28 +225,34 @@
         <Calendar 
             {calendar} 
             {focusDate}
+            context="side-menu"
             isDisabled={!!g_loading}
             onDayUpdate={onDayUpdate}
         />
     </div>
     <div class="day-view__day" style:height={`calc(100% - ${calendarHt}px)`}>
-        <button 
-            class="day-view__day-settings-btn" 
-            id="day-view--dbtn"
-            on:click={() => settings = !settings}
-        >
-            <SvgIcon icon={Icon.Settings} options={{ opacity: 1, scale: 0.9 }} />
-        </button>
-        <div class="day-view__day-header">
-            <span>
+    <div class="flx-sb" style:padding="0px 12px 5px 0px">
+        <div class="flx-center">
+            <div class="day-view__day-header">
                 {#if view === "cal"}
                     {formatDatetoStr(focusDate, { month: "long", day: "numeric" })}
                 {:else}
                     Tasks
                 {/if}
-            </span>
+            </div>
+            <button 
+                class:hidden={view === "cal"}
+                class="day-view__add-btn"
+                on:click={() => addBtnFlag = !addBtnFlag}
+            >
+                <SvgIcon 
+                    icon={Icon.Add} 
+                    options={{ scale: 1.1, strokeWidth: 1.3, opacity: 0.8 }}
+                />
+            </button>
         </div>
-
+        <SettingsBtn id="day-view" onClick={() => settings = !settings} />
+    </div>
     <div class="day-view__main-content">
         {#if view === "cal"}
             <DayView
@@ -257,6 +265,7 @@
             />
         {:else}
             <Todos
+                {addBtnFlag}
                 {removeCompleteFlag}
                 manager={todosManager}
                 onTaskComplete={(completed) => hasCompletedTasks = completed > 0} 
@@ -274,7 +283,7 @@
         {@const tokenExpired = api === "google-cal" && g_tokenExpired}
 
         <div class="day-view__api" data-api={api}>
-            <div class="flx-algn-center">
+            <div class="flx-center">
                 <Logo 
                     logo={logo}
                     options={{
@@ -318,7 +327,10 @@
     >
         {#if $gCalState}
             {@const { loading, tokenExpired } = $gCalState}
-            <div class="google-cals" id="day-view--dmenu">
+            <div 
+                class="google-cals" 
+                data-dmenu-id="day-view"
+            >
                 <div class="google-cals__header">
                     <span>
                         Your Calendars
@@ -361,7 +373,7 @@
             class="dmenu"
             class:dmenu--light={isLight}
             style:--font-size="1.32rem"
-            id="day-view--dmenu"
+            data-dmenu-id="day-view"
         >
             <!-- view -->
             <li class="dmenu__section">
@@ -668,18 +680,10 @@
         &--light &__day-header span {
             @include text-style(0.85);
         }
-        &--light &__day-settings-btn {
-            background-color: rgba(var(--textColor1), 0.1);
-            opacity: 0.4;
-
-            &:hover {
-                opacity: 0.9;
-            }
-        }
         &__calendar-container {
             margin: 0px 0px 0px 0px;
             padding: 0px var(--OVERVIEW_SIDE_MARGINS);
-            height: 230px;
+            height: 220px;
         }
         &__day {
             width: 100%;
@@ -689,23 +693,17 @@
         &__day-header {
             @include flex(center, space-between);
             position: relative;
-            padding: 0px var(--DAY_VIEW_SIDE_MARGINS);
-            margin: 0px 0px 5px 1px;
-
-            span {
-                margin-top: 0px;
-                @include text-style(0.35, var(--fw-400-500), 1.25rem, "Geist Mono");
-            }
+            padding-left: var(--DAY_VIEW_SIDE_MARGINS);
+            @include text-style(0.35, var(--fw-400-500), 1.25rem, "Geist Mono");
         }
-        &__day-settings-btn {
-            background-color: rgba(var(--textColor1), 0.05);
-            opacity: 0.3;
-            @include circle(20px);
-            @include abs-top-right(-3px, 10px);
-            z-index: 1;
+        &__add-btn {
+            @include center;
+            @include square(22px, 7px);
+            opacity: 0.25;
+            margin: -2px 0px 0px 5px;
 
             &:hover {
-                opacity: 0.5;
+                opacity: 0.7;
             }
         }
         &__main-content {
